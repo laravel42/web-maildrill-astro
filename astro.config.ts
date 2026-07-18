@@ -4,9 +4,16 @@ import sitemap from '@astrojs/sitemap';
 
 import { siteConfig } from './src/config/site';
 
+// `import.meta.env` isn't populated at config-load time, so read the raw env
+// (set at build, e.g. on Cloudflare Pages) with the config default as fallback.
+const siteUrl = process.env.PUBLIC_SITE_URL || siteConfig.url;
+
 export default defineConfig({
-  site: siteConfig.url,
+  site: siteUrl,
   trailingSlash: 'never',
+  // Flat file output (`/pricing.html`) so hosts serve no-trailing-slash URLs
+  // with a 200 (matching the canonicals) instead of 308-redirecting to a slash.
+  build: { format: 'file' },
   integrations: [
     react(),
     sitemap({

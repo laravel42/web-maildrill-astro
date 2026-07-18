@@ -204,11 +204,32 @@ Replace those implementations with real HTTP clients; do not scatter `fetch` thr
 
 ## Deployment
 
-Defaults to static output — deploy `dist/` to any static host (or add an Astro adapter).
+Static output (`build.format: 'file'` for clean, no-trailing-slash URLs) — deploy `dist/` to any
+static host. **Always build with `PUBLIC_SITE_URL` set to the deploy origin** so canonicals, the
+sitemap, robots.txt, OG tags, and RSS all agree.
 
-1. Set `PUBLIC_SITE_URL` to the production origin.
-2. `npm run build`
-3. Deploy `dist/`.
+### Cloudflare Pages (current)
+
+Live at **https://maildrill-astro.pages.dev**. Deployed as a static site (no adapter/Functions
+needed). `public/_redirects` provides clean 301s on Pages.
+
+```bash
+# one-time: create the project
+wrangler pages project create maildrill-astro --production-branch main
+
+# build against the production origin, then deploy
+PUBLIC_SITE_URL=https://maildrill-astro.pages.dev npm run build
+wrangler pages deploy dist --project-name maildrill-astro --branch main
+```
+
+To use a **custom domain** (e.g. `maildrill.com`): add it in the Pages project → Custom domains,
+then rebuild/redeploy with `PUBLIC_SITE_URL=https://maildrill.com` (or set that as a Pages build
+environment variable if you wire up Git-connected builds).
+
+### Any other static host
+
+1. `PUBLIC_SITE_URL=https://your-domain npm run build`
+2. Deploy `dist/`.
 
 ---
 
