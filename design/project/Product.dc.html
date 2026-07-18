@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<meta name="ext-resource-dependency" content="./md-motion.js" data-resource-id="mdmotion">
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" data-bg-color="#f6f5f2"><rect width="1200" height="630" fill="#f6f5f2"/><g transform="translate(566,232) scale(3.4)"><path fill="#ff441f" d="M13.39,0c-2.86,2.06-5.61,4-8.47,6.06C3.89,4,2.86,2.06,1.95,0h11.44Z"/><path fill="#ff441f" d="M19.57,17.49c-1.49,3.09-3.09,6.17-4.58,9.26-.69-1.49-1.49-2.97-2.17-4.34l6.75-4.92Z"/><path fill="#ff441f" d="M26.32,0c-6.07,4.23-12.02,8.58-18.08,12.81-.8-1.6-1.6-3.2-2.4-4.92,3.66-2.63,7.44-5.26,11.1-7.89h9.38Z"/><path fill="#ff441f" d="M27.12,2.17c-1.83,3.66-3.66,7.32-5.49,10.98-3.2,2.29-6.52,4.57-9.73,6.86l-2.63-5.15c5.95-4.23,11.9-8.46,17.85-12.69Z"/></g><text x="600" y="440" font-family="Geist,system-ui,sans-serif" font-size="56" font-weight="800" fill="#1f1e1b" text-anchor="middle" letter-spacing="-3">Maildrill</text></svg></template>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Product — Maildrill campaign workspace, builder & analytics</title>
+<meta name="description" content="Explore the Maildrill workspace: a guided campaign wizard, drag-and-drop email builder, one shared audience, live segments, deep analytics, and deliverability tooling.">
+<meta name="keywords" content="email builder, campaign wizard, marketing analytics, audience segmentation, email deliverability tools">
+<meta property="og:title" content="Maildrill Product — everything a campaign needs">
+<meta property="og:description" content="A guided campaign wizard, drag-and-drop builder, shared audience, and deep analytics in one fast workspace.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://maildrill.com/product">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@keyframes md-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes md-drift{0%,100%{transform:translate(0,0)}50%{transform:translate(8px,-10px)}}
+@keyframes md-grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes md-blob{0%,100%{border-radius:60% 40% 55% 45%/50% 55% 45% 50%}50%{border-radius:45% 55% 40% 60%/55% 45% 60% 40%}}
+body{margin:0}
+*{cursor:none}
+@media (pointer:coarse){*{cursor:auto}}
+a{color:#4f46e5}a:hover{color:#4338ca}
+.pd-chan:hover .pd-chan-arrow{opacity:1;transform:translate(3px,-3px)}
+.md-mono{font-family:'Geist Mono',ui-monospace,monospace}
+</style>
+</helmet>
+<div style="font-family:Geist,system-ui,sans-serif;background:#f6f5f2;color:#1f1e1b;overflow-x:hidden">
+  <dc-import name="MaildrillNav" active="product" hint-size="100%,64px"></dc-import>
+
+  <!-- HERO -->
+  <section style="max-width:1280px;margin:0 auto;padding:72px 32px 48px;position:relative">
+    <div class="md-mono" data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#77756c">/ The workspace</div>
+    <h1 data-split style="opacity:0;font-size:clamp(44px,6.5vw,92px);line-height:.98;letter-spacing:-.04em;font-weight:800;margin:16px 0 0;max-width:15ch">Run campaigns, not software</h1>
+    <p data-reveal data-delay="160" style="opacity:0;transform:translateY(20px);transition:all .7s cubic-bezier(.2,.7,.2,1);font-size:20px;line-height:1.55;color:#57554e;max-width:56ch;margin:24px 0 0">Every screen in Maildrill is built to help you do the work — draft, target, send, and learn — with the density of Linear and the calm of a tool that gets out of your way.</p>
+  </section>
+
+  <!-- FEATURE ROWS -->
+  <section style="max-width:1100px;margin:0 auto;padding:24px 24px 40px;display:flex;flex-direction:column;gap:28px">
+    <sc-for list="{{ rows }}" as="r" hint-placeholder-count="4">
+      <div data-card data-reveal style="opacity:0;transform:translateY(28px);transition:all .75s cubic-bezier(.2,.7,.2,1);display:grid;grid-template-columns:{{ r.cols }};gap:44px;align-items:center;background:#fff;border:1px solid #ecebe6;border-radius:20px;padding:40px">
+        <div style="order:{{ r.textOrder }}">
+          <div style="width:44px;height:44px;border-radius:11px;background:#eef0ff;color:#4f46e5;display:flex;align-items:center;justify-content:center;margin-bottom:16px" data-icon="{{ r.icon }}"></div>
+          <h2 style="font-size:28px;line-height:1.15;letter-spacing:-.02em;font-weight:700;margin:0 0 12px">{{ r.title }}</h2>
+          <p style="font-size:16px;line-height:1.65;color:#57554e;margin:0 0 18px">{{ r.desc }}</p>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ r.points }}" as="p" hint-placeholder-count="3">
+              <span style="display:flex;align-items:flex-start;gap:10px;font-size:14px;color:#3a3833"><span style="color:#16a34a;flex-shrink:0;margin-top:1px" data-icon="check"></span>{{ p }}</span>
+            </sc-for>
+          </div>
+        </div>
+        <div style="order:{{ r.visualOrder }}" data-visual="{{ r.visual }}"></div>
+      </div>
+    </sc-for>
+  </section>
+
+  <!-- CHANNELS (merged from Solutions) -->
+  <section id="channels" style="max-width:1100px;margin:0 auto;padding:32px 24px 8px;scroll-margin-top:88px">
+    <div class="md-mono" data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#77756c">/ Channels</div>
+    <h2 data-split style="opacity:0;font-size:clamp(28px,3.8vw,44px);line-height:1.05;letter-spacing:-.03em;font-weight:800;margin:12px 0 28px;max-width:20ch">One workspace, four channels.</h2>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">
+      <sc-for list="{{ channels }}" as="c" hint-placeholder-count="4">
+        <a href="{{ c.href }}" class="pd-chan" data-card data-reveal data-delay="{{ c.delay }}" style="opacity:0;transform:translateY(24px);transition:all .7s cubic-bezier(.2,.7,.2,1);background:#fff;border:1px solid #ecebe6;border-radius:18px;padding:28px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:16px;min-height:220px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="width:48px;height:48px;border-radius:12px;background:{{ c.tint }};color:{{ c.color }};display:flex;align-items:center;justify-content:center" data-icon="{{ c.icon }}"></span>
+            <span class="pd-chan-arrow" style="color:#1f1e1b;opacity:.3;transition:all .3s" data-icon="arrowUpRight"></span>
+          </div>
+          <span style="font-size:22px;font-weight:700;letter-spacing:-.02em">{{ c.label }}</span>
+          <span style="font-size:15px;line-height:1.55;color:#57554e;margin-top:auto">{{ c.desc }}</span>
+        </a>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- WORKFLOW / WIZARD -->
+  <section style="max-width:1280px;margin:0 auto;padding:64px 32px 40px">
+    <div data-reveal style="opacity:0;transform:translateY(26px);transition:all .8s cubic-bezier(.2,.7,.2,1);position:relative;overflow:hidden;border-radius:24px;background:linear-gradient(135deg,#201d16,#15130d);padding:64px 48px">
+      <div style="position:absolute;top:-90px;left:8%;width:340px;height:340px;background:radial-gradient(circle,rgba(99,91,245,.28),transparent 65%);animation:md-blob 14s ease-in-out infinite;pointer-events:none"></div>
+      <div style="position:absolute;bottom:-110px;right:6%;width:360px;height:360px;background:radial-gradient(circle,rgba(255,68,31,.22),transparent 65%);animation:md-drift 12s ease-in-out infinite;pointer-events:none"></div>
+      <div style="position:absolute;top:40%;right:34%;width:220px;height:220px;background:radial-gradient(circle,rgba(34,197,94,.14),transparent 65%);animation:md-drift 16s ease-in-out infinite;pointer-events:none"></div>
+      <div style="position:relative;text-align:center;max-width:600px;margin:0 auto 52px">
+        <div class="md-mono" style="font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#a5a39a">/ Campaign wizard</div>
+        <h2 style="font-size:clamp(30px,3.8vw,46px);line-height:1.08;letter-spacing:-.03em;font-weight:800;color:#f5f3ec;margin:14px 0 0">Five steps from idea to inbox</h2>
+      </div>
+      <div style="position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:14px">
+        <div style="position:absolute;top:26px;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,#332f26 8%,#332f26 92%,transparent)"></div>
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="5">
+          <div data-reveal data-delay="{{ s.delay }}" style="opacity:0;transform:scale(.7);transition:all .6s cubic-bezier(.34,1.56,.64,1);text-align:center;position:relative">
+            <div style="width:52px;height:52px;margin:0 auto 16px;border-radius:50%;background:#4f46e5;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;font-variant-numeric:tabular-nums;box-shadow:0 0 0 6px #15130d,0 0 0 8px #332f26">{{ s.n }}</div>
+            <div style="font-size:16px;font-weight:600;color:#f5f3ec;margin-bottom:6px">{{ s.title }}</div>
+            <div style="font-size:13px;line-height:1.5;color:#a5a39a">{{ s.desc }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAPABILITIES GRID -->
+  <section style="max-width:1100px;margin:0 auto;padding:72px 24px">
+    <h2 data-reveal style="opacity:0;transform:translateY(20px);transition:all .7s cubic-bezier(.2,.7,.2,1);font-size:32px;letter-spacing:-.03em;font-weight:700;margin:0 0 36px;text-align:center">And everything else you'd expect</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+      <sc-for list="{{ caps }}" as="c" hint-placeholder-count="6">
+        <div data-card data-reveal data-delay="{{ c.delay }}" style="opacity:0;transform:translateY(24px);transition:all .7s cubic-bezier(.2,.7,.2,1);background:#fff;border:1px solid #ecebe6;border-radius:16px;padding:24px;transition:all .7s cubic-bezier(.2,.7,.2,1),box-shadow .2s,transform .2s" style-hover="box-shadow:0 6px 18px rgba(30,27,22,.07);transform:translateY(-3px)">
+          <div style="width:40px;height:40px;border-radius:10px;background:#f3f2ee;color:#4f46e5;display:flex;align-items:center;justify-content:center;margin-bottom:14px" data-icon="{{ c.icon }}"></div>
+          <h3 style="font-size:16px;font-weight:600;margin:0 0 6px">{{ c.title }}</h3>
+          <p style="font-size:14px;line-height:1.55;color:#57554e;margin:0">{{ c.desc }}</p>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section style="max-width:1100px;margin:0 auto;padding:40px 24px 88px">
+    <div data-reveal style="opacity:0;transform:translateY(24px);transition:all .8s cubic-bezier(.2,.7,.2,1);position:relative;overflow:hidden;border-radius:24px;background:linear-gradient(135deg,#201d16,#15130d);padding:56px 40px;text-align:center">
+      <div style="position:absolute;top:-60px;right:-40px;width:280px;height:280px;background:radial-gradient(circle,rgba(255,68,31,.22),transparent 65%);animation:md-blob 12s ease-in-out infinite;pointer-events:none"></div>
+      <h2 style="position:relative;font-size:38px;letter-spacing:-.03em;font-weight:700;color:#f5f3ec;margin:0">See the workspace in action</h2>
+      <p style="position:relative;font-size:17px;color:#c0beb4;margin:14px auto 0;max-width:480px">Start a free trial and send your first multichannel campaign today.</p>
+      <div style="position:relative;display:flex;gap:12px;justify-content:center;margin-top:28px;flex-wrap:wrap">
+        <a href="#" style="display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:10px;font-size:15px;font-weight:600;text-decoration:none;color:#fff;background:#4f46e5;transition:all .15s" style-hover="background:#4338ca;transform:translateY(-2px)">Start free trial<span data-icon="arrow"></span></a>
+        <a href="Pricing.dc.html" style="display:inline-flex;align-items:center;padding:14px 26px;border-radius:10px;font-size:15px;font-weight:600;text-decoration:none;color:#f5f3ec;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);transition:background .15s" style-hover="background:rgba(255,255,255,.14)">View pricing</a>
+      </div>
+    </div>
+  </section>
+
+  <dc-import name="MaildrillFooter" hint-size="100%,420px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  componentDidMount(){
+    import(window.__resources&&window.__resources.mdmotion||'./md-motion.js').then(m=>{ requestAnimationFrame(()=>{ m.initMotion({cursor:true}); this.buildVisuals(); }); });
+  }
+  buildVisuals(){
+    const V = {
+      builder:`<div style="background:#fbfaf8;border:1px solid #ecebe6;border-radius:14px;overflow:hidden;box-shadow:0 12px 30px rgba(30,27,22,.08);animation:md-float 7s ease-in-out infinite">
+        <div style="height:34px;display:flex;align-items:center;gap:6px;padding:0 12px;border-bottom:1px solid #efeee9"><span style="width:9px;height:9px;border-radius:50%;background:#e4e2da"></span><span style="width:9px;height:9px;border-radius:50%;background:#e4e2da"></span><span style="width:9px;height:9px;border-radius:50%;background:#e4e2da"></span></div>
+        <div style="display:grid;grid-template-columns:64px 1fr;height:220px">
+          <div style="border-right:1px solid #efeee9;padding:10px;display:flex;flex-direction:column;gap:8px">${['#eef0ff','#f3f2ee','#f3f2ee','#f3f2ee'].map(c=>`<div style="height:34px;border-radius:8px;background:${c}"></div>`).join('')}</div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="height:40px;border-radius:8px;background:linear-gradient(90deg,#eef0ff,#f6f5f2)"></div>
+            <div style="height:70px;border-radius:8px;border:1.5px dashed #c7c7f0;background:#f8f8ff;display:flex;align-items:center;justify-content:center;color:#a5a3d6;font-size:12px;font-weight:500">Drag a block here</div>
+            <div style="height:14px;width:80%;border-radius:5px;background:#efeee9"></div>
+            <div style="height:14px;width:60%;border-radius:5px;background:#efeee9"></div>
+            <div style="height:32px;width:120px;border-radius:8px;background:#4f46e5"></div>
+          </div>
+        </div>
+      </div>`,
+      audience:`<div style="background:#fff;border:1px solid #ecebe6;border-radius:14px;overflow:hidden;box-shadow:0 12px 30px rgba(30,27,22,.08);animation:md-float 8s ease-in-out .4s infinite">
+        <div style="padding:14px 16px;border-bottom:1px solid #efeee9;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">Segments</span><span style="font-size:11px;color:#4f46e5;font-weight:600">+ New</span></div>
+        ${[['Active subscribers','48,210','#4f46e5'],['Opened last 30d','21,884','#16a34a'],['VIP customers','3,502','#ff441f'],['Dormant','9,140','#a5a39a']].map(([n,c,col])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #f3f2ee"><span style="display:flex;align-items:center;gap:9px;font-size:13px"><span style="width:8px;height:8px;border-radius:50%;background:${col}"></span>${n}</span><span style="font-size:13px;font-weight:600;font-variant-numeric:tabular-nums">${c}</span></div>`).join('')}
+      </div>`,
+      analytics:`<div style="background:#fff;border:1px solid #ecebe6;border-radius:14px;padding:18px;box-shadow:0 12px 30px rgba(30,27,22,.08);animation:md-float 7.5s ease-in-out .2s infinite">
+        <div style="display:flex;justify-content:space-between;margin-bottom:16px"><span style="font-size:13px;font-weight:600">Performance</span><span style="font-size:12px;color:#77756c">Last 7 days</span></div>
+        <div style="display:flex;align-items:flex-end;gap:8px;height:130px">
+          ${[45,62,50,74,58,88,70].map((h,i)=>`<div style="flex:1;align-self:stretch;display:flex;flex-direction:column;gap:3px;justify-content:flex-end"><div style="background:linear-gradient(#818cf8,#4f46e5);border-radius:4px 4px 0 0;height:${h}%;transform-origin:bottom;animation:md-grow .8s ease ${.2+i*.08}s both"></div><div style="background:#e9e7ff;border-radius:0 0 4px 4px;height:${h*0.4}%;transform-origin:top"></div></div>`).join('')}
+        </div>
+      </div>`,
+      deliver:`<div style="background:#fff;border:1px solid #ecebe6;border-radius:14px;padding:22px;box-shadow:0 12px 30px rgba(30,27,22,.08);animation:md-float 8s ease-in-out infinite;display:flex;align-items:center;gap:22px">
+        <svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="40" fill="none" stroke="#efeee9" stroke-width="10"/><circle cx="48" cy="48" r="40" fill="none" stroke="#16a34a" stroke-width="10" stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="6" transform="rotate(-90 48 48)"/></svg>
+        <div>
+          <div style="font-size:34px;font-weight:700;font-variant-numeric:tabular-nums">99.2%</div>
+          <div style="font-size:13px;color:#57554e;margin-bottom:12px">Inbox placement</div>
+          ${[['SPF','ok'],['DKIM','ok'],['DMARC','ok']].map(([n])=>`<div style="display:flex;align-items:center;gap:7px;font-size:12px;color:#3a3833;margin-bottom:5px"><span style="width:6px;height:6px;border-radius:50%;background:#16a34a"></span>${n} verified</div>`).join('')}
+        </div>
+      </div>`,
+    };
+    document.querySelectorAll('[data-visual]').forEach(n=>{ if(!n.__v){ n.innerHTML = V[n.getAttribute('data-visual')]||''; n.__v=1; } });
+  }
+  renderVals(){
+    return {
+      channels:[
+        {label:"Email",icon:"mail",color:"#4f46e5",tint:"#eef0ff",href:"ChannelEmail.dc.html",desc:"Inbox-ready campaigns & builder"},
+        {label:"SMS",icon:"sms",color:"#0891b2",tint:"#ecfeff",href:"ChannelSMS.dc.html",desc:"Two-way texting, instant reach"},
+        {label:"WhatsApp",icon:"whatsapp",color:"#16a34a",tint:"#dcfce7",href:"ChannelWhatsApp.dc.html",desc:"Rich Business API conversations"},
+        {label:"Voice",icon:"voice",color:"#d97706",tint:"#fef3c7",href:"ChannelVoice.dc.html",desc:"Automated calls & IVR flows"},
+      ],
+      rows:[
+        {icon:"edit",title:"A builder that stays out of your way",desc:"Compose emails with a drag-and-drop block editor, reusable templates, and a live responsive preview. Autosave and undo/redo mean you never lose a thought.",points:["Block library + property inspector","Responsive preview for every device","Reusable, brand-consistent templates"],visual:"builder",cols:"1fr 1fr",textOrder:1,visualOrder:2,delay:0},
+        {icon:"users",title:"One audience, every channel",desc:"Lists, subscribers, custom fields, and live segments are shared across email, SMS, and WhatsApp. Build a segment once and it stays in sync everywhere.",points:["Live segments with real-time counts","CRM-style subscriber profiles","Saved, persisted segment builder"],visual:"audience",cols:"1fr 1fr",textOrder:2,visualOrder:1,delay:0},
+        {icon:"chart",title:"Analytics that tell you what to do next",desc:"Trends, funnels, comparisons, and per-channel breakdowns — designed to surface insight, not bury you in raw numbers.",points:["Per-channel performance views","Funnels, timelines, top links & devices","Campaign-over-campaign comparison"],visual:"analytics",cols:"1fr 1fr",textOrder:1,visualOrder:2,delay:0},
+        {icon:"shield",title:"Deliverability built in",desc:"Domain authentication, warmup, and reputation monitoring keep more of your messages landing in the inbox — not the spam folder.",points:["SPF, DKIM & DMARC guidance","Reputation & bounce monitoring","Automatic list hygiene"],visual:"deliver",cols:"1fr 1fr",textOrder:2,visualOrder:1,delay:0},
+      ],
+      steps:[
+        {n:"1",title:"Sender",desc:"Pick channel & verified sender",delay:0},
+        {n:"2",title:"Audience",desc:"Target a list or live segment",delay:80},
+        {n:"3",title:"Content",desc:"Build with live preview",delay:160},
+        {n:"4",title:"Schedule",desc:"Send now or later",delay:240},
+        {n:"5",title:"Review",desc:"Final checks before you send",delay:320},
+      ],
+      caps:[
+        {icon:"layers",title:"Template gallery",desc:"Categorized templates with large previews and hover actions.",delay:0},
+        {icon:"globe",title:"Media library",desc:"Folders, drag & drop uploads, and a preview drawer.",delay:80},
+        {icon:"sparkle",title:"AI copilot",desc:"Draft subject lines and rewrite copy in the editor.",delay:160},
+        {icon:"filter",title:"Saved segments",desc:"Build complex segments once and reuse them anywhere.",delay:0},
+        {icon:"code",title:"API & webhooks",desc:"Trigger sends and stream events into your stack.",delay:80},
+        {icon:"clock",title:"Scheduling",desc:"Send-time optimization and timezone-aware delivery.",delay:160},
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

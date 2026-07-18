@@ -1,0 +1,361 @@
+/* Shared presentational primitives (used by both Astro and React surfaces). */
+
+/* ------------------------------------------------------------------ Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0.7rem 1.15rem;
+  border-radius: var(--radius-btn);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background var(--duration) var(--ease-out),
+    color var(--duration) var(--ease-out),
+    border-color var(--duration) var(--ease-out),
+    box-shadow var(--duration) var(--ease-out),
+    transform var(--duration) var(--ease-out);
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn__icon {
+  display: inline-flex;
+  transition: transform var(--duration-slow) var(--ease-out);
+}
+
+.btn:hover .btn__icon--arrow {
+  transform: translate(3px, -3px);
+}
+
+.btn--pill {
+  border-radius: var(--radius-pill);
+}
+
+/* Primary: ink pill → indigo on hover (marketing CTA). */
+.btn--primary {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.btn--primary:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Accent: solid indigo (app primary actions). */
+.btn--accent {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.btn--accent:hover {
+  background: var(--accent-hover);
+}
+
+/* Brand: solid orange (rare emphasis). */
+.btn--brand {
+  background: var(--brand);
+  color: #fff;
+}
+
+.btn--brand:hover {
+  background: var(--brand-hover);
+}
+
+.btn--secondary {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border2);
+}
+
+.btn--secondary:hover {
+  background: var(--surface2);
+  border-color: var(--muted2);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--text2);
+}
+
+.btn--ghost:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+/* Underline text-link CTA ("See how it works"). */
+.btn--underline {
+  background: transparent;
+  color: var(--text);
+  border: 0;
+  border-bottom: 1.5px solid currentColor;
+  border-radius: 0;
+  min-height: 0;
+  padding: 0.1rem 0 0.35rem;
+}
+
+.btn--underline:hover {
+  color: var(--brand);
+}
+
+.btn--lg {
+  min-height: 50px;
+  padding: 0.95rem 1.6rem;
+  font-size: var(--fs-md);
+}
+
+.btn--sm {
+  min-height: 38px;
+  padding: 0.5rem 0.95rem;
+  font-size: var(--fs-sm2);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+/* ------------------------------------------------------------------- Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1.2;
+  background: var(--surface2);
+  color: var(--text3);
+  border: 1px solid var(--border);
+}
+
+.badge--brand {
+  background: var(--brand-tint);
+  color: var(--brand);
+  border-color: transparent;
+}
+
+.badge--accent {
+  background: var(--accent-tint);
+  color: var(--accent);
+  border-color: transparent;
+}
+
+.badge--success {
+  background: var(--success-bg);
+  color: var(--success-strong);
+  border-color: transparent;
+}
+
+.badge--warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border-color: transparent;
+}
+
+.badge--danger {
+  background: var(--danger-bg);
+  color: var(--danger-strong);
+  border-color: transparent;
+}
+
+/* Channel pills — color paired with a label (never color alone). */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.pill__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.pill--email {
+  background: var(--ch-email-tint);
+  color: var(--ch-email);
+}
+.pill--sms {
+  background: var(--ch-sms-tint);
+  color: var(--ch-sms);
+}
+.pill--whatsapp {
+  background: var(--ch-whatsapp-tint);
+  color: var(--ch-whatsapp);
+}
+.pill--voice {
+  background: var(--ch-voice-tint);
+  color: var(--ch-voice);
+}
+
+/* -------------------------------------------------------------------- Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: var(--space-6);
+  transition:
+    border-color var(--duration) var(--ease-out),
+    box-shadow var(--duration) var(--ease-out),
+    transform var(--duration) var(--ease-out);
+}
+
+.card--interactive {
+  cursor: pointer;
+}
+
+.card--interactive:hover {
+  border-color: var(--border2);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+/* -------------------------------------------------------------------- Forms */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field__label {
+  font-size: var(--fs-sm2);
+  font-weight: 500;
+  color: var(--text2);
+}
+
+.field__hint {
+  font-size: var(--fs-xs);
+  color: var(--text4);
+}
+
+.field__error {
+  font-size: var(--fs-xs);
+  color: var(--danger);
+  font-weight: 500;
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-btn);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-base);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--muted);
+}
+
+.textarea {
+  min-height: 128px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.input:hover,
+.textarea:hover,
+.select:hover {
+  border-color: var(--muted2);
+}
+
+.input:focus-visible,
+.textarea:focus-visible,
+.select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.input[aria-invalid='true'],
+.textarea[aria-invalid='true'],
+.select[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.input:disabled,
+.textarea:disabled,
+.select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--surface2);
+}
+
+/* ------------------------------------------------------------- Layout utils */
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+}
+
+.grid-2,
+.grid-3,
+.grid-4 {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 960px) {
+  .grid-3,
+  .grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .grid-2,
+  .grid-3,
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Skeleton shimmer for loading states. */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface2) 25%, var(--surface3) 37%, var(--surface2) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 8px;
+}

@@ -1,0 +1,207 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import Icon from '@/components/ui/Icon.astro';
+import PricingEstimator from '@/components/react/PricingEstimator';
+import { includedItems, pricingFaqs } from '@/config/pricing';
+import { breadcrumbJsonLd, faqPageJsonLd, productJsonLd } from '@/lib/seo/structured-data';
+import { routes } from '@/config/routes';
+
+const seo = {
+  title: 'Pricing — pay-per-use messaging, no monthly minimums',
+  description:
+    'Maildrill pay-per-use pricing: pay only for the messages you send across email, SMS, WhatsApp, and voice, plus a one-time setup fee per channel. No monthly minimums, no seat charges.',
+};
+
+const jsonLd = [
+  productJsonLd({
+    name: 'Maildrill pay-per-use messaging',
+    description: seo.description,
+    path: routes.pricing,
+  }),
+  faqPageJsonLd([...pricingFaqs]),
+  breadcrumbJsonLd([
+    { name: 'Home', path: '/' },
+    { name: 'Pricing', path: routes.pricing },
+  ]),
+];
+---
+
+<MarketingLayout seo={seo} jsonLd={jsonLd} active="pricing">
+  {/* ---------------- hero ---------------- */}
+  <section class="phero container--wide">
+    <p class="eyebrow" data-reveal>Pricing</p>
+    <h1 class="phero__title display" data-reveal style="--reveal-delay:60ms">
+      Pay only for what you send.
+    </h1>
+    <p class="phero__lead" data-reveal style="--reveal-delay:120ms">
+      No plans, no monthly minimums, no seat charges. Every account gets the full workspace — you
+      pay a simple per-message rate for each channel, plus a one-time setup fee to activate it.
+    </p>
+  </section>
+
+  {/* ---------------- interactive calculator (rate cards + estimator + prepay) ---------------- */}
+  <PricingEstimator client:visible />
+
+  {/* ---------------- always included ---------------- */}
+  <section class="pincl container--wide">
+    <p class="eyebrow" data-reveal>Always included</p>
+    <h2 class="h-section pincl__title" data-reveal style="--reveal-delay:60ms">
+      The whole workspace, on every account.
+    </h2>
+    <ul class="pincl__grid">
+      {
+        includedItems.map((item, i) => (
+          <li class="pincl__item" data-reveal style={`--reveal-delay:${(i % 3) * 60}ms`}>
+            <span class="pincl__check" aria-hidden="true">
+              <Icon name="check" size={18} stroke={2.5} />
+            </span>
+            {item}
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  {/* ---------------- FAQ ---------------- */}
+  <section class="pfaq container--narrow">
+    <h2 class="pfaq__title" data-reveal>Frequently asked</h2>
+    <div class="pfaq__list">
+      {
+        pricingFaqs.map((faq) => (
+          <details class="pfaq__item" data-reveal>
+            <summary>
+              {faq.question}
+              <span class="pfaq__marker" aria-hidden="true">+</span>
+            </summary>
+            <p>{faq.answer}</p>
+          </details>
+        ))
+      }
+    </div>
+  </section>
+</MarketingLayout>
+
+<style>
+  .phero {
+    padding-block: 72px 40px;
+  }
+
+  .phero__title {
+    font-size: var(--display-xl);
+    margin: 16px 0 0;
+    max-width: 15ch;
+  }
+
+  .phero__lead {
+    font-size: var(--fs-lg);
+    line-height: 1.55;
+    color: var(--text3);
+    max-width: 56ch;
+    margin: 24px 0 0;
+  }
+
+  .pincl {
+    padding-block: 72px 40px;
+  }
+
+  .pincl__title {
+    margin: 14px 0 40px;
+    max-width: 18ch;
+  }
+
+  .pincl__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px 32px;
+  }
+
+  .pincl__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    padding: 14px 0;
+    border-top: 1px solid var(--border2);
+    font-size: var(--fs-base);
+    color: var(--text);
+  }
+
+  .pincl__check {
+    color: var(--success);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .pfaq {
+    padding-block: 56px 88px;
+  }
+
+  .pfaq__title {
+    font-size: clamp(1.875rem, 4vw, 2.75rem);
+    letter-spacing: -0.03em;
+    font-weight: 800;
+    margin: 0 0 32px;
+    text-align: center;
+  }
+
+  .pfaq__list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .pfaq__item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 22px;
+  }
+
+  .pfaq__item summary {
+    font-size: var(--fs-md);
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .pfaq__item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .pfaq__marker {
+    color: var(--muted);
+    font-size: 20px;
+    font-weight: 400;
+    transition: transform var(--duration) var(--ease-out);
+  }
+
+  .pfaq__item[open] .pfaq__marker {
+    transform: rotate(45deg);
+  }
+
+  .pfaq__item p {
+    font-size: var(--fs-sm2);
+    line-height: 1.6;
+    color: var(--text3);
+    margin: 12px 0 0;
+  }
+
+  @media (max-width: 800px) {
+    .pincl__grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px 24px;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .pincl__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

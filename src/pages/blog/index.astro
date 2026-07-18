@@ -1,0 +1,543 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import { getCollection } from 'astro:content';
+import { breadcrumbJsonLd } from '@/lib/seo/structured-data';
+import { routes } from '@/config/routes';
+
+const posts = (await getCollection('blog', ({ data }) => data.draft !== true)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+const featured = posts.find((post) => post.data.featured) ?? posts[0];
+const rest = posts.filter((post) => post.id !== featured?.id);
+
+/* ---- Presentation helpers (no fabricated data — all derived from real posts) ---- */
+const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join('');
+
+const readingMinutes = (body: string | undefined) => {
+  const words = (body ?? '').trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200));
+};
+
+type CatStyle = { color: string; tint: string };
+const categoryStyle = (tag?: string): CatStyle => {
+  switch ((tag ?? '').toLowerCase()) {
+    case 'email':
+      return { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)' };
+    case 'voice':
+      return { color: 'var(--ch-voice)', tint: 'var(--ch-voice-tint)' };
+    case 'announcement':
+    case 'deliverability':
+      return { color: 'var(--brand)', tint: 'color-mix(in srgb, var(--brand) 14%, var(--surface))' };
+    case 'lifecycle':
+    case 'perspective':
+      return { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)' };
+    case 'strategy':
+    case 'customers':
+      return { color: 'var(--ch-whatsapp)', tint: 'var(--ch-whatsapp-tint)' };
+    case 'product':
+    case 'company':
+    default:
+      return { color: 'var(--accent)', tint: 'var(--ch-email-tint)' };
+  }
+};
+
+// Topic chips derived from the tags that actually appear across published posts.
+const topicChips = ['All', ...[...new Set(posts.flatMap((p) => p.data.tags))].map(titleCase)];
+
+const featuredTag = featured?.data.tags[0] ?? 'Product';
+const featuredCat = categoryStyle(featuredTag);
+const featuredMin = readingMinutes(featured?.body);
+
+const seo = {
+  title: 'Blog',
+  description:
+    'Product launches, company updates, customer stories, and how we think about multichannel messaging.',
+};
+
+const jsonLd = breadcrumbJsonLd([
+  { name: 'Home', path: '/' },
+  { name: 'Blog', path: routes.blog },
+]);
+---
+
+<MarketingLayout seo={seo} jsonLd={jsonLd} active="resources">
+  {/* ------------------------------------------------------------------ HERO */}
+  <section class="blog-hero container--wide">
+    <div class="blog-hero__head" data-reveal>
+      <p class="eyebrow">Blog</p>
+      <h1 class="display blog-hero__title" style="--reveal-delay:60ms">News from Maildrill</h1>
+      <p class="blog-hero__lead" style="--reveal-delay:120ms">
+        Product launches, company updates, customer stories, and how we think about multichannel
+        messaging. Looking for step-by-step how-tos? Head to the <a href={routes.guides}>Guides</a>.
+      </p>
+    </div>
+    <div class="topics" data-reveal style="--reveal-delay:180ms">
+      {
+        topicChips.map((chip, i) => (
+          <span class:list={['topic', { 'topic--active': i === 0 }]}>{chip}</span>
+        ))
+      }
+    </div>
+  </section>
+
+  {/* -------------------------------------------------------------- FEATURED */}
+  {
+    featured && (
+      <section class="blog-inner blog-inner--featured">
+        <a
+          href={`/blog/${featured.id}`}
+          class="feat"
+          data-reveal
+          style={`--cat:${featuredCat.color};--cat-tint:${featuredCat.tint}`}
+        >
+          <div class="feat__art">
+            <span class="feat__glow" aria-hidden="true" />
+            <span class="feat__label">Featured · {featuredTag.toUpperCase()}</span>
+            <span class="feat__big mono" aria-hidden="true">
+              {featuredMin}
+            </span>
+          </div>
+          <div class="feat__body">
+            <span class="feat__badge">{titleCase(featuredTag)}</span>
+            <h2 class="feat__title">{featured.data.title}</h2>
+            <p class="feat__excerpt">{featured.data.description}</p>
+            <span class="feat__meta">
+              <span class="avatar" style={`--cat:${featuredCat.color};--cat-tint:${featuredCat.tint}`}>
+                {initials(featured.data.author)}
+              </span>
+              {featured.data.author} · {featuredMin} min read
+            </span>
+          </div>
+        </a>
+      </section>
+    )
+  }
+
+  {/* ------------------------------------------------------------- POST GRID */}
+  {
+    rest.length > 0 && (
+      <section class="blog-inner blog-inner--grid">
+        <div class="post-grid">
+          {rest.map((post, i) => {
+            const tag = post.data.tags[0] ?? 'Product';
+            const cat = categoryStyle(tag);
+            const min = readingMinutes(post.body);
+            return (
+              <a
+                href={`/blog/${post.id}`}
+                class="post-card"
+                data-reveal
+                style={`--cat:${cat.color};--cat-tint:${cat.tint};--reveal-delay:${(i % 3) * 80}ms`}
+              >
+                <div class="post-card__art">
+                  <span class="post-card__tag">{titleCase(tag)}</span>
+                </div>
+                <div class="post-card__body">
+                  <h3 class="post-card__title">{post.data.title}</h3>
+                  <p class="post-card__excerpt">{post.data.description}</p>
+                  <span class="post-card__meta">
+                    {post.data.author} · {min} min read
+                  </span>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    )
+  }
+
+  {/* ------------------------------------------------------------ NEWSLETTER */}
+  <section class="blog-inner blog-inner--news">
+    <div class="news" data-reveal>
+      <div class="news__copy">
+        <h2 class="news__title">The Drip, twice a month</h2>
+        <p class="news__sub">
+          Practical messaging tactics and Maildrill updates. No fluff, unsubscribe anytime.
+        </p>
+      </div>
+      <form class="news__form" method="get" action={routes.contact}>
+        <label class="sr-only" for="drip-email">Email address</label>
+        <input
+          id="drip-email"
+          class="news__input"
+          type="email"
+          name="email"
+          required
+          placeholder="you@company.com"
+          autocomplete="email"
+        />
+        <button type="submit" class="btn btn--accent news__btn">Subscribe</button>
+      </form>
+    </div>
+  </section>
+</MarketingLayout>
+
+<style>
+  /* ---- Layout shells ---- */
+  .blog-hero {
+    padding-block: 72px 24px;
+  }
+
+  .blog-hero__head {
+    max-width: 760px;
+  }
+
+  .blog-hero__title {
+    font-size: clamp(2.75rem, 6.5vw, 5.75rem);
+    line-height: 0.98;
+    letter-spacing: -0.04em;
+    margin: 16px 0 0;
+    max-width: 16ch;
+  }
+
+  .blog-hero__lead {
+    font-size: var(--fs-md);
+    line-height: 1.6;
+    color: var(--text3);
+    margin: 16px 0 0;
+    max-width: 60ch;
+  }
+
+  .blog-hero__lead a {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .topics {
+    display: flex;
+    gap: 8px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+
+  .topic {
+    padding: 7px 14px;
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--text2);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    border: 1px solid var(--border2);
+  }
+
+  .topic--active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .blog-inner {
+    width: 100%;
+    max-width: 1100px;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .blog-inner--featured {
+    padding-block: 8px 20px;
+  }
+  .blog-inner--grid {
+    padding-block: 24px 40px;
+  }
+  .blog-inner--news {
+    padding-block: 32px 88px;
+  }
+
+  /* ---- Featured card ---- */
+  .feat {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-dialog);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition:
+      box-shadow var(--duration) var(--ease-out),
+      transform var(--duration) var(--ease-out);
+  }
+
+  .feat:hover {
+    box-shadow: 0 12px 34px rgba(30, 27, 22, 0.09);
+    transform: translateY(-3px);
+  }
+
+  .feat__art {
+    position: relative;
+    min-height: 300px;
+    background: linear-gradient(135deg, var(--ink-band2), var(--ink-band));
+    overflow: hidden;
+  }
+
+  .feat__glow {
+    position: absolute;
+    top: -40px;
+    right: -30px;
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--brand) 30%, transparent), transparent 65%);
+    animation: blob 12s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .feat__label {
+    position: absolute;
+    bottom: 24px;
+    left: 28px;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #ff7a5c;
+  }
+
+  .feat__big {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    font-size: 120px;
+    font-weight: 800;
+    line-height: 0.8;
+    color: rgba(245, 243, 236, 0.06);
+    padding: 0 20px 8px;
+  }
+
+  .feat__body {
+    padding: 36px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .feat__badge {
+    align-self: flex-start;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--cat-tint);
+    color: var(--cat);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+
+  .feat__title {
+    font-size: var(--fs-2xl);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    margin: 0 0 12px;
+  }
+
+  .feat:hover .feat__title {
+    color: var(--brand);
+  }
+
+  .feat__excerpt {
+    font-size: var(--fs-base);
+    line-height: 1.6;
+    color: var(--text3);
+    margin: 0 0 20px;
+  }
+
+  .feat__meta,
+  .post-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: var(--fs-sm);
+    color: var(--text4);
+    margin-top: auto;
+  }
+
+  .avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--cat-tint);
+    color: var(--cat);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: var(--fs-xs);
+    flex-shrink: 0;
+  }
+
+  /* ---- Post grid ---- */
+  .post-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+
+  .post-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition:
+      box-shadow var(--duration) var(--ease-out),
+      transform var(--duration) var(--ease-out);
+  }
+
+  .post-card:hover {
+    box-shadow: 0 8px 24px rgba(30, 27, 22, 0.08);
+    transform: translateY(-3px);
+  }
+
+  .post-card__art {
+    height: 150px;
+    background: linear-gradient(135deg, var(--cat-tint), color-mix(in srgb, var(--cat-tint) 35%, var(--surface)));
+    display: flex;
+    align-items: flex-end;
+    padding: 16px;
+  }
+
+  .post-card__tag {
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--cat);
+    background: var(--surface);
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+  }
+
+  .post-card__body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .post-card__title {
+    font-size: var(--fs-lg);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    font-weight: 600;
+    margin: 0 0 10px;
+  }
+
+  .post-card:hover .post-card__title {
+    color: var(--brand);
+  }
+
+  .post-card__excerpt {
+    font-size: var(--fs-sm2);
+    line-height: 1.55;
+    color: var(--text3);
+    margin: 0 0 16px;
+    flex: 1;
+  }
+
+  /* ---- Newsletter ---- */
+  .news {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-dialog);
+    padding: 44px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .news__copy {
+    flex: 1;
+    min-width: 260px;
+  }
+
+  .news__title {
+    font-size: var(--fs-2xl);
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    margin: 0 0 8px;
+  }
+
+  .news__sub {
+    font-size: var(--fs-base);
+    line-height: 1.6;
+    color: var(--text3);
+    margin: 0;
+  }
+
+  .news__form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .news__input {
+    padding: 12px 16px;
+    border-radius: var(--radius-btn);
+    border: 1px solid var(--border2);
+    font-size: var(--fs-base);
+    font-family: inherit;
+    min-width: 240px;
+    outline: none;
+    background: var(--surface3);
+    color: var(--text);
+  }
+
+  .news__input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+  }
+
+  .news__btn {
+    flex-shrink: 0;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ---- Responsive ---- */
+  @media (max-width: 860px) {
+    .feat {
+      grid-template-columns: 1fr;
+    }
+    .feat__art {
+      min-height: 200px;
+    }
+    .post-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 560px) {
+    .post-grid {
+      grid-template-columns: 1fr;
+    }
+    .feat__body,
+    .news {
+      padding: 28px;
+    }
+    .news__form,
+    .news__input,
+    .news__btn {
+      width: 100%;
+      min-width: 0;
+    }
+  }
+</style>

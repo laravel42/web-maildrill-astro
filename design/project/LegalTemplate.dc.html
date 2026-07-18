@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+*{cursor:none}
+@media (pointer:coarse){*{cursor:auto}}
+a{color:#4f46e5}a:hover{color:#4338ca}
+.md-mono{font-family:'Geist Mono',ui-monospace,monospace}
+html{scroll-behavior:smooth}
+.lg-toc a:hover{color:#1f1e1b}
+</style>
+</helmet>
+<div style="font-family:Geist,system-ui,sans-serif;background:#f6f5f2;color:#1f1e1b;overflow-x:clip">
+  <dc-import name="MaildrillNav" active="none" hint-size="100%,72px"></dc-import>
+
+  <section style="max-width:1180px;margin:0 auto;padding:64px 32px 32px">
+    <div class="md-mono" data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#77756c">/ {{ kicker }}</div>
+    <h1 data-split style="opacity:0;font-size:clamp(40px,5.5vw,76px);line-height:1;letter-spacing:-.04em;font-weight:800;margin:16px 0 0">{{ title }}</h1>
+    <p data-reveal data-delay="100" style="opacity:0;transform:translateY(16px);transition:all .6s;font-size:16px;color:#77756c;margin:18px 0 0" class="md-mono">Last updated {{ updated }}</p>
+  </section>
+
+  <section style="max-width:1180px;margin:0 auto;padding:8px 32px 80px;display:grid;grid-template-columns:240px 1fr;gap:56px;align-items:start">
+    <nav class="lg-toc" data-reveal style="opacity:0;transition:all .6s;position:sticky;top:96px;display:flex;flex-direction:column;gap:10px">
+      <span class="md-mono" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#a5a39a;margin-bottom:4px">On this page</span>
+      <sc-for list="{{ sections }}" as="s" hint-placeholder-count="6">
+        <a href="#{{ s.id }}" style="font-size:14px;line-height:1.4;text-decoration:none;color:#77756c;transition:color .15s">{{ s.h }}</a>
+      </sc-for>
+    </nav>
+    <div style="max-width:720px">
+      <p data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s;font-size:18px;line-height:1.7;color:#3a3833;margin:0 0 40px">{{ intro }}</p>
+      <sc-for list="{{ sections }}" as="s" hint-placeholder-count="6">
+        <div id="{{ s.id }}" data-reveal style="opacity:0;transform:translateY(18px);transition:all .6s;margin-bottom:40px;scroll-margin-top:96px">
+          <h2 style="font-size:24px;font-weight:700;letter-spacing:-.02em;margin:0 0 14px;display:flex;align-items:baseline;gap:12px"><span class="md-mono" style="font-size:14px;color:#ff441f;font-weight:500">{{ s.num }}</span>{{ s.h }}</h2>
+          <sc-for list="{{ s.body }}" as="p" hint-placeholder-count="2">
+            <p style="font-size:16px;line-height:1.7;color:#57554e;margin:0 0 14px">{{ p }}</p>
+          </sc-for>
+        </div>
+      </sc-for>
+      <div data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s;margin-top:8px;padding:22px;background:#fff;border:1px solid #ecebe6;border-radius:16px;font-size:15px;line-height:1.6;color:#57554e">Questions about this {{ noun }}? Email <a href="mailto:legal@maildrill.com" style="font-weight:600">legal@maildrill.com</a> or reach out via our <a href="Contact.dc.html" style="font-weight:600">contact page</a>.</div>
+    </div>
+  </section>
+
+  <dc-import name="MaildrillFooter" hint-size="100%,540px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180},&quot;doc&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;privacy&quot;,&quot;terms&quot;],&quot;default&quot;:&quot;privacy&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  componentDidMount(){
+    import(window.__resources&&window.__resources.mdmotion||'./md-motion.js').then(m=>{ requestAnimationFrame(()=>m.initMotion({cursor:true})); });
+  }
+  renderVals(){
+    const DOCS={
+      privacy:{
+        kicker:"Privacy", title:"Privacy Policy", updated:"July 1, 2026", noun:"policy",
+        intro:"This Privacy Policy explains what information Maildrill collects, how we use it, and the choices you have. It applies to our website and the Maildrill messaging workspace. We keep it plain-spoken on purpose — if anything is unclear, ask us.",
+        sections:[
+          {id:"collect",h:"Information we collect",body:["We collect account details you provide (name, email, company), the content and audiences you upload to run campaigns, and technical data such as log files, device information, and usage analytics.","For messaging, we process recipient contact data you import solely to deliver the campaigns you configure. You remain the controller of that data."]},
+          {id:"use",h:"How we use information",body:["We use your information to operate the workspace, deliver messages across email, SMS, WhatsApp, and voice, provide support, secure the platform, and improve our product.","We never sell your data, and we do not use the contents of your campaigns or audiences to train third-party models."]},
+          {id:"sharing",h:"Sharing & subprocessors",body:["We share data only with vetted subprocessors that help us deliver the service — such as messaging carriers, cloud infrastructure, and analytics providers — under contractual data-protection obligations.","A current list of subprocessors is available on request and updated before any material change."]},
+          {id:"retention",h:"Data retention",body:["We retain account and campaign data for as long as your workspace is active, and delete or anonymize it within 90 days of account closure unless a longer period is legally required."]},
+          {id:"rights",h:"Your rights",body:["Depending on your location, you may have rights to access, correct, export, or delete your personal data. You can exercise most of these directly in your workspace settings, or by contacting us.","We honor recognized opt-out and unsubscribe signals across every channel."]},
+          {id:"security",h:"Security",body:["We protect data with encryption in transit and at rest, least-privilege access controls, audit logging, and regular security reviews. No system is perfectly secure, but we work continuously to protect your information."]},
+          {id:"changes",h:"Changes to this policy",body:["We may update this policy as our product and regulations evolve. Material changes will be announced in-app and via email, with the effective date shown above."]},
+        ],
+      },
+      terms:{
+        kicker:"Legal", title:"Terms of Service", updated:"July 1, 2026", noun:"agreement",
+        intro:"These Terms of Service govern your access to and use of Maildrill. By creating an account or sending messages through the platform, you agree to these terms. Please read them carefully.",
+        sections:[
+          {id:"accounts",h:"Accounts",body:["You must provide accurate information and are responsible for activity under your account and for keeping your credentials secure.","You must be authorized to send messages to the audiences you upload and to represent the organization on whose behalf you use Maildrill."]},
+          {id:"acceptable",h:"Acceptable use",body:["You agree not to send unlawful, deceptive, or unsolicited messages, to respect recipient consent and opt-outs, and to comply with all applicable messaging regulations and carrier requirements.","We may suspend sending that threatens deliverability, violates these terms, or harms the platform or its users."]},
+          {id:"billing",h:"Billing",body:["Maildrill is billed on a pay-per-use basis for messages sent, plus one-time channel setup fees, as described on our pricing page. Annual prepay commitments are billed up front and are non-refundable except as required by law.","Fees are exclusive of taxes, which you are responsible for where applicable."]},
+          {id:"ip",h:"Intellectual property",body:["Maildrill and its software, brand, and content are owned by us. You retain all rights to the content and audiences you bring to the platform; you grant us a limited license to process them solely to provide the service."]},
+          {id:"warranty",h:"Disclaimers",body:["The service is provided \u201Cas is.\u201D While we work hard on reliability and deliverability, we do not warrant uninterrupted service or that every message will be delivered, as delivery depends on third parties including carriers and mailbox providers."]},
+          {id:"liability",h:"Limitation of liability",body:["To the maximum extent permitted by law, Maildrill's aggregate liability arising from the service is limited to the fees you paid in the twelve months preceding the claim. We are not liable for indirect or consequential damages."]},
+          {id:"termination",h:"Termination",body:["You may close your account at any time. We may suspend or terminate access for breach of these terms. On termination, your right to use the service ends and we handle your data per our Privacy Policy."]},
+          {id:"changes",h:"Changes to these terms",body:["We may update these terms as the product evolves. We'll give reasonable notice of material changes; continued use after they take effect constitutes acceptance."]},
+        ],
+      },
+    };
+    const key=this.props.doc||"privacy";
+    const d=DOCS[key]||DOCS.privacy;
+    return { ...d, sections: d.sections.map((s,i)=>({...s,num:String(i+1).padStart(2,'0')})) };
+  }
+}
+</script>
+</body>
+</html>

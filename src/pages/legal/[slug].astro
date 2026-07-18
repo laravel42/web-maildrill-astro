@@ -1,0 +1,186 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import { getCollection, render } from 'astro:content';
+import { breadcrumbJsonLd } from '@/lib/seo/structured-data';
+import { siteConfig } from '@/config/site';
+import { routes } from '@/config/routes';
+
+export async function getStaticPaths() {
+  const docs = await getCollection('legal');
+  return docs.map((doc) => ({
+    params: { slug: doc.id },
+    props: { doc },
+  }));
+}
+
+const { doc } = Astro.props;
+const { Content, headings } = await render(doc);
+const toc = headings.filter((h) => h.depth === 2);
+const path = `/legal/${doc.id}`;
+
+const seo = {
+  title: doc.data.title,
+  description: doc.data.description,
+};
+
+const jsonLd = breadcrumbJsonLd([
+  { name: 'Home', path: '/' },
+  { name: doc.data.title, path },
+]);
+
+const updated = doc.data.updatedDate.toLocaleDateString('en', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<MarketingLayout seo={seo} jsonLd={jsonLd}>
+  <section class="legal-hero container--wide">
+    <p class="eyebrow" data-reveal>{doc.data.kicker}</p>
+    <h1 class="legal-hero__title display" data-reveal style="--reveal-delay:60ms">{doc.data.title}</h1>
+    <p class="legal-hero__meta mono" data-reveal style="--reveal-delay:120ms">
+      Last updated <time datetime={doc.data.updatedDate.toISOString()}>{updated}</time>
+    </p>
+  </section>
+
+  <section class="legal-body container--wide">
+    {
+      toc.length > 0 && (
+        <nav class="legal-toc" aria-label="On this page">
+          <span class="legal-toc__head mono">On this page</span>
+          {toc.map((h) => (
+            <a href={`#${h.slug}`}>{h.text}</a>
+          ))}
+        </nav>
+      )
+    }
+    <div class="legal-content">
+      <div class="prose legal-prose">
+        <Content />
+      </div>
+      <div class="legal-contact">
+        Questions about this {doc.data.noun}? Email{' '}
+        <a href={`mailto:${siteConfig.email.legal}`}>{siteConfig.email.legal}</a> or reach out via our{' '}
+        <a href={routes.contact}>contact page</a>.
+      </div>
+    </div>
+  </section>
+</MarketingLayout>
+
+<style>
+  .legal-hero {
+    padding-block: 64px 8px;
+  }
+
+  .legal-hero__title {
+    font-size: clamp(2.5rem, 5.5vw, 4.75rem);
+    line-height: 1;
+    margin: 16px 0 0;
+  }
+
+  .legal-hero__meta {
+    font-size: var(--fs-base);
+    color: var(--text4);
+    margin: 18px 0 0;
+  }
+
+  .legal-body {
+    padding-block: 24px 80px;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 56px;
+    align-items: start;
+  }
+
+  .legal-toc {
+    position: sticky;
+    top: calc(var(--nav-height) + 24px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .legal-toc__head {
+    font-size: var(--fs-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .legal-toc a {
+    font-size: var(--fs-sm2);
+    line-height: 1.4;
+    color: var(--text4);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .legal-toc a:hover {
+    color: var(--text);
+  }
+
+  .legal-content {
+    max-width: 720px;
+  }
+
+  /* Numbered section headings (01, 02 … in brand orange). */
+  .legal-prose {
+    counter-reset: legal-sec;
+  }
+
+  .legal-prose :global(h2) {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    font-size: var(--fs-xl);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    scroll-margin-top: calc(var(--nav-height) + 24px);
+    margin-top: var(--space-12);
+  }
+
+  .legal-prose :global(h2)::before {
+    counter-increment: legal-sec;
+    content: counter(legal-sec, decimal-leading-zero);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--brand);
+  }
+
+  .legal-contact {
+    margin-top: var(--space-8);
+    padding: 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    font-size: var(--fs-base);
+    line-height: 1.6;
+    color: var(--text3);
+  }
+
+  .legal-contact a {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  @media (max-width: 860px) {
+    .legal-body {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .legal-toc {
+      position: static;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .legal-toc__head {
+      width: 100%;
+      margin-bottom: 0;
+    }
+  }
+</style>

@@ -1,0 +1,200 @@
+/*
+ * Maildrill design tokens — canonical values extracted from the Claude Design
+ * handoff (DESIGN.md + the shipped .dc.html prototypes).
+ *
+ * Two accent roles, deliberately distinct:
+ *   --brand  (#ff441f, orange)  = identity accent: logo, link/nav hovers,
+ *                                 active states, star ratings, radial glows.
+ *   --accent (#4f46e5, indigo)  = interactive accent: links, primary-CTA hover,
+ *                                 the email channel, chart bars, focus ring.
+ * Primary CTAs are INK pills (--ink) that shift to --accent on hover — never
+ * orange. Orange is reserved for identity + emphasis, not button fills.
+ */
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+
+  /* Surfaces (warm cream neutral ramp) */
+  --bg: #f6f5f2;
+  --surface: #ffffff;
+  --surface2: #f3f2ee;
+  --surface3: #fbfaf8;
+  --border: #ecebe6;
+  --border2: #e4e2da;
+  --divider: #efeee9;
+  --header-bg: rgba(246, 245, 242, 0.75);
+
+  /* Text */
+  --ink: #1f1e1b;
+  --text: #1f1e1b;
+  --text2: #3a3833;
+  --text3: #57554e;
+  --text4: #77756c;
+  --muted: #a5a39a;
+  --muted2: #c0beb4;
+  --on-brand: #ffffff;
+  --on-ink: #ffffff;
+
+  /* Brand (orange identity accent) */
+  --brand: #ff441f;
+  --brand-hover: #e63a17;
+  --brand-tint: #ffede9;
+
+  /* Accent (indigo interactive accent) */
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-tint: #eef0ff;
+  --accent-contrast: #ffffff;
+
+  /* Status */
+  --success: #16a34a;
+  --success-strong: #15803d;
+  --success-bg: #dcfce7;
+  --warning: #d97706;
+  --warning-strong: #b45309;
+  --warning-bg: #fef3c7;
+  --danger: #dc2626;
+  --danger-strong: #b91c1c;
+  --danger-bg: #fee2e2;
+  --info: #4f46e5;
+  --info-bg: #eef0ff;
+
+  /* Channels (color + tint pairs, used everywhere consistently) */
+  --ch-email: #4f46e5;
+  --ch-email-tint: #eef0ff;
+  --ch-sms: #0891b2;
+  --ch-sms-tint: #ecfeff;
+  --ch-whatsapp: #16a34a;
+  --ch-whatsapp-tint: #dcfce7;
+  --ch-voice: #d97706;
+  --ch-voice-tint: #fef3c7;
+
+  /* Dark bands used inside the light theme (footer, hero frame, results) */
+  --ink-band: #15130d;
+  --ink-band2: #201d16;
+  --ink-band-border: #332f26;
+  --ink-band-text: #f5f3ec;
+  --ink-band-text2: #c0beb4;
+  --ink-band-muted: #8b8a80;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(30, 27, 22, 0.05);
+  --shadow-md: 0 6px 18px rgba(30, 27, 22, 0.07);
+  --shadow-lg: 0 16px 40px rgba(30, 27, 22, 0.1);
+  --shadow-xl: 0 20px 50px rgba(30, 27, 22, 0.14);
+  --shadow-float: 0 40px 100px rgba(30, 27, 22, 0.28);
+
+  /* Radii */
+  --radius-xs: 8px;
+  --radius-btn: 10px;
+  --radius-img: 12px;
+  --radius-card: 16px;
+  --radius-dialog: 20px;
+  --radius-pill: 999px;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* Layout */
+  --container: 1280px;
+  --container-wide: 1280px;
+  --container-narrow: 760px;
+  --gutter: 2rem; /* 32px — the design's horizontal page padding */
+  --sidebar-width: 280px;
+  --nav-height: 72px; /* marketing header */
+  --header-height: 64px; /* app header */
+
+  /* Typography */
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --fs-xs: 0.75rem; /* 12 */
+  --fs-sm: 0.8125rem; /* 13 */
+  --fs-sm2: 0.875rem; /* 14 */
+  --fs-base: 0.9375rem; /* 15 — the design's default body size */
+  --fs-md: 1.0625rem; /* 17 */
+  --fs-lg: 1.25rem; /* 20 */
+  --fs-xl: 1.5rem; /* 24 */
+  --fs-2xl: 1.75rem; /* 28 */
+  --fs-3xl: 2.25rem; /* 36 */
+  --fs-4xl: 3rem; /* 48 */
+  --lh-tight: 1.02;
+  --lh-snug: 1.35;
+  --lh-body: 1.6;
+
+  /* Fluid display sizes (match the prototype clamps) */
+  --display-hero: clamp(2.75rem, 7vw, 6.5rem); /* 44 → 104 */
+  --display-xl: clamp(2.5rem, 6.5vw, 5.75rem); /* footer CTA */
+  --display-lg: clamp(2.125rem, 4.6vw, 3.75rem); /* section h2, 34 → 60 */
+  --display-md: clamp(1.75rem, 3.2vw, 2.5rem);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration: 200ms;
+  --duration-slow: 250ms;
+  --reveal-duration: 700ms;
+
+  /* Focus / z-index */
+  --focus-ring: 0 0 0 3px rgba(79, 70, 229, 0.35);
+  --focus-ring-brand: 0 0 0 3px rgba(255, 68, 31, 0.4);
+  --z-header: 50;
+  --z-dropdown: 60;
+  --z-drawer: 70;
+  --z-modal: 80;
+  --z-toast: 90;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #15130d;
+  --surface: #201d16;
+  --surface2: #2a261e;
+  --surface3: #26221b;
+  --border: #332f26;
+  --border2: #3c372c;
+  --divider: #29251d;
+  --header-bg: rgba(21, 19, 13, 0.75);
+
+  --ink: #f5f3ec;
+  --text: #f5f3ec;
+  --text2: #e6e2d8;
+  --text3: #cbc6b8;
+  --text4: #a8a394;
+  --muted: #8b8778;
+  --muted2: #6b6759;
+  --on-ink: #15130d;
+
+  --brand-tint: rgba(255, 68, 31, 0.16);
+  --accent-tint: rgba(99, 91, 245, 0.2);
+  --accent-contrast: #ffffff;
+
+  --warning-strong: #fbbf24;
+  --success-bg: rgba(34, 197, 94, 0.16);
+  --warning-bg: rgba(217, 119, 6, 0.16);
+  --danger-bg: rgba(220, 38, 38, 0.16);
+  --info-bg: rgba(99, 91, 245, 0.18);
+
+  --ch-email-tint: rgba(99, 91, 245, 0.18);
+  --ch-sms-tint: rgba(8, 145, 178, 0.18);
+  --ch-whatsapp-tint: rgba(22, 163, 74, 0.18);
+  --ch-voice-tint: rgba(217, 119, 6, 0.18);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
+  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.5);
+  --shadow-float: 0 40px 100px rgba(0, 0, 0, 0.6);
+}

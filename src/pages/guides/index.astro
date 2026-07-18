@@ -1,0 +1,415 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import Icon from '@/components/ui/Icon.astro';
+import { getCollection } from 'astro:content';
+import { breadcrumbJsonLd } from '@/lib/seo/structured-data';
+import { routes } from '@/config/routes';
+
+const guides = (await getCollection('guides', ({ data }) => data.draft !== true)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+const series = guides.find((guide) => guide.data.series);
+const rest = guides.filter((guide) => guide.id !== series?.id);
+
+// Distinct categories in first-seen order — powers the filter chip row.
+const categories = [...new Set(guides.map((guide) => guide.data.category))];
+
+// Category → color pairing (channel/status tokens, theme-aware). Known names get
+// the design's mapping; anything new gets a stable palette slot.
+type Theme = { color: string; tint: string };
+const CATEGORY_THEME: Record<string, Theme> = {
+  Deliverability: { color: 'var(--accent)', tint: 'var(--accent-tint)' },
+  Growth: { color: 'var(--ch-whatsapp)', tint: 'var(--ch-whatsapp-tint)' },
+  Segmentation: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)' },
+  Automation: { color: 'var(--ch-voice)', tint: 'var(--ch-voice-tint)' },
+  'Getting started': { color: 'var(--brand)', tint: 'var(--brand-tint)' },
+  Audience: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)' },
+};
+const FALLBACK: Theme[] = [
+  { color: 'var(--accent)', tint: 'var(--accent-tint)' },
+  { color: 'var(--ch-whatsapp)', tint: 'var(--ch-whatsapp-tint)' },
+  { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)' },
+  { color: 'var(--ch-voice)', tint: 'var(--ch-voice-tint)' },
+  { color: 'var(--brand)', tint: 'var(--brand-tint)' },
+];
+function categoryTheme(name: string): Theme {
+  if (CATEGORY_THEME[name]) return CATEGORY_THEME[name];
+  let h = 0;
+  for (const ch of name) h = (h + ch.charCodeAt(0)) % FALLBACK.length;
+  return FALLBACK[h];
+}
+
+const seo = {
+  title: 'Guides',
+  description:
+    'Step-by-step Maildrill guides and playbooks: deliverability setup, list growth, segmentation, channel orchestration, and lifecycle automation across email, SMS, WhatsApp, and voice.',
+};
+
+const jsonLd = breadcrumbJsonLd([
+  { name: 'Home', path: '/' },
+  { name: 'Guides', path: routes.guides },
+]);
+---
+
+<MarketingLayout seo={seo} jsonLd={jsonLd} active="resources">
+  {/* -------------------------------------------------------------- HERO */}
+  <section class="gd-hero container--wide">
+    <p class="eyebrow" data-reveal>Guides</p>
+    <h1 class="display gd-hero__title" data-reveal style="--reveal-delay:60ms">
+      Playbooks for sending better.
+    </h1>
+    <p class="lead gd-hero__lead" data-reveal style="--reveal-delay:120ms">
+      Hands-on, step-by-step guides — from your first authenticated domain to multichannel lifecycle
+      orchestration. Looking for news and updates instead? Read the{' '}
+      <a href={routes.blog}>blog</a>.
+    </p>
+  </section>
+
+  {/* ---------------------------------------------------------- FEATURED */}
+  {
+    series && (
+      <section class="gd-featured-wrap container--wide">
+        <a href={`/guides/${series.id}`} class="gd-featured" data-reveal>
+          <div class="gd-featured__body">
+            <span class="mono gd-featured__eyebrow">Start here · {series.data.series}</span>
+            <h2 class="gd-featured__title">{series.data.title}</h2>
+            <p class="gd-featured__desc">{series.data.description}</p>
+            <span class="gd-featured__cta">
+              Read the series
+              <span class="gd-featured__arrow" aria-hidden="true">
+                <Icon name="arrow-up-right" size={16} stroke={2} />
+              </span>
+            </span>
+          </div>
+          <div class="gd-featured__art" aria-hidden="true">
+            <span class="gd-featured__glow" />
+            <span class="mono gd-featured__num">01</span>
+          </div>
+        </a>
+      </section>
+    )
+  }
+
+  {/* -------------------------------------------------- CATEGORY CHIPS */}
+  <section class="gd-filter-wrap container--wide">
+    <ul class="gd-filter" data-reveal aria-label="Guide categories">
+      <li class="gd-chip gd-chip--all">All</li>
+      {categories.map((cat) => <li class="gd-chip">{cat}</li>)}
+    </ul>
+  </section>
+
+  {/* ------------------------------------------------------------- GRID */}
+  <section class="gd-grid-wrap container--wide">
+    <div class="gd-grid">
+      {
+        rest.map((guide, i) => {
+          const theme = categoryTheme(guide.data.category);
+          return (
+            <a
+              href={`/guides/${guide.id}`}
+              class="gd-card"
+              data-reveal
+              style={`--reveal-delay:${(i % 3) * 80}ms`}
+            >
+              <div class="gd-card__top">
+                <span
+                  class="gd-card__tag"
+                  style={`color:${theme.color};background:${theme.tint}`}
+                >
+                  {guide.data.category}
+                </span>
+                <span class="mono gd-card__mins">{guide.data.readingMinutes} min</span>
+              </div>
+              <h3 class="gd-card__title">{guide.data.title}</h3>
+              <p class="gd-card__desc">{guide.data.description}</p>
+              <span class="gd-card__cta">
+                Read guide
+                <span class="gd-card__arrow" aria-hidden="true">
+                  <Icon name="arrow-right" size={15} stroke={2} />
+                </span>
+              </span>
+            </a>
+          );
+        })
+      }
+    </div>
+  </section>
+</MarketingLayout>
+
+<style>
+  /* ---- HERO ---- */
+  .gd-hero {
+    padding-block: 64px 24px;
+  }
+
+  .gd-hero__title {
+    font-size: clamp(2.625rem, 6vw, 5.5rem);
+    margin: 16px 0 0;
+    max-width: 15ch;
+  }
+
+  .gd-hero__lead {
+    max-width: 58ch;
+    margin: 22px 0 0;
+  }
+
+  .gd-hero__lead a {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .gd-hero__lead a:hover {
+    color: var(--accent-hover);
+  }
+
+  /* ---- FEATURED (dark band card) ---- */
+  .gd-featured-wrap {
+    padding-block: 16px 24px;
+  }
+
+  .gd-featured {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--ink-band);
+    border-radius: var(--radius-dialog);
+    overflow: hidden;
+    color: var(--ink-band-text);
+    transition:
+      box-shadow var(--duration) var(--ease-out),
+      transform var(--duration) var(--ease-out);
+  }
+
+  .gd-featured:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .gd-featured__body {
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .gd-featured__eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #ff7a5c;
+  }
+
+  .gd-featured__title {
+    font-size: clamp(1.6rem, 3vw, 2rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    color: var(--ink-band-text);
+    margin: 14px 0 12px;
+  }
+
+  .gd-featured__desc {
+    font-size: var(--fs-md);
+    line-height: 1.6;
+    color: var(--ink-band-text2);
+    margin: 0 0 20px;
+    max-width: 46ch;
+  }
+
+  .gd-featured__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: auto;
+    font-size: var(--fs-base);
+    font-weight: 600;
+    color: var(--ink-band-text);
+  }
+
+  .gd-featured__arrow {
+    display: inline-flex;
+    opacity: 0.6;
+    transition:
+      opacity var(--duration-slow) var(--ease-out),
+      transform var(--duration-slow) var(--ease-out);
+  }
+
+  .gd-featured:hover .gd-featured__arrow {
+    opacity: 1;
+    transform: translate(4px, -4px);
+  }
+
+  .gd-featured__art {
+    position: relative;
+    min-height: 280px;
+    background: linear-gradient(135deg, var(--ink-band2), var(--ink-band));
+    overflow: hidden;
+  }
+
+  .gd-featured__glow {
+    position: absolute;
+    top: -40px;
+    right: -30px;
+    width: 260px;
+    height: 260px;
+    background: radial-gradient(circle, rgba(22, 163, 74, 0.35), transparent 65%);
+    animation: blob 13s ease-in-out infinite;
+  }
+
+  .gd-featured__num {
+    position: absolute;
+    bottom: 24px;
+    left: 32px;
+    font-size: 88px;
+    font-weight: 500;
+    line-height: 0.8;
+    color: rgba(245, 243, 236, 0.08);
+  }
+
+  @media (max-width: 720px) {
+    .gd-featured {
+      grid-template-columns: 1fr;
+    }
+    .gd-featured__body {
+      padding: 28px;
+      order: 2;
+    }
+    .gd-featured__art {
+      min-height: 150px;
+      order: 1;
+    }
+  }
+
+  /* ---- CATEGORY CHIPS ---- */
+  .gd-filter-wrap {
+    padding-block: 16px 8px;
+  }
+
+  .gd-filter {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .gd-chip {
+    padding: 7px 14px;
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--text2);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    border: 1px solid var(--border2);
+  }
+
+  .gd-chip--all {
+    background: var(--ink);
+    color: var(--on-ink);
+    border-color: var(--ink);
+  }
+
+  /* ---- GRID ---- */
+  .gd-grid-wrap {
+    padding-block: 24px 72px;
+  }
+
+  .gd-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+  }
+
+  .gd-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 24px;
+    color: inherit;
+    transition:
+      border-color var(--duration) var(--ease-out),
+      box-shadow var(--duration) var(--ease-out),
+      transform var(--duration) var(--ease-out);
+  }
+
+  .gd-card:hover {
+    border-color: var(--border2);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .gd-card__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .gd-card__tag {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+  }
+
+  .gd-card__mins {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .gd-card__title {
+    font-size: 18px;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    font-weight: 600;
+    margin: 0 0 10px;
+    transition: color var(--duration) var(--ease-out);
+  }
+
+  .gd-card:hover .gd-card__title {
+    color: var(--brand);
+  }
+
+  .gd-card__desc {
+    font-size: var(--fs-sm2);
+    line-height: 1.55;
+    color: var(--text3);
+    margin: 0 0 18px;
+    flex: 1;
+  }
+
+  .gd-card__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: var(--fs-sm2);
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .gd-card__arrow {
+    display: inline-flex;
+    opacity: 0.55;
+    transition:
+      opacity var(--duration-slow) var(--ease-out),
+      transform var(--duration-slow) var(--ease-out);
+  }
+
+  .gd-card:hover .gd-card__arrow {
+    opacity: 1;
+    transform: translateX(4px);
+  }
+
+  @media (max-width: 960px) {
+    .gd-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .gd-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

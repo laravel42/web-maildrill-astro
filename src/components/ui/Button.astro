@@ -1,0 +1,77 @@
+---
+interface Props {
+  href?: string;
+  variant?: 'primary' | 'accent' | 'brand' | 'secondary' | 'ghost' | 'underline';
+  size?: 'sm' | 'md' | 'lg';
+  type?: 'button' | 'submit' | 'reset';
+  pill?: boolean;
+  block?: boolean;
+  /** Append the up-right arrow icon that animates on hover. */
+  icon?: 'arrow' | false;
+  class?: string;
+  disabled?: boolean;
+  external?: boolean;
+  id?: string;
+  'aria-label'?: string;
+}
+
+const {
+  href,
+  variant = 'primary',
+  size = 'md',
+  type = 'button',
+  pill = false,
+  block = false,
+  icon = false,
+  class: className = '',
+  disabled = false,
+  external = false,
+  id,
+  'aria-label': ariaLabel,
+} = Astro.props;
+
+const classes = [
+  'btn',
+  `btn--${variant}`,
+  size !== 'md' ? `btn--${size}` : '',
+  pill ? 'btn--pill' : '',
+  block ? 'btn--block' : '',
+  className,
+]
+  .filter(Boolean)
+  .join(' ');
+
+const Tag = href ? 'a' : 'button';
+---
+
+<Tag
+  id={id}
+  class={classes}
+  aria-label={ariaLabel}
+  href={href}
+  type={href ? undefined : type}
+  disabled={href ? undefined : disabled}
+  aria-disabled={href && disabled ? 'true' : undefined}
+  target={external ? '_blank' : undefined}
+  rel={external ? 'noopener noreferrer' : undefined}
+>
+  <slot />
+  {
+    icon === 'arrow' && (
+      <span class="btn__icon btn__icon--arrow" aria-hidden="true">
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M7 17 17 7M8 7h9v9" />
+        </svg>
+      </span>
+    )
+  }
+</Tag>

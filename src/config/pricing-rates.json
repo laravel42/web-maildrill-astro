@@ -1,0 +1,761 @@
+{
+  "emailUsd": 0.0004,
+  "countries": [
+    {
+      "code": "US",
+      "name": "United States",
+      "sms": 0.0083,
+      "whatsapp": 0.025,
+      "voice": 0.019
+    },
+    {
+      "code": "CA",
+      "name": "Canada",
+      "sms": 0.009,
+      "whatsapp": 0.025,
+      "voice": 0.019
+    },
+    {
+      "code": "GB",
+      "name": "United Kingdom",
+      "sms": 0.04,
+      "whatsapp": 0.0592,
+      "voice": 0.022
+    },
+    {
+      "code": "IE",
+      "name": "Ireland",
+      "sms": 0.055,
+      "whatsapp": 0.062,
+      "voice": 0.03
+    },
+    {
+      "code": "DE",
+      "name": "Germany",
+      "sms": 0.085,
+      "whatsapp": 0.1365,
+      "voice": 0.035
+    },
+    {
+      "code": "FR",
+      "name": "France",
+      "sms": 0.07,
+      "whatsapp": 0.1129,
+      "voice": 0.03
+    },
+    {
+      "code": "ES",
+      "name": "Spain",
+      "sms": 0.06,
+      "whatsapp": 0.0781,
+      "voice": 0.028
+    },
+    {
+      "code": "IT",
+      "name": "Italy",
+      "sms": 0.055,
+      "whatsapp": 0.0691,
+      "voice": 0.027
+    },
+    {
+      "code": "NL",
+      "name": "Netherlands",
+      "sms": 0.075,
+      "whatsapp": 0.1015,
+      "voice": 0.032
+    },
+    {
+      "code": "BE",
+      "name": "Belgium",
+      "sms": 0.09,
+      "whatsapp": 0.12,
+      "voice": 0.034
+    },
+    {
+      "code": "CH",
+      "name": "Switzerland",
+      "sms": 0.07,
+      "whatsapp": 0.09,
+      "voice": 0.038
+    },
+    {
+      "code": "AT",
+      "name": "Austria",
+      "sms": 0.08,
+      "whatsapp": 0.11,
+      "voice": 0.034
+    },
+    {
+      "code": "SE",
+      "name": "Sweden",
+      "sms": 0.045,
+      "whatsapp": 0.07,
+      "voice": 0.03
+    },
+    {
+      "code": "NO",
+      "name": "Norway",
+      "sms": 0.05,
+      "whatsapp": 0.075,
+      "voice": 0.032
+    },
+    {
+      "code": "DK",
+      "name": "Denmark",
+      "sms": 0.045,
+      "whatsapp": 0.07,
+      "voice": 0.03
+    },
+    {
+      "code": "FI",
+      "name": "Finland",
+      "sms": 0.055,
+      "whatsapp": 0.075,
+      "voice": 0.031
+    },
+    {
+      "code": "PT",
+      "name": "Portugal",
+      "sms": 0.045,
+      "whatsapp": 0.065,
+      "voice": 0.028
+    },
+    {
+      "code": "PL",
+      "name": "Poland",
+      "sms": 0.03,
+      "whatsapp": 0.04,
+      "voice": 0.024
+    },
+    {
+      "code": "CZ",
+      "name": "Czech Republic",
+      "sms": 0.04,
+      "whatsapp": 0.055,
+      "voice": 0.026
+    },
+    {
+      "code": "SK",
+      "name": "Slovakia",
+      "sms": 0.045,
+      "whatsapp": 0.06,
+      "voice": 0.027
+    },
+    {
+      "code": "HU",
+      "name": "Hungary",
+      "sms": 0.035,
+      "whatsapp": 0.05,
+      "voice": 0.025
+    },
+    {
+      "code": "RO",
+      "name": "Romania",
+      "sms": 0.03,
+      "whatsapp": 0.045,
+      "voice": 0.024
+    },
+    {
+      "code": "BG",
+      "name": "Bulgaria",
+      "sms": 0.035,
+      "whatsapp": 0.05,
+      "voice": 0.025
+    },
+    {
+      "code": "GR",
+      "name": "Greece",
+      "sms": 0.045,
+      "whatsapp": 0.06,
+      "voice": 0.028
+    },
+    {
+      "code": "HR",
+      "name": "Croatia",
+      "sms": 0.04,
+      "whatsapp": 0.055,
+      "voice": 0.026
+    },
+    {
+      "code": "SI",
+      "name": "Slovenia",
+      "sms": 0.045,
+      "whatsapp": 0.06,
+      "voice": 0.027
+    },
+    {
+      "code": "RS",
+      "name": "Serbia",
+      "sms": 0.035,
+      "whatsapp": 0.05,
+      "voice": 0.026
+    },
+    {
+      "code": "UA",
+      "name": "Ukraine",
+      "sms": 0.03,
+      "whatsapp": 0.045,
+      "voice": 0.028
+    },
+    {
+      "code": "RU",
+      "name": "Russia",
+      "sms": 0.04,
+      "whatsapp": 0.06,
+      "voice": 0.03
+    },
+    {
+      "code": "TR",
+      "name": "Turkey",
+      "sms": 0.015,
+      "whatsapp": 0.03,
+      "voice": 0.022
+    },
+    {
+      "code": "IL",
+      "name": "Israel",
+      "sms": 0.02,
+      "whatsapp": 0.035,
+      "voice": 0.024
+    },
+    {
+      "code": "AE",
+      "name": "United Arab Emirates",
+      "sms": 0.025,
+      "whatsapp": 0.04,
+      "voice": 0.03
+    },
+    {
+      "code": "SA",
+      "name": "Saudi Arabia",
+      "sms": 0.028,
+      "whatsapp": 0.041,
+      "voice": 0.032
+    },
+    {
+      "code": "QA",
+      "name": "Qatar",
+      "sms": 0.03,
+      "whatsapp": 0.042,
+      "voice": 0.033
+    },
+    {
+      "code": "KW",
+      "name": "Kuwait",
+      "sms": 0.03,
+      "whatsapp": 0.042,
+      "voice": 0.033
+    },
+    {
+      "code": "BH",
+      "name": "Bahrain",
+      "sms": 0.03,
+      "whatsapp": 0.043,
+      "voice": 0.033
+    },
+    {
+      "code": "OM",
+      "name": "Oman",
+      "sms": 0.03,
+      "whatsapp": 0.043,
+      "voice": 0.033
+    },
+    {
+      "code": "JO",
+      "name": "Jordan",
+      "sms": 0.028,
+      "whatsapp": 0.042,
+      "voice": 0.03
+    },
+    {
+      "code": "LB",
+      "name": "Lebanon",
+      "sms": 0.03,
+      "whatsapp": 0.045,
+      "voice": 0.032
+    },
+    {
+      "code": "IQ",
+      "name": "Iraq",
+      "sms": 0.032,
+      "whatsapp": 0.048,
+      "voice": 0.034
+    },
+    {
+      "code": "EG",
+      "name": "Egypt",
+      "sms": 0.02,
+      "whatsapp": 0.035,
+      "voice": 0.028
+    },
+    {
+      "code": "MA",
+      "name": "Morocco",
+      "sms": 0.03,
+      "whatsapp": 0.045,
+      "voice": 0.03
+    },
+    {
+      "code": "DZ",
+      "name": "Algeria",
+      "sms": 0.03,
+      "whatsapp": 0.045,
+      "voice": 0.03
+    },
+    {
+      "code": "TN",
+      "name": "Tunisia",
+      "sms": 0.032,
+      "whatsapp": 0.047,
+      "voice": 0.031
+    },
+    {
+      "code": "ZA",
+      "name": "South Africa",
+      "sms": 0.018,
+      "whatsapp": 0.033,
+      "voice": 0.022
+    },
+    {
+      "code": "NG",
+      "name": "Nigeria",
+      "sms": 0.02,
+      "whatsapp": 0.034,
+      "voice": 0.026
+    },
+    {
+      "code": "KE",
+      "name": "Kenya",
+      "sms": 0.018,
+      "whatsapp": 0.032,
+      "voice": 0.024
+    },
+    {
+      "code": "GH",
+      "name": "Ghana",
+      "sms": 0.02,
+      "whatsapp": 0.034,
+      "voice": 0.026
+    },
+    {
+      "code": "ET",
+      "name": "Ethiopia",
+      "sms": 0.022,
+      "whatsapp": 0.036,
+      "voice": 0.028
+    },
+    {
+      "code": "TZ",
+      "name": "Tanzania",
+      "sms": 0.02,
+      "whatsapp": 0.034,
+      "voice": 0.026
+    },
+    {
+      "code": "UG",
+      "name": "Uganda",
+      "sms": 0.02,
+      "whatsapp": 0.034,
+      "voice": 0.026
+    },
+    {
+      "code": "CI",
+      "name": "C\u00f4te d\u2019Ivoire",
+      "sms": 0.022,
+      "whatsapp": 0.036,
+      "voice": 0.028
+    },
+    {
+      "code": "SN",
+      "name": "Senegal",
+      "sms": 0.024,
+      "whatsapp": 0.038,
+      "voice": 0.029
+    },
+    {
+      "code": "CM",
+      "name": "Cameroon",
+      "sms": 0.024,
+      "whatsapp": 0.038,
+      "voice": 0.029
+    },
+    {
+      "code": "AO",
+      "name": "Angola",
+      "sms": 0.026,
+      "whatsapp": 0.04,
+      "voice": 0.03
+    },
+    {
+      "code": "MZ",
+      "name": "Mozambique",
+      "sms": 0.024,
+      "whatsapp": 0.038,
+      "voice": 0.029
+    },
+    {
+      "code": "ZM",
+      "name": "Zambia",
+      "sms": 0.022,
+      "whatsapp": 0.036,
+      "voice": 0.028
+    },
+    {
+      "code": "ZW",
+      "name": "Zimbabwe",
+      "sms": 0.024,
+      "whatsapp": 0.038,
+      "voice": 0.029
+    },
+    {
+      "code": "IN",
+      "name": "India",
+      "sms": 0.0025,
+      "whatsapp": 0.0107,
+      "voice": 0.045
+    },
+    {
+      "code": "PK",
+      "name": "Pakistan",
+      "sms": 0.005,
+      "whatsapp": 0.015,
+      "voice": 0.04
+    },
+    {
+      "code": "BD",
+      "name": "Bangladesh",
+      "sms": 0.006,
+      "whatsapp": 0.016,
+      "voice": 0.038
+    },
+    {
+      "code": "LK",
+      "name": "Sri Lanka",
+      "sms": 0.008,
+      "whatsapp": 0.018,
+      "voice": 0.036
+    },
+    {
+      "code": "NP",
+      "name": "Nepal",
+      "sms": 0.007,
+      "whatsapp": 0.017,
+      "voice": 0.038
+    },
+    {
+      "code": "ID",
+      "name": "Indonesia",
+      "sms": 0.03,
+      "whatsapp": 0.0411,
+      "voice": 0.035
+    },
+    {
+      "code": "MY",
+      "name": "Malaysia",
+      "sms": 0.02,
+      "whatsapp": 0.03,
+      "voice": 0.03
+    },
+    {
+      "code": "SG",
+      "name": "Singapore",
+      "sms": 0.03,
+      "whatsapp": 0.04,
+      "voice": 0.028
+    },
+    {
+      "code": "TH",
+      "name": "Thailand",
+      "sms": 0.015,
+      "whatsapp": 0.025,
+      "voice": 0.03
+    },
+    {
+      "code": "VN",
+      "name": "Vietnam",
+      "sms": 0.02,
+      "whatsapp": 0.03,
+      "voice": 0.032
+    },
+    {
+      "code": "PH",
+      "name": "Philippines",
+      "sms": 0.025,
+      "whatsapp": 0.035,
+      "voice": 0.033
+    },
+    {
+      "code": "KH",
+      "name": "Cambodia",
+      "sms": 0.022,
+      "whatsapp": 0.033,
+      "voice": 0.033
+    },
+    {
+      "code": "MM",
+      "name": "Myanmar",
+      "sms": 0.024,
+      "whatsapp": 0.035,
+      "voice": 0.034
+    },
+    {
+      "code": "CN",
+      "name": "China",
+      "sms": 0.03,
+      "whatsapp": 0.045,
+      "voice": 0.035
+    },
+    {
+      "code": "HK",
+      "name": "Hong Kong",
+      "sms": 0.025,
+      "whatsapp": 0.038,
+      "voice": 0.03
+    },
+    {
+      "code": "TW",
+      "name": "Taiwan",
+      "sms": 0.028,
+      "whatsapp": 0.04,
+      "voice": 0.031
+    },
+    {
+      "code": "JP",
+      "name": "Japan",
+      "sms": 0.045,
+      "whatsapp": 0.065,
+      "voice": 0.036
+    },
+    {
+      "code": "KR",
+      "name": "South Korea",
+      "sms": 0.02,
+      "whatsapp": 0.035,
+      "voice": 0.03
+    },
+    {
+      "code": "AU",
+      "name": "Australia",
+      "sms": 0.035,
+      "whatsapp": 0.0596,
+      "voice": 0.028
+    },
+    {
+      "code": "NZ",
+      "name": "New Zealand",
+      "sms": 0.045,
+      "whatsapp": 0.065,
+      "voice": 0.03
+    },
+    {
+      "code": "BR",
+      "name": "Brazil",
+      "sms": 0.017,
+      "whatsapp": 0.0625,
+      "voice": 0.05
+    },
+    {
+      "code": "MX",
+      "name": "Mexico",
+      "sms": 0.03,
+      "whatsapp": 0.0436,
+      "voice": 0.042
+    },
+    {
+      "code": "AR",
+      "name": "Argentina",
+      "sms": 0.035,
+      "whatsapp": 0.0617,
+      "voice": 0.045
+    },
+    {
+      "code": "CL",
+      "name": "Chile",
+      "sms": 0.04,
+      "whatsapp": 0.07,
+      "voice": 0.044
+    },
+    {
+      "code": "CO",
+      "name": "Colombia",
+      "sms": 0.012,
+      "whatsapp": 0.025,
+      "voice": 0.04
+    },
+    {
+      "code": "PE",
+      "name": "Peru",
+      "sms": 0.025,
+      "whatsapp": 0.045,
+      "voice": 0.042
+    },
+    {
+      "code": "EC",
+      "name": "Ecuador",
+      "sms": 0.03,
+      "whatsapp": 0.05,
+      "voice": 0.043
+    },
+    {
+      "code": "UY",
+      "name": "Uruguay",
+      "sms": 0.04,
+      "whatsapp": 0.065,
+      "voice": 0.045
+    },
+    {
+      "code": "BO",
+      "name": "Bolivia",
+      "sms": 0.034,
+      "whatsapp": 0.054,
+      "voice": 0.044
+    },
+    {
+      "code": "PY",
+      "name": "Paraguay",
+      "sms": 0.034,
+      "whatsapp": 0.054,
+      "voice": 0.044
+    },
+    {
+      "code": "DO",
+      "name": "Dominican Republic",
+      "sms": 0.035,
+      "whatsapp": 0.055,
+      "voice": 0.044
+    },
+    {
+      "code": "GT",
+      "name": "Guatemala",
+      "sms": 0.038,
+      "whatsapp": 0.058,
+      "voice": 0.045
+    },
+    {
+      "code": "CR",
+      "name": "Costa Rica",
+      "sms": 0.036,
+      "whatsapp": 0.056,
+      "voice": 0.044
+    },
+    {
+      "code": "PA",
+      "name": "Panama",
+      "sms": 0.036,
+      "whatsapp": 0.056,
+      "voice": 0.044
+    },
+    {
+      "code": "JM",
+      "name": "Jamaica",
+      "sms": 0.04,
+      "whatsapp": 0.062,
+      "voice": 0.046
+    },
+    {
+      "code": "TT",
+      "name": "Trinidad and Tobago",
+      "sms": 0.04,
+      "whatsapp": 0.062,
+      "voice": 0.046
+    },
+    {
+      "code": "KZ",
+      "name": "Kazakhstan",
+      "sms": 0.03,
+      "whatsapp": 0.045,
+      "voice": 0.03
+    },
+    {
+      "code": "UZ",
+      "name": "Uzbekistan",
+      "sms": 0.028,
+      "whatsapp": 0.043,
+      "voice": 0.03
+    },
+    {
+      "code": "AZ",
+      "name": "Azerbaijan",
+      "sms": 0.03,
+      "whatsapp": 0.045,
+      "voice": 0.03
+    },
+    {
+      "code": "GE",
+      "name": "Georgia",
+      "sms": 0.028,
+      "whatsapp": 0.043,
+      "voice": 0.029
+    },
+    {
+      "code": "AM",
+      "name": "Armenia",
+      "sms": 0.028,
+      "whatsapp": 0.043,
+      "voice": 0.029
+    },
+    {
+      "code": "MN",
+      "name": "Mongolia",
+      "sms": 0.026,
+      "whatsapp": 0.038,
+      "voice": 0.033
+    },
+    {
+      "code": "EE",
+      "name": "Estonia",
+      "sms": 0.05,
+      "whatsapp": 0.07,
+      "voice": 0.03
+    },
+    {
+      "code": "LV",
+      "name": "Latvia",
+      "sms": 0.05,
+      "whatsapp": 0.07,
+      "voice": 0.03
+    },
+    {
+      "code": "LT",
+      "name": "Lithuania",
+      "sms": 0.048,
+      "whatsapp": 0.068,
+      "voice": 0.03
+    },
+    {
+      "code": "LU",
+      "name": "Luxembourg",
+      "sms": 0.08,
+      "whatsapp": 0.1,
+      "voice": 0.034
+    },
+    {
+      "code": "MT",
+      "name": "Malta",
+      "sms": 0.05,
+      "whatsapp": 0.068,
+      "voice": 0.03
+    },
+    {
+      "code": "CY",
+      "name": "Cyprus",
+      "sms": 0.048,
+      "whatsapp": 0.066,
+      "voice": 0.029
+    },
+    {
+      "code": "IS",
+      "name": "Iceland",
+      "sms": 0.055,
+      "whatsapp": 0.072,
+      "voice": 0.032
+    },
+    {
+      "code": "FJ",
+      "name": "Fiji",
+      "sms": 0.045,
+      "whatsapp": 0.065,
+      "voice": 0.04
+    }
+  ]
+}

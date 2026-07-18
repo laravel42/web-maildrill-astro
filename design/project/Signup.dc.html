@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Start free trial — Maildrill</title>
+<meta name="description" content="Create your Maildrill account and start sending across email, SMS, WhatsApp, and voice. No credit card required.">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://maildrill.com/signup">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@keyframes md-pop{0%{transform:scale(.9);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes md-grid-pan{0%{background-position:0 0}100%{background-position:44px 44px}}
+body{margin:0}
+*{cursor:none}
+@media (pointer:coarse){*{cursor:auto}}
+a{color:#4f46e5}a:hover{color:#4338ca}
+.md-mono{font-family:'Geist Mono',ui-monospace,monospace}
+.md-inp:focus{border-color:#4f46e5!important;box-shadow:0 0 0 3px rgba(79,70,229,.12)!important}
+</style>
+</helmet>
+<div style="font-family:Geist,system-ui,sans-serif;background:#f6f5f2;color:#1f1e1b;min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr;overflow:hidden">
+
+  <!-- LEFT: FORM -->
+  <div style="display:flex;flex-direction:column;min-height:100vh;padding:32px 40px">
+    <a href="Home.dc.html" style="display:inline-flex;align-items:center;gap:9px;text-decoration:none;align-self:flex-start" aria-label="Maildrill home">
+      <svg viewBox="0 0 30 26.76" width="25" height="22" aria-hidden="true">
+        <path fill="#ff441f" d="M13.39,0c-2.86,2.06-5.61,4-8.47,6.06C3.89,4,2.86,2.06,1.95,0h11.44Z"/>
+        <path fill="#ff441f" d="M19.57,17.49c-1.49,3.09-3.09,6.17-4.58,9.26-.69-1.49-1.49-2.97-2.17-4.34l6.75-4.92Z"/>
+        <path fill="#ff441f" d="M26.32,0c-6.07,4.23-12.02,8.58-18.08,12.81-.8-1.6-1.6-3.2-2.4-4.92,3.66-2.63,7.44-5.26,11.1-7.89h9.38Z"/>
+        <path fill="#ff441f" d="M27.12,2.17c-1.83,3.66-3.66,7.32-5.49,10.98-3.2,2.29-6.52,4.57-9.73,6.86l-2.63-5.15c5.95-4.23,11.9-8.46,17.85-12.69Z"/>
+      </svg>
+      <span style="font-size:19px;font-weight:600;letter-spacing:-.02em;color:#1f1e1b">Mail<span style="color:#ff441f">drill</span></span>
+    </a>
+
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px 0">
+      <div style="width:100%;max-width:420px">
+        <div class="md-mono" style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#a5a39a">/ 14-day free trial</div>
+        <h1 style="font-size:clamp(32px,3.8vw,44px);line-height:1;letter-spacing:-.035em;font-weight:800;margin:12px 0 8px">Create account</h1>
+        <p style="font-size:15px;line-height:1.6;color:#57554e;margin:0 0 26px">Already have one? <a href="Login.dc.html" style="font-weight:600;text-decoration:none">Log in</a></p>
+
+        <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+          <div style="text-align:center;padding:36px 0;animation:md-pop .5s ease both">
+            <div style="width:56px;height:56px;margin:0 auto 18px;border-radius:50%;background:#dcfce7;color:#16a34a;display:flex;align-items:center;justify-content:center" data-icon="check"></div>
+            <h2 style="font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0 0 8px">Check your inbox</h2>
+            <p style="font-size:15px;color:#57554e;margin:0">We sent a verification link to confirm your email and finish setting up your workspace.</p>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+              <button onClick="{{ onSubmit }}" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border-radius:10px;border:1px solid #e4e2da;background:#fff;font-size:14px;font-weight:600;font-family:inherit;color:#1f1e1b;cursor:pointer;transition:background .15s" style-hover="background:#faf9f6">
+                <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.2 13.5 17.6 9.5 24 9.5Z"/><path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v9.1h12.4c-.5 2.9-2.2 5.3-4.6 7l7.1 5.5c4.2-3.9 6.6-9.6 6.6-16.4Z"/><path fill="#FBBC05" d="M10.4 28.3a14.5 14.5 0 0 1 0-8.6l-7.8-6.1a24 24 0 0 0 0 20.8l7.8-6.1Z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.1-5.5c-2 1.3-4.5 2.1-8.8 2.1-6.4 0-11.8-4-13.6-9.8l-7.8 6.1C6.5 42.6 14.6 48 24 48Z"/></svg>
+                Sign up with Google
+              </button>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px"><span style="flex:1;height:1px;background:#e4e2da"></span><span class="md-mono" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#a5a39a">or</span><span style="flex:1;height:1px;background:#e4e2da"></span></div>
+
+            <form onSubmit="{{ onSubmit }}">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+                <label style="display:block"><span style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">First name</span><input class="md-inp" required style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid #e4e2da;font-size:15px;font-family:inherit;outline:none;background:#fff;transition:border-color .15s,box-shadow .15s"></label>
+                <label style="display:block"><span style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Last name</span><input class="md-inp" required style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid #e4e2da;font-size:15px;font-family:inherit;outline:none;background:#fff;transition:border-color .15s,box-shadow .15s"></label>
+              </div>
+              <label style="display:block;margin-bottom:14px"><span style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Work email</span><input class="md-inp" type="email" required placeholder="you@company.com" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid #e4e2da;font-size:15px;font-family:inherit;outline:none;background:#fff;transition:border-color .15s,box-shadow .15s"></label>
+              <label style="display:block;margin-bottom:18px"><span style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Password</span><input class="md-inp" type="password" required placeholder="At least 8 characters" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid #e4e2da;font-size:15px;font-family:inherit;outline:none;background:#fff;transition:border-color .15s,box-shadow .15s"></label>
+              <label style="display:flex;align-items:flex-start;gap:8px;margin:0 0 20px;font-size:13px;line-height:1.5;color:#57554e;cursor:pointer"><input type="checkbox" required style="width:15px;height:15px;margin-top:2px;accent-color:#4f46e5;cursor:pointer"><span>I agree to the <a href="Terms.dc.html" style="text-decoration:none">Terms</a> and <a href="Privacy.dc.html" style="text-decoration:none">Privacy Policy</a>.</span></label>
+              <button type="submit" data-magnetic="0.2" style="width:100%;padding:13px;border-radius:10px;border:none;background:#1f1e1b;color:#fff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .2s" style-hover="background:#4f46e5">Start free trial</button>
+              <p class="md-mono" style="font-size:11px;letter-spacing:.04em;color:#a5a39a;text-align:center;margin:14px 0 0">No credit card required · Cancel anytime</p>
+            </form>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: EDITORIAL PANEL -->
+  <div style="position:relative;background:#131211;color:#fff;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:48px 52px">
+    <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:44px 44px;animation:md-grid-pan 6s linear infinite"></div>
+    <div style="position:absolute;top:-120px;right:-120px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(255,68,31,.4),transparent 70%);filter:blur(20px)"></div>
+    <div style="position:absolute;bottom:-140px;left:-100px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(79,70,229,.45),transparent 70%);filter:blur(20px)"></div>
+
+    <div style="position:relative">
+      <div class="md-mono" style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.5)">/ Get started free</div>
+      <h2 style="font-size:clamp(30px,3.4vw,44px);line-height:1.02;letter-spacing:-.035em;font-weight:800;margin:16px 0 0;max-width:12ch">Launch your first <span style="color:#ff441f">campaign</span> in minutes.</h2>
+    </div>
+
+    <div style="position:relative;display:flex;flex-direction:column;gap:14px">
+      <sc-for list="{{ perks }}" as="p" hint-placeholder-count="4">
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="width:34px;height:34px;flex-shrink:0;border-radius:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#ff8f79;display:flex;align-items:center;justify-content:center" data-icon="{{ p.icon }}"></span>
+          <div style="font-size:15px;font-weight:500;letter-spacing:-.01em">{{ p.t }}</div>
+        </div>
+      </sc-for>
+      <div style="border-top:1px solid rgba(255,255,255,.12);margin-top:8px;padding-top:20px;display:flex;gap:32px">
+        <sc-for list="{{ stats }}" as="s" hint-placeholder-count="3">
+          <div><div style="font-size:24px;font-weight:800;letter-spacing:-.02em">{{ s.n }}</div><div class="md-mono" style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-top:2px">{{ s.l }}</div></div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1200,&quot;height&quot;:760}}">
+class Component extends DCLogic {
+  state = { sent:false };
+  componentDidMount(){
+    import(window.__resources&&window.__resources.mdmotion||'./md-motion.js').then(m=>{ requestAnimationFrame(()=>m.initMotion({cursor:true})); });
+  }
+  renderVals(){
+    return {
+      sent: this.state.sent,
+      notSent: !this.state.sent,
+      onSubmit: (e)=>{ e.preventDefault(); this.setState({sent:true}); },
+      perks:[
+        {icon:"bolt",t:"Email, SMS, WhatsApp & voice in one place"},
+        {icon:"chart",t:"Real-time deliverability & analytics"},
+        {icon:"code",t:"REST API, SDKs & webhooks"},
+        {icon:"shield",t:"2FA & role-based access"},
+      ],
+      stats:[
+        {n:"14 days",l:"Free trial"},
+        {n:"5 min",l:"To first send"},
+        {n:"24/7",l:"Support"},
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

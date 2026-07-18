@@ -1,0 +1,33 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import Button from '@/components/ui/Button.astro';
+import { routes } from '@/config/routes';
+
+const seo = {
+  title: 'Page not found',
+  description: 'The page you requested does not exist.',
+  noindex: true,
+};
+---
+
+<MarketingLayout seo={seo}>
+  <section class="not-found">
+    <div class="container">
+      <p class="eyebrow">404</p>
+      <h1 class="hero-title">This page left the inbox.</h1>
+      <p class="section-lead">
+        The link may be outdated, or the page moved. Try the homepage, product overview, or support.
+      </p>
+      <div class="cta-row">
+        <Button href={routes.home}>Back home</Button>
+        <Button href={routes.support} variant="secondary">Support</Button>
+      </div>
+    </div>
+  </section>
+</MarketingLayout>
+
+<style>
+  .not-found {
+    padding-block: clamp(4rem, 12vw, 7rem);
+  }
+</style>

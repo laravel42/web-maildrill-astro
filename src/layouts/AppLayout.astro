@@ -1,0 +1,33 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import AppShell from '@/components/react/AppShell';
+import '@/styles/app.css';
+import type { PageSeo } from '@/config/seo';
+
+interface Props {
+  title: string;
+  seo?: PageSeo;
+}
+
+const { title, seo } = Astro.props;
+const pageSeo: PageSeo = seo ?? {
+  title: `${title} · Workspace`,
+  description: 'Maildrill campaign workspace.',
+  noindex: true,
+};
+---
+
+<BaseLayout seo={pageSeo} bodyClass="app-body">
+  {/* Apply the saved workspace theme before paint to avoid a flash. */}
+  <script is:inline>
+    try {
+      const t = localStorage.getItem('md-theme');
+      if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+    } catch {
+      /* no-op */
+    }
+  </script>
+  <AppShell client:idle currentPath={Astro.url.pathname} title={title}>
+    <slot />
+  </AppShell>
+</BaseLayout>

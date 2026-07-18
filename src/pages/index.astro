@@ -1,0 +1,896 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import Icon from '@/components/ui/Icon.astro';
+import type { IconName } from '@/lib/icons';
+import { routes } from '@/config/routes';
+import {
+  organizationJsonLd,
+  softwareApplicationJsonLd,
+  websiteJsonLd,
+} from '@/lib/seo/structured-data';
+
+const seo = {
+  title: 'Maildrill — One workspace for email, SMS & WhatsApp campaigns',
+  description:
+    'Maildrill is the fast, professional workspace for creating, delivering, and analyzing multichannel messaging campaigns across email, SMS, WhatsApp, and voice. 99.2% deliverability, one shared audience.',
+};
+
+type Row = { num: string; icon: IconName; title: string; href: string; desc: string; color: string; tint: string };
+const channelRows: Row[] = [
+  {
+    num: '01',
+    icon: 'mail',
+    title: 'Email',
+    href: routes.channels.email,
+    desc: 'Drag-and-drop builder, reusable templates, and inbox-ready HTML that renders everywhere.',
+    color: 'var(--ch-email)',
+    tint: 'var(--ch-email-tint)',
+  },
+  {
+    num: '02',
+    icon: 'sms',
+    title: 'SMS',
+    href: routes.channels.sms,
+    desc: 'Two-way texting with link tracking, opt-out handling, and carrier-grade routing.',
+    color: 'var(--ch-sms)',
+    tint: 'var(--ch-sms-tint)',
+  },
+  {
+    num: '03',
+    icon: 'whatsapp',
+    title: 'WhatsApp',
+    href: routes.channels.whatsapp,
+    desc: 'Approved templates, rich media, and conversation flows on the official Business API.',
+    color: 'var(--ch-whatsapp)',
+    tint: 'var(--ch-whatsapp-tint)',
+  },
+  {
+    num: '04',
+    icon: 'voice',
+    title: 'Voice',
+    href: routes.channels.voice,
+    desc: 'Automated voice calls and IVR flows with text-to-speech, call tracking, and fallbacks.',
+    color: 'var(--ch-voice)',
+    tint: 'var(--ch-voice-tint)',
+  },
+];
+
+type Feature = { icon: IconName; title: string; desc: string };
+const features: Feature[] = [
+  {
+    icon: 'bolt',
+    title: 'Campaign wizard',
+    desc: 'Sender, audience, content, review, schedule — a guided flow with a live preview at every step.',
+  },
+  {
+    icon: 'users',
+    title: 'One shared audience',
+    desc: 'Lists, subscribers, and live segments shared across every channel. Import once.',
+  },
+  {
+    icon: 'chart',
+    title: 'Deep analytics',
+    desc: 'Trends, funnels, and per-channel performance — not just a wall of raw numbers.',
+  },
+  {
+    icon: 'layers',
+    title: 'Templates & media',
+    desc: 'A reusable template gallery and media library keep your brand consistent.',
+  },
+  {
+    icon: 'shield',
+    title: 'Deliverability first',
+    desc: 'Domain auth, warmup, and reputation monitoring so more messages land in the inbox.',
+  },
+  {
+    icon: 'sparkle',
+    title: 'AI copilot',
+    desc: 'Draft subject lines, rewrite copy, and generate variants without leaving the editor.',
+  },
+];
+
+const stats = [
+  { to: 99.2, decimals: 1, suffix: '%', prefix: '', label: 'Average deliverability' },
+  { to: 2.4, decimals: 1, suffix: 'M', prefix: '', label: 'Messages sent monthly' },
+  { to: 1.2, decimals: 1, suffix: 'k+', prefix: '', label: 'Active workspaces' },
+  { to: 40, decimals: 0, suffix: '%', prefix: '', label: 'Faster campaign setup' },
+];
+
+const quotes = [
+  {
+    text: 'We replaced three tools with Maildrill. One audience across email and SMS changed how fast we can move.',
+    name: 'Ava Chen',
+    role: 'Head of Growth, Lumen',
+    initials: 'AC',
+    color: 'var(--ch-email)',
+    tint: 'var(--ch-email-tint)',
+  },
+  {
+    text: 'Deliverability jumped the week we switched. The analytics tell us what to do next, not just what happened.',
+    name: 'Marcus Reed',
+    role: 'CRM Lead, Orbit',
+    initials: 'MR',
+    color: 'var(--ch-whatsapp)',
+    tint: 'var(--ch-whatsapp-tint)',
+  },
+  {
+    text: 'The campaign wizard is so fast our team stopped dreading launches. It feels like Linear for messaging.',
+    name: 'Sofia Alvarez',
+    role: 'Lifecycle Manager, Fjord',
+    initials: 'SA',
+    color: 'var(--ch-sms)',
+    tint: 'var(--ch-sms-tint)',
+  },
+];
+
+const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd()];
+---
+
+<MarketingLayout seo={seo} jsonLd={jsonLd}>
+  {/* ---------------------------------------------------------------- HERO */}
+  <section class="hero container--wide">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <p class="eyebrow" data-reveal>Multichannel messaging</p>
+    <h1 class="hero__title display" data-reveal style="--reveal-delay:60ms">
+      One workspace for every message.
+    </h1>
+    <div class="hero__intro">
+      <div>
+        <p class="hero__lead" data-reveal style="--reveal-delay:120ms">
+          Create, deliver, and analyze <strong>email, SMS, WhatsApp, and voice</strong> campaigns from
+          one fast workspace — one shared audience, deliverability you can trust.
+        </p>
+        <div class="cta-row" data-reveal style="--reveal-delay:220ms">
+          <a href={routes.auth.signup} class="btn btn--primary btn--pill btn--lg" data-magnetic="0.15">
+            Start free trial
+            <span class="btn__icon btn__icon--arrow" aria-hidden="true">
+              <Icon name="arrow-up-right" size={15} stroke={2.2} />
+            </span>
+          </a>
+          <a href={routes.product} class="btn btn--underline">See how it works</a>
+        </div>
+      </div>
+      <dl class="hero__metrics" data-reveal style="--reveal-delay:180ms">
+        <div>
+          <dt class="mono tnum">99.2%</dt>
+          <dd>deliverability</dd>
+        </div>
+        <div>
+          <dt class="mono tnum">4</dt>
+          <dd>channels, one audience</dd>
+        </div>
+        <div>
+          <dt class="mono tnum">1.2k+</dt>
+          <dd>workspaces</dd>
+        </div>
+      </dl>
+    </div>
+
+    {/* Product frame — recreated in CSS (no screenshot) */}
+    <div class="frame" data-reveal data-tilt="4" style="--reveal-delay:120ms">
+      <div class="frame__glow frame__glow--indigo" aria-hidden="true"></div>
+      <div class="frame__glow frame__glow--orange" aria-hidden="true"></div>
+      <div class="frame__inner">
+        <div class="mock">
+          <div class="mock__chrome">
+            <span class="mock__dot"></span><span class="mock__dot"></span><span class="mock__dot"></span>
+            <span class="mock__path mono">maildrill / campaigns</span>
+          </div>
+          <div class="mock__body">
+            <div class="mock__head">
+              <span class="mock__title">Spring Launch</span>
+              <span class="badge badge--success">Sent</span>
+            </div>
+            <div class="mock__kpis">
+              <div class="mock__kpi"><span>Delivered</span><b class="mono tnum">98.4%</b></div>
+              <div class="mock__kpi"><span>Opened</span><b class="mono tnum">54.1%</b></div>
+              <div class="mock__kpi"><span>Clicked</span><b class="mono tnum">21.7%</b></div>
+            </div>
+            <div class="mock__chart" aria-hidden="true">
+              <span style="height:40%;--d:.30s"></span>
+              <span style="height:62%;--d:.38s"></span>
+              <span style="height:48%;--d:.46s"></span>
+              <span style="height:80%;--d:.54s"></span>
+              <span style="height:66%;--d:.62s"></span>
+              <span class="mock__chart-accent" style="height:94%;--d:.70s"></span>
+            </div>
+          </div>
+        </div>
+        <div class="stack">
+          <div class="stack__card stack__card--float">
+            <div class="stack__head"><span class="stack__ic stack__ic--sms"><Icon name="sms" size={13} /></span><span class="mono stack__label stack__label--sms">SMS</span></div>
+            <p class="stack__msg">Your order shipped 🎉 Track it → mdrl.co/t</p>
+          </div>
+          <div class="stack__card stack__card--float2">
+            <div class="stack__head"><span class="stack__ic stack__ic--wa"><Icon name="whatsapp" size={13} /></span><span class="mono stack__label stack__label--wa">WhatsApp</span></div>
+            <p class="stack__msg stack__msg--wa">Appointment confirmed for Tue 10:00 ✅</p>
+          </div>
+          <div class="stack__card stack__card--drift stack__deliver">
+            <svg width="46" height="46" viewBox="0 0 48 48" aria-hidden="true">
+              <circle cx="24" cy="24" r="19" fill="none" stroke="var(--divider)" stroke-width="6"></circle>
+              <circle cx="24" cy="24" r="19" fill="none" stroke="var(--ch-whatsapp)" stroke-width="6" stroke-linecap="round" stroke-dasharray="119" stroke-dashoffset="4" transform="rotate(-90 24 24)"></circle>
+            </svg>
+            <div><div class="mono tnum stack__deliver-num">99.2%</div><div class="stack__deliver-label">deliverability</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* ------------------------------------------------------------ CHANNELS */}
+  <section class="channels container--wide">
+    <div class="channels__head">
+      <div>
+        <p class="eyebrow" data-reveal>Channels</p>
+        <h2 class="h-section" data-reveal style="--reveal-delay:60ms">Four channels. One audience.</h2>
+      </div>
+      <a href={`${routes.product}#channels`} class="btn btn--underline">Explore solutions</a>
+    </div>
+    <div class="channels__list">
+      {
+        channelRows.map((row, i) => (
+          <a href={row.href} class="chrow" data-reveal style={`--reveal-delay:${i * 90}ms`}>
+            <span class="chrow__num mono">{row.num}</span>
+            <div class="chrow__name">
+              <span class="chrow__ic" style={`background:${row.tint};color:${row.color}`}>
+                <Icon name={row.icon} size={22} />
+              </span>
+              <span class="chrow__title">{row.title}</span>
+            </div>
+            <span class="chrow__desc">{row.desc}</span>
+            <span class="chrow__arrow" aria-hidden="true">
+              <Icon name="arrow-up-right" size={22} stroke={2} />
+            </span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+
+  {/* ----------------------------------------------------------- WORKSPACE */}
+  <section class="workspace">
+    <div class="container--wide">
+      <p class="eyebrow" data-reveal>Workspace</p>
+      <h2 class="h-section workspace__title" data-reveal style="--reveal-delay:60ms">
+        Everything a campaign needs. Nothing it doesn't.
+      </h2>
+      <div class="grid-3">
+        {
+          features.map((f, i) => (
+            <div class="feat" data-reveal style={`--reveal-delay:${(i % 3) * 80}ms`}>
+              <span class="feat__ic"><Icon name={f.icon} size={22} /></span>
+              <h3 class="feat__title">{f.title}</h3>
+              <p class="feat__desc">{f.desc}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* ------------------------------------------------------------- RESULTS */}
+  <section class="results">
+    <div class="results__glow results__glow--indigo" aria-hidden="true"></div>
+    <div class="results__glow results__glow--orange" aria-hidden="true"></div>
+    <div class="container--wide results__inner">
+      <p class="eyebrow results__eyebrow" data-reveal>Results</p>
+      <h2 class="h-section results__title" data-reveal style="--reveal-delay:60ms">
+        Numbers our senders send by.
+      </h2>
+      <div class="grid-4">
+        {
+          stats.map((s, i) => (
+            <div class="result" data-reveal style={`--reveal-delay:${i * 80}ms`}>
+              <div
+                class="result__num mono tnum"
+                data-count
+                data-to={s.to}
+                data-suffix={s.suffix}
+                data-decimals={s.decimals}
+                data-prefix={s.prefix}
+              >
+                {s.prefix}0{s.suffix}
+              </div>
+              <div class="result__label">{s.label}</div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* -------------------------------------------------------------- VOICES */}
+  <section class="voices container--wide">
+    <p class="eyebrow" data-reveal>Voices</p>
+    <h2 class="h-section voices__title" data-reveal style="--reveal-delay:60ms">
+      Teams ship faster on Maildrill.
+    </h2>
+    <div class="grid-3">
+      {
+        quotes.map((q, i) => (
+          <figure class="quote" data-card data-reveal style={`--reveal-delay:${i * 90}ms`}>
+            <div class="quote__stars" aria-label="Rated 5 out of 5">★★★★★</div>
+            <blockquote>"{q.text}"</blockquote>
+            <figcaption>
+              <span class="quote__avatar" style={`background:${q.tint};color:${q.color}`}>{q.initials}</span>
+              <span>
+                <span class="quote__name">{q.name}</span>
+                <span class="quote__role">{q.role}</span>
+              </span>
+            </figcaption>
+          </figure>
+        ))
+      }
+    </div>
+  </section>
+</MarketingLayout>
+
+<style>
+  /* ---- HERO ---- */
+  .hero {
+    position: relative;
+    padding-block: 64px 48px;
+  }
+
+  .hero__glow {
+    position: absolute;
+    top: 0;
+    right: -40px;
+    width: 460px;
+    height: 460px;
+    max-width: 70vw;
+    background: radial-gradient(circle at 40% 40%, rgba(255, 68, 31, 0.1), transparent 62%);
+    filter: blur(10px);
+    animation: blob 16s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .hero__title {
+    font-size: var(--display-hero);
+    margin: 18px 0 0;
+    max-width: 15ch;
+  }
+
+  .hero__intro {
+    display: grid;
+    gap: 48px;
+    align-items: end;
+    margin-top: 32px;
+  }
+
+  .hero__lead {
+    font-size: var(--fs-lg);
+    line-height: 1.55;
+    color: var(--text3);
+    margin: 0;
+    max-width: 46ch;
+  }
+
+  .hero__lead strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .hero__metrics {
+    display: flex;
+    gap: 36px;
+    flex-wrap: wrap;
+    margin: 0;
+  }
+
+  .hero__metrics dt {
+    font-size: 2rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+
+  .hero__metrics dd {
+    margin: 2px 0 0;
+    font-size: var(--fs-sm);
+    color: var(--text4);
+  }
+
+  @media (min-width: 900px) {
+    .hero__intro {
+      grid-template-columns: 1.1fr 0.9fr;
+    }
+  }
+
+  /* ---- Product frame ---- */
+  .frame {
+    position: relative;
+    margin-top: 56px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #201d16, #15130d);
+    padding: 14px;
+    box-shadow: var(--shadow-float);
+    overflow: hidden;
+  }
+
+  .frame__glow {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .frame__glow--indigo {
+    top: -40px;
+    left: 20%;
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle, rgba(99, 91, 245, 0.28), transparent 65%);
+    animation: drift 12s ease-in-out infinite;
+  }
+
+  .frame__glow--orange {
+    bottom: -60px;
+    right: 8%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(255, 68, 31, 0.22), transparent 65%);
+    animation: blob 14s ease-in-out infinite;
+  }
+
+  .frame__inner {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 14px;
+    align-items: stretch;
+  }
+
+  @media (max-width: 720px) {
+    .frame__inner {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .mock {
+    background: var(--surface);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .mock__chrome {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--divider);
+    background: var(--surface3);
+  }
+
+  .mock__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--border2);
+  }
+
+  .mock__path {
+    margin-left: 10px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .mock__body {
+    padding: 20px;
+  }
+
+  .mock__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .mock__title {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .mock__kpis {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .mock__kpi {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 12px;
+  }
+
+  .mock__kpi span {
+    display: block;
+    font-size: 11px;
+    color: var(--text4);
+    margin-bottom: 4px;
+  }
+
+  .mock__kpi b {
+    font-size: 19px;
+    font-weight: 500;
+  }
+
+  .mock__chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 7px;
+    height: 96px;
+  }
+
+  .mock__chart span {
+    flex: 1;
+    background: linear-gradient(#818cf8, #4f46e5);
+    border-radius: 4px 4px 0 0;
+    transform-origin: bottom;
+    animation: grow 0.9s var(--ease-out) var(--d) both;
+  }
+
+  .mock__chart-accent {
+    background: linear-gradient(#ff7a5c, #ff441f) !important;
+  }
+
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .stack__card {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 14px;
+  }
+
+  .stack__card--float {
+    animation: floaty 8s ease-in-out infinite;
+  }
+  .stack__card--float2 {
+    animation: floaty2 9s ease-in-out 0.4s infinite;
+  }
+  .stack__card--drift {
+    animation: drift 10s ease-in-out infinite;
+  }
+
+  .stack__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .stack__ic {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stack__ic--sms {
+    background: var(--ch-sms-tint);
+    color: var(--ch-sms);
+  }
+  .stack__ic--wa {
+    background: var(--ch-whatsapp-tint);
+    color: var(--ch-whatsapp);
+  }
+
+  .stack__label {
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .stack__label--sms {
+    color: var(--ch-sms);
+  }
+  .stack__label--wa {
+    color: var(--ch-whatsapp);
+  }
+
+  .stack__msg {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text2);
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 9px 11px;
+  }
+
+  .stack__msg--wa {
+    background: var(--ch-whatsapp-tint);
+    border-radius: 10px 10px 10px 2px;
+  }
+
+  .stack__deliver {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .stack__deliver-num {
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .stack__deliver-label {
+    font-size: 11px;
+    color: var(--text4);
+  }
+
+  /* ---- CHANNELS ---- */
+  .channels {
+    padding-block: 88px 40px;
+  }
+
+  .channels__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 36px;
+  }
+
+  .channels__list {
+    border-top: 1px solid var(--border2);
+  }
+
+  .chrow {
+    display: grid;
+    grid-template-columns: 64px 1fr 1.4fr 40px;
+    gap: 24px;
+    align-items: center;
+    padding: 30px 20px;
+    border-bottom: 1px solid var(--border2);
+    color: inherit;
+    transition: background var(--duration) var(--ease-out);
+  }
+
+  .chrow:hover {
+    background: var(--surface3);
+  }
+
+  .chrow__num {
+    font-size: 15px;
+    color: var(--muted);
+  }
+
+  .chrow__name {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .chrow__ic {
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .chrow__title {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    transition: color var(--duration) var(--ease-out);
+  }
+
+  .chrow:hover .chrow__title {
+    color: var(--brand);
+  }
+
+  .chrow__desc {
+    font-size: var(--fs-md);
+    line-height: 1.5;
+    color: var(--text3);
+  }
+
+  .chrow__arrow {
+    color: var(--text);
+    opacity: 0.35;
+    transition:
+      opacity var(--duration-slow) var(--ease-out),
+      transform var(--duration-slow) var(--ease-out);
+  }
+
+  .chrow:hover .chrow__arrow {
+    opacity: 1;
+    transform: translate(6px, -6px);
+  }
+
+  @media (max-width: 760px) {
+    .chrow {
+      grid-template-columns: 40px 1fr;
+      gap: 10px 16px;
+      padding: 22px 4px;
+    }
+    .chrow__desc {
+      grid-column: 2;
+      font-size: var(--fs-sm2);
+    }
+    .chrow__arrow {
+      display: none;
+    }
+    .chrow__title {
+      font-size: 22px;
+    }
+  }
+
+  /* ---- WORKSPACE ---- */
+  .workspace {
+    background: var(--surface);
+    border-block: 1px solid var(--border);
+    padding-block: 88px;
+  }
+
+  .workspace__title {
+    margin: 14px 0 44px;
+    max-width: 18ch;
+  }
+
+  .feat__ic {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    background: var(--surface2);
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .feat__title {
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+  }
+
+  .feat__desc {
+    font-size: var(--fs-base);
+    line-height: 1.6;
+    color: var(--text3);
+    margin: 0;
+  }
+
+  /* ---- RESULTS ---- */
+  .results {
+    position: relative;
+    background: var(--ink-band);
+    color: var(--ink-band-text);
+    overflow: hidden;
+  }
+
+  .results__glow {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .results__glow--indigo {
+    top: -80px;
+    right: 6%;
+    width: 360px;
+    height: 360px;
+    background: radial-gradient(circle, rgba(99, 91, 245, 0.24), transparent 65%);
+    animation: blob 14s ease-in-out infinite;
+  }
+
+  .results__glow--orange {
+    bottom: -100px;
+    left: 2%;
+    width: 380px;
+    height: 380px;
+    background: radial-gradient(circle, rgba(255, 68, 31, 0.18), transparent 65%);
+    animation: drift 13s ease-in-out infinite;
+  }
+
+  .results__inner {
+    position: relative;
+    padding-block: 96px;
+  }
+
+  .results__eyebrow {
+    color: var(--muted);
+  }
+
+  .results__title {
+    margin: 14px 0 56px;
+    max-width: 20ch;
+    color: var(--ink-band-text);
+  }
+
+  .result {
+    border-top: 1px solid var(--ink-band-border);
+    padding-top: 20px;
+  }
+
+  .result__num {
+    font-size: clamp(2.75rem, 5vw, 4.25rem);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: var(--ink-band-text);
+  }
+
+  .result__label {
+    font-size: var(--fs-base);
+    color: var(--ink-band-text2);
+    margin-top: 8px;
+  }
+
+  /* ---- VOICES ---- */
+  .voices {
+    padding-block: 88px;
+  }
+
+  .voices__title {
+    margin: 14px 0 44px;
+  }
+
+  .quote {
+    margin: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .quote__stars {
+    color: var(--brand);
+    font-size: 15px;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+
+  .quote blockquote {
+    margin: 0 0 24px;
+    padding: 0;
+    border: 0;
+    font-size: 19px;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .quote figcaption {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .quote__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .quote__name {
+    display: block;
+    font-size: var(--fs-sm2);
+    font-weight: 600;
+  }
+
+  .quote__role {
+    display: block;
+    font-size: var(--fs-sm);
+    color: var(--text4);
+  }
+</style>

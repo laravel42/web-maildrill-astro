@@ -1,0 +1,480 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import { getCollection, render } from 'astro:content';
+import { articleJsonLd, breadcrumbJsonLd } from '@/lib/seo/structured-data';
+import { routes } from '@/config/routes';
+
+export async function getStaticPaths() {
+  const guides = (await getCollection('guides', ({ data }) => data.draft !== true)).sort(
+    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+  );
+  return guides.map((guide, i) => ({
+    params: { slug: guide.id },
+    props: {
+      guide,
+      prev: guides[i - 1] ?? null,
+      next: guides[i + 1] ?? null,
+    },
+  }));
+}
+
+const { guide, prev, next } = Astro.props;
+const { Content, headings } = await render(guide);
+const path = `/guides/${guide.id}`;
+
+// Section headings (h2) drive the sticky table of contents + numbered steps.
+const toc = headings.filter((h) => h.depth === 2);
+
+// Category → color pairing (theme-aware tokens), mirroring the listing.
+type Theme = { color: string; tint: string };
+const CATEGORY_THEME: Record<string, Theme> = {
+  Deliverability: { color: 'var(--accent)', tint: 'var(--accent-tint)' },
+  Growth: { color: 'var(--ch-whatsapp)', tint: 'var(--ch-whatsapp-tint)' },
+  Segmentation: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)' },
+  Automation: { color: 'var(--ch-voice)', tint: 'var(--ch-voice-tint)' },
+  'Getting started': { color: 'var(--brand)', tint: 'var(--brand-tint)' },
+  Audience: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)' },
+};
+const FALLBACK: Theme[] = [
+  { color: 'var(--accent)', tint: 'var(--accent-tint)' },
+  { color: 'var(--ch-whatsapp)', tint: 'var(--ch-whatsapp-tint)' },
+  { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)' },
+  { color: 'var(--ch-voice)', tint: 'var(--ch-voice-tint)' },
+  { color: 'var(--brand)', tint: 'var(--brand-tint)' },
+];
+function categoryTheme(name: string): Theme {
+  if (CATEGORY_THEME[name]) return CATEGORY_THEME[name];
+  let h = 0;
+  for (const ch of name) h = (h + ch.charCodeAt(0)) % FALLBACK.length;
+  return FALLBACK[h];
+}
+const theme = categoryTheme(guide.data.category);
+
+const pubLabel = guide.data.pubDate.toLocaleDateString('en', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+
+const seo = {
+  title: guide.data.title,
+  description: guide.data.description,
+  type: 'article' as const,
+  publishedTime: guide.data.pubDate.toISOString(),
+  modifiedTime: (guide.data.updatedDate ?? guide.data.pubDate).toISOString(),
+  author: guide.data.author,
+};
+
+const jsonLd = [
+  articleJsonLd({
+    title: guide.data.title,
+    description: guide.data.description,
+    path,
+    publishedTime: seo.publishedTime,
+    modifiedTime: seo.modifiedTime,
+    author: guide.data.author,
+  }),
+  breadcrumbJsonLd([
+    { name: 'Home', path: '/' },
+    { name: 'Guides', path: routes.guides },
+    { name: guide.data.title, path },
+  ]),
+];
+---
+
+<MarketingLayout seo={seo} jsonLd={jsonLd} active="resources">
+  <article class="ga">
+    {/* Reading progress bar — progressive enhancement, hidden until JS sizes it. */}
+    <div class="ga-progress" data-progress aria-hidden="true"></div>
+
+    {/* ------------------------------------------------------------ HERO */}
+    <header class="ga-hero container--wide">
+      <a href={routes.guides} class="ga-back mono" data-reveal>
+        <span aria-hidden="true">←</span> Guides
+      </a>
+      <div class="ga-meta" data-reveal style="--reveal-delay:60ms">
+        <span class="ga-cat" style={`color:${theme.color};background:${theme.tint}`}>
+          {guide.data.category}
+        </span>
+        <span class="mono ga-meta__facts">
+          {
+            [toc.length > 0 ? `${toc.length} steps` : null, `${guide.data.readingMinutes} min read`]
+              .filter(Boolean)
+              .join(' · ')
+          }
+        </span>
+      </div>
+      <h1 class="display ga-title" data-reveal style="--reveal-delay:100ms">
+        {guide.data.title}
+      </h1>
+      <p class="lead ga-lead" data-reveal style="--reveal-delay:140ms">{guide.data.description}</p>
+      <p class="ga-byline" data-reveal style="--reveal-delay:180ms">
+        By {guide.data.author} ·{' '}
+        <time datetime={guide.data.pubDate.toISOString()}>{pubLabel}</time>
+      </p>
+    </header>
+
+    {/* ------------------------------------------------------------ BODY */}
+    <div class:list={['ga-body', 'container--wide', { 'ga-body--toc': toc.length > 0 }]}>
+      {
+        toc.length > 0 && (
+          <nav class="ga-toc" data-reveal aria-label="On this page">
+            <span class="mono ga-toc__label">On this page</span>
+            {toc.map((h, i) => (
+              <a href={`#${h.slug}`} class="ga-toc__link" data-toc-link={h.slug}>
+                <span class="mono ga-toc__num">{String(i + 1).padStart(2, '0')}</span>
+                <span>{h.text}</span>
+              </a>
+            ))}
+          </nav>
+        )
+      }
+
+      <div class="ga-content">
+        <div class="prose ga-prose" data-reveal>
+          <Content />
+        </div>
+
+        {/* ------------------------------------------------- PREV / NEXT */}
+        <nav class="ga-pager" data-reveal aria-label="More guides">
+          {
+            prev && (
+              <a href={`/guides/${prev.id}`} class="ga-pager__card ga-pager__card--prev">
+                <span class="mono ga-pager__label">
+                  <span aria-hidden="true">←</span> Previous guide
+                </span>
+                <span class="ga-pager__title">{prev.data.title}</span>
+              </a>
+            )
+          }
+          <div class="ga-pager__next">
+            <div>
+              <span class="mono ga-pager__label">Next guide</span>
+              {
+                next ? (
+                  <a href={`/guides/${next.id}`} class="ga-pager__title ga-pager__title--link">
+                    {next.data.title}
+                    {' '}
+                    <span aria-hidden="true">→</span>
+                  </a>
+                ) : (
+                  <a href={routes.guides} class="ga-pager__title ga-pager__title--link">
+                    Browse all guides
+                    {' '}
+                    <span aria-hidden="true">→</span>
+                  </a>
+                )
+              }
+            </div>
+            <a href={routes.auth.signup} class="ga-pager__try">Try it in Maildrill</a>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </article>
+</MarketingLayout>
+
+<style>
+  .ga {
+    position: relative;
+    padding-bottom: 72px;
+  }
+
+  /* ---- Reading progress ---- */
+  .ga-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 0;
+    z-index: 200;
+    background: linear-gradient(90deg, var(--accent), #8b5cf6, var(--brand));
+    pointer-events: none;
+    transition: width 0.08s linear;
+  }
+
+  /* ---- HERO ---- */
+  .ga-hero {
+    padding-block: 56px 24px;
+  }
+
+  .ga-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--fs-sm);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text4);
+    transition: color var(--duration) var(--ease-out);
+  }
+
+  .ga-back:hover {
+    color: var(--text);
+  }
+
+  .ga-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+  }
+
+  .ga-cat {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .ga-meta__facts {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .ga-title {
+    font-size: clamp(2.375rem, 5.2vw, 4.5rem);
+    line-height: 1;
+    margin: 16px 0 0;
+    max-width: 16ch;
+  }
+
+  .ga-lead {
+    max-width: 60ch;
+    margin: 20px 0 0;
+  }
+
+  .ga-byline {
+    margin: 14px 0 0;
+    font-size: var(--fs-sm2);
+    color: var(--text4);
+  }
+
+  /* ---- BODY LAYOUT ---- */
+  .ga-body {
+    padding-block: 8px 8px;
+  }
+
+  .ga-body--toc {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr);
+    gap: 56px;
+    align-items: start;
+  }
+
+  .ga-content {
+    max-width: 720px;
+  }
+
+  /* Single-column guides (no section headings) read centered in the wide shell. */
+  .ga-body:not(.ga-body--toc) .ga-content {
+    margin-inline: auto;
+  }
+
+  /* ---- STICKY TOC ---- */
+  .ga-toc {
+    position: sticky;
+    top: calc(var(--nav-height) + 24px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ga-toc__label {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .ga-toc__link {
+    display: flex;
+    gap: 9px;
+    font-size: var(--fs-sm2);
+    line-height: 1.4;
+    color: var(--text4);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .ga-toc__num {
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .ga-toc__link:hover {
+    color: var(--text);
+  }
+
+  .ga-toc__link.is-active {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ---- PROSE: numbered step badges on section headings ---- */
+  .ga-prose {
+    counter-reset: ga-step;
+  }
+
+  .ga-body--toc .ga-prose :global(h2) {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    counter-increment: ga-step;
+    font-size: var(--fs-xl);
+    margin-top: var(--space-12);
+    scroll-margin-top: calc(var(--nav-height) + 24px);
+  }
+
+  .ga-body--toc .ga-prose :global(h2)::before {
+    content: counter(ga-step, decimal-leading-zero);
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: var(--accent);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+
+  /* Dark code blocks + inline code inside guide prose. */
+  .ga-prose :global(pre) {
+    border-radius: var(--radius-img);
+    padding: 16px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  /* ---- PREV / NEXT ---- */
+  .ga-pager {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 40px;
+  }
+
+  .ga-pager__card--prev {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 18px 22px;
+    color: inherit;
+    transition:
+      border-color var(--duration) var(--ease-out),
+      box-shadow var(--duration) var(--ease-out);
+  }
+
+  .ga-pager__card--prev:hover {
+    border-color: var(--border2);
+    box-shadow: var(--shadow-md);
+  }
+
+  .ga-pager__next {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 22px 24px;
+  }
+
+  .ga-pager__label {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .ga-pager__title {
+    display: block;
+    margin-top: 4px;
+    font-size: var(--fs-md);
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .ga-pager__title--link {
+    transition: color var(--duration) var(--ease-out);
+  }
+
+  .ga-pager__title--link:hover {
+    color: var(--accent);
+  }
+
+  .ga-pager__try {
+    flex-shrink: 0;
+    padding: 11px 18px;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-size: var(--fs-sm2);
+    font-weight: 600;
+    transition: background var(--duration) var(--ease-out);
+  }
+
+  .ga-pager__try:hover {
+    background: var(--accent-hover);
+  }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 900px) {
+    .ga-body--toc {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .ga-toc {
+      position: static;
+      top: auto;
+    }
+    .ga-content {
+      max-width: none;
+    }
+  }
+</style>
+
+{/* Reading progress + TOC scroll-spy — progressive enhancement only. */}
+<script>
+  const bar = document.querySelector<HTMLElement>('[data-progress]');
+  const tocLinks = [...document.querySelectorAll<HTMLElement>('[data-toc-link]')];
+
+  if (bar) {
+    const update = () => {
+      const footer = document.querySelector('footer');
+      const end = (footer ? footer.offsetTop : document.documentElement.scrollHeight) - window.innerHeight;
+      const p = end > 0 ? Math.min(Math.max(window.scrollY / end, 0), 1) : 0;
+      bar.style.width = p * 100 + '%';
+    };
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  }
+
+  if (tocLinks.length) {
+    const setActive = (id: string) => {
+      for (const a of tocLinks) a.classList.toggle('is-active', a.dataset.tocLink === id);
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) if (e.isIntersecting) setActive(e.target.id);
+      },
+      { rootMargin: '-38% 0px -55% 0px', threshold: 0 },
+    );
+    for (const a of tocLinks) {
+      const el = a.dataset.tocLink && document.getElementById(a.dataset.tocLink);
+      if (el) io.observe(el);
+    }
+  }
+</script>

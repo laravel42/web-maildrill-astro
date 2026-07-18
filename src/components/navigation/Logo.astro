@@ -1,0 +1,73 @@
+---
+interface Props {
+  href?: string;
+  /** Wordmark font-size in px (mark scales with it). */
+  size?: number;
+  /** Include the "Maildrill" wordmark (false = mark only). */
+  wordmark?: boolean;
+  class?: string;
+}
+
+const { href = '/', size = 19, wordmark = true, class: className = '' } = Astro.props;
+const markH = Math.round(size * 1.16);
+const markW = Math.round(markH * (30 / 26.76));
+---
+
+<a href={href} class:list={['logo', className]} aria-label="Maildrill home" style={`--logo-size:${size}px`}>
+  <svg
+    viewBox="0 0 30 26.76"
+    width={markW}
+    height={markH}
+    aria-hidden="true"
+    focusable="false"
+    class="logo__mark"
+  >
+    <path
+      fill="#ff441f"
+      d="M13.39,0c-2.86,2.06-5.61,4-8.47,6.06C3.89,4,2.86,2.06,1.95,0h11.44Z"></path>
+    <path
+      fill="#ff441f"
+      d="M19.57,17.49c-1.49,3.09-3.09,6.17-4.58,9.26-.69-1.49-1.49-2.97-2.17-4.34l6.75-4.92Z"
+    ></path>
+    <path
+      fill="#ff441f"
+      d="M26.32,0c-6.07,4.23-12.02,8.58-18.08,12.81-.8-1.6-1.6-3.2-2.4-4.92,3.66-2.63,7.44-5.26,11.1-7.89h9.38Z"
+    ></path>
+    <path
+      fill="#ff441f"
+      d="M27.12,2.17c-1.83,3.66-3.66,7.32-5.49,10.98-3.2,2.29-6.52,4.57-9.73,6.86l-2.63-5.15c5.95-4.23,11.9-8.46,17.85-12.69Z"
+    ></path>
+  </svg>
+  {
+    wordmark && (
+      <span class="logo__word">
+        Mail<span class="logo__word--brand">drill</span>
+      </span>
+    )
+  }
+</a>
+
+<style>
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    flex-shrink: 0;
+  }
+
+  .logo__mark {
+    display: block;
+  }
+
+  .logo__word {
+    font-size: var(--logo-size);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: currentColor;
+    line-height: 1;
+  }
+
+  .logo__word--brand {
+    color: var(--brand);
+  }
+</style>

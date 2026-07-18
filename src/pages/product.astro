@@ -1,0 +1,1207 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import Icon from '@/components/ui/Icon.astro';
+import type { IconName } from '@/lib/icons';
+import { routes } from '@/config/routes';
+import { softwareApplicationJsonLd, breadcrumbJsonLd } from '@/lib/seo/structured-data';
+
+const seo = {
+  title: 'Product — Maildrill campaign workspace, builder & analytics',
+  description:
+    'Explore the Maildrill workspace: a guided campaign wizard, drag-and-drop email builder, one shared audience, live segments, deep analytics, and deliverability tooling.',
+  canonical: 'https://maildrill.com/product',
+};
+
+const jsonLd = [
+  softwareApplicationJsonLd(),
+  breadcrumbJsonLd([
+    { name: 'Home', path: '/' },
+    { name: 'Product', path: '/product' },
+  ]),
+];
+
+type Visual = 'builder' | 'audience' | 'analytics' | 'deliver';
+type Feature = { icon: IconName; title: string; desc: string; points: string[]; visual: Visual };
+
+const features: Feature[] = [
+  {
+    icon: 'edit',
+    title: 'A builder that stays out of your way',
+    desc: 'Compose emails with a drag-and-drop block editor, reusable templates, and a live responsive preview. Autosave and undo/redo mean you never lose a thought.',
+    points: [
+      'Block library + property inspector',
+      'Responsive preview for every device',
+      'Reusable, brand-consistent templates',
+    ],
+    visual: 'builder',
+  },
+  {
+    icon: 'users',
+    title: 'One audience, every channel',
+    desc: 'Lists, subscribers, custom fields, and live segments are shared across email, SMS, and WhatsApp. Build a segment once and it stays in sync everywhere.',
+    points: [
+      'Live segments with real-time counts',
+      'CRM-style subscriber profiles',
+      'Saved, persisted segment builder',
+    ],
+    visual: 'audience',
+  },
+  {
+    icon: 'chart',
+    title: 'Analytics that tell you what to do next',
+    desc: 'Trends, funnels, comparisons, and per-channel breakdowns — designed to surface insight, not bury you in raw numbers.',
+    points: [
+      'Per-channel performance views',
+      'Funnels, timelines, top links & devices',
+      'Campaign-over-campaign comparison',
+    ],
+    visual: 'analytics',
+  },
+  {
+    icon: 'shield',
+    title: 'Deliverability built in',
+    desc: 'Domain authentication, warmup, and reputation monitoring keep more of your messages landing in the inbox — not the spam folder.',
+    points: [
+      'SPF, DKIM & DMARC guidance',
+      'Reputation & bounce monitoring',
+      'Automatic list hygiene',
+    ],
+    visual: 'deliver',
+  },
+];
+
+type Channel = { label: string; icon: IconName; color: string; tint: string; href: string; desc: string };
+const channels: Channel[] = [
+  {
+    label: 'Email',
+    icon: 'mail',
+    color: 'var(--ch-email)',
+    tint: 'var(--ch-email-tint)',
+    href: routes.channels.email,
+    desc: 'Inbox-ready campaigns & builder',
+  },
+  {
+    label: 'SMS',
+    icon: 'sms',
+    color: 'var(--ch-sms)',
+    tint: 'var(--ch-sms-tint)',
+    href: routes.channels.sms,
+    desc: 'Two-way texting, instant reach',
+  },
+  {
+    label: 'WhatsApp',
+    icon: 'whatsapp',
+    color: 'var(--ch-whatsapp)',
+    tint: 'var(--ch-whatsapp-tint)',
+    href: routes.channels.whatsapp,
+    desc: 'Rich Business API conversations',
+  },
+  {
+    label: 'Voice',
+    icon: 'voice',
+    color: 'var(--ch-voice)',
+    tint: 'var(--ch-voice-tint)',
+    href: routes.channels.voice,
+    desc: 'Automated calls & IVR flows',
+  },
+];
+
+const steps = [
+  { n: '1', title: 'Sender', desc: 'Pick channel & verified sender' },
+  { n: '2', title: 'Audience', desc: 'Target a list or live segment' },
+  { n: '3', title: 'Content', desc: 'Build with live preview' },
+  { n: '4', title: 'Schedule', desc: 'Send now or later' },
+  { n: '5', title: 'Review', desc: 'Final checks before you send' },
+];
+
+type Cap = { icon: IconName; title: string; desc: string };
+const caps: Cap[] = [
+  { icon: 'layers', title: 'Template gallery', desc: 'Categorized templates with large previews and hover actions.' },
+  { icon: 'globe', title: 'Media library', desc: 'Folders, drag & drop uploads, and a preview drawer.' },
+  { icon: 'sparkle', title: 'AI copilot', desc: 'Draft subject lines and rewrite copy in the editor.' },
+  { icon: 'filter', title: 'Saved segments', desc: 'Build complex segments once and reuse them anywhere.' },
+  { icon: 'code', title: 'API & webhooks', desc: 'Trigger sends and stream events into your stack.' },
+  { icon: 'clock', title: 'Scheduling', desc: 'Send-time optimization and timezone-aware delivery.' },
+];
+
+// Product-shot mockup data (recreated in CSS, no screenshots).
+const segments = [
+  { name: 'Active subscribers', value: '48,210', dot: 'var(--accent)' },
+  { name: 'Opened last 30d', value: '21,884', dot: 'var(--success)' },
+  { name: 'VIP customers', value: '3,502', dot: 'var(--brand)' },
+  { name: 'Dormant', value: '9,140', dot: 'var(--muted)' },
+];
+const analyticsBars = [45, 62, 50, 74, 58, 88, 70];
+const deliverChecks = ['SPF', 'DKIM', 'DMARC'];
+---
+
+<MarketingLayout seo={seo} jsonLd={jsonLd} active="product">
+  {/* -------------------------------------------------------------- HERO */}
+  <section class="pd-wide pd-sec-hero">
+    <p class="eyebrow" data-reveal>The workspace</p>
+    <h1 class="display pd-hero__title" data-reveal style="--reveal-delay:60ms">
+      Run campaigns, not software
+    </h1>
+    <p class="pd-hero__lead" data-reveal style="--reveal-delay:160ms">
+      Every screen in Maildrill is built to help you do the work — draft, target, send, and learn —
+      with the density of Linear and the calm of a tool that gets out of your way.
+    </p>
+  </section>
+
+  {/* ------------------------------------------------------ FEATURE ROWS */}
+  <section class="pd-wrap pd-sec-features">
+    <div class="feat-list">
+      {
+        features.map((f, i) => (
+          <div data-reveal>
+            <article class:list={['feat-row', 'pd-card', { 'feat-row--reverse': i % 2 === 1 }]}>
+              <div class="feat-row__text">
+                <span class="feat-row__ic">
+                  <Icon name={f.icon} size={22} />
+                </span>
+                <h2 class="feat-row__title">{f.title}</h2>
+                <p class="feat-row__desc">{f.desc}</p>
+                <ul class="feat-row__points">
+                  {f.points.map((p) => (
+                    <li class="feat-row__point">
+                      <span class="feat-row__point-ic">
+                        <Icon name="check" size={16} stroke={2.5} />
+                      </span>
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div class="feat-row__visual" aria-hidden="true">
+                {f.visual === 'builder' && (
+                  <div class="pv pv-builder">
+                    <div class="pv-builder__bar">
+                      <span class="pv-dot" />
+                      <span class="pv-dot" />
+                      <span class="pv-dot" />
+                    </div>
+                    <div class="pv-builder__body">
+                      <div class="pv-builder__rail">
+                        <span class="pv-rail-block pv-rail-block--active" />
+                        <span class="pv-rail-block" />
+                        <span class="pv-rail-block" />
+                        <span class="pv-rail-block" />
+                      </div>
+                      <div class="pv-builder__canvas">
+                        <div class="pv-builder__hero" />
+                        <div class="pv-builder__drop">Drag a block here</div>
+                        <div class="pv-line pv-line--80" />
+                        <div class="pv-line pv-line--60" />
+                        <div class="pv-builder__btn" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {f.visual === 'audience' && (
+                  <div class="pv pv-aud">
+                    <div class="pv-aud__head">
+                      <span class="pv-aud__title">Segments</span>
+                      <span class="pv-aud__new">+ New</span>
+                    </div>
+                    {segments.map((s) => (
+                      <div class="pv-aud__row">
+                        <span class="pv-aud__name">
+                          <span class="pv-aud__dot" style={`background:${s.dot}`} />
+                          {s.name}
+                        </span>
+                        <span class="pv-aud__val tnum">{s.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {f.visual === 'analytics' && (
+                  <div class="pv pv-an">
+                    <div class="pv-an__head">
+                      <span class="pv-an__title">Performance</span>
+                      <span class="pv-an__sub">Last 7 days</span>
+                    </div>
+                    <div class="pv-an__bars">
+                      {analyticsBars.map((h, bi) => (
+                        <div class="pv-an__col">
+                          <span
+                            class="pv-an__bar"
+                            style={`height:${h}%;animation-delay:${(0.2 + bi * 0.08).toFixed(2)}s`}
+                          />
+                          <span class="pv-an__reflect" style={`height:${(h * 0.4).toFixed(1)}%`} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {f.visual === 'deliver' && (
+                  <div class="pv pv-del">
+                    <svg class="pv-del__gauge" width="96" height="96" viewBox="0 0 96 96" aria-hidden="true">
+                      <circle cx="48" cy="48" r="40" fill="none" stroke="var(--divider)" stroke-width="10" />
+                      <circle
+                        cx="48"
+                        cy="48"
+                        r="40"
+                        fill="none"
+                        stroke="var(--success)"
+                        stroke-width="10"
+                        stroke-linecap="round"
+                        stroke-dasharray="251"
+                        stroke-dashoffset="6"
+                        transform="rotate(-90 48 48)"
+                      />
+                    </svg>
+                    <div>
+                      <div class="pv-del__num tnum">99.2%</div>
+                      <div class="pv-del__cap">Inbox placement</div>
+                      {deliverChecks.map((c) => (
+                        <div class="pv-del__check">
+                          <span class="pv-del__dot" />
+                          {c} verified
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </article>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  {/* --------------------------------------------------------- CHANNELS */}
+  <section id="channels" class="pd-wrap pd-sec-channels">
+    <p class="eyebrow" data-reveal>Channels</p>
+    <h2 class="pd-channels__title" data-reveal style="--reveal-delay:60ms">One workspace, four channels.</h2>
+    <div class="pd-chan-grid">
+      {
+        channels.map((c, i) => (
+          <div class="pd-cell" data-reveal style={`--reveal-delay:${i * 80}ms`}>
+            <a href={c.href} class="pd-chan pd-card">
+              <div class="pd-chan__top">
+                <span class="pd-chan__ic" style={`background:${c.tint};color:${c.color}`}>
+                  <Icon name={c.icon} size={22} />
+                </span>
+                <span class="pd-chan__arrow">
+                  <Icon name="arrow-up-right" size={18} stroke={2.2} />
+                </span>
+              </div>
+              <span class="pd-chan__label">{c.label}</span>
+              <span class="pd-chan__desc">{c.desc}</span>
+            </a>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  {/* -------------------------------------------------- WORKFLOW / WIZARD */}
+  <section class="pd-wide pd-sec-wizard">
+    <div class="pd-wizard-panel" data-reveal>
+      <div class="pd-glow pd-glow--1" aria-hidden="true"></div>
+      <div class="pd-glow pd-glow--2" aria-hidden="true"></div>
+      <div class="pd-glow pd-glow--3" aria-hidden="true"></div>
+      <div class="pd-wizard__head">
+        <p class="eyebrow pd-eyebrow--dark">Campaign wizard</p>
+        <h2 class="pd-wizard__title">Five steps from idea to inbox</h2>
+      </div>
+      <div class="pd-wizard__steps">
+        <div class="pd-wizard__line" aria-hidden="true"></div>
+        {
+          steps.map((s, i) => (
+            <div class="pd-step" data-reveal style={`--reveal-delay:${i * 80}ms`}>
+              <div class="pd-step__num tnum">{s.n}</div>
+              <div class="pd-step__title">{s.title}</div>
+              <div class="pd-step__desc">{s.desc}</div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* -------------------------------------------------- CAPABILITIES GRID */}
+  <section class="pd-wrap pd-sec-caps">
+    <h2 class="pd-caps__title" data-reveal>And everything else you'd expect</h2>
+    <div class="pd-caps-grid">
+      {
+        caps.map((c, i) => (
+          <div class="pd-cell" data-reveal style={`--reveal-delay:${(i % 3) * 80}ms`}>
+            <article class="pd-cap pd-card">
+              <span class="pd-cap__ic">
+                <Icon name={c.icon} size={20} />
+              </span>
+              <h3 class="pd-cap__title">{c.title}</h3>
+              <p class="pd-cap__desc">{c.desc}</p>
+            </article>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  {/* ----------------------------------------------------------------- CTA */}
+  <section class="pd-wrap pd-sec-cta">
+    <div class="pd-cta-panel" data-reveal>
+      <div class="pd-cta__glow" aria-hidden="true"></div>
+      <h2 class="pd-cta__title">See the workspace in action</h2>
+      <p class="pd-cta__sub">Start a free trial and send your first multichannel campaign today.</p>
+      <div class="pd-cta__row">
+        <a href={routes.auth.signup} class="pd-cta__primary">
+          Start free trial
+          <Icon name="arrow-right" size={16} stroke={2} />
+        </a>
+        <a href={routes.pricing} class="pd-cta__secondary">View pricing</a>
+      </div>
+    </div>
+  </section>
+</MarketingLayout>
+
+<style>
+  /* ---------------------------------------------------------- Containers */
+  .pd-wide {
+    max-width: calc(1280px + 64px);
+    margin-inline: auto;
+    padding-inline: 32px;
+  }
+  .pd-wrap {
+    max-width: calc(1100px + 48px);
+    margin-inline: auto;
+    padding-inline: 24px;
+  }
+
+  .pd-sec-hero {
+    position: relative;
+    padding-block: 72px 48px;
+  }
+  .pd-sec-features {
+    padding-block: 24px 40px;
+  }
+  .pd-sec-channels {
+    padding-block: 32px 8px;
+    scroll-margin-top: 88px;
+  }
+  .pd-sec-wizard {
+    padding-block: 64px 40px;
+  }
+  .pd-sec-caps {
+    padding-block: 72px;
+  }
+  .pd-sec-cta {
+    padding-block: 40px 88px;
+  }
+
+  @media (max-width: 640px) {
+    .pd-wide,
+    .pd-wrap {
+      padding-inline: 20px;
+    }
+  }
+
+  /* --------------------------------------------------------------- Hero */
+  .pd-hero__title {
+    font-size: clamp(44px, 6.5vw, 92px);
+    margin: 16px 0 0;
+    max-width: 15ch;
+  }
+
+  .pd-hero__lead {
+    font-size: 20px;
+    line-height: 1.55;
+    color: var(--text3);
+    max-width: 56ch;
+    margin: 24px 0 0;
+  }
+
+  /* ----------------------------------------------- Shared card hover ring */
+  @property --pd-a {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+  }
+
+  .pd-card {
+    position: relative;
+    isolation: isolate;
+    transition:
+      transform 0.3s var(--ease-out),
+      box-shadow 0.3s var(--ease-out);
+  }
+
+  .pd-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: conic-gradient(
+      from var(--pd-a),
+      transparent 50%,
+      #4f46e5 74%,
+      #8b5cf6 84%,
+      #ff441f 94%,
+      transparent 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.3s var(--ease-out);
+    pointer-events: none;
+  }
+
+  .pd-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 40px rgba(30, 27, 22, 0.1);
+  }
+
+  .pd-card:hover::before {
+    opacity: 1;
+    animation: pdSpin 3.2s linear infinite;
+  }
+
+  @keyframes pdSpin {
+    to {
+      --pd-a: 360deg;
+    }
+  }
+
+  /* ------------------------------------------------------- Feature rows */
+  .feat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .feat-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 44px;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+  }
+
+  .feat-row__text {
+    order: 1;
+  }
+  .feat-row__visual {
+    order: 2;
+  }
+  .feat-row--reverse .feat-row__text {
+    order: 2;
+  }
+  .feat-row--reverse .feat-row__visual {
+    order: 1;
+  }
+
+  .feat-row__ic {
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    background: var(--accent-tint);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .feat-row__title {
+    font-size: 28px;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    margin: 0 0 12px;
+  }
+
+  .feat-row__desc {
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--text3);
+    margin: 0 0 18px;
+  }
+
+  .feat-row__points {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .feat-row__point {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--text2);
+  }
+
+  .feat-row__point-ic {
+    color: var(--success);
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+  }
+
+  @media (max-width: 900px) {
+    .feat-row {
+      grid-template-columns: 1fr;
+      gap: 28px;
+      padding: 28px;
+    }
+    .feat-row__text,
+    .feat-row__visual,
+    .feat-row--reverse .feat-row__text,
+    .feat-row--reverse .feat-row__visual {
+      order: 0;
+    }
+  }
+
+  /* ---------------------------------------------------- Product visuals */
+  .pv-builder {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 12px 30px rgba(30, 27, 22, 0.08);
+    animation: pdFloat 7s ease-in-out infinite;
+  }
+  .pv-builder__bar {
+    height: 34px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--divider);
+  }
+  .pv-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--border2);
+  }
+  .pv-builder__body {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    height: 220px;
+  }
+  .pv-builder__rail {
+    border-right: 1px solid var(--divider);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .pv-rail-block {
+    height: 34px;
+    border-radius: 8px;
+    background: var(--surface2);
+  }
+  .pv-rail-block--active {
+    background: var(--accent-tint);
+  }
+  .pv-builder__canvas {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .pv-builder__hero {
+    height: 40px;
+    border-radius: 8px;
+    background: linear-gradient(90deg, var(--accent-tint), var(--bg));
+  }
+  .pv-builder__drop {
+    height: 70px;
+    border-radius: 8px;
+    border: 1.5px dashed #c7c7f0;
+    background: #f8f8ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a5a3d6;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .pv-line {
+    height: 14px;
+    border-radius: 5px;
+    background: var(--divider);
+  }
+  .pv-line--80 {
+    width: 80%;
+  }
+  .pv-line--60 {
+    width: 60%;
+  }
+  .pv-builder__btn {
+    height: 32px;
+    width: 120px;
+    border-radius: 8px;
+    background: var(--accent);
+  }
+
+  .pv-aud {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 12px 30px rgba(30, 27, 22, 0.08);
+    animation: pdFloat 8s ease-in-out 0.4s infinite;
+  }
+  .pv-aud__head {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--divider);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pv-aud__title {
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .pv-aud__new {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .pv-aud__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--surface2);
+  }
+  .pv-aud__name {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 13px;
+  }
+  .pv-aud__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .pv-aud__val {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .pv-an {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 12px 30px rgba(30, 27, 22, 0.08);
+    animation: pdFloat 7.5s ease-in-out 0.2s infinite;
+  }
+  .pv-an__head {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .pv-an__title {
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .pv-an__sub {
+    font-size: 12px;
+    color: var(--text4);
+  }
+  .pv-an__bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 130px;
+  }
+  .pv-an__col {
+    flex: 1;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    justify-content: flex-end;
+  }
+  .pv-an__bar {
+    background: linear-gradient(#818cf8, #4f46e5);
+    border-radius: 4px 4px 0 0;
+    transform-origin: bottom;
+    animation: pdGrow 0.8s ease both;
+  }
+  .pv-an__reflect {
+    background: #e9e7ff;
+    border-radius: 0 0 4px 4px;
+    transform-origin: top;
+  }
+
+  .pv-del {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 12px 30px rgba(30, 27, 22, 0.08);
+    animation: pdFloat 8s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+  }
+  .pv-del__gauge {
+    flex-shrink: 0;
+  }
+  .pv-del__num {
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .pv-del__cap {
+    font-size: 13px;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+  .pv-del__check {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 5px;
+  }
+  .pv-del__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    flex-shrink: 0;
+  }
+
+  /* ------------------------------------------------------------ Channels */
+  .pd-channels__title {
+    font-size: clamp(28px, 3.8vw, 44px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-weight: 800;
+    margin: 12px 0 28px;
+    max-width: 20ch;
+    color: var(--text);
+  }
+
+  .pd-chan-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  .pd-cell {
+    display: flex;
+  }
+
+  .pd-chan {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 220px;
+  }
+
+  .pd-chan__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .pd-chan__ic {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pd-chan__arrow {
+    color: var(--text);
+    opacity: 0.3;
+    display: flex;
+    transition:
+      opacity 0.3s var(--ease-out),
+      transform 0.3s var(--ease-out);
+  }
+
+  .pd-chan:hover .pd-chan__arrow {
+    opacity: 1;
+    transform: translate(3px, -3px);
+  }
+
+  .pd-chan__label {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .pd-chan__desc {
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--text3);
+    margin-top: auto;
+  }
+
+  @media (max-width: 900px) {
+    .pd-chan-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 560px) {
+    .pd-chan-grid {
+      grid-template-columns: 1fr;
+    }
+    .pd-chan {
+      min-height: 0;
+    }
+  }
+
+  /* --------------------------------------------------- Workflow / wizard */
+  .pd-wizard-panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    background: linear-gradient(135deg, var(--ink-band2), var(--ink-band));
+    padding: 64px 48px;
+  }
+
+  .pd-glow {
+    position: absolute;
+    pointer-events: none;
+  }
+  .pd-glow--1 {
+    top: -90px;
+    left: 8%;
+    width: 340px;
+    height: 340px;
+    background: radial-gradient(circle, rgba(99, 91, 245, 0.28), transparent 65%);
+    animation: pdBlob 14s ease-in-out infinite;
+  }
+  .pd-glow--2 {
+    bottom: -110px;
+    right: 6%;
+    width: 360px;
+    height: 360px;
+    background: radial-gradient(circle, rgba(255, 68, 31, 0.22), transparent 65%);
+    animation: pdDrift 12s ease-in-out infinite;
+  }
+  .pd-glow--3 {
+    top: 40%;
+    right: 34%;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(34, 197, 94, 0.14), transparent 65%);
+    animation: pdDrift 16s ease-in-out infinite;
+  }
+
+  .pd-wizard__head {
+    position: relative;
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto 52px;
+  }
+
+  .pd-eyebrow--dark {
+    color: #a5a39a;
+  }
+
+  .pd-wizard__title {
+    font-size: clamp(30px, 3.8vw, 46px);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    font-weight: 800;
+    color: var(--ink-band-text);
+    margin: 14px 0 0;
+  }
+
+  .pd-wizard__steps {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+  }
+
+  .pd-wizard__line {
+    position: absolute;
+    top: 26px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--ink-band-border) 8%,
+      var(--ink-band-border) 92%,
+      transparent
+    );
+  }
+
+  .pd-step {
+    text-align: center;
+    position: relative;
+  }
+
+  .pd-step__num {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 17px;
+    box-shadow:
+      0 0 0 6px var(--ink-band),
+      0 0 0 8px var(--ink-band-border);
+  }
+
+  .pd-step__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink-band-text);
+    margin-bottom: 6px;
+  }
+
+  .pd-step__desc {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #a5a39a;
+  }
+
+  @media (max-width: 640px) {
+    .pd-wizard-panel {
+      padding: 44px 24px;
+    }
+    .pd-wizard__steps {
+      grid-template-columns: 1fr;
+      gap: 26px;
+    }
+    .pd-wizard__line {
+      display: none;
+    }
+  }
+
+  /* -------------------------------------------------------- Capabilities */
+  .pd-caps__title {
+    font-size: clamp(26px, 4vw, 32px);
+    letter-spacing: -0.03em;
+    font-weight: 700;
+    margin: 0 0 36px;
+    text-align: center;
+    color: var(--text);
+  }
+
+  .pd-caps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .pd-cap {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  .pd-cap__ic {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--surface2);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+
+  .pd-cap__title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+
+  .pd-cap__desc {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text3);
+    margin: 0;
+  }
+
+  @media (max-width: 900px) {
+    .pd-caps-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 560px) {
+    .pd-caps-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ---------------------------------------------------------------- CTA */
+  .pd-cta-panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    background: linear-gradient(135deg, var(--ink-band2), var(--ink-band));
+    padding: 56px 40px;
+    text-align: center;
+  }
+
+  .pd-cta__glow {
+    position: absolute;
+    top: -60px;
+    right: -40px;
+    width: 280px;
+    height: 280px;
+    background: radial-gradient(circle, rgba(255, 68, 31, 0.22), transparent 65%);
+    animation: pdBlob 12s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .pd-cta__title {
+    position: relative;
+    font-size: clamp(28px, 6vw, 38px);
+    letter-spacing: -0.03em;
+    font-weight: 700;
+    color: var(--ink-band-text);
+    margin: 0;
+  }
+
+  .pd-cta__sub {
+    position: relative;
+    font-size: 17px;
+    color: var(--ink-band-text2);
+    margin: 14px auto 0;
+    max-width: 480px;
+  }
+
+  .pd-cta__row {
+    position: relative;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+
+  .pd-cta__primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 26px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    transition:
+      background 0.15s var(--ease-out),
+      transform 0.15s var(--ease-out);
+  }
+
+  .pd-cta__primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+  }
+
+  .pd-cta__secondary {
+    display: inline-flex;
+    align-items: center;
+    padding: 14px 26px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink-band-text);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    transition: background 0.15s var(--ease-out);
+  }
+
+  .pd-cta__secondary:hover {
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  /* ------------------------------------------------------- Local keyframes */
+  @keyframes pdFloat {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-12px);
+    }
+  }
+  @keyframes pdDrift {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    50% {
+      transform: translate(8px, -10px);
+    }
+  }
+  @keyframes pdGrow {
+    from {
+      transform: scaleY(0);
+    }
+    to {
+      transform: scaleY(1);
+    }
+  }
+  @keyframes pdBlob {
+    0%,
+    100% {
+      border-radius: 60% 40% 55% 45% / 50% 55% 45% 50%;
+    }
+    50% {
+      border-radius: 45% 55% 40% 60% / 55% 45% 60% 40%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pv-builder,
+    .pv-aud,
+    .pv-an,
+    .pv-del,
+    .pd-glow,
+    .pd-cta__glow,
+    .pv-an__bar {
+      animation: none !important;
+    }
+    .pd-card:hover {
+      transform: none;
+    }
+    .pd-card:hover::before {
+      animation: none;
+    }
+  }
+</style>

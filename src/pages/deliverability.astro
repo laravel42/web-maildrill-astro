@@ -1,0 +1,621 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import Icon from '@/components/ui/Icon.astro';
+import type { IconName } from '@/lib/icons';
+import { routes } from '@/config/routes';
+import { serviceJsonLd, breadcrumbJsonLd } from '@/lib/seo/structured-data';
+
+const seo = {
+  title: 'Deliverability — Maildrill inbox placement, authentication & warmup',
+  description:
+    "Maildrill's deliverability engine: domain authentication (SPF, DKIM, DMARC), automated warmup, reputation and bounce monitoring, and list hygiene for 99.2% inbox placement.",
+};
+
+// Hero gauge — domain authentication status readout.
+const authStatus = [
+  { name: 'SPF', value: 'Verified' },
+  { name: 'DKIM', value: 'Verified' },
+  { name: 'DMARC', value: 'Aligned' },
+  { name: 'Reputation', value: 'Excellent' },
+];
+
+type Stat = {
+  to: number;
+  decimals: number;
+  prefix: string;
+  suffix: string;
+  label: string;
+};
+const stats: Stat[] = [
+  { to: 99.2, decimals: 1, prefix: '', suffix: '%', label: 'Average inbox placement' },
+  { to: 0.1, decimals: 1, prefix: '<', suffix: '%', label: 'Spam-complaint rate' },
+  { to: 2.4, decimals: 1, prefix: '', suffix: 'B', label: 'Messages delivered monthly' },
+];
+
+type Pillar = { icon: IconName; title: string; desc: string };
+const pillars: Pillar[] = [
+  {
+    icon: 'shield',
+    title: 'Authentication',
+    desc: 'Guided SPF, DKIM, and DMARC setup with a live checker, so mailbox providers know your mail is really you.',
+  },
+  {
+    icon: 'chart',
+    title: 'Automated warmup',
+    desc: 'New domains and IPs ramp volume on a schedule that builds reputation without tripping spam filters.',
+  },
+  {
+    icon: 'bolt',
+    title: 'Reputation monitoring',
+    desc: 'Real-time bounce, complaint, and blocklist monitoring with alerts before problems affect delivery.',
+  },
+  {
+    icon: 'filter',
+    title: 'List hygiene',
+    desc: 'Automatic suppression of bounces, complaints, and unengaged contacts keeps your sender score high.',
+  },
+];
+
+const checks: string[] = [
+  'One-click SPF, DKIM & DMARC records',
+  'Custom sending domains & subdomains',
+  'Dedicated IP options at scale',
+  'Seed-list inbox placement testing',
+  'Bounce & complaint auto-suppression',
+  'Engagement-based sending',
+  'Blocklist monitoring & alerts',
+  'Unsubscribe & preference handling',
+  'Per-domain reputation dashboards',
+];
+
+const jsonLd = [
+  serviceJsonLd({
+    name: 'Deliverability',
+    description: seo.description,
+    path: routes.deliverability,
+  }),
+  breadcrumbJsonLd([
+    { name: 'Home', path: '/' },
+    { name: 'Deliverability', path: routes.deliverability },
+  ]),
+];
+---
+
+<MarketingLayout seo={seo} jsonLd={jsonLd} active="resources">
+  {/* ---------------------------------------------------------------- HERO */}
+  <section class="dl-hero container--wide">
+    <div class="dl-hero__glow" aria-hidden="true"></div>
+    <p class="eyebrow" data-reveal>Deliverability</p>
+    <div class="dl-hero__grid">
+      <div>
+        <h1 class="display dl-hero__title" data-reveal style="--reveal-delay:40ms">
+          Land in the inbox, not the spam folder.
+        </h1>
+        <p class="lead dl-hero__lead" data-reveal style="--reveal-delay:120ms">
+          A message that doesn't arrive doesn't count. Maildrill's deliverability engine handles
+          authentication, warmup, and reputation so more of every send reaches real people.
+        </p>
+        <div class="dl-hero__actions" data-reveal style="--reveal-delay:200ms">
+          <a href={routes.auth.signup} class="btn btn--pill btn--lg dl-hero-cta">
+            Start free trial
+            <span class="btn__icon btn__icon--arrow" aria-hidden="true">
+              <Icon name="arrow-up-right" size={15} stroke={2.2} />
+            </span>
+          </a>
+          <a href={routes.product} class="btn btn--underline">See the workspace</a>
+        </div>
+      </div>
+
+      {/* Inbox-placement gauge — recreated in CSS, no screenshot */}
+      <div class="dl-ring" data-reveal style="--reveal-delay:140ms">
+        <div class="dl-ring__card">
+          <div class="dl-ring__row">
+            <svg class="dl-ring__gauge" width="140" height="140" viewBox="0 0 140 140" aria-hidden="true">
+              <circle cx="70" cy="70" r="58" fill="none" stroke="var(--divider)" stroke-width="14"></circle>
+              <circle
+                cx="70"
+                cy="70"
+                r="58"
+                fill="none"
+                stroke="var(--success)"
+                stroke-width="14"
+                stroke-linecap="round"
+                stroke-dasharray="364"
+                stroke-dashoffset="8"
+                transform="rotate(-90 70 70)"></circle>
+            </svg>
+            <div class="dl-ring__body">
+              <div class="dl-ring__pct mono tnum">99.2%</div>
+              <div class="dl-ring__cap">inbox placement</div>
+              <dl class="dl-ring__list">
+                {
+                  authStatus.map((s) => (
+                    <div class="dl-ring__item">
+                      <dt class="dl-ring__name">
+                        <span class="dl-ring__dot" aria-hidden="true" />
+                        {s.name}
+                      </dt>
+                      <dd class="dl-ring__value mono">{s.value}</dd>
+                    </div>
+                  ))
+                }
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* ------------------------------------------------------------- METRICS */}
+  <section class="dl-metrics">
+    <div class="container--wide dl-metrics__grid">
+      {
+        stats.map((s, i) => (
+          <div class="dl-metric" data-reveal style={`--reveal-delay:${i * 80}ms`}>
+            <div
+              class="dl-metric__num mono tnum"
+              data-count
+              data-to={s.to}
+              data-decimals={s.decimals}
+              data-prefix={s.prefix}
+              data-suffix={s.suffix}
+            >
+              {s.prefix}0{s.suffix}
+            </div>
+            <div class="dl-metric__label">{s.label}</div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  {/* ------------------------------------------------------------- PILLARS */}
+  <section class="dl-pillars container--wide">
+    <p class="eyebrow" data-reveal>The engine</p>
+    <h2 class="h-section dl-pillars__title" data-reveal style="--reveal-delay:60ms">
+      Four systems working behind every send.
+    </h2>
+    <div class="dl-pillars__grid">
+      {
+        pillars.map((p, i) => (
+          <div class="dl-pillar" data-reveal style={`--reveal-delay:${i * 80}ms`}>
+            <span class="dl-pillar__ic">
+              <Icon name={p.icon} size={22} />
+            </span>
+            <h3 class="dl-pillar__title">{p.title}</h3>
+            <p class="dl-pillar__desc">{p.desc}</p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  {/* ------------------------------------------------------------ CHECKLIST */}
+  <section class="dl-checks">
+    <div class="container--wide">
+      <p class="eyebrow" data-reveal>Handled for you</p>
+      <h2 class="h-section dl-checks__title" data-reveal style="--reveal-delay:60ms">
+        Best practice, on by default.
+      </h2>
+      <ul class="dl-checks__grid">
+        {
+          checks.map((c, i) => (
+            <li class="dl-check" data-reveal style={`--reveal-delay:${i * 40}ms`}>
+              <span class="dl-check__ic" aria-hidden="true">
+                <Icon name="check" size={18} stroke={2.4} />
+              </span>
+              <span>{c}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  {/* ------------------------------------------------------------------ CTA */}
+  <section class="dl-cta-sec container--wide">
+    <div class="dl-cta-card" data-reveal>
+      <div class="dl-cta-card__glow" aria-hidden="true"></div>
+      <h2 class="dl-cta-card__title">Send with confidence.</h2>
+      <p class="dl-cta-card__sub">
+        Get authenticated and warmed up in minutes — deliverability tooling is included on every
+        account.
+      </p>
+      <div class="dl-cta-card__row">
+        <a href={routes.auth.signup} class="btn btn--pill dl-cta-green">
+          Start free trial
+          <span class="btn__icon btn__icon--arrow" aria-hidden="true">
+            <Icon name="arrow-up-right" size={15} stroke={2.2} />
+          </span>
+        </a>
+        <a href={routes.pricing} class="btn btn--pill dl-cta-ghost">View pricing</a>
+      </div>
+    </div>
+  </section>
+</MarketingLayout>
+
+<style>
+  /* ---- HERO ---- */
+  .dl-hero {
+    position: relative;
+    padding-block: 64px 40px;
+  }
+
+  .dl-hero__glow {
+    position: absolute;
+    top: 10px;
+    right: -30px;
+    width: 420px;
+    height: 420px;
+    max-width: 70vw;
+    background: radial-gradient(circle at 40% 40%, rgba(22, 163, 74, 0.1), transparent 62%);
+    filter: blur(10px);
+    animation: blob 16s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .dl-hero__grid {
+    display: grid;
+    gap: 40px;
+    align-items: center;
+    margin-top: 16px;
+  }
+
+  .dl-hero__title {
+    font-size: clamp(2.625rem, 6vw, 5.25rem);
+    line-height: 1;
+    margin: 8px 0 0;
+    max-width: 15ch;
+  }
+
+  .dl-hero__lead {
+    margin: 22px 0 0;
+    max-width: 52ch;
+  }
+
+  .dl-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    margin-top: 30px;
+  }
+
+  /* Primary CTA: ink pill that warms to success-green on hover (page theme). */
+  .dl-hero-cta {
+    background: var(--ink);
+    color: var(--on-ink);
+  }
+
+  .dl-hero-cta:hover {
+    background: var(--success);
+    color: #fff;
+  }
+
+  @media (min-width: 900px) {
+    .dl-hero__grid {
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 56px;
+    }
+  }
+
+  /* ---- HERO gauge card ---- */
+  .dl-ring {
+    justify-self: stretch;
+  }
+
+  .dl-ring__card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-dialog);
+    padding: 34px;
+    box-shadow: 0 22px 50px rgba(30, 27, 22, 0.1);
+    animation: floaty 7.5s ease-in-out infinite;
+  }
+
+  .dl-ring__row {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+  }
+
+  .dl-ring__gauge {
+    flex-shrink: 0;
+    width: 140px;
+    height: 140px;
+  }
+
+  .dl-ring__body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .dl-ring__pct {
+    font-size: 46px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .dl-ring__cap {
+    font-size: var(--fs-sm2);
+    color: var(--text3);
+    margin: 4px 0 16px;
+  }
+
+  .dl-ring__list {
+    margin: 0;
+  }
+
+  .dl-ring__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    font-size: var(--fs-sm);
+    padding: 5px 0;
+  }
+
+  .dl-ring__name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text2);
+  }
+
+  .dl-ring__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--success);
+    flex-shrink: 0;
+  }
+
+  .dl-ring__value {
+    margin: 0;
+    color: var(--success);
+    font-weight: 500;
+  }
+
+  @media (max-width: 520px) {
+    .dl-ring__card {
+      padding: 24px;
+    }
+    .dl-ring__row {
+      gap: 18px;
+    }
+    .dl-ring__gauge {
+      width: 108px;
+      height: 108px;
+    }
+    .dl-ring__pct {
+      font-size: 38px;
+    }
+  }
+
+  /* ---- METRICS ---- */
+  .dl-metrics {
+    background: var(--surface);
+    border-block: 1px solid var(--border);
+  }
+
+  .dl-metrics__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    padding-block: 36px;
+  }
+
+  .dl-metric {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+
+  .dl-metric__num {
+    font-size: clamp(2.125rem, 4vw, 3rem);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: var(--success);
+  }
+
+  .dl-metric__label {
+    font-size: var(--fs-sm2);
+    line-height: 1.35;
+    color: var(--text3);
+  }
+
+  @media (max-width: 680px) {
+    .dl-metrics__grid {
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+  }
+
+  /* ---- PILLARS ---- */
+  .dl-pillars {
+    padding-block: 80px 48px;
+  }
+
+  .dl-pillars__title {
+    margin: 14px 0 44px;
+    max-width: 18ch;
+  }
+
+  .dl-pillars__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
+
+  .dl-pillar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+  }
+
+  .dl-pillar__ic {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    background: var(--success-bg);
+    color: var(--success);
+    margin-bottom: 16px;
+  }
+
+  .dl-pillar__title {
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+  }
+
+  .dl-pillar__desc {
+    font-size: var(--fs-base);
+    line-height: 1.6;
+    color: var(--text3);
+    margin: 0;
+  }
+
+  @media (max-width: 640px) {
+    .dl-pillars__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ---- CHECKLIST ---- */
+  .dl-checks {
+    background: var(--surface);
+    border-block: 1px solid var(--border);
+  }
+
+  .dl-checks > .container--wide {
+    padding-block: 80px;
+  }
+
+  .dl-checks__title {
+    margin: 14px 0 40px;
+    max-width: 16ch;
+  }
+
+  .dl-checks__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px 32px;
+  }
+
+  .dl-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    padding: 14px 0;
+    border-top: 1px solid var(--border2);
+    font-size: var(--fs-base);
+    color: var(--text);
+  }
+
+  .dl-check__ic {
+    display: flex;
+    color: var(--success);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  @media (max-width: 860px) {
+    .dl-checks__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 560px) {
+    .dl-checks__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ---- CTA ---- */
+  .dl-cta-sec {
+    padding-block: 56px 88px;
+  }
+
+  .dl-cta-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    background: linear-gradient(135deg, var(--ink-band2), var(--ink-band));
+    padding: 56px 40px;
+    text-align: center;
+  }
+
+  .dl-cta-card__glow {
+    position: absolute;
+    bottom: -70px;
+    left: -40px;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(22, 163, 74, 0.22), transparent 65%);
+    animation: blob 12s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .dl-cta-card__title {
+    position: relative;
+    font-size: clamp(1.875rem, 3.6vw, 2.375rem);
+    letter-spacing: -0.03em;
+    font-weight: 700;
+    color: var(--ink-band-text);
+    margin: 0;
+  }
+
+  .dl-cta-card__sub {
+    position: relative;
+    font-size: var(--fs-md);
+    line-height: 1.55;
+    color: var(--ink-band-text2);
+    margin: 14px auto 0;
+    max-width: 480px;
+  }
+
+  .dl-cta-card__row {
+    position: relative;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+
+  .dl-cta-green {
+    background: var(--success);
+    color: #fff;
+  }
+
+  .dl-cta-green:hover {
+    background: var(--success-strong);
+    transform: translateY(-2px);
+  }
+
+  .dl-cta-ghost {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--ink-band-text);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .dl-cta-ghost:hover {
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  @media (max-width: 560px) {
+    .dl-cta-card {
+      padding: 44px 22px;
+    }
+  }
+</style>

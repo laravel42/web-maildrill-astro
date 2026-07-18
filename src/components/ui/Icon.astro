@@ -1,0 +1,44 @@
+---
+import { iconPaths, filledIcons, type IconName } from '@/lib/icons';
+
+interface Props {
+  name: IconName;
+  size?: number;
+  stroke?: number;
+  class?: string;
+  title?: string;
+}
+
+const { name, size = 20, stroke = 2, class: className = '', title } = Astro.props;
+const isFilled = filledIcons.has(name);
+
+const attrs = isFilled
+  ? { fill: 'currentColor' }
+  : {
+      fill: 'none',
+      stroke: 'currentColor',
+      'stroke-width': String(stroke),
+      'stroke-linecap': 'round' as const,
+      'stroke-linejoin': 'round' as const,
+    };
+---
+
+<svg
+  viewBox="0 0 24 24"
+  width={size}
+  height={size}
+  class:list={['icon', className]}
+  role={title ? 'img' : undefined}
+  aria-hidden={title ? undefined : 'true'}
+  aria-label={title}
+  {...attrs}
+  set:html={(title ? `<title>${title}</title>` : '') + iconPaths[name]}
+/>
+
+<style>
+  .icon {
+    display: inline-block;
+    flex-shrink: 0;
+    vertical-align: middle;
+  }
+</style>

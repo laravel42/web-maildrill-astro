@@ -1,0 +1,602 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import Icon from '@/components/ui/Icon.astro';
+import type { IconName } from '@/lib/icons';
+import { routes } from '@/config/routes';
+import { organizationJsonLd, breadcrumbJsonLd, personJsonLd } from '@/lib/seo/structured-data';
+
+const seo = {
+  title: 'About — Maildrill, the workspace for every message',
+  description:
+    'Maildrill is building the fastest, calmest workspace for multichannel messaging. Learn about our mission, principles, and the team behind email, SMS, WhatsApp, and voice in one place.',
+};
+
+type Value = { icon: IconName; title: string; desc: string; delay: number };
+const values: Value[] = [
+  {
+    icon: 'bolt',
+    title: 'Speed is a feature',
+    desc: "If it's slow, it's broken. We optimize every screen for the fastest path to a sent campaign.",
+    delay: 0,
+  },
+  {
+    icon: 'layers',
+    title: 'One source of truth',
+    desc: 'No silos. Audience, content, and analytics live in one place, shared across every channel.',
+    delay: 80,
+  },
+  {
+    icon: 'sparkle',
+    title: 'Calm over clever',
+    desc: 'Powerful, never noisy. Progressive disclosure keeps the surface simple and the depth available.',
+    delay: 160,
+  },
+  {
+    icon: 'shield',
+    title: 'Deliverability matters',
+    desc: "A message that doesn't arrive doesn't count. Reputation and inbox placement are first-class.",
+    delay: 0,
+  },
+  {
+    icon: 'users',
+    title: 'Built with senders',
+    desc: 'We ship alongside the marketers who use Maildrill every day, and their feedback drives the roadmap.',
+    delay: 80,
+  },
+  {
+    icon: 'globe',
+    title: 'Meet people anywhere',
+    desc: "Email, SMS, WhatsApp, voice — we go where the audience is, not where it's convenient for us.",
+    delay: 160,
+  },
+];
+
+type Milestone = { year: string; title: string; desc: string; delay: number };
+const milestones: Milestone[] = [
+  {
+    year: '2023',
+    title: 'The frustration',
+    desc: 'Two operators, tired of stitching together five tools for one campaign, sketched a unified workspace.',
+    delay: 0,
+  },
+  {
+    year: '2024',
+    title: 'First send',
+    desc: 'Maildrill sent its first production email. Deliverability tooling shipped a month later.',
+    delay: 80,
+  },
+  {
+    year: '2025',
+    title: 'Multichannel',
+    desc: 'SMS and WhatsApp joined email on one shared audience — and the AI copilot arrived.',
+    delay: 160,
+  },
+  {
+    year: '2026',
+    title: 'Voice & scale',
+    desc: 'Voice campaigns launched. Today 12,000+ workspaces send billions of messages a month.',
+    delay: 240,
+  },
+];
+
+type Stat = {
+  to: number;
+  decimals: number;
+  suffix: string;
+  prefix: string;
+  label: string;
+  delay: number;
+};
+const stats: Stat[] = [
+  { to: 12, decimals: 0, suffix: 'k+', prefix: '', label: 'Active workspaces', delay: 0 },
+  { to: 2.4, decimals: 1, suffix: 'B', prefix: '', label: 'Messages sent monthly', delay: 80 },
+  { to: 4, decimals: 0, suffix: '', prefix: '', label: 'Channels, one audience', delay: 160 },
+  { to: 38, decimals: 0, suffix: '', prefix: '', label: 'People on the team', delay: 240 },
+];
+
+type Member = { name: string; role: string; initials: string; grad: string; delay: number };
+const team: Member[] = [
+  {
+    name: 'Elena Marsh',
+    role: 'Co-founder & CEO',
+    initials: 'EM',
+    grad: 'linear-gradient(150deg,#4f46e5,#818cf8)',
+    delay: 0,
+  },
+  {
+    name: 'Tom Whitfield',
+    role: 'Co-founder & CTO',
+    initials: 'TW',
+    grad: 'linear-gradient(150deg,#ff441f,#ff7a5c)',
+    delay: 80,
+  },
+  {
+    name: 'Priya Nair',
+    role: 'Head of Product',
+    initials: 'PN',
+    grad: 'linear-gradient(150deg,#0891b2,#22d3ee)',
+    delay: 160,
+  },
+  {
+    name: 'Marcus Reed',
+    role: 'Head of Deliverability',
+    initials: 'MR',
+    grad: 'linear-gradient(150deg,#16a34a,#4ade80)',
+    delay: 240,
+  },
+];
+
+const jsonLd = [
+  organizationJsonLd(),
+  breadcrumbJsonLd([
+    { name: 'Home', path: routes.home },
+    { name: 'About', path: routes.about },
+  ]),
+  ...team.map((m) => personJsonLd(m.name, m.role)),
+];
+---
+
+<MarketingLayout seo={seo} jsonLd={jsonLd}>
+  {/* --------------------------------------------------------------- HERO */}
+  <section class="about-hero container--wide">
+    <div class="about-hero__glow" aria-hidden="true"></div>
+    <p class="eyebrow" data-reveal>About</p>
+    <h1 class="about-hero__title display" data-reveal style="--reveal-delay:60ms">
+      We make messaging feel effortless.
+    </h1>
+    <p class="about-hero__lead lead" data-reveal style="--reveal-delay:120ms">
+      Maildrill started with a simple frustration: sending a campaign meant juggling a stack of
+      disconnected tools, each with its own audience, its own dashboard, its own quirks. We thought
+      running campaigns should feel like running campaigns — not operating software.
+    </p>
+  </section>
+
+  {/* ------------------------------------------------------------ MISSION */}
+  <section class="mission">
+    <div class="container--wide mission__grid">
+      <p class="eyebrow" data-reveal>Mission</p>
+      <div class="mission__body">
+        <h2 class="mission__title" data-reveal>One workspace, one audience, every channel.</h2>
+        <p class="mission__p" data-reveal style="--reveal-delay:80ms">
+          We're on a mission to unify email, SMS, WhatsApp, and voice into a single, fast workspace —
+          where a marketer builds a segment once and reaches people wherever they are, without exports
+          or reconciliation.
+        </p>
+        <p class="mission__p" data-reveal style="--reveal-delay:140ms">
+          Speed, clarity, confidence, and scale — in that order. Every decision we make starts by
+          asking whether it helps someone ship a better campaign, faster.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  {/* --------------------------------------------------------- PRINCIPLES */}
+  <section class="values container--wide">
+    <p class="eyebrow" data-reveal>Principles</p>
+    <h2 class="h-section values__title" data-reveal style="--reveal-delay:60ms">What we build by.</h2>
+    <div class="values__grid">
+      {
+        values.map((v) => (
+          <div class="value" data-reveal style={`--reveal-delay:${v.delay}ms`}>
+            <span class="value__ic">
+              <Icon name={v.icon} size={22} />
+            </span>
+            <h3 class="value__title">{v.title}</h3>
+            <p class="value__desc">{v.desc}</p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  {/* -------------------------------------------------------------- STORY */}
+  <section class="story">
+    <div class="container--wide">
+      <p class="eyebrow" data-reveal>Story</p>
+      <h2 class="h-section story__title" data-reveal style="--reveal-delay:60ms">How we got here.</h2>
+      <ol class="story__list">
+        {
+          milestones.map((m) => (
+            <li class="milestone" data-reveal style={`--reveal-delay:${m.delay}ms`}>
+              <span class="milestone__year mono">{m.year}</span>
+              <span class="milestone__title">{m.title}</span>
+              <span class="milestone__desc">{m.desc}</span>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  {/* ------------------------------------------------------ BY THE NUMBERS */}
+  <section class="stats">
+    <div class="stats__glow stats__glow--orange" aria-hidden="true"></div>
+    <div class="stats__glow stats__glow--indigo" aria-hidden="true"></div>
+    <div class="container--wide stats__inner">
+      <p class="eyebrow stats__eyebrow" data-reveal>By the numbers</p>
+      <h2 class="stats__title" data-reveal style="--reveal-delay:60ms">
+        A small team, a lot of messages.
+      </h2>
+      <div class="stats__grid">
+        {
+          stats.map((s) => (
+            <div class="stat" data-reveal style={`--reveal-delay:${s.delay}ms`}>
+              <div
+                class="stat__num mono tnum"
+                data-count
+                data-to={s.to}
+                data-suffix={s.suffix}
+                data-decimals={s.decimals}
+                data-prefix={s.prefix}
+              >
+                {s.prefix}0{s.suffix}
+              </div>
+              <div class="stat__label">{s.label}</div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* --------------------------------------------------------------- TEAM */}
+  <section class="team container--wide">
+    <p class="eyebrow" data-reveal>Team</p>
+    <h2 class="h-section team__title" data-reveal style="--reveal-delay:60ms">
+      The people behind Maildrill.
+    </h2>
+    <ul class="team__grid">
+      {
+        team.map((t) => (
+          <li class="member" data-reveal style={`--reveal-delay:${t.delay}ms`}>
+            <div class="member__avatar" style={`background:${t.grad}`} aria-hidden="true">
+              <span class="member__initials">{t.initials}</span>
+            </div>
+            <div class="member__name">{t.name}</div>
+            <div class="member__role">{t.role}</div>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</MarketingLayout>
+
+<style>
+  /* ---- HERO ---- */
+  .about-hero {
+    position: relative;
+    padding-block: 64px 40px;
+  }
+
+  .about-hero__glow {
+    position: absolute;
+    top: 20px;
+    right: -30px;
+    width: 420px;
+    height: 420px;
+    max-width: 70vw;
+    background: radial-gradient(circle at 40% 40%, rgba(79, 70, 229, 0.1), transparent 62%);
+    filter: blur(10px);
+    animation: blob 16s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .about-hero__title {
+    font-size: clamp(2.75rem, 6.5vw, 5.75rem);
+    margin: 16px 0 0;
+    max-width: 16ch;
+  }
+
+  .about-hero__lead {
+    margin: 24px 0 0;
+    max-width: 60ch;
+  }
+
+  /* ---- MISSION ---- */
+  .mission {
+    background: var(--surface);
+    border-block: 1px solid var(--border);
+  }
+
+  .mission__grid {
+    display: grid;
+    gap: 24px 56px;
+    align-items: start;
+    padding-block: 80px;
+  }
+
+  .mission__title {
+    font-size: clamp(1.75rem, 3.6vw, 2.875rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin: 0 0 24px;
+    max-width: 20ch;
+  }
+
+  .mission__p {
+    font-size: 1.125rem;
+    line-height: 1.65;
+    color: var(--text3);
+    margin: 0 0 16px;
+  }
+
+  .mission__p:last-child {
+    margin-bottom: 0;
+  }
+
+  @media (min-width: 860px) {
+    .mission__grid {
+      grid-template-columns: 1fr 1.3fr;
+    }
+  }
+
+  /* ---- PRINCIPLES ---- */
+  .values {
+    padding-block: 80px 48px;
+  }
+
+  .values__title {
+    margin: 14px 0 44px;
+    max-width: 16ch;
+  }
+
+  .values__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
+
+  .value {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 26px;
+  }
+
+  .value__ic {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    background: var(--ch-email-tint);
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .value__title {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+  }
+
+  .value__desc {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text3);
+    margin: 0;
+  }
+
+  @media (max-width: 900px) {
+    .values__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 560px) {
+    .values__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ---- STORY / TIMELINE ---- */
+  .story {
+    background: var(--surface);
+    border-block: 1px solid var(--border);
+  }
+
+  .story .container--wide {
+    padding-block: 80px;
+  }
+
+  .story__title {
+    margin: 14px 0 44px;
+  }
+
+  .story__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border2);
+  }
+
+  .milestone {
+    display: grid;
+    grid-template-columns: 120px 1fr 1.6fr;
+    gap: 24px;
+    align-items: baseline;
+    padding: 26px 8px;
+    border-bottom: 1px solid var(--border2);
+  }
+
+  .milestone__year {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--brand);
+  }
+
+  .milestone__title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .milestone__desc {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text3);
+  }
+
+  @media (max-width: 760px) {
+    .milestone {
+      grid-template-columns: 1fr;
+      gap: 6px;
+      align-items: start;
+      padding: 22px 4px;
+    }
+    .milestone__title {
+      font-size: 20px;
+    }
+  }
+
+  /* ---- BY THE NUMBERS (dark band) ---- */
+  .stats {
+    position: relative;
+    background: var(--ink-band);
+    color: var(--ink-band-text);
+    overflow: hidden;
+  }
+
+  .stats__glow {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .stats__glow--orange {
+    top: -80px;
+    right: 6%;
+    width: 360px;
+    height: 360px;
+    background: radial-gradient(circle, rgba(255, 68, 31, 0.18), transparent 65%);
+    animation: blob 14s ease-in-out infinite;
+  }
+
+  .stats__glow--indigo {
+    bottom: -100px;
+    left: 2%;
+    width: 380px;
+    height: 380px;
+    background: radial-gradient(circle, rgba(99, 91, 245, 0.2), transparent 65%);
+    animation: drift 13s ease-in-out infinite;
+  }
+
+  .stats__inner {
+    position: relative;
+    padding-block: 88px;
+  }
+
+  .stats__eyebrow {
+    color: var(--muted);
+  }
+
+  .stats__title {
+    font-size: clamp(1.875rem, 4vw, 3.25rem);
+    font-weight: 800;
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+    color: var(--ink-band-text);
+    margin: 14px 0 48px;
+    max-width: 20ch;
+  }
+
+  .stats__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+  }
+
+  .stat {
+    border-top: 1px solid var(--ink-band-border);
+    padding-top: 20px;
+  }
+
+  .stat__num {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: var(--ink-band-text);
+  }
+
+  .stat__label {
+    font-size: 15px;
+    color: var(--ink-band-text2);
+    margin-top: 8px;
+  }
+
+  @media (max-width: 900px) {
+    .stats__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stats__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ---- TEAM ---- */
+  .team {
+    padding-block: 80px 88px;
+  }
+
+  .team__title {
+    margin: 14px 0 44px;
+  }
+
+  .team__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .member__avatar {
+    aspect-ratio: 1;
+    border-radius: 18px;
+    display: flex;
+    align-items: flex-end;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  .member__initials {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    /* Fixed dark ink: the chip is always light over a colored gradient, so the
+       theme-flipping --ink token would render invisible in dark mode. */
+    color: #1f1e1b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 17px;
+  }
+
+  .member__name {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+
+  .member__role {
+    font-size: 14px;
+    color: var(--text4);
+  }
+
+  @media (max-width: 900px) {
+    .team__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>

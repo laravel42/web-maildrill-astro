@@ -1,0 +1,494 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import Icon from '@/components/ui/Icon.astro';
+import { getCollection, render } from 'astro:content';
+import { articleJsonLd, breadcrumbJsonLd } from '@/lib/seo/structured-data';
+import { routes } from '@/config/routes';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => data.draft !== true);
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const path = `/blog/${post.id}`;
+
+/* ---- Presentation helpers (all derived from real posts) ---- */
+const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join('');
+
+const readingMinutes = (body: string | undefined) => {
+  const words = (body ?? '').trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200));
+};
+
+type CatStyle = { color: string; tint: string };
+const categoryStyle = (tag?: string): CatStyle => {
+  switch ((tag ?? '').toLowerCase()) {
+    case 'email':
+      return { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)' };
+    case 'voice':
+      return { color: 'var(--ch-voice)', tint: 'var(--ch-voice-tint)' };
+    case 'announcement':
+    case 'deliverability':
+      return { color: 'var(--brand)', tint: 'color-mix(in srgb, var(--brand) 14%, var(--surface))' };
+    case 'lifecycle':
+    case 'perspective':
+      return { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)' };
+    case 'strategy':
+    case 'customers':
+      return { color: 'var(--ch-whatsapp)', tint: 'var(--ch-whatsapp-tint)' };
+    case 'product':
+    case 'company':
+    default:
+      return { color: 'var(--accent)', tint: 'var(--ch-email-tint)' };
+  }
+};
+
+const primaryTag = post.data.tags[0] ?? 'Product';
+const cat = categoryStyle(primaryTag);
+const minutes = readingMinutes(post.body);
+
+const dateLabel = post.data.pubDate.toLocaleDateString('en', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+
+// Related posts: other published posts, newest first, up to 3.
+const related = (await getCollection('blog', ({ data }) => data.draft !== true))
+  .filter((p) => p.id !== post.id)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+
+const seo = {
+  title: post.data.title,
+  description: post.data.description,
+  type: 'article' as const,
+  publishedTime: post.data.pubDate.toISOString(),
+  modifiedTime: (post.data.updatedDate ?? post.data.pubDate).toISOString(),
+  author: post.data.author,
+  image: post.data.heroImage,
+};
+
+const jsonLd = [
+  articleJsonLd({
+    title: post.data.title,
+    description: post.data.description,
+    path,
+    publishedTime: seo.publishedTime,
+    modifiedTime: seo.modifiedTime,
+    author: post.data.author,
+    image: post.data.heroImage,
+  }),
+  breadcrumbJsonLd([
+    { name: 'Home', path: '/' },
+    { name: 'Blog', path: routes.blog },
+    { name: post.data.title, path },
+  ]),
+];
+---
+
+<MarketingLayout seo={seo} jsonLd={jsonLd} active="resources">
+  <div id="read-progress" class="read-progress" aria-hidden="true"></div>
+
+  {/* ------------------------------------------------------------- HEADER */}
+  <article class="art">
+    <header class="art__wrap">
+      <a href={routes.blog} class="art__back mono" data-reveal>
+        <Icon name="arrow-right" size={14} stroke={2} />
+        Blog
+      </a>
+      <div class="art__badge-row" data-reveal style="--reveal-delay:60ms">
+        <span class="art__badge" style={`--cat:${cat.color};--cat-tint:${cat.tint}`}>
+          {titleCase(primaryTag)}
+        </span>
+      </div>
+      <h1 class="art__title display" data-reveal style="--reveal-delay:100ms">{post.data.title}</h1>
+      <div class="art__meta" data-reveal style="--reveal-delay:140ms">
+        <span class="avatar avatar--md" style={`--cat:${cat.color};--cat-tint:${cat.tint}`}>
+          {initials(post.data.author)}
+        </span>
+        <span class="art__author"><strong>{post.data.author}</strong></span>
+        <span class="art__meta-time mono">
+          <time datetime={post.data.pubDate.toISOString()}>{dateLabel}</time> · {minutes} min
+        </span>
+      </div>
+    </header>
+
+    {/* ---------------------------------------------------------- HERO BANNER */}
+    <div class="art__banner-wrap" data-reveal>
+      <div class="art__banner" style={`--cat:${cat.color};--cat-tint:${cat.tint}`}>
+        <span class="art__banner-glow art__banner-glow--a" aria-hidden="true"></span>
+        <span class="art__banner-glow art__banner-glow--b" aria-hidden="true"></span>
+        <span class="art__banner-tag mono" aria-hidden="true">{primaryTag.toUpperCase()}</span>
+      </div>
+    </div>
+
+    {/* ---------------------------------------------------------------- BODY */}
+    <div class="art__wrap prose art__prose">
+      <Content />
+    </div>
+
+    {/* -------------------------------------------------------------- AUTHOR */}
+    <div class="art__wrap">
+      <div class="author-card" data-reveal>
+        <span class="avatar avatar--lg" style={`--cat:${cat.color};--cat-tint:${cat.tint}`}>
+          {initials(post.data.author)}
+        </span>
+        <div>
+          <div class="author-card__name">{post.data.author}</div>
+          <div class="author-card__bio">Writing for the Maildrill blog on multichannel messaging.</div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  {/* -------------------------------------------------------------- RELATED */}
+  {
+    related.length > 0 && (
+      <section class="related">
+        <p class="eyebrow" data-reveal>More from the blog</p>
+        <div class="related__grid">
+          {related.map((r, i) => {
+            const rTag = r.data.tags[0] ?? 'Product';
+            const rCat = categoryStyle(rTag);
+            return (
+              <a
+                href={`/blog/${r.id}`}
+                class="related__card"
+                data-reveal
+                style={`--cat:${rCat.color};--cat-tint:${rCat.tint};--reveal-delay:${i * 80}ms`}
+              >
+                <div class="related__art" />
+                <div class="related__body">
+                  <span class="related__tag">{titleCase(rTag)}</span>
+                  <h3 class="related__title">{r.data.title}</h3>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    )
+  }
+</MarketingLayout>
+
+{/* Reading-progress bar: progressive enhancement, page is fully usable without it. */}
+<script>
+  const bar = document.getElementById('read-progress');
+  if (bar) {
+    const update = () => {
+      const footer = document.querySelector('footer');
+      const end =
+        (footer ? footer.offsetTop : document.documentElement.scrollHeight) - window.innerHeight;
+      const ratio = end > 0 ? Math.min(Math.max(window.scrollY / end, 0), 1) : 0;
+      bar.style.width = ratio * 100 + '%';
+    };
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  }
+</script>
+
+<style>
+  /* ---- Reading progress ---- */
+  .read-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 0;
+    z-index: 200;
+    background: linear-gradient(90deg, var(--accent), #8b5cf6, var(--brand));
+    pointer-events: none;
+    transition: width 80ms linear;
+  }
+
+  /* ---- Shells ---- */
+  .art {
+    padding-block: 56px 0;
+  }
+
+  .art__wrap {
+    width: 100%;
+    max-width: 760px;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .art__banner-wrap {
+    width: 100%;
+    max-width: 1000px;
+    margin: 44px auto 0;
+    padding-inline: var(--gutter);
+  }
+
+  /* ---- Header ---- */
+  .art__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--fs-sm);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text4);
+    text-decoration: none;
+    transition: color var(--duration) var(--ease-out);
+  }
+
+  .art__back :global(svg) {
+    transform: rotate(180deg);
+  }
+
+  .art__back:hover {
+    color: var(--brand);
+  }
+
+  .art__badge-row {
+    margin-top: 22px;
+  }
+
+  .art__badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    background: var(--cat-tint);
+    color: var(--cat);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+  }
+
+  .art__title {
+    font-size: clamp(2.25rem, 5vw, 4rem);
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    font-weight: 800;
+    margin: 16px 0 0;
+  }
+
+  .art__meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+    font-size: var(--fs-sm2);
+    color: var(--text3);
+  }
+
+  .art__author strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .art__meta-time {
+    margin-left: auto;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* ---- Avatars ---- */
+  .avatar {
+    border-radius: 50%;
+    background: var(--cat-tint);
+    color: var(--cat);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .avatar--md {
+    width: 40px;
+    height: 40px;
+    font-size: var(--fs-sm2);
+  }
+
+  .avatar--lg {
+    width: 52px;
+    height: 52px;
+    font-size: var(--fs-md);
+  }
+
+  /* ---- Hero banner ---- */
+  .art__banner {
+    position: relative;
+    border-radius: var(--radius-dialog);
+    overflow: hidden;
+    height: 380px;
+    background: linear-gradient(135deg, var(--ink-band2), var(--ink-band));
+  }
+
+  .art__banner-glow {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .art__banner-glow--a {
+    top: -60px;
+    right: -30px;
+    width: 360px;
+    height: 360px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--cat) 42%, transparent), transparent 65%);
+    animation: blob 13s ease-in-out infinite;
+  }
+
+  .art__banner-glow--b {
+    bottom: -70px;
+    left: 6%;
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle, rgba(99, 91, 245, 0.3), transparent 65%);
+    animation: drift 15s ease-in-out infinite;
+  }
+
+  .art__banner-tag {
+    position: absolute;
+    bottom: 26px;
+    left: 32px;
+    font-size: clamp(2.75rem, 8vw, 5.5rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 0.8;
+    color: rgba(245, 243, 236, 0.1);
+  }
+
+  /* ---- Body ---- */
+  .art__prose {
+    margin-top: 44px;
+    padding-bottom: 24px;
+  }
+
+  .art__prose > :global(p:first-child) {
+    font-size: var(--fs-lg);
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  /* ---- Author card ---- */
+  .author-card {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 24px;
+    margin-top: 24px;
+  }
+
+  .author-card__name {
+    font-size: var(--fs-md);
+    font-weight: 600;
+  }
+
+  .author-card__bio {
+    font-size: var(--fs-sm2);
+    color: var(--text3);
+    line-height: 1.5;
+    margin-top: 2px;
+  }
+
+  /* ---- Related ---- */
+  .related {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 56px var(--gutter) 40px;
+  }
+
+  .related__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+    margin-top: 24px;
+  }
+
+  .related__card {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition:
+      box-shadow var(--duration) var(--ease-out),
+      transform var(--duration) var(--ease-out);
+  }
+
+  .related__card:hover {
+    box-shadow: 0 8px 24px rgba(30, 27, 22, 0.08);
+    transform: translateY(-3px);
+  }
+
+  .related__art {
+    height: 120px;
+    background: linear-gradient(135deg, var(--cat-tint), color-mix(in srgb, var(--cat-tint) 35%, var(--surface)));
+  }
+
+  .related__body {
+    padding: 20px;
+  }
+
+  .related__tag {
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--cat);
+  }
+
+  .related__title {
+    font-size: var(--fs-md);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    font-weight: 600;
+    margin: 8px 0 0;
+  }
+
+  .related__card:hover .related__title {
+    color: var(--brand);
+  }
+
+  /* ---- Responsive ---- */
+  @media (max-width: 860px) {
+    .related__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .art__banner {
+      height: 260px;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .related__grid {
+      grid-template-columns: 1fr;
+    }
+    .art__meta {
+      flex-wrap: wrap;
+    }
+    .art__meta-time {
+      margin-left: 0;
+      width: 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .art__banner-glow {
+      animation: none;
+    }
+  }
+</style>

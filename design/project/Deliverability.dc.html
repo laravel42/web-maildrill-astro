@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<meta name="ext-resource-dependency" content="./md-motion.js" data-resource-id="mdmotion">
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" data-bg-color="#f6f5f2"><rect width="1200" height="630" fill="#f6f5f2"/><g transform="translate(566,232) scale(3.4)"><path fill="#ff441f" d="M13.39,0c-2.86,2.06-5.61,4-8.47,6.06C3.89,4,2.86,2.06,1.95,0h11.44Z"/><path fill="#ff441f" d="M19.57,17.49c-1.49,3.09-3.09,6.17-4.58,9.26-.69-1.49-1.49-2.97-2.17-4.34l6.75-4.92Z"/><path fill="#ff441f" d="M26.32,0c-6.07,4.23-12.02,8.58-18.08,12.81-.8-1.6-1.6-3.2-2.4-4.92,3.66-2.63,7.44-5.26,11.1-7.89h9.38Z"/><path fill="#ff441f" d="M27.12,2.17c-1.83,3.66-3.66,7.32-5.49,10.98-3.2,2.29-6.52,4.57-9.73,6.86l-2.63-5.15c5.95-4.23,11.9-8.46,17.85-12.69Z"/></g><text x="600" y="440" font-family="Geist,system-ui,sans-serif" font-size="56" font-weight="800" fill="#1f1e1b" text-anchor="middle" letter-spacing="-3">Maildrill</text></svg></template>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Deliverability — Maildrill inbox placement, authentication & warmup</title>
+<meta name="description" content="Maildrill's deliverability engine: domain authentication (SPF, DKIM, DMARC), automated warmup, reputation and bounce monitoring, and list hygiene for 99.2% inbox placement.">
+<meta name="keywords" content="email deliverability, inbox placement, SPF DKIM DMARC, IP warmup, sender reputation, bounce monitoring">
+<meta property="og:title" content="Maildrill Deliverability — land in the inbox">
+<meta property="og:description" content="Authentication, warmup, and reputation monitoring for 99.2% inbox placement.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://maildrill.com/deliverability">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@keyframes md-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes md-drift{0%,100%{transform:translate(0,0)}50%{transform:translate(8px,-10px)}}
+@keyframes md-blob{0%,100%{border-radius:60% 40% 55% 45%/50% 55% 45% 50%}50%{border-radius:45% 55% 40% 60%/55% 45% 60% 40%}}
+@keyframes md-dash{to{stroke-dashoffset:0}}
+body{margin:0}
+*{cursor:none}
+@media (pointer:coarse){*{cursor:auto}}
+a{color:#4f46e5}a:hover{color:#4338ca}
+.md-mono{font-family:'Geist Mono',ui-monospace,monospace}
+</style>
+</helmet>
+<div style="font-family:Geist,system-ui,sans-serif;background:#f6f5f2;color:#1f1e1b;overflow-x:hidden">
+  <dc-import name="MaildrillNav" active="product" hint-size="100%,72px"></dc-import>
+
+  <!-- HERO -->
+  <section style="position:relative;max-width:1280px;margin:0 auto;padding:64px 32px 40px">
+    <div style="position:absolute;top:10px;right:-30px;width:420px;height:420px;background:radial-gradient(circle at 40% 40%,rgba(22,163,74,.10),transparent 62%);filter:blur(10px);animation:md-blob 16s ease-in-out infinite;pointer-events:none"></div>
+    <div class="md-mono" data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#77756c">/ Deliverability</div>
+    <div style="display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;margin-top:16px">
+      <div>
+        <h1 data-split style="opacity:0;font-size:clamp(42px,5.8vw,84px);line-height:1;letter-spacing:-.04em;font-weight:800;margin:8px 0 0;max-width:15ch">Land in the inbox, not the spam folder.</h1>
+        <p data-reveal data-delay="120" style="opacity:0;transform:translateY(16px);transition:all .7s cubic-bezier(.2,.7,.2,1);font-size:20px;line-height:1.55;color:#57554e;margin:22px 0 0;max-width:52ch">A message that doesn't arrive doesn't count. Maildrill's deliverability engine handles authentication, warmup, and reputation so more of every send reaches real people.</p>
+        <div data-reveal data-delay="200" style="opacity:0;transform:translateY(16px);transition:all .7s cubic-bezier(.2,.7,.2,1);display:flex;gap:14px;margin-top:30px;flex-wrap:wrap;align-items:center">
+          <a href="Signup.dc.html" style="display:inline-flex;align-items:center;gap:9px;padding:15px 26px;border-radius:999px;font-size:15px;font-weight:600;text-decoration:none;color:#fff;background:#1f1e1b;transition:background .2s" style-hover="background:#16a34a">Start free trial<span data-icon="arrowUpRight"></span></a>
+          <a href="Product.dc.html" style="display:inline-flex;align-items:center;gap:8px;padding:15px 8px;font-size:15px;font-weight:600;text-decoration:none;color:#1f1e1b;border-bottom:1.5px solid #1f1e1b">See the workspace</a>
+        </div>
+      </div>
+      <div data-reveal data-delay="140" data-tilt="4" style="opacity:0;transform:translateY(18px);transition:all .8s cubic-bezier(.2,.7,.2,1)" data-visual="ring"></div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section style="border-top:1px solid #ecebe6;border-bottom:1px solid #ecebe6;background:#fff">
+    <div style="max-width:1280px;margin:0 auto;padding:36px 32px;display:grid;grid-template-columns:repeat(3,1fr);gap:24px">
+      <sc-for list="{{ stats }}" as="s" hint-placeholder-count="3">
+        <div data-reveal data-delay="{{ s.delay }}" style="opacity:0;transform:translateY(16px);transition:all .6s;display:flex;align-items:baseline;gap:14px">
+          <div class="md-mono" data-count data-to="{{ s.to }}" data-suffix="{{ s.suffix }}" data-decimals="{{ s.decimals }}" data-prefix="{{ s.prefix }}" style="font-size:clamp(34px,4vw,48px);font-weight:500;letter-spacing:-.03em;color:#16a34a">{{ s.prefix }}0{{ s.suffix }}</div>
+          <div style="font-size:14px;line-height:1.35;color:#57554e">{{ s.label }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- PILLARS -->
+  <section style="max-width:1280px;margin:0 auto;padding:80px 32px 48px">
+    <div class="md-mono" data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#77756c">/ The engine</div>
+    <h2 data-split style="opacity:0;font-size:clamp(32px,4.4vw,56px);line-height:1.02;letter-spacing:-.03em;font-weight:800;margin:14px 0 44px;max-width:18ch">Four systems working behind every send.</h2>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:24px">
+      <sc-for list="{{ pillars }}" as="p" hint-placeholder-count="4">
+        <div data-card data-reveal data-delay="{{ p.delay }}" style="opacity:0;transform:translateY(24px);transition:all .7s cubic-bezier(.2,.7,.2,1);background:#fff;border:1px solid #ecebe6;border-radius:18px;padding:28px">
+          <div style="width:44px;height:44px;border-radius:11px;background:#dcfce7;color:#16a34a;display:flex;align-items:center;justify-content:center;margin-bottom:16px" data-icon="{{ p.icon }}"></div>
+          <h3 style="font-size:19px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">{{ p.title }}</h3>
+          <p style="font-size:15px;line-height:1.6;color:#57554e;margin:0">{{ p.desc }}</p>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- CHECKLIST -->
+  <section style="background:#fff;border-top:1px solid #ecebe6;border-bottom:1px solid #ecebe6">
+    <div style="max-width:1280px;margin:0 auto;padding:80px 32px">
+      <div class="md-mono" data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#77756c">/ Handled for you</div>
+      <h2 data-split style="opacity:0;font-size:clamp(32px,4.4vw,56px);line-height:1.02;letter-spacing:-.03em;font-weight:800;margin:14px 0 40px;max-width:16ch">Best practice, on by default.</h2>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px 32px">
+        <sc-for list="{{ checks }}" as="c" hint-placeholder-count="9">
+          <div data-reveal data-delay="{{ c.delay }}" style="opacity:0;transform:translateY(16px);transition:all .6s;display:flex;align-items:flex-start;gap:11px;padding:14px 0;border-top:1px solid #e4e2da;font-size:15px;color:#1f1e1b"><span style="color:#16a34a;flex-shrink:0;margin-top:1px" data-icon="check"></span>{{ c.t }}</div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section style="max-width:1280px;margin:0 auto;padding:56px 32px 88px">
+    <div data-reveal data-card style="opacity:0;transform:translateY(24px);transition:all .8s cubic-bezier(.2,.7,.2,1);position:relative;overflow:hidden;border-radius:24px;background:linear-gradient(135deg,#201d16,#15130d);padding:56px 40px;text-align:center">
+      <div style="position:absolute;bottom:-70px;left:-40px;width:300px;height:300px;background:radial-gradient(circle,rgba(22,163,74,.22),transparent 65%);animation:md-blob 12s ease-in-out infinite;pointer-events:none"></div>
+      <h2 style="position:relative;font-size:38px;letter-spacing:-.03em;font-weight:700;color:#f5f3ec;margin:0">Send with confidence.</h2>
+      <p style="position:relative;font-size:17px;color:#c0beb4;margin:14px auto 0;max-width:480px">Get authenticated and warmed up in minutes — deliverability tooling is included on every account.</p>
+      <div style="position:relative;display:flex;gap:12px;justify-content:center;margin-top:28px;flex-wrap:wrap">
+        <a href="#" style="display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:999px;font-size:15px;font-weight:600;text-decoration:none;color:#fff;background:#16a34a;transition:all .2s" style-hover="background:#15803d;transform:translateY(-2px)">Start free trial<span data-icon="arrowUpRight"></span></a>
+        <a href="Pricing.dc.html" style="display:inline-flex;align-items:center;padding:14px 26px;border-radius:999px;font-size:15px;font-weight:600;text-decoration:none;color:#f5f3ec;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);transition:background .2s" style-hover="background:rgba(255,255,255,.14)">View pricing</a>
+      </div>
+    </div>
+  </section>
+
+  <dc-import name="MaildrillFooter" hint-size="100%,540px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  componentDidMount(){
+    import(window.__resources&&window.__resources.mdmotion||'./md-motion.js').then(m=>{ requestAnimationFrame(()=>{ m.initMotion({cursor:true}); this.buildVisuals(); }); });
+  }
+  buildVisuals(){
+    const ring=`<div style="background:#fff;border:1px solid #ecebe6;border-radius:20px;padding:34px;box-shadow:0 22px 50px rgba(30,27,22,.10);animation:md-float 7.5s ease-in-out infinite">
+      <div style="display:flex;align-items:center;gap:26px">
+        <svg width="140" height="140" viewBox="0 0 140 140" style="flex-shrink:0"><circle cx="70" cy="70" r="58" fill="none" stroke="#efeee9" stroke-width="14"/><circle cx="70" cy="70" r="58" fill="none" stroke="#16a34a" stroke-width="14" stroke-linecap="round" stroke-dasharray="364" stroke-dashoffset="8" transform="rotate(-90 70 70)"/></svg>
+        <div>
+          <div class="md-mono" style="font-size:46px;font-weight:500;letter-spacing:-.03em;line-height:1">99.2%</div>
+          <div style="font-size:14px;color:#57554e;margin:4px 0 16px">inbox placement</div>
+          ${[['SPF','Verified'],['DKIM','Verified'],['DMARC','Aligned'],['Reputation','Excellent']].map(([n,v])=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:20px;font-size:13px;padding:5px 0"><span style="display:flex;align-items:center;gap:8px;color:#3a3833"><span style="width:7px;height:7px;border-radius:50%;background:#16a34a"></span>${n}</span><span class="md-mono" style="color:#16a34a;font-weight:500">${v}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+    document.querySelectorAll('[data-visual="ring"]').forEach(n=>{ if(!n.__v){ n.innerHTML=ring; n.__v=1; } });
+  }
+  renderVals(){
+    return {
+      stats:[
+        {to:99.2,decimals:1,suffix:"%",prefix:"",label:"Average inbox placement",delay:0},
+        {to:0,decimals:0,prefix:"<",suffix:"0.1%",label:"Spam-complaint rate",delay:80},
+        {to:2.4,decimals:1,suffix:"B",prefix:"",label:"Messages delivered monthly",delay:160},
+      ],
+      pillars:[
+        {icon:"shield",title:"Authentication",desc:"Guided SPF, DKIM, and DMARC setup with a live checker, so mailbox providers know your mail is really you.",delay:0},
+        {icon:"chart",title:"Automated warmup",desc:"New domains and IPs ramp volume on a schedule that builds reputation without tripping spam filters.",delay:80},
+        {icon:"bolt",title:"Reputation monitoring",desc:"Real-time bounce, complaint, and blocklist monitoring with alerts before problems affect delivery.",delay:160},
+        {icon:"filter",title:"List hygiene",desc:"Automatic suppression of bounces, complaints, and unengaged contacts keeps your sender score high.",delay:240},
+      ],
+      checks:[
+        {t:"One-click SPF, DKIM & DMARC records",delay:0},
+        {t:"Custom sending domains & subdomains",delay:40},
+        {t:"Dedicated IP options at scale",delay:80},
+        {t:"Seed-list inbox placement testing",delay:120},
+        {t:"Bounce & complaint auto-suppression",delay:160},
+        {t:"Engagement-based sending",delay:200},
+        {t:"Blocklist monitoring & alerts",delay:240},
+        {t:"Unsubscribe & preference handling",delay:280},
+        {t:"Per-domain reputation dashboards",delay:320},
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

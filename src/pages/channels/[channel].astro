@@ -1,0 +1,1359 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import Icon from '@/components/ui/Icon.astro';
+import type { IconName } from '@/lib/icons';
+import { routes } from '@/config/routes';
+import { serviceJsonLd, breadcrumbJsonLd } from '@/lib/seo/structured-data';
+import {
+  channelOrder,
+  channelPages,
+  channelSteps,
+  otherChannels,
+  type ChannelPageKey,
+  type ChannelStat,
+} from '@/config/channel-pages';
+
+export function getStaticPaths() {
+  return channelOrder.map((key) => ({
+    params: { channel: key },
+    props: { channelKey: key },
+  }));
+}
+
+const { channelKey } = Astro.props as { channelKey: ChannelPageKey };
+const data = channelPages[channelKey];
+const others = otherChannels(channelKey);
+
+const seo = {
+  title: data.seo.title,
+  description: data.seo.description,
+};
+
+const jsonLd = [
+  serviceJsonLd({
+    name: `Maildrill ${data.label}`,
+    description: data.seo.description,
+    path: data.href,
+  }),
+  breadcrumbJsonLd([
+    { name: 'Home', path: routes.home },
+    { name: 'Channels', path: `${routes.product}#channels` },
+    { name: data.label, path: data.href },
+  ]),
+];
+
+// Channel accent driven from CSS custom properties on the page root.
+const chVars = `--cc:${data.color};--ct:${data.tint};--cg:${data.glow}`;
+
+// Format a stat to its final visible value (e.g. "99.2%", "<0.1%", "60+").
+const fmt = (s: ChannelStat) => `${s.prefix}${s.to.toFixed(s.decimals)}${s.suffix}`;
+
+// `wizard` is not in the shared icon set — inline it where features reference it.
+const wizardPath =
+  '<path d="m3 21 11-11"/><path d="m14 6.5 3.5-3.5 3.5 3.5-3.5 3.5z"/><path d="M12 3v2M4 12h1.5M20 15h1.5"/>';
+
+// Voice hero equalizer bar heights (px).
+const eqBars = [8, 15, 11, 20, 9, 17, 13, 22, 10];
+---
+
+<MarketingLayout seo={seo} jsonLd={jsonLd} active="channels">
+  <div class="ch" style={chVars}>
+    {/* --------------------------------------------------------------- HERO */}
+    <section class="ch-hero container--wide">
+      <div class="ch-hero__glow" aria-hidden="true"></div>
+      <a href={`${routes.product}#channels`} class="ch-back">
+        <span aria-hidden="true">←</span> All channels
+      </a>
+      <div class="ch-hero__grid">
+        <div class="ch-hero__copy">
+          <span class="ch-pill" data-reveal>
+            <Icon name={data.icon} size={16} stroke={2} />
+            {data.label}
+          </span>
+          <h1 class="ch-hero__title" data-reveal style="--reveal-delay:60ms">{data.h1}</h1>
+          <p class="ch-hero__sub" data-reveal style="--reveal-delay:120ms">{data.sub}</p>
+          <div class="cta-row" data-reveal style="--reveal-delay:200ms">
+            <a href={routes.auth.signup} class="btn btn--primary btn--pill btn--lg ch-cta">
+              Start free trial
+              <span class="btn__icon btn__icon--arrow" aria-hidden="true">
+                <Icon name="arrow-up-right" size={15} stroke={2.2} />
+              </span>
+            </a>
+            <a href={routes.pricing} class="btn btn--underline">See pricing</a>
+          </div>
+        </div>
+
+        <div class="ch-hero__visual" data-reveal style="--reveal-delay:140ms">
+          {/* ---- EMAIL device mock ---- */}
+          {data.visual === 'email' && (
+            <div class="mk mk--float mk-email">
+              <div class="mk-email__bar">
+                <span class="mk__dot"></span><span class="mk__dot"></span><span class="mk__dot"></span>
+                <span class="mono mk-email__tab">inbox</span>
+              </div>
+              <div class="mk-email__body">
+                <div class="mk-email__from">
+                  <span class="mk-email__avatar">M</span>
+                  <span>
+                    <span class="mk-email__name">Maildrill</span>
+                    <span class="mk-email__to">to you</span>
+                  </span>
+                </div>
+                <div class="mk-email__subject">Your spring collection has landed 🌿</div>
+                <div class="mk-email__hero" aria-hidden="true">Hero image</div>
+                <div class="mk-email__line" style="width:90%"></div>
+                <div class="mk-email__line" style="width:68%"></div>
+                <span class="mk-email__btn">Shop now</span>
+              </div>
+            </div>
+          )}
+
+          {/* ---- SMS chat mock ---- */}
+          {data.visual === 'sms' && (
+            <div class="mk mk--float mk-sms">
+              <div class="mk-sms__bubble mk-sms__bubble--in" style="--pop:0s">
+                Hey Maya! Your cart's still waiting 🛒 Complete your order &amp; get 10% off: mdrl.co/x
+              </div>
+              <div class="mk-sms__bubble mk-sms__bubble--out" style="--pop:.4s">YES please 🙌</div>
+              <div class="mk-sms__bubble mk-sms__bubble--in" style="--pop:.8s">
+                Done! Discount applied ✅ See you soon.
+              </div>
+            </div>
+          )}
+
+          {/* ---- WhatsApp mock ---- */}
+          {data.visual === 'whatsapp' && (
+            <div class="mk mk--float mk-wa">
+              <div class="mk-wa__head">
+                <span class="mk-wa__avatar">M</span>
+                <span>
+                  <span class="mk-wa__name">Maildrill</span>
+                  <span class="mk-wa__status">● online</span>
+                </span>
+              </div>
+              <div class="mk-wa__card">
+                <div class="mk-wa__preview" aria-hidden="true">Order preview</div>
+                <div class="mk-wa__title">Your order is confirmed ✅</div>
+                <div class="mk-wa__body">Arriving Tue, Jul 21. Track anytime below.</div>
+                <div class="mk-wa__btns">
+                  <span class="mk-wa__btn mk-wa__btn--primary">Track order</span>
+                  <span class="mk-wa__btn">Get help</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ---- Voice mock ---- */}
+          {data.visual === 'voice' && (
+            <div class="mk mk--float mk-voice">
+              <div class="mk-voice__row">
+                <span class="mk-voice__ic"><Icon name="voice" size={20} stroke={2} /></span>
+                <span class="mk-voice__meta">
+                  <span class="mk-voice__title">Outbound call</span>
+                  <span class="mk-voice__sub">Appointment reminder · 0:24</span>
+                </span>
+                <span class="mk-voice__eq" aria-hidden="true">
+                  {eqBars.map((h, i) => (
+                    <span style={`height:${h}px;--eq:${i * 0.08}s`}></span>
+                  ))}
+                </span>
+              </div>
+              <div class="mk-voice__ivr">
+                <span class="mk-voice__ivr-tag">IVR</span> · "Press 1 to confirm, 2 to reschedule."
+              </div>
+              <div class="mk-voice__btns">
+                <span class="mk-voice__btn mk-voice__btn--primary">✓ Confirmed (1)</span>
+                <span class="mk-voice__btn">Reschedule (2)</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+
+    {/* ------------------------------------------------------------ METRICS */}
+    <section class="ch-metrics">
+      <div class="container--wide ch-metrics__grid">
+        {data.stats.map((s) => (
+          <div class="ch-stat" data-reveal style={`--reveal-delay:${s.delay}ms`}>
+            <div
+              class="ch-stat__num mono tnum"
+              data-count
+              data-to={s.to}
+              data-suffix={s.suffix}
+              data-decimals={s.decimals}
+              data-prefix={s.prefix}
+            >
+              {s.prefix}0{s.suffix}
+            </div>
+            <div class="ch-stat__label">{s.label}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    {/* -------------------------------------------------- IN THE WORKSPACE */}
+    <section class="ch-shot container--wide">
+      <p class="eyebrow" data-reveal>In the workspace</p>
+      <h2 class="h-section ch-shot__title" data-reveal style="--reveal-delay:60ms">
+        See {data.label} in action.
+      </h2>
+
+      <div class="ch-frame" data-reveal style="--reveal-delay:80ms">
+        <div class="ch-frame__bar">
+          <span class="mk__dot"></span><span class="mk__dot"></span><span class="mk__dot"></span>
+          <span class="mono ch-frame__url">app.maildrill.com/{data.key}</span>
+        </div>
+        <div class="ch-frame__body">
+          {/* Workspace app mock — recreated in CSS (no screenshot). */}
+          <div class="ws">
+            <aside class="ws__nav" aria-hidden="true">
+              <div class="ws__brand">
+                <span class="ws__logo">M</span>
+                <span class="ws__brandname">Maildrill</span>
+              </div>
+              <div class="ws__navlist">
+                <span class="ws__navitem">Dashboard</span>
+                <span class="ws__navitem ws__navitem--active">Campaigns</span>
+                <span class="ws__navitem">Templates</span>
+                <span class="ws__navitem">Audience</span>
+                <span class="ws__navitem">Analytics</span>
+              </div>
+            </aside>
+            <div class="ws__main">
+              <div class="ws__head">
+                <div>
+                  <div class="mono ws__eyebrow">Campaign · Spring Launch</div>
+                  <div class="ws__title">{data.label} performance</div>
+                </div>
+                <div class="ws__actions">
+                  <span class="ws__badge"><Icon name={data.icon} size={13} stroke={2} />{data.label}</span>
+                  <span class="ws__send">Send</span>
+                </div>
+              </div>
+              <div class="ws__kpis">
+                {data.stats.map((s) => (
+                  <div class="ws__kpi">
+                    <span class="ws__kpi-label">{s.label}</span>
+                    <b class="mono tnum ws__kpi-val">{fmt(s)}</b>
+                  </div>
+                ))}
+              </div>
+              <div class="ws__chart" aria-hidden="true">
+                <span style="height:38%;--d:.30s"></span>
+                <span style="height:60%;--d:.38s"></span>
+                <span style="height:47%;--d:.46s"></span>
+                <span style="height:78%;--d:.54s"></span>
+                <span style="height:64%;--d:.62s"></span>
+                <span class="ws__chart-accent" style="height:94%;--d:.70s"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* --------------------------------------------------------- CAPABILITIES */}
+    <section class="ch-features container--wide">
+      <p class="eyebrow" data-reveal>Capabilities</p>
+      <h2 class="h-section ch-features__title" data-reveal style="--reveal-delay:60ms">
+        {data.featuresTitle}
+      </h2>
+      <div class="ch-features__grid">
+        {data.features.map((f) => (
+          <div class="ch-feat" data-reveal style={`--reveal-delay:${f.delay}ms`}>
+            <span class="ch-feat__ic">
+              {f.icon === 'wizard' ? (
+                <svg
+                  class="icon"
+                  viewBox="0 0 24 24"
+                  width={22}
+                  height={22}
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                  set:html={wizardPath}
+                />
+              ) : (
+                <Icon name={f.icon as IconName} size={22} stroke={2} />
+              )}
+            </span>
+            <h3 class="ch-feat__title">{f.title}</h3>
+            <p class="ch-feat__desc">{f.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    {/* ------------------------------------------------------------ USE CASES */}
+    <section class="ch-uses">
+      <div class="container--wide">
+        <p class="eyebrow" data-reveal>Use cases</p>
+        <h2 class="h-section ch-uses__title" data-reveal style="--reveal-delay:60ms">
+          {data.useTitle}
+        </h2>
+        <div class="ch-uses__list">
+          {data.useCases.map((u) => (
+            <div class="ch-use" data-reveal style={`--reveal-delay:${u.delay}ms`}>
+              <span class="mono ch-use__num">{u.num}</span>
+              <span class="ch-use__title">{u.title}</span>
+              <span class="ch-use__desc">{u.desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* -------------------------------------------------------- HOW IT WORKS */}
+    <section class="ch-steps container--wide">
+      <p class="eyebrow" data-reveal>How it works</p>
+      <h2 class="h-section ch-steps__title" data-reveal style="--reveal-delay:60ms">
+        Live in four steps.
+      </h2>
+      <div class="ch-steps__grid">
+        {channelSteps.map((st) => (
+          <div class="ch-step" data-reveal style={`--reveal-delay:${st.delay}ms`}>
+            <div class="mono ch-step__n">{st.n}</div>
+            <div class="ch-step__title">{st.title}</div>
+            <div class="ch-step__desc">{st.desc}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    {/* ----------------------------------------------------- OTHER CHANNELS */}
+    <section class="ch-others container--wide">
+      <p class="eyebrow" data-reveal>Other channels</p>
+      <h2 class="ch-others__title" data-reveal style="--reveal-delay:60ms">
+        One audience, every channel.
+      </h2>
+      <div class="ch-others__grid">
+        {others.map((o, i) => (
+          <a href={o.href} class="ch-other" data-reveal style={`--reveal-delay:${i * 80}ms`}>
+            <span class="ch-other__ic" style={`background:${o.tint};color:${o.color}`}>
+              <Icon name={o.icon} size={22} stroke={2} />
+            </span>
+            <span class="ch-other__text">
+              <span class="ch-other__label">{o.label}</span>
+              <span class="ch-other__tag">{o.tag}</span>
+            </span>
+            <span class="ch-other__arrow" aria-hidden="true">
+              <Icon name="arrow-up-right" size={20} stroke={2} />
+            </span>
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+</MarketingLayout>
+
+<style>
+  .ch {
+    /* Fallbacks in case a channel omits a var. */
+    --cc: var(--accent);
+    --ct: var(--accent-tint);
+    --cg: rgba(79, 70, 229, 0.12);
+    /* Contain the hero glow blob (positioned 30px past the container edge). */
+    overflow-x: clip;
+  }
+
+  /* ============================================================= HERO */
+  .ch-hero {
+    position: relative;
+    padding-block: 56px 40px;
+  }
+
+  .ch-hero__glow {
+    position: absolute;
+    top: 10px;
+    right: -30px;
+    width: 420px;
+    height: 420px;
+    max-width: 70vw;
+    background: radial-gradient(circle at 40% 40%, var(--cg), transparent 62%);
+    filter: blur(10px);
+    border-radius: 60% 40% 55% 45% / 50% 55% 45% 50%;
+    animation: blob 16s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .ch-back {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text4);
+    text-decoration: none;
+  }
+
+  .ch-back:hover {
+    color: var(--text2);
+  }
+
+  .ch-hero__grid {
+    position: relative;
+    display: grid;
+    gap: 40px;
+    align-items: center;
+    margin-top: 24px;
+  }
+
+  .ch-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 14px;
+    border-radius: var(--radius-pill);
+    background: var(--ct);
+    color: var(--cc);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+  }
+
+  .ch-hero__title {
+    font-size: clamp(2.625rem, 5.6vw, 5rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    font-weight: 800;
+    color: var(--text);
+    margin: 18px 0 0;
+    max-width: 15ch;
+  }
+
+  .ch-hero__sub {
+    font-size: var(--fs-lg);
+    line-height: 1.55;
+    color: var(--text3);
+    margin: 22px 0 0;
+    max-width: 52ch;
+  }
+
+  .ch-hero .cta-row {
+    margin-top: 30px;
+  }
+
+  /* Ink pill → CHANNEL color on hover (the one channel-tinted CTA). */
+  .ch-cta:hover {
+    background: var(--cc);
+    color: #fff;
+  }
+
+  .ch-hero__visual {
+    justify-self: center;
+    width: 100%;
+    max-width: 440px;
+  }
+
+  @media (min-width: 900px) {
+    .ch-hero__grid {
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 56px;
+    }
+    .ch-hero__visual {
+      justify-self: end;
+    }
+  }
+
+  /* ---- shared mock bits ---- */
+  .mk__dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #e4e2da;
+    flex-shrink: 0;
+  }
+
+  .mk--float {
+    animation: floaty 7.5s ease-in-out infinite;
+  }
+
+  /* ---- EMAIL mock ---- */
+  .mk-email {
+    background: #fbfaf8;
+    border: 1px solid #ecebe6;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 22px 50px rgba(30, 27, 22, 0.1);
+  }
+
+  .mk-email__bar {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px;
+    background: #fff;
+    border-bottom: 1px solid #efeee9;
+  }
+
+  .mk-email__tab {
+    margin-left: 8px;
+    font-size: 12px;
+    color: #77756c;
+  }
+
+  .mk-email__body {
+    padding: 18px 20px;
+    background: #fff;
+  }
+
+  .mk-email__from {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .mk-email__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #eef0ff;
+    color: #4f46e5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .mk-email__name {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f1e1b;
+  }
+
+  .mk-email__to {
+    display: block;
+    font-size: 11px;
+    color: #a5a39a;
+  }
+
+  .mk-email__subject {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1f1e1b;
+    margin-bottom: 12px;
+  }
+
+  .mk-email__hero {
+    height: 130px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #eef0ff, #f6f5f2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a5a3d6;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+
+  .mk-email__line {
+    height: 12px;
+    border-radius: 5px;
+    background: #efeee9;
+    margin-bottom: 7px;
+  }
+
+  .mk-email__line + .mk-email__btn {
+    margin-top: 9px;
+  }
+
+  .mk-email__btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 8px;
+    background: #4f46e5;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* ---- SMS mock ---- */
+  .mk-sms {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 26px;
+    background: #f0fdff;
+    border: 1px solid #cff2f7;
+    border-radius: 16px;
+    box-shadow: 0 22px 50px rgba(30, 27, 22, 0.08);
+  }
+
+  .mk-sms__bubble {
+    max-width: 80%;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 12px 15px;
+    animation: pop 0.5s ease var(--pop, 0s) both;
+  }
+
+  .mk-sms__bubble--in {
+    align-self: flex-start;
+    background: #fff;
+    border: 1px solid #e0f2f5;
+    border-radius: 14px 14px 14px 4px;
+    color: #1f1e1b;
+  }
+
+  .mk-sms__bubble--out {
+    align-self: flex-end;
+    background: #0891b2;
+    color: #fff;
+    border-radius: 14px 14px 4px 14px;
+  }
+
+  /* ---- WhatsApp mock ---- */
+  .mk-wa {
+    padding: 24px;
+    background: #e8f6ec;
+    border: 1px solid #cdeed6;
+    border-radius: 16px;
+    box-shadow: 0 22px 50px rgba(30, 27, 22, 0.08);
+  }
+
+  .mk-wa__head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .mk-wa__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #16a34a;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .mk-wa__name {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f1e1b;
+  }
+
+  .mk-wa__status {
+    display: block;
+    font-size: 11px;
+    color: #16a34a;
+  }
+
+  .mk-wa__card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px;
+    animation: pop 0.5s ease both;
+  }
+
+  .mk-wa__preview {
+    height: 96px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #dcfce7, #f0fdf4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #86c79b;
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+
+  .mk-wa__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f1e1b;
+    margin-bottom: 4px;
+  }
+
+  .mk-wa__body {
+    font-size: 12px;
+    color: #57554e;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .mk-wa__btns {
+    display: flex;
+    gap: 8px;
+  }
+
+  .mk-wa__btn {
+    flex: 1;
+    text-align: center;
+    padding: 9px;
+    border-radius: 8px;
+    background: #f3f2ee;
+    color: #3a3833;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .mk-wa__btn--primary {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  /* ---- Voice mock ---- */
+  .mk-voice {
+    padding: 26px;
+    background: #fffbeb;
+    border: 1px solid #fdeec3;
+    border-radius: 16px;
+    box-shadow: 0 22px 50px rgba(30, 27, 22, 0.08);
+  }
+
+  .mk-voice__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #fff;
+    border: 1px solid #fdeec3;
+    border-radius: 14px;
+    padding: 15px 16px;
+    margin-bottom: 14px;
+    animation: pop 0.5s ease both;
+  }
+
+  .mk-voice__ic {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #fef3c7;
+    color: #d97706;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .mk-voice__meta {
+    flex: 1;
+  }
+
+  .mk-voice__title {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f1e1b;
+  }
+
+  .mk-voice__sub {
+    display: block;
+    font-size: 12px;
+    color: #a5a39a;
+  }
+
+  .mk-voice__eq {
+    display: flex;
+    gap: 3px;
+    align-items: flex-end;
+    height: 24px;
+  }
+
+  .mk-voice__eq span {
+    width: 3px;
+    border-radius: 2px;
+    background: #d97706;
+    transform-origin: bottom;
+    animation: grow 1s ease var(--eq, 0s) infinite alternate;
+  }
+
+  .mk-voice__ivr {
+    background: #fff;
+    border: 1px solid #fdeec3;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #3a3833;
+    animation: pop 0.5s ease 0.3s both;
+  }
+
+  .mk-voice__ivr-tag {
+    color: #d97706;
+    font-weight: 600;
+  }
+
+  .mk-voice__btns {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    animation: pop 0.5s ease 0.6s both;
+  }
+
+  .mk-voice__btn {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    border-radius: 8px;
+    background: #f3f2ee;
+    color: #3a3833;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .mk-voice__btn--primary {
+    background: #fef3c7;
+    color: #d97706;
+  }
+
+  /* ============================================================ METRICS */
+  .ch-metrics {
+    border-block: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .ch-metrics__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    padding-block: 36px;
+  }
+
+  .ch-stat {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+
+  .ch-stat__num {
+    font-size: clamp(2.125rem, 4vw, 3rem);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: var(--cc);
+    line-height: 1;
+  }
+
+  .ch-stat__label {
+    font-size: var(--fs-sm2);
+    line-height: 1.35;
+    color: var(--text3);
+  }
+
+  /* ==================================================== IN THE WORKSPACE */
+  .ch-shot {
+    padding-block: 80px 8px;
+  }
+
+  .ch-shot__title {
+    margin: 14px 0 36px;
+    max-width: 16ch;
+    line-height: 1.02;
+  }
+
+  .ch-frame {
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid var(--border2);
+    box-shadow: var(--shadow-float);
+    background: var(--surface);
+  }
+
+  .ch-frame__bar {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 18px;
+    background: var(--surface3);
+    border-bottom: 1px solid var(--divider);
+  }
+
+  .ch-frame__bar .mk__dot {
+    width: 12px;
+    height: 12px;
+    background: var(--border2);
+  }
+
+  .ch-frame__url {
+    margin-left: 14px;
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--surface2);
+    padding: 5px 14px;
+    border-radius: 7px;
+  }
+
+  .ch-frame__body {
+    background: var(--ct);
+    padding: 22px;
+  }
+
+  /* ---- workspace app mock ---- */
+  .ws {
+    display: grid;
+    grid-template-columns: 190px 1fr;
+    gap: 16px;
+    min-height: 340px;
+  }
+
+  .ws__nav {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .ws__brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .ws__logo {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: var(--brand);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+  }
+
+  .ws__brandname {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+
+  .ws__navlist {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .ws__navitem {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text4);
+    padding: 8px 10px;
+    border-radius: 8px;
+  }
+
+  .ws__navitem--active {
+    background: var(--ct);
+    color: var(--cc);
+    font-weight: 600;
+  }
+
+  .ws__main {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .ws__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .ws__eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .ws__title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+
+  .ws__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .ws__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 11px;
+    border-radius: var(--radius-pill);
+    background: var(--ct);
+    color: var(--cc);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .ws__send {
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    background: var(--ink);
+    color: var(--on-ink);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .ws__kpis {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .ws__kpi {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 12px;
+  }
+
+  .ws__kpi-label {
+    display: block;
+    font-size: 11px;
+    line-height: 1.3;
+    color: var(--text4);
+    margin-bottom: 6px;
+  }
+
+  .ws__kpi-val {
+    font-size: 19px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--cc);
+  }
+
+  .ws__chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    flex: 1;
+    min-height: 90px;
+  }
+
+  .ws__chart span {
+    flex: 1;
+    background: var(--cc);
+    opacity: 0.42;
+    border-radius: 4px 4px 0 0;
+    transform-origin: bottom;
+    animation: grow 0.9s var(--ease-out) var(--d) both;
+  }
+
+  .ws__chart-accent {
+    opacity: 1;
+  }
+
+  /* ======================================================= CAPABILITIES */
+  .ch-features {
+    padding-block: 80px 48px;
+  }
+
+  .ch-features__title {
+    margin: 14px 0 44px;
+    max-width: 20ch;
+    line-height: 1.02;
+  }
+
+  .ch-features__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .ch-feat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 26px;
+    transition:
+      box-shadow var(--duration) var(--ease-out),
+      transform var(--duration) var(--ease-out);
+  }
+
+  .ch-feat:hover {
+    box-shadow: 0 8px 24px rgba(30, 27, 22, 0.08);
+    transform: translateY(-3px);
+  }
+
+  .ch-feat__ic {
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    background: var(--ct);
+    color: var(--cc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .ch-feat__title {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    margin: 0 0 8px;
+  }
+
+  .ch-feat__desc {
+    font-size: var(--fs-base);
+    line-height: 1.6;
+    color: var(--text3);
+    margin: 0;
+  }
+
+  /* ========================================================== USE CASES */
+  .ch-uses {
+    background: var(--surface);
+    border-block: 1px solid var(--border);
+    padding-block: 80px;
+  }
+
+  .ch-uses__title {
+    margin: 14px 0 44px;
+    max-width: 18ch;
+    line-height: 1.02;
+  }
+
+  .ch-uses__list {
+    border-top: 1px solid var(--border2);
+  }
+
+  .ch-use {
+    display: grid;
+    grid-template-columns: 56px 1fr 1.5fr;
+    gap: 24px;
+    align-items: baseline;
+    padding: 26px 8px;
+    border-bottom: 1px solid var(--border2);
+  }
+
+  .ch-use__num {
+    font-size: var(--fs-sm2);
+    color: var(--muted);
+  }
+
+  .ch-use__title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .ch-use__desc {
+    font-size: var(--fs-md);
+    line-height: 1.6;
+    color: var(--text3);
+  }
+
+  /* ======================================================= HOW IT WORKS */
+  .ch-steps {
+    padding-block: 80px 40px;
+  }
+
+  .ch-steps__title {
+    margin: 14px 0 44px;
+    max-width: 16ch;
+    line-height: 1.02;
+  }
+
+  .ch-steps__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .ch-step {
+    border-top: 2px solid var(--cc);
+    padding-top: 18px;
+  }
+
+  .ch-step__n {
+    font-size: var(--fs-sm);
+    color: var(--cc);
+    margin-bottom: 10px;
+  }
+
+  .ch-step__title {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .ch-step__desc {
+    font-size: var(--fs-sm2);
+    line-height: 1.55;
+    color: var(--text3);
+  }
+
+  /* ==================================================== OTHER CHANNELS */
+  .ch-others {
+    padding-block: 56px 88px;
+  }
+
+  .ch-others__title {
+    font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-weight: 800;
+    color: var(--text);
+    margin: 14px 0 28px;
+  }
+
+  .ch-others__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .ch-other {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    text-decoration: none;
+    color: inherit;
+    transition: background var(--duration) var(--ease-out);
+  }
+
+  .ch-other:hover {
+    background: var(--surface3);
+  }
+
+  .ch-other__ic {
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .ch-other__text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ch-other__label {
+    display: block;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    transition: color var(--duration) var(--ease-out);
+  }
+
+  .ch-other:hover .ch-other__label {
+    color: var(--brand);
+  }
+
+  .ch-other__tag {
+    display: block;
+    font-size: var(--fs-sm);
+    color: var(--text4);
+  }
+
+  .ch-other__arrow {
+    color: var(--text);
+    opacity: 0.35;
+    transition:
+      opacity var(--duration-slow) var(--ease-out),
+      transform var(--duration-slow) var(--ease-out);
+  }
+
+  .ch-other:hover .ch-other__arrow {
+    opacity: 1;
+    transform: translate(5px, -5px);
+  }
+
+  /* ============================================================ RESPONSIVE */
+  @media (max-width: 960px) {
+    .ch-features__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .ch-steps__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 760px) {
+    .ch-metrics__grid {
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    .ch-features__grid,
+    .ch-others__grid {
+      grid-template-columns: 1fr;
+    }
+    .ch-use {
+      grid-template-columns: 1fr;
+      gap: 6px;
+      padding: 20px 4px;
+    }
+    .ch-use__num {
+      order: -1;
+    }
+    .ws {
+      grid-template-columns: 1fr;
+    }
+    .ws__nav {
+      display: none;
+    }
+    .ch-shot,
+    .ch-features,
+    .ch-uses,
+    .ch-steps {
+      padding-block: 60px;
+    }
+    .ch-others {
+      padding-block: 40px 64px;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .ch-steps__grid {
+      grid-template-columns: 1fr;
+    }
+    .ch-frame__body {
+      padding: 14px;
+    }
+    .ws__kpis {
+      grid-template-columns: 1fr;
+    }
+    .ws__head {
+      flex-direction: column;
+    }
+  }
+</style>

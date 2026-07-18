@@ -1,0 +1,48 @@
+---
+import '@/styles/global.css';
+import '@/styles/components.css';
+import SeoHead from '@/components/seo/SeoHead.astro';
+import JsonLd from '@/components/seo/JsonLd.astro';
+import type { PageSeo } from '@/config/seo';
+import { siteConfig } from '@/config/site';
+
+interface Props {
+  seo: PageSeo;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  bodyClass?: string;
+}
+
+const { seo, jsonLd, bodyClass = '' } = Astro.props;
+const pathname = Astro.url.pathname;
+---
+
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#f6f5f2" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="alternate" type="application/rss+xml" title={`${siteConfig.name} Blog`} href="/rss.xml" />
+    <SeoHead seo={seo} pathname={pathname} />
+    {jsonLd && <JsonLd data={jsonLd} />}
+    {/* Enable scroll-reveal only when motion is allowed; runs before paint to avoid FOUC. */}
+    <script is:inline>
+      try {
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          document.documentElement.classList.add('js-motion');
+        }
+      } catch {
+        /* no-op */
+      }
+    </script>
+  </head>
+  <body class={bodyClass}>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <slot />
+  </body>
+</html>

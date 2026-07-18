@@ -1,0 +1,590 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import Icon from '@/components/ui/Icon.astro';
+import { routes } from '@/config/routes';
+import { externalUrls } from '@/config/site';
+import { breadcrumbJsonLd, softwareApplicationJsonLd } from '@/lib/seo/structured-data';
+
+const seo = {
+  title: 'API Docs — Maildrill developer platform & REST API',
+  description:
+    'Maildrill developer docs: send email, SMS, WhatsApp, and voice from one REST API, manage audiences and templates, and stream events via webhooks. SDKs for Node, Python, PHP, and Go.',
+};
+
+const jsonLd = [
+  breadcrumbJsonLd([
+    { name: 'Home', path: '/' },
+    { name: 'API docs', path: routes.apiDocs },
+  ]),
+  softwareApplicationJsonLd(),
+];
+
+type Step = { n: string; title: string; file: string; lang: string; delay: number; code: string };
+const steps: Step[] = [
+  {
+    n: '1',
+    title: 'Install the SDK',
+    file: 'terminal',
+    lang: 'bash',
+    delay: 0,
+    code: `npm install @maildrill/node
+
+export MD_KEY="sk_live_…"`,
+  },
+  {
+    n: '2',
+    title: 'Send a message',
+    file: 'send.js',
+    lang: 'node',
+    delay: 80,
+    code: `import { Maildrill } from '@maildrill/node';
+const md = new Maildrill(process.env.MD_KEY);
+
+await md.messages.send({
+  channel: 'sms',
+  to: '+15551234567',
+  body: 'Your order shipped 🎉'
+});`,
+  },
+];
+
+type Endpoint = { method: 'POST' | 'GET'; path: string; desc: string };
+const endpoints: Endpoint[] = [
+  { method: 'POST', path: '/v1/messages', desc: 'Send a message on any channel' },
+  { method: 'GET', path: '/v1/messages/:id', desc: 'Retrieve a message & its delivery status' },
+  { method: 'POST', path: '/v1/campaigns', desc: 'Create and schedule a campaign' },
+  { method: 'GET', path: '/v1/audiences', desc: 'List audiences and live segments' },
+  { method: 'POST', path: '/v1/contacts', desc: 'Upsert a contact into an audience' },
+  { method: 'POST', path: '/v1/webhooks', desc: 'Subscribe to delivery & engagement events' },
+];
+
+type Sdk = { name: string; install: string; delay: number };
+const sdks: Sdk[] = [
+  { name: 'Node', install: 'npm i @maildrill/node', delay: 0 },
+  { name: 'Python', install: 'pip install maildrill', delay: 80 },
+  { name: 'PHP', install: 'composer require maildrill/sdk', delay: 160 },
+  { name: 'Go', install: 'go get maildrill.com/go', delay: 240 },
+];
+---
+
+<MarketingLayout seo={seo} jsonLd={jsonLd} active="resources">
+  {/* ---------------------------------------------------------------- HERO */}
+  <section class="dev-hero container--wide">
+    <div class="dev-hero__glow" aria-hidden="true"></div>
+    <p class="eyebrow" data-reveal>Developers</p>
+    <div class="dev-hero__grid">
+      <div>
+        <h1 class="dev-hero__title display" data-reveal style="--reveal-delay:60ms">
+          One API for every channel.
+        </h1>
+        <p class="lead dev-hero__lead" data-reveal style="--reveal-delay:120ms">
+          Send email, SMS, WhatsApp, and voice from a single REST endpoint. Manage audiences and
+          templates, and stream delivery events through webhooks.
+        </p>
+        <div class="cta-row dev-hero__cta" data-reveal style="--reveal-delay:200ms">
+          <a href="#quickstart" class="btn btn--primary btn--pill btn--lg">
+            Quickstart
+            <span class="dev-arrow" aria-hidden="true">
+              <Icon name="arrow-right" size={16} stroke={2.2} />
+            </span>
+          </a>
+          <a href={externalUrls.docs} class="btn btn--underline">Full reference</a>
+        </div>
+      </div>
+
+      {/* Terminal/code card — recreated in CSS, not a screenshot */}
+      <div class="codecard" data-reveal style="--reveal-delay:140ms">
+        <div class="codecard__bar">
+          <span class="codecard__dot" style="background:#ff5f57"></span>
+          <span class="codecard__dot" style="background:#febc2e"></span>
+          <span class="codecard__dot" style="background:#28c840"></span>
+          <span class="codecard__name mono">send.sh</span>
+        </div>
+        <pre class="codecard__code mono"><span class="c-cmt"># Send an email in one call</span>
+curl https://api.maildrill.com/v1/messages \
+  -H <span class="c-str">"Authorization: Bearer $MD_KEY"</span> \
+  -d channel=<span class="c-val">email</span> \
+  -d to=<span class="c-val">maya@acme.com</span> \
+  -d template=<span class="c-val">spring-launch</span></pre>
+      </div>
+    </div>
+  </section>
+
+  {/* ---------------------------------------------------------- QUICKSTART */}
+  <section id="quickstart" class="band">
+    <div class="container--wide">
+      <p class="eyebrow" data-reveal>Quickstart</p>
+      <h2 class="h-section band__title" data-reveal style="--reveal-delay:60ms">
+        Send your first message.
+      </h2>
+      <div class="steps">
+        {
+          steps.map((s) => (
+            <div class="step" data-reveal style={`--reveal-delay:${s.delay}ms`}>
+              <div class="step__head">
+                <span class="step__num mono" aria-hidden="true">{s.n}</span>
+                <h3 class="step__title">{s.title}</h3>
+              </div>
+              <div class="step__box">
+                <div class="step__bar">
+                  <span class="mono step__file">{s.file}</span>
+                  <span class="mono step__lang">{s.lang}</span>
+                </div>
+                <pre class="step__code mono"><code>{s.code}</code></pre>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* ----------------------------------------------------------- ENDPOINTS */}
+  <section class="endpoints-section container--wide">
+    <p class="eyebrow" data-reveal>Endpoints</p>
+    <h2 class="h-section endpoints-section__title" data-reveal style="--reveal-delay:60ms">
+      A small, predictable surface.
+    </h2>
+    <ul class="endpoints" data-reveal style="--reveal-delay:60ms">
+      {
+        endpoints.map((e) => (
+          <li class="endpoint">
+            <span class={`mono endpoint__method epm--${e.method.toLowerCase()}`}>{e.method}</span>
+            <span class="mono endpoint__path">{e.path}</span>
+            <span class="endpoint__desc">{e.desc}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  {/* ---------------------------------------------------------------- SDKS */}
+  <section class="band">
+    <div class="container--wide">
+      <p class="eyebrow" data-reveal>SDKs</p>
+      <h2 class="h-section band__title" data-reveal style="--reveal-delay:60ms">
+        Official libraries.
+      </h2>
+      <div class="grid-4">
+        {
+          sdks.map((s) => (
+            <a href={externalUrls.docs} class="sdk" data-reveal style={`--reveal-delay:${s.delay}ms`}>
+              <span class="sdk__name mono">{s.name}</span>
+              <span class="sdk__install mono">{s.install}</span>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* ----------------------------------------------------------------- CTA */}
+  <section class="dev-cta-section container--wide">
+    <div class="dev-cta" data-reveal>
+      <div class="dev-cta__glow" aria-hidden="true"></div>
+      <h2 class="dev-cta__title">Grab an API key.</h2>
+      <p class="dev-cta__lead">
+        Create a free account, generate a key, and send your first message in minutes.
+      </p>
+      <div class="dev-cta__row">
+        <a href={routes.auth.signup} class="btn btn--accent btn--pill btn--lg dev-cta__start">
+          Start free
+          <span class="btn__icon btn__icon--arrow" aria-hidden="true">
+            <Icon name="arrow-up-right" size={15} stroke={2.2} />
+          </span>
+        </a>
+        <a href={routes.contact} class="btn btn--pill btn--lg dev-cta__talk">Talk to us</a>
+      </div>
+    </div>
+  </section>
+</MarketingLayout>
+
+<style>
+  /* ---------------------------------------------------------------- HERO */
+  .dev-hero {
+    position: relative;
+    padding-block: 64px 40px;
+  }
+
+  .dev-hero__glow {
+    position: absolute;
+    top: 10px;
+    right: -30px;
+    width: 420px;
+    height: 420px;
+    max-width: 70vw;
+    background: radial-gradient(circle at 40% 40%, rgba(79, 70, 229, 0.1), transparent 62%);
+    filter: blur(10px);
+    animation: blob 16s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .dev-hero__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+    align-items: center;
+    margin-top: 16px;
+  }
+
+  @media (min-width: 900px) {
+    .dev-hero__grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 48px;
+    }
+  }
+
+  .dev-hero__title {
+    font-size: clamp(2.625rem, 5.6vw, 5rem);
+    line-height: 1;
+    margin: 8px 0 0;
+    max-width: 14ch;
+  }
+
+  .dev-hero__lead {
+    margin-top: 22px;
+    max-width: 50ch;
+  }
+
+  .dev-hero__cta {
+    margin-top: 30px;
+    gap: 14px;
+  }
+
+  .dev-arrow {
+    display: inline-flex;
+    transition: transform var(--duration-slow) var(--ease-out);
+  }
+
+  .btn--primary:hover .dev-arrow {
+    transform: translateX(3px);
+  }
+
+  /* ------------------------------------------------------------ Code card */
+  .codecard {
+    min-width: 0;
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    border: 1px solid var(--ink-band2);
+    box-shadow: var(--shadow-xl);
+  }
+
+  .codecard__bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 14px;
+    background: var(--ink-band2);
+    border-bottom: 1px solid var(--ink-band-border);
+  }
+
+  .codecard__dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .codecard__name {
+    margin-left: 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .codecard__code {
+    margin: 0;
+    background: var(--ink-band);
+    color: #e8e6df;
+    font-size: 13px;
+    line-height: 1.75;
+    padding: 20px;
+    overflow-x: auto;
+  }
+
+  /* Syntax accents (code highlighting specifics, kept inline per the design) */
+  .c-cmt {
+    color: #77756c;
+  }
+  .c-str {
+    color: #86efac;
+  }
+  .c-val {
+    color: #fca5a5;
+  }
+
+  /* --------------------------------------------------------- White bands */
+  .band {
+    background: var(--surface);
+    border-block: 1px solid var(--border);
+    padding-block: 88px;
+    scroll-margin-top: 88px;
+  }
+
+  .band__title {
+    margin: 14px 0 40px;
+  }
+
+  /* ---- Quickstart steps ---- */
+  .steps {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  @media (min-width: 760px) {
+    .steps {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .step {
+    min-width: 0;
+  }
+
+  .step__head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .step__num {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-xs);
+    background: var(--accent-tint);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .step__title {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .step__box {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--ink-band2);
+  }
+
+  .step__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 14px;
+    background: var(--ink-band2);
+  }
+
+  .step__file {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .step__lang {
+    font-size: 11px;
+    color: var(--ink-band-muted);
+  }
+
+  .step__code {
+    margin: 0;
+    background: var(--ink-band);
+    color: #e8e6df;
+    font-size: 12.5px;
+    line-height: 1.7;
+    padding: 16px;
+    overflow-x: auto;
+  }
+
+  .step__code code {
+    font-family: inherit;
+  }
+
+  /* ---------------------------------------------------------- Endpoints */
+  .endpoints-section {
+    padding-block: 88px 48px;
+  }
+
+  .endpoints-section__title {
+    margin: 14px 0 40px;
+  }
+
+  .endpoints {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  .endpoint {
+    display: grid;
+    grid-template-columns: 76px 260px 1fr;
+    gap: 16px;
+    align-items: center;
+    padding: 15px 20px;
+  }
+
+  .endpoint + .endpoint {
+    border-top: 1px solid var(--surface2);
+  }
+
+  .endpoint__method {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-align: center;
+    justify-self: start;
+  }
+
+  .epm--post {
+    color: var(--success);
+    background: var(--success-bg);
+  }
+
+  .epm--get {
+    color: var(--accent);
+    background: var(--accent-tint);
+  }
+
+  .endpoint__path {
+    font-size: 13px;
+    color: var(--text);
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .endpoint__desc {
+    font-size: var(--fs-sm2);
+    color: var(--text3);
+  }
+
+  @media (max-width: 720px) {
+    .endpoint {
+      grid-template-columns: auto 1fr;
+      row-gap: 8px;
+    }
+    .endpoint__desc {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* --------------------------------------------------------------- SDKs */
+  .sdk {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 24px;
+    color: inherit;
+    transition:
+      border-color var(--duration) var(--ease-out),
+      box-shadow var(--duration) var(--ease-out),
+      transform var(--duration) var(--ease-out);
+  }
+
+  .sdk:hover {
+    border-color: var(--border2);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .sdk__name {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    transition: color var(--duration) var(--ease-out);
+  }
+
+  .sdk:hover .sdk__name {
+    color: var(--brand);
+  }
+
+  .sdk__install {
+    font-size: 13px;
+    color: var(--text4);
+  }
+
+  /* ---------------------------------------------------------------- CTA */
+  .dev-cta-section {
+    padding-block: 48px 88px;
+  }
+
+  .dev-cta {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-dialog);
+    background: linear-gradient(135deg, var(--ink-band2), var(--ink-band));
+    padding: 56px 40px;
+    text-align: center;
+  }
+
+  .dev-cta__glow {
+    position: absolute;
+    top: -70px;
+    right: -40px;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(99, 91, 245, 0.22), transparent 65%);
+    animation: blob 12s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .dev-cta__title {
+    position: relative;
+    font-size: clamp(1.75rem, 4vw, 2.375rem);
+    letter-spacing: -0.03em;
+    font-weight: 700;
+    color: var(--ink-band-text);
+    margin: 0;
+  }
+
+  .dev-cta__lead {
+    position: relative;
+    font-size: var(--fs-md);
+    color: var(--ink-band-text2);
+    margin: 14px auto 0;
+    max-width: 480px;
+  }
+
+  .dev-cta__row {
+    position: relative;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+
+  .dev-cta__start {
+    transition:
+      background var(--duration) var(--ease-out),
+      transform var(--duration) var(--ease-out);
+  }
+
+  .dev-cta__start:hover {
+    transform: translateY(-2px);
+  }
+
+  .dev-cta__talk {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--ink-band-text);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  .dev-cta__talk:hover {
+    background: rgba(255, 255, 255, 0.14);
+  }
+</style>

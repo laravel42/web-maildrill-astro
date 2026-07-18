@@ -1,0 +1,285 @@
+---
+import { footerNav } from '@/config/navigation';
+import { routes } from '@/config/routes';
+import { siteConfig, externalUrls } from '@/config/site';
+import Logo from './Logo.astro';
+import Icon from '@/components/ui/Icon.astro';
+
+const year = new Date().getFullYear();
+const socials = [
+  { name: 'Twitter', href: externalUrls.twitter, icon: 'twitter' as const },
+  { name: 'LinkedIn', href: externalUrls.linkedin, icon: 'linkedin' as const },
+  { name: 'GitHub', href: externalUrls.github, icon: 'github' as const },
+];
+---
+
+<footer class="foot">
+  <div class="foot__cta container--wide">
+    <div class="foot__glow" aria-hidden="true"></div>
+    <p class="eyebrow foot__eyebrow">Get started</p>
+    <h2 class="foot__title mono" data-scramble>Start sending in minutes.</h2>
+    <div class="foot__actions">
+      <a href={routes.auth.signup} class="foot__button">
+        Start free trial
+        <span class="foot__arrow" aria-hidden="true">
+          <Icon name="arrow-up-right" size={18} stroke={2.2} />
+        </span>
+      </a>
+      <a href="mailto:hello@maildrill.com" class="foot__mail">hello@maildrill.com</a>
+    </div>
+  </div>
+
+  <div class="foot__grid container--wide">
+    <div class="foot__brand">
+      <Logo size={18} class="foot__logo" />
+      <p class="foot__desc">
+        One workspace for email, SMS, WhatsApp, and voice campaigns — built for speed, clarity, and
+        deliverability.
+      </p>
+      <div class="foot__socials">
+        {
+          socials.map((s) => (
+            <a href={s.href} class="foot__social" aria-label={s.name} rel="noopener noreferrer">
+              <Icon name={s.icon} size={16} />
+            </a>
+          ))
+        }
+      </div>
+    </div>
+
+    {
+      Object.entries(footerNav).map(([heading, links]) => (
+        <nav class="foot__col" aria-label={heading}>
+          <p class="foot__colhead">{heading}</p>
+          <ul>
+            {links.map((link) => (
+              <li>
+                <a href={link.href}>{link.label}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ))
+    }
+  </div>
+
+  <div class="foot__bar container--wide">
+    <span class="foot__copy mono">© {year} {siteConfig.name}. All rights reserved.</span>
+    <a href={externalUrls.status} class="foot__status" rel="noopener noreferrer">
+      <span class="foot__dot" aria-hidden="true"></span>
+      All systems operational
+    </a>
+  </div>
+</footer>
+
+<style>
+  .foot {
+    background: var(--ink-band);
+    color: var(--ink-band-text2);
+    overflow: hidden;
+  }
+
+  .foot__cta {
+    position: relative;
+    padding-block: clamp(4rem, 9vw, 6rem) 4rem;
+  }
+
+  .foot__glow {
+    position: absolute;
+    top: 20px;
+    right: 8%;
+    width: 340px;
+    height: 340px;
+    max-width: 60vw;
+    background: radial-gradient(circle, rgba(255, 68, 31, 0.16), transparent 65%);
+    pointer-events: none;
+  }
+
+  .foot__eyebrow {
+    position: relative;
+    color: var(--ink-band-muted);
+  }
+
+  .foot__title {
+    position: relative;
+    font-size: var(--display-xl);
+    line-height: 0.98;
+    letter-spacing: -0.04em;
+    font-weight: 800;
+    color: var(--ink-band-text);
+    margin: 16px 0 0;
+    max-width: 16ch;
+  }
+
+  .foot__actions {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    flex-wrap: wrap;
+    margin-top: 36px;
+  }
+
+  .foot__button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 17px 30px;
+    border-radius: var(--radius-pill);
+    font-size: var(--fs-md);
+    font-weight: 600;
+    color: var(--ink-band);
+    background: var(--ink-band-text);
+    transition:
+      background var(--duration) var(--ease-out),
+      color var(--duration) var(--ease-out);
+  }
+
+  .foot__button:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .foot__arrow {
+    display: inline-flex;
+    transition: transform var(--duration-slow) var(--ease-out);
+  }
+
+  .foot__button:hover .foot__arrow {
+    transform: translate(5px, -5px);
+  }
+
+  .foot__mail {
+    font-size: var(--fs-lg);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--ink-band-text);
+    border-bottom: 1.5px solid var(--ink-band-border);
+    padding-bottom: 4px;
+    transition: border-color var(--duration) var(--ease-out);
+  }
+
+  .foot__mail:hover {
+    border-color: var(--ink-band-text);
+  }
+
+  .foot__grid {
+    padding-block: 48px 40px;
+    border-top: 1px solid var(--ink-band-border);
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr;
+    gap: 40px;
+  }
+
+  .foot__logo {
+    color: var(--ink-band-text);
+    margin-bottom: 16px;
+  }
+
+  .foot__desc {
+    font-size: var(--fs-sm2);
+    line-height: 1.6;
+    color: var(--muted);
+    max-width: 280px;
+    margin: 0 0 20px;
+  }
+
+  .foot__socials {
+    display: flex;
+    gap: 10px;
+  }
+
+  .foot__social {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--ink-band2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-band-text2);
+    transition:
+      background var(--duration) var(--ease-out),
+      color var(--duration) var(--ease-out);
+  }
+
+  .foot__social:hover {
+    background: var(--ink-band-border);
+    color: var(--ink-band-text);
+  }
+
+  .foot__colhead {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-band-muted);
+    margin: 0 0 14px;
+  }
+
+  .foot__col ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+  }
+
+  .foot__col a {
+    font-size: var(--fs-sm2);
+    color: var(--ink-band-text2);
+    transition: color var(--duration) var(--ease-out);
+  }
+
+  .foot__col a:hover {
+    color: var(--ink-band-text);
+  }
+
+  .foot__bar {
+    padding-block: 32px;
+    border-top: 1px solid var(--ink-band-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .foot__copy {
+    font-size: var(--fs-xs);
+    color: var(--ink-band-muted);
+  }
+
+  .foot__status {
+    font-size: var(--fs-sm);
+    color: var(--ink-band-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .foot__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+  }
+
+  @media (max-width: 900px) {
+    .foot__grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+    .foot__brand {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .foot__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

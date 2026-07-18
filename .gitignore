@@ -1,0 +1,54 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+.astro/
+.output/
+*.tsbuildinfo
+
+# env (keep .env.example)
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# test / coverage
+test-results/
+playwright-report/
+playwright/.cache/
+coverage/
+
+# caches
+.cache/
+.vite/
+.eslintcache
+
+# deploy adapters
+.vercel/
+.netlify/
+
+# editors
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# design handoff (local reference only)
+.handoff/

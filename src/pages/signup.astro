@@ -1,0 +1,113 @@
+---
+import AuthLayout from '@/layouts/AuthLayout.astro';
+import AuthForm from '@/components/react/AuthForm';
+import Icon from '@/components/ui/Icon.astro';
+import type { IconName } from '@/lib/icons';
+
+const seo = {
+  title: 'Start free trial',
+  description:
+    'Create your Maildrill account and start sending across email, SMS, WhatsApp, and voice. No credit card required.',
+  noindex: true,
+};
+
+const perks: { icon: IconName; t: string }[] = [
+  { icon: 'bolt', t: 'Email, SMS, WhatsApp & voice in one place' },
+  { icon: 'chart', t: 'Real-time deliverability & analytics' },
+  { icon: 'code', t: 'REST API, SDKs & webhooks' },
+  { icon: 'shield', t: '2FA & role-based access' },
+];
+const stats = [
+  { n: '14 days', l: 'Free trial' },
+  { n: '5 min', l: 'To first send' },
+  { n: '24/7', l: 'Support' },
+];
+---
+
+<AuthLayout
+  seo={seo}
+  panelEyebrow="Get started free"
+  panelHeading={'Launch your first <span style="color:#ff441f">campaign</span> in minutes.'}
+>
+  <AuthForm client:load mode="signup" />
+
+  <div slot="panel" class="spanel">
+    <ul class="spanel__perks">
+      {
+        perks.map((p) => (
+          <li>
+            <span class="spanel__ic"><Icon name={p.icon} size={16} /></span>
+            {p.t}
+          </li>
+        ))
+      }
+    </ul>
+    <dl class="spanel__stats">
+      {
+        stats.map((s) => (
+          <div>
+            <dt>{s.n}</dt>
+            <dd class="mono">{s.l}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</AuthLayout>
+
+<style is:global>
+  .spanel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .spanel__perks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .spanel__perks li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: #fff;
+  }
+  .spanel__ic {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #ff8f79;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .spanel__stats {
+    display: flex;
+    gap: 32px;
+    margin: 8px 0 0;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .spanel__stats dt {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+  .spanel__stats dd {
+    margin: 2px 0 0;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+  }
+</style>

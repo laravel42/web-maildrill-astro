@@ -1,0 +1,122 @@
+---
+import AuthLayout from '@/layouts/AuthLayout.astro';
+import AuthForm from '@/components/react/AuthForm';
+
+const seo = {
+  title: 'Log in',
+  description: 'Log in to your Maildrill workspace to run email, SMS, WhatsApp, and voice campaigns.',
+  noindex: true,
+};
+
+const stats = [
+  { n: '99.2%', l: 'Inbox rate' },
+  { n: '4', l: 'Channels' },
+  { n: '12k+', l: 'Teams' },
+];
+---
+
+<AuthLayout
+  seo={seo}
+  panelEyebrow="Maildrill OS"
+  panelHeading={'One inbox for <span style="color:#ff441f">every</span> channel.'}
+>
+  <AuthForm client:load mode="login" />
+
+  <div slot="panel" class="lpanel">
+    <figure class="lpanel__quote">
+      <blockquote>
+        "We moved email, SMS, and WhatsApp onto Maildrill in a week. Deliverability jumped and our
+        stack got a lot simpler."
+      </blockquote>
+      <figcaption>
+        <span class="lpanel__avatar">RK</span>
+        <span>
+          <span class="lpanel__name">Rina Kapoor</span>
+          <span class="lpanel__role mono">Head of Growth, Loop</span>
+        </span>
+      </figcaption>
+    </figure>
+    <dl class="lpanel__stats">
+      {
+        stats.map((s) => (
+          <div>
+            <dt>{s.n}</dt>
+            <dd class="mono">{s.l}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</AuthLayout>
+
+<style is:global>
+  .lpanel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .lpanel__quote {
+    margin: 0;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 18px;
+    padding: 26px 28px;
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(6px);
+  }
+  .lpanel__quote blockquote {
+    margin: 0 0 18px;
+    padding: 0;
+    border: 0;
+    font-size: 19px;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    font-weight: 500;
+    color: #fff;
+  }
+  .lpanel__quote figcaption {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .lpanel__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5, #ff441f);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+  }
+  .lpanel__name {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .lpanel__role {
+    display: block;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+  .lpanel__stats {
+    display: flex;
+    gap: 32px;
+    margin: 0;
+  }
+  .lpanel__stats dt {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+  .lpanel__stats dd {
+    margin: 2px 0 0;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+  }
+</style>

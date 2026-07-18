@@ -1,0 +1,289 @@
+---
+import { marketingCtas, marketingNav } from '@/config/navigation';
+import Logo from './Logo.astro';
+import Icon from '@/components/ui/Icon.astro';
+import MobileNav from '@/components/react/MobileNav';
+
+interface Props {
+  /** Highlights the active top-level item in brand orange. */
+  active?: 'product' | 'channels' | 'pricing' | 'contact' | 'resources';
+}
+const { active } = Astro.props;
+---
+
+<header class="nav">
+  <div class="nav__bar">
+    <nav class="nav__inner" aria-label="Primary">
+      <Logo />
+
+      <ul class="nav__list">
+        {
+          marketingNav.map((item) =>
+            item.children ? (
+              <li class="nav__item nav__item--menu">
+                <a
+                  href={item.href}
+                  class="nav__link"
+                  class:list={[item.label.toLowerCase() === active && 'is-active']}
+                  aria-haspopup="true"
+                >
+                  {item.label}
+                  <Icon name="chevron-down" size={13} stroke={2.2} class="nav__caret" />
+                </a>
+                <div class="nav__menu" role="menu">
+                  <div class="nav__menu-card">
+                    {item.children.map((child) => (
+                      <a href={child.href} class="nav__subitem" role="menuitem">
+                        <span
+                          class="nav__subicon"
+                          style={`background:${child.tint};color:${child.color}`}
+                        >
+                          {child.icon && <Icon name={child.icon} size={18} />}
+                        </span>
+                        <span class="nav__subtext">
+                          <span class="nav__subtitle">
+                            {child.label}
+                            <Icon name="arrow-up-right" size={13} stroke={2.2} class="nav__subarrow" />
+                          </span>
+                          <span class="nav__subdesc">{child.description}</span>
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </li>
+            ) : (
+              <li class="nav__item">
+                <a
+                  href={item.href}
+                  class="nav__link"
+                  class:list={[item.label.toLowerCase() === active && 'is-active']}
+                >
+                  {item.label}
+                </a>
+              </li>
+            )
+          )
+        }
+      </ul>
+
+      <div class="nav__right">
+        <div class="nav__actions">
+          <a href={marketingCtas.secondary.href} class="nav__login">{marketingCtas.secondary.label}</a>
+          <a href={marketingCtas.primary.href} class="btn btn--primary btn--pill btn--sm nav__cta">
+            {marketingCtas.primary.label}
+            <span class="btn__icon btn__icon--arrow" aria-hidden="true">
+              <Icon name="arrow-up-right" size={14} stroke={2.2} />
+            </span>
+          </a>
+        </div>
+        <MobileNav client:idle items={marketingNav} primaryCta={marketingCtas.primary} secondaryCta={marketingCtas.secondary} />
+      </div>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-header);
+  }
+
+  .nav__bar {
+    background: var(--header-bg);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav__inner {
+    max-width: calc(var(--container-wide) + 2 * var(--gutter));
+    margin-inline: auto;
+    height: var(--nav-height);
+    padding-inline: var(--gutter);
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+  }
+
+  .nav__list {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    justify-self: center;
+  }
+
+  .nav__item {
+    display: flex;
+    align-items: center;
+  }
+
+  .nav__item--menu {
+    position: relative;
+  }
+
+  .nav__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: var(--fs-sm2);
+    font-weight: 500;
+    color: var(--text3);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .nav__link:hover,
+  .nav__item--menu:hover .nav__link,
+  .nav__item--menu:focus-within .nav__link {
+    color: var(--brand);
+  }
+
+  .nav__link.is-active {
+    color: var(--brand);
+  }
+
+  .nav__caret {
+    opacity: 0.6;
+    transition: transform var(--duration-slow) var(--ease-out);
+  }
+
+  .nav__item--menu:hover .nav__caret,
+  .nav__item--menu:focus-within .nav__caret {
+    transform: rotate(180deg);
+  }
+
+  /* Dropdown menu */
+  .nav__menu {
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    transform: translate(-50%, 10px);
+    padding-top: 16px;
+    z-index: var(--z-dropdown);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity 0.22s var(--ease-out),
+      transform 0.22s var(--ease-out);
+  }
+
+  .nav__item--menu:hover .nav__menu,
+  .nav__item--menu:focus-within .nav__menu {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+  }
+
+  .nav__menu-card {
+    width: 320px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-xl);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nav__subitem {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px;
+    border-radius: 12px;
+    transition: background var(--duration-fast) var(--ease-out);
+  }
+
+  .nav__subitem:hover {
+    background: var(--surface2);
+  }
+
+  .nav__subicon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .nav__subtext {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .nav__subtitle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: var(--fs-sm2);
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .nav__subarrow {
+    opacity: 0;
+    color: var(--text4);
+    transition:
+      opacity var(--duration) var(--ease-out),
+      transform var(--duration) var(--ease-out);
+  }
+
+  .nav__subitem:hover .nav__subarrow {
+    opacity: 1;
+    transform: translate(3px, -3px);
+  }
+
+  .nav__subdesc {
+    display: block;
+    font-size: var(--fs-xs);
+    color: var(--text4);
+    margin-top: 2px;
+    line-height: 1.4;
+  }
+
+  /* Right actions */
+  .nav__right {
+    justify-self: end;
+    display: flex;
+    align-items: center;
+  }
+
+  .nav__actions {
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nav__login {
+    padding: 8px 14px;
+    border-radius: var(--radius-btn);
+    font-size: var(--fs-sm2);
+    font-weight: 500;
+    color: var(--text2);
+    transition: background var(--duration-fast) var(--ease-out);
+  }
+
+  .nav__login:hover {
+    background: var(--surface2);
+  }
+
+  .nav__cta {
+    font-weight: 600;
+  }
+
+  @media (min-width: 960px) {
+    .nav__list,
+    .nav__actions {
+      display: flex;
+    }
+  }
+</style>

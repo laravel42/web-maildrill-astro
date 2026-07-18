@@ -1,0 +1,147 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Logo from '@/components/navigation/Logo.astro';
+import type { PageSeo } from '@/config/seo';
+
+interface Props {
+  seo: PageSeo;
+  panelEyebrow: string;
+  /** HTML — may include an inline-styled span for the orange accent word. */
+  panelHeading: string;
+}
+
+const { seo, panelEyebrow, panelHeading } = Astro.props;
+---
+
+<BaseLayout seo={{ ...seo, noindex: true }} bodyClass="auth-body">
+  <div class="auth">
+    <main id="main" class="auth__pane">
+      <Logo class="auth__logo" />
+      <div class="auth__form">
+        <slot />
+      </div>
+    </main>
+
+    <aside class="auth__panel" aria-label="Product highlight">
+      <div class="auth__grid" aria-hidden="true"></div>
+      <div class="auth__glow auth__glow--indigo" aria-hidden="true"></div>
+      <div class="auth__glow auth__glow--orange" aria-hidden="true"></div>
+
+      <div class="auth__panel-top">
+        <p class="eyebrow auth__panel-eyebrow">{panelEyebrow}</p>
+        <h2 class="auth__panel-heading" set:html={panelHeading} />
+      </div>
+      <div class="auth__panel-bottom">
+        <slot name="panel" />
+      </div>
+    </aside>
+  </div>
+</BaseLayout>
+
+<style>
+  .auth {
+    min-height: 100vh;
+    display: grid;
+    overflow: hidden;
+  }
+
+  .auth__pane {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 32px 40px;
+  }
+
+  .auth__logo {
+    align-self: flex-start;
+  }
+
+  .auth__form {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 0;
+  }
+
+  .auth__panel {
+    display: none;
+    position: relative;
+    background: #131211;
+    color: #fff;
+    overflow: hidden;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 48px 52px;
+  }
+
+  .auth__grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 44px 44px;
+    animation: gridpan 6s linear infinite;
+  }
+
+  @keyframes gridpan {
+    from {
+      background-position: 0 0;
+    }
+    to {
+      background-position: 44px 44px;
+    }
+  }
+
+  .auth__glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(20px);
+    pointer-events: none;
+  }
+
+  .auth__glow--indigo {
+    top: -120px;
+    right: -120px;
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(circle, rgba(79, 70, 229, 0.5), transparent 70%);
+  }
+
+  .auth__glow--orange {
+    bottom: -140px;
+    left: -100px;
+    width: 360px;
+    height: 360px;
+    background: radial-gradient(circle, rgba(255, 68, 31, 0.35), transparent 70%);
+  }
+
+  .auth__panel-top,
+  .auth__panel-bottom {
+    position: relative;
+  }
+
+  .auth__panel-eyebrow {
+    letter-spacing: 0.16em;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .auth__panel-heading {
+    font-size: clamp(1.875rem, 3.4vw, 2.75rem);
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    font-weight: 800;
+    margin: 16px 0 0;
+    max-width: 12ch;
+  }
+
+  @media (min-width: 900px) {
+    .auth {
+      grid-template-columns: 1.05fr 0.95fr;
+    }
+    .auth__panel {
+      display: flex;
+    }
+  }
+</style>

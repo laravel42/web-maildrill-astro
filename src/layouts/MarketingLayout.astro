@@ -1,0 +1,27 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import MarketingNav from '@/components/navigation/MarketingNav.astro';
+import MarketingFooter from '@/components/navigation/MarketingFooter.astro';
+import type { PageSeo } from '@/config/seo';
+
+interface Props {
+  seo: PageSeo;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  active?: 'product' | 'channels' | 'pricing' | 'contact' | 'resources';
+}
+
+const { seo, jsonLd, active } = Astro.props;
+---
+
+<BaseLayout seo={seo} jsonLd={jsonLd}>
+  <MarketingNav active={active} />
+  <main id="main">
+    <slot />
+  </main>
+  <MarketingFooter />
+</BaseLayout>
+
+{/* Marketing motion: reveal, count-up, split headings, scramble, tilt, cards, progress. */}
+<script>
+  import '@/scripts/motion';
+</script>
