@@ -1,0 +1,3 @@
+# Cloudflare Pages redirects (proper 301s; mirrors astro.config redirects)
+/privacy-policy    /legal/privacy   301
+/terms-of-service  /legal/terms     301
