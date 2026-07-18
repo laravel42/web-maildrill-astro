@@ -1,9 +1,9 @@
 ---
-title: "Ship your first multichannel campaign"
+title: 'Ship your first multichannel campaign'
 description: "A guided walkthrough of Maildrill's five-step wizard from sender to schedule."
 pubDate: 2026-03-10
-author: "Ava Chen"
-category: "Getting started"
+author: 'Ava Chen'
+category: 'Getting started'
 readingMinutes: 10
 draft: false
 ---

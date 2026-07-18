@@ -34,12 +34,23 @@ const STATUS_LABEL: Record<SubscriberStatus, string> = {
 };
 const STATUS_TABS: ('all' | SubscriberStatus)[] = ['all', 'active', 'unsubscribed', 'bounced'];
 
-const CHANNEL: Record<ChannelType, { color: string; tint: string; icon: IconName; label: string }> = {
-  email: { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)', icon: 'mail', label: 'Email' },
-  sms: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)', icon: 'sms', label: 'SMS' },
-  whatsapp: { color: 'var(--ch-whatsapp)', tint: 'var(--ch-whatsapp-tint)', icon: 'whatsapp', label: 'WhatsApp' },
-  voice: { color: 'var(--ch-voice)', tint: 'var(--ch-voice-tint)', icon: 'voice', label: 'Voice' },
-};
+const CHANNEL: Record<ChannelType, { color: string; tint: string; icon: IconName; label: string }> =
+  {
+    email: { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)', icon: 'mail', label: 'Email' },
+    sms: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)', icon: 'sms', label: 'SMS' },
+    whatsapp: {
+      color: 'var(--ch-whatsapp)',
+      tint: 'var(--ch-whatsapp-tint)',
+      icon: 'whatsapp',
+      label: 'WhatsApp',
+    },
+    voice: {
+      color: 'var(--ch-voice)',
+      tint: 'var(--ch-voice-tint)',
+      icon: 'voice',
+      label: 'Voice',
+    },
+  };
 const CHANNELS: ChannelType[] = ['email', 'sms', 'whatsapp', 'voice'];
 
 /* Deterministic tag styling (known map + hashed palette for custom tags). */
@@ -70,9 +81,15 @@ function tagStyle(name: string): { color: string; background: string } {
 /* Reachable-channel logic (drives channel filter + drawer engagement). */
 function reachOf(s: RichSubscriber) {
   const eng = s.status === 'active';
-  const tail = s.name.replace(/[^a-z]/gi, '').slice(-2).toLowerCase();
+  const tail = s.name
+    .replace(/[^a-z]/gi, '')
+    .slice(-2)
+    .toLowerCase();
   const sms = eng && /[aeiou]/.test(tail);
-  return { email: true, sms, whatsapp: eng && !sms, voice: eng && sms } as Record<ChannelType, boolean>;
+  return { email: true, sms, whatsapp: eng && !sms, voice: eng && sms } as Record<
+    ChannelType,
+    boolean
+  >;
 }
 
 function initials(name: string): string {
@@ -104,7 +121,10 @@ export default function AppSubscribers() {
   const [tagStore, setTagStore] = useState<Record<string, string[]>>({});
 
   const [segments, setSegments] = useState<SavedSegment[]>(BUILTIN_SEGMENTS);
-  const [segModal, setSegModal] = useState<{ open: boolean; edit: SavedSegment | null }>({ open: false, edit: null });
+  const [segModal, setSegModal] = useState<{ open: boolean; edit: SavedSegment | null }>({
+    open: false,
+    edit: null,
+  });
 
   /* Load persisted user segments after mount (keeps SSR/first render deterministic). */
   useEffect(() => {
@@ -140,7 +160,11 @@ export default function AppSubscribers() {
   const testRule = (s: RichSubscriber, rule: SegRule): boolean => {
     const { field, op, val } = rule;
     if (field === 'Status') {
-      const map: Record<string, SubscriberStatus> = { Active: 'active', Unsubscribed: 'unsubscribed', Bounced: 'bounced' };
+      const map: Record<string, SubscriberStatus> = {
+        Active: 'active',
+        Unsubscribed: 'unsubscribed',
+        Bounced: 'bounced',
+      };
       const is = s.status === map[val];
       return op === 'is' ? is : !is;
     }
@@ -163,12 +187,18 @@ export default function AppSubscribers() {
     const thr = parseInt(val, 10);
     return op === 'above' ? n >= thr : n < thr;
   };
-  const evalSeg = (seg: { rows: SegRule[]; matchType: 'all' | 'any' }, s: RichSubscriber): boolean =>
-    seg.matchType === 'any' ? seg.rows.some((r) => testRule(s, r)) : seg.rows.every((r) => testRule(s, r));
+  const evalSeg = (
+    seg: { rows: SegRule[]; matchType: 'all' | 'any' },
+    s: RichSubscriber,
+  ): boolean =>
+    seg.matchType === 'any'
+      ? seg.rows.some((r) => testRule(s, r))
+      : seg.rows.every((r) => testRule(s, r));
 
   const segById = useMemo(() => new Map(segments.map((s) => [s.id, s])), [segments]);
 
-  const segCount = (seg: SavedSegment): number => richSubscribers.filter((s) => evalSeg(seg, s)).length;
+  const segCount = (seg: SavedSegment): number =>
+    richSubscribers.filter((s) => evalSeg(seg, s)).length;
   const countMatch = (rows: SegRule[], matchType: 'all' | 'any'): number =>
     richSubscribers.filter((s) => evalSeg({ rows, matchType }, s)).length;
 
@@ -202,18 +232,30 @@ export default function AppSubscribers() {
         const r = reachOf(s);
         if (![...channelFilter].some((ch) => r[ch])) return false;
       }
-      if (tagFilter && !effTags(s).some((t) => t.toLowerCase() === tagFilter.toLowerCase())) return false;
+      if (tagFilter && !effTags(s).some((t) => t.toLowerCase() === tagFilter.toLowerCase()))
+        return false;
       return true;
     });
     const { key, dir } = sort;
     list = [...list].sort((a, b) => {
       let av: number | string;
       let bv: number | string;
-      if (key === 'name') { av = a.name.toLowerCase(); bv = b.name.toLowerCase(); }
-      else if (key === 'lists') { av = a.lists.join(', ').toLowerCase(); bv = b.lists.join(', ').toLowerCase(); }
-      else if (key === 'tags') { av = effTags(a).length; bv = effTags(b).length; }
-      else if (key === 'status') { av = a.status; bv = b.status; }
-      else { av = new Date(a.updatedAt).getTime(); bv = new Date(b.updatedAt).getTime(); }
+      if (key === 'name') {
+        av = a.name.toLowerCase();
+        bv = b.name.toLowerCase();
+      } else if (key === 'lists') {
+        av = a.lists.join(', ').toLowerCase();
+        bv = b.lists.join(', ').toLowerCase();
+      } else if (key === 'tags') {
+        av = effTags(a).length;
+        bv = effTags(b).length;
+      } else if (key === 'status') {
+        av = a.status;
+        bv = b.status;
+      } else {
+        av = new Date(a.updatedAt).getTime();
+        bv = new Date(b.updatedAt).getTime();
+      }
       if (av < bv) return -1 * dir;
       if (av > bv) return 1 * dir;
       return 0;
@@ -341,7 +383,7 @@ export default function AppSubscribers() {
     showToast(`Segment “${name}” deleted`);
   };
 
-  const openSub = openId ? richSubscribers.find((s) => s.id === openId) ?? null : null;
+  const openSub = openId ? (richSubscribers.find((s) => s.id === openId) ?? null) : null;
 
   const startIdx = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
   const endIdx = Math.min(safePage * PAGE_SIZE, filtered.length);
@@ -354,7 +396,11 @@ export default function AppSubscribers() {
           <p className="screen__sub">Everyone across your lists and segments.</p>
         </div>
         <div className="sb__actions">
-          <button type="button" className="sbtn" onClick={() => setSegModal({ open: true, edit: null })}>
+          <button
+            type="button"
+            className="sbtn"
+            onClick={() => setSegModal({ open: true, edit: null })}
+          >
             <Icon name="filter" size={15} />
             Create segment
           </button>
@@ -362,7 +408,11 @@ export default function AppSubscribers() {
             <Icon name="download" size={15} />
             Export
           </button>
-          <button type="button" className="pbtn" onClick={() => showToast('Opening add-subscriber…')}>
+          <button
+            type="button"
+            className="pbtn"
+            onClick={() => showToast('Opening add-subscriber…')}
+          >
             <Icon name="plus" size={15} stroke={2.2} />
             Add subscriber
           </button>
@@ -374,7 +424,10 @@ export default function AppSubscribers() {
         <button
           type="button"
           className={`sb__seg${segSel.size === 0 ? ' is-on' : ''}`}
-          onClick={() => { setSegSel(new Set()); resetPageAndSel(); }}
+          onClick={() => {
+            setSegSel(new Set());
+            resetPageAndSel();
+          }}
           aria-pressed={segSel.size === 0}
         >
           All subscribers
@@ -407,7 +460,11 @@ export default function AppSubscribers() {
             </span>
           );
         })}
-        <button type="button" className="sb__segnew" onClick={() => setSegModal({ open: true, edit: null })}>
+        <button
+          type="button"
+          className="sb__segnew"
+          onClick={() => setSegModal({ open: true, edit: null })}
+        >
           <Icon name="plus" size={13} stroke={2.2} />
           New segment
         </button>
@@ -423,7 +480,10 @@ export default function AppSubscribers() {
               role="tab"
               aria-selected={tab === t}
               className={`atab${tab === t ? ' is-active' : ''}`}
-              onClick={() => { setTab(t); resetPageAndSel(); }}
+              onClick={() => {
+                setTab(t);
+                resetPageAndSel();
+              }}
             >
               {t === 'all' ? 'All' : STATUS_LABEL[t]}
               <span className="atab__count tnum">{tabCounts[t] ?? 0}</span>
@@ -439,7 +499,10 @@ export default function AppSubscribers() {
               type="search"
               placeholder="Search by name, email or tag…"
               value={query}
-              onChange={(e) => { setQuery(e.target.value); resetPageAndSel(); }}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                resetPageAndSel();
+              }}
               aria-label="Search subscribers"
             />
           </label>
@@ -454,20 +517,36 @@ export default function AppSubscribers() {
             >
               <Icon name="filter" size={14} />
               Channel
-              {channelFilter.size > 0 && <span className="sb__filtercount tnum">{channelFilter.size}</span>}
+              {channelFilter.size > 0 && (
+                <span className="sb__filtercount tnum">{channelFilter.size}</span>
+              )}
               <Icon name="chevron-down" size={12} className="sb__filtercaret" />
             </button>
             {channelOpen && (
               <>
-                <button type="button" className="sb__scrim" aria-label="Close" onClick={() => setChannelOpen(false)} />
+                <button
+                  type="button"
+                  className="sb__scrim"
+                  aria-label="Close"
+                  onClick={() => setChannelOpen(false)}
+                />
                 <div className="sb__pop" role="menu">
                   <div className="sb__poptitle">Subscribed to</div>
                   {CHANNELS.map((ch) => {
                     const m = CHANNEL[ch];
                     const on = channelFilter.has(ch);
                     return (
-                      <button key={ch} type="button" role="menuitemcheckbox" aria-checked={on} className="sb__popopt" onClick={() => toggleChannel(ch)}>
-                        <span className={`sb__box${on ? ' is-on' : ''}`}>{on && <Icon name="check" size={11} stroke={3} />}</span>
+                      <button
+                        key={ch}
+                        type="button"
+                        role="menuitemcheckbox"
+                        aria-checked={on}
+                        className="sb__popopt"
+                        onClick={() => toggleChannel(ch)}
+                      >
+                        <span className={`sb__box${on ? ' is-on' : ''}`}>
+                          {on && <Icon name="check" size={11} stroke={3} />}
+                        </span>
                         <span className="apill" style={{ background: m.tint, color: m.color }}>
                           <Icon name={m.icon} size={12} />
                           {m.label}
@@ -476,7 +555,14 @@ export default function AppSubscribers() {
                     );
                   })}
                   {channelFilter.size > 0 && (
-                    <button type="button" className="sb__popclear" onClick={() => { setChannelFilter(new Set()); resetPageAndSel(); }}>
+                    <button
+                      type="button"
+                      className="sb__popclear"
+                      onClick={() => {
+                        setChannelFilter(new Set());
+                        resetPageAndSel();
+                      }}
+                    >
                       Clear
                     </button>
                   )}
@@ -510,34 +596,70 @@ export default function AppSubscribers() {
               const seg = segById.get(id);
               if (!seg) return null;
               return (
-                <button key={id} type="button" className="sb__chip sb__chip--seg" onClick={() => toggleSeg(id)}>
+                <button
+                  key={id}
+                  type="button"
+                  className="sb__chip sb__chip--seg"
+                  onClick={() => toggleSeg(id)}
+                >
                   Segment: {seg.name}
-                  <span className="sb__chipx"><Icon name="x" size={11} stroke={2.4} /></span>
+                  <span className="sb__chipx">
+                    <Icon name="x" size={11} stroke={2.4} />
+                  </span>
                 </button>
               );
             })}
             {tab !== 'all' && (
-              <button type="button" className={`sb__chip sb__chip--st-${tab}`} onClick={() => { setTab('all'); resetPageAndSel(); }}>
+              <button
+                type="button"
+                className={`sb__chip sb__chip--st-${tab}`}
+                onClick={() => {
+                  setTab('all');
+                  resetPageAndSel();
+                }}
+              >
                 Status: {STATUS_LABEL[tab]}
-                <span className="sb__chipx"><Icon name="x" size={11} stroke={2.4} /></span>
+                <span className="sb__chipx">
+                  <Icon name="x" size={11} stroke={2.4} />
+                </span>
               </button>
             )}
             {[...channelFilter].map((ch) => {
               const m = CHANNEL[ch];
               return (
-                <button key={ch} type="button" className="sb__chip" style={{ background: m.tint, color: m.color }} onClick={() => toggleChannel(ch)}>
+                <button
+                  key={ch}
+                  type="button"
+                  className="sb__chip"
+                  style={{ background: m.tint, color: m.color }}
+                  onClick={() => toggleChannel(ch)}
+                >
                   {m.label}
-                  <span className="sb__chipx"><Icon name="x" size={11} stroke={2.4} /></span>
+                  <span className="sb__chipx">
+                    <Icon name="x" size={11} stroke={2.4} />
+                  </span>
                 </button>
               );
             })}
             {tagFilter && (
-              <button type="button" className="sb__chip" style={tagStyle(tagFilter)} onClick={() => { setTagFilter(null); resetPageAndSel(); }}>
+              <button
+                type="button"
+                className="sb__chip"
+                style={tagStyle(tagFilter)}
+                onClick={() => {
+                  setTagFilter(null);
+                  resetPageAndSel();
+                }}
+              >
                 Tag: {tagFilter}
-                <span className="sb__chipx"><Icon name="x" size={11} stroke={2.4} /></span>
+                <span className="sb__chipx">
+                  <Icon name="x" size={11} stroke={2.4} />
+                </span>
               </button>
             )}
-            <button type="button" className="sb__clearall" onClick={clearAll}>Clear all</button>
+            <button type="button" className="sb__clearall" onClick={clearAll}>
+              Clear all
+            </button>
           </div>
         )}
 
@@ -546,11 +668,29 @@ export default function AppSubscribers() {
           <div className="sb__bulk">
             <span className="sb__bulkcount tnum">{selected.size} selected</span>
             <span className="sb__bulkdiv" />
-            <button type="button" className="sb__bulkbtn" onClick={() => bulk('Tagged')}><Icon name="star" size={13} />Tag</button>
-            <button type="button" className="sb__bulkbtn" onClick={() => bulk('Added')}><Icon name="filter" size={13} />Add to segment</button>
-            <button type="button" className="sb__bulkbtn" onClick={() => bulk('Exporting')}><Icon name="download" size={13} />Export</button>
-            <button type="button" className="sb__bulkbtn sb__bulkbtn--danger" onClick={() => bulk('Removed')}><Icon name="trash" size={13} />Remove</button>
-            <button type="button" className="sb__bulkclear" onClick={() => setSelected(new Set())}>Clear</button>
+            <button type="button" className="sb__bulkbtn" onClick={() => bulk('Tagged')}>
+              <Icon name="star" size={13} />
+              Tag
+            </button>
+            <button type="button" className="sb__bulkbtn" onClick={() => bulk('Added')}>
+              <Icon name="filter" size={13} />
+              Add to segment
+            </button>
+            <button type="button" className="sb__bulkbtn" onClick={() => bulk('Exporting')}>
+              <Icon name="download" size={13} />
+              Export
+            </button>
+            <button
+              type="button"
+              className="sb__bulkbtn sb__bulkbtn--danger"
+              onClick={() => bulk('Removed')}
+            >
+              <Icon name="trash" size={13} />
+              Remove
+            </button>
+            <button type="button" className="sb__bulkclear" onClick={() => setSelected(new Set())}>
+              Clear
+            </button>
           </div>
         )}
 
@@ -559,15 +699,41 @@ export default function AppSubscribers() {
           <>
             <div className="athead sb__grid">
               <div className="sb__check">
-                <button type="button" className={`sb__box${pageAllChecked ? ' is-on' : ''}`} onClick={toggleAllPage} aria-label="Select all on page" aria-pressed={pageAllChecked}>
+                <button
+                  type="button"
+                  className={`sb__box${pageAllChecked ? ' is-on' : ''}`}
+                  onClick={toggleAllPage}
+                  aria-label="Select all on page"
+                  aria-pressed={pageAllChecked}
+                >
                   {pageAllChecked && <Icon name="check" size={11} stroke={3} />}
                 </button>
               </div>
-              <div><button type="button" onClick={() => toggleSort('name')}>Subscriber <span className="tnum">{sortArrow('name')}</span></button></div>
-              <div><button type="button" onClick={() => toggleSort('lists')}>Lists <span className="tnum">{sortArrow('lists')}</span></button></div>
-              <div><button type="button" onClick={() => toggleSort('tags')}>Tags <span className="tnum">{sortArrow('tags')}</span></button></div>
-              <div><button type="button" onClick={() => toggleSort('status')}>Status <span className="tnum">{sortArrow('status')}</span></button></div>
-              <div><button type="button" onClick={() => toggleSort('last')}>Last activity <span className="tnum">{sortArrow('last')}</span></button></div>
+              <div>
+                <button type="button" onClick={() => toggleSort('name')}>
+                  Subscriber <span className="tnum">{sortArrow('name')}</span>
+                </button>
+              </div>
+              <div>
+                <button type="button" onClick={() => toggleSort('lists')}>
+                  Lists <span className="tnum">{sortArrow('lists')}</span>
+                </button>
+              </div>
+              <div>
+                <button type="button" onClick={() => toggleSort('tags')}>
+                  Tags <span className="tnum">{sortArrow('tags')}</span>
+                </button>
+              </div>
+              <div>
+                <button type="button" onClick={() => toggleSort('status')}>
+                  Status <span className="tnum">{sortArrow('status')}</span>
+                </button>
+              </div>
+              <div>
+                <button type="button" onClick={() => toggleSort('last')}>
+                  Last activity <span className="tnum">{sortArrow('last')}</span>
+                </button>
+              </div>
             </div>
 
             {pageRows.length === 0 ? (
@@ -580,10 +746,21 @@ export default function AppSubscribers() {
                   role="button"
                   tabIndex={0}
                   onClick={() => setOpenId(s.id)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenId(s.id); } }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setOpenId(s.id);
+                    }
+                  }}
                 >
                   <div className="sb__check" onClick={(e) => e.stopPropagation()}>
-                    <button type="button" className={`sb__box${selected.has(s.id) ? ' is-on' : ''}`} onClick={() => toggleSelect(s.id)} aria-label={`Select ${s.name}`} aria-pressed={selected.has(s.id)}>
+                    <button
+                      type="button"
+                      className={`sb__box${selected.has(s.id) ? ' is-on' : ''}`}
+                      onClick={() => toggleSelect(s.id)}
+                      aria-label={`Select ${s.name}`}
+                      aria-pressed={selected.has(s.id)}
+                    >
                       {selected.has(s.id) && <Icon name="check" size={11} stroke={3} />}
                     </button>
                   </div>
@@ -596,11 +773,19 @@ export default function AppSubscribers() {
                   </div>
                   <div className="sb__lists">{s.lists.join(', ')}</div>
                   <div className="sb__tagcell">
-                    {effTags(s).length === 0 ? <span className="sb__dash">—</span> : effTags(s).map((t) => (
-                      <span key={t} className="sb__tag" style={tagStyle(t)}>{t}</span>
-                    ))}
+                    {effTags(s).length === 0 ? (
+                      <span className="sb__dash">—</span>
+                    ) : (
+                      effTags(s).map((t) => (
+                        <span key={t} className="sb__tag" style={tagStyle(t)}>
+                          {t}
+                        </span>
+                      ))
+                    )}
                   </div>
-                  <div><span className={`astatus astatus--${s.status}`}>{STATUS_LABEL[s.status]}</span></div>
+                  <div>
+                    <span className={`astatus astatus--${s.status}`}>{STATUS_LABEL[s.status]}</span>
+                  </div>
                   <div className="sb__last">{ago(s.updatedAt)}</div>
                 </div>
               ))
@@ -609,8 +794,8 @@ export default function AppSubscribers() {
         )}
 
         {/* CARDS VIEW */}
-        {view === 'cards' && (
-          pageRows.length === 0 ? (
+        {view === 'cards' &&
+          (pageRows.length === 0 ? (
             <div className="atable__empty">No subscribers match your filters.</div>
           ) : (
             <div className="sb__cards">
@@ -621,16 +806,34 @@ export default function AppSubscribers() {
                   role="button"
                   tabIndex={0}
                   onClick={() => setOpenId(s.id)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenId(s.id); } }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setOpenId(s.id);
+                    }
+                  }}
                 >
-                  <button type="button" className={`sb__box sb__cardbox${selected.has(s.id) ? ' is-on' : ''}`} onClick={(e) => { e.stopPropagation(); toggleSelect(s.id); }} aria-label={`Select ${s.name}`} aria-pressed={selected.has(s.id)}>
+                  <button
+                    type="button"
+                    className={`sb__box sb__cardbox${selected.has(s.id) ? ' is-on' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSelect(s.id);
+                    }}
+                    aria-label={`Select ${s.name}`}
+                    aria-pressed={selected.has(s.id)}
+                  >
                     {selected.has(s.id) && <Icon name="check" size={11} stroke={3} />}
                   </button>
                   <Avatar sub={s} size={40} />
                   <div className="sb__cardname">{s.name}</div>
                   <div className="sb__email">{s.email}</div>
                   <div className="sb__cardtags">
-                    {effTags(s).map((t) => <span key={t} className="sb__tag" style={tagStyle(t)}>{t}</span>)}
+                    {effTags(s).map((t) => (
+                      <span key={t} className="sb__tag" style={tagStyle(t)}>
+                        {t}
+                      </span>
+                    ))}
                   </div>
                   <div className="sb__cardfoot">
                     <span className={`astatus astatus--${s.status}`}>{STATUS_LABEL[s.status]}</span>
@@ -639,12 +842,11 @@ export default function AppSubscribers() {
                 </div>
               ))}
             </div>
-          )
-        )}
+          ))}
 
         {/* COMPACT VIEW */}
-        {view === 'compact' && (
-          pageRows.length === 0 ? (
+        {view === 'compact' &&
+          (pageRows.length === 0 ? (
             <div className="atable__empty">No subscribers match your filters.</div>
           ) : (
             pageRows.map((s) => (
@@ -654,7 +856,12 @@ export default function AppSubscribers() {
                 role="button"
                 tabIndex={0}
                 onClick={() => setOpenId(s.id)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenId(s.id); } }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setOpenId(s.id);
+                  }
+                }}
               >
                 <Avatar sub={s} size={26} />
                 <span className="sb__cname">{s.name}</span>
@@ -663,8 +870,7 @@ export default function AppSubscribers() {
                 <span className="sb__last sb__clast">{ago(s.updatedAt)}</span>
               </div>
             ))
-          )
-        )}
+          ))}
 
         {/* footer / pagination */}
         <div className="atable__foot sb__foot">
@@ -675,15 +881,42 @@ export default function AppSubscribers() {
           </span>
           {pageCount > 1 && (
             <div className="sb__pager">
-              <button type="button" className="sb__pg" disabled={safePage === 1} onClick={() => { setPage((p) => Math.max(1, p - 1)); setSelected(new Set()); }} aria-label="Previous page">
+              <button
+                type="button"
+                className="sb__pg"
+                disabled={safePage === 1}
+                onClick={() => {
+                  setPage((p) => Math.max(1, p - 1));
+                  setSelected(new Set());
+                }}
+                aria-label="Previous page"
+              >
                 <Icon name="chevron-right" size={15} className="sb__pgflip" />
               </button>
               {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
-                <button key={n} type="button" className={`sb__pgn tnum${n === safePage ? ' is-on' : ''}`} aria-current={n === safePage ? 'page' : undefined} onClick={() => { setPage(n); setSelected(new Set()); }}>
+                <button
+                  key={n}
+                  type="button"
+                  className={`sb__pgn tnum${n === safePage ? ' is-on' : ''}`}
+                  aria-current={n === safePage ? 'page' : undefined}
+                  onClick={() => {
+                    setPage(n);
+                    setSelected(new Set());
+                  }}
+                >
                   {n}
                 </button>
               ))}
-              <button type="button" className="sb__pg" disabled={safePage === pageCount} onClick={() => { setPage((p) => Math.min(pageCount, p + 1)); setSelected(new Set()); }} aria-label="Next page">
+              <button
+                type="button"
+                className="sb__pg"
+                disabled={safePage === pageCount}
+                onClick={() => {
+                  setPage((p) => Math.min(pageCount, p + 1));
+                  setSelected(new Set());
+                }}
+                aria-label="Next page"
+              >
                 <Icon name="chevron-right" size={15} />
               </button>
             </div>
@@ -716,7 +949,9 @@ export default function AppSubscribers() {
 
       {toast && (
         <div className="sb__toast" role="status">
-          <span className="sb__toastic"><Icon name="check" size={13} stroke={3} /></span>
+          <span className="sb__toastic">
+            <Icon name="check" size={13} stroke={3} />
+          </span>
           {toast}
         </div>
       )}
@@ -894,27 +1129,84 @@ function SubscriberDrawer({
 
   const channelRows: { ch: ChannelType; meta: string; open: string; click: string }[] = [
     { ch: 'email', meta: '24 sent', open: sub.opens, click: sub.clicks },
-    { ch: 'sms', meta: reach.sms ? '6 sent' : 'Not opted in', open: reach.sms ? '58%' : '—', click: reach.sms ? '21%' : '—' },
-    { ch: 'whatsapp', meta: reach.whatsapp ? '3 sent' : 'Not opted in', open: reach.whatsapp ? '92%' : '—', click: reach.whatsapp ? '34%' : '—' },
-    { ch: 'voice', meta: reach.voice ? '2 calls' : 'Not opted in', open: reach.voice ? '75%' : '—', click: '—' },
+    {
+      ch: 'sms',
+      meta: reach.sms ? '6 sent' : 'Not opted in',
+      open: reach.sms ? '58%' : '—',
+      click: reach.sms ? '21%' : '—',
+    },
+    {
+      ch: 'whatsapp',
+      meta: reach.whatsapp ? '3 sent' : 'Not opted in',
+      open: reach.whatsapp ? '92%' : '—',
+      click: reach.whatsapp ? '34%' : '—',
+    },
+    {
+      ch: 'voice',
+      meta: reach.voice ? '2 calls' : 'Not opted in',
+      open: reach.voice ? '75%' : '—',
+      click: '—',
+    },
   ];
 
   type Ev = { icon: IconName; bg: string; color: string; title: string; when: string };
   const activity: Ev[] = [];
   if (sub.status === 'active') {
-    activity.push({ icon: 'eye', bg: 'var(--accent-tint)', color: 'var(--accent)', title: 'Opened “Summer Sale”', when: ago(sub.updatedAt) });
-    activity.push({ icon: 'target', bg: 'var(--success-bg)', color: 'var(--success-strong)', title: 'Clicked a link in “Spring Preview”', when: '3d ago' });
-    activity.push({ icon: 'inbox', bg: 'var(--surface2)', color: 'var(--text4)', title: 'Received “Welcome Series”', when: sub.joined });
+    activity.push({
+      icon: 'eye',
+      bg: 'var(--accent-tint)',
+      color: 'var(--accent)',
+      title: 'Opened “Summer Sale”',
+      when: ago(sub.updatedAt),
+    });
+    activity.push({
+      icon: 'target',
+      bg: 'var(--success-bg)',
+      color: 'var(--success-strong)',
+      title: 'Clicked a link in “Spring Preview”',
+      when: '3d ago',
+    });
+    activity.push({
+      icon: 'inbox',
+      bg: 'var(--surface2)',
+      color: 'var(--text4)',
+      title: 'Received “Welcome Series”',
+      when: sub.joined,
+    });
   } else if (sub.status === 'bounced') {
-    activity.push({ icon: 'x', bg: 'var(--danger-bg)', color: 'var(--danger)', title: 'Email bounced (hard)', when: ago(sub.updatedAt) });
+    activity.push({
+      icon: 'x',
+      bg: 'var(--danger-bg)',
+      color: 'var(--danger)',
+      title: 'Email bounced (hard)',
+      when: ago(sub.updatedAt),
+    });
   } else {
-    activity.push({ icon: 'x', bg: 'var(--warning-bg)', color: 'var(--warning)', title: 'Unsubscribed from all lists', when: ago(sub.updatedAt) });
+    activity.push({
+      icon: 'x',
+      bg: 'var(--warning-bg)',
+      color: 'var(--warning)',
+      title: 'Unsubscribed from all lists',
+      when: ago(sub.updatedAt),
+    });
   }
-  activity.push({ icon: 'plus', bg: 'var(--surface2)', color: 'var(--text4)', title: `Joined ${sub.lists[0] ?? 'a list'}`, when: sub.joined });
+  activity.push({
+    icon: 'plus',
+    bg: 'var(--surface2)',
+    color: 'var(--text4)',
+    title: `Joined ${sub.lists[0] ?? 'a list'}`,
+    when: sub.joined,
+  });
 
   return (
     <div className="adrawer-overlay" onClick={onClose}>
-      <div className="adrawer sbd" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={`${sub.name} profile`}>
+      <div
+        className="adrawer sbd"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${sub.name} profile`}
+      >
         <div className="adrawer__head">
           <span className="adrawer__title">Subscriber profile</span>
           <button type="button" className="iconbtn" onClick={onClose} aria-label="Close">
@@ -954,7 +1246,10 @@ function SubscriberDrawer({
                 className="sbd__savetags"
                 data-dirty={dirty}
                 disabled={!dirty}
-                onClick={() => { onSaveTags(sub.id, draft); setSaved(draft); }}
+                onClick={() => {
+                  onSaveTags(sub.id, draft);
+                  setSaved(draft);
+                }}
               >
                 Save tags
               </button>
@@ -962,8 +1257,22 @@ function SubscriberDrawer({
             <div className="sbd__tags">
               {draft.map((t) => (
                 <span key={t} className="sbd__tag" style={tagStyle(t)}>
-                  <button type="button" className="sbd__taglbl" title={`Filter by “${t}”`} onClick={() => onFilterTag(t)}>{t}</button>
-                  <button type="button" className="sbd__tagx" aria-label={`Remove ${t}`} onClick={() => removeTag(t)}><Icon name="x" size={10} stroke={2.6} /></button>
+                  <button
+                    type="button"
+                    className="sbd__taglbl"
+                    title={`Filter by “${t}”`}
+                    onClick={() => onFilterTag(t)}
+                  >
+                    {t}
+                  </button>
+                  <button
+                    type="button"
+                    className="sbd__tagx"
+                    aria-label={`Remove ${t}`}
+                    onClick={() => removeTag(t)}
+                  >
+                    <Icon name="x" size={10} stroke={2.6} />
+                  </button>
                 </span>
               ))}
               <input
@@ -971,7 +1280,12 @@ function SubscriberDrawer({
                 placeholder="Add tag…"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag();
+                  }
+                }}
                 aria-label="Add tag"
               />
             </div>
@@ -980,10 +1294,22 @@ function SubscriberDrawer({
           {/* details */}
           <div className="sbd__section">
             <span className="adrawer__eyebrow sbd__eyebrow">Details</span>
-            <div className="adetail"><span className="adetail__k">Lists</span><span className="adetail__v">{sub.lists.join(', ')}</span></div>
-            <div className="adetail"><span className="adetail__k">Location</span><span className="adetail__v">{sub.location}</span></div>
-            <div className="adetail"><span className="adetail__k">Subscribed</span><span className="adetail__v">{sub.joined}</span></div>
-            <div className="adetail"><span className="adetail__k">Last active</span><span className="adetail__v">{ago(sub.updatedAt)}</span></div>
+            <div className="adetail">
+              <span className="adetail__k">Lists</span>
+              <span className="adetail__v">{sub.lists.join(', ')}</span>
+            </div>
+            <div className="adetail">
+              <span className="adetail__k">Location</span>
+              <span className="adetail__v">{sub.location}</span>
+            </div>
+            <div className="adetail">
+              <span className="adetail__k">Subscribed</span>
+              <span className="adetail__v">{sub.joined}</span>
+            </div>
+            <div className="adetail">
+              <span className="adetail__k">Last active</span>
+              <span className="adetail__v">{ago(sub.updatedAt)}</span>
+            </div>
           </div>
 
           {/* channel engagement */}
@@ -995,19 +1321,33 @@ function SubscriberDrawer({
                 const on = reach[ch];
                 return (
                   <div key={ch} className="sbd__chan">
-                    <span className="sbd__chan-ic" style={{ background: on ? m.tint : 'var(--surface2)', color: on ? m.color : 'var(--muted)' }}>
+                    <span
+                      className="sbd__chan-ic"
+                      style={{
+                        background: on ? m.tint : 'var(--surface2)',
+                        color: on ? m.color : 'var(--muted)',
+                      }}
+                    >
                       <Icon name={m.icon} size={14} />
                     </span>
                     <div className="sbd__chan-main">
                       <div className="sbd__chan-top">
                         <span className="sbd__chan-name">{m.label}</span>
-                        <span className={`sbd__chan-pill${on ? '' : ' is-off'}`}>{on ? 'Active' : 'Off'}</span>
+                        <span className={`sbd__chan-pill${on ? '' : ' is-off'}`}>
+                          {on ? 'Active' : 'Off'}
+                        </span>
                       </div>
                       <div className="sbd__chan-meta">{meta}</div>
                     </div>
                     <div className="sbd__chan-metrics">
-                      <div><span className="tnum sbd__chan-num">{open}</span><span className="sbd__chan-sub">open</span></div>
-                      <div><span className="tnum sbd__chan-num">{click}</span><span className="sbd__chan-sub">click</span></div>
+                      <div>
+                        <span className="tnum sbd__chan-num">{open}</span>
+                        <span className="sbd__chan-sub">open</span>
+                      </div>
+                      <div>
+                        <span className="tnum sbd__chan-num">{click}</span>
+                        <span className="sbd__chan-sub">click</span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -1035,11 +1375,23 @@ function SubscriberDrawer({
         </div>
 
         <div className="adrawer__foot">
-          <button type="button" className="sbtn" style={{ flex: 1 }} onClick={() => onToast('Opening campaign wizard…')}>
-            <Icon name="send" size={15} />Send email
+          <button
+            type="button"
+            className="sbtn"
+            style={{ flex: 1 }}
+            onClick={() => onToast('Opening campaign wizard…')}
+          >
+            <Icon name="send" size={15} />
+            Send email
           </button>
-          <button type="button" className="pbtn" style={{ flex: 1 }} onClick={() => onToast('Opening profile editor…')}>
-            <Icon name="edit" size={15} />Edit
+          <button
+            type="button"
+            className="pbtn"
+            style={{ flex: 1 }}
+            onClick={() => onToast('Opening profile editor…')}
+          >
+            <Icon name="edit" size={15} />
+            Edit
           </button>
         </div>
 
@@ -1115,10 +1467,14 @@ function SegmentModal({
 
   const setField = (i: number, field: SegField) => {
     const spec = SEG_FIELDS[field];
-    setRows((r) => r.map((row, idx) => (idx === i ? { field, op: spec.ops[0], val: spec.vals[0] } : row)));
+    setRows((r) =>
+      r.map((row, idx) => (idx === i ? { field, op: spec.ops[0], val: spec.vals[0] } : row)),
+    );
   };
-  const setOp = (i: number, op: string) => setRows((r) => r.map((row, idx) => (idx === i ? { ...row, op } : row)));
-  const setVal = (i: number, val: string) => setRows((r) => r.map((row, idx) => (idx === i ? { ...row, val } : row)));
+  const setOp = (i: number, op: string) =>
+    setRows((r) => r.map((row, idx) => (idx === i ? { ...row, op } : row)));
+  const setVal = (i: number, val: string) =>
+    setRows((r) => r.map((row, idx) => (idx === i ? { ...row, val } : row)));
   const addRow = () => setRows((r) => [...r, { field: 'Tag', op: 'is', val: 'VIP' }]);
   const removeRow = (i: number) => setRows((r) => r.filter((_, idx) => idx !== i));
 
@@ -1136,24 +1492,48 @@ function SegmentModal({
 
   return (
     <div className="segm-overlay" onClick={onClose}>
-      <div className="segm" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={edit ? 'Edit segment' : 'Create segment'}>
+      <div
+        className="segm"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={edit ? 'Edit segment' : 'Create segment'}
+      >
         <div className="segm__head">
           <div>
             <div className="segm__title">{edit ? 'Edit segment' : 'Create segment'}</div>
             <div className="segm__sub">Filter subscribers by rules that update automatically.</div>
           </div>
-          <button type="button" className="iconbtn" onClick={onClose} aria-label="Close"><Icon name="x" size={16} /></button>
+          <button type="button" className="iconbtn" onClick={onClose} aria-label="Close">
+            <Icon name="x" size={16} />
+          </button>
         </div>
 
         <div className="segm__body">
-          <label className="segm__label" htmlFor="segname">Segment name</label>
-          <input id="segname" className="segm__input" placeholder="e.g. Engaged VIPs" value={name} onChange={(e) => setName(e.target.value)} />
+          <label className="segm__label" htmlFor="segname">
+            Segment name
+          </label>
+          <input
+            id="segname"
+            className="segm__input"
+            placeholder="e.g. Engaged VIPs"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
 
           <div className="segm__matchline">
             Match
             <span className="aseg segm__matchseg">
               {(['all', 'any'] as const).map((m) => (
-                <button key={m} type="button" className={`aseg__opt${matchType === m ? ' is-active' : ''}`} onClick={() => setMatchType(m)} aria-pressed={matchType === m}>{m}</button>
+                <button
+                  key={m}
+                  type="button"
+                  className={`aseg__opt${matchType === m ? ' is-active' : ''}`}
+                  onClick={() => setMatchType(m)}
+                  aria-pressed={matchType === m}
+                >
+                  {m}
+                </button>
               ))}
             </span>
             of the following conditions:
@@ -1164,16 +1544,49 @@ function SegmentModal({
               const spec = SEG_FIELDS[row.field];
               return (
                 <div key={i} className="segm__row">
-                  <select className="segm__sel" value={row.field} onChange={(e) => setField(i, e.target.value as SegField)} aria-label="Field">
-                    {SEG_FIELD_LIST.map((f) => <option key={f} value={f}>{f}</option>)}
+                  <select
+                    className="segm__sel"
+                    value={row.field}
+                    onChange={(e) => setField(i, e.target.value as SegField)}
+                    aria-label="Field"
+                  >
+                    {SEG_FIELD_LIST.map((f) => (
+                      <option key={f} value={f}>
+                        {f}
+                      </option>
+                    ))}
                   </select>
-                  <select className="segm__sel" value={row.op} onChange={(e) => setOp(i, e.target.value)} aria-label="Operator">
-                    {spec.ops.map((o) => <option key={o} value={o}>{o}</option>)}
+                  <select
+                    className="segm__sel"
+                    value={row.op}
+                    onChange={(e) => setOp(i, e.target.value)}
+                    aria-label="Operator"
+                  >
+                    {spec.ops.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
                   </select>
-                  <select className="segm__sel" value={row.val} onChange={(e) => setVal(i, e.target.value)} aria-label="Value">
-                    {spec.vals.map((v) => <option key={v} value={v}>{v}</option>)}
+                  <select
+                    className="segm__sel"
+                    value={row.val}
+                    onChange={(e) => setVal(i, e.target.value)}
+                    aria-label="Value"
+                  >
+                    {spec.vals.map((v) => (
+                      <option key={v} value={v}>
+                        {v}
+                      </option>
+                    ))}
                   </select>
-                  <button type="button" className="segm__rm" disabled={rows.length <= 1} aria-label="Remove condition" onClick={() => removeRow(i)}>
+                  <button
+                    type="button"
+                    className="segm__rm"
+                    disabled={rows.length <= 1}
+                    aria-label="Remove condition"
+                    onClick={() => removeRow(i)}
+                  >
                     <Icon name="x" size={15} />
                   </button>
                 </div>
@@ -1182,21 +1595,30 @@ function SegmentModal({
           </div>
 
           <button type="button" className="segm__add" onClick={addRow}>
-            <Icon name="plus" size={14} stroke={2.2} />Add condition
+            <Icon name="plus" size={14} stroke={2.2} />
+            Add condition
           </button>
 
           <div className="segm__summary">
             <Icon name="filter" size={15} />
-            <span className="tnum">≈ {count.toLocaleString('en-US')} subscriber{count === 1 ? '' : 's'} match</span>
+            <span className="tnum">
+              ≈ {count.toLocaleString('en-US')} subscriber{count === 1 ? '' : 's'} match
+            </span>
           </div>
         </div>
 
         <div className="segm__foot">
           {edit && (
-            <button type="button" className="segm__del" onClick={() => onDelete(edit.id)}>Delete</button>
+            <button type="button" className="segm__del" onClick={() => onDelete(edit.id)}>
+              Delete
+            </button>
           )}
-          <button type="button" className="sbtn segm__cancel" onClick={onClose}>Cancel</button>
-          <button type="button" className="pbtn" onClick={submit}>{edit ? 'Save changes' : 'Save segment'}</button>
+          <button type="button" className="sbtn segm__cancel" onClick={onClose}>
+            Cancel
+          </button>
+          <button type="button" className="pbtn" onClick={submit}>
+            {edit ? 'Save changes' : 'Save segment'}
+          </button>
         </div>
 
         <style>{`

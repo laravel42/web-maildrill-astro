@@ -30,10 +30,7 @@ describe('SEO helpers', () => {
   });
 
   it('marks noindex pages', () => {
-    const meta = resolveSeo(
-      { title: 'Log in', description: 'Auth', noindex: true },
-      '/login',
-    );
+    const meta = resolveSeo({ title: 'Log in', description: 'Auth', noindex: true }, '/login');
     expect(meta.robots).toBe('noindex,nofollow');
   });
 });

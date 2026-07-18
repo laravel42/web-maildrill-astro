@@ -5,7 +5,9 @@ test.describe('marketing smoke', () => {
     page,
   }) => {
     await page.goto('/');
-    await expect(page.getByRole('banner').getByRole('link', { name: 'Maildrill home' })).toBeVisible();
+    await expect(
+      page.getByRole('banner').getByRole('link', { name: 'Maildrill home' }),
+    ).toBeVisible();
     await expect(page.getByRole('heading', { level: 1 })).toContainText('One workspace');
     await expect(page.getByRole('link', { name: 'Start free trial' }).first()).toBeVisible();
     const canonical = page.locator('link[rel="canonical"]');

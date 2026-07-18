@@ -3,7 +3,13 @@ import { mockContactSubmit } from '@/lib/app/services';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
-const TOPICS = ['Talk to sales', 'Book a demo', 'Technical support', 'Partnerships', 'Something else'];
+const TOPICS = [
+  'Talk to sales',
+  'Book a demo',
+  'Technical support',
+  'Partnerships',
+  'Something else',
+];
 
 export default function ContactForm() {
   const [status, setStatus] = useState<Status>('idle');
@@ -50,7 +56,19 @@ export default function ContactForm() {
       {status === 'success' ? (
         <div className="cf__success" role="status">
           <div className="cf__successicon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
           </div>
           <h2>Message sent</h2>
           <p>Thanks — we'll get back to you within one business day.</p>
@@ -72,7 +90,15 @@ export default function ContactForm() {
           </div>
           <label className="cf__field">
             <span className="cf__label">Work email</span>
-            <input className="cf__input" type="email" name="email" autoComplete="email" inputMode="email" placeholder="you@company.com" required />
+            <input
+              className="cf__input"
+              type="email"
+              name="email"
+              autoComplete="email"
+              inputMode="email"
+              placeholder="you@company.com"
+              required
+            />
           </label>
           <label className="cf__field">
             <span className="cf__label">What can we help with?</span>
@@ -86,7 +112,13 @@ export default function ContactForm() {
           </label>
           <label className="cf__field">
             <span className="cf__label">Message</span>
-            <textarea className="cf__input cf__textarea" name="message" rows={4} placeholder="Tell us a bit about your use case and volume…" required />
+            <textarea
+              className="cf__input cf__textarea"
+              name="message"
+              rows={4}
+              placeholder="Tell us a bit about your use case and volume…"
+              required
+            />
           </label>
           {error && (
             <p className="cf__error" role="alert">

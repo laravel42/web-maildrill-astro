@@ -19,12 +19,23 @@ function fmtDate(iso: string): string {
   return `${MONTHS[Number(m) - 1]} ${Number(d)}`;
 }
 
-const CHANNEL: Record<ChannelType, { color: string; tint: string; icon: IconName; label: string }> = {
-  email: { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)', icon: 'mail', label: 'Email' },
-  sms: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)', icon: 'sms', label: 'SMS' },
-  whatsapp: { color: 'var(--ch-whatsapp)', tint: 'var(--ch-whatsapp-tint)', icon: 'whatsapp', label: 'WhatsApp' },
-  voice: { color: 'var(--ch-voice)', tint: 'var(--ch-voice-tint)', icon: 'voice', label: 'Voice' },
-};
+const CHANNEL: Record<ChannelType, { color: string; tint: string; icon: IconName; label: string }> =
+  {
+    email: { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)', icon: 'mail', label: 'Email' },
+    sms: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)', icon: 'sms', label: 'SMS' },
+    whatsapp: {
+      color: 'var(--ch-whatsapp)',
+      tint: 'var(--ch-whatsapp-tint)',
+      icon: 'whatsapp',
+      label: 'WhatsApp',
+    },
+    voice: {
+      color: 'var(--ch-voice)',
+      tint: 'var(--ch-voice-tint)',
+      icon: 'voice',
+      label: 'Voice',
+    },
+  };
 const CHANNEL_KEYS: ChannelType[] = ['email', 'sms', 'whatsapp', 'voice'];
 
 /* Range chips — visual toggle only (source data is static). */
@@ -37,14 +48,45 @@ const RANGES: { key: string; label: string }[] = [
 
 /* ---- KPI trend strip (§1.2) ---- */
 const KPIS: { label: string; value: string; delta: string; line: string; spark: number[] }[] = [
-  { label: 'Open rate', value: '43%', delta: '↑ 4%', line: '#4f46e5', spark: [32, 34, 33, 38, 36, 40, 39, 43] },
-  { label: 'Click rate', value: '12%', delta: '↑ 2%', line: '#8b5cf6', spark: [8, 9, 8, 10, 9, 11, 10, 12] },
-  { label: 'Delivered', value: '97.8%', delta: '↑ 0.3%', line: '#059669', spark: [96, 97, 96.5, 97.2, 97, 97.5, 97.6, 97.8] },
-  { label: 'Unsub rate', value: '0.4%', delta: '↓ 0.1%', line: '#d97706', spark: [0.7, 0.6, 0.65, 0.55, 0.5, 0.48, 0.45, 0.4] },
+  {
+    label: 'Open rate',
+    value: '43%',
+    delta: '↑ 4%',
+    line: '#4f46e5',
+    spark: [32, 34, 33, 38, 36, 40, 39, 43],
+  },
+  {
+    label: 'Click rate',
+    value: '12%',
+    delta: '↑ 2%',
+    line: '#8b5cf6',
+    spark: [8, 9, 8, 10, 9, 11, 10, 12],
+  },
+  {
+    label: 'Delivered',
+    value: '97.8%',
+    delta: '↑ 0.3%',
+    line: '#059669',
+    spark: [96, 97, 96.5, 97.2, 97, 97.5, 97.6, 97.8],
+  },
+  {
+    label: 'Unsub rate',
+    value: '0.4%',
+    delta: '↓ 0.1%',
+    line: '#d97706',
+    spark: [0.7, 0.6, 0.65, 0.55, 0.5, 0.48, 0.45, 0.4],
+  },
 ];
 
 /* ---- Per-channel comparison bars (§1.3b) ---- */
-const BY_CHANNEL: { ch: ChannelType; label: string; sent: string; pct: string; w: number; color: string }[] = [
+const BY_CHANNEL: {
+  ch: ChannelType;
+  label: string;
+  sent: string;
+  pct: string;
+  w: number;
+  color: string;
+}[] = [
   { ch: 'email', label: 'Email', sent: '11,240', pct: '90%', w: 90, color: '#4f46e5' },
   { ch: 'sms', label: 'SMS', sent: '980', pct: '8%', w: 8, color: '#8b5cf6' },
   { ch: 'whatsapp', label: 'WhatsApp', sent: '260', pct: '2%', w: 2, color: '#c4b5fd' },
@@ -61,9 +103,33 @@ const CHANNEL_PERF: {
   click: string;
   clickW: number;
 }[] = [
-  { ch: 'email', sent: '11,240', delivered: '98.6%', open: '43.2%', openW: 43, click: '12.1%', clickW: 12 },
-  { ch: 'sms', sent: '980', delivered: '99.2%', open: '61.4%', openW: 61, click: '24.3%', clickW: 24 },
-  { ch: 'whatsapp', sent: '260', delivered: '99.8%', open: '88.5%', openW: 88, click: '31.2%', clickW: 31 },
+  {
+    ch: 'email',
+    sent: '11,240',
+    delivered: '98.6%',
+    open: '43.2%',
+    openW: 43,
+    click: '12.1%',
+    clickW: 12,
+  },
+  {
+    ch: 'sms',
+    sent: '980',
+    delivered: '99.2%',
+    open: '61.4%',
+    openW: 61,
+    click: '24.3%',
+    clickW: 24,
+  },
+  {
+    ch: 'whatsapp',
+    sent: '260',
+    delivered: '99.8%',
+    open: '88.5%',
+    openW: 88,
+    click: '31.2%',
+    clickW: 31,
+  },
   { ch: 'voice', sent: '95', delivered: '96.4%', open: '71.0%', openW: 71, click: '—', clickW: 0 },
 ];
 
@@ -113,7 +179,10 @@ function sparkPoints(pts: number[], w: number, h: number): string {
   const min = Math.min(...pts);
   const rng = max - min || 1;
   return pts
-    .map((p, i) => `${((i / (pts.length - 1)) * w).toFixed(1)},${(h - ((p - min) / rng) * h).toFixed(1)}`)
+    .map(
+      (p, i) =>
+        `${((i / (pts.length - 1)) * w).toFixed(1)},${(h - ((p - min) / rng) * h).toFixed(1)}`,
+    )
     .join(' ');
 }
 
@@ -121,7 +190,24 @@ function niceMax(v: number): number {
   if (v <= 0) return 1;
   const pow = Math.pow(10, Math.floor(Math.log10(v)));
   const n = v / pow;
-  const f = n <= 1 ? 1 : n <= 1.5 ? 1.5 : n <= 2 ? 2 : n <= 3 ? 3 : n <= 4 ? 4 : n <= 5 ? 5 : n <= 6 ? 6 : n <= 8 ? 8 : 10;
+  const f =
+    n <= 1
+      ? 1
+      : n <= 1.5
+        ? 1.5
+        : n <= 2
+          ? 2
+          : n <= 3
+            ? 3
+            : n <= 4
+              ? 4
+              : n <= 5
+                ? 5
+                : n <= 6
+                  ? 6
+                  : n <= 8
+                    ? 8
+                    : 10;
   return f * pow;
 }
 function fmtCompact(v: number): string {
@@ -151,7 +237,9 @@ const TOTAL_SENDS = HERO_SERIES.reduce((s, p) => s + p.sent, 0);
 export default function AppAnalytics() {
   const [range, setRange] = useState('30d');
   const [channel, setChannel] = useState<ChannelType | 'all'>('all');
-  const [visible, setVisible] = useState<Set<SeriesKey>>(new Set<SeriesKey>(['sent', 'opened', 'clicked']));
+  const [visible, setVisible] = useState<Set<SeriesKey>>(
+    new Set<SeriesKey>(['sent', 'opened', 'clicked']),
+  );
   const [toast, setToast] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -218,7 +306,11 @@ export default function AppAnalytics() {
               </button>
             ))}
           </div>
-          <button type="button" className="sbtn" onClick={() => showToast('Preparing analytics export…')}>
+          <button
+            type="button"
+            className="sbtn"
+            onClick={() => showToast('Preparing analytics export…')}
+          >
             <Icon name="download" size={15} />
             Export
           </button>
@@ -261,7 +353,8 @@ export default function AppAnalytics() {
           <div>
             <h2 className="acrd__title">Sends, opens &amp; clicks over time</h2>
             <p className="an__card-sub tnum">
-              Daily volume · {fmtDate(analyticsSeries[0].date)} – {fmtDate(analyticsSeries[analyticsSeries.length - 1].date)}
+              Daily volume · {fmtDate(analyticsSeries[0].date)} –{' '}
+              {fmtDate(analyticsSeries[analyticsSeries.length - 1].date)}
             </p>
           </div>
           <div className="an__hero-total">
@@ -281,7 +374,10 @@ export default function AppAnalytics() {
                 aria-pressed={on}
                 onClick={() => toggleSeries(s.key)}
               >
-                <span className="an__leg-sw" style={{ background: on ? s.color : 'var(--muted2)' }} />
+                <span
+                  className="an__leg-sw"
+                  style={{ background: on ? s.color : 'var(--muted2)' }}
+                />
                 {s.label}
               </button>
             );
@@ -313,7 +409,11 @@ export default function AppAnalytics() {
         <section className="acrd an__panel">
           <h2 className="an__panel-title">By channel</h2>
           {BY_CHANNEL.map((c) => (
-            <div key={c.ch} className="an__bar-row" style={{ opacity: dim(c.ch), transition: 'opacity .2s ease' }}>
+            <div
+              key={c.ch}
+              className="an__bar-row"
+              style={{ opacity: dim(c.ch), transition: 'opacity .2s ease' }}
+            >
               <div className="an__bar-top">
                 <span className="an__bar-lbl">{c.label}</span>
                 <span className="an__bar-meta tnum">
@@ -321,7 +421,10 @@ export default function AppAnalytics() {
                 </span>
               </div>
               <div className="an__track">
-                <div className="an__fill" style={{ width: `${Math.max(c.w, 1.5)}%`, background: c.color }} />
+                <div
+                  className="an__fill"
+                  style={{ width: `${Math.max(c.w, 1.5)}%`, background: c.color }}
+                />
               </div>
             </div>
           ))}
@@ -333,7 +436,9 @@ export default function AppAnalytics() {
         <div className="acrd__head">
           <h2 className="acrd__title">Channel performance</h2>
           <span className="an__table-sub">
-            {channel === 'all' ? 'Delivery & engagement per channel' : `Focused on ${CHANNEL[channel].label}`}
+            {channel === 'all'
+              ? 'Delivery & engagement per channel'
+              : `Focused on ${CHANNEL[channel].label}`}
           </span>
         </div>
         <div className="an__ct">
@@ -363,7 +468,10 @@ export default function AppAnalytics() {
                   <div className="an__ct-del tnum">{row.delivered}</div>
                   <div className="an__ct-rate">
                     <div className="an__ct-mini">
-                      <div className="an__ct-mini-fill" style={{ width: `${row.openW}%`, background: m.color }} />
+                      <div
+                        className="an__ct-mini-fill"
+                        style={{ width: `${row.openW}%`, background: m.color }}
+                      />
                     </div>
                     <span className="an__ct-rate-val tnum">{row.open}</span>
                   </div>
@@ -606,7 +714,14 @@ function TrendChart({ visible }: { visible: Set<SeriesKey> }) {
           const gy = MT + plotH - (g / 4) * plotH;
           return (
             <g key={g}>
-              <line x1={ML} y1={gy} x2={ML + plotW} y2={gy} style={{ stroke: 'var(--divider)' }} strokeWidth="1" />
+              <line
+                x1={ML}
+                y1={gy}
+                x2={ML + plotW}
+                y2={gy}
+                style={{ stroke: 'var(--divider)' }}
+                strokeWidth="1"
+              />
               <text
                 x={ML - 8}
                 y={gy + 3.5}
@@ -701,7 +816,12 @@ function TrendChart({ visible }: { visible: Set<SeriesKey> }) {
           className="an__tip"
           style={{
             left: `${(x(hover) / W) * 100}%`,
-            transform: hover <= 1 ? 'translateX(4px)' : hover >= n - 2 ? 'translateX(-100%) translateX(-4px)' : 'translateX(-50%)',
+            transform:
+              hover <= 1
+                ? 'translateX(4px)'
+                : hover >= n - 2
+                  ? 'translateX(-100%) translateX(-4px)'
+                  : 'translateX(-50%)',
           }}
         >
           <div className="an__tip-date">{fmtDate(series[hover].date)}</div>
@@ -709,7 +829,9 @@ function TrendChart({ visible }: { visible: Set<SeriesKey> }) {
             <div key={s.key} className="an__tip-row">
               <span className="an__tip-sw" style={{ background: s.color }} />
               <span className="an__tip-lbl">{s.label}</span>
-              <span className="an__tip-val tnum">{series[hover][s.key].toLocaleString('en-US')}</span>
+              <span className="an__tip-val tnum">
+                {series[hover][s.key].toLocaleString('en-US')}
+              </span>
             </div>
           ))}
         </div>

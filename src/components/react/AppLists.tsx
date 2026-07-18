@@ -159,7 +159,7 @@ export default function AppLists() {
     setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: 1 }));
   const sortArrow = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? '↑' : '↓') : '');
 
-  const open = openId ? rows.find((l) => l.id === openId) ?? null : null;
+  const open = openId ? (rows.find((l) => l.id === openId) ?? null) : null;
   const closeDrawer = () => {
     setClosing(true);
     window.setTimeout(() => {
@@ -315,7 +315,8 @@ export default function AppLists() {
                     className="ll__card-growth tnum"
                     style={{ color: up ? 'var(--success)' : 'var(--danger)' }}
                   >
-                    {fmtPct(l.growthPct)} · {up ? '↑' : '↓'} {Math.abs(weeklyGain(l.trend)).toLocaleString('en-US')} this week
+                    {fmtPct(l.growthPct)} · {up ? '↑' : '↓'}{' '}
+                    {Math.abs(weeklyGain(l.trend)).toLocaleString('en-US')} this week
                   </div>
                   <div className="ll__card-meta">
                     <span>Recent: {l.recentCampaign}</span>
@@ -332,7 +333,11 @@ export default function AppLists() {
                 </div>
               );
             })}
-            <button type="button" className="ll__card ll__card--new" onClick={() => showToast('Opening new list…')}>
+            <button
+              type="button"
+              className="ll__card ll__card--new"
+              onClick={() => showToast('Opening new list…')}
+            >
               <span className="ll__newplus">
                 <Icon name="plus" size={18} stroke={2.2} />
               </span>
@@ -342,7 +347,13 @@ export default function AppLists() {
         ))}
 
       {open && (
-        <ListDrawer key={open.id} list={open} closing={closing} onClose={closeDrawer} onToast={showToast} />
+        <ListDrawer
+          key={open.id}
+          list={open}
+          closing={closing}
+          onClose={closeDrawer}
+          onToast={showToast}
+        />
       )}
 
       {toast && (

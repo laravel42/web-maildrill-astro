@@ -38,7 +38,9 @@ const updated = doc.data.updatedDate.toLocaleDateString('en', {
 <MarketingLayout seo={seo} jsonLd={jsonLd}>
   <section class="legal-hero container--wide">
     <p class="eyebrow" data-reveal>{doc.data.kicker}</p>
-    <h1 class="legal-hero__title display" data-reveal style="--reveal-delay:60ms">{doc.data.title}</h1>
+    <h1 class="legal-hero__title display" data-reveal style="--reveal-delay:60ms">
+      {doc.data.title}
+    </h1>
     <p class="legal-hero__meta mono" data-reveal style="--reveal-delay:120ms">
       Last updated <time datetime={doc.data.updatedDate.toISOString()}>{updated}</time>
     </p>
@@ -61,7 +63,9 @@ const updated = doc.data.updatedDate.toLocaleDateString('en', {
       </div>
       <div class="legal-contact">
         Questions about this {doc.data.noun}? Email{' '}
-        <a href={`mailto:${siteConfig.email.legal}`}>{siteConfig.email.legal}</a> or reach out via our{' '}
+        <a href={`mailto:${siteConfig.email.legal}`}>{siteConfig.email.legal}</a> or reach out via our{
+          ' '
+        }
         <a href={routes.contact}>contact page</a>.
       </div>
     </div>

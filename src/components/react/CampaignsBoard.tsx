@@ -22,12 +22,23 @@ const STATUS_LABEL: Record<CampaignStatus, string> = {
   paused: 'Paused',
 };
 
-const CHANNEL: Record<ChannelType, { color: string; tint: string; icon: IconName; label: string }> = {
-  email: { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)', icon: 'mail', label: 'Email' },
-  sms: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)', icon: 'sms', label: 'SMS' },
-  whatsapp: { color: 'var(--ch-whatsapp)', tint: 'var(--ch-whatsapp-tint)', icon: 'whatsapp', label: 'WhatsApp' },
-  voice: { color: 'var(--ch-voice)', tint: 'var(--ch-voice-tint)', icon: 'voice', label: 'Voice' },
-};
+const CHANNEL: Record<ChannelType, { color: string; tint: string; icon: IconName; label: string }> =
+  {
+    email: { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)', icon: 'mail', label: 'Email' },
+    sms: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)', icon: 'sms', label: 'SMS' },
+    whatsapp: {
+      color: 'var(--ch-whatsapp)',
+      tint: 'var(--ch-whatsapp-tint)',
+      icon: 'whatsapp',
+      label: 'WhatsApp',
+    },
+    voice: {
+      color: 'var(--ch-voice)',
+      tint: 'var(--ch-voice-tint)',
+      icon: 'voice',
+      label: 'Voice',
+    },
+  };
 
 const TABS: (CampaignStatus | 'all')[] = ['all', 'draft', 'scheduled', 'sending', 'sent', 'paused'];
 const CHANNELS: ChannelType[] = ['email', 'sms', 'whatsapp', 'voice'];
@@ -123,7 +134,7 @@ export default function CampaignsBoard() {
     setSelected(new Set()); // changing filters clears selection (spec §12)
   };
 
-  const open = openId ? allCampaigns.find((c) => c.id === openId) ?? null : null;
+  const open = openId ? (allCampaigns.find((c) => c.id === openId) ?? null) : null;
   const sortArrow = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? '↑' : '↓') : '');
 
   return (
@@ -133,7 +144,11 @@ export default function CampaignsBoard() {
           <h1 className="screen__h1">Campaigns</h1>
           <p className="screen__sub">Create, schedule, and measure every send in one place.</p>
         </div>
-        <button type="button" className="pbtn" onClick={() => showToast('Opening campaign wizard…')}>
+        <button
+          type="button"
+          className="pbtn"
+          onClick={() => showToast('Opening campaign wizard…')}
+        >
           <Icon name="plus" size={15} stroke={2.2} />
           Create campaign
         </button>
@@ -183,16 +198,27 @@ export default function CampaignsBoard() {
           >
             <Icon name="filter" size={14} />
             Channel
-            {channelFilter.size > 0 && <span className="cb__filtercount">{channelFilter.size}</span>}
+            {channelFilter.size > 0 && (
+              <span className="cb__filtercount">{channelFilter.size}</span>
+            )}
             <Icon name="chevron-down" size={12} className="cb__filtercaret" />
           </button>
           {filterOpen && (
             <>
-              <button type="button" className="cb__filterscrim" aria-label="Close" onClick={() => setFilterOpen(false)} />
+              <button
+                type="button"
+                className="cb__filterscrim"
+                aria-label="Close"
+                onClick={() => setFilterOpen(false)}
+              />
               <div className="cb__filterpop">
                 {CHANNELS.map((ch) => (
                   <label key={ch} className="cb__filteropt">
-                    <input type="checkbox" checked={channelFilter.has(ch)} onChange={() => toggleChannel(ch)} />
+                    <input
+                      type="checkbox"
+                      checked={channelFilter.has(ch)}
+                      onChange={() => toggleChannel(ch)}
+                    />
                     <ChannelPill channel={ch} />
                   </label>
                 ))}
@@ -219,10 +245,22 @@ export default function CampaignsBoard() {
         <div className="cb__bulk">
           <span className="cb__bulkcount">{selected.size} selected</span>
           <span className="cb__bulkdiv" />
-          <button type="button" className="cb__bulkbtn" onClick={() => bulk('Duplicated')}>Duplicate</button>
-          <button type="button" className="cb__bulkbtn" onClick={() => bulk('Archived')}>Archive</button>
-          <button type="button" className="cb__bulkbtn cb__bulkbtn--danger" onClick={() => bulk('Deleted')}>Delete</button>
-          <button type="button" className="cb__bulkclear" onClick={() => setSelected(new Set())}>Clear</button>
+          <button type="button" className="cb__bulkbtn" onClick={() => bulk('Duplicated')}>
+            Duplicate
+          </button>
+          <button type="button" className="cb__bulkbtn" onClick={() => bulk('Archived')}>
+            Archive
+          </button>
+          <button
+            type="button"
+            className="cb__bulkbtn cb__bulkbtn--danger"
+            onClick={() => bulk('Deleted')}
+          >
+            Delete
+          </button>
+          <button type="button" className="cb__bulkclear" onClick={() => setSelected(new Set())}>
+            Clear
+          </button>
         </div>
       )}
 
@@ -230,17 +268,39 @@ export default function CampaignsBoard() {
       <div className="atable cb__table">
         <div className="athead cb__grid">
           <div className="cb__check">
-            <button type="button" className={`cb__box${allChecked ? ' is-on' : ''}`} onClick={toggleAll} aria-label="Select all" aria-pressed={allChecked}>
+            <button
+              type="button"
+              className={`cb__box${allChecked ? ' is-on' : ''}`}
+              onClick={toggleAll}
+              aria-label="Select all"
+              aria-pressed={allChecked}
+            >
               {allChecked && <Icon name="check" size={11} stroke={3} />}
             </button>
           </div>
-          <div><button type="button" onClick={() => toggleSort('name')}>Campaign <span className="tnum">{sortArrow('name')}</span></button></div>
+          <div>
+            <button type="button" onClick={() => toggleSort('name')}>
+              Campaign <span className="tnum">{sortArrow('name')}</span>
+            </button>
+          </div>
           <div>Status</div>
           <div>Channel</div>
           <div>Audience</div>
-          <div><button type="button" onClick={() => toggleSort('recipients')}>Recipients <span className="tnum">{sortArrow('recipients')}</span></button></div>
-          <div><button type="button" onClick={() => toggleSort('openRate')}>Open <span className="tnum">{sortArrow('openRate')}</span></button></div>
-          <div><button type="button" onClick={() => toggleSort('updatedAt')}>Updated <span className="tnum">{sortArrow('updatedAt')}</span></button></div>
+          <div>
+            <button type="button" onClick={() => toggleSort('recipients')}>
+              Recipients <span className="tnum">{sortArrow('recipients')}</span>
+            </button>
+          </div>
+          <div>
+            <button type="button" onClick={() => toggleSort('openRate')}>
+              Open <span className="tnum">{sortArrow('openRate')}</span>
+            </button>
+          </div>
+          <div>
+            <button type="button" onClick={() => toggleSort('updatedAt')}>
+              Updated <span className="tnum">{sortArrow('updatedAt')}</span>
+            </button>
+          </div>
           <div />
         </div>
 
@@ -264,19 +324,36 @@ export default function CampaignsBoard() {
               }}
             >
               <div className="cb__check" onClick={(e) => e.stopPropagation()}>
-                <button type="button" className={`cb__box${selected.has(c.id) ? ' is-on' : ''}`} onClick={() => toggleSelect(c.id)} aria-label={`Select ${c.name}`} aria-pressed={selected.has(c.id)}>
+                <button
+                  type="button"
+                  className={`cb__box${selected.has(c.id) ? ' is-on' : ''}`}
+                  onClick={() => toggleSelect(c.id)}
+                  aria-label={`Select ${c.name}`}
+                  aria-pressed={selected.has(c.id)}
+                >
                   {selected.has(c.id) && <Icon name="check" size={11} stroke={3} />}
                 </button>
               </div>
               <div className="cb__name">{c.name}</div>
-              <div><span className={`astatus astatus--${c.status}`}>{STATUS_LABEL[c.status]}</span></div>
-              <div><ChannelPill channel={c.channel} /></div>
+              <div>
+                <span className={`astatus astatus--${c.status}`}>{STATUS_LABEL[c.status]}</span>
+              </div>
+              <div>
+                <ChannelPill channel={c.channel} />
+              </div>
               <div className="cb__muted">{c.audience}</div>
               <div className="tnum cb__muted3">{c.recipients.toLocaleString('en-US')}</div>
-              <div className="tnum cb__muted3">{c.openRate != null ? `${Math.round(c.openRate * 100)}%` : '—'}</div>
+              <div className="tnum cb__muted3">
+                {c.openRate != null ? `${Math.round(c.openRate * 100)}%` : '—'}
+              </div>
               <div className="cb__muted">{ago(c.updatedAt)}</div>
               <div className="cb__check" onClick={(e) => e.stopPropagation()}>
-                <button type="button" className="kbtn" aria-label={`Actions for ${c.name}`} onClick={() => showToast('Row menu')}>
+                <button
+                  type="button"
+                  className="kbtn"
+                  aria-label={`Actions for ${c.name}`}
+                  onClick={() => showToast('Row menu')}
+                >
                   <Icon name="more" size={16} />
                 </button>
               </div>
@@ -285,12 +362,16 @@ export default function CampaignsBoard() {
         )}
 
         <div className="atable__foot">
-          <span className="tnum">{rows.length} of {allCampaigns.length} campaigns</span>
+          <span className="tnum">
+            {rows.length} of {allCampaigns.length} campaigns
+          </span>
         </div>
       </div>
 
       {/* detail drawer */}
-      {open && <CampaignDrawer campaign={open} onClose={() => setOpenId(null)} onToast={showToast} />}
+      {open && (
+        <CampaignDrawer campaign={open} onClose={() => setOpenId(null)} onToast={showToast} />
+      )}
 
       {toast && (
         <div className="cb__toast" role="status">
@@ -367,12 +448,24 @@ function CampaignDrawer({
     campaign.openRate && campaign.clickRate ? (campaign.clickRate / campaign.openRate) * 100 : null;
 
   const kpis = [
-    { label: 'Recipients', value: campaign.recipients.toLocaleString('en-US'), color: 'var(--text)' },
+    {
+      label: 'Recipients',
+      value: campaign.recipients.toLocaleString('en-US'),
+      color: 'var(--text)',
+    },
     { label: 'Delivered', value: `${deliveredPct.toFixed(1)}%`, color: 'var(--text)' },
     { label: 'Open rate', value: pct(campaign.openRate), color: 'var(--success-strong)' },
     { label: 'Click rate', value: pct(campaign.clickRate), color: 'var(--accent)' },
-    { label: 'Click-to-open', value: cto == null ? '—' : `${cto.toFixed(1)}%`, color: 'var(--warning-strong)' },
-    { label: 'Unsubscribed', value: campaign.unsubscribed.toLocaleString('en-US'), color: 'var(--danger)' },
+    {
+      label: 'Click-to-open',
+      value: cto == null ? '—' : `${cto.toFixed(1)}%`,
+      color: 'var(--warning-strong)',
+    },
+    {
+      label: 'Unsubscribed',
+      value: campaign.unsubscribed.toLocaleString('en-US'),
+      color: 'var(--danger)',
+    },
   ];
 
   // Focus management: focus into the panel on open, trap Tab, Esc closes, restore focus.
@@ -382,8 +475,8 @@ function CampaignDrawer({
     const list = () =>
       Array.from(
         panelRef.current?.querySelectorAll<HTMLElement>(
-          'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])'
-        ) ?? []
+          'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])',
+        ) ?? [],
       );
     list()[0]?.focus();
     const onKey = (e: KeyboardEvent) => {
@@ -415,7 +508,14 @@ function CampaignDrawer({
 
   return (
     <div className="adrawer-overlay" onClick={onClose}>
-      <div ref={panelRef} className="adrawer cbd" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={`${campaign.name} details`}>
+      <div
+        ref={panelRef}
+        className="adrawer cbd"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${campaign.name} details`}
+      >
         <div className="adrawer__head">
           <span className="adrawer__title">Campaign details</span>
           <button type="button" className="iconbtn" onClick={onClose} aria-label="Close">
@@ -425,7 +525,9 @@ function CampaignDrawer({
         <div className="adrawer__body">
           <div className="cbd__title-row">
             <ChannelPill channel={campaign.channel} />
-            <span className={`astatus astatus--${campaign.status}`}>{STATUS_LABEL[campaign.status]}</span>
+            <span className={`astatus astatus--${campaign.status}`}>
+              {STATUS_LABEL[campaign.status]}
+            </span>
           </div>
           <h3 className="cbd__name">{campaign.name}</h3>
           <p className="cbd__aud">To {campaign.audience}</p>
@@ -435,7 +537,9 @@ function CampaignDrawer({
               {kpis.map((k) => (
                 <div key={k.label} className="cbd__kpi">
                   <div className="cbd__kpi-lbl">{k.label}</div>
-                  <div className="tnum cbd__kpi-val" style={{ color: k.color }}>{k.value}</div>
+                  <div className="tnum cbd__kpi-val" style={{ color: k.color }}>
+                    {k.value}
+                  </div>
                 </div>
               ))}
             </div>
@@ -447,15 +551,46 @@ function CampaignDrawer({
 
           <p className="adrawer__eyebrow cbd__eyebrow">Details</p>
           <div className="cbd__details">
-            <div className="adetail"><span className="adetail__k">Channel</span><span className="adetail__v">{m.label}</span></div>
-            <div className="adetail"><span className="adetail__k">Audience</span><span className="adetail__v">{campaign.audience}</span></div>
-            <div className="adetail"><span className="adetail__k">Scheduled</span><span className="adetail__v">{campaign.scheduledAt ? new Date(campaign.scheduledAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}</span></div>
-            <div className="adetail"><span className="adetail__k">Recipients</span><span className="adetail__v tnum">{campaign.recipients.toLocaleString('en-US')}</span></div>
+            <div className="adetail">
+              <span className="adetail__k">Channel</span>
+              <span className="adetail__v">{m.label}</span>
+            </div>
+            <div className="adetail">
+              <span className="adetail__k">Audience</span>
+              <span className="adetail__v">{campaign.audience}</span>
+            </div>
+            <div className="adetail">
+              <span className="adetail__k">Scheduled</span>
+              <span className="adetail__v">
+                {campaign.scheduledAt
+                  ? new Date(campaign.scheduledAt).toLocaleString('en-US', {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    })
+                  : '—'}
+              </span>
+            </div>
+            <div className="adetail">
+              <span className="adetail__k">Recipients</span>
+              <span className="adetail__v tnum">{campaign.recipients.toLocaleString('en-US')}</span>
+            </div>
           </div>
         </div>
         <div className="adrawer__foot">
-          <button type="button" className="sbtn" style={{ flex: 1 }} onClick={() => onToast('Campaign duplicated')}>Duplicate</button>
-          <button type="button" className="pbtn" style={{ flex: 1 }} onClick={() => onToast(isSent ? 'Opening report…' : 'Opening editor…')}>
+          <button
+            type="button"
+            className="sbtn"
+            style={{ flex: 1 }}
+            onClick={() => onToast('Campaign duplicated')}
+          >
+            Duplicate
+          </button>
+          <button
+            type="button"
+            className="pbtn"
+            style={{ flex: 1 }}
+            onClick={() => onToast(isSent ? 'Opening report…' : 'Opening editor…')}
+          >
             {isSent ? 'View report' : 'Edit'}
           </button>
         </div>

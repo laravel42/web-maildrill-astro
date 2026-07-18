@@ -44,7 +44,7 @@ export type Estimate = {
 export function estimate(
   usage: Record<ChannelKey, number>,
   rates: Record<ChannelKey, number>,
-  tierId: number
+  tierId: number,
 ): Estimate {
   const disc = TIERS[tierId]?.disc ?? 0;
   const usageFull = CHANNEL_ORDER.reduce((sum, k) => sum + usage[k] * rates[k], 0);

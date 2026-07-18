@@ -85,88 +85,110 @@ const eqBars = [8, 15, 11, 20, 9, 17, 13, 22, 10];
 
         <div class="ch-hero__visual" data-reveal style="--reveal-delay:140ms">
           {/* ---- EMAIL device mock ---- */}
-          {data.visual === 'email' && (
-            <div class="mk mk--float mk-email">
-              <div class="mk-email__bar">
-                <span class="mk__dot"></span><span class="mk__dot"></span><span class="mk__dot"></span>
-                <span class="mono mk-email__tab">inbox</span>
-              </div>
-              <div class="mk-email__body">
-                <div class="mk-email__from">
-                  <span class="mk-email__avatar">M</span>
-                  <span>
-                    <span class="mk-email__name">Maildrill</span>
-                    <span class="mk-email__to">to you</span>
-                  </span>
+          {
+            data.visual === 'email' && (
+              <div class="mk mk--float mk-email">
+                <div class="mk-email__bar">
+                  <>
+                    <span class="mk__dot" />
+                    <span class="mk__dot" />
+                    <span class="mk__dot" />
+                  </>
+                  <span class="mono mk-email__tab">inbox</span>
                 </div>
-                <div class="mk-email__subject">Your spring collection has landed 🌿</div>
-                <div class="mk-email__hero" aria-hidden="true">Hero image</div>
-                <div class="mk-email__line" style="width:90%"></div>
-                <div class="mk-email__line" style="width:68%"></div>
-                <span class="mk-email__btn">Shop now</span>
+                <div class="mk-email__body">
+                  <div class="mk-email__from">
+                    <span class="mk-email__avatar">M</span>
+                    <span>
+                      <span class="mk-email__name">Maildrill</span>
+                      <span class="mk-email__to">to you</span>
+                    </span>
+                  </div>
+                  <div class="mk-email__subject">Your spring collection has landed 🌿</div>
+                  <div class="mk-email__hero" aria-hidden="true">
+                    Hero image
+                  </div>
+                  <div class="mk-email__line" style="width:90%" />
+                  <div class="mk-email__line" style="width:68%" />
+                  <span class="mk-email__btn">Shop now</span>
+                </div>
               </div>
-            </div>
-          )}
+            )
+          }
 
           {/* ---- SMS chat mock ---- */}
-          {data.visual === 'sms' && (
-            <div class="mk mk--float mk-sms">
-              <div class="mk-sms__bubble mk-sms__bubble--in" style="--pop:0s">
-                Hey Maya! Your cart's still waiting 🛒 Complete your order &amp; get 10% off: mdrl.co/x
-              </div>
-              <div class="mk-sms__bubble mk-sms__bubble--out" style="--pop:.4s">YES please 🙌</div>
-              <div class="mk-sms__bubble mk-sms__bubble--in" style="--pop:.8s">
-                Done! Discount applied ✅ See you soon.
-              </div>
-            </div>
-          )}
-
-          {/* ---- WhatsApp mock ---- */}
-          {data.visual === 'whatsapp' && (
-            <div class="mk mk--float mk-wa">
-              <div class="mk-wa__head">
-                <span class="mk-wa__avatar">M</span>
-                <span>
-                  <span class="mk-wa__name">Maildrill</span>
-                  <span class="mk-wa__status">● online</span>
-                </span>
-              </div>
-              <div class="mk-wa__card">
-                <div class="mk-wa__preview" aria-hidden="true">Order preview</div>
-                <div class="mk-wa__title">Your order is confirmed ✅</div>
-                <div class="mk-wa__body">Arriving Tue, Jul 21. Track anytime below.</div>
-                <div class="mk-wa__btns">
-                  <span class="mk-wa__btn mk-wa__btn--primary">Track order</span>
-                  <span class="mk-wa__btn">Get help</span>
+          {
+            data.visual === 'sms' && (
+              <div class="mk mk--float mk-sms">
+                <div class="mk-sms__bubble mk-sms__bubble--in" style="--pop:0s">
+                  Hey Maya! Your cart's still waiting 🛒 Complete your order &amp; get 10% off:
+                  mdrl.co/x
+                </div>
+                <div class="mk-sms__bubble mk-sms__bubble--out" style="--pop:.4s">
+                  YES please 🙌
+                </div>
+                <div class="mk-sms__bubble mk-sms__bubble--in" style="--pop:.8s">
+                  Done! Discount applied ✅ See you soon.
                 </div>
               </div>
-            </div>
-          )}
+            )
+          }
+
+          {/* ---- WhatsApp mock ---- */}
+          {
+            data.visual === 'whatsapp' && (
+              <div class="mk mk--float mk-wa">
+                <div class="mk-wa__head">
+                  <span class="mk-wa__avatar">M</span>
+                  <span>
+                    <span class="mk-wa__name">Maildrill</span>
+                    <span class="mk-wa__status">● online</span>
+                  </span>
+                </div>
+                <div class="mk-wa__card">
+                  <div class="mk-wa__preview" aria-hidden="true">
+                    Order preview
+                  </div>
+                  <div class="mk-wa__title">Your order is confirmed ✅</div>
+                  <div class="mk-wa__body">Arriving Tue, Jul 21. Track anytime below.</div>
+                  <div class="mk-wa__btns">
+                    <span class="mk-wa__btn mk-wa__btn--primary">Track order</span>
+                    <span class="mk-wa__btn">Get help</span>
+                  </div>
+                </div>
+              </div>
+            )
+          }
 
           {/* ---- Voice mock ---- */}
-          {data.visual === 'voice' && (
-            <div class="mk mk--float mk-voice">
-              <div class="mk-voice__row">
-                <span class="mk-voice__ic"><Icon name="voice" size={20} stroke={2} /></span>
-                <span class="mk-voice__meta">
-                  <span class="mk-voice__title">Outbound call</span>
-                  <span class="mk-voice__sub">Appointment reminder · 0:24</span>
-                </span>
-                <span class="mk-voice__eq" aria-hidden="true">
-                  {eqBars.map((h, i) => (
-                    <span style={`height:${h}px;--eq:${i * 0.08}s`}></span>
-                  ))}
-                </span>
+          {
+            data.visual === 'voice' && (
+              <div class="mk mk--float mk-voice">
+                <div class="mk-voice__row">
+                  <span class="mk-voice__ic">
+                    <Icon name="voice" size={20} stroke={2} />
+                  </span>
+                  <span class="mk-voice__meta">
+                    <span class="mk-voice__title">Outbound call</span>
+                    <span class="mk-voice__sub">Appointment reminder · 0:24</span>
+                  </span>
+                  <span class="mk-voice__eq" aria-hidden="true">
+                    {eqBars.map((h, i) => (
+                      <span style={`height:${h}px;--eq:${i * 0.08}s`} />
+                    ))}
+                  </span>
+                </div>
+                <div class="mk-voice__ivr">
+                  <span class="mk-voice__ivr-tag">IVR</span> · "Press 1 to confirm, 2 to
+                  reschedule."
+                </div>
+                <div class="mk-voice__btns">
+                  <span class="mk-voice__btn mk-voice__btn--primary">✓ Confirmed (1)</span>
+                  <span class="mk-voice__btn">Reschedule (2)</span>
+                </div>
               </div>
-              <div class="mk-voice__ivr">
-                <span class="mk-voice__ivr-tag">IVR</span> · "Press 1 to confirm, 2 to reschedule."
-              </div>
-              <div class="mk-voice__btns">
-                <span class="mk-voice__btn mk-voice__btn--primary">✓ Confirmed (1)</span>
-                <span class="mk-voice__btn">Reschedule (2)</span>
-              </div>
-            </div>
-          )}
+            )
+          }
         </div>
       </div>
     </section>
@@ -174,21 +196,23 @@ const eqBars = [8, 15, 11, 20, 9, 17, 13, 22, 10];
     {/* ------------------------------------------------------------ METRICS */}
     <section class="ch-metrics">
       <div class="container--wide ch-metrics__grid">
-        {data.stats.map((s) => (
-          <div class="ch-stat" data-reveal style={`--reveal-delay:${s.delay}ms`}>
-            <div
-              class="ch-stat__num mono tnum"
-              data-count
-              data-to={s.to}
-              data-suffix={s.suffix}
-              data-decimals={s.decimals}
-              data-prefix={s.prefix}
-            >
-              {s.prefix}0{s.suffix}
+        {
+          data.stats.map((s) => (
+            <div class="ch-stat" data-reveal style={`--reveal-delay:${s.delay}ms`}>
+              <div
+                class="ch-stat__num mono tnum"
+                data-count
+                data-to={s.to}
+                data-suffix={s.suffix}
+                data-decimals={s.decimals}
+                data-prefix={s.prefix}
+              >
+                {s.prefix}0{s.suffix}
+              </div>
+              <div class="ch-stat__label">{s.label}</div>
             </div>
-            <div class="ch-stat__label">{s.label}</div>
-          </div>
-        ))}
+          ))
+        }
       </div>
     </section>
 
@@ -227,17 +251,21 @@ const eqBars = [8, 15, 11, 20, 9, 17, 13, 22, 10];
                   <div class="ws__title">{data.label} performance</div>
                 </div>
                 <div class="ws__actions">
-                  <span class="ws__badge"><Icon name={data.icon} size={13} stroke={2} />{data.label}</span>
+                  <span class="ws__badge"
+                    ><Icon name={data.icon} size={13} stroke={2} />{data.label}</span
+                  >
                   <span class="ws__send">Send</span>
                 </div>
               </div>
               <div class="ws__kpis">
-                {data.stats.map((s) => (
-                  <div class="ws__kpi">
-                    <span class="ws__kpi-label">{s.label}</span>
-                    <b class="mono tnum ws__kpi-val">{fmt(s)}</b>
-                  </div>
-                ))}
+                {
+                  data.stats.map((s) => (
+                    <div class="ws__kpi">
+                      <span class="ws__kpi-label">{s.label}</span>
+                      <b class="mono tnum ws__kpi-val">{fmt(s)}</b>
+                    </div>
+                  ))
+                }
               </div>
               <div class="ws__chart" aria-hidden="true">
                 <span style="height:38%;--d:.30s"></span>
@@ -260,31 +288,33 @@ const eqBars = [8, 15, 11, 20, 9, 17, 13, 22, 10];
         {data.featuresTitle}
       </h2>
       <div class="ch-features__grid">
-        {data.features.map((f) => (
-          <div class="ch-feat" data-reveal style={`--reveal-delay:${f.delay}ms`}>
-            <span class="ch-feat__ic">
-              {f.icon === 'wizard' ? (
-                <svg
-                  class="icon"
-                  viewBox="0 0 24 24"
-                  width={22}
-                  height={22}
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                  set:html={wizardPath}
-                />
-              ) : (
-                <Icon name={f.icon as IconName} size={22} stroke={2} />
-              )}
-            </span>
-            <h3 class="ch-feat__title">{f.title}</h3>
-            <p class="ch-feat__desc">{f.desc}</p>
-          </div>
-        ))}
+        {
+          data.features.map((f) => (
+            <div class="ch-feat" data-reveal style={`--reveal-delay:${f.delay}ms`}>
+              <span class="ch-feat__ic">
+                {f.icon === 'wizard' ? (
+                  <svg
+                    class="icon"
+                    viewBox="0 0 24 24"
+                    width={22}
+                    height={22}
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                    set:html={wizardPath}
+                  />
+                ) : (
+                  <Icon name={f.icon as IconName} size={22} stroke={2} />
+                )}
+              </span>
+              <h3 class="ch-feat__title">{f.title}</h3>
+              <p class="ch-feat__desc">{f.desc}</p>
+            </div>
+          ))
+        }
       </div>
     </section>
 
@@ -296,13 +326,15 @@ const eqBars = [8, 15, 11, 20, 9, 17, 13, 22, 10];
           {data.useTitle}
         </h2>
         <div class="ch-uses__list">
-          {data.useCases.map((u) => (
-            <div class="ch-use" data-reveal style={`--reveal-delay:${u.delay}ms`}>
-              <span class="mono ch-use__num">{u.num}</span>
-              <span class="ch-use__title">{u.title}</span>
-              <span class="ch-use__desc">{u.desc}</span>
-            </div>
-          ))}
+          {
+            data.useCases.map((u) => (
+              <div class="ch-use" data-reveal style={`--reveal-delay:${u.delay}ms`}>
+                <span class="mono ch-use__num">{u.num}</span>
+                <span class="ch-use__title">{u.title}</span>
+                <span class="ch-use__desc">{u.desc}</span>
+              </div>
+            ))
+          }
         </div>
       </div>
     </section>
@@ -314,13 +346,15 @@ const eqBars = [8, 15, 11, 20, 9, 17, 13, 22, 10];
         Live in four steps.
       </h2>
       <div class="ch-steps__grid">
-        {channelSteps.map((st) => (
-          <div class="ch-step" data-reveal style={`--reveal-delay:${st.delay}ms`}>
-            <div class="mono ch-step__n">{st.n}</div>
-            <div class="ch-step__title">{st.title}</div>
-            <div class="ch-step__desc">{st.desc}</div>
-          </div>
-        ))}
+        {
+          channelSteps.map((st) => (
+            <div class="ch-step" data-reveal style={`--reveal-delay:${st.delay}ms`}>
+              <div class="mono ch-step__n">{st.n}</div>
+              <div class="ch-step__title">{st.title}</div>
+              <div class="ch-step__desc">{st.desc}</div>
+            </div>
+          ))
+        }
       </div>
     </section>
 
@@ -331,20 +365,22 @@ const eqBars = [8, 15, 11, 20, 9, 17, 13, 22, 10];
         One audience, every channel.
       </h2>
       <div class="ch-others__grid">
-        {others.map((o, i) => (
-          <a href={o.href} class="ch-other" data-reveal style={`--reveal-delay:${i * 80}ms`}>
-            <span class="ch-other__ic" style={`background:${o.tint};color:${o.color}`}>
-              <Icon name={o.icon} size={22} stroke={2} />
-            </span>
-            <span class="ch-other__text">
-              <span class="ch-other__label">{o.label}</span>
-              <span class="ch-other__tag">{o.tag}</span>
-            </span>
-            <span class="ch-other__arrow" aria-hidden="true">
-              <Icon name="arrow-up-right" size={20} stroke={2} />
-            </span>
-          </a>
-        ))}
+        {
+          others.map((o, i) => (
+            <a href={o.href} class="ch-other" data-reveal style={`--reveal-delay:${i * 80}ms`}>
+              <span class="ch-other__ic" style={`background:${o.tint};color:${o.color}`}>
+                <Icon name={o.icon} size={22} stroke={2} />
+              </span>
+              <span class="ch-other__text">
+                <span class="ch-other__label">{o.label}</span>
+                <span class="ch-other__tag">{o.tag}</span>
+              </span>
+              <span class="ch-other__arrow" aria-hidden="true">
+                <Icon name="arrow-up-right" size={20} stroke={2} />
+              </span>
+            </a>
+          ))
+        }
       </div>
     </section>
   </div>

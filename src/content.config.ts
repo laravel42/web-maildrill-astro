@@ -1,5 +1,8 @@
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
+// Astro 6+ deprecates the `z` re-export from `astro:content`; import it from
+// `astro/zod` so the schema uses the same (Zod 4) instance Astro bundles.
+import { z } from 'astro/zod';
 
 const blog = defineCollection({
   loader: glob({ pattern: '**/[^_]*.md', base: './src/content/blog' }),

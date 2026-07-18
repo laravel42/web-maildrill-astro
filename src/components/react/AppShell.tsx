@@ -13,7 +13,12 @@ type Props = {
 type Cmd = { label: string; hint: 'Navigate' | 'Action'; href?: string; icon: IconName };
 
 const COMMANDS: Cmd[] = [
-  ...appNav.map((n) => ({ label: `Go to ${n.label}`, hint: 'Navigate' as const, href: n.href, icon: n.icon })),
+  ...appNav.map((n) => ({
+    label: `Go to ${n.label}`,
+    hint: 'Navigate' as const,
+    href: n.href,
+    icon: n.icon,
+  })),
   { label: 'Go to Settings', hint: 'Navigate', href: appSettingsNav.href, icon: 'settings' },
   { label: 'New campaign', hint: 'Action', href: '/app/campaigns', icon: 'plus' },
   { label: 'New template', hint: 'Action', href: '/app/templates', icon: 'templates' },
@@ -90,15 +95,34 @@ export default function AppShell({ currentPath, title, children }: Props) {
   return (
     <div className="ash">
       {/* backdrop for mobile sidebar */}
-      {mobileNav && <button type="button" className="ash__scrim" aria-label="Close menu" onClick={() => setMobileNav(false)} />}
+      {mobileNav && (
+        <button
+          type="button"
+          className="ash__scrim"
+          aria-label="Close menu"
+          onClick={() => setMobileNav(false)}
+        />
+      )}
 
       <aside className={`ashsb${mobileNav ? ' is-open' : ''}`} aria-label="Workspace">
         <a href="/app" className="ashsb__brand" aria-label="Maildrill workspace">
           <svg viewBox="0 0 30 26.76" width="23" height="20" aria-hidden="true">
-            <path fill="#ff441f" d="M13.39,0c-2.86,2.06-5.61,4-8.47,6.06C3.89,4,2.86,2.06,1.95,0h11.44Z" />
-            <path fill="#ff441f" d="M19.57,17.49c-1.49,3.09-3.09,6.17-4.58,9.26-.69-1.49-1.49-2.97-2.17-4.34l6.75-4.92Z" />
-            <path fill="#ff441f" d="M26.32,0c-6.07,4.23-12.02,8.58-18.08,12.81-.8-1.6-1.6-3.2-2.4-4.92,3.66-2.63,7.44-5.26,11.1-7.89h9.38Z" />
-            <path fill="#ff441f" d="M27.12,2.17c-1.83,3.66-3.66,7.32-5.49,10.98-3.2,2.29-6.52,4.57-9.73,6.86l-2.63-5.15c5.95-4.23,11.9-8.46,17.85-12.69Z" />
+            <path
+              fill="#ff441f"
+              d="M13.39,0c-2.86,2.06-5.61,4-8.47,6.06C3.89,4,2.86,2.06,1.95,0h11.44Z"
+            />
+            <path
+              fill="#ff441f"
+              d="M19.57,17.49c-1.49,3.09-3.09,6.17-4.58,9.26-.69-1.49-1.49-2.97-2.17-4.34l6.75-4.92Z"
+            />
+            <path
+              fill="#ff441f"
+              d="M26.32,0c-6.07,4.23-12.02,8.58-18.08,12.81-.8-1.6-1.6-3.2-2.4-4.92,3.66-2.63,7.44-5.26,11.1-7.89h9.38Z"
+            />
+            <path
+              fill="#ff441f"
+              d="M27.12,2.17c-1.83,3.66-3.66,7.32-5.49,10.98-3.2,2.29-6.52,4.57-9.73,6.86l-2.63-5.15c5.95-4.23,11.9-8.46,17.85-12.69Z"
+            />
           </svg>
           <span className="ashsb__word">
             Mail<span>drill</span>
@@ -147,15 +171,31 @@ export default function AppShell({ currentPath, title, children }: Props) {
             <span className="topbar__title">{title}</span>
           </div>
           <div className="topbar__controls">
-            <button type="button" className="topbar__search" onClick={() => setCmdOpen(true)} aria-haspopup="dialog">
+            <button
+              type="button"
+              className="topbar__search"
+              onClick={() => setCmdOpen(true)}
+              aria-haspopup="dialog"
+            >
               <Icon name="search" size={14} className="topbar__searchic" />
               <span>Search…</span>
               <kbd>⌘K</kbd>
             </button>
-            <button type="button" className="iconbtn" onClick={toggleTheme} title="Toggle theme" aria-label="Toggle theme">
+            <button
+              type="button"
+              className="iconbtn"
+              onClick={toggleTheme}
+              title="Toggle theme"
+              aria-label="Toggle theme"
+            >
               <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={16} />
             </button>
-            <button type="button" className="iconbtn" title="Notifications" aria-label="Notifications">
+            <button
+              type="button"
+              className="iconbtn"
+              title="Notifications"
+              aria-label="Notifications"
+            >
               <Icon name="inbox" size={16} />
               <span className="topbar__dot" aria-hidden="true" />
             </button>
@@ -169,7 +209,12 @@ export default function AppShell({ currentPath, title, children }: Props) {
 
       {cmdOpen && (
         <div className="cmdk" role="dialog" aria-modal="true" aria-label="Command palette">
-          <button type="button" className="cmdk__backdrop" aria-label="Close" onClick={() => setCmdOpen(false)} />
+          <button
+            type="button"
+            className="cmdk__backdrop"
+            aria-label="Close"
+            onClick={() => setCmdOpen(false)}
+          />
           <div className="cmdk__panel">
             <div className="cmdk__search">
               <Icon name="search" size={17} className="cmdk__searchic" />
@@ -190,7 +235,9 @@ export default function AppShell({ currentPath, title, children }: Props) {
                 filtered.map((c) => (
                   <li key={c.label}>
                     <a href={c.href} className="cmdk__item" onClick={() => setCmdOpen(false)}>
-                      <span className={`cmdk__ic cmdk__ic--${c.hint === 'Action' ? 'action' : 'nav'}`}>
+                      <span
+                        className={`cmdk__ic cmdk__ic--${c.hint === 'Action' ? 'action' : 'nav'}`}
+                      >
                         <Icon name={c.icon} size={15} />
                       </span>
                       <span className="cmdk__label">{c.label}</span>

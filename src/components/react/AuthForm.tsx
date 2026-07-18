@@ -6,10 +6,22 @@ type Status = 'idle' | 'loading' | 'success' | 'error';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-    <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.2 13.5 17.6 9.5 24 9.5Z" />
-    <path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v9.1h12.4c-.5 2.9-2.2 5.3-4.6 7l7.1 5.5c4.2-3.9 6.6-9.6 6.6-16.4Z" />
-    <path fill="#FBBC05" d="M10.4 28.3a14.5 14.5 0 0 1 0-8.6l-7.8-6.1a24 24 0 0 0 0 20.8l7.8-6.1Z" />
-    <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.1-5.5c-2 1.3-4.5 2.1-8.8 2.1-6.4 0-11.8-4-13.6-9.8l-7.8 6.1C6.5 42.6 14.6 48 24 48Z" />
+    <path
+      fill="#EA4335"
+      d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.2 13.5 17.6 9.5 24 9.5Z"
+    />
+    <path
+      fill="#4285F4"
+      d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v9.1h12.4c-.5 2.9-2.2 5.3-4.6 7l7.1 5.5c4.2-3.9 6.6-9.6 6.6-16.4Z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M10.4 28.3a14.5 14.5 0 0 1 0-8.6l-7.8-6.1a24 24 0 0 0 0 20.8l7.8-6.1Z"
+    />
+    <path
+      fill="#34A853"
+      d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.1-5.5c-2 1.3-4.5 2.1-8.8 2.1-6.4 0-11.8-4-13.6-9.8l-7.8 6.1C6.5 42.6 14.6 48 24 48Z"
+    />
   </svg>
 );
 
@@ -145,7 +157,19 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       <div className="af">
         <div className="af__success af__success--center" role="status">
           <div className="af__successicon af__successicon--check" style={{ margin: '0 auto 18px' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
           </div>
           <h1 className="af__successtitle">Signing you in…</h1>
           <p className="af__successtext">Taking you to your workspace.</p>
@@ -160,7 +184,19 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       <div className="af">
         <div className="af__success af__success--center" role="status">
           <div className="af__successicon af__successicon--check">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
           </div>
           <h1 className="af__successtitle">Check your inbox</h1>
           <p className="af__successtext">
@@ -178,8 +214,19 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         <p className="af__eyebrow">/ Account recovery</p>
         <div className="af__success" role="status">
           <div className="af__successicon af__successicon--mail">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-10 6L2 7" />
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="m22 7-10 6L2 7" />
             </svg>
           </div>
           <h1 className="af__successtitle af__successtitle--lg">Check your inbox</h1>
@@ -191,7 +238,19 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           </button>
         </div>
         <a className="af__back" href="/login">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6" /></svg>
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M19 12H5M11 18l-6-6 6-6" />
+          </svg>
           Back to log in
         </a>
         {styleTag}
@@ -203,7 +262,11 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const heading =
     mode === 'login' ? 'Log in' : mode === 'signup' ? 'Create account' : 'Reset password';
   const eyebrow =
-    mode === 'login' ? '/ Welcome back' : mode === 'signup' ? '/ 14-day free trial' : '/ Account recovery';
+    mode === 'login'
+      ? '/ Welcome back'
+      : mode === 'signup'
+        ? '/ 14-day free trial'
+        : '/ Account recovery';
   const submitLabel =
     status === 'loading'
       ? 'Please wait…'
@@ -236,12 +299,22 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       {mode !== 'forgot' && (
         <>
           <div className="af__sso">
-            <button type="button" className="af__ssobtn" onClick={mode === 'login' ? runLogin : () => setStatus('success')} disabled={status === 'loading'}>
+            <button
+              type="button"
+              className="af__ssobtn"
+              onClick={mode === 'login' ? runLogin : () => setStatus('success')}
+              disabled={status === 'loading'}
+            >
               <GoogleIcon />
               {mode === 'login' ? 'Continue with Google' : 'Sign up with Google'}
             </button>
             {mode === 'login' && (
-              <button type="button" className="af__ssobtn" onClick={runLogin} disabled={status === 'loading'}>
+              <button
+                type="button"
+                className="af__ssobtn"
+                onClick={runLogin}
+                disabled={status === 'loading'}
+              >
                 <AppleIcon />
                 Continue with Apple
               </button>
@@ -271,13 +344,23 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
         <label className="af__field">
           <span className="af__label">Work email</span>
-          <input className="af__input" type="email" name="email" autoComplete="email" inputMode="email" placeholder="you@company.com" required />
+          <input
+            className="af__input"
+            type="email"
+            name="email"
+            autoComplete="email"
+            inputMode="email"
+            placeholder="you@company.com"
+            required
+          />
         </label>
 
         {mode !== 'forgot' && (
           <label className="af__field">
             <span className="af__labelrow">
-              <span className="af__label" style={{ marginBottom: 0 }}>Password</span>
+              <span className="af__label" style={{ marginBottom: 0 }}>
+                Password
+              </span>
               {mode === 'login' && <a href="/forgot-password">Forgot?</a>}
             </span>
             <input
@@ -303,7 +386,8 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           <label className="af__check">
             <input type="checkbox" name="terms" />
             <span>
-              I agree to the <a href="/legal/terms">Terms</a> and <a href="/legal/privacy">Privacy Policy</a>.
+              I agree to the <a href="/legal/terms">Terms</a> and{' '}
+              <a href="/legal/privacy">Privacy Policy</a>.
             </span>
           </label>
         )}
@@ -330,7 +414,19 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       )}
       {mode === 'forgot' && (
         <a className="af__back" href="/login">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6" /></svg>
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M19 12H5M11 18l-6-6 6-6" />
+          </svg>
           Back to log in
         </a>
       )}

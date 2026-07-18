@@ -14,12 +14,23 @@ import type { IconName } from '@/lib/icons';
 
 /* ---------------------------------------------------------------- meta ---- */
 
-const CHANNEL: Record<ChannelType, { color: string; tint: string; icon: IconName; label: string }> = {
-  email: { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)', icon: 'mail', label: 'Email' },
-  sms: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)', icon: 'sms', label: 'SMS' },
-  whatsapp: { color: 'var(--ch-whatsapp)', tint: 'var(--ch-whatsapp-tint)', icon: 'whatsapp', label: 'WhatsApp' },
-  voice: { color: 'var(--ch-voice)', tint: 'var(--ch-voice-tint)', icon: 'voice', label: 'Voice' },
-};
+const CHANNEL: Record<ChannelType, { color: string; tint: string; icon: IconName; label: string }> =
+  {
+    email: { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)', icon: 'mail', label: 'Email' },
+    sms: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)', icon: 'sms', label: 'SMS' },
+    whatsapp: {
+      color: 'var(--ch-whatsapp)',
+      tint: 'var(--ch-whatsapp-tint)',
+      icon: 'whatsapp',
+      label: 'WhatsApp',
+    },
+    voice: {
+      color: 'var(--ch-voice)',
+      tint: 'var(--ch-voice-tint)',
+      icon: 'voice',
+      label: 'Voice',
+    },
+  };
 
 const CHANNEL_TABS: (ChannelType | 'all')[] = ['all', 'email', 'sms', 'whatsapp', 'voice'];
 const VIEWS = [
@@ -35,7 +46,17 @@ const PAGE_SIZE = 10;
 
 /* --------------------------------------------------------- small pieces ---- */
 
-function Check({ on, onClick, label, size = 17 }: { on: boolean; onClick: () => void; label: string; size?: number }) {
+function Check({
+  on,
+  onClick,
+  label,
+  size = 17,
+}: {
+  on: boolean;
+  onClick: () => void;
+  label: string;
+  size?: number;
+}) {
   return (
     <button
       type="button"
@@ -50,7 +71,17 @@ function Check({ on, onClick, label, size = 17 }: { on: boolean; onClick: () => 
   );
 }
 
-function StarBtn({ on, onClick, name, size = 15 }: { on: boolean; onClick: () => void; name: string; size?: number }) {
+function StarBtn({
+  on,
+  onClick,
+  name,
+  size = 15,
+}: {
+  on: boolean;
+  onClick: () => void;
+  name: string;
+  size?: number;
+}) {
   return (
     <button
       type="button"
@@ -71,14 +102,20 @@ function FauxEmail({ t, variant }: { t: GalleryTemplate; variant: 'card' | 'draw
   return (
     <div className={`tpl__mail${lg ? ' tpl__mail--lg' : ''}`} aria-hidden="true">
       <div className="tpl__mail-band" style={{ background: t.thumb }}>
-        <div className="tpl__mail-kicker" style={{ color: t.fg }}>{t.kicker}</div>
-        <div className="tpl__mail-title" style={{ color: t.fg }}>{t.title}</div>
+        <div className="tpl__mail-kicker" style={{ color: t.fg }}>
+          {t.kicker}
+        </div>
+        <div className="tpl__mail-title" style={{ color: t.fg }}>
+          {t.title}
+        </div>
       </div>
       <div className="tpl__mail-body">
         <span className="tpl__mail-bar" style={{ width: '80%', background: '#e7e5e4' }} />
         <span className="tpl__mail-bar" style={{ width: '95%', background: '#efedec' }} />
         <span className="tpl__mail-bar" style={{ width: '60%', background: '#efedec' }} />
-        <span className="tpl__mail-cta" style={{ background: t.accent }}>{t.cta}</span>
+        <span className="tpl__mail-cta" style={{ background: t.accent }}>
+          {t.cta}
+        </span>
       </div>
     </div>
   );
@@ -117,7 +154,12 @@ function ColFilter({
       </button>
       {open && (
         <>
-          <button type="button" className="tpl__colscrim" aria-label="Close filter" onClick={onOpenToggle} />
+          <button
+            type="button"
+            className="tpl__colscrim"
+            aria-label="Close filter"
+            onClick={onOpenToggle}
+          />
           <div className="tpl__colpop" role="menu" aria-label={label}>
             {options.map((o) => {
               const on = selected.has(o);
@@ -179,7 +221,8 @@ export default function AppTemplates() {
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: galleryTemplates.length };
-    for (const t of CHANNEL_TABS) if (t !== 'all') c[t] = galleryTemplates.filter((x) => x.channel === t).length;
+    for (const t of CHANNEL_TABS)
+      if (t !== 'all') c[t] = galleryTemplates.filter((x) => x.channel === t).length;
     return c;
   }, []);
 
@@ -196,13 +239,20 @@ export default function AppTemplates() {
     const { key, dir } = sort;
     const val = (t: GalleryTemplate): string | number => {
       switch (key) {
-        case 'name': return t.name.toLowerCase();
-        case 'cat': return t.category.toLowerCase();
-        case 'updated': return -t.updatedMin;
-        case 'avgOpen': return t.avgOpen;
-        case 'avgClick': return t.avgClick;
-        case 'fav': return isFav(t.id) ? 1 : 0;
-        default: return 0;
+        case 'name':
+          return t.name.toLowerCase();
+        case 'cat':
+          return t.category.toLowerCase();
+        case 'updated':
+          return -t.updatedMin;
+        case 'avgOpen':
+          return t.avgOpen;
+        case 'avgClick':
+          return t.avgClick;
+        case 'fav':
+          return isFav(t.id) ? 1 : 0;
+        default:
+          return 0;
       }
     };
     return [...list].sort((a, b) => {
@@ -221,20 +271,22 @@ export default function AppTemplates() {
   const pageItems = filtered.slice(start, start + PAGE_SIZE);
 
   const toggleSort = (key: SortKey) =>
-    setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: ASC_FIRST.has(key) ? 1 : -1 }));
+    setSort((s) =>
+      s.key === key
+        ? { key, dir: (s.dir * -1) as 1 | -1 }
+        : { key, dir: ASC_FIRST.has(key) ? 1 : -1 },
+    );
   const sortArrow = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? '↑' : '↓') : '');
 
-  const toggleSet =
-    (setter: Dispatch<SetStateAction<Set<string>>>) =>
-    (v: string) => {
-      setter((prev) => {
-        const next = new Set(prev);
-        if (next.has(v)) next.delete(v);
-        else next.add(v);
-        return next;
-      });
-      resetPage();
-    };
+  const toggleSet = (setter: Dispatch<SetStateAction<Set<string>>>) => (v: string) => {
+    setter((prev) => {
+      const next = new Set(prev);
+      if (next.has(v)) next.delete(v);
+      else next.add(v);
+      return next;
+    });
+    resetPage();
+  };
 
   const toggleSelect = (id: string) =>
     setSelected((prev) => {
@@ -245,8 +297,7 @@ export default function AppTemplates() {
     });
 
   const allChecked = pageItems.length > 0 && pageItems.every((t) => selected.has(t.id));
-  const toggleAll = () =>
-    setSelected(allChecked ? new Set() : new Set(pageItems.map((t) => t.id)));
+  const toggleAll = () => setSelected(allChecked ? new Set() : new Set(pageItems.map((t) => t.id)));
 
   const toggleFav = (id: string, name: string) => {
     setFavIds((prev) => {
@@ -268,7 +319,7 @@ export default function AppTemplates() {
     setSelected(new Set());
   };
 
-  const openTpl = openId ? galleryTemplates.find((t) => t.id === openId) ?? null : null;
+  const openTpl = openId ? (galleryTemplates.find((t) => t.id === openId) ?? null) : null;
 
   const setTab = (t: ChannelType | 'all') => {
     setChannelTab(t);
@@ -287,7 +338,11 @@ export default function AppTemplates() {
           <h1 className="screen__h1">Templates</h1>
           <p className="screen__sub">Reusable email designs for your campaigns.</p>
         </div>
-        <button type="button" className="pbtn" onClick={() => showToast('Opening template builder…')}>
+        <button
+          type="button"
+          className="pbtn"
+          onClick={() => showToast('Opening template builder…')}
+        >
           <Icon name="plus" size={15} stroke={2.2} />
           New template
         </button>
@@ -307,7 +362,10 @@ export default function AppTemplates() {
                 role="tab"
                 aria-selected={active}
                 className={`tpl__tab${active ? ' is-active' : ''}`}
-                style={{ color: active ? 'var(--text)' : 'var(--muted)', borderBottomColor: active ? color : 'transparent' }}
+                style={{
+                  color: active ? 'var(--text)' : 'var(--muted)',
+                  borderBottomColor: active ? color : 'transparent',
+                }}
                 onClick={() => setTab(t)}
               >
                 {m && <Icon name={m.icon} size={12} />}
@@ -315,7 +373,11 @@ export default function AppTemplates() {
                 <span
                   className="tpl__tabcount tnum"
                   style={{
-                    background: active ? (t === 'all' ? 'var(--accent-tint)' : m!.tint) : 'var(--surface2)',
+                    background: active
+                      ? t === 'all'
+                        ? 'var(--accent-tint)'
+                        : m!.tint
+                      : 'var(--surface2)',
                     color: active ? color : 'var(--muted)',
                   }}
                 >
@@ -408,7 +470,11 @@ export default function AppTemplates() {
             <button type="button" className="tpl__bulkbtn" onClick={() => bulk('Favorited')}>
               <Icon name="star" size={13} /> Favorite
             </button>
-            <button type="button" className="tpl__bulkbtn tpl__bulkbtn--danger" onClick={() => bulk('Deleted')}>
+            <button
+              type="button"
+              className="tpl__bulkbtn tpl__bulkbtn--danger"
+              onClick={() => bulk('Deleted')}
+            >
               <Icon name="trash" size={13} /> Delete
             </button>
             <button type="button" className="tpl__bulkclear" onClick={() => setSelected(new Set())}>
@@ -443,7 +509,12 @@ export default function AppTemplates() {
                 >
                   <div className="tpl__preview">
                     <span className="tpl__gcheck" onClick={(e) => e.stopPropagation()}>
-                      <Check on={sel} onClick={() => toggleSelect(t.id)} label={`Select ${t.name}`} size={19} />
+                      <Check
+                        on={sel}
+                        onClick={() => toggleSelect(t.id)}
+                        label={`Select ${t.name}`}
+                        size={19}
+                      />
                     </span>
                     <span className="tpl__gbadge" style={{ background: m.tint, color: m.color }}>
                       <Icon name={m.icon} size={11} />
@@ -492,7 +563,11 @@ export default function AppTemplates() {
                       </div>
                     </div>
                     <span onClick={(e) => e.stopPropagation()}>
-                      <StarBtn on={isFav(t.id)} onClick={() => toggleFav(t.id, t.name)} name={t.name} />
+                      <StarBtn
+                        on={isFav(t.id)}
+                        onClick={() => toggleFav(t.id, t.name)}
+                        name={t.name}
+                      />
                     </span>
                   </div>
                 </div>
@@ -521,7 +596,12 @@ export default function AppTemplates() {
                 >
                   <div className="tpl__cband" style={{ background: t.thumb, color: t.fg }}>
                     <span className="tpl__ccheck" onClick={(e) => e.stopPropagation()}>
-                      <Check on={sel} onClick={() => toggleSelect(t.id)} label={`Select ${t.name}`} size={18} />
+                      <Check
+                        on={sel}
+                        onClick={() => toggleSelect(t.id)}
+                        label={`Select ${t.name}`}
+                        size={18}
+                      />
                     </span>
                     {t.title}
                   </div>
@@ -529,7 +609,12 @@ export default function AppTemplates() {
                     <div className="tpl__crow">
                       <span className="tpl__cname">{t.name}</span>
                       <span onClick={(e) => e.stopPropagation()}>
-                        <StarBtn on={isFav(t.id)} onClick={() => toggleFav(t.id, t.name)} name={t.name} size={13} />
+                        <StarBtn
+                          on={isFav(t.id)}
+                          onClick={() => toggleFav(t.id, t.name)}
+                          name={t.name}
+                          size={13}
+                        />
                       </span>
                     </div>
                     <div className="tpl__cmetrics tnum">
@@ -547,12 +632,60 @@ export default function AppTemplates() {
               <div className="tpl__lcheck">
                 <Check on={allChecked} onClick={toggleAll} label="Select all on this page" />
               </div>
-              <div><button type="button" onClick={() => toggleSort('name')} aria-label="Sort by template">Template <span className="tnum">{sortArrow('name')}</span></button></div>
-              <div><button type="button" onClick={() => toggleSort('cat')} aria-label="Sort by category">Category <span className="tnum">{sortArrow('cat')}</span></button></div>
-              <div><button type="button" onClick={() => toggleSort('updated')} aria-label="Sort by updated">Updated <span className="tnum">{sortArrow('updated')}</span></button></div>
-              <div className="tpl__lright"><button type="button" onClick={() => toggleSort('avgOpen')} aria-label="Sort by opens">Opens <span className="tnum">{sortArrow('avgOpen')}</span></button></div>
-              <div className="tpl__lright"><button type="button" onClick={() => toggleSort('avgClick')} aria-label="Sort by clicks">Clicks <span className="tnum">{sortArrow('avgClick')}</span></button></div>
-              <div className="tpl__lcenter"><button type="button" onClick={() => toggleSort('fav')} aria-label="Sort by favorite">Fav <span className="tnum">{sortArrow('fav')}</span></button></div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => toggleSort('name')}
+                  aria-label="Sort by template"
+                >
+                  Template <span className="tnum">{sortArrow('name')}</span>
+                </button>
+              </div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => toggleSort('cat')}
+                  aria-label="Sort by category"
+                >
+                  Category <span className="tnum">{sortArrow('cat')}</span>
+                </button>
+              </div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => toggleSort('updated')}
+                  aria-label="Sort by updated"
+                >
+                  Updated <span className="tnum">{sortArrow('updated')}</span>
+                </button>
+              </div>
+              <div className="tpl__lright">
+                <button
+                  type="button"
+                  onClick={() => toggleSort('avgOpen')}
+                  aria-label="Sort by opens"
+                >
+                  Opens <span className="tnum">{sortArrow('avgOpen')}</span>
+                </button>
+              </div>
+              <div className="tpl__lright">
+                <button
+                  type="button"
+                  onClick={() => toggleSort('avgClick')}
+                  aria-label="Sort by clicks"
+                >
+                  Clicks <span className="tnum">{sortArrow('avgClick')}</span>
+                </button>
+              </div>
+              <div className="tpl__lcenter">
+                <button
+                  type="button"
+                  onClick={() => toggleSort('fav')}
+                  aria-label="Sort by favorite"
+                >
+                  Fav <span className="tnum">{sortArrow('fav')}</span>
+                </button>
+              </div>
               <div />
             </div>
             {pageItems.map((t) => {
@@ -576,18 +709,31 @@ export default function AppTemplates() {
                     <Check on={sel} onClick={() => toggleSelect(t.id)} label={`Select ${t.name}`} />
                   </div>
                   <div className="tpl__lname-cell">
-                    <span className="tpl__lchip" style={{ background: t.thumb, color: t.fg }}>{t.title}</span>
+                    <span className="tpl__lchip" style={{ background: t.thumb, color: t.fg }}>
+                      {t.title}
+                    </span>
                     <span className="tpl__lname">{t.name}</span>
                   </div>
-                  <div><span className="tpl__catpill">{t.category}</span></div>
+                  <div>
+                    <span className="tpl__catpill">{t.category}</span>
+                  </div>
                   <div className="tpl__lmuted">{t.updated}</div>
                   <div className="tpl__lright tnum tpl__lmuted3">{t.avgOpen}%</div>
                   <div className="tpl__lright tnum tpl__lmuted3">{t.avgClick}%</div>
                   <div className="tpl__lcenter" onClick={(e) => e.stopPropagation()}>
-                    <StarBtn on={isFav(t.id)} onClick={() => toggleFav(t.id, t.name)} name={t.name} />
+                    <StarBtn
+                      on={isFav(t.id)}
+                      onClick={() => toggleFav(t.id, t.name)}
+                      name={t.name}
+                    />
                   </div>
                   <div className="tpl__lcenter" onClick={(e) => e.stopPropagation()}>
-                    <button type="button" className="kbtn" aria-label={`Actions for ${t.name}`} onClick={() => showToast('Row menu')}>
+                    <button
+                      type="button"
+                      className="kbtn"
+                      aria-label={`Actions for ${t.name}`}
+                      onClick={() => showToast('Row menu')}
+                    >
                       <Icon name="more" size={16} />
                     </button>
                   </div>
@@ -721,7 +867,10 @@ function TemplateDrawer({
             <h3 className="tpld__name">{t.name}</h3>
             <span
               className="tpld__catpill"
-              style={{ color: catColor, background: `color-mix(in srgb, ${catColor} 14%, transparent)` }}
+              style={{
+                color: catColor,
+                background: `color-mix(in srgb, ${catColor} 14%, transparent)`,
+              }}
             >
               {t.category}
             </span>
@@ -731,11 +880,15 @@ function TemplateDrawer({
           <div className="tpld__stats">
             <div className="tpld__stat">
               <div className="tpld__stat-lbl">Avg. opens</div>
-              <div className="tnum tpld__stat-val" style={{ color: '#4f46e5' }}>{t.avgOpen}%</div>
+              <div className="tnum tpld__stat-val" style={{ color: '#4f46e5' }}>
+                {t.avgOpen}%
+              </div>
             </div>
             <div className="tpld__stat">
               <div className="tpld__stat-lbl">Avg. clicks</div>
-              <div className="tnum tpld__stat-val" style={{ color: '#0891b2' }}>{t.avgClick}%</div>
+              <div className="tnum tpld__stat-val" style={{ color: '#0891b2' }}>
+                {t.avgClick}%
+              </div>
             </div>
           </div>
 
@@ -761,7 +914,12 @@ function TemplateDrawer({
           >
             <Icon name="star" size={16} />
           </button>
-          <button type="button" className="sbtn" style={{ flex: 1 }} onClick={() => onToast(`Cloned “${t.name}”`)}>
+          <button
+            type="button"
+            className="sbtn"
+            style={{ flex: 1 }}
+            onClick={() => onToast(`Cloned “${t.name}”`)}
+          >
             <Icon name="copy" size={14} /> Clone
           </button>
           <button type="button" className="pbtn" style={{ flex: 1 }} onClick={onUse}>

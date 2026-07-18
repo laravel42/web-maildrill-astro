@@ -27,7 +27,12 @@ const pathname = Astro.url.pathname;
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <link rel="alternate" type="application/rss+xml" title={`${siteConfig.name} Blog`} href="/rss.xml" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={`${siteConfig.name} Blog`}
+      href="/rss.xml"
+    />
     <SeoHead seo={seo} pathname={pathname} />
     {jsonLd && <JsonLd data={jsonLd} />}
     {/* Enable scroll-reveal only when motion is allowed; runs before paint to avoid FOUC. */}

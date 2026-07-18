@@ -35,7 +35,10 @@ const categoryStyle = (tag?: string): CatStyle => {
       return { color: 'var(--ch-voice)', tint: 'var(--ch-voice-tint)' };
     case 'announcement':
     case 'deliverability':
-      return { color: 'var(--brand)', tint: 'color-mix(in srgb, var(--brand) 14%, var(--surface))' };
+      return {
+        color: 'var(--brand)',
+        tint: 'color-mix(in srgb, var(--brand) 14%, var(--surface))',
+      };
     case 'lifecycle':
     case 'perspective':
       return { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)' };
@@ -110,7 +113,10 @@ const jsonLd = breadcrumbJsonLd([
             <h2 class="feat__title">{featured.data.title}</h2>
             <p class="feat__excerpt">{featured.data.description}</p>
             <span class="feat__meta">
-              <span class="avatar" style={`--cat:${featuredCat.color};--cat-tint:${featuredCat.tint}`}>
+              <span
+                class="avatar"
+                style={`--cat:${featuredCat.color};--cat-tint:${featuredCat.tint}`}
+              >
                 {initials(featured.data.author)}
               </span>
               {featured.data.author} · {featuredMin} min read
@@ -285,7 +291,11 @@ const jsonLd = breadcrumbJsonLd([
     right: -30px;
     width: 240px;
     height: 240px;
-    background: radial-gradient(circle, color-mix(in srgb, var(--brand) 30%, transparent), transparent 65%);
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--brand) 30%, transparent),
+      transparent 65%
+    );
     animation: blob 12s ease-in-out infinite;
     pointer-events: none;
   }
@@ -399,7 +409,11 @@ const jsonLd = breadcrumbJsonLd([
 
   .post-card__art {
     height: 150px;
-    background: linear-gradient(135deg, var(--cat-tint), color-mix(in srgb, var(--cat-tint) 35%, var(--surface)));
+    background: linear-gradient(
+      135deg,
+      var(--cat-tint),
+      color-mix(in srgb, var(--cat-tint) 35%, var(--surface))
+    );
     display: flex;
     align-items: flex-end;
     padding: 16px;

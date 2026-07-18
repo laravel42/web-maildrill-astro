@@ -186,7 +186,9 @@ const contacts: Contact[] = [
     <div class="sup-hero__glow sup-hero__glow--orange" aria-hidden="true"></div>
     <div class="sup-hero__inner">
       <p class="eyebrow sup-hero__eyebrow" data-reveal>Support</p>
-      <h1 class="display sup-hero__title" data-reveal style="--reveal-delay:80ms">How can we help?</h1>
+      <h1 class="display sup-hero__title" data-reveal style="--reveal-delay:80ms">
+        How can we help?
+      </h1>
 
       <form
         class="sup-search"
@@ -255,7 +257,11 @@ const contacts: Contact[] = [
         {
           popular.map((a) => (
             <a class="pop__row" href={a.href}>
-              <span class="pop__ic" style={`background:${a.tint};color:${a.color}`} aria-hidden="true">
+              <span
+                class="pop__ic"
+                style={`background:${a.tint};color:${a.color}`}
+                aria-hidden="true"
+              >
                 <Icon name={a.icon} size={16} />
               </span>
               <span class="pop__title">{a.title}</span>
@@ -274,7 +280,11 @@ const contacts: Contact[] = [
         {
           contacts.map((c) => (
             <a class="contact" href={c.href} data-reveal style={`--reveal-delay:${c.delay}ms`}>
-              <span class="contact__ic" style={`background:${c.tint};color:${c.color}`} aria-hidden="true">
+              <span
+                class="contact__ic"
+                style={`background:${c.tint};color:${c.color}`}
+                aria-hidden="true"
+              >
                 <Icon name={c.icon} size={19} />
               </span>
               <span class="contact__body">

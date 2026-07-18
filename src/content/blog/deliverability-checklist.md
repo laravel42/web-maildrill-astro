@@ -1,9 +1,9 @@
 ---
 title: "The operator's deliverability checklist"
-description: "Authenticate, warm, monitor, and recover — the practical path our best senders follow before every big launch."
+description: 'Authenticate, warm, monitor, and recover — the practical path our best senders follow before every big launch.'
 pubDate: 2026-05-20
-author: "Marcus Reed"
-tags: ["deliverability", "email"]
+author: 'Marcus Reed'
+tags: ['deliverability', 'email']
 featured: false
 draft: false
 ---

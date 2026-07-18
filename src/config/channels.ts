@@ -30,7 +30,12 @@ export const channels: Channel[] = [
       'Attachments, preheaders, and plain-text fallbacks',
     ],
     useCases: ['Product launches', 'Lifecycle nurture', 'Transactional receipts', 'Newsletters'],
-    steps: ['Authenticate your domain', 'Pick a template', 'Target lists & segments', 'Schedule or send'],
+    steps: [
+      'Authenticate your domain',
+      'Pick a template',
+      'Target lists & segments',
+      'Schedule or send',
+    ],
   },
   {
     key: 'sms',
@@ -63,8 +68,18 @@ export const channels: Channel[] = [
       'Rich media support',
       'Phone-frame live preview',
     ],
-    useCases: ['Support follow-ups', 'Abandoned cart', 'Appointment confirmations', 'Customer care'],
-    steps: ['Connect WhatsApp Business', 'Approve templates', 'Target audience', 'Launch conversation'],
+    useCases: [
+      'Support follow-ups',
+      'Abandoned cart',
+      'Appointment confirmations',
+      'Customer care',
+    ],
+    steps: [
+      'Connect WhatsApp Business',
+      'Approve templates',
+      'Target audience',
+      'Launch conversation',
+    ],
   },
   {
     key: 'voice',
@@ -80,8 +95,18 @@ export const channels: Channel[] = [
       'Per-minute destination rates',
       'Campaign analytics alongside other channels',
     ],
-    useCases: ['Urgent alerts', 'Appointment confirmations', 'Collections reminders', 'Event day outreach'],
-    steps: ['Write the script', 'Pick destination markets', 'Select audience', 'Schedule the call window'],
+    useCases: [
+      'Urgent alerts',
+      'Appointment confirmations',
+      'Collections reminders',
+      'Event day outreach',
+    ],
+    steps: [
+      'Write the script',
+      'Pick destination markets',
+      'Select audience',
+      'Schedule the call window',
+    ],
   },
 ];
 

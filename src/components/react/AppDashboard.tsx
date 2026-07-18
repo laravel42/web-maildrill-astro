@@ -16,12 +16,23 @@ function ago(iso: string): string {
   return days === 1 ? '1d ago' : `${days}d ago`;
 }
 
-const CHANNEL: Record<ChannelType, { color: string; tint: string; icon: IconName; label: string }> = {
-  email: { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)', icon: 'mail', label: 'Email' },
-  sms: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)', icon: 'sms', label: 'SMS' },
-  whatsapp: { color: 'var(--ch-whatsapp)', tint: 'var(--ch-whatsapp-tint)', icon: 'whatsapp', label: 'WhatsApp' },
-  voice: { color: 'var(--ch-voice)', tint: 'var(--ch-voice-tint)', icon: 'voice', label: 'Voice' },
-};
+const CHANNEL: Record<ChannelType, { color: string; tint: string; icon: IconName; label: string }> =
+  {
+    email: { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)', icon: 'mail', label: 'Email' },
+    sms: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)', icon: 'sms', label: 'SMS' },
+    whatsapp: {
+      color: 'var(--ch-whatsapp)',
+      tint: 'var(--ch-whatsapp-tint)',
+      icon: 'whatsapp',
+      label: 'WhatsApp',
+    },
+    voice: {
+      color: 'var(--ch-voice)',
+      tint: 'var(--ch-voice-tint)',
+      icon: 'voice',
+      label: 'Voice',
+    },
+  };
 
 const statusLabel: Record<string, string> = {
   draft: 'Draft',
@@ -35,7 +46,12 @@ const totalSubs = lists.reduce((sum, l) => sum + l.subscribers, 0);
 const sentCount = campaigns.filter((c) => c.status === 'sent').length;
 
 const kpis = [
-  { label: 'Active subscribers', value: totalSubs.toLocaleString('en-US'), delta: '↑ 1,006 this month', up: true },
+  {
+    label: 'Active subscribers',
+    value: totalSubs.toLocaleString('en-US'),
+    delta: '↑ 1,006 this month',
+    up: true,
+  },
   { label: 'Lists', value: String(lists.length), delta: 'All active', up: false },
   { label: 'Campaigns', value: String(campaigns.length), delta: `${sentCount} sent`, up: false },
   { label: 'Emails sent today', value: '0', delta: '—', up: false },
@@ -46,10 +62,34 @@ const kpis = [
 const recent = campaigns.slice(0, 4);
 
 const activity: { icon: IconName; bg: string; color: string; text: string; time: string }[] = [
-  { icon: 'subscribers', bg: 'var(--accent-tint)', color: 'var(--accent)', text: 'Imported 300 contacts to VIP buyers', time: '2 hours ago' },
-  { icon: 'edit', bg: 'var(--surface2)', color: 'var(--text4)', text: 'Winback draft created', time: '3 hours ago' },
-  { icon: 'templates', bg: 'var(--warning-bg)', color: 'var(--warning)', text: 'Template "Product launch" updated', time: '5 hours ago' },
-  { icon: 'plus', bg: 'var(--success-bg)', color: 'var(--success-strong)', text: 'Recent buyers list created', time: 'Yesterday' },
+  {
+    icon: 'subscribers',
+    bg: 'var(--accent-tint)',
+    color: 'var(--accent)',
+    text: 'Imported 300 contacts to VIP buyers',
+    time: '2 hours ago',
+  },
+  {
+    icon: 'edit',
+    bg: 'var(--surface2)',
+    color: 'var(--text4)',
+    text: 'Winback draft created',
+    time: '3 hours ago',
+  },
+  {
+    icon: 'templates',
+    bg: 'var(--warning-bg)',
+    color: 'var(--warning)',
+    text: 'Template "Product launch" updated',
+    time: '5 hours ago',
+  },
+  {
+    icon: 'plus',
+    bg: 'var(--success-bg)',
+    color: 'var(--success-strong)',
+    text: 'Recent buyers list created',
+    time: 'Yesterday',
+  },
 ];
 
 const channelPerf = [
@@ -65,16 +105,37 @@ function sparkPoints(pts: number[], w: number, h: number): string {
   const min = Math.min(...pts);
   const rng = max - min || 1;
   return pts
-    .map((p, i) => `${((i / (pts.length - 1)) * w).toFixed(1)},${(h - ((p - min) / rng) * h).toFixed(1)}`)
+    .map(
+      (p, i) =>
+        `${((i / (pts.length - 1)) * w).toFixed(1)},${(h - ((p - min) / rng) * h).toFixed(1)}`,
+    )
     .join(' ');
 }
 const sparkLine = sparkPoints(spark, 320, 66);
 const sparkArea = `${sparkLine} 320,70 0,70`;
 
 const getStarted = [
-  { label: 'Import your contacts', bg: 'var(--surface2)', ring: '#22c55e', fill: '#22c55e', text: 'var(--text3)' },
-  { label: 'Create your first campaign', bg: 'var(--accent-tint)', ring: 'var(--accent)', fill: 'transparent', text: 'var(--accent)' },
-  { label: 'Send your first email', bg: 'var(--surface2)', ring: 'var(--muted2)', fill: 'transparent', text: 'var(--text4)' },
+  {
+    label: 'Import your contacts',
+    bg: 'var(--surface2)',
+    ring: '#22c55e',
+    fill: '#22c55e',
+    text: 'var(--text3)',
+  },
+  {
+    label: 'Create your first campaign',
+    bg: 'var(--accent-tint)',
+    ring: 'var(--accent)',
+    fill: 'transparent',
+    text: 'var(--accent)',
+  },
+  {
+    label: 'Send your first email',
+    bg: 'var(--surface2)',
+    ring: 'var(--muted2)',
+    fill: 'transparent',
+    text: 'var(--text4)',
+  },
 ];
 
 export default function AppDashboard() {
@@ -104,7 +165,9 @@ export default function AppDashboard() {
           <div key={k.label} className="akpi">
             <div className="akpi__label">{k.label}</div>
             <div className="akpi__value tnum">{k.value}</div>
-            <div className={`akpi__delta ${k.up ? 'akpi__delta--up' : 'akpi__delta--flat'} tnum`}>{k.delta}</div>
+            <div className={`akpi__delta ${k.up ? 'akpi__delta--up' : 'akpi__delta--flat'} tnum`}>
+              {k.delta}
+            </div>
           </div>
         ))}
       </div>
@@ -114,17 +177,27 @@ export default function AppDashboard() {
         <div className="acrd" style={{ overflow: 'hidden' }}>
           <div className="acrd__head">
             <h2 className="acrd__title">Recent campaigns</h2>
-            <a href="/app/campaigns" className="acrd__link">View all</a>
+            <a href="/app/campaigns" className="acrd__link">
+              View all
+            </a>
           </div>
           <div className="dash__ct-head">
-            <span>Campaign</span><span>Status</span><span>Recipients</span><span>Open</span><span>Updated</span>
+            <span>Campaign</span>
+            <span>Status</span>
+            <span>Recipients</span>
+            <span>Open</span>
+            <span>Updated</span>
           </div>
           {recent.map((c) => (
             <a key={c.id} href="/app/campaigns" className="dash__ct-row">
               <span className="dash__ct-name">{c.name}</span>
-              <span><span className={`astatus astatus--${c.status}`}>{statusLabel[c.status]}</span></span>
+              <span>
+                <span className={`astatus astatus--${c.status}`}>{statusLabel[c.status]}</span>
+              </span>
               <span className="tnum dash__muted3">{c.recipients.toLocaleString('en-US')}</span>
-              <span className="tnum dash__muted3">{c.openRate != null ? `${Math.round(c.openRate * 100)}%` : '—'}</span>
+              <span className="tnum dash__muted3">
+                {c.openRate != null ? `${Math.round(c.openRate * 100)}%` : '—'}
+              </span>
               <span className="dash__muted">{ago(c.updatedAt)}</span>
             </a>
           ))}
@@ -154,14 +227,19 @@ export default function AppDashboard() {
       <div className="acrd dash__perf">
         <div className="dash__perf-head">
           <h2 className="acrd__title">Performance by channel</h2>
-          <a href="/app/analytics" className="acrd__link">View analytics</a>
+          <a href="/app/analytics" className="acrd__link">
+            View analytics
+          </a>
         </div>
         <div className="dash__perf-list">
           {channelPerf.map((p) => {
             const meta = CHANNEL[p.channel];
             return (
               <div key={p.channel} className="dash__perf-row">
-                <span className="dash__perf-ic" style={{ background: meta.tint, color: meta.color }}>
+                <span
+                  className="dash__perf-ic"
+                  style={{ background: meta.tint, color: meta.color }}
+                >
                   <Icon name={meta.icon} size={14} />
                 </span>
                 <div className="dash__perf-label">
@@ -174,7 +252,14 @@ export default function AppDashboard() {
                     <span>Click {p.click}</span>
                   </div>
                   <div className="abar">
-                    <div className="abar__fill" style={{ width: `${p.openW}%`, background: meta.color, animation: 'grow .5s ease' }} />
+                    <div
+                      className="abar__fill"
+                      style={{
+                        width: `${p.openW}%`,
+                        background: meta.color,
+                        animation: 'grow .5s ease',
+                      }}
+                    />
                   </div>
                 </div>
               </div>
@@ -195,7 +280,14 @@ export default function AppDashboard() {
               <div className="tnum dash__spark-val">43%</div>
               <div className="tnum dash__spark-delta">↑ 4%</div>
             </div>
-            <svg width="100%" height="70" viewBox="0 0 320 70" preserveAspectRatio="none" className="dash__spark-svg" aria-hidden="true">
+            <svg
+              width="100%"
+              height="70"
+              viewBox="0 0 320 70"
+              preserveAspectRatio="none"
+              className="dash__spark-svg"
+              aria-hidden="true"
+            >
               <defs>
                 <linearGradient id="dashspk" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0" stopColor="#4f46e5" stopOpacity="0.18" />
@@ -203,19 +295,45 @@ export default function AppDashboard() {
                 </linearGradient>
               </defs>
               <polyline points={sparkArea} fill="url(#dashspk)" stroke="none" />
-              <polyline points={sparkLine} fill="none" stroke="#4f46e5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <polyline
+                points={sparkLine}
+                fill="none"
+                stroke="#4f46e5"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </div>
         </div>
 
         <div className="acrd dash__start">
-          <h2 className="acrd__title" style={{ marginBottom: 13 }}>Get started</h2>
+          <h2 className="acrd__title" style={{ marginBottom: 13 }}>
+            Get started
+          </h2>
           {getStarted.map((g) => (
             <div key={g.label} className="dash__start-item" style={{ background: g.bg }}>
-              <span className="dash__start-disc" style={{ borderColor: g.ring, background: g.fill }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+              <span
+                className="dash__start-disc"
+                style={{ borderColor: g.ring, background: g.fill }}
+              >
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#fff"
+                  strokeWidth="3.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
               </span>
-              <span className="dash__start-lbl" style={{ color: g.text }}>{g.label}</span>
+              <span className="dash__start-lbl" style={{ color: g.text }}>
+                {g.label}
+              </span>
             </div>
           ))}
         </div>

@@ -1,120 +1,425 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="./support.js"></script>
-<meta name="ext-resource-dependency" content="./md-motion.js" data-resource-id="mdmotion">
-<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" data-bg-color="#f6f5f2"><rect width="1200" height="630" fill="#f6f5f2"/><g transform="translate(566,232) scale(3.4)"><path fill="#ff441f" d="M13.39,0c-2.86,2.06-5.61,4-8.47,6.06C3.89,4,2.86,2.06,1.95,0h11.44Z"/><path fill="#ff441f" d="M19.57,17.49c-1.49,3.09-3.09,6.17-4.58,9.26-.69-1.49-1.49-2.97-2.17-4.34l6.75-4.92Z"/><path fill="#ff441f" d="M26.32,0c-6.07,4.23-12.02,8.58-18.08,12.81-.8-1.6-1.6-3.2-2.4-4.92,3.66-2.63,7.44-5.26,11.1-7.89h9.38Z"/><path fill="#ff441f" d="M27.12,2.17c-1.83,3.66-3.66,7.32-5.49,10.98-3.2,2.29-6.52,4.57-9.73,6.86l-2.63-5.15c5.95-4.23,11.9-8.46,17.85-12.69Z"/></g><text x="600" y="440" font-family="Geist,system-ui,sans-serif" font-size="56" font-weight="800" fill="#1f1e1b" text-anchor="middle" letter-spacing="-3">Maildrill</text></svg></template>
-</head>
-<body>
-<x-dc>
-<helmet>
-<title>Authenticate your sending domain — Maildrill Guides</title>
-<meta name="description" content="A step-by-step guide to setting up SPF, DKIM, and DMARC for your sending domain in Maildrill — get authenticated correctly the first time with a validation checklist.">
-<meta name="keywords" content="SPF DKIM DMARC setup, domain authentication guide, email deliverability, sending domain">
-<meta property="og:title" content="Authenticate your sending domain — Maildrill Guide">
-<meta property="og:description" content="Set up SPF, DKIM, and DMARC correctly the first time.">
-<meta property="og:type" content="article">
-<meta name="twitter:card" content="summary_large_image">
-<link rel="canonical" href="https://maildrill.com/guides/authenticate-domain">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-body{margin:0}
-*{cursor:none}
-@media (pointer:coarse){*{cursor:auto}}
-a{color:#4f46e5}a:hover{color:#4338ca}
-.md-mono{font-family:'Geist Mono',ui-monospace,monospace}
-html{scroll-behavior:smooth}
-.gt-toc a:hover{color:#1f1e1b}
-.gt p{font-size:17px;line-height:1.7;color:#57554e;margin:0 0 16px}
-.gt strong{color:#1f1e1b;font-weight:600}
-pre{margin:0}
-</style>
-</helmet>
-<div style="font-family:Geist,system-ui,sans-serif;background:#f6f5f2;color:#1f1e1b;overflow-x:clip">
-  <dc-import name="MaildrillNav" active="blog" hint-size="100%,72px"></dc-import>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+    <meta name="ext-resource-dependency" content="./md-motion.js" data-resource-id="mdmotion" />
+    <template id="__bundler_thumbnail"
+      ><svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="1200"
+        height="630"
+        viewBox="0 0 1200 630"
+        data-bg-color="#f6f5f2"
+      >
+        <rect width="1200" height="630" fill="#f6f5f2" />
+        <g transform="translate(566,232) scale(3.4)">
+          <path
+            fill="#ff441f"
+            d="M13.39,0c-2.86,2.06-5.61,4-8.47,6.06C3.89,4,2.86,2.06,1.95,0h11.44Z"
+          />
+          <path
+            fill="#ff441f"
+            d="M19.57,17.49c-1.49,3.09-3.09,6.17-4.58,9.26-.69-1.49-1.49-2.97-2.17-4.34l6.75-4.92Z"
+          />
+          <path
+            fill="#ff441f"
+            d="M26.32,0c-6.07,4.23-12.02,8.58-18.08,12.81-.8-1.6-1.6-3.2-2.4-4.92,3.66-2.63,7.44-5.26,11.1-7.89h9.38Z"
+          />
+          <path
+            fill="#ff441f"
+            d="M27.12,2.17c-1.83,3.66-3.66,7.32-5.49,10.98-3.2,2.29-6.52,4.57-9.73,6.86l-2.63-5.15c5.95-4.23,11.9-8.46,17.85-12.69Z"
+          />
+        </g>
+        <text
+          x="600"
+          y="440"
+          font-family="Geist,system-ui,sans-serif"
+          font-size="56"
+          font-weight="800"
+          fill="#1f1e1b"
+          text-anchor="middle"
+          letter-spacing="-3"
+        >
+          Maildrill
+        </text>
+      </svg></template
+    >
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <title>Authenticate your sending domain — Maildrill Guides</title>
+        <meta
+          name="description"
+          content="A step-by-step guide to setting up SPF, DKIM, and DMARC for your sending domain in Maildrill — get authenticated correctly the first time with a validation checklist."
+        />
+        <meta
+          name="keywords"
+          content="SPF DKIM DMARC setup, domain authentication guide, email deliverability, sending domain"
+        />
+        <meta property="og:title" content="Authenticate your sending domain — Maildrill Guide" />
+        <meta
+          property="og:description"
+          content="Set up SPF, DKIM, and DMARC correctly the first time."
+        />
+        <meta property="og:type" content="article" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <link rel="canonical" href="https://maildrill.com/guides/authenticate-domain" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Geist+Mono:wght@400;500&display=swap"
+          rel="stylesheet"
+        />
+        <style>
+          body {
+            margin: 0;
+          }
+          * {
+            cursor: none;
+          }
+          @media (pointer: coarse) {
+            * {
+              cursor: auto;
+            }
+          }
+          a {
+            color: #4f46e5;
+          }
+          a:hover {
+            color: #4338ca;
+          }
+          .md-mono {
+            font-family: 'Geist Mono', ui-monospace, monospace;
+          }
+          html {
+            scroll-behavior: smooth;
+          }
+          .gt-toc a:hover {
+            color: #1f1e1b;
+          }
+          .gt p {
+            font-size: 17px;
+            line-height: 1.7;
+            color: #57554e;
+            margin: 0 0 16px;
+          }
+          .gt strong {
+            color: #1f1e1b;
+            font-weight: 600;
+          }
+          pre {
+            margin: 0;
+          }
+        </style>
+      </helmet>
+      <div
+        style="
+          font-family: Geist, system-ui, sans-serif;
+          background: #f6f5f2;
+          color: #1f1e1b;
+          overflow-x: clip;
+        "
+      >
+        <dc-import name="MaildrillNav" active="blog" hint-size="100%,72px"></dc-import>
 
-  <section style="max-width:1180px;margin:0 auto;padding:56px 32px 24px">
-    <a href="Guides.dc.html" class="md-mono" data-reveal style="opacity:0;transform:translateY(10px);transition:all .5s;display:inline-flex;align-items:center;gap:8px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#77756c;text-decoration:none">← Guides</a>
-    <div data-reveal data-delay="60" style="opacity:0;transform:translateY(14px);transition:all .6s;display:flex;align-items:center;gap:10px;margin-top:22px">
-      <span style="display:inline-block;padding:4px 12px;border-radius:999px;background:#eef0ff;color:#4f46e5;font-size:12px;font-weight:600">Deliverability</span>
-      <span class="md-mono" style="font-size:12px;color:#a5a39a">7 steps · 12 min</span>
-    </div>
-    <h1 data-split style="opacity:0;font-size:clamp(38px,5.2vw,72px);line-height:1;letter-spacing:-.04em;font-weight:800;margin:16px 0 0;max-width:16ch">Authenticate your sending domain</h1>
-    <p data-reveal data-delay="140" style="opacity:0;transform:translateY(14px);transition:all .6s;font-size:19px;line-height:1.6;color:#57554e;max-width:60ch;margin:20px 0 0">Set up SPF, DKIM, and DMARC correctly the first time. Authentication is the single highest-leverage thing you can do for deliverability — it tells mailbox providers your mail is really you.</p>
-  </section>
-
-  <section style="max-width:1180px;margin:0 auto;padding:8px 32px 72px;display:grid;grid-template-columns:230px 1fr;gap:56px;align-items:start">
-    <nav class="gt-toc" data-reveal style="opacity:0;transition:all .6s;position:sticky;top:96px;display:flex;flex-direction:column;gap:10px">
-      <span class="md-mono" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#a5a39a;margin-bottom:4px">Steps</span>
-      <sc-for list="{{ steps }}" as="s" hint-placeholder-count="7">
-        <a href="#{{ s.id }}" style="font-size:14px;line-height:1.4;text-decoration:none;color:#77756c;transition:color .15s;display:flex;gap:9px"><span class="md-mono" style="color:#4f46e5">{{ s.num }}</span>{{ s.h }}</a>
-      </sc-for>
-    </nav>
-    <div class="gt" style="max-width:720px">
-      <sc-for list="{{ steps }}" as="s" hint-placeholder-count="7">
-        <div id="{{ s.id }}" data-reveal style="opacity:0;transform:translateY(18px);transition:all .6s;margin-bottom:38px;scroll-margin-top:96px">
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-            <span class="md-mono" style="width:34px;height:34px;border-radius:9px;background:#4f46e5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;flex-shrink:0">{{ s.num }}</span>
-            <h2 style="font-size:24px;font-weight:700;letter-spacing:-.02em;margin:0">{{ s.h }}</h2>
+        <section style="max-width: 1180px; margin: 0 auto; padding: 56px 32px 24px">
+          <a
+            href="Guides.dc.html"
+            class="md-mono"
+            data-reveal
+            style="
+              opacity: 0;
+              transform: translateY(10px);
+              transition: all 0.5s;
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+              font-size: 13px;
+              letter-spacing: 0.1em;
+              text-transform: uppercase;
+              color: #77756c;
+              text-decoration: none;
+            "
+            >← Guides</a
+          >
+          <div
+            data-reveal
+            data-delay="60"
+            style="
+              opacity: 0;
+              transform: translateY(14px);
+              transition: all 0.6s;
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              margin-top: 22px;
+            "
+          >
+            <span
+              style="
+                display: inline-block;
+                padding: 4px 12px;
+                border-radius: 999px;
+                background: #eef0ff;
+                color: #4f46e5;
+                font-size: 12px;
+                font-weight: 600;
+              "
+              >Deliverability</span
+            >
+            <span class="md-mono" style="font-size: 12px; color: #a5a39a">7 steps · 12 min</span>
           </div>
-          <sc-for list="{{ s.body }}" as="p" hint-placeholder-count="2">
-            <p>{{ p }}</p>
-          </sc-for>
-          <sc-if value="{{ s.code }}" hint-placeholder-val="{{ false }}">
-            <div style="border-radius:12px;overflow:hidden;border:1px solid #201d16;margin:4px 0 8px"><pre class="md-mono" style="background:#15130d;color:#e8e6df;font-size:13px;line-height:1.7;padding:16px;overflow-x:auto">{{ s.code }}</pre></div>
-          </sc-if>
-          <sc-if value="{{ s.tip }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;gap:11px;background:#eef0ff;border:1px solid #dfe1ff;border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.55;color:#3a3833"><span style="color:#4f46e5;flex-shrink:0;font-weight:700">Tip</span>{{ s.tip }}</div>
-          </sc-if>
-        </div>
-      </sc-for>
-      <div data-reveal data-card style="opacity:0;transform:translateY(14px);transition:all .6s;display:flex;justify-content:space-between;align-items:center;gap:16px;background:#fff;border:1px solid #ecebe6;border-radius:16px;padding:22px 24px;margin-top:8px">
-        <div><div style="font-size:12px;color:#a5a39a" class="md-mono">NEXT GUIDE</div><a href="Guides.dc.html" style="font-size:17px;font-weight:600;text-decoration:none;color:#1f1e1b">Warm up a new domain or IP →</a></div>
-        <a href="#" style="flex-shrink:0;padding:11px 18px;border-radius:999px;background:#4f46e5;color:#fff;font-size:14px;font-weight:600;text-decoration:none;transition:background .2s" style-hover="background:#4338ca">Try it in Maildrill</a>
-      </div>
-    </div>
-  </section>
+          <h1
+            data-split
+            style="
+              opacity: 0;
+              font-size: clamp(38px, 5.2vw, 72px);
+              line-height: 1;
+              letter-spacing: -0.04em;
+              font-weight: 800;
+              margin: 16px 0 0;
+              max-width: 16ch;
+            "
+          >
+            Authenticate your sending domain
+          </h1>
+          <p
+            data-reveal
+            data-delay="140"
+            style="
+              opacity: 0;
+              transform: translateY(14px);
+              transition: all 0.6s;
+              font-size: 19px;
+              line-height: 1.6;
+              color: #57554e;
+              max-width: 60ch;
+              margin: 20px 0 0;
+            "
+          >
+            Set up SPF, DKIM, and DMARC correctly the first time. Authentication is the single
+            highest-leverage thing you can do for deliverability — it tells mailbox providers your
+            mail is really you.
+          </p>
+        </section>
 
-  <dc-import name="MaildrillFooter" hint-size="100%,540px"></dc-import>
-</div>
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props="{}">
-class Component extends DCLogic {
-  componentDidMount(){
-    import(window.__resources&&window.__resources.mdmotion||'./md-motion.js').then(m=>{ requestAnimationFrame(()=>{ m.initMotion({cursor:true,progress:false}); this.readBar(); this.scrollSpy(); }); });
-  }
-  scrollSpy(){
-    const links=[...document.querySelectorAll('.gt-toc a')];
-    if(!links.length) return;
-    const setActive=(id)=>{ links.forEach(a=>{ const on=a.getAttribute('href').slice(1)===id; a.style.color=on?'#1f1e1b':'#77756c'; a.style.fontWeight=on?'600':'400'; }); };
-    const io=new IntersectionObserver((es)=>{ es.forEach(e=>{ if(e.isIntersecting) setActive(e.target.id); }); },{rootMargin:'-38% 0px -55% 0px',threshold:0});
-    links.forEach(a=>{ const el=document.getElementById(a.getAttribute('href').slice(1)); if(el) io.observe(el); });
-  }
-  readBar(){
-    if(document.getElementById('md-readbar')) return;
-    const bar=document.createElement('div'); bar.id='md-readbar';
-    bar.style.cssText='position:fixed;top:0;left:0;height:3px;width:0;z-index:200;background:linear-gradient(90deg,#4f46e5,#8b5cf6,#ff441f);pointer-events:none;transition:width .08s linear';
-    document.body.appendChild(bar);
-    const upd=()=>{ const footer=document.querySelector('footer'); const end=(footer?footer.offsetTop:document.documentElement.scrollHeight)-window.innerHeight; const p=end>0?Math.min(Math.max(window.scrollY/end,0),1):0; bar.style.width=(p*100)+'%'; };
-    window.addEventListener('scroll',upd,{passive:true}); window.addEventListener('resize',upd); upd();
-  }
-  renderVals(){
-    const steps=[
-      {id:"why",h:"Understand what authentication proves",body:["Mailbox providers ask three questions about every message: is the sender allowed to send for this domain (SPF), was the message tampered with in transit (DKIM), and what should happen if those checks fail (DMARC). Passing all three is table stakes for the inbox.","You'll set each up as a DNS record on your sending domain. Budget 15 minutes plus DNS propagation time."]},
-      {id:"domain",h:"Choose a sending subdomain",body:["Send marketing mail from a subdomain like send.yourbrand.com — not your root domain. This isolates your marketing reputation from your corporate email, so one never drags down the other."],tip:"Add the domain in Maildrill under Settings → Domains before you touch DNS — we'll generate the exact records for you."},
-      {id:"spf",h:"Add your SPF record",body:["SPF lists the servers allowed to send for your domain. Add a TXT record that includes Maildrill's sending infrastructure:"],code:"send.yourbrand.com  TXT\nv=spf1 include:spf.maildrill.com ~all"},
-      {id:"dkim",h:"Add your DKIM keys",body:["DKIM signs each message with a private key so the recipient can verify it wasn't altered. Maildrill generates a keypair per domain — add the two CNAME records we show you:"],code:"md1._domainkey  CNAME  md1.dkim.maildrill.com\nmd2._domainkey  CNAME  md2.dkim.maildrill.com"},
-      {id:"dmarc",h:"Publish a DMARC policy",body:["DMARC tells providers what to do when SPF or DKIM fail, and where to send reports. Start in monitoring mode (p=none) so you can watch before enforcing:"],code:"_dmarc  TXT\nv=DMARC1; p=none; rua=mailto:dmarc@yourbrand.com",tip:"Once reports look clean for a couple of weeks, tighten to p=quarantine, then p=reject."},
-      {id:"verify",h:"Verify in Maildrill",body:["Back in Settings → Domains, hit Verify. Maildrill checks all three records and shows a green status per record. DNS can take up to a few hours to propagate — recheck if anything is still pending."]},
-      {id:"monitor",h:"Monitor and enforce",body:["Watch your DMARC reports and the reputation dashboard for the first few sends. When alignment holds steady, move your DMARC policy to enforcement. You're now authenticated — the biggest single lever for landing in the inbox."]},
-    ];
-    return { steps: steps.map((s,i)=>({...s,num:String(i+1).padStart(2,'0'),code:s.code||"",tip:s.tip||""})) };
-  }
-}
-</script>
-</body>
+        <section
+          style="
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 8px 32px 72px;
+            display: grid;
+            grid-template-columns: 230px 1fr;
+            gap: 56px;
+            align-items: start;
+          "
+        >
+          <nav
+            class="gt-toc"
+            data-reveal
+            style="
+              opacity: 0;
+              transition: all 0.6s;
+              position: sticky;
+              top: 96px;
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+            "
+          >
+            <span
+              class="md-mono"
+              style="
+                font-size: 12px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: #a5a39a;
+                margin-bottom: 4px;
+              "
+              >Steps</span
+            >
+            <sc-for list="{{ steps }}" as="s" hint-placeholder-count="7">
+              <a
+                href="#{{ s.id }}"
+                style="
+                  font-size: 14px;
+                  line-height: 1.4;
+                  text-decoration: none;
+                  color: #77756c;
+                  transition: color 0.15s;
+                  display: flex;
+                  gap: 9px;
+                "
+                ><span class="md-mono" style="color: #4f46e5">{{ s.num }}</span>{{ s.h }}</a
+              >
+            </sc-for>
+          </nav>
+          <div class="gt" style="max-width: 720px">
+            <sc-for list="{{ steps }}" as="s" hint-placeholder-count="7">
+              <div
+                id="{{ s.id }}"
+                data-reveal
+                style="
+                  opacity: 0;
+                  transform: translateY(18px);
+                  transition: all 0.6s;
+                  margin-bottom: 38px;
+                  scroll-margin-top: 96px;
+                "
+              >
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px">
+                  <span
+                    class="md-mono"
+                    style="
+                      width: 34px;
+                      height: 34px;
+                      border-radius: 9px;
+                      background: #4f46e5;
+                      color: #fff;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-size: 14px;
+                      font-weight: 500;
+                      flex-shrink: 0;
+                    "
+                    >{{ s.num }}</span
+                  >
+                  <h2 style="font-size: 24px; font-weight: 700; letter-spacing: -0.02em; margin: 0">
+                    {{ s.h }}
+                  </h2>
+                </div>
+                <sc-for list="{{ s.body }}" as="p" hint-placeholder-count="2">
+                  <p>{{ p }}</p>
+                </sc-for>
+                <sc-if value="{{ s.code }}" hint-placeholder-val="{{ false }}">
+                  <div
+                    style="
+                      border-radius: 12px;
+                      overflow: hidden;
+                      border: 1px solid #201d16;
+                      margin: 4px 0 8px;
+                    "
+                  >
+                    <pre
+                      class="md-mono"
+                      style="
+                        background: #15130d;
+                        color: #e8e6df;
+                        font-size: 13px;
+                        line-height: 1.7;
+                        padding: 16px;
+                        overflow-x: auto;
+                      "
+                    >
+{{ s.code }}</pre>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ s.tip }}" hint-placeholder-val="{{ false }}">
+                  <div
+                    style="
+                      display: flex;
+                      gap: 11px;
+                      background: #eef0ff;
+                      border: 1px solid #dfe1ff;
+                      border-radius: 12px;
+                      padding: 14px 16px;
+                      font-size: 14px;
+                      line-height: 1.55;
+                      color: #3a3833;
+                    "
+                  >
+                    <span style="color: #4f46e5; flex-shrink: 0; font-weight: 700">Tip</span>{{
+                    s.tip }}
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+            <div
+              data-reveal
+              data-card
+              style="
+                opacity: 0;
+                transform: translateY(14px);
+                transition: all 0.6s;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 16px;
+                background: #fff;
+                border: 1px solid #ecebe6;
+                border-radius: 16px;
+                padding: 22px 24px;
+                margin-top: 8px;
+              "
+            >
+              <div>
+                <div style="font-size: 12px; color: #a5a39a" class="md-mono">NEXT GUIDE</div>
+                <a
+                  href="Guides.dc.html"
+                  style="font-size: 17px; font-weight: 600; text-decoration: none; color: #1f1e1b"
+                  >Warm up a new domain or IP →</a
+                >
+              </div>
+              <a
+                href="#"
+                style="
+                  flex-shrink: 0;
+                  padding: 11px 18px;
+                  border-radius: 999px;
+                  background: #4f46e5;
+                  color: #fff;
+                  font-size: 14px;
+                  font-weight: 600;
+                  text-decoration: none;
+                  transition: background 0.2s;
+                "
+                style-hover="background:#4338ca"
+                >Try it in Maildrill</a
+              >
+            </div>
+          </div>
+        </section>
+
+        <dc-import name="MaildrillFooter" hint-size="100%,540px"></dc-import>
+      </div>
+    </x-dc>
+    <script type="text/x-dc" data-dc-script data-props="{}">
+      class Component extends DCLogic {
+        componentDidMount(){
+          import(window.__resources&&window.__resources.mdmotion||'./md-motion.js').then(m=>{ requestAnimationFrame(()=>{ m.initMotion({cursor:true,progress:false}); this.readBar(); this.scrollSpy(); }); });
+        }
+        scrollSpy(){
+          const links=[...document.querySelectorAll('.gt-toc a')];
+          if(!links.length) return;
+          const setActive=(id)=>{ links.forEach(a=>{ const on=a.getAttribute('href').slice(1)===id; a.style.color=on?'#1f1e1b':'#77756c'; a.style.fontWeight=on?'600':'400'; }); };
+          const io=new IntersectionObserver((es)=>{ es.forEach(e=>{ if(e.isIntersecting) setActive(e.target.id); }); },{rootMargin:'-38% 0px -55% 0px',threshold:0});
+          links.forEach(a=>{ const el=document.getElementById(a.getAttribute('href').slice(1)); if(el) io.observe(el); });
+        }
+        readBar(){
+          if(document.getElementById('md-readbar')) return;
+          const bar=document.createElement('div'); bar.id='md-readbar';
+          bar.style.cssText='position:fixed;top:0;left:0;height:3px;width:0;z-index:200;background:linear-gradient(90deg,#4f46e5,#8b5cf6,#ff441f);pointer-events:none;transition:width .08s linear';
+          document.body.appendChild(bar);
+          const upd=()=>{ const footer=document.querySelector('footer'); const end=(footer?footer.offsetTop:document.documentElement.scrollHeight)-window.innerHeight; const p=end>0?Math.min(Math.max(window.scrollY/end,0),1):0; bar.style.width=(p*100)+'%'; };
+          window.addEventListener('scroll',upd,{passive:true}); window.addEventListener('resize',upd); upd();
+        }
+        renderVals(){
+          const steps=[
+            {id:"why",h:"Understand what authentication proves",body:["Mailbox providers ask three questions about every message: is the sender allowed to send for this domain (SPF), was the message tampered with in transit (DKIM), and what should happen if those checks fail (DMARC). Passing all three is table stakes for the inbox.","You'll set each up as a DNS record on your sending domain. Budget 15 minutes plus DNS propagation time."]},
+            {id:"domain",h:"Choose a sending subdomain",body:["Send marketing mail from a subdomain like send.yourbrand.com — not your root domain. This isolates your marketing reputation from your corporate email, so one never drags down the other."],tip:"Add the domain in Maildrill under Settings → Domains before you touch DNS — we'll generate the exact records for you."},
+            {id:"spf",h:"Add your SPF record",body:["SPF lists the servers allowed to send for your domain. Add a TXT record that includes Maildrill's sending infrastructure:"],code:"send.yourbrand.com  TXT\nv=spf1 include:spf.maildrill.com ~all"},
+            {id:"dkim",h:"Add your DKIM keys",body:["DKIM signs each message with a private key so the recipient can verify it wasn't altered. Maildrill generates a keypair per domain — add the two CNAME records we show you:"],code:"md1._domainkey  CNAME  md1.dkim.maildrill.com\nmd2._domainkey  CNAME  md2.dkim.maildrill.com"},
+            {id:"dmarc",h:"Publish a DMARC policy",body:["DMARC tells providers what to do when SPF or DKIM fail, and where to send reports. Start in monitoring mode (p=none) so you can watch before enforcing:"],code:"_dmarc  TXT\nv=DMARC1; p=none; rua=mailto:dmarc@yourbrand.com",tip:"Once reports look clean for a couple of weeks, tighten to p=quarantine, then p=reject."},
+            {id:"verify",h:"Verify in Maildrill",body:["Back in Settings → Domains, hit Verify. Maildrill checks all three records and shows a green status per record. DNS can take up to a few hours to propagate — recheck if anything is still pending."]},
+            {id:"monitor",h:"Monitor and enforce",body:["Watch your DMARC reports and the reputation dashboard for the first few sends. When alignment holds steady, move your DMARC policy to enforcement. You're now authenticated — the biggest single lever for landing in the inbox."]},
+          ];
+          return { steps: steps.map((s,i)=>({...s,num:String(i+1).padStart(2,'0'),code:s.code||"",tip:s.tip||""})) };
+        }
+      }
+    </script>
+  </body>
 </html>

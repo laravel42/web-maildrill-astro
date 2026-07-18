@@ -11,12 +11,23 @@ import type { IconName } from '@/lib/icons';
  */
 
 /* ----------------------------- channel meta ----------------------------- */
-const CHANNEL: Record<ChannelType, { color: string; tint: string; icon: IconName; label: string }> = {
-  email: { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)', icon: 'mail', label: 'Email' },
-  sms: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)', icon: 'sms', label: 'SMS' },
-  whatsapp: { color: 'var(--ch-whatsapp)', tint: 'var(--ch-whatsapp-tint)', icon: 'whatsapp', label: 'WhatsApp' },
-  voice: { color: 'var(--ch-voice)', tint: 'var(--ch-voice-tint)', icon: 'voice', label: 'Voice' },
-};
+const CHANNEL: Record<ChannelType, { color: string; tint: string; icon: IconName; label: string }> =
+  {
+    email: { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)', icon: 'mail', label: 'Email' },
+    sms: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)', icon: 'sms', label: 'SMS' },
+    whatsapp: {
+      color: 'var(--ch-whatsapp)',
+      tint: 'var(--ch-whatsapp-tint)',
+      icon: 'whatsapp',
+      label: 'WhatsApp',
+    },
+    voice: {
+      color: 'var(--ch-voice)',
+      tint: 'var(--ch-voice-tint)',
+      icon: 'voice',
+      label: 'Voice',
+    },
+  };
 
 /* ------------------------------- tones ---------------------------------- */
 type Tone = 'success' | 'warning' | 'danger' | 'accent' | 'neutral' | 'violet';
@@ -31,8 +42,16 @@ const TONE: Record<Tone, { background: string; color: string }> = {
 
 /* ------------------------------ nav model ------------------------------- */
 type SectionKey =
-  | 'workspace' | 'usage' | 'branding' | 'domains' | 'smtp'
-  | 'billing' | 'api' | 'users' | 'integrations' | 'ai';
+  | 'workspace'
+  | 'usage'
+  | 'branding'
+  | 'domains'
+  | 'smtp'
+  | 'billing'
+  | 'api'
+  | 'users'
+  | 'integrations'
+  | 'ai';
 
 const NAV: { key: SectionKey; label: string; icon: IconName }[] = [
   { key: 'workspace', label: 'Workspace', icon: 'settings' },
@@ -54,7 +73,14 @@ type ToggleDef = { key: ToggleKey; title: string; desc: string };
 
 type FormPanel = { kind: 'form'; title: string; desc: string; fields: FieldDef[] };
 type UsagePanel = { kind: 'usage'; title: string; desc: string };
-type TablePanel = { kind: 'table'; title: string; desc: string; cta: string; rows?: TableRow[]; roster?: boolean };
+type TablePanel = {
+  kind: 'table';
+  title: string;
+  desc: string;
+  cta: string;
+  rows?: TableRow[];
+  roster?: boolean;
+};
 type TogglePanel = { kind: 'toggles'; title: string; desc: string; toggles: ToggleDef[] };
 type Panel = FormPanel | UsagePanel | TablePanel | TogglePanel;
 
@@ -72,7 +98,11 @@ const PANELS: Record<SectionKey, Panel> = {
       { key: 'ws_sender', label: 'Default sender', value: 'Maildrill Team <hello@maildrill.app>' },
     ],
   },
-  usage: { kind: 'usage', title: 'Usage', desc: 'Sends remaining this billing period, by channel.' },
+  usage: {
+    kind: 'usage',
+    title: 'Usage',
+    desc: 'Sends remaining this billing period, by channel.',
+  },
   branding: {
     kind: 'form',
     title: 'Branding',
@@ -90,9 +120,24 @@ const PANELS: Record<SectionKey, Panel> = {
     desc: 'Authenticate domains to improve deliverability.',
     cta: 'Add domain',
     rows: [
-      { title: 'maildrill.app', sub: 'SPF, DKIM & DMARC verified', badge: 'Verified', tone: 'success' },
-      { title: 'mail.maildrill.app', sub: 'Awaiting DNS propagation', badge: 'Pending', tone: 'warning' },
-      { title: 'promo.maildrill.app', sub: 'DKIM record missing', badge: 'Action needed', tone: 'danger' },
+      {
+        title: 'maildrill.app',
+        sub: 'SPF, DKIM & DMARC verified',
+        badge: 'Verified',
+        tone: 'success',
+      },
+      {
+        title: 'mail.maildrill.app',
+        sub: 'Awaiting DNS propagation',
+        badge: 'Pending',
+        tone: 'warning',
+      },
+      {
+        title: 'promo.maildrill.app',
+        sub: 'DKIM record missing',
+        badge: 'Action needed',
+        tone: 'danger',
+      },
     ],
   },
   smtp: {
@@ -123,9 +168,24 @@ const PANELS: Record<SectionKey, Panel> = {
     desc: 'Keys for programmatic access to Maildrill.',
     cta: 'Create key',
     rows: [
-      { title: 'Production', sub: 'md_live_••••7f2a · created Jan 2025', badge: 'Live', tone: 'success' },
-      { title: 'Development', sub: 'md_test_••••1c9d · created Feb 2025', badge: 'Test', tone: 'accent' },
-      { title: 'CI pipeline', sub: 'md_live_••••44be · last used 3d ago', badge: 'Live', tone: 'success' },
+      {
+        title: 'Production',
+        sub: 'md_live_••••7f2a · created Jan 2025',
+        badge: 'Live',
+        tone: 'success',
+      },
+      {
+        title: 'Development',
+        sub: 'md_test_••••1c9d · created Feb 2025',
+        badge: 'Test',
+        tone: 'accent',
+      },
+      {
+        title: 'CI pipeline',
+        sub: 'md_live_••••44be · last used 3d ago',
+        badge: 'Live',
+        tone: 'success',
+      },
     ],
   },
   users: {
@@ -152,9 +212,21 @@ const PANELS: Record<SectionKey, Panel> = {
     title: 'AI features',
     desc: 'Let Maildrill assist with copy and timing.',
     toggles: [
-      { key: 'summaries', title: 'Campaign summaries', desc: 'Auto-generate a plain-language recap after each send.' },
-      { key: 'subject', title: 'Subject line suggestions', desc: 'Get AI subject lines while composing.' },
-      { key: 'sendtime', title: 'Smart send-time', desc: 'Deliver to each subscriber at their most active hour.' },
+      {
+        key: 'summaries',
+        title: 'Campaign summaries',
+        desc: 'Auto-generate a plain-language recap after each send.',
+      },
+      {
+        key: 'subject',
+        title: 'Subject line suggestions',
+        desc: 'Get AI subject lines while composing.',
+      },
+      {
+        key: 'sendtime',
+        title: 'Smart send-time',
+        desc: 'Deliver to each subscriber at their most active hour.',
+      },
     ],
   },
 };
@@ -173,21 +245,72 @@ const totalCap = USAGE.reduce((s, u) => s + u.total, 0);
 /* ----------------------------- team roster ------------------------------ */
 type Role = 'Owner' | 'Editor' | 'Viewer';
 type Member = {
-  email: string; name: string; role: Role; title: string;
-  avBg: string; avColor: string; init: string;
-  joined: string; lastActive: string; campaigns: number;
+  email: string;
+  name: string;
+  role: Role;
+  title: string;
+  avBg: string;
+  avColor: string;
+  init: string;
+  joined: string;
+  lastActive: string;
+  campaigns: number;
 };
 const roleTone: Record<Role, Tone> = { Owner: 'violet', Editor: 'accent', Viewer: 'neutral' };
 
 const ROSTER: Member[] = [
-  { email: 'andrea@example.com', name: 'Andrea Rossi', role: 'Owner', title: 'Founder & CEO', avBg: '#ede9fe', avColor: '#5b21b6', init: 'AR', joined: 'Jan 3, 2025', lastActive: 'Active now', campaigns: 42 },
-  { email: 'james@example.com', name: 'James Carter', role: 'Editor', title: 'Marketing Lead', avBg: 'var(--accent-tint)', avColor: 'var(--accent)', init: 'JC', joined: 'Mar 15, 2025', lastActive: '2 hours ago', campaigns: 18 },
-  { email: 'mei@example.com', name: 'Mei Tanaka', role: 'Viewer', title: 'Data Analyst', avBg: '#f1f0eb', avColor: '#78756c', init: 'MT', joined: 'Jun 2, 2025', lastActive: 'Yesterday', campaigns: 0 },
+  {
+    email: 'andrea@example.com',
+    name: 'Andrea Rossi',
+    role: 'Owner',
+    title: 'Founder & CEO',
+    avBg: '#ede9fe',
+    avColor: '#5b21b6',
+    init: 'AR',
+    joined: 'Jan 3, 2025',
+    lastActive: 'Active now',
+    campaigns: 42,
+  },
+  {
+    email: 'james@example.com',
+    name: 'James Carter',
+    role: 'Editor',
+    title: 'Marketing Lead',
+    avBg: 'var(--accent-tint)',
+    avColor: 'var(--accent)',
+    init: 'JC',
+    joined: 'Mar 15, 2025',
+    lastActive: '2 hours ago',
+    campaigns: 18,
+  },
+  {
+    email: 'mei@example.com',
+    name: 'Mei Tanaka',
+    role: 'Viewer',
+    title: 'Data Analyst',
+    avBg: '#f1f0eb',
+    avColor: '#78756c',
+    init: 'MT',
+    joined: 'Jun 2, 2025',
+    lastActive: 'Yesterday',
+    campaigns: 0,
+  },
 ];
 
 const ROLE_PERMS: Record<Role, string[]> = {
-  Owner: ['Full account access', 'Manage billing & plan', 'Invite & remove users', 'Create & send campaigns', 'Manage integrations & domains'],
-  Editor: ['Create & send campaigns', 'Manage lists & subscribers', 'Create & edit templates', 'View reports & analytics'],
+  Owner: [
+    'Full account access',
+    'Manage billing & plan',
+    'Invite & remove users',
+    'Create & send campaigns',
+    'Manage integrations & domains',
+  ],
+  Editor: [
+    'Create & send campaigns',
+    'Manage lists & subscribers',
+    'Create & edit templates',
+    'View reports & analytics',
+  ],
   Viewer: ['View campaigns & reports', 'View lists & subscribers'],
 };
 
@@ -200,7 +323,11 @@ function Badge({ tone, children }: { tone: Tone; children: ReactNode }) {
   );
 }
 
-const DEFAULT_TOGGLES: Record<ToggleKey, boolean> = { summaries: true, subject: true, sendtime: false };
+const DEFAULT_TOGGLES: Record<ToggleKey, boolean> = {
+  summaries: true,
+  subject: true,
+  sendtime: false,
+};
 
 export default function AppSettings() {
   const [section, setSection] = useState<SectionKey>('workspace');
@@ -210,7 +337,7 @@ export default function AppSettings() {
   const [toast, setToast] = useState<string | null>(null);
 
   const panel = PANELS[section];
-  const member = openEmail ? ROSTER.find((m) => m.email === openEmail) ?? null : null;
+  const member = openEmail ? (ROSTER.find((m) => m.email === openEmail) ?? null) : null;
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -251,7 +378,9 @@ export default function AppSettings() {
         <div className="set__panelwrap">
           <section className="acrd set__panel" aria-labelledby="set-panel-title">
             <header className="set__panelhead">
-              <h2 id="set-panel-title" className="set__title">{panel.title}</h2>
+              <h2 id="set-panel-title" className="set__title">
+                {panel.title}
+              </h2>
               <p className="set__desc">{panel.desc}</p>
             </header>
 
@@ -268,10 +397,16 @@ export default function AppSettings() {
                   const id = `set-${f.key}`;
                   return (
                     <div key={f.key} className="set__field">
-                      <label htmlFor={id} className="set__label">{f.label}</label>
+                      <label htmlFor={id} className="set__label">
+                        {f.label}
+                      </label>
                       <div className="set__inputwrap">
                         {f.swatch && (
-                          <span className="set__swatch" style={{ background: swatchColor(val(f)) }} aria-hidden="true" />
+                          <span
+                            className="set__swatch"
+                            style={{ background: swatchColor(val(f)) }}
+                            aria-hidden="true"
+                          />
                         )}
                         <input
                           id={id}
@@ -285,7 +420,9 @@ export default function AppSettings() {
                   );
                 })}
                 <div className="set__formfoot">
-                  <button type="submit" className="pbtn">Save changes</button>
+                  <button type="submit" className="pbtn">
+                    Save changes
+                  </button>
                 </div>
               </form>
             )}
@@ -300,7 +437,11 @@ export default function AppSettings() {
                       {fmt(totalUsed)} <span className="set__summary-cap">/ {fmt(totalCap)}</span>
                     </div>
                   </div>
-                  <button type="button" className="pbtn" onClick={() => showToast('Redirecting to pricing…')}>
+                  <button
+                    type="button"
+                    className="pbtn"
+                    onClick={() => showToast('Redirecting to pricing…')}
+                  >
                     Upgrade plan
                   </button>
                 </div>
@@ -313,7 +454,10 @@ export default function AppSettings() {
                     return (
                       <div key={u.channel} className="set__usage-row">
                         <div className="set__usage-head">
-                          <span className="set__usage-ic" style={{ background: meta.tint, color: meta.color }}>
+                          <span
+                            className="set__usage-ic"
+                            style={{ background: meta.tint, color: meta.color }}
+                          >
                             <Icon name={meta.icon} size={14} />
                           </span>
                           <span className="set__usage-name">{meta.label}</span>
@@ -324,7 +468,11 @@ export default function AppSettings() {
                         <div className="abar set__usage-bar">
                           <div
                             className="abar__fill"
-                            style={{ width: `${pct}%`, background: meta.color, animation: 'grow .5s ease' }}
+                            style={{
+                              width: `${pct}%`,
+                              background: meta.color,
+                              animation: 'grow .5s ease',
+                            }}
                             role="progressbar"
                             aria-valuenow={pct}
                             aria-valuemin={0}
@@ -359,7 +507,11 @@ export default function AppSettings() {
                             }
                           }}
                         >
-                          <span className="set__avatar" style={{ background: m.avBg, color: m.avColor }} aria-hidden="true">
+                          <span
+                            className="set__avatar"
+                            style={{ background: m.avBg, color: m.avColor }}
+                            aria-hidden="true"
+                          >
                             {m.init}
                           </span>
                           <div className="set__trow-main">
@@ -588,7 +740,9 @@ function TeamDrawer({
   ];
 
   const remove = () => {
-    if (window.confirm(`Remove this member? "${member.name}" will lose access to this workspace.`)) {
+    if (
+      window.confirm(`Remove this member? "${member.name}" will lose access to this workspace.`)
+    ) {
       onToast(`${member.name} removed`);
       onClose();
     }
@@ -613,13 +767,19 @@ function TeamDrawer({
         <div className="adrawer__body">
           {/* identity */}
           <div className="setd__id">
-            <span className="setd__avatar" style={{ background: member.avBg, color: member.avColor }} aria-hidden="true">
+            <span
+              className="setd__avatar"
+              style={{ background: member.avBg, color: member.avColor }}
+              aria-hidden="true"
+            >
               {member.init}
             </span>
             <div>
               <div className="setd__name">{member.name}</div>
               <div className="setd__role-title">{member.title}</div>
-              <span className="set__badge setd__role" style={TONE[roleTone[member.role]]}>{member.role}</span>
+              <span className="set__badge setd__role" style={TONE[roleTone[member.role]]}>
+                {member.role}
+              </span>
             </div>
           </div>
 
@@ -661,7 +821,12 @@ function TeamDrawer({
         </div>
 
         <div className="adrawer__foot">
-          <button type="button" className="sbtn" style={{ flex: 1 }} onClick={() => onToast(`Message sent to ${member.name}`)}>
+          <button
+            type="button"
+            className="sbtn"
+            style={{ flex: 1 }}
+            onClick={() => onToast(`Message sent to ${member.name}`)}
+          >
             Message
           </button>
           {canRemove && (
@@ -669,7 +834,12 @@ function TeamDrawer({
               Remove
             </button>
           )}
-          <button type="button" className="pbtn" style={{ flex: 1 }} onClick={() => onToast(`Editing role for ${member.name}`)}>
+          <button
+            type="button"
+            className="pbtn"
+            style={{ flex: 1 }}
+            onClick={() => onToast(`Editing role for ${member.name}`)}
+          >
             Edit role
           </button>
         </div>

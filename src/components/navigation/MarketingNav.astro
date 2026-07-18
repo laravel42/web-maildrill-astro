@@ -43,7 +43,12 @@ const { active } = Astro.props;
                         <span class="nav__subtext">
                           <span class="nav__subtitle">
                             {child.label}
-                            <Icon name="arrow-up-right" size={13} stroke={2.2} class="nav__subarrow" />
+                            <Icon
+                              name="arrow-up-right"
+                              size={13}
+                              stroke={2.2}
+                              class="nav__subarrow"
+                            />
                           </span>
                           <span class="nav__subdesc">{child.description}</span>
                         </span>
@@ -62,14 +67,16 @@ const { active } = Astro.props;
                   {item.label}
                 </a>
               </li>
-            )
+            ),
           )
         }
       </ul>
 
       <div class="nav__right">
         <div class="nav__actions">
-          <a href={marketingCtas.secondary.href} class="nav__login">{marketingCtas.secondary.label}</a>
+          <a href={marketingCtas.secondary.href} class="nav__login"
+            >{marketingCtas.secondary.label}</a
+          >
           <a href={marketingCtas.primary.href} class="btn btn--primary btn--pill btn--sm nav__cta">
             {marketingCtas.primary.label}
             <span class="btn__icon btn__icon--arrow" aria-hidden="true">
@@ -77,7 +84,12 @@ const { active } = Astro.props;
             </span>
           </a>
         </div>
-        <MobileNav client:idle items={marketingNav} primaryCta={marketingCtas.primary} secondaryCta={marketingCtas.secondary} />
+        <MobileNav
+          client:idle
+          items={marketingNav}
+          primaryCta={marketingCtas.primary}
+          secondaryCta={marketingCtas.secondary}
+        />
       </div>
     </nav>
   </div>

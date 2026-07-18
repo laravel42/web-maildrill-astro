@@ -15,7 +15,15 @@ const seo = {
     'Maildrill is the fast, professional workspace for creating, delivering, and analyzing multichannel messaging campaigns across email, SMS, WhatsApp, and voice. 99.2% deliverability, one shared audience.',
 };
 
-type Row = { num: string; icon: IconName; title: string; href: string; desc: string; color: string; tint: string };
+type Row = {
+  num: string;
+  icon: IconName;
+  title: string;
+  href: string;
+  desc: string;
+  color: string;
+  tint: string;
+};
 const channelRows: Row[] = [
   {
     num: '01',
@@ -141,7 +149,11 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
           one fast workspace — one shared audience, deliverability you can trust.
         </p>
         <div class="cta-row" data-reveal style="--reveal-delay:220ms">
-          <a href={routes.auth.signup} class="btn btn--primary btn--pill btn--lg" data-magnetic="0.15">
+          <a
+            href={routes.auth.signup}
+            class="btn btn--primary btn--pill btn--lg"
+            data-magnetic="0.15"
+          >
             Start free trial
             <span class="btn__icon btn__icon--arrow" aria-hidden="true">
               <Icon name="arrow-up-right" size={15} stroke={2.2} />
@@ -173,7 +185,8 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
       <div class="frame__inner">
         <div class="mock">
           <div class="mock__chrome">
-            <span class="mock__dot"></span><span class="mock__dot"></span><span class="mock__dot"></span>
+            <span class="mock__dot"></span><span class="mock__dot"></span><span class="mock__dot"
+            ></span>
             <span class="mock__path mono">maildrill / campaigns</span>
           </div>
           <div class="mock__body">
@@ -198,19 +211,44 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
         </div>
         <div class="stack">
           <div class="stack__card stack__card--float">
-            <div class="stack__head"><span class="stack__ic stack__ic--sms"><Icon name="sms" size={13} /></span><span class="mono stack__label stack__label--sms">SMS</span></div>
+            <div class="stack__head">
+              <span class="stack__ic stack__ic--sms"><Icon name="sms" size={13} /></span><span
+                class="mono stack__label stack__label--sms">SMS</span
+              >
+            </div>
             <p class="stack__msg">Your order shipped 🎉 Track it → mdrl.co/t</p>
           </div>
           <div class="stack__card stack__card--float2">
-            <div class="stack__head"><span class="stack__ic stack__ic--wa"><Icon name="whatsapp" size={13} /></span><span class="mono stack__label stack__label--wa">WhatsApp</span></div>
+            <div class="stack__head">
+              <span class="stack__ic stack__ic--wa"><Icon name="whatsapp" size={13} /></span><span
+                class="mono stack__label stack__label--wa">WhatsApp</span
+              >
+            </div>
             <p class="stack__msg stack__msg--wa">Appointment confirmed for Tue 10:00 ✅</p>
           </div>
           <div class="stack__card stack__card--drift stack__deliver">
             <svg width="46" height="46" viewBox="0 0 48 48" aria-hidden="true">
-              <circle cx="24" cy="24" r="19" fill="none" stroke="var(--divider)" stroke-width="6"></circle>
-              <circle cx="24" cy="24" r="19" fill="none" stroke="var(--ch-whatsapp)" stroke-width="6" stroke-linecap="round" stroke-dasharray="119" stroke-dashoffset="4" transform="rotate(-90 24 24)"></circle>
+              <circle cx="24" cy="24" r="19" fill="none" stroke="var(--divider)" stroke-width="6"
+              ></circle>
+              <circle
+                cx="24"
+                cy="24"
+                r="19"
+                fill="none"
+                stroke="var(--ch-whatsapp)"
+                stroke-width="6"
+                stroke-linecap="round"
+                stroke-dasharray="119"
+                stroke-dashoffset="4"
+                transform="rotate(-90 24 24)"></circle>
             </svg>
-            <div><div class="mono tnum stack__deliver-num">99.2%</div><div class="stack__deliver-label">deliverability</div></div>
+            <div>
+              <div class="mono tnum stack__deliver-num">99.2%</div><div
+                class="stack__deliver-label"
+              >
+                deliverability
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -222,7 +260,9 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     <div class="channels__head">
       <div>
         <p class="eyebrow" data-reveal>Channels</p>
-        <h2 class="h-section" data-reveal style="--reveal-delay:60ms">Four channels. One audience.</h2>
+        <h2 class="h-section" data-reveal style="--reveal-delay:60ms">
+          Four channels. One audience.
+        </h2>
       </div>
       <a href={`${routes.product}#channels`} class="btn btn--underline">Explore solutions</a>
     </div>
@@ -258,7 +298,9 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
         {
           features.map((f, i) => (
             <div class="feat" data-reveal style={`--reveal-delay:${(i % 3) * 80}ms`}>
-              <span class="feat__ic"><Icon name={f.icon} size={22} /></span>
+              <span class="feat__ic">
+                <Icon name={f.icon} size={22} />
+              </span>
               <h3 class="feat__title">{f.title}</h3>
               <p class="feat__desc">{f.desc}</p>
             </div>
@@ -309,10 +351,14 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
       {
         quotes.map((q, i) => (
           <figure class="quote" data-card data-reveal style={`--reveal-delay:${i * 90}ms`}>
-            <div class="quote__stars" aria-label="Rated 5 out of 5">★★★★★</div>
+            <div class="quote__stars" aria-label="Rated 5 out of 5">
+              ★★★★★
+            </div>
             <blockquote>"{q.text}"</blockquote>
             <figcaption>
-              <span class="quote__avatar" style={`background:${q.tint};color:${q.color}`}>{q.initials}</span>
+              <span class="quote__avatar" style={`background:${q.tint};color:${q.color}`}>
+                {q.initials}
+              </span>
               <span>
                 <span class="quote__name">{q.name}</span>
                 <span class="quote__role">{q.role}</span>

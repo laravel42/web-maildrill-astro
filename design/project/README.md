@@ -15,16 +15,16 @@ Resend** — fast, calm, and minimal — not like an admin panel.
 
 ## Tech stack
 
-| Layer | Technology |
-|---|---|
-| Language | PHP 8.4 |
-| Framework | Laravel 13 (multi-tenant monolith) |
-| Runtime | Laravel Octane on RoadRunner |
-| Interactive UI | Livewire 4.3 (class-based, `app/Livewire`) |
-| Client behavior | Alpine 3 (UI-only) |
-| Styling | Tailwind 4 |
-| Build | Vite 8 + pnpm |
-| Tests | PHPUnit 13 |
+| Layer           | Technology                                 |
+| --------------- | ------------------------------------------ |
+| Language        | PHP 8.4                                    |
+| Framework       | Laravel 13 (multi-tenant monolith)         |
+| Runtime         | Laravel Octane on RoadRunner               |
+| Interactive UI  | Livewire 4.3 (class-based, `app/Livewire`) |
+| Client behavior | Alpine 3 (UI-only)                         |
+| Styling         | Tailwind 4                                 |
+| Build           | Vite 8 + pnpm                              |
+| Tests           | PHPUnit 13                                 |
 
 > Codebase is ground truth: if a doc disagrees with `composer.json` /
 > `package.json`, the manifest wins.

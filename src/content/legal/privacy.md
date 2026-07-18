@@ -1,9 +1,9 @@
 ---
-title: "Privacy Policy"
-description: "How Maildrill collects, uses, and protects personal data."
+title: 'Privacy Policy'
+description: 'How Maildrill collects, uses, and protects personal data.'
 updatedDate: 2026-06-01
-kicker: "Privacy"
-noun: "policy"
+kicker: 'Privacy'
+noun: 'policy'
 ---
 
 ## Overview

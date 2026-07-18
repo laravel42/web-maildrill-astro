@@ -39,11 +39,27 @@ export default function MobileNav({ items, primaryCta, secondaryCta }: Props) {
         onClick={() => setOpen((value) => !value)}
       >
         {open ? (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
         ) : (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
             <path d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         )}
@@ -57,21 +73,35 @@ export default function MobileNav({ items, primaryCta, secondaryCta }: Props) {
                 <div className="mnav__group" key={item.label}>
                   <p className="mnav__grouplabel">{item.label}</p>
                   {item.children.map((child) => (
-                    <a key={child.href} className="mnav__sublink" href={child.href} onClick={() => setOpen(false)}>
+                    <a
+                      key={child.href}
+                      className="mnav__sublink"
+                      href={child.href}
+                      onClick={() => setOpen(false)}
+                    >
                       {child.label}
                     </a>
                   ))}
                 </div>
               ) : (
-                <a key={item.label} className="mnav__link" href={item.href} onClick={() => setOpen(false)}>
+                <a
+                  key={item.label}
+                  className="mnav__link"
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                >
                   {item.label}
                 </a>
-              )
+              ),
             )}
             <a className="mnav__link" href={secondaryCta.href} onClick={() => setOpen(false)}>
               {secondaryCta.label}
             </a>
-            <a className="btn btn--primary btn--pill mnav__cta" href={primaryCta.href} onClick={() => setOpen(false)}>
+            <a
+              className="btn btn--primary btn--pill mnav__cta"
+              href={primaryCta.href}
+              onClick={() => setOpen(false)}
+            >
               {primaryCta.label}
             </a>
           </nav>

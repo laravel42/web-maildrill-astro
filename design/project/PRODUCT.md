@@ -29,13 +29,13 @@ permissions, quotas, and feature flags (e.g. AI, chat metadata).
 
 ## Who it's for
 
-| Persona | Goal | What they need from Maildrill |
-|---|---|---|
-| **Customer users** (operators) | Ship campaigns quickly and confidently | Templates, lists, campaigns, media library, live preview, reliable scheduling |
-| **Account-level users** | Collaborate within a workspace | Configurable, permission-scoped access |
-| **Marketing lead** | Understand what's working | Trend-first analytics, per-channel performance |
-| **List / audience owner** | Keep audiences clean and segmented | Subscribers CRM, saved segments, custom fields, import/export |
-| **Platform admins** | Create & configure apps | Branding (from name/email, domains), quotas, invitations, impersonation, template gallery |
+| Persona                        | Goal                                   | What they need from Maildrill                                                             |
+| ------------------------------ | -------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Customer users** (operators) | Ship campaigns quickly and confidently | Templates, lists, campaigns, media library, live preview, reliable scheduling             |
+| **Account-level users**        | Collaborate within a workspace         | Configurable, permission-scoped access                                                    |
+| **Marketing lead**             | Understand what's working              | Trend-first analytics, per-channel performance                                            |
+| **List / audience owner**      | Keep audiences clean and segmented     | Subscribers CRM, saved segments, custom fields, import/export                             |
+| **Platform admins**            | Create & configure apps                | Branding (from name/email, domains), quotas, invitations, impersonation, template gallery |
 
 Role-based access separates **platform administration** from standard **tenant
 operations**.
@@ -44,7 +44,7 @@ operations**.
 
 ## Core principles (product)
 
-1. **Workspaces over dashboards.** Every page helps the user *do work*, not just
+1. **Workspaces over dashboards.** Every page helps the user _do work_, not just
    read statistics. No page exists solely to show numbers.
 2. **One primary action.** Every screen answers "what should I do next?" with an
    obvious primary CTA.
@@ -82,6 +82,7 @@ The following reflects the shipping codebase plus the interactive prototype
 Livewire screens.
 
 ### Navigation & shell
+
 - Fixed 280px collapsible sidebar; workspace destinations: Dashboard,
   Campaigns, Templates, Lists, Subscribers, Media Library, Analytics, Settings.
 - 64px header with global search in the navbar and a dark-mode toggle.
@@ -89,6 +90,7 @@ Livewire screens.
 - Light / dark theme with persisted preference (`ThemeSwitcher`).
 
 ### Campaigns
+
 - Lifecycle from **draft → send**: batch sends, progress visibility, scheduled
   sends with suspend/cancel hooks, **clone**, and optional **public archive** of
   sent content (embeddable via `AllowEmbedding` middleware).
@@ -108,12 +110,14 @@ Livewire screens.
   Analytics live inside the campaign detail.
 
 ### Campaign wizard (prototype UX)
+
 - Five steps: **Sender → Audience → Content → Review → Schedule**.
 - Left stepper, center content, right live preview, sticky footer nav.
 - Channel-aware: Email / SMS / WhatsApp change the sender label, composer,
   character/segment counts, and the live phone preview.
 
 ### Templates & content
+
 - **Email templates**: create, edit, preview, clone, upload, gallery
   integration, and multi-channel conversion utilities. Authoring uses an
   **integrated visual, block-based email builder** (drag-and-drop, HTML export).
@@ -122,6 +126,7 @@ Livewire screens.
   (Preview / Use / Clone / Favorite), bulk actions, pagination, detail drawer.
 
 ### Lists, subscribers & segments
+
 - **Lists**: full CRUD + clone.
 - **Subscribers** (CRM): per-list search and table operations, bulk
   unsubscribe/delete, GDPR toggles, individual updates, **token-based public
@@ -134,6 +139,7 @@ Livewire screens.
   column sorting, pagination, bulk actions.
 
 ### Media library
+
 - Centralizes images and files for campaign and template work
   (`MediaLibrary`, `UploadMediaButton` Livewire components).
 - Prototype UX: grid / list / compact views, folder navigation, upload with
@@ -141,15 +147,18 @@ Livewire screens.
   filtering, preview drawer, bulk actions.
 
 ### AI-assisted features (per-app, when enabled)
+
 - Image generation and text transformation, subject to **rate limits** and
   access control (`config/ai.php`).
 
 ### Donations / fundraising (per-app, when enabled)
+
 - Donation campaign setup, preview, and dashboard management; public donation
   views and thank-you flows; API support for pledgers, payment verification,
   campaign status, and **Stripe** payment intents.
 
 ### Billing & packages
+
 - Pricing and checkout via **Laravel Cashier / Stripe** with post-purchase
   success handling; per-app **quota** and **send accounting** aligned to plans.
 - Settings UX: sectioned subnav (never one long scroll) — Workspace, Branding,
@@ -157,16 +166,19 @@ Livewire screens.
   editable fields and save-toast feedback; usage split by channel.
 
 ### API & integrations
+
 - **REST API (v1)** documented via Scramble (`/api/v1/docs`, `/api-docs`);
   authenticated access via **Laravel Sanctum**.
 - Public endpoints for subscribe-by-token, captcha (where required), and
   donation/pledger flows.
 
 ### Operations
+
 - **Queues + Redis** for campaign batch processing and finalization;
   **Horizon** for queue visibility; **Octane (RoadRunner)** for the web tier.
 
 ### Cross-cutting (prototype UX)
+
 - Modals: Import contacts, New list, Export, Add subscribers, Segment builder,
   Upload file, Confirm, Notifications, list contextual menu.
 - Toast notifications on every save / destructive confirm.
@@ -202,9 +214,9 @@ gives the user a clear next action.
 
 ## Relationship to other documents
 
-| Document | Purpose |
-|---|---|
-| `PRODUCT.md` | Product narrative, positioning, capability map (this file) |
-| `DESIGN.md` | Visual language, tokens, component conventions |
-| `README.md` | Repository overview, setup, frontend scripts |
-| `AGENTS.md` / `CLAUDE.md` | Engineering conventions for this repo |
+| Document                  | Purpose                                                    |
+| ------------------------- | ---------------------------------------------------------- |
+| `PRODUCT.md`              | Product narrative, positioning, capability map (this file) |
+| `DESIGN.md`               | Visual language, tokens, component conventions             |
+| `README.md`               | Repository overview, setup, frontend scripts               |
+| `AGENTS.md` / `CLAUDE.md` | Engineering conventions for this repo                      |

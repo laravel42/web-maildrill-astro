@@ -105,11 +105,7 @@ export function articleJsonLd(input: {
   });
 }
 
-export function serviceJsonLd(input: {
-  name: string;
-  description: string;
-  path: string;
-}): JsonLd {
+export function serviceJsonLd(input: { name: string; description: string; path: string }): JsonLd {
   return withContext({
     '@type': 'Service',
     name: input.name,
@@ -120,11 +116,7 @@ export function serviceJsonLd(input: {
   });
 }
 
-export function productJsonLd(input: {
-  name: string;
-  description: string;
-  path: string;
-}): JsonLd {
+export function productJsonLd(input: { name: string; description: string; path: string }): JsonLd {
   return withContext({
     '@type': 'Product',
     name: input.name,

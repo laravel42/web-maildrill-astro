@@ -68,6 +68,7 @@ For **every** action method:
    records.
 
 UI details:
+
 - `wire:key` on every loop iteration.
 - `data-loading` (or `wire:loading`) for loading states.
 - Use **Islands** (`wire:poll.visible`) for polling / expensive regions — do not

@@ -153,15 +153,11 @@ const jsonLd = [
               {
                 next ? (
                   <a href={`/guides/${next.id}`} class="ga-pager__title ga-pager__title--link">
-                    {next.data.title}
-                    {' '}
-                    <span aria-hidden="true">→</span>
+                    {next.data.title} <span aria-hidden="true">→</span>
                   </a>
                 ) : (
                   <a href={routes.guides} class="ga-pager__title ga-pager__title--link">
-                    Browse all guides
-                    {' '}
-                    <span aria-hidden="true">→</span>
+                    Browse all guides <span aria-hidden="true">→</span>
                   </a>
                 )
               }
@@ -453,7 +449,8 @@ const jsonLd = [
   if (bar) {
     const update = () => {
       const footer = document.querySelector('footer');
-      const end = (footer ? footer.offsetTop : document.documentElement.scrollHeight) - window.innerHeight;
+      const end =
+        (footer ? footer.offsetTop : document.documentElement.scrollHeight) - window.innerHeight;
       const p = end > 0 ? Math.min(Math.max(window.scrollY / end, 0), 1) : 0;
       bar.style.width = p * 100 + '%';
     };

@@ -1,9 +1,9 @@
 ---
-title: "Segments that stay honest"
-description: "Build match-all / match-any segments with live counts so targeting never surprises you at send time."
+title: 'Segments that stay honest'
+description: 'Build match-all / match-any segments with live counts so targeting never surprises you at send time.'
 pubDate: 2026-03-18
-author: "Sofia Alvarez"
-category: "Audience"
+author: 'Sofia Alvarez'
+category: 'Audience'
 readingMinutes: 7
 draft: false
 ---

@@ -1,9 +1,9 @@
 ---
-title: "Voice is here: automated calls join Maildrill"
-description: "Email, SMS, WhatsApp — and now voice. Why we added a fourth channel and what it unlocks for urgent outreach."
+title: 'Voice is here: automated calls join Maildrill'
+description: 'Email, SMS, WhatsApp — and now voice. Why we added a fourth channel and what it unlocks for urgent outreach.'
 pubDate: 2026-06-12
-author: "Ava Chen"
-tags: ["product", "voice", "announcement"]
+author: 'Ava Chen'
+tags: ['product', 'voice', 'announcement']
 featured: true
 draft: false
 ---

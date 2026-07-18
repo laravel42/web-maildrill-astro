@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
 const publicEnvSchema = z.object({
-  PUBLIC_SITE_URL: z.string().url().optional(),
+  PUBLIC_SITE_URL: z.url().optional(),
   PUBLIC_POSTHOG_KEY: z.string().optional(),
-  PUBLIC_POSTHOG_HOST: z.string().url().optional(),
+  PUBLIC_POSTHOG_HOST: z.url().optional(),
 });
 
 const serverEnvSchema = z.object({
   AUTH_SECRET: z.string().optional(),
-  API_BASE_URL: z.string().url().optional(),
+  API_BASE_URL: z.url().optional(),
 });
 
 export function getPublicEnv() {

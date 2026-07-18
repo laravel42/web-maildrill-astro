@@ -74,14 +74,21 @@ const jsonLd = [
         <div class="contact__channels">
           {
             channels.map((c, i) => (
-              <div class="contact__channel" data-card data-reveal style={`--reveal-delay:${i * 80}ms`}>
+              <div
+                class="contact__channel"
+                data-card
+                data-reveal
+                style={`--reveal-delay:${i * 80}ms`}
+              >
                 <span class="contact__ic" style={`background:${c.tint};color:${c.color}`}>
                   <Icon name={c.icon} size={20} />
                 </span>
                 <div>
                   <div class="contact__ctitle">{c.title}</div>
                   <p class="contact__cdesc">{c.desc}</p>
-                  <a href={c.href} class="contact__clink">{c.link}</a>
+                  <a href={c.href} class="contact__clink">
+                    {c.link}
+                  </a>
                 </div>
               </div>
             ))

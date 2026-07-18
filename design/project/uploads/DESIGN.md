@@ -132,11 +132,11 @@ No decorative colors.
 ## Border Radius
 
 | Component | Radius |
-|-----------|--------|
-| Buttons | 10px |
-| Cards | 16px |
-| Dialogs | 20px |
-| Images | 12px |
+| --------- | ------ |
+| Buttons   | 10px   |
+| Cards     | 16px   |
+| Dialogs   | 20px   |
+| Images    | 12px   |
 
 ---
 

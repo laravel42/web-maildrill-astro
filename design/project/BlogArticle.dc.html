@@ -1,127 +1,526 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="./support.js"></script>
-<meta name="ext-resource-dependency" content="./md-motion.js" data-resource-id="mdmotion">
-<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" data-bg-color="#f6f5f2"><rect width="1200" height="630" fill="#f6f5f2"/><g transform="translate(566,232) scale(3.4)"><path fill="#ff441f" d="M13.39,0c-2.86,2.06-5.61,4-8.47,6.06C3.89,4,2.86,2.06,1.95,0h11.44Z"/><path fill="#ff441f" d="M19.57,17.49c-1.49,3.09-3.09,6.17-4.58,9.26-.69-1.49-1.49-2.97-2.17-4.34l6.75-4.92Z"/><path fill="#ff441f" d="M26.32,0c-6.07,4.23-12.02,8.58-18.08,12.81-.8-1.6-1.6-3.2-2.4-4.92,3.66-2.63,7.44-5.26,11.1-7.89h9.38Z"/><path fill="#ff441f" d="M27.12,2.17c-1.83,3.66-3.66,7.32-5.49,10.98-3.2,2.29-6.52,4.57-9.73,6.86l-2.63-5.15c5.95-4.23,11.9-8.46,17.85-12.69Z"/></g><text x="600" y="440" font-family="Geist,system-ui,sans-serif" font-size="56" font-weight="800" fill="#1f1e1b" text-anchor="middle" letter-spacing="-3">Maildrill</text></svg></template>
-</head>
-<body>
-<x-dc>
-<helmet>
-<title>Voice is here: automated calls join Maildrill — Maildrill Blog</title>
-<meta name="description" content="Email, SMS, WhatsApp — and now voice. Why we added a fourth channel to Maildrill, what it unlocks for lifecycle programs, and how it shares one audience with everything else.">
-<meta name="keywords" content="Maildrill voice, automated calls, multichannel messaging, product announcement">
-<meta property="og:title" content="Voice is here: automated calls join Maildrill">
-<meta property="og:description" content="Why we added a fourth channel, and what it unlocks.">
-<meta property="og:type" content="article">
-<meta name="twitter:card" content="summary_large_image">
-<link rel="canonical" href="https://maildrill.com/blog/voice-is-here">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"Voice is here: automated calls join Maildrill","author":{"@type":"Person","name":"Tom Whitfield"},"datePublished":"2026-07-08","publisher":{"@type":"Organization","name":"Maildrill"}}</script>
-<style>
-@keyframes md-blob{0%,100%{border-radius:60% 40% 55% 45%/50% 55% 45% 50%}50%{border-radius:45% 55% 40% 60%/55% 45% 60% 40%}}
-body{margin:0}
-*{cursor:none}
-@media (pointer:coarse){*{cursor:auto}}
-a{color:#4f46e5}a:hover{color:#4338ca}
-.md-mono{font-family:'Geist Mono',ui-monospace,monospace}
-.art p{font-size:18px;line-height:1.75;color:#3a3833;margin:0 0 22px}
-.art h2{font-size:27px;line-height:1.2;letter-spacing:-.02em;font-weight:700;color:#1f1e1b;margin:44px 0 16px}
-.art ul{margin:0 0 22px;padding-left:22px}
-.art li{font-size:18px;line-height:1.7;color:#3a3833;margin:0 0 8px}
-.art strong{color:#1f1e1b;font-weight:600}
-</style>
-</helmet>
-<div style="font-family:Geist,system-ui,sans-serif;background:#f6f5f2;color:#1f1e1b;overflow-x:hidden">
-  <dc-import name="MaildrillNav" active="blog" hint-size="100%,72px"></dc-import>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+    <meta name="ext-resource-dependency" content="./md-motion.js" data-resource-id="mdmotion" />
+    <template id="__bundler_thumbnail"
+      ><svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="1200"
+        height="630"
+        viewBox="0 0 1200 630"
+        data-bg-color="#f6f5f2"
+      >
+        <rect width="1200" height="630" fill="#f6f5f2" />
+        <g transform="translate(566,232) scale(3.4)">
+          <path
+            fill="#ff441f"
+            d="M13.39,0c-2.86,2.06-5.61,4-8.47,6.06C3.89,4,2.86,2.06,1.95,0h11.44Z"
+          />
+          <path
+            fill="#ff441f"
+            d="M19.57,17.49c-1.49,3.09-3.09,6.17-4.58,9.26-.69-1.49-1.49-2.97-2.17-4.34l6.75-4.92Z"
+          />
+          <path
+            fill="#ff441f"
+            d="M26.32,0c-6.07,4.23-12.02,8.58-18.08,12.81-.8-1.6-1.6-3.2-2.4-4.92,3.66-2.63,7.44-5.26,11.1-7.89h9.38Z"
+          />
+          <path
+            fill="#ff441f"
+            d="M27.12,2.17c-1.83,3.66-3.66,7.32-5.49,10.98-3.2,2.29-6.52,4.57-9.73,6.86l-2.63-5.15c5.95-4.23,11.9-8.46,17.85-12.69Z"
+          />
+        </g>
+        <text
+          x="600"
+          y="440"
+          font-family="Geist,system-ui,sans-serif"
+          font-size="56"
+          font-weight="800"
+          fill="#1f1e1b"
+          text-anchor="middle"
+          letter-spacing="-3"
+        >
+          Maildrill
+        </text>
+      </svg></template
+    >
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <title>Voice is here: automated calls join Maildrill — Maildrill Blog</title>
+        <meta
+          name="description"
+          content="Email, SMS, WhatsApp — and now voice. Why we added a fourth channel to Maildrill, what it unlocks for lifecycle programs, and how it shares one audience with everything else."
+        />
+        <meta
+          name="keywords"
+          content="Maildrill voice, automated calls, multichannel messaging, product announcement"
+        />
+        <meta property="og:title" content="Voice is here: automated calls join Maildrill" />
+        <meta
+          property="og:description"
+          content="Why we added a fourth channel, and what it unlocks."
+        />
+        <meta property="og:type" content="article" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <link rel="canonical" href="https://maildrill.com/blog/voice-is-here" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Geist+Mono:wght@400;500&display=swap"
+          rel="stylesheet"
+        />
+        <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "BlogPosting",
+            "headline": "Voice is here: automated calls join Maildrill",
+            "author": { "@type": "Person", "name": "Tom Whitfield" },
+            "datePublished": "2026-07-08",
+            "publisher": { "@type": "Organization", "name": "Maildrill" }
+          }
+        </script>
+        <style>
+          @keyframes md-blob {
+            0%,
+            100% {
+              border-radius: 60% 40% 55% 45%/50% 55% 45% 50%;
+            }
+            50% {
+              border-radius: 45% 55% 40% 60%/55% 45% 60% 40%;
+            }
+          }
+          body {
+            margin: 0;
+          }
+          * {
+            cursor: none;
+          }
+          @media (pointer: coarse) {
+            * {
+              cursor: auto;
+            }
+          }
+          a {
+            color: #4f46e5;
+          }
+          a:hover {
+            color: #4338ca;
+          }
+          .md-mono {
+            font-family: 'Geist Mono', ui-monospace, monospace;
+          }
+          .art p {
+            font-size: 18px;
+            line-height: 1.75;
+            color: #3a3833;
+            margin: 0 0 22px;
+          }
+          .art h2 {
+            font-size: 27px;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            font-weight: 700;
+            color: #1f1e1b;
+            margin: 44px 0 16px;
+          }
+          .art ul {
+            margin: 0 0 22px;
+            padding-left: 22px;
+          }
+          .art li {
+            font-size: 18px;
+            line-height: 1.7;
+            color: #3a3833;
+            margin: 0 0 8px;
+          }
+          .art strong {
+            color: #1f1e1b;
+            font-weight: 600;
+          }
+        </style>
+      </helmet>
+      <div
+        style="
+          font-family: Geist, system-ui, sans-serif;
+          background: #f6f5f2;
+          color: #1f1e1b;
+          overflow-x: hidden;
+        "
+      >
+        <dc-import name="MaildrillNav" active="blog" hint-size="100%,72px"></dc-import>
 
-  <article style="max-width:760px;margin:0 auto;padding:56px 32px 40px">
-    <a href="Blog.dc.html" class="md-mono" data-reveal style="opacity:0;transform:translateY(10px);transition:all .5s;display:inline-flex;align-items:center;gap:8px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#77756c;text-decoration:none">← Blog</a>
-    <div data-reveal data-delay="60" style="opacity:0;transform:translateY(14px);transition:all .6s;margin-top:22px"><span style="display:inline-block;padding:4px 12px;border-radius:999px;background:#fff0eb;color:#ff441f;font-size:12px;font-weight:600">Announcement</span></div>
-    <h1 data-split style="opacity:0;font-size:clamp(36px,5vw,64px);line-height:1.02;letter-spacing:-.035em;font-weight:800;margin:16px 0 0">Voice is here: automated calls join Maildrill</h1>
-    <div data-reveal data-delay="140" style="opacity:0;transform:translateY(14px);transition:all .6s;display:flex;align-items:center;gap:12px;margin-top:24px;font-size:14px;color:#57554e">
-      <span style="width:40px;height:40px;border-radius:50%;background:#eef0ff;color:#4f46e5;display:flex;align-items:center;justify-content:center;font-weight:600">TW</span>
-      <span><strong style="color:#1f1e1b;font-weight:600">Tom Whitfield</strong> · Co-founder & CTO</span>
-      <span class="md-mono" style="margin-left:auto;color:#a5a39a">Jul 8, 2026 · 4 min</span>
-    </div>
-  </article>
+        <article style="max-width: 760px; margin: 0 auto; padding: 56px 32px 40px">
+          <a
+            href="Blog.dc.html"
+            class="md-mono"
+            data-reveal
+            style="
+              opacity: 0;
+              transform: translateY(10px);
+              transition: all 0.5s;
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+              font-size: 13px;
+              letter-spacing: 0.1em;
+              text-transform: uppercase;
+              color: #77756c;
+              text-decoration: none;
+            "
+            >← Blog</a
+          >
+          <div
+            data-reveal
+            data-delay="60"
+            style="opacity: 0; transform: translateY(14px); transition: all 0.6s; margin-top: 22px"
+          >
+            <span
+              style="
+                display: inline-block;
+                padding: 4px 12px;
+                border-radius: 999px;
+                background: #fff0eb;
+                color: #ff441f;
+                font-size: 12px;
+                font-weight: 600;
+              "
+              >Announcement</span
+            >
+          </div>
+          <h1
+            data-split
+            style="
+              opacity: 0;
+              font-size: clamp(36px, 5vw, 64px);
+              line-height: 1.02;
+              letter-spacing: -0.035em;
+              font-weight: 800;
+              margin: 16px 0 0;
+            "
+          >
+            Voice is here: automated calls join Maildrill
+          </h1>
+          <div
+            data-reveal
+            data-delay="140"
+            style="
+              opacity: 0;
+              transform: translateY(14px);
+              transition: all 0.6s;
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              margin-top: 24px;
+              font-size: 14px;
+              color: #57554e;
+            "
+          >
+            <span
+              style="
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: #eef0ff;
+                color: #4f46e5;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 600;
+              "
+              >TW</span
+            >
+            <span
+              ><strong style="color: #1f1e1b; font-weight: 600">Tom Whitfield</strong> · Co-founder
+              & CTO</span
+            >
+            <span class="md-mono" style="margin-left: auto; color: #a5a39a"
+              >Jul 8, 2026 · 4 min</span
+            >
+          </div>
+        </article>
 
-  <div data-reveal style="opacity:0;transition:all .7s;max-width:1000px;margin:0 auto;padding:0 32px">
-    <div style="position:relative;border-radius:20px;overflow:hidden;height:380px;background:linear-gradient(135deg,#201d16,#15130d)">
-      <div style="position:absolute;top:-60px;right:-30px;width:360px;height:360px;background:radial-gradient(circle,rgba(217,119,6,.4),transparent 65%);animation:md-blob 13s ease-in-out infinite"></div>
-      <div style="position:absolute;bottom:-70px;left:6%;width:320px;height:320px;background:radial-gradient(circle,rgba(99,91,245,.3),transparent 65%);animation:md-blob 15s ease-in-out infinite"></div>
-      <div class="md-mono" style="position:absolute;bottom:26px;left:32px;font-size:120px;font-weight:500;color:rgba(245,243,236,.1);line-height:.8">04</div>
-    </div>
-  </div>
+        <div
+          data-reveal
+          style="
+            opacity: 0;
+            transition: all 0.7s;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 32px;
+          "
+        >
+          <div
+            style="
+              position: relative;
+              border-radius: 20px;
+              overflow: hidden;
+              height: 380px;
+              background: linear-gradient(135deg, #201d16, #15130d);
+            "
+          >
+            <div
+              style="
+                position: absolute;
+                top: -60px;
+                right: -30px;
+                width: 360px;
+                height: 360px;
+                background: radial-gradient(circle, rgba(217, 119, 6, 0.4), transparent 65%);
+                animation: md-blob 13s ease-in-out infinite;
+              "
+            ></div>
+            <div
+              style="
+                position: absolute;
+                bottom: -70px;
+                left: 6%;
+                width: 320px;
+                height: 320px;
+                background: radial-gradient(circle, rgba(99, 91, 245, 0.3), transparent 65%);
+                animation: md-blob 15s ease-in-out infinite;
+              "
+            ></div>
+            <div
+              class="md-mono"
+              style="
+                position: absolute;
+                bottom: 26px;
+                left: 32px;
+                font-size: 120px;
+                font-weight: 500;
+                color: rgba(245, 243, 236, 0.1);
+                line-height: 0.8;
+              "
+            >
+              04
+            </div>
+          </div>
+        </div>
 
-  <div class="art" style="max-width:760px;margin:0 auto;padding:44px 32px 24px">
-    <p data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s;font-size:21px;line-height:1.6;color:#1f1e1b"><strong>Today we're adding voice to Maildrill.</strong> Email, SMS, and WhatsApp now share the workspace with automated calls and IVR — all driven by the same audience, segments, and analytics you already use.</p>
-    <p data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s">For most of our history we said no to voice. It felt like a different category — different vendors, different compliance, a different mental model. But the requests never stopped, and they all rhymed: the message that finally lands isn't always a message at all. It's a call.</p>
-    <h2 data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s">Why a fourth channel</h2>
-    <p data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s">Some moments demand a phone call. An appointment nobody confirmed. A payment that's about to lapse. A delivery that needs a signature. For these, an unread email or a muted text isn't good enough — and a human calling one by one doesn't scale.</p>
-    <ul data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s">
-      <li><strong>Reach the unreachable.</strong> Voice cuts through when other channels are ignored.</li>
-      <li><strong>Interactive by design.</strong> IVR lets people confirm, reschedule, or route themselves with a keypress.</li>
-      <li><strong>Naturally a fallback.</strong> No answer? Fall back to SMS or WhatsApp automatically.</li>
-    </ul>
-    <h2 data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s">One audience, still</h2>
-    <p data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s">The point of Maildrill was never "more channels." It's <strong>one audience across every channel</strong>. Voice plugs into the same contacts and live segments as your email and messaging — so a journey can start with an email, follow up over SMS, and place a call when it matters, measured as a single funnel.</p>
-    <blockquote data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s;margin:36px 0;padding:24px 28px;border-left:3px solid #d97706;background:#fffbeb;border-radius:0 14px 14px 0;font-size:20px;line-height:1.5;font-weight:500;color:#1f1e1b">"The message that finally lands isn't always a message. Sometimes it's a call."</blockquote>
-    <h2 data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s">Available today</h2>
-    <p data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s">Voice is live on every account now — text-to-speech in 30+ voices, IVR flows, call tracking, and channel fallbacks. Setup takes a few minutes. Read the <a href="ChannelVoice.dc.html" style="font-weight:600">Voice overview</a> or jump straight into your workspace.</p>
-  </div>
+        <div class="art" style="max-width: 760px; margin: 0 auto; padding: 44px 32px 24px">
+          <p
+            data-reveal
+            style="
+              opacity: 0;
+              transform: translateY(14px);
+              transition: all 0.6s;
+              font-size: 21px;
+              line-height: 1.6;
+              color: #1f1e1b;
+            "
+          >
+            <strong>Today we're adding voice to Maildrill.</strong> Email, SMS, and WhatsApp now
+            share the workspace with automated calls and IVR — all driven by the same audience,
+            segments, and analytics you already use.
+          </p>
+          <p data-reveal style="opacity: 0; transform: translateY(14px); transition: all 0.6s">
+            For most of our history we said no to voice. It felt like a different category —
+            different vendors, different compliance, a different mental model. But the requests
+            never stopped, and they all rhymed: the message that finally lands isn't always a
+            message at all. It's a call.
+          </p>
+          <h2 data-reveal style="opacity: 0; transform: translateY(14px); transition: all 0.6s">
+            Why a fourth channel
+          </h2>
+          <p data-reveal style="opacity: 0; transform: translateY(14px); transition: all 0.6s">
+            Some moments demand a phone call. An appointment nobody confirmed. A payment that's
+            about to lapse. A delivery that needs a signature. For these, an unread email or a muted
+            text isn't good enough — and a human calling one by one doesn't scale.
+          </p>
+          <ul data-reveal style="opacity: 0; transform: translateY(14px); transition: all 0.6s">
+            <li>
+              <strong>Reach the unreachable.</strong> Voice cuts through when other channels are
+              ignored.
+            </li>
+            <li>
+              <strong>Interactive by design.</strong> IVR lets people confirm, reschedule, or route
+              themselves with a keypress.
+            </li>
+            <li>
+              <strong>Naturally a fallback.</strong> No answer? Fall back to SMS or WhatsApp
+              automatically.
+            </li>
+          </ul>
+          <h2 data-reveal style="opacity: 0; transform: translateY(14px); transition: all 0.6s">
+            One audience, still
+          </h2>
+          <p data-reveal style="opacity: 0; transform: translateY(14px); transition: all 0.6s">
+            The point of Maildrill was never "more channels." It's
+            <strong>one audience across every channel</strong>. Voice plugs into the same contacts
+            and live segments as your email and messaging — so a journey can start with an email,
+            follow up over SMS, and place a call when it matters, measured as a single funnel.
+          </p>
+          <blockquote
+            data-reveal
+            style="
+              opacity: 0;
+              transform: translateY(14px);
+              transition: all 0.6s;
+              margin: 36px 0;
+              padding: 24px 28px;
+              border-left: 3px solid #d97706;
+              background: #fffbeb;
+              border-radius: 0 14px 14px 0;
+              font-size: 20px;
+              line-height: 1.5;
+              font-weight: 500;
+              color: #1f1e1b;
+            "
+          >
+            "The message that finally lands isn't always a message. Sometimes it's a call."
+          </blockquote>
+          <h2 data-reveal style="opacity: 0; transform: translateY(14px); transition: all 0.6s">
+            Available today
+          </h2>
+          <p data-reveal style="opacity: 0; transform: translateY(14px); transition: all 0.6s">
+            Voice is live on every account now — text-to-speech in 30+ voices, IVR flows, call
+            tracking, and channel fallbacks. Setup takes a few minutes. Read the
+            <a href="ChannelVoice.dc.html" style="font-weight: 600">Voice overview</a> or jump
+            straight into your workspace.
+          </p>
+        </div>
 
-  <!-- AUTHOR -->
-  <div style="max-width:760px;margin:0 auto;padding:24px 32px 8px">
-    <div data-card data-reveal style="opacity:0;transform:translateY(16px);transition:all .6s;display:flex;gap:16px;align-items:center;background:#fff;border:1px solid #ecebe6;border-radius:16px;padding:24px">
-      <span style="width:52px;height:52px;border-radius:50%;background:#eef0ff;color:#4f46e5;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:17px;flex-shrink:0">TW</span>
-      <div><div style="font-size:16px;font-weight:600">Tom Whitfield</div><div style="font-size:14px;color:#57554e;line-height:1.5">Co-founder & CTO at Maildrill. Building the fastest, calmest workspace for multichannel messaging.</div></div>
-    </div>
-  </div>
+        <!-- AUTHOR -->
+        <div style="max-width: 760px; margin: 0 auto; padding: 24px 32px 8px">
+          <div
+            data-card
+            data-reveal
+            style="
+              opacity: 0;
+              transform: translateY(16px);
+              transition: all 0.6s;
+              display: flex;
+              gap: 16px;
+              align-items: center;
+              background: #fff;
+              border: 1px solid #ecebe6;
+              border-radius: 16px;
+              padding: 24px;
+            "
+          >
+            <span
+              style="
+                width: 52px;
+                height: 52px;
+                border-radius: 50%;
+                background: #eef0ff;
+                color: #4f46e5;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 600;
+                font-size: 17px;
+                flex-shrink: 0;
+              "
+              >TW</span
+            >
+            <div>
+              <div style="font-size: 16px; font-weight: 600">Tom Whitfield</div>
+              <div style="font-size: 14px; color: #57554e; line-height: 1.5">
+                Co-founder & CTO at Maildrill. Building the fastest, calmest workspace for
+                multichannel messaging.
+              </div>
+            </div>
+          </div>
+        </div>
 
-  <!-- RELATED -->
-  <section style="max-width:1100px;margin:0 auto;padding:56px 32px 40px">
-    <div class="md-mono" data-reveal style="opacity:0;transform:translateY(14px);transition:all .6s;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#77756c">/ More from the blog</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:24px">
-      <sc-for list="{{ related }}" as="r" hint-placeholder-count="3">
-        <a href="Blog.dc.html" data-card data-reveal data-delay="{{ r.delay }}" style="opacity:0;transform:translateY(24px);transition:all .7s cubic-bezier(.2,.7,.2,1);display:flex;flex-direction:column;background:#fff;border:1px solid #ecebe6;border-radius:16px;overflow:hidden;text-decoration:none;color:inherit">
-          <div style="height:120px;background:{{ r.grad }}"></div>
-          <div style="padding:20px"><span style="font-size:12px;font-weight:600;color:{{ r.tagColor }}">{{ r.tag }}</span><h3 style="font-size:17px;line-height:1.3;letter-spacing:-.01em;font-weight:600;margin:8px 0 0">{{ r.title }}</h3></div>
-        </a>
-      </sc-for>
-    </div>
-  </section>
+        <!-- RELATED -->
+        <section style="max-width: 1100px; margin: 0 auto; padding: 56px 32px 40px">
+          <div
+            class="md-mono"
+            data-reveal
+            style="
+              opacity: 0;
+              transform: translateY(14px);
+              transition: all 0.6s;
+              font-size: 13px;
+              letter-spacing: 0.14em;
+              text-transform: uppercase;
+              color: #77756c;
+            "
+          >
+            / More from the blog
+          </div>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 22px;
+              margin-top: 24px;
+            "
+          >
+            <sc-for list="{{ related }}" as="r" hint-placeholder-count="3">
+              <a
+                href="Blog.dc.html"
+                data-card
+                data-reveal
+                data-delay="{{ r.delay }}"
+                style="
+                  opacity: 0;
+                  transform: translateY(24px);
+                  transition: all 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+                  display: flex;
+                  flex-direction: column;
+                  background: #fff;
+                  border: 1px solid #ecebe6;
+                  border-radius: 16px;
+                  overflow: hidden;
+                  text-decoration: none;
+                  color: inherit;
+                "
+              >
+                <div style="height:120px;background:{{ r.grad }}"></div>
+                <div style="padding: 20px">
+                  <span style="font-size:12px;font-weight:600;color:{{ r.tagColor }}"
+                    >{{ r.tag }}</span
+                  >
+                  <h3
+                    style="
+                      font-size: 17px;
+                      line-height: 1.3;
+                      letter-spacing: -0.01em;
+                      font-weight: 600;
+                      margin: 8px 0 0;
+                    "
+                  >
+                    {{ r.title }}
+                  </h3>
+                </div>
+              </a>
+            </sc-for>
+          </div>
+        </section>
 
-  <dc-import name="MaildrillFooter" hint-size="100%,540px"></dc-import>
-</div>
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props="{}">
-class Component extends DCLogic {
-  componentDidMount(){
-    import(window.__resources&&window.__resources.mdmotion||'./md-motion.js').then(m=>{ requestAnimationFrame(()=>{ m.initMotion({cursor:true,progress:false}); this.readBar(); }); });
-  }
-  readBar(){
-    if(document.getElementById('md-readbar')) return;
-    const bar=document.createElement('div'); bar.id='md-readbar';
-    bar.style.cssText='position:fixed;top:0;left:0;height:3px;width:0;z-index:200;background:linear-gradient(90deg,#4f46e5,#8b5cf6,#ff441f);pointer-events:none;transition:width .08s linear';
-    document.body.appendChild(bar);
-    const upd=()=>{ const footer=document.querySelector('footer'); const end=(footer?footer.offsetTop:document.documentElement.scrollHeight)-window.innerHeight; const p=end>0?Math.min(Math.max(window.scrollY/end,0),1):0; bar.style.width=(p*100)+'%'; };
-    window.addEventListener('scroll',upd,{passive:true}); window.addEventListener('resize',upd); upd();
-  }
-  renderVals(){
-    return {
-      related:[
-        {tag:"Product",tagColor:"#4f46e5",title:"What we shipped in Q2: AI copilot & funnels",grad:"linear-gradient(135deg,#eef0ff,#f5f5ff)",delay:0},
-        {tag:"Customers",tagColor:"#16a34a",title:"How Orbit cut campaign setup time by 40%",grad:"linear-gradient(135deg,#dcfce7,#f0fdf4)",delay:80},
-        {tag:"Perspective",tagColor:"#0891b2",title:"The state of multichannel messaging in 2026",grad:"linear-gradient(135deg,#ecfeff,#f0fdff)",delay:160},
-      ],
-    };
-  }
-}
-</script>
-</body>
+        <dc-import name="MaildrillFooter" hint-size="100%,540px"></dc-import>
+      </div>
+    </x-dc>
+    <script type="text/x-dc" data-dc-script data-props="{}">
+      class Component extends DCLogic {
+        componentDidMount(){
+          import(window.__resources&&window.__resources.mdmotion||'./md-motion.js').then(m=>{ requestAnimationFrame(()=>{ m.initMotion({cursor:true,progress:false}); this.readBar(); }); });
+        }
+        readBar(){
+          if(document.getElementById('md-readbar')) return;
+          const bar=document.createElement('div'); bar.id='md-readbar';
+          bar.style.cssText='position:fixed;top:0;left:0;height:3px;width:0;z-index:200;background:linear-gradient(90deg,#4f46e5,#8b5cf6,#ff441f);pointer-events:none;transition:width .08s linear';
+          document.body.appendChild(bar);
+          const upd=()=>{ const footer=document.querySelector('footer'); const end=(footer?footer.offsetTop:document.documentElement.scrollHeight)-window.innerHeight; const p=end>0?Math.min(Math.max(window.scrollY/end,0),1):0; bar.style.width=(p*100)+'%'; };
+          window.addEventListener('scroll',upd,{passive:true}); window.addEventListener('resize',upd); upd();
+        }
+        renderVals(){
+          return {
+            related:[
+              {tag:"Product",tagColor:"#4f46e5",title:"What we shipped in Q2: AI copilot & funnels",grad:"linear-gradient(135deg,#eef0ff,#f5f5ff)",delay:0},
+              {tag:"Customers",tagColor:"#16a34a",title:"How Orbit cut campaign setup time by 40%",grad:"linear-gradient(135deg,#dcfce7,#f0fdf4)",delay:80},
+              {tag:"Perspective",tagColor:"#0891b2",title:"The state of multichannel messaging in 2026",grad:"linear-gradient(135deg,#ecfeff,#f0fdff)",delay:160},
+            ],
+          };
+        }
+      }
+    </script>
+  </body>
 </html>

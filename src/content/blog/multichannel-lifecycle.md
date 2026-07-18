@@ -1,9 +1,9 @@
 ---
-title: "Designing a multichannel lifecycle without chaos"
-description: "How teams keep email, SMS, and WhatsApp coordinated when one audience powers every send."
+title: 'Designing a multichannel lifecycle without chaos'
+description: 'How teams keep email, SMS, and WhatsApp coordinated when one audience powers every send.'
 pubDate: 2026-04-08
-author: "Sofia Alvarez"
-tags: ["lifecycle", "strategy"]
+author: 'Sofia Alvarez'
+tags: ['lifecycle', 'strategy']
 draft: false
 ---
 

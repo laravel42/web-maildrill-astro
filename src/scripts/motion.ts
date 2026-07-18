@@ -164,7 +164,7 @@ function observe(nodes: HTMLElement[], onEnter: (el: HTMLElement) => void, thres
         }
       }
     },
-    { threshold, rootMargin: '0px 0px -6% 0px' }
+    { threshold, rootMargin: '0px 0px -6% 0px' },
   );
   nodes.forEach((n) => io.observe(n));
 }
@@ -177,7 +177,7 @@ function observe(nodes: HTMLElement[], onEnter: (el: HTMLElement) => void, thres
  */
 function q(selector: string): HTMLElement[] {
   return Array.from(document.querySelectorAll<HTMLElement>(selector)).filter(
-    (el) => !el.closest('astro-island')
+    (el) => !el.closest('astro-island'),
   );
 }
 
@@ -186,7 +186,7 @@ function init() {
 
   // Split-word candidates: display/section headings that are plain text.
   const splitEls = q('.display, .h-section, [data-split]').filter(
-    (el) => el.children.length === 0 && (el.textContent ?? '').trim().length > 0
+    (el) => el.children.length === 0 && (el.textContent ?? '').trim().length > 0,
   );
   const splitSet = new Set<HTMLElement>(splitEls);
 
@@ -204,7 +204,7 @@ function init() {
   observe(
     q('[data-reveal]').filter((el) => !splitSet.has(el)),
     reveal,
-    0.08
+    0.08,
   );
 
   // Split-word heading reveal.

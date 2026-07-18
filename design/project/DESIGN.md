@@ -16,8 +16,8 @@ screen optimizes for **speed, clarity, confidence, and scalability** instead of
 CRUD. The product is professional, calm, fast, predictable, powerful, minimal —
 and never playful, decorative, colorful, or enterprise-legacy.
 
-The user should never feel they are *using software*. They should feel they are
-*running campaigns*.
+The user should never feel they are _using software_. They should feel they are
+_running campaigns_.
 
 ---
 
@@ -42,20 +42,20 @@ properties driven by `[data-theme]`.
 
 **Light (`:root`, `[data-theme="light"]`)**
 
-| Token | Value | Use |
-|---|---|---|
-| `--bg` | `#f6f5f2` | App background (warm cream) |
-| `--surface` | `#ffffff` | Cards, panels |
-| `--surface2` | `#f3f2ee` | Hover / subtle fills |
-| `--border` | `#ecebe6` | Default borders |
-| `--border2` | `#e4e2da` | Stronger borders / hover |
-| `--divider` | `#efeee9` | Hairlines |
-| `--text` | `#1f1e1b` | Primary text |
-| `--text2` | `#3a3833` | Secondary |
-| `--text3` | `#57554e` | Tertiary |
-| `--text4` | `#77756c` | Quaternary |
-| `--muted` / `--muted2` | `#a5a39a` / `#c0beb4` | Muted labels |
-| `--accent-tint` | `#eef0ff` | Accent wash |
+| Token                  | Value                 | Use                         |
+| ---------------------- | --------------------- | --------------------------- |
+| `--bg`                 | `#f6f5f2`             | App background (warm cream) |
+| `--surface`            | `#ffffff`             | Cards, panels               |
+| `--surface2`           | `#f3f2ee`             | Hover / subtle fills        |
+| `--border`             | `#ecebe6`             | Default borders             |
+| `--border2`            | `#e4e2da`             | Stronger borders / hover    |
+| `--divider`            | `#efeee9`             | Hairlines                   |
+| `--text`               | `#1f1e1b`             | Primary text                |
+| `--text2`              | `#3a3833`             | Secondary                   |
+| `--text3`              | `#57554e`             | Tertiary                    |
+| `--text4`              | `#77756c`             | Quaternary                  |
+| `--muted` / `--muted2` | `#a5a39a` / `#c0beb4` | Muted labels                |
+| `--accent-tint`        | `#eef0ff`             | Accent wash                 |
 
 **Dark (`[data-theme="dark"]`)** — a warm near-black ramp: `--bg:#15130d`,
 `--surface:#201d16`, `--surface2:#2a261e`, `--border:#332f26`, `--text:#f5f3ec`,
@@ -63,20 +63,20 @@ properties driven by `[data-theme]`.
 
 **Brand & semantic**
 
-| Role | Color |
-|---|---|
-| Brand / primary action | `#4f46e5` (hover `#4338ca`) |
-| Success | Green (`#16a34a` / `#22c55e`) |
-| Warning | Amber |
-| Danger | Red (`#dc2626`) |
+| Role                   | Color                         |
+| ---------------------- | ----------------------------- |
+| Brand / primary action | `#4f46e5` (hover `#4338ca`)   |
+| Success                | Green (`#16a34a` / `#22c55e`) |
+| Warning                | Amber                         |
+| Danger                 | Red (`#dc2626`)               |
 
 **Channel colors** (used consistently in pills, filters, previews, analytics):
 
-| Channel | Color |
-|---|---|
-| Email | Indigo `#4f46e5` |
-| SMS | Cyan |
-| WhatsApp | Green |
+| Channel  | Color            |
+| -------- | ---------------- |
+| Email    | Indigo `#4f46e5` |
+| SMS      | Cyan             |
+| WhatsApp | Green            |
 
 ### 3.2 Typography
 
@@ -88,11 +88,11 @@ properties driven by `[data-theme]`.
 ### 3.3 Border radius
 
 | Component | Radius |
-|---|---|
-| Buttons | 10px |
-| Cards | 16px |
-| Images | 12px |
-| Dialogs | 20px |
+| --------- | ------ |
+| Buttons   | 10px   |
+| Cards     | 16px   |
+| Images    | 12px   |
+| Dialogs   | 20px   |
 
 ### 3.4 Elevation
 

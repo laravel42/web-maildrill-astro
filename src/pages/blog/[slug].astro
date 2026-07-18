@@ -42,7 +42,10 @@ const categoryStyle = (tag?: string): CatStyle => {
       return { color: 'var(--ch-voice)', tint: 'var(--ch-voice-tint)' };
     case 'announcement':
     case 'deliverability':
-      return { color: 'var(--brand)', tint: 'color-mix(in srgb, var(--brand) 14%, var(--surface))' };
+      return {
+        color: 'var(--brand)',
+        tint: 'color-mix(in srgb, var(--brand) 14%, var(--surface))',
+      };
     case 'lifecycle':
     case 'perspective':
       return { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)' };
@@ -149,7 +152,9 @@ const jsonLd = [
         </span>
         <div>
           <div class="author-card__name">{post.data.author}</div>
-          <div class="author-card__bio">Writing for the Maildrill blog on multichannel messaging.</div>
+          <div class="author-card__bio">
+            Writing for the Maildrill blog on multichannel messaging.
+          </div>
         </div>
       </div>
     </div>
@@ -159,7 +164,9 @@ const jsonLd = [
   {
     related.length > 0 && (
       <section class="related">
-        <p class="eyebrow" data-reveal>More from the blog</p>
+        <p class="eyebrow" data-reveal>
+          More from the blog
+        </p>
         <div class="related__grid">
           {related.map((r, i) => {
             const rTag = r.data.tags[0] ?? 'Product';
@@ -342,7 +349,11 @@ const jsonLd = [
     right: -30px;
     width: 360px;
     height: 360px;
-    background: radial-gradient(circle, color-mix(in srgb, var(--cat) 42%, transparent), transparent 65%);
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--cat) 42%, transparent),
+      transparent 65%
+    );
     animation: blob 13s ease-in-out infinite;
   }
 
@@ -438,7 +449,11 @@ const jsonLd = [
 
   .related__art {
     height: 120px;
-    background: linear-gradient(135deg, var(--cat-tint), color-mix(in srgb, var(--cat-tint) 35%, var(--surface)));
+    background: linear-gradient(
+      135deg,
+      var(--cat-tint),
+      color-mix(in srgb, var(--cat-tint) 35%, var(--surface))
+    );
   }
 
   .related__body {

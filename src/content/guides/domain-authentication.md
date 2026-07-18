@@ -1,11 +1,11 @@
 ---
-title: "Authenticate your sending domain"
-description: "Add SPF, DKIM, and DMARC so Maildrill can send on your behalf with strong inbox placement."
+title: 'Authenticate your sending domain'
+description: 'Add SPF, DKIM, and DMARC so Maildrill can send on your behalf with strong inbox placement.'
 pubDate: 2026-03-01
-author: "Marcus Reed"
-category: "Deliverability"
+author: 'Marcus Reed'
+category: 'Deliverability'
 readingMinutes: 8
-series: "Deliverability setup"
+series: 'Deliverability setup'
 draft: false
 ---
 

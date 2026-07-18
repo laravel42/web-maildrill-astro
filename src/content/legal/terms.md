@@ -1,9 +1,9 @@
 ---
-title: "Terms of Service"
-description: "Terms governing use of the Maildrill website and workspace."
+title: 'Terms of Service'
+description: 'Terms governing use of the Maildrill website and workspace.'
 updatedDate: 2026-06-01
-kicker: "Terms"
-noun: "agreement"
+kicker: 'Terms'
+noun: 'agreement'
 ---
 
 ## Agreement

@@ -71,7 +71,7 @@ export default function PricingEstimator() {
   // ---- country combobox ----
   const allCountries = useMemo(
     () => [...COUNTRIES].sort((a, b) => a.name.localeCompare(b.name)),
-    []
+    [],
   );
   const filtered = useMemo(() => {
     const q = countryQuery.trim().toLowerCase();

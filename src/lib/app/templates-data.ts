@@ -92,15 +92,150 @@ const TRIPLES: Array<[string, string, string]> = [
 type Seed = Omit<GalleryTemplate, 'updatedMin'>;
 
 const SEEDS: Seed[] = [
-  { id: 'tpl-summer-sale', name: 'Summer Sale', title: 'SUMMER SALE', kicker: 'LIMITED TIME', cta: 'Shop the sale', updated: '1d ago', thumb: 'linear-gradient(150deg,#4f46e5,#6d28d9)', fg: '#fff', accent: '#4f46e5', favorite: true, category: 'Promotional', channel: 'email', avgOpen: 52, avgClick: 14 },
-  { id: 'tpl-meet-teacher', name: 'Meet the teacher', title: 'MEET THE TEACHER!', kicker: 'NEW SCHOOL YEAR', cta: 'Read more', updated: '5h ago', thumb: '#c9b79c', fg: '#3f2f1c', accent: '#a1774a', favorite: false, category: 'Announcement', channel: 'email', avgOpen: 38, avgClick: 7 },
-  { id: 'tpl-welcome-series', name: 'Welcome Series', title: 'WELCOME', kicker: "GLAD YOU’RE HERE", cta: 'Get started', updated: '3d ago', thumb: '#f6b8a0', fg: '#7c2d12', accent: '#ea6c3f', favorite: true, category: 'Transactional', channel: 'email', avgOpen: 64, avgClick: 22 },
-  { id: 'tpl-product-launch', name: 'Product Launch', title: 'NEW ARRIVAL', kicker: 'JUST DROPPED', cta: 'Explore now', updated: '1w ago', thumb: '#e7e0d2', fg: '#57534e', accent: '#78716c', favorite: false, category: 'Announcement', channel: 'email', avgOpen: 41, avgClick: 9 },
-  { id: 'tpl-spring-preview', name: 'Spring Preview', title: 'SPRING PREVIEW', kicker: 'THE EDIT', cta: 'See the collection', updated: '2w ago', thumb: 'linear-gradient(150deg,#34d399,#059669)', fg: '#fff', accent: '#059669', favorite: false, category: 'Newsletter', channel: 'email', avgOpen: 29, avgClick: 5 },
-  { id: 'tpl-back-in-stock', name: 'Back in Stock', title: 'BACK IN STOCK', kicker: 'YOU ASKED, WE LISTENED', cta: 'Grab yours', updated: '3w ago', thumb: '#ede9fe', fg: '#5b21b6', accent: '#7c3aed', favorite: false, category: 'Promotional', channel: 'email', avgOpen: 47, avgClick: 18 },
-  { id: 'tpl-flash-sale-text', name: 'Flash Sale Text', title: 'FLASH SALE', kicker: 'TEXT', cta: 'Shop now', updated: '2d ago', thumb: 'linear-gradient(150deg,#06b6d4,#0891b2)', fg: '#fff', accent: '#0891b2', favorite: false, category: 'Promotional', channel: 'sms', avgOpen: 71, avgClick: 31 },
-  { id: 'tpl-order-update-wa', name: 'Order Update WA', title: 'ORDER UPDATE', kicker: 'WHATSAPP', cta: 'Track order', updated: '4d ago', thumb: 'linear-gradient(150deg,#22c55e,#16a34a)', fg: '#fff', accent: '#16a34a', favorite: false, category: 'Transactional', channel: 'whatsapp', avgOpen: 83, avgClick: 26 },
-  { id: 'tpl-payment-call', name: 'Payment Reminder Call', title: 'PAYMENT DUE', kicker: 'VOICE SCRIPT', cta: 'Pay now', updated: '5d ago', thumb: 'linear-gradient(150deg,#f59e0b,#d97706)', fg: '#fff', accent: '#d97706', favorite: false, category: 'Transactional', channel: 'voice', avgOpen: 35, avgClick: 11 },
+  {
+    id: 'tpl-summer-sale',
+    name: 'Summer Sale',
+    title: 'SUMMER SALE',
+    kicker: 'LIMITED TIME',
+    cta: 'Shop the sale',
+    updated: '1d ago',
+    thumb: 'linear-gradient(150deg,#4f46e5,#6d28d9)',
+    fg: '#fff',
+    accent: '#4f46e5',
+    favorite: true,
+    category: 'Promotional',
+    channel: 'email',
+    avgOpen: 52,
+    avgClick: 14,
+  },
+  {
+    id: 'tpl-meet-teacher',
+    name: 'Meet the teacher',
+    title: 'MEET THE TEACHER!',
+    kicker: 'NEW SCHOOL YEAR',
+    cta: 'Read more',
+    updated: '5h ago',
+    thumb: '#c9b79c',
+    fg: '#3f2f1c',
+    accent: '#a1774a',
+    favorite: false,
+    category: 'Announcement',
+    channel: 'email',
+    avgOpen: 38,
+    avgClick: 7,
+  },
+  {
+    id: 'tpl-welcome-series',
+    name: 'Welcome Series',
+    title: 'WELCOME',
+    kicker: 'GLAD YOU’RE HERE',
+    cta: 'Get started',
+    updated: '3d ago',
+    thumb: '#f6b8a0',
+    fg: '#7c2d12',
+    accent: '#ea6c3f',
+    favorite: true,
+    category: 'Transactional',
+    channel: 'email',
+    avgOpen: 64,
+    avgClick: 22,
+  },
+  {
+    id: 'tpl-product-launch',
+    name: 'Product Launch',
+    title: 'NEW ARRIVAL',
+    kicker: 'JUST DROPPED',
+    cta: 'Explore now',
+    updated: '1w ago',
+    thumb: '#e7e0d2',
+    fg: '#57534e',
+    accent: '#78716c',
+    favorite: false,
+    category: 'Announcement',
+    channel: 'email',
+    avgOpen: 41,
+    avgClick: 9,
+  },
+  {
+    id: 'tpl-spring-preview',
+    name: 'Spring Preview',
+    title: 'SPRING PREVIEW',
+    kicker: 'THE EDIT',
+    cta: 'See the collection',
+    updated: '2w ago',
+    thumb: 'linear-gradient(150deg,#34d399,#059669)',
+    fg: '#fff',
+    accent: '#059669',
+    favorite: false,
+    category: 'Newsletter',
+    channel: 'email',
+    avgOpen: 29,
+    avgClick: 5,
+  },
+  {
+    id: 'tpl-back-in-stock',
+    name: 'Back in Stock',
+    title: 'BACK IN STOCK',
+    kicker: 'YOU ASKED, WE LISTENED',
+    cta: 'Grab yours',
+    updated: '3w ago',
+    thumb: '#ede9fe',
+    fg: '#5b21b6',
+    accent: '#7c3aed',
+    favorite: false,
+    category: 'Promotional',
+    channel: 'email',
+    avgOpen: 47,
+    avgClick: 18,
+  },
+  {
+    id: 'tpl-flash-sale-text',
+    name: 'Flash Sale Text',
+    title: 'FLASH SALE',
+    kicker: 'TEXT',
+    cta: 'Shop now',
+    updated: '2d ago',
+    thumb: 'linear-gradient(150deg,#06b6d4,#0891b2)',
+    fg: '#fff',
+    accent: '#0891b2',
+    favorite: false,
+    category: 'Promotional',
+    channel: 'sms',
+    avgOpen: 71,
+    avgClick: 31,
+  },
+  {
+    id: 'tpl-order-update-wa',
+    name: 'Order Update WA',
+    title: 'ORDER UPDATE',
+    kicker: 'WHATSAPP',
+    cta: 'Track order',
+    updated: '4d ago',
+    thumb: 'linear-gradient(150deg,#22c55e,#16a34a)',
+    fg: '#fff',
+    accent: '#16a34a',
+    favorite: false,
+    category: 'Transactional',
+    channel: 'whatsapp',
+    avgOpen: 83,
+    avgClick: 26,
+  },
+  {
+    id: 'tpl-payment-call',
+    name: 'Payment Reminder Call',
+    title: 'PAYMENT DUE',
+    kicker: 'VOICE SCRIPT',
+    cta: 'Pay now',
+    updated: '5d ago',
+    thumb: 'linear-gradient(150deg,#f59e0b,#d97706)',
+    fg: '#fff',
+    accent: '#d97706',
+    favorite: false,
+    category: 'Transactional',
+    channel: 'voice',
+    avgOpen: 35,
+    avgClick: 11,
+  },
 ];
 
 // ---- 2. Enrich the four shared mock-data fixtures into gallery items. ----------
@@ -114,10 +249,19 @@ const CATEGORY_MAP: Record<string, TplCategory> = {
   Announcement: 'Announcement',
 };
 
-const SHARED_META: Record<string, { kicker: string; cta: string; triple: [string, string, string]; open: number; click: number }> = {
+const SHARED_META: Record<
+  string,
+  { kicker: string; cta: string; triple: [string, string, string]; open: number; click: number }
+> = {
   tpl_1: { kicker: 'JUST LAUNCHED', cta: 'Shop now', triple: TRIPLES[0], open: 58, click: 19 },
   tpl_2: { kicker: 'ON THE WAY', cta: 'Track order', triple: TRIPLES[6], open: 74, click: 22 },
-  tpl_3: { kicker: 'CONFIRMED', cta: 'View details', triple: ['linear-gradient(150deg,#22c55e,#16a34a)', '#fff', '#16a34a'], open: 80, click: 18 },
+  tpl_3: {
+    kicker: 'CONFIRMED',
+    cta: 'View details',
+    triple: ['linear-gradient(150deg,#22c55e,#16a34a)', '#fff', '#16a34a'],
+    open: 80,
+    click: 18,
+  },
   tpl_4: { kicker: 'HELLO', cta: 'Get started', triple: TRIPLES[2], open: 61, click: 15 },
 };
 
@@ -146,12 +290,41 @@ const enrichedShared: Seed[] = sharedTemplates.map((t) => {
 const GEN_CATS: TplCategory[] = ['Promotional', 'Newsletter', 'Transactional', 'Announcement'];
 const GEN_CHANNELS: ChannelType[] = ['email', 'email', 'email', 'sms', 'whatsapp', 'voice'];
 const GEN_BASES = [
-  'Weekly Digest', 'Cart Reminder', 'New Feature', 'Holiday Offer', 'Referral Invite',
-  'Event Invite', 'Survey Request', 'Restock Alert', 'VIP Preview', 'Birthday Reward',
-  'Order Shipped', 'Feedback Ask', 'Membership Renewal', 'Seasonal Sale',
+  'Weekly Digest',
+  'Cart Reminder',
+  'New Feature',
+  'Holiday Offer',
+  'Referral Invite',
+  'Event Invite',
+  'Survey Request',
+  'Restock Alert',
+  'VIP Preview',
+  'Birthday Reward',
+  'Order Shipped',
+  'Feedback Ask',
+  'Membership Renewal',
+  'Seasonal Sale',
 ];
-const GEN_KICKERS = ['LIMITED TIME', 'THE EDIT', 'JUST DROPPED', 'NEW', 'YOU ASKED', 'THIS WEEK', 'SPECIAL', 'EXCLUSIVE'];
-const GEN_CTAS = ['Shop now', 'Read more', 'Get started', 'Explore now', 'See more', 'Grab yours', 'Learn more', 'Track order'];
+const GEN_KICKERS = [
+  'LIMITED TIME',
+  'THE EDIT',
+  'JUST DROPPED',
+  'NEW',
+  'YOU ASKED',
+  'THIS WEEK',
+  'SPECIAL',
+  'EXCLUSIVE',
+];
+const GEN_CTAS = [
+  'Shop now',
+  'Read more',
+  'Get started',
+  'Explore now',
+  'See more',
+  'Grab yours',
+  'Learn more',
+  'Track order',
+];
 const GEN_UPDATED = ['2d ago', '4d ago', '6d ago', '1w ago', '2w ago', '3w ago'];
 
 const generated: Seed[] = Array.from({ length: 27 }, (_, i) => {
@@ -186,7 +359,12 @@ export const galleryTemplates: GalleryTemplate[] = [
   ...generated,
 ].map((t) => ({ ...t, updatedMin: agoMin(t.updated) }));
 
-export const TEMPLATE_CATEGORIES: TplCategory[] = ['Promotional', 'Newsletter', 'Transactional', 'Announcement'];
+export const TEMPLATE_CATEGORIES: TplCategory[] = [
+  'Promotional',
+  'Newsletter',
+  'Transactional',
+  'Announcement',
+];
 export const RATE_BUCKETS = ['None', 'Under 20%', '20 – 40%', '40%+'] as const;
 export type RateBucket = (typeof RATE_BUCKETS)[number];
 

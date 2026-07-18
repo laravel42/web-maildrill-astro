@@ -9,7 +9,8 @@ function agoMin(s: string): number {
   const m = s.match(/(\d+)\s*([smhdw])/);
   if (!m) return 0;
   const n = parseInt(m[1], 10);
-  const mult = m[2] === 's' ? 1 / 60 : m[2] === 'm' ? 1 : m[2] === 'h' ? 60 : m[2] === 'd' ? 1440 : 10080;
+  const mult =
+    m[2] === 's' ? 1 / 60 : m[2] === 'm' ? 1 : m[2] === 'h' ? 60 : m[2] === 'd' ? 1440 : 10080;
   return n * mult;
 }
 function sizeBytes(s: string): number {
@@ -48,7 +49,13 @@ const VIEWS = [
 type ViewKey = (typeof VIEWS)[number]['key'];
 
 type SortKey = 'name' | 'type' | 'dim' | 'size' | 'uploaded';
-const ASC_FIRST: Record<SortKey, boolean> = { name: true, type: true, dim: false, size: false, uploaded: false };
+const ASC_FIRST: Record<SortKey, boolean> = {
+  name: true,
+  type: true,
+  dim: false,
+  size: false,
+  uploaded: false,
+};
 const PAGE_SIZE = 10;
 
 function Box({ on, size = 17 }: { on: boolean; size?: number }) {
@@ -92,8 +99,14 @@ export default function AppMedia() {
     }
     return c;
   }, []);
-  const folders = useMemo(() => FOLDER_ORDER.filter((f) => f === 'All files' || (folderCounts[f] ?? 0) > 0), [folderCounts]);
-  const presentTypes = useMemo(() => TYPE_ORDER.filter((t) => mediaFiles.some((m) => m.type === t)), []);
+  const folders = useMemo(
+    () => FOLDER_ORDER.filter((f) => f === 'All files' || (folderCounts[f] ?? 0) > 0),
+    [folderCounts],
+  );
+  const presentTypes = useMemo(
+    () => TYPE_ORDER.filter((t) => mediaFiles.some((m) => m.type === t)),
+    [],
+  );
 
   const effTags = (m: MediaFile): string[] => tagStore[m.id] ?? [m.type];
 
@@ -130,7 +143,11 @@ export default function AppMedia() {
   const end = Math.min(startIdx + PAGE_SIZE, total);
 
   const toggleSort = (key: SortKey) =>
-    setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: (ASC_FIRST[key] ? 1 : -1) as 1 | -1 }));
+    setSort((s) =>
+      s.key === key
+        ? { key, dir: (s.dir * -1) as 1 | -1 }
+        : { key, dir: (ASC_FIRST[key] ? 1 : -1) as 1 | -1 },
+    );
   const sortArrow = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? '↑' : '↓') : '');
 
   const toggleSelect = (id: string) =>
@@ -156,7 +173,11 @@ export default function AppMedia() {
     setSelected(new Set());
   };
 
-  const toggleFrom = (set: Set<MediaFileType>, setter: (s: Set<MediaFileType>) => void, t: MediaFileType) => {
+  const toggleFrom = (
+    set: Set<MediaFileType>,
+    setter: (s: Set<MediaFileType>) => void,
+    t: MediaFileType,
+  ) => {
     const next = new Set(set);
     if (next.has(t)) next.delete(t);
     else next.add(t);
@@ -165,9 +186,28 @@ export default function AppMedia() {
   };
 
   const chips: { key: string; label: string; remove: () => void }[] = [
-    ...[...popTypes].map((t) => ({ key: `pop:${t}`, label: `Type: ${t}`, remove: () => toggleFrom(popTypes, setPopTypes, t) })),
-    ...[...colTypes].map((t) => ({ key: `col:${t}`, label: `Type: ${t}`, remove: () => toggleFrom(colTypes, setColTypes, t) })),
-    ...(tagFilter ? [{ key: 'tag', label: `Tag: ${tagFilter}`, remove: () => { setTagFilter(null); resetPage(); } }] : []),
+    ...[...popTypes].map((t) => ({
+      key: `pop:${t}`,
+      label: `Type: ${t}`,
+      remove: () => toggleFrom(popTypes, setPopTypes, t),
+    })),
+    ...[...colTypes].map((t) => ({
+      key: `col:${t}`,
+      label: `Type: ${t}`,
+      remove: () => toggleFrom(colTypes, setColTypes, t),
+    })),
+    ...(tagFilter
+      ? [
+          {
+            key: 'tag',
+            label: `Tag: ${tagFilter}`,
+            remove: () => {
+              setTagFilter(null);
+              resetPage();
+            },
+          },
+        ]
+      : []),
   ];
   const clearChips = () => {
     setPopTypes(new Set());
@@ -176,7 +216,7 @@ export default function AppMedia() {
     resetPage();
   };
 
-  const openFile = openId ? mediaFiles.find((m) => m.id === openId) ?? null : null;
+  const openFile = openId ? (mediaFiles.find((m) => m.id === openId) ?? null) : null;
 
   // Escape closes overlays
   useEffect(() => {
@@ -262,7 +302,12 @@ export default function AppMedia() {
           </button>
           {filterOpen && (
             <>
-              <button type="button" className="ml__scrim" aria-label="Close filters" onClick={() => setFilterOpen(false)} />
+              <button
+                type="button"
+                className="ml__scrim"
+                aria-label="Close filters"
+                onClick={() => setFilterOpen(false)}
+              />
               <div className="ml__filterpop" role="dialog" aria-label="Filter files">
                 <p className="adrawer__eyebrow ml__pop-eyebrow">File type</p>
                 <div className="ml__chiprow">
@@ -308,15 +353,28 @@ export default function AppMedia() {
           >
             Type
             {colTypes.size > 0 && <span className="ml__colcount tnum">{colTypes.size}</span>}
-            <Icon name="chevron-down" size={12} className={`ml__caret${colOpen ? ' is-open' : ''}`} />
+            <Icon
+              name="chevron-down"
+              size={12}
+              className={`ml__caret${colOpen ? ' is-open' : ''}`}
+            />
           </button>
           {colOpen && (
             <>
-              <button type="button" className="ml__scrim" aria-label="Close type filter" onClick={() => setColOpen(false)} />
+              <button
+                type="button"
+                className="ml__scrim"
+                aria-label="Close type filter"
+                onClick={() => setColOpen(false)}
+              />
               <div className="ml__coldrop" role="menu">
                 {presentTypes.map((t) => (
                   <label key={t} className="ml__colopt">
-                    <input type="checkbox" checked={colTypes.has(t)} onChange={() => toggleFrom(colTypes, setColTypes, t)} />
+                    <input
+                      type="checkbox"
+                      checked={colTypes.has(t)}
+                      onChange={() => toggleFrom(colTypes, setColTypes, t)}
+                    />
                     {t}
                   </label>
                 ))}
@@ -343,7 +401,12 @@ export default function AppMedia() {
             {chips.map((c) => (
               <span key={c.key} className="ml__chip">
                 {c.label}
-                <button type="button" className="ml__chip-x" aria-label={`Remove ${c.label}`} onClick={c.remove}>
+                <button
+                  type="button"
+                  className="ml__chip-x"
+                  aria-label={`Remove ${c.label}`}
+                  onClick={c.remove}
+                >
                   <Icon name="x" size={11} stroke={2.6} />
                 </button>
               </span>
@@ -409,7 +472,11 @@ export default function AppMedia() {
               <Icon name="layers" size={13} />
               Move to folder
             </button>
-            <button type="button" className="ml__bulkbtn ml__bulkbtn--danger" onClick={() => bulk('Deleted')}>
+            <button
+              type="button"
+              className="ml__bulkbtn ml__bulkbtn--danger"
+              onClick={() => bulk('Deleted')}
+            >
               <Icon name="trash" size={13} />
               Delete
             </button>
@@ -445,11 +512,16 @@ export default function AppMedia() {
                 >
                   <Box on={selected.has(m.id)} size={19} />
                 </button>
-                <div className="ml__thumb ml__thumb--grid" style={{ background: m.thumb, color: m.fg }}>
+                <div
+                  className="ml__thumb ml__thumb--grid"
+                  style={{ background: m.thumb, color: m.fg }}
+                >
                   {m.label && <span className="ml__thumb-label">{m.label}</span>}
                 </div>
                 <div className="ml__gcap">
-                  <div className="ml__fname" title={m.name}>{m.name}</div>
+                  <div className="ml__fname" title={m.name}>
+                    {m.name}
+                  </div>
                   <div className="ml__gdim tnum">{m.dim}</div>
                 </div>
               </div>
@@ -468,9 +540,15 @@ export default function AppMedia() {
               >
                 <div
                   className="ml__thumb ml__thumb--compact"
-                  style={{ background: m.thumb, color: m.fg, borderColor: selected.has(m.id) ? '#4f46e5' : 'var(--border)' }}
+                  style={{
+                    background: m.thumb,
+                    color: m.fg,
+                    borderColor: selected.has(m.id) ? '#4f46e5' : 'var(--border)',
+                  }}
                 >
-                  {m.label && <span className="ml__thumb-label ml__thumb-label--sm">{m.label}</span>}
+                  {m.label && (
+                    <span className="ml__thumb-label ml__thumb-label--sm">{m.label}</span>
+                  )}
                   <button
                     type="button"
                     className="ml__ccheck"
@@ -484,7 +562,9 @@ export default function AppMedia() {
                     <Box on={selected.has(m.id)} size={18} />
                   </button>
                 </div>
-                <div className="ml__cname" title={m.name}>{m.name}</div>
+                <div className="ml__cname" title={m.name}>
+                  {m.name}
+                </div>
               </div>
             ))}
           </div>
@@ -492,24 +572,40 @@ export default function AppMedia() {
           <div className="ml__list">
             <div className="ml__lhead ml__lgrid">
               <div className="ml__check" onClick={(e) => e.stopPropagation()}>
-                <button type="button" className="ml__checkbtn" aria-label="Select all on page" aria-pressed={allChecked} onClick={toggleAll}>
+                <button
+                  type="button"
+                  className="ml__checkbtn"
+                  aria-label="Select all on page"
+                  aria-pressed={allChecked}
+                  onClick={toggleAll}
+                >
                   <Box on={allChecked} />
                 </button>
               </div>
               <div>
-                <button type="button" onClick={() => toggleSort('name')}>Name <span className="tnum">{sortArrow('name')}</span></button>
+                <button type="button" onClick={() => toggleSort('name')}>
+                  Name <span className="tnum">{sortArrow('name')}</span>
+                </button>
               </div>
               <div>
-                <button type="button" onClick={() => toggleSort('type')}>Type <span className="tnum">{sortArrow('type')}</span></button>
+                <button type="button" onClick={() => toggleSort('type')}>
+                  Type <span className="tnum">{sortArrow('type')}</span>
+                </button>
               </div>
               <div className="ml__r">
-                <button type="button" onClick={() => toggleSort('dim')}>Dimensions <span className="tnum">{sortArrow('dim')}</span></button>
+                <button type="button" onClick={() => toggleSort('dim')}>
+                  Dimensions <span className="tnum">{sortArrow('dim')}</span>
+                </button>
               </div>
               <div className="ml__r">
-                <button type="button" onClick={() => toggleSort('size')}>Size <span className="tnum">{sortArrow('size')}</span></button>
+                <button type="button" onClick={() => toggleSort('size')}>
+                  Size <span className="tnum">{sortArrow('size')}</span>
+                </button>
               </div>
               <div className="ml__r">
-                <button type="button" onClick={() => toggleSort('uploaded')}>Uploaded <span className="tnum">{sortArrow('uploaded')}</span></button>
+                <button type="button" onClick={() => toggleSort('uploaded')}>
+                  Uploaded <span className="tnum">{sortArrow('uploaded')}</span>
+                </button>
               </div>
               <div />
             </div>
@@ -524,20 +620,41 @@ export default function AppMedia() {
                 onKeyDown={onRowActivate(m.id)}
               >
                 <div className="ml__check" onClick={(e) => e.stopPropagation()}>
-                  <button type="button" className="ml__checkbtn" aria-label={`Select ${m.name}`} aria-pressed={selected.has(m.id)} onClick={() => toggleSelect(m.id)}>
+                  <button
+                    type="button"
+                    className="ml__checkbtn"
+                    aria-label={`Select ${m.name}`}
+                    aria-pressed={selected.has(m.id)}
+                    onClick={() => toggleSelect(m.id)}
+                  >
                     <Box on={selected.has(m.id)} />
                   </button>
                 </div>
                 <div className="ml__lname-cell">
-                  <span className="ml__lthumb" style={{ background: m.thumb, color: m.fg }} aria-hidden="true">{m.label}</span>
-                  <span className="ml__fname" title={m.name}>{m.name}</span>
+                  <span
+                    className="ml__lthumb"
+                    style={{ background: m.thumb, color: m.fg }}
+                    aria-hidden="true"
+                  >
+                    {m.label}
+                  </span>
+                  <span className="ml__fname" title={m.name}>
+                    {m.name}
+                  </span>
                 </div>
-                <div><span className="ml__typepill">{m.type}</span></div>
+                <div>
+                  <span className="ml__typepill">{m.type}</span>
+                </div>
                 <div className="ml__r tnum ml__muted4">{m.dim}</div>
                 <div className="ml__r tnum ml__muted4">{m.size}</div>
                 <div className="ml__r tnum ml__muted">{m.uploaded}</div>
                 <div className="ml__check" onClick={(e) => e.stopPropagation()}>
-                  <button type="button" className="kbtn" aria-label={`Actions for ${m.name}`} onClick={() => showToast('Row menu')}>
+                  <button
+                    type="button"
+                    className="kbtn"
+                    aria-label={`Actions for ${m.name}`}
+                    onClick={() => showToast('Row menu')}
+                  >
                     <Icon name="more" size={16} />
                   </button>
                 </div>
@@ -549,11 +666,19 @@ export default function AppMedia() {
         {/* footer / pager */}
         <div className="ml__foot">
           <span className="tnum ml__count">
-            {total === 0 ? 'No files match your search' : `${start}–${end} of ${total} file${total === 1 ? '' : 's'}`}
+            {total === 0
+              ? 'No files match your search'
+              : `${start}–${end} of ${total} file${total === 1 ? '' : 's'}`}
           </span>
           {pageCount > 1 && (
             <div className="ml__pager">
-              <button type="button" className="ml__pgarrow" disabled={curPage === 1} aria-label="Previous page" onClick={() => setPage((p) => Math.max(1, p - 1))}>
+              <button
+                type="button"
+                className="ml__pgarrow"
+                disabled={curPage === 1}
+                aria-label="Previous page"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
                 <Icon name="chevron-right" size={15} className="ml__flip" />
               </button>
               {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
@@ -567,7 +692,13 @@ export default function AppMedia() {
                   {n}
                 </button>
               ))}
-              <button type="button" className="ml__pgarrow" disabled={curPage === pageCount} aria-label="Next page" onClick={() => setPage((p) => Math.min(pageCount, p + 1))}>
+              <button
+                type="button"
+                className="ml__pgarrow"
+                disabled={curPage === pageCount}
+                aria-label="Next page"
+                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+              >
                 <Icon name="chevron-right" size={15} />
               </button>
             </div>
@@ -599,15 +730,30 @@ export default function AppMedia() {
       {/* upload modal */}
       {uploadOpen && (
         <div className="ml__modal-ov" onClick={() => setUploadOpen(false)}>
-          <div className="ml__modal" role="dialog" aria-modal="true" aria-label="Upload media" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="ml__modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Upload media"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="ml__modal-head">
               <span className="ml__modal-title">Upload media</span>
-              <button type="button" className="iconbtn" aria-label="Close" onClick={() => setUploadOpen(false)}>
+              <button
+                type="button"
+                className="iconbtn"
+                aria-label="Close"
+                onClick={() => setUploadOpen(false)}
+              >
                 <Icon name="x" size={16} />
               </button>
             </div>
             <div className="ml__modal-body">
-              <button type="button" className="ml__drop" onClick={() => showToast('File picker is a mock in this demo')}>
+              <button
+                type="button"
+                className="ml__drop"
+                onClick={() => showToast('File picker is a mock in this demo')}
+              >
                 <span className="ml__drop-ic">
                   <Icon name="media" size={22} />
                 </span>
@@ -620,20 +766,31 @@ export default function AppMedia() {
               <p className="adrawer__eyebrow ml__queue-eyebrow">Upload queue</p>
 
               <div className="ml__qitem">
-                <span className="ml__qthumb" style={{ background: 'linear-gradient(135deg,#93c5fd,#3b82f6)' }} aria-hidden="true" />
+                <span
+                  className="ml__qthumb"
+                  style={{ background: 'linear-gradient(135deg,#93c5fd,#3b82f6)' }}
+                  aria-hidden="true"
+                />
                 <div className="ml__qmain">
                   <div className="ml__qtop">
                     <span className="ml__qname">hero-banner.jpg</span>
                     <span className="ml__qpct tnum">{prog}%</span>
                   </div>
                   <div className="abar ml__qbar">
-                    <div className="abar__fill" style={{ width: `${prog}%`, background: '#4f46e5' }} />
+                    <div
+                      className="abar__fill"
+                      style={{ width: `${prog}%`, background: '#4f46e5' }}
+                    />
                   </div>
                 </div>
               </div>
 
               <div className="ml__qitem ml__qitem--last">
-                <span className="ml__qthumb" style={{ background: 'linear-gradient(135deg,#c4b5fd,#8b5cf6)' }} aria-hidden="true" />
+                <span
+                  className="ml__qthumb"
+                  style={{ background: 'linear-gradient(135deg,#c4b5fd,#8b5cf6)' }}
+                  aria-hidden="true"
+                />
                 <div className="ml__qmain">
                   <div className="ml__qtop">
                     <span className="ml__qname">product-shot.png</span>
@@ -649,7 +806,9 @@ export default function AppMedia() {
               </div>
             </div>
             <div className="ml__modal-foot">
-              <button type="button" className="sbtn" onClick={() => setUploadOpen(false)}>Cancel</button>
+              <button type="button" className="sbtn" onClick={() => setUploadOpen(false)}>
+                Cancel
+              </button>
               <button
                 type="button"
                 className="pbtn"
@@ -729,7 +888,13 @@ function MediaDrawer({
 
   return (
     <div className="adrawer-overlay" onClick={onClose}>
-      <div className="adrawer ml__drawer" role="dialog" aria-modal="true" aria-label={`${file.name} preview`} onClick={(e) => e.stopPropagation()}>
+      <div
+        className="adrawer ml__drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${file.name} preview`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="adrawer__head">
           <span className="adrawer__title">File preview</span>
           <button type="button" className="iconbtn" aria-label="Close" onClick={onClose}>
@@ -748,7 +913,11 @@ function MediaDrawer({
 
           <div className="ml__meta">
             {meta.map((row, i) => (
-              <div key={row.k} className="adetail" style={i === meta.length - 1 ? { borderBottom: 'none' } : undefined}>
+              <div
+                key={row.k}
+                className="adetail"
+                style={i === meta.length - 1 ? { borderBottom: 'none' } : undefined}
+              >
                 <span className="adetail__k">{row.k}</span>
                 <span className={`adetail__v${row.num ? ' tnum' : ''}`}>{row.v}</span>
               </div>
@@ -781,7 +950,14 @@ function MediaDrawer({
                   >
                     {tag}
                   </button>
-                  <button type="button" className="ml__tag-x" style={{ color: st.c }} aria-label={`Remove tag ${tag}`} title="Remove tag" onClick={() => removeTag(tag)}>
+                  <button
+                    type="button"
+                    className="ml__tag-x"
+                    style={{ color: st.c }}
+                    aria-label={`Remove tag ${tag}`}
+                    title="Remove tag"
+                    onClick={() => removeTag(tag)}
+                  >
                     <Icon name="x" size={10} stroke={2.6} />
                   </button>
                 </span>

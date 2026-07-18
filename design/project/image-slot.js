@@ -117,9 +117,7 @@
   // CLOSED (unrecognized-but-real Unsplash srcs must error, not render).
   const isUnsplashHost = (u) => {
     try {
-      return /(^|\.)unsplash\.com$/.test(
-        new URL(u, document.baseURI).hostname.replace(/\.$/, '')
-      );
+      return /(^|\.)unsplash\.com$/.test(new URL(u, document.baseURI).hostname.replace(/\.$/, ''));
     } catch {
       return false;
     }
@@ -192,7 +190,10 @@
         tombstones.clear();
       })
       .catch(() => {})
-      .then(() => { loaded = true; subs.forEach((fn) => fn()); });
+      .then(() => {
+        loaded = true;
+        subs.forEach((fn) => fn());
+      });
     return loadP;
   }
 
@@ -217,16 +218,27 @@
     if (!loaded) return;
     const w = window.omelette && window.omelette.writeFile;
     if (!w) return;
-    try { Promise.resolve(w(STATE_FILE, JSON.stringify(slots))).catch(() => {}); } catch (e) {}
+    try {
+      Promise.resolve(w(STATE_FILE, JSON.stringify(slots))).catch(() => {});
+    } catch (e) {}
   }
   function save() {
-    if (saving) { saveDirty = true; return; }
+    if (saving) {
+      saveDirty = true;
+      return;
+    }
     const w = window.omelette && window.omelette.writeFile;
     if (!w) return;
     saving = true;
     Promise.resolve(w(STATE_FILE, JSON.stringify(slots)))
       .catch(() => {})
-      .then(() => { saving = false; if (saveDirty) { saveDirty = false; save(); } });
+      .then(() => {
+        saving = false;
+        if (saveDirty) {
+          saveDirty = false;
+          save();
+        }
+      });
   }
 
   const S_MAX = 5;
@@ -242,13 +254,19 @@
 
   function setSlot(id, val) {
     if (!id) return;
-    if (val) { slots[id] = val; tombstones.delete(id); }
-    else { delete slots[id]; if (!loaded) tombstones.add(id); }
+    if (val) {
+      slots[id] = val;
+      tombstones.delete(id);
+    } else {
+      delete slots[id];
+      if (!loaded) tombstones.add(id);
+    }
     subs.forEach((fn) => fn());
     // A drop is rare + high-value — write immediately so nav-away can't lose
     // it. Gate on the initial read so we don't overwrite a sidecar we haven't
     // merged yet; the merge in load() keeps this change once the read lands.
-    if (loaded) save(); else load().then(save);
+    if (loaded) save();
+    else load().then(save);
   }
 
   // ── Image downscale ─────────────────────────────────────────────────────
@@ -264,7 +282,8 @@
       const w = Math.max(1, Math.round(bitmap.width * scale));
       const h = Math.max(1, Math.round(bitmap.height * scale));
       const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
+      canvas.width = w;
+      canvas.height = h;
       canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
       return canvas.toDataURL('image/webp', 0.85);
     } finally {
@@ -427,7 +446,17 @@
 
   class ImageSlot extends HTMLElement {
     static get observedAttributes() {
-      return ['shape', 'radius', 'mask', 'fit', 'placeholder', 'src', 'id', 'credit', 'credit-href'];
+      return [
+        'shape',
+        'radius',
+        'mask',
+        'fit',
+        'placeholder',
+        'src',
+        'id',
+        'credit',
+        'credit-href',
+      ];
     }
 
     /** Duplicate-slide hook (called by deck-stage, see its
@@ -464,9 +493,17 @@
           // adopted or rewritten. (Entries without .u never match.)
           const prev = getSlot(toId);
           const cur = getSlot(fromId);
-          if (!(prev && cur && prev.u && prev.u === cur.u &&
-                prev.s === cur.s && prev.x === cur.x && prev.y === cur.y &&
-                (typeof isFree !== 'function' || isFree(toId)))) continue;
+          if (!(
+            prev &&
+            cur &&
+            prev.u &&
+            prev.u === cur.u &&
+            prev.s === cur.s &&
+            prev.x === cur.x &&
+            prev.y === cur.y &&
+            (typeof isFree !== 'function' || isFree(toId))
+          ))
+            continue;
           return toId;
         }
         if (typeof isFree === 'function' && !isFree(toId)) continue;
@@ -483,18 +520,21 @@
       // along; reuse an already-cloned root so upgrade-after-clone works.
       // (Deliberately NOT serializable — a getHTML consumer would embed
       // multi-MB sidecar data-URLs into serialized page HTML.)
-      const root = this.shadowRoot ||
-        this.attachShadow({ mode: 'open', clonable: true });
+      const root = this.shadowRoot || this.attachShadow({ mode: 'open', clonable: true });
       // .spill and .ctl sit OUTSIDE .frame so overflow:hidden + border-radius
       // on the frame (circle, pill, rounded) can't clip them.
       root.innerHTML =
-        '<style>' + stylesheet + '</style>' +
+        '<style>' +
+        stylesheet +
+        '</style>' +
         '<div class="frame" part="frame">' +
         '  <img part="image" alt="" draggable="false" style="display:none">' +
-        '  <div class="empty" part="empty">' + icon +
+        '  <div class="empty" part="empty">' +
+        icon +
         '    <div class="cap"></div>' +
         '    <div class="sub">or <u>browse files</u></div></div>' +
-        '  <div class="attr-error" part="attribution-error">' + warnIcon +
+        '  <div class="attr-error" part="attribution-error">' +
+        warnIcon +
         '    <div class="cap">This photo needs attribution</div></div>' +
         '  <div class="loading" part="loading"></div>' +
         '  <div class="ring" part="ring"></div>' +
@@ -515,7 +555,9 @@
         // element selection and the controls look dead.
         '<div class="ctl" popover="manual" data-dc-edit-transparent><button data-act="replace" title="Replace image">Replace</button>' +
         '  <button data-act="edit" title="Reframe image">Edit</button></div>' +
-        '<input type="file" accept="' + ACCEPT.join(',') + '" hidden>';
+        '<input type="file" accept="' +
+        ACCEPT.join(',') +
+        '" hidden>';
       this._frame = root.querySelector('.frame');
       this._ring = root.querySelector('.ring');
       this._img = root.querySelector('.frame img');
@@ -568,9 +610,13 @@
         if (act === 'replace') {
           this._exitReframe(true);
           // Host-owned picker (Unsplash modal; it also offers local import).
-          this.dispatchEvent(new CustomEvent('image-slot:pick', {
-            bubbles: true, composed: true, detail: { id: this.id || null }
-          }));
+          this.dispatchEvent(
+            new CustomEvent('image-slot:pick', {
+              bubbles: true,
+              composed: true,
+              detail: { id: this.id || null },
+            }),
+          );
         }
         if (act === 'edit') {
           if (!this._reframes()) return;
@@ -616,33 +662,37 @@
         e.stopPropagation();
         this._spill.setPointerCapture(e.pointerId);
         const rect = this.getBoundingClientRect();
-        const fw = rect.width || 1, fh = rect.height || 1;
+        const fw = rect.width || 1,
+          fh = rect.height || 1;
         const corner = e.target.getAttribute && e.target.getAttribute('data-c');
         let move;
         if (corner) {
           // Resize about the OPPOSITE corner. Viewport-px throughout (rect
           // fw/fh, not clientWidth) so the math survives a transform:scale()
           // ancestor — deck_stage renders slides scaled-to-fit.
-          const iw = this._img.naturalWidth || 1, ih = this._img.naturalHeight || 1;
+          const iw = this._img.naturalWidth || 1,
+            ih = this._img.naturalHeight || 1;
           const contain = (this.getAttribute('fit') || 'cover').toLowerCase() === 'contain';
           const base = contain ? Math.min(fw / iw, fh / ih) : Math.max(fw / iw, fh / ih);
           const sx = corner.includes('e') ? 1 : -1;
           const sy = corner.includes('s') ? 1 : -1;
           const s0 = this._view.s;
-          const w0 = iw * base * s0, h0 = ih * base * s0;
-          const cx0 = (50 + this._view.x) / 100 * fw;
-          const cy0 = (50 + this._view.y) / 100 * fh;
-          const ox = cx0 - sx * w0 / 2, oy = cy0 - sy * h0 / 2;
+          const w0 = iw * base * s0,
+            h0 = ih * base * s0;
+          const cx0 = ((50 + this._view.x) / 100) * fw;
+          const cy0 = ((50 + this._view.y) / 100) * fh;
+          const ox = cx0 - (sx * w0) / 2,
+            oy = cy0 - (sy * h0) / 2;
           const diag0 = Math.hypot(w0, h0);
-          const ux = sx * w0 / diag0, uy = sy * h0 / diag0;
+          const ux = (sx * w0) / diag0,
+            uy = (sy * h0) / diag0;
           move = (ev) => {
-            const proj = (ev.clientX - rect.left - ox) * ux +
-                         (ev.clientY - rect.top - oy) * uy;
-            const s = clampS(s0 * proj / diag0);
-            const d = diag0 * s / s0;
+            const proj = (ev.clientX - rect.left - ox) * ux + (ev.clientY - rect.top - oy) * uy;
+            const s = clampS((s0 * proj) / diag0);
+            const d = (diag0 * s) / s0;
             this._view.s = s;
-            this._view.x = (ox + ux * d / 2) / fw * 100 - 50;
-            this._view.y = (oy + uy * d / 2) / fh * 100 - 50;
+            this._view.x = ((ox + (ux * d) / 2) / fw) * 100 - 50;
+            this._view.y = ((oy + (uy * d) / 2) / fh) * 100 - 50;
             this._clampView();
             this._applyView();
           };
@@ -650,14 +700,16 @@
           this.setAttribute('data-panning', '');
           const start = { px: e.clientX, py: e.clientY, x: this._view.x, y: this._view.y };
           move = (ev) => {
-            this._view.x = start.x + (ev.clientX - start.px) / fw * 100;
-            this._view.y = start.y + (ev.clientY - start.py) / fh * 100;
+            this._view.x = start.x + ((ev.clientX - start.px) / fw) * 100;
+            this._view.y = start.y + ((ev.clientY - start.py) / fh) * 100;
             this._clampView();
             this._applyView();
           };
         }
         const up = () => {
-          try { this._spill.releasePointerCapture(e.pointerId); } catch {}
+          try {
+            this._spill.releasePointerCapture(e.pointerId);
+          } catch {}
           this._spill.removeEventListener('pointermove', move);
           this._spill.removeEventListener('pointerup', up);
           this._spill.removeEventListener('pointercancel', up);
@@ -673,22 +725,26 @@
       });
       // Wheel zoom stays available inside reframe mode as a trackpad nicety —
       // zooms toward the cursor (offset' = cursor·(1-k) + offset·k).
-      this.addEventListener('wheel', (e) => {
-        if (!this.hasAttribute('data-reframe')) return;
-        e.preventDefault();
-        const r = this.getBoundingClientRect();
-        const cx = (e.clientX - r.left) / r.width * 100 - 50;
-        const cy = (e.clientY - r.top) / r.height * 100 - 50;
-        const prev = this._view.s;
-        const next = clampS(prev * Math.pow(1.0015, -e.deltaY));
-        if (next === prev) return;
-        const k = next / prev;
-        this._view.s = next;
-        this._view.x = cx * (1 - k) + this._view.x * k;
-        this._view.y = cy * (1 - k) + this._view.y * k;
-        this._clampView();
-        this._applyView();
-      }, { passive: false });
+      this.addEventListener(
+        'wheel',
+        (e) => {
+          if (!this.hasAttribute('data-reframe')) return;
+          e.preventDefault();
+          const r = this.getBoundingClientRect();
+          const cx = ((e.clientX - r.left) / r.width) * 100 - 50;
+          const cy = ((e.clientY - r.top) / r.height) * 100 - 50;
+          const prev = this._view.s;
+          const next = clampS(prev * Math.pow(1.0015, -e.deltaY));
+          if (next === prev) return;
+          const k = next / prev;
+          this._view.s = next;
+          this._view.x = cx * (1 - k) + this._view.x * k;
+          this._view.y = cy * (1 - k) + this._view.y * k;
+          this._clampView();
+          this._applyView();
+        },
+        { passive: false },
+      );
     }
 
     connectedCallback() {
@@ -725,7 +781,10 @@
       this.removeEventListener('dragover', this);
       this.removeEventListener('dragleave', this);
       this.removeEventListener('drop', this);
-      if (this._ro) { this._ro.disconnect(); this._ro = null; }
+      if (this._ro) {
+        this._ro.disconnect();
+        this._ro = null;
+      }
       // commit=false: a disconnect is not a user intent — committing here
       // would persist whatever half-finished drag a React remount or DOM
       // splice happened to interrupt. Deliberate exits commit on their own
@@ -743,17 +802,26 @@
       // document, so the crop survives even though the mode dies with the
       // DOM. Held on the instance so _exitReframe detaches exactly what
       // was attached.
-      this._pagehide = () => { this._exitReframe(true); flushNow(); };
+      this._pagehide = () => {
+        this._exitReframe(true);
+        flushNow();
+      };
       window.addEventListener('pagehide', this._pagehide);
       // Promote spill to the top layer, then keep it pinned over the frame:
       // scroll/resize cover the common cases, and a per-frame rect check
       // catches layout shifts that fire neither (an image above finishing
       // load, streamed DOM pushing the slot down, an ancestor transform
       // change) so the overlay can't detach from the frame.
-      try { this._spill.showPopover(); } catch {}
+      try {
+        this._spill.showPopover();
+      } catch {}
       // After the spill, so the controls stack above it in the top layer.
-      try { this._ctl.showPopover(); } catch {}
-      this._reposition = () => { if (this.hasAttribute('data-reframe')) this._applyView(); };
+      try {
+        this._ctl.showPopover();
+      } catch {}
+      this._reposition = () => {
+        if (this.hasAttribute('data-reframe')) this._applyView();
+      };
       window.addEventListener('scroll', this._reposition, true);
       window.addEventListener('resize', this._reposition);
       this._lastRect = '';
@@ -761,7 +829,10 @@
         if (!this.hasAttribute('data-reframe')) return;
         const r = this.getBoundingClientRect();
         const key = r.left + ',' + r.top + ',' + r.width + ',' + r.height;
-        if (key !== this._lastRect) { this._lastRect = key; this._applyView(); }
+        if (key !== this._lastRect) {
+          this._lastRect = key;
+          this._applyView();
+        }
         this._watchId = requestAnimationFrame(this._watch);
       };
       this._watchId = requestAnimationFrame(this._watch);
@@ -774,7 +845,9 @@
         if (e.composedPath && e.composedPath().includes(this)) return;
         this._exitReframe(true);
       };
-      this._esc = (e) => { if (e.key === 'Escape') this._exitReframe(true); };
+      this._esc = (e) => {
+        if (e.key === 'Escape') this._exitReframe(true);
+      };
       document.addEventListener('pointerdown', this._outside, true);
       document.addEventListener('keydown', this._esc, true);
     }
@@ -792,14 +865,22 @@
         window.removeEventListener('resize', this._reposition);
         this._reposition = null;
       }
-      if (this._watchId) { cancelAnimationFrame(this._watchId); this._watchId = 0; }
+      if (this._watchId) {
+        cancelAnimationFrame(this._watchId);
+        this._watchId = 0;
+      }
       if (this._pagehide) {
         window.removeEventListener('pagehide', this._pagehide);
         this._pagehide = null;
       }
-      try { this._spill.hidePopover(); } catch {}
-      try { this._ctl.hidePopover(); } catch {}
-      this._ctl.style.left = ''; this._ctl.style.top = '';
+      try {
+        this._spill.hidePopover();
+      } catch {}
+      try {
+        this._ctl.hidePopover();
+      } catch {}
+      this._ctl.style.left = '';
+      this._ctl.style.top = '';
       if (commit) this._commitView();
       this._signalReframe(false);
     }
@@ -813,16 +894,24 @@
     // the host still hears it.
     _signalReframe(active) {
       const target = this.isConnected ? this : document;
-      target.dispatchEvent(new CustomEvent('image-slot:reframe', {
-        bubbles: true, composed: true,
-        detail: { active: active, id: this.id || null }
-      }));
+      target.dispatchEvent(
+        new CustomEvent('image-slot:reframe', {
+          bubbles: true,
+          composed: true,
+          detail: { active: active, id: this.id || null },
+        }),
+      );
     }
 
     // Public: host's "Import from computer" calls this to run local browse.
-    openFilePicker() { this._exitReframe(true); this._input.click(); }
+    openFilePicker() {
+      this._exitReframe(true);
+      this._input.click();
+    }
 
-    attributeChangedCallback() { if (this.shadowRoot) this._render(); }
+    attributeChangedCallback() {
+      if (this.shadowRoot) this._render();
+    }
 
     // handleEvent — one listener object for all four drag events keeps the
     // add/remove symmetric and the depth counter correct.
@@ -837,7 +926,10 @@
       } else if (e.type === 'dragleave') {
         // dragenter/leave fire for every descendant crossing — count depth
         // so hovering the icon inside the empty state doesn't flicker.
-        if (--this._depth <= 0) { this._depth = 0; this.removeAttribute('data-over'); }
+        if (--this._depth <= 0) {
+          this._depth = 0;
+          this.removeAttribute('data-over');
+        }
       } else if (e.type === 'drop') {
         e.preventDefault();
         e.stopPropagation();
@@ -885,7 +977,10 @@
         setSlot(this.id || '', val);
         // Keep a session-local copy for id-less slots so the drop still
         // shows, even though it cannot persist.
-        if (!this.id) { this._local = val; this._render(); }
+        if (!this.id) {
+          this._local = val;
+          this._render();
+        }
       } catch (err) {
         if (gen !== this._gen) return;
         this._swapGen = 0;
@@ -899,13 +994,22 @@
     }
 
     _setError(msg) {
-      if (this._err) { this._err.remove(); this._err = null; }
+      if (this._err) {
+        this._err.remove();
+        this._err = null;
+      }
       if (!msg) return;
       const d = document.createElement('div');
-      d.className = 'err'; d.textContent = msg;
+      d.className = 'err';
+      d.textContent = msg;
       this.shadowRoot.appendChild(d);
       this._err = d;
-      setTimeout(() => { if (this._err === d) { d.remove(); this._err = null; } }, 3000);
+      setTimeout(() => {
+        if (this._err === d) {
+          d.remove();
+          this._err = null;
+        }
+      }, 3000);
     }
 
     // Reframing (pan/resize) is available on any filled slot — the user can
@@ -929,11 +1033,7 @@
     // Every release path funnels through here EXCEPT _render's empty
     // branch (the img is being cleared — nothing will ever settle).
     _releaseMask(settled) {
-      if (
-        !this._swapGen &&
-        !this._loadPending &&
-        (settled || this._img.complete)
-      ) {
+      if (!this._swapGen && !this._loadPending && (settled || this._img.complete)) {
         this.removeAttribute('data-swapping');
       }
     }
@@ -947,13 +1047,13 @@
     // clamping against a degenerate 1×1 frame would silently pull the stored
     // pan toward zero.
     _geom() {
-      const iw = this._img.naturalWidth, ih = this._img.naturalHeight;
-      const fw = this.clientWidth, fh = this.clientHeight;
+      const iw = this._img.naturalWidth,
+        ih = this._img.naturalHeight;
+      const fw = this.clientWidth,
+        fh = this.clientHeight;
       if (!iw || !ih || !fw || !fh) return null;
       const contain = (this.getAttribute('fit') || 'cover').toLowerCase() === 'contain';
-      const base = contain
-        ? Math.min(fw / iw, fh / ih)
-        : Math.max(fw / iw, fh / ih);
+      const base = contain ? Math.min(fw / iw, fh / ih) : Math.max(fw / iw, fh / ih);
       return { iw, ih, fw, fh, base };
     }
 
@@ -961,8 +1061,8 @@
       // Pan range on each axis is half the overflow past the frame edge.
       const g = this._geom();
       if (!g) return;
-      const mx = Math.max(0, (g.iw * g.base * this._view.s / g.fw - 1) * 50);
-      const my = Math.max(0, (g.ih * g.base * this._view.s / g.fh - 1) * 50);
+      const mx = Math.max(0, ((g.iw * g.base * this._view.s) / g.fw - 1) * 50);
+      const my = Math.max(0, ((g.ih * g.base * this._view.s) / g.fh - 1) * 50);
       this._view.x = Math.max(-mx, Math.min(mx, this._view.x));
       this._view.y = Math.max(-my, Math.min(my, this._view.y));
     }
@@ -981,11 +1081,13 @@
       // there (unknown pseudo-class), hence the try/catch.
       if (this.hasAttribute('data-reframe')) {
         let onTop = false;
-        try { onTop = this._ctl.matches(':popover-open'); } catch {}
+        try {
+          onTop = this._ctl.matches(':popover-open');
+        } catch {}
         if (onTop) {
           const r = this.getBoundingClientRect();
-          this._ctl.style.left = (r.right - 8) + 'px';
-          this._ctl.style.top = (r.top + 8) + 'px';
+          this._ctl.style.left = r.right - 8 + 'px';
+          this._ctl.style.top = r.top + 8 + 'px';
         }
       }
       if (!g) {
@@ -1004,12 +1106,14 @@
       // a responsive resize keeps the same crop. The spill layer mirrors the
       // same box so its corners = image corners.
       const k = g.base * this._view.s;
-      const w = (g.iw * k / g.fw * 100) + '%';
-      const h = (g.ih * k / g.fh * 100) + '%';
-      const l = (50 + this._view.x) + '%';
-      const t = (50 + this._view.y) + '%';
-      this._img.style.width = w; this._img.style.height = h;
-      this._img.style.left = l; this._img.style.top = t;
+      const w = ((g.iw * k) / g.fw) * 100 + '%';
+      const h = ((g.ih * k) / g.fh) * 100 + '%';
+      const l = 50 + this._view.x + '%';
+      const t = 50 + this._view.y + '%';
+      this._img.style.width = w;
+      this._img.style.height = h;
+      this._img.style.left = l;
+      this._img.style.top = t;
       this._img.style.objectFit = '';
       if (this.hasAttribute('data-reframe')) {
         // Top-layer spill: position in viewport px over the frame. The top
@@ -1021,10 +1125,10 @@
         const r = this.getBoundingClientRect();
         const sx = g.fw ? r.width / g.fw : 1;
         const sy = g.fh ? r.height / g.fh : 1;
-        this._spill.style.width = (g.iw * k * sx) + 'px';
-        this._spill.style.height = (g.ih * k * sy) + 'px';
-        this._spill.style.left = (r.left + (50 + this._view.x) / 100 * r.width) + 'px';
-        this._spill.style.top = (r.top + (50 + this._view.y) / 100 * r.height) + 'px';
+        this._spill.style.width = g.iw * k * sx + 'px';
+        this._spill.style.height = g.ih * k * sy + 'px';
+        this._spill.style.left = r.left + ((50 + this._view.x) / 100) * r.width + 'px';
+        this._spill.style.top = r.top + ((50 + this._view.y) / 100) * r.height + 'px';
       }
     }
 
@@ -1034,7 +1138,9 @@
       // Framing-only (no u) persists too so an author-src slot remembers its
       // crop; clearing the sidecar still falls through to src=.
       if (this.id) setSlot(this.id, v);
-      else { this._local = v; }
+      else {
+        this._local = v;
+      }
     }
 
     _render() {
@@ -1090,9 +1196,7 @@
       // error tile AND render an empty credit box (no text, no links),
       // exactly the unattributed state this gate exists to prevent.
       const credit = (this.getAttribute('credit') || '').trim();
-      const attrError = !!(
-        !credit && !this._userUrl && srcAttr && isUnsplashHost(srcAttr)
-      );
+      const attrError = !!(!credit && !this._userUrl && srcAttr && isUnsplashHost(srcAttr));
       this.toggleAttribute('data-attribution-error', attrError);
       if (url && !attrError) {
         const prev = this._img.getAttribute('src');
@@ -1176,9 +1280,7 @@
         const m = /^Photo by (.+) on Unsplash$/.exec(credit);
         if (m) {
           this._credit.appendChild(document.createTextNode('Photo by '));
-          this._credit.appendChild(
-            href ? mkLink(m[1], href) : document.createTextNode(m[1])
-          );
+          this._credit.appendChild(href ? mkLink(m[1], href) : document.createTextNode(m[1]));
           this._credit.appendChild(document.createTextNode(' on '));
           this._credit.appendChild(mkLink('Unsplash', UNSPLASH_HOMEPAGE_HREF));
         } else if (href) {
