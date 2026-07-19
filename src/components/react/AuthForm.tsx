@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { mockResetPassword, mockSignIn, mockSignUp } from '@/lib/app/services';
+import { useEffect, useState } from 'react';
+import { signIn } from 'auth-astro/client';
+import { mockResetPassword, mockSignUp } from '@/lib/app/services';
 import type { Mode, Status } from './AuthForm.types';
 import styles from './AuthForm.module.css';
 
@@ -24,36 +25,25 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const AppleIcon = () => (
-  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M16.4 1.3c.1 1-.3 2-1 2.8-.7.8-1.7 1.4-2.7 1.3-.1-1 .4-2 1-2.7.7-.8 1.8-1.3 2.7-1.4ZM19 17c-.5 1.2-.8 1.7-1.4 2.7-.9 1.4-2.2 3.1-3.8 3.1-1.4 0-1.8-.9-3.7-.9s-2.4.9-3.7.9c-1.6 0-2.8-1.5-3.7-2.9C.6 16.1.3 11.5 2 9c.9-1.4 2.4-2.3 3.9-2.3 1.5 0 2.5 1 3.7 1 1.2 0 1.9-1 3.7-1 1.3 0 2.7.7 3.7 2-3.2 1.8-2.7 6.4.9 7.6Z" />
-  </svg>
-);
-
 export default function AuthForm({ mode }: { mode: Mode }) {
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [sentTo, setSentTo] = useState('');
+  const [stage, setStage] = useState<'form' | 'code'>('form');
+  const [code, setCode] = useState('');
 
-  async function runLogin() {
-    setStatus('loading');
-    setError(null);
-    try {
-      await mockSignIn('sso@maildrill.com', 'sso-placeholder');
-      setStatus('success');
-      window.setTimeout(() => {
-        window.location.href = '/app';
-      }, 900);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.');
-      setStatus('error');
+  // Surface a friendly note when an expired/used sign-in link bounced here.
+  useEffect(() => {
+    if (mode !== 'login') return;
+    if (new URLSearchParams(window.location.search).get('error')) {
+      setError('That sign-in link expired or was already used — enter your email for a new code.');
     }
-  }
+  }, [mode]);
 
   async function onSubmit(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     if (status === 'loading') return;
     const form = event.currentTarget;
-    // Enforce native constraints (required / type=email / minLength) despite noValidate.
     if (!form.checkValidity()) {
       form.reportValidity();
       return;
@@ -66,12 +56,17 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     setError(null);
     try {
       if (mode === 'login') {
-        if (!email || !password) throw new Error('Enter email and password.');
-        await mockSignIn(email, password);
-        setStatus('success');
-        window.setTimeout(() => {
-          window.location.href = '/app';
-        }, 900);
+        if (!email) throw new Error('Enter your work email.');
+        const res = await fetch('/api/login-code', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        if (!res.ok) throw new Error('Could not send your code. Try again.');
+        setSentTo(email);
+        setCode('');
+        setStage('code');
+        setStatus('idle');
         return;
       }
       if (mode === 'signup') {
@@ -95,40 +90,104 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     }
   }
 
-  // ---------- success screens ----------
-  if (status === 'success' && mode === 'login') {
+  async function onVerify(event: React.SyntheticEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (status === 'loading') return;
+    const clean = code.replace(/\D/g, '');
+    if (clean.length !== 6) {
+      setError('Enter the 6-digit code.');
+      return;
+    }
+    setStatus('loading');
+    setError(null);
+    try {
+      const doSignIn = signIn as (p: string, o: Record<string, unknown>) => Promise<unknown>;
+      // auth-astro: on success it redirects (resolves to undefined); on a bad
+      // code it resolves to the raw Response without navigating.
+      const res = await doSignIn('credentials', {
+        email: sentTo,
+        code: clean,
+        redirect: false,
+        callbackUrl: '/app',
+      });
+      if (res !== undefined) {
+        setError('That code is invalid or expired.');
+        setStatus('error');
+        return;
+      }
+      // success — navigation to /app is already underway
+    } catch {
+      setError('Something went wrong. Try again.');
+      setStatus('error');
+    }
+  }
+
+  // ---------- login: enter the 6-digit code ----------
+  if (mode === 'login' && stage === 'code') {
     return (
       <div className={styles.af} style={{ maxWidth: '400px' }}>
-        <div
-          className={styles.successCenter}
-          role="status"
-          style={{ animation: 'pop .5s var(--ease-out) both' }}
-        >
-          <div
-            className={`${styles.successicon} ${styles.successiconCheck}`}
-            style={{ margin: '0 auto 18px' }}
+        <p className={styles.eyebrow}>/ Check your inbox</p>
+        <h1 className={styles.title}>Enter your code</h1>
+        <p className={styles.sub}>
+          We emailed a 6-digit code to <strong>{sentTo}</strong>.
+        </p>
+        <form onSubmit={onVerify} noValidate>
+          <input
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            aria-label="6-digit sign-in code"
+            placeholder="••••••"
+            autoFocus
+            style={{
+              width: '100%',
+              boxSizing: 'border-box',
+              textAlign: 'center',
+              fontFamily: "'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace",
+              fontSize: '30px',
+              fontWeight: 700,
+              letterSpacing: '14px',
+              padding: '16px 0 16px 14px',
+              border: '1px solid var(--af-border, #e5e7eb)',
+              borderRadius: '12px',
+              background: 'var(--af-input-bg, #fbfbfc)',
+              color: 'inherit',
+              caretColor: '#ff441f',
+            }}
+          />
+          {error && (
+            <p className={styles.error} role="alert" style={{ marginTop: '12px' }}>
+              {error}
+            </p>
+          )}
+          <button
+            className={styles.submit}
+            type="submit"
+            disabled={status === 'loading' || code.length < 6}
+            style={{ marginTop: '16px' }}
           >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
-          </div>
-          <h1 className={styles.successtitle}>Signing you in…</h1>
-          <p className={styles.successtext}>Taking you to your workspace.</p>
-        </div>
+            {status === 'loading' ? 'Verifying…' : 'Verify & sign in'}
+          </button>
+        </form>
+        <button
+          type="button"
+          className={styles.ghost}
+          onClick={() => {
+            setStage('form');
+            setStatus('idle');
+            setError(null);
+          }}
+          style={{ marginTop: '14px' }}
+        >
+          Use a different email
+        </button>
+        <p className={styles.foot}>Didn't get it? Check spam, or go back to resend.</p>
       </div>
     );
   }
 
+  // ---------- success screens (signup / forgot) ----------
   if (status === 'success' && mode === 'signup') {
     return (
       <div className={styles.af} style={{ maxWidth: '420px' }}>
@@ -223,7 +282,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     status === 'loading'
       ? 'Please wait…'
       : mode === 'login'
-        ? 'Log in'
+        ? 'Send sign-in code'
         : mode === 'signup'
           ? 'Start free trial'
           : 'Send reset link';
@@ -248,29 +307,18 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         </p>
       )}
 
-      {mode !== 'forgot' && (
+      {mode === 'signup' && (
         <>
           <div className={styles.sso}>
             <button
               type="button"
               className={styles.ssobtn}
-              onClick={mode === 'login' ? runLogin : () => setStatus('success')}
+              onClick={() => setStatus('success')}
               disabled={status === 'loading'}
             >
               <GoogleIcon />
-              {mode === 'login' ? 'Continue with Google' : 'Sign up with Google'}
+              Sign up with Google
             </button>
-            {mode === 'login' && (
-              <button
-                type="button"
-                className={styles.ssobtn}
-                onClick={runLogin}
-                disabled={status === 'loading'}
-              >
-                <AppleIcon />
-                Continue with Apple
-              </button>
-            )}
           </div>
           <div className={styles.divider}>
             <span></span>
@@ -307,20 +355,19 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           />
         </label>
 
-        {mode !== 'forgot' && (
+        {mode === 'signup' && (
           <label className={styles.field}>
             <span className={styles.labelrow}>
               <span className={styles.label} style={{ marginBottom: 0 }}>
                 Password
               </span>
-              {mode === 'login' && <a href="/forgot-password">Forgot?</a>}
             </span>
             <input
               className={styles.input}
               type="password"
               name="password"
-              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-              placeholder={mode === 'signup' ? 'At least 8 characters' : '••••••••'}
+              autoComplete="new-password"
+              placeholder="At least 8 characters"
               minLength={8}
               required
             />
@@ -328,10 +375,9 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         )}
 
         {mode === 'login' && (
-          <label className={styles.check}>
-            <input type="checkbox" name="remember" />
-            Keep me signed in for 30 days
-          </label>
+          <p className={styles.note}>
+            We'll email you a 6-digit code to sign in — no password needed.
+          </p>
         )}
 
         {mode === 'signup' && (
@@ -363,7 +409,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
       {mode === 'login' && (
         <p className={styles.foot}>
-          Protected by SSO &amp; 2FA — <a href="/support">need help?</a>
+          Passwordless &amp; secure — <a href="/support">need help?</a>
         </p>
       )}
       {mode === 'forgot' && (
