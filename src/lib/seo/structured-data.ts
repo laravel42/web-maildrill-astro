@@ -127,7 +127,7 @@ export function productJsonLd(input: { name: string; description: string; path: 
       '@type': 'AggregateOffer',
       priceCurrency: 'USD',
       // Lowest per-message rate shown on the pricing page (email, flat worldwide).
-      lowPrice: '0.0004',
+      lowPrice: '0.0005',
       offerCount: 4,
       availability: 'https://schema.org/InStock',
       url: absoluteUrl(input.path),

@@ -2,7 +2,15 @@
 import MarketingLayout from '@/layouts/MarketingLayout.astro';
 import Icon from '@/components/ui/Icon.astro';
 import PricingEstimator from '@/components/react/PricingEstimator';
-import { includedItems, pricingFaqs } from '@/config/pricing';
+import {
+  COMPARISON,
+  COMPARISON_TOOLS,
+  EMAIL_RATE,
+  includedItems,
+  isPromoActive,
+  pricingFaqs,
+  REGION_TIERS,
+} from '@/config/pricing';
 import { breadcrumbJsonLd, faqPageJsonLd, productJsonLd } from '@/lib/seo/structured-data';
 import { routes } from '@/config/routes';
 
@@ -11,6 +19,11 @@ const seo = {
   description:
     'Maildrill pay-per-use pricing: pay only for the messages you send across email, SMS, WhatsApp, and voice, plus a one-time setup fee per channel. No monthly minimums, no seat charges.',
 };
+
+// Evaluated at build time so the server-rendered HTML and client hydration
+// agree (no date-driven hydration mismatch). Rebuild after the promo end date
+// to fall back to the regular tiers.
+const promoActive = isPromoActive();
 
 const jsonLd = [
   productJsonLd({
@@ -40,7 +53,110 @@ const jsonLd = [
   </section>
 
   {/* ---------------- interactive calculator (rate cards + estimator + prepay) ---------------- */}
-  <PricingEstimator client:visible />
+  <PricingEstimator client:visible promoActive={promoActive} />
+
+  {/* ---------------- how we compare ---------------- */}
+  <section class="pcmp container--wide" aria-label="How Maildrill compares">
+    <p class="eyebrow" data-reveal>How we compare</p>
+    <h2 class="h-section pcmp__title" data-reveal style="--reveal-delay:60ms">
+      One platform, every channel, no hidden fees.
+    </h2>
+    <p class="pcmp__intro" data-reveal style="--reveal-delay:120ms">
+      Representative US-market list prices. Every rate is all-in — no per-number rentals, no carrier
+      surcharges — across one workspace instead of separate SMS, email, and WhatsApp products.
+    </p>
+    <div class="pcmp__scroll" data-reveal>
+      <table class="pcmp__table">
+        <thead>
+          <tr>
+            <th scope="col">Rate · US</th>
+            {
+              COMPARISON_TOOLS.map((tool, i) => (
+                <th scope="col" class:list={['pcmp__tool', i === 0 && 'pcmp__tool--us']}>
+                  {tool}
+                </th>
+              ))
+            }
+          </tr>
+        </thead>
+        <tbody>
+          {
+            COMPARISON.map((row) => (
+              <tr>
+                <th scope="row" class="pcmp__ch">
+                  {row.channel}
+                  <span class="pcmp__unit">{row.unit}</span>
+                </th>
+                {COMPARISON_TOOLS.map((tool, i) => (
+                  <td class:list={['mono', i === 0 ? 'pcmp__us' : 'pcmp__rival']}>
+                    {row.prices[tool]}
+                  </td>
+                ))}
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="pcmp__sources">
+      “—” means the tool doesn’t offer that channel natively. <span class="mono">*</span> All-in estimate:
+      Twilio and Telnyx advertise a lower base SMS rate but add per-carrier surcharges ($0.003–0.015/msg)
+      on top, so the figure shown folds in a typical surcharge — Maildrill’s rate is genuinely all-in.
+      Sources: <a href="https://www.twilio.com/en-us/sms/pricing/us">Twilio</a>,
+      <a href="https://sinch.com/pricing/sms/">Sinch</a>,
+      <a href="https://www.vonage.com/communications-apis/sms/pricing/">Vonage</a>,
+      <a href="https://www.brevo.com/pricing/">Brevo</a>,
+      <a href="https://telnyx.com/pricing/messaging">Telnyx</a>, and
+      <a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing"
+        >Meta WhatsApp rates</a
+      > (mid-2026). Indicative — check each provider for your volumes.
+    </p>
+  </section>
+
+  {/* ---------------- regional tiers ---------------- */}
+  <section class="ptier container--wide" aria-label="Regional pricing tiers">
+    <p class="eyebrow" data-reveal>Simple regional pricing</p>
+    <h2 class="h-section ptier__title" data-reveal style="--reveal-delay:60ms">
+      Four tiers. No 200-row rate card.
+    </h2>
+    <p class="ptier__intro" data-reveal style="--reveal-delay:120ms">
+      SMS, WhatsApp, and voice are priced by region — pick your destination in the estimator above
+      for the exact rate. Email is a single flat rate worldwide.
+    </p>
+    <div class="ptier__scroll" data-reveal>
+      <table class="ptier__table">
+        <thead>
+          <tr>
+            <th scope="col">Tier</th>
+            <th scope="col">Email</th>
+            <th scope="col">SMS</th>
+            <th scope="col">WhatsApp</th>
+            <th scope="col">Voice</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            REGION_TIERS.map((t) => (
+              <tr>
+                <th scope="row" class="ptier__region">
+                  {t.name}
+                  <span class="ptier__blurb">{t.blurb}</span>
+                </th>
+                <td class="mono">${EMAIL_RATE.toFixed(4)}</td>
+                <td class="mono">${t.sms.toFixed(4)}</td>
+                <td class="mono">${t.whatsapp.toFixed(3)}</td>
+                <td class="mono">${t.voice.toFixed(4)}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="ptier__note">
+      Per-unit list prices in USD. WhatsApp is the Meta marketing-message rate plus a slim platform
+      fee. Rates are indicative; your invoice uses the exact destination rate at send time.
+    </p>
+  </section>
 
   {/* ---------------- always included ---------------- */}
   <section class="pincl container--wide">
@@ -100,6 +216,148 @@ const jsonLd = [
     color: var(--text3);
     max-width: 56ch;
     margin: 24px 0 0;
+  }
+
+  /* how we compare */
+  .pcmp {
+    padding-block: 72px 24px;
+  }
+
+  .pcmp__title {
+    margin: 14px 0 0;
+    max-width: 20ch;
+  }
+
+  .pcmp__intro,
+  .ptier__intro {
+    font-size: var(--fs-base);
+    line-height: 1.55;
+    color: var(--text3);
+    max-width: 62ch;
+    margin: 16px 0 32px;
+  }
+
+  .pcmp__scroll,
+  .ptier__scroll {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+  }
+
+  .pcmp__table,
+  .ptier__table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 640px;
+    font-size: var(--fs-sm2);
+  }
+
+  /* 7 columns (Rate + 6 tools) need more room before horizontal scroll. */
+  .pcmp__table {
+    min-width: 840px;
+  }
+
+  .pcmp__table th,
+  .pcmp__table td,
+  .ptier__table th,
+  .ptier__table td {
+    text-align: left;
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--divider);
+    vertical-align: top;
+  }
+
+  .pcmp__table thead th,
+  .ptier__table thead th {
+    font-size: var(--fs-xs);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .pcmp__table tbody tr:last-child th,
+  .pcmp__table tbody tr:last-child td,
+  .ptier__table tbody tr:last-child th,
+  .ptier__table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .pcmp__ch,
+  .ptier__region {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .pcmp__unit,
+  .ptier__blurb {
+    display: block;
+    font-size: var(--fs-xs);
+    font-weight: 400;
+    color: var(--text4);
+    margin-top: 3px;
+  }
+
+  /* Tool column headers */
+  .pcmp__tool {
+    font-size: var(--fs-sm2) !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    color: var(--text) !important;
+    font-weight: 600 !important;
+    white-space: nowrap;
+  }
+
+  /* Highlight the Maildrill column (header + cells) */
+  .pcmp__tool--us,
+  .pcmp__us {
+    background: var(--success-bg);
+  }
+
+  .pcmp__tool--us {
+    color: var(--success-strong) !important;
+    border-radius: 10px 10px 0 0;
+  }
+
+  .pcmp__us {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--success);
+    white-space: nowrap;
+  }
+
+  .pcmp__rival {
+    color: var(--text3);
+    white-space: nowrap;
+  }
+
+  .pcmp__sources,
+  .ptier__note {
+    font-size: var(--fs-xs);
+    color: var(--text4);
+    line-height: 1.6;
+    margin: 16px 0 0;
+  }
+
+  .pcmp__sources a {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* regional tiers */
+  .ptier {
+    padding-block: 56px 24px;
+  }
+
+  .ptier__title {
+    margin: 14px 0 0;
+    max-width: 24ch;
+  }
+
+  .ptier__table td {
+    color: var(--text);
+    font-size: 15px;
   }
 
   .pincl {
