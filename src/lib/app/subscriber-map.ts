@@ -42,6 +42,11 @@ function fmtDate(iso?: string | null): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
 }
 
+/** Map a single live API subscriber into the CRM shape the screen renders. */
+export function toRichSubscriber(r: ApiSubscriber): RichSubscriber {
+  return toRichSubscribers([r])[0];
+}
+
 /** Map live API subscribers into the CRM shape the Subscribers screen renders. */
 export function toRichSubscribers(rows: ApiSubscriber[]): RichSubscriber[] {
   return rows.map((r) => {

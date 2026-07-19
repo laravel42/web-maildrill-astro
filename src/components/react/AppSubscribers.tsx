@@ -13,6 +13,8 @@ import {
   type SegRule,
 } from '@/lib/app/subscribers-data';
 import { lists as allLists } from '@/lib/app/mock-data';
+import { api, ApiError } from '@/lib/app/api';
+import { toRichSubscriber, type ApiSubscriber } from '@/lib/app/subscriber-map';
 import SubscriberEditorModal from './SubscriberEditorModal';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { ago, recHrs } from './shared/time';
@@ -37,7 +39,12 @@ const STATUS_CHIP: Record<SubscriberStatus, string> = {
 
 export default function AppSubscribers({ initial }: { initial?: RichSubscriber[] } = {}) {
   // Live data from the SSR page when provided (even if empty); otherwise fixtures.
-  const richSubscribers = initial !== undefined ? initial : mockSubscribers;
+  // `live` gates persistence: connected workspaces write through the BFF proxy;
+  // the fixture demo stays local-only so the marketing preview still works.
+  const live = initial !== undefined;
+  const [richSubscribers, setRichSubscribers] = useState<RichSubscriber[]>(
+    initial !== undefined ? initial : mockSubscribers,
+  );
   const [view, setView] = useState<ViewMode>('table');
   const [tab, setTab] = useState<'all' | SubscriberStatus>('all');
   const [query, setQuery] = useState('');
@@ -139,7 +146,7 @@ export default function AppSubscribers({ initial }: { initial?: RichSubscriber[]
     if (segSel.size === 0) return richSubscribers;
     const active = [...segSel].map((id) => segById.get(id)).filter(Boolean) as SavedSegment[];
     return richSubscribers.filter((s) => active.some((seg) => evalSeg(seg, s)));
-  }, [segSel, segById, tagStore]);
+  }, [segSel, segById, tagStore, richSubscribers]);
 
   const tabCounts = useMemo(() => {
     const c: Record<string, number> = { all: segFiltered.length };
@@ -252,6 +259,28 @@ export default function AppSubscribers({ initial }: { initial?: RichSubscriber[]
     setSelected(new Set());
   };
 
+  /* Delete selected — persists to the service in live mode, else local-only. */
+  const removeSelected = async () => {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    if (!live) {
+      setRichSubscribers((prev) => prev.filter((s) => !selected.has(s.id)));
+      showToast(`Removed ${ids.length} subscriber${ids.length === 1 ? '' : 's'}`);
+      setSelected(new Set());
+      return;
+    }
+    const results = await Promise.allSettled(ids.map((id) => api.del(`subscribers/${id}`)));
+    const okIds = new Set(ids.filter((_, i) => results[i].status === 'fulfilled'));
+    setRichSubscribers((prev) => prev.filter((s) => !okIds.has(s.id)));
+    const failed = ids.length - okIds.size;
+    showToast(
+      failed
+        ? `Removed ${okIds.size}, ${failed} failed`
+        : `Removed ${okIds.size} subscriber${okIds.size === 1 ? '' : 's'}`,
+    );
+    setSelected(new Set());
+  };
+
   const filterByTag = (tag: string) => {
     setTagFilter(tag);
     setOpenId(null);
@@ -277,9 +306,22 @@ export default function AppSubscribers({ initial }: { initial?: RichSubscriber[]
     else if (openId) setOpenId(null);
   });
 
-  const saveTags = (id: string, tags: string[]) => {
-    setTagStore((prev) => ({ ...prev, [id]: tags }));
-    showToast('Tags saved');
+  const saveTags = async (id: string, tags: string[]) => {
+    if (!live) {
+      setTagStore((prev) => ({ ...prev, [id]: tags }));
+      showToast('Tags saved');
+      return;
+    }
+    const sub = richSubscribers.find((s) => s.id === id);
+    try {
+      await api.patch(`subscribers/${id}`, {
+        attributes: { tags, ...(sub && sub.location !== '—' ? { location: sub.location } : {}) },
+      });
+      setRichSubscribers((prev) => prev.map((s) => (s.id === id ? { ...s, tags } : s)));
+      showToast('Tags saved');
+    } catch (e) {
+      showToast(e instanceof ApiError ? e.message : 'Could not save tags');
+    }
   };
 
   const saveSegment = (seg: SavedSegment) => {
@@ -610,7 +652,7 @@ export default function AppSubscribers({ initial }: { initial?: RichSubscriber[]
             <button
               type="button"
               className={`${styles.bulkbtn} ${styles.bulkbtnDanger}`}
-              onClick={() => bulk('Removed')}
+              onClick={() => void removeSelected()}
             >
               <Icon name="trash" size={13} />
               Remove
@@ -878,15 +920,46 @@ export default function AppSubscribers({ initial }: { initial?: RichSubscriber[]
           initialTags={subEditor.mode === 'edit' ? effTags(subEditor.sub) : []}
           lists={listNames}
           onClose={() => setSubEditor(null)}
-          onSave={(values) => {
-            const created = subEditor.mode === 'create';
-            if (subEditor.mode === 'edit') saveTags(subEditor.sub.id, values.tags);
-            setSubEditor(null);
-            showToast(
-              created
-                ? `${values.email} added`
-                : `${values.name || values.email} updated`,
-            );
+          onSave={async (values) => {
+            const editor = subEditor;
+            if (!live) {
+              if (editor.mode === 'edit') saveTags(editor.sub.id, values.tags);
+              setSubEditor(null);
+              showToast(
+                editor.mode === 'create'
+                  ? `${values.email} added`
+                  : `${values.name || values.email} updated`,
+              );
+              return;
+            }
+            try {
+              if (editor.mode === 'create') {
+                const created = await api.post<ApiSubscriber>('subscribers', {
+                  email: values.email,
+                  name: values.name || undefined,
+                  status: values.status,
+                  attributes: { tags: values.tags },
+                });
+                setRichSubscribers((prev) => [toRichSubscriber(created), ...prev]);
+                showToast(`${values.email} added`);
+              } else {
+                const updated = await api.patch<ApiSubscriber>(`subscribers/${editor.sub.id}`, {
+                  name: values.name || null,
+                  status: values.status,
+                  attributes: {
+                    tags: values.tags,
+                    ...(editor.sub.location !== '—' ? { location: editor.sub.location } : {}),
+                  },
+                });
+                setRichSubscribers((prev) =>
+                  prev.map((s) => (s.id === editor.sub.id ? toRichSubscriber(updated) : s)),
+                );
+                showToast(`${values.name || values.email} updated`);
+              }
+              setSubEditor(null);
+            } catch (e) {
+              showToast(e instanceof ApiError ? e.message : 'Could not save subscriber');
+            }
           }}
         />
       )}
