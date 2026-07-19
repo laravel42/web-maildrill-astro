@@ -36,6 +36,7 @@ export default function VisualEmailBuilder({ name, initialDocument, onClose, onS
   const [Builder, setBuilder] = useState<BuilderComponent | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [title, setTitle] = useState(name ?? '');
 
   // Client-only load of the editor + its stylesheet (kept out of SSR).
   useEffect(() => {
@@ -70,7 +71,7 @@ export default function VisualEmailBuilder({ name, initialDocument, onClose, onS
     try {
       const html = el.getHtml();
       const document = el.getDocument();
-      await onSave({ name: name?.trim() || 'Untitled', html, document });
+      await onSave({ name: title.trim() || 'Untitled', html, document });
     } finally {
       setSaving(false);
     }
@@ -82,7 +83,17 @@ export default function VisualEmailBuilder({ name, initialDocument, onClose, onS
         <button type="button" className="veb__close" onClick={onClose} aria-label="Close editor">
           <Icon name="x" size={16} />
         </button>
-        <span className="veb__title">{name?.trim() || 'Untitled template'}</span>
+        <input
+          className="veb__title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Untitled template"
+          aria-label="Template name"
+          spellCheck={false}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') e.currentTarget.blur();
+          }}
+        />
         <span className="veb__spacer" />
         <button
           type="button"
@@ -162,6 +173,26 @@ export default function VisualEmailBuilder({ name, initialDocument, onClose, onS
           font-weight: 700;
           font-size: 14px;
           color: var(--text, #0b0b0f);
+          font-family: inherit;
+          border: 1px solid transparent;
+          border-radius: 7px;
+          padding: 5px 8px;
+          margin-left: -2px;
+          background: transparent;
+          min-width: 140px;
+          max-width: 380px;
+        }
+        .veb__title::placeholder {
+          color: var(--muted, #9ca3af);
+          font-weight: 500;
+        }
+        .veb__title:hover {
+          border-color: var(--border, #ececf0);
+        }
+        .veb__title:focus {
+          outline: none;
+          border-color: #ff441f;
+          background: var(--surface, #fff);
         }
         .veb__spacer { flex: 1; }
         .veb__save {
