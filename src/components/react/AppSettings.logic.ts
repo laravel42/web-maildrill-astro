@@ -24,10 +24,10 @@ export const PANELS: Record<SectionKey, Panel> = {
     title: 'Workspace',
     desc: 'General information about your workspace.',
     fields: [
-      { key: 'ws_name', label: 'Workspace name', value: 'Maildrill' },
-      { key: 'ws_url', label: 'Workspace URL', value: 'maildrill.app/andrea' },
-      { key: 'ws_tz', label: 'Default timezone', value: 'Europe/Rome (GMT+1)' },
-      { key: 'ws_sender', label: 'Default sender', value: 'Maildrill Team <hello@maildrill.app>' },
+      { key: 'ws_name', label: 'Workspace name', value: '' },
+      { key: 'ws_url', label: 'Workspace URL', value: '' },
+      { key: 'ws_tz', label: 'Default timezone', value: '' },
+      { key: 'ws_sender', label: 'Default sender', value: '' },
     ],
   },
   usage: {
@@ -40,10 +40,10 @@ export const PANELS: Record<SectionKey, Panel> = {
     title: 'Branding',
     desc: 'How your emails and dashboard look.',
     fields: [
-      { key: 'br_name', label: 'Brand name', value: 'Maildrill' },
-      { key: 'br_logo', label: 'Logo', value: 'logo-maildrill.png' },
-      { key: 'br_accent', label: 'Accent color', value: '#4F46E5 · Purple', swatch: true },
-      { key: 'br_footer', label: 'Email footer', value: '© 2026 Maildrill. Unsubscribe anytime.' },
+      { key: 'br_name', label: 'Brand name', value: '' },
+      { key: 'br_logo', label: 'Logo', value: '' },
+      { key: 'br_accent', label: 'Accent color', value: '', swatch: true },
+      { key: 'br_footer', label: 'Email footer', value: '' },
     ],
   },
   domains: {
@@ -51,36 +51,17 @@ export const PANELS: Record<SectionKey, Panel> = {
     title: 'Sending domains',
     desc: 'Authenticate domains to improve deliverability.',
     cta: 'Add domain',
-    rows: [
-      {
-        title: 'maildrill.app',
-        sub: 'SPF, DKIM & DMARC verified',
-        badge: 'Verified',
-        tone: 'success',
-      },
-      {
-        title: 'mail.maildrill.app',
-        sub: 'Awaiting DNS propagation',
-        badge: 'Pending',
-        tone: 'warning',
-      },
-      {
-        title: 'promo.maildrill.app',
-        sub: 'DKIM record missing',
-        badge: 'Action needed',
-        tone: 'danger',
-      },
-    ],
+    rows: [],
   },
   smtp: {
     kind: 'form',
     title: 'SMTP relay',
     desc: 'Connect an external mail relay.',
     fields: [
-      { key: 'smtp_host', label: 'Host', value: 'smtp.maildrill.app' },
-      { key: 'smtp_port', label: 'Port', value: '587' },
-      { key: 'smtp_user', label: 'Username', value: 'relay@maildrill.app' },
-      { key: 'smtp_pass', label: 'Password', value: 'maildrill-relay-2026', type: 'password' },
+      { key: 'smtp_host', label: 'Host', value: '' },
+      { key: 'smtp_port', label: 'Port', value: '' },
+      { key: 'smtp_user', label: 'Username', value: '' },
+      { key: 'smtp_pass', label: 'Password', value: '', type: 'password' },
     ],
   },
   billing: {
@@ -88,37 +69,14 @@ export const PANELS: Record<SectionKey, Panel> = {
     title: 'Billing',
     desc: 'Manage your plan and payment method.',
     cta: 'Change plan',
-    rows: [
-      { title: 'Growth plan', sub: '$49 / month · renews Aug 1', badge: 'Active', tone: 'success' },
-      { title: 'Email credits', sub: '8,420 of 25,000 used', badge: '43% left', tone: 'accent' },
-      { title: 'Payment method', sub: 'Visa ending 4242', badge: 'Default', tone: 'neutral' },
-    ],
+    rows: [],
   },
   api: {
     kind: 'table',
     title: 'API keys',
     desc: 'Keys for programmatic access to Maildrill.',
     cta: 'Create key',
-    rows: [
-      {
-        title: 'Production',
-        sub: 'md_live_••••7f2a · created Jan 2025',
-        badge: 'Live',
-        tone: 'success',
-      },
-      {
-        title: 'Development',
-        sub: 'md_test_••••1c9d · created Feb 2025',
-        badge: 'Test',
-        tone: 'accent',
-      },
-      {
-        title: 'CI pipeline',
-        sub: 'md_live_••••44be · last used 3d ago',
-        badge: 'Live',
-        tone: 'success',
-      },
-    ],
+    rows: [],
   },
   users: {
     kind: 'table',
@@ -132,12 +90,7 @@ export const PANELS: Record<SectionKey, Panel> = {
     title: 'Integrations',
     desc: 'Connect Maildrill to your other tools.',
     cta: 'Browse all',
-    rows: [
-      { title: 'Shopify', sub: 'Sync customers & orders', badge: 'Connected', tone: 'success' },
-      { title: 'Stripe', sub: 'Import paying customers', badge: 'Connected', tone: 'success' },
-      { title: 'Zapier', sub: '5,000+ app automations', badge: 'Connect', tone: 'neutral' },
-      { title: 'Slack', sub: 'Campaign notifications', badge: 'Connect', tone: 'neutral' },
-    ],
+    rows: [],
   },
   ai: {
     kind: 'toggles',
@@ -164,12 +117,7 @@ export const PANELS: Record<SectionKey, Panel> = {
 };
 
 /* ---------------------------- usage fixtures ---------------------------- */
-export const USAGE: { channel: ChannelType; used: number; total: number }[] = [
-  { channel: 'email', used: 8420, total: 20000 },
-  { channel: 'sms', used: 2860, total: 4000 },
-  { channel: 'whatsapp', used: 940, total: 1000 },
-  { channel: 'voice', used: 260, total: 480 },
-];
+export const USAGE: { channel: ChannelType; used: number; total: number }[] = [];
 export const fmt = (n: number) => n.toLocaleString('en-US');
 export const totalUsed = USAGE.reduce((s, u) => s + u.used, 0);
 export const totalCap = USAGE.reduce((s, u) => s + u.total, 0);
@@ -181,44 +129,8 @@ export const roleTone: Record<Role, Tone> = {
   Viewer: 'neutral',
 };
 
-export const ROSTER: Member[] = [
-  {
-    email: 'andrea@example.com',
-    name: 'Andrea Rossi',
-    role: 'Owner',
-    title: 'Founder & CEO',
-    avBg: '#ede9fe',
-    avColor: '#5b21b6',
-    init: 'AR',
-    joined: 'Jan 3, 2025',
-    lastActive: 'Active now',
-    campaigns: 42,
-  },
-  {
-    email: 'james@example.com',
-    name: 'James Carter',
-    role: 'Editor',
-    title: 'Marketing Lead',
-    avBg: 'var(--accent-tint)',
-    avColor: 'var(--accent)',
-    init: 'JC',
-    joined: 'Mar 15, 2025',
-    lastActive: '2 hours ago',
-    campaigns: 18,
-  },
-  {
-    email: 'mei@example.com',
-    name: 'Mei Tanaka',
-    role: 'Viewer',
-    title: 'Data Analyst',
-    avBg: '#f1f0eb',
-    avColor: '#78756c',
-    init: 'MT',
-    joined: 'Jun 2, 2025',
-    lastActive: 'Yesterday',
-    campaigns: 0,
-  },
-];
+// No seed team members — the roster loads from the service once wired.
+export const ROSTER: Member[] = [];
 
 export const ROLE_PERMS: Record<Role, string[]> = {
   Owner: [

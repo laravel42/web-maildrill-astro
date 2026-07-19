@@ -1,4 +1,3 @@
-import { currentUser } from '@/lib/app/mock-data';
 import Icon from './Icon';
 import { CHANNEL } from './shared/channels';
 import { ago } from './shared/time';
@@ -20,7 +19,7 @@ export default function AppDashboard() {
       {/* greeting */}
       <div className={styles.greet}>
         <div>
-          <h1 className="screen__h1">Good evening, {currentUser.name} 👋</h1>
+          <h1 className="screen__h1">Good evening 👋</h1>
           <p className="screen__sub">Here's what's happening with your workspace today.</p>
         </div>
         <div className={styles.actions}>
@@ -146,8 +145,8 @@ export default function AppDashboard() {
           <div className={styles.sparkBody}>
             <div className={styles.sparkStat}>
               <div className={styles.sparkLbl}>Open rate</div>
-              <div className={`tnum ${styles.sparkVal}`}>43%</div>
-              <div className={`tnum ${styles.sparkDelta}`}>↑ 4%</div>
+              <div className={`tnum ${styles.sparkVal}`}>—</div>
+              <div className={`tnum ${styles.sparkDelta}`} />
             </div>
             <svg
               width="100%"

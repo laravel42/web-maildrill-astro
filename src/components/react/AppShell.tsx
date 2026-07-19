@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { appNav, appSettingsNav } from '@/config/navigation';
-import { currentUser } from '@/lib/app/mock-data';
 import Icon from './Icon';
 import type { IconName } from '@/lib/icons';
 import type { Props } from './AppShell.types';
@@ -8,7 +7,10 @@ import { COMMANDS } from './AppShell.logic';
 import styles from './AppShell.module.css';
 import { signOut } from 'auth-astro/client';
 
-export default function AppShell({ currentPath, title, children, userEmail }: Props) {
+export default function AppShell({ currentPath, title, children, userEmail, userName }: Props) {
+  // Display identity from the real session (no mock user).
+  const displayName = userName?.trim() || (userEmail ? userEmail.split('@')[0] : 'Your workspace');
+  const avatarInitial = displayName.charAt(0).toUpperCase();
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [cmdOpen, setCmdOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -130,11 +132,11 @@ export default function AppShell({ currentPath, title, children, userEmail }: Pr
           </span>
           <div className={styles.ashsbUser}>
             <span className={styles.ashsbAvatar} aria-hidden="true">
-              {currentUser.name.charAt(0)}
+              {avatarInitial}
             </span>
             <span className={styles.ashsbUsermeta}>
-              <span className={styles.ashsbUsername}>{currentUser.name} Rossi</span>
-              <span className={styles.ashsbUseremail}>{userEmail ?? currentUser.email}</span>
+              <span className={styles.ashsbUsername}>{displayName}</span>
+              <span className={styles.ashsbUseremail}>{userEmail ?? ''}</span>
             </span>
             <button
               type="button"

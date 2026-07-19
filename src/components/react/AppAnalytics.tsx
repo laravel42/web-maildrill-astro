@@ -56,6 +56,26 @@ export default function AppAnalytics() {
   /* dim non-selected channels when a specific channel is focused */
   const dim = (ch: ChannelType): number => (channel !== 'all' && ch !== channel ? 0.32 : 1);
 
+  // Empty state until analytics are wired to real send/engagement data. Guards
+  // the charts below, which assume a non-empty series.
+  if (HERO_SERIES.length === 0) {
+    return (
+      <div className={`screen ${styles.an}`} style={{ animation: 'fade .3s ease' }}>
+        <div className="screen__head">
+          <div>
+            <h1 className="screen__h1">Analytics</h1>
+            <p className="screen__sub">Delivery and engagement across all channels.</p>
+          </div>
+        </div>
+        <div className="acrd" style={{ padding: '48px 24px', textAlign: 'center' }}>
+          <p className="screen__sub" style={{ margin: 0 }}>
+            No analytics yet — charts appear here once your campaigns start sending.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`screen ${styles.an}`} style={{ animation: 'fade .3s ease' }}>
       {/* header + selectors */}

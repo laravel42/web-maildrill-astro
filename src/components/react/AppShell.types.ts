@@ -6,6 +6,7 @@ export type Props = {
   title: string;
   children: ReactNode;
   userEmail?: string | null;
+  userName?: string | null;
 };
 
 export type Cmd = { label: string; hint: 'Navigate' | 'Action'; href?: string; icon: IconName };

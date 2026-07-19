@@ -1,20 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { listCampaigns, mockContactSubmit, mockSignIn } from '@/lib/app/services';
+import { mockContactSubmit, mockResetPassword, mockSignUp } from '@/lib/app/services';
 
-describe('mock app services', () => {
-  it('filters campaigns by status and channel', async () => {
-    const sentEmail = await listCampaigns({ status: 'sent', channel: 'email' });
-    expect(sentEmail.length).toBeGreaterThan(0);
-    expect(sentEmail.every((c) => c.status === 'sent' && c.channel === 'email')).toBe(true);
+describe('marketing form services', () => {
+  it('accepts sign-up submissions', async () => {
+    await expect(
+      mockSignUp({ firstName: 'A', lastName: 'B', email: 'a@b.com', password: 'password' }),
+    ).resolves.toEqual({ ok: true });
   });
 
-  it('supports search queries', async () => {
-    const results = await listCampaigns({ query: 'spring' });
-    expect(results.some((c) => c.name.toLowerCase().includes('spring'))).toBe(true);
+  it('accepts password reset requests', async () => {
+    await expect(mockResetPassword('a@b.com')).resolves.toEqual({ ok: true });
   });
 
-  it('accepts placeholder auth and contact submits', async () => {
-    await expect(mockSignIn('a@b.com', 'password')).resolves.toEqual({ ok: true });
+  it('accepts contact submissions', async () => {
     await expect(
       mockContactSubmit({
         firstName: 'A',
