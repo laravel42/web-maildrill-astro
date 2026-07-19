@@ -8,6 +8,7 @@ interface ImportMetaEnv {
   readonly AUTH_SECRET?: string;
   readonly API_BASE_URL?: string;
   readonly JWT_SECRET?: string;
+  readonly EB_BACKEND_URL?: string;
 }
 
 interface ImportMeta {

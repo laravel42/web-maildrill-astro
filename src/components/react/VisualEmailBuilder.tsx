@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { EmailBuilderProps, EmailBuilderRef, TEditorConfiguration } from 'email-builder-online';
+import { builderGenerateTemplate, builderTextAction } from '@/lib/app/services';
 import Icon from './Icon';
 
 /**
@@ -112,7 +113,9 @@ export default function VisualEmailBuilder({ name, initialDocument, onClose, onS
             galleryImages
             templateSaving
             componentsStorage="local"
-            enableAI={false}
+            enableAI
+            onAIGenerateTemplate={builderGenerateTemplate}
+            onAIRequest={builderTextAction}
           />
         ) : (
           <div className="veb__state">
