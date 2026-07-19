@@ -12,7 +12,7 @@ import {
 import Icon from './Icon';
 import EmailBuilder from './EmailBuilder';
 import VisualEmailBuilder from './VisualEmailBuilder';
-import { CHANNEL } from './shared/channels';
+import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { useToast } from './shared/useToast';
 import { CHANNEL_TABS, VIEWS, ASC_FIRST, PAGE_SIZE } from './AppTemplates.logic';
 import type { ViewKey, SortKey } from './AppTemplates.types';
@@ -192,6 +192,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
   const [opensSel, setOpensSel] = useState<Set<string>>(new Set());
   const [clicksSel, setClicksSel] = useState<Set<string>>(new Set());
   const [openFilter, setOpenFilter] = useState<'cat' | 'opens' | 'clicks' | null>(null);
+  const [newOpen, setNewOpen] = useState(false);
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updated', dir: -1 });
   const [favIds, setFavIds] = useState<Set<string>>(
     () => new Set((initial ?? galleryTemplates).filter((t) => t.favorite).map((t) => t.id)),
@@ -373,14 +374,68 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           <h1 className="screen__h1">Templates</h1>
           <p className="screen__sub">Reusable email designs for your campaigns.</p>
         </div>
-        <button
-          type="button"
-          className="pbtn"
-          onClick={() => setBuilder({ channel: 'email', name: null })}
-        >
-          <Icon name="plus" size={15} stroke={2.2} />
-          New template
-        </button>
+        <div className={styles.coldrop}>
+          <button
+            type="button"
+            className="pbtn"
+            aria-haspopup="menu"
+            aria-expanded={newOpen}
+            onClick={() => setNewOpen((v) => !v)}
+          >
+            <Icon name="plus" size={15} stroke={2.2} />
+            New template
+            <Icon name="chevron-down" size={13} />
+          </button>
+          {newOpen && (
+            <>
+              <button
+                type="button"
+                className={styles.colscrim}
+                aria-label="Close menu"
+                onClick={() => setNewOpen(false)}
+              />
+              <div
+                className={styles.colpop}
+                role="menu"
+                aria-label="New template channel"
+                style={{ left: 'auto', right: 0, animation: 'pop .14s ease' }}
+              >
+                {CHANNEL_ORDER.map((ch) => {
+                  const m = CHANNEL[ch];
+                  return (
+                    <button
+                      key={ch}
+                      type="button"
+                      role="menuitem"
+                      className={styles.colopt}
+                      onClick={() => {
+                        setNewOpen(false);
+                        setBuilder({ channel: ch, name: null });
+                      }}
+                    >
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 22,
+                          height: 22,
+                          borderRadius: 6,
+                          flex: 'none',
+                          background: m.tint,
+                          color: m.color,
+                        }}
+                      >
+                        <Icon name={m.icon} size={13} />
+                      </span>
+                      {m.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       <div className={`acrd ${styles.card}`}>
