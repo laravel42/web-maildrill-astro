@@ -6,8 +6,9 @@ import type { IconName } from '@/lib/icons';
 import type { Props } from './AppShell.types';
 import { COMMANDS } from './AppShell.logic';
 import styles from './AppShell.module.css';
+import { signOut } from 'auth-astro/client';
 
-export default function AppShell({ currentPath, title, children }: Props) {
+export default function AppShell({ currentPath, title, children, userEmail }: Props) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [cmdOpen, setCmdOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -133,9 +134,18 @@ export default function AppShell({ currentPath, title, children }: Props) {
             </span>
             <span className={styles.ashsbUsermeta}>
               <span className={styles.ashsbUsername}>{currentUser.name} Rossi</span>
-              <span className={styles.ashsbUseremail}>{currentUser.email}</span>
+              <span className={styles.ashsbUseremail}>{userEmail ?? currentUser.email}</span>
             </span>
-            <Icon name="chevron-down" size={14} stroke={2} className={styles.ashsbUserchev} />
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              title="Log out"
+              aria-label="Log out"
+              className={styles.ashsbUserchev}
+              style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', color: 'inherit' }}
+            >
+              <Icon name="chevron-down" size={14} stroke={2} />
+            </button>
           </div>
         </div>
       </aside>

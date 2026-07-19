@@ -3,7 +3,7 @@ import Icon from './Icon';
 import type { IconName } from '@/lib/icons';
 import type { ChannelType, SubscriberStatus } from '@/types/app';
 import {
-  richSubscribers,
+  richSubscribers as mockSubscribers,
   BUILTIN_SEGMENTS,
   SEG_FIELDS,
   SEG_FIELD_LIST,
@@ -35,7 +35,9 @@ const STATUS_CHIP: Record<SubscriberStatus, string> = {
   bounced: styles.chipStBounced,
 };
 
-export default function AppSubscribers() {
+export default function AppSubscribers({ initial }: { initial?: RichSubscriber[] } = {}) {
+  // Live data from the SSR page when provided (even if empty); otherwise fixtures.
+  const richSubscribers = initial !== undefined ? initial : mockSubscribers;
   const [view, setView] = useState<ViewMode>('table');
   const [tab, setTab] = useState<'all' | SubscriberStatus>('all');
   const [query, setQuery] = useState('');

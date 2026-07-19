@@ -10,6 +10,7 @@ interface Props {
 }
 
 const { title, seo } = Astro.props;
+const userEmail = Astro.locals.session?.user?.email ?? null;
 const pageSeo: PageSeo = seo ?? {
   title: `${title} · Workspace`,
   description: 'Maildrill campaign workspace.',
@@ -27,7 +28,7 @@ const pageSeo: PageSeo = seo ?? {
       /* no-op */
     }
   </script>
-  <AppShell client:idle currentPath={Astro.url.pathname} title={title}>
+  <AppShell client:idle currentPath={Astro.url.pathname} title={title} userEmail={userEmail}>
     <slot />
   </AppShell>
 </BaseLayout>
