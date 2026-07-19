@@ -58,7 +58,7 @@ export default function AppShell({ currentPath, title, children, userEmail, user
   }, [query]);
 
   const isActive = (href: string) =>
-    href === '/app' ? currentPath === '/app' : currentPath.startsWith(href);
+    href === '/dashboard' ? currentPath === '/dashboard' : currentPath.startsWith(href);
 
   const navItem = (item: { label: string; href: string; icon: IconName }) => {
     const active = isActive(item.href);
@@ -93,7 +93,7 @@ export default function AppShell({ currentPath, title, children, userEmail, user
         className={`${styles.ashsb}${mobileNav ? ` ${styles.isOpen}` : ''}`}
         aria-label="Workspace"
       >
-        <a href="/app" className={styles.ashsbBrand} aria-label="Maildrill workspace">
+        <a href="/dashboard" className={styles.ashsbBrand} aria-label="Maildrill workspace">
           <svg viewBox="0 0 30 26.76" width="23" height="20" aria-hidden="true">
             <path
               fill="#ff441f"

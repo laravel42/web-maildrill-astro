@@ -26,7 +26,7 @@ export const routes = {
   },
   app: {
     root: '/app',
-    dashboard: '/app',
+    dashboard: '/dashboard',
     campaigns: '/app/campaigns',
     templates: '/app/templates',
     lists: '/app/lists',

@@ -96,7 +96,7 @@ const code = Astro.url.searchParams.get('code') ?? '';
     </div>
     <script>
       // Drive the credentials callback directly so we control the outcome:
-      // success -> /app, failure -> branded /login (never Auth.js's default page).
+      // success -> /dashboard, failure -> branded /login (never Auth.js's default page).
       const el = document.getElementById('msg');
       const email = el?.getAttribute('data-email') ?? '';
       const code = el?.getAttribute('data-code') ?? '';
@@ -115,12 +115,18 @@ const code = Astro.url.searchParams.get('code') ?? '';
               'Content-Type': 'application/x-www-form-urlencoded',
               'X-Auth-Return-Redirect': '1',
             },
-            body: new URLSearchParams({ csrfToken, email, code, callbackUrl: '/app', json: 'true' }),
+            body: new URLSearchParams({
+              csrfToken,
+              email,
+              code,
+              callbackUrl: '/dashboard',
+              json: 'true',
+            }),
           });
           const data = await res.json().catch(() => ({}));
           const url = typeof data.url === 'string' ? data.url : '';
-          if (res.ok && url.includes('/app') && !url.includes('error')) {
-            window.location.replace('/app');
+          if (res.ok && url.includes('/dashboard') && !url.includes('error')) {
+            window.location.replace('/dashboard');
           } else {
             window.location.replace('/login?error=expired');
           }

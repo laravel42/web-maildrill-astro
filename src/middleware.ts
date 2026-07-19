@@ -1,7 +1,7 @@
 import { defineMiddleware } from 'astro:middleware';
 import { getSession } from 'auth-astro/server';
 
-const PROTECTED = /^\/app(\/|$)/;
+const PROTECTED = /^\/(app|dashboard)(\/|$)/;
 
 export const onRequest = defineMiddleware(async (context, next) => {
   // Prerendered (static) routes have no real request — skip session work so we

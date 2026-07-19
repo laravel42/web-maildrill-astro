@@ -108,14 +108,14 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         email: sentTo,
         code: clean,
         redirect: false,
-        callbackUrl: '/app',
+        callbackUrl: '/dashboard',
       });
       if (res !== undefined) {
         setError('That code is invalid or expired.');
         setStatus('error');
         return;
       }
-      // success — navigation to /app is already underway
+      // success — navigation to /dashboard is already underway
     } catch {
       setError('Something went wrong. Try again.');
       setStatus('error');

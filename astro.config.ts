@@ -30,6 +30,7 @@ export default defineConfig({
     sitemap({
       filter: (page) =>
         !page.includes('/app/') &&
+        !page.includes('/dashboard') &&
         !page.includes('/login') &&
         !page.includes('/signup') &&
         !page.includes('/forgot-password'),
@@ -45,5 +46,7 @@ export default defineConfig({
   redirects: {
     '/privacy-policy': '/legal/privacy',
     '/terms-of-service': '/legal/terms',
+    // Dashboard moved to /dashboard; keep the old workspace root working.
+    '/app': '/dashboard',
   },
 });
