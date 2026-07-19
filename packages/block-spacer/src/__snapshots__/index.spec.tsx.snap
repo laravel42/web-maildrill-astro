@@ -1,0 +1,38 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Spacer renders with default values 1`] = `
+<DocumentFragment>
+  <table
+    class="bykB1o"
+    style="width: 100%; min-width: 100%;"
+    width="100%"
+  >
+    <tbody>
+      <tr
+        class="itbykB1o"
+      >
+        <td />
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;
+
+exports[`Spacer renders with props 1`] = `
+<DocumentFragment>
+  <table
+    class="bykB1o"
+    style="width: 100%; min-width: 100%;"
+    width="100%"
+  >
+    <tbody>
+      <tr
+        class="itbykB1o"
+        style="height: 10px;"
+      >
+        <td />
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;

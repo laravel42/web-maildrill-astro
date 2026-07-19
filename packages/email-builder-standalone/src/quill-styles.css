@@ -1,0 +1,138 @@
+/* Estilos personalizados para Quill en el web component */
+.ql-container {
+  font-family: inherit;
+  font-size: inherit;
+  height: auto;
+  min-height: 200px;
+}
+
+.ql-editor {
+  padding: 12px 15px;
+  min-height: 200px;
+}
+
+.ql-toolbar {
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.ql-container {
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+/* Asegurarse de que los iconos de Quill se muestren correctamente */
+
+.ql-snow .ql-fill {
+  fill: currentColor;
+}
+
+.ql-snow .ql-picker {
+  color: #495057;
+}
+
+.ql-snow .ql-picker-options {
+  background-color: white;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Asegurarse de que los menús desplegables de Quill se muestren correctamente */
+.ql-snow .ql-picker-label {
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}
+
+.ql-snow .ql-picker-label:hover {
+  border-color: #80bdff;
+}
+
+.ql-snow .ql-picker-label.ql-active {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Asegurarse de que los botones de Quill se muestren correctamente */
+.ql-snow .ql-toolbar button {
+  width: 28px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.ql-snow .ql-toolbar button:hover {
+  background-color: #e9ecef;
+}
+
+.ql-snow .ql-toolbar button.ql-active {
+  background-color: #e9ecef;
+  /* color via MUI GlobalStyles */
+}
+
+/* Asegurarse de que los selectores de color de Quill se muestren correctamente */
+.ql-snow .ql-picker.ql-color-picker .ql-picker-label,
+.ql-snow .ql-picker.ql-background .ql-picker-label {
+  width: 28px;
+  height: 24px;
+}
+
+/* Asegurarse de que los iconos de emoji se muestren correctamente */
+.emoji-mart {
+  z-index: 1000;
+}
+
+/* Asegurarse de que los selectores de fuente se muestren correctamente */
+.ql-snow .ql-picker.ql-font .ql-picker-label::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item::before {
+  content: 'Font';
+}
+
+/* Asegurarse de que los selectores de tamaño se muestren correctamente */
+.ql-snow .ql-picker.ql-size .ql-picker-label::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item::before {
+  content: 'Size';
+}
+
+/* Asegurarse de que los selectores de encabezado se muestren correctamente */
+.ql-snow .ql-picker.ql-header .ql-picker-label::before,
+.ql-snow .ql-picker.ql-header .ql-picker-item::before {
+  content: 'Heading';
+}
+
+/* Asegurarse de que los selectores de alineación se muestren correctamente */
+.ql-snow .ql-picker.ql-align .ql-picker-label::before,
+.ql-snow .ql-picker.ql-align .ql-picker-item::before {
+  content: 'Align';
+}
+
+/* Asegurarse de que los selectores de lista se muestren correctamente */
+.ql-snow .ql-picker.ql-list .ql-picker-label::before,
+.ql-snow .ql-picker.ql-list .ql-picker-item::before {
+  content: 'List';
+}
+
+/* Asegurarse de que los selectores de indentación se muestren correctamente */
+.ql-snow .ql-picker.ql-indent .ql-picker-label::before,
+.ql-snow .ql-picker.ql-indent .ql-picker-item::before {
+  content: 'Indent';
+}
+
+/* Asegurarse de que los selectores de dirección se muestren correctamente */
+.ql-snow .ql-picker.ql-direction .ql-picker-label::before,
+.ql-snow .ql-picker.ql-direction .ql-picker-item::before {
+  content: 'Direction';
+}
+
+/* Asegurarse de que los selectores de código se muestren correctamente */
+.ql-snow .ql-picker.ql-code-block .ql-picker-label::before,
+.ql-snow .ql-picker.ql-code-block .ql-picker-item::before {
+  content: 'Code Block';
+}
+
+/* Asegurarse de que los selectores de limpieza se muestren correctamente */
+.ql-snow .ql-picker.ql-clean .ql-picker-label::before,
+.ql-snow .ql-picker.ql-clean .ql-picker-item::before {
+  content: 'Clean';
+}

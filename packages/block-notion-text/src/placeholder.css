@@ -1,0 +1,18 @@
+/* Estilos para el placeholder y comportamiento del editor Tiptap (solo en modo edición) */
+
+/* Only show placeholder on the very first paragraph when the whole editor is empty */
+.notion-text-inline-editor .tiptap p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.notion-text-inline-editor .tiptap {
+  outline: none;
+}
+
+.notion-text-inline-editor .tiptap:focus {
+  outline: none;
+}

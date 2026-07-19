@@ -1,0 +1,12 @@
+/* Heredar estilos del contenedor en modo edición (detalle en tiptap-content.css) */
+.notion-text-inline-editor {
+  position: relative;
+}
+
+.notion-text-inline-editor .ProseMirror {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}

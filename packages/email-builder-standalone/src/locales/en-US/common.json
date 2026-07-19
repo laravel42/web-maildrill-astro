@@ -1,0 +1,78 @@
+{
+  "language": "English (US)",
+  "generic": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete"
+  },
+  "editor": {
+    "notionTextPlaceholder": "Write here",
+    "editing": "Editing",
+    "dragBlockHandle": "Drag to reorder block",
+    "addBlock": "Add block below",
+    "addBlockAtEnd": "Add block",
+    "cloneBlock": "Duplicate block",
+    "emptyCanvasDropHint": "Drag a block here from the library",
+    "emptyCanvasPaletteHint": "Press {{key}} to open the command palette",
+    "emptyCanvasShortcuts": {
+      "undo": "Undo",
+      "redo": "Redo",
+      "openLibrary": "Open library",
+      "insertBlock": "Insert block 1–8",
+      "insertText": "Insert text block",
+      "mobile": "Toggle mobile preview",
+      "preview": "Preview"
+    }
+  },
+  "commandPalette": {
+    "placeholder": "Type a command or search…",
+    "empty": "No results",
+    "open": "Open command palette",
+    "title": "Command palette",
+    "group": {
+      "insert": "Insert block",
+      "view": "View",
+      "library": "Library",
+      "edit": "Edit"
+    },
+    "action": {
+      "tabEditor": "Go to editor",
+      "tabPreview": "Go to preview",
+      "tabHtml": "Show HTML output",
+      "tabJson": "Show JSON output",
+      "screenDesktop": "Desktop preview",
+      "screenMobile": "Mobile preview",
+      "openLibrary": "Open components library",
+      "toggleInspector": "Expand / compact inspector",
+      "undo": "Undo",
+      "redo": "Redo"
+    }
+  },
+  "bubbleMenu": {
+    "bold": "Bold",
+    "italic": "Italic",
+    "underline": "Underline",
+    "strikethrough": "Strikethrough",
+    "lists": "Lists",
+    "bulletList": "Bullet List",
+    "numberedList": "Numbered List",
+    "textAlign": "Text Align",
+    "alignLeft": "Align Left",
+    "alignCenter": "Align Center",
+    "alignRight": "Align Right",
+    "alignJustify": "Align Justify",
+    "textColor": "Text Color",
+    "backgroundColor": "Background Color",
+    "link": "Link",
+    "insertMergeTag": "Insert Merge Tag",
+    "insertEmoji": "Insert Emoji",
+    "aiFeatures": "AI Features",
+    "clearFormatting": "Clear Formatting"
+  },
+  "linkEditor": {
+    "urlLabel": "URL",
+    "urlPlaceholder": "https://example.com",
+    "invalidUrl": "Enter a valid URL"
+  }
+}

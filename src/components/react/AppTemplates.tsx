@@ -18,7 +18,7 @@ import { CHANNEL_TABS, VIEWS, ASC_FIRST, PAGE_SIZE } from './AppTemplates.logic'
 import type { ViewKey, SortKey } from './AppTemplates.types';
 import { api, ApiError } from '@/lib/app/api';
 import { toGalleryTemplate, type ApiTemplate } from '@/lib/app/template-map';
-import type { TEditorConfiguration } from 'email-builder-online';
+import type { TEditorConfiguration } from 'email-builder-standalone';
 import styles from './AppTemplates.module.css';
 
 /* --------------------------------------------------------- small pieces ---- */

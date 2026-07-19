@@ -1,6 +1,17 @@
+# The email editor client is vendored here and compiled from source by
+# Vite, rather than consumed as the prebuilt `email-builder-online` npm
+# package. See packages/email-builder-standalone.
+packages:
+  - 'packages/*'
+
 allowBuilds:
   esbuild: true
   sharp: true
+  # Pulled in transitively by the vendored editor packages. Their native build
+  # steps aren't needed: the host app compiles the editor's source with its own
+  # Vite/esbuild pipeline.
+  '@parcel/watcher': false
+  '@swc/core': false
 # eslint-plugin-jsx-a11y@6.10.2 (its latest) hasn't widened its `eslint` peer
 # range to include v10, but eslint-plugin-astro@3 requires exactly this pairing
 # and it lints cleanly against ESLint 10. Declare the combination allowed.

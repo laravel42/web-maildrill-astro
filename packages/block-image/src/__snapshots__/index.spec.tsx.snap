@@ -1,0 +1,206 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`block-image renders with default values 1`] = `
+<DocumentFragment>
+  <table
+    border="0"
+    cellpadding="0"
+    cellspacing="0"
+    class="bykB1o"
+    style="width: 100%; min-width: 100%; border-radius: initial; overflow: visible; border-collapse: initial; table-layout: fixed;"
+    width="100%"
+  >
+    <tbody>
+      <tr
+        class="tbykB1o"
+        style="height: 0px;"
+      >
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr>
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          class="abykB1o"
+          style="width: 100%;"
+        >
+          <img
+            alt=""
+            style="height: auto; outline: none; text-decoration: none; vertical-align: middle; display: inline-block; max-width: 100%; opacity: 1; transition: opacity 0.2s ease-in-out;"
+          />
+        </td>
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr
+        class="bbykB1o"
+        style="height: 0px;"
+      >
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;
+
+exports[`block-image renders with height + objectFit contain 1`] = `
+<DocumentFragment>
+  <table
+    border="0"
+    cellpadding="0"
+    cellspacing="0"
+    class="bblvOXY"
+    style="width: 100%; min-width: 100%; border-radius: initial; overflow: visible; border-collapse: initial; table-layout: fixed;"
+    width="100%"
+  >
+    <tbody>
+      <tr
+        class="tbblvOXY"
+        style="height: 0px;"
+      >
+        <td
+          class="lbblvOXY"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rbblvOXY"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr>
+        <td
+          class="lbblvOXY"
+          style="width: 0px;"
+        />
+        <td
+          class="abblvOXY"
+          style="width: 100%;"
+        >
+          <img
+            alt="dog"
+            height="320"
+            src="https://example.com/dog.jpg"
+            style="height: 320px; object-fit: contain; object-position: top left; outline: none; text-decoration: none; vertical-align: middle; display: inline-block; max-width: 100%; opacity: 1; transition: opacity 0.2s ease-in-out;"
+          />
+        </td>
+        <td
+          class="rbblvOXY"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr
+        class="bbblvOXY"
+        style="height: 0px;"
+      >
+        <td
+          class="lbblvOXY"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rbblvOXY"
+          style="width: 0px;"
+        />
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;
+
+exports[`block-image renders with height + objectFit cover 1`] = `
+<DocumentFragment>
+  <table
+    border="0"
+    cellpadding="0"
+    cellspacing="0"
+    class="bcwDRxI"
+    style="width: 100%; min-width: 100%; border-radius: initial; overflow: visible; border-collapse: initial; table-layout: fixed;"
+    width="100%"
+  >
+    <tbody>
+      <tr
+        class="tbcwDRxI"
+        style="height: 0px;"
+      >
+        <td
+          class="lbcwDRxI"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rbcwDRxI"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr>
+        <td
+          class="lbcwDRxI"
+          style="width: 0px;"
+        />
+        <td
+          class="abcwDRxI"
+          style="width: 100%;"
+        >
+          <img
+            alt="cat"
+            height="200"
+            src="https://example.com/cat.jpg"
+            style="height: 200px; object-fit: cover; object-position: center; outline: none; text-decoration: none; vertical-align: middle; display: inline-block; max-width: 100%; opacity: 1; transition: opacity 0.2s ease-in-out;"
+          />
+        </td>
+        <td
+          class="rbcwDRxI"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr
+        class="bbcwDRxI"
+        style="height: 0px;"
+      >
+        <td
+          class="lbcwDRxI"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rbcwDRxI"
+          style="width: 0px;"
+        />
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;

@@ -1,0 +1,78 @@
+{
+  "language": "Español (Latinoamérica)",
+  "generic": {
+    "confirm": "Confirmar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar"
+  },
+  "editor": {
+    "notionTextPlaceholder": "Escribe aquí",
+    "editing": "Editando",
+    "dragBlockHandle": "Arrastrar para reordenar el bloque",
+    "addBlock": "Añadir bloque abajo",
+    "addBlockAtEnd": "Añadir bloque",
+    "cloneBlock": "Duplicar bloque",
+    "emptyCanvasDropHint": "Arrastra un bloque aquí desde la biblioteca",
+    "emptyCanvasPaletteHint": "Presiona {{key}} para abrir el panel de comandos",
+    "emptyCanvasShortcuts": {
+      "undo": "Deshacer",
+      "redo": "Rehacer",
+      "openLibrary": "Abrir biblioteca",
+      "insertBlock": "Insertar bloque 1–8",
+      "insertText": "Insertar bloque de texto",
+      "mobile": "Vista móvil",
+      "preview": "Vista previa"
+    }
+  },
+  "commandPalette": {
+    "placeholder": "Escribe un comando o busca…",
+    "empty": "Sin resultados",
+    "open": "Abrir la paleta de comandos",
+    "title": "Paleta de comandos",
+    "group": {
+      "insert": "Insertar bloque",
+      "view": "Vista",
+      "library": "Biblioteca",
+      "edit": "Editar"
+    },
+    "action": {
+      "tabEditor": "Ir al editor",
+      "tabPreview": "Ir a la vista previa",
+      "tabHtml": "Mostrar salida HTML",
+      "tabJson": "Mostrar salida JSON",
+      "screenDesktop": "Vista de escritorio",
+      "screenMobile": "Vista móvil",
+      "openLibrary": "Abrir biblioteca de componentes",
+      "toggleInspector": "Expandir / compactar inspector",
+      "undo": "Deshacer",
+      "redo": "Rehacer"
+    }
+  },
+  "bubbleMenu": {
+    "bold": "Negrita",
+    "italic": "Cursiva",
+    "underline": "Subrayado",
+    "strikethrough": "Tachado",
+    "lists": "Listas",
+    "bulletList": "Lista con viñetas",
+    "numberedList": "Lista numerada",
+    "textAlign": "Alineación de texto",
+    "alignLeft": "Alinear a la izquierda",
+    "alignCenter": "Alinear al centro",
+    "alignRight": "Alinear a la derecha",
+    "alignJustify": "Justificar",
+    "textColor": "Color de texto",
+    "backgroundColor": "Color de fondo",
+    "link": "Enlace",
+    "insertMergeTag": "Insertar etiqueta dinámica",
+    "insertEmoji": "Insertar emoji",
+    "aiFeatures": "Funciones de IA",
+    "clearFormatting": "Limpiar formato"
+  },
+  "linkEditor": {
+    "urlLabel": "URL",
+    "urlPlaceholder": "https://ejemplo.com",
+    "invalidUrl": "Ingresa una URL válida"
+  }
+}

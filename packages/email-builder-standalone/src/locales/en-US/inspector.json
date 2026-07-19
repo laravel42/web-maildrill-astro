@@ -1,0 +1,588 @@
+{
+  "header": {
+    "undo": "Undo (CTRL + Z)",
+    "redo": "Redo (CTRL + Y)",
+    "copy_html": "Copy HTML",
+    "copy_json": "Copy JSON",
+    "edit": "Edit",
+    "preview": "Preview",
+    "htmlOutput": "HTML",
+    "jsonOutput": "JSON",
+    "desktop": "Desktop",
+    "mobile": "Mobile",
+    "content": "Content",
+    "styles": "Styles",
+    "componentTree": "Component tree",
+    "openComponentTree": "Open component tree",
+    "closeComponentTree": "Close component tree",
+    "componentTreeColumn": "Column {{n}}"
+  },
+  "aiGeneration": {
+    "button": "Generate with AI",
+    "tooltip": "Generate an email template from a natural language description",
+    "dialog": {
+      "title": "Generate an email with AI",
+      "modeLabel": "Generation mode",
+      "mode": {
+        "new": "Generate new",
+        "refine": "Refine current"
+      },
+      "promptLabel": "Describe your email",
+      "promptLabelRefine": "What should change?",
+      "promptPlaceholder": "e.g. A friendly welcome email for new users with a CTA button to confirm their account",
+      "promptPlaceholderRefine": "e.g. Make the CTA button orange, shorten the intro paragraph, and add a footer with links to our social networks.",
+      "suggestionsLabel": "Need inspiration?",
+      "improvePrompt": "✨ Improve prompt",
+      "improvingPrompt": "Improving...",
+      "suggestions": [],
+      "suggestionsRefine": [
+        {
+          "label": "Change CTA color",
+          "prompt": "Change the primary CTA button to a warm orange background color with white text. Keep the button text, link, spacing, and overall layout exactly as they are. Adjust any complementary accents so the new orange reads well on the current background."
+        },
+        {
+          "label": "Add a footer",
+          "prompt": "Add a footer section at the bottom of the email. Include a one-line tagline about the company, a row of small social media icons linking to Twitter, LinkedIn and Instagram, and a muted unsubscribe text link. Use a subtle divider above the footer to separate it from the main content. Do not touch any existing blocks."
+        },
+        {
+          "label": "More formal tone",
+          "prompt": "Rewrite the body copy in a more formal, professional tone, suitable for a B2B audience. Keep the structure, CTAs, images, and technical details intact — only update wording. Avoid casual expressions, slang, or exclamation marks."
+        },
+        {
+          "label": "Shorten the copy",
+          "prompt": "Tighten the body copy so the email reads at a glance. Combine or remove redundant paragraphs, keep every heading and CTA, and preserve critical information (dates, amounts, codes, links) verbatim. Target about half of the current text length."
+        },
+        {
+          "label": "Add a hero image",
+          "prompt": "Insert a hero image block at the very top of the email, above every other block. Use a placeholder URL, set the image to full-width, and align the existing heading and intro paragraph below it with comfortable padding. Do not remove or reorder any other blocks."
+        },
+        {
+          "label": "Dark mode palette",
+          "prompt": "Switch the color palette to a dark mode look: dark backdrop, near-black canvas, light neutral text, and a vibrant accent color for CTAs and links. Keep all copy, CTAs, layout, and spacing identical — only the colors change."
+        }
+      ],
+      "generate": "Generate",
+      "apply": "Apply to editor",
+      "cancel": "Cancel",
+      "close": "Close",
+      "retry": "Retry",
+      "status": {
+        "thinking": "Preparing your template…",
+        "streaming": "Streaming response…",
+        "complete": "Template ready",
+        "cancelled": "Generation cancelled"
+      },
+      "error": {
+        "title": "Generation failed",
+        "hint": "Try simplifying your prompt. If the issue persists, check your backend connection.",
+        "validationTitle": "The generated template is invalid",
+        "validationHint": "The AI response didn't match the expected schema. Try regenerating with a simpler prompt."
+      },
+      "warnings": {
+        "title": "The stream reported some issues",
+        "hint": "The template is still valid and can be applied, but the backend flagged these events. Review them if the preview looks off."
+      },
+      "confirmClose": {
+        "title": "Leave this session?",
+        "message": "Your prompt and wizard answers will be cleared.",
+        "stay": "Keep working",
+        "leave": "Yes, leave"
+      }
+    },
+    "preview": {
+      "framesTitle": "Stream",
+      "previewTitle": "Live preview",
+      "emptyFrames": "Waiting for the first frame…",
+      "emptyPreview": "The preview will appear as blocks arrive.",
+      "renderError": "Could not render this block — it will retry as more frames arrive.",
+      "blocksCount": "{{count}} blocks",
+      "bytesCount": "{{bytes}} bytes"
+    }
+  },
+  "actions": {
+    "copyFormat": "Copy format",
+    "pasteFormatting": "Paste formatting",
+    "noFormatSupported": "No format supported",
+    "duplicate": "Duplicate",
+    "delete": "Delete"
+  },
+  "lockValues": {
+    "lockTooltip": "Lock values",
+    "unlockTooltip": "Unlock values"
+  },
+  "shape": {
+    "label": "Style",
+    "square": "Square",
+    "pill": "Pill",
+    "custom": "Custom",
+    "borderRadius": "Border Radius"
+  },
+  "properties": {
+    "backgroundColor": "Background Color",
+    "border": "Border",
+    "padding": "Padding",
+    "fontWeight": "Font Weight",
+    "fontSize": "Font Size",
+    "fontFamily": "Font family",
+    "width": "Width",
+    "shape": "Shape",
+    "borderRadius": "Border radius",
+    "alignment": "Alignment",
+    "height": "Height",
+    "lineHeight": "Line Height",
+    "color": "Color"
+  },
+  "inputs": {
+    "tabs": {
+      "gallery": "Gallery",
+      "yourGallery": "Your Gallery",
+      "upload": "Upload",
+      "generate": "Generate"
+    },
+    "width": {
+      "full": "Full",
+      "auto": "Auto"
+    },
+    "common": {
+      "size": "Size",
+      "width": "Width",
+      "height": "Height",
+      "uploadFile": "Upload a file",
+      "dragAndDrop": "or drag and drop",
+      "fileInfo": "PNG, JPG, GIF up to 5MB",
+      "add": "Add",
+      "close": "Close",
+      "invalidFiles": "Some files were invalid (wrong type or too large). Only valid files will be uploaded.",
+      "svgWarning": "SVG images may not display correctly in Outlook email clients. Consider using PNG or JPG format for better compatibility."
+    },
+    "columnWidths": {
+      "label": "Columns width",
+      "tooltip": "Images in these columns cannot exceed the column's width",
+      "left": "Left",
+      "right": "Right",
+      "center": "Center"
+    },
+    "alignment": {
+      "label": "Alignment"
+    },
+    "fontWeightToggle": {
+      "regular": "Regular",
+      "bold": "Bold"
+    },
+    "responsiveSize": {
+      "customPadding": "Custom Padding",
+      "allSides": "All",
+      "options": {
+        "xSmall": "XS",
+        "small": "SM",
+        "medium": "MD",
+        "custom": "Custom"
+      }
+    },
+    "sizeSelector": {
+      "label": "Size",
+      "contain": "Contain",
+      "cover": "Cover",
+      "scale": "Scale"
+    },
+    "screenSelector": {
+      "desktop": "Desktop view",
+      "mobile": "Mobile view"
+    },
+    "links": {
+      "color": "Link color",
+      "underline": "Link underline",
+      "underlineOn": "Underline on",
+      "underlineOff": "Underline off"
+    },
+    "background": {
+      "reset": "Reset background color"
+    },
+    "color": {
+      "eyedropper": {
+        "tooltip": "Pick color from screen",
+        "fallbackHint": "Click on an image to pick a color",
+        "corsError": "Cannot sample this image due to security restrictions"
+      }
+    },
+    "backgroundImage": {
+      "label": "Background image",
+      "warningTooltip": "Some email clients don't support background images. Add a background color as fallback.",
+      "or": "or",
+      "browseGallery": "Browse gallery",
+      "fillType": "Background fill type",
+      "repeat": "Background repeat",
+      "position": "Background position",
+      "fillOptions": {
+        "cover": "Cover",
+        "contain": "Contain",
+        "auto": "Auto"
+      },
+      "repeatOptions": {
+        "none": "No repeat",
+        "repeat": "Repeat",
+        "repeatX": "Repeat X",
+        "repeatY": "Repeat Y"
+      },
+      "positions": {
+        "topLeft": "Top Left",
+        "topCenter": "Top Center",
+        "topRight": "Top Right",
+        "centerLeft": "Center Left",
+        "center": "Center",
+        "centerRight": "Center Right",
+        "bottomLeft": "Bottom Left",
+        "bottomCenter": "Bottom Center",
+        "bottomRight": "Bottom Right"
+      }
+    },
+    "image": {
+      "urlLabel": "Image URL",
+      "urlPlaceholder": "Enter image URL...",
+      "invalidUrl": "Invalid URL format",
+      "timeout": "Request timeout - URL took too long to respond",
+      "notImage": "URL does not point to an image",
+      "httpError": "HTTP {{status}}: {{statusText}}",
+      "loadError": "Cannot access image — CORS policy, network error, or invalid URL",
+      "unexpectedError": "Unexpected error occurred while validating URL"
+    },
+    "unsplash": {
+      "title": "Unsplash",
+      "subtitle": "High-quality photos for your email",
+      "poweredBy": "Powered by",
+      "searchPlaceholder": "Search photos (e.g. yoga studio, coffee)",
+      "loadMore": "Load more",
+      "emptyInitial": "Type a search term to find photos",
+      "emptyNoResults": "No results for \"{{query}}\"",
+      "selectBlockHint": "Select an image block to insert a photo into",
+      "quotaLow": "Only {{remaining}} Unsplash requests left this hour",
+      "orientation": {
+        "any": "Any",
+        "landscape": "Landscape",
+        "portrait": "Portrait",
+        "squarish": "Square"
+      },
+      "creditLine": "Photo by <authorLink>{{author}}</authorLink> on <unsplashLink>Unsplash</unsplashLink>",
+      "error": {
+        "rate_limited": "Unsplash rate limit reached. Wait a few minutes and try again.",
+        "not_configured": "Unsplash is not configured on the backend.",
+        "unauthorized": "Unsplash rejected the request. Check UNSPLASH_API_KEY.",
+        "network": "Network error while searching Unsplash.",
+        "invalid_request": "Invalid search parameters.",
+        "unknown": "Something went wrong while searching Unsplash."
+      }
+    },
+    "aiImageGeneration": {
+      "generate": "Generate",
+      "titleError": "Image generation failed",
+      "titleLoading": "Generating Your Image",
+      "titleCreate": "Create your image",
+      "titleReady": "Your Image is ready",
+      "descriptionError": "Try simplifying your prompt or describing something else. If the issue persists, please try again later.",
+      "descriptionLoading": "Hang tight! This may take a few seconds as we bring your image to life.",
+      "descriptionCreate": "Describe the image you want us to generate. Be specific to get the best results.",
+      "descriptionReady": "Here's your image. Not quite right? You can tweak it and try again.",
+      "warningRegenerate": "Regenerating will discard this image, and it won't be saved in your gallery. To keep it, make sure to",
+      "warningInsertFirst": "Insert the image",
+      "warningFirst": "first.",
+      "regenerate": "Regenerate",
+      "cancel": "Cancel",
+      "insertImage": "Insert Image",
+      "generateImage": "Generate image",
+      "loadingStep1": "Preparing your canvas...",
+      "loadingStep2": "Crafting composition...",
+      "loadingStep3": "Adding details...",
+      "loadingStep4": "Final touches..."
+    },
+    "social": {
+      "icon": "Icon",
+      "url": "URL",
+      "theme": "Theme",
+      "size": "Size"
+    },
+    "layout": {
+      "label": "Layout",
+      "custom": {
+        "shortLabel": "Custom",
+        "panelTitle": "Custom column widths",
+        "split2": "Column split",
+        "firstColumn": "First column width",
+        "secondColumn": "Second column width",
+        "apply": "Apply"
+      }
+    },
+    "panels": {
+      "button": {
+        "title": "Button block",
+        "textLabel": "Text",
+        "targetLabel": "Target",
+        "targetPlaceholder": "https://your-site.com",
+        "textColor": "Text color",
+        "buttonColor": "Button color"
+      },
+      "columns": {
+        "title": "Columns block",
+        "countLabel": "Number of columns",
+        "stackColumnsOnMobile": "Stack columns on mobile",
+        "stackColumnsOnMobileWarning": "Some email clients (Outlook.com, Yahoo Mail) have limited support for responsive column stacking. In those clients, columns will remain side-by-side.",
+        "stackToggleSideBySide": "Side by side",
+        "stackToggleStacked": "Stacked"
+      },
+      "container": {
+        "title": "Container block"
+      },
+      "divider": {
+        "title": "Divider block"
+      },
+      "emailLayout": {
+        "backgroundColor": "Background color",
+        "canvasColor": "Canvas color",
+        "fontFamily": "Font family",
+        "textColor": "Text color",
+        "linksLabel": "Links",
+        "version": "Version",
+        "showVersion": "Show version"
+      },
+      "image": {
+        "title": "Image block",
+        "altLabel": "Alt text",
+        "altPlaceholder": "Two white watches",
+        "urlLabel": "URL",
+        "urlPlaceholder": "https://your-website.com",
+        "heightLabel": "Height",
+        "objectFitLabel": "Fit mode",
+        "objectFitCover": "Cover",
+        "objectFitContain": "Contain",
+        "objectFitFill": "Fill",
+        "objectPositionLabel": "Position"
+      },
+      "social": {
+        "title": "Social media icons",
+        "gap": "Gap"
+      },
+      "spacer": {
+        "title": "Spacer block"
+      },
+      "text": {
+        "title": "Text block",
+        "contentLabel": "Content",
+        "markdownLabel": "Markdown",
+        "doubleClickToEdit": "Double-click on the block in the canvas to edit the content"
+      },
+      "notionText": {
+        "title": "Text"
+      }
+    }
+  },
+  "componentsLibrary": {
+    "sectionRole": {
+      "hero": "Hero",
+      "features": "Features",
+      "social_proof": "Social proof",
+      "cta": "CTA",
+      "header": "Header",
+      "footer": "Footer",
+      "nav": "Nav",
+      "logo": "Logo",
+      "pricing": "Pricing",
+      "comparison": "Comparison",
+      "testimonial": "Testimonials",
+      "stats": "Stats",
+      "steps": "Steps",
+      "faq": "FAQ",
+      "team": "Team",
+      "gallery": "Gallery",
+      "banner": "Banner"
+    },
+    "save": {
+      "button": "Save component",
+      "tooltip": "Save this block and its descendants as a reusable component",
+      "title": "Save block as section",
+      "titlePrimitive": "Save block as primitive",
+      "titleLayout": "Save block as layout",
+      "titleTemplate": "Save document as template",
+      "categoryLabel": "Category",
+      "body": "Captures the selected block and its {{count}} descendants as a reusable component on the backend.",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. Hero bold purple",
+      "descriptionLabel": "Description (optional)",
+      "roleLabel": "Role",
+      "roleHelp": "hero / features / social_proof / cta participate in the AI rotation pool. Other roles are library-only.",
+      "submit": "Save component",
+      "submitting": "Saving…",
+      "close": "Close",
+      "successDetailed": "Saved → {{path}} ({{count}} blocks)",
+      "unsupportedCategory": "Cannot save this category here.",
+      "templateRedirect": "Templates are saved from the inspector \"Save as template\" action when no block is selected.",
+      "tagsLabel": "Tags (optional)",
+      "tagsPlaceholder": "Add tag…",
+      "tagsHelp": "Press Enter to add. Up to 12 tags."
+    },
+    "search": {
+      "placeholder": "Search…",
+      "sortLabel": "Sort",
+      "axisLabel": "Filter",
+      "tagsLabel": "Tags",
+      "results": "{{count}} of {{total}}",
+      "clear": "Clear",
+      "sort": {
+        "updatedDesc": "Recently updated",
+        "createdDesc": "Recently created",
+        "nameAsc": "Name (A–Z)",
+        "nameDesc": "Name (Z–A)",
+        "sizeDesc": "Largest",
+        "sizeAsc": "Smallest",
+        "blocksDesc": "Most blocks",
+        "blocksAsc": "Fewest blocks"
+      }
+    },
+    "rename": {
+      "title": "Rename component",
+      "submit": "Save changes"
+    },
+    "applyTemplate": {
+      "title": "Apply template \"{{name}}\"?",
+      "body": "This will REPLACE your current document with the saved template. You can undo this action.",
+      "submit": "Replace document",
+      "applying": "Applying…",
+      "cancel": "Cancel",
+      "errorMalformed": "Template payload was empty or did not start with an EmailLayout root."
+    },
+    "saveTemplate": {
+      "button": "Template",
+      "tooltip": "Save the current document as a reusable template",
+      "body": "Captures the full document ({{count}} blocks) as a reusable template. Apply it later from the Components Library Templates tab; applying replaces the current document.",
+      "namePlaceholder": "e.g. Welcome newsletter",
+      "submit": "Save template"
+    },
+    "manage": {
+      "button": "Components library",
+      "tooltip": "List and delete saved components",
+      "title": "Components library",
+      "loading": "Loading components…",
+      "empty": "No components yet. Use \"Save component\" on a Container or Columns block to populate the library.",
+      "refresh": "Refresh",
+      "close": "Close",
+      "deleteTooltip": "Delete this component",
+      "confirmDelete": "Delete component \"{{name}}\"? This cannot be undone.",
+      "blockCount_one": "{{count}} block",
+      "blockCount_other": "{{count}} blocks",
+      "blockCount": "{{count}} blocks"
+    },
+    "drawer": {
+      "title": "Components library",
+      "handle": "Library",
+      "handleOpen": "Open components library",
+      "handleClose": "Close components library",
+      "compact": "Compact to base blocks",
+      "expand": "Expand library",
+      "loading": "Loading components…",
+      "empty": "No saved components yet. Use \"Save component\" on a Container or Columns block to add one.",
+      "emptyTitle": "Your library is empty",
+      "refresh": "Refresh",
+      "close": "Close",
+      "rename": "Rename component",
+      "delete": "Delete component",
+      "deleteConfirm": "Delete component \"{{name}}\"? This cannot be undone.",
+      "noResults": "No components match your search.",
+      "usageOther": "Other",
+      "cardMeta": "{{count}} blocks · {{size}}",
+      "comingSoon": "Coming soon",
+      "comingSoonHint": "{{category}} are part of the upcoming taxonomy refactor.",
+      "category": {
+        "blocks": "Blocks",
+        "themes": "Themes",
+        "primitives": "Primitives",
+        "layouts": "Layouts",
+        "sections": "Sections",
+        "templates": "Templates"
+      },
+      "themes": {
+        "loading": "Loading themes…",
+        "empty": "No themes saved yet. Use \"Save as theme\" in the Globals inspector view.",
+        "emptyTitle": "No themes yet",
+        "rename": "Rename theme",
+        "delete": "Delete theme",
+        "deleteConfirm": "Delete theme \"{{name}}\"? This cannot be undone."
+      }
+    }
+  },
+  "styles": {
+    "rootTitle": "Globals"
+  },
+  "theme": {
+    "title": "Theme",
+    "description": "Default styles applied to every block of a given type. Block-level edits always win; reset a value here to fall back to the block's built-in default.",
+    "reset": "Reset to default",
+    "overrideCount": "{{count}} override",
+    "overrideCount_other": "{{count}} overrides",
+    "modified": "Modified",
+    "exportButton": "Theme",
+    "exportTooltip": "Save current theme to the gallery",
+    "applyButton": "Apply theme",
+    "applyTooltip": "Apply a saved theme from the gallery",
+    "save": {
+      "title": "Save current theme",
+      "description": "Snapshots the current root globals and per-block-type theme overrides. Saved themes can be reapplied later from the Components Library.",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. Brand default",
+      "descriptionLabel": "Description (optional)",
+      "submit": "Save",
+      "submitting": "Saving…",
+      "cancel": "Cancel"
+    },
+    "rename": {
+      "title": "Rename theme",
+      "submit": "Save changes"
+    },
+    "apply": {
+      "title": "Apply theme \"{{name}}\"?",
+      "body": "This will overwrite your current root globals and per-block-type theme overrides. You can undo this action.",
+      "submit": "Apply",
+      "applying": "Applying…",
+      "cancel": "Cancel",
+      "errorMalformed": "Saved theme failed schema validation."
+    },
+    "presets": {
+      "tooltip": "Predefined themes"
+    },
+    "applied": {
+      "badge": "Selected"
+    },
+    "blocks": {
+      "root": { "title": "Root" },
+      "notionText": { "title": "Text" },
+      "button": { "title": "Button" },
+      "image": { "title": "Image" },
+      "divider": { "title": "Divider" },
+      "spacer": { "title": "Spacer" },
+      "socialMedia": { "title": "Social media" },
+      "container": { "title": "Container" },
+      "columnsContainer": { "title": "Columns" }
+    },
+    "fields": {
+      "color": "Text color",
+      "backgroundColor": "Background color",
+      "border": "Border",
+      "borderColor": "Border color",
+      "borderTop": "Border top",
+      "borderBottom": "Border bottom",
+      "borderLeft": "Border left",
+      "borderRight": "Border right",
+      "padding": "Padding",
+      "width": "Width",
+      "height": "Height",
+      "fontSize": "Font size",
+      "fontFamily": "Font family",
+      "fontWeight": "Font weight",
+      "textAlign": "Text align",
+      "buttonBackgroundColor": "Button color",
+      "buttonTextColor": "Button text color"
+    }
+  },
+  "tools": {
+    "title": "Tools",
+    "backendEnabled": "Backend",
+    "backendUrl": "Backend URL"
+  }
+}

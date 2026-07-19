@@ -1,0 +1,194 @@
+{
+  "target": {
+    "title": "What do you want to generate?",
+    "template": {
+      "title": "Full Template",
+      "description": "A complete email with all sections"
+    },
+    "component": {
+      "title": "Component",
+      "description": "A single reusable section (hero, CTA, etc.)"
+    },
+    "theme": {
+      "title": "Theme",
+      "description": "A colour palette and style for your emails"
+    }
+  },
+  "entry": {
+    "title": "How do you want to build your email?",
+    "directCard": {
+      "title": "Direct",
+      "description": "Write your own prompt. Best when you know exactly what you want."
+    },
+    "wizardCard": {
+      "title": "Wizard",
+      "description": "Answer a few quick questions. Best when you want help shaping the brief."
+    }
+  },
+  "header": {
+    "directTitle": "Generate with AI",
+    "wizardTitle": "Visual Wizard",
+    "switchAria": "Switch between Direct and Wizard mode"
+  },
+  "steps": {
+    "common": {
+      "next": "Next",
+      "back": "Back",
+      "skip": "Skip",
+      "review": "Review",
+      "onlyAnswerThisPoint": "Answer just this point — keep it short."
+    },
+    "step01": {
+      "title": "About the email",
+      "purposeQuestion": "What type of email is this?",
+      "purpose": {
+        "welcome": "Welcome",
+        "receipt": "Receipt",
+        "sale": "Sale",
+        "newsletter": "Newsletter",
+        "otp": "OTP / Verification",
+        "event": "Event",
+        "reminder": "Reminder",
+        "custom": "Custom"
+      },
+      "brandNameLabel": "Brand name",
+      "brandNamePlaceholder": "e.g. Bloom",
+      "audienceLabel": "Who is it for?",
+      "audiencePlaceholder": "e.g. busy professionals",
+      "goalCaption": "Describe the goal of this email",
+      "goalPlaceholder": "e.g. Remind users to complete their profile"
+    },
+    "step02": {
+      "title": "Vibe & industry",
+      "moodQuestion": "How should it feel? (pick up to 4)",
+      "mood": {
+        "friendly": "Friendly",
+        "premium": "Premium",
+        "bold": "Bold",
+        "minimal": "Minimal",
+        "playful": "Playful",
+        "wellness": "Wellness",
+        "corporate": "Corporate",
+        "editorial": "Editorial"
+      },
+      "verticalQuestion": "What industry is it for?",
+      "vertical": {
+        "saas": "SaaS",
+        "ecommerce": "E-commerce",
+        "fintech": "Fintech",
+        "wellness": "Wellness",
+        "hospitality": "Hospitality",
+        "education": "Education",
+        "nonprofit": "Non-profit",
+        "real-estate": "Real estate",
+        "media": "Media",
+        "food-beverage": "Food & Beverage",
+        "other": "Other"
+      }
+    },
+    "step03": {
+      "title": "Look & feel",
+      "paletteQuestion": "Which colour palette?",
+      "palette": {
+        "warm": "Warm",
+        "cool": "Cool",
+        "mono": "Monochrome",
+        "pastel": "Pastel",
+        "dark": "Dark",
+        "neutral": "Neutral"
+      },
+      "photoStyleQuestion": "What image style?",
+      "photoStyle": {
+        "photographic": "Photographic",
+        "illustrated": "Illustrated",
+        "abstract": "Abstract",
+        "mixed": "Mixed",
+        "none": "No images"
+      },
+      "brandColorsNote": "Using your brand colours",
+      "brandColorsTitle": "Brand colours",
+      "brandColorsHint": "Enter your brand hex codes or use the picker. Leave blank to let AI decide.",
+      "colorPrimary": "Primary",
+      "colorSecondary": "Secondary",
+      "colorAccent": "Accent"
+    },
+    "step04": {
+      "title": "Imagery",
+      "subjectQuestion": "What should the images show?",
+      "subject": {
+        "people": "People",
+        "product": "Product",
+        "place": "Place",
+        "food": "Food",
+        "abstract": "Abstract"
+      },
+      "scenePlaceholder": "Describe a specific scene, e.g. artisan bakery storefront"
+    },
+    "step05": {
+      "title": "Sections",
+      "sectionsQuestion": "Which sections should the email have?",
+      "section": {
+        "hero": "Hero",
+        "features": "Features",
+        "testimonial": "Testimonial",
+        "stats": "Stats",
+        "cta": "Call to action",
+        "faq": "FAQ",
+        "footer": "Footer"
+      }
+    },
+    "theme": {
+      "title": "Your brand colours",
+      "colorsTitle": "Pick your colours",
+      "colorsHint": "Choose the colours for your theme. Leave blank for any you don't need.",
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "accent": "Accent / CTA",
+      "auto": "Auto",
+      "brandNameLabel": "Brand name (optional)",
+      "brandNamePlaceholder": "e.g. Bloom"
+    },
+    "themeTypography": {
+      "title": "Typography & shape",
+      "fontBodyLabel": "Body font",
+      "fontHeadingsLabel": "Headings font",
+      "radiusTitle": "Corner radius",
+      "radiusHint": "Drag the slider to adjust rounding on buttons and cards."
+    }
+  },
+  "summary": {
+    "title": "Review your brief",
+    "purpose": "Type",
+    "brand": "Brand",
+    "moods": "Vibe",
+    "palette": "Palette",
+    "sections": "Sections",
+    "finalPrompt": "Generated prompt",
+    "finalPromptHelp": "This is the prompt we will use. You can edit it before generating.",
+    "editPrompt": "Edit prompt",
+    "doneEditing": "Done editing",
+    "compiling": "Building your prompt…",
+    "compileError": "Could not compile the brief. You can still edit the prompt manually.",
+    "retry": "Retry",
+    "generate": "Generate",
+    "generating": "Generating…",
+    "back": "Back"
+  },
+  "themeSummary": {
+    "title": "Your generated theme",
+    "generating": "Generating your theme…",
+    "error": "Could not generate the theme. Try again.",
+    "retry": "Retry",
+    "sampleHeading": "Your Brand",
+    "sampleBody": "This is how your emails will look with this theme. Read more on our",
+    "sampleLink": "website",
+    "sampleButton": "Get started",
+    "a11yPass": "Accessible — contrast {{ratio}}:1 (WCAG AA)",
+    "a11yWarn": "Low contrast — {{ratio}}:1",
+    "nameLabel": "Theme name",
+    "saveButton": "Save to library",
+    "savedButton": "Saved",
+    "applyButton": "Apply theme",
+    "saved": "Theme saved to your library."
+  }
+}

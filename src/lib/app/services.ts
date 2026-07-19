@@ -9,7 +9,7 @@ import type {
   AIFeatureRequest,
   AIGenerateTemplateRequest,
   AIGenerateTemplateResponse,
-} from 'email-builder-online';
+} from 'email-builder-standalone';
 
 const delay = (ms = 120) => new Promise((resolve) => setTimeout(resolve, ms));
 

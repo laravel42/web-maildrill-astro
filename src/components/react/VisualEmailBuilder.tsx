@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { EmailBuilderProps, EmailBuilderRef, TEditorConfiguration } from 'email-builder-online';
+import type { EmailBuilderProps, EmailBuilderRef, TEditorConfiguration } from 'email-builder-standalone';
 import { builderGenerateTemplate, builderTextAction } from '@/lib/app/services';
 import { TEMPLATE_CATEGORIES } from '@/lib/app/templates-data';
 import Icon from './Icon';
@@ -8,7 +8,7 @@ import EditorHeader from './shared/EditorHeader';
 import { useAutosave } from './shared/useAutosave';
 
 /**
- * Full-screen wrapper around EmailBuilder.js (email-builder-online) — the visual
+ * Full-screen wrapper around EmailBuilder.js (vendored email-builder-standalone) — the visual
  * email editor. Email-channel only; SMS/WhatsApp/Voice use the composer. Shares
  * EditorHeader with the composer so the two read as one product.
  *
@@ -58,8 +58,8 @@ export default function VisualEmailBuilder({
     let alive = true;
     void (async () => {
       try {
-        await import('email-builder-online/style.css');
-        const mod = await import('email-builder-online');
+        await import('email-builder-standalone/style.css');
+        const mod = await import('email-builder-standalone');
         if (alive) setBuilder(() => mod.EmailBuilder as unknown as BuilderComponent);
       } catch (err) {
         if (alive) setLoadError(err instanceof Error ? err.message : 'Failed to load the editor.');

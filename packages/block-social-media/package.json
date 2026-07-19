@@ -1,0 +1,25 @@
+{
+  "name": "@eb/block-social-media",
+  "version": "1.0.0",
+  "main": "./index.tsx",
+  "types": "./index.tsx",
+  "exports": {
+    ".": {
+      "types": "./index.tsx",
+      "import": "./index.tsx",
+      "require": "./index.tsx"
+    },
+    "./utils/icons": {
+      "types": "./utils/icons.ts",
+      "import": "./utils/icons.ts",
+      "require": "./utils/icons.ts"
+    }
+  },
+  "peerDependencies": {
+    "react": "^16 || ^17 || ^18 || ^19",
+    "zod": "^4.4.3"
+  },
+  "dependencies": {
+    "@eb/document-core": "workspace:*"
+  }
+}

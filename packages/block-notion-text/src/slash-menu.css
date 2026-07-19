@@ -1,0 +1,14 @@
+/* Estilos básicos para tippy.js (slash menu) */
+.tippy-box {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.tippy-content {
+  padding: 0;
+}
+
+.tippy-arrow {
+  display: none;
+}

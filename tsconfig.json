@@ -9,5 +9,13 @@
     "types": ["vitest/globals"]
   },
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist", "node_modules", ".handoff", "design", "test-results", "playwright-report"]
+  "exclude": [
+    "dist",
+    "node_modules",
+    ".handoff",
+    "design",
+    "test-results",
+    "playwright-report",
+    "packages"
+  ]
 }

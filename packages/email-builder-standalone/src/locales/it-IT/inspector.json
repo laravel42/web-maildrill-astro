@@ -1,0 +1,588 @@
+{
+  "header": {
+    "undo": "Annulla (CTRL + Z)",
+    "redo": "Ripeti (CTRL + Y)",
+    "copy_html": "Copia HTML",
+    "copy_json": "Copia JSON",
+    "edit": "Modifica",
+    "preview": "Anteprima",
+    "htmlOutput": "HTML",
+    "jsonOutput": "JSON",
+    "desktop": "Desktop",
+    "mobile": "Mobile",
+    "content": "Contenuto",
+    "styles": "Stili",
+    "componentTree": "Albero componenti",
+    "openComponentTree": "Apri albero componenti",
+    "closeComponentTree": "Chiudi albero componenti",
+    "componentTreeColumn": "Colonna {{n}}"
+  },
+  "aiGeneration": {
+    "button": "Genera con IA",
+    "tooltip": "Genera un modello di email partendo da una descrizione in linguaggio naturale",
+    "dialog": {
+      "title": "Genera un'email con IA",
+      "modeLabel": "Modalità di generazione",
+      "mode": {
+        "new": "Genera nuova",
+        "refine": "Rifinisci attuale"
+      },
+      "promptLabel": "Descrivi la tua email",
+      "promptLabelRefine": "Cosa dovrebbe cambiare?",
+      "promptPlaceholder": "Es. Un'email di benvenuto amichevole per i nuovi utenti con un pulsante CTA per confermare l'account",
+      "promptPlaceholderRefine": "Es. Rendi il pulsante CTA arancione, accorcia il paragrafo introduttivo e aggiungi un piè di pagina con link ai nostri social.",
+      "suggestionsLabel": "Hai bisogno di ispirazione?",
+      "improvePrompt": "✨ Migliora prompt",
+      "improvingPrompt": "Migliorando...",
+      "suggestions": [],
+      "suggestionsRefine": [
+        {
+          "label": "Cambia colore CTA",
+          "prompt": "Cambia il pulsante CTA principale con uno sfondo arancione caldo e testo bianco. Mantieni il testo del pulsante, il link, la spaziatura e il layout esattamente come sono. Regola eventuali accenti complementari in modo che il nuovo arancione si legga bene sullo sfondo attuale."
+        },
+        {
+          "label": "Aggiungi piè di pagina",
+          "prompt": "Aggiungi una sezione di piè di pagina in fondo all'email. Includi una riga breve con un claim aziendale, una fila di piccole icone social che rimandano a Twitter, LinkedIn e Instagram, e un link attenuato per disiscriversi. Usa un divisore sottile sopra il piè di pagina per separarlo dal contenuto principale. Non toccare alcun blocco esistente."
+        },
+        {
+          "label": "Tono più formale",
+          "prompt": "Riscrivi il testo del corpo in un tono più formale e professionale, adatto a un pubblico B2B. Mantieni intatti la struttura, i CTA, le immagini e i dettagli tecnici — aggiorna solo le parole. Evita espressioni colloquiali, slang o punti esclamativi."
+        },
+        {
+          "label": "Accorcia il testo",
+          "prompt": "Rendi più conciso il testo del corpo in modo che l'email si legga in un colpo d'occhio. Combina o rimuovi i paragrafi ridondanti, mantieni ogni titolo e CTA e preserva le informazioni critiche (date, importi, codici, link) identiche. Punta a circa la metà della lunghezza attuale."
+        },
+        {
+          "label": "Aggiungi immagine hero",
+          "prompt": "Inserisci un blocco immagine hero all'inizio dell'email, sopra tutti gli altri blocchi. Usa un URL di esempio, imposta l'immagine a larghezza piena e allinea il titolo e l'introduzione esistenti sotto con un padding confortevole. Non rimuovere né riordinare altri blocchi."
+        },
+        {
+          "label": "Palette dark mode",
+          "prompt": "Passa la palette dei colori a un look dark mode: backdrop scuro, canvas quasi nero, testo neutro chiaro e un colore di accento vivace per CTA e link. Mantieni identici tutto il testo, i CTA, il layout e la spaziatura — cambiano solo i colori."
+        }
+      ],
+      "generate": "Genera",
+      "apply": "Applica all'editor",
+      "cancel": "Annulla",
+      "close": "Chiudi",
+      "retry": "Riprova",
+      "status": {
+        "thinking": "Preparazione del modello…",
+        "streaming": "Ricezione della risposta…",
+        "complete": "Modello pronto",
+        "cancelled": "Generazione annullata"
+      },
+      "error": {
+        "title": "Generazione fallita",
+        "hint": "Prova a semplificare il prompt. Se il problema persiste, controlla la connessione al backend.",
+        "validationTitle": "Il modello generato non è valido",
+        "validationHint": "La risposta dell'IA non corrisponde allo schema atteso. Prova a rigenerare con un prompt più semplice."
+      },
+      "warnings": {
+        "title": "Lo stream ha segnalato alcuni problemi",
+        "hint": "Il modello è comunque valido e può essere applicato, ma il backend ha segnalato questi eventi. Controlla se l'anteprima sembra strana."
+      },
+      "confirmClose": {
+        "title": "Vuoi uscire?",
+        "message": "Il prompt e le risposte del wizard verranno cancellati.",
+        "stay": "Continua a lavorare",
+        "leave": "Sì, esci"
+      }
+    },
+    "preview": {
+      "framesTitle": "Stream",
+      "previewTitle": "Anteprima live",
+      "emptyFrames": "In attesa del primo frammento…",
+      "emptyPreview": "L'anteprima apparirà man mano che arrivano i blocchi.",
+      "renderError": "Impossibile renderizzare questo blocco — verrà ritentato con l'arrivo di nuovi frammenti.",
+      "blocksCount": "{{count}} blocchi",
+      "bytesCount": "{{bytes}} byte"
+    }
+  },
+  "actions": {
+    "copyFormat": "Copia formato",
+    "pasteFormatting": "Incolla formato",
+    "noFormatSupported": "Formato non supportato",
+    "duplicate": "Duplica",
+    "delete": "Elimina"
+  },
+  "lockValues": {
+    "lockTooltip": "Blocca valori",
+    "unlockTooltip": "Sblocca valori"
+  },
+  "shape": {
+    "label": "Stile",
+    "square": "Quadrato",
+    "pill": "Pillola",
+    "custom": "Personalizzato",
+    "borderRadius": "Raggio del bordo"
+  },
+  "properties": {
+    "backgroundColor": "Colore di sfondo",
+    "border": "Bordo",
+    "padding": "Riempimento",
+    "fontWeight": "Spessore del carattere",
+    "fontSize": "Dimensione del carattere",
+    "fontFamily": "Famiglia di caratteri",
+    "width": "Larghezza",
+    "shape": "Forma",
+    "borderRadius": "Raggio del bordo",
+    "alignment": "Allineamento",
+    "height": "Altezza",
+    "lineHeight": "Altezza della linea",
+    "color": "Colore"
+  },
+  "inputs": {
+    "tabs": {
+      "gallery": "Galleria",
+      "yourGallery": "La tua galleria",
+      "upload": "Carica",
+      "generate": "Genera"
+    },
+    "width": {
+      "full": "Completo",
+      "auto": "Automatico"
+    },
+    "common": {
+      "size": "Dimensione",
+      "width": "Larghezza",
+      "height": "Altezza",
+      "uploadFile": "Carica un file",
+      "dragAndDrop": "o trascina e rilascia",
+      "fileInfo": "PNG, JPG, GIF fino a 5MB",
+      "add": "Aggiungi",
+      "close": "Chiudi",
+      "invalidFiles": "Alcuni file non sono validi (tipo errato o troppo grandi). Solo i file validi verranno caricati.",
+      "svgWarning": "Le immagini SVG potrebbero non essere visualizzate correttamente nei client di posta Outlook. Considera l'uso di PNG o JPG per una migliore compatibilità."
+    },
+    "columnWidths": {
+      "label": "Larghezza delle colonne",
+      "tooltip": "Le immagini in queste colonne non possono superare la larghezza della colonna",
+      "left": "Sinistra",
+      "right": "Destra",
+      "center": "Centro"
+    },
+    "alignment": {
+      "label": "Allineamento"
+    },
+    "fontWeightToggle": {
+      "regular": "Regolare",
+      "bold": "Grassetto"
+    },
+    "responsiveSize": {
+      "customPadding": "Riempimento personalizzato",
+      "allSides": "Tutti",
+      "options": {
+        "xSmall": "XS",
+        "small": "SM",
+        "medium": "MD",
+        "custom": "Personalizzato"
+      }
+    },
+    "sizeSelector": {
+      "label": "Dimensione",
+      "contain": "Contieni",
+      "cover": "Copri",
+      "scale": "Scala"
+    },
+    "screenSelector": {
+      "desktop": "Vista desktop",
+      "mobile": "Vista mobile"
+    },
+    "links": {
+      "color": "Colore del collegamento",
+      "underline": "Sottolineatura del collegamento",
+      "underlineOn": "Sottolineatura attiva",
+      "underlineOff": "Sottolineatura disattiva"
+    },
+    "background": {
+      "reset": "Reimposta colore di sfondo"
+    },
+    "color": {
+      "eyedropper": {
+        "tooltip": "Seleziona colore dallo schermo",
+        "fallbackHint": "Clicca su un'immagine per selezionare un colore",
+        "corsError": "Impossibile campionare questa immagine per restrizioni di sicurezza"
+      }
+    },
+    "backgroundImage": {
+      "label": "Immagine di sfondo",
+      "warningTooltip": "Alcuni client di posta non supportano le immagini di sfondo. Aggiungi un colore di sfondo come alternativa.",
+      "or": "o",
+      "browseGallery": "Sfoglia galleria",
+      "fillType": "Tipo di riempimento dello sfondo",
+      "repeat": "Ripetizione dello sfondo",
+      "position": "Posizione dello sfondo",
+      "fillOptions": {
+        "cover": "Copri",
+        "contain": "Contieni",
+        "auto": "Automatico"
+      },
+      "repeatOptions": {
+        "none": "Nessuna ripetizione",
+        "repeat": "Ripeti",
+        "repeatX": "Ripeti X",
+        "repeatY": "Ripeti Y"
+      },
+      "positions": {
+        "topLeft": "In alto a sinistra",
+        "topCenter": "In alto al centro",
+        "topRight": "In alto a destra",
+        "centerLeft": "Centro sinistra",
+        "center": "Centro",
+        "centerRight": "Centro destra",
+        "bottomLeft": "In basso a sinistra",
+        "bottomCenter": "In basso al centro",
+        "bottomRight": "In basso a destra"
+      }
+    },
+    "image": {
+      "urlLabel": "URL dell'immagine",
+      "urlPlaceholder": "Inserisci l'URL dell'immagine...",
+      "invalidUrl": "Formato URL non valido",
+      "timeout": "Timeout della richiesta - L'URL ha impiegato troppo tempo per rispondere",
+      "notImage": "L'URL non punta a un'immagine",
+      "httpError": "HTTP {{status}}: {{statusText}}",
+      "loadError": "Impossibile accedere all'immagine: policy CORS, errore di rete o URL non valido",
+      "unexpectedError": "Errore imprevisto durante la convalida dell'URL"
+    },
+    "unsplash": {
+      "title": "Unsplash",
+      "subtitle": "Foto di alta qualità per la tua email",
+      "poweredBy": "Powered by",
+      "searchPlaceholder": "Cerca foto (es. studio yoga, caffè)",
+      "loadMore": "Carica altro",
+      "emptyInitial": "Digita un termine per cercare foto",
+      "emptyNoResults": "Nessun risultato per \"{{query}}\"",
+      "selectBlockHint": "Seleziona un blocco immagine per inserire una foto",
+      "quotaLow": "Solo {{remaining}} richieste Unsplash rimanenti quest'ora",
+      "orientation": {
+        "any": "Qualsiasi",
+        "landscape": "Orizzontale",
+        "portrait": "Verticale",
+        "squarish": "Quadrata"
+      },
+      "creditLine": "Foto di <authorLink>{{author}}</authorLink> su <unsplashLink>Unsplash</unsplashLink>",
+      "error": {
+        "rate_limited": "Limite Unsplash raggiunto. Attendi qualche minuto e riprova.",
+        "not_configured": "Unsplash non è configurato sul backend.",
+        "unauthorized": "Unsplash ha rifiutato la richiesta. Verifica UNSPLASH_API_KEY.",
+        "network": "Errore di rete durante la ricerca su Unsplash.",
+        "invalid_request": "Parametri di ricerca non validi.",
+        "unknown": "Qualcosa è andato storto durante la ricerca su Unsplash."
+      }
+    },
+    "aiImageGeneration": {
+      "generate": "Genera",
+      "titleError": "Generazione immagine fallita",
+      "titleLoading": "Generazione dell'immagine in corso",
+      "titleCreate": "Crea la tua immagine",
+      "titleReady": "La tua immagine è pronta",
+      "descriptionError": "Prova a semplificare il prompt o a descrivere qualcos'altro. Se il problema persiste, riprova più tardi.",
+      "descriptionLoading": "Aspetta! Potrebbero volerci alcuni secondi per dare vita alla tua immagine.",
+      "descriptionCreate": "Descrivi l'immagine che vuoi generare. Sii specifico per ottenere i migliori risultati.",
+      "descriptionReady": "Ecco la tua immagine. Non è quella giusta? Puoi modificarla e riprovare.",
+      "warningRegenerate": "Rigenerare scarterà questa immagine e non verrà salvata nella tua galleria. Per conservarla, assicurati di",
+      "warningInsertFirst": "Inserire l'immagine",
+      "warningFirst": "prima.",
+      "regenerate": "Rigenera",
+      "cancel": "Annulla",
+      "insertImage": "Inserisci immagine",
+      "generateImage": "Genera immagine",
+      "loadingStep1": "Preparando la tela...",
+      "loadingStep2": "Creando la composizione...",
+      "loadingStep3": "Aggiungendo dettagli...",
+      "loadingStep4": "Ultimi ritocchi..."
+    },
+    "social": {
+      "icon": "Icona",
+      "url": "URL",
+      "theme": "Tema",
+      "size": "Dimensione"
+    },
+    "layout": {
+      "label": "Layout",
+      "custom": {
+        "shortLabel": "Personalizzato",
+        "panelTitle": "Larghezze colonne personalizzate",
+        "split2": "Distribuzione tra colonne",
+        "firstColumn": "Larghezza prima colonna",
+        "secondColumn": "Larghezza seconda colonna",
+        "apply": "Applica"
+      }
+    },
+    "panels": {
+      "button": {
+        "title": "Blocco pulsante",
+        "textLabel": "Testo",
+        "targetLabel": "Destinazione",
+        "targetPlaceholder": "https://tuo-sito.com",
+        "textColor": "Colore del testo",
+        "buttonColor": "Colore del pulsante"
+      },
+      "columns": {
+        "title": "Blocco colonne",
+        "countLabel": "Numero di colonne",
+        "stackColumnsOnMobile": "Impila colonne su mobile",
+        "stackColumnsOnMobileWarning": "Alcuni client di posta (Outlook.com, Yahoo Mail) hanno un supporto limitato per l'impilamento delle colonne responsive. In quei client, le colonne rimarranno affiancate.",
+        "stackToggleSideBySide": "Affiancate",
+        "stackToggleStacked": "Impilate"
+      },
+      "container": {
+        "title": "Blocco contenitore"
+      },
+      "divider": {
+        "title": "Blocco divisore"
+      },
+      "emailLayout": {
+        "backgroundColor": "Colore di sfondo",
+        "canvasColor": "Colore della tela",
+        "fontFamily": "Famiglia di caratteri",
+        "textColor": "Colore del testo",
+        "linksLabel": "Collegamenti",
+        "version": "Versione",
+        "showVersion": "Mostra versione"
+      },
+      "image": {
+        "title": "Blocco immagine",
+        "altLabel": "Testo alternativo",
+        "altPlaceholder": "Due orologi bianchi",
+        "urlLabel": "URL",
+        "urlPlaceholder": "https://tuo-sito-web.com",
+        "heightLabel": "Altezza",
+        "objectFitLabel": "Modalità adattamento",
+        "objectFitCover": "Copri",
+        "objectFitContain": "Contieni",
+        "objectFitFill": "Riempi",
+        "objectPositionLabel": "Posizione"
+      },
+      "social": {
+        "title": "Icone dei social media",
+        "gap": "Spaziatura"
+      },
+      "spacer": {
+        "title": "Blocco spaziatore"
+      },
+      "text": {
+        "title": "Blocco testo",
+        "contentLabel": "Contenuto",
+        "markdownLabel": "Markdown",
+        "doubleClickToEdit": "Fai doppio clic sul blocco nella tela per modificare il contenuto"
+      },
+      "notionText": {
+        "title": "Testo"
+      }
+    }
+  },
+  "componentsLibrary": {
+    "sectionRole": {
+      "hero": "Hero",
+      "features": "Caratteristiche",
+      "social_proof": "Riprova sociale",
+      "cta": "CTA",
+      "header": "Intestazione",
+      "footer": "Piè di pagina",
+      "nav": "Navigazione",
+      "logo": "Logo",
+      "pricing": "Prezzi",
+      "comparison": "Confronto",
+      "testimonial": "Testimonianze",
+      "stats": "Statistiche",
+      "steps": "Passaggi",
+      "faq": "FAQ",
+      "team": "Team",
+      "gallery": "Galleria",
+      "banner": "Banner"
+    },
+    "save": {
+      "button": "Salva componente",
+      "tooltip": "Salva questo blocco e i suoi discendenti come componente riutilizzabile",
+      "title": "Salva blocco come sezione",
+      "titlePrimitive": "Salva blocco come primitive",
+      "titleLayout": "Salva blocco come layout",
+      "titleTemplate": "Salva documento come template",
+      "categoryLabel": "Categoria",
+      "body": "Cattura il blocco selezionato e i suoi {{count}} discendenti come componente riutilizzabile nel backend.",
+      "nameLabel": "Nome",
+      "namePlaceholder": "es. Hero audace viola",
+      "descriptionLabel": "Descrizione (opzionale)",
+      "roleLabel": "Ruolo",
+      "roleHelp": "hero / features / social_proof / cta partecipano alla rotazione AI. Gli altri ruoli sono solo di libreria.",
+      "submit": "Salva componente",
+      "submitting": "Salvataggio…",
+      "close": "Chiudi",
+      "successDetailed": "Salvato → {{path}} ({{count}} blocchi)",
+      "unsupportedCategory": "Impossibile salvare questa categoria qui.",
+      "templateRedirect": "I template vengono salvati dall'azione \"Salva come template\" nell'inspector quando non è selezionato alcun blocco.",
+      "tagsLabel": "Tag (opzionale)",
+      "tagsPlaceholder": "Aggiungi tag…",
+      "tagsHelp": "Premi Invio per aggiungere. Fino a 12 tag."
+    },
+    "search": {
+      "placeholder": "Cerca…",
+      "sortLabel": "Ordina",
+      "axisLabel": "Filtra",
+      "tagsLabel": "Tag",
+      "results": "{{count}} di {{total}}",
+      "clear": "Cancella",
+      "sort": {
+        "updatedDesc": "Aggiornati di recente",
+        "createdDesc": "Creati di recente",
+        "nameAsc": "Nome (A–Z)",
+        "nameDesc": "Nome (Z–A)",
+        "sizeDesc": "Più grandi",
+        "sizeAsc": "Più piccoli",
+        "blocksDesc": "Più blocchi",
+        "blocksAsc": "Meno blocchi"
+      }
+    },
+    "rename": {
+      "title": "Rinomina componente",
+      "submit": "Salva modifiche"
+    },
+    "applyTemplate": {
+      "title": "Applicare il template \"{{name}}\"?",
+      "body": "Questo SOSTITUIRÀ il documento corrente con il template salvato. Puoi annullare l'azione.",
+      "submit": "Sostituisci documento",
+      "applying": "Applicazione…",
+      "cancel": "Annulla",
+      "errorMalformed": "Il template è vuoto o non inizia con un EmailLayout."
+    },
+    "saveTemplate": {
+      "button": "Template",
+      "tooltip": "Salva il documento corrente come template riutilizzabile",
+      "body": "Cattura l'intero documento ({{count}} blocchi) come template riutilizzabile. Applicalo in seguito dalla scheda Template della libreria; l'applicazione sostituisce il documento corrente.",
+      "namePlaceholder": "es. Newsletter di benvenuto",
+      "submit": "Salva template"
+    },
+    "manage": {
+      "button": "Libreria componenti",
+      "tooltip": "Elenca ed elimina i componenti salvati",
+      "title": "Libreria componenti",
+      "loading": "Caricamento componenti…",
+      "empty": "Nessun componente salvato. Usa \"Salva componente\" su un blocco Container o Columns per popolare la libreria.",
+      "refresh": "Aggiorna",
+      "close": "Chiudi",
+      "deleteTooltip": "Elimina questo componente",
+      "confirmDelete": "Eliminare il componente \"{{name}}\"? L'operazione non può essere annullata.",
+      "blockCount_one": "{{count}} blocco",
+      "blockCount_other": "{{count}} blocchi",
+      "blockCount": "{{count}} blocchi"
+    },
+    "drawer": {
+      "title": "Libreria componenti",
+      "handle": "Libreria",
+      "handleOpen": "Apri la libreria componenti",
+      "handleClose": "Chiudi la libreria componenti",
+      "compact": "Comprimi ai blocchi base",
+      "expand": "Espandi la libreria",
+      "loading": "Caricamento componenti…",
+      "empty": "Nessun componente salvato. Usa \"Salva componente\" su un blocco Container o Columns per aggiungerne uno.",
+      "emptyTitle": "La tua libreria è vuota",
+      "refresh": "Aggiorna",
+      "close": "Chiudi",
+      "rename": "Rinomina componente",
+      "delete": "Elimina componente",
+      "deleteConfirm": "Eliminare il componente \"{{name}}\"? L'operazione non può essere annullata.",
+      "noResults": "Nessun componente corrisponde alla ricerca.",
+      "usageOther": "Altro",
+      "cardMeta": "{{count}} blocchi · {{size}}",
+      "comingSoon": "In arrivo",
+      "comingSoonHint": "{{category}} fa parte del refactor della tassonomia in arrivo.",
+      "category": {
+        "blocks": "Blocks",
+        "themes": "Temi",
+        "primitives": "Primitives",
+        "layouts": "Layouts",
+        "sections": "Sections",
+        "templates": "Templates"
+      },
+      "themes": {
+        "loading": "Caricamento temi…",
+        "empty": "Nessun tema salvato. Usa \"Salva come tema\" nella vista Globali dell'ispettore.",
+        "emptyTitle": "Nessun tema ancora",
+        "rename": "Rinomina tema",
+        "delete": "Elimina tema",
+        "deleteConfirm": "Eliminare il tema \"{{name}}\"? L'operazione non può essere annullata."
+      }
+    }
+  },
+  "styles": {
+    "rootTitle": "Globali"
+  },
+  "theme": {
+    "title": "Tema",
+    "description": "Stili predefiniti applicati a ogni blocco del tipo selezionato. Le modifiche a livello di blocco hanno sempre la precedenza; reimposta qui per tornare al valore predefinito del blocco.",
+    "reset": "Ripristina al valore predefinito",
+    "overrideCount": "{{count}} sovrascrittura",
+    "overrideCount_other": "{{count}} sovrascritture",
+    "modified": "Modificato",
+    "exportButton": "Tema",
+    "exportTooltip": "Salva il tema corrente nella galleria",
+    "applyButton": "Applica tema",
+    "applyTooltip": "Applica un tema salvato dalla galleria",
+    "save": {
+      "title": "Salva tema corrente",
+      "description": "Cattura i globali del root e gli override del tema per tipo di blocco. I temi salvati possono essere riapplicati in seguito dalla Libreria Componenti.",
+      "nameLabel": "Nome",
+      "namePlaceholder": "es. Brand predefinito",
+      "descriptionLabel": "Descrizione (opzionale)",
+      "submit": "Salva",
+      "submitting": "Salvataggio…",
+      "cancel": "Annulla"
+    },
+    "rename": {
+      "title": "Rinomina tema",
+      "submit": "Salva modifiche"
+    },
+    "apply": {
+      "title": "Applicare il tema \"{{name}}\"?",
+      "body": "Questo sovrascriverà i globali del root e gli override del tema per tipo di blocco. Puoi annullare l'operazione.",
+      "submit": "Applica",
+      "applying": "Applicazione…",
+      "cancel": "Annulla",
+      "errorMalformed": "Il tema salvato non ha superato la validazione dello schema."
+    },
+    "presets": {
+      "tooltip": "Temi predefiniti"
+    },
+    "applied": {
+      "badge": "Selezionato"
+    },
+    "blocks": {
+      "root": { "title": "Root" },
+      "notionText": { "title": "Testo" },
+      "button": { "title": "Pulsante" },
+      "image": { "title": "Immagine" },
+      "divider": { "title": "Separatore" },
+      "spacer": { "title": "Spaziatore" },
+      "socialMedia": { "title": "Social media" },
+      "container": { "title": "Contenitore" },
+      "columnsContainer": { "title": "Colonne" }
+    },
+    "fields": {
+      "color": "Colore del testo",
+      "backgroundColor": "Colore di sfondo",
+      "border": "Bordo",
+      "borderColor": "Colore del bordo",
+      "borderTop": "Bordo superiore",
+      "borderBottom": "Bordo inferiore",
+      "borderLeft": "Bordo sinistro",
+      "borderRight": "Bordo destro",
+      "padding": "Padding",
+      "width": "Larghezza",
+      "height": "Altezza",
+      "fontSize": "Dimensione carattere",
+      "fontFamily": "Famiglia di caratteri",
+      "fontWeight": "Spessore carattere",
+      "textAlign": "Allineamento testo",
+      "buttonBackgroundColor": "Colore del pulsante",
+      "buttonTextColor": "Colore del testo del pulsante"
+    }
+  },
+  "tools": {
+    "title": "Strumenti",
+    "backendEnabled": "Backend",
+    "backendUrl": "URL del backend"
+  }
+}

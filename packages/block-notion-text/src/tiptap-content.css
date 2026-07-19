@@ -1,0 +1,206 @@
+/**
+ * TipTap / ProseMirror content styles.
+ * Scoped so preview, exported HTML and edit mode render correctly and host
+ * project CSS does not override when using the reader or embedding HTML.
+ *
+ * Scopes:
+ * - .notion-text-inline-editor .ProseMirror → edit mode (EditorContent)
+ * - .eb-notion-content → reader, preview and embedded HTML in other projects
+ */
+
+/* ----- Editor: inherit from container ----- */
+.notion-text-inline-editor .ProseMirror,
+.notion-text-inline-editor .tiptap {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+.notion-text-inline-editor .ProseMirror p,
+.notion-text-inline-editor .ProseMirror h1,
+.notion-text-inline-editor .ProseMirror h2,
+.notion-text-inline-editor .ProseMirror h3,
+.notion-text-inline-editor .ProseMirror ul,
+.notion-text-inline-editor .ProseMirror ol,
+.notion-text-inline-editor .ProseMirror li,
+.notion-text-inline-editor .ProseMirror blockquote,
+.notion-text-inline-editor .ProseMirror a {
+  font-family: inherit;
+}
+
+.notion-text-inline-editor .ProseMirror p {
+  margin: 0 !important;
+}
+
+/* ----- Reader / preview / other projects: base and typography ----- */
+.eb-notion-content,
+.eb-notion-content p,
+.eb-notion-content h1,
+.eb-notion-content h2,
+.eb-notion-content h3,
+.eb-notion-content ul,
+.eb-notion-content ol,
+.eb-notion-content li,
+.eb-notion-content blockquote,
+.eb-notion-content a {
+  font-family: inherit;
+  color: inherit;
+  line-height: inherit;
+  font-weight: inherit;
+}
+
+/* Margins en 0: el espaciado entre líneas lo controla solo line-height */
+.eb-notion-content p {
+  margin: 0 !important;
+}
+
+/* Headings - editor */
+.notion-text-inline-editor .ProseMirror h1 {
+  font-size: 2em;
+  font-weight: bold;
+  margin: 0;
+  color: inherit;
+  line-height: inherit;
+}
+
+.notion-text-inline-editor .ProseMirror h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 0;
+  color: inherit;
+  line-height: inherit;
+}
+
+.notion-text-inline-editor .ProseMirror h3 {
+  font-size: 1.17em;
+  font-weight: bold;
+  margin: 0;
+  color: inherit;
+  line-height: inherit;
+}
+
+/* Headings - reader / preview (sizes can be overridden by cleanDocument .nt* rules) */
+.eb-notion-content h1 {
+  font-size: 2em;
+  font-weight: bold;
+  margin: 0;
+}
+
+.eb-notion-content h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 0;
+}
+
+.eb-notion-content h3 {
+  font-size: 1.17em;
+  font-weight: bold;
+  margin: 0;
+}
+
+/* Lists - editor */
+.notion-text-inline-editor .ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin: 0;
+  color: inherit;
+  line-height: inherit;
+}
+
+.notion-text-inline-editor .ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin: 0;
+  color: inherit;
+  line-height: inherit;
+}
+
+.notion-text-inline-editor .ProseMirror li {
+  display: list-item;
+  margin: 0;
+  color: inherit;
+  line-height: inherit;
+}
+
+/* Lists - reader / preview */
+.eb-notion-content ul {
+  list-style-type: disc;
+  list-style-position: outside;
+  padding-left: 1.5em;
+  margin: 0;
+}
+
+.eb-notion-content ol {
+  list-style-type: decimal;
+  list-style-position: outside;
+  padding-left: 1.5em;
+  margin: 0;
+}
+
+.eb-notion-content li {
+  display: list-item;
+  margin: 0;
+}
+
+/* Blockquote - editor and reader */
+.notion-text-inline-editor .ProseMirror blockquote,
+.eb-notion-content blockquote {
+  border-left: 3px solid #ccc;
+  padding-left: 1rem;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Links - editor (use CSS vars from container) */
+.notion-text-inline-editor .ProseMirror a {
+  color: var(--global-link-color, inherit);
+  text-decoration: var(--global-link-text-decoration, underline);
+  cursor: pointer;
+}
+
+/* When the anchor has a child with an explicit color, remove underline from
+   the anchor and let the colored descendant draw it so both text and underline
+   share the same color. */
+.notion-text-inline-editor .ProseMirror a:has(span[style*='color:']) {
+  text-decoration: none;
+}
+
+.notion-text-inline-editor .ProseMirror a span[style*='color:'] {
+  text-decoration: var(--global-link-text-decoration, underline);
+}
+
+.notion-text-inline-editor .ProseMirror a:hover {
+  opacity: 0.8;
+}
+
+/* Links - reader (inherit or use inline styles from getFormattedHtmlCached) */
+.eb-notion-content a {
+  cursor: pointer;
+}
+
+.eb-notion-content a:hover {
+  opacity: 0.8;
+}
+
+/* Text alignment (editor and reader when set inline) */
+.notion-text-inline-editor .ProseMirror [style*='text-align: left'],
+.eb-notion-content [style*='text-align: left'] {
+  text-align: left;
+}
+
+.notion-text-inline-editor .ProseMirror [style*='text-align: center'],
+.eb-notion-content [style*='text-align: center'] {
+  text-align: center;
+}
+
+.notion-text-inline-editor .ProseMirror [style*='text-align: right'],
+.eb-notion-content [style*='text-align: right'] {
+  text-align: right;
+}
+
+.notion-text-inline-editor .ProseMirror [style*='text-align: justify'],
+.eb-notion-content [style*='text-align: justify'] {
+  text-align: justify;
+}

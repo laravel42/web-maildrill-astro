@@ -1,0 +1,459 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`block-columns-container columnsCount 2 renders column children 1`] = `
+<DocumentFragment>
+  <table
+    border="0"
+    cellpadding="0"
+    cellspacing="0"
+    class="bykB1o"
+    style="width: 100%; min-width: 100%; border-radius: initial; overflow: visible; border-collapse: initial; table-layout: fixed;"
+    width="100%"
+  >
+    <tbody>
+      <tr
+        class="tbykB1o"
+        style="height: 0px;"
+      >
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr>
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          class="abykB1o"
+          style="width: 100%;"
+        >
+          <table
+            border="0"
+            cellpadding="0"
+            cellspacing="0"
+            style="width: 100%;"
+          >
+            <tbody
+              style="width: 100%;"
+            >
+              <tr
+                style="width: 100%;"
+              >
+                <td
+                  class="colbykB1o"
+                  style="box-sizing: border-box; vertical-align: middle; width: 50%;"
+                >
+                  bread
+                </td>
+                <td
+                  class="colbykB1o"
+                  style="box-sizing: border-box; vertical-align: middle; width: 50%;"
+                >
+                  tomato
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr
+        class="bbykB1o"
+        style="height: 0px;"
+      >
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;
+
+exports[`block-columns-container columnsCount 2 uses padding correctly 1`] = `
+<DocumentFragment>
+  <table
+    border="0"
+    cellpadding="0"
+    cellspacing="0"
+    class="bykB1o"
+    style="width: 100%; min-width: 100%; border-radius: initial; overflow: visible; border-collapse: initial; table-layout: fixed;"
+    width="100%"
+  >
+    <tbody>
+      <tr
+        class="tbykB1o"
+        style="height: 0px;"
+      >
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr>
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          class="abykB1o"
+          style="width: 100%;"
+        >
+          <table
+            border="0"
+            cellpadding="0"
+            cellspacing="0"
+            style="width: 100%;"
+          >
+            <tbody
+              style="width: 100%;"
+            >
+              <tr
+                style="width: 100%;"
+              >
+                <td
+                  class="colbykB1o"
+                  style="box-sizing: border-box; vertical-align: middle; width: 50%;"
+                >
+                  bread
+                </td>
+                <td
+                  class="colbykB1o"
+                  style="box-sizing: border-box; vertical-align: middle; width: 50%;"
+                >
+                  tomato
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr
+        class="bbykB1o"
+        style="height: 0px;"
+      >
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;
+
+exports[`block-columns-container columnsCount 3 renders column children 1`] = `
+<DocumentFragment>
+  <table
+    border="0"
+    cellpadding="0"
+    cellspacing="0"
+    class="bykB1o"
+    style="width: 100%; min-width: 100%; border-radius: initial; overflow: visible; border-collapse: initial; table-layout: fixed;"
+    width="100%"
+  >
+    <tbody>
+      <tr
+        class="tbykB1o"
+        style="height: 0px;"
+      >
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr>
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          class="abykB1o"
+          style="width: 100%;"
+        >
+          <table
+            border="0"
+            cellpadding="0"
+            cellspacing="0"
+            style="width: 100%;"
+          >
+            <tbody
+              style="width: 100%;"
+            >
+              <tr
+                style="width: 100%;"
+              >
+                <td
+                  class="colbykB1o"
+                  style="box-sizing: border-box; vertical-align: middle; width: 33.333333333333336%;"
+                >
+                  bread
+                </td>
+                <td
+                  class="colbykB1o"
+                  style="box-sizing: border-box; vertical-align: middle; width: 33.333333333333336%;"
+                >
+                  tomato
+                </td>
+                <td
+                  class="colbykB1o"
+                  style="box-sizing: border-box; vertical-align: middle; width: 33.333333333333336%;"
+                >
+                  lettuce
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr
+        class="bbykB1o"
+        style="height: 0px;"
+      >
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;
+
+exports[`block-columns-container columnsCount 3 uses padding correctly 1`] = `
+<DocumentFragment>
+  <table
+    border="0"
+    cellpadding="0"
+    cellspacing="0"
+    class="bykB1o"
+    style="width: 100%; min-width: 100%; border-radius: initial; overflow: visible; border-collapse: initial; table-layout: fixed;"
+    width="100%"
+  >
+    <tbody>
+      <tr
+        class="tbykB1o"
+        style="height: 0px;"
+      >
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr>
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          class="abykB1o"
+          style="width: 100%;"
+        >
+          <table
+            border="0"
+            cellpadding="0"
+            cellspacing="0"
+            style="width: 100%;"
+          >
+            <tbody
+              style="width: 100%;"
+            >
+              <tr
+                style="width: 100%;"
+              >
+                <td
+                  class="colbykB1o"
+                  style="box-sizing: border-box; vertical-align: middle; width: 33.333333333333336%;"
+                >
+                  bread
+                </td>
+                <td
+                  class="colbykB1o"
+                  style="box-sizing: border-box; vertical-align: middle; width: 33.333333333333336%;"
+                >
+                  tomato
+                </td>
+                <td
+                  class="colbykB1o"
+                  style="box-sizing: border-box; vertical-align: middle; width: 33.333333333333336%;"
+                >
+                  lettuce
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr
+        class="bbykB1o"
+        style="height: 0px;"
+      >
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;
+
+exports[`block-columns-container renders with default values 1`] = `
+<DocumentFragment>
+  <table
+    border="0"
+    cellpadding="0"
+    cellspacing="0"
+    class="bykB1o"
+    style="width: 100%; min-width: 100%; border-radius: initial; overflow: visible; border-collapse: initial; table-layout: fixed;"
+    width="100%"
+  >
+    <tbody>
+      <tr
+        class="tbykB1o"
+        style="height: 0px;"
+      >
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr>
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          class="abykB1o"
+          style="width: 100%;"
+        >
+          <table
+            border="0"
+            cellpadding="0"
+            cellspacing="0"
+            style="width: 100%;"
+          >
+            <tbody
+              style="width: 100%;"
+            >
+              <tr
+                style="width: 100%;"
+              >
+                <td
+                  class="colbykB1o"
+                  style="box-sizing: border-box; vertical-align: middle; width: 50%;"
+                />
+                <td
+                  class="colbykB1o"
+                  style="box-sizing: border-box; vertical-align: middle; width: 50%;"
+                />
+              </tr>
+            </tbody>
+          </table>
+        </td>
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr
+        class="bbykB1o"
+        style="height: 0px;"
+      >
+        <td
+          class="lbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;

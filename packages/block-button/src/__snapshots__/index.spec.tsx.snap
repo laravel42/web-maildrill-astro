@@ -1,0 +1,132 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`block-button renders with default values 1`] = `
+<DocumentFragment>
+  <table
+    border="0"
+    cellpadding="0"
+    cellspacing="0"
+    class="cbykB1o"
+    style="width: 100%; min-width: 100%; border-radius: initial; overflow: visible; border-collapse: initial; table-layout: fixed;"
+    width="100%"
+  >
+    <tbody>
+      <tr
+        class="tcbykB1o"
+        style="height: 0px;"
+      >
+        <td
+          class="lcbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rcbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr>
+        <td
+          class="lcbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          class="acbykB1o"
+          style="width: 100%;"
+        >
+          <a
+            class="abtn-bykB1o"
+            href="#"
+            target="_blank"
+          >
+            <table
+              border="0"
+              cellpadding="0"
+              cellspacing="0"
+              class="bykB1o"
+              style="display: inline-block; border-radius: initial; overflow: visible; border-collapse: initial; background: rgb(153, 153, 153); table-layout: fixed;"
+            >
+              <tbody>
+                <tr
+                  class="itbykB1o"
+                  style="height: 12px;"
+                >
+                  <td
+                    class="ilbykB1o"
+                    style="width: 20px;"
+                  />
+                  <td
+                    style="width: 100%;"
+                  />
+                  <td
+                    class="irbykB1o"
+                    style="width: 20px;"
+                  />
+                </tr>
+                <tr>
+                  <td
+                    class="ilbykB1o"
+                    style="width: 20px;"
+                  />
+                  <td
+                    align="center"
+                    class="abykB1o"
+                    style="width: 100%;"
+                  >
+                    <span
+                      class="btnbykB1o"
+                      style="font-family: "Helvetica Neue", "Arial Nova", "Nimbus Sans", Arial, sans-serif; display: inline-block; text-decoration: none;"
+                    />
+                  </td>
+                  <td
+                    class="irbykB1o"
+                    style="width: 20px;"
+                  />
+                </tr>
+                <tr
+                  class="ibbykB1o"
+                  style="height: 12px;"
+                >
+                  <td
+                    class="ilbykB1o"
+                    style="width: 20px;"
+                  />
+                  <td
+                    style="width: 100%;"
+                  />
+                  <td
+                    class="irbykB1o"
+                    style="width: 20px;"
+                  />
+                </tr>
+              </tbody>
+            </table>
+          </a>
+        </td>
+        <td
+          class="rcbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr
+        class="bcbykB1o"
+        style="height: 0px;"
+      >
+        <td
+          class="lcbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rcbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;

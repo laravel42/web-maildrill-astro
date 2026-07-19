@@ -1,0 +1,811 @@
+/* Google Fonts are loaded dynamically at editor mount via
+   `ensureEditorFontsLink()` (see src/index.tsx), built from the
+   single-source FONT_CATALOG in @eb/document-core. No static @import here. */
+
+/* --- Figtree (UI sans — all editor interface) --- */
+@font-face {
+  font-family: 'Figtree';
+  src: url('./fonts/Figtree-Italic-VariableFont_wght.ttf') format('truetype');
+  font-style: italic;
+  font-weight: 100 900;
+}
+
+@font-face {
+  font-family: 'Figtree';
+  src: url('./fonts/Figtree-VariableFont_wght.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 100 900;
+}
+
+/* --- Newsreader (serif display — landing/marketing headings only) --- */
+@font-face {
+  font-family: 'Newsreader';
+  src: url('./fonts/newsreader-latin-wght-normal.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Newsreader';
+  src: url('./fonts/newsreader-latin-wght-italic.woff2') format('woff2');
+  font-style: italic;
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+/* EditorJS Styles */
+.email-builder-html {
+  overflow: auto;
+}
+
+.codex-editor__redactor {
+  padding-bottom: 0 !important;
+  margin: 0 !important;
+}
+
+.ct {
+  z-index: 20 !important;
+}
+
+.ce-inline-toolbar,
+.codex-editor--narrow .ce-toolbox,
+.ce-conversion-toolbar,
+.ce-settings,
+.ce-settings__button,
+.ce-toolbar__settings-btn:hover,
+.cdx-button,
+.ce-popover,
+.ce-toolbar__plus:hover {
+  /* color set via MUI GlobalStyles */
+}
+/* Reset styles - solo aplicar dentro del canvas del email builder */
+.email-builder-body p {
+  margin: 0;
+}
+.email-builder-body h1,
+.email-builder-body h2,
+.email-builder-body h3,
+.email-builder-body h4,
+.email-builder-body h5,
+.email-builder-body h6 {
+  font-size: revert;
+  font-weight: revert;
+}
+.email-builder-body ol,
+.email-builder-body ul {
+  list-style: revert;
+  margin: revert;
+  padding: revert;
+}
+.email-builder-body .MuiList-root {
+  padding: 0;
+}
+
+.cdx-search-field__input {
+  box-shadow: none !important;
+  color: #212121;
+}
+
+::selection,
+.ce-block--selected .ce-block__content {
+  /* background via MUI GlobalStyles */
+}
+
+.ce-popover-item:hover {
+  /* colors via MUI GlobalStyles */
+}
+
+.cdx-settings-button:hover,
+.ce-settings__button:hover,
+.ce-toolbox__button--active,
+.ce-toolbox__button:hover,
+.cdx-button:hover,
+.ce-inline-toolbar__dropdown:hover,
+.ce-inline-tool:hover,
+.ce-popover__item:hover,
+.ce-toolbar__settings-btn:hover {
+  /* hover colors via MUI GlobalStyles */
+}
+
+.cdx-notify--error {
+  background: #fb5d5d !important;
+}
+
+.cdx-notify__cross::after,
+.cdx-notify__cross::before {
+  background: white;
+}
+
+.cdx-block .ce-block--selected {
+  color: white !important;
+}
+
+.tag__title {
+  font-weight: 500;
+  margin: 0.4rem 0;
+}
+
+.cdx-block font,
+.ce-popover-item-html p:not(.tag__title) {
+  color: #212121 !important;
+}
+
+.editor-js-loader {
+  width: 16px;
+  height: 16px;
+  border: 3px solid #eeeeee;
+  /* border-bottom-color via MUI GlobalStyles */
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.ce-popover--opened > .ce-popover__container {
+  max-height: unset;
+}
+.ce-popover--inline .ce-popover--nested .ce-popover__container {
+  width: fit-content;
+}
+
+.ce-popover--open-left .ce-popover--nested .ce-popover__container #picker {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.ce-popover--open-left .ce-popover--nested .ce-popover__container:has(#picker) {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.ce-toolbar__actions .ce-toolbar__plus,
+.ce-toolbar__actions .ce-toolbar__settings-btn,
+button[data-item-name='convert-to'],
+.ce-popover-item-separator {
+  display: none !important;
+}
+
+.ce-paragraph {
+  width: 100% !important;
+  z-index: 0 !important;
+}
+
+#customEditor .codex-editor .ce-paragraph.cdx-block {
+  max-width: 80%;
+}
+
+#customEditor .codex-editor .ce-paragraph.cdx-block:first-line {
+  text-indent: 400px;
+}
+
+.ce-inline-tool-input {
+  color: #212121;
+  --tw-ring-color: transparent;
+}
+
+@keyframes rainbow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.react-colorful {
+  width: 100% !important;
+}
+
+[data-list='bullet'] {
+  list-style-type: disc !important;
+  list-style-position: inside;
+}
+
+[data-list='ordered'] {
+  list-style-type: decimal !important;
+  list-style-position: inside;
+}
+
+.ql-picker-options {
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.ql-font.ql-picker {
+  min-width: 120px;
+}
+
+.ql-align-right {
+  text-align: right;
+}
+.ql-align-center {
+  text-align: center;
+}
+.ql-align-justify {
+  text-align: justify;
+}
+
+.ql-size-small {
+  font-size: 0.75em !important;
+}
+.ql-size-large {
+  font-size: 1.5em !important;
+}
+.ql-size-huge {
+  font-size: 2.5em !important;
+}
+
+.ql-size-10px {
+  font-size: 10px;
+}
+.ql-size-12px {
+  font-size: 12px;
+}
+.ql-size-14px {
+  font-size: 14px;
+}
+.ql-size-16px {
+  font-size: 16px;
+}
+.ql-size-18px {
+  font-size: 18px;
+}
+.ql-size-20px {
+  font-size: 20px;
+}
+.ql-size-22px {
+  font-size: 22px;
+}
+.ql-size-24px {
+  font-size: 24px;
+}
+.ql-size-26px {
+  font-size: 26px;
+}
+.ql-size-28px {
+  font-size: 28px;
+}
+.ql-size-30px {
+  font-size: 30px;
+}
+.ql-size-32px {
+  font-size: 32px;
+}
+.ql-size-34px {
+  font-size: 34px;
+}
+.ql-size-36px {
+  font-size: 36px;
+}
+.ql-size-38px {
+  font-size: 38px;
+}
+.ql-size-40px {
+  font-size: 40px;
+}
+.ql-size-42px {
+  font-size: 42px;
+}
+.ql-size-44px {
+  font-size: 44px;
+}
+.ql-size-46px {
+  font-size: 46px;
+}
+.ql-size-48px {
+  font-size: 48px;
+}
+
+.ql-size .ql-picker-item[data-value='10px']::before {
+  font-size: 10px;
+}
+.ql-size .ql-picker-item[data-value='12px']::before {
+  font-size: 12px;
+}
+.ql-size .ql-picker-item[data-value='14px']::before {
+  font-size: 14px;
+}
+.ql-size .ql-picker-item[data-value='16px']::before {
+  font-size: 16px;
+}
+.ql-size .ql-picker-item[data-value='18px']::before {
+  font-size: 18px;
+}
+.ql-size .ql-picker-item[data-value='20px']::before {
+  font-size: 20px;
+}
+.ql-size .ql-picker-item[data-value='22px']::before {
+  font-size: 22px;
+}
+.ql-size .ql-picker-item[data-value='24px']::before {
+  font-size: 24px;
+}
+.ql-size .ql-picker-item[data-value='26px']::before {
+  font-size: 26px;
+}
+.ql-size .ql-picker-item[data-value='28px']::before {
+  font-size: 28px;
+}
+.ql-size .ql-picker-item[data-value='30px']::before {
+  font-size: 30px;
+}
+.ql-size .ql-picker-item[data-value='32px']::before {
+  font-size: 32px;
+}
+.ql-size .ql-picker-item[data-value='34px']::before {
+  font-size: 34px;
+}
+.ql-size .ql-picker-item[data-value='36px']::before {
+  font-size: 36px;
+}
+.ql-size .ql-picker-item[data-value='38px']::before {
+  font-size: 38px;
+}
+.ql-size .ql-picker-item[data-value='40px']::before {
+  font-size: 40px;
+}
+.ql-size .ql-picker-item[data-value='42px']::before {
+  font-size: 42px;
+}
+.ql-size .ql-picker-item[data-value='44px']::before {
+  font-size: 44px;
+}
+.ql-size .ql-picker-item[data-value='46px']::before {
+  font-size: 46px;
+}
+.ql-size .ql-picker-item[data-value='48px']::before {
+  font-size: 48px;
+}
+
+.ql-font-lato {
+  font-family: 'Lato', 'Helvetica', sans-serif, Arial;
+}
+
+.ql-font-merriweather {
+  font-family: 'Merriweather', 'Georgia', serif;
+}
+
+.ql-font-montserrat {
+  font-family: 'Montserrat', 'Helvetica', sans-serif, Arial;
+}
+
+.ql-font-open-sans {
+  font-family: 'Open Sans', 'Helvetica', sans-serif, Arial;
+}
+
+.ql-font-oswald {
+  font-family: 'Oswald', 'Arial', sans-serif;
+}
+
+.ql-font-pacifico {
+  font-family: 'Pacifico', 'Brush Script MT', cursive;
+}
+
+.ql-font-playfair {
+  font-family: 'Playfair Display', 'Georgia', serif;
+}
+
+.ql-font-roboto-mono {
+  font-family: 'Roboto Mono', 'Courier New', monospace;
+}
+
+.ql-font-roboto-slab {
+  font-family: 'Roboto Slab', 'Georgia', serif;
+}
+
+.ql-font-roboto {
+  font-family: 'Roboto', 'Helvetica', sans-serif, Arial;
+}
+
+.ql-font .ql-picker-item[data-value='lato']::before {
+  font-family: 'Lato', 'Helvetica', sans-serif, Arial;
+}
+.ql-font .ql-picker-item[data-value='merriweather']::before {
+  font-family: 'Merriweather', 'Georgia', serif;
+}
+.ql-font .ql-picker-item[data-value='montserrat']::before {
+  font-family: 'Montserrat', 'Helvetica', sans-serif, Arial;
+}
+.ql-font .ql-picker-item[data-value='open-sans']::before {
+  font-family: 'Open Sans', 'Helvetica', sans-serif, Arial;
+}
+.ql-font .ql-picker-item[data-value='oswald']::before {
+  font-family: 'Oswald', 'Arial', sans-serif;
+}
+.ql-font .ql-picker-item[data-value='pacifico']::before {
+  font-family: 'Pacifico', 'Brush Script MT', cursive;
+}
+.ql-font .ql-picker-item[data-value='playfair']::before {
+  font-family: 'Playfair Display', 'Georgia', serif;
+}
+.ql-font .ql-picker-item[data-value='roboto-mono']::before {
+  font-family: 'Roboto Mono', 'Courier New', monospace;
+}
+.ql-font .ql-picker-item[data-value='roboto-slab']::before {
+  font-family: 'Roboto Slab', 'Georgia', serif;
+}
+.ql-font .ql-picker-item[data-value='roboto']::before {
+  font-family: 'Roboto', 'Helvetica', sans-serif, Arial;
+}
+
+.backgroundTranspatent .MuiPaper-root {
+  background: transparent !important;
+  form {
+    border-radius: 0.5rem;
+  }
+}
+.containerErrorDialog .MuiPaper-root {
+  background: transparent !important;
+  .errorModal {
+    background: white;
+    border-radius: 0.5rem;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+label.MuiFormLabel-root {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+div.quill {
+  height: 59vh !important;
+  max-height: 100% !important;
+}
+
+/* WYSIWYG inline editor: altura según contenido (no 59vh) */
+.wysiwyg-inline-editor div.quill {
+  height: auto !important;
+  min-height: 24px !important;
+  max-height: none !important;
+}
+.ql-tooltip {
+  left: 0 !important;
+  font-size: 12px !important;
+  z-index: 20;
+  border-radius: 6px;
+  padding: 6px 6px !important;
+  /* Tooltip creation */
+  &:before {
+    content: '' !important;
+    margin-right: 0 !important;
+  }
+  > input {
+    margin-right: 4px !important;
+    border-radius: 4px;
+  }
+  .ql-action {
+    /* background via MUI GlobalStyles */
+    color: white !important;
+    border-radius: 4px;
+    padding: 6px 12px;
+    &:after {
+      margin-left: 0 !important ;
+      border-right: 0 !important;
+      padding-right: 0 !important;
+    }
+  }
+  .ql-remove {
+    margin-left: 4px;
+    background: #ef4444;
+    color: white !important;
+    border-radius: 4px;
+    padding: 6px 12px;
+    &:before {
+      margin-left: 0 !important;
+    }
+  }
+  /* Tooltip edit */
+  .ql-preview {
+    margin-right: 8px;
+  }
+}
+.email-builder-body {
+  a:not([style*='color']) {
+    color: var(--global-link-color, inherit);
+  }
+  a {
+    text-decoration: var(--global-link-text-decoration, underline) !important;
+  }
+}
+
+.light-email-builder pre,
+.light-email-builder .preview-container {
+  font-family:
+    'Figtree', ui-monospace, Menlo, Monaco, 'Cascadia Mono', 'Segoe UI Mono', 'Roboto Mono', 'Oxygen Mono',
+    'Ubuntu Monospace', 'Source Code Pro', 'Fira Mono', 'Droid Sans Mono', 'Courier New', monospace;
+}
+.light-email-builder .hljs-tag,
+.light-email-builder .hljs-name,
+.light-email-builder .hljs-attribute {
+  color: #1f1f21;
+}
+.light-email-builder .hljs-selector-tag,
+.light-email-builder .hljs-selector-class,
+.light-email-builder .hljs-selector-attr,
+.light-email-builder .hljs-selector-pseudo {
+  color: #116329;
+}
+.light-email-builder .hljs-keyword {
+  color: #cf222e;
+}
+.light-email-builder .hljs-number {
+  color: #0550ae;
+}
+.light-email-builder .hljs-string {
+  color: #0a3069;
+}
+.light-email-builder .hljs-comment {
+  color: #6e7781;
+  font-style: italic;
+}
+.light-email-builder .hljs-meta {
+  color: #1f1f21;
+  font-weight: bold;
+}
+
+/* Estilos para modo oscuro */
+.dark-email-builder pre,
+.dark-email-builder .preview-container {
+  font-family:
+    'Figtree', ui-monospace, Menlo, Monaco, 'Cascadia Mono', 'Segoe UI Mono', 'Roboto Mono', 'Oxygen Mono',
+    'Ubuntu Monospace', 'Source Code Pro', 'Fira Mono', 'Droid Sans Mono', 'Courier New', monospace;
+}
+.dark-email-builder .hljs-tag,
+.dark-email-builder .hljs-name {
+  color: #7ee787;
+}
+.dark-email-builder .hljs-attribute {
+  color: #79c0ff;
+}
+.dark-email-builder .hljs-selector-tag,
+.dark-email-builder .hljs-selector-class,
+.dark-email-builder .hljs-selector-attr,
+.dark-email-builder .hljs-selector-pseudo {
+  color: #7ee787;
+}
+.dark-email-builder .hljs-keyword {
+  color: #ff7b72;
+}
+.dark-email-builder .hljs-number {
+  color: #a5d6ff;
+}
+.dark-email-builder .hljs-string {
+  color: #a5d6ff;
+}
+.dark-email-builder .hljs-comment {
+  color: #8b949e;
+  font-style: italic;
+}
+.dark-email-builder .hljs-meta {
+  color: #ffa657;
+  font-weight: bold;
+}
+
+/* Estilos comunes para ambos modos */
+.hljs-tag .hljs-name {
+  font-weight: bold;
+}
+.hljs-meta {
+  font-style: italic;
+}
+
+/* Modo claro - hacer el atributo más visible */
+.light-email-builder .hljs-attr {
+  color: #0550ae; /* Azul más oscuro para mejor contraste */
+  font-weight: 500;
+}
+
+/* Modo oscuro - hacer el atributo más visible */
+.dark-email-builder .hljs-attr {
+  color: #ffa657; /* Naranja más brillante para mejor contraste */
+  font-weight: 500;
+}
+
+/* Scrolling styles */
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+  border-radius: 4px;
+  opacity: 0.4;
+  transition:
+    opacity 0.3s ease,
+    background-color 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  opacity: 0.7;
+  background: #6b7280;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Light mode specific scrollbar */
+.light-email-builder ::-webkit-scrollbar-track {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.light-email-builder ::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border: 1px solid #e5e7eb;
+}
+
+.light-email-builder ::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+  border-color: #d1d5db;
+}
+
+/* Dark mode specific scrollbar */
+.dark-email-builder ::-webkit-scrollbar-track {
+  background: #1f2937;
+  border: 1px solid #374151;
+}
+
+.dark-email-builder ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border: 1px solid #374151;
+}
+
+.dark-email-builder ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+  border-color: #4b5563;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #9ca3af transparent;
+}
+
+.light-email-builder * {
+  scrollbar-color: #d1d5db #f9fafb;
+}
+
+.dark-email-builder * {
+  scrollbar-color: #4b5563 #1f2937;
+}
+
+/* Scrollbar for email builder body */
+.email-builder-body::-webkit-scrollbar {
+  width: 10px;
+}
+
+.email-builder-body::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+}
+
+.email-builder-body::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.email-builder-body::-webkit-scrollbar-thumb:hover {
+  opacity: 0.9;
+}
+
+/* Scrollbar animations */
+@keyframes scrollbar-appear {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+/* Hover effects for better UX */
+.email-builder-html:hover ::-webkit-scrollbar-thumb {
+  opacity: 0.6;
+}
+
+/* Responsive scrollbar for mobile */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .email-builder-body::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .quill .ql-editor::-webkit-scrollbar {
+    width: 4px;
+  }
+}
+
+.noMarginTop {
+  margin-top: 0 !important;
+}
+
+.react-colorful__saturation {
+  border-bottom: 1px solid black !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.buttonsUndoRedo {
+  display: grid;
+  place-content: center;
+  cursor: pointer;
+  /* colors via MUI GlobalStyles */
+  &.disabledButton {
+    pointer-events: none;
+  }
+}
+
+.stickyClassMainHeader {
+  z-index: 1;
+}
+
+/* Canvas dot pattern background (applied via `.eb-canvas`). */
+.light-email-builder .eb-canvas {
+  --eb-bg-canvas: #f5f5f5;
+  --eb-dot-color: #d4d4d4;
+}
+.dark-email-builder .eb-canvas {
+  --eb-bg-canvas: #434955;
+  --eb-dot-color: #5a6070;
+}
+.eb-canvas {
+  background-color: var(--eb-bg-canvas);
+  background-image: radial-gradient(circle, var(--eb-dot-color) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Accessibility: honor the user's reduced-motion preference.
+   Editorial "pro" micro-interactions (hover lifts, transitions) are
+   composited and cheap, but users who opt out should get none of the
+   movement. Scoped to the editor roots so we don't override host-page
+   motion. */
+@media (prefers-reduced-motion: reduce) {
+  .light-email-builder *,
+  .dark-email-builder * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .light-email-builder *:hover,
+  .dark-email-builder *:hover {
+    transform: none !important;
+  }
+}

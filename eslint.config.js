@@ -7,6 +7,8 @@ export default [
   {
     ignores: [
       'dist/**',
+      // Vendored upstream editor sources — compiled by Vite, linted upstream.
+      'packages/**',
       '.astro/**',
       'node_modules/**',
       '.handoff/**',

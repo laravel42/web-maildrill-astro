@@ -1,0 +1,247 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Divider renders with default values 1`] = `
+<DocumentFragment>
+  <table
+    border="0"
+    cellpadding="0"
+    cellspacing="0"
+    class="cbykB1o"
+    style="width: 100%; min-width: 100%; font-size: 0px; line-height: 0; border-radius: initial; overflow: visible; border-collapse: initial; table-layout: fixed;"
+    width="100%"
+  >
+    <tbody>
+      <tr
+        class="tcbykB1o"
+        style="height: 0px;"
+      >
+        <td
+          class="lcbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rcbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr>
+        <td
+          class="lcbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          class="acbykB1o"
+          style="width: 100%; font-size: 0px; line-height: 0;"
+        >
+          <table
+            border="0"
+            cellpadding="0"
+            cellspacing="0"
+            class="bykB1o"
+            style="font-size: 0px; line-height: 0; display: inline-block; border-radius: initial; overflow: visible; border-collapse: initial; table-layout: fixed;"
+          >
+            <tbody>
+              <tr
+                class="itbykB1o"
+                style="height: 0px;"
+              >
+                <td
+                  class="ilbykB1o"
+                  style="width: 0px;"
+                />
+                <td
+                  style="width: 100%;"
+                />
+                <td
+                  class="irbykB1o"
+                  style="width: 0px;"
+                />
+              </tr>
+              <tr>
+                <td
+                  class="ilbykB1o"
+                  style="width: 0px;"
+                />
+                <td
+                  class="abykB1o"
+                  style="width: 100%; font-size: 0px; line-height: 0;"
+                >
+                  <div
+                    style="margin: 0px; padding: 0px; height: 0px; overflow: hidden; font-size: 0px; line-height: 0;"
+                  />
+                </td>
+                <td
+                  class="irbykB1o"
+                  style="width: 0px;"
+                />
+              </tr>
+              <tr
+                class="ibbykB1o"
+                style="height: 0px;"
+              >
+                <td
+                  class="ilbykB1o"
+                  style="width: 0px;"
+                />
+                <td
+                  style="width: 100%;"
+                />
+                <td
+                  class="irbykB1o"
+                  style="width: 0px;"
+                />
+              </tr>
+            </tbody>
+          </table>
+        </td>
+        <td
+          class="rcbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+      <tr
+        class="bcbykB1o"
+        style="height: 0px;"
+      >
+        <td
+          class="lcbykB1o"
+          style="width: 0px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rcbykB1o"
+          style="width: 0px;"
+        />
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;
+
+exports[`Divider renders with props 1`] = `
+<DocumentFragment>
+  <table
+    border="0"
+    cellpadding="0"
+    cellspacing="0"
+    class="cbykB1o"
+    style="width: 100%; min-width: 100%; font-size: 0px; line-height: 0; border-radius: initial; overflow: visible; border-collapse: initial; background: rgb(255, 240, 0); table-layout: fixed;"
+    width="100%"
+  >
+    <tbody>
+      <tr
+        class="tcbykB1o"
+        style="height: 1px;"
+      >
+        <td
+          class="lcbykB1o"
+          style="width: 2px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rcbykB1o"
+          style="width: 4px;"
+        />
+      </tr>
+      <tr>
+        <td
+          class="lcbykB1o"
+          style="width: 2px;"
+        />
+        <td
+          class="acbykB1o"
+          style="width: 100%; font-size: 0px; line-height: 0;"
+        >
+          <table
+            border="0"
+            cellpadding="0"
+            cellspacing="0"
+            class="bykB1o"
+            style="font-size: 0px; line-height: 0; display: inline-block; border-radius: initial; overflow: visible; border-collapse: initial; background-color: rgb(255, 240, 0); table-layout: fixed;"
+          >
+            <tbody>
+              <tr
+                class="itbykB1o"
+                style="height: 0px;"
+              >
+                <td
+                  class="ilbykB1o"
+                  style="width: 0px;"
+                />
+                <td
+                  style="width: 100%;"
+                />
+                <td
+                  class="irbykB1o"
+                  style="width: 0px;"
+                />
+              </tr>
+              <tr>
+                <td
+                  class="ilbykB1o"
+                  style="width: 0px;"
+                />
+                <td
+                  class="abykB1o"
+                  style="width: 100%; font-size: 0px; line-height: 0;"
+                >
+                  <div
+                    style="margin: 0px; padding: 0px; height: 0px; overflow: hidden; font-size: 0px; line-height: 0;"
+                  />
+                </td>
+                <td
+                  class="irbykB1o"
+                  style="width: 0px;"
+                />
+              </tr>
+              <tr
+                class="ibbykB1o"
+                style="height: 0px;"
+              >
+                <td
+                  class="ilbykB1o"
+                  style="width: 0px;"
+                />
+                <td
+                  style="width: 100%;"
+                />
+                <td
+                  class="irbykB1o"
+                  style="width: 0px;"
+                />
+              </tr>
+            </tbody>
+          </table>
+        </td>
+        <td
+          class="rcbykB1o"
+          style="width: 4px;"
+        />
+      </tr>
+      <tr
+        class="bcbykB1o"
+        style="height: 3px;"
+      >
+        <td
+          class="lcbykB1o"
+          style="width: 2px;"
+        />
+        <td
+          style="width: 100%;"
+        />
+        <td
+          class="rcbykB1o"
+          style="width: 4px;"
+        />
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;

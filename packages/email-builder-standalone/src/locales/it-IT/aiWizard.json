@@ -1,0 +1,194 @@
+{
+  "target": {
+    "title": "Cosa vuoi generare?",
+    "template": {
+      "title": "Template completo",
+      "description": "Un'email completa con tutte le sezioni"
+    },
+    "component": {
+      "title": "Componente",
+      "description": "Una sezione riutilizzabile (hero, CTA, ecc.)"
+    },
+    "theme": {
+      "title": "Tema",
+      "description": "Una palette di colori e stile per le tue email"
+    }
+  },
+  "entry": {
+    "title": "Come vuoi creare la tua email?",
+    "directCard": {
+      "title": "Diretto",
+      "description": "Scrivi il tuo prompt. Ideale quando sai già cosa vuoi."
+    },
+    "wizardCard": {
+      "title": "Wizard",
+      "description": "Rispondi ad alcune domande rapide. Ideale per definire il brief."
+    }
+  },
+  "header": {
+    "directTitle": "Genera con IA",
+    "wizardTitle": "Wizard visivo",
+    "switchAria": "Passa tra modalità Diretto e Wizard"
+  },
+  "steps": {
+    "common": {
+      "next": "Avanti",
+      "back": "Indietro",
+      "skip": "Salta",
+      "review": "Rivedi",
+      "onlyAnswerThisPoint": "Rispondi solo a questo punto — breve."
+    },
+    "step01": {
+      "title": "Sull'email",
+      "purposeQuestion": "Che tipo di email è?",
+      "purpose": {
+        "welcome": "Benvenuto",
+        "receipt": "Ricevuta",
+        "sale": "Promozione",
+        "newsletter": "Newsletter",
+        "otp": "OTP / Verifica",
+        "event": "Evento",
+        "reminder": "Promemoria",
+        "custom": "Personalizzato"
+      },
+      "brandNameLabel": "Nome del brand",
+      "brandNamePlaceholder": "es. Bloom",
+      "audienceLabel": "A chi è destinata?",
+      "audiencePlaceholder": "es. professionisti impegnati",
+      "goalCaption": "Descrivi l'obiettivo di questa email",
+      "goalPlaceholder": "es. Ricordare agli utenti di completare il profilo"
+    },
+    "step02": {
+      "title": "Tono e settore",
+      "moodQuestion": "Come deve sembrare? (scegli fino a 4)",
+      "mood": {
+        "friendly": "Amichevole",
+        "premium": "Premium",
+        "bold": "Audace",
+        "minimal": "Minimale",
+        "playful": "Giocoso",
+        "wellness": "Benessere",
+        "corporate": "Corporate",
+        "editorial": "Editoriale"
+      },
+      "verticalQuestion": "A quale settore appartiene?",
+      "vertical": {
+        "saas": "SaaS",
+        "ecommerce": "E-commerce",
+        "fintech": "Fintech",
+        "wellness": "Benessere",
+        "hospitality": "Ospitalità",
+        "education": "Istruzione",
+        "nonprofit": "Non profit",
+        "real-estate": "Immobiliare",
+        "media": "Media",
+        "food-beverage": "Cibo e bevande",
+        "other": "Altro"
+      }
+    },
+    "step03": {
+      "title": "Look & feel",
+      "paletteQuestion": "Quale palette di colori?",
+      "palette": {
+        "warm": "Calda",
+        "cool": "Fredda",
+        "mono": "Monocromatica",
+        "pastel": "Pastello",
+        "dark": "Scura",
+        "neutral": "Neutrale"
+      },
+      "photoStyleQuestion": "Che stile di immagini?",
+      "photoStyle": {
+        "photographic": "Fotografico",
+        "illustrated": "Illustrato",
+        "abstract": "Astratto",
+        "mixed": "Misto",
+        "none": "Nessuna immagine"
+      },
+      "brandColorsNote": "Utilizzo i colori del tuo brand",
+      "brandColorsTitle": "Colori del brand",
+      "brandColorsHint": "Inserisci i codici hex del tuo brand o usa il selettore. Lascia vuoto per far decidere l'IA.",
+      "colorPrimary": "Primario",
+      "colorSecondary": "Secondario",
+      "colorAccent": "Accento"
+    },
+    "step04": {
+      "title": "Immagini",
+      "subjectQuestion": "Cosa devono mostrare le immagini?",
+      "subject": {
+        "people": "Persone",
+        "product": "Prodotto",
+        "place": "Luogo",
+        "food": "Cibo",
+        "abstract": "Astratto"
+      },
+      "scenePlaceholder": "Descrivi una scena specifica, es. panetteria artigianale"
+    },
+    "step05": {
+      "title": "Sezioni",
+      "sectionsQuestion": "Quali sezioni deve avere l'email?",
+      "section": {
+        "hero": "Hero",
+        "features": "Caratteristiche",
+        "testimonial": "Testimonianza",
+        "stats": "Statistiche",
+        "cta": "Call to action",
+        "faq": "FAQ",
+        "footer": "Footer"
+      }
+    },
+    "theme": {
+      "title": "Colori del tuo brand",
+      "colorsTitle": "Scegli i tuoi colori",
+      "colorsHint": "Scegli i colori per il tuo tema. Lascia vuoto quelli che non servono.",
+      "primary": "Primario",
+      "secondary": "Secondario",
+      "accent": "Accento / CTA",
+      "auto": "Automatico",
+      "brandNameLabel": "Nome del brand (opzionale)",
+      "brandNamePlaceholder": "es. Bloom"
+    },
+    "themeTypography": {
+      "title": "Tipografia e forma",
+      "fontBodyLabel": "Font del corpo",
+      "fontHeadingsLabel": "Font dei titoli",
+      "radiusTitle": "Raggio degli angoli",
+      "radiusHint": "Trascina il cursore per regolare l'arrotondamento di pulsanti e schede."
+    }
+  },
+  "summary": {
+    "title": "Rivedi il tuo brief",
+    "purpose": "Tipo",
+    "brand": "Brand",
+    "moods": "Tono",
+    "palette": "Palette",
+    "sections": "Sezioni",
+    "finalPrompt": "Prompt generato",
+    "finalPromptHelp": "Questo è il prompt che useremo. Puoi modificarlo prima di generare.",
+    "editPrompt": "Modifica prompt",
+    "doneEditing": "Fatto",
+    "compiling": "Creazione del prompt…",
+    "compileError": "Non è stato possibile compilare il brief. Puoi modificare il prompt manualmente.",
+    "retry": "Riprova",
+    "generate": "Genera",
+    "generating": "Generando…",
+    "back": "Indietro"
+  },
+  "themeSummary": {
+    "title": "Il tuo tema generato",
+    "generating": "Generazione del tema…",
+    "error": "Impossibile generare il tema. Riprova.",
+    "retry": "Riprova",
+    "sampleHeading": "Il tuo brand",
+    "sampleBody": "Ecco come appariranno le tue email con questo tema. Scopri di più sul nostro",
+    "sampleLink": "sito web",
+    "sampleButton": "Inizia",
+    "a11yPass": "Accessibile — contrasto {{ratio}}:1 (WCAG AA)",
+    "a11yWarn": "Contrasto basso — {{ratio}}:1",
+    "nameLabel": "Nome del tema",
+    "saveButton": "Salva nella libreria",
+    "savedButton": "Salvato",
+    "applyButton": "Applica tema",
+    "saved": "Tema salvato nella tua libreria."
+  }
+}
