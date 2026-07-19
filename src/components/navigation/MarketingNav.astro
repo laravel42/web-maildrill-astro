@@ -264,6 +264,10 @@ const { active } = Astro.props;
 
   /* Right actions */
   .nav__right {
+    /* Pin to the last column. `.nav__list` is `display:none` on mobile, so
+       without this the right group auto-places into the middle `auto` column
+       and the toggle ends up centered instead of right-aligned. */
+    grid-column: 3;
     justify-self: end;
     display: flex;
     align-items: center;

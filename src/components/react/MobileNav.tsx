@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { NavGroup } from '@/config/navigation';
 
 type Cta = { label: string; href: string };
@@ -65,48 +66,51 @@ export default function MobileNav({ items, primaryCta, secondaryCta }: Props) {
         )}
       </button>
 
-      {open && (
-        <div className="mnav__panel" id={panelId}>
-          <nav aria-label="Mobile">
-            {items.map((item) =>
-              item.children ? (
-                <div className="mnav__group" key={item.label}>
-                  <p className="mnav__grouplabel">{item.label}</p>
-                  {item.children.map((child) => (
-                    <a
-                      key={child.href}
-                      className="mnav__sublink"
-                      href={child.href}
-                      onClick={() => setOpen(false)}
-                    >
-                      {child.label}
-                    </a>
-                  ))}
-                </div>
-              ) : (
-                <a
-                  key={item.label}
-                  className="mnav__link"
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                >
-                  {item.label}
-                </a>
-              ),
-            )}
-            <a className="mnav__link" href={secondaryCta.href} onClick={() => setOpen(false)}>
-              {secondaryCta.label}
-            </a>
-            <a
-              className="btn btn--primary btn--pill mnav__cta"
-              href={primaryCta.href}
-              onClick={() => setOpen(false)}
-            >
-              {primaryCta.label}
-            </a>
-          </nav>
-        </div>
-      )}
+      {open &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div className="mnav__panel" id={panelId}>
+            <nav aria-label="Mobile">
+              {items.map((item) =>
+                item.children ? (
+                  <div className="mnav__group" key={item.label}>
+                    <p className="mnav__grouplabel">{item.label}</p>
+                    {item.children.map((child) => (
+                      <a
+                        key={child.href}
+                        className="mnav__sublink"
+                        href={child.href}
+                        onClick={() => setOpen(false)}
+                      >
+                        {child.label}
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <a
+                    key={item.label}
+                    className="mnav__link"
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                  >
+                    {item.label}
+                  </a>
+                ),
+              )}
+              <a className="mnav__link" href={secondaryCta.href} onClick={() => setOpen(false)}>
+                {secondaryCta.label}
+              </a>
+              <a
+                className="btn btn--primary btn--pill mnav__cta"
+                href={primaryCta.href}
+                onClick={() => setOpen(false)}
+              >
+                {primaryCta.label}
+              </a>
+            </nav>
+          </div>,
+          document.body,
+        )}
 
       <style>{`
         .mnav { display: flex; align-items: center; }
@@ -127,6 +131,7 @@ export default function MobileNav({ items, primaryCta, secondaryCta }: Props) {
           right: 0;
           top: var(--nav-height);
           bottom: 0;
+          z-index: var(--z-drawer);
           background: var(--bg);
           padding: 8px 20px 24px;
           overflow-y: auto;
@@ -162,7 +167,9 @@ export default function MobileNav({ items, primaryCta, secondaryCta }: Props) {
         .mnav__sublink:hover { background: var(--surface2); }
         .mnav__cta { margin-top: 10px; width: 100%; }
         @media (min-width: 960px) {
-          .mnav { display: none; }
+          /* Panel is portaled to <body>, so hide it here too (not just .mnav)
+             in case the viewport crosses the breakpoint while it is open. */
+          .mnav, .mnav__panel { display: none; }
         }
       `}</style>
     </div>
