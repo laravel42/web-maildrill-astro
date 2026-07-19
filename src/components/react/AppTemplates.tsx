@@ -15,6 +15,8 @@ import { CHANNEL } from './shared/channels';
 import { useToast } from './shared/useToast';
 import { CHANNEL_TABS, VIEWS, ASC_FIRST, PAGE_SIZE } from './AppTemplates.logic';
 import type { ViewKey, SortKey } from './AppTemplates.types';
+import { api, ApiError } from '@/lib/app/api';
+import { toGalleryTemplate, type ApiTemplate } from '@/lib/app/template-map';
 import styles from './AppTemplates.module.css';
 
 /* --------------------------------------------------------- small pieces ---- */
@@ -175,7 +177,12 @@ function ColFilter({
 
 /* --------------------------------------------------------------- screen ---- */
 
-export default function AppTemplates() {
+export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] } = {}) {
+  // Live workspace templates from SSR when provided; else the fixture gallery.
+  const live = initial !== undefined;
+  const [templates, setTemplates] = useState<GalleryTemplate[]>(
+    initial !== undefined ? initial : galleryTemplates,
+  );
   const [channelTab, setChannelTab] = useState<ChannelType | 'all'>('all');
   const [query, setQuery] = useState('');
   const [view, setView] = useState<ViewKey>('gallery');
@@ -185,7 +192,7 @@ export default function AppTemplates() {
   const [openFilter, setOpenFilter] = useState<'cat' | 'opens' | 'clicks' | null>(null);
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updated', dir: -1 });
   const [favIds, setFavIds] = useState<Set<string>>(
-    () => new Set(galleryTemplates.filter((t) => t.favorite).map((t) => t.id)),
+    () => new Set((initial ?? galleryTemplates).filter((t) => t.favorite).map((t) => t.id)),
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
@@ -200,15 +207,15 @@ export default function AppTemplates() {
   const resetPage = () => setPage(1);
 
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: galleryTemplates.length };
+    const c: Record<string, number> = { all: templates.length };
     for (const t of CHANNEL_TABS)
-      if (t !== 'all') c[t] = galleryTemplates.filter((x) => x.channel === t).length;
+      if (t !== 'all') c[t] = templates.filter((x) => x.channel === t).length;
     return c;
-  }, []);
+  }, [templates]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = galleryTemplates.filter((t) => {
+    const list = templates.filter((t) => {
       if (channelTab !== 'all' && t.channel !== channelTab) return false;
       if (catSel.size && !catSel.has(t.category)) return false;
       if (opensSel.size && !opensSel.has(rateBucket(t.avgOpen))) return false;
@@ -242,7 +249,7 @@ export default function AppTemplates() {
       if (av > bv) return 1 * dir;
       return a.name.localeCompare(b.name);
     });
-  }, [channelTab, query, catSel, opensSel, clicksSel, sort, favIds]);
+  }, [channelTab, query, catSel, opensSel, clicksSel, sort, favIds, templates]);
 
   const total = filtered.length;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -282,13 +289,11 @@ export default function AppTemplates() {
   const toggleFav = (id: string, name: string) => {
     setFavIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-        show(`Removed “${name}” from favorites`);
-      } else {
-        next.add(id);
-        show(`Added “${name}” to favorites`);
-      }
+      const willFav = !next.has(id);
+      if (willFav) next.add(id);
+      else next.delete(id);
+      show(willFav ? `Added “${name}” to favorites` : `Removed “${name}” from favorites`);
+      if (live) void api.patch(`templates/${id}`, { favorite: willFav }).catch(() => undefined);
       return next;
     });
   };
@@ -299,7 +304,29 @@ export default function AppTemplates() {
     setSelected(new Set());
   };
 
-  const openTpl = openId ? (galleryTemplates.find((t) => t.id === openId) ?? null) : null;
+  /* Delete selected — persists to the service in live mode, else local-only. */
+  const removeSelected = async () => {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    if (!live) {
+      setTemplates((prev) => prev.filter((t) => !selected.has(t.id)));
+      show(`Deleted ${ids.length} template${ids.length === 1 ? '' : 's'}`);
+      setSelected(new Set());
+      return;
+    }
+    const results = await Promise.allSettled(ids.map((id) => api.del(`templates/${id}`)));
+    const okIds = new Set(ids.filter((_, i) => results[i].status === 'fulfilled'));
+    setTemplates((prev) => prev.filter((t) => !okIds.has(t.id)));
+    const failed = ids.length - okIds.size;
+    show(
+      failed
+        ? `Deleted ${okIds.size}, ${failed} failed`
+        : `Deleted ${okIds.size} template${okIds.size === 1 ? '' : 's'}`,
+    );
+    setSelected(new Set());
+  };
+
+  const openTpl = openId ? (templates.find((t) => t.id === openId) ?? null) : null;
 
   const setTab = (t: ChannelType | 'all') => {
     setChannelTab(t);
@@ -453,7 +480,7 @@ export default function AppTemplates() {
             <button
               type="button"
               className={`${styles.bulkbtn} ${styles.bulkbtnDanger}`}
-              onClick={() => bulk('Deleted')}
+              onClick={() => void removeSelected()}
             >
               <Icon name="trash" size={13} /> Delete
             </button>
@@ -788,9 +815,24 @@ export default function AppTemplates() {
           name={builder.name}
           kind="template"
           onClose={() => setBuilder(null)}
-          onSave={({ name }) => {
-            setBuilder(null);
-            show(name && name !== 'Untitled' ? `“${name}” saved` : 'Template saved');
+          onSave={async ({ channel, name, message }) => {
+            if (!live) {
+              setBuilder(null);
+              show(name && name !== 'Untitled' ? `“${name}” saved` : 'Template saved');
+              return;
+            }
+            try {
+              const created = await api.post<ApiTemplate>('templates', {
+                name: name && name !== 'Untitled' ? name : 'Untitled template',
+                channel,
+                text: message || null,
+              });
+              setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
+              show(`“${created.name}” saved`);
+              setBuilder(null);
+            } catch (e) {
+              show(e instanceof ApiError ? e.message : 'Could not save template');
+            }
           }}
         />
       )}
