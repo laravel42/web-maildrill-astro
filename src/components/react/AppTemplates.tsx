@@ -11,6 +11,7 @@ import {
 } from '@/lib/app/templates-data';
 import Icon from './Icon';
 import EmailBuilder from './EmailBuilder';
+import VisualEmailBuilder from './VisualEmailBuilder';
 import { CHANNEL } from './shared/channels';
 import { useToast } from './shared/useToast';
 import { CHANNEL_TABS, VIEWS, ASC_FIRST, PAGE_SIZE } from './AppTemplates.logic';
@@ -809,7 +810,36 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
         />
       )}
 
-      {builder && (
+      {/* Email uses the full EmailBuilder.js visual editor; other channels keep
+          the lightweight composer. */}
+      {builder && builder.channel === 'email' && (
+        <VisualEmailBuilder
+          name={builder.name}
+          onClose={() => setBuilder(null)}
+          onSave={async ({ name, html, document }) => {
+            if (!live) {
+              setBuilder(null);
+              show(name && name !== 'Untitled' ? `“${name}” saved` : 'Template saved');
+              return;
+            }
+            try {
+              const created = await api.post<ApiTemplate>('templates', {
+                name: name && name !== 'Untitled' ? name : 'Untitled template',
+                channel: 'email',
+                html,
+                builderDoc: document as Record<string, unknown>,
+              });
+              setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
+              show(`“${created.name}” saved`);
+              setBuilder(null);
+            } catch (e) {
+              show(e instanceof ApiError ? e.message : 'Could not save template');
+            }
+          }}
+        />
+      )}
+
+      {builder && builder.channel !== 'email' && (
         <EmailBuilder
           channel={builder.channel}
           name={builder.name}
