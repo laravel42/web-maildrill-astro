@@ -1,8 +1,21 @@
 import type { APIContext } from 'astro';
 
-/** Base URL of the EmailBuilder.js AI/image backend (@eb/backend). */
+/**
+ * Base URL of the EmailBuilder.js AI/image backend.
+ *
+ * Defaults to the same origin as the rest of the service: `pnpm dev` in
+ * maildrill-service runs messaging, product and the builder on one port. Set
+ * `EB_BACKEND_URL` (e.g. http://localhost:3100) only when running the builder
+ * as its own process.
+ */
 export function ebBaseUrl(): string {
-  return process.env.EB_BACKEND_URL ?? import.meta.env.EB_BACKEND_URL ?? 'http://localhost:3100';
+  return (
+    process.env.EB_BACKEND_URL ??
+    import.meta.env.EB_BACKEND_URL ??
+    process.env.API_BASE_URL ??
+    import.meta.env.API_BASE_URL ??
+    'http://localhost:3001'
+  );
 }
 
 /**
