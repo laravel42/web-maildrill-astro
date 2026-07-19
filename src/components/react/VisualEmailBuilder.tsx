@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { EmailBuilderProps, EmailBuilderRef, TEditorConfiguration } from 'email-builder-online';
 import { builderGenerateTemplate, builderTextAction } from '@/lib/app/services';
 import Icon from './Icon';
+import { useToast } from './shared/useToast';
 
 /**
  * Full-screen wrapper around EmailBuilder.js (email-builder-online) — the visual
@@ -37,8 +38,7 @@ export default function VisualEmailBuilder({ name, initialDocument, onClose, onS
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState(name ?? '');
-  const [justSaved, setJustSaved] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const { toast, show } = useToast();
 
   // Client-only load of the editor + its stylesheet (kept out of SSR).
   useEffect(() => {
@@ -66,22 +66,19 @@ export default function VisualEmailBuilder({ name, initialDocument, onClose, onS
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  // Save in place: persist, then show a confirmation badge and stay in the
-  // editor (no redirect back to the gallery).
+  // Save in place: persist, then confirm with the shared workspace toast and
+  // stay in the editor (no redirect back to the gallery).
   const handleSave = async () => {
     const el = builderRef.current;
     if (!el || saving) return;
     setSaving(true);
-    setSaveError(null);
-    setJustSaved(false);
     try {
       const html = el.getHtml();
       const document = el.getDocument();
       await onSave({ name: title.trim() || 'Untitled', html, document });
-      setJustSaved(true);
-      window.setTimeout(() => setJustSaved(false), 2600);
+      show(`“${title.trim() || 'Untitled template'}” saved`);
     } catch (e) {
-      setSaveError(e instanceof Error ? e.message : 'Could not save.');
+      show(e instanceof Error ? e.message : 'Could not save.');
     } finally {
       setSaving(false);
     }
@@ -105,18 +102,6 @@ export default function VisualEmailBuilder({ name, initialDocument, onClose, onS
           }}
         />
         <span className="veb__spacer" />
-        {justSaved && (
-          <span className="veb__saved" role="status">
-            <Icon name="check" size={13} stroke={3} />
-            Saved
-          </span>
-        )}
-        {saveError && (
-          <span className="veb__saveerr" role="status" title={saveError}>
-            <Icon name="x" size={13} stroke={3} />
-            {saveError}
-          </span>
-        )}
         <button
           type="button"
           className="veb__save"
@@ -159,6 +144,19 @@ export default function VisualEmailBuilder({ name, initialDocument, onClose, onS
           </div>
         )}
       </div>
+
+      {toast && (
+        <div
+          className="veb__toast"
+          role="status"
+          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
+        >
+          <span className="veb__toastic">
+            <Icon name="check" size={13} stroke={3} />
+          </span>
+          {toast}
+        </div>
+      )}
 
       <style>{`
         .veb {
@@ -229,39 +227,34 @@ export default function VisualEmailBuilder({ name, initialDocument, onClose, onS
           cursor: pointer;
         }
         .veb__save:disabled { opacity: 0.6; cursor: default; }
-        .veb__saved,
-        .veb__saveerr {
-          display: inline-flex;
+        /* Shared workspace toast — same style as every other app notification. */
+        .veb__toast {
+          position: fixed;
+          bottom: 24px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: var(--z-toast, 1200);
+          display: flex;
           align-items: center;
-          gap: 5px;
-          height: 34px;
-          padding: 0 12px;
-          border-radius: 8px;
-          font-size: 12.5px;
-          font-weight: 600;
-          white-space: nowrap;
-          animation: veb-badge-in 0.2s ease;
+          gap: 11px;
+          background: var(--text, #1c1917);
+          color: var(--bg, #fff);
+          padding: 12px 16px 12px 13px;
+          border-radius: 12px;
+          box-shadow: 0 12px 32px rgba(28, 25, 23, 0.3);
+          font-size: 13px;
+          font-weight: 500;
         }
-        .veb__saved {
-          background: #ecfdf3;
-          color: #067647;
-          border: 1px solid #a6f4c5;
-        }
-        .veb__saveerr {
-          max-width: 320px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          background: #fef3f2;
-          color: #b42318;
-          border: 1px solid #fecdca;
-        }
-        @keyframes veb-badge-in {
-          from { opacity: 0; transform: translateY(-3px); }
-          to { opacity: 1; transform: none; }
-        }
-        @media (prefers-color-scheme: dark) {
-          .veb__saved { background: #05271b; color: #6ee7b7; border-color: #10442f; }
-          .veb__saveerr { background: #2b1512; color: #fca5a5; border-color: #5a201b; }
+        .veb__toastic {
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          background: #22c55e;
+          color: #fff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex: none;
         }
         .veb__stage { position: relative; flex: 1; min-height: 0; }
         .veb__state {
