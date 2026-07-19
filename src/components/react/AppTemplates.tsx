@@ -335,6 +335,27 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
 
   const openTpl = openId ? (templates.find((t) => t.id === openId) ?? null) : null;
 
+  /* Open the visual editor for a template. Email templates load their saved
+     design (fetched on demand) so edits update the same template in place. */
+  const openForEdit = async (tpl: GalleryTemplate) => {
+    setOpenId(null);
+    if (tpl.channel === 'email' && live) {
+      try {
+        const full = await api.get<ApiTemplate>(`templates/${tpl.id}`);
+        setBuilder({
+          channel: 'email',
+          name: tpl.name,
+          id: tpl.id,
+          document: (full.builderDoc as TEditorConfiguration | null) ?? undefined,
+        });
+      } catch {
+        setBuilder({ channel: 'email', name: tpl.name, id: tpl.id });
+      }
+    } else {
+      setBuilder({ channel: tpl.channel, name: tpl.name });
+    }
+  };
+
   const setTab = (t: ChannelType | 'all') => {
     setChannelTab(t);
     setSelected(new Set());
@@ -541,10 +562,10 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                         className={styles.ovUse}
                         onClick={(e) => {
                           e.stopPropagation();
-                          show(`Using “${t.name}”`);
+                          void openForEdit(t);
                         }}
                       >
-                        Use
+                        Edit
                       </button>
                       <button
                         type="button"
@@ -808,26 +829,8 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           onFav={() => toggleFav(openTpl.id, openTpl.name)}
           onClose={() => setOpenId(null)}
           onToast={show}
-          onUse={async () => {
-            const tpl = openTpl;
-            setOpenId(null);
-            // Email templates reopen in the visual editor loaded with their saved
-            // design (builderDoc) so edits update the same template.
-            if (tpl.channel === 'email' && live) {
-              try {
-                const full = await api.get<ApiTemplate>(`templates/${tpl.id}`);
-                setBuilder({
-                  channel: 'email',
-                  name: tpl.name,
-                  id: tpl.id,
-                  document: (full.builderDoc as TEditorConfiguration | null) ?? undefined,
-                });
-              } catch {
-                setBuilder({ channel: 'email', name: tpl.name, id: tpl.id });
-              }
-            } else {
-              setBuilder({ channel: tpl.channel, name: tpl.name });
-            }
+          onUse={() => {
+            if (openTpl) void openForEdit(openTpl);
           }}
         />
       )}
@@ -1026,7 +1029,7 @@ function TemplateDrawer({
             <Icon name="copy" size={14} /> Clone
           </button>
           <button type="button" className="pbtn" style={{ flex: 1 }} onClick={onUse}>
-            Use template
+            <Icon name="edit" size={14} /> Edit template
           </button>
         </div>
       </div>
