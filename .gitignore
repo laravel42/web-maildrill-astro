@@ -26,6 +26,9 @@ playwright-report/
 playwright/.cache/
 coverage/
 
+# scripts (ignore local secrets/captures; keep committed .mjs tooling)
+scripts/.*
+
 # caches
 .cache/
 .vite/
