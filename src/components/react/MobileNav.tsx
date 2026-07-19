@@ -1,14 +1,10 @@
 import { useEffect, useId, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { NavGroup } from '@/config/navigation';
+import { useEscapeClose } from './shared/useEscapeClose';
+import type { Props } from './MobileNav.types';
+import styles from './MobileNav.module.css';
 
-type Cta = { label: string; href: string };
-
-type Props = {
-  items: NavGroup[];
-  primaryCta: Cta;
-  secondaryCta: Cta;
-};
+export type { Cta, Props } from './MobileNav.types';
 
 export default function MobileNav({ items, primaryCta, secondaryCta }: Props) {
   const [open, setOpen] = useState(false);
@@ -21,19 +17,13 @@ export default function MobileNav({ items, primaryCta, secondaryCta }: Props) {
     };
   }, [open]);
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  useEscapeClose(() => setOpen(false));
 
   return (
-    <div className="mnav">
+    <div className={styles.mnav}>
       <button
         type="button"
-        className="mnav__toggle"
+        className={styles.toggle}
         aria-expanded={open}
         aria-controls={panelId}
         aria-label={open ? 'Close menu' : 'Open menu'}
@@ -69,16 +59,16 @@ export default function MobileNav({ items, primaryCta, secondaryCta }: Props) {
       {open &&
         typeof document !== 'undefined' &&
         createPortal(
-          <div className="mnav__panel" id={panelId}>
+          <div className={styles.panel} id={panelId} style={{ animation: 'fade var(--duration) var(--ease-out)' }}>
             <nav aria-label="Mobile">
               {items.map((item) =>
                 item.children ? (
-                  <div className="mnav__group" key={item.label}>
-                    <p className="mnav__grouplabel">{item.label}</p>
+                  <div className={styles.group} key={item.label}>
+                    <p className={styles.grouplabel}>{item.label}</p>
                     {item.children.map((child) => (
                       <a
                         key={child.href}
-                        className="mnav__sublink"
+                        className={styles.sublink}
                         href={child.href}
                         onClick={() => setOpen(false)}
                       >
@@ -89,7 +79,7 @@ export default function MobileNav({ items, primaryCta, secondaryCta }: Props) {
                 ) : (
                   <a
                     key={item.label}
-                    className="mnav__link"
+                    className={styles.link}
                     href={item.href}
                     onClick={() => setOpen(false)}
                   >
@@ -97,11 +87,11 @@ export default function MobileNav({ items, primaryCta, secondaryCta }: Props) {
                   </a>
                 ),
               )}
-              <a className="mnav__link" href={secondaryCta.href} onClick={() => setOpen(false)}>
+              <a className={styles.link} href={secondaryCta.href} onClick={() => setOpen(false)}>
                 {secondaryCta.label}
               </a>
               <a
-                className="btn btn--primary btn--pill mnav__cta"
+                className={`btn btn--primary btn--pill ${styles.cta}`}
                 href={primaryCta.href}
                 onClick={() => setOpen(false)}
               >
@@ -111,67 +101,6 @@ export default function MobileNav({ items, primaryCta, secondaryCta }: Props) {
           </div>,
           document.body,
         )}
-
-      <style>{`
-        .mnav { display: flex; align-items: center; }
-        .mnav__toggle {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 40px;
-          height: 40px;
-          border-radius: 10px;
-          border: 1px solid var(--border2);
-          background: transparent;
-          color: var(--text);
-        }
-        .mnav__panel {
-          position: fixed;
-          left: 0;
-          right: 0;
-          top: var(--nav-height);
-          bottom: 0;
-          z-index: var(--z-drawer);
-          background: var(--bg);
-          padding: 8px 20px 24px;
-          overflow-y: auto;
-          animation: fade var(--duration) var(--ease-out);
-        }
-        .mnav__panel nav { display: flex; flex-direction: column; gap: 2px; }
-        .mnav__link {
-          padding: 12px;
-          border-radius: 10px;
-          font-size: 15px;
-          font-weight: 500;
-          color: var(--text);
-        }
-        .mnav__link:hover { background: var(--surface2); }
-        .mnav__group { display: flex; flex-direction: column; }
-        .mnav__grouplabel {
-          margin: 0;
-          padding: 12px 12px 4px;
-          font-family: var(--font-mono);
-          font-size: 12px;
-          font-weight: 600;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          color: var(--muted);
-        }
-        .mnav__sublink {
-          padding: 10px 12px 10px 20px;
-          border-radius: 10px;
-          font-size: 15px;
-          font-weight: 500;
-          color: var(--text);
-        }
-        .mnav__sublink:hover { background: var(--surface2); }
-        .mnav__cta { margin-top: 10px; width: 100%; }
-        @media (min-width: 960px) {
-          /* Panel is portaled to <body>, so hide it here too (not just .mnav)
-             in case the viewport crosses the breakpoint while it is open. */
-          .mnav, .mnav__panel { display: none; }
-        }
-      `}</style>
     </div>
   );
 }

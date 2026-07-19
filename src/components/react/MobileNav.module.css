@@ -19,6 +19,7 @@
   right: 0;
   top: var(--nav-height);
   bottom: 0;
+  z-index: var(--z-drawer);
   background: var(--bg);
   padding: 8px 20px 24px;
   overflow-y: auto;
@@ -67,7 +68,10 @@
   width: 100%;
 }
 @media (min-width: 960px) {
-  .mnav {
+  /* Panel is portaled to <body>, so hide it here too (not just .mnav)
+     in case the viewport crosses the breakpoint while it is open. */
+  .mnav,
+  .panel {
     display: none;
   }
 }

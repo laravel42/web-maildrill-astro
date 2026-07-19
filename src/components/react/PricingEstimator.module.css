@@ -96,10 +96,6 @@
 .comboOpt:global(.is-selected.is-active) {
   background: color-mix(in srgb, var(--accent) 16%, var(--surface2));
 }
-.comboRate {
-  font-size: 11px;
-  color: var(--muted);
-}
 .comboEmpty {
   padding: 14px 12px;
   font-size: 13px;
@@ -221,37 +217,86 @@
 .h2 {
   margin: 14px 0 40px;
 }
-.tiertabs {
-  display: inline-flex;
-  gap: 4px;
-  padding: 5px;
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  border-radius: 12px;
+.promobanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: -20px 0 28px;
+}
+.promobannerText {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text4);
+}
+.promobannerDeadline {
+  text-decoration: underline;
+  text-decoration-color: var(--brand);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+.promobannerTag {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(135deg, var(--brand), var(--brand-hover));
+  padding: 6px 14px;
+  border-radius: 999px;
+  box-shadow: 0 3px 12px rgba(255, 68, 31, 0.38);
+}
+.was {
+  text-decoration: line-through;
+  opacity: 0.5;
+  font-weight: 400;
+}
+/* Tab bar mirrors the estimator grid so the plan selector lines up with
+   (and is as wide as) the sliders column. */
+.tierbar {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 32px;
   margin-bottom: 28px;
+}
+.tiertabs {
+  display: flex;
+  gap: 10px;
   flex-wrap: wrap;
 }
+/* Individual pills (not a joined segmented control). */
 .tiertab {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
-  padding: 9px 16px;
-  border-radius: 9px;
+  gap: 3px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border2);
+  background: var(--surface2);
   color: var(--text3);
-  background: transparent;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
-.tiertab:global(.is-active) {
+.tiertab:hover {
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--ink) 5%, var(--surface2));
+}
+.tiertab:global(.is-active),
+.tiertab:global(.is-active):hover {
   background: var(--ink);
   color: #fff;
+  border-color: var(--ink);
 }
 .tiertabName {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
 }
 .tiertabLabel {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
 }
 .tiertabLabel.isDisc {
@@ -259,6 +304,9 @@
 }
 .tiertab:global(.is-active) .tiertabLabel {
   color: var(--muted2);
+}
+.tiertabLabel .was {
+  font-size: 0.9em;
 }
 
 .estgrid {
@@ -413,7 +461,7 @@
 .estcardSave b {
   color: #fff;
 }
-.estcardCta {
+.pc a.estcardCta {
   display: block;
   text-align: center;
   padding: 13px;
@@ -424,9 +472,13 @@
   color: #fff;
   transition: background 0.2s;
 }
-.estcardCta:hover {
+.pc a.estcardCta:hover {
   background: var(--accent-hover);
   color: #fff;
+}
+.pc a.estcardCta:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 .prepay {
@@ -445,12 +497,34 @@
   gap: 20px;
 }
 .pcard {
+  position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 20px;
   padding: 28px;
   display: flex;
   flex-direction: column;
+}
+.pcardRibbon {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(135deg, var(--brand), var(--brand-hover));
+  padding: 5px 12px;
+  border-radius: 999px;
+  box-shadow: 0 3px 12px rgba(255, 68, 31, 0.38);
+}
+.pcardPctwas {
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  text-decoration: line-through;
+  opacity: 0.45;
 }
 .pcardHi {
   background: linear-gradient(180deg, #201d16, #15130d);
@@ -530,7 +604,8 @@
   .prepaycards {
     grid-template-columns: repeat(2, 1fr);
   }
-  .estgrid {
+  .estgrid,
+  .tierbar {
     grid-template-columns: 1fr;
   }
 }

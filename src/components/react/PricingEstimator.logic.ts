@@ -6,6 +6,19 @@ export const COUNTRIES = ratesData.countries as Country[];
 
 export const CONTACT = '/contact';
 
+/** Default send mix (Monthly / pay-as-you-go) — also the base the plan
+ *  auto-scaling multiplies from. */
+export const BASE_USAGE: Record<ChannelKey, number> = {
+  email: 50_000,
+  sms: 2_000,
+  whatsapp: 2_000,
+  voice: 1_000,
+};
+
+/** How aggressively paid plans scale the send volumes, as a multiple of the
+ *  plan's annual commitment. Higher = bigger, more visible slider jumps. */
+export const PLAN_VOLUME_MULTIPLIER = 2;
+
 export const CHANNEL_SVG: Record<ChannelKey, string> = {
   email: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
   sms: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/>',
