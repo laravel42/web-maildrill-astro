@@ -99,6 +99,7 @@ export default function EmailBuilder({
   channel: initialChannel,
   name = null,
   kind = 'template',
+  lockChannel = false,
   onClose,
   onSave,
 }: Props) {
@@ -165,7 +166,8 @@ export default function EmailBuilder({
           </div>
         </div>
 
-        {/* Channel switcher */}
+        {/* Channel switcher — hidden when the channel is locked (chosen up front). */}
+        {!lockChannel && (
         <div className={styles.seg}>
           {CHANNEL_ORDER.map((k) => {
             const on = channel === k;
@@ -197,6 +199,7 @@ export default function EmailBuilder({
             );
           })}
         </div>
+        )}
 
         {/* Email-only preview controls */}
         {isEmail ? (

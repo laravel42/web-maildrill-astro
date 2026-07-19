@@ -377,6 +377,7 @@ export default function CampaignsBoard() {
           channel={builder.channel}
           name={builder.name}
           kind="campaign"
+          lockChannel
           onClose={() => setBuilder(null)}
           onSave={({ name }) => {
             setBuilder(null);

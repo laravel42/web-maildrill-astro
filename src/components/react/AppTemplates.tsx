@@ -932,6 +932,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           channel={builder.channel}
           name={builder.name}
           kind="template"
+          lockChannel
           onClose={() => setBuilder(null)}
           onSave={async ({ channel, name, message }) => {
             if (!live) {
