@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { mediaFiles, folderOf, FOLDER_ORDER } from '@/lib/app/media-data';
+import { folderOf, FOLDER_ORDER } from '@/lib/app/media-data';
 import type { MediaFile, MediaFileType, MediaFolder } from '@/lib/app/media-data';
+import { api, ApiError } from '@/lib/app/api';
+import { toMediaFile, type ApiMediaAsset } from '@/lib/app/media-map';
 import Icon from './Icon';
 import { useToast } from './shared/useToast';
 import {
@@ -27,7 +29,36 @@ function Box({ on, size = 17 }: { on: boolean; size?: number }) {
   );
 }
 
-export default function AppMedia() {
+/** Read intrinsic dimensions so the grid can show real sizes. Non-images and
+    unreadable files resolve to null rather than blocking the upload. */
+async function imageSize(file: File): Promise<{ width: number; height: number } | null> {
+  if (!file.type.startsWith('image/')) return null;
+  const url = URL.createObjectURL(file);
+  try {
+    return await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      img.onerror = () => resolve(null);
+      img.src = url;
+    });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/** A grid row plus the fields that only exist for live assets. */
+type LiveMediaFile = MediaFile & { preview: string; tags: string[] };
+
+export default function AppMedia({
+  initial,
+  storageReady = false,
+}: {
+  initial?: LiveMediaFile[];
+  storageReady?: boolean;
+} = {}) {
+  const live = initial !== undefined;
+  const [mediaFiles, setMediaFiles] = useState<LiveMediaFile[]>(initial ?? []);
+  const [uploading, setUploading] = useState(false);
   const [view, setView] = useState<ViewKey>('list');
   const [folder, setFolder] = useState<MediaFolder>('All files');
   const [query, setQuery] = useState('');
@@ -43,7 +74,6 @@ export default function AppMedia() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const { toast, show } = useToast();
   const [tagStore, setTagStore] = useState<Record<string, string[]>>({});
-  const [prog, setProg] = useState(72);
 
   const resetPage = () => setPage(1);
 
@@ -55,7 +85,7 @@ export default function AppMedia() {
       c[f] = (c[f] ?? 0) + 1;
     }
     return c;
-  }, []);
+  }, [mediaFiles]);
   const folders = useMemo(
     () => FOLDER_ORDER.filter((f) => f === 'All files' || (folderCounts[f] ?? 0) > 0),
     [folderCounts],
@@ -125,9 +155,94 @@ export default function AppMedia() {
       return new Set([...prev, ...pageRows.map((r) => r.id)]);
     });
 
-  const bulk = (verb: string) => {
-    show(`${verb} ${selected.size} file${selected.size === 1 ? '' : 's'}`);
+  /* Upload straight to S3 with a presigned PUT, then register the object.
+     Registering only after the PUT succeeds means a failed upload never leaves
+     an asset behind that claims to exist. */
+  const uploadFiles = async (files: File[]) => {
+    if (files.length === 0) return;
+    if (!live || !storageReady) {
+      show('Media storage is not configured yet');
+      return;
+    }
+    setUploading(true);
+    let ok = 0;
+    for (const file of files) {
+      try {
+        const ticket = await api.post<{ storageKey: string; uploadUrl: string }>(
+          'media/upload-url',
+          { filename: file.name, contentType: file.type, sizeBytes: file.size },
+        );
+        // Straight to S3 — the bytes never pass through our server.
+        const put = await fetch(ticket.uploadUrl, {
+          method: 'PUT',
+          headers: { 'content-type': file.type },
+          body: file,
+        });
+        if (!put.ok) throw new Error(`upload failed (${put.status})`);
+
+        const dims = await imageSize(file);
+        const asset = await api.post<ApiMediaAsset>('media', {
+          storageKey: ticket.storageKey,
+          name: file.name,
+          contentType: file.type,
+          sizeBytes: file.size,
+          width: dims?.width ?? null,
+          height: dims?.height ?? null,
+        });
+        setMediaFiles((prev) => [toMediaFile(asset, prev.length), ...prev]);
+        ok += 1;
+      } catch (e) {
+        show(e instanceof ApiError ? e.message : `Could not upload ${file.name}`);
+      }
+    }
+    setUploading(false);
+    if (ok > 0) {
+      show(`${ok} file${ok === 1 ? '' : 's'} uploaded`);
+      setUploadOpen(false);
+    }
+  };
+
+  /* Delete for real, and only drop rows the server actually removed. */
+  const deleteSelected = async () => {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    if (!live) {
+      show('Media storage is not configured yet');
+      return;
+    }
+    const results = await Promise.allSettled(ids.map((id) => api.del(`media/${id}`)));
+    const okIds = new Set(ids.filter((_, i) => results[i].status === 'fulfilled'));
+    setMediaFiles((prev) => prev.filter((f) => !okIds.has(f.id)));
+    const failed = ids.length - okIds.size;
+    show(
+      failed
+        ? `Deleted ${okIds.size}, ${failed} failed`
+        : `Deleted ${okIds.size} file${okIds.size === 1 ? '' : 's'}`,
+    );
     setSelected(new Set());
+  };
+
+  /* Open each selected asset's real CDN URL — no fake "Downloading" toast. */
+  const downloadSelected = () => {
+    const rows = mediaFiles.filter((f) => selected.has(f.id) && f.preview);
+    if (rows.length === 0) {
+      show('Nothing downloadable selected');
+      return;
+    }
+    rows.forEach((f) => window.open(f.preview, '_blank', 'noopener'));
+    setSelected(new Set());
+  };
+
+  const saveTags = async (id: string, tags: string[]) => {
+    setTagStore((prev) => ({ ...prev, [id]: tags }));
+    if (!live) return;
+    try {
+      await api.patch<ApiMediaAsset>(`media/${id}`, { tags });
+      setMediaFiles((prev) => prev.map((f) => (f.id === id ? { ...f, tags } : f)));
+      show('Tags saved');
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : 'Could not save tags');
+    }
   };
 
   const toggleFrom = (
@@ -187,22 +302,6 @@ export default function AppMedia() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [uploadOpen, openId, filterOpen, colOpen]);
-
-  // mock upload progress (client-only, after the modal is opened)
-  useEffect(() => {
-    if (!uploadOpen) return;
-    setProg(24);
-    const id = window.setInterval(() => {
-      setProg((p) => {
-        if (p >= 72) {
-          window.clearInterval(id);
-          return 72;
-        }
-        return Math.min(72, p + 6);
-      });
-    }, 130);
-    return () => window.clearInterval(id);
-  }, [uploadOpen]);
 
   const onRowActivate = (id: string) => (e: ReactKeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -426,18 +525,14 @@ export default function AppMedia() {
           <div className={styles.bulk} style={{ animation: 'fade .18s ease' }}>
             <span className={`${styles.bulkCount} tnum`}>{selected.size} selected</span>
             <span className={styles.bulkDiv} />
-            <button type="button" className={styles.bulkBtn} onClick={() => bulk('Downloading')}>
+            <button type="button" className={styles.bulkBtn} onClick={downloadSelected}>
               <Icon name="download" size={13} />
               Download
-            </button>
-            <button type="button" className={styles.bulkBtn} onClick={() => bulk('Moved')}>
-              <Icon name="layers" size={13} />
-              Move to folder
             </button>
             <button
               type="button"
               className={`${styles.bulkBtn} ${styles.bulkBtnDanger}`}
-              onClick={() => bulk('Deleted')}
+              onClick={() => void deleteSelected()}
             >
               <Icon name="trash" size={13} />
               Delete
@@ -480,7 +575,10 @@ export default function AppMedia() {
                 </button>
                 <div
                   className={`${styles.thumb} ${styles.thumbGrid}`}
-                  style={{ background: m.thumb, color: m.fg }}
+                  style={{
+                    background: m.preview ? `center/cover no-repeat url(${m.preview})` : m.thumb,
+                    color: m.fg,
+                  }}
                 >
                   {m.label && <span className={styles.thumbLabel}>{m.label}</span>}
                 </div>
@@ -507,7 +605,9 @@ export default function AppMedia() {
                 <div
                   className={`${styles.thumb} ${styles.thumbCompact}`}
                   style={{
-                    background: m.thumb,
+                    background: m.preview
+                      ? `center/cover no-repeat url(${m.preview})`
+                      : m.thumb,
                     color: m.fg,
                     borderColor: selected.has(m.id) ? '#4f46e5' : 'var(--border)',
                   }}
@@ -599,7 +699,10 @@ export default function AppMedia() {
                 <div className={styles.lnameCell}>
                   <span
                     className={styles.lthumb}
-                    style={{ background: m.thumb, color: m.fg }}
+                    style={{
+                      background: m.preview ? `center/cover no-repeat url(${m.preview})` : m.thumb,
+                      color: m.fg,
+                    }}
                     aria-hidden="true"
                   >
                     {m.label}
@@ -681,7 +784,7 @@ export default function AppMedia() {
           onClose={() => setOpenId(null)}
           onToast={show}
           onSaveTags={(id, tags) => {
-            setTagStore((prev) => ({ ...prev, [id]: tags }));
+            void saveTags(id, tags);
             show('Tags saved');
           }}
           onFilterTag={(tag) => {
@@ -720,74 +823,53 @@ export default function AppMedia() {
               </button>
             </div>
             <div className={styles.modalBody}>
-              <button
-                type="button"
+              {!storageReady && (
+                <p className="screen__sub" style={{ margin: '0 0 12px' }}>
+                  Media storage isn't configured yet, so uploads are disabled.
+                </p>
+              )}
+              <label
                 className={styles.drop}
-                onClick={() => show('File picker is a mock in this demo')}
+                style={{
+                  display: 'flex',
+                  cursor: storageReady && !uploading ? 'pointer' : 'not-allowed',
+                  opacity: storageReady ? 1 : 0.55,
+                }}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (storageReady && !uploading) void uploadFiles([...e.dataTransfer.files]);
+                }}
               >
+                <input
+                  type="file"
+                  multiple
+                  accept="image/png,image/jpeg,image/gif,image/webp,image/avif,image/svg+xml,application/pdf"
+                  disabled={!storageReady || uploading}
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const files = [...(e.target.files ?? [])];
+                    e.target.value = '';
+                    void uploadFiles(files);
+                  }}
+                />
                 <span className={styles.dropIc}>
                   <Icon name="media" size={22} />
                 </span>
-                <span className={styles.dropTitle}>Drop images here to upload</span>
-                <span className={styles.dropSub}>
-                  or <span className={styles.dropBrowse}>browse</span> · PNG, JPG, SVG up to 5 MB
+                <span className={styles.dropTitle}>
+                  {uploading ? 'Uploading…' : 'Drop files here to upload'}
                 </span>
-              </button>
-
-              <p className={`adrawer__eyebrow ${styles.queueEyebrow}`}>Upload queue</p>
-
-              <div className={styles.qitem}>
-                <span
-                  className={styles.qthumb}
-                  style={{ background: 'linear-gradient(135deg,#93c5fd,#3b82f6)' }}
-                  aria-hidden="true"
-                />
-                <div className={styles.qmain}>
-                  <div className={styles.qtop}>
-                    <span className={styles.qname}>hero-banner.jpg</span>
-                    <span className={`${styles.qpct} tnum`}>{prog}%</span>
-                  </div>
-                  <div className={`abar ${styles.qbar}`}>
-                    <div
-                      className="abar__fill"
-                      style={{ width: `${prog}%`, background: '#4f46e5' }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className={`${styles.qitem} ${styles.qitemLast}`}>
-                <span
-                  className={styles.qthumb}
-                  style={{ background: 'linear-gradient(135deg,#c4b5fd,#8b5cf6)' }}
-                  aria-hidden="true"
-                />
-                <div className={styles.qmain}>
-                  <div className={styles.qtop}>
-                    <span className={styles.qname}>product-shot.png</span>
-                    <span className={styles.qdone}>
-                      <Icon name="check" size={13} stroke={3} />
-                      Done
-                    </span>
-                  </div>
-                  <div className={`abar ${styles.qbar}`}>
-                    <div className="abar__fill" style={{ width: '100%', background: '#22c55e' }} />
-                  </div>
-                </div>
-              </div>
+                <span className={styles.dropSub}>
+                  or <span className={styles.dropBrowse}>browse</span> · PNG, JPG, SVG, PDF up to
+                  15 MB
+                </span>
+              </label>
             </div>
             <div className={styles.modalFoot}>
               <button type="button" className="sbtn" onClick={() => setUploadOpen(false)}>
                 Cancel
               </button>
-              <button
-                type="button"
-                className="pbtn"
-                onClick={() => {
-                  setUploadOpen(false);
-                  show('2 files uploaded');
-                }}
-              >
+              <button type="button" className="pbtn" onClick={() => setUploadOpen(false)}>
                 Done
               </button>
             </div>
@@ -849,8 +931,14 @@ function MediaDrawer({
     { k: 'Uploaded', v: file.uploaded, num: true },
   ];
 
+  /* The asset's real CloudFront URL. Previously this fabricated a
+     cdn.maildrill.app link that pointed at nothing. */
   const copyUrl = () => {
-    const url = `https://cdn.maildrill.app/media/${file.name}`;
+    const url = (file as { preview?: string }).preview;
+    if (!url) {
+      onToast('No public URL for this file');
+      return;
+    }
     try {
       navigator.clipboard?.writeText(url);
     } catch {
