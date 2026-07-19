@@ -79,6 +79,31 @@
   padding: 0 6px;
 }
 
+.category {
+  flex: none;
+  height: 30px;
+  margin-left: 6px;
+  padding: 0 8px;
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text2);
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.category:hover {
+  border-color: var(--muted2);
+  background: var(--surface2);
+}
+.category:focus {
+  outline: none;
+  border-color: var(--accent, #ff441f);
+}
+
 .right {
   display: flex;
   align-items: center;

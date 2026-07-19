@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { EmailBuilderProps, EmailBuilderRef, TEditorConfiguration } from 'email-builder-online';
 import { builderGenerateTemplate, builderTextAction } from '@/lib/app/services';
+import { TEMPLATE_CATEGORIES } from '@/lib/app/templates-data';
 import Icon from './Icon';
 import { useToast } from './shared/useToast';
 import EditorHeader from './shared/EditorHeader';
@@ -24,12 +25,14 @@ export type VisualEmailBuilderSave = {
   name: string;
   html: string;
   document: TEditorConfiguration;
+  category: string;
 };
 
 type Props = {
   name: string | null;
   /** Existing design to reopen for editing (builderDoc JSON), if any. */
   initialDocument?: TEditorConfiguration | string;
+  initialCategory?: string;
   kind?: 'template' | 'campaign';
   onClose: () => void;
   onSave: (value: VisualEmailBuilderSave) => void | Promise<void>;
@@ -38,6 +41,7 @@ type Props = {
 export default function VisualEmailBuilder({
   name,
   initialDocument,
+  initialCategory,
   kind = 'template',
   onClose,
   onSave,
@@ -46,6 +50,7 @@ export default function VisualEmailBuilder({
   const [Builder, setBuilder] = useState<BuilderComponent | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [title, setTitle] = useState(name ?? '');
+  const [category, setCategory] = useState(initialCategory ?? TEMPLATE_CATEGORIES[1]);
   const { toast, show } = useToast();
 
   // Client-only load of the editor + its stylesheet (kept out of SSR).
@@ -80,7 +85,7 @@ export default function VisualEmailBuilder({
     if (!el) throw new Error('Editor not ready');
     const html = el.getHtml();
     const document = el.getDocument();
-    await onSave({ name: title.trim() || 'Untitled', html, document });
+    await onSave({ name: title.trim() || 'Untitled', html, document, category });
   };
 
   const { status, markDirty, flush } = useAutosave(persist);
@@ -103,6 +108,16 @@ export default function VisualEmailBuilder({
         }}
         kind={kind}
         status={status}
+        category={category}
+        categories={kind === 'template' ? TEMPLATE_CATEGORIES : undefined}
+        onCategoryChange={
+          kind === 'template'
+            ? (v) => {
+                setCategory(v);
+                markDirty();
+              }
+            : undefined
+        }
         onBack={onClose}
         onSendTest={handleSendTest}
         onSaveDraft={() => void handleSaveDraft()}

@@ -206,6 +206,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
     name: string | null;
     id?: string;
     document?: TEditorConfiguration;
+    category?: string;
   } | null>(
     null,
   );
@@ -348,12 +349,13 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           name: tpl.name,
           id: tpl.id,
           document: (full.builderDoc as TEditorConfiguration | null) ?? undefined,
+          category: full.category ?? tpl.category,
         });
       } catch {
-        setBuilder({ channel: 'email', name: tpl.name, id: tpl.id });
+        setBuilder({ channel: 'email', name: tpl.name, id: tpl.id, category: tpl.category });
       }
     } else {
-      setBuilder({ channel: tpl.channel, name: tpl.name });
+      setBuilder({ channel: tpl.channel, name: tpl.name, category: tpl.category });
     }
   };
 
@@ -896,8 +898,9 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
         <VisualEmailBuilder
           name={builder.name}
           initialDocument={builder.document}
+          initialCategory={builder.category}
           onClose={() => setBuilder(null)}
-          onSave={async ({ name, html, document }) => {
+          onSave={async ({ name, html, document, category }) => {
             const ed = builder;
             if (!ed) return;
             // Stay in the editor and let it show a saved badge; don't close.
@@ -909,6 +912,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               channel: 'email' as const,
               html,
               builderDoc: document as Record<string, unknown>,
+              category,
             };
             if (ed.id) {
               // Editing an existing template — update it in place.
@@ -932,14 +936,16 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           channel={builder.channel}
           name={builder.name}
           kind="template"
+          initialCategory={builder.category}
           onClose={() => setBuilder(null)}
-          onSave={async ({ channel, name, message }) => {
+          onSave={async ({ channel, name, message, category }) => {
             const ed = builder;
             if (!ed || !live) return;
             const body = {
               name: name && name !== 'Untitled' ? name : 'Untitled template',
               channel,
               text: message || null,
+              category,
             };
             if (ed.id) {
               const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);

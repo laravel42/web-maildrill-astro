@@ -14,6 +14,7 @@ import {
   VOICE_OPTS,
 } from './EmailBuilder.logic';
 import type { Props } from './EmailBuilder.types';
+import { TEMPLATE_CATEGORIES } from '@/lib/app/templates-data';
 import EditorHeader from './shared/EditorHeader';
 import { useAutosave } from './shared/useAutosave';
 import { useToast } from './shared/useToast';
@@ -85,6 +86,7 @@ export default function EmailBuilder({
   channel: initialChannel,
   name = null,
   kind = 'template',
+  initialCategory,
   onClose,
   onSave,
 }: Props) {
@@ -95,6 +97,7 @@ export default function EmailBuilder({
   const [voice, setVoice] = useState<string>(VOICE_OPTS[0]);
   const [speed, setSpeed] = useState<string>(SPEED_OPTS[1]);
   const [templateName, setTemplateName] = useState(name ?? '');
+  const [category, setCategory] = useState(initialCategory ?? TEMPLATE_CATEGORIES[1]);
   const { toast, show } = useToast();
 
   useEscapeClose(onClose);
@@ -115,7 +118,7 @@ export default function EmailBuilder({
 
   // Autosave the draft every 5s once the user starts editing.
   const persist = async () => {
-    await onSave({ channel, name: templateName.trim() || 'Untitled', message });
+    await onSave({ channel, name: templateName.trim() || 'Untitled', message, category });
   };
   const { status, markDirty, flush } = useAutosave(persist);
   const dirtyInit = useRef(false);
@@ -125,7 +128,7 @@ export default function EmailBuilder({
       return;
     }
     markDirty();
-  }, [message, templateName, markDirty]);
+  }, [message, templateName, category, markDirty]);
   const handleSaveDraft = async () => {
     const ok = await flush();
     show(ok ? `“${templateName.trim() || 'Untitled template'}” saved` : 'Could not save.');
@@ -140,6 +143,9 @@ export default function EmailBuilder({
         onNameChange={setTemplateName}
         kind={kind}
         status={status}
+        category={category}
+        categories={kind === 'template' ? TEMPLATE_CATEGORIES : undefined}
+        onCategoryChange={kind === 'template' ? setCategory : undefined}
         onBack={onClose}
         onSendTest={handleSendTest}
         onSaveDraft={() => void handleSaveDraft()}

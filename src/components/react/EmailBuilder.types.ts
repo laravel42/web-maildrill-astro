@@ -5,11 +5,13 @@ export type Props = {
   channel: ChannelType;
   name?: string | null;
   kind?: 'template' | 'campaign';
+  initialCategory?: string;
   onClose: () => void;
   onSave: (payload: {
     channel: ChannelType;
     name: string;
     message: string;
+    category: string;
   }) => void | Promise<void>;
 };
 

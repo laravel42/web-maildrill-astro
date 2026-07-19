@@ -13,6 +13,10 @@ type Props = {
   kind?: 'template' | 'campaign';
   /** Autosave indicator state. */
   status?: SaveStatus;
+  /** Optional category picker — omit `categories` to hide it (e.g. campaigns). */
+  category?: string;
+  categories?: readonly string[];
+  onCategoryChange?: (value: string) => void;
   onBack: () => void;
   onSendTest: () => void;
   onSaveDraft: () => void;
@@ -54,6 +58,9 @@ export default function EditorHeader({
   onNameChange,
   kind = 'template',
   status = 'idle',
+  category,
+  categories,
+  onCategoryChange,
   onBack,
   onSendTest,
   onSaveDraft,
@@ -85,6 +92,21 @@ export default function EditorHeader({
           />
           <div className={styles.crumb}>{section} / Draft</div>
         </div>
+
+        {categories && onCategoryChange && (
+          <select
+            className={styles.category}
+            value={category ?? categories[0]}
+            onChange={(e: ChangeEvent<HTMLSelectElement>) => onCategoryChange(e.target.value)}
+            aria-label="Category"
+          >
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       <div className={styles.right}>
