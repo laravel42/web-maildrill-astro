@@ -6,6 +6,8 @@ export type Props = {
   name?: string | null;
   kind?: 'template' | 'campaign';
   initialCategory?: string;
+  /** Saved body when reopening an existing template, so edits replace it. */
+  initialMessage?: string;
   onClose: () => void;
   onSave: (payload: {
     channel: ChannelType;

@@ -87,11 +87,12 @@ export default function EmailBuilder({
   name = null,
   kind = 'template',
   initialCategory,
+  initialMessage,
   onClose,
   onSave,
 }: Props) {
   const [channel] = useState<ChannelType>(initialChannel);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(initialMessage ?? '');
   const [previewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [quickReplies, setQuickReplies] = useState<string[]>(['Yes, count me in', 'Maybe later']);
   const [voice, setVoice] = useState<string>(VOICE_OPTS[0]);

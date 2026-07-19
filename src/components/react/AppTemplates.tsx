@@ -16,7 +16,7 @@ import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { useToast } from './shared/useToast';
 import { CHANNEL_TABS, VIEWS, ASC_FIRST, PAGE_SIZE } from './AppTemplates.logic';
 import type { ViewKey, SortKey } from './AppTemplates.types';
-import { api } from '@/lib/app/api';
+import { api, ApiError } from '@/lib/app/api';
 import { toGalleryTemplate, type ApiTemplate } from '@/lib/app/template-map';
 import type { TEditorConfiguration } from 'email-builder-online';
 import styles from './AppTemplates.module.css';
@@ -207,6 +207,8 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
     id?: string;
     document?: TEditorConfiguration;
     category?: string;
+    /** Saved body for the SMS/WhatsApp/Voice composer when reopening. */
+    message?: string;
   } | null>(
     null,
   );
@@ -337,26 +339,33 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
 
   const openTpl = openId ? (templates.find((t) => t.id === openId) ?? null) : null;
 
-  /* Open the visual editor for a template. Email templates load their saved
-     design (fetched on demand) so edits update the same template in place. */
+  /* Open an editor on an existing template. The saved row is fetched for every
+     channel — carrying `id` is what makes the editor PATCH in place instead of
+     POSTing a copy, and the body has to come back with it or the first save
+     would overwrite the stored content with an empty editor. */
   const openForEdit = async (tpl: GalleryTemplate) => {
     setOpenId(null);
-    if (tpl.channel === 'email' && live) {
-      try {
-        const full = await api.get<ApiTemplate>(`templates/${tpl.id}`);
-        setBuilder({
-          channel: 'email',
-          name: tpl.name,
-          id: tpl.id,
-          document: (full.builderDoc as TEditorConfiguration | null) ?? undefined,
-          category: full.category ?? tpl.category,
-        });
-      } catch {
-        setBuilder({ channel: 'email', name: tpl.name, id: tpl.id, category: tpl.category });
-      }
-    } else {
+    if (!live) {
       setBuilder({ channel: tpl.channel, name: tpl.name, category: tpl.category });
+      return;
     }
+    let full: ApiTemplate;
+    try {
+      full = await api.get<ApiTemplate>(`templates/${tpl.id}`);
+    } catch (e) {
+      // Opening without the saved content would let the next save destroy it,
+      // so refuse to open rather than risk the template.
+      show(e instanceof ApiError ? e.message : `Could not open “${tpl.name}”`);
+      return;
+    }
+    setBuilder({
+      channel: tpl.channel,
+      name: tpl.name,
+      id: tpl.id,
+      category: full.category ?? tpl.category,
+      document: (full.builderDoc as TEditorConfiguration | null) ?? undefined,
+      message: full.text ?? undefined,
+    });
   };
 
   const setTab = (t: ChannelType | 'all') => {
@@ -937,6 +946,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           name={builder.name}
           kind="template"
           initialCategory={builder.category}
+          initialMessage={builder.message}
           onClose={() => setBuilder(null)}
           onSave={async ({ channel, name, message, category }) => {
             const ed = builder;
