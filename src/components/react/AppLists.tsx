@@ -2,11 +2,16 @@ import { useMemo, useState } from 'react';
 import Icon from './Icon';
 import ListEditorModal, { type ListEditorValues } from './ListEditorModal';
 import { ago } from './shared/time';
-import { AVATAR_GRADS, fmtPct, rows, trendPath, weeklyGain } from './AppLists.logic';
+import { AVATAR_GRADS, fmtPct, rows as mockRows, trendPath, weeklyGain } from './AppLists.logic';
 import type { ListRow, SortKey, View } from './AppLists.types';
+import { api, ApiError } from '@/lib/app/api';
+import { toListRow, type ApiList } from '@/lib/app/list-map';
 import styles from './AppLists.module.css';
 
-export default function AppLists() {
+export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
+  // Live workspace lists from SSR when provided; otherwise the fixture preview.
+  const live = initial !== undefined;
+  const [listRows, setListRows] = useState<ListRow[]>(initial !== undefined ? initial : mockRows);
   const [query, setQuery] = useState('');
   const [view, setView] = useState<View>('table');
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updatedAt', dir: -1 });
@@ -14,7 +19,7 @@ export default function AppLists() {
   const [closing, setClosing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [editor, setEditor] = useState<
-    { mode: 'create' } | { mode: 'edit'; name: string; color: string } | null
+    { mode: 'create' } | { mode: 'edit'; id: string; name: string; color: string } | null
   >(null);
 
   const showToast = (msg: string) => {
@@ -22,15 +27,61 @@ export default function AppLists() {
     window.setTimeout(() => setToast(null), 2800);
   };
 
-  const saveList = (values: ListEditorValues) => {
-    const created = editor?.mode === 'create';
-    setEditor(null);
-    showToast(created ? `List “${values.name}” created` : `List “${values.name}” updated`);
+  const saveList = async (values: ListEditorValues) => {
+    const ed = editor;
+    if (!ed) return;
+    if (!live) {
+      setEditor(null);
+      showToast(
+        ed.mode === 'create' ? `List “${values.name}” created` : `List “${values.name}” updated`,
+      );
+      return;
+    }
+    try {
+      if (ed.mode === 'create') {
+        const created = await api.post<ApiList>('lists', {
+          name: values.name,
+          description: values.description || null,
+          color: values.color,
+        });
+        setListRows((prev) => [toListRow(created), ...prev]);
+        showToast(`List “${values.name}” created`);
+      } else {
+        // Name + colour only — the modal doesn't carry description, so don't clobber it.
+        const updated = await api.patch<ApiList>(`lists/${ed.id}`, {
+          name: values.name,
+          color: values.color,
+        });
+        setListRows((prev) =>
+          prev.map((l) =>
+            l.id === ed.id ? { ...l, name: updated.name, color: updated.color || l.color } : l,
+          ),
+        );
+        showToast(`List “${values.name}” updated`);
+      }
+      setEditor(null);
+    } catch (e) {
+      showToast(e instanceof ApiError ? e.message : 'Could not save list');
+    }
+  };
+
+  const deleteList = async (id: string, name: string) => {
+    if (live) {
+      try {
+        await api.del(`lists/${id}`);
+      } catch (e) {
+        showToast(e instanceof ApiError ? e.message : 'Could not delete list');
+        return;
+      }
+    }
+    setListRows((prev) => prev.filter((l) => l.id !== id));
+    closeDrawer();
+    showToast(`List “${name}” deleted`);
   };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = rows.filter((l) => {
+    let list = listRows.filter((l) => {
       if (!q) return true;
       return (
         l.name.toLowerCase().includes(q) ||
@@ -54,13 +105,13 @@ export default function AppLists() {
       return 0;
     });
     return list;
-  }, [query, sort]);
+  }, [query, sort, listRows]);
 
   const toggleSort = (key: SortKey) =>
     setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: 1 }));
   const sortArrow = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? '↑' : '↓') : '');
 
-  const open = openId ? (rows.find((l) => l.id === openId) ?? null) : null;
+  const open = openId ? (listRows.find((l) => l.id === openId) ?? null) : null;
   const closeDrawer = () => {
     setClosing(true);
     window.setTimeout(() => {
@@ -176,7 +227,7 @@ export default function AppLists() {
 
           <div className="atable__foot">
             <span className="tnum">
-              {filtered.length} of {rows.length} lists
+              {filtered.length} of {listRows.length} lists
             </span>
           </div>
         </div>
@@ -254,8 +305,9 @@ export default function AppLists() {
           closing={closing}
           onClose={closeDrawer}
           onToast={showToast}
+          onDelete={() => deleteList(open.id, open.name)}
           onEdit={() => {
-            setEditor({ mode: 'edit', name: open.name, color: open.color });
+            setEditor({ mode: 'edit', id: open.id, name: open.name, color: open.color });
             closeDrawer();
           }}
         />
@@ -292,12 +344,14 @@ function ListDrawer({
   closing,
   onClose,
   onToast,
+  onDelete,
   onEdit,
 }: {
   list: ListRow;
   closing: boolean;
   onClose: () => void;
   onToast: (m: string) => void;
+  onDelete: () => void;
   onEdit: () => void;
 }) {
   const DEFAULT_NOTE =
@@ -499,6 +553,15 @@ function ListDrawer({
         </div>
 
         <div className="adrawer__foot">
+          <button
+            type="button"
+            className="sbtn"
+            style={{ flex: 'none', color: 'var(--danger)' }}
+            aria-label={`Delete ${list.name}`}
+            onClick={onDelete}
+          >
+            <Icon name="trash" size={15} />
+          </button>
           <button
             type="button"
             className="sbtn"
