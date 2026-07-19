@@ -12,16 +12,16 @@ feel like _Linear meets Resend_, not an admin panel.
 
 ## Tech stack
 
-| Layer            | Choice                                                       |
-| ---------------- | ------------------------------------------------------------ |
-| Framework        | **Astro 5** — static-first marketing, islands architecture   |
-| Interactive UI   | **React 19** — app shell, pricing estimator, forms           |
-| Language         | **TypeScript** (strict, `astro/tsconfigs/strict`)            |
-| Styling          | Hand-authored CSS + design tokens (CSS custom properties)    |
-| Content          | Astro **Content Collections** + **Zod** schemas              |
-| Fonts            | **Geist** / **Geist Mono** (variable woff2)                  |
-| Tests            | **Vitest** (unit/integration) + **Playwright** (e2e)         |
-| Quality gates    | ESLint (+ jsx-a11y) · Prettier · `astro check` · `tsc`       |
+| Layer          | Choice                                                     |
+| -------------- | ---------------------------------------------------------- |
+| Framework      | **Astro 5** — static-first marketing, islands architecture |
+| Interactive UI | **React 19** — app shell, pricing estimator, forms         |
+| Language       | **TypeScript** (strict, `astro/tsconfigs/strict`)          |
+| Styling        | Hand-authored CSS + design tokens (CSS custom properties)  |
+| Content        | Astro **Content Collections** + **Zod** schemas            |
+| Fonts          | **Geist** / **Geist Mono** (variable woff2)                |
+| Tests          | **Vitest** (unit/integration) + **Playwright** (e2e)       |
+| Quality gates  | ESLint (+ jsx-a11y) · Prettier · `astro check` · `tsc`     |
 
 ---
 
@@ -76,15 +76,15 @@ tests/                  unit, integration, e2e
 Marketing content, navigation, and CTAs are **pure Astro + CSS** and render fully without JS.
 JavaScript is opt-in per island, with the cheapest directive that works:
 
-| Surface                         | Hydration        | Why                                    |
-| ------------------------------- | ---------------- | -------------------------------------- |
-| Every marketing page body       | none             | static HTML; SEO + zero JS cost        |
+| Surface                         | Hydration        | Why                                                                                                 |
+| ------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------- |
+| Every marketing page body       | none             | static HTML; SEO + zero JS cost                                                                     |
 | Marketing motion module         | bundled script   | reveal, count-up, split headings, scramble, card hover, tilt, scroll-progress — reduced-motion safe |
-| Marketing mobile nav            | `client:idle`    | only needed after first paint          |
-| Pricing calculator              | `client:visible` | below the fold; hydrate when scrolled  |
-| Auth / contact forms            | `client:load`    | the sole purpose of those pages        |
-| App shell (sidebar/topbar/⌘K)   | `client:idle`    | interactive chrome for `/app/*` only   |
-| App screens (dashboard, boards) | `client:visible` | nested inside the shell                |
+| Marketing mobile nav            | `client:idle`    | only needed after first paint                                                                       |
+| Pricing calculator              | `client:visible` | below the fold; hydrate when scrolled                                                               |
+| Auth / contact forms            | `client:load`    | the sole purpose of those pages                                                                     |
+| App shell (sidebar/topbar/⌘K)   | `client:idle`    | interactive chrome for `/app/*` only                                                                |
+| App screens (dashboard, boards) | `client:visible` | nested inside the shell                                                                             |
 
 No marketing route ships page-wide React hydration.
 
@@ -131,13 +131,13 @@ npm run dev            # http://localhost:4321
 
 ### Environment variables
 
-| Variable             | Client? | Purpose                        |
-| -------------------- | ------- | ------------------------------ |
-| `PUBLIC_SITE_URL`    | yes     | Canonical base, sitemap, OG    |
-| `PUBLIC_POSTHOG_KEY` | yes     | Optional analytics             |
-| `PUBLIC_POSTHOG_HOST`| yes     | Optional analytics host        |
-| `AUTH_SECRET`        | **no**  | Future auth signing            |
-| `API_BASE_URL`       | **no**  | Future API base                |
+| Variable              | Client? | Purpose                     |
+| --------------------- | ------- | --------------------------- |
+| `PUBLIC_SITE_URL`     | yes     | Canonical base, sitemap, OG |
+| `PUBLIC_POSTHOG_KEY`  | yes     | Optional analytics          |
+| `PUBLIC_POSTHOG_HOST` | yes     | Optional analytics host     |
+| `AUTH_SECRET`         | **no**  | Future auth signing         |
+| `API_BASE_URL`        | **no**  | Future API base             |
 
 Only `PUBLIC_*` variables reach the client. Server env is read exclusively via `getServerEnv()` in
 [`src/lib/env.ts`](src/lib/env.ts).
@@ -248,4 +248,7 @@ environment variable if you wire up Git-connected builds).
    built to the design's patterns.
 6. **Fonts** load Geist from jsDelivr with `font-display: swap`; self-host by dropping the woff2 in
    `public/fonts/` and repointing the `@font-face` `src` in `global.css`.
+
+```
+
 ```
