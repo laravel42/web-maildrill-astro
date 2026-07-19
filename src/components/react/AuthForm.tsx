@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { mockResetPassword, mockSignIn, mockSignUp } from '@/lib/app/services';
-
-type Mode = 'login' | 'signup' | 'forgot';
-type Status = 'idle' | 'loading' | 'success' | 'error';
+import type { Mode, Status } from './AuthForm.types';
+import styles from './AuthForm.module.css';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
@@ -96,67 +95,19 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     }
   }
 
-  const styleTag = (
-    <style>{`
-      .af { width: 100%; max-width: ${mode === 'signup' ? '420px' : '400px'}; }
-      .af__eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0; }
-      .af__title { font-size: clamp(32px, 4vw, 46px); line-height: 1; letter-spacing: -.035em; font-weight: 800; margin: 12px 0 8px; }
-      .af__sub { font-size: 15px; line-height: 1.6; color: var(--text3); margin: 0 0 26px; }
-      .af__sub a, .af a { color: var(--accent); font-weight: 600; }
-      .af__sso { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-      .af__ssobtn {
-        display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
-        padding: 12px; border-radius: 10px; border: 1px solid var(--border2); background: var(--surface);
-        font-size: 14px; font-weight: 600; color: var(--text); transition: background .15s;
-      }
-      .af__ssobtn:hover { background: var(--surface3); }
-      .af__divider { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
-      .af__divider span:first-child, .af__divider span:last-child { flex: 1; height: 1px; background: var(--border2); }
-      .af__divider .af__or { flex: 0; font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-      .af__row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-      .af label.af__field { display: block; margin-bottom: 14px; }
-      .af__label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
-      .af__labelrow { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-      .af__labelrow a { font-size: 12px; }
-      .af__input {
-        width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 10px;
-        border: 1px solid var(--border2); font-size: 15px; background: var(--surface); color: var(--text);
-        outline: none; transition: border-color .15s, box-shadow .15s;
-      }
-      .af__input:focus { border-color: var(--accent); box-shadow: var(--focus-ring); }
-      .af__check { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 20px; font-size: 13px; line-height: 1.5; color: var(--text3); cursor: pointer; }
-      .af__check input { width: 15px; height: 15px; margin-top: 2px; accent-color: var(--accent); flex-shrink: 0; }
-      .af__submit {
-        width: 100%; padding: 13px; border-radius: 10px; border: none; background: var(--ink);
-        color: #fff; font-size: 15px; font-weight: 600; transition: background .2s;
-      }
-      .af__submit:hover:not(:disabled) { background: var(--accent); }
-      .af__submit:disabled { opacity: .7; cursor: default; }
-      .af__note { font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em; color: var(--muted); margin: 14px 0 0; }
-      .af__note--center { text-align: center; }
-      .af__error { color: var(--danger); font-size: 13px; font-weight: 500; margin: 0 0 14px; }
-      .af__foot { font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em; color: var(--muted); margin: 28px 0 0; }
-      .af__foot a { color: var(--accent); }
-      .af__back { display: inline-flex; align-items: center; gap: 7px; margin-top: 30px; font-size: 14px; font-weight: 600; color: var(--accent); }
-      .af__success { animation: pop .5s var(--ease-out) both; }
-      .af__success--center { text-align: center; padding: 36px 0; }
-      .af__successicon { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-      .af__successicon--mail { border-radius: 14px; background: var(--accent-tint); color: var(--accent); margin: 24px 0 20px; }
-      .af__successicon--check { background: var(--success-bg); color: var(--success); margin: 0 auto 18px; }
-      .af__successtitle { font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin: 0 0 8px; }
-      .af__successtitle--lg { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.02; letter-spacing: -.03em; font-weight: 800; }
-      .af__successtext { font-size: 15px; color: var(--text3); margin: 0; line-height: 1.6; }
-      .af__ghost { padding: 11px 18px; border-radius: 10px; border: 1px solid var(--border2); background: var(--surface); font-size: 14px; font-weight: 600; color: var(--text); margin-top: 24px; }
-      .af__ghost:hover { background: var(--surface3); }
-    `}</style>
-  );
-
   // ---------- success screens ----------
   if (status === 'success' && mode === 'login') {
     return (
-      <div className="af">
-        <div className="af__success af__success--center" role="status">
-          <div className="af__successicon af__successicon--check" style={{ margin: '0 auto 18px' }}>
+      <div className={styles.af} style={{ maxWidth: '400px' }}>
+        <div
+          className={styles.successCenter}
+          role="status"
+          style={{ animation: 'pop .5s var(--ease-out) both' }}
+        >
+          <div
+            className={`${styles.successicon} ${styles.successiconCheck}`}
+            style={{ margin: '0 auto 18px' }}
+          >
             <svg
               width="24"
               height="24"
@@ -171,19 +122,22 @@ export default function AuthForm({ mode }: { mode: Mode }) {
               <path d="M20 6 9 17l-5-5" />
             </svg>
           </div>
-          <h1 className="af__successtitle">Signing you in…</h1>
-          <p className="af__successtext">Taking you to your workspace.</p>
+          <h1 className={styles.successtitle}>Signing you in…</h1>
+          <p className={styles.successtext}>Taking you to your workspace.</p>
         </div>
-        {styleTag}
       </div>
     );
   }
 
   if (status === 'success' && mode === 'signup') {
     return (
-      <div className="af">
-        <div className="af__success af__success--center" role="status">
-          <div className="af__successicon af__successicon--check">
+      <div className={styles.af} style={{ maxWidth: '420px' }}>
+        <div
+          className={styles.successCenter}
+          role="status"
+          style={{ animation: 'pop .5s var(--ease-out) both' }}
+        >
+          <div className={`${styles.successicon} ${styles.successiconCheck}`}>
             <svg
               width="24"
               height="24"
@@ -198,22 +152,21 @@ export default function AuthForm({ mode }: { mode: Mode }) {
               <path d="M20 6 9 17l-5-5" />
             </svg>
           </div>
-          <h1 className="af__successtitle">Check your inbox</h1>
-          <p className="af__successtext">
+          <h1 className={styles.successtitle}>Check your inbox</h1>
+          <p className={styles.successtext}>
             We sent a verification link to confirm your email and finish setting up your workspace.
           </p>
         </div>
-        {styleTag}
       </div>
     );
   }
 
   if (status === 'success' && mode === 'forgot') {
     return (
-      <div className="af">
-        <p className="af__eyebrow">/ Account recovery</p>
-        <div className="af__success" role="status">
-          <div className="af__successicon af__successicon--mail">
+      <div className={styles.af} style={{ maxWidth: '400px' }}>
+        <p className={styles.eyebrow}>/ Account recovery</p>
+        <div role="status" style={{ animation: 'pop .5s var(--ease-out) both' }}>
+          <div className={`${styles.successicon} ${styles.successiconMail}`}>
             <svg
               width="24"
               height="24"
@@ -229,15 +182,15 @@ export default function AuthForm({ mode }: { mode: Mode }) {
               <path d="m22 7-10 6L2 7" />
             </svg>
           </div>
-          <h1 className="af__successtitle af__successtitle--lg">Check your inbox</h1>
-          <p className="af__successtext">
+          <h1 className={`${styles.successtitle} ${styles.successtitleLg}`}>Check your inbox</h1>
+          <p className={styles.successtext}>
             If an account matches that email, a reset link is on its way. It expires in 30 minutes.
           </p>
-          <button type="button" className="af__ghost" onClick={() => setStatus('idle')}>
+          <button type="button" className={styles.ghost} onClick={() => setStatus('idle')}>
             Use a different email
           </button>
         </div>
-        <a className="af__back" href="/login">
+        <a className={styles.back} href="/login">
           <svg
             width="15"
             height="15"
@@ -253,7 +206,6 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           </svg>
           Back to log in
         </a>
-        {styleTag}
       </div>
     );
   }
@@ -277,31 +229,31 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           : 'Send reset link';
 
   return (
-    <div className="af">
-      <p className="af__eyebrow">{eyebrow}</p>
-      <h1 className="af__title">{heading}</h1>
+    <div className={styles.af} style={{ maxWidth: mode === 'signup' ? '420px' : '400px' }}>
+      <p className={styles.eyebrow}>{eyebrow}</p>
+      <h1 className={styles.title}>{heading}</h1>
       {mode === 'login' && (
-        <p className="af__sub">
+        <p className={styles.sub}>
           New to Maildrill? <a href="/signup">Create an account</a>
         </p>
       )}
       {mode === 'signup' && (
-        <p className="af__sub">
+        <p className={styles.sub}>
           Already have one? <a href="/login">Log in</a>
         </p>
       )}
       {mode === 'forgot' && (
-        <p className="af__sub">
+        <p className={styles.sub}>
           Enter the email on your account and we'll send you a secure link to set a new password.
         </p>
       )}
 
       {mode !== 'forgot' && (
         <>
-          <div className="af__sso">
+          <div className={styles.sso}>
             <button
               type="button"
-              className="af__ssobtn"
+              className={styles.ssobtn}
               onClick={mode === 'login' ? runLogin : () => setStatus('success')}
               disabled={status === 'loading'}
             >
@@ -311,7 +263,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
             {mode === 'login' && (
               <button
                 type="button"
-                className="af__ssobtn"
+                className={styles.ssobtn}
                 onClick={runLogin}
                 disabled={status === 'loading'}
               >
@@ -320,9 +272,9 @@ export default function AuthForm({ mode }: { mode: Mode }) {
               </button>
             )}
           </div>
-          <div className="af__divider">
+          <div className={styles.divider}>
             <span></span>
-            <span className="af__or">or</span>
+            <span className={styles.or}>or</span>
             <span></span>
           </div>
         </>
@@ -330,22 +282,22 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
       <form onSubmit={onSubmit} noValidate method="post" action="#">
         {mode === 'signup' && (
-          <div className="af__row">
-            <label className="af__field">
-              <span className="af__label">First name</span>
-              <input className="af__input" name="firstName" autoComplete="given-name" required />
+          <div className={styles.row}>
+            <label className={styles.field}>
+              <span className={styles.label}>First name</span>
+              <input className={styles.input} name="firstName" autoComplete="given-name" required />
             </label>
-            <label className="af__field">
-              <span className="af__label">Last name</span>
-              <input className="af__input" name="lastName" autoComplete="family-name" required />
+            <label className={styles.field}>
+              <span className={styles.label}>Last name</span>
+              <input className={styles.input} name="lastName" autoComplete="family-name" required />
             </label>
           </div>
         )}
 
-        <label className="af__field">
-          <span className="af__label">Work email</span>
+        <label className={styles.field}>
+          <span className={styles.label}>Work email</span>
           <input
-            className="af__input"
+            className={styles.input}
             type="email"
             name="email"
             autoComplete="email"
@@ -356,15 +308,15 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         </label>
 
         {mode !== 'forgot' && (
-          <label className="af__field">
-            <span className="af__labelrow">
-              <span className="af__label" style={{ marginBottom: 0 }}>
+          <label className={styles.field}>
+            <span className={styles.labelrow}>
+              <span className={styles.label} style={{ marginBottom: 0 }}>
                 Password
               </span>
               {mode === 'login' && <a href="/forgot-password">Forgot?</a>}
             </span>
             <input
-              className="af__input"
+              className={styles.input}
               type="password"
               name="password"
               autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
@@ -376,14 +328,14 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         )}
 
         {mode === 'login' && (
-          <label className="af__check">
+          <label className={styles.check}>
             <input type="checkbox" name="remember" />
             Keep me signed in for 30 days
           </label>
         )}
 
         {mode === 'signup' && (
-          <label className="af__check">
+          <label className={styles.check}>
             <input type="checkbox" name="terms" />
             <span>
               I agree to the <a href="/legal/terms">Terms</a> and{' '}
@@ -393,27 +345,29 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         )}
 
         {error && (
-          <p className="af__error" role="alert">
+          <p className={styles.error} role="alert">
             {error}
           </p>
         )}
 
-        <button className="af__submit" type="submit" disabled={status === 'loading'}>
+        <button className={styles.submit} type="submit" disabled={status === 'loading'}>
           {submitLabel}
         </button>
 
         {mode === 'signup' && (
-          <p className="af__note af__note--center">No credit card required · Cancel anytime</p>
+          <p className={`${styles.note} ${styles.noteCenter}`}>
+            No credit card required · Cancel anytime
+          </p>
         )}
       </form>
 
       {mode === 'login' && (
-        <p className="af__foot">
+        <p className={styles.foot}>
           Protected by SSO &amp; 2FA — <a href="/support">need help?</a>
         </p>
       )}
       {mode === 'forgot' && (
-        <a className="af__back" href="/login">
+        <a className={styles.back} href="/login">
           <svg
             width="15"
             height="15"
@@ -430,8 +384,6 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           Back to log in
         </a>
       )}
-
-      {styleTag}
     </div>
   );
 }

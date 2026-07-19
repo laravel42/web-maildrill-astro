@@ -1,0 +1,222 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  color: var(--text);
+  font-family: 'Geist', system-ui, sans-serif;
+}
+.topbar {
+  height: 57px;
+  flex: none;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 20px;
+}
+.back {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  padding: 4px;
+  border-radius: 8px;
+  transition: color .15s ease, background .15s ease;
+}
+.back:hover {
+  color: var(--text);
+  background: var(--surface2);
+}
+.seg {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface2);
+  border-radius: 10px;
+  padding: 3px;
+  flex: none;
+}
+.pill {
+  transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.hist {
+  width: 30px;
+  height: 28px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 15px;
+}
+.view {
+  width: 30px;
+  height: 28px;
+  border-radius: 7px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .15s ease, box-shadow .15s ease;
+}
+.sbtn {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  padding: 8px 13px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.sbtn:hover {
+  border-color: var(--muted2);
+  background: var(--surface2);
+}
+.pbtn {
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(79, 70, 229, .35), inset 0 1px 0 rgba(255, 255, 255, .16);
+  transition: filter .15s ease;
+}
+.pbtn:hover {
+  filter: brightness(1.06);
+}
+.grid {
+  flex: 1;
+  display: grid;
+  min-height: 0;
+}
+.panel {
+  background: var(--surface);
+  padding: 18px;
+  overflow-y: auto;
+}
+.block {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: grab;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.block:hover {
+  border-color: var(--accent);
+  box-shadow: 0 1px 3px rgba(28, 25, 23, .06);
+}
+.saved {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 8px;
+  cursor: grab;
+  transition: border-color .15s ease;
+}
+.saved:hover {
+  border-color: var(--border2);
+}
+.varchip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text3);
+  background: transparent;
+  text-align: left;
+  transition: border-color .15s ease, background .15s ease;
+}
+.varchip:hover {
+  border-color: var(--border2);
+  background: var(--surface2);
+}
+.ta {
+  font-family: 'Geist', system-ui, sans-serif;
+  transition: border-color .15s ease;
+}
+.ta:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.qrRemove {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: none;
+  background: var(--surface2);
+  border-radius: 8px;
+  color: var(--text4);
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.qrRemove:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+.addbtn {
+  background: none;
+  border: 1px dashed var(--border2);
+  padding: 9px 12px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text3);
+  cursor: pointer;
+  width: 100%;
+  transition: border-color .15s ease, color .15s ease;
+}
+.addbtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 9px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+  transition: border-color .15s ease, background .15s ease, color .15s ease;
+}
+.callbtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+.tnum {
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,621 @@
+/* The `.set` root animation (`fade`) is a global keyframe, so it lives inline
+   on the root element rather than in this module. */
+
+.h1 {
+  margin: 0 0 22px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+/* subnav */
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  position: sticky;
+  top: 20px;
+}
+.navitem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text3);
+  background: transparent;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.navitem svg {
+  color: var(--muted2);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+.navitem:hover {
+  background: var(--surface2);
+  color: var(--text2);
+}
+.navitem:hover svg {
+  color: var(--text4);
+}
+.navitem:global(.is-active) {
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-tint);
+}
+.navitem:global(.is-active) svg {
+  color: var(--accent);
+}
+
+/* panel */
+.panelwrap {
+  min-width: 0;
+}
+.panel {
+  padding: 24px 26px;
+}
+.panelhead {
+  margin-bottom: 22px;
+}
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  margin: 0;
+}
+.desc {
+  font-size: 13px;
+  color: var(--text4);
+  margin: 5px 0 0;
+}
+
+/* form */
+.form {
+  display: block;
+}
+.field {
+  margin-bottom: 18px;
+  max-width: 520px;
+}
+.label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text2);
+  margin-bottom: 6px;
+}
+.inputwrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input {
+  width: 100%;
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  color: var(--text);
+  background: transparent;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+.inputSwatch {
+  padding-left: 34px;
+}
+.swatch {
+  position: absolute;
+  left: 11px;
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+}
+.formfoot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+/* usage */
+.summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface2);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.summaryLbl {
+  font-size: 12px;
+  color: var(--muted);
+}
+.summaryVal {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 3px;
+  color: var(--text);
+}
+.summaryCap {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.usageList {
+  display: block;
+}
+.usageRow {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--surface2);
+}
+.usageRow:last-child {
+  border-bottom: none;
+}
+.usageHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+.usageIc {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.usageName {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.usageNums {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.usageBar {
+  height: 6px;
+  border-radius: 6px;
+}
+
+/* table */
+.table {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.trow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--surface2);
+}
+.trow:last-child {
+  border-bottom: none;
+}
+.trowClick {
+  cursor: pointer;
+  transition: background 0.12s var(--ease-out);
+}
+.trowClick:hover {
+  background: var(--surface2);
+}
+.trowClick:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.avatar {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+.trowMain {
+  flex: 1;
+  min-width: 0;
+}
+.trowTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.trowSub {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.more {
+  flex: none;
+}
+.chevron {
+  flex: none;
+  color: var(--muted2);
+  display: flex;
+}
+.tablefoot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* toggles */
+.toggles {
+  display: block;
+}
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--surface2);
+}
+.toggleRow:last-child {
+  border-bottom: none;
+}
+.toggleMain {
+  flex: 1;
+  min-width: 0;
+}
+.toggleTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.toggleDesc {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.toggleRow :global(.atoggle) {
+  cursor: pointer;
+}
+
+/* toast — the `toastin` entry animation is a global keyframe, so it lives
+   inline on the toast element rather than here. */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-toast);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: var(--text);
+  color: #fff;
+  padding: 12px 16px 12px 13px;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(28, 25, 23, 0.3);
+  font-size: 13px;
+  font-weight: 500;
+}
+.toastIc {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 820px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .nav {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .navitem {
+    width: auto;
+  }
+}
+
+/* ------------------------- team-member drawer --------------------------- */
+.setdId {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.setdAvatar {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  font-weight: 700;
+}
+.setdName {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+.setdRoleTitle {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 2px 0 8px;
+}
+.setdRole {
+  /* intentionally empty — mirrors the original no-op `.setd__role` rule */
+}
+.setdStats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.setdStat {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.setdStatLbl {
+  font-size: 11px;
+  color: var(--muted);
+}
+.setdStatVal {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 6px;
+  letter-spacing: -0.3px;
+}
+.setdStatValSm {
+  font-size: 14px;
+}
+.setdEyebrow {
+  margin: 4px 0 10px;
+}
+.setdDv {
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+.setdPerms {
+  list-style: none;
+  margin: 0 0 4px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.setdPerm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text2);
+}
+.setdPermIc {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--success-bg);
+  color: var(--success-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.setdRemove {
+  flex: none;
+  padding: 9px 14px;
+  color: var(--danger);
+}
+.setdRemove:hover {
+  background: var(--danger-bg);
+}
+
+/* ------------------------------ role editor ----------------------------- */
+/* The `.rolemOverlay` (`ovfade`) and `.rolem` (`pop`) entry animations are
+   global keyframes, so they live inline on their elements rather than here. */
+.rolemOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background: rgba(28, 25, 23, 0.4);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+.rolem {
+  width: 440px;
+  max-width: 100%;
+  background: var(--surface);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(28, 25, 23, 0.28);
+  overflow: hidden;
+}
+.rolemHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--divider);
+}
+.rolemTitle {
+  font-weight: 600;
+  font-size: 15px;
+}
+.rolemX {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: var(--surface2);
+  border-radius: 9px;
+  cursor: pointer;
+  color: var(--text4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rolemX:hover {
+  color: var(--text2);
+  background: var(--border2);
+}
+.rolemBody {
+  padding: 20px 22px;
+}
+.rolemSub {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--text4);
+}
+.rolemSub strong {
+  color: var(--text2);
+  font-weight: 600;
+}
+.rolemOpt {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 13px 15px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition:
+    border-color 0.12s var(--ease-out),
+    background 0.12s var(--ease-out);
+}
+.rolemOpt:hover {
+  border-color: var(--muted2);
+}
+.rolemOpt:global(.is-on) {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+.rolemRadio {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-top: 1px;
+  border-radius: 50%;
+  border: 1.6px solid var(--muted2);
+  position: relative;
+}
+.rolemRadio:global(.is-on) {
+  border-color: var(--accent);
+}
+.rolemRadio:global(.is-on)::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.rolemOptmain {
+  flex: 1;
+  min-width: 0;
+}
+.rolemOptrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.rolemOptname {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+.rolemOptdesc {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.rolemFoot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--divider);
+  background: var(--surface2);
+}
+.rolemCancel,
+.rolemSave {
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+.rolemCancel {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+}
+.rolemCancel:hover {
+  background: var(--surface2);
+}
+.rolemSave {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 9px 18px;
+  box-shadow:
+    0 1px 2px rgba(79, 70, 229, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+.rolemSave:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

@@ -10,40 +10,12 @@ import {
   type TplCategory,
 } from '@/lib/app/templates-data';
 import Icon from './Icon';
-import type { IconName } from '@/lib/icons';
 import EmailBuilder from './EmailBuilder';
-
-/* ---------------------------------------------------------------- meta ---- */
-
-const CHANNEL: Record<ChannelType, { color: string; tint: string; icon: IconName; label: string }> =
-  {
-    email: { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)', icon: 'mail', label: 'Email' },
-    sms: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)', icon: 'sms', label: 'SMS' },
-    whatsapp: {
-      color: 'var(--ch-whatsapp)',
-      tint: 'var(--ch-whatsapp-tint)',
-      icon: 'whatsapp',
-      label: 'WhatsApp',
-    },
-    voice: {
-      color: 'var(--ch-voice)',
-      tint: 'var(--ch-voice-tint)',
-      icon: 'voice',
-      label: 'Voice',
-    },
-  };
-
-const CHANNEL_TABS: (ChannelType | 'all')[] = ['all', 'email', 'sms', 'whatsapp', 'voice'];
-const VIEWS = [
-  { key: 'gallery', label: 'Gallery', icon: 'templates' as IconName },
-  { key: 'list', label: 'List', icon: 'lists' as IconName },
-  { key: 'compact', label: 'Compact', icon: 'dashboard' as IconName },
-] as const;
-type ViewKey = (typeof VIEWS)[number]['key'];
-
-type SortKey = 'name' | 'cat' | 'updated' | 'avgOpen' | 'avgClick' | 'fav';
-const ASC_FIRST = new Set<SortKey>(['name', 'cat']);
-const PAGE_SIZE = 10;
+import { CHANNEL } from './shared/channels';
+import { useToast } from './shared/useToast';
+import { CHANNEL_TABS, VIEWS, ASC_FIRST, PAGE_SIZE } from './AppTemplates.logic';
+import type { ViewKey, SortKey } from './AppTemplates.types';
+import styles from './AppTemplates.module.css';
 
 /* --------------------------------------------------------- small pieces ---- */
 
@@ -61,7 +33,7 @@ function Check({
   return (
     <button
       type="button"
-      className={`tpl__box${on ? ' is-on' : ''}`}
+      className={`${styles.box}${on ? ' is-on' : ''}`}
       style={{ width: size, height: size }}
       onClick={onClick}
       aria-pressed={on}
@@ -86,7 +58,7 @@ function StarBtn({
   return (
     <button
       type="button"
-      className="tpl__star"
+      className={styles.star}
       onClick={onClick}
       aria-pressed={on}
       aria-label={on ? `Remove ${name} from favorites` : `Add ${name} to favorites`}
@@ -101,20 +73,20 @@ function StarBtn({
 function FauxEmail({ t, variant }: { t: GalleryTemplate; variant: 'card' | 'drawer' }) {
   const lg = variant === 'drawer';
   return (
-    <div className={`tpl__mail${lg ? ' tpl__mail--lg' : ''}`} aria-hidden="true">
-      <div className="tpl__mail-band" style={{ background: t.thumb }}>
-        <div className="tpl__mail-kicker" style={{ color: t.fg }}>
+    <div className={`${styles.mail}${lg ? ` ${styles.mailLg}` : ''}`} aria-hidden="true">
+      <div className={styles.mailBand} style={{ background: t.thumb }}>
+        <div className={styles.mailKicker} style={{ color: t.fg }}>
           {t.kicker}
         </div>
-        <div className="tpl__mail-title" style={{ color: t.fg }}>
+        <div className={styles.mailTitle} style={{ color: t.fg }}>
           {t.title}
         </div>
       </div>
-      <div className="tpl__mail-body">
-        <span className="tpl__mail-bar" style={{ width: '80%', background: '#e7e5e4' }} />
-        <span className="tpl__mail-bar" style={{ width: '95%', background: '#efedec' }} />
-        <span className="tpl__mail-bar" style={{ width: '60%', background: '#efedec' }} />
-        <span className="tpl__mail-cta" style={{ background: t.accent }}>
+      <div className={styles.mailBody}>
+        <span className={styles.mailBar} style={{ width: '80%', background: '#e7e5e4' }} />
+        <span className={styles.mailBar} style={{ width: '95%', background: '#efedec' }} />
+        <span className={styles.mailBar} style={{ width: '60%', background: '#efedec' }} />
+        <span className={styles.mailCta} style={{ background: t.accent }}>
           {t.cta}
         </span>
       </div>
@@ -141,27 +113,36 @@ function ColFilter({
 }) {
   const count = selected.size;
   return (
-    <div className="tpl__coldrop">
+    <div className={styles.coldrop}>
       <button
         type="button"
-        className={`tpl__colbtn${count ? ' is-on' : ''}`}
+        className={`${styles.colbtn}${count ? ' is-on' : ''}`}
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={onOpenToggle}
       >
         {label}
-        {count > 0 && <span className="tpl__colcount tnum">{count}</span>}
-        <Icon name="chevron-down" size={12} className={`tpl__colcaret${open ? ' is-open' : ''}`} />
+        {count > 0 && <span className={`${styles.colcount} tnum`}>{count}</span>}
+        <Icon
+          name="chevron-down"
+          size={12}
+          className={`${styles.colcaret}${open ? ` ${styles.caretOpen}` : ''}`}
+        />
       </button>
       {open && (
         <>
           <button
             type="button"
-            className="tpl__colscrim"
+            className={styles.colscrim}
             aria-label="Close filter"
             onClick={onOpenToggle}
           />
-          <div className="tpl__colpop" role="menu" aria-label={label}>
+          <div
+            className={styles.colpop}
+            role="menu"
+            aria-label={label}
+            style={{ animation: 'pop .14s ease' }}
+          >
             {options.map((o) => {
               const on = selected.has(o);
               return (
@@ -170,10 +151,10 @@ function ColFilter({
                   type="button"
                   role="menuitemcheckbox"
                   aria-checked={on}
-                  className="tpl__colopt"
+                  className={styles.colopt}
                   onClick={() => onToggle(o)}
                 >
-                  <span className={`tpl__box tpl__box--sm${on ? ' is-on' : ''}`}>
+                  <span className={`${styles.box} ${styles.boxSm}${on ? ' is-on' : ''}`}>
                     {on && <Icon name="check" size={10} stroke={3} />}
                   </span>
                   {o}
@@ -181,7 +162,7 @@ function ColFilter({
               );
             })}
             {count > 0 && (
-              <button type="button" className="tpl__colclear" onClick={onClear}>
+              <button type="button" className={styles.colclear} onClick={onClear}>
                 Clear
               </button>
             )}
@@ -209,17 +190,12 @@ export default function AppTemplates() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const { toast, show } = useToast();
   const [builder, setBuilder] = useState<{ channel: ChannelType; name: string | null } | null>(
     null,
   );
 
   const isFav = (id: string) => favIds.has(id);
-
-  const showToast = (msg: string) => {
-    setToast(msg);
-    window.setTimeout(() => setToast(null), 2800);
-  };
 
   const resetPage = () => setPage(1);
 
@@ -308,10 +284,10 @@ export default function AppTemplates() {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
-        showToast(`Removed “${name}” from favorites`);
+        show(`Removed “${name}” from favorites`);
       } else {
         next.add(id);
-        showToast(`Added “${name}” to favorites`);
+        show(`Added “${name}” to favorites`);
       }
       return next;
     });
@@ -319,7 +295,7 @@ export default function AppTemplates() {
 
   const bulk = (verb: string) => {
     const n = selected.size;
-    showToast(`${verb} ${n} template${n === 1 ? '' : 's'}`);
+    show(`${verb} ${n} template${n === 1 ? '' : 's'}`);
     setSelected(new Set());
   };
 
@@ -336,7 +312,7 @@ export default function AppTemplates() {
   const rangeEnd = Math.min(start + PAGE_SIZE, total);
 
   return (
-    <div className="screen tpl">
+    <div className="screen" style={{ animation: 'fade .3s ease' }}>
       <div className="screen__head">
         <div>
           <h1 className="screen__h1">Templates</h1>
@@ -352,9 +328,9 @@ export default function AppTemplates() {
         </button>
       </div>
 
-      <div className="acrd tpl__card">
+      <div className={`acrd ${styles.card}`}>
         {/* channel tab bar */}
-        <div className="tpl__tabs" role="tablist" aria-label="Filter by channel">
+        <div className={styles.tabs} role="tablist" aria-label="Filter by channel">
           {CHANNEL_TABS.map((t) => {
             const active = channelTab === t;
             const m = t === 'all' ? null : CHANNEL[t];
@@ -365,7 +341,7 @@ export default function AppTemplates() {
                 type="button"
                 role="tab"
                 aria-selected={active}
-                className={`tpl__tab${active ? ' is-active' : ''}`}
+                className={`${styles.tab}${active ? ' is-active' : ''}`}
                 style={{
                   color: active ? 'var(--text)' : 'var(--muted)',
                   borderBottomColor: active ? color : 'transparent',
@@ -375,7 +351,7 @@ export default function AppTemplates() {
                 {m && <Icon name={m.icon} size={12} />}
                 {t === 'all' ? 'All' : m!.label}
                 <span
-                  className="tpl__tabcount tnum"
+                  className={`${styles.tabcount} tnum`}
                   style={{
                     background: active
                       ? t === 'all'
@@ -393,9 +369,9 @@ export default function AppTemplates() {
         </div>
 
         {/* toolbar */}
-        <div className="tpl__toolbar">
-          <label className="tpl__search">
-            <Icon name="search" size={15} className="tpl__searchic" />
+        <div className={styles.toolbar}>
+          <label className={styles.search}>
+            <Icon name="search" size={15} className={styles.searchic} />
             <input
               type="search"
               placeholder="Search templates…"
@@ -445,9 +421,9 @@ export default function AppTemplates() {
             onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
           />
 
-          <span className="tpl__spacer" />
+          <span className={styles.spacer} />
 
-          <div className="aseg tpl__seg" role="group" aria-label="View">
+          <div className={`aseg ${styles.seg}`} role="group" aria-label="View">
             {VIEWS.map((v) => (
               <button
                 key={v.key}
@@ -457,7 +433,7 @@ export default function AppTemplates() {
                 onClick={() => setView(v.key)}
               >
                 <Icon name={v.icon} size={13} />
-                <span className="tpl__seg-lbl">{v.label}</span>
+                <span className={styles.segLbl}>{v.label}</span>
               </button>
             ))}
           </div>
@@ -465,23 +441,23 @@ export default function AppTemplates() {
 
         {/* bulk-selection bar */}
         {selected.size > 0 && (
-          <div className="tpl__bulk">
-            <span className="tpl__bulkcount">{selected.size} selected</span>
-            <span className="tpl__bulkdiv" />
-            <button type="button" className="tpl__bulkbtn" onClick={() => bulk('Duplicated')}>
+          <div className={styles.bulk} style={{ animation: 'fade .18s ease' }}>
+            <span className={styles.bulkcount}>{selected.size} selected</span>
+            <span className={styles.bulkdiv} />
+            <button type="button" className={styles.bulkbtn} onClick={() => bulk('Duplicated')}>
               <Icon name="copy" size={13} /> Duplicate
             </button>
-            <button type="button" className="tpl__bulkbtn" onClick={() => bulk('Favorited')}>
+            <button type="button" className={styles.bulkbtn} onClick={() => bulk('Favorited')}>
               <Icon name="star" size={13} /> Favorite
             </button>
             <button
               type="button"
-              className="tpl__bulkbtn tpl__bulkbtn--danger"
+              className={`${styles.bulkbtn} ${styles.bulkbtnDanger}`}
               onClick={() => bulk('Deleted')}
             >
               <Icon name="trash" size={13} /> Delete
             </button>
-            <button type="button" className="tpl__bulkclear" onClick={() => setSelected(new Set())}>
+            <button type="button" className={styles.bulkclear} onClick={() => setSelected(new Set())}>
               Clear
             </button>
           </div>
@@ -491,14 +467,14 @@ export default function AppTemplates() {
         {empty ? (
           <div className="atable__empty">No templates match your filters.</div>
         ) : view === 'gallery' ? (
-          <div className="tpl__grid">
+          <div className={styles.grid}>
             {pageItems.map((t) => {
               const sel = selected.has(t.id);
               const m = CHANNEL[t.channel];
               return (
                 <div
                   key={t.id}
-                  className="acrd acrd--hover tpl__gcard"
+                  className={`acrd acrd--hover ${styles.gcard}`}
                   style={{ borderColor: sel ? 'var(--accent)' : undefined }}
                   role="button"
                   tabIndex={0}
@@ -511,8 +487,8 @@ export default function AppTemplates() {
                     }
                   }}
                 >
-                  <div className="tpl__preview">
-                    <span className="tpl__gcheck" onClick={(e) => e.stopPropagation()}>
+                  <div className={styles.preview}>
+                    <span className={styles.gcheck} onClick={(e) => e.stopPropagation()}>
                       <Check
                         on={sel}
                         onClick={() => toggleSelect(t.id)}
@@ -520,25 +496,25 @@ export default function AppTemplates() {
                         size={19}
                       />
                     </span>
-                    <span className="tpl__gbadge" style={{ background: m.tint, color: m.color }}>
+                    <span className={styles.gbadge} style={{ background: m.tint, color: m.color }}>
                       <Icon name={m.icon} size={11} />
                       {m.label}
                     </span>
                     <FauxEmail t={t} variant="card" />
-                    <div className="tpl__ov">
+                    <div className={styles.ov}>
                       <button
                         type="button"
-                        className="tpl__ov-use"
+                        className={styles.ovUse}
                         onClick={(e) => {
                           e.stopPropagation();
-                          showToast(`Using “${t.name}”`);
+                          show(`Using “${t.name}”`);
                         }}
                       >
                         Use
                       </button>
                       <button
                         type="button"
-                        className="tpl__ov-prev"
+                        className={styles.ovPrev}
                         onClick={(e) => {
                           e.stopPropagation();
                           setOpenId(t.id);
@@ -548,20 +524,20 @@ export default function AppTemplates() {
                       </button>
                     </div>
                   </div>
-                  <div className="tpl__gmeta">
-                    <div className="tpl__gmeta-main">
-                      <div className="tpl__gname">{t.name}</div>
-                      <div className="tpl__gsub">
-                        <span className="tpl__catpill">{t.category}</span>
-                        <span className="tpl__updated">Updated {t.updated}</span>
+                  <div className={styles.gmeta}>
+                    <div className={styles.gmetaMain}>
+                      <div className={styles.gname}>{t.name}</div>
+                      <div className={styles.gsub}>
+                        <span className={styles.catpill}>{t.category}</span>
+                        <span className={styles.updated}>Updated {t.updated}</span>
                       </div>
-                      <div className="tpl__metrics">
-                        <span className="tpl__metric">
-                          <span className="tpl__dot" style={{ background: '#4f46e5' }} />
+                      <div className={styles.metrics}>
+                        <span className={styles.metric}>
+                          <span className={styles.dot} style={{ background: '#4f46e5' }} />
                           <span className="tnum">{t.avgOpen}%</span> opens
                         </span>
-                        <span className="tpl__metric">
-                          <span className="tpl__dot" style={{ background: '#0891b2' }} />
+                        <span className={styles.metric}>
+                          <span className={styles.dot} style={{ background: '#0891b2' }} />
                           <span className="tnum">{t.avgClick}%</span> clicks
                         </span>
                       </div>
@@ -579,13 +555,13 @@ export default function AppTemplates() {
             })}
           </div>
         ) : view === 'compact' ? (
-          <div className="tpl__compact">
+          <div className={styles.compact}>
             {pageItems.map((t) => {
               const sel = selected.has(t.id);
               return (
                 <div
                   key={t.id}
-                  className="tpl__ccard"
+                  className={styles.ccard}
                   style={{ borderColor: sel ? 'var(--accent)' : 'var(--border)' }}
                   role="button"
                   tabIndex={0}
@@ -598,8 +574,8 @@ export default function AppTemplates() {
                     }
                   }}
                 >
-                  <div className="tpl__cband" style={{ background: t.thumb, color: t.fg }}>
-                    <span className="tpl__ccheck" onClick={(e) => e.stopPropagation()}>
+                  <div className={styles.cband} style={{ background: t.thumb, color: t.fg }}>
+                    <span className={styles.ccheck} onClick={(e) => e.stopPropagation()}>
                       <Check
                         on={sel}
                         onClick={() => toggleSelect(t.id)}
@@ -609,9 +585,9 @@ export default function AppTemplates() {
                     </span>
                     {t.title}
                   </div>
-                  <div className="tpl__cfoot">
-                    <div className="tpl__crow">
-                      <span className="tpl__cname">{t.name}</span>
+                  <div className={styles.cfoot}>
+                    <div className={styles.crow}>
+                      <span className={styles.cname}>{t.name}</span>
                       <span onClick={(e) => e.stopPropagation()}>
                         <StarBtn
                           on={isFav(t.id)}
@@ -621,7 +597,7 @@ export default function AppTemplates() {
                         />
                       </span>
                     </div>
-                    <div className="tpl__cmetrics tnum">
+                    <div className={`${styles.cmetrics} tnum`}>
                       {t.avgOpen}% open · {t.avgClick}% click
                     </div>
                   </div>
@@ -632,8 +608,8 @@ export default function AppTemplates() {
         ) : (
           /* list view */
           <div className="tpl__list">
-            <div className="tpl__lhead tpl__lgrid">
-              <div className="tpl__lcheck">
+            <div className={`${styles.lhead} ${styles.lgrid}`}>
+              <div className={styles.lcheck}>
                 <Check on={allChecked} onClick={toggleAll} label="Select all on this page" />
               </div>
               <div>
@@ -663,7 +639,7 @@ export default function AppTemplates() {
                   Updated <span className="tnum">{sortArrow('updated')}</span>
                 </button>
               </div>
-              <div className="tpl__lright">
+              <div className={styles.lright}>
                 <button
                   type="button"
                   onClick={() => toggleSort('avgOpen')}
@@ -672,7 +648,7 @@ export default function AppTemplates() {
                   Opens <span className="tnum">{sortArrow('avgOpen')}</span>
                 </button>
               </div>
-              <div className="tpl__lright">
+              <div className={styles.lright}>
                 <button
                   type="button"
                   onClick={() => toggleSort('avgClick')}
@@ -681,7 +657,7 @@ export default function AppTemplates() {
                   Clicks <span className="tnum">{sortArrow('avgClick')}</span>
                 </button>
               </div>
-              <div className="tpl__lcenter">
+              <div className={styles.lcenter}>
                 <button
                   type="button"
                   onClick={() => toggleSort('fav')}
@@ -697,7 +673,7 @@ export default function AppTemplates() {
               return (
                 <div
                   key={t.id}
-                  className={`tpl__lrow tpl__lgrid${sel ? ' is-selected' : ''}`}
+                  className={`${styles.lrow} ${styles.lgrid}${sel ? ' is-selected' : ''}`}
                   role="button"
                   tabIndex={0}
                   aria-label={`Open ${t.name}`}
@@ -709,34 +685,34 @@ export default function AppTemplates() {
                     }
                   }}
                 >
-                  <div className="tpl__lcheck" onClick={(e) => e.stopPropagation()}>
+                  <div className={styles.lcheck} onClick={(e) => e.stopPropagation()}>
                     <Check on={sel} onClick={() => toggleSelect(t.id)} label={`Select ${t.name}`} />
                   </div>
-                  <div className="tpl__lname-cell">
-                    <span className="tpl__lchip" style={{ background: t.thumb, color: t.fg }}>
+                  <div className={styles.lnameCell}>
+                    <span className={styles.lchip} style={{ background: t.thumb, color: t.fg }}>
                       {t.title}
                     </span>
-                    <span className="tpl__lname">{t.name}</span>
+                    <span className={styles.lname}>{t.name}</span>
                   </div>
                   <div>
-                    <span className="tpl__catpill">{t.category}</span>
+                    <span className={styles.catpill}>{t.category}</span>
                   </div>
-                  <div className="tpl__lmuted">{t.updated}</div>
-                  <div className="tpl__lright tnum tpl__lmuted3">{t.avgOpen}%</div>
-                  <div className="tpl__lright tnum tpl__lmuted3">{t.avgClick}%</div>
-                  <div className="tpl__lcenter" onClick={(e) => e.stopPropagation()}>
+                  <div className={styles.lmuted}>{t.updated}</div>
+                  <div className={`${styles.lright} tnum ${styles.lmuted3}`}>{t.avgOpen}%</div>
+                  <div className={`${styles.lright} tnum ${styles.lmuted3}`}>{t.avgClick}%</div>
+                  <div className={styles.lcenter} onClick={(e) => e.stopPropagation()}>
                     <StarBtn
                       on={isFav(t.id)}
                       onClick={() => toggleFav(t.id, t.name)}
                       name={t.name}
                     />
                   </div>
-                  <div className="tpl__lcenter" onClick={(e) => e.stopPropagation()}>
+                  <div className={styles.lcenter} onClick={(e) => e.stopPropagation()}>
                     <button
                       type="button"
                       className="kbtn"
                       aria-label={`Actions for ${t.name}`}
-                      onClick={() => showToast('Row menu')}
+                      onClick={() => show('Row menu')}
                     >
                       <Icon name="more" size={16} />
                     </button>
@@ -748,28 +724,28 @@ export default function AppTemplates() {
         )}
 
         {/* footer / pager */}
-        <div className="tpl__foot">
+        <div className={styles.foot}>
           <span className="tnum">
             {empty
               ? 'No templates match your filters'
               : `${rangeStart}–${rangeEnd} of ${total} template${total === 1 ? '' : 's'}`}
           </span>
           {pageCount > 1 && (
-            <div className="tpl__pager">
+            <div className={styles.pager}>
               <button
                 type="button"
-                className="tpl__pgnav"
+                className={styles.pgnav}
                 disabled={safePage <= 1}
                 aria-label="Previous page"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
-                <Icon name="chevron-right" size={15} className="tpl__pgleft" />
+                <Icon name="chevron-right" size={15} className={styles.pgleft} />
               </button>
               {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
                 <button
                   key={n}
                   type="button"
-                  className={`tpl__pgbtn${n === safePage ? ' is-active' : ''}`}
+                  className={`${styles.pgbtn}${n === safePage ? ' is-active' : ''}`}
                   aria-current={n === safePage ? 'page' : undefined}
                   aria-label={`Page ${n}`}
                   onClick={() => setPage(n)}
@@ -779,7 +755,7 @@ export default function AppTemplates() {
               ))}
               <button
                 type="button"
-                className="tpl__pgnav"
+                className={styles.pgnav}
                 disabled={safePage >= pageCount}
                 aria-label="Next page"
                 onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
@@ -797,7 +773,7 @@ export default function AppTemplates() {
           fav={isFav(openTpl.id)}
           onFav={() => toggleFav(openTpl.id, openTpl.name)}
           onClose={() => setOpenId(null)}
-          onToast={showToast}
+          onToast={show}
           onUse={() => {
             const tpl = openTpl;
             setOpenId(null);
@@ -814,21 +790,23 @@ export default function AppTemplates() {
           onClose={() => setBuilder(null)}
           onSave={({ name }) => {
             setBuilder(null);
-            showToast(name && name !== 'Untitled' ? `“${name}” saved` : 'Template saved');
+            show(name && name !== 'Untitled' ? `“${name}” saved` : 'Template saved');
           }}
         />
       )}
 
       {toast && (
-        <div className="tpl__toast" role="status">
-          <span className="tpl__toast-ic">
+        <div
+          className={styles.toast}
+          role="status"
+          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
+        >
+          <span className={styles.toastIc}>
             <Icon name="check" size={13} stroke={3} />
           </span>
           {toast}
         </div>
       )}
-
-      <style>{styles}</style>
     </div>
   );
 }
@@ -877,14 +855,14 @@ function TemplateDrawer({
         </div>
 
         <div className="adrawer__body">
-          <div className="tpld__preview">
+          <div className={styles.dPreview}>
             <FauxEmail t={t} variant="drawer" />
           </div>
 
-          <div className="tpld__titlerow">
-            <h3 className="tpld__name">{t.name}</h3>
+          <div className={styles.dTitlerow}>
+            <h3 className={styles.dName}>{t.name}</h3>
             <span
-              className="tpld__catpill"
+              className={styles.dCatpill}
               style={{
                 color: catColor,
                 background: `color-mix(in srgb, ${catColor} 14%, transparent)`,
@@ -893,24 +871,24 @@ function TemplateDrawer({
               {t.category}
             </span>
           </div>
-          <p className="tpld__updated">Updated {t.updated}</p>
+          <p className={styles.dUpdated}>Updated {t.updated}</p>
 
-          <div className="tpld__stats">
-            <div className="tpld__stat">
-              <div className="tpld__stat-lbl">Avg. opens</div>
-              <div className="tnum tpld__stat-val" style={{ color: '#4f46e5' }}>
+          <div className={styles.dStats}>
+            <div className={styles.dStat}>
+              <div className={styles.dStatLbl}>Avg. opens</div>
+              <div className={`tnum ${styles.dStatVal}`} style={{ color: '#4f46e5' }}>
                 {t.avgOpen}%
               </div>
             </div>
-            <div className="tpld__stat">
-              <div className="tpld__stat-lbl">Avg. clicks</div>
-              <div className="tnum tpld__stat-val" style={{ color: '#0891b2' }}>
+            <div className={styles.dStat}>
+              <div className={styles.dStatLbl}>Avg. clicks</div>
+              <div className={`tnum ${styles.dStatVal}`} style={{ color: '#0891b2' }}>
                 {t.avgClick}%
               </div>
             </div>
           </div>
 
-          <p className="adrawer__eyebrow tpld__eyebrow">About this template</p>
+          <p className={`adrawer__eyebrow ${styles.dEyebrow}`}>About this template</p>
           <div>
             {details.map(([k, v]) => (
               <div key={k} className="adetail">
@@ -924,7 +902,7 @@ function TemplateDrawer({
         <div className="adrawer__foot">
           <button
             type="button"
-            className="sbtn tpld__favbtn"
+            className={`sbtn ${styles.dFavbtn}`}
             onClick={onFav}
             aria-pressed={fav}
             aria-label={fav ? 'Remove from favorites' : 'Add to favorites'}
@@ -944,168 +922,7 @@ function TemplateDrawer({
             Use template
           </button>
         </div>
-
-        <style>{`
-          .tpld__preview { background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 22px; display: flex; justify-content: center; }
-          .tpld__titlerow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 20px; }
-          .tpld__name { font-size: 18px; font-weight: 600; letter-spacing: -.3px; margin: 0; }
-          .tpld__catpill { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; flex: none; }
-          .tpld__updated { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
-          .tpld__stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
-          .tpld__stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 13px; }
-          .tpld__stat-lbl { font-size: 11px; color: var(--muted); }
-          .tpld__stat-val { font-size: 21px; font-weight: 600; margin-top: 3px; }
-          .tpld__eyebrow { margin: 24px 0 8px; }
-          .tpld__favbtn { flex: none; width: 40px; padding: 0; }
-        `}</style>
       </div>
     </div>
   );
 }
-
-/* --------------------------------------------------------------- styles ---- */
-
-const styles = `
-  .tpl { animation: fade .3s ease; }
-  .tpl__card { overflow: visible; }
-
-  /* channel tabs */
-  .tpl__tabs { display: flex; gap: 20px; padding: 0 19px; border-bottom: 1px solid var(--divider); overflow-x: auto; }
-  .tpl__tab { display: inline-flex; align-items: center; gap: 6px; padding: 14px 0 13px; font-size: 13px; font-weight: 600; white-space: nowrap; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color var(--duration-fast) var(--ease-out); }
-  .tpl__tabcount { font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 20px; }
-
-  /* toolbar */
-  .tpl__toolbar { display: flex; align-items: center; gap: 12px; padding: 14px 19px; border-bottom: 1px solid var(--divider); flex-wrap: wrap; row-gap: 10px; }
-  .tpl__search { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 0 11px; flex: 1 1 160px; min-width: 140px; max-width: 250px; }
-  .tpl__searchic { color: var(--muted); flex: none; }
-  .tpl__search input { border: none; background: none; padding: 9px 0; font-size: 13px; color: var(--text2); outline: none; width: 100%; }
-  .tpl__spacer { flex: 1 1 0; }
-
-  .tpl__coldrop { position: relative; }
-  .tpl__colbtn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 11px; border-radius: 9px; font-size: 13px; font-weight: 500; background: var(--surface); border: 1px solid var(--border2); color: var(--text2); transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out); }
-  .tpl__colbtn:hover { background: var(--surface2); }
-  .tpl__colbtn.is-on { background: var(--accent-tint); border-color: color-mix(in srgb, var(--accent) 40%, transparent); color: var(--accent); }
-  .tpl__colcount { min-width: 16px; height: 16px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; padding: 0 3px; }
-  .tpl__colcaret { opacity: .55; transition: transform var(--duration-fast) var(--ease-out); }
-  .tpl__colcaret.is-open { transform: rotate(180deg); }
-  .tpl__colscrim { position: fixed; inset: 0; z-index: 39; border: 0; background: none; }
-  .tpl__colpop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; min-width: 190px; max-height: 260px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-lg); padding: 6px; animation: pop .14s ease; }
-  .tpl__colopt { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 9px; border-radius: 8px; font-size: 13px; color: var(--text2); }
-  .tpl__colopt:hover { background: var(--surface2); }
-  .tpl__colclear { display: block; width: 100%; text-align: left; padding: 8px 9px; margin-top: 2px; border-top: 1px solid var(--divider); font-size: 12.5px; color: var(--muted); }
-
-  .tpl__seg { flex: none; }
-  .tpl__seg .aseg__opt { display: inline-flex; align-items: center; gap: 6px; }
-
-  /* checkbox */
-  .tpl__box { border-radius: 5px; border: 1.5px solid var(--border2); background: var(--surface); display: inline-flex; align-items: center; justify-content: center; color: #fff; transition: all .12s; flex: none; }
-  .tpl__box.is-on { background: var(--accent); border-color: var(--accent); }
-  .tpl__box--sm { width: 17px; height: 17px; }
-
-  /* bulk bar */
-  .tpl__bulk { display: flex; align-items: center; gap: 10px; padding: 10px 19px; background: var(--accent-tint); border-bottom: 1px solid var(--divider); animation: fade .18s ease; flex-wrap: wrap; }
-  .tpl__bulkcount { font-size: 13px; font-weight: 600; color: var(--accent); }
-  .tpl__bulkdiv { width: 1px; height: 16px; background: var(--border2); }
-  .tpl__bulkbtn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--text2); background: var(--surface); border: 1px solid var(--border2); }
-  .tpl__bulkbtn:hover { background: var(--surface2); }
-  .tpl__bulkbtn--danger { color: var(--danger); border-color: #f3c9c9; }
-  .tpl__bulkclear { margin-left: auto; font-size: 12.5px; color: var(--muted); }
-
-  /* shared bits */
-  .tpl__catpill { font-size: 10.5px; font-weight: 600; color: var(--text4); background: var(--surface2); border: 1px solid var(--border); padding: 1px 8px; border-radius: 20px; white-space: nowrap; }
-  .tpl__star { display: inline-flex; align-items: center; justify-content: center; padding: 2px; border-radius: 6px; transition: transform var(--duration-fast) var(--ease-out); }
-  .tpl__star:hover { transform: scale(1.12); }
-
-  /* faux email */
-  .tpl__mail { width: 100%; max-width: 170px; background: #fff; border-radius: 8px 8px 0 0; box-shadow: 0 4px 14px rgba(30,27,22,.1); overflow: hidden; align-self: flex-end; }
-  .tpl__mail--lg { max-width: 260px; border-radius: 10px; box-shadow: 0 8px 26px rgba(30,27,22,.14); }
-  .tpl__mail-band { height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 14px; text-align: center; }
-  .tpl__mail--lg .tpl__mail-band { height: auto; padding: 30px 20px; }
-  .tpl__mail-kicker { font-size: 6px; font-weight: 700; letter-spacing: 1px; opacity: .8; }
-  .tpl__mail--lg .tpl__mail-kicker { font-size: 8px; letter-spacing: 1.4px; opacity: .82; }
-  .tpl__mail-title { font-size: 11px; font-weight: 800; letter-spacing: .4px; margin-top: 3px; line-height: 1.1; }
-  .tpl__mail--lg .tpl__mail-title { font-size: 18px; letter-spacing: .5px; margin-top: 6px; }
-  .tpl__mail-body { padding: 11px 13px 13px; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
-  .tpl__mail--lg .tpl__mail-body { padding: 18px 20px 20px; gap: 8px; }
-  .tpl__mail-bar { height: 4px; border-radius: 3px; }
-  .tpl__mail--lg .tpl__mail-bar { height: 6px; }
-  .tpl__mail-cta { margin-top: 4px; font-size: 6.5px; font-weight: 700; color: #fff; padding: 4px 9px; border-radius: 5px; }
-  .tpl__mail--lg .tpl__mail-cta { font-size: 9px; padding: 7px 14px; border-radius: 7px; margin-top: 6px; }
-
-  /* gallery */
-  .tpl__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; padding: 18px 19px; }
-  .tpl__gcard { border-radius: 16px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; }
-  .tpl__preview { position: relative; height: 172px; background: var(--surface2); padding: 16px 18px 0; display: flex; justify-content: center; }
-  .tpl__gcheck { position: absolute; top: 12px; left: 12px; z-index: 2; }
-  .tpl__gcheck .tpl__box { box-shadow: 0 1px 2px rgba(30,27,22,.12); }
-  .tpl__gbadge { position: absolute; top: 12px; right: 12px; z-index: 2; display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700; padding: 4px 8px; border-radius: 20px; }
-  .tpl__ov { position: absolute; inset: 0; background: rgba(28,25,23,.5); opacity: 0; display: flex; align-items: center; justify-content: center; gap: 9px; transition: opacity .16s; }
-  .tpl__gcard:hover .tpl__ov, .tpl__gcard:focus-visible .tpl__ov { opacity: 1; }
-  .tpl__ov-use { background: var(--surface); color: var(--text2); padding: 7px 13px; border-radius: 9px; font-size: 12px; font-weight: 600; }
-  .tpl__ov-prev { background: rgba(255,255,255,.16); color: #fff; border: 1px solid rgba(255,255,255,.35); padding: 7px 11px; border-radius: 9px; font-size: 12px; font-weight: 600; }
-  .tpl__gmeta { padding: 13px 15px; border-top: 1px solid var(--divider); display: flex; justify-content: space-between; gap: 8px; }
-  .tpl__gmeta-main { min-width: 0; }
-  .tpl__gname { font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tpl__gsub { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
-  .tpl__updated { font-size: 11.5px; color: var(--muted); }
-  .tpl__metrics { display: flex; gap: 12px; margin-top: 8px; }
-  .tpl__metric { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--text3); }
-  .tpl__dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
-  .tpl__star { flex: none; }
-
-  /* compact */
-  .tpl__compact { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; padding: 18px 19px; }
-  .tpl__ccard { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; background: var(--surface); position: relative; transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out); }
-  .tpl__ccard:hover { box-shadow: var(--shadow-md); }
-  .tpl__cband { position: relative; height: 92px; display: flex; align-items: center; justify-content: center; padding: 0 12px; text-align: center; font-weight: 700; font-size: 10px; letter-spacing: .3px; }
-  .tpl__ccheck { position: absolute; top: 8px; left: 8px; }
-  .tpl__ccheck .tpl__box { box-shadow: 0 1px 2px rgba(30,27,22,.14); }
-  .tpl__cfoot { padding: 9px 11px; }
-  .tpl__crow { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-  .tpl__cname { font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tpl__cmetrics { font-size: 10.5px; color: var(--muted); margin-top: 3px; }
-
-  /* list */
-  .tpl__lgrid { display: grid; grid-template-columns: 36px 2fr 1fr .9fr .7fr .7fr 60px 36px; column-gap: 16px; align-items: center; }
-  .tpl__lhead { padding: 12px 19px; border-bottom: 1px solid var(--surface2); }
-  .tpl__lhead > div { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: .3px; text-transform: uppercase; }
-  .tpl__lhead button { display: inline-flex; align-items: center; gap: 4px; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; }
-  .tpl__lhead button:hover { color: var(--text); }
-  .tpl__lright { text-align: right; justify-self: end; }
-  .tpl__lcenter { display: flex; align-items: center; justify-content: center; }
-  .tpl__lrow { padding: 12px 19px; border-bottom: 1px solid var(--divider); font-size: 13px; cursor: pointer; transition: background .12s var(--ease-out); }
-  .tpl__lrow:hover { background: var(--surface2); }
-  .tpl__lrow.is-selected { background: var(--accent-tint); }
-  .tpl__lcheck { display: flex; align-items: center; }
-  .tpl__lname-cell { display: flex; align-items: center; gap: 11px; min-width: 0; }
-  .tpl__lchip { width: 54px; height: 37px; flex: none; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); display: flex; align-items: center; justify-content: center; text-align: center; font-weight: 700; font-size: 7px; letter-spacing: .2px; padding: 0 4px; overflow: hidden; }
-  .tpl__lname { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tpl__lmuted { color: var(--muted); font-size: 12px; }
-  .tpl__lmuted3 { color: var(--text3); font-size: 12.5px; }
-
-  /* footer / pager */
-  .tpl__foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 19px; border-top: 1px solid var(--divider); font-size: 12px; color: var(--muted); flex-wrap: wrap; }
-  .tpl__pager { display: flex; align-items: center; gap: 6px; }
-  .tpl__pgnav { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border2); background: var(--surface); color: var(--text3); display: inline-flex; align-items: center; justify-content: center; }
-  .tpl__pgnav:hover:not(:disabled) { background: var(--surface2); }
-  .tpl__pgnav:disabled { opacity: .4; pointer-events: none; }
-  .tpl__pgleft { transform: rotate(180deg); }
-  .tpl__pgbtn { min-width: 30px; height: 30px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--border2); background: var(--surface); color: var(--text3); font-size: 12.5px; font-weight: 600; }
-  .tpl__pgbtn:hover { background: var(--surface2); }
-  .tpl__pgbtn.is-active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
-
-  /* toast */
-  .tpl__toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: var(--z-toast); display: flex; align-items: center; gap: 11px; background: var(--text); color: var(--bg); padding: 12px 16px 12px 13px; border-radius: 12px; box-shadow: 0 12px 32px rgba(28,25,23,.3); font-size: 13px; font-weight: 500; animation: toastin .22s cubic-bezier(.2,.8,.2,1); }
-  .tpl__toast-ic { width: 22px; height: 22px; border-radius: 50%; background: #22c55e; color: #fff; display: flex; align-items: center; justify-content: center; flex: none; }
-
-  @media (max-width: 900px) {
-    .tpl__lgrid { grid-template-columns: 32px 2fr 1fr .8fr 44px 32px; }
-    .tpl__lgrid > :nth-child(5), .tpl__lgrid > :nth-child(6) { display: none; }
-  }
-  @media (max-width: 640px) {
-    .tpl__seg-lbl { display: none; }
-    .tpl__lgrid { grid-template-columns: 30px 1.7fr .9fr 44px 30px; }
-    .tpl__lgrid > :nth-child(4) { display: none; }
-    .tpl__lchip { display: none; }
-  }
-`;

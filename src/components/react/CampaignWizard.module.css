@@ -1,0 +1,10 @@
+.cwCrd {
+  transition:
+    border-color 0.12s,
+    transform 0.12s,
+    box-shadow 0.12s;
+}
+.cwCrd:hover {
+  border-color: color-mix(in srgb, #4f46e5 45%, var(--border2));
+  transform: translateY(-1px);
+}

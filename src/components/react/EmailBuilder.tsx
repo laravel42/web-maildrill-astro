@@ -1,92 +1,26 @@
-import { useEffect, useState, type ChangeEvent, type CSSProperties } from 'react';
+import { useState, type ChangeEvent, type CSSProperties } from 'react';
 import type { ChannelType } from '@/types/app';
-import type { IconName } from '@/lib/icons';
 import Icon from './Icon';
+import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
+import { formatDuration, smsSegments, voiceSeconds } from './shared/messaging';
+import { useEscapeClose } from './shared/useEscapeClose';
+import {
+  BLOCKS,
+  PLACEHOLDER,
+  PREVIEW_FALLBACK,
+  SPEED_OPTS,
+  TIPS,
+  VARIABLES,
+  VOICE_OPTS,
+} from './EmailBuilder.logic';
+import type { Props } from './EmailBuilder.types';
+import styles from './EmailBuilder.module.css';
 
 /* ------------------------------------------------------------------ *
  * EmailBuilder — full-screen template / message builder overlay.
  * React port of the "BUILDER" overlay in design/project/App.dc.html.
  * The parent gates mounting, so this renders its overlay immediately.
  * ------------------------------------------------------------------ */
-
-type Props = {
-  channel: ChannelType;
-  name?: string | null;
-  kind?: 'template' | 'campaign';
-  onClose: () => void;
-  onSave: (payload: { channel: ChannelType; name: string; message: string }) => void;
-};
-
-type ChannelMeta = { label: string; color: string; tint: string; icon: IconName };
-
-const CH: Record<ChannelType, ChannelMeta> = {
-  email: { label: 'Email', color: 'var(--ch-email)', tint: 'var(--ch-email-tint)', icon: 'mail' },
-  sms: { label: 'SMS', color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)', icon: 'sms' },
-  whatsapp: {
-    label: 'WhatsApp',
-    color: 'var(--ch-whatsapp)',
-    tint: 'var(--ch-whatsapp-tint)',
-    icon: 'whatsapp',
-  },
-  voice: { label: 'Voice', color: 'var(--ch-voice)', tint: 'var(--ch-voice-tint)', icon: 'voice' },
-};
-
-const CHANNEL_ORDER: ChannelType[] = ['email', 'sms', 'whatsapp', 'voice'];
-
-const BLOCKS: { label: string; icon: IconName }[] = [
-  { label: 'Heading', icon: 'templates' },
-  { label: 'Text', icon: 'lists' },
-  { label: 'Image', icon: 'media' },
-  { label: 'Button', icon: 'zap' },
-  { label: 'Divider', icon: 'menu' },
-  { label: 'Columns', icon: 'dashboard' },
-  { label: 'Spacer', icon: 'chevron-down' },
-  { label: 'Social', icon: 'star' },
-];
-
-const VARIABLES = ['[first_name]', '[last_name]', '[company]', '[order_id]'];
-
-const PLACEHOLDER: Record<ChannelType, string> = {
-  email: '',
-  sms: 'Type your SMS… keep it short — 160 characters fit a single segment.',
-  whatsapp: 'Write your WhatsApp message. You can use *bold* and _italic_ formatting.',
-  voice: 'Write the script your recipients will hear when they answer the call.',
-};
-
-const TIPS: Record<ChannelType, string[]> = {
-  email: [],
-  sms: [
-    'Keep it under 160 characters to fit one segment.',
-    'Always include a clear opt-out such as “Reply STOP”.',
-    'Use a short branded link instead of a long URL.',
-  ],
-  whatsapp: [
-    'Lead with the value in your very first line.',
-    'Add quick-reply buttons to drive responses.',
-    'Marketing templates must be pre-approved by Meta.',
-  ],
-  voice: [
-    'Write the way people speak — short, plain sentences.',
-    'Say who is calling in the first sentence.',
-    'Aim to keep the whole call under 30 seconds.',
-  ],
-};
-
-const PREVIEW_FALLBACK: Record<ChannelType, string> = {
-  email: '',
-  sms: 'Hi [first_name], your order is on its way! Track it here: mldr.io/go',
-  whatsapp: 'Hi [first_name] 👋 thanks for shopping with us. Reply here if you need anything.',
-  voice: 'Hello [first_name], this is a courtesy call from Maildrill about your recent order.',
-};
-
-const VOICE_OPTS = ['Ava · US English', 'Noah · US English', 'Emma · UK English'];
-const SPEED_OPTS = ['Slow', 'Normal', 'Fast'];
-
-function fmtDuration(totalSeconds: number): string {
-  const m = Math.floor(totalSeconds / 60);
-  const r = totalSeconds % 60;
-  return `${m}:${String(r).padStart(2, '0')}`;
-}
 
 /* Small inline icons the shared Icon set doesn't cover (match the design). */
 function BackArrow() {
@@ -175,23 +109,14 @@ export default function EmailBuilder({
   const [voice, setVoice] = useState<string>(VOICE_OPTS[0]);
   const [speed, setSpeed] = useState<string>(SPEED_OPTS[1]);
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  useEscapeClose(onClose);
 
-  const meta = CH[channel];
+  const meta = CHANNEL[channel];
   const isEmail = channel === 'email';
 
   const len = message.length;
-  const words = message.trim() ? message.trim().split(/\s+/).length : 0;
   const isVoice = channel === 'voice';
-  const count2 = isVoice
-    ? Math.max(1, Math.round(words / 2.5))
-    : Math.max(1, Math.ceil((len || 1) / 160));
+  const count2 = isVoice ? voiceSeconds(message) : smsSegments(len);
   const count2Label = isVoice ? 'sec (est.)' : 'segment(s)';
   const msgPreview = message.trim() ? message : PREVIEW_FALLBACK[channel];
 
@@ -206,11 +131,11 @@ export default function EmailBuilder({
   const deskActive = previewMode === 'desktop';
 
   return (
-    <div className="eb-overlay">
+    <div className={styles.overlay} style={{ animation: 'fade .2s ease' }}>
       {/* ------------------------------- Top bar ------------------------------- */}
-      <div className="eb-topbar">
+      <div className={styles.topbar}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
-          <button className="eb-back" type="button" onClick={onClose} aria-label="Back">
+          <button className={styles.back} type="button" onClick={onClose} aria-label="Back">
             <BackArrow />
           </button>
           <div style={{ minWidth: 0 }}>
@@ -241,15 +166,15 @@ export default function EmailBuilder({
         </div>
 
         {/* Channel switcher */}
-        <div className="eb-seg">
+        <div className={styles.seg}>
           {CHANNEL_ORDER.map((k) => {
             const on = channel === k;
-            const m = CH[k];
+            const m = CHANNEL[k];
             return (
               <button
                 key={k}
                 type="button"
-                className="eb-pill"
+                className={styles.pill}
                 onClick={() => setChannel(k)}
                 style={{
                   display: 'flex',
@@ -275,11 +200,11 @@ export default function EmailBuilder({
 
         {/* Email-only preview controls */}
         {isEmail ? (
-          <div className="eb-seg">
-            <span className="eb-hist" aria-hidden>
+          <div className={styles.seg}>
+            <span className={styles.hist} aria-hidden>
               ↺
             </span>
-            <span className="eb-hist" aria-hidden>
+            <span className={styles.hist} aria-hidden>
               ↻
             </span>
             <div
@@ -287,7 +212,7 @@ export default function EmailBuilder({
             />
             <button
               type="button"
-              className="eb-view"
+              className={styles.view}
               onClick={() => setPreviewMode('desktop')}
               aria-label="Desktop preview"
               style={{
@@ -308,7 +233,7 @@ export default function EmailBuilder({
             </button>
             <button
               type="button"
-              className="eb-view"
+              className={styles.view}
               onClick={() => setPreviewMode('mobile')}
               aria-label="Mobile preview"
               style={{
@@ -350,13 +275,13 @@ export default function EmailBuilder({
             />
             Autosaved
           </span>
-          <button type="button" className="eb-sbtn">
+          <button type="button" className={styles.sbtn}>
             Send test
           </button>
-          <button type="button" className="eb-sbtn" style={{ fontWeight: 600 }} onClick={handleSave}>
+          <button type="button" className={styles.sbtn} style={{ fontWeight: 600 }} onClick={handleSave}>
             Save draft
           </button>
-          <button type="button" className="eb-pbtn">
+          <button type="button" className={styles.pbtn}>
             Next step →
           </button>
         </div>
@@ -364,9 +289,9 @@ export default function EmailBuilder({
 
       {/* ------------------------------- Body ------------------------------- */}
       {isEmail ? (
-        <div className="eb-grid" style={{ gridTemplateColumns: '250px 1fr 268px' }}>
+        <div className={styles.grid} style={{ gridTemplateColumns: '250px 1fr 268px' }}>
           {/* Blocks palette */}
-          <aside className="eb-panel" style={{ borderRight: '1px solid var(--border)' }}>
+          <aside className={styles.panel} style={{ borderRight: '1px solid var(--border)' }}>
             <div
               style={{
                 display: 'flex',
@@ -401,7 +326,7 @@ export default function EmailBuilder({
               }}
             >
               {BLOCKS.map((b) => (
-                <div key={b.label} className="eb-block">
+                <div key={b.label} className={styles.block}>
                   <span style={{ color: 'var(--text3)' }}>
                     <Icon name={b.icon} size={16} stroke={1.9} />
                   </span>
@@ -411,7 +336,7 @@ export default function EmailBuilder({
             </div>
 
             <div style={labelCap}>Saved blocks</div>
-            <div className="eb-saved">
+            <div className={styles.saved}>
               <div
                 style={{
                   width: 26,
@@ -431,7 +356,7 @@ export default function EmailBuilder({
                 <div style={{ fontSize: 10.5, color: 'var(--muted)' }}>3 blocks</div>
               </div>
             </div>
-            <div className="eb-saved" style={{ marginBottom: 0 }}>
+            <div className={styles.saved} style={{ marginBottom: 0 }}>
               <div
                 style={{
                   width: 26,
@@ -541,7 +466,7 @@ export default function EmailBuilder({
           </div>
 
           {/* Inspector */}
-          <aside className="eb-panel" style={{ borderLeft: '1px solid var(--border)' }}>
+          <aside className={styles.panel} style={{ borderLeft: '1px solid var(--border)' }}>
             <div
               style={{
                 display: 'flex',
@@ -566,7 +491,7 @@ export default function EmailBuilder({
               />
               <div>
                 <div style={{ fontSize: 12, fontWeight: 500 }}>teacher-portrait.png</div>
-                <div className="eb-tnum" style={{ fontSize: 11, color: 'var(--muted)' }}>
+                <div className={styles.tnum} style={{ fontSize: 11, color: 'var(--muted)' }}>
                   1200 × 800
                 </div>
               </div>
@@ -653,16 +578,16 @@ export default function EmailBuilder({
         </div>
       ) : (
         /* -------------------------- Non-email layout -------------------------- */
-        <div className="eb-grid" style={{ gridTemplateColumns: '250px 1fr 300px' }}>
+        <div className={styles.grid} style={{ gridTemplateColumns: '250px 1fr 300px' }}>
           {/* Personalize + tips */}
-          <aside className="eb-panel" style={{ borderRight: '1px solid var(--border)' }}>
+          <aside className={styles.panel} style={{ borderRight: '1px solid var(--border)' }}>
             <div style={labelCap}>Personalize</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 22 }}>
               {VARIABLES.map((v) => (
                 <button
                   key={v}
                   type="button"
-                  className="eb-varchip"
+                  className={styles.varchip}
                   onClick={() => insertVariable(v)}
                 >
                   <span style={{ color: meta.color }}>+</span>
@@ -716,7 +641,7 @@ export default function EmailBuilder({
                 Use the variables on the left to personalize. Changes autosave.
               </p>
               <textarea
-                className="eb-ta"
+                className={styles.ta}
                 value={message}
                 onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setMessage(e.target.value)}
                 placeholder={PLACEHOLDER[channel]}
@@ -745,8 +670,8 @@ export default function EmailBuilder({
                   color: 'var(--muted)',
                 }}
               >
-                <span className="eb-tnum">{len} characters</span>
-                <span className="eb-tnum" style={{ fontWeight: 600, color: meta.color }}>
+                <span className={styles.tnum}>{len} characters</span>
+                <span className={styles.tnum} style={{ fontWeight: 600, color: meta.color }}>
                   {count2} {count2Label}
                 </span>
               </div>
@@ -776,7 +701,7 @@ export default function EmailBuilder({
                       </div>
                       <button
                         type="button"
-                        className="eb-qr-remove"
+                        className={styles.qrRemove}
                         aria-label="Remove quick reply"
                         onClick={() => setQuickReplies((qs) => qs.filter((_, idx) => idx !== i))}
                       >
@@ -786,7 +711,7 @@ export default function EmailBuilder({
                   ))}
                   <button
                     type="button"
-                    className="eb-addbtn"
+                    className={styles.addbtn}
                     onClick={() => setQuickReplies((qs) => [...qs, `Button ${qs.length + 1}`])}
                   >
                     + Add button
@@ -816,7 +741,7 @@ export default function EmailBuilder({
                           <button
                             key={vo}
                             type="button"
-                            className="eb-opt"
+                            className={styles.opt}
                             onClick={() => setVoice(vo)}
                             style={{
                               border: `1.5px solid ${on ? meta.color : 'var(--border2)'}`,
@@ -841,7 +766,7 @@ export default function EmailBuilder({
                           <button
                             key={sp}
                             type="button"
-                            className="eb-opt"
+                            className={styles.opt}
                             onClick={() => setSpeed(sp)}
                             style={{
                               border: `1.5px solid ${on ? meta.color : 'var(--border2)'}`,
@@ -861,7 +786,7 @@ export default function EmailBuilder({
           </div>
 
           {/* Phone live preview */}
-          <aside className="eb-panel" style={{ borderLeft: '1px solid var(--border)' }}>
+          <aside className={styles.panel} style={{ borderLeft: '1px solid var(--border)' }}>
             <div
               style={{
                 display: 'flex',
@@ -956,10 +881,10 @@ export default function EmailBuilder({
                       </div>
                       <div style={{ fontSize: 17, fontWeight: 600, marginTop: 14 }}>Maildrill</div>
                       <div
-                        className="eb-tnum"
+                        className={styles.tnum}
                         style={{ fontSize: 12, color: 'rgba(255,255,255,.55)', marginTop: 5 }}
                       >
-                        {fmtDuration(count2)} · calling…
+                        {formatDuration(count2)} · calling…
                       </div>
                     </div>
                     <div style={{ width: '100%' }}>
@@ -978,7 +903,7 @@ export default function EmailBuilder({
                         {msgPreview}
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 20 }}>
-                        <div className="eb-callbtn" style={{ background: 'rgba(255,255,255,.12)' }}>
+                        <div className={styles.callbtn} style={{ background: 'rgba(255,255,255,.12)' }}>
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2}>
                             <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0" />
                             <path d="M19 11a7 7 0 0 1-14 0M12 18v3" />
@@ -986,14 +911,14 @@ export default function EmailBuilder({
                           </svg>
                         </div>
                         <div
-                          className="eb-callbtn"
+                          className={styles.callbtn}
                           style={{ width: 54, height: 54, background: '#e11d48', transform: 'rotate(135deg)' }}
                         >
                           <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff">
                             <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1z" />
                           </svg>
                         </div>
-                        <div className="eb-callbtn" style={{ background: 'rgba(255,255,255,.12)' }}>
+                        <div className={styles.callbtn} style={{ background: 'rgba(255,255,255,.12)' }}>
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                             <circle cx="6" cy="6" r="1.6" />
                             <circle cx="12" cy="6" r="1.6" />
@@ -1188,174 +1113,6 @@ export default function EmailBuilder({
           </aside>
         </div>
       )}
-
-      <style>{`
-        .eb-overlay {
-          position: fixed;
-          inset: 0;
-          z-index: 95;
-          background: var(--bg);
-          display: flex;
-          flex-direction: column;
-          animation: fade .2s ease;
-          color: var(--text);
-          font-family: 'Geist', system-ui, sans-serif;
-        }
-        .eb-topbar {
-          height: 57px;
-          flex: none;
-          background: var(--surface);
-          border-bottom: 1px solid var(--border);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          padding: 0 20px;
-        }
-        .eb-back {
-          display: flex;
-          align-items: center;
-          background: none;
-          border: none;
-          cursor: pointer;
-          color: var(--text3);
-          padding: 4px;
-          border-radius: 8px;
-          transition: color .15s ease, background .15s ease;
-        }
-        .eb-back:hover { color: var(--text); background: var(--surface2); }
-        .eb-seg {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          background: var(--surface2);
-          border-radius: 10px;
-          padding: 3px;
-          flex: none;
-        }
-        .eb-pill { transition: background .15s ease, color .15s ease, box-shadow .15s ease; }
-        .eb-hist {
-          width: 30px; height: 28px; border-radius: 7px;
-          display: flex; align-items: center; justify-content: center;
-          color: var(--muted); cursor: pointer; font-size: 15px;
-        }
-        .eb-view {
-          width: 30px; height: 28px; border-radius: 7px; border: none;
-          display: flex; align-items: center; justify-content: center;
-          cursor: pointer; transition: background .15s ease, box-shadow .15s ease;
-        }
-        .eb-sbtn {
-          background: var(--surface);
-          border: 1px solid var(--border2);
-          padding: 8px 13px;
-          border-radius: 9px;
-          font-size: 12.5px;
-          font-weight: 500;
-          color: var(--text2);
-          cursor: pointer;
-          transition: border-color .15s ease, background .15s ease;
-        }
-        .eb-sbtn:hover { border-color: var(--muted2); background: var(--surface2); }
-        .eb-pbtn {
-          background: #4f46e5;
-          color: #fff;
-          border: none;
-          padding: 8px 15px;
-          border-radius: 9px;
-          font-size: 12.5px;
-          font-weight: 600;
-          cursor: pointer;
-          box-shadow: 0 1px 2px rgba(79,70,229,.35), inset 0 1px 0 rgba(255,255,255,.16);
-          transition: filter .15s ease;
-        }
-        .eb-pbtn:hover { filter: brightness(1.06); }
-        .eb-grid { flex: 1; display: grid; min-height: 0; }
-        .eb-panel {
-          background: var(--surface);
-          padding: 18px;
-          overflow-y: auto;
-        }
-        .eb-block {
-          border: 1px solid var(--border);
-          border-radius: 10px;
-          aspect-ratio: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 5px;
-          cursor: grab;
-          transition: border-color .15s ease, box-shadow .15s ease;
-        }
-        .eb-block:hover { border-color: var(--accent); box-shadow: 0 1px 3px rgba(28,25,23,.06); }
-        .eb-saved {
-          border: 1px solid var(--border);
-          border-radius: 10px;
-          padding: 11px 12px;
-          display: flex;
-          align-items: center;
-          gap: 9px;
-          margin-bottom: 8px;
-          cursor: grab;
-          transition: border-color .15s ease;
-        }
-        .eb-saved:hover { border-color: var(--border2); }
-        .eb-varchip {
-          display: flex;
-          align-items: center;
-          gap: 9px;
-          padding: 9px 11px;
-          border: 1px solid var(--border);
-          border-radius: 9px;
-          cursor: pointer;
-          font-size: 12.5px;
-          font-weight: 600;
-          color: var(--text3);
-          background: transparent;
-          text-align: left;
-          transition: border-color .15s ease, background .15s ease;
-        }
-        .eb-varchip:hover { border-color: var(--border2); background: var(--surface2); }
-        .eb-ta { font-family: 'Geist', system-ui, sans-serif; transition: border-color .15s ease; }
-        .eb-ta:focus { outline: none; border-color: var(--accent); }
-        .eb-qr-remove {
-          width: 32px; height: 32px; flex: none; border: none;
-          background: var(--surface2); border-radius: 8px;
-          color: var(--text4); cursor: pointer;
-          transition: background .15s ease, color .15s ease;
-        }
-        .eb-qr-remove:hover { background: var(--danger-bg); color: var(--danger); }
-        .eb-addbtn {
-          background: none;
-          border: 1px dashed var(--border2);
-          padding: 9px 12px;
-          border-radius: 9px;
-          font-size: 12.5px;
-          font-weight: 600;
-          color: var(--text3);
-          cursor: pointer;
-          width: 100%;
-          transition: border-color .15s ease, color .15s ease;
-        }
-        .eb-addbtn:hover { border-color: var(--accent); color: var(--accent); }
-        .eb-opt {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          border-radius: 9px;
-          padding: 10px 12px;
-          cursor: pointer;
-          font-size: 12.5px;
-          font-weight: 600;
-          text-align: left;
-          transition: border-color .15s ease, background .15s ease, color .15s ease;
-        }
-        .eb-callbtn {
-          width: 44px; height: 44px; border-radius: 50%;
-          display: flex; align-items: center; justify-content: center; color: #fff;
-        }
-        .eb-tnum { font-variant-numeric: tabular-nums; }
-      `}</style>
     </div>
   );
 }

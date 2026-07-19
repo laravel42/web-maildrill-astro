@@ -1,0 +1,15 @@
+import { appNav, appSettingsNav } from '@/config/navigation';
+import type { Cmd } from './AppShell.types';
+
+export const COMMANDS: Cmd[] = [
+  ...appNav.map((n) => ({
+    label: `Go to ${n.label}`,
+    hint: 'Navigate' as const,
+    href: n.href,
+    icon: n.icon,
+  })),
+  { label: 'Go to Settings', hint: 'Navigate', href: appSettingsNav.href, icon: 'settings' },
+  { label: 'New campaign', hint: 'Action', href: '/app/campaigns', icon: 'plus' },
+  { label: 'New template', hint: 'Action', href: '/app/templates', icon: 'templates' },
+  { label: 'Import contacts', hint: 'Action', href: '/app/subscribers', icon: 'upload' },
+];

@@ -1,0 +1,239 @@
+.af {
+  width: 100%;
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+.title {
+  font-size: clamp(32px, 4vw, 46px);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-weight: 800;
+  margin: 12px 0 8px;
+}
+.sub {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text3);
+  margin: 0 0 26px;
+}
+.sub a,
+.af a {
+  color: var(--accent);
+  font-weight: 600;
+}
+.sso {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.ssobtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  transition: background 0.15s;
+}
+.ssobtn:hover {
+  background: var(--surface3);
+}
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.divider span:first-child,
+.divider span:last-child {
+  flex: 1;
+  height: 1px;
+  background: var(--border2);
+}
+.divider .or {
+  flex: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.af label.field {
+  display: block;
+  margin-bottom: 14px;
+}
+.label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.labelrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+.labelrow a {
+  font-size: 12px;
+}
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border2);
+  font-size: 15px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.input:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 20px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text3);
+  cursor: pointer;
+}
+.check input {
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+.submit {
+  width: 100%;
+  padding: 13px;
+  border-radius: 10px;
+  border: none;
+  background: var(--ink);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.submit:hover:not(:disabled) {
+  background: var(--accent);
+}
+.submit:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+.note {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 14px 0 0;
+}
+.noteCenter {
+  text-align: center;
+}
+.error {
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0 0 14px;
+}
+.foot {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 28px 0 0;
+}
+.foot a {
+  color: var(--accent);
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 30px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.successCenter {
+  text-align: center;
+  padding: 36px 0;
+}
+.successicon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.successiconMail {
+  border-radius: 14px;
+  background: var(--accent-tint);
+  color: var(--accent);
+  margin: 24px 0 20px;
+}
+.successiconCheck {
+  background: var(--success-bg);
+  color: var(--success);
+  margin: 0 auto 18px;
+}
+.successtitle {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+}
+.successtitleLg {
+  font-size: clamp(28px, 3.4vw, 40px);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+}
+.successtext {
+  font-size: 15px;
+  color: var(--text3);
+  margin: 0;
+  line-height: 1.6;
+}
+.ghost {
+  padding: 11px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 24px;
+}
+.ghost:hover {
+  background: var(--surface3);
+}

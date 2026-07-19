@@ -2,50 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { campaigns as allCampaigns } from '@/lib/app/mock-data';
 import type { Campaign, CampaignStatus, ChannelType } from '@/types/app';
 import Icon from './Icon';
-import type { IconName } from '@/lib/icons';
 import CampaignWizard from './CampaignWizard';
 import EmailBuilder from './EmailBuilder';
-
-const NOW = new Date('2026-07-17T18:00:00Z').getTime();
-function ago(iso: string): string {
-  const mins = Math.round((NOW - new Date(iso).getTime()) / 60000);
-  if (mins < 60) return `${Math.max(mins, 1)}m ago`;
-  const hrs = Math.round(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.round(hrs / 24);
-  return days === 1 ? '1d ago' : `${days}d ago`;
-}
-
-const STATUS_LABEL: Record<CampaignStatus, string> = {
-  draft: 'Draft',
-  scheduled: 'Scheduled',
-  sending: 'Sending',
-  sent: 'Sent',
-  paused: 'Paused',
-};
-
-const CHANNEL: Record<ChannelType, { color: string; tint: string; icon: IconName; label: string }> =
-  {
-    email: { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)', icon: 'mail', label: 'Email' },
-    sms: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)', icon: 'sms', label: 'SMS' },
-    whatsapp: {
-      color: 'var(--ch-whatsapp)',
-      tint: 'var(--ch-whatsapp-tint)',
-      icon: 'whatsapp',
-      label: 'WhatsApp',
-    },
-    voice: {
-      color: 'var(--ch-voice)',
-      tint: 'var(--ch-voice-tint)',
-      icon: 'voice',
-      label: 'Voice',
-    },
-  };
-
-const TABS: (CampaignStatus | 'all')[] = ['all', 'draft', 'scheduled', 'sending', 'sent', 'paused'];
-const CHANNELS: ChannelType[] = ['email', 'sms', 'whatsapp', 'voice'];
-
-type SortKey = 'name' | 'recipients' | 'openRate' | 'updatedAt';
+import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
+import { ago } from './shared/time';
+import { useToast } from './shared/useToast';
+import { STATUS_LABEL, TABS, pct } from './CampaignsBoard.logic';
+import type { SortKey } from './CampaignsBoard.types';
+import styles from './CampaignsBoard.module.css';
 
 function ChannelPill({ channel }: { channel: ChannelType }) {
   const m = CHANNEL[channel];
@@ -57,10 +21,6 @@ function ChannelPill({ channel }: { channel: ChannelType }) {
   );
 }
 
-function pct(v: number | null): string {
-  return v == null ? '—' : `${(v * 100).toFixed(1)}%`;
-}
-
 export default function CampaignsBoard() {
   const [tab, setTab] = useState<CampaignStatus | 'all'>('all');
   const [query, setQuery] = useState('');
@@ -69,7 +29,7 @@ export default function CampaignsBoard() {
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updatedAt', dir: -1 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [openId, setOpenId] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const { toast, show } = useToast(2600);
   const [wizard, setWizard] = useState<
     { mode: 'create' } | { mode: 'edit'; channel: ChannelType; name: string } | null
   >(null);
@@ -122,13 +82,8 @@ export default function CampaignsBoard() {
   const allChecked = rows.length > 0 && rows.every((r) => selected.has(r.id));
   const toggleAll = () => setSelected(allChecked ? new Set() : new Set(rows.map((r) => r.id)));
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    window.setTimeout(() => setToast(null), 2600);
-  };
-
   const bulk = (verb: string) => {
-    showToast(`${verb} ${selected.size} campaign${selected.size === 1 ? '' : 's'}`);
+    show(`${verb} ${selected.size} campaign${selected.size === 1 ? '' : 's'}`);
     setSelected(new Set());
   };
 
@@ -159,7 +114,7 @@ export default function CampaignsBoard() {
       </div>
 
       {/* tabs */}
-      <div className="cb__tabs atabs" role="tablist" aria-label="Campaign status">
+      <div className={`${styles.tabs} atabs`} role="tablist" aria-label="Campaign status">
         {TABS.map((t) => (
           <button
             key={t}
@@ -179,9 +134,9 @@ export default function CampaignsBoard() {
       </div>
 
       {/* toolbar */}
-      <div className="cb__toolbar">
-        <label className="cb__search">
-          <Icon name="search" size={15} className="cb__searchic" />
+      <div className={styles.toolbar}>
+        <label className={styles.search}>
+          <Icon name="search" size={15} className={styles.searchic} />
           <input
             type="search"
             placeholder="Search campaigns…"
@@ -193,31 +148,31 @@ export default function CampaignsBoard() {
             aria-label="Search campaigns"
           />
         </label>
-        <div className="cb__filterwrap">
+        <div className={styles.filterwrap}>
           <button
             type="button"
-            className={`cb__filter${channelFilter.size ? ' is-on' : ''}`}
+            className={`${styles.filter}${channelFilter.size ? ' is-on' : ''}`}
             aria-expanded={filterOpen}
             onClick={() => setFilterOpen((v) => !v)}
           >
             <Icon name="filter" size={14} />
             Channel
             {channelFilter.size > 0 && (
-              <span className="cb__filtercount">{channelFilter.size}</span>
+              <span className={styles.filtercount}>{channelFilter.size}</span>
             )}
-            <Icon name="chevron-down" size={12} className="cb__filtercaret" />
+            <Icon name="chevron-down" size={12} className={styles.filtercaret} />
           </button>
           {filterOpen && (
             <>
               <button
                 type="button"
-                className="cb__filterscrim"
+                className={styles.filterscrim}
                 aria-label="Close"
                 onClick={() => setFilterOpen(false)}
               />
-              <div className="cb__filterpop">
-                {CHANNELS.map((ch) => (
-                  <label key={ch} className="cb__filteropt">
+              <div className={styles.filterpop} style={{ animation: 'pop .14s ease' }}>
+                {CHANNEL_ORDER.map((ch) => (
+                  <label key={ch} className={styles.filteropt}>
                     <input
                       type="checkbox"
                       checked={channelFilter.has(ch)}
@@ -229,7 +184,7 @@ export default function CampaignsBoard() {
                 {channelFilter.size > 0 && (
                   <button
                     type="button"
-                    className="cb__filterclear"
+                    className={styles.filterclear}
                     onClick={() => {
                       setChannelFilter(new Set());
                       setSelected(new Set());
@@ -246,23 +201,23 @@ export default function CampaignsBoard() {
 
       {/* bulk bar */}
       {selected.size > 0 && (
-        <div className="cb__bulk">
-          <span className="cb__bulkcount">{selected.size} selected</span>
-          <span className="cb__bulkdiv" />
-          <button type="button" className="cb__bulkbtn" onClick={() => bulk('Duplicated')}>
+        <div className={styles.bulk} style={{ animation: 'fade .18s ease' }}>
+          <span className={styles.bulkcount}>{selected.size} selected</span>
+          <span className={styles.bulkdiv} />
+          <button type="button" className={styles.bulkbtn} onClick={() => bulk('Duplicated')}>
             Duplicate
           </button>
-          <button type="button" className="cb__bulkbtn" onClick={() => bulk('Archived')}>
+          <button type="button" className={styles.bulkbtn} onClick={() => bulk('Archived')}>
             Archive
           </button>
           <button
             type="button"
-            className="cb__bulkbtn cb__bulkbtn--danger"
+            className={`${styles.bulkbtn} ${styles.bulkbtnDanger}`}
             onClick={() => bulk('Deleted')}
           >
             Delete
           </button>
-          <button type="button" className="cb__bulkclear" onClick={() => setSelected(new Set())}>
+          <button type="button" className={styles.bulkclear} onClick={() => setSelected(new Set())}>
             Clear
           </button>
         </div>
@@ -270,11 +225,11 @@ export default function CampaignsBoard() {
 
       {/* table */}
       <div className="atable cb__table">
-        <div className="athead cb__grid">
-          <div className="cb__check">
+        <div className={`athead ${styles.grid}`}>
+          <div className={styles.check}>
             <button
               type="button"
-              className={`cb__box${allChecked ? ' is-on' : ''}`}
+              className={`${styles.box}${allChecked ? ' is-on' : ''}`}
               onClick={toggleAll}
               aria-label="Select all"
               aria-pressed={allChecked}
@@ -314,7 +269,7 @@ export default function CampaignsBoard() {
           rows.map((c) => (
             <div
               key={c.id}
-              className={`atrow cb__grid${selected.has(c.id) ? ' is-selected' : ''}`}
+              className={`atrow ${styles.grid}${selected.has(c.id) ? ' is-selected' : ''}`}
               onClick={() => setOpenId(c.id)}
               role="button"
               tabIndex={0}
@@ -327,10 +282,10 @@ export default function CampaignsBoard() {
                 }
               }}
             >
-              <div className="cb__check" onClick={(e) => e.stopPropagation()}>
+              <div className={styles.check} onClick={(e) => e.stopPropagation()}>
                 <button
                   type="button"
-                  className={`cb__box${selected.has(c.id) ? ' is-on' : ''}`}
+                  className={`${styles.box}${selected.has(c.id) ? ' is-on' : ''}`}
                   onClick={() => toggleSelect(c.id)}
                   aria-label={`Select ${c.name}`}
                   aria-pressed={selected.has(c.id)}
@@ -338,25 +293,25 @@ export default function CampaignsBoard() {
                   {selected.has(c.id) && <Icon name="check" size={11} stroke={3} />}
                 </button>
               </div>
-              <div className="cb__name">{c.name}</div>
+              <div className={styles.name}>{c.name}</div>
               <div>
                 <span className={`astatus astatus--${c.status}`}>{STATUS_LABEL[c.status]}</span>
               </div>
               <div>
                 <ChannelPill channel={c.channel} />
               </div>
-              <div className="cb__muted">{c.audience}</div>
-              <div className="tnum cb__muted3">{c.recipients.toLocaleString('en-US')}</div>
-              <div className="tnum cb__muted3">
+              <div className={styles.muted}>{c.audience}</div>
+              <div className={`tnum ${styles.muted3}`}>{c.recipients.toLocaleString('en-US')}</div>
+              <div className={`tnum ${styles.muted3}`}>
                 {c.openRate != null ? `${Math.round(c.openRate * 100)}%` : '—'}
               </div>
-              <div className="cb__muted">{ago(c.updatedAt)}</div>
-              <div className="cb__check" onClick={(e) => e.stopPropagation()}>
+              <div className={styles.muted}>{ago(c.updatedAt)}</div>
+              <div className={styles.check} onClick={(e) => e.stopPropagation()}>
                 <button
                   type="button"
                   className="kbtn"
                   aria-label={`Actions for ${c.name}`}
-                  onClick={() => showToast('Row menu')}
+                  onClick={() => show('Row menu')}
                 >
                   <Icon name="more" size={16} />
                 </button>
@@ -377,7 +332,7 @@ export default function CampaignsBoard() {
         <CampaignDrawer
           campaign={open}
           onClose={() => setOpenId(null)}
-          onToast={showToast}
+          onToast={show}
           onEdit={() => {
             const c = open;
             setOpenId(null);
@@ -394,7 +349,7 @@ export default function CampaignsBoard() {
           onClose={() => setWizard(null)}
           onDone={(msg) => {
             setWizard(null);
-            showToast(msg);
+            show(msg);
           }}
           onOpenBuilder={(channel, name) => {
             setWizard(null);
@@ -411,66 +366,23 @@ export default function CampaignsBoard() {
           onClose={() => setBuilder(null)}
           onSave={({ name }) => {
             setBuilder(null);
-            showToast(name && name !== 'Untitled' ? `“${name}” saved` : 'Draft saved');
+            show(name && name !== 'Untitled' ? `“${name}” saved` : 'Draft saved');
           }}
         />
       )}
 
       {toast && (
-        <div className="cb__toast" role="status">
-          <span className="cb__toast-ic">
+        <div
+          className={styles.toast}
+          role="status"
+          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
+        >
+          <span className={styles.toastIc}>
             <Icon name="check" size={13} stroke={3} />
           </span>
           {toast}
         </div>
       )}
-
-      <style>{`
-        .cb__tabs { margin-bottom: 16px; overflow-x: auto; }
-        .cb__toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-        .cb__search { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 0 11px; width: 250px; max-width: 100%; }
-        .cb__searchic { color: var(--muted); }
-        .cb__search input { border: none; background: none; padding: 9px 0; font-size: 13px; color: var(--text); outline: none; width: 100%; }
-        .cb__filterwrap { position: relative; }
-        .cb__filter { display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border2); padding: 8px 11px; border-radius: 9px; font-size: 13px; font-weight: 500; color: var(--text2); }
-        .cb__filter.is-on { background: var(--accent-tint); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
-        .cb__filtercount { background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; padding: 0 3px; }
-        .cb__filtercaret { opacity: .55; }
-        .cb__filterscrim { position: fixed; inset: 0; z-index: 39; border: 0; background: none; }
-        .cb__filterpop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; min-width: 190px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-lg); padding: 6px; animation: pop .14s ease; }
-        .cb__filteropt { display: flex; align-items: center; gap: 9px; padding: 8px 9px; border-radius: 8px; cursor: pointer; }
-        .cb__filteropt:hover { background: var(--surface2); }
-        .cb__filteropt input { width: 15px; height: 15px; accent-color: var(--accent); }
-        .cb__filterclear { display: block; width: 100%; text-align: left; padding: 8px 9px; margin-top: 2px; border-top: 1px solid var(--divider); font-size: 12.5px; color: var(--muted); }
-
-        .cb__bulk { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--accent-tint); border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent); border-radius: 12px; margin-bottom: 12px; animation: fade .18s ease; }
-        .cb__bulkcount { font-size: 13px; font-weight: 600; color: var(--accent); }
-        .cb__bulkdiv { width: 1px; height: 16px; background: var(--border2); }
-        .cb__bulkbtn { padding: 6px 11px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--text2); background: var(--surface); border: 1px solid var(--border2); }
-        .cb__bulkbtn:hover { background: var(--surface2); }
-        .cb__bulkbtn--danger { color: var(--danger); border-color: #f3c9c9; }
-        .cb__bulkclear { margin-left: auto; font-size: 12.5px; color: var(--muted); }
-
-        .cb__grid { grid-template-columns: 36px 2fr .9fr 1fr 1.1fr .8fr .7fr .8fr 36px; }
-        .cb__check { display: flex; align-items: center; justify-content: center; }
-        .cb__box { width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid var(--border2); background: var(--surface); display: flex; align-items: center; justify-content: center; color: #fff; transition: all .12s; }
-        .cb__box.is-on { background: var(--accent); border-color: var(--accent); }
-        .cb__name { font-weight: 500; }
-        .cb__muted { color: var(--muted); }
-        .cb__muted3 { color: var(--text3); }
-
-        .cb__toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: var(--z-toast); display: flex; align-items: center; gap: 11px; background: var(--text); color: #fff; padding: 12px 16px 12px 13px; border-radius: 12px; box-shadow: 0 12px 32px rgba(28,25,23,.3); font-size: 13px; font-weight: 500; animation: toastin .22s cubic-bezier(.2,.8,.2,1); }
-        .cb__toast-ic { width: 22px; height: 22px; border-radius: 50%; background: #22c55e; color: #fff; display: flex; align-items: center; justify-content: center; }
-
-        @media (max-width: 1100px) {
-          .cb__grid { grid-template-columns: 36px 1.6fr .9fr 1fr .8fr .8fr 36px; }
-          .cb__grid > :nth-child(5), .cb__grid > :nth-child(7) { display: none; }
-        }
-        @media (max-width: 720px) {
-          .cb__grid { grid-template-columns: 30px 1.4fr .9fr .8fr 30px; }
-          .cb__grid > :nth-child(4), .cb__grid > :nth-child(6) { display: none; }
-        }
-      `}</style>
     </div>
   );
 }
@@ -568,21 +480,21 @@ function CampaignDrawer({
           </button>
         </div>
         <div className="adrawer__body">
-          <div className="cbd__title-row">
+          <div className={styles.drawerTitleRow}>
             <ChannelPill channel={campaign.channel} />
             <span className={`astatus astatus--${campaign.status}`}>
               {STATUS_LABEL[campaign.status]}
             </span>
           </div>
-          <h3 className="cbd__name">{campaign.name}</h3>
-          <p className="cbd__aud">To {campaign.audience}</p>
+          <h3 className={styles.drawerName}>{campaign.name}</h3>
+          <p className={styles.drawerAud}>To {campaign.audience}</p>
 
           {isSent ? (
-            <div className="cbd__kpis">
+            <div className={styles.drawerKpis}>
               {kpis.map((k) => (
-                <div key={k.label} className="cbd__kpi">
-                  <div className="cbd__kpi-lbl">{k.label}</div>
-                  <div className="tnum cbd__kpi-val" style={{ color: k.color }}>
+                <div key={k.label} className={styles.drawerKpi}>
+                  <div className={styles.drawerKpiLbl}>{k.label}</div>
+                  <div className={`tnum ${styles.drawerKpiVal}`} style={{ color: k.color }}>
                     {k.value}
                   </div>
                 </div>
@@ -594,8 +506,8 @@ function CampaignDrawer({
             </div>
           )}
 
-          <p className="adrawer__eyebrow cbd__eyebrow">Details</p>
-          <div className="cbd__details">
+          <p className={`adrawer__eyebrow ${styles.drawerEyebrow}`}>Details</p>
+          <div className={styles.drawerDetails}>
             <div className="adetail">
               <span className="adetail__k">Channel</span>
               <span className="adetail__v">{m.label}</span>
@@ -639,18 +551,6 @@ function CampaignDrawer({
             {isSent ? 'View report' : 'Edit'}
           </button>
         </div>
-
-        <style>{`
-          .cbd__title-row { display: flex; align-items: center; gap: 8px; }
-          .cbd__name { font-size: 18px; font-weight: 600; letter-spacing: -.3px; margin: 14px 0 2px; }
-          .cbd__aud { font-size: 13px; color: var(--text4); margin: 0 0 4px; }
-          .cbd__kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
-          .cbd__kpi { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 13px; }
-          .cbd__kpi-lbl { font-size: 11px; color: var(--muted); }
-          .cbd__kpi-val { font-size: 19px; font-weight: 600; margin-top: 4px; }
-          .cbd__eyebrow { margin: 24px 0 10px; }
-          .cbd__details { }
-        `}</style>
       </div>
     </div>
   );

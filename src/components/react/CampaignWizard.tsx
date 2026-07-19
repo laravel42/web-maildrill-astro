@@ -1,7 +1,22 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import type { ChannelType } from '@/types/app';
-import type { IconName } from '@/lib/icons';
 import Icon from './Icon';
+import { CHANNEL, CHANNEL_ORDER, channelLabel } from './shared/channels';
+import { formatDuration, smsSegments, voiceSeconds } from './shared/messaging';
+import { useEscapeClose } from './shared/useEscapeClose';
+import {
+  AUD_NAME,
+  AUDIENCES,
+  buildReviewRows,
+  buildStepDefs,
+  CONTENT_SUB,
+  SENDER,
+  TEMPLATES,
+} from './CampaignWizard.logic';
+import type { Audience, Props, Schedule, Step, Template } from './CampaignWizard.types';
+import styles from './CampaignWizard.module.css';
+
+export type { Props };
 
 /* ---------------------------------------------------------------------------
  * CampaignWizard — faithful React port of the 5-step campaign wizard modal.
@@ -9,145 +24,6 @@ import Icon from './Icon';
  * immediately. Logical step order is 1..5: Basics, Audience, Content, Schedule,
  * Review (matching `stepDefs` in the design).
  * ------------------------------------------------------------------------- */
-
-type Step = 1 | 2 | 3 | 4 | 5;
-type Audience = 'newsletter' | 'vip' | 'all';
-type Schedule = 'now' | 'later';
-
-export type Props = {
-  mode: 'create' | 'edit';
-  initialChannel?: ChannelType; // default 'email'
-  initialName?: string; // default '' (create) or the campaign name (edit)
-  onClose: () => void; // X / overlay click / Escape
-  onDone: (msg: string) => void; // final "Schedule campaign" / "Save changes"
-  onOpenBuilder?: (channel: ChannelType, name: string) => void; // step-3 "Open in builder →" (email only)
-};
-
-const CHANNELS: ChannelType[] = ['email', 'sms', 'whatsapp', 'voice'];
-
-const CHANNEL_LABEL: Record<ChannelType, string> = {
-  email: 'Email',
-  sms: 'SMS',
-  whatsapp: 'WhatsApp',
-  voice: 'Voice',
-};
-
-const CHANNEL_ICON: Record<ChannelType, IconName> = {
-  email: 'mail',
-  sms: 'sms',
-  whatsapp: 'whatsapp',
-  voice: 'voice',
-};
-
-const SENDER: Record<ChannelType, { label: string; value: string }> = {
-  email: { label: 'Sender', value: 'Maildrill Team <hello@maildrill.app>' },
-  sms: { label: 'Sender ID', value: 'MAILDRILL' },
-  whatsapp: { label: 'Business number', value: '+1 555 010 0142' },
-  voice: { label: 'Caller ID', value: '+1 555 010 0199' },
-};
-
-const CONTENT_SUB: Record<ChannelType, string> = {
-  email: 'Design your email',
-  sms: 'Write your text message',
-  whatsapp: 'Compose your WhatsApp message',
-  voice: 'Write your voice script',
-};
-
-const AUDIENCES: { key: Audience; name: string; desc: string; count: string }[] = [
-  { key: 'newsletter', name: 'Newsletter', desc: 'All active newsletter subscribers', count: '856' },
-  { key: 'vip', name: 'VIP customers', desc: 'Segment · engaged in last 30 days', count: '142' },
-  { key: 'all', name: 'All subscribers', desc: 'Everyone across every list', count: '1,193' },
-];
-
-const AUD_NAME: Record<Audience, string> = {
-  newsletter: 'Newsletter (856)',
-  vip: 'VIP customers (142)',
-  all: 'All subscribers (1,193)',
-};
-
-type Template = {
-  name: string;
-  thumb: string;
-  cat: string;
-  title?: string;
-  kicker?: string;
-  cta?: string;
-  fg?: string;
-};
-
-const TEMPLATES: Record<ChannelType, Template[]> = {
-  email: [
-    {
-      name: 'Summer Sale',
-      thumb: 'linear-gradient(150deg,#4f46e5,#6d28d9)',
-      fg: '#fff',
-      title: 'SUMMER SALE',
-      kicker: 'LIMITED TIME',
-      cta: 'Shop the sale',
-      cat: 'Promotional',
-    },
-    {
-      name: 'Welcome Series',
-      thumb: '#f6b8a0',
-      fg: '#7c2d12',
-      title: 'WELCOME',
-      kicker: 'GLAD YOU’RE HERE',
-      cta: 'Get started',
-      cat: 'Transactional',
-    },
-    {
-      name: 'Spring Preview',
-      thumb: 'linear-gradient(150deg,#34d399,#059669)',
-      fg: '#fff',
-      title: 'SPRING PREVIEW',
-      kicker: 'THE EDIT',
-      cta: 'See the collection',
-      cat: 'Newsletter',
-    },
-  ],
-  sms: [
-    {
-      name: 'Flash Sale Text',
-      thumb: 'linear-gradient(150deg,#06b6d4,#0891b2)',
-      cta: 'Shop now',
-      cat: 'Promotional',
-    },
-    {
-      name: 'Appointment Reminder',
-      thumb: 'linear-gradient(150deg,#06b6d4,#0e7490)',
-      cta: 'Confirm',
-      cat: 'Transactional',
-    },
-  ],
-  whatsapp: [
-    {
-      name: 'Order Update',
-      thumb: 'linear-gradient(150deg,#22c55e,#16a34a)',
-      cta: 'Track order',
-      cat: 'Transactional',
-    },
-    {
-      name: 'Delivery Notice',
-      thumb: 'linear-gradient(150deg,#34d399,#059669)',
-      cta: 'View status',
-      cat: 'Transactional',
-    },
-  ],
-  voice: [
-    {
-      name: 'Payment Reminder',
-      thumb: 'linear-gradient(150deg,#f59e0b,#d97706)',
-      cta: 'Pay now',
-      cat: 'Transactional',
-    },
-    {
-      name: 'Appointment Call',
-      thumb: 'linear-gradient(150deg,#fbbf24,#d97706)',
-      cta: 'Confirm',
-      cat: 'Reminder',
-    },
-  ],
-};
 
 const INDIGO = '#4f46e5';
 
@@ -262,31 +138,20 @@ export default function CampaignWizard({
   const [replyTo, setReplyTo] = useState<string>('');
 
   // Escape closes the modal.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  useEscapeClose(onClose);
 
   const isEmail = channel === 'email';
-  const channelLabel = CHANNEL_LABEL[channel];
   const templates = TEMPLATES[channel];
   const selTpl = templates.find((t) => t.name === selectedTemplate) ?? null;
   const audienceLabel = AUD_NAME[audience];
 
   // Non-email content metrics.
   const messageLen = message.length;
-  const words = message.trim() ? message.trim().split(/\s+/).length : 0;
-  const voiceSecs = Math.max(1, Math.round(words / 2.5));
-  const segments = Math.max(1, Math.ceil((messageLen || 1) / 160));
+  const voiceSecs = voiceSeconds(message);
+  const segments = smsSegments(messageLen);
   const count2 = channel === 'voice' ? voiceSecs : segments;
   const count2Label = channel === 'voice' ? 'sec (est.)' : 'segment(s)';
-  const callDuration = `${Math.floor(voiceSecs / 60)}:${String(voiceSecs % 60).padStart(2, '0')}`;
+  const callDuration = formatDuration(voiceSecs);
   const msgPreview = message || 'Hi Andrea, your message preview will appear here as you type…';
 
   // Email live-preview values.
@@ -302,13 +167,7 @@ export default function CampaignWizard({
   const statusColor = channel === 'sms' ? '#0b0b0f' : '#fff';
 
   const contentSub = CONTENT_SUB[channel];
-  const stepDefs: [string, string][] = [
-    ['Sender', 'Basics'],
-    ['Audience', 'Choose recipients'],
-    ['Content', contentSub],
-    ['Schedule', 'Set delivery'],
-    ['Review', 'Check everything'],
-  ];
+  const stepDefs = buildStepDefs(contentSub);
 
   const title = mode === 'edit' ? 'Edit campaign' : 'New campaign';
   const nextLabel =
@@ -344,25 +203,9 @@ export default function CampaignWizard({
     }
   };
 
-  const blankLabel = `Blank ${isEmail ? 'email' : channelLabel}`;
+  const blankLabel = `Blank ${isEmail ? 'email' : channelLabel(channel)}`;
 
-  const reviewRows: [string, string][] = [
-    ['Campaign', name || 'Untitled'],
-    ['Channel', channelLabel],
-    [
-      'Sender',
-      isEmail
-        ? 'Maildrill Team <hello@maildrill.app>'
-        : channel === 'sms'
-          ? 'MAILDRILL (sender ID)'
-          : channel === 'whatsapp'
-            ? '+1 555 010 0142'
-            : '+1 555 010 0199 (caller ID)',
-    ],
-    ['Audience', audienceLabel],
-    ['Template', selectedTemplate ?? 'Summer Sale'],
-    ['Delivery', schedule === 'now' ? 'Send immediately' : 'Jul 15, 2026 · 09:00 AM'],
-  ];
+  const reviewRows = buildReviewRows(name, channel, audienceLabel, selectedTemplate, schedule);
 
   const labelStyle: CSSProperties = {
     display: 'block',
@@ -525,7 +368,7 @@ export default function CampaignWizard({
                     marginBottom: 18,
                   }}
                 >
-                  {CHANNELS.map((c) => {
+                  {CHANNEL_ORDER.map((c) => {
                     const on = channel === c;
                     return (
                       <div
@@ -546,8 +389,8 @@ export default function CampaignWizard({
                           cursor: 'pointer',
                         }}
                       >
-                        <Icon name={CHANNEL_ICON[c]} size={15} stroke={2.2} />
-                        {CHANNEL_LABEL[c]}
+                        <Icon name={CHANNEL[c].icon} size={15} stroke={2.2} />
+                        {channelLabel(c)}
                       </div>
                     );
                   })}
@@ -640,7 +483,7 @@ export default function CampaignWizard({
                 <p style={{ ...pStyle, margin: '0 0 18px' }}>
                   Start from a template or build from scratch.
                 </p>
-                <label style={{ ...labelStyle, marginBottom: 8 }}>{channelLabel} templates</label>
+                <label style={{ ...labelStyle, marginBottom: 8 }}>{channelLabel(channel)} templates</label>
                 <div
                   style={{
                     display: 'grid',
@@ -655,7 +498,7 @@ export default function CampaignWizard({
                       <div
                         key={t.name}
                         onClick={() => selectTemplate(t)}
-                        className="cw-crd"
+                        className={styles.cwCrd}
                         style={{
                           border: `1.5px solid ${sel ? INDIGO : 'var(--border2)'}`,
                           background: sel ? 'var(--accent-tint)' : 'var(--surface)',
@@ -681,7 +524,7 @@ export default function CampaignWizard({
                   })}
                   <div
                     onClick={() => setSelectedTemplate(null)}
-                    className="cw-crd"
+                    className={styles.cwCrd}
                     style={{
                       border: '1.5px dashed var(--border2)',
                       borderRadius: 12,
@@ -1344,11 +1187,6 @@ export default function CampaignWizard({
           </button>
         </div>
       </div>
-
-      <style>{`
-        .cw-crd { transition: border-color .12s, transform .12s, box-shadow .12s; }
-        .cw-crd:hover { border-color: color-mix(in srgb, ${INDIGO} 45%, var(--border2)); transform: translateY(-1px); }
-      `}</style>
     </div>
   );
 }

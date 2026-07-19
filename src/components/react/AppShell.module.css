@@ -1,0 +1,367 @@
+.ash {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  background: var(--bg);
+  overflow: hidden;
+}
+.ashMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ashScroll {
+  flex: 1;
+  overflow-y: auto;
+}
+.ashScrim {
+  display: none;
+}
+
+/* sidebar */
+.ashsb {
+  width: 238px;
+  flex: none;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 14px;
+}
+.ashsbBrand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  justify-content: center;
+  padding: 6px 8px 18px;
+  color: var(--text);
+}
+.ashsbWord {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.ashsbWord span {
+  color: var(--brand);
+}
+.ashsbGroup {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--muted2);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 0 10px 8px;
+}
+.ashsbNav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ashsbNavItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--text3);
+  transition: background 0.13s var(--ease-out), color 0.13s var(--ease-out);
+}
+.ashsbNavItem:hover {
+  background: var(--surface2);
+}
+.ashsbNavItem:global(.is-active) {
+  font-weight: 600;
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+.ashsbNavItemStatic {
+  color: var(--text3);
+  cursor: default;
+}
+.ashsbNavItemStatic:hover {
+  background: transparent;
+}
+.ashsbNavIc {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ashsbFoot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ashsbUser {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 10px;
+  padding: 9px 8px;
+  border-top: 1px solid var(--divider);
+}
+.ashsbAvatar {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 9px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  background: linear-gradient(135deg, #818cf8, #4f46e5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ashsbUsermeta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ashsbUsername {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+.ashsbUseremail {
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ashsbUserchev {
+  color: var(--muted);
+}
+
+/* topbar */
+.topbar {
+  height: 57px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--border);
+  background: var(--header-bg);
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 5;
+}
+.topbarCrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.topbarMenu {
+  display: none;
+  color: var(--text3);
+}
+.topbarWs {
+  color: var(--text4);
+}
+.topbarTitle {
+  font-weight: 600;
+  color: var(--text2);
+}
+.topbarControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.topbarSearch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 0 10px;
+  height: 33px;
+  min-width: 220px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.topbarSearchic {
+  color: var(--muted);
+}
+.topbarSearch span {
+  flex: 1;
+  text-align: left;
+}
+.topbarSearch kbd {
+  font-size: 10.5px;
+  color: var(--muted2);
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+.topbarDot {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ea580c;
+  border: 1.5px solid var(--surface);
+}
+
+/* command palette */
+.cmdk {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 120px;
+}
+.cmdkBackdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(28, 25, 23, 0.32);
+  backdrop-filter: blur(3px);
+  border: 0;
+}
+.cmdkPanel {
+  position: relative;
+  width: 560px;
+  max-width: 92%;
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(28, 25, 23, 0.32);
+  overflow: hidden;
+}
+.cmdkSearch {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--divider);
+}
+.cmdkSearchic {
+  color: var(--muted);
+}
+.cmdkInput {
+  flex: 1;
+  border: none;
+  background: none;
+  font-size: 15px;
+  color: var(--text);
+  outline: none;
+}
+.cmdkEsc {
+  font-size: 10.5px;
+  color: var(--muted2);
+  font-weight: 600;
+  background: var(--surface2);
+  border-radius: 5px;
+  padding: 2px 6px;
+}
+.cmdkList {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+.cmdkItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+.cmdkItem:hover {
+  background: var(--surface2);
+}
+.cmdkIc {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.cmdkIcAction {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+.cmdkIcNav {
+  background: var(--surface2);
+  color: var(--text4);
+}
+.cmdkLabel {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text);
+}
+.cmdkHint {
+  font-size: 11.5px;
+  color: var(--muted2);
+}
+.cmdkEmpty {
+  padding: 32px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .ashsb {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: var(--z-drawer);
+    transform: translateX(-100%);
+    transition: transform 0.28s var(--ease-out);
+    box-shadow: 8px 0 40px rgba(28, 25, 23, 0.18);
+  }
+  .ashsb.isOpen {
+    transform: translateX(0);
+  }
+  .ashScrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-drawer) - 1);
+    background: rgba(28, 25, 23, 0.32);
+    border: 0;
+  }
+  .topbarMenu {
+    display: inline-flex;
+  }
+  .topbar {
+    padding: 0 16px;
+  }
+  .topbarSearch {
+    min-width: 0;
+  }
+  .topbarSearch span,
+  .topbarSearch kbd {
+    display: none;
+  }
+  .topbarSearch {
+    width: 33px;
+    height: 33px;
+    justify-content: center;
+    padding: 0;
+  }
+}
