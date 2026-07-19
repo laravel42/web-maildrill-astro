@@ -1611,6 +1611,7 @@ export interface paths {
             parameters: {
                 query?: {
                     days?: number;
+                    channel?: "email" | "sms" | "whatsapp" | "voice";
                 };
                 header?: never;
                 path?: never;

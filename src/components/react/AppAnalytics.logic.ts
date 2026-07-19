@@ -1,63 +1,58 @@
-import type { AnalyticsPoint, ChannelType } from '@/types/app';
 import type { SeriesKey } from './AppAnalytics.types';
 
 /* ------------------------------------------------------------------ *
- * Chart math + config for the account-wide analytics screen. All rollup
- * numbers were removed — the screen shows an empty state until analytics
- * are wired to real send/engagement data. Only the pure helpers and the
- * chart/series/range config remain.
+ * Chart math + config for the account-wide analytics screen.
+ *
+ * The screen reports delivery, not engagement. Opens and clicks are absent
+ * on purpose: nothing in the product records them yet (no tracking pixel, no
+ * link rewriting, no normalized provider engagement events), so any number
+ * here would be invented. Add them back when there is a source.
  * ------------------------------------------------------------------ */
 
-/* Fixed reference window label — deterministic across SSR + hydration. */
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 export function fmtDate(iso: string): string {
   const [, m, d] = iso.split('-');
   return `${MONTHS[Number(m) - 1]} ${Number(d)}`;
 }
 
-/* Range chips — visual toggle only. */
-export const RANGES: { key: string; label: string }[] = [
-  { key: '7d', label: '7 days' },
-  { key: '30d', label: '30 days' },
-  { key: '90d', label: '90 days' },
-  { key: '12m', label: '12 months' },
+/** Range chips. `days` is sent to /v1/stats/activity, so these really refilter. */
+export const RANGES: { key: string; label: string; days: number }[] = [
+  { key: '7d', label: '7 days', days: 7 },
+  { key: '30d', label: '30 days', days: 30 },
+  { key: '90d', label: '90 days', days: 90 },
+  { key: '12m', label: '12 months', days: 365 },
 ];
 
-/* Panels below are data-driven and empty until wired. */
-export const KPIS: { label: string; value: string; delta: string; line: string; spark: number[] }[] =
-  [];
-export const BY_CHANNEL: {
-  ch: ChannelType;
-  label: string;
-  sent: string;
-  pct: string;
-  w: number;
-  color: string;
-}[] = [];
-export const CHANNEL_PERF: {
-  ch: ChannelType;
-  sent: string;
-  delivered: string;
-  open: string;
-  openW: number;
-  click: string;
-  clickW: number;
-}[] = [];
-export const FUNNEL: { stage: string; value: string; pct: string; w: number; color: string }[] = [];
-export const DEVICES: { label: string; pct: string; w: number; color: string }[] = [];
-export const TOP_CAMPAIGNS: { name: string; open: string; w: number }[] = [];
-export const TOP_LINKS: { url: string; clicks: string }[] = [];
+/** One day of send activity, as returned by /v1/stats/activity. */
+export type ActivityPoint = { date: string; sent: number; delivered: number; failed: number };
 
-/* Hero trend chart series config. */
+export type ChannelBreakdown = {
+  channel: string;
+  sent: number;
+  delivered: number;
+  failed: number;
+};
+
+/** Series plotted on the hero chart — delivery outcomes only. */
 export const SERIES: { key: SeriesKey; label: string; color: string }[] = [
   { key: 'sent', label: 'Sent', color: '#4f46e5' },
-  { key: 'delivered', label: 'Delivered', color: '#6366f1' },
-  { key: 'opened', label: 'Opened', color: '#8b5cf6' },
-  { key: 'clicked', label: 'Clicked', color: '#a78bfa' },
+  { key: 'delivered', label: 'Delivered', color: '#22c55e' },
+  { key: 'failed', label: 'Failed', color: '#ef4444' },
 ];
 
-/* Sparkline point generator: normalize per-series, map to w×h. */
+const CHANNEL_COLOR: Record<string, string> = {
+  email: '#4f46e5',
+  sms: '#06b6d4',
+  whatsapp: '#22c55e',
+  voice: '#f59e0b',
+};
+
+export function channelColor(ch: string): string {
+  return CHANNEL_COLOR[ch] ?? 'var(--accent)';
+}
+
 export function sparkPoints(pts: number[], w: number, h: number): string {
+  if (pts.length < 2) return '';
   const max = Math.max(...pts);
   const min = Math.min(...pts);
   const rng = max - min || 1;
@@ -102,6 +97,49 @@ export function fmtCompact(v: number): string {
   return String(Math.round(v));
 }
 
-/* Hero trend series — empty until analytics are wired. */
-export const HERO_SERIES: AnalyticsPoint[] = [];
-export const TOTAL_SENDS = 0;
+export function pctOf(part: number, whole: number): string {
+  return whole > 0 ? `${((part / whole) * 100).toFixed(1)}%` : '—';
+}
+
+/** Headline totals over the visible window. */
+export function totalsOf(points: ActivityPoint[]) {
+  const sent = points.reduce((t, p) => t + p.sent, 0);
+  const delivered = points.reduce((t, p) => t + p.delivered, 0);
+  const failed = points.reduce((t, p) => t + p.failed, 0);
+  return { sent, delivered, failed };
+}
+
+export function buildKpis(points: ActivityPoint[]) {
+  const { sent, delivered, failed } = totalsOf(points);
+  return [
+    {
+      label: 'Messages sent',
+      value: fmtCompact(sent),
+      sub: 'in range',
+      spark: points.map((p) => p.sent),
+    },
+    {
+      label: 'Delivered',
+      value: fmtCompact(delivered),
+      sub: pctOf(delivered, sent),
+      spark: points.map((p) => p.delivered),
+    },
+    {
+      label: 'Failed',
+      value: fmtCompact(failed),
+      sub: pctOf(failed, sent),
+      spark: points.map((p) => p.failed),
+    },
+  ];
+}
+
+/** CSV of the visible series — the export button writes exactly what's shown. */
+export function toCsv(points: ActivityPoint[]): string {
+  const head = 'date,sent,delivered,failed';
+  const rows = points.map((p) => `${p.date},${p.sent},${p.delivered},${p.failed}`);
+  return [head, ...rows].join('\n');
+}
+
+export function channelLabelOf(ch: string): string {
+  return ch === 'sms' ? 'SMS' : ch === 'whatsapp' ? 'WhatsApp' : ch === 'voice' ? 'Voice' : 'Email';
+}

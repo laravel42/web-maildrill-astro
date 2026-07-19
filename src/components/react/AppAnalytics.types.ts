@@ -1,2 +1,2 @@
-/** The four metrics plotted on the hero trend chart. */
-export type SeriesKey = 'sent' | 'delivered' | 'opened' | 'clicked';
+/** The delivery outcomes plotted on the hero trend chart. */
+export type SeriesKey = 'sent' | 'delivered' | 'failed';

@@ -1,25 +1,24 @@
-import { useState } from 'react';
-import { analyticsSeries } from '@/lib/app/mock-data';
-import type { AnalyticsPoint, ChannelType } from '@/types/app';
+import { useEffect, useState } from 'react';
+import type { ChannelType } from '@/types/app';
+import { api } from '@/lib/app/api';
 import Icon from './Icon';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import type { SeriesKey } from './AppAnalytics.types';
 import {
-  BY_CHANNEL,
-  CHANNEL_PERF,
-  DEVICES,
-  FUNNEL,
-  HERO_SERIES,
-  KPIS,
   RANGES,
   SERIES,
-  TOP_CAMPAIGNS,
-  TOP_LINKS,
-  TOTAL_SENDS,
+  buildKpis,
+  channelColor,
+  channelLabelOf,
   fmtCompact,
   fmtDate,
   niceMax,
+  pctOf,
   sparkPoints,
+  toCsv,
+  totalsOf,
+  type ActivityPoint,
+  type ChannelBreakdown,
 } from './AppAnalytics.logic';
 import styles from './AppAnalytics.module.css';
 
@@ -28,13 +27,67 @@ import styles from './AppAnalytics.module.css';
  * Every chart is hand-built inline SVG / CSS — no chart library.
  * ------------------------------------------------------------------ */
 
-export default function AppAnalytics() {
+export default function AppAnalytics({
+  initialDaily = [],
+  byChannel = [],
+  live = false,
+}: {
+  initialDaily?: ActivityPoint[];
+  byChannel?: ChannelBreakdown[];
+  live?: boolean;
+} = {}) {
   const [range, setRange] = useState('30d');
   const [channel, setChannel] = useState<ChannelType | 'all'>('all');
+  const [daily, setDaily] = useState<ActivityPoint[]>(initialDaily);
+  const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState<Set<SeriesKey>>(
-    new Set<SeriesKey>(['sent', 'opened', 'clicked']),
+    new Set<SeriesKey>(['sent', 'delivered', 'failed']),
   );
   const [toast, setToast] = useState<string | null>(null);
+
+  /* Range and channel really refilter: both are query params on the endpoint,
+     so the chart reflects the selection rather than restyling the same data. */
+  useEffect(() => {
+    if (!live) return;
+    const days = RANGES.find((r) => r.key === range)?.days ?? 30;
+    const qs = new URLSearchParams({ days: String(days) });
+    if (channel !== 'all') qs.set('channel', channel);
+    let cancelled = false;
+    setLoading(true);
+    api
+      .get<{ data: ActivityPoint[] }>(`stats/activity?${qs.toString()}`)
+      .then((res) => {
+        if (!cancelled) setDaily(res.data ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) showToast('Could not load analytics');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [range, channel, live]);
+
+  const kpis = buildKpis(daily);
+  const totals = totalsOf(daily);
+  const channelRows = channel === 'all' ? byChannel : byChannel.filter((c) => c.channel === channel);
+  const totalChannelSends = byChannel.reduce((t, c) => t + c.sent, 0);
+
+  /* Download exactly the series on screen, rather than claiming an export. */
+  const exportCsv = () => {
+    const blob = new Blob([toCsv(daily)], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `maildrill-activity-${range}${channel === 'all' ? '' : `-${channel}`}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast(`Exported ${daily.length} days`);
+  };
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -53,18 +106,14 @@ export default function AppAnalytics() {
       return next;
     });
 
-  /* dim non-selected channels when a specific channel is focused */
-  const dim = (ch: ChannelType): number => (channel !== 'all' && ch !== channel ? 0.32 : 1);
-
-  // Empty state until analytics are wired to real send/engagement data. Guards
-  // the charts below, which assume a non-empty series.
-  if (HERO_SERIES.length === 0) {
+  // The charts below assume a non-empty series.
+  if (daily.length === 0) {
     return (
       <div className={`screen ${styles.an}`} style={{ animation: 'fade .3s ease' }}>
         <div className="screen__head">
           <div>
             <h1 className="screen__h1">Analytics</h1>
-            <p className="screen__sub">Delivery and engagement across all channels.</p>
+            <p className="screen__sub">Delivery across all channels.</p>
           </div>
         </div>
         <div className="acrd" style={{ padding: '48px 24px', textAlign: 'center' }}>
@@ -82,7 +131,7 @@ export default function AppAnalytics() {
       <div className={`screen__head ${styles.head}`}>
         <div>
           <h1 className="screen__h1">Analytics</h1>
-          <p className="screen__sub">Delivery and engagement across all channels.</p>
+          <p className="screen__sub">Delivery across all channels.</p>
         </div>
         <div className={styles.controls}>
           <div className={`aseg ${styles.seg}`} role="group" aria-label="Filter by channel">
@@ -120,11 +169,7 @@ export default function AppAnalytics() {
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            className="sbtn"
-            onClick={() => showToast('Preparing analytics export…')}
-          >
+          <button type="button" className="sbtn" onClick={exportCsv}>
             <Icon name="download" size={15} />
             Export
           </button>
@@ -133,11 +178,11 @@ export default function AppAnalytics() {
 
       {/* KPI trend strip */}
       <div className={styles.kpis}>
-        {KPIS.map((k) => (
+        {kpis.map((k, i) => (
           <div key={k.label} className={`acrd ${styles.kpi}`}>
             <div className={styles.kpiTop}>
               <span className={styles.kpiLbl}>{k.label}</span>
-              <span className={`${styles.kpiDelta} tnum`}>{k.delta}</span>
+              <span className={`${styles.kpiDelta} tnum`}>{k.sub}</span>
             </div>
             <div className={`${styles.kpiVal} tnum`}>{k.value}</div>
             <svg
@@ -151,7 +196,7 @@ export default function AppAnalytics() {
               <polyline
                 points={sparkPoints(k.spark, 120, 30)}
                 fill="none"
-                stroke={k.line}
+                stroke={SERIES[i]?.color ?? '#4f46e5'}
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -162,18 +207,18 @@ export default function AppAnalytics() {
       </div>
 
       {/* hero trend chart */}
-      <section className={`acrd ${styles.hero}`} aria-label="Sends, opens and clicks over time">
+      <section className={`acrd ${styles.hero}`} aria-label="Delivery over time">
         <div className={styles.cardHead}>
           <div>
-            <h2 className="acrd__title">Sends, opens &amp; clicks over time</h2>
+            <h2 className="acrd__title">Delivery over time</h2>
             <p className={`${styles.cardSub} tnum`}>
-              Daily volume · {fmtDate(analyticsSeries[0].date)} –{' '}
-              {fmtDate(analyticsSeries[analyticsSeries.length - 1].date)}
+              Daily volume · {fmtDate(daily[0].date)} – {fmtDate(daily[daily.length - 1].date)}
+              {loading ? ' · updating…' : ''}
             </p>
           </div>
           <div className={styles.heroTotal}>
-            <span className={`${styles.heroNum} tnum`}>{TOTAL_SENDS.toLocaleString('en-US')}</span>
-            <span className={styles.heroLbl}>total sends</span>
+            <span className={`${styles.heroNum} tnum`}>{totals.sent.toLocaleString('en-US')}</span>
+            <span className={styles.heroLbl}>messages sent</span>
           </div>
         </div>
 
@@ -198,57 +243,51 @@ export default function AppAnalytics() {
           })}
         </div>
 
-        <TrendChart visible={visible} />
+        <TrendChart visible={visible} series={daily} />
       </section>
 
-      {/* funnel + by channel */}
+      {/* by channel — real send/delivery counts per channel */}
       <div className={`${styles.row} ${styles.row2}`}>
         <section className={`acrd ${styles.panel}`}>
-          <h2 className={styles.panelTitle}>Engagement funnel</h2>
-          {FUNNEL.map((f) => (
-            <div key={f.stage} className={styles.barRow}>
-              <div className={styles.barTop}>
-                <span className={styles.barLbl}>{f.stage}</span>
-                <span className={`${styles.barMeta} tnum`}>
-                  {f.value} · {f.pct}
-                </span>
-              </div>
-              <div className={styles.track}>
-                <div
-                  className={styles.fill}
-                  style={{ width: `${f.w}%`, background: f.color, animation: 'grow .5s ease' }}
-                />
-              </div>
-            </div>
-          ))}
+          <h2 className={styles.panelTitle}>By channel</h2>
+          {channelRows.length === 0 ? (
+            <p className="screen__sub" style={{ margin: 0 }}>
+              Nothing sent on this channel yet.
+            </p>
+          ) : (
+            channelRows.map((c) => {
+              const share = totalChannelSends > 0 ? (c.sent / totalChannelSends) * 100 : 0;
+              return (
+                <div key={c.channel} className={styles.barRow}>
+                  <div className={styles.barTop}>
+                    <span className={styles.barLbl}>{channelLabelOf(c.channel)}</span>
+                    <span className={`${styles.barMeta} tnum`}>
+                      {c.sent.toLocaleString('en-US')} · {share.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className={styles.track}>
+                    <div
+                      className={styles.fill}
+                      style={{
+                        width: `${Math.max(share, 1.5)}%`,
+                        background: channelColor(c.channel),
+                        animation: 'grow .5s ease',
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })
+          )}
         </section>
 
         <section className={`acrd ${styles.panel}`}>
-          <h2 className={styles.panelTitle}>By channel</h2>
-          {BY_CHANNEL.map((c) => (
-            <div
-              key={c.ch}
-              className={styles.barRow}
-              style={{ opacity: dim(c.ch), transition: 'opacity .2s ease' }}
-            >
-              <div className={styles.barTop}>
-                <span className={styles.barLbl}>{c.label}</span>
-                <span className={`${styles.barMeta} tnum`}>
-                  {c.sent} · {c.pct}
-                </span>
-              </div>
-              <div className={styles.track}>
-                <div
-                  className={styles.fill}
-                  style={{
-                    width: `${Math.max(c.w, 1.5)}%`,
-                    background: c.color,
-                    animation: 'grow .5s ease',
-                  }}
-                />
-              </div>
-            </div>
-          ))}
+          <h2 className={styles.panelTitle}>Engagement</h2>
+          <p className="screen__sub" style={{ margin: 0 }}>
+            Opens and clicks aren't tracked yet. They need a tracking pixel and link
+            rewriting on outbound email, plus provider engagement webhooks — until then
+            this product has no way to measure them, so nothing is shown here.
+          </p>
         </section>
       </div>
 
@@ -257,9 +296,7 @@ export default function AppAnalytics() {
         <div className="acrd__head">
           <h2 className="acrd__title">Channel performance</h2>
           <span className={styles.tableSub}>
-            {channel === 'all'
-              ? 'Delivery & engagement per channel'
-              : `Focused on ${CHANNEL[channel].label}`}
+            {channel === 'all' ? 'Delivery per channel' : `Focused on ${CHANNEL[channel].label}`}
           </span>
         </div>
         <div className={styles.ct}>
@@ -268,47 +305,36 @@ export default function AppAnalytics() {
               <div>Channel</div>
               <div className={styles.ctR}>Sent</div>
               <div className={styles.ctR}>Delivered</div>
-              <div>Open rate</div>
-              <div>Click rate</div>
+              <div className={styles.ctR}>Failed</div>
+              <div>Delivery rate</div>
             </div>
-            {CHANNEL_PERF.map((row) => {
-              const m = CHANNEL[row.ch];
+            {channelRows.map((row) => {
+              const ch = (row.channel as ChannelType) ?? 'email';
+              const m = CHANNEL[ch] ?? CHANNEL.email;
+              const rate = row.sent > 0 ? (row.delivered / row.sent) * 100 : 0;
               return (
-                <div
-                  key={row.ch}
-                  className={styles.ctRow}
-                  style={{ opacity: dim(row.ch), transition: 'opacity .2s ease' }}
-                >
+                <div key={row.channel} className={styles.ctRow}>
                   <div className={styles.ctCh}>
                     <span className={styles.ctChip} style={{ background: m.tint, color: m.color }}>
                       <Icon name={m.icon} size={14} />
                     </span>
                     <span className={styles.ctChname}>{m.label}</span>
                   </div>
-                  <div className={`${styles.ctNum} tnum`}>{row.sent}</div>
-                  <div className={`${styles.ctDel} tnum`}>{row.delivered}</div>
-                  <div className={styles.ctRate}>
-                    <div className={styles.ctMini}>
-                      <div
-                        className={styles.ctMiniFill}
-                        style={{ width: `${row.openW}%`, background: m.color, animation: 'grow .5s ease' }}
-                      />
-                    </div>
-                    <span className={`${styles.ctRateVal} tnum`}>{row.open}</span>
+                  <div className={`${styles.ctNum} tnum`}>{row.sent.toLocaleString('en-US')}</div>
+                  <div className={`${styles.ctDel} tnum`}>
+                    {row.delivered.toLocaleString('en-US')}
                   </div>
+                  <div className={`${styles.ctNum} tnum`}>{row.failed.toLocaleString('en-US')}</div>
                   <div className={styles.ctRate}>
                     <div className={styles.ctMini}>
                       <div
                         className={styles.ctMiniFill}
-                        style={{
-                          width: `${row.clickW}%`,
-                          background: m.color,
-                          opacity: 0.6,
-                          animation: 'grow .5s ease',
-                        }}
+                        style={{ width: `${rate}%`, background: m.color, animation: 'grow .5s ease' }}
                       />
                     </div>
-                    <span className={`${styles.ctRateVal} tnum`}>{row.click}</span>
+                    <span className={`${styles.ctRateVal} tnum`}>
+                      {pctOf(row.delivered, row.sent)}
+                    </span>
                   </div>
                 </div>
               );
@@ -316,55 +342,6 @@ export default function AppAnalytics() {
           </div>
         </div>
       </section>
-
-      {/* top campaigns / top links / devices */}
-      <div className={`${styles.row} ${styles.row3}`}>
-        <section className={`acrd ${styles.panel}`}>
-          <h2 className={styles.panelTitle}>Top campaigns</h2>
-          {TOP_CAMPAIGNS.map((c) => (
-            <div key={c.name} className={styles.tcRow}>
-              <span className={styles.tcName} title={c.name}>
-                {c.name}
-              </span>
-              <div className={`${styles.track} ${styles.tcTrack}`}>
-                <div
-                  className={styles.fill}
-                  style={{ width: `${c.w}%`, background: '#4f46e5', animation: 'grow .5s ease' }}
-                />
-              </div>
-              <span className={`${styles.tcOpen} tnum`}>{c.open}</span>
-            </div>
-          ))}
-        </section>
-
-        <section className={`acrd ${styles.panel}`}>
-          <h2 className={styles.panelTitle}>Top links clicked</h2>
-          {TOP_LINKS.map((l) => (
-            <div key={l.url} className={styles.linkRow}>
-              <span className={styles.linkUrl} title={l.url}>
-                {l.url}
-              </span>
-              <span className={`${styles.linkClicks} tnum`}>{l.clicks}</span>
-            </div>
-          ))}
-        </section>
-
-        <section className={`acrd ${styles.panel}`}>
-          <h2 className={styles.panelTitle}>Top devices</h2>
-          {DEVICES.map((d) => (
-            <div key={d.label} className={styles.devRow}>
-              <span className={styles.devLbl}>{d.label}</span>
-              <div className={styles.track} style={{ flex: 1 }}>
-                <div
-                  className={styles.fill}
-                  style={{ width: `${d.w}%`, background: d.color, animation: 'grow .5s ease' }}
-                />
-              </div>
-              <span className={`${styles.devPct} tnum`}>{d.pct}</span>
-            </div>
-          ))}
-        </section>
-      </div>
 
       {toast && (
         <div
@@ -388,7 +365,7 @@ export default function AppAnalytics() {
  * Fixed 900×280 viewBox scales uniformly, so tooltip positions can be
  * expressed as simple percentages of the viewBox.
  * ------------------------------------------------------------------ */
-function TrendChart({ visible }: { visible: Set<SeriesKey> }) {
+function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: ActivityPoint[] }) {
   const [hover, setHover] = useState<number | null>(null);
 
   const W = 900;
@@ -401,7 +378,6 @@ function TrendChart({ visible }: { visible: Set<SeriesKey> }) {
   const plotH = H - MT - MB;
   const baseY = MT + plotH;
 
-  const series: AnalyticsPoint[] = HERO_SERIES;
   const n = series.length;
   const active = SERIES.filter((s) => visible.has(s.key));
 
@@ -427,7 +403,7 @@ function TrendChart({ visible }: { visible: Set<SeriesKey> }) {
         className={styles.chart}
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label={`Daily sends, opens and clicks from ${fmtDate(series[0].date)} to ${fmtDate(series[n - 1].date)}`}
+        aria-label={`Daily delivery from ${fmtDate(series[0].date)} to ${fmtDate(series[n - 1].date)}`}
       >
         <defs>
           <linearGradient id="an-area" x1="0" y1="0" x2="0" y2="1">
