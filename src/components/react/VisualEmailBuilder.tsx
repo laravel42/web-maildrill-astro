@@ -111,6 +111,8 @@ export default function VisualEmailBuilder({ name, initialDocument, onClose, onS
             htmlTab
             jsonTab={false}
             galleryImages
+            unsplashEnabled
+            unsplashBackendUrl={typeof window !== 'undefined' ? window.location.origin : ''}
             templateSaving
             componentsStorage="local"
             enableAI
