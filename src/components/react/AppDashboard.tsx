@@ -1,25 +1,43 @@
+import type { Campaign } from '@/types/app';
 import Icon from './Icon';
 import { CHANNEL } from './shared/channels';
 import { ago } from './shared/time';
 import {
   activity,
+  buildGetStarted,
+  buildKpis,
+  buildRecent,
+  buildSpark,
   channelPerf,
-  getStarted,
-  kpis,
-  recent,
-  sparkArea,
-  sparkLine,
+  isStepDone,
   statusLabel,
+  type ActivityPoint,
+  type Summary,
 } from './AppDashboard.logic';
 import styles from './AppDashboard.module.css';
 
-export default function AppDashboard() {
+export default function AppDashboard({
+  summary = null,
+  campaigns = [],
+  daily = [],
+  greeting = 'Hello',
+}: {
+  summary?: Summary | null;
+  campaigns?: Campaign[];
+  daily?: ActivityPoint[];
+  greeting?: string;
+} = {}) {
+  const kpis = buildKpis(summary);
+  const recent = buildRecent(campaigns);
+  const getStarted = buildGetStarted(summary);
+  const spark = buildSpark(daily);
+  const sentInWindow = daily.reduce((t, d) => t + d.sent, 0);
   return (
     <div className="screen" style={{ animation: 'fade .3s ease' }}>
       {/* greeting */}
       <div className={styles.greet}>
         <div>
-          <h1 className="screen__h1">Good evening 👋</h1>
+          <h1 className="screen__h1">{greeting} 👋</h1>
           <p className="screen__sub">Here's what's happening with your workspace today.</p>
         </div>
         <div className={styles.actions}>
@@ -144,8 +162,10 @@ export default function AppDashboard() {
           </div>
           <div className={styles.sparkBody}>
             <div className={styles.sparkStat}>
-              <div className={styles.sparkLbl}>Open rate</div>
-              <div className={`tnum ${styles.sparkVal}`}>—</div>
+              <div className={styles.sparkLbl}>Messages sent</div>
+              <div className={`tnum ${styles.sparkVal}`}>
+                {sentInWindow.toLocaleString('en-US')}
+              </div>
               <div className={`tnum ${styles.sparkDelta}`} />
             </div>
             <svg
@@ -162,9 +182,9 @@ export default function AppDashboard() {
                   <stop offset="1" stopColor="#4f46e5" stopOpacity="0" />
                 </linearGradient>
               </defs>
-              <polyline points={sparkArea} fill="url(#dashspk)" stroke="none" />
+              <polyline points={spark.area} fill="url(#dashspk)" stroke="none" />
               <polyline
-                points={sparkLine}
+                points={spark.line}
                 fill="none"
                 stroke="#4f46e5"
                 strokeWidth="2"
@@ -182,19 +202,21 @@ export default function AppDashboard() {
           {getStarted.map((g) => (
             <div key={g.label} className={styles.startItem} style={{ background: g.bg }}>
               <span className={styles.startDisc} style={{ borderColor: g.ring, background: g.fill }}>
-                <svg
-                  width="11"
-                  height="11"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#fff"
-                  strokeWidth="3.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M20 6 9 17l-5-5" />
-                </svg>
+                {isStepDone(g) && (
+                  <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="3.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                )}
               </span>
               <span className={styles.startLbl} style={{ color: g.text }}>
                 {g.label}
