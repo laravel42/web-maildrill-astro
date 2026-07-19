@@ -309,12 +309,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
     });
   };
 
-  const bulk = (verb: string) => {
-    const n = selected.size;
-    show(`${verb} ${n} template${n === 1 ? '' : 's'}`);
-    setSelected(new Set());
-  };
-
   /* Delete selected — persists to the service in live mode, else local-only. */
   const removeSelected = async () => {
     const ids = [...selected];
@@ -334,6 +328,61 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
         ? `Deleted ${okIds.size}, ${failed} failed`
         : `Deleted ${okIds.size} template${okIds.size === 1 ? '' : 's'}`,
     );
+    setSelected(new Set());
+  };
+
+  /* Copy templates. The full row is fetched first because the gallery shape
+     carries no html/text/builderDoc — copying from it would produce an empty
+     template that looks like the original. */
+  const duplicateTemplates = async (ids: string[]) => {
+    if (ids.length === 0) return;
+    if (!live) {
+      show(`Duplicated ${ids.length} template${ids.length === 1 ? '' : 's'}`);
+      setSelected(new Set());
+      return;
+    }
+    const results = await Promise.allSettled(
+      ids.map(async (id) => {
+        const full = await api.get<ApiTemplate>(`templates/${id}`);
+        return api.post<ApiTemplate>('templates', {
+          name: `${full.name} (copy)`,
+          channel: full.channel,
+          subject: full.subject ?? null,
+          preheader: full.preheader ?? null,
+          html: full.html ?? null,
+          text: full.text ?? null,
+          builderDoc: full.builderDoc ?? null,
+          category: full.category ?? null,
+        });
+      }),
+    );
+    const made = results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
+    setTemplates((prev) => [...made.map(toGalleryTemplate), ...prev]);
+    const failed = ids.length - made.length;
+    show(
+      failed
+        ? `Duplicated ${made.length}, ${failed} failed`
+        : `Duplicated ${made.length} template${made.length === 1 ? '' : 's'}`,
+    );
+    setSelected(new Set());
+  };
+
+  /* Favorite/unfavorite in bulk, persisted per template. */
+  const favoriteSelected = async () => {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    if (live) {
+      const results = await Promise.allSettled(
+        ids.map((id) => api.patch<ApiTemplate>(`templates/${id}`, { favorite: true })),
+      );
+      const okIds = ids.filter((_, i) => results[i].status === 'fulfilled');
+      setFavIds((prev) => new Set([...prev, ...okIds]));
+      const failed = ids.length - okIds.length;
+      show(failed ? `Favorited ${okIds.length}, ${failed} failed` : `Favorited ${okIds.length}`);
+    } else {
+      setFavIds((prev) => new Set([...prev, ...ids]));
+      show(`Favorited ${ids.length}`);
+    }
     setSelected(new Set());
   };
 
@@ -565,10 +614,10 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           <div className={styles.bulk} style={{ animation: 'fade .18s ease' }}>
             <span className={styles.bulkcount}>{selected.size} selected</span>
             <span className={styles.bulkdiv} />
-            <button type="button" className={styles.bulkbtn} onClick={() => bulk('Duplicated')}>
+            <button type="button" className={styles.bulkbtn} onClick={() => void duplicateTemplates([...selected])}>
               <Icon name="copy" size={13} /> Duplicate
             </button>
-            <button type="button" className={styles.bulkbtn} onClick={() => bulk('Favorited')}>
+            <button type="button" className={styles.bulkbtn} onClick={() => void favoriteSelected()}>
               <Icon name="star" size={13} /> Favorite
             </button>
             <button
@@ -894,9 +943,13 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           fav={isFav(openTpl.id)}
           onFav={() => toggleFav(openTpl.id, openTpl.name)}
           onClose={() => setOpenId(null)}
-          onToast={show}
           onUse={() => {
             if (openTpl) void openForEdit(openTpl);
+          }}
+          onClone={() => {
+            const id = openTpl.id;
+            setOpenId(null);
+            void duplicateTemplates([id]);
           }}
         />
       )}
@@ -994,15 +1047,15 @@ function TemplateDrawer({
   fav,
   onFav,
   onClose,
-  onToast,
   onUse,
+  onClone,
 }: {
   t: GalleryTemplate;
   fav: boolean;
   onFav: () => void;
   onClose: () => void;
-  onToast: (m: string) => void;
   onUse: () => void;
+  onClone: () => void;
 }) {
   const catColor = CATEGORY_COLOR[t.category as TplCategory] ?? 'var(--accent)';
   const details: [string, string][] = [
@@ -1090,7 +1143,7 @@ function TemplateDrawer({
             type="button"
             className="sbtn"
             style={{ flex: 1 }}
-            onClick={() => onToast(`Cloned “${t.name}”`)}
+            onClick={onClone}
           >
             <Icon name="copy" size={14} /> Clone
           </button>
