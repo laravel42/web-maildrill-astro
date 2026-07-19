@@ -9,6 +9,10 @@ export interface ApiSubscriber {
   name?: string | null;
   status: string;
   attributes?: Record<string, unknown> | null;
+  /** Real list memberships, joined server-side. */
+  lists?: { id: string; name: string }[] | null;
+  /** Real tag names from the tags relation. */
+  tagNames?: string[] | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
@@ -56,8 +60,16 @@ export function toRichSubscribers(rows: ApiSubscriber[]): RichSubscriber[] {
       email: r.email,
       name: r.name || r.email,
       status: mapStatus(r.status),
-      lists: [],
-      tags: Array.isArray(attrs.tags) ? (attrs.tags as string[]) : [],
+      lists: (r.lists ?? []).map((l) => l.name),
+      listIds: (r.lists ?? []).map((l) => l.id),
+      // Prefer the real tag relation; fall back to the legacy attributes.tags
+      // blob for subscribers written before tags were relational.
+      tags:
+        r.tagNames && r.tagNames.length > 0
+          ? r.tagNames
+          : Array.isArray(attrs.tags)
+            ? (attrs.tags as string[])
+            : [],
       updatedAt: r.updatedAt ?? r.createdAt ?? new Date().toISOString(),
       location: typeof attrs.location === 'string' ? attrs.location : '—',
       joined: fmtDate(r.createdAt),

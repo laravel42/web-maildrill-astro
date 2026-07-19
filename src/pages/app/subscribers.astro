@@ -4,7 +4,12 @@ import AppLayout from '@/layouts/AppLayout.astro';
 import AppSubscribers from '@/components/react/AppSubscribers';
 import { productClient } from '@/lib/server/service';
 import { toRichSubscribers, type ApiSubscriber } from '@/lib/app/subscriber-map';
-import type { RichSubscriber } from '@/lib/app/subscribers-data';
+import {
+  toSavedSegment,
+  type ApiSegment,
+  type RichSubscriber,
+  type SavedSegment,
+} from '@/lib/app/subscribers-data';
 
 // Load real subscribers for the signed-in workspace from maildrill-service and
 // hand them to the island. Falls back to local fixtures if the service is
@@ -12,7 +17,14 @@ import type { RichSubscriber } from '@/lib/app/subscribers-data';
 const session = Astro.locals.session;
 // undefined = not connected (island uses fixtures); an array = live data (even if empty).
 let initial: RichSubscriber[] | undefined = undefined;
+// Segments, lists and tags are workspace resources the segment builder and the
+// list-membership editor both need.
+let initialSegments: SavedSegment[] = [];
+let allLists: { id: string; name: string }[] = [];
+let allTagRows: { id: string; name: string }[] = [];
 let banner: { ok: boolean; text: string } | null = null;
+
+const unwrap = <T,>(d: unknown): T[] => (d as { data?: T[] } | undefined)?.data ?? [];
 
 if (session?.user?.id && session.activeTenantId) {
   try {
@@ -21,14 +33,25 @@ if (session?.user?.id && session.activeTenantId) {
       activeTenantId: session.activeTenantId,
       role: session.role,
     });
-    const { data, error } = await client.GET('/v1/subscribers', {
-      params: { query: { limit: 200 } },
-    });
-    if (error) {
+    const [subsRes, segsRes, listsRes, tagsRes] = await Promise.all([
+      client.GET('/v1/subscribers', { params: { query: { limit: 200 } } }),
+      client.GET('/v1/segments'),
+      client.GET('/v1/lists'),
+      client.GET('/v1/tags'),
+    ]);
+    if (subsRes.error) {
       banner = { ok: false, text: 'maildrill-service returned an error.' };
     } else {
-      const rows = (data as unknown as { data?: ApiSubscriber[] })?.data ?? [];
-      initial = toRichSubscribers(rows);
+      initial = toRichSubscribers(unwrap<ApiSubscriber>(subsRes.data));
+      initialSegments = unwrap<ApiSegment>(segsRes.data).map(toSavedSegment);
+      allLists = unwrap<{ id: string; name: string }>(listsRes.data).map((l) => ({
+        id: l.id,
+        name: l.name,
+      }));
+      allTagRows = unwrap<{ id: string; name: string }>(tagsRes.data).map((t) => ({
+        id: t.id,
+        name: t.name,
+      }));
       banner = { ok: true, text: `Live from maildrill-service — ${initial.length} subscriber(s).` };
     }
   } catch (err) {
@@ -39,7 +62,13 @@ if (session?.user?.id && session.activeTenantId) {
 
 <AppLayout title="Subscribers">
   {banner && <div class={`svc-banner ${banner.ok ? 'ok' : 'err'}`}>{banner.text}</div>}
-  <AppSubscribers client:visible initial={initial} />
+  <AppSubscribers
+    client:visible
+    initial={initial}
+    initialSegments={initialSegments}
+    allLists={allLists}
+    allTagRows={allTagRows}
+  />
 </AppLayout>
 
 <style>

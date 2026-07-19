@@ -19,9 +19,11 @@ type Props = {
   initialEmail?: string;
   initialName?: string;
   initialStatus?: SubscriberStatus;
+  /** Currently selected list id, when editing. */
   initialList?: string;
   initialTags?: string[];
-  lists?: string[];
+  /** Real workspace lists; the value saved is the list id. */
+  lists?: { id: string; name: string }[];
   onClose: () => void;
   onSave: (values: SubscriberEditorValues) => void;
 };
@@ -33,14 +35,14 @@ export default function SubscriberEditorModal({
   initialStatus = 'active',
   initialList,
   initialTags = [],
-  lists = ['Newsletter', 'VIP customers', 'Recent buyers'],
+  lists = [],
   onClose,
   onSave,
 }: Props) {
   const [email, setEmail] = useState(initialEmail);
   const [name, setName] = useState(initialName);
   const [status, setStatus] = useState<SubscriberStatus>(initialStatus);
-  const [list, setList] = useState(initialList ?? lists[0] ?? '');
+  const [list, setList] = useState(initialList ?? '');
   const [tags, setTags] = useState<string[]>(initialTags);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState('');
@@ -116,9 +118,10 @@ export default function SubscriberEditorModal({
                 value={list}
                 onChange={(e) => setList(e.target.value)}
               >
+                <option value="">No list</option>
                 {lists.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
+                  <option key={l.id} value={l.id}>
+                    {l.name}
                   </option>
                 ))}
               </select>

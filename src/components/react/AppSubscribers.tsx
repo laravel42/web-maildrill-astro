@@ -4,20 +4,24 @@ import type { IconName } from '@/lib/icons';
 import type { ChannelType, SubscriberStatus } from '@/types/app';
 import {
   richSubscribers as mockSubscribers,
-  BUILTIN_SEGMENTS,
-  SEG_FIELDS,
   SEG_FIELD_LIST,
+  SEG_OPS,
+  STATUS_VALUES,
+  opNeedsValue,
+  toApiRules,
+  toSavedSegment,
+  type ApiSegment,
   type RichSubscriber,
   type SavedSegment,
   type SegField,
+  type SegOp,
   type SegRule,
 } from '@/lib/app/subscribers-data';
-import { lists as allLists } from '@/lib/app/mock-data';
 import { api, ApiError } from '@/lib/app/api';
 import { toRichSubscriber, type ApiSubscriber } from '@/lib/app/subscriber-map';
 import SubscriberEditorModal from './SubscriberEditorModal';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
-import { ago, recHrs } from './shared/time';
+import { ago } from './shared/time';
 import { useToast } from './shared/useToast';
 import { useEscapeClose } from './shared/useEscapeClose';
 import {
@@ -37,7 +41,21 @@ const STATUS_CHIP: Record<SubscriberStatus, string> = {
   bounced: styles.chipStBounced,
 };
 
-export default function AppSubscribers({ initial }: { initial?: RichSubscriber[] } = {}) {
+export default function AppSubscribers({
+  initial,
+  initialSegments,
+  allLists = [],
+  allTagRows = [],
+}: {
+  initial?: RichSubscriber[];
+  /** Saved segments from the service — the workspace's, not this browser's. */
+  initialSegments?: SavedSegment[];
+  /** Real lists, used for segment rules and list membership. */
+  allLists?: { id: string; name: string }[];
+  /** Real workspace tags (id + name), for segment rules and tagging. */
+  allTagRows?: { id: string; name: string }[];
+} = {}) {
+  const allTags = allTagRows.map((t) => t.name);
   // Live data from the SSR page when provided (even if empty); otherwise fixtures.
   // `live` gates persistence: connected workspaces write through the BFF proxy;
   // the fixture demo stays local-only so the marketing preview still works.
@@ -59,7 +77,10 @@ export default function AppSubscribers({ initial }: { initial?: RichSubscriber[]
   const { toast, show: showToast } = useToast();
   const [tagStore, setTagStore] = useState<Record<string, string[]>>({});
 
-  const [segments, setSegments] = useState<SavedSegment[]>(BUILTIN_SEGMENTS);
+  const [segments, setSegments] = useState<SavedSegment[]>(initialSegments ?? []);
+  const [tagIndex, setTagIndex] = useState<{ id: string; name: string }[]>(allTagRows);
+  const [segCounts, setSegCounts] = useState<Record<string, number>>({});
+  const [segMembers, setSegMembers] = useState<Record<string, Set<string>>>({});
   const [segModal, setSegModal] = useState<{ open: boolean; edit: SavedSegment | null }>({
     open: false,
     edit: null,
@@ -68,85 +89,72 @@ export default function AppSubscribers({ initial }: { initial?: RichSubscriber[]
     { mode: 'create' } | { mode: 'edit'; sub: RichSubscriber } | null
   >(null);
 
-  const listNames = useMemo(() => allLists.map((l) => l.name), []);
-
-  /* Load persisted user segments after mount (keeps SSR/first render deterministic). */
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem('md_userSegs');
-      if (raw) {
-        const custom = JSON.parse(raw) as SavedSegment[];
-        if (Array.isArray(custom) && custom.length) {
-          setSegments([...BUILTIN_SEGMENTS, ...custom.map((c) => ({ ...c, custom: true }))]);
-        }
-      }
-    } catch {
-      /* ignore malformed storage */
-    }
-  }, []);
-
-  const persistSegs = (next: SavedSegment[]) => {
-    try {
-      window.localStorage.setItem('md_userSegs', JSON.stringify(next.filter((s) => s.custom)));
-    } catch {
-      /* ignore */
-    }
-  };
-
   const effTags = (s: RichSubscriber): string[] => tagStore[s.id] ?? s.tags;
-
-  /* Segment matcher over the current effective tags. */
-  const testRule = (s: RichSubscriber, rule: SegRule): boolean => {
-    const { field, op, val } = rule;
-    if (field === 'Status') {
-      const map: Record<string, SubscriberStatus> = {
-        Active: 'active',
-        Unsubscribed: 'unsubscribed',
-        Bounced: 'bounced',
-      };
-      const is = s.status === map[val];
-      return op === 'is' ? is : !is;
-    }
-    if (field === 'Tag') {
-      const has = effTags(s).some((t) => t.toLowerCase() === val.toLowerCase());
-      return op === 'is' ? has : !has;
-    }
-    if (field === 'List') {
-      const has = s.lists.includes(val);
-      return op === 'is' ? has : !has;
-    }
-    if (field === 'Last activity') {
-      const hrs: Record<string, number> = { '24 hours': 24, '48 hours': 48, '7 days': 168 };
-      const within = recHrs(s.updatedAt) <= (hrs[val] ?? 0);
-      return op === 'within' ? within : !within;
-    }
-    // Open rate
-    const n = parseInt(s.opens, 10);
-    if (Number.isNaN(n)) return false;
-    const thr = parseInt(val, 10);
-    return op === 'above' ? n >= thr : n < thr;
-  };
-  const evalSeg = (
-    seg: { rows: SegRule[]; matchType: 'all' | 'any' },
-    s: RichSubscriber,
-  ): boolean =>
-    seg.matchType === 'any'
-      ? seg.rows.some((r) => testRule(s, r))
-      : seg.rows.every((r) => testRule(s, r));
 
   const segById = useMemo(() => new Map(segments.map((s) => [s.id, s])), [segments]);
 
-  const segCount = (seg: SavedSegment): number =>
-    richSubscribers.filter((s) => evalSeg(seg, s)).length;
-  const countMatch = (rows: SegRule[], matchType: 'all' | 'any'): number =>
-    richSubscribers.filter((s) => evalSeg({ rows, matchType }, s)).length;
+  /* Segment sizes come from the service, which evaluates against every
+     subscriber. Counting in the browser would only ever see the loaded page. */
+  const refreshCounts = async (segs: SavedSegment[]) => {
+    if (!live || segs.length === 0) return;
+    const results = await Promise.allSettled(
+      segs.map((seg) =>
+        api
+          .post<{ count: number }>('segments/preview', {
+            matchType: seg.matchType,
+            rules: toApiRules(seg.rows),
+            limit: 1,
+          })
+          .then((r) => [seg.id, r.count] as const),
+      ),
+    );
+    setSegCounts((prev) => {
+      const next = { ...prev };
+      for (const r of results) if (r.status === 'fulfilled') next[r.value[0]] = r.value[1];
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    void refreshCounts(segments);
+  }, [segments, live]);
+
+  /* Membership for a selected segment is resolved by the service too, so
+     filtering isn't limited to the rows this page happens to hold. */
+  useEffect(() => {
+    if (!live) return;
+    const missing = [...segSel].filter((id) => !segMembers[id]);
+    if (missing.length === 0) return;
+    let cancelled = false;
+    void Promise.allSettled(
+      missing.map((id) =>
+        api
+          .get<{ data: { id: string }[] }>(`segments/${id}/subscribers?limit=1000`)
+          .then((r) => [id, new Set(r.data.map((x) => x.id))] as const),
+      ),
+    ).then((results) => {
+      if (cancelled) return;
+      setSegMembers((prev) => {
+        const next = { ...prev };
+        for (const r of results) if (r.status === 'fulfilled') next[r.value[0]] = r.value[1];
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [segSel, live, segMembers]);
+
+  const segCount = (seg: SavedSegment): number => segCounts[seg.id] ?? 0;
 
   /* Pipeline: segment → status → search+channel → tag filter → sort. */
   const segFiltered = useMemo(() => {
     if (segSel.size === 0) return richSubscribers;
-    const active = [...segSel].map((id) => segById.get(id)).filter(Boolean) as SavedSegment[];
-    return richSubscribers.filter((s) => active.some((seg) => evalSeg(seg, s)));
-  }, [segSel, segById, tagStore, richSubscribers]);
+    // Union of the service-resolved memberships for the selected segments.
+    const ids = new Set<string>();
+    for (const segId of segSel) for (const id of segMembers[segId] ?? []) ids.add(id);
+    return richSubscribers.filter((s) => ids.has(s.id));
+  }, [segSel, segMembers, richSubscribers]);
 
   const tabCounts = useMemo(() => {
     const c: Record<string, number> = { all: segFiltered.length };
@@ -306,6 +314,10 @@ export default function AppSubscribers({ initial }: { initial?: RichSubscriber[]
     else if (openId) setOpenId(null);
   });
 
+  /* Tags go through the real tag relation, not the attributes blob. Segment
+     rules match on that relation, so a tag written anywhere else would be
+     invisible to the very segments built from it. Unknown names are created as
+     workspace tags first. */
   const saveTags = async (id: string, tags: string[]) => {
     if (!live) {
       setTagStore((prev) => ({ ...prev, [id]: tags }));
@@ -313,10 +325,25 @@ export default function AppSubscribers({ initial }: { initial?: RichSubscriber[]
       return;
     }
     const sub = richSubscribers.find((s) => s.id === id);
+    const before = sub?.tags ?? [];
+    const added = tags.filter((t) => !before.includes(t));
+    const removed = before.filter((t) => !tags.includes(t));
     try {
-      await api.patch(`subscribers/${id}`, {
-        attributes: { tags, ...(sub && sub.location !== '—' ? { location: sub.location } : {}) },
-      });
+      const known = new Map(tagIndex.map((t) => [t.name.toLowerCase(), t.id]));
+      for (const name of added) {
+        let tagId = known.get(name.toLowerCase());
+        if (!tagId) {
+          const created = await api.post<{ id: string; name: string }>('tags', { name });
+          tagId = created.id;
+          known.set(name.toLowerCase(), tagId);
+          setTagIndex((prev) => [...prev, created]);
+        }
+        await api.post(`subscribers/${id}/tags/${tagId}`, {});
+      }
+      for (const name of removed) {
+        const tagId = known.get(name.toLowerCase());
+        if (tagId) await api.del(`subscribers/${id}/tags/${tagId}`);
+      }
       setRichSubscribers((prev) => prev.map((s) => (s.id === id ? { ...s, tags } : s)));
       showToast('Tags saved');
     } catch (e) {
@@ -324,32 +351,78 @@ export default function AppSubscribers({ initial }: { initial?: RichSubscriber[]
     }
   };
 
-  const saveSegment = (seg: SavedSegment) => {
-    setSegments((prev) => {
-      const exists = prev.some((s) => s.id === seg.id);
-      const next = exists ? prev.map((s) => (s.id === seg.id ? seg : s)) : [...prev, seg];
-      persistSegs(next);
-      return next;
-    });
-    setSegSel((prev) => new Set(prev).add(seg.id));
-    setSegModal({ open: false, edit: null });
-    resetPageAndSel();
-    showToast(`Segment “${seg.name}” ${segModal.edit ? 'updated' : 'created'}`);
+  /* Reconcile list membership against the service. The editor offers a single
+     list, so this adds the chosen one and removes the others it was on —
+     previously the selection was collected and silently discarded. */
+  const applyListMembership = async (
+    subscriberId: string,
+    currentListIds: string[],
+    nextListId: string,
+  ) => {
+    const toRemove = currentListIds.filter((id) => id !== nextListId);
+    await Promise.allSettled(
+      toRemove.map((id) => api.del(`lists/${id}/members/${subscriberId}`)),
+    );
+    if (nextListId && !currentListIds.includes(nextListId)) {
+      await api.post(`lists/${nextListId}/members`, { subscriberId });
+    }
   };
-  const deleteSegment = (id: string) => {
+
+  /* Segments are workspace resources: they persist to the service so teammates
+     see them, rather than living in this browser's localStorage. */
+  const saveSegment = async (seg: SavedSegment) => {
+    const body = {
+      name: seg.name,
+      matchType: seg.matchType,
+      rules: toApiRules(seg.rows),
+    };
+    if (!live) {
+      showToast('Not connected to maildrill-service');
+      return;
+    }
+    try {
+      const editing = segments.some((s) => s.id === seg.id);
+      const saved = editing
+        ? await api.patch<ApiSegment>(`segments/${seg.id}`, body)
+        : await api.post<ApiSegment>('segments', body);
+      const mapped = toSavedSegment(saved);
+      setSegments((prev) =>
+        editing ? prev.map((s) => (s.id === mapped.id ? mapped : s)) : [...prev, mapped],
+      );
+      // Drop any cached membership so the filter re-resolves against new rules.
+      setSegMembers((prev) => {
+        const next = { ...prev };
+        delete next[mapped.id];
+        return next;
+      });
+      setSegSel((prev) => new Set(prev).add(mapped.id));
+      setSegModal({ open: false, edit: null });
+      resetPageAndSel();
+      showToast(`Segment “${mapped.name}” ${editing ? 'updated' : 'created'}`);
+    } catch (e) {
+      showToast(e instanceof ApiError ? e.message : 'Could not save segment');
+    }
+  };
+
+  const deleteSegment = async (id: string) => {
     const name = segById.get(id)?.name ?? 'Segment';
-    setSegments((prev) => {
-      const next = prev.filter((s) => s.id !== id);
-      persistSegs(next);
-      return next;
-    });
-    setSegSel((prev) => {
-      const n = new Set(prev);
-      n.delete(id);
-      return n;
-    });
-    setSegModal({ open: false, edit: null });
-    showToast(`Segment “${name}” deleted`);
+    if (!live) {
+      showToast('Not connected to maildrill-service');
+      return;
+    }
+    try {
+      await api.del(`segments/${id}`);
+      setSegments((prev) => prev.filter((s) => s.id !== id));
+      setSegSel((prev) => {
+        const n = new Set(prev);
+        n.delete(id);
+        return n;
+      });
+      setSegModal({ open: false, edit: null });
+      showToast(`Segment “${name}” deleted`);
+    } catch (e) {
+      showToast(e instanceof ApiError ? e.message : 'Could not delete segment');
+    }
   };
 
   const openSub = openId ? (richSubscribers.find((s) => s.id === openId) ?? null) : null;
@@ -916,9 +989,9 @@ export default function AppSubscribers({ initial }: { initial?: RichSubscriber[]
           initialEmail={subEditor.mode === 'edit' ? subEditor.sub.email : ''}
           initialName={subEditor.mode === 'edit' ? subEditor.sub.name : ''}
           initialStatus={subEditor.mode === 'edit' ? subEditor.sub.status : 'active'}
-          initialList={subEditor.mode === 'edit' ? subEditor.sub.lists[0] : undefined}
+          initialList={subEditor.mode === 'edit' ? subEditor.sub.listIds[0] : undefined}
           initialTags={subEditor.mode === 'edit' ? effTags(subEditor.sub) : []}
-          lists={listNames}
+          lists={allLists}
           onClose={() => setSubEditor(null)}
           onSave={async (values) => {
             const editor = subEditor;
@@ -940,7 +1013,10 @@ export default function AppSubscribers({ initial }: { initial?: RichSubscriber[]
                   status: values.status,
                   attributes: { tags: values.tags },
                 });
-                setRichSubscribers((prev) => [toRichSubscriber(created), ...prev]);
+                // The chosen list was previously collected and dropped.
+                await applyListMembership(created.id, [], values.list ?? '');
+                const withList = await api.get<ApiSubscriber>(`subscribers/${created.id}`);
+                setRichSubscribers((prev) => [toRichSubscriber(withList), ...prev]);
                 showToast(`${values.email} added`);
               } else {
                 const updated = await api.patch<ApiSubscriber>(`subscribers/${editor.sub.id}`, {
@@ -951,9 +1027,16 @@ export default function AppSubscribers({ initial }: { initial?: RichSubscriber[]
                     ...(editor.sub.location !== '—' ? { location: editor.sub.location } : {}),
                   },
                 });
-                setRichSubscribers((prev) =>
-                  prev.map((s) => (s.id === editor.sub.id ? toRichSubscriber(updated) : s)),
+                await applyListMembership(
+                  editor.sub.id,
+                  editor.sub.listIds,
+                  values.list ?? '',
                 );
+                const fresh = await api.get<ApiSubscriber>(`subscribers/${editor.sub.id}`);
+                setRichSubscribers((prev) =>
+                  prev.map((s) => (s.id === editor.sub.id ? toRichSubscriber(fresh) : s)),
+                );
+                void updated;
                 showToast(`${values.name || values.email} updated`);
               }
               setSubEditor(null);
@@ -971,7 +1054,9 @@ export default function AppSubscribers({ initial }: { initial?: RichSubscriber[]
           onClose={() => setSegModal({ open: false, edit: null })}
           onSave={saveSegment}
           onDelete={deleteSegment}
-          countMatch={countMatch}
+          lists={allLists}
+          tags={allTags}
+          live={live}
         />
       )}
 
@@ -1329,38 +1414,78 @@ function SegmentModal({
   onClose,
   onSave,
   onDelete,
-  countMatch,
+  lists,
+  tags,
+  live,
 }: {
   edit: SavedSegment | null;
   onClose: () => void;
   onSave: (seg: SavedSegment) => void;
   onDelete: (id: string) => void;
-  countMatch: (rows: SegRule[], matchType: 'all' | 'any') => number;
+  lists: { id: string; name: string }[];
+  tags: string[];
+  live: boolean;
 }) {
   const [name, setName] = useState(edit?.name ?? '');
   const [matchType, setMatchType] = useState<'all' | 'any'>(edit?.matchType ?? 'all');
   const [rows, setRows] = useState<SegRule[]>(
-    edit?.rows ?? [{ field: 'Status', op: 'is', val: 'Active' }],
+    edit?.rows ?? [{ field: 'Status', op: 'eq', val: 'active' }],
   );
+  const [count, setCount] = useState<number | null>(null);
+
+  /** Values offered for a field — real lists and tags, not a fixed vocabulary. */
+  const valuesFor = (field: SegField): { value: string; label: string }[] => {
+    if (field === 'Status') return STATUS_VALUES.map((v) => ({ value: v, label: v }));
+    if (field === 'List') return lists.map((l) => ({ value: l.id, label: l.name }));
+    if (field === 'Tag') return tags.map((t) => ({ value: t, label: t }));
+    return [];
+  };
 
   const setField = (i: number, field: SegField) => {
-    const spec = SEG_FIELDS[field];
+    const op = SEG_OPS[field][0]!.op;
+    const vals = valuesFor(field);
     setRows((r) =>
-      r.map((row, idx) => (idx === i ? { field, op: spec.ops[0], val: spec.vals[0] } : row)),
+      r.map((row, idx) => (idx === i ? { field, op, val: vals[0]?.value ?? '' } : row)),
     );
   };
-  const setOp = (i: number, op: string) =>
+  const setOp = (i: number, op: SegOp) =>
     setRows((r) => r.map((row, idx) => (idx === i ? { ...row, op } : row)));
   const setVal = (i: number, val: string) =>
     setRows((r) => r.map((row, idx) => (idx === i ? { ...row, val } : row)));
-  const addRow = () => setRows((r) => [...r, { field: 'Tag', op: 'is', val: 'VIP' }]);
+  const addRow = () =>
+    setRows((r) => [...r, { field: 'Tag', op: 'eq', val: tags[0] ?? '' } as SegRule]);
   const removeRow = (i: number) => setRows((r) => r.filter((_, idx) => idx !== i));
 
-  const count = countMatch(rows, matchType);
+  /* The match count is evaluated by the service against every subscriber.
+     Debounced so typing a value doesn't fire a request per keystroke. */
+  useEffect(() => {
+    if (!live) return;
+    let cancelled = false;
+    const t = window.setTimeout(() => {
+      api
+        .post<{ count: number }>('segments/preview', {
+          matchType,
+          rules: toApiRules(rows),
+          limit: 1,
+        })
+        .then((r) => {
+          if (!cancelled) setCount(r.count);
+        })
+        .catch(() => {
+          if (!cancelled) setCount(null);
+        });
+    }, 300);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [rows, matchType, live]);
 
   const submit = () => {
     onSave({
-      id: edit?.id ?? `u${Date.now()}`,
+      // The service mints ids; this placeholder is only used to decide
+      // create-vs-update and is replaced by the saved row.
+      id: edit?.id ?? 'new',
       name: name.trim() || 'Untitled segment',
       matchType,
       rows,
@@ -1422,7 +1547,8 @@ function SegmentModal({
 
           <div className={styles.segmRows}>
             {rows.map((row, i) => {
-              const spec = SEG_FIELDS[row.field];
+              const opts = valuesFor(row.field);
+              const freeText = row.field === 'Email' || row.field === 'Name';
               return (
                 <div key={i} className={styles.segmRow}>
                   <select
@@ -1440,27 +1566,43 @@ function SegmentModal({
                   <select
                     className={styles.segmSel}
                     value={row.op}
-                    onChange={(e) => setOp(i, e.target.value)}
+                    onChange={(e) => setOp(i, e.target.value as SegOp)}
                     aria-label="Operator"
                   >
-                    {spec.ops.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
+                    {SEG_OPS[row.field].map((o) => (
+                      <option key={o.op} value={o.op}>
+                        {o.label}
                       </option>
                     ))}
                   </select>
-                  <select
-                    className={styles.segmSel}
-                    value={row.val}
-                    onChange={(e) => setVal(i, e.target.value)}
-                    aria-label="Value"
-                  >
-                    {spec.vals.map((v) => (
-                      <option key={v} value={v}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
+                  {/* exists / not_exists take no value, so no control is shown. */}
+                  {!opNeedsValue(row.op) ? (
+                    <span className={styles.segmSel} style={{ opacity: 0.55 }}>
+                      —
+                    </span>
+                  ) : freeText ? (
+                    <input
+                      className={styles.segmSel}
+                      value={row.val}
+                      onChange={(e) => setVal(i, e.target.value)}
+                      placeholder={row.field === 'Email' ? 'example.com' : 'Ada'}
+                      aria-label="Value"
+                    />
+                  ) : (
+                    <select
+                      className={styles.segmSel}
+                      value={row.val}
+                      onChange={(e) => setVal(i, e.target.value)}
+                      aria-label="Value"
+                    >
+                      {opts.length === 0 && <option value="">(none yet)</option>}
+                      {opts.map((v) => (
+                        <option key={v.value} value={v.value}>
+                          {v.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <button
                     type="button"
                     className={styles.segmRm}
@@ -1483,7 +1625,9 @@ function SegmentModal({
           <div className={styles.segmSummary}>
             <Icon name="filter" size={15} />
             <span className="tnum">
-              ≈ {count.toLocaleString('en-US')} subscriber{count === 1 ? '' : 's'} match
+              {count == null
+                ? 'Counting…'
+                : `${count.toLocaleString('en-US')} subscriber${count === 1 ? '' : 's'} match`}
             </span>
           </div>
         </div>
