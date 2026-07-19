@@ -1,6 +1,11 @@
 import type { ChannelType } from '@/types/app';
 import { channelLabel } from './shared/channels';
-import type { Audience, AudienceOption, Schedule, Template } from './CampaignWizard.types';
+import type {
+  AudienceChoice,
+  Schedule,
+  Template,
+  TemplateChoice,
+} from './CampaignWizard.types';
 
 export const SENDER: Record<ChannelType, { label: string; value: string }> = {
   email: { label: 'Sender', value: 'Maildrill Team <hello@maildrill.app>' },
@@ -16,17 +21,38 @@ export const CONTENT_SUB: Record<ChannelType, string> = {
   voice: 'Write your voice script',
 };
 
-export const AUDIENCES: AudienceOption[] = [
-  { key: 'newsletter', name: 'Newsletter', desc: 'All active newsletter subscribers', count: '856' },
-  { key: 'vip', name: 'VIP customers', desc: 'Segment · engaged in last 30 days', count: '142' },
-  { key: 'all', name: 'All subscribers', desc: 'Everyone across every list', count: '1,193' },
+/** "Newsletter (856)" — the audience as shown in the review step and toasts. */
+export function audienceLabelOf(a: AudienceChoice | null): string {
+  if (!a) return 'No audience selected';
+  return a.count == null ? a.name : `${a.name} (${a.count.toLocaleString()})`;
+}
+
+/* Card gradients for real templates, which carry no styling of their own.
+   Indexing by position keeps a given list of templates visually stable. */
+const TEMPLATE_THUMBS = [
+  'linear-gradient(150deg,#4f46e5,#6d28d9)',
+  'linear-gradient(150deg,#34d399,#059669)',
+  'linear-gradient(150deg,#06b6d4,#0891b2)',
+  'linear-gradient(150deg,#f59e0b,#d97706)',
+  'linear-gradient(150deg,#ec4899,#be185d)',
 ];
 
-export const AUD_NAME: Record<Audience, string> = {
-  newsletter: 'Newsletter (856)',
-  vip: 'VIP customers (142)',
-  all: 'All subscribers (1,193)',
-};
+/**
+ * Present a saved template as a wizard card. Real templates only have a name and
+ * category, so the decorative fields the preview needs are derived rather than
+ * stored — the selection is what matters, not the thumbnail.
+ */
+export function templateCard(t: TemplateChoice, index: number): Template {
+  return {
+    id: t.id,
+    name: t.name,
+    thumb: TEMPLATE_THUMBS[index % TEMPLATE_THUMBS.length]!,
+    fg: '#fff',
+    title: t.name.toUpperCase(),
+    kicker: t.category ?? '',
+    cat: t.category ?? 'Uncategorized',
+  };
+}
 
 export const TEMPLATES: Record<ChannelType, Template[]> = {
   email: [

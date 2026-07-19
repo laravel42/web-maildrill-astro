@@ -5,12 +5,22 @@ import CampaignsBoard from '@/components/react/CampaignsBoard';
 import { productClient } from '@/lib/server/service';
 import { toCampaigns, type ApiCampaign } from '@/lib/app/campaign-map';
 import type { Campaign } from '@/types/app';
+import type {
+  AudienceChoice,
+  TemplateChoice,
+} from '@/components/react/CampaignWizard.types';
 
 // Load real campaigns for the signed-in workspace; undefined = not connected
 // (island falls back to fixtures), an array = live data (even if empty).
 const session = Astro.locals.session;
 let initial: Campaign[] | undefined = undefined;
+// Lists/segments/templates feed the wizard, so a campaign targets real
+// recipients and real content instead of placeholder choices.
+let audiences: AudienceChoice[] | undefined = undefined;
+let templates: TemplateChoice[] | undefined = undefined;
 let banner: { ok: boolean; text: string } | null = null;
+
+const unwrap = <T,>(d: unknown): T[] => (d as { data?: T[] } | undefined)?.data ?? [];
 
 if (session?.user?.id && session.activeTenantId) {
   try {
@@ -19,14 +29,52 @@ if (session?.user?.id && session.activeTenantId) {
       activeTenantId: session.activeTenantId,
       role: session.role,
     });
-    const { data, error } = await client.GET('/v1/campaigns');
-    if (error) {
+    const [campaignsRes, listsRes, segmentsRes, templatesRes] = await Promise.all([
+      client.GET('/v1/campaigns'),
+      client.GET('/v1/lists'),
+      client.GET('/v1/segments'),
+      client.GET('/v1/templates'),
+    ]);
+
+    if (campaignsRes.error) {
       banner = { ok: false, text: 'maildrill-service returned an error.' };
     } else {
-      const rows = (data as unknown as { data?: ApiCampaign[] })?.data ?? [];
-      initial = toCampaigns(rows);
+      initial = toCampaigns(unwrap<ApiCampaign>(campaignsRes.data));
       banner = { ok: true, text: `Live from maildrill-service — ${initial.length} campaign(s).` };
     }
+
+    // A failed lookup leaves the wizard with an empty picker and its own
+    // explanatory empty state — it must not take the whole page down.
+    audiences = [
+      ...unwrap<{ id: string; name: string; memberCount?: number | null }>(listsRes.data).map(
+        (l): AudienceChoice => ({
+          id: l.id,
+          kind: 'list',
+          name: l.name,
+          desc: 'List',
+          count: l.memberCount ?? null,
+        }),
+      ),
+      ...unwrap<{ id: string; name: string; description?: string | null }>(
+        segmentsRes.data,
+      ).map(
+        (s): AudienceChoice => ({
+          id: s.id,
+          kind: 'segment',
+          name: s.name,
+          desc: s.description || 'Segment',
+          count: null,
+        }),
+      ),
+    ];
+    templates = unwrap<{ id: string; name: string; channel?: string | null; category?: string | null }>(
+      templatesRes.data,
+    ).map((t): TemplateChoice => ({
+      id: t.id,
+      name: t.name,
+      category: t.category ?? null,
+      channel: (t.channel as TemplateChoice['channel']) ?? 'email',
+    }));
   } catch (err) {
     banner = { ok: false, text: err instanceof Error ? err.message : 'Service unreachable.' };
   }
@@ -35,7 +83,7 @@ if (session?.user?.id && session.activeTenantId) {
 
 <AppLayout title="Campaigns">
   {banner && <div class={`svc-banner ${banner.ok ? 'ok' : 'err'}`}>{banner.text}</div>}
-  <CampaignsBoard client:visible initial={initial} />
+  <CampaignsBoard client:visible initial={initial} audiences={audiences} templates={templates} />
 </AppLayout>
 
 <style>

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { campaigns as mockCampaigns } from '@/lib/app/mock-data';
 import { api, ApiError } from '@/lib/app/api';
 import { toCampaign, type ApiCampaign } from '@/lib/app/campaign-map';
-import type { CampaignDraft } from './CampaignWizard.types';
+import type { AudienceChoice, CampaignDraft, TemplateChoice } from './CampaignWizard.types';
 import type { Campaign, CampaignStatus, ChannelType } from '@/types/app';
 import Icon from './Icon';
 import CampaignWizard from './CampaignWizard';
@@ -25,7 +25,15 @@ function ChannelPill({ channel }: { channel: ChannelType }) {
   );
 }
 
-export default function CampaignsBoard({ initial }: { initial?: Campaign[] } = {}) {
+export default function CampaignsBoard({
+  initial,
+  audiences,
+  templates,
+}: {
+  initial?: Campaign[];
+  audiences?: AudienceChoice[];
+  templates?: TemplateChoice[];
+} = {}) {
   // Live workspace campaigns from SSR when provided; else the fixture preview.
   const live = initial !== undefined;
   const [campaigns, setCampaigns] = useState<Campaign[]>(initial ?? mockCampaigns);
@@ -94,24 +102,61 @@ export default function CampaignsBoard({ initial }: { initial?: Campaign[] } = {
     setSelected(new Set());
   };
 
-  /* Create the campaign record from the wizard. Note this persists a draft —
-     it does not dispatch messages; sending goes through /v1/campaigns/send. */
+  /* Persist the wizard's campaign, then dispatch it when the user chose "Send
+     now". The draft is saved first either way, so a send that fails leaves a
+     recoverable campaign behind rather than losing the user's work. */
   const createFromWizard = async (draft: CampaignDraft) => {
     const name = draft.name.trim() || 'Untitled campaign';
     if (!live) {
       show(`“${name}” created`);
       return;
     }
+
+    let created: ApiCampaign;
     try {
-      const created = await api.post<ApiCampaign>('campaigns', {
+      created = await api.post<ApiCampaign>('campaigns', {
         name,
         channel: draft.channel,
         status: draft.schedule === 'later' ? 'scheduled' : 'draft',
+        listId: draft.listId ?? null,
+        segmentId: draft.segmentId ?? null,
+        templateId: draft.templateId ?? null,
+        content: draft.content ?? {},
       });
-      setCampaigns((prev) => [toCampaign(created), ...prev]);
-      show(`“${created.name}” created`);
     } catch (e) {
       show(e instanceof ApiError ? e.message : 'Could not create campaign');
+      return;
+    }
+    setCampaigns((prev) => [toCampaign(created), ...prev]);
+
+    if (draft.schedule !== 'now') {
+      show(`“${created.name}” created`);
+      return;
+    }
+    await sendCampaign(created.id, created.name);
+  };
+
+  /* Dispatch a saved campaign. The service resolves the audience, so the queued
+     count it returns — not the wizard's estimate — is what gets reported. */
+  const sendCampaign = async (id: string, name: string) => {
+    try {
+      const res = await api.post<{ queued: number; audience: number; truncated: boolean }>(
+        `campaigns/${id}/send`,
+        { sendNow: true },
+      );
+      // Reflect the send without a refetch; counters come from the server.
+      setCampaigns((prev) =>
+        prev.map((c) =>
+          c.id === id ? { ...c, status: 'sent', recipients: res.queued } : c,
+        ),
+      );
+      show(
+        res.queued === 0
+          ? `“${name}” reached nobody — its audience is empty`
+          : `“${name}” sending to ${res.queued.toLocaleString()} recipient${res.queued === 1 ? '' : 's'}`,
+      );
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : `Could not send “${name}”`);
     }
   };
 
@@ -396,6 +441,8 @@ export default function CampaignsBoard({ initial }: { initial?: Campaign[] } = {
           mode={wizard.mode}
           initialChannel={wizard.mode === 'edit' ? wizard.channel : 'email'}
           initialName={wizard.mode === 'edit' ? wizard.name : ''}
+          audiences={audiences}
+          templates={templates}
           onClose={() => setWizard(null)}
           onDone={(msg, draft) => {
             const mode = wizard.mode;

@@ -5,15 +5,15 @@ import { CHANNEL, CHANNEL_ORDER, channelLabel } from './shared/channels';
 import { formatDuration, smsSegments, voiceSeconds } from './shared/messaging';
 import { useEscapeClose } from './shared/useEscapeClose';
 import {
-  AUD_NAME,
-  AUDIENCES,
+  audienceLabelOf,
   buildReviewRows,
   buildStepDefs,
   CONTENT_SUB,
   SENDER,
+  templateCard,
   TEMPLATES,
 } from './CampaignWizard.logic';
-import type { Audience, Props, Schedule, Step, Template } from './CampaignWizard.types';
+import type { Props, Schedule, Step, Template } from './CampaignWizard.types';
 import styles from './CampaignWizard.module.css';
 
 export type { Props };
@@ -124,6 +124,8 @@ export default function CampaignWizard({
   mode,
   initialChannel = 'email',
   initialName = '',
+  audiences,
+  templates: templateChoices,
   onClose,
   onDone,
   onOpenBuilder,
@@ -131,7 +133,7 @@ export default function CampaignWizard({
   const [step, setStep] = useState<Step>(1);
   const [channel, setChannel] = useState<ChannelType>(initialChannel);
   const [name, setName] = useState<string>(initialName);
-  const [audience, setAudience] = useState<Audience>('newsletter');
+  const [audienceId, setAudienceId] = useState<string | null>(null);
   const [message, setMessage] = useState<string>('');
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [schedule, setSchedule] = useState<Schedule>('now');
@@ -141,9 +143,20 @@ export default function CampaignWizard({
   useEscapeClose(onClose);
 
   const isEmail = channel === 'email';
-  const templates = TEMPLATES[channel];
+
+  /* Live workspace data when the caller supplied it, else the preview fixtures —
+     the same fallback the campaigns board uses when it has no session. */
+  const live = audiences !== undefined || templateChoices !== undefined;
+  const audienceList = audiences ?? [];
+  const selectedAudience = audienceList.find((a) => a.id === audienceId) ?? null;
+  const audienceLabel = live
+    ? audienceLabelOf(selectedAudience)
+    : 'Preview audience';
+
+  const templates: Template[] = live
+    ? (templateChoices ?? []).filter((t) => t.channel === channel).map(templateCard)
+    : TEMPLATES[channel];
   const selTpl = templates.find((t) => t.name === selectedTemplate) ?? null;
-  const audienceLabel = AUD_NAME[audience];
 
   // Non-email content metrics.
   const messageLen = message.length;
@@ -179,19 +192,45 @@ export default function CampaignWizard({
         ? 'Continue to review →'
         : 'Continue →';
 
+  /* The caller reports the outcome of an actual send, so this only covers the
+     cases where nothing is dispatched. */
   const doneMsg =
     mode === 'edit'
       ? `Campaign "${name || 'Untitled'}" updated`
-      : schedule === 'now'
-        ? `Campaign sent to ${audienceLabel}`
-        : 'Campaign scheduled';
+      : 'Campaign scheduled';
+
+  /* Email sends a saved template; the other channels send the typed message. */
+  const draftContent = isEmail ? undefined : message.trim() ? { text: message } : undefined;
+
+  /* Why this campaign cannot be sent yet, or null when it can. Checked up front
+     so the wizard explains the problem instead of the send failing afterwards. */
+  const blockedReason =
+    !live || mode === 'edit'
+      ? null
+      : !selectedAudience
+        ? 'Pick an audience before sending.'
+        : !selTpl?.id && !draftContent
+          ? isEmail
+            ? 'Choose a template — an email campaign needs content to send.'
+            : 'Write a message before sending.'
+          : null;
 
   const handlePrimary = () => {
     if (step < 5) {
       setStep((s) => (s + 1) as Step);
       return;
     }
-    onDone(doneMsg, { name, channel, audience, schedule });
+    if (blockedReason) return;
+    onDone(doneMsg, {
+      name,
+      channel,
+      listId: selectedAudience?.kind === 'list' ? selectedAudience.id : undefined,
+      segmentId: selectedAudience?.kind === 'segment' ? selectedAudience.id : undefined,
+      templateId: selTpl?.id,
+      content: draftContent,
+      audienceLabel,
+      schedule,
+    });
   };
 
   const handleBack = () => setStep((s) => (s > 1 ? ((s - 1) as Step) : s));
@@ -456,24 +495,39 @@ export default function CampaignWizard({
             {step === 2 && (
               <>
                 <h3 style={h3Style}>Choose your audience</h3>
-                <p style={pStyle}>Pick the lists or segments to send to.</p>
-                {AUDIENCES.map((a) => (
-                  <RadioCard
-                    key={a.key}
-                    selected={audience === a.key}
-                    onSelect={() => setAudience(a.key)}
-                    title={a.name}
-                    sub={a.desc}
-                    right={
-                      <span
-                        className="tnum"
-                        style={{ fontSize: 13, fontWeight: 600, color: 'var(--text3)' }}
-                      >
-                        {a.count}
-                      </span>
-                    }
-                  />
-                ))}
+                <p style={pStyle}>Pick the list or segment to send to.</p>
+                {audienceList.length === 0 ? (
+                  <p
+                    style={{
+                      ...pStyle,
+                      padding: '14px 16px',
+                      border: '1px dashed var(--border2)',
+                      borderRadius: 12,
+                      margin: 0,
+                    }}
+                  >
+                    No lists or segments yet. Create one under Audience first — a campaign
+                    with no list or segment reaches nobody.
+                  </p>
+                ) : (
+                  audienceList.map((a) => (
+                    <RadioCard
+                      key={a.id}
+                      selected={audienceId === a.id}
+                      onSelect={() => setAudienceId(a.id)}
+                      title={a.name}
+                      sub={a.desc}
+                      right={
+                        <span
+                          className="tnum"
+                          style={{ fontSize: 13, fontWeight: 600, color: 'var(--text3)' }}
+                        >
+                          {a.count == null ? '—' : a.count.toLocaleString()}
+                        </span>
+                      }
+                    />
+                  ))
+                )}
               </>
             )}
 
@@ -484,6 +538,20 @@ export default function CampaignWizard({
                   Start from a template or build from scratch.
                 </p>
                 <label style={{ ...labelStyle, marginBottom: 8 }}>{channelLabel(channel)} templates</label>
+                {templates.length === 0 && (
+                  <p
+                    style={{
+                      ...pStyle,
+                      padding: '14px 16px',
+                      border: '1px dashed var(--border2)',
+                      borderRadius: 12,
+                      margin: '0 0 16px',
+                    }}
+                  >
+                    No saved {channelLabel(channel)} templates yet. Create one under Templates,
+                    or write the message below.
+                  </p>
+                )}
                 <div
                   style={{
                     display: 'grid',
@@ -1167,10 +1235,19 @@ export default function CampaignWizard({
           >
             ← Back
           </button>
+          {/* On the final step an incomplete campaign explains itself rather
+              than failing on the server after the user commits. */}
+          {step === 5 && blockedReason && (
+            <span style={{ fontSize: 12.5, color: 'var(--text3)', marginRight: 'auto', paddingLeft: 12 }}>
+              {blockedReason}
+            </span>
+          )}
           <button
             type="button"
             onClick={handlePrimary}
             className="pbtn"
+            disabled={step === 5 && blockedReason !== null}
+            title={step === 5 && blockedReason ? blockedReason : undefined}
             style={{
               background: INDIGO,
               color: '#fff',
@@ -1179,7 +1256,8 @@ export default function CampaignWizard({
               borderRadius: 10,
               fontWeight: 600,
               fontSize: 13,
-              cursor: 'pointer',
+              cursor: step === 5 && blockedReason ? 'not-allowed' : 'pointer',
+              opacity: step === 5 && blockedReason ? 0.5 : 1,
               boxShadow: '0 1px 2px rgba(79,70,229,.35), inset 0 1px 0 rgba(255,255,255,.16)',
             }}
           >
