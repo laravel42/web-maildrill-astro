@@ -3,6 +3,8 @@ import { campaigns as allCampaigns } from '@/lib/app/mock-data';
 import type { Campaign, CampaignStatus, ChannelType } from '@/types/app';
 import Icon from './Icon';
 import type { IconName } from '@/lib/icons';
+import CampaignWizard from './CampaignWizard';
+import EmailBuilder from './EmailBuilder';
 
 const NOW = new Date('2026-07-17T18:00:00Z').getTime();
 function ago(iso: string): string {
@@ -68,6 +70,12 @@ export default function CampaignsBoard() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [openId, setOpenId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [wizard, setWizard] = useState<
+    { mode: 'create' } | { mode: 'edit'; channel: ChannelType; name: string } | null
+  >(null);
+  const [builder, setBuilder] = useState<{ channel: ChannelType; name: string | null } | null>(
+    null,
+  );
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: allCampaigns.length };
@@ -144,11 +152,7 @@ export default function CampaignsBoard() {
           <h1 className="screen__h1">Campaigns</h1>
           <p className="screen__sub">Create, schedule, and measure every send in one place.</p>
         </div>
-        <button
-          type="button"
-          className="pbtn"
-          onClick={() => showToast('Opening campaign wizard…')}
-        >
+        <button type="button" className="pbtn" onClick={() => setWizard({ mode: 'create' })}>
           <Icon name="plus" size={15} stroke={2.2} />
           Create campaign
         </button>
@@ -370,7 +374,46 @@ export default function CampaignsBoard() {
 
       {/* detail drawer */}
       {open && (
-        <CampaignDrawer campaign={open} onClose={() => setOpenId(null)} onToast={showToast} />
+        <CampaignDrawer
+          campaign={open}
+          onClose={() => setOpenId(null)}
+          onToast={showToast}
+          onEdit={() => {
+            const c = open;
+            setOpenId(null);
+            setWizard({ mode: 'edit', channel: c.channel, name: c.name });
+          }}
+        />
+      )}
+
+      {wizard && (
+        <CampaignWizard
+          mode={wizard.mode}
+          initialChannel={wizard.mode === 'edit' ? wizard.channel : 'email'}
+          initialName={wizard.mode === 'edit' ? wizard.name : ''}
+          onClose={() => setWizard(null)}
+          onDone={(msg) => {
+            setWizard(null);
+            showToast(msg);
+          }}
+          onOpenBuilder={(channel, name) => {
+            setWizard(null);
+            setBuilder({ channel, name });
+          }}
+        />
+      )}
+
+      {builder && (
+        <EmailBuilder
+          channel={builder.channel}
+          name={builder.name}
+          kind="campaign"
+          onClose={() => setBuilder(null)}
+          onSave={({ name }) => {
+            setBuilder(null);
+            showToast(name && name !== 'Untitled' ? `“${name}” saved` : 'Draft saved');
+          }}
+        />
       )}
 
       {toast && (
@@ -436,10 +479,12 @@ function CampaignDrawer({
   campaign,
   onClose,
   onToast,
+  onEdit,
 }: {
   campaign: Campaign;
   onClose: () => void;
   onToast: (m: string) => void;
+  onEdit: () => void;
 }) {
   const m = CHANNEL[campaign.channel];
   const isSent = campaign.status === 'sent';
@@ -589,7 +634,7 @@ function CampaignDrawer({
             type="button"
             className="pbtn"
             style={{ flex: 1 }}
-            onClick={() => onToast(isSent ? 'Opening report…' : 'Opening editor…')}
+            onClick={() => (isSent ? onToast('Opening report…') : onEdit())}
           >
             {isSent ? 'View report' : 'Edit'}
           </button>

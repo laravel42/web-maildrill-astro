@@ -12,6 +12,8 @@ import {
   type SegField,
   type SegRule,
 } from '@/lib/app/subscribers-data';
+import { lists as allLists } from '@/lib/app/mock-data';
+import SubscriberEditorModal from './SubscriberEditorModal';
 
 /* Fixed reference "now" — deterministic across SSR + hydration (no Date.now()). */
 const NOW = new Date('2026-07-17T18:00:00Z').getTime();
@@ -125,6 +127,11 @@ export default function AppSubscribers() {
     open: false,
     edit: null,
   });
+  const [subEditor, setSubEditor] = useState<
+    { mode: 'create' } | { mode: 'edit'; sub: RichSubscriber } | null
+  >(null);
+
+  const listNames = useMemo(() => allLists.map((l) => l.name), []);
 
   /* Load persisted user segments after mount (keeps SSR/first render deterministic). */
   useEffect(() => {
@@ -411,7 +418,7 @@ export default function AppSubscribers() {
           <button
             type="button"
             className="pbtn"
-            onClick={() => showToast('Opening add-subscriber…')}
+            onClick={() => setSubEditor({ mode: 'create' })}
           >
             <Icon name="plus" size={15} stroke={2.2} />
             Add subscriber
@@ -933,6 +940,34 @@ export default function AppSubscribers() {
           onSaveTags={saveTags}
           onFilterTag={filterByTag}
           onToast={showToast}
+          onEdit={() => {
+            const sub = openSub;
+            setOpenId(null);
+            setSubEditor({ mode: 'edit', sub });
+          }}
+        />
+      )}
+
+      {subEditor && (
+        <SubscriberEditorModal
+          mode={subEditor.mode}
+          initialEmail={subEditor.mode === 'edit' ? subEditor.sub.email : ''}
+          initialName={subEditor.mode === 'edit' ? subEditor.sub.name : ''}
+          initialStatus={subEditor.mode === 'edit' ? subEditor.sub.status : 'active'}
+          initialList={subEditor.mode === 'edit' ? subEditor.sub.lists[0] : undefined}
+          initialTags={subEditor.mode === 'edit' ? effTags(subEditor.sub) : []}
+          lists={listNames}
+          onClose={() => setSubEditor(null)}
+          onSave={(values) => {
+            const created = subEditor.mode === 'create';
+            if (subEditor.mode === 'edit') saveTags(subEditor.sub.id, values.tags);
+            setSubEditor(null);
+            showToast(
+              created
+                ? `${values.email} added`
+                : `${values.name || values.email} updated`,
+            );
+          }}
         />
       )}
 
@@ -1103,6 +1138,7 @@ function SubscriberDrawer({
   onSaveTags,
   onFilterTag,
   onToast,
+  onEdit,
 }: {
   sub: RichSubscriber;
   tags: string[];
@@ -1110,6 +1146,7 @@ function SubscriberDrawer({
   onClose: () => void;
   onSaveTags: (id: string, tags: string[]) => void;
   onFilterTag: (tag: string) => void;
+  onEdit: () => void;
   onToast: (m: string) => void;
 }) {
   const [draft, setDraft] = useState<string[]>(tags);
@@ -1388,7 +1425,7 @@ function SubscriberDrawer({
             type="button"
             className="pbtn"
             style={{ flex: 1 }}
-            onClick={() => onToast('Opening profile editor…')}
+            onClick={onEdit}
           >
             <Icon name="edit" size={15} />
             Edit

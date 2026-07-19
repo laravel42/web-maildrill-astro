@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { lists as baseLists } from '@/lib/app/mock-data';
 import type { ListSummary } from '@/types/app';
 import Icon from './Icon';
+import ListEditorModal, { type ListEditorValues } from './ListEditorModal';
 
 // Fixed reference "now" (matches the mock-data window) — deterministic across
 // SSR + hydration, so no mismatch and no Date.now() nondeterminism.
@@ -121,10 +122,19 @@ export default function AppLists() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [closing, setClosing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [editor, setEditor] = useState<
+    { mode: 'create' } | { mode: 'edit'; name: string; color: string } | null
+  >(null);
 
   const showToast = (msg: string) => {
     setToast(msg);
     window.setTimeout(() => setToast(null), 2800);
+  };
+
+  const saveList = (values: ListEditorValues) => {
+    const created = editor?.mode === 'create';
+    setEditor(null);
+    showToast(created ? `List “${values.name}” created` : `List “${values.name}” updated`);
   };
 
   const filtered = useMemo(() => {
@@ -175,7 +185,7 @@ export default function AppLists() {
           <h1 className="screen__h1">Lists</h1>
           <p className="screen__sub">Organize your subscribers into lists.</p>
         </div>
-        <button type="button" className="pbtn" onClick={() => showToast('Opening new list…')}>
+        <button type="button" className="pbtn" onClick={() => setEditor({ mode: 'create' })}>
           <Icon name="plus" size={15} stroke={2.2} />
           New list
         </button>
@@ -336,7 +346,7 @@ export default function AppLists() {
             <button
               type="button"
               className="ll__card ll__card--new"
-              onClick={() => showToast('Opening new list…')}
+              onClick={() => setEditor({ mode: 'create' })}
             >
               <span className="ll__newplus">
                 <Icon name="plus" size={18} stroke={2.2} />
@@ -353,6 +363,20 @@ export default function AppLists() {
           closing={closing}
           onClose={closeDrawer}
           onToast={showToast}
+          onEdit={() => {
+            setEditor({ mode: 'edit', name: open.name, color: open.color });
+            closeDrawer();
+          }}
+        />
+      )}
+
+      {editor && (
+        <ListEditorModal
+          mode={editor.mode}
+          initialName={editor.mode === 'edit' ? editor.name : ''}
+          initialColor={editor.mode === 'edit' ? editor.color : undefined}
+          onClose={() => setEditor(null)}
+          onSave={saveList}
         />
       )}
 
@@ -419,11 +443,13 @@ function ListDrawer({
   closing,
   onClose,
   onToast,
+  onEdit,
 }: {
   list: ListRow;
   closing: boolean;
   onClose: () => void;
   onToast: (m: string) => void;
+  onEdit: () => void;
 }) {
   const DEFAULT_NOTE =
     'Segment used for the weekly product newsletter. Keep double opt-in on for GDPR.';
@@ -639,7 +665,7 @@ function ListDrawer({
             type="button"
             className="sbtn"
             style={{ flex: 1 }}
-            onClick={() => onToast('Opening list editor…')}
+            onClick={onEdit}
           >
             Edit list
           </button>

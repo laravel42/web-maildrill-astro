@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { ChannelType } from '@/types/app';
 import Icon from './Icon';
 import type { IconName } from '@/lib/icons';
@@ -334,10 +334,18 @@ export default function AppSettings() {
   const [form, setForm] = useState<Record<string, string>>({});
   const [toggles, setToggles] = useState<Record<ToggleKey, boolean>>(DEFAULT_TOGGLES);
   const [openEmail, setOpenEmail] = useState<string | null>(null);
+  const [roleOverrides, setRoleOverrides] = useState<Record<string, Role>>({});
+  const [roleEditEmail, setRoleEditEmail] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
+  const effRole = (m: Member): Role => roleOverrides[m.email] ?? m.role;
+
   const panel = PANELS[section];
-  const member = openEmail ? (ROSTER.find((m) => m.email === openEmail) ?? null) : null;
+  const baseMember = openEmail ? (ROSTER.find((m) => m.email === openEmail) ?? null) : null;
+  const member = baseMember ? { ...baseMember, role: effRole(baseMember) } : null;
+  const roleEditMember = roleEditEmail
+    ? (ROSTER.find((m) => m.email === roleEditEmail) ?? null)
+    : null;
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -518,7 +526,7 @@ export default function AppSettings() {
                             <div className="set__trow-title">{m.name}</div>
                             <div className="set__trow-sub tnum">{m.email}</div>
                           </div>
-                          <Badge tone={roleTone[m.role]}>{m.role}</Badge>
+                          <Badge tone={roleTone[effRole(m)]}>{effRole(m)}</Badge>
                           <span className="set__chevron" aria-hidden="true">
                             <Icon name="chevron-right" size={16} />
                           </span>
@@ -581,7 +589,26 @@ export default function AppSettings() {
 
       {/* team-member drawer */}
       {member && (
-        <TeamDrawer member={member} onClose={() => setOpenEmail(null)} onToast={showToast} />
+        <TeamDrawer
+          member={member}
+          onClose={() => setOpenEmail(null)}
+          onToast={showToast}
+          onEditRole={() => setRoleEditEmail(member.email)}
+        />
+      )}
+
+      {/* role editor */}
+      {roleEditMember && (
+        <RoleModal
+          member={roleEditMember}
+          current={effRole(roleEditMember)}
+          onClose={() => setRoleEditEmail(null)}
+          onSave={(role) => {
+            setRoleOverrides((s) => ({ ...s, [roleEditMember.email]: role }));
+            setRoleEditEmail(null);
+            showToast(`${roleEditMember.name} is now ${role}`);
+          }}
+        />
       )}
 
       {/* toast */}
@@ -723,10 +750,12 @@ function TeamDrawer({
   member,
   onClose,
   onToast,
+  onEditRole,
 }: {
   member: Member;
   onClose: () => void;
   onToast: (m: string) => void;
+  onEditRole: () => void;
 }) {
   const canRemove = member.role !== 'Owner';
   const perms = ROLE_PERMS[member.role];
@@ -834,12 +863,7 @@ function TeamDrawer({
               Remove
             </button>
           )}
-          <button
-            type="button"
-            className="pbtn"
-            style={{ flex: 1 }}
-            onClick={() => onToast(`Editing role for ${member.name}`)}
-          >
+          <button type="button" className="pbtn" style={{ flex: 1 }} onClick={onEditRole}>
             Edit role
           </button>
         </div>
@@ -862,6 +886,156 @@ function TeamDrawer({
           .setd__perm-ic { width: 18px; height: 18px; flex: none; border-radius: 50%; background: var(--success-bg); color: var(--success-strong); display: flex; align-items: center; justify-content: center; }
           .setd__remove { flex: none; padding: 9px 14px; color: var(--danger); }
           .setd__remove:hover { background: var(--danger-bg); }
+        `}</style>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------ role editor ----------------------------- */
+const ROLE_LIST: Role[] = ['Owner', 'Editor', 'Viewer'];
+const ROLE_DESC: Record<Role, string> = {
+  Owner: 'Full access, including billing and members.',
+  Editor: 'Create and send campaigns, manage content.',
+  Viewer: 'Read-only access to campaigns and reports.',
+};
+
+function RoleModal({
+  member,
+  current,
+  onClose,
+  onSave,
+}: {
+  member: Member;
+  current: Role;
+  onClose: () => void;
+  onSave: (role: Role) => void;
+}) {
+  const [role, setRole] = useState<Role>(current);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div className="rolem-overlay" onClick={onClose}>
+      <div
+        className="rolem"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Edit role for ${member.name}`}
+      >
+        <div className="rolem__head">
+          <span className="rolem__title">Edit role</span>
+          <button type="button" className="rolem__x" onClick={onClose} aria-label="Close">
+            <Icon name="x" size={16} />
+          </button>
+        </div>
+
+        <div className="rolem__body">
+          <p className="rolem__sub">
+            Choose the access level for <strong>{member.name}</strong>.
+          </p>
+          {ROLE_LIST.map((r) => {
+            const on = r === role;
+            return (
+              <button
+                key={r}
+                type="button"
+                className={`rolem__opt${on ? ' is-on' : ''}`}
+                aria-pressed={on}
+                onClick={() => setRole(r)}
+              >
+                <span className={`rolem__radio${on ? ' is-on' : ''}`} aria-hidden="true" />
+                <span className="rolem__optmain">
+                  <span className="rolem__optrow">
+                    <span className="rolem__optname">{r}</span>
+                    <span className="set__badge" style={TONE[roleTone[r]]}>
+                      {r}
+                    </span>
+                  </span>
+                  <span className="rolem__optdesc">{ROLE_DESC[r]}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="rolem__foot">
+          <button type="button" className="rolem__cancel" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="rolem__save"
+            disabled={role === current}
+            onClick={() => onSave(role)}
+          >
+            Save role
+          </button>
+        </div>
+
+        <style>{`
+          .rolem-overlay {
+            position: fixed; inset: 0; z-index: var(--z-modal);
+            background: rgba(28,25,23,.4); backdrop-filter: blur(3px);
+            display: flex; align-items: center; justify-content: center; padding: 32px;
+            animation: ovfade .18s var(--ease-out);
+          }
+          .rolem {
+            width: 440px; max-width: 100%; background: var(--surface); border-radius: 20px;
+            box-shadow: 0 24px 60px rgba(28,25,23,.28); overflow: hidden; animation: pop .18s ease;
+          }
+          .rolem__head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 22px; border-bottom: 1px solid var(--divider);
+          }
+          .rolem__title { font-weight: 600; font-size: 15px; }
+          .rolem__x {
+            width: 30px; height: 30px; border: none; background: var(--surface2); border-radius: 9px;
+            cursor: pointer; color: var(--text4); display: flex; align-items: center; justify-content: center;
+          }
+          .rolem__x:hover { color: var(--text2); background: var(--border2); }
+          .rolem__body { padding: 20px 22px; }
+          .rolem__sub { margin: 0 0 14px; font-size: 13px; color: var(--text4); }
+          .rolem__sub strong { color: var(--text2); font-weight: 600; }
+          .rolem__opt {
+            display: flex; align-items: flex-start; gap: 12px; width: 100%; text-align: left;
+            border: 1.5px solid var(--border2); background: var(--surface); border-radius: 12px;
+            padding: 13px 15px; margin-bottom: 10px; cursor: pointer;
+            transition: border-color .12s var(--ease-out), background .12s var(--ease-out);
+          }
+          .rolem__opt:hover { border-color: var(--muted2); }
+          .rolem__opt.is-on { border-color: var(--accent); background: var(--accent-tint); }
+          .rolem__radio {
+            width: 18px; height: 18px; flex: none; margin-top: 1px; border-radius: 50%;
+            border: 1.6px solid var(--muted2); position: relative;
+          }
+          .rolem__radio.is-on { border-color: var(--accent); }
+          .rolem__radio.is-on::after {
+            content: ''; position: absolute; inset: 3px; border-radius: 50%; background: var(--accent);
+          }
+          .rolem__optmain { flex: 1; min-width: 0; }
+          .rolem__optrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+          .rolem__optname { font-size: 13.5px; font-weight: 600; color: var(--text); }
+          .rolem__optdesc { display: block; font-size: 12px; color: var(--muted); margin-top: 3px; }
+          .rolem__foot {
+            display: flex; justify-content: flex-end; gap: 10px; padding: 16px 22px;
+            border-top: 1px solid var(--divider); background: var(--surface2);
+          }
+          .rolem__cancel, .rolem__save { padding: 9px 16px; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; }
+          .rolem__cancel { background: var(--surface); border: 1px solid var(--border2); color: var(--text2); }
+          .rolem__cancel:hover { background: var(--surface2); }
+          .rolem__save {
+            background: var(--accent); color: #fff; border: none; padding: 9px 18px;
+            box-shadow: 0 1px 2px rgba(79,70,229,.35), inset 0 1px 0 rgba(255,255,255,.16);
+          }
+          .rolem__save:disabled { opacity: .55; cursor: not-allowed; }
         `}</style>
       </div>
     </div>

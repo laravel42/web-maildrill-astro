@@ -11,6 +11,7 @@ import {
 } from '@/lib/app/templates-data';
 import Icon from './Icon';
 import type { IconName } from '@/lib/icons';
+import EmailBuilder from './EmailBuilder';
 
 /* ---------------------------------------------------------------- meta ---- */
 
@@ -209,6 +210,9 @@ export default function AppTemplates() {
   const [page, setPage] = useState(1);
   const [openId, setOpenId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [builder, setBuilder] = useState<{ channel: ChannelType; name: string | null } | null>(
+    null,
+  );
 
   const isFav = (id: string) => favIds.has(id);
 
@@ -341,7 +345,7 @@ export default function AppTemplates() {
         <button
           type="button"
           className="pbtn"
-          onClick={() => showToast('Opening template builder…')}
+          onClick={() => setBuilder({ channel: 'email', name: null })}
         >
           <Icon name="plus" size={15} stroke={2.2} />
           New template
@@ -795,8 +799,22 @@ export default function AppTemplates() {
           onClose={() => setOpenId(null)}
           onToast={showToast}
           onUse={() => {
+            const tpl = openTpl;
             setOpenId(null);
-            showToast(`Editing “${openTpl.name}”`);
+            setBuilder({ channel: tpl.channel, name: tpl.name });
+          }}
+        />
+      )}
+
+      {builder && (
+        <EmailBuilder
+          channel={builder.channel}
+          name={builder.name}
+          kind="template"
+          onClose={() => setBuilder(null)}
+          onSave={({ name }) => {
+            setBuilder(null);
+            showToast(name && name !== 'Untitled' ? `“${name}” saved` : 'Template saved');
           }}
         />
       )}
