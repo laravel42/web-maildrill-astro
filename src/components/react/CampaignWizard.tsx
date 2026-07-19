@@ -191,7 +191,7 @@ export default function CampaignWizard({
       setStep((s) => (s + 1) as Step);
       return;
     }
-    onDone(doneMsg);
+    onDone(doneMsg, { name, channel, audience, schedule });
   };
 
   const handleBack = () => setStep((s) => (s > 1 ? ((s - 1) as Step) : s));

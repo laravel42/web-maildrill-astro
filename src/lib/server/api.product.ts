@@ -70,7 +70,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/auth/magic-link/request": {
+    "/v1/auth/code/request": {
         parameters: {
             query?: never;
             header?: never;
@@ -79,7 +79,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Request a magic-link sign-in email */
+        /** Email a 6-digit sign-in code (+ auto-login link) */
         post: {
             parameters: {
                 query?: never;
@@ -111,7 +111,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/auth/magic-link/verify": {
+    "/v1/auth/code/verify": {
         parameters: {
             query?: never;
             header?: never;
@@ -120,7 +120,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Verify a magic-link token, returning identity + workspaces */
+        /** Verify a login code, returning identity + workspaces */
         post: {
             parameters: {
                 query?: never;
@@ -131,7 +131,9 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        token: string;
+                        /** Format: email */
+                        email: string;
+                        code: string;
                     };
                 };
             };
@@ -1349,6 +1351,176 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/v1/campaigns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List campaigns */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Create a campaign draft */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        name: string;
+                        /** @enum {string} */
+                        channel?: "email" | "sms" | "whatsapp" | "voice";
+                        /** @enum {string} */
+                        status?: "draft" | "scheduled" | "sending" | "sent" | "paused";
+                        /** Format: uuid */
+                        listId?: string | null;
+                        /** Format: uuid */
+                        segmentId?: string | null;
+                        /** Format: uuid */
+                        templateId?: string | null;
+                        content?: {
+                            [key: string]: unknown;
+                        };
+                        /** Format: date-time */
+                        scheduledAt?: string | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/campaigns/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a campaign */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Delete a campaign */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Update a campaign draft */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        name?: string;
+                        /** @enum {string} */
+                        channel?: "email" | "sms" | "whatsapp" | "voice";
+                        /** @enum {string} */
+                        status?: "draft" | "scheduled" | "sending" | "sent" | "paused";
+                        /** Format: uuid */
+                        listId?: string | null;
+                        /** Format: uuid */
+                        segmentId?: string | null;
+                        /** Format: uuid */
+                        templateId?: string | null;
+                        content?: {
+                            [key: string]: unknown;
+                        };
+                        /** Format: date-time */
+                        scheduledAt?: string | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         trace?: never;
     };
 }

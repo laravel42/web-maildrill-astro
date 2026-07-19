@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { campaigns as allCampaigns } from '@/lib/app/mock-data';
+import { campaigns as mockCampaigns } from '@/lib/app/mock-data';
+import { api, ApiError } from '@/lib/app/api';
+import { toCampaign, type ApiCampaign } from '@/lib/app/campaign-map';
+import type { CampaignDraft } from './CampaignWizard.types';
 import type { Campaign, CampaignStatus, ChannelType } from '@/types/app';
 import Icon from './Icon';
 import CampaignWizard from './CampaignWizard';
@@ -22,7 +25,10 @@ function ChannelPill({ channel }: { channel: ChannelType }) {
   );
 }
 
-export default function CampaignsBoard() {
+export default function CampaignsBoard({ initial }: { initial?: Campaign[] } = {}) {
+  // Live workspace campaigns from SSR when provided; else the fixture preview.
+  const live = initial !== undefined;
+  const [campaigns, setCampaigns] = useState<Campaign[]>(initial ?? mockCampaigns);
   const [tab, setTab] = useState<CampaignStatus | 'all'>('all');
   const [query, setQuery] = useState('');
   const [channelFilter, setChannelFilter] = useState<Set<ChannelType>>(new Set());
@@ -39,13 +45,13 @@ export default function CampaignsBoard() {
   );
 
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: allCampaigns.length };
-    for (const t of TABS) if (t !== 'all') c[t] = allCampaigns.filter((x) => x.status === t).length;
+    const c: Record<string, number> = { all: campaigns.length };
+    for (const t of TABS) if (t !== 'all') c[t] = campaigns.filter((x) => x.status === t).length;
     return c;
-  }, []);
+  }, [campaigns]);
 
   const rows = useMemo(() => {
-    let list = allCampaigns.filter((c) => {
+    let list = campaigns.filter((c) => {
       if (tab !== 'all' && c.status !== tab) return false;
       if (channelFilter.size > 0 && !channelFilter.has(c.channel)) return false;
       if (query) {
@@ -67,7 +73,7 @@ export default function CampaignsBoard() {
       return 0;
     });
     return list;
-  }, [tab, query, channelFilter, sort]);
+  }, [tab, query, channelFilter, sort, campaigns]);
 
   const toggleSort = (key: SortKey) =>
     setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: 1 }));
@@ -88,6 +94,49 @@ export default function CampaignsBoard() {
     setSelected(new Set());
   };
 
+  /* Create the campaign record from the wizard. Note this persists a draft —
+     it does not dispatch messages; sending goes through /v1/campaigns/send. */
+  const createFromWizard = async (draft: CampaignDraft) => {
+    const name = draft.name.trim() || 'Untitled campaign';
+    if (!live) {
+      show(`“${name}” created`);
+      return;
+    }
+    try {
+      const created = await api.post<ApiCampaign>('campaigns', {
+        name,
+        channel: draft.channel,
+        status: draft.schedule === 'later' ? 'scheduled' : 'draft',
+      });
+      setCampaigns((prev) => [toCampaign(created), ...prev]);
+      show(`“${created.name}” created`);
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : 'Could not create campaign');
+    }
+  };
+
+  /* Delete selected — persists in live mode, else local-only. */
+  const removeSelected = async () => {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    if (!live) {
+      setCampaigns((prev) => prev.filter((c) => !selected.has(c.id)));
+      show(`Deleted ${ids.length} campaign${ids.length === 1 ? '' : 's'}`);
+      setSelected(new Set());
+      return;
+    }
+    const results = await Promise.allSettled(ids.map((id) => api.del(`campaigns/${id}`)));
+    const okIds = new Set(ids.filter((_, i) => results[i].status === 'fulfilled'));
+    setCampaigns((prev) => prev.filter((c) => !okIds.has(c.id)));
+    const failed = ids.length - okIds.size;
+    show(
+      failed
+        ? `Deleted ${okIds.size}, ${failed} failed`
+        : `Deleted ${okIds.size} campaign${okIds.size === 1 ? '' : 's'}`,
+    );
+    setSelected(new Set());
+  };
+
   const toggleChannel = (ch: ChannelType) => {
     setChannelFilter((prev) => {
       const next = new Set(prev);
@@ -98,7 +147,7 @@ export default function CampaignsBoard() {
     setSelected(new Set()); // changing filters clears selection (spec §12)
   };
 
-  const open = openId ? (allCampaigns.find((c) => c.id === openId) ?? null) : null;
+  const open = openId ? (campaigns.find((c) => c.id === openId) ?? null) : null;
   const sortArrow = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? '↑' : '↓') : '');
 
   return (
@@ -214,7 +263,7 @@ export default function CampaignsBoard() {
           <button
             type="button"
             className={`${styles.bulkbtn} ${styles.bulkbtnDanger}`}
-            onClick={() => bulk('Deleted')}
+            onClick={() => void removeSelected()}
           >
             Delete
           </button>
@@ -323,7 +372,7 @@ export default function CampaignsBoard() {
 
         <div className="atable__foot">
           <span className="tnum">
-            {rows.length} of {allCampaigns.length} campaigns
+            {rows.length} of {campaigns.length} campaigns
           </span>
         </div>
       </div>
@@ -348,9 +397,11 @@ export default function CampaignsBoard() {
           initialChannel={wizard.mode === 'edit' ? wizard.channel : 'email'}
           initialName={wizard.mode === 'edit' ? wizard.name : ''}
           onClose={() => setWizard(null)}
-          onDone={(msg) => {
+          onDone={(msg, draft) => {
+            const mode = wizard.mode;
             setWizard(null);
-            show(msg);
+            if (mode === 'create') void createFromWizard(draft);
+            else show(msg);
           }}
           onOpenBuilder={(channel, name) => {
             setWizard(null);

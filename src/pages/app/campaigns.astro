@@ -2,8 +2,57 @@
 export const prerender = false;
 import AppLayout from '@/layouts/AppLayout.astro';
 import CampaignsBoard from '@/components/react/CampaignsBoard';
+import { productClient } from '@/lib/server/service';
+import { toCampaigns, type ApiCampaign } from '@/lib/app/campaign-map';
+import type { Campaign } from '@/types/app';
+
+// Load real campaigns for the signed-in workspace; undefined = not connected
+// (island falls back to fixtures), an array = live data (even if empty).
+const session = Astro.locals.session;
+let initial: Campaign[] | undefined = undefined;
+let banner: { ok: boolean; text: string } | null = null;
+
+if (session?.user?.id && session.activeTenantId) {
+  try {
+    const client = productClient({
+      userId: session.user.id,
+      activeTenantId: session.activeTenantId,
+      role: session.role,
+    });
+    const { data, error } = await client.GET('/v1/campaigns');
+    if (error) {
+      banner = { ok: false, text: 'maildrill-service returned an error.' };
+    } else {
+      const rows = (data as unknown as { data?: ApiCampaign[] })?.data ?? [];
+      initial = toCampaigns(rows);
+      banner = { ok: true, text: `Live from maildrill-service — ${initial.length} campaign(s).` };
+    }
+  } catch (err) {
+    banner = { ok: false, text: err instanceof Error ? err.message : 'Service unreachable.' };
+  }
+}
 ---
 
 <AppLayout title="Campaigns">
-  <CampaignsBoard client:visible />
+  {banner && <div class={`svc-banner ${banner.ok ? 'ok' : 'err'}`}>{banner.text}</div>}
+  <CampaignsBoard client:visible initial={initial} />
 </AppLayout>
+
+<style>
+  .svc-banner {
+    margin: 0 0 14px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+  }
+  .svc-banner.ok {
+    border: 1px solid #16a34a;
+    background: #f0fdf4;
+    color: #166534;
+  }
+  .svc-banner.err {
+    border: 1px solid #dc2626;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+</style>

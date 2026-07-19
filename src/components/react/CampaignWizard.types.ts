@@ -21,11 +21,19 @@ export type AudienceOption = {
   count: string;
 };
 
+/** What the wizard collected, handed to the caller so it can be persisted. */
+export type CampaignDraft = {
+  name: string;
+  channel: ChannelType;
+  audience: Audience;
+  schedule: Schedule;
+};
+
 export type Props = {
   mode: 'create' | 'edit';
   initialChannel?: ChannelType; // default 'email'
   initialName?: string; // default '' (create) or the campaign name (edit)
   onClose: () => void; // X / overlay click / Escape
-  onDone: (msg: string) => void; // final "Schedule campaign" / "Save changes"
+  onDone: (msg: string, draft: CampaignDraft) => void; // final "Schedule campaign" / "Save changes"
   onOpenBuilder?: (channel: ChannelType, name: string) => void; // step-3 "Open in builder →" (email only)
 };
