@@ -845,33 +845,28 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           onSave={async ({ name, html, document }) => {
             const ed = builder;
             if (!ed) return;
-            if (!live) {
-              setBuilder(null);
-              show(name && name !== 'Untitled' ? `“${name}” saved` : 'Template saved');
-              return;
-            }
+            // Stay in the editor and let it show a saved badge; don't close.
+            // Errors propagate so the editor surfaces them. Local (no-service)
+            // mode just acknowledges.
+            if (!live) return;
             const body = {
               name: name && name !== 'Untitled' ? name : 'Untitled template',
               channel: 'email' as const,
               html,
               builderDoc: document as Record<string, unknown>,
             };
-            try {
-              if (ed.id) {
-                // Editing an existing template — update it in place.
-                const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
-                setTemplates((prev) =>
-                  prev.map((t) => (t.id === ed.id ? toGalleryTemplate(updated) : t)),
-                );
-                show(`“${updated.name}” updated`);
-              } else {
-                const created = await api.post<ApiTemplate>('templates', body);
-                setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
-                show(`“${created.name}” saved`);
-              }
-              setBuilder(null);
-            } catch (e) {
-              show(e instanceof ApiError ? e.message : 'Could not save template');
+            if (ed.id) {
+              // Editing an existing template — update it in place.
+              const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
+              setTemplates((prev) =>
+                prev.map((t) => (t.id === ed.id ? toGalleryTemplate(updated) : t)),
+              );
+            } else {
+              const created = await api.post<ApiTemplate>('templates', body);
+              setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
+              // Switch to update mode so subsequent saves patch this template
+              // instead of creating duplicates.
+              setBuilder((prev) => (prev ? { ...prev, id: created.id } : prev));
             }
           }}
         />

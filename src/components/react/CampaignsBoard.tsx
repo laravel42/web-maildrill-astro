@@ -365,9 +365,9 @@ export default function CampaignsBoard() {
         <VisualEmailBuilder
           name={builder.name}
           onClose={() => setBuilder(null)}
-          onSave={({ name }) => {
-            setBuilder(null);
-            show(name && name !== 'Untitled' ? `“${name}” saved` : 'Draft saved');
+          onSave={() => {
+            // Draft kept locally; the editor shows the saved confirmation badge
+            // and stays open (no redirect back to the board).
           }}
         />
       )}
