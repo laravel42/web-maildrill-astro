@@ -6,6 +6,8 @@ export interface ApiList {
   name: string;
   description?: string | null;
   color?: string | null;
+  /** Subscribers on the list, counted server-side by /v1/lists. */
+  memberCount?: number | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
@@ -19,7 +21,7 @@ export function toListRow(l: ApiList): ListRow {
   return {
     id: l.id,
     name: l.name,
-    subscribers: 0,
+    subscribers: l.memberCount ?? 0,
     growthPct: 0,
     updatedAt: l.updatedAt ?? l.createdAt ?? new Date().toISOString(),
     color: l.color || '#4f46e5',
