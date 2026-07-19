@@ -17,7 +17,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:all": "npm run test && npm run test:e2e"
+    "test:all": "npm run test && npm run test:e2e",
+    "sync:rates:login": "node scripts/sync-infobip-rates.mjs login",
+    "sync:rates": "node scripts/sync-infobip-rates.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.9",
