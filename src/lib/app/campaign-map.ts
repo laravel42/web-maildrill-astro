@@ -9,6 +9,8 @@ export interface ApiCampaign {
   listId?: string | null;
   segmentId?: string | null;
   templateId?: string | null;
+  /** Ad-hoc body for non-email channels, when no template is used. */
+  content?: Record<string, unknown> | null;
   /** Derived server-side: list name, segment name, or "All subscribers". */
   audience?: string | null;
   recipients?: number | null;

@@ -46,7 +46,18 @@ export default function CampaignsBoard({
   const [openId, setOpenId] = useState<string | null>(null);
   const { toast, show } = useToast(2600);
   const [wizard, setWizard] = useState<
-    { mode: 'create' } | { mode: 'edit'; channel: ChannelType; name: string } | null
+    | { mode: 'create' }
+    | {
+        mode: 'edit';
+        id: string;
+        channel: ChannelType;
+        name: string;
+        audienceId: string | null;
+        templateId: string | null;
+        message: string;
+        schedule: 'now' | 'later';
+      }
+    | null
   >(null);
   const [builder, setBuilder] = useState<{ channel: ChannelType; name: string | null } | null>(
     null,
@@ -134,6 +145,97 @@ export default function CampaignsBoard({
       return;
     }
     await sendCampaign(created.id, created.name);
+  };
+
+  /* Open the wizard on an existing campaign. The board row carries only display
+     fields, so the saved audience/template/body are fetched — without them the
+     wizard would open blank and "save" would wipe the campaign's targeting. */
+  const openForEdit = async (c: Campaign) => {
+    if (!live) {
+      setWizard({
+        mode: 'edit',
+        id: c.id,
+        channel: c.channel,
+        name: c.name,
+        audienceId: null,
+        templateId: null,
+        message: '',
+        schedule: c.scheduledAt ? 'later' : 'now',
+      });
+      return;
+    }
+    try {
+      const full = await api.get<ApiCampaign>(`campaigns/${c.id}`);
+      const content = (full.content ?? {}) as { text?: string };
+      setWizard({
+        mode: 'edit',
+        id: c.id,
+        channel: (full.channel as ChannelType) ?? c.channel,
+        name: full.name,
+        audienceId: full.listId ?? full.segmentId ?? null,
+        templateId: full.templateId ?? null,
+        message: typeof content.text === 'string' ? content.text : '',
+        schedule: full.scheduledAt ? 'later' : 'now',
+      });
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : `Could not open “${c.name}”`);
+    }
+  };
+
+  /* Persist edits to an existing campaign. */
+  const saveEdit = async (id: string, draft: CampaignDraft) => {
+    if (!live) {
+      show(`“${draft.name}” updated`);
+      return;
+    }
+    try {
+      const updated = await api.patch<ApiCampaign>(`campaigns/${id}`, {
+        name: draft.name.trim() || 'Untitled campaign',
+        channel: draft.channel,
+        listId: draft.listId ?? null,
+        segmentId: draft.segmentId ?? null,
+        templateId: draft.templateId ?? null,
+        content: draft.content ?? {},
+      });
+      setCampaigns((prev) => prev.map((c) => (c.id === id ? toCampaign(updated) : c)));
+      show(`“${updated.name}” updated`);
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : 'Could not save changes');
+    }
+  };
+
+  /* Copy a campaign into a fresh draft. The copy deliberately resets status and
+     schedule: duplicating a sent campaign must not produce something that looks
+     already-sent, or that a scheduler could pick up. */
+  const duplicateCampaigns = async (ids: string[]) => {
+    if (ids.length === 0) return;
+    if (!live) {
+      show(`Duplicated ${ids.length} campaign${ids.length === 1 ? '' : 's'}`);
+      return;
+    }
+    const results = await Promise.allSettled(
+      ids.map(async (id) => {
+        const full = await api.get<ApiCampaign>(`campaigns/${id}`);
+        return api.post<ApiCampaign>('campaigns', {
+          name: `${full.name} (copy)`,
+          channel: full.channel ?? 'email',
+          status: 'draft',
+          listId: full.listId ?? null,
+          segmentId: full.segmentId ?? null,
+          templateId: full.templateId ?? null,
+          content: full.content ?? {},
+        });
+      }),
+    );
+    const made = results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
+    setCampaigns((prev) => [...made.map(toCampaign), ...prev]);
+    const failed = ids.length - made.length;
+    show(
+      failed
+        ? `Duplicated ${made.length}, ${failed} failed`
+        : `Duplicated ${made.length} campaign${made.length === 1 ? '' : 's'}`,
+    );
+    setSelected(new Set());
   };
 
   /* Dispatch a saved campaign. The service resolves the audience, so the queued
@@ -299,7 +401,11 @@ export default function CampaignsBoard({
         <div className={styles.bulk} style={{ animation: 'fade .18s ease' }}>
           <span className={styles.bulkcount}>{selected.size} selected</span>
           <span className={styles.bulkdiv} />
-          <button type="button" className={styles.bulkbtn} onClick={() => bulk('Duplicated')}>
+          <button
+            type="button"
+            className={styles.bulkbtn}
+            onClick={() => void duplicateCampaigns([...selected])}
+          >
             Duplicate
           </button>
           <button type="button" className={styles.bulkbtn} onClick={() => bulk('Archived')}>
@@ -431,7 +537,12 @@ export default function CampaignsBoard({
           onEdit={() => {
             const c = open;
             setOpenId(null);
-            setWizard({ mode: 'edit', channel: c.channel, name: c.name });
+            void openForEdit(c);
+          }}
+          onDuplicate={() => {
+            const c = open;
+            setOpenId(null);
+            void duplicateCampaigns([c.id]);
           }}
         />
       )}
@@ -441,14 +552,18 @@ export default function CampaignsBoard({
           mode={wizard.mode}
           initialChannel={wizard.mode === 'edit' ? wizard.channel : 'email'}
           initialName={wizard.mode === 'edit' ? wizard.name : ''}
+          initialAudienceId={wizard.mode === 'edit' ? wizard.audienceId : null}
+          initialTemplateId={wizard.mode === 'edit' ? wizard.templateId : null}
+          initialMessage={wizard.mode === 'edit' ? wizard.message : ''}
+          initialSchedule={wizard.mode === 'edit' ? wizard.schedule : 'now'}
           audiences={audiences}
           templates={templates}
           onClose={() => setWizard(null)}
-          onDone={(msg, draft) => {
-            const mode = wizard.mode;
+          onDone={(_msg, draft) => {
+            const w = wizard;
             setWizard(null);
-            if (mode === 'create') void createFromWizard(draft);
-            else show(msg);
+            if (w.mode === 'create') void createFromWizard(draft);
+            else void saveEdit(w.id, draft);
           }}
           onOpenBuilder={(channel, name) => {
             setWizard(null);
@@ -505,11 +620,13 @@ function CampaignDrawer({
   onClose,
   onToast,
   onEdit,
+  onDuplicate,
 }: {
   campaign: Campaign;
   onClose: () => void;
   onToast: (m: string) => void;
   onEdit: () => void;
+  onDuplicate: () => void;
 }) {
   const m = CHANNEL[campaign.channel];
   const isSent = campaign.status === 'sent';
@@ -651,7 +768,7 @@ function CampaignDrawer({
             type="button"
             className="sbtn"
             style={{ flex: 1 }}
-            onClick={() => onToast('Campaign duplicated')}
+            onClick={onDuplicate}
           >
             Duplicate
           </button>

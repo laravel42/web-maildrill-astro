@@ -56,6 +56,13 @@ export type Props = {
   mode: 'create' | 'edit';
   initialChannel?: ChannelType; // default 'email'
   initialName?: string; // default '' (create) or the campaign name (edit)
+  /** Saved audience of the campaign being edited (list or segment id). */
+  initialAudienceId?: string | null;
+  /** Saved template of the campaign being edited. */
+  initialTemplateId?: string | null;
+  /** Saved body of the campaign being edited (SMS/WhatsApp/Voice). */
+  initialMessage?: string;
+  initialSchedule?: Schedule;
   /** Real lists/segments. Empty or omitted → the audience step explains why. */
   audiences?: AudienceChoice[];
   /** Real saved templates, filtered to the active channel by the wizard. */

@@ -124,6 +124,10 @@ export default function CampaignWizard({
   mode,
   initialChannel = 'email',
   initialName = '',
+  initialAudienceId = null,
+  initialTemplateId = null,
+  initialMessage = '',
+  initialSchedule = 'now',
   audiences,
   templates: templateChoices,
   onClose,
@@ -133,10 +137,13 @@ export default function CampaignWizard({
   const [step, setStep] = useState<Step>(1);
   const [channel, setChannel] = useState<ChannelType>(initialChannel);
   const [name, setName] = useState<string>(initialName);
-  const [audienceId, setAudienceId] = useState<string | null>(null);
-  const [message, setMessage] = useState<string>('');
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
-  const [schedule, setSchedule] = useState<Schedule>('now');
+  const [audienceId, setAudienceId] = useState<string | null>(initialAudienceId);
+  const [message, setMessage] = useState<string>(initialMessage);
+  // Templates are selected by name in the UI; resolve the saved id to its name.
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(
+    () => templateChoices?.find((t) => t.id === initialTemplateId)?.name ?? null,
+  );
+  const [schedule, setSchedule] = useState<Schedule>(initialSchedule);
   const [replyTo, setReplyTo] = useState<string>('');
 
   // Escape closes the modal.
