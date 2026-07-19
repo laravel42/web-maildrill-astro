@@ -1,6 +1,8 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
+import node from '@astrojs/node';
+import auth from 'auth-astro';
 
 import { siteConfig } from './src/config/site';
 
@@ -19,8 +21,12 @@ export default defineConfig({
   // Flat file output (`/pricing.html`) so hosts serve no-trailing-slash URLs
   // with a 200 (matching the canonicals) instead of 308-redirecting to a slash.
   build: { format: 'file' },
+  // Marketing pages stay static; the app/auth/api routes opt into on-demand
+  // rendering with `export const prerender = false`.
+  adapter: node({ mode: 'standalone' }),
   integrations: [
     react(),
+    auth(),
     sitemap({
       filter: (page) =>
         !page.includes('/app/') &&

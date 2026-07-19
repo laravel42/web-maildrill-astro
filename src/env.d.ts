@@ -7,8 +7,22 @@ interface ImportMetaEnv {
   readonly PUBLIC_POSTHOG_HOST?: string;
   readonly AUTH_SECRET?: string;
   readonly API_BASE_URL?: string;
+  readonly JWT_SECRET?: string;
 }
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
+}
+
+declare namespace App {
+  interface Locals {
+    session:
+      | {
+          user?: { id?: string; email?: string | null; name?: string | null };
+          activeTenantId?: string | null;
+          role?: string | null;
+          workspaces?: Array<{ tenantId: string; role: string; workspaceName: string }>;
+        }
+      | null;
+  }
 }

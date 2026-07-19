@@ -19,14 +19,19 @@
     "test:e2e": "playwright test",
     "test:all": "npm run test && npm run test:e2e",
     "sync:rates:login": "node scripts/sync-infobip-rates.mjs login",
-    "sync:rates": "node scripts/sync-infobip-rates.mjs"
+    "sync:rates": "node scripts/sync-infobip-rates.mjs",
+    "gen:api": "openapi-typescript src/lib/server/openapi.product.json -o src/lib/server/api.product.ts && openapi-typescript src/lib/server/openapi.messaging.json -o src/lib/server/api.messaging.ts"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.9",
+    "@astrojs/node": "^11.0.0",
     "@astrojs/react": "^6.0.1",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
+    "@auth/core": "^0.37.3",
     "astro": "^7.1.1",
+    "auth-astro": "^4.2.0",
+    "openapi-fetch": "^0.17.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "zod": "^4.4.3"
@@ -37,10 +42,12 @@
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "@types/set-cookie-parser": "^2.4.10",
     "eslint": "^10.7.0",
     "eslint-plugin-astro": "^3.0.1",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "globals": "^17.7.0",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.9.5",
     "prettier-plugin-astro": "^0.14.1",
     "typescript": "^6.0.3",
