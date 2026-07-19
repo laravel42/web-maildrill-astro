@@ -1,7 +1,7 @@
-import { useState, type ChangeEvent, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from 'react';
 import type { ChannelType } from '@/types/app';
 import Icon from './Icon';
-import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
+import { CHANNEL } from './shared/channels';
 import { formatDuration, smsSegments, voiceSeconds } from './shared/messaging';
 import { useEscapeClose } from './shared/useEscapeClose';
 import {
@@ -14,6 +14,9 @@ import {
   VOICE_OPTS,
 } from './EmailBuilder.logic';
 import type { Props } from './EmailBuilder.types';
+import EditorHeader from './shared/EditorHeader';
+import { useAutosave } from './shared/useAutosave';
+import { useToast } from './shared/useToast';
 import styles from './EmailBuilder.module.css';
 
 /* ------------------------------------------------------------------ *
@@ -22,23 +25,6 @@ import styles from './EmailBuilder.module.css';
  * The parent gates mounting, so this renders its overlay immediately.
  * ------------------------------------------------------------------ */
 
-/* Small inline icons the shared Icon set doesn't cover (match the design). */
-function BackArrow() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M19 12H5M12 19l-7-7 7-7" />
-    </svg>
-  );
-}
 
 function StatusBar({ color }: { color: string }) {
   return (
@@ -99,16 +85,17 @@ export default function EmailBuilder({
   channel: initialChannel,
   name = null,
   kind = 'template',
-  lockChannel = false,
   onClose,
   onSave,
 }: Props) {
-  const [channel, setChannel] = useState<ChannelType>(initialChannel);
+  const [channel] = useState<ChannelType>(initialChannel);
   const [message, setMessage] = useState('');
-  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [previewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [quickReplies, setQuickReplies] = useState<string[]>(['Yes, count me in', 'Maybe later']);
   const [voice, setVoice] = useState<string>(VOICE_OPTS[0]);
   const [speed, setSpeed] = useState<string>(SPEED_OPTS[1]);
+  const [templateName, setTemplateName] = useState(name ?? '');
+  const { toast, show } = useToast();
 
   useEscapeClose(onClose);
 
@@ -121,174 +108,42 @@ export default function EmailBuilder({
   const count2Label = isVoice ? 'sec (est.)' : 'segment(s)';
   const msgPreview = message.trim() ? message : PREVIEW_FALLBACK[channel];
 
-  const handleSave = () => onSave({ channel, name: name ?? 'Untitled', message });
   const insertVariable = (token: string) =>
     setMessage((m) => (m ? `${m} ${token}` : token));
 
-  const title = name ?? 'Untitled template';
-  const crumb = `${kind === 'campaign' ? 'Campaigns' : 'Templates'} / Draft`;
-
   const canvasWidth = previewMode === 'desktop' ? 600 : 390;
-  const deskActive = previewMode === 'desktop';
+
+  // Autosave the draft every 5s once the user starts editing.
+  const persist = async () => {
+    await onSave({ channel, name: templateName.trim() || 'Untitled', message });
+  };
+  const { status, markDirty, flush } = useAutosave(persist);
+  const dirtyInit = useRef(false);
+  useEffect(() => {
+    if (!dirtyInit.current) {
+      dirtyInit.current = true;
+      return;
+    }
+    markDirty();
+  }, [message, templateName, markDirty]);
+  const handleSaveDraft = async () => {
+    const ok = await flush();
+    show(ok ? `“${templateName.trim() || 'Untitled template'}” saved` : 'Could not save.');
+  };
+  const handleSendTest = () => show('Test message sent');
 
   return (
     <div className={styles.overlay} style={{ animation: 'fade .2s ease' }}>
-      {/* ------------------------------- Top bar ------------------------------- */}
-      <div className={styles.topbar}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
-          <button className={styles.back} type="button" onClick={onClose} aria-label="Back">
-            <BackArrow />
-          </button>
-          <div style={{ minWidth: 0 }}>
-            <div
-              style={{
-                fontWeight: 600,
-                fontSize: 14,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 7,
-              }}
-            >
-              <span style={{ display: 'flex', color: meta.color }}>
-                <Icon name={meta.icon} size={13} stroke={2} />
-              </span>
-              <span
-                style={{
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {title}
-              </span>
-            </div>
-            <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>{crumb}</div>
-          </div>
-        </div>
-
-        {/* Channel switcher — hidden when the channel is locked (chosen up front). */}
-        {!lockChannel && (
-        <div className={styles.seg}>
-          {CHANNEL_ORDER.map((k) => {
-            const on = channel === k;
-            const m = CHANNEL[k];
-            return (
-              <button
-                key={k}
-                type="button"
-                className={styles.pill}
-                onClick={() => setChannel(k)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 11px',
-                  borderRadius: 7,
-                  fontSize: 12.5,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: 'none',
-                  background: on ? 'var(--surface)' : 'transparent',
-                  color: on ? m.color : 'var(--muted)',
-                  boxShadow: on ? '0 1px 2px rgba(28,25,23,.08)' : 'none',
-                }}
-              >
-                <Icon name={m.icon} size={12} stroke={2} />
-                {m.label}
-              </button>
-            );
-          })}
-        </div>
-        )}
-
-        {/* Email-only preview controls */}
-        {isEmail ? (
-          <div className={styles.seg}>
-            <span className={styles.hist} aria-hidden>
-              ↺
-            </span>
-            <span className={styles.hist} aria-hidden>
-              ↻
-            </span>
-            <div
-              style={{ width: 1, height: 18, background: 'var(--border2)', margin: '0 3px' }}
-            />
-            <button
-              type="button"
-              className={styles.view}
-              onClick={() => setPreviewMode('desktop')}
-              aria-label="Desktop preview"
-              style={{
-                background: deskActive ? 'var(--surface)' : 'transparent',
-                boxShadow: deskActive ? '0 1px 2px rgba(28,25,23,.1)' : 'none',
-              }}
-            >
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke={deskActive ? 'var(--text)' : 'var(--muted)'}
-                strokeWidth={1.9}
-              >
-                <rect x="2" y="4" width="20" height="14" rx="2" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className={styles.view}
-              onClick={() => setPreviewMode('mobile')}
-              aria-label="Mobile preview"
-              style={{
-                background: !deskActive ? 'var(--surface)' : 'transparent',
-                boxShadow: !deskActive ? '0 1px 2px rgba(28,25,23,.1)' : 'none',
-              }}
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke={!deskActive ? 'var(--text)' : 'var(--muted)'}
-                strokeWidth={1.9}
-              >
-                <rect x="6" y="2" width="12" height="20" rx="2" />
-              </svg>
-            </button>
-          </div>
-        ) : null}
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-          <span
-            style={{
-              fontSize: 11.5,
-              color: 'var(--muted)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-            }}
-          >
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: 'var(--success-strong)',
-              }}
-            />
-            Autosaved
-          </span>
-          <button type="button" className={styles.sbtn}>
-            Send test
-          </button>
-          <button type="button" className={styles.sbtn} style={{ fontWeight: 600 }} onClick={handleSave}>
-            Save draft
-          </button>
-          <button type="button" className={styles.pbtn}>
-            Next step →
-          </button>
-        </div>
-      </div>
+      <EditorHeader
+        channel={channel}
+        name={templateName}
+        onNameChange={setTemplateName}
+        kind={kind}
+        status={status}
+        onBack={onClose}
+        onSendTest={handleSendTest}
+        onSaveDraft={() => void handleSaveDraft()}
+      />
 
       {/* ------------------------------- Body ------------------------------- */}
       {isEmail ? (
@@ -1114,6 +969,19 @@ export default function EmailBuilder({
               </div>
             </div>
           </aside>
+        </div>
+      )}
+
+      {toast && (
+        <div
+          className={styles.toast}
+          role="status"
+          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
+        >
+          <span className={styles.toastic}>
+            <Icon name="check" size={13} stroke={3} />
+          </span>
+          {toast}
         </div>
       )}
     </div>

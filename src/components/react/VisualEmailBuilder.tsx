@@ -3,11 +3,13 @@ import type { EmailBuilderProps, EmailBuilderRef, TEditorConfiguration } from 'e
 import { builderGenerateTemplate, builderTextAction } from '@/lib/app/services';
 import Icon from './Icon';
 import { useToast } from './shared/useToast';
+import EditorHeader from './shared/EditorHeader';
+import { useAutosave } from './shared/useAutosave';
 
 /**
  * Full-screen wrapper around EmailBuilder.js (email-builder-online) — the visual
- * email editor imported from the Maildrill Laravel stack. Email-channel only;
- * SMS/WhatsApp/Voice keep the lightweight composer.
+ * email editor. Email-channel only; SMS/WhatsApp/Voice use the composer. Shares
+ * EditorHeader with the composer so the two read as one product.
  *
  * The package pulls in react-dom/client and browser-only APIs, so it must never
  * load during Astro SSR: we dynamic-import both the module and its stylesheet in
@@ -28,15 +30,21 @@ type Props = {
   name: string | null;
   /** Existing design to reopen for editing (builderDoc JSON), if any. */
   initialDocument?: TEditorConfiguration | string;
+  kind?: 'template' | 'campaign';
   onClose: () => void;
   onSave: (value: VisualEmailBuilderSave) => void | Promise<void>;
 };
 
-export default function VisualEmailBuilder({ name, initialDocument, onClose, onSave }: Props) {
+export default function VisualEmailBuilder({
+  name,
+  initialDocument,
+  kind = 'template',
+  onClose,
+  onSave,
+}: Props) {
   const builderRef = useRef<EmailBuilderRef>(null);
   const [Builder, setBuilder] = useState<BuilderComponent | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState(name ?? '');
   const { toast, show } = useToast();
 
@@ -66,51 +74,39 @@ export default function VisualEmailBuilder({ name, initialDocument, onClose, onS
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  // Save in place: persist, then confirm with the shared workspace toast and
-  // stay in the editor (no redirect back to the gallery).
-  const handleSave = async () => {
+  // Persist current content (throws on failure so autosave/flush can react).
+  const persist = async () => {
     const el = builderRef.current;
-    if (!el || saving) return;
-    setSaving(true);
-    try {
-      const html = el.getHtml();
-      const document = el.getDocument();
-      await onSave({ name: title.trim() || 'Untitled', html, document });
-      show(`“${title.trim() || 'Untitled template'}” saved`);
-    } catch (e) {
-      show(e instanceof Error ? e.message : 'Could not save.');
-    } finally {
-      setSaving(false);
-    }
+    if (!el) throw new Error('Editor not ready');
+    const html = el.getHtml();
+    const document = el.getDocument();
+    await onSave({ name: title.trim() || 'Untitled', html, document });
   };
+
+  const { status, markDirty, flush } = useAutosave(persist);
+
+  const handleSaveDraft = async () => {
+    const ok = await flush();
+    show(ok ? `“${title.trim() || 'Untitled template'}” saved` : 'Could not save.');
+  };
+
+  const handleSendTest = () => show('Test message sent');
 
   return (
     <div className="veb">
-      <header className="veb__bar">
-        <button type="button" className="veb__close" onClick={onClose} aria-label="Close editor">
-          <Icon name="x" size={16} />
-        </button>
-        <input
-          className="veb__title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Untitled template"
-          aria-label="Template name"
-          spellCheck={false}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') e.currentTarget.blur();
-          }}
-        />
-        <span className="veb__spacer" />
-        <button
-          type="button"
-          className="veb__save"
-          onClick={() => void handleSave()}
-          disabled={!Builder || saving}
-        >
-          {saving ? 'Saving…' : 'Save to workspace'}
-        </button>
-      </header>
+      <EditorHeader
+        channel="email"
+        name={title}
+        onNameChange={(v) => {
+          setTitle(v);
+          markDirty();
+        }}
+        kind={kind}
+        status={status}
+        onBack={onClose}
+        onSendTest={handleSendTest}
+        onSaveDraft={() => void handleSaveDraft()}
+      />
 
       <div className="veb__stage">
         {loadError ? (
@@ -136,6 +132,7 @@ export default function VisualEmailBuilder({ name, initialDocument, onClose, onS
             enableAI
             onAIGenerateTemplate={builderGenerateTemplate}
             onAIRequest={builderTextAction}
+            onAutoSave={() => markDirty()}
           />
         ) : (
           <div className="veb__state">
@@ -167,66 +164,25 @@ export default function VisualEmailBuilder({ name, initialDocument, onClose, onS
           flex-direction: column;
           background: var(--surface, #fff);
         }
-        .veb__bar {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          height: 52px;
-          flex: none;
-          padding: 0 14px;
-          border-bottom: 1px solid var(--border, #ececf0);
-          background: var(--surface, #fff);
+        .veb__stage { position: relative; flex: 1; min-height: 0; }
+        .veb__state {
+          height: 100%;
+          display: grid;
+          place-content: center;
+          justify-items: center;
+          gap: 10px;
+          text-align: center;
         }
-        .veb__close {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          border: 1px solid var(--border, #ececf0);
-          border-radius: 8px;
-          background: transparent;
-          color: var(--text, #0b0b0f);
-          cursor: pointer;
+        .veb__muted { color: var(--muted, #6b7280); font-size: 13px; margin: 0; }
+        .veb__spinner {
+          width: 26px;
+          height: 26px;
+          border: 3px solid var(--border, #eee);
+          border-top-color: #ff441f;
+          border-radius: 50%;
+          animation: veb-spin 0.7s linear infinite;
         }
-        .veb__title {
-          font-weight: 700;
-          font-size: 14px;
-          color: var(--text, #0b0b0f);
-          font-family: inherit;
-          border: 1px solid transparent;
-          border-radius: 7px;
-          padding: 5px 8px;
-          margin-left: -2px;
-          background: transparent;
-          min-width: 140px;
-          max-width: 380px;
-        }
-        .veb__title::placeholder {
-          color: var(--muted, #9ca3af);
-          font-weight: 500;
-        }
-        .veb__title:hover {
-          border-color: var(--border, #ececf0);
-        }
-        .veb__title:focus {
-          outline: none;
-          border-color: #ff441f;
-          background: var(--surface, #fff);
-        }
-        .veb__spacer { flex: 1; }
-        .veb__save {
-          height: 34px;
-          padding: 0 16px;
-          border: none;
-          border-radius: 8px;
-          background: #ff441f;
-          color: #fff;
-          font-weight: 600;
-          font-size: 13px;
-          cursor: pointer;
-        }
-        .veb__save:disabled { opacity: 0.6; cursor: default; }
+        @keyframes veb-spin { to { transform: rotate(360deg); } }
         /* Shared workspace toast — same style as every other app notification. */
         .veb__toast {
           position: fixed;
@@ -256,25 +212,6 @@ export default function VisualEmailBuilder({ name, initialDocument, onClose, onS
           justify-content: center;
           flex: none;
         }
-        .veb__stage { position: relative; flex: 1; min-height: 0; }
-        .veb__state {
-          height: 100%;
-          display: grid;
-          place-content: center;
-          justify-items: center;
-          gap: 10px;
-          text-align: center;
-        }
-        .veb__muted { color: var(--muted, #6b7280); font-size: 13px; margin: 0; }
-        .veb__spinner {
-          width: 26px;
-          height: 26px;
-          border: 3px solid var(--border, #eee);
-          border-top-color: #ff441f;
-          border-radius: 50%;
-          animation: veb-spin 0.7s linear infinite;
-        }
-        @keyframes veb-spin { to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );

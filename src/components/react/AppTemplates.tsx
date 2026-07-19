@@ -16,7 +16,7 @@ import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { useToast } from './shared/useToast';
 import { CHANNEL_TABS, VIEWS, ASC_FIRST, PAGE_SIZE } from './AppTemplates.logic';
 import type { ViewKey, SortKey } from './AppTemplates.types';
-import { api, ApiError } from '@/lib/app/api';
+import { api } from '@/lib/app/api';
 import { toGalleryTemplate, type ApiTemplate } from '@/lib/app/template-map';
 import type { TEditorConfiguration } from 'email-builder-online';
 import styles from './AppTemplates.module.css';
@@ -932,25 +932,24 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           channel={builder.channel}
           name={builder.name}
           kind="template"
-          lockChannel
           onClose={() => setBuilder(null)}
           onSave={async ({ channel, name, message }) => {
-            if (!live) {
-              setBuilder(null);
-              show(name && name !== 'Untitled' ? `“${name}” saved` : 'Template saved');
-              return;
-            }
-            try {
-              const created = await api.post<ApiTemplate>('templates', {
-                name: name && name !== 'Untitled' ? name : 'Untitled template',
-                channel,
-                text: message || null,
-              });
+            const ed = builder;
+            if (!ed || !live) return;
+            const body = {
+              name: name && name !== 'Untitled' ? name : 'Untitled template',
+              channel,
+              text: message || null,
+            };
+            if (ed.id) {
+              const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
+              setTemplates((prev) =>
+                prev.map((t) => (t.id === ed.id ? toGalleryTemplate(updated) : t)),
+              );
+            } else {
+              const created = await api.post<ApiTemplate>('templates', body);
               setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
-              show(`“${created.name}” saved`);
-              setBuilder(null);
-            } catch (e) {
-              show(e instanceof ApiError ? e.message : 'Could not save template');
+              setBuilder((prev) => (prev ? { ...prev, id: created.id } : prev));
             }
           }}
         />

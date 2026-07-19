@@ -364,6 +364,7 @@ export default function CampaignsBoard() {
       {builder && builder.channel === 'email' && (
         <VisualEmailBuilder
           name={builder.name}
+          kind="campaign"
           onClose={() => setBuilder(null)}
           onSave={() => {
             // Draft kept locally; the editor shows the saved confirmation badge
@@ -377,11 +378,10 @@ export default function CampaignsBoard() {
           channel={builder.channel}
           name={builder.name}
           kind="campaign"
-          lockChannel
           onClose={() => setBuilder(null)}
-          onSave={({ name }) => {
-            setBuilder(null);
-            show(name && name !== 'Untitled' ? `“${name}” saved` : 'Draft saved');
+          onSave={() => {
+            // Draft kept locally; the editor shows the saved confirmation badge
+            // and stays open (no redirect back to the board).
           }}
         />
       )}

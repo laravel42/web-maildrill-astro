@@ -5,10 +5,12 @@ export type Props = {
   channel: ChannelType;
   name?: string | null;
   kind?: 'template' | 'campaign';
-  /** Hide the channel switcher — the channel was chosen up front. */
-  lockChannel?: boolean;
   onClose: () => void;
-  onSave: (payload: { channel: ChannelType; name: string; message: string }) => void;
+  onSave: (payload: {
+    channel: ChannelType;
+    name: string;
+    message: string;
+  }) => void | Promise<void>;
 };
 
 /** A draggable item in the email builder's structure/blocks palette. */
