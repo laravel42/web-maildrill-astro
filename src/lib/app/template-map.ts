@@ -10,6 +10,7 @@ export interface ApiTemplate {
   preheader?: string | null;
   html?: string | null;
   text?: string | null;
+  builderDoc?: Record<string, unknown> | null;
   category?: string | null;
   favorite?: boolean | null;
   createdAt?: string | null;

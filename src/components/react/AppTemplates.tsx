@@ -18,6 +18,7 @@ import { CHANNEL_TABS, VIEWS, ASC_FIRST, PAGE_SIZE } from './AppTemplates.logic'
 import type { ViewKey, SortKey } from './AppTemplates.types';
 import { api, ApiError } from '@/lib/app/api';
 import { toGalleryTemplate, type ApiTemplate } from '@/lib/app/template-map';
+import type { TEditorConfiguration } from 'email-builder-online';
 import styles from './AppTemplates.module.css';
 
 /* --------------------------------------------------------- small pieces ---- */
@@ -199,7 +200,12 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
   const [page, setPage] = useState(1);
   const [openId, setOpenId] = useState<string | null>(null);
   const { toast, show } = useToast();
-  const [builder, setBuilder] = useState<{ channel: ChannelType; name: string | null } | null>(
+  const [builder, setBuilder] = useState<{
+    channel: ChannelType;
+    name: string | null;
+    id?: string;
+    document?: TEditorConfiguration;
+  } | null>(
     null,
   );
 
@@ -802,10 +808,26 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           onFav={() => toggleFav(openTpl.id, openTpl.name)}
           onClose={() => setOpenId(null)}
           onToast={show}
-          onUse={() => {
+          onUse={async () => {
             const tpl = openTpl;
             setOpenId(null);
-            setBuilder({ channel: tpl.channel, name: tpl.name });
+            // Email templates reopen in the visual editor loaded with their saved
+            // design (builderDoc) so edits update the same template.
+            if (tpl.channel === 'email' && live) {
+              try {
+                const full = await api.get<ApiTemplate>(`templates/${tpl.id}`);
+                setBuilder({
+                  channel: 'email',
+                  name: tpl.name,
+                  id: tpl.id,
+                  document: (full.builderDoc as TEditorConfiguration | null) ?? undefined,
+                });
+              } catch {
+                setBuilder({ channel: 'email', name: tpl.name, id: tpl.id });
+              }
+            } else {
+              setBuilder({ channel: tpl.channel, name: tpl.name });
+            }
           }}
         />
       )}
@@ -815,22 +837,35 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
       {builder && builder.channel === 'email' && (
         <VisualEmailBuilder
           name={builder.name}
+          initialDocument={builder.document}
           onClose={() => setBuilder(null)}
           onSave={async ({ name, html, document }) => {
+            const ed = builder;
+            if (!ed) return;
             if (!live) {
               setBuilder(null);
               show(name && name !== 'Untitled' ? `“${name}” saved` : 'Template saved');
               return;
             }
+            const body = {
+              name: name && name !== 'Untitled' ? name : 'Untitled template',
+              channel: 'email' as const,
+              html,
+              builderDoc: document as Record<string, unknown>,
+            };
             try {
-              const created = await api.post<ApiTemplate>('templates', {
-                name: name && name !== 'Untitled' ? name : 'Untitled template',
-                channel: 'email',
-                html,
-                builderDoc: document as Record<string, unknown>,
-              });
-              setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
-              show(`“${created.name}” saved`);
+              if (ed.id) {
+                // Editing an existing template — update it in place.
+                const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
+                setTemplates((prev) =>
+                  prev.map((t) => (t.id === ed.id ? toGalleryTemplate(updated) : t)),
+                );
+                show(`“${updated.name}” updated`);
+              } else {
+                const created = await api.post<ApiTemplate>('templates', body);
+                setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
+                show(`“${created.name}” saved`);
+              }
               setBuilder(null);
             } catch (e) {
               show(e instanceof ApiError ? e.message : 'Could not save template');

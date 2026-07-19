@@ -4,6 +4,7 @@ import type { Campaign, CampaignStatus, ChannelType } from '@/types/app';
 import Icon from './Icon';
 import CampaignWizard from './CampaignWizard';
 import EmailBuilder from './EmailBuilder';
+import VisualEmailBuilder from './VisualEmailBuilder';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { ago } from './shared/time';
 import { useToast } from './shared/useToast';
@@ -358,7 +359,20 @@ export default function CampaignsBoard() {
         />
       )}
 
-      {builder && (
+      {/* Email campaigns compose in the full EmailBuilder.js visual editor;
+          SMS/WhatsApp/Voice keep the lightweight composer. */}
+      {builder && builder.channel === 'email' && (
+        <VisualEmailBuilder
+          name={builder.name}
+          onClose={() => setBuilder(null)}
+          onSave={({ name }) => {
+            setBuilder(null);
+            show(name && name !== 'Untitled' ? `“${name}” saved` : 'Draft saved');
+          }}
+        />
+      )}
+
+      {builder && builder.channel !== 'email' && (
         <EmailBuilder
           channel={builder.channel}
           name={builder.name}
