@@ -25,18 +25,20 @@ export const ALL: APIRoute = async ({ request, params, locals }) => {
   const url = new URL(request.url);
   const target = `${serviceBaseUrl()}/v1/${params.path ?? ''}${url.search}`;
 
-  const init: RequestInit = {
-    method: request.method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'content-type': request.headers.get('content-type') ?? 'application/json',
-    },
-  };
+  // Only forward a body (and its content-type) when there actually is one — a
+  // bodyless request (e.g. DELETE) must not carry `content-type: application/json`
+  // with an empty body, which Fastify rejects as a malformed JSON payload.
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+  let body: string | undefined;
   if (request.method !== 'GET' && request.method !== 'HEAD') {
-    init.body = await request.text();
+    const raw = await request.text();
+    if (raw) {
+      body = raw;
+      headers['content-type'] = request.headers.get('content-type') ?? 'application/json';
+    }
   }
 
-  const res = await fetch(target, init);
+  const res = await fetch(target, { method: request.method, headers, body });
   return new Response(res.body, {
     status: res.status,
     headers: { 'content-type': res.headers.get('content-type') ?? 'application/json' },
