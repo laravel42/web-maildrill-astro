@@ -741,6 +741,15 @@
   background: #fff;
   border: 1px solid var(--border);
   border-radius: 10px;
+  /* Scroll stays; the scrollbar is hidden (Firefox + old Edge). */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+/* WebKit/Blink */
+.pvViewport::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 .pvFrame {
   display: block;

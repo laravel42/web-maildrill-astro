@@ -210,8 +210,15 @@ function HtmlPreview({ html }: { html: string }) {
   const onLoad = () => {
     const doc = frameRef.current?.contentDocument;
     if (!doc) return;
+    // Measure before hiding overflow so the full content height is captured.
     const h = Math.max(doc.documentElement.scrollHeight, doc.body?.scrollHeight ?? 0);
     if (h > 0) setDocHeight(h);
+    // Hide the framed document's own scrollbars (the outer viewport scrolls).
+    const s = doc.createElement('style');
+    s.textContent =
+      'html,body{scrollbar-width:none;-ms-overflow-style:none;overflow:hidden}' +
+      'html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}';
+    doc.head?.appendChild(s);
   };
 
   return (
