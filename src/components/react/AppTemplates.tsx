@@ -10,6 +10,7 @@ import {
   type TplCategory,
 } from '@/lib/app/templates-data';
 import Icon from './Icon';
+import ConfirmDialog from './shared/ConfirmDialog';
 import EmailBuilder from './EmailBuilder';
 import VisualEmailBuilder from './VisualEmailBuilder';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
@@ -215,6 +216,8 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
     () => new Set((initial ?? galleryTemplates).filter((t) => t.favorite).map((t) => t.id)),
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // Set while a destructive action waits on confirmation.
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [page, setPage] = useState(1);
   const [openId, setOpenId] = useState<string | null>(null);
   const { toast, show } = useToast();
@@ -642,7 +645,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
             <button
               type="button"
               className={`${styles.bulkbtn} ${styles.bulkbtnDanger}`}
-              onClick={() => void removeSelected()}
+              onClick={() => setConfirmDelete(true)}
             >
               <Icon name="trash" size={13} /> Delete
             </button>
@@ -1041,6 +1044,19 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
               setBuilder((prev) => (prev ? { ...prev, id: created.id } : prev));
             }
+          }}
+        />
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title={`Delete ${selected.size} template${selected.size === 1 ? '' : 's'}?`}
+          message="This can’t be undone."
+          confirmLabel="Delete"
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => {
+            setConfirmDelete(false);
+            void removeSelected();
           }}
         />
       )}

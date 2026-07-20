@@ -1,0 +1,84 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 1100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: rgba(28, 25, 23, 0.4);
+  backdrop-filter: blur(3px);
+}
+
+.dialog {
+  width: 400px;
+  max-width: 100%;
+  padding: 24px;
+  background: var(--surface);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(28, 25, 23, 0.28);
+}
+
+.title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.message {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text3);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.cancel,
+.confirm,
+.confirmDanger {
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+
+.cancel {
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  color: var(--text2);
+}
+.cancel:hover {
+  border-color: var(--muted2);
+  background: var(--surface2);
+}
+
+.confirm {
+  border: none;
+  background: var(--accent);
+  color: var(--accent-contrast, #fff);
+}
+.confirm:hover {
+  background: var(--accent-hover);
+}
+
+.confirmDanger {
+  border: none;
+  background: var(--danger, #dc2626);
+  color: #fff;
+}
+.confirmDanger:hover {
+  background: var(--danger-strong, #b91c1c);
+}

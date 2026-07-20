@@ -5,6 +5,7 @@ import { toCampaign, type ApiCampaign } from '@/lib/app/campaign-map';
 import type { AudienceChoice, CampaignDraft, TemplateChoice } from './CampaignWizard.types';
 import type { Campaign, CampaignStatus, ChannelType } from '@/types/app';
 import Icon from './Icon';
+import ConfirmDialog from './shared/ConfirmDialog';
 import CampaignWizard from './CampaignWizard';
 import EmailBuilder from './EmailBuilder';
 import VisualEmailBuilder from './VisualEmailBuilder';
@@ -43,6 +44,8 @@ export default function CampaignsBoard({
   const [filterOpen, setFilterOpen] = useState(false);
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updatedAt', dir: -1 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // Set while a destructive action waits on confirmation.
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const { toast, show } = useToast(2600);
   const [wizard, setWizard] = useState<
@@ -414,7 +417,7 @@ export default function CampaignsBoard({
           <button
             type="button"
             className={`${styles.bulkbtn} ${styles.bulkbtnDanger}`}
-            onClick={() => void removeSelected()}
+            onClick={() => setConfirmDelete(true)}
           >
             Delete
           </button>
@@ -585,6 +588,19 @@ export default function CampaignsBoard({
           onSave={() => {
             // Draft kept locally; the editor shows the saved confirmation badge
             // and stays open (no redirect back to the board).
+          }}
+        />
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title={`Delete ${selected.size} campaign${selected.size === 1 ? '' : 's'}?`}
+          message="This can’t be undone."
+          confirmLabel="Delete"
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => {
+            setConfirmDelete(false);
+            void removeSelected();
           }}
         />
       )}

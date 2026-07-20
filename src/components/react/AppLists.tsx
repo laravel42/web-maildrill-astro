@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import Icon from './Icon';
+import ConfirmDialog from './shared/ConfirmDialog';
 import ListEditorModal, { type ListEditorValues } from './ListEditorModal';
 import { ago } from './shared/time';
 import { AVATAR_GRADS, fmtPct, rows as mockRows, trendPath, weeklyGain } from './AppLists.logic';
@@ -64,6 +65,9 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
       showToast(e instanceof ApiError ? e.message : 'Could not save list');
     }
   };
+
+  // Set while a delete waits on confirmation.
+  const [confirmList, setConfirmList] = useState<{ id: string; name: string } | null>(null);
 
   const deleteList = async (id: string, name: string) => {
     if (live) {
@@ -305,7 +309,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
           closing={closing}
           onClose={closeDrawer}
           onToast={showToast}
-          onDelete={() => deleteList(open.id, open.name)}
+          onDelete={() => setConfirmList({ id: open.id, name: open.name })}
           onEdit={() => {
             setEditor({ mode: 'edit', id: open.id, name: open.name, color: open.color });
             closeDrawer();
@@ -320,6 +324,20 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
           initialColor={editor.mode === 'edit' ? editor.color : undefined}
           onClose={() => setEditor(null)}
           onSave={saveList}
+        />
+      )}
+
+      {confirmList && (
+        <ConfirmDialog
+          title={`Delete “${confirmList.name}”?`}
+          message="The list is removed. Its subscribers stay in the workspace."
+          confirmLabel="Delete list"
+          onCancel={() => setConfirmList(null)}
+          onConfirm={() => {
+            const target = confirmList;
+            setConfirmList(null);
+            void deleteList(target.id, target.name);
+          }}
         />
       )}
 

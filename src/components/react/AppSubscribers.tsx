@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Icon from './Icon';
+import ConfirmDialog from './shared/ConfirmDialog';
 import type { IconName } from '@/lib/icons';
 import type { ChannelType, SubscriberStatus } from '@/types/app';
 import {
@@ -72,6 +73,9 @@ export default function AppSubscribers({
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'name', dir: 1 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // Set while a destructive action waits on confirmation.
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmSegment, setConfirmSegment] = useState<{ id: string; name: string } | null>(null);
   const [page, setPage] = useState(1);
   const [openId, setOpenId] = useState<string | null>(null);
   const { toast, show: showToast } = useToast();
@@ -725,7 +729,7 @@ export default function AppSubscribers({
             <button
               type="button"
               className={`${styles.bulkbtn} ${styles.bulkbtnDanger}`}
-              onClick={() => void removeSelected()}
+              onClick={() => setConfirmDelete(true)}
             >
               <Icon name="trash" size={13} />
               Remove
@@ -1053,10 +1057,37 @@ export default function AppSubscribers({
           edit={segModal.edit}
           onClose={() => setSegModal({ open: false, edit: null })}
           onSave={saveSegment}
-          onDelete={deleteSegment}
+          onDelete={(id) => setConfirmSegment({ id, name: segById.get(id)?.name ?? 'Segment' })}
           lists={allLists}
           tags={allTags}
           live={live}
+        />
+      )}
+
+      {confirmSegment && (
+        <ConfirmDialog
+          title={`Delete “${confirmSegment.name}”?`}
+          message="The segment is removed. Subscribers that matched it are not affected."
+          confirmLabel="Delete segment"
+          onCancel={() => setConfirmSegment(null)}
+          onConfirm={() => {
+            const target = confirmSegment;
+            setConfirmSegment(null);
+            void deleteSegment(target.id);
+          }}
+        />
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title={`Delete ${selected.size} subscriber${selected.size === 1 ? '' : 's'}?`}
+          message="This can’t be undone."
+          confirmLabel="Delete"
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => {
+            setConfirmDelete(false);
+            void removeSelected();
+          }}
         />
       )}
 

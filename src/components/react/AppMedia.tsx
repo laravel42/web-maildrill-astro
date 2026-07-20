@@ -5,6 +5,7 @@ import type { MediaFile, MediaFileType, MediaFolder } from '@/lib/app/media-data
 import { api, ApiError } from '@/lib/app/api';
 import { toMediaFile, type ApiMediaAsset } from '@/lib/app/media-map';
 import Icon from './Icon';
+import ConfirmDialog from './shared/ConfirmDialog';
 import { useToast } from './shared/useToast';
 import {
   ASC_FIRST,
@@ -69,6 +70,8 @@ export default function AppMedia({
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'uploaded', dir: -1 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // Set while a destructive action waits on confirmation.
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [page, setPage] = useState(1);
   const [openId, setOpenId] = useState<string | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -532,7 +535,7 @@ export default function AppMedia({
             <button
               type="button"
               className={`${styles.bulkBtn} ${styles.bulkBtnDanger}`}
-              onClick={() => void deleteSelected()}
+              onClick={() => setConfirmDelete(true)}
             >
               <Icon name="trash" size={13} />
               Delete
@@ -864,6 +867,19 @@ export default function AppMedia({
             </div>
           </div>
         </div>
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title={`Delete ${selected.size} file${selected.size === 1 ? '' : 's'}?`}
+          message="This can’t be undone."
+          confirmLabel="Delete"
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => {
+            setConfirmDelete(false);
+            void deleteSelected();
+          }}
+        />
       )}
 
       {toast && (
