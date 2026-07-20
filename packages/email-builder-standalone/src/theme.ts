@@ -23,6 +23,14 @@ const BRAND_BROWN = '#CC996C';
  * product. This never touches the email being composed: document text picks
  * its family from the font catalogue.
  */
+/**
+ * The host app's interactive accent and its focus tint (--accent /
+ * --accent-tint). Distinct from the editor's primary on purpose: the app uses
+ * orange for identity and indigo for interaction, and focus is interaction.
+ */
+const APP_ACCENT = '#4f46e5';
+const APP_ACCENT_TINT = '#eef0ff';
+
 const UI_FONT_FAMILY =
   '"Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
@@ -1192,14 +1200,15 @@ const getTheme = (
                 borderColor: greyColors[400],
               },
               '&.Mui-focused fieldset': {
-                borderColor: adjustedMainColor,
+                borderColor: APP_ACCENT,
                 borderWidth: 1,
               },
-              // The app rings focused inputs rather than thickening the
-              // border. Kept on the editor's own accent so a second hue
-              // isn't introduced into this surface.
+              // Focus parity with the host app: a 1px accent border plus a 3px
+              // tint ring. The app splits its accents deliberately — orange is
+              // identity, indigo is interactive — so focus is indigo even
+              // though this editor's primary is orange.
               '&.Mui-focused': {
-                boxShadow: `0 0 0 3px ${alpha(adjustedMainColor, 0.16)}`,
+                boxShadow: `0 0 0 3px ${APP_ACCENT_TINT}`,
               },
             },
             '.MuiSelect-icon': {
