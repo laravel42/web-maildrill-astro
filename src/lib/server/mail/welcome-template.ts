@@ -130,26 +130,8 @@ export function welcomeEmailHtml(firstName?: string): string {
                   </td>
                 </tr>
 
-                <!-- Meanwhile -->
                 <tr>
-                  <td class="px" style="padding:28px 40px 8px;font-family:Arial,Helvetica,sans-serif;">
-                    <p style="margin:0 0 6px;font-size:16px;line-height:1.65;color:#2b2a26;">In the meantime, get a head start:</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="px" style="padding:0 40px 24px;font-family:Arial,Helvetica,sans-serif;">
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0;">
-                      <tr>
-                        <td bgcolor="#4f46e5" style="border-radius:10px;">
-                          <a href="https://maildrill.com/guides" style="display:block;padding:13px 26px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:10px;">Explore the docs &amp; guides</a>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-
-                <tr>
-                  <td class="px" style="padding:0 40px 36px;font-family:Arial,Helvetica,sans-serif;">
+                  <td class="px" style="padding:28px 40px 36px;font-family:Arial,Helvetica,sans-serif;">
                     <p style="margin:0;font-size:15px;line-height:1.65;color:#57554e;">Questions before you're live? Just reply to this email or reach us at <a href="mailto:support@maildrill.com" style="color:#4f46e5;text-decoration:none;font-weight:bold;">support@maildrill.com</a>.</p>
                     <p style="margin:18px 0 0;font-size:15px;line-height:1.65;color:#2b2a26;">Talk soon,<br>The Maildrill team</p>
                   </td>
@@ -192,7 +174,6 @@ export function welcomeEmailText(firstName?: string): string {
     `sooner, and we'll email you the moment it's live.\n\n` +
     `Your free trial includes 100 emails, 15 SMS messages, 100 WhatsApp messages and ` +
     `60 minutes of voice calls.\n\n` +
-    `Get a head start: https://maildrill.com/guides\n\n` +
     `Questions? Reply to this email or reach us at support@maildrill.com.\n\n` +
     `Talk soon,\nThe Maildrill team`
   );
