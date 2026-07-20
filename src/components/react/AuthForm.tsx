@@ -167,134 +167,130 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     setCode(['', '', '', '', '', '']);
   }
 
-  // ---------- login: verified, handing off to the workspace ----------
-  if (mode === 'login' && stage === 'done') {
-    return (
-      <div className={styles.af} style={{ maxWidth: '400px' }}>
-        <div role="status" style={{ animation: 'pop .5s var(--ease-out) both' }}>
-          <div className={`${styles.successicon} ${styles.iconTile} ${styles.iconTileCheck}`}>
-            <svg
-              width="26"
-              height="26"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
-          </div>
-          <h1 className={styles.substep}>You&rsquo;re in</h1>
-          <p className={styles.sub} style={{ margin: 0 }}>
-            Code verified — taking you to your workspace.
-          </p>
-        </div>
+  // The login states share one column: the "Log in" header and footer stay
+  // put (see the design) and only this middle swaps. These are the middles for
+  // the post-submit states; the email form is the default middle below.
+  const codeComplete = code.join('').length === 6;
+
+  const loginDoneMiddle = (
+    <div role="status" style={{ animation: 'pop .5s var(--ease-out) both' }}>
+      <div className={`${styles.successicon} ${styles.iconTile} ${styles.iconTileCheck}`}>
+        <svg
+          width="26"
+          height="26"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
       </div>
-    );
-  }
+      <h2 className={styles.substep}>You&rsquo;re in</h2>
+      <p className={styles.sub} style={{ margin: 0 }}>
+        Code verified — taking you to your workspace.
+      </p>
+    </div>
+  );
 
-  // ---------- login: check email for the magic link (or enter the code) ----------
-  if (mode === 'login' && stage === 'code') {
-    const complete = code.join('').length === 6;
-    return (
-      <div className={styles.af} style={{ maxWidth: '400px' }}>
-        <div className={`${styles.successicon} ${styles.iconTile} ${styles.iconTileMail}`}>
-          <svg
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <rect x="2" y="4" width="20" height="16" rx="2" />
-            <path d="m22 7-10 6L2 7" />
-          </svg>
-        </div>
-        <h1 className={styles.substep}>Check your email</h1>
-        <p className={styles.sub} style={{ margin: '0 0 22px' }}>
-          We sent a magic link to <strong>{sentTo}</strong>. Click it to sign in — no password
-          needed. The link expires in 15 minutes.
-        </p>
+  const loginCodeMiddle = (
+    <div style={{ animation: 'pop .5s var(--ease-out) both' }}>
+      <div className={`${styles.successicon} ${styles.iconTile} ${styles.iconTileMail}`}>
+        <svg
+          width="26"
+          height="26"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path d="m22 7-10 6L2 7" />
+        </svg>
+      </div>
+      <h2 className={styles.substep}>Check your email</h2>
+      <p className={styles.sub} style={{ margin: '0 0 22px' }}>
+        We sent a magic link to <strong>{sentTo}</strong>. Click it to sign in — no password
+        needed. The link expires in 15 minutes.
+      </p>
 
-        <div className={styles.otpSection}>
-          <p className={styles.otpLabel}>Or enter the 6-digit code</p>
-          <form onSubmit={onVerify} noValidate>
-            <div className={styles.otp} ref={boxesRef}>
-              {code.map((d, i) => (
-                <input
-                  // Fixed six-slot list that never reorders — index is stable.
-                  key={i}
-                  className={styles.otpBox}
-                  inputMode="numeric"
-                  autoComplete={i === 0 ? 'one-time-code' : 'off'}
-                  maxLength={1}
-                  value={d}
-                  aria-label={`Digit ${i + 1}`}
-                  autoFocus={i === 0}
-                  onChange={(e) => {
-                    const v = e.target.value.replace(/\D/g, '').slice(-1);
-                    setDigit(i, v);
-                    if (v && i < 5) focusBox(i + 1);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Backspace' && !code[i] && i > 0) {
-                      e.preventDefault();
-                      setDigit(i - 1, '');
-                      focusBox(i - 1);
-                    }
-                  }}
-                  onPaste={(e) => {
+      <div className={styles.otpSection}>
+        <p className={styles.otpLabel}>Or enter the 6-digit code</p>
+        <form onSubmit={onVerify} noValidate>
+          <div className={styles.otp} ref={boxesRef}>
+            {code.map((d, i) => (
+              <input
+                // Fixed six-slot list that never reorders — index is stable.
+                key={i}
+                className={styles.otpBox}
+                inputMode="numeric"
+                autoComplete={i === 0 ? 'one-time-code' : 'off'}
+                maxLength={1}
+                value={d}
+                aria-label={`Digit ${i + 1}`}
+                autoFocus={i === 0}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, '').slice(-1);
+                  setDigit(i, v);
+                  if (v && i < 5) focusBox(i + 1);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Backspace' && !code[i] && i > 0) {
                     e.preventDefault();
-                    const t = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-                    if (!t) return;
-                    const next = ['', '', '', '', '', ''];
-                    t.split('').forEach((c, j) => (next[j] = c));
-                    setCode(next);
-                    setError(null);
-                    focusBox(Math.min(t.length, 5));
-                  }}
-                />
-              ))}
-            </div>
-            {error && (
-              <p className={styles.error} role="alert">
-                {error}
-              </p>
-            )}
-            <button
-              className={styles.submit}
-              type="submit"
-              disabled={status === 'loading' || !complete}
-            >
-              {status === 'loading' ? 'Verifying…' : 'Verify code'}
-            </button>
-          </form>
-        </div>
-
-        <div className={styles.hintCard}>
-          <p className={styles.hintTitle}>Didn&rsquo;t get it?</p>
-          <p className={styles.hintText}>
-            Check spam, or{' '}
-            <button type="button" className={styles.linkbtn} onClick={() => void onResend()}>
-              resend the link
-            </button>
-            . Wrong address?{' '}
-            <button type="button" className={styles.linkbtn} onClick={onReset}>
-              Use a different email
-            </button>
-            .
-          </p>
-        </div>
+                    setDigit(i - 1, '');
+                    focusBox(i - 1);
+                  }
+                }}
+                onPaste={(e) => {
+                  e.preventDefault();
+                  const t = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                  if (!t) return;
+                  const next = ['', '', '', '', '', ''];
+                  t.split('').forEach((c, j) => (next[j] = c));
+                  setCode(next);
+                  setError(null);
+                  focusBox(Math.min(t.length, 5));
+                }}
+              />
+            ))}
+          </div>
+          {error && (
+            <p className={styles.error} role="alert">
+              {error}
+            </p>
+          )}
+          <button
+            className={styles.submit}
+            type="submit"
+            disabled={status === 'loading' || !codeComplete}
+          >
+            {status === 'loading' ? 'Verifying…' : 'Verify code'}
+          </button>
+        </form>
       </div>
-    );
-  }
+
+      <div className={styles.hintCard}>
+        <p className={styles.hintTitle}>Didn&rsquo;t get it?</p>
+        <p className={styles.hintText}>
+          Check spam, or{' '}
+          <button type="button" className={styles.linkbtn} onClick={() => void onResend()}>
+            resend the link
+          </button>
+          . Wrong address?{' '}
+          <button type="button" className={styles.linkbtn} onClick={onReset}>
+            Use a different email
+          </button>
+          .
+        </p>
+      </div>
+    </div>
+  );
 
   // ---------- success screens (signup / forgot) ----------
   if (status === 'success' && mode === 'signup') {
@@ -437,7 +433,12 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         </>
       )}
 
-      <form onSubmit={onSubmit} noValidate method="post" action="#">
+      {mode === 'login' && stage === 'code' ? (
+        loginCodeMiddle
+      ) : mode === 'login' && stage === 'done' ? (
+        loginDoneMiddle
+      ) : (
+        <form onSubmit={onSubmit} noValidate method="post" action="#">
         {mode === 'signup' && (
           <div className={styles.row}>
             <label className={styles.field}>
@@ -514,7 +515,8 @@ export default function AuthForm({ mode }: { mode: Mode }) {
             No credit card required · Cancel anytime
           </p>
         )}
-      </form>
+        </form>
+      )}
 
       {mode === 'login' && (
         <p className={styles.foot}>
