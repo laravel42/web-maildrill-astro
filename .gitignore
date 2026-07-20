@@ -53,8 +53,9 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# design handoff (local reference only)
+# design handoff / reference (local only)
 .handoff/
+/design/
 
 # infobip pricing sync — local auth session, captured payloads, and the internal
 # rate reference (confidential negotiated rates). Never commit.
