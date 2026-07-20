@@ -30,6 +30,19 @@ Upstream manifests are written for publishing, not source consumption:
 
 ### Code patches
 
+- `email-builder-standalone/src/App/TemplatePanel/index.tsx`
+  — the undo/redo icons used SVG attributes in kebab-case (`stroke-linecap`,
+  `stroke-linejoin`, `stroke-width`), which React rejects, logging "Invalid DOM
+  property" on every render. Converted to camelCase, matching the same file's
+  other icons (lines 89-91) which already did it correctly.
+
+- `email-builder-standalone/src/App/ComponentsLibrary/LibraryHoverPreviewPortal.tsx`
+  — the hover-preview iframe declared `sandbox="allow-same-origin allow-scripts"`,
+  which makes browsers warn that the frame can escape its sandbox. `allow-scripts`
+  is unnecessary: the skeleton srcDoc carries no `<script>` and all content is
+  injected from the parent document, so it was dropped. This both silences the
+  warning and tightens the sandbox.
+
 - `email-builder-standalone/src/documents/editor/EditorContext.tsx`
   — `useBlockTypeSelected` nested a second `editorStateStore(...)` call inside a
   selector. Under zustand v5 that returns an unstable snapshot and

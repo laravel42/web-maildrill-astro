@@ -521,7 +521,12 @@ export default function LibraryHoverPreviewPortal(): React.ReactElement {
               ref={iframeRef}
               srcDoc={IFRAME_INITIAL_SRCDOC}
               title={t('componentsLibrary.preview.iframeTitle', 'Live preview')}
-              sandbox="allow-same-origin allow-scripts"
+              /* VENDOR PATCH — dropped `allow-scripts`. Combined with
+                 `allow-same-origin` the browser warns the frame can escape its
+                 sandbox, and nothing here needs it: the skeleton srcDoc carries
+                 no <script>, and all content is injected from the parent
+                 document (ensureIframeChrome + the React portal below). */
+              sandbox="allow-same-origin"
               onLoad={handleIframeLoad}
               style={{
                 position: 'absolute',
