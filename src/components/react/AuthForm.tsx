@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { signIn } from 'auth-astro/client';
 import { mockResetPassword, mockSignUp } from '@/lib/app/services';
 import type { Mode, Status } from './AuthForm.types';
@@ -29,8 +29,26 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState('');
-  const [stage, setStage] = useState<'form' | 'code'>('form');
-  const [code, setCode] = useState('');
+  const [stage, setStage] = useState<'form' | 'code' | 'done'>('form');
+  // Six positional slots so a digit typed into any box stays in place.
+  const [code, setCode] = useState<string[]>(['', '', '', '', '', '']);
+  const boxesRef = useRef<HTMLDivElement>(null);
+
+  const focusBox = (i: number) => {
+    const el = boxesRef.current?.querySelectorAll('input')[i];
+    if (el) {
+      el.focus();
+      el.select();
+    }
+  };
+  const setDigit = (i: number, v: string) => {
+    setCode((prev) => {
+      const next = prev.slice();
+      next[i] = v;
+      return next;
+    });
+    setError(null);
+  };
 
   // Surface a friendly note when an expired/used sign-in link bounced here.
   useEffect(() => {
@@ -64,7 +82,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         });
         if (!res.ok) throw new Error('Could not send your code. Try again.');
         setSentTo(email);
-        setCode('');
+        setCode(['', '', '', '', '', '']);
         setStage('code');
         setStatus('idle');
         return;
@@ -93,17 +111,18 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   async function onVerify(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     if (status === 'loading') return;
-    const clean = code.replace(/\D/g, '');
+    const clean = code.join('').replace(/\D/g, '');
     if (clean.length !== 6) {
-      setError('Enter the 6-digit code.');
+      setError('Enter all 6 digits from the email.');
       return;
     }
     setStatus('loading');
     setError(null);
     try {
       const doSignIn = signIn as (p: string, o: Record<string, unknown>) => Promise<unknown>;
-      // auth-astro: on success it redirects (resolves to undefined); on a bad
-      // code it resolves to the raw Response without navigating.
+      // redirect:false so we control the transition: on success it resolves to
+      // undefined (session cookie already set); a bad code resolves to the raw
+      // Response without navigating.
       const res = await doSignIn('credentials', {
         email: sentTo,
         code: clean,
@@ -115,74 +134,164 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         setStatus('error');
         return;
       }
-      // success — navigation to /dashboard is already underway
+      // Success: show the "You're in" beat, then hand off to the workspace.
+      setStatus('idle');
+      setStage('done');
+      window.setTimeout(() => window.location.assign('/dashboard'), 1100);
     } catch {
       setError('Something went wrong. Try again.');
       setStatus('error');
     }
   }
 
-  // ---------- login: enter the 6-digit code ----------
-  if (mode === 'login' && stage === 'code') {
+  // Send the sign-in email again for the same address.
+  async function onResend() {
+    try {
+      await fetch('/api/login-code', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: sentTo }),
+      });
+      setCode(['', '', '', '', '', '']);
+      setError(null);
+      focusBox(0);
+    } catch {
+      setError('Could not resend. Try again.');
+    }
+  }
+  // Back to the email step to use a different address.
+  function onReset() {
+    setStage('form');
+    setStatus('idle');
+    setError(null);
+    setCode(['', '', '', '', '', '']);
+  }
+
+  // ---------- login: verified, handing off to the workspace ----------
+  if (mode === 'login' && stage === 'done') {
     return (
       <div className={styles.af} style={{ maxWidth: '400px' }}>
-        <p className={styles.eyebrow}>/ Check your inbox</p>
-        <h1 className={styles.title}>Enter your code</h1>
-        <p className={styles.sub}>
-          We emailed a 6-digit code to <strong>{sentTo}</strong>.
-        </p>
-        <form onSubmit={onVerify} noValidate>
-          <input
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            aria-label="6-digit sign-in code"
-            placeholder="••••••"
-            autoFocus
-            style={{
-              width: '100%',
-              boxSizing: 'border-box',
-              textAlign: 'center',
-              fontFamily: "'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace",
-              fontSize: '30px',
-              fontWeight: 700,
-              letterSpacing: '14px',
-              padding: '16px 0 16px 14px',
-              border: '1px solid var(--af-border, #e5e7eb)',
-              borderRadius: '12px',
-              background: 'var(--af-input-bg, #fbfbfc)',
-              color: 'inherit',
-              caretColor: '#ff441f',
-            }}
-          />
-          {error && (
-            <p className={styles.error} role="alert" style={{ marginTop: '12px' }}>
-              {error}
-            </p>
-          )}
-          <button
-            className={styles.submit}
-            type="submit"
-            disabled={status === 'loading' || code.length < 6}
-            style={{ marginTop: '16px' }}
+        <div role="status" style={{ animation: 'pop .5s var(--ease-out) both' }}>
+          <div className={`${styles.successicon} ${styles.iconTile} ${styles.iconTileCheck}`}>
+            <svg
+              width="26"
+              height="26"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </div>
+          <h1 className={styles.substep}>You&rsquo;re in</h1>
+          <p className={styles.sub} style={{ margin: 0 }}>
+            Code verified — taking you to your workspace.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------- login: check email for the magic link (or enter the code) ----------
+  if (mode === 'login' && stage === 'code') {
+    const complete = code.join('').length === 6;
+    return (
+      <div className={styles.af} style={{ maxWidth: '400px' }}>
+        <div className={`${styles.successicon} ${styles.iconTile} ${styles.iconTileMail}`}>
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
           >
-            {status === 'loading' ? 'Verifying…' : 'Verify & sign in'}
-          </button>
-        </form>
-        <button
-          type="button"
-          className={styles.ghost}
-          onClick={() => {
-            setStage('form');
-            setStatus('idle');
-            setError(null);
-          }}
-          style={{ marginTop: '14px' }}
-        >
-          Use a different email
-        </button>
-        <p className={styles.foot}>Didn't get it? Check spam, or go back to resend.</p>
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <path d="m22 7-10 6L2 7" />
+          </svg>
+        </div>
+        <h1 className={styles.substep}>Check your email</h1>
+        <p className={styles.sub} style={{ margin: '0 0 22px' }}>
+          We sent a magic link to <strong>{sentTo}</strong>. Click it to sign in — no password
+          needed. The link expires in 15 minutes.
+        </p>
+
+        <div className={styles.otpSection}>
+          <p className={styles.otpLabel}>Or enter the 6-digit code</p>
+          <form onSubmit={onVerify} noValidate>
+            <div className={styles.otp} ref={boxesRef}>
+              {code.map((d, i) => (
+                <input
+                  // Fixed six-slot list that never reorders — index is stable.
+                  key={i}
+                  className={styles.otpBox}
+                  inputMode="numeric"
+                  autoComplete={i === 0 ? 'one-time-code' : 'off'}
+                  maxLength={1}
+                  value={d}
+                  aria-label={`Digit ${i + 1}`}
+                  autoFocus={i === 0}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, '').slice(-1);
+                    setDigit(i, v);
+                    if (v && i < 5) focusBox(i + 1);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Backspace' && !code[i] && i > 0) {
+                      e.preventDefault();
+                      setDigit(i - 1, '');
+                      focusBox(i - 1);
+                    }
+                  }}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const t = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                    if (!t) return;
+                    const next = ['', '', '', '', '', ''];
+                    t.split('').forEach((c, j) => (next[j] = c));
+                    setCode(next);
+                    setError(null);
+                    focusBox(Math.min(t.length, 5));
+                  }}
+                />
+              ))}
+            </div>
+            {error && (
+              <p className={styles.error} role="alert">
+                {error}
+              </p>
+            )}
+            <button
+              className={styles.submit}
+              type="submit"
+              disabled={status === 'loading' || !complete}
+            >
+              {status === 'loading' ? 'Verifying…' : 'Verify code'}
+            </button>
+          </form>
+        </div>
+
+        <div className={styles.hintCard}>
+          <p className={styles.hintTitle}>Didn&rsquo;t get it?</p>
+          <p className={styles.hintText}>
+            Check spam, or{' '}
+            <button type="button" className={styles.linkbtn} onClick={() => void onResend()}>
+              resend the link
+            </button>
+            . Wrong address?{' '}
+            <button type="button" className={styles.linkbtn} onClick={onReset}>
+              Use a different email
+            </button>
+            .
+          </p>
+        </div>
       </div>
     );
   }
@@ -282,7 +391,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     status === 'loading'
       ? 'Please wait…'
       : mode === 'login'
-        ? 'Send sign-in code'
+        ? 'Send magic link'
         : mode === 'signup'
           ? 'Start free trial'
           : 'Send reset link';
@@ -374,12 +483,6 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           </label>
         )}
 
-        {mode === 'login' && (
-          <p className={styles.note}>
-            We'll email you a 6-digit code to sign in — no password needed.
-          </p>
-        )}
-
         {mode === 'signup' && (
           <label className={styles.check}>
             <input type="checkbox" name="terms" />
@@ -400,6 +503,12 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           {submitLabel}
         </button>
 
+        {mode === 'login' && (
+          <p className={`${styles.note} ${styles.noteCenter}`}>
+            We&rsquo;ll email you a one-time sign-in link
+          </p>
+        )}
+
         {mode === 'signup' && (
           <p className={`${styles.note} ${styles.noteCenter}`}>
             No credit card required · Cancel anytime
@@ -409,7 +518,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
       {mode === 'login' && (
         <p className={styles.foot}>
-          Passwordless &amp; secure — <a href="/support">need help?</a>
+          Passwordless &amp; secure by default — <a href="/support">need help?</a>
         </p>
       )}
       {mode === 'forgot' && (

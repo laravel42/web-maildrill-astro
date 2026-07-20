@@ -8,9 +8,11 @@ interface Props {
   panelEyebrow: string;
   /** HTML — may include an inline-styled span for the orange accent word. */
   panelHeading: string;
+  /** Optional supporting line under the panel heading. */
+  panelDescription?: string;
 }
 
-const { seo, panelEyebrow, panelHeading } = Astro.props;
+const { seo, panelEyebrow, panelHeading, panelDescription } = Astro.props;
 ---
 
 <BaseLayout seo={{ ...seo, noindex: true }} bodyClass="auth-body">
@@ -30,6 +32,7 @@ const { seo, panelEyebrow, panelHeading } = Astro.props;
       <div class="auth__panel-top">
         <p class="eyebrow auth__panel-eyebrow">{panelEyebrow}</p>
         <h2 class="auth__panel-heading" set:html={panelHeading} />
+        {panelDescription && <p class="auth__panel-desc">{panelDescription}</p>}
       </div>
       <div class="auth__panel-bottom">
         <slot name="panel" />
@@ -129,11 +132,19 @@ const { seo, panelEyebrow, panelHeading } = Astro.props;
 
   .auth__panel-heading {
     font-size: clamp(1.875rem, 3.4vw, 2.75rem);
-    line-height: 1.02;
+    line-height: 1.03;
     letter-spacing: -0.035em;
     font-weight: 800;
     margin: 16px 0 0;
-    max-width: 12ch;
+    max-width: 13ch;
+  }
+
+  .auth__panel-desc {
+    font-size: 1rem;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.62);
+    margin: 18px 0 0;
+    max-width: 34ch;
   }
 
   @media (min-width: 900px) {

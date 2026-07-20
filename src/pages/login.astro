@@ -12,22 +12,23 @@ const seo = {
 const stats = [
   { n: '99.2%', l: 'Inbox rate' },
   { n: '4', l: 'Channels' },
-  { n: '12k+', l: 'Teams' },
+  { n: '1.2k+', l: 'Teams' },
 ];
 ---
 
 <AuthLayout
   seo={seo}
   panelEyebrow="Maildrill OS"
-  panelHeading={'One inbox for <span style="color:#ff441f">every</span> channel.'}
+  panelHeading={'Every channel, <span style="color:#ff441f">one</span> workspace.'}
+  panelDescription="Email, SMS, WhatsApp, and voice — sent, tracked, and answered from a single place. No more stitching tools together."
 >
   <AuthForm client:load mode="login" />
 
   <div slot="panel" class="lpanel">
     <figure class="lpanel__quote">
       <blockquote>
-        "We moved email, SMS, and WhatsApp onto Maildrill in a week. Deliverability jumped and our
-        stack got a lot simpler."
+        "We moved email, SMS, and WhatsApp onto Maildrill in a week — deliverability climbed to 99%
+        and we retired three separate tools."
       </blockquote>
       <figcaption>
         <span class="lpanel__avatar">RK</span>
