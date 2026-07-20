@@ -11,16 +11,12 @@ const seo = {
   noindex: true,
 };
 
+// What the free trial includes — matches the sign-up design's panel.
 const perks: { icon: IconName; t: string }[] = [
-  { icon: 'bolt', t: 'Email, SMS, WhatsApp & voice in one place' },
-  { icon: 'chart', t: 'Real-time deliverability & analytics' },
-  { icon: 'code', t: 'REST API, SDKs & webhooks' },
-  { icon: 'shield', t: '2FA & role-based access' },
-];
-const stats = [
-  { n: '14 days', l: 'Free trial' },
-  { n: '5 min', l: 'To first send' },
-  { n: '24/7', l: 'Support' },
+  { icon: 'bolt', t: '100 emails included' },
+  { icon: 'chart', t: '15 SMS messages' },
+  { icon: 'code', t: '100 WhatsApp messages' },
+  { icon: 'shield', t: '60 min of voice calls' },
 ];
 ---
 
@@ -28,10 +24,12 @@ const stats = [
   seo={seo}
   panelEyebrow="Get started free"
   panelHeading={'Launch your first <span style="color:#ff441f">campaign</span> in minutes.'}
+  panelGlowSwap
 >
   <AuthForm client:load mode="signup" />
 
   <div slot="panel" class="spanel">
+    <span class="spanel__badge mono">Free trial</span>
     <ul class="spanel__perks">
       {
         perks.map((p) => (
@@ -44,16 +42,6 @@ const stats = [
         ))
       }
     </ul>
-    <dl class="spanel__stats">
-      {
-        stats.map((s) => (
-          <div>
-            <dt>{s.n}</dt>
-            <dd class="mono">{s.l}</dd>
-          </div>
-        ))
-      }
-    </dl>
   </div>
 </AuthLayout>
 
@@ -62,6 +50,18 @@ const stats = [
     display: flex;
     flex-direction: column;
     gap: 14px;
+  }
+  .spanel__badge {
+    align-self: flex-start;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #ff8f79;
+    background: rgba(255, 68, 31, 0.12);
+    border: 1px solid rgba(255, 143, 121, 0.3);
+    padding: 5px 11px;
+    border-radius: 999px;
   }
   .spanel__perks {
     list-style: none;
@@ -91,25 +91,5 @@ const stats = [
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-  .spanel__stats {
-    display: flex;
-    gap: 32px;
-    margin: 8px 0 0;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
-  }
-  .spanel__stats dt {
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: #fff;
-  }
-  .spanel__stats dd {
-    margin: 2px 0 0;
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.5);
   }
 </style>

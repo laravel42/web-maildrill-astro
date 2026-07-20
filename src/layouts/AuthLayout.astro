@@ -10,9 +10,11 @@ interface Props {
   panelHeading: string;
   /** Optional supporting line under the panel heading. */
   panelDescription?: string;
+  /** Swap the corner glow colors (orange top-right) — used by sign-up. */
+  panelGlowSwap?: boolean;
 }
 
-const { seo, panelEyebrow, panelHeading, panelDescription } = Astro.props;
+const { seo, panelEyebrow, panelHeading, panelDescription, panelGlowSwap } = Astro.props;
 ---
 
 <BaseLayout seo={{ ...seo, noindex: true }} bodyClass="auth-body">
@@ -24,7 +26,7 @@ const { seo, panelEyebrow, panelHeading, panelDescription } = Astro.props;
       </div>
     </main>
 
-    <aside class="auth__panel" aria-label="Product highlight">
+    <aside class:list={['auth__panel', { 'auth__panel--swap': panelGlowSwap }]} aria-label="Product highlight">
       <div class="auth__grid" aria-hidden="true"></div>
       <div class="auth__glow auth__glow--indigo" aria-hidden="true"></div>
       <div class="auth__glow auth__glow--orange" aria-hidden="true"></div>
@@ -119,6 +121,14 @@ const { seo, panelEyebrow, panelHeading, panelDescription } = Astro.props;
     width: 360px;
     height: 360px;
     background: radial-gradient(circle, rgba(255, 68, 31, 0.35), transparent 70%);
+  }
+
+  /* Sign-up leads with the orange glow top-right and indigo bottom-left. */
+  .auth__panel--swap .auth__glow--indigo {
+    background: radial-gradient(circle, rgba(255, 68, 31, 0.4), transparent 70%);
+  }
+  .auth__panel--swap .auth__glow--orange {
+    background: radial-gradient(circle, rgba(79, 70, 229, 0.45), transparent 70%);
   }
 
   .auth__panel-top,
