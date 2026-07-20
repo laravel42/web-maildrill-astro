@@ -32,7 +32,9 @@ function getTransport(): Transporter | null {
 
 /** Address emails are sent from; falls back to a sensible default. */
 function mailFrom(): string {
-  return process.env.MAIL_FROM ?? 'Maildrill <hello@maildrill.com>';
+  // Must match the authenticated SMTP mailbox (e.g. forwardemail.net rejects a
+  // mismatched From with 550) — the domain is maildrill.app.
+  return process.env.MAIL_FROM ?? 'Maildrill <hello@maildrill.app>';
 }
 
 /**
