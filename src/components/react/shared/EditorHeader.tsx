@@ -68,6 +68,9 @@ export default function EditorHeader({
   const meta = CHANNEL[channel];
   const section = kind === 'campaign' ? 'Campaigns' : 'Templates';
   const placeholder = kind === 'campaign' ? 'Untitled campaign' : 'Untitled template';
+  // Name the thing being saved. "Save draft" said nothing about what it was,
+  // and this header is shared with the campaign editor.
+  const saveLabel = kind === 'campaign' ? 'Save campaign' : 'Save template';
 
   return (
     <header className={styles.head}>
@@ -124,7 +127,7 @@ export default function EditorHeader({
           Send test
         </button>
         <button type="button" className={`${styles.sbtn} ${styles.primary}`} onClick={onSaveDraft}>
-          Save draft
+          {saveLabel}
         </button>
       </div>
     </header>
