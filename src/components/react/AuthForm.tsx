@@ -89,7 +89,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         void fetch('/api/signup-welcome', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ email, firstName }),
+          body: JSON.stringify({ email, firstName, lastName }),
         }).catch(() => undefined);
         // No code to enter — the welcome email is the confirmation. Land on the
         // terminal "you're on the list" state.
