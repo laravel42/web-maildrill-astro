@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { signIn } from 'auth-astro/client';
 import { mockResetPassword } from '@/lib/app/services';
+import { isAllowedLoginEmail } from '@/lib/auth/login-allowlist';
 import type { Mode, Status } from './AuthForm.types';
 import styles from './AuthForm.module.css';
 
 export default function AuthForm({ mode }: { mode: Mode }) {
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | null>(null);
+  // Set when a login is attempted with an address that isn't on the allowlist.
+  const [notInvited, setNotInvited] = useState(false);
   const [sentTo, setSentTo] = useState('');
   const [stage, setStage] = useState<'form' | 'code' | 'done'>('form');
   // Six positional slots so a digit typed into any box stays in place.
@@ -50,9 +53,17 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
     setStatus('loading');
     setError(null);
+    setNotInvited(false);
     try {
       if (mode === 'login') {
         if (!email) throw new Error('Enter your work email.');
+        // Private rollout: only allowlisted accounts get a sign-in code. Anyone
+        // else is pointed at the waitlist rather than emailed a code.
+        if (!isAllowedLoginEmail(email)) {
+          setNotInvited(true);
+          setStatus('idle');
+          return;
+        }
         const res = await fetch('/api/login-code', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
@@ -441,6 +452,10 @@ export default function AuthForm({ mode }: { mode: Mode }) {
             inputMode="email"
             placeholder="you@company.com"
             required
+            onChange={() => {
+              if (notInvited) setNotInvited(false);
+              if (error) setError(null);
+            }}
           />
         </label>
 
@@ -458,6 +473,15 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           <p className={styles.error} role="alert">
             {error}
           </p>
+        )}
+
+        {mode === 'login' && notInvited && (
+          <div className={styles.gate} role="status">
+            We couldn&rsquo;t find an active account for that email. If you already signed up, your
+            confirmation email is on its way — expect it within a few days. Otherwise{' '}
+            <a href="/signup">join the waitlist</a> and you&rsquo;ll be part of the crew in 3&ndash;7
+            days.
+          </div>
         )}
 
         <button className={styles.submit} type="submit" disabled={status === 'loading'}>

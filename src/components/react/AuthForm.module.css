@@ -164,6 +164,21 @@
   font-weight: 500;
   margin: 0 0 14px;
 }
+/* Waitlist notice for a login attempt from a non-invited address. */
+.gate {
+  margin: 0 0 16px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text3);
+}
+.gate a {
+  color: var(--accent);
+  font-weight: 600;
+}
 .foot {
   font-family: var(--font-mono);
   font-size: 11px;

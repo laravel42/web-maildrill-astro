@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { serviceBaseUrl } from '@/lib/server/service';
+import { isAllowedLoginEmail } from '@/lib/auth/login-allowlist';
 
 export const prerender = false;
 
@@ -14,11 +15,16 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 
-  await fetch(`${serviceBaseUrl()}/v1/auth/code/request`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ email }),
-  }).catch(() => undefined);
+  // Private rollout: only allowlisted accounts get a code. Everyone else gets
+  // the same 202 (no enumeration) but no code is sent — the form shows them the
+  // waitlist notice. This mirrors the client gate so a direct call can't bypass.
+  if (isAllowedLoginEmail(email)) {
+    await fetch(`${serviceBaseUrl()}/v1/auth/code/request`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email }),
+    }).catch(() => undefined);
+  }
 
   return new Response(JSON.stringify({ ok: true }), {
     status: 202,
