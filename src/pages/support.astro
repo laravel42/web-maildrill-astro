@@ -70,16 +70,6 @@ const categories: Category[] = [
     delay: 0,
   },
   {
-    icon: 'code',
-    title: 'API & webhooks',
-    desc: 'Authenticate, send via the API, and stream events to your stack.',
-    count: '18',
-    color: 'var(--accent)',
-    tint: 'var(--accent-tint)',
-    href: routes.apiDocs,
-    delay: 80,
-  },
-  {
     icon: 'filter',
     title: 'Billing & account',
     desc: 'Pay-per-use billing, prepay tiers, invoices, and account settings.',
@@ -114,13 +104,6 @@ const popular: Article[] = [
     color: 'var(--success)',
     tint: 'var(--success-bg)',
     href: routes.pricing,
-  },
-  {
-    title: 'Where do I find and rotate my API key?',
-    icon: 'code',
-    color: 'var(--ch-sms)',
-    tint: 'var(--ch-sms-tint)',
-    href: routes.apiDocs,
   },
   {
     title: 'How do I warm up a new sending domain?',
@@ -216,8 +199,7 @@ const contacts: Contact[] = [
       <p class="sup-hero__popular" data-reveal style="--reveal-delay:200ms">
         Popular:
         <a href="/guides/domain-authentication">domain setup</a> ·
-        <a href={routes.pricing}>billing</a> ·
-        <a href={routes.apiDocs}>API keys</a>
+        <a href={routes.pricing}>billing</a>
       </p>
     </div>
   </section>

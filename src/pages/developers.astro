@@ -1,9 +1,16 @@
 ---
+export const prerender = false;
 import MarketingLayout from '@/layouts/MarketingLayout.astro';
 import Icon from '@/components/ui/Icon.astro';
 import { routes } from '@/config/routes';
 import { externalUrls } from '@/config/site';
 import { breadcrumbJsonLd, softwareApplicationJsonLd } from '@/lib/seo/structured-data';
+
+// Temporarily hidden: the API docs aren't part of the current rollout. The page
+// is unlinked from nav and redirects home; set HIDDEN to false (and restore the
+// nav/support links) to bring it back. Typed `boolean` so the rest still checks.
+const HIDDEN: boolean = true;
+if (HIDDEN) return Astro.redirect('/', 302);
 
 const seo = {
   title: 'API Docs — Maildrill developer platform & REST API',

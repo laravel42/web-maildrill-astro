@@ -81,14 +81,6 @@ export const marketingNav: NavGroup[] = [
         tint: 'var(--ch-whatsapp-tint)',
       },
       {
-        label: 'API docs',
-        href: routes.apiDocs,
-        description: 'REST API, SDKs & webhooks',
-        icon: 'code',
-        color: 'var(--ch-sms)',
-        tint: 'var(--ch-sms-tint)',
-      },
-      {
         label: 'Deliverability',
         href: routes.deliverability,
         description: 'Inbox placement & authentication',
@@ -125,7 +117,6 @@ export const footerNav = {
   Resources: [
     { label: 'Blog', href: routes.blog },
     { label: 'Guides', href: routes.guides },
-    { label: 'API docs', href: routes.apiDocs },
     { label: 'Support', href: routes.support },
   ],
   Company: [

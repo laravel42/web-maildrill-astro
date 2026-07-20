@@ -33,7 +33,9 @@ export default defineConfig({
         !page.includes('/dashboard') &&
         !page.includes('/login') &&
         !page.includes('/signup') &&
-        !page.includes('/forgot-password'),
+        !page.includes('/forgot-password') &&
+        // API docs are hidden for now — keep them out of the sitemap too.
+        !page.includes('/developers'),
     }),
   ],
   vite: {
