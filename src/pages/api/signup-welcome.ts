@@ -1,9 +1,13 @@
 import type { APIRoute } from 'astro';
-import { serviceBaseUrl } from '@/lib/server/service';
+import { sendWelcomeEmail } from '@/lib/server/mail/send';
 
 export const prerender = false;
 
-/** BFF: ask maildrill-service to send the sign-up welcome email. No enumeration. */
+/**
+ * Sends the sign-up welcome email — temporarily in-repo over SMTP, so it no
+ * longer depends on maildrill-service. Fire-and-forget: always 202 so the
+ * sign-up UX doesn't wait on (or fail on) delivery. No address enumeration.
+ */
 export const POST: APIRoute = async ({ request }) => {
   const body = (await request.json().catch(() => ({}))) as {
     email?: unknown;
@@ -18,11 +22,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 
-  await fetch(`${serviceBaseUrl()}/v1/auth/welcome`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ email, firstName }),
-  }).catch(() => undefined);
+  void sendWelcomeEmail(email, firstName).catch(() => undefined);
 
   return new Response(JSON.stringify({ ok: true }), {
     status: 202,
