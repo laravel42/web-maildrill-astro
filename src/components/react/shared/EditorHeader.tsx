@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import type { ChannelType } from '@/types/app';
 import Icon from '../Icon';
 import { CHANNEL } from './channels';
@@ -86,6 +86,13 @@ export default function EditorHeader({
     onSaveDraft();
   };
 
+  // Clear the badge on its own, like the app's other notifications.
+  useEffect(() => {
+    if (!nameError) return;
+    const id = window.setTimeout(() => setNameError(null), 3200);
+    return () => window.clearTimeout(id);
+  }, [nameError]);
+
   return (
     <header className={styles.head}>
       <div className={styles.left}>
@@ -115,11 +122,6 @@ export default function EditorHeader({
           <div className={styles.crumb}>
             {section} / {status === 'saved' ? 'Saved' : 'Draft'}
           </div>
-          {nameError && (
-            <div className={styles.error} role="alert">
-              {nameError}
-            </div>
-          )}
         </div>
 
         {categories && onCategoryChange && (
@@ -158,6 +160,17 @@ export default function EditorHeader({
           {saveLabel}
         </button>
       </div>
+      {nameError && (
+        /* Bottom badge in the app's toast position, in its alert tone. Sits
+           outside the header so it can never affect the bar's height, and
+           auto-dismisses like every other notification. */
+        <div className={styles.alertBadge} role="alert" style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}>
+          <span className={styles.alertBadgeIcon}>
+            <Icon name="x" size={13} stroke={3} />
+          </span>
+          {nameError}
+        </div>
+      )}
     </header>
   );
 }
