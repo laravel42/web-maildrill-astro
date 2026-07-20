@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 
 import { Reader, TReaderDocument } from '@eb/email-builder';
-import { ContentCopyOutlined, SearchOutlined } from '@mui/icons-material';
+import { ContentCopyOutlined, TerminalOutlined } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -433,7 +433,12 @@ export default function TemplatePanel({
                 onClick={openCommandPalette}
                 aria-label={tCommon('commandPalette.open', 'Open command palette')}
               >
-                <SearchOutlined fontSize="small" />
+                {/* A terminal prompt, not a magnifier: this opens the command
+                    palette (run an action) rather than searching content. Kept
+                    platform-neutral on purpose — the palette is Cmd+K on macOS
+                    but Ctrl+K elsewhere, so a Command-key glyph would be wrong
+                    for most users. */}
+                <TerminalOutlined fontSize="small" />
               </IconButton>
             </Tooltip>
             <div style={{ display: 'flex', gap: 8 }}>
