@@ -158,6 +158,9 @@
 }
 
 .sbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: var(--surface);
   border: 1px solid var(--border2);
   padding: 8px 13px;

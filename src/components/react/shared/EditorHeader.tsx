@@ -124,9 +124,11 @@ export default function EditorHeader({
           {STATUS_LABEL[status]}
         </span>
         <button type="button" className={styles.sbtn} onClick={onSendTest}>
+          <Icon name="send" size={14} />
           Send test
         </button>
         <button type="button" className={`${styles.sbtn} ${styles.primary}`} onClick={onSaveDraft}>
+          <Icon name="check" size={14} stroke={2.6} />
           {saveLabel}
         </button>
       </div>
