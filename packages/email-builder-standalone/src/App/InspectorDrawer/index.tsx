@@ -1,12 +1,7 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import {
-  KeyboardDoubleArrowLeftOutlined,
-  KeyboardDoubleArrowRightOutlined,
-  MonitorOutlined,
-  PhoneIphoneOutlined,
-} from '@mui/icons-material';
+import { KeyboardDoubleArrowLeftOutlined, KeyboardDoubleArrowRightOutlined } from '@mui/icons-material';
 import { Box, Container, IconButton, Tab, Tabs, Tooltip, useTheme } from '@mui/material';
 
 import { COMPACT_PANEL_WIDTH, HEADER_HEIGHT } from '../../constants';
@@ -53,18 +48,6 @@ export default function InspectorDrawer({ sticky, heightContent }: { sticky: boo
   }, [selectedSidebarTab]);
 
   const renderCurrentSidebarPanel = () => {
-    const screenIconSx = {
-      position: 'absolute',
-      top: '1rem',
-      right: '0.5rem',
-      color: 'primary.main',
-      fontSize: '20px',
-      cursor: 'pointer',
-      display: isCompact ? 'none' : undefined,
-    } as const;
-
-    const toggleScreen = () => setSelectedScreenSize(selectedScreenSize === 'desktop' ? 'mobile' : 'desktop');
-
     // In compact mode, always show ConfigurationPanel for blocks that have content+styles tabs
     const showConfiguration =
       selectedSidebarTab === 'block-configuration' ||
@@ -74,12 +57,6 @@ export default function InspectorDrawer({ sticky, heightContent }: { sticky: boo
     if (showConfiguration) {
       return (
         <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', flex: '1 0 auto' }}>
-          {selectedScreenSize === 'desktop' ? (
-            <MonitorOutlined sx={screenIconSx} onClick={toggleScreen} />
-          ) : (
-            <PhoneIphoneOutlined sx={screenIconSx} onClick={toggleScreen} />
-          )}
-
           <ConfigurationPanel />
         </div>
       );
@@ -88,11 +65,6 @@ export default function InspectorDrawer({ sticky, heightContent }: { sticky: boo
     return (
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', flex: '1 0 auto' }}>
         <StylesPanel />
-        {selectedScreenSize === 'desktop' ? (
-          <MonitorOutlined sx={screenIconSx} onClick={toggleScreen} />
-        ) : (
-          <PhoneIphoneOutlined sx={screenIconSx} onClick={toggleScreen} />
-        )}
       </div>
     );
   };
@@ -149,22 +121,101 @@ export default function InspectorDrawer({ sticky, heightContent }: { sticky: boo
           backgroundColor: `${t.palette.background.paper} !important`,
         })}
       >
-        {/* Expand/collapse lives outside the tab strip because compact mode
-            hides that strip entirely — inside it, the control would vanish in
-            exactly the state you need it to escape from. */}
+        {/* One row for the tab strip and the collapse control, at the same
+            height as the canvas toolbar so the two read as a single band
+            across the editor. The control stays outside <Tabs> so it survives
+            compact mode, which hides the strip. */}
         <Box
           sx={{
             position: 'sticky',
             top: 0,
             zIndex: 2,
             display: 'flex',
-            justifyContent: isCompact ? 'center' : 'flex-end',
             alignItems: 'center',
+            justifyContent: isCompact ? 'center' : 'space-between',
+            gap: 0.5,
+            minHeight: HEADER_HEIGHT,
+            height: HEADER_HEIGHT,
             px: isCompact ? 0 : 0.5,
-            pt: 0.5,
             backgroundColor: `${theme.palette.background.paper} !important`,
           }}
         >
+          <Box sx={{ display: isCompact ? 'none' : 'flex', alignItems: 'center', minWidth: 0 }}>
+          <Tabs
+            sx={{
+              backgroundColor: `${theme.palette.background.paper} !important`,
+            }}
+            value={selectedSidebarTab}
+            onChange={onChangeSideBar}
+          >
+            {selectedBlockId != null &&
+              !BLOCKS_DEFAULT_CSS.includes(typeSelected || '') && [
+                <Tab
+                  sx={{
+                    height: HEADER_HEIGHT,
+                    minHeight: HEADER_HEIGHT,
+                    // Toned down from bold/14: the tab strip labels a panel,
+                    // it shouldn't out-shout the controls beneath it.
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                  }}
+                  key="block-configuration"
+                  value="block-configuration"
+                  label={t('header.content')}
+                  icon={<ContentIcon />}
+                  iconPosition="start"
+                />,
+                <Tab
+                  sx={{
+                    height: HEADER_HEIGHT,
+                    minHeight: HEADER_HEIGHT,
+                    // Toned down from bold/14: the tab strip labels a panel,
+                    // it shouldn't out-shout the controls beneath it.
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                  }}
+                  key="css"
+                  value="css"
+                  label={t('header.styles')}
+                  icon={<StyleIcon />}
+                  iconPosition="start"
+                />,
+              ]}
+            {selectedBlockId != null &&
+              BLOCKS_DEFAULT_CSS.includes(typeSelected) && [
+                <Tab
+                  sx={{
+                    height: HEADER_HEIGHT,
+                    minHeight: HEADER_HEIGHT,
+                    // Toned down from bold/14: the tab strip labels a panel,
+                    // it shouldn't out-shout the controls beneath it.
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                  }}
+                  key="styles"
+                  value="styles"
+                  label={t('header.styles')}
+                  icon={<StyleIcon />}
+                  iconPosition="start"
+                />,
+              ]}
+            {selectedBlockId == null && (
+              <Tab
+                sx={{
+                  height: HEADER_HEIGHT,
+                  minHeight: HEADER_HEIGHT,
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                }}
+                key="styles"
+                value="styles"
+                label={t('header.styles')}
+                icon={<StyleIcon />}
+                iconPosition="start"
+              />
+            )}
+          </Tabs>
+          </Box>
           <Tooltip
             title={isCompact ? t('header.expandPanel', 'Expand panel') : t('header.collapsePanel', 'Collapse panel')}
             placement="left"
@@ -183,80 +234,6 @@ export default function InspectorDrawer({ sticky, heightContent }: { sticky: boo
               )}
             </IconButton>
           </Tooltip>
-        </Box>
-        <Box
-          sx={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 1,
-            backgroundColor: `${theme.palette.background.paper} !important`,
-            display: isCompact ? 'none' : undefined,
-          }}
-        >
-          <Tabs
-            sx={{
-              backgroundColor: `${theme.palette.background.paper} !important`,
-            }}
-            value={selectedSidebarTab}
-            onChange={onChangeSideBar}
-          >
-            {selectedBlockId != null &&
-              !BLOCKS_DEFAULT_CSS.includes(typeSelected || '') && [
-                <Tab
-                  sx={{
-                    height: HEADER_HEIGHT,
-                    minHeight: HEADER_HEIGHT,
-                    fontWeight: 'bold',
-                  }}
-                  key="block-configuration"
-                  value="block-configuration"
-                  label={t('header.content')}
-                  icon={<ContentIcon />}
-                  iconPosition="start"
-                />,
-                <Tab
-                  sx={{
-                    height: HEADER_HEIGHT,
-                    minHeight: HEADER_HEIGHT,
-                    fontWeight: 'bold',
-                  }}
-                  key="css"
-                  value="css"
-                  label={t('header.styles')}
-                  icon={<StyleIcon />}
-                  iconPosition="start"
-                />,
-              ]}
-            {selectedBlockId != null &&
-              BLOCKS_DEFAULT_CSS.includes(typeSelected) && [
-                <Tab
-                  sx={{
-                    height: HEADER_HEIGHT,
-                    minHeight: HEADER_HEIGHT,
-                    fontWeight: 'bold',
-                  }}
-                  key="styles"
-                  value="styles"
-                  label={t('header.styles')}
-                  icon={<StyleIcon />}
-                  iconPosition="start"
-                />,
-              ]}
-            {selectedBlockId == null && (
-              <Tab
-                sx={{
-                  height: HEADER_HEIGHT,
-                  minHeight: HEADER_HEIGHT,
-                  fontWeight: 'bold',
-                }}
-                key="styles"
-                value="styles"
-                label={t('header.styles')}
-                icon={<StyleIcon />}
-                iconPosition="start"
-              />
-            )}
-          </Tabs>
         </Box>
         <Container
           sx={(t) => ({

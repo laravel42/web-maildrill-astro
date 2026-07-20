@@ -148,7 +148,11 @@ export default function VisualEmailBuilder({
             galleryImages
             unsplashEnabled
             unsplashBackendUrl={typeof window !== 'undefined' ? window.location.origin : ''}
-            templateSaving
+            /* The editor's own "save as theme/template" shortcuts are off:
+               templates are managed on the Templates screen, and the buttons
+               sat between the tab strip and the first control. */
+            templateSaving={false}
+            themeSaving={false}
             componentsStorage="local"
             enableAI
             onAIGenerateTemplate={builderGenerateTemplate}

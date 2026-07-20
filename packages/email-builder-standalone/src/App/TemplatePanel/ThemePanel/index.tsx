@@ -50,27 +50,21 @@ export default function ThemePanel() {
     <Container
       sx={{
         padding: '0!important',
-        paddingTop: '1rem!important',
+        // Controls start just under the tab strip.
+        paddingTop: '6px!important',
         display: 'flex',
         flexDirection: 'column',
         flex: '1 0 auto',
         minHeight: '100%',
       }}
     >
-      {!compact && (
+      {/* Only when it has something to show — an empty row still contributed
+          its bottom margin, holding the controls away from the tab strip. */}
+      {!compact && libraryEnabled && (themeSaving || templateSaving) && (
         <Stack
           direction="row"
           sx={{ mb: 2, flexWrap: 'wrap', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}
         >
-          <Typography
-            sx={{
-              fontWeight: 'bold',
-              color: 'text.primary',
-              fontSize: '1.25rem',
-            }}
-          >
-            {t('styles.rootTitle')}
-          </Typography>
           {libraryEnabled && (
             <Stack direction="row" spacing={0.5} sx={{ width: '100%', ml: '0!important' }}>
               {themeSaving && (
