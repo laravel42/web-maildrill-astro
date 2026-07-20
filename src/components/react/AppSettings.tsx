@@ -239,14 +239,6 @@ export default function AppSettings() {
                             <div className={`${styles.trowSub} tnum`}>{r.sub}</div>
                           </div>
                           <Badge tone={r.tone}>{r.badge}</Badge>
-                          <button
-                            type="button"
-                            className={`kbtn ${styles.more}`}
-                            aria-label={`Actions for ${r.title}`}
-                            onClick={() => showToast(`${r.title} · more actions`)}
-                          >
-                            <Icon name="more" size={16} />
-                          </button>
                         </div>
                       ))}
                 </div>

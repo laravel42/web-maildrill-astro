@@ -673,7 +673,6 @@ export default function AppMedia({
                   Uploaded <span className="tnum">{sortArrow('uploaded')}</span>
                 </button>
               </div>
-              <div />
             </div>
 
             {pageRows.map((m) => (
@@ -717,16 +716,6 @@ export default function AppMedia({
                 <div className={`${styles.r} tnum ${styles.muted4}`}>{m.dim}</div>
                 <div className={`${styles.r} tnum ${styles.muted4}`}>{m.size}</div>
                 <div className={`${styles.r} tnum ${styles.muted}`}>{m.uploaded}</div>
-                <div className={styles.check} onClick={(e) => e.stopPropagation()}>
-                  <button
-                    type="button"
-                    className="kbtn"
-                    aria-label={`Actions for ${m.name}`}
-                    onClick={() => show('Row menu')}
-                  >
-                    <Icon name="more" size={16} />
-                  </button>
-                </div>
               </div>
             ))}
           </div>

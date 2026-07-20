@@ -534,7 +534,7 @@
 /* list */
 .lgrid {
   display: grid;
-  grid-template-columns: 36px 2fr 0.9fr 1fr 0.9fr 0.7fr 0.7fr 60px 36px;
+  grid-template-columns: 36px 2fr 0.9fr 1fr 0.9fr 0.7fr 0.7fr 60px;
   column-gap: 16px;
   align-items: center;
 }

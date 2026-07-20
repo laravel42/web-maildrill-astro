@@ -413,7 +413,7 @@
 }
 .lgrid {
   display: grid;
-  grid-template-columns: 36px 2fr 0.8fr 1fr 0.8fr 0.9fr 36px;
+  grid-template-columns: 36px 2fr 0.8fr 1fr 0.8fr 0.9fr;
   column-gap: 16px;
   align-items: center;
 }
@@ -837,7 +837,7 @@
 
 @media (max-width: 900px) {
   .lgrid {
-    grid-template-columns: 34px 1.8fr 0.8fr 0.9fr 34px;
+    grid-template-columns: 34px 1.8fr 0.8fr 0.9fr;
   }
   .lgrid > :nth-child(4),
   .lgrid > :nth-child(6) {

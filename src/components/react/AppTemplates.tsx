@@ -865,7 +865,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                   Fav <span className="tnum">{sortArrow('fav')}</span>
                 </button>
               </div>
-              <div />
             </div>
             {pageItems.map((t) => {
               const sel = selected.has(t.id);
@@ -908,16 +907,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                       onClick={() => toggleFav(t.id, t.name)}
                       name={t.name}
                     />
-                  </div>
-                  <div className={styles.lcenter} onClick={(e) => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      className="kbtn"
-                      aria-label={`Actions for ${t.name}`}
-                      onClick={() => show('Row menu')}
-                    >
-                      <Icon name="more" size={16} />
-                    </button>
                   </div>
                 </div>
               );

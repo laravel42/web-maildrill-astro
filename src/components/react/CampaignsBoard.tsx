@@ -507,16 +507,6 @@ export default function CampaignsBoard({
                 {c.openRate != null ? `${Math.round(c.openRate * 100)}%` : '—'}
               </div>
               <div className={styles.muted}>{ago(c.updatedAt)}</div>
-              <div className={styles.check} onClick={(e) => e.stopPropagation()}>
-                <button
-                  type="button"
-                  className="kbtn"
-                  aria-label={`Actions for ${c.name}`}
-                  onClick={() => show('Row menu')}
-                >
-                  <Icon name="more" size={16} />
-                </button>
-              </div>
             </div>
           ))
         )}

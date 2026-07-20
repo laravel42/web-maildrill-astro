@@ -254,9 +254,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.more {
-  flex: none;
-}
 .chevron {
   flex: none;
   color: var(--muted2);
