@@ -10,5 +10,5 @@ export const VIEWS = [
   { key: 'compact', label: 'Compact', icon: 'dashboard' as IconName },
 ] as const;
 
-export const ASC_FIRST = new Set<SortKey>(['name', 'cat']);
+export const ASC_FIRST = new Set<SortKey>(['name', 'channel', 'cat']);
 export const PAGE_SIZE = 10;

@@ -23,6 +23,23 @@ import styles from './AppTemplates.module.css';
 
 /* --------------------------------------------------------- small pieces ---- */
 
+/** Channel of a template, as a tinted pill. `compact` drops the label to an
+ *  icon so it fits the compact card's single row. */
+function ChannelBadge({ channel, compact = false }: { channel: ChannelType; compact?: boolean }) {
+  const m = CHANNEL[channel];
+  return (
+    <span
+      className={compact ? styles.cbadge : styles.tbadge}
+      style={{ background: m.tint, color: m.color }}
+      title={compact ? m.label : undefined}
+      aria-label={compact ? m.label : undefined}
+    >
+      <Icon name={m.icon} size={11} />
+      {!compact && m.label}
+    </span>
+  );
+}
+
 function Check({
   on,
   onClick,
@@ -239,6 +256,8 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
       switch (key) {
         case 'name':
           return t.name.toLowerCase();
+        case 'channel':
+          return t.channel;
         case 'cat':
           return t.category.toLowerCase();
         case 'updated':
@@ -757,6 +776,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                   </div>
                   <div className={styles.cfoot}>
                     <div className={styles.crow}>
+                      <ChannelBadge channel={t.channel} compact />
                       <span className={styles.cname}>{t.name}</span>
                       <span onClick={(e) => e.stopPropagation()}>
                         <StarBtn
@@ -789,6 +809,15 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                   aria-label="Sort by template"
                 >
                   Template <span className="tnum">{sortArrow('name')}</span>
+                </button>
+              </div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => toggleSort('channel')}
+                  aria-label="Sort by type"
+                >
+                  Type <span className="tnum">{sortArrow('channel')}</span>
                 </button>
               </div>
               <div>
@@ -863,6 +892,9 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                       {t.title}
                     </span>
                     <span className={styles.lname}>{t.name}</span>
+                  </div>
+                  <div>
+                    <ChannelBadge channel={t.channel} />
                   </div>
                   <div>
                     <span className={styles.catpill}>{t.category}</span>
