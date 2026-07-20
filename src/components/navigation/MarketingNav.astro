@@ -9,6 +9,9 @@ interface Props {
   active?: 'product' | 'channels' | 'pricing' | 'contact' | 'resources';
 }
 const { active } = Astro.props;
+
+// "Resources" is hidden for now (desktop + mobile) — drop this filter to restore.
+const visibleNav = marketingNav.filter((item) => item.label !== 'Resources');
 ---
 
 <header class="nav">
@@ -18,7 +21,7 @@ const { active } = Astro.props;
 
       <ul class="nav__list">
         {
-          marketingNav.map((item) =>
+          visibleNav.map((item) =>
             item.children ? (
               <li class="nav__item nav__item--menu">
                 <a
@@ -86,7 +89,7 @@ const { active } = Astro.props;
         </div>
         <MobileNav
           client:idle
-          items={marketingNav}
+          items={visibleNav}
           primaryCta={marketingCtas.primary}
           secondaryCta={marketingCtas.secondary}
         />

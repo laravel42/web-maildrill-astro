@@ -14,6 +14,9 @@ const socials = [
 // Social links are hidden for now — set HIDE_SOCIALS to false to show them.
 // Typed `boolean` so `socials` still reads as used while hidden.
 const HIDE_SOCIALS: boolean = true;
+
+// Footer nav columns ("Resources" hidden for now — drop the filter to restore).
+const footerCols = Object.entries(footerNav).filter(([heading]) => heading !== 'Resources');
 ---
 
 <footer class="foot">
@@ -51,7 +54,7 @@ const HIDE_SOCIALS: boolean = true;
     </div>
 
     {
-      Object.entries(footerNav).map(([heading, links]) => (
+      footerCols.map(([heading, links], i) => (
         <nav class="foot__col" aria-label={heading}>
           <p class="foot__colhead">{heading}</p>
           <ul>
@@ -71,6 +74,14 @@ const HIDE_SOCIALS: boolean = true;
               );
             })}
           </ul>
+          {i === footerCols.length - 1 && (
+            <p class="foot__credit">
+              Crafted by{' '}
+              <a href="https://laravel42.com" target="_blank" rel="noopener noreferrer">
+                Laravel42
+              </a>
+            </p>
+          )}
         </nav>
       ))
     }
@@ -247,6 +258,20 @@ const HIDE_SOCIALS: boolean = true;
 
   .foot__col a:hover {
     color: var(--ink-band-text);
+  }
+
+  .foot__credit {
+    margin: 20px 0 0;
+    font-size: var(--fs-sm2);
+    color: var(--ink-band-text3, var(--muted));
+  }
+  .foot__credit a {
+    color: var(--ink-band-text2);
+    font-weight: 600;
+    transition: color var(--duration) var(--ease-out);
+  }
+  .foot__credit a:hover {
+    color: var(--brand);
   }
 
   .foot__bar {
