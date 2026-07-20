@@ -19,7 +19,9 @@ import { TEditorBlock, TEditorConfiguration } from './core';
 import { migrateDocument } from './migrateDocument';
 import { getUndoRedoState, resetUndoRedoStore, updateUndoRedoState } from './UndoRedoStore';
 
-export const lateralPanel = 385;
+// Inspector width when expanded. 385 crowded the canvas; 320 still fits the
+// widest control rows (colour + swatch, paired number inputs) without wrapping.
+export const lateralPanel = 320;
 export const DEFAULT_IMAGE_PLACEHOLDER = 'https://ddc4vowthkjlv.cloudfront.net/uploads/gallery/1/69cc1b1083b90.jpg';
 
 const INSPECTOR_STORAGE_KEY = 'eb-inspector-drawer';

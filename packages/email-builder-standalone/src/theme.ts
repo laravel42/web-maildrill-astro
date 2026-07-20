@@ -1192,8 +1192,14 @@ const getTheme = (
                 borderColor: greyColors[400],
               },
               '&.Mui-focused fieldset': {
-                borderColor: textColors.secondary,
+                borderColor: adjustedMainColor,
                 borderWidth: 1,
+              },
+              // The app rings focused inputs rather than thickening the
+              // border. Kept on the editor's own accent so a second hue
+              // isn't introduced into this surface.
+              '&.Mui-focused': {
+                boxShadow: `0 0 0 3px ${alpha(adjustedMainColor, 0.16)}`,
               },
             },
             '.MuiSelect-icon': {
@@ -1201,7 +1207,9 @@ const getTheme = (
             },
           },
           input: {
-            fontSize: BASE_THEME.typography.pxToRem(14),
+            // 13.5px + 10/12 padding mirrors the app's form controls.
+            fontSize: '13.5px',
+            padding: '10px 12px',
             color: textColors.primary,
             '&.Mui-disabled': {
               WebkitTextFillColor: 'inherit',
@@ -1216,11 +1224,19 @@ const getTheme = (
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
+            // Set explicitly rather than relying on shape.borderRadius: the
+            // panel's inputs otherwise render at MUI's tighter default and
+            // read noticeably squarer than the app's controls.
+            borderRadius: '10px',
             input: {
-              padding: '8px 12px',
+              padding: '10px 12px',
             },
           },
           notchedOutline: {
+            // The visible border lives on the fieldset, and it does not inherit
+            // the root's radius — setting it here is what actually rounds the
+            // control to match the app's 10px.
+            borderRadius: '10px',
             '& legend': {
               fontSize: '0.85em',
               maxWidth: '100%',
