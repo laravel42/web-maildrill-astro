@@ -776,19 +776,21 @@ div.quill {
   z-index: 1;
 }
 
-/* Canvas dot pattern background (applied via `.eb-canvas`). */
+/* Canvas background (applied via `.eb-canvas`). Plain and uniform: the dot
+   grid competed with the email being composed, which is itself a light
+   surface. Dark mode keeps its darker canvas — going white there would blow
+   out the whole editor — but is equally flat.
+
+   Note the light value is what the canvas Box already resolves to; its MUI
+   style wins over this rule, so changing it here alone has no effect. */
 .light-email-builder .eb-canvas {
   --eb-bg-canvas: #f5f5f5;
-  --eb-dot-color: #d4d4d4;
 }
 .dark-email-builder .eb-canvas {
   --eb-bg-canvas: #434955;
-  --eb-dot-color: #5a6070;
 }
 .eb-canvas {
   background-color: var(--eb-bg-canvas);
-  background-image: radial-gradient(circle, var(--eb-dot-color) 1px, transparent 1px);
-  background-size: 20px 20px;
 }
 
 /* Accessibility: honor the user's reduced-motion preference.
