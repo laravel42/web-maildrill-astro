@@ -39,3 +39,30 @@ export function normalizeKey(raw: string): string {
     .replace(/^_+|_+$/g, '');
   return /^[a-z]/.test(slug) ? slug.slice(0, 64) : '';
 }
+
+/** One entry in the editor's merge-tag menu (structurally an editor MergeTag). */
+export type MergeTagEntry = { label?: string; value?: string; type?: 'divider' };
+/** A labelled group of merge tags (structurally an editor MergeTagGroup). */
+export type MergeTagMenu = { label: string; children: MergeTagEntry[] };
+
+/**
+ * Build the editor's merge-tag menu from the real subscriber schema: the always-
+ * present fields plus every workspace custom field. Tokens use the `{{…}}`
+ * grammar the send pipeline substitutes (`{{name}}`, `{{email}}`, `{{phone}}`,
+ * `{{attributes.<key>}}`) — so what a user inserts is exactly what gets merged,
+ * not a placeholder from another ESP.
+ */
+export function buildMergeTagMenu(fields: CustomField[]): MergeTagMenu {
+  const children: MergeTagEntry[] = [
+    { label: 'Name', value: '{{name}}' },
+    { label: 'Email', value: '{{email}}' },
+    { label: 'Phone', value: '{{phone}}' },
+  ];
+  if (fields.length > 0) {
+    children.push({ type: 'divider' });
+    for (const f of fields) {
+      children.push({ label: f.label, value: `{{attributes.${f.key}}}` });
+    }
+  }
+  return { label: 'Merge tags', children };
+}

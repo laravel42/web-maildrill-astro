@@ -89,15 +89,11 @@ export const slashMenuItems: SlashMenuItem[] = [
     description: 'Insert a merge tag variable',
     icon: <LocalOffer fontSize="small" />,
     keywords: ['merge', 'tag', 'variable', 'dynamic', 'placeholder'],
-    submenu: (() => {
-      const mergeTags = getMergeTags();
-      return mergeTags.children.map((tag: MergeTag) => ({
-        title: tag.label || '',
-        icon: tag.icon,
-        value: tag.value || '',
-        type: tag.type,
-      }));
-    })(),
+    // Submenu is filled in by getFilteredSlashMenuItems(), not here: this array
+    // is a module-level const, so an IIFE would capture getMergeTags() once at
+    // import time — before the host sets its custom tags on window — and stay
+    // stuck on the defaults. Rebuilding per open keeps it in sync.
+    submenu: [],
   },
   {
     title: 'Emoji',
@@ -128,14 +124,25 @@ export const slashMenuItems: SlashMenuItem[] = [
 
 /**
  * Filtra los items del slash menu según el estado de enableAI.
+ *
+ * The Merge Tag submenu is (re)built here rather than baked into the static
+ * `slashMenuItems`, so it reflects the host's current merge tags each time the
+ * menu opens instead of the defaults captured at module import.
  */
 export function getFilteredSlashMenuItems(enableAI: boolean): SlashMenuItem[] {
-  return slashMenuItems.filter((item) => {
-    // Si el item requiere AI y no está habilitado, no mostrarlo
-    if (item.requiresAI && !enableAI) {
-      return false;
-    }
-
-    return true;
-  });
+  return slashMenuItems
+    .filter((item) => !(item.requiresAI && !enableAI))
+    .map((item) => {
+      if (item.title !== 'Merge Tag') return item;
+      const mergeTags = getMergeTags();
+      return {
+        ...item,
+        submenu: mergeTags.children.map((tag: MergeTag) => ({
+          title: tag.label || '',
+          icon: tag.icon,
+          value: tag.value || '',
+          type: tag.type,
+        })),
+      };
+    });
 }

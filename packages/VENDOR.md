@@ -51,6 +51,16 @@ Upstream manifests are written for publishing, not source consumption:
   its own subscription and returning a primitive. **Report this upstream** — it
   is a real bug in the source, not a vendoring artifact.
 
+- `block-notion-text/src/slash-menu-items.tsx`
+  — the "Merge Tag" submenu was built by an IIFE inside the module-level
+  `slashMenuItems` const, so it captured `getMergeTags()` **once at import time**
+  — before the host sets `window.__emailBuilderCustomMergeTags` — and stayed
+  stuck on the placeholder defaults. The bubble-menu dropdown reads
+  `getMergeTags()` per render and was fine, so the two menus disagreed. Moved the
+  submenu build into `getFilteredSlashMenuItems()` (called each time the menu
+  opens) so it reflects the host's current merge tags. **Report this upstream** —
+  the slash menu should honour custom merge tags like the bubble menu does.
+
 ## Scope
 
 `packages/**` is excluded from this repo's `tsconfig` and eslint: it is upstream

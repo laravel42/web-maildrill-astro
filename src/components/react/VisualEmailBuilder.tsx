@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import type { EmailBuilderProps, EmailBuilderRef, TEditorConfiguration } from 'email-builder-standalone';
+import type {
+  EmailBuilderProps,
+  EmailBuilderRef,
+  MergeTagGroup,
+  TEditorConfiguration,
+} from 'email-builder-standalone';
+import { api } from '@/lib/app/api';
+import { buildMergeTagMenu, type CustomField } from '@/lib/app/custom-fields';
 import { builderGenerateTemplate, builderTextAction } from '@/lib/app/services';
 import { TEMPLATE_CATEGORIES } from '@/lib/app/templates-data';
 import Icon from './Icon';
@@ -51,7 +58,27 @@ export default function VisualEmailBuilder({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [title, setTitle] = useState(name ?? '');
   const [category, setCategory] = useState(initialCategory ?? TEMPLATE_CATEGORIES[1]);
+  // Real personalization tokens for the editor's merge-tag menus. Starts with
+  // the always-present subscriber fields; workspace custom fields are appended
+  // once fetched. Never the vendor's placeholder tags from another ESP.
+  const [mergeTags, setMergeTags] = useState<MergeTagGroup>(() => buildMergeTagMenu([]));
   const { toast, show } = useToast();
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const res = await api.get<{ data: CustomField[] }>('custom-fields');
+        if (alive) setMergeTags(buildMergeTagMenu(res.data));
+      } catch {
+        // No workspace/custom fields reachable — keep the default subscriber
+        // fields; the menu is still real, just without custom ones.
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // Client-only load of the editor + its stylesheet (kept out of SSR).
   useEffect(() => {
@@ -133,6 +160,7 @@ export default function VisualEmailBuilder({
           <Builder
             ref={builderRef}
             initialDocument={initialDocument}
+            mergeTags={mergeTags}
             primaryColor="#ff441f"
             secondaryColor="#ff441f"
             height="100%"
