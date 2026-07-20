@@ -3,7 +3,7 @@ import MarketingLayout from '@/layouts/MarketingLayout.astro';
 import Icon from '@/components/ui/Icon.astro';
 import type { IconName } from '@/lib/icons';
 import { routes } from '@/config/routes';
-import { organizationJsonLd, breadcrumbJsonLd, personJsonLd } from '@/lib/seo/structured-data';
+import { organizationJsonLd, breadcrumbJsonLd } from '@/lib/seo/structured-data';
 
 const seo = {
   title: 'About — Maildrill, the workspace for every message',
@@ -94,45 +94,12 @@ const stats: Stat[] = [
   { to: 38, decimals: 0, suffix: '', prefix: '', label: 'People on the team', delay: 240 },
 ];
 
-type Member = { name: string; role: string; initials: string; grad: string; delay: number };
-const team: Member[] = [
-  {
-    name: 'Elena Marsh',
-    role: 'Co-founder & CEO',
-    initials: 'EM',
-    grad: 'linear-gradient(150deg,#4f46e5,#818cf8)',
-    delay: 0,
-  },
-  {
-    name: 'Tom Whitfield',
-    role: 'Co-founder & CTO',
-    initials: 'TW',
-    grad: 'linear-gradient(150deg,#ff441f,#ff7a5c)',
-    delay: 80,
-  },
-  {
-    name: 'Priya Nair',
-    role: 'Head of Product',
-    initials: 'PN',
-    grad: 'linear-gradient(150deg,#0891b2,#22d3ee)',
-    delay: 160,
-  },
-  {
-    name: 'Marcus Reed',
-    role: 'Head of Deliverability',
-    initials: 'MR',
-    grad: 'linear-gradient(150deg,#16a34a,#4ade80)',
-    delay: 240,
-  },
-];
-
 const jsonLd = [
   organizationJsonLd(),
   breadcrumbJsonLd([
     { name: 'Home', path: routes.home },
     { name: 'About', path: routes.about },
   ]),
-  ...team.map((m) => personJsonLd(m.name, m.role)),
 ];
 ---
 
@@ -191,27 +158,6 @@ const jsonLd = [
     </div>
   </section>
 
-  {/* -------------------------------------------------------------- STORY */}
-  <section class="story">
-    <div class="container--wide">
-      <p class="eyebrow" data-reveal>Story</p>
-      <h2 class="h-section story__title" data-reveal style="--reveal-delay:60ms">
-        How we got here.
-      </h2>
-      <ol class="story__list">
-        {
-          milestones.map((m) => (
-            <li class="milestone" data-reveal style={`--reveal-delay:${m.delay}ms`}>
-              <span class="milestone__year mono">{m.year}</span>
-              <span class="milestone__title">{m.title}</span>
-              <span class="milestone__desc">{m.desc}</span>
-            </li>
-          ))
-        }
-      </ol>
-    </div>
-  </section>
-
   {/* ------------------------------------------------------ BY THE NUMBERS */}
   <section class="stats">
     <div class="stats__glow stats__glow--orange" aria-hidden="true"></div>
@@ -243,25 +189,25 @@ const jsonLd = [
     </div>
   </section>
 
-  {/* --------------------------------------------------------------- TEAM */}
-  <section class="team container--wide">
-    <p class="eyebrow" data-reveal>Team</p>
-    <h2 class="h-section team__title" data-reveal style="--reveal-delay:60ms">
-      The people behind Maildrill.
-    </h2>
-    <ul class="team__grid">
-      {
-        team.map((t) => (
-          <li class="member" data-reveal style={`--reveal-delay:${t.delay}ms`}>
-            <div class="member__avatar" style={`background:${t.grad}`} aria-hidden="true">
-              <span class="member__initials">{t.initials}</span>
-            </div>
-            <div class="member__name">{t.name}</div>
-            <div class="member__role">{t.role}</div>
-          </li>
-        ))
-      }
-    </ul>
+  {/* -------------------------------------------------------------- STORY */}
+  <section class="story">
+    <div class="container--wide">
+      <p class="eyebrow" data-reveal>Story</p>
+      <h2 class="h-section story__title" data-reveal style="--reveal-delay:60ms">
+        How we got here.
+      </h2>
+      <ol class="story__list">
+        {
+          milestones.map((m) => (
+            <li class="milestone" data-reveal style={`--reveal-delay:${m.delay}ms`}>
+              <span class="milestone__year mono">{m.year}</span>
+              <span class="milestone__title">{m.title}</span>
+              <span class="milestone__desc">{m.desc}</span>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
   </section>
 </MarketingLayout>
 
@@ -544,63 +490,4 @@ const jsonLd = [
     }
   }
 
-  /* ---- TEAM ---- */
-  .team {
-    padding-block: 80px 88px;
-  }
-
-  .team__title {
-    margin: 14px 0 44px;
-  }
-
-  .team__grid {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 20px;
-  }
-
-  .member__avatar {
-    aspect-ratio: 1;
-    border-radius: 18px;
-    display: flex;
-    align-items: flex-end;
-    padding: 16px;
-    margin-bottom: 14px;
-  }
-
-  .member__initials {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.85);
-    /* Fixed dark ink: the chip is always light over a colored gradient, so the
-       theme-flipping --ink token would render invisible in dark mode. */
-    color: #1f1e1b;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 17px;
-  }
-
-  .member__name {
-    font-size: 17px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    color: var(--text);
-  }
-
-  .member__role {
-    font-size: 14px;
-    color: var(--text4);
-  }
-
-  @media (max-width: 900px) {
-    .team__grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
 </style>
