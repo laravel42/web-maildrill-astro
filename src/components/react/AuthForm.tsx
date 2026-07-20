@@ -80,9 +80,10 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ email, firstName }),
         }).catch(() => undefined);
+        // No code to enter — the welcome email is the confirmation. Land on the
+        // terminal "you're on the list" state.
         setSentTo(email);
-        setCode(['', '', '', '', '', '']);
-        setStage('code');
+        setStage('done');
         setStatus('idle');
         return;
       }
@@ -101,13 +102,6 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     const clean = code.join('').replace(/\D/g, '');
     if (clean.length !== 6) {
       setError('Enter all 6 digits from the email.');
-      return;
-    }
-    // Signup has no account to sign into yet — confirm the address and land on
-    // the "you're all set" beat while the workspace is provisioned.
-    if (mode === 'signup') {
-      setStatus('idle');
-      setStage('done');
       return;
     }
     setStatus('loading');
@@ -168,33 +162,67 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   // stay put per the design and only this middle swaps. Copy differs by mode.
   const codeComplete = code.join('').length === 6;
   const isSignup = mode === 'signup';
-  const doneHeading = isSignup ? 'You’re all set' : 'You’re in';
-  const doneMessage = isSignup
-    ? 'Email confirmed — spinning up your workspace.'
-    : 'Code verified — taking you to your workspace.';
-  const resetLabel = isSignup ? 'Start over' : 'Use a different email';
+  const resetLabel = 'Use a different email';
 
+  // The terminal state. Login reaches it after verifying a code ("you're in");
+  // sign-up reaches it straight from submit — the welcome email is the
+  // confirmation, so it reads "you're on the list" and points at the inbox.
   const doneMiddle = (
     <div role="status" style={{ animation: 'pop .5s var(--ease-out) both' }}>
-      <div className={`${styles.successicon} ${styles.iconTile} ${styles.iconTileCheck}`}>
-        <svg
-          width="26"
-          height="26"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M20 6 9 17l-5-5" />
-        </svg>
+      <div
+        className={`${styles.successicon} ${styles.iconTile} ${
+          isSignup ? styles.iconTileMail : styles.iconTileCheck
+        }`}
+      >
+        {isSignup ? (
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <path d="m22 7-10 6L2 7" />
+          </svg>
+        ) : (
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+        )}
       </div>
-      <h2 className={styles.substep}>{doneHeading}</h2>
-      <p className={styles.sub} style={{ margin: 0 }}>
-        {doneMessage}
-      </p>
+      <h2 className={styles.substep}>{isSignup ? 'You’re on the list' : 'You’re in'}</h2>
+      {isSignup ? (
+        <>
+          <p className={styles.sub} style={{ margin: '0 0 16px' }}>
+            We’re thrilled to have you. Because demand has been far higher than we expected, we’re
+            rolling out new accounts in controlled waves to keep deliverability and support quality
+            high for everyone.
+          </p>
+          <p className={styles.sub} style={{ margin: 0 }}>
+            Your workspace will be ready within the next 7 days — and most likely sooner. You don’t
+            need to do anything: we’ll email you the moment it’s live.
+          </p>
+        </>
+      ) : (
+        <p className={styles.sub} style={{ margin: 0 }}>
+          Code verified — taking you to your workspace.
+        </p>
+      )}
     </div>
   );
 
@@ -218,10 +246,8 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       </div>
       <h2 className={styles.substep}>Check your email</h2>
       <p className={styles.sub} style={{ margin: '0 0 22px' }}>
-        We sent a magic link to <strong>{sentTo}</strong>.{' '}
-        {isSignup
-          ? 'Click it to confirm your address and finish setting up your workspace — no password needed.'
-          : 'Click it to sign in — no password needed. The link expires in 15 minutes.'}
+        We sent a magic link to <strong>{sentTo}</strong>. Click it to sign in — no password
+        needed. The link expires in 15 minutes.
       </p>
 
       <div className={styles.otpSection}>
