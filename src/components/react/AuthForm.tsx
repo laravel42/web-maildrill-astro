@@ -356,7 +356,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       : mode === 'login'
         ? 'Send magic link'
         : mode === 'signup'
-          ? 'Send magic link'
+          ? 'Start free trial'
           : 'Send reset link';
 
   return (
