@@ -189,3 +189,21 @@
 .primary:hover {
   background: var(--accent-hover);
 }
+
+/* Name validation — the input turns invalid and the message sits under the
+   crumb, so the error appears next to the field it refers to rather than as a
+   transient toast the user may miss. */
+.nameInvalid {
+  border-color: var(--danger, #dc2626);
+}
+.nameInvalid:focus {
+  border-color: var(--danger, #dc2626);
+  box-shadow: 0 0 0 3px var(--danger-bg, #fee2e2);
+}
+.error {
+  margin-top: 2px;
+  color: var(--danger, #dc2626);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.4;
+}

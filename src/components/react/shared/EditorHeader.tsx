@@ -1,4 +1,4 @@
-import type { ChangeEvent } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import type { ChannelType } from '@/types/app';
 import Icon from '../Icon';
 import { CHANNEL } from './channels';
@@ -71,6 +71,20 @@ export default function EditorHeader({
   // Name the thing being saved. "Save draft" said nothing about what it was,
   // and this header is shared with the campaign editor.
   const saveLabel = kind === 'campaign' ? 'Save campaign' : 'Save template';
+  const [nameError, setNameError] = useState<string | null>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  /* An unnamed template is unfindable in the gallery, so saving is blocked
+     rather than silently filed as "Untitled". */
+  const handleSave = () => {
+    if (!name.trim()) {
+      setNameError(`Give this ${kind} a name before saving.`);
+      nameRef.current?.focus();
+      return;
+    }
+    setNameError(null);
+    onSaveDraft();
+  };
 
   return (
     <header className={styles.head}>
@@ -83,9 +97,14 @@ export default function EditorHeader({
         </span>
         <div className={styles.titlecol}>
           <input
-            className={styles.name}
+            ref={nameRef}
+            className={`${styles.name}${nameError ? ` ${styles.nameInvalid}` : ''}`}
             value={name}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => onNameChange(e.target.value)}
+            aria-invalid={nameError ? true : undefined}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              if (nameError) setNameError(null);
+              onNameChange(e.target.value);
+            }}
             placeholder={placeholder}
             aria-label={`${section} name`}
             spellCheck={false}
@@ -93,7 +112,14 @@ export default function EditorHeader({
               if (e.key === 'Enter') e.currentTarget.blur();
             }}
           />
-          <div className={styles.crumb}>{section} / Draft</div>
+          <div className={styles.crumb}>
+            {section} / {status === 'saved' ? 'Saved' : 'Draft'}
+          </div>
+          {nameError && (
+            <div className={styles.error} role="alert">
+              {nameError}
+            </div>
+          )}
         </div>
 
         {categories && onCategoryChange && (
@@ -127,7 +153,7 @@ export default function EditorHeader({
           <Icon name="send" size={14} />
           Send test
         </button>
-        <button type="button" className={`${styles.sbtn} ${styles.primary}`} onClick={onSaveDraft}>
+        <button type="button" className={`${styles.sbtn} ${styles.primary}`} onClick={handleSave}>
           <Icon name="check" size={14} stroke={2.6} />
           {saveLabel}
         </button>

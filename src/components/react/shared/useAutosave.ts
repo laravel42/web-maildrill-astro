@@ -17,6 +17,10 @@ export function useAutosave(save: () => Promise<void> | void, interval = 5000) {
 
   const markDirty = useCallback(() => {
     dirty.current = true;
+    // Editing after a save makes the draft dirty again, so stop reporting
+    // "saved" — otherwise the header keeps claiming a saved state while the
+    // user types. A save already in flight is left alone.
+    setStatus((s) => (s === 'saved' ? 'idle' : s));
   }, []);
 
   const run = useCallback(async (force: boolean): Promise<boolean> => {
