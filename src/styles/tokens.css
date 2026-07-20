@@ -119,6 +119,7 @@
   /* Typography */
   --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-hand: 'Caveat', 'Segoe Script', 'Bradley Hand', cursive;
   --fs-xs: 0.75rem; /* 12 */
   --fs-sm: 0.8125rem; /* 13 */
   --fs-sm2: 0.875rem; /* 14 */

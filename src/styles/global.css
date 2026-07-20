@@ -23,6 +23,16 @@
     format('woff2');
 }
 
+/* Handwritten accent (footer credit). */
+@font-face {
+  font-family: 'Caveat';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/npm/@fontsource/caveat@5/files/caveat-latin-600-normal.woff2')
+    format('woff2');
+}
+
 *,
 *::before,
 *::after {

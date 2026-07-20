@@ -54,7 +54,7 @@ const footerCols = Object.entries(footerNav).filter(([heading]) => heading !== '
     </div>
 
     {
-      footerCols.map(([heading, links], i) => (
+      footerCols.map(([heading, links]) => (
         <nav class="foot__col" aria-label={heading}>
           <p class="foot__colhead">{heading}</p>
           <ul>
@@ -74,17 +74,17 @@ const footerCols = Object.entries(footerNav).filter(([heading]) => heading !== '
               );
             })}
           </ul>
-          {i === footerCols.length - 1 && (
-            <p class="foot__credit">
-              Crafted by{' '}
-              <a href="https://laravel42.com" target="_blank" rel="noopener noreferrer">
-                Laravel42
-              </a>
-            </p>
-          )}
         </nav>
       ))
     }
+
+    {/* Fourth column — crafted-by credit */}
+    <p class="foot__credit">
+      Crafted by{' '}
+      <a href="https://laravel42.com" target="_blank" rel="noopener noreferrer">
+        Laravel42
+      </a>
+    </p>
   </div>
 
   <div class="foot__bar container--wide">
@@ -261,13 +261,16 @@ const footerCols = Object.entries(footerNav).filter(([heading]) => heading !== '
   }
 
   .foot__credit {
-    margin: 20px 0 0;
-    font-size: var(--fs-sm2);
-    color: var(--ink-band-text3, var(--muted));
+    align-self: start;
+    margin: 0;
+    font-family: var(--font-hand);
+    font-size: 22px;
+    line-height: 1.25;
+    color: var(--ink-band-text2);
   }
   .foot__credit a {
-    color: var(--ink-band-text2);
-    font-weight: 600;
+    color: var(--ink-band-text);
+    font-weight: 700;
     transition: color var(--duration) var(--ease-out);
   }
   .foot__credit a:hover {
