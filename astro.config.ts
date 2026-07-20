@@ -44,6 +44,12 @@ export default defineConfig({
         '@': '/src',
       },
     },
+    // nodemailer is a Node-only CJS dep (used by the SMTP welcome sender) —
+    // keep it out of Vite's SSR transform/optimizer so it's required at runtime
+    // (avoids a transient 500 on the first request that imports it in dev).
+    ssr: {
+      external: ['nodemailer'],
+    },
   },
   redirects: {
     '/privacy-policy': '/legal/privacy',
