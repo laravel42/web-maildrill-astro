@@ -214,8 +214,10 @@ export default function AuthForm({ mode }: { mode: Mode }) {
             high for everyone.
           </p>
           <p className={styles.sub} style={{ margin: 0 }}>
-            Your workspace will be ready within the next 7 days — and most likely sooner. You don’t
-            need to do anything: we’ll email you the moment it’s live.
+            <strong style={{ color: 'var(--text)', fontWeight: 600 }}>
+              Your workspace will be ready within the next 7 days — and most likely sooner.
+            </strong>{' '}
+            You don’t need to do anything: we’ll email you the moment it’s live.
           </p>
         </>
       ) : (
