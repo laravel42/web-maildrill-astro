@@ -55,11 +55,21 @@ const HIDE_SOCIALS: boolean = true;
         <nav class="foot__col" aria-label={heading}>
           <p class="foot__colhead">{heading}</p>
           <ul>
-            {links.map((link) => (
-              <li>
-                <a href={link.href}>{link.label}</a>
-              </li>
-            ))}
+            {links.map((link) => {
+              // Off-site links (e.g. the Team site) open in a new tab.
+              const external = link.href.startsWith('http');
+              return (
+                <li>
+                  <a
+                    href={link.href}
+                    target={external ? '_blank' : undefined}
+                    rel={external ? 'noopener noreferrer' : undefined}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         </nav>
       ))

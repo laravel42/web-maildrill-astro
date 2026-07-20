@@ -118,6 +118,7 @@ export const footerNav = {
     { label: 'Blog', href: routes.blog },
     { label: 'Guides', href: routes.guides },
     { label: 'Support', href: routes.support },
+    { label: 'Team', href: 'https://laravel42.com' },
   ],
   Company: [
     { label: 'About', href: routes.about },
