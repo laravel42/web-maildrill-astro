@@ -73,8 +73,13 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           throw new Error('Please complete all fields.');
         }
         if (!terms) throw new Error('Please accept the Terms and Privacy Policy.');
-        // Passwordless: like login, we email a link + code. The account is
-        // provisioned on verify, so the flow mirrors the sign-in stages.
+        // All required fields are in — send the welcome email. Fire-and-forget:
+        // the endpoint is 202-always and the UX shouldn't wait on delivery.
+        void fetch('/api/signup-welcome', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ email, firstName }),
+        }).catch(() => undefined);
         setSentTo(email);
         setCode(['', '', '', '', '', '']);
         setStage('code');
