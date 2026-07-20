@@ -79,29 +79,57 @@
   padding: 0 6px;
 }
 
-.category {
-  flex: none;
-  height: 30px;
+/* Category picker — a radio group drawn as pills. The native inputs stay in
+   the DOM (focusable, arrow-key navigable) but are visually hidden; the
+   adjacent span is what you see, and CSS drives its checked/focus states so no
+   className juggling is needed in JSX. */
+.categories {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin-left: 6px;
-  padding: 0 8px;
+  padding: 3px;
   border: 1px solid var(--border2);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text2);
-  font-family: inherit;
-  font-size: 12.5px;
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    background 0.15s ease;
-}
-.category:hover {
-  border-color: var(--muted2);
+  border-radius: 999px;
   background: var(--surface2);
 }
-.category:focus {
-  outline: none;
-  border-color: var(--accent, #ff441f);
+.pill {
+  display: inline-flex;
+  position: relative;
+}
+.pillInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.pillLabel {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.pillLabel:hover {
+  color: var(--text2);
+}
+.pillInput:checked + .pillLabel {
+  background: var(--surface);
+  color: var(--text2);
+  box-shadow: 0 1px 2px rgba(30, 27, 22, 0.1);
+}
+.pillInput:focus-visible + .pillLabel {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .right {

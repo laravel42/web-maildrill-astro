@@ -94,18 +94,24 @@ export default function EditorHeader({
         </div>
 
         {categories && onCategoryChange && (
-          <select
-            className={styles.category}
-            value={category ?? categories[0]}
-            onChange={(e: ChangeEvent<HTMLSelectElement>) => onCategoryChange(e.target.value)}
-            aria-label="Category"
-          >
+          /* Radio group rather than a select: with four options the choices are
+             worth showing, and native radios give arrow-key navigation and
+             screen-reader semantics for free — the pills are the labels. */
+          <div className={styles.categories} role="radiogroup" aria-label="Category">
             {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
+              <label key={c} className={styles.pill}>
+                <input
+                  type="radio"
+                  name="editor-category"
+                  className={styles.pillInput}
+                  value={c}
+                  checked={(category ?? categories[0]) === c}
+                  onChange={() => onCategoryChange(c)}
+                />
+                <span className={styles.pillLabel}>{c}</span>
+              </label>
             ))}
-          </select>
+          </div>
         )}
       </div>
 
