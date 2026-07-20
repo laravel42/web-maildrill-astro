@@ -1099,9 +1099,6 @@ function TemplateDrawer({
     ['Category', t.category],
     ['Channel', CHANNEL[t.channel].label],
     ['Last edited', t.updated],
-    ['Used in', '3 campaigns'],
-    ['Blocks', 'Header · Hero · CTA · Footer'],
-    ['Responsive', 'Mobile optimized'],
   ];
 
   return (
