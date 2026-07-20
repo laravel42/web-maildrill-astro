@@ -58,6 +58,7 @@ export function toRichSubscribers(rows: ApiSubscriber[]): RichSubscriber[] {
     return {
       id: r.id,
       email: r.email,
+      phone: r.phone ?? '',
       name: r.name || r.email,
       status: mapStatus(r.status),
       lists: (r.lists ?? []).map((l) => l.name),

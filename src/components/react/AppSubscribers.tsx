@@ -991,6 +991,7 @@ export default function AppSubscribers({
         <SubscriberEditorModal
           mode={subEditor.mode}
           initialEmail={subEditor.mode === 'edit' ? subEditor.sub.email : ''}
+          initialPhone={subEditor.mode === 'edit' ? subEditor.sub.phone : ''}
           initialName={subEditor.mode === 'edit' ? subEditor.sub.name : ''}
           initialStatus={subEditor.mode === 'edit' ? subEditor.sub.status : 'active'}
           initialList={subEditor.mode === 'edit' ? subEditor.sub.listIds[0] : undefined}
@@ -1013,6 +1014,7 @@ export default function AppSubscribers({
               if (editor.mode === 'create') {
                 const created = await api.post<ApiSubscriber>('subscribers', {
                   email: values.email,
+                  phone: values.phone || undefined,
                   name: values.name || undefined,
                   status: values.status,
                   attributes: { tags: values.tags },
@@ -1025,6 +1027,8 @@ export default function AppSubscribers({
               } else {
                 const updated = await api.patch<ApiSubscriber>(`subscribers/${editor.sub.id}`, {
                   name: values.name || null,
+                  // Empty clears the number; a value updates it.
+                  phone: values.phone || null,
                   status: values.status,
                   attributes: {
                     tags: values.tags,
@@ -1337,6 +1341,10 @@ function SubscriberDrawer({
             <div className="adetail">
               <span className="adetail__k">Lists</span>
               <span className="adetail__v">{sub.lists.join(', ')}</span>
+            </div>
+            <div className="adetail">
+              <span className="adetail__k">Phone</span>
+              <span className="adetail__v">{sub.phone || '—'}</span>
             </div>
             <div className="adetail">
               <span className="adetail__k">Location</span>

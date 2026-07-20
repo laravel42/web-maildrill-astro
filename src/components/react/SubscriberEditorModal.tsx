@@ -17,6 +17,7 @@ export type { SubscriberEditorValues } from './SubscriberEditorModal.types';
 type Props = {
   mode: 'create' | 'edit';
   initialEmail?: string;
+  initialPhone?: string;
   initialName?: string;
   initialStatus?: SubscriberStatus;
   /** Currently selected list id, when editing. */
@@ -31,6 +32,7 @@ type Props = {
 export default function SubscriberEditorModal({
   mode,
   initialEmail = '',
+  initialPhone = '',
   initialName = '',
   initialStatus = 'active',
   initialList,
@@ -40,6 +42,7 @@ export default function SubscriberEditorModal({
   onSave,
 }: Props) {
   const [email, setEmail] = useState(initialEmail);
+  const [phone, setPhone] = useState(initialPhone);
   const [name, setName] = useState(initialName);
   const [status, setStatus] = useState<SubscriberStatus>(initialStatus);
   const [list, setList] = useState(initialList ?? '');
@@ -62,7 +65,7 @@ export default function SubscriberEditorModal({
 
   const submit = () => {
     if (!canSave) return;
-    onSave({ email: email.trim(), name: name.trim(), status, list, tags });
+    onSave({ email: email.trim(), phone: phone.trim(), name: name.trim(), status, list, tags });
   };
 
   return (
@@ -105,6 +108,20 @@ export default function SubscriberEditorModal({
             value={name}
             placeholder="Jane Doe"
             onChange={(e) => setName(e.target.value)}
+          />
+
+          <label className={styles.label} htmlFor="sem-phone">
+            Phone <span className={styles.opt}>(optional)</span>
+          </label>
+          {/* Addressing field for SMS/WhatsApp/Voice, the same way email is for
+              email. Kept permissive: numbers vary too much to validate here. */}
+          <input
+            id="sem-phone"
+            type="tel"
+            className={styles.input}
+            value={phone}
+            placeholder="+1 555 123 4567"
+            onChange={(e) => setPhone(e.target.value)}
           />
 
           <div className={styles.grid}>

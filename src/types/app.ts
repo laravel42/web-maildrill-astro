@@ -21,6 +21,8 @@ export type SubscriberStatus = 'active' | 'unsubscribed' | 'bounced';
 export type Subscriber = {
   id: string;
   email: string;
+  /** SMS/WhatsApp/Voice addressing field; empty string when none is on file. */
+  phone: string;
   name: string;
   status: SubscriberStatus;
   lists: string[];
