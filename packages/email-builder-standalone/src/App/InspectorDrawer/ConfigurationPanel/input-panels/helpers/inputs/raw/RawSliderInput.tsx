@@ -10,10 +10,13 @@ const CustomNumberInput = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   border: `1px solid ${theme.palette.divider}`,
-  borderRadius: '8px',
+  borderRadius: '10px',
   padding: '4px',
   minWidth: 58,
   maxWidth: 'fit-content',
+  // Never absorb the row's overflow — the slider does that. Without this the
+  // box is squeezed and its stepper column rides over the unit label.
+  flexShrink: 0,
   backgroundColor: theme.palette.background.paper,
   '&:hover': {
     borderColor: theme.palette.primary.main,
@@ -148,11 +151,19 @@ export default function RawSliderInput({
   return (
     <FieldContainer>
       <LabelProperty label={label} />
-      <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+      {/* spacing 1 (not 2) and a shrinkable slider: at the panel's width the
+          old layout pushed the number box into the unit label. Everything
+          except the slider is flexShrink: 0 so the slider absorbs the squeeze. */}
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ alignItems: 'center', justifyContent: 'space-between', width: '100%', minWidth: 0 }}
+      >
         <Box sx={{ minWidth: 24, lineHeight: 1, flexShrink: 0 }}>{iconLabel}</Box>
 
         <Slider
           {...props}
+          sx={{ flex: 1, minWidth: 0 }}
           value={safeValue}
           min={min}
           max={max || 1000}
@@ -201,7 +212,11 @@ export default function RawSliderInput({
           </Box>
         </CustomNumberInput>
 
-        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '16px', ml: '4px!important' }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ fontSize: '12px', flexShrink: 0, ml: '4px!important' }}
+        >
           {units}
         </Typography>
       </Stack>

@@ -8,7 +8,9 @@ import React from 'react';
  * but `.map` on a single child throws `children.map is not a function`.
  */
 const FieldContainer = ({ children }) => {
-  return <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>{children}</div>;
+  // 4px: the label already carries its own small bottom margin, and anything
+  // larger reads as a gap rather than a label attached to its control.
+  return <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>{children}</div>;
 };
 
 export default FieldContainer;

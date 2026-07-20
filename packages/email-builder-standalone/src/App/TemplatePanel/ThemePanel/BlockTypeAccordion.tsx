@@ -19,6 +19,8 @@ type BlockTypeAccordionProps = {
    * instead of having to expand it manually.
    */
   defaultExpanded?: boolean;
+  /** Render only the fields — the pill selector supplies the heading. */
+  headless?: boolean;
 };
 
 /**
@@ -29,12 +31,29 @@ type BlockTypeAccordionProps = {
  * active override, so the per-block status is visible without
  * expanding everything.
  */
-export default function BlockTypeAccordion({ blockType, spec, defaultExpanded = false }: BlockTypeAccordionProps) {
+export default function BlockTypeAccordion({
+  blockType,
+  spec,
+  defaultExpanded = false,
+  headless = false,
+}: BlockTypeAccordionProps) {
   const { t } = useTranslation('inspector');
   const override = useThemeBlockOverride(blockType);
   const compact = useCompactMode();
   const isModified = countOverrides(override) > 0;
   const Icon = spec.icon;
+
+  const fields = (
+    <Stack spacing={2}>
+      {spec.fields.map((field) => (
+        <ThemeFieldRow key={`${field.section}.${field.key}`} blockType={blockType} field={field} />
+      ))}
+    </Stack>
+  );
+
+  if (headless) {
+    return <Box sx={{ pt: 1, pb: 3 }}>{fields}</Box>;
+  }
 
   return (
     <Accordion
@@ -109,13 +128,7 @@ export default function BlockTypeAccordion({ blockType, spec, defaultExpanded = 
           </Stack>
         )}
       </AccordionSummary>
-      <AccordionDetails sx={{ p: 0, pb: 3 }}>
-        <Stack spacing={2}>
-          {spec.fields.map((field) => (
-            <ThemeFieldRow key={`${field.section}.${field.key}`} blockType={blockType} field={field} />
-          ))}
-        </Stack>
-      </AccordionDetails>
+      <AccordionDetails sx={{ p: 0, pb: 3 }}>{fields}</AccordionDetails>
     </Accordion>
   );
 }

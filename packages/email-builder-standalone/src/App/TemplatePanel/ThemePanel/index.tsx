@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { BookmarkAddOutlined, FileDownloadOutlined } from '@mui/icons-material';
@@ -43,6 +43,15 @@ export default function ThemePanel() {
   const templateSaving = useTemplateSaving();
   const themeSaving = useThemeSaving();
   const compact = useCompactMode();
+  // Which theme section the pill selector is showing.
+  const [section, setSection] = useState<'root' | (typeof THEME_BLOCK_ORDER)[number]>('root');
+  const THEME_SECTIONS = useMemo(
+    () => [
+      { id: 'root' as const, label: t('theme.blocks.root.title') },
+      ...THEME_BLOCK_ORDER.map((b) => ({ id: b, label: t(THEME_BLOCK_REGISTRY[b].titleKey) })),
+    ],
+    [t]
+  );
   const [saveThemeOpen, setSaveThemeOpen] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
 
@@ -101,17 +110,70 @@ export default function ThemePanel() {
         </Stack>
       )}
 
-      <Box>
-        <RootAccordion defaultExpanded />
-        {THEME_BLOCK_ORDER.map((blockType) => (
-          <BlockTypeAccordion
-            key={blockType}
-            blockType={blockType}
-            spec={THEME_BLOCK_REGISTRY[blockType]}
-            defaultExpanded={false}
-          />
-        ))}
-      </Box>
+      {/* Pill selector rather than stacked accordions: one section is visible
+          at a time, so the controls you want are never buried under six
+          collapsed headers, and the panel stops scrolling for its own chrome.
+          Compact mode keeps the accordion list, which suits a 56px rail. */}
+      {compact ? (
+        <Box>
+          <RootAccordion defaultExpanded />
+          {THEME_BLOCK_ORDER.map((blockType) => (
+            <BlockTypeAccordion
+              key={blockType}
+              blockType={blockType}
+              spec={THEME_BLOCK_REGISTRY[blockType]}
+              defaultExpanded={false}
+            />
+          ))}
+        </Box>
+      ) : (
+        <Box>
+          <Stack
+            direction="row"
+            sx={{ flexWrap: 'wrap', gap: 0.75, pb: 1.5, borderBottom: (th) => `1px solid ${th.palette.divider}` }}
+          >
+            {THEME_SECTIONS.map(({ id, label }) => {
+              const active = section === id;
+              return (
+                <Box
+                  key={id}
+                  component="button"
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setSection(id)}
+                  sx={{
+                    border: (th) => `1px solid ${active ? 'transparent' : th.palette.grey[300]}`,
+                    borderRadius: 999,
+                    px: 1.25,
+                    py: 0.5,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    lineHeight: 1.6,
+                    color: active ? 'primary.contrastText' : 'text.secondary',
+                    backgroundColor: active ? 'primary.main' : 'transparent',
+                    transition: 'background-color .15s, color .15s, border-color .15s',
+                    '&:hover': { borderColor: (th) => (active ? 'transparent' : th.palette.grey[400]) },
+                  }}
+                >
+                  {label}
+                </Box>
+              );
+            })}
+          </Stack>
+
+          {section === 'root' ? (
+            <RootAccordion headless />
+          ) : (
+            <BlockTypeAccordion
+              blockType={section}
+              spec={THEME_BLOCK_REGISTRY[section]}
+              headless
+            />
+          )}
+        </Box>
+      )}
 
       {showVersion && (
         <Box color="text.secondary" sx={{ display: 'flex', justifyContent: 'flex-end', mt: 'auto', pt: 3, pb: 3 }}>

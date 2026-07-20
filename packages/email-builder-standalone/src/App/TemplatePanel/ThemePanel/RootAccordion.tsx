@@ -13,6 +13,8 @@ import EmailLayoutSidebarFields from '../../InspectorDrawer/ConfigurationPanel/i
 type RootAccordionProps = {
   /** When true the accordion starts expanded. */
   defaultExpanded?: boolean;
+  /** Render only the fields — the pill selector supplies the heading. */
+  headless?: boolean;
 };
 
 /**
@@ -23,7 +25,7 @@ type RootAccordionProps = {
  * accordion edits real document props on the `root` `EmailLayout` block,
  * not theme overrides.
  */
-export default function RootAccordion({ defaultExpanded = true }: RootAccordionProps) {
+export default function RootAccordion({ defaultExpanded = true, headless = false }: RootAccordionProps) {
   const { t } = useTranslation('inspector');
   const block = useBlock('root');
   const compact = useCompactMode();
@@ -33,6 +35,24 @@ export default function RootAccordion({ defaultExpanded = true }: RootAccordionP
   }
 
   const { data } = block;
+
+  const fields = (
+    <Stack spacing={2}>
+      <EmailLayoutSidebarFields
+        data={data}
+        setData={(next) => {
+          // Editing a global field diverges the document from any applied
+          // preset / library theme — drop the mark.
+          clearAppliedTheme();
+          atomicUpdateBlock('root', () => ({ type: 'EmailLayout', data: next }));
+        }}
+      />
+    </Stack>
+  );
+
+  if (headless) {
+    return <Box sx={{ pt: 1, pb: 3 }}>{fields}</Box>;
+  }
 
   return (
     <Accordion
@@ -65,17 +85,7 @@ export default function RootAccordion({ defaultExpanded = true }: RootAccordionP
         )}
       </AccordionSummary>
       <AccordionDetails sx={{ px: 0, pt: 0, pb: 3 }}>
-        <Stack spacing={2}>
-          <EmailLayoutSidebarFields
-            data={data}
-            setData={(next) => {
-              // Editing a global field diverges the document from any
-              // applied preset / library theme — drop the mark.
-              clearAppliedTheme();
-              atomicUpdateBlock('root', () => ({ type: 'EmailLayout', data: next }));
-            }}
-          />
-        </Stack>
+        {fields}
       </AccordionDetails>
     </Accordion>
   );

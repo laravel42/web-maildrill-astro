@@ -21,7 +21,7 @@ const LabelProperty: React.FC<{ label?: React.ReactNode; action?: React.ReactNod
     return null;
   }
   if (!action) {
-    return <p style={{ ...labelStyle, marginBottom: '2px' }}>{label}</p>;
+    return <p style={{ ...labelStyle, marginBottom: 0 }}>{label}</p>;
   }
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
