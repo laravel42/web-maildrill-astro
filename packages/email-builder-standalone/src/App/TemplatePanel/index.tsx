@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 
 import { Reader, TReaderDocument } from '@eb/email-builder';
-import { ContentCopyOutlined, TerminalOutlined } from '@mui/icons-material';
+import { ContentCopyOutlined } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -360,24 +360,6 @@ export default function TemplatePanel({
     redoChange();
   }, []);
 
-  // Programmatically open the command palette. The headless c42 controller
-  // listens for a Cmd/Ctrl+K keydown on `document` (capture phase) and
-  // toggles itself, so we dispatch that synthetic event instead of holding
-  // an imperative handle to the controller.
-  const openCommandPalette = useCallback(() => {
-    const mac = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform);
-    document.dispatchEvent(
-      new KeyboardEvent('keydown', {
-        key: 'k',
-        code: 'KeyK',
-        ctrlKey: !mac,
-        metaKey: mac,
-        bubbles: true,
-        cancelable: true,
-      })
-    );
-  }, []);
-
   // OPTIMIZACIÓN: Calcular HTML/JSON solo cuando se necesita (en la tab activa)
   // Obtener documento directamente del store en lugar de suscribirse
   const templateHTML = useMemo(() => {
@@ -427,20 +409,6 @@ export default function TemplatePanel({
       default:
         return (
           <>
-            <Tooltip title={tCommon('commandPalette.open', 'Open command palette')}>
-              <IconButton
-                size="small"
-                onClick={openCommandPalette}
-                aria-label={tCommon('commandPalette.open', 'Open command palette')}
-              >
-                {/* A terminal prompt, not a magnifier: this opens the command
-                    palette (run an action) rather than searching content. Kept
-                    platform-neutral on purpose — the palette is Cmd+K on macOS
-                    but Ctrl+K elsewhere, so a Command-key glyph would be wrong
-                    for most users. */}
-                <TerminalOutlined fontSize="small" />
-              </IconButton>
-            </Tooltip>
             <div style={{ display: 'flex', gap: 8 }}>
               <Tooltip title={t('header.undo')}>
                 <div onClick={undo} className={`buttonsUndoRedo ${!canUndo ? 'disabledButton' : ''} `}>
@@ -494,7 +462,6 @@ export default function TemplatePanel({
     tCommon,
     undo,
     redo,
-    openCommandPalette,
     enableComponentTree,
   ]);
 
