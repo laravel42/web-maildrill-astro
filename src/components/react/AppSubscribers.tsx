@@ -1155,17 +1155,24 @@ function SubscriberDrawer({
   onToast: (m: string) => void;
 }) {
   const [draft, setDraft] = useState<string[]>(tags);
-  const [saved, setSaved] = useState<string[]>(tags);
   const [input, setInput] = useState('');
-  const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
 
+  // Tags persist as you edit: adding (Enter) or removing a tag saves the whole
+  // set immediately. onSaveTags diffs it against the server, so passing the
+  // full next array applies just the delta.
   const addTag = () => {
     const v = input.trim();
-    if (!v) return;
-    if (!draft.some((t) => t.toLowerCase() === v.toLowerCase())) setDraft((d) => [...d, v]);
     setInput('');
+    if (!v || draft.some((t) => t.toLowerCase() === v.toLowerCase())) return;
+    const next = [...draft, v];
+    setDraft(next);
+    onSaveTags(sub.id, next);
   };
-  const removeTag = (t: string) => setDraft((d) => d.filter((x) => x !== t));
+  const removeTag = (t: string) => {
+    const next = draft.filter((x) => x !== t);
+    setDraft(next);
+    onSaveTags(sub.id, next);
+  };
 
   const statusLabel = STATUS_LABEL[sub.status];
 
@@ -1281,23 +1288,9 @@ function SubscriberDrawer({
             </div>
           </div>
 
-          {/* editable tags */}
+          {/* editable tags — saved as you add or remove them */}
           <div className={styles.sbdSection}>
-            <div className={styles.sbdSeclabel}>
-              <span className="adrawer__eyebrow">Tags</span>
-              <button
-                type="button"
-                className={styles.sbdSavetags}
-                data-dirty={dirty}
-                disabled={!dirty}
-                onClick={() => {
-                  onSaveTags(sub.id, draft);
-                  setSaved(draft);
-                }}
-              >
-                Save tags
-              </button>
-            </div>
+            <span className={`adrawer__eyebrow ${styles.sbdEyebrow}`}>Tags</span>
             <div className={styles.sbdTags}>
               {draft.map((t) => (
                 <span key={t} className={styles.sbdTag} style={tagStyle(t)}>

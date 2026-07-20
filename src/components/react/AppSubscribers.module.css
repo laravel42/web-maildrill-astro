@@ -120,10 +120,6 @@
 .sbdStatVal { font-size: 20px; font-weight: 600; margin-top: 4px; }
 .sbdSection { margin-bottom: 22px; }
 .sbdEyebrow { display: block; margin-bottom: 10px; }
-.sbdSeclabel { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.sbdSavetags { font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 7px; background: var(--surface2); color: var(--muted); }
-.sbdSavetags[data-dirty="true"] { background: var(--accent); color: #fff; }
-.sbdSavetags:disabled { cursor: default; }
 .sbdTags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .sbdTag { display: inline-flex; align-items: center; gap: 2px; padding: 3px 4px 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
 .sbdTaglbl { color: inherit; font: inherit; }
