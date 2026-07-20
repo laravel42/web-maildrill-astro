@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
+import ListCustomFields from './ListCustomFields';
 import ListEditorModal, { type ListEditorValues } from './ListEditorModal';
 import { ago } from './shared/time';
 import { AVATAR_GRADS, fmtPct, rows as mockRows, trendPath, weeklyGain } from './AppLists.logic';
@@ -306,6 +307,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
         <ListDrawer
           key={open.id}
           list={open}
+          live={live}
           closing={closing}
           onClose={closeDrawer}
           onToast={showToast}
@@ -359,6 +361,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
 
 function ListDrawer({
   list,
+  live,
   closing,
   onClose,
   onToast,
@@ -366,6 +369,7 @@ function ListDrawer({
   onEdit,
 }: {
   list: ListRow;
+  live: boolean;
   closing: boolean;
   onClose: () => void;
   onToast: (m: string) => void;
@@ -545,6 +549,9 @@ function ListDrawer({
               ))}
             </div>
           )}
+
+          {/* custom fields — workspace-wide subscriber attribute schema */}
+          <ListCustomFields live={live} onToast={onToast} />
 
           {/* notes */}
           <div className={styles.dNoteshead}>
