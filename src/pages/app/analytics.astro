@@ -31,7 +31,6 @@ if (session?.user?.id && session.activeTenantId) {
       byChannel =
         (summaryRes.data as unknown as { byChannel?: ChannelBreakdown[] })?.byChannel ?? [];
       live = true;
-      banner = { ok: true, text: 'Live from maildrill-service.' };
     }
   } catch (err) {
     banner = { ok: false, text: err instanceof Error ? err.message : 'Service unreachable.' };

@@ -31,7 +31,7 @@ if (session?.user?.id && session.activeTenantId) {
         (statusRes.data as unknown as { configured?: boolean })?.configured,
       );
       banner = storageReady
-        ? { ok: true, text: `Live from maildrill-service — ${initial.length} asset(s).` }
+        ? null
         : {
             ok: false,
             text: 'Media storage is not configured. Set AWS_REGION, MEDIA_S3_BUCKET and MEDIA_CDN_DOMAIN in maildrill-service to enable uploads.',

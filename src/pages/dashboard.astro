@@ -38,7 +38,6 @@ if (session?.user?.id && session.activeTenantId) {
       banner = { ok: false, text: 'maildrill-service returned an error.' };
     } else {
       summary = summaryRes.data as unknown as Summary;
-      banner = { ok: true, text: 'Live from maildrill-service.' };
     }
     campaigns = toCampaigns(
       (campaignsRes.data as unknown as { data?: ApiCampaign[] })?.data ?? [],

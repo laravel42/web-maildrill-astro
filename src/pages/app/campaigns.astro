@@ -40,7 +40,6 @@ if (session?.user?.id && session.activeTenantId) {
       banner = { ok: false, text: 'maildrill-service returned an error.' };
     } else {
       initial = toCampaigns(unwrap<ApiCampaign>(campaignsRes.data));
-      banner = { ok: true, text: `Live from maildrill-service — ${initial.length} campaign(s).` };
     }
 
     // A failed lookup leaves the wizard with an empty picker and its own

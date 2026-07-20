@@ -25,7 +25,6 @@ if (session?.user?.id && session.activeTenantId) {
     } else {
       const rows = (data as unknown as { data?: ApiList[] })?.data ?? [];
       initial = toListRows(rows);
-      banner = { ok: true, text: `Live from maildrill-service — ${initial.length} list(s).` };
     }
   } catch (err) {
     banner = { ok: false, text: err instanceof Error ? err.message : 'Service unreachable.' };

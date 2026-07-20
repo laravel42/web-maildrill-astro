@@ -52,7 +52,6 @@ if (session?.user?.id && session.activeTenantId) {
         id: t.id,
         name: t.name,
       }));
-      banner = { ok: true, text: `Live from maildrill-service — ${initial.length} subscriber(s).` };
     }
   } catch (err) {
     banner = { ok: false, text: err instanceof Error ? err.message : 'Service unreachable.' };
