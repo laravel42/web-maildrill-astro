@@ -1,6 +1,19 @@
 import Credentials from '@auth/core/providers/credentials';
 import { defineConfig } from 'auth-astro';
 
+// The standalone Node server doesn't load .env at runtime — Astro only inlines
+// import.meta.env at build time, so process.env is empty in production unless the
+// daemon injects it. Load ./.env here (Node's built-in parser) so runtime reads
+// like AUTH_SECRET, JWT_SECRET, API_BASE_URL and SMTP_* resolve. Skipped when the
+// environment already provides them; a missing file or older Node is ignored.
+if (!process.env.AUTH_SECRET && typeof process.loadEnvFile === 'function') {
+  try {
+    process.loadEnvFile();
+  } catch {
+    /* no ./.env — rely on the real process environment */
+  }
+}
+
 /**
  * Auth.js (auth-astro) with a single "magic-link" Credentials provider. The
  * actual magic-link issue/verify lives in maildrill-service; here we only
