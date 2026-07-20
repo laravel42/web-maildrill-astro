@@ -137,8 +137,14 @@ export default function VisualEmailBuilder({
             secondaryColor="#ff441f"
             height="100%"
             sticky
-            htmlTab
+            /* Source-code and JSON views stay off: templates are edited
+               visually here, and the raw HTML is an export concern rather than
+               something to hand-edit inside the app. The component tree is off
+               for the same reason — it exposes document structure that the
+               canvas and inspector already cover. */
+            htmlTab={false}
             jsonTab={false}
+            componentTree={false}
             galleryImages
             unsplashEnabled
             unsplashBackendUrl={typeof window !== 'undefined' ? window.location.origin : ''}

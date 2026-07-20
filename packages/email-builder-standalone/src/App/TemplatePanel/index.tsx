@@ -575,7 +575,11 @@ export default function TemplatePanel({
                   />
                   <AIGeneration />
                 </Stack>
-                <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+                {/* `gap` rather than Stack's `spacing`: since the MUI 9 upgrade
+                    spacing renders no margin at all here (every child comes out
+                    with margin-left: 0), leaving the search, undo/redo and
+                    viewport controls flush against each other. */}
+                <Stack direction="row" sx={{ alignItems: 'center', gap: 1.5 }}>
                   {rightButtonsHeader()}
                 </Stack>
               </Stack>
