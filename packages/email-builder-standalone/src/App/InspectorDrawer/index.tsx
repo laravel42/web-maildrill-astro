@@ -1,8 +1,13 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { MonitorOutlined, PhoneIphoneOutlined } from '@mui/icons-material';
-import { Box, Container, Tab, Tabs, useTheme } from '@mui/material';
+import {
+  KeyboardDoubleArrowLeftOutlined,
+  KeyboardDoubleArrowRightOutlined,
+  MonitorOutlined,
+  PhoneIphoneOutlined,
+} from '@mui/icons-material';
+import { Box, Container, IconButton, Tab, Tabs, Tooltip, useTheme } from '@mui/material';
 
 import { COMPACT_PANEL_WIDTH, HEADER_HEIGHT } from '../../constants';
 import { BLOCKS_DEFAULT_CSS } from '../../documents/blocks/helpers/constants';
@@ -12,6 +17,7 @@ import {
   setSidebarTab,
   setWindowWidth,
   useBlockTypeSelected,
+  setInspectorDrawerMode,
   useInspectorDrawerMode,
   useSelectedBlockId,
   useSelectedScreenSize,
@@ -143,6 +149,41 @@ export default function InspectorDrawer({ sticky, heightContent }: { sticky: boo
           backgroundColor: `${t.palette.background.paper} !important`,
         })}
       >
+        {/* Expand/collapse lives outside the tab strip because compact mode
+            hides that strip entirely — inside it, the control would vanish in
+            exactly the state you need it to escape from. */}
+        <Box
+          sx={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 2,
+            display: 'flex',
+            justifyContent: isCompact ? 'center' : 'flex-end',
+            alignItems: 'center',
+            px: isCompact ? 0 : 0.5,
+            pt: 0.5,
+            backgroundColor: `${theme.palette.background.paper} !important`,
+          }}
+        >
+          <Tooltip
+            title={isCompact ? t('header.expandPanel', 'Expand panel') : t('header.collapsePanel', 'Collapse panel')}
+            placement="left"
+          >
+            <IconButton
+              size="small"
+              aria-label={
+                isCompact ? t('header.expandPanel', 'Expand panel') : t('header.collapsePanel', 'Collapse panel')
+              }
+              onClick={() => setInspectorDrawerMode(isCompact ? 'full' : 'compact')}
+            >
+              {isCompact ? (
+                <KeyboardDoubleArrowLeftOutlined fontSize="small" />
+              ) : (
+                <KeyboardDoubleArrowRightOutlined fontSize="small" />
+              )}
+            </IconButton>
+          </Tooltip>
+        </Box>
         <Box
           sx={{
             position: 'sticky',

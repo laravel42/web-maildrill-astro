@@ -31,7 +31,7 @@ function readInspectorPreference(): { open: boolean; mode: 'full' | 'compact'; m
       const parsed = JSON.parse(raw);
       return {
         open: typeof parsed.open === 'boolean' ? parsed.open : true,
-        mode: parsed.mode === 'compact' ? 'compact' : 'full',
+        mode: parsed.mode === 'full' ? 'full' : 'compact',
         // Whether the user set the mode by hand. Once true, the automatic
         // compaction (left drawer open / narrow viewport) must not override
         // the user's choice.
@@ -41,7 +41,10 @@ function readInspectorPreference(): { open: boolean; mode: 'full' | 'compact'; m
   } catch {
     /* ignore */
   }
-  return { open: true, mode: 'full', manual: false };
+  // Compact on first run: the inspector opens as a 56px icon rail and
+  // expands on demand, so the canvas gets the width by default. A stored
+  // preference always wins over this.
+  return { open: true, mode: 'compact', manual: false };
 }
 
 function saveInspectorPreference(open: boolean, mode: 'full' | 'compact', manual: boolean) {

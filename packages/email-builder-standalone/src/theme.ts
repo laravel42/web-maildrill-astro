@@ -17,8 +17,14 @@ const BRAND_PURPLE = '#6C0E7C';
 const BRAND_BROWN = '#CC996C';
 
 /** Figtree — primary UI sans for the entire editor interface */
-const FIGTREE_FAMILY =
-  '"Figtree", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+/**
+ * UI typeface for the editor chrome — matched to the host app's stack
+ * (--font-sans in its design tokens) so panels and menus read as the same
+ * product. This never touches the email being composed: document text picks
+ * its family from the font catalogue.
+ */
+const UI_FONT_FAMILY =
+  '"Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 /** Newsreader — serif display, used only for landing/marketing headings */
 export const NEWSREADER_FAMILY = '"Newsreader", "Georgia", "Times New Roman", serif';
@@ -66,7 +72,7 @@ const BASE_THEME = createTheme({
     },
   },
   typography: {
-    fontFamily: FIGTREE_FAMILY,
+    fontFamily: UI_FONT_FAMILY,
   },
 });
 
@@ -107,33 +113,38 @@ const getTheme = (
     }
   };
 
-  // Colores base según el modo
+  // Light-mode neutrals mirror the host app's design tokens (see
+  // src/styles/tokens.css) so the editor reads as part of the same product
+  // rather than an embedded third-party tool. The ramp is a warm cream
+  // neutral, not MUI's cool grey. Dark mode keeps the editor's own values.
   const backgroundColors = {
-    default: darkMode ? '#121212' : '#FAFAF8',
-    paper: darkMode ? '#1e1e1e' : '#FFFFFF',
-    // Contrasta con paper: inputs, selects, dropdowns (grey[100])
-    input: darkMode ? '#2c2c2c' : '#F5F5F3',
+    default: darkMode ? '#121212' : '#f6f5f2', // --bg
+    paper: darkMode ? '#1e1e1e' : '#ffffff', // --surface
+    // Contrasts with paper: inputs, selects, dropdowns (grey[100])
+    input: darkMode ? '#2c2c2c' : '#f3f2ee', // --surface2
     canvas: darkMode ? CANVAS_BG_DARK : CANVAS_BG_LIGHT,
   };
 
   const textColors = {
-    primary: darkMode ? '#FAFAFA' : '#18181B',
-    secondary: darkMode ? '#A1A1AA' : '#71717A',
-    disabled: darkMode ? '#52525B' : '#A1A1AA',
+    primary: darkMode ? '#FAFAFA' : '#1f1e1b', // --text
+    secondary: darkMode ? '#A1A1AA' : '#57554e', // --text3
+    disabled: darkMode ? '#52525B' : '#a5a39a', // --muted
   };
   const greyColors = {
-    100: darkMode ? '#27272A' : '#F5F5F3',
-    200: darkMode ? '#3F3F46' : '#E7E5E4',
-    300: darkMode ? '#52525B' : '#D4D4D8',
-    400: darkMode ? '#71717A' : '#A1A1AA',
-    500: darkMode ? '#A1A1AA' : '#71717A',
+    100: darkMode ? '#27272A' : '#f3f2ee', // --surface2
+    200: darkMode ? '#3F3F46' : '#ecebe6', // --border
+    300: darkMode ? '#52525B' : '#e4e2da', // --border2
+    400: darkMode ? '#71717A' : '#a5a39a', // --muted
+    500: darkMode ? '#A1A1AA' : '#77756c', // --text4
   };
 
   // Helper function to
 
   const THEME = createTheme(BASE_THEME, {
     shape: {
-      borderRadius: 6,
+      // --radius-btn from the host app's tokens; its cards/controls are
+      // noticeably rounder than the MUI default this used to carry.
+      borderRadius: 10,
     },
     palette: {
       mode: darkMode ? 'dark' : 'light',
@@ -1291,7 +1302,7 @@ const getTheme = (
             paddingLeft: BASE_THEME.spacing(1.5),
             paddingRight: BASE_THEME.spacing(1.5),
             fontSize: BASE_THEME.typography.pxToRem(14),
-            fontFamily: FIGTREE_FAMILY,
+            fontFamily: UI_FONT_FAMILY,
             lineHeight: 1.5,
             fontWeight: 500,
             transition: 'color 0.2s, stroke 0.2s',
@@ -1358,9 +1369,9 @@ const getTheme = (
       }),
     },
     typography: {
-      fontFamily: FIGTREE_FAMILY,
+      fontFamily: UI_FONT_FAMILY,
       h1: {
-        fontFamily: FIGTREE_FAMILY,
+        fontFamily: UI_FONT_FAMILY,
         fontSize: BASE_THEME.typography.pxToRem(36),
         lineHeight: 1.4,
         letterSpacing: '-0.01em',
@@ -1368,7 +1379,7 @@ const getTheme = (
         color: textColors.primary,
       },
       h2: {
-        fontFamily: FIGTREE_FAMILY,
+        fontFamily: UI_FONT_FAMILY,
         fontSize: BASE_THEME.typography.pxToRem(28),
         lineHeight: 1.4,
         letterSpacing: '-0.01em',
@@ -1376,7 +1387,7 @@ const getTheme = (
         color: textColors.primary,
       },
       h3: {
-        fontFamily: FIGTREE_FAMILY,
+        fontFamily: UI_FONT_FAMILY,
         fontSize: BASE_THEME.typography.pxToRem(22),
         lineHeight: 1.5,
         letterSpacing: '-0.005em',
@@ -1384,7 +1395,7 @@ const getTheme = (
         color: textColors.primary,
       },
       h4: {
-        fontFamily: FIGTREE_FAMILY,
+        fontFamily: UI_FONT_FAMILY,
         fontSize: BASE_THEME.typography.pxToRem(18),
         lineHeight: 1.5,
         letterSpacing: '-0.005em',
@@ -1392,7 +1403,7 @@ const getTheme = (
         color: textColors.primary,
       },
       h5: {
-        fontFamily: FIGTREE_FAMILY,
+        fontFamily: UI_FONT_FAMILY,
         fontSize: BASE_THEME.typography.pxToRem(16),
         lineHeight: 1.5,
         letterSpacing: 'normal',
@@ -1400,7 +1411,7 @@ const getTheme = (
         color: textColors.primary,
       },
       h6: {
-        fontFamily: FIGTREE_FAMILY,
+        fontFamily: UI_FONT_FAMILY,
         fontSize: BASE_THEME.typography.pxToRem(14),
         lineHeight: 1.5,
         letterSpacing: 'normal',
