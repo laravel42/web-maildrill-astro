@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { ExpandMoreOutlined } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Stack, Tooltip, Typography } from '@mui/material';
 
-import { useThemeBlockOverride } from '../../../documents/editor/EditorContext';
 import { useCompactMode } from '../../InspectorDrawer/CompactModeContext';
 
 import type { ThemeBlockSpec, ThemeBlockType } from './registry';
@@ -27,9 +26,6 @@ type BlockTypeAccordionProps = {
  * Phase 2c — Inspector Theme panel.
  *
  * Accordion grouping all theme overrides for a single block type.
- * Renders a small badge in the summary when the user has at least one
- * active override, so the per-block status is visible without
- * expanding everything.
  */
 export default function BlockTypeAccordion({
   blockType,
@@ -38,9 +34,7 @@ export default function BlockTypeAccordion({
   headless = false,
 }: BlockTypeAccordionProps) {
   const { t } = useTranslation('inspector');
-  const override = useThemeBlockOverride(blockType);
   const compact = useCompactMode();
-  const isModified = countOverrides(override) > 0;
   const Icon = spec.icon;
 
   // Box, not Stack — theme.ts's MuiStack styleOverrides forces
@@ -82,7 +76,6 @@ export default function BlockTypeAccordion({
           <Tooltip title={t(spec.titleKey)} placement="left">
             <Box
               sx={{
-                position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
                 p: 0.5,
@@ -91,56 +84,15 @@ export default function BlockTypeAccordion({
               }}
             >
               <Icon fontSize="small" />
-              {isModified && (
-                <Box
-                  component="span"
-                  aria-label={t('theme.modified', 'Modified')}
-                  sx={{
-                    position: 'absolute',
-                    top: 2,
-                    right: 2,
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    bgcolor: 'primary.main',
-                  }}
-                />
-              )}
             </Box>
           </Tooltip>
         ) : (
           <Stack direction="row" spacing={1} sx={{ width: '100%', alignItems: 'center' }}>
-            <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-              <Typography sx={{ fontWeight: 600, color: 'text.primary' }}>{t(spec.titleKey)}</Typography>
-              {isModified && (
-                <Box
-                  component="span"
-                  aria-label={t('theme.modified', 'Modified')}
-                  sx={{
-                    position: 'absolute',
-                    top: -1,
-                    right: -8,
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    bgcolor: 'primary.main',
-                  }}
-                />
-              )}
-            </Box>
+            <Typography sx={{ fontWeight: 600, color: 'text.primary' }}>{t(spec.titleKey)}</Typography>
           </Stack>
         )}
       </AccordionSummary>
       <AccordionDetails sx={{ p: 0, pb: 3 }}>{fields}</AccordionDetails>
     </Accordion>
   );
-}
-
-function countOverrides(
-  override: { style?: Record<string, unknown>; props?: Record<string, unknown> } | undefined
-): number {
-  if (!override) return 0;
-  const styleKeys = override.style ? Object.keys(override.style).length : 0;
-  const propsKeys = override.props ? Object.keys(override.props).length : 0;
-  return styleKeys + propsKeys;
 }
