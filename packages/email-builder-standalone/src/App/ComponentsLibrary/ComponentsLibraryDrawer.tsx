@@ -3,11 +3,14 @@
  * every item across the Components Library taxonomy plus the Themes
  * gallery:
  *
- *   Blocks / Sections / Templates / Themes
+ *   Blocks (incl. Sections at the bottom) / Templates / Themes
  *
  * Blocks is synthetic (built-in factories, see `builtInBlocks.tsx` /
  * `BlocksCategoryContent.tsx`) — no listing endpoint, no storage.
- * Sections and Templates are saved components fetched by id.
+ * Sections and Templates are saved components fetched by id. Sections
+ * no longer has its own Tab (point 7, EMAIL_BUILDER_TASKS.md) — its
+ * search/sort toolbar and listing render inside the Blocks tab body,
+ * below the built-in block tiles.
  *
  * Each card is a `react-dnd` drag source of type
  * `library-component`. Dropping it onto a block in the canvas (handled
@@ -28,19 +31,13 @@ import { useTranslation } from 'react-i18next';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import Inventory2Outlined from '@mui/icons-material/Inventory2Outlined';
 import RefreshOutlined from '@mui/icons-material/RefreshOutlined';
-import SearchOutlined from '@mui/icons-material/SearchOutlined';
-import SortOutlined from '@mui/icons-material/SortOutlined';
 import {
   Alert,
   Box,
   IconButton,
-  InputAdornment,
-  Menu,
-  MenuItem,
   Stack,
   Tab,
   Tabs,
-  TextField,
   Tooltip,
   Typography,
   useTheme,
@@ -57,7 +54,6 @@ import {
   useSelectedMainTab,
   useTemplateSaving,
 } from '../../documents/editor/EditorContext';
-import { INPUT_TEXTFIELD_SX } from '../InspectorDrawer/ConfigurationPanel/input-panels/helpers/inputs/components/inputStyles';
 
 import ApplyTemplateConfirmDialog from './ApplyTemplateConfirmDialog';
 import BlocksCategoryContent from './BlocksCategoryContent';
@@ -66,7 +62,7 @@ import CompactBlocksList from './CompactBlocksList';
 import { type FetchableLibraryCategory, LIBRARY_COMPONENT_DND_TYPE, type LibraryComponentDragItem } from './dnd';
 import { requestHoverEnter, requestHoverLeave, resetHoverPreview } from './hoverPreviewStore';
 import LibraryHoverPreviewPortal, { clearHoverPreviewCache } from './LibraryHoverPreviewPortal';
-import { filterLibraryItems, LIBRARY_SORT_KEYS, type LibrarySortKey, sortLibraryItems } from './librarySearch';
+import { filterLibraryItems, type LibrarySortKey, sortLibraryItems } from './librarySearch';
 import LibrarySkeletonGrid from './LibrarySkeletonGrid';
 import {
   getLocalThumbnail,
@@ -120,9 +116,11 @@ type LibraryItem = {
 /** Sentinel axis for templates that carry no `usage` value. */
 const TEMPLATE_USAGE_OTHER = '__other__';
 
+// Point 7 (EMAIL_BUILDER_TASKS.md) removed the standalone "Sections" tab —
+// its content (search/sort toolbar + SectionsCategoryContent) now renders
+// at the bottom of the "Blocks" tab body instead of its own Tab entry.
 const CATEGORIES: ReadonlyArray<{ key: string; labelKey: string; enabled: boolean }> = [
   { key: 'blocks', labelKey: 'componentsLibrary.drawer.category.blocks', enabled: true },
-  { key: 'sections', labelKey: 'componentsLibrary.drawer.category.sections', enabled: true },
   { key: 'templates', labelKey: 'componentsLibrary.drawer.category.templates', enabled: true },
 ];
 
@@ -754,7 +752,6 @@ export default function ComponentsLibraryDrawer() {
   // Global search + sort shared by every category tab.
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<LibrarySortKey>('updatedDesc');
-  const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
   // Active category tab. Defaults to the first visible category.
   const [activeTab, setActiveTab] = useState<string>(() => visibleCategories[0]?.key ?? 'blocks');
 
@@ -897,70 +894,22 @@ export default function ComponentsLibraryDrawer() {
             </Box>
 
             <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', px: 1.5, pb: 2, pt: 1 }}>
-              {activeTab === 'blocks' && <BlocksCategoryContent />}
-              {activeTab === 'sections' && (
+              {activeTab === 'blocks' && (
                 <>
-                  <Box sx={{ pb: 1.5 }}>
-                    <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-                      <TextField
-                        size="small"
-                        fullWidth
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder={t('componentsLibrary.search.placeholder', 'Search…')}
-                        sx={INPUT_TEXTFIELD_SX}
-                        slotProps={{
-                          input: {
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <SearchOutlined fontSize="small" />
-                              </InputAdornment>
-                            ),
-                          },
-                        }}
-                      />
-                      <Tooltip title={t('componentsLibrary.search.sortLabel', 'Sort')}>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => setSortAnchorEl(e.currentTarget)}
-                          sx={{
-                            flexShrink: 0,
-                            color: sortAnchorEl ? 'primary.main' : 'text.secondary',
-                          }}
-                        >
-                          <SortOutlined fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Menu
-                        anchorEl={sortAnchorEl}
-                        open={Boolean(sortAnchorEl)}
-                        onClose={() => setSortAnchorEl(null)}
-                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                      >
-                        {LIBRARY_SORT_KEYS.map((key) => (
-                          <MenuItem
-                            key={key}
-                            selected={sort === key}
-                            onClick={() => {
-                              setSort(key);
-                              setSortAnchorEl(null);
-                            }}
-                            sx={{ fontSize: '0.8rem' }}
-                          >
-                            {t(`componentsLibrary.search.sort.${key}`, key)}
-                          </MenuItem>
-                        ))}
-                      </Menu>
-                    </Stack>
+                  <BlocksCategoryContent />
+                  {/* Point 7 (EMAIL_BUILDER_TASKS.md): the former standalone
+                      "Sections" tab now lives at the bottom of the Blocks
+                      tab instead of its own Tab entry. No title/search/sort
+                      toolbar — just the listing, grouped by role. */}
+                  <Box sx={{ mt: 2, pt: 1.5, borderTop: (theme) => `1px solid ${theme.palette.divider}` }}>
+                    <SectionsCategoryContent
+                      search={search}
+                      sort={sort}
+                      onRename={setRenameTarget}
+                      refreshKey={sectionsRefreshKey}
+                      onChange={() => setSectionsRefreshKey((k) => k + 1)}
+                    />
                   </Box>
-                  <SectionsCategoryContent
-                    search={search}
-                    sort={sort}
-                    onRename={setRenameTarget}
-                    refreshKey={sectionsRefreshKey}
-                    onChange={() => setSectionsRefreshKey((k) => k + 1)}
-                  />
                 </>
               )}
               {activeTab === 'templates' && (
