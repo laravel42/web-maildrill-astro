@@ -9,7 +9,7 @@ import ConfirmDialog from './shared/ConfirmDialog';
 import CampaignWizard from './CampaignWizard';
 import EmailBuilder from './EmailBuilder';
 import VisualEmailBuilder from './VisualEmailBuilder';
-import TemplatePreview from './shared/TemplatePreview';
+import TemplatePreview, { MessagePreview } from './shared/TemplatePreview';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { ago } from './shared/time';
 import { useToast } from './shared/useToast';
@@ -649,6 +649,55 @@ export default function CampaignsBoard({
   );
 }
 
+/**
+ * Preview of a campaign's actual body. The content (html/text) is saved on the
+ * campaign itself, so we read it from `campaigns/:id` and render it directly.
+ * Template-based campaigns keep their body on the template, so an empty content
+ * with a templateId falls back to the template preview.
+ */
+function CampaignPreview({ campaign, live }: { campaign: Campaign; live: boolean }) {
+  const [body, setBody] = useState<{ html: string; text: string } | null>(null);
+  const [state, setState] = useState<'loading' | 'body' | 'template' | 'empty' | 'error'>(
+    live ? 'loading' : 'empty',
+  );
+
+  useEffect(() => {
+    if (!live) return;
+    let alive = true;
+    void (async () => {
+      try {
+        const full = await api.get<ApiCampaign>(`campaigns/${campaign.id}`);
+        if (!alive) return;
+        const content = (full.content ?? {}) as { html?: unknown; text?: unknown };
+        const html = typeof content.html === 'string' ? content.html : '';
+        const text = typeof content.text === 'string' ? content.text : '';
+        if (html.trim() || text.trim()) {
+          setBody({ html, text });
+          setState('body');
+        } else if (full.templateId) {
+          setState('template');
+        } else {
+          setState('empty');
+        }
+      } catch {
+        if (alive) setState('error');
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [campaign.id, live]);
+
+  if (!live) return <div className="aempty">No preview in local mode</div>;
+  if (state === 'loading') return <div className="aempty">Loading preview…</div>;
+  if (state === 'error') return <div className="aempty">Couldn’t load the preview.</div>;
+  if (state === 'empty') return <div className="aempty">This campaign has no content yet.</div>;
+  if (state === 'template' && campaign.templateId) {
+    return <TemplatePreview id={campaign.templateId} channel={campaign.channel} live={live} />;
+  }
+  return <MessagePreview html={body?.html} text={body?.text} channel={campaign.channel} />;
+}
+
 function CampaignDrawer({
   campaign,
   live,
@@ -755,19 +804,10 @@ function CampaignDrawer({
           <h3 className={styles.drawerName}>{campaign.name}</h3>
           <p className={styles.drawerAud}>To {campaign.audience}</p>
 
-          {campaign.templateId && (
-            <>
-              <p className={`adrawer__eyebrow ${styles.drawerEyebrow}`}>Template</p>
-              <div className={styles.drawerPreview}>
-                <TemplatePreview
-                  id={campaign.templateId}
-                  channel={campaign.channel}
-                  live={live}
-                  fallback={<div className="aempty">No preview in local mode</div>}
-                />
-              </div>
-            </>
-          )}
+          <p className={`adrawer__eyebrow ${styles.drawerEyebrow}`}>Preview</p>
+          <div className={styles.drawerPreview}>
+            <CampaignPreview campaign={campaign} live={live} />
+          </div>
 
           {isSent ? (
             <div className={styles.drawerKpis}>

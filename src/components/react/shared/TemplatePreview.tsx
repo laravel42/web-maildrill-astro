@@ -58,8 +58,26 @@ export default function TemplatePreview({
   if (state === 'error') return <div className={styles.pvMsg}>Couldn’t load the preview.</div>;
   if (state === 'empty')
     return <div className={styles.pvMsg}>This template has no saved content yet.</div>;
-  if (html) return <HtmlPreview html={html} />;
-  return <TextPreview text={text ?? ''} channel={channel} />;
+  return <MessagePreview html={html} text={text} channel={channel} />;
+}
+
+/**
+ * Render primitive: given a message body, show the HTML in a sandboxed iframe
+ * (email) or the text as a bubble (SMS/WhatsApp/Voice). Used directly by callers
+ * that already hold the content — e.g. a campaign's saved body — without a fetch.
+ */
+export function MessagePreview({
+  html,
+  text,
+  channel,
+}: {
+  html?: string | null;
+  text?: string | null;
+  channel: ChannelType;
+}) {
+  if (html && html.trim()) return <HtmlPreview html={html} />;
+  if (text && text.trim()) return <TextPreview text={text} channel={channel} />;
+  return <div className={styles.pvMsg}>Nothing to preview yet.</div>;
 }
 
 /**
