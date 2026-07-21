@@ -153,6 +153,61 @@ listado de themes guardados.
 2. Puntos 5–8 (Librería de componentes) — mismo módulo `ComponentsLibrary/`.
 3. Punto 9 (Theme) — cambio acotado al estado inicial de selección; no toca guardado/aplicación.
 
+## Hallazgo pendiente — lentitud real de apertura del editor (no es bundle size)
+
+**Estado: PAUSADO — retomar en la próxima sesión.**
+
+Ya resuelto (no es esto): el peso de 2MB en dev era exclusivo del dev server de
+Vite (HMR sirve todo el CSS del grafo de módulos aunque esté detrás de
+`lazy()`); confirmado con `npm run build && npm run preview` que en producción
+real el bundle inicial de `/app/templates` es ~33KB HTML + ~59KB CSS, sin el
+JS del email-builder (2.4MB) hasta que se abre el editor.
+
+**Lo que sí es un problema real, incluso en preview/producción:** abrir el
+editor tarda cerca de 2 minutos por una causa distinta — generación de
+thumbnails de la Components Library.
+
+Evidencia (consola del navegador, `npm run preview`):
+```
+captureThumbnail.BtyNo9RM.js:519 [captureSubtreeThumbnail] timeout after 6000 ms
+```
+Se repite muchas veces en serie (uno por bloque/sección/template de la
+librería), cada uno agotando el timeout completo de 6000ms antes de seguir
+con el siguiente — de ahí los ~2 minutos.
+
+Causa probable: cada captura usa un `<iframe>` (`about:srcdoc`) en modo
+`sandbox` para renderizar el bloque aislado y tomarle una "foto"
+(`html-to-image` es dependencia del paquete). El log también muestra:
+```
+Blocked script execution in 'about:srcdoc' because the document's frame is
+sandboxed and the 'allow-scripts' permission is not set.
+```
+Sin `allow-scripts` en el sandbox del iframe, el contenido nunca termina de
+montar/pintar dentro de él, así que cada captura falla por timeout en vez de
+resolver rápido — comportamiento consistente con "casi siempre tarda el
+timeout completo", no con una carga que varía según tamaño.
+
+**Archivos involucrados (a revisar cuando se retome):**
+- `src/App/ComponentsLibrary/thumbnail/captureThumbnail.ts` (línea ~519, el timeout de 6000ms y el iframe sandbox)
+- `src/App/ComponentsLibrary/lazyThumbnailGenerator.ts` (quién dispara las capturas, en qué orden/concurrencia)
+- `src/App/ComponentsLibrary/devSeedSections.ts` / `devSeedThemes.ts` / `devSeedTemplates.ts` / `devSeedLayouts.ts` / `devSeedPrimitives.ts` (posible origen de cuántos ítems se intentan capturar al inicio — el nombre "devSeed" sugiere que esto podría ser solo para desarrollo/seed local, no necesario en producción real con backend)
+
+**Preguntas a resolver antes de tocar código:**
+1. ¿Este flujo de captura de thumbnails corre siempre al abrir el editor, o solo la primera vez / solo en modo dev-seed? Si es dev-only, quizás no afecta usuarios reales con backend real.
+2. ¿Por qué el iframe no tiene `allow-scripts`? ¿Falta agregarlo, o es intencional por seguridad y hay que resolver la captura de otra forma (ej. renderizar sin iframe, o con un sandbox distinto)?
+3. ¿Se puede paralelizar las capturas en vez de serializarlas, y/o bajar el timeout, y/o cachear thumbnails ya generados para no repetir el trabajo en cada apertura?
+
+## Pendiente — mejorar el loader del editor mientras carga
+
+El spinner + mensajes progresivos por tiempo (agregados en
+`VisualEmailBuilder.tsx`) ayudan, pero con la apertura tardando ~2 minutos por
+el problema de thumbnails arriba, se pidió algo con más sensación de avance
+real (tipo progreso/loader animado) en vez de solo cambiar texto en un
+spinner estático — para que no se perciba como que "nunca va a terminar".
+Retomar junto con el fix de thumbnails: si se resuelve la causa raíz (timeout
+de 6s por captura), la carga debería bajar de minutos a segundos y puede que
+ni se necesite un loader más elaborado.
+
 ## Reglas de esta sesión de trabajo
 
 - No commitear ningún cambio de este documento ni del código del builder hasta indicación explícita.
