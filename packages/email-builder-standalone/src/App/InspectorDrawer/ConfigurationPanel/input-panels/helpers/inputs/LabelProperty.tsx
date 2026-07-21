@@ -26,11 +26,11 @@ const LabelProperty: React.FC<{ label?: React.ReactNode; action?: React.ReactNod
   }
   // With an action (the theme panel's per-field reset button), the row's
   // 32px-tall IconButton — not the ~18px label text — was setting the row
-  // height, so `alignItems: 'center'` centered the text inside 32px and the
-  // visual gap to the input below ballooned well past 6px. Pin the row to
-  // the label's own line height and bottom-align instead, so only the
-  // margin (still 6px) separates label from input, matching the no-action
-  // rows exactly.
+  // height. The row itself carries no bottom margin now (margin on a
+  // flex-end row still measures from the tallest child, the button, not
+  // the label text, which kept producing more than the intended 6px gap
+  // to the input below). Spacing to the input is left to the input's own
+  // layout.
   return (
     <Box
       sx={{
@@ -39,7 +39,6 @@ const LabelProperty: React.FC<{ label?: React.ReactNode; action?: React.ReactNod
         justifyContent: 'space-between',
         width: '100%',
         minHeight: 0,
-        mb: '6px',
       }}
     >
       <p style={{ ...labelStyle, margin: 0 }}>{label}</p>
