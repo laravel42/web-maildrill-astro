@@ -84,7 +84,7 @@ import { resolveThumbnailUrl } from './thumbnail/thumbnailUrl';
 export const COMPONENTS_LIBRARY_DRAWER_WIDTH = 380;
 
 /** Width (in px) when the drawer is collapsed to its compact base-blocks rail. */
-export const COMPACT_LIBRARY_DRAWER_WIDTH = 64;
+export const COMPACT_LIBRARY_DRAWER_WIDTH = 164;
 
 /** Card axis is per-category: role | type | shape | none. */
 type LibraryItem = {
