@@ -38,6 +38,26 @@ const FALLBACK_BACKDROP = '#f4f4f4';
 const FALLBACK_CANVAS = '#ffffff';
 
 /**
+ * Local placeholder for empty containers/columns — a plain 600×120
+ * light-grey rectangle, encoded as a data URI SVG.
+ *
+ * Was `https://placehold.co/600x120@2x/F0F0F0/BBB?text=%C2%A0` (a real
+ * network request). During the lazy thumbnail generator's pass over
+ * the seeded local catalog (114 items; ~106 empty containers/columns
+ * across them, confirmed by inspecting localPresets.data.json), every
+ * placeholder fired its own request to placehold.co — that's the bulk
+ * of the ~260 requests and multi-minute stall reported when opening
+ * the editor, not the per-capture iframe timeout (already addressed
+ * separately). A same-document data URI has zero network latency and
+ * renders identically (same fill colour, same size).
+ */
+const PLACEHOLDER_IMAGE_DATA_URI =
+  'data:image/svg+xml,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="120"><rect width="600" height="120" fill="%23F0F0F0"/></svg>'
+  );
+
+/**
  * Inject placeholder Image blocks into empty containers/columns so
  * layout previews show visible structure instead of collapsing to 0px.
  */
@@ -50,7 +70,7 @@ export function injectPlaceholders(document: TReaderDocument): TReaderDocument {
       type: 'Image',
       data: {
         style: { padding: { top: 0, bottom: 0, left: 0, right: 0 } },
-        props: { url: 'https://placehold.co/600x120@2x/F0F0F0/BBB?text=%C2%A0' },
+        props: { url: PLACEHOLDER_IMAGE_DATA_URI },
       },
     }) as unknown as TReaderDocument[string];
 
