@@ -43,12 +43,15 @@ export default function BlockTypeAccordion({
   const isModified = countOverrides(override) > 0;
   const Icon = spec.icon;
 
+  // Box, not Stack — theme.ts's MuiStack styleOverrides forces
+  // `margin: 0 !important` on every Stack's children workspace-wide (see
+  // BaseSidebarPanel.tsx / RootAccordion.tsx for the same fix).
   const fields = (
-    <Stack spacing={2}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {spec.fields.map((field) => (
         <ThemeFieldRow key={`${field.section}.${field.key}`} blockType={blockType} field={field} />
       ))}
-    </Stack>
+    </Box>
   );
 
   if (headless) {
