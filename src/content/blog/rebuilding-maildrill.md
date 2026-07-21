@@ -4,8 +4,8 @@ description: 'The story of a full refactor — a new islands frontend, a queue-b
 pubDate: 2026-07-20
 author: 'The Maildrill team'
 tags: ['engineering', 'product']
-featured: true
-draft: true
+featured: false
+draft: false
 ---
 
 Maildrill started as a single idea: one calm workspace for every message — email, SMS, WhatsApp, and voice — that feels like a modern product, not an admin panel. Getting there meant rebuilding almost everything. This is the story of that refactor, and the features it unlocked.
