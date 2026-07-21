@@ -222,9 +222,13 @@ const createInitialState = (): TValue => ({
   canvasHoveredBlockId: null,
   highlightColor: '#FF6B35', // Naranja por defecto
   showVersion: false,
-  // Fresh documents ship with the Classic Light theme baked into the seed
-  // root (see empty-email-message.ts), so mark it as the applied theme.
-  appliedThemeId: 'classic-light',
+  // Fresh documents ship with the Classic Light theme's values baked
+  // into the seed root (see empty-email-message.ts) so previews render
+  // correctly — but no theme card should show as "Selected" until the
+  // user explicitly picks one. Point 9 (EMAIL_BUILDER_TASKS.md): start
+  // with no theme marked as applied; save/apply/list themes work exactly
+  // as before, they just don't preselect on load.
+  appliedThemeId: null,
 });
 
 export const editorStateStore = create<TValue>(() => createInitialState());
