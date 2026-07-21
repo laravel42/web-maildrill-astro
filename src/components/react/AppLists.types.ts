@@ -11,6 +11,8 @@ export type ListMeta = {
   trend: number[];
   recentCampaign: string;
   tags: string[];
+  /** Free-text note kept with the list. */
+  notes: string;
   more: string;
   openRate: string;
   clickRate: string;

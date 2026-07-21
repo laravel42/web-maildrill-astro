@@ -1,12 +1,16 @@
 import { lists as baseLists } from '@/lib/app/mock-data';
 import type { ListMeta, ListRow } from './AppLists.types';
 
+/** Rows shown per page in the lists table/cards. */
+export const PAGE_SIZE = 10;
+
 const META: Record<string, ListMeta> = {
   list_1: {
     color: '#4f46e5',
     trend: [16800, 17150, 17480, 17720, 17980, 18220, 18420],
     recentCampaign: 'Spring Launch',
     tags: ['Marketing', 'VIP', 'Opt-in'],
+    notes: 'Used for the weekly product newsletter. Keep double opt-in on for GDPR.',
     more: '+240',
     openRate: '58.2%',
     clickRate: '12.1%',
@@ -16,6 +20,7 @@ const META: Record<string, ListMeta> = {
     trend: [58200, 58720, 59180, 59520, 59810, 60050, 60211],
     recentCampaign: 'Welcome Series',
     tags: ['Weekly', 'Opt-in'],
+    notes: '',
     more: '+18',
     openRate: '46.7%',
     clickRate: '9.4%',
@@ -25,6 +30,7 @@ const META: Record<string, ListMeta> = {
     trend: [2510, 2680, 2840, 2980, 3080, 3160, 3200],
     recentCampaign: 'Order shipped SMS',
     tags: ['Automation', 'Transactional'],
+    notes: '',
     more: '+12',
     openRate: '71.4%',
     clickRate: '18.9%',
@@ -38,6 +44,7 @@ export const rows: ListRow[] = baseLists.map((l) => ({
     trend: [l.subscribers],
     recentCampaign: '—',
     tags: [],
+    notes: '',
     more: '+0',
     openRate: '—',
     clickRate: '—',

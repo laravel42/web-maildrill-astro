@@ -6,6 +6,10 @@ export interface ApiList {
   name: string;
   description?: string | null;
   color?: string | null;
+  /** Free-form labels stored on the list (jsonb array). */
+  tags?: string[] | null;
+  /** Free-text note kept with the list. */
+  notes?: string | null;
   /** Subscribers on the list, counted server-side by /v1/lists. */
   memberCount?: number | null;
   createdAt?: string | null;
@@ -27,7 +31,8 @@ export function toListRow(l: ApiList): ListRow {
     color: l.color || '#4f46e5',
     trend: [0],
     recentCampaign: '—',
-    tags: [],
+    tags: l.tags ?? [],
+    notes: l.notes ?? '',
     more: '+0',
     openRate: '—',
     clickRate: '—',

@@ -1,13 +1,22 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
 import ListCustomFields from './ListCustomFields';
 import ListEditorModal, { type ListEditorValues } from './ListEditorModal';
 import { ago } from './shared/time';
-import { AVATAR_GRADS, fmtPct, rows as mockRows, trendPath, weeklyGain } from './AppLists.logic';
+import {
+  AVATAR_GRADS,
+  fmtPct,
+  PAGE_SIZE,
+  rows as mockRows,
+  trendPath,
+  weeklyGain,
+} from './AppLists.logic';
 import type { ListRow, SortKey, View } from './AppLists.types';
 import { api, ApiError } from '@/lib/app/api';
 import { toListRow, type ApiList } from '@/lib/app/list-map';
+import { tagStyle } from '@/lib/app/tag-style';
+import TagFilter from './shared/TagFilter';
 import styles from './AppLists.module.css';
 
 export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
@@ -15,8 +24,23 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
   const live = initial !== undefined;
   const [listRows, setListRows] = useState<ListRow[]>(initial !== undefined ? initial : mockRows);
   const [query, setQuery] = useState('');
+  const [tagSel, setTagSel] = useState<Set<string>>(new Set());
   const [view, setView] = useState<View>('table');
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updatedAt', dir: -1 });
+  const [page, setPage] = useState(1);
+
+  // Every tag present across the workspace's lists, for the tags filter.
+  const allTags = useMemo(
+    () => [...new Set(listRows.flatMap((l) => l.tags))].sort((a, b) => a.localeCompare(b)),
+    [listRows],
+  );
+  const toggleTag = (t: string) =>
+    setTagSel((prev) => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t);
+      else next.add(t);
+      return next;
+    });
   const [openId, setOpenId] = useState<string | null>(null);
   const [closing, setClosing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -70,6 +94,18 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
   // Set while a delete waits on confirmation.
   const [confirmList, setConfirmList] = useState<{ id: string; name: string } | null>(null);
 
+  /* Persist a tags/notes change from the drawer. Optimistic: the row updates
+     immediately so a reopen reflects it, then the PATCH syncs the service. */
+  const patchList = async (id: string, patch: { tags?: string[]; notes?: string }) => {
+    setListRows((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+    if (!live) return;
+    try {
+      await api.patch(`lists/${id}`, patch);
+    } catch (e) {
+      showToast(e instanceof ApiError ? e.message : 'Could not save changes');
+    }
+  };
+
   const deleteList = async (id: string, name: string) => {
     if (live) {
       try {
@@ -87,6 +123,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let list = listRows.filter((l) => {
+      if (tagSel.size > 0 && !l.tags.some((t) => tagSel.has(t))) return false;
       if (!q) return true;
       return (
         l.name.toLowerCase().includes(q) ||
@@ -110,7 +147,18 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
       return 0;
     });
     return list;
-  }, [query, sort, listRows]);
+  }, [query, tagSel, sort, listRows]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const startIdx = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const endIdx = Math.min(safePage * PAGE_SIZE, filtered.length);
+  const pageRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  // Snap back to the first page whenever the filtered set changes underneath.
+  useEffect(() => {
+    setPage(1);
+  }, [query, tagSel, sort]);
 
   const toggleSort = (key: SortKey) =>
     setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: 1 }));
@@ -138,170 +186,216 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
         </button>
       </div>
 
-      {/* toolbar */}
-      <div className={styles.toolbar}>
-        <label className={styles.search}>
-          <Icon name="search" size={15} className={styles.searchic} />
-          <input
-            type="search"
-            placeholder="Search lists…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            aria-label="Search lists"
+      <div className={`atable ${styles.tablecard}`}>
+        {/* toolbar */}
+        <div className={styles.toolbar}>
+          <label className={styles.search}>
+            <Icon name="search" size={15} className={styles.searchic} />
+            <input
+              type="search"
+              placeholder="Search lists…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              aria-label="Search lists"
+            />
+          </label>
+          <TagFilter
+            tags={allTags}
+            selected={tagSel}
+            onToggle={toggleTag}
+            onClear={() => setTagSel(new Set())}
           />
-        </label>
-        <div className={styles.spacer} />
-        <div className="aseg" role="group" aria-label="View mode">
-          {(['cards', 'table'] as View[]).map((v) => (
-            <button
-              key={v}
-              type="button"
-              className={`aseg__opt${view === v ? ' is-active' : ''}`}
-              aria-pressed={view === v}
-              onClick={() => setView(v)}
-            >
-              {v === 'cards' ? 'Cards' : 'Table'}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* TABLE VIEW */}
-      {view === 'table' && (
-        <div className="atable ll__table">
-          <div className={`athead ${styles.grid}`}>
-            <div>
-              <button type="button" onClick={() => toggleSort('name')}>
-                List <span className="tnum">{sortArrow('name')}</span>
+          <div className={styles.spacer} />
+          <div className="aseg" role="group" aria-label="View mode">
+            {(['cards', 'table'] as View[]).map((v) => (
+              <button
+                key={v}
+                type="button"
+                className={`aseg__opt${view === v ? ' is-active' : ''}`}
+                aria-pressed={view === v}
+                onClick={() => setView(v)}
+              >
+                {v === 'cards' ? 'Cards' : 'Table'}
               </button>
-            </div>
-            <div>
-              <button type="button" onClick={() => toggleSort('subscribers')}>
-                Subscribers <span className="tnum">{sortArrow('subscribers')}</span>
-              </button>
-            </div>
-            <div>
-              <button type="button" onClick={() => toggleSort('growthPct')}>
-                Growth <span className="tnum">{sortArrow('growthPct')}</span>
-              </button>
-            </div>
-            <div>Recent campaign</div>
-            <div>
-              <button type="button" onClick={() => toggleSort('updatedAt')}>
-                Updated <span className="tnum">{sortArrow('updatedAt')}</span>
-              </button>
-            </div>
+            ))}
           </div>
+        </div>
 
-          {filtered.length === 0 ? (
+        {/* TABLE VIEW */}
+        {view === 'table' && (
+          <>
+            <div className={`athead ${styles.grid}`}>
+              <div>
+                <button type="button" onClick={() => toggleSort('name')}>
+                  List <span className="tnum">{sortArrow('name')}</span>
+                </button>
+              </div>
+              <div>
+                <button type="button" onClick={() => toggleSort('subscribers')}>
+                  Subscribers <span className="tnum">{sortArrow('subscribers')}</span>
+                </button>
+              </div>
+              <div>
+                <button type="button" onClick={() => toggleSort('growthPct')}>
+                  Growth <span className="tnum">{sortArrow('growthPct')}</span>
+                </button>
+              </div>
+              <div>Recent campaign</div>
+              <div>
+                <button type="button" onClick={() => toggleSort('updatedAt')}>
+                  Updated <span className="tnum">{sortArrow('updatedAt')}</span>
+                </button>
+              </div>
+            </div>
+
+            {filtered.length === 0 ? (
+              <div className="atable__empty">No lists match your search.</div>
+            ) : (
+              pageRows.map((l) => {
+                const up = l.growthPct >= 0;
+                return (
+                  <div
+                    key={l.id}
+                    className={`atrow ${styles.grid}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setOpenId(l.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setOpenId(l.id);
+                      }
+                    }}
+                  >
+                    <div className={styles.namecell}>
+                      <span className={styles.dot} style={{ background: l.color }} />
+                      <span className={styles.name}>{l.name}</span>
+                    </div>
+                    <div className={`tnum ${styles.muted3}`}>
+                      {l.subscribers.toLocaleString('en-US')}
+                    </div>
+                    <div
+                      className={`tnum ${styles.growth}`}
+                      style={{ color: up ? 'var(--success)' : 'var(--danger)' }}
+                    >
+                      {fmtPct(l.growthPct)}
+                    </div>
+                    <div className={styles.muted3}>{l.recentCampaign}</div>
+                    <div className={styles.muted}>{ago(l.updatedAt)}</div>
+                  </div>
+                );
+              })
+            )}
+          </>
+        )}
+
+        {/* CARDS VIEW */}
+        {view === 'cards' &&
+          (filtered.length === 0 ? (
             <div className="atable__empty">No lists match your search.</div>
           ) : (
-            filtered.map((l) => {
-              const up = l.growthPct >= 0;
-              return (
-                <div
-                  key={l.id}
-                  className={`atrow ${styles.grid}`}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setOpenId(l.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setOpenId(l.id);
-                    }
-                  }}
-                >
-                  <div className={styles.namecell}>
-                    <span className={styles.dot} style={{ background: l.color }} />
-                    <span className={styles.name}>{l.name}</span>
-                  </div>
-                  <div className={`tnum ${styles.muted3}`}>{l.subscribers.toLocaleString('en-US')}</div>
+            <div className={styles.cards}>
+              {pageRows.map((l) => {
+                const up = l.growthPct >= 0;
+                return (
                   <div
-                    className={`tnum ${styles.growth}`}
-                    style={{ color: up ? 'var(--success)' : 'var(--danger)' }}
+                    key={l.id}
+                    className={`acrd acrd--hover ${styles.card}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setOpenId(l.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setOpenId(l.id);
+                      }
+                    }}
                   >
-                    {fmtPct(l.growthPct)}
-                  </div>
-                  <div className={styles.muted3}>{l.recentCampaign}</div>
-                  <div className={styles.muted}>{ago(l.updatedAt)}</div>
-                </div>
-              );
-            })
-          )}
-
-          <div className="atable__foot">
-            <span className="tnum">
-              {filtered.length} of {listRows.length} lists
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* CARDS VIEW */}
-      {view === 'cards' &&
-        (filtered.length === 0 ? (
-          <div className="atable ll__table">
-            <div className="atable__empty">No lists match your search.</div>
-          </div>
-        ) : (
-          <div className={styles.cards}>
-            {filtered.map((l) => {
-              const up = l.growthPct >= 0;
-              return (
-                <div
-                  key={l.id}
-                  className={`acrd acrd--hover ${styles.card}`}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setOpenId(l.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setOpenId(l.id);
-                    }
-                  }}
-                >
-                  <div className={styles.cardTop}>
-                    <span className={styles.dot} style={{ background: l.color }} />
-                    <span className={styles.cardName}>{l.name}</span>
-                  </div>
-                  <div className={`${styles.cardNum} tnum`}>{l.subscribers.toLocaleString('en-US')}</div>
-                  <div className={styles.cardSublabel}>subscribers</div>
-                  <div
-                    className={`${styles.cardGrowth} tnum`}
-                    style={{ color: up ? 'var(--success)' : 'var(--danger)' }}
-                  >
-                    {fmtPct(l.growthPct)} · {up ? '↑' : '↓'}{' '}
-                    {Math.abs(weeklyGain(l.trend)).toLocaleString('en-US')} this week
-                  </div>
-                  <div className={styles.cardMeta}>
-                    <span>Recent: {l.recentCampaign}</span>
-                    <span>Updated {ago(l.updatedAt)}</span>
-                  </div>
-                  <div className={styles.cardFoot}>
-                    <div className={styles.avatars} aria-hidden="true">
-                      {AVATAR_GRADS.map((g, i) => (
-                        <span key={i} className={styles.avatar} style={{ background: g }} />
-                      ))}
+                    <div className={styles.cardTop}>
+                      <span className={styles.dot} style={{ background: l.color }} />
+                      <span className={styles.cardName}>{l.name}</span>
                     </div>
-                    <span className={`${styles.more} tnum`}>{l.more} more</span>
+                    <div className={`${styles.cardNum} tnum`}>
+                      {l.subscribers.toLocaleString('en-US')}
+                    </div>
+                    <div className={styles.cardSublabel}>subscribers</div>
+                    <div
+                      className={`${styles.cardGrowth} tnum`}
+                      style={{ color: up ? 'var(--success)' : 'var(--danger)' }}
+                    >
+                      {fmtPct(l.growthPct)} · {up ? '↑' : '↓'}{' '}
+                      {Math.abs(weeklyGain(l.trend)).toLocaleString('en-US')} this week
+                    </div>
+                    <div className={styles.cardMeta}>
+                      <span>Recent: {l.recentCampaign}</span>
+                      <span>Updated {ago(l.updatedAt)}</span>
+                    </div>
+                    <div className={styles.cardFoot}>
+                      <div className={styles.avatars} aria-hidden="true">
+                        {AVATAR_GRADS.map((g, i) => (
+                          <span key={i} className={styles.avatar} style={{ background: g }} />
+                        ))}
+                      </div>
+                      <span className={`${styles.more} tnum`}>{l.more} more</span>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-            <button
-              type="button"
-              className={`${styles.card} ${styles.cardNew}`}
-              onClick={() => setEditor({ mode: 'create' })}
-            >
-              <span className={styles.newplus}>
-                <Icon name="plus" size={18} stroke={2.2} />
-              </span>
-              Create new list
-            </button>
-          </div>
-        ))}
+                );
+              })}
+              <button
+                type="button"
+                className={`${styles.card} ${styles.cardNew}`}
+                onClick={() => setEditor({ mode: 'create' })}
+              >
+                <span className={styles.newplus}>
+                  <Icon name="plus" size={18} stroke={2.2} />
+                </span>
+                Create new list
+              </button>
+            </div>
+          ))}
+
+        {/* footer / pagination */}
+        <div className={`atable__foot ${styles.foot}`}>
+          <span className="tnum">
+            {filtered.length === 0
+              ? 'No lists match your search'
+              : `${startIdx}–${endIdx} of ${filtered.length} list${filtered.length === 1 ? '' : 's'}`}
+          </span>
+          {pageCount > 1 && (
+            <div className={styles.pager}>
+              <button
+                type="button"
+                className={styles.pg}
+                disabled={safePage === 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                aria-label="Previous page"
+              >
+                <Icon name="chevron-right" size={15} className={styles.pgflip} />
+              </button>
+              {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`${styles.pgn} tnum${n === safePage ? ' is-on' : ''}`}
+                  aria-current={n === safePage ? 'page' : undefined}
+                  onClick={() => setPage(n)}
+                >
+                  {n}
+                </button>
+              ))}
+              <button
+                type="button"
+                className={styles.pg}
+                disabled={safePage === pageCount}
+                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                aria-label="Next page"
+              >
+                <Icon name="chevron-right" size={15} />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
       {open && (
         <ListDrawer
@@ -311,6 +405,12 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
           closing={closing}
           onClose={closeDrawer}
           onToast={showToast}
+          onPatch={patchList}
+          onFilterTag={(t) => {
+            if (!tagSel.has(t)) toggleTag(t);
+            closeDrawer();
+            showToast(`Filtered by “${t}”`);
+          }}
           onDelete={() => setConfirmList({ id: open.id, name: open.name })}
           onEdit={() => {
             setEditor({ mode: 'edit', id: open.id, name: open.name, color: open.color });
@@ -365,6 +465,8 @@ function ListDrawer({
   closing,
   onClose,
   onToast,
+  onPatch,
+  onFilterTag,
   onDelete,
   onEdit,
 }: {
@@ -373,14 +475,37 @@ function ListDrawer({
   closing: boolean;
   onClose: () => void;
   onToast: (m: string) => void;
+  onPatch: (id: string, patch: { tags?: string[]; notes?: string }) => void;
+  onFilterTag: (tag: string) => void;
   onDelete: () => void;
   onEdit: () => void;
 }) {
-  const DEFAULT_NOTE =
-    'Segment used for the weekly product newsletter. Keep double opt-in on for GDPR.';
-  const [note, setNote] = useState(DEFAULT_NOTE);
-  const [savedNote, setSavedNote] = useState(DEFAULT_NOTE);
+  // Notes persist on Save; tags persist immediately as they're added/removed.
+  const [note, setNote] = useState(list.notes);
+  const [savedNote, setSavedNote] = useState(list.notes);
   const dirty = note !== savedNote;
+
+  const [tags, setTags] = useState<string[]>(list.tags);
+  const [tagInput, setTagInput] = useState('');
+  const addTag = () => {
+    const v = tagInput.trim();
+    setTagInput('');
+    if (!v || tags.some((t) => t.toLowerCase() === v.toLowerCase())) return;
+    const next = [...tags, v];
+    setTags(next);
+    onPatch(list.id, { tags: next });
+  };
+  const removeTag = (t: string) => {
+    const next = tags.filter((x) => x !== t);
+    setTags(next);
+    onPatch(list.id, { tags: next });
+  };
+
+  const saveNote = () => {
+    setSavedNote(note);
+    onPatch(list.id, { notes: note });
+    onToast('Note saved');
+  };
 
   const up = list.growthPct >= 0;
   const gain = weeklyGain(list.trend);
@@ -425,16 +550,45 @@ function ListDrawer({
             </div>
           </div>
 
-          {/* tags */}
-          {list.tags.length > 0 && (
+          {/* editable tags — saved as you add or remove them */}
+          <div className={styles.dTagsSection}>
+            <span className={`adrawer__eyebrow ${styles.dTagsEyebrow}`}>Tags</span>
             <div className={styles.dTags}>
-              {list.tags.map((t) => (
-                <span key={t} className={styles.dTag}>
-                  {t}
+              {tags.map((t) => (
+                <span key={t} className={styles.dTag} style={tagStyle(t)}>
+                  <button
+                    type="button"
+                    className={styles.dTaglbl}
+                    title={`Filter by “${t}”`}
+                    onClick={() => onFilterTag(t)}
+                  >
+                    {t}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.dTagx}
+                    aria-label={`Remove ${t}`}
+                    onClick={() => removeTag(t)}
+                  >
+                    <Icon name="x" size={10} stroke={2.6} />
+                  </button>
                 </span>
               ))}
+              <input
+                className={styles.dTagin}
+                placeholder="Add tag…"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag();
+                  }
+                }}
+                aria-label="Add tag"
+              />
             </div>
-          )}
+          </div>
 
           {/* stat cards */}
           <div className={styles.dStats}>
@@ -560,10 +714,7 @@ function ListDrawer({
               type="button"
               className={`${styles.dSavenote}${dirty ? ` ${styles.isDirty}` : ''}`}
               disabled={!dirty}
-              onClick={() => {
-                setSavedNote(note);
-                onToast('Note saved');
-              }}
+              onClick={saveNote}
             >
               Save note
             </button>
