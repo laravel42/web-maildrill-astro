@@ -7,6 +7,10 @@ export type Campaign = {
   status: CampaignStatus;
   channel: ChannelType;
   audience: string;
+  /** Recipient selector — one of these is set (or neither = all subscribers).
+      `audience` is the resolved name of whichever applies. */
+  listId: string | null;
+  segmentId: string | null;
   /** Template this campaign sends, when it uses one (null for ad-hoc bodies). */
   templateId: string | null;
   scheduledAt: string | null;

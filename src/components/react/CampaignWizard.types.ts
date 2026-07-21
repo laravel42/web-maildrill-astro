@@ -14,6 +14,8 @@ export type AudienceChoice = {
   name: string;
   desc: string;
   count: number | null;
+  /** List colour (hex), for the list badge. Only set for `kind: 'list'`. */
+  color?: string | null;
 };
 
 /** A saved template the campaign can send, narrowed to the chosen channel. */

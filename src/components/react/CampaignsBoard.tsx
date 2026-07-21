@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { campaigns as mockCampaigns } from '@/lib/app/mock-data';
 import { api, ApiError } from '@/lib/app/api';
 import { toCampaign, type ApiCampaign } from '@/lib/app/campaign-map';
@@ -23,6 +23,24 @@ function ChannelPill({ channel }: { channel: ChannelType }) {
     <span className="apill" style={{ background: m.tint, color: m.color }}>
       <Icon name={m.icon} size={12} />
       {m.label}
+    </span>
+  );
+}
+
+const DEFAULT_LIST_COLOR = '#4f46e5';
+
+/** A list identifier badge tinted with the list's own colour. */
+function ListPill({ name, color }: { name: string; color?: string | null }) {
+  const c = color || DEFAULT_LIST_COLOR;
+  return (
+    <span
+      className="apill"
+      style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c }}
+    >
+      <span
+        style={{ width: 7, height: 7, borderRadius: '50%', background: c, flex: 'none' }}
+      />
+      {name}
     </span>
   );
 }
@@ -303,11 +321,20 @@ export default function CampaignsBoard({
   const report = reportId ? (campaigns.find((c) => c.id === reportId) ?? null) : null;
   const sortArrow = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? '↑' : '↓') : '');
 
+  // Resolve a campaign's target-list colour from the audience picker data so the
+  // detail views can tint the list badge; undefined when it targets a segment or
+  // the list isn't in the loaded set (fixtures, or a since-deleted list).
+  const listColorFor = (c: Campaign): string | undefined =>
+    c.listId
+      ? (audiences?.find((a) => a.kind === 'list' && a.id === c.listId)?.color ?? undefined)
+      : undefined;
+
   // The report replaces the board (a screen, matching the design), not an overlay.
   if (report) {
     return (
       <CampaignReport
         campaign={report}
+        listColor={listColorFor(report)}
         onBack={() => setReportId(null)}
         onEdit={() => {
           const c = report;
@@ -548,6 +575,7 @@ export default function CampaignsBoard({
       {open && (
         <CampaignDrawer
           campaign={open}
+          listColor={listColorFor(open)}
           live={live}
           onClose={() => setOpenId(null)}
           onEdit={() => {
@@ -700,6 +728,7 @@ function CampaignPreview({ campaign, live }: { campaign: Campaign; live: boolean
 
 function CampaignDrawer({
   campaign,
+  listColor,
   live,
   onClose,
   onEdit,
@@ -707,13 +736,13 @@ function CampaignDrawer({
   onViewReport,
 }: {
   campaign: Campaign;
+  listColor?: string;
   live: boolean;
   onClose: () => void;
   onEdit: () => void;
   onDuplicate: () => void;
   onViewReport: () => void;
 }) {
-  const m = CHANNEL[campaign.channel];
   const isSent = campaign.status === 'sent';
   const deliveredPct = campaign.recipients ? (campaign.delivered / campaign.recipients) * 100 : 0;
   const cto =
@@ -807,7 +836,6 @@ function CampaignDrawer({
               {STATUS_LABEL[campaign.status]}
             </span>
           </div>
-          <p className={styles.drawerAud}>To {campaign.audience}</p>
 
           {isSent ? (
             <div className={styles.drawerKpis}>
@@ -830,12 +858,28 @@ function CampaignDrawer({
           <div className={styles.drawerDetails}>
             <div className="adetail">
               <span className="adetail__k">Channel</span>
-              <span className="adetail__v">{m.label}</span>
+              <span className="adetail__v">
+                <ChannelPill channel={campaign.channel} />
+              </span>
             </div>
-            <div className="adetail">
-              <span className="adetail__k">Audience</span>
-              <span className="adetail__v">{campaign.audience}</span>
-            </div>
+            {campaign.listId ? (
+              <div className="adetail">
+                <span className="adetail__k">List</span>
+                <span className="adetail__v">
+                  <ListPill name={campaign.audience} color={listColor} />
+                </span>
+              </div>
+            ) : campaign.segmentId ? (
+              <div className="adetail">
+                <span className="adetail__k">Segment</span>
+                <span className="adetail__v">{campaign.audience}</span>
+              </div>
+            ) : (
+              <div className="adetail">
+                <span className="adetail__k">Audience</span>
+                <span className="adetail__v">{campaign.audience}</span>
+              </div>
+            )}
             <div className="adetail">
               <span className="adetail__k">Scheduled</span>
               <span className="adetail__v">
@@ -885,16 +929,17 @@ function CampaignDrawer({
  */
 function CampaignReport({
   campaign,
+  listColor,
   onBack,
   onEdit,
   onDuplicate,
 }: {
   campaign: Campaign;
+  listColor?: string;
   onBack: () => void;
   onEdit: () => void;
   onDuplicate: () => void;
 }) {
-  const channel = CHANNEL[campaign.channel];
   const base = campaign.recipients || 1;
   const deliveredPct = (campaign.delivered / base) * 100;
   const cto =
@@ -933,9 +978,14 @@ function CampaignReport({
     },
   ];
 
-  const details: [string, string][] = [
-    ['Channel', channel.label],
-    ['Audience', campaign.audience],
+  const audienceDetail: [string, ReactNode] = campaign.listId
+    ? ['List', <ListPill name={campaign.audience} color={listColor} />]
+    : campaign.segmentId
+      ? ['Segment', campaign.audience]
+      : ['Audience', campaign.audience];
+  const details: [string, ReactNode][] = [
+    ['Channel', <ChannelPill channel={campaign.channel} />],
+    audienceDetail,
     ['Recipients', campaign.recipients.toLocaleString('en-US')],
     ['Unsubscribed', campaign.unsubscribed.toLocaleString('en-US')],
     ['Click-to-open', cto == null ? '—' : `${cto.toFixed(1)}%`],

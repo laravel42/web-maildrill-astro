@@ -45,13 +45,16 @@ if (session?.user?.id && session.activeTenantId) {
     // A failed lookup leaves the wizard with an empty picker and its own
     // explanatory empty state — it must not take the whole page down.
     audiences = [
-      ...unwrap<{ id: string; name: string; memberCount?: number | null }>(listsRes.data).map(
+      ...unwrap<{ id: string; name: string; memberCount?: number | null; color?: string | null }>(
+        listsRes.data,
+      ).map(
         (l): AudienceChoice => ({
           id: l.id,
           kind: 'list',
           name: l.name,
           desc: 'List',
           count: l.memberCount ?? null,
+          color: l.color ?? null,
         }),
       ),
       ...unwrap<{ id: string; name: string; description?: string | null }>(

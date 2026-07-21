@@ -42,6 +42,8 @@ export function toCampaign(c: ApiCampaign): Campaign {
     status: toStatus(c.status),
     channel: toChannel(c.channel),
     audience: c.audience || 'All subscribers',
+    listId: c.listId ?? null,
+    segmentId: c.segmentId ?? null,
     templateId: c.templateId ?? null,
     scheduledAt: c.scheduledAt ?? null,
     openRate: null,
