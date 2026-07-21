@@ -494,11 +494,13 @@ function ListDrawer({
     const next = [...tags, v];
     setTags(next);
     onPatch(list.id, { tags: next });
+    onToast('Tags saved');
   };
   const removeTag = (t: string) => {
     const next = tags.filter((x) => x !== t);
     setTags(next);
     onPatch(list.id, { tags: next });
+    onToast('Tags saved');
   };
 
   const saveNote = () => {

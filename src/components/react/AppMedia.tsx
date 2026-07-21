@@ -1,18 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { folderOf, FOLDER_ORDER } from '@/lib/app/media-data';
-import type { MediaFile, MediaFileType, MediaFolder } from '@/lib/app/media-data';
+import type { MediaFile, MediaFolder } from '@/lib/app/media-data';
 import { api, ApiError } from '@/lib/app/api';
 import { toMediaFile, type ApiMediaAsset } from '@/lib/app/media-map';
 import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
 import TagFilter from './shared/TagFilter';
 import { useToast } from './shared/useToast';
+import { agoNow } from './shared/time';
 import {
   ASC_FIRST,
   PAGE_SIZE,
-  POPOVER_TYPES,
-  TYPE_ORDER,
   VIEWS,
   agoMin,
   dimFirst,
@@ -49,7 +48,7 @@ async function imageSize(file: File): Promise<{ width: number; height: number } 
 }
 
 /** A grid row plus the fields that only exist for live assets. */
-type LiveMediaFile = MediaFile & { preview: string; tags: string[] };
+type LiveMediaFile = MediaFile & { preview: string; url: string; tags: string[] };
 
 export default function AppMedia({
   initial,
@@ -64,10 +63,6 @@ export default function AppMedia({
   const [view, setView] = useState<ViewKey>('list');
   const [folder, setFolder] = useState<MediaFolder>('All files');
   const [query, setQuery] = useState('');
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [popTypes, setPopTypes] = useState<Set<MediaFileType>>(new Set());
-  const [colOpen, setColOpen] = useState(false);
-  const [colTypes, setColTypes] = useState<Set<MediaFileType>>(new Set());
   const [tagSel, setTagSel] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'uploaded', dir: -1 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -94,12 +89,9 @@ export default function AppMedia({
     () => FOLDER_ORDER.filter((f) => f === 'All files' || (folderCounts[f] ?? 0) > 0),
     [folderCounts],
   );
-  const presentTypes = useMemo(
-    () => TYPE_ORDER.filter((t) => mediaFiles.some((m) => m.type === t)),
-    [],
-  );
 
-  const effTags = (m: MediaFile): string[] => tagStore[m.id] ?? [m.type];
+  // In-session edits win; otherwise the asset's real persisted tags.
+  const effTags = (m: LiveMediaFile): string[] => tagStore[m.id] ?? m.tags;
 
   // Tags present across the library (custom tags, else the file type), for the
   // tags filter dropdown.
@@ -122,8 +114,6 @@ export default function AppMedia({
     let list = mediaFiles.filter((m) => {
       if (q && !m.name.toLowerCase().includes(q)) return false;
       if (folder !== 'All files' && folderOf(m.type) !== folder) return false;
-      if (popTypes.size && !popTypes.has(m.type)) return false;
-      if (colTypes.size && !colTypes.has(m.type)) return false;
       if (tagSel.size > 0 && !effTags(m).some((t) => tagSel.has(t))) return false;
       return true;
     });
@@ -138,7 +128,7 @@ export default function AppMedia({
       return r * dir;
     });
     return list;
-  }, [query, folder, popTypes, colTypes, tagSel, sort, tagStore]);
+  }, [mediaFiles, query, folder, tagSel, sort, tagStore]);
 
   const total = filtered.length;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -243,18 +233,21 @@ export default function AppMedia({
 
   /* Open each selected asset's real CDN URL — no fake "Downloading" toast. */
   const downloadSelected = () => {
-    const rows = mediaFiles.filter((f) => selected.has(f.id) && f.preview);
+    const rows = mediaFiles.filter((f) => selected.has(f.id) && f.url);
     if (rows.length === 0) {
       show('Nothing downloadable selected');
       return;
     }
-    rows.forEach((f) => window.open(f.preview, '_blank', 'noopener'));
+    rows.forEach((f) => window.open(f.url, '_blank', 'noopener'));
     setSelected(new Set());
   };
 
   const saveTags = async (id: string, tags: string[]) => {
     setTagStore((prev) => ({ ...prev, [id]: tags }));
-    if (!live) return;
+    if (!live) {
+      show('Tags saved');
+      return;
+    }
     try {
       await api.patch<ApiMediaAsset>(`media/${id}`, { tags });
       setMediaFiles((prev) => prev.map((f) => (f.id === id ? { ...f, tags } : f)));
@@ -264,38 +257,12 @@ export default function AppMedia({
     }
   };
 
-  const toggleFrom = (
-    set: Set<MediaFileType>,
-    setter: (s: Set<MediaFileType>) => void,
-    t: MediaFileType,
-  ) => {
-    const next = new Set(set);
-    if (next.has(t)) next.delete(t);
-    else next.add(t);
-    setter(next);
-    resetPage();
-  };
-
-  const chips: { key: string; label: string; remove: () => void }[] = [
-    ...[...popTypes].map((t) => ({
-      key: `pop:${t}`,
-      label: `Type: ${t}`,
-      remove: () => toggleFrom(popTypes, setPopTypes, t),
-    })),
-    ...[...colTypes].map((t) => ({
-      key: `col:${t}`,
-      label: `Type: ${t}`,
-      remove: () => toggleFrom(colTypes, setColTypes, t),
-    })),
-    ...[...tagSel].map((t) => ({
-      key: `tag:${t}`,
-      label: `Tag: ${t}`,
-      remove: () => toggleTag(t),
-    })),
-  ];
+  const chips: { key: string; label: string; remove: () => void }[] = [...tagSel].map((t) => ({
+    key: `tag:${t}`,
+    label: `Tag: ${t}`,
+    remove: () => toggleTag(t),
+  }));
   const clearChips = () => {
-    setPopTypes(new Set());
-    setColTypes(new Set());
     setTagSel(new Set());
     resetPage();
   };
@@ -308,12 +275,10 @@ export default function AppMedia({
       if (e.key !== 'Escape') return;
       if (uploadOpen) setUploadOpen(false);
       else if (openId) setOpenId(null);
-      else if (filterOpen) setFilterOpen(false);
-      else if (colOpen) setColOpen(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [uploadOpen, openId, filterOpen, colOpen]);
+  }, [uploadOpen, openId]);
 
   const onRowActivate = (id: string) => (e: ReactKeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -374,122 +339,6 @@ export default function AppMedia({
               aria-label="Search files"
             />
           </label>
-
-          {/* Filters popover */}
-          <div className={styles.popWrap}>
-            <button
-              type="button"
-              className={`sbtn ${styles.filterBtn}${popTypes.size ? ' is-on' : ''}`}
-              aria-expanded={filterOpen}
-              aria-haspopup="dialog"
-              onClick={() => {
-                setFilterOpen((v) => !v);
-                setColOpen(false);
-              }}
-            >
-              <Icon name="filter" size={14} />
-              Filters
-              {popTypes.size > 0 && <span className={styles.dot} aria-hidden="true" />}
-            </button>
-            {filterOpen && (
-              <>
-                <button
-                  type="button"
-                  className={styles.scrim}
-                  aria-label="Close filters"
-                  onClick={() => setFilterOpen(false)}
-                />
-                <div
-                  className={styles.filterPop}
-                  role="dialog"
-                  aria-label="Filter files"
-                  style={{ animation: 'pop .14s ease' }}
-                >
-                  <p className={`adrawer__eyebrow ${styles.popEyebrow}`}>File type</p>
-                  <div className={styles.chipRow}>
-                    {POPOVER_TYPES.map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        className={`${styles.typeChip}${popTypes.has(t) ? ' is-on' : ''}`}
-                        aria-pressed={popTypes.has(t)}
-                        onClick={() => toggleFrom(popTypes, setPopTypes, t)}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                  <div className={styles.popDiv} />
-                  <button
-                    type="button"
-                    className={styles.popClear}
-                    onClick={() => {
-                      setPopTypes(new Set());
-                      resetPage();
-                    }}
-                  >
-                    <Icon name="trash" size={13} />
-                    Clear filters
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Type column dropdown */}
-          <div className={styles.popWrap}>
-            <button
-              type="button"
-              className={`${styles.colToggle}${colTypes.size ? ' is-on' : ''}`}
-              aria-expanded={colOpen}
-              onClick={() => {
-                setColOpen((v) => !v);
-                setFilterOpen(false);
-              }}
-            >
-              Type
-              {colTypes.size > 0 && <span className={`${styles.colCount} tnum`}>{colTypes.size}</span>}
-              <Icon
-                name="chevron-down"
-                size={12}
-                className={`${styles.caret}${colOpen ? ' ' + styles.isOpen : ''}`}
-              />
-            </button>
-            {colOpen && (
-              <>
-                <button
-                  type="button"
-                  className={styles.scrim}
-                  aria-label="Close type filter"
-                  onClick={() => setColOpen(false)}
-                />
-                <div className={styles.colDrop} role="menu" style={{ animation: 'pop .14s ease' }}>
-                  {presentTypes.map((t) => (
-                    <label key={t} className={styles.colOpt}>
-                      <input
-                        type="checkbox"
-                        checked={colTypes.has(t)}
-                        onChange={() => toggleFrom(colTypes, setColTypes, t)}
-                      />
-                      {t}
-                    </label>
-                  ))}
-                  {colTypes.size > 0 && (
-                    <button
-                      type="button"
-                      className={`${styles.popClear} ${styles.colDropClear}`}
-                      onClick={() => {
-                        setColTypes(new Set());
-                        resetPage();
-                      }}
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
 
           <TagFilter
             tags={tagUniverse}
@@ -737,7 +586,7 @@ export default function AppMedia({
                 </div>
                 <div className={`${styles.r} tnum ${styles.muted4}`}>{m.dim}</div>
                 <div className={`${styles.r} tnum ${styles.muted4}`}>{m.size}</div>
-                <div className={`${styles.r} tnum ${styles.muted}`}>{m.uploaded}</div>
+                <div className={`${styles.r} ${styles.muted}`}>{agoNow(m.uploaded)}</div>
               </div>
             ))}
           </div>
@@ -791,13 +640,10 @@ export default function AppMedia({
         <MediaDrawer
           key={openFile.id}
           file={openFile}
-          initialTags={tagStore[openFile.id] ?? [openFile.type]}
+          initialTags={tagStore[openFile.id] ?? openFile.tags}
           onClose={() => setOpenId(null)}
           onToast={show}
-          onSaveTags={(id, tags) => {
-            void saveTags(id, tags);
-            show('Tags saved');
-          }}
+          onSaveTags={(id, tags) => void saveTags(id, tags)}
           onFilterTag={(tag) => {
             if (!tagSel.has(tag)) toggleTag(tag);
             setOpenId(null);
@@ -854,7 +700,7 @@ export default function AppMedia({
                 <input
                   type="file"
                   multiple
-                  accept="image/png,image/jpeg,image/gif,image/webp,image/avif,image/svg+xml,application/pdf"
+                  accept="image/png,image/jpeg,image/gif,image/webp,image/avif,image/svg+xml,application/pdf,audio/mpeg,audio/wav,audio/x-wav,audio/ogg,audio/mp4,audio/x-m4a,audio/aac,.mp3,.wav,.ogg,.m4a,.aac"
                   disabled={!storageReady || uploading}
                   style={{ display: 'none' }}
                   onChange={(e) => {
@@ -924,7 +770,7 @@ function MediaDrawer({
   onSaveTags,
   onFilterTag,
 }: {
-  file: MediaFile;
+  file: MediaFile & { url?: string; preview?: string };
   initialTags: string[];
   onClose: () => void;
   onToast: (m: string) => void;
@@ -933,31 +779,34 @@ function MediaDrawer({
 }) {
   const [tags, setTags] = useState<string[]>(initialTags);
   const [draft, setDraft] = useState('');
-  const dirty = tags.length !== initialTags.length || tags.some((t, i) => t !== initialTags[i]);
-
+  const url = file.url ?? '';
+  const isAudio = file.type === 'MP3' || file.type === 'WAV' || file.type === 'AUDIO';
+  const isImage = file.type === 'JPEG' || file.type === 'PNG' || file.type === 'SVG';
+  // Tags autosave: adding (Enter) or removing a tag persists the whole set
+  // immediately — no "Save" button. onSaveTags diffs it against the server.
   const addTag = () => {
     const v = draft.trim();
-    if (!v) return;
-    if (tags.some((t) => t.toLowerCase() === v.toLowerCase())) {
-      setDraft('');
-      return;
-    }
-    setTags((t) => [...t, v]);
     setDraft('');
+    if (!v || tags.some((t) => t.toLowerCase() === v.toLowerCase())) return;
+    const next = [...tags, v];
+    setTags(next);
+    onSaveTags(file.id, next);
   };
-  const removeTag = (tag: string) => setTags((t) => t.filter((x) => x !== tag));
+  const removeTag = (tag: string) => {
+    const next = tags.filter((x) => x !== tag);
+    setTags(next);
+    onSaveTags(file.id, next);
+  };
 
   const meta: { k: string; v: string; num?: boolean }[] = [
     { k: 'Dimensions', v: file.dim, num: true },
     { k: 'Size', v: file.size, num: true },
     { k: 'Type', v: file.type },
-    { k: 'Uploaded', v: file.uploaded, num: true },
+    { k: 'Uploaded', v: agoNow(file.uploaded) },
   ];
 
-  /* The asset's real CloudFront URL. Previously this fabricated a
-     cdn.maildrill.app link that pointed at nothing. */
+  /* The asset's real CloudFront URL, for every file type. */
   const copyUrl = () => {
-    const url = (file as { preview?: string }).preview;
     if (!url) {
       onToast('No public URL for this file');
       return;
@@ -988,9 +837,20 @@ function MediaDrawer({
 
         <div className={`adrawer__body ${styles.drawerBody}`}>
           <div className={styles.preview}>
-            <div className={styles.previewInner} style={{ background: file.thumb, color: file.fg }}>
-              {file.label || file.type}
-            </div>
+            {isImage && url ? (
+              <img className={styles.previewImg} src={url} alt={file.name} />
+            ) : isAudio && url ? (
+              <div className={styles.audioPreview}>
+                <span className={styles.audioBadge} style={{ background: file.thumb, color: file.fg }}>
+                  {file.type}
+                </span>
+                <audio className={styles.audioPlayer} controls preload="none" src={url} />
+              </div>
+            ) : (
+              <div className={styles.previewInner} style={{ background: file.thumb, color: file.fg }}>
+                {file.label || file.type}
+              </div>
+            )}
           </div>
 
           <div className={styles.dname}>{file.name}</div>
@@ -1008,17 +868,7 @@ function MediaDrawer({
             ))}
           </div>
 
-          <div className={styles.tagsHead}>
-            <span className="adrawer__eyebrow">Tags</span>
-            <button
-              type="button"
-              className={`${styles.saveTags}${dirty ? ' ' + styles.isDirty : ''}`}
-              disabled={!dirty}
-              onClick={() => onSaveTags(file.id, tags)}
-            >
-              Save tags
-            </button>
-          </div>
+          <span className={`adrawer__eyebrow ${styles.tagsEyebrow}`}>Tags</span>
 
           <div className={styles.tags}>
             {tags.map((tag) => {
@@ -1072,12 +922,11 @@ function MediaDrawer({
             type="button"
             className="pbtn"
             style={{ flex: 1 }}
-            onClick={() => {
-              onToast(`Inserted ${file.name}`);
-              onClose();
-            }}
+            disabled={!url}
+            onClick={() => url && window.open(url, '_blank', 'noopener')}
           >
-            Insert
+            <Icon name="download" size={15} />
+            Download
           </button>
         </div>
       </div>

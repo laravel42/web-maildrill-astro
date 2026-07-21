@@ -36,7 +36,17 @@ export function tagStyle(tag: string): { bg: string; c: string } {
   return TAG_PALETTE[h % TAG_PALETTE.length];
 }
 
-export const TYPE_ORDER: MediaFileType[] = ['JPEG', 'PNG', 'SVG', 'PDF', 'XLSX', 'DOCX'];
+export const TYPE_ORDER: MediaFileType[] = [
+  'JPEG',
+  'PNG',
+  'SVG',
+  'MP3',
+  'WAV',
+  'AUDIO',
+  'PDF',
+  'XLSX',
+  'DOCX',
+];
 export const POPOVER_TYPES: MediaFileType[] = ['JPEG', 'PNG', 'SVG'];
 
 export const VIEWS = [

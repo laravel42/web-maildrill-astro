@@ -23,6 +23,13 @@ const TYPE_BY_MIME: Record<string, MediaFileType> = {
   'image/avif': 'PNG',
   'image/svg+xml': 'SVG',
   'application/pdf': 'PDF',
+  'audio/mpeg': 'MP3',
+  'audio/wav': 'WAV',
+  'audio/x-wav': 'WAV',
+  'audio/ogg': 'AUDIO',
+  'audio/mp4': 'AUDIO',
+  'audio/x-m4a': 'AUDIO',
+  'audio/aac': 'AUDIO',
 };
 
 export function typeOf(contentType?: string | null, name?: string): MediaFileType {
@@ -33,6 +40,9 @@ export function typeOf(contentType?: string | null, name?: string): MediaFileTyp
   if (ext === 'svg') return 'SVG';
   if (ext === 'pdf') return 'PDF';
   if (ext === 'xlsx' || ext === 'csv') return 'XLSX';
+  if (ext === 'mp3') return 'MP3';
+  if (ext === 'wav') return 'WAV';
+  if (ext === 'ogg' || ext === 'm4a' || ext === 'aac') return 'AUDIO';
   return 'DOCX';
 }
 
@@ -57,6 +67,7 @@ const THUMBS = [
  */
 export function toMediaFile(a: ApiMediaAsset, index = 0): MediaFile & {
   preview: string;
+  url: string;
   tags: string[];
 } {
   const type = typeOf(a.contentType, a.name);
@@ -71,7 +82,10 @@ export function toMediaFile(a: ApiMediaAsset, index = 0): MediaFile & {
     size: fmtSize(a.sizeBytes),
     type,
     uploaded: a.createdAt ?? new Date().toISOString(),
+    // `preview` backs image tiles only; `url` is the real CloudFront URL for
+    // every asset (download, copy, and the audio player).
     preview: isImage ? a.url : '',
+    url: a.url ?? '',
     tags: a.tags ?? [],
   };
 }

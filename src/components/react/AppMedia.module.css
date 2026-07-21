@@ -36,164 +36,6 @@
   min-width: 0;
 }
 
-.popWrap {
-  position: relative;
-}
-.filterBtn {
-  padding: 8px 12px;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 500;
-}
-.filterBtn:global(.is-on) {
-  background: var(--accent-tint);
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-}
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  display: inline-block;
-}
-.colToggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--surface);
-  border: 1px solid var(--border2);
-  color: var(--text2);
-  padding: 8px 11px;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 500;
-}
-.colToggle:hover {
-  background: var(--surface2);
-}
-.colToggle:global(.is-on) {
-  background: var(--accent-tint);
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-}
-.colCount {
-  background: var(--accent);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  min-width: 16px;
-  height: 16px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 3px;
-}
-.caret {
-  opacity: 0.6;
-  transition: transform 0.14s var(--ease-out);
-}
-.caret.isOpen {
-  transform: rotate(180deg);
-}
-
-.scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 39;
-  border: 0;
-  background: none;
-}
-.filterPop {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 40;
-  width: 236px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: var(--shadow-lg);
-  padding: 10px;
-}
-.popEyebrow {
-  margin: 2px 0 9px;
-}
-.chipRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-.typeChip {
-  padding: 5px 11px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  background: var(--surface2);
-  color: var(--text2);
-  border: 1px solid var(--border2);
-}
-.typeChip:global(.is-on) {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-}
-.popDiv {
-  height: 1px;
-  background: var(--divider);
-  margin: 10px -10px;
-}
-.popClear {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  width: 100%;
-  padding: 7px 8px;
-  border-radius: 8px;
-  font-size: 12.5px;
-  color: var(--text3);
-}
-.popClear:hover {
-  background: var(--surface2);
-}
-
-.colDrop {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 40;
-  min-width: 180px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: var(--shadow-lg);
-  padding: 6px;
-}
-.colOpt {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 8px 9px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--text2);
-}
-.colOpt:hover {
-  background: var(--surface2);
-}
-.colOpt input {
-  width: 15px;
-  height: 15px;
-  accent-color: var(--accent);
-}
-.colDropClear {
-  margin-top: 2px;
-  border-top: 1px solid var(--divider);
-  border-radius: 0;
-}
-
 .chips {
   display: flex;
   align-items: center;
@@ -591,6 +433,34 @@
   text-align: center;
   padding: 0 16px;
 }
+.previewImg {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  background: var(--surface2);
+}
+.audioPreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 26px 18px;
+  background: var(--surface2);
+}
+.audioBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.audioPlayer {
+  width: 100%;
+}
 .dname {
   font-weight: 600;
   font-size: 14px;
@@ -600,23 +470,9 @@
 .meta {
   margin-bottom: 4px;
 }
-.tagsHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.tagsEyebrow {
+  display: block;
   margin: 18px 0 10px;
-}
-.saveTags {
-  padding: 4px 10px;
-  border-radius: 7px;
-  font-size: 11px;
-  font-weight: 600;
-  background: var(--surface2);
-  color: var(--muted);
-}
-.saveTags.isDirty {
-  background: var(--accent);
-  color: #fff;
 }
 .tags {
   display: flex;
@@ -649,11 +505,11 @@
   background: rgba(0, 0, 0, 0.08);
 }
 .tagInput {
-  flex: 1;
-  min-width: 82px;
+  width: 92px;
+  flex: none;
   border: 1px dashed var(--border2);
   border-radius: 20px;
-  padding: 3px 11px;
+  padding: 4px 11px;
   font-size: 11px;
   background: none;
   color: var(--text2);
