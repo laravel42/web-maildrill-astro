@@ -283,3 +283,129 @@
 }
 .drawerDetails {
 }
+
+/* ---- Campaign report (full-screen "View report") ---- */
+.report {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+.reportBar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.reportBarTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.reportBarActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.reportBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 32px 24px 48px;
+}
+.reportHead {
+  margin-bottom: 26px;
+}
+.reportMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.reportName {
+  margin: 0 0 6px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.reportSub {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text3);
+}
+.reportKpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+.reportKpi {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.reportKpiLbl {
+  font-size: 12px;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+.reportKpiVal {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.reportEyebrow {
+  display: block;
+  margin: 32px 0 16px;
+}
+.funnel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.funnelRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.funnelTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.funnelLbl {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.funnelVal {
+  font-size: 13px;
+  color: var(--text3);
+}
+.funnelTrack {
+  height: 10px;
+  border-radius: 6px;
+  background: var(--surface2);
+  overflow: hidden;
+}
+.funnelBar {
+  height: 100%;
+  border-radius: 6px;
+}
+.reportActions {
+  margin-top: 32px;
+  display: flex;
+  gap: 10px;
+}

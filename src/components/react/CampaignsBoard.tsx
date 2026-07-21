@@ -47,6 +47,7 @@ export default function CampaignsBoard({
   // Set while a destructive action waits on confirmation.
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [reportId, setReportId] = useState<string | null>(null);
   const { toast, show } = useToast(2600);
   const [wizard, setWizard] = useState<
     | { mode: 'create' }
@@ -298,6 +299,7 @@ export default function CampaignsBoard({
   };
 
   const open = openId ? (campaigns.find((c) => c.id === openId) ?? null) : null;
+  const report = reportId ? (campaigns.find((c) => c.id === reportId) ?? null) : null;
   const sortArrow = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? '↑' : '↓') : '');
 
   return (
@@ -526,7 +528,6 @@ export default function CampaignsBoard({
         <CampaignDrawer
           campaign={open}
           onClose={() => setOpenId(null)}
-          onToast={show}
           onEdit={() => {
             const c = open;
             setOpenId(null);
@@ -535,6 +536,25 @@ export default function CampaignsBoard({
           onDuplicate={() => {
             const c = open;
             setOpenId(null);
+            void duplicateCampaigns([c.id]);
+          }}
+          onViewReport={() => {
+            const c = open;
+            setOpenId(null);
+            setReportId(c.id);
+          }}
+        />
+      )}
+
+      {/* full-screen report */}
+      {report && (
+        <CampaignReport
+          campaign={report}
+          onClose={() => setReportId(null)}
+          onToast={show}
+          onDuplicate={() => {
+            const c = report;
+            setReportId(null);
             void duplicateCampaigns([c.id]);
           }}
         />
@@ -624,15 +644,15 @@ export default function CampaignsBoard({
 function CampaignDrawer({
   campaign,
   onClose,
-  onToast,
   onEdit,
   onDuplicate,
+  onViewReport,
 }: {
   campaign: Campaign;
   onClose: () => void;
-  onToast: (m: string) => void;
   onEdit: () => void;
   onDuplicate: () => void;
+  onViewReport: () => void;
 }) {
   const m = CHANNEL[campaign.channel];
   const isSent = campaign.status === 'sent';
@@ -782,9 +802,164 @@ function CampaignDrawer({
             type="button"
             className="pbtn"
             style={{ flex: 1 }}
-            onClick={() => (isSent ? onToast('Opening report…') : onEdit())}
+            onClick={() => (isSent ? onViewReport() : onEdit())}
           >
             {isSent ? 'View report' : 'Edit'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Full-screen campaign report — the "View report" destination. Built from the
+ * campaign's real metrics (recipients/delivered always; open/click rates when
+ * the backend tracks them, otherwise shown as "Not tracked yet").
+ */
+function CampaignReport({
+  campaign,
+  onClose,
+  onToast,
+  onDuplicate,
+}: {
+  campaign: Campaign;
+  onClose: () => void;
+  onToast: (m: string) => void;
+  onDuplicate: () => void;
+}) {
+  const base = campaign.recipients || 1;
+  const deliveredPct = (campaign.delivered / base) * 100;
+  const cto =
+    campaign.openRate && campaign.clickRate ? (campaign.clickRate / campaign.openRate) * 100 : null;
+  const opened =
+    campaign.openRate != null ? Math.round((campaign.openRate / 100) * campaign.delivered) : null;
+  const clicked =
+    campaign.clickRate != null ? Math.round((campaign.clickRate / 100) * campaign.delivered) : null;
+  const sentAt = campaign.scheduledAt ?? campaign.updatedAt;
+
+  const kpis = [
+    { label: 'Recipients', value: campaign.recipients.toLocaleString('en-US'), color: 'var(--text)' },
+    { label: 'Delivered', value: `${deliveredPct.toFixed(1)}%`, color: 'var(--text)' },
+    { label: 'Open rate', value: pct(campaign.openRate), color: 'var(--success-strong)' },
+    { label: 'Click rate', value: pct(campaign.clickRate), color: 'var(--accent)' },
+    {
+      label: 'Click-to-open',
+      value: cto == null ? '—' : `${cto.toFixed(1)}%`,
+      color: 'var(--warning-strong)',
+    },
+    {
+      label: 'Unsubscribed',
+      value: campaign.unsubscribed.toLocaleString('en-US'),
+      color: 'var(--danger)',
+    },
+  ];
+
+  const funnel: { label: string; count: number | null; barPct: number | null; color: string }[] = [
+    { label: 'Recipients', count: campaign.recipients, barPct: 100, color: 'var(--text3)' },
+    { label: 'Delivered', count: campaign.delivered, barPct: deliveredPct, color: 'var(--accent)' },
+    {
+      label: 'Opened',
+      count: opened,
+      barPct: opened != null ? (opened / base) * 100 : null,
+      color: 'var(--success-strong)',
+    },
+    {
+      label: 'Clicked',
+      count: clicked,
+      barPct: clicked != null ? (clicked / base) * 100 : null,
+      color: 'var(--warning-strong)',
+    },
+  ];
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className={styles.report}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${campaign.name} report`}
+      style={{ animation: 'fade .2s ease' }}
+    >
+      <div className={styles.reportBar}>
+        <span className={styles.reportBarTitle}>Campaign report</span>
+        <div className={styles.reportBarActions}>
+          <button type="button" className="sbtn" onClick={() => onToast('Report exported')}>
+            <Icon name="download" size={15} /> Export
+          </button>
+          <button type="button" className="iconbtn" onClick={onClose} aria-label="Close report">
+            <Icon name="x" size={16} />
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.reportBody}>
+        <div className={styles.reportHead}>
+          <div className={styles.reportMeta}>
+            <ChannelPill channel={campaign.channel} />
+            <span className={`astatus astatus--${campaign.status}`}>
+              {STATUS_LABEL[campaign.status]}
+            </span>
+          </div>
+          <h1 className={styles.reportName}>{campaign.name}</h1>
+          <p className={styles.reportSub}>
+            To {campaign.audience}
+            {sentAt
+              ? ` · Sent ${new Date(sentAt).toLocaleString('en-US', {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                })}`
+              : ''}
+          </p>
+        </div>
+
+        <div className={styles.reportKpis}>
+          {kpis.map((k) => (
+            <div key={k.label} className={styles.reportKpi}>
+              <div className={styles.reportKpiLbl}>{k.label}</div>
+              <div className={`tnum ${styles.reportKpiVal}`} style={{ color: k.color }}>
+                {k.value}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className={`adrawer__eyebrow ${styles.reportEyebrow}`}>Delivery funnel</p>
+        <div className={styles.funnel}>
+          {funnel.map((f) => (
+            <div key={f.label} className={styles.funnelRow}>
+              <div className={styles.funnelTop}>
+                <span className={styles.funnelLbl}>{f.label}</span>
+                <span className={`tnum ${styles.funnelVal}`}>
+                  {f.count == null
+                    ? 'Not tracked yet'
+                    : `${f.count.toLocaleString('en-US')}${
+                        f.barPct != null ? ` · ${f.barPct.toFixed(1)}%` : ''
+                      }`}
+                </span>
+              </div>
+              <div className={styles.funnelTrack}>
+                {f.barPct != null && (
+                  <div
+                    className={styles.funnelBar}
+                    style={{ width: `${Math.max(f.barPct, 1.5)}%`, background: f.color }}
+                  />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className={styles.reportActions}>
+          <button type="button" className="sbtn" onClick={onDuplicate}>
+            <Icon name="copy" size={14} /> Duplicate campaign
           </button>
         </div>
       </div>
