@@ -62,7 +62,7 @@ function Check({
       aria-pressed={on}
       aria-label={label}
     >
-      {on && <Icon name="check" size={Math.round(size * 0.62)} stroke={3} />}
+      {on && <Icon name="check" size={Math.round(size * 0.88)} stroke={3.5} />}
     </button>
   );
 }
@@ -115,6 +115,63 @@ function FauxEmail({ t, variant }: { t: GalleryTemplate; variant: 'card' | 'draw
       </div>
     </div>
   );
+}
+
+/* Fixed waveform bar heights (deterministic — no Math.random, so SSR and the
+   client hydrate to the same markup). */
+const VOICE_WAVE = [38, 62, 48, 88, 56, 30, 72, 46, 82, 40, 64, 34, 70, 44];
+
+/** Chat-bubble preview for the text channels (SMS, WhatsApp). */
+function FauxChat({ t }: { t: GalleryTemplate }) {
+  const m = CHANNEL[t.channel];
+  const wa = t.channel === 'whatsapp';
+  return (
+    <div className={`${styles.chat}${wa ? ` ${styles.chatWa}` : ''}`} aria-hidden="true">
+      <div className={styles.chatHead}>
+        <span className={styles.chatAvatar} style={{ background: m.color }}>
+          <Icon name={m.icon} size={11} />
+        </span>
+        <span className={styles.chatName}>{t.kicker}</span>
+      </div>
+      <div className={styles.chatBubbleOut} style={{ background: m.color }}>
+        {t.title}
+      </div>
+      {/* awaiting reply — typing indicator */}
+      <div className={styles.chatBubbleIn} aria-label="Awaiting reply">
+        <span className={styles.chatDot} />
+        <span className={styles.chatDot} />
+        <span className={styles.chatDot} />
+      </div>
+    </div>
+  );
+}
+
+/** Voice-note card preview for the Voice channel. */
+function FauxVoice({ t }: { t: GalleryTemplate }) {
+  const m = CHANNEL[t.channel];
+  return (
+    <div className={styles.voice} aria-hidden="true">
+      <span className={styles.voicePlay} style={{ background: m.color }}>
+        <Icon name={m.icon} size={13} />
+      </span>
+      <div className={styles.voiceMain}>
+        <span className={styles.voiceName}>{t.title}</span>
+        <div className={styles.voiceWave}>
+          {VOICE_WAVE.map((h, i) => (
+            <span key={i} className={styles.voiceBar} style={{ height: `${h}%`, background: m.color }} />
+          ))}
+        </div>
+      </div>
+      <span className={`${styles.voiceTime} tnum`}>0:14</span>
+    </div>
+  );
+}
+
+/** Gallery thumbnail, chosen by channel: an email mock, a chat, or a voice note. */
+function GalleryPreview({ t }: { t: GalleryTemplate }) {
+  if (t.channel === 'email') return <FauxEmail t={t} variant="card" />;
+  if (t.channel === 'voice') return <FauxVoice t={t} />;
+  return <FauxChat t={t} />;
 }
 
 function ColFilter({
@@ -178,7 +235,7 @@ function ColFilter({
                   onClick={() => onToggle(o)}
                 >
                   <span className={`${styles.box} ${styles.boxSm}${on ? ' is-on' : ''}`}>
-                    {on && <Icon name="check" size={10} stroke={3} />}
+                    {on && <Icon name="check" size={15} stroke={3.5} />}
                   </span>
                   {o}
                 </button>
@@ -693,7 +750,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                       <Icon name={m.icon} size={11} />
                       {m.label}
                     </span>
-                    <FauxEmail t={t} variant="card" />
+                    <GalleryPreview t={t} />
                     <div className={styles.ov}>
                       <button
                         type="button"
