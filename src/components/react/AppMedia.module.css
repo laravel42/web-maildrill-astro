@@ -3,7 +3,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  padding: 14px 19px;
+  border-bottom: 1px solid var(--divider);
   flex-wrap: wrap;
   row-gap: 10px;
 }
@@ -229,14 +230,18 @@
 }
 
 /* card */
+/* The whole screen lives in one card; overflow stays visible so the toolbar's
+   filter/type popovers can escape the card bounds. */
 .card {
-  overflow: hidden;
+  overflow: visible;
 }
 .folders {
-  padding: 4px 8px 0;
+  gap: 20px;
+  padding: 0 19px;
   overflow-x: auto;
 }
 .folders :global(.atab) {
+  padding: 14px 0 13px;
   white-space: nowrap;
 }
 

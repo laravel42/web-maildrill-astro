@@ -6,6 +6,7 @@ import { api, ApiError } from '@/lib/app/api';
 import { toMediaFile, type ApiMediaAsset } from '@/lib/app/media-map';
 import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
+import TagFilter from './shared/TagFilter';
 import { useToast } from './shared/useToast';
 import {
   ASC_FIRST,
@@ -67,7 +68,7 @@ export default function AppMedia({
   const [popTypes, setPopTypes] = useState<Set<MediaFileType>>(new Set());
   const [colOpen, setColOpen] = useState(false);
   const [colTypes, setColTypes] = useState<Set<MediaFileType>>(new Set());
-  const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [tagSel, setTagSel] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'uploaded', dir: -1 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Set while a destructive action waits on confirmation.
@@ -100,15 +101,30 @@ export default function AppMedia({
 
   const effTags = (m: MediaFile): string[] => tagStore[m.id] ?? [m.type];
 
+  // Tags present across the library (custom tags, else the file type), for the
+  // tags filter dropdown.
+  const tagUniverse = useMemo(
+    () => [...new Set(mediaFiles.flatMap((m) => effTags(m)))].sort((a, b) => a.localeCompare(b)),
+    [mediaFiles, tagStore],
+  );
+  const toggleTag = (t: string) => {
+    setTagSel((prev) => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t);
+      else next.add(t);
+      return next;
+    });
+    resetPage();
+  };
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const tf = tagFilter?.toLowerCase();
     let list = mediaFiles.filter((m) => {
       if (q && !m.name.toLowerCase().includes(q)) return false;
       if (folder !== 'All files' && folderOf(m.type) !== folder) return false;
       if (popTypes.size && !popTypes.has(m.type)) return false;
       if (colTypes.size && !colTypes.has(m.type)) return false;
-      if (tf && !effTags(m).some((t) => t.toLowerCase() === tf)) return false;
+      if (tagSel.size > 0 && !effTags(m).some((t) => tagSel.has(t))) return false;
       return true;
     });
     const { key, dir } = sort;
@@ -122,7 +138,7 @@ export default function AppMedia({
       return r * dir;
     });
     return list;
-  }, [query, folder, popTypes, colTypes, tagFilter, sort, tagStore]);
+  }, [query, folder, popTypes, colTypes, tagSel, sort, tagStore]);
 
   const total = filtered.length;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -271,23 +287,16 @@ export default function AppMedia({
       label: `Type: ${t}`,
       remove: () => toggleFrom(colTypes, setColTypes, t),
     })),
-    ...(tagFilter
-      ? [
-          {
-            key: 'tag',
-            label: `Tag: ${tagFilter}`,
-            remove: () => {
-              setTagFilter(null);
-              resetPage();
-            },
-          },
-        ]
-      : []),
+    ...[...tagSel].map((t) => ({
+      key: `tag:${t}`,
+      label: `Tag: ${t}`,
+      remove: () => toggleTag(t),
+    })),
   ];
   const clearChips = () => {
     setPopTypes(new Set());
     setColTypes(new Set());
-    setTagFilter(null);
+    setTagSel(new Set());
     resetPage();
   };
 
@@ -327,179 +336,6 @@ export default function AppMedia({
         </button>
       </div>
 
-      {/* toolbar */}
-      <div className={styles.toolbar}>
-        <label className={styles.search}>
-          <Icon name="search" size={15} className={styles.searchIc} />
-          <input
-            type="search"
-            placeholder="Search files…"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              resetPage();
-            }}
-            aria-label="Search files"
-          />
-        </label>
-
-        {/* Filters popover */}
-        <div className={styles.popWrap}>
-          <button
-            type="button"
-            className={`sbtn ${styles.filterBtn}${popTypes.size ? ' is-on' : ''}`}
-            aria-expanded={filterOpen}
-            aria-haspopup="dialog"
-            onClick={() => {
-              setFilterOpen((v) => !v);
-              setColOpen(false);
-            }}
-          >
-            <Icon name="filter" size={14} />
-            Filters
-            {popTypes.size > 0 && <span className={styles.dot} aria-hidden="true" />}
-          </button>
-          {filterOpen && (
-            <>
-              <button
-                type="button"
-                className={styles.scrim}
-                aria-label="Close filters"
-                onClick={() => setFilterOpen(false)}
-              />
-              <div
-                className={styles.filterPop}
-                role="dialog"
-                aria-label="Filter files"
-                style={{ animation: 'pop .14s ease' }}
-              >
-                <p className={`adrawer__eyebrow ${styles.popEyebrow}`}>File type</p>
-                <div className={styles.chipRow}>
-                  {POPOVER_TYPES.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      className={`${styles.typeChip}${popTypes.has(t) ? ' is-on' : ''}`}
-                      aria-pressed={popTypes.has(t)}
-                      onClick={() => toggleFrom(popTypes, setPopTypes, t)}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-                <div className={styles.popDiv} />
-                <button
-                  type="button"
-                  className={styles.popClear}
-                  onClick={() => {
-                    setPopTypes(new Set());
-                    resetPage();
-                  }}
-                >
-                  <Icon name="trash" size={13} />
-                  Clear filters
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Type column dropdown */}
-        <div className={styles.popWrap}>
-          <button
-            type="button"
-            className={`${styles.colToggle}${colTypes.size ? ' is-on' : ''}`}
-            aria-expanded={colOpen}
-            onClick={() => {
-              setColOpen((v) => !v);
-              setFilterOpen(false);
-            }}
-          >
-            Type
-            {colTypes.size > 0 && <span className={`${styles.colCount} tnum`}>{colTypes.size}</span>}
-            <Icon
-              name="chevron-down"
-              size={12}
-              className={`${styles.caret}${colOpen ? ' ' + styles.isOpen : ''}`}
-            />
-          </button>
-          {colOpen && (
-            <>
-              <button
-                type="button"
-                className={styles.scrim}
-                aria-label="Close type filter"
-                onClick={() => setColOpen(false)}
-              />
-              <div className={styles.colDrop} role="menu" style={{ animation: 'pop .14s ease' }}>
-                {presentTypes.map((t) => (
-                  <label key={t} className={styles.colOpt}>
-                    <input
-                      type="checkbox"
-                      checked={colTypes.has(t)}
-                      onChange={() => toggleFrom(colTypes, setColTypes, t)}
-                    />
-                    {t}
-                  </label>
-                ))}
-                {colTypes.size > 0 && (
-                  <button
-                    type="button"
-                    className={`${styles.popClear} ${styles.colDropClear}`}
-                    onClick={() => {
-                      setColTypes(new Set());
-                      resetPage();
-                    }}
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* active chips */}
-        {chips.length > 0 && (
-          <div className={styles.chips}>
-            {chips.map((c) => (
-              <span key={c.key} className={styles.chip}>
-                {c.label}
-                <button
-                  type="button"
-                  className={styles.chipX}
-                  aria-label={`Remove ${c.label}`}
-                  onClick={c.remove}
-                >
-                  <Icon name="x" size={11} stroke={2.6} />
-                </button>
-              </span>
-            ))}
-            <button type="button" className={styles.chipsClear} onClick={clearChips}>
-              Clear all
-            </button>
-          </div>
-        )}
-
-        <div className={styles.spacer} />
-
-        {/* view switch */}
-        <div className="aseg" role="tablist" aria-label="View">
-          {VIEWS.map((v) => (
-            <button
-              key={v.key}
-              type="button"
-              role="tab"
-              aria-selected={view === v.key}
-              className={`aseg__opt${view === v.key ? ' is-active' : ''}`}
-              onClick={() => setView(v.key)}
-            >
-              {v.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* card container */}
       <div className={`acrd ${styles.card}`}>
         {/* folder tabs */}
@@ -521,6 +357,189 @@ export default function AppMedia({
               <span className="atab__count tnum">{folderCounts[f] ?? 0}</span>
             </button>
           ))}
+        </div>
+
+        {/* toolbar */}
+        <div className={styles.toolbar}>
+          <label className={styles.search}>
+            <Icon name="search" size={15} className={styles.searchIc} />
+            <input
+              type="search"
+              placeholder="Search files…"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                resetPage();
+              }}
+              aria-label="Search files"
+            />
+          </label>
+
+          {/* Filters popover */}
+          <div className={styles.popWrap}>
+            <button
+              type="button"
+              className={`sbtn ${styles.filterBtn}${popTypes.size ? ' is-on' : ''}`}
+              aria-expanded={filterOpen}
+              aria-haspopup="dialog"
+              onClick={() => {
+                setFilterOpen((v) => !v);
+                setColOpen(false);
+              }}
+            >
+              <Icon name="filter" size={14} />
+              Filters
+              {popTypes.size > 0 && <span className={styles.dot} aria-hidden="true" />}
+            </button>
+            {filterOpen && (
+              <>
+                <button
+                  type="button"
+                  className={styles.scrim}
+                  aria-label="Close filters"
+                  onClick={() => setFilterOpen(false)}
+                />
+                <div
+                  className={styles.filterPop}
+                  role="dialog"
+                  aria-label="Filter files"
+                  style={{ animation: 'pop .14s ease' }}
+                >
+                  <p className={`adrawer__eyebrow ${styles.popEyebrow}`}>File type</p>
+                  <div className={styles.chipRow}>
+                    {POPOVER_TYPES.map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        className={`${styles.typeChip}${popTypes.has(t) ? ' is-on' : ''}`}
+                        aria-pressed={popTypes.has(t)}
+                        onClick={() => toggleFrom(popTypes, setPopTypes, t)}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                  <div className={styles.popDiv} />
+                  <button
+                    type="button"
+                    className={styles.popClear}
+                    onClick={() => {
+                      setPopTypes(new Set());
+                      resetPage();
+                    }}
+                  >
+                    <Icon name="trash" size={13} />
+                    Clear filters
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Type column dropdown */}
+          <div className={styles.popWrap}>
+            <button
+              type="button"
+              className={`${styles.colToggle}${colTypes.size ? ' is-on' : ''}`}
+              aria-expanded={colOpen}
+              onClick={() => {
+                setColOpen((v) => !v);
+                setFilterOpen(false);
+              }}
+            >
+              Type
+              {colTypes.size > 0 && <span className={`${styles.colCount} tnum`}>{colTypes.size}</span>}
+              <Icon
+                name="chevron-down"
+                size={12}
+                className={`${styles.caret}${colOpen ? ' ' + styles.isOpen : ''}`}
+              />
+            </button>
+            {colOpen && (
+              <>
+                <button
+                  type="button"
+                  className={styles.scrim}
+                  aria-label="Close type filter"
+                  onClick={() => setColOpen(false)}
+                />
+                <div className={styles.colDrop} role="menu" style={{ animation: 'pop .14s ease' }}>
+                  {presentTypes.map((t) => (
+                    <label key={t} className={styles.colOpt}>
+                      <input
+                        type="checkbox"
+                        checked={colTypes.has(t)}
+                        onChange={() => toggleFrom(colTypes, setColTypes, t)}
+                      />
+                      {t}
+                    </label>
+                  ))}
+                  {colTypes.size > 0 && (
+                    <button
+                      type="button"
+                      className={`${styles.popClear} ${styles.colDropClear}`}
+                      onClick={() => {
+                        setColTypes(new Set());
+                        resetPage();
+                      }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          <TagFilter
+            tags={tagUniverse}
+            selected={tagSel}
+            onToggle={toggleTag}
+            onClear={() => {
+              setTagSel(new Set());
+              resetPage();
+            }}
+          />
+
+          {/* active chips */}
+          {chips.length > 0 && (
+            <div className={styles.chips}>
+              {chips.map((c) => (
+                <span key={c.key} className={styles.chip}>
+                  {c.label}
+                  <button
+                    type="button"
+                    className={styles.chipX}
+                    aria-label={`Remove ${c.label}`}
+                    onClick={c.remove}
+                  >
+                    <Icon name="x" size={11} stroke={2.6} />
+                  </button>
+                </span>
+              ))}
+              <button type="button" className={styles.chipsClear} onClick={clearChips}>
+                Clear all
+              </button>
+            </div>
+          )}
+
+          <div className={styles.spacer} />
+
+          {/* view switch */}
+          <div className="aseg" role="tablist" aria-label="View">
+            {VIEWS.map((v) => (
+              <button
+                key={v.key}
+                type="button"
+                role="tab"
+                aria-selected={view === v.key}
+                className={`aseg__opt${view === v.key ? ' is-active' : ''}`}
+                onClick={() => setView(v.key)}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* bulk bar */}
@@ -780,10 +799,9 @@ export default function AppMedia({
             show('Tags saved');
           }}
           onFilterTag={(tag) => {
-            setTagFilter(tag);
-            resetPage();
+            if (!tagSel.has(tag)) toggleTag(tag);
             setOpenId(null);
-            show(`Filtered by "${tag}"`);
+            show(`Filtered by “${tag}”`);
           }}
         />
       )}
