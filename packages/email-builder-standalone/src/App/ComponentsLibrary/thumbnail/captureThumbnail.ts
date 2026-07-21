@@ -209,7 +209,16 @@ export async function captureSubtreeThumbnail(html: string, options: CaptureOpti
 
       iframe = document.createElement('iframe');
       iframe.setAttribute('aria-hidden', 'true');
-      iframe.setAttribute('sandbox', 'allow-same-origin');
+      // allow-scripts: the srcdoc HTML here is always generated internally
+      // by renderEmailHtml/buildSubtreeHtml — the same document the user is
+      // already editing, never third-party or unsanitised input — so this
+      // isn't a new trust boundary. Without it, the browser blocks script
+      // execution inside the iframe (visible as "Blocked script execution
+      // in 'about:srcdoc'..." in the console) and web-font/image loading
+      // signals inside the frame don't settle the way `onload` + the
+      // fonts.ready/img.decode() waits below expect, so nearly every
+      // capture rode out the full 6s timeout instead of resolving quickly.
+      iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
       iframe.style.position = 'fixed';
       iframe.style.left = '-99999px';
       iframe.style.top = '0';
