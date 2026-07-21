@@ -52,11 +52,7 @@ export default function RawSliderInput({
       {/* spacing 1.5: enough gap between icon, slider and value so they
           don't feel cramped, while the slider keeps flex:1 to absorb the
           panel's width squeeze. */}
-      <Stack
-        direction="row"
-        spacing={1.5}
-        sx={{ alignItems: 'center', justifyContent: 'space-between', width: '100%', minWidth: 0 }}
-      >
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', width: '100%', minWidth: 0 }}>
         <Box sx={{ minWidth: 24, lineHeight: 1, flexShrink: 0 }}>{iconLabel}</Box>
 
         <Slider
