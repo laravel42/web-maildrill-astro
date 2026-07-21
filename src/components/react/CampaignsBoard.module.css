@@ -284,115 +284,122 @@
 .drawerDetails {
 }
 
-/* ---- Campaign report (full-screen "View report") ---- */
-.report {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-}
-.reportBar {
-  flex: none;
-  display: flex;
+/* ---- Campaign report (full screen, App.dc.html § campaignDetail) ---- */
+.reportBack {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text4);
+  cursor: pointer;
 }
-.reportBarTitle {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text);
-}
-.reportBarActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.reportBody {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  width: 100%;
-  max-width: 920px;
-  margin: 0 auto;
-  box-sizing: border-box;
-  padding: 32px 24px 48px;
+.reportBack:hover {
+  color: var(--text2);
 }
 .reportHead {
-  margin-bottom: 26px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
 }
-.reportMeta {
+.reportHeadMain {
+  min-width: 0;
+}
+.reportTitleRow {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 11px;
 }
 .reportName {
-  margin: 0 0 6px;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  margin: 0;
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
   color: var(--text);
 }
 .reportSub {
-  margin: 0;
-  font-size: 14px;
-  color: var(--text3);
+  margin: 7px 0 0;
+  font-size: 13.5px;
+  color: var(--text4);
 }
+.reportHeadActions {
+  display: flex;
+  gap: 10px;
+  flex: none;
+}
+
 .reportKpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 18px;
 }
 .reportKpi {
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  padding: 16px 18px;
   background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(30, 27, 22, 0.04);
 }
 .reportKpiLbl {
   font-size: 12px;
-  color: var(--text3);
-  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--muted);
 }
 .reportKpiVal {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  margin-top: 8px;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+  color: var(--text);
 }
-.reportEyebrow {
-  display: block;
-  margin: 32px 0 16px;
+
+.reportRow {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 18px;
 }
-.funnel {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.reportCard {
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(30, 27, 22, 0.04);
 }
+.reportCardTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 18px;
+}
+
 .funnelRow {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  margin-bottom: 15px;
+}
+.funnelRow:last-child {
+  margin-bottom: 0;
 }
 .funnelTop {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
+  margin-bottom: 6px;
 }
 .funnelLbl {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text3);
 }
 .funnelVal {
-  font-size: 13px;
-  color: var(--text3);
+  font-size: 12.5px;
+  color: var(--muted);
 }
 .funnelTrack {
   height: 10px;
@@ -403,9 +410,37 @@
 .funnelBar {
   height: 100%;
   border-radius: 6px;
+  transform-origin: left;
+  animation: grow 0.5s ease;
 }
-.reportActions {
-  margin-top: 32px;
+
+.reportDetail {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--divider);
+}
+.reportDetail:last-child {
+  border-bottom: none;
+}
+.reportDetailK {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.reportDetailV {
+  font-size: 13px;
+  font-weight: 500;
+  text-align: right;
+  color: var(--text);
+}
+
+@media (max-width: 860px) {
+  .reportKpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .reportRow {
+    grid-template-columns: 1fr;
+  }
 }

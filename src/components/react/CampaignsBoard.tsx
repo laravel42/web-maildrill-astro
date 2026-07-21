@@ -302,6 +302,26 @@ export default function CampaignsBoard({
   const report = reportId ? (campaigns.find((c) => c.id === reportId) ?? null) : null;
   const sortArrow = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? '↑' : '↓') : '');
 
+  // The report replaces the board (a screen, matching the design), not an overlay.
+  if (report) {
+    return (
+      <CampaignReport
+        campaign={report}
+        onBack={() => setReportId(null)}
+        onEdit={() => {
+          const c = report;
+          setReportId(null);
+          void openForEdit(c);
+        }}
+        onDuplicate={() => {
+          const c = report;
+          setReportId(null);
+          void duplicateCampaigns([c.id]);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="screen cb">
       <div className="screen__head">
@@ -542,20 +562,6 @@ export default function CampaignsBoard({
             const c = open;
             setOpenId(null);
             setReportId(c.id);
-          }}
-        />
-      )}
-
-      {/* full-screen report */}
-      {report && (
-        <CampaignReport
-          campaign={report}
-          onClose={() => setReportId(null)}
-          onToast={show}
-          onDuplicate={() => {
-            const c = report;
-            setReportId(null);
-            void duplicateCampaigns([c.id]);
           }}
         />
       )}
@@ -813,46 +819,43 @@ function CampaignDrawer({
 }
 
 /**
- * Full-screen campaign report — the "View report" destination. Built from the
- * campaign's real metrics (recipients/delivered always; open/click rates when
- * the backend tracks them, otherwise shown as "Not tracked yet").
+ * Campaign report — the "View report" destination, rendered as a full screen
+ * (see App.dc.html § campaignDetail): breadcrumb, header with actions, KPI
+ * cards, then an engagement-funnel card beside a campaign-details card. Built
+ * from the campaign's real metrics; open/click stages the backend doesn't track
+ * yet read "Not tracked yet" rather than faking numbers.
  */
 function CampaignReport({
   campaign,
-  onClose,
-  onToast,
+  onBack,
+  onEdit,
   onDuplicate,
 }: {
   campaign: Campaign;
-  onClose: () => void;
-  onToast: (m: string) => void;
+  onBack: () => void;
+  onEdit: () => void;
   onDuplicate: () => void;
 }) {
+  const channel = CHANNEL[campaign.channel];
   const base = campaign.recipients || 1;
   const deliveredPct = (campaign.delivered / base) * 100;
   const cto =
     campaign.openRate && campaign.clickRate ? (campaign.clickRate / campaign.openRate) * 100 : null;
+  // openRate/clickRate are fractions (0–1) — pct() multiplies by 100.
   const opened =
-    campaign.openRate != null ? Math.round((campaign.openRate / 100) * campaign.delivered) : null;
+    campaign.openRate != null ? Math.round(campaign.openRate * campaign.delivered) : null;
   const clicked =
-    campaign.clickRate != null ? Math.round((campaign.clickRate / 100) * campaign.delivered) : null;
+    campaign.clickRate != null ? Math.round(campaign.clickRate * campaign.delivered) : null;
   const sentAt = campaign.scheduledAt ?? campaign.updatedAt;
+  const sentLabel = sentAt
+    ? new Date(sentAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+    : '—';
 
   const kpis = [
-    { label: 'Recipients', value: campaign.recipients.toLocaleString('en-US'), color: 'var(--text)' },
-    { label: 'Delivered', value: `${deliveredPct.toFixed(1)}%`, color: 'var(--text)' },
-    { label: 'Open rate', value: pct(campaign.openRate), color: 'var(--success-strong)' },
-    { label: 'Click rate', value: pct(campaign.clickRate), color: 'var(--accent)' },
-    {
-      label: 'Click-to-open',
-      value: cto == null ? '—' : `${cto.toFixed(1)}%`,
-      color: 'var(--warning-strong)',
-    },
-    {
-      label: 'Unsubscribed',
-      value: campaign.unsubscribed.toLocaleString('en-US'),
-      color: 'var(--danger)',
-    },
+    { label: 'Recipients', value: campaign.recipients.toLocaleString('en-US') },
+    { label: 'Delivered', value: `${deliveredPct.toFixed(1)}%` },
+    { label: 'Open rate', value: pct(campaign.openRate) },
+    { label: 'Click rate', value: pct(campaign.clickRate) },
   ];
 
   const funnel: { label: string; count: number | null; barPct: number | null; color: string }[] = [
@@ -872,67 +875,77 @@ function CampaignReport({
     },
   ];
 
+  const details: [string, string][] = [
+    ['Channel', channel.label],
+    ['Audience', campaign.audience],
+    ['Recipients', campaign.recipients.toLocaleString('en-US')],
+    ['Unsubscribed', campaign.unsubscribed.toLocaleString('en-US')],
+    ['Click-to-open', cto == null ? '—' : `${cto.toFixed(1)}%`],
+    ['Sent', sentLabel],
+  ];
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onBack();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onBack]);
 
   return (
-    <div
-      className={styles.report}
-      role="dialog"
-      aria-modal="true"
-      aria-label={`${campaign.name} report`}
-      style={{ animation: 'fade .2s ease' }}
-    >
-      <div className={styles.reportBar}>
-        <span className={styles.reportBarTitle}>Campaign report</span>
-        <div className={styles.reportBarActions}>
-          <button type="button" className="sbtn" onClick={() => onToast('Report exported')}>
-            <Icon name="download" size={15} /> Export
-          </button>
-          <button type="button" className="iconbtn" onClick={onClose} aria-label="Close report">
-            <Icon name="x" size={16} />
-          </button>
-        </div>
-      </div>
+    <div className="screen" style={{ animation: 'fade .3s ease' }}>
+      <button type="button" className={styles.reportBack} onClick={onBack}>
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        Campaigns
+      </button>
 
-      <div className={styles.reportBody}>
-        <div className={styles.reportHead}>
-          <div className={styles.reportMeta}>
-            <ChannelPill channel={campaign.channel} />
+      <div className={styles.reportHead}>
+        <div className={styles.reportHeadMain}>
+          <div className={styles.reportTitleRow}>
+            <h1 className={styles.reportName}>{campaign.name}</h1>
             <span className={`astatus astatus--${campaign.status}`}>
               {STATUS_LABEL[campaign.status]}
             </span>
           </div>
-          <h1 className={styles.reportName}>{campaign.name}</h1>
           <p className={styles.reportSub}>
             To {campaign.audience}
-            {sentAt
-              ? ` · Sent ${new Date(sentAt).toLocaleString('en-US', {
-                  dateStyle: 'medium',
-                  timeStyle: 'short',
-                })}`
-              : ''}
+            {sentAt ? ` · Sent ${sentLabel}` : ''}
           </p>
         </div>
-
-        <div className={styles.reportKpis}>
-          {kpis.map((k) => (
-            <div key={k.label} className={styles.reportKpi}>
-              <div className={styles.reportKpiLbl}>{k.label}</div>
-              <div className={`tnum ${styles.reportKpiVal}`} style={{ color: k.color }}>
-                {k.value}
-              </div>
-            </div>
-          ))}
+        <div className={styles.reportHeadActions}>
+          <button type="button" className="sbtn" onClick={onDuplicate}>
+            <Icon name="copy" size={14} /> Duplicate
+          </button>
+          <button type="button" className="pbtn" onClick={onEdit}>
+            <Icon name="edit" size={14} /> Edit campaign
+          </button>
         </div>
+      </div>
 
-        <p className={`adrawer__eyebrow ${styles.reportEyebrow}`}>Delivery funnel</p>
-        <div className={styles.funnel}>
+      <div className={styles.reportKpis}>
+        {kpis.map((k) => (
+          <div key={k.label} className={styles.reportKpi}>
+            <div className={styles.reportKpiLbl}>{k.label}</div>
+            <div className={`tnum ${styles.reportKpiVal}`}>{k.value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className={styles.reportRow}>
+        <div className={styles.reportCard}>
+          <div className={styles.reportCardTitle}>Engagement funnel</div>
           {funnel.map((f) => (
             <div key={f.label} className={styles.funnelRow}>
               <div className={styles.funnelTop}>
@@ -957,10 +970,14 @@ function CampaignReport({
           ))}
         </div>
 
-        <div className={styles.reportActions}>
-          <button type="button" className="sbtn" onClick={onDuplicate}>
-            <Icon name="copy" size={14} /> Duplicate campaign
-          </button>
+        <div className={styles.reportCard}>
+          <div className={styles.reportCardTitle}>Campaign details</div>
+          {details.map(([k, v]) => (
+            <div key={k} className={styles.reportDetail}>
+              <span className={styles.reportDetailK}>{k}</span>
+              <span className={styles.reportDetailV}>{v}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
