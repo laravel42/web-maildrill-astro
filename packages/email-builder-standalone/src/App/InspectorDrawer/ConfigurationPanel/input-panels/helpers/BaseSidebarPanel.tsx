@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Box, Container, Divider, Tooltip, Typography } from '@mui/material';
+import { Box, Container, Divider, Tooltip } from '@mui/material';
 
 import { useBlockTypeSelected } from '../../../../../documents/editor/EditorContext';
 import { THEME_BLOCK_REGISTRY, ThemeBlockType } from '../../../../TemplatePanel/ThemePanel/registry';
@@ -17,19 +17,10 @@ export default function BaseSidebarPanel({ title, children }: SidebarPanelProps)
   const BlockIcon = blockSpec?.icon;
 
   return (
-    <Container sx={{ padding: '0!important', paddingTop: '1rem!important' }}>
-      {!compact && (
-        <Typography
-          sx={{
-            fontWeight: 'bold',
-            mb: 2,
-            color: 'text.primary',
-            fontSize: '1.25rem',
-          }}
-        >
-          {title}
-        </Typography>
-      )}
+    <Container sx={{ padding: '0!important' }}>
+      {/* No title here anymore — it duplicated the tab header above it and
+          ate vertical space. Compact mode keeps its icon (there's no text
+          header to duplicate in that rail). */}
       {compact && BlockIcon && (
         <Tooltip title={title} placement="left">
           <Box sx={{ display: 'flex', justifyContent: 'center', pb: 1.5 }}>
@@ -42,10 +33,10 @@ export default function BaseSidebarPanel({ title, children }: SidebarPanelProps)
           other layout elsewhere), which silently defeats both `spacing`
           and a `gap` set via sx on an actual MuiStack-root. A Box sidesteps
           that override entirely. 1rem between properties in full mode;
-          compact keeps its tighter rhythm since it's icon-only rows. */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', mb: 3, pt: compact ? 0 : 1, gap: compact ? 0.5 : 2 }}>
-        {children}
-      </Box>
+          compact keeps its tighter rhythm since it's icon-only rows. No
+          top padding — with the title gone, the first property row sits
+          right under the tab header instead of floating below it. */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', mb: 3, gap: compact ? 0.5 : 2 }}>{children}</Box>
     </Container>
   );
 }
