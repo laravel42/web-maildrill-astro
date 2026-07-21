@@ -444,3 +444,12 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Template preview inside the campaign detail drawer */
+.drawerPreview {
+  margin-bottom: 6px;
+  padding: 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}

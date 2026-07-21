@@ -7,6 +7,8 @@ export type Campaign = {
   status: CampaignStatus;
   channel: ChannelType;
   audience: string;
+  /** Template this campaign sends, when it uses one (null for ad-hoc bodies). */
+  templateId: string | null;
   scheduledAt: string | null;
   openRate: number | null;
   clickRate: number | null;

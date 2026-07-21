@@ -9,6 +9,7 @@ import ConfirmDialog from './shared/ConfirmDialog';
 import CampaignWizard from './CampaignWizard';
 import EmailBuilder from './EmailBuilder';
 import VisualEmailBuilder from './VisualEmailBuilder';
+import TemplatePreview from './shared/TemplatePreview';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { ago } from './shared/time';
 import { useToast } from './shared/useToast';
@@ -547,6 +548,7 @@ export default function CampaignsBoard({
       {open && (
         <CampaignDrawer
           campaign={open}
+          live={live}
           onClose={() => setOpenId(null)}
           onEdit={() => {
             const c = open;
@@ -649,12 +651,14 @@ export default function CampaignsBoard({
 
 function CampaignDrawer({
   campaign,
+  live,
   onClose,
   onEdit,
   onDuplicate,
   onViewReport,
 }: {
   campaign: Campaign;
+  live: boolean;
   onClose: () => void;
   onEdit: () => void;
   onDuplicate: () => void;
@@ -750,6 +754,20 @@ function CampaignDrawer({
           </div>
           <h3 className={styles.drawerName}>{campaign.name}</h3>
           <p className={styles.drawerAud}>To {campaign.audience}</p>
+
+          {campaign.templateId && (
+            <>
+              <p className={`adrawer__eyebrow ${styles.drawerEyebrow}`}>Template</p>
+              <div className={styles.drawerPreview}>
+                <TemplatePreview
+                  id={campaign.templateId}
+                  channel={campaign.channel}
+                  live={live}
+                  fallback={<div className="aempty">No preview in local mode</div>}
+                />
+              </div>
+            </>
+          )}
 
           {isSent ? (
             <div className={styles.drawerKpis}>

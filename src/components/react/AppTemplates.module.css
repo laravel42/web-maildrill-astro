@@ -724,60 +724,6 @@
 }
 
 /* Real-preview states (see TemplatePreview) */
-.pvMsg {
-  width: 100%;
-  min-height: 160px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text3);
-  font-size: 13px;
-  text-align: center;
-}
-.pvViewport {
-  width: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  /* Scroll stays; the scrollbar is hidden (Firefox + old Edge). */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-/* WebKit/Blink */
-.pvViewport::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
-}
-.pvFrame {
-  display: block;
-  border: 0;
-  background: #fff;
-}
-.pvText {
-  width: 100%;
-  display: flex;
-  justify-content: flex-start;
-}
-.pvBubble {
-  max-width: 100%;
-  padding: 12px 15px;
-  border-radius: 4px 16px 16px 16px;
-  background: #fff;
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-size: 14px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-.pvBubbleWa {
-  background: #dcf8c6;
-  border-color: #c5edaf;
-  color: #111b21;
-}
 .dTitlerow {
   display: flex;
   align-items: center;
