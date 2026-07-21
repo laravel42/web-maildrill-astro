@@ -322,11 +322,8 @@ export default function TemplatePanel({
           event.preventDefault();
           setSelectedScreenSize(editorStateStore.getState().selectedScreenSize === 'mobile' ? 'desktop' : 'mobile');
         }
-        // Ctrl+1..N — insert built-in block by index (N = BUTTONS.length,
-        // currently 5 after Text/Social/Button were dropped from the
-        // library in Point 6; guards against BUTTONS[idx] being
-        // undefined if a fixed 1-8 range outlives the array shrinking).
-        else if (!event.shiftKey && !isEditable && new RegExp(`^[1-${BUTTONS.length}]$`).test(event.key)) {
+        // Ctrl+1-8 — insert built-in block by index
+        else if (!event.shiftKey && !isEditable && /^[1-8]$/.test(event.key)) {
           event.preventDefault();
           const idx = Number(event.key) - 1;
           const newId = appendBuiltInBlockToParent('root', BUTTONS[idx].block());
