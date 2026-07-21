@@ -21,6 +21,7 @@ import {
 import { api, ApiError } from '@/lib/app/api';
 import { toRichSubscriber, type ApiSubscriber } from '@/lib/app/subscriber-map';
 import SubscriberEditorModal from './SubscriberEditorModal';
+import TagFilter from './shared/TagFilter';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { ago } from './shared/time';
 import { useToast } from './shared/useToast';
@@ -70,7 +71,7 @@ export default function AppSubscribers({
   const [channelFilter, setChannelFilter] = useState<Set<ChannelType>>(new Set());
   const [channelOpen, setChannelOpen] = useState(false);
   const [segSel, setSegSel] = useState<Set<string>>(new Set());
-  const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [tagSel, setTagSel] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'name', dir: 1 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Set while a destructive action waits on confirmation.
@@ -94,6 +95,12 @@ export default function AppSubscribers({
   >(null);
 
   const effTags = (s: RichSubscriber): string[] => tagStore[s.id] ?? s.tags;
+
+  // Tags actually present on subscribers, for the tags filter dropdown.
+  const tagUniverse = useMemo(
+    () => [...new Set(richSubscribers.flatMap((s) => effTags(s)))].sort((a, b) => a.localeCompare(b)),
+    [richSubscribers, tagStore],
+  );
 
   const segById = useMemo(() => new Map(segments.map((s) => [s.id, s])), [segments]);
 
@@ -183,8 +190,7 @@ export default function AppSubscribers({
         const r = reachOf(s);
         if (![...channelFilter].some((ch) => r[ch])) return false;
       }
-      if (tagFilter && !effTags(s).some((t) => t.toLowerCase() === tagFilter.toLowerCase()))
-        return false;
+      if (tagSel.size > 0 && !effTags(s).some((t) => tagSel.has(t))) return false;
       return true;
     });
     const { key, dir } = sort;
@@ -212,7 +218,7 @@ export default function AppSubscribers({
       return 0;
     });
     return list;
-  }, [segFiltered, tab, query, channelFilter, tagFilter, sort, tagStore]);
+  }, [segFiltered, tab, query, channelFilter, tagSel, sort, tagStore]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -250,6 +256,16 @@ export default function AppSubscribers({
       const next = new Set(prev);
       if (next.has(ch)) next.delete(ch);
       else next.add(ch);
+      return next;
+    });
+    resetPageAndSel();
+  };
+
+  const toggleTag = (t: string) => {
+    setTagSel((prev) => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t);
+      else next.add(t);
       return next;
     });
     resetPageAndSel();
@@ -294,23 +310,22 @@ export default function AppSubscribers({
   };
 
   const filterByTag = (tag: string) => {
-    setTagFilter(tag);
+    if (!tagSel.has(tag)) toggleTag(tag);
     setOpenId(null);
-    resetPageAndSel();
     showToast(`Filtered by “${tag}”`);
   };
 
   const clearAll = () => {
     setSegSel(new Set());
     setTab('all');
-    setTagFilter(null);
+    setTagSel(new Set());
     setChannelFilter(new Set());
     setQuery('');
     resetPageAndSel();
   };
 
   const hasActiveFilters =
-    segSel.size > 0 || tab !== 'all' || tagFilter !== null || channelFilter.size > 0;
+    segSel.size > 0 || tab !== 'all' || tagSel.size > 0 || channelFilter.size > 0;
 
   /* Esc closes drawer/modal. */
   useEscapeClose(() => {
@@ -617,6 +632,16 @@ export default function AppSubscribers({
             )}
           </div>
 
+          <TagFilter
+            tags={tagUniverse}
+            selected={tagSel}
+            onToggle={toggleTag}
+            onClear={() => {
+              setTagSel(new Set());
+              resetPageAndSel();
+            }}
+          />
+
           <div className={styles.spacer} />
 
           <div className="aseg sb__viewseg" role="group" aria-label="View mode">
@@ -687,22 +712,20 @@ export default function AppSubscribers({
                 </button>
               );
             })}
-            {tagFilter && (
+            {[...tagSel].map((t) => (
               <button
+                key={t}
                 type="button"
                 className={styles.chip}
-                style={tagStyle(tagFilter)}
-                onClick={() => {
-                  setTagFilter(null);
-                  resetPageAndSel();
-                }}
+                style={tagStyle(t)}
+                onClick={() => toggleTag(t)}
               >
-                Tag: {tagFilter}
+                Tag: {t}
                 <span className={styles.chipx}>
                   <Icon name="x" size={11} stroke={2.4} />
                 </span>
               </button>
-            )}
+            ))}
             <button type="button" className={styles.clearall} onClick={clearAll}>
               Clear all
             </button>
