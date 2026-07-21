@@ -795,19 +795,19 @@ function CampaignDrawer({
           </button>
         </div>
         <div className="adrawer__body">
+          {/* framed preview on top, then title/status/audience — matches the
+              template drawer's UX */}
+          <div className={styles.drawerPreview}>
+            <CampaignPreview campaign={campaign} live={live} />
+          </div>
+
           <div className={styles.drawerTitleRow}>
-            <ChannelPill channel={campaign.channel} />
+            <h3 className={styles.drawerName}>{campaign.name}</h3>
             <span className={`astatus astatus--${campaign.status}`}>
               {STATUS_LABEL[campaign.status]}
             </span>
           </div>
-          <h3 className={styles.drawerName}>{campaign.name}</h3>
           <p className={styles.drawerAud}>To {campaign.audience}</p>
-
-          <p className={`adrawer__eyebrow ${styles.drawerEyebrow}`}>Preview</p>
-          <div className={styles.drawerPreview}>
-            <CampaignPreview campaign={campaign} live={live} />
-          </div>
 
           {isSent ? (
             <div className={styles.drawerKpis}>
