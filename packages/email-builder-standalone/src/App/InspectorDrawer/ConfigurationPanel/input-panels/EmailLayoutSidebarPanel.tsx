@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ZodError } from 'zod';
 
 import { CropSquareOutlined, LinkOutlined } from '@mui/icons-material';
-import { Stack } from '@mui/material';
+import { Box } from '@mui/material';
 
 import EmailLayoutPropsSchema, {
   EmailLayoutProps,
@@ -35,8 +35,12 @@ export default function EmailLayoutSidebarFields({ data, setData }: EmailLayoutS
     }
   };
 
+  // Box, not Stack — theme.ts's MuiStack styleOverrides forces
+  // `margin: 0 !important` on every Stack's children workspace-wide (see
+  // BaseSidebarPanel.tsx). gap: 2 (1rem) matches the between-property
+  // spacing used everywhere else in the inspector.
   return (
-    <Stack spacing={1}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <CompactableInput icon={BackgroundColorIcon} label={t('inputs.panels.emailLayout.backgroundColor')}>
         <ColorInput
           label={t('inputs.panels.emailLayout.backgroundColor')}
@@ -77,6 +81,6 @@ export default function EmailLayoutSidebarFields({ data, setData }: EmailLayoutS
           onChange={(linkGlobal) => updateData({ ...data, linkGlobal })}
         />
       </CompactableInput>
-    </Stack>
+    </Box>
   );
 }

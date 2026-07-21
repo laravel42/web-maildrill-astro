@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ExpandMoreOutlined, TuneOutlined } from '@mui/icons-material';
-import { Accordion, AccordionDetails, AccordionSummary, Box, Stack, Tooltip, Typography } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Tooltip, Typography } from '@mui/material';
 
 import { useBlock } from '../../../documents/editor/blockHooks';
 import { atomicUpdateBlock } from '../../../documents/editor/blockUpdaters';
@@ -36,8 +36,12 @@ export default function RootAccordion({ defaultExpanded = true, headless = false
 
   const { data } = block;
 
+  // Box, not Stack — theme.ts's MuiStack styleOverrides forces
+  // `margin: 0 !important` on every Stack's children workspace-wide, which
+  // silently defeats both `spacing` and a `gap` set on a real
+  // MuiStack-root. See BaseSidebarPanel.tsx for the same fix.
   const fields = (
-    <Stack spacing={2}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <EmailLayoutSidebarFields
         data={data}
         setData={(next) => {
@@ -47,7 +51,7 @@ export default function RootAccordion({ defaultExpanded = true, headless = false
           atomicUpdateBlock('root', () => ({ type: 'EmailLayout', data: next }));
         }}
       />
-    </Stack>
+    </Box>
   );
 
   if (headless) {
