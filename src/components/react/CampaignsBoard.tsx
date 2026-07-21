@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { campaigns as mockCampaigns } from '@/lib/app/mock-data';
 import { api, ApiError } from '@/lib/app/api';
 import { toCampaign, type ApiCampaign } from '@/lib/app/campaign-map';
@@ -8,7 +8,10 @@ import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
 import CampaignWizard from './CampaignWizard';
 import EmailBuilder from './EmailBuilder';
-import VisualEmailBuilder from './VisualEmailBuilder';
+// Lazy: see AppTemplates.tsx for why — email-builder-standalone is a large
+// bundle that should only load once a user actually opens the visual editor,
+// not on every visit to the campaigns board.
+const VisualEmailBuilder = lazy(() => import('./VisualEmailBuilder'));
 import TemplatePreview, { MessagePreview } from './shared/TemplatePreview';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { ago } from './shared/time';
@@ -683,17 +686,20 @@ export default function CampaignsBoard({
       )}
 
       {/* Email campaigns compose in the full EmailBuilder.js visual editor;
-          SMS/WhatsApp/Voice keep the lightweight composer. */}
+          SMS/WhatsApp/Voice keep the lightweight composer. Suspense is
+          required by React.lazy — see AppTemplates.tsx for details. */}
       {builder && builder.channel === 'email' && (
-        <VisualEmailBuilder
-          name={builder.name}
-          kind="campaign"
-          onClose={() => setBuilder(null)}
-          onSave={() => {
-            // Draft kept locally; the editor shows the saved confirmation badge
-            // and stays open (no redirect back to the board).
-          }}
-        />
+        <Suspense fallback={null}>
+          <VisualEmailBuilder
+            name={builder.name}
+            kind="campaign"
+            onClose={() => setBuilder(null)}
+            onSave={() => {
+              // Draft kept locally; the editor shows the saved confirmation badge
+              // and stays open (no redirect back to the board).
+            }}
+          />
+        </Suspense>
       )}
 
       {builder && builder.channel !== 'email' && (
