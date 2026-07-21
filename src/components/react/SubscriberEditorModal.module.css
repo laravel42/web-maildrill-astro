@@ -75,18 +75,42 @@
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-tint);
 }
-.select {
-  appearance: none;
+/* Multi-select list picker — associate a subscriber with several lists at once. */
+.listpick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 18px;
+}
+.listchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text2);
   cursor: pointer;
-  background-image: none;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
 }
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.listchip:hover {
+  border-color: var(--muted2);
 }
-.grid > div {
-  min-width: 0;
+.listchipOn {
+  background: var(--accent-tint);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--accent);
+}
+.listempty {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 0 0 18px;
 }
 .tags {
   display: flex;
@@ -111,7 +135,7 @@
   background: none;
   cursor: pointer;
   color: inherit;
-  opacity: 0.7;
+  opacity: 0.9;
   padding: 0;
 }
 .tagx:hover {

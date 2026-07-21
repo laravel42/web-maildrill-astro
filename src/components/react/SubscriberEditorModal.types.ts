@@ -5,6 +5,7 @@ export type SubscriberEditorValues = {
   phone: string;
   name: string;
   status: SubscriberStatus;
-  list: string;
+  /** Lists to associate the subscriber with, in one save. */
+  listIds: string[];
   tags: string[];
 };

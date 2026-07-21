@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { SubscriberStatus } from '@/types/app';
 import Icon from './Icon';
 import { useEscapeClose } from './shared/useEscapeClose';
-import { STATUS_OPTS, toneFor } from './SubscriberEditorModal.logic';
+import { toneFor } from './SubscriberEditorModal.logic';
 import type { SubscriberEditorValues } from './SubscriberEditorModal.types';
 import styles from './SubscriberEditorModal.module.css';
 
@@ -20,10 +20,10 @@ type Props = {
   initialPhone?: string;
   initialName?: string;
   initialStatus?: SubscriberStatus;
-  /** Currently selected list id, when editing. */
-  initialList?: string;
+  /** Lists the subscriber already belongs to, when editing. */
+  initialListIds?: string[];
   initialTags?: string[];
-  /** Real workspace lists; the value saved is the list id. */
+  /** Real workspace lists; the values saved are list ids. */
   lists?: { id: string; name: string }[];
   onClose: () => void;
   onSave: (values: SubscriberEditorValues) => void;
@@ -35,7 +35,7 @@ export default function SubscriberEditorModal({
   initialPhone = '',
   initialName = '',
   initialStatus = 'active',
-  initialList,
+  initialListIds = [],
   initialTags = [],
   lists = [],
   onClose,
@@ -44,8 +44,10 @@ export default function SubscriberEditorModal({
   const [email, setEmail] = useState(initialEmail);
   const [phone, setPhone] = useState(initialPhone);
   const [name, setName] = useState(initialName);
-  const [status, setStatus] = useState<SubscriberStatus>(initialStatus);
-  const [list, setList] = useState(initialList ?? '');
+  // Status isn't edited here; it's carried through unchanged so a save doesn't
+  // reset the subscriber's current status.
+  const [status] = useState<SubscriberStatus>(initialStatus);
+  const [listIds, setListIds] = useState<string[]>(initialListIds);
   const [tags, setTags] = useState<string[]>(initialTags);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState('');
@@ -54,6 +56,9 @@ export default function SubscriberEditorModal({
 
   const isEdit = mode === 'edit';
   const canSave = /.+@.+\..+/.test(email.trim());
+
+  const toggleList = (id: string) =>
+    setListIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const addTag = () => {
     const t = draft.trim();
@@ -65,7 +70,7 @@ export default function SubscriberEditorModal({
 
   const submit = () => {
     if (!canSave) return;
-    onSave({ email: email.trim(), phone: phone.trim(), name: name.trim(), status, list, tags });
+    onSave({ email: email.trim(), phone: phone.trim(), name: name.trim(), status, listIds, tags });
   };
 
   return (
@@ -124,45 +129,30 @@ export default function SubscriberEditorModal({
             onChange={(e) => setPhone(e.target.value)}
           />
 
-          <div className={styles.grid}>
-            <div>
-              <label className={styles.label} htmlFor="sem-list">
-                Add to list
-              </label>
-              <select
-                id="sem-list"
-                className={`${styles.input} ${styles.select}`}
-                value={list}
-                onChange={(e) => setList(e.target.value)}
-              >
-                <option value="">No list</option>
-                {lists.map((l) => (
-                  <option key={l.id} value={l.id}>
+          <label className={styles.label}>
+            Add to lists <span className={styles.opt}>(optional)</span>
+          </label>
+          {lists.length === 0 ? (
+            <p className={styles.listempty}>No lists yet — create one first.</p>
+          ) : (
+            <div className={styles.listpick} role="group" aria-label="Add to lists">
+              {lists.map((l) => {
+                const on = listIds.includes(l.id);
+                return (
+                  <button
+                    key={l.id}
+                    type="button"
+                    className={`${styles.listchip}${on ? ` ${styles.listchipOn}` : ''}`}
+                    aria-pressed={on}
+                    onClick={() => toggleList(l.id)}
+                  >
+                    {on && <Icon name="check" size={15} stroke={3.5} />}
                     {l.name}
-                  </option>
-                ))}
-              </select>
+                  </button>
+                );
+              })}
             </div>
-            {isEdit && (
-              <div>
-                <label className={styles.label} htmlFor="sem-status">
-                  Status
-                </label>
-                <select
-                  id="sem-status"
-                  className={`${styles.input} ${styles.select}`}
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as SubscriberStatus)}
-                >
-                  {STATUS_OPTS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
+          )}
 
           <label className={styles.label}>Tags</label>
           <div className={styles.tags}>
@@ -177,7 +167,7 @@ export default function SubscriberEditorModal({
                     aria-label={`Remove ${t}`}
                     onClick={() => removeTag(t)}
                   >
-                    <Icon name="x" size={11} stroke={2.6} />
+                    <Icon name="x" size={14} stroke={3} />
                   </button>
                 </span>
               );

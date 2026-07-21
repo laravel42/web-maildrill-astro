@@ -20,7 +20,7 @@ let initial: RichSubscriber[] | undefined = undefined;
 // Segments, lists and tags are workspace resources the segment builder and the
 // list-membership editor both need.
 let initialSegments: SavedSegment[] = [];
-let allLists: { id: string; name: string }[] = [];
+let allLists: { id: string; name: string; color?: string | null }[] = [];
 let allTagRows: { id: string; name: string }[] = [];
 let banner: { ok: boolean; text: string } | null = null;
 
@@ -44,10 +44,13 @@ if (session?.user?.id && session.activeTenantId) {
     } else {
       initial = toRichSubscribers(unwrap<ApiSubscriber>(subsRes.data));
       initialSegments = unwrap<ApiSegment>(segsRes.data).map(toSavedSegment);
-      allLists = unwrap<{ id: string; name: string }>(listsRes.data).map((l) => ({
-        id: l.id,
-        name: l.name,
-      }));
+      allLists = unwrap<{ id: string; name: string; color?: string | null }>(listsRes.data).map(
+        (l) => ({
+          id: l.id,
+          name: l.name,
+          color: l.color ?? null,
+        }),
+      );
       allTagRows = unwrap<{ id: string; name: string }>(tagsRes.data).map((t) => ({
         id: t.id,
         name: t.name,

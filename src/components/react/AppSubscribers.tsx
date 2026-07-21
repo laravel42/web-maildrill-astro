@@ -23,7 +23,7 @@ import { toRichSubscriber, type ApiSubscriber } from '@/lib/app/subscriber-map';
 import SubscriberEditorModal from './SubscriberEditorModal';
 import TagFilter from './shared/TagFilter';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
-import { ago } from './shared/time';
+import { ago, agoNow } from './shared/time';
 import { useToast } from './shared/useToast';
 import { useEscapeClose } from './shared/useEscapeClose';
 import {
@@ -52,8 +52,8 @@ export default function AppSubscribers({
   initial?: RichSubscriber[];
   /** Saved segments from the service — the workspace's, not this browser's. */
   initialSegments?: SavedSegment[];
-  /** Real lists, used for segment rules and list membership. */
-  allLists?: { id: string; name: string }[];
+  /** Real lists, used for segment rules and list membership; color tints chips. */
+  allLists?: { id: string; name: string; color?: string | null }[];
   /** Real workspace tags (id + name), for segment rules and tagging. */
   allTagRows?: { id: string; name: string }[];
 } = {}) {
@@ -70,6 +70,8 @@ export default function AppSubscribers({
   const [query, setQuery] = useState('');
   const [channelFilter, setChannelFilter] = useState<Set<ChannelType>>(new Set());
   const [channelOpen, setChannelOpen] = useState(false);
+  const [listFilter, setListFilter] = useState<Set<string>>(new Set());
+  const [listOpen, setListOpen] = useState(false);
   const [segSel, setSegSel] = useState<Set<string>>(new Set());
   const [tagSel, setTagSel] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'name', dir: 1 });
@@ -95,6 +97,12 @@ export default function AppSubscribers({
   >(null);
 
   const effTags = (s: RichSubscriber): string[] => tagStore[s.id] ?? s.tags;
+
+  // Each list's own colour, for tinting the membership chips in the table.
+  const listColorById = useMemo(
+    () => new Map(allLists.map((l) => [l.id, l.color ?? null])),
+    [allLists],
+  );
 
   // Tags actually present on subscribers, for the tags filter dropdown.
   const tagUniverse = useMemo(
@@ -190,6 +198,7 @@ export default function AppSubscribers({
         const r = reachOf(s);
         if (![...channelFilter].some((ch) => r[ch])) return false;
       }
+      if (listFilter.size > 0 && !s.listIds.some((id) => listFilter.has(id))) return false;
       if (tagSel.size > 0 && !effTags(s).some((t) => tagSel.has(t))) return false;
       return true;
     });
@@ -218,7 +227,7 @@ export default function AppSubscribers({
       return 0;
     });
     return list;
-  }, [segFiltered, tab, query, channelFilter, tagSel, sort, tagStore]);
+  }, [segFiltered, tab, query, channelFilter, listFilter, tagSel, sort, tagStore]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -256,6 +265,16 @@ export default function AppSubscribers({
       const next = new Set(prev);
       if (next.has(ch)) next.delete(ch);
       else next.add(ch);
+      return next;
+    });
+    resetPageAndSel();
+  };
+
+  const toggleListFilter = (id: string) => {
+    setListFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
     resetPageAndSel();
@@ -320,12 +339,17 @@ export default function AppSubscribers({
     setTab('all');
     setTagSel(new Set());
     setChannelFilter(new Set());
+    setListFilter(new Set());
     setQuery('');
     resetPageAndSel();
   };
 
   const hasActiveFilters =
-    segSel.size > 0 || tab !== 'all' || tagSel.size > 0 || channelFilter.size > 0;
+    segSel.size > 0 ||
+    tab !== 'all' ||
+    tagSel.size > 0 ||
+    channelFilter.size > 0 ||
+    listFilter.size > 0;
 
   /* Esc closes drawer/modal. */
   useEscapeClose(() => {
@@ -370,21 +394,22 @@ export default function AppSubscribers({
     }
   };
 
-  /* Reconcile list membership against the service. The editor offers a single
-     list, so this adds the chosen one and removes the others it was on —
-     previously the selection was collected and silently discarded. */
+  /* Reconcile list membership against the service. The editor now offers a
+     multi-select, so this adds every newly chosen list and removes the ones the
+     subscriber was dropped from — all in one save. */
   const applyListMembership = async (
     subscriberId: string,
     currentListIds: string[],
-    nextListId: string,
+    nextListIds: string[],
   ) => {
-    const toRemove = currentListIds.filter((id) => id !== nextListId);
-    await Promise.allSettled(
-      toRemove.map((id) => api.del(`lists/${id}/members/${subscriberId}`)),
-    );
-    if (nextListId && !currentListIds.includes(nextListId)) {
-      await api.post(`lists/${nextListId}/members`, { subscriberId });
-    }
+    const next = new Set(nextListIds);
+    const current = new Set(currentListIds);
+    const toRemove = currentListIds.filter((id) => !next.has(id));
+    const toAdd = nextListIds.filter((id) => !current.has(id));
+    await Promise.allSettled([
+      ...toRemove.map((id) => api.del(`lists/${id}/members/${subscriberId}`)),
+      ...toAdd.map((id) => api.post(`lists/${id}/members`, { subscriberId })),
+    ]);
   };
 
   /* Segments are workspace resources: they persist to the service so teammates
@@ -606,7 +631,7 @@ export default function AppSubscribers({
                         onClick={() => toggleChannel(ch)}
                       >
                         <span className={`${styles.box}${on ? ' is-on' : ''}`}>
-                          {on && <Icon name="check" size={11} stroke={3} />}
+                          {on && <Icon name="check" size={15} stroke={3.5} />}
                         </span>
                         <span className="apill" style={{ background: m.tint, color: m.color }}>
                           <Icon name={m.icon} size={12} />
@@ -621,6 +646,69 @@ export default function AppSubscribers({
                       className={styles.popclear}
                       onClick={() => {
                         setChannelFilter(new Set());
+                        resetPageAndSel();
+                      }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className={styles.filterwrap}>
+            <button
+              type="button"
+              className={`${styles.filter}${listFilter.size ? ' is-on' : ''}`}
+              aria-expanded={listOpen}
+              aria-haspopup="true"
+              disabled={allLists.length === 0}
+              onClick={() => setListOpen((v) => !v)}
+            >
+              <Icon name="lists" size={14} />
+              Lists
+              {listFilter.size > 0 && (
+                <span className={`${styles.filtercount} tnum`}>{listFilter.size}</span>
+              )}
+              <Icon name="chevron-down" size={12} className={styles.filtercaret} />
+            </button>
+            {listOpen && (
+              <>
+                <button
+                  type="button"
+                  className={styles.scrim}
+                  aria-label="Close"
+                  onClick={() => setListOpen(false)}
+                />
+                <div className={styles.pop} style={{ animation: 'pop .14s ease' }} role="menu">
+                  <div className={styles.poptitle}>On list</div>
+                  {allLists.map((l) => {
+                    const on = listFilter.has(l.id);
+                    const color = l.color || tagStyle(l.name).color;
+                    return (
+                      <button
+                        key={l.id}
+                        type="button"
+                        role="menuitemcheckbox"
+                        aria-checked={on}
+                        className={styles.popopt}
+                        onClick={() => toggleListFilter(l.id)}
+                      >
+                        <span className={`${styles.box}${on ? ' is-on' : ''}`}>
+                          {on && <Icon name="check" size={15} stroke={3.5} />}
+                        </span>
+                        <span className={styles.listfdot} style={{ background: color }} />
+                        {l.name}
+                      </button>
+                    );
+                  })}
+                  {listFilter.size > 0 && (
+                    <button
+                      type="button"
+                      className={styles.popclear}
+                      onClick={() => {
+                        setListFilter(new Set());
                         resetPageAndSel();
                       }}
                     >
@@ -675,7 +763,7 @@ export default function AppSubscribers({
                 >
                   Segment: {seg.name}
                   <span className={styles.chipx}>
-                    <Icon name="x" size={11} stroke={2.4} />
+                    <Icon name="x" size={14} stroke={3} />
                   </span>
                 </button>
               );
@@ -691,7 +779,7 @@ export default function AppSubscribers({
               >
                 Status: {STATUS_LABEL[tab]}
                 <span className={styles.chipx}>
-                  <Icon name="x" size={11} stroke={2.4} />
+                  <Icon name="x" size={14} stroke={3} />
                 </span>
               </button>
             )}
@@ -707,7 +795,26 @@ export default function AppSubscribers({
                 >
                   {m.label}
                   <span className={styles.chipx}>
-                    <Icon name="x" size={11} stroke={2.4} />
+                    <Icon name="x" size={14} stroke={3} />
+                  </span>
+                </button>
+              );
+            })}
+            {[...listFilter].map((id) => {
+              const l = allLists.find((x) => x.id === id);
+              const name = l?.name ?? id;
+              const color = l?.color || tagStyle(name).color;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  className={styles.chip}
+                  style={{ background: `color-mix(in srgb, ${color} 14%, transparent)`, color }}
+                  onClick={() => toggleListFilter(id)}
+                >
+                  List: {name}
+                  <span className={styles.chipx}>
+                    <Icon name="x" size={14} stroke={3} />
                   </span>
                 </button>
               );
@@ -722,7 +829,7 @@ export default function AppSubscribers({
               >
                 Tag: {t}
                 <span className={styles.chipx}>
-                  <Icon name="x" size={11} stroke={2.4} />
+                  <Icon name="x" size={14} stroke={3} />
                 </span>
               </button>
             ))}
@@ -775,7 +882,7 @@ export default function AppSubscribers({
                   aria-label="Select all on page"
                   aria-pressed={pageAllChecked}
                 >
-                  {pageAllChecked && <Icon name="check" size={11} stroke={3} />}
+                  {pageAllChecked && <Icon name="check" size={15} stroke={3.5} />}
                 </button>
               </div>
               <div>
@@ -830,7 +937,7 @@ export default function AppSubscribers({
                       aria-label={`Select ${s.name}`}
                       aria-pressed={selected.has(s.id)}
                     >
-                      {selected.has(s.id) && <Icon name="check" size={11} stroke={3} />}
+                      {selected.has(s.id) && <Icon name="check" size={15} stroke={3.5} />}
                     </button>
                   </div>
                   <div className={styles.idcell}>
@@ -840,7 +947,29 @@ export default function AppSubscribers({
                       <div className={styles.email}>{s.email}</div>
                     </div>
                   </div>
-                  <div className={styles.lists}>{s.lists.join(', ')}</div>
+                  <div className={styles.lists}>
+                    {s.listIds.length === 0 ? (
+                      <span className={styles.dash}>—</span>
+                    ) : (
+                      s.listIds.map((id, i) => {
+                        const name = s.lists[i] ?? id;
+                        const color = listColorById.get(id) || tagStyle(name).color;
+                        return (
+                          <span
+                            key={id}
+                            className={styles.listchip}
+                            style={{
+                              background: `color-mix(in srgb, ${color} 14%, transparent)`,
+                              color,
+                            }}
+                          >
+                            <span className={styles.listdot} style={{ background: color }} />
+                            {name}
+                          </span>
+                        );
+                      })
+                    )}
+                  </div>
                   <div className={styles.tagcell}>
                     {effTags(s).length === 0 ? (
                       <span className={styles.dash}>—</span>
@@ -892,7 +1021,7 @@ export default function AppSubscribers({
                     aria-label={`Select ${s.name}`}
                     aria-pressed={selected.has(s.id)}
                   >
-                    {selected.has(s.id) && <Icon name="check" size={11} stroke={3} />}
+                    {selected.has(s.id) && <Icon name="check" size={15} stroke={3.5} />}
                   </button>
                   <Avatar sub={s} size={40} />
                   <div className={styles.cardname}>{s.name}</div>
@@ -998,6 +1127,7 @@ export default function AppSubscribers({
           sub={openSub}
           tags={effTags(openSub)}
           reach={reachOf(openSub)}
+          live={live}
           onClose={() => setOpenId(null)}
           onSaveTags={saveTags}
           onFilterTag={filterByTag}
@@ -1017,7 +1147,7 @@ export default function AppSubscribers({
           initialPhone={subEditor.mode === 'edit' ? subEditor.sub.phone : ''}
           initialName={subEditor.mode === 'edit' ? subEditor.sub.name : ''}
           initialStatus={subEditor.mode === 'edit' ? subEditor.sub.status : 'active'}
-          initialList={subEditor.mode === 'edit' ? subEditor.sub.listIds[0] : undefined}
+          initialListIds={subEditor.mode === 'edit' ? subEditor.sub.listIds : []}
           initialTags={subEditor.mode === 'edit' ? effTags(subEditor.sub) : []}
           lists={allLists}
           onClose={() => setSubEditor(null)}
@@ -1042,8 +1172,7 @@ export default function AppSubscribers({
                   status: values.status,
                   attributes: { tags: values.tags },
                 });
-                // The chosen list was previously collected and dropped.
-                await applyListMembership(created.id, [], values.list ?? '');
+                await applyListMembership(created.id, [], values.listIds);
                 const withList = await api.get<ApiSubscriber>(`subscribers/${created.id}`);
                 setRichSubscribers((prev) => [toRichSubscriber(withList), ...prev]);
                 showToast(`${values.email} added`);
@@ -1058,11 +1187,7 @@ export default function AppSubscribers({
                     ...(editor.sub.location !== '—' ? { location: editor.sub.location } : {}),
                   },
                 });
-                await applyListMembership(
-                  editor.sub.id,
-                  editor.sub.listIds,
-                  values.list ?? '',
-                );
+                await applyListMembership(editor.sub.id, editor.sub.listIds, values.listIds);
                 const fresh = await api.get<ApiSubscriber>(`subscribers/${editor.sub.id}`);
                 setRichSubscribers((prev) =>
                   prev.map((s) => (s.id === editor.sub.id ? toRichSubscriber(fresh) : s)),
@@ -1158,10 +1283,41 @@ function Avatar({ sub, size }: { sub: RichSubscriber; size: number }) {
 }
 
 /* ----------------------------- Details drawer ----------------------------- */
+type ApiSubscriberActivity = {
+  lastActiveAt: string | null;
+  channels: { channel: ChannelType; sent: number; delivered: number; read: number }[];
+  recent: {
+    id: string;
+    channel: ChannelType;
+    status: string;
+    campaignName: string | null;
+    at: string;
+  }[];
+};
+
+/** Map a message status to its timeline presentation. */
+const EV_TONE: Record<string, { bg: string; color: string }> = {
+  accent: { bg: 'var(--accent-tint)', color: 'var(--accent)' },
+  success: { bg: 'var(--success-bg)', color: 'var(--success-strong)' },
+  muted: { bg: 'var(--surface2)', color: 'var(--text4)' },
+  danger: { bg: 'var(--danger-bg)', color: 'var(--danger)' },
+};
+const EV_STATUS: Record<string, { icon: IconName; verb: string; tone: keyof typeof EV_TONE }> = {
+  read: { icon: 'eye', verb: 'Opened', tone: 'accent' },
+  delivered: { icon: 'check-circle', verb: 'Delivered', tone: 'success' },
+  sent: { icon: 'send', verb: 'Sent', tone: 'muted' },
+  submitted: { icon: 'send', verb: 'Sent', tone: 'muted' },
+  queued: { icon: 'clock', verb: 'Queued', tone: 'muted' },
+  failed: { icon: 'x', verb: 'Delivery failed for', tone: 'danger' },
+  expired: { icon: 'x', verb: 'Expired', tone: 'danger' },
+  cancelled: { icon: 'x', verb: 'Cancelled', tone: 'muted' },
+};
+
 function SubscriberDrawer({
   sub,
   tags,
   reach,
+  live,
   onClose,
   onSaveTags,
   onFilterTag,
@@ -1171,6 +1327,7 @@ function SubscriberDrawer({
   sub: RichSubscriber;
   tags: string[];
   reach: Record<ChannelType, boolean>;
+  live: boolean;
   onClose: () => void;
   onSaveTags: (id: string, tags: string[]) => void;
   onFilterTag: (tag: string) => void;
@@ -1179,6 +1336,23 @@ function SubscriberDrawer({
 }) {
   const [draft, setDraft] = useState<string[]>(tags);
   const [input, setInput] = useState('');
+
+  // Real engagement + activity from the service (live workspaces only). The
+  // drawer remounts per subscriber (keyed by id), so a plain mount fetch is fine.
+  const [act, setAct] = useState<ApiSubscriberActivity | null>(null);
+  useEffect(() => {
+    if (!live) return;
+    let alive = true;
+    void api
+      .get<ApiSubscriberActivity>(`subscribers/${sub.id}/activity`)
+      .then((a) => {
+        if (alive) setAct(a);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [live, sub.id]);
 
   // Tags persist as you edit: adding (Enter) or removing a tag saves the whole
   // set immediately. onSaveTags diffs it against the server, so passing the
@@ -1199,76 +1373,133 @@ function SubscriberDrawer({
 
   const statusLabel = STATUS_LABEL[sub.status];
 
-  const channelRows: { ch: ChannelType; meta: string; open: string; click: string }[] = [
-    { ch: 'email', meta: '24 sent', open: sub.opens, click: sub.clicks },
-    {
-      ch: 'sms',
-      meta: reach.sms ? '6 sent' : 'Not opted in',
-      open: reach.sms ? '58%' : '—',
-      click: reach.sms ? '21%' : '—',
-    },
-    {
-      ch: 'whatsapp',
-      meta: reach.whatsapp ? '3 sent' : 'Not opted in',
-      open: reach.whatsapp ? '92%' : '—',
-      click: reach.whatsapp ? '34%' : '—',
-    },
-    {
-      ch: 'voice',
-      meta: reach.voice ? '2 calls' : 'Not opted in',
-      open: reach.voice ? '75%' : '—',
-      click: '—',
-    },
-  ];
-
+  type ChanRow = { ch: ChannelType; on: boolean; meta: string; open: string; click: string };
   type Ev = { icon: IconName; bg: string; color: string; title: string; when: string };
-  const activity: Ev[] = [];
-  if (sub.status === 'active') {
-    activity.push({
-      icon: 'eye',
-      bg: 'var(--accent-tint)',
-      color: 'var(--accent)',
-      title: 'Opened “Summer Sale”',
-      when: ago(sub.updatedAt),
+
+  // "Last active" is the most recent real message timestamp; falls back to the
+  // fixture value only in the marketing preview.
+  const lastActive = act
+    ? act.lastActiveAt
+      ? agoNow(act.lastActiveAt)
+      : 'Never'
+    : live
+      ? '—'
+      : ago(sub.updatedAt);
+
+  let channelRows: ChanRow[];
+  let activity: Ev[];
+
+  if (act) {
+    // Real engagement + timeline from the service.
+    const byChannel = new Map(act.channels.map((c) => [c.channel, c]));
+    channelRows = CHANNEL_ORDER.map((ch) => {
+      const s = byChannel.get(ch);
+      const sent = s?.sent ?? 0;
+      const delivered = s?.delivered ?? 0;
+      const read = s?.read ?? 0;
+      const openPct =
+        delivered > 0 && read > 0 ? `${Math.round((read / delivered) * 100)}%` : '—';
+      return {
+        ch,
+        on: sent > 0,
+        meta: sent > 0 ? `${sent.toLocaleString('en-US')} sent` : 'No messages yet',
+        open: openPct,
+        click: '—', // link clicks aren't tracked yet
+      };
     });
-    activity.push({
-      icon: 'target',
-      bg: 'var(--success-bg)',
-      color: 'var(--success-strong)',
-      title: 'Clicked a link in “Spring Preview”',
-      when: '3d ago',
+    activity = act.recent.map((e) => {
+      const p = EV_STATUS[e.status] ?? {
+        icon: 'inbox' as IconName,
+        verb: e.status,
+        tone: 'muted' as const,
+      };
+      const tone = EV_TONE[p.tone];
+      const subject = e.campaignName ? `“${e.campaignName}”` : `a ${CHANNEL[e.channel].label} message`;
+      return {
+        icon: p.icon,
+        bg: tone.bg,
+        color: tone.color,
+        title: `${p.verb} ${subject}`,
+        when: agoNow(e.at),
+      };
     });
+  } else if (live) {
+    // Live but still loading — show empty channels rather than fake numbers.
+    channelRows = CHANNEL_ORDER.map((ch) => ({
+      ch,
+      on: false,
+      meta: 'No messages yet',
+      open: '—',
+      click: '—',
+    }));
+    activity = [];
+  } else {
+    // Fixture/marketing preview keeps its illustrative values.
+    channelRows = [
+      { ch: 'email', on: reach.email, meta: '24 sent', open: sub.opens, click: sub.clicks },
+      {
+        ch: 'sms',
+        on: reach.sms,
+        meta: reach.sms ? '6 sent' : 'Not opted in',
+        open: reach.sms ? '58%' : '—',
+        click: reach.sms ? '21%' : '—',
+      },
+      {
+        ch: 'whatsapp',
+        on: reach.whatsapp,
+        meta: reach.whatsapp ? '3 sent' : 'Not opted in',
+        open: reach.whatsapp ? '92%' : '—',
+        click: reach.whatsapp ? '34%' : '—',
+      },
+      {
+        ch: 'voice',
+        on: reach.voice,
+        meta: reach.voice ? '2 calls' : 'Not opted in',
+        open: reach.voice ? '75%' : '—',
+        click: '—',
+      },
+    ];
+    activity = [];
+    if (sub.status === 'active') {
+      activity.push({
+        icon: 'eye',
+        bg: 'var(--accent-tint)',
+        color: 'var(--accent)',
+        title: 'Opened “Summer Sale”',
+        when: ago(sub.updatedAt),
+      });
+      activity.push({
+        icon: 'target',
+        bg: 'var(--success-bg)',
+        color: 'var(--success-strong)',
+        title: 'Clicked a link in “Spring Preview”',
+        when: '3d ago',
+      });
+    } else if (sub.status === 'bounced') {
+      activity.push({
+        icon: 'x',
+        bg: 'var(--danger-bg)',
+        color: 'var(--danger)',
+        title: 'Email bounced (hard)',
+        when: ago(sub.updatedAt),
+      });
+    } else {
+      activity.push({
+        icon: 'x',
+        bg: 'var(--warning-bg)',
+        color: 'var(--warning)',
+        title: 'Unsubscribed from all lists',
+        when: ago(sub.updatedAt),
+      });
+    }
     activity.push({
-      icon: 'inbox',
+      icon: 'plus',
       bg: 'var(--surface2)',
       color: 'var(--text4)',
-      title: 'Received “Welcome Series”',
+      title: `Joined ${sub.lists[0] ?? 'a list'}`,
       when: sub.joined,
     });
-  } else if (sub.status === 'bounced') {
-    activity.push({
-      icon: 'x',
-      bg: 'var(--danger-bg)',
-      color: 'var(--danger)',
-      title: 'Email bounced (hard)',
-      when: ago(sub.updatedAt),
-    });
-  } else {
-    activity.push({
-      icon: 'x',
-      bg: 'var(--warning-bg)',
-      color: 'var(--warning)',
-      title: 'Unsubscribed from all lists',
-      when: ago(sub.updatedAt),
-    });
   }
-  activity.push({
-    icon: 'plus',
-    bg: 'var(--surface2)',
-    color: 'var(--text4)',
-    title: `Joined ${sub.lists[0] ?? 'a list'}`,
-    when: sub.joined,
-  });
 
   return (
     <div className="adrawer-overlay" onClick={onClose}>
@@ -1331,7 +1562,7 @@ function SubscriberDrawer({
                     aria-label={`Remove ${t}`}
                     onClick={() => removeTag(t)}
                   >
-                    <Icon name="x" size={10} stroke={2.6} />
+                    <Icon name="x" size={14} stroke={3} />
                   </button>
                 </span>
               ))}
@@ -1372,7 +1603,7 @@ function SubscriberDrawer({
             </div>
             <div className="adetail">
               <span className="adetail__k">Last active</span>
-              <span className="adetail__v">{ago(sub.updatedAt)}</span>
+              <span className="adetail__v">{lastActive}</span>
             </div>
           </div>
 
@@ -1380,9 +1611,8 @@ function SubscriberDrawer({
           <div className={styles.sbdSection}>
             <span className={`adrawer__eyebrow ${styles.sbdEyebrow}`}>Channel engagement</span>
             <div className={styles.sbdChans}>
-              {channelRows.map(({ ch, meta, open, click }) => {
+              {channelRows.map(({ ch, on, meta, open, click }) => {
                 const m = CHANNEL[ch];
-                const on = reach[ch];
                 return (
                   <div key={ch} className={styles.sbdChan}>
                     <span
@@ -1423,6 +1653,9 @@ function SubscriberDrawer({
           <div className={styles.sbdSection}>
             <span className={`adrawer__eyebrow ${styles.sbdEyebrow}`}>Recent activity</span>
             <div className={styles.sbdTimeline}>
+              {activity.length === 0 && (
+                <div className={styles.sbdChanMeta}>No activity yet.</div>
+              )}
               {activity.map((ev, i) => (
                 <div key={i} className={styles.sbdEv}>
                   <span className={styles.sbdEvIc} style={{ background: ev.bg, color: ev.color }}>
