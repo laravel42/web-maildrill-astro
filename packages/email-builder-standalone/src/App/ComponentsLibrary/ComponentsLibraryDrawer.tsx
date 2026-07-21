@@ -237,6 +237,9 @@ function LibraryCard({
         <LibraryCardThumbnail
           src={thumbnailUrl}
           alt={item.name}
+          // Point 8 (EMAIL_BUILDER_TASKS.md): Templates previews were too
+          // small — double the default 120px height for that category only.
+          height={category === 'template' ? 240 : undefined}
           placeholderText={t('componentsLibrary.thumbnail.placeholder', 'No preview')}
         />
       )}
