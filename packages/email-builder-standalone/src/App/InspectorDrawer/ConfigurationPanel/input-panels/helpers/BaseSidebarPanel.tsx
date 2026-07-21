@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Box, Container, Divider, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Container, Divider, Tooltip, Typography } from '@mui/material';
 
 import { useBlockTypeSelected } from '../../../../../documents/editor/EditorContext';
 import { THEME_BLOCK_REGISTRY, ThemeBlockType } from '../../../../TemplatePanel/ThemePanel/registry';
@@ -37,11 +37,15 @@ export default function BaseSidebarPanel({ title, children }: SidebarPanelProps)
           </Box>
         </Tooltip>
       )}
-      {/* gap (not the Stack `spacing` prop) — spacing wasn't rendering
-          reliably here, same issue fixed the same way in RawSliderInput.
-          1rem between properties in full mode; compact keeps its tighter
-          rhythm since it's icon-only rows. */}
-      <Stack sx={{ mb: 3, pt: compact ? 0 : 1, gap: compact ? 0.5 : 2 }}>{children}</Stack>
+      {/* Plain Box, not Stack — the theme's MuiStack styleOverrides forces
+          `margin: 0 !important` on every Stack's children (added for some
+          other layout elsewhere), which silently defeats both `spacing`
+          and a `gap` set via sx on an actual MuiStack-root. A Box sidesteps
+          that override entirely. 1rem between properties in full mode;
+          compact keeps its tighter rhythm since it's icon-only rows. */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', mb: 3, pt: compact ? 0 : 1, gap: compact ? 0.5 : 2 }}>
+        {children}
+      </Box>
     </Container>
   );
 }
