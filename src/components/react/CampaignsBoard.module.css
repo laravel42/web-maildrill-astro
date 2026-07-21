@@ -1,12 +1,23 @@
+/* The whole board lives in one card; overflow must stay visible so the channel
+   filter popover can escape the card bounds. */
+.card {
+  overflow: visible;
+}
 .tabs {
-  margin-bottom: 16px;
+  gap: 20px;
+  padding: 0 19px;
   overflow-x: auto;
+}
+.tabs :global(.atab) {
+  padding: 14px 0 13px;
+  white-space: nowrap;
 }
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 8px 10px;
+  padding: 14px 19px;
+  border-bottom: 1px solid var(--divider);
   flex-wrap: wrap;
 }
 .search {
@@ -120,11 +131,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 16px;
+  padding: 10px 19px;
   background: var(--accent-tint);
-  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
-  border-radius: 12px;
-  margin-bottom: 12px;
+  border-bottom: 1px solid var(--divider);
+  flex-wrap: wrap;
 }
 .bulkcount {
   font-size: 13px;
@@ -160,6 +170,13 @@
 
 .grid {
   grid-template-columns: 36px 2fr 0.9fr 1fr 1.1fr 0.8fr 0.7fr 0.8fr;
+  column-gap: 14px;
+}
+.grid:global(.athead) {
+  padding: 0 19px;
+}
+.grid:global(.athead) > div {
+  padding: 12px 0;
 }
 .check {
   display: flex;
@@ -190,6 +207,52 @@
 }
 .muted3 {
   color: var(--text3);
+}
+
+/* footer / pagination — matches the Templates & Subscribers list UX */
+.foot {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.pg {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text3);
+  border: 1px solid var(--border2);
+  background: var(--surface);
+}
+.pg:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.pgflip {
+  transform: rotate(180deg);
+}
+.pgn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text3);
+  border: 1px solid var(--border2);
+  background: var(--surface);
+}
+.pgn:global(.is-on) {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  font-weight: 700;
 }
 
 /* animation 'toastin' is applied inline (global keyframe cannot live in a CSS Module). */

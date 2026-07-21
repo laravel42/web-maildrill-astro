@@ -13,7 +13,7 @@ import TemplatePreview, { MessagePreview } from './shared/TemplatePreview';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { ago } from './shared/time';
 import { useToast } from './shared/useToast';
-import { STATUS_LABEL, TABS, pct } from './CampaignsBoard.logic';
+import { STATUS_LABEL, TABS, PAGE_SIZE, pct } from './CampaignsBoard.logic';
 import type { SortKey } from './CampaignsBoard.types';
 import styles from './CampaignsBoard.module.css';
 
@@ -62,6 +62,7 @@ export default function CampaignsBoard({
   const [channelFilter, setChannelFilter] = useState<Set<ChannelType>>(new Set());
   const [filterOpen, setFilterOpen] = useState(false);
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updatedAt', dir: -1 });
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Set while a destructive action waits on confirmation.
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -117,6 +118,17 @@ export default function CampaignsBoard({
     return list;
   }, [tab, query, channelFilter, sort, campaigns]);
 
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const startIdx = rows.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const endIdx = Math.min(safePage * PAGE_SIZE, rows.length);
+  const pageRows = rows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  // Snap back to the first page whenever the filtered set changes underneath.
+  useEffect(() => {
+    setPage(1);
+  }, [tab, query, channelFilter, sort]);
+
   const toggleSort = (key: SortKey) =>
     setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: 1 }));
 
@@ -128,8 +140,9 @@ export default function CampaignsBoard({
       return next;
     });
 
-  const allChecked = rows.length > 0 && rows.every((r) => selected.has(r.id));
-  const toggleAll = () => setSelected(allChecked ? new Set() : new Set(rows.map((r) => r.id)));
+  const allChecked = pageRows.length > 0 && pageRows.every((r) => selected.has(r.id));
+  const toggleAll = () =>
+    setSelected(allChecked ? new Set() : new Set(pageRows.map((r) => r.id)));
 
   const bulk = (verb: string) => {
     show(`${verb} ${selected.size} campaign${selected.size === 1 ? '' : 's'}`);
@@ -363,122 +376,126 @@ export default function CampaignsBoard({
         </button>
       </div>
 
-      {/* tabs */}
-      <div className={`${styles.tabs} atabs`} role="tablist" aria-label="Campaign status">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            type="button"
-            role="tab"
-            aria-selected={tab === t}
-            className={`atab${tab === t ? ' is-active' : ''}`}
-            onClick={() => {
-              setTab(t);
-              setSelected(new Set());
-            }}
-          >
-            {t === 'all' ? 'All' : STATUS_LABEL[t]}
-            <span className="atab__count tnum">{counts[t] ?? 0}</span>
-          </button>
-        ))}
-      </div>
+      <div className={`atable ${styles.card}`}>
+        {/* status tabs */}
+        <div className={`${styles.tabs} atabs`} role="tablist" aria-label="Campaign status">
+          {TABS.map((t) => (
+            <button
+              key={t}
+              type="button"
+              role="tab"
+              aria-selected={tab === t}
+              className={`atab${tab === t ? ' is-active' : ''}`}
+              onClick={() => {
+                setTab(t);
+                setSelected(new Set());
+              }}
+            >
+              {t === 'all' ? 'All' : STATUS_LABEL[t]}
+              <span className="atab__count tnum">{counts[t] ?? 0}</span>
+            </button>
+          ))}
+        </div>
 
-      {/* toolbar */}
-      <div className={styles.toolbar}>
-        <label className={styles.search}>
-          <Icon name="search" size={15} className={styles.searchic} />
-          <input
-            type="search"
-            placeholder="Search campaigns…"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setSelected(new Set());
-            }}
-            aria-label="Search campaigns"
-          />
-        </label>
-        <div className={styles.filterwrap}>
-          <button
-            type="button"
-            className={`${styles.filter}${channelFilter.size ? ' is-on' : ''}`}
-            aria-expanded={filterOpen}
-            onClick={() => setFilterOpen((v) => !v)}
-          >
-            <Icon name="filter" size={14} />
-            Channel
-            {channelFilter.size > 0 && (
-              <span className={styles.filtercount}>{channelFilter.size}</span>
+        {/* toolbar */}
+        <div className={styles.toolbar}>
+          <label className={styles.search}>
+            <Icon name="search" size={15} className={styles.searchic} />
+            <input
+              type="search"
+              placeholder="Search campaigns…"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setSelected(new Set());
+              }}
+              aria-label="Search campaigns"
+            />
+          </label>
+          <div className={styles.filterwrap}>
+            <button
+              type="button"
+              className={`${styles.filter}${channelFilter.size ? ' is-on' : ''}`}
+              aria-expanded={filterOpen}
+              onClick={() => setFilterOpen((v) => !v)}
+            >
+              <Icon name="filter" size={14} />
+              Channel
+              {channelFilter.size > 0 && (
+                <span className={styles.filtercount}>{channelFilter.size}</span>
+              )}
+              <Icon name="chevron-down" size={12} className={styles.filtercaret} />
+            </button>
+            {filterOpen && (
+              <>
+                <button
+                  type="button"
+                  className={styles.filterscrim}
+                  aria-label="Close"
+                  onClick={() => setFilterOpen(false)}
+                />
+                <div className={styles.filterpop} style={{ animation: 'pop .14s ease' }}>
+                  {CHANNEL_ORDER.map((ch) => (
+                    <label key={ch} className={styles.filteropt}>
+                      <input
+                        type="checkbox"
+                        checked={channelFilter.has(ch)}
+                        onChange={() => toggleChannel(ch)}
+                      />
+                      <ChannelPill channel={ch} />
+                    </label>
+                  ))}
+                  {channelFilter.size > 0 && (
+                    <button
+                      type="button"
+                      className={styles.filterclear}
+                      onClick={() => {
+                        setChannelFilter(new Set());
+                        setSelected(new Set());
+                      }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </>
             )}
-            <Icon name="chevron-down" size={12} className={styles.filtercaret} />
-          </button>
-          {filterOpen && (
-            <>
-              <button
-                type="button"
-                className={styles.filterscrim}
-                aria-label="Close"
-                onClick={() => setFilterOpen(false)}
-              />
-              <div className={styles.filterpop} style={{ animation: 'pop .14s ease' }}>
-                {CHANNEL_ORDER.map((ch) => (
-                  <label key={ch} className={styles.filteropt}>
-                    <input
-                      type="checkbox"
-                      checked={channelFilter.has(ch)}
-                      onChange={() => toggleChannel(ch)}
-                    />
-                    <ChannelPill channel={ch} />
-                  </label>
-                ))}
-                {channelFilter.size > 0 && (
-                  <button
-                    type="button"
-                    className={styles.filterclear}
-                    onClick={() => {
-                      setChannelFilter(new Set());
-                      setSelected(new Set());
-                    }}
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </>
-          )}
+          </div>
         </div>
-      </div>
 
-      {/* bulk bar */}
-      {selected.size > 0 && (
-        <div className={styles.bulk} style={{ animation: 'fade .18s ease' }}>
-          <span className={styles.bulkcount}>{selected.size} selected</span>
-          <span className={styles.bulkdiv} />
-          <button
-            type="button"
-            className={styles.bulkbtn}
-            onClick={() => void duplicateCampaigns([...selected])}
-          >
-            Duplicate
-          </button>
-          <button type="button" className={styles.bulkbtn} onClick={() => bulk('Archived')}>
-            Archive
-          </button>
-          <button
-            type="button"
-            className={`${styles.bulkbtn} ${styles.bulkbtnDanger}`}
-            onClick={() => setConfirmDelete(true)}
-          >
-            Delete
-          </button>
-          <button type="button" className={styles.bulkclear} onClick={() => setSelected(new Set())}>
-            Clear
-          </button>
-        </div>
-      )}
+        {/* bulk bar */}
+        {selected.size > 0 && (
+          <div className={styles.bulk} style={{ animation: 'fade .18s ease' }}>
+            <span className={styles.bulkcount}>{selected.size} selected</span>
+            <span className={styles.bulkdiv} />
+            <button
+              type="button"
+              className={styles.bulkbtn}
+              onClick={() => void duplicateCampaigns([...selected])}
+            >
+              Duplicate
+            </button>
+            <button type="button" className={styles.bulkbtn} onClick={() => bulk('Archived')}>
+              Archive
+            </button>
+            <button
+              type="button"
+              className={`${styles.bulkbtn} ${styles.bulkbtnDanger}`}
+              onClick={() => setConfirmDelete(true)}
+            >
+              Delete
+            </button>
+            <button
+              type="button"
+              className={styles.bulkclear}
+              onClick={() => setSelected(new Set())}
+            >
+              Clear
+            </button>
+          </div>
+        )}
 
-      {/* table */}
-      <div className="atable cb__table">
+        {/* table head */}
         <div className={`athead ${styles.grid}`}>
           <div className={styles.check}>
             <button
@@ -514,13 +531,12 @@ export default function CampaignsBoard({
               Updated <span className="tnum">{sortArrow('updatedAt')}</span>
             </button>
           </div>
-          <div />
         </div>
 
         {rows.length === 0 ? (
           <div className="atable__empty">No campaigns match your filters.</div>
         ) : (
-          rows.map((c) => (
+          pageRows.map((c) => (
             <div
               key={c.id}
               className={`atrow ${styles.grid}${selected.has(c.id) ? ' is-selected' : ''}`}
@@ -564,10 +580,55 @@ export default function CampaignsBoard({
           ))
         )}
 
-        <div className="atable__foot">
+        {/* footer / pagination */}
+        <div className={`atable__foot ${styles.foot}`}>
           <span className="tnum">
-            {rows.length} of {campaigns.length} campaigns
+            {rows.length === 0
+              ? 'No campaigns match your filters'
+              : `${startIdx}–${endIdx} of ${rows.length} campaign${rows.length === 1 ? '' : 's'}`}
           </span>
+          {pageCount > 1 && (
+            <div className={styles.pager}>
+              <button
+                type="button"
+                className={styles.pg}
+                disabled={safePage === 1}
+                onClick={() => {
+                  setPage((p) => Math.max(1, p - 1));
+                  setSelected(new Set());
+                }}
+                aria-label="Previous page"
+              >
+                <Icon name="chevron-right" size={15} className={styles.pgflip} />
+              </button>
+              {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`${styles.pgn} tnum${n === safePage ? ' is-on' : ''}`}
+                  aria-current={n === safePage ? 'page' : undefined}
+                  onClick={() => {
+                    setPage(n);
+                    setSelected(new Set());
+                  }}
+                >
+                  {n}
+                </button>
+              ))}
+              <button
+                type="button"
+                className={styles.pg}
+                disabled={safePage === pageCount}
+                onClick={() => {
+                  setPage((p) => Math.min(pageCount, p + 1));
+                  setSelected(new Set());
+                }}
+                aria-label="Next page"
+              >
+                <Icon name="chevron-right" size={15} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

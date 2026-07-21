@@ -17,6 +17,9 @@ export const TABS: (CampaignStatus | 'all')[] = [
   'paused',
 ];
 
+/** Rows shown per page in the campaigns table. */
+export const PAGE_SIZE = 10;
+
 export function pct(v: number | null): string {
   return v == null ? '—' : `${(v * 100).toFixed(1)}%`;
 }
