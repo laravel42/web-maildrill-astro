@@ -505,7 +505,7 @@ export default function CampaignsBoard({
               aria-label="Select all"
               aria-pressed={allChecked}
             >
-              {allChecked && <Icon name="check" size={11} stroke={3} />}
+              {allChecked && <Icon name="check" size={15} stroke={3.5} />}
             </button>
           </div>
           <div>
@@ -560,7 +560,7 @@ export default function CampaignsBoard({
                   aria-label={`Select ${c.name}`}
                   aria-pressed={selected.has(c.id)}
                 >
-                  {selected.has(c.id) && <Icon name="check" size={11} stroke={3} />}
+                  {selected.has(c.id) && <Icon name="check" size={15} stroke={3.5} />}
                 </button>
               </div>
               <div className={styles.name}>{c.name}</div>

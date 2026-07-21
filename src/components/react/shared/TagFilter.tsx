@@ -63,7 +63,7 @@ export default function TagFilter({
                   onClick={() => onToggle(t)}
                 >
                   <span className={`${styles.box}${on ? ` ${styles.boxOn}` : ''}`}>
-                    {on && <Icon name="check" size={10} stroke={3} />}
+                    {on && <Icon name="check" size={15} stroke={3.5} />}
                   </span>
                   <span className={styles.dot} style={{ background: s.color }} />
                   <span className={styles.name}>{t}</span>

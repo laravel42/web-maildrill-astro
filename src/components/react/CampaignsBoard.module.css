@@ -198,6 +198,7 @@
 .box:global(.is-on) {
   background: var(--accent);
   border-color: var(--accent);
+  color: #fff;
 }
 .name {
   font-weight: 500;

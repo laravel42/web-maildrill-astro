@@ -26,7 +26,7 @@ import styles from './AppMedia.module.css';
 function Box({ on, size = 17 }: { on: boolean; size?: number }) {
   return (
     <span className={`${styles.box}${on ? ' is-on' : ''}`} style={{ width: size, height: size }}>
-      {on && <Icon name="check" size={Math.round(size * 0.62)} stroke={3} />}
+      {on && <Icon name="check" size={Math.round(size * 0.88)} stroke={3.5} />}
     </span>
   );
 }
@@ -513,7 +513,7 @@ export default function AppMedia({
                     aria-label={`Remove ${c.label}`}
                     onClick={c.remove}
                   >
-                    <Icon name="x" size={11} stroke={2.6} />
+                    <Icon name="x" size={14} stroke={3} />
                   </button>
                 </span>
               ))}
@@ -1042,7 +1042,7 @@ function MediaDrawer({
                     title="Remove tag"
                     onClick={() => removeTag(tag)}
                   >
-                    <Icon name="x" size={10} stroke={2.6} />
+                    <Icon name="x" size={14} stroke={3} />
                   </button>
                 </span>
               );

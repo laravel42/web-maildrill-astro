@@ -570,7 +570,7 @@ function ListDrawer({
                     aria-label={`Remove ${t}`}
                     onClick={() => removeTag(t)}
                   >
-                    <Icon name="x" size={10} stroke={2.6} />
+                    <Icon name="x" size={14} stroke={3} />
                   </button>
                 </span>
               ))}

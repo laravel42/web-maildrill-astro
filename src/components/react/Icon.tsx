@@ -19,7 +19,16 @@ export default function Icon({ name, size = 20, stroke = 2, className, title }: 
     role: title ? ('img' as const) : undefined,
     'aria-hidden': title ? undefined : true,
     'aria-label': title,
-    style: { display: 'inline-block', flexShrink: 0, verticalAlign: 'middle' } as const,
+    // Explicit width/height + max-width:none so the global `svg { max-width:100% }`
+    // reset can't collapse the icon inside small flex containers (e.g. checkboxes).
+    style: {
+      display: 'inline-block',
+      width: size,
+      height: size,
+      maxWidth: 'none',
+      flexShrink: 0,
+      verticalAlign: 'middle',
+    } as const,
   };
   return isFilled ? (
     <svg {...shared} fill="currentColor" dangerouslySetInnerHTML={{ __html: iconPaths[name] }} />
