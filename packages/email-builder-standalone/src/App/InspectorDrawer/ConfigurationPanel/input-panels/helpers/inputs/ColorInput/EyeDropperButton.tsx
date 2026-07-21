@@ -44,6 +44,11 @@ export default function EyeDropperButton({ onColorPicked }: Props) {
             width: 24,
             height: 24,
             minWidth: 24,
+            // Same fix as Picker.tsx's reset button: MuiButton's default
+            // 6px/8px padding leaves almost no room for the icon in a
+            // fixed 24px box. 1-2px keeps it visible without crowding
+            // the border.
+            padding: '2px',
             margin: '0!important',
             borderColor: theme.palette.divider,
             display: 'inline-flex',

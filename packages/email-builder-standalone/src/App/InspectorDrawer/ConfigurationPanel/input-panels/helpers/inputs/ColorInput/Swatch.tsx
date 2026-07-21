@@ -65,6 +65,10 @@ export default function Swatch({ paletteColors, isLocked, onToggleLock, onChange
               border: '1px solid',
               ...TILE_BUTTON,
               minWidth: 24,
+              // Same fix as the Picker's reset/eyedropper buttons: MuiButton's
+              // default 6px/8px padding barely leaves room for the icon in a
+              // fixed 24px box.
+              padding: '2px',
               margin: '0!important',
               borderColor: isLocked ? theme.palette.error.main : theme.palette.divider,
               display: 'inline-flex',
