@@ -1,19 +1,15 @@
 import React from 'react';
 
 import {
-  ArticleOutlined,
   Crop32Outlined,
-  Groups2,
   HorizontalRuleOutlined,
   ImageOutlined,
   LibraryAddOutlined,
-  SmartButtonOutlined,
   ViewColumnOutlined,
 } from '@mui/icons-material';
 
 import { TEditorBlock } from '../../documents/editor/core';
 import { DEFAULT_IMAGE_PLACEHOLDER, getImagePlaceholder } from '../../documents/editor/EditorContext';
-import { generateUUID } from '../TemplatePanel/helper/extraFunctions';
 
 export type TButtonProps = {
   label: string;
@@ -51,66 +47,6 @@ export type TButtonProps = {
  * sneaks back in.
  */
 export const BUTTONS: TButtonProps[] = [
-  {
-    label: 'Text',
-    labelKey: 'theme.blocks.notionText.title',
-    icon: <ArticleOutlined />,
-    block: () => ({
-      type: 'NotionText',
-      data: {
-        // Empty html so freshly added text blocks land on a blank
-        // canvas instead of the schema's placeholder ("Double click to
-        // edit..."). This is content, not styling, so it correctly
-        // lives in the seed.
-        props: { html: '' },
-      },
-    }),
-  },
-  {
-    label: 'Social',
-    labelKey: 'theme.blocks.socialMedia.title',
-    icon: <Groups2 />,
-    block: () => ({
-      type: 'SocialMedia',
-      data: {
-        items: [
-          {
-            id: generateUUID(),
-            key: 'facebook',
-            label: 'Facebook',
-            iconName: 'Facebook',
-            theme: 'positive',
-            size: 'small',
-            sizePx: '24px',
-            url: 'https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Facebook_Positive_24px.png',
-            href: '',
-          },
-        ],
-        gap: 1,
-      },
-    }),
-  },
-  {
-    label: 'Button',
-    labelKey: 'theme.blocks.button.title',
-    icon: <SmartButtonOutlined />,
-    block: () => ({
-      type: 'Button',
-      data: {
-        // `size` and `shape` have no schema `.default(...)` yet, so
-        // seeding them here is the only way to give fresh buttons a
-        // sensible starting layout. If/when those move to the schema,
-        // delete them from this seed too.
-        props: {
-          text: 'Button',
-          size: 'medium',
-        },
-        style: {
-          shape: 'rectangle',
-        },
-      },
-    }),
-  },
   {
     label: 'Image',
     labelKey: 'theme.blocks.image.title',
