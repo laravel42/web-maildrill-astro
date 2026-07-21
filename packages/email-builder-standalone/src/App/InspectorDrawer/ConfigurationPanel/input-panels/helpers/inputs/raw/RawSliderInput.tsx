@@ -49,10 +49,9 @@ export default function RawSliderInput({
   return (
     <FieldContainer>
       <LabelProperty label={label} />
-      {/* spacing 1.5: enough gap between icon, slider and value so they
-          don't feel cramped, while the slider keeps flex:1 to absorb the
-          panel's width squeeze. */}
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', width: '100%', minWidth: 0 }}>
+      {/* gap: 1.5 on the row (not the Stack `spacing` prop) — keeps icon,
+          slider and value from feeling cramped together. */}
+      <Stack direction="row" sx={{ alignItems: 'center', width: '100%', minWidth: 0, gap: 1.5 }}>
         <Box sx={{ minWidth: 24, lineHeight: 1, flexShrink: 0 }}>{iconLabel}</Box>
 
         <Slider
@@ -68,9 +67,8 @@ export default function RawSliderInput({
         />
 
         {/* Read-only value display — editing happens only via the slider now. */}
-        <NumberDisplay>{safeValue}</NumberDisplay>
-
         <Typography variant="caption" color="text.secondary" sx={{ fontSize: '12px', flexShrink: 0 }}>
+          <NumberDisplay>{safeValue}</NumberDisplay>
           {units}
         </Typography>
       </Stack>
