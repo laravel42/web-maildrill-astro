@@ -97,6 +97,29 @@ export default function VisualEmailBuilder({
     };
   }, []);
 
+  // The editor is a large bundle (MUI, tiptap, drag-and-drop, image tools…).
+  // In dev, the very first load after a cache clear can take a couple of
+  // minutes while Vite transforms it all; without feedback that reads as a
+  // hang rather than a one-time cold start. Step through reassuring copy
+  // the longer it takes instead of a static "Loading editor…". None of this
+  // matters in production, where the bundle is pre-built and loads quickly.
+  const LOADING_STEPS = [
+    'Loading editor…',
+    'Preparing the editor — loading templates and sections…',
+    'Still working on it — first load can take a minute…',
+    'Almost there — setting up the canvas…',
+  ];
+  const [loadingStep, setLoadingStep] = useState(0);
+  useEffect(() => {
+    if (Builder || loadError) return;
+    const timers = [
+      setTimeout(() => setLoadingStep(1), 4_000),
+      setTimeout(() => setLoadingStep(2), 20_000),
+      setTimeout(() => setLoadingStep(3), 60_000),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [Builder, loadError]);
+
   // Esc closes the editor.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -190,7 +213,7 @@ export default function VisualEmailBuilder({
         ) : (
           <div className="veb__state">
             <span className="veb__spinner" aria-hidden="true" />
-            <p className="veb__muted">Loading editor…</p>
+            <p className="veb__muted">{LOADING_STEPS[loadingStep]}</p>
           </div>
         )}
       </div>
