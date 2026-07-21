@@ -37,12 +37,11 @@ export default function BaseSidebarPanel({ title, children }: SidebarPanelProps)
           </Box>
         </Tooltip>
       )}
-      {/* 1rem between properties in full mode — anything smaller reads as
-          cramped once each row also has its own label. Compact keeps its
-          tighter rhythm since it's icon-only rows. */}
-      <Stack spacing={compact ? 0.5 : 2} sx={{ mb: 3, pt: compact ? 0 : 1 }}>
-        {children}
-      </Stack>
+      {/* gap (not the Stack `spacing` prop) — spacing wasn't rendering
+          reliably here, same issue fixed the same way in RawSliderInput.
+          1rem between properties in full mode; compact keeps its tighter
+          rhythm since it's icon-only rows. */}
+      <Stack sx={{ mb: 3, pt: compact ? 0 : 1, gap: compact ? 0.5 : 2 }}>{children}</Stack>
     </Container>
   );
 }
