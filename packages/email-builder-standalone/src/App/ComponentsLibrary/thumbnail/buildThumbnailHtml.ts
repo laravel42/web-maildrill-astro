@@ -54,7 +54,14 @@ const FALLBACK_CANVAS = '#ffffff';
 const PLACEHOLDER_IMAGE_DATA_URI =
   'data:image/svg+xml,' +
   encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="120"><rect width="600" height="120" fill="%23F0F0F0"/></svg>'
+    // NOTE: use a LITERAL `#` here. `encodeURIComponent` escapes it to
+    // `%23` exactly once, which the browser decodes back to `#` when it
+    // parses the data URI. Pre-escaping to `%23` in the source would be
+    // double-encoded (`%2523`) → the SVG parser then receives the
+    // literal string `%23F0F0F0`, an invalid colour that falls back to
+    // solid black — so every empty-container placeholder rendered black
+    // instead of the intended light grey.
+    '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="120"><rect width="600" height="120" fill="#F0F0F0"/></svg>'
   );
 
 /**
