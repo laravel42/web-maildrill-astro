@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import AiSparkleIcon from '../AiSparkleIcon';
+import { AutoAwesome as AIIcon } from '@mui/icons-material';
 import {
   Box,
   CircularProgress,
@@ -104,7 +104,7 @@ export default function AiFeaturesDropdown({ editor }: Props) {
   return (
     <>
       <ToolbarIconButton tooltip={t('bubbleMenu.aiFeatures')} onClick={handleClick}>
-        <AiSparkleIcon fontSize="small" />
+        <AIIcon fontSize="small" />
       </ToolbarIconButton>
 
       <Divider orientation="vertical" flexItem sx={{ backgroundColor: theme.palette.divider, mx: 0.5 }} />
