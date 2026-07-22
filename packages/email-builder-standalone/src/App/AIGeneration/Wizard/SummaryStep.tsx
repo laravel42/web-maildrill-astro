@@ -16,6 +16,32 @@ interface Props {
   generating: boolean;
 }
 
+/** Strip wrapping quotes some backends/LLMs add around values. */
+function stripQuotes(value: string): string {
+  return value.replace(/^["'\s]+|["'\s]+$/g, '');
+}
+
+/**
+ * Normalise the compiled prompt. Some responses arrive JSON-encoded (the whole
+ * payload wrapped in quotes with escaped newlines); decode that so lines split
+ * correctly and no stray quotes show in the review.
+ */
+function normalizePrompt(raw: string): string {
+  let s = raw;
+  if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) {
+    try {
+      const decoded = JSON.parse(s);
+      if (typeof decoded === 'string') s = decoded;
+    } catch {
+      /* not JSON — leave as-is */
+    }
+  }
+  return s;
+}
+
+/** Tags derived by the model — hidden from the review (they still go in the prompt). */
+const HIDDEN_REVIEW_TAGS = new Set(['LAYOUT', 'IMAGERY', 'TONE']);
+
 /** Parse structured prompt lines into labeled sections for display. */
 function parsePromptSections(prompt: string): Array<{ tag: string; content: string }> {
   const lines = prompt.split('\n');
@@ -23,9 +49,9 @@ function parsePromptSections(prompt: string): Array<{ tag: string; content: stri
   for (const line of lines) {
     const match = line.match(/^\[([A-Z]+)]\s*(.+)$/);
     if (match) {
-      sections.push({ tag: match[1], content: match[2] });
+      sections.push({ tag: match[1], content: stripQuotes(match[2]) });
     } else if (line.trim()) {
-      sections.push({ tag: '', content: line.trim() });
+      sections.push({ tag: '', content: stripQuotes(line.trim()) });
     }
   }
   return sections;
@@ -53,7 +79,7 @@ export default function SummaryStep({ brief, backendUrl, onGenerate, onBack, gen
     setError(null);
     try {
       const result = await compileBriefClient(brief, backendUrl);
-      setPrompt(result.prompt);
+      setPrompt(normalizePrompt(result.prompt));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -69,7 +95,9 @@ export default function SummaryStep({ brief, backendUrl, onGenerate, onBack, gen
     if (prompt.trim()) onGenerate(prompt.trim(), brief);
   }, [prompt, brief, onGenerate]);
 
-  const sections = parsePromptSections(prompt);
+  // Full prompt (with LAYOUT/IMAGERY/TONE) is still what we send to generate;
+  // the review only shows the high-signal sections the user actually chose.
+  const sections = parsePromptSections(prompt).filter((s) => !HIDDEN_REVIEW_TAGS.has(s.tag));
 
   return (
     <Stack spacing={2}>

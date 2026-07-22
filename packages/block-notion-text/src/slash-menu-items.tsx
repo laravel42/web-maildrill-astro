@@ -1,5 +1,4 @@
 import {
-  AutoAwesome,
   EmojiEmotions,
   FormatListBulleted,
   FormatListNumbered,
@@ -9,6 +8,7 @@ import {
 import type { Editor, Range } from '@tiptap/core';
 
 import { aiFeatures } from './ai-features-config';
+import AiSparkleIcon from './AiSparkleIcon';
 import { getMergeTags, type MergeTag } from './merge-tags-config';
 
 export interface SlashMenuItem {
@@ -109,7 +109,7 @@ export const slashMenuItems: SlashMenuItem[] = [
   {
     title: 'AI Features',
     description: 'Use AI to improve your text',
-    icon: <AutoAwesome fontSize="small" />,
+    icon: <AiSparkleIcon fontSize="small" />,
     keywords: ['ai', 'artificial', 'intelligence', 'improve', 'rewrite', 'grammar'],
     requiresAI: true, // Solo visible si enableAI está activo
     submenu: (() => {

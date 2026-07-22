@@ -36,7 +36,14 @@
       "back": "Atrás",
       "skip": "Omitir",
       "review": "Revisar",
+      "stepOf": "Paso {{current}} de {{total}}",
       "onlyAnswerThisPoint": "Respondé solo este punto — breve."
+    },
+    "stepBrand": {
+      "title": "Tu marca"
+    },
+    "stepAudience": {
+      "title": "Audiencia y colores"
     },
     "step01": {
       "title": "Sobre el correo",
@@ -110,7 +117,8 @@
       "brandColorsHint": "Ingresá los hex de tu marca o usá el selector. Dejá vacío para que la IA decida.",
       "colorPrimary": "Primario",
       "colorSecondary": "Secundario",
-      "colorAccent": "Acento"
+      "colorAccent": "Acento",
+      "sceneLabel": "Escena específica (opcional)"
     },
     "step04": {
       "title": "Imágenes",

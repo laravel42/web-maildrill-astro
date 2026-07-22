@@ -1,6 +1,8 @@
 import React from 'react';
 
-import { AutoAwesome, CheckCircle, Description, Edit, Refresh, ShortText, Subject } from '@mui/icons-material';
+import { CheckCircle, Description, Edit, Refresh, ShortText, Subject } from '@mui/icons-material';
+
+import AiSparkleIcon from './AiSparkleIcon';
 
 export type AIAction =
   | 'rewrite'
@@ -42,7 +44,7 @@ export interface AIFeatureRequest {
  */
 export const aiFeatures: AIFeatureGroup = {
   label: 'AI Features',
-  icon: <AutoAwesome fontSize="small" />,
+  icon: <AiSparkleIcon fontSize="small" />,
   children: [
     // Opciones principales (sin categoría)
     {

@@ -36,7 +36,14 @@
       "back": "Back",
       "skip": "Skip",
       "review": "Review",
+      "stepOf": "Step {{current}} of {{total}}",
       "onlyAnswerThisPoint": "Answer just this point — keep it short."
+    },
+    "stepBrand": {
+      "title": "Your brand"
+    },
+    "stepAudience": {
+      "title": "Audience & colours"
     },
     "step01": {
       "title": "About the email",
@@ -110,7 +117,8 @@
       "brandColorsHint": "Enter your brand hex codes or use the picker. Leave blank to let AI decide.",
       "colorPrimary": "Primary",
       "colorSecondary": "Secondary",
-      "colorAccent": "Accent"
+      "colorAccent": "Accent",
+      "sceneLabel": "Specific scene (optional)"
     },
     "step04": {
       "title": "Imagery",

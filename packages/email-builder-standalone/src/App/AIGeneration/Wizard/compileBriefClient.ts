@@ -11,8 +11,9 @@ export interface CompileBriefResult {
 }
 
 /**
- * Build a minimal valid VisualBrief from the DraftBrief, filling required
- * fields with defaults so the backend schema always passes.
+ * Build a VisualBrief from the DraftBrief. Only high-signal fields the wizard
+ * collects are sent; tone, vertical, palette, photo style and sections are left
+ * empty/omitted so the backend lets the model decide them.
  */
 function toWireBrief(draft: DraftBrief): object {
   return {
@@ -24,19 +25,28 @@ function toWireBrief(draft: DraftBrief): object {
       rawIntent: draft.email_strategy.rawIntent,
     },
     tone_strategy: {
-      moods: draft.tone_strategy.moods.length > 0 ? draft.tone_strategy.moods : ['friendly'],
-      vertical: draft.tone_strategy.vertical ?? 'other',
+      // Not asked anymore — the model infers tone/vertical from purpose + brand.
+      moods: draft.tone_strategy.moods,
+      vertical: draft.tone_strategy.vertical,
     },
     visual_strategy: {
-      palette: draft.visual_strategy.palette ?? 'neutral',
-      photoStyle: draft.visual_strategy.photoStyle ?? 'photographic',
+      // Palette / photo style are derived by the model; only brand colours are
+      // collected (they steer the palette when present).
+      palette: draft.visual_strategy.palette,
+      photoStyle: draft.visual_strategy.photoStyle,
       brandColors: draft.visual_strategy.brandColors,
     },
     layout_strategy: {
-      sections: draft.layout_strategy.sections.length > 0 ? draft.layout_strategy.sections : ['hero', 'cta'],
+      // Empty ⇒ the backend instructs the model to choose the most effective
+      // section structure. The wizard no longer asks the user for sections.
+      sections: draft.layout_strategy.sections,
     },
     image_queries: {
-      subjects: draft.image_queries.subjects,
+      // Subjects are no longer a wizard question; when the user typed a specific
+      // scene, forward it as the single subject so it steers the image queries.
+      subjects: draft.image_queries.specificScene.trim()
+        ? [draft.image_queries.specificScene.trim()]
+        : draft.image_queries.subjects,
     },
   };
 }

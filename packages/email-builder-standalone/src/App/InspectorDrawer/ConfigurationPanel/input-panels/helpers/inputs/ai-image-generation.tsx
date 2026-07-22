@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Attachment, AutoAwesome, Refresh } from '@mui/icons-material';
+import { Attachment, Refresh } from '@mui/icons-material';
 import {
   Alert,
   Button,
@@ -15,6 +15,8 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+
+import AiSparkleIcon from '../../../../../AIGeneration/AiSparkleIcon';
 
 import { CloseButton } from './components/CloseButton';
 import { ImagePreview } from './components/ImagePreview';
@@ -168,7 +170,7 @@ export default function AiImageGeneration({ src, style }: AiImageGenerationProps
     <>
       <Button
         style={style}
-        startIcon={<AutoAwesome className="w-4 h-4" />}
+        startIcon={<AiSparkleIcon className="w-4 h-4" />}
         variant="contained"
         onClick={handleClickOpen}
       >
@@ -229,7 +231,7 @@ export default function AiImageGeneration({ src, style }: AiImageGenerationProps
                   borderRadius: '8px',
                 }}
               >
-                <AutoAwesome
+                <AiSparkleIcon
                   sx={{
                     fontSize: 48,
                     color: 'primary.main',
@@ -280,7 +282,7 @@ export default function AiImageGeneration({ src, style }: AiImageGenerationProps
                   imagePreview && !isRegenerating ? (
                     <Attachment className="w-4 h-4" />
                   ) : (
-                    <AutoAwesome className="w-4 h-4" />
+                    <AiSparkleIcon className="w-4 h-4" />
                   )
                 }
                 onClick={handleGenerateImage}
