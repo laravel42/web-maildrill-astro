@@ -1,12 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { AutoAwesome } from '@mui/icons-material';
 import { Button, Tooltip } from '@mui/material';
 
+import {
+  useComponentsLibraryDrawerOpen,
+  useInspectorDrawerMode,
+  useInspectorDrawerOpen,
+} from '../../documents/editor/EditorContext';
 import type { AIGenerateTemplateRequest, AIGenerateTemplateResponse } from '../..';
 
 import AIGenerationDialog from './AIGenerationDialog';
+import AiSparkleIcon from './AiSparkleIcon';
 
 type OnAIGenerateTemplate = (
   request: AIGenerateTemplateRequest,
@@ -37,6 +42,15 @@ function readCallbackFromWindow(): OnAIGenerateTemplate | undefined {
 export default function AIGeneration() {
   const { t } = useTranslation('inspector');
 
+  // When BOTH side panels are in their expanded state the header is
+  // cramped, so collapse this action to an icon-only button (tooltip keeps
+  // the label discoverable). Left panel = Components Library drawer open;
+  // right panel = inspector open in its full (non-compact) mode.
+  const libraryOpen = useComponentsLibraryDrawerOpen();
+  const inspectorOpen = useInspectorDrawerOpen();
+  const inspectorMode = useInspectorDrawerMode();
+  const bothPanelsOpen = libraryOpen && inspectorOpen && inspectorMode === 'full';
+
   const [onAIGenerateTemplate, setOnAIGenerateTemplate] = useState<OnAIGenerateTemplate | undefined>(
     readCallbackFromWindow
   );
@@ -66,9 +80,26 @@ export default function AIGeneration() {
   return (
     <>
       <Tooltip title={t('aiGeneration.tooltip')}>
-        <Button variant="outlined" size="small" startIcon={<AutoAwesome fontSize="small" />} onClick={handleOpen}>
-          {t('aiGeneration.button')}
-        </Button>
+        {bothPanelsOpen ? (
+          <Button
+            variant="outlined"
+            size="small"
+            aria-label={t('aiGeneration.button')}
+            onClick={handleOpen}
+            sx={{ minWidth: 0, px: 1 }}
+          >
+            <AiSparkleIcon fontSize="small" />
+          </Button>
+        ) : (
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<AiSparkleIcon fontSize="small" />}
+            onClick={handleOpen}
+          >
+            {t('aiGeneration.button')}
+          </Button>
+        )}
       </Tooltip>
       <AIGenerationDialog open={dialogOpen} onClose={handleClose} onAIGenerateTemplate={onAIGenerateTemplate} />
     </>
