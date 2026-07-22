@@ -87,19 +87,22 @@ const IFRAME_HEIGHT = 1200;
  *   - Width 600 px: the canvas table's natural width
  *     (`max-width: 600px` + `width: 100%` inside a 641 px container).
  *
- *   - Height 300 px: crops the captured email to a 2:1 strip showing
+ *   - Height 450 px: crops the captured email to a 4:3 strip showing
  *     the TOP of the content. The thumbnail is just a teaser — full
  *     fidelity preview happens on hover (Task 11) via a live iframe
- *     that mounts the complete component / template. Capturing more
- *     than the top 300 px is wasted bandwidth because users only see
- *     the first 120 px (50%) in the LibraryCard anyway, and the rest
- *     would still need cropping at display time. Combined with
- *     `overflow: hidden` in the style option, this guarantees the
+ *     that mounts the complete component / template. Raised from the
+ *     original 300 px because Templates previews were cropping too
+ *     aggressively (EMAIL_BUILDER_TASKS.md, thumbnail follow-up) —
+ *     450 px shows noticeably more of the template's real content
+ *     while staying well short of a full multi-section email. Combined
+ *     with `overflow: hidden` in the style option, this guarantees the
  *     captured area is exactly `width × height` regardless of how
- *     tall the underlying email is.
+ *     tall the underlying email is. Sections/Layouts don't use this
+ *     default at all — they pass `fitHeight: true` instead (see below)
+ *     because they're short enough that a crop loses the whole element.
  */
 const DEFAULT_RENDER_WIDTH = 600;
-const DEFAULT_RENDER_HEIGHT = 300;
+const DEFAULT_RENDER_HEIGHT = 450;
 
 /**
  * OUTPUT canvas dimensions — what html-to-image rasterises into.
@@ -121,6 +124,15 @@ const DEFAULT_RENDER_HEIGHT = 300;
  */
 const DEFAULT_CANVAS_WIDTH = 240;
 const DEFAULT_CANVAS_HEIGHT = 120;
+
+/**
+ * Upper bound on the OUTPUT canvas height when `fitHeight` is set
+ * (Sections/Layouts capture their full natural height instead of a
+ * fixed teaser crop). Prevents an unusually tall stored subtree from
+ * producing an oversized WebP that blows past the backend's storage
+ * cap — beyond this the capture is simply cropped at the bottom.
+ */
+const DEFAULT_MAX_CANVAS_HEIGHT = 2000;
 
 /*
  * --- Mobile capture preset (commented out for a future toggle) ----
@@ -159,7 +171,7 @@ const DEFAULT_PIXEL_RATIO = 1.0;
 export type CaptureOptions = {
   /** Capture target width — the canvas table is 600 px naturally. @default 600 */
   renderWidth?: number;
-  /** Capture target height — content beyond is cropped via overflow:hidden. @default 300 */
+  /** Capture target height — content beyond is cropped via overflow:hidden. @default 450 */
   renderHeight?: number;
   /** Output canvas width (downscale target). @default 240 */
   canvasWidth?: number;
@@ -171,6 +183,20 @@ export type CaptureOptions = {
   backgroundColor?: string;
   /** Wall-clock timeout. After this, the capture is abandoned and resolves to null. @default 8000 */
   timeoutMs?: number;
+  /**
+   * When true, capture the FULL natural height of the rendered content
+   * instead of cropping to `renderHeight` — used for Sections/Layouts,
+   * which are short enough that cropping loses the whole element rather
+   * than just trimming a teaser. `renderHeight`/`canvasHeight` are
+   * ignored when this is set; the output canvas height is derived from
+   * the measured content height, scaled by the same width ratio as
+   * `canvasWidth / renderWidth` (capped by `maxCanvasHeight` so a very
+   * tall section doesn't produce an oversized file).
+   * @default false
+   */
+  fitHeight?: boolean;
+  /** Upper bound on the derived output height when `fitHeight` is set. @default 2000 */
+  maxCanvasHeight?: number;
 };
 
 /**
@@ -193,6 +219,8 @@ export async function captureSubtreeThumbnail(html: string, options: CaptureOpti
   const pixelRatio = options.pixelRatio ?? DEFAULT_PIXEL_RATIO;
   const backgroundColor = options.backgroundColor ?? '#ffffff';
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const fitHeight = options.fitHeight ?? false;
+  const maxCanvasHeight = options.maxCanvasHeight ?? DEFAULT_MAX_CANVAS_HEIGHT;
 
   let iframe: HTMLIFrameElement | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -283,6 +311,30 @@ export async function captureSubtreeThumbnail(html: string, options: CaptureOpti
           const canvasEl =
             (doc.querySelector('body > table > tbody > tr > td > table') as HTMLElement | null) ?? doc.body;
 
+          // fitHeight (Sections/Layouts): instead of cropping to the fixed
+          // teaser `renderHeight`, capture the element's FULL natural height
+          // so short subtrees aren't sliced off. We measure the rendered
+          // canvas after fonts/images have settled (above), then derive the
+          // OUTPUT canvas height from that measurement, preserving the same
+          // width→canvas downscale ratio (`canvasWidth / renderWidth`) so the
+          // thumbnail keeps the content's real aspect. `maxCanvasHeight` caps
+          // the result so a very tall stored subtree can't produce an
+          // oversized file (the excess is cropped at the bottom instead).
+          let effectiveRenderHeight = renderHeight;
+          let effectiveCanvasHeight = canvasHeight;
+          if (fitHeight) {
+            const measured = Math.ceil(
+              Math.max(canvasEl.scrollHeight, canvasEl.getBoundingClientRect().height)
+            );
+            if (measured > 0) {
+              const scale = canvasWidth / renderWidth;
+              effectiveCanvasHeight = Math.min(maxCanvasHeight, Math.round(measured * scale));
+              // If the cap kicked in, crop the source height to match so the
+              // output isn't vertically squashed (keep the top of the content).
+              effectiveRenderHeight = Math.round(effectiveCanvasHeight / scale);
+            }
+          }
+
           // Capture the iframe body. We pass our pixelRatio so the
           // resulting image is sharp on retina displays.
           //
@@ -317,13 +369,13 @@ export async function captureSubtreeThumbnail(html: string, options: CaptureOpti
             // td). We cap height so very tall emails don't capture
             // huge SVGs we'd just downscale anyway.
             width: renderWidth,
-            height: renderHeight,
+            height: effectiveRenderHeight,
             // Output canvas dimensions (downscale during encode).
             // This is the key knob keeping byte counts low: we render
             // at 600×800 for layout fidelity, but only encode 360×480
             // worth of pixels.
             canvasWidth,
-            canvasHeight,
+            canvasHeight: effectiveCanvasHeight,
             cacheBust: true,
             type: 'image/webp',
             quality: 0.85,

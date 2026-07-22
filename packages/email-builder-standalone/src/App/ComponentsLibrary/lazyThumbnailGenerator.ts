@@ -89,7 +89,12 @@ export async function generateMissingThumbnails(): Promise<void> {
           for (const entry of item.blocks) docMap[entry.id] = entry.block;
           const anchor = isTemplate ? 'root' : item.blocks[0].id;
           const html = buildSubtreeHtml(docMap as TReaderDocument, anchor);
-          const blob = await captureSubtreeThumbnail(html, { timeoutMs: CAPTURE_TIMEOUT_MS });
+          const blob = await captureSubtreeThumbnail(html, {
+            timeoutMs: CAPTURE_TIMEOUT_MS,
+            // Sections/Layouts capture their full natural height; only
+            // Templates crop to the fixed teaser strip.
+            fitHeight: !isTemplate,
+          });
           if (blob) {
             const dataUrl = await blobToDataUrl(blob);
             setLocalThumbnail(item.id, dataUrl);

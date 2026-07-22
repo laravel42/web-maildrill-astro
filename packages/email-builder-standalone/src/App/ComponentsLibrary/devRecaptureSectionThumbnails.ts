@@ -61,7 +61,7 @@ export async function recaptureSectionThumbnails(
       const docMap: Record<string, unknown> = {};
       for (const e of blocks) docMap[e.id] = e.block;
       const html = buildSubtreeHtml(docMap as Parameters<typeof buildSubtreeHtml>[0], blocks[0].id);
-      const blob = await captureSubtreeThumbnail(html);
+      const blob = await captureSubtreeThumbnail(html, { fitHeight: true });
       if (!blob) {
         summary.skipped++;
         console.warn(`[recaptureSectionThumbnails] capture returned null for ${s.role}/${name}`);

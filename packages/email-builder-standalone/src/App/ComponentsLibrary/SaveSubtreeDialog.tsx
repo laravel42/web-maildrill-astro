@@ -252,7 +252,7 @@ export default function SaveSubtreeDialog({ open, rootBlockId, onClose }: SaveSu
               canvasColor: rootData.canvasColor,
             }
           );
-          thumbnailBlob = await captureSubtreeThumbnail(html);
+          thumbnailBlob = await captureSubtreeThumbnail(html, { fitHeight: true });
           if (thumbnailBlob) {
             console.info(
               '[SaveSubtreeDialog] captured thumbnail',
