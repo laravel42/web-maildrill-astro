@@ -643,8 +643,10 @@ function TemplatesCategoryContent({ refreshKey, search, sort, onRename, onChange
     setError(null);
     try {
       if (getComponentsStorageMode() === 'local') {
-        // Local templates have no usage axis → group them under "Other".
-        setItems(localListTemplates().map((tpl) => ({ ...tpl, axis: TEMPLATE_USAGE_OTHER })));
+        // Few local templates — render them as a single flat grid (empty
+        // axis makes the shared body treat the category as flat, no usage
+        // sub-accordion).
+        setItems(localListTemplates().map((tpl) => ({ ...tpl, axis: '' })));
         return;
       }
       const list = await fetchListing<{
