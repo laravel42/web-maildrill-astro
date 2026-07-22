@@ -25,13 +25,15 @@ import {
   setStickyHeader,
   setTemplateSaving,
   setThemeSaving,
+  useComponentsLibraryEnabled,
   useInspectorDrawerMode,
   useInspectorDrawerOpen,
+  useSelectedMainTab,
 } from '../documents/editor/EditorContext';
 import { EmailBuilderWindow } from '../global';
 
 import CommandPalette from './CommandPalette';
-import { ComponentsLibraryDrawer, ComponentsLibraryHandle } from './ComponentsLibrary';
+import { ComponentsLibraryDrawer, ComponentsLibraryHandle, COMPACT_LIBRARY_DRAWER_WIDTH } from './ComponentsLibrary';
 import InspectorDrawer from './InspectorDrawer';
 import StickyWrapper from './InspectorDrawer/ConfigurationPanel/input-panels/helpers/containers/StickyWrapper';
 import InspectorHandle from './InspectorDrawer/InspectorHandle';
@@ -83,12 +85,29 @@ export default function App({
 }: AppProps) {
   const inspectorDrawerOpen = useInspectorDrawerOpen();
   const inspectorDrawerMode = useInspectorDrawerMode();
+  const componentsLibraryEnabled = useComponentsLibraryEnabled();
+  const selectedMainTab = useSelectedMainTab();
   const theme = useTheme();
   const inspectorWidth = inspectorDrawerOpen
     ? inspectorDrawerMode === 'compact'
       ? COMPACT_PANEL_WIDTH
       : lateralPanel
     : 0;
+
+  // Space the floating side panels reserve in the canvas flow.
+  //
+  // Both side panels are `position: absolute` so the OPEN (expanded) state
+  // floats over the canvas without resizing it. But the COMPACT state must
+  // occupy real layout space so the canvas' own floating elements (centered
+  // preview, toolbars) never hide behind the rails. We reserve exactly the
+  // compact footprint here via flex spacers; the absolute panels overlay it
+  // 1:1 when compact and simply overflow it when expanded.
+  //
+  // Left rail exists only in the editor view (mirrors ComponentsLibraryDrawer/
+  // Handle visibility). Right rail is reserved only while the inspector is open.
+  const leftReservedWidth =
+    componentsLibraryEnabled && selectedMainTab === 'editor' ? COMPACT_LIBRARY_DRAWER_WIDTH : 0;
+  const rightReservedWidth = inspectorDrawerOpen ? COMPACT_PANEL_WIDTH : 0;
 
   // Efecto inicial para configuración de devMode (solo una vez)
   useEffect(() => {
@@ -284,7 +303,21 @@ export default function App({
       {/* Global command palette (Cmd/Ctrl+K) */}
       <CommandPalette />
 
-      {/* Canvas takes full width; panels float over it */}
+      {/* Left compact-rail spacer: reserves the collapsed left panel's
+          footprint in the flow so the canvas never sits behind the rail.
+          The absolute ComponentsLibraryDrawer overlays this exactly when
+          compact and overflows it (floats) when expanded. */}
+      <Box
+        aria-hidden
+        sx={{
+          flexShrink: 0,
+          width: `${leftReservedWidth}px`,
+          transition: 'width 220ms cubic-bezier(0.4, 0, 0.2, 1)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Canvas takes the remaining width; open panels float over it */}
       <Box
         sx={{
           flex: 1,
@@ -304,6 +337,20 @@ export default function App({
           enableComponentTree={componentTree}
         />
       </Box>
+
+      {/* Right compact-rail spacer: reserves the collapsed inspector's
+          footprint so the canvas accounts for it. The absolute inspector
+          panel overlays this when compact and floats over the canvas when
+          expanded. */}
+      <Box
+        aria-hidden
+        sx={{
+          flexShrink: 0,
+          width: `${rightReservedWidth}px`,
+          transition: 'width 220ms cubic-bezier(0.4, 0, 0.2, 1)',
+          pointerEvents: 'none',
+        }}
+      />
 
       {/* Right floating panel */}
       <Box
