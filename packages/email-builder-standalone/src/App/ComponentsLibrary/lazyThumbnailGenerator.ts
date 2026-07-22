@@ -64,7 +64,7 @@ function yieldToBrowser(): Promise<void> {
   });
 }
 
-type StoredItem = { id: string; blocks?: Array<{ id: string; block: unknown }> };
+type StoredItem = { id: string; updatedAt?: string; createdAt?: string; blocks?: Array<{ id: string; block: unknown }> };
 
 function readArray(key: string): StoredItem[] {
   try {
@@ -81,6 +81,8 @@ type CaptureJob = {
   anchor: string;
   docMap: Record<string, unknown>;
   variant: 'subtree' | 'template';
+  /** updatedAt (or createdAt) used to order the queue like the display. */
+  sortKey: string;
 };
 
 export async function generateMissingThumbnails(): Promise<void> {
@@ -103,10 +105,21 @@ export async function generateMissingThumbnails(): Promise<void> {
         if (hasLocalThumbnail(item.id) || !item.blocks?.length) continue;
         const docMap: Record<string, unknown> = {};
         for (const entry of item.blocks) docMap[entry.id] = entry.block;
-        jobs.push({ id: item.id, anchor: isTemplate ? 'root' : item.blocks[0].id, docMap, variant });
+        jobs.push({
+          id: item.id,
+          anchor: isTemplate ? 'root' : item.blocks[0].id,
+          docMap,
+          variant,
+          sortKey: item.updatedAt ?? item.createdAt ?? '',
+        });
       }
     }
     if (jobs.length === 0) return;
+
+    // Match the drawer's default `updatedDesc` sort so previews fill in the
+    // same order the cards are shown — newest (top) first, not bottom-up.
+    jobs.sort((a, b) => (a.sortKey < b.sortKey ? 1 : a.sortKey > b.sortKey ? -1 : 0));
+
     markThumbnailsPending(jobs.map((job) => job.id));
 
     // Phase 2 — capture one at a time. Yield before each capture so the
