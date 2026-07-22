@@ -231,16 +231,27 @@ export async function captureSubtreeThumbnail(html: string, options: CaptureOpti
 
       iframe = document.createElement('iframe');
       iframe.setAttribute('aria-hidden', 'true');
-      // allow-scripts: the srcdoc HTML here is always generated internally
-      // by renderEmailHtml/buildSubtreeHtml — the same document the user is
-      // already editing, never third-party or unsanitised input — so this
-      // isn't a new trust boundary. Without it, the browser blocks script
-      // execution inside the iframe (visible as "Blocked script execution
-      // in 'about:srcdoc'..." in the console) and web-font/image loading
-      // signals inside the frame don't settle the way `onload` + the
-      // fonts.ready/img.decode() waits below expect, so nearly every
-      // capture rode out the full 6s timeout instead of resolving quickly.
-      iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+      // Sandbox: `allow-same-origin` ONLY — deliberately WITHOUT
+      // `allow-scripts`. The two together are the dangerous combo: a
+      // same-origin frame that can also run scripts executes with the
+      // PARENT's origin, so any markup in `srcdoc` could read our
+      // `localStorage` (`eb:lib:*`, thumbnails), non-HttpOnly cookies,
+      // or even strip its own sandbox attribute. This matters because
+      // the same capture path also renders SAVED/SHARED templates
+      // (SaveTemplateDialog / SaveSubtreeDialog), and the Html /
+      // NotionText block emits its `props.html` unsanitised via
+      // `dangerouslySetInnerHTML` — a malicious template author could
+      // smuggle `<img src=x onerror=…>` and get stored XSS in another
+      // user's origin the moment their editor auto-generates the
+      // thumbnail. Dropping `allow-scripts` neutralises that: inert
+      // markup renders, but no script/`on*` handler ever runs.
+      //
+      // No perf cost: the frame is settled entirely from the PARENT in
+      // `onload` below (`doc.fonts.ready` + `img.decode()`), which needs
+      // `allow-same-origin` (kept) but never in-frame scripting. The
+      // original open-editor slowness was the ~100 `placehold.co`
+      // network requests (fixed in buildThumbnailHtml.ts), not scripts.
+      iframe.setAttribute('sandbox', 'allow-same-origin');
       iframe.style.position = 'fixed';
       iframe.style.left = '-99999px';
       iframe.style.top = '0';
