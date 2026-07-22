@@ -50,7 +50,7 @@ export async function generateThemeClient(
   locale?: string,
   signal?: AbortSignal
 ): Promise<GeneratedThemeResult> {
-  const res = await fetch(`${backendUrl}/api/generate-theme`, {
+  const res = await fetch(`${backendUrl}/generate-theme`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(toThemeRequest(draft, locale)),

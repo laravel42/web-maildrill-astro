@@ -148,7 +148,12 @@ export default function AIGenerationDialog({
   onClose,
   onAIGenerateTemplate,
   locale,
-  backendUrl = 'http://localhost:3100',
+  // Route AI-generation calls (improve-prompt, wizard compile/theme) through
+  // the host's same-origin BFF proxy — the SAME `/api/eb/*` path the template
+  // generation and inline text AI already use — instead of a direct
+  // cross-origin fetch to a raw backend (which failed with CORS / "Failed to
+  // fetch"). The proxy prepends `/api/`, so callers use `${backendUrl}/<name>`.
+  backendUrl = '/api/eb',
   primaryColor,
   secondaryColor,
 }: AIGenerationDialogProps) {
@@ -403,7 +408,7 @@ export default function AIGenerationDialog({
 
     setIsImprovingPrompt(true);
     try {
-      const response = await fetch(`${backendUrl}/api/improve-prompt`, {
+      const response = await fetch(`${backendUrl}/improve-prompt`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: prompt.trim() }),

@@ -46,7 +46,7 @@ export async function compileBriefClient(
   backendUrl: string,
   signal?: AbortSignal
 ): Promise<CompileBriefResult> {
-  const res = await fetch(`${backendUrl}/api/visual-brief/compile`, {
+  const res = await fetch(`${backendUrl}/visual-brief/compile`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ brief: toWireBrief(draft) }),
