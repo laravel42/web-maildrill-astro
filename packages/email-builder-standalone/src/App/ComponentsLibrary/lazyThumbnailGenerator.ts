@@ -2,19 +2,18 @@
  * lazyThumbnailGenerator — generates and persists preview thumbnails
  * for local Components Library items that don't have one yet.
  *
- * Reconstructed faithfully from the published `email-builder-online`
- * dist (`lazyThumbnailGenerator-*.js`):
  *   - Runs only in `componentsStorage='local'` mode, and only one pass
  *     at a time (`running` guard).
  *   - Processes Sections, Layouts and Templates (Primitives render
  *     inline, so they never need a static capture).
- *   - For each item missing a thumbnail, it rebuilds the reader doc
- *     map, anchors at `'root'` for templates or `blocks[0].id` for
- *     subtrees, renders via `buildSubtreeHtml`, captures with a 6 s
- *     timeout, stores the data URL, and throttles 200 ms between items.
+ *   - Two phases: first it collects every item missing a thumbnail and
+ *     marks them all pending (their cards render a skeleton); then it
+ *     captures them ONE BY ONE, yielding to the browser before each
+ *     heavy capture so skeletons paint and input stays responsive, and
+ *     clearing each card's pending flag the instant its image is stored
+ *     (incremental — cards fill in as they finish, not all at the end).
  *   - Honours `pauseThumbnailGeneration` / `resumeThumbnailGeneration`
  *     (polled every 500 ms) so heavy interaction can suspend capture.
- *   - Refreshes the drawer once at the end if anything was generated.
  */
 
 import type { TReaderDocument } from '@eb/email-builder';
@@ -24,8 +23,8 @@ import { bumpComponentsLibraryRefresh, getComponentsStorageMode } from '../../do
 import { hasLocalThumbnail, setLocalThumbnail } from './localLibraryStore';
 import { buildSubtreeHtml } from './thumbnail/buildThumbnailHtml';
 import { captureSubtreeThumbnail } from './thumbnail/captureThumbnail';
+import { clearThumbnailsPending, markThumbnailDone, markThumbnailsPending } from './thumbnailStatus';
 
-const THROTTLE_MS = 200;
 const CAPTURE_TIMEOUT_MS = 6000;
 
 let running = false;
@@ -52,6 +51,19 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Yield a frame back to the browser so it can paint pending skeletons and
+ * process input before the next (main-thread-blocking) html-to-image
+ * capture. Prefer requestAnimationFrame — it guarantees a paint — and fall
+ * back to a macrotask where rAF isn't available.
+ */
+function yieldToBrowser(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => resolve());
+    else setTimeout(resolve, 0);
+  });
+}
+
 type StoredItem = { id: string; blocks?: Array<{ id: string; block: unknown }> };
 
 function readArray(key: string): StoredItem[] {
@@ -64,6 +76,13 @@ function readArray(key: string): StoredItem[] {
   }
 }
 
+type CaptureJob = {
+  id: string;
+  anchor: string;
+  docMap: Record<string, unknown>;
+  variant: 'subtree' | 'template';
+};
+
 export async function generateMissingThumbnails(): Promise<void> {
   if (running || getComponentsStorageMode() !== 'local') return;
   running = true;
@@ -71,43 +90,54 @@ export async function generateMissingThumbnails(): Promise<void> {
 
   try {
     const targets = [
-      { storageKey: 'eb:lib:sections', isTemplate: false },
-      { storageKey: 'eb:lib:layouts', isTemplate: false },
-      { storageKey: 'eb:lib:templates', isTemplate: true },
+      { storageKey: 'eb:lib:sections', variant: 'subtree' as const, isTemplate: false },
+      { storageKey: 'eb:lib:layouts', variant: 'subtree' as const, isTemplate: false },
+      { storageKey: 'eb:lib:templates', variant: 'template' as const, isTemplate: true },
     ];
 
-    for (const { storageKey, isTemplate } of targets) {
-      const items = readArray(storageKey);
-      for (const item of items) {
+    // Phase 1 — collect every item still missing a thumbnail and mark them
+    // all pending up-front, so their cards immediately render a skeleton.
+    const jobs: CaptureJob[] = [];
+    for (const { storageKey, variant, isTemplate } of targets) {
+      for (const item of readArray(storageKey)) {
         if (hasLocalThumbnail(item.id) || !item.blocks?.length) continue;
+        const docMap: Record<string, unknown> = {};
+        for (const entry of item.blocks) docMap[entry.id] = entry.block;
+        jobs.push({ id: item.id, anchor: isTemplate ? 'root' : item.blocks[0].id, docMap, variant });
+      }
+    }
+    if (jobs.length === 0) return;
+    markThumbnailsPending(jobs.map((job) => job.id));
 
-        // Suspend while paused (e.g. during heavy interaction).
-        while (paused) await delay(500);
+    // Phase 2 — capture one at a time. Yield before each capture so the
+    // skeletons paint, then clear that card's pending flag the moment its
+    // image is stored (or the capture fails) so it swaps in incrementally.
+    for (const job of jobs) {
+      while (paused) await delay(500);
+      await yieldToBrowser();
 
-        try {
-          const docMap: Record<string, unknown> = {};
-          for (const entry of item.blocks) docMap[entry.id] = entry.block;
-          const anchor = isTemplate ? 'root' : item.blocks[0].id;
-          const html = buildSubtreeHtml(docMap as TReaderDocument, anchor);
-          const blob = await captureSubtreeThumbnail(html, {
-            timeoutMs: CAPTURE_TIMEOUT_MS,
-            // Templates use the tall 2:3 card band; sections/layouts the 4:3 band.
-            variant: isTemplate ? 'template' : 'subtree',
-          });
-          if (blob) {
-            const dataUrl = await blobToDataUrl(blob);
-            setLocalThumbnail(item.id, dataUrl);
-            generated++;
-          }
-        } catch {
-          // Best-effort — skip failed captures, keep going.
+      try {
+        const html = buildSubtreeHtml(job.docMap as TReaderDocument, job.anchor);
+        const blob = await captureSubtreeThumbnail(html, {
+          timeoutMs: CAPTURE_TIMEOUT_MS,
+          variant: job.variant,
+        });
+        if (blob) {
+          const dataUrl = await blobToDataUrl(blob);
+          setLocalThumbnail(job.id, dataUrl);
+          generated++;
         }
-
-        await delay(THROTTLE_MS);
+      } catch {
+        // Best-effort — skip failed captures, keep going.
+      } finally {
+        // Clears the skeleton: the card re-reads getLocalThumbnail and shows
+        // the image if stored, or the "No preview" placeholder if it failed.
+        markThumbnailDone(job.id);
       }
     }
   } finally {
     running = false;
+    clearThumbnailsPending();
     if (generated > 0) bumpComponentsLibraryRefresh();
   }
 }

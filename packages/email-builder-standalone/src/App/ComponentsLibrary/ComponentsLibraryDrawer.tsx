@@ -72,6 +72,7 @@ import {
   localListTemplates,
 } from './localLibraryStore';
 import RenameSubtreeDialog, { type RenameSubtreeTarget } from './RenameSubtreeDialog';
+import { isThumbnailPending, useThumbnailStatusVersion } from './thumbnailStatus';
 import LibraryCardPrimitiveRender from './thumbnail/LibraryCardPrimitiveRender';
 import LibraryCardThumbnail from './thumbnail/LibraryCardThumbnail';
 import { resolveThumbnailUrl } from './thumbnail/thumbnailUrl';
@@ -180,14 +181,27 @@ function LibraryCard({
   //     payload that the listing endpoint embeds. NO static file.
   //   - theme: own card type (LibraryCardThemeSwatch) — handled by
   //     ThemesList, never reaches this LibraryCard.
+  // Subscribe to incremental thumbnail-generation status so this card
+  // re-renders (skeleton → image) as the lazy generator finishes each one.
+  useThumbnailStatusVersion();
+  const isLocalStorage = getComponentsStorageMode() === 'local';
+
   const showThumbnail = category === 'section' || category === 'layout' || category === 'template';
   const showPrimitiveRender = category === 'primitive' && item.block !== undefined;
-  const thumbnailUrl =
-    showThumbnail && item.hasThumbnail
-      ? getComponentsStorageMode() === 'local'
-        ? getLocalThumbnail(item.id)
-        : resolveThumbnailUrl(category, category === 'template' ? null : item.axis, item.id)
-      : null;
+  // In local mode read the data URL straight from the store — the listing's
+  // `hasThumbnail` is a stale snapshot taken before incremental generation
+  // fills them in. In backend mode fall back to the served endpoint, gated
+  // by the listing's `hasThumbnail`.
+  const thumbnailUrl = !showThumbnail
+    ? null
+    : isLocalStorage
+      ? getLocalThumbnail(item.id)
+      : item.hasThumbnail
+        ? resolveThumbnailUrl(category, category === 'template' ? null : item.axis, item.id)
+        : null;
+  // Only sections/layouts/templates get generated previews; while queued and
+  // not yet captured, the card shows a skeleton instead of "No preview".
+  const thumbnailPending = showThumbnail && isLocalStorage && thumbnailUrl === null && isThumbnailPending(item.id);
 
   // Hover preview is rendered by a singleton at the drawer level — the
   // card just dispatches `(category, axis, id, name)` to the central
@@ -237,6 +251,7 @@ function LibraryCard({
         <LibraryCardThumbnail
           src={thumbnailUrl}
           alt={item.name}
+          loading={thumbnailPending}
           // Point 8 (EMAIL_BUILDER_TASKS.md): Templates previews were too
           // small — double the default 120px height for that category only.
           height={category === 'template' ? 240 : undefined}

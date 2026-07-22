@@ -21,7 +21,7 @@
 import React from 'react';
 
 import ImageNotSupportedOutlinedIcon from '@mui/icons-material/ImageNotSupportedOutlined';
-import { Box, Typography, useTheme } from '@mui/material';
+import { Box, Skeleton, Typography, useTheme } from '@mui/material';
 
 export type LibraryCardThumbnailProps = {
   /** Source URL when a thumbnail exists; null shows the placeholder. */
@@ -30,11 +30,23 @@ export type LibraryCardThumbnailProps = {
   alt: string;
   /** CSS height of the thumbnail strip. @default 120 */
   height?: number;
+  /**
+   * True while this item's preview is queued/generating (local mode).
+   * Renders an animated Skeleton instead of the "No preview" placeholder
+   * until the capture finishes and `src` arrives.
+   */
+  loading?: boolean;
   /** Optional placeholder caption — defaults to a localised fallback. */
   placeholderText?: string;
 };
 
-export default function LibraryCardThumbnail({ src, alt, height = 120, placeholderText }: LibraryCardThumbnailProps) {
+export default function LibraryCardThumbnail({
+  src,
+  alt,
+  height = 120,
+  loading = false,
+  placeholderText,
+}: LibraryCardThumbnailProps) {
   const theme = useTheme();
 
   const baseStyle: React.CSSProperties = {
@@ -44,6 +56,21 @@ export default function LibraryCardThumbnail({ src, alt, height = 120, placehold
     backgroundColor: theme.palette.background.default,
     display: 'block',
   };
+
+  // Pending generation (local mode): show an animated skeleton rather than
+  // the "No preview" placeholder, so a queued card reads as "loading" not
+  // "empty" while the lazy generator works through the queue.
+  if (src === null && loading) {
+    return (
+      <Skeleton
+        variant="rounded"
+        animation="wave"
+        height={height}
+        aria-label={alt}
+        sx={{ width: '100%', borderRadius: 1 }}
+      />
+    );
+  }
 
   if (src === null) {
     return (
