@@ -52,7 +52,7 @@ export default function LibraryCardThumbnail({
   const baseStyle: React.CSSProperties = {
     width: '100%',
     height,
-    borderRadius: 4,
+    borderRadius: 0,
     backgroundColor: theme.palette.background.default,
     display: 'block',
   };
@@ -67,7 +67,7 @@ export default function LibraryCardThumbnail({
         animation="wave"
         height={height}
         aria-label={alt}
-        sx={{ width: '100%', borderRadius: 1 }}
+        sx={{ width: '100%', borderRadius: 0 }}
       />
     );
   }

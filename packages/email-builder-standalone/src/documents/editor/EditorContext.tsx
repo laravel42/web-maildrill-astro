@@ -2315,13 +2315,6 @@ function buildRenamedSubtreeFromSaved(saved: TSavedComponentBlock[]): {
 } {
   if (saved.length === 0) return { rootId: null, subtree: {} };
 
-  // Current document theme — inserted blocks must adopt it (the theme
-  // always wins over the component's baked-in styling) via the same
-  // per-block transform as `applyThemePreset`. When the target document
-  // has no theme override for a block, only the NotionText colour pass
-  // applies; structural content is always preserved.
-  const currentTheme = (editorStateStore.getState().document?.root?.data as { theme?: ThemeJson } | undefined)?.theme;
-
   const idMap = new Map<string, string>();
   for (const entry of saved) {
     if (typeof entry.id === 'string' && !idMap.has(entry.id)) {
@@ -2356,11 +2349,13 @@ function buildRenamedSubtreeFromSaved(saved: TSavedComponentBlock[]): {
         }
       }
     }
-    // Strip the block's own styling so the destination theme wins —
-    // same per-block transform as `applyThemePreset` (governed keys +
-    // NotionText colour). `childrenIds` / `columns` rewritten above are
-    // preserved (the theme never defines structural props).
-    subtree[newId] = stripBlockStylesForTheme(cloned, currentTheme);
+    // Insert the pre-made block VERBATIM — as created, with its own
+    // colours and styling. The destination document's theme is
+    // intentionally NOT applied here (requirement: library blocks keep
+    // the exact look they were saved with when inserted, matching their
+    // card thumbnail and hover preview). `childrenIds` / `columns`
+    // rewritten above are preserved.
+    subtree[newId] = cloned;
   }
 
   return { rootId: idMap.get(saved[0].id) ?? null, subtree };

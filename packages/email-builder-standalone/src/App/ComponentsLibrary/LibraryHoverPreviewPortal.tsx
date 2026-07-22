@@ -45,7 +45,7 @@ import ZoomOutMapOutlined from '@mui/icons-material/ZoomOutMapOutlined';
 import { Box, CircularProgress, IconButton, Paper, Popper, Tooltip, Typography, useTheme } from '@mui/material';
 
 import type { TEditorBlock } from '../../documents/editor/core';
-import { editorStateStore, stripBlockStylesForTheme } from '../../documents/editor/EditorContext';
+import { editorStateStore } from '../../documents/editor/EditorContext';
 import { globalsStyles } from '../TemplatePanel/helper/globalsStyles';
 
 import { fetchSavedSubtree, fetchSavedTemplate } from './fetchSavedSubtree';
@@ -130,16 +130,14 @@ async function buildReaderDoc(
   };
   const backdrop = rootData.backdropColor ?? FALLBACK_BACKDROP;
   const canvas = rootData.canvasColor ?? FALLBACK_CANVAS;
-  // Live previews adopt the current project theme: the previewed blocks
-  // are cleaned with the same per-block transform as `applyThemePreset`
-  // (governed keys + NotionText colour) so the theme wins, and the
-  // synthetic root carries ALL the document globals (textColor,
-  // fontFamily, linkGlobal, theme…) so the subtree inherits them exactly
-  // like the live canvas. With no theme this is a no-op (component
-  // previews as saved).
-  const theme = rootData.theme;
+  // As-created preview: the synthetic root carries ONLY the stage
+  // backdrop/canvas — NOT the project theme or globals (textColor,
+  // fontFamily, linkGlobal). Library sections/layouts/primitives
+  // therefore render with their own saved colours, exactly like their
+  // card thumbnail; the active document's theme no longer bleeds into
+  // library previews. (The `theme` card category below still previews a
+  // theme being applied — that's a different, intentional flow.)
   const syntheticRootData = (childrenIds: string[]): Record<string, unknown> => ({
-    ...rootData,
     backdropColor: backdrop,
     canvasColor: canvas,
     childrenIds,
@@ -161,9 +159,8 @@ async function buildReaderDoc(
   }
 
   if (descriptor.category === 'primitive' && descriptor.primitiveBlock !== undefined) {
-    const themed = stripBlockStylesForTheme(descriptor.primitiveBlock as TEditorBlock, theme);
     const doc: Record<string, unknown> = {
-      [descriptor.id]: themed,
+      [descriptor.id]: descriptor.primitiveBlock as TEditorBlock,
       root: { type: 'EmailLayout', data: syntheticRootData([descriptor.id]) },
     };
     return { doc: doc as TReaderDocument, rootBlockId: 'root' };
@@ -200,7 +197,7 @@ async function buildReaderDoc(
   }
   const doc: Record<string, unknown> = {};
   for (const entry of cached.blocks) {
-    doc[entry.id] = stripBlockStylesForTheme(entry.block as TEditorBlock, theme);
+    doc[entry.id] = entry.block as TEditorBlock;
   }
   doc.root = { type: 'EmailLayout', data: syntheticRootData([subtreeRoot]) };
   return { doc: injectPlaceholders(doc as TReaderDocument), rootBlockId: 'root' };
@@ -506,7 +503,7 @@ export default function LibraryHoverPreviewPortal(): React.ReactElement {
             justifyContent: 'center',
             alignItems: 'flex-start',
             backgroundColor: muiTheme.palette.action.hover,
-            borderRadius: 1,
+            borderRadius: 0,
             overflowY: zoomed ? 'auto' : 'hidden',
             overflowX: 'hidden',
           }}
