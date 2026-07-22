@@ -121,8 +121,10 @@ type TValue = {
    * localStorage outside the React tree.
    */
   componentsLibraryRefreshNonce: number;
-  /** When false, hides "Save as template" button and the Templates accordion in the drawer. */
+  /** When false, hides the "Save as template" button. Defaults to true. */
   templateSaving: boolean;
+  /** When false, hides the Templates tab in the Components Library drawer. Defaults to true. */
+  templateLibrary: boolean;
   /** When true, shows the "Save as theme" button in the root inspector panel. Defaults to false. */
   themeSaving: boolean;
   imageUploading: {
@@ -191,6 +193,7 @@ const createInitialState = (): TValue => ({
   componentsStorageMode: 'backend',
   componentsLibraryRefreshNonce: 0,
   templateSaving: true,
+  templateLibrary: true,
   themeSaving: false,
   imageUploading: {
     uploading: false,
@@ -321,6 +324,14 @@ export function useTemplateSaving() {
 
 export function setTemplateSaving(enabled: boolean) {
   return editorStateStore.setState({ templateSaving: enabled });
+}
+
+export function useTemplateLibrary() {
+  return editorStateStore((s) => s.templateLibrary);
+}
+
+export function setTemplateLibrary(enabled: boolean) {
+  return editorStateStore.setState({ templateLibrary: enabled });
 }
 
 export function useThemeSaving() {

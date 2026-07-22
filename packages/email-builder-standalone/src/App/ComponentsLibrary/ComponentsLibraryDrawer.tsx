@@ -52,7 +52,7 @@ import {
   useComponentsLibraryEnabled,
   useComponentsLibraryRefreshNonce,
   useSelectedMainTab,
-  useTemplateSaving,
+  useTemplateLibrary,
 } from '../../documents/editor/EditorContext';
 
 import ApplyTemplateConfirmDialog from './ApplyTemplateConfirmDialog';
@@ -750,21 +750,21 @@ export default function ComponentsLibraryDrawer() {
   const drawerWidth = open ? COMPONENTS_LIBRARY_DRAWER_WIDTH : COMPACT_LIBRARY_DRAWER_WIDTH;
   const enabled = useComponentsLibraryEnabled();
   const selectedMainTab = useSelectedMainTab();
-  const templateSaving = useTemplateSaving();
+  const templateLibrary = useTemplateLibrary();
   const libraryRefreshNonce = useComponentsLibraryRefreshNonce();
   const { t } = useTranslation('inspector');
   const theme = useTheme();
   // Local storage mode persists Sections / Templates in localStorage, so
   // both tabs are available. Blocks is always available (client-side
-  // factories, no storage). When templateSaving is disabled, hide only
+  // factories, no storage). When templateLibrary is disabled, hide only
   // the Templates tab.
   const visibleCategories = useMemo(
     () =>
       CATEGORIES.filter((c) => {
-        if (!templateSaving && c.key === 'templates') return false;
+        if (!templateLibrary && c.key === 'templates') return false;
         return true;
       }),
-    [templateSaving]
+    [templateLibrary]
   );
   const [sectionsRefreshKey, setSectionsRefreshKey] = useState(0);
   const [templatesRefreshKey, setTemplatesRefreshKey] = useState(0);
@@ -777,7 +777,7 @@ export default function ComponentsLibraryDrawer() {
   const [activeTab, setActiveTab] = useState<string>(() => visibleCategories[0]?.key ?? 'blocks');
 
   // Keep the active tab valid when the visible set changes (disabling
-  // templateSaving hides Templates).
+  // templateLibrary hides Templates).
   useEffect(() => {
     if (!visibleCategories.some((c) => c.key === activeTab)) {
       setActiveTab(visibleCategories[0]?.key ?? 'blocks');

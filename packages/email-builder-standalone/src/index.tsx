@@ -213,8 +213,10 @@ export interface EmailBuilderProps {
    * restricts the drawer to the Templates + Themes tabs.
    */
   componentsStorage?: 'backend' | 'local';
-  /** When false, hides "Save as template" and the Templates tab in the library drawer. Defaults to true. */
+  /** When false, hides the "Save as template" button. Defaults to true. */
   templateSaving?: boolean;
+  /** When false, hides the Templates tab in the Components Library drawer. Defaults to true. */
+  templateLibrary?: boolean;
   /** When true, shows the "Save as theme" button in the root inspector panel. Defaults to false. */
   themeSaving?: boolean;
 }
@@ -262,6 +264,7 @@ const EmailBuilder = forwardRef<EmailBuilderRef, EmailBuilderProps>(
       portalContainer,
       componentsStorage,
       templateSaving,
+      templateLibrary,
       themeSaving,
     },
     ref
@@ -593,6 +596,7 @@ const EmailBuilder = forwardRef<EmailBuilderRef, EmailBuilderProps>(
                 showVersion={showVersion ?? false}
                 componentsStorage={componentsStorage ?? 'backend'}
                 templateSaving={templateSaving}
+                templateLibrary={templateLibrary}
                 themeSaving={themeSaving}
               />
             </I18nextProvider>
@@ -630,6 +634,7 @@ function ensureElementClass(): CustomElementConstructor {
       componentTree: 'boolean',
       componentsStorage: 'string',
       templateSaving: 'boolean',
+      templateLibrary: 'boolean',
       themeSaving: 'boolean',
       enableAI: 'boolean',
       mergeTags: 'json',

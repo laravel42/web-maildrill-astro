@@ -199,10 +199,12 @@ export default function VisualEmailBuilder({
             galleryImages
             unsplashEnabled
             unsplashBackendUrl={typeof window !== 'undefined' ? window.location.origin : ''}
-            /* Template saving is on: the builder's own Templates tab
-               (list/apply) is enabled. Theme saving stays off — themes
-               are managed elsewhere. */
-            templateSaving
+            /* The "Save as template" button is off — templates aren't saved
+               from here. The Templates tab (browse/apply saved templates)
+               stays on via templateLibrary, so the two are independent.
+               Theme saving stays off — themes are managed elsewhere. */
+            templateSaving={false}
+            templateLibrary
             themeSaving={false}
             componentsStorage="local"
             enableAI

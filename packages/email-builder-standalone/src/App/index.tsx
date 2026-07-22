@@ -24,6 +24,7 @@ import {
   setShowVersion,
   setStickyHeader,
   setTemplateSaving,
+  setTemplateLibrary,
   setThemeSaving,
   useComponentsLibraryEnabled,
   useInspectorDrawerMode,
@@ -58,8 +59,10 @@ export type AppProps = {
   showVersion?: boolean;
   /** Storage backend for Components Library Templates + Themes. */
   componentsStorage?: 'backend' | 'local';
-  /** When false, hides template saving UI. Defaults to true. */
+  /** When false, hides the "Save as template" button. Defaults to true. */
   templateSaving?: boolean;
+  /** When false, hides the Templates tab in the Components Library drawer. Defaults to true. */
+  templateLibrary?: boolean;
   /** When true, shows the "Save as theme" button in the root inspector panel. Defaults to false. */
   themeSaving?: boolean;
 };
@@ -81,6 +84,7 @@ export default function App({
   showVersion = false,
   componentsStorage = 'backend',
   templateSaving,
+  templateLibrary,
   themeSaving,
 }: AppProps) {
   const inspectorDrawerOpen = useInspectorDrawerOpen();
@@ -153,6 +157,10 @@ export default function App({
   useEffect(() => {
     setTemplateSaving(templateSaving ?? true);
   }, [templateSaving]);
+
+  useEffect(() => {
+    setTemplateLibrary(templateLibrary ?? true);
+  }, [templateLibrary]);
 
   useEffect(() => {
     setThemeSaving(themeSaving ?? false);
