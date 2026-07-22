@@ -57,6 +57,37 @@ const DEFAULT_TIMEOUT_MS = 8000;
 const FAILED_IMAGE_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
 /**
+ * Strip active content (`<script>` elements and inline `on*` event
+ * handlers) from the HTML before it goes into `iframe.srcdoc`.
+ *
+ * The sandbox (`allow-same-origin` WITHOUT `allow-scripts`) is the real
+ * security control — it already prevents any script from executing. This
+ * strip is DEFENSE-IN-DEPTH on top of it, and it also removes the benign
+ * but noisy `Blocked script execution in 'about:srcdoc'` console warning
+ * the browser logs whenever a sandboxed frame contains a script it
+ * refuses to run. The capture path renders saved/shared templates whose
+ * Html/NotionText blocks emit `props.html` verbatim, so treating that
+ * markup as untrusted here is correct regardless.
+ *
+ * Regex-based on purpose: this is a belt-and-suspenders pass over markup
+ * we only rasterise to a 240 px thumbnail, not the primary sanitiser, so
+ * the edge cases a full HTML parser would catch don't matter — the
+ * sandbox catches anything this misses.
+ */
+function stripActiveContent(html: string): string {
+  return (
+    html
+      // <script>…</script>, self-closing, or unterminated at EOF.
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, '')
+      .replace(/<script\b[^>]*\/?>/gi, '')
+      // Inline event handlers: on…="…", on…='…', on…=unquoted.
+      .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, '')
+      .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, '')
+      .replace(/\son[a-z]+\s*=\s*[^\s>]+/gi, '')
+  );
+}
+
+/**
  * Internal iframe sizing — the iframe is just a render host that
  * forces the email-builder to use desktop styles. It is NOT what we
  * capture (we capture the inner canvas table, see `canvasEl` below).
@@ -260,7 +291,10 @@ export async function captureSubtreeThumbnail(html: string, options: CaptureOpti
       iframe.style.border = '0';
       iframe.style.opacity = '0';
       iframe.style.pointerEvents = 'none';
-      iframe.srcdoc = html;
+      // Defense-in-depth on top of the no-`allow-scripts` sandbox; also
+      // silences the benign "Blocked script execution in 'about:srcdoc'"
+      // console warning by removing the markup the browser would refuse.
+      iframe.srcdoc = stripActiveContent(html);
 
       iframe.onload = async () => {
         try {
