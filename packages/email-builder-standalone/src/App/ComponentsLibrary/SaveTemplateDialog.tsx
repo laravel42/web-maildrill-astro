@@ -144,7 +144,7 @@ export default function SaveTemplateDialog({ open, onClose }: SaveTemplateDialog
           docMap[entry.id] = entry.block;
         }
         const html = buildSubtreeHtml(docMap as Parameters<typeof buildSubtreeHtml>[0], 'root');
-        thumbnailBlob = await captureSubtreeThumbnail(html);
+        thumbnailBlob = await captureSubtreeThumbnail(html, { variant: 'template' });
         if (thumbnailBlob) {
           console.info(
             '[SaveTemplateDialog] captured thumbnail',

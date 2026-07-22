@@ -91,9 +91,8 @@ export async function generateMissingThumbnails(): Promise<void> {
           const html = buildSubtreeHtml(docMap as TReaderDocument, anchor);
           const blob = await captureSubtreeThumbnail(html, {
             timeoutMs: CAPTURE_TIMEOUT_MS,
-            // Sections/Layouts capture their full natural height; only
-            // Templates crop to the fixed teaser strip.
-            fitHeight: !isTemplate,
+            // Templates use the tall 2:3 card band; sections/layouts the 4:3 band.
+            variant: isTemplate ? 'template' : 'subtree',
           });
           if (blob) {
             const dataUrl = await blobToDataUrl(blob);
