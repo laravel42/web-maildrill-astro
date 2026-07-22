@@ -12,6 +12,7 @@ import EmailBuilder from './EmailBuilder';
 // bundle that should only load once a user actually opens the visual editor,
 // not on every visit to the campaigns board.
 const VisualEmailBuilder = lazy(() => import('./VisualEmailBuilder'));
+import LazyBoundary from './shared/LazyBoundary';
 import TemplatePreview, { MessagePreview } from './shared/TemplatePreview';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { ago } from './shared/time';
@@ -689,17 +690,19 @@ export default function CampaignsBoard({
           SMS/WhatsApp/Voice keep the lightweight composer. Suspense is
           required by React.lazy — see AppTemplates.tsx for details. */}
       {builder && builder.channel === 'email' && (
-        <Suspense fallback={null}>
-          <VisualEmailBuilder
-            name={builder.name}
-            kind="campaign"
-            onClose={() => setBuilder(null)}
-            onSave={() => {
-              // Draft kept locally; the editor shows the saved confirmation badge
-              // and stays open (no redirect back to the board).
-            }}
-          />
-        </Suspense>
+        <LazyBoundary label="the email editor" onClose={() => setBuilder(null)}>
+          <Suspense fallback={null}>
+            <VisualEmailBuilder
+              name={builder.name}
+              kind="campaign"
+              onClose={() => setBuilder(null)}
+              onSave={() => {
+                // Draft kept locally; the editor shows the saved confirmation badge
+                // and stays open (no redirect back to the board).
+              }}
+            />
+          </Suspense>
+        </LazyBoundary>
       )}
 
       {builder && builder.channel !== 'email' && (

@@ -18,6 +18,7 @@ import EmailBuilder from './EmailBuilder';
 // — everyone visiting /app/templates paid for it upfront. React.lazy defers
 // the fetch until <VisualEmailBuilder> actually mounts.
 const VisualEmailBuilder = lazy(() => import('./VisualEmailBuilder'));
+import LazyBoundary from './shared/LazyBoundary';
 import TemplatePreview from './shared/TemplatePreview';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { useToast } from './shared/useToast';
@@ -1048,6 +1049,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           heavy email-builder-standalone package has its own loading state
           inside VisualEmailBuilder. */}
       {builder && builder.channel === 'email' && (
+        <LazyBoundary label="the email editor" onClose={() => setBuilder(null)}>
         <Suspense fallback={null}>
           <VisualEmailBuilder
             name={builder.name}
@@ -1084,6 +1086,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
             }}
           />
         </Suspense>
+        </LazyBoundary>
       )}
 
       {builder && builder.channel !== 'email' && (
