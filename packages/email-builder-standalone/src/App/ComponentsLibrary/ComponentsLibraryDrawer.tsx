@@ -486,14 +486,15 @@ function CategoryListingBody({
           renderGrid(visible, 'flat')
         ) : (
           <Box>
-            {axisGroups.map((group, idx) => (
+            {axisGroups.map((group) => (
               <SubcategoryAccordion
                 key={group.axis}
                 title={axisLabel(group.axis)}
                 count={group.items.length}
-                // Default the first axis open; respect explicit toggles after.
-                expanded={expandedAxes[group.axis] ?? idx === 0}
-                onToggle={(isExpanded) => setExpandedAxes((prev) => ({ ...prev, [group.axis]: isExpanded }))}
+                // All groups start collapsed; opening one collapses the rest
+                // (single-open accordion) so the Blocks tab stays compact.
+                expanded={expandedAxes[group.axis] ?? false}
+                onToggle={(isExpanded) => setExpandedAxes(isExpanded ? { [group.axis]: true } : {})}
               >
                 {renderGrid(group.items, group.axis)}
               </SubcategoryAccordion>
