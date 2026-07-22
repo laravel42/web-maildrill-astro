@@ -770,9 +770,17 @@ export default function ComponentsLibraryDrawer() {
   const [templatesRefreshKey, setTemplatesRefreshKey] = useState(0);
   const [renameTarget, setRenameTarget] = useState<RenameSubtreeTarget | null>(null);
 
-  // Global search + sort shared by every category tab.
-  const [search, setSearch] = useState('');
-  const [sort, setSort] = useState<LibrarySortKey>('updatedDesc');
+  // Sections (bottom of the Blocks tab, per Point 7) and Templates render
+  // as plain listings: unfiltered and sorted newest-first. The former
+  // shared search/sort state was left without any writer after Point 7
+  // removed the toolbars, so it could only ever hold these defaults —
+  // keeping it as mutable state was dead code AND a latent cross-tab leak
+  // (a future writer on one tab would silently reorder the other). Pass
+  // explicit constants instead. (Restoring a per-tab search/sort toolbar
+  // is a separate task; when added it MUST be local per listing, never a
+  // single shared value across tabs.)
+  const SEARCH_UNFILTERED = '';
+  const SORT_DEFAULT: LibrarySortKey = 'updatedDesc';
   // Active category tab. Defaults to the first visible category.
   const [activeTab, setActiveTab] = useState<string>(() => visibleCategories[0]?.key ?? 'blocks');
 
@@ -924,8 +932,8 @@ export default function ComponentsLibraryDrawer() {
                       toolbar — just the listing, grouped by role. */}
                   <Box sx={{ mt: 2, pt: 1.5, borderTop: (theme) => `1px solid ${theme.palette.divider}` }}>
                     <SectionsCategoryContent
-                      search={search}
-                      sort={sort}
+                      search={SEARCH_UNFILTERED}
+                      sort={SORT_DEFAULT}
                       onRename={setRenameTarget}
                       refreshKey={sectionsRefreshKey}
                       onChange={() => setSectionsRefreshKey((k) => k + 1)}
@@ -935,8 +943,8 @@ export default function ComponentsLibraryDrawer() {
               )}
               {activeTab === 'templates' && (
                 <TemplatesCategoryContent
-                  search={search}
-                  sort={sort}
+                  search={SEARCH_UNFILTERED}
+                  sort={SORT_DEFAULT}
                   onRename={setRenameTarget}
                   refreshKey={templatesRefreshKey}
                   onChange={() => setTemplatesRefreshKey((k) => k + 1)}
