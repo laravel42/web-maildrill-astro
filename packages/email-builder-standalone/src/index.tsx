@@ -434,15 +434,63 @@ const EmailBuilder = forwardRef<EmailBuilderRef, EmailBuilderProps>(
         // Notify components that read these globals (e.g. AIGeneration button in
         // the editor header) so they can refresh their visibility/reactivity.
         window.dispatchEvent(new Event('email-builder-ai-features-updated'));
+        // The rich-text bubble/slash menus and the image AI tabs listen for
+        // `email-builder-ai-generation` (boolean detail) to toggle their AI
+        // affordances — nothing dispatched it before, so they only ever saw the
+        // initial global read and could stay hidden depending on mount order.
+        window.dispatchEvent(new CustomEvent('email-builder-ai-generation', { detail: Boolean(enableAI) }));
       }
       return () => {
         if (typeof window !== 'undefined') {
           delete (window as any).__emailBuilderOnAIRequest;
           delete (window as any).__emailBuilderOnAIGenerateTemplate;
           window.dispatchEvent(new Event('email-builder-ai-features-updated'));
+          window.dispatchEvent(new CustomEvent('email-builder-ai-generation', { detail: false }));
         }
       };
     }, [enableAI, onAIRequest, onAIGenerateTemplate]);
+
+    // Bridge the rich-text inline AI (bubble menu / slash menu) to the host's
+    // `onAIRequest`. block-notion-text dispatches a window `ai-request`
+    // CustomEvent (see `requestAIFeature`) and waits for a `text-ai-processed`
+    // event to replace the selection. Previously the ONLY listener was a local
+    // dummy (`initDummyAIEvents`) that never called the backend — so inline
+    // text AI made no request. This wires the event to the real callback and
+    // echoes back the selection info the editor needs to apply the result.
+    useEffect(() => {
+      if (typeof window === 'undefined' || !onAIRequest) return undefined;
+
+      const handleAiRequest = (event: Event) => {
+        const detail = (
+          event as CustomEvent<
+            AIFeatureRequest & { replaceSelection?: boolean; selectionFrom?: number; selectionTo?: number }
+          >
+        ).detail;
+        if (!detail) return;
+
+        void (async () => {
+          let processedContent = '';
+          try {
+            processedContent = await onAIRequest(detail);
+          } catch (err) {
+            console.error('[EmailBuilder] onAIRequest failed', err);
+          }
+          window.dispatchEvent(
+            new CustomEvent('text-ai-processed', {
+              detail: {
+                processedContent,
+                replaceSelection: detail.replaceSelection,
+                selectionFrom: detail.selectionFrom,
+                selectionTo: detail.selectionTo,
+              },
+            }),
+          );
+        })();
+      };
+
+      window.addEventListener('ai-request', handleAiRequest);
+      return () => window.removeEventListener('ai-request', handleAiRequest);
+    }, [onAIRequest]);
 
     // Expose Unsplash configuration to `ImageInput` / `BackgroundImageInput`
     // via the same window-global pattern used by the AI features. The picker

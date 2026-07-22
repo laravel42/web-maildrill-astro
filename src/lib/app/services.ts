@@ -54,7 +54,13 @@ export async function builderTextAction(request: AIFeatureRequest): Promise<stri
   });
   if (!res.ok) throw new Error(`AI text action failed (${res.status})`);
   const data = (await res.json()) as { processedContent?: string };
-  return data.processedContent ?? '';
+  // The backend sometimes wraps the result in a markdown code fence
+  // (```html … ```). Strip it so the editor inserts clean HTML, not literal
+  // backticks.
+  return (data.processedContent ?? '')
+    .replace(/^\s*```(?:html)?\s*\n?/i, '')
+    .replace(/\n?```\s*$/i, '')
+    .trim();
 }
 
 export async function mockSignUp(_input: {
