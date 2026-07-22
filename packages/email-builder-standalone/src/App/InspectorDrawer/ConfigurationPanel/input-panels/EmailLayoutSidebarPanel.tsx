@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ZodError } from 'zod';
 
-import { CropSquareOutlined, LinkOutlined } from '@mui/icons-material';
+import { CropSquareOutlined, FormatUnderlined, LinkOutlined } from '@mui/icons-material';
 import { Box } from '@mui/material';
 
 import EmailLayoutPropsSchema, {
@@ -11,7 +11,7 @@ import EmailLayoutPropsSchema, {
 import { DEFAULT_FONT } from '../../../../documents/blocks/helpers/fontFamily';
 
 import ColorInput from './helpers/inputs/ColorInput';
-import LinksInput from './helpers/inputs/ColorInput/LinksInput';
+import LinkUnderlineInput from './helpers/inputs/ColorInput/LinkUnderlineInput';
 import CompactableInput from './helpers/inputs/CompactableInput';
 import { NullableFontFamily } from './helpers/inputs/FontFamily';
 import { BackgroundColorIcon, FontFamilyIcon, TextColorIcon } from './helpers/style-inputs/SingleStylePropertyPanel';
@@ -73,12 +73,29 @@ export default function EmailLayoutSidebarFields({ data, setData }: EmailLayoutS
         />
       </CompactableInput>
 
-      <CompactableInput icon={LinkOutlined} label={t('inputs.panels.emailLayout.linksLabel')}>
-        <LinksInput
-          label={t('inputs.panels.emailLayout.linksLabel')}
-          linkColor={data.linkGlobal?.linkColor || '#000000'}
+      <CompactableInput icon={LinkOutlined} label={t('inputs.links.color')}>
+        <ColorInput
+          label={t('inputs.links.color')}
+          defaultValue={data.linkGlobal?.linkColor || '#000000'}
+          onChange={(linkColor) =>
+            updateData({
+              ...data,
+              linkGlobal: { linkColor, underline: data.linkGlobal?.underline ?? false },
+            })
+          }
+        />
+      </CompactableInput>
+
+      <CompactableInput icon={FormatUnderlined} label={t('inputs.links.underline')}>
+        <LinkUnderlineInput
+          label={t('inputs.links.underline')}
           underline={data.linkGlobal?.underline || false}
-          onChange={(linkGlobal) => updateData({ ...data, linkGlobal })}
+          onChange={(underline) =>
+            updateData({
+              ...data,
+              linkGlobal: { linkColor: data.linkGlobal?.linkColor ?? '#000000', underline },
+            })
+          }
         />
       </CompactableInput>
     </Box>
