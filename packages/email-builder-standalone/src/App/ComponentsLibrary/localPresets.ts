@@ -61,4 +61,25 @@ export type LocalPresets = {
 
 const presets = data as unknown as LocalPresets;
 
-export default presets;
+/**
+ * Catalog version, derived from a content hash (FNV-1a) of the preset
+ * arrays rather than the static `version` field in the JSON. This makes
+ * the seed / thumbnail-cache version change **if and only if** the
+ * presets actually change — no manual bump to forget, and no needless
+ * cache invalidation on unrelated rebuilds. The hash is computed once,
+ * lazily (this module is only imported in local mode).
+ */
+function fnv1a(str: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i += 1) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(36);
+}
+
+const contentVersion = fnv1a(
+  JSON.stringify([presets.templates, presets.sections, presets.layouts, presets.primitives, presets.themes])
+);
+
+export default { ...presets, version: contentVersion } satisfies LocalPresets;
