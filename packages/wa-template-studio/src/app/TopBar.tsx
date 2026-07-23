@@ -45,7 +45,7 @@ export function TopBar() {
   };
 
   return (
-    <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-card px-3">
+    <header className="relative flex h-12 shrink-0 items-center gap-2 border-b border-border bg-card px-3">
       <Select value={doc.language} onValueChange={(v) => setTemplateField('language', v)}>
         <SelectTrigger className="h-8 w-24 text-xs" aria-label="Language">
           <SelectValue />
@@ -71,11 +71,12 @@ export function TopBar() {
         </SelectContent>
       </Select>
 
-      {/* Edit / Test segmented toggle — the Figma-style play mode. */}
+      {/* Edit / Test segmented toggle — centered in the bar like Figma's
+          play mode, independent of the side groups' widths. */}
       <div
         role="group"
         aria-label="Preview mode"
-        className="ml-2 flex items-center rounded-lg border border-border bg-muted/60 p-0.5"
+        className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center rounded-lg border border-border bg-muted/60 p-0.5"
       >
         <Button
           variant={previewMode === 'edit' ? 'secondary' : 'ghost'}
