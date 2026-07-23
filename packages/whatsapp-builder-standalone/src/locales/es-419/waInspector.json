@@ -1,0 +1,131 @@
+{
+  "sections": {
+    "header": "Encabezado",
+    "body": "Cuerpo",
+    "footer": "Pie",
+    "buttons": "Botones"
+  },
+  "tabs": {
+    "editor": "Editor",
+    "preview": "Vista previa",
+    "json": "JSON"
+  },
+  "toolbar": {
+    "undo": "Deshacer",
+    "redo": "Rehacer",
+    "copyJson": "Copiar JSON de componentes",
+    "copied": "¡Copiado!"
+  },
+  "palette": {
+    "title": "Secciones del mensaje",
+    "header": {
+      "label": "Encabezado",
+      "description": "Texto, imagen, video, documento o ubicación"
+    },
+    "body": {
+      "label": "Cuerpo",
+      "description": "Obligatorio · hasta 1024 caracteres, variables"
+    },
+    "footer": {
+      "label": "Pie",
+      "description": "Texto pequeño · hasta 60 caracteres"
+    },
+    "buttons": {
+      "label": "Botones",
+      "description": "Respuestas rápidas, enlaces, llamadas, códigos"
+    }
+  },
+  "inspector": {
+    "title": "Configuración"
+  },
+  "canvas": {
+    "emptyMessage": "Agrega secciones desde el panel izquierdo para componer tu mensaje",
+    "removeSection": "Quitar {{section}}",
+    "headerPlaceholder": "Texto del encabezado…",
+    "bodyPlaceholder": "Escribe tu mensaje…",
+    "footerPlaceholder": "Texto del pie",
+    "buttonsPlaceholder": "Aún no hay botones — agrégalos en el panel",
+    "copyCodeLabel": "Copiar código de oferta",
+    "untitledButton": "Botón",
+    "seeAllOptions": "Ver todas las opciones",
+    "mediaPlaceholder": {
+      "image": "Encabezado de imagen",
+      "video": "Encabezado de video",
+      "document": "Encabezado de documento"
+    }
+  },
+  "message": {
+    "category": "Categoría de plantilla",
+    "categoryHint": "Meta revisa y cobra las plantillas según su categoría",
+    "language": "Idioma",
+    "categories": {
+      "MARKETING": "Marketing",
+      "UTILITY": "Utilidad",
+      "AUTHENTICATION": "Autenticación"
+    }
+  },
+  "validation": {
+    "allGood": "La plantilla parece válida para la revisión de WhatsApp",
+    "title": "{{count}} problema(s) por corregir",
+    "bodyRequired": "El mensaje necesita texto en el cuerpo",
+    "bodyTooLong": "El cuerpo supera los {{max}} caracteres",
+    "variablesNotSequential": "Las variables deben ser secuenciales: {1}, {2}, … sin saltos",
+    "headerTextEmpty": "El encabezado de texto está vacío",
+    "headerTooLong": "El encabezado supera los {{max}} caracteres",
+    "headerVariableLimit": "Un encabezado de texto admite como máximo una variable, {1}",
+    "headerMediaMissing": "El encabezado multimedia necesita una URL de ejemplo",
+    "footerTooLong": "El pie supera los {{max}} caracteres",
+    "tooManyButtons": "Las plantillas admiten hasta {{max}} botones",
+    "tooManyOfType": "Demasiados botones {{type}} (máx. {{max}})",
+    "buttonTextEmpty": "El botón {{n}} no tiene etiqueta",
+    "buttonTextTooLong": "La etiqueta del botón {{n}} supera los {{max}} caracteres",
+    "buttonUrlEmpty": "El botón {{n}} no tiene URL",
+    "buttonPhoneEmpty": "El botón {{n}} no tiene número de teléfono",
+    "buttonCodeEmpty": "El botón {{n}} no tiene código de oferta"
+  },
+  "header": {
+    "format": "Tipo de encabezado",
+    "formats": {
+      "text": "Texto",
+      "image": "Imagen",
+      "video": "Video",
+      "document": "Documento",
+      "location": "Ubicación"
+    },
+    "text": "Texto del encabezado",
+    "textHint": "Máximo una variable {1}",
+    "mediaUrl": "URL de ejemplo del medio",
+    "mediaUrlHint": "Se usa como ejemplo para la revisión de Meta",
+    "locationName": "Nombre del lugar",
+    "locationAddress": "Dirección"
+  },
+  "body": {
+    "text": "Texto del mensaje",
+    "formattingHint": "*negrita* _cursiva_ ~tachado~ ```mono``` y variables {n}",
+    "insertVariable": "Insertar variable {{n}}",
+    "examplesTitle": "Valores de ejemplo (requeridos por Meta)",
+    "examplesHint": "Se muestran a los revisores en lugar de las variables"
+  },
+  "footer": {
+    "text": "Texto del pie",
+    "hint": "Texto plano, sin formato ni variables"
+  },
+  "buttons": {
+    "types": {
+      "QUICK_REPLY": "Respuesta rápida",
+      "URL": "Visitar sitio web",
+      "PHONE_NUMBER": "Llamar por teléfono",
+      "COPY_CODE": "Copiar código de oferta"
+    },
+    "label": "Etiqueta del botón",
+    "url": "URL",
+    "urlHint": "Puede terminar con una variable {1}",
+    "phone": "Número de teléfono",
+    "code": "Código de oferta",
+    "add": "Agregar botón",
+    "remove": "Quitar botón",
+    "moveUp": "Subir",
+    "moveDown": "Bajar",
+    "limits": "Hasta {{max}} botones; 2 URL, 1 teléfono, 1 código"
+  }
+}

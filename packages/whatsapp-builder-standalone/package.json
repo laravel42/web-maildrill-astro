@@ -1,0 +1,39 @@
+{
+  "name": "whatsapp-builder-standalone",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.tsx",
+  "types": "./src/index.tsx",
+  "exports": {
+    ".": {
+      "types": "./src/index.tsx",
+      "import": "./src/index.tsx",
+      "require": "./src/index.tsx"
+    },
+    "./standalone": {
+      "types": "./src/standalone.tsx",
+      "import": "./src/standalone.tsx"
+    },
+    "./style.css": "./src/global.css"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0 || ^19.0.0",
+    "react-dom": ">=18.0.0 || ^19.0.0"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "dependencies": {
+    "@eb/document-core": "workspace:*",
+    "@emotion/cache": "^11.14.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^9.2.0",
+    "@mui/material": "^9.2.0",
+    "@r2wc/react-to-web-component": "^2.1.1",
+    "i18next": "^26.3.6",
+    "react-i18next": "^17.0.10",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.14"
+  }
+}
