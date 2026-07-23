@@ -35,5 +35,11 @@
     "react-i18next": "^17.0.10",
     "zod": "^4.4.3",
     "zustand": "^5.0.14"
+  },
+  "scripts": {
+    "dev": "vite --config dev/vite.config.ts"
+  },
+  "devDependencies": {
+    "vite": "^8.1.5"
   }
 }
