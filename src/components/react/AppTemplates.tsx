@@ -61,7 +61,7 @@ function ApprovalBadge({ t, compact = false }: { t: GalleryTemplate; compact?: b
   const status = t.approvalStatus ?? 'draft';
   return (
     <span
-      className={`astatus astatus--${status}`}
+      className={`astatus tstat--${status}`}
       style={compact ? { fontSize: 10, padding: '1px 7px' } : undefined}
       title={APPROVAL_HINT[status]}
     >
@@ -660,6 +660,11 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                       <Icon name={m.icon} size={11} />
                       {m.label}
                     </span>
+                    {t.channel === 'whatsapp' && (
+                      <span className={styles.gApproval}>
+                        <ApprovalBadge t={t} />
+                      </span>
+                    )}
                     <GalleryPreview channel={t.channel} t={t} />
                     <div className={styles.ov}>
                       <button
@@ -689,7 +694,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                       <div className={styles.gname}>{t.name}</div>
                       <div className={styles.gsub}>
                         <span className={styles.catpill}>{t.category}</span>
-                        <ApprovalBadge t={t} />
                         <span className={styles.updated}>Updated {t.updated}</span>
                       </div>
                       <div className={styles.metrics}>
@@ -745,6 +749,11 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                       />
                     </span>
                     {t.title}
+                    {t.channel === 'whatsapp' && (
+                      <span className={styles.cApproval}>
+                        <ApprovalBadge t={t} compact />
+                      </span>
+                    )}
                   </div>
                   <div className={styles.cfoot}>
                     <div className={styles.crow}>
@@ -759,11 +768,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                         />
                       </span>
                     </div>
-                    {t.channel === 'whatsapp' && (
-                      <div style={{ marginTop: 4 }}>
-                        <ApprovalBadge t={t} compact />
-                      </div>
-                    )}
                     <div className={`${styles.cmetrics} tnum`}>
                       {t.avgOpen}% open · {t.avgClick}% click
                     </div>
@@ -1151,7 +1155,7 @@ function TemplateDrawer({
               {t.category}
             </span>
             {approval && (
-              <span className={`astatus astatus--${approval}`}>{APPROVAL_LABEL[approval]}</span>
+              <span className={`astatus tstat--${approval}`}>{APPROVAL_LABEL[approval]}</span>
             )}
           </div>
           <p className={styles.dUpdated}>Updated {t.updated}</p>
@@ -1192,7 +1196,7 @@ function TemplateDrawer({
                 <p className={`adrawer__eyebrow ${styles.dEyebrow}`} style={{ margin: 0 }}>
                   Approval status
                 </p>
-                <span className={`astatus astatus--${approval}`}>{APPROVAL_LABEL[approval]}</span>
+                <span className={`astatus tstat--${approval}`}>{APPROVAL_LABEL[approval]}</span>
               </div>
               <p
                 style={{

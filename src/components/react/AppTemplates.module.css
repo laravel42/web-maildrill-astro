@@ -305,6 +305,19 @@
   padding: 4px 8px;
   border-radius: 20px;
 }
+/* WhatsApp approval pill pinned inside the card header (gallery preview / compact band). */
+.gApproval {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 2;
+}
+.cApproval {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  z-index: 2;
+}
 .ov {
   position: absolute;
   inset: 0;
