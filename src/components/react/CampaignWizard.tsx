@@ -1,20 +1,43 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import type { ChannelType } from '@/types/app';
+import { api } from '@/lib/app/api';
+import type { ApiTemplate } from '@/lib/app/template-map';
+import type { ChannelSenders } from '@/lib/app/channel-senders';
+import { channelSender } from '@/lib/app/channel-senders';
 import Icon from './Icon';
+import GalleryPreview, { FauxEmail, type GalleryPreviewData } from './shared/GalleryPreview';
+import TemplatePreview from './shared/TemplatePreview';
 import { CHANNEL, CHANNEL_ORDER, channelLabel } from './shared/channels';
 import { formatDuration, smsSegments, voiceSeconds } from './shared/messaging';
 import { useEscapeClose } from './shared/useEscapeClose';
 import {
-  audienceLabelOf,
+  audiencesLabelOf,
   buildReviewRows,
   buildStepDefs,
   CONTENT_SUB,
-  SENDER,
+  getStepBlockedReason,
+  isWizardStepBlocked,
+  partitionAudienceIds,
   templateCard,
+  templateKey,
+  fixtureTemplateMessage,
   TEMPLATES,
+  type ReviewRow,
 } from './CampaignWizard.logic';
-import type { Props, Schedule, Step, Template } from './CampaignWizard.types';
+import { prepareAudiencesForChannel } from '@/lib/app/audience-map';
+import type { AudienceChoice, Props, Schedule, Step, Template } from './CampaignWizard.types';
 import styles from './CampaignWizard.module.css';
+import DatePicker from './shared/DatePicker';
+import TimePicker from './shared/TimePicker';
+import {
+  combineScheduledParts,
+  defaultScheduledParts,
+  isScheduledInFuture,
+  nextValidScheduleTime,
+  partsFromScheduledAt,
+  type ScheduleDate,
+  type ScheduleTime,
+} from '@/lib/app/schedule';
 
 export type { Props };
 
@@ -27,6 +50,193 @@ export type { Props };
 
 const INDIGO = '#4f46e5';
 
+/** Shell/preview scale — modal frame, header, footer, and live preview are ~30% larger than the original 960×600 design. Step nav and form inputs stay at original sizes. */
+const WZ = 1.3;
+const wz = (n: number) => Math.round(n * WZ * 10) / 10;
+
+/** Phone mock width cap — narrower shell (~78% of the prior 256px shell); height fills the preview column. */
+const PREVIEW_PHONE_W = wz(200);
+
+const DEFAULT_LIST_COLOR = '#4f46e5';
+
+function initialAudienceSet(ids?: string[]): Set<string> {
+  return new Set((ids ?? []).filter(Boolean));
+}
+
+function toGalleryPreviewData(t: Template): GalleryPreviewData {
+  return {
+    name: t.name,
+    thumb: t.thumb,
+    fg: t.fg,
+    accent: t.accent,
+    title: t.title,
+    kicker: t.kicker,
+    cta: t.cta,
+  };
+}
+
+/* Compact multi-select card for Audience step 2 (3-column grid). */
+function AudienceOption({
+  id,
+  selected,
+  onToggle,
+  title,
+  sub,
+  count,
+}: {
+  id: string;
+  selected: boolean;
+  onToggle: (id: string) => void;
+  title: string;
+  sub: string;
+  count: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={selected}
+      className={`${styles.audRow}${selected ? ` ${styles.audRowOn}` : ''}`}
+      onClick={() => onToggle(id)}
+    >
+      <span className={`${styles.audBadge} tnum`}>{count}</span>
+      <span className={styles.audRowTop}>
+        <span className={`${styles.audBox}${selected ? ` ${styles.audBoxOn}` : ''}`} aria-hidden="true">
+          {selected && <Icon name="check" size={12} stroke={3.5} />}
+        </span>
+        <span className={styles.audTitle}>{title}</span>
+      </span>
+      {sub ? <span className={styles.audSub}>{sub}</span> : null}
+    </button>
+  );
+}
+
+function AudienceSection({
+  heading,
+  items,
+  emptyMessage,
+  selectedIds,
+  onToggle,
+}: {
+  heading: string;
+  items: AudienceChoice[];
+  emptyMessage: string;
+  selectedIds: Set<string>;
+  onToggle: (id: string) => void;
+}) {
+  return (
+    <section className={styles.audSection}>
+      <h4 className={styles.audSectionHeading}>{heading}</h4>
+      {items.length === 0 ? (
+        <p className={styles.audSectionEmpty}>{emptyMessage}</p>
+      ) : (
+        <div className={styles.audGrid} role="group" aria-label={heading}>
+          {items.map((a) => (
+            <AudienceOption
+              key={a.id}
+              id={a.id}
+              selected={selectedIds.has(a.id)}
+              onToggle={onToggle}
+              title={a.name}
+              sub={a.desc}
+              count={a.count == null ? '—' : a.count.toLocaleString()}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** Channel identity badge for the review step — matches step-1 picker styling. */
+function ReviewChannelBadge({ channel }: { channel: ChannelType }) {
+  const m = CHANNEL[channel];
+  return (
+    <span className={styles.reviewChannelBadge} data-channel={channel}>
+      <Icon name={m.icon} size={14} stroke={2.2} />
+      {m.label}
+    </span>
+  );
+}
+
+/** One list or segment badge for the review step audience row. */
+function ReviewAudienceBadge({ audience }: { audience: AudienceChoice }) {
+  if (audience.kind === 'list') {
+    const c = audience.color || DEFAULT_LIST_COLOR;
+    return (
+      <span
+        className={styles.reviewListBadge}
+        style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c }}
+      >
+        <span className={styles.reviewListDot} style={{ background: c }} />
+        {audience.name}
+      </span>
+    );
+  }
+  return (
+    <span className={styles.reviewSegmentBadge}>
+      <Icon name="filter" size={11} stroke={2.2} />
+      {audience.name}
+    </span>
+  );
+}
+
+function ReviewAudienceBadges({ audiences }: { audiences: AudienceChoice[] }) {
+  if (audiences.length === 0) {
+    return <span className={styles.reviewValue}>No audience selected</span>;
+  }
+  return (
+    <div className={styles.reviewAudienceBadges}>
+      {audiences.map((a) => (
+        <ReviewAudienceBadge key={a.id} audience={a} />
+      ))}
+    </div>
+  );
+}
+
+function ReviewRowValue({ row, live }: { row: ReviewRow; live: boolean }) {
+  if (row.kind === 'channel') return <ReviewChannelBadge channel={row.channel} />;
+  if (row.kind === 'audience') {
+    if (!live) return <span className={styles.reviewValue}>Preview audience</span>;
+    return <ReviewAudienceBadges audiences={row.audiences} />;
+  }
+  return <span className={styles.reviewValue}>{row.value}</span>;
+}
+
+/* Selectable radio card used for Schedule (step 4). */
+function RadioCard({
+  selected,
+  onSelect,
+  title,
+  sub,
+  right,
+}: {
+  selected: boolean;
+  onSelect: () => void;
+  title: string;
+  sub: string;
+  right?: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      className={`${styles.radioCard}${selected ? ` ${styles.radioCardOn}` : ''}`}
+      onClick={onSelect}
+    >
+      <span className={`${styles.radioDot}${selected ? ` ${styles.radioDotOn}` : ''}`} aria-hidden="true">
+        <span className={`${styles.radioDotInner}${selected ? ` ${styles.radioDotInnerOn}` : ''}`} />
+      </span>
+      <div className={styles.radioBody}>
+        <div className={styles.radioTitle}>{title}</div>
+        <div className={styles.radioSub}>{sub}</div>
+      </div>
+      {right}
+    </button>
+  );
+}
+
 /* Read-only phone status bar (signal + battery), shared by every phone mock. */
 function PhoneStatusBar({ color }: { color: string }) {
   return (
@@ -35,8 +245,8 @@ function PhoneStatusBar({ color }: { color: string }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '8px 18px 3px',
-        fontSize: 11,
+        padding: `${wz(8)}px ${wz(18)}px ${wz(3)}px`,
+        fontSize: wz(11),
         fontWeight: 600,
         color,
       }}
@@ -59,111 +269,121 @@ function PhoneStatusBar({ color }: { color: string }) {
   );
 }
 
-/* Selectable radio card used for Audience (step 2) and Schedule (step 4). */
-function RadioCard({
-  selected,
-  onSelect,
-  title,
-  sub,
-  right,
-}: {
-  selected: boolean;
-  onSelect: () => void;
-  title: string;
-  sub: string;
-  right?: ReactNode;
-}) {
-  return (
-    <div
-      onClick={onSelect}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        border: `1.5px solid ${selected ? INDIGO : 'var(--border2)'}`,
-        background: selected ? 'var(--accent-tint)' : 'var(--surface)',
-        borderRadius: 12,
-        padding: '13px 15px',
-        marginBottom: 11,
-        cursor: 'pointer',
-      }}
-    >
-      <span
-        style={{
-          width: 18,
-          height: 18,
-          flex: 'none',
-          borderRadius: '50%',
-          border: `1.6px solid ${selected ? INDIGO : 'var(--muted2)'}`,
-          background: selected ? INDIGO : 'var(--surface)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <span
-          style={{
-            width: 7,
-            height: 7,
-            borderRadius: '50%',
-            background: 'var(--surface)',
-            opacity: selected ? 1 : 0,
-          }}
-        />
-      </span>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 600 }}>{title}</div>
-        <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>{sub}</div>
-      </div>
-      {right}
-    </div>
-  );
-}
-
 export default function CampaignWizard({
   mode,
   initialChannel = 'email',
   initialName = '',
-  initialAudienceId = null,
+  initialSubject = '',
+  initialAudienceIds = [],
   initialTemplateId = null,
   initialMessage = '',
   initialSchedule = 'now',
+  initialScheduledAt = null,
   audiences,
   templates: templateChoices,
+  senders,
   onClose,
   onDone,
-  onOpenBuilder,
 }: Props) {
   const [step, setStep] = useState<Step>(1);
   const [channel, setChannel] = useState<ChannelType>(initialChannel);
   const [name, setName] = useState<string>(initialName);
-  const [audienceId, setAudienceId] = useState<string | null>(initialAudienceId);
+  const [subject, setSubject] = useState<string>(initialSubject);
+  const [audienceIds, setAudienceIds] = useState<Set<string>>(() => initialAudienceSet(initialAudienceIds));
   const [message, setMessage] = useState<string>(initialMessage);
-  // Templates are selected by name in the UI; resolve the saved id to its name.
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(
-    () => templateChoices?.find((t) => t.id === initialTemplateId)?.name ?? null,
-  );
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState<string | null>(() => {
+    const match = templateChoices?.find((t) => t.id === initialTemplateId);
+    return match ? templateKey({ id: match.id, name: match.name, thumb: '', cat: '' }) : null;
+  });
   const [schedule, setSchedule] = useState<Schedule>(initialSchedule);
+  const initialParts =
+    initialSchedule === 'later'
+      ? (partsFromScheduledAt(initialScheduledAt) ?? defaultScheduledParts())
+      : defaultScheduledParts();
+  const [scheduledDate, setScheduledDate] = useState<ScheduleDate>(initialParts.date);
+  const [scheduledTime, setScheduledTime] = useState<ScheduleTime>(initialParts.time);
   const [replyTo, setReplyTo] = useState<string>('');
+  const [resolvedSenders, setResolvedSenders] = useState<ChannelSenders | undefined>(senders);
+
+  useEffect(() => {
+    setResolvedSenders(senders);
+  }, [senders]);
+
+  /* SSR may omit senders; fetch from the BFF when we're in a live workspace. */
+  useEffect(() => {
+    if (senders || audiences === undefined) return;
+    let alive = true;
+    void api
+      .get<ChannelSenders>('channels/senders')
+      .then((data) => {
+        if (alive) setResolvedSenders(data);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [senders, audiences]);
+
+  const activeSender = channelSender(channel, resolvedSenders);
 
   // Escape closes the modal.
   useEscapeClose(onClose);
 
   const isEmail = channel === 'email';
+  const channelMeta = CHANNEL[channel];
 
   /* Live workspace data when the caller supplied it, else the preview fixtures —
      the same fallback the campaigns board uses when it has no session. */
   const live = audiences !== undefined || templateChoices !== undefined;
-  const audienceList = audiences ?? [];
-  const selectedAudience = audienceList.find((a) => a.id === audienceId) ?? null;
-  const audienceLabel = live
-    ? audienceLabelOf(selectedAudience)
-    : 'Preview audience';
+  const audienceList = useMemo(
+    () => (live ? prepareAudiencesForChannel(audiences ?? [], channel) : []),
+    [audiences, channel, live],
+  );
+  const listAudiences = audienceList.filter((a) => a.kind === 'list');
+  const segmentAudiences = audienceList.filter((a) => a.kind === 'segment');
+  const selectedAudiences = audienceList.filter((a) => audienceIds.has(a.id));
+  const audienceLabel = live ? audiencesLabelOf(selectedAudiences) : 'Preview audience';
+
+  /* Drop selections that are hidden for this channel (e.g. zero phone reach). */
+  useEffect(() => {
+    if (!live) return;
+    const visible = new Set(audienceList.map((a) => a.id));
+    setAudienceIds((prev) => {
+      const next = new Set([...prev].filter((id) => visible.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [audienceList, live]);
+
+  /* When editing a template-backed non-email campaign, hydrate the message body. */
+  useEffect(() => {
+    if (!live || channel === 'email' || !initialTemplateId || initialMessage.trim()) return;
+    let alive = true;
+    void (async () => {
+      try {
+        const full = await api.get<ApiTemplate>(`templates/${initialTemplateId}`);
+        if (alive && full.text?.trim()) setMessage(full.text);
+      } catch {
+        /* preview fixtures / missing template — leave message as-is */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [live, channel, initialTemplateId, initialMessage]);
+
+  const toggleAudience = (id: string) => {
+    setAudienceIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const templates: Template[] = live
     ? (templateChoices ?? []).filter((t) => t.channel === channel).map(templateCard)
     : TEMPLATES[channel];
-  const selTpl = templates.find((t) => t.name === selectedTemplate) ?? null;
+  const selTpl = templates.find((t) => templateKey(t) === selectedTemplateKey) ?? null;
 
   // Non-email content metrics.
   const messageLen = message.length;
@@ -173,14 +393,6 @@ export default function CampaignWizard({
   const count2Label = channel === 'voice' ? 'sec (est.)' : 'segment(s)';
   const callDuration = formatDuration(voiceSecs);
   const msgPreview = message || 'Hi Andrea, your message preview will appear here as you type…';
-
-  // Email live-preview values.
-  const prevHeaderBg = selTpl ? selTpl.thumb : 'linear-gradient(150deg,#4f46e5,#6d28d9)';
-  const prevHeaderFg = selTpl ? (selTpl.fg ?? '#fff') : '#fff';
-  const prevTitle = selTpl ? (selTpl.title ?? selTpl.name) : 'SUMMER SALE';
-  const prevKicker = selTpl ? (selTpl.kicker ?? '') : 'UP TO 50% OFF';
-  const prevCta = selTpl ? (selTpl.cta ?? 'Shop now') : 'SHOP NOW';
-  const prevSubject = selTpl ? selTpl.name : 'Discover our best sellers this season';
 
   // Phone mock chrome.
   const statusBg = channel === 'voice' ? '#26221d' : channel === 'whatsapp' ? '#075e54' : '#f6f6f7';
@@ -194,7 +406,9 @@ export default function CampaignWizard({
     step === 5
       ? mode === 'edit'
         ? 'Save changes'
-        : 'Schedule campaign'
+        : schedule === 'now'
+          ? 'Send campaign'
+          : 'Schedule campaign'
       : step === 4
         ? 'Continue to review →'
         : 'Continue →';
@@ -204,54 +418,133 @@ export default function CampaignWizard({
   const doneMsg =
     mode === 'edit'
       ? `Campaign "${name || 'Untitled'}" updated`
-      : 'Campaign scheduled';
+      : schedule === 'now'
+        ? 'Campaign queued for delivery'
+        : 'Campaign scheduled';
 
-  /* Email sends a saved template; the other channels send the typed message. */
-  const draftContent = isEmail ? undefined : message.trim() ? { text: message } : undefined;
+  /* Email: template supplies html; subject is campaign metadata (step 1). Other
+     channels send the typed message. Both persist under the campaign's `content`. */
+  const draftContent = isEmail
+    ? subject.trim()
+      ? { subject: subject.trim() }
+      : undefined
+    : message.trim()
+      ? { text: message }
+      : undefined;
 
-  /* Why this campaign cannot be sent yet, or null when it can. Checked up front
-     so the wizard explains the problem instead of the send failing afterwards. */
-  const blockedReason =
-    !live || mode === 'edit'
-      ? null
-      : !selectedAudience
-        ? 'Pick an audience before sending.'
-        : !selTpl?.id && !draftContent
-          ? isEmail
-            ? 'Choose a template — an email campaign needs content to send.'
-            : 'Write a message before sending.'
-          : null;
+  const selectSchedule = (next: Schedule) => {
+    setSchedule(next);
+    if (next === 'later') {
+      const parts = defaultScheduledParts();
+      setScheduledDate(parts.date);
+      setScheduledTime(parts.time);
+    }
+  };
+
+  /* When the selected date leaves the current time in the past, bump to the next valid slot. */
+  useEffect(() => {
+    if (schedule !== 'later') return;
+    if (isScheduledInFuture(scheduledDate, scheduledTime)) return;
+    const next = nextValidScheduleTime(scheduledDate);
+    if (next && next !== scheduledTime) setScheduledTime(next);
+  }, [schedule, scheduledDate, scheduledTime]);
+
+  const scheduledAt =
+    schedule === 'later' ? combineScheduledParts(scheduledDate, scheduledTime) : null;
+
+  const stepBlockedReason = getStepBlockedReason({
+    step,
+    name,
+    subject,
+    channel,
+    audienceIds,
+    audienceList,
+    message,
+    selTpl,
+    live,
+    mode,
+    schedule,
+    scheduledDate,
+    scheduledTime,
+  });
+  const primaryDisabled = isWizardStepBlocked({
+    step,
+    name,
+    subject,
+    channel,
+    audienceIds,
+    audienceList,
+    message,
+    selTpl,
+    live,
+    mode,
+    schedule,
+    scheduledDate,
+    scheduledTime,
+  });
 
   const handlePrimary = () => {
+    if (primaryDisabled) return;
     if (step < 5) {
       setStep((s) => (s + 1) as Step);
       return;
     }
-    if (blockedReason) return;
+    const { listIds, segmentIds } = partitionAudienceIds(audienceList, audienceIds);
+    const audienceIdsArr = [...listIds, ...segmentIds];
     onDone(doneMsg, {
       name,
       channel,
-      listId: selectedAudience?.kind === 'list' ? selectedAudience.id : undefined,
-      segmentId: selectedAudience?.kind === 'segment' ? selectedAudience.id : undefined,
+      listIds,
+      segmentIds,
+      listId: listIds[0],
+      segmentId: segmentIds[0],
       templateId: selTpl?.id,
-      content: draftContent,
+      content: draftContent ? { ...draftContent, audienceIds: audienceIdsArr } : { audienceIds: audienceIdsArr },
       audienceLabel,
       schedule,
+      scheduledAt,
     });
   };
 
   const handleBack = () => setStep((s) => (s > 1 ? ((s - 1) as Step) : s));
 
   const selectTemplate = (t: Template) => {
-    setSelectedTemplate(t.name);
-    if (channel !== 'email') {
-      setMessage(`Hi [first_name], ${t.name} — ${t.cta ?? 'take a look'}. mldr.io/go`);
+    setSelectedTemplateKey(templateKey(t));
+    if (channel === 'email') return;
+
+    if (live && t.id) {
+      void (async () => {
+        try {
+          const full = await api.get<ApiTemplate>(`templates/${t.id}`);
+          setMessage(full.text?.trim() ?? '');
+        } catch {
+          setMessage('');
+        }
+      })();
+      return;
     }
+
+    setMessage(fixtureTemplateMessage(t));
   };
 
-  const blankLabel = `Blank ${isEmail ? 'email' : channelLabel(channel)}`;
+  const changeChannel = (next: ChannelType) => {
+    if (next === channel) return;
+    setChannel(next);
+    setSelectedTemplateKey(null);
+    setMessage('');
+  };
 
-  const reviewRows = buildReviewRows(name, channel, audienceLabel, selectedTemplate, schedule);
+  const reviewRows = buildReviewRows(
+    name,
+    subject,
+    channel,
+    selectedAudiences,
+    selTpl?.name ?? null,
+    schedule,
+    scheduledDate,
+    scheduledTime,
+    resolvedSenders,
+  );
 
   const labelStyle: CSSProperties = {
     display: 'block',
@@ -280,7 +573,7 @@ export default function CampaignWizard({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 32,
+        padding: wz(32),
         animation: 'fade .16s ease',
       }}
     >
@@ -290,12 +583,12 @@ export default function CampaignWizard({
         aria-modal="true"
         aria-label={title}
         style={{
-          width: 960,
+          width: wz(960),
           maxWidth: '100%',
-          height: 600,
+          height: wz(600),
           maxHeight: '100%',
           background: 'var(--surface)',
-          borderRadius: 20,
+          borderRadius: wz(20),
           boxShadow: '0 24px 60px rgba(28,25,23,.28)',
           overflow: 'hidden',
           display: 'flex',
@@ -309,27 +602,22 @@ export default function CampaignWizard({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '18px 25px',
+            padding: `${wz(12)}px ${wz(25)}px`,
             borderBottom: '1px solid var(--divider)',
           }}
         >
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 16 }}>{title}</div>
-            <div className="tnum" style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>
-              Step {step} of 5
-            </div>
-          </div>
+          <div style={{ fontWeight: 600, fontSize: wz(15) }}>{title}</div>
           <button
             type="button"
             onClick={onClose}
             className="sbtn"
             aria-label="Close"
             style={{
-              width: 31,
-              height: 31,
+              width: wz(28),
+              height: wz(28),
               border: 'none',
               background: 'var(--surface2)',
-              borderRadius: 9,
+              borderRadius: wz(8),
               cursor: 'pointer',
               color: 'var(--text4)',
               display: 'flex',
@@ -337,68 +625,61 @@ export default function CampaignWizard({
               justifyContent: 'center',
             }}
           >
-            <Icon name="x" size={16} />
+            <Icon name="x" size={wz(15)} />
           </button>
         </div>
 
-        {/* body */}
-        <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr 300px', flex: 1, minHeight: 0 }}>
-          {/* left step rail */}
-          <div
-            style={{
-              padding: '26px 21px',
-              borderRight: '1px solid var(--divider)',
-              background: 'var(--surface2)',
-              overflowY: 'auto',
-            }}
-          >
+        {/* step index — read-only; use footer Back/Next to navigate */}
+        <nav className={styles.stepNav} aria-label="Campaign steps">
+          <ol className={styles.stepList}>
             {stepDefs.map(([sTitle, sSub], i) => {
               const n = (i + 1) as Step;
               const done = n < step;
               const active = n === step;
+              const itemClass = [
+                styles.stepItem,
+                active ? styles.stepItemActive : '',
+                done ? styles.stepItemDone : '',
+              ]
+                .filter(Boolean)
+                .join(' ');
               return (
-                <div
-                  key={sTitle}
-                  onClick={() => setStep(n)}
-                  style={{ display: 'flex', gap: 11, marginBottom: 22, cursor: 'pointer' }}
-                >
-                  <div
-                    style={{
-                      width: 25,
-                      height: 25,
-                      flex: 'none',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 12,
-                      fontWeight: 600,
-                      background: active ? INDIGO : done ? '#e7f6ec' : 'var(--surface)',
-                      color: active ? '#fff' : done ? '#15803d' : 'var(--muted)',
-                      border: `1.5px solid ${active ? INDIGO : done ? '#bbe6c8' : 'var(--border2)'}`,
-                    }}
-                  >
+                <li key={sTitle} className={itemClass} aria-current={active ? 'step' : undefined}>
+                  <span className={styles.stepBadge} aria-hidden="true">
                     {done ? '✓' : String(n)}
-                  </div>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: active || done ? 'var(--text)' : 'var(--text4)',
-                      }}
-                    >
-                      {sTitle}
-                    </div>
-                    <div style={{ fontSize: 11.5, color: 'var(--muted)', marginTop: 1 }}>{sSub}</div>
-                  </div>
-                </div>
+                  </span>
+                  <span className={styles.stepText}>
+                    <span className={styles.stepTitle}>{sTitle}</span>
+                    <span className={styles.stepSub}>{sSub}</span>
+                  </span>
+                  {i < stepDefs.length - 1 && (
+                    <span className={styles.stepConnector} aria-hidden="true" />
+                  )}
+                </li>
               );
             })}
-          </div>
+          </ol>
+        </nav>
 
+        {/* body — form + preview */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `1fr ${wz(300)}px`,
+            flex: 1,
+            minHeight: 0,
+          }}
+        >
           {/* center step form */}
-          <div style={{ padding: '28px 30px', overflowY: 'auto' }}>
+          <div
+            style={{
+              padding: '28px 30px',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 0,
+            }}
+          >
             {step === 1 && (
               <>
                 <h3 style={h3Style}>Let&rsquo;s start with the basics</h3>
@@ -406,38 +687,22 @@ export default function CampaignWizard({
                   Choose a channel, name your campaign and set the sender.
                 </p>
                 <label style={labelStyle}>Channel</label>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 8,
-                    marginBottom: 18,
-                  }}
-                >
+                <div className={styles.channelGrid} role="radiogroup" aria-label="Channel">
                   {CHANNEL_ORDER.map((c) => {
                     const on = channel === c;
                     return (
-                      <div
+                      <button
                         key={c}
-                        onClick={() => setChannel(c)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 7,
-                          border: `1.5px solid ${on ? `var(--ch-${c})` : 'var(--border2)'}`,
-                          background: on ? `var(--ch-${c}-tint)` : 'var(--surface)',
-                          color: on ? `var(--ch-${c})` : 'var(--text3)',
-                          borderRadius: 10,
-                          padding: 10,
-                          fontSize: 13,
-                          fontWeight: on ? 600 : 500,
-                          cursor: 'pointer',
-                        }}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        data-channel={c}
+                        className={[styles.channelBtn, on ? styles.channelBtnOn : ''].filter(Boolean).join(' ')}
+                        onClick={() => changeChannel(c)}
                       >
                         <Icon name={CHANNEL[c].icon} size={15} stroke={2.2} />
                         {channelLabel(c)}
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -457,7 +722,27 @@ export default function CampaignWizard({
                     color: 'var(--text)',
                   }}
                 />
-                <label style={labelStyle}>{SENDER[channel].label}</label>
+                {isEmail && (
+                  <>
+                    <label style={labelStyle}>Email subject</label>
+                    <input
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                      placeholder="Your summer sale starts now ☀️"
+                      style={{
+                        width: '100%',
+                        border: '1px solid var(--border2)',
+                        borderRadius: 10,
+                        padding: '10px 12px',
+                        fontSize: 13.5,
+                        marginBottom: 18,
+                        background: 'var(--surface)',
+                        color: 'var(--text)',
+                      }}
+                    />
+                  </>
+                )}
+                <label style={labelStyle}>{activeSender.label}</label>
                 <div
                   style={{
                     border: '1px solid var(--border2)',
@@ -471,7 +756,7 @@ export default function CampaignWizard({
                     color: 'var(--text2)',
                   }}
                 >
-                  {SENDER[channel].value}
+                  {activeSender.value}
                   <span style={{ color: 'var(--muted)' }}>▾</span>
                 </div>
                 {isEmail && (
@@ -502,7 +787,7 @@ export default function CampaignWizard({
             {step === 2 && (
               <>
                 <h3 style={h3Style}>Choose your audience</h3>
-                <p style={pStyle}>Pick the list or segment to send to.</p>
+                <p style={pStyle}>Pick one or more lists or segments to send to.</p>
                 {audienceList.length === 0 ? (
                   <p
                     style={{
@@ -517,23 +802,22 @@ export default function CampaignWizard({
                     with no list or segment reaches nobody.
                   </p>
                 ) : (
-                  audienceList.map((a) => (
-                    <RadioCard
-                      key={a.id}
-                      selected={audienceId === a.id}
-                      onSelect={() => setAudienceId(a.id)}
-                      title={a.name}
-                      sub={a.desc}
-                      right={
-                        <span
-                          className="tnum"
-                          style={{ fontSize: 13, fontWeight: 600, color: 'var(--text3)' }}
-                        >
-                          {a.count == null ? '—' : a.count.toLocaleString()}
-                        </span>
-                      }
+                  <div className={styles.audList}>
+                    <AudienceSection
+                      heading="Lists"
+                      items={listAudiences}
+                      emptyMessage="No lists yet. Create one under Audience → Lists."
+                      selectedIds={audienceIds}
+                      onToggle={toggleAudience}
                     />
-                  ))
+                    <AudienceSection
+                      heading="Segments"
+                      items={segmentAudiences}
+                      emptyMessage="No segments yet. Create one under Audience → Segments."
+                      selectedIds={audienceIds}
+                      onToggle={toggleAudience}
+                    />
+                  </div>
                 )}
               </>
             )}
@@ -542,7 +826,9 @@ export default function CampaignWizard({
               <>
                 <h3 style={h3Style}>{contentSub}</h3>
                 <p style={{ ...pStyle, margin: '0 0 18px' }}>
-                  Start from a template or build from scratch.
+                  {isEmail
+                    ? 'Choose a saved email template for this campaign.'
+                    : 'Start from a template or build from scratch.'}
                 </p>
                 <label style={{ ...labelStyle, marginBottom: 8 }}>{channelLabel(channel)} templates</label>
                 {templates.length === 0 && (
@@ -555,104 +841,35 @@ export default function CampaignWizard({
                       margin: '0 0 16px',
                     }}
                   >
-                    No saved {channelLabel(channel)} templates yet. Create one under Templates,
-                    or write the message below.
+                    {isEmail
+                      ? `No saved ${channelLabel(channel)} templates yet. Create one under Templates before continuing.`
+                      : `No saved ${channelLabel(channel)} templates yet. Create one under Templates, or write the message below.`}
                   </p>
                 )}
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 12,
-                    marginBottom: 16,
-                  }}
-                >
+                <div className={styles.tplGrid}>
                   {templates.map((t) => {
-                    const sel = selectedTemplate === t.name;
+                    const sel = selectedTemplateKey === templateKey(t);
                     return (
-                      <div
-                        key={t.name}
+                      <button
+                        key={templateKey(t)}
+                        type="button"
+                        className={`${styles.tplCard}${sel ? ` ${styles.tplCardOn}` : ''}`}
+                        aria-pressed={sel}
                         onClick={() => selectTemplate(t)}
-                        className={styles.cwCrd}
-                        style={{
-                          border: `1.5px solid ${sel ? INDIGO : 'var(--border2)'}`,
-                          background: sel ? 'var(--accent-tint)' : 'var(--surface)',
-                          borderRadius: 12,
-                          padding: 16,
-                          cursor: 'pointer',
-                        }}
                       >
-                        <div
-                          style={{
-                            height: 56,
-                            borderRadius: 8,
-                            background: t.thumb,
-                            marginBottom: 11,
-                          }}
-                        />
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{t.name}</div>
-                        <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>
-                          {sel ? 'Selected' : t.cat}
+                        <div className={styles.tplPreview}>
+                          <GalleryPreview channel={channel} t={toGalleryPreviewData(t)} />
                         </div>
-                      </div>
+                        <div className={styles.tplMeta}>
+                          <div className={styles.tplName}>{t.name}</div>
+                          <div className={styles.tplSub}>{sel ? 'Selected' : t.cat}</div>
+                        </div>
+                      </button>
                     );
                   })}
-                  <div
-                    onClick={() => setSelectedTemplate(null)}
-                    className={styles.cwCrd}
-                    style={{
-                      border: '1.5px dashed var(--border2)',
-                      borderRadius: 12,
-                      padding: 16,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--muted)',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 30,
-                        height: 30,
-                        borderRadius: 9,
-                        background: 'var(--surface2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginBottom: 9,
-                        color: 'var(--muted)',
-                      }}
-                    >
-                      <Icon name="plus" size={16} stroke={2.2} />
-                    </div>
-                    <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text4)' }}>
-                      {blankLabel}
-                    </div>
-                  </div>
                 </div>
 
-                {isEmail ? (
-                  <button
-                    type="button"
-                    onClick={() => onOpenBuilder?.(channel, name || 'Untitled')}
-                    className="sbtn"
-                    style={{
-                      width: '100%',
-                      background: 'var(--surface)',
-                      border: '1px solid var(--border2)',
-                      padding: 10,
-                      borderRadius: 10,
-                      fontWeight: 600,
-                      fontSize: 13,
-                      color: 'var(--text2)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Open in builder →
-                  </button>
-                ) : (
+                {!isEmail && (
                   <>
                     <label style={labelStyle}>Message</label>
                     <textarea
@@ -694,59 +911,45 @@ export default function CampaignWizard({
             )}
 
             {step === 4 && (
-              <>
+              <div className={styles.scheduleStep}>
                 <h3 style={h3Style}>When should this send?</h3>
-                <p style={pStyle}>Send immediately or schedule for later.</p>
-                <RadioCard
-                  selected={schedule === 'now'}
-                  onSelect={() => setSchedule('now')}
-                  title="Send now"
-                  sub="Delivery starts immediately"
-                />
-                <RadioCard
-                  selected={schedule === 'later'}
-                  onSelect={() => setSchedule('later')}
-                  title="Schedule for later"
-                  sub="Pick a date and time"
-                />
+                <p className={styles.scheduleIntro} style={pStyle}>
+                  Send immediately or schedule for later.
+                </p>
+                <div role="radiogroup" aria-label="Delivery schedule">
+                  <RadioCard
+                    selected={schedule === 'now'}
+                    onSelect={() => selectSchedule('now')}
+                    title="Send now"
+                    sub="Delivery starts immediately"
+                  />
+                  <RadioCard
+                    selected={schedule === 'later'}
+                    onSelect={() => selectSchedule('later')}
+                    title="Schedule for later"
+                    sub="Pick a date and time"
+                  />
+                </div>
                 {schedule === 'later' && (
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: 12,
-                      marginTop: 14,
-                    }}
-                  >
-                    <div>
-                      <label style={{ ...labelStyle, fontSize: 12 }}>Date</label>
-                      <div
-                        style={{
-                          border: '1px solid var(--border2)',
-                          borderRadius: 10,
-                          padding: '10px 12px',
-                          fontSize: 13,
-                        }}
-                      >
-                        Jul 15, 2026
-                      </div>
-                    </div>
-                    <div>
-                      <label style={{ ...labelStyle, fontSize: 12 }}>Time</label>
-                      <div
-                        style={{
-                          border: '1px solid var(--border2)',
-                          borderRadius: 10,
-                          padding: '10px 12px',
-                          fontSize: 13,
-                        }}
-                      >
-                        09:00 AM
-                      </div>
-                    </div>
+                  <div className={styles.scheduleGrid}>
+                    <DatePicker
+                      id="campaign-schedule-date"
+                      label="Date"
+                      value={scheduledDate}
+                      onChange={setScheduledDate}
+                      inline
+                    />
+                    <TimePicker
+                      id="campaign-schedule-time"
+                      label="Time"
+                      value={scheduledTime}
+                      onChange={setScheduledTime}
+                      referenceDate={scheduledDate}
+                      inline
+                    />
                   </div>
                 )}
-              </>
+              </div>
             )}
 
             {step === 5 && (
@@ -754,9 +957,9 @@ export default function CampaignWizard({
                 <h3 style={h3Style}>Review your campaign</h3>
                 <p style={pStyle}>Double-check everything before you send.</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  {reviewRows.map(([label, value]) => (
+                  {reviewRows.map((row) => (
                     <div
-                      key={label}
+                      key={row.label}
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -766,137 +969,92 @@ export default function CampaignWizard({
                         gap: 16,
                       }}
                     >
-                      <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>{label}</span>
-                      <span style={{ fontSize: 13, fontWeight: 500, textAlign: 'right' }}>
-                        {value}
-                      </span>
+                      <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>{row.label}</span>
+                      <ReviewRowValue row={row} live={live} />
                     </div>
                   ))}
                 </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 9,
-                    marginTop: 18,
-                    padding: '12px 14px',
-                    borderRadius: 10,
-                    background: '#e7f6ec',
-                    color: '#15803d',
-                    fontSize: 12.5,
-                    fontWeight: 500,
-                  }}
-                >
-                  <Icon name="check" size={16} stroke={2.2} />
-                  All checks passed. Ready to schedule.
-                </div>
+                {!stepBlockedReason && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 9,
+                      marginTop: 18,
+                      padding: '12px 14px',
+                      borderRadius: 10,
+                      background: '#e7f6ec',
+                      color: '#15803d',
+                      fontSize: 12.5,
+                      fontWeight: 500,
+                    }}
+                  >
+                    <Icon name="check" size={16} stroke={2.2} />
+                    All checks passed. Ready to schedule.
+                  </div>
+                )}
               </>
             )}
           </div>
 
           {/* right live preview */}
           <div
+            className={styles.previewCol}
             style={{
-              padding: 22,
-              background: 'var(--surface2)',
-              borderLeft: '1px solid var(--divider)',
-              overflowY: 'auto',
+              padding: wz(22),
+              background: `color-mix(in srgb, ${channelMeta.tint} 72%, var(--surface))`,
+              borderLeft: `1px solid color-mix(in srgb, ${channelMeta.color} 28%, var(--divider))`,
             }}
           >
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: 'var(--muted)',
-                letterSpacing: '0.3px',
-                textTransform: 'uppercase',
-                marginBottom: 12,
-              }}
-            >
-              Live preview
-            </div>
-
+            <div className={styles.previewFit}>
             {isEmail ? (
-              /* Email card preview — kept intentionally light (like a mail client). */
-              <div
-                style={{
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                  boxShadow: '0 4px 16px rgba(28,25,23,.12)',
-                }}
-              >
-                <div
-                  style={{
-                    background: prevHeaderBg,
-                    padding: '34px 22px',
-                    textAlign: 'center',
-                    color: prevHeaderFg,
-                  }}
-                >
-                  <div style={{ fontSize: 19, fontWeight: 700, letterSpacing: '0.5px' }}>
-                    {prevTitle}
-                  </div>
-                  {prevKicker && (
-                    <div style={{ fontSize: 12, marginTop: 6, opacity: 0.9 }}>{prevKicker}</div>
+              selTpl ? (
+                <div className={styles.previewEmailLive}>
+                  {selTpl.id && live ? (
+                    <TemplatePreview
+                      id={selTpl.id}
+                      channel="email"
+                      live={live}
+                      fallback={
+                        <FauxEmail t={toGalleryPreviewData(selTpl)} variant="drawer" />
+                      }
+                    />
+                  ) : (
+                    <FauxEmail t={toGalleryPreviewData(selTpl)} variant="drawer" />
                   )}
-                  <div
-                    style={{
-                      display: 'inline-block',
-                      marginTop: 16,
-                      background: '#f6b8a0',
-                      color: '#7c2d12',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      padding: '7px 16px',
-                      borderRadius: 6,
-                    }}
-                  >
-                    {prevCta}
-                  </div>
                 </div>
-                <div style={{ background: '#ffffff', padding: '18px 20px' }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#1c1917' }}>
-                    {prevSubject}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#78716c', lineHeight: 1.5 }}>
-                    Lorem ipsum is simply dummy text of the printing and typesetting industry.
-                  </div>
-                  <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-                    <div style={{ flex: 1, height: 44, background: '#f1f0fb', borderRadius: 7 }} />
-                    <div style={{ flex: 1, height: 44, background: '#f1f0fb', borderRadius: 7 }} />
-                    <div style={{ flex: 1, height: 44, background: '#f1f0fb', borderRadius: 7 }} />
-                  </div>
+              ) : (
+                <div className={styles.previewEmpty}>
+                  <Icon name="mail" size={wz(28)} stroke={1.6} />
+                  <span>Select a template to preview</span>
                 </div>
-              </div>
+              )
             ) : (
               /* Phone mock preview for SMS / WhatsApp / Voice. */
               <div
+                className={styles.previewPhoneShell}
                 style={{
-                  maxWidth: 256,
-                  margin: '0 auto',
+                  width: '100%',
+                  maxWidth: PREVIEW_PHONE_W,
                   background: '#0b0b0f',
-                  borderRadius: 34,
-                  padding: 10,
+                  borderRadius: wz(34),
+                  padding: wz(10),
                   boxShadow: '0 10px 30px rgba(28,25,23,.22)',
                 }}
               >
                 <div
+                  className={styles.previewPhoneScreen}
                   style={{
                     background: statusBg,
-                    borderRadius: 26,
-                    overflow: 'hidden',
-                    minHeight: 360,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    position: 'relative',
+                    borderRadius: wz(26),
                   }}
                 >
                   <div
                     style={{
-                      width: 72,
-                      height: 18,
+                      width: wz(72),
+                      height: wz(18),
                       background: '#000',
-                      borderRadius: '0 0 10px 10px',
+                      borderRadius: `0 0 ${wz(10)}px ${wz(10)}px`,
                       position: 'absolute',
                       top: 0,
                       left: '50%',
@@ -908,63 +1066,70 @@ export default function CampaignWizard({
 
                   {channel === 'voice' && (
                     <div
+                      className={styles.previewChannelBody}
                       style={{
-                        flex: 1,
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '18px 18px 24px',
+                        padding: `${wz(14)}px ${wz(16)}px ${wz(18)}px`,
                         background: 'linear-gradient(180deg,#26221d,#0b0b0f)',
                         color: '#fff',
                       }}
                     >
-                      <div style={{ textAlign: 'center', marginTop: 12 }}>
+                      <div style={{ textAlign: 'center', marginTop: wz(12) }}>
                         <div
                           style={{
-                            fontSize: 10.5,
+                            fontSize: wz(10.5),
                             color: 'rgba(255,255,255,.5)',
                             fontWeight: 600,
                             letterSpacing: '0.4px',
-                            marginBottom: 9,
+                            marginBottom: wz(9),
                           }}
                         >
                           INCOMING CALL
                         </div>
                         <div
                           style={{
-                            width: 70,
-                            height: 70,
+                            width: wz(70),
+                            height: wz(70),
                             borderRadius: '50%',
                             background: 'var(--ch-voice)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: 24,
+                            fontSize: wz(24),
                             fontWeight: 700,
                             margin: '0 auto',
                           }}
                         >
                           M
                         </div>
-                        <div style={{ fontSize: 16, fontWeight: 600, marginTop: 13 }}>Maildrill</div>
+                        <div style={{ fontSize: wz(16), fontWeight: 600, marginTop: wz(13) }}>Maildrill</div>
                         <div
                           className="tnum"
-                          style={{ fontSize: 11.5, color: 'rgba(255,255,255,.55)', marginTop: 4 }}
+                          style={{ fontSize: wz(11.5), color: 'rgba(255,255,255,.55)', marginTop: wz(4) }}
+                        >
+                          {activeSender.value}
+                        </div>
+                        <div
+                          className="tnum"
+                          style={{ fontSize: wz(10), color: 'rgba(255,255,255,.4)', marginTop: wz(2) }}
                         >
                           {callDuration} · calling…
                         </div>
                       </div>
                       <div style={{ width: '100%' }}>
                         <div
+                          className={styles.previewBubble}
                           style={{
-                            maxWidth: 180,
-                            margin: '0 auto 18px',
+                            maxWidth: wz(180),
+                            margin: `0 auto ${wz(12)}px`,
                             background: 'rgba(255,255,255,.08)',
-                            borderRadius: 12,
-                            padding: '10px 12px',
-                            fontSize: 11,
-                            lineHeight: 1.5,
+                            borderRadius: wz(12),
+                            padding: `${wz(8)}px ${wz(10)}px`,
+                            fontSize: wz(11),
+                            lineHeight: 1.45,
                             color: 'rgba(255,255,255,.85)',
                           }}
                         >
@@ -975,18 +1140,18 @@ export default function CampaignWizard({
                             display: 'flex',
                             justifyContent: 'center',
                             alignItems: 'center',
-                            gap: 18,
+                            gap: wz(18),
+                            flexShrink: 0,
                           }}
                         >
                           <div
+                            className={styles.voiceCallAction}
                             style={{
-                              width: 42,
-                              height: 42,
-                              borderRadius: '50%',
+                              width: wz(42),
+                              height: wz(42),
+                              minWidth: wz(42),
+                              minHeight: wz(42),
                               background: 'rgba(255,255,255,.12)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
                               color: '#fff',
                             }}
                           >
@@ -1005,14 +1170,13 @@ export default function CampaignWizard({
                             </svg>
                           </div>
                           <div
+                            className={styles.voiceCallAction}
                             style={{
-                              width: 50,
-                              height: 50,
-                              borderRadius: '50%',
+                              width: wz(50),
+                              height: wz(50),
+                              minWidth: wz(50),
+                              minHeight: wz(50),
                               background: '#e11d48',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
                               transform: 'rotate(135deg)',
                             }}
                           >
@@ -1021,14 +1185,13 @@ export default function CampaignWizard({
                             </svg>
                           </div>
                           <div
+                            className={styles.voiceCallAction}
                             style={{
-                              width: 42,
-                              height: 42,
-                              borderRadius: '50%',
+                              width: wz(42),
+                              height: wz(42),
+                              minWidth: wz(42),
+                              minHeight: wz(42),
                               background: 'rgba(255,255,255,.12)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
                               color: '#fff',
                             }}
                           >
@@ -1050,10 +1213,13 @@ export default function CampaignWizard({
                   )}
 
                   {channel === 'sms' && (
-                    <div style={{ flex: 1, background: '#e9eaec', display: 'flex', flexDirection: 'column' }}>
+                    <div
+                      className={styles.previewChannelBody}
+                      style={{ background: '#e9eaec', display: 'flex', flexDirection: 'column' }}
+                    >
                       <div
                         style={{
-                          padding: '10px 14px 9px',
+                          padding: `${wz(10)}px ${wz(14)}px ${wz(9)}px`,
                           textAlign: 'center',
                           background: '#f6f6f7',
                           borderBottom: '1px solid rgba(0,0,0,.06)',
@@ -1061,41 +1227,44 @@ export default function CampaignWizard({
                       >
                         <div
                           style={{
-                            width: 32,
-                            height: 32,
+                            width: wz(32),
+                            height: wz(32),
                             borderRadius: '50%',
                             background: '#c7c9cc',
-                            margin: '0 auto 4px',
+                            margin: `0 auto ${wz(4)}px`,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: 12,
+                            fontSize: wz(12),
                             fontWeight: 700,
                             color: '#fff',
                           }}
                         >
                           M
                         </div>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: '#0b0b0f' }}>Maildrill</div>
+                        <div style={{ fontSize: wz(11), fontWeight: 600, color: '#0b0b0f' }}>Maildrill</div>
                       </div>
                       <div
                         style={{
                           flex: 1,
-                          padding: '14px 12px',
+                          minHeight: 0,
+                          overflow: 'hidden',
+                          padding: `${wz(14)}px ${wz(12)}px`,
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: 3,
+                          gap: wz(3),
                           justifyContent: 'flex-end',
                         }}
                       >
                         <div
+                          className={styles.previewBubble}
                           style={{
                             alignSelf: 'flex-start',
                             maxWidth: '82%',
                             background: '#fff',
-                            borderRadius: '16px 16px 16px 4px',
-                            padding: '9px 13px',
-                            fontSize: 11.5,
+                            borderRadius: `${wz(16)}px ${wz(16)}px ${wz(16)}px ${wz(4)}px`,
+                            padding: `${wz(9)}px ${wz(13)}px`,
+                            fontSize: wz(11.5),
                             lineHeight: 1.45,
                             color: '#0b0b0f',
                             boxShadow: '0 1px 1px rgba(0,0,0,.05)',
@@ -1106,9 +1275,10 @@ export default function CampaignWizard({
                         <div
                           style={{
                             alignSelf: 'flex-start',
-                            fontSize: 9,
+                            fontSize: wz(9),
                             color: '#9a9a9e',
-                            margin: '2px 6px 0',
+                            margin: `${wz(2)}px ${wz(6)}px 0`,
+                            flex: 'none',
                           }}
                         >
                           Delivered
@@ -1119,65 +1289,78 @@ export default function CampaignWizard({
 
                   {channel === 'whatsapp' && (
                     <div
+                      className={styles.previewChannelBody}
                       style={{
-                        flex: 1,
                         display: 'flex',
                         flexDirection: 'column',
                         background: '#e5ddd0',
                         backgroundImage: 'radial-gradient(rgba(0,0,0,.04) 1px, transparent 1px)',
-                        backgroundSize: '13px 13px',
+                        backgroundSize: `${wz(13)}px ${wz(13)}px`,
                       }}
                     >
                       <div
                         style={{
                           background: '#075e54',
                           color: '#fff',
-                          padding: '10px 13px',
+                          padding: `${wz(10)}px ${wz(13)}px`,
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 9,
+                          gap: wz(9),
                         }}
                       >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" aria-hidden="true">
+                        <svg
+                          width={wz(15)}
+                          height={wz(15)}
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#fff"
+                          strokeWidth="2.4"
+                          aria-hidden="true"
+                        >
                           <path d="M15 6l-6 6 6 6" />
                         </svg>
                         <div
                           style={{
-                            width: 25,
-                            height: 25,
+                            width: wz(25),
+                            height: wz(25),
                             borderRadius: '50%',
                             background: 'rgba(255,255,255,.22)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: 11,
+                            fontSize: wz(11),
                             fontWeight: 700,
                           }}
                         >
                           M
                         </div>
                         <div style={{ lineHeight: 1.15 }}>
-                          <div style={{ fontSize: 11.5, fontWeight: 700 }}>Maildrill</div>
-                          <div style={{ fontSize: 9, opacity: 0.8 }}>online</div>
+                          <div style={{ fontSize: wz(11.5), fontWeight: 700 }}>Maildrill</div>
+                          <div className="tnum" style={{ fontSize: wz(9), opacity: 0.8 }}>
+                            {activeSender.value}
+                          </div>
                         </div>
                       </div>
                       <div
                         style={{
                           flex: 1,
-                          padding: '14px 11px',
+                          minHeight: 0,
+                          overflow: 'hidden',
+                          padding: `${wz(14)}px ${wz(11)}px`,
                           display: 'flex',
                           flexDirection: 'column',
                           justifyContent: 'flex-end',
                         }}
                       >
                         <div
+                          className={styles.previewBubble}
                           style={{
                             alignSelf: 'flex-start',
                             maxWidth: '82%',
                             background: '#fff',
-                            borderRadius: '2px 12px 12px 12px',
-                            padding: '9px 12px 15px',
-                            fontSize: 11.5,
+                            borderRadius: `${wz(2)}px ${wz(12)}px ${wz(12)}px ${wz(12)}px`,
+                            padding: `${wz(9)}px ${wz(12)}px ${wz(15)}px`,
+                            fontSize: wz(11.5),
                             lineHeight: 1.45,
                             color: '#111',
                             boxShadow: '0 1px 1px rgba(0,0,0,.1)',
@@ -1188,17 +1371,25 @@ export default function CampaignWizard({
                           <span
                             style={{
                               position: 'absolute',
-                              bottom: 5,
-                              right: 10,
-                              fontSize: 9,
+                              bottom: wz(5),
+                              right: wz(10),
+                              fontSize: wz(9),
                               color: '#8a8a8e',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: 2,
+                              gap: wz(2),
                             }}
                           >
                             9:41
-                            <svg width="13" height="9" viewBox="0 0 16 11" fill="none" stroke="#53bdeb" strokeWidth="1.6" aria-hidden="true">
+                            <svg
+                              width={wz(13)}
+                              height={wz(9)}
+                              viewBox="0 0 16 11"
+                              fill="none"
+                              stroke="#53bdeb"
+                              strokeWidth="1.6"
+                              aria-hidden="true"
+                            >
                               <path d="M1 6l3.5 3.5L11 2" />
                               <path d="M6 6l3.5 3.5L16 2" />
                             </svg>
@@ -1210,6 +1401,7 @@ export default function CampaignWizard({
                 </div>
               </div>
             )}
+            </div>
           </div>
         </div>
 
@@ -1219,7 +1411,7 @@ export default function CampaignWizard({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '16px 25px',
+            padding: `${wz(12)}px ${wz(25)}px`,
             borderTop: '1px solid var(--divider)',
             background: 'var(--surface)',
           }}
@@ -1231,10 +1423,10 @@ export default function CampaignWizard({
             style={{
               background: 'var(--surface)',
               border: '1px solid var(--border2)',
-              padding: '10px 18px',
-              borderRadius: 10,
+              padding: `${wz(8)}px ${wz(18)}px`,
+              borderRadius: wz(9),
               fontWeight: 600,
-              fontSize: 13,
+              fontSize: wz(12.5),
               color: 'var(--text2)',
               cursor: 'pointer',
               visibility: step === 1 ? 'hidden' : 'visible',
@@ -1242,29 +1434,22 @@ export default function CampaignWizard({
           >
             ← Back
           </button>
-          {/* On the final step an incomplete campaign explains itself rather
-              than failing on the server after the user commits. */}
-          {step === 5 && blockedReason && (
-            <span style={{ fontSize: 12.5, color: 'var(--text3)', marginRight: 'auto', paddingLeft: 12 }}>
-              {blockedReason}
-            </span>
-          )}
           <button
             type="button"
             onClick={handlePrimary}
             className="pbtn"
-            disabled={step === 5 && blockedReason !== null}
-            title={step === 5 && blockedReason ? blockedReason : undefined}
+            disabled={primaryDisabled}
+            aria-disabled={primaryDisabled}
             style={{
               background: INDIGO,
               color: '#fff',
               border: 'none',
-              padding: '10px 20px',
-              borderRadius: 10,
+              padding: `${wz(8)}px ${wz(20)}px`,
+              borderRadius: wz(9),
               fontWeight: 600,
-              fontSize: 13,
-              cursor: step === 5 && blockedReason ? 'not-allowed' : 'pointer',
-              opacity: step === 5 && blockedReason ? 0.5 : 1,
+              fontSize: wz(12.5),
+              cursor: primaryDisabled ? 'not-allowed' : 'pointer',
+              opacity: primaryDisabled ? 0.5 : 1,
               boxShadow: '0 1px 2px rgba(79,70,229,.35), inset 0 1px 0 rgba(255,255,255,.16)',
             }}
           >
