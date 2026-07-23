@@ -10,7 +10,7 @@ import type { TEditorBlock, TEditorConfiguration } from '../../documents/editor/
 import EditorRenderContextBridge from '../../documents/editor/EditorRenderContextBridge';
 
 import { type NDJSONEvent, parseNDJSONStream } from './ndjsonStreamClient';
-import { repairDocument } from './repairOrphanedBlocks';
+import { extractAllChildIds, repairDocument } from './repairOrphanedBlocks';
 
 type AIPreviewPanelProps = {
   /** Resolved response from the host's `onAIGenerateTemplate` callback. */
@@ -91,18 +91,75 @@ function isStreamingResponse(
   return typeof (response as any)[Symbol.asyncIterator] === 'function';
 }
 
+type BlockDataShape = {
+  childrenIds?: string[];
+  props?: {
+    childrenIds?: string[];
+    columns?: Array<{ childrenIds?: string[] } | null | undefined>;
+  };
+};
+
 /**
- * Read `childrenIds` off a block defensively. Root (`EmailLayout`) stores
- * them under `data.childrenIds`; `Container` / `ColumnsContainer` nest them
- * under `data.props.childrenIds`. Either shape is accepted.
+ * Strip child references that point to blocks not yet received and return
+ * the ids that remain. Handles EmailLayout, Container, and ColumnsContainer
+ * (column slots) — the same shapes as {@link extractAllChildIds}.
  */
-function extractChildrenIds(block: TEditorBlock): string[] {
-  const data = block.data as { childrenIds?: unknown; props?: { childrenIds?: unknown } } | undefined;
-  const rootLevel = data?.childrenIds;
-  if (Array.isArray(rootLevel)) return rootLevel.filter((v): v is string => typeof v === 'string');
-  const propsLevel = data?.props?.childrenIds;
-  if (Array.isArray(propsLevel)) return propsLevel.filter((v): v is string => typeof v === 'string');
-  return [];
+function sanitizeBlockForReader(
+  block: TEditorBlock,
+  acc: Record<string, TEditorBlock>
+): { block: TEditorBlock; keptChildIds: string[] } {
+  const data = block.data as BlockDataShape | undefined;
+  if (!data) return { block, keptChildIds: [] };
+
+  let nextData: BlockDataShape = data;
+  const keptChildIds: string[] = [];
+
+  if (Array.isArray(data.childrenIds)) {
+    const kept = data.childrenIds.filter((cid) => Boolean(acc[cid]));
+    keptChildIds.push(...kept);
+    if (kept.length !== data.childrenIds.length) {
+      nextData = { ...nextData, childrenIds: kept };
+    }
+  }
+
+  if (data.props) {
+    let nextProps = data.props;
+
+    if (Array.isArray(data.props.childrenIds)) {
+      const kept = data.props.childrenIds.filter((cid) => Boolean(acc[cid]));
+      keptChildIds.push(...kept);
+      if (kept.length !== data.props.childrenIds.length) {
+        nextProps = { ...nextProps, childrenIds: kept };
+      }
+    }
+
+    if (Array.isArray(data.props.columns)) {
+      let columnsChanged = false;
+      const nextColumns = data.props.columns.map((col) => {
+        if (!col || typeof col !== 'object') return col;
+        const colIds = Array.isArray(col.childrenIds) ? col.childrenIds : [];
+        const kept = colIds.filter((cid) => Boolean(acc[cid]));
+        keptChildIds.push(...kept);
+        if (kept.length !== colIds.length) {
+          columnsChanged = true;
+          return { ...col, childrenIds: kept };
+        }
+        return col;
+      });
+      if (columnsChanged) {
+        nextProps = { ...nextProps, columns: nextColumns };
+      }
+    }
+
+    if (nextProps !== data.props) {
+      nextData = { ...nextData, props: nextProps };
+    }
+  }
+
+  return {
+    block: nextData === data ? block : ({ ...block, data: nextData } as TEditorBlock),
+    keptChildIds,
+  };
 }
 
 /**
@@ -110,7 +167,8 @@ function extractChildrenIds(block: TEditorBlock): string[] {
  * in-flight. Specifically: drop `childrenIds` entries that reference blocks
  * not yet received, so `ReaderBlock` never tries to spread `document[id]`
  * against `undefined`. The filter runs BFS from `root` and returns only
- * blocks reachable from there.
+ * blocks reachable from there — including column children inside
+ * `ColumnsContainer`.
  */
 function sanitizeForReader(acc: Record<string, TEditorBlock>): Record<string, TEditorBlock> | null {
   if (!acc.root) return null;
@@ -123,28 +181,16 @@ function sanitizeForReader(acc: Record<string, TEditorBlock>): Record<string, TE
     const block = acc[id];
     if (!block) continue;
     seen.add(id);
-    const ids = extractChildrenIds(block);
-    const kept = ids.filter((cid) => Boolean(acc[cid]));
-    if (kept.length !== ids.length) {
-      const data = block.data as {
-        childrenIds?: string[];
-        props?: { childrenIds?: string[] };
-      };
-      // Preserve the nesting level the block originally used.
-      if (Array.isArray(data.childrenIds)) {
-        sanitized[id] = { ...block, data: { ...data, childrenIds: kept } } as TEditorBlock;
-      } else if (data.props && Array.isArray(data.props.childrenIds)) {
-        sanitized[id] = {
-          ...block,
-          data: { ...data, props: { ...data.props, childrenIds: kept } },
-        } as TEditorBlock;
-      } else {
-        sanitized[id] = block;
-      }
-    } else {
-      sanitized[id] = block;
+    const { block: safeBlock, keptChildIds } = sanitizeBlockForReader(block, acc);
+    sanitized[id] = safeBlock;
+    for (const cid of keptChildIds) {
+      if (!seen.has(cid)) queue.push(cid);
     }
-    for (const cid of kept) queue.push(cid);
+    // Safety net: if a block shape we don't rewrite still references children
+    // (future block types), keep the walk alive.
+    for (const cid of extractAllChildIds(safeBlock)) {
+      if (!seen.has(cid) && !keptChildIds.includes(cid) && acc[cid]) queue.push(cid);
+    }
   }
   return sanitized;
 }
@@ -385,7 +431,7 @@ export default function AIPreviewPanel({ response, onComplete, onError }: AIPrev
   const sanitized = useMemo(() => sanitizeForReader(acc), [acc]);
 
   return (
-    <Stack sx={{ gap: 1.5 }}>
+    <Stack sx={{ gap: 1.5, flex: 1, minHeight: 0 }}>
       {/* Stream stats — hidden (unhide by removing display:'none') */}
       <Box sx={{ display: 'none' }}>
         <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
@@ -402,7 +448,7 @@ export default function AIPreviewPanel({ response, onComplete, onError }: AIPrev
           sx={{ borderRadius: '4px', height: 4 }}
         />
       </Box>
-      <Stack direction={{ xs: 'column', md: 'row' }} sx={{ gap: 1.5, minHeight: 320 }}>
+      <Stack direction={{ xs: 'column', md: 'row' }} sx={{ gap: 1.5, flex: 1, minHeight: 0 }}>
         {/* Raw frames log — hidden (unhide by removing display:'none') */}
         <Box sx={{ flex: 1, display: 'none', flexDirection: 'column', minWidth: 0 }}>
           <Typography sx={{ fontSize: '14px', fontWeight: 700, mb: 0.5 }}>
@@ -469,7 +515,7 @@ export default function AIPreviewPanel({ response, onComplete, onError }: AIPrev
         </Box>
 
         {/* Live preview */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0 }}>
           <Typography sx={{ fontSize: '14px', fontWeight: 700, mb: 0.5 }}>
             {t('aiGeneration.preview.previewTitle')}
           </Typography>
@@ -477,7 +523,6 @@ export default function AIPreviewPanel({ response, onComplete, onError }: AIPrev
             sx={{
               flex: 1,
               minHeight: 240,
-              maxHeight: 360,
               overflow: 'auto',
               borderRadius: '8px',
               border: `1px solid ${theme.palette.divider}`,

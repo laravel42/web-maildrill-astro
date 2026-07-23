@@ -367,6 +367,7 @@ export default function AIGenerationDialog({
   // the panel gets unmounted on the first error event and the frames are
   // lost.
   const showPreview = (status === 'streaming' || status === 'complete' || status === 'error') && response !== null;
+  const stretchPrompt = entryMode === 'direct' && !showPreview;
 
   // Example prompts shown as clickable chips under the textarea. Hidden while
   // a generation is in flight, after completion, and cleared from noise by
@@ -626,7 +627,20 @@ export default function AIGenerationDialog({
       }}
       maxWidth={showPreview ? 'lg' : 'sm'}
       fullWidth
-      slotProps={{ paper: { sx: { bgcolor: 'background.paper', color: 'text.primary', borderRadius: '10px' } } }}
+      slotProps={{
+        paper: {
+          sx: {
+            bgcolor: 'background.paper',
+            color: 'text.primary',
+            borderRadius: '10px',
+            minHeight: 500,
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+          },
+        },
+      }}
     >
       <DialogTitle sx={{ fontWeight: 700, fontSize: '24px' }}>
         {entryMode === 'picker' ? (
@@ -638,7 +652,17 @@ export default function AIGenerationDialog({
           <WizardHeader mode={entryMode as 'direct' | 'wizard'} onSwitch={handleModeSwitch} disabled={isBusy} />
         )}
       </DialogTitle>
-      <DialogContent>
+      <DialogContent
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          pb: 0,
+          
+        }}
+      >
         {/* ---------------------------------------------------------------- */}
         {/* ENTRY PICKER                                                      */}
         {/* ---------------------------------------------------------------- */}
@@ -648,16 +672,18 @@ export default function AIGenerationDialog({
         {/* WIZARD MODE                                                       */}
         {/* ---------------------------------------------------------------- */}
         {entryMode === 'wizard' && !showPreview && (
-          <AIVisualWizard
-            initialRawIntent={prompt}
-            backendUrl={backendUrl}
-            brandColors={
-              primaryColor || secondaryColor ? { primary: primaryColor, secondary: secondaryColor } : undefined
-            }
-            locale={locale}
-            onGenerate={handleWizardGenerate}
-            generating={isBusy}
-          />
+          <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+            <AIVisualWizard
+              initialRawIntent={prompt}
+              backendUrl={backendUrl}
+              brandColors={
+                primaryColor || secondaryColor ? { primary: primaryColor, secondary: secondaryColor } : undefined
+              }
+              locale={locale}
+              onGenerate={handleWizardGenerate}
+              generating={isBusy}
+            />
+          </Box>
         )}
         {entryMode === 'wizard' && status === 'thinking' && (
           <Stack direction="row" sx={{ gap: 2, alignItems: 'center', py: 1 }}>
@@ -675,15 +701,17 @@ export default function AIGenerationDialog({
         {/* Fatal errors visible in wizard mode too (see direct-mode note). */}
         {entryMode === 'wizard' && status === 'error' && renderStatusRow()}
         {entryMode === 'wizard' && showPreview && response && (
-          <AIPreviewPanel response={response} onComplete={handlePreviewComplete} onError={handlePreviewError} />
+          <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <AIPreviewPanel response={response} onComplete={handlePreviewComplete} onError={handlePreviewError} />
+          </Box>
         )}
 
         {/* ---------------------------------------------------------------- */}
         {/* DIRECT MODE (unchanged)                                           */}
         {/* ---------------------------------------------------------------- */}
         {entryMode === 'direct' && (
-          <Stack sx={{ gap: 1.5 }}>
-            <Box>
+          <Stack sx={{ gap: 1.5, flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            <Box sx={{ flexShrink: 0 }}>
               <ToggleButtonGroup
                 value={mode}
                 exclusive
@@ -704,6 +732,43 @@ export default function AIGenerationDialog({
               <Typography sx={{ fontSize: '14px', fontWeight: 700 }}>
                 {mode === 'refine' ? t('aiGeneration.dialog.promptLabelRefine') : t('aiGeneration.dialog.promptLabel')}
               </Typography>
+            </Box>
+            {stretchPrompt ? (
+              <Box sx={{ flex: 1, minHeight: 0, position: 'relative' }}>
+                <TextField
+                  autoFocus
+                  margin="dense"
+                  id="ai-generation-prompt"
+                  type="text"
+                  multiline
+                  fullWidth
+                  variant="outlined"
+                  disabled={isBusy}
+                  placeholder={
+                    mode === 'refine'
+                      ? t('aiGeneration.dialog.promptPlaceholderRefine')
+                      : t('aiGeneration.dialog.promptPlaceholder')
+                  }
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    '& .MuiInputBase-root': {
+                      height: '100%',
+                      alignItems: 'flex-start',
+                      borderRadius: '6px',
+                    },
+                    '& textarea': {
+                      height: '100% !important',
+                      overflow: 'auto !important',
+                      boxSizing: 'border-box',
+                      resize: 'none',
+                    },
+                  }}
+                />
+              </Box>
+            ) : (
               <TextField
                 autoFocus
                 margin="dense"
@@ -711,7 +776,7 @@ export default function AIGenerationDialog({
                 type="text"
                 multiline
                 minRows={4}
-                maxRows={10}
+                maxRows={8}
                 fullWidth
                 variant="outlined"
                 disabled={isBusy}
@@ -722,27 +787,27 @@ export default function AIGenerationDialog({
                 }
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                sx={{ mt: 0.5, '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
               />
-              {showSuggestions && prompt.trim().length > 0 && (
-                <Box sx={{ mt: 1 }}>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={isImprovingPrompt ? <CircularProgress size={16} /> : <AiSparkleIcon />}
-                    onClick={handleImprovePrompt}
-                    disabled={isImprovingPrompt || !prompt.trim()}
-                    sx={{ textTransform: 'none' }}
-                  >
-                    {isImprovingPrompt
-                      ? t('aiGeneration.dialog.improvingPrompt')
-                      : t('aiGeneration.dialog.improvePrompt')}
-                  </Button>
-                </Box>
-              )}
-            </Box>
+            )}
+            {showSuggestions && prompt.trim().length > 0 && (
+              <Box sx={{ flexShrink: 0 }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={isImprovingPrompt ? <CircularProgress size={16} /> : <AiSparkleIcon />}
+                  onClick={handleImprovePrompt}
+                  disabled={isImprovingPrompt || !prompt.trim()}
+                  sx={{ textTransform: 'none' }}
+                >
+                  {isImprovingPrompt
+                    ? t('aiGeneration.dialog.improvingPrompt')
+                    : t('aiGeneration.dialog.improvePrompt')}
+                </Button>
+              </Box>
+            )}
             {showSuggestions && suggestions.length > 0 && (
-              <Box>
+              <Box sx={{ flexShrink: 0 }}>
                 <Typography variant="caption" color="text.secondary">
                   {t('aiGeneration.dialog.suggestionsLabel')}
                 </Typography>
@@ -754,7 +819,7 @@ export default function AIGenerationDialog({
               </Box>
             )}
             {status === 'thinking' && (
-              <Stack direction="row" sx={{ gap: 2, alignItems: 'center', py: 1 }}>
+              <Stack direction="row" sx={{ gap: 2, alignItems: 'center', py: 1, flexShrink: 0 }}>
                 <CircularProgress size={20} />
                 <Typography variant="body2" color="text.secondary">
                   {t('aiGeneration.dialog.status.thinking')}
@@ -762,7 +827,7 @@ export default function AIGenerationDialog({
               </Stack>
             )}
             {status === 'complete' && (
-              <Alert severity="success" variant="outlined" sx={{ mt: 1 }}>
+              <Alert severity="success" variant="outlined" sx={{ mt: 1, flexShrink: 0 }}>
                 {t('aiGeneration.dialog.status.complete')}
               </Alert>
             )}
@@ -771,7 +836,9 @@ export default function AIGenerationDialog({
                 instead of the dialog silently reverting to a Retry button. */}
             {status === 'error' && renderStatusRow()}
             {showPreview && response && (
-              <AIPreviewPanel response={response} onComplete={handlePreviewComplete} onError={handlePreviewError} />
+              <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <AIPreviewPanel response={response} onComplete={handlePreviewComplete} onError={handlePreviewError} />
+              </Box>
             )}
           </Stack>
         )}

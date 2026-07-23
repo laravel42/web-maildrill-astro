@@ -59,13 +59,15 @@ export default function AIVisualWizard({
 
   if (isSummary) {
     return (
-      <SummaryStep
-        brief={brief}
-        backendUrl={backendUrl}
-        onGenerate={onGenerate}
-        onBack={handleBack}
-        generating={generating}
-      />
+      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
+        <SummaryStep
+          brief={brief}
+          backendUrl={backendUrl}
+          onGenerate={onGenerate}
+          onBack={handleBack}
+          generating={generating}
+        />
+      </Box>
     );
   }
 
@@ -81,16 +83,18 @@ export default function AIVisualWizard({
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, minHeight: 320 }}>
-      <Box sx={{ flex: 1 }}>{renderStep()}</Box>
-      <WizardNav
-        stepIndex={step}
-        totalSteps={totalSteps}
-        onBack={handleBack}
-        onNext={handleNext}
-        backDisabled={step === 0}
-        isLastStep={step === totalSteps - 1}
-      />
+    <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>{renderStep()}</Box>
+      <Box sx={{ flexShrink: 0 }}>
+        <WizardNav
+          stepIndex={step}
+          totalSteps={totalSteps}
+          onBack={handleBack}
+          onNext={handleNext}
+          backDisabled={step === 0}
+          isLastStep={step === totalSteps - 1}
+        />
+      </Box>
     </Box>
   );
 }

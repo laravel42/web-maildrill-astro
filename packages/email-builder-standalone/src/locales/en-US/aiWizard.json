@@ -28,7 +28,9 @@
   "header": {
     "directTitle": "Generate with AI",
     "wizardTitle": "Visual Wizard",
-    "switchAria": "Switch between Direct and Wizard mode"
+    "switchAria": "Switch between Direct and Wizard mode",
+    "directTooltip": "Direct: write your own prompt — best when you know exactly what you want.",
+    "wizardTooltip": "Visual Wizard: answer a few quick questions and let AI shape the brief."
   },
   "steps": {
     "common": {
@@ -173,6 +175,7 @@
     "sections": "Sections",
     "finalPrompt": "Generated prompt",
     "finalPromptHelp": "This is the prompt we will use. You can edit it before generating.",
+    "promptPlaceholder": "Describe the email you want…",
     "editPrompt": "Edit prompt",
     "doneEditing": "Done editing",
     "compiling": "Building your prompt…",

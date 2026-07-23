@@ -28,7 +28,9 @@
   "header": {
     "directTitle": "Genera con IA",
     "wizardTitle": "Wizard visivo",
-    "switchAria": "Passa tra modalità Diretto e Wizard"
+    "switchAria": "Passa tra modalità Diretto e Wizard",
+    "directTooltip": "Diretto: scrivi il tuo prompt — ideale quando sai già cosa vuoi.",
+    "wizardTooltip": "Wizard visivo: rispondi ad alcune domande rapide e lascia che l'IA definisca il brief."
   },
   "steps": {
     "common": {
@@ -173,6 +175,7 @@
     "sections": "Sezioni",
     "finalPrompt": "Prompt generato",
     "finalPromptHelp": "Questo è il prompt che useremo. Puoi modificarlo prima di generare.",
+    "promptPlaceholder": "Descrivi l'email che vuoi…",
     "editPrompt": "Modifica prompt",
     "doneEditing": "Fatto",
     "compiling": "Creazione del prompt…",
