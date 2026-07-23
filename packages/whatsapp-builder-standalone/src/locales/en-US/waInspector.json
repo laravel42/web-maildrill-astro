@@ -1,0 +1,131 @@
+{
+  "sections": {
+    "header": "Header",
+    "body": "Body",
+    "footer": "Footer",
+    "buttons": "Buttons"
+  },
+  "tabs": {
+    "editor": "Editor",
+    "preview": "Preview",
+    "json": "JSON"
+  },
+  "toolbar": {
+    "undo": "Undo",
+    "redo": "Redo",
+    "copyJson": "Copy components JSON",
+    "copied": "Copied!"
+  },
+  "palette": {
+    "title": "Message sections",
+    "header": {
+      "label": "Header",
+      "description": "Text, image, video, document or location"
+    },
+    "body": {
+      "label": "Body",
+      "description": "Required · up to 1024 characters, variables"
+    },
+    "footer": {
+      "label": "Footer",
+      "description": "Small print · up to 60 characters"
+    },
+    "buttons": {
+      "label": "Buttons",
+      "description": "Quick replies, links, calls, offer codes"
+    }
+  },
+  "inspector": {
+    "title": "Configuration"
+  },
+  "canvas": {
+    "emptyMessage": "Add sections from the left panel to compose your message",
+    "removeSection": "Remove {{section}}",
+    "headerPlaceholder": "Header text…",
+    "bodyPlaceholder": "Write your message…",
+    "footerPlaceholder": "Footer text",
+    "buttonsPlaceholder": "No buttons yet — add them in the panel",
+    "copyCodeLabel": "Copy offer code",
+    "untitledButton": "Button",
+    "seeAllOptions": "See all options",
+    "mediaPlaceholder": {
+      "image": "Image header",
+      "video": "Video header",
+      "document": "Document header"
+    }
+  },
+  "message": {
+    "category": "Template category",
+    "categoryHint": "Meta reviews and prices templates by category",
+    "language": "Language",
+    "categories": {
+      "MARKETING": "Marketing",
+      "UTILITY": "Utility",
+      "AUTHENTICATION": "Authentication"
+    }
+  },
+  "validation": {
+    "allGood": "Template looks valid for WhatsApp review",
+    "title": "{{count}} issue(s) to fix",
+    "bodyRequired": "The message needs body text",
+    "bodyTooLong": "Body exceeds {{max}} characters",
+    "variablesNotSequential": "Variables must be sequential: {1}, {2}, … without gaps",
+    "headerTextEmpty": "The text header is empty",
+    "headerTooLong": "Header exceeds {{max}} characters",
+    "headerVariableLimit": "A text header allows at most one variable, {1}",
+    "headerMediaMissing": "The media header needs a sample URL",
+    "footerTooLong": "Footer exceeds {{max}} characters",
+    "tooManyButtons": "Templates allow at most {{max}} buttons",
+    "tooManyOfType": "Too many {{type}} buttons (max {{max}})",
+    "buttonTextEmpty": "Button {{n}} has no label",
+    "buttonTextTooLong": "Button {{n}} label exceeds {{max}} characters",
+    "buttonUrlEmpty": "Button {{n}} has no URL",
+    "buttonPhoneEmpty": "Button {{n}} has no phone number",
+    "buttonCodeEmpty": "Button {{n}} has no offer code"
+  },
+  "header": {
+    "format": "Header type",
+    "formats": {
+      "text": "Text",
+      "image": "Image",
+      "video": "Video",
+      "document": "Document",
+      "location": "Location"
+    },
+    "text": "Header text",
+    "textHint": "Max one {1} variable",
+    "mediaUrl": "Sample media URL",
+    "mediaUrlHint": "Used as the example handle for Meta review",
+    "locationName": "Location name",
+    "locationAddress": "Address"
+  },
+  "body": {
+    "text": "Message text",
+    "formattingHint": "*bold* _italic_ ~strike~ ```mono``` and {n} variables",
+    "insertVariable": "Insert variable {{n}}",
+    "examplesTitle": "Example values (required by Meta review)",
+    "examplesHint": "Shown to reviewers in place of the variables"
+  },
+  "footer": {
+    "text": "Footer text",
+    "hint": "Plain text, no formatting or variables"
+  },
+  "buttons": {
+    "types": {
+      "QUICK_REPLY": "Quick reply",
+      "URL": "Visit website",
+      "PHONE_NUMBER": "Call phone number",
+      "COPY_CODE": "Copy offer code"
+    },
+    "label": "Button label",
+    "url": "URL",
+    "urlHint": "May end with one {1} variable",
+    "phone": "Phone number",
+    "code": "Offer code",
+    "add": "Add button",
+    "remove": "Remove button",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "limits": "Up to {{max}} buttons; 2 URL, 1 phone, 1 offer code"
+  }
+}

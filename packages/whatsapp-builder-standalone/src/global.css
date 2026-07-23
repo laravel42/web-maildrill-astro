@@ -1,0 +1,10 @@
+/* whatsapp-builder-standalone host styles. Kept minimal: the editor is
+   MUI-styled and the message preview is styled by PhoneFrame's CSS
+   vars. This exists so the package exposes the same `./style.css`
+   entry contract as the email builder. */
+
+whatsapp-builder,
+.whatsapp-builder-root {
+  display: block;
+  height: 100%;
+}

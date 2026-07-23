@@ -1,0 +1,131 @@
+{
+  "sections": {
+    "header": "Intestazione",
+    "body": "Corpo",
+    "footer": "Piè di pagina",
+    "buttons": "Pulsanti"
+  },
+  "tabs": {
+    "editor": "Editor",
+    "preview": "Anteprima",
+    "json": "JSON"
+  },
+  "toolbar": {
+    "undo": "Annulla",
+    "redo": "Ripeti",
+    "copyJson": "Copia JSON dei componenti",
+    "copied": "Copiato!"
+  },
+  "palette": {
+    "title": "Sezioni del messaggio",
+    "header": {
+      "label": "Intestazione",
+      "description": "Testo, immagine, video, documento o posizione"
+    },
+    "body": {
+      "label": "Corpo",
+      "description": "Obbligatorio · fino a 1024 caratteri, variabili"
+    },
+    "footer": {
+      "label": "Piè di pagina",
+      "description": "Testo piccolo · fino a 60 caratteri"
+    },
+    "buttons": {
+      "label": "Pulsanti",
+      "description": "Risposte rapide, link, chiamate, codici sconto"
+    }
+  },
+  "inspector": {
+    "title": "Configurazione"
+  },
+  "canvas": {
+    "emptyMessage": "Aggiungi sezioni dal pannello sinistro per comporre il messaggio",
+    "removeSection": "Rimuovi {{section}}",
+    "headerPlaceholder": "Testo dell'intestazione…",
+    "bodyPlaceholder": "Scrivi il tuo messaggio…",
+    "footerPlaceholder": "Testo del piè di pagina",
+    "buttonsPlaceholder": "Nessun pulsante — aggiungili dal pannello",
+    "copyCodeLabel": "Copia codice offerta",
+    "untitledButton": "Pulsante",
+    "seeAllOptions": "Vedi tutte le opzioni",
+    "mediaPlaceholder": {
+      "image": "Intestazione immagine",
+      "video": "Intestazione video",
+      "document": "Intestazione documento"
+    }
+  },
+  "message": {
+    "category": "Categoria del modello",
+    "categoryHint": "Meta esamina e tariffa i modelli in base alla categoria",
+    "language": "Lingua",
+    "categories": {
+      "MARKETING": "Marketing",
+      "UTILITY": "Utilità",
+      "AUTHENTICATION": "Autenticazione"
+    }
+  },
+  "validation": {
+    "allGood": "Il modello sembra valido per la revisione di WhatsApp",
+    "title": "{{count}} problema/i da correggere",
+    "bodyRequired": "Il messaggio ha bisogno di un testo nel corpo",
+    "bodyTooLong": "Il corpo supera i {{max}} caratteri",
+    "variablesNotSequential": "Le variabili devono essere sequenziali: {1}, {2}, … senza salti",
+    "headerTextEmpty": "L'intestazione di testo è vuota",
+    "headerTooLong": "L'intestazione supera i {{max}} caratteri",
+    "headerVariableLimit": "Un'intestazione di testo ammette al massimo una variabile, {1}",
+    "headerMediaMissing": "L'intestazione multimediale richiede un URL di esempio",
+    "footerTooLong": "Il piè di pagina supera i {{max}} caratteri",
+    "tooManyButtons": "I modelli ammettono al massimo {{max}} pulsanti",
+    "tooManyOfType": "Troppi pulsanti {{type}} (max {{max}})",
+    "buttonTextEmpty": "Il pulsante {{n}} non ha etichetta",
+    "buttonTextTooLong": "L'etichetta del pulsante {{n}} supera i {{max}} caratteri",
+    "buttonUrlEmpty": "Il pulsante {{n}} non ha URL",
+    "buttonPhoneEmpty": "Il pulsante {{n}} non ha numero di telefono",
+    "buttonCodeEmpty": "Il pulsante {{n}} non ha codice offerta"
+  },
+  "header": {
+    "format": "Tipo di intestazione",
+    "formats": {
+      "text": "Testo",
+      "image": "Immagine",
+      "video": "Video",
+      "document": "Documento",
+      "location": "Posizione"
+    },
+    "text": "Testo dell'intestazione",
+    "textHint": "Massimo una variabile {1}",
+    "mediaUrl": "URL multimediale di esempio",
+    "mediaUrlHint": "Usato come esempio per la revisione di Meta",
+    "locationName": "Nome del luogo",
+    "locationAddress": "Indirizzo"
+  },
+  "body": {
+    "text": "Testo del messaggio",
+    "formattingHint": "*grassetto* _corsivo_ ~barrato~ ```mono``` e variabili {n}",
+    "insertVariable": "Inserisci variabile {{n}}",
+    "examplesTitle": "Valori di esempio (richiesti da Meta)",
+    "examplesHint": "Mostrati ai revisori al posto delle variabili"
+  },
+  "footer": {
+    "text": "Testo del piè di pagina",
+    "hint": "Testo semplice, senza formattazione né variabili"
+  },
+  "buttons": {
+    "types": {
+      "QUICK_REPLY": "Risposta rapida",
+      "URL": "Visita sito web",
+      "PHONE_NUMBER": "Chiama numero",
+      "COPY_CODE": "Copia codice offerta"
+    },
+    "label": "Etichetta del pulsante",
+    "url": "URL",
+    "urlHint": "Può terminare con una variabile {1}",
+    "phone": "Numero di telefono",
+    "code": "Codice offerta",
+    "add": "Aggiungi pulsante",
+    "remove": "Rimuovi pulsante",
+    "moveUp": "Sposta su",
+    "moveDown": "Sposta giù",
+    "limits": "Fino a {{max}} pulsanti; 2 URL, 1 telefono, 1 codice"
+  }
+}
