@@ -795,10 +795,25 @@ export default function AIGenerationDialog({
                 <Button
                   size="small"
                   variant="outlined"
-                  startIcon={isImprovingPrompt ? <CircularProgress size={16} /> : <AiSparkleIcon />}
+                  color="primary"
+                  startIcon={isImprovingPrompt ? <CircularProgress size={14} /> : <AiSparkleIcon />}
                   onClick={handleImprovePrompt}
                   disabled={isImprovingPrompt || !prompt.trim()}
-                  sx={{ textTransform: 'none' }}
+                  sx={{
+                    textTransform: 'none',
+                    fontSize: 13,
+                    lineHeight: 1.4,
+                    py: 0.625,
+                    px: 1.25,
+                    minHeight: 30,
+                    '& .MuiButton-startIcon': {
+                      marginRight: 0.5,
+                      marginLeft: -0.25,
+                      '& > *:nth-of-type(1)': {
+                        fontSize: 14,
+                      },
+                    },
+                  }}
                 >
                   {isImprovingPrompt
                     ? t('aiGeneration.dialog.improvingPrompt')
