@@ -1,5 +1,5 @@
 import type { ChannelSenders } from '@/lib/app/channel-senders';
-import type { ChannelType } from '@/types/app';
+import type { ChannelType, TemplateApprovalStatus } from '@/types/app';
 
 export type Step = 1 | 2 | 3 | 4 | 5;
 export type Schedule = 'now' | 'later';
@@ -28,6 +28,8 @@ export type TemplateChoice = {
   name: string;
   category: string | null;
   channel: ChannelType;
+  /** WhatsApp approval state; the wizard only offers approved WhatsApp templates. */
+  approvalStatus?: TemplateApprovalStatus | null;
 };
 
 export type Template = {

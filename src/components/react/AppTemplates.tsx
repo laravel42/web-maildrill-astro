@@ -1,5 +1,5 @@
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
-import type { ChannelType } from '@/types/app';
+import type { ChannelType, TemplateApprovalStatus } from '@/types/app';
 import {
   galleryTemplates,
   CATEGORY_COLOR,
@@ -29,6 +29,45 @@ import styles from './AppTemplates.module.css';
 
 /** Channel of a template, as a tinted pill. `compact` drops the label to an
  *  icon so it fits the compact card's single row. */
+const APPROVAL_LABEL: Record<TemplateApprovalStatus, string> = {
+  draft: 'Needs approval',
+  pending: 'In review',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  paused: 'Paused',
+  disabled: 'Disabled',
+};
+
+/** One-line explanation of each approval state, shown in the drawer + as a tooltip. */
+const APPROVAL_HINT: Record<TemplateApprovalStatus, string> = {
+  draft: 'Not submitted yet — submit it for Meta review.',
+  pending: 'Submitted to Meta. Review usually takes a few minutes, up to 24h.',
+  approved: 'Approved by Meta — ready to use in WhatsApp campaigns.',
+  rejected: 'Meta rejected this template. Edit it and resubmit.',
+  paused: 'Paused by Meta over quality — sending is temporarily blocked.',
+  disabled: 'Disabled by Meta — this template can no longer be sent.',
+};
+
+/** Small approval-status pill for WhatsApp templates; renders nothing otherwise. */
+function ApprovalBadge({ t, compact = false }: { t: GalleryTemplate; compact?: boolean }) {
+  if (t.channel !== 'whatsapp') return null;
+  const status = t.approvalStatus ?? 'draft';
+  return (
+    <span
+      className={`astatus astatus--${status}`}
+      style={compact ? { fontSize: 10, padding: '1px 7px' } : undefined}
+      title={APPROVAL_HINT[status]}
+    >
+      {APPROVAL_LABEL[status]}
+    </span>
+  );
+}
+
+/** Map a gallery category to a WhatsApp/Meta template category. */
+function waCategory(category: string): 'MARKETING' | 'UTILITY' | 'AUTHENTICATION' {
+  return category === 'Transactional' ? 'UTILITY' : 'MARKETING';
+}
+
 function ChannelBadge({ channel, compact = false }: { channel: ChannelType; compact?: boolean }) {
   const m = CHANNEL[channel];
   return (
@@ -304,6 +343,30 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
       show(`Favorited ${ids.length}`);
     }
     setSelected(new Set());
+  };
+
+  /* Submit a WhatsApp template to Meta (via Infobip) for review. */
+  const submitTemplate = async (id: string) => {
+    if (!live) return;
+    try {
+      const updated = await api.post<ApiTemplate>(`templates/${id}/submit`, {});
+      setTemplates((prev) => prev.map((t) => (t.id === id ? toGalleryTemplate(updated) : t)));
+      show('Submitted for approval');
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : 'Could not submit for approval');
+    }
+  };
+
+  /* Manual fallback when a status webhook was missed — pulls the live status. */
+  const refreshApproval = async (id: string) => {
+    if (!live) return;
+    try {
+      const updated = await api.post<ApiTemplate>(`templates/${id}/refresh-status`, {});
+      setTemplates((prev) => prev.map((t) => (t.id === id ? toGalleryTemplate(updated) : t)));
+      show('Approval status refreshed');
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : 'Could not refresh status');
+    }
   };
 
   const openTpl = openId ? (templates.find((t) => t.id === openId) ?? null) : null;
@@ -619,6 +682,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                       <div className={styles.gname}>{t.name}</div>
                       <div className={styles.gsub}>
                         <span className={styles.catpill}>{t.category}</span>
+                        <ApprovalBadge t={t} />
                         <span className={styles.updated}>Updated {t.updated}</span>
                       </div>
                       <div className={styles.metrics}>
@@ -688,6 +752,11 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                         />
                       </span>
                     </div>
+                    {t.channel === 'whatsapp' && (
+                      <div style={{ marginTop: 4 }}>
+                        <ApprovalBadge t={t} compact />
+                      </div>
+                    )}
                     <div className={`${styles.cmetrics} tnum`}>
                       {t.avgOpen}% open · {t.avgClick}% click
                     </div>
@@ -796,8 +865,9 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                   <div>
                     <ChannelBadge channel={t.channel} />
                   </div>
-                  <div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
                     <span className={styles.catpill}>{t.category}</span>
+                    <ApprovalBadge t={t} compact />
                   </div>
                   <div className={styles.lmuted}>{t.updated}</div>
                   <div className={`${styles.lright} tnum ${styles.lmuted3}`}>{t.avgOpen}%</div>
@@ -865,6 +935,8 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           live={live}
           fav={isFav(openTpl.id)}
           onFav={() => toggleFav(openTpl.id, openTpl.name)}
+          onSubmit={() => submitTemplate(openTpl.id)}
+          onRefresh={() => refreshApproval(openTpl.id)}
           onClose={() => setOpenId(null)}
           onUse={() => {
             if (openTpl) void openForEdit(openTpl);
@@ -927,11 +999,20 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           onSave={async ({ channel, name, message, category }) => {
             const ed = builder;
             if (!ed || !live) return;
+            // WhatsApp templates persist their Meta structure so "Submit for
+            // approval" has a body/category/language to register.
+            const isWa = channel === 'whatsapp';
             const body = {
               name: name && name !== 'Untitled' ? name : 'Untitled template',
               channel,
               text: message || null,
               category,
+              ...(isWa
+                ? {
+                    language: 'en',
+                    components: { category: waCategory(category), body: { text: message } },
+                  }
+                : {}),
             };
             if (ed.id) {
               const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
@@ -983,6 +1064,8 @@ function TemplateDrawer({
   live,
   fav,
   onFav,
+  onSubmit,
+  onRefresh,
   onClose,
   onUse,
   onClone,
@@ -991,16 +1074,34 @@ function TemplateDrawer({
   live: boolean;
   fav: boolean;
   onFav: () => void;
+  onSubmit: () => void | Promise<void>;
+  onRefresh: () => void | Promise<void>;
   onClose: () => void;
   onUse: () => void;
   onClone: () => void;
 }) {
+  const [busy, setBusy] = useState(false);
   const catColor = CATEGORY_COLOR[t.category as TplCategory] ?? 'var(--accent)';
+  // WhatsApp templates carry an approval status; other channels don't.
+  const approval: TemplateApprovalStatus | null =
+    t.channel === 'whatsapp' ? (t.approvalStatus ?? 'draft') : null;
   const details: [string, string][] = [
     ['Category', t.category],
     ['Channel', CHANNEL[t.channel].label],
+    ...(approval ? ([['Approval', APPROVAL_LABEL[approval]]] as [string, string][]) : []),
+    ...(approval === 'rejected' && t.rejectionReason
+      ? ([['Rejection reason', t.rejectionReason]] as [string, string][])
+      : []),
     ['Last edited', t.updated],
   ];
+  const runBusy = (fn: () => void | Promise<void>) => async () => {
+    setBusy(true);
+    try {
+      await fn();
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="adrawer-overlay" onClick={onClose}>
@@ -1039,6 +1140,9 @@ function TemplateDrawer({
             >
               {t.category}
             </span>
+            {approval && (
+              <span className={`astatus astatus--${approval}`}>{APPROVAL_LABEL[approval]}</span>
+            )}
           </div>
           <p className={styles.dUpdated}>Updated {t.updated}</p>
 
@@ -1066,6 +1170,18 @@ function TemplateDrawer({
               </div>
             ))}
           </div>
+
+          {approval && approval !== 'approved' && (
+            <button
+              type="button"
+              className="pbtn"
+              style={{ width: '100%', marginTop: 14 }}
+              disabled={busy || !live}
+              onClick={runBusy(approval === 'pending' ? onRefresh : onSubmit)}
+            >
+              {approval === 'pending' ? 'Refresh status' : 'Submit for approval'}
+            </button>
+          )}
         </div>
 
         <div className="adrawer__foot">

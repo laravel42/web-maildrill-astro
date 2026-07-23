@@ -1,5 +1,21 @@
-import type { ChannelType } from '@/types/app';
+import type { ChannelType, TemplateApprovalStatus } from '@/types/app';
 import type { GalleryTemplate, TplCategory } from '@/lib/app/templates-data';
+
+const APPROVAL_STATUSES: TemplateApprovalStatus[] = [
+  'draft',
+  'pending',
+  'approved',
+  'rejected',
+  'paused',
+  'disabled',
+];
+
+/** Coerce the service's approval_status into our union, or null (non-WhatsApp). */
+export function toApprovalStatus(s?: string | null): TemplateApprovalStatus | null {
+  return APPROVAL_STATUSES.includes(s as TemplateApprovalStatus)
+    ? (s as TemplateApprovalStatus)
+    : null;
+}
 
 /** Shape of a template as returned by maildrill-service /v1/templates. */
 export interface ApiTemplate {
@@ -13,6 +29,11 @@ export interface ApiTemplate {
   builderDoc?: Record<string, unknown> | null;
   category?: string | null;
   favorite?: boolean | null;
+  /** WhatsApp template approval fields (null/absent on other channels). */
+  approvalStatus?: string | null;
+  rejectionReason?: string | null;
+  language?: string | null;
+  components?: Record<string, unknown> | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
@@ -81,6 +102,8 @@ export function toGalleryTemplate(t: ApiTemplate): GalleryTemplate {
     favorite: !!t.favorite,
     avgOpen: 0,
     avgClick: 0,
+    approvalStatus: toApprovalStatus(t.approvalStatus),
+    rejectionReason: t.rejectionReason ?? null,
   };
 }
 

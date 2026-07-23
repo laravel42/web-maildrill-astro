@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/AppLayout.astro';
 import CampaignsBoard from '@/components/react/CampaignsBoard';
 import { productClient, mintServiceToken, serviceBaseUrl } from '@/lib/server/service';
 import { toCampaigns, type ApiCampaign } from '@/lib/app/campaign-map';
+import { toApprovalStatus } from '@/lib/app/template-map';
 import type { Campaign } from '@/types/app';
 import type { ChannelSenders } from '@/lib/app/channel-senders';
 import type {
@@ -68,13 +69,18 @@ if (session?.user?.id && session.activeTenantId) {
       ...apiLists.map((l) => listToAudienceChoice(l, listCounts.get(l.id))),
       ...apiSegments.map((s) => segmentToAudienceChoice(s, segmentCounts.get(s.id))),
     ];
-    templates = unwrap<{ id: string; name: string; channel?: string | null; category?: string | null }>(
-      templatesRes.data,
-    ).map((t): TemplateChoice => ({
+    templates = unwrap<{
+      id: string;
+      name: string;
+      channel?: string | null;
+      category?: string | null;
+      approvalStatus?: string | null;
+    }>(templatesRes.data).map((t): TemplateChoice => ({
       id: t.id,
       name: t.name,
       category: t.category ?? null,
       channel: (t.channel as TemplateChoice['channel']) ?? 'email',
+      approvalStatus: toApprovalStatus(t.approvalStatus),
     }));
     if (sendersRes.ok) {
       senders = (await sendersRes.json()) as ChannelSenders;

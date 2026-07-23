@@ -4,7 +4,7 @@
  * (mapped in template-map.ts). Only the gallery card shape and the category/rate
  * vocabulary remain here.
  */
-import type { ChannelType } from '@/types/app';
+import type { ChannelType, TemplateApprovalStatus } from '@/types/app';
 
 export type TplCategory = 'Promotional' | 'Newsletter' | 'Transactional' | 'Announcement';
 
@@ -34,6 +34,10 @@ export type GalleryTemplate = {
   avgOpen: number;
   /** Average click rate, whole percent. */
   avgClick: number;
+  /** WhatsApp Meta-approval state; null for non-WhatsApp templates. */
+  approvalStatus?: TemplateApprovalStatus | null;
+  /** Meta rejection reason when approvalStatus === 'rejected'. */
+  rejectionReason?: string | null;
 };
 
 /** Category display colour (indigo / green / coral / tan). */

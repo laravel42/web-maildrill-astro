@@ -381,7 +381,11 @@ export default function CampaignWizard({
   };
 
   const templates: Template[] = live
-    ? (templateChoices ?? []).filter((t) => t.channel === channel).map(templateCard)
+    ? (templateChoices ?? [])
+        .filter((t) => t.channel === channel)
+        // WhatsApp campaigns can only send Meta-approved templates.
+        .filter((t) => t.channel !== 'whatsapp' || t.approvalStatus === 'approved')
+        .map(templateCard)
     : TEMPLATES[channel];
   const selTpl = templates.find((t) => templateKey(t) === selectedTemplateKey) ?? null;
 
