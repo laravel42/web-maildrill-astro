@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { AlertTriangle, Search, ShieldCheck } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 import { Input } from '@/ui/input';
 import { ScrollArea } from '@/ui/scroll-area';
@@ -8,12 +8,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip';
 import { listBlockPlugins, listButtonPlugins } from '@/core/registry';
 import { addButton, placeBlock, setLibrarySearch, useStudio } from '@/core/store';
 import type { Availability, PluginMeta } from '@/core/types';
-import { validateTemplate } from '@/core/validation';
 
 /**
- * Left sidebar: searchable component library grouped by category, plus
- * a live validation summary. Tiles are dnd-kit drag sources AND
- * click-to-place; unavailable ones are disabled with the reason.
+ * Left sidebar: searchable component library grouped by category.
+ * Tiles are dnd-kit drag sources AND click-to-place; unavailable ones
+ * are disabled with the reason. Validation lives in the inspector
+ * (per-instance) — not here.
  */
 
 type LibraryEntry = {
@@ -121,10 +121,6 @@ export function LibraryPanel() {
     return [...byGroup.entries()];
   }, [entries, search]);
 
-  const issues = React.useMemo(() => validateTemplate(doc), [doc]);
-  const errors = issues.filter((i) => i.severity === 'error');
-  const warnings = issues.filter((i) => i.severity === 'warning');
-
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-background" aria-label="Component library">
       <div className="p-3 pb-2">
@@ -152,29 +148,6 @@ export function LibraryPanel() {
             </section>
           ))}
           {groups.length === 0 && <p className="px-1 text-xs text-muted-foreground">No components match “{search}”.</p>}
-
-          <section aria-label="Validation" className="rounded-lg border border-border p-2.5">
-            <h3 className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              {errors.length > 0 ? <AlertTriangle className="size-3.5 text-destructive" /> : <ShieldCheck className="size-3.5 text-primary" />}
-              Validation
-            </h3>
-            {issues.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Template is ready for Meta review.</p>
-            ) : (
-              <ul className="flex flex-col gap-1">
-                {errors.map((issue, i) => (
-                  <li key={`e-${i}`} className="text-[11px] leading-snug text-destructive">
-                    {issue.message}
-                  </li>
-                ))}
-                {warnings.map((issue, i) => (
-                  <li key={`w-${i}`} className="text-[11px] leading-snug text-amber-600 dark:text-amber-400">
-                    {issue.message}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
         </div>
       </ScrollArea>
     </aside>

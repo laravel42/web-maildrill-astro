@@ -3,7 +3,7 @@ import { registerBlock, registerButton } from '@/core/registry';
 import { bodyAuthPlugin, footerAuthPlugin } from './auth-blocks';
 import { bodyPlugin } from './body';
 import { catalogPlugin, flowPlugin, mpmPlugin, otpPlugin } from './buttons/advanced';
-import { copyCodePlugin, phoneButtonPlugin, quickReplyPlugin, urlButtonPlugin } from './buttons/basic';
+import { copyCodePlugin, phoneButtonPlugin, urlButtonPlugin } from './buttons/basic';
 import { footerPlugin } from './footer';
 import { headerLocationPlugin } from './header-location';
 import { headerDocumentPlugin, headerImagePlugin, headerVideoPlugin } from './header-media';
@@ -29,7 +29,9 @@ export function registerBuiltInPlugins(): void {
   registerBlock(footerPlugin);
   registerBlock(footerAuthPlugin);
 
-  registerButton(quickReplyPlugin);
+  // Quick reply is intentionally NOT registered by default (product
+  // decision) — the plugin still ships; hosts can opt back in with
+  // `registerButton(quickReplyPlugin)` from the package root.
   registerButton(urlButtonPlugin);
   registerButton(phoneButtonPlugin);
   registerButton(copyCodePlugin);

@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { registerBuiltInPlugins } from '../src/blocks';
+import { quickReplyPlugin } from '../src/blocks/buttons/basic';
 import { getButtonPlugin } from '../src/core/registry';
 import {
   openPreviewSheet,
@@ -27,10 +28,11 @@ function apiSpy(): { api: InteractionApi; calls: Record<string, unknown[][]> } {
 }
 
 describe('button onTap behaviors (Test mode)', () => {
-  it('quick reply sends its label as an outgoing reply', () => {
+  it('quick reply (unregistered by default) still ships a reply behavior', () => {
     const { api, calls } = apiSpy();
-    getButtonPlugin('quick-reply')!.onTap!({ text: 'Count me in' }, api);
+    quickReplyPlugin.onTap!({ text: 'Count me in' }, api);
     expect(calls.reply).toEqual([['Count me in']]);
+    expect(getButtonPlugin('quick-reply')).toBeUndefined();
   });
 
   it('URL button opens the link sheet, resolving a dynamic suffix from the example', () => {
@@ -80,7 +82,7 @@ describe('button onTap behaviors (Test mode)', () => {
   });
 
   it('every registered button plugin defines a tap behavior', () => {
-    for (const type of ['quick-reply', 'url', 'phone', 'copy-code', 'otp', 'flow', 'catalog', 'mpm']) {
+    for (const type of ['url', 'phone', 'copy-code', 'otp', 'flow', 'catalog', 'mpm']) {
       expect(getButtonPlugin(type)!.onTap, `${type} should define onTap`).toBeTypeOf('function');
     }
   });

@@ -12,6 +12,8 @@ export { Studio, type StudioProps } from './app/Studio';
 // Plugin system
 export { registerBlock, registerButton, listBlockPlugins, listButtonPlugins } from './core/registry';
 export { registerBuiltInPlugins } from './blocks';
+// Not registered by default; re-enable with registerButton(quickReplyPlugin).
+export { quickReplyPlugin } from './blocks/buttons/basic';
 export type {
   Availability,
   BlockInstance,

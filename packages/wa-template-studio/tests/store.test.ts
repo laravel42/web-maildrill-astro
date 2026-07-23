@@ -39,19 +39,19 @@ describe('studio store', () => {
   });
 
   it('adds, reorders and removes buttons', () => {
-    addButton('quick-reply');
+    addButton('copy-code');
     addButton('url');
     addButton('phone');
     let buttons = useStudio.getState().doc.blocks.buttons;
-    expect(buttons.map((b) => b.type)).toEqual(['quick-reply', 'url', 'phone']);
+    expect(buttons.map((b) => b.type)).toEqual(['copy-code', 'url', 'phone']);
 
     reorderButtons(2, 0);
     buttons = useStudio.getState().doc.blocks.buttons;
-    expect(buttons.map((b) => b.type)).toEqual(['phone', 'quick-reply', 'url']);
+    expect(buttons.map((b) => b.type)).toEqual(['phone', 'copy-code', 'url']);
 
     const removedId = buttons[0]!.id;
     removeButton(removedId);
-    expect(useStudio.getState().doc.blocks.buttons.map((b) => b.type)).toEqual(['quick-reply', 'url']);
+    expect(useStudio.getState().doc.blocks.buttons.map((b) => b.type)).toEqual(['copy-code', 'url']);
   });
 
   it('undo/redo restore document states across mutation kinds', () => {

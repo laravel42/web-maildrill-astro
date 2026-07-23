@@ -31,7 +31,6 @@ function marketingDoc(): TemplateDoc {
       },
       footer: { id: newId('footer'), type: 'footer', data: { text: 'Reply STOP to opt out' } },
       buttons: [
-        { id: newId('btn'), type: 'quick-reply', data: { text: 'Show me' } },
         { id: newId('btn'), type: 'url', data: { text: 'Shop now', url: 'https://shop.example.com/sale/{{1}}', example: 'https://shop.example.com/sale/spring' } },
         { id: newId('btn'), type: 'copy-code', data: { example: 'SPRING20' } },
       ],
@@ -155,8 +154,8 @@ describe('meta serialization', () => {
     expect(body.example).toEqual({ body_text: [['Ada', '20%']] });
 
     const buttons = meta.components[3]!.buttons as Array<Record<string, unknown>>;
-    expect(buttons.map((b) => b.type)).toEqual(['QUICK_REPLY', 'URL', 'COPY_CODE']);
-    expect(buttons[1]!.example).toEqual(['https://shop.example.com/sale/spring']);
+    expect(buttons.map((b) => b.type)).toEqual(['URL', 'COPY_CODE']);
+    expect(buttons[0]!.example).toEqual(['https://shop.example.com/sale/spring']);
   });
 
   it('round-trips losslessly (export → import → export)', () => {
@@ -216,7 +215,6 @@ describe('meta serialization', () => {
         {
           type: 'BUTTONS',
           buttons: [
-            { type: 'QUICK_REPLY', text: 'Hi' },
             { type: 'URL', text: 'Web', url: 'https://x.com' },
             { type: 'PHONE_NUMBER', text: 'Call', phone_number: '+1555' },
             { type: 'COPY_CODE', example: 'SAVE' },
@@ -229,7 +227,6 @@ describe('meta serialization', () => {
     };
     const doc = fromMetaJson(meta);
     expect(doc.blocks.buttons.map((b) => b.type)).toEqual([
-      'quick-reply',
       'url',
       'phone',
       'copy-code',
