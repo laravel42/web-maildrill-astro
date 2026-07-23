@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+/* The dev harness's Vite root is `dev/`, so point Tailwind's source
+   scanner at the package source explicitly (paths are relative to this
+   file). Without this, utilities used in src/ are never generated. */
+@source "../";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Modern builder aesthetic: near-white surfaces, subtle borders, 8px radius. */
+  --background: #fafafa;
+  --foreground: #14201b;
+  --card: #ffffff;
+  --card-foreground: #14201b;
+  --popover: #ffffff;
+  --popover-foreground: #14201b;
+  --primary: #00a884;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f3f2;
+  --secondary-foreground: #1c2723;
+  --muted: #f1f3f2;
+  --muted-foreground: #6b7571;
+  --accent: #ecf1ef;
+  --accent-foreground: #14201b;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e4e7e5;
+  --input: #e4e7e5;
+  --ring: #00a884;
+  --radius: 0.5rem;
+
+  /* Studio-specific: WhatsApp preview surfaces (consumed by the preview pane). */
+  --wa-chat-light: #efeae2;
+  --wa-chat-dark: #0b141a;
+  --wa-bubble-light: #ffffff;
+  --wa-bubble-dark: #202c33;
+}
+
+.dark {
+  --background: #0f1412;
+  --foreground: #e8ebe9;
+  --card: #151b18;
+  --card-foreground: #e8ebe9;
+  --popover: #181f1c;
+  --popover-foreground: #e8ebe9;
+  --primary: #00c49f;
+  --primary-foreground: #06231c;
+  --secondary: #1c2420;
+  --secondary-foreground: #dfe4e2;
+  --muted: #1a211d;
+  --muted-foreground: #8b9591;
+  --accent: #202925;
+  --accent-foreground: #e8ebe9;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #242c28;
+  --input: #2a332e;
+  --ring: #00c49f;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+    outline-color: color-mix(in oklab, var(--color-ring) 50%, transparent);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+}
