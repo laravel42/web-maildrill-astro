@@ -14,6 +14,7 @@ import {
   TEMPLATES,
 } from './CampaignWizard.logic';
 import type { Props, Schedule, Step, Template } from './CampaignWizard.types';
+import TemplatePreview from './shared/TemplatePreview';
 import styles from './CampaignWizard.module.css';
 
 export type { Props };
@@ -817,7 +818,24 @@ export default function CampaignWizard({
             </div>
 
             {isEmail ? (
-              /* Email card preview — kept intentionally light (like a mail client). */
+              live && selTpl?.id ? (
+                /* Real rendered template — the same preview used in the
+                   templates gallery (exported email HTML in a sandboxed
+                   iframe), so the "received email" matches the builder canvas
+                   instead of a generic placeholder that dropped the images and
+                   columns. */
+                <div
+                  style={{
+                    borderRadius: 12,
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 16px rgba(28,25,23,.12)',
+                  }}
+                >
+                  <TemplatePreview id={selTpl.id} channel="email" live />
+                </div>
+              ) : (
+              /* Email card placeholder — used in fixture/marketing mode or
+                 before a saved template is selected. */
               <div
                 style={{
                   borderRadius: 12,
@@ -868,6 +886,7 @@ export default function CampaignWizard({
                   </div>
                 </div>
               </div>
+              )
             ) : (
               /* Phone mock preview for SMS / WhatsApp / Voice. */
               <div

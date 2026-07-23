@@ -672,8 +672,8 @@ export default function AIGenerationDialog({
             {t('aiGeneration.dialog.status.complete')}
           </Alert>
         )}
-        {/* Stream error reports hidden — unhide by removing display:'none' */}
-        {entryMode === 'wizard' && showPreview && response && <Box sx={{ display: 'none' }}>{renderStatusRow()}</Box>}
+        {/* Fatal errors visible in wizard mode too (see direct-mode note). */}
+        {entryMode === 'wizard' && status === 'error' && renderStatusRow()}
         {entryMode === 'wizard' && showPreview && response && (
           <AIPreviewPanel response={response} onComplete={handlePreviewComplete} onError={handlePreviewError} />
         )}
@@ -766,8 +766,10 @@ export default function AIGenerationDialog({
                 {t('aiGeneration.dialog.status.complete')}
               </Alert>
             )}
-            {/* Stream error reports hidden — unhide by removing display:'none' */}
-            <Box sx={{ display: 'none' }}>{renderStatusRow()}</Box>
+            {/* Fatal errors (provider/setup/stream failures or schema-invalid
+                output) must be visible so the user sees WHY generation failed
+                instead of the dialog silently reverting to a Retry button. */}
+            {status === 'error' && renderStatusRow()}
             {showPreview && response && (
               <AIPreviewPanel response={response} onComplete={handlePreviewComplete} onError={handlePreviewError} />
             )}
