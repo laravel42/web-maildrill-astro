@@ -37,6 +37,12 @@ const StyledSelect = styled(Select)(({ theme }) => ({
     border: `1px solid ${theme.palette.divider}`,
     backgroundColor: 'transparent',
   },
+  // MUI's outlined variant renders its own fieldset/legend border
+  // (.MuiOutlinedInput-notchedOutline) underneath the one set above —
+  // without disabling it, the two combine into a visible double border.
+  '& .MuiOutlinedInput-notchedOutline': {
+    border: 'none',
+  },
   // Standardize select padding; extra right padding to avoid icon overlap
   '&& .MuiSelect-select, && .MuiInputBase-input': {
     paddingTop: '8px',

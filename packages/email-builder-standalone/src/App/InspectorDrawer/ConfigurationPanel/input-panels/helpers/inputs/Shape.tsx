@@ -138,7 +138,7 @@ const Shape: FC<ShapeProps> = ({
       </RadioGroupInput>
 
       {selectedShape === 'rounded' && (
-        <Stack spacing={2} sx={{ alignItems: 'flex-start', pb: 1 }}>
+        <Stack spacing={2} sx={{ width: '100%', pb: 1 }}>
           <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
             <LabelProperty label={t('shape.borderRadius')} />
             <Tooltip title={isLocked ? t('lockValues.unlockTooltip') : t('lockValues.lockTooltip')}>

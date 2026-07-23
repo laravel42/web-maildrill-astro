@@ -30,11 +30,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
-import { type ThemeJson } from '@eb/document-core';
 import { Box, useTheme } from '@mui/material';
-
-import type { TEditorBlock } from '../../../documents/editor/core';
-import { editorStateStore, stripBlockStylesForTheme } from '../../../documents/editor/EditorContext';
 
 import { buildPrimitiveHtml } from './buildThumbnailHtml';
 
@@ -63,28 +59,24 @@ export default function LibraryCardPrimitiveRender({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
-  // Subscribe to the current EmailLayout globals (textColor, fontFamily,
-  // linkGlobal, theme…) so the live card render reflects the project
-  // theme. The block is cleaned with the same per-block transform as
-  // `applyThemePreset` so the theme wins. No theme → renders as saved.
-  const projectRootData = editorStateStore((s) => s.document?.root?.data as Record<string, unknown> | undefined);
-
   // Build the HTML lazily — only when the card is first visible. The
   // build itself is synchronous but creates a React Element via
   // renderToStaticMarkup, which has nontrivial cost on a list of 50+
   // primitives. Memo + visibility gate keeps this under control.
+  //
+  // Rendered VERBATIM (as created) — the project theme is intentionally
+  // NOT applied, so the card shows the primitive with its own saved
+  // colours, matching the hover preview and the inserted result.
   const html = useMemo(() => {
     if (!isVisible) return null;
     try {
-      const theme = projectRootData?.theme as ThemeJson | undefined;
-      const stripped = stripBlockStylesForTheme(block as TEditorBlock, theme);
-      return buildPrimitiveHtml({ id, block: stripped }, { rootData: projectRootData });
+      return buildPrimitiveHtml({ id, block });
     } catch {
       // Defensive: malformed block payloads (e.g. an old version with
       // a removed prop) shouldn't crash the drawer.
       return null;
     }
-  }, [isVisible, id, block, projectRootData]);
+  }, [isVisible, id, block]);
 
   // Defer iframe mount until the card scrolls into view. Once visible,
   // we leave the iframe mounted (no toggle on scroll-out) — re-
@@ -120,7 +112,7 @@ export default function LibraryCardPrimitiveRender({
       sx={{
         width: '100%',
         height,
-        borderRadius: 1,
+        borderRadius: 0,
         backgroundColor: theme.palette.action.hover,
         overflow: 'hidden',
         position: 'relative',

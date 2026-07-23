@@ -1,5 +1,6 @@
-import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { lazy, Suspense, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { ChannelType, TemplateApprovalStatus } from '@/types/app';
+
 import {
   galleryTemplates,
   CATEGORY_COLOR,
@@ -13,7 +14,13 @@ import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
 import ColFilter from './shared/ColFilter';
 import EmailBuilder from './EmailBuilder';
-import VisualEmailBuilder from './VisualEmailBuilder';
+// Lazy: email-builder-standalone (MUI, tiptap, DnD, image tools…) is a large
+// bundle. A static import here pulled it into this route's module graph even
+// though the visual editor only renders once a user opens an email template
+// — everyone visiting /app/templates paid for it upfront. React.lazy defers
+// the fetch until <VisualEmailBuilder> actually mounts.
+const VisualEmailBuilder = lazy(() => import('./VisualEmailBuilder'));
+import LazyBoundary from './shared/LazyBoundary';
 import TemplatePreview from './shared/TemplatePreview';
 import GalleryPreview, { FauxEmail } from './shared/GalleryPreview';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
@@ -950,42 +957,49 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
       )}
 
       {/* Email uses the full EmailBuilder.js visual editor; other channels keep
-          the lightweight composer. */}
+          the lightweight composer. Suspense is required by React.lazy — its
+          fallback only covers fetching this wrapper's own (small) chunk; the
+          heavy email-builder-standalone package has its own loading state
+          inside VisualEmailBuilder. */}
       {builder && builder.channel === 'email' && (
-        <VisualEmailBuilder
-          name={builder.name}
-          initialDocument={builder.document}
-          initialCategory={builder.category}
-          onClose={() => setBuilder(null)}
-          onSave={async ({ name, html, document, category }) => {
-            const ed = builder;
-            if (!ed) return;
-            // Stay in the editor and let it show a saved badge; don't close.
-            // Errors propagate so the editor surfaces them. Local (no-service)
-            // mode just acknowledges.
-            if (!live) return;
-            const body = {
-              name: name && name !== 'Untitled' ? name : 'Untitled template',
-              channel: 'email' as const,
-              html,
-              builderDoc: document as Record<string, unknown>,
-              category,
-            };
-            if (ed.id) {
-              // Editing an existing template — update it in place.
-              const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
-              setTemplates((prev) =>
-                prev.map((t) => (t.id === ed.id ? toGalleryTemplate(updated) : t)),
-              );
-            } else {
-              const created = await api.post<ApiTemplate>('templates', body);
-              setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
-              // Switch to update mode so subsequent saves patch this template
-              // instead of creating duplicates.
-              setBuilder((prev) => (prev ? { ...prev, id: created.id } : prev));
-            }
-          }}
-        />
+        <LazyBoundary label="the email editor" onClose={() => setBuilder(null)}>
+        <Suspense fallback={null}>
+          <VisualEmailBuilder
+            name={builder.name}
+            initialDocument={builder.document}
+            initialCategory={builder.category}
+            onClose={() => setBuilder(null)}
+            onSave={async ({ name, html, document, category }) => {
+              const ed = builder;
+              if (!ed) return;
+              // Stay in the editor and let it show a saved badge; don't close.
+              // Errors propagate so the editor surfaces them. Local (no-service)
+              // mode just acknowledges.
+              if (!live) return;
+              const body = {
+                name: name && name !== 'Untitled' ? name : 'Untitled template',
+                channel: 'email' as const,
+                html,
+                builderDoc: document as Record<string, unknown>,
+                category,
+              };
+              if (ed.id) {
+                // Editing an existing template — update it in place.
+                const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
+                setTemplates((prev) =>
+                  prev.map((t) => (t.id === ed.id ? toGalleryTemplate(updated) : t)),
+                );
+              } else {
+                const created = await api.post<ApiTemplate>('templates', body);
+                setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
+                // Switch to update mode so subsequent saves patch this template
+                // instead of creating duplicates.
+                setBuilder((prev) => (prev ? { ...prev, id: created.id } : prev));
+              }
+            }}
+          />
+        </Suspense>
+        </LazyBoundary>
       )}
 
       {builder && builder.channel !== 'email' && (
@@ -1088,10 +1102,6 @@ function TemplateDrawer({
   const details: [string, string][] = [
     ['Category', t.category],
     ['Channel', CHANNEL[t.channel].label],
-    ...(approval ? ([['Approval', APPROVAL_LABEL[approval]]] as [string, string][]) : []),
-    ...(approval === 'rejected' && t.rejectionReason
-      ? ([['Rejection reason', t.rejectionReason]] as [string, string][])
-      : []),
     ['Last edited', t.updated],
   ];
   const runBusy = (fn: () => void | Promise<void>) => async () => {
@@ -1161,6 +1171,78 @@ function TemplateDrawer({
             </div>
           </div>
 
+          {approval && (
+            <div
+              style={{
+                border: '1px solid var(--border)',
+                borderRadius: 12,
+                padding: '12px 14px',
+                marginBottom: 16,
+                background: 'var(--surface2)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                }}
+              >
+                <p className={`adrawer__eyebrow ${styles.dEyebrow}`} style={{ margin: 0 }}>
+                  Approval status
+                </p>
+                <span className={`astatus astatus--${approval}`}>{APPROVAL_LABEL[approval]}</span>
+              </div>
+              <p
+                style={{
+                  fontSize: 12.5,
+                  color: 'var(--text3)',
+                  lineHeight: 1.5,
+                  margin: '8px 0 0',
+                }}
+              >
+                {APPROVAL_HINT[approval]}
+              </p>
+              {approval === 'rejected' && t.rejectionReason && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    padding: '8px 10px',
+                    borderRadius: 8,
+                    background: 'var(--danger-bg)',
+                    color: 'var(--danger)',
+                    fontSize: 12,
+                  }}
+                >
+                  <strong>Reason:</strong> {t.rejectionReason}
+                </div>
+              )}
+              {approval !== 'approved' && (
+                <button
+                  type="button"
+                  className="pbtn"
+                  style={{ width: '100%', marginTop: 12 }}
+                  disabled={busy || !live}
+                  onClick={runBusy(approval === 'pending' ? onRefresh : onSubmit)}
+                >
+                  {busy
+                    ? 'Working…'
+                    : approval === 'pending'
+                      ? 'Refresh status'
+                      : approval === 'rejected'
+                        ? 'Resubmit for approval'
+                        : 'Submit for approval'}
+                </button>
+              )}
+              {!live && (
+                <p style={{ fontSize: 11, color: 'var(--muted)', margin: '8px 0 0' }}>
+                  Connect a workspace to submit templates.
+                </p>
+              )}
+            </div>
+          )}
+
           <p className={`adrawer__eyebrow ${styles.dEyebrow}`}>About this template</p>
           <div>
             {details.map(([k, v]) => (
@@ -1170,18 +1252,6 @@ function TemplateDrawer({
               </div>
             ))}
           </div>
-
-          {approval && approval !== 'approved' && (
-            <button
-              type="button"
-              className="pbtn"
-              style={{ width: '100%', marginTop: 14 }}
-              disabled={busy || !live}
-              onClick={runBusy(approval === 'pending' ? onRefresh : onSubmit)}
-            >
-              {approval === 'pending' ? 'Refresh status' : 'Submit for approval'}
-            </button>
-          )}
         </div>
 
         <div className="adrawer__foot">

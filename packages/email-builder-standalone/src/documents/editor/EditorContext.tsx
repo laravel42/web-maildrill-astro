@@ -121,8 +121,10 @@ type TValue = {
    * localStorage outside the React tree.
    */
   componentsLibraryRefreshNonce: number;
-  /** When false, hides "Save as template" button and the Templates accordion in the drawer. */
+  /** When false, hides the "Save as template" button. Defaults to true. */
   templateSaving: boolean;
+  /** When false, hides the Templates tab in the Components Library drawer. Defaults to true. */
+  templateLibrary: boolean;
   /** When true, shows the "Save as theme" button in the root inspector panel. Defaults to false. */
   themeSaving: boolean;
   imageUploading: {
@@ -191,6 +193,7 @@ const createInitialState = (): TValue => ({
   componentsStorageMode: 'backend',
   componentsLibraryRefreshNonce: 0,
   templateSaving: true,
+  templateLibrary: true,
   themeSaving: false,
   imageUploading: {
     uploading: false,
@@ -222,9 +225,13 @@ const createInitialState = (): TValue => ({
   canvasHoveredBlockId: null,
   highlightColor: '#FF6B35', // Naranja por defecto
   showVersion: false,
-  // Fresh documents ship with the Classic Light theme baked into the seed
-  // root (see empty-email-message.ts), so mark it as the applied theme.
-  appliedThemeId: 'classic-light',
+  // Fresh documents ship with the Classic Light theme's values baked
+  // into the seed root (see empty-email-message.ts) so previews render
+  // correctly — but no theme card should show as "Selected" until the
+  // user explicitly picks one. Point 9 (EMAIL_BUILDER_TASKS.md): start
+  // with no theme marked as applied; save/apply/list themes work exactly
+  // as before, they just don't preselect on load.
+  appliedThemeId: null,
 });
 
 export const editorStateStore = create<TValue>(() => createInitialState());
@@ -317,6 +324,14 @@ export function useTemplateSaving() {
 
 export function setTemplateSaving(enabled: boolean) {
   return editorStateStore.setState({ templateSaving: enabled });
+}
+
+export function useTemplateLibrary() {
+  return editorStateStore((s) => s.templateLibrary);
+}
+
+export function setTemplateLibrary(enabled: boolean) {
+  return editorStateStore.setState({ templateLibrary: enabled });
 }
 
 export function useThemeSaving() {
@@ -2300,13 +2315,6 @@ function buildRenamedSubtreeFromSaved(saved: TSavedComponentBlock[]): {
 } {
   if (saved.length === 0) return { rootId: null, subtree: {} };
 
-  // Current document theme — inserted blocks must adopt it (the theme
-  // always wins over the component's baked-in styling) via the same
-  // per-block transform as `applyThemePreset`. When the target document
-  // has no theme override for a block, only the NotionText colour pass
-  // applies; structural content is always preserved.
-  const currentTheme = (editorStateStore.getState().document?.root?.data as { theme?: ThemeJson } | undefined)?.theme;
-
   const idMap = new Map<string, string>();
   for (const entry of saved) {
     if (typeof entry.id === 'string' && !idMap.has(entry.id)) {
@@ -2341,11 +2349,13 @@ function buildRenamedSubtreeFromSaved(saved: TSavedComponentBlock[]): {
         }
       }
     }
-    // Strip the block's own styling so the destination theme wins —
-    // same per-block transform as `applyThemePreset` (governed keys +
-    // NotionText colour). `childrenIds` / `columns` rewritten above are
-    // preserved (the theme never defines structural props).
-    subtree[newId] = stripBlockStylesForTheme(cloned, currentTheme);
+    // Insert the pre-made block VERBATIM — as created, with its own
+    // colours and styling. The destination document's theme is
+    // intentionally NOT applied here (requirement: library blocks keep
+    // the exact look they were saved with when inserted, matching their
+    // card thumbnail and hover preview). `childrenIds` / `columns`
+    // rewritten above are preserved.
+    subtree[newId] = cloned;
   }
 
   return { rootId: idMap.get(saved[0].id) ?? null, subtree };

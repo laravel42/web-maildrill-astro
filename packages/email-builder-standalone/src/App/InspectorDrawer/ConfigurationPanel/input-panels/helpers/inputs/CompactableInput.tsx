@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 
 import type { SvgIconComponent } from '@mui/icons-material';
-import { alpha, Box, IconButton, Popover, Tooltip } from '@mui/material';
+import { Box, IconButton, Popover, Tooltip } from '@mui/material';
 
 import { useCompactMode } from '../../../../CompactModeContext';
 
@@ -9,41 +9,15 @@ type CompactableInputProps = {
   icon: SvgIconComponent;
   label: string;
   children: React.ReactNode;
-  /**
-   * When true, renders a small "modified" dot so the user can scan which
-   * individual properties diverge from the default. Intentionally lighter
-   * and smaller than the parent accordion badge. Compact mode paints it on
-   * the icon button; full mode paints it in the left gutter of the field.
-   */
-  modified?: boolean;
 };
 
-export default function CompactableInput({ icon: Icon, label, children, modified = false }: CompactableInputProps) {
+export default function CompactableInput({ icon: Icon, label, children }: CompactableInputProps) {
   const compact = useCompactMode();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLButtonElement>(null);
 
   if (!compact) {
-    if (!modified) return <>{children}</>;
-    return (
-      <Box sx={{ position: 'relative' }}>
-        {children}
-        <Box
-          component="span"
-          aria-hidden
-          sx={(theme) => ({
-            position: 'absolute',
-            top: 4,
-            left: -10,
-            width: 5,
-            height: 5,
-            borderRadius: '50%',
-            bgcolor: alpha(theme.palette.primary.main, 0.55),
-            pointerEvents: 'none',
-          })}
-        />
-      </Box>
-    );
+    return <>{children}</>;
   }
 
   return (
@@ -59,22 +33,6 @@ export default function CompactableInput({ icon: Icon, label, children, modified
           >
             <Icon fontSize="small" />
           </IconButton>
-          {modified && (
-            <Box
-              component="span"
-              aria-hidden
-              sx={(theme) => ({
-                position: 'absolute',
-                top: 2,
-                right: 2,
-                width: 5,
-                height: 5,
-                borderRadius: '50%',
-                bgcolor: alpha(theme.palette.primary.main, 0.55),
-                pointerEvents: 'none',
-              })}
-            />
-          )}
         </Box>
       </Tooltip>
       <Popover

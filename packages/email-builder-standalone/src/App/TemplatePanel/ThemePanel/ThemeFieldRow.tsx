@@ -79,7 +79,7 @@ export default function ThemeFieldRow({ blockType, field }: ThemeFieldRowProps) 
   switch (field.kind) {
     case 'color':
       return (
-        <CompactableInput icon={fieldIcon} label={label} modified={isOverridden}>
+        <CompactableInput icon={fieldIcon} label={label}>
           <NullableColorInput
             label={label}
             labelAction={resetButton}
@@ -90,7 +90,7 @@ export default function ThemeFieldRow({ blockType, field }: ThemeFieldRowProps) 
       );
     case 'padding':
       return (
-        <CompactableInput icon={fieldIcon} label={label} modified={isOverridden}>
+        <CompactableInput icon={fieldIcon} label={label}>
           <PaddingInput
             label={label}
             labelAction={resetButton}
@@ -108,7 +108,7 @@ export default function ThemeFieldRow({ blockType, field }: ThemeFieldRowProps) 
       );
     case 'fontSize':
       return (
-        <CompactableInput icon={fieldIcon} label={label} modified={isOverridden}>
+        <CompactableInput icon={fieldIcon} label={label}>
           <FontSizeInput
             label={label}
             labelAction={resetButton}
@@ -119,7 +119,7 @@ export default function ThemeFieldRow({ blockType, field }: ThemeFieldRowProps) 
       );
     case 'fontFamily':
       return (
-        <CompactableInput icon={fieldIcon} label={label} modified={isOverridden}>
+        <CompactableInput icon={fieldIcon} label={label}>
           <NullableFontFamily
             label={label}
             labelAction={resetButton}
@@ -130,7 +130,7 @@ export default function ThemeFieldRow({ blockType, field }: ThemeFieldRowProps) 
       );
     case 'fontWeight':
       return (
-        <CompactableInput icon={fieldIcon} label={label} modified={isOverridden}>
+        <CompactableInput icon={fieldIcon} label={label}>
           <FontWeightInput
             label={label}
             labelAction={resetButton}
@@ -141,7 +141,7 @@ export default function ThemeFieldRow({ blockType, field }: ThemeFieldRowProps) 
       );
     case 'textAlign':
       return (
-        <CompactableInput icon={fieldIcon} label={label} modified={isOverridden}>
+        <CompactableInput icon={fieldIcon} label={label}>
           <TextAlignInput
             label={label}
             labelAction={resetButton}
@@ -152,7 +152,7 @@ export default function ThemeFieldRow({ blockType, field }: ThemeFieldRowProps) 
       );
     case 'number':
       return (
-        <CompactableInput icon={fieldIcon} label={label} modified={isOverridden}>
+        <CompactableInput icon={fieldIcon} label={label}>
           <FontSizeInput
             label={label}
             labelAction={resetButton}
@@ -163,7 +163,7 @@ export default function ThemeFieldRow({ blockType, field }: ThemeFieldRowProps) 
       );
     case 'border':
       return (
-        <CompactableInput icon={fieldIcon} label={label} modified={isOverridden}>
+        <CompactableInput icon={fieldIcon} label={label}>
           <ThemeBorderField blockType={blockType} field={field} />
         </CompactableInput>
       );

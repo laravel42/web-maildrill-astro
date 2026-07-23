@@ -35,7 +35,7 @@ export default function TextInput({ helperText, label, placeholder, rows, InputP
   const isMultiline = typeof rows === 'number' && rows > 1;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
       <LabelProperty label={label} />
       <TextField
         fullWidth

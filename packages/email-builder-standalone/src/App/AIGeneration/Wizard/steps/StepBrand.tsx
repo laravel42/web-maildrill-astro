@@ -1,10 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Stack } from '@mui/material';
-
 import { type DraftBrief, PURPOSE_CHIPS } from '../briefDefaults';
-import ChipQuestion from '../ChipQuestion';
+import PillSelect from '../controls/PillSelect';
+import WizardStep from '../controls/WizardStep';
 import type { BriefPatch } from '../useVisualBrief';
 import WizardField from '../WizardField';
 
@@ -13,35 +12,26 @@ interface Props {
   patch: (p: BriefPatch) => void;
 }
 
-const PURPOSE_OPTIONS = PURPOSE_CHIPS.map((v) => ({
-  value: v,
-  labelKey: `steps.step01.purpose.${v}`,
-}));
-
-export default function Step01Strategy({ brief, patch }: Props) {
+/** Step 1: the brand and what kind of email to create. */
+export default function StepBrand({ brief, patch }: Props) {
   const { t } = useTranslation('aiWizard');
   const es = brief.email_strategy;
 
+  const purposeOptions = PURPOSE_CHIPS.map((v) => ({ value: v, label: t(`steps.step01.purpose.${v}`) }));
+
   return (
-    <Stack spacing={2}>
-      <ChipQuestion
-        questionKey="steps.step01.purposeQuestion"
-        hintKey="steps.common.onlyAnswerThisPoint"
-        options={PURPOSE_OPTIONS}
-        selected={es.purpose ? [es.purpose] : []}
-        onChange={([v]) => patch({ email_strategy: { purpose: v } })}
-      />
+    <WizardStep title={t('steps.stepBrand.title')}>
       <WizardField
         label={t('steps.step01.brandNameLabel')}
         value={es.brandName}
         onChange={(e) => patch({ email_strategy: { brandName: e.target.value } })}
         placeholder={t('steps.step01.brandNamePlaceholder')}
       />
-      <WizardField
-        label={t('steps.step01.audienceLabel')}
-        value={es.audience}
-        onChange={(e) => patch({ email_strategy: { audience: e.target.value } })}
-        placeholder={t('steps.step01.audiencePlaceholder')}
+      <PillSelect
+        label={t('steps.step01.purposeQuestion')}
+        value={es.purpose}
+        options={purposeOptions}
+        onChange={(v) => patch({ email_strategy: { purpose: v } })}
       />
       {es.purpose === 'custom' && (
         <WizardField
@@ -53,6 +43,6 @@ export default function Step01Strategy({ brief, patch }: Props) {
           placeholder={t('steps.step01.goalPlaceholder')}
         />
       )}
-    </Stack>
+    </WizardStep>
   );
 }

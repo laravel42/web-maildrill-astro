@@ -191,7 +191,15 @@ const StickyWrapper = ({
           // crezca naturalmente; el placeholder mantiene el espacio.
           // El ancho puede venir del style externo del consumidor.
           width: 'auto',
-          height: 'auto',
+          // En estado sticky (fixed) dejamos que crezca con el contenido
+          // (`auto`) y el placeholder mantiene el hueco. En estado estático
+          // llenamos el alto del padre (`100%`) para que un hijo que pide una
+          // altura acotada (p. ej. el InspectorDrawer con su `calc(100% - 4px)`
+          // + `overflowY: auto` interno) la pueda resolver y haga scroll en vez
+          // de desbordar. En contenedores de alto indefinido, `100%` computa
+          // como `auto`, así que no cambia el comportamiento previo.
+          height: shouldApplySticky ? 'auto' : '100%',
+          minHeight: 0,
           zIndex: shouldApplySticky ? zIndex : 'auto',
           transition: isBeingPushed
             ? 'none' // Sin transición cuando está siendo empujado para movimiento fluido

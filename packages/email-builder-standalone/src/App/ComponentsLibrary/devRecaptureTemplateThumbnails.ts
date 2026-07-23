@@ -71,7 +71,7 @@ export async function recaptureTemplateThumbnails(
       // blocks[0] is the EmailLayout root (renumbered on save); anchor
       // the capture there so the whole document renders.
       const html = buildSubtreeHtml(docMap as Parameters<typeof buildSubtreeHtml>[0], blocks[0].id);
-      const blob = await captureSubtreeThumbnail(html);
+      const blob = await captureSubtreeThumbnail(html, { variant: 'template' });
       if (!blob) {
         summary.skipped++;
         console.warn(`[recaptureTemplateThumbnails] capture returned null for "${name}"`);

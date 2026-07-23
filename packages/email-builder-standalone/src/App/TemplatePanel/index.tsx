@@ -177,6 +177,18 @@ export default function TemplatePanel({
   const inspectorMode = useInspectorDrawerMode();
   const inspectorWidth = inspectorOpen ? (inspectorMode === 'compact' ? COMPACT_PANEL_WIDTH : lateralPanel) : 0;
 
+  // The compact footprint of each side panel is now reserved as real layout
+  // space by the flex spacers in App/index.tsx (so the canvas/preview never
+  // sits behind a compact rail). The canvas Box that contains this header is
+  // therefore already inset by those compact widths. Subtract them from the
+  // header's own padding so the toolbar controls keep dodging the FULL panel
+  // width exactly as before — only the EXTRA overflow beyond the compact rail
+  // (i.e. the expanded portion that floats over the canvas) is padded here.
+  const leftReserved = libraryEnabled && selectedMainTab === 'editor' ? COMPACT_LIBRARY_DRAWER_WIDTH : 0;
+  const rightReserved = inspectorOpen ? COMPACT_PANEL_WIDTH : 0;
+  const headerPaddingLeft = Math.max(0, libraryOffset - leftReserved);
+  const headerPaddingRight = Math.max(0, inspectorWidth + 8 - rightReserved);
+
   // Estado para controlar el loading del preview
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -530,8 +542,8 @@ export default function TemplatePanel({
                 direction="row"
                 spacing={2}
                 sx={{
-                  pl: libraryOffset ? `${libraryOffset}px` : 2,
-                  pr: `${inspectorWidth + 8}px`,
+                  pl: headerPaddingLeft ? `${headerPaddingLeft}px` : 2,
+                  pr: `${headerPaddingRight}px`,
                   transition: 'padding 220ms cubic-bezier(0.4, 0, 0.2, 1)',
                   width: '100%',
                   justifyContent: 'space-between',

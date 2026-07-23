@@ -12,9 +12,17 @@ allowBuilds:
   # Vite/esbuild pipeline.
   '@parcel/watcher': false
   '@swc/core': false
+
 # eslint-plugin-jsx-a11y@6.10.2 (its latest) hasn't widened its `eslint` peer
 # range to include v10, but eslint-plugin-astro@3 requires exactly this pairing
 # and it lints cleanly against ESLint 10. Declare the combination allowed.
 peerDependencyRules:
   allowedVersions:
     eslint-plugin-jsx-a11y>eslint: '10'
+
+# Dependencies allowed to run their (native) install/build scripts. pnpm 10
+# blocks build scripts by default; these two are approved because the toolchain
+# needs them. Written by pnpm when the build prompts are approved.
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - esbuild

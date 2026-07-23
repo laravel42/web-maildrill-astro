@@ -1,8 +1,8 @@
 /**
  * CompactBlocksList — the body rendered inside the Components Library
  * drawer when it is collapsed to `compact` mode. It mirrors the right
- * InspectorDrawer's compact rail: a narrow vertical strip that surfaces
- * only the essentials — here, the built-in base blocks.
+ * InspectorDrawer's compact rail: a narrower strip that surfaces only
+ * the essentials — here, the built-in base blocks.
  *
  * Each tile is the same `react-dnd` drag source as the full Blocks tab
  * (`BlocksCategoryContent`): type `LIBRARY_COMPONENT_DND_TYPE`, category
@@ -11,9 +11,10 @@
  * Clicking a tile appends the block to the document root (empty-canvas
  * friendly). A single "expand" button at the top returns to full mode.
  *
- * The labels stay icon-only (surfaced via tooltip) so the whole strip
- * fits in the compact width; use the full drawer for Sections /
- * Templates and search.
+ * At the current 164px rail width, tiles show the full icon + label
+ * (mirroring the full Blocks tab's tile styling) instead of an
+ * icon-only square; use the full drawer for Sections / Templates and
+ * search.
  */
 
 import React from 'react';
@@ -21,7 +22,7 @@ import { useDrag } from 'react-dnd';
 import { useTranslation } from 'react-i18next';
 
 import ViewSidebarOutlined from '@mui/icons-material/ViewSidebarOutlined';
-import { Box, ButtonBase, Stack, Tooltip, useTheme } from '@mui/material';
+import { Box, ButtonBase, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 
 import {
   appendBuiltInBlockToParent,
@@ -33,7 +34,15 @@ import { BUTTONS } from './builtInBlocks';
 import { type BuiltInBlockDragItem, LIBRARY_COMPONENT_DND_TYPE } from './dnd';
 import { dragTileShellSx } from './dragTileShell';
 
-/** One icon-only base-block tile: drag to position, click to append. */
+/**
+ * One base-block tile — mirrors the full Blocks tab's `BlockTile`
+ * styling (icon chip on top, label below, in a column) instead of the
+ * previous icon-only square, now that the compact rail is 164px wide
+ * (up from 64px) and has room for it. Rectangular — width fills the
+ * rail, height stays tight to icon+label — rather than a square
+ * aspect-ratio tile, so a full list of blocks doesn't overflow the
+ * rail vertically the way taller square tiles would.
+ */
 function CompactBlockTile({ index }: { index: number }) {
   const entry = BUTTONS[index];
   const theme = useTheme();
@@ -61,24 +70,47 @@ function CompactBlockTile({ index }: { index: number }) {
   };
 
   return (
-    <Tooltip title={t(entry.labelKey)} placement="right">
+    <Box
+      ref={(node: HTMLDivElement | null) => {
+        if (node) (dragRef as unknown as (n: HTMLElement) => void)(node);
+      }}
+      onClick={handleClick}
+      sx={{
+        ...dragTileShellSx(theme, { dragging: isDragging }),
+        p: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 0.5,
+      }}
+    >
       <Box
-        ref={(node: HTMLDivElement | null) => {
-          if (node) (dragRef as unknown as (n: HTMLElement) => void)(node);
-        }}
-        onClick={handleClick}
         sx={{
-          ...dragTileShellSx(theme, { dragging: isDragging }),
-          aspectRatio: '1 / 1',
+          width: '100%',
           display: 'flex',
-          alignItems: 'center',
           justifyContent: 'center',
+          p: 0.75,
+          borderRadius: 0.5,
+          bgcolor: theme.palette.action.hover,
           color: 'text.secondary',
         }}
       >
         {entry.icon}
       </Box>
-    </Tooltip>
+      <Typography
+        variant="body2"
+        sx={{
+          fontSize: '0.75rem',
+          textAlign: 'center',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          width: '100%',
+        }}
+      >
+        {t(entry.labelKey)}
+      </Typography>
+    </Box>
   );
 }
 
@@ -115,11 +147,16 @@ export default function CompactBlocksList() {
         </Tooltip>
       </Stack>
       <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', px: 0.5, py: 1 }}>
-        <Stack spacing={0.5}>
+        {/* Box + gap, not Stack spacing — theme.ts's MuiStack styleOverrides
+            forces margin: 0 !important on every Stack's children workspace-
+            wide (see BaseSidebarPanel.tsx for the same issue), which would
+            silently collapse this back to touching tiles. gap: 1 = 0.5rem
+            gives the list some breathing room. */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {BUTTONS.map((_entry, index) => (
             <CompactBlockTile key={index} index={index} />
           ))}
-        </Stack>
+        </Box>
       </Box>
     </>
   );

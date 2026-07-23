@@ -84,7 +84,7 @@ async function saveOne(
   try {
     const docMap: Record<string, unknown> = {};
     for (const e of blocks) docMap[e.id] = e.block;
-    thumbnail = await captureSubtreeThumbnail(buildSubtreeHtml(docMap as never, 'root'));
+    thumbnail = await captureSubtreeThumbnail(buildSubtreeHtml(docMap as never, 'root'), { variant: 'template' });
   } catch {
     /* capture is best-effort — save without a thumbnail */
   }

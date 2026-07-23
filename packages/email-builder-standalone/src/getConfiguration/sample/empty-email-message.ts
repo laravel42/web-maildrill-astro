@@ -14,16 +14,18 @@ import { TEditorConfiguration } from '../../documents/editor/core';
  * automatically and any duplication would shadow theme overrides for
  * fresh documents (see `skills/theme-system.md`).
  *
- * The `Classic Light` theme is baked onto the root (globals +
- * per-block `theme.blocks` overrides). Shipping the theme by default
- * means fresh documents — and every section / layout / primitive
- * preview in the Components Library that inherits the current root
- * globals + `theme` — render with a correct white canvas and container
- * background instead of a transparent / unset surface. Keep these
- * values in sync with the `classic-light` preset in
- * `App/TemplatePanel/ThemePresets/defaults/index.ts`.
+ * NO theme is baked onto the root. Fresh documents ship with sensible
+ * document-level globals (backdrop/canvas surface, text color, font,
+ * link style) but WITHOUT a `theme.blocks` override map — so inserted
+ * library blocks never inherit a theme-imposed background/border and
+ * stay a clean, fully editable slate. (Previously a `Classic Light`
+ * theme was baked here, which injected Container/ColumnsContainer
+ * backgrounds, Button colors and a Divider color into every block that
+ * didn't set its own; that default theme selection has been removed on
+ * purpose.) A theme can still be applied deliberately from the Themes
+ * gallery, which writes the `theme` back onto the root.
  */
-const CLASSIC_LIGHT_ROOT_DEFAULTS = {
+const CLEAN_ROOT_DEFAULTS = {
   backdropColor: '#f1f5f9',
   canvasColor: '#ffffff',
   textColor: '#0f172a',
@@ -32,21 +34,13 @@ const CLASSIC_LIGHT_ROOT_DEFAULTS = {
     linkColor: '#2563eb',
     underline: true,
   },
-  theme: {
-    blocks: {
-      Button: { style: { buttonBackgroundColor: '#2563eb', buttonTextColor: '#ffffff' } },
-      Divider: { style: { color: '#e2e8f0' } },
-      Container: { style: { backgroundColor: '#ffffff' } },
-      ColumnsContainer: { style: { backgroundColor: '#ffffff' } },
-    },
-  },
 } as const;
 
 const EMPTY_EMAIL_MESSAGE: TEditorConfiguration = {
   root: {
     type: 'EmailLayout',
     data: {
-      ...CLASSIC_LIGHT_ROOT_DEFAULTS,
+      ...CLEAN_ROOT_DEFAULTS,
       childrenIds: [],
       showVersion: true,
     },
@@ -57,7 +51,7 @@ const EMPTY_EMAIL_PROD: TEditorConfiguration = {
   root: {
     type: 'EmailLayout',
     data: {
-      ...CLASSIC_LIGHT_ROOT_DEFAULTS,
+      ...CLEAN_ROOT_DEFAULTS,
       childrenIds: [],
     },
   },

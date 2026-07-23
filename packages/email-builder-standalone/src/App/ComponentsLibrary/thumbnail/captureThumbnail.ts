@@ -57,6 +57,37 @@ const DEFAULT_TIMEOUT_MS = 8000;
 const FAILED_IMAGE_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
 /**
+ * Strip active content (`<script>` elements and inline `on*` event
+ * handlers) from the HTML before it goes into `iframe.srcdoc`.
+ *
+ * The sandbox (`allow-same-origin` WITHOUT `allow-scripts`) is the real
+ * security control — it already prevents any script from executing. This
+ * strip is DEFENSE-IN-DEPTH on top of it, and it also removes the benign
+ * but noisy `Blocked script execution in 'about:srcdoc'` console warning
+ * the browser logs whenever a sandboxed frame contains a script it
+ * refuses to run. The capture path renders saved/shared templates whose
+ * Html/NotionText blocks emit `props.html` verbatim, so treating that
+ * markup as untrusted here is correct regardless.
+ *
+ * Regex-based on purpose: this is a belt-and-suspenders pass over markup
+ * we only rasterise to a 240 px thumbnail, not the primary sanitiser, so
+ * the edge cases a full HTML parser would catch don't matter — the
+ * sandbox catches anything this misses.
+ */
+function stripActiveContent(html: string): string {
+  return (
+    html
+      // <script>…</script>, self-closing, or unterminated at EOF.
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, '')
+      .replace(/<script\b[^>]*\/?>/gi, '')
+      // Inline event handlers: on…="…", on…='…', on…=unquoted.
+      .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, '')
+      .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, '')
+      .replace(/\son[a-z]+\s*=\s*[^\s>]+/gi, '')
+  );
+}
+
+/**
  * Internal iframe sizing — the iframe is just a render host that
  * forces the email-builder to use desktop styles. It is NOT what we
  * capture (we capture the inner canvas table, see `canvasEl` below).
@@ -87,19 +118,26 @@ const IFRAME_HEIGHT = 1200;
  *   - Width 600 px: the canvas table's natural width
  *     (`max-width: 600px` + `width: 100%` inside a 641 px container).
  *
- *   - Height 300 px: crops the captured email to a 2:1 strip showing
- *     the TOP of the content. The thumbnail is just a teaser — full
- *     fidelity preview happens on hover (Task 11) via a live iframe
- *     that mounts the complete component / template. Capturing more
- *     than the top 300 px is wasted bandwidth because users only see
- *     the first 120 px (50%) in the LibraryCard anyway, and the rest
- *     would still need cropping at display time. Combined with
- *     `overflow: hidden` in the style option, this guarantees the
- *     captured area is exactly `width × height` regardless of how
- *     tall the underlying email is.
+ *   - Height: per card variant, chosen so the captured SOURCE aspect
+ *     equals the card's DISPLAY band aspect (see the variant constants
+ *     below). This keeps the top of the email visible while matching
+ *     the band, so object-fit:cover never crops (no "zoom") and the
+ *     output canvas (same aspect) downscales uniformly (no distortion).
+ *     Combined with `overflow: hidden` in the style option, the captured
+ *     area is exactly `width × height` regardless of how tall the
+ *     underlying email is. Full-fidelity preview happens on hover
+ *     (Task 11) via a live iframe that mounts the complete element.
  */
 const DEFAULT_RENDER_WIDTH = 600;
-const DEFAULT_RENDER_HEIGHT = 300;
+// Capture heights per card variant — chosen so the SOURCE aspect equals the
+// card's DISPLAY band aspect. Open drawer = 380px → card inner width 160px
+// ((380 − 24 px:1.5 − 4 gap) / 2 cols − 16 card p:1):
+//   subtree  (section/layout): band 160×120 → 4:3 → capture 600×450
+//   template:                  band 160×240 → 2:3 → capture 600×900
+// Matching the display aspect means object-fit:cover never crops (no "zoom"),
+// and the output canvas (same aspect, below) downscales uniformly (no squash).
+const SUBTREE_RENDER_HEIGHT = 450;
+const TEMPLATE_RENDER_HEIGHT = 900;
 
 /**
  * OUTPUT canvas dimensions — what html-to-image rasterises into.
@@ -120,7 +158,10 @@ const DEFAULT_RENDER_HEIGHT = 300;
  * `canvasHeight` to 240 (matches 2:1 at 2× scale).
  */
 const DEFAULT_CANVAS_WIDTH = 240;
-const DEFAULT_CANVAS_HEIGHT = 120;
+// Output canvas heights — same aspect as the matching render height above, so
+// the encode downscales uniformly (no vertical squash). subtree 4:3, template 2:3.
+const SUBTREE_CANVAS_HEIGHT = 180;
+const TEMPLATE_CANVAS_HEIGHT = 360;
 
 /*
  * --- Mobile capture preset (commented out for a future toggle) ----
@@ -157,13 +198,22 @@ const DEFAULT_CANVAS_HEIGHT = 120;
 const DEFAULT_PIXEL_RATIO = 1.0;
 
 export type CaptureOptions = {
+  /**
+   * Card variant — selects the default capture/output aspect so the thumbnail
+   * matches its display band and object-fit:cover never crops:
+   *   'subtree'  (section/layout) → 4:3 (600×450 → 240×180)
+   *   'template'                  → 2:3 (600×900 → 240×360)
+   * Overridden by explicit renderHeight/canvasHeight when provided.
+   * @default 'subtree'
+   */
+  variant?: 'subtree' | 'template';
   /** Capture target width — the canvas table is 600 px naturally. @default 600 */
   renderWidth?: number;
-  /** Capture target height — content beyond is cropped via overflow:hidden. @default 300 */
+  /** Capture target height — content beyond is cropped via overflow:hidden. @default per variant (subtree 450, template 900) */
   renderHeight?: number;
   /** Output canvas width (downscale target). @default 240 */
   canvasWidth?: number;
-  /** Output canvas height (downscale target). @default 120 */
+  /** Output canvas height (downscale target). @default per variant (subtree 180, template 360) */
   canvasHeight?: number;
   /** Device pixel ratio for the capture. @default 1.0 */
   pixelRatio?: number;
@@ -186,10 +236,13 @@ export type CaptureOptions = {
  *     when the result is null AND a thumbnail was expected.
  */
 export async function captureSubtreeThumbnail(html: string, options: CaptureOptions = {}): Promise<Blob | null> {
+  const variant = options.variant ?? 'subtree';
   const renderWidth = options.renderWidth ?? DEFAULT_RENDER_WIDTH;
-  const renderHeight = options.renderHeight ?? DEFAULT_RENDER_HEIGHT;
+  const renderHeight =
+    options.renderHeight ?? (variant === 'template' ? TEMPLATE_RENDER_HEIGHT : SUBTREE_RENDER_HEIGHT);
   const canvasWidth = options.canvasWidth ?? DEFAULT_CANVAS_WIDTH;
-  const canvasHeight = options.canvasHeight ?? DEFAULT_CANVAS_HEIGHT;
+  const canvasHeight =
+    options.canvasHeight ?? (variant === 'template' ? TEMPLATE_CANVAS_HEIGHT : SUBTREE_CANVAS_HEIGHT);
   const pixelRatio = options.pixelRatio ?? DEFAULT_PIXEL_RATIO;
   const backgroundColor = options.backgroundColor ?? '#ffffff';
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
@@ -209,6 +262,26 @@ export async function captureSubtreeThumbnail(html: string, options: CaptureOpti
 
       iframe = document.createElement('iframe');
       iframe.setAttribute('aria-hidden', 'true');
+      // Sandbox: `allow-same-origin` ONLY — deliberately WITHOUT
+      // `allow-scripts`. The two together are the dangerous combo: a
+      // same-origin frame that can also run scripts executes with the
+      // PARENT's origin, so any markup in `srcdoc` could read our
+      // `localStorage` (`eb:lib:*`, thumbnails), non-HttpOnly cookies,
+      // or even strip its own sandbox attribute. This matters because
+      // the same capture path also renders SAVED/SHARED templates
+      // (SaveTemplateDialog / SaveSubtreeDialog), and the Html /
+      // NotionText block emits its `props.html` unsanitised via
+      // `dangerouslySetInnerHTML` — a malicious template author could
+      // smuggle `<img src=x onerror=…>` and get stored XSS in another
+      // user's origin the moment their editor auto-generates the
+      // thumbnail. Dropping `allow-scripts` neutralises that: inert
+      // markup renders, but no script/`on*` handler ever runs.
+      //
+      // No perf cost: the frame is settled entirely from the PARENT in
+      // `onload` below (`doc.fonts.ready` + `img.decode()`), which needs
+      // `allow-same-origin` (kept) but never in-frame scripting. The
+      // original open-editor slowness was the ~100 `placehold.co`
+      // network requests (fixed in buildThumbnailHtml.ts), not scripts.
       iframe.setAttribute('sandbox', 'allow-same-origin');
       iframe.style.position = 'fixed';
       iframe.style.left = '-99999px';
@@ -218,7 +291,10 @@ export async function captureSubtreeThumbnail(html: string, options: CaptureOpti
       iframe.style.border = '0';
       iframe.style.opacity = '0';
       iframe.style.pointerEvents = 'none';
-      iframe.srcdoc = html;
+      // Defense-in-depth on top of the no-`allow-scripts` sandbox; also
+      // silences the benign "Blocked script execution in 'about:srcdoc'"
+      // console warning by removing the markup the browser would refuse.
+      iframe.srcdoc = stripActiveContent(html);
 
       iframe.onload = async () => {
         try {

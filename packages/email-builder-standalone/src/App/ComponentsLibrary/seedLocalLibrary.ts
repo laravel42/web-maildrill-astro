@@ -19,6 +19,12 @@
 
 import { bumpComponentsLibraryRefresh } from '../../documents/editor/EditorContext';
 
+import {
+  clearAllLocalThumbnails,
+  getThumbnailsCacheVersion,
+  setThumbnailsCacheVersion,
+} from './localLibraryStore';
+
 const TEMPLATES_KEY = 'eb:lib:templates';
 const THEMES_KEY = 'eb:lib:themes';
 const SECTIONS_KEY = 'eb:lib:sections';
@@ -50,6 +56,18 @@ function mergeById<T extends WithId>(key: string, incoming: T[] | undefined): vo
 export async function seedLocalLibrary(): Promise<void> {
   const { default: presets } = await import('./localPresets');
   const version = presets.version ?? '1';
+
+  // Thumbnail cache is pinned to the catalog version. When the catalog
+  // changes (new/updated/more complex templates & sections) drop every
+  // cached preview so the lazy generator recaptures them all at the
+  // current sizes. Runs before the seed early-return so an already-seeded
+  // user still gets a one-time refresh when the version bumps (or the
+  // first time this versioning ships and no version tag exists yet).
+  if (getThumbnailsCacheVersion() !== version) {
+    clearAllLocalThumbnails();
+    setThumbnailsCacheVersion(version);
+    bumpComponentsLibraryRefresh();
+  }
 
   // Already seeded for this catalog version — nothing to do.
   if (localStorage.getItem(SEEDED_KEY) === version) return;

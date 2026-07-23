@@ -36,6 +36,7 @@ function ensureElementClass(): CustomElementConstructor {
       componentTree: 'boolean',
       componentsStorage: 'string',
       templateSaving: 'boolean',
+      templateLibrary: 'boolean',
       themeSaving: 'boolean',
       enableAI: 'boolean',
       mergeTags: 'json',

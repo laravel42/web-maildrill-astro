@@ -3,11 +3,14 @@
  * every item across the Components Library taxonomy plus the Themes
  * gallery:
  *
- *   Blocks / Sections / Templates / Themes
+ *   Blocks (incl. Sections at the bottom) / Templates / Themes
  *
  * Blocks is synthetic (built-in factories, see `builtInBlocks.tsx` /
  * `BlocksCategoryContent.tsx`) — no listing endpoint, no storage.
- * Sections and Templates are saved components fetched by id.
+ * Sections and Templates are saved components fetched by id. Sections
+ * no longer has its own Tab (point 7, EMAIL_BUILDER_TASKS.md) — its
+ * search/sort toolbar and listing render inside the Blocks tab body,
+ * below the built-in block tiles.
  *
  * Each card is a `react-dnd` drag source of type
  * `library-component`. Dropping it onto a block in the canvas (handled
@@ -28,19 +31,13 @@ import { useTranslation } from 'react-i18next';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import Inventory2Outlined from '@mui/icons-material/Inventory2Outlined';
 import RefreshOutlined from '@mui/icons-material/RefreshOutlined';
-import SearchOutlined from '@mui/icons-material/SearchOutlined';
-import SortOutlined from '@mui/icons-material/SortOutlined';
 import {
   Alert,
   Box,
   IconButton,
-  InputAdornment,
-  Menu,
-  MenuItem,
   Stack,
   Tab,
   Tabs,
-  TextField,
   Tooltip,
   Typography,
   useTheme,
@@ -55,9 +52,8 @@ import {
   useComponentsLibraryEnabled,
   useComponentsLibraryRefreshNonce,
   useSelectedMainTab,
-  useTemplateSaving,
+  useTemplateLibrary,
 } from '../../documents/editor/EditorContext';
-import { INPUT_TEXTFIELD_SX } from '../InspectorDrawer/ConfigurationPanel/input-panels/helpers/inputs/components/inputStyles';
 
 import ApplyTemplateConfirmDialog from './ApplyTemplateConfirmDialog';
 import BlocksCategoryContent from './BlocksCategoryContent';
@@ -66,7 +62,7 @@ import CompactBlocksList from './CompactBlocksList';
 import { type FetchableLibraryCategory, LIBRARY_COMPONENT_DND_TYPE, type LibraryComponentDragItem } from './dnd';
 import { requestHoverEnter, requestHoverLeave, resetHoverPreview } from './hoverPreviewStore';
 import LibraryHoverPreviewPortal, { clearHoverPreviewCache } from './LibraryHoverPreviewPortal';
-import { filterLibraryItems, LIBRARY_SORT_KEYS, type LibrarySortKey, sortLibraryItems } from './librarySearch';
+import { filterLibraryItems, type LibrarySortKey, sortLibraryItems } from './librarySearch';
 import LibrarySkeletonGrid from './LibrarySkeletonGrid';
 import {
   getLocalThumbnail,
@@ -76,6 +72,7 @@ import {
   localListTemplates,
 } from './localLibraryStore';
 import RenameSubtreeDialog, { type RenameSubtreeTarget } from './RenameSubtreeDialog';
+import { isThumbnailPending, useThumbnailStatusVersion } from './thumbnailStatus';
 import LibraryCardPrimitiveRender from './thumbnail/LibraryCardPrimitiveRender';
 import LibraryCardThumbnail from './thumbnail/LibraryCardThumbnail';
 import { resolveThumbnailUrl } from './thumbnail/thumbnailUrl';
@@ -84,7 +81,7 @@ import { resolveThumbnailUrl } from './thumbnail/thumbnailUrl';
 export const COMPONENTS_LIBRARY_DRAWER_WIDTH = 380;
 
 /** Width (in px) when the drawer is collapsed to its compact base-blocks rail. */
-export const COMPACT_LIBRARY_DRAWER_WIDTH = 64;
+export const COMPACT_LIBRARY_DRAWER_WIDTH = 164;
 
 /** Card axis is per-category: role | type | shape | none. */
 type LibraryItem = {
@@ -120,9 +117,11 @@ type LibraryItem = {
 /** Sentinel axis for templates that carry no `usage` value. */
 const TEMPLATE_USAGE_OTHER = '__other__';
 
+// Point 7 (EMAIL_BUILDER_TASKS.md) removed the standalone "Sections" tab —
+// its content (search/sort toolbar + SectionsCategoryContent) now renders
+// at the bottom of the "Blocks" tab body instead of its own Tab entry.
 const CATEGORIES: ReadonlyArray<{ key: string; labelKey: string; enabled: boolean }> = [
   { key: 'blocks', labelKey: 'componentsLibrary.drawer.category.blocks', enabled: true },
-  { key: 'sections', labelKey: 'componentsLibrary.drawer.category.sections', enabled: true },
   { key: 'templates', labelKey: 'componentsLibrary.drawer.category.templates', enabled: true },
 ];
 
@@ -182,14 +181,27 @@ function LibraryCard({
   //     payload that the listing endpoint embeds. NO static file.
   //   - theme: own card type (LibraryCardThemeSwatch) — handled by
   //     ThemesList, never reaches this LibraryCard.
+  // Subscribe to incremental thumbnail-generation status so this card
+  // re-renders (skeleton → image) as the lazy generator finishes each one.
+  useThumbnailStatusVersion();
+  const isLocalStorage = getComponentsStorageMode() === 'local';
+
   const showThumbnail = category === 'section' || category === 'layout' || category === 'template';
   const showPrimitiveRender = category === 'primitive' && item.block !== undefined;
-  const thumbnailUrl =
-    showThumbnail && item.hasThumbnail
-      ? getComponentsStorageMode() === 'local'
-        ? getLocalThumbnail(item.id)
-        : resolveThumbnailUrl(category, category === 'template' ? null : item.axis, item.id)
-      : null;
+  // In local mode read the data URL straight from the store — the listing's
+  // `hasThumbnail` is a stale snapshot taken before incremental generation
+  // fills them in. In backend mode fall back to the served endpoint, gated
+  // by the listing's `hasThumbnail`.
+  const thumbnailUrl = !showThumbnail
+    ? null
+    : isLocalStorage
+      ? getLocalThumbnail(item.id)
+      : item.hasThumbnail
+        ? resolveThumbnailUrl(category, category === 'template' ? null : item.axis, item.id)
+        : null;
+  // Only sections/layouts/templates get generated previews; while queued and
+  // not yet captured, the card shows a skeleton instead of "No preview".
+  const thumbnailPending = showThumbnail && isLocalStorage && thumbnailUrl === null && isThumbnailPending(item.id);
 
   // Hover preview is rendered by a singleton at the drawer level — the
   // card just dispatches `(category, axis, id, name)` to the central
@@ -239,6 +251,10 @@ function LibraryCard({
         <LibraryCardThumbnail
           src={thumbnailUrl}
           alt={item.name}
+          loading={thumbnailPending}
+          // Point 8 (EMAIL_BUILDER_TASKS.md): Templates previews were too
+          // small — double the default 120px height for that category only.
+          height={category === 'template' ? 240 : undefined}
           placeholderText={t('componentsLibrary.thumbnail.placeholder', 'No preview')}
         />
       )}
@@ -470,14 +486,15 @@ function CategoryListingBody({
           renderGrid(visible, 'flat')
         ) : (
           <Box>
-            {axisGroups.map((group, idx) => (
+            {axisGroups.map((group) => (
               <SubcategoryAccordion
                 key={group.axis}
                 title={axisLabel(group.axis)}
                 count={group.items.length}
-                // Default the first axis open; respect explicit toggles after.
-                expanded={expandedAxes[group.axis] ?? idx === 0}
-                onToggle={(isExpanded) => setExpandedAxes((prev) => ({ ...prev, [group.axis]: isExpanded }))}
+                // All groups start collapsed; opening one collapses the rest
+                // (single-open accordion) so the Blocks tab stays compact.
+                expanded={expandedAxes[group.axis] ?? false}
+                onToggle={(isExpanded) => setExpandedAxes(isExpanded ? { [group.axis]: true } : {})}
               >
                 {renderGrid(group.items, group.axis)}
               </SubcategoryAccordion>
@@ -626,8 +643,10 @@ function TemplatesCategoryContent({ refreshKey, search, sort, onRename, onChange
     setError(null);
     try {
       if (getComponentsStorageMode() === 'local') {
-        // Local templates have no usage axis → group them under "Other".
-        setItems(localListTemplates().map((tpl) => ({ ...tpl, axis: TEMPLATE_USAGE_OTHER })));
+        // Few local templates — render them as a single flat grid (empty
+        // axis makes the shared body treat the category as flat, no usage
+        // sub-accordion).
+        setItems(localListTemplates().map((tpl) => ({ ...tpl, axis: '' })));
         return;
       }
       const list = await fetchListing<{
@@ -731,35 +750,42 @@ export default function ComponentsLibraryDrawer() {
   const drawerWidth = open ? COMPONENTS_LIBRARY_DRAWER_WIDTH : COMPACT_LIBRARY_DRAWER_WIDTH;
   const enabled = useComponentsLibraryEnabled();
   const selectedMainTab = useSelectedMainTab();
-  const templateSaving = useTemplateSaving();
+  const templateLibrary = useTemplateLibrary();
   const libraryRefreshNonce = useComponentsLibraryRefreshNonce();
   const { t } = useTranslation('inspector');
   const theme = useTheme();
   // Local storage mode persists Sections / Templates in localStorage, so
   // both tabs are available. Blocks is always available (client-side
-  // factories, no storage). When templateSaving is disabled, hide only
+  // factories, no storage). When templateLibrary is disabled, hide only
   // the Templates tab.
   const visibleCategories = useMemo(
     () =>
       CATEGORIES.filter((c) => {
-        if (!templateSaving && c.key === 'templates') return false;
+        if (!templateLibrary && c.key === 'templates') return false;
         return true;
       }),
-    [templateSaving]
+    [templateLibrary]
   );
   const [sectionsRefreshKey, setSectionsRefreshKey] = useState(0);
   const [templatesRefreshKey, setTemplatesRefreshKey] = useState(0);
   const [renameTarget, setRenameTarget] = useState<RenameSubtreeTarget | null>(null);
 
-  // Global search + sort shared by every category tab.
-  const [search, setSearch] = useState('');
-  const [sort, setSort] = useState<LibrarySortKey>('updatedDesc');
-  const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
+  // Sections (bottom of the Blocks tab, per Point 7) and Templates render
+  // as plain listings: unfiltered and sorted newest-first. The former
+  // shared search/sort state was left without any writer after Point 7
+  // removed the toolbars, so it could only ever hold these defaults —
+  // keeping it as mutable state was dead code AND a latent cross-tab leak
+  // (a future writer on one tab would silently reorder the other). Pass
+  // explicit constants instead. (Restoring a per-tab search/sort toolbar
+  // is a separate task; when added it MUST be local per listing, never a
+  // single shared value across tabs.)
+  const SEARCH_UNFILTERED = '';
+  const SORT_DEFAULT: LibrarySortKey = 'updatedDesc';
   // Active category tab. Defaults to the first visible category.
   const [activeTab, setActiveTab] = useState<string>(() => visibleCategories[0]?.key ?? 'blocks');
 
   // Keep the active tab valid when the visible set changes (disabling
-  // templateSaving hides Templates).
+  // templateLibrary hides Templates).
   useEffect(() => {
     if (!visibleCategories.some((c) => c.key === activeTab)) {
       setActiveTab(visibleCategories[0]?.key ?? 'blocks');
@@ -897,76 +923,28 @@ export default function ComponentsLibraryDrawer() {
             </Box>
 
             <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', px: 1.5, pb: 2, pt: 1 }}>
-              {activeTab === 'blocks' && <BlocksCategoryContent />}
-              {activeTab === 'sections' && (
+              {activeTab === 'blocks' && (
                 <>
-                  <Box sx={{ pb: 1.5 }}>
-                    <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-                      <TextField
-                        size="small"
-                        fullWidth
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder={t('componentsLibrary.search.placeholder', 'Search…')}
-                        sx={INPUT_TEXTFIELD_SX}
-                        slotProps={{
-                          input: {
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <SearchOutlined fontSize="small" />
-                              </InputAdornment>
-                            ),
-                          },
-                        }}
-                      />
-                      <Tooltip title={t('componentsLibrary.search.sortLabel', 'Sort')}>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => setSortAnchorEl(e.currentTarget)}
-                          sx={{
-                            flexShrink: 0,
-                            color: sortAnchorEl ? 'primary.main' : 'text.secondary',
-                          }}
-                        >
-                          <SortOutlined fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Menu
-                        anchorEl={sortAnchorEl}
-                        open={Boolean(sortAnchorEl)}
-                        onClose={() => setSortAnchorEl(null)}
-                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                      >
-                        {LIBRARY_SORT_KEYS.map((key) => (
-                          <MenuItem
-                            key={key}
-                            selected={sort === key}
-                            onClick={() => {
-                              setSort(key);
-                              setSortAnchorEl(null);
-                            }}
-                            sx={{ fontSize: '0.8rem' }}
-                          >
-                            {t(`componentsLibrary.search.sort.${key}`, key)}
-                          </MenuItem>
-                        ))}
-                      </Menu>
-                    </Stack>
+                  <BlocksCategoryContent />
+                  {/* Point 7 (EMAIL_BUILDER_TASKS.md): the former standalone
+                      "Sections" tab now lives at the bottom of the Blocks
+                      tab instead of its own Tab entry. No title/search/sort
+                      toolbar — just the listing, grouped by role. */}
+                  <Box sx={{ mt: 2, pt: 1.5, borderTop: (theme) => `1px solid ${theme.palette.divider}` }}>
+                    <SectionsCategoryContent
+                      search={SEARCH_UNFILTERED}
+                      sort={SORT_DEFAULT}
+                      onRename={setRenameTarget}
+                      refreshKey={sectionsRefreshKey}
+                      onChange={() => setSectionsRefreshKey((k) => k + 1)}
+                    />
                   </Box>
-                  <SectionsCategoryContent
-                    search={search}
-                    sort={sort}
-                    onRename={setRenameTarget}
-                    refreshKey={sectionsRefreshKey}
-                    onChange={() => setSectionsRefreshKey((k) => k + 1)}
-                  />
                 </>
               )}
               {activeTab === 'templates' && (
                 <TemplatesCategoryContent
-                  search={search}
-                  sort={sort}
+                  search={SEARCH_UNFILTERED}
+                  sort={SORT_DEFAULT}
                   onRename={setRenameTarget}
                   refreshKey={templatesRefreshKey}
                   onChange={() => setTemplatesRefreshKey((k) => k + 1)}

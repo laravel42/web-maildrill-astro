@@ -191,6 +191,11 @@ export default function Picker({ value, nullable, onChange }: Props) {
               width: 24,
               height: 24,
               minWidth: 24,
+              // MuiButton's default padding (6px 8px, from theme.ts) barely
+              // leaves room for the icon inside a fixed 24px box, squeezing
+              // it against the edge. 1-2px keeps the icon visible without
+              // crowding the border.
+              padding: '2px',
               margin: '0!important',
               borderColor: theme.palette.divider,
               display: 'inline-flex',

@@ -83,6 +83,15 @@ function sizeOf(value: unknown): number {
  * card reads the data URL straight from here.
  */
 const THUMBNAILS_KEY = 'eb:lib:thumbnails';
+/**
+ * Catalog version the cached thumbnails were generated for. When the
+ * bundled preset catalog bumps its `version` (new/updated/more complex
+ * templates & sections), the cache is invalidated so every preview is
+ * recaptured at the current sizes. Kept separate from `eb:lib:seeded`
+ * (which gates the append-by-id seed) so a thumbnail-only refresh can
+ * happen even when no new items were seeded.
+ */
+const THUMBNAILS_VERSION_KEY = 'eb:lib:thumbnails:version';
 
 function readThumbnailMap(): Record<string, string> {
   try {
@@ -109,6 +118,33 @@ export function setLocalThumbnail(id: string, dataUrl: string): void {
     localStorage.setItem(THUMBNAILS_KEY, JSON.stringify(map));
   } catch {
     // Quota exceeded — drop silently; the card falls back to the placeholder.
+  }
+}
+
+/** Version the cached thumbnails were generated for, or null if never. */
+export function getThumbnailsCacheVersion(): string | null {
+  try {
+    return localStorage.getItem(THUMBNAILS_VERSION_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** Record the catalog version the current thumbnail cache corresponds to. */
+export function setThumbnailsCacheVersion(version: string): void {
+  try {
+    localStorage.setItem(THUMBNAILS_VERSION_KEY, version);
+  } catch {
+    // Best-effort — a missing version just forces one extra regeneration.
+  }
+}
+
+/** Drop all cached thumbnails (forces the lazy generator to recapture). */
+export function clearAllLocalThumbnails(): void {
+  try {
+    localStorage.removeItem(THUMBNAILS_KEY);
+  } catch {
+    // Best-effort.
   }
 }
 

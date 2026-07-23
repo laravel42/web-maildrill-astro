@@ -1,12 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { AutoAwesome, TipsAndUpdates } from '@mui/icons-material';
 import {
   Alert,
   Box,
   Button,
-  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -27,10 +25,12 @@ import type { TEditorConfiguration } from '../../documents/editor/core';
 import { editorStateStore, resetDocument } from '../../documents/editor/EditorContext';
 
 import AIPreviewPanel from './AIPreviewPanel';
+import AiSparkleIcon from './AiSparkleIcon';
 import { trackUnsplashFromDocument } from './trackUnsplashFromDocument';
 import { isValidationFailure, validateGeneratedTemplate } from './validateGeneratedTemplate';
 import AIVisualWizard from './Wizard/AIVisualWizard';
 import type { DraftBrief } from './Wizard/briefDefaults';
+import PillButton from './Wizard/controls/PillButton';
 import EntryPicker from './Wizard/EntryPicker';
 import WizardHeader from './Wizard/WizardHeader';
 
@@ -148,7 +148,12 @@ export default function AIGenerationDialog({
   onClose,
   onAIGenerateTemplate,
   locale,
-  backendUrl = 'http://localhost:3100',
+  // Route AI-generation calls (improve-prompt, wizard compile/theme) through
+  // the host's same-origin BFF proxy — the SAME `/api/eb/*` path the template
+  // generation and inline text AI already use — instead of a direct
+  // cross-origin fetch to a raw backend (which failed with CORS / "Failed to
+  // fetch"). The proxy prepends `/api/`, so callers use `${backendUrl}/<name>`.
+  backendUrl = '/api/eb',
   primaryColor,
   secondaryColor,
 }: AIGenerationDialogProps) {
@@ -403,7 +408,7 @@ export default function AIGenerationDialog({
 
     setIsImprovingPrompt(true);
     try {
-      const response = await fetch(`${backendUrl}/api/improve-prompt`, {
+      const response = await fetch(`${backendUrl}/improve-prompt`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: prompt.trim() }),
@@ -626,7 +631,7 @@ export default function AIGenerationDialog({
       <DialogTitle sx={{ fontWeight: 700, fontSize: '24px' }}>
         {entryMode === 'picker' ? (
           <Stack direction="row" sx={{ gap: 1, alignItems: 'center' }}>
-            <AutoAwesome fontSize="small" color="primary" />
+            <AiSparkleIcon fontSize="small" color="primary" />
             <Box component="span">{t('aiGeneration.dialog.title')}</Box>
           </Stack>
         ) : (
@@ -651,7 +656,6 @@ export default function AIGenerationDialog({
             }
             locale={locale}
             onGenerate={handleWizardGenerate}
-            onThemeApplied={onClose}
             generating={isBusy}
           />
         )}
@@ -725,7 +729,7 @@ export default function AIGenerationDialog({
                   <Button
                     size="small"
                     variant="outlined"
-                    startIcon={isImprovingPrompt ? <CircularProgress size={16} /> : <TipsAndUpdates />}
+                    startIcon={isImprovingPrompt ? <CircularProgress size={16} /> : <AiSparkleIcon />}
                     onClick={handleImprovePrompt}
                     disabled={isImprovingPrompt || !prompt.trim()}
                     sx={{ textTransform: 'none' }}
@@ -742,15 +746,9 @@ export default function AIGenerationDialog({
                 <Typography variant="caption" color="text.secondary">
                   {t('aiGeneration.dialog.suggestionsLabel')}
                 </Typography>
-                <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75, mt: 0.5 }}>
                   {suggestions.map((s) => (
-                    <Chip
-                      key={s.label}
-                      label={s.label}
-                      size="small"
-                      onClick={() => handleSuggestionClick(s.prompt)}
-                      variant="outlined"
-                    />
+                    <PillButton key={s.label} label={s.label} onClick={() => handleSuggestionClick(s.prompt)} />
                   ))}
                 </Stack>
               </Box>
@@ -800,7 +798,7 @@ export default function AIGenerationDialog({
                     onClick={handleApply}
                     variant="contained"
                     disabled={!completedDocument}
-                    startIcon={<AutoAwesome />}
+                    startIcon={undefined}
                   >
                     {t('aiGeneration.dialog.apply')}
                   </Button>
@@ -809,7 +807,7 @@ export default function AIGenerationDialog({
                   <Button
                     onClick={() => handleWizardGenerate(prompt, {} as DraftBrief)}
                     variant="contained"
-                    startIcon={<AutoAwesome />}
+                    startIcon={undefined}
                   >
                     {t('aiGeneration.dialog.retry')}
                   </Button>
@@ -835,7 +833,7 @@ export default function AIGenerationDialog({
               </Button>
             )}
             {status === 'error' ? (
-              <Button onClick={handleGenerate} variant="contained" disabled={!canGenerate} startIcon={<AutoAwesome />}>
+              <Button onClick={handleGenerate} variant="contained" disabled={!canGenerate} startIcon={undefined}>
                 {t('aiGeneration.dialog.retry')}
               </Button>
             ) : status === 'complete' ? (
@@ -843,7 +841,7 @@ export default function AIGenerationDialog({
                 onClick={handleApply}
                 variant="contained"
                 disabled={!completedDocument}
-                startIcon={<AutoAwesome />}
+                startIcon={undefined}
               >
                 {t('aiGeneration.dialog.apply')}
               </Button>
@@ -852,7 +850,7 @@ export default function AIGenerationDialog({
                 onClick={handleGenerate}
                 variant="contained"
                 disabled={!canGenerate}
-                startIcon={isBusy ? <CircularProgress size={16} color="inherit" /> : <AutoAwesome />}
+                startIcon={isBusy ? <CircularProgress size={16} color="inherit" /> : undefined}
               >
                 {t('aiGeneration.dialog.generate')}
               </Button>

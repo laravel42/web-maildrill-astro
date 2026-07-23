@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ZodError } from 'zod';
 
-import { CropSquareOutlined, LinkOutlined } from '@mui/icons-material';
-import { Stack } from '@mui/material';
+import { CropSquareOutlined, FormatUnderlined, LinkOutlined } from '@mui/icons-material';
+import { Box } from '@mui/material';
 
 import EmailLayoutPropsSchema, {
   EmailLayoutProps,
@@ -11,7 +11,7 @@ import EmailLayoutPropsSchema, {
 import { DEFAULT_FONT } from '../../../../documents/blocks/helpers/fontFamily';
 
 import ColorInput from './helpers/inputs/ColorInput';
-import LinksInput from './helpers/inputs/ColorInput/LinksInput';
+import LinkUnderlineInput from './helpers/inputs/ColorInput/LinkUnderlineInput';
 import CompactableInput from './helpers/inputs/CompactableInput';
 import { NullableFontFamily } from './helpers/inputs/FontFamily';
 import { BackgroundColorIcon, FontFamilyIcon, TextColorIcon } from './helpers/style-inputs/SingleStylePropertyPanel';
@@ -35,8 +35,12 @@ export default function EmailLayoutSidebarFields({ data, setData }: EmailLayoutS
     }
   };
 
+  // Box, not Stack — theme.ts's MuiStack styleOverrides forces
+  // `margin: 0 !important` on every Stack's children workspace-wide (see
+  // BaseSidebarPanel.tsx). gap: 2 (1rem) matches the between-property
+  // spacing used everywhere else in the inspector.
   return (
-    <Stack spacing={1}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <CompactableInput icon={BackgroundColorIcon} label={t('inputs.panels.emailLayout.backgroundColor')}>
         <ColorInput
           label={t('inputs.panels.emailLayout.backgroundColor')}
@@ -69,14 +73,31 @@ export default function EmailLayoutSidebarFields({ data, setData }: EmailLayoutS
         />
       </CompactableInput>
 
-      <CompactableInput icon={LinkOutlined} label={t('inputs.panels.emailLayout.linksLabel')}>
-        <LinksInput
-          label={t('inputs.panels.emailLayout.linksLabel')}
-          linkColor={data.linkGlobal?.linkColor || '#000000'}
-          underline={data.linkGlobal?.underline || false}
-          onChange={(linkGlobal) => updateData({ ...data, linkGlobal })}
+      <CompactableInput icon={LinkOutlined} label={t('inputs.links.color')}>
+        <ColorInput
+          label={t('inputs.links.color')}
+          defaultValue={data.linkGlobal?.linkColor || '#000000'}
+          onChange={(linkColor) =>
+            updateData({
+              ...data,
+              linkGlobal: { linkColor, underline: data.linkGlobal?.underline ?? false },
+            })
+          }
         />
       </CompactableInput>
-    </Stack>
+
+      <CompactableInput icon={FormatUnderlined} label={t('inputs.links.underline')}>
+        <LinkUnderlineInput
+          label={t('inputs.links.underline')}
+          underline={data.linkGlobal?.underline || false}
+          onChange={(underline) =>
+            updateData({
+              ...data,
+              linkGlobal: { linkColor: data.linkGlobal?.linkColor ?? '#000000', underline },
+            })
+          }
+        />
+      </CompactableInput>
+    </Box>
   );
 }

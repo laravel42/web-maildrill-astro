@@ -1,8 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { AutoAwesome, EditNote } from '@mui/icons-material';
+import { EditNote } from '@mui/icons-material';
 import { Box, Card, CardActionArea, CardContent, Stack, Typography } from '@mui/material';
+
+import AiSparkleIcon from '../AiSparkleIcon';
 
 interface Props {
   onSelect: (mode: 'direct' | 'wizard') => void;
@@ -51,7 +53,7 @@ export default function EntryPicker({ onSelect }: Props) {
           onClick={() => onSelect('direct')}
         />
         <ModeCard
-          icon={<AutoAwesome fontSize="inherit" />}
+          icon={<AiSparkleIcon fontSize="inherit" />}
           title={t('entry.wizardCard.title')}
           description={t('entry.wizardCard.description')}
           onClick={() => onSelect('wizard')}
