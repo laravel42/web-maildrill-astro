@@ -20,6 +20,7 @@ import EmailBuilder from './EmailBuilder';
 // — everyone visiting /app/templates paid for it upfront. React.lazy defers
 // the fetch until <VisualEmailBuilder> actually mounts.
 const VisualEmailBuilder = lazy(() => import('./VisualEmailBuilder'));
+const VisualWhatsAppBuilder = lazy(() => import('./VisualWhatsAppBuilder'));
 import LazyBoundary from './shared/LazyBoundary';
 import TemplatePreview from './shared/TemplatePreview';
 import GalleryPreview, { FauxEmail } from './shared/GalleryPreview';
@@ -1002,7 +1003,49 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
         </LazyBoundary>
       )}
 
-      {builder && builder.channel !== 'email' && (
+      {/* WhatsApp uses the vendored whatsapp-builder-standalone visual editor:
+          same shell as email, but the block set and constraints are Meta's
+          template grammar (header/body/footer/buttons, {{n}} variables). */}
+      {builder && builder.channel === 'whatsapp' && (
+        <LazyBoundary label="the WhatsApp editor" onClose={() => setBuilder(null)}>
+        <Suspense fallback={null}>
+          <VisualWhatsAppBuilder
+            name={builder.name}
+            initialDocument={builder.document as import('whatsapp-builder-standalone').TWhatsAppConfiguration | undefined}
+            initialCategory={builder.category}
+            onClose={() => setBuilder(null)}
+            onSave={async ({ name, text, document, components, category }) => {
+              const ed = builder;
+              if (!ed || !live) return;
+              // Persist the Meta structure (components) for approval, the
+              // flattened text for previews, and the builder JSON so the
+              // template reopens in the visual editor.
+              const body = {
+                name: name && name !== 'Untitled' ? name : 'Untitled template',
+                channel: 'whatsapp' as const,
+                text: text || null,
+                category,
+                language: components.language,
+                components: components as unknown as Record<string, unknown>,
+                builderDoc: document as Record<string, unknown>,
+              };
+              if (ed.id) {
+                const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
+                setTemplates((prev) =>
+                  prev.map((t) => (t.id === ed.id ? toGalleryTemplate(updated) : t)),
+                );
+              } else {
+                const created = await api.post<ApiTemplate>('templates', body);
+                setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
+                setBuilder((prev) => (prev ? { ...prev, id: created.id } : prev));
+              }
+            }}
+          />
+        </Suspense>
+        </LazyBoundary>
+      )}
+
+      {builder && builder.channel !== 'email' && builder.channel !== 'whatsapp' && (
         <EmailBuilder
           channel={builder.channel}
           name={builder.name}
