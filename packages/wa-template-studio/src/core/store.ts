@@ -5,6 +5,7 @@ import {
   newId,
   type BlockInstance,
   type ButtonInstance,
+  type PreviewSheet,
   type TemplateCategory,
   type TemplateDoc,
 } from './types';
@@ -18,11 +19,18 @@ import {
  */
 
 export type PreviewDevice = 'mobile' | 'desktop';
+export type PreviewMode = 'edit' | 'interact';
 export type Selection =
   | { kind: 'none' }
   | { kind: 'template' }
   | { kind: 'block'; slot: 'header' | 'body' | 'footer'; id: string }
   | { kind: 'button'; id: string };
+
+/** One outgoing bubble produced by tapping a quick reply in Test mode. */
+export interface PreviewReply {
+  id: string;
+  text: string;
+}
 
 const MAX_HISTORY = 100;
 const DRAFT_KEY = 'wa-studio:draft';
@@ -53,6 +61,12 @@ interface StudioState {
   librarySearch: string;
   /** Autosave indicator: idle → saving → saved. */
   saveState: 'idle' | 'saving' | 'saved';
+  /** Edit = click selects; Interact = the preview behaves like WhatsApp. */
+  previewMode: PreviewMode;
+  /** Test-mode conversation state (never part of undo history). */
+  previewReplies: PreviewReply[];
+  previewSheet: PreviewSheet | null;
+  previewToast: string | null;
 }
 
 export const useStudio = create<StudioState>(() => ({
@@ -64,6 +78,10 @@ export const useStudio = create<StudioState>(() => ({
   previewDevice: 'mobile',
   librarySearch: '',
   saveState: 'idle',
+  previewMode: 'edit',
+  previewReplies: [],
+  previewSheet: null,
+  previewToast: null,
 }));
 
 // ---------------------------------------------------------------------------
@@ -247,4 +265,45 @@ export function setPreviewDevice(previewDevice: PreviewDevice) {
 
 export function setLibrarySearch(librarySearch: string) {
   useStudio.setState({ librarySearch });
+}
+
+// ---------------------------------------------------------------------------
+// Test-mode interactions
+// ---------------------------------------------------------------------------
+
+let toastTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function setPreviewMode(previewMode: PreviewMode) {
+  // Entering/leaving Test mode starts a fresh conversation.
+  useStudio.setState({
+    previewMode,
+    previewReplies: [],
+    previewSheet: null,
+    previewToast: null,
+    ...(previewMode === 'interact' ? { selection: { kind: 'none' as const } } : {}),
+  });
+}
+
+export function pushPreviewReply(text: string) {
+  useStudio.setState((s) => ({
+    previewReplies: [...s.previewReplies, { id: newId('reply'), text }],
+  }));
+}
+
+export function openPreviewSheet(previewSheet: PreviewSheet) {
+  useStudio.setState({ previewSheet });
+}
+
+export function closePreviewSheet() {
+  useStudio.setState({ previewSheet: null });
+}
+
+export function showPreviewToast(previewToast: string) {
+  useStudio.setState({ previewToast });
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => useStudio.setState({ previewToast: null }), 1800);
+}
+
+export function resetPreviewInteractions() {
+  useStudio.setState({ previewReplies: [], previewSheet: null, previewToast: null });
 }

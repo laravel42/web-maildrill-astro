@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Check, Loader2, Moon, Monitor, Redo2, Smartphone, Sun, Undo2 } from 'lucide-react';
+import { Check, Loader2, Moon, Monitor, Pencil, Play, Redo2, Smartphone, Sun, Undo2 } from 'lucide-react';
 
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
@@ -13,6 +13,7 @@ import {
   setCategory,
   setPreviewDark,
   setPreviewDevice,
+  setPreviewMode,
   setTemplateField,
   undo,
   useStudio,
@@ -33,6 +34,7 @@ export function TopBar() {
   const future = useStudio((s) => s.future.length);
   const previewDark = useStudio((s) => s.previewDark);
   const previewDevice = useStudio((s) => s.previewDevice);
+  const previewMode = useStudio((s) => s.previewMode);
   const saveState = useStudio((s) => s.saveState);
 
   const onCategoryChange = (category: TemplateCategory) => {
@@ -88,6 +90,32 @@ export function TopBar() {
           ))}
         </SelectContent>
       </Select>
+
+      {/* Edit / Test segmented toggle — the Figma-style play mode. */}
+      <div
+        role="group"
+        aria-label="Preview mode"
+        className="ml-2 flex items-center rounded-lg border border-border bg-muted/60 p-0.5"
+      >
+        <Button
+          variant={previewMode === 'edit' ? 'secondary' : 'ghost'}
+          size="sm"
+          aria-pressed={previewMode === 'edit'}
+          onClick={() => setPreviewMode('edit')}
+          className="h-7 gap-1.5 px-2.5"
+        >
+          <Pencil className="size-3.5" /> Edit
+        </Button>
+        <Button
+          variant={previewMode === 'interact' ? 'secondary' : 'ghost'}
+          size="sm"
+          aria-pressed={previewMode === 'interact'}
+          onClick={() => setPreviewMode('interact')}
+          className="h-7 gap-1.5 px-2.5"
+        >
+          <Play className="size-3.5" /> Test
+        </Button>
+      </div>
 
       <div className="ml-auto flex items-center gap-1">
         <Badge variant="outline" className="mr-1 gap-1 text-[11px] font-normal text-muted-foreground">

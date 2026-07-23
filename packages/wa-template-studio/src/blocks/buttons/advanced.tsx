@@ -121,6 +121,13 @@ export const otpPlugin: ButtonPlugin<OtpData> = {
   Preview: ({ data, ctx }) => (
     <WaButtonRow dark={ctx.dark} icon={<Copy className="size-4" />} label={data.text || 'Copy code'} />
   ),
+  onTap: (data, api) => {
+    if (data.otpType === 'ONE_TAP' || data.otpType === 'ZERO_TAP') {
+      api.toast(`Code sent to ${data.packageName || 'your app'}`);
+    } else {
+      api.copy('123456', 'Code copied');
+    }
+  },
   toMeta: (data) => ({
     type: 'OTP',
     otp_type: data.otpType,
@@ -238,6 +245,8 @@ export const flowPlugin: ButtonPlugin<FlowData> = {
     );
   },
   Preview: ({ data, ctx }) => <WaButtonRow dark={ctx.dark} icon={<Workflow className="size-4" />} label={data.text || 'Open Flow'} />,
+  onTap: (data, api) =>
+    api.openSheet({ kind: 'flow', label: data.text || 'Flow', flowId: data.flowId || '—', screen: data.navigateScreen }),
   toMeta: (data) => ({
     type: 'FLOW',
     text: data.text,
@@ -315,6 +324,8 @@ function makeCommercePlugin(config: {
       const Icon = config.icon;
       return <WaButtonRow dark={ctx.dark} icon={<Icon className="size-4" />} label={data.text || config.defaultLabel} />;
     },
+    onTap: (data, api) =>
+      api.openSheet({ kind: 'catalog', label: data.text || config.defaultLabel, multi: config.metaType === 'MPM' }),
     toMeta: (data) => ({ type: config.metaType, text: data.text }),
     fromMeta: (button) => {
       if (String(button.type).toUpperCase() !== config.metaType) return null;

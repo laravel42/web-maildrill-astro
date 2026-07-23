@@ -57,6 +57,7 @@ export const quickReplyPlugin: ButtonPlugin<z.infer<typeof quickReplySchema>> = 
     );
   },
   Preview: ({ data, ctx }) => <WaButtonRow dark={ctx.dark} icon={<Reply className="size-4" />} label={data.text || 'Quick reply'} />,
+  onTap: (data, api) => api.reply(data.text || 'Quick reply'),
   toMeta: (data) => ({ type: 'QUICK_REPLY', text: data.text }),
   fromMeta: (button) => {
     if (String(button.type).toUpperCase() !== 'QUICK_REPLY') return null;
@@ -148,6 +149,10 @@ export const urlButtonPlugin: ButtonPlugin<z.infer<typeof urlSchema>> = {
   Preview: ({ data, ctx }) => (
     <WaButtonRow dark={ctx.dark} icon={<ExternalLink className="size-4" />} label={data.text || 'Visit website'} />
   ),
+  onTap: (data, api) => {
+    const url = data.url ? data.url.replace(/\{\{\s*1\s*\}\}$/, data.example?.split('/').pop() ?? '…') : 'https://example.com';
+    api.openSheet({ kind: 'link', url });
+  },
   toMeta: (data) => {
     const dynamic = uniqueVariables(data.url).length > 0;
     return {
@@ -220,6 +225,8 @@ export const phoneButtonPlugin: ButtonPlugin<z.infer<typeof phoneSchema>> = {
     );
   },
   Preview: ({ data, ctx }) => <WaButtonRow dark={ctx.dark} icon={<Phone className="size-4" />} label={data.text || 'Call'} />,
+  onTap: (data, api) =>
+    api.openSheet({ kind: 'call', phoneNumber: data.phoneNumber || '+1 555 010 4477', label: data.text || 'Call' }),
   toMeta: (data) => ({ type: 'PHONE_NUMBER', text: data.text, phone_number: data.phoneNumber }),
   fromMeta: (button) => {
     if (String(button.type).toUpperCase() !== 'PHONE_NUMBER') return null;
@@ -274,6 +281,7 @@ export const copyCodePlugin: ButtonPlugin<z.infer<typeof copyCodeSchema>> = {
     );
   },
   Preview: ({ ctx }) => <WaButtonRow dark={ctx.dark} icon={<Copy className="size-4" />} label="Copy offer code" />,
+  onTap: (data, api) => api.copy(data.example || 'CODE', 'Offer code copied'),
   toMeta: (data) => ({ type: 'COPY_CODE', example: data.example }),
   fromMeta: (button) => {
     if (String(button.type).toUpperCase() !== 'COPY_CODE') return null;

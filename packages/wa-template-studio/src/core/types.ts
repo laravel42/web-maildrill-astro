@@ -104,6 +104,30 @@ export interface PreviewContext {
   dark: boolean;
 }
 
+/**
+ * What a tapped button may do in the interactive (Test-mode) preview.
+ * The canvas provides the implementation; plugins stay presentation-
+ * agnostic and just describe their WhatsApp behavior.
+ */
+export interface InteractionApi {
+  /** Append an outgoing reply bubble to the conversation. */
+  reply: (text: string) => void;
+  /** Copy to the clipboard and show WhatsApp's "Copied" snackbar. */
+  copy: (text: string, label?: string) => void;
+  /** Open a WhatsApp-style bottom sheet. */
+  openSheet: (sheet: PreviewSheet) => void;
+  /** Show a transient snackbar inside the phone frame. */
+  toast: (message: string) => void;
+}
+
+/** Bottom-sheet variants the phone frame knows how to render. */
+export type PreviewSheet =
+  | { kind: 'link'; url: string }
+  | { kind: 'call'; phoneNumber: string; label: string }
+  | { kind: 'flow'; label: string; flowId: string; screen?: string }
+  | { kind: 'catalog'; label: string; multi: boolean }
+  | { kind: 'options' };
+
 export interface EditorProps<TData> {
   value: TData;
   onChange: (next: TData) => void;
@@ -155,6 +179,11 @@ export interface ButtonPlugin<TData = unknown> extends BasePlugin<TData> {
   maxPerTemplate: number;
   toMeta: (data: TData, doc: TemplateDoc) => MetaButton | null;
   fromMeta: (button: MetaButton, template: MetaTemplate) => TData | null;
+  /**
+   * Test-mode tap behavior — what the real WhatsApp client would do.
+   * Optional: buttons without it show a generic "no action" toast.
+   */
+  onTap?: (data: TData, api: InteractionApi) => void;
 }
 
 // ---------------------------------------------------------------------------

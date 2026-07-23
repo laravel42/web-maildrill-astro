@@ -1,25 +1,41 @@
 import * as React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, ChevronLeft, MoreVertical, Phone, Video } from 'lucide-react';
+import { ChevronDown, ChevronLeft, MoreVertical, Phone, RotateCcw, Video } from 'lucide-react';
 
+import { Button } from '@/ui/button';
 import { getBlockPlugin, getButtonPlugin } from '@/core/registry';
-import { select, useStudio, type Selection } from '@/core/store';
-import type { PreviewContext, TemplateDoc } from '@/core/types';
+import {
+  openPreviewSheet,
+  pushPreviewReply,
+  resetPreviewInteractions,
+  select,
+  showPreviewToast,
+  useStudio,
+  type Selection,
+} from '@/core/store';
+import type { InteractionApi, PreviewContext, TemplateDoc } from '@/core/types';
 import type { VariableMap } from '@/core/variables';
+import { PhoneSheet, PreviewSnackbar, ReplyBubble } from './preview-interactions';
 
 /**
  * Center canvas: a faithful WhatsApp conversation preview inside a
- * device frame. Every block renders through its plugin's Preview;
- * clicking selects (highlight ring); the whole bubble is a dnd drop
- * target for library tiles.
+ * device frame, in two modes:
+ *
+ *  - edit:     clicking a region selects it for the inspector
+ *  - interact: the preview behaves like the real client — buttons tap,
+ *    quick replies answer, codes copy, sheets slide up
  */
 
-function resolveVariableFactory(doc: TemplateDoc): (n: number) => string {
+function resolveVariableFactory(doc: TemplateDoc, interactive: boolean): (n: number) => string {
   const bodyData = doc.blocks.body.data as { variables?: VariableMap };
   const headerData = (doc.blocks.header?.data ?? {}) as { variables?: VariableMap };
-  return (n: number) =>
-    bodyData.variables?.[String(n)]?.example ?? headerData.variables?.[String(n)]?.example ?? '';
+  return (n: number) => {
+    const example = bodyData.variables?.[String(n)]?.example ?? headerData.variables?.[String(n)]?.example ?? '';
+    // In Test mode the message reads as "sent": variables always resolve.
+    if (!example && interactive) return `Sample ${n}`;
+    return example;
+  };
 }
 
 function SelectableRegion({
@@ -27,12 +43,15 @@ function SelectableRegion({
   active,
   onSelect,
   label,
+  interactive,
 }: {
   children: React.ReactNode;
   active: boolean;
   onSelect: () => void;
   label: string;
+  interactive: boolean;
 }) {
+  if (interactive) return <>{children}</>;
   return (
     <div
       role="button"
@@ -64,16 +83,33 @@ export function CanvasPanel() {
   const selection = useStudio((s) => s.selection);
   const dark = useStudio((s) => s.previewDark);
   const device = useStudio((s) => s.previewDevice);
+  const mode = useStudio((s) => s.previewMode);
+  const replies = useStudio((s) => s.previewReplies);
+  const sheet = useStudio((s) => s.previewSheet);
+  const toast = useStudio((s) => s.previewToast);
 
-  const { setNodeRef, isOver } = useDroppable({ id: 'canvas-drop' });
+  const interactive = mode === 'interact';
+  const { setNodeRef, isOver } = useDroppable({ id: 'canvas-drop', disabled: interactive });
 
   const ctx: PreviewContext = React.useMemo(
-    () => ({ doc, dark, resolveVariable: resolveVariableFactory(doc) }),
-    [doc, dark]
+    () => ({ doc, dark, resolveVariable: resolveVariableFactory(doc, interactive) }),
+    [doc, dark, interactive]
   );
 
-  const isSelected = (check: Selection) =>
-    JSON.stringify(selection) === JSON.stringify(check);
+  const api: InteractionApi = React.useMemo(
+    () => ({
+      reply: pushPreviewReply,
+      copy: (text, label) => {
+        void navigator.clipboard?.writeText(text).catch(() => undefined);
+        showPreviewToast(label ?? 'Copied to clipboard');
+      },
+      openSheet: openPreviewSheet,
+      toast: showPreviewToast,
+    }),
+    []
+  );
+
+  const isSelected = (check: Selection) => JSON.stringify(selection) === JSON.stringify(check);
 
   const buttons = doc.blocks.buttons;
   const collapsed = buttons.length > VISIBLE_BUTTONS;
@@ -81,14 +117,35 @@ export function CanvasPanel() {
 
   const frameWidth = device === 'mobile' ? 360 : 480;
 
+  const tapButton = (id: string) => {
+    const instance = buttons.find((b) => b.id === id);
+    const plugin = instance ? getButtonPlugin(instance.type) : undefined;
+    if (!instance || !plugin) return;
+    if (plugin.onTap) plugin.onTap(instance.data, api);
+    else api.toast('This button has no preview action');
+  };
+
   return (
     <main
       aria-label="Preview canvas"
-      className="flex min-w-0 flex-1 items-start justify-center overflow-auto bg-muted/50 p-6 lg:p-10"
-      onClick={() => select({ kind: 'template' })}
+      className="relative flex min-w-0 flex-1 items-start justify-center overflow-auto bg-muted/50 p-6 lg:p-10"
+      onClick={() => {
+        if (!interactive) select({ kind: 'template' });
+      }}
     >
+      {interactive && replies.length > 0 && (
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={resetPreviewInteractions}
+          className="absolute right-4 top-4 z-10 gap-1.5"
+        >
+          <RotateCcw className="size-3.5" /> Reset chat
+        </Button>
+      )}
+
       <div
-        className="overflow-hidden rounded-[22px] border border-border shadow-2xl"
+        className="relative overflow-hidden rounded-[22px] border border-border shadow-2xl"
         style={{ width: frameWidth, maxWidth: '100%' }}
       >
         {/* Chat header */}
@@ -98,12 +155,12 @@ export function CanvasPanel() {
           }`}
         >
           <ChevronLeft className="size-5 opacity-90" />
-          <span className="flex size-8 items-center justify-center rounded-full bg-white/25 text-[13px] font-semibold">
-            M
-          </span>
+          <span className="flex size-8 items-center justify-center rounded-full bg-white/25 text-[13px] font-semibold">M</span>
           <div className="min-w-0 flex-1">
             <div className="truncate text-[14.5px] font-semibold leading-tight">Maildrill</div>
-            <div className="text-[11px] leading-tight opacity-75">WhatsApp Business</div>
+            <div className="text-[11px] leading-tight opacity-75">
+              {interactive ? 'online' : 'WhatsApp Business'}
+            </div>
           </div>
           <Video className="size-[18px] opacity-90" />
           <Phone className="size-4 opacity-90" />
@@ -120,7 +177,7 @@ export function CanvasPanel() {
             backgroundSize: '18px 18px',
           }}
         >
-          {/* Message bubble */}
+          {/* Template message bubble */}
           <div
             className="relative max-w-[85%] rounded-lg rounded-tl-none p-[3px] pb-1 shadow-[0_1px_0.5px_rgba(11,20,26,0.13)]"
             style={{ backgroundColor: dark ? 'var(--wa-bubble-dark)' : 'var(--wa-bubble-light)' }}
@@ -140,14 +197,10 @@ export function CanvasPanel() {
                   const plugin = getBlockPlugin(header.type);
                   if (!plugin) return null;
                   return (
-                    <motion.div
-                      key={header.id}
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                    >
+                    <motion.div key={header.id} initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}>
                       <SelectableRegion
                         label="header"
+                        interactive={interactive}
                         active={isSelected({ kind: 'block', slot: 'header', id: header.id })}
                         onSelect={() => select({ kind: 'block', slot: 'header', id: header.id })}
                       >
@@ -165,6 +218,7 @@ export function CanvasPanel() {
               return (
                 <SelectableRegion
                   label="body"
+                  interactive={interactive}
                   active={isSelected({ kind: 'block', slot: 'body', id: body.id })}
                   onSelect={() => select({ kind: 'block', slot: 'body', id: body.id })}
                 >
@@ -183,6 +237,7 @@ export function CanvasPanel() {
                     <motion.div key={footer.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                       <SelectableRegion
                         label="footer"
+                        interactive={interactive}
                         active={isSelected({ kind: 'block', slot: 'footer', id: footer.id })}
                         onSelect={() => select({ kind: 'block', slot: 'footer', id: footer.id })}
                       >
@@ -202,31 +257,59 @@ export function CanvasPanel() {
               {visibleButtons.map((button) => {
                 const plugin = getButtonPlugin(button.type);
                 if (!plugin) return null;
+                const row = <plugin.Preview data={button.data} ctx={ctx} />;
                 return (
                   <motion.div key={button.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                    <SelectableRegion
-                      label={`${plugin.meta.label} button`}
-                      active={isSelected({ kind: 'button', id: button.id })}
-                      onSelect={() => select({ kind: 'button', id: button.id })}
-                    >
-                      <plugin.Preview data={button.data} ctx={ctx} />
-                    </SelectableRegion>
+                    {interactive ? (
+                      <button
+                        type="button"
+                        aria-label={`Tap ${plugin.meta.label}`}
+                        onClick={() => tapButton(button.id)}
+                        className="block w-full cursor-pointer text-left transition-opacity active:opacity-60"
+                      >
+                        {row}
+                      </button>
+                    ) : (
+                      <SelectableRegion
+                        label={`${plugin.meta.label} button`}
+                        interactive={false}
+                        active={isSelected({ kind: 'button', id: button.id })}
+                        onSelect={() => select({ kind: 'button', id: button.id })}
+                      >
+                        {row}
+                      </SelectableRegion>
+                    )}
                   </motion.div>
                 );
               })}
             </AnimatePresence>
             {collapsed && (
-              <div
-                className={`flex items-center justify-center gap-1.5 border-t py-[10px] text-[14px] font-medium ${
-                  dark ? 'border-[#e9edef]/10 text-[#53bdeb]' : 'border-[#111b21]/10 text-[#00a5f4]'
-                }`}
+              <button
+                type="button"
+                aria-label="See all options"
+                disabled={!interactive}
+                onClick={() => interactive && openPreviewSheet({ kind: 'options' })}
+                className={`flex w-full items-center justify-center gap-1.5 border-t py-[10px] text-[14px] font-medium ${
+                  interactive ? 'cursor-pointer active:opacity-60' : 'cursor-default'
+                } ${dark ? 'border-[#e9edef]/10 text-[#53bdeb]' : 'border-[#111b21]/10 text-[#00a5f4]'}`}
               >
                 <ChevronDown className="size-4" />
                 See all options
-              </div>
+              </button>
             )}
           </div>
+
+          {/* Test-mode conversation */}
+          <AnimatePresence initial={false}>
+            {replies.map((reply) => (
+              <ReplyBubble key={reply.id} reply={reply} dark={dark} />
+            ))}
+          </AnimatePresence>
         </div>
+
+        {/* Test-mode overlays live inside the frame like the real client. */}
+        <PhoneSheet sheet={sheet} dark={dark} buttons={buttons} api={api} ctx={ctx} />
+        <PreviewSnackbar message={toast} />
       </div>
     </main>
   );
