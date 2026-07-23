@@ -12,6 +12,8 @@ export interface ApiList {
   notes?: string | null;
   /** Subscribers on the list, counted server-side by /v1/lists. */
   memberCount?: number | null;
+  /** List members with a phone number — for SMS / WhatsApp / Voice reach. */
+  phoneMemberCount?: number | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }

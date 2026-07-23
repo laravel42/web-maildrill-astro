@@ -19,6 +19,7 @@ export type Campaign = {
   updatedAt: string;
   recipients: number;
   delivered: number;
+  failed: number;
   unsubscribed: number;
 };
 

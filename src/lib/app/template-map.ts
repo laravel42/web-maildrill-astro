@@ -20,7 +20,7 @@ export interface ApiTemplate {
 const CATEGORIES: TplCategory[] = ['Promotional', 'Newsletter', 'Transactional', 'Announcement'];
 
 /** Deterministic thumbnail palette [band background, foreground, CTA accent]. */
-const THUMBS: Array<[string, string, string]> = [
+export const TEMPLATE_THUMBS: Array<[string, string, string]> = [
   ['linear-gradient(135deg,#6366f1,#4f46e5)', '#fff', '#4f46e5'],
   ['linear-gradient(135deg,#f59e0b,#d97706)', '#fff', '#d97706'],
   ['linear-gradient(135deg,#10b981,#059669)', '#fff', '#059669'],
@@ -32,6 +32,10 @@ function hash(s: string): number {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return h;
+}
+
+export function hashTemplateId(id: string): number {
+  return hash(id);
 }
 
 function toChannel(c?: string | null): ChannelType {
@@ -53,18 +57,18 @@ function fmtAgo(iso?: string | null): { updated: string; updatedMin: number } {
 }
 
 /**
- * Map a live API template into the gallery card shape. Identity/subject/category
- * are real; the thumbnail styling is deterministic from the id, and open/click
- * rates start at 0 (no fabricated analytics) until sends report back.
+ * Map a live API template into the gallery card shape. Name/category/channel are
+ * real; the thumbnail styling is deterministic from the id, and open/click rates
+ * start at 0 (no fabricated analytics) until sends report back.
  */
 export function toGalleryTemplate(t: ApiTemplate): GalleryTemplate {
-  const [thumb, fg, accent] = THUMBS[hash(t.id) % THUMBS.length];
+  const [thumb, fg, accent] = TEMPLATE_THUMBS[hash(t.id) % TEMPLATE_THUMBS.length];
   const { updated, updatedMin } = fmtAgo(t.updatedAt ?? t.createdAt);
   const category = toCategory(t.category);
   return {
     id: t.id,
     name: t.name,
-    title: t.subject || t.name,
+    title: t.name,
     kicker: category.toUpperCase(),
     cta: 'View',
     category,

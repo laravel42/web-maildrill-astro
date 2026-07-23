@@ -62,3 +62,10 @@ export function rateBucket(v: number): RateBucket {
   if (v < 40) return '20 – 40%';
   return '40%+';
 }
+
+/** Parse a display rate like "58.2%" or "—" into a whole percent for bucketing. */
+export function parseRatePercent(s: string): number {
+  if (!s || s === '—') return 0;
+  const n = parseFloat(s.replace('%', '').trim());
+  return Number.isFinite(n) ? n : 0;
+}

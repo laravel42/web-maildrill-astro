@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
 import ListCustomFields from './ListCustomFields';
@@ -15,8 +15,10 @@ import {
 import type { ListRow, SortKey, View } from './AppLists.types';
 import { api, ApiError } from '@/lib/app/api';
 import { toListRow, type ApiList } from '@/lib/app/list-map';
+import { RATE_BUCKETS, parseRatePercent, rateBucket } from '@/lib/app/templates-data';
 import { tagStyle } from '@/lib/app/tag-style';
 import TagFilter from './shared/TagFilter';
+import ColFilter from './shared/ColFilter';
 import styles from './AppLists.module.css';
 
 export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
@@ -25,6 +27,9 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
   const [listRows, setListRows] = useState<ListRow[]>(initial !== undefined ? initial : mockRows);
   const [query, setQuery] = useState('');
   const [tagSel, setTagSel] = useState<Set<string>>(new Set());
+  const [opensSel, setOpensSel] = useState<Set<string>>(new Set());
+  const [clicksSel, setClicksSel] = useState<Set<string>>(new Set());
+  const [openFilter, setOpenFilter] = useState<'opens' | 'clicks' | null>(null);
   const [view, setView] = useState<View>('table');
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updatedAt', dir: -1 });
   const [page, setPage] = useState(1);
@@ -41,6 +46,18 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
       else next.add(t);
       return next;
     });
+
+  const resetPage = () => setPage(1);
+
+  const toggleSet = (setter: Dispatch<SetStateAction<Set<string>>>) => (v: string) => {
+    setter((prev) => {
+      const next = new Set(prev);
+      if (next.has(v)) next.delete(v);
+      else next.add(v);
+      return next;
+    });
+    resetPage();
+  };
   const [openId, setOpenId] = useState<string | null>(null);
   const [closing, setClosing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -124,6 +141,8 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
     const q = query.trim().toLowerCase();
     let list = listRows.filter((l) => {
       if (tagSel.size > 0 && !l.tags.some((t) => tagSel.has(t))) return false;
+      if (opensSel.size && !opensSel.has(rateBucket(parseRatePercent(l.openRate)))) return false;
+      if (clicksSel.size && !clicksSel.has(rateBucket(parseRatePercent(l.clickRate)))) return false;
       if (!q) return true;
       return (
         l.name.toLowerCase().includes(q) ||
@@ -147,7 +166,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
       return 0;
     });
     return list;
-  }, [query, tagSel, sort, listRows]);
+  }, [query, tagSel, opensSel, clicksSel, sort, listRows]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -158,7 +177,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
   // Snap back to the first page whenever the filtered set changes underneath.
   useEffect(() => {
     setPage(1);
-  }, [query, tagSel, sort]);
+  }, [query, tagSel, opensSel, clicksSel, sort]);
 
   const toggleSort = (key: SortKey) =>
     setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: 1 }));
@@ -203,7 +222,34 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
             tags={allTags}
             selected={tagSel}
             onToggle={toggleTag}
-            onClear={() => setTagSel(new Set())}
+            onClear={() => {
+              setTagSel(new Set());
+              resetPage();
+            }}
+          />
+          <ColFilter
+            label="Opens"
+            options={RATE_BUCKETS}
+            selected={opensSel}
+            onToggle={toggleSet(setOpensSel)}
+            onClear={() => {
+              setOpensSel(new Set());
+              resetPage();
+            }}
+            open={openFilter === 'opens'}
+            onOpenToggle={() => setOpenFilter((o) => (o === 'opens' ? null : 'opens'))}
+          />
+          <ColFilter
+            label="Clicks"
+            options={RATE_BUCKETS}
+            selected={clicksSel}
+            onToggle={toggleSet(setClicksSel)}
+            onClear={() => {
+              setClicksSel(new Set());
+              resetPage();
+            }}
+            open={openFilter === 'clicks'}
+            onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
           />
           <div className={styles.spacer} />
           <div className="aseg" role="group" aria-label="View mode">
@@ -552,46 +598,6 @@ function ListDrawer({
             </div>
           </div>
 
-          {/* editable tags — saved as you add or remove them */}
-          <div className={styles.dTagsSection}>
-            <span className={`adrawer__eyebrow ${styles.dTagsEyebrow}`}>Tags</span>
-            <div className={styles.dTags}>
-              {tags.map((t) => (
-                <span key={t} className={styles.dTag} style={tagStyle(t)}>
-                  <button
-                    type="button"
-                    className={styles.dTaglbl}
-                    title={`Filter by “${t}”`}
-                    onClick={() => onFilterTag(t)}
-                  >
-                    {t}
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.dTagx}
-                    aria-label={`Remove ${t}`}
-                    onClick={() => removeTag(t)}
-                  >
-                    <Icon name="x" size={14} stroke={3} />
-                  </button>
-                </span>
-              ))}
-              <input
-                className={styles.dTagin}
-                placeholder="Add tag…"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addTag();
-                  }
-                }}
-                aria-label="Add tag"
-              />
-            </div>
-          </div>
-
           {/* stat cards */}
           <div className={styles.dStats}>
             <div className={styles.dStat}>
@@ -656,6 +662,46 @@ function ListDrawer({
             <div className={styles.dAxis}>
               <span>6 weeks ago</span>
               <span>Now</span>
+            </div>
+          </div>
+
+          {/* editable tags — saved as you add or remove them */}
+          <div className={styles.dTagsSection}>
+            <span className={`adrawer__eyebrow ${styles.dTagsEyebrow}`}>Tags</span>
+            <div className={styles.dTags}>
+              {tags.map((t) => (
+                <span key={t} className={styles.dTag} style={tagStyle(t)}>
+                  <button
+                    type="button"
+                    className={styles.dTaglbl}
+                    title={`Filter by “${t}”`}
+                    onClick={() => onFilterTag(t)}
+                  >
+                    {t}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.dTagx}
+                    aria-label={`Remove ${t}`}
+                    onClick={() => removeTag(t)}
+                  >
+                    <Icon name="x" size={14} stroke={3} />
+                  </button>
+                </span>
+              ))}
+              <input
+                className={styles.dTagin}
+                placeholder="Add tag…"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag();
+                  }
+                }}
+                aria-label="Add tag"
+              />
             </div>
           </div>
 
