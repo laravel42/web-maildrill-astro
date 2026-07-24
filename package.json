@@ -40,11 +40,13 @@
     "posthog-node": "^5.46.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "wa-template-studio": "workspace:*",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.61.1",
+    "@tailwindcss/vite": "^4.1.16",
     "@types/node": "^26.1.1",
     "@types/nodemailer": "^8.0.1",
     "@types/react": "^19.2.17",

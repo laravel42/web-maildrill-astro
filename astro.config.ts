@@ -1,3 +1,8 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
@@ -5,6 +10,44 @@ import node from '@astrojs/node';
 import auth from 'auth-astro';
 
 import { siteConfig } from './src/config/site';
+
+const rootDir = fileURLToPath(new URL('.', import.meta.url));
+const appSrc = path.resolve(rootDir, 'src');
+const waStudioSrc = path.resolve(rootDir, 'packages/wa-template-studio/src');
+
+const RESOLVE_EXTS = ['.tsx', '.ts', '.jsx', '.js'];
+
+function resolveWithExtensions(base: string): string | undefined {
+  if (fs.existsSync(base) && fs.statSync(base).isFile()) return base;
+  for (const ext of RESOLVE_EXTS) {
+    const file = base + ext;
+    if (fs.existsSync(file)) return file;
+  }
+  for (const ext of RESOLVE_EXTS) {
+    const file = path.join(base, `index${ext}`);
+    if (fs.existsSync(file)) return file;
+  }
+  return undefined;
+}
+
+/** `@/` means app `src/` here, but wa-template-studio's own `src/` inside the package. */
+function resolveAtImport(source: string, importer?: string): string | undefined {
+  if (!source.startsWith('@/')) return undefined;
+  const subpath = source.slice(2);
+  const root = importer?.includes('wa-template-studio') ? waStudioSrc : appSrc;
+  return resolveWithExtensions(path.join(root, subpath));
+}
+
+/** Resolve wa-template-studio's internal `@/` imports when bundled by Astro/Vite. */
+function waTemplateStudioAlias() {
+  return {
+    name: 'wa-template-studio-alias',
+    enforce: 'pre' as const,
+    resolveId(source: string, importer?: string) {
+      return resolveAtImport(source, importer) ?? null;
+    },
+  };
+}
 
 // `import.meta.env` isn't populated at config-load time, so read the raw env
 // (set at build, e.g. on Cloudflare Pages) with the config default as fallback.
@@ -39,10 +82,17 @@ export default defineConfig({
     }),
   ],
   vite: {
+    plugins: [waTemplateStudioAlias(), tailwindcss()],
     resolve: {
-      alias: {
-        '@': '/src',
-      },
+      alias: [
+        {
+          find: /^@\/(.*)$/,
+          replacement: '$1',
+          customResolver(source, importer) {
+            return resolveAtImport(source, importer);
+          },
+        },
+      ],
     },
     // nodemailer is a Node-only CJS dep (used by the SMTP welcome sender) —
     // keep it out of Vite's SSR transform/optimizer so it's required at runtime

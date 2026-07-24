@@ -5,9 +5,11 @@
    file). Without this, utilities used in src/ are never generated. */
 @source "../";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.wa-studio.dark *));
 
-:root {
+/* Scoped to the studio root so we never clobber Maildrill app tokens on :root
+   (e.g. --accent, which powers .pbtn across the workspace). */
+.wa-studio {
   /* Modern builder aesthetic: near-white surfaces, subtle borders, 8px radius. */
   --background: #fafafa;
   --foreground: #14201b;
@@ -37,7 +39,7 @@
   --wa-bubble-dark: #202c33;
 }
 
-.dark {
+.wa-studio.dark {
   --background: #0f1412;
   --foreground: #e8ebe9;
   --card: #151b18;
@@ -87,13 +89,8 @@
 }
 
 @layer base {
-  * {
+  .wa-studio * {
     border-color: var(--color-border);
     outline-color: color-mix(in oklab, var(--color-ring) 50%, transparent);
-  }
-
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
   }
 }

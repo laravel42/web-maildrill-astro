@@ -122,7 +122,7 @@ export function LibraryPanel() {
   }, [entries, search]);
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-background" aria-label="Component library">
+    <aside className="flex h-full min-h-0 w-64 shrink-0 flex-col overflow-hidden border-r border-border bg-background" aria-label="Component library">
       <div className="p-3 pb-2">
         <div className="relative">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />

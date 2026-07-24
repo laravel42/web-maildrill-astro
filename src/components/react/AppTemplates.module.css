@@ -70,6 +70,8 @@
 
 .coldrop {
   position: relative;
+  /* Stay above the full-screen scrim so the trigger stays clickable. */
+  z-index: 41;
 }
 .colbtn {
   display: inline-flex;

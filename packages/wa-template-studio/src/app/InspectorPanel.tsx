@@ -172,7 +172,7 @@ export function InspectorPanel() {
   }
 
   return (
-    <aside className="flex w-80 shrink-0 flex-col border-l border-border bg-background" aria-label="Properties">
+    <aside className="flex h-full min-h-0 w-80 shrink-0 flex-col overflow-hidden border-l border-border bg-background" aria-label="Properties">
       <div className="flex items-center justify-between px-4 py-3">
         <h2 className="text-sm font-semibold">{title}</h2>
         {removable && (

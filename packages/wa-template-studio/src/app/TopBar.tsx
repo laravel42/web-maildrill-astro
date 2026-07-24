@@ -17,6 +17,7 @@ import {
 } from '@/core/store';
 import { placeBlock } from '@/core/store';
 import type { TemplateCategory } from '@/core/types';
+import { cn } from '@/lib/cn';
 import { ImportExportControls } from './ImportExportDialog';
 
 const CATEGORY_LABEL: Record<TemplateCategory, string> = {
@@ -24,6 +25,55 @@ const CATEGORY_LABEL: Record<TemplateCategory, string> = {
   UTILITY: 'Utility',
   AUTHENTICATION: 'Authentication',
 };
+
+/** Shared chrome for top-bar selects and the Edit/Test toggle. */
+const toolbarControl =
+  'rounded-md border border-input bg-transparent shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]';
+
+function PreviewModeToggle({
+  mode,
+  onChange,
+}: {
+  mode: 'edit' | 'interact';
+  onChange: (mode: 'edit' | 'interact') => void;
+}) {
+  const segment =
+    'inline-flex h-7 items-center gap-1.5 rounded-[5px] px-2.5 text-xs font-medium transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50';
+
+  return (
+    <div
+      role="group"
+      aria-label="Preview mode"
+      className={cn(
+        'absolute left-1/2 top-1/2 flex h-8 -translate-x-1/2 -translate-y-1/2 items-center p-0.5',
+        toolbarControl,
+      )}
+    >
+      <button
+        type="button"
+        aria-pressed={mode === 'edit'}
+        onClick={() => onChange('edit')}
+        className={cn(
+          segment,
+          mode === 'edit' ? 'bg-muted text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground',
+        )}
+      >
+        <Pencil className="size-3.5 opacity-70" /> Edit
+      </button>
+      <button
+        type="button"
+        aria-pressed={mode === 'interact'}
+        onClick={() => onChange('interact')}
+        className={cn(
+          segment,
+          mode === 'interact' ? 'bg-muted text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground',
+        )}
+      >
+        <Play className="size-3.5 opacity-70" /> Test
+      </button>
+    </div>
+  );
+}
 
 export function TopBar() {
   const doc = useStudio((s) => s.doc);
@@ -45,7 +95,7 @@ export function TopBar() {
   };
 
   return (
-    <header className="relative flex h-12 shrink-0 items-center gap-2 border-b border-border bg-card px-3">
+    <header className="relative z-10 flex h-12 shrink-0 items-center gap-2 border-b border-border bg-card px-3">
       <Select value={doc.language} onValueChange={(v) => setTemplateField('language', v)}>
         <SelectTrigger className="h-8 w-24 text-xs" aria-label="Language">
           <SelectValue />
@@ -71,32 +121,7 @@ export function TopBar() {
         </SelectContent>
       </Select>
 
-      {/* Edit / Test segmented toggle — centered in the bar like Figma's
-          play mode, independent of the side groups' widths. */}
-      <div
-        role="group"
-        aria-label="Preview mode"
-        className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center rounded-lg border border-border bg-muted/60 p-0.5"
-      >
-        <Button
-          variant={previewMode === 'edit' ? 'secondary' : 'ghost'}
-          size="sm"
-          aria-pressed={previewMode === 'edit'}
-          onClick={() => setPreviewMode('edit')}
-          className="h-7 gap-1.5 px-2.5"
-        >
-          <Pencil className="size-3.5" /> Edit
-        </Button>
-        <Button
-          variant={previewMode === 'interact' ? 'secondary' : 'ghost'}
-          size="sm"
-          aria-pressed={previewMode === 'interact'}
-          onClick={() => setPreviewMode('interact')}
-          className="h-7 gap-1.5 px-2.5"
-        >
-          <Play className="size-3.5" /> Test
-        </Button>
-      </div>
+      <PreviewModeToggle mode={previewMode} onChange={setPreviewMode} />
 
       <div className="ml-auto flex items-center gap-1">
         <Tooltip>

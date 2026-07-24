@@ -61,18 +61,18 @@ export function Studio({ restoreDraft = true, dark = false }: StudioProps) {
   };
 
   return (
-    <div className={dark ? 'dark' : undefined}>
+    <div className={dark ? 'wa-studio dark h-full min-h-0' : 'wa-studio h-full min-h-0'}>
       <TooltipProvider delayDuration={250}>
-        <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-          <div className="flex h-full min-h-0 flex-col bg-background font-sans text-foreground antialiased">
-            <TopBar />
-            <div className="flex min-h-0 flex-1">
+        <div className="flex h-full min-h-0 flex-col bg-background font-sans text-foreground antialiased">
+          <TopBar />
+          <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+            <div className="flex min-h-0 flex-1 overflow-hidden">
               <LibraryPanel />
               <CanvasPanel />
               <InspectorPanel />
             </div>
-          </div>
-        </DndContext>
+          </DndContext>
+        </div>
       </TooltipProvider>
     </div>
   );

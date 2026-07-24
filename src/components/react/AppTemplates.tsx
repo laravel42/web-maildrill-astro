@@ -20,6 +20,7 @@ import EmailBuilder from './EmailBuilder';
 // — everyone visiting /app/templates paid for it upfront. React.lazy defers
 // the fetch until <VisualEmailBuilder> actually mounts.
 const VisualEmailBuilder = lazy(() => import('./VisualEmailBuilder'));
+const WaTemplateStudioEditor = lazy(() => import('./WaTemplateStudioEditor'));
 import LazyBoundary from './shared/LazyBoundary';
 import TemplatePreview from './shared/TemplatePreview';
 import GalleryPreview, { FauxEmail } from './shared/GalleryPreview';
@@ -68,11 +69,6 @@ function ApprovalBadge({ t, compact = false }: { t: GalleryTemplate; compact?: b
       {APPROVAL_LABEL[status]}
     </span>
   );
-}
-
-/** Map a gallery category to a WhatsApp/Meta template category. */
-function waCategory(category: string): 'MARKETING' | 'UTILITY' | 'AUTHENTICATION' {
-  return category === 'Transactional' ? 'UTILITY' : 'MARKETING';
 }
 
 function ChannelBadge({ channel, compact = false }: { channel: ChannelType; compact?: boolean }) {
@@ -172,8 +168,12 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
     id?: string;
     document?: TEditorConfiguration;
     category?: string;
-    /** Saved body for the SMS/WhatsApp/Voice composer when reopening. */
+    /** Saved body for the SMS/Voice composer when reopening. */
     message?: string;
+    /** WhatsApp studio round-trip fields. */
+    language?: string | null;
+    waComponents?: Record<string, unknown> | null;
+    waDoc?: Record<string, unknown> | null;
   } | null>(null);
 
   const isFav = (id: string) => favIds.has(id);
@@ -404,6 +404,9 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
       category: full.category ?? tpl.category,
       document: (full.builderDoc as TEditorConfiguration | null) ?? undefined,
       message: full.text ?? undefined,
+      language: full.language,
+      waComponents: full.components ?? undefined,
+      waDoc: full.builderDoc ?? undefined,
     });
   };
 
@@ -972,11 +975,8 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
         />
       )}
 
-      {/* Email uses the full EmailBuilder.js visual editor; other channels keep
-          the lightweight composer. Suspense is required by React.lazy — its
-          fallback only covers fetching this wrapper's own (small) chunk; the
-          heavy email-builder-standalone package has its own loading state
-          inside VisualEmailBuilder. */}
+      {/* Email → EmailBuilder.js visual editor; WhatsApp → wa-template-studio;
+          SMS/Voice keep the lightweight text composer. */}
       {builder && builder.channel === 'email' && (
         <LazyBoundary label="the email editor" onClose={() => setBuilder(null)}>
           <Suspense fallback={null}>
@@ -1018,7 +1018,57 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
         </LazyBoundary>
       )}
 
-      {builder && builder.channel !== 'email' && (
+      {builder && builder.channel === 'whatsapp' && (
+        <LazyBoundary label="the WhatsApp template editor" onClose={() => setBuilder(null)}>
+          <Suspense fallback={null}>
+            <WaTemplateStudioEditor
+              name={builder.name}
+              language={builder.language}
+              text={builder.message}
+              category={builder.category}
+              builderDoc={builder.waDoc}
+              components={builder.waComponents}
+              onClose={() => setBuilder(null)}
+              onSave={async (fields) => {
+                const ed = builder;
+                if (!ed || !live) return;
+                const body = {
+                  name: fields.name,
+                  channel: 'whatsapp' as const,
+                  text: fields.text,
+                  category: fields.category,
+                  language: fields.language,
+                  builderDoc: fields.builderDoc,
+                  components: fields.components,
+                };
+                if (ed.id) {
+                  const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
+                  setTemplates((prev) =>
+                    prev.map((t) => (t.id === ed.id ? toGalleryTemplate(updated) : t)),
+                  );
+                } else {
+                  const created = await api.post<ApiTemplate>('templates', body);
+                  setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
+                  setBuilder((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          id: created.id,
+                          waDoc: fields.builderDoc,
+                          waComponents: fields.components,
+                          message: fields.text ?? undefined,
+                          language: fields.language,
+                        }
+                      : prev,
+                  );
+                }
+              }}
+            />
+          </Suspense>
+        </LazyBoundary>
+      )}
+
+      {builder && builder.channel !== 'email' && builder.channel !== 'whatsapp' && (
         <EmailBuilder
           channel={builder.channel}
           name={builder.name}
@@ -1029,20 +1079,11 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           onSave={async ({ channel, name, message, category }) => {
             const ed = builder;
             if (!ed || !live) return;
-            // WhatsApp templates persist their Meta structure so "Submit for
-            // approval" has a body/category/language to register.
-            const isWa = channel === 'whatsapp';
             const body = {
               name: name && name !== 'Untitled' ? name : 'Untitled template',
               channel,
               text: message || null,
               category,
-              ...(isWa
-                ? {
-                    language: 'en',
-                    components: { category: waCategory(category), body: { text: message } },
-                  }
-                : {}),
             };
             if (ed.id) {
               const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
