@@ -1,5 +1,21 @@
-import type { ChannelType } from '@/types/app';
+import type { ChannelType, TemplateApprovalStatus } from '@/types/app';
 import type { GalleryTemplate, TplCategory } from '@/lib/app/templates-data';
+
+const APPROVAL_STATUSES: TemplateApprovalStatus[] = [
+  'draft',
+  'pending',
+  'approved',
+  'rejected',
+  'paused',
+  'disabled',
+];
+
+/** Coerce the service's approval_status into our union, or null (non-WhatsApp). */
+export function toApprovalStatus(s?: string | null): TemplateApprovalStatus | null {
+  return APPROVAL_STATUSES.includes(s as TemplateApprovalStatus)
+    ? (s as TemplateApprovalStatus)
+    : null;
+}
 
 /** Shape of a template as returned by maildrill-service /v1/templates. */
 export interface ApiTemplate {
@@ -13,6 +29,11 @@ export interface ApiTemplate {
   builderDoc?: Record<string, unknown> | null;
   category?: string | null;
   favorite?: boolean | null;
+  /** WhatsApp template approval fields (null/absent on other channels). */
+  approvalStatus?: string | null;
+  rejectionReason?: string | null;
+  language?: string | null;
+  components?: Record<string, unknown> | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
@@ -20,7 +41,7 @@ export interface ApiTemplate {
 const CATEGORIES: TplCategory[] = ['Promotional', 'Newsletter', 'Transactional', 'Announcement'];
 
 /** Deterministic thumbnail palette [band background, foreground, CTA accent]. */
-const THUMBS: Array<[string, string, string]> = [
+export const TEMPLATE_THUMBS: Array<[string, string, string]> = [
   ['linear-gradient(135deg,#6366f1,#4f46e5)', '#fff', '#4f46e5'],
   ['linear-gradient(135deg,#f59e0b,#d97706)', '#fff', '#d97706'],
   ['linear-gradient(135deg,#10b981,#059669)', '#fff', '#059669'],
@@ -32,6 +53,10 @@ function hash(s: string): number {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return h;
+}
+
+export function hashTemplateId(id: string): number {
+  return hash(id);
 }
 
 function toChannel(c?: string | null): ChannelType {
@@ -53,18 +78,18 @@ function fmtAgo(iso?: string | null): { updated: string; updatedMin: number } {
 }
 
 /**
- * Map a live API template into the gallery card shape. Identity/subject/category
- * are real; the thumbnail styling is deterministic from the id, and open/click
- * rates start at 0 (no fabricated analytics) until sends report back.
+ * Map a live API template into the gallery card shape. Name/category/channel are
+ * real; the thumbnail styling is deterministic from the id, and open/click rates
+ * start at 0 (no fabricated analytics) until sends report back.
  */
 export function toGalleryTemplate(t: ApiTemplate): GalleryTemplate {
-  const [thumb, fg, accent] = THUMBS[hash(t.id) % THUMBS.length];
+  const [thumb, fg, accent] = TEMPLATE_THUMBS[hash(t.id) % TEMPLATE_THUMBS.length];
   const { updated, updatedMin } = fmtAgo(t.updatedAt ?? t.createdAt);
   const category = toCategory(t.category);
   return {
     id: t.id,
     name: t.name,
-    title: t.subject || t.name,
+    title: t.name,
     kicker: category.toUpperCase(),
     cta: 'View',
     category,
@@ -77,6 +102,8 @@ export function toGalleryTemplate(t: ApiTemplate): GalleryTemplate {
     favorite: !!t.favorite,
     avgOpen: 0,
     avgClick: 0,
+    approvalStatus: toApprovalStatus(t.approvalStatus),
+    rejectionReason: t.rejectionReason ?? null,
   };
 }
 

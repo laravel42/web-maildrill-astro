@@ -2,13 +2,23 @@
 export const prerender = false;
 import AppLayout from '@/layouts/AppLayout.astro';
 import CampaignsBoard from '@/components/react/CampaignsBoard';
-import { productClient } from '@/lib/server/service';
+import { productClient, mintServiceToken, serviceBaseUrl } from '@/lib/server/service';
 import { toCampaigns, type ApiCampaign } from '@/lib/app/campaign-map';
+import { toApprovalStatus } from '@/lib/app/template-map';
 import type { Campaign } from '@/types/app';
+import type { ChannelSenders } from '@/lib/app/channel-senders';
 import type {
   AudienceChoice,
   TemplateChoice,
 } from '@/components/react/CampaignWizard.types';
+import {
+  enrichListAudienceCounts,
+  enrichSegmentAudienceCounts,
+  listToAudienceChoice,
+  segmentToAudienceChoice,
+  type ApiAudienceSegment,
+} from '@/lib/app/audience-map';
+import type { ApiList } from '@/lib/app/list-map';
 
 // Load real campaigns for the signed-in workspace; undefined = not connected
 // (island falls back to fixtures), an array = live data (even if empty).
@@ -18,22 +28,27 @@ let initial: Campaign[] | undefined = undefined;
 // recipients and real content instead of placeholder choices.
 let audiences: AudienceChoice[] | undefined = undefined;
 let templates: TemplateChoice[] | undefined = undefined;
+let senders: ChannelSenders | undefined = undefined;
 let banner: { ok: boolean; text: string } | null = null;
 
 const unwrap = <T,>(d: unknown): T[] => (d as { data?: T[] } | undefined)?.data ?? [];
 
 if (session?.user?.id && session.activeTenantId) {
   try {
-    const client = productClient({
+    const ctx = {
       userId: session.user.id,
       activeTenantId: session.activeTenantId,
       role: session.role,
-    });
-    const [campaignsRes, listsRes, segmentsRes, templatesRes] = await Promise.all([
+    };
+    const client = productClient(ctx);
+    const [campaignsRes, listsRes, segmentsRes, templatesRes, sendersRes] = await Promise.all([
       client.GET('/v1/campaigns'),
       client.GET('/v1/lists'),
       client.GET('/v1/segments'),
       client.GET('/v1/templates'),
+      fetch(`${serviceBaseUrl()}/v1/channels/senders`, {
+        headers: { Authorization: `Bearer ${mintServiceToken(ctx)}` },
+      }),
     ]);
 
     if (campaignsRes.error) {
@@ -44,39 +59,32 @@ if (session?.user?.id && session.activeTenantId) {
 
     // A failed lookup leaves the wizard with an empty picker and its own
     // explanatory empty state — it must not take the whole page down.
+    const apiLists = unwrap<ApiList>(listsRes.data);
+    const apiSegments = unwrap<ApiAudienceSegment>(segmentsRes.data);
+    const [listCounts, segmentCounts] = await Promise.all([
+      enrichListAudienceCounts(client, apiLists),
+      enrichSegmentAudienceCounts(client, apiSegments),
+    ]);
     audiences = [
-      ...unwrap<{ id: string; name: string; memberCount?: number | null; color?: string | null }>(
-        listsRes.data,
-      ).map(
-        (l): AudienceChoice => ({
-          id: l.id,
-          kind: 'list',
-          name: l.name,
-          desc: 'List',
-          count: l.memberCount ?? null,
-          color: l.color ?? null,
-        }),
-      ),
-      ...unwrap<{ id: string; name: string; description?: string | null }>(
-        segmentsRes.data,
-      ).map(
-        (s): AudienceChoice => ({
-          id: s.id,
-          kind: 'segment',
-          name: s.name,
-          desc: s.description || 'Segment',
-          count: null,
-        }),
-      ),
+      ...apiLists.map((l) => listToAudienceChoice(l, listCounts.get(l.id))),
+      ...apiSegments.map((s) => segmentToAudienceChoice(s, segmentCounts.get(s.id))),
     ];
-    templates = unwrap<{ id: string; name: string; channel?: string | null; category?: string | null }>(
-      templatesRes.data,
-    ).map((t): TemplateChoice => ({
+    templates = unwrap<{
+      id: string;
+      name: string;
+      channel?: string | null;
+      category?: string | null;
+      approvalStatus?: string | null;
+    }>(templatesRes.data).map((t): TemplateChoice => ({
       id: t.id,
       name: t.name,
       category: t.category ?? null,
       channel: (t.channel as TemplateChoice['channel']) ?? 'email',
+      approvalStatus: toApprovalStatus(t.approvalStatus),
     }));
+    if (sendersRes.ok) {
+      senders = (await sendersRes.json()) as ChannelSenders;
+    }
   } catch (err) {
     banner = { ok: false, text: err instanceof Error ? err.message : 'Service unreachable.' };
   }
@@ -85,7 +93,7 @@ if (session?.user?.id && session.activeTenantId) {
 
 <AppLayout title="Campaigns">
   {banner && <div class={`svc-banner ${banner.ok ? 'ok' : 'err'}`}>{banner.text}</div>}
-  <CampaignsBoard client:visible initial={initial} audiences={audiences} templates={templates} />
+  <CampaignsBoard client:visible initial={initial} audiences={audiences} templates={templates} senders={senders} />
 </AppLayout>
 
 <style>

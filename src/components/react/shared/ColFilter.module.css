@@ -1,0 +1,108 @@
+.wrap {
+  position: relative;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 11px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+.btn:hover {
+  background: var(--surface2);
+}
+.btnOn {
+  background: var(--accent-tint);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--accent);
+}
+.count {
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+.caret {
+  opacity: 0.55;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+.caretOpen {
+  transform: rotate(180deg);
+}
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  border: 0;
+  background: none;
+}
+.pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  min-width: 190px;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+}
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 9px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text2);
+}
+.opt:hover {
+  background: var(--surface2);
+}
+.clear {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 9px;
+  margin-top: 2px;
+  border-top: 1px solid var(--divider);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.box {
+  width: 17px;
+  height: 17px;
+  border-radius: 5px;
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: all 0.12s;
+  flex: none;
+}
+.boxOn {
+  background: var(--accent);
+  border-color: var(--accent);
+}

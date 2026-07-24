@@ -1,10 +1,634 @@
-.cwCrd {
-  transition:
-    border-color 0.12s,
-    transform 0.12s,
-    box-shadow 0.12s;
+/* Horizontal step index — read-only; navigation is via footer Back/Next only. */
+.stepNav {
+  padding: 14px 25px;
+  border-bottom: 1px solid var(--divider);
+  background: var(--surface2);
 }
-.cwCrd:hover {
-  border-color: color-mix(in srgb, #4f46e5 45%, var(--border2));
-  transform: translateY(-1px);
+
+.stepList {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stepItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+  cursor: default;
+  user-select: none;
+}
+
+.stepItem:not(:last-child) {
+  padding-right: 10px;
+}
+
+.stepConnector {
+  flex: 1;
+  min-width: 12px;
+  height: 1.5px;
+  margin-top: 12px;
+  background: var(--border2);
+}
+
+.stepItemDone .stepConnector {
+  background: #bbe6c8;
+}
+
+.stepBadge {
+  width: 25px;
+  height: 25px;
+  flex: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface);
+  color: var(--muted);
+  border: 1.5px solid var(--border2);
+}
+
+.stepItemActive .stepBadge {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.stepItemDone .stepBadge {
+  background: #e7f6ec;
+  color: #15803d;
+  border-color: #bbe6c8;
+}
+
+.stepText {
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.stepTitle {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stepItemActive .stepTitle,
+.stepItemDone .stepTitle {
+  color: var(--text);
+}
+
+.stepSub {
+  display: block;
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 1px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Step 1 — channel picker (single row, 4 equal columns). */
+.channelGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.channelBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  color: var(--text3);
+  border-radius: 10px;
+  padding: 10px 6px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.channelBtnOn[data-channel='email'] {
+  border-color: var(--ch-email);
+  background: var(--ch-email-tint);
+  color: var(--ch-email);
+  font-weight: 600;
+}
+
+.channelBtnOn[data-channel='sms'] {
+  border-color: var(--ch-sms);
+  background: var(--ch-sms-tint);
+  color: var(--ch-sms);
+  font-weight: 600;
+}
+
+.channelBtnOn[data-channel='whatsapp'] {
+  border-color: var(--ch-whatsapp);
+  background: var(--ch-whatsapp-tint);
+  color: var(--ch-whatsapp);
+  font-weight: 600;
+}
+
+.channelBtnOn[data-channel='voice'] {
+  border-color: var(--ch-voice);
+  background: var(--ch-voice-tint);
+  color: var(--ch-voice);
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .channelGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Step 2 — audience picker: Lists + Segments in 3-column card grids. */
+.audList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.audSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.audSectionHeading {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text3);
+}
+.audSectionEmpty {
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--muted);
+  border: 1px dashed var(--border2);
+  border-radius: 10px;
+}
+.audGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.audRow {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  min-width: 0;
+  padding: 7px 52px 7px 8px;
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+.audRow:hover {
+  border-color: var(--muted2);
+}
+.audRowOn {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border2));
+  background: var(--accent-tint);
+}
+.audBadge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 1px 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text3);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 999px;
+  pointer-events: none;
+}
+.audRowOn .audBadge {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--border2));
+}
+.audRowTop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.audBox {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  border-radius: 4px;
+  border: 1.5px solid var(--muted2);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+.audBoxOn {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.audTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.audSub {
+  padding-left: 21px;
+  font-size: 10.5px;
+  color: var(--muted);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+  .audGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .audGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Step 4 — schedule radio cards (single choice). */
+.radioCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 15px;
+  margin-bottom: 11px;
+  border: 1.5px solid var(--border2);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+.radioCardOn {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+.radioDot {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  border: 1.6px solid var(--muted2);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.radioDotOn {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.radioDotInner {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--surface);
+  opacity: 0;
+}
+.radioDotInnerOn {
+  opacity: 1;
+}
+.radioBody {
+  flex: 1;
+}
+.radioTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.radioSub {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+/* Step 4 — compact chrome so inline calendar + time grid fit without clipping. */
+.scheduleStep {
+  display: flex;
+  flex-direction: column;
+}
+
+.scheduleIntro {
+  margin: 0 0 6px;
+}
+
+.scheduleStep .radioCard {
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  gap: 10px;
+}
+
+.scheduleStep .radioTitle {
+  font-size: 13px;
+}
+
+.scheduleStep .radioSub {
+  font-size: 11px;
+}
+
+.scheduleGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 4px;
+  align-items: stretch;
+}
+
+.scheduleGrid > * {
+  min-width: 0;
+}
+
+.scheduleHint {
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #b45309;
+}
+
+@media (max-width: 520px) {
+  .scheduleGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Right preview column — constrain to body height, no scrollbars. */
+.previewCol {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.previewFit {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Step 3 — template picker (3-column grid, all channels). */
+.tplGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 640px) {
+  .tplGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .tplGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Step 3 — template picker cards with gallery-style mockups. */
+.tplCard {
+  display: flex;
+  flex-direction: column;
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  border-radius: 12;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+.tplCardOn {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+.tplPreview {
+  height: 100px;
+  background: var(--surface2);
+  padding: 10px 12px 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+.tplMeta {
+  padding: 10px 12px 12px;
+}
+.tplName {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.tplSub {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.previewEmailLive {
+  width: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+}
+
+.previewEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px 16px;
+  color: var(--text3);
+  font-size: 13px;
+  text-align: center;
+}
+
+.previewCol .previewEmailLive :global(.pvViewport) {
+  max-height: min(420px, 100%);
+  border-radius: 10px;
+}
+
+.previewCol .previewEmailLive :global(.pvMsg) {
+  min-height: 120px;
+  font-size: 12px;
+}
+
+.previewPhoneShell {
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 1;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.previewPhoneScreen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.previewChannelBody {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.previewBubble {
+  overflow: hidden;
+  word-break: break-word;
+}
+
+/* Voice call controls — prevent flex squeeze from ovaling fixed-size circles. */
+.voiceCallAction {
+  flex-shrink: 0;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* Step 5 — review summary badges (channel + audience). */
+.reviewValue {
+  font-size: 13px;
+  font-weight: 500;
+  text-align: right;
+}
+
+.reviewChannelBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.reviewChannelBadge[data-channel='email'] {
+  border-color: var(--ch-email);
+  background: var(--ch-email-tint);
+  color: var(--ch-email);
+}
+
+.reviewChannelBadge[data-channel='sms'] {
+  border-color: var(--ch-sms);
+  background: var(--ch-sms-tint);
+  color: var(--ch-sms);
+}
+
+.reviewChannelBadge[data-channel='whatsapp'] {
+  border-color: var(--ch-whatsapp);
+  background: var(--ch-whatsapp-tint);
+  color: var(--ch-whatsapp);
+}
+
+.reviewChannelBadge[data-channel='voice'] {
+  border-color: var(--ch-voice);
+  background: var(--ch-voice-tint);
+  color: var(--ch-voice);
+}
+
+.reviewAudienceBadges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  max-width: min(100%, 280px);
+}
+
+.reviewListBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.reviewListDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.reviewSegmentBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--accent-tint);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border2));
 }

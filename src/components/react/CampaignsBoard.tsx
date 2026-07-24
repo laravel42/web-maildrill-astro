@@ -1,18 +1,32 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from 'react';
 import { campaigns as mockCampaigns } from '@/lib/app/mock-data';
 import { api, ApiError } from '@/lib/app/api';
-import { toCampaign, type ApiCampaign } from '@/lib/app/campaign-map';
+import {
+  toCampaign,
+  audienceIdsFromApiCampaign,
+  campaignAudiencePayload,
+  campaignSendPayload,
+  campaignDeliveryToast,
+  waitForCampaignDelivery,
+  type ApiCampaign,
+  type CampaignSendResult,
+} from '@/lib/app/campaign-map';
+import { RATE_BUCKETS, rateBucket } from '@/lib/app/templates-data';
+import type { ChannelSenders } from '@/lib/app/channel-senders';
 import type { AudienceChoice, CampaignDraft, TemplateChoice } from './CampaignWizard.types';
 import type { Campaign, CampaignStatus, ChannelType } from '@/types/app';
 import Icon from './Icon';
+import ColFilter from './shared/ColFilter';
 import ConfirmDialog from './shared/ConfirmDialog';
 import CampaignWizard from './CampaignWizard';
-import EmailBuilder from './EmailBuilder';
-// Lazy: see AppTemplates.tsx for why — email-builder-standalone is a large
-// bundle that should only load once a user actually opens the visual editor,
-// not on every visit to the campaigns board.
-const VisualEmailBuilder = lazy(() => import('./VisualEmailBuilder'));
-import LazyBoundary from './shared/LazyBoundary';
 import TemplatePreview, { MessagePreview } from './shared/TemplatePreview';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { ago } from './shared/time';
@@ -53,10 +67,12 @@ export default function CampaignsBoard({
   initial,
   audiences,
   templates,
+  senders,
 }: {
   initial?: Campaign[];
   audiences?: AudienceChoice[];
   templates?: TemplateChoice[];
+  senders?: ChannelSenders;
 } = {}) {
   // Live workspace campaigns from SSR when provided; else the fixture preview.
   const live = initial !== undefined;
@@ -64,7 +80,9 @@ export default function CampaignsBoard({
   const [tab, setTab] = useState<CampaignStatus | 'all'>('all');
   const [query, setQuery] = useState('');
   const [channelFilter, setChannelFilter] = useState<Set<ChannelType>>(new Set());
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [opensSel, setOpensSel] = useState<Set<string>>(new Set());
+  const [clicksSel, setClicksSel] = useState<Set<string>>(new Set());
+  const [openFilter, setOpenFilter] = useState<'channel' | 'opens' | 'clicks' | null>(null);
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updatedAt', dir: -1 });
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -80,16 +98,15 @@ export default function CampaignsBoard({
         id: string;
         channel: ChannelType;
         name: string;
-        audienceId: string | null;
+        subject: string;
+        audienceIds: string[];
         templateId: string | null;
         message: string;
         schedule: 'now' | 'later';
+        scheduledAt: string | null;
       }
     | null
   >(null);
-  const [builder, setBuilder] = useState<{ channel: ChannelType; name: string | null } | null>(
-    null,
-  );
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: campaigns.length };
@@ -97,10 +114,24 @@ export default function CampaignsBoard({
     return c;
   }, [campaigns]);
 
+  const resetPage = () => setPage(1);
+
+  const toggleSet = (setter: Dispatch<SetStateAction<Set<string>>>) => (v: string) => {
+    setter((prev) => {
+      const next = new Set(prev);
+      if (next.has(v)) next.delete(v);
+      else next.add(v);
+      return next;
+    });
+    resetPage();
+  };
+
   const rows = useMemo(() => {
     let list = campaigns.filter((c) => {
       if (tab !== 'all' && c.status !== tab) return false;
       if (channelFilter.size > 0 && !channelFilter.has(c.channel)) return false;
+      if (opensSel.size && !opensSel.has(rateBucket((c.openRate ?? 0) * 100))) return false;
+      if (clicksSel.size && !clicksSel.has(rateBucket((c.clickRate ?? 0) * 100))) return false;
       if (query) {
         const q = query.toLowerCase();
         return c.name.toLowerCase().includes(q) || c.audience.toLowerCase().includes(q);
@@ -120,7 +151,7 @@ export default function CampaignsBoard({
       return 0;
     });
     return list;
-  }, [tab, query, channelFilter, sort, campaigns]);
+  }, [tab, query, channelFilter, opensSel, clicksSel, sort, campaigns]);
 
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -131,7 +162,7 @@ export default function CampaignsBoard({
   // Snap back to the first page whenever the filtered set changes underneath.
   useEffect(() => {
     setPage(1);
-  }, [tab, query, channelFilter, sort]);
+  }, [tab, query, channelFilter, opensSel, clicksSel, sort]);
 
   const toggleSort = (key: SortKey) =>
     setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: 1 }));
@@ -153,9 +184,15 @@ export default function CampaignsBoard({
     setSelected(new Set());
   };
 
-  /* Persist the wizard's campaign, then dispatch it when the user chose "Send
-     now". The draft is saved first either way, so a send that fails leaves a
-     recoverable campaign behind rather than losing the user's work. */
+  const reportSendOutcome = async (id: string, name: string) => {
+    const outcome = await waitForCampaignDelivery(id);
+    setCampaigns((prev) => prev.map((c) => (c.id === id ? toCampaign(outcome) : c)));
+    show(campaignDeliveryToast(name, outcome));
+  };
+
+  /* "Send now" uses POST /campaigns/send in one shot so a campaign never sits
+     in draft limbo when the follow-up dispatch step fails. Scheduled campaigns
+     are saved as drafts first. */
   const createFromWizard = async (draft: CampaignDraft) => {
     const name = draft.name.trim() || 'Untitled campaign';
     if (!live) {
@@ -163,28 +200,38 @@ export default function CampaignsBoard({
       return;
     }
 
-    let created: ApiCampaign;
+    if (draft.schedule === 'now') {
+      try {
+        const res = await api.post<CampaignSendResult>(
+          'campaigns/send',
+          campaignSendPayload(draft, name),
+        );
+        const created = await api.get<ApiCampaign>(`campaigns/${res.campaignId}`);
+        setCampaigns((prev) => [toCampaign(created), ...prev]);
+        void reportSendOutcome(res.campaignId, name);
+      } catch (e) {
+        show(e instanceof ApiError ? e.message : `Could not send “${name}”`);
+      }
+      return;
+    }
+
     try {
-      created = await api.post<ApiCampaign>('campaigns', {
+      const audience = campaignAudiencePayload(draft);
+      const created = await api.post<ApiCampaign>('campaigns', {
         name,
         channel: draft.channel,
-        status: draft.schedule === 'later' ? 'scheduled' : 'draft',
-        listId: draft.listId ?? null,
-        segmentId: draft.segmentId ?? null,
+        status: 'scheduled',
+        listId: audience.listId,
+        segmentId: audience.segmentId,
         templateId: draft.templateId ?? null,
-        content: draft.content ?? {},
+        content: audience.content,
+        scheduledAt: draft.scheduledAt ?? null,
       });
+      setCampaigns((prev) => [toCampaign(created), ...prev]);
+      show(`“${created.name}” scheduled`);
     } catch (e) {
       show(e instanceof ApiError ? e.message : 'Could not create campaign');
-      return;
     }
-    setCampaigns((prev) => [toCampaign(created), ...prev]);
-
-    if (draft.schedule !== 'now') {
-      show(`“${created.name}” created`);
-      return;
-    }
-    await sendCampaign(created.id, created.name);
   };
 
   /* Open the wizard on an existing campaign. The board row carries only display
@@ -197,47 +244,63 @@ export default function CampaignsBoard({
         id: c.id,
         channel: c.channel,
         name: c.name,
-        audienceId: null,
+        subject: '',
+        audienceIds: [],
         templateId: null,
         message: '',
         schedule: c.scheduledAt ? 'later' : 'now',
+        scheduledAt: c.scheduledAt,
       });
       return;
     }
     try {
       const full = await api.get<ApiCampaign>(`campaigns/${c.id}`);
-      const content = (full.content ?? {}) as { text?: string };
+      const content = (full.content ?? {}) as { text?: string; subject?: string };
       setWizard({
         mode: 'edit',
         id: c.id,
         channel: (full.channel as ChannelType) ?? c.channel,
         name: full.name,
-        audienceId: full.listId ?? full.segmentId ?? null,
+        subject: typeof content.subject === 'string' ? content.subject : '',
+        audienceIds: audienceIdsFromApiCampaign(full),
         templateId: full.templateId ?? null,
         message: typeof content.text === 'string' ? content.text : '',
         schedule: full.scheduledAt ? 'later' : 'now',
+        scheduledAt: full.scheduledAt ?? null,
       });
     } catch (e) {
       show(e instanceof ApiError ? e.message : `Could not open “${c.name}”`);
     }
   };
 
-  /* Persist edits to an existing campaign. */
+  /* Persist edits to an existing campaign; dispatch when the user chose send now. */
   const saveEdit = async (id: string, draft: CampaignDraft) => {
     if (!live) {
       show(`“${draft.name}” updated`);
       return;
     }
+    const prior = campaigns.find((c) => c.id === id);
+    const sendable =
+      prior != null && (prior.status === 'draft' || prior.status === 'scheduled' || prior.status === 'paused');
+
     try {
+      const audience = campaignAudiencePayload(draft);
       const updated = await api.patch<ApiCampaign>(`campaigns/${id}`, {
         name: draft.name.trim() || 'Untitled campaign',
         channel: draft.channel,
-        listId: draft.listId ?? null,
-        segmentId: draft.segmentId ?? null,
+        listId: audience.listId,
+        segmentId: audience.segmentId,
         templateId: draft.templateId ?? null,
-        content: draft.content ?? {},
+        content: audience.content,
+        scheduledAt: draft.scheduledAt ?? null,
+        status: draft.schedule === 'later' ? 'scheduled' : undefined,
       });
       setCampaigns((prev) => prev.map((c) => (c.id === id ? toCampaign(updated) : c)));
+
+      if (draft.schedule === 'now' && sendable) {
+        await sendCampaign(id, updated.name);
+        return;
+      }
       show(`“${updated.name}” updated`);
     } catch (e) {
       show(e instanceof ApiError ? e.message : 'Could not save changes');
@@ -282,21 +345,8 @@ export default function CampaignsBoard({
      count it returns — not the wizard's estimate — is what gets reported. */
   const sendCampaign = async (id: string, name: string) => {
     try {
-      const res = await api.post<{ queued: number; audience: number; truncated: boolean }>(
-        `campaigns/${id}/send`,
-        { sendNow: true },
-      );
-      // Reflect the send without a refetch; counters come from the server.
-      setCampaigns((prev) =>
-        prev.map((c) =>
-          c.id === id ? { ...c, status: 'sent', recipients: res.queued } : c,
-        ),
-      );
-      show(
-        res.queued === 0
-          ? `“${name}” reached nobody — its audience is empty`
-          : `“${name}” sending to ${res.queued.toLocaleString()} recipient${res.queued === 1 ? '' : 's'}`,
-      );
+      await api.post<CampaignSendResult>(`campaigns/${id}/send`, { sendNow: true });
+      void reportSendOutcome(id, name);
     } catch (e) {
       show(e instanceof ApiError ? e.message : `Could not send “${name}”`);
     }
@@ -420,8 +470,8 @@ export default function CampaignsBoard({
             <button
               type="button"
               className={`${styles.filter}${channelFilter.size ? ' is-on' : ''}`}
-              aria-expanded={filterOpen}
-              onClick={() => setFilterOpen((v) => !v)}
+              aria-expanded={openFilter === 'channel'}
+              onClick={() => setOpenFilter((o) => (o === 'channel' ? null : 'channel'))}
             >
               <Icon name="filter" size={14} />
               Channel
@@ -430,13 +480,13 @@ export default function CampaignsBoard({
               )}
               <Icon name="chevron-down" size={12} className={styles.filtercaret} />
             </button>
-            {filterOpen && (
+            {openFilter === 'channel' && (
               <>
                 <button
                   type="button"
                   className={styles.filterscrim}
                   aria-label="Close"
-                  onClick={() => setFilterOpen(false)}
+                  onClick={() => setOpenFilter(null)}
                 />
                 <div className={styles.filterpop} style={{ animation: 'pop .14s ease' }}>
                   {CHANNEL_ORDER.map((ch) => (
@@ -465,6 +515,30 @@ export default function CampaignsBoard({
               </>
             )}
           </div>
+          <ColFilter
+            label="Opens"
+            options={RATE_BUCKETS}
+            selected={opensSel}
+            onToggle={toggleSet(setOpensSel)}
+            onClear={() => {
+              setOpensSel(new Set());
+              resetPage();
+            }}
+            open={openFilter === 'opens'}
+            onOpenToggle={() => setOpenFilter((o) => (o === 'opens' ? null : 'opens'))}
+          />
+          <ColFilter
+            label="Clicks"
+            options={RATE_BUCKETS}
+            selected={clicksSel}
+            onToggle={toggleSet(setClicksSel)}
+            onClear={() => {
+              setClicksSel(new Set());
+              resetPage();
+            }}
+            open={openFilter === 'clicks'}
+            onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
+          />
         </div>
 
         {/* bulk bar */}
@@ -666,54 +740,21 @@ export default function CampaignsBoard({
           mode={wizard.mode}
           initialChannel={wizard.mode === 'edit' ? wizard.channel : 'email'}
           initialName={wizard.mode === 'edit' ? wizard.name : ''}
-          initialAudienceId={wizard.mode === 'edit' ? wizard.audienceId : null}
+          initialSubject={wizard.mode === 'edit' ? wizard.subject : ''}
+          initialAudienceIds={wizard.mode === 'edit' ? wizard.audienceIds : []}
           initialTemplateId={wizard.mode === 'edit' ? wizard.templateId : null}
           initialMessage={wizard.mode === 'edit' ? wizard.message : ''}
           initialSchedule={wizard.mode === 'edit' ? wizard.schedule : 'now'}
+          initialScheduledAt={wizard.mode === 'edit' ? wizard.scheduledAt : null}
           audiences={audiences}
           templates={templates}
+          senders={senders}
           onClose={() => setWizard(null)}
           onDone={(_msg, draft) => {
             const w = wizard;
             setWizard(null);
             if (w.mode === 'create') void createFromWizard(draft);
             else void saveEdit(w.id, draft);
-          }}
-          onOpenBuilder={(channel, name) => {
-            setWizard(null);
-            setBuilder({ channel, name });
-          }}
-        />
-      )}
-
-      {/* Email campaigns compose in the full EmailBuilder.js visual editor;
-          SMS/WhatsApp/Voice keep the lightweight composer. Suspense is
-          required by React.lazy — see AppTemplates.tsx for details. */}
-      {builder && builder.channel === 'email' && (
-        <LazyBoundary label="the email editor" onClose={() => setBuilder(null)}>
-          <Suspense fallback={null}>
-            <VisualEmailBuilder
-              name={builder.name}
-              kind="campaign"
-              onClose={() => setBuilder(null)}
-              onSave={() => {
-                // Draft kept locally; the editor shows the saved confirmation badge
-                // and stays open (no redirect back to the board).
-              }}
-            />
-          </Suspense>
-        </LazyBoundary>
-      )}
-
-      {builder && builder.channel !== 'email' && (
-        <EmailBuilder
-          channel={builder.channel}
-          name={builder.name}
-          kind="campaign"
-          onClose={() => setBuilder(null)}
-          onSave={() => {
-            // Draft kept locally; the editor shows the saved confirmation badge
-            // and stays open (no redirect back to the board).
           }}
         />
       )}

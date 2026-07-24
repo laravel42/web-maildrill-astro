@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
 import type { IconName } from '@/lib/icons';
@@ -20,8 +20,10 @@ import {
 } from '@/lib/app/subscribers-data';
 import { api, ApiError } from '@/lib/app/api';
 import { toRichSubscriber, type ApiSubscriber } from '@/lib/app/subscriber-map';
+import { RATE_BUCKETS, parseRatePercent, rateBucket } from '@/lib/app/templates-data';
 import SubscriberEditorModal from './SubscriberEditorModal';
 import TagFilter from './shared/TagFilter';
+import ColFilter from './shared/ColFilter';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { ago, agoNow } from './shared/time';
 import { useToast } from './shared/useToast';
@@ -72,6 +74,9 @@ export default function AppSubscribers({
   const [channelOpen, setChannelOpen] = useState(false);
   const [listFilter, setListFilter] = useState<Set<string>>(new Set());
   const [listOpen, setListOpen] = useState(false);
+  const [opensSel, setOpensSel] = useState<Set<string>>(new Set());
+  const [clicksSel, setClicksSel] = useState<Set<string>>(new Set());
+  const [rateFilterOpen, setRateFilterOpen] = useState<'opens' | 'clicks' | null>(null);
   const [segSel, setSegSel] = useState<Set<string>>(new Set());
   const [tagSel, setTagSel] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'name', dir: 1 });
@@ -200,6 +205,8 @@ export default function AppSubscribers({
       }
       if (listFilter.size > 0 && !s.listIds.some((id) => listFilter.has(id))) return false;
       if (tagSel.size > 0 && !effTags(s).some((t) => tagSel.has(t))) return false;
+      if (opensSel.size && !opensSel.has(rateBucket(parseRatePercent(s.opens)))) return false;
+      if (clicksSel.size && !clicksSel.has(rateBucket(parseRatePercent(s.clicks)))) return false;
       return true;
     });
     const { key, dir } = sort;
@@ -227,7 +234,7 @@ export default function AppSubscribers({
       return 0;
     });
     return list;
-  }, [segFiltered, tab, query, channelFilter, listFilter, tagSel, sort, tagStore]);
+  }, [segFiltered, tab, query, channelFilter, listFilter, tagSel, opensSel, clicksSel, sort, tagStore]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -275,6 +282,26 @@ export default function AppSubscribers({
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      return next;
+    });
+    resetPageAndSel();
+  };
+
+  const toggleSet = (setter: Dispatch<SetStateAction<Set<string>>>) => (v: string) => {
+    setter((prev) => {
+      const next = new Set(prev);
+      if (next.has(v)) next.delete(v);
+      else next.add(v);
+      return next;
+    });
+    resetPageAndSel();
+  };
+
+  const toggleRateBucket = (kind: 'opens' | 'clicks', bucket: string) => {
+    const setter = kind === 'opens' ? setOpensSel : setClicksSel;
+    setter((prev) => {
+      const next = new Set(prev);
+      next.delete(bucket);
       return next;
     });
     resetPageAndSel();
@@ -340,6 +367,8 @@ export default function AppSubscribers({
     setTagSel(new Set());
     setChannelFilter(new Set());
     setListFilter(new Set());
+    setOpensSel(new Set());
+    setClicksSel(new Set());
     setQuery('');
     resetPageAndSel();
   };
@@ -349,7 +378,9 @@ export default function AppSubscribers({
     tab !== 'all' ||
     tagSel.size > 0 ||
     channelFilter.size > 0 ||
-    listFilter.size > 0;
+    listFilter.size > 0 ||
+    opensSel.size > 0 ||
+    clicksSel.size > 0;
 
   /* Esc closes drawer/modal. */
   useEscapeClose(() => {
@@ -730,6 +761,31 @@ export default function AppSubscribers({
             }}
           />
 
+          <ColFilter
+            label="Opens"
+            options={RATE_BUCKETS}
+            selected={opensSel}
+            onToggle={toggleSet(setOpensSel)}
+            onClear={() => {
+              setOpensSel(new Set());
+              resetPageAndSel();
+            }}
+            open={rateFilterOpen === 'opens'}
+            onOpenToggle={() => setRateFilterOpen((o) => (o === 'opens' ? null : 'opens'))}
+          />
+          <ColFilter
+            label="Clicks"
+            options={RATE_BUCKETS}
+            selected={clicksSel}
+            onToggle={toggleSet(setClicksSel)}
+            onClear={() => {
+              setClicksSel(new Set());
+              resetPageAndSel();
+            }}
+            open={rateFilterOpen === 'clicks'}
+            onOpenToggle={() => setRateFilterOpen((o) => (o === 'clicks' ? null : 'clicks'))}
+          />
+
           <div className={styles.spacer} />
 
           <div className="aseg sb__viewseg" role="group" aria-label="View mode">
@@ -828,6 +884,32 @@ export default function AppSubscribers({
                 onClick={() => toggleTag(t)}
               >
                 Tag: {t}
+                <span className={styles.chipx}>
+                  <Icon name="x" size={14} stroke={3} />
+                </span>
+              </button>
+            ))}
+            {[...opensSel].map((b) => (
+              <button
+                key={`opens-${b}`}
+                type="button"
+                className={styles.chip}
+                onClick={() => toggleRateBucket('opens', b)}
+              >
+                Opens: {b}
+                <span className={styles.chipx}>
+                  <Icon name="x" size={14} stroke={3} />
+                </span>
+              </button>
+            ))}
+            {[...clicksSel].map((b) => (
+              <button
+                key={`clicks-${b}`}
+                type="button"
+                className={styles.chip}
+                onClick={() => toggleRateBucket('clicks', b)}
+              >
+                Clicks: {b}
                 <span className={styles.chipx}>
                   <Icon name="x" size={14} stroke={3} />
                 </span>

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
-import type { ChannelType } from '@/types/app';
+import type { ChannelType, TemplateApprovalStatus } from '@/types/app';
+
 import {
   galleryTemplates,
   CATEGORY_COLOR,
@@ -11,6 +12,7 @@ import {
 } from '@/lib/app/templates-data';
 import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
+import ColFilter from './shared/ColFilter';
 import EmailBuilder from './EmailBuilder';
 // Lazy: email-builder-standalone (MUI, tiptap, DnD, image tools…) is a large
 // bundle. A static import here pulled it into this route's module graph even
@@ -20,6 +22,7 @@ import EmailBuilder from './EmailBuilder';
 const VisualEmailBuilder = lazy(() => import('./VisualEmailBuilder'));
 import LazyBoundary from './shared/LazyBoundary';
 import TemplatePreview from './shared/TemplatePreview';
+import GalleryPreview, { FauxEmail } from './shared/GalleryPreview';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { useToast } from './shared/useToast';
 import { CHANNEL_TABS, VIEWS, ASC_FIRST, PAGE_SIZE } from './AppTemplates.logic';
@@ -33,6 +36,45 @@ import styles from './AppTemplates.module.css';
 
 /** Channel of a template, as a tinted pill. `compact` drops the label to an
  *  icon so it fits the compact card's single row. */
+const APPROVAL_LABEL: Record<TemplateApprovalStatus, string> = {
+  draft: 'Needs approval',
+  pending: 'In review',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  paused: 'Paused',
+  disabled: 'Disabled',
+};
+
+/** One-line explanation of each approval state, shown in the drawer + as a tooltip. */
+const APPROVAL_HINT: Record<TemplateApprovalStatus, string> = {
+  draft: 'Not submitted yet — submit it for Meta review.',
+  pending: 'Submitted to Meta. Review usually takes a few minutes, up to 24h.',
+  approved: 'Approved by Meta — ready to use in WhatsApp campaigns.',
+  rejected: 'Meta rejected this template. Edit it and resubmit.',
+  paused: 'Paused by Meta over quality — sending is temporarily blocked.',
+  disabled: 'Disabled by Meta — this template can no longer be sent.',
+};
+
+/** Small approval-status pill for WhatsApp templates; renders nothing otherwise. */
+function ApprovalBadge({ t, compact = false }: { t: GalleryTemplate; compact?: boolean }) {
+  if (t.channel !== 'whatsapp') return null;
+  const status = t.approvalStatus ?? 'draft';
+  return (
+    <span
+      className={`astatus astatus--${status}`}
+      style={compact ? { fontSize: 10, padding: '1px 7px' } : undefined}
+      title={APPROVAL_HINT[status]}
+    >
+      {APPROVAL_LABEL[status]}
+    </span>
+  );
+}
+
+/** Map a gallery category to a WhatsApp/Meta template category. */
+function waCategory(category: string): 'MARKETING' | 'UTILITY' | 'AUTHENTICATION' {
+  return category === 'Transactional' ? 'UTILITY' : 'MARKETING';
+}
+
 function ChannelBadge({ channel, compact = false }: { channel: ChannelType; compact?: boolean }) {
   const m = CHANNEL[channel];
   return (
@@ -95,167 +137,6 @@ function StarBtn({
     >
       <Icon name="star" size={size} />
     </button>
-  );
-}
-
-/** Recreated faux-email preview — pure CSS blocks, never a real image. */
-function FauxEmail({ t, variant }: { t: GalleryTemplate; variant: 'card' | 'drawer' }) {
-  const lg = variant === 'drawer';
-  return (
-    <div className={`${styles.mail}${lg ? ` ${styles.mailLg}` : ''}`} aria-hidden="true">
-      <div className={styles.mailBand} style={{ background: t.thumb }}>
-        <div className={styles.mailKicker} style={{ color: t.fg }}>
-          {t.kicker}
-        </div>
-        <div className={styles.mailTitle} style={{ color: t.fg }}>
-          {t.title}
-        </div>
-      </div>
-      <div className={styles.mailBody}>
-        <span className={styles.mailBar} style={{ width: '80%', background: '#e7e5e4' }} />
-        <span className={styles.mailBar} style={{ width: '95%', background: '#efedec' }} />
-        <span className={styles.mailBar} style={{ width: '60%', background: '#efedec' }} />
-        <span className={styles.mailCta} style={{ background: t.accent }}>
-          {t.cta}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/* Fixed waveform bar heights (deterministic — no Math.random, so SSR and the
-   client hydrate to the same markup). */
-const VOICE_WAVE = [38, 62, 48, 88, 56, 30, 72, 46, 82, 40, 64, 34, 70, 44];
-
-/** Chat-bubble preview for the text channels (SMS, WhatsApp). */
-function FauxChat({ t }: { t: GalleryTemplate }) {
-  const m = CHANNEL[t.channel];
-  const wa = t.channel === 'whatsapp';
-  return (
-    <div className={`${styles.chat}${wa ? ` ${styles.chatWa}` : ''}`} aria-hidden="true">
-      <div className={styles.chatHead}>
-        <span className={styles.chatAvatar} style={{ background: m.color }}>
-          <Icon name={m.icon} size={11} />
-        </span>
-        <span className={styles.chatName}>{t.kicker}</span>
-      </div>
-      <div className={styles.chatBubbleOut} style={{ background: m.color }}>
-        {t.title}
-      </div>
-      {/* awaiting reply — typing indicator */}
-      <div className={styles.chatBubbleIn} aria-label="Awaiting reply">
-        <span className={styles.chatDot} />
-        <span className={styles.chatDot} />
-        <span className={styles.chatDot} />
-      </div>
-    </div>
-  );
-}
-
-/** Voice-note card preview for the Voice channel. */
-function FauxVoice({ t }: { t: GalleryTemplate }) {
-  const m = CHANNEL[t.channel];
-  return (
-    <div className={styles.voice} aria-hidden="true">
-      <span className={styles.voicePlay} style={{ background: m.color }}>
-        <Icon name={m.icon} size={13} />
-      </span>
-      <div className={styles.voiceMain}>
-        <span className={styles.voiceName}>{t.title}</span>
-        <div className={styles.voiceWave}>
-          {VOICE_WAVE.map((h, i) => (
-            <span key={i} className={styles.voiceBar} style={{ height: `${h}%`, background: m.color }} />
-          ))}
-        </div>
-      </div>
-      <span className={`${styles.voiceTime} tnum`}>0:14</span>
-    </div>
-  );
-}
-
-/** Gallery thumbnail, chosen by channel: an email mock, a chat, or a voice note. */
-function GalleryPreview({ t }: { t: GalleryTemplate }) {
-  if (t.channel === 'email') return <FauxEmail t={t} variant="card" />;
-  if (t.channel === 'voice') return <FauxVoice t={t} />;
-  return <FauxChat t={t} />;
-}
-
-function ColFilter({
-  label,
-  options,
-  selected,
-  onToggle,
-  onClear,
-  open,
-  onOpenToggle,
-}: {
-  label: string;
-  options: readonly string[];
-  selected: Set<string>;
-  onToggle: (v: string) => void;
-  onClear: () => void;
-  open: boolean;
-  onOpenToggle: () => void;
-}) {
-  const count = selected.size;
-  return (
-    <div className={styles.coldrop}>
-      <button
-        type="button"
-        className={`${styles.colbtn}${count ? ' is-on' : ''}`}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        onClick={onOpenToggle}
-      >
-        {label}
-        {count > 0 && <span className={`${styles.colcount} tnum`}>{count}</span>}
-        <Icon
-          name="chevron-down"
-          size={12}
-          className={`${styles.colcaret}${open ? ` ${styles.caretOpen}` : ''}`}
-        />
-      </button>
-      {open && (
-        <>
-          <button
-            type="button"
-            className={styles.colscrim}
-            aria-label="Close filter"
-            onClick={onOpenToggle}
-          />
-          <div
-            className={styles.colpop}
-            role="menu"
-            aria-label={label}
-            style={{ animation: 'pop .14s ease' }}
-          >
-            {options.map((o) => {
-              const on = selected.has(o);
-              return (
-                <button
-                  key={o}
-                  type="button"
-                  role="menuitemcheckbox"
-                  aria-checked={on}
-                  className={styles.colopt}
-                  onClick={() => onToggle(o)}
-                >
-                  <span className={`${styles.box} ${styles.boxSm}${on ? ' is-on' : ''}`}>
-                    {on && <Icon name="check" size={15} stroke={3.5} />}
-                  </span>
-                  {o}
-                </button>
-              );
-            })}
-            {count > 0 && (
-              <button type="button" className={styles.colclear} onClick={onClear}>
-                Clear
-              </button>
-            )}
-          </div>
-        </>
-      )}
-    </div>
   );
 }
 
@@ -433,7 +314,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
         return api.post<ApiTemplate>('templates', {
           name: `${full.name} (copy)`,
           channel: full.channel,
-          subject: full.subject ?? null,
           preheader: full.preheader ?? null,
           html: full.html ?? null,
           text: full.text ?? null,
@@ -470,6 +350,30 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
       show(`Favorited ${ids.length}`);
     }
     setSelected(new Set());
+  };
+
+  /* Submit a WhatsApp template to Meta (via Infobip) for review. */
+  const submitTemplate = async (id: string) => {
+    if (!live) return;
+    try {
+      const updated = await api.post<ApiTemplate>(`templates/${id}/submit`, {});
+      setTemplates((prev) => prev.map((t) => (t.id === id ? toGalleryTemplate(updated) : t)));
+      show('Submitted for approval');
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : 'Could not submit for approval');
+    }
+  };
+
+  /* Manual fallback when a status webhook was missed — pulls the live status. */
+  const refreshApproval = async (id: string) => {
+    if (!live) return;
+    try {
+      const updated = await api.post<ApiTemplate>(`templates/${id}/refresh-status`, {});
+      setTemplates((prev) => prev.map((t) => (t.id === id ? toGalleryTemplate(updated) : t)));
+      show('Approval status refreshed');
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : 'Could not refresh status');
+    }
   };
 
   const openTpl = openId ? (templates.find((t) => t.id === openId) ?? null) : null;
@@ -756,7 +660,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                       <Icon name={m.icon} size={11} />
                       {m.label}
                     </span>
-                    <GalleryPreview t={t} />
+                    <GalleryPreview channel={t.channel} t={t} />
                     <div className={styles.ov}>
                       <button
                         type="button"
@@ -785,6 +689,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                       <div className={styles.gname}>{t.name}</div>
                       <div className={styles.gsub}>
                         <span className={styles.catpill}>{t.category}</span>
+                        <ApprovalBadge t={t} />
                         <span className={styles.updated}>Updated {t.updated}</span>
                       </div>
                       <div className={styles.metrics}>
@@ -854,6 +759,11 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                         />
                       </span>
                     </div>
+                    {t.channel === 'whatsapp' && (
+                      <div style={{ marginTop: 4 }}>
+                        <ApprovalBadge t={t} compact />
+                      </div>
+                    )}
                     <div className={`${styles.cmetrics} tnum`}>
                       {t.avgOpen}% open · {t.avgClick}% click
                     </div>
@@ -962,8 +872,9 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                   <div>
                     <ChannelBadge channel={t.channel} />
                   </div>
-                  <div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
                     <span className={styles.catpill}>{t.category}</span>
+                    <ApprovalBadge t={t} compact />
                   </div>
                   <div className={styles.lmuted}>{t.updated}</div>
                   <div className={`${styles.lright} tnum ${styles.lmuted3}`}>{t.avgOpen}%</div>
@@ -1031,6 +942,8 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           live={live}
           fav={isFav(openTpl.id)}
           onFav={() => toggleFav(openTpl.id, openTpl.name)}
+          onSubmit={() => submitTemplate(openTpl.id)}
+          onRefresh={() => refreshApproval(openTpl.id)}
           onClose={() => setOpenId(null)}
           onUse={() => {
             if (openTpl) void openForEdit(openTpl);
@@ -1100,11 +1013,20 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           onSave={async ({ channel, name, message, category }) => {
             const ed = builder;
             if (!ed || !live) return;
+            // WhatsApp templates persist their Meta structure so "Submit for
+            // approval" has a body/category/language to register.
+            const isWa = channel === 'whatsapp';
             const body = {
               name: name && name !== 'Untitled' ? name : 'Untitled template',
               channel,
               text: message || null,
               category,
+              ...(isWa
+                ? {
+                    language: 'en',
+                    components: { category: waCategory(category), body: { text: message } },
+                  }
+                : {}),
             };
             if (ed.id) {
               const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
@@ -1156,6 +1078,8 @@ function TemplateDrawer({
   live,
   fav,
   onFav,
+  onSubmit,
+  onRefresh,
   onClose,
   onUse,
   onClone,
@@ -1164,16 +1088,30 @@ function TemplateDrawer({
   live: boolean;
   fav: boolean;
   onFav: () => void;
+  onSubmit: () => void | Promise<void>;
+  onRefresh: () => void | Promise<void>;
   onClose: () => void;
   onUse: () => void;
   onClone: () => void;
 }) {
+  const [busy, setBusy] = useState(false);
   const catColor = CATEGORY_COLOR[t.category as TplCategory] ?? 'var(--accent)';
+  // WhatsApp templates carry an approval status; other channels don't.
+  const approval: TemplateApprovalStatus | null =
+    t.channel === 'whatsapp' ? (t.approvalStatus ?? 'draft') : null;
   const details: [string, string][] = [
     ['Category', t.category],
     ['Channel', CHANNEL[t.channel].label],
     ['Last edited', t.updated],
   ];
+  const runBusy = (fn: () => void | Promise<void>) => async () => {
+    setBusy(true);
+    try {
+      await fn();
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="adrawer-overlay" onClick={onClose}>
@@ -1212,6 +1150,9 @@ function TemplateDrawer({
             >
               {t.category}
             </span>
+            {approval && (
+              <span className={`astatus astatus--${approval}`}>{APPROVAL_LABEL[approval]}</span>
+            )}
           </div>
           <p className={styles.dUpdated}>Updated {t.updated}</p>
 
@@ -1229,6 +1170,78 @@ function TemplateDrawer({
               </div>
             </div>
           </div>
+
+          {approval && (
+            <div
+              style={{
+                border: '1px solid var(--border)',
+                borderRadius: 12,
+                padding: '12px 14px',
+                marginBottom: 16,
+                background: 'var(--surface2)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                }}
+              >
+                <p className={`adrawer__eyebrow ${styles.dEyebrow}`} style={{ margin: 0 }}>
+                  Approval status
+                </p>
+                <span className={`astatus astatus--${approval}`}>{APPROVAL_LABEL[approval]}</span>
+              </div>
+              <p
+                style={{
+                  fontSize: 12.5,
+                  color: 'var(--text3)',
+                  lineHeight: 1.5,
+                  margin: '8px 0 0',
+                }}
+              >
+                {APPROVAL_HINT[approval]}
+              </p>
+              {approval === 'rejected' && t.rejectionReason && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    padding: '8px 10px',
+                    borderRadius: 8,
+                    background: 'var(--danger-bg)',
+                    color: 'var(--danger)',
+                    fontSize: 12,
+                  }}
+                >
+                  <strong>Reason:</strong> {t.rejectionReason}
+                </div>
+              )}
+              {approval !== 'approved' && (
+                <button
+                  type="button"
+                  className="pbtn"
+                  style={{ width: '100%', marginTop: 12 }}
+                  disabled={busy || !live}
+                  onClick={runBusy(approval === 'pending' ? onRefresh : onSubmit)}
+                >
+                  {busy
+                    ? 'Working…'
+                    : approval === 'pending'
+                      ? 'Refresh status'
+                      : approval === 'rejected'
+                        ? 'Resubmit for approval'
+                        : 'Submit for approval'}
+                </button>
+              )}
+              {!live && (
+                <p style={{ fontSize: 11, color: 'var(--muted)', margin: '8px 0 0' }}>
+                  Connect a workspace to submit templates.
+                </p>
+              )}
+            </div>
+          )}
 
           <p className={`adrawer__eyebrow ${styles.dEyebrow}`}>About this template</p>
           <div>

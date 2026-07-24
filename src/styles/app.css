@@ -186,6 +186,23 @@
   background: var(--danger-bg);
   color: var(--danger);
 }
+/* WhatsApp template approval (draft & paused reuse the shared classes above). */
+.astatus--pending {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+.astatus--approved {
+  background: var(--success-bg);
+  color: var(--success-strong);
+}
+.astatus--rejected {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+.astatus--disabled {
+  background: var(--surface2);
+  color: var(--muted);
+}
 
 /* ---------------- cards ---------------- */
 .acrd {
