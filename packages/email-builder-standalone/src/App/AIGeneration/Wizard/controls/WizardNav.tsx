@@ -32,7 +32,7 @@ export default function WizardNav({
 }: Props) {
   const { t } = useTranslation('aiWizard');
   return (
-    <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', pt: 0 }}>
+    <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', pt: 1 }}>
       <Button onClick={onBack} disabled={backDisabled} color="inherit" size="small">
         {t('steps.common.back')}
       </Button>

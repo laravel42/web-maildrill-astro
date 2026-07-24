@@ -33,6 +33,7 @@ export default function AIVisualWizard({
   initialRawIntent = '',
   backendUrl,
   brandColors,
+  locale,
   onGenerate,
   generating,
 }: Props) {
@@ -63,6 +64,7 @@ export default function AIVisualWizard({
         <SummaryStep
           brief={brief}
           backendUrl={backendUrl}
+          locale={locale}
           onGenerate={onGenerate}
           onBack={handleBack}
           generating={generating}

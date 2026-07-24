@@ -11,6 +11,7 @@ import { compileBriefClient } from './compileBriefClient';
 interface Props {
   brief: DraftBrief;
   backendUrl: string;
+  locale?: string;
   onGenerate: (prompt: string, brief: DraftBrief) => void;
   onBack: () => void;
   generating: boolean;
@@ -20,7 +21,7 @@ interface Props {
  * Normalise the compiled prompt: some responses arrive JSON-encoded (the whole
  * payload wrapped in quotes with escaped newlines) — decode that first.
  */
-function normalizePrompt(raw: string): string {
+function normalizeCompiledPrompt(raw: string): string {
   let s = raw;
   if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) {
     try {
@@ -30,31 +31,10 @@ function normalizePrompt(raw: string): string {
       /* not JSON — leave as-is */
     }
   }
-  return s;
+  return s.trim();
 }
 
-/**
- * Turn the backend's structured, tag-annotated brief (`[PURPOSE] …`,
- * `[LAYOUT] …`) into a single, natural prompt the user reads and edits. We
- * still let the backend derive a structure for us, but we don't surface the
- * machine tags/chips — the review reads like one editable prompt, in tone with
- * the rest of the app. The `/generate` system prompt handles layout/quality, so
- * dropping the tag scaffolding here doesn't cost generation quality.
- */
-function humanizePrompt(raw: string): string {
-  return normalizePrompt(raw)
-    .split('\n')
-    .map((line) =>
-      line
-        .replace(/^\s*\[[A-Z0-9_]+]\s*/, '') // drop leading [TAG]
-        .replace(/^["'\s]+|["'\s]+$/g, '') // trim stray quotes/space
-        .trim()
-    )
-    .filter(Boolean)
-    .join('\n');
-}
-
-export default function SummaryStep({ brief, backendUrl, onGenerate, onBack, generating }: Props) {
+export default function SummaryStep({ brief, backendUrl, locale, onGenerate, onBack, generating }: Props) {
   const { t } = useTranslation('aiWizard');
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
@@ -88,8 +68,8 @@ export default function SummaryStep({ brief, backendUrl, onGenerate, onBack, gen
     setLoading(true);
     setCompileFailed(false);
     try {
-      const result = await compileBriefClient(brief, backendUrl);
-      const clean = humanizePrompt(result.prompt);
+      const result = await compileBriefClient(brief, backendUrl, { locale });
+      const clean = normalizeCompiledPrompt(result.prompt);
       if (!editedRef.current) setPrompt(clean || buildFallback());
     } catch {
       setCompileFailed(true);
@@ -97,7 +77,7 @@ export default function SummaryStep({ brief, backendUrl, onGenerate, onBack, gen
     } finally {
       setLoading(false);
     }
-  }, [brief, backendUrl, buildFallback]);
+  }, [brief, backendUrl, locale, buildFallback]);
 
   // Seed the field immediately with the local fallback so it is never empty,
   // then replace it with the compiled prompt when it arrives.
