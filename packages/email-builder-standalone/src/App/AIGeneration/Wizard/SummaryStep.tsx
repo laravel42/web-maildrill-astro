@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Alert, Button, CircularProgress, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Stack, TextField, Typography } from '@mui/material';
 
 import { INPUT_TEXTFIELD_SX } from '../../InspectorDrawer/ConfigurationPanel/input-panels/helpers/inputs/components/inputStyles';
 
@@ -34,7 +34,14 @@ function normalizeCompiledPrompt(raw: string): string {
   return s.trim();
 }
 
-export default function SummaryStep({ brief, backendUrl, locale, onGenerate, onBack, generating }: Props) {
+export default function SummaryStep({
+  brief,
+  backendUrl,
+  locale,
+  onGenerate,
+  onBack,
+  generating,
+}: Props) {
   const { t } = useTranslation('aiWizard');
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
@@ -102,24 +109,26 @@ export default function SummaryStep({ brief, backendUrl, locale, onGenerate, onB
         </Typography>
       </div>
 
-      <TextField
-        fullWidth
-        multiline
-        minRows={6}
-        maxRows={14}
-        variant="outlined"
-        value={prompt}
-        placeholder={t('summary.promptPlaceholder')}
-        onChange={(e) => {
-          editedRef.current = true;
-          setPrompt(e.target.value);
-        }}
-        disabled={generating}
-        sx={INPUT_TEXTFIELD_SX}
-      />
+      <Box sx={{ mb: '1rem !important' }}>
+        <TextField
+          fullWidth
+          multiline
+          minRows={6}
+          maxRows={14}
+          variant="outlined"
+          value={prompt}
+          placeholder={t('summary.promptPlaceholder')}
+          onChange={(e) => {
+            editedRef.current = true;
+            setPrompt(e.target.value);
+          }}
+          disabled={generating}
+          sx={INPUT_TEXTFIELD_SX}
+        />
+      </Box>
 
       {loading && (
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mt: 2 }}>
           <CircularProgress size={16} />
           <Typography variant="caption">{t('summary.compiling')}</Typography>
         </Stack>
@@ -128,6 +137,7 @@ export default function SummaryStep({ brief, backendUrl, locale, onGenerate, onB
       {compileFailed && !loading && (
         <Alert
           severity="info"
+          sx={{ mt: 2 }}
           action={
             <Button size="small" onClick={compile}>
               {t('summary.retry')}
