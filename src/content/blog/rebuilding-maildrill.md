@@ -24,7 +24,7 @@ So we split the system cleanly and rebuilt each half around those goals.
 
 The frontend is an **Astro** site with **React islands**. The marketing pages render statically; the workspace opts into server rendering only where it needs a session. Interactive surfaces — the campaign board, the subscriber CRM, the pricing estimator — are React islands that hydrate on demand. Styling is hand-authored CSS driven by design tokens, so the whole product shares one visual language instead of a tangle of component overrides.
 
-The backend, `maildrill-service`, is a **Fastify** application with **BullMQ** workers on **Redis** and **Drizzle** over **PostgreSQL**. Postgres is the system of record; the delivery provider is used for delivery only. Every row is tenant-scoped in a shared schema, so a workspace's data is isolated without standing up a database per customer.
+The backend lives under **`workers/`** in this monorepo (package name still `workers`): **Fastify** apps with **BullMQ** workers on **Redis** and **Drizzle** over **PostgreSQL**. Postgres is the system of record; Infobip is delivery-only. Delivery reports land in **PostHog**; a short poller reconciles them into message and campaign state. Every row is tenant-scoped in a shared schema.
 
 Between them sits a **BFF (backend-for-frontend) proxy**. The browser never holds a service credential. Islands call same-origin `/api/*` routes on the Astro server, which read the session, mint a short-lived tenant-scoped token, and forward to the service. It keeps secrets on the server and gives the client a single, typed surface generated from the backend's OpenAPI schema.
 

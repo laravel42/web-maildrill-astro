@@ -47,29 +47,37 @@ hex where a token exists.
 
 ## Architecture
 
+This repo is a **monorepo**: Astro frontend + BFF at the root, messaging/product
+backend under [`workers/`](workers/) (formerly the separate `workers`
+repo). Env is shared at the **repo root** (`.env`). Backend handoff:
+[`workers/HANDOFF.md`](workers/HANDOFF.md). Product overview: [`docs/PRODUCT.md`](docs/PRODUCT.md).
+Agent guidance: [`docs/AGENTS.md`](docs/AGENTS.md) (also symlinked as root `AGENTS.md`).
+Other project docs live in [`docs/`](docs/).
+
 ```
-public/                 favicon (orange drill mark), icons, OG image, robots, manifest
+public/                 favicon, icons, OG image, robots, manifest
 src/
   components/
-    navigation/         Logo, MarketingNav (dropdowns), MarketingFooter
-    react/              Interactive islands (AppShell, PricingEstimator, AuthForm,
-                        ContactForm, MobileNav, App{Dashboard,Campaigns,…}, Icon)
-    seo/                SeoHead, JsonLd
-    ui/                 Button, Badge, Container, Section, Icon (curated inline SVGs)
-  config/               site, routes, navigation, channels, channel-pages, pricing (+rates)
-  content/              blog, guides, legal (Content Collections)
-  layouts/              Base, Marketing, Auth, App
+    navigation/         Logo, MarketingNav, MarketingFooter
+    react/              App shell, boards, wizards, forms, VisualEmailBuilder
+    seo/ ui/ …
+  config/ content/ layouts/ pages/ styles/ types/
   lib/
-    app/                mock data + services (the API integration boundary)
-    seo/                metadata + JSON-LD helpers
-    icons.ts            framework-agnostic icon path data + IconName type
-    pricing-math.ts     pure, unit-tested estimator math
-    env.ts              typed env access
-  pages/                marketing, auth, app/*, rss, 404
-  styles/               tokens.css · global.css · components.css · app.css
-  types/                domain types
+    app/                client API boundary (services → same-origin /api/v1)
+    seo/ pricing-math.ts env.ts …
+  middleware.ts         auth gate for /app + /dashboard
+  pages/api/            BFF: JWT to workers, Auth.js helpers, EB proxy
+packages/               vendored EmailBuilder.js (compiled from source)
+workers/                Fastify + BullMQ + Drizzle (root workspace member)
+  apps/{api,product-api,email-builder-api,workers,dev-server}
+  packages/{config,database,domain,services,product,…}
+  HANDOFF.md            current backend architecture & ops
 tests/                  unit, integration, e2e
 ```
+
+**Delivery analytics (locked):** Infobip DLRs → **PostHog Hog only** →
+`campaign-delivery` worker HogQL-polls → Postgres message/campaign state.
+In-app Analytics reads HogQL (Postgres fallback). See `workers/HANDOFF.md` §3.
 
 ### Astro / React hydration strategy
 
@@ -124,38 +132,49 @@ No marketing route ships page-wide React hydration.
 ## Setup
 
 ```bash
-npm install
-cp .env.example .env
-npm run dev            # http://localhost:4321
+pnpm install
+cp .env.example .env          # one file for Astro + workers
+pnpm --dir workers db:migrate
+pnpm --dir workers db:up      # optional: Docker Postgres + Redis
+pnpm dev:all                  # workers (:3001, includes delivery pollers) then Astro (:4321)
+# or separately: pnpm --filter workers dev   +   pnpm dev
 ```
 
+`pnpm --dir workers dev` (unified `dev-server`) starts dispatch, events, publisher,
+scheduler, maintenance, **campaign-delivery**, and **template-approval**. Set
+`DEV_WORKERS=0` to serve HTTP only. One root `pnpm install` covers Astro and
+`workers/` (no second install under `workers/`).
 ### Environment variables
 
-| Variable              | Client? | Purpose                     |
-| --------------------- | ------- | --------------------------- |
-| `PUBLIC_SITE_URL`     | yes     | Canonical base, sitemap, OG |
-| `PUBLIC_POSTHOG_KEY`  | yes     | Optional analytics          |
-| `PUBLIC_POSTHOG_HOST` | yes     | Optional analytics host     |
-| `AUTH_SECRET`         | **no**  | Future auth signing         |
-| `API_BASE_URL`        | **no**  | Future API base             |
+| Variable | Client? | Purpose |
+| --- | --- | --- |
+| `PUBLIC_SITE_URL` | yes | Canonical base, sitemap, OG |
+| `PUBLIC_POSTHOG_PROJECT_TOKEN` | yes | Browser PostHog project token (`phc_…`) |
+| `PUBLIC_POSTHOG_HOST` | yes | PostHog ingest host |
+| `AUTH_SECRET` | **no** | Auth.js session |
+| `API_BASE_URL` | **no** | workers product-api (default `http://localhost:3001`) |
+| `JWT_SECRET` | **no** | Shared with workers — BFF mints tenant JWTs |
+| `DATABASE_URL` / `REDIS_URL` | **no** | workers (same root `.env`) |
+| `POSTHOG_PERSONAL_API_KEY` | **no** | HogQL for stats + campaign-delivery (`query:read`) |
+| `POSTHOG_PROJECT_ID` | **no** | Maildrill messaging project (`526344`) |
 
-Only `PUBLIC_*` variables reach the client. Server env is read exclusively via `getServerEnv()` in
-[`src/lib/env.ts`](src/lib/env.ts).
+Only `PUBLIC_*` reach the browser. Full list: [`.env.example`](.env.example). Server
+helpers: [`src/lib/env.ts`](src/lib/env.ts). Backend config: `workers/packages/config`.
 
 ---
 
 ## Commands
 
 ```bash
-npm run dev          # local dev server
-npm run build        # production build (static output + sitemap)
-npm run preview      # preview dist/
-npm run typecheck    # astro check && tsc --noEmit
-npm run lint         # eslint (+ jsx-a11y)
-npm run format       # prettier --write
-npm run test         # vitest (unit + integration)
-npm run test:e2e     # playwright (build first, or it runs against preview)
-npm run test:all     # unit + e2e
+pnpm dev             # Astro only (:4321)
+pnpm dev:workers     # workers unified process (:3001)
+pnpm dev:all         # workers first, then Astro when :3001 is up
+pnpm build           # production build (compiles vendored editor)
+pnpm check           # astro check (authoritative type gate)
+pnpm typecheck       # astro check && tsc --noEmit
+pnpm lint            # eslint (+ jsx-a11y)
+pnpm test            # vitest
+pnpm test:e2e        # playwright
 ```
 
 Recommended validation order:
@@ -188,17 +207,14 @@ npm run test:e2e
 
 ---
 
-## Integration boundaries / placeholders
+## Integration boundaries
 
-The app area uses **mock services** in [`src/lib/app/services.ts`](src/lib/app/services.ts) and
-fixtures in [`src/lib/app/mock-data.ts`](src/lib/app/mock-data.ts). UI imports data only through the
-services module, so wiring a real backend is a single-file swap:
+Workspace UI talks to **same-origin** `/api/v1/*` (Astro BFF), which mints a tenant
+JWT and forwards to `workers/` (`API_BASE_URL`). Prefer the client helpers in
+[`src/lib/app/`](src/lib/app/) over ad-hoc `fetch` in components.
 
-- `mockSignIn` / `mockSignUp` / `mockResetPassword` — succeed locally; login routes to `/app`.
-- `mockContactSubmit` — success UI only.
-- `listCampaigns`, `listSubscribers`, … — in-memory fixtures.
-
-Replace those implementations with real HTTP clients; do not scatter `fetch` through components.
+Auth is passwordless (login code); see [`docs/PRODUCT.md`](docs/PRODUCT.md) for current
+rollout caveats. Backend ops and Infobip→PostHog setup: [`workers/HANDOFF.md`](workers/HANDOFF.md).
 
 ---
 
@@ -235,20 +251,9 @@ environment variable if you wire up Git-connected builds).
 
 ## Assumptions & known placeholders
 
-1. **Target stack is Astro** (this repo). The handoff `AGENTS.md` / `PRODUCT.md` describe the
-   original Laravel/Livewire product; those are treated as backend context, not this deliverable.
-2. **Brand color is `#ff441f` orange** per the shipped `.dc.html` prototypes (which supersede the
-   1.0 `DESIGN.md` "indigo brand" note — indigo is the interactive accent).
-3. **Voice** is a first-class channel surface across marketing + app (the prototype treats it as
-   exploratory; kept as designed).
-4. **Auth is mocked** — no real sessions, SSO, or 2FA (SSO buttons run the mock flow).
-5. **App data is mocked**; the deepest interactive prototype flows (email builder, full campaign
-   wizard, every modal) are represented via the shell + key screens rather than pixel-ported from
-   the 470 KB prototype. Dashboard, Campaigns (table + detail drawer), and the workspace screens are
-   built to the design's patterns.
-6. **Fonts** load Geist from jsDelivr with `font-display: swap`; self-host by dropping the woff2 in
-   `public/fonts/` and repointing the `@font-face` `src` in `global.css`.
-
-```
-
-```
+1. **Stack** — Astro frontend + `workers/` Fastify backend in this repo (see `docs/PRODUCT.md` /
+   `workers/HANDOFF.md`). Older Laravel/Livewire notes are historical only.
+2. **Brand** — `#ff441f` orange identity; indigo is the interactive accent.
+3. **Voice** — first-class channel across marketing + app.
+4. **Auth** — passwordless login code against Postgres; signup is waitlist-gated (see `docs/PRODUCT.md` §4).
+5. **Fonts** — Geist from jsDelivr with `font-display: swap`; self-host via `public/fonts/` if needed.

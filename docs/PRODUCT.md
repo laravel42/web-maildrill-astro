@@ -8,8 +8,10 @@ _Linear meets Resend_, not an admin panel.
 
 This document describes **what the product is** (specifications), **what it's
 built with** (tech stack), and **how it runs** (infrastructure). For brand/design
-rules see [`README.md`](README.md); for the messaging backend internals see the
-`maildrill-service` repo.
+rules see [`../README.md`](../README.md). For the messaging backend (ops, Infobip →
+PostHog, campaign-delivery poller) see [`../workers/HANDOFF.md`](../workers/HANDOFF.md)
+— the backend lives in [`../workers/`](../workers/) (formerly the separate
+`workers` repo).
 
 ---
 
@@ -46,7 +48,7 @@ across channels; a subscriber is addressed by `email` and/or `phone`.
 | **Lists**       | List CRUD, membership, workspace-wide custom fields, member counts              |
 | **Segments**    | Rule-based (field + op + value) compiled to SQL `EXISTS`; membership counts     |
 | **Media**       | S3-backed asset library (presigned upload, CloudFront delivery)                 |
-| **Analytics**   | Daily activity (zero-filled), channel breakdown                                 |
+| **Analytics**   | Daily activity + channel breakdown (PostHog HogQL when configured; else PG)     |
 | **Settings**    | Workspace/account settings                                                      |
 
 ### 1.4 Personalization (merge tags)
@@ -100,9 +102,9 @@ negotiated rate card is **not** exposed by any API — it is scraped offline
 `document-core`, `email-builder`, and eight `block-*` packages) and **compiled
 from source** rather than consumed as a prebuilt npm package — so it can be
 patched and restyled in place. Uses MUI 9, zustand 5, react-dnd, tiptap, zod 4.
-See [`packages/VENDOR.md`](packages/VENDOR.md) for the (few, documented) patches.
+See [`../packages/VENDOR.md`](../packages/VENDOR.md) for the (few, documented) patches.
 
-### 2.3 Backend (`maildrill-service`)
+### 2.3 Backend (`workers/` — package name `workers`)
 
 | Layer         | Choice                                                        |
 | ------------- | ------------------------------------------------------------ |
@@ -137,22 +139,16 @@ packages/
 ### 3.1 Topology
 
 ```
-┌──────────────┐   same-origin    ┌───────────────────────┐   tenant JWT / API key
-│   Browser    │  /api/v1/*, etc. │  Astro node server    │  ───────────────►  ┌──────────────────┐
-│ (React       │ ───────────────► │  (web-maildrill-astro)│                    │ maildrill-service │
-│  islands)    │                  │   • BFF proxy         │                    │  Fastify + BullMQ │
-└──────────────┘                  │   • Auth.js session   │                    │  + Drizzle        │
-                                   │   • SSR pages         │                    └────────┬─────────┘
-                                   │   • SMTP welcome mail │                             │
-                                   └───────────────────────┘             ┌──────────────┼───────────────┐
-                                                                         ▼              ▼               ▼
-                                                                   ┌──────────┐   ┌─────────┐   ┌─────────────┐
-                                                                   │ Postgres │   │  Redis  │   │  Infobip    │
-                                                                   │ (system  │   │ (BullMQ)│   │ (delivery:  │
-                                                                   │ of record)│  └─────────┘   │ email/SMS/  │
-                                                                   └──────────┘                 │ WA/voice)   │
-                                                                        ▲                       └─────────────┘
-                                                              S3 + CloudFront (media)
+┌──────────────┐  same-origin   ┌────────────────────┐  JWT / API key  ┌─────────────────┐
+│   Browser    │ ─────────────► │ Astro (BFF+SSR)    │ ──────────────► │ workers/        │
+│ React islands│  /api/v1/*     │ Auth.js · SMTP     │                 │ Fastify+BullMQ  │
+└──────────────┘                └────────────────────┘                 └────────┬────────┘
+                                                                                │
+                              ┌─────────────┬─────────────┬─────────────────────┼──────────┐
+                              ▼             ▼             ▼                     ▼          ▼
+                         Postgres       Redis         Infobip              PostHog     S3/CDN
+                       (system of     (BullMQ)    (send + DLR notify     (Hog ingest
+                        record)                    → PostHog only)        + HogQL)
 ```
 
 ### 3.2 The BFF pattern
@@ -162,7 +158,7 @@ The browser never holds a service credential. Islands call **same-origin**
 
 1. Reads the Auth.js session (via middleware).
 2. Mints a **tenant-scoped JWT** (shared `JWT_SECRET`) and forwards to
-   `maildrill-service` (`API_BASE_URL`, default `http://localhost:3001`).
+   `workers/` product-api (`API_BASE_URL`, default `http://localhost:3001`).
 3. Streams the response back.
 
 Public/unauthenticated endpoints (`/api/login-code`, `/api/signup-welcome`) run
@@ -181,13 +177,19 @@ server-side and never expose provider keys to the client.
 1. A send writes to a **transactional outbox** and enqueues a **BullMQ** job with
    a **deterministic job id** (generation-scoped; ids must not contain `:`).
 2. **Workers** dispatch through the provider (`getProvider()` → Infobip or mock).
-3. Provider **webhooks** are ingested and normalized into delivery/engagement
-   events (idempotent via event fingerprints).
-4. `sendCampaign` is guarded by a status-checked `UPDATE` (`claimForSending`) so a
-   campaign can't be double-sent.
+   Infobip sends stamp `callbackData` = `{tenantId}|{channel}|{maildrillMessageId}`.
+3. **Delivery reports:** Infobip notify → **PostHog Hog only** (not Maildrill
+   webhooks in production). The **`campaign-delivery`** worker HogQL-polls
+   PostHog (~5s), applies message outcomes, and when every campaign message is
+   terminal flips the campaign from **`sending`** → **`sent`**.
+4. **Analytics:** `GET /v1/stats/activity` prefers PostHog HogQL
+   (`POSTHOG_PERSONAL_API_KEY`); falls back to Postgres.
+5. `sendCampaign` is guarded by `claimForSending` (no double-send) and leaves the
+   campaign in **`sending`** until the poller completes it (empty audience →
+   immediate `sent`).
 
 Transactional emails (login code, welcome) go **straight through the provider**,
-bypassing the campaign pipeline.
+bypassing the campaign pipeline. Full ops checklist: [`../workers/HANDOFF.md`](../workers/HANDOFF.md).
 
 ### 3.5 Media
 
@@ -197,14 +199,16 @@ delivered via **CloudFront**. Requires `AWS_REGION`, `MEDIA_S3_BUCKET`,
 
 ### 3.6 Configuration (env)
 
-| Where          | Key vars                                                              |
-| -------------- | --------------------------------------------------------------------- |
-| Frontend       | `PUBLIC_SITE_URL`, `AUTH_SECRET`, `JWT_SECRET`, `API_BASE_URL`, `EB_BACKEND_URL`, `PUBLIC_POSTHOG_*` |
-| Frontend SMTP  | `SMTP_HOST/PORT/USER/PASS/SECURE`, `MAIL_FROM` (embedded welcome email) |
-| Backend        | `DATABASE_URL`, Redis URL, `PROVIDER_DRIVER` (`mock`\|`infobip`), `INFOBIP_API_KEY`, `API_KEYS`, AWS/media vars |
+| Where | Key vars |
+| --- | --- |
+| Shared root `.env` | One file for Astro + workers (see `.env.example`) |
+| Frontend | `PUBLIC_SITE_URL`, `AUTH_SECRET`, `JWT_SECRET`, `API_BASE_URL`, `EB_BACKEND_URL`, `PUBLIC_POSTHOG_*` |
+| Frontend SMTP | `SMTP_HOST/PORT/USER/PASS/SECURE`, `MAIL_FROM` |
+| Backend | `DATABASE_URL`, `REDIS_URL`, `PROVIDER_DRIVER`, `INFOBIP_*`, `API_KEYS`, AWS/media |
+| PostHog query | `POSTHOG_PERSONAL_API_KEY` (`query:read`), `POSTHOG_PROJECT_ID=526344`, `POSTHOG_APP_HOST` |
 
-Secrets live only in gitignored `.env` files — never committed. `/design` (design
-mockups) is local-reference-only and gitignored.
+Secrets live only in gitignored `.env` — never committed. `/design` is local-only
+and gitignored.
 
 ---
 
@@ -216,9 +220,9 @@ These reflect how the system behaves **today**, not the end goal:
 - **Sign-up** is a passwordless, front-end flow — the welcome email is real
   (SMTP), but a full account/workspace is not provisioned on the frontend yet.
 - **Welcome email** is sent **in-repo over SMTP** (Nodemailer), temporarily
-  decoupled from `maildrill-service`. Falls back to a logged no-op when SMTP is
+  decoupled from `workers/`. Falls back to a logged no-op when SMTP is
   unconfigured. The backend's `/v1/auth/welcome` remains but is unused.
-- **Login code** still requires `maildrill-service` (code storage + verify +
+- **Login code** still requires `workers/` (code storage + verify +
   session live in Postgres).
 - **Infobip** delivery is wired but the current key returns **403** — real sends
   fail until the key/base-URL is fixed; use `PROVIDER_DRIVER=mock` in dev.
@@ -227,10 +231,10 @@ These reflect how the system behaves **today**, not the end goal:
 
 ---
 
-## 5. Repositories
+## 5. Repositories / paths
 
-| Repo                    | Role                                                        |
-| ----------------------- | ---------------------------------------------------------- |
-| `web-maildrill-astro`   | This repo — marketing site + workspace UI + BFF (+ vendored editor) |
-| `maildrill-service`     | Fastify + BullMQ + Drizzle messaging/product backend       |
-| `web-email-builder-js`  | Upstream EmailBuilder.js source (vendored into this repo)  |
+| Path | Role |
+| --- | --- |
+| `web-maildrill-astro` (this repo) | Marketing + workspace UI + BFF + vendored editor + `workers/` |
+| `workers/` | Fastify + BullMQ + Drizzle backend (was `workers`) — see [`../workers/HANDOFF.md`](../workers/HANDOFF.md) |
+| `web-email-builder-js` | Upstream EmailBuilder.js (vendored into `packages/`) |

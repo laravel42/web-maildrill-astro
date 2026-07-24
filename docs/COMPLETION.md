@@ -1,5 +1,10 @@
 # Maildrill Astro — Completion Report
 
+> Historical snapshot of the Astro marketing + workspace rebuild. For **current**
+> monorepo layout (including `workers/` backend and Infobip → PostHog delivery),
+> see [`../README.md`](../README.md), [`PRODUCT.md`](PRODUCT.md), and
+> [`../workers/HANDOFF.md`](../workers/HANDOFF.md).
+
 A full rebuild of the Claude Design handoff into a production Astro + React-islands
 codebase, brought to high visual fidelity with the shipped `.dc.html` prototypes.
 
@@ -30,7 +35,7 @@ codebase, brought to high visual fidelity with the shipped `.dc.html` prototypes
 
 ## 2. Final route map
 
-See [README.md](./README.md#route-map). 34 pages: marketing (indexed), auth + `/app/*` (noindex),
+See [README.md](../README.md#route-map). 34 pages: marketing (indexed), auth + `/app/*` (noindex),
 plus `/robots.txt`, `/sitemap-index.xml`, `/rss.xml`.
 
 ## 3. Main architectural decisions
@@ -84,7 +89,7 @@ global-`<style>` class collision (`AppShell.sb` vs `AppSubscribers.sb`).
 
 ## 8. Assumptions
 
-Documented in [README.md](./README.md#assumptions--known-placeholders). Notably: the target stack is
+Documented in [README.md](../README.md#assumptions--known-placeholders). Notably: the target stack is
 Astro (the handoff Laravel docs are backend context); the brand color is orange `#ff441f` per the
 shipped prototypes; Voice is a first-class channel; auth + app data are mocked; and the deepest
 interactive prototype flows (email builder, full campaign wizard, every modal) are represented via
