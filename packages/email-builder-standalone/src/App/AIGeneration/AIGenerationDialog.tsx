@@ -682,8 +682,18 @@ export default function AIGenerationDialog({
         {/* ---------------------------------------------------------------- */}
         {/* WIZARD MODE                                                       */}
         {/* ---------------------------------------------------------------- */}
-        {entryMode === 'wizard' && !showPreview && (
-          <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        {/* Keep the wizard summary visible during thinking AND streaming so the
+             Generate button stays in the viewport with its loading spinner —
+             it is the only signal telling the user blocks are arriving.
+             Shrink to a compact strip once the preview panel takes over. */}
+        {entryMode === 'wizard' && (status === 'idle' || status === 'thinking' || status === 'streaming') && (
+          <Box
+            sx={
+              showPreview
+                ? { flexShrink: 0, overflow: 'auto', maxHeight: '30%' }
+                : { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }
+            }
+          >
             <AIVisualWizard
               key={wizardKey}
               initialRawIntent={prompt}
@@ -698,7 +708,7 @@ export default function AIGenerationDialog({
           </Box>
         )}
         {entryMode === 'wizard' && status === 'thinking' && (
-          <Stack direction="row" sx={{ gap: 2, alignItems: 'center', py: 1 }}>
+          <Stack direction="row" sx={{ gap: 2, alignItems: 'center', py: 1, flexShrink: 0 }}>
             <CircularProgress size={20} />
             <Typography variant="body2" color="text.secondary">
               {t('aiGeneration.dialog.status.thinking')}
@@ -706,11 +716,10 @@ export default function AIGenerationDialog({
           </Stack>
         )}
         {entryMode === 'wizard' && status === 'complete' && (
-          <Alert severity="success" variant="outlined" sx={{ mt: 1 }}>
+          <Alert severity="success" variant="outlined" sx={{ mt: 1, flexShrink: 0 }}>
             {t('aiGeneration.dialog.status.complete')}
           </Alert>
         )}
-        {/* Fatal errors visible in wizard mode too (see direct-mode note). */}
         {entryMode === 'wizard' && status === 'error' && renderStatusRow()}
         {entryMode === 'wizard' && showPreview && response && (
           <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
