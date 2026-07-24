@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button, Stack, Typography } from '@mui/material';
+import { Box, Button, Stack, Typography } from '@mui/material';
 
 interface Props {
   /** Zero-based index of the current step. */
@@ -10,7 +10,8 @@ interface Props {
   totalSteps: number;
   onBack: () => void;
   onNext: () => void;
-  backDisabled?: boolean;
+  /** When false, the back control is hidden (step 1). */
+  showBack?: boolean;
   nextDisabled?: boolean;
   /** When true, the primary button reads "Review" instead of "Next". */
   isLastStep?: boolean;
@@ -26,16 +27,20 @@ export default function WizardNav({
   totalSteps,
   onBack,
   onNext,
-  backDisabled,
+  showBack = true,
   nextDisabled,
   isLastStep,
 }: Props) {
   const { t } = useTranslation('aiWizard');
   return (
     <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', pt: 1 }}>
-      <Button onClick={onBack} disabled={backDisabled} color="inherit" size="small">
-        {t('steps.common.back')}
-      </Button>
+      {showBack ? (
+        <Button onClick={onBack} color="inherit" size="small">
+          {t('steps.common.back')}
+        </Button>
+      ) : (
+        <Box sx={{ width: 64 }} />
+      )}
       <Typography variant="caption" color="text.secondary">
         {t('steps.common.stepOf', { current: stepIndex + 1, total: totalSteps })}
       </Typography>

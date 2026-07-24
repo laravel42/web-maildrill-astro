@@ -93,7 +93,7 @@ export default function AIVisualWizard({
           totalSteps={totalSteps}
           onBack={handleBack}
           onNext={handleNext}
-          backDisabled={step === 0}
+          showBack={step > 0}
           isLastStep={step === totalSteps - 1}
         />
       </Box>
