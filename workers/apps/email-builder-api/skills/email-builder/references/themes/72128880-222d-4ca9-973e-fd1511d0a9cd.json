@@ -1,0 +1,42 @@
+{
+  "id": "72128880-222d-4ca9-973e-fd1511d0a9cd",
+  "createdAt": "2026-06-08T15:07:20.259Z",
+  "updatedAt": "2026-06-08T15:07:20.259Z",
+  "name": "Mulberry Galaxy",
+  "description": "Music festival",
+  "globals": {
+    "backdropColor": "#1E0B36",
+    "borderRadius": 12,
+    "canvasColor": "#2D1B4E",
+    "textColor": "#F5F0FF",
+    "fontFamily": "PACIFICO",
+    "linkGlobal": {
+      "linkColor": "#FBBF24",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#EC4899",
+        "buttonTextColor": "#FFFFFF",
+        "shape": "pill"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#4C1D95"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#2D1B4E"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#2D1B4E"
+      }
+    }
+  }
+}

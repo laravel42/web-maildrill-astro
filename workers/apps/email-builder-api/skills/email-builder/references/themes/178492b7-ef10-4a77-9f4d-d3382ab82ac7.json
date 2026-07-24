@@ -1,0 +1,113 @@
+{
+  "id": "178492b7-ef10-4a77-9f4d-d3382ab82ac7",
+  "createdAt": "2026-05-25T19:21:42.632Z",
+  "updatedAt": "2026-05-25T19:21:42.632Z",
+  "name": "Al properties changed",
+  "description": "Prueba con todas las propiedades modificadas globalmente",
+  "globals": {
+    "backdropColor": "#fa8888",
+    "canvasColor": "#fad2d2",
+    "textColor": "#a69999",
+    "fontFamily": "PACIFICO",
+    "linkGlobal": {
+      "linkColor": "#a69998",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "NotionText": {
+      "style": {
+        "fontFamily": "MERRIWEATHER",
+        "color": "#cd0606",
+        "backgroundColor": "#000000",
+        "fontSize": 28,
+        "textAlign": "left",
+        "padding": {
+          "top": 64,
+          "right": 32,
+          "bottom": 16,
+          "left": 112
+        }
+      }
+    },
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#f01e1e",
+        "buttonTextColor": "#ffffff",
+        "fontFamily": "MERRIWEATHER",
+        "fontSize": 40,
+        "fontWeight": "bold",
+        "textAlign": "right",
+        "backgroundColor": "#cfd0f0",
+        "padding": {
+          "top": 80,
+          "right": 48,
+          "bottom": 32,
+          "left": 112
+        }
+      }
+    },
+    "Image": {
+      "style": {
+        "backgroundColor": "#dd1717",
+        "padding": {
+          "top": 48,
+          "right": 16,
+          "bottom": 0,
+          "left": 64
+        }
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#e51ac0",
+        "backgroundColor": "#1657e4",
+        "padding": {
+          "top": 32,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      }
+    },
+    "Spacer": {
+      "style": {
+        "backgroundColor": "#4bad53"
+      }
+    },
+    "SocialMedia": {
+      "style": {
+        "backgroundColor": "#e22222",
+        "padding": {
+          "top": 32,
+          "right": 80,
+          "bottom": 64,
+          "left": 32
+        }
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#f9ed17",
+        "borderColor": "#ff581d",
+        "padding": {
+          "top": 48,
+          "right": 64,
+          "bottom": 80,
+          "left": 48
+        }
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "padding": {
+          "top": 16,
+          "right": 0,
+          "bottom": 64,
+          "left": 0
+        },
+        "backgroundColor": "#40e2e2"
+      }
+    }
+  }
+}

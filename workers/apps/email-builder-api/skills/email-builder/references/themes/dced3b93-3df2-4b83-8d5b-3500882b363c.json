@@ -1,0 +1,42 @@
+{
+  "id": "dced3b93-3df2-4b83-8d5b-3500882b363c",
+  "createdAt": "2026-06-08T15:07:20.239Z",
+  "updatedAt": "2026-06-08T15:07:20.239Z",
+  "name": "Pacific Travel",
+  "description": "Travel & cruise",
+  "globals": {
+    "backdropColor": "#ECFEFF",
+    "borderRadius": 20,
+    "canvasColor": "#FFFFFF",
+    "textColor": "#0E7490",
+    "fontFamily": "MONTSERRAT",
+    "linkGlobal": {
+      "linkColor": "#0891B2",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#0891B2",
+        "buttonTextColor": "#FFFFFF",
+        "shape": "pill"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#A5F3FC"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    }
+  }
+}

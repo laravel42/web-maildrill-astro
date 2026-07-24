@@ -1,0 +1,304 @@
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { config } from "@maildrill/config";
+import { campaigns, db, messages, type MessageRow } from "@maildrill/database";
+import {
+  CAMPAIGN_COMPLETE_STATES,
+  OPEN_DELIVERY_STATES,
+  isCampaignDeliveryComplete,
+  outcomeFromInfobipStatusGroup,
+  type MessageState,
+} from "@maildrill/domain";
+import {
+  cellString,
+  columnIndex,
+  createLogger,
+  hogqlLiteralList,
+  runHogQL,
+} from "@maildrill/observability";
+import { applyProviderOutcome } from "./events";
+import { getProvider } from "@maildrill/providers";
+
+const log = createLogger({ component: "campaign-delivery" });
+
+const HOGQL_CHUNK = 200;
+const OPEN_MESSAGE_LIMIT = 1000;
+/** Cap Infobip log lookups per poll so a large backlog can't stall the loop. */
+const INFOBIP_STATUS_LIMIT = 50;
+
+export interface DeliveryPollResult {
+  openMessages: number;
+  updated: number;
+  campaignsCompleted: number;
+}
+
+export interface StatusGroupRow {
+  maildrillMessageId: string;
+  statusGroup: string;
+}
+
+/** Pure: map HogQL rows → latest status_group per maildrill message id. */
+export function mapLatestStatusGroups(
+  columns: string[],
+  results: unknown[][],
+): StatusGroupRow[] {
+  const iId = columnIndex(columns, "maildrill_message_id");
+  const iGroup = columnIndex(columns, "status_group");
+  if (iId < 0 || iGroup < 0) return [];
+
+  // Query already returns argMax / latest; keep first row per id if duplicates.
+  const seen = new Set<string>();
+  const out: StatusGroupRow[] = [];
+  for (const row of results) {
+    const id = cellString(row, iId);
+    const statusGroup = cellString(row, iGroup);
+    if (!id || !statusGroup || seen.has(id)) continue;
+    seen.add(id);
+    out.push({ maildrillMessageId: id, statusGroup });
+  }
+  return out;
+}
+
+/** Pure: whether a sending campaign should flip to sent given message statuses. */
+export function shouldCompleteCampaign(statuses: MessageState[]): boolean {
+  if (statuses.length === 0) return true;
+  return statuses.every(isCampaignDeliveryComplete);
+}
+
+async function loadOpenMessages(): Promise<MessageRow[]> {
+  // Oldest-updated first so a stable set of stuck rows cannot starve newer
+  // campaigns when OPEN_MESSAGE_LIMIT is hit. Successful outcome writes bump
+  // updatedAt and rotate them out of the front of the queue.
+  return db
+    .select()
+    .from(messages)
+    .where(inArray(messages.status, [...OPEN_DELIVERY_STATES]))
+    .orderBy(asc(messages.updatedAt), asc(messages.createdAt))
+    .limit(OPEN_MESSAGE_LIMIT);
+}
+
+async function fetchStatusGroupsFromPostHog(
+  messageIds: string[],
+): Promise<Map<string, string>> {
+  const byId = new Map<string, string>();
+  if (messageIds.length === 0 || !config.posthog.statsEnabled) return byId;
+
+  for (let i = 0; i < messageIds.length; i += HOGQL_CHUNK) {
+    const chunk = messageIds.slice(i, i + HOGQL_CHUNK);
+    const lits = hogqlLiteralList(chunk);
+    if (!lits) {
+      log.warn({ chunkSize: chunk.length }, "skip hogql chunk: unsafe message id");
+      continue;
+    }
+
+    // Voice DLRs land as message_voice_report when Infobip notify is routed via
+    // the portal's ?kind=voice URL — same status_group shape as delivery.
+    const query = `
+SELECT
+  toString(properties.maildrill_message_id) AS maildrill_message_id,
+  argMax(toString(properties.status_group), timestamp) AS status_group
+FROM events
+WHERE event IN ('message_delivery_report', 'message_voice_report')
+  AND toString(properties.maildrill_message_id) IN (${lits.join(", ")})
+GROUP BY maildrill_message_id
+`.trim();
+
+    const result = await runHogQL(query, "maildrill-campaign-delivery");
+    if (!result) continue;
+
+    for (const row of mapLatestStatusGroups(result.columns, result.results)) {
+      byId.set(row.maildrillMessageId, row.statusGroup);
+    }
+  }
+
+  return byId;
+}
+
+async function syncOpenMessages(open: MessageRow[]): Promise<number> {
+  const statusById = await fetchStatusGroupsFromPostHog(open.map((m) => m.id));
+  let updated = 0;
+
+  for (const msg of open) {
+    const statusGroup = statusById.get(msg.id);
+    if (!statusGroup) continue;
+
+    const outcome = outcomeFromInfobipStatusGroup(statusGroup);
+    const changed = await applyProviderOutcome({
+      messageId: msg.id,
+      tenantId: msg.tenantId,
+      channel: msg.channel,
+      provider: msg.provider,
+      currentStatus: msg.status,
+      outcome,
+      statusGroup,
+    });
+    if (changed) updated += 1;
+  }
+
+  // PostHog miss → pull Infobip logs for remaining submitted/sent rows.
+  updated += await syncOpenMessagesFromInfobip(
+    open.filter((m) => !statusById.has(m.id)),
+  );
+
+  return updated;
+}
+
+async function syncOpenMessagesFromInfobip(open: MessageRow[]): Promise<number> {
+  const provider = getProvider();
+  if (!provider.getDeliveryStatusGroup && !provider.pullDeliveryReports) return 0;
+
+  const byProviderId = new Map(
+    open
+      .filter((m) => m.providerMessageId)
+      .map((m) => [m.providerMessageId!, m] as const),
+  );
+  if (byProviderId.size === 0) return 0;
+
+  let updated = 0;
+  const resolved = new Set<string>();
+
+  // 1) Drain recent report batches (each Infobip DLR is returned only once).
+  if (provider.pullDeliveryReports) {
+    const channels = [...new Set(open.map((m) => m.channel))];
+    for (const channel of channels) {
+      const reports = await provider.pullDeliveryReports(channel, 200);
+      for (const report of reports) {
+        const msg = byProviderId.get(report.providerMessageId);
+        if (!msg) continue;
+        const outcome = outcomeFromInfobipStatusGroup(report.statusGroup);
+        if (outcome === "submitted") continue;
+        const changed = await applyProviderOutcome({
+          messageId: msg.id,
+          tenantId: msg.tenantId,
+          channel: msg.channel,
+          provider: msg.provider,
+          currentStatus: msg.status,
+          outcome,
+          statusGroup: report.statusGroup,
+        });
+        if (changed) updated += 1;
+        resolved.add(msg.id);
+      }
+    }
+  }
+
+  // 2) Per-id lookup for anything still open (messageId filter on reports API).
+  if (!provider.getDeliveryStatusGroup) {
+    if (updated > 0 || resolved.size > 0) {
+      log.debug({ updated, resolved: resolved.size }, "infobip delivery report sync");
+    }
+    return updated;
+  }
+
+  let checked = 0;
+  for (const msg of open) {
+    if (resolved.has(msg.id)) continue;
+    if (checked >= INFOBIP_STATUS_LIMIT) break;
+    if (!msg.providerMessageId) continue;
+    if (msg.status !== "submitted" && msg.status !== "sent") continue;
+    checked += 1;
+
+    const statusGroup = await provider.getDeliveryStatusGroup(
+      msg.channel,
+      msg.providerMessageId,
+    );
+    if (!statusGroup) continue;
+
+    const outcome = outcomeFromInfobipStatusGroup(statusGroup);
+    // PENDING maps to submitted — no transition; skip.
+    if (outcome === "submitted") continue;
+
+    const changed = await applyProviderOutcome({
+      messageId: msg.id,
+      tenantId: msg.tenantId,
+      channel: msg.channel,
+      provider: msg.provider,
+      currentStatus: msg.status,
+      outcome,
+      statusGroup,
+    });
+    if (changed) updated += 1;
+  }
+
+  if (checked > 0 || updated > 0) {
+    log.debug({ checked, updated, resolved: resolved.size }, "infobip delivery report sync");
+  }
+  return updated;
+}
+
+async function completeFinishedCampaigns(): Promise<number> {
+  const sending = await db
+    .select({ id: campaigns.id, tenantId: campaigns.tenantId })
+    .from(campaigns)
+    .where(eq(campaigns.status, "sending"))
+    .orderBy(asc(campaigns.updatedAt), asc(campaigns.createdAt))
+    .limit(200);
+
+  let completed = 0;
+  for (const camp of sending) {
+    const rows = await db
+      .select({ status: messages.status })
+      .from(messages)
+      .where(
+        and(eq(messages.campaignId, camp.id), eq(messages.tenantId, camp.tenantId)),
+      );
+
+    const statuses = rows.map((r) => r.status);
+    if (!shouldCompleteCampaign(statuses)) continue;
+
+    // Guard: still has open rows (race with concurrent inserts) — skip.
+    const openLeft = await db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(messages)
+      .where(
+        and(
+          eq(messages.campaignId, camp.id),
+          inArray(messages.status, [...OPEN_DELIVERY_STATES]),
+        ),
+      );
+    if (Number(openLeft[0]?.n ?? 0) > 0) continue;
+
+    // Also skip if campaign has messages not yet complete that aren't in OPEN
+    // (e.g. draft) — shouldCompleteCampaign already covers this.
+
+    await db
+      .update(campaigns)
+      .set({ status: "sent", completedAt: new Date(), updatedAt: new Date() })
+      .where(and(eq(campaigns.id, camp.id), eq(campaigns.status, "sending")));
+
+    completed += 1;
+    log.info(
+      {
+        campaignId: camp.id,
+        tenantId: camp.tenantId,
+        messages: statuses.length,
+        completeStates: CAMPAIGN_COMPLETE_STATES,
+      },
+      "campaign delivery complete",
+    );
+  }
+
+  return completed;
+}
+
+/**
+ * Sync open message DLRs from PostHog and flip finished campaigns to `sent`.
+ * Safe to call when PostHog is unset — still completes campaigns whose messages
+ * already reached terminal states via dispatch failures.
+ */
+export async function pollCampaignDelivery(): Promise<DeliveryPollResult> {
+  const open = await loadOpenMessages();
+  let updated = 0;
+  try {
+    updated = await syncOpenMessages(open);
+  } catch (err) {
+    log.warn({ err }, "posthog delivery sync failed");
+  }
+
+  const campaignsCompleted = await completeFinishedCampaigns();
+
+  return {
+    openMessages: open.length,
+    updated,
+    campaignsCompleted,
+  };
+}

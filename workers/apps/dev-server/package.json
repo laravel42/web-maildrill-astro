@@ -1,0 +1,28 @@
+{
+  "name": "@maildrill/dev-server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Runs the messaging, product and EmailBuilder apps on one Fastify instance and one port for local development.",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.3.0",
+    "@maildrill/config": "workspace:*",
+    "@maildrill/database": "workspace:*",
+    "@maildrill/email-builder-api": "workspace:*",
+    "@maildrill/httpkit": "workspace:*",
+    "@maildrill/observability": "workspace:*",
+    "@maildrill/providers": "workspace:*",
+    "@maildrill/queues": "workspace:*",
+    "@maildrill/authz": "workspace:*",
+    "@node-telescope/core": "^1.0.0",
+    "@node-telescope/dashboard": "^1.0.0",
+    "@node-telescope/fastify": "^1.0.0",
+    "@node-telescope/storage-postgres": "^1.0.0",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.10.0"
+  }
+}

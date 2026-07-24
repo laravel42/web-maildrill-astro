@@ -1,0 +1,48 @@
+{
+  "id": "2d794386-3d0c-4f0b-b19d-6eb163f1fe7f",
+  "createdAt": "2026-06-08T15:07:20.262Z",
+  "updatedAt": "2026-06-08T15:07:20.262Z",
+  "name": "Pastel Bakery",
+  "description": "Bakery / cafe",
+  "globals": {
+    "backdropColor": "#FFF1F2",
+    "borderRadius": 16,
+    "canvasColor": "#FFF7F3",
+    "textColor": "#5C3A2E",
+    "fontFamily": "MERRIWEATHER",
+    "linkGlobal": {
+      "linkColor": "#BE5A38",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#BE5A38",
+        "buttonTextColor": "#FFF7F3",
+        "fontWeight": "normal",
+        "shape": "pill"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#F5D5C8"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFF7F3"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFF7F3"
+      }
+    },
+    "NotionText": {
+      "style": {
+        "fontFamily": "MERRIWEATHER"
+      }
+    }
+  }
+}

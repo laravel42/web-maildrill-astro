@@ -1,0 +1,43 @@
+{
+  "id": "36028e7d-4b17-4226-a7a6-7548fe569923",
+  "createdAt": "2026-06-08T15:07:20.243Z",
+  "updatedAt": "2026-06-08T15:07:20.243Z",
+  "name": "Sage Wellness",
+  "description": "Yoga & spa",
+  "globals": {
+    "backdropColor": "#F4F7F2",
+    "borderRadius": 28,
+    "canvasColor": "#FFFFFF",
+    "textColor": "#1F2937",
+    "fontFamily": "MERRIWEATHER",
+    "linkGlobal": {
+      "linkColor": "#4D7C0F",
+      "underline": false
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#4D7C0F",
+        "buttonTextColor": "#FFFFFF",
+        "fontWeight": "normal",
+        "shape": "pill"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#D9E2D0"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    }
+  }
+}

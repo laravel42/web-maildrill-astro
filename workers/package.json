@@ -1,0 +1,46 @@
+{
+  "name": "workers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.15.1+sha512.81350b07e53c9538a02f1f2303b4290fa2d7be04e56e2a970c4cc4b417dc761de196edabd49d55c7dc9580db81007c44143e4e3d7e462b3000d23c255122d065",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:api": "tsx watch apps/api/src/index.ts",
+    "start:api": "tsx apps/api/src/index.ts",
+    "dev:product-api": "tsx watch apps/product-api/src/index.ts",
+    "start:product-api": "tsx apps/product-api/src/index.ts",
+    "dev:email-builder-api": "tsx watch apps/email-builder-api/src/index.ts",
+    "start:email-builder-api": "tsx apps/email-builder-api/src/index.ts",
+    "worker": "tsx apps/workers/src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx packages/database/src/migrate.ts",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "dev": "tsx watch apps/dev-server/src/index.ts",
+    "start": "tsx apps/dev-server/src/index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.10",
+    "drizzle-kit": "^0.31.5",
+    "tsx": "^4.19.2",
+    "typescript": "^6.0.0",
+    "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1090.0",
+    "@aws-sdk/s3-request-presigner": "^3.1090.0",
+    "@maildrill/api": "workspace:*",
+    "@maildrill/database": "workspace:*",
+    "@maildrill/dev-server": "workspace:*",
+    "@maildrill/email-builder-api": "workspace:*",
+    "@maildrill/product-api": "workspace:*",
+    "@maildrill/workers": "workspace:*"
+  }
+}

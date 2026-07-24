@@ -1,0 +1,130 @@
+[
+  {
+    "slot": 1,
+    "slug": "saas-onboarding",
+    "description": "SaaS / onboarding — multi-section with feature card and footer.",
+    "fontFamily": "MONTSERRAT",
+    "sourceFile": "skills/email-builder/references/json/01.json",
+    "blockCount": 25
+  },
+  {
+    "slot": 2,
+    "slug": "editorial-newsletter",
+    "description": "Editorial newsletter — feature story, section dividers, editorial footer.",
+    "fontFamily": "PLAYFAIR",
+    "sourceFile": "skills/email-builder/references/json/02.json",
+    "blockCount": 31
+  },
+  {
+    "slot": 3,
+    "slug": "ecommerce-flash-sale",
+    "description": "E-commerce flash sale — bold hero banner, discount code, product grid.",
+    "fontFamily": "OSWALD",
+    "sourceFile": "skills/email-builder/references/json/03.json",
+    "blockCount": 32
+  },
+  {
+    "slot": 4,
+    "slug": "event-celebration",
+    "description": "Event / celebration announcement — full-bleed hero, date callout, CTA.",
+    "fontFamily": "OSWALD",
+    "sourceFile": "skills/email-builder/references/json/04.json",
+    "blockCount": 30
+  },
+  {
+    "slot": 5,
+    "slug": "non-profit-cause",
+    "description": "Non-profit / cause — awareness header, story body, donation CTA.",
+    "fontFamily": "MERRIWEATHER",
+    "sourceFile": "skills/email-builder/references/json/05.json",
+    "blockCount": 22
+  },
+  {
+    "slot": 6,
+    "slug": "receipt-otp-minimal",
+    "description": "Receipt / OTP minimal — single-column transactional, code highlight, footer.",
+    "fontFamily": "LATO",
+    "sourceFile": "skills/email-builder/references/json/06.json",
+    "blockCount": 28
+  },
+  {
+    "slot": 7,
+    "slug": "friendly-consumer",
+    "description": "Friendly consumer — warm palette, illustration area, lifestyle copy.",
+    "fontFamily": "OPEN_SANS",
+    "sourceFile": "skills/email-builder/references/json/07.json",
+    "blockCount": 39
+  },
+  {
+    "slot": 8,
+    "slug": "travel-hospitality",
+    "description": "Travel / hospitality — destination hero, itinerary highlights, booking CTA.",
+    "fontFamily": "PLAYFAIR",
+    "sourceFile": "skills/email-builder/references/json/08.json",
+    "blockCount": 31
+  },
+  {
+    "slot": 9,
+    "slug": "wellness-mindful",
+    "description": "Wellness / mindfulness — soft palette, service tiles, gentle CTA.",
+    "fontFamily": "MERRIWEATHER",
+    "sourceFile": "skills/email-builder/references/json/09.json",
+    "blockCount": 51
+  },
+  {
+    "slot": 10,
+    "slug": "real-estate",
+    "description": "Real estate / B2B partnership — property image, key stats, contact block.",
+    "fontFamily": "PLAYFAIR",
+    "sourceFile": "skills/email-builder/references/json/10.json",
+    "blockCount": 41
+  },
+  {
+    "slot": 11,
+    "slug": "fintech-data",
+    "description": "Fintech / data report — KPI summary table, chart placeholder, update footer.",
+    "fontFamily": "MONTSERRAT",
+    "sourceFile": "skills/email-builder/references/json/11.json",
+    "blockCount": 28
+  },
+  {
+    "slot": 12,
+    "slug": "education-coaching",
+    "description": "Education / coaching — instructor intro, course highlights, enroll CTA.",
+    "fontFamily": "MERRIWEATHER",
+    "sourceFile": "skills/email-builder/references/json/12.json",
+    "blockCount": 27
+  },
+  {
+    "slot": 13,
+    "slug": "product-launch-saas",
+    "description": "Product launch (SaaS / app) — feature showcase, screenshots row, download CTA.",
+    "fontFamily": "MONTSERRAT",
+    "sourceFile": "skills/email-builder/references/json/13.json",
+    "blockCount": 36
+  },
+  {
+    "slot": 14,
+    "slug": "confirmation-reservation",
+    "description": "Confirmation / reservation — details summary card, next-steps list, contact link.",
+    "fontFamily": "LATO",
+    "sourceFile": "skills/email-builder/references/json/14.json",
+    "blockCount": 33
+  },
+  {
+    "slot": 15,
+    "slug": "abandoned-cart",
+    "description": "Abandoned cart — product thumbnail, price, urgency copy, checkout CTA.",
+    "fontFamily": "MODERN_SANS",
+    "sourceFile": "skills/email-builder/references/json/15.json",
+    "blockCount": 37
+  },
+  {
+    "slot": 16,
+    "slug": "activation-reengagement",
+    "description": "Activation / re-engagement — prize/reward reveal, CTA, social links.",
+    "fontFamily": "MONTSERRAT",
+    "sourceFile": "skills/email-builder/references/json/16.json",
+    "blockCount": 35
+  }
+]

@@ -1,0 +1,42 @@
+{
+  "id": "b0be628f-eec7-4055-b895-5cab227a67dd",
+  "createdAt": "2026-06-08T15:07:20.246Z",
+  "updatedAt": "2026-06-08T15:07:20.246Z",
+  "name": "Lemon Notes",
+  "description": "Personal blog / newsletter",
+  "globals": {
+    "backdropColor": "#FFFBEB",
+    "borderRadius": 4,
+    "canvasColor": "#FFFFFF",
+    "textColor": "#1C1917",
+    "fontFamily": "MERRIWEATHER",
+    "linkGlobal": {
+      "linkColor": "#A16207",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#1C1917",
+        "buttonTextColor": "#FEF3C7",
+        "fontWeight": "normal"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#FEF3C7"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "project": "Maildrill",
+  "views": [
+    {
+      "name": "message_lifecycle",
+      "description": "Delivery/seen/voice reports (Infobip → PostHog Hog). message_submitted is no longer captured from Maildrill.",
+      "query": "SELECT\n    timestamp AS reported_at,\n    event AS report_event,\n    properties.channel AS channel,\n    properties.message_id AS provider_message_id,\n    properties.status_group AS status_group,\n    properties.status_name AS status_name,\n    properties.to AS to\nFROM events\nWHERE event IN (\n    'message_delivery_report',\n    'message_seen_report',\n    'message_voice_report'\n)"
+    },
+    {
+      "name": "delivery_funnel_daily",
+      "description": "Daily delivery report counts by channel and Infobip status group.",
+      "query": "SELECT\n    toDate(timestamp) AS day,\n    properties.channel AS channel,\n    properties.status_group AS status_group,\n    count() AS events\nFROM events\nWHERE event = 'message_delivery_report'\nGROUP BY day, channel, status_group\nORDER BY day DESC"
+    },
+    {
+      "name": "template_approval_events",
+      "description": "WhatsApp template Meta approval status changes from Infobip (via PostHog Hog).",
+      "query": "SELECT\n    timestamp,\n    properties.provider_template_id AS provider_template_id,\n    properties.template_name AS template_name,\n    properties.status AS status,\n    properties.rejection_reason AS rejection_reason\nFROM events\nWHERE event = 'whatsapp_template_status'"
+    }
+  ],
+  "events": [
+    "message_delivery_report",
+    "message_seen_report",
+    "message_voice_report",
+    "whatsapp_template_status"
+  ]
+}

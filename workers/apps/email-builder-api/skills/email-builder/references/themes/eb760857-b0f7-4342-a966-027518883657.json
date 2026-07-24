@@ -1,0 +1,42 @@
+{
+  "id": "eb760857-b0f7-4342-a966-027518883657",
+  "createdAt": "2026-06-08T15:07:20.274Z",
+  "updatedAt": "2026-06-08T15:07:20.274Z",
+  "name": "Tropical Resort",
+  "description": "Beach / resort",
+  "globals": {
+    "backdropColor": "#ECFEFF",
+    "borderRadius": 12,
+    "canvasColor": "#FFFFFF",
+    "textColor": "#0F172A",
+    "fontFamily": "MONTSERRAT",
+    "linkGlobal": {
+      "linkColor": "#0891B2",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#F97316",
+        "buttonTextColor": "#FFFFFF",
+        "shape": "pill"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#A5F3FC"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    }
+  }
+}

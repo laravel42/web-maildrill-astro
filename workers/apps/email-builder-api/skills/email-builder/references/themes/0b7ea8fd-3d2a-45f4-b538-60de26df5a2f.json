@@ -1,0 +1,41 @@
+{
+  "id": "0b7ea8fd-3d2a-45f4-b538-60de26df5a2f",
+  "createdAt": "2026-06-08T15:07:20.276Z",
+  "updatedAt": "2026-06-08T15:07:20.276Z",
+  "name": "Spicy Restaurant",
+  "description": "Restaurant",
+  "globals": {
+    "backdropColor": "#FFFBEB",
+    "borderRadius": 8,
+    "canvasColor": "#FFFFFF",
+    "textColor": "#3F2E1A",
+    "fontFamily": "MERRIWEATHER",
+    "linkGlobal": {
+      "linkColor": "#B91C1C",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#B91C1C",
+        "buttonTextColor": "#FFFFFF"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#FED7AA"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    }
+  }
+}

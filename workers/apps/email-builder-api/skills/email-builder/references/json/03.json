@@ -1,0 +1,1020 @@
+{
+  "root": {
+    "type": "EmailLayout",
+    "data": {
+      "backdropColor": "#298c8c",
+      "canvasColor": "#FFFFFF",
+      "textColor": "#000000",
+      "fontFamily": "LATO",
+      "linkGlobal": {
+        "linkColor": "#0000ee",
+        "underline": true
+      },
+      "childrenIds": [
+        "block-687a835fd8e7a",
+        "block-687a835fd8f1f",
+        "block-1778881694927-ptu",
+        "block-687a835fd8f3b",
+        "block-687a835fd8ff1",
+        "block-687a835fd908f"
+      ]
+    }
+  },
+  "block-687a835fd8e98": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 60,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 60,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "textAlign": "center",
+        "backgroundColor": "#298c8c"
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/390x261/EEE/999?text=Image+Placeholder",
+        "alt": "Placeholder image",
+        "scale": 65,
+        "scaleMobile": 65,
+        "width": 390
+      }
+    }
+  },
+  "block-687a835fd8eb7": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 40,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 40,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": 22,
+        "backgroundColor": "#298c8c"
+      },
+      "props": {
+        "html": "Your Favorite Things, On Us"
+      }
+    }
+  },
+  "block-687a835fd8edc": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 50,
+          "bottom": 10,
+          "left": 50
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 50,
+          "bottom": 10,
+          "left": 50
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": 16,
+        "backgroundColor": "#298c8c"
+      },
+      "props": {
+        "html": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+      }
+    }
+  },
+  "block-687a835fd8efb": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "#298c8c",
+        "textAlign": "center",
+        "padding": {
+          "top": 10,
+          "bottom": 32,
+          "right": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 10,
+          "bottom": 60,
+          "right": 10,
+          "left": 10
+        },
+        "borderRadius": 4,
+        "borderColor": "#cf864d",
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0
+      },
+      "props": {
+        "buttonBackgroundColor": "#ffffff",
+        "buttonTextColor": "#000000",
+        "fullWidth": true,
+        "text": "Send a Card"
+      }
+    }
+  },
+  "block-687a835fd8e7a": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a835fd8e98",
+          "block-687a835fd8eb7",
+          "block-687a835fd8edc",
+          "block-687a835fd8efb"
+        ]
+      }
+    }
+  },
+  "block-687a835fd8f28": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 20,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "mobilePadding": {
+          "top": 20,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": 16,
+        "backgroundColor": "#285050"
+      },
+      "props": {
+        "html": "<p>Use code&nbsp; ABCD2022 &nbsp; at checkout</p>"
+      }
+    }
+  },
+  "block-687a835fd8f1f": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a835fd8f28"
+        ]
+      }
+    }
+  },
+  "block-687a835fd8f5b": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": "#298c8c"
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/504x337/EEE/999?text=Image+Placeholder",
+        "alt": "Placeholder image",
+        "scale": 84,
+        "scaleMobile": 84,
+        "width": 284
+      }
+    }
+  },
+  "block-687a835fd8f6a": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 15,
+          "right": 10,
+          "bottom": 0,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 15,
+          "right": 10,
+          "bottom": 0,
+          "left": 30
+        },
+        "textAlign": "left",
+        "color": "#ffffff",
+        "fontSize": 16,
+        "backgroundColor": "#298c8c"
+      },
+      "props": {
+        "html": "Earrings"
+      }
+    }
+  },
+  "block-687a835fd8f7d": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 30
+        },
+        "textAlign": "left",
+        "color": "#ffffff",
+        "fontSize": 16,
+        "backgroundColor": "#298c8c"
+      },
+      "props": {
+        "html": "<p>This is a new Text block. Change the text.</p>"
+      }
+    }
+  },
+  "block-687a835fd8f91": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "#298c8c",
+        "textAlign": "left",
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 30
+        },
+        "borderRadius": 20,
+        "borderColor": "#ffffff",
+        "borderTop": 1,
+        "borderBottom": 1,
+        "borderLeft": 1,
+        "borderRight": 1
+      },
+      "props": {
+        "buttonBackgroundColor": "#298c8c",
+        "text": "Shop Now",
+        "fullWidth": true,
+        "buttonTextColor": "#FFFFFF"
+      }
+    }
+  },
+  "block-687a835fd8fa8": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": "#298c8c"
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/504x337/EEE/999?text=Image+Placeholder",
+        "alt": "Placeholder image",
+        "scale": 84,
+        "scaleMobile": 84,
+        "width": 284
+      }
+    }
+  },
+  "block-687a835fd8fb4": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 15,
+          "right": 10,
+          "bottom": 0,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 15,
+          "right": 10,
+          "bottom": 0,
+          "left": 22
+        },
+        "textAlign": "left",
+        "color": "#ffffff",
+        "fontSize": 16,
+        "backgroundColor": "#298c8c"
+      },
+      "props": {
+        "html": "<p>Rings</p>"
+      }
+    }
+  },
+  "block-687a835fd8fc7": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 22
+        },
+        "textAlign": "left",
+        "color": "#ffffff",
+        "fontSize": 16,
+        "backgroundColor": "#298c8c"
+      },
+      "props": {
+        "html": "This is a new Text block. Change the text."
+      }
+    }
+  },
+  "block-687a835fd8fda": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "#298c8c",
+        "textAlign": "left",
+        "padding": {
+          "top": 10,
+          "bottom": 10,
+          "right": 10,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 10,
+          "bottom": 10,
+          "right": 10,
+          "left": 22
+        },
+        "borderRadius": 20,
+        "borderColor": "#ffffff",
+        "borderTop": 1,
+        "borderBottom": 1,
+        "borderLeft": 1,
+        "borderRight": 1
+      },
+      "props": {
+        "buttonBackgroundColor": "#298c8c",
+        "buttonTextColor": "#FFFFFF",
+        "fullWidth": true,
+        "text": "Shop Now"
+      }
+    }
+  },
+  "block-687a835fd8f49": {
+    "type": "ColumnsContainer",
+    "data": {
+      "props": {
+        "columnsCount": 2,
+        "columns": [
+          {
+            "childrenIds": []
+          },
+          {
+            "childrenIds": []
+          }
+        ],
+        "fixedWidths": [
+          50,
+          50
+        ],
+        "layout": "layout-50-50"
+      },
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "mobilePadding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "gap": 0
+      }
+    }
+  },
+  "block-687a835fd8f3b": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-1778881523999-bie"
+        ]
+      }
+    }
+  },
+  "block-687a835fd9001": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": "#298c8c"
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/504x337/EEE/999?text=Image+Placeholder",
+        "alt": "Placeholder image",
+        "scale": 84,
+        "scaleMobile": 84,
+        "width": 292
+      }
+    }
+  },
+  "block-687a835fd900e": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 15,
+          "right": 10,
+          "bottom": 0,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 15,
+          "right": 10,
+          "bottom": 0,
+          "left": 30
+        },
+        "textAlign": "left",
+        "color": "#ffffff",
+        "fontSize": 16,
+        "backgroundColor": "#298c8c"
+      },
+      "props": {
+        "html": "Necklace"
+      }
+    }
+  },
+  "block-687a835fd9020": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 30
+        },
+        "textAlign": "left",
+        "color": "#ffffff",
+        "fontSize": 16,
+        "backgroundColor": "#298c8c"
+      },
+      "props": {
+        "html": "This is a new Text block. Change the text."
+      }
+    }
+  },
+  "block-687a835fd9033": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "#298c8c",
+        "textAlign": "left",
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 30
+        },
+        "borderRadius": 20,
+        "borderColor": "#ffffff",
+        "borderTop": 1,
+        "borderBottom": 1,
+        "borderLeft": 1,
+        "borderRight": 1
+      },
+      "props": {
+        "buttonBackgroundColor": "#298c8c",
+        "text": "Shop Now",
+        "fullWidth": true,
+        "buttonTextColor": "#FFFFFF"
+      }
+    }
+  },
+  "block-687a835fd9048": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": "#298c8c"
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/504x337/EEE/999?text=Image+Placeholder",
+        "alt": "Placeholder image",
+        "scale": 84,
+        "scaleMobile": 84,
+        "width": 292
+      }
+    }
+  },
+  "block-687a835fd9054": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 15,
+          "right": 10,
+          "bottom": 0,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 15,
+          "right": 10,
+          "bottom": 0,
+          "left": 22
+        },
+        "textAlign": "left",
+        "color": "#ffffff",
+        "fontSize": 16,
+        "backgroundColor": "#298c8c"
+      },
+      "props": {
+        "html": "<p>Earrings</p>"
+      }
+    }
+  },
+  "block-687a835fd9065": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 23
+        },
+        "textAlign": "left",
+        "color": "#ffffff",
+        "fontSize": 16,
+        "backgroundColor": "#298c8c"
+      },
+      "props": {
+        "html": "This is a new Text block. Change the text."
+      }
+    }
+  },
+  "block-687a835fd9079": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "#298c8c",
+        "textAlign": "left",
+        "padding": {
+          "top": 10,
+          "bottom": 10,
+          "right": 10,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 10,
+          "bottom": 10,
+          "right": 10,
+          "left": 22
+        },
+        "borderRadius": 20,
+        "borderColor": "#ffffff",
+        "borderTop": 1,
+        "borderBottom": 1,
+        "borderLeft": 1,
+        "borderRight": 1
+      },
+      "props": {
+        "buttonBackgroundColor": "#298c8c",
+        "buttonTextColor": "#FFFFFF",
+        "fullWidth": true,
+        "text": "Shop Now"
+      }
+    }
+  },
+  "block-687a835fd8ffa": {
+    "type": "ColumnsContainer",
+    "data": {
+      "props": {
+        "columnsCount": 2,
+        "columns": [
+          {
+            "childrenIds": []
+          },
+          {
+            "childrenIds": []
+          }
+        ],
+        "fixedWidths": [
+          50,
+          50
+        ],
+        "layout": "layout-50-50"
+      },
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "mobilePadding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "gap": 0
+      }
+    }
+  },
+  "block-687a835fd8ff1": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-1778881576855-r8r"
+        ]
+      }
+    }
+  },
+  "block-687a835fd909a": {
+    "type": "SocialMedia",
+    "data": {
+      "style": {
+        "backgroundColor": "#285050",
+        "padding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center"
+      },
+      "gap": 15,
+      "theme": "rounded",
+      "items": [
+        {
+          "id": "687a835fd90a4",
+          "key": "facebook",
+          "label": "Facebook",
+          "iconName": "Facebook",
+          "theme": "original",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Facebook_Original_36px.png",
+          "href": "https://facebook.com/"
+        },
+        {
+          "id": "687a835fd90c6",
+          "key": "apple",
+          "label": "Apple",
+          "iconName": "Apple",
+          "theme": "original",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Apple_Original_36px.png",
+          "href": "https://twitter.com/"
+        },
+        {
+          "id": "687a835fd90ce",
+          "key": "linkedin",
+          "label": "LinkedIn",
+          "iconName": "LinkedIn",
+          "theme": "original",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/LinkedIn_Original_36px.png",
+          "href": "https://linkedin.com/"
+        },
+        {
+          "id": "687a835fd90d7",
+          "key": "instagram",
+          "label": "Instagram",
+          "iconName": "Instagram",
+          "theme": "original",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Instagram_Original_36px.png",
+          "href": "https://instagram.com/"
+        }
+      ]
+    }
+  },
+  "block-687a835fd90ea": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 20,
+          "bottom": 60,
+          "left": 20
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 20,
+          "bottom": 60,
+          "left": 20
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": 16,
+        "backgroundColor": "#285050"
+      },
+      "props": {
+        "html": "2261 Market Street #4667 San Francisco, CA 94114 All rights reserved.  Company No. 94114   Preferences | Unsubscribe  | View in browser"
+      }
+    }
+  },
+  "block-687a835fd908f": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": true,
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a835fd909a",
+          "block-687a835fd90ea"
+        ]
+      }
+    }
+  },
+  "block-1778881523999-bie": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 16,
+          "left": 16
+        },
+        "mobilePadding": null
+      },
+      "props": {
+        "fixedWidths": [
+          50,
+          50,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "columns": [
+          {
+            "childrenIds": [
+              "block-687a835fd8f5b",
+              "block-687a835fd8f6a",
+              "block-687a835fd8f7d",
+              "block-687a835fd8f91"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-687a835fd8fa8",
+              "block-687a835fd8fb4",
+              "block-687a835fd8fc7",
+              "block-687a835fd8fda"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "block-1778881576855-r8r": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 16,
+          "left": 16
+        },
+        "mobilePadding": null
+      },
+      "props": {
+        "fixedWidths": [
+          50,
+          50,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "contentAlignment": "top",
+        "columns": [
+          {
+            "childrenIds": [
+              "block-687a835fd9001",
+              "block-687a835fd900e",
+              "block-687a835fd9020",
+              "block-687a835fd9033"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-687a835fd9048",
+              "block-687a835fd9054",
+              "block-687a835fd9065",
+              "block-687a835fd9079"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "block-1778881694927-ptu": {
+    "type": "Spacer",
+    "data": {
+      "style": {
+        "height": 39,
+        "backgroundColor": "#298c8c"
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "42aed75d-a1e4-4c51-bcb1-1815e0ad853e",
+  "createdAt": "2026-05-25T18:47:15.355Z",
+  "updatedAt": "2026-05-25T18:47:15.355Z",
+  "name": "dark guitar",
+  "globals": {
+    "backdropColor": "#F5F5F5",
+    "canvasColor": "#030303",
+    "textColor": "#ffffff",
+    "fontFamily": "ROBOTO",
+    "linkGlobal": {
+      "linkColor": "#ffffff",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "textAlign": "center",
+        "fontWeight": "bold",
+        "buttonBackgroundColor": "#ffffff",
+        "buttonTextColor": "#050505",
+        "fontSize": 18
+      }
+    }
+  }
+}

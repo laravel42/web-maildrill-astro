@@ -1,0 +1,48 @@
+{
+  "id": "7fb7a660-49b0-47fd-88c2-f3e717b6bfe0",
+  "createdAt": "2026-06-08T15:07:20.264Z",
+  "updatedAt": "2026-06-08T15:07:20.264Z",
+  "name": "Sky Wedding",
+  "description": "Wedding & events",
+  "globals": {
+    "backdropColor": "#F0F9FF",
+    "borderRadius": 32,
+    "canvasColor": "#FFFFFF",
+    "textColor": "#1F2937",
+    "fontFamily": "PLAYFAIR",
+    "linkGlobal": {
+      "linkColor": "#B45309",
+      "underline": false
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#B45309",
+        "buttonTextColor": "#FFFFFF",
+        "fontWeight": "normal",
+        "shape": "pill"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#BAE6FD"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "NotionText": {
+      "style": {
+        "fontFamily": "PLAYFAIR"
+      }
+    }
+  }
+}

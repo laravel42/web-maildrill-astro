@@ -1,0 +1,46 @@
+{
+  "id": "bcc979f7-725c-427d-a3a9-8b4225b7e916",
+  "createdAt": "2026-06-08T15:07:20.244Z",
+  "updatedAt": "2026-06-08T15:07:20.244Z",
+  "name": "Coral Studio",
+  "description": "Creative agency",
+  "globals": {
+    "backdropColor": "#FFF7F5",
+    "borderRadius": 8,
+    "canvasColor": "#FFFFFF",
+    "textColor": "#1F2937",
+    "fontFamily": "OSWALD",
+    "linkGlobal": {
+      "linkColor": "#F97056",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#1F2937",
+        "buttonTextColor": "#FFFFFF"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#FBD7CD"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "NotionText": {
+      "style": {
+        "fontFamily": "OSWALD"
+      }
+    }
+  }
+}

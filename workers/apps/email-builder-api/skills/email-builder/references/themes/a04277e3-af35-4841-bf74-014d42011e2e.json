@@ -1,0 +1,16 @@
+{
+  "id": "a04277e3-af35-4841-bf74-014d42011e2e",
+  "createdAt": "2026-06-02T21:09:06.452Z",
+  "updatedAt": "2026-06-02T21:09:06.452Z",
+  "name": "Elegant 3",
+  "globals": {
+    "backdropColor": "#111111",
+    "canvasColor": "#0D0D0D",
+    "textColor": "#ffffff",
+    "fontFamily": "PLAYFAIR",
+    "linkGlobal": {
+      "linkColor": "#C9A84C",
+      "underline": true
+    }
+  }
+}

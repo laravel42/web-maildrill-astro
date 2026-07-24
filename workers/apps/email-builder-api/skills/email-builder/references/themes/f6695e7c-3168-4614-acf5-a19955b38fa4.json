@@ -1,0 +1,41 @@
+{
+  "id": "f6695e7c-3168-4614-acf5-a19955b38fa4",
+  "createdAt": "2026-06-08T15:07:20.254Z",
+  "updatedAt": "2026-06-08T15:07:20.254Z",
+  "name": "Forest Outdoor",
+  "description": "Outdoor brand",
+  "globals": {
+    "backdropColor": "#052E16",
+    "borderRadius": 8,
+    "canvasColor": "#14532D",
+    "textColor": "#F0FDF4",
+    "fontFamily": "MONTSERRAT",
+    "linkGlobal": {
+      "linkColor": "#FDE68A",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#FDE68A",
+        "buttonTextColor": "#14532D"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#166534"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#14532D"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#14532D"
+      }
+    }
+  }
+}

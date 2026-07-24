@@ -1,0 +1,41 @@
+{
+  "id": "571e7f46-ab98-409a-be62-cdf0b4e1f281",
+  "createdAt": "2026-06-08T15:07:20.257Z",
+  "updatedAt": "2026-06-08T15:07:20.257Z",
+  "name": "Crypto Lime",
+  "description": "Web3 / crypto",
+  "globals": {
+    "backdropColor": "#0A0A0A",
+    "borderRadius": 6,
+    "canvasColor": "#111111",
+    "textColor": "#F5F5F5",
+    "fontFamily": "MODERN_SANS",
+    "linkGlobal": {
+      "linkColor": "#A3E635",
+      "underline": false
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#A3E635",
+        "buttonTextColor": "#0A0A0A"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#262626"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#111111"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#111111"
+      }
+    }
+  }
+}

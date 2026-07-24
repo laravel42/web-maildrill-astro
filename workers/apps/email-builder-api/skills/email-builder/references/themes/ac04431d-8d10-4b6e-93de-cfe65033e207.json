@@ -1,0 +1,43 @@
+{
+  "id": "ac04431d-8d10-4b6e-93de-cfe65033e207",
+  "createdAt": "2026-06-08T15:07:20.234Z",
+  "updatedAt": "2026-06-08T15:07:20.234Z",
+  "name": "Indigo Trust",
+  "description": "Fintech · sharp & confident",
+  "globals": {
+    "backdropColor": "#F1F5F9",
+    "borderColor": "#C7D2FE",
+    "borderRadius": 4,
+    "canvasColor": "#FFFFFF",
+    "textColor": "#0F172A",
+    "fontFamily": "MODERN_SANS",
+    "linkGlobal": {
+      "linkColor": "#3730A3",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#3730A3",
+        "buttonTextColor": "#FFFFFF"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#E2E8F0"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFFFF",
+        "borderColor": "#C7D2FE"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    }
+  }
+}

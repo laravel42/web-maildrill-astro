@@ -1,0 +1,46 @@
+{
+  "id": "e492de82-fd72-4a1d-a5f8-4ad85409b88f",
+  "createdAt": "2026-06-08T15:07:20.249Z",
+  "updatedAt": "2026-06-08T15:07:20.249Z",
+  "name": "Onyx Luxe",
+  "description": "Luxury fashion · serif gold",
+  "globals": {
+    "backdropColor": "#0A0A0A",
+    "borderRadius": 0,
+    "canvasColor": "#000000",
+    "textColor": "#F5F0E8",
+    "fontFamily": "PLAYFAIR",
+    "linkGlobal": {
+      "linkColor": "#C9A84C",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#C9A84C",
+        "buttonTextColor": "#000000"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#2A2A2A"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#000000"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#000000"
+      }
+    },
+    "NotionText": {
+      "style": {
+        "fontFamily": "PLAYFAIR"
+      }
+    }
+  }
+}

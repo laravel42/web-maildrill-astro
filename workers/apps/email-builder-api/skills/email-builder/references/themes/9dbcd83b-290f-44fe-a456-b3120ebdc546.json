@@ -1,0 +1,42 @@
+{
+  "id": "9dbcd83b-290f-44fe-a456-b3120ebdc546",
+  "createdAt": "2026-06-08T15:07:20.266Z",
+  "updatedAt": "2026-06-08T15:07:20.266Z",
+  "name": "Lavender Beauty",
+  "description": "Beauty & cosmetics",
+  "globals": {
+    "backdropColor": "#F5F3FF",
+    "borderRadius": 16,
+    "canvasColor": "#FFFFFF",
+    "textColor": "#3B0764",
+    "fontFamily": "PACIFICO",
+    "linkGlobal": {
+      "linkColor": "#7C3AED",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#7C3AED",
+        "buttonTextColor": "#FFFFFF",
+        "shape": "pill"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#E9D5FF"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    }
+  }
+}

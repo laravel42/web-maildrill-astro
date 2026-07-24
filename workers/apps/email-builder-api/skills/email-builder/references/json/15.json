@@ -1,0 +1,1122 @@
+{
+  "root": {
+    "type": "EmailLayout",
+    "data": {
+      "backdropColor": "#0d2135",
+      "canvasColor": "#2f5a80",
+      "textColor": "#ffffff",
+      "fontFamily": "LATO",
+      "childrenIds": [
+        "block-687a836776d93",
+        "block-687a836776e3b",
+        "block-687a836776f5b",
+        "block-687a836776f95",
+        "block-687a836777031"
+      ],
+      "linkGlobal": {
+        "linkColor": "#0000ee",
+        "underline": true
+      }
+    }
+  },
+  "block-687a836776db2": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": 45,
+        "backgroundColor": "#0d2135"
+      },
+      "props": {
+        "html": "[Shop Name!]"
+      }
+    }
+  },
+  "block-687a836776de6": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 20,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 20,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#FFFFFF",
+        "fontSize": 32,
+        "backgroundColor": "#0d2135"
+      },
+      "props": {
+        "html": "<p>00 : 00 : 00 : 00</p>"
+      }
+    }
+  },
+  "block-687a836776df2": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 20,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 20,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#FFFFFF",
+        "fontSize": 24,
+        "backgroundColor": "#0d2135"
+      },
+      "props": {
+        "html": "<p>Days&nbsp;&nbsp;&nbsp;&nbsp;Hours&nbsp;&nbsp;&nbsp;&nbsp;Minutes&nbsp;&nbsp;&nbsp;&nbsp;Seconds</p>"
+      }
+    }
+  },
+  "block-687a836776dd9": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#0d2135",
+        "padding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 20,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 20,
+          "left": 10
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a836776de6",
+          "block-687a836776df2"
+        ]
+      }
+    }
+  },
+  "block-687a836776dfd": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 50,
+          "bottom": 30,
+          "left": 50
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 50,
+          "bottom": 30,
+          "left": 50
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": 16,
+        "backgroundColor": "#0d2135"
+      },
+      "props": {
+        "html": "Hey, we know you're busy so don't wait too long! Your items are in your cart and ready for checkout."
+      }
+    }
+  },
+  "block-687a836776e15": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": "#0d2135"
+      },
+      "props": {
+        "size": "cover",
+        "sizeMobile": "cover",
+        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "alt": "shoes",
+        "scale": 100,
+        "scaleMobile": 100,
+        "width": 580
+      }
+    }
+  },
+  "block-687a836776e29": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 40,
+          "right": 10,
+          "bottom": 15,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 40,
+          "right": 10,
+          "bottom": 15,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": 22,
+        "backgroundColor": "#0d2135"
+      },
+      "props": {
+        "html": "<p>New Arrival</p>"
+      }
+    }
+  },
+  "block-687a836776d93": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a836776db2",
+          "block-687a836776dd9",
+          "block-687a836776dfd",
+          "block-687a836776e15",
+          "block-687a836776e29"
+        ]
+      }
+    }
+  },
+  "block-687a836776e5c": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "cover",
+        "sizeMobile": "cover",
+        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "alt": "shoes",
+        "scale": 100,
+        "scaleMobile": 100,
+        "width": 167
+      }
+    }
+  },
+  "block-687a836776e68": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "RunX 1.44"
+      }
+    }
+  },
+  "block-687a836776e7f": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 5,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 5,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#7e8c8d",
+        "fontSize": "14px",
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "MEN SS17"
+      }
+    }
+  },
+  "block-687a836776e90": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "$123.99"
+      }
+    }
+  },
+  "block-687a836776e9e": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "textAlign": "center",
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 40,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 40,
+          "left": 10
+        },
+        "borderRadius": 4,
+        "borderColor": "#ffffff",
+        "borderTop": 1,
+        "borderBottom": 1,
+        "borderLeft": 1,
+        "borderRight": 1
+      },
+      "props": {
+        "buttonBackgroundColor": "#0d2135",
+        "text": "Buy Now",
+        "fullWidth": true,
+        "buttonTextColor": "#FFFFFF"
+      }
+    }
+  },
+  "block-687a836776ebb": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "cover",
+        "sizeMobile": "cover",
+        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "alt": "shoes",
+        "scale": 100,
+        "scaleMobile": 100,
+        "width": 167
+      }
+    }
+  },
+  "block-687a836776ec6": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "RunG 1.47"
+      }
+    }
+  },
+  "block-687a836776ed8": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 5,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 5,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#7e8c8d",
+        "fontSize": "14px",
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "MEN SS17"
+      }
+    }
+  },
+  "block-687a836776ee8": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "$120.99"
+      }
+    }
+  },
+  "block-687a836776ef5": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "textAlign": "center",
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 40,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 40,
+          "left": 10
+        },
+        "borderRadius": 4,
+        "borderColor": "#ffffff",
+        "borderTop": 1,
+        "borderBottom": 1,
+        "borderLeft": 1,
+        "borderRight": 1
+      },
+      "props": {
+        "buttonBackgroundColor": "#0d2135",
+        "text": "Buy Now",
+        "fullWidth": true,
+        "buttonTextColor": "#FFFFFF"
+      }
+    }
+  },
+  "block-687a836776f0a": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "cover",
+        "sizeMobile": "cover",
+        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "alt": "shoes",
+        "scale": 100,
+        "scaleMobile": 100,
+        "width": 167
+      }
+    }
+  },
+  "block-687a836776f14": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "RunF 1.43"
+      }
+    }
+  },
+  "block-687a836776f26": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 5,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 5,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#7e8c8d",
+        "fontSize": "14px",
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "MEN SS17"
+      }
+    }
+  },
+  "block-687a836776f36": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "$118.99"
+      }
+    }
+  },
+  "block-687a836776f43": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "textAlign": "center",
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 40,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 40,
+          "left": 10
+        },
+        "borderRadius": 4,
+        "borderColor": "#ffffff",
+        "borderTop": 1,
+        "borderBottom": 1,
+        "borderLeft": 1,
+        "borderRight": 1
+      },
+      "props": {
+        "buttonBackgroundColor": "#0d2135",
+        "text": "Buy Now",
+        "fullWidth": true,
+        "buttonTextColor": "#FFFFFF"
+      }
+    }
+  },
+  "block-687a836776e47": {
+    "type": "ColumnsContainer",
+    "data": {
+      "props": {
+        "columnsCount": 3,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-687a836776e5c",
+              "block-687a836776e68",
+              "block-687a836776e7f",
+              "block-687a836776e90",
+              "block-687a836776e9e"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-687a836776ebb",
+              "block-687a836776ec6",
+              "block-687a836776ed8",
+              "block-687a836776ee8",
+              "block-687a836776ef5"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-687a836776f0a",
+              "block-687a836776f14",
+              "block-687a836776f26",
+              "block-687a836776f36",
+              "block-687a836776f43"
+            ]
+          }
+        ],
+        "fixedWidths": [
+          33.333333333333336,
+          33.333333333333336,
+          33.333333333333336
+        ],
+        "layout": "layout-33-33-33"
+      },
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "mobilePadding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "gap": 0
+      }
+    }
+  },
+  "block-687a836776e3b": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a836776e47"
+        ]
+      }
+    }
+  },
+  "block-687a836776f65": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 80,
+          "right": 87,
+          "bottom": 10,
+          "left": 80
+        },
+        "mobilePadding": {
+          "top": 80,
+          "right": 87,
+          "bottom": 10,
+          "left": 80
+        },
+        "textAlign": "center",
+        "color": "#000000",
+        "fontSize": 18,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "10% off your purchase when you use code ABANDONED"
+      }
+    }
+  },
+  "block-687a836776f7f": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "textAlign": "center",
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 90,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 90,
+          "left": 10
+        },
+        "borderRadius": 4
+      },
+      "props": {
+        "buttonBackgroundColor": "#2885aa",
+        "text": "Apply Coupon",
+        "fullWidth": false,
+        "buttonTextColor": "#FFFFFF"
+      }
+    }
+  },
+  "block-687a836776f5b": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a836776f65",
+          "block-687a836776f7f"
+        ]
+      }
+    }
+  },
+  "block-687a836776faa": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "left",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/198x132/EEE/999?text=Image+Placeholder",
+        "alt": "Logo",
+        "scale": 33,
+        "scaleMobile": 33,
+        "width": 284
+      }
+    }
+  },
+  "block-687a836776fbc": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 23,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 23,
+          "left": 10
+        },
+        "textAlign": "left",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Copyright 2022 [COMPANY NAME]"
+      }
+    }
+  },
+  "block-687a836776fd2": {
+    "type": "SocialMedia",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 33,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 33,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "right"
+      },
+      "gap": 10,
+      "theme": "squared",
+      "items": [
+        {
+          "id": "687a836776fdc",
+          "key": "facebook",
+          "label": "Facebook",
+          "iconName": "Facebook",
+          "theme": "original",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Facebook_Original_36px.png",
+          "href": "https://facebook.com/"
+        },
+        {
+          "id": "687a836776fef",
+          "key": "instagram",
+          "label": "Instagram",
+          "iconName": "Instagram",
+          "theme": "original",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Instagram_Original_36px.png",
+          "href": "https://instagram.com/"
+        },
+        {
+          "id": "687a836776ffa",
+          "key": "pinterest",
+          "label": "Pinterest",
+          "iconName": "Pinterest",
+          "theme": "original",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Pinterest_Original_36px.png",
+          "href": "https://pinterest.com/"
+        },
+        {
+          "id": "687a836777002",
+          "key": "linkedin",
+          "label": "LinkedIn",
+          "iconName": "LinkedIn",
+          "theme": "original",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/LinkedIn_Original_36px.png",
+          "href": "https://linkedin.com/"
+        }
+      ]
+    }
+  },
+  "block-687a836777016": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 19,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 19,
+          "left": 10
+        },
+        "textAlign": "right",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "www.L42.com"
+      }
+    }
+  },
+  "block-687a836776fa0": {
+    "type": "ColumnsContainer",
+    "data": {
+      "props": {
+        "columnsCount": 2,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-1778899420826-qoz",
+              "block-687a836776fbc"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-687a836776fd2",
+              "block-687a836777016"
+            ]
+          }
+        ],
+        "fixedWidths": [
+          50,
+          50
+        ],
+        "layout": "layout-50-50"
+      },
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "mobilePadding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "gap": 0
+      }
+    }
+  },
+  "block-687a836776f95": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a836776fa0"
+        ]
+      }
+    }
+  },
+  "block-687a83677703e": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 20,
+          "right": 10,
+          "bottom": 20,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 20,
+          "right": 10,
+          "bottom": 20,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#0d2135",
+        "fontSize": "14px",
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "No longer want to receive these emails? Unsubscribe . 2261 Market Street #4667 San Francisco"
+      }
+    }
+  },
+  "block-687a836777031": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": true,
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a83677703e"
+        ]
+      }
+    }
+  },
+  "block-1778899420826-qoz": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        },
+        "mobilePadding": null
+      },
+      "props": {
+        "touched": false,
+        "scale": 41,
+        "size": "scale",
+        "sizeMobile": "scale",
+        "width": 284,
+        "widthMobile": 117,
+        "scaleMobile": 41,
+        "height": null,
+        "url": "https://ddc4vowthkjlv.cloudfront.net/uploads/gallery/1/69cc1b1083b90.jpg",
+        "alt": null,
+        "linkHref": null,
+        "contentAlignment": "middle"
+      }
+    }
+  }
+}

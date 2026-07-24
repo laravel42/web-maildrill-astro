@@ -1,0 +1,19 @@
+{
+  "name": "@maildrill/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@maildrill/authz": "workspace:*",
+    "@maildrill/config": "workspace:*",
+    "@maildrill/database": "workspace:*",
+    "@maildrill/domain": "workspace:*",
+    "@maildrill/httpkit": "workspace:*",
+    "@maildrill/observability": "workspace:*",
+    "@maildrill/providers": "workspace:*",
+    "@maildrill/queues": "workspace:*",
+    "@maildrill/services": "workspace:*",
+    "fastify": "^5.2.0",
+    "zod": "^3.24.1"
+  }
+}

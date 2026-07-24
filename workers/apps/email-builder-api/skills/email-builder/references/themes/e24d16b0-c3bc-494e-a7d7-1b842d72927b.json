@@ -1,0 +1,41 @@
+{
+  "id": "e24d16b0-c3bc-494e-a7d7-1b842d72927b",
+  "createdAt": "2026-06-08T15:07:20.251Z",
+  "updatedAt": "2026-06-08T15:07:20.251Z",
+  "name": "Cyber Tech",
+  "description": "DevOps & SaaS dev",
+  "globals": {
+    "backdropColor": "#020617",
+    "borderRadius": 4,
+    "canvasColor": "#0F172A",
+    "textColor": "#E2E8F0",
+    "fontFamily": "MODERN_SANS",
+    "linkGlobal": {
+      "linkColor": "#22D3EE",
+      "underline": false
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#06B6D4",
+        "buttonTextColor": "#020617"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#1E293B"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#0F172A"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#0F172A"
+      }
+    }
+  }
+}
