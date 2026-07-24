@@ -54,13 +54,16 @@ function toWireBrief(draft: DraftBrief): object {
 export async function compileBriefClient(
   draft: DraftBrief,
   backendUrl: string,
-  signal?: AbortSignal
+  options?: { locale?: string; signal?: AbortSignal }
 ): Promise<CompileBriefResult> {
   const res = await fetch(`${backendUrl}/visual-brief/compile`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ brief: toWireBrief(draft) }),
-    signal,
+    body: JSON.stringify({
+      brief: toWireBrief(draft),
+      locale: options?.locale,
+    }),
+    signal: options?.signal,
   });
   if (!res.ok) {
     throw new Error(`visual-brief/compile: HTTP ${res.status}`);

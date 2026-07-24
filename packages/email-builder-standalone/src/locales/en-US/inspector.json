@@ -32,7 +32,7 @@
       "promptPlaceholder": "e.g. A friendly welcome email for new users with a CTA button to confirm their account",
       "promptPlaceholderRefine": "e.g. Make the CTA button orange, shorten the intro paragraph, and add a footer with links to our social networks.",
       "suggestionsLabel": "Need inspiration?",
-      "improvePrompt": "✨ Improve prompt",
+      "improvePrompt": "Improve prompt",
       "improvingPrompt": "Improving...",
       "suggestions": [],
       "suggestionsRefine": [

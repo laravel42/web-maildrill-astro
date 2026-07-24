@@ -1,4 +1,4 @@
-import { alpha, createTheme, darken, getContrastRatio, hexToRgb, lighten } from '@mui/material/styles';
+import { alpha, createTheme, darken, getContrastRatio, getLuminance, hexToRgb, lighten } from '@mui/material/styles';
 
 declare module '@mui/material/styles' {
   interface TypeBackground {
@@ -101,14 +101,14 @@ const getTheme = (
   // Helper with robust error handling
   const createColorPalette = (color: string) => {
     try {
-      const contrastText =
-        getContrastRatio(color, darkMode ? '#000' : '#fff') > 4.5
-          ? darkMode
-            ? '#000'
-            : '#fff'
-          : darkMode
-            ? '#fff'
-            : '#111';
+      // Pick a label colour that stays legible on top of the fill. Use the
+      // fill's luminance instead of a white-only contrast check: saturated
+      // brand colours like the orange #ff441f land in a band where the old
+      // `getContrastRatio(color,'#fff') > 4.5` check fell back to dark text,
+      // which reads poorly on the vivid fill — e.g. selected toggle pills
+      // showed near-black text/icons on orange. Below the mid-luminance cutoff
+      // we use white; genuinely light fills (pale yellow) keep dark text.
+      const contrastText = getLuminance(color) < 0.45 ? '#ffffff' : '#111111';
 
       return {
         main: color,

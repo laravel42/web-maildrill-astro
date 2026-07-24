@@ -117,3 +117,15 @@ The visual editor is **vendored and compiled from source**, wrapped by
 - Commit only when asked; stage specific files (never blanket `git add .` that could sweep in
   `.env` or the auth bypass). Conventional-commit style messages (`feat(...)`, `fix(...)`).
 - Never commit `src/middleware.ts`'s `SKIP_AUTH_FOR_BUILDER_WORK` bypass.
+
+## Learned User Preferences
+
+- Communicate in Spanish with this user.
+- In the AI generation dialog, never expose Zod validation paths, schema mismatch details, or raw SSE/backend warning JSON to end users; use generic status copy and log diagnostics in dev only.
+
+## Learned Workspace Facts
+
+- AI email generation HTTP API lives in sibling repo `maildrill-service/apps/email-builder-api`; this Astro app proxies it through `src/pages/api/eb/[...path].ts` (`eb-proxy.ts`).
+- Unsplash `IMAGE_POOL` for new templates and refine mode is resolved in `maildrill-service` (`generate.ts`, `buildRefinePrompt`); refine must not skip the pool just because `currentDocument` is present.
+- `AIPreviewPanel.sanitizeForReader` must walk `ColumnsContainer` column-slot `childrenIds`; omitting them makes modal preview hide columns that render on the canvas.
+- LLM-emitted CSS padding strings are normalized client-side in the repair pipeline (`coerceGeneratedStyles.ts` inside `repairDocument`) before validation and apply.

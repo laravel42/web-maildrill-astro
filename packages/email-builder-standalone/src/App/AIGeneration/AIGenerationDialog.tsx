@@ -180,6 +180,9 @@ export default function AIGenerationDialog({
   const [completedDocument, setCompletedDocument] = useState<TEditorConfiguration | null>(null);
   // Whether the close-confirmation dialog is visible.
   const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
+  // Force the wizard subtree to remount on every dialog open so brief state
+  // and SummaryStep compile are fresh.
+  const [wizardKey, setWizardKey] = useState(0);
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -197,6 +200,9 @@ export default function AIGenerationDialog({
     setStreamWarnings(null);
     setResponse(null);
     setCompletedDocument(null);
+    // Force the wizard subtree to remount on every dialog open so brief state,
+    // SummaryStep compile, and useVisualBrief are all re-initialised fresh.
+    setWizardKey((k) => k + 1);
     // Restore entry mode only on the very first open (when entryMode is still
     // 'picker' and there is no prompt). Once the user has made a choice we
     // leave their state untouched.
@@ -303,6 +309,11 @@ export default function AIGenerationDialog({
     // Deep clone so subsequent dialog runs can't mutate the editor state by
     // reference. Mirrors the pattern EmailBuilder uses when loading `data`.
     resetDocument(JSON.parse(JSON.stringify(completedDocument)));
+    // Clear the dialog-level prompt so the wizard's initialRawIntent is empty
+    // on the next dialog open. Without this a stale compiled prompt leaks
+    // into useVisualBrief.rawIntent and SummaryStep.buildFallback serves it
+    // immediately, making every subsequent generation identical.
+    setPrompt('');
     onClose();
   }, [completedDocument, onClose]);
 
@@ -367,6 +378,7 @@ export default function AIGenerationDialog({
   // the panel gets unmounted on the first error event and the frames are
   // lost.
   const showPreview = (status === 'streaming' || status === 'complete' || status === 'error') && response !== null;
+  const stretchPrompt = entryMode === 'direct' && !showPreview;
 
   // Example prompts shown as clickable chips under the textarea. Hidden while
   // a generation is in flight, after completion, and cleared from noise by
@@ -626,7 +638,20 @@ export default function AIGenerationDialog({
       }}
       maxWidth={showPreview ? 'lg' : 'sm'}
       fullWidth
-      slotProps={{ paper: { sx: { bgcolor: 'background.paper', color: 'text.primary', borderRadius: '10px' } } }}
+      slotProps={{
+        paper: {
+          sx: {
+            bgcolor: 'background.paper',
+            color: 'text.primary',
+            borderRadius: '10px',
+            minHeight: 500,
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+          },
+        },
+      }}
     >
       <DialogTitle sx={{ fontWeight: 700, fontSize: '24px' }}>
         {entryMode === 'picker' ? (
@@ -638,7 +663,17 @@ export default function AIGenerationDialog({
           <WizardHeader mode={entryMode as 'direct' | 'wizard'} onSwitch={handleModeSwitch} disabled={isBusy} />
         )}
       </DialogTitle>
-      <DialogContent>
+      <DialogContent
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          pb: 0,
+          
+        }}
+      >
         {/* ---------------------------------------------------------------- */}
         {/* ENTRY PICKER                                                      */}
         {/* ---------------------------------------------------------------- */}
@@ -647,20 +682,33 @@ export default function AIGenerationDialog({
         {/* ---------------------------------------------------------------- */}
         {/* WIZARD MODE                                                       */}
         {/* ---------------------------------------------------------------- */}
-        {entryMode === 'wizard' && !showPreview && (
-          <AIVisualWizard
-            initialRawIntent={prompt}
-            backendUrl={backendUrl}
-            brandColors={
-              primaryColor || secondaryColor ? { primary: primaryColor, secondary: secondaryColor } : undefined
+        {/* Keep the wizard summary visible during thinking AND streaming so the
+             Generate button stays in the viewport with its loading spinner —
+             it is the only signal telling the user blocks are arriving.
+             Shrink to a compact strip once the preview panel takes over. */}
+        {entryMode === 'wizard' && (status === 'idle' || status === 'thinking' || status === 'streaming') && (
+          <Box
+            sx={
+              showPreview
+                ? { flexShrink: 0, overflow: 'auto', maxHeight: '30%' }
+                : { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }
             }
-            locale={locale}
-            onGenerate={handleWizardGenerate}
-            generating={isBusy}
-          />
+          >
+            <AIVisualWizard
+              key={wizardKey}
+              initialRawIntent={prompt}
+              backendUrl={backendUrl}
+              brandColors={
+                primaryColor || secondaryColor ? { primary: primaryColor, secondary: secondaryColor } : undefined
+              }
+              locale={locale}
+              onGenerate={handleWizardGenerate}
+              generating={isBusy}
+            />
+          </Box>
         )}
         {entryMode === 'wizard' && status === 'thinking' && (
-          <Stack direction="row" sx={{ gap: 2, alignItems: 'center', py: 1 }}>
+          <Stack direction="row" sx={{ gap: 2, alignItems: 'center', py: 1, flexShrink: 0 }}>
             <CircularProgress size={20} />
             <Typography variant="body2" color="text.secondary">
               {t('aiGeneration.dialog.status.thinking')}
@@ -668,22 +716,23 @@ export default function AIGenerationDialog({
           </Stack>
         )}
         {entryMode === 'wizard' && status === 'complete' && (
-          <Alert severity="success" variant="outlined" sx={{ mt: 1 }}>
+          <Alert severity="success" variant="outlined" sx={{ mt: 1, flexShrink: 0 }}>
             {t('aiGeneration.dialog.status.complete')}
           </Alert>
         )}
-        {/* Stream error reports hidden — unhide by removing display:'none' */}
-        {entryMode === 'wizard' && showPreview && response && <Box sx={{ display: 'none' }}>{renderStatusRow()}</Box>}
+        {entryMode === 'wizard' && status === 'error' && renderStatusRow()}
         {entryMode === 'wizard' && showPreview && response && (
-          <AIPreviewPanel response={response} onComplete={handlePreviewComplete} onError={handlePreviewError} />
+          <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <AIPreviewPanel response={response} onComplete={handlePreviewComplete} onError={handlePreviewError} />
+          </Box>
         )}
 
         {/* ---------------------------------------------------------------- */}
         {/* DIRECT MODE (unchanged)                                           */}
         {/* ---------------------------------------------------------------- */}
         {entryMode === 'direct' && (
-          <Stack sx={{ gap: 1.5 }}>
-            <Box>
+          <Stack sx={{ gap: 1.5, flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            <Box sx={{ flexShrink: 0 }}>
               <ToggleButtonGroup
                 value={mode}
                 exclusive
@@ -704,6 +753,43 @@ export default function AIGenerationDialog({
               <Typography sx={{ fontSize: '14px', fontWeight: 700 }}>
                 {mode === 'refine' ? t('aiGeneration.dialog.promptLabelRefine') : t('aiGeneration.dialog.promptLabel')}
               </Typography>
+            </Box>
+            {stretchPrompt ? (
+              <Box sx={{ flex: 1, minHeight: 0, position: 'relative' }}>
+                <TextField
+                  autoFocus
+                  margin="dense"
+                  id="ai-generation-prompt"
+                  type="text"
+                  multiline
+                  fullWidth
+                  variant="outlined"
+                  disabled={isBusy}
+                  placeholder={
+                    mode === 'refine'
+                      ? t('aiGeneration.dialog.promptPlaceholderRefine')
+                      : t('aiGeneration.dialog.promptPlaceholder')
+                  }
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    '& .MuiInputBase-root': {
+                      height: '100%',
+                      alignItems: 'flex-start',
+                      borderRadius: '6px',
+                    },
+                    '& textarea': {
+                      height: '100% !important',
+                      overflow: 'auto !important',
+                      boxSizing: 'border-box',
+                      resize: 'none',
+                    },
+                  }}
+                />
+              </Box>
+            ) : (
               <TextField
                 autoFocus
                 margin="dense"
@@ -711,7 +797,7 @@ export default function AIGenerationDialog({
                 type="text"
                 multiline
                 minRows={4}
-                maxRows={10}
+                maxRows={8}
                 fullWidth
                 variant="outlined"
                 disabled={isBusy}
@@ -722,27 +808,42 @@ export default function AIGenerationDialog({
                 }
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                sx={{ mt: 0.5, '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
               />
-              {showSuggestions && prompt.trim().length > 0 && (
-                <Box sx={{ mt: 1 }}>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={isImprovingPrompt ? <CircularProgress size={16} /> : <AiSparkleIcon />}
-                    onClick={handleImprovePrompt}
-                    disabled={isImprovingPrompt || !prompt.trim()}
-                    sx={{ textTransform: 'none' }}
-                  >
-                    {isImprovingPrompt
-                      ? t('aiGeneration.dialog.improvingPrompt')
-                      : t('aiGeneration.dialog.improvePrompt')}
-                  </Button>
-                </Box>
-              )}
-            </Box>
+            )}
+            {showSuggestions && prompt.trim().length > 0 && (
+              <Box sx={{ flexShrink: 0 }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="primary"
+                  startIcon={isImprovingPrompt ? <CircularProgress size={14} /> : <AiSparkleIcon />}
+                  onClick={handleImprovePrompt}
+                  disabled={isImprovingPrompt || !prompt.trim()}
+                  sx={{
+                    textTransform: 'none',
+                    fontSize: 13,
+                    lineHeight: 1.4,
+                    py: 0.625,
+                    px: 1.25,
+                    minHeight: 30,
+                    '& .MuiButton-startIcon': {
+                      marginRight: 0.5,
+                      marginLeft: -0.25,
+                      '& > *:nth-of-type(1)': {
+                        fontSize: 14,
+                      },
+                    },
+                  }}
+                >
+                  {isImprovingPrompt
+                    ? t('aiGeneration.dialog.improvingPrompt')
+                    : t('aiGeneration.dialog.improvePrompt')}
+                </Button>
+              </Box>
+            )}
             {showSuggestions && suggestions.length > 0 && (
-              <Box>
+              <Box sx={{ flexShrink: 0 }}>
                 <Typography variant="caption" color="text.secondary">
                   {t('aiGeneration.dialog.suggestionsLabel')}
                 </Typography>
@@ -754,7 +855,7 @@ export default function AIGenerationDialog({
               </Box>
             )}
             {status === 'thinking' && (
-              <Stack direction="row" sx={{ gap: 2, alignItems: 'center', py: 1 }}>
+              <Stack direction="row" sx={{ gap: 2, alignItems: 'center', py: 1, flexShrink: 0 }}>
                 <CircularProgress size={20} />
                 <Typography variant="body2" color="text.secondary">
                   {t('aiGeneration.dialog.status.thinking')}
@@ -762,14 +863,18 @@ export default function AIGenerationDialog({
               </Stack>
             )}
             {status === 'complete' && (
-              <Alert severity="success" variant="outlined" sx={{ mt: 1 }}>
+              <Alert severity="success" variant="outlined" sx={{ mt: 1, flexShrink: 0 }}>
                 {t('aiGeneration.dialog.status.complete')}
               </Alert>
             )}
-            {/* Stream error reports hidden — unhide by removing display:'none' */}
-            <Box sx={{ display: 'none' }}>{renderStatusRow()}</Box>
+            {/* Fatal errors (provider/setup/stream failures or schema-invalid
+                output) must be visible so the user sees WHY generation failed
+                instead of the dialog silently reverting to a Retry button. */}
+            {status === 'error' && renderStatusRow()}
             {showPreview && response && (
-              <AIPreviewPanel response={response} onComplete={handlePreviewComplete} onError={handlePreviewError} />
+              <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <AIPreviewPanel response={response} onComplete={handlePreviewComplete} onError={handlePreviewError} />
+              </Box>
             )}
           </Stack>
         )}

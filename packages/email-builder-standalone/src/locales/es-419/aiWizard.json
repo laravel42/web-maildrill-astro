@@ -28,7 +28,9 @@
   "header": {
     "directTitle": "Generar con IA",
     "wizardTitle": "Wizard visual",
-    "switchAria": "Cambiar entre modo Directo y Wizard"
+    "switchAria": "Cambiar entre modo Directo y Wizard",
+    "directTooltip": "Directo: escribí tu propio prompt — ideal cuando ya sabés lo que querés.",
+    "wizardTooltip": "Wizard visual: respondé unas preguntas rápidas y dejá que la IA arme el brief."
   },
   "steps": {
     "common": {
@@ -173,6 +175,7 @@
     "sections": "Secciones",
     "finalPrompt": "Prompt generado",
     "finalPromptHelp": "Este es el prompt que usaremos. Podés editarlo antes de generar.",
+    "promptPlaceholder": "Describí el correo que querés…",
     "editPrompt": "Editar prompt",
     "doneEditing": "Listo",
     "compiling": "Armando tu prompt…",
