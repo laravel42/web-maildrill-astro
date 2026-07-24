@@ -180,6 +180,9 @@ export default function AIGenerationDialog({
   const [completedDocument, setCompletedDocument] = useState<TEditorConfiguration | null>(null);
   // Whether the close-confirmation dialog is visible.
   const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
+  // Force the wizard subtree to remount on every dialog open so brief state
+  // and SummaryStep compile are fresh.
+  const [wizardKey, setWizardKey] = useState(0);
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -197,6 +200,9 @@ export default function AIGenerationDialog({
     setStreamWarnings(null);
     setResponse(null);
     setCompletedDocument(null);
+    // Force the wizard subtree to remount on every dialog open so brief state,
+    // SummaryStep compile, and useVisualBrief are all re-initialised fresh.
+    setWizardKey((k) => k + 1);
     // Restore entry mode only on the very first open (when entryMode is still
     // 'picker' and there is no prompt). Once the user has made a choice we
     // leave their state untouched.
@@ -303,6 +309,11 @@ export default function AIGenerationDialog({
     // Deep clone so subsequent dialog runs can't mutate the editor state by
     // reference. Mirrors the pattern EmailBuilder uses when loading `data`.
     resetDocument(JSON.parse(JSON.stringify(completedDocument)));
+    // Clear the dialog-level prompt so the wizard's initialRawIntent is empty
+    // on the next dialog open. Without this a stale compiled prompt leaks
+    // into useVisualBrief.rawIntent and SummaryStep.buildFallback serves it
+    // immediately, making every subsequent generation identical.
+    setPrompt('');
     onClose();
   }, [completedDocument, onClose]);
 
@@ -674,6 +685,7 @@ export default function AIGenerationDialog({
         {entryMode === 'wizard' && !showPreview && (
           <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             <AIVisualWizard
+              key={wizardKey}
               initialRawIntent={prompt}
               backendUrl={backendUrl}
               brandColors={
