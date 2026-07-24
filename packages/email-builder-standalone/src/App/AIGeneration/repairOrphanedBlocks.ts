@@ -1,5 +1,7 @@
 import type { TEditorBlock, TEditorConfiguration } from '../../documents/editor/core';
 
+import { coerceGeneratedStyles } from './coerceGeneratedStyles';
+
 /**
  * Outcome of {@link repairOrphanedBlocks}.
  *
@@ -600,8 +602,9 @@ export function repairDocument(doc: TEditorConfiguration): FullRepairResult {
   const { deduped, duplicates: duplicateChildRefs } = dedupeChildReferences(normalized);
   const { cleaned, droppedReferences } = cleanDanglingReferences(deduped);
   const { repaired, appendedRootChildren } = repairOrphanedBlocks(cleaned);
+  const styled = coerceGeneratedStyles(repaired);
   return {
-    repaired,
+    repaired: styled,
     appendedRootChildren,
     droppedReferences,
     normalizedBlocks,
