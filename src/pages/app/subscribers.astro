@@ -11,7 +11,7 @@ import {
   type SavedSegment,
 } from '@/lib/app/subscribers-data';
 
-// Load real subscribers for the signed-in workspace from maildrill-service and
+// Load real subscribers for the signed-in workspace from workers and
 // hand them to the island. Falls back to local fixtures if the service is
 // unreachable or the workspace has none yet.
 const session = Astro.locals.session;
@@ -40,7 +40,7 @@ if (session?.user?.id && session.activeTenantId) {
       client.GET('/v1/tags'),
     ]);
     if (subsRes.error) {
-      banner = { ok: false, text: 'maildrill-service returned an error.' };
+      banner = { ok: false, text: 'workers returned an error.' };
     } else {
       initial = toRichSubscribers(unwrap<ApiSubscriber>(subsRes.data));
       initialSegments = unwrap<ApiSegment>(segsRes.data).map(toSavedSegment);

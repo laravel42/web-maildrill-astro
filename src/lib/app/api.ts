@@ -1,6 +1,6 @@
 /**
  * Browser-side BFF client. Islands call the same-origin `/api/v1/*` proxy, which
- * mints a tenant-scoped JWT and forwards to maildrill-service — the browser never
+ * mints a tenant-scoped JWT and forwards to workers — the browser never
  * holds a service credential. Server-side code uses `productClient` instead.
  */
 

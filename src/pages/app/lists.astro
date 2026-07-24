@@ -21,7 +21,7 @@ if (session?.user?.id && session.activeTenantId) {
     });
     const { data, error } = await client.GET('/v1/lists');
     if (error) {
-      banner = { ok: false, text: 'maildrill-service returned an error.' };
+      banner = { ok: false, text: 'workers returned an error.' };
     } else {
       const rows = (data as unknown as { data?: ApiList[] })?.data ?? [];
       initial = toListRows(rows);

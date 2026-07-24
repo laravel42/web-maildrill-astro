@@ -3,7 +3,7 @@ import { welcomeEmailHtml, welcomeEmailText } from './welcome-template';
 
 /**
  * Temporary in-repo email sending over SMTP (Nodemailer), so sign-up can send
- * the welcome email without maildrill-service running.
+ * the welcome email without workers running.
  *
  * Config comes from server-only env (never PUBLIC_*):
  *   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE?, MAIL_FROM

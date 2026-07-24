@@ -1,6 +1,6 @@
 import type { ListRow } from '@/components/react/AppLists.types';
 
-/** Shape of a list as returned by maildrill-service /v1/lists. */
+/** Shape of a list as returned by workers /v1/lists. */
 export interface ApiList {
   id: string;
   name: string;

@@ -35,7 +35,7 @@ if (session?.user?.id && session.activeTenantId) {
       client.GET('/v1/stats/activity', { params: { query: { days: 30 } } }),
     ]);
     if (summaryRes.error) {
-      banner = { ok: false, text: 'maildrill-service returned an error.' };
+      banner = { ok: false, text: 'workers returned an error.' };
     } else {
       summary = summaryRes.data as unknown as Summary;
     }

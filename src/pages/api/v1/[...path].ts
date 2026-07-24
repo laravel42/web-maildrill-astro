@@ -5,7 +5,7 @@ export const prerender = false;
 
 /**
  * BFF proxy: island mutations/reads hit this same-origin route, which mints a
- * tenant-scoped JWT and forwards to maildrill-service. The browser never holds
+ * tenant-scoped JWT and forwards to workers. The browser never holds
  * a service credential.
  */
 export const ALL: APIRoute = async ({ request, params, locals }) => {

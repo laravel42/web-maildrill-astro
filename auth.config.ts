@@ -16,7 +16,7 @@ if (!process.env.AUTH_SECRET && typeof process.loadEnvFile === 'function') {
 
 /**
  * Auth.js (auth-astro) with a single "magic-link" Credentials provider. The
- * actual magic-link issue/verify lives in maildrill-service; here we only
+ * actual magic-link issue/verify lives in workers; here we only
  * exchange a verified token for a session. Stateless JWT sessions — the frontend
  * keeps no DB.
  */

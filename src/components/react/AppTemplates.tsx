@@ -174,9 +174,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
     category?: string;
     /** Saved body for the SMS/WhatsApp/Voice composer when reopening. */
     message?: string;
-  } | null>(
-    null,
-  );
+  } | null>(null);
 
   const isFav = (id: string) => favIds.has(id);
 
@@ -290,6 +288,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
     const okIds = new Set(ids.filter((_, i) => results[i].status === 'fulfilled'));
     setTemplates((prev) => prev.filter((t) => !okIds.has(t.id)));
     const failed = ids.length - okIds.size;
+    window.posthog?.capture('template_deleted', { count: okIds.size, failed });
     show(
       failed
         ? `Deleted ${okIds.size}, ${failed} failed`
@@ -325,6 +324,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
     const made = results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
     setTemplates((prev) => [...made.map(toGalleryTemplate), ...prev]);
     const failed = ids.length - made.length;
+    window.posthog?.capture('template_duplicated', { count: made.length, failed });
     show(
       failed
         ? `Duplicated ${made.length}, ${failed} failed`
@@ -604,10 +604,18 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           <div className={styles.bulk} style={{ animation: 'fade .18s ease' }}>
             <span className={styles.bulkcount}>{selected.size} selected</span>
             <span className={styles.bulkdiv} />
-            <button type="button" className={styles.bulkbtn} onClick={() => void duplicateTemplates([...selected])}>
+            <button
+              type="button"
+              className={styles.bulkbtn}
+              onClick={() => void duplicateTemplates([...selected])}
+            >
               <Icon name="copy" size={13} /> Duplicate
             </button>
-            <button type="button" className={styles.bulkbtn} onClick={() => void favoriteSelected()}>
+            <button
+              type="button"
+              className={styles.bulkbtn}
+              onClick={() => void favoriteSelected()}
+            >
               <Icon name="star" size={13} /> Favorite
             </button>
             <button
@@ -617,7 +625,11 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
             >
               <Icon name="trash" size={13} /> Delete
             </button>
-            <button type="button" className={styles.bulkclear} onClick={() => setSelected(new Set())}>
+            <button
+              type="button"
+              className={styles.bulkclear}
+              onClick={() => setSelected(new Set())}
+            >
               Clear
             </button>
           </div>
@@ -967,42 +979,42 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           inside VisualEmailBuilder. */}
       {builder && builder.channel === 'email' && (
         <LazyBoundary label="the email editor" onClose={() => setBuilder(null)}>
-        <Suspense fallback={null}>
-          <VisualEmailBuilder
-            name={builder.name}
-            initialDocument={builder.document}
-            initialCategory={builder.category}
-            onClose={() => setBuilder(null)}
-            onSave={async ({ name, html, document, category }) => {
-              const ed = builder;
-              if (!ed) return;
-              // Stay in the editor and let it show a saved badge; don't close.
-              // Errors propagate so the editor surfaces them. Local (no-service)
-              // mode just acknowledges.
-              if (!live) return;
-              const body = {
-                name: name && name !== 'Untitled' ? name : 'Untitled template',
-                channel: 'email' as const,
-                html,
-                builderDoc: document as Record<string, unknown>,
-                category,
-              };
-              if (ed.id) {
-                // Editing an existing template — update it in place.
-                const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
-                setTemplates((prev) =>
-                  prev.map((t) => (t.id === ed.id ? toGalleryTemplate(updated) : t)),
-                );
-              } else {
-                const created = await api.post<ApiTemplate>('templates', body);
-                setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
-                // Switch to update mode so subsequent saves patch this template
-                // instead of creating duplicates.
-                setBuilder((prev) => (prev ? { ...prev, id: created.id } : prev));
-              }
-            }}
-          />
-        </Suspense>
+          <Suspense fallback={null}>
+            <VisualEmailBuilder
+              name={builder.name}
+              initialDocument={builder.document}
+              initialCategory={builder.category}
+              onClose={() => setBuilder(null)}
+              onSave={async ({ name, html, document, category }) => {
+                const ed = builder;
+                if (!ed) return;
+                // Stay in the editor and let it show a saved badge; don't close.
+                // Errors propagate so the editor surfaces them. Local (no-service)
+                // mode just acknowledges.
+                if (!live) return;
+                const body = {
+                  name: name && name !== 'Untitled' ? name : 'Untitled template',
+                  channel: 'email' as const,
+                  html,
+                  builderDoc: document as Record<string, unknown>,
+                  category,
+                };
+                if (ed.id) {
+                  // Editing an existing template — update it in place.
+                  const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
+                  setTemplates((prev) =>
+                    prev.map((t) => (t.id === ed.id ? toGalleryTemplate(updated) : t)),
+                  );
+                } else {
+                  const created = await api.post<ApiTemplate>('templates', body);
+                  setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
+                  // Switch to update mode so subsequent saves patch this template
+                  // instead of creating duplicates.
+                  setBuilder((prev) => (prev ? { ...prev, id: created.id } : prev));
+                }
+              }}
+            />
+          </Suspense>
         </LazyBoundary>
       )}
 
@@ -1154,9 +1166,6 @@ function TemplateDrawer({
             >
               {t.category}
             </span>
-            {approval && (
-              <span className={`astatus tstat--${approval}`}>{APPROVAL_LABEL[approval]}</span>
-            )}
           </div>
           <p className={styles.dUpdated}>Updated {t.updated}</p>
 
@@ -1181,6 +1190,7 @@ function TemplateDrawer({
                 border: '1px solid var(--border)',
                 borderRadius: 12,
                 padding: '12px 14px',
+                marginTop: 6,
                 marginBottom: 16,
                 background: 'var(--surface2)',
               }}
@@ -1269,12 +1279,7 @@ function TemplateDrawer({
           >
             <Icon name="star" size={16} />
           </button>
-          <button
-            type="button"
-            className="sbtn"
-            style={{ flex: 1 }}
-            onClick={onClone}
-          >
+          <button type="button" className="sbtn" style={{ flex: 1 }} onClick={onClone}>
             <Icon name="copy" size={14} /> Clone
           </button>
           <button type="button" className="pbtn" style={{ flex: 1 }} onClick={onUse}>

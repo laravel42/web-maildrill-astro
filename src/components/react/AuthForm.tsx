@@ -59,6 +59,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           body: JSON.stringify({ email }),
         });
         if (!res.ok) throw new Error('Could not send your code. Try again.');
+        window.posthog?.capture('login_code_requested');
         setSentTo(email);
         setCode(['', '', '', '', '', '']);
         setStage('code');
@@ -73,6 +74,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           throw new Error('Please complete all fields.');
         }
         if (!terms) throw new Error('Please accept the Terms and Privacy Policy.');
+        window.posthog?.capture('signup_form_submitted', { channel: 'email' });
         // All required fields are in — send the welcome email. Fire-and-forget:
         // the endpoint is 202-always and the UX shouldn't wait on delivery.
         void fetch('/api/signup-welcome', {
@@ -84,6 +86,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         // terminal "you're on the list" state.
         setSentTo(email);
         setStage('done');
+        window.posthog?.capture('signup_completed', { channel: 'email' });
         setStatus('idle');
         return;
       }
@@ -91,6 +94,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       await mockResetPassword(email);
       setStatus('success');
     } catch (err) {
+      if (err instanceof Error) window.posthog?.captureException(err);
       setError(err instanceof Error ? err.message : 'Something went wrong.');
       setStatus('error');
     }
@@ -123,6 +127,8 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         return;
       }
       // Success: show the "You're in" beat, then hand off to the workspace.
+      window.posthog?.identify(sentTo, { email: sentTo });
+      window.posthog?.capture('login_succeeded');
       setStatus('idle');
       setStage('done');
       window.setTimeout(() => window.location.assign('/dashboard'), 1100);
@@ -248,8 +254,8 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       </div>
       <h2 className={styles.substep}>Check your email</h2>
       <p className={styles.sub} style={{ margin: '0 0 22px' }}>
-        We sent a magic link to <strong>{sentTo}</strong>. Click it to sign in — no password
-        needed. The link expires in 15 minutes.
+        We sent a magic link to <strong>{sentTo}</strong>. Click it to sign in — no password needed.
+        The link expires in 15 minutes.
       </p>
 
       <div className={styles.otpSection}>
@@ -418,66 +424,76 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         doneMiddle
       ) : (
         <form onSubmit={onSubmit} noValidate method="post" action="#">
-        {mode === 'signup' && (
-          <div className={styles.row}>
-            <label className={styles.field}>
-              <span className={styles.label}>First name</span>
-              <input className={styles.input} name="firstName" autoComplete="given-name" required />
-            </label>
-            <label className={styles.field}>
-              <span className={styles.label}>Last name</span>
-              <input className={styles.input} name="lastName" autoComplete="family-name" required />
-            </label>
-          </div>
-        )}
+          {mode === 'signup' && (
+            <div className={styles.row}>
+              <label className={styles.field}>
+                <span className={styles.label}>First name</span>
+                <input
+                  className={styles.input}
+                  name="firstName"
+                  autoComplete="given-name"
+                  required
+                />
+              </label>
+              <label className={styles.field}>
+                <span className={styles.label}>Last name</span>
+                <input
+                  className={styles.input}
+                  name="lastName"
+                  autoComplete="family-name"
+                  required
+                />
+              </label>
+            </div>
+          )}
 
-        <label className={styles.field}>
-          <span className={styles.label}>Work email</span>
-          <input
-            className={styles.input}
-            type="email"
-            name="email"
-            autoComplete="email"
-            inputMode="email"
-            placeholder="you@company.com"
-            required
-            onChange={() => {
-              if (error) setError(null);
-            }}
-          />
-        </label>
-
-        {mode === 'signup' && (
-          <label className={styles.check}>
-            <input type="checkbox" name="terms" />
-            <span>
-              I agree to the <a href="/legal/terms">Terms</a> and{' '}
-              <a href="/legal/privacy">Privacy Policy</a>.
-            </span>
+          <label className={styles.field}>
+            <span className={styles.label}>Work email</span>
+            <input
+              className={styles.input}
+              type="email"
+              name="email"
+              autoComplete="email"
+              inputMode="email"
+              placeholder="you@company.com"
+              required
+              onChange={() => {
+                if (error) setError(null);
+              }}
+            />
           </label>
-        )}
 
-        {error && (
-          <p className={styles.error} role="alert">
-            {error}
-          </p>
-        )}
+          {mode === 'signup' && (
+            <label className={styles.check}>
+              <input type="checkbox" name="terms" />
+              <span>
+                I agree to the <a href="/legal/terms">Terms</a> and{' '}
+                <a href="/legal/privacy">Privacy Policy</a>.
+              </span>
+            </label>
+          )}
 
-        <button className={styles.submit} type="submit" disabled={status === 'loading'}>
-          {submitLabel}
-        </button>
+          {error && (
+            <p className={styles.error} role="alert">
+              {error}
+            </p>
+          )}
 
-        {mode === 'login' && (
-          <p className={`${styles.note} ${styles.noteCenter}`}>
-            We&rsquo;ll email you a one-time sign-in link
-          </p>
-        )}
+          <button className={styles.submit} type="submit" disabled={status === 'loading'}>
+            {submitLabel}
+          </button>
 
-        {mode === 'signup' && (
-          <p className={`${styles.note} ${styles.noteCenter}`}>
-            No password, no credit card · Cancel anytime
-          </p>
-        )}
+          {mode === 'login' && (
+            <p className={`${styles.note} ${styles.noteCenter}`}>
+              We&rsquo;ll email you a one-time sign-in link
+            </p>
+          )}
+
+          {mode === 'signup' && (
+            <p className={`${styles.note} ${styles.noteCenter}`}>
+              No password, no credit card · Cancel anytime
+            </p>
+          )}
         </form>
       )}
 

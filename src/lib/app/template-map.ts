@@ -17,7 +17,7 @@ export function toApprovalStatus(s?: string | null): TemplateApprovalStatus | nu
     : null;
 }
 
-/** Shape of a template as returned by maildrill-service /v1/templates. */
+/** Shape of a template as returned by workers /v1/templates. */
 export interface ApiTemplate {
   id: string;
   name: string;

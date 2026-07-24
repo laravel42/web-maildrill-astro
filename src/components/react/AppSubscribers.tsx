@@ -452,7 +452,7 @@ export default function AppSubscribers({
       rules: toApiRules(seg.rows),
     };
     if (!live) {
-      showToast('Not connected to maildrill-service');
+      showToast('Not connected to workers');
       return;
     }
     try {
@@ -482,7 +482,7 @@ export default function AppSubscribers({
   const deleteSegment = async (id: string) => {
     const name = segById.get(id)?.name ?? 'Segment';
     if (!live) {
-      showToast('Not connected to maildrill-service');
+      showToast('Not connected to workers');
       return;
     }
     try {

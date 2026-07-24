@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { sendSignupNotification, sendWelcomeEmail } from '@/lib/server/mail/send';
+import { getPostHogServer } from '@/lib/posthog-server';
 
 export const prerender = false;
 
@@ -27,6 +28,21 @@ export const POST: APIRoute = async ({ request }) => {
 
   void sendWelcomeEmail(email, firstName).catch(() => undefined);
   void sendSignupNotification({ email, firstName, lastName }).catch(() => undefined);
+
+  const posthog = getPostHogServer();
+  if (posthog) {
+    // Unauthenticated route: key people by submitted email only — never trust
+    // client X-PostHog-Distinct-Id (would allow PII misbinding onto another person).
+    posthog.identify({
+      distinctId: email,
+      properties: { email, first_name: firstName, last_name: lastName },
+    });
+    posthog.capture({
+      distinctId: email,
+      event: 'signup_welcome_sent',
+    });
+    await posthog.flush();
+  }
 
   return new Response(JSON.stringify({ ok: true }), {
     status: 202,

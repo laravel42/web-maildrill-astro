@@ -1,7 +1,7 @@
 /**
  * Types and the segment-rule vocabulary for the Subscribers (CRM) screen. Seed
  * subscribers and built-in segments were removed — live data comes from
- * maildrill-service (mapped in subscriber-map.ts). Only the CRM row shape and
+ * workers (mapped in subscriber-map.ts). Only the CRM row shape and
  * the rule-builder option lists remain here.
  */
 import type { Subscriber } from '@/types/app';

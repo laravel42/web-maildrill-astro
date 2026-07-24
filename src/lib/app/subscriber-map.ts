@@ -1,7 +1,7 @@
 import type { SubscriberStatus } from '@/types/app';
 import type { RichSubscriber } from './subscribers-data';
 
-/** Shape of a subscriber as returned by maildrill-service /v1/subscribers. */
+/** Shape of a subscriber as returned by workers /v1/subscribers. */
 export interface ApiSubscriber {
   id: string;
   email: string;

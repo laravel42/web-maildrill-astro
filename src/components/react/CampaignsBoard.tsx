@@ -11,10 +11,12 @@ import { campaigns as mockCampaigns } from '@/lib/app/mock-data';
 import { api, ApiError } from '@/lib/app/api';
 import {
   toCampaign,
+  toCampaigns,
   audienceIdsFromApiCampaign,
   campaignAudiencePayload,
   campaignSendPayload,
   campaignDeliveryToast,
+  campaignSendProgress,
   waitForCampaignDelivery,
   type ApiCampaign,
   type CampaignSendResult,
@@ -164,6 +166,27 @@ export default function CampaignsBoard({
     setPage(1);
   }, [tab, query, channelFilter, opensSel, clicksSel, sort]);
 
+  // While any campaign is sending, refresh list so the progress bar advances.
+  const hasSending = campaigns.some((c) => c.status === 'sending');
+  useEffect(() => {
+    if (!live || !hasSending) return;
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const res = await api.get<{ data: ApiCampaign[] }>('campaigns');
+        if (!cancelled) setCampaigns(toCampaigns(res.data ?? []));
+      } catch {
+        /* keep last snapshot */
+      }
+    };
+    const id = window.setInterval(() => void tick(), 3000);
+    void tick();
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [live, hasSending]);
+
   const toggleSort = (key: SortKey) =>
     setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: 1 }));
 
@@ -185,6 +208,7 @@ export default function CampaignsBoard({
   };
 
   const reportSendOutcome = async (id: string, name: string) => {
+    show(`“${name}” is sending…`);
     const outcome = await waitForCampaignDelivery(id);
     setCampaigns((prev) => prev.map((c) => (c.id === id ? toCampaign(outcome) : c)));
     show(campaignDeliveryToast(name, outcome));
@@ -206,6 +230,13 @@ export default function CampaignsBoard({
           'campaigns/send',
           campaignSendPayload(draft, name),
         );
+        window.posthog?.capture('campaign_sent', {
+          channel: draft.channel,
+          mode: 'create',
+          schedule: 'now',
+          audience_count: res.audience,
+          queued: res.queued,
+        });
         const created = await api.get<ApiCampaign>(`campaigns/${res.campaignId}`);
         setCampaigns((prev) => [toCampaign(created), ...prev]);
         void reportSendOutcome(res.campaignId, name);
@@ -643,7 +674,32 @@ export default function CampaignsBoard({
               </div>
               <div className={styles.name}>{c.name}</div>
               <div>
-                <span className={`astatus astatus--${c.status}`}>{STATUS_LABEL[c.status]}</span>
+                {c.status === 'sending' ? (
+                  <div
+                    className={styles.sendProgress}
+                    title={`${campaignSendProgress(c)}% complete`}
+                  >
+                    <span className={`astatus astatus--sending`}>{STATUS_LABEL.sending}</span>
+                    <div
+                      className={styles.sendProgressTrack}
+                      role="progressbar"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={campaignSendProgress(c)}
+                      aria-label={`Send progress ${campaignSendProgress(c)} percent`}
+                    >
+                      <div
+                        className={styles.sendProgressFill}
+                        style={{ width: `${campaignSendProgress(c)}%` }}
+                      />
+                    </div>
+                    <span className={`tnum ${styles.sendProgressPct}`}>
+                      {campaignSendProgress(c)}%
+                    </span>
+                  </div>
+                ) : (
+                  <span className={`astatus astatus--${c.status}`}>{STATUS_LABEL[c.status]}</span>
+                )}
               </div>
               <div>
                 <ChannelPill channel={c.channel} />
