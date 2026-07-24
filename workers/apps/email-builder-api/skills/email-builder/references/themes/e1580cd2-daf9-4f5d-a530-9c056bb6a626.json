@@ -1,0 +1,44 @@
+{
+  "id": "e1580cd2-daf9-4f5d-a530-9c056bb6a626",
+  "createdAt": "2026-06-08T15:07:20.230Z",
+  "updatedAt": "2026-06-08T15:07:20.230Z",
+  "name": "Slate Pro",
+  "description": "Professional SaaS · pill CTAs",
+  "globals": {
+    "backdropColor": "#F8FAFC",
+    "borderColor": "#E2E8F0",
+    "borderRadius": 8,
+    "canvasColor": "#FFFFFF",
+    "textColor": "#0F172A",
+    "fontFamily": "MODERN_SANS",
+    "linkGlobal": {
+      "linkColor": "#2563EB",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#0F172A",
+        "buttonTextColor": "#FFFFFF",
+        "shape": "pill"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#E2E8F0"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFFFF",
+        "borderColor": "#E2E8F0"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    }
+  }
+}

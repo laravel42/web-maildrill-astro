@@ -1,7 +1,7 @@
 /**
  * Sign-up welcome email (design/WelcomeEmail.html). Static apart from the
  * greeting, which uses the first name when we have one. Embedded here so this
- * repo can send it directly, without maildrill-service.
+ * repo can send it directly, without workers.
  */
 
 /** Escape a user-supplied name before it goes into the HTML email body. */

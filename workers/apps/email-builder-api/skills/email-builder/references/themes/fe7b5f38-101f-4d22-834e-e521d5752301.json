@@ -1,0 +1,47 @@
+{
+  "id": "fe7b5f38-101f-4d22-834e-e521d5752301",
+  "createdAt": "2026-06-08T15:07:20.241Z",
+  "updatedAt": "2026-06-08T15:07:20.241Z",
+  "name": "Cream Editorial",
+  "description": "Newsletter / publishing",
+  "globals": {
+    "backdropColor": "#FAF7F2",
+    "borderRadius": 0,
+    "canvasColor": "#FFFEF7",
+    "textColor": "#1F2937",
+    "fontFamily": "MERRIWEATHER",
+    "linkGlobal": {
+      "linkColor": "#92400E",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#1F2937",
+        "buttonTextColor": "#FFFEF7",
+        "fontWeight": "normal"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#1F2937"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFEF7"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFEF7"
+      }
+    },
+    "NotionText": {
+      "style": {
+        "fontFamily": "MERRIWEATHER"
+      }
+    }
+  }
+}

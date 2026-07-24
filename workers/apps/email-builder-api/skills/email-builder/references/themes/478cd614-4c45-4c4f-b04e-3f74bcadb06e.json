@@ -1,0 +1,47 @@
+{
+  "id": "478cd614-4c45-4c4f-b04e-3f74bcadb06e",
+  "createdAt": "2026-06-08T15:07:20.278Z",
+  "updatedAt": "2026-06-08T15:07:20.278Z",
+  "name": "Royal Editorial",
+  "description": "Premium news · serif",
+  "globals": {
+    "backdropColor": "#FFFFFF",
+    "borderRadius": 0,
+    "canvasColor": "#FFFFFF",
+    "textColor": "#0A0A0A",
+    "fontFamily": "PLAYFAIR",
+    "linkGlobal": {
+      "linkColor": "#1E40AF",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#1E40AF",
+        "buttonTextColor": "#FFFFFF",
+        "fontWeight": "normal"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#0A0A0A"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "NotionText": {
+      "style": {
+        "fontFamily": "PLAYFAIR"
+      }
+    }
+  }
+}

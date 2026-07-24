@@ -1,0 +1,1627 @@
+{
+  "root": {
+    "type": "EmailLayout",
+    "data": {
+      "backdropColor": "#fbfbfb",
+      "canvasColor": "#FFFFFF",
+      "textColor": "#ffe5e5",
+      "fontFamily": "LATO",
+      "childrenIds": [
+        "block-687a83a168e7b",
+        "block-687a83a168eb2",
+        "block-1778887028513-m2g",
+        "block-687a83a168ec8"
+      ],
+      "linkGlobal": {
+        "linkColor": "#0000ee",
+        "underline": true
+      }
+    }
+  },
+  "block-687a83a168e98": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 20,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 20,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "cover",
+        "sizeMobile": "cover",
+        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "alt": "Logo",
+        "scale": 100,
+        "scaleMobile": 100,
+        "width": 134
+      }
+    }
+  },
+  "block-687a83a168e7b": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a83a168e98"
+        ]
+      }
+    }
+  },
+  "block-687a83a168ebc": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "textAlign": "center",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "cover",
+        "sizeMobile": "cover",
+        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "alt": "Past Due Invoice",
+        "scale": 100,
+        "scaleMobile": 100,
+        "width": 600
+      }
+    }
+  },
+  "block-687a83a168eb2": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-1778885240557-r1b"
+        ]
+      }
+    }
+  },
+  "block-687a83a168ed0": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 20,
+          "right": 10,
+          "bottom": 10,
+          "left": 20
+        },
+        "mobilePadding": {
+          "top": 20,
+          "right": 10,
+          "bottom": 10,
+          "left": 20
+        },
+        "textAlign": "left",
+        "color": "#555555",
+        "fontSize": 20,
+        "backgroundColor": "#363636"
+      },
+      "props": {
+        "html": "<p style=\"text-align: center;\"><span style=\"color: rgb(255, 255, 255);\"><strong>Dear Jeff</strong></span></p>"
+      }
+    }
+  },
+  "block-687a83a168eef": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 20
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 20
+        },
+        "textAlign": "left",
+        "color": "#7e7b7b",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "<p>This is a friendly payment reminder that your account is now past due.</p>"
+      }
+    }
+  },
+  "block-687a83a168f10": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 20,
+          "left": 20
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 20,
+          "left": 20
+        },
+        "textAlign": "left",
+        "color": "#7e7b7b",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "<p>According to our records, the following account is overdue:</p>"
+      }
+    }
+  },
+  "block-687a83a168ec8": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#f7f7f7",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-1778885615449-22v",
+          "block-1778886587059-6sx",
+          "block-1778886611815-yn1"
+        ]
+      }
+    }
+  },
+  "block-687a83a168f4d": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 15,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 15,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#720c10",
+        "fontSize": 15,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Account Number"
+      }
+    }
+  },
+  "block-687a83a168f60": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#8b8989",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "123XPWERZTU07"
+      }
+    }
+  },
+  "block-687a83a168f6e": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 15,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 15,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#720c10",
+        "fontSize": 15,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Due Date"
+      }
+    }
+  },
+  "block-687a83a168f80": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#8b8989",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "02-April-20XX"
+      }
+    }
+  },
+  "block-687a83a168f8e": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 15,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 15,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#720c10",
+        "fontSize": 15,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Amount"
+      }
+    }
+  },
+  "block-687a83a168f9c": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 15,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 15,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#8b8989",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "$ 645.00"
+      }
+    }
+  },
+  "block-687a83a168f38": {
+    "type": "ColumnsContainer",
+    "data": {
+      "props": {
+        "columnsCount": 3,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-687a83a168f4d",
+              "block-687a83a168f60"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-687a83a168f6e",
+              "block-687a83a168f80"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-687a83a168f8e"
+            ]
+          }
+        ],
+        "fixedWidths": [
+          33.333333333333336,
+          33.333333333333336,
+          33.333333333333336
+        ],
+        "layout": "layout-33-33-33"
+      },
+      "style": {
+        "backgroundColor": "#ebeef0",
+        "padding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "mobilePadding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "gap": 0
+      }
+    }
+  },
+  "block-687a83a168f29": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#ebeef0",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": []
+      }
+    }
+  },
+  "block-687a83a168fba": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 20,
+          "right": 10,
+          "bottom": 20,
+          "left": 20
+        },
+        "mobilePadding": {
+          "top": 20,
+          "right": 10,
+          "bottom": 20,
+          "left": 20
+        },
+        "textAlign": "left",
+        "color": "#7e7b7b",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "As your account is now overdue, a late fee of  $20.00 has been assessed."
+      }
+    }
+  },
+  "block-687a83a168fda": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 20,
+          "right": 10,
+          "bottom": 25,
+          "left": 20
+        },
+        "mobilePadding": {
+          "top": 20,
+          "right": 10,
+          "bottom": 25,
+          "left": 20
+        },
+        "textAlign": "center",
+        "color": "#7e7b7b",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "For your convenience, you may make a payment here:"
+      }
+    }
+  },
+  "block-687a83a168fb2": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#f7f7f7",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": []
+      }
+    }
+  },
+  "block-687a83a169020": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "textAlign": "right",
+        "padding": {
+          "top": 10,
+          "right": 20,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 20,
+          "bottom": 10,
+          "left": 10
+        },
+        "borderRadius": 13
+      },
+      "props": {
+        "buttonBackgroundColor": "#c02a2b",
+        "text": "Pay by Credit Card",
+        "fullWidth": false,
+        "buttonTextColor": "#FFFFFF"
+      }
+    }
+  },
+  "block-687a83a16906a": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "textAlign": "left",
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 20
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 20
+        },
+        "borderRadius": 13
+      },
+      "props": {
+        "buttonBackgroundColor": "#c02a2b",
+        "text": "Pay by PayPal",
+        "fullWidth": false,
+        "buttonTextColor": "#FFFFFF"
+      }
+    }
+  },
+  "block-687a83a168ffd": {
+    "type": "ColumnsContainer",
+    "data": {
+      "props": {
+        "columnsCount": 2,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-687a83a169020"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-687a83a16906a"
+            ]
+          }
+        ],
+        "fixedWidths": [
+          50,
+          50
+        ],
+        "layout": "layout-50-50"
+      },
+      "style": {
+        "backgroundColor": "#f7f7f7",
+        "padding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "mobilePadding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "gap": 0
+      }
+    }
+  },
+  "block-687a83a168ff3": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#f7f7f7",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": []
+      }
+    }
+  },
+  "block-687a83a169090": {
+    "type": "Divider",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "width": 100,
+        "color": "#BBBBBB",
+        "backgroundColor": ""
+      },
+      "props": {
+        "lineColor": "#BBBBBB"
+      }
+    }
+  },
+  "block-687a83a16909f": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 20,
+          "left": 20
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 20,
+          "left": 20
+        },
+        "textAlign": "left",
+        "color": "#7e7b7b",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "<p>If you have any questions or need to discuss your account, please reach out to me at 123-456-789 .</p>"
+      }
+    }
+  },
+  "block-687a83a1690c2": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 20,
+          "left": 20
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 20,
+          "left": 20
+        },
+        "textAlign": "left",
+        "color": "#7e7b7b",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "<p>Thank you for your attention to this matter and your continued business.</p>"
+      }
+    }
+  },
+  "block-687a83a1690de": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 30,
+          "left": 20
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 30,
+          "left": 20
+        },
+        "textAlign": "left",
+        "color": "#7e7b7b",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "<p>Sincerely, John</p>"
+      }
+    }
+  },
+  "block-687a83a169084": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#f7f7f7",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": []
+      }
+    }
+  },
+  "block-687a83a1691bf": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "cover",
+        "sizeMobile": "cover",
+        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "alt": "Logo",
+        "scale": 100,
+        "scaleMobile": 100,
+        "width": 600
+      }
+    }
+  },
+  "block-687a83a1691d8": {
+    "type": "SocialMedia",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center"
+      },
+      "gap": 10,
+      "theme": "circle-white",
+      "items": [
+        {
+          "id": "687a83a1691f2",
+          "key": "apple",
+          "label": "Apple",
+          "iconName": "Apple",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Apple_Negative_36px.png",
+          "href": "https://twitter.com/"
+        },
+        {
+          "id": "687a83a169203",
+          "key": "linkedin",
+          "label": "LinkedIn",
+          "iconName": "LinkedIn",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/LinkedIn_Negative_36px.png",
+          "href": "https://linkedin.com/"
+        },
+        {
+          "id": "687a83a16920e",
+          "key": "messenger",
+          "label": "Messenger",
+          "iconName": "Messenger",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Messenger_Negative_36px.png",
+          "href": "https://messenger.com/"
+        },
+        {
+          "id": "687a83a169216",
+          "key": "instagram",
+          "label": "Instagram",
+          "iconName": "Instagram",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Instagram_Negative_36px.png",
+          "href": "https://instagram.com/"
+        }
+      ]
+    }
+  },
+  "block-687a83a16922b": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#5e5e5e",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "<p>©Company Ltd. All Rights Reserved</p>"
+      }
+    }
+  },
+  "block-687a83a169244": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#5e5e5e",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "<p>Lorem ipsum, or lipsum as it is sometimes known, is dummy text used in laying out print</p>"
+      }
+    }
+  },
+  "block-687a83a169263": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 15,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 15,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#5e5e5e",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Terms &amp; Conditions | Unsubscribe"
+      }
+    }
+  },
+  "block-687a83a1691a9": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#bcbdbd",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": []
+      }
+    }
+  },
+  "block-1778885240557-r1b": {
+    "type": "NotionText",
+    "data": {
+      "props": {
+        "html": "<p style=\"text-align: center;\"><span style=\"color: rgb(255, 255, 255);\"><strong>SLATE SIGN CODE</strong></span></p>"
+      },
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "left": 24,
+          "right": 24
+        },
+        "mobilePadding": null,
+        "fontSize": 32,
+        "fontWeight": "normal",
+        "color": null,
+        "backgroundColor": "#353535",
+        "textAlign": "left"
+      }
+    }
+  },
+  "block-1778885615449-22v": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#363636",
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 24,
+          "left": 24
+        },
+        "mobilePadding": null
+      },
+      "props": {
+        "childrenIds": [
+          "block-1778885635933-ip7",
+          "block-1778885663181",
+          "block-1778885747334-mrd",
+          "block-1778885660075-0re",
+          "block-1778885844482-izv",
+          "block-1778885846377-alx",
+          "block-1778886581965-h1w"
+        ]
+      }
+    }
+  },
+  "block-1778885635933-ip7": {
+    "type": "NotionText",
+    "data": {
+      "props": {
+        "html": "<p style=\"text-align: center;\"><span style=\"color: rgb(255, 255, 255);\"><strong>Dear Jeff</strong></span></p>"
+      },
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "left": 24,
+          "right": 24
+        },
+        "mobilePadding": null,
+        "fontSize": 24,
+        "fontWeight": "normal",
+        "color": null,
+        "backgroundColor": null,
+        "textAlign": "left"
+      }
+    }
+  },
+  "block-1778885660075-0re": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "borderColor": "#c8c2c2",
+        "borderTop": 1,
+        "borderBottom": 1,
+        "borderLeft": 1,
+        "borderRight": 1,
+        "shape": "pill",
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 24,
+          "left": 24
+        },
+        "mobilePadding": null
+      },
+      "props": {
+        "childrenIds": [
+          "block-1778885801658"
+        ]
+      }
+    }
+  },
+  "block-1778885663181": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        },
+        "mobilePadding": null,
+        "textAlign": "center",
+        "shape": "pill"
+      },
+      "props": {
+        "touched": false,
+        "scale": 17,
+        "size": "scale",
+        "sizeMobile": "scale",
+        "width": 552,
+        "widthMobile": 86,
+        "scaleMobile": 17,
+        "height": null,
+        "url": "https://ddc4vowthkjlv.cloudfront.net/uploads/gallery/1/69cc1b1083b90.jpg",
+        "alt": "Logo",
+        "linkHref": null,
+        "contentAlignment": "middle"
+      }
+    }
+  },
+  "block-1778885747334-mrd": {
+    "type": "NotionText",
+    "data": {
+      "props": {
+        "html": "<p style=\"text-align: center;\"><span style=\"color: rgb(229, 113, 5);\"><strong>Your sign code is here</strong></span></p>"
+      },
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "left": 24,
+          "right": 24
+        },
+        "mobilePadding": null,
+        "fontSize": 24,
+        "fontWeight": "normal",
+        "color": null,
+        "backgroundColor": null,
+        "textAlign": "left"
+      }
+    }
+  },
+  "block-1778885801658": {
+    "type": "NotionText",
+    "data": {
+      "props": {
+        "html": "<p style=\"text-align: center;\"><span style=\"color: rgb(255, 255, 255);\"><strong>420001</strong></span></p>"
+      },
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "left": 24,
+          "right": 24
+        },
+        "mobilePadding": null,
+        "fontSize": 32,
+        "fontWeight": "normal",
+        "color": null,
+        "backgroundColor": null,
+        "textAlign": "left"
+      }
+    }
+  },
+  "block-1778885844482-izv": {
+    "type": "Spacer",
+    "data": {}
+  },
+  "block-1778885846377-alx": {
+    "type": "NotionText",
+    "data": {
+      "props": {
+        "html": "<p style=\"text-align: center;\">This code will expire in 15 minutes. Please use it before it expires and do not share it with anyone for security reasons</p>"
+      },
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "left": 112,
+          "right": 112
+        },
+        "mobilePadding": {
+          "top": 16,
+          "bottom": 16,
+          "left": 32,
+          "right": 32
+        },
+        "fontSize": 16,
+        "fontWeight": "normal",
+        "color": null,
+        "backgroundColor": null,
+        "textAlign": "left"
+      }
+    }
+  },
+  "block-1778886581965-h1w": {
+    "type": "Spacer",
+    "data": {
+      "style": {
+        "height": 26
+      }
+    }
+  },
+  "block-1778886587059-6sx": {
+    "type": "Divider",
+    "data": {
+      "style": {
+        "backgroundColor": "#363636",
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 0,
+          "left": 0
+        },
+        "mobilePadding": null,
+        "color": "#ffffff",
+        "width": 100
+      },
+      "props": {
+        "lineColor": "#CCCCCC"
+      }
+    }
+  },
+  "block-1778886611815-yn1": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#363636",
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 24,
+          "left": 24
+        },
+        "mobilePadding": null
+      },
+      "props": {
+        "childrenIds": [
+          "block-1778886657973",
+          "block-1778886751356-xmw",
+          "block-1778886787915-une",
+          "block-1778886764525-5y6"
+        ]
+      }
+    }
+  },
+  "block-1778886657973": {
+    "type": "SocialMedia",
+    "data": {
+      "style": {
+        "fontSize": 36,
+        "textAlign": "center",
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 24,
+          "left": 24
+        },
+        "mobilePadding": null
+      },
+      "gap": 20,
+      "items": [
+        {
+          "id": "08f188ad-8f47-4798-a1ec-bb8f8d5f9481",
+          "key": "facebook",
+          "label": "Facebook",
+          "iconName": "Facebook",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Facebook_Negative_36px.png",
+          "href": ""
+        },
+        {
+          "id": "1005f9b1-330e-4a92-9d80-4432e0053ceb",
+          "key": "tiktok",
+          "label": "TikTok",
+          "iconName": "TikTok",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/TikTok_Negative_36px.png",
+          "href": "https://www.tiktok.com/@your-profile"
+        },
+        {
+          "id": "c095f7d4-9b52-40aa-8e48-30c8d437d4e5",
+          "key": "instagram",
+          "label": "Instagram",
+          "iconName": "Instagram",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Instagram_Negative_36px.png",
+          "href": "https://www.instagram.com/your-profile"
+        },
+        {
+          "id": "944b06af-38ff-491d-b79b-34f6f7daf0db",
+          "key": "youtube",
+          "label": "YouTube",
+          "iconName": "YouTube",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/YouTube_Negative_36px.png",
+          "href": "https://www.youtube.com/channel/your-channel-id"
+        },
+        {
+          "id": "66e67875-ad2b-4d81-a85c-dea03cf1d75a",
+          "key": "linkedin",
+          "label": "LinkedIn",
+          "iconName": "LinkedIn",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/LinkedIn_Negative_36px.png",
+          "href": "https://www.linkedin.com/in/your-profile"
+        }
+      ]
+    }
+  },
+  "block-1778886712938-wpi": {
+    "type": "NotionText",
+    "data": {
+      "props": {
+        "html": "<p style=\"text-align: center;\">Privacy Policy</p>"
+      },
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "left": 24,
+          "right": 24
+        },
+        "mobilePadding": null,
+        "fontSize": 13,
+        "fontWeight": "normal",
+        "color": null,
+        "backgroundColor": null,
+        "textAlign": "left"
+      }
+    }
+  },
+  "block-1778886751356-xmw": {
+    "type": "NotionText",
+    "data": {
+      "props": {
+        "html": "<p style=\"text-align: center;\">1234 Daley Drive, Fake, Information 54231</p>"
+      },
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "left": 24,
+          "right": 24
+        },
+        "mobilePadding": null,
+        "fontSize": 16,
+        "fontWeight": "normal",
+        "color": null,
+        "backgroundColor": null,
+        "textAlign": "left"
+      }
+    }
+  },
+  "block-1778886764525-5y6": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 32,
+          "left": 32
+        },
+        "mobilePadding": null,
+        "paddingSidesLinked": false
+      },
+      "props": {
+        "fixedWidths": [
+          50,
+          50,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "columns": [
+          {
+            "childrenIds": [
+              "block-1778886826504-j0e"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-1778886774698"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "block-1778886774698": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        },
+        "mobilePadding": null,
+        "paddingSidesLinked": true
+      },
+      "props": {
+        "fixedWidths": [
+          50,
+          50,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "columns": [
+          {
+            "childrenIds": [
+              "block-1778886806844-hku"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-1778886805701-g5b"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "block-1778886787915-une": {
+    "type": "NotionText",
+    "data": {
+      "props": {
+        "html": "<p style=\"text-align: center;\">@ 2026 Slate Auto. All rights reserved</p>"
+      },
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 48,
+          "left": 24,
+          "right": 24
+        },
+        "mobilePadding": null,
+        "fontSize": 13,
+        "fontWeight": "normal",
+        "color": null,
+        "backgroundColor": null,
+        "textAlign": "left"
+      }
+    }
+  },
+  "block-1778886804954-a0k": {
+    "type": "NotionText",
+    "data": {
+      "props": {
+        "html": "<p style=\"text-align: center;\">Privacy Policy</p>"
+      },
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "left": 24,
+          "right": 24
+        },
+        "mobilePadding": null,
+        "fontSize": 13,
+        "fontWeight": "normal",
+        "color": null,
+        "backgroundColor": null,
+        "textAlign": "left"
+      }
+    }
+  },
+  "block-1778886805701-g5b": {
+    "type": "NotionText",
+    "data": {
+      "props": {
+        "html": "<p style=\"text-align: center;\">View in browser</p>"
+      },
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        },
+        "mobilePadding": null,
+        "fontSize": 13,
+        "fontWeight": "normal",
+        "color": null,
+        "backgroundColor": null,
+        "textAlign": "left"
+      }
+    }
+  },
+  "block-1778886806844-hku": {
+    "type": "NotionText",
+    "data": {
+      "props": {
+        "html": "<p style=\"text-align: center;\">Preference</p>"
+      },
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        },
+        "mobilePadding": null,
+        "fontSize": 13,
+        "fontWeight": "normal",
+        "color": null,
+        "backgroundColor": null,
+        "textAlign": "left"
+      }
+    }
+  },
+  "block-1778886826504-j0e": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        },
+        "mobilePadding": null,
+        "paddingSidesLinked": true
+      },
+      "props": {
+        "fixedWidths": [
+          50,
+          50,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "columns": [
+          {
+            "childrenIds": [
+              "block-1778886826504-b8j"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-1778886826504-yr7"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "block-1778886826504-b8j": {
+    "type": "NotionText",
+    "data": {
+      "props": {
+        "html": "<p style=\"text-align: center;\">Privacy Policy</p>"
+      },
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        },
+        "mobilePadding": null,
+        "fontSize": 13,
+        "fontWeight": "normal",
+        "color": null,
+        "backgroundColor": null,
+        "textAlign": "left"
+      }
+    }
+  },
+  "block-1778886826504-yr7": {
+    "type": "NotionText",
+    "data": {
+      "props": {
+        "html": "<p style=\"text-align: center;\">Contac Us</p>"
+      },
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        },
+        "mobilePadding": null,
+        "fontSize": 13,
+        "fontWeight": "normal",
+        "color": null,
+        "backgroundColor": null,
+        "textAlign": "left"
+      }
+    }
+  },
+  "block-1778887028513-m2g": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        },
+        "mobilePadding": null
+      },
+      "props": {
+        "touched": false,
+        "size": "fill",
+        "width": 0,
+        "height": null,
+        "url": "https://ddc4vowthkjlv.cloudfront.net/uploads/gallery/1/69cc1b1083b90.jpg",
+        "alt": "banner",
+        "linkHref": null,
+        "contentAlignment": "middle"
+      }
+    }
+  }
+}

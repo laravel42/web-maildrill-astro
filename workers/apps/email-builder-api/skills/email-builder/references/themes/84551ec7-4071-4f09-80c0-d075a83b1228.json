@@ -1,0 +1,42 @@
+{
+  "id": "84551ec7-4071-4f09-80c0-d075a83b1228",
+  "createdAt": "2026-06-08T15:07:20.236Z",
+  "updatedAt": "2026-06-08T15:07:20.236Z",
+  "name": "Mint Fresh",
+  "description": "Health & wellness",
+  "globals": {
+    "backdropColor": "#F0FDFA",
+    "borderRadius": 16,
+    "canvasColor": "#FFFFFF",
+    "textColor": "#134E4A",
+    "fontFamily": "OPEN_SANS",
+    "linkGlobal": {
+      "linkColor": "#0D9488",
+      "underline": false
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#0D9488",
+        "buttonTextColor": "#FFFFFF",
+        "shape": "pill"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#CCFBF1"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    }
+  }
+}

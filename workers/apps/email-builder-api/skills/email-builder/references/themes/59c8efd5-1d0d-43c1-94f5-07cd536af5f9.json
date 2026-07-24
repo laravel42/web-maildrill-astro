@@ -1,0 +1,48 @@
+{
+  "id": "59c8efd5-1d0d-43c1-94f5-07cd536af5f9",
+  "createdAt": "2026-06-08T15:07:20.269Z",
+  "updatedAt": "2026-06-08T15:07:20.269Z",
+  "name": "Petal Floral",
+  "description": "Florist",
+  "globals": {
+    "backdropColor": "#FFF1F2",
+    "borderRadius": 24,
+    "canvasColor": "#FFFAFA",
+    "textColor": "#3F1D1D",
+    "fontFamily": "PLAYFAIR",
+    "linkGlobal": {
+      "linkColor": "#9F1239",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#9F1239",
+        "buttonTextColor": "#FFFAFA",
+        "fontWeight": "normal",
+        "shape": "pill"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#FBCFE8"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFAFA"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFAFA"
+      }
+    },
+    "NotionText": {
+      "style": {
+        "fontFamily": "PLAYFAIR"
+      }
+    }
+  }
+}

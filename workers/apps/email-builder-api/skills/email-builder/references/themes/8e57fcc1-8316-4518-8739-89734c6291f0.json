@@ -1,0 +1,46 @@
+{
+  "id": "8e57fcc1-8316-4518-8739-89734c6291f0",
+  "createdAt": "2026-06-08T15:07:20.282Z",
+  "updatedAt": "2026-06-08T15:07:20.282Z",
+  "name": "Magenta Pop",
+  "description": "Music / youth",
+  "globals": {
+    "backdropColor": "#FFFFFF",
+    "borderRadius": 6,
+    "canvasColor": "#FFFFFF",
+    "textColor": "#0A0A0A",
+    "fontFamily": "OSWALD",
+    "linkGlobal": {
+      "linkColor": "#DB2777",
+      "underline": false
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#DB2777",
+        "buttonTextColor": "#FFFFFF"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#FBCFE8"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "NotionText": {
+      "style": {
+        "fontFamily": "OSWALD"
+      }
+    }
+  }
+}

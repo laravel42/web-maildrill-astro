@@ -1,0 +1,651 @@
+{
+  "root": {
+    "type": "EmailLayout",
+    "data": {
+      "backdropColor": "#e7e7e7",
+      "canvasColor": "#FFFFFF",
+      "textColor": "#000000",
+      "fontFamily": "LATO",
+      "linkGlobal": {
+        "linkColor": "#0000ee",
+        "underline": true
+      },
+      "childrenIds": [
+        "block-687a83530f73a",
+        "block-1778884881974-c89",
+        "block-687a83530f808"
+      ]
+    }
+  },
+  "block-687a83530f75a": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 30,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 30,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#2d07d3",
+        "fontSize": 30,
+        "backgroundColor": "#fff7ed"
+      },
+      "props": {
+        "html": "INTERNATIONAL HUMAN RIGHTS DAY"
+      }
+    }
+  },
+  "block-687a83530f78a": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": "#fff7ed"
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/318x213/EEE/999?text=Image+Placeholder",
+        "alt": "header image",
+        "scale": 53,
+        "scaleMobile": 53,
+        "width": 307
+      }
+    }
+  },
+  "block-687a83530f73a": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a83530f75a",
+          "block-687a83530f78a"
+        ]
+      }
+    }
+  },
+  "block-687a83530f7ab": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 50,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 50,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#2d07d3",
+        "fontSize": 22,
+        "backgroundColor": "#f3fafd"
+      },
+      "props": {
+        "html": "HUMAN RIGHTS ARE FOR EVERYONE"
+      }
+    }
+  },
+  "block-687a83530f7bc": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 60,
+          "bottom": 10,
+          "left": 60
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 60,
+          "bottom": 10,
+          "left": 60
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": 16,
+        "backgroundColor": "#f3fafd"
+      },
+      "props": {
+        "html": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quis ipsum suspendisse ultrices gravida. Risus commodo viverra maecenas accumsan lacus vel facilisis. "
+      }
+    }
+  },
+  "block-687a83530f7e4": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "#f3fafd",
+        "textAlign": "center",
+        "padding": {
+          "top": 10,
+          "bottom": 50,
+          "right": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "bottom": 50,
+          "right": 10,
+          "left": 10
+        },
+        "shape": "pill",
+        "borderRadius": 28
+      },
+      "props": {
+        "buttonBackgroundColor": "#4d3ae0",
+        "buttonTextColor": "#FFFFFF",
+        "fullWidth": true,
+        "text": "Read more"
+      }
+    }
+  },
+  "block-687a83530f7a1": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 5,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 5,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a83530f7ab",
+          "block-687a83530f7bc"
+        ]
+      }
+    }
+  },
+  "block-687a83530f827": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 50,
+          "right": 10,
+          "bottom": 50,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 50,
+          "right": 10,
+          "bottom": 50,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": "#e9fff3"
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/480x321/EEE/999?text=Image+Placeholder",
+        "alt": "globe",
+        "scale": 80,
+        "scaleMobile": 80,
+        "width": 211
+      }
+    }
+  },
+  "block-687a83530f837": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 16,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 85,
+          "right": 10,
+          "bottom": 60,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#2d07d3",
+        "fontSize": 27,
+        "backgroundColor": "#e9fff3"
+      },
+      "props": {
+        "html": "<p><span style=\"color: rgb(12, 63, 2);\"><strong>“A right delayed is a right denied.” </strong></span></p>"
+      }
+    }
+  },
+  "block-687a83530f815": {
+    "type": "ColumnsContainer",
+    "data": {
+      "props": {
+        "columnsCount": 2,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-687a83530f827"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-687a83530f837",
+              "block-1778884736410-vyi"
+            ]
+          }
+        ],
+        "fixedWidths": [
+          50,
+          50
+        ],
+        "layout": "layout-50-50"
+      },
+      "style": {
+        "backgroundColor": "#e9fff3",
+        "padding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "mobilePadding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "gap": 0
+      }
+    }
+  },
+  "block-687a83530f808": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#e9fff3",
+        "padding": {
+          "top": 5,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 5,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a83530f815",
+          "block-1778884668381-tdp",
+          "block-1778884101290-epe"
+        ]
+      }
+    }
+  },
+  "block-687a83530f859": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 50,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 50,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#2d07d3",
+        "fontSize": 22,
+        "backgroundColor": "#fff7ed"
+      },
+      "props": {
+        "html": "<p><span style=\"color: rgb(22, 176, 163);\"><strong>LEAVE NO ONE BEHIND!</strong></span></p>"
+      }
+    }
+  },
+  "block-687a83530f868": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 60,
+          "bottom": 10,
+          "left": 60
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 60,
+          "bottom": 10,
+          "left": 60
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": 16,
+        "backgroundColor": "#fff7ed"
+      },
+      "props": {
+        "html": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quis ipsum suspendisse ultrices gravida. Risus commodo viverra maecenas accumsan lacus vel facilisis. "
+      }
+    }
+  },
+  "block-687a83530f885": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "#fff7ed",
+        "buttonBackgroundColor": "#16b0a3",
+        "buttonTextColor": "#faf9ff",
+        "textAlign": "center",
+        "padding": {
+          "top": 10,
+          "bottom": 10,
+          "right": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "bottom": 10,
+          "right": 10,
+          "left": 10
+        },
+        "shape": "pill",
+        "borderRadius": 28
+      },
+      "props": {
+        "buttonBackgroundColor": "#4d3ae0",
+        "buttonTextColor": "#FFFFFF",
+        "fullWidth": true,
+        "text": "Read more"
+      }
+    }
+  },
+  "block-687a83530f898": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "textAlign": "center",
+        "backgroundColor": "#fff7ed"
+      },
+      "props": {
+        "size": "cover",
+        "sizeMobile": "cover",
+        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "alt": "bottom image",
+        "scale": 100,
+        "scaleMobile": 100,
+        "width": 600
+      }
+    }
+  },
+  "block-687a83530f84f": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 5,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 5,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": []
+      }
+    }
+  },
+  "block-1778884101290-epe": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#fff7ed",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        },
+        "mobilePadding": null
+      },
+      "props": {
+        "childrenIds": [
+          "block-1778884118684",
+          "block-687a83530f898"
+        ]
+      }
+    }
+  },
+  "block-1778884118684": {
+    "type": "SocialMedia",
+    "data": {
+      "style": {
+        "fontSize": 36,
+        "textAlign": "center",
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 24,
+          "left": 24
+        },
+        "mobilePadding": null
+      },
+      "gap": 24,
+      "items": [
+        {
+          "id": "43c160a6-5945-4656-a25d-405f347ab052",
+          "key": "reddit",
+          "label": "Reddit",
+          "iconName": "Reddit",
+          "theme": "original",
+          "size": "small",
+          "sizePx": "24px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Reddit_Original_24px.png",
+          "href": "https://www.reddit.com/"
+        },
+        {
+          "id": "ca144bd2-5b28-4cf3-8c15-806dff353098",
+          "key": "facebook",
+          "label": "Facebook",
+          "iconName": "Facebook",
+          "theme": "original",
+          "size": "small",
+          "sizePx": "24px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Facebook_Original_24px.png",
+          "href": ""
+        },
+        {
+          "id": "7502e7bf-8541-45db-bf1b-ce07fbe9a424",
+          "key": "tiktok",
+          "label": "TikTok",
+          "iconName": "TikTok",
+          "theme": "original",
+          "size": "small",
+          "sizePx": "24px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/TikTok_Original_24px.png",
+          "href": "https://www.tiktok.com/@your-profile"
+        },
+        {
+          "id": "ec00058d-103e-421f-94f1-c4bf40421271",
+          "key": "twitch",
+          "label": "Twitch",
+          "iconName": "Twitch",
+          "theme": "original",
+          "size": "small",
+          "sizePx": "24px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Twitch_Original_24px.png",
+          "href": "https://www.twitch.tv/"
+        }
+      ]
+    }
+  },
+  "block-1778884151163-nuh": {
+    "type": "Spacer",
+    "data": {
+      "style": {
+        "height": 20,
+        "backgroundColor": "#fff7ed"
+      }
+    }
+  },
+  "block-1778884394908-u7z": {
+    "type": "NotionText",
+    "data": {
+      "props": {
+        "html": "<p style=\"text-align: center;\"><span style=\"color: rgb(22, 176, 163);\"><strong>Join to the comunity</strong></span></p>"
+      },
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 0,
+          "left": 24,
+          "right": 24
+        },
+        "mobilePadding": null,
+        "fontSize": 20,
+        "fontWeight": "normal",
+        "color": null,
+        "backgroundColor": null,
+        "textAlign": "left"
+      }
+    }
+  },
+  "block-1778884668381-tdp": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#fff7ed",
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 24,
+          "left": 24
+        },
+        "mobilePadding": null
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a83530f859",
+          "block-687a83530f868",
+          "block-687a83530f885",
+          "block-1778884394908-u7z"
+        ]
+      }
+    }
+  },
+  "block-1778884736410-vyi": {
+    "type": "NotionText",
+    "data": {
+      "props": {
+        "html": "<p style=\"text-align: center;\"><span style=\"color: rgb(12, 63, 2);\">- Martin Luther King, Jr.</span></p>"
+      },
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        },
+        "mobilePadding": null,
+        "fontSize": 16,
+        "fontWeight": "normal",
+        "color": null,
+        "backgroundColor": null,
+        "textAlign": "left"
+      }
+    }
+  },
+  "block-1778884881974-c89": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#f3fafd",
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 24,
+          "left": 24
+        },
+        "mobilePadding": null
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a83530f7a1",
+          "block-687a83530f7e4"
+        ]
+      }
+    }
+  }
+}

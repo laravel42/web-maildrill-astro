@@ -29,6 +29,8 @@ export type Campaign = {
   recipients: number;
   delivered: number;
   failed: number;
+  /** Messages accepted by the provider (or finished) — drives send progress %. */
+  accepted: number;
   unsubscribed: number;
 };
 

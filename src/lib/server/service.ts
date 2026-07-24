@@ -12,9 +12,15 @@ export function serviceBaseUrl(): string {
   return process.env.API_BASE_URL ?? import.meta.env.API_BASE_URL ?? 'http://localhost:3001';
 }
 
-/** Mint a short-lived HS256 JWT the maildrill-service accepts (tenant-scoped). */
+/** Mint a short-lived HS256 JWT the workers accepts (tenant-scoped). */
 export function mintServiceToken(ctx: ServiceCtx): string {
-  const secret = process.env.JWT_SECRET ?? import.meta.env.JWT_SECRET ?? 'change-me';
+  const secret = process.env.JWT_SECRET ?? import.meta.env.JWT_SECRET;
+  if (!secret || secret === 'change-me' || secret === 'change-me-in-production') {
+    if (import.meta.env.PROD) {
+      throw new Error('JWT_SECRET must be set to a strong value in production');
+    }
+  }
+  const resolved = secret && secret.length > 0 ? secret : 'change-me';
   const b64 = (v: string) => Buffer.from(v).toString('base64url');
   const header = b64(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
   const payload = b64(
@@ -25,7 +31,7 @@ export function mintServiceToken(ctx: ServiceCtx): string {
       exp: Math.floor(Date.now() / 1000) + 300,
     }),
   );
-  const sig = createHmac('sha256', secret).update(`${header}.${payload}`).digest('base64url');
+  const sig = createHmac('sha256', resolved).update(`${header}.${payload}`).digest('base64url');
   return `${header}.${payload}.${sig}`;
 }
 

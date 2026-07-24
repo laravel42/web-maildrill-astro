@@ -1,0 +1,1488 @@
+{
+  "root": {
+    "type": "EmailLayout",
+    "data": {
+      "backdropColor": "#e8eae9",
+      "canvasColor": "#FFFFFF",
+      "textColor": "#000000",
+      "fontFamily": "LATO",
+      "childrenIds": [
+        "block-687a8341110dc",
+        "block-687a834111175",
+        "block-687a8341111db",
+        "block-687a834111211",
+        "block-687a834111245",
+        "block-687a83411127a",
+        "block-687a8341112b0",
+        "block-687a8341112f6",
+        "block-687a83411139c",
+        "block-687a8341114ba",
+        "block-687a834111511"
+      ],
+      "linkGlobal": {
+        "linkColor": "#0000ee",
+        "underline": true
+      }
+    }
+  },
+  "block-687a834111113": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 22,
+          "right": 0,
+          "bottom": 0,
+          "left": 15
+        },
+        "mobilePadding": {
+          "top": 22,
+          "right": 0,
+          "bottom": 0,
+          "left": 15
+        },
+        "textAlign": "left",
+        "color": null,
+        "fontSize": 33,
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "html": "<p>SUPPORTING YOUR MENTAL&nbsp; HEALTH</p>"
+      }
+    }
+  },
+  "block-687a834111141": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 15
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 15
+        },
+        "textAlign": "left",
+        "color": null,
+        "fontSize": "16px",
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "html": "<p>Our Services and Resources</p>"
+      }
+    }
+  },
+  "block-687a83411115c": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 26,
+          "right": 30,
+          "bottom": 7,
+          "left": 7
+        },
+        "mobilePadding": {
+          "top": 26,
+          "right": 30,
+          "bottom": 7,
+          "left": 7
+        },
+        "textAlign": "right",
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/318x213/EEE/999?text=Image+Placeholder",
+        "alt": "Placeholder image",
+        "scale": 53,
+        "scaleMobile": 53,
+        "width": 284
+      }
+    }
+  },
+  "block-687a8341110ff": {
+    "type": "ColumnsContainer",
+    "data": {
+      "props": {
+        "columnsCount": 2,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-687a834111113",
+              "block-687a834111141"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-687a83411115c"
+            ]
+          }
+        ],
+        "fixedWidths": [
+          50,
+          50
+        ],
+        "layout": "layout-50-50"
+      },
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "mobilePadding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "gap": 0
+      }
+    }
+  },
+  "block-687a8341110dc": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a8341110ff"
+        ]
+      }
+    }
+  },
+  "block-687a83411117f": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 22,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 22,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "size": "cover",
+        "sizeMobile": "cover",
+        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "alt": "Placeholder image",
+        "scale": 100,
+        "scaleMobile": 100,
+        "width": 0
+      }
+    }
+  },
+  "block-687a83411118f": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 30,
+          "right": 50,
+          "bottom": 10,
+          "left": 50
+        },
+        "mobilePadding": {
+          "top": 30,
+          "right": 50,
+          "bottom": 10,
+          "left": 50
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "html": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.  sodales condimentum. Donec aliquet tincidunt tellus sed feugiat. Sed vulputate imperdiet hendrerit consectetur."
+      }
+    }
+  },
+  "block-687a8341111ab": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "#ffffff",
+        "textAlign": "center",
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "borderRadius": 0
+      },
+      "props": {
+        "buttonBackgroundColor": "#05c26b",
+        "text": "Get appointment now",
+        "fullWidth": false,
+        "buttonTextColor": "#FFFFFF"
+      }
+    }
+  },
+  "block-687a8341111c7": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 20,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 20,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": 28,
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "html": "Our Special Services"
+      }
+    }
+  },
+  "block-687a834111175": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a83411117f",
+          "block-687a83411118f",
+          "block-687a8341111ab",
+          "block-687a8341111c7"
+        ]
+      }
+    }
+  },
+  "block-687a8341111e5": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": 17,
+        "backgroundColor": "#f1f2f2"
+      },
+      "props": {
+        "html": "Individual Counseling"
+      }
+    }
+  },
+  "block-687a8341111f5": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 5,
+          "right": 50,
+          "bottom": 30,
+          "left": 50
+        },
+        "mobilePadding": {
+          "top": 5,
+          "right": 50,
+          "bottom": 30,
+          "left": 50
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": "#f1f2f2"
+      },
+      "props": {
+        "html": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut ves sodales condimentum. Donec aliquet tincidunt tellus sed feugiat. Sed vulputate imperdiet hendrerit."
+      }
+    }
+  },
+  "block-687a8341111db": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a8341111e5",
+          "block-687a8341111f5"
+        ]
+      }
+    }
+  },
+  "block-687a83411121b": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": 17,
+        "backgroundColor": "#9adfc3"
+      },
+      "props": {
+        "html": "Parent Support Group"
+      }
+    }
+  },
+  "block-687a83411122b": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 5,
+          "right": 50,
+          "bottom": 30,
+          "left": 50
+        },
+        "mobilePadding": {
+          "top": 5,
+          "right": 50,
+          "bottom": 30,
+          "left": 50
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": "#9adfc3"
+      },
+      "props": {
+        "html": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut vestibulum sodales condimentum. Donec aliquet tincidunt tellus sed feugiat. Sed vulputate imperdiet hendrerit."
+      }
+    }
+  },
+  "block-687a834111211": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a83411121b",
+          "block-687a83411122b"
+        ]
+      }
+    }
+  },
+  "block-687a83411124f": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": 17,
+        "backgroundColor": "#f1f2f2"
+      },
+      "props": {
+        "html": "Teen Support Group"
+      }
+    }
+  },
+  "block-687a83411125f": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 5,
+          "right": 50,
+          "bottom": 30,
+          "left": 50
+        },
+        "mobilePadding": {
+          "top": 5,
+          "right": 50,
+          "bottom": 30,
+          "left": 50
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": "#f1f2f2"
+      },
+      "props": {
+        "html": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut vestibulum sodales condimentum. Donec aliquet tincidunt tellus sed feugiat. Sed vulputate imperdiet hendrerit."
+      }
+    }
+  },
+  "block-687a834111245": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a83411124f",
+          "block-687a83411125f"
+        ]
+      }
+    }
+  },
+  "block-687a834111286": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": 17,
+        "backgroundColor": "#f5e9c3"
+      },
+      "props": {
+        "html": "Kids Play Therapy Group"
+      }
+    }
+  },
+  "block-687a834111296": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 5,
+          "right": 50,
+          "bottom": 30,
+          "left": 50
+        },
+        "mobilePadding": {
+          "top": 5,
+          "right": 50,
+          "bottom": 30,
+          "left": 50
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": "#f5e9c3"
+      },
+      "props": {
+        "html": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut vestibulum sodales condimentum. Donec aliquet tincidunt tellus sed feugiat. Sed vulputate imperdiet hendrerit."
+      }
+    }
+  },
+  "block-687a83411127a": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a834111286",
+          "block-687a834111296"
+        ]
+      }
+    }
+  },
+  "block-687a8341112ba": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": 28,
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "html": "Success Stories"
+      }
+    }
+  },
+  "block-687a8341112c9": {
+    "type": "Divider",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "width": 21,
+        "color": "#BBBBBB",
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "lineColor": "#BBBBBB"
+      }
+    }
+  },
+  "block-687a8341112d9": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 50,
+          "bottom": 20,
+          "left": 50
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 50,
+          "bottom": 20,
+          "left": 50
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "html": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut vestibulum sodales condimentum. Donec aliquet tincidunt tellus sed feugiat. Sed vulputate imperdiet hendrerit."
+      }
+    }
+  },
+  "block-687a8341112b0": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a8341112ba",
+          "block-687a8341112c9",
+          "block-687a8341112d9"
+        ]
+      }
+    }
+  },
+  "block-687a83411132b": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 0,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 0,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "right",
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "size": "cover",
+        "sizeMobile": "cover",
+        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "alt": "Placeholder image",
+        "scale": 100,
+        "scaleMobile": 100,
+        "width": 274
+      }
+    }
+  },
+  "block-687a83411133d": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 0,
+          "bottom": 0,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 0,
+          "bottom": 0,
+          "left": 30
+        },
+        "textAlign": "left",
+        "color": null,
+        "fontSize": 19,
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "html": "Jallani.Q"
+      }
+    }
+  },
+  "block-687a83411134d": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 5,
+          "right": 0,
+          "bottom": 0,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 5,
+          "right": 0,
+          "bottom": 0,
+          "left": 30
+        },
+        "textAlign": "left",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "html": "Lorem ipsum dolor sit amet, conseetur adipiscing elit. "
+      }
+    }
+  },
+  "block-687a834111364": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 11,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 11,
+          "left": 0
+        },
+        "textAlign": "center",
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "size": "cover",
+        "sizeMobile": "cover",
+        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "alt": "Placeholder image",
+        "scale": 100,
+        "scaleMobile": 100,
+        "width": 274
+      }
+    }
+  },
+  "block-687a834111374": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 0,
+          "bottom": 0,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 0,
+          "bottom": 0,
+          "left": 30
+        },
+        "textAlign": "left",
+        "color": null,
+        "fontSize": 19,
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "html": "Bella.J"
+      }
+    }
+  },
+  "block-687a834111384": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 5,
+          "right": 0,
+          "bottom": 0,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 5,
+          "right": 0,
+          "bottom": 0,
+          "left": 30
+        },
+        "textAlign": "left",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "html": "Lorem ipsum dolor sit amet, conseetur adipiscing elit. "
+      }
+    }
+  },
+  "block-687a83411131e": {
+    "type": "ColumnsContainer",
+    "data": {
+      "props": {
+        "columnsCount": 2,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-687a83411132b",
+              "block-687a83411133d",
+              "block-687a83411134d"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-687a834111364",
+              "block-687a834111374",
+              "block-687a834111384"
+            ]
+          }
+        ],
+        "fixedWidths": [
+          50,
+          50
+        ],
+        "layout": "layout-50-50"
+      },
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "mobilePadding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "gap": 0
+      }
+    }
+  },
+  "block-687a8341112f6": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a83411131e"
+        ]
+      }
+    }
+  },
+  "block-687a8341113b0": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 20,
+          "right": 0,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 20,
+          "right": 0,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "size": "cover",
+        "sizeMobile": "cover",
+        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "alt": "Placeholder image",
+        "scale": 100,
+        "scaleMobile": 100,
+        "width": 274
+      }
+    }
+  },
+  "block-687a8341113c2": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 0,
+          "bottom": 0,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 0,
+          "bottom": 0,
+          "left": 30
+        },
+        "textAlign": "left",
+        "color": null,
+        "fontSize": 19,
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "html": "Henna.R"
+      }
+    }
+  },
+  "block-687a8341113e9": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 5,
+          "right": 0,
+          "bottom": 0,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 5,
+          "right": 0,
+          "bottom": 0,
+          "left": 30
+        },
+        "textAlign": "left",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "html": "Lorem ipsum dolor sit amet, conseetur adipiscing elit. "
+      }
+    }
+  },
+  "block-687a834111466": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 20,
+          "right": 10,
+          "bottom": 10,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 20,
+          "right": 10,
+          "bottom": 10,
+          "left": 0
+        },
+        "textAlign": "center",
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "size": "cover",
+        "sizeMobile": "cover",
+        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "alt": "Placeholder image",
+        "scale": 100,
+        "scaleMobile": 100,
+        "width": 274
+      }
+    }
+  },
+  "block-687a834111485": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 0,
+          "bottom": 0,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 0,
+          "bottom": 0,
+          "left": 30
+        },
+        "textAlign": "left",
+        "color": null,
+        "fontSize": 19,
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "html": "Faisal.U"
+      }
+    }
+  },
+  "block-687a83411149b": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 5,
+          "right": 0,
+          "bottom": 0,
+          "left": 30
+        },
+        "mobilePadding": {
+          "top": 5,
+          "right": 0,
+          "bottom": 0,
+          "left": 30
+        },
+        "textAlign": "left",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "html": "<p>Lorem ipsum dolor sit amet, conseetur adipiscing elit.</p>"
+      }
+    }
+  },
+  "block-687a8341113a9": {
+    "type": "ColumnsContainer",
+    "data": {
+      "props": {
+        "columnsCount": 2,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-687a8341113b0",
+              "block-687a8341113c2",
+              "block-687a8341113e9"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-687a834111466",
+              "block-687a834111485",
+              "block-687a83411149b"
+            ]
+          }
+        ],
+        "fixedWidths": [
+          50,
+          50
+        ],
+        "layout": "layout-50-50"
+      },
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "mobilePadding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "gap": 0
+      }
+    }
+  },
+  "block-687a83411139c": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a8341113a9"
+        ]
+      }
+    }
+  },
+  "block-687a8341114d8": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "#ffffff",
+        "textAlign": "center",
+        "padding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 60,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "borderRadius": 0
+      },
+      "props": {
+        "buttonBackgroundColor": "#05c26b",
+        "text": "Get appointment now",
+        "fullWidth": false,
+        "buttonTextColor": "#FFFFFF"
+      }
+    }
+  },
+  "block-687a8341114f4": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 0,
+          "bottom": 60,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 0,
+          "bottom": 60,
+          "left": 0
+        },
+        "textAlign": "center",
+        "color": null,
+        "fontSize": "14px",
+        "backgroundColor": "#ffffff"
+      },
+      "props": {
+        "html": "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut vestibulum sodales condimentum.</p>"
+      }
+    }
+  },
+  "block-687a8341114ba": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a8341114d8",
+          "block-687a8341114f4"
+        ]
+      }
+    }
+  },
+  "block-687a834111520": {
+    "type": "SocialMedia",
+    "data": {
+      "style": {
+        "backgroundColor": "#9adfc3",
+        "textAlign": "center",
+        "padding": {
+          "top": 60,
+          "bottom": 10,
+          "right": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 60,
+          "bottom": 10,
+          "right": 10,
+          "left": 10
+        }
+      },
+      "gap": 20,
+      "items": [
+        {
+          "id": "687a83411152c",
+          "key": "facebook",
+          "label": "Facebook",
+          "iconName": "Facebook",
+          "theme": "original",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Facebook_Original_36px.png",
+          "href": "https://www.facebook.com/unlayer"
+        },
+        {
+          "id": "687a83411154e",
+          "key": "apple",
+          "label": "Apple",
+          "iconName": "Apple",
+          "theme": "original",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Apple_Original_36px.png",
+          "href": "https://twitter.com/unlayerapp"
+        },
+        {
+          "id": "687a834111557",
+          "key": "linkedin",
+          "label": "LinkedIn",
+          "iconName": "LinkedIn",
+          "theme": "original",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/LinkedIn_Original_36px.png",
+          "href": "https://www.linkedin.com/company/unlayer/mycompany/"
+        },
+        {
+          "id": "687a83411155f",
+          "key": "instagram",
+          "label": "Instagram",
+          "iconName": "Instagram",
+          "theme": "original",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Instagram_Original_36px.png",
+          "href": "https://www.instagram.com/unlayer_official/"
+        }
+      ],
+      "theme": "squared"
+    }
+  },
+  "block-687a834111571": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 20,
+          "right": 100,
+          "bottom": 30,
+          "left": 100
+        },
+        "mobilePadding": {
+          "top": 20,
+          "right": 100,
+          "bottom": 30,
+          "left": 100
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": "14px",
+        "backgroundColor": "#9adfc3"
+      },
+      "props": {
+        "html": "HOME  |  PAGE  |  ABOUT US  |  CONTACT US   Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore."
+      }
+    }
+  },
+  "block-687a8341115a4": {
+    "type": "Divider",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "width": 100,
+        "color": "#BBBBBB",
+        "backgroundColor": "#05c26b"
+      },
+      "props": {
+        "lineColor": "#BBBBBB"
+      }
+    }
+  },
+  "block-687a8341115b9": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 20,
+          "bottom": 20,
+          "right": 20,
+          "left": 20
+        },
+        "mobilePadding": {
+          "top": 20,
+          "bottom": 20,
+          "right": 20,
+          "left": 20
+        },
+        "backgroundColor": "#9adfc3",
+        "textAlign": "center"
+      },
+      "props": {
+        "scale": 42,
+        "size": "scale",
+        "sizeMobile": "scale",
+        "width": 600,
+        "widthMobile": 252,
+        "scaleMobile": 42,
+        "url": "https://placehold.co/252x168/EEE/999?text=Image+Placeholder",
+        "alt": "Placeholder image"
+      }
+    }
+  },
+  "block-687a834111511": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a834111520",
+          "block-687a834111571",
+          "block-1778888067884-aww",
+          "block-687a8341115a4"
+        ]
+      }
+    }
+  },
+  "block-1778888067884-aww": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        },
+        "mobilePadding": null,
+        "backgroundColor": "#9adfc3",
+        "textAlign": "center"
+      },
+      "props": {
+        "touched": false,
+        "scale": 22,
+        "size": "scale",
+        "sizeMobile": "scale",
+        "width": 600,
+        "widthMobile": 132,
+        "scaleMobile": 22,
+        "height": null,
+        "url": "https://ddc4vowthkjlv.cloudfront.net/uploads/gallery/1/69cc1b1083b90.jpg",
+        "alt": "Logo",
+        "linkHref": null,
+        "contentAlignment": "middle"
+      }
+    }
+  }
+}

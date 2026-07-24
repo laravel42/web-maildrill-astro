@@ -1,0 +1,42 @@
+{
+  "id": "861965aa-dff6-4b20-b5e4-25efd5e3c2db",
+  "createdAt": "2026-06-08T15:07:20.280Z",
+  "updatedAt": "2026-06-08T15:07:20.280Z",
+  "name": "Verdant Eco",
+  "description": "Sustainability / nonprofit",
+  "globals": {
+    "backdropColor": "#F7FEE7",
+    "borderRadius": 24,
+    "canvasColor": "#FFFFFF",
+    "textColor": "#1A2E05",
+    "fontFamily": "OPEN_SANS",
+    "linkGlobal": {
+      "linkColor": "#15803D",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#15803D",
+        "buttonTextColor": "#FFFFFF",
+        "shape": "pill"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#D9F99D"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    }
+  }
+}

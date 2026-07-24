@@ -3,6 +3,7 @@ import '@/styles/global.css';
 import '@/styles/components.css';
 import SeoHead from '@/components/seo/SeoHead.astro';
 import JsonLd from '@/components/seo/JsonLd.astro';
+import PostHog from '@/components/posthog.astro';
 import type { PageSeo } from '@/config/seo';
 import { siteConfig } from '@/config/site';
 
@@ -35,6 +36,7 @@ const pathname = Astro.url.pathname;
     />
     <SeoHead seo={seo} pathname={pathname} />
     {jsonLd && <JsonLd data={jsonLd} />}
+    <PostHog />
     {/* Enable scroll-reveal only when motion is allowed; runs before paint to avoid FOUC. */}
     <script is:inline>
       try {

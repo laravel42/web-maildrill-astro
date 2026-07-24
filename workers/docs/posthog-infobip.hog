@@ -1,0 +1,276 @@
+// Infobip → PostHog incoming webhook (source_webhook).
+// Point Infobip notify URLs here with ?kind=delivery|engagement|voice|template
+// (kind is optional; template payloads are auto-detected via messageTemplateId).
+
+if (inputs.debug) {
+    print('Infobip webhook:', request.method, request.query, request.body)
+}
+
+if (request.method != inputs.method) {
+    return {
+        'httpResponse': {
+            'status': 405,
+            'body': 'Method not allowed'
+        }
+    }
+}
+
+if (notEmpty(inputs.auth_header) and notEquals(inputs.auth_header, request.headers['authorization'])) {
+    print('Incoming request denied due to bad authorization header')
+    return {
+        'httpResponse': {
+            'status': 401,
+            'body': 'Unauthorized'
+        }
+    }
+}
+
+let body := request.body
+if (empty(body)) {
+    body := {}
+}
+
+let kind := request.query.kind
+if (empty(kind)) {
+    if (not empty(body.messageTemplateId)) {
+        kind := 'template'
+    } else {
+        kind := 'delivery'
+    }
+}
+
+let eventName := 'message_delivery_report'
+if (kind == 'engagement') {
+    eventName := 'message_seen_report'
+} else if (kind == 'voice') {
+    eventName := 'message_voice_report'
+} else if (kind == 'template') {
+    eventName := 'whatsapp_template_status'
+}
+
+// --- Template status (single object, not results[]) ---
+if (kind == 'template') {
+    let providerTemplateId := toString(body.messageTemplateId)
+    let change := body.change
+    if (empty(change)) {
+        change := {}
+    }
+    let newStatus := change.newStatus
+    if (empty(providerTemplateId) or empty(newStatus)) {
+        return {
+            'httpResponse': {
+                'status': 400,
+                'body': {'error': 'missing messageTemplateId or change.newStatus'}
+            }
+        }
+    }
+
+    let status := 'pending'
+    let upperStatus := upper(toString(newStatus))
+    if (upperStatus == 'APPROVED' or upperStatus == 'REINSTATED') {
+        status := 'approved'
+    } else if (upperStatus == 'REJECTED') {
+        status := 'rejected'
+    } else if (upperStatus == 'FLAGGED' or upperStatus == 'FIRST_PAUSED' or upperStatus == 'SECOND_PAUSED') {
+        status := 'paused'
+    } else if (upperStatus == 'DISABLED' or upperStatus == 'DELETED' or upperStatus == 'PENDING_DELETION') {
+        status := 'disabled'
+    }
+
+    let reason := change.reason
+    let rejectionReason := ''
+    if (not empty(reason) and toString(reason) != 'NONE') {
+        rejectionReason := toString(reason)
+    }
+
+    let templateName := body.messageTemplateName
+    let insertId := f'infobip:{providerTemplateId}:{status}:{toString(templateName)}'
+
+    postHogCapture({
+        'event': eventName,
+        'distinct_id': providerTemplateId,
+        'properties': {
+            '$insert_id': insertId,
+            '$ip': request.ip,
+            '$lib': 'posthog-webhook',
+            'provider': 'infobip',
+            'kind': 'template',
+            'provider_template_id': providerTemplateId,
+            'template_name': templateName,
+            'status': status,
+            'rejection_reason': rejectionReason,
+            'raw': body
+        }
+    })
+
+    return {
+        'httpResponse': {
+            'status': 200,
+            'body': {'ok': true, 'captured': 1}
+        }
+    }
+}
+
+// --- Delivery / engagement / voice: Infobip { results: [...] } ---
+let results := body.results
+if (empty(results)) {
+    if (not empty(body.messageId)) {
+        results := [body]
+    } else {
+        results := []
+    }
+}
+
+let captured := 0
+let lastEvent := null
+let batchJson := ''
+for (let raw in results) {
+    if (empty(raw)) {
+        continue
+    }
+
+    let statusObj := raw.status
+    if (empty(statusObj)) {
+        statusObj := {}
+    }
+    let errorObj := raw.error
+    if (empty(errorObj)) {
+        errorObj := {}
+    }
+    let priceObj := raw.price
+    if (empty(priceObj)) {
+        priceObj := {}
+    }
+    let platformObj := raw.platform
+    if (empty(platformObj)) {
+        platformObj := {}
+    }
+    let contactObj := raw.contact
+    if (empty(contactObj)) {
+        contactObj := {}
+    }
+
+    let messageId := toString(raw.messageId)
+    let statusName := statusObj.name
+    if (empty(statusName)) {
+        statusName := statusObj.groupName
+    }
+    let statusGroup := statusObj.groupName
+    let doneAt := raw.doneAt
+    if (empty(doneAt)) {
+        doneAt := raw.seenAt
+    }
+    if (empty(doneAt)) {
+        doneAt := raw.sentAt
+    }
+
+    let to := raw.to
+    if (empty(to)) {
+        to := contactObj.phoneNumber
+    }
+    let distinctId := toString(to)
+    if (empty(distinctId)) {
+        distinctId := messageId
+    }
+    if (empty(distinctId)) {
+        distinctId := 'anonymous'
+    }
+
+    let insertId := f'infobip:{messageId}:{toString(statusName)}:{toString(doneAt)}'
+
+    let appId := platformObj.applicationId
+    if (empty(appId)) {
+        appId := raw.applicationId
+    }
+    let entityId := platformObj.entityId
+    if (empty(entityId)) {
+        entityId := raw.entityId
+    }
+
+    let ppm := priceObj.pricePerMessage
+    if (empty(ppm)) {
+        ppm := priceObj.pricePerSecond
+    }
+
+    // callbackData stamped on send: tenantId|channel|maildrillMessageId
+    let tenantId := ''
+    let channel := ''
+    let maildrillMessageId := ''
+    let cb := toString(raw.callbackData)
+    if (not empty(cb)) {
+        // splitByString, not splitByChar — the CDP Hog VM stdlib only has the former.
+        let parts := splitByString('|', cb)
+        if (length(parts) >= 3) {
+            tenantId := parts[1]
+            channel := parts[2]
+            maildrillMessageId := parts[3]
+        }
+    }
+
+    let ev := {
+        'event': eventName,
+        'distinct_id': distinctId,
+        'properties': {
+            '$insert_id': insertId,
+            '$ip': request.ip,
+            '$lib': 'posthog-webhook',
+            'provider': 'infobip',
+            'kind': kind,
+            'message_id': messageId,
+            'bulk_id': raw.bulkId,
+            'status_group': statusGroup,
+            'status_name': statusName,
+            'to': to,
+            'tenant_id': tenantId,
+            'channel': channel,
+            'maildrill_message_id': maildrillMessageId,
+            'application_id': appId,
+            'entity_id': entityId,
+            'error_id': errorObj.id,
+            'error_name': errorObj.name,
+            'error_group': errorObj.groupName,
+            'error_description': errorObj.description,
+            'error_permanent': errorObj.permanent,
+            'price_per_message': ppm,
+            'price_currency': priceObj.currency,
+            'voice_call': raw.voiceCall,
+            'raw': raw
+        }
+    }
+    lastEvent := ev
+    if (batchJson != '') {
+        batchJson := concat(batchJson, ',')
+    }
+    batchJson := concat(batchJson, jsonStringify(ev))
+    captured := captured + 1
+}
+
+// The source_webhook runtime allows ONE postHogCapture per invocation, so a
+// multi-result Infobip DLR batch must go through the /batch capture API in a
+// single fetch instead (arrayPushBack/arrayConcat are not in the Hog VM stdlib
+// — the batch body is assembled as a JSON string via concat + jsonStringify).
+if (captured == 1) {
+    postHogCapture(lastEvent)
+} else if (captured > 1) {
+    let res := fetch('https://us.i.posthog.com/batch/', {
+        'method': 'POST',
+        'headers': {'Content-Type': 'application/json'},
+        'body': concat('{"api_key":"', inputs.project_api_key, '","batch":[', batchJson, ']}')
+    })
+    if (res.status >= 400) {
+        print('batch capture failed', res.status, res.body)
+        return {
+            'httpResponse': {
+                'status': 502,
+                'body': {'ok': false, 'captured': 0}
+            }
+        }
+    }
+}
+
+return {
+    'httpResponse': {
+        'status': 200,
+        'body': {'ok': true, 'captured': captured}
+    }
+}

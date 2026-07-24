@@ -1,0 +1,43 @@
+{
+  "id": "f027d3bc-327c-48a1-9a50-f027e78a01e0",
+  "createdAt": "2026-06-08T15:07:20.268Z",
+  "updatedAt": "2026-06-08T15:07:20.268Z",
+  "name": "Peach Boutique",
+  "description": "Boutique retail",
+  "globals": {
+    "backdropColor": "#FFF7ED",
+    "borderRadius": 12,
+    "canvasColor": "#FFFAF5",
+    "textColor": "#3E2B23",
+    "fontFamily": "MONTSERRAT",
+    "linkGlobal": {
+      "linkColor": "#C2410C",
+      "underline": false
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#C2410C",
+        "buttonTextColor": "#FFFAF5",
+        "fontWeight": "normal",
+        "shape": "pill"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#FED7AA"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFAF5"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFAF5"
+      }
+    }
+  }
+}

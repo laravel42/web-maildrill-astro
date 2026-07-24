@@ -1,0 +1,16 @@
+{
+  "id": "c4c295fe-8518-45dc-814e-2e9ab1ef2079",
+  "createdAt": "2026-05-25T21:20:05.413Z",
+  "updatedAt": "2026-05-25T21:20:05.413Z",
+  "name": "pink",
+  "globals": {
+    "backdropColor": "#f9d1d1",
+    "canvasColor": "#ed7878",
+    "textColor": "#262626",
+    "fontFamily": "MODERN_SANS",
+    "linkGlobal": {
+      "linkColor": "#2563EB",
+      "underline": true
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "81cce632-abdd-409d-b9a9-85c67f7089a7",
+  "createdAt": "2026-05-27T23:27:32.300Z",
+  "updatedAt": "2026-05-27T23:27:32.300Z",
+  "name": "Elegante",
+  "globals": {
+    "backdropColor": "#111111",
+    "canvasColor": "#0D0D0D",
+    "textColor": "#F5F0E8",
+    "fontFamily": "PLAYFAIR",
+    "linkGlobal": {
+      "linkColor": "#C9A84C",
+      "underline": true
+    }
+  }
+}

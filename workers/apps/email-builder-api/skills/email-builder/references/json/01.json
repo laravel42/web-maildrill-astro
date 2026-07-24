@@ -1,0 +1,782 @@
+{
+  "root": {
+    "type": "EmailLayout",
+    "data": {
+      "backdropColor": "#e7e7e7",
+      "canvasColor": "#FFFFFF",
+      "textColor": "#000000",
+      "fontFamily": "LATO",
+      "linkGlobal": {
+        "linkColor": "#01499d",
+        "underline": true
+      },
+      "childrenIds": [
+        "block-687a837acdf9c",
+        "block-687a837acdfc8",
+        "block-687a837acdfe9",
+        "block-687a837ace00b",
+        "block-687a837ace063",
+        "block-687a837ace082",
+        "block-1778877971991-thg",
+        "block-687a837ace0ef",
+        "block-687a837ace104"
+      ]
+    }
+  },
+  "block-687a837acdfb2": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 30,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 30,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/174x116/EEE/999?text=Image+Placeholder",
+        "alt": "Logo",
+        "scale": 29,
+        "scaleMobile": 29,
+        "width": 600
+      }
+    }
+  },
+  "block-687a837acdf9c": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#1a2e35",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a837acdfb2"
+        ]
+      }
+    }
+  },
+  "block-687a837acdfd0": {
+    "type": "Divider",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 10,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 10,
+          "left": 0
+        },
+        "width": 100,
+        "color": "#037bfe",
+        "backgroundColor": ""
+      },
+      "props": {
+        "lineColor": "#037bfe"
+      }
+    }
+  },
+  "block-687a837acdfde": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 25,
+          "right": 0,
+          "bottom": 30,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 25,
+          "right": 0,
+          "bottom": 30,
+          "left": 0
+        },
+        "textAlign": "center",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/528x353/EEE/999?text=Image+Placeholder",
+        "alt": "Hero Image",
+        "scale": 88,
+        "scaleMobile": 88,
+        "width": 528
+      }
+    }
+  },
+  "block-687a837acdfc8": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#ffffff",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a837acdfd0",
+          "block-687a837acdfde"
+        ]
+      }
+    }
+  },
+  "block-687a837acdfef": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 20,
+          "right": 25,
+          "bottom": 20,
+          "left": 25
+        },
+        "mobilePadding": {
+          "top": 20,
+          "right": 25,
+          "bottom": 20,
+          "left": 25
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": 27,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Update on a background verification for [Job Title] at [Company Name]"
+      }
+    }
+  },
+  "block-687a837acdfe9": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#01499d",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a837acdfef"
+        ]
+      }
+    }
+  },
+  "block-687a837ace011": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 40,
+          "right": 50,
+          "bottom": 50,
+          "left": 50
+        },
+        "mobilePadding": {
+          "top": 40,
+          "right": 50,
+          "bottom": 50,
+          "left": 50
+        },
+        "textAlign": "left",
+        "color": "#5c5c5c",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Hi [Candidate&rsquo;s Name],    Received your mail and hope this mail reads you well. Talent acquisition often requires a huge investment of time and resources, so it is always safe and secure to do your due diligence before onboarding a new hire.    To go ahead with your data verification, we would require these documents from you: [document names]   This will ensure the authenticity of your data and information with the verification process is pretty simple and short. The information you provide is confidential and safe with us.    If you have any questions/issues regarding the process, feel free to contact us.    With Regards, [Your name]"
+      }
+    }
+  },
+  "block-687a837ace00b": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#f5f5f5",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a837ace011"
+        ]
+      }
+    }
+  },
+  "block-687a837ace06a": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "textAlign": "center",
+        "padding": {
+          "top": 35,
+          "right": 10,
+          "bottom": 35,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 35,
+          "right": 10,
+          "bottom": 35,
+          "left": 10
+        },
+        "borderRadius": 0,
+        "borderColor": "#ffffff",
+        "borderTop": 3,
+        "borderBottom": 3,
+        "borderLeft": 3,
+        "borderRight": 3
+      },
+      "props": {
+        "buttonBackgroundColor": "#01499d",
+        "text": "Verify Now!",
+        "fullWidth": true,
+        "buttonTextColor": "#FFFFFF"
+      }
+    }
+  },
+  "block-687a837ace063": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#01499d",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a837ace06a"
+        ]
+      }
+    }
+  },
+  "block-687a837ace088": {
+    "type": "Divider",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 20,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 20,
+          "left": 0
+        },
+        "width": 100,
+        "color": "#1a2e35",
+        "backgroundColor": ""
+      },
+      "props": {
+        "lineColor": "#1a2e35"
+      }
+    }
+  },
+  "block-687a837ace082": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#ffffff",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a837ace088"
+        ]
+      }
+    }
+  },
+  "block-687a837ace0ae": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 45,
+          "right": 0,
+          "bottom": 25,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 45,
+          "right": 0,
+          "bottom": 25,
+          "left": 0
+        },
+        "textAlign": "center",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/288x192/EEE/999?text=Image+Placeholder",
+        "alt": "Icon",
+        "scale": 48,
+        "scaleMobile": 48,
+        "width": 284
+      }
+    }
+  },
+  "block-687a837ace0bc": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 40,
+          "right": 10,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 40,
+          "right": 10,
+          "bottom": 0,
+          "left": 0
+        },
+        "textAlign": "left",
+        "color": "#1b2e35",
+        "fontSize": 24,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "<p>Feel Free To Contact Us.</p>"
+      }
+    }
+  },
+  "block-687a837ace0cc": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 9,
+          "left": 1
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 9,
+          "left": 1
+        },
+        "textAlign": "left",
+        "color": null,
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "<p>support@mailus.com</p>"
+      }
+    }
+  },
+  "block-687a837ace0de": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 50,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 50,
+          "left": 0
+        },
+        "textAlign": "left",
+        "color": "#1b2e35",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "123-456-7890"
+      }
+    }
+  },
+  "block-687a837ace099": {
+    "type": "ColumnsContainer",
+    "data": {
+      "props": {
+        "columnsCount": 2,
+        "columns": [
+          {
+            "childrenIds": []
+          },
+          {
+            "childrenIds": []
+          }
+        ],
+        "fixedWidths": [
+          50,
+          50
+        ],
+        "layout": "layout-50-50"
+      },
+      "style": {
+        "backgroundColor": "#ffffff",
+        "padding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "mobilePadding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "gap": 0
+      }
+    }
+  },
+  "block-687a837ace092": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#ffffff",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": []
+      }
+    }
+  },
+  "block-687a837ace0f8": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "textAlign": "center",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "cover",
+        "sizeMobile": "cover",
+        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "alt": "curve border",
+        "scale": 100,
+        "scaleMobile": 100,
+        "width": 600
+      }
+    }
+  },
+  "block-687a837ace0ef": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#ffffff",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a837ace0f8"
+        ]
+      }
+    }
+  },
+  "block-687a837ace10c": {
+    "type": "SocialMedia",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 24,
+          "right": 10,
+          "bottom": 20,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 24,
+          "right": 10,
+          "bottom": 20,
+          "left": 10
+        },
+        "textAlign": "center"
+      },
+      "gap": 13,
+      "theme": "circle-white",
+      "items": [
+        {
+          "id": "687a837ace125",
+          "key": "apple",
+          "label": "Apple",
+          "iconName": "Apple",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Apple_Negative_36px.png",
+          "href": "https://twitter.com/"
+        },
+        {
+          "id": "687a837ace132",
+          "key": "instagram",
+          "label": "Instagram",
+          "iconName": "Instagram",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Instagram_Negative_36px.png",
+          "href": "https://instagram.com/"
+        },
+        {
+          "id": "687a837ace13e",
+          "key": "youtube",
+          "label": "YouTube",
+          "iconName": "YouTube",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/YouTube_Negative_36px.png",
+          "href": "https://youtube.com/"
+        },
+        {
+          "id": "687a837ace145",
+          "key": "linkedin",
+          "label": "LinkedIn",
+          "iconName": "LinkedIn",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/LinkedIn_Negative_36px.png",
+          "href": "https://linkedin.com/"
+        }
+      ]
+    }
+  },
+  "block-687a837ace154": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 44,
+          "bottom": 35,
+          "left": 44
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 44,
+          "bottom": 35,
+          "left": 44
+        },
+        "textAlign": "center",
+        "color": "#ecf0f1",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "<p>You're receiving this email because you asked us about regular newsletter. ©20XX your Company | 123 San Francisco, CA. United States</p>"
+      }
+    }
+  },
+  "block-687a837ace104": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#1a2e35",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a837ace10c",
+          "block-687a837ace154"
+        ]
+      }
+    }
+  },
+  "block-1778877971991-thg": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 0,
+          "left": 0
+        },
+        "mobilePadding": null
+      },
+      "props": {
+        "fixedWidths": [
+          50,
+          50,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-687a837ace0ae"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-1778877982826"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "block-1778877982826": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 24,
+          "left": 24
+        },
+        "mobilePadding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 16,
+          "left": 32
+        },
+        "mobilePaddingSidesLinked": false
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a837ace0bc",
+          "block-687a837ace0cc",
+          "block-687a837ace0de"
+        ]
+      }
+    }
+  }
+}

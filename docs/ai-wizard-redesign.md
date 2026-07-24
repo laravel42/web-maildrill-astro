@@ -267,7 +267,7 @@ tenderá a "marcar todo" o que el modelo puede inferir mejor desde la estrategia
   **fuerza** `sections: ['hero', 'cta']` cuando el usuario no elige nada. Debe pasar a enviar `[]`
   (o omitir el campo). Sin esto, aunque quitemos la UI el cliente seguiría inyectando secciones.
   `subjects` ya se envía tal cual (vacío incluido).
-- Cambios **en el backend** — repo **separado** `../maildrill-service`
+- Cambios **en el backend** — [`workers/`](../workers/) (antes repo separado `workers`)
   (`apps/email-builder-api`), en **rama aparte** (ver 6.1). Dos ficheros:
   1. `src/wizard/brief-schema.ts`: hacer **opcionales** los campos que el modelo ahora decide:
      `layout_strategy.sections` (`.default([])`), `tone_strategy.moods` (`.default([])`),
@@ -317,7 +317,7 @@ Cada fase compila y es verificable de forma aislada (`npm run check` + `npm run 
    2 (Component/Theme) en `buildStepSequence` + `WizardFlow`. **Eliminar `Step04Imagery` y
    `Step05Layout`**; mover "escena concreta" (opcional) al step Estilo. Sustituir `MobileStepper` por
    `WizardNav`.
-4. **F4 · Backend (repo aparte, rama aparte).** En `../maildrill-service/apps/email-builder-api`:
+4. **F4 · Backend (rama aparte).** En `workers/apps/email-builder-api`:
    relajar `brief-schema.ts` (`sections` admite vacío) y ajustar `compile-brief.ts` (`[LAYOUT]`
    "elige la estructura" + density default). Ver 6.1.
 5. **F5 · Entrada unificada.** Crear `WizardEntry`, eliminar `EntryPicker`,
@@ -332,8 +332,8 @@ frontend:
 
 | Repo | Ubicación | Alcance | Rama |
 | --- | --- | --- | --- |
-| Frontend (este) | `web-maildrill-astro` | Wizard UX, primitivos, `toWireBrief` enviando `[]` | rama de trabajo del editor (p.ej. `work/email-builder-isolated` según AGENTS.md) |
-| Backend | `../maildrill-service` | `brief-schema.ts` + `compile-brief.ts` | **rama aparte dedicada**, p.ej. `feat/wizard-llm-decides-structure` |
+| Frontend (este) | `web-maildrill-astro` | Wizard UX, primitivos, `toWireBrief` enviando `[]` | rama de trabajo del editor (p.ej. `work/email-builder-isolated` según `docs/AGENTS.md`) |
+| Backend | `workers/` | `brief-schema.ts` + `compile-brief.ts` | **rama aparte dedicada**, p.ej. `feat/wizard-llm-decides-structure` |
 
 Orden de despliegue recomendado para no romper en producción:
 1. **Backend primero**: la rama del backend debe permitir `sections` vacío **antes** de que el

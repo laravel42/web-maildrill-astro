@@ -36,6 +36,7 @@ export default function ContactForm() {
     try {
       // Placeholder submit — no backend wired yet (see services.ts).
       await mockContactSubmit({ firstName, lastName, email, topic, message });
+      window.posthog?.capture('contact_form_submitted', { topic });
       setStatus('success');
       form.reset();
     } catch {

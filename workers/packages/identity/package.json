@@ -1,0 +1,15 @@
+{
+  "name": "@maildrill/identity",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@maildrill/config": "workspace:*",
+    "@maildrill/database": "workspace:*",
+    "@maildrill/domain": "workspace:*",
+    "@maildrill/observability": "workspace:*",
+    "@maildrill/providers": "workspace:*",
+    "drizzle-orm": "^0.38.0"
+  }
+}

@@ -1,0 +1,930 @@
+{
+  "root": {
+    "type": "EmailLayout",
+    "data": {
+      "backdropColor": "#5cc5d8",
+      "canvasColor": "#5cc5d8",
+      "textColor": "#000000",
+      "fontFamily": "LATO",
+      "childrenIds": [
+        "block-687a8374bf411",
+        "block-687a8374bf491",
+        "block-687a8374bf506",
+        "block-687a8374bf5bd"
+      ],
+      "linkGlobal": {
+        "linkColor": "#0000ee",
+        "underline": true
+      }
+    }
+  },
+  "block-687a8374bf430": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 20,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 20,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/360x241/EEE/999?text=Image+Placeholder",
+        "alt": "Logo",
+        "scale": 60,
+        "scaleMobile": 60,
+        "width": 600
+      }
+    }
+  },
+  "block-687a8374bf44e": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 70,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 70,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": 30,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "JOIN OUR"
+      }
+    }
+  },
+  "block-687a8374bf46e": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#fbeeb8",
+        "fontSize": 44,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "VACATION TOUR"
+      }
+    }
+  },
+  "block-687a8374bf481": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/540x361/EEE/999?text=Image+Placeholder",
+        "alt": "Hero Image",
+        "scale": 90,
+        "scaleMobile": 90,
+        "width": 522
+      }
+    }
+  },
+  "block-687a8374bf411": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a8374bf430",
+          "block-687a8374bf44e",
+          "block-687a8374bf46e",
+          "block-687a8374bf481"
+        ]
+      }
+    }
+  },
+  "block-687a8374bf4b2": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 200,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 200,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "textAlign": "center",
+        "color": "#fbeeb8",
+        "fontSize": 26,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "WORLD TOURISM DAY"
+      }
+    }
+  },
+  "block-687a8374bf4c8": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 0,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": 20,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Make the moment happens Expand your world"
+      }
+    }
+  },
+  "block-687a8374bf4d9": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "textAlign": "center",
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "borderRadius": 30
+      },
+      "props": {
+        "buttonBackgroundColor": "#fbeeb8",
+        "text": "Get Discount",
+        "fullWidth": false,
+        "buttonTextColor": "#34495e"
+      }
+    }
+  },
+  "block-687a8374bf4f5": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 170,
+          "right": 10,
+          "bottom": 90,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 170,
+          "right": 10,
+          "bottom": 90,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "cover",
+        "sizeMobile": "cover",
+        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "alt": "Illustration",
+        "scale": 100,
+        "scaleMobile": 100,
+        "width": 264
+      }
+    }
+  },
+  "block-687a8374bf49d": {
+    "type": "ColumnsContainer",
+    "data": {
+      "props": {
+        "columnsCount": 2,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-687a8374bf4b2",
+              "block-687a8374bf4c8",
+              "block-687a8374bf4d9"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-687a8374bf4f5"
+            ]
+          }
+        ],
+        "fixedWidths": [
+          50,
+          50
+        ],
+        "layout": "layout-50-50"
+      },
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "mobilePadding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "gap": 0
+      }
+    }
+  },
+  "block-687a8374bf491": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a8374bf49d"
+        ]
+      }
+    }
+  },
+  "block-687a8374bf51c": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/300x201/EEE/999?text=Image+Placeholder",
+        "alt": "Icon",
+        "scale": 50,
+        "scaleMobile": 50,
+        "width": 85
+      }
+    }
+  },
+  "block-687a8374bf528": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": 18,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Best Ticket Prices"
+      }
+    }
+  },
+  "block-687a8374bf537": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Get your tickets at the best possible prices within time"
+      }
+    }
+  },
+  "block-687a8374bf553": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/300x201/EEE/999?text=Image+Placeholder",
+        "alt": "Icon",
+        "scale": 50,
+        "scaleMobile": 50,
+        "width": 85
+      }
+    }
+  },
+  "block-687a8374bf55f": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": 18,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Travel Insurance"
+      }
+    }
+  },
+  "block-687a8374bf570": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Don't worry about hiccups, we got you covered"
+      }
+    }
+  },
+  "block-687a8374bf588": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "backgroundColor": ""
+      },
+      "props": {
+        "size": "scale",
+        "sizeMobile": "scale",
+        "url": "https://placehold.co/300x201/EEE/999?text=Image+Placeholder",
+        "alt": "Icon",
+        "scale": 50,
+        "scaleMobile": 50,
+        "width": 85
+      }
+    }
+  },
+  "block-687a8374bf595": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": 18,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Unique Experiences"
+      }
+    }
+  },
+  "block-687a8374bf5a6": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Experience the most unique places in the world"
+      }
+    }
+  },
+  "block-687a8374bf510": {
+    "type": "ColumnsContainer",
+    "data": {
+      "props": {
+        "columnsCount": 3,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-687a8374bf51c",
+              "block-687a8374bf528",
+              "block-687a8374bf537"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-687a8374bf553",
+              "block-687a8374bf55f",
+              "block-687a8374bf570"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-687a8374bf588",
+              "block-687a8374bf595",
+              "block-687a8374bf5a6"
+            ]
+          }
+        ],
+        "fixedWidths": [
+          33.333333333333336,
+          33.333333333333336,
+          33.333333333333336
+        ],
+        "layout": "layout-33-33-33"
+      },
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "mobilePadding": {
+          "top": 16,
+          "right": 16,
+          "bottom": 16,
+          "left": 16
+        },
+        "gap": 0
+      }
+    }
+  },
+  "block-687a8374bf506": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a8374bf510"
+        ]
+      }
+    }
+  },
+  "block-687a8374bf5c9": {
+    "type": "Divider",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 30,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 30,
+          "left": 10
+        },
+        "width": 100,
+        "color": "#5cc5d8",
+        "backgroundColor": ""
+      },
+      "props": {
+        "lineColor": "#5cc5d8"
+      }
+    }
+  },
+  "block-687a8374bf5d8": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": 28,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Sale Period : Sept 26-30, 20XX"
+      }
+    }
+  },
+  "block-687a8374bf5eb": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Fly to a selected international destination now Domestic routes are also on sale!"
+      }
+    }
+  },
+  "block-687a8374bf60e": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "textAlign": "center",
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "borderRadius": 30
+      },
+      "props": {
+        "buttonBackgroundColor": "#fbeeb8",
+        "text": "Book Now",
+        "fullWidth": false,
+        "buttonTextColor": "#34495e"
+      }
+    }
+  },
+  "block-687a8374bf624": {
+    "type": "Divider",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 30,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 30,
+          "right": 10,
+          "bottom": 30,
+          "left": 10
+        },
+        "width": 100,
+        "color": "#5cc5d8",
+        "backgroundColor": ""
+      },
+      "props": {
+        "lineColor": "#5cc5d8"
+      }
+    }
+  },
+  "block-687a8374bf631": {
+    "type": "SocialMedia",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center"
+      },
+      "gap": 5,
+      "theme": "circle-white",
+      "items": [
+        {
+          "id": "687a8374bf63d",
+          "key": "facebook",
+          "label": "Facebook",
+          "iconName": "Facebook",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Facebook_Negative_36px.png",
+          "href": "https://facebook.com/"
+        },
+        {
+          "id": "687a8374bf661",
+          "key": "apple",
+          "label": "Apple",
+          "iconName": "Apple",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Apple_Negative_36px.png",
+          "href": "https://twitter.com/"
+        },
+        {
+          "id": "687a8374bf66c",
+          "key": "linkedin",
+          "label": "LinkedIn",
+          "iconName": "LinkedIn",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/LinkedIn_Negative_36px.png",
+          "href": "https://linkedin.com/"
+        },
+        {
+          "id": "687a8374bf674",
+          "key": "instagram",
+          "label": "Instagram",
+          "iconName": "Instagram",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Instagram_Negative_36px.png",
+          "href": "https://instagram.com/"
+        },
+        {
+          "id": "687a8374bf67e",
+          "key": "pinterest",
+          "label": "Pinterest",
+          "iconName": "Pinterest",
+          "theme": "negative",
+          "size": "medium",
+          "sizePx": "36px",
+          "url": "https://maildrill-dev.s3.us-east-2.amazonaws.com/icons/Pinterest_Negative_36px.png",
+          "href": "https://pinterest.com/"
+        }
+      ]
+    }
+  },
+  "block-687a8374bf691": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "mobilePadding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "textAlign": "center",
+        "color": "#ffffff",
+        "fontSize": 16,
+        "backgroundColor": ""
+      },
+      "props": {
+        "html": "Your Street 12, 34567 AB City Email: info@example.com Tel: (+1) 123 456 789"
+      }
+    }
+  },
+  "block-687a8374bf5bd": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "mobilePadding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-687a8374bf5c9",
+          "block-687a8374bf5d8",
+          "block-687a8374bf5eb",
+          "block-687a8374bf60e",
+          "block-687a8374bf624",
+          "block-687a8374bf631",
+          "block-687a8374bf691"
+        ]
+      }
+    }
+  }
+}

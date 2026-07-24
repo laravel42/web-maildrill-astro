@@ -1,0 +1,46 @@
+{
+  "id": "3a57b814-c647-4027-b1a5-69b4298b794f",
+  "createdAt": "2026-06-08T15:07:20.253Z",
+  "updatedAt": "2026-06-08T15:07:20.253Z",
+  "name": "Neon Studio",
+  "description": "Music & gaming",
+  "globals": {
+    "backdropColor": "#050505",
+    "borderRadius": 4,
+    "canvasColor": "#0A0A0A",
+    "textColor": "#F5F5F5",
+    "fontFamily": "OSWALD",
+    "linkGlobal": {
+      "linkColor": "#EC4899",
+      "underline": false
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#EC4899",
+        "buttonTextColor": "#0A0A0A"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#262626"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#0A0A0A"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#0A0A0A"
+      }
+    },
+    "NotionText": {
+      "style": {
+        "fontFamily": "OSWALD"
+      }
+    }
+  }
+}

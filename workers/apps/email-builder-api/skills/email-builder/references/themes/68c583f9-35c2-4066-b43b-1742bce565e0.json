@@ -1,0 +1,46 @@
+{
+  "id": "68c583f9-35c2-4066-b43b-1742bce565e0",
+  "createdAt": "2026-06-08T15:07:20.256Z",
+  "updatedAt": "2026-06-08T15:07:20.256Z",
+  "name": "Crimson Sports",
+  "description": "Sports & gym · sharp red",
+  "globals": {
+    "backdropColor": "#1A1A1A",
+    "borderRadius": 0,
+    "canvasColor": "#0F0F0F",
+    "textColor": "#F5F5F5",
+    "fontFamily": "OSWALD",
+    "linkGlobal": {
+      "linkColor": "#DC2626",
+      "underline": false
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#DC2626",
+        "buttonTextColor": "#FFFFFF"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#262626"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#0F0F0F"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#0F0F0F"
+      }
+    },
+    "NotionText": {
+      "style": {
+        "fontFamily": "OSWALD"
+      }
+    }
+  }
+}

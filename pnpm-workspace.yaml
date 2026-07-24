@@ -1,8 +1,10 @@
-# The email editor client is vendored here and compiled from source by
-# Vite, rather than consumed as the prebuilt `email-builder-online` npm
-# package. See packages/email-builder-standalone.
+# Astro site packages (email editor) + workers/ backend (Fastify apps & libs).
+# One `pnpm install` at the repo root covers everything.
 packages:
   - 'packages/*'
+  - 'workers'
+  - 'workers/packages/*'
+  - 'workers/apps/*'
 
 allowBuilds:
   esbuild: true
@@ -12,6 +14,11 @@ allowBuilds:
   # Vite/esbuild pipeline.
   '@parcel/watcher': false
   '@swc/core': false
+  core-js: false
+  # workers/ (Infobip / protobuf / telescope transitive)
+  '@google/genai': false
+  msgpackr-extract: false
+  protobufjs: false
 
 # eslint-plugin-jsx-a11y@6.10.2 (its latest) hasn't widened its `eslint` peer
 # range to include v10, but eslint-plugin-astro@3 requires exactly this pairing

@@ -24,7 +24,7 @@ if (session?.user?.id && session.activeTenantId) {
       client.GET('/v1/media/status'),
     ]);
     if (listRes.error) {
-      banner = { ok: false, text: 'maildrill-service returned an error.' };
+      banner = { ok: false, text: 'workers returned an error.' };
     } else {
       initial = toMediaFiles((listRes.data as unknown as { data?: ApiMediaAsset[] })?.data ?? []);
       storageReady = Boolean(
@@ -34,7 +34,7 @@ if (session?.user?.id && session.activeTenantId) {
         ? null
         : {
             ok: false,
-            text: 'Media storage is not configured. Set AWS_REGION, MEDIA_S3_BUCKET and MEDIA_CDN_DOMAIN in maildrill-service to enable uploads.',
+            text: 'Media storage is not configured. Set AWS_REGION, MEDIA_S3_BUCKET and MEDIA_CDN_DOMAIN in workers to enable uploads.',
           };
     }
   } catch (err) {

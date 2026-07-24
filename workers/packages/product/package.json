@@ -1,0 +1,19 @@
+{
+  "name": "@maildrill/product",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1090.0",
+    "@aws-sdk/s3-request-presigner": "^3.1090.0",
+    "@maildrill/config": "workspace:*",
+    "@maildrill/database": "workspace:*",
+    "@maildrill/domain": "workspace:*",
+    "@maildrill/observability": "workspace:*",
+    "@maildrill/services": "workspace:*",
+    "drizzle-orm": "^0.38.0"
+  }
+}

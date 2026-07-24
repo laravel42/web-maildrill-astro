@@ -9,6 +9,8 @@ export default [
       'dist/**',
       // Vendored upstream editor sources — compiled by Vite, linted upstream.
       'packages/**',
+      // Nested backend monorepo (own eslint/tsc); not part of the Astro lint graph.
+      'workers/**',
       '.astro/**',
       'node_modules/**',
       '.handoff/**',

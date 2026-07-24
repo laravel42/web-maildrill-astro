@@ -186,20 +186,30 @@
   background: var(--danger-bg);
   color: var(--danger);
 }
-/* WhatsApp template approval (draft & paused reuse the shared classes above). */
-.astatus--pending {
-  background: var(--warning-bg);
-  color: var(--warning);
+/* WhatsApp template approval — a distinct background per status. Scoped to its
+   own `tstat--*` classes so it never recolors the shared campaign `.astatus--*`
+   badges (which also have draft/paused). Pairs with the `.astatus` pill shape. */
+.tstat--draft {
+  background: var(--info-bg);
+  color: var(--info);
 }
-.astatus--approved {
+.tstat--pending {
+  background: var(--warning-bg);
+  color: var(--warning-strong);
+}
+.tstat--approved {
   background: var(--success-bg);
   color: var(--success-strong);
 }
-.astatus--rejected {
+.tstat--rejected {
   background: var(--danger-bg);
   color: var(--danger);
 }
-.astatus--disabled {
+.tstat--paused {
+  background: rgba(139, 92, 246, 0.16);
+  color: #7c3aed;
+}
+.tstat--disabled {
   background: var(--surface2);
   color: var(--muted);
 }

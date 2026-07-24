@@ -1,0 +1,15 @@
+{
+  "name": "@maildrill/workers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@maildrill/config": "workspace:*",
+    "@maildrill/database": "workspace:*",
+    "@maildrill/domain": "workspace:*",
+    "@maildrill/observability": "workspace:*",
+    "@maildrill/queues": "workspace:*",
+    "@maildrill/services": "workspace:*",
+    "bullmq": "^5.34.0"
+  }
+}

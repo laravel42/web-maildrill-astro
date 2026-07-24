@@ -1,6 +1,6 @@
 import type { MediaFile, MediaFileType } from '@/lib/app/media-data';
 
-/** Shape of an asset as returned by maildrill-service /v1/media. */
+/** Shape of an asset as returned by workers /v1/media. */
 export interface ApiMediaAsset {
   id: string;
   name: string;

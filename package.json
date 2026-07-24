@@ -6,6 +6,8 @@
   "description": "Maildrill marketing website and campaign workspace (Astro + React islands)",
   "scripts": {
     "dev": "astro dev",
+    "dev:workers": "pnpm --filter workers dev",
+    "dev:all": "node scripts/dev-all.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
@@ -34,6 +36,8 @@
     "email-builder-standalone": "workspace:*",
     "nodemailer": "^9.0.3",
     "openapi-fetch": "^0.17.0",
+    "posthog-js": "^1.407.0",
+    "posthog-node": "^5.46.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "zod": "^4.4.3"

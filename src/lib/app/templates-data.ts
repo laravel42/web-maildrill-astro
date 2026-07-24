@@ -1,6 +1,6 @@
 /**
  * Types and display constants for the Templates gallery screen. The seed/enriched
- * template fixtures were removed — live templates come from maildrill-service
+ * template fixtures were removed — live templates come from workers
  * (mapped in template-map.ts). Only the gallery card shape and the category/rate
  * vocabulary remain here.
  */

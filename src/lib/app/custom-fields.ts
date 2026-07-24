@@ -7,7 +7,7 @@
  * shared catalogue.
  */
 
-/** Matches the `custom_field_type` enum in maildrill-service. */
+/** Matches the `custom_field_type` enum in workers. */
 export const FIELD_TYPES = ['text', 'number', 'date', 'boolean'] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
 

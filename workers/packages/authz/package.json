@@ -1,0 +1,12 @@
+{
+  "name": "@maildrill/authz",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@maildrill/config": "workspace:*",
+    "@maildrill/services": "workspace:*",
+    "fastify": "^5.2.0"
+  }
+}

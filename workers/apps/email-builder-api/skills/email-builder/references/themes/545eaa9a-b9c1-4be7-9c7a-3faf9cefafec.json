@@ -1,0 +1,46 @@
+{
+  "id": "545eaa9a-b9c1-4be7-9c7a-3faf9cefafec",
+  "createdAt": "2026-06-08T15:07:20.272Z",
+  "updatedAt": "2026-06-08T15:07:20.272Z",
+  "name": "Citrus Fitness",
+  "description": "Fitness / gym · bold lime",
+  "globals": {
+    "backdropColor": "#0A0A0A",
+    "borderRadius": 4,
+    "canvasColor": "#FFFFFF",
+    "textColor": "#0A0A0A",
+    "fontFamily": "OSWALD",
+    "linkGlobal": {
+      "linkColor": "#65A30D",
+      "underline": false
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#65A30D",
+        "buttonTextColor": "#0A0A0A"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#D9F99D"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "NotionText": {
+      "style": {
+        "fontFamily": "OSWALD"
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "3095aa75-d71c-4130-87bc-f55ae227d9ed",
+  "createdAt": "2026-05-25T18:54:32.554Z",
+  "updatedAt": "2026-05-25T18:54:32.554Z",
+  "name": "dark guitar (oswald)",
+  "globals": {
+    "backdropColor": "#F5F5F5",
+    "canvasColor": "#030303",
+    "textColor": "#ffffff",
+    "fontFamily": "OSWALD",
+    "linkGlobal": {
+      "linkColor": "#ffffff",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "textAlign": "center",
+        "fontWeight": "bold",
+        "buttonBackgroundColor": "#ffffff",
+        "buttonTextColor": "#050505",
+        "fontSize": 18
+      }
+    }
+  }
+}

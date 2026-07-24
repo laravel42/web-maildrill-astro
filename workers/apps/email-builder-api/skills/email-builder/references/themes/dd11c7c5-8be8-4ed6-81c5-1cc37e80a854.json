@@ -1,0 +1,47 @@
+{
+  "id": "dd11c7c5-8be8-4ed6-81c5-1cc37e80a854",
+  "createdAt": "2026-06-08T15:07:20.261Z",
+  "updatedAt": "2026-06-08T15:07:20.261Z",
+  "name": "Espresso Bar",
+  "description": "Specialty coffee",
+  "globals": {
+    "backdropColor": "#1C1410",
+    "borderRadius": 4,
+    "canvasColor": "#2C1F18",
+    "textColor": "#FAF6F1",
+    "fontFamily": "MERRIWEATHER",
+    "linkGlobal": {
+      "linkColor": "#D4A574",
+      "underline": true
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#D4A574",
+        "buttonTextColor": "#2C1F18",
+        "fontWeight": "normal"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#3F2D22"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#2C1F18"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#2C1F18"
+      }
+    },
+    "NotionText": {
+      "style": {
+        "fontFamily": "MERRIWEATHER"
+      }
+    }
+  }
+}

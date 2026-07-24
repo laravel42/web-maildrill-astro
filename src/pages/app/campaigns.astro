@@ -52,7 +52,7 @@ if (session?.user?.id && session.activeTenantId) {
     ]);
 
     if (campaignsRes.error) {
-      banner = { ok: false, text: 'maildrill-service returned an error.' };
+      banner = { ok: false, text: 'workers returned an error.' };
     } else {
       initial = toCampaigns(unwrap<ApiCampaign>(campaignsRes.data));
     }

@@ -1,0 +1,42 @@
+{
+  "id": "c4e39d31-33d2-4b8d-ae1d-0e8a0a337492",
+  "createdAt": "2026-06-08T15:07:20.248Z",
+  "updatedAt": "2026-06-08T15:07:20.248Z",
+  "name": "Cloud Kids",
+  "description": "Kids & edtech",
+  "globals": {
+    "backdropColor": "#EFF6FF",
+    "borderRadius": 16,
+    "canvasColor": "#FFFFFF",
+    "textColor": "#0F172A",
+    "fontFamily": "MODERN_SANS",
+    "linkGlobal": {
+      "linkColor": "#2563EB",
+      "underline": false
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#3B82F6",
+        "buttonTextColor": "#FFFFFF",
+        "shape": "pill"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#DBEAFE"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFFFF"
+      }
+    }
+  }
+}

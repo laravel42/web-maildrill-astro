@@ -19,7 +19,7 @@ import type {
 export const CONTENT_SUB: Record<ChannelType, string> = {
   email: 'Choose your template',
   sms: 'Write your text message',
-  whatsapp: 'Compose your WhatsApp message',
+  whatsapp: 'Pick your WhatsApp message template',
   voice: 'Write your voice script',
 };
 

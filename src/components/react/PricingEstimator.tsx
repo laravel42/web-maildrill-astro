@@ -48,6 +48,7 @@ export default function PricingEstimator({ promoActive = false }: { promoActive?
   const [countryOpen, setCountryOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const estimateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cur = CURRENCIES.find((c) => c.code === currency)!;
   const selected = COUNTRIES.find((c) => c.code === country) ?? COUNTRIES[0];
@@ -94,6 +95,20 @@ export default function PricingEstimator({ promoActive = false }: { promoActive?
     );
   };
 
+  const captureEstimate = (nextUsage: Record<ChannelKey, number>, nextCountry: string) => {
+    if (estimateTimer.current) clearTimeout(estimateTimer.current);
+    estimateTimer.current = setTimeout(() => {
+      window.posthog?.capture('pricing_estimate_calculated', {
+        country: nextCountry,
+        email_volume: nextUsage.email,
+        sms_volume: nextUsage.sms,
+        whatsapp_volume: nextUsage.whatsapp,
+        voice_volume: nextUsage.voice,
+        currency,
+      });
+    }, 1000);
+  };
+
   // ---- country combobox ----
   const allCountries = useMemo(
     () => [...COUNTRIES].sort((a, b) => a.name.localeCompare(b.name)),
@@ -112,6 +127,7 @@ export default function PricingEstimator({ promoActive = false }: { promoActive?
     setCountry(code);
     setCountryOpen(false);
     setCountryQuery('');
+    captureEstimate(usage, code);
   };
 
   const rateCard = (m: (typeof CHANNEL_META)[number]) => {
@@ -338,7 +354,9 @@ export default function PricingEstimator({ promoActive = false }: { promoActive?
                       style={{ accentColor: m.color }}
                       onChange={(e) => {
                         setUsageTouched(true);
-                        setUsage((u) => ({ ...u, [m.key]: Number(e.target.value) }));
+                        const next = { ...usage, [m.key]: Number(e.target.value) };
+                        setUsage(next);
+                        captureEstimate(next, country);
                       }}
                     />
                   </div>
@@ -349,7 +367,9 @@ export default function PricingEstimator({ promoActive = false }: { promoActive?
             <div className={styles.estcard}>
               <div className={styles.estcardHead}>
                 <span className={`mono ${styles.estcardKicker}`}>Your estimate</span>
-                {hasDiscount && <span className={`mono ${styles.estcardPill}`}>−{discountPct}</span>}
+                {hasDiscount && (
+                  <span className={`mono ${styles.estcardPill}`}>−{discountPct}</span>
+                )}
               </div>
               <div className={styles.estcardRow}>
                 <span>Monthly usage</span>
@@ -417,7 +437,11 @@ export default function PricingEstimator({ promoActive = false }: { promoActive?
           {TIERS.map((t) => {
             const promoOn = tierHasPromo(t, promoActive);
             return (
-              <div key={t.id} data-card className={`${styles.pcard}${t.hi ? ` ${styles.pcardHi}` : ''}`}>
+              <div
+                key={t.id}
+                data-card
+                className={`${styles.pcard}${t.hi ? ` ${styles.pcardHi}` : ''}`}
+              >
                 {promoOn && <div className={`${styles.pcardRibbon} mono`}>Launch promo</div>}
                 <div className={styles.pcardName}>{t.name}</div>
                 <div className={styles.pcardTag}>{t.tagline}</div>

@@ -1,0 +1,43 @@
+{
+  "id": "e5870e80-2a00-410a-a56d-a52eface8429",
+  "createdAt": "2026-06-08T15:07:20.271Z",
+  "updatedAt": "2026-06-08T15:07:20.271Z",
+  "name": "Vanilla Spa",
+  "description": "Spa & wellness",
+  "globals": {
+    "backdropColor": "#FBF7F0",
+    "borderRadius": 20,
+    "canvasColor": "#FFFEF9",
+    "textColor": "#3F2E1A",
+    "fontFamily": "OPEN_SANS",
+    "linkGlobal": {
+      "linkColor": "#15803D",
+      "underline": false
+    }
+  },
+  "blocks": {
+    "Button": {
+      "style": {
+        "buttonBackgroundColor": "#15803D",
+        "buttonTextColor": "#FFFEF9",
+        "fontWeight": "normal",
+        "shape": "pill"
+      }
+    },
+    "Divider": {
+      "style": {
+        "color": "#E7E5E4"
+      }
+    },
+    "Container": {
+      "style": {
+        "backgroundColor": "#FFFEF9"
+      }
+    },
+    "ColumnsContainer": {
+      "style": {
+        "backgroundColor": "#FFFEF9"
+      }
+    }
+  }
+}

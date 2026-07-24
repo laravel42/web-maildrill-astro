@@ -1,0 +1,146 @@
+[
+  {
+    "slot": 1,
+    "slug": "stat-row-3col",
+    "role": "social_proof",
+    "description": "Three metrics in a row, e.g. user count + uptime + support.",
+    "whenToUse": "Prompt mentions stats, metrics, or quantitative social proof.",
+    "blockCount": 8
+  },
+  {
+    "slot": 2,
+    "slug": "feature-icon-row-3col",
+    "role": "features",
+    "description": "Three features with icon, title, and description in columns.",
+    "whenToUse": "Prompt mentions features, benefits, value-props, or capabilities in a grid.",
+    "blockCount": 11
+  },
+  {
+    "slot": 3,
+    "slug": "quote-card",
+    "role": "social_proof",
+    "description": "Single customer quote with attribution and avatar.",
+    "whenToUse": "Prompt mentions a testimonial, customer quote, or social proof quote.",
+    "blockCount": 4
+  },
+  {
+    "slot": 4,
+    "slug": "article-preview-row",
+    "role": "features",
+    "description": "Three article previews with image, tag, title, summary, and read-more link.",
+    "whenToUse": "Prompt mentions newsletter digest, blog roundup, or article links.",
+    "blockCount": 17
+  },
+  {
+    "slot": 5,
+    "slug": "cta-card-bordered",
+    "role": "cta",
+    "description": "Secondary CTA card with accent background, title, body, and pill button.",
+    "whenToUse": "Prompt needs a secondary call-to-action, upgrade prompt, or \"ready to start?\" card.",
+    "blockCount": 4
+  },
+  {
+    "slot": 6,
+    "slug": "pricing-card-2col",
+    "role": "features",
+    "description": "Side-by-side pricing comparison with two tiers.",
+    "whenToUse": "Prompt mentions pricing tiers, plan comparison, or subscription options.",
+    "blockCount": 22
+  },
+  {
+    "slot": 7,
+    "slug": "step-list-vertical",
+    "role": "features",
+    "description": "Three numbered steps with big numbers and descriptions.",
+    "whenToUse": "Prompt mentions how-it-works, get started steps, or numbered onboarding.",
+    "blockCount": 16
+  },
+  {
+    "slot": 8,
+    "slug": "hero-split-2col",
+    "role": "hero",
+    "description": "Hero with text on left and image on right.",
+    "whenToUse": "Prompt wants an alternative hero layout with side-by-side text and image.",
+    "blockCount": 7
+  },
+  {
+    "slot": 9,
+    "slug": "discount-banner-strip",
+    "role": "cta",
+    "description": "Big promo strip with percentage off and supporting text.",
+    "whenToUse": "Prompt mentions discounts, promo codes, percentage off, or flash deals.",
+    "blockCount": 3
+  },
+  {
+    "slot": 10,
+    "slug": "testimonial-2col",
+    "role": "social_proof",
+    "description": "Two customer quotes side by side in bordered cards.",
+    "whenToUse": "Prompt mentions multiple testimonials or customer quotes side by side.",
+    "blockCount": 12
+  },
+  {
+    "slot": 11,
+    "slug": "logo-bar-trusted-by",
+    "role": "social_proof",
+    "description": "Trusted-by section with caption and 5 brand logos.",
+    "whenToUse": "Prompt mentions trust signals, \"trusted by\", \"as seen in\", or partner logos.",
+    "blockCount": 8
+  },
+  {
+    "slot": 12,
+    "slug": "announcement-banner-thin",
+    "role": "cta",
+    "description": "Thin top strip with urgent or limited-time message.",
+    "whenToUse": "Prompt mentions urgent announcements, limited-time banners, or top-bar alerts.",
+    "blockCount": 2
+  },
+  {
+    "slot": 13,
+    "slug": "event-info-grid-2col",
+    "role": "features",
+    "description": "Event details grid with date/time on left and location on right.",
+    "whenToUse": "Prompt mentions event details, date/time + location, conference info, meetup logistics.",
+    "blockCount": 13
+  },
+  {
+    "slot": 14,
+    "slug": "data-summary-card",
+    "role": "features",
+    "description": "Dashboard digest card with one hero metric and three supporting metrics.",
+    "whenToUse": "Prompt mentions data summary, weekly digest, dashboard stats, KPI overview, analytics recap.",
+    "blockCount": 12
+  },
+  {
+    "slot": 15,
+    "slug": "hero-centered-typeonly",
+    "role": "hero",
+    "description": "Oversized pure-typography hero — no image, editorial feel.",
+    "whenToUse": "Variation seed selects this layout for editorial, newsletter, or premium brand emails.",
+    "blockCount": 5
+  },
+  {
+    "slot": 16,
+    "slug": "hero-card-overlay",
+    "role": "hero",
+    "description": "Full-width image with semi-transparent card floating over it.",
+    "whenToUse": "Variation seed selects this layout for lifestyle, travel, or consumer brand emails.",
+    "blockCount": 6
+  },
+  {
+    "slot": 17,
+    "slug": "hero-banner-strip",
+    "role": "hero",
+    "description": "Compact 2-col strip: brand/logo left, headline + CTA right.",
+    "whenToUse": "Variation seed selects this layout for transactional or compact SaaS emails.",
+    "blockCount": 6
+  },
+  {
+    "slot": 18,
+    "slug": "feature-2col-alternating",
+    "role": "features",
+    "description": "Alternating rows of image + text, narrative storytelling layout.",
+    "whenToUse": "Variation seed selects this for emails that need a storytelling or case-study features section.",
+    "blockCount": 12
+  }
+]

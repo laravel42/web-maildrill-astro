@@ -1,7 +1,7 @@
 import type { Campaign, CampaignStatus, ChannelType } from '@/types/app';
 import type { CampaignDraft } from '@/components/react/CampaignWizard.types';
 
-/** Shape of a campaign as returned by maildrill-service /v1/campaigns. */
+/** Shape of a campaign as returned by workers /v1/campaigns. */
 export interface ApiCampaign {
   id: string;
   name: string;
@@ -17,6 +17,8 @@ export interface ApiCampaign {
   recipients?: number | null;
   delivered?: number | null;
   failed?: number | null;
+  /** Messages past queued/processing (submitted → terminal). */
+  accepted?: number | null;
   lastErrorMessage?: string | null;
   scheduledAt?: string | null;
   createdAt?: string | null;
@@ -55,6 +57,7 @@ export function toCampaign(c: ApiCampaign): Campaign {
     recipients: c.recipients ?? 0,
     delivered: c.delivered ?? 0,
     failed: c.failed ?? 0,
+    accepted: c.accepted ?? 0,
     unsubscribed: 0,
   };
 }
@@ -120,36 +123,61 @@ export type CampaignSendResult = {
   truncated: boolean;
 };
 
-/** Poll until messages leave the queued/processing state or we time out. */
+/** Poll until the campaign leaves `sending` (all messages terminal) or we time out. */
 export async function waitForCampaignDelivery(
   id: string,
   opts: { maxMs?: number; intervalMs?: number } = {},
 ): Promise<ApiCampaign> {
   const { api } = await import('./api');
-  const maxMs = opts.maxMs ?? 12000;
-  const intervalMs = opts.intervalMs ?? 1500;
+  const maxMs = opts.maxMs ?? 120_000;
+  const intervalMs = opts.intervalMs ?? 2_000;
   const start = Date.now();
   let latest = await api.get<ApiCampaign>(`campaigns/${id}`);
   while (Date.now() - start < maxMs) {
-    const pending =
-      (latest.recipients ?? 0) - (latest.delivered ?? 0) - (latest.failed ?? 0);
-    if ((latest.failed ?? 0) > 0 || (latest.delivered ?? 0) > 0 || pending <= 0) {
-      return latest;
-    }
+    if (latest.status === 'sent' || latest.status === 'paused') return latest;
+    const recipients = latest.recipients ?? 0;
+    if (recipients === 0 && latest.status !== 'sending') return latest;
     await new Promise((r) => setTimeout(r, intervalMs));
     latest = await api.get<ApiCampaign>(`campaigns/${id}`);
   }
   return latest;
 }
 
+/** Progress 0–100 while a campaign is sending.
+ *  Accepted (Infobip handoff) fills up to 90%; DLR confirmations fill the last
+ *  10% as they land, and 100% only when all are terminal (delivered/failed/…)
+ *  so the bar never says "done" while status is still Sending.
+ */
+export function campaignSendProgress(c: {
+  recipients?: number | null;
+  accepted?: number | null;
+  delivered?: number | null;
+  failed?: number | null;
+}): number {
+  const recipients = c.recipients ?? 0;
+  if (recipients <= 0) return 0;
+  const terminal = (c.delivered ?? 0) + (c.failed ?? 0);
+  if (terminal >= recipients) return 100;
+  const accepted = c.accepted ?? terminal;
+  const base = Math.min(90, Math.round((accepted / recipients) * 90));
+  const tail = Math.round((terminal / recipients) * 10);
+  return Math.min(99, base + tail);
+}
+
 export function campaignDeliveryToast(name: string, c: ApiCampaign): string {
   const failed = c.failed ?? 0;
   const delivered = c.delivered ?? 0;
-  if (failed > 0) {
+  if (c.status === 'sending') {
+    return `“${name}” is sending…`;
+  }
+  if (failed > 0 && delivered === 0) {
     const detail = c.lastErrorMessage?.trim();
     return detail
       ? `“${name}” failed — ${detail}`
       : `“${name}” failed at the provider`;
+  }
+  if (failed > 0) {
+    return `“${name}” finished — ${delivered.toLocaleString()} delivered, ${failed.toLocaleString()} failed`;
   }
   if (delivered > 0) {
     return `“${name}” delivered to ${delivered.toLocaleString()} recipient${delivered === 1 ? '' : 's'}`;
@@ -157,5 +185,5 @@ export function campaignDeliveryToast(name: string, c: ApiCampaign): string {
   if ((c.recipients ?? 0) === 0) {
     return `“${name}” reached nobody — its audience is empty`;
   }
-  return `“${name}” queued — still processing at the provider`;
+  return `“${name}” finished`;
 }
