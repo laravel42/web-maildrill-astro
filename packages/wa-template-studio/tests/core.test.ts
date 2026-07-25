@@ -4,7 +4,7 @@ import { registerBuiltInPlugins } from '../src/blocks';
 import { newId, type MetaTemplate, type TemplateDoc } from '../src/core/types';
 import { fromMetaJson, toMetaJson } from '../src/core/serialize';
 import { hasErrors, validateTemplate } from '../src/core/validation';
-import { analyzeVariables, renumberVariables } from '../src/core/variables';
+import { analyzeVariables, insertVariableAt, renumberVariables } from '../src/core/variables';
 
 beforeAll(() => {
   registerBuiltInPlugins();
@@ -57,6 +57,29 @@ describe('variable engine', () => {
     expect(result.text).toBe('A {{1}} B {{2}} C {{1}}');
     expect(result.map).toEqual({ '1': { example: 'four' }, '2': { example: 'two' } });
     expect(result.mapping).toEqual({ 4: 1, 2: 2 });
+  });
+
+  it('inserts a sequential placeholder at the caret (append)', () => {
+    const result = insertVariableAt('Hi {{1}}', {}, 'Hi {{1}}'.length);
+    expect(result.text).toBe('Hi {{1}}{{2}}');
+    expect(result.caret).toBe('Hi {{1}}{{2}}'.length);
+  });
+
+  it('inserts by position and pushes later variables up, following metadata', () => {
+    const text = 'Hi {{1}}, order {{2}} shipped';
+    const caretAt = 'Hi {{1}}, '.length; // right before {{2}}'s text, mid-message
+    const result = insertVariableAt(text, { '1': { name: 'Name' }, '2': { example: 'A123' } }, caretAt);
+    // The inserted placeholder takes position 2; the old {{2}} becomes {{3}}.
+    expect(result.text).toBe('Hi {{1}}, {{2}}order {{3}} shipped');
+    // Metadata follows its variable: old {{2}} → {{3}}, {{1}} unchanged, new {{2}} empty.
+    expect(result.map).toEqual({ '1': { name: 'Name' }, '3': { example: 'A123' } });
+    expect(result.caret).toBe('Hi {{1}}, {{2}}'.length);
+  });
+
+  it('inserts {{1}} into empty text', () => {
+    const result = insertVariableAt('', {}, 0);
+    expect(result.text).toBe('{{1}}');
+    expect(result.caret).toBe('{{1}}'.length);
   });
 });
 

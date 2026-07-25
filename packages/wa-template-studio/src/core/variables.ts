@@ -120,6 +120,40 @@ export function nextVariableNumber(text: string): number {
 }
 
 /**
+ * Insert a brand-new variable into `text` at the caret (or replacing the
+ * selection `[start, end)`), then renumber every placeholder so the series
+ * stays sequential 1..n in order of appearance. The inserted placeholder
+ * therefore takes the number matching its position (e.g. inserting between
+ * {{1}} and {{2}} yields a new {{2}} and pushes the old one to {{3}}).
+ *
+ * Returns the new text, the remapped metadata map (examples/labels follow
+ * their variable), and the caret index just after the inserted placeholder so
+ * the editor can keep typing inline.
+ */
+export function insertVariableAt(
+  text: string,
+  map: VariableMap = {},
+  start: number = text.length,
+  end: number = start
+): { text: string; map: VariableMap; caret: number } {
+  const before = text.slice(0, start);
+  const after = text.slice(end);
+  // A guaranteed-unique temporary number keeps the inserted placeholder a
+  // distinct variable (never merged with an existing duplicate) until the
+  // renumber pass assigns its final, position-based number.
+  const tempNum = nextVariableNumber(text);
+  const { text: nextText, map: nextMap, mapping } = renumberVariables(`${before}{{${tempNum}}}${after}`, map);
+  // The renumber only rewrites {{n}} digit runs, so applying the same mapping
+  // to the prefix alone gives its post-renumber length — hence the caret.
+  const remappedBefore = before.replace(VARIABLE_RE, (_m, d: string) => {
+    const mapped = mapping[Number(d)];
+    return mapped ? `{{${mapped}}}` : `{{${d}}}`;
+  });
+  const caret = remappedBefore.length + `{{${mapping[tempNum] ?? tempNum}}}`.length;
+  return { text: nextText, map: nextMap, caret };
+}
+
+/**
  * Example JSON payload (what a send-time API call would look like) for
  * the whole doc — shown in the variables panel.
  */
