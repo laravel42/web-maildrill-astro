@@ -6,6 +6,7 @@ export type Props = {
   name?: string | null;
   kind?: 'template' | 'campaign';
   initialCategory?: string;
+  initialLanguage?: string | null;
   /** Saved body when reopening an existing template, so edits replace it. */
   initialMessage?: string;
   onClose: () => void;
@@ -14,6 +15,7 @@ export type Props = {
     name: string;
     message: string;
     category: string;
+    language: string;
   }) => void | Promise<void>;
 };
 

@@ -45,6 +45,23 @@ export type MergeTagEntry = { label?: string; value?: string; type?: 'divider' }
 /** A labelled group of merge tags (structurally an editor MergeTagGroup). */
 export type MergeTagMenu = { label: string; children: MergeTagEntry[] };
 
+/** A labelled token for SMS / WhatsApp / voice composer chips. */
+export type PersonalizationToken = { label: string; token: string };
+
+const CORE_PERSONALIZATION_TOKENS: PersonalizationToken[] = [
+  { label: 'Name', token: '{{name}}' },
+  { label: 'Email', token: '{{email}}' },
+  { label: 'Phone', token: '{{phone}}' },
+];
+
+/** Chips for the text-channel composer — core subscriber fields plus workspace custom fields. */
+export function buildPersonalizationTokens(fields: CustomField[]): PersonalizationToken[] {
+  return [
+    ...CORE_PERSONALIZATION_TOKENS,
+    ...fields.map((f) => ({ label: f.label, token: `{{attributes.${f.key}}}` })),
+  ];
+}
+
 /**
  * Build the editor's merge-tag menu from the real subscriber schema: the always-
  * present fields plus every workspace custom field. Tokens use the `{{…}}`
@@ -53,11 +70,10 @@ export type MergeTagMenu = { label: string; children: MergeTagEntry[] };
  * not a placeholder from another ESP.
  */
 export function buildMergeTagMenu(fields: CustomField[]): MergeTagMenu {
-  const children: MergeTagEntry[] = [
-    { label: 'Name', value: '{{name}}' },
-    { label: 'Email', value: '{{email}}' },
-    { label: 'Phone', value: '{{phone}}' },
-  ];
+  const children: MergeTagEntry[] = CORE_PERSONALIZATION_TOKENS.map(({ label, token }) => ({
+    label,
+    value: token,
+  }));
   if (fields.length > 0) {
     children.push({ type: 'divider' });
     for (const f of fields) {

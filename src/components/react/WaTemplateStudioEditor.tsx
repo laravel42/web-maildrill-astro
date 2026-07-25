@@ -1,14 +1,29 @@
 import { useEffect, useRef, useState } from 'react';
 import type { TemplateDoc } from 'wa-template-studio';
+import waTemplateCatalog from '../../../docs/whatsapp-message-templates.json';
 import Icon from './Icon';
-import EditorHeader from './shared/EditorHeader';
+import ChannelEditorShell, { shellStyles } from './shared/ChannelEditorShell';
+import { CHANNEL } from './shared/channels';
 import { useAutosave } from './shared/useAutosave';
 import { useToast } from './shared/useToast';
-import { docToApiFields, hydrateTemplateDoc } from '@/lib/app/wa-template-map';
+import {
+  normalizeTemplateLanguageCode,
+  TEMPLATE_LANGUAGE_OPTIONS,
+  templateLanguageFlagSrc,
+} from '@/lib/app/template-language';
+import {
+  docToApiFields,
+  hydrateTemplateDoc,
+  maildrillCategoryToMeta,
+  WA_TEMPLATE_CATEGORY_LABELS,
+  waCategoryLabel,
+  waLabelToMeta,
+  type WaTemplateCategoryLabel,
+} from '@/lib/app/wa-template-map';
 
 export type WaTemplateStudioSave = ReturnType<typeof docToApiFields>;
 
-type StudioComponent = React.ComponentType<{ restoreDraft?: boolean; dark?: boolean }>;
+type StudioComponent = React.ComponentType<{ restoreDraft?: boolean; dark?: boolean; accentColor?: string }>;
 
 type Props = {
   name: string | null;
@@ -20,6 +35,13 @@ type Props = {
   onClose: () => void;
   onSave: (value: WaTemplateStudioSave) => void | Promise<void>;
 };
+
+function normalizeWaCategoryLabel(value: string | null | undefined): WaTemplateCategoryLabel {
+  if (value && WA_TEMPLATE_CATEGORY_LABELS.includes(value as WaTemplateCategoryLabel)) {
+    return value as WaTemplateCategoryLabel;
+  }
+  return waCategoryLabel(maildrillCategoryToMeta(value ?? undefined));
+}
 
 /**
  * Full-screen wrapper around wa-template-studio for WhatsApp template authoring.
@@ -38,6 +60,10 @@ export default function WaTemplateStudioEditor({
   const [Studio, setStudio] = useState<StudioComponent | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [title, setTitle] = useState(name ?? '');
+  const [waCategory, setWaCategory] = useState<WaTemplateCategoryLabel>(() =>
+    normalizeWaCategoryLabel(category),
+  );
+  const [waLanguage, setWaLanguage] = useState(() => normalizeTemplateLanguageCode(language));
   const studioReady = useRef(false);
   const { toast, show } = useToast();
 
@@ -48,7 +74,9 @@ export default function WaTemplateStudioEditor({
         await import('wa-template-studio/style.css');
         const mod = await import('wa-template-studio');
         if (!alive) return;
-        const { replaceDoc, setTemplateField, useStudio } = mod;
+        const { replaceDoc, setGalleryCatalog, setTemplateField } = mod;
+        // Ready-made template gallery shown in the inspector's default state.
+        setGalleryCatalog(waTemplateCatalog);
         if (!studioReady.current) {
           const doc = hydrateTemplateDoc({
             name: title.trim() || name || '',
@@ -59,6 +87,12 @@ export default function WaTemplateStudioEditor({
             category,
           });
           replaceDoc(doc, { resetHistory: true });
+          const canonicalLanguage = normalizeTemplateLanguageCode(doc.language);
+          if (canonicalLanguage !== doc.language) {
+            setTemplateField('language', canonicalLanguage);
+          }
+          setWaCategory(waCategoryLabel(doc.category));
+          setWaLanguage(canonicalLanguage);
           studioReady.current = true;
         }
         setStudio(() => mod.Studio);
@@ -94,6 +128,12 @@ export default function WaTemplateStudioEditor({
       if (!alive) return;
       unsubscribe = mod.useStudio.subscribe((state, prev) => {
         if (state.doc !== prev.doc) markDirty();
+        if (state.doc.category !== prev.doc.category) {
+          setWaCategory(waCategoryLabel(state.doc.category));
+        }
+        if (state.doc.language !== prev.doc.language) {
+          setWaLanguage(normalizeTemplateLanguageCode(state.doc.language));
+        }
       });
     });
     return () => {
@@ -116,112 +156,69 @@ export default function WaTemplateStudioEditor({
   };
 
   return (
-    <div className="wts">
-      <EditorHeader
-        channel="whatsapp"
-        name={title}
-        onNameChange={(v) => {
-          setTitle(v);
-          markDirty();
-          void import('wa-template-studio').then((mod) => mod.setTemplateField('name', v));
-        }}
-        status={status}
-        onBack={onClose}
-        onSendTest={() => show('Test message sent')}
-        onSaveDraft={() => void handleSave()}
-      />
-
-      <div className="wts__stage">
-        {loadError ? (
-          <div className="wts__state">
-            <p>Couldn’t load the WhatsApp template editor.</p>
-            <p className="wts__muted">{loadError}</p>
+    <ChannelEditorShell
+      channel="whatsapp"
+      name={title}
+      onNameChange={(v) => {
+        setTitle(v);
+        markDirty();
+        void import('wa-template-studio').then((mod) => mod.setTemplateField('name', v));
+      }}
+      status={status}
+      category={waCategory}
+      categories={WA_TEMPLATE_CATEGORY_LABELS}
+      onCategoryChange={(v) => {
+        const next = normalizeWaCategoryLabel(v);
+        setWaCategory(next);
+        markDirty();
+        void import('wa-template-studio').then((mod) => {
+          mod.changeTemplateCategory(waLabelToMeta(next));
+        });
+      }}
+      language={waLanguage}
+      languageOptions={TEMPLATE_LANGUAGE_OPTIONS}
+      getLanguageFlagSrc={templateLanguageFlagSrc}
+      onLanguageChange={(v) => {
+        const next = normalizeTemplateLanguageCode(v);
+        setWaLanguage(next);
+        markDirty();
+        void import('wa-template-studio').then((mod) => mod.setTemplateField('language', next));
+      }}
+      onBack={onClose}
+      onSendTest={() => show('Test message sent')}
+      onSaveDraft={() => void handleSave()}
+      toast={
+        toast ? (
+          <div
+            className={shellStyles.toast}
+            role="status"
+            style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
+          >
+            <span className={shellStyles.toastIcon}>
+              <Icon name="check" size={13} stroke={3} />
+            </span>
+            {toast}
           </div>
-        ) : Studio ? (
-          <Studio restoreDraft={false} />
-        ) : (
-          <div className="wts__state">
-            <span className="wts__spinner" aria-hidden="true" />
-            <p className="wts__muted">Loading WhatsApp template studio…</p>
-          </div>
-        )}
-      </div>
-
-      {toast && (
-        <div
-          className="wts__toast"
-          role="status"
-          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-        >
-          <span className="wts__toastic">
-            <Icon name="check" size={13} stroke={3} />
-          </span>
-          {toast}
+        ) : null
+      }
+    >
+      {loadError ? (
+        <div className={shellStyles.state}>
+          <p>Couldn’t load the WhatsApp template editor.</p>
+          <p className={shellStyles.muted}>{loadError}</p>
+        </div>
+      ) : Studio ? (
+        <Studio restoreDraft={false} accentColor={CHANNEL.whatsapp.hex} />
+      ) : (
+        <div className={shellStyles.state}>
+          <span
+            className={shellStyles.spinner}
+            style={{ borderTopColor: '#00a884' }}
+            aria-hidden="true"
+          />
+          <p className={shellStyles.muted}>Loading WhatsApp template studio…</p>
         </div>
       )}
-
-      <style>{`
-        .wts {
-          position: fixed;
-          inset: 0;
-          z-index: 1000;
-          display: flex;
-          flex-direction: column;
-          background: var(--surface, #fff);
-        }
-        .wts__stage {
-          position: relative;
-          flex: 1;
-          min-height: 0;
-          overflow: hidden;
-        }
-        .wts__state {
-          height: 100%;
-          display: grid;
-          place-content: center;
-          justify-items: center;
-          gap: 10px;
-          text-align: center;
-        }
-        .wts__muted { color: var(--muted, #6b7280); font-size: 13px; margin: 0; }
-        .wts__spinner {
-          width: 26px;
-          height: 26px;
-          border: 3px solid var(--border, #eee);
-          border-top-color: #00a884;
-          border-radius: 50%;
-          animation: wts-spin 0.7s linear infinite;
-        }
-        @keyframes wts-spin { to { transform: rotate(360deg); } }
-        .wts__toast {
-          position: fixed;
-          bottom: 24px;
-          left: 50%;
-          transform: translateX(-50%);
-          z-index: var(--z-toast, 1200);
-          display: flex;
-          align-items: center;
-          gap: 11px;
-          background: var(--text, #1c1917);
-          color: var(--bg, #fff);
-          padding: 12px 16px 12px 13px;
-          border-radius: 12px;
-          box-shadow: 0 12px 32px rgba(28, 25, 23, 0.3);
-          font-size: 13px;
-          font-weight: 500;
-        }
-        .wts__toastic {
-          width: 22px;
-          height: 22px;
-          border-radius: 50%;
-          background: #22c55e;
-          color: #fff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex: none;
-        }
-      `}</style>
-    </div>
+    </ChannelEditorShell>
   );
 }

@@ -1,5 +1,13 @@
 import { create } from 'zustand';
 
+import {
+  galleryTemplateToDoc,
+  normalizeGalleryCatalog,
+  pickGalleryText,
+  type GalleryCategory,
+  type GalleryTemplate,
+  type RawGalleryCatalog,
+} from '@/presets/gallery';
 import { getBlockPlugin, getButtonPlugin } from './registry';
 import {
   newId,
@@ -63,6 +71,17 @@ interface StudioState {
   saveState: 'idle' | 'saving' | 'saved';
   /** Edit = click selects; Interact = the preview behaves like WhatsApp. */
   previewMode: PreviewMode;
+  /** `false` = compact library rail; `true` = full searchable library. */
+  libraryOpen: boolean;
+  /** Inspector sidebar width mode. */
+  inspectorMode: 'full' | 'compact';
+  /** Ready-made templates for the inspector's default state (host-provided). */
+  galleryTemplates: GalleryCategory[];
+  /**
+   * Id of the gallery template the current doc was built from (or null). Lets
+   * the body copy re-localize when the language changes, until it's edited.
+   */
+  activeTemplateId: string | null;
   /** Test-mode conversation state (never part of undo history). */
   previewReplies: PreviewReply[];
   previewSheet: PreviewSheet | null;
@@ -79,6 +98,10 @@ export const useStudio = create<StudioState>(() => ({
   librarySearch: '',
   saveState: 'idle',
   previewMode: 'edit',
+  libraryOpen: false,
+  inspectorMode: 'full',
+  galleryTemplates: [],
+  activeTemplateId: null,
   previewReplies: [],
   previewSheet: null,
   previewToast: null,
@@ -134,16 +157,79 @@ function commit(next: TemplateDoc) {
 
 export function replaceDoc(next: TemplateDoc, options: { resetHistory?: boolean } = {}) {
   if (options.resetHistory) {
-    useStudio.setState({ doc: next, past: [], future: [], selection: { kind: 'template' } });
+    useStudio.setState({
+      doc: next,
+      past: [],
+      future: [],
+      selection: { kind: 'template' },
+      activeTemplateId: null,
+    });
     scheduleAutosave();
   } else {
     commit(next);
+    useStudio.setState({ activeTemplateId: null });
   }
 }
 
+/** Find a gallery template by id across all catalog groups. */
+function findGalleryTemplate(id: string | null): GalleryTemplate | null {
+  if (!id) return null;
+  for (const group of useStudio.getState().galleryTemplates) {
+    const found = group.templates.find((t) => t.id === id);
+    if (found) return found;
+  }
+  return null;
+}
+
+/**
+ * When the language changes, refresh the body copy to the applied gallery
+ * template's translation for that language — but only while the body is still
+ * the template's untouched copy, so manual edits are never discarded.
+ */
+function relocalizeForLanguage(
+  doc: TemplateDoc,
+  language: string,
+  activeTemplateId: string | null,
+): TemplateDoc {
+  const next: TemplateDoc = { ...doc, language };
+  const template = findGalleryTemplate(activeTemplateId);
+  const body = next.blocks.body;
+  // Authentication bodies are Meta-generated (no free text to translate).
+  if (!template || template.category === 'AUTHENTICATION' || body.type !== 'body') {
+    return next;
+  }
+  const data = body.data as { text?: string; variables?: unknown };
+  const currentText = data.text ?? '';
+  // Untouched = still exactly the copy we injected for the previous language.
+  if (currentText !== pickGalleryText(template, doc.language)) return next;
+  const localized = pickGalleryText(template, language);
+  if (localized === currentText) return next;
+  return {
+    ...next,
+    blocks: {
+      ...next.blocks,
+      body: { ...body, data: { ...data, text: localized } },
+    },
+  };
+}
+
 export function setTemplateField(field: 'name' | 'language', value: string) {
-  const doc = useStudio.getState().doc;
+  const { doc, activeTemplateId } = useStudio.getState();
+  if (field === 'language' && value !== doc.language) {
+    commit(relocalizeForLanguage(doc, value, activeTemplateId));
+    return;
+  }
   commit({ ...doc, [field]: value });
+}
+
+/**
+ * Apply a ready-made gallery template (undoable). Remembers which template it
+ * was so switching languages afterward re-localizes the body copy in place.
+ */
+export function applyGalleryTemplate(template: GalleryTemplate) {
+  const doc = useStudio.getState().doc;
+  commit(galleryTemplateToDoc(template, doc));
+  useStudio.setState({ activeTemplateId: template.id, selection: { kind: 'template' } });
 }
 
 export function setCategory(category: TemplateCategory) {
@@ -151,6 +237,18 @@ export function setCategory(category: TemplateCategory) {
   // Never silently delete content on a category switch — validation
   // flags incompatible blocks and the user resolves them explicitly.
   commit({ ...doc, category });
+}
+
+/** Category switch with auth slot presets (shared by TopBar + host header). */
+export function changeTemplateCategory(category: TemplateCategory) {
+  const previous = useStudio.getState().doc.category;
+  setCategory(category);
+  if (category === 'AUTHENTICATION') {
+    placeBlock('body', 'body-auth');
+    placeBlock('footer', 'footer-auth');
+  } else if (previous === 'AUTHENTICATION') {
+    placeBlock('body', 'body');
+  }
 }
 
 /** Place (or replace) a slot block from a plugin type. */
@@ -252,7 +350,11 @@ export function redo() {
 // ---------------------------------------------------------------------------
 
 export function select(selection: Selection) {
-  useStudio.setState({ selection });
+  // Clicking an editable region (block/button) in the preview reveals the
+  // inspector so its properties are immediately editable. Background/template
+  // clicks leave the inspector as-is (they don't force it open).
+  const editable = selection.kind === 'block' || selection.kind === 'button';
+  useStudio.setState(editable ? { selection, inspectorMode: 'full' } : { selection });
 }
 
 export function setPreviewDark(previewDark: boolean) {
@@ -265,6 +367,29 @@ export function setPreviewDevice(previewDevice: PreviewDevice) {
 
 export function setLibrarySearch(librarySearch: string) {
   useStudio.setState({ librarySearch });
+}
+
+export function toggleLibraryOpen() {
+  useStudio.setState((s) => ({ libraryOpen: !s.libraryOpen }));
+}
+
+export function setLibraryOpen(libraryOpen: boolean) {
+  useStudio.setState({ libraryOpen });
+}
+
+export function setInspectorMode(inspectorMode: 'full' | 'compact') {
+  useStudio.setState({ inspectorMode });
+}
+
+/** Load the host-provided template gallery (normalized into the domain model). */
+export function setGalleryCatalog(raw: RawGalleryCatalog | null | undefined) {
+  useStudio.setState({ galleryTemplates: normalizeGalleryCatalog(raw) });
+}
+
+export function toggleInspectorMode() {
+  useStudio.setState((s) => ({
+    inspectorMode: s.inspectorMode === 'full' ? 'compact' : 'full',
+  }));
 }
 
 // ---------------------------------------------------------------------------

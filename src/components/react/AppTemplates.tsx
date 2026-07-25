@@ -984,8 +984,9 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               name={builder.name}
               initialDocument={builder.document}
               initialCategory={builder.category}
+              initialLanguage={builder.language}
               onClose={() => setBuilder(null)}
-              onSave={async ({ name, html, document, category }) => {
+              onSave={async ({ name, html, document, category, language }) => {
                 const ed = builder;
                 if (!ed) return;
                 // Stay in the editor and let it show a saved badge; don't close.
@@ -998,6 +999,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                   html,
                   builderDoc: document as Record<string, unknown>,
                   category,
+                  language,
                 };
                 if (ed.id) {
                   // Editing an existing template — update it in place.
@@ -1010,7 +1012,9 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                   setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
                   // Switch to update mode so subsequent saves patch this template
                   // instead of creating duplicates.
-                  setBuilder((prev) => (prev ? { ...prev, id: created.id } : prev));
+                  setBuilder((prev) =>
+                    prev ? { ...prev, id: created.id, language } : prev,
+                  );
                 }
               }}
             />
@@ -1074,9 +1078,10 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           name={builder.name}
           kind="template"
           initialCategory={builder.category}
+          initialLanguage={builder.language}
           initialMessage={builder.message}
           onClose={() => setBuilder(null)}
-          onSave={async ({ channel, name, message, category }) => {
+          onSave={async ({ channel, name, message, category, language }) => {
             const ed = builder;
             if (!ed || !live) return;
             const body = {
@@ -1084,6 +1089,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               channel,
               text: message || null,
               category,
+              language,
             };
             if (ed.id) {
               const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
@@ -1093,7 +1099,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
             } else {
               const created = await api.post<ApiTemplate>('templates', body);
               setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
-              setBuilder((prev) => (prev ? { ...prev, id: created.id } : prev));
+              setBuilder((prev) => (prev ? { ...prev, id: created.id, language } : prev));
             }
           }}
         />

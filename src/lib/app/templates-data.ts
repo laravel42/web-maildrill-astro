@@ -6,7 +6,7 @@
  */
 import type { ChannelType, TemplateApprovalStatus } from '@/types/app';
 
-export type TplCategory = 'Promotional' | 'Newsletter' | 'Transactional' | 'Announcement';
+export type TplCategory = 'Promotional' | 'Newsletter' | 'Transactional';
 
 export type GalleryTemplate = {
   id: string;
@@ -45,18 +45,41 @@ export const CATEGORY_COLOR: Record<TplCategory, string> = {
   Promotional: '#4f46e5',
   Newsletter: '#059669',
   Transactional: '#ea6c3f',
-  Announcement: '#a1774a',
 };
 
 // No seed templates — the gallery renders live workspace templates.
 export const galleryTemplates: GalleryTemplate[] = [];
 
 export const TEMPLATE_CATEGORIES: TplCategory[] = [
-  'Promotional',
   'Newsletter',
+  'Promotional',
   'Transactional',
-  'Announcement',
 ];
+
+/** SMS template categories shown in the editor header. */
+export const SMS_TEMPLATE_CATEGORIES = ['Transactional', 'Promotional', 'Standard'] as const;
+export type SmsTplCategory = (typeof SMS_TEMPLATE_CATEGORIES)[number];
+
+/** Voice script template categories shown in the editor header. */
+export const VOICE_TEMPLATE_CATEGORIES = ['Marketing', 'Customer Service', 'IVR'] as const;
+export type VoiceTplCategory = (typeof VOICE_TEMPLATE_CATEGORIES)[number];
+
+export function templateCategoriesForChannel(channel: ChannelType): readonly string[] {
+  if (channel === 'sms') return SMS_TEMPLATE_CATEGORIES;
+  if (channel === 'voice') return VOICE_TEMPLATE_CATEGORIES;
+  return TEMPLATE_CATEGORIES;
+}
+
+export function defaultTemplateCategory(
+  channel: ChannelType,
+  initial?: string | null,
+): string {
+  const categories = templateCategoriesForChannel(channel);
+  if (initial === 'Announcement') return 'Newsletter';
+  if (initial && categories.includes(initial)) return initial;
+  if (channel === 'email') return 'Newsletter';
+  return categories[0];
+}
 export const RATE_BUCKETS = ['None', 'Under 20%', '20 – 40%', '40%+'] as const;
 export type RateBucket = (typeof RATE_BUCKETS)[number];
 

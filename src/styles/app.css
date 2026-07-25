@@ -214,6 +214,18 @@
   color: var(--muted);
 }
 
+/* Outlined for visibility — a solid currentColor border (matching each
+   status hue) makes the WhatsApp approval badge read clearly against the
+   tinted card backgrounds. */
+.tstat--draft,
+.tstat--pending,
+.tstat--approved,
+.tstat--rejected,
+.tstat--paused,
+.tstat--disabled {
+  border: 1.5px solid currentColor;
+}
+
 /* ---------------- cards ---------------- */
 .acrd {
   background: var(--surface);

@@ -28,9 +28,17 @@
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
   --border: #e4e7e5;
+  /* Drag-source tile dashes: --border vanishes on white cards, so these
+     get a darker dash that still reads as a subtle affordance. */
+  --border-strong: #c3cac6;
   --input: #e4e7e5;
   --ring: #00a884;
   --radius: 0.5rem;
+
+  /* Toolbar accent — overridden by host via accentColor prop (--wts-accent). */
+  --wts-accent: var(--primary);
+  --wts-accent-foreground: var(--primary-foreground);
+  --wts-text-secondary: var(--muted-foreground);
 
   /* Studio-specific: WhatsApp preview surfaces (consumed by the preview pane). */
   --wa-chat-light: #efeae2;
@@ -57,6 +65,7 @@
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   --border: #242c28;
+  --border-strong: #3c4741;
   --input: #2a332e;
   --ring: #00c49f;
 }
@@ -79,6 +88,7 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
 
@@ -94,3 +104,407 @@
     outline-color: color-mix(in oklab, var(--color-ring) 50%, transparent);
   }
 }
+
+/* Library tiles (drag sources) — mirrors email-builder-standalone's
+   dragTileShellSx: 10px radius, 1px dashed border, accent hover with a 1px
+   lift, 130ms composited transition. Plain CSS on purpose: the host app
+   compiles this package's Tailwind classes itself, and a newly-introduced
+   utility can be missing until its scanner re-runs. These rules only need
+   this stylesheet to load. */
+.wa-studio .wts-lib-tile {
+  border: 1px dashed var(--border-strong, #c3cac6);
+  border-radius: 10px;
+  transition:
+    transform 130ms ease,
+    background-color 130ms ease,
+    border-color 130ms ease;
+  will-change: transform;
+}
+
+.wa-studio .wts-lib-tile:hover:not(:disabled) {
+  border-color: var(--primary);
+  background-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.wa-studio .wts-lib-tile:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Inspector selects — replica of the host app's `.select` control
+   (src/styles/components.css). Values are literal copies from the app's
+   tokens.css because the studio also runs standalone (dev harness) where
+   those :root tokens don't exist. Focus is indigo on purpose: the app
+   uses its accent for interaction/focus even inside channel editors.
+   Plain CSS for the same reason as .wts-lib-tile above. */
+.wa-studio .wts-select {
+  display: flex;
+  width: 100%;
+  /* The app's `.select` is 44px; the inspector is denser, so 36px. */
+  min-height: 36px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid #e4e2da; /* --border2 */
+  border-radius: 10px; /* --radius-btn */
+  background: #ffffff; /* --surface */
+  color: var(--foreground);
+  font-size: 0.9375rem; /* --fs-base */
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color 150ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 150ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.wa-studio .wts-select:hover:not(:disabled) {
+  border-color: #c0beb4; /* --muted2 */
+}
+
+.wa-studio .wts-select:focus-visible {
+  outline: none;
+  border-color: #4f46e5; /* --accent */
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.35); /* --focus-ring */
+}
+
+.wa-studio .wts-select[aria-invalid='true'] {
+  border-color: var(--destructive);
+}
+
+.wa-studio .wts-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f3f2ee; /* --surface2 */
+}
+
+.wa-studio .wts-select[data-placeholder] {
+  color: #a5a39a; /* --muted */
+}
+
+.wa-studio.dark .wts-select {
+  border-color: #3c372c;
+  background: #201d16;
+}
+
+.wa-studio.dark .wts-select:hover:not(:disabled) {
+  border-color: #6b6759;
+}
+
+.wa-studio.dark .wts-select:disabled {
+  background: #2a261e;
+}
+
+.wa-studio.dark .wts-select[data-placeholder] {
+  color: #8b8778;
+}
+
+/* The dropdown panel. Radix portals it to document.body — OUTSIDE the
+   .wa-studio scope — so these rules are unscoped (the wts- prefix keeps
+   them collision-free) and fully self-contained: no var() that only
+   exists on .wa-studio. Light-only for now, like the host app renders
+   the studio; give this a pass when the host grows a dark editor. */
+.wts-select-menu {
+  border: 1px solid #e4e2da; /* --border2 */
+  border-radius: 10px; /* --radius-btn */
+  background: #ffffff; /* --surface */
+  color: #1f1e1b; /* --text */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1); /* --shadow-md */
+}
+
+.wts-select-menu [data-slot='select-item'] {
+  border-radius: 6px;
+  font-size: 0.9375rem; /* --fs-base */
+}
+
+.wts-select-menu [data-slot='select-item'][data-highlighted] {
+  background: #eef0ff; /* --accent-tint */
+  color: #1f1e1b;
+}
+
+/* Toolbar — aligned with email-builder-standalone TemplatePanel / MainTabsGroup. */
+.wa-studio .wts-mode-tabs {
+  display: flex;
+  align-items: stretch;
+  height: 50px;
+  gap: 0;
+}
+
+.wa-studio .wts-mode-tab {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-content: center;
+  box-sizing: border-box;
+  width: 44px;
+  min-width: 44px;
+  height: 48px;
+  align-self: center;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--wts-text-secondary);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.wa-studio .wts-mode-tab:hover:not(.is-active):not(:disabled) {
+  color: var(--foreground);
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.wa-studio.dark .wts-mode-tab:hover:not(.is-active):not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.wa-studio .wts-mode-tab.is-active {
+  color: var(--wts-accent);
+}
+
+.wa-studio .wts-mode-tab.is-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 44px;
+  height: 3px;
+  border-radius: 4px;
+  background: var(--wts-accent);
+}
+
+.wa-studio .wts-toolbar-action {
+  display: grid;
+  place-content: center;
+  width: 20px;
+  height: 20px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--wts-accent);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.wa-studio .wts-toolbar-action:hover:not(:disabled) {
+  background-color: color-mix(in oklab, var(--wts-accent) 8%, transparent);
+}
+
+.wa-studio .wts-toolbar-action:disabled {
+  color: var(--wts-text-secondary);
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.wa-studio .wts-toolbar-icon {
+  display: grid;
+  place-content: center;
+  min-width: 40px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--wts-text-secondary);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.wa-studio .wts-toolbar-icon:hover:not(:disabled):not(.is-active) {
+  color: var(--wts-text-secondary);
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.wa-studio.dark .wts-toolbar-icon:hover:not(:disabled):not(.is-active) {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.wa-studio .wts-toolbar-icon.is-active {
+  color: var(--wts-accent-foreground);
+  background-color: var(--wts-accent);
+}
+
+.wa-studio .wts-toolbar-icon.is-active:hover:not(:disabled) {
+  color: var(--wts-accent-foreground);
+  background-color: var(--wts-accent);
+}
+
+.wa-studio .wts-toolbar-icon:disabled {
+  color: var(--wts-text-secondary);
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.wa-studio .wts-undo-redo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 14px;
+}
+
+.wa-studio .wts-device-toggle {
+  display: inline-flex;
+  align-items: stretch;
+  box-sizing: border-box;
+  height: 30px;
+  overflow: hidden;
+  padding: 0;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+}
+
+.wa-studio .wts-device-toggle .wts-toolbar-icon {
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 40px;
+  padding: 0 10px;
+}
+
+.wa-studio .wts-device-toggle .wts-toolbar-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.wa-studio .wts-device-toggle .wts-toolbar-icon + .wts-toolbar-icon {
+  border-left: 1px solid var(--border);
+}
+
+/* Side panels — absolute rails that expand over the canvas (email-builder pattern). */
+.wa-studio .wts-side-panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--background);
+}
+
+.wa-studio .wts-side-panel--library {
+  left: 0;
+  border-right: 1px solid var(--border);
+}
+
+.wa-studio .wts-side-panel--inspector {
+  right: 0;
+  flex-direction: row;
+  align-items: stretch;
+  overflow: visible;
+  border-left: 1px solid var(--border);
+  border-top-right-radius: 12px;
+}
+
+.wa-studio .wts-side-panel--inspector > aside {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Collapsed inspector: fully hidden (width 0) — drop the edge borders so no
+   white column or hairline remains; only the floating handle stays. */
+.wa-studio .wts-side-panel--inspector.is-collapsed,
+.wa-studio .wts-side-panel--inspector.is-collapsed > aside {
+  border-left: none;
+  border-top-right-radius: 0;
+}
+
+/* Collapse handles on panel edges. */
+.wa-studio .wts-panel-handle {
+  position: absolute;
+  top: 50%;
+  z-index: 11;
+  transform: translateY(-50%);
+  transition: left 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wa-studio .wts-panel-handle--library {
+  transition: left 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wa-studio .wts-panel-handle--inspector {
+  left: 0;
+  transform: translateX(-100%) translateY(-50%);
+}
+
+.wa-studio .wts-panel-handle-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.wa-studio .wts-panel-handle-btn:hover {
+  background: var(--muted);
+}
+
+.wa-studio .wts-panel-handle-btn--library {
+  width: 28px;
+  min-height: 96px;
+  gap: 6px;
+  border-left: none;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
+}
+
+.wa-studio .wts-panel-handle-btn--library.is-active {
+  background: var(--wts-accent);
+  color: var(--wts-accent-foreground);
+  border-color: var(--wts-accent);
+}
+
+.wa-studio .wts-panel-handle-btn--library.is-active:hover {
+  filter: brightness(0.92);
+}
+
+.wa-studio .wts-panel-handle-btn--inspector {
+  width: 24px;
+  min-height: 80px;
+  gap: 4px;
+  border-right: none;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+  box-shadow: -2px 0 6px rgba(0, 0, 0, 0.04);
+  color: var(--muted-foreground);
+}
+
+.wa-studio .wts-panel-handle-btn--inspector.is-active {
+  background: var(--wts-accent);
+  color: var(--wts-accent-foreground);
+  border-color: var(--wts-accent);
+}
+
+.wa-studio .wts-panel-handle-btn--inspector.is-active:hover {
+  filter: brightness(0.92);
+}
+
+.wa-studio .wts-panel-handle-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+

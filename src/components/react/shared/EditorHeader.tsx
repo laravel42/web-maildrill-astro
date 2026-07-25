@@ -6,6 +6,8 @@ import styles from './EditorHeader.module.css';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved';
 
+export type LanguageOption = { code: string; label: string };
+
 type Props = {
   channel: ChannelType;
   name: string;
@@ -17,6 +19,12 @@ type Props = {
   category?: string;
   categories?: readonly string[];
   onCategoryChange?: (value: string) => void;
+  /** Optional language picker — suffix on the title field (templates). */
+  language?: string;
+  languageOptions?: readonly LanguageOption[];
+  onLanguageChange?: (value: string) => void;
+  /** Square flag image URL for a language code. */
+  getLanguageFlagSrc?: (code: string) => string;
   onBack: () => void;
   onSendTest: () => void;
   onSaveDraft: () => void;
@@ -46,11 +54,90 @@ function BackArrow() {
   );
 }
 
+function LanguagePicker({
+  value,
+  options,
+  onChange,
+  getFlagSrc,
+}: {
+  value: string;
+  options: readonly LanguageOption[];
+  onChange: (code: string) => void;
+  getFlagSrc?: (code: string) => string;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const selectedCode = value || options[0]?.code;
+  const selected = options.find((o) => o.code === selectedCode) ?? options[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [open]);
+
+  if (!selected) return null;
+
+  return (
+    <div className={styles.languageWrap} ref={wrapRef}>
+      <button
+        type="button"
+        className={styles.languageTrigger}
+        aria-label={`Template language, ${selected.label}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
+        {getFlagSrc && (
+          <img
+            className={styles.languageFlag}
+            src={getFlagSrc(selected.code)}
+            alt=""
+            decoding="async"
+          />
+        )}
+        <span className={styles.languageLabel}>{selected.label}</span>
+        <Icon name="chevron-down" size={12} className={styles.languageCaret} />
+      </button>
+      {open && (
+        <ul className={styles.languageMenu} role="listbox" aria-label="Template language">
+          {options.map((option) => (
+            <li key={option.code} role="presentation">
+              <button
+                type="button"
+                role="option"
+                aria-selected={option.code === selected.code}
+                className={`${styles.languageOption}${option.code === selected.code ? ` ${styles.languageOptionActive}` : ''}`}
+                onClick={() => {
+                  onChange(option.code);
+                  setOpen(false);
+                }}
+              >
+                {getFlagSrc && (
+                  <img
+                    className={styles.languageFlag}
+                    src={getFlagSrc(option.code)}
+                    alt=""
+                    decoding="async"
+                  />
+                )}
+                <span>{option.label}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 /**
  * Shared editor header used by both the visual email editor and the SMS/
- * WhatsApp/Voice composer so they read as one product: back, channel icon,
- * an editable name, the draft crumb + autosave status, and Send test /
- * Save draft actions.
+ * WhatsApp/Voice composer so they read as one product: back, a centered
+ * editable name (with channel icon + save), autosave status, and Send test.
  */
 export default function EditorHeader({
   channel,
@@ -61,6 +148,10 @@ export default function EditorHeader({
   category,
   categories,
   onCategoryChange,
+  language,
+  languageOptions,
+  onLanguageChange,
+  getLanguageFlagSrc,
   onBack,
   onSendTest,
   onSaveDraft,
@@ -99,31 +190,6 @@ export default function EditorHeader({
         <button type="button" className={styles.back} onClick={onBack} aria-label="Back">
           <BackArrow />
         </button>
-        <span className={styles.chanic} style={{ color: meta.color }}>
-          <Icon name={meta.icon} size={14} stroke={2} />
-        </span>
-        <div className={styles.titlecol}>
-          <input
-            ref={nameRef}
-            className={`${styles.name}${nameError ? ` ${styles.nameInvalid}` : ''}`}
-            value={name}
-            aria-invalid={nameError ? true : undefined}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => {
-              if (nameError) setNameError(null);
-              onNameChange(e.target.value);
-            }}
-            placeholder={placeholder}
-            aria-label={`${section} name`}
-            spellCheck={false}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') e.currentTarget.blur();
-            }}
-          />
-          <div className={styles.crumb}>
-            {section} / {status === 'saved' ? 'Saved' : 'Draft'}
-          </div>
-        </div>
-
         {categories && onCategoryChange && (
           /* Radio group rather than a select: with four options the choices are
              worth showing, and native radios give arrow-key navigation and
@@ -146,6 +212,55 @@ export default function EditorHeader({
         )}
       </div>
 
+      <div className={styles.center}>
+        <div className={styles.nameRow}>
+          <div
+            className={`${styles.nameField}${nameError ? ` ${styles.nameFieldInvalid}` : ''}`}
+          >
+            <span
+              className={styles.nameIcon}
+              style={{ background: meta.tint, color: meta.color }}
+              aria-hidden="true"
+            >
+              <Icon name={meta.icon} size={14} stroke={2} />
+            </span>
+            <input
+              ref={nameRef}
+              className={styles.name}
+              value={name}
+              aria-invalid={nameError ? true : undefined}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                if (nameError) setNameError(null);
+                onNameChange(e.target.value);
+              }}
+              placeholder={placeholder}
+              aria-label={`${section} name`}
+              spellCheck={false}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.currentTarget.blur();
+              }}
+            />
+            {languageOptions && onLanguageChange && (
+              <LanguagePicker
+                value={language ?? languageOptions[0]?.code ?? ''}
+                options={languageOptions}
+                onChange={onLanguageChange}
+                getFlagSrc={getLanguageFlagSrc}
+              />
+            )}
+          </div>
+          <button
+            type="button"
+            className={styles.saveIcon}
+            onClick={handleSave}
+            disabled={status === 'saving'}
+          >
+            <Icon name="save" size={14} stroke={2} />
+            {saveLabel}
+          </button>
+        </div>
+      </div>
+
       <div className={styles.right}>
         <span className={styles.status} role="status">
           <span className={`${styles.dot} ${status === 'saving' ? styles.dotSaving : ''}`} />
@@ -154,10 +269,6 @@ export default function EditorHeader({
         <button type="button" className={styles.sbtn} onClick={onSendTest}>
           <Icon name="send" size={14} />
           Send test
-        </button>
-        <button type="button" className={`${styles.sbtn} ${styles.primary}`} onClick={handleSave}>
-          <Icon name="check" size={14} stroke={2.6} />
-          {saveLabel}
         </button>
       </div>
       {nameError && (

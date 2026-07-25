@@ -34,6 +34,8 @@ export type {
 // Document + state
 export {
   addButton,
+  applyGalleryTemplate,
+  changeTemplateCategory,
   emptyDoc,
   loadDraft,
   clearDraft,
@@ -44,6 +46,7 @@ export {
   reorderButtons,
   replaceDoc,
   setCategory,
+  setGalleryCatalog,
   setTemplateField,
   undo,
   updateBlockData,
@@ -73,3 +76,19 @@ export {
 
 // Constraints
 export { CATEGORIES, CATEGORY_CAPS, LANGUAGES, LIMITS } from './core/limits';
+
+// Template gallery (host-provided catalog → curated presets)
+export {
+  galleryTemplateToDoc,
+  normalizeGalleryCatalog,
+  pickGalleryText,
+  slugifyTemplateName,
+} from './presets/gallery';
+export type {
+  GalleryCategory,
+  GalleryTemplate,
+  GalleryVariable,
+  RawGalleryCatalog,
+  RawGalleryCategory,
+  RawGalleryTemplate,
+} from './presets/gallery';

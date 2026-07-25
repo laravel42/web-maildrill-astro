@@ -526,6 +526,7 @@ export default function TemplatePanel({
           <div id="ee-editor-header">
             <div
               style={{
+                position: 'relative',
                 height: 50,
                 width: lastWidth || '100%',
                 borderBottom: 1,
@@ -533,7 +534,6 @@ export default function TemplatePanel({
                 backgroundColor: theme.palette.background.paper,
                 zIndex: 1,
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
                 marginTop: 0,
               }}
@@ -548,15 +548,10 @@ export default function TemplatePanel({
                   width: '100%',
                   justifyContent: 'space-between',
                   alignItems: 'center',
+                  minHeight: 50,
                 }}
               >
                 <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-                  <MainTabsGroup
-                    enableEditorTab={enableEditorTab}
-                    enablePreviewTab={enablePreviewTab}
-                    enableHtmlTab={enableHtmlTab}
-                    enableJsonTab={enableJsonTab}
-                  />
                   <AIGeneration />
                 </Stack>
                 {/* `gap` rather than Stack's `spacing`: since the MUI 9 upgrade
@@ -567,6 +562,24 @@ export default function TemplatePanel({
                   {rightButtonsHeader()}
                 </Stack>
               </Stack>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  left: '50%',
+                  top: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 1,
+                  pointerEvents: 'none',
+                  '& > *': { pointerEvents: 'auto' },
+                }}
+              >
+                <MainTabsGroup
+                  enableEditorTab={enableEditorTab}
+                  enablePreviewTab={enablePreviewTab}
+                  enableHtmlTab={enableHtmlTab}
+                  enableJsonTab={enableJsonTab}
+                />
+              </Box>
             </div>
             {cssHeaderInfo && (cssHeaderInfo.length / cssHeaderInfo.threshold >= 0.9 || cssHeaderInfo.exceeded) && (
               <Alert

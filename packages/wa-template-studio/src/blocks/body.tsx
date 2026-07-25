@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { z } from 'zod';
-import { AlignLeft, ListRestart, Plus } from 'lucide-react';
+import { AlignLeft, Bold, Braces, Code, Italic, ListRestart, Strikethrough } from 'lucide-react';
 
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
@@ -12,7 +12,7 @@ import type { BlockPlugin, ValidationIssue } from '@/core/types';
 import {
   analyzeVariables,
   exampleRow,
-  nextVariableNumber,
+  insertVariableAt,
   renumberVariables,
   uniqueVariables,
   type VariableMap,
@@ -30,6 +30,19 @@ type Data = z.infer<typeof schema>;
 /** URL / phone detection for the live helper hints (never blocking). */
 const URL_IN_TEXT_RE = /https?:\/\/[^\s]+/g;
 const PHONE_IN_TEXT_RE = /\+\d[\d\s().-]{7,}\d/g;
+
+/** WhatsApp's inline markup — the only formatting the client understands. */
+const WA_FORMATS: ReadonlyArray<{
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  before: string;
+  after: string;
+}> = [
+  { label: 'Bold', icon: Bold, before: '*', after: '*' },
+  { label: 'Italic', icon: Italic, before: '_', after: '_' },
+  { label: 'Strikethrough', icon: Strikethrough, before: '~', after: '~' },
+  { label: 'Monospace', icon: Code, before: '```', after: '```' },
+];
 
 export const bodyPlugin: BlockPlugin<Data> = {
   type: 'body',
@@ -109,6 +122,7 @@ export const bodyPlugin: BlockPlugin<Data> = {
     const analysis = analyzeVariables(value.text, value.variables ?? {});
     const detectedUrls = value.text.match(URL_IN_TEXT_RE) ?? [];
     const detectedPhones = value.text.match(PHONE_IN_TEXT_RE) ?? [];
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
     const setVariableMeta = (n: number, patch: { name?: string; example?: string }) => {
       onChange({
@@ -117,14 +131,108 @@ export const bodyPlugin: BlockPlugin<Data> = {
       });
     };
 
+    // Splice text into the body at the caret (or over the current selection),
+    // keep the controlled value in sync, and position the caret — all
+    // synchronously. Using setRangeText (instead of onChange + a deferred
+    // setSelectionRange) avoids a race with the controlled re-render driven by
+    // the external store, which would otherwise fling the caret to the end.
+    // When the textarea isn't focused we have no meaningful caret, so we append.
+    const spliceText = (
+      make: (ctx: { start: number; end: number; text: string }) => {
+        insert: string;
+        selStart: number;
+        selEnd: number;
+      },
+    ) => {
+      const el = textareaRef.current;
+      const text = value.text;
+      const focused = !!el && document.activeElement === el;
+      const start = focused ? el.selectionStart ?? text.length : text.length;
+      const end = focused ? el.selectionEnd ?? text.length : text.length;
+      const { insert, selStart, selEnd } = make({ start, end, text });
+      if (el) {
+        el.focus();
+        // setRangeText mutates el.value in place; because React receives the
+        // exact same string, its controlled-value guard skips the DOM write and
+        // the selection we set below survives the re-render.
+        el.setRangeText(insert, start, end, 'end');
+        el.setSelectionRange(start + selStart, start + selEnd);
+        onChange({ ...value, text: el.value });
+      } else {
+        onChange({ ...value, text: text.slice(0, start) + insert + text.slice(end) });
+      }
+    };
+
+    // Wrap the current selection (or a placeholder) in a WhatsApp marker and
+    // keep the inner text selected so it reads like a WYSIWYG toggle.
+    const applyFormat = (before: string, after: string) =>
+      spliceText(({ start, end, text }) => {
+        const inner = text.slice(start, end) || 'text';
+        return { insert: before + inner + after, selStart: before.length, selEnd: before.length + inner.length };
+      });
+
+    // Insert a variable at the caret and renumber so placeholders stay
+    // sequential 1..n by position. This rewrites the whole text (numbers may
+    // shift), so we replace the field's full contents and restore the caret in
+    // one synchronous pass, feeding React the same string to avoid a re-render
+    // caret jump.
+    const insertVariable = () => {
+      const el = textareaRef.current;
+      const text = value.text;
+      const focused = !!el && document.activeElement === el;
+      const start = focused ? el.selectionStart ?? text.length : text.length;
+      const end = focused ? el.selectionEnd ?? text.length : text.length;
+      const result = insertVariableAt(text, value.variables ?? {}, start, end);
+      if (el) {
+        el.focus();
+        el.setRangeText(result.text, 0, el.value.length, 'end');
+        el.setSelectionRange(result.caret, result.caret);
+        onChange({ ...value, text: el.value, variables: result.map });
+      } else {
+        onChange({ ...value, text: result.text, variables: result.map });
+      }
+    };
+
     return (
       <div className="flex flex-col gap-4">
         <Field
           label="Message text"
           counter={`${value.text.length}/${LIMITS.BODY_TEXT_MAX}`}
-          hint="*bold* _italic_ ~strike~ ```mono``` · line breaks and emoji supported"
         >
+          <div
+            role="group"
+            aria-label="Text formatting"
+            className="flex items-center gap-0.5 rounded-md border border-border bg-muted/40 p-0.5"
+          >
+            {WA_FORMATS.map((f) => (
+              <button
+                key={f.label}
+                type="button"
+                aria-label={f.label}
+                title={f.label}
+                // Keep the textarea's focus/selection when the button is pressed.
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => applyFormat(f.before, f.after)}
+                className="inline-flex size-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <f.icon className="size-3.5" />
+              </button>
+            ))}
+            <span aria-hidden="true" className="mx-0.5 h-4 w-px bg-border" />
+            <button
+              type="button"
+              aria-label="Insert variable"
+              title="Insert variable"
+              // Keep the textarea's caret/selection when the button is pressed.
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={insertVariable}
+              className="inline-flex size-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Braces className="size-3.5" />
+            </button>
+          </div>
           <Textarea
+            ref={textareaRef}
             value={value.text}
             onChange={(e) => onChange({ ...value, text: e.target.value })}
             rows={8}
@@ -133,16 +241,8 @@ export const bodyPlugin: BlockPlugin<Data> = {
           />
         </Field>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onChange({ ...value, text: `${value.text}{{${nextVariableNumber(value.text)}}}` })}
-          >
-            <Plus className="size-3.5" /> Variable
-          </Button>
-          {!analysis.sequential && (
+        {!analysis.sequential && (
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
               variant="secondary"
@@ -154,8 +254,8 @@ export const bodyPlugin: BlockPlugin<Data> = {
             >
               <ListRestart className="size-3.5" /> Renumber
             </Button>
-          )}
-        </div>
+          </div>
+        )}
 
         {analysis.used.length > 0 && (
           <div className="flex flex-col gap-3">

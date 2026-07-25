@@ -22,6 +22,7 @@ import {
   resetDocument,
 } from './documents/editor/EditorContext';
 import { migrateDocument } from './documents/editor/migrateDocument';
+import { EMAIL_CHANNEL_COLOR } from './constants';
 import i18n, { normalizeLocale } from './i18n';
 import getTheme from './theme';
 
@@ -272,8 +273,8 @@ const EmailBuilder = forwardRef<EmailBuilderRef, EmailBuilderProps>(
     // Derive values directly from props — no local state copy needed.
     // r2wc calls root.render() with fresh props on every attribute change,
     // so React will re-render automatically.
-    const resolvedPrimaryColor = primaryColor || '#058705';
-    const resolvedSecondaryColor = secondaryColor || '#079707';
+    const resolvedPrimaryColor = primaryColor || EMAIL_CHANNEL_COLOR;
+    const resolvedSecondaryColor = secondaryColor || EMAIL_CHANNEL_COLOR;
     const resolvedGalleryImages = galleryImages ?? false;
     const resolvedImagePlaceholder = imagePlaceholder || DEFAULT_IMAGE_PLACEHOLDER;
 

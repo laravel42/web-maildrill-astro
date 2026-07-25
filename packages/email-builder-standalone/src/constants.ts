@@ -21,6 +21,9 @@ export const COMPACT_PANEL_WIDTH = 56;
 export const MAX_WIDTH_DESKTOP = 600;
 export const MAX_WIDTH_MOBILE = 370;
 
+/** Maildrill email channel identity — matches host `--ch-email` / `--accent`. */
+export const EMAIL_CHANNEL_COLOR = '#4F46E5';
+
 export const DEFAULT_PRESET_COLORS = [
   '#DC2626',
   '#EF4444',

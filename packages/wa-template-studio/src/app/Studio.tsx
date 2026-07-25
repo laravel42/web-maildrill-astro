@@ -3,10 +3,19 @@ import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } f
 
 import { TooltipProvider } from '@/ui/tooltip';
 import { registerBuiltInPlugins } from '@/blocks';
-import { addButton, loadDraft, placeBlock, redo, replaceDoc, undo, useStudio } from '@/core/store';
+import {
+  INSPECTOR_COMPACT_WIDTH,
+  INSPECTOR_FULL_WIDTH,
+  LIBRARY_COMPACT_WIDTH,
+  LIBRARY_FULL_WIDTH,
+  PANEL_TRANSITION,
+} from '@/core/panel-layout';
+import { addButton, loadDraft, placeBlock, redo, replaceDoc, setInspectorMode, undo, useStudio } from '@/core/store';
 import { CanvasPanel } from './CanvasPanel';
 import { InspectorPanel } from './InspectorPanel';
+import { InspectorPanelHandle } from './InspectorPanelHandle';
 import { LibraryPanel } from './LibraryPanel';
+import { LibraryPanelHandle } from './LibraryPanelHandle';
 import { TopBar } from './TopBar';
 
 registerBuiltInPlugins();
@@ -16,13 +25,24 @@ export interface StudioProps {
   restoreDraft?: boolean;
   /** Dark chrome for the studio UI itself (preview has its own toggle). */
   dark?: boolean;
+  /** Toolbar accent (channel identity). Falls back to `--primary`. */
+  accentColor?: string;
 }
 
 /**
  * The WhatsApp Template Studio — four-panel layout:
  * top bar / library / live preview / properties.
  */
-export function Studio({ restoreDraft = true, dark = false }: StudioProps) {
+export function Studio({ restoreDraft = true, dark = false, accentColor }: StudioProps) {
+  const libraryOpen = useStudio((s) => s.libraryOpen);
+  const inspectorMode = useStudio((s) => s.inspectorMode);
+
+  const libraryWidth = libraryOpen ? LIBRARY_FULL_WIDTH : LIBRARY_COMPACT_WIDTH;
+  // Collapsed inspector is fully hidden (width 0) so the canvas reclaims the space —
+  // no leftover white rail. Only the floating handle stays to reopen it.
+  const inspectorCollapsed = inspectorMode !== 'full';
+  const inspectorWidth = inspectorCollapsed ? 0 : INSPECTOR_FULL_WIDTH;
+
   // Restore draft once on mount.
   React.useEffect(() => {
     if (!restoreDraft) return;
@@ -30,6 +50,13 @@ export function Studio({ restoreDraft = true, dark = false }: StudioProps) {
     if (draft) replaceDoc(draft, { resetHistory: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restoreDraft]);
+
+  // The inspector is visible by default whenever the studio opens. The store is a
+  // module-level singleton that survives editor close/reopen, so reset any prior
+  // collapsed state on mount.
+  React.useEffect(() => {
+    setInspectorMode('full');
+  }, []);
 
   // Keyboard shortcuts: undo/redo.
   React.useEffect(() => {
@@ -61,15 +88,55 @@ export function Studio({ restoreDraft = true, dark = false }: StudioProps) {
   };
 
   return (
-    <div className={dark ? 'wa-studio dark h-full min-h-0' : 'wa-studio h-full min-h-0'}>
+    <div
+      className={dark ? 'wa-studio dark h-full min-h-0' : 'wa-studio h-full min-h-0'}
+      style={
+        accentColor
+          ? ({
+              '--wts-accent': accentColor,
+              '--wts-accent-foreground': '#ffffff',
+            } as React.CSSProperties)
+          : undefined
+      }
+    >
       <TooltipProvider delayDuration={250}>
         <div className="flex h-full min-h-0 flex-col bg-background font-sans text-foreground antialiased">
           <TopBar />
           <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-            <div className="flex min-h-0 flex-1 overflow-hidden">
-              <LibraryPanel />
+            <div className="relative flex min-h-0 flex-1 overflow-hidden">
+              {/* Left floating panel */}
+              <div
+                className="wts-side-panel wts-side-panel--library"
+                style={{ width: libraryWidth, transition: PANEL_TRANSITION }}
+              >
+                <LibraryPanel />
+              </div>
+              <LibraryPanelHandle />
+
+              {/* Compact library rail spacer */}
+              <div
+                aria-hidden
+                className="pointer-events-none shrink-0"
+                style={{ width: LIBRARY_COMPACT_WIDTH, transition: PANEL_TRANSITION }}
+              />
+
               <CanvasPanel />
-              <InspectorPanel />
+
+              {/* Inspector rail spacer — collapses to 0 so the canvas fills the gap */}
+              <div
+                aria-hidden
+                className="pointer-events-none shrink-0"
+                style={{ width: inspectorCollapsed ? 0 : INSPECTOR_COMPACT_WIDTH, transition: PANEL_TRANSITION }}
+              />
+
+              {/* Right floating panel */}
+              <div
+                className={`wts-side-panel wts-side-panel--inspector${inspectorCollapsed ? ' is-collapsed' : ''}`}
+                style={{ width: inspectorWidth, transition: PANEL_TRANSITION }}
+              >
+                <InspectorPanelHandle />
+                <InspectorPanel />
+              </div>
             </div>
           </DndContext>
         </div>

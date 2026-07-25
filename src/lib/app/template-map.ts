@@ -38,7 +38,7 @@ export interface ApiTemplate {
   updatedAt?: string | null;
 }
 
-const CATEGORIES: TplCategory[] = ['Promotional', 'Newsletter', 'Transactional', 'Announcement'];
+const CATEGORIES: TplCategory[] = ['Newsletter', 'Promotional', 'Transactional'];
 
 /** Deterministic thumbnail palette [band background, foreground, CTA accent]. */
 export const TEMPLATE_THUMBS: Array<[string, string, string]> = [
@@ -64,6 +64,7 @@ function toChannel(c?: string | null): ChannelType {
 }
 
 function toCategory(c?: string | null): TplCategory {
+  if (c === 'Announcement') return 'Newsletter';
   return CATEGORIES.includes(c as TplCategory) ? (c as TplCategory) : 'Newsletter';
 }
 

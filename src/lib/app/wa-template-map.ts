@@ -2,6 +2,57 @@ import type { MetaButton, MetaComponent, MetaTemplate, TemplateCategory, Templat
 import { emptyDoc, fromMetaJson, toMetaJson } from 'wa-template-studio';
 
 import type { TplCategory } from '@/lib/app/templates-data';
+import {
+  normalizeTemplateLanguageCode,
+  TEMPLATE_LANGUAGE_OPTIONS,
+  templateLanguageCountry,
+  templateLanguageFlagSrc,
+  templateLanguageLabel,
+  type TemplateLanguageOption,
+} from '@/lib/app/template-language';
+
+/** Meta template categories shown in the WhatsApp editor header. */
+export const WA_TEMPLATE_CATEGORY_LABELS = ['Marketing', 'Utility', 'Authentication'] as const;
+export type WaTemplateCategoryLabel = (typeof WA_TEMPLATE_CATEGORY_LABELS)[number];
+
+/** @deprecated Use `TemplateLanguageOption` from `@/lib/app/template-language`. */
+export type WaLanguageOption = TemplateLanguageOption;
+
+/** @deprecated Use `TEMPLATE_LANGUAGE_OPTIONS`. */
+export const WA_LANGUAGE_OPTIONS = TEMPLATE_LANGUAGE_OPTIONS;
+
+/** @deprecated Use `normalizeTemplateLanguageCode`. */
+export const normalizeWaLanguageCode = normalizeTemplateLanguageCode;
+
+/** @deprecated Use `templateLanguageLabel`. */
+export const waLanguageLabel = templateLanguageLabel;
+
+/** @deprecated Use `templateLanguageCountry`. */
+export const waLanguageCountry = templateLanguageCountry;
+
+/** @deprecated Use `templateLanguageFlagSrc`. */
+export const waLanguageFlagSrc = templateLanguageFlagSrc;
+
+const WA_LABEL_TO_META: Record<WaTemplateCategoryLabel, TemplateCategory> = {
+  Marketing: 'MARKETING',
+  Utility: 'UTILITY',
+  Authentication: 'AUTHENTICATION',
+};
+
+const WA_META_TO_LABEL: Record<TemplateCategory, WaTemplateCategoryLabel> = {
+  MARKETING: 'Marketing',
+  UTILITY: 'Utility',
+  AUTHENTICATION: 'Authentication',
+};
+
+export function waCategoryLabel(category: TemplateCategory): WaTemplateCategoryLabel {
+  return WA_META_TO_LABEL[category];
+}
+
+export function waLabelToMeta(label: string): TemplateCategory {
+  if (label in WA_LABEL_TO_META) return WA_LABEL_TO_META[label as WaTemplateCategoryLabel];
+  return 'MARKETING';
+}
 
 /** Map Meta category → Maildrill gallery category. */
 export function metaCategoryToMaildrill(category: TemplateCategory): TplCategory {

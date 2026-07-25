@@ -9,6 +9,8 @@ import type { IconName } from '@/lib/icons';
  */
 export type ChannelMeta = {
   color: string;
+  /** Resolved hex for props/APIs that cannot accept CSS variables. */
+  hex: string;
   tint: string;
   icon: IconName;
   /** Display label, e.g. "Email", "SMS", "WhatsApp", "Voice". */
@@ -16,15 +18,34 @@ export type ChannelMeta = {
 };
 
 export const CHANNEL: Record<ChannelType, ChannelMeta> = {
-  email: { color: 'var(--ch-email)', tint: 'var(--ch-email-tint)', icon: 'mail', label: 'Email' },
-  sms: { color: 'var(--ch-sms)', tint: 'var(--ch-sms-tint)', icon: 'sms', label: 'SMS' },
+  email: {
+    color: 'var(--ch-email)',
+    hex: '#4f46e5',
+    tint: 'var(--ch-email-tint)',
+    icon: 'mail',
+    label: 'Email',
+  },
+  sms: {
+    color: 'var(--ch-sms)',
+    hex: '#0891b2',
+    tint: 'var(--ch-sms-tint)',
+    icon: 'sms',
+    label: 'SMS',
+  },
   whatsapp: {
     color: 'var(--ch-whatsapp)',
+    hex: '#16a34a',
     tint: 'var(--ch-whatsapp-tint)',
     icon: 'whatsapp',
     label: 'WhatsApp',
   },
-  voice: { color: 'var(--ch-voice)', tint: 'var(--ch-voice-tint)', icon: 'voice', label: 'Voice' },
+  voice: {
+    color: 'var(--ch-voice)',
+    hex: '#d97706',
+    tint: 'var(--ch-voice-tint)',
+    icon: 'voice',
+    label: 'Voice',
+  },
 };
 
 /** Stable channel ordering for tab bars, selectors and filters. */

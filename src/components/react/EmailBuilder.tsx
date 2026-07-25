@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type CSSProperties } from 'react';
 import type { ChannelType } from '@/types/app';
 import Icon from './Icon';
 import { CHANNEL } from './shared/channels';
@@ -10,12 +10,25 @@ import {
   PREVIEW_FALLBACK,
   SPEED_OPTS,
   TIPS,
-  VARIABLES,
   VOICE_OPTS,
+  voicesForLanguage,
 } from './EmailBuilder.logic';
 import type { Props } from './EmailBuilder.types';
-import { TEMPLATE_CATEGORIES } from '@/lib/app/templates-data';
-import EditorHeader from './shared/EditorHeader';
+import { api } from '@/lib/app/api';
+import {
+  buildPersonalizationTokens,
+  type CustomField,
+} from '@/lib/app/custom-fields';
+import {
+  defaultTemplateCategory,
+  templateCategoriesForChannel,
+} from '@/lib/app/templates-data';
+import {
+  normalizeTemplateLanguageCode,
+  TEMPLATE_LANGUAGE_OPTIONS,
+  templateLanguageFlagSrc,
+} from '@/lib/app/template-language';
+import ChannelEditorShell, { shellStyles } from './shared/ChannelEditorShell';
 import { useAutosave } from './shared/useAutosave';
 import { useToast } from './shared/useToast';
 import styles from './EmailBuilder.module.css';
@@ -87,6 +100,7 @@ export default function EmailBuilder({
   name = null,
   kind = 'template',
   initialCategory,
+  initialLanguage,
   initialMessage,
   onClose,
   onSave,
@@ -95,11 +109,37 @@ export default function EmailBuilder({
   const [message, setMessage] = useState(initialMessage ?? '');
   const [previewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [quickReplies, setQuickReplies] = useState<string[]>(['Yes, count me in', 'Maybe later']);
-  const [voice, setVoice] = useState<string>(VOICE_OPTS[0]);
+  const [voice, setVoice] = useState<string>(
+    () => voicesForLanguage(initialLanguage)[0] ?? VOICE_OPTS[0],
+  );
   const [speed, setSpeed] = useState<string>(SPEED_OPTS[1]);
   const [templateName, setTemplateName] = useState(name ?? '');
-  const [category, setCategory] = useState(initialCategory ?? TEMPLATE_CATEGORIES[1]);
+  const [category, setCategory] = useState(() =>
+    defaultTemplateCategory(channel, initialCategory),
+  );
+  const [language, setLanguage] = useState(() => normalizeTemplateLanguageCode(initialLanguage));
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const { toast, show } = useToast();
+
+  const personalizationTokens = useMemo(
+    () => buildPersonalizationTokens(customFields),
+    [customFields],
+  );
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const res = await api.get<{ data: CustomField[] }>('custom-fields');
+        if (alive) setCustomFields(res.data);
+      } catch {
+        // No session or API unreachable — keep core name/email/phone chips.
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEscapeClose(onClose);
 
@@ -108,6 +148,15 @@ export default function EmailBuilder({
 
   const len = message.length;
   const isVoice = channel === 'voice';
+  const voiceOptions = useMemo(
+    () => (isVoice ? voicesForLanguage(language) : []),
+    [isVoice, language],
+  );
+
+  useEffect(() => {
+    if (!isVoice || voiceOptions.length === 0) return;
+    if (!voiceOptions.includes(voice)) setVoice(voiceOptions[0]);
+  }, [isVoice, voice, voiceOptions]);
   const count2 = isVoice ? voiceSeconds(message) : smsSegments(len);
   const count2Label = isVoice ? 'sec (est.)' : 'segment(s)';
   const msgPreview = message.trim() ? message : PREVIEW_FALLBACK[channel];
@@ -119,7 +168,13 @@ export default function EmailBuilder({
 
   // Autosave the draft every 5s once the user starts editing.
   const persist = async () => {
-    await onSave({ channel, name: templateName.trim() || 'Untitled', message, category });
+    await onSave({
+      channel,
+      name: templateName.trim() || 'Untitled',
+      message,
+      category,
+      language,
+    });
   };
   const { status, markDirty, flush } = useAutosave(persist);
   const dirtyInit = useRef(false);
@@ -129,7 +184,7 @@ export default function EmailBuilder({
       return;
     }
     markDirty();
-  }, [message, templateName, category, markDirty]);
+  }, [message, templateName, category, language, markDirty]);
   const handleSaveDraft = async () => {
     const ok = await flush();
     show(ok ? `“${templateName.trim() || 'Untitled template'}” saved` : 'Could not save.');
@@ -137,22 +192,42 @@ export default function EmailBuilder({
   const handleSendTest = () => show('Test message sent');
 
   return (
-    <div className={styles.overlay} style={{ animation: 'fade .2s ease' }}>
-      <EditorHeader
-        channel={channel}
-        name={templateName}
-        onNameChange={setTemplateName}
-        kind={kind}
-        status={status}
-        category={category}
-        categories={kind === 'template' ? TEMPLATE_CATEGORIES : undefined}
-        onCategoryChange={kind === 'template' ? setCategory : undefined}
-        onBack={onClose}
-        onSendTest={handleSendTest}
-        onSaveDraft={() => void handleSaveDraft()}
-      />
-
-      {/* ------------------------------- Body ------------------------------- */}
+    <ChannelEditorShell
+      channel={channel}
+      name={templateName}
+      onNameChange={setTemplateName}
+      kind={kind}
+      status={status}
+      category={category}
+      categories={kind === 'template' ? templateCategoriesForChannel(channel) : undefined}
+      onCategoryChange={kind === 'template' ? setCategory : undefined}
+      language={kind === 'template' ? language : undefined}
+      languageOptions={kind === 'template' ? TEMPLATE_LANGUAGE_OPTIONS : undefined}
+      getLanguageFlagSrc={kind === 'template' ? templateLanguageFlagSrc : undefined}
+      onLanguageChange={
+        kind === 'template'
+          ? (v) => setLanguage(normalizeTemplateLanguageCode(v))
+          : undefined
+      }
+      onBack={onClose}
+      onSendTest={handleSendTest}
+      onSaveDraft={() => void handleSaveDraft()}
+      className={styles.overlayFade}
+      toast={
+        toast ? (
+          <div
+            className={shellStyles.toast}
+            role="status"
+            style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
+          >
+            <span className={shellStyles.toastIcon}>
+              <Icon name="check" size={13} stroke={3} />
+            </span>
+            {toast}
+          </div>
+        ) : null
+      }
+    >
       {isEmail ? (
         <div className={styles.grid} style={{ gridTemplateColumns: '250px 1fr 268px' }}>
           {/* Blocks palette */}
@@ -448,15 +523,15 @@ export default function EmailBuilder({
           <aside className={styles.panel} style={{ borderRight: '1px solid var(--border)' }}>
             <div style={labelCap}>Personalize</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 22 }}>
-              {VARIABLES.map((v) => (
+              {personalizationTokens.map(({ label, token }) => (
                 <button
-                  key={v}
+                  key={token}
                   type="button"
                   className={styles.varchip}
-                  onClick={() => insertVariable(v)}
+                  onClick={() => insertVariable(token)}
                 >
                   <span style={{ color: meta.color }}>+</span>
-                  {v}
+                  {label}
                 </button>
               ))}
             </div>
@@ -536,7 +611,10 @@ export default function EmailBuilder({
                 }}
               >
                 <span className={styles.tnum}>{len} characters</span>
-                <span className={styles.tnum} style={{ fontWeight: 600, color: meta.color }}>
+                <span
+                  className={`${styles.tnum} ${styles.metricBadge}`}
+                  style={{ background: meta.tint, color: meta.color }}
+                >
                   {count2} {count2Label}
                 </span>
               </div>
@@ -600,7 +678,7 @@ export default function EmailBuilder({
                       Voice
                     </label>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                      {VOICE_OPTS.map((vo) => {
+                      {voiceOptions.map((vo) => {
                         const on = voice === vo;
                         return (
                           <button
@@ -979,18 +1057,6 @@ export default function EmailBuilder({
         </div>
       )}
 
-      {toast && (
-        <div
-          className={styles.toast}
-          role="status"
-          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-        >
-          <span className={styles.toastic}>
-            <Icon name="check" size={13} stroke={3} />
-          </span>
-          {toast}
-        </div>
-      )}
-    </div>
+    </ChannelEditorShell>
   );
 }

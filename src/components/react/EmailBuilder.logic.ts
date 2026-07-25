@@ -1,4 +1,5 @@
 import type { ChannelType } from '@/types/app';
+import { normalizeTemplateLanguageCode } from '@/lib/app/template-language';
 import type { BlockDef } from './EmailBuilder.types';
 
 /** Structure blocks shown in the email canvas palette. */
@@ -12,9 +13,6 @@ export const BLOCKS: BlockDef[] = [
   { label: 'Spacer', icon: 'chevron-down' },
   { label: 'Social', icon: 'star' },
 ];
-
-/** Personalization tokens offered as insertable chips. */
-export const VARIABLES = ['[first_name]', '[last_name]', '[company]', '[order_id]'];
 
 /** Per-channel textarea placeholder copy. */
 export const PLACEHOLDER: Record<ChannelType, string> = {
@@ -47,10 +45,33 @@ export const TIPS: Record<ChannelType, string[]> = {
 /** Per-channel fallback preview text when the message is empty. */
 export const PREVIEW_FALLBACK: Record<ChannelType, string> = {
   email: '',
-  sms: 'Hi [first_name], your order is on its way! Track it here: mldr.io/go',
-  whatsapp: 'Hi [first_name] 👋 thanks for shopping with us. Reply here if you need anything.',
-  voice: 'Hello [first_name], this is a courtesy call from Maildrill about your recent order.',
+  sms: 'Hi {{name}}, your order is on its way! Track it here: mldr.io/go',
+  whatsapp: 'Hi {{name}} 👋 thanks for shopping with us. Reply here if you need anything.',
+  voice: 'Hello {{name}}, this is a courtesy call from Maildrill about your recent order.',
 };
 
-export const VOICE_OPTS = ['Ava · US English', 'Noah · US English', 'Emma · UK English'];
+/** TTS voices available per template language (header picker drives this list). */
+export const VOICES_BY_LANGUAGE: Record<string, readonly string[]> = {
+  en_US: ['Ava · US English', 'Noah · US English', 'Emma · UK English'],
+  es: ['Lucia · Spanish', 'Diego · Spanish'],
+  it: ['Giulia · Italian', 'Marco · Italian'],
+  pt_BR: ['Camila · Portuguese', 'Thiago · Portuguese'],
+  fr: ['Chloé · French', 'Henri · French'],
+  de: ['Anna · German', 'Klaus · German'],
+  nl: ['Lotte · Dutch', 'Daan · Dutch'],
+  ar: ['Amira · Arabic', 'Omar · Arabic'],
+  hi: ['Priya · Hindi', 'Arjun · Hindi'],
+  id: ['Sari · Indonesian', 'Budi · Indonesian'],
+  ja: ['Yuki · Japanese', 'Kenji · Japanese'],
+  ko: ['Min-jun · Korean', 'Soo-jin · Korean'],
+  zh_CN: ['Wei · Chinese', 'Mei · Chinese'],
+};
+
+export function voicesForLanguage(code: string | null | undefined): readonly string[] {
+  const canonical = normalizeTemplateLanguageCode(code);
+  return VOICES_BY_LANGUAGE[canonical] ?? VOICES_BY_LANGUAGE.en_US;
+}
+
+/** @deprecated Use `voicesForLanguage('en_US')`. */
+export const VOICE_OPTS = VOICES_BY_LANGUAGE.en_US;
 export const SPEED_OPTS = ['Slow', 'Normal', 'Fast'];

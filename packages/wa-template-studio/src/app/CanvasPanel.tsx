@@ -28,13 +28,15 @@ import { PhoneSheet, PreviewSnackbar, ReplyBubble } from './preview-interactions
  */
 
 function resolveVariableFactory(doc: TemplateDoc, interactive: boolean): (n: number) => string {
+  // The authoring canvas shows the template exactly as Meta stores it — as
+  // {{n}} tokens, not sample data — so returning '' lets renderWaText draw the
+  // variable chips. Only the interactive "sent message" preview fills them in.
+  if (!interactive) return () => '';
   const bodyData = doc.blocks.body.data as { variables?: VariableMap };
   const headerData = (doc.blocks.header?.data ?? {}) as { variables?: VariableMap };
   return (n: number) => {
     const example = bodyData.variables?.[String(n)]?.example ?? headerData.variables?.[String(n)]?.example ?? '';
-    // In Test mode the message reads as "sent": variables always resolve.
-    if (!example && interactive) return `Sample ${n}`;
-    return example;
+    return example || `Sample ${n}`;
   };
 }
 

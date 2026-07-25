@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Braces, Check, Copy, Download, Upload } from 'lucide-react';
+import { Braces, Check, Copy } from 'lucide-react';
 
 import { Button } from '@/ui/button';
 import {
@@ -14,9 +14,12 @@ import {
 import { Switch } from '@/ui/switch';
 import { Label } from '@/ui/label';
 import { Textarea } from '@/ui/textarea';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip';
 import { replaceDoc, useStudio } from '@/core/store';
 import { fromMetaJson, toInternalJson, toMetaJsonString } from '@/core/serialize';
 import { hasErrors, validateTemplate } from '@/core/validation';
+import { ToolbarIconButton } from './ToolbarIconButton';
+import { IconExport, IconImport } from './ToolbarIcons';
 
 /** Export + Import dialogs for the top bar. */
 export function ImportExportControls() {
@@ -47,11 +50,16 @@ function ImportDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-1.5">
-          <Upload className="size-3.5" /> Import
-        </Button>
-      </DialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <ToolbarIconButton aria-label="Import template JSON">
+              <IconImport />
+            </ToolbarIconButton>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>Import JSON</TooltipContent>
+      </Tooltip>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Import Meta template</DialogTitle>
@@ -112,11 +120,16 @@ function ExportDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="secondary" size="sm" className="gap-1.5">
-          <Download className="size-3.5" /> Export
-        </Button>
-      </DialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <ToolbarIconButton aria-label="Export template JSON">
+              <IconExport />
+            </ToolbarIconButton>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>Export JSON</TooltipContent>
+      </Tooltip>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Export template</DialogTitle>

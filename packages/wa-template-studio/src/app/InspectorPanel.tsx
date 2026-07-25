@@ -18,8 +18,8 @@ import {
   updateButtonData,
   useStudio,
 } from '@/core/store';
-import { examplePayload } from '@/core/variables';
 import { issuesForBlock, validateTemplate } from '@/core/validation';
+import { TemplateGallery } from './TemplateGallery';
 
 /**
  * Right sidebar: properties of the current selection, rendered by the
@@ -117,6 +117,8 @@ function ButtonsOrderList() {
 export function InspectorPanel() {
   const doc = useStudio((s) => s.doc);
   const selection = useStudio((s) => s.selection);
+  const compact = useStudio((s) => s.inspectorMode === 'compact');
+  const hasGallery = useStudio((s) => s.galleryTemplates.length > 0);
 
   let content: React.ReactNode = null;
   let title = 'Template';
@@ -156,43 +158,48 @@ export function InspectorPanel() {
   }
 
   if (!content) {
-    title = 'Template';
-    content = (
-      <div className="flex flex-col gap-3">
+    if (hasGallery) {
+      title = 'Templates';
+      content = <TemplateGallery />;
+    } else {
+      title = 'Template';
+      content = (
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Select a block in the preview to edit it, or add components from the library. This panel also shows the
-          send-time API payload your variables produce.
+          Select a block in the preview to edit it, or add components from the library.
         </p>
-        <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Example send payload</h3>
-        <pre className="overflow-auto rounded-md border border-border bg-muted/40 p-2.5 font-mono text-[10.5px] leading-relaxed">
-          {JSON.stringify(examplePayload(doc), null, 2)}
-        </pre>
-      </div>
-    );
+      );
+    }
   }
 
   return (
-    <aside className="flex h-full min-h-0 w-80 shrink-0 flex-col overflow-hidden border-l border-border bg-background" aria-label="Properties">
-      <div className="flex items-center justify-between px-4 py-3">
-        <h2 className="text-sm font-semibold">{title}</h2>
-        {removable && (
-          <Button variant="ghost" size="icon" aria-label={`Remove ${title}`} onClick={removable}>
-            <Trash2 className="size-4 text-muted-foreground hover:text-destructive" />
-          </Button>
-        )}
-      </div>
-      <Separator />
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-5 p-4">
-          {content}
-          {selection.kind === 'button' && (
-            <>
-              <Separator />
-              <ButtonsOrderList />
-            </>
-          )}
-        </div>
-      </ScrollArea>
+    <aside
+      className="flex h-full min-h-0 w-full flex-col overflow-hidden border-l border-border bg-background"
+      aria-label="Properties"
+    >
+      {!compact && (
+        <>
+          <div className="flex items-center justify-between px-4 py-3">
+            <h2 className="text-sm font-semibold">{title}</h2>
+            {removable && (
+              <Button variant="ghost" size="icon" aria-label={`Remove ${title}`} onClick={removable}>
+                <Trash2 className="size-4 text-muted-foreground hover:text-destructive" />
+              </Button>
+            )}
+          </div>
+          <Separator />
+          <ScrollArea className="min-h-0 flex-1">
+            <div className="flex flex-col gap-5 p-4">
+              {content}
+              {selection.kind === 'button' && (
+                <>
+                  <Separator />
+                  <ButtonsOrderList />
+                </>
+              )}
+            </div>
+          </ScrollArea>
+        </>
+      )}
     </aside>
   );
 }
