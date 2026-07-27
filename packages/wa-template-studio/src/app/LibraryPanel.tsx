@@ -152,7 +152,7 @@ export function LibraryPanel() {
             </div>
           </div>
           <ScrollArea className="min-h-0 flex-1 px-3 pb-3">
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 px-1">
               {groups.map(([group, groupEntries]) => (
                 <section key={group} aria-label={group}>
                   <h3 className="mb-1.5 px-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
