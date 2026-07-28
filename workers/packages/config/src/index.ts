@@ -1,18 +1,18 @@
-import { existsSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import { config as loadDotenv } from "dotenv";
-import { z } from "zod";
+import { existsSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { config as loadDotenv } from 'dotenv';
+import { z } from 'zod';
 
 /**
  * Prefer the monorepo root `.env` (Astro + workers share one file). Fall back to
  * `workers/.env` for older checkouts, then cwd.
  */
 const configDir = dirname(fileURLToPath(import.meta.url));
-const workersRoot = resolve(configDir, "../../..");
-const monorepoRoot = resolve(workersRoot, "..");
-const rootEnv = resolve(monorepoRoot, ".env");
-const workersEnv = resolve(workersRoot, ".env");
+const workersRoot = resolve(configDir, '../../..');
+const monorepoRoot = resolve(workersRoot, '..');
+const rootEnv = resolve(monorepoRoot, '.env');
+const workersEnv = resolve(workersRoot, '.env');
 if (existsSync(rootEnv)) {
   loadDotenv({ path: rootEnv });
 } else if (existsSync(workersEnv)) {
@@ -24,32 +24,36 @@ if (existsSync(rootEnv)) {
 const int = (def: number) => z.coerce.number().int().default(def);
 
 const EnvSchema = z.object({
-  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  LOG_LEVEL: z
-    .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
-    .default("info"),
-  API_HOST: z.string().default("0.0.0.0"),
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  API_HOST: z.string().default('0.0.0.0'),
   API_PORT: int(3000),
   PRODUCT_API_PORT: int(3001),
   DATABASE_URL: z
     .string()
     .min(1)
-    .default("postgres://maildrill:maildrill@localhost:5432/maildrill"),
+    .default('postgres://maildrill:maildrill@localhost:5432/maildrill'),
   PG_POOL_MAX: int(10),
-  REDIS_URL: z.string().default("redis://localhost:6379"),
-  API_KEYS: z.string().default(""),
-  JWT_SECRET: z.string().default("change-me"),
-  APP_URL: z.string().default("http://localhost:4321"),
+  REDIS_URL: z.string().default('redis://localhost:6379'),
+  API_KEYS: z.string().default(''),
+  JWT_SECRET: z.string().default('change-me'),
+  APP_URL: z.string().default('http://localhost:4321'),
   MAGIC_LINK_TTL_MINUTES: int(15),
-  INFOBIP_BASE_URL: z.string().default(""),
-  INFOBIP_API_KEY: z.string().default(""),
-  INFOBIP_FROM: z.string().default("no-reply@maildrill.app"),
+  INFOBIP_BASE_URL: z.string().default(''),
+  INFOBIP_API_KEY: z.string().default(''),
+  INFOBIP_FROM: z.string().default('no-reply@maildrill.app'),
   /** E.164 numeric sender shared by SMS / WhatsApp / Voice when a channel override is unset. */
-  INFOBIP_PHONE_FROM: z.string().default(""),
+  INFOBIP_PHONE_FROM: z.string().default(''),
   /** Per-channel sender overrides; each falls back to INFOBIP_PHONE_FROM. */
-  INFOBIP_SMS_FROM: z.string().default(""),
-  INFOBIP_WHATSAPP_FROM: z.string().default(""),
-  INFOBIP_VOICE_FROM: z.string().default(""),
+  INFOBIP_SMS_FROM: z.string().default(''),
+  INFOBIP_WHATSAPP_FROM: z.string().default(''),
+  INFOBIP_VOICE_FROM: z.string().default(''),
+  /**
+   * Calls Configuration ID (Calls API + WebRTC). Powers the in-browser voice
+   * template preview: the API places a Calls-API call to the user's WebRTC
+   * identity and plays the template via TTS. Empty → preview endpoints 501.
+   */
+  INFOBIP_CALLS_CONFIGURATION_ID: z.string().default(''),
   /**
    * Optional CPaaS X identity. Required when the API key and/or WhatsApp/SMS
    * senders are bound to an Application/Entity in the Infobip portal — omitting
@@ -59,21 +63,21 @@ const EnvSchema = z.object({
    */
   INFOBIP_APPLICATION_ID: z
     .string()
-    .default("")
-    .transform((v) => v.split("#")[0]?.trim() ?? ""),
+    .default('')
+    .transform((v) => v.split('#')[0]?.trim() ?? ''),
   INFOBIP_ENTITY_ID: z
     .string()
-    .default("")
-    .transform((v) => v.split("#")[0]?.trim() ?? ""),
+    .default('')
+    .transform((v) => v.split('#')[0]?.trim() ?? ''),
   /**
    * Optional Infobip `notifyUrl` stamped on outbound sends so DLRs are pushed
    * (typically the PostHog Infobip webhook `?kind=delivery`). Paired with
    * `callbackData`, it lets the poller reconcile the DLR back to the message.
    * Leave empty to rely on portal subscriptions + Messages API report pull.
    */
-  INFOBIP_NOTIFY_URL: z.string().default(""),
-  PROVIDER_DRIVER: z.enum(["mock", "infobip"]).default("mock"),
-  WEBHOOK_INFOBIP_SECRET: z.string().default("change-me"),
+  INFOBIP_NOTIFY_URL: z.string().default(''),
+  PROVIDER_DRIVER: z.enum(['mock', 'infobip']).default('mock'),
+  WEBHOOK_INFOBIP_SECRET: z.string().default('change-me'),
   DISPATCH_CONCURRENCY: int(10),
   DISPATCH_MAX_ATTEMPTS: int(5),
   DISPATCH_BACKOFF_MS: int(2000),
@@ -86,11 +90,11 @@ const EnvSchema = z.object({
   // Media library storage: S3 for objects, CloudFront for delivery. Empty
   // values mean media is unconfigured and its endpoints refuse rather than
   // pretend to store anything.
-  AWS_REGION: z.string().default(""),
-  AWS_ACCESS_KEY_ID: z.string().default(""),
-  AWS_SECRET_ACCESS_KEY: z.string().default(""),
-  MEDIA_S3_BUCKET: z.string().default(""),
-  MEDIA_CDN_DOMAIN: z.string().default(""),
+  AWS_REGION: z.string().default(''),
+  AWS_ACCESS_KEY_ID: z.string().default(''),
+  AWS_SECRET_ACCESS_KEY: z.string().default(''),
+  MEDIA_S3_BUCKET: z.string().default(''),
+  MEDIA_CDN_DOMAIN: z.string().default(''),
   MEDIA_MAX_BYTES: int(15 * 1024 * 1024),
   /** How often to poll Infobip for pending WhatsApp template approvals. */
   TEMPLATE_APPROVAL_POLL_INTERVAL_MS: int(60_000),
@@ -107,11 +111,11 @@ const EnvSchema = z.object({
    * key with Query Read — not the project write token (`phc_`). Leave empty to
    * keep Postgres-only stats / skip PostHog DLR sync.
    */
-  POSTHOG_PERSONAL_API_KEY: z.string().default(""),
-  POSTHOG_PROJECT_ID: z.string().default("526344"),
-  POSTHOG_APP_HOST: z.string().default("https://us.posthog.com"),
+  POSTHOG_PERSONAL_API_KEY: z.string().default(''),
+  POSTHOG_PROJECT_ID: z.string().default('526344'),
+  POSTHOG_APP_HOST: z.string().default('https://us.posthog.com'),
   /** Empty = auto-on when personal key set. Set 0/false to force Postgres. */
-  POSTHOG_STATS_ENABLED: z.string().default(""),
+  POSTHOG_STATS_ENABLED: z.string().default(''),
 });
 
 export interface ApiKey {
@@ -121,11 +125,11 @@ export interface ApiKey {
 
 function parseApiKeys(raw: string): ApiKey[] {
   return raw
-    .split(",")
+    .split(',')
     .map((p) => p.trim())
     .filter(Boolean)
     .map((pair) => {
-      const idx = pair.indexOf(":");
+      const idx = pair.indexOf(':');
       if (idx === -1) {
         throw new Error(`Invalid API_KEYS entry (expected "id:secret"): ${pair}`);
       }
@@ -136,30 +140,30 @@ function parseApiKeys(raw: string): ApiKey[] {
 const parsed = EnvSchema.safeParse(process.env);
 if (!parsed.success) {
   const issues = parsed.error.issues
-    .map((i) => `  - ${i.path.join(".") || "(root)"}: ${i.message}`)
-    .join("\n");
+    .map((i) => `  - ${i.path.join('.') || '(root)'}: ${i.message}`)
+    .join('\n');
   throw new Error(`Invalid environment configuration:\n${issues}`);
 }
 const env = parsed.data;
 
-const WEAK_SECRETS = new Set(["", "change-me", "change-me-in-production"]);
-if (env.NODE_ENV === "production") {
+const WEAK_SECRETS = new Set(['', 'change-me', 'change-me-in-production']);
+if (env.NODE_ENV === 'production') {
   if (WEAK_SECRETS.has(env.JWT_SECRET.trim())) {
     throw new Error(
-      "JWT_SECRET must be set to a strong non-default value when NODE_ENV=production",
+      'JWT_SECRET must be set to a strong non-default value when NODE_ENV=production',
     );
   }
   if (WEAK_SECRETS.has(env.WEBHOOK_INFOBIP_SECRET.trim())) {
     throw new Error(
-      "WEBHOOK_INFOBIP_SECRET must be set to a strong non-default value when NODE_ENV=production",
+      'WEBHOOK_INFOBIP_SECRET must be set to a strong non-default value when NODE_ENV=production',
     );
   }
 }
 
 export const config = {
   env: env.NODE_ENV,
-  isProd: env.NODE_ENV === "production",
-  isTest: env.NODE_ENV === "test",
+  isProd: env.NODE_ENV === 'production',
+  isTest: env.NODE_ENV === 'test',
   log: { level: env.LOG_LEVEL },
   api: { host: env.API_HOST, port: env.API_PORT },
   productApi: { host: env.API_HOST, port: env.PRODUCT_API_PORT },
@@ -179,6 +183,7 @@ export const config = {
     smsFrom: env.INFOBIP_SMS_FROM || env.INFOBIP_PHONE_FROM,
     whatsappFrom: env.INFOBIP_WHATSAPP_FROM || env.INFOBIP_PHONE_FROM,
     voiceFrom: env.INFOBIP_VOICE_FROM || env.INFOBIP_PHONE_FROM,
+    callsConfigurationId: env.INFOBIP_CALLS_CONFIGURATION_ID,
     applicationId: env.INFOBIP_APPLICATION_ID,
     entityId: env.INFOBIP_ENTITY_ID,
     notifyUrl: env.INFOBIP_NOTIFY_URL,
@@ -200,15 +205,15 @@ export const config = {
   posthog: {
     personalApiKey: env.POSTHOG_PERSONAL_API_KEY,
     projectId: env.POSTHOG_PROJECT_ID,
-    appHost: env.POSTHOG_APP_HOST.replace(/\/$/, ""),
+    appHost: env.POSTHOG_APP_HOST.replace(/\/$/, ''),
     /**
      * Query-backed stats: on when a personal key is set, unless explicitly
      * disabled via POSTHOG_STATS_ENABLED=0|false|no.
      */
     get statsEnabled(): boolean {
       const t = env.POSTHOG_STATS_ENABLED.trim().toLowerCase();
-      if (t === "0" || t === "false" || t === "no") return false;
-      if (t === "1" || t === "true" || t === "yes") return Boolean(env.POSTHOG_PERSONAL_API_KEY);
+      if (t === '0' || t === 'false' || t === 'no') return false;
+      if (t === '1' || t === 'true' || t === 'yes') return Boolean(env.POSTHOG_PERSONAL_API_KEY);
       return Boolean(env.POSTHOG_PERSONAL_API_KEY);
     },
   },

@@ -34,6 +34,7 @@
     "astro": "^7.1.1",
     "auth-astro": "^4.2.0",
     "email-builder-standalone": "workspace:*",
+    "infobip-rtc": "^2.7.36",
     "nodemailer": "^9.0.3",
     "openapi-fetch": "^0.17.0",
     "posthog-js": "^1.407.0",

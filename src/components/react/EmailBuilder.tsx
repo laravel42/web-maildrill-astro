@@ -15,14 +15,8 @@ import {
 } from './EmailBuilder.logic';
 import type { Props } from './EmailBuilder.types';
 import { api } from '@/lib/app/api';
-import {
-  buildPersonalizationTokens,
-  type CustomField,
-} from '@/lib/app/custom-fields';
-import {
-  defaultTemplateCategory,
-  templateCategoriesForChannel,
-} from '@/lib/app/templates-data';
+import { buildPersonalizationTokens, type CustomField } from '@/lib/app/custom-fields';
+import { defaultTemplateCategory, templateCategoriesForChannel } from '@/lib/app/templates-data';
 import {
   normalizeTemplateLanguageCode,
   TEMPLATE_LANGUAGE_OPTIONS,
@@ -31,6 +25,7 @@ import {
 import ChannelEditorShell, { shellStyles } from './shared/ChannelEditorShell';
 import { useAutosave } from './shared/useAutosave';
 import { useToast } from './shared/useToast';
+import { useVoicePreview } from './shared/useVoicePreview';
 import styles from './EmailBuilder.module.css';
 
 /* ------------------------------------------------------------------ *
@@ -38,7 +33,6 @@ import styles from './EmailBuilder.module.css';
  * React port of the "BUILDER" overlay in design/project/App.dc.html.
  * The parent gates mounting, so this renders its overlay immediately.
  * ------------------------------------------------------------------ */
-
 
 function StatusBar({ color }: { color: string }) {
   return (
@@ -95,6 +89,17 @@ const fauxField: CSSProperties = {
   color: 'var(--text2)',
 };
 
+/** Sample values spoken in place of {{tokens}} during the voice preview. */
+const TOKEN_SAMPLES: Record<string, string> = {
+  name: 'Alex',
+  first_name: 'Alex',
+  last_name: 'Rivera',
+  email: 'alex at example dot com',
+  phone: '5 5 5, 0 1 0 0',
+};
+
+const PREVIEW_RATES: Record<string, number> = { Slow: 0.85, Normal: 1, Fast: 1.15 };
+
 export default function EmailBuilder({
   channel: initialChannel,
   name = null,
@@ -102,6 +107,7 @@ export default function EmailBuilder({
   initialCategory,
   initialLanguage,
   initialMessage,
+  initialBuilderDoc,
   onClose,
   onSave,
 }: Props) {
@@ -109,14 +115,18 @@ export default function EmailBuilder({
   const [message, setMessage] = useState(initialMessage ?? '');
   const [previewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [quickReplies, setQuickReplies] = useState<string[]>(['Yes, count me in', 'Maybe later']);
-  const [voice, setVoice] = useState<string>(
-    () => voicesForLanguage(initialLanguage)[0] ?? VOICE_OPTS[0],
-  );
-  const [speed, setSpeed] = useState<string>(SPEED_OPTS[1]);
+  const [voice, setVoice] = useState<string>(() => {
+    const savedDoc = initialBuilderDoc as { voice?: { label?: unknown } } | null | undefined;
+    const saved = typeof savedDoc?.voice?.label === 'string' ? savedDoc.voice.label : null;
+    const opts = voicesForLanguage(initialLanguage);
+    return saved && opts.some((o) => o.label === saved) ? saved : (opts[0] ?? VOICE_OPTS[0]).label;
+  });
+  const [speed, setSpeed] = useState<string>(() => {
+    const saved = (initialBuilderDoc as { speed?: unknown } | null | undefined)?.speed;
+    return typeof saved === 'string' && SPEED_OPTS.includes(saved) ? saved : SPEED_OPTS[1];
+  });
   const [templateName, setTemplateName] = useState(name ?? '');
-  const [category, setCategory] = useState(() =>
-    defaultTemplateCategory(channel, initialCategory),
-  );
+  const [category, setCategory] = useState(() => defaultTemplateCategory(channel, initialCategory));
   const [language, setLanguage] = useState(() => normalizeTemplateLanguageCode(initialLanguage));
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const { toast, show } = useToast();
@@ -155,14 +165,36 @@ export default function EmailBuilder({
 
   useEffect(() => {
     if (!isVoice || voiceOptions.length === 0) return;
-    if (!voiceOptions.includes(voice)) setVoice(voiceOptions[0]);
+    if (!voiceOptions.some((o) => o.label === voice)) setVoice(voiceOptions[0].label);
   }, [isVoice, voice, voiceOptions]);
   const count2 = isVoice ? voiceSeconds(message) : smsSegments(len);
   const count2Label = isVoice ? 'sec (est.)' : 'segment(s)';
   const msgPreview = message.trim() ? message : PREVIEW_FALLBACK[channel];
 
-  const insertVariable = (token: string) =>
-    setMessage((m) => (m ? `${m} ${token}` : token));
+  // Voice review playback — the real Infobip TTS voice over a silent WebRTC
+  // call (see useVoicePreview). {{tokens}} are spoken as sample values.
+  const preview = useVoicePreview();
+  const selectedVoice = voiceOptions.find((o) => o.label === voice);
+
+  const togglePreviewPlayback = () => {
+    if (preview.state !== 'idle') {
+      preview.stop();
+      return;
+    }
+    if (!selectedVoice) return;
+    const text = msgPreview.replace(
+      /\{\{\s*([\w.]+)\s*\}\}/g,
+      (_, key: string) => TOKEN_SAMPLES[key] ?? key.replace(/[_.]+/g, ' '),
+    );
+    void preview.play({
+      text,
+      language: selectedVoice.sayLanguage,
+      voiceName: selectedVoice.name,
+      speechRate: PREVIEW_RATES[speed] ?? 1,
+    });
+  };
+
+  const insertVariable = (token: string) => setMessage((m) => (m ? `${m} ${token}` : token));
 
   const canvasWidth = previewMode === 'desktop' ? 600 : 390;
 
@@ -174,6 +206,22 @@ export default function EmailBuilder({
       message,
       category,
       language,
+      // Voice templates persist their TTS selection so delivery speaks the
+      // authored voice (mirrored by resolveMessageContent in workers).
+      ...(isVoice && selectedVoice
+        ? {
+            builderDoc: {
+              voice: {
+                label: selectedVoice.label,
+                name: selectedVoice.name,
+                gender: selectedVoice.gender,
+                sayLanguage: selectedVoice.sayLanguage,
+              },
+              speed,
+              speechRate: PREVIEW_RATES[speed] ?? 1,
+            },
+          }
+        : {}),
     });
   };
   const { status, markDirty, flush } = useAutosave(persist);
@@ -184,7 +232,7 @@ export default function EmailBuilder({
       return;
     }
     markDirty();
-  }, [message, templateName, category, language, markDirty]);
+  }, [message, templateName, category, language, voice, speed, markDirty]);
   const handleSaveDraft = async () => {
     const ok = await flush();
     show(ok ? `“${templateName.trim() || 'Untitled template'}” saved` : 'Could not save.');
@@ -205,9 +253,7 @@ export default function EmailBuilder({
       languageOptions={kind === 'template' ? TEMPLATE_LANGUAGE_OPTIONS : undefined}
       getLanguageFlagSrc={kind === 'template' ? templateLanguageFlagSrc : undefined}
       onLanguageChange={
-        kind === 'template'
-          ? (v) => setLanguage(normalizeTemplateLanguageCode(v))
-          : undefined
+        kind === 'template' ? (v) => setLanguage(normalizeTemplateLanguageCode(v)) : undefined
       }
       onBack={onClose}
       onSendTest={handleSendTest}
@@ -251,7 +297,9 @@ export default function EmailBuilder({
               >
                 Content
               </div>
-              <div style={{ paddingBottom: 9, fontSize: 13, fontWeight: 500, color: 'var(--muted)' }}>
+              <div
+                style={{ paddingBottom: 9, fontSize: 13, fontWeight: 500, color: 'var(--muted)' }}
+              >
                 Blocks
               </div>
             </div>
@@ -339,8 +387,17 @@ export default function EmailBuilder({
                 transition: 'width .2s',
               }}
             >
-              <div style={{ background: '#c9b79c', padding: '30px 28px', textAlign: 'center', color: '#3f2f1c' }}>
-                <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '1px' }}>MEET THE TEACHER!</div>
+              <div
+                style={{
+                  background: '#c9b79c',
+                  padding: '30px 28px',
+                  textAlign: 'center',
+                  color: '#3f2f1c',
+                }}
+              >
+                <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '1px' }}>
+                  MEET THE TEACHER!
+                </div>
                 <div style={{ fontSize: 12, marginTop: 6 }}>
                   Introducing Our Dedicated Educator: El Gwero
                 </div>
@@ -372,7 +429,9 @@ export default function EmailBuilder({
                   Image Placeholder
                 </div>
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.25, color: '#1f1e1b' }}>
+                  <div
+                    style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.25, color: '#1f1e1b' }}
+                  >
                     Breaking Barriers Building Minds
                   </div>
                   <div style={{ fontSize: 11.5, color: '#6b675e', lineHeight: 1.5, marginTop: 8 }}>
@@ -556,7 +615,14 @@ export default function EmailBuilder({
           </aside>
 
           {/* Editor card */}
-          <div style={{ overflowY: 'auto', padding: '32px 40px', display: 'flex', justifyContent: 'center' }}>
+          <div
+            style={{
+              overflowY: 'auto',
+              padding: '32px 40px',
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
             <div
               style={{
                 width: '100%',
@@ -620,8 +686,12 @@ export default function EmailBuilder({
               </div>
 
               {channel === 'whatsapp' ? (
-                <div style={{ marginTop: 22, paddingTop: 20, borderTop: '1px solid var(--divider)' }}>
-                  <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, marginBottom: 11 }}>
+                <div
+                  style={{ marginTop: 22, paddingTop: 20, borderTop: '1px solid var(--divider)' }}
+                >
+                  <label
+                    style={{ display: 'block', fontSize: 12.5, fontWeight: 600, marginBottom: 11 }}
+                  >
                     Quick reply buttons
                   </label>
                   {quickReplies.map((q, i) => (
@@ -663,67 +733,144 @@ export default function EmailBuilder({
               ) : null}
 
               {channel === 'voice' ? (
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 14,
-                    marginTop: 22,
-                    paddingTop: 20,
-                    borderTop: '1px solid var(--divider)',
-                  }}
-                >
-                  <div>
-                    <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, marginBottom: 9 }}>
-                      Voice
-                    </label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                      {voiceOptions.map((vo) => {
-                        const on = voice === vo;
-                        return (
-                          <button
-                            key={vo}
-                            type="button"
-                            className={styles.opt}
-                            onClick={() => setVoice(vo)}
-                            style={{
-                              border: `1.5px solid ${on ? meta.color : 'var(--border2)'}`,
-                              background: on ? meta.tint : 'transparent',
-                              color: on ? meta.color : 'var(--text3)',
-                            }}
-                          >
-                            {vo}
-                          </button>
-                        );
-                      })}
+                <>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: 14,
+                      marginTop: 22,
+                      paddingTop: 20,
+                      borderTop: '1px solid var(--divider)',
+                    }}
+                  >
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                          marginBottom: 9,
+                        }}
+                      >
+                        Voice
+                      </label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                        {voiceOptions.map((vo) => {
+                          const on = voice === vo.label;
+                          return (
+                            <button
+                              key={vo.label}
+                              type="button"
+                              className={styles.opt}
+                              onClick={() => setVoice(vo.label)}
+                              style={{
+                                border: `1.5px solid ${on ? meta.color : 'var(--border2)'}`,
+                                background: on ? meta.tint : 'transparent',
+                                color: on ? meta.color : 'var(--text3)',
+                              }}
+                            >
+                              {vo.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                          marginBottom: 9,
+                        }}
+                      >
+                        Speaking speed
+                      </label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                        {SPEED_OPTS.map((sp) => {
+                          const on = speed === sp;
+                          return (
+                            <button
+                              key={sp}
+                              type="button"
+                              className={styles.opt}
+                              onClick={() => setSpeed(sp)}
+                              style={{
+                                border: `1.5px solid ${on ? meta.color : 'var(--border2)'}`,
+                                background: on ? meta.tint : 'transparent',
+                                color: on ? meta.color : 'var(--text3)',
+                              }}
+                            >
+                              {sp}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, marginBottom: 9 }}>
-                      Speaking speed
-                    </label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                      {SPEED_OPTS.map((sp) => {
-                        const on = speed === sp;
-                        return (
-                          <button
-                            key={sp}
-                            type="button"
-                            className={styles.opt}
-                            onClick={() => setSpeed(sp)}
-                            style={{
-                              border: `1.5px solid ${on ? meta.color : 'var(--border2)'}`,
-                              background: on ? meta.tint : 'transparent',
-                              color: on ? meta.color : 'var(--text3)',
-                            }}
-                          >
-                            {sp}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
+                  <button
+                    type="button"
+                    onClick={togglePreviewPlayback}
+                    aria-pressed={preview.state === 'playing'}
+                    style={{
+                      marginTop: 14,
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      padding: '9px 12px',
+                      borderRadius: 10,
+                      border: `1.5px solid ${meta.color}`,
+                      background: preview.state === 'idle' ? meta.tint : meta.color,
+                      color: preview.state === 'idle' ? meta.color : '#fff',
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      opacity: preview.state === 'connecting' ? 0.75 : 1,
+                      transition: 'background-color 150ms ease, color 150ms ease',
+                    }}
+                  >
+                    {preview.state === 'idle' ? (
+                      <svg
+                        width="11"
+                        height="11"
+                        viewBox="0 0 12 12"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M2.5 1.2v9.6L11 6z" />
+                      </svg>
+                    ) : (
+                      <svg
+                        width="11"
+                        height="11"
+                        viewBox="0 0 12 12"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <rect x="1" y="1" width="10" height="10" rx="2" />
+                      </svg>
+                    )}
+                    {preview.state === 'idle'
+                      ? 'Play preview'
+                      : preview.state === 'connecting'
+                        ? 'Connecting…'
+                        : 'Stop preview'}
+                  </button>
+                  <p
+                    style={{
+                      margin: '7px 0 0',
+                      fontSize: 11,
+                      color: preview.error ? 'var(--danger)' : 'var(--muted)',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {preview.error ??
+                      `Plays the real Infobip voice (${voice}) over a silent WebRTC call.`}
+                  </p>
+                </>
               ) : null}
             </div>
           </div>
@@ -739,9 +886,7 @@ export default function EmailBuilder({
               }}
             >
               <span style={{ fontWeight: 600, fontSize: 13.5 }}>Live preview</span>
-              <span
-                style={{ width: 7, height: 7, borderRadius: '50%', background: meta.color }}
-              />
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: meta.color }} />
             </div>
             <div
               style={{
@@ -845,9 +990,26 @@ export default function EmailBuilder({
                       >
                         {msgPreview}
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 20 }}>
-                        <div className={styles.callbtn} style={{ background: 'rgba(255,255,255,.12)' }}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          gap: 20,
+                        }}
+                      >
+                        <div
+                          className={styles.callbtn}
+                          style={{ background: 'rgba(255,255,255,.12)' }}
+                        >
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#fff"
+                            strokeWidth={2}
+                          >
                             <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0" />
                             <path d="M19 11a7 7 0 0 1-14 0M12 18v3" />
                             <line x1="3" y1="3" x2="21" y2="21" />
@@ -855,13 +1017,21 @@ export default function EmailBuilder({
                         </div>
                         <div
                           className={styles.callbtn}
-                          style={{ width: 54, height: 54, background: '#e11d48', transform: 'rotate(135deg)' }}
+                          style={{
+                            width: 54,
+                            height: 54,
+                            background: '#e11d48',
+                            transform: 'rotate(135deg)',
+                          }}
                         >
                           <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff">
                             <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1z" />
                           </svg>
                         </div>
-                        <div className={styles.callbtn} style={{ background: 'rgba(255,255,255,.12)' }}>
+                        <div
+                          className={styles.callbtn}
+                          style={{ background: 'rgba(255,255,255,.12)' }}
+                        >
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                             <circle cx="6" cy="6" r="1.6" />
                             <circle cx="12" cy="6" r="1.6" />
@@ -881,7 +1051,14 @@ export default function EmailBuilder({
 
                 {/* SMS — iMessage-style grey bubble */}
                 {channel === 'sms' ? (
-                  <div style={{ flex: 1, background: '#e9eaec', display: 'flex', flexDirection: 'column' }}>
+                  <div
+                    style={{
+                      flex: 1,
+                      background: '#e9eaec',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
                     <div
                       style={{
                         padding: '10px 14px 9px',
@@ -907,7 +1084,9 @@ export default function EmailBuilder({
                       >
                         M
                       </div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: '#0b0b0f' }}>Maildrill</div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: '#0b0b0f' }}>
+                        Maildrill
+                      </div>
                     </div>
                     <div
                       style={{
@@ -934,7 +1113,14 @@ export default function EmailBuilder({
                       >
                         {msgPreview}
                       </div>
-                      <div style={{ alignSelf: 'flex-start', fontSize: 9, color: '#9a9a9e', margin: '2px 6px 0' }}>
+                      <div
+                        style={{
+                          alignSelf: 'flex-start',
+                          fontSize: 9,
+                          color: '#9a9a9e',
+                          margin: '2px 6px 0',
+                        }}
+                      >
                         Delivered
                       </div>
                     </div>
@@ -963,7 +1149,14 @@ export default function EmailBuilder({
                         gap: 9,
                       }}
                     >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.4}>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#fff"
+                        strokeWidth={2.4}
+                      >
                         <path d="M15 6l-6 6 6 6" />
                       </svg>
                       <div
@@ -1024,7 +1217,14 @@ export default function EmailBuilder({
                           }}
                         >
                           9:41
-                          <svg width="13" height="9" viewBox="0 0 16 11" fill="none" stroke="#53bdeb" strokeWidth={1.6}>
+                          <svg
+                            width="13"
+                            height="9"
+                            viewBox="0 0 16 11"
+                            fill="none"
+                            stroke="#53bdeb"
+                            strokeWidth={1.6}
+                          >
                             <path d="M1 6l3.5 3.5L11 2" />
                             <path d="M6 6l3.5 3.5L16 2" />
                           </svg>
@@ -1056,7 +1256,6 @@ export default function EmailBuilder({
           </aside>
         </div>
       )}
-
     </ChannelEditorShell>
   );
 }

@@ -9,6 +9,11 @@ export type Props = {
   initialLanguage?: string | null;
   /** Saved body when reopening an existing template, so edits replace it. */
   initialMessage?: string;
+  /**
+   * Saved builderDoc when reopening. Voice templates keep their TTS selection
+   * here: `{ voice: { label, name, gender, sayLanguage }, speed, speechRate }`.
+   */
+  initialBuilderDoc?: Record<string, unknown> | null;
   onClose: () => void;
   onSave: (payload: {
     channel: ChannelType;
@@ -16,6 +21,8 @@ export type Props = {
     message: string;
     category: string;
     language: string;
+    /** Present for voice templates: the persisted TTS selection. */
+    builderDoc?: Record<string, unknown>;
   }) => void | Promise<void>;
 };
 

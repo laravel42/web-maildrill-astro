@@ -170,7 +170,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
     category?: string;
     /** Saved body for the SMS/Voice composer when reopening. */
     message?: string;
-    /** WhatsApp studio round-trip fields. */
+    /** WhatsApp studio / voice composer round-trip fields (raw builderDoc). */
     language?: string | null;
     waComponents?: Record<string, unknown> | null;
     waDoc?: Record<string, unknown> | null;
@@ -1012,9 +1012,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                   setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
                   // Switch to update mode so subsequent saves patch this template
                   // instead of creating duplicates.
-                  setBuilder((prev) =>
-                    prev ? { ...prev, id: created.id, language } : prev,
-                  );
+                  setBuilder((prev) => (prev ? { ...prev, id: created.id, language } : prev));
                 }
               }}
             />
@@ -1080,8 +1078,9 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           initialCategory={builder.category}
           initialLanguage={builder.language}
           initialMessage={builder.message}
+          initialBuilderDoc={builder.waDoc ?? null}
           onClose={() => setBuilder(null)}
-          onSave={async ({ channel, name, message, category, language }) => {
+          onSave={async ({ channel, name, message, category, language, builderDoc }) => {
             const ed = builder;
             if (!ed || !live) return;
             const body = {
@@ -1090,6 +1089,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               text: message || null,
               category,
               language,
+              ...(builderDoc !== undefined ? { builderDoc } : {}),
             };
             if (ed.id) {
               const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);

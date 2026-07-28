@@ -1,26 +1,27 @@
-import { and, eq, inArray } from "drizzle-orm";
-import { campaigns, db, type Campaign } from "@maildrill/database";
-import { ConflictError, NotFoundError, type Channel } from "@maildrill/domain";
-import { submitMessage } from "@maildrill/services";
-import { createLogger } from "@maildrill/observability";
-import { addressForChannel, resolveAudience, type AudienceSelector } from "./audience";
-import { getTemplate, renderTemplate, resolveTemplatePlaceholders } from "./templates";
+import { and, eq, inArray } from 'drizzle-orm';
+import { campaigns, db, type Campaign } from '@maildrill/database';
+import { ConflictError, NotFoundError, type Channel } from '@maildrill/domain';
+import { submitMessage } from '@maildrill/services';
+import { createLogger } from '@maildrill/observability';
+import { addressForChannel, resolveAudience, type AudienceSelector } from './audience';
+import { getTemplate, renderTemplate, resolveTemplatePlaceholders } from './templates';
 
-const log = createLogger({ component: "campaigns" });
+const log = createLogger({ component: 'campaigns' });
 const MAX_AUDIENCE = 5000;
 
 /** Provider-facing body fields; strips UI metadata stored alongside (e.g. audienceIds). */
 const MESSAGE_CONTENT_KEYS = [
-  "subject",
-  "html",
-  "text",
-  "from",
-  "preheader",
+  'subject',
+  'html',
+  'text',
+  'from',
+  'preheader',
   // Voice TTS language / voice selection (ignored by email/SMS builders).
-  "language",
-  "voiceName",
-  "voiceGender",
-  "audioFileUrl",
+  'language',
+  'voiceName',
+  'voiceGender',
+  'speechRate',
+  'audioFileUrl',
 ] as const;
 
 function messageContentOverrides(
@@ -30,7 +31,7 @@ function messageContentOverrides(
   const out: Record<string, unknown> = {};
   for (const key of MESSAGE_CONTENT_KEYS) {
     const v = raw[key];
-    if (v !== undefined && v !== null && v !== "") out[key] = v;
+    if (v !== undefined && v !== null && v !== '') out[key] = v;
   }
   return out;
 }
@@ -46,18 +47,18 @@ function resolveMessageContent(
 
   // Approved WhatsApp templates send via the template endpoint: pass the template
   // name/language plus the ordered placeholder values resolved per recipient.
-  if (channel === "whatsapp" && template.approvalStatus === "approved") {
+  if (channel === 'whatsapp' && template.approvalStatus === 'approved') {
     // Infobip/Meta template names are lowercase; DB may still hold a display name.
     const templateName = template.name
       .trim()
       .toLowerCase()
-      .replace(/[\s-]+/g, "_")
-      .replace(/[^a-z0-9_]/g, "")
-      .replace(/_+/g, "_")
-      .replace(/^_|_$/g, "");
+      .replace(/[\s-]+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
     return {
       templateName,
-      templateLanguage: template.language ?? "en",
+      templateLanguage: template.language ?? 'en',
       placeholders: resolveTemplatePlaceholders(template, sub),
       ...campaign,
     };
@@ -69,6 +70,19 @@ function resolveMessageContent(
   if (rendered.html) body.html = rendered.html;
   if (rendered.text) body.text = rendered.text;
   if (rendered.preheader) body.preheader = rendered.preheader;
+
+  // Voice templates persist their TTS selection in builderDoc
+  // ({ voice: { name, gender, sayLanguage }, speechRate }) — surface it as
+  // provider content so delivery speaks the authored voice. Campaign-level
+  // overrides still win via the spread below.
+  if (channel === 'voice' && template.builderDoc) {
+    const doc = template.builderDoc as Record<string, unknown>;
+    const voice = (doc.voice ?? {}) as Record<string, unknown>;
+    if (typeof voice.sayLanguage === 'string') body.language = voice.sayLanguage;
+    if (typeof voice.name === 'string') body.voiceName = voice.name;
+    if (typeof voice.gender === 'string') body.voiceGender = voice.gender;
+    if (typeof doc.speechRate === 'number') body.speechRate = doc.speechRate;
+  }
   return { ...body, ...campaign };
 }
 
@@ -77,7 +91,7 @@ function resolveMessageContent(
  * design: claiming the row is what makes a double-click (or a retried request)
  * unable to send the same campaign twice.
  */
-const SENDABLE_STATUSES = ["draft", "scheduled", "paused"] as const;
+const SENDABLE_STATUSES = ['draft', 'scheduled', 'paused'] as const;
 
 export interface SendCampaignInput {
   tenantId: string;
@@ -115,7 +129,7 @@ async function claimForSending(
 ): Promise<Campaign> {
   const claimed = await db
     .update(campaigns)
-    .set({ status: "sending", startedAt, updatedAt: new Date() })
+    .set({ status: 'sending', startedAt, updatedAt: new Date() })
     .where(
       and(
         eq(campaigns.id, campaignId),
@@ -133,7 +147,7 @@ async function claimForSending(
     .from(campaigns)
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.tenantId, tenantId)))
     .limit(1);
-  if (!existing[0]) throw new NotFoundError("campaign not found");
+  if (!existing[0]) throw new NotFoundError('campaign not found');
   throw new ConflictError(`campaign is already ${existing[0].status}`);
 }
 
@@ -150,22 +164,18 @@ async function claimForSending(
  * campaigns should fan out via a batched scheduler job — see the messaging
  * scheduler for the pattern.
  */
-export async function sendCampaign(
-  input: SendCampaignInput,
-): Promise<SendCampaignResult> {
+export async function sendCampaign(input: SendCampaignInput): Promise<SendCampaignResult> {
   const scheduled = input.scheduledAt != null && input.scheduledAt.getTime() > Date.now();
   const now = new Date();
 
-  const template = input.templateId
-    ? await getTemplate(input.tenantId, input.templateId)
-    : null;
+  const template = input.templateId ? await getTemplate(input.tenantId, input.templateId) : null;
 
   // WhatsApp marketing broadcasts must send through a Meta-approved template.
   // Gate before claiming so a rejected send leaves the draft untouched (not
   // stranded in "sending").
-  if (input.channel === "whatsapp" && template && template.approvalStatus !== "approved") {
+  if (input.channel === 'whatsapp' && template && template.approvalStatus !== 'approved') {
     throw new ConflictError(
-      "WhatsApp template must be approved by Meta before this campaign can send",
+      'WhatsApp template must be approved by Meta before this campaign can send',
     );
   }
 
@@ -178,8 +188,8 @@ export async function sendCampaign(
           .insert(campaigns)
           .values({
             tenantId: input.tenantId,
-            name: input.name ?? "campaign",
-            status: scheduled ? "scheduled" : "sending",
+            name: input.name ?? 'campaign',
+            status: scheduled ? 'scheduled' : 'sending',
             channel: input.channel,
             listId: input.selector.listId ?? null,
             segmentId: input.selector.segmentId ?? null,
@@ -218,23 +228,23 @@ export async function sendCampaign(
   if (scheduled) {
     await db
       .update(campaigns)
-      .set({ status: "scheduled", completedAt: null, updatedAt: new Date() })
+      .set({ status: 'scheduled', completedAt: null, updatedAt: new Date() })
       .where(eq(campaigns.id, camp.id));
   } else if (queued === 0) {
     await db
       .update(campaigns)
-      .set({ status: "sent", completedAt: new Date(), updatedAt: new Date() })
+      .set({ status: 'sent', completedAt: new Date(), updatedAt: new Date() })
       .where(eq(campaigns.id, camp.id));
   } else {
     await db
       .update(campaigns)
-      .set({ status: "sending", updatedAt: new Date() })
+      .set({ status: 'sending', updatedAt: new Date() })
       .where(eq(campaigns.id, camp.id));
   }
 
   log.info(
     { campaignId: camp.id, channel: input.channel, audience: resolved.length, queued },
-    "campaign submitted",
+    'campaign submitted',
   );
   return { campaignId: camp.id, audience: resolved.length, queued, truncated };
 }
@@ -258,11 +268,11 @@ export async function sendCampaignDraft(
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.tenantId, tenantId)))
     .limit(1);
   const draft = rows[0];
-  if (!draft) throw new NotFoundError("campaign not found");
+  if (!draft) throw new NotFoundError('campaign not found');
 
   const content = draft.content as Record<string, unknown>;
   if (!draft.templateId && Object.keys(content).length === 0) {
-    throw new ConflictError("campaign has no template or content to send");
+    throw new ConflictError('campaign has no template or content to send');
   }
 
   return sendCampaign({

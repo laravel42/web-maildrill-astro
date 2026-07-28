@@ -4,11 +4,11 @@ import {
   isRetryable,
   type Channel,
   type ProviderOutcome,
-} from "@maildrill/domain";
-import { config } from "@maildrill/config";
-import https from "node:https";
-import { URL } from "node:url";
-import { emitProviderHttp, redactHeaders } from "./http-observer";
+} from '@maildrill/domain';
+import { config } from '@maildrill/config';
+import https from 'node:https';
+import { URL } from 'node:url';
+import { emitProviderHttp, redactHeaders } from './http-observer';
 import {
   asRecord,
   str,
@@ -24,7 +24,7 @@ import {
   type RemoteTemplate,
   type TemplateApprovalStatus,
   type TemplateStatusEvent,
-} from "./core";
+} from './core';
 
 /** Overall abort for Infobip calls. Template create can wait on Meta sync. */
 const REQUEST_TIMEOUT_MS = 60_000;
@@ -45,7 +45,7 @@ function formatFetchError(err: unknown): string {
   let cur: unknown = err;
   for (let i = 0; i < 4 && cur; i++) {
     if (cur instanceof Error) {
-      const bit = cur.name && cur.name !== "Error" ? `${cur.name}: ${cur.message}` : cur.message;
+      const bit = cur.name && cur.name !== 'Error' ? `${cur.name}: ${cur.message}` : cur.message;
       if (bit && !parts.includes(bit)) parts.push(bit);
       cur = cur.cause;
     } else {
@@ -54,7 +54,7 @@ function formatFetchError(err: unknown): string {
       break;
     }
   }
-  return parts.join(" — ") || "network error";
+  return parts.join(' — ') || 'network error';
 }
 
 /**
@@ -65,15 +65,15 @@ function normalizeWhatsAppTemplateName(raw: string): string {
   return raw
     .trim()
     .toLowerCase()
-    .replace(/[\s-]+/g, "_")
-    .replace(/[^a-z0-9_]/g, "")
-    .replace(/_+/g, "_")
-    .replace(/^_|_$/g, "");
+    .replace(/[\s-]+/g, '_')
+    .replace(/[^a-z0-9_]/g, '')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
 }
 
 /** Infobip phone APIs expect E.164 digits without a leading +. */
 function e164Digits(value: string): string {
-  return value.replace(/\D/g, "");
+  return value.replace(/\D/g, '');
 }
 
 function phoneSender(contentFrom: unknown, configured: string): string {
@@ -85,26 +85,26 @@ function phoneSender(contentFrom: unknown, configured: string): string {
 /** Map an Infobip WhatsApp template status to our approval enum. */
 function mapTemplateStatus(raw: unknown): TemplateApprovalStatus {
   switch (str(raw)?.toUpperCase()) {
-    case "APPROVED":
-    case "REINSTATED":
-      return "approved";
-    case "REJECTED":
-      return "rejected";
-    case "FLAGGED":
-    case "FIRST_PAUSED":
-    case "SECOND_PAUSED":
-      return "paused";
-    case "DISABLED":
-    case "DELETED":
-    case "PENDING_DELETION":
-      return "disabled";
+    case 'APPROVED':
+    case 'REINSTATED':
+      return 'approved';
+    case 'REJECTED':
+      return 'rejected';
+    case 'FLAGGED':
+    case 'FIRST_PAUSED':
+    case 'SECOND_PAUSED':
+      return 'paused';
+    case 'DISABLED':
+    case 'DELETED':
+    case 'PENDING_DELETION':
+      return 'disabled';
     // PENDING / IN_APPEAL / unknown → still awaiting a terminal decision.
     default:
-      return "pending";
+      return 'pending';
   }
 }
 
-import { outcomeFromInfobipStatusGroup } from "@maildrill/domain";
+import { outcomeFromInfobipStatusGroup } from '@maildrill/domain';
 
 /** Map an Infobip delivery status groupName to our provider outcome. */
 function mapInfobipGroup(groupName: string | undefined): ProviderOutcome {
@@ -210,7 +210,7 @@ type InfobipWhatsAppTemplateBody = {
 
 /** Text-to-speech voice selection for `POST /tts/3/single`. */
 type InfobipVoiceConfig = {
-  gender: "male" | "female";
+  gender: 'male' | 'female';
   name: string;
 };
 
@@ -230,6 +230,8 @@ type InfobipVoiceMessage = {
   text?: string;
   language?: string;
   voice?: InfobipVoiceConfig;
+  /** TTS reproduction speed, `[0.5 – 2]`; omitted → Infobip default `1`. */
+  speechRate?: number;
 } & InfobipNotifyFields &
   InfobipPlatformFields;
 
@@ -259,7 +261,7 @@ type InfobipSendBody =
  * and SMS return FORBIDDEN "forbidden application id and/or entity id".
  */
 export class InfobipProvider implements MessagingProvider {
-  readonly name = "infobip";
+  readonly name = 'infobip';
   private readonly base = config.infobip.baseUrl;
   private readonly key = config.infobip.apiKey;
 
@@ -309,37 +311,37 @@ export class InfobipProvider implements MessagingProvider {
 
   async send(input: SendInput): Promise<ProviderSendResult> {
     switch (input.channel) {
-      case "email":
-        return this.post("/email/4/messages", this.buildEmailV4(input));
-      case "sms":
-        return this.post("/sms/2/text/advanced", this.buildSms(input));
-      case "whatsapp": {
+      case 'email':
+        return this.post('/email/4/messages', this.buildEmailV4(input));
+      case 'sms':
+        return this.post('/sms/2/text/advanced', this.buildSms(input));
+      case 'whatsapp': {
         const from = phoneSender(input.content.from, config.infobip.whatsappFrom);
-        const missing = this.requirePhoneSender("whatsapp", from);
+        const missing = this.requirePhoneSender('whatsapp', from);
         if (missing) return missing;
         // A referenced approved template sends via the template endpoint; free
         // text (session messages) via the plain text endpoint.
-        const templateName = normalizeWhatsAppTemplateName(str(input.content.templateName) ?? "");
+        const templateName = normalizeWhatsAppTemplateName(str(input.content.templateName) ?? '');
         if (templateName) {
           return this.post(
-            "/whatsapp/1/message/template",
+            '/whatsapp/1/message/template',
             this.buildWhatsAppTemplate(input, from, templateName),
           );
         }
         const body = this.buildWhatsApp(input);
         if (!body.content.text) {
-          return this.validationError("whatsapp: message text is required");
+          return this.validationError('whatsapp: message text is required');
         }
-        return this.post("/whatsapp/1/message/text", body);
+        return this.post('/whatsapp/1/message/text', body);
       }
-      case "voice": {
+      case 'voice': {
         const message = this.buildVoice(input);
-        const missing = this.requirePhoneSender("voice", message.from);
+        const missing = this.requirePhoneSender('voice', message.from);
         if (missing) return missing;
         if (!message.text && !message.audioFileUrl) {
-          return this.validationError("voice: text or audioFileUrl is required");
+          return this.validationError('voice: text or audioFileUrl is required');
         }
-        return this.post("/tts/3/advanced", {
+        return this.post('/tts/3/advanced', {
           bulkId: input.correlationId,
           messages: [message],
         });
@@ -350,16 +352,16 @@ export class InfobipProvider implements MessagingProvider {
   private headers(): Record<string, string> {
     return {
       Authorization: `App ${this.key}`,
-      "Content-Type": "application/json",
-      Accept: "application/json",
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
     };
   }
 
   private validationError(message: string): ProviderSendResult {
     return {
       accepted: false,
-      status: "rejected",
-      error: { category: "validation", message, retryable: false },
+      status: 'rejected',
+      error: { category: 'validation', message, retryable: false },
     };
   }
 
@@ -372,13 +374,13 @@ export class InfobipProvider implements MessagingProvider {
 
   private buildEmailV4(input: SendInput): InfobipEmailBody {
     const c = input.content;
-    const content: InfobipEmailContent = { subject: str(c.subject) ?? "" };
+    const content: InfobipEmailContent = { subject: str(c.subject) ?? '' };
     const html = str(c.html);
     const text = str(c.text);
     if (html) content.html = html;
-    if (text || !html) content.text = text ?? "";
+    if (text || !html) content.text = text ?? '';
     const webhooks: InfobipEmailWebhooks = {
-      contentType: "application/json",
+      contentType: 'application/json',
       callbackData: this.callbackData(input),
     };
     // Empty notifyUrl → omit delivery so portal subscription settings apply.
@@ -399,13 +401,13 @@ export class InfobipProvider implements MessagingProvider {
 
   private buildSms(input: SendInput): InfobipSmsBody {
     const c = input.content;
-    const from = str(c.from) ?? (config.infobip.smsFrom || "Maildrill");
+    const from = str(c.from) ?? (config.infobip.smsFrom || 'Maildrill');
     return {
       messages: [
         {
           from,
           destinations: [{ to: e164Digits(input.to) }],
-          text: str(c.text) ?? "",
+          text: str(c.text) ?? '',
           callbackData: this.callbackData(input),
           ...this.notifyFields(),
           ...this.platformFields(),
@@ -417,7 +419,7 @@ export class InfobipProvider implements MessagingProvider {
 
   private buildWhatsApp(input: SendInput): InfobipWhatsAppTextBody {
     const c = input.content;
-    const content: InfobipWhatsAppTextContent = { text: str(c.text) ?? "" };
+    const content: InfobipWhatsAppTextContent = { text: str(c.text) ?? '' };
     if (c.previewUrl === true) content.previewUrl = true;
     return {
       from: phoneSender(c.from, config.infobip.whatsappFrom),
@@ -446,12 +448,14 @@ export class InfobipProvider implements MessagingProvider {
     }
     const gender = str(c.voiceGender)?.toLowerCase();
     const name = str(c.voiceName);
-    message.text = str(c.text) ?? "";
-    message.language = str(c.language) ?? "en";
+    message.text = str(c.text) ?? '';
+    message.language = str(c.language) ?? 'en';
     message.voice = {
-      gender: gender === "male" || gender === "female" ? gender : "female",
-      name: name || "Joanna",
+      gender: gender === 'male' || gender === 'female' ? gender : 'female',
+      name: name || 'Joanna',
     };
+    const rate = typeof c.speechRate === 'number' ? c.speechRate : Number(str(c.speechRate));
+    if (Number.isFinite(rate) && rate >= 0.5 && rate <= 2) message.speechRate = rate;
     return message;
   }
 
@@ -463,7 +467,7 @@ export class InfobipProvider implements MessagingProvider {
   ): InfobipWhatsAppTemplateBody {
     const c = input.content;
     const placeholders = Array.isArray(c.placeholders)
-      ? c.placeholders.map((p) => str(p) ?? String(p ?? ""))
+      ? c.placeholders.map((p) => str(p) ?? String(p ?? ''))
       : [];
     return {
       messages: [
@@ -477,7 +481,7 @@ export class InfobipProvider implements MessagingProvider {
             templateName,
             templateData: { body: { placeholders } },
             // Must match the language code used when the template was registered.
-            language: str(c.templateLanguage) ?? "en",
+            language: str(c.templateLanguage) ?? 'en',
           },
           ...this.platformFields(),
         },
@@ -495,7 +499,7 @@ export class InfobipProvider implements MessagingProvider {
     path: string,
     body: string | undefined,
   ): Promise<{ res: Response; text: string }> {
-    const url = new URL(path, this.base.endsWith("/") ? this.base : `${this.base}/`);
+    const url = new URL(path, this.base.endsWith('/') ? this.base : `${this.base}/`);
     const headers = this.headers();
     const start = Date.now();
 
@@ -514,7 +518,7 @@ export class InfobipProvider implements MessagingProvider {
             method,
             headers: {
               ...headers,
-              ...(body ? { "Content-Length": Buffer.byteLength(body) } : {}),
+              ...(body ? { 'Content-Length': Buffer.byteLength(body) } : {}),
             },
             // Prefer IPv4 — dual-stack connect hangs are a common Infobip timeout cause.
             family: 4,
@@ -522,34 +526,37 @@ export class InfobipProvider implements MessagingProvider {
           },
           (res) => {
             const chunks: Buffer[] = [];
-            res.on("data", (c) => chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)));
-            res.on("end", () => {
+            res.on('data', (c) => chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)));
+            res.on('end', () => {
               const rawHeaders: Record<string, string> = {};
               for (const [k, v] of Object.entries(res.headers)) {
                 if (v == null) continue;
-                rawHeaders[k] = Array.isArray(v) ? v.join(", ") : String(v);
+                rawHeaders[k] = Array.isArray(v) ? v.join(', ') : String(v);
               }
               resolve({
                 statusCode: res.statusCode ?? 0,
                 responseHeaders: rawHeaders,
-                text: Buffer.concat(chunks).toString("utf8"),
+                text: Buffer.concat(chunks).toString('utf8'),
               });
             });
-            res.on("error", reject);
+            res.on('error', reject);
           },
         );
         req.setTimeout(REQUEST_TIMEOUT_MS, () => {
           req.destroy(new Error(`Infobip request timed out after ${REQUEST_TIMEOUT_MS}ms`));
         });
-        req.on("timeout", () => {
+        req.on('timeout', () => {
           req.destroy(
-            Object.assign(new Error(`ConnectTimeoutError: connect timed out after ${CONNECT_TIMEOUT_MS}ms`), {
-              name: "ConnectTimeoutError",
-              code: "UND_ERR_CONNECT_TIMEOUT",
-            }),
+            Object.assign(
+              new Error(`ConnectTimeoutError: connect timed out after ${CONNECT_TIMEOUT_MS}ms`),
+              {
+                name: 'ConnectTimeoutError',
+                code: 'UND_ERR_CONNECT_TIMEOUT',
+              },
+            ),
           );
         });
-        req.on("error", reject);
+        req.on('error', reject);
         if (body) req.write(body);
         req.end();
       });
@@ -608,17 +615,15 @@ export class InfobipProvider implements MessagingProvider {
     return { ok: res.ok, status: res.status, json: text ? safeJson(text) : {} };
   }
 
-  async registerWhatsAppTemplate(
-    input: RegisterTemplateInput,
-  ): Promise<RegisterTemplateResult> {
+  async registerWhatsAppTemplate(input: RegisterTemplateInput): Promise<RegisterTemplateResult> {
     const name = normalizeWhatsAppTemplateName(input.name);
     if (!name) {
       return {
         ok: false,
         error: {
-          category: "validation",
+          category: 'validation',
           message:
-            "WhatsApp template name must contain lowercase letters, numbers, or underscores (e.g. wa1)",
+            'WhatsApp template name must contain lowercase letters, numbers, or underscores (e.g. wa1)',
           retryable: false,
         },
       };
@@ -647,7 +652,7 @@ export class InfobipProvider implements MessagingProvider {
       let lastErr: unknown;
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          const res = await this.rawRequest("POST", path, body);
+          const res = await this.rawRequest('POST', path, body);
           if (!res.ok) return { ok: false, error: this.httpError(res.status, res.json) };
           return {
             ok: true,
@@ -668,7 +673,7 @@ export class InfobipProvider implements MessagingProvider {
   async listWhatsAppTemplates(sender: string): Promise<ListTemplatesResult> {
     try {
       const res = await this.rawRequest(
-        "GET",
+        'GET',
         `/whatsapp/2/senders/${encodeURIComponent(sender)}/templates`,
       );
       if (!res.ok) return { ok: false, templates: [], error: this.httpError(res.status, res.json) };
@@ -677,9 +682,9 @@ export class InfobipProvider implements MessagingProvider {
         .map((row): RemoteTemplate => {
           const r = asRecord(row);
           return {
-            id: str(r.id) ?? "",
-            name: str(r.name) ?? "",
-            language: str(r.language) ?? "",
+            id: str(r.id) ?? '',
+            name: str(r.name) ?? '',
+            language: str(r.language) ?? '',
             status: mapTemplateStatus(r.status),
             category: str(r.category),
           };
@@ -694,8 +699,7 @@ export class InfobipProvider implements MessagingProvider {
   normalizeTemplateWebhook(input: ProviderWebhookInput): TemplateStatusEvent | null {
     const body = asRecord(input.body);
     const rawId = body.messageTemplateId;
-    const providerTemplateId =
-      rawId === undefined || rawId === null ? undefined : String(rawId);
+    const providerTemplateId = rawId === undefined || rawId === null ? undefined : String(rawId);
     const change = asRecord(body.change);
     const newStatus = str(change.newStatus);
     if (!providerTemplateId || !newStatus) return null;
@@ -704,7 +708,7 @@ export class InfobipProvider implements MessagingProvider {
       providerTemplateId,
       name: str(body.messageTemplateName),
       status: mapTemplateStatus(newStatus),
-      rejectionReason: reason && reason !== "NONE" ? reason : undefined,
+      rejectionReason: reason && reason !== 'NONE' ? reason : undefined,
     };
   }
 
@@ -723,7 +727,7 @@ export class InfobipProvider implements MessagingProvider {
     let message = formatFetchError(err);
     if (/fetch failed|ConnectTimeout|HeadersTimeout|UND_ERR/i.test(message)) {
       message +=
-        " — Infobip did not complete the HTTP response in time. Retry; if it persists, check connectivity to INFOBIP_BASE_URL and that the WhatsApp sender is active on this account.";
+        ' — Infobip did not complete the HTTP response in time. Retry; if it persists, check connectivity to INFOBIP_BASE_URL and that the WhatsApp sender is active on this account.';
     }
     return {
       category,
@@ -732,23 +736,20 @@ export class InfobipProvider implements MessagingProvider {
     };
   }
 
-  private async post(
-    path: string,
-    body: InfobipSendBody,
-  ): Promise<ProviderSendResult> {
+  private async post(path: string, body: InfobipSendBody): Promise<ProviderSendResult> {
     // One quick retry on connect/network blips (BullMQ will still back off further).
     let lastErr: unknown;
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        const { res, text } = await this.fetchInfobip("POST", path, JSON.stringify(body));
+        const { res, text } = await this.fetchInfobip('POST', path, JSON.stringify(body));
         const json = text ? safeJson(text) : {};
-        const requestId = res.headers.get("x-request-id") ?? undefined;
+        const requestId = res.headers.get('x-request-id') ?? undefined;
 
         if (!res.ok) {
           const category = classifyHttpStatus(res.status);
           return {
             accepted: false,
-            status: "rejected",
+            status: 'rejected',
             providerRequestId: requestId,
             error: {
               category,
@@ -760,7 +761,7 @@ export class InfobipProvider implements MessagingProvider {
         }
         return {
           accepted: true,
-          status: "submitted",
+          status: 'submitted',
           providerMessageId: this.extractMessageId(json),
           providerRequestId: requestId,
         };
@@ -771,7 +772,7 @@ export class InfobipProvider implements MessagingProvider {
     }
     return {
       accepted: false,
-      status: "rejected",
+      status: 'rejected',
       error: this.networkError(lastErr),
     };
   }
@@ -796,25 +797,23 @@ export class InfobipProvider implements MessagingProvider {
     const validationBits = Object.entries(validation).flatMap(([field, errs]) => {
       const list = Array.isArray(errs) ? errs : [errs];
       return list
-        .map((e) => (typeof e === "string" ? e : null))
+        .map((e) => (typeof e === 'string' ? e : null))
         .filter((e): e is string => Boolean(e))
         .map((e) => `${field}: ${e}`);
     });
-    if (validationBits.length) message += ` — ${validationBits.join("; ")}`;
+    if (validationBits.length) message += ` — ${validationBits.join('; ')}`;
     // Point operators at the usual fix when CPaaS X bindings are the cause.
     if (/forbidden application id|forbidden entity id/i.test(message)) {
       message +=
-        " — set INFOBIP_APPLICATION_ID / INFOBIP_ENTITY_ID to the Application/Entity that owns this sender (portal → Developer tools → Applications and entities), or use a main (unbound) API key. Restart the server after editing .env.";
+        ' — set INFOBIP_APPLICATION_ID / INFOBIP_ENTITY_ID to the Application/Entity that owns this sender (portal → Developer tools → Applications and entities), or use a main (unbound) API key. Restart the server after editing .env.';
     } else if (/unauthorized access/i.test(message)) {
       message +=
-        " — usually a bad CPaaS X Application/Entity on the request (check INFOBIP_APPLICATION_ID / INFOBIP_ENTITY_ID — leave empty for an unbound main key), or the key is Application-linked and cannot call management APIs. Scopes alone are not enough if platform IDs are wrong.";
+        ' — usually a bad CPaaS X Application/Entity on the request (check INFOBIP_APPLICATION_ID / INFOBIP_ENTITY_ID — leave empty for an unbound main key), or the key is Application-linked and cannot call management APIs. Scopes alone are not enough if platform IDs are wrong.';
     }
     return message;
   }
 
-  async normalizeWebhook(
-    input: ProviderWebhookInput,
-  ): Promise<NormalizedProviderEvent[]> {
+  async normalizeWebhook(input: ProviderWebhookInput): Promise<NormalizedProviderEvent[]> {
     const body = asRecord(input.body);
     const results = Array.isArray(body.results) ? body.results : [];
     return results.map((entry): NormalizedProviderEvent => {
@@ -845,24 +844,24 @@ export class InfobipProvider implements MessagingProvider {
     providerMessageId: string,
   ): Promise<string | null> {
     const channelParam = messagesApiChannel(channel);
-    const q = new URLSearchParams({ messageId: providerMessageId, limit: "10" });
-    if (channelParam) q.set("channel", channelParam);
+    const q = new URLSearchParams({ messageId: providerMessageId, limit: '10' });
+    if (channelParam) q.set('channel', channelParam);
 
     // Unified reports API covers standalone WhatsApp/SMS/email sends too.
     // Voice reports are NOT in the unified API — they live at /tts/3/reports.
     const paths = [
       `/messages-api/1/reports?${q.toString()}`,
-      ...(channel === "sms"
+      ...(channel === 'sms'
         ? [`/sms/1/reports?messageId=${encodeURIComponent(providerMessageId)}`]
         : []),
-      ...(channel === "voice"
+      ...(channel === 'voice'
         ? [`/tts/3/reports?messageId=${encodeURIComponent(providerMessageId)}`]
         : []),
     ];
 
     for (const path of paths) {
       try {
-        const { res, text } = await this.fetchInfobip("GET", path, undefined);
+        const { res, text } = await this.fetchInfobip('GET', path, undefined);
         if (!res.ok) continue;
         const json = text ? safeJson(text) : {};
         const results = Array.isArray(json.results) ? json.results : [];
@@ -893,16 +892,16 @@ export class InfobipProvider implements MessagingProvider {
       limit: String(Math.min(Math.max(limit, 1), 1000)),
     });
     const channelParam = channel ? messagesApiChannel(channel) : null;
-    if (channelParam) q.set("channel", channelParam);
+    if (channelParam) q.set('channel', channelParam);
 
     // Voice reports are not in the unified Messages API — drain /tts/3/reports.
     const path =
-      channel === "voice"
+      channel === 'voice'
         ? `/tts/3/reports?limit=${Math.min(Math.max(limit, 1), 1000)}`
         : `/messages-api/1/reports?${q.toString()}`;
 
     try {
-      const { res, text } = await this.fetchInfobip("GET", path, undefined);
+      const { res, text } = await this.fetchInfobip('GET', path, undefined);
       if (!res.ok) return [];
       const json = text ? safeJson(text) : {};
       const results = Array.isArray(json.results) ? json.results : [];
@@ -924,14 +923,14 @@ export class InfobipProvider implements MessagingProvider {
 
 function messagesApiChannel(channel: Channel): string | null {
   switch (channel) {
-    case "whatsapp":
-      return "WHATSAPP";
-    case "sms":
-      return "SMS";
-    case "email":
-      return "EMAIL";
-    case "voice":
-      return "VOICE";
+    case 'whatsapp':
+      return 'WHATSAPP';
+    case 'sms':
+      return 'SMS';
+    case 'email':
+      return 'EMAIL';
+    case 'voice':
+      return 'VOICE';
     default:
       return null;
   }
