@@ -1,5 +1,5 @@
-import { and, eq, inArray } from 'drizzle-orm';
-import { campaigns, db, type Campaign } from '@maildrill/database';
+import { and, eq, inArray, sql } from 'drizzle-orm';
+import { campaigns, db, messages, subscribers, type Campaign } from '@maildrill/database';
 import { ConflictError, NotFoundError, type Channel } from '@maildrill/domain';
 import { submitMessage } from '@maildrill/services';
 import { createLogger } from '@maildrill/observability';
@@ -8,6 +8,55 @@ import { getTemplate, resolveMessageContent } from './templates';
 
 const log = createLogger({ component: 'campaigns' });
 const MAX_AUDIENCE = 5000;
+
+export interface CampaignRecipientEvent {
+  id: string;
+  recipientId: string | null;
+  /** Subscriber display name when the recipient still exists in the CRM. */
+  name: string | null;
+  /** The address the message was actually sent to (email or phone). */
+  address: string;
+  channel: Channel;
+  status: string;
+  /** Engagement beyond message status, from provider events. */
+  clicked: boolean;
+  unsubscribed: boolean;
+  /** Most meaningful moment for the row: delivered/failed/sent, else last update. */
+  at: Date | null;
+}
+
+/**
+ * Per-recipient message outcomes for a campaign report, newest first. Joined
+ * against subscribers for display names; messages survive recipient deletion
+ * (recipient_id is a soft reference), so the name may be null.
+ */
+export async function listCampaignMessages(
+  tenantId: string,
+  campaignId: string,
+  limit = 200,
+): Promise<CampaignRecipientEvent[]> {
+  const at = sql<Date | null>`coalesce(${messages.deliveredAt}, ${messages.failedAt}, ${messages.sentAt}, ${messages.updatedAt})`;
+  return db
+    .select({
+      id: messages.id,
+      recipientId: messages.recipientId,
+      name: subscribers.name,
+      address: messages.toAddress,
+      channel: messages.channel,
+      status: messages.status,
+      clicked: sql<boolean>`exists (select 1 from message_events e where e.message_id = ${messages.id} and e.event_type = 'click')`,
+      unsubscribed: sql<boolean>`exists (select 1 from message_events e where e.message_id = ${messages.id} and e.event_type = 'unsubscribed')`,
+      at,
+    })
+    .from(messages)
+    .leftJoin(
+      subscribers,
+      sql`${subscribers.id}::text = ${messages.recipientId} and ${subscribers.tenantId} = ${messages.tenantId}`,
+    )
+    .where(and(eq(messages.tenantId, tenantId), eq(messages.campaignId, campaignId)))
+    .orderBy(sql`${at} desc nulls last`)
+    .limit(Math.min(Math.max(limit, 1), 500));
+}
 
 /**
  * Statuses a campaign may be sent from. "sending" and "sent" are absent by
@@ -146,8 +195,8 @@ export async function sendCampaign(input: SendCampaignInput): Promise<SendCampai
     queued += 1;
   }
 
-  // Immediate sends stay `sending` until the delivery poller sees every message
-  // terminal (delivered/failed/…). Empty audience has nothing to wait for.
+  // Immediate sends stay `sending` until every message leaves the dispatch
+  // queue. Empty audience has nothing to wait for.
   if (scheduled) {
     await db
       .update(campaigns)

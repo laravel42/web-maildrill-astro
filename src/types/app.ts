@@ -23,13 +23,17 @@ export type Campaign = {
   /** Template this campaign sends, when it uses one (null for ad-hoc bodies). */
   templateId: string | null;
   scheduledAt: string | null;
+  /** When the send job actually started (null until dispatch). */
+  startedAt: string | null;
+  /** When the send finished (null until status is sent / paused terminal). */
+  completedAt: string | null;
   openRate: number | null;
   clickRate: number | null;
   updatedAt: string;
   recipients: number;
   delivered: number;
   failed: number;
-  /** Messages accepted by the provider (or finished) — drives send progress %. */
+  /** Messages past the send queue (dispatched / finished) — drives send progress %. */
   accepted: number;
   unsubscribed: number;
 };

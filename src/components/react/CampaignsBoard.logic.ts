@@ -1,3 +1,4 @@
+import type { IconName } from '@/lib/icons';
 import type { CampaignStatus } from '@/types/app';
 
 export const STATUS_LABEL: Record<CampaignStatus, string> = {
@@ -6,6 +7,14 @@ export const STATUS_LABEL: Record<CampaignStatus, string> = {
   sending: 'Sending',
   sent: 'Sent',
   paused: 'Paused',
+};
+
+export const STATUS_ICON: Record<CampaignStatus, IconName> = {
+  draft: 'edit',
+  scheduled: 'clock',
+  sending: 'send',
+  sent: 'check-circle',
+  paused: 'pause',
 };
 
 export const TABS: (CampaignStatus | 'all')[] = [

@@ -1,24 +1,25 @@
-import type { FastifyInstance } from "fastify";
-import { z } from "zod";
-import { channelSchema, ConflictError, NotFoundError } from "@maildrill/domain";
-import { authenticate } from "@maildrill/authz";
-import type { ZodTypeProvider } from "@maildrill/httpkit";
+import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
+import { channelSchema, ConflictError, NotFoundError } from '@maildrill/domain';
+import { authenticate } from '@maildrill/authz';
+import type { ZodTypeProvider } from '@maildrill/httpkit';
 import {
   createCampaign,
   deleteCampaign,
   getCampaign,
+  listCampaignMessages,
   listCampaigns,
   sendCampaign,
   sendCampaignDraft,
   updateCampaign,
-} from "@maildrill/product";
+} from '@maildrill/product';
 
-const TAG = ["Campaigns"];
+const TAG = ['Campaigns'];
 const idParam = z.object({ id: z.string().uuid() });
 const createSchema = z.object({
   name: z.string().min(1),
   channel: channelSchema.optional(),
-  status: z.enum(["draft", "scheduled", "sending", "sent", "paused"]).optional(),
+  status: z.enum(['draft', 'scheduled', 'sending', 'sent', 'paused']).optional(),
   listId: z.string().uuid().nullable().optional(),
   segmentId: z.string().uuid().nullable().optional(),
   templateId: z.string().uuid().nullable().optional(),
@@ -38,19 +39,25 @@ const sendSchema = z
     scheduledAt: z.coerce.date().optional(),
   })
   .refine((v) => v.listId || v.segmentId || v.subscriberIds?.length, {
-    message: "one of listId, segmentId, or subscriberIds is required",
+    message: 'one of listId, segmentId, or subscriberIds is required',
   })
   .refine((v) => v.templateId || v.content, {
-    message: "templateId or content is required",
+    message: 'templateId or content is required',
   });
 
 export async function campaignRoutes(appRaw: FastifyInstance): Promise<void> {
   const app = appRaw.withTypeProvider<ZodTypeProvider>();
-  app.addHook("preHandler", authenticate);
+  app.addHook('preHandler', authenticate);
 
   app.post(
-    "/v1/campaigns/send",
-    { schema: { tags: ["Campaigns"], summary: "Resolve an audience and submit a campaign to the messaging engine", body: sendSchema } },
+    '/v1/campaigns/send',
+    {
+      schema: {
+        tags: ['Campaigns'],
+        summary: 'Resolve an audience and submit a campaign to the messaging engine',
+        body: sendSchema,
+      },
+    },
     async (req, reply) => {
       const result = await sendCampaign({
         tenantId: req.tenantId,
@@ -73,11 +80,11 @@ export async function campaignRoutes(appRaw: FastifyInstance): Promise<void> {
   // route always creates a new campaign; this one sends the draft the user has
   // been editing, which is what the app's "Send now" button needs.
   app.post(
-    "/v1/campaigns/:id/send",
+    '/v1/campaigns/:id/send',
     {
       schema: {
         tags: TAG,
-        summary: "Send an existing campaign draft using its saved audience and content",
+        summary: 'Send an existing campaign draft using its saved audience and content',
         params: idParam,
         body: z.object({ sendNow: z.boolean().optional() }).optional(),
       },
@@ -94,10 +101,10 @@ export async function campaignRoutes(appRaw: FastifyInstance): Promise<void> {
         // A draft that is missing, already sending, or has nothing to send is a
         // client-correctable state — surface it instead of a blank 500.
         if (err instanceof NotFoundError) {
-          return reply.code(404).send({ error: "not_found", message: err.message });
+          return reply.code(404).send({ error: 'not_found', message: err.message });
         }
         if (err instanceof ConflictError) {
-          return reply.code(409).send({ error: "conflict", message: err.message });
+          return reply.code(409).send({ error: 'conflict', message: err.message });
         }
         throw err;
       }
@@ -107,8 +114,8 @@ export async function campaignRoutes(appRaw: FastifyInstance): Promise<void> {
   // ---- Campaign drafts (CRUD) --------------------------------------------
 
   app.post(
-    "/v1/campaigns",
-    { schema: { tags: TAG, summary: "Create a campaign draft", body: createSchema } },
+    '/v1/campaigns',
+    { schema: { tags: TAG, summary: 'Create a campaign draft', body: createSchema } },
     async (req, reply) =>
       reply.code(201).send(
         await createCampaign({
@@ -119,40 +126,55 @@ export async function campaignRoutes(appRaw: FastifyInstance): Promise<void> {
       ),
   );
 
-  app.get("/v1/campaigns", { schema: { tags: TAG, summary: "List campaigns" } }, async (req) => ({
+  app.get('/v1/campaigns', { schema: { tags: TAG, summary: 'List campaigns' } }, async (req) => ({
     data: await listCampaigns(req.tenantId),
   }));
 
   app.get(
-    "/v1/campaigns/:id",
-    { schema: { tags: TAG, summary: "Get a campaign", params: idParam } },
+    '/v1/campaigns/:id',
+    { schema: { tags: TAG, summary: 'Get a campaign', params: idParam } },
     async (req, reply) => {
       const campaign = await getCampaign(req.tenantId, req.params.id);
-      if (!campaign) return reply.code(404).send({ error: "not_found" });
+      if (!campaign) return reply.code(404).send({ error: 'not_found' });
       return campaign;
     },
   );
 
-  app.patch(
-    "/v1/campaigns/:id",
+  app.get(
+    '/v1/campaigns/:id/messages',
     {
       schema: {
         tags: TAG,
-        summary: "Update a campaign draft",
+        summary: 'Per-recipient message outcomes for a campaign report',
+        params: idParam,
+        querystring: z.object({ limit: z.coerce.number().int().min(1).max(500).optional() }),
+      },
+    },
+    async (req) => ({
+      data: await listCampaignMessages(req.tenantId, req.params.id, req.query.limit ?? 200),
+    }),
+  );
+
+  app.patch(
+    '/v1/campaigns/:id',
+    {
+      schema: {
+        tags: TAG,
+        summary: 'Update a campaign draft',
         params: idParam,
         body: createSchema.partial(),
       },
     },
     async (req, reply) => {
       const campaign = await updateCampaign(req.tenantId, req.params.id, req.body);
-      if (!campaign) return reply.code(404).send({ error: "not_found" });
+      if (!campaign) return reply.code(404).send({ error: 'not_found' });
       return campaign;
     },
   );
 
   app.delete(
-    "/v1/campaigns/:id",
-    { schema: { tags: TAG, summary: "Delete a campaign", params: idParam } },
+    '/v1/campaigns/:id',
+    { schema: { tags: TAG, summary: 'Delete a campaign', params: idParam } },
     async (req, reply) => {
       const ok = await deleteCampaign(req.tenantId, req.params.id);
       return reply.code(ok ? 204 : 404).send();

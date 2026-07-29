@@ -60,7 +60,7 @@
 }
 .filter:global(.is-on) {
   background: var(--accent-tint);
-  color: var(--accent);
+  color: var(--accent-text);
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 .filtercount {
@@ -139,7 +139,7 @@
 .bulkcount {
   font-size: 13px;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .bulkdiv {
   width: 1px;
@@ -159,7 +159,7 @@
   background: var(--surface2);
 }
 .bulkbtnDanger {
-  color: var(--danger);
+  color: var(--danger-text);
   border-color: #f3c9c9;
 }
 .bulkclear {
@@ -169,7 +169,7 @@
 }
 
 .grid {
-  grid-template-columns: 36px 2fr 0.9fr 1fr 1.1fr 0.8fr 0.7fr 0.8fr;
+  grid-template-columns: 36px 2fr 0.9fr 1fr 0.85fr 0.7fr 0.7fr 0.8fr;
   column-gap: 14px;
 }
 .grid:global(.athead) {
@@ -210,20 +210,24 @@
 .sendProgress {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 4px;
   min-width: 0;
 }
 .sendProgressTrack {
+  align-self: stretch;
   height: 4px;
   border-radius: 999px;
   background: var(--surface2);
   overflow: hidden;
 }
 .sendProgressFill {
+  width: 100%;
   height: 100%;
   border-radius: inherit;
   background: var(--accent);
-  transition: width 0.35s ease;
+  transform-origin: left;
+  transition: transform 0.35s ease;
 }
 .sendProgressPct {
   font-size: 11px;
@@ -235,6 +239,16 @@
 }
 .muted3 {
   color: var(--text3);
+}
+.colCenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.grid:global(.athead) > .colCenter button {
+  width: 100%;
+  justify-content: center;
 }
 
 /* footer / pagination — matches the Templates & Subscribers list UX */
@@ -326,7 +340,9 @@
     grid-template-columns: 30px 1.4fr 0.9fr 0.8fr;
   }
   .grid > :nth-child(4),
-  .grid > :nth-child(6) {
+  .grid > :nth-child(5),
+  .grid > :nth-child(6),
+  .grid > :nth-child(7) {
     display: none;
   }
 }
@@ -423,12 +439,15 @@
 }
 
 .reportKpis {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 18px;
+  /* fluid: the six counters share the row; wrapped cards fill their line */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 18px;
 }
 .reportKpi {
+  flex: 1 1 150px;
+  min-width: 0;
   padding: 16px 18px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -436,22 +455,52 @@
   box-shadow: 0 1px 2px rgba(30, 27, 22, 0.04);
 }
 .reportKpiLbl {
+  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 500;
-  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .reportKpiVal {
   margin-top: 8px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 26px;
   font-weight: 600;
-  letter-spacing: -0.6px;
+  letter-spacing: -0.02em;
   color: var(--text);
+}
+.kOpened {
+  color: var(--success-text);
+}
+.kClicked {
+  color: var(--accent-text);
+}
+.kBounced {
+  color: var(--warning-strong);
+}
+.kDanger {
+  color: var(--danger-text);
 }
 
 .reportRow {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: 18px;
+}
+.reportRow2 {
+  margin-top: 18px;
+}
+.reportEmptyNote {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text4);
+  max-width: 44ch;
 }
 .reportCard {
   padding: 18px 20px;
@@ -525,9 +574,6 @@
 }
 
 @media (max-width: 860px) {
-  .reportKpis {
-    grid-template-columns: repeat(2, 1fr);
-  }
   .reportRow {
     grid-template-columns: 1fr;
   }
@@ -541,4 +587,131 @@
   border-radius: 14px;
   display: flex;
   justify-content: center;
+}
+
+/* --------------------------- recipient events ---------------------------- */
+.revCard {
+  margin-top: 18px;
+}
+.revHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 17px 19px 14px;
+}
+.revSub {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--text4);
+}
+.revGrid {
+  grid-template-columns: 2.2fr 1fr 0.9fr 0.9fr;
+}
+.revRow {
+  cursor: default;
+}
+.revRow:hover {
+  background: none;
+}
+.revCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.revAv {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+.revWho {
+  min-width: 0;
+}
+.revName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.revAddr {
+  font-size: 11.5px;
+  color: var(--text4);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.revChannel {
+  font-size: 12.5px;
+  color: var(--text3);
+}
+.revWhenHead {
+  text-align: right;
+}
+.revWhen {
+  text-align: right;
+  font-size: 12.5px;
+  color: var(--text4);
+}
+
+/* first-row rate cards with trend sparklines */
+.rateRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.rateRow .reportKpi {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-basis: 220px;
+}
+.rateTop {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.rateVal {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.rateSpark {
+  display: block;
+  margin-top: auto;
+}
+
+/* rate-card deltas vs the previous same-channel campaign */
+.rateValWrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.rateDelta {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.deltaGood {
+  color: var(--success-text);
+}
+.deltaBad {
+  color: var(--danger-text);
 }

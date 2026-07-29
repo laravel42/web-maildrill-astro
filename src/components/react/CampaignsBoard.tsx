@@ -32,6 +32,7 @@ import ConfirmDialog from './shared/ConfirmDialog';
 import CampaignWizard from './CampaignWizard';
 import TemplatePreview, { MessagePreview } from './shared/TemplatePreview';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
+import StatusBadge from './shared/StatusBadge';
 import { ago } from './shared/time';
 import { useToast } from './shared/useToast';
 import { STATUS_LABEL, TABS, PAGE_SIZE, pct } from './CampaignsBoard.logic';
@@ -48,6 +49,34 @@ function ChannelPill({ channel }: { channel: ChannelType }) {
   );
 }
 
+function DispatchProgress({
+  progress,
+  status,
+}: {
+  progress: number;
+  status: 'sending' | 'sent';
+}) {
+  return (
+    <div className={styles.sendProgress} title={`${progress}% dispatched`}>
+      <StatusBadge status={status} />
+      <div
+        className={styles.sendProgressTrack}
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={progress}
+        aria-label={`Dispatch progress ${progress} percent`}
+      >
+        <div
+          className={styles.sendProgressFill}
+          style={{ transform: `scaleX(${progress / 100})` }}
+        />
+      </div>
+      <span className={`tnum ${styles.sendProgressPct}`}>{progress}%</span>
+    </div>
+  );
+}
+
 const DEFAULT_LIST_COLOR = '#4f46e5';
 
 /** A list identifier badge tinted with the list's own colour. */
@@ -58,9 +87,7 @@ function ListPill({ name, color }: { name: string; color?: string | null }) {
       className="apill"
       style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c }}
     >
-      <span
-        style={{ width: 7, height: 7, borderRadius: '50%', background: c, flex: 'none' }}
-      />
+      <span style={{ width: 7, height: 7, borderRadius: '50%', background: c, flex: 'none' }} />
       {name}
     </span>
   );
@@ -188,6 +215,41 @@ export default function CampaignsBoard({
     };
   }, [live, hasSending]);
 
+  // Keep the dispatch bar at 100% for 1s after status flips to `sent`, then drop it.
+  const [progressHoldIds, setProgressHoldIds] = useState<Set<string>>(() => new Set());
+  const prevStatusById = useRef<Map<string, CampaignStatus>>(new Map());
+  const progressHoldTimers = useRef<Map<string, number>>(new Map());
+  useEffect(() => {
+    const prev = prevStatusById.current;
+    const next = new Map(prev);
+    for (const c of campaigns) {
+      if (prev.get(c.id) === 'sending' && c.status === 'sent') {
+        const id = c.id;
+        setProgressHoldIds((hold) => new Set(hold).add(id));
+        const existing = progressHoldTimers.current.get(id);
+        if (existing != null) window.clearTimeout(existing);
+        const timer = window.setTimeout(() => {
+          progressHoldTimers.current.delete(id);
+          setProgressHoldIds((hold) => {
+            const h = new Set(hold);
+            h.delete(id);
+            return h;
+          });
+        }, 1000);
+        progressHoldTimers.current.set(id, timer);
+      }
+      next.set(c.id, c.status);
+    }
+    prevStatusById.current = next;
+  }, [campaigns]);
+  useEffect(
+    () => () => {
+      for (const t of progressHoldTimers.current.values()) window.clearTimeout(t);
+      progressHoldTimers.current.clear();
+    },
+    [],
+  );
+
   const toggleSort = (key: SortKey) =>
     setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: 1 }));
 
@@ -200,8 +262,7 @@ export default function CampaignsBoard({
     });
 
   const allChecked = pageRows.length > 0 && pageRows.every((r) => selected.has(r.id));
-  const toggleAll = () =>
-    setSelected(allChecked ? new Set() : new Set(pageRows.map((r) => r.id)));
+  const toggleAll = () => setSelected(allChecked ? new Set() : new Set(pageRows.map((r) => r.id)));
 
   const bulk = (verb: string) => {
     show(`${verb} ${selected.size} campaign${selected.size === 1 ? '' : 's'}`);
@@ -313,7 +374,8 @@ export default function CampaignsBoard({
     }
     const prior = campaigns.find((c) => c.id === id);
     const sendable =
-      prior != null && (prior.status === 'draft' || prior.status === 'scheduled' || prior.status === 'paused');
+      prior != null &&
+      (prior.status === 'draft' || prior.status === 'scheduled' || prior.status === 'paused');
 
     try {
       const audience = campaignAudiencePayload(draft);
@@ -430,16 +492,22 @@ export default function CampaignsBoard({
 
   // The report replaces the board (a screen, matching the design), not an overlay.
   if (report) {
+    const reportTime = new Date(report.updatedAt).getTime();
+    const history = campaigns
+      .filter(
+        (c) =>
+          c.channel === report.channel &&
+          (c.status === 'sent' || c.id === report.id) &&
+          new Date(c.updatedAt).getTime() <= reportTime,
+      )
+      .sort((a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
     return (
       <CampaignReport
         campaign={report}
+        history={history}
         listColor={listColorFor(report)}
+        live={live}
         onBack={() => setReportId(null)}
-        onEdit={() => {
-          const c = report;
-          setReportId(null);
-          void openForEdit(c);
-        }}
         onDuplicate={() => {
           const c = report;
           setReportId(null);
@@ -625,18 +693,22 @@ export default function CampaignsBoard({
           </div>
           <div>Status</div>
           <div>Channel</div>
-          <div>Audience</div>
-          <div>
+          <div className={styles.colCenter}>
             <button type="button" onClick={() => toggleSort('recipients')}>
               Recipients <span className="tnum">{sortArrow('recipients')}</span>
             </button>
           </div>
-          <div>
+          <div className={styles.colCenter}>
             <button type="button" onClick={() => toggleSort('openRate')}>
               Open <span className="tnum">{sortArrow('openRate')}</span>
             </button>
           </div>
-          <div>
+          <div className={styles.colCenter}>
+            <button type="button" onClick={() => toggleSort('clickRate')}>
+              Click <span className="tnum">{sortArrow('clickRate')}</span>
+            </button>
+          </div>
+          <div className={styles.colCenter}>
             <button type="button" onClick={() => toggleSort('updatedAt')}>
               Updated <span className="tnum">{sortArrow('updatedAt')}</span>
             </button>
@@ -676,48 +748,33 @@ export default function CampaignsBoard({
               <div className={styles.name}>{c.name}</div>
               <div>
                 {c.status === 'sending' ? (
-                  <div
-                    className={styles.sendProgress}
-                    title={`${campaignSendProgress(c)}% complete`}
-                  >
-                    <span className={`astatus astatus--sending`}>{STATUS_LABEL.sending}</span>
-                    <div
-                      className={styles.sendProgressTrack}
-                      role="progressbar"
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-valuenow={campaignSendProgress(c)}
-                      aria-label={`Send progress ${campaignSendProgress(c)} percent`}
-                    >
-                      <div
-                        className={styles.sendProgressFill}
-                        style={{ width: `${campaignSendProgress(c)}%` }}
-                      />
-                    </div>
-                    <span className={`tnum ${styles.sendProgressPct}`}>
-                      {campaignSendProgress(c)}%
-                    </span>
-                  </div>
+                  <DispatchProgress progress={campaignSendProgress(c)} status="sending" />
+                ) : progressHoldIds.has(c.id) ? (
+                  <DispatchProgress progress={100} status="sent" />
                 ) : (
-                  <span className={`astatus astatus--${c.status}`}>{STATUS_LABEL[c.status]}</span>
+                  <StatusBadge status={c.status} />
                 )}
               </div>
               <div>
                 <ChannelPill channel={c.channel} />
               </div>
-              <div className={styles.muted}>{c.audience}</div>
-              <div className={`tnum ${styles.muted3}`}>{c.recipients.toLocaleString('en-US')}</div>
-              <div className={`tnum ${styles.muted3}`}>
+              <div className={`tnum ${styles.muted3} ${styles.colCenter}`}>
+                {c.recipients.toLocaleString('en-US')}
+              </div>
+              <div className={`tnum ${styles.muted3} ${styles.colCenter}`}>
                 {c.openRate != null ? `${Math.round(c.openRate * 100)}%` : '—'}
               </div>
-              <div className={styles.muted}>{ago(c.updatedAt)}</div>
+              <div className={`tnum ${styles.muted3} ${styles.colCenter}`}>
+                {c.clickRate != null ? `${Math.round(c.clickRate * 100)}%` : '—'}
+              </div>
+              <div className={`${styles.muted} ${styles.colCenter}`}>{ago(c.updatedAt)}</div>
             </div>
           ))
         )}
 
         {/* footer / pagination */}
         <div className={`atable__foot ${styles.foot}`}>
-          <span className="tnum">
+          <span className={rows.length === 0 ? undefined : 'tnum'}>
             {rows.length === 0
               ? 'No campaigns match your filters'
               : `${startIdx}–${endIdx} of ${rows.length} campaign${rows.length === 1 ? '' : 's'}`}
@@ -931,7 +988,8 @@ function CampaignDrawer({
   onDuplicate: () => void;
   onViewReport: () => void;
 }) {
-  const isSent = campaign.status === 'sent';
+  // Sent and in-flight sends expose a report (partial while sending); drafts etc. stay editable.
+  const showReport = campaign.status === 'sent' || campaign.status === 'sending';
   const deliveredPct = campaign.recipients ? (campaign.delivered / campaign.recipients) * 100 : 0;
   const cto =
     campaign.openRate && campaign.clickRate ? (campaign.clickRate / campaign.openRate) * 100 : null;
@@ -1020,12 +1078,10 @@ function CampaignDrawer({
 
           <div className={styles.drawerTitleRow}>
             <h3 className={styles.drawerName}>{campaign.name}</h3>
-            <span className={`astatus astatus--${campaign.status}`}>
-              {STATUS_LABEL[campaign.status]}
-            </span>
+            <StatusBadge status={campaign.status} />
           </div>
 
-          {isSent ? (
+          {showReport ? (
             <div className={styles.drawerKpis}>
               {kpis.map((k) => (
                 <div key={k.label} className={styles.drawerKpi}>
@@ -1086,21 +1142,16 @@ function CampaignDrawer({
           </div>
         </div>
         <div className="adrawer__foot">
-          <button
-            type="button"
-            className="sbtn"
-            style={{ flex: 1 }}
-            onClick={onDuplicate}
-          >
+          <button type="button" className="sbtn" style={{ flex: 1 }} onClick={onDuplicate}>
             Duplicate
           </button>
           <button
             type="button"
             className="pbtn"
             style={{ flex: 1 }}
-            onClick={() => (isSent ? onViewReport() : onEdit())}
+            onClick={() => (showReport ? onViewReport() : onEdit())}
           >
-            {isSent ? 'View report' : 'Edit'}
+            {showReport ? 'View report' : 'Edit'}
           </button>
         </div>
       </div>
@@ -1108,24 +1159,94 @@ function CampaignDrawer({
   );
 }
 
+/* ------------------------- recipient events ------------------------------ */
+/** One row from GET /v1/campaigns/:id/messages — a recipient's message outcome. */
+type RecipientEvent = {
+  id: string;
+  recipientId: string | null;
+  name: string | null;
+  address: string;
+  channel: ChannelType;
+  status: string;
+  clicked?: boolean;
+  unsubscribed?: boolean;
+  at: string | null;
+};
+
+const EVENT_TABS = [
+  'all',
+  'delivered',
+  'opened',
+  'clicked',
+  'unsubscribed',
+  'sent',
+  'bounced',
+  'queued',
+] as const;
+type EventKind = Exclude<(typeof EVENT_TABS)[number], 'all'>;
+
+/** Collapse message status + engagement events into glanceable report events.
+    The furthest stage wins: unsubscribed > clicked > opened > delivered. */
+const eventKind = (e: Pick<RecipientEvent, 'status' | 'clicked' | 'unsubscribed'>): EventKind =>
+  e.unsubscribed
+    ? 'unsubscribed'
+    : e.clicked
+      ? 'clicked'
+      : e.status === 'read'
+        ? 'opened'
+        : e.status === 'delivered'
+          ? 'delivered'
+          : e.status === 'failed' || e.status === 'expired'
+            ? 'bounced'
+            : e.status === 'sent' || e.status === 'submitted'
+              ? 'sent'
+              : 'queued';
+
+const EVENT_META: Record<EventKind, { label: string; cls: string }> = {
+  delivered: { label: 'Delivered', cls: 'astatus--sent' },
+  opened: { label: 'Opened', cls: 'astatus--active' },
+  clicked: { label: 'Clicked', cls: 'astatus--scheduled' },
+  unsubscribed: { label: 'Unsubscribed', cls: 'astatus--unsubscribed' },
+  sent: { label: 'Sent', cls: 'astatus--scheduled' },
+  bounced: { label: 'Bounced', cls: 'astatus--bounced' },
+  queued: { label: 'Queued', cls: 'astatus--draft' },
+};
+
+const EVENT_TAB_LABEL: Record<(typeof EVENT_TABS)[number], string> = {
+  all: 'All',
+  delivered: 'Delivered',
+  opened: 'Opened',
+  clicked: 'Clicked',
+  unsubscribed: 'Unsubscribed',
+  sent: 'Sent',
+  bounced: 'Bounced',
+  queued: 'Queued',
+};
+
+const EVENT_PAGE_SIZE = 8;
+
 /**
  * Campaign report — the "View report" destination, rendered as a full screen
  * (see App.dc.html § campaignDetail): breadcrumb, header with actions, KPI
- * cards, then an engagement-funnel card beside a campaign-details card. Built
- * from the campaign's real metrics; open/click stages the backend doesn't track
- * yet read "Not tracked yet" rather than faking numbers.
+ * cards, an engagement-funnel card beside a campaign-details card, then the
+ * per-recipient event table fed by real message outcomes. Open/click stages
+ * the backend doesn't track yet read "Not tracked yet" rather than faking
+ * numbers, and untracked engagement events are absent by design.
  */
 function CampaignReport({
   campaign,
+  history,
   listColor,
+  live,
   onBack,
-  onEdit,
   onDuplicate,
 }: {
   campaign: Campaign;
+  /** Same-channel sent campaigns, chronological, ending with this one. */
+  history: Campaign[];
   listColor?: string;
+  live: boolean;
   onBack: () => void;
-  onEdit: () => void;
   onDuplicate: () => void;
 }) {
   const base = campaign.recipients || 1;
@@ -1142,27 +1263,66 @@ function CampaignReport({
     ? new Date(sentAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
     : '—';
 
-  const kpis = [
-    { label: 'Recipients', value: campaign.recipients.toLocaleString('en-US') },
-    { label: 'Delivered', value: `${deliveredPct.toFixed(1)}%` },
-    { label: 'Open rate', value: pct(campaign.openRate) },
-    { label: 'Click rate', value: pct(campaign.clickRate) },
+  /* The six mockup counters. Delivered/bounced/unsubscribed are real message
+     state; opened/clicked/complaints stay "—" until engagement tracking lands
+     rather than inventing numbers. */
+  const kpis: { label: string; value: string; cls?: string; hint?: string }[] = [
+    { label: 'Delivered', value: campaign.delivered.toLocaleString('en-US') },
+    {
+      label: 'Opened',
+      value: opened != null ? opened.toLocaleString('en-US') : '—',
+      cls: styles.kOpened,
+      hint: opened == null ? 'No deliveries yet' : undefined,
+    },
+    {
+      label: 'Clicked',
+      value: clicked != null ? clicked.toLocaleString('en-US') : '—',
+      cls: styles.kClicked,
+      hint: clicked == null ? 'No deliveries yet' : undefined,
+    },
+    { label: 'Bounced', value: campaign.failed.toLocaleString('en-US'), cls: styles.kBounced },
+    {
+      label: 'Unsubscribed',
+      value: campaign.unsubscribed.toLocaleString('en-US'),
+      cls: styles.kDanger,
+    },
+    { label: 'Complaints', value: '—', cls: styles.kDanger, hint: 'Needs complaint webhooks' },
   ];
 
-  const funnel: { label: string; count: number | null; barPct: number | null; color: string }[] = [
-    { label: 'Recipients', count: campaign.recipients, barPct: 100, color: 'var(--text3)' },
-    { label: 'Delivered', count: campaign.delivered, barPct: deliveredPct, color: 'var(--accent)' },
+  const funnel: {
+    label: string;
+    count: number | null;
+    barPct: number | null;
+    color: string;
+    empty: string;
+  }[] = [
+    {
+      label: 'Recipients',
+      count: campaign.recipients,
+      barPct: 100,
+      color: 'var(--text3)',
+      empty: '—',
+    },
+    {
+      label: 'Delivered',
+      count: campaign.delivered,
+      barPct: deliveredPct,
+      color: 'var(--accent)',
+      empty: '—',
+    },
     {
       label: 'Opened',
       count: opened,
       barPct: opened != null ? (opened / base) * 100 : null,
       color: 'var(--success-strong)',
+      empty: '—',
     },
     {
       label: 'Clicked',
       count: clicked,
       barPct: clicked != null ? (clicked / base) * 100 : null,
       color: 'var(--warning-strong)',
+      empty: '—',
     },
   ];
 
@@ -1188,6 +1348,161 @@ function CampaignReport({
     return () => document.removeEventListener('keydown', onKey);
   }, [onBack]);
 
+  // Per-recipient outcomes, loaded once per campaign when the service is wired.
+  const [events, setEvents] = useState<RecipientEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventTab, setEventTab] = useState<(typeof EVENT_TABS)[number]>('all');
+  const [eventPage, setEventPage] = useState(1);
+
+  useEffect(() => {
+    if (!live) return;
+    let cancelled = false;
+    setEventsLoading(true);
+    api
+      .get<{ data: RecipientEvent[] }>(`campaigns/${campaign.id}/messages`)
+      .then((res) => {
+        if (!cancelled) setEvents(res.data ?? []);
+      })
+      .catch(() => {
+        /* keep the empty state on failure */
+      })
+      .finally(() => {
+        if (!cancelled) setEventsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [live, campaign.id]);
+
+  /* Rate cards: delivery/unsub are real; the delivery spark is the cumulative
+     delivered share across the real event timeline (oldest → newest). */
+  const unsubPct =
+    campaign.recipients > 0 ? (campaign.unsubscribed / campaign.recipients) * 100 : 0;
+  const deliverySeries = (() => {
+    const timeline = [...events]
+      .filter((e) => e.at != null)
+      .sort((a, b) => new Date(a.at!).getTime() - new Date(b.at!).getTime());
+    let delivered = 0;
+    return timeline.map((e, i) => {
+      const k = eventKind(e);
+      if (k === 'delivered' || k === 'opened' || k === 'clicked') delivered += 1;
+      return (delivered / (i + 1)) * 100;
+    });
+  })();
+  const sparkPath = (series: number[], w = 120, h = 30): string => {
+    if (series.length < 2) return '';
+    const min = Math.min(...series);
+    const max = Math.max(...series);
+    const span = max - min || 1;
+    return series
+      .map((v, i) => {
+        const x = (i / (series.length - 1)) * w;
+        const y = h - 4 - ((v - min) / span) * (h - 8);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(' ');
+  };
+  /* Period-over-period: same-channel campaign history drives the sparklines
+     and the delta vs the previous campaign. */
+  const deliveryHistory = history
+    .map((c) => (c.recipients > 0 ? (c.delivered / c.recipients) * 100 : null))
+    .filter((v): v is number => v != null);
+  const openHistory = history
+    .map((c) => (c.openRate != null ? c.openRate * 100 : null))
+    .filter((v): v is number => v != null);
+  const clickHistory = history
+    .map((c) => (c.clickRate != null ? c.clickRate * 100 : null))
+    .filter((v): v is number => v != null);
+  const unsubHistory = history
+    .map((c) => (c.recipients > 0 ? (c.unsubscribed / c.recipients) * 100 : null))
+    .filter((v): v is number => v != null);
+  const deltaOf = (series: number[]): number | null =>
+    series.length >= 2 ? series[series.length - 1]! - series[series.length - 2]! : null;
+  const asDelta = (
+    d: number | null,
+    goodWhenUp = true,
+  ): { text: string; good: boolean } | undefined =>
+    d == null || Math.abs(d) < 0.05
+      ? undefined
+      : {
+          text: `${d > 0 ? '↑' : '↓'} ${Math.abs(d).toFixed(1)}%`,
+          good: goodWhenUp ? d > 0 : d < 0,
+        };
+
+  const rateCards: {
+    label: string;
+    value: string;
+    color: string;
+    series: number[];
+    delta?: { text: string; good: boolean };
+    hint?: string;
+  }[] = [
+    {
+      label: 'Delivery rate',
+      value: `${deliveredPct.toFixed(1)}%`,
+      color: 'var(--success-strong)',
+      series: deliveryHistory.length >= 2 ? deliveryHistory : deliverySeries,
+      delta: asDelta(deltaOf(deliveryHistory)),
+    },
+    {
+      label: 'Open rate',
+      value: pct(campaign.openRate),
+      color: 'var(--accent)',
+      series: openHistory.length >= 2 ? openHistory : [],
+      delta: asDelta(deltaOf(openHistory)),
+      hint: campaign.openRate == null ? 'No deliveries yet' : undefined,
+    },
+    {
+      label: 'Click rate',
+      value: pct(campaign.clickRate),
+      color: '#8b5cf6',
+      series: clickHistory.length >= 2 ? clickHistory : [],
+      delta: asDelta(deltaOf(clickHistory)),
+      hint: campaign.clickRate == null ? 'No deliveries yet' : undefined,
+    },
+    {
+      label: 'Unsub rate',
+      value: `${unsubPct.toFixed(1)}%`,
+      color: 'var(--ch-voice)',
+      series: unsubHistory.length >= 2 ? unsubHistory : [],
+      delta: asDelta(deltaOf(unsubHistory), false),
+    },
+  ];
+
+  const eventCounts: Record<string, number> = { all: events.length };
+  for (const e of events) {
+    const k = eventKind(e);
+    eventCounts[k] = (eventCounts[k] ?? 0) + 1;
+  }
+  const filteredEvents =
+    eventTab === 'all' ? events : events.filter((e) => eventKind(e) === eventTab);
+  const eventPages = Math.max(1, Math.ceil(filteredEvents.length / EVENT_PAGE_SIZE));
+  const safeEventPage = Math.min(eventPage, eventPages);
+  const pageEvents = filteredEvents.slice(
+    (safeEventPage - 1) * EVENT_PAGE_SIZE,
+    safeEventPage * EVENT_PAGE_SIZE,
+  );
+  const eventStart = filteredEvents.length === 0 ? 0 : (safeEventPage - 1) * EVENT_PAGE_SIZE + 1;
+  const eventEnd = Math.min(safeEventPage * EVENT_PAGE_SIZE, filteredEvents.length);
+
+  const exportEvents = () => {
+    const head = 'recipient,address,channel,event,at';
+    const lines = filteredEvents.map((e) =>
+      [e.name ?? '', e.address, e.channel, EVENT_META[eventKind(e)].label, e.at ?? '']
+        .map((v) => `"${String(v).replaceAll('"', '""')}"`)
+        .join(','),
+    );
+    const blob = new Blob([[head, ...lines].join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `maildrill-${campaign.name.replaceAll(/\s+/g, '-').toLowerCase()}-events.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="screen" style={{ animation: 'fade .3s ease' }}>
       <button type="button" className={styles.reportBack} onClick={onBack}>
@@ -1211,9 +1526,7 @@ function CampaignReport({
         <div className={styles.reportHeadMain}>
           <div className={styles.reportTitleRow}>
             <h1 className={styles.reportName}>{campaign.name}</h1>
-            <span className={`astatus astatus--${campaign.status}`}>
-              {STATUS_LABEL[campaign.status]}
-            </span>
+            <StatusBadge status={campaign.status} />
           </div>
           <p className={styles.reportSub}>
             To {campaign.audience}
@@ -1224,17 +1537,47 @@ function CampaignReport({
           <button type="button" className="sbtn" onClick={onDuplicate}>
             <Icon name="copy" size={14} /> Duplicate
           </button>
-          <button type="button" className="pbtn" onClick={onEdit}>
-            <Icon name="edit" size={14} /> Edit campaign
-          </button>
         </div>
       </div>
 
-      <div className={styles.reportKpis}>
-        {kpis.map((k) => (
-          <div key={k.label} className={styles.reportKpi}>
-            <div className={styles.reportKpiLbl}>{k.label}</div>
-            <div className={`tnum ${styles.reportKpiVal}`}>{k.value}</div>
+      <div className={styles.rateRow}>
+        {rateCards.map((r) => (
+          <div key={r.label} className={styles.reportKpi} title={r.hint}>
+            <div className={styles.rateTop}>
+              <span className={styles.reportKpiLbl}>{r.label}</span>
+              <span className={styles.rateValWrap}>
+                <span className={`tnum ${styles.rateVal}`}>{r.value}</span>
+                {r.delta && (
+                  <span
+                    className={`tnum ${styles.rateDelta} ${
+                      r.delta.good ? styles.deltaGood : styles.deltaBad
+                    }`}
+                  >
+                    {r.delta.text}
+                  </span>
+                )}
+              </span>
+            </div>
+            {r.series.length >= 2 && (
+              <svg
+                className={styles.rateSpark}
+                width="100%"
+                height="30"
+                viewBox="0 0 120 30"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                <polyline
+                  points={sparkPath(r.series)}
+                  fill="none"
+                  stroke={r.color}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </svg>
+            )}
           </div>
         ))}
       </div>
@@ -1248,7 +1591,7 @@ function CampaignReport({
                 <span className={styles.funnelLbl}>{f.label}</span>
                 <span className={`tnum ${styles.funnelVal}`}>
                   {f.count == null
-                    ? 'Not tracked yet'
+                    ? f.empty
                     : `${f.count.toLocaleString('en-US')}${
                         f.barPct != null ? ` · ${f.barPct.toFixed(1)}%` : ''
                       }`}
@@ -1267,6 +1610,16 @@ function CampaignReport({
         </div>
 
         <div className={styles.reportCard}>
+          <div className={styles.reportCardTitle}>Top devices</div>
+          <p className={styles.reportEmptyNote}>
+            Read receipts don&apos;t carry device info yet — the desktop / mobile / tablet split
+            appears here once opens report the device that read the message.
+          </p>
+        </div>
+      </div>
+
+      <div className={`${styles.reportRow} ${styles.reportRow2}`}>
+        <div className={styles.reportCard}>
           <div className={styles.reportCardTitle}>Campaign details</div>
           {details.map(([k, v]) => (
             <div key={k} className={styles.reportDetail}>
@@ -1275,7 +1628,151 @@ function CampaignReport({
             </div>
           ))}
         </div>
+
+        <div className={styles.reportCard}>
+          <div className={styles.reportCardTitle}>Top links clicked</div>
+          <p className={styles.reportEmptyNote}>
+            Every click event records the URL it hit — the ranking shows up here once the links
+            aggregation endpoint lands.
+          </p>
+        </div>
       </div>
+
+      <div className={styles.reportKpis}>
+        {kpis.map((k) => (
+          <div key={k.label} className={styles.reportKpi} title={k.hint}>
+            <div className={styles.reportKpiLbl}>{k.label}</div>
+            <div className={`tnum ${styles.reportKpiVal}${k.cls ? ` ${k.cls}` : ''}`}>
+              {k.value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* per-recipient events */}
+      <section className={`atable ${styles.revCard}`} aria-label="Recipient events">
+        <div className={styles.revHead}>
+          <div>
+            <h2 className="acrd__title">Recipient events</h2>
+            <p className={styles.revSub}>Individual delivery activity, per recipient.</p>
+          </div>
+          <button
+            type="button"
+            className="sbtn"
+            onClick={exportEvents}
+            disabled={filteredEvents.length === 0}
+          >
+            <Icon name="download" size={14} /> Export
+          </button>
+        </div>
+
+        <div className={`${styles.tabs} atabs`} role="tablist" aria-label="Event type">
+          {EVENT_TABS.map((t) => (
+            <button
+              key={t}
+              type="button"
+              role="tab"
+              aria-selected={eventTab === t}
+              className={`atab${eventTab === t ? ' is-active' : ''}`}
+              onClick={() => {
+                setEventTab(t);
+                setEventPage(1);
+              }}
+            >
+              {EVENT_TAB_LABEL[t]}
+              <span className="atab__count tnum">{eventCounts[t] ?? 0}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className={`athead ${styles.revGrid}`}>
+          <div>Recipient</div>
+          <div>Event</div>
+          <div>Channel</div>
+          <div className={styles.revWhenHead}>When</div>
+        </div>
+
+        {pageEvents.map((e) => {
+          const kind = EVENT_META[eventKind(e)];
+          const meta = CHANNEL[e.channel] ?? CHANNEL.email;
+          const display = e.name?.trim() || e.address;
+          return (
+            <div key={e.id} className={`atrow ${styles.revGrid} ${styles.revRow}`}>
+              <div className={styles.revCell}>
+                <span
+                  className={styles.revAv}
+                  style={{ background: meta.tint, color: meta.color }}
+                  aria-hidden="true"
+                >
+                  {display.charAt(0).toUpperCase()}
+                </span>
+                <div className={styles.revWho}>
+                  <div className={styles.revName}>{display}</div>
+                  <div className={`${styles.revAddr} tnum`}>{e.address}</div>
+                </div>
+              </div>
+              <div>
+                <span className={`astatus ${kind.cls}`}>{kind.label}</span>
+              </div>
+              <div className={styles.revChannel}>{meta.label}</div>
+              <div className={`${styles.revWhen} tnum`}>{e.at ? ago(e.at) : '—'}</div>
+            </div>
+          );
+        })}
+
+        {!live && (
+          <div className="atable__empty">
+            Recipient events load from the delivery service once the workspace is connected.
+          </div>
+        )}
+        {live && !eventsLoading && filteredEvents.length === 0 && (
+          <div className="atable__empty">No recipient events for this campaign yet.</div>
+        )}
+        {live && eventsLoading && events.length === 0 && (
+          <div className="atable__empty">Loading recipient events…</div>
+        )}
+
+        <div className="atable__foot">
+          <span className={filteredEvents.length === 0 ? undefined : 'tnum'}>
+            {filteredEvents.length === 0
+              ? 'Opens, clicks, unsubscribes, and complaints appear once engagement tracking lands'
+              : `${eventStart}–${eventEnd} of ${filteredEvents.length} events`}
+          </span>
+          {eventPages > 1 && (
+            <div className={styles.pager}>
+              <button
+                type="button"
+                className={styles.pg}
+                disabled={safeEventPage === 1}
+                onClick={() => setEventPage((p) => Math.max(1, p - 1))}
+                aria-label="Previous page"
+              >
+                <Icon name="chevron-right" size={15} className={styles.pgflip} />
+              </button>
+              {Array.from({ length: eventPages }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`${styles.pgn} tnum${n === safeEventPage ? ' is-on' : ''}`}
+                  aria-current={n === safeEventPage ? 'page' : undefined}
+                  onClick={() => setEventPage(n)}
+                >
+                  {n}
+                </button>
+              ))}
+              <button
+                type="button"
+                className={styles.pg}
+                disabled={safeEventPage === eventPages}
+                onClick={() => setEventPage((p) => Math.min(eventPages, p + 1))}
+                aria-label="Next page"
+              >
+                <Icon name="chevron-right" size={15} />
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

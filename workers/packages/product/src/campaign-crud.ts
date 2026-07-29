@@ -1,14 +1,15 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from 'drizzle-orm';
 import {
   campaigns,
   db,
   lists,
+  messageEvents,
   messages,
   segments,
   type Campaign,
   type NewCampaign,
-} from "@maildrill/database";
-import type { Channel } from "@maildrill/domain";
+} from '@maildrill/database';
+import type { Channel } from '@maildrill/domain';
 
 /**
  * Campaign drafts. The stored shape mirrors the `/v1/campaigns/send` contract
@@ -39,10 +40,16 @@ export interface CampaignWithStats extends Campaign {
   audience: string;
   recipients: number;
   delivered: number;
+  /** Messages with a provider read/seen receipt — the real "opened" signal. */
+  opened: number;
+  /** Messages with at least one click event. */
+  clicked: number;
+  /** Recipients who unsubscribed off this campaign (unsubscribe events). */
+  unsubscribed: number;
   failed: number;
   /**
-   * Messages past the queue (submitted/sent/terminal). Used for the in-send
-   * progress bar so it advances when Infobip accepts, not only after DLRs.
+   * Messages past the send queue (submitted/sent/terminal). Drives the
+   * dispatch progress bar; campaign flips to `sent` when this equals recipients.
    */
   accepted: number;
   /** Most recent provider error when any message failed (detail GET only). */
@@ -50,34 +57,74 @@ export interface CampaignWithStats extends Campaign {
 }
 
 /** Per-campaign message counters, keyed by campaign id. */
-async function statsFor(
-  tenantId: string,
-): Promise<
-  Map<string, { recipients: number; delivered: number; failed: number; accepted: number }>
+async function statsFor(tenantId: string): Promise<
+  Map<
+    string,
+    {
+      recipients: number;
+      delivered: number;
+      opened: number;
+      clicked: number;
+      unsubscribed: number;
+      failed: number;
+      accepted: number;
+    }
+  >
 > {
   const rows = await db
     .select({
       campaignId: messages.campaignId,
       recipients: sql<number>`count(*)::int`,
-      // Progress treats engagement-after-delivery as done; match CAMPAIGN_COMPLETE_STATES.
       delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read'))::int`,
+      opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
       failed: sql<number>`count(*) filter (where ${messages.status} in ('failed', 'cancelled', 'expired'))::int`,
-      // Accepted by provider (or finished): everything except still waiting in queue.
+      // Dispatched: left the send queue (provider handoff or permanent failure).
       accepted: sql<number>`count(*) filter (where ${messages.status} not in ('queued', 'processing', 'draft', 'scheduled'))::int`,
     })
     .from(messages)
     .where(eq(messages.tenantId, tenantId))
     .groupBy(messages.campaignId);
 
+  /* Click / unsubscribe live in message_events, not message status. */
+  const engagement = await db
+    .select({
+      campaignId: messages.campaignId,
+      clicked: sql<number>`count(distinct ${messageEvents.messageId}) filter (where ${messageEvents.eventType} = 'click')::int`,
+      unsubscribed: sql<number>`count(distinct ${messageEvents.messageId}) filter (where ${messageEvents.eventType} = 'unsubscribed')::int`,
+    })
+    .from(messageEvents)
+    .innerJoin(messages, eq(messageEvents.messageId, messages.id))
+    .where(eq(messages.tenantId, tenantId))
+    .groupBy(messages.campaignId);
+  const engagementMap = new Map(
+    engagement
+      .filter((r) => r.campaignId)
+      .map((r) => [
+        r.campaignId as string,
+        { clicked: Number(r.clicked), unsubscribed: Number(r.unsubscribed) },
+      ]),
+  );
+
   const map = new Map<
     string,
-    { recipients: number; delivered: number; failed: number; accepted: number }
+    {
+      recipients: number;
+      delivered: number;
+      opened: number;
+      clicked: number;
+      unsubscribed: number;
+      failed: number;
+      accepted: number;
+    }
   >();
   for (const r of rows) {
     if (r.campaignId) {
       map.set(r.campaignId, {
         recipients: Number(r.recipients),
         delivered: Number(r.delivered),
+        opened: Number(r.opened),
+        clicked: engagementMap.get(r.campaignId)?.clicked ?? 0,
+        unsubscribed: engagementMap.get(r.campaignId)?.unsubscribed ?? 0,
         failed: Number(r.failed),
         accepted: Number(r.accepted),
       });
@@ -97,17 +144,17 @@ async function lastFailedMessageError(
       and(
         eq(messages.tenantId, tenantId),
         eq(messages.campaignId, campaignId),
-        eq(messages.status, "failed"),
+        eq(messages.status, 'failed'),
       ),
     )
     .orderBy(desc(messages.updatedAt))
     .limit(1);
   const msg = rows[0]?.message;
-  return typeof msg === "string" && msg.trim() ? msg.trim() : null;
+  return typeof msg === 'string' && msg.trim() ? msg.trim() : null;
 }
 
 function audienceLabel(listName: string | null, segmentName: string | null): string {
-  return listName ?? segmentName ?? "All subscribers";
+  return listName ?? segmentName ?? 'All subscribers';
 }
 
 export async function listCampaigns(tenantId: string): Promise<CampaignWithStats[]> {
@@ -129,15 +176,15 @@ export async function listCampaigns(tenantId: string): Promise<CampaignWithStats
     audience: audienceLabel(r.listName, r.segmentName),
     recipients: stats.get(r.campaign.id)?.recipients ?? 0,
     delivered: stats.get(r.campaign.id)?.delivered ?? 0,
+    opened: stats.get(r.campaign.id)?.opened ?? 0,
+    clicked: stats.get(r.campaign.id)?.clicked ?? 0,
+    unsubscribed: stats.get(r.campaign.id)?.unsubscribed ?? 0,
     failed: stats.get(r.campaign.id)?.failed ?? 0,
     accepted: stats.get(r.campaign.id)?.accepted ?? 0,
   }));
 }
 
-export async function getCampaign(
-  tenantId: string,
-  id: string,
-): Promise<CampaignWithStats | null> {
+export async function getCampaign(tenantId: string, id: string): Promise<CampaignWithStats | null> {
   const rows = await db
     .select({
       campaign: campaigns,
@@ -161,10 +208,12 @@ export async function getCampaign(
     audience: audienceLabel(row.listName, row.segmentName),
     recipients: counters?.recipients ?? 0,
     delivered: counters?.delivered ?? 0,
+    opened: counters?.opened ?? 0,
+    clicked: counters?.clicked ?? 0,
+    unsubscribed: counters?.unsubscribed ?? 0,
     failed,
     accepted: counters?.accepted ?? 0,
-    lastErrorMessage:
-      failed > 0 ? await lastFailedMessageError(tenantId, row.campaign.id) : null,
+    lastErrorMessage: failed > 0 ? await lastFailedMessageError(tenantId, row.campaign.id) : null,
   };
 }
 
@@ -174,8 +223,8 @@ export async function createCampaign(input: UpsertCampaignInput): Promise<Campai
     .values({
       tenantId: input.tenantId,
       name: input.name,
-      status: input.status ?? "draft",
-      channel: input.channel ?? "email",
+      status: input.status ?? 'draft',
+      channel: input.channel ?? 'email',
       listId: input.listId ?? null,
       segmentId: input.segmentId ?? null,
       templateId: input.templateId ?? null,
@@ -190,7 +239,7 @@ export async function createCampaign(input: UpsertCampaignInput): Promise<Campai
 export async function updateCampaign(
   tenantId: string,
   id: string,
-  patch: Partial<Omit<UpsertCampaignInput, "tenantId">>,
+  patch: Partial<Omit<UpsertCampaignInput, 'tenantId'>>,
 ): Promise<CampaignWithStats | null> {
   const set: Partial<NewCampaign> = { updatedAt: new Date() };
   if (patch.name !== undefined) set.name = patch.name;

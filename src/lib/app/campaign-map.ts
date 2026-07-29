@@ -16,11 +16,19 @@ export interface ApiCampaign {
   audience?: string | null;
   recipients?: number | null;
   delivered?: number | null;
+  /** Messages with a provider read/seen receipt — real opens. */
+  opened?: number | null;
+  /** Messages with at least one click event. */
+  clicked?: number | null;
+  /** Recipients who unsubscribed off this campaign. */
+  unsubscribed?: number | null;
   failed?: number | null;
   /** Messages past queued/processing (submitted → terminal). */
   accepted?: number | null;
   lastErrorMessage?: string | null;
   scheduledAt?: string | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
@@ -37,8 +45,9 @@ function toChannel(c?: string | null): ChannelType {
 
 /**
  * Map a live API campaign into the board's row shape. Counters come from the
- * service (derived from real messages); open/click rates and unsubscribes stay
- * null/0 until provider engagement events are normalized — no invented numbers.
+ * service (derived from real messages and provider events): open rate from
+ * read/seen receipts, click rate from click events, unsubscribes from
+ * unsubscribe events. No invented numbers.
  */
 export function toCampaign(c: ApiCampaign): Campaign {
   return {
@@ -51,14 +60,16 @@ export function toCampaign(c: ApiCampaign): Campaign {
     segmentId: c.segmentId ?? null,
     templateId: c.templateId ?? null,
     scheduledAt: c.scheduledAt ?? null,
-    openRate: null,
-    clickRate: null,
+    startedAt: c.startedAt ?? null,
+    completedAt: c.completedAt ?? null,
+    openRate: c.delivered ? (c.opened ?? 0) / c.delivered : null,
+    clickRate: c.delivered ? (c.clicked ?? 0) / c.delivered : null,
     updatedAt: c.updatedAt ?? c.createdAt ?? new Date().toISOString(),
     recipients: c.recipients ?? 0,
     delivered: c.delivered ?? 0,
     failed: c.failed ?? 0,
     accepted: c.accepted ?? 0,
-    unsubscribed: 0,
+    unsubscribed: c.unsubscribed ?? 0,
   };
 }
 
@@ -123,7 +134,7 @@ export type CampaignSendResult = {
   truncated: boolean;
 };
 
-/** Poll until the campaign leaves `sending` (all messages terminal) or we time out. */
+/** Poll until the campaign leaves `sending` (queue fully dispatched) or we time out. */
 export async function waitForCampaignDelivery(
   id: string,
   opts: { maxMs?: number; intervalMs?: number } = {},
@@ -143,25 +154,17 @@ export async function waitForCampaignDelivery(
   return latest;
 }
 
-/** Progress 0–100 while a campaign is sending.
- *  Accepted (Infobip handoff) fills up to 90%; DLR confirmations fill the last
- *  10% as they land, and 100% only when all are terminal (delivered/failed/…)
- *  so the bar never says "done" while status is still Sending.
- */
+/** Queue-dispatch progress 0–100: share of messages that have left the send
+ *  queue (`accepted` / `recipients`). Hits 100% once every message is
+ *  dispatched (provider handoff or permanent dispatch failure). */
 export function campaignSendProgress(c: {
   recipients?: number | null;
   accepted?: number | null;
-  delivered?: number | null;
-  failed?: number | null;
 }): number {
   const recipients = c.recipients ?? 0;
   if (recipients <= 0) return 0;
-  const terminal = (c.delivered ?? 0) + (c.failed ?? 0);
-  if (terminal >= recipients) return 100;
-  const accepted = c.accepted ?? terminal;
-  const base = Math.min(90, Math.round((accepted / recipients) * 90));
-  const tail = Math.round((terminal / recipients) * 10);
-  return Math.min(99, base + tail);
+  const accepted = c.accepted ?? 0;
+  return Math.min(100, Math.round((accepted / recipients) * 100));
 }
 
 export function campaignDeliveryToast(name: string, c: ApiCampaign): string {
@@ -172,9 +175,7 @@ export function campaignDeliveryToast(name: string, c: ApiCampaign): string {
   }
   if (failed > 0 && delivered === 0) {
     const detail = c.lastErrorMessage?.trim();
-    return detail
-      ? `“${name}” failed — ${detail}`
-      : `“${name}” failed at the provider`;
+    return detail ? `“${name}” failed — ${detail}` : `“${name}” failed at the provider`;
   }
   if (failed > 0) {
     return `“${name}” finished — ${delivered.toLocaleString()} delivered, ${failed.toLocaleString()} failed`;
