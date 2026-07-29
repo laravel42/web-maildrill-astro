@@ -10,6 +10,7 @@ import {
   removeButton,
   reorderButtons,
   replaceDoc,
+  setTemplateField,
   undo,
   updateBlockData,
   useStudio,
@@ -78,5 +79,14 @@ describe('studio store', () => {
     expect(useStudio.getState().future).toEqual([]);
     redo();
     expect((useStudio.getState().doc.blocks.body.data as { text: string }).text).toBe('Two');
+  });
+
+  it('does not push history for no-op template field updates or identical commits', () => {
+    setTemplateField('name', '');
+    expect(useStudio.getState().past).toEqual([]);
+
+    updateBlockData('body', { text: 'Hello', variables: {} });
+    updateBlockData('body', { text: 'Hello', variables: {} });
+    expect(useStudio.getState().past).toHaveLength(1);
   });
 });
