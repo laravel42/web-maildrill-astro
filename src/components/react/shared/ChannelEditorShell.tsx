@@ -18,7 +18,6 @@ type Props = {
   onLanguageChange?: (value: string) => void;
   getLanguageFlagSrc?: (code: string) => string;
   onBack: () => void;
-  onSendTest: () => void;
   onSaveDraft: () => void;
   children: ReactNode;
   toast?: ReactNode;

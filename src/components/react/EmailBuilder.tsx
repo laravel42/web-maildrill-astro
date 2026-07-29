@@ -10,6 +10,7 @@ import {
   PREVIEW_FALLBACK,
   SPEED_OPTS,
   TIPS,
+  truncatePreview,
   VOICE_OPTS,
   voicesForLanguage,
 } from './EmailBuilder.logic';
@@ -170,6 +171,7 @@ export default function EmailBuilder({
   const count2 = isVoice ? voiceSeconds(message) : smsSegments(len);
   const count2Label = isVoice ? 'sec (est.)' : 'segment(s)';
   const msgPreview = message.trim() ? message : PREVIEW_FALLBACK[channel];
+  const msgPreviewDisplay = truncatePreview(msgPreview);
 
   // Voice review playback — the real Infobip TTS voice over a silent WebRTC
   // call (see useVoicePreview). {{tokens}} are spoken as sample values.
@@ -237,7 +239,6 @@ export default function EmailBuilder({
     const ok = await flush();
     show(ok ? `“${templateName.trim() || 'Untitled template'}” saved` : 'Could not save.');
   };
-  const handleSendTest = () => show('Test message sent');
 
   return (
     <ChannelEditorShell
@@ -256,7 +257,6 @@ export default function EmailBuilder({
         kind === 'template' ? (v) => setLanguage(normalizeTemplateLanguageCode(v)) : undefined
       }
       onBack={onClose}
-      onSendTest={handleSendTest}
       onSaveDraft={() => void handleSaveDraft()}
       className={styles.overlayFade}
       toast={
@@ -988,7 +988,7 @@ export default function EmailBuilder({
                           color: 'rgba(255,255,255,.85)',
                         }}
                       >
-                        {msgPreview}
+                        {msgPreviewDisplay}
                       </div>
                       <div
                         style={{
@@ -1111,7 +1111,7 @@ export default function EmailBuilder({
                           boxShadow: '0 1px 1px rgba(0,0,0,.05)',
                         }}
                       >
-                        {msgPreview}
+                        {msgPreviewDisplay}
                       </div>
                       <div
                         style={{
@@ -1203,7 +1203,7 @@ export default function EmailBuilder({
                           position: 'relative',
                         }}
                       >
-                        {msgPreview}
+                        {msgPreviewDisplay}
                         <span
                           style={{
                             position: 'absolute',

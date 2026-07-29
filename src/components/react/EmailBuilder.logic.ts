@@ -50,6 +50,15 @@ export const PREVIEW_FALLBACK: Record<ChannelType, string> = {
   voice: 'Hello {{name}}, this is a courtesy call from Maildrill about your recent order.',
 };
 
+/** Max characters shown in the device preview bubbles. */
+export const PREVIEW_MAX_CHARS = 190;
+
+/** Clip long copy for the side-panel device mockups (full text still used for TTS). */
+export function truncatePreview(text: string, max = PREVIEW_MAX_CHARS): string {
+  if (text.length <= max) return text;
+  return `${text.slice(0, max).trimEnd()}…`;
+}
+
 /** A TTS voice as Infobip's Voice APIs know it. */
 export type VoiceOption = {
   /** Picker label, e.g. 'Joanna · US English'. */

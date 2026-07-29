@@ -26,7 +26,6 @@ type Props = {
   /** Square flag image URL for a language code. */
   getLanguageFlagSrc?: (code: string) => string;
   onBack: () => void;
-  onSendTest: () => void;
   onSaveDraft: () => void;
 };
 
@@ -137,7 +136,7 @@ function LanguagePicker({
 /**
  * Shared editor header used by both the visual email editor and the SMS/
  * WhatsApp/Voice composer so they read as one product: back, a centered
- * editable name (with channel icon + save), autosave status, and Send test.
+ * editable name (with channel icon + save), and autosave status.
  */
 export default function EditorHeader({
   channel,
@@ -153,7 +152,6 @@ export default function EditorHeader({
   onLanguageChange,
   getLanguageFlagSrc,
   onBack,
-  onSendTest,
   onSaveDraft,
 }: Props) {
   const meta = CHANNEL[channel];
@@ -266,10 +264,6 @@ export default function EditorHeader({
           <span className={`${styles.dot} ${status === 'saving' ? styles.dotSaving : ''}`} />
           {STATUS_LABEL[status]}
         </span>
-        <button type="button" className={styles.sbtn} onClick={onSendTest}>
-          <Icon name="send" size={14} />
-          Send test
-        </button>
       </div>
       {nameError && (
         /* Bottom badge in the app's toast position, in its alert tone. Sits

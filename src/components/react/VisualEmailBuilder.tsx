@@ -163,8 +163,6 @@ export default function VisualEmailBuilder({
     show(ok ? `“${title.trim() || 'Untitled template'}” saved` : 'Could not save.');
   };
 
-  const handleSendTest = () => show('Test message sent');
-
   return (
     <ChannelEditorShell
       channel="email"
@@ -197,7 +195,6 @@ export default function VisualEmailBuilder({
           : undefined
       }
       onBack={onClose}
-      onSendTest={handleSendTest}
       onSaveDraft={() => void handleSaveDraft()}
       toast={
         toast ? (
