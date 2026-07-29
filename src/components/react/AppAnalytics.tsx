@@ -72,7 +72,8 @@ export default function AppAnalytics({
 
   const kpis = buildKpis(daily);
   const totals = totalsOf(daily);
-  const channelRows = channel === 'all' ? byChannel : byChannel.filter((c) => c.channel === channel);
+  const channelRows =
+    channel === 'all' ? byChannel : byChannel.filter((c) => c.channel === channel);
   const totalChannelSends = byChannel.reduce((t, c) => t + c.sent, 0);
 
   /* Download exactly the series on screen, rather than claiming an export. */
@@ -284,9 +285,9 @@ export default function AppAnalytics({
         <section className={`acrd ${styles.panel}`}>
           <h2 className={styles.panelTitle}>Engagement</h2>
           <p className="screen__sub" style={{ margin: 0 }}>
-            Opens and clicks aren't tracked yet. They need a tracking pixel and link
-            rewriting on outbound email, plus provider engagement webhooks — until then
-            this product has no way to measure them, so nothing is shown here.
+            Opens and clicks aren't tracked yet. They need a tracking pixel and link rewriting on
+            outbound email, plus provider engagement webhooks — until then this product has no way
+            to measure them, so nothing is shown here.
           </p>
         </section>
       </div>
@@ -329,7 +330,11 @@ export default function AppAnalytics({
                     <div className={styles.ctMini}>
                       <div
                         className={styles.ctMiniFill}
-                        style={{ width: `${rate}%`, background: m.color, animation: 'grow .5s ease' }}
+                        style={{
+                          width: `${rate}%`,
+                          background: m.color,
+                          animation: 'grow .5s ease',
+                        }}
                       />
                     </div>
                     <span className={`${styles.ctRateVal} tnum`}>
@@ -390,6 +395,13 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
   const grid = [0, 1, 2, 3, 4];
   const step = plotW / (n - 1);
 
+  /* Thin the day labels so they never collide: at most ~8 across the axis,
+     with the final day always labeled (and the stepped label nearest to it
+     dropped so the two can't touch). */
+  const labelEvery = Math.max(1, Math.ceil(n / 8));
+  const showLabel = (i: number) =>
+    i === n - 1 || (i % labelEvery === 0 && n - 1 - i >= labelEvery / 2);
+
   const sentVisible = visible.has('sent');
   const areaPath = sentVisible
     ? `M ${x(0)},${y(series[0].sent)} ` +
@@ -429,7 +441,7 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
                 x={ML - 8}
                 y={gy + 3.5}
                 textAnchor="end"
-                style={{ fill: 'var(--muted2)', fontSize: '11px' }}
+                style={{ fill: 'var(--text4)', fontSize: '10.5px', fontFamily: 'var(--font-mono)' }}
                 className="tnum"
               >
                 {fmtCompact((yMax * g) / 4)}
@@ -438,19 +450,21 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
           );
         })}
 
-        {/* x labels */}
-        {series.map((p, i) => (
-          <text
-            key={p.date}
-            x={x(i)}
-            y={H - 10}
-            textAnchor="middle"
-            style={{ fill: 'var(--muted)', fontSize: '11px' }}
-            className="tnum"
-          >
-            {fmtDate(p.date)}
-          </text>
-        ))}
+        {/* x labels — thinned; the last is end-anchored so it can't clip */}
+        {series.map((p, i) =>
+          showLabel(i) ? (
+            <text
+              key={p.date}
+              x={x(i)}
+              y={H - 10}
+              textAnchor={i === n - 1 ? 'end' : 'middle'}
+              style={{ fill: 'var(--text4)', fontSize: '10.5px', fontFamily: 'var(--font-mono)' }}
+              className="tnum"
+            >
+              {fmtDate(p.date)}
+            </text>
+          ) : null,
+        )}
 
         {/* hover guide */}
         {hover != null && (
