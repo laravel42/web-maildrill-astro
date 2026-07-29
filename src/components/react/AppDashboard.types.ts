@@ -5,7 +5,8 @@ export type Kpi = {
   label: string;
   value: string;
   delta: string;
-  up: boolean;
+  /** Visual tone for the delta vs last week. */
+  tone: 'up' | 'down' | 'flat';
 };
 
 export type ActivityItem = {
@@ -16,12 +17,12 @@ export type ActivityItem = {
   time: string;
 };
 
-export type ChannelPerf = {
-  channel: ChannelType;
-  sent: string;
-  open: string;
-  click: string;
-  openW: number;
+/** One entry from /v1/stats/feed — a real workspace happening. */
+export type FeedItem = {
+  type: 'campaign_sent' | 'subscriber_added' | 'unsubscribed';
+  title: string;
+  detail: string | null;
+  at: string;
 };
 
 export type GetStartedStep = {
