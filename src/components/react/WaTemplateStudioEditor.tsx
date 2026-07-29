@@ -86,18 +86,17 @@ export default function WaTemplateStudioEditor({
             components,
             category,
           });
-          replaceDoc(doc, { resetHistory: true });
-          const canonicalLanguage = normalizeTemplateLanguageCode(doc.language);
-          if (canonicalLanguage !== doc.language) {
-            setTemplateField('language', canonicalLanguage);
-          }
-          setWaCategory(waCategoryLabel(doc.category));
-          setWaLanguage(canonicalLanguage);
+          const hydrated = {
+            ...doc,
+            language: normalizeTemplateLanguageCode(doc.language),
+            name: title.trim() || name || doc.name || '',
+          };
+          replaceDoc(hydrated, { resetHistory: true });
+          setWaCategory(waCategoryLabel(hydrated.category));
+          setWaLanguage(hydrated.language);
           studioReady.current = true;
         }
         setStudio(() => mod.Studio);
-        // Keep header name in sync with the studio doc field used on export.
-        setTemplateField('name', title.trim() || name || '');
       } catch (err) {
         if (alive) {
           setLoadError(err instanceof Error ? err.message : 'Failed to load the WhatsApp editor.');
@@ -185,7 +184,6 @@ export default function WaTemplateStudioEditor({
         void import('wa-template-studio').then((mod) => mod.setTemplateField('language', next));
       }}
       onBack={onClose}
-      onSendTest={() => show('Test message sent')}
       onSaveDraft={() => void handleSave()}
       toast={
         toast ? (
