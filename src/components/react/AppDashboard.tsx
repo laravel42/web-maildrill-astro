@@ -81,6 +81,11 @@ export default function AppDashboard({
             <span>Open</span>
             <span>Updated</span>
           </div>
+          {recent.length === 0 && (
+            <p className={styles.cardEmpty}>
+              No campaigns yet — create your first and it shows up here.
+            </p>
+          )}
           {recent.map((c) => (
             <a key={c.id} href="/dashboard/campaigns" className={styles.ctRow}>
               <span className={styles.ctName}>{c.name}</span>
@@ -102,6 +107,11 @@ export default function AppDashboard({
           <div className="acrd__head">
             <h2 className="acrd__title">Recent activity</h2>
           </div>
+          {activity.length === 0 && (
+            <p className={styles.cardEmpty}>
+              Workspace activity lands here as things happen — sends, imports, and edits.
+            </p>
+          )}
           <div className={styles.activity}>
             {activity.map((a, i) => (
               <div key={i} className={styles.act}>
@@ -126,6 +136,11 @@ export default function AppDashboard({
             View analytics
           </a>
         </div>
+        {channelPerf.length === 0 && (
+          <p className={styles.cardEmpty} style={{ padding: 0 }}>
+            Per-channel volume appears once your campaigns start sending.
+          </p>
+        )}
         <div className={styles.perfList}>
           {channelPerf.map((p) => {
             const meta = CHANNEL[p.channel];
@@ -177,30 +192,38 @@ export default function AppDashboard({
               </div>
               <div className={`tnum ${styles.sparkDelta}`} />
             </div>
-            <svg
-              width="100%"
-              height="70"
-              viewBox="0 0 320 70"
-              preserveAspectRatio="none"
-              className={styles.sparkSvg}
-              aria-hidden="true"
-            >
-              <defs>
-                <linearGradient id="dashspk" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stopColor="#4f46e5" stopOpacity="0.18" />
-                  <stop offset="1" stopColor="#4f46e5" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <polyline points={spark.area} fill="url(#dashspk)" stroke="none" />
-              <polyline
-                points={spark.line}
-                fill="none"
-                stroke="#4f46e5"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            {!spark.line && (
+              <p className={styles.cardEmpty} style={{ padding: '0 0 4px' }}>
+                Daily send volume plots here once there is activity to chart.
+              </p>
+            )}
+            {spark.line && (
+              <svg
+                width="100%"
+                height="70"
+                viewBox="0 0 100 32"
+                preserveAspectRatio="none"
+                className={styles.sparkSvg}
+                aria-hidden="true"
+              >
+                <defs>
+                  <linearGradient id="dashspk" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stopColor="#4f46e5" stopOpacity="0.18" />
+                    <stop offset="1" stopColor="#4f46e5" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <polyline points={spark.area} fill="url(#dashspk)" stroke="none" />
+                <polyline
+                  points={spark.line}
+                  fill="none"
+                  stroke="#4f46e5"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </svg>
+            )}
           </div>
         </div>
 

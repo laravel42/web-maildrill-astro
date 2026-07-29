@@ -15,10 +15,31 @@
   text-decoration: none;
 }
 .kpis {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  /* fluid: cards share the full row; wrapped cards grow to fill their row */
+  display: flex;
+  flex-wrap: wrap;
   gap: 14px;
   margin-bottom: 18px;
+}
+.kpis :global(.akpi) {
+  flex: 1 1 150px;
+  min-width: 0;
+}
+.kpis :global(.akpi__label) {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kpis :global(.akpi__value) {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 .row {
   display: grid;
@@ -27,11 +48,24 @@
   margin-bottom: 18px;
 }
 .muted {
-  color: var(--muted);
+  color: var(--text4);
   font-size: 12px;
 }
 .muted3 {
   color: var(--text3);
+}
+.ctRow :global(.tnum) {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+/* quiet blank slate for cards whose data is not wired yet */
+.cardEmpty {
+  margin: 0;
+  padding: 16px 19px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text4);
+  max-width: 46ch;
 }
 
 .ctHead,
@@ -42,12 +76,13 @@
   padding: 12px 19px;
 }
 .ctHead {
-  font-size: 11px;
-  color: var(--muted);
-  font-weight: 600;
-  letter-spacing: 0.3px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text4);
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  border-bottom: 1px solid var(--surface2);
+  border-bottom: 1px solid var(--border2);
   padding: 10px 19px;
 }
 .ctRow {
@@ -94,7 +129,7 @@
 }
 .actTime {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--text4);
   margin-top: 2px;
 }
 
@@ -136,8 +171,10 @@
   font-weight: 600;
 }
 .perfSent {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
-  color: var(--muted);
+  color: var(--text4);
 }
 .perfBar {
   flex: 1;
@@ -163,14 +200,19 @@
   flex: none;
 }
 .sparkLbl {
-  font-size: 11.5px;
-  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text4);
 }
 .sparkVal {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 23px;
   font-weight: 600;
-  letter-spacing: -0.5px;
-  margin-top: 3px;
+  letter-spacing: -0.02em;
+  margin-top: 4px;
 }
 .sparkDelta {
   font-size: 11.5px;
@@ -208,20 +250,12 @@
   font-weight: 500;
 }
 
-@media (max-width: 1180px) {
-  .kpis {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
 @media (max-width: 1000px) {
   .row {
     grid-template-columns: 1fr;
   }
 }
 @media (max-width: 640px) {
-  .kpis {
-    grid-template-columns: repeat(2, 1fr);
-  }
   .ctHead span:nth-child(3),
   .ctRow span:nth-child(3) {
     display: none;
