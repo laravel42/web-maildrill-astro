@@ -2,9 +2,9 @@ import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { config } from "@maildrill/config";
 import { campaigns, db, messages, type MessageRow } from "@maildrill/database";
 import {
-  CAMPAIGN_COMPLETE_STATES,
   OPEN_DELIVERY_STATES,
-  isCampaignDeliveryComplete,
+  QUEUE_PENDING_STATES,
+  isCampaignDispatched,
   outcomeFromInfobipStatusGroup,
   type MessageState,
 } from "@maildrill/domain";
@@ -58,10 +58,10 @@ export function mapLatestStatusGroups(
   return out;
 }
 
-/** Pure: whether a sending campaign should flip to sent given message statuses. */
+/** Pure: flip to `sent` once every message has left the send queue. */
 export function shouldCompleteCampaign(statuses: MessageState[]): boolean {
   if (statuses.length === 0) return true;
-  return statuses.every(isCampaignDeliveryComplete);
+  return statuses.every(isCampaignDispatched);
 }
 
 async function loadOpenMessages(): Promise<MessageRow[]> {
@@ -225,6 +225,53 @@ async function syncOpenMessagesFromInfobip(open: MessageRow[]): Promise<number> 
   return updated;
 }
 
+/**
+ * Flip a single campaign to `sent` when every message has left the send queue.
+ * Safe to call after each dispatch; no-ops if still pending or already sent.
+ */
+export async function tryCompleteCampaign(
+  campaignId: string,
+  tenantId: string,
+): Promise<boolean> {
+  const camp = await db
+    .select({ id: campaigns.id, status: campaigns.status })
+    .from(campaigns)
+    .where(and(eq(campaigns.id, campaignId), eq(campaigns.tenantId, tenantId)))
+    .limit(1);
+  if (camp[0]?.status !== "sending") return false;
+
+  const rows = await db
+    .select({ status: messages.status })
+    .from(messages)
+    .where(and(eq(messages.campaignId, campaignId), eq(messages.tenantId, tenantId)));
+
+  const statuses = rows.map((r) => r.status);
+  if (!shouldCompleteCampaign(statuses)) return false;
+
+  // Guard: race with concurrent queue inserts / claims still in flight.
+  const queuedLeft = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(messages)
+    .where(
+      and(
+        eq(messages.campaignId, campaignId),
+        inArray(messages.status, [...QUEUE_PENDING_STATES]),
+      ),
+    );
+  if (Number(queuedLeft[0]?.n ?? 0) > 0) return false;
+
+  await db
+    .update(campaigns)
+    .set({ status: "sent", completedAt: new Date(), updatedAt: new Date() })
+    .where(and(eq(campaigns.id, campaignId), eq(campaigns.status, "sending")));
+
+  log.info(
+    { campaignId, tenantId, messages: statuses.length },
+    "campaign dispatch complete",
+  );
+  return true;
+}
+
 async function completeFinishedCampaigns(): Promise<number> {
   const sending = await db
     .select({ id: campaigns.id, tenantId: campaigns.tenantId })
@@ -235,55 +282,15 @@ async function completeFinishedCampaigns(): Promise<number> {
 
   let completed = 0;
   for (const camp of sending) {
-    const rows = await db
-      .select({ status: messages.status })
-      .from(messages)
-      .where(
-        and(eq(messages.campaignId, camp.id), eq(messages.tenantId, camp.tenantId)),
-      );
-
-    const statuses = rows.map((r) => r.status);
-    if (!shouldCompleteCampaign(statuses)) continue;
-
-    // Guard: still has open rows (race with concurrent inserts) — skip.
-    const openLeft = await db
-      .select({ n: sql<number>`count(*)::int` })
-      .from(messages)
-      .where(
-        and(
-          eq(messages.campaignId, camp.id),
-          inArray(messages.status, [...OPEN_DELIVERY_STATES]),
-        ),
-      );
-    if (Number(openLeft[0]?.n ?? 0) > 0) continue;
-
-    // Also skip if campaign has messages not yet complete that aren't in OPEN
-    // (e.g. draft) — shouldCompleteCampaign already covers this.
-
-    await db
-      .update(campaigns)
-      .set({ status: "sent", completedAt: new Date(), updatedAt: new Date() })
-      .where(and(eq(campaigns.id, camp.id), eq(campaigns.status, "sending")));
-
-    completed += 1;
-    log.info(
-      {
-        campaignId: camp.id,
-        tenantId: camp.tenantId,
-        messages: statuses.length,
-        completeStates: CAMPAIGN_COMPLETE_STATES,
-      },
-      "campaign delivery complete",
-    );
+    if (await tryCompleteCampaign(camp.id, camp.tenantId)) completed += 1;
   }
 
   return completed;
 }
 
 /**
- * Sync open message DLRs from PostHog and flip finished campaigns to `sent`.
- * Safe to call when PostHog is unset — still completes campaigns whose messages
- * already reached terminal states via dispatch failures.
+ * Sync open message DLRs from PostHog and flip fully-dispatched campaigns to
+ * `sent`. Safe to call when PostHog is unset — completion is queue-based.
  */
 export async function pollCampaignDelivery(): Promise<DeliveryPollResult> {
   const open = await loadOpenMessages();

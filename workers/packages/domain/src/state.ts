@@ -34,8 +34,24 @@ export function isTerminal(state: MessageState): boolean {
 }
 
 /**
- * Message finished for campaign completion / progress (delivered counts as done;
- * `read` is a further engagement state after delivery).
+ * Still waiting in/before the send queue — not yet handed off to the provider
+ * (or permanently failed out of dispatch). Campaigns flip to `sent` once no
+ * messages remain in these states.
+ */
+export const QUEUE_PENDING_STATES = [
+  "draft",
+  "scheduled",
+  "queued",
+  "processing",
+] as const satisfies readonly MessageState[];
+
+export function isCampaignDispatched(state: MessageState): boolean {
+  return !(QUEUE_PENDING_STATES as readonly MessageState[]).includes(state);
+}
+
+/**
+ * Message reached a terminal delivery outcome (DLR / engagement). Used for
+ * analytics completeness — campaign status itself completes on dispatch.
  */
 export const CAMPAIGN_COMPLETE_STATES = [
   "delivered",
@@ -49,7 +65,7 @@ export function isCampaignDeliveryComplete(state: MessageState): boolean {
   return (CAMPAIGN_COMPLETE_STATES as readonly MessageState[]).includes(state);
 }
 
-/** Open message statuses still awaiting a final DLR (or dispatch). */
+/** Open message statuses still awaiting a final DLR (or still in the send queue). */
 export const OPEN_DELIVERY_STATES = [
   "queued",
   "processing",

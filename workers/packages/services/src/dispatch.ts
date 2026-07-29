@@ -14,9 +14,22 @@ import {
 } from "@maildrill/domain";
 import { getProvider } from "@maildrill/providers";
 import { createLogger, metrics } from "@maildrill/observability";
+import { tryCompleteCampaign } from "./campaign-delivery";
 import { bumpVersion } from "./shared";
 
 const log = createLogger({ component: "dispatch" });
+
+async function maybeCompleteCampaign(
+  campaignId: string | null,
+  tenantId: string,
+): Promise<void> {
+  if (!campaignId) return;
+  try {
+    await tryCompleteCampaign(campaignId, tenantId);
+  } catch (err) {
+    log.warn({ err, campaignId, tenantId }, "campaign complete after dispatch failed");
+  }
+}
 
 /** Thrown to hand a retryable failure back to BullMQ (backoff + attempts). */
 export class DispatchRetryError extends Error {
@@ -125,6 +138,7 @@ export async function handleDispatch(raw: unknown): Promise<void> {
       provider: message.provider,
     });
     metrics.inc("provider_request_total", { provider: message.provider });
+    await maybeCompleteCampaign(message.campaignId, message.tenantId);
     return;
   }
 
@@ -194,4 +208,5 @@ export async function handleDispatch(raw: unknown): Promise<void> {
     channel: message.channel,
     provider: message.provider,
   });
+  await maybeCompleteCampaign(message.campaignId, message.tenantId);
 }

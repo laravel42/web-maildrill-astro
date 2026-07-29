@@ -35,15 +35,18 @@ describe("mapLatestStatusGroups", () => {
 });
 
 describe("shouldCompleteCampaign", () => {
-  it("completes when every message is terminal (incl. failed)", () => {
+  it("completes when every message has left the send queue", () => {
     expect(shouldCompleteCampaign([])).toBe(true);
     expect(shouldCompleteCampaign(["delivered", "failed", "expired"])).toBe(true);
     expect(shouldCompleteCampaign(["delivered", "read"])).toBe(true);
+    expect(shouldCompleteCampaign(["delivered", "submitted"])).toBe(true);
+    expect(shouldCompleteCampaign(["sent", "submitted"])).toBe(true);
   });
 
-  it("stays open while any message awaits DLR", () => {
-    expect(shouldCompleteCampaign(["delivered", "submitted"])).toBe(false);
+  it("stays open while any message is still queued / processing", () => {
     expect(shouldCompleteCampaign(["queued"])).toBe(false);
-    expect(shouldCompleteCampaign(["sent"])).toBe(false);
+    expect(shouldCompleteCampaign(["processing"])).toBe(false);
+    expect(shouldCompleteCampaign(["submitted", "queued"])).toBe(false);
+    expect(shouldCompleteCampaign(["draft", "submitted"])).toBe(false);
   });
 });
