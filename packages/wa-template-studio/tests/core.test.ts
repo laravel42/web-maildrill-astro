@@ -5,6 +5,7 @@ import { newId, type MetaTemplate, type TemplateDoc } from '../src/core/types';
 import { fromMetaJson, toMetaJson } from '../src/core/serialize';
 import { hasErrors, validateTemplate } from '../src/core/validation';
 import { analyzeVariables, insertVariableAt, renumberVariables } from '../src/core/variables';
+import { buildSubscriberFieldOptions, matchSubscriberField } from '../src/core/subscriber-fields';
 
 beforeAll(() => {
   registerBuiltInPlugins();
@@ -80,6 +81,25 @@ describe('variable engine', () => {
     const result = insertVariableAt('', {}, 0);
     expect(result.text).toBe('{{1}}');
     expect(result.caret).toBe('{{1}}'.length);
+  });
+});
+
+describe('subscriber fields', () => {
+  it('includes core fields and workspace custom fields', () => {
+    const options = buildSubscriberFieldOptions([
+      { id: '1', key: 'company', label: 'Company', type: 'text' },
+    ]);
+    expect(options.map((o) => o.label)).toEqual(['Name', 'Email', 'Phone', 'Company']);
+    expect(options[3]?.token).toBe('{{attributes.company}}');
+  });
+
+  it('matches stored variable metadata by merge token', () => {
+    const options = buildSubscriberFieldOptions();
+    const matched = matchSubscriberField(
+      { name: 'Name', example: 'Alex Morgan', source: '{{name}}' },
+      options,
+    );
+    expect(matched?.id).toBe('name');
   });
 });
 

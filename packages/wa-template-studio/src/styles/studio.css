@@ -105,6 +105,59 @@
   }
 }
 
+/* Maildrill app badge — mirrored from src/styles/components.css so variable
+   chips match the workspace when the studio is embedded or run standalone. */
+.wa-studio .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: var(--radius-pill, 999px);
+  font-size: var(--fs-xs, 0.75rem);
+  font-weight: 600;
+  line-height: 1.2;
+  background: var(--surface2, var(--secondary));
+  color: var(--text3, var(--muted-foreground));
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.wa-studio .badge--whatsapp {
+  background: var(--ch-whatsapp-tint, #dcfce7);
+  color: var(--ch-whatsapp, #16a34a);
+  border-color: transparent;
+}
+
+.wa-studio input.badge {
+  width: auto;
+  min-width: 0;
+  max-width: 55%;
+  flex-shrink: 1;
+  field-sizing: content;
+  text-align: left;
+  outline: none;
+  cursor: text;
+  margin: 0;
+  padding: 0.22rem 0.6rem;
+  appearance: none;
+  box-sizing: border-box;
+}
+
+.wa-studio input.badge::placeholder {
+  color: var(--ch-whatsapp, #16a34a);
+  opacity: 0.65;
+}
+
+.wa-studio input.badge:focus-visible {
+  border-color: var(--accent, var(--ring));
+  box-shadow: 0 0 0 2px var(--accent-tint, color-mix(in srgb, var(--ring) 30%, transparent));
+}
+
+.wa-studio input.badge.badge--whatsapp:focus-visible {
+  border-color: var(--ch-whatsapp, #16a34a);
+  box-shadow: 0 0 0 2px var(--ch-whatsapp-tint, #dcfce7);
+}
+
 /* Library tiles (drag sources) — mirrors email-builder-standalone's
    dragTileShellSx: 10px radius, 1px dashed border, accent hover with a 1px
    lift, 130ms composited transition. Plain CSS on purpose: the host app
@@ -221,6 +274,31 @@
 .wts-select-menu [data-slot='select-item'][data-highlighted] {
   background: #eef0ff; /* --accent-tint */
   color: #1f1e1b;
+}
+
+.wts-select-menu [data-slot='combobox-item'] {
+  border-radius: 6px;
+  font-size: 0.9375rem; /* --fs-base */
+}
+
+.wts-select-menu [data-slot='combobox-item']:hover,
+.wts-select-menu [data-slot='combobox-item']:focus-visible,
+.wts-select-menu [data-slot='combobox-item'][data-selected] {
+  background: #eef0ff; /* --accent-tint */
+  color: #1f1e1b;
+}
+
+.wts-combobox-list {
+  max-height: 14rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.wts-select-menu .wts-combobox-token {
+  color: #77756c; /* --text4 */
+  word-break: break-word;
 }
 
 /* Toolbar — aligned with email-builder-standalone TemplatePanel / MainTabsGroup. */

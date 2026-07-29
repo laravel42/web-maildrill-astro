@@ -2,13 +2,14 @@ import * as React from 'react';
 import { z } from 'zod';
 import { AlignLeft, Bold, Braces, Code, Italic, ListRestart, Strikethrough } from 'lucide-react';
 
-import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 import { Field } from '@/ui/field';
-import { Input } from '@/ui/input';
 import { Textarea } from '@/ui/textarea';
+import { SubscriberFieldCombobox } from '@/ui/subscriber-field-combobox';
 import { LIMITS } from '@/core/limits';
+import { matchSubscriberField } from '@/core/subscriber-fields';
 import type { BlockPlugin, ValidationIssue } from '@/core/types';
+import { useSubscriberFields } from '@/hooks/use-subscriber-fields';
 import {
   analyzeVariables,
   exampleRow,
@@ -22,7 +23,7 @@ import { renderWaText } from '@/preview/renderWaText';
 const schema = z.object({
   text: z.string(),
   // Optional: drafts/imports may lack it; every consumer treats absence as {}.
-  variables: z.record(z.string(), z.object({ name: z.string().optional(), example: z.string().optional() })).optional(),
+  variables: z.record(z.string(), z.object({ name: z.string().optional(), example: z.string().optional(), source: z.string().optional() })).optional(),
 });
 
 type Data = z.infer<typeof schema>;
@@ -123,8 +124,9 @@ export const bodyPlugin: BlockPlugin<Data> = {
     const detectedUrls = value.text.match(URL_IN_TEXT_RE) ?? [];
     const detectedPhones = value.text.match(PHONE_IN_TEXT_RE) ?? [];
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+    const subscriberFields = useSubscriberFields();
 
-    const setVariableMeta = (n: number, patch: { name?: string; example?: string }) => {
+    const setVariableMeta = (n: number, patch: { name?: string; example?: string; source?: string }) => {
       onChange({
         ...value,
         variables: { ...(value.variables ?? {}), [String(n)]: { ...(value.variables ?? {})[String(n)], ...patch } },
@@ -236,6 +238,7 @@ export const bodyPlugin: BlockPlugin<Data> = {
             value={value.text}
             onChange={(e) => onChange({ ...value, text: e.target.value })}
             rows={8}
+            className="min-h-32"
             placeholder={'Hi {{1}}, your order {{2}} has shipped! 🎉'}
             aria-label="Body text"
           />
@@ -262,21 +265,30 @@ export const bodyPlugin: BlockPlugin<Data> = {
             <div className="text-xs font-medium text-muted-foreground">Variables</div>
             {analysis.used.map((n) => (
               <div key={n} className="flex flex-col gap-1.5 rounded-md border border-border p-2.5">
-                <div className="flex items-center gap-1.5">
-                  <Badge variant="secondary">{`{{${n}}}`}</Badge>
-                  {analysis.duplicated.includes(n) && <Badge variant="outline">used twice</Badge>}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    <span className="badge">{`{{${n}}}`}</span>
+                    {analysis.duplicated.includes(n) && <span className="badge">used twice</span>}
+                  </div>
+                  <input
+                    value={(value.variables ?? {})[String(n)]?.name ?? ''}
+                    onChange={(e) => setVariableMeta(n, { name: e.target.value })}
+                    placeholder="Label"
+                    aria-label={`Variable ${n} label`}
+                    className="badge badge--whatsapp"
+                  />
                 </div>
-                <Input
-                  value={(value.variables ?? {})[String(n)]?.name ?? ''}
-                  onChange={(e) => setVariableMeta(n, { name: e.target.value })}
-                  placeholder="Label (e.g. Customer name)"
-                  aria-label={`Variable ${n} label`}
-                />
-                <Input
-                  value={(value.variables ?? {})[String(n)]?.example ?? ''}
-                  onChange={(e) => setVariableMeta(n, { example: e.target.value })}
-                  placeholder="Example value (required by Meta)"
-                  aria-label={`Variable ${n} example`}
+                <SubscriberFieldCombobox
+                  options={subscriberFields}
+                  value={matchSubscriberField((value.variables ?? {})[String(n)], subscriberFields)}
+                  onChange={(option) =>
+                    setVariableMeta(n, {
+                      example: option.example,
+                      source: option.token,
+                    })
+                  }
+                  placeholder="Map to subscriber field…"
+                  aria-label={`Variable ${n} subscriber field`}
                 />
               </div>
             ))}

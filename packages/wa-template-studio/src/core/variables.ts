@@ -20,6 +20,8 @@ export interface VariableMeta {
   name?: string;
   /** Example value required by Meta review. */
   example?: string;
+  /** Merge tag for send-time mapping, e.g. `{{name}}` or `{{attributes.company}}`. */
+  source?: string;
 }
 
 /** Keyed by variable number as a string ('1', '2', …). */
