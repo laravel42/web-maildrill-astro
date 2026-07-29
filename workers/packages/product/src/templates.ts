@@ -122,20 +122,27 @@ function subscriberToken(sub: Subscriber, key: string): string {
 }
 
 /**
- * Render a template for a subscriber, substituting `{{email}}`, `{{name}}`,
- * `{{phone}}`, and `{{attributes.key}}` (or bare `{{key}}`) tokens from the
- * subscriber record.
+ * Substitute `{{email}}`, `{{name}}`, `{{phone}}`, and `{{attributes.key}}`
+ * (or bare `{{key}}`) tokens anywhere in a string from the subscriber record.
  */
+export function mergeSubscriberTokens(s: string, sub: Subscriber): string {
+  return s.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_m, k: string) => subscriberToken(sub, k));
+}
+
+/** Render a template's copy fields for a subscriber. */
 export function renderTemplate(
   tpl: TemplateRow,
   sub: Subscriber,
 ): Record<string, unknown> {
   const merge = (s: string | null): string | undefined =>
-    s == null
-      ? undefined
-      : s.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_m, k: string) => subscriberToken(sub, k));
+    s == null ? undefined : mergeSubscriberTokens(s, sub);
 
-  return { subject: merge(tpl.subject), html: merge(tpl.html), text: merge(tpl.text) };
+  return {
+    subject: merge(tpl.subject),
+    preheader: merge(tpl.preheader),
+    html: merge(tpl.html),
+    text: merge(tpl.text),
+  };
 }
 
 /**
@@ -147,4 +154,104 @@ export function resolveTemplatePlaceholders(tpl: TemplateRow, sub: Subscriber): 
   const components = (tpl.components ?? {}) as { placeholders?: unknown };
   const tokens = Array.isArray(components.placeholders) ? components.placeholders : [];
   return tokens.map((t) => (typeof t === "string" ? subscriberToken(sub, t) : ""));
+}
+
+/** Provider-facing body fields; strips UI metadata stored alongside (e.g. audienceIds). */
+const MESSAGE_CONTENT_KEYS = [
+  "subject",
+  "html",
+  "text",
+  "from",
+  "preheader",
+  // Voice TTS language / voice selection (ignored by email/SMS builders).
+  "language",
+  "voiceName",
+  "voiceGender",
+  "speechRate",
+  "audioFileUrl",
+] as const;
+
+function messageContentOverrides(
+  raw: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  if (!raw) return {};
+  const out: Record<string, unknown> = {};
+  for (const key of MESSAGE_CONTENT_KEYS) {
+    const v = raw[key];
+    if (v !== undefined && v !== null && v !== "") out[key] = v;
+  }
+  return out;
+}
+
+/** User-authored copy fields that may carry {{merge}} tags, whichever source they came from. */
+const COPY_FIELDS = ["subject", "html", "text", "preheader"] as const;
+
+function renderCopyFields(
+  content: Record<string, unknown>,
+  sub: Subscriber,
+): Record<string, unknown> {
+  for (const key of COPY_FIELDS) {
+    const v = content[key];
+    if (typeof v === "string") content[key] = mergeSubscriberTokens(v, sub);
+  }
+  return content;
+}
+
+/**
+ * Final provider content for one recipient: template body (if any) merged with
+ * campaign-level overrides, then subscriber tokens substituted exactly once in
+ * every copy field. Campaign-authored copy (an email subject, a composer SMS /
+ * voice script stored on the campaign with no template) personalizes the same
+ * way a template body does, on every channel.
+ */
+export function resolveMessageContent(
+  template: TemplateRow | null,
+  sub: Subscriber,
+  overrides: Record<string, unknown> | undefined,
+  channel: Channel,
+): Record<string, unknown> {
+  const campaign = messageContentOverrides(overrides);
+  if (!template) return renderCopyFields(campaign, sub);
+
+  // Approved WhatsApp templates send via the template endpoint: pass the template
+  // name/language plus the ordered placeholder values resolved per recipient.
+  if (channel === "whatsapp" && template.approvalStatus === "approved") {
+    // Infobip/Meta template names are lowercase; DB may still hold a display name.
+    const templateName = template.name
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, "_")
+      .replace(/[^a-z0-9_]/g, "")
+      .replace(/_+/g, "_")
+      .replace(/^_|_$/g, "");
+    return renderCopyFields(
+      {
+        templateName,
+        templateLanguage: template.language ?? "en",
+        placeholders: resolveTemplatePlaceholders(template, sub),
+        ...campaign,
+      },
+      sub,
+    );
+  }
+
+  // Templates carry body only (html/text/preheader). Subject lives on the campaign.
+  const body: Record<string, unknown> = {};
+  if (template.html) body.html = template.html;
+  if (template.text) body.text = template.text;
+  if (template.preheader) body.preheader = template.preheader;
+
+  // Voice templates persist their TTS selection in builderDoc
+  // ({ voice: { name, gender, sayLanguage }, speechRate }) — surface it as
+  // provider content so delivery speaks the authored voice. Campaign-level
+  // overrides still win via the spread below.
+  if (channel === "voice" && template.builderDoc) {
+    const doc = template.builderDoc as Record<string, unknown>;
+    const voice = (doc.voice ?? {}) as Record<string, unknown>;
+    if (typeof voice.sayLanguage === "string") body.language = voice.sayLanguage;
+    if (typeof voice.name === "string") body.voiceName = voice.name;
+    if (typeof voice.gender === "string") body.voiceGender = voice.gender;
+    if (typeof doc.speechRate === "number") body.speechRate = doc.speechRate;
+  }
+  return renderCopyFields({ ...body, ...campaign }, sub);
 }

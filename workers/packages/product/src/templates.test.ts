@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Subscriber, TemplateRow } from "@maildrill/database";
-import { renderTemplate } from "./templates";
+import { renderTemplate, resolveMessageContent } from "./templates";
 
 // renderTemplate is pure (no DB); build just the fields it reads.
 function tpl(parts: Partial<TemplateRow>): TemplateRow {
@@ -40,5 +40,59 @@ describe("renderTemplate merge tags", () => {
     );
     expect(out.subject).toBe("Hi Sam");
     expect(out.html).toBe("|");
+  });
+
+  it("renders the preheader too", () => {
+    const out = renderTemplate(
+      tpl({ preheader: "For {{name}}" } as Partial<TemplateRow>),
+      sub({ name: "Sam" }),
+    );
+    expect(out.preheader).toBe("For Sam");
+  });
+});
+
+describe("resolveMessageContent merge tags", () => {
+  const jane = sub({ email: "jane@acme.io", name: "Jane", attributes: { plan: "pro" } });
+
+  it("substitutes tokens in campaign-only content (composer SMS/voice, no template)", () => {
+    const out = resolveMessageContent(null, jane, { text: "Hi {{name}}, {{plan}} it is" }, "sms");
+    expect(out.text).toBe("Hi Jane, pro it is");
+  });
+
+  it("substitutes tokens in the campaign subject alongside a template body", () => {
+    const out = resolveMessageContent(
+      tpl({ html: "<p>Hello {{name}}</p>" }),
+      jane,
+      { subject: "{{name}}, your {{plan}} digest" },
+      "email",
+    );
+    expect(out.subject).toBe("Jane, your pro digest");
+    expect(out.html).toBe("<p>Hello Jane</p>");
+  });
+
+  it("keeps campaign overrides winning over template body, rendered", () => {
+    const out = resolveMessageContent(
+      tpl({ text: "template {{name}}" }),
+      jane,
+      { text: "override {{name}}" },
+      "sms",
+    );
+    expect(out.text).toBe("override Jane");
+  });
+
+  it("resolves approved WhatsApp template placeholders per recipient", () => {
+    const out = resolveMessageContent(
+      tpl({
+        name: "Order Update",
+        approvalStatus: "approved",
+        language: "en",
+        components: { placeholders: ["name", "attributes.plan"] },
+      } as Partial<TemplateRow>),
+      jane,
+      undefined,
+      "whatsapp",
+    );
+    expect(out.templateName).toBe("order_update");
+    expect(out.placeholders).toEqual(["Jane", "pro"]);
   });
 });

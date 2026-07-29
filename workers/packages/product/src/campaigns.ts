@@ -4,87 +4,10 @@ import { ConflictError, NotFoundError, type Channel } from '@maildrill/domain';
 import { submitMessage } from '@maildrill/services';
 import { createLogger } from '@maildrill/observability';
 import { addressForChannel, resolveAudience, type AudienceSelector } from './audience';
-import { getTemplate, renderTemplate, resolveTemplatePlaceholders } from './templates';
+import { getTemplate, resolveMessageContent } from './templates';
 
 const log = createLogger({ component: 'campaigns' });
 const MAX_AUDIENCE = 5000;
-
-/** Provider-facing body fields; strips UI metadata stored alongside (e.g. audienceIds). */
-const MESSAGE_CONTENT_KEYS = [
-  'subject',
-  'html',
-  'text',
-  'from',
-  'preheader',
-  // Voice TTS language / voice selection (ignored by email/SMS builders).
-  'language',
-  'voiceName',
-  'voiceGender',
-  'speechRate',
-  'audioFileUrl',
-] as const;
-
-function messageContentOverrides(
-  raw: Record<string, unknown> | undefined,
-): Record<string, unknown> {
-  if (!raw) return {};
-  const out: Record<string, unknown> = {};
-  for (const key of MESSAGE_CONTENT_KEYS) {
-    const v = raw[key];
-    if (v !== undefined && v !== null && v !== '') out[key] = v;
-  }
-  return out;
-}
-
-function resolveMessageContent(
-  template: Awaited<ReturnType<typeof getTemplate>>,
-  sub: Parameters<typeof renderTemplate>[1],
-  overrides: Record<string, unknown> | undefined,
-  channel: Channel,
-): Record<string, unknown> {
-  const campaign = messageContentOverrides(overrides);
-  if (!template) return campaign;
-
-  // Approved WhatsApp templates send via the template endpoint: pass the template
-  // name/language plus the ordered placeholder values resolved per recipient.
-  if (channel === 'whatsapp' && template.approvalStatus === 'approved') {
-    // Infobip/Meta template names are lowercase; DB may still hold a display name.
-    const templateName = template.name
-      .trim()
-      .toLowerCase()
-      .replace(/[\s-]+/g, '_')
-      .replace(/[^a-z0-9_]/g, '')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '');
-    return {
-      templateName,
-      templateLanguage: template.language ?? 'en',
-      placeholders: resolveTemplatePlaceholders(template, sub),
-      ...campaign,
-    };
-  }
-
-  // Templates carry body only (html/text/preheader). Subject lives on the campaign.
-  const rendered = renderTemplate(template, sub);
-  const body: Record<string, unknown> = {};
-  if (rendered.html) body.html = rendered.html;
-  if (rendered.text) body.text = rendered.text;
-  if (rendered.preheader) body.preheader = rendered.preheader;
-
-  // Voice templates persist their TTS selection in builderDoc
-  // ({ voice: { name, gender, sayLanguage }, speechRate }) — surface it as
-  // provider content so delivery speaks the authored voice. Campaign-level
-  // overrides still win via the spread below.
-  if (channel === 'voice' && template.builderDoc) {
-    const doc = template.builderDoc as Record<string, unknown>;
-    const voice = (doc.voice ?? {}) as Record<string, unknown>;
-    if (typeof voice.sayLanguage === 'string') body.language = voice.sayLanguage;
-    if (typeof voice.name === 'string') body.voiceName = voice.name;
-    if (typeof voice.gender === 'string') body.voiceGender = voice.gender;
-    if (typeof doc.speechRate === 'number') body.speechRate = doc.speechRate;
-  }
-  return { ...body, ...campaign };
-}
 
 /**
  * Statuses a campaign may be sent from. "sending" and "sent" are absent by
