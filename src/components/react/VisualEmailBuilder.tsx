@@ -15,6 +15,7 @@ import {
   templateLanguageFlagSrc,
 } from '@/lib/app/template-language';
 import Icon from './Icon';
+import MediaPickerModal, { type MediaPickerImage } from './shared/MediaPickerModal';
 import { useToast } from './shared/useToast';
 import ChannelEditorShell, { shellStyles } from './shared/ChannelEditorShell';
 import { CHANNEL } from './shared/channels';
@@ -74,7 +75,24 @@ export default function VisualEmailBuilder({
   // the always-present subscriber fields; workspace custom fields are appended
   // once fetched. Never the vendor's placeholder tags from another ESP.
   const [mergeTags, setMergeTags] = useState<MergeTagGroup>(() => buildMergeTagMenu([]));
+  // Media-library picker behind the image panel's "Browse gallery" button.
+  const [mediaOpen, setMediaOpen] = useState(false);
   const { toast, show } = useToast();
+
+  // The builder's image/background inputs dispatch `toggle-media-library` when
+  // the user clicks "Browse gallery" (shown because we pass `galleryImages`).
+  useEffect(() => {
+    const onToggle = () => setMediaOpen(true);
+    window.addEventListener('toggle-media-library', onToggle);
+    return () => window.removeEventListener('toggle-media-library', onToggle);
+  }, []);
+
+  // The image (or background-image) panel that opened the picker listens for
+  // this event and applies the URL to the block it's editing on the canvas.
+  const pickMediaImage = (img: MediaPickerImage) => {
+    window.dispatchEvent(new CustomEvent('email-builder-set-image', { detail: { url: img.url } }));
+    setMediaOpen(false);
+  };
 
   useEffect(() => {
     let alive = true;
@@ -132,14 +150,16 @@ export default function VisualEmailBuilder({
     return () => timers.forEach(clearTimeout);
   }, [Builder, loadError]);
 
-  // Esc closes the editor.
+  // Esc closes the media picker when open, else the editor.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key !== 'Escape') return;
+      if (mediaOpen) setMediaOpen(false);
+      else onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, mediaOpen]);
 
   // Persist current content (throws on failure so autosave/flush can react).
   const persist = async () => {
@@ -254,6 +274,9 @@ export default function VisualEmailBuilder({
           <span className={shellStyles.spinner} aria-hidden="true" />
           <p className={shellStyles.muted}>{LOADING_STEPS[loadingStep]}</p>
         </div>
+      )}
+      {mediaOpen && (
+        <MediaPickerModal onPick={pickMediaImage} onClose={() => setMediaOpen(false)} />
       )}
     </ChannelEditorShell>
   );
