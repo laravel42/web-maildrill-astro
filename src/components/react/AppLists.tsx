@@ -794,16 +794,9 @@ function ListDrawer({
             <Icon name="download" size={15} />
             Export
           </button>
-          <button type="button" className="sbtn" style={{ flex: 1 }} onClick={onEdit}>
+          <button type="button" className="pbtn" style={{ flex: 1 }} onClick={onEdit}>
             Edit list
           </button>
-          <a
-            href="/dashboard/subscribers"
-            className="pbtn"
-            style={{ flex: 1, textDecoration: 'none' }}
-          >
-            Subscribers
-          </a>
         </div>
       </div>
     </div>
