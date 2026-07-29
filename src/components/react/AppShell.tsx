@@ -15,6 +15,7 @@ export default function AppShell({ currentPath, title, children, userEmail, user
   const [cmdOpen, setCmdOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [mobileNav, setMobileNav] = useState(false);
+  const [userMenu, setUserMenu] = useState(false);
 
   // Theme: hydrate from the value the pre-paint script already applied.
   useEffect(() => {
@@ -45,6 +46,7 @@ export default function AppShell({ currentPath, title, children, userEmail, user
       if (event.key === 'Escape') {
         setCmdOpen(false);
         setMobileNav(false);
+        setUserMenu(false);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -140,14 +142,45 @@ export default function AppShell({ currentPath, title, children, userEmail, user
             </span>
             <button
               type="button"
-              onClick={() => void signOut()}
-              title="Log out"
-              aria-label="Log out"
-              className={styles.ashsbUserchev}
-              style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', color: 'inherit' }}
+              onClick={() => setUserMenu((v) => !v)}
+              aria-label="Account menu"
+              aria-haspopup="menu"
+              aria-expanded={userMenu}
+              className={`${styles.ashsbUserchev}${userMenu ? ' is-open' : ''}`}
             >
               <Icon name="chevron-down" size={14} stroke={2} />
             </button>
+
+            {userMenu && (
+              <>
+                <button
+                  type="button"
+                  className={styles.userMenuBackdrop}
+                  aria-label="Close account menu"
+                  onClick={() => setUserMenu(false)}
+                />
+                <div
+                  className={styles.userMenu}
+                  role="menu"
+                  aria-label="Account"
+                  style={{ animation: 'pop 0.14s var(--ease-out)' }}
+                >
+                  <a href="/dashboard/profile" role="menuitem" className={styles.userMenuItem}>
+                    <Icon name="user" size={15} stroke={2} />
+                    Profile
+                  </a>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={`${styles.userMenuItem} ${styles.userMenuDanger}`}
+                    onClick={() => void signOut()}
+                  >
+                    <Icon name="logout" size={15} stroke={2} />
+                    Log out
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </aside>
