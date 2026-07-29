@@ -22,6 +22,7 @@ import {
   type CampaignSendResult,
 } from '@/lib/app/campaign-map';
 import { RATE_BUCKETS, rateBucket } from '@/lib/app/templates-data';
+import type { ApiTemplate } from '@/lib/app/template-map';
 import type { ChannelSenders } from '@/lib/app/channel-senders';
 import type { AudienceChoice, CampaignDraft, TemplateChoice } from './CampaignWizard.types';
 import type { Campaign, CampaignStatus, ChannelType } from '@/types/app';
@@ -852,6 +853,7 @@ export default function CampaignsBoard({
  */
 function CampaignPreview({ campaign, live }: { campaign: Campaign; live: boolean }) {
   const [body, setBody] = useState<{ html: string; text: string } | null>(null);
+  const [components, setComponents] = useState<Record<string, unknown> | null>(null);
   const [state, setState] = useState<'loading' | 'body' | 'template' | 'empty' | 'error'>(
     live ? 'loading' : 'empty',
   );
@@ -867,6 +869,18 @@ function CampaignPreview({ campaign, live }: { campaign: Campaign; live: boolean
         const html = typeof content.html === 'string' ? content.html : '';
         const text = typeof content.text === 'string' ? content.text : '';
         if (html.trim() || text.trim()) {
+          // WhatsApp campaigns save only the body text; header/footer/buttons
+          // live on the template, so fetch its structure for the full bubble.
+          if (campaign.channel === 'whatsapp' && full.templateId) {
+            try {
+              const tpl = await api.get<ApiTemplate>(`templates/${full.templateId}`);
+              if (!alive) return;
+              setComponents(tpl.components ?? null);
+            } catch {
+              // Body-only bubble is still a valid preview.
+            }
+          }
+          if (!alive) return;
           setBody({ html, text });
           setState('body');
         } else if (full.templateId) {
@@ -881,7 +895,7 @@ function CampaignPreview({ campaign, live }: { campaign: Campaign; live: boolean
     return () => {
       alive = false;
     };
-  }, [campaign.id, live]);
+  }, [campaign.id, campaign.channel, live]);
 
   if (!live) return <div className="aempty">No preview in local mode</div>;
   if (state === 'loading') return <div className="aempty">Loading preview…</div>;
@@ -890,7 +904,14 @@ function CampaignPreview({ campaign, live }: { campaign: Campaign; live: boolean
   if (state === 'template' && campaign.templateId) {
     return <TemplatePreview id={campaign.templateId} channel={campaign.channel} live={live} />;
   }
-  return <MessagePreview html={body?.html} text={body?.text} channel={campaign.channel} />;
+  return (
+    <MessagePreview
+      html={body?.html}
+      text={body?.text}
+      channel={campaign.channel}
+      components={components}
+    />
+  );
 }
 
 function CampaignDrawer({
