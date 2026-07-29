@@ -1,19 +1,20 @@
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
-import type { PgUpdateSetSource } from "drizzle-orm/pg-core";
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
+import type { PgUpdateSetSource } from 'drizzle-orm/pg-core';
 import {
   campaigns,
   db,
   listMembers,
   lists,
+  messageEvents,
   messages,
   subscriberTags,
   subscribers,
   tags,
   type Subscriber,
-} from "@maildrill/database";
-import { clamp } from "./rules";
+} from '@maildrill/database';
+import { clamp } from './rules';
 
-type SubscriberStatus = Subscriber["status"];
+type SubscriberStatus = Subscriber['status'];
 
 export interface UpsertSubscriberInput {
   tenantId: string;
@@ -25,9 +26,7 @@ export interface UpsertSubscriberInput {
 }
 
 /** Create or update a subscriber, keyed by (tenant, lowercased email). */
-export async function upsertSubscriber(
-  input: UpsertSubscriberInput,
-): Promise<Subscriber> {
+export async function upsertSubscriber(input: UpsertSubscriberInput): Promise<Subscriber> {
   const email = input.email.trim().toLowerCase();
   const rows = await db
     .insert(subscribers)
@@ -37,7 +36,7 @@ export async function upsertSubscriber(
       phone: input.phone ?? null,
       name: input.name ?? null,
       attributes: input.attributes ?? {},
-      status: input.status ?? "active",
+      status: input.status ?? 'active',
     })
     .onConflictDoUpdate({
       target: [subscribers.tenantId, subscribers.email],
@@ -54,10 +53,7 @@ export async function upsertSubscriber(
   return rows[0]!;
 }
 
-export async function getSubscriber(
-  tenantId: string,
-  id: string,
-): Promise<Subscriber | null> {
+export async function getSubscriber(tenantId: string, id: string): Promise<Subscriber | null> {
   const rows = await db
     .select()
     .from(subscribers)
@@ -91,6 +87,16 @@ export async function listSubscribers(
 export interface SubscriberWithRelations extends Subscriber {
   lists: { id: string; name: string }[];
   tagNames: string[];
+  /** Message outcomes for this recipient, for open/click rates. */
+  delivered: number;
+  /**
+   * Deliveries on channels with engagement tracking (email, WhatsApp).
+   * Open/click rates divide by this, not `delivered` — SMS and voice
+   * deliveries can never produce an open, so counting them dilutes the rate.
+   */
+  trackedDelivered: number;
+  opened: number;
+  clicked: number;
 }
 
 /**
@@ -103,21 +109,42 @@ async function withRelations(rows: Subscriber[]): Promise<SubscriberWithRelation
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
 
-  const [memberships, tagRows] = await Promise.all([
+  const [memberships, tagRows, outcomeRows, clickRows] = await Promise.all([
     db
       .select({
         subscriberId: listMembers.subscriberId,
         id: lists.id,
         name: lists.name,
+        addedAt: listMembers.addedAt,
       })
       .from(listMembers)
       .innerJoin(lists, eq(lists.id, listMembers.listId))
-      .where(inArray(listMembers.subscriberId, ids)),
+      .where(inArray(listMembers.subscriberId, ids))
+      .orderBy(desc(listMembers.addedAt)),
     db
       .select({ subscriberId: subscriberTags.subscriberId, name: tags.name })
       .from(subscriberTags)
       .innerJoin(tags, eq(tags.id, subscriberTags.tagId))
       .where(inArray(subscriberTags.subscriberId, ids)),
+    db
+      .select({
+        recipientId: messages.recipientId,
+        delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read'))::int`,
+        trackedDelivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read') and ${messages.channel} in ('email', 'whatsapp'))::int`,
+        opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
+      })
+      .from(messages)
+      .where(inArray(messages.recipientId, ids))
+      .groupBy(messages.recipientId),
+    db
+      .select({
+        recipientId: messages.recipientId,
+        clicked: sql<number>`count(distinct ${messageEvents.messageId})::int`,
+      })
+      .from(messageEvents)
+      .innerJoin(messages, eq(messageEvents.messageId, messages.id))
+      .where(and(inArray(messages.recipientId, ids), eq(messageEvents.eventType, 'click')))
+      .groupBy(messages.recipientId),
   ]);
 
   const listsBySub = new Map<string, { id: string; name: string }[]>();
@@ -133,10 +160,17 @@ async function withRelations(rows: Subscriber[]): Promise<SubscriberWithRelation
     tagsBySub.set(t.subscriberId, bucket);
   }
 
+  const outcomeBySub = new Map(outcomeRows.map((o) => [o.recipientId, o]));
+  const clicksBySub = new Map(clickRows.map((c) => [c.recipientId, c]));
+
   return rows.map((r) => ({
     ...r,
     lists: listsBySub.get(r.id) ?? [],
     tagNames: tagsBySub.get(r.id) ?? [],
+    delivered: Number(outcomeBySub.get(r.id)?.delivered ?? 0),
+    trackedDelivered: Number(outcomeBySub.get(r.id)?.trackedDelivered ?? 0),
+    opened: Number(outcomeBySub.get(r.id)?.opened ?? 0),
+    clicked: Number(clicksBySub.get(r.id)?.clicked ?? 0),
   }));
 }
 
@@ -156,7 +190,7 @@ export async function getSubscriberWithRelations(
   return (await withRelations([row]))[0] ?? null;
 }
 
-/** Lists a subscriber belongs to, for the membership editor. */
+/** Lists a subscriber belongs to, for the membership editor (newest first). */
 export async function subscriberLists(
   tenantId: string,
   subscriberId: string,
@@ -165,12 +199,8 @@ export async function subscriberLists(
     .select({ id: lists.id, name: lists.name })
     .from(listMembers)
     .innerJoin(lists, eq(lists.id, listMembers.listId))
-    .where(
-      and(
-        eq(listMembers.subscriberId, subscriberId),
-        eq(listMembers.tenantId, tenantId),
-      ),
-    );
+    .where(and(eq(listMembers.subscriberId, subscriberId), eq(listMembers.tenantId, tenantId)))
+    .orderBy(desc(listMembers.addedAt));
 }
 
 export interface UpdateSubscriberInput {
@@ -232,6 +262,8 @@ export interface SubscriberChannelStat {
   sent: number;
   delivered: number;
   read: number;
+  /** Messages with at least one click event. */
+  clicked: number;
 }
 export interface SubscriberActivityEvent {
   id: string;
@@ -259,7 +291,7 @@ export async function subscriberActivity(
 ): Promise<SubscriberActivity> {
   const mine = and(eq(messages.tenantId, tenantId), eq(messages.recipientId, subscriberId));
 
-  const [channelRows, lastRows, recentRows] = await Promise.all([
+  const [channelRows, clickRows, lastRows, recentRows] = await Promise.all([
     db
       .select({
         channel: messages.channel,
@@ -271,6 +303,15 @@ export async function subscriberActivity(
       })
       .from(messages)
       .where(mine)
+      .groupBy(messages.channel),
+    db
+      .select({
+        channel: messages.channel,
+        clicked: sql<number>`count(distinct ${messageEvents.messageId})::int`,
+      })
+      .from(messageEvents)
+      .innerJoin(messages, eq(messageEvents.messageId, messages.id))
+      .where(and(mine, eq(messageEvents.eventType, 'click')))
       .groupBy(messages.channel),
     db
       .select({
@@ -300,6 +341,7 @@ export async function subscriberActivity(
       sent: Number(r.sent),
       delivered: Number(r.delivered),
       read: Number(r.read),
+      clicked: Number(clickRows.find((c) => c.channel === r.channel)?.clicked ?? 0),
     })),
     recent: recentRows.map((r) => ({
       id: r.id,

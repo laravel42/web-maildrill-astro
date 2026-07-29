@@ -18,6 +18,45 @@ export const STATUS_TABS: ('all' | SubscriberStatus)[] = [
 
 export const PAGE_SIZE = 8;
 
+/** Max numbered buttons shown in the table pager (prev/next are separate). */
+export const MAX_VISIBLE_PAGES = 5;
+
+/** Sliding window of page numbers centered on `current`, capped at `max`. */
+export function visiblePageNumbers(
+  current: number,
+  total: number,
+  max: number = MAX_VISIBLE_PAGES,
+): number[] {
+  if (total <= 0) return [];
+  if (total <= max) return Array.from({ length: total }, (_, i) => i + 1);
+  const half = Math.floor(max / 2);
+  let start = Math.max(1, current - half);
+  let end = start + max - 1;
+  if (end > total) {
+    end = total;
+    start = end - max + 1;
+  }
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+}
+
+/**
+ * Drawer lists line: the two most recent memberships, with `+n` for the rest.
+ * Expects `names` newest-first (API orders by list_members.added_at desc).
+ */
+export function recentListsSummary(
+  names: string[],
+  keep = 2,
+): { shown: string[]; more: number; rest: string[] } {
+  if (names.length <= keep) {
+    return { shown: names, more: 0, rest: [] };
+  }
+  return {
+    shown: names.slice(0, keep),
+    more: names.length - keep,
+    rest: names.slice(keep),
+  };
+}
+
 /* Reachable-channel logic (drives channel filter + drawer engagement). */
 export function reachOf(s: RichSubscriber) {
   const eng = s.status === 'active';

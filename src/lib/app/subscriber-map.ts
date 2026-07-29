@@ -13,6 +13,12 @@ export interface ApiSubscriber {
   lists?: { id: string; name: string }[] | null;
   /** Real tag names from the tags relation. */
   tagNames?: string[] | null;
+  /** Message outcomes for this recipient, joined server-side. */
+  delivered?: number | null;
+  /** Deliveries on channels with engagement tracking (email, WhatsApp). */
+  trackedDelivered?: number | null;
+  opened?: number | null;
+  clicked?: number | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
@@ -55,6 +61,10 @@ export function toRichSubscriber(r: ApiSubscriber): RichSubscriber {
 export function toRichSubscribers(rows: ApiSubscriber[]): RichSubscriber[] {
   return rows.map((r) => {
     const attrs = (r.attributes ?? {}) as Record<string, unknown>;
+    // Open/click rates divide by deliveries on channels that track engagement
+    // (email, WhatsApp) — SMS/voice deliveries can never produce an open, so
+    // counting them would dilute the rate below what any channel shows.
+    const denom = r.trackedDelivered ?? r.delivered ?? 0;
     return {
       id: r.id,
       email: r.email,
@@ -72,10 +82,11 @@ export function toRichSubscribers(rows: ApiSubscriber[]): RichSubscriber[] {
             ? (attrs.tags as string[])
             : [],
       updatedAt: r.updatedAt ?? r.createdAt ?? new Date().toISOString(),
+      createdAt: r.createdAt ?? r.updatedAt ?? new Date().toISOString(),
       location: typeof attrs.location === 'string' ? attrs.location : '—',
       joined: fmtDate(r.createdAt),
-      opens: '—',
-      clicks: '—',
+      opens: denom > 0 ? `${Math.round(((r.opened ?? 0) / denom) * 100)}%` : '—',
+      clicks: denom > 0 ? `${Math.round(((r.clicked ?? 0) / denom) * 100)}%` : '—',
       av: pickAv(r.id),
     };
   });

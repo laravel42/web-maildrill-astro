@@ -32,6 +32,9 @@ import {
   STATUS_LABEL,
   STATUS_TABS,
   PAGE_SIZE,
+  MAX_VISIBLE_PAGES,
+  visiblePageNumbers,
+  recentListsSummary,
   tagStyle,
   reachOf,
   initials,
@@ -103,15 +106,10 @@ export default function AppSubscribers({
 
   const effTags = (s: RichSubscriber): string[] => tagStore[s.id] ?? s.tags;
 
-  // Each list's own colour, for tinting the membership chips in the table.
-  const listColorById = useMemo(
-    () => new Map(allLists.map((l) => [l.id, l.color ?? null])),
-    [allLists],
-  );
-
   // Tags actually present on subscribers, for the tags filter dropdown.
   const tagUniverse = useMemo(
-    () => [...new Set(richSubscribers.flatMap((s) => effTags(s)))].sort((a, b) => a.localeCompare(b)),
+    () =>
+      [...new Set(richSubscribers.flatMap((s) => effTags(s)))].sort((a, b) => a.localeCompare(b)),
     [richSubscribers, tagStore],
   );
 
@@ -216,15 +214,21 @@ export default function AppSubscribers({
       if (key === 'name') {
         av = a.name.toLowerCase();
         bv = b.name.toLowerCase();
-      } else if (key === 'lists') {
-        av = a.lists.join(', ').toLowerCase();
-        bv = b.lists.join(', ').toLowerCase();
+      } else if (key === 'opens') {
+        av = parseRatePercent(a.opens);
+        bv = parseRatePercent(b.opens);
+      } else if (key === 'clicks') {
+        av = parseRatePercent(a.clicks);
+        bv = parseRatePercent(b.clicks);
       } else if (key === 'tags') {
         av = effTags(a).length;
         bv = effTags(b).length;
       } else if (key === 'status') {
         av = a.status;
         bv = b.status;
+      } else if (key === 'subscribed') {
+        av = new Date(a.createdAt).getTime();
+        bv = new Date(b.createdAt).getTime();
       } else {
         av = new Date(a.updatedAt).getTime();
         bv = new Date(b.updatedAt).getTime();
@@ -234,11 +238,23 @@ export default function AppSubscribers({
       return 0;
     });
     return list;
-  }, [segFiltered, tab, query, channelFilter, listFilter, tagSel, opensSel, clicksSel, sort, tagStore]);
+  }, [
+    segFiltered,
+    tab,
+    query,
+    channelFilter,
+    listFilter,
+    tagSel,
+    opensSel,
+    clicksSel,
+    sort,
+    tagStore,
+  ]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
   const pageRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const pagerPages = visiblePageNumbers(safePage, pageCount, MAX_VISIBLE_PAGES);
 
   const resetPageAndSel = () => {
     setPage(1);
@@ -525,11 +541,7 @@ export default function AppSubscribers({
             <Icon name="download" size={15} />
             Export
           </button>
-          <button
-            type="button"
-            className="pbtn"
-            onClick={() => setSubEditor({ mode: 'create' })}
-          >
+          <button type="button" className="pbtn" onClick={() => setSubEditor({ mode: 'create' })}>
             <Icon name="plus" size={15} stroke={2.2} />
             Add subscriber
           </button>
@@ -946,7 +958,11 @@ export default function AppSubscribers({
               <Icon name="trash" size={13} />
               Remove
             </button>
-            <button type="button" className={styles.bulkclear} onClick={() => setSelected(new Set())}>
+            <button
+              type="button"
+              className={styles.bulkclear}
+              onClick={() => setSelected(new Set())}
+            >
               Clear
             </button>
           </div>
@@ -972,9 +988,14 @@ export default function AppSubscribers({
                   Subscriber <span className="tnum">{sortArrow('name')}</span>
                 </button>
               </div>
-              <div>
-                <button type="button" onClick={() => toggleSort('lists')}>
-                  Lists <span className="tnum">{sortArrow('lists')}</span>
+              <div className={styles.colCenter}>
+                <button type="button" onClick={() => toggleSort('opens')}>
+                  Avg. open <span className="tnum">{sortArrow('opens')}</span>
+                </button>
+              </div>
+              <div className={styles.colCenter}>
+                <button type="button" onClick={() => toggleSort('clicks')}>
+                  Avg. click <span className="tnum">{sortArrow('clicks')}</span>
                 </button>
               </div>
               <div>
@@ -982,12 +1003,17 @@ export default function AppSubscribers({
                   Tags <span className="tnum">{sortArrow('tags')}</span>
                 </button>
               </div>
-              <div>
+              <div className={styles.colCenter}>
                 <button type="button" onClick={() => toggleSort('status')}>
                   Status <span className="tnum">{sortArrow('status')}</span>
                 </button>
               </div>
-              <div>
+              <div className={styles.colCenter}>
+                <button type="button" onClick={() => toggleSort('subscribed')}>
+                  Subscribed <span className="tnum">{sortArrow('subscribed')}</span>
+                </button>
+              </div>
+              <div className={styles.colCenter}>
                 <button type="button" onClick={() => toggleSort('last')}>
                   Last activity <span className="tnum">{sortArrow('last')}</span>
                 </button>
@@ -1029,29 +1055,8 @@ export default function AppSubscribers({
                       <div className={styles.email}>{s.email}</div>
                     </div>
                   </div>
-                  <div className={styles.lists}>
-                    {s.listIds.length === 0 ? (
-                      <span className={styles.dash}>—</span>
-                    ) : (
-                      s.listIds.map((id, i) => {
-                        const name = s.lists[i] ?? id;
-                        const color = listColorById.get(id) || tagStyle(name).color;
-                        return (
-                          <span
-                            key={id}
-                            className={styles.listchip}
-                            style={{
-                              background: `color-mix(in srgb, ${color} 14%, transparent)`,
-                              color,
-                            }}
-                          >
-                            <span className={styles.listdot} style={{ background: color }} />
-                            {name}
-                          </span>
-                        );
-                      })
-                    )}
-                  </div>
+                  <div className={`tnum ${styles.rate}`}>{s.opens}</div>
+                  <div className={`tnum ${styles.rate}`}>{s.clicks}</div>
                   <div className={styles.tagcell}>
                     {effTags(s).length === 0 ? (
                       <span className={styles.dash}>—</span>
@@ -1063,9 +1068,10 @@ export default function AppSubscribers({
                       ))
                     )}
                   </div>
-                  <div>
+                  <div className={styles.colCenter}>
                     <span className={`astatus astatus--${s.status}`}>{STATUS_LABEL[s.status]}</span>
                   </div>
+                  <div className={styles.last}>{ago(s.createdAt)}</div>
                   <div className={styles.last}>{ago(s.updatedAt)}</div>
                 </div>
               ))
@@ -1154,7 +1160,7 @@ export default function AppSubscribers({
 
         {/* footer / pagination */}
         <div className={`atable__foot ${styles.foot}`}>
-          <span className="tnum">
+          <span className={filtered.length === 0 ? undefined : 'tnum'}>
             {filtered.length === 0
               ? 'No subscribers match your filters'
               : `${startIdx}–${endIdx} of ${filtered.length} subscribers`}
@@ -1173,7 +1179,7 @@ export default function AppSubscribers({
               >
                 <Icon name="chevron-right" size={15} className={styles.pgflip} />
               </button>
-              {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
+              {pagerPages.map((n) => (
                 <button
                   key={n}
                   type="button"
@@ -1367,7 +1373,13 @@ function Avatar({ sub, size }: { sub: RichSubscriber; size: number }) {
 /* ----------------------------- Details drawer ----------------------------- */
 type ApiSubscriberActivity = {
   lastActiveAt: string | null;
-  channels: { channel: ChannelType; sent: number; delivered: number; read: number }[];
+  channels: {
+    channel: ChannelType;
+    sent: number;
+    delivered: number;
+    read: number;
+    clicked?: number;
+  }[];
   recent: {
     id: string;
     channel: ChannelType;
@@ -1479,14 +1491,18 @@ function SubscriberDrawer({
       const sent = s?.sent ?? 0;
       const delivered = s?.delivered ?? 0;
       const read = s?.read ?? 0;
-      const openPct =
-        delivered > 0 && read > 0 ? `${Math.round((read / delivered) * 100)}%` : '—';
+      const clicked = s?.clicked ?? 0;
+      // Email and WhatsApp track engagement, so a real 0% is shown; SMS and
+      // voice have no open/click signal at all, so they stay "—".
+      const tracked = ch === 'email' || ch === 'whatsapp';
+      const pctOf = (v: number) =>
+        tracked && delivered > 0 ? `${Math.round((v / delivered) * 100)}%` : '—';
       return {
         ch,
         on: sent > 0,
         meta: sent > 0 ? `${sent.toLocaleString('en-US')} sent` : 'No messages yet',
-        open: openPct,
-        click: '—', // link clicks aren't tracked yet
+        open: pctOf(read),
+        click: pctOf(clicked),
       };
     });
     activity = act.recent.map((e) => {
@@ -1496,7 +1512,9 @@ function SubscriberDrawer({
         tone: 'muted' as const,
       };
       const tone = EV_TONE[p.tone];
-      const subject = e.campaignName ? `“${e.campaignName}”` : `a ${CHANNEL[e.channel].label} message`;
+      const subject = e.campaignName
+        ? `“${e.campaignName}”`
+        : `a ${CHANNEL[e.channel].label} message`;
       return {
         icon: p.icon,
         bg: tone.bg,
@@ -1582,6 +1600,8 @@ function SubscriberDrawer({
       when: sub.joined,
     });
   }
+
+  const listsLine = recentListsSummary(sub.lists);
 
   return (
     <div className="adrawer-overlay" onClick={onClose}>
@@ -1669,7 +1689,24 @@ function SubscriberDrawer({
             <span className={`adrawer__eyebrow ${styles.sbdEyebrow}`}>Details</span>
             <div className="adetail">
               <span className="adetail__k">Lists</span>
-              <span className="adetail__v">{sub.lists.join(', ')}</span>
+              <span className="adetail__v">
+                {listsLine.shown.length === 0 ? (
+                  '—'
+                ) : (
+                  <>
+                    {listsLine.shown.join(', ')}
+                    {listsLine.more > 0 && (
+                      <span
+                        className={styles.listMore}
+                        title={listsLine.rest.join(', ')}
+                        aria-label={`${listsLine.more} more list${listsLine.more === 1 ? '' : 's'}: ${listsLine.rest.join(', ')}`}
+                      >
+                        +{listsLine.more}
+                      </span>
+                    )}
+                  </>
+                )}
+              </span>
             </div>
             <div className="adetail">
               <span className="adetail__k">Phone</span>
@@ -1735,9 +1772,7 @@ function SubscriberDrawer({
           <div className={styles.sbdSection}>
             <span className={`adrawer__eyebrow ${styles.sbdEyebrow}`}>Recent activity</span>
             <div className={styles.sbdTimeline}>
-              {activity.length === 0 && (
-                <div className={styles.sbdChanMeta}>No activity yet.</div>
-              )}
+              {activity.length === 0 && <div className={styles.sbdChanMeta}>No activity yet.</div>}
               {activity.map((ev, i) => (
                 <div key={i} className={styles.sbdEv}>
                   <span className={styles.sbdEvIc} style={{ background: ev.bg, color: ev.color }}>
@@ -1763,12 +1798,7 @@ function SubscriberDrawer({
             <Icon name="send" size={15} />
             Send email
           </button>
-          <button
-            type="button"
-            className="pbtn"
-            style={{ flex: 1 }}
-            onClick={onEdit}
-          >
+          <button type="button" className="pbtn" style={{ flex: 1 }} onClick={onEdit}>
             <Icon name="edit" size={15} />
             Edit
           </button>

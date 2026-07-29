@@ -10,6 +10,8 @@ export type RichSubscriber = Subscriber & {
   /** Ids of the lists this subscriber is on, parallel to `lists` names. */
   listIds: string[];
   location: string;
+  /** ISO timestamp of signup (for sorting / relative ago). */
+  createdAt: string;
   joined: string; // human display, e.g. "Jan 12, 2025"
   opens: string; // "87%" | "—"
   clicks: string; // "34%" | "—"
