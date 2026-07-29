@@ -160,7 +160,7 @@ flowchart LR
 | Area | Variables |
 | --- | --- |
 | Astro public | `PUBLIC_SITE_URL`, `PUBLIC_POSTHOG_PROJECT_TOKEN`, `PUBLIC_POSTHOG_HOST` |
-| Astro server | `AUTH_SECRET`, `API_BASE_URL`, `JWT_SECRET`, SMTP_*, `EB_BACKEND_URL` |
+| Astro server | `AUTH_SECRET`, `API_BASE_URL`, `JWT_SECRET`, SMTP_* |
 | Workers core | `DATABASE_URL`, `REDIS_URL`, `API_KEYS`, `APP_URL` |
 | Infobip | `INFOBIP_*`, `PROVIDER_DRIVER` (`mock`\|`infobip`) |
 | PostHog query | `POSTHOG_PERSONAL_API_KEY`, `POSTHOG_PROJECT_ID=526344`, `POSTHOG_APP_HOST=https://us.posthog.com`, `POSTHOG_STATS_ENABLED` |

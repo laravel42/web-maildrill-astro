@@ -15,7 +15,13 @@ template webhooks). Template-status analytics still go Infobip → PostHog.
 
 In-app Analytics (`GET /v1/stats/activity`, `summary.byChannel`) reads delivery
 series from **PostHog HogQL** when `POSTHOG_PERSONAL_API_KEY` is set, and falls
-back to Postgres otherwise.
+back to Postgres otherwise. The stats queries match both
+`message_delivery_report` and `message_voice_report` (same as the poller), so
+voice volume is not dropped when PostHog takes over.
+
+The dev seeder (`pnpm db:seed`) mirrors its six months of provider events into
+PostHog through the same event taxonomy (`/batch/` + `historical_migration`),
+so the HogQL paths return realistic data without any real Infobip traffic.
 
 ## Infobip URL split
 

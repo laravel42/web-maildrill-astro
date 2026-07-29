@@ -202,7 +202,7 @@ delivered via **CloudFront**. Requires `AWS_REGION`, `MEDIA_S3_BUCKET`,
 | Where | Key vars |
 | --- | --- |
 | Shared root `.env` | One file for Astro + workers (see `.env.example`) |
-| Frontend | `PUBLIC_SITE_URL`, `AUTH_SECRET`, `JWT_SECRET`, `API_BASE_URL`, `EB_BACKEND_URL`, `PUBLIC_POSTHOG_*` |
+| Frontend | `PUBLIC_SITE_URL`, `AUTH_SECRET`, `JWT_SECRET`, `API_BASE_URL`, `PUBLIC_POSTHOG_*` |
 | Frontend SMTP | `SMTP_HOST/PORT/USER/PASS/SECURE`, `MAIL_FROM` |
 | Backend | `DATABASE_URL`, `REDIS_URL`, `PROVIDER_DRIVER`, `INFOBIP_*`, `API_KEYS`, AWS/media |
 | PostHog query | `POSTHOG_PERSONAL_API_KEY` (`query:read`), `POSTHOG_PROJECT_ID=526344`, `POSTHOG_APP_HOST` |

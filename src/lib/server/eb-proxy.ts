@@ -5,13 +5,11 @@ import type { APIContext } from 'astro';
  *
  * Defaults to the same origin as the rest of the service: `pnpm dev` in
  * workers runs messaging, product and the builder on one port. Set
- * `EB_BACKEND_URL` (e.g. http://localhost:3100) only when running the builder
+ * `API_BASE_URL` (e.g. http://localhost:3100) only when running the builder
  * as its own process.
  */
 export function ebBaseUrl(): string {
   return (
-    process.env.EB_BACKEND_URL ??
-    import.meta.env.EB_BACKEND_URL ??
     process.env.API_BASE_URL ??
     import.meta.env.API_BASE_URL ??
     'http://localhost:3001'
@@ -20,7 +18,7 @@ export function ebBaseUrl(): string {
 
 /**
  * Auth-gated streaming proxy to @eb/backend. `subPath` is appended to
- * `${EB_BACKEND_URL}/api/`. Keeps provider keys server-side and streams the
+ * `${API_BASE_URL}/api/`. Keeps provider keys server-side and streams the
  * (possibly SSE) response through unbuffered. Returns 401 without a session and
  * a clean 502 when the backend is unreachable.
  */

@@ -100,6 +100,48 @@ export default defineConfig({
     ssr: {
       external: ['nodemailer'],
     },
+    // Deps reachable only through lazy `import()` (voice preview, WhatsApp
+    // studio, email builder) are invisible to Vite's default startup scan.
+    // Mid-session discovery re-optimizes while the app is in use and can
+    // strand the new dep at a never-committed hash — every request then 504s
+    // with "Outdated Optimize Dep" until the server restarts. `entries` makes
+    // the startup scanner crawl the island sources (following lazy chains and
+    // deep subpath imports like @mui/icons-material/*); `include` pins the
+    // clusters that bit us, in case a chain ever escapes the scan.
+    optimizeDeps: {
+      entries: [
+        'src/components/react/**/*.{ts,tsx}',
+        'packages/email-builder-standalone/src/index.tsx',
+        'packages/wa-template-studio/src/index.ts',
+      ],
+      include: [
+        'infobip-rtc',
+        'wa-template-studio > @dnd-kit/core',
+        'wa-template-studio > @dnd-kit/modifiers',
+        'wa-template-studio > @dnd-kit/sortable',
+        'wa-template-studio > @dnd-kit/utilities',
+        'wa-template-studio > @hookform/resolvers/zod',
+        'wa-template-studio > @radix-ui/react-dialog',
+        'wa-template-studio > @radix-ui/react-dropdown-menu',
+        'wa-template-studio > @radix-ui/react-label',
+        'wa-template-studio > @radix-ui/react-popover',
+        'wa-template-studio > @radix-ui/react-scroll-area',
+        'wa-template-studio > @radix-ui/react-select',
+        'wa-template-studio > @radix-ui/react-separator',
+        'wa-template-studio > @radix-ui/react-slot',
+        'wa-template-studio > @radix-ui/react-switch',
+        'wa-template-studio > @radix-ui/react-tabs',
+        'wa-template-studio > @radix-ui/react-tooltip',
+        'wa-template-studio > class-variance-authority',
+        'wa-template-studio > clsx',
+        'wa-template-studio > framer-motion',
+        'wa-template-studio > lucide-react',
+        'wa-template-studio > react-hook-form',
+        'wa-template-studio > tailwind-merge',
+        'wa-template-studio > zod',
+        'wa-template-studio > zustand',
+      ],
+    },
   },
   redirects: {
     '/privacy-policy': '/legal/privacy',
