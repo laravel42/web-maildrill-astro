@@ -151,7 +151,7 @@ export function storedComponentsToMeta(
   const metaComponents: MetaComponent[] = [];
 
   if (components.header && typeof components.header === 'object') {
-    metaComponents.push({ type: 'HEADER', ...(components.header as MetaComponent) });
+    metaComponents.push({ ...(components.header as MetaComponent), type: 'HEADER' });
   }
 
   if (components.body && typeof components.body === 'object') {
@@ -166,7 +166,7 @@ export function storedComponentsToMeta(
   }
 
   if (components.footer && typeof components.footer === 'object') {
-    metaComponents.push({ type: 'FOOTER', ...(components.footer as MetaComponent) });
+    metaComponents.push({ ...(components.footer as MetaComponent), type: 'FOOTER' });
   }
 
   if (Array.isArray(components.buttons) && components.buttons.length) {
