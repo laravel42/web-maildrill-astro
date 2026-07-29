@@ -55,14 +55,10 @@
   padding-top: 16px;
 }
 .logout {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .logout:hover {
   background: var(--danger-bg);
-}
-/* --danger is too dim on the dark surface; lift to red-400 */
-:global([data-theme='dark']) .logout {
-  color: #f87171;
 }
 
 @media (max-width: 820px) {

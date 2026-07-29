@@ -48,11 +48,11 @@
 }
 .navitem:global(.is-active) {
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-text);
   background: var(--accent-tint);
 }
 .navitem:global(.is-active) svg {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* panel */
@@ -153,7 +153,7 @@
 }
 .ledgerKicker {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -163,7 +163,7 @@
   padding: 0;
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-text);
   text-decoration: none;
   border-radius: 6px;
 }
@@ -174,10 +174,6 @@
 .ledgerLink:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
-}
-/* --accent indigo lands ~2.6:1 on the dark surface; lift it (indigo-400) */
-:global([data-theme='dark']) .ledgerLink {
-  color: #818cf8;
 }
 .ledgerHero {
   display: flex;
@@ -205,7 +201,7 @@
 }
 .heroStatLbl {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -224,11 +220,6 @@
 .heroStatAlert .heroStatLbl,
 .heroStatAlert .heroStatVal {
   color: var(--danger-strong);
-}
-/* --danger-strong is too dim on the dark surface; lift to red-400 */
-:global([data-theme='dark']) .heroStatAlert .heroStatLbl,
-:global([data-theme='dark']) .heroStatAlert .heroStatVal {
-  color: #f87171;
 }
 .ledgerTotal {
   font-family: var(--font-mono);
@@ -276,8 +267,8 @@
   border-collapse: collapse;
 }
 .ledgerTable th {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-family: var(--font-sans);
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -330,7 +321,7 @@
 .ledgerTable .cellNum {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 12.5px;
+  font-size: 13px;
   text-align: right;
   padding-left: 18px;
   color: var(--text3);
@@ -342,7 +333,7 @@
 }
 .ledgerEmpty {
   margin: 14px 0 0;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text4);
 }
 
@@ -434,7 +425,7 @@
   align-items: center;
   gap: 5px;
   flex: none;
-  padding: 3px 10px;
+  padding: 3px 8px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
@@ -638,7 +629,7 @@
 .setdRemove {
   flex: none;
   padding: 9px 14px;
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .setdRemove:hover {
   background: var(--danger-bg);
@@ -847,11 +838,7 @@
 .chip:global(.is-on) {
   border-color: var(--accent);
   background: var(--accent-tint);
-  color: var(--accent);
-}
-/* accent-on-tint drops to ~2:1 on the dark surface; lift to indigo-300 */
-:global([data-theme='dark']) .chip:global(.is-on) {
-  color: #a5b4fc;
+  color: var(--accent-text);
 }
 .amount {
   position: relative;

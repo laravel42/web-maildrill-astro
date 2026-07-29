@@ -231,7 +231,7 @@
   pointer-events: none;
 }
 .audRowOn .audBadge {
-  color: var(--accent);
+  color: var(--accent-text);
   background: color-mix(in srgb, var(--accent) 10%, var(--surface));
   border-color: color-mix(in srgb, var(--accent) 22%, var(--border2));
 }
@@ -629,6 +629,6 @@
   font-weight: 600;
   white-space: nowrap;
   background: var(--accent-tint);
-  color: var(--accent);
+  color: var(--accent-text);
   border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border2));
 }

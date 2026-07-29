@@ -46,7 +46,7 @@
 }
 .kpiLbl {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -55,7 +55,7 @@
 .kpiDelta {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--success-strong);
 }
@@ -102,7 +102,7 @@
 }
 .heroLbl {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text4);
@@ -233,7 +233,7 @@
 .barMeta {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text4);
 }
 .track {
@@ -274,7 +274,7 @@
 .ctHead {
   padding: 11px 20px;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--text4);
   font-weight: 500;
   letter-spacing: 0.08em;
@@ -312,14 +312,14 @@
 .ctNum {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text3);
   text-align: right;
 }
 .ctDel {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--success-strong);
   text-align: right;
@@ -342,11 +342,11 @@
   transform-origin: left;
 }
 .ctRateVal {
-  width: 44px;
+  width: 50px;
   text-align: right;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text2);
 }
@@ -425,7 +425,7 @@
   flex: 1;
   min-width: 0;
   font-size: 12.5px;
-  color: var(--accent);
+  color: var(--accent-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

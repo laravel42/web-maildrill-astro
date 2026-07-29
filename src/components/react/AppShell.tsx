@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { appNav, appSettingsNav } from '@/config/navigation';
+import { routes } from '@/config/routes';
 import Icon from './Icon';
 import type { IconName } from '@/lib/icons';
 import type { Props } from './AppShell.types';
@@ -126,12 +127,15 @@ export default function AppShell({ currentPath, title, children, userEmail, user
 
         <div className={styles.ashsbFoot}>
           {navItem({ ...appSettingsNav })}
-          <span className={`${styles.ashsbNavItem} ${styles.ashsbNavItemStatic}`}>
+          <a href={routes.guides} target="_blank" rel="noreferrer" className={styles.ashsbNavItem}>
             <span className={styles.ashsbNavIc}>
               <Icon name="help" size={20} stroke={1.9} />
             </span>
             Help &amp; docs
-          </span>
+            <span className={styles.ashsbExt} aria-hidden="true">
+              <Icon name="arrow-up-right" size={13} stroke={2.2} />
+            </span>
+          </a>
           <div className={styles.ashsbUser}>
             <span className={styles.ashsbAvatar} aria-hidden="true">
               {avatarInitial}

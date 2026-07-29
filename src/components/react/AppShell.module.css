@@ -48,10 +48,11 @@
 }
 .ashsbGroup {
   margin: 0;
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--muted2);
-  letter-spacing: 0.6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text4);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 0 10px 8px;
 }
@@ -79,14 +80,16 @@
 .ashsbNavItem:global(.is-active) {
   font-weight: 600;
   background: var(--accent-tint);
-  color: var(--accent);
+  color: var(--accent-text);
 }
-.ashsbNavItemStatic {
-  color: var(--text3);
-  cursor: default;
+/* trailing hint on links that leave the workspace (docs open in a new tab) */
+.ashsbExt {
+  margin-left: auto;
+  display: flex;
+  color: var(--muted2);
 }
-.ashsbNavItemStatic:hover {
-  background: transparent;
+.ashsbNavItem:hover .ashsbExt {
+  color: var(--text4);
 }
 .ashsbNavIc {
   width: 22px;
@@ -214,7 +217,7 @@
 }
 .userMenuDanger,
 .userMenuDanger svg {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 .userMenuDanger:hover {
   background: var(--danger-bg);
@@ -222,13 +225,6 @@
 }
 .userMenuDanger:hover svg {
   color: var(--danger-strong);
-}
-/* --danger is too dim on the dark surface; lift to red-400 */
-:global([data-theme='dark']) .userMenuDanger,
-:global([data-theme='dark']) .userMenuDanger svg,
-:global([data-theme='dark']) .userMenuDanger:hover,
-:global([data-theme='dark']) .userMenuDanger:hover svg {
-  color: #f87171;
 }
 
 /* topbar */
@@ -388,7 +384,7 @@
 }
 .cmdkIcAction {
   background: var(--accent-tint);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .cmdkIcNav {
   background: var(--surface2);

@@ -22,18 +22,9 @@ export function dimFirst(s: string): number {
   return m ? parseInt(m[0], 10) : 0;
 }
 
-const TAG_PALETTE = [
-  { bg: 'var(--accent-tint)', c: '#4f46e5' },
-  { bg: '#e0f5fa', c: '#0891b2' },
-  { bg: '#e7f6ec', c: '#16a34a' },
-  { bg: '#fef3e2', c: '#d97706' },
-  { bg: '#fde8ef', c: '#be185d' },
-  { bg: '#ede9fe', c: '#7c3aed' },
-];
-export function tagStyle(tag: string): { bg: string; c: string } {
-  let h = 0;
-  for (let i = 0; i < tag.length; i++) h = (h * 31 + tag.charCodeAt(i)) >>> 0;
-  return TAG_PALETTE[h % TAG_PALETTE.length];
+/** Uniform tag chip colours (matches `@/lib/app/tag-style`). */
+export function tagStyle(_tag?: string): { bg: string; c: string } {
+  return { bg: 'var(--surface2)', c: 'var(--text3)' };
 }
 
 export const TYPE_ORDER: MediaFileType[] = [

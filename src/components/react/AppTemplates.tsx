@@ -825,7 +825,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                   Category <span className="tnum">{sortArrow('cat')}</span>
                 </button>
               </div>
-              <div>
+              <div className={styles.lcenter}>
                 <button
                   type="button"
                   onClick={() => toggleSort('updated')}
@@ -834,7 +834,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                   Updated <span className="tnum">{sortArrow('updated')}</span>
                 </button>
               </div>
-              <div className={styles.lright}>
+              <div className={styles.lcenter}>
                 <button
                   type="button"
                   onClick={() => toggleSort('avgOpen')}
@@ -843,7 +843,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                   Opens <span className="tnum">{sortArrow('avgOpen')}</span>
                 </button>
               </div>
-              <div className={styles.lright}>
+              <div className={styles.lcenter}>
                 <button
                   type="button"
                   onClick={() => toggleSort('avgClick')}
@@ -891,13 +891,12 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                   <div>
                     <ChannelBadge channel={t.channel} />
                   </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+                  <div>
                     <span className={styles.catpill}>{t.category}</span>
-                    <ApprovalBadge t={t} compact />
                   </div>
-                  <div className={styles.lmuted}>{t.updated}</div>
-                  <div className={`${styles.lright} tnum ${styles.lmuted3}`}>{t.avgOpen}%</div>
-                  <div className={`${styles.lright} tnum ${styles.lmuted3}`}>{t.avgClick}%</div>
+                  <div className={`${styles.lcenter} ${styles.lmuted}`}>{t.updated}</div>
+                  <div className={`${styles.lcenter} tnum ${styles.lmuted3}`}>{t.avgOpen}%</div>
+                  <div className={`${styles.lcenter} tnum ${styles.lmuted3}`}>{t.avgClick}%</div>
                   <div className={styles.lcenter} onClick={(e) => e.stopPropagation()}>
                     <StarBtn
                       on={isFav(t.id)}

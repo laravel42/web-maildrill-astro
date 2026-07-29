@@ -4,6 +4,12 @@
  * (not the marketing ink-pill), a 238px sidebar and a 57px topbar.
  */
 
+/* Workspace numerals: data figures render in the mono ledger voice. */
+.app-body .tnum {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
 .app-body {
   overflow: hidden;
 }
@@ -106,7 +112,7 @@
 
 .abtn-danger {
   background: var(--surface);
-  color: var(--danger);
+  color: var(--danger-text);
   border: 1px solid #f3c9c9;
 }
 .abtn-danger:hover {
@@ -139,56 +145,40 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 9px;
-  border-radius: 20px;
-  font-size: 10.5px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.astatus {
-  display: inline-block;
-  padding: 2px 9px;
+  padding: 3px 12px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
 }
-.astatus--draft {
-  background: var(--surface2);
-  color: var(--text3);
+
+.astatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  background: #6b675c;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.2;
 }
-.astatus--scheduled {
-  background: var(--accent-tint);
-  color: var(--accent);
-}
-.astatus--sending {
-  background: var(--warning-bg);
-  color: var(--warning);
-}
-.astatus--sent {
-  background: var(--success-bg);
-  color: var(--success-strong);
-}
-.astatus--paused {
-  background: var(--surface2);
-  color: var(--muted);
-}
-.astatus--active {
-  background: var(--success-bg);
-  color: var(--success-strong);
-}
-.astatus--unsubscribed {
-  background: var(--surface2);
-  color: var(--muted);
-}
+.astatus--draft,
+.astatus--scheduled,
+.astatus--sending,
+.astatus--sent,
+.astatus--paused,
+.astatus--active,
+.astatus--unsubscribed,
 .astatus--bounced {
-  background: var(--danger-bg);
-  color: var(--danger);
+  background: #6b675c;
+  color: #fff;
 }
 /* WhatsApp template approval — a distinct background per status. Scoped to its
    own `tstat--*` classes so it never recolors the shared campaign `.astatus--*`
-   badges (which also have draft/paused). Pairs with the `.astatus` pill shape. */
+   labels (which also have draft/paused). */
 .tstat--draft {
   background: var(--info-bg);
   color: var(--info);
@@ -203,7 +193,7 @@
 }
 .tstat--rejected {
   background: var(--danger-bg);
-  color: var(--danger);
+  color: var(--danger-strong);
 }
 .tstat--paused {
   background: rgba(139, 92, 246, 0.16);
@@ -211,18 +201,23 @@
 }
 .tstat--disabled {
   background: var(--surface2);
-  color: var(--muted);
+  color: var(--text4);
 }
 
 /* Outlined for visibility — a solid currentColor border (matching each
    status hue) makes the WhatsApp approval badge read clearly against the
-   tinted card backgrounds. */
+   tinted card backgrounds. Restores pill shape since `.astatus` is now a
+   plain label. */
 .tstat--draft,
 .tstat--pending,
 .tstat--approved,
 .tstat--rejected,
 .tstat--paused,
 .tstat--disabled {
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
   border: 1.5px solid currentColor;
 }
 
@@ -258,7 +253,7 @@
 .acrd__link {
   font-size: 12.5px;
   font-weight: 500;
-  color: var(--accent);
+  color: var(--accent-text);
   cursor: pointer;
 }
 
@@ -271,14 +266,19 @@
   padding: 16px 17px;
 }
 .akpi__label {
-  font-size: 11.5px;
-  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text4);
   font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 .akpi__value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 25px;
   font-weight: 600;
-  letter-spacing: -0.6px;
+  letter-spacing: -0.02em;
   margin-top: 10px;
 }
 .akpi__delta {
@@ -287,10 +287,13 @@
   margin-top: 8px;
 }
 .akpi__delta--up {
-  color: var(--success);
+  color: var(--success-text);
+}
+.akpi__delta--down {
+  color: var(--danger-text);
 }
 .akpi__delta--flat {
-  color: var(--muted);
+  color: var(--text4);
 }
 
 /* ---------------- tables ---------------- */
@@ -307,14 +310,15 @@
   align-items: center;
 }
 .athead {
-  border-bottom: 1px solid var(--surface2);
+  border-bottom: 1px solid var(--border2);
 }
 .athead > div {
   padding: 12px 19px;
-  font-size: 11px;
-  color: var(--muted);
-  font-weight: 600;
-  letter-spacing: 0.3px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--text4);
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .athead button {
@@ -352,12 +356,12 @@
   padding: 12px 19px;
   border-top: 1px solid var(--divider);
   font-size: 12px;
-  color: var(--muted);
+  color: var(--text4);
 }
 .atable__empty {
   padding: 46px 19px;
   text-align: center;
-  color: var(--muted);
+  color: var(--text4);
   font-size: 13px;
 }
 
@@ -379,7 +383,7 @@
   transition: color var(--duration-fast) var(--ease-out);
 }
 .atab.is-active {
-  color: var(--accent);
+  color: var(--accent-text);
   border-bottom-color: var(--accent);
 }
 .atab__count {
@@ -388,11 +392,11 @@
   padding: 1px 7px;
   border-radius: 20px;
   background: var(--surface2);
-  color: var(--muted);
+  color: var(--text4);
 }
 .atab.is-active .atab__count {
   background: var(--accent-tint);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .aseg {
@@ -407,7 +411,7 @@
   border-radius: 7px;
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--text4);
   background: transparent;
   transition:
     background var(--duration-fast) var(--ease-out),
@@ -505,11 +509,12 @@
   gap: 10px;
 }
 .adrawer__eyebrow {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--text4);
 }
 
 /* Detail row */
@@ -521,7 +526,7 @@
   font-size: 13px;
 }
 .adetail__k {
-  color: var(--muted);
+  color: var(--text4);
 }
 .adetail__v {
   font-weight: 500;
@@ -533,6 +538,6 @@
   border-radius: 11px;
   padding: 18px;
   font-size: 12.5px;
-  color: var(--muted);
+  color: var(--text4);
   text-align: center;
 }

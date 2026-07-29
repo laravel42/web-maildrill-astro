@@ -47,7 +47,7 @@
   align-items: center;
   gap: 4px;
   background: var(--accent-tint);
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 12px;
   font-weight: 600;
   padding: 3px 4px 3px 10px;
@@ -60,7 +60,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .chipX:hover {
   background: color-mix(in srgb, var(--accent) 16%, transparent);
@@ -100,7 +100,7 @@
 .bulkCount {
   font-size: 13px;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .bulkDiv {
   width: 1px;
@@ -123,7 +123,7 @@
   background: var(--surface2);
 }
 .bulkBtnDanger {
-  color: var(--danger);
+  color: var(--danger-text);
   border-color: #f3c9c9;
 }
 .bulkBtnDanger:hover {
@@ -266,13 +266,14 @@
 }
 .lhead {
   padding: 12px 19px;
-  border-bottom: 1px solid var(--surface2);
+  border-bottom: 1px solid var(--border2);
 }
 .lhead > div {
-  font-size: 11px;
-  color: var(--muted);
-  font-weight: 600;
-  letter-spacing: 0.3px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--text4);
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .lhead button {
@@ -290,6 +291,9 @@
 .r {
   text-align: right;
   justify-content: flex-end;
+}
+.lgrid > :last-child {
+  padding-right: 10px;
 }
 .lhead .r button {
   justify-content: flex-end;
@@ -485,7 +489,7 @@
   align-items: center;
   gap: 3px;
   padding: 3px 5px 3px 10px;
-  border-radius: 20px;
+  border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
 }
@@ -508,7 +512,7 @@
   width: 92px;
   flex: none;
   border: 1px dashed var(--border2);
-  border-radius: 20px;
+  border-radius: 4px;
   padding: 4px 11px;
   font-size: 11px;
   background: none;
@@ -570,7 +574,9 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  transition: border-color 0.14s, background 0.14s;
+  transition:
+    border-color 0.14s,
+    background 0.14s;
 }
 .drop:hover {
   border-color: var(--accent);
@@ -581,7 +587,7 @@
   height: 44px;
   border-radius: 12px;
   background: var(--accent-tint);
-  color: var(--accent);
+  color: var(--accent-text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -597,7 +603,7 @@
   color: var(--muted);
 }
 .dropBrowse {
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
 }
 .queueEyebrow {

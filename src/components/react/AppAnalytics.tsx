@@ -441,7 +441,7 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
                 x={ML - 8}
                 y={gy + 3.5}
                 textAnchor="end"
-                style={{ fill: 'var(--text4)', fontSize: '10.5px', fontFamily: 'var(--font-mono)' }}
+                style={{ fill: 'var(--text4)', fontSize: '11.5px', fontFamily: 'var(--font-mono)' }}
                 className="tnum"
               >
                 {fmtCompact((yMax * g) / 4)}
@@ -458,7 +458,7 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
               x={x(i)}
               y={H - 10}
               textAnchor={i === n - 1 ? 'end' : 'middle'}
-              style={{ fill: 'var(--text4)', fontSize: '10.5px', fontFamily: 'var(--font-mono)' }}
+              style={{ fill: 'var(--text4)', fontSize: '11.5px', fontFamily: 'var(--font-mono)' }}
               className="tnum"
             >
               {fmtDate(p.date)}

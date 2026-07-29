@@ -46,6 +46,12 @@
   --accent-hover: #4338ca;
   --accent-tint: #eef0ff;
   --accent-contrast: #ffffff;
+  /* Text-role variants: same hue families, guaranteed readable (APCA Lc 60+)
+     on the theme surfaces. Use these when the color is carried BY TEXT; keep
+     --accent/--danger/--success for fills, borders, and bars. */
+  --accent-text: #4f46e5;
+  --success-text: #15803d;
+  --danger-text: #b91c1c;
 
   /* Status */
   --success: #16a34a;
@@ -172,22 +178,33 @@
   --ink: #f5f3ec;
   --text: #f5f3ec;
   --text2: #e6e2d8;
-  --text3: #cbc6b8;
-  --text4: #a8a394;
+  --text3: #d6d1c3;
+  --text4: #bdb8a9;
   --muted: #8b8778;
-  --muted2: #6b6759;
+  --muted2: #817c6d;
   --on-ink: #15130d;
 
   --brand-tint: rgba(255, 68, 31, 0.16);
   --accent-tint: rgba(99, 91, 245, 0.2);
   --accent-contrast: #ffffff;
+  --accent-text: #b1bdfd;
+  --success-text: #4ade80;
+  --danger-text: #fca5a5;
 
+  --success-strong: #4ade80;
+  --danger: #f87171;
+  --danger-strong: #fca5a5;
+  --info: #b1bdfd;
   --warning-strong: #fbbf24;
   --success-bg: rgba(34, 197, 94, 0.16);
   --warning-bg: rgba(217, 119, 6, 0.16);
   --danger-bg: rgba(220, 38, 38, 0.16);
   --info-bg: rgba(99, 91, 245, 0.18);
 
+  --ch-email: #a5b4fc;
+  --ch-sms: #22d3ee;
+  --ch-whatsapp: #4ade80;
+  --ch-voice: #fbbf24;
   --ch-email-tint: rgba(99, 91, 245, 0.18);
   --ch-sms-tint: rgba(8, 145, 178, 0.18);
   --ch-whatsapp-tint: rgba(22, 163, 74, 0.18);
