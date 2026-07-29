@@ -145,15 +145,66 @@ export function renderTemplate(
   };
 }
 
+/** Numbered WhatsApp placeholders ({{1}}, {{2}}, …) as opposed to merge tokens. */
+const WA_VARIABLE_RE = /\{\{\s*(\d+)\s*\}\}/g;
+
+/**
+ * {{n}} → subscriber token from the WA studio doc's body variable map, where the
+ * editor stores each variable's merge tag as `source` (e.g. `{{attributes.x}}`).
+ */
+function builderDocVariableSources(tpl: TemplateRow): Record<string, string> {
+  const doc = tpl.builderDoc as
+    | { blocks?: { body?: { data?: { variables?: unknown } } } }
+    | null;
+  const vars = doc?.blocks?.body?.data?.variables;
+  const out: Record<string, string> = {};
+  if (!vars || typeof vars !== "object") return out;
+  for (const [n, meta] of Object.entries(vars as Record<string, unknown>)) {
+    const source = (meta as { source?: unknown } | null)?.source;
+    if (typeof source !== "string") continue;
+    const m = /^\{\{\s*([\w.]+)\s*\}\}$/.exec(source.trim());
+    if (m) out[n] = m[1]!;
+  }
+  return out;
+}
+
 /**
  * Resolve a WhatsApp template's ordered body placeholders ({{1}}, {{2}}, …) for a
- * subscriber. `components.placeholders` maps each position to a subscriber token
- * (e.g. `["name", "attributes.orderId"]`); missing/non-string tokens become "".
+ * subscriber. Every position the registered body uses MUST get a non-empty value
+ * or Meta rejects the send (EC_INVALID_TEMPLATE_ARGS), so each one resolves
+ * through a fallback chain:
+ *
+ *   1. `components.placeholders[i]` subscriber token (e.g. `"attributes.orderId"`)
+ *   2. the studio builderDoc's `variables[n].source` merge tag
+ *   3. the Meta-review example value (`components.body.examples[i]`) as a literal
  */
 export function resolveTemplatePlaceholders(tpl: TemplateRow, sub: Subscriber): string[] {
-  const components = (tpl.components ?? {}) as { placeholders?: unknown };
+  const components = (tpl.components ?? {}) as {
+    placeholders?: unknown;
+    body?: { text?: unknown; examples?: unknown };
+  };
+  const bodyText =
+    typeof components.body?.text === "string" ? components.body.text : (tpl.text ?? "");
+  let count = 0;
+  for (const m of bodyText.matchAll(WA_VARIABLE_RE)) count = Math.max(count, Number(m[1]));
+
   const tokens = Array.isArray(components.placeholders) ? components.placeholders : [];
-  return tokens.map((t) => (typeof t === "string" ? subscriberToken(sub, t) : ""));
+  count = Math.max(count, tokens.length);
+  if (count === 0) return [];
+
+  const examples = Array.isArray(components.body?.examples) ? components.body.examples : [];
+  const sources = builderDocVariableSources(tpl);
+
+  return Array.from({ length: count }, (_, i) => {
+    const token = tokens[i];
+    let v = typeof token === "string" && token ? subscriberToken(sub, token) : "";
+    if (!v) {
+      const source = sources[String(i + 1)];
+      if (source) v = subscriberToken(sub, source);
+    }
+    if (!v && examples[i] != null) v = String(examples[i]);
+    return v;
+  });
 }
 
 /** Provider-facing body fields; strips UI metadata stored alongside (e.g. audienceIds). */

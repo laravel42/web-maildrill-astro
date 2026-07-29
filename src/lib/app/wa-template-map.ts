@@ -1,5 +1,5 @@
 import type { MetaButton, MetaComponent, MetaTemplate, TemplateCategory, TemplateDoc } from 'wa-template-studio';
-import { emptyDoc, fromMetaJson, toMetaJson } from 'wa-template-studio';
+import { emptyDoc, extractVariables, fromMetaJson, toMetaJson } from 'wa-template-studio';
 
 import type { TplCategory } from '@/lib/app/templates-data';
 import {
@@ -74,6 +74,26 @@ function isTemplateDoc(value: unknown): value is TemplateDoc {
 function bodyText(doc: TemplateDoc): string {
   const data = doc.blocks.body.data as { text?: unknown };
   return typeof data.text === 'string' ? data.text : '';
+}
+
+/**
+ * Ordered send-time subscriber tokens for the body's {{1}}..{{n}} placeholders,
+ * from the studio's variable→field mapping (`variables[n].source`, a merge tag
+ * like `{{attributes.company}}`). Unmapped positions become "" — the sender then
+ * falls back to the variable's Meta-review example value.
+ */
+function bodyPlaceholderTokens(doc: TemplateDoc): string[] {
+  const data = doc.blocks.body.data as {
+    variables?: Record<string, { source?: string }>;
+  };
+  const count = Math.max(0, ...extractVariables(bodyText(doc)));
+  if (count === 0) return [];
+  const vars = data.variables ?? {};
+  return Array.from({ length: count }, (_, i) => {
+    const source = vars[String(i + 1)]?.source;
+    const m = typeof source === 'string' ? /^\{\{\s*([\w.]+)\s*\}\}$/.exec(source.trim()) : null;
+    return m ? m[1] : '';
+  });
 }
 
 function normalizeButton(btn: MetaButton): Record<string, unknown> {
@@ -187,6 +207,9 @@ export function storedComponentsToMeta(
 /** Build the API PATCH/POST body fields for a WhatsApp template save. */
 export function docToApiFields(doc: TemplateDoc) {
   const meta = toMetaJson(doc);
+  const components = metaToStoredComponents(meta);
+  const placeholders = bodyPlaceholderTokens(doc);
+  if (placeholders.length > 0) components.placeholders = placeholders;
   return {
     name: doc.name.trim() || 'Untitled template',
     channel: 'whatsapp' as const,
@@ -194,7 +217,7 @@ export function docToApiFields(doc: TemplateDoc) {
     category: metaCategoryToMaildrill(doc.category),
     language: doc.language,
     builderDoc: doc as unknown as Record<string, unknown>,
-    components: metaToStoredComponents(meta),
+    components,
   };
 }
 

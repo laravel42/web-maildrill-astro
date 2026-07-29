@@ -95,4 +95,73 @@ describe("resolveMessageContent merge tags", () => {
     expect(out.templateName).toBe("order_update");
     expect(out.placeholders).toEqual(["Jane", "pro"]);
   });
+
+  it("falls back to builderDoc variable sources when components.placeholders is absent (studio saves)", () => {
+    const out = resolveMessageContent(
+      tpl({
+        name: "Strategy",
+        approvalStatus: "approved",
+        language: "it",
+        components: {
+          body: {
+            text: "Ciao {{1}}, lanciato {{2}}!",
+            examples: ["Alex Morgan", "Company"],
+          },
+        },
+        builderDoc: {
+          blocks: {
+            body: {
+              data: {
+                variables: {
+                  "1": { source: "{{name}}", example: "Alex Morgan" },
+                  "2": { source: "{{attributes.plan}}", example: "Company" },
+                },
+              },
+            },
+          },
+        },
+      } as Partial<TemplateRow>),
+      jane,
+      undefined,
+      "whatsapp",
+    );
+    expect(out.placeholders).toEqual(["Jane", "pro"]);
+  });
+
+  it("falls back to example values so no placeholder is ever empty (Meta rejects empty args)", () => {
+    const noName = sub({ email: "x@y.z", attributes: {} });
+    const out = resolveMessageContent(
+      tpl({
+        name: "Strategy",
+        approvalStatus: "approved",
+        language: "it",
+        components: {
+          placeholders: ["name", ""],
+          body: {
+            text: "Ciao {{1}}, lanciato {{2}}!",
+            examples: ["Alex Morgan", "Company"],
+          },
+        },
+      } as Partial<TemplateRow>),
+      noName,
+      undefined,
+      "whatsapp",
+    );
+    expect(out.placeholders).toEqual(["Alex Morgan", "Company"]);
+  });
+
+  it("derives the placeholder count from the body text when no mapping exists at all", () => {
+    const out = resolveMessageContent(
+      tpl({
+        name: "Bare",
+        approvalStatus: "approved",
+        language: "en",
+        components: { body: { text: "Hi {{1}}", examples: ["there"] } },
+      } as Partial<TemplateRow>),
+      jane,
+      undefined,
+      "whatsapp",
+    );
+    expect(out.placeholders).toEqual(["there"]);
+  });
 });
