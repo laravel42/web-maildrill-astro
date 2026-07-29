@@ -1,4 +1,6 @@
 import { lists as baseLists } from '@/lib/app/mock-data';
+import type { ApiCampaign } from '@/lib/app/campaign-map';
+import { ago } from './shared/time';
 import type { ListMeta, ListRow } from './AppLists.types';
 
 /** Rows shown per page in the lists table/cards. */
@@ -56,6 +58,50 @@ export const AVATAR_GRADS = [
   'linear-gradient(135deg,#818cf8,#4f46e5)',
   'linear-gradient(135deg,#34d399,#059669)',
 ];
+
+/** One row in the drawer's "Recent campaigns" section. */
+export interface DrawerCampaign {
+  name: string;
+  status: string;
+  when: string;
+  open: string | null;
+}
+
+const CAMPAIGN_STATUS_LABEL: Record<string, string> = {
+  draft: 'Draft',
+  scheduled: 'Scheduled',
+  sending: 'Sending',
+  sent: 'Sent',
+  paused: 'Paused',
+};
+
+/**
+ * The three most recent campaigns targeting a list, with real open rates.
+ * Opens only exist for channels that track them (email, WhatsApp); SMS and
+ * voice campaigns — and anything not yet sent — show "—".
+ */
+export function recentCampaignRows(all: ApiCampaign[], listId: string): DrawerCampaign[] {
+  const at = (c: ApiCampaign) =>
+    new Date(c.completedAt ?? c.updatedAt ?? c.createdAt ?? 0).getTime();
+  return all
+    .filter((c) => c.listId === listId)
+    .sort((a, b) => at(b) - at(a))
+    .slice(0, 3)
+    .map((c) => {
+      const sentAt = c.completedAt ?? c.updatedAt;
+      const delivered = c.delivered ?? 0;
+      const tracked = c.channel === 'email' || c.channel === 'whatsapp';
+      return {
+        name: c.name,
+        status: CAMPAIGN_STATUS_LABEL[c.status ?? ''] ?? '—',
+        when: c.status === 'sent' && sentAt ? ago(sentAt) : '—',
+        open:
+          c.status === 'sent' && tracked && delivered > 0
+            ? `${Math.round(((c.opened ?? 0) / delivered) * 100)}%`
+            : null,
+      };
+    });
+}
 
 export function fmtPct(pct: number): string {
   const arrow = pct >= 0 ? '↑' : '↓';

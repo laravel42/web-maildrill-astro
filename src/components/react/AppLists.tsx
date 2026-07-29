@@ -8,13 +8,16 @@ import {
   AVATAR_GRADS,
   fmtPct,
   PAGE_SIZE,
+  recentCampaignRows,
   rows as mockRows,
   trendPath,
   weeklyGain,
+  type DrawerCampaign,
 } from './AppLists.logic';
 import type { ListRow, SortKey, View } from './AppLists.types';
 import { api, ApiError } from '@/lib/app/api';
 import { toListRow, type ApiList } from '@/lib/app/list-map';
+import type { ApiCampaign } from '@/lib/app/campaign-map';
 import { RATE_BUCKETS, parseRatePercent, rateBucket } from '@/lib/app/templates-data';
 import { tagStyle } from '@/lib/app/tag-style';
 import TagFilter from './shared/TagFilter';
@@ -276,18 +279,19 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                   List <span className="tnum">{sortArrow('name')}</span>
                 </button>
               </div>
-              <div>
+              <div>Tags</div>
+              <div className={styles.colCenter}>
                 <button type="button" onClick={() => toggleSort('subscribers')}>
                   Subscribers <span className="tnum">{sortArrow('subscribers')}</span>
                 </button>
               </div>
-              <div>
+              <div className={styles.colCenter}>
                 <button type="button" onClick={() => toggleSort('growthPct')}>
                   Growth <span className="tnum">{sortArrow('growthPct')}</span>
                 </button>
               </div>
               <div>Recent campaign</div>
-              <div>
+              <div className={styles.colCenter}>
                 <button type="button" onClick={() => toggleSort('updatedAt')}>
                   Updated <span className="tnum">{sortArrow('updatedAt')}</span>
                 </button>
@@ -317,7 +321,18 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                       <span className={styles.dot} style={{ background: l.color }} />
                       <span className={styles.name}>{l.name}</span>
                     </div>
-                    <div className={`tnum ${styles.muted3}`}>
+                    <div className={styles.tagcell}>
+                      {l.tags.length === 0 ? (
+                        <span className={styles.dash}>—</span>
+                      ) : (
+                        l.tags.map((t) => (
+                          <span key={t} className={styles.tag} style={tagStyle(t)}>
+                            {t}
+                          </span>
+                        ))
+                      )}
+                    </div>
+                    <div className={`tnum ${styles.numCell}`}>
                       {l.subscribers.toLocaleString('en-US')}
                     </div>
                     <div
@@ -327,7 +342,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                       {fmtPct(l.growthPct)}
                     </div>
                     <div className={styles.muted3}>{l.recentCampaign}</div>
-                    <div className={styles.muted}>{ago(l.updatedAt)}</div>
+                    <div className={styles.dateCell}>{ago(l.updatedAt)}</div>
                   </div>
                 );
               })
@@ -402,7 +417,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
 
         {/* footer / pagination */}
         <div className={`atable__foot ${styles.foot}`}>
-          <span className="tnum">
+          <span className={filtered.length === 0 ? undefined : 'tnum'}>
             {filtered.length === 0
               ? 'No lists match your search'
               : `${startIdx}–${endIdx} of ${filtered.length} list${filtered.length === 1 ? '' : 's'}`}
@@ -559,14 +574,36 @@ function ListDrawer({
   const gain = weeklyGain(list.trend);
   const chart = trendPath(list.trend, 346, 88);
 
-  const recentCampaigns =
-    list.recentCampaign === '—'
-      ? []
-      : [
-          { name: list.recentCampaign, status: 'Sent', when: '2d ago', open: '54.1%' },
-          { name: 'Monthly Digest', status: 'Sent', when: '2w ago', open: '48.7%' },
-          { name: 'Welcome Series', status: 'Draft', when: '—', open: null },
-        ];
+  // Real campaigns targeting this list, with per-campaign open rates from the
+  // service (live workspaces only) — the fixture preview keeps illustrative
+  // rows. The drawer remounts per list, so a plain mount fetch is fine; null
+  // means "still loading" so we never flash a false empty state.
+  const [recentCampaigns, setRecentCampaigns] = useState<DrawerCampaign[] | null>(
+    live
+      ? null
+      : list.recentCampaign === '—'
+        ? []
+        : [
+            { name: list.recentCampaign, status: 'Sent', when: '2d ago', open: '54.1%' },
+            { name: 'Monthly Digest', status: 'Sent', when: '2w ago', open: '48.7%' },
+            { name: 'Welcome Series', status: 'Draft', when: '—', open: null },
+          ],
+  );
+  useEffect(() => {
+    if (!live) return;
+    let alive = true;
+    void api
+      .get<{ data: ApiCampaign[] }>('campaigns')
+      .then((res) => {
+        if (alive) setRecentCampaigns(recentCampaignRows(res.data, list.id));
+      })
+      .catch(() => {
+        if (alive) setRecentCampaigns([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [live, list.id]);
 
   return (
     <div className={`adrawer-overlay${closing ? ` ${styles.overlayOut}` : ''}`} onClick={onClose}>
@@ -723,7 +760,7 @@ function ListDrawer({
 
           {/* recent campaigns */}
           <p className={`adrawer__eyebrow ${styles.dEyebrow}`}>Recent campaigns</p>
-          {recentCampaigns.length === 0 ? (
+          {recentCampaigns === null ? null : recentCampaigns.length === 0 ? (
             <div className="aempty">No campaigns sent to this list yet</div>
           ) : (
             <div className={styles.dCamps}>

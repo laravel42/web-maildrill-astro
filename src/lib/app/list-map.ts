@@ -14,30 +14,49 @@ export interface ApiList {
   memberCount?: number | null;
   /** List members with a phone number — for SMS / WhatsApp / Voice reach. */
   phoneMemberCount?: number | null;
+  /** Members added in the trailing 7 days / the 7 days before that. */
+  addedLast7?: number | null;
+  addedPrev7?: number | null;
+  /** Cumulative member count at 7 weekly points, oldest → now. */
+  trend?: number[] | null;
+  /** Most recent sent campaign that targeted this list. */
+  recentCampaign?: string | null;
+  /** Message outcomes across campaigns sent to this list. */
+  delivered?: number | null;
+  /** Deliveries on channels with engagement tracking (email, WhatsApp). */
+  trackedDelivered?: number | null;
+  opened?: number | null;
+  clicked?: number | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
 
 /**
- * Map a live API list into the row shape the Lists screen renders. The service
- * stores only identity + colour; growth/trend/engagement are presentation-only
- * and start neutral until analytics wire them up.
+ * Map a live API list into the row shape the Lists screen renders. Growth,
+ * trend, and engagement are computed server-side from membership timestamps
+ * and campaign message outcomes.
  */
 export function toListRow(l: ApiList): ListRow {
+  const last7 = l.addedLast7 ?? 0;
+  const prev7 = l.addedPrev7 ?? 0;
+  // Rates divide by deliveries on channels that track engagement (email,
+  // WhatsApp); SMS/voice deliveries can never open, so they don't count.
+  const denom = l.trackedDelivered ?? l.delivered ?? 0;
+  const rate = (n: number) => (denom > 0 ? `${Math.round((n / denom) * 100)}%` : '—');
   return {
     id: l.id,
     name: l.name,
     subscribers: l.memberCount ?? 0,
-    growthPct: 0,
+    growthPct: prev7 > 0 ? ((last7 - prev7) / prev7) * 100 : last7 > 0 ? 100 : 0,
     updatedAt: l.updatedAt ?? l.createdAt ?? new Date().toISOString(),
     color: l.color || '#4f46e5',
-    trend: [0],
-    recentCampaign: '—',
+    trend: l.trend && l.trend.length > 1 ? l.trend : [0],
+    recentCampaign: l.recentCampaign ?? '—',
     tags: l.tags ?? [],
     notes: l.notes ?? '',
-    more: '+0',
-    openRate: '—',
-    clickRate: '—',
+    more: last7 > 0 ? `+${last7}` : '+0',
+    openRate: rate(l.opened ?? 0),
+    clickRate: rate(l.clicked ?? 0),
   };
 }
 
