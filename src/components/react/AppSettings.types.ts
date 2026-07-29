@@ -2,16 +2,7 @@ import type { Tone } from './shared/tones';
 
 /* ------------------------------ nav model ------------------------------- */
 export type SectionKey =
-  | 'workspace'
-  | 'usage'
-  | 'branding'
-  | 'domains'
-  | 'smtp'
-  | 'billing'
-  | 'api'
-  | 'users'
-  | 'integrations'
-  | 'ai';
+  'usage' | 'branding' | 'domains' | 'billing' | 'api' | 'users' | 'integrations' | 'ai';
 
 /* ------------------------------- panels --------------------------------- */
 export type ToggleKey = 'summaries' | 'subject' | 'sendtime';
@@ -22,6 +13,8 @@ export type FieldDef = {
   value: string;
   type?: string;
   swatch?: boolean;
+  /** Placeholder hinting the expected content while the field is empty. */
+  ph?: string;
 };
 export type TableRow = { title: string; sub: string; badge: string; tone: Tone };
 export type ToggleDef = { key: ToggleKey; title: string; desc: string };
@@ -33,6 +26,8 @@ export type TablePanel = {
   title: string;
   desc: string;
   cta: string;
+  /** Blank-slate message shown while the section has no rows yet. */
+  empty: string;
   rows?: TableRow[];
   roster?: boolean;
 };

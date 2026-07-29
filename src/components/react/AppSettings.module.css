@@ -77,37 +77,48 @@
   margin: 5px 0 0;
 }
 
-/* form */
+/* form — definition rows: label left, control right, hairlines between */
 .form {
   display: block;
 }
-.field {
-  margin-bottom: 18px;
-  max-width: 520px;
+.frow {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--divider);
+}
+.frow:first-of-type {
+  padding-top: 2px;
 }
 .label {
-  display: block;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text2);
-  margin-bottom: 6px;
 }
 .inputwrap {
   position: relative;
   display: flex;
   align-items: center;
+  justify-self: start;
+  width: 100%;
+  max-width: 360px;
 }
 .input {
   width: 100%;
   border: 1px solid var(--border2);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 9px 12px;
   font-size: 13.5px;
   color: var(--text);
   background: transparent;
   transition:
     border-color var(--duration-fast) var(--ease-out),
     box-shadow var(--duration-fast) var(--ease-out);
+}
+.input::placeholder {
+  color: var(--text4);
 }
 .input:focus {
   outline: none;
@@ -129,93 +140,231 @@
 .formfoot {
   display: flex;
   justify-content: flex-end;
-  margin-top: 4px;
+  padding-top: 16px;
 }
 
-/* usage */
-.summary {
+/* usage — metered ledger. Mono tabular figures, hairline rules, one stacked
+   channel meter; no nested cards. */
+.ledgerHead {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 16px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface2);
-  margin-bottom: 20px;
-  flex-wrap: wrap;
 }
-.summaryLbl {
-  font-size: 12px;
-  color: var(--muted);
-}
-.summaryVal {
-  font-size: 20px;
-  font-weight: 600;
-  margin-top: 3px;
-  color: var(--text);
-}
-.summaryCap {
-  font-size: 13px;
+.ledgerKicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
   font-weight: 500;
-  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text4);
 }
-.usageList {
-  display: block;
-}
-.usageRow {
-  padding: 14px 0;
-  border-bottom: 1px solid var(--surface2);
-}
-.usageRow:last-child {
-  border-bottom: none;
-}
-.usageHead {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 9px;
-}
-.usageIc {
-  width: 26px;
-  height: 26px;
-  flex: none;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.usageName {
-  flex: 1;
-  font-size: 13.5px;
-  font-weight: 600;
-}
-.usageNums {
+.ledgerLink {
+  padding: 0;
   font-size: 12.5px;
-  color: var(--muted);
-}
-.usageBar {
-  height: 6px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
   border-radius: 6px;
 }
+.ledgerLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ledgerLink:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+/* --accent indigo lands ~2.6:1 on the dark surface; lift it (indigo-400) */
+:global([data-theme='dark']) .ledgerLink {
+  color: #818cf8;
+}
+.ledgerHero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
+  flex-wrap: wrap;
+  margin: 12px 0 18px;
+}
+.heroMain {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.heroStats {
+  display: flex;
+  gap: 28px;
+  text-align: right;
+}
+.heroStat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.heroStatLbl {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text4);
+}
+.heroStatVal {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+/* low-credit alert: the whole balance stat turns danger red */
+.heroStatAlert .heroStatLbl,
+.heroStatAlert .heroStatVal {
+  color: var(--danger-strong);
+}
+/* --danger-strong is too dim on the dark surface; lift to red-400 */
+:global([data-theme='dark']) .heroStatAlert .heroStatLbl,
+:global([data-theme='dark']) .heroStatAlert .heroStatVal {
+  color: #f87171;
+}
+.ledgerTotal {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 36px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.ledgerUnit {
+  font-size: 13px;
+  color: var(--text4);
+}
+.meter {
+  display: flex;
+  gap: 3px;
+  height: 10px;
+  margin-bottom: 24px;
+}
+.meterSeg {
+  min-width: 6px;
+  border-radius: 3px;
+  transform-origin: left;
+  animation: meterGrow 0.55s var(--ease-out) backwards;
+}
+@keyframes meterGrow {
+  from {
+    transform: scaleX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .meterSeg {
+    animation: none;
+  }
+}
+.meterEmpty {
+  height: 10px;
+  border-radius: 3px;
+  margin-bottom: 24px;
+  background: var(--surface2);
+}
+.ledgerTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ledgerTable th {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text4);
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--border2);
+}
+.thName {
+  text-align: left;
+}
+/* one class deeper than `.ledgerTable th/td`, so the column padding wins */
+.ledgerTable .thNum {
+  text-align: right;
+  padding-left: 18px;
+}
+.ledgerTable td {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--divider);
+}
+.ledgerTable tr:last-child td {
+  border-bottom: none;
+}
+.cellName {
+  width: 100%;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+.nameWrap {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.chSwatch {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 3px;
+}
+.leader {
+  flex: 1;
+  min-width: 24px;
+  height: 1px;
+  align-self: center;
+  transform: translateY(3px);
+  border-bottom: 1px dotted var(--muted2);
+  margin: 0 4px;
+}
+.ledgerTable .cellNum {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  text-align: right;
+  padding-left: 18px;
+  color: var(--text3);
+  white-space: nowrap;
+}
+.ledgerTable .cellSent {
+  color: var(--text);
+  font-weight: 500;
+}
+.ledgerEmpty {
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  color: var(--text4);
+}
 
-/* table */
+/* table — hairline rows, no outer box */
 .table {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
+  display: block;
 }
 .trow {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 13px 16px;
-  border-bottom: 1px solid var(--surface2);
+  padding: 13px 0;
+  border-bottom: 1px solid var(--divider);
 }
 .trow:last-child {
   border-bottom: none;
 }
+/* clickable rows keep stable geometry; the inset just rounds the hover wash */
 .trowClick {
+  padding: 13px 10px;
+  margin: 0 -10px;
+  border-radius: 10px;
   cursor: pointer;
   transition: background 0.12s var(--ease-out);
 }
@@ -225,6 +374,21 @@
 .trowClick:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
+}
+
+/* blank slate — shown while a table section has no rows yet */
+.blank {
+  padding: 6px 0 4px;
+}
+.blankMsg {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text3);
+  max-width: 46ch;
+}
+.blankCta {
+  margin-top: 14px;
 }
 .avatar {
   width: 34px;
@@ -248,7 +412,7 @@
 }
 .trowSub {
   font-size: 11.5px;
-  color: var(--muted);
+  color: var(--text4);
   margin-top: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -286,7 +450,7 @@
   align-items: center;
   gap: 14px;
   padding: 14px 0;
-  border-bottom: 1px solid var(--surface2);
+  border-bottom: 1px solid var(--divider);
 }
 .toggleRow:last-child {
   border-bottom: none;
@@ -301,7 +465,7 @@
 }
 .toggleDesc {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--text4);
   margin-top: 3px;
 }
 .toggleRow :global(.atoggle) {
@@ -339,6 +503,31 @@
 }
 
 @media (max-width: 820px) {
+  .panel {
+    padding: 20px 16px;
+  }
+  .ledgerTotal {
+    font-size: 30px;
+  }
+  .ledgerTable .thNum,
+  .ledgerTable .cellNum {
+    padding-left: 8px;
+  }
+  .ledgerTable .cellNum {
+    font-size: 12px;
+  }
+  .leader {
+    display: none;
+  }
+  .heroStats {
+    gap: 20px;
+    text-align: left;
+  }
+  .frow {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 11px 0;
+  }
   .grid {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -456,9 +645,9 @@
 }
 
 /* ------------------------------ role editor ----------------------------- */
-/* The `.rolemOverlay` (`ovfade`) and `.rolem` (`pop`) entry animations are
+/* The `.modalOverlay` (`ovfade`) and `.modal` (`pop`) entry animations are
    global keyframes, so they live inline on their elements rather than here. */
-.rolemOverlay {
+.modalOverlay {
   position: fixed;
   inset: 0;
   z-index: var(--z-modal);
@@ -469,7 +658,7 @@
   justify-content: center;
   padding: 32px;
 }
-.rolem {
+.modal {
   width: 440px;
   max-width: 100%;
   background: var(--surface);
@@ -477,18 +666,18 @@
   box-shadow: 0 24px 60px rgba(28, 25, 23, 0.28);
   overflow: hidden;
 }
-.rolemHead {
+.modalHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 18px 22px;
   border-bottom: 1px solid var(--divider);
 }
-.rolemTitle {
+.modalTitle {
   font-weight: 600;
   font-size: 15px;
 }
-.rolemX {
+.modalX {
   width: 30px;
   height: 30px;
   border: none;
@@ -500,23 +689,23 @@
   align-items: center;
   justify-content: center;
 }
-.rolemX:hover {
+.modalX:hover {
   color: var(--text2);
   background: var(--border2);
 }
-.rolemBody {
+.modalBody {
   padding: 20px 22px;
 }
-.rolemSub {
+.modalSub {
   margin: 0 0 14px;
   font-size: 13px;
   color: var(--text4);
 }
-.rolemSub strong {
+.modalSub strong {
   color: var(--text2);
   font-weight: 600;
 }
-.rolemOpt {
+.modalOpt {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -532,14 +721,14 @@
     border-color 0.12s var(--ease-out),
     background 0.12s var(--ease-out);
 }
-.rolemOpt:hover {
+.modalOpt:hover {
   border-color: var(--muted2);
 }
-.rolemOpt:global(.is-on) {
+.modalOpt:global(.is-on) {
   border-color: var(--accent);
   background: var(--accent-tint);
 }
-.rolemRadio {
+.modalRadio {
   width: 18px;
   height: 18px;
   flex: none;
@@ -548,38 +737,38 @@
   border: 1.6px solid var(--muted2);
   position: relative;
 }
-.rolemRadio:global(.is-on) {
+.modalRadio:global(.is-on) {
   border-color: var(--accent);
 }
-.rolemRadio:global(.is-on)::after {
+.modalRadio:global(.is-on)::after {
   content: '';
   position: absolute;
   inset: 3px;
   border-radius: 50%;
   background: var(--accent);
 }
-.rolemOptmain {
+.modalOptmain {
   flex: 1;
   min-width: 0;
 }
-.rolemOptrow {
+.modalOptrow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
-.rolemOptname {
+.modalOptname {
   font-size: 13.5px;
   font-weight: 600;
   color: var(--text);
 }
-.rolemOptdesc {
+.modalOptdesc {
   display: block;
   font-size: 12px;
-  color: var(--muted);
+  color: var(--text4);
   margin-top: 3px;
 }
-.rolemFoot {
+.modalFoot {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
@@ -587,23 +776,23 @@
   border-top: 1px solid var(--divider);
   background: var(--surface2);
 }
-.rolemCancel,
-.rolemSave {
+.modalCancel,
+.modalSave {
   padding: 9px 16px;
   border-radius: 10px;
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
 }
-.rolemCancel {
+.modalCancel {
   background: var(--surface);
   border: 1px solid var(--border2);
   color: var(--text2);
 }
-.rolemCancel:hover {
+.modalCancel:hover {
   background: var(--surface2);
 }
-.rolemSave {
+.modalSave {
   background: var(--accent);
   color: #fff;
   border: none;
@@ -612,7 +801,80 @@
     0 1px 2px rgba(79, 70, 229, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
-.rolemSave:disabled {
+.modalSave:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+/* ----------------------------- modal fields ----------------------------- */
+.modalField {
+  margin-bottom: 14px;
+}
+.modalField .label {
+  display: block;
+  margin-bottom: 6px;
+}
+.modalHelp {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text4);
+}
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.chip {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  padding: 8px 13px;
+  border: 1.5px solid var(--border2);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  background: var(--surface);
+  transition:
+    border-color 0.12s var(--ease-out),
+    background 0.12s var(--ease-out),
+    color 0.12s var(--ease-out);
+}
+.chip:hover {
+  border-color: var(--muted2);
+}
+.chip:global(.is-on) {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+/* accent-on-tint drops to ~2:1 on the dark surface; lift to indigo-300 */
+:global([data-theme='dark']) .chip:global(.is-on) {
+  color: #a5b4fc;
+}
+.amount {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.amountPrefix {
+  position: absolute;
+  left: 12px;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  color: var(--text4);
+  pointer-events: none;
+}
+.inputMoney {
+  padding-left: 26px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.convert {
+  margin: 8px 0 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--text4);
 }
