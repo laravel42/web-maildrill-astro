@@ -32,11 +32,22 @@
 }
 .pvText {
   width: 100%;
-  display: flex;
-  justify-content: flex-start;
+  max-height: 520px; /* match HtmlPreview PREVIEW_MAX_HEIGHT */
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.pvText::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 .pvBubble {
+  /* Block (not flex child) so bg grows with full text; parent scrolls. */
+  width: fit-content;
   max-width: 100%;
+  box-sizing: border-box;
   padding: 12px 15px;
   border-radius: 4px 16px 16px 16px;
   background: #fff;
