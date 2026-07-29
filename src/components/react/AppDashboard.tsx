@@ -41,11 +41,11 @@ export default function AppDashboard({
           <p className="screen__sub">Here's what's happening with your workspace today.</p>
         </div>
         <div className={styles.actions}>
-          <a href="/app/campaigns" className="pbtn">
+          <a href="/dashboard/campaigns" className="pbtn">
             <Icon name="plus" size={15} stroke={2.2} />
             Create campaign
           </a>
-          <a href="/app/subscribers" className="sbtn">
+          <a href="/dashboard/subscribers" className="sbtn">
             <Icon name="upload" size={15} />
             Import contacts
           </a>
@@ -70,7 +70,7 @@ export default function AppDashboard({
         <div className="acrd" style={{ overflow: 'hidden' }}>
           <div className="acrd__head">
             <h2 className="acrd__title">Recent campaigns</h2>
-            <a href="/app/campaigns" className="acrd__link">
+            <a href="/dashboard/campaigns" className="acrd__link">
               View all
             </a>
           </div>
@@ -82,12 +82,14 @@ export default function AppDashboard({
             <span>Updated</span>
           </div>
           {recent.map((c) => (
-            <a key={c.id} href="/app/campaigns" className={styles.ctRow}>
+            <a key={c.id} href="/dashboard/campaigns" className={styles.ctRow}>
               <span className={styles.ctName}>{c.name}</span>
               <span>
                 <span className={`astatus astatus--${c.status}`}>{statusLabel[c.status]}</span>
               </span>
-              <span className={`tnum ${styles.muted3}`}>{c.recipients.toLocaleString('en-US')}</span>
+              <span className={`tnum ${styles.muted3}`}>
+                {c.recipients.toLocaleString('en-US')}
+              </span>
               <span className={`tnum ${styles.muted3}`}>
                 {c.openRate != null ? `${Math.round(c.openRate * 100)}%` : '—'}
               </span>
@@ -120,7 +122,7 @@ export default function AppDashboard({
       <div className={`acrd ${styles.perf}`}>
         <div className={styles.perfHead}>
           <h2 className="acrd__title">Performance by channel</h2>
-          <a href="/app/analytics" className="acrd__link">
+          <a href="/dashboard/analytics" className="acrd__link">
             View analytics
           </a>
         </div>
@@ -129,7 +131,10 @@ export default function AppDashboard({
             const meta = CHANNEL[p.channel];
             return (
               <div key={p.channel} className={styles.perfRow}>
-                <span className={styles.perfIc} style={{ background: meta.tint, color: meta.color }}>
+                <span
+                  className={styles.perfIc}
+                  style={{ background: meta.tint, color: meta.color }}
+                >
                   <Icon name={meta.icon} size={14} />
                 </span>
                 <div className={styles.perfLabel}>
@@ -144,7 +149,11 @@ export default function AppDashboard({
                   <div className="abar">
                     <div
                       className="abar__fill"
-                      style={{ width: `${p.openW}%`, background: meta.color, animation: 'grow .5s ease' }}
+                      style={{
+                        width: `${p.openW}%`,
+                        background: meta.color,
+                        animation: 'grow .5s ease',
+                      }}
                     />
                   </div>
                 </div>
@@ -201,7 +210,10 @@ export default function AppDashboard({
           </h2>
           {getStarted.map((g) => (
             <div key={g.label} className={styles.startItem} style={{ background: g.bg }}>
-              <span className={styles.startDisc} style={{ borderColor: g.ring, background: g.fill }}>
+              <span
+                className={styles.startDisc}
+                style={{ borderColor: g.ring, background: g.fill }}
+              >
                 {isStepDone(g) && (
                   <svg
                     width="11"

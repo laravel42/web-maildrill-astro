@@ -9,7 +9,7 @@ export const COMMANDS: Cmd[] = [
     icon: n.icon,
   })),
   { label: 'Go to Settings', hint: 'Navigate', href: appSettingsNav.href, icon: 'settings' },
-  { label: 'New campaign', hint: 'Action', href: '/app/campaigns', icon: 'plus' },
-  { label: 'New template', hint: 'Action', href: '/app/templates', icon: 'templates' },
-  { label: 'Import contacts', hint: 'Action', href: '/app/subscribers', icon: 'upload' },
+  { label: 'New campaign', hint: 'Action', href: '/dashboard/campaigns', icon: 'plus' },
+  { label: 'New template', hint: 'Action', href: '/dashboard/templates', icon: 'templates' },
+  { label: 'Import contacts', hint: 'Action', href: '/dashboard/subscribers', icon: 'upload' },
 ];

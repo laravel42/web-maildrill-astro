@@ -569,10 +569,7 @@ function ListDrawer({
         ];
 
   return (
-    <div
-      className={`adrawer-overlay${closing ? ` ${styles.overlayOut}` : ''}`}
-      onClick={onClose}
-    >
+    <div className={`adrawer-overlay${closing ? ` ${styles.overlayOut}` : ''}`} onClick={onClose}>
       <div
         className={`adrawer lld${closing ? ` ${styles.drawerOut}` : ''}`}
         style={{ width: 410 }}
@@ -602,7 +599,9 @@ function ListDrawer({
           <div className={styles.dStats}>
             <div className={styles.dStat}>
               <div className={styles.dStatLbl}>Subscribers</div>
-              <div className={`tnum ${styles.dStatVal}`}>{list.subscribers.toLocaleString('en-US')}</div>
+              <div className={`tnum ${styles.dStatVal}`}>
+                {list.subscribers.toLocaleString('en-US')}
+              </div>
             </div>
             <div className={styles.dStat}>
               <div className={styles.dStatLbl}>Growth</div>
@@ -798,7 +797,11 @@ function ListDrawer({
           <button type="button" className="sbtn" style={{ flex: 1 }} onClick={onEdit}>
             Edit list
           </button>
-          <a href="/app/subscribers" className="pbtn" style={{ flex: 1, textDecoration: 'none' }}>
+          <a
+            href="/dashboard/subscribers"
+            className="pbtn"
+            style={{ flex: 1, textDecoration: 'none' }}
+          >
             Subscribers
           </a>
         </div>

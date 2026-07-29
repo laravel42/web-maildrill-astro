@@ -24,16 +24,18 @@ export const routes = {
     signup: '/signup',
     forgotPassword: '/forgot-password',
   },
+  // The workspace lives entirely under /dashboard/*; legacy /app/* URLs
+  // 301 there via astro.config redirects.
   app: {
-    root: '/app',
+    root: '/dashboard',
     dashboard: '/dashboard',
-    campaigns: '/app/campaigns',
-    templates: '/app/templates',
-    lists: '/app/lists',
-    subscribers: '/app/subscribers',
-    media: '/app/media',
-    analytics: '/app/analytics',
-    settings: '/app/settings',
+    campaigns: '/dashboard/campaigns',
+    templates: '/dashboard/templates',
+    lists: '/dashboard/lists',
+    subscribers: '/dashboard/subscribers',
+    media: '/dashboard/media',
+    analytics: '/dashboard/analytics',
+    settings: '/dashboard/settings',
   },
 } as const;
 

@@ -104,7 +104,16 @@ export default defineConfig({
   redirects: {
     '/privacy-policy': '/legal/privacy',
     '/terms-of-service': '/legal/terms',
-    // Dashboard moved to /dashboard; keep the old workspace root working.
+    // The workspace moved from /app/* to /dashboard/*; keep old URLs working.
+    // Enumerated because Astro dynamic redirects need a matching dynamic
+    // destination route, and /dashboard/* are plain file routes.
     '/app': '/dashboard',
+    '/app/campaigns': '/dashboard/campaigns',
+    '/app/templates': '/dashboard/templates',
+    '/app/lists': '/dashboard/lists',
+    '/app/subscribers': '/dashboard/subscribers',
+    '/app/media': '/dashboard/media',
+    '/app/analytics': '/dashboard/analytics',
+    '/app/settings': '/dashboard/settings',
   },
 });

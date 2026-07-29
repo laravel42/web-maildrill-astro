@@ -43,21 +43,22 @@ test.describe('marketing smoke', () => {
 
 test.describe('app shell', () => {
   test('dashboard and campaigns navigation work', async ({ page }) => {
-    await page.goto('/app');
+    // Legacy /app 301s to /dashboard — land there directly.
+    await page.goto('/dashboard');
     // The dashboard's single H1 is the greeting (per the design).
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Good evening');
     await page.getByRole('link', { name: 'Campaigns' }).first().click();
-    await expect(page).toHaveURL(/\/app\/campaigns$/);
+    await expect(page).toHaveURL(/\/dashboard\/campaigns$/);
     await expect(page.getByRole('heading', { level: 1, name: 'Campaigns' })).toBeVisible();
     await expect(page.getByText('Spring Launch')).toBeVisible();
   });
 
-  test('login placeholder routes into app', async ({ page }) => {
+  test('login placeholder routes into the dashboard', async ({ page }) => {
     await page.goto('/login');
     await page.getByLabel('Work email').fill('andrea@acme.com');
     await page.getByLabel('Password').fill('password123');
     await page.getByRole('button', { name: 'Log in' }).click();
-    await expect(page).toHaveURL(/\/app\/?$/);
+    await expect(page).toHaveURL(/\/dashboard\/?$/);
   });
 });
 
