@@ -1,3 +1,4 @@
+import type { IconName } from '@/lib/icons';
 import Icon from '../Icon';
 import styles from './ColFilter.module.css';
 
@@ -14,6 +15,7 @@ export default function ColFilter({
   onClear,
   open,
   onOpenToggle,
+  icon,
 }: {
   label: string;
   options: readonly string[];
@@ -22,6 +24,8 @@ export default function ColFilter({
   onClear: () => void;
   open: boolean;
   onOpenToggle: () => void;
+  /** Optional leading icon (e.g. Media Orientation / Ratio). */
+  icon?: IconName;
 }) {
   const count = selected.size;
   return (
@@ -33,6 +37,7 @@ export default function ColFilter({
         aria-haspopup="menu"
         onClick={onOpenToggle}
       >
+        {icon && <Icon name={icon} size={14} />}
         {label}
         {count > 0 && <span className={`${styles.count} tnum`}>{count}</span>}
         <Icon

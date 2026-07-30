@@ -28,6 +28,7 @@ import type { AudienceChoice, CampaignDraft, TemplateChoice } from './CampaignWi
 import type { Campaign, CampaignStatus, ChannelType } from '@/types/app';
 import Icon from './Icon';
 import ColFilter from './shared/ColFilter';
+import FilterChipsRow from './shared/FilterChipsRow';
 import ConfirmDialog from './shared/ConfirmDialog';
 import CampaignWizard from './CampaignWizard';
 import TemplatePreview, { MessagePreview } from './shared/TemplatePreview';
@@ -37,6 +38,7 @@ import { ago } from './shared/time';
 import { useToast } from './shared/useToast';
 import { STATUS_LABEL, TABS, PAGE_SIZE, pct } from './CampaignsBoard.logic';
 import type { SortKey } from './CampaignsBoard.types';
+import { visiblePageNumbers } from './shared/pagination';
 import styles from './CampaignsBoard.module.css';
 
 function ChannelPill({ channel }: { channel: ChannelType }) {
@@ -185,6 +187,7 @@ export default function CampaignsBoard({
 
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
+  const pagerPages = visiblePageNumbers(safePage, pageCount);
   const startIdx = rows.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
   const endIdx = Math.min(safePage * PAGE_SIZE, rows.length);
   const pageRows = rows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
@@ -551,93 +554,127 @@ export default function CampaignsBoard({
           ))}
         </div>
 
-        {/* toolbar */}
+        {/* toolbar: controls on row 1; active filter chips always on their own row */}
         <div className={styles.toolbar}>
-          <label className={styles.search}>
-            <Icon name="search" size={15} className={styles.searchic} />
-            <input
-              type="search"
-              placeholder="Search campaigns…"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setSelected(new Set());
-              }}
-              aria-label="Search campaigns"
-            />
-          </label>
-          <div className={styles.filterwrap}>
-            <button
-              type="button"
-              className={`${styles.filter}${channelFilter.size ? ' is-on' : ''}`}
-              aria-expanded={openFilter === 'channel'}
-              onClick={() => setOpenFilter((o) => (o === 'channel' ? null : 'channel'))}
-            >
-              <Icon name="filter" size={14} />
-              Channel
-              {channelFilter.size > 0 && (
-                <span className={styles.filtercount}>{channelFilter.size}</span>
+          <div className={styles.toolbarRow}>
+            <label className={styles.search}>
+              <Icon name="search" size={15} className={styles.searchic} />
+              <input
+                type="search"
+                placeholder="Search campaigns…"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setSelected(new Set());
+                }}
+                aria-label="Search campaigns"
+              />
+            </label>
+            <div className={styles.filterwrap}>
+              <button
+                type="button"
+                className={`${styles.filter}${channelFilter.size ? ' is-on' : ''}`}
+                aria-expanded={openFilter === 'channel'}
+                onClick={() => setOpenFilter((o) => (o === 'channel' ? null : 'channel'))}
+              >
+                <Icon name="filter" size={14} />
+                Channel
+                {channelFilter.size > 0 && (
+                  <span className={styles.filtercount}>{channelFilter.size}</span>
+                )}
+                <Icon name="chevron-down" size={12} className={styles.filtercaret} />
+              </button>
+              {openFilter === 'channel' && (
+                <>
+                  <button
+                    type="button"
+                    className={styles.filterscrim}
+                    aria-label="Close"
+                    onClick={() => setOpenFilter(null)}
+                  />
+                  <div className={styles.filterpop} style={{ animation: 'pop .14s ease' }}>
+                    {CHANNEL_ORDER.map((ch) => (
+                      <label key={ch} className={styles.filteropt}>
+                        <input
+                          type="checkbox"
+                          checked={channelFilter.has(ch)}
+                          onChange={() => toggleChannel(ch)}
+                        />
+                        <ChannelPill channel={ch} />
+                      </label>
+                    ))}
+                    {channelFilter.size > 0 && (
+                      <button
+                        type="button"
+                        className={styles.filterclear}
+                        onClick={() => {
+                          setChannelFilter(new Set());
+                          setSelected(new Set());
+                        }}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </>
               )}
-              <Icon name="chevron-down" size={12} className={styles.filtercaret} />
-            </button>
-            {openFilter === 'channel' && (
-              <>
-                <button
-                  type="button"
-                  className={styles.filterscrim}
-                  aria-label="Close"
-                  onClick={() => setOpenFilter(null)}
-                />
-                <div className={styles.filterpop} style={{ animation: 'pop .14s ease' }}>
-                  {CHANNEL_ORDER.map((ch) => (
-                    <label key={ch} className={styles.filteropt}>
-                      <input
-                        type="checkbox"
-                        checked={channelFilter.has(ch)}
-                        onChange={() => toggleChannel(ch)}
-                      />
-                      <ChannelPill channel={ch} />
-                    </label>
-                  ))}
-                  {channelFilter.size > 0 && (
-                    <button
-                      type="button"
-                      className={styles.filterclear}
-                      onClick={() => {
-                        setChannelFilter(new Set());
-                        setSelected(new Set());
-                      }}
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
+            </div>
+            <ColFilter
+              label="Opens"
+              icon="eye"
+              options={RATE_BUCKETS}
+              selected={opensSel}
+              onToggle={toggleSet(setOpensSel)}
+              onClear={() => {
+                setOpensSel(new Set());
+                resetPage();
+              }}
+              open={openFilter === 'opens'}
+              onOpenToggle={() => setOpenFilter((o) => (o === 'opens' ? null : 'opens'))}
+            />
+            <ColFilter
+              label="Clicks"
+              icon="target"
+              options={RATE_BUCKETS}
+              selected={clicksSel}
+              onToggle={toggleSet(setClicksSel)}
+              onClear={() => {
+                setClicksSel(new Set());
+                resetPage();
+              }}
+              open={openFilter === 'clicks'}
+              onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
+            />
           </div>
-          <ColFilter
-            label="Opens"
-            options={RATE_BUCKETS}
-            selected={opensSel}
-            onToggle={toggleSet(setOpensSel)}
-            onClear={() => {
+          <FilterChipsRow
+            chips={[
+              ...[...channelFilter].map((ch) => {
+                const m = CHANNEL[ch];
+                return {
+                  key: `ch:${ch}`,
+                  label: m.label,
+                  onRemove: () => toggleChannel(ch),
+                  style: { background: m.tint, color: m.color },
+                };
+              }),
+              ...[...opensSel].map((b) => ({
+                key: `opens:${b}`,
+                label: `Opens: ${b}`,
+                onRemove: () => toggleSet(setOpensSel)(b),
+              })),
+              ...[...clicksSel].map((b) => ({
+                key: `clicks:${b}`,
+                label: `Clicks: ${b}`,
+                onRemove: () => toggleSet(setClicksSel)(b),
+              })),
+            ]}
+            onClearAll={() => {
+              setChannelFilter(new Set());
               setOpensSel(new Set());
-              resetPage();
-            }}
-            open={openFilter === 'opens'}
-            onOpenToggle={() => setOpenFilter((o) => (o === 'opens' ? null : 'opens'))}
-          />
-          <ColFilter
-            label="Clicks"
-            options={RATE_BUCKETS}
-            selected={clicksSel}
-            onToggle={toggleSet(setClicksSel)}
-            onClear={() => {
               setClicksSel(new Set());
+              setSelected(new Set());
               resetPage();
             }}
-            open={openFilter === 'clicks'}
-            onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
           />
         </div>
 
@@ -793,7 +830,7 @@ export default function CampaignsBoard({
               >
                 <Icon name="chevron-right" size={15} className={styles.pgflip} />
               </button>
-              {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
+              {pagerPages.map((n) => (
                 <button
                   key={n}
                   type="button"
@@ -1223,7 +1260,7 @@ const EVENT_TAB_LABEL: Record<(typeof EVENT_TABS)[number], string> = {
   queued: 'Queued',
 };
 
-const EVENT_PAGE_SIZE = 8;
+const EVENT_PAGE_SIZE = 15;
 
 /**
  * Campaign report — the "View report" destination, rendered as a full screen
@@ -1478,6 +1515,7 @@ function CampaignReport({
     eventTab === 'all' ? events : events.filter((e) => eventKind(e) === eventTab);
   const eventPages = Math.max(1, Math.ceil(filteredEvents.length / EVENT_PAGE_SIZE));
   const safeEventPage = Math.min(eventPage, eventPages);
+  const eventPagerPages = visiblePageNumbers(safeEventPage, eventPages);
   const pageEvents = filteredEvents.slice(
     (safeEventPage - 1) * EVENT_PAGE_SIZE,
     safeEventPage * EVENT_PAGE_SIZE,
@@ -1749,7 +1787,7 @@ function CampaignReport({
               >
                 <Icon name="chevron-right" size={15} className={styles.pgflip} />
               </button>
-              {Array.from({ length: eventPages }, (_, i) => i + 1).map((n) => (
+              {eventPagerPages.map((n) => (
                 <button
                   key={n}
                   type="button"

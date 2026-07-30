@@ -69,13 +69,18 @@ export function toMediaFile(a: ApiMediaAsset, index = 0): MediaFile & {
   preview: string;
   url: string;
   tags: string[];
+  folder: string | null;
+  width: number | null;
+  height: number | null;
 } {
   const type = typeOf(a.contentType, a.name);
   const isImage = Boolean(a.contentType?.startsWith('image/'));
+  const width = a.width && a.width > 0 ? a.width : null;
+  const height = a.height && a.height > 0 ? a.height : null;
   return {
     id: a.id,
     name: a.name,
-    dim: a.width && a.height ? `${a.width} × ${a.height}` : '—',
+    dim: width && height ? `${width} × ${height}` : '—',
     label: isImage ? '' : type,
     thumb: THUMBS[index % THUMBS.length]!,
     fg: '#fff',
@@ -87,6 +92,9 @@ export function toMediaFile(a: ApiMediaAsset, index = 0): MediaFile & {
     preview: isImage ? a.url : '',
     url: a.url ?? '',
     tags: a.tags ?? [],
+    folder: a.folder?.trim() || null,
+    width,
+    height,
   };
 }
 

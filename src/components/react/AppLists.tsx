@@ -19,9 +19,12 @@ import { api, ApiError } from '@/lib/app/api';
 import { toListRow, type ApiList } from '@/lib/app/list-map';
 import type { ApiCampaign } from '@/lib/app/campaign-map';
 import { RATE_BUCKETS, parseRatePercent, rateBucket } from '@/lib/app/templates-data';
+import { matchesSearchQuery } from '@/lib/app/search-match';
 import { tagStyle } from '@/lib/app/tag-style';
 import TagFilter from './shared/TagFilter';
 import ColFilter from './shared/ColFilter';
+import FilterChipsRow from './shared/FilterChipsRow';
+import { visiblePageNumbers } from './shared/pagination';
 import styles from './AppLists.module.css';
 
 export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
@@ -37,11 +40,16 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updatedAt', dir: -1 });
   const [page, setPage] = useState(1);
 
-  // Every tag present across the workspace's lists, for the tags filter.
-  const allTags = useMemo(
-    () => [...new Set(listRows.flatMap((l) => l.tags))].sort((a, b) => a.localeCompare(b)),
-    [listRows],
-  );
+  // Every tag present across the workspace's lists, with list counts.
+  const allTags = useMemo(() => {
+    const freq = new Map<string, number>();
+    for (const l of listRows) {
+      for (const t of l.tags) freq.set(t, (freq.get(t) ?? 0) + 1);
+    }
+    return [...freq.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [listRows]);
   const toggleTag = (t: string) =>
     setTagSel((prev) => {
       const next = new Set(prev);
@@ -148,9 +156,9 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
       if (clicksSel.size && !clicksSel.has(rateBucket(parseRatePercent(l.clickRate)))) return false;
       if (!q) return true;
       return (
-        l.name.toLowerCase().includes(q) ||
-        l.tags.some((t) => t.toLowerCase().includes(q)) ||
-        l.recentCampaign.toLowerCase().includes(q)
+        matchesSearchQuery(l.name, q) ||
+        l.tags.some((t) => matchesSearchQuery(t, q)) ||
+        matchesSearchQuery(l.recentCampaign, q)
       );
     });
     const { key, dir } = sort;
@@ -173,6 +181,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
+  const pagerPages = visiblePageNumbers(safePage, pageCount);
   const startIdx = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
   const endIdx = Math.min(safePage * PAGE_SIZE, filtered.length);
   const pageRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
@@ -209,65 +218,94 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
       </div>
 
       <div className={`atable ${styles.tablecard}`}>
-        {/* toolbar */}
+        {/* toolbar: controls on row 1; active filter chips always on their own row */}
         <div className={styles.toolbar}>
-          <label className={styles.search}>
-            <Icon name="search" size={15} className={styles.searchic} />
-            <input
-              type="search"
-              placeholder="Search lists…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              aria-label="Search lists"
+          <div className={styles.toolbarRow}>
+            <label className={styles.search}>
+              <Icon name="search" size={15} className={styles.searchic} />
+              <input
+                type="search"
+                placeholder="Search lists…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label="Search lists"
+              />
+            </label>
+            <TagFilter
+              tags={allTags}
+              selected={tagSel}
+              onToggle={toggleTag}
+              onClear={() => {
+                setTagSel(new Set());
+                resetPage();
+              }}
             />
-          </label>
-          <TagFilter
-            tags={allTags}
-            selected={tagSel}
-            onToggle={toggleTag}
-            onClear={() => {
+            <ColFilter
+              label="Opens"
+              icon="eye"
+              options={RATE_BUCKETS}
+              selected={opensSel}
+              onToggle={toggleSet(setOpensSel)}
+              onClear={() => {
+                setOpensSel(new Set());
+                resetPage();
+              }}
+              open={openFilter === 'opens'}
+              onOpenToggle={() => setOpenFilter((o) => (o === 'opens' ? null : 'opens'))}
+            />
+            <ColFilter
+              label="Clicks"
+              icon="target"
+              options={RATE_BUCKETS}
+              selected={clicksSel}
+              onToggle={toggleSet(setClicksSel)}
+              onClear={() => {
+                setClicksSel(new Set());
+                resetPage();
+              }}
+              open={openFilter === 'clicks'}
+              onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
+            />
+            <div className={styles.spacer} />
+            <div className="aseg" role="group" aria-label="View mode">
+              {(['cards', 'table'] as View[]).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  className={`aseg__opt${view === v ? ' is-active' : ''}`}
+                  aria-pressed={view === v}
+                  onClick={() => setView(v)}
+                >
+                  {v === 'cards' ? 'Cards' : 'Table'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <FilterChipsRow
+            chips={[
+              ...[...tagSel].map((t) => ({
+                key: `tag:${t}`,
+                label: `Tag: ${t}`,
+                onRemove: () => toggleTag(t),
+              })),
+              ...[...opensSel].map((b) => ({
+                key: `opens:${b}`,
+                label: `Opens: ${b}`,
+                onRemove: () => toggleSet(setOpensSel)(b),
+              })),
+              ...[...clicksSel].map((b) => ({
+                key: `clicks:${b}`,
+                label: `Clicks: ${b}`,
+                onRemove: () => toggleSet(setClicksSel)(b),
+              })),
+            ]}
+            onClearAll={() => {
               setTagSel(new Set());
-              resetPage();
-            }}
-          />
-          <ColFilter
-            label="Opens"
-            options={RATE_BUCKETS}
-            selected={opensSel}
-            onToggle={toggleSet(setOpensSel)}
-            onClear={() => {
               setOpensSel(new Set());
-              resetPage();
-            }}
-            open={openFilter === 'opens'}
-            onOpenToggle={() => setOpenFilter((o) => (o === 'opens' ? null : 'opens'))}
-          />
-          <ColFilter
-            label="Clicks"
-            options={RATE_BUCKETS}
-            selected={clicksSel}
-            onToggle={toggleSet(setClicksSel)}
-            onClear={() => {
               setClicksSel(new Set());
               resetPage();
             }}
-            open={openFilter === 'clicks'}
-            onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
           />
-          <div className={styles.spacer} />
-          <div className="aseg" role="group" aria-label="View mode">
-            {(['cards', 'table'] as View[]).map((v) => (
-              <button
-                key={v}
-                type="button"
-                className={`aseg__opt${view === v ? ' is-active' : ''}`}
-                aria-pressed={view === v}
-                onClick={() => setView(v)}
-              >
-                {v === 'cards' ? 'Cards' : 'Table'}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* TABLE VIEW */}
@@ -433,7 +471,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
               >
                 <Icon name="chevron-right" size={15} className={styles.pgflip} />
               </button>
-              {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
+              {pagerPages.map((n) => (
                 <button
                   key={n}
                   type="button"

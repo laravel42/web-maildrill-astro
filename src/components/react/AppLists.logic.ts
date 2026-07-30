@@ -4,7 +4,7 @@ import { ago } from './shared/time';
 import type { ListMeta, ListRow } from './AppLists.types';
 
 /** Rows shown per page in the lists table/cards. */
-export const PAGE_SIZE = 10;
+export const PAGE_SIZE = 15;
 
 const META: Record<string, ListMeta> = {
   list_1: {

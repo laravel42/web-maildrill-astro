@@ -20,10 +20,12 @@ import {
 } from '@/lib/app/subscribers-data';
 import { api, ApiError } from '@/lib/app/api';
 import { toRichSubscriber, type ApiSubscriber } from '@/lib/app/subscriber-map';
+import { matchesSearchQuery } from '@/lib/app/search-match';
 import { RATE_BUCKETS, parseRatePercent, rateBucket } from '@/lib/app/templates-data';
 import SubscriberEditorModal from './SubscriberEditorModal';
 import TagFilter from './shared/TagFilter';
 import ColFilter from './shared/ColFilter';
+import FilterChipsRow from './shared/FilterChipsRow';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { ago, agoNow } from './shared/time';
 import { useToast } from './shared/useToast';
@@ -32,7 +34,6 @@ import {
   STATUS_LABEL,
   STATUS_TABS,
   PAGE_SIZE,
-  MAX_VISIBLE_PAGES,
   visiblePageNumbers,
   recentListsSummary,
   tagStyle,
@@ -41,12 +42,6 @@ import {
 } from './AppSubscribers.logic';
 import type { SortKey, ViewMode } from './AppSubscribers.types';
 import styles from './AppSubscribers.module.css';
-
-const STATUS_CHIP: Record<SubscriberStatus, string> = {
-  active: styles.chipStActive,
-  unsubscribed: styles.chipStUnsubscribed,
-  bounced: styles.chipStBounced,
-};
 
 export default function AppSubscribers({
   initial,
@@ -106,12 +101,16 @@ export default function AppSubscribers({
 
   const effTags = (s: RichSubscriber): string[] => tagStore[s.id] ?? s.tags;
 
-  // Tags actually present on subscribers, for the tags filter dropdown.
-  const tagUniverse = useMemo(
-    () =>
-      [...new Set(richSubscribers.flatMap((s) => effTags(s)))].sort((a, b) => a.localeCompare(b)),
-    [richSubscribers, tagStore],
-  );
+  // Tags actually present on subscribers, with counts for the filter dropdown.
+  const tagUniverse = useMemo(() => {
+    const freq = new Map<string, number>();
+    for (const s of richSubscribers) {
+      for (const t of effTags(s)) freq.set(t, (freq.get(t) ?? 0) + 1);
+    }
+    return [...freq.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [richSubscribers, tagStore]);
 
   const segById = useMemo(() => new Map(segments.map((s) => [s.id, s])), [segments]);
 
@@ -192,9 +191,9 @@ export default function AppSubscribers({
       if (tab !== 'all' && s.status !== tab) return false;
       if (q) {
         const hit =
-          s.name.toLowerCase().includes(q) ||
+          matchesSearchQuery(s.name, q) ||
           s.email.toLowerCase().includes(q) ||
-          effTags(s).some((t) => t.toLowerCase().includes(q));
+          effTags(s).some((t) => matchesSearchQuery(t, q));
         if (!hit) return false;
       }
       if (channelFilter.size > 0) {
@@ -254,7 +253,7 @@ export default function AppSubscribers({
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
   const pageRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
-  const pagerPages = visiblePageNumbers(safePage, pageCount, MAX_VISIBLE_PAGES);
+  const pagerPages = visiblePageNumbers(safePage, pageCount);
 
   const resetPageAndSel = () => {
     setPage(1);
@@ -388,15 +387,6 @@ export default function AppSubscribers({
     setQuery('');
     resetPageAndSel();
   };
-
-  const hasActiveFilters =
-    segSel.size > 0 ||
-    tab !== 'all' ||
-    tagSel.size > 0 ||
-    channelFilter.size > 0 ||
-    listFilter.size > 0 ||
-    opensSel.size > 0 ||
-    clicksSel.size > 0;
 
   /* Esc closes drawer/modal. */
   useEscapeClose(() => {
@@ -620,318 +610,278 @@ export default function AppSubscribers({
           ))}
         </div>
 
-        {/* toolbar */}
+        {/* toolbar: controls on row 1; active filter chips always on their own row */}
         <div className={styles.toolbar}>
-          <label className={styles.search}>
-            <Icon name="search" size={15} className={styles.searchic} />
-            <input
-              type="search"
-              placeholder="Search by name, email or tag…"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                resetPageAndSel();
-              }}
-              aria-label="Search subscribers"
-            />
-          </label>
-
-          <div className={styles.filterwrap}>
-            <button
-              type="button"
-              className={`${styles.filter}${channelFilter.size ? ' is-on' : ''}`}
-              aria-expanded={channelOpen}
-              aria-haspopup="true"
-              onClick={() => setChannelOpen((v) => !v)}
-            >
-              <Icon name="filter" size={14} />
-              Channel
-              {channelFilter.size > 0 && (
-                <span className={`${styles.filtercount} tnum`}>{channelFilter.size}</span>
-              )}
-              <Icon name="chevron-down" size={12} className={styles.filtercaret} />
-            </button>
-            {channelOpen && (
-              <>
-                <button
-                  type="button"
-                  className={styles.scrim}
-                  aria-label="Close"
-                  onClick={() => setChannelOpen(false)}
-                />
-                <div className={styles.pop} style={{ animation: 'pop .14s ease' }} role="menu">
-                  <div className={styles.poptitle}>Subscribed to</div>
-                  {CHANNEL_ORDER.map((ch) => {
-                    const m = CHANNEL[ch];
-                    const on = channelFilter.has(ch);
-                    return (
-                      <button
-                        key={ch}
-                        type="button"
-                        role="menuitemcheckbox"
-                        aria-checked={on}
-                        className={styles.popopt}
-                        onClick={() => toggleChannel(ch)}
-                      >
-                        <span className={`${styles.box}${on ? ' is-on' : ''}`}>
-                          {on && <Icon name="check" size={15} stroke={3.5} />}
-                        </span>
-                        <span className="apill" style={{ background: m.tint, color: m.color }}>
-                          <Icon name={m.icon} size={12} />
-                          {m.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                  {channelFilter.size > 0 && (
-                    <button
-                      type="button"
-                      className={styles.popclear}
-                      onClick={() => {
-                        setChannelFilter(new Set());
-                        resetPageAndSel();
-                      }}
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className={styles.filterwrap}>
-            <button
-              type="button"
-              className={`${styles.filter}${listFilter.size ? ' is-on' : ''}`}
-              aria-expanded={listOpen}
-              aria-haspopup="true"
-              disabled={allLists.length === 0}
-              onClick={() => setListOpen((v) => !v)}
-            >
-              <Icon name="lists" size={14} />
-              Lists
-              {listFilter.size > 0 && (
-                <span className={`${styles.filtercount} tnum`}>{listFilter.size}</span>
-              )}
-              <Icon name="chevron-down" size={12} className={styles.filtercaret} />
-            </button>
-            {listOpen && (
-              <>
-                <button
-                  type="button"
-                  className={styles.scrim}
-                  aria-label="Close"
-                  onClick={() => setListOpen(false)}
-                />
-                <div className={styles.pop} style={{ animation: 'pop .14s ease' }} role="menu">
-                  <div className={styles.poptitle}>On list</div>
-                  {allLists.map((l) => {
-                    const on = listFilter.has(l.id);
-                    const color = l.color || tagStyle(l.name).color;
-                    return (
-                      <button
-                        key={l.id}
-                        type="button"
-                        role="menuitemcheckbox"
-                        aria-checked={on}
-                        className={styles.popopt}
-                        onClick={() => toggleListFilter(l.id)}
-                      >
-                        <span className={`${styles.box}${on ? ' is-on' : ''}`}>
-                          {on && <Icon name="check" size={15} stroke={3.5} />}
-                        </span>
-                        <span className={styles.listfdot} style={{ background: color }} />
-                        {l.name}
-                      </button>
-                    );
-                  })}
-                  {listFilter.size > 0 && (
-                    <button
-                      type="button"
-                      className={styles.popclear}
-                      onClick={() => {
-                        setListFilter(new Set());
-                        resetPageAndSel();
-                      }}
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-
-          <TagFilter
-            tags={tagUniverse}
-            selected={tagSel}
-            onToggle={toggleTag}
-            onClear={() => {
-              setTagSel(new Set());
-              resetPageAndSel();
-            }}
-          />
-
-          <ColFilter
-            label="Opens"
-            options={RATE_BUCKETS}
-            selected={opensSel}
-            onToggle={toggleSet(setOpensSel)}
-            onClear={() => {
-              setOpensSel(new Set());
-              resetPageAndSel();
-            }}
-            open={rateFilterOpen === 'opens'}
-            onOpenToggle={() => setRateFilterOpen((o) => (o === 'opens' ? null : 'opens'))}
-          />
-          <ColFilter
-            label="Clicks"
-            options={RATE_BUCKETS}
-            selected={clicksSel}
-            onToggle={toggleSet(setClicksSel)}
-            onClear={() => {
-              setClicksSel(new Set());
-              resetPageAndSel();
-            }}
-            open={rateFilterOpen === 'clicks'}
-            onOpenToggle={() => setRateFilterOpen((o) => (o === 'clicks' ? null : 'clicks'))}
-          />
-
-          <div className={styles.spacer} />
-
-          <div className="aseg sb__viewseg" role="group" aria-label="View mode">
-            {(['table', 'cards', 'compact'] as ViewMode[]).map((v) => (
-              <button
-                key={v}
-                type="button"
-                className={`aseg__opt${view === v ? ' is-active' : ''}`}
-                aria-pressed={view === v}
-                onClick={() => setView(v)}
-              >
-                {v[0].toUpperCase() + v.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* active filters */}
-        {hasActiveFilters && (
-          <div className={styles.active} style={{ animation: 'fade .18s ease' }}>
-            <span className={styles.activelbl}>ACTIVE</span>
-            {[...segSel].map((id) => {
-              const seg = segById.get(id);
-              if (!seg) return null;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  className={`${styles.chip} ${styles.chipSeg}`}
-                  onClick={() => toggleSeg(id)}
-                >
-                  Segment: {seg.name}
-                  <span className={styles.chipx}>
-                    <Icon name="x" size={14} stroke={3} />
-                  </span>
-                </button>
-              );
-            })}
-            {tab !== 'all' && (
-              <button
-                type="button"
-                className={`${styles.chip} ${STATUS_CHIP[tab]}`}
-                onClick={() => {
-                  setTab('all');
+          <div className={styles.toolbarRow}>
+            <label className={styles.search}>
+              <Icon name="search" size={15} className={styles.searchic} />
+              <input
+                type="search"
+                placeholder="Search by name, email or tag…"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
                   resetPageAndSel();
                 }}
+                aria-label="Search subscribers"
+              />
+            </label>
+
+            <div className={styles.filterwrap}>
+              <button
+                type="button"
+                className={`${styles.filter}${channelFilter.size ? ' is-on' : ''}`}
+                aria-expanded={channelOpen}
+                aria-haspopup="true"
+                onClick={() => setChannelOpen((v) => !v)}
               >
-                Status: {STATUS_LABEL[tab]}
-                <span className={styles.chipx}>
-                  <Icon name="x" size={14} stroke={3} />
-                </span>
+                <Icon name="filter" size={14} />
+                Channel
+                {channelFilter.size > 0 && (
+                  <span className={`${styles.filtercount} tnum`}>{channelFilter.size}</span>
+                )}
+                <Icon name="chevron-down" size={12} className={styles.filtercaret} />
               </button>
-            )}
-            {[...channelFilter].map((ch) => {
-              const m = CHANNEL[ch];
-              return (
+              {channelOpen && (
+                <>
+                  <button
+                    type="button"
+                    className={styles.scrim}
+                    aria-label="Close"
+                    onClick={() => setChannelOpen(false)}
+                  />
+                  <div className={styles.pop} style={{ animation: 'pop .14s ease' }} role="menu">
+                    <div className={styles.poptitle}>Subscribed to</div>
+                    {CHANNEL_ORDER.map((ch) => {
+                      const m = CHANNEL[ch];
+                      const on = channelFilter.has(ch);
+                      return (
+                        <button
+                          key={ch}
+                          type="button"
+                          role="menuitemcheckbox"
+                          aria-checked={on}
+                          className={styles.popopt}
+                          onClick={() => toggleChannel(ch)}
+                        >
+                          <span className={`${styles.box}${on ? ' is-on' : ''}`}>
+                            {on && <Icon name="check" size={15} stroke={3.5} />}
+                          </span>
+                          <span className="apill" style={{ background: m.tint, color: m.color }}>
+                            <Icon name={m.icon} size={12} />
+                            {m.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                    {channelFilter.size > 0 && (
+                      <button
+                        type="button"
+                        className={styles.popclear}
+                        onClick={() => {
+                          setChannelFilter(new Set());
+                          resetPageAndSel();
+                        }}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className={styles.filterwrap}>
+              <button
+                type="button"
+                className={`${styles.filter}${listFilter.size ? ' is-on' : ''}`}
+                aria-expanded={listOpen}
+                aria-haspopup="true"
+                disabled={allLists.length === 0}
+                onClick={() => setListOpen((v) => !v)}
+              >
+                <Icon name="lists" size={14} />
+                Lists
+                {listFilter.size > 0 && (
+                  <span className={`${styles.filtercount} tnum`}>{listFilter.size}</span>
+                )}
+                <Icon name="chevron-down" size={12} className={styles.filtercaret} />
+              </button>
+              {listOpen && (
+                <>
+                  <button
+                    type="button"
+                    className={styles.scrim}
+                    aria-label="Close"
+                    onClick={() => setListOpen(false)}
+                  />
+                  <div className={styles.pop} style={{ animation: 'pop .14s ease' }} role="menu">
+                    <div className={styles.poptitle}>On list</div>
+                    {allLists.map((l) => {
+                      const on = listFilter.has(l.id);
+                      const color = l.color || tagStyle(l.name).color;
+                      return (
+                        <button
+                          key={l.id}
+                          type="button"
+                          role="menuitemcheckbox"
+                          aria-checked={on}
+                          className={styles.popopt}
+                          onClick={() => toggleListFilter(l.id)}
+                        >
+                          <span className={`${styles.box}${on ? ' is-on' : ''}`}>
+                            {on && <Icon name="check" size={15} stroke={3.5} />}
+                          </span>
+                          <span className={styles.listfdot} style={{ background: color }} />
+                          {l.name}
+                        </button>
+                      );
+                    })}
+                    {listFilter.size > 0 && (
+                      <button
+                        type="button"
+                        className={styles.popclear}
+                        onClick={() => {
+                          setListFilter(new Set());
+                          resetPageAndSel();
+                        }}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <TagFilter
+              tags={tagUniverse}
+              selected={tagSel}
+              onToggle={toggleTag}
+              onClear={() => {
+                setTagSel(new Set());
+                resetPageAndSel();
+              }}
+            />
+
+            <ColFilter
+              label="Opens"
+              icon="eye"
+              options={RATE_BUCKETS}
+              selected={opensSel}
+              onToggle={toggleSet(setOpensSel)}
+              onClear={() => {
+                setOpensSel(new Set());
+                resetPageAndSel();
+              }}
+              open={rateFilterOpen === 'opens'}
+              onOpenToggle={() => setRateFilterOpen((o) => (o === 'opens' ? null : 'opens'))}
+            />
+            <ColFilter
+              label="Clicks"
+              icon="target"
+              options={RATE_BUCKETS}
+              selected={clicksSel}
+              onToggle={toggleSet(setClicksSel)}
+              onClear={() => {
+                setClicksSel(new Set());
+                resetPageAndSel();
+              }}
+              open={rateFilterOpen === 'clicks'}
+              onOpenToggle={() => setRateFilterOpen((o) => (o === 'clicks' ? null : 'clicks'))}
+            />
+
+            <div className={styles.spacer} />
+
+            <div className="aseg sb__viewseg" role="group" aria-label="View mode">
+              {(['table', 'compact'] as ViewMode[]).map((v) => (
                 <button
-                  key={ch}
+                  key={v}
                   type="button"
-                  className={styles.chip}
-                  style={{ background: m.tint, color: m.color }}
-                  onClick={() => toggleChannel(ch)}
+                  className={`aseg__opt${view === v ? ' is-active' : ''}`}
+                  aria-pressed={view === v}
+                  onClick={() => setView(v)}
                 >
-                  {m.label}
-                  <span className={styles.chipx}>
-                    <Icon name="x" size={14} stroke={3} />
-                  </span>
+                  {v[0].toUpperCase() + v.slice(1)}
                 </button>
-              );
-            })}
-            {[...listFilter].map((id) => {
-              const l = allLists.find((x) => x.id === id);
-              const name = l?.name ?? id;
-              const color = l?.color || tagStyle(name).color;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  className={styles.chip}
-                  style={{ background: `color-mix(in srgb, ${color} 14%, transparent)`, color }}
-                  onClick={() => toggleListFilter(id)}
-                >
-                  List: {name}
-                  <span className={styles.chipx}>
-                    <Icon name="x" size={14} stroke={3} />
-                  </span>
-                </button>
-              );
-            })}
-            {[...tagSel].map((t) => (
-              <button
-                key={t}
-                type="button"
-                className={styles.chip}
-                style={tagStyle(t)}
-                onClick={() => toggleTag(t)}
-              >
-                Tag: {t}
-                <span className={styles.chipx}>
-                  <Icon name="x" size={14} stroke={3} />
-                </span>
-              </button>
-            ))}
-            {[...opensSel].map((b) => (
-              <button
-                key={`opens-${b}`}
-                type="button"
-                className={styles.chip}
-                onClick={() => toggleRateBucket('opens', b)}
-              >
-                Opens: {b}
-                <span className={styles.chipx}>
-                  <Icon name="x" size={14} stroke={3} />
-                </span>
-              </button>
-            ))}
-            {[...clicksSel].map((b) => (
-              <button
-                key={`clicks-${b}`}
-                type="button"
-                className={styles.chip}
-                onClick={() => toggleRateBucket('clicks', b)}
-              >
-                Clicks: {b}
-                <span className={styles.chipx}>
-                  <Icon name="x" size={14} stroke={3} />
-                </span>
-              </button>
-            ))}
-            <button type="button" className={styles.clearall} onClick={clearAll}>
-              Clear all
-            </button>
+              ))}
+            </div>
           </div>
-        )}
+
+          <FilterChipsRow
+            chips={[
+              ...[...segSel].flatMap((id) => {
+                const seg = segById.get(id);
+                if (!seg) return [];
+                return [
+                  {
+                    key: `seg:${id}`,
+                    label: `Segment: ${seg.name}`,
+                    onRemove: () => toggleSeg(id),
+                  },
+                ];
+              }),
+              ...(tab !== 'all'
+                ? [
+                    {
+                      key: `status:${tab}`,
+                      label: `Status: ${STATUS_LABEL[tab]}`,
+                      onRemove: () => {
+                        setTab('all');
+                        resetPageAndSel();
+                      },
+                      style:
+                        tab === 'active'
+                          ? { background: 'var(--success-bg)', color: 'var(--success-strong)' }
+                          : tab === 'bounced'
+                            ? { background: 'var(--danger-bg)', color: 'var(--danger-text)' }
+                            : undefined,
+                    },
+                  ]
+                : []),
+              ...[...channelFilter].map((ch) => {
+                const m = CHANNEL[ch];
+                return {
+                  key: `ch:${ch}`,
+                  label: m.label,
+                  onRemove: () => toggleChannel(ch),
+                  style: { background: m.tint, color: m.color },
+                };
+              }),
+              ...[...listFilter].map((id) => {
+                const l = allLists.find((x) => x.id === id);
+                const name = l?.name ?? id;
+                const color = l?.color || tagStyle(name).color;
+                return {
+                  key: `list:${id}`,
+                  label: `List: ${name}`,
+                  onRemove: () => toggleListFilter(id),
+                  style: {
+                    background: `color-mix(in srgb, ${color} 14%, transparent)`,
+                    color,
+                  },
+                };
+              }),
+              ...[...tagSel].map((t) => ({
+                key: `tag:${t}`,
+                label: `Tag: ${t}`,
+                onRemove: () => toggleTag(t),
+                style: tagStyle(t),
+              })),
+              ...[...opensSel].map((b) => ({
+                key: `opens:${b}`,
+                label: `Opens: ${b}`,
+                onRemove: () => toggleRateBucket('opens', b),
+              })),
+              ...[...clicksSel].map((b) => ({
+                key: `clicks:${b}`,
+                label: `Clicks: ${b}`,
+                onRemove: () => toggleRateBucket('clicks', b),
+              })),
+            ]}
+            onClearAll={clearAll}
+          />
+        </div>
 
         {/* bulk bar */}
         {selected.size > 0 && (
@@ -1078,57 +1028,6 @@ export default function AppSubscribers({
             )}
           </>
         )}
-
-        {/* CARDS VIEW */}
-        {view === 'cards' &&
-          (pageRows.length === 0 ? (
-            <div className="atable__empty">No subscribers match your filters.</div>
-          ) : (
-            <div className={styles.cards}>
-              {pageRows.map((s) => (
-                <div
-                  key={s.id}
-                  className={`${styles.cardt}${selected.has(s.id) ? ' is-selected' : ''}`}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setOpenId(s.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setOpenId(s.id);
-                    }
-                  }}
-                >
-                  <button
-                    type="button"
-                    className={`${styles.box} ${styles.cardbox}${selected.has(s.id) ? ' is-on' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleSelect(s.id);
-                    }}
-                    aria-label={`Select ${s.name}`}
-                    aria-pressed={selected.has(s.id)}
-                  >
-                    {selected.has(s.id) && <Icon name="check" size={15} stroke={3.5} />}
-                  </button>
-                  <Avatar sub={s} size={40} />
-                  <div className={styles.cardname}>{s.name}</div>
-                  <div className={styles.email}>{s.email}</div>
-                  <div className={styles.cardtags}>
-                    {effTags(s).map((t) => (
-                      <span key={t} className={styles.tag} style={tagStyle(t)}>
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                  <div className={styles.cardfoot}>
-                    <span className={`astatus astatus--${s.status}`}>{STATUS_LABEL[s.status]}</span>
-                    <span className={styles.last}>{ago(s.updatedAt)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ))}
 
         {/* COMPACT VIEW */}
         {view === 'compact' &&

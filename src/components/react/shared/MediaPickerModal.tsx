@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/app/api';
 import type { ApiMediaAsset } from '@/lib/app/media-map';
+import { matchesSearchQuery } from '@/lib/app/search-match';
 import Icon from '../Icon';
 import styles from './MediaPickerModal.module.css';
 
@@ -64,8 +65,8 @@ export default function MediaPickerModal({
   }, []);
 
   const shown = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return q ? images.filter((i) => i.name.toLowerCase().includes(q)) : images;
+    const q = query.trim();
+    return q ? images.filter((i) => matchesSearchQuery(i.name, q)) : images;
   }, [images, query]);
 
   const selected = selectedId ? (images.find((i) => i.id === selectedId) ?? null) : null;

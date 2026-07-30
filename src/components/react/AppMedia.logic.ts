@@ -43,7 +43,6 @@ export const POPOVER_TYPES: MediaFileType[] = ['JPEG', 'PNG', 'SVG'];
 export const VIEWS = [
   { key: 'grid', label: 'Grid' },
   { key: 'list', label: 'List' },
-  { key: 'compact', label: 'Compact' },
 ] as const;
 export type ViewKey = (typeof VIEWS)[number]['key'];
 
@@ -54,4 +53,71 @@ export const ASC_FIRST: Record<SortKey, boolean> = {
   size: false,
   uploaded: false,
 };
-export const PAGE_SIZE = 10;
+export const PAGE_SIZE = 15;
+
+/** Orientation filter options (square images match both). */
+export const ORIENTATIONS = ['Landscape', 'Portrait'] as const;
+export type OrientationFilter = (typeof ORIENTATIONS)[number];
+
+/** Named aspect-ratio buckets for the Media Library filter. */
+export const ASPECT_RATIOS = [
+  { key: '1:1', w: 1, h: 1 },
+  { key: '16:9', w: 16, h: 9 },
+  { key: '9:16', w: 9, h: 16 },
+  { key: '4:3', w: 4, h: 3 },
+  { key: '3:2', w: 3, h: 2 },
+] as const;
+export type AspectRatioKey = (typeof ASPECT_RATIOS)[number]['key'];
+
+export const ASPECT_RATIO_KEYS: AspectRatioKey[] = ASPECT_RATIOS.map((r) => r.key);
+
+/** Relative tolerance when matching a pixel size to a named ratio. */
+const RATIO_TOLERANCE = 0.06;
+
+export function parseDim(dim: string): { width: number; height: number } | null {
+  const m = dim.match(/(\d+)\s*[×x]\s*(\d+)/i);
+  if (!m) return null;
+  const width = parseInt(m[1]!, 10);
+  const height = parseInt(m[2]!, 10);
+  if (!width || !height) return null;
+  return { width, height };
+}
+
+export function mediaSize(file: {
+  width?: number | null;
+  height?: number | null;
+  dim?: string;
+}): { width: number; height: number } | null {
+  if (file.width && file.height) return { width: file.width, height: file.height };
+  if (file.dim) return parseDim(file.dim);
+  return null;
+}
+
+/** Square counts as both landscape and portrait. */
+export function matchesOrientation(
+  width: number,
+  height: number,
+  selected: ReadonlySet<string>,
+): boolean {
+  if (selected.size === 0) return true;
+  if (width === height) {
+    return selected.has('Landscape') || selected.has('Portrait');
+  }
+  if (width > height) return selected.has('Landscape');
+  return selected.has('Portrait');
+}
+
+export function matchesAspectRatio(
+  width: number,
+  height: number,
+  selected: ReadonlySet<string>,
+): boolean {
+  if (selected.size === 0) return true;
+  const actual = width / height;
+  for (const r of ASPECT_RATIOS) {
+    if (!selected.has(r.key)) continue;
+    const target = r.w / r.h;
+    if (Math.abs(actual - target) / target <= RATIO_TOLERANCE) return true;
+  }
+  return false;
+}

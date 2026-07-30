@@ -24,24 +24,47 @@ export type MediaFile = {
   uploaded: string;
 };
 
-/** Fixed folder buckets, in display order. */
-export const FOLDER_ORDER = [
-  'All files',
+/** Built-in type buckets used when an asset has no custom `folder`. */
+export const TYPE_FOLDER_ORDER = [
   'Images',
   'Audio',
   'PDF',
   'Spreadsheets',
   'Docs',
 ] as const;
-export type MediaFolder = (typeof FOLDER_ORDER)[number];
 
-/** Map a file type to its folder bucket. */
-export function folderOf(type: MediaFileType): Exclude<MediaFolder, 'All files'> {
+export type MediaTypeFolder = (typeof TYPE_FOLDER_ORDER)[number];
+/** Folder tab value: all files, a custom library folder, or a type bucket. */
+export type MediaFolder = 'All files' | string;
+
+/** Map a file type to its default folder bucket. */
+export function folderOf(type: MediaFileType): MediaTypeFolder {
   if (type === 'JPEG' || type === 'PNG' || type === 'SVG') return 'Images';
   if (type === 'MP3' || type === 'WAV' || type === 'AUDIO') return 'Audio';
   if (type === 'PDF') return 'PDF';
   if (type === 'XLSX') return 'Spreadsheets';
   return 'Docs';
+}
+
+/** Effective library folder for filtering/tabs — custom folder wins over type. */
+export function libraryFolderOf(file: {
+  folder?: string | null;
+  type: MediaFileType;
+}): string {
+  const custom = file.folder?.trim();
+  return custom || folderOf(file.type);
+}
+
+/** Display label for a folder slug (e.g. "nature" → "Nature"). */
+export function folderLabel(folder: string): string {
+  if (folder === 'All files' || (TYPE_FOLDER_ORDER as readonly string[]).includes(folder)) {
+    return folder;
+  }
+  return folder
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
 }
 
 // No seed files — the Media Library renders live assets once storage is wired.

@@ -1,20 +1,30 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { folderOf, FOLDER_ORDER } from '@/lib/app/media-data';
+import { folderLabel, libraryFolderOf } from '@/lib/app/media-data';
 import type { MediaFile, MediaFolder } from '@/lib/app/media-data';
+import { anyMatchesSearchQuery } from '@/lib/app/search-match';
 import { api, ApiError } from '@/lib/app/api';
 import { toMediaFile, type ApiMediaAsset } from '@/lib/app/media-map';
 import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
+import ColFilter from './shared/ColFilter';
+import FilterChipsRow from './shared/FilterChipsRow';
+import FolderFilter from './shared/FolderFilter';
 import TagFilter from './shared/TagFilter';
 import { useToast } from './shared/useToast';
 import { agoNow } from './shared/time';
+import { visiblePageNumbers } from './shared/pagination';
 import {
   ASC_FIRST,
+  ASPECT_RATIO_KEYS,
+  ORIENTATIONS,
   PAGE_SIZE,
   VIEWS,
   agoMin,
   dimFirst,
+  matchesAspectRatio,
+  matchesOrientation,
+  mediaSize,
   sizeBytes,
   tagStyle,
 } from './AppMedia.logic';
@@ -48,7 +58,14 @@ async function imageSize(file: File): Promise<{ width: number; height: number } 
 }
 
 /** A grid row plus the fields that only exist for live assets. */
-type LiveMediaFile = MediaFile & { preview: string; url: string; tags: string[] };
+type LiveMediaFile = MediaFile & {
+  preview: string;
+  url: string;
+  tags: string[];
+  folder: string | null;
+  width: number | null;
+  height: number | null;
+};
 
 export default function AppMedia({
   initial,
@@ -64,6 +81,9 @@ export default function AppMedia({
   const [folder, setFolder] = useState<MediaFolder>('All files');
   const [query, setQuery] = useState('');
   const [tagSel, setTagSel] = useState<Set<string>>(new Set());
+  const [orientSel, setOrientSel] = useState<Set<string>>(new Set());
+  const [ratioSel, setRatioSel] = useState<Set<string>>(new Set());
+  const [filterOpen, setFilterOpen] = useState<'orientation' | 'ratio' | null>(null);
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'uploaded', dir: -1 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Set while a destructive action waits on confirmation.
@@ -76,29 +96,53 @@ export default function AppMedia({
 
   const resetPage = () => setPage(1);
 
-  // folder counts over the full set
+  const toggleSet =
+    (setter: typeof setOrientSel) =>
+    (v: string) => {
+      setter((prev) => {
+        const next = new Set(prev);
+        if (next.has(v)) next.delete(v);
+        else next.add(v);
+        return next;
+      });
+      resetPage();
+    };
+
+  // Folder counts: custom library folders (topics) win over type buckets.
   const folderCounts = useMemo(() => {
     const c: Record<string, number> = { 'All files': mediaFiles.length };
     for (const m of mediaFiles) {
-      const f = folderOf(m.type);
+      const f = libraryFolderOf(m);
       c[f] = (c[f] ?? 0) + 1;
     }
     return c;
   }, [mediaFiles]);
-  const folders = useMemo(
-    () => FOLDER_ORDER.filter((f) => f === 'All files' || (folderCounts[f] ?? 0) > 0),
+  const folderOptions = useMemo(
+    () =>
+      Object.keys(folderCounts)
+        .filter((f) => f !== 'All files' && (folderCounts[f] ?? 0) > 0)
+        .sort((a, b) => a.localeCompare(b))
+        .map((key) => ({
+          key,
+          label: folderLabel(key),
+          count: folderCounts[key] ?? 0,
+        })),
     [folderCounts],
   );
 
   // In-session edits win; otherwise the asset's real persisted tags.
   const effTags = (m: LiveMediaFile): string[] => tagStore[m.id] ?? m.tags;
 
-  // Tags present across the library (custom tags, else the file type), for the
-  // tags filter dropdown.
-  const tagUniverse = useMemo(
-    () => [...new Set(mediaFiles.flatMap((m) => effTags(m)))].sort((a, b) => a.localeCompare(b)),
-    [mediaFiles, tagStore],
-  );
+  // Tags present across the library, with image counts for the filter dropdown.
+  const tagUniverse = useMemo(() => {
+    const freq = new Map<string, number>();
+    for (const m of mediaFiles) {
+      for (const t of effTags(m)) freq.set(t, (freq.get(t) ?? 0) + 1);
+    }
+    return [...freq.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [mediaFiles, tagStore]);
   const toggleTag = (t: string) => {
     setTagSel((prev) => {
       const next = new Set(prev);
@@ -110,11 +154,23 @@ export default function AppMedia({
   };
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = query.trim();
     let list = mediaFiles.filter((m) => {
-      if (q && !m.name.toLowerCase().includes(q)) return false;
-      if (folder !== 'All files' && folderOf(m.type) !== folder) return false;
+      if (q) {
+        // Word/prefix match on name, folder, and each tag — not mid-word
+        // substrings ("two" must not match the tag "artwork").
+        if (!anyMatchesSearchQuery([m.name, libraryFolderOf(m), ...effTags(m)], q)) {
+          return false;
+        }
+      }
+      if (folder !== 'All files' && libraryFolderOf(m) !== folder) return false;
       if (tagSel.size > 0 && !effTags(m).some((t) => tagSel.has(t))) return false;
+      if (orientSel.size > 0 || ratioSel.size > 0) {
+        const size = mediaSize(m);
+        if (!size) return false;
+        if (!matchesOrientation(size.width, size.height, orientSel)) return false;
+        if (!matchesAspectRatio(size.width, size.height, ratioSel)) return false;
+      }
       return true;
     });
     const { key, dir } = sort;
@@ -128,11 +184,12 @@ export default function AppMedia({
       return r * dir;
     });
     return list;
-  }, [mediaFiles, query, folder, tagSel, sort, tagStore]);
+  }, [mediaFiles, query, folder, tagSel, orientSel, ratioSel, sort, tagStore]);
 
   const total = filtered.length;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const curPage = Math.min(page, pageCount);
+  const pagerPages = visiblePageNumbers(curPage, pageCount);
   const startIdx = (curPage - 1) * PAGE_SIZE;
   const pageRows = filtered.slice(startIdx, startIdx + PAGE_SIZE);
   const start = total === 0 ? 0 : startIdx + 1;
@@ -257,13 +314,42 @@ export default function AppMedia({
     }
   };
 
-  const chips: { key: string; label: string; remove: () => void }[] = [...tagSel].map((t) => ({
-    key: `tag:${t}`,
-    label: `Tag: ${t}`,
-    remove: () => toggleTag(t),
-  }));
+  const chips = [
+    ...(folder !== 'All files'
+      ? [
+          {
+            key: `folder:${folder}`,
+            label: `Folder: ${folderLabel(folder)}`,
+            onRemove: () => {
+              setFolder('All files');
+              setSelected(new Set());
+              resetPage();
+            },
+          },
+        ]
+      : []),
+    ...[...tagSel].map((t) => ({
+      key: `tag:${t}`,
+      label: `Tag: ${t}`,
+      onRemove: () => toggleTag(t),
+    })),
+    ...[...orientSel].map((o) => ({
+      key: `orient:${o}`,
+      label: `Orientation: ${o}`,
+      onRemove: () => toggleSet(setOrientSel)(o),
+    })),
+    ...[...ratioSel].map((r) => ({
+      key: `ratio:${r}`,
+      label: `Ratio: ${r}`,
+      onRemove: () => toggleSet(setRatioSel)(r),
+    })),
+  ];
   const clearChips = () => {
+    setFolder('All files');
     setTagSel(new Set());
+    setOrientSel(new Set());
+    setRatioSel(new Set());
+    setSelected(new Set());
     resetPage();
   };
 
@@ -303,92 +389,92 @@ export default function AppMedia({
 
       {/* card container */}
       <div className={`acrd ${styles.card}`}>
-        {/* folder tabs */}
-        <div className={`${styles.folders} atabs`} role="tablist" aria-label="Folders">
-          {folders.map((f) => (
-            <button
-              key={f}
-              type="button"
-              role="tab"
-              aria-selected={folder === f}
-              className={`atab${folder === f ? ' is-active' : ''}`}
-              onClick={() => {
-                setFolder(f);
+        {/* toolbar: controls on row 1; active filter chips always on their own row */}
+        <div className={styles.toolbar}>
+          <div className={styles.toolbarRow}>
+            <label className={styles.search}>
+              <Icon name="search" size={15} className={styles.searchIc} />
+              <input
+                type="search"
+                placeholder="Search files…"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  resetPage();
+                }}
+                aria-label="Search files"
+              />
+            </label>
+
+            <FolderFilter
+              options={folderOptions}
+              value={folder === 'All files' ? null : folder}
+              onChange={(key) => {
+                setFolder((key ?? 'All files') as MediaFolder);
                 setSelected(new Set());
                 resetPage();
               }}
-            >
-              {f}
-              <span className="atab__count tnum">{folderCounts[f] ?? 0}</span>
-            </button>
-          ))}
-        </div>
+            />
 
-        {/* toolbar */}
-        <div className={styles.toolbar}>
-          <label className={styles.search}>
-            <Icon name="search" size={15} className={styles.searchIc} />
-            <input
-              type="search"
-              placeholder="Search files…"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
+            <TagFilter
+              tags={tagUniverse}
+              selected={tagSel}
+              onToggle={toggleTag}
+              onClear={() => {
+                setTagSel(new Set());
                 resetPage();
               }}
-              aria-label="Search files"
             />
-          </label>
 
-          <TagFilter
-            tags={tagUniverse}
-            selected={tagSel}
-            onToggle={toggleTag}
-            onClear={() => {
-              setTagSel(new Set());
-              resetPage();
-            }}
-          />
+            <ColFilter
+              label="Orientation"
+              icon="orientation"
+              options={ORIENTATIONS}
+              selected={orientSel}
+              onToggle={toggleSet(setOrientSel)}
+              onClear={() => {
+                setOrientSel(new Set());
+                resetPage();
+              }}
+              open={filterOpen === 'orientation'}
+              onOpenToggle={() =>
+                setFilterOpen((v) => (v === 'orientation' ? null : 'orientation'))
+              }
+            />
 
-          {/* active chips */}
-          {chips.length > 0 && (
-            <div className={styles.chips}>
-              {chips.map((c) => (
-                <span key={c.key} className={styles.chip}>
-                  {c.label}
-                  <button
-                    type="button"
-                    className={styles.chipX}
-                    aria-label={`Remove ${c.label}`}
-                    onClick={c.remove}
-                  >
-                    <Icon name="x" size={14} stroke={3} />
-                  </button>
-                </span>
+            <ColFilter
+              label="Ratio"
+              icon="ratio"
+              options={ASPECT_RATIO_KEYS}
+              selected={ratioSel}
+              onToggle={toggleSet(setRatioSel)}
+              onClear={() => {
+                setRatioSel(new Set());
+                resetPage();
+              }}
+              open={filterOpen === 'ratio'}
+              onOpenToggle={() => setFilterOpen((v) => (v === 'ratio' ? null : 'ratio'))}
+            />
+
+            <div className={styles.spacer} />
+
+            <div className="aseg" role="tablist" aria-label="View">
+              {VIEWS.map((v) => (
+                <button
+                  key={v.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={view === v.key}
+                  className={`aseg__opt${view === v.key ? ' is-active' : ''}`}
+                  onClick={() => setView(v.key)}
+                >
+                  {v.label}
+                </button>
               ))}
-              <button type="button" className={styles.chipsClear} onClick={clearChips}>
-                Clear all
-              </button>
             </div>
-          )}
-
-          <div className={styles.spacer} />
-
-          {/* view switch */}
-          <div className="aseg" role="tablist" aria-label="View">
-            {VIEWS.map((v) => (
-              <button
-                key={v.key}
-                type="button"
-                role="tab"
-                aria-selected={view === v.key}
-                className={`aseg__opt${view === v.key ? ' is-active' : ''}`}
-                onClick={() => setView(v.key)}
-              >
-                {v.label}
-              </button>
-            ))}
           </div>
+
+          <FilterChipsRow chips={chips} onClearAll={clearChips} />
         </div>
 
         {/* bulk bar */}
@@ -458,49 +544,6 @@ export default function AppMedia({
                     {m.name}
                   </div>
                   <div className={`${styles.gdim} tnum`}>{m.dim}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : view === 'compact' ? (
-          <div className={styles.compact}>
-            {pageRows.map((m) => (
-              <div
-                key={m.id}
-                className={styles.ccell}
-                role="button"
-                tabIndex={0}
-                onClick={() => setOpenId(m.id)}
-                onKeyDown={onRowActivate(m.id)}
-              >
-                <div
-                  className={`${styles.thumb} ${styles.thumbCompact}`}
-                  style={{
-                    background: m.preview
-                      ? `center/cover no-repeat url(${m.preview})`
-                      : m.thumb,
-                    color: m.fg,
-                    borderColor: selected.has(m.id) ? '#4f46e5' : 'var(--border)',
-                  }}
-                >
-                  {m.label && (
-                    <span className={`${styles.thumbLabel} ${styles.thumbLabelSm}`}>{m.label}</span>
-                  )}
-                  <button
-                    type="button"
-                    className={styles.ccheck}
-                    aria-label={`Select ${m.name}`}
-                    aria-pressed={selected.has(m.id)}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleSelect(m.id);
-                    }}
-                  >
-                    <Box on={selected.has(m.id)} size={18} />
-                  </button>
-                </div>
-                <div className={styles.cname} title={m.name}>
-                  {m.name}
                 </div>
               </div>
             ))}
@@ -610,7 +653,7 @@ export default function AppMedia({
               >
                 <Icon name="chevron-right" size={15} className={styles.flip} />
               </button>
-              {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
+              {pagerPages.map((n) => (
                 <button
                   key={n}
                   type="button"

@@ -1,12 +1,18 @@
 /* toolbar */
 .toolbar {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   padding: 14px 19px;
   border-bottom: 1px solid var(--divider);
+}
+.toolbarRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
   row-gap: 10px;
+  width: 100%;
 }
 .search {
   display: flex;
@@ -36,57 +42,12 @@
   min-width: 0;
 }
 
-.chips {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  flex-wrap: wrap;
-}
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--accent-tint);
-  color: var(--accent-text);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 3px 4px 3px 10px;
-  border-radius: 20px;
-}
-.chipX {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  color: var(--accent-text);
-}
-.chipX:hover {
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
-}
-.chipsClear {
-  font-size: 12px;
-  color: var(--muted);
-  font-weight: 500;
-}
-
 /* card */
 /* The whole screen lives in one card; overflow stays visible so the toolbar's
    filter/type popovers can escape the card bounds. */
 .card {
   overflow: visible;
 }
-.folders {
-  gap: 20px;
-  padding: 0 19px;
-  overflow-x: auto;
-}
-.folders :global(.atab) {
-  padding: 14px 0 13px;
-  white-space: nowrap;
-}
-
 /* bulk bar */
 .bulk {
   display: flex;
@@ -148,10 +109,6 @@
   letter-spacing: 0.3px;
   padding: 0 12px;
   line-height: 1.2;
-}
-.thumbLabelSm {
-  font-size: 9px;
-  padding: 0 6px;
 }
 .fname {
   font-size: 12px;
@@ -221,37 +178,6 @@
   font-size: 11px;
   color: var(--muted);
   margin-top: 3px;
-}
-
-/* COMPACT view */
-.compact {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-  gap: 10px;
-  padding: 18px 19px;
-}
-.ccell {
-  cursor: pointer;
-}
-.thumbCompact {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  border-radius: 10px;
-  border: 1.5px solid var(--border);
-  overflow: hidden;
-}
-.ccheck {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-}
-.cname {
-  font-size: 11px;
-  color: var(--text3);
-  margin-top: 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* LIST view */

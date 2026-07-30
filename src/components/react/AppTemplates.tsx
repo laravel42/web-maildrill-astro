@@ -13,6 +13,7 @@ import {
 import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
 import ColFilter from './shared/ColFilter';
+import FilterChipsRow from './shared/FilterChipsRow';
 import EmailBuilder from './EmailBuilder';
 // Lazy: email-builder-standalone (MUI, tiptap, DnD, image tools…) is a large
 // bundle. A static import here pulled it into this route's module graph even
@@ -26,6 +27,7 @@ import TemplatePreview from './shared/TemplatePreview';
 import GalleryPreview, { FauxEmail } from './shared/GalleryPreview';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { useToast } from './shared/useToast';
+import { visiblePageNumbers } from './shared/pagination';
 import { CHANNEL_TABS, VIEWS, ASC_FIRST, PAGE_SIZE } from './AppTemplates.logic';
 import type { ViewKey, SortKey } from './AppTemplates.types';
 import { api, ApiError } from '@/lib/app/api';
@@ -35,8 +37,6 @@ import styles from './AppTemplates.module.css';
 
 /* --------------------------------------------------------- small pieces ---- */
 
-/** Channel of a template, as a tinted pill. `compact` drops the label to an
- *  icon so it fits the compact card's single row. */
 const APPROVAL_LABEL: Record<TemplateApprovalStatus, string> = {
   draft: 'Needs approval',
   pending: 'In review',
@@ -57,31 +57,22 @@ const APPROVAL_HINT: Record<TemplateApprovalStatus, string> = {
 };
 
 /** Small approval-status pill for WhatsApp templates; renders nothing otherwise. */
-function ApprovalBadge({ t, compact = false }: { t: GalleryTemplate; compact?: boolean }) {
+function ApprovalBadge({ t }: { t: GalleryTemplate }) {
   if (t.channel !== 'whatsapp') return null;
   const status = t.approvalStatus ?? 'draft';
   return (
-    <span
-      className={`astatus tstat--${status}`}
-      style={compact ? { fontSize: 10, padding: '1px 7px' } : undefined}
-      title={APPROVAL_HINT[status]}
-    >
+    <span className={`astatus tstat--${status}`} title={APPROVAL_HINT[status]}>
       {APPROVAL_LABEL[status]}
     </span>
   );
 }
 
-function ChannelBadge({ channel, compact = false }: { channel: ChannelType; compact?: boolean }) {
+function ChannelBadge({ channel }: { channel: ChannelType }) {
   const m = CHANNEL[channel];
   return (
-    <span
-      className={compact ? styles.cbadge : styles.tbadge}
-      style={{ background: m.tint, color: m.color }}
-      title={compact ? m.label : undefined}
-      aria-label={compact ? m.label : undefined}
-    >
+    <span className={styles.tbadge} style={{ background: m.tint, color: m.color }}>
       <Icon name={m.icon} size={11} />
-      {!compact && m.label}
+      {m.label}
     </span>
   );
 }
@@ -230,6 +221,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
   const total = filtered.length;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
+  const pagerPages = visiblePageNumbers(safePage, pageCount);
   const start = (safePage - 1) * PAGE_SIZE;
   const pageItems = filtered.slice(start, start + PAGE_SIZE);
 
@@ -531,75 +523,104 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           })}
         </div>
 
-        {/* toolbar */}
+        {/* toolbar: controls on row 1; active filter chips always on their own row */}
         <div className={styles.toolbar}>
-          <label className={styles.search}>
-            <Icon name="search" size={15} className={styles.searchic} />
-            <input
-              type="search"
-              placeholder="Search templates…"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
+          <div className={styles.toolbarRow}>
+            <label className={styles.search}>
+              <Icon name="search" size={15} className={styles.searchic} />
+              <input
+                type="search"
+                placeholder="Search templates…"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  resetPage();
+                }}
+                aria-label="Search templates"
+              />
+            </label>
+
+            <ColFilter
+              label="Category"
+              icon="layers"
+              options={TEMPLATE_CATEGORIES}
+              selected={catSel}
+              onToggle={toggleSet(setCatSel)}
+              onClear={() => {
+                setCatSel(new Set());
                 resetPage();
               }}
-              aria-label="Search templates"
+              open={openFilter === 'cat'}
+              onOpenToggle={() => setOpenFilter((o) => (o === 'cat' ? null : 'cat'))}
             />
-          </label>
+            <ColFilter
+              label="Opens"
+              icon="eye"
+              options={RATE_BUCKETS}
+              selected={opensSel}
+              onToggle={toggleSet(setOpensSel)}
+              onClear={() => {
+                setOpensSel(new Set());
+                resetPage();
+              }}
+              open={openFilter === 'opens'}
+              onOpenToggle={() => setOpenFilter((o) => (o === 'opens' ? null : 'opens'))}
+            />
+            <ColFilter
+              label="Clicks"
+              icon="target"
+              options={RATE_BUCKETS}
+              selected={clicksSel}
+              onToggle={toggleSet(setClicksSel)}
+              onClear={() => {
+                setClicksSel(new Set());
+                resetPage();
+              }}
+              open={openFilter === 'clicks'}
+              onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
+            />
 
-          <ColFilter
-            label="Category"
-            options={TEMPLATE_CATEGORIES}
-            selected={catSel}
-            onToggle={toggleSet(setCatSel)}
-            onClear={() => {
+            <span className={styles.spacer} />
+
+            <div className={`aseg ${styles.seg}`} role="group" aria-label="View">
+              {VIEWS.map((v) => (
+                <button
+                  key={v.key}
+                  type="button"
+                  className={`aseg__opt${view === v.key ? ' is-active' : ''}`}
+                  aria-pressed={view === v.key}
+                  onClick={() => setView(v.key)}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <FilterChipsRow
+            chips={[
+              ...[...catSel].map((c) => ({
+                key: `cat:${c}`,
+                label: `Category: ${c}`,
+                onRemove: () => toggleSet(setCatSel)(c),
+              })),
+              ...[...opensSel].map((b) => ({
+                key: `opens:${b}`,
+                label: `Opens: ${b}`,
+                onRemove: () => toggleSet(setOpensSel)(b),
+              })),
+              ...[...clicksSel].map((b) => ({
+                key: `clicks:${b}`,
+                label: `Clicks: ${b}`,
+                onRemove: () => toggleSet(setClicksSel)(b),
+              })),
+            ]}
+            onClearAll={() => {
               setCatSel(new Set());
-              resetPage();
-            }}
-            open={openFilter === 'cat'}
-            onOpenToggle={() => setOpenFilter((o) => (o === 'cat' ? null : 'cat'))}
-          />
-          <ColFilter
-            label="Opens"
-            options={RATE_BUCKETS}
-            selected={opensSel}
-            onToggle={toggleSet(setOpensSel)}
-            onClear={() => {
               setOpensSel(new Set());
-              resetPage();
-            }}
-            open={openFilter === 'opens'}
-            onOpenToggle={() => setOpenFilter((o) => (o === 'opens' ? null : 'opens'))}
-          />
-          <ColFilter
-            label="Clicks"
-            options={RATE_BUCKETS}
-            selected={clicksSel}
-            onToggle={toggleSet(setClicksSel)}
-            onClear={() => {
               setClicksSel(new Set());
               resetPage();
             }}
-            open={openFilter === 'clicks'}
-            onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
           />
-
-          <span className={styles.spacer} />
-
-          <div className={`aseg ${styles.seg}`} role="group" aria-label="View">
-            {VIEWS.map((v) => (
-              <button
-                key={v.key}
-                type="button"
-                className={`aseg__opt${view === v.key ? ' is-active' : ''}`}
-                aria-pressed={view === v.key}
-                onClick={() => setView(v.key)}
-              >
-                <Icon name={v.icon} size={13} />
-                <span className={styles.segLbl}>{v.label}</span>
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* bulk-selection bar */}
@@ -729,63 +750,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                         name={t.name}
                       />
                     </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : view === 'compact' ? (
-          <div className={styles.compact}>
-            {pageItems.map((t) => {
-              const sel = selected.has(t.id);
-              return (
-                <div
-                  key={t.id}
-                  className={styles.ccard}
-                  style={{ borderColor: sel ? 'var(--accent)' : 'var(--border)' }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Open ${t.name}`}
-                  onClick={() => setOpenId(t.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setOpenId(t.id);
-                    }
-                  }}
-                >
-                  <div className={styles.cband} style={{ background: t.thumb, color: t.fg }}>
-                    <span className={styles.ccheck} onClick={(e) => e.stopPropagation()}>
-                      <Check
-                        on={sel}
-                        onClick={() => toggleSelect(t.id)}
-                        label={`Select ${t.name}`}
-                        size={18}
-                      />
-                    </span>
-                    {t.title}
-                    {t.channel === 'whatsapp' && (
-                      <span className={styles.cApproval}>
-                        <ApprovalBadge t={t} compact />
-                      </span>
-                    )}
-                  </div>
-                  <div className={styles.cfoot}>
-                    <div className={styles.crow}>
-                      <ChannelBadge channel={t.channel} compact />
-                      <span className={styles.cname}>{t.name}</span>
-                      <span onClick={(e) => e.stopPropagation()}>
-                        <StarBtn
-                          on={isFav(t.id)}
-                          onClick={() => toggleFav(t.id, t.name)}
-                          name={t.name}
-                          size={13}
-                        />
-                      </span>
-                    </div>
-                    <div className={`${styles.cmetrics} tnum`}>
-                      {t.avgOpen}% open · {t.avgClick}% click
-                    </div>
                   </div>
                 </div>
               );
@@ -928,7 +892,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               >
                 <Icon name="chevron-right" size={15} className={styles.pgleft} />
               </button>
-              {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
+              {pagerPages.map((n) => (
                 <button
                   key={n}
                   type="button"
