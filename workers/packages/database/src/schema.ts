@@ -551,6 +551,8 @@ export const mediaAssets = pgTable(
     // Object key within the media bucket. Named for its role, not the vendor:
     // this was "r2_key" under the dropped Cloudflare design and is now S3.
     storageKey: text("storage_key").notNull(),
+    // Optional 250×250 cover twin for library Grid/List previews.
+    thumbStorageKey: text("thumb_storage_key"),
     name: text("name").notNull(),
     folder: text("folder"),
     tags: jsonb("tags").$type<string[]>().notNull().default([]),

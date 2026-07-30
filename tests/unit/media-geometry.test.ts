@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  displayNameFromFile,
   matchesAspectRatio,
   matchesOrientation,
   mediaSize,
   parseDim,
+  tagsFromFilename,
+  toKebabCase,
 } from '@/components/react/AppMedia.logic';
 
 describe('parseDim / mediaSize', () => {
@@ -44,5 +47,26 @@ describe('matchesAspectRatio', () => {
 
   it('ORs multiple selected ratios', () => {
     expect(matchesAspectRatio(1920, 1080, new Set(['1:1', '16:9']))).toBe(true);
+  });
+});
+
+describe('displayNameFromFile / tagsFromFilename', () => {
+  it('strips extension and path for display name', () => {
+    expect(displayNameFromFile('sunset-beach.jpg')).toBe('sunset-beach');
+    expect(displayNameFromFile('/tmp/foo_bar.PNG')).toBe('foo_bar');
+  });
+
+  it('derives tags from filename tokens', () => {
+    expect(tagsFromFilename('sunset-beach-view.jpg')).toEqual(['sunset', 'beach', 'view']);
+    expect(tagsFromFilename('ab.jpg')).toEqual([]); // too short
+    expect(tagsFromFilename('img_12.jpg')).toEqual(['img']); // numeric token skipped
+  });
+});
+
+describe('toKebabCase', () => {
+  it('normalizes titles to kebab-case', () => {
+    expect(toKebabCase('Red Fox in Snow')).toBe('red-fox-in-snow');
+    expect(toKebabCase('  already_snake  ')).toBe('already-snake');
+    expect(toKebabCase('Café-Morning!!')).toBe('caf-morning');
   });
 });

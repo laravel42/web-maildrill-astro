@@ -1,7 +1,12 @@
 import { randomUUID } from "node:crypto";
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { db, mediaAssets, type MediaAssetRow } from "@maildrill/database";
 import { config } from "@maildrill/config";
 import { ConflictError, NotFoundError, ValidationError } from "@maildrill/domain";
@@ -15,7 +20,7 @@ import { ConflictError, NotFoundError, ValidationError } from "@maildrill/domain
  * asset claiming to be there.
  */
 
-/** What the browser is allowed to store. Anything else is rejected up front. */
+/** What the browser is allowed to store. Images only — anything else is rejected up front. */
 const ALLOWED_TYPES = new Set([
   "image/png",
   "image/jpeg",
@@ -23,15 +28,6 @@ const ALLOWED_TYPES = new Set([
   "image/webp",
   "image/avif",
   "image/svg+xml",
-  "application/pdf",
-  // Audio — usable as Voice-message audio files (Infobip prefers mp3/wav).
-  "audio/mpeg", // mp3
-  "audio/wav",
-  "audio/x-wav",
-  "audio/ogg",
-  "audio/mp4", // m4a
-  "audio/x-m4a",
-  "audio/aac",
 ]);
 
 /** Presigned PUT lifetime — long enough for a slow upload, short enough to expire. */
@@ -71,6 +67,19 @@ function safeName(filename: string): string {
   return base.replace(/[^a-zA-Z0-9._-]/g, "-").slice(0, 120) || "file";
 }
 
+/** Asset display names are always kebab-case. */
+function toKebabCaseName(value: string): string {
+  return value
+    .trim()
+    .replace(/['’]/g, "")
+    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .toLowerCase()
+    .slice(0, 120) || "file";
+}
+
 export interface MediaAsset {
   id: string;
   name: string;
@@ -81,6 +90,8 @@ export interface MediaAsset {
   width: number | null;
   height: number | null;
   url: string;
+  /** 250×250 cover twin for Grid/List; null when none was stored. */
+  thumbUrl: string | null;
   createdAt: Date;
 }
 
@@ -95,6 +106,7 @@ function toAsset(row: MediaAssetRow): MediaAsset {
     width: row.width,
     height: row.height,
     url: publicUrlFor(row.storageKey),
+    thumbUrl: row.thumbStorageKey ? publicUrlFor(row.thumbStorageKey) : null,
     createdAt: row.createdAt,
   };
 }
@@ -158,20 +170,33 @@ export async function confirmUpload(
     contentType?: string | null;
     sizeBytes?: number | null;
     folder?: string | null;
+    tags?: string[];
     width?: number | null;
     height?: number | null;
+    /** Optional key of a 250×250 cover twin already PUTted to S3. */
+    thumbStorageKey?: string | null;
   },
 ): Promise<MediaAsset> {
-  if (!input.storageKey.startsWith(`tenants/${tenantId}/`)) {
+  const prefix = `tenants/${tenantId}/`;
+  if (!input.storageKey.startsWith(prefix)) {
     throw new ValidationError("storage key does not belong to this workspace");
   }
+  const thumbStorageKey = input.thumbStorageKey?.trim() || null;
+  if (thumbStorageKey && !thumbStorageKey.startsWith(prefix)) {
+    throw new ValidationError("thumb storage key does not belong to this workspace");
+  }
+  const tags = (input.tags ?? [])
+    .map((t) => t.trim())
+    .filter(Boolean);
   const rows = await db
     .insert(mediaAssets)
     .values({
       tenantId,
       storageKey: input.storageKey,
-      name: safeName(input.name),
-      folder: input.folder ?? null,
+      thumbStorageKey,
+      name: toKebabCaseName(input.name),
+      folder: input.folder?.trim() || null,
+      tags,
       contentType: input.contentType ?? null,
       sizeBytes: input.sizeBytes ?? null,
       width: input.width ?? null,
@@ -208,7 +233,7 @@ export async function updateMedia(
   patch: { name?: string; folder?: string | null; tags?: string[] },
 ): Promise<MediaAsset | null> {
   const set: Record<string, unknown> = {};
-  if (patch.name !== undefined) set.name = safeName(patch.name);
+  if (patch.name !== undefined) set.name = toKebabCaseName(patch.name);
   if (patch.folder !== undefined) set.folder = patch.folder;
   if (patch.tags !== undefined) set.tags = patch.tags;
   if (Object.keys(set).length === 0) {
@@ -237,17 +262,110 @@ export async function deleteMedia(tenantId: string, id: string): Promise<boolean
   const rows = await db
     .delete(mediaAssets)
     .where(and(eq(mediaAssets.id, id), eq(mediaAssets.tenantId, tenantId)))
-    .returning({ storageKey: mediaAssets.storageKey });
+    .returning({
+      storageKey: mediaAssets.storageKey,
+      thumbStorageKey: mediaAssets.thumbStorageKey,
+    });
   const row = rows[0];
   if (!row) throw new NotFoundError("media asset not found");
 
   await s3().send(
     new DeleteObjectCommand({ Bucket: config.media.bucket, Key: row.storageKey }),
   );
+  if (row.thumbStorageKey) {
+    await s3().send(
+      new DeleteObjectCommand({ Bucket: config.media.bucket, Key: row.thumbStorageKey }),
+    );
+  }
   return true;
 }
 
 /** Whether the media endpoints can do anything at all. */
 export function mediaConfigured(): boolean {
   return config.media.configured;
+}
+
+/** Cover twin edge length — keep in sync with the browser upload path. */
+export const MEDIA_THUMB_SIZE = 250;
+
+/** Assets that still need a 250×250 twin (optional tenant filter). */
+export async function listMediaMissingThumbs(
+  tenantId?: string,
+): Promise<MediaAssetRow[]> {
+  const rows = await db
+    .select()
+    .from(mediaAssets)
+    .where(
+      tenantId
+        ? and(eq(mediaAssets.tenantId, tenantId), isNull(mediaAssets.thumbStorageKey))
+        : isNull(mediaAssets.thumbStorageKey),
+    )
+    .orderBy(desc(mediaAssets.createdAt));
+  return rows;
+}
+
+/** Download an original object from the media bucket. */
+export async function getMediaObjectBytes(storageKey: string): Promise<Buffer> {
+  const res = await s3().send(
+    new GetObjectCommand({ Bucket: config.media.bucket, Key: storageKey }),
+  );
+  if (!res.Body) throw new NotFoundError(`object missing: ${storageKey}`);
+  return Buffer.from(await res.Body.transformToByteArray());
+}
+
+/**
+ * Store a thumb twin under the tenant prefix and point the asset at it.
+ * Replaces a previous twin key if one was already set.
+ */
+export async function attachMediaThumb(
+  tenantId: string,
+  id: string,
+  input: { body: Buffer; contentType: string; filename?: string },
+): Promise<MediaAsset> {
+  if (!ALLOWED_TYPES.has(input.contentType)) {
+    throw new ValidationError(`unsupported thumb type: ${input.contentType}`);
+  }
+  const existing = await db
+    .select()
+    .from(mediaAssets)
+    .where(and(eq(mediaAssets.id, id), eq(mediaAssets.tenantId, tenantId)))
+    .limit(1);
+  const row = existing[0];
+  if (!row) throw new NotFoundError("media asset not found");
+
+  const storageKey = `tenants/${tenantId}/${randomUUID()}-${safeName(
+    input.filename ?? "thumb-250.webp",
+  )}`;
+  await s3().send(
+    new PutObjectCommand({
+      Bucket: config.media.bucket,
+      Key: storageKey,
+      Body: input.body,
+      ContentType: input.contentType,
+      ContentLength: input.body.byteLength,
+    }),
+  );
+
+  const updated = await db
+    .update(mediaAssets)
+    .set({ thumbStorageKey: storageKey })
+    .where(and(eq(mediaAssets.id, id), eq(mediaAssets.tenantId, tenantId)))
+    .returning();
+  if (!updated[0]) throw new NotFoundError("media asset not found");
+
+  // Drop the previous twin after the row points at the new one.
+  if (row.thumbStorageKey && row.thumbStorageKey !== storageKey) {
+    try {
+      await s3().send(
+        new DeleteObjectCommand({
+          Bucket: config.media.bucket,
+          Key: row.thumbStorageKey,
+        }),
+      );
+    } catch {
+      /* orphaned previous twin is recoverable waste */
+    }
+  }
+
+  return toAsset(updated[0]);
 }

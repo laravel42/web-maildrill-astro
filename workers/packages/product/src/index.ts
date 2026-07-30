@@ -11,4 +11,5 @@ export * from "./campaign-crud";
 export { buildSegmentWhere } from "./rules";
 export * from "./stats";
 export * from "./media";
+export * from "./media-suggest";
 export * from "./channel-senders";

@@ -467,7 +467,8 @@
   background: var(--surface);
   border-radius: 20px;
   box-shadow: 0 24px 60px rgba(28, 25, 23, 0.28);
-  overflow: hidden;
+  /* Visible so the folder combobox popover can escape the dialog. */
+  overflow: visible;
   display: flex;
   flex-direction: column;
   max-height: 100%;
@@ -478,6 +479,8 @@
   justify-content: space-between;
   padding: 18px 22px;
   border-bottom: 1px solid var(--divider);
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
 }
 .modalTitle {
   font-size: 15px;
@@ -485,7 +488,74 @@
 }
 .modalBody {
   padding: 22px;
-  overflow-y: auto;
+  overflow: visible;
+  background: var(--surface);
+  border-radius: 0;
+}
+.fieldLabel {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text2);
+}
+.fieldInput {
+  width: 100%;
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  color: var(--text);
+  background: transparent;
+  margin-bottom: 14px;
+  font-family: inherit;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+.fieldInput:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+.fieldInput:disabled {
+  opacity: 0.6;
+}
+.fieldInvalid {
+  border-color: var(--danger, #dc2626);
+}
+.fieldInvalid:focus {
+  border-color: var(--danger, #dc2626);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger, #dc2626) 18%, transparent);
+}
+.fieldError {
+  margin: -8px 0 12px;
+  font-size: 12px;
+  color: var(--danger, #dc2626);
+}
+.req {
+  color: var(--danger, #dc2626);
+  font-weight: 700;
+}
+.uploadTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 16px;
+  min-height: 34px;
+}
+.queue {
+  margin: -6px 0 16px;
+}
+.suggesting {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -4px 0 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--accent-text);
 }
 .drop {
   width: 100%;
@@ -495,7 +565,7 @@
   text-align: center;
   background: var(--surface2);
   cursor: pointer;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -552,6 +622,7 @@
   height: 38px;
   flex: none;
   border-radius: 8px;
+  background-color: var(--surface2);
 }
 .qmain {
   flex: 1;
@@ -571,6 +642,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.qmeta {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 2px;
 }
 .qpct {
   font-size: 12px;
@@ -596,6 +672,7 @@
   padding: 16px 22px;
   border-top: 1px solid var(--divider);
   background: var(--surface2);
+  border-radius: 0 0 20px 20px;
 }
 
 /* toast */

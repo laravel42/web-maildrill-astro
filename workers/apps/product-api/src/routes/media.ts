@@ -9,6 +9,8 @@ import {
   deleteMedia,
   listMedia,
   mediaConfigured,
+  mediaSuggestConfigured,
+  suggestMediaMetadata,
   updateMedia,
 } from "@maildrill/product";
 
@@ -27,14 +29,22 @@ const confirmSchema = z.object({
   contentType: z.string().nullable().optional(),
   sizeBytes: z.number().int().nonnegative().nullable().optional(),
   folder: z.string().nullable().optional(),
+  tags: z.array(z.string()).optional(),
   width: z.number().int().positive().nullable().optional(),
   height: z.number().int().positive().nullable().optional(),
+  thumbStorageKey: z.string().min(1).nullable().optional(),
 });
 
 const patchSchema = z.object({
   name: z.string().min(1).optional(),
   folder: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
+});
+
+const suggestSchema = z.object({
+  /** Raw base64 or a data: URL. */
+  imageBase64: z.string().min(1),
+  contentType: z.string().min(1),
 });
 
 export async function mediaRoutes(appRaw: FastifyInstance): Promise<void> {
@@ -45,7 +55,28 @@ export async function mediaRoutes(appRaw: FastifyInstance): Promise<void> {
   app.get(
     "/v1/media/status",
     { schema: { tags: TAG, summary: "Whether media storage is configured" } },
-    async () => ({ configured: mediaConfigured() }),
+    async () => ({
+      configured: mediaConfigured(),
+      suggestConfigured: mediaSuggestConfigured(),
+    }),
+  );
+
+  app.post(
+    "/v1/media/suggest-metadata",
+    {
+      schema: {
+        tags: TAG,
+        summary: "Vision-powered name + tags for a staged image",
+        body: suggestSchema,
+      },
+    },
+    async (req, reply) => {
+      try {
+        return await suggestMediaMetadata(req.body);
+      } catch (err) {
+        return mapError(err, reply);
+      }
+    },
   );
 
   app.get("/v1/media", { schema: { tags: TAG, summary: "List media assets" } }, async (req) => ({

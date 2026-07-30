@@ -8,8 +8,10 @@ import styles from './MediaPickerModal.module.css';
 /** An image asset as offered by the picker. */
 export interface MediaPickerImage {
   id: string;
-  /** Public CloudFront URL. */
+  /** Full original CloudFront URL (what Insert returns). */
   url: string;
+  /** Tile preview (250×250 twin when available). */
+  preview: string;
   name: string;
   dim: string | null;
 }
@@ -50,6 +52,7 @@ export default function MediaPickerModal({
           .map((a) => ({
             id: a.id,
             url: a.url,
+            preview: a.thumbUrl?.trim() || a.url,
             name: a.name,
             dim: a.width && a.height ? `${a.width} × ${a.height}` : null,
           }));
@@ -132,7 +135,7 @@ export default function MediaPickerModal({
                     title={img.name}
                   >
                     <span className={styles.thumb}>
-                      <img src={img.url} alt="" loading="lazy" />
+                      <img src={img.preview} alt="" loading="lazy" />
                       {isSelected && (
                         <span className={styles.check} aria-hidden="true">
                           <Icon name="check" size={12} stroke={3} />
