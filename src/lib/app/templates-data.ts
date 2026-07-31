@@ -23,6 +23,8 @@ export type GalleryTemplate = {
   updated: string;
   /** Precomputed minutes-ago, for deterministic sorting. */
   updatedMin: number;
+  /** Creation date display, e.g. "Jul 12, 2026" (absent on fixture data). */
+  createdOn?: string;
   /** CSS background for the thumbnail header band (gradient or solid). */
   thumb: string;
   /** Foreground text colour used on top of `thumb`. */

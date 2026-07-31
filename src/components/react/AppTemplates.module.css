@@ -261,18 +261,6 @@
   border-radius: 20px;
   white-space: nowrap;
 }
-.star {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px;
-  border-radius: 6px;
-  transition: transform var(--duration-fast) var(--ease-out);
-}
-.star:hover {
-  transform: scale(1.12);
-}
-
 /* faux email — moved to shared/GalleryPreview.module.css */
 
 /* gallery */
@@ -292,7 +280,7 @@
 }
 .preview {
   position: relative;
-  height: 172px;
+  height: 148px;
   background: var(--surface2);
   padding: 16px 18px 0;
   display: flex;
@@ -327,6 +315,35 @@
   left: 12px;
   z-index: 2;
 }
+/* Previews are always light (chat mock), so dark-theme translucent
+   --*-bg tokens wash out here. Pin the light chip palette in both themes. */
+.gApproval :global(.astatus) {
+  box-shadow: 0 1px 2px rgba(30, 27, 22, 0.14);
+}
+.gApproval :global(.tstat--draft) {
+  background: #eef0ff;
+  color: #4f46e5;
+}
+.gApproval :global(.tstat--pending) {
+  background: #fef3c7;
+  color: #b45309;
+}
+.gApproval :global(.tstat--approved) {
+  background: #dcfce7;
+  color: #15803d;
+}
+.gApproval :global(.tstat--rejected) {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.gApproval :global(.tstat--paused) {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+.gApproval :global(.tstat--disabled) {
+  background: #f6f5f2;
+  color: #57554e;
+}
 .ov {
   position: absolute;
   inset: 0;
@@ -359,60 +376,64 @@
   font-size: 12px;
   font-weight: 600;
 }
-.gmeta {
-  padding: 13px 15px;
-  border-top: 1px solid var(--divider);
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-}
-.gmetaMain {
-  min-width: 0;
-}
-.gname {
+/* Slim full-width category band between the preview and the card body,
+   tinted with the category's own hue (same recipe as the drawer pill). */
+.gcatbar {
+  padding: 4px 15px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   font-weight: 600;
-  font-size: 13.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Fills the card's remaining height so the last row pins to the bottom
+   even when a taller sibling stretches the grid row. */
+.gmeta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 15px 13px;
+  border-top: 1px solid var(--divider);
+  min-width: 0;
+}
+/* Name wraps in full across the card width. */
+.gname {
+  min-width: 0;
+  font-weight: 600;
+  font-size: 13.5px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+/* Last row: metrics left, freshness pinned bottom-right. The auto margin
+   sinks it to the card bottom; the padding keeps a minimum gap. */
 .gsub {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 6px;
-  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px;
+  margin-top: auto;
+  padding-top: 5px;
+  white-space: nowrap;
 }
 .updated {
+  flex: none;
+  margin-left: auto;
   font-size: 11.5px;
   color: var(--muted);
-}
-.metrics {
-  display: flex;
-  gap: 12px;
-  margin-top: 8px;
+  white-space: nowrap;
 }
 .metric {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+  flex: none;
   font-size: 11.5px;
   color: var(--text3);
 }
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex: none;
-}
-.star {
-  flex: none;
-}
-
 /* list */
 .lgrid {
   display: grid;
-  grid-template-columns: 36px 2fr 0.9fr 1fr 0.9fr 0.7fr 0.7fr 60px;
+  grid-template-columns: 36px 2fr 0.9fr 1fr 0.9fr 0.7fr 0.7fr;
   column-gap: 16px;
   align-items: center;
 }
@@ -422,10 +443,9 @@
 }
 .lhead > div {
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--text4);
   font-weight: 600;
-  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .lhead button {
@@ -630,16 +650,11 @@
   white-space: nowrap;
   flex: none;
 }
-.dUpdated {
-  font-size: 12.5px;
-  color: var(--muted);
-  margin: 6px 0 0;
-}
 .dStats {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-top: 18px;
+  margin-top: 12px;
 }
 .dStat {
   background: var(--surface2);
@@ -659,15 +674,9 @@
 .dEyebrow {
   margin: 24px 0 8px;
 }
-.dFavbtn {
-  flex: none;
-  width: 40px;
-  padding: 0;
-}
-
 @media (max-width: 900px) {
   .lgrid {
-    grid-template-columns: 32px 2fr 1fr 0.8fr 44px 32px;
+    grid-template-columns: 32px 2fr 1fr 0.8fr 44px;
   }
   .lgrid > :nth-child(5),
   .lgrid > :nth-child(6) {
@@ -676,7 +685,7 @@
 }
 @media (max-width: 640px) {
   .lgrid {
-    grid-template-columns: 30px 1.7fr 0.9fr 44px 30px;
+    grid-template-columns: 30px 1.7fr 0.9fr 44px;
   }
   .lgrid > :nth-child(4) {
     display: none;

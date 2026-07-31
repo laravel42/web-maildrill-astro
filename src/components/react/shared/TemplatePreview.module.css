@@ -32,7 +32,7 @@
 }
 .pvText {
   width: 100%;
-  max-height: 520px; /* match HtmlPreview PREVIEW_MAX_HEIGHT */
+  max-height: 400px; /* match HtmlPreview PREVIEW_MAX_HEIGHT */
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;

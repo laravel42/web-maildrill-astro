@@ -14,7 +14,7 @@
   box-shadow: 0 8px 26px rgba(30, 27, 22, 0.14);
 }
 .mailBand {
-  height: 60px;
+  height: 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -50,10 +50,10 @@
   margin-top: 6px;
 }
 .mailBody {
-  padding: 11px 13px 13px;
+  padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   align-items: flex-start;
 }
 .mailLg .mailBody {

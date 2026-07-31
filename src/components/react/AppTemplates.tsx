@@ -1,4 +1,13 @@
-import { lazy, Suspense, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import type { ChannelType, TemplateApprovalStatus } from '@/types/app';
 
 import {
@@ -102,31 +111,6 @@ function Check({
   );
 }
 
-function StarBtn({
-  on,
-  onClick,
-  name,
-  size = 15,
-}: {
-  on: boolean;
-  onClick: () => void;
-  name: string;
-  size?: number;
-}) {
-  return (
-    <button
-      type="button"
-      className={styles.star}
-      onClick={onClick}
-      aria-pressed={on}
-      aria-label={on ? `Remove ${name} from favorites` : `Add ${name} to favorites`}
-      style={{ color: on ? '#f59e0b' : 'var(--border2)' }}
-    >
-      <Icon name="star" size={size} />
-    </button>
-  );
-}
-
 /* --------------------------------------------------------------- screen ---- */
 
 export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] } = {}) {
@@ -144,12 +128,9 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
   const [openFilter, setOpenFilter] = useState<'cat' | 'opens' | 'clicks' | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updated', dir: -1 });
-  const [favIds, setFavIds] = useState<Set<string>>(
-    () => new Set((initial ?? galleryTemplates).filter((t) => t.favorite).map((t) => t.id)),
-  );
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  // Set while a destructive action waits on confirmation.
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  // Ids waiting on the delete confirm dialog (bulk toolbar or drawer).
+  const [confirmDelete, setConfirmDelete] = useState<string[] | null>(null);
   const [page, setPage] = useState(1);
   const [openId, setOpenId] = useState<string | null>(null);
   const { toast, show } = useToast();
@@ -166,8 +147,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
     waComponents?: Record<string, unknown> | null;
     waDoc?: Record<string, unknown> | null;
   } | null>(null);
-
-  const isFav = (id: string) => favIds.has(id);
 
   const resetPage = () => setPage(1);
 
@@ -203,8 +182,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           return t.avgOpen;
         case 'avgClick':
           return t.avgClick;
-        case 'fav':
-          return isFav(t.id) ? 1 : 0;
         default:
           return 0;
       }
@@ -216,7 +193,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
       if (av > bv) return 1 * dir;
       return a.name.localeCompare(b.name);
     });
-  }, [channelTab, query, catSel, opensSel, clicksSel, sort, favIds, templates]);
+  }, [channelTab, query, catSel, opensSel, clicksSel, sort, templates]);
 
   const total = filtered.length;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -254,31 +231,22 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
   const allChecked = pageItems.length > 0 && pageItems.every((t) => selected.has(t.id));
   const toggleAll = () => setSelected(allChecked ? new Set() : new Set(pageItems.map((t) => t.id)));
 
-  const toggleFav = (id: string, name: string) => {
-    setFavIds((prev) => {
-      const next = new Set(prev);
-      const willFav = !next.has(id);
-      if (willFav) next.add(id);
-      else next.delete(id);
-      show(willFav ? `Added “${name}” to favorites` : `Removed “${name}” from favorites`);
-      if (live) void api.patch(`templates/${id}`, { favorite: willFav }).catch(() => undefined);
-      return next;
-    });
-  };
-
-  /* Delete selected — persists to the service in live mode, else local-only. */
-  const removeSelected = async () => {
-    const ids = [...selected];
+  /* Delete by id list — persists to the service in live mode, else local-only. */
+  const removeTemplates = async (ids: string[]) => {
     if (ids.length === 0) return;
+    const doomed = new Set(ids);
     if (!live) {
-      setTemplates((prev) => prev.filter((t) => !selected.has(t.id)));
+      setTemplates((prev) => prev.filter((t) => !doomed.has(t.id)));
       show(`Deleted ${ids.length} template${ids.length === 1 ? '' : 's'}`);
-      setSelected(new Set());
+      setSelected((prev) => new Set([...prev].filter((id) => !doomed.has(id))));
+      if (openId && doomed.has(openId)) setOpenId(null);
       return;
     }
     const results = await Promise.allSettled(ids.map((id) => api.del(`templates/${id}`)));
     const okIds = new Set(ids.filter((_, i) => results[i].status === 'fulfilled'));
     setTemplates((prev) => prev.filter((t) => !okIds.has(t.id)));
+    setSelected((prev) => new Set([...prev].filter((id) => !okIds.has(id))));
+    if (openId && okIds.has(openId)) setOpenId(null);
     const failed = ids.length - okIds.size;
     window.posthog?.capture('template_deleted', { count: okIds.size, failed });
     show(
@@ -286,7 +254,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
         ? `Deleted ${okIds.size}, ${failed} failed`
         : `Deleted ${okIds.size} template${okIds.size === 1 ? '' : 's'}`,
     );
-    setSelected(new Set());
   };
 
   /* Copy templates. The full row is fetched first because the gallery shape
@@ -322,25 +289,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
         ? `Duplicated ${made.length}, ${failed} failed`
         : `Duplicated ${made.length} template${made.length === 1 ? '' : 's'}`,
     );
-    setSelected(new Set());
-  };
-
-  /* Favorite/unfavorite in bulk, persisted per template. */
-  const favoriteSelected = async () => {
-    const ids = [...selected];
-    if (ids.length === 0) return;
-    if (live) {
-      const results = await Promise.allSettled(
-        ids.map((id) => api.patch<ApiTemplate>(`templates/${id}`, { favorite: true })),
-      );
-      const okIds = ids.filter((_, i) => results[i].status === 'fulfilled');
-      setFavIds((prev) => new Set([...prev, ...okIds]));
-      const failed = ids.length - okIds.length;
-      show(failed ? `Favorited ${okIds.length}, ${failed} failed` : `Favorited ${okIds.length}`);
-    } else {
-      setFavIds((prev) => new Set([...prev, ...ids]));
-      show(`Favorited ${ids.length}`);
-    }
     setSelected(new Set());
   };
 
@@ -401,6 +349,21 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
       waDoc: full.builderDoc ?? undefined,
     });
   };
+
+  // Sidebar pins: /dashboard/templates?edit=<id> opens the editor directly.
+  const editDeepLinkDone = useRef(false);
+  useEffect(() => {
+    if (editDeepLinkDone.current) return;
+    const editId = new URLSearchParams(window.location.search).get('edit');
+    if (!editId) return;
+    const tpl = templates.find((t) => t.id === editId);
+    if (!tpl) return;
+    editDeepLinkDone.current = true;
+    void openForEdit(tpl);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('edit');
+    window.history.replaceState(null, '', `${url.pathname}${url.search}`);
+  }, [templates]);
 
   const setTab = (t: ChannelType | 'all') => {
     setChannelTab(t);
@@ -637,15 +600,8 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
             </button>
             <button
               type="button"
-              className={styles.bulkbtn}
-              onClick={() => void favoriteSelected()}
-            >
-              <Icon name="star" size={13} /> Favorite
-            </button>
-            <button
-              type="button"
               className={`${styles.bulkbtn} ${styles.bulkbtnDanger}`}
-              onClick={() => setConfirmDelete(true)}
+              onClick={() => setConfirmDelete([...selected])}
             >
               <Icon name="trash" size={13} /> Delete
             </button>
@@ -725,31 +681,31 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                       </button>
                     </div>
                   </div>
+                  <div
+                    className={styles.gcatbar}
+                    style={{
+                      /* Text keeps the category hue but leans on the theme's
+                         foreground so it stays readable on the tint in both
+                         light and dark. */
+                      color: `color-mix(in srgb, ${CATEGORY_COLOR[t.category] ?? 'var(--accent)'} 55%, var(--text))`,
+                      background: `color-mix(in srgb, ${CATEGORY_COLOR[t.category] ?? 'var(--accent)'} 12%, transparent)`,
+                    }}
+                  >
+                    {t.category}
+                  </div>
                   <div className={styles.gmeta}>
-                    <div className={styles.gmetaMain}>
-                      <div className={styles.gname}>{t.name}</div>
-                      <div className={styles.gsub}>
-                        <span className={styles.catpill}>{t.category}</span>
-                        <span className={styles.updated}>Updated {t.updated}</span>
-                      </div>
-                      <div className={styles.metrics}>
-                        <span className={styles.metric}>
-                          <span className={styles.dot} style={{ background: '#4f46e5' }} />
-                          <span className="tnum">{t.avgOpen}%</span> opens
-                        </span>
-                        <span className={styles.metric}>
-                          <span className={styles.dot} style={{ background: '#0891b2' }} />
-                          <span className="tnum">{t.avgClick}%</span> clicks
-                        </span>
-                      </div>
+                    <div className={styles.gname}>{t.name}</div>
+                    <div className={styles.gsub}>
+                      <span className={styles.metric}>
+                        <span className="tnum">{t.avgOpen}%</span> opens
+                      </span>
+                      <span className={styles.metric}>
+                        · <span className="tnum">{t.avgClick}%</span> clicks
+                      </span>
+                      <span className={styles.updated} title={`Updated ${t.updated}`}>
+                        {t.updated}
+                      </span>
                     </div>
-                    <span onClick={(e) => e.stopPropagation()}>
-                      <StarBtn
-                        on={isFav(t.id)}
-                        onClick={() => toggleFav(t.id, t.name)}
-                        name={t.name}
-                      />
-                    </span>
                   </div>
                 </div>
               );
@@ -822,16 +778,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                   Clicks <span className="tnum">{sortArrow('avgClick')}</span>
                 </button>
               </div>
-              <div className={styles.lcenter}>
-                <button
-                  type="button"
-                  className={sort.key === 'fav' ? styles.isActive : undefined}
-                  onClick={() => toggleSort('fav')}
-                  aria-label="Sort by favorite"
-                >
-                  Fav <span className="tnum">{sortArrow('fav')}</span>
-                </button>
-              </div>
             </div>
             {pageItems.map((t) => {
               const sel = selected.has(t.id);
@@ -868,13 +814,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                   <div className={`${styles.lcenter} ${styles.lmuted}`}>{t.updated}</div>
                   <div className={`${styles.lcenter} tnum ${styles.lmuted3}`}>{t.avgOpen}%</div>
                   <div className={`${styles.lcenter} tnum ${styles.lmuted3}`}>{t.avgClick}%</div>
-                  <div className={styles.lcenter} onClick={(e) => e.stopPropagation()}>
-                    <StarBtn
-                      on={isFav(t.id)}
-                      onClick={() => toggleFav(t.id, t.name)}
-                      name={t.name}
-                    />
-                  </div>
                 </div>
               );
             })}
@@ -929,8 +868,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
         <TemplateDrawer
           t={openTpl}
           live={live}
-          fav={isFav(openTpl.id)}
-          onFav={() => toggleFav(openTpl.id, openTpl.name)}
           onSubmit={() => submitTemplate(openTpl.id)}
           onRefresh={() => refreshApproval(openTpl.id)}
           onClose={() => setOpenId(null)}
@@ -942,6 +879,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
             setOpenId(null);
             void duplicateTemplates([id]);
           }}
+          onDelete={() => setConfirmDelete([openTpl.id])}
         />
       )}
 
@@ -1077,13 +1015,14 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
 
       {confirmDelete && (
         <ConfirmDialog
-          title={`Delete ${selected.size} template${selected.size === 1 ? '' : 's'}?`}
+          title={`Delete ${confirmDelete.length} template${confirmDelete.length === 1 ? '' : 's'}?`}
           message="This can’t be undone."
           confirmLabel="Delete"
-          onCancel={() => setConfirmDelete(false)}
+          onCancel={() => setConfirmDelete(null)}
           onConfirm={() => {
-            setConfirmDelete(false);
-            void removeSelected();
+            const ids = confirmDelete;
+            setConfirmDelete(null);
+            void removeTemplates(ids);
           }}
         />
       )}
@@ -1109,23 +1048,21 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
 function TemplateDrawer({
   t,
   live,
-  fav,
-  onFav,
   onSubmit,
   onRefresh,
   onClose,
   onUse,
   onClone,
+  onDelete,
 }: {
   t: GalleryTemplate;
   live: boolean;
-  fav: boolean;
-  onFav: () => void;
   onSubmit: () => void | Promise<void>;
   onRefresh: () => void | Promise<void>;
   onClose: () => void;
   onUse: () => void;
   onClone: () => void;
+  onDelete: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const catColor = CATEGORY_COLOR[t.category as TplCategory] ?? 'var(--accent)';
@@ -1135,6 +1072,7 @@ function TemplateDrawer({
   const details: [string, string][] = [
     ['Category', t.category],
     ['Channel', CHANNEL[t.channel].label],
+    ['Created on', t.createdOn ?? '—'],
     ['Last edited', t.updated],
   ];
   const runBusy = (fn: () => void | Promise<void>) => async () => {
@@ -1184,8 +1122,6 @@ function TemplateDrawer({
               {t.category}
             </span>
           </div>
-          <p className={styles.dUpdated}>Updated {t.updated}</p>
-
           <div className={styles.dStats}>
             <div className={styles.dStat}>
               <div className={styles.dStatLbl}>Avg. opens</div>
@@ -1288,13 +1224,12 @@ function TemplateDrawer({
         <div className="adrawer__foot">
           <button
             type="button"
-            className={`sbtn ${styles.dFavbtn}`}
-            onClick={onFav}
-            aria-pressed={fav}
-            aria-label={fav ? 'Remove from favorites' : 'Add to favorites'}
-            style={{ color: fav ? '#f59e0b' : 'var(--text3)' }}
+            className="sbtn"
+            style={{ flex: 'none', color: 'var(--danger)' }}
+            aria-label={`Delete ${t.name}`}
+            onClick={onDelete}
           >
-            <Icon name="star" size={16} />
+            <Icon name="trash" size={15} />
           </button>
           <button type="button" className="sbtn" style={{ flex: 1 }} onClick={onClone}>
             <Icon name="copy" size={14} /> Clone

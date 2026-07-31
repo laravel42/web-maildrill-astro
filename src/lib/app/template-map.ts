@@ -36,6 +36,10 @@ export interface ApiTemplate {
   components?: Record<string, unknown> | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+  /** Engagement across campaigns that sent this template (absent pre-rollout). */
+  trackedDelivered?: number | null;
+  opened?: number | null;
+  clicked?: number | null;
 }
 
 const CATEGORIES: TplCategory[] = ['Newsletter', 'Promotional', 'Transactional'];
@@ -78,10 +82,25 @@ function fmtAgo(iso?: string | null): { updated: string; updatedMin: number } {
   return { updated, updatedMin: min };
 }
 
+/** "Jul 12, 2026" from an ISO timestamp; em-dash when absent/invalid. */
+function fmtDate(iso?: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+/** Whole-percent rate against tracked deliveries; 0 until sends report back. */
+function rate(numerator?: number | null, tracked?: number | null): number {
+  if (!tracked || tracked <= 0) return 0;
+  return Math.round(((numerator ?? 0) / tracked) * 100);
+}
+
 /**
  * Map a live API template into the gallery card shape. Name/category/channel are
  * real; the thumbnail styling is deterministic from the id, and open/click rates
- * start at 0 (no fabricated analytics) until sends report back.
+ * come from real message outcomes of campaigns that sent this template
+ * (0 until sends report back — never fabricated).
  */
 export function toGalleryTemplate(t: ApiTemplate): GalleryTemplate {
   const [thumb, fg, accent] = TEMPLATE_THUMBS[hash(t.id) % TEMPLATE_THUMBS.length];
@@ -97,12 +116,13 @@ export function toGalleryTemplate(t: ApiTemplate): GalleryTemplate {
     channel: toChannel(t.channel),
     updated,
     updatedMin,
+    createdOn: fmtDate(t.createdAt),
     thumb,
     fg,
     accent,
     favorite: !!t.favorite,
-    avgOpen: 0,
-    avgClick: 0,
+    avgOpen: rate(t.opened, t.trackedDelivered),
+    avgClick: rate(t.clicked, t.trackedDelivered),
     approvalStatus: toApprovalStatus(t.approvalStatus),
     rejectionReason: t.rejectionReason ?? null,
   };

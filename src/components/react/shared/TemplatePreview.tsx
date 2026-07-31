@@ -100,7 +100,7 @@ export function MessagePreview({
  * scripts, so any JS embedded in a template can't run.
  */
 const EMAIL_LOGICAL_WIDTH = 600;
-const PREVIEW_MAX_HEIGHT = 520;
+const PREVIEW_MAX_HEIGHT = 400;
 
 function HtmlPreview({ html }: { html: string }) {
   const viewportRef = useRef<HTMLDivElement>(null);
