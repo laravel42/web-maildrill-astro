@@ -8,16 +8,13 @@ import {
   AVATAR_GRADS,
   fmtPct,
   PAGE_SIZE,
-  recentCampaignRows,
   rows as mockRows,
   trendPath,
   weeklyGain,
-  type DrawerCampaign,
 } from './AppLists.logic';
 import type { ListRow, SortKey, View } from './AppLists.types';
 import { api, ApiError } from '@/lib/app/api';
 import { toListRow, type ApiList } from '@/lib/app/list-map';
-import type { ApiCampaign } from '@/lib/app/campaign-map';
 import { RATE_BUCKETS, parseRatePercent, rateBucket } from '@/lib/app/templates-data';
 import { matchesSearchQuery } from '@/lib/app/search-match';
 import { tagStyle } from '@/lib/app/tag-style';
@@ -70,10 +67,18 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
     resetPage();
   };
   const [openId, setOpenId] = useState<string | null>(null);
+
+  // Deep link from sidebar pins: /dashboard/lists?open=<id> opens the drawer.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('open');
+    if (id) setOpenId(id);
+  }, []);
   const [closing, setClosing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [editor, setEditor] = useState<
-    { mode: 'create' } | { mode: 'edit'; id: string; name: string; color: string } | null
+    | { mode: 'create' }
+    | { mode: 'edit'; id: string; name: string; color: string; notes: string }
+    | null
   >(null);
 
   const showToast = (msg: string) => {
@@ -95,20 +100,27 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
       if (ed.mode === 'create') {
         const created = await api.post<ApiList>('lists', {
           name: values.name,
-          description: values.description || null,
+          notes: values.notes || null,
           color: values.color,
         });
         setListRows((prev) => [toListRow(created), ...prev]);
         showToast(`List “${values.name}” created`);
       } else {
-        // Name + colour only — the modal doesn't carry description, so don't clobber it.
         const updated = await api.patch<ApiList>(`lists/${ed.id}`, {
           name: values.name,
+          notes: values.notes || null,
           color: values.color,
         });
         setListRows((prev) =>
           prev.map((l) =>
-            l.id === ed.id ? { ...l, name: updated.name, color: updated.color || l.color } : l,
+            l.id === ed.id
+              ? {
+                  ...l,
+                  name: updated.name,
+                  color: updated.color || l.color,
+                  notes: updated.notes ?? values.notes,
+                }
+              : l,
           ),
         );
         showToast(`List “${values.name}” updated`);
@@ -429,21 +441,35 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                     <div className={styles.cardTop}>
                       <span className={styles.dot} style={{ background: l.color }} />
                       <span className={styles.cardName}>{l.name}</span>
+                      <span
+                        className={`${styles.cardPct} tnum`}
+                        style={{ color: up ? 'var(--success-text)' : 'var(--danger-text)' }}
+                      >
+                        {fmtPct(l.growthPct)}
+                      </span>
                     </div>
-                    <div className={`${styles.cardNum} tnum`}>
-                      {l.subscribers.toLocaleString('en-US')}
-                    </div>
-                    <div className={styles.cardSublabel}>subscribers</div>
-                    <div
-                      className={`${styles.cardGrowth} tnum`}
-                      style={{ color: up ? 'var(--success)' : 'var(--danger)' }}
-                    >
-                      {fmtPct(l.growthPct)} · {up ? '↑' : '↓'}{' '}
-                      {Math.abs(weeklyGain(l.trend)).toLocaleString('en-US')} this week
+                    <div className={styles.cardStat}>
+                      <span className={`${styles.cardNum} tnum`}>
+                        {l.subscribers.toLocaleString('en-US')}
+                      </span>
+                      <span className={styles.cardStatSub}>
+                        {/* Label truncates under pressure; the delta never does. */}
+                        <span className={styles.cardStatLabel}>subscribers</span>
+                        <span className={styles.cardStatDelta}>
+                          ·{' '}
+                          <span
+                            className="tnum"
+                            style={{ color: up ? 'var(--success-text)' : 'var(--danger-text)' }}
+                          >
+                            {up ? '↑' : '↓'} {Math.abs(weeklyGain(l.trend)).toLocaleString('en-US')}
+                          </span>{' '}
+                          this week
+                        </span>
+                      </span>
                     </div>
                     <div className={styles.cardMeta}>
-                      <span>Recent: {l.recentCampaign}</span>
-                      <span>Updated {ago(l.updatedAt)}</span>
+                      <span className={styles.cardRecent}>Recent: {l.recentCampaign}</span>
+                      <span className={styles.cardUpdated}>Updated {ago(l.updatedAt)}</span>
                     </div>
                     <div className={styles.cardFoot}>
                       <div className={styles.avatars} aria-hidden="true">
@@ -528,7 +554,13 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
           }}
           onDelete={() => setConfirmList({ id: open.id, name: open.name })}
           onEdit={() => {
-            setEditor({ mode: 'edit', id: open.id, name: open.name, color: open.color });
+            setEditor({
+              mode: 'edit',
+              id: open.id,
+              name: open.name,
+              color: open.color,
+              notes: open.notes,
+            });
             closeDrawer();
           }}
         />
@@ -538,6 +570,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
         <ListEditorModal
           mode={editor.mode}
           initialName={editor.mode === 'edit' ? editor.name : ''}
+          initialNotes={editor.mode === 'edit' ? editor.notes : ''}
           initialColor={editor.mode === 'edit' ? editor.color : undefined}
           onClose={() => setEditor(null)}
           onSave={saveList}
@@ -627,37 +660,6 @@ function ListDrawer({
   const up = list.growthPct >= 0;
   const gain = weeklyGain(list.trend);
   const chart = trendPath(list.trend, 346, 88);
-
-  // Real campaigns targeting this list, with per-campaign open rates from the
-  // service (live workspaces only) — the fixture preview keeps illustrative
-  // rows. The drawer remounts per list, so a plain mount fetch is fine; null
-  // means "still loading" so we never flash a false empty state.
-  const [recentCampaigns, setRecentCampaigns] = useState<DrawerCampaign[] | null>(
-    live
-      ? null
-      : list.recentCampaign === '—'
-        ? []
-        : [
-            { name: list.recentCampaign, status: 'Sent', when: '2d ago', open: '54.1%' },
-            { name: 'Monthly Digest', status: 'Sent', when: '2w ago', open: '48.7%' },
-            { name: 'Welcome Series', status: 'Draft', when: '—', open: null },
-          ],
-  );
-  useEffect(() => {
-    if (!live) return;
-    let alive = true;
-    void api
-      .get<{ data: ApiCampaign[] }>('campaigns')
-      .then((res) => {
-        if (alive) setRecentCampaigns(recentCampaignRows(res.data, list.id));
-      })
-      .catch(() => {
-        if (alive) setRecentCampaigns([]);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [live, list.id]);
 
   return (
     <div className={`adrawer-overlay${closing ? ` ${styles.overlayOut}` : ''}`} onClick={onClose}>
@@ -794,53 +796,6 @@ function ListDrawer({
               />
             </div>
           </div>
-
-          {/* engagement */}
-          <p className={`adrawer__eyebrow ${styles.dEyebrow}`}>Engagement</p>
-          <div className={styles.dEng}>
-            <div className="adetail">
-              <span className="adetail__k">Open rate</span>
-              <span className="adetail__v tnum">{list.openRate}</span>
-            </div>
-            <div className="adetail">
-              <span className="adetail__k">Click rate</span>
-              <span className="adetail__v tnum">{list.clickRate}</span>
-            </div>
-            <div className="adetail" style={{ borderBottom: 'none' }}>
-              <span className="adetail__k">Recent campaign</span>
-              <span className="adetail__v">{list.recentCampaign}</span>
-            </div>
-          </div>
-
-          {/* recent campaigns */}
-          <p className={`adrawer__eyebrow ${styles.dEyebrow}`}>Recent campaigns</p>
-          {recentCampaigns === null ? null : recentCampaigns.length === 0 ? (
-            <div className="aempty">No campaigns sent to this list yet</div>
-          ) : (
-            <div className={styles.dCamps}>
-              {recentCampaigns.map((c, i) => (
-                <div key={i} className={styles.dCamp}>
-                  <span className={styles.dCampDot} style={{ background: list.color }} />
-                  <div className={styles.dCampText}>
-                    <div className={styles.dCampName}>{c.name}</div>
-                    <div className={styles.dCampSub}>
-                      {c.status} · {c.when}
-                    </div>
-                  </div>
-                  <div className={styles.dCampOpen}>
-                    {c.open ? (
-                      <>
-                        <span className={`tnum ${styles.dCampOpenval}`}>{c.open}</span>
-                        <span className={styles.dCampOpenlbl}>open</span>
-                      </>
-                    ) : (
-                      <span className={styles.dCampOpenlbl}>—</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
 
           {/* custom fields — workspace-wide subscriber attribute schema */}
           <ListCustomFields live={live} onToast={onToast} />
