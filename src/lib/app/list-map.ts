@@ -4,8 +4,15 @@ import type { ListRow } from '@/components/react/AppLists.types';
 export interface ApiList {
   id: string;
   name: string;
-  description?: string | null;
   color?: string | null;
+  /** Consent & lifecycle configuration stored on the list. */
+  gdprConsent?: boolean | null;
+  doubleOptIn?: boolean | null;
+  doubleOptOut?: boolean | null;
+  doubleOptInTemplateId?: string | null;
+  doubleOptOutTemplateId?: string | null;
+  welcomeEmailTemplateId?: string | null;
+  goodbyeEmailTemplateId?: string | null;
   /** Free-form labels stored on the list (jsonb array). */
   tags?: string[] | null;
   /** Free-text note kept with the list. */

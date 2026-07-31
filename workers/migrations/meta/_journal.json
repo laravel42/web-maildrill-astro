@@ -57,6 +57,13 @@
       "when": 1784490489582,
       "tag": "0007_media_thumb",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784490489583,
+      "tag": "0008_list_consent_lifecycle",
+      "breakpoints": true
     }
   ]
 }

@@ -15,10 +15,16 @@ import { clamp } from './rules';
 export interface CreateListInput {
   tenantId: string;
   name: string;
-  description?: string | null;
   color?: string | null;
   tags?: string[];
   notes?: string | null;
+  gdprConsent?: boolean;
+  doubleOptIn?: boolean;
+  doubleOptOut?: boolean;
+  doubleOptInTemplateId?: string | null;
+  doubleOptOutTemplateId?: string | null;
+  welcomeEmailTemplateId?: string | null;
+  goodbyeEmailTemplateId?: string | null;
 }
 
 export async function createList(input: CreateListInput): Promise<ListRow> {
@@ -27,10 +33,16 @@ export async function createList(input: CreateListInput): Promise<ListRow> {
     .values({
       tenantId: input.tenantId,
       name: input.name,
-      description: input.description ?? null,
       color: input.color ?? null,
       tags: input.tags ?? [],
       notes: input.notes ?? null,
+      gdprConsent: input.gdprConsent ?? false,
+      doubleOptIn: input.doubleOptIn ?? false,
+      doubleOptOut: input.doubleOptOut ?? false,
+      doubleOptInTemplateId: input.doubleOptInTemplateId ?? null,
+      doubleOptOutTemplateId: input.doubleOptOutTemplateId ?? null,
+      welcomeEmailTemplateId: input.welcomeEmailTemplateId ?? null,
+      goodbyeEmailTemplateId: input.goodbyeEmailTemplateId ?? null,
     })
     .returning();
   return rows[0]!;
@@ -160,10 +172,16 @@ export async function updateList(
   id: string,
   patch: {
     name?: string;
-    description?: string | null;
     color?: string | null;
     tags?: string[];
     notes?: string | null;
+    gdprConsent?: boolean;
+    doubleOptIn?: boolean;
+    doubleOptOut?: boolean;
+    doubleOptInTemplateId?: string | null;
+    doubleOptOutTemplateId?: string | null;
+    welcomeEmailTemplateId?: string | null;
+    goodbyeEmailTemplateId?: string | null;
   },
 ): Promise<ListRow | null> {
   const rows = await db

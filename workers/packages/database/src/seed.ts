@@ -451,7 +451,6 @@ async function main(): Promise<void> {
       {
         tenantId: tid,
         name: 'Newsletter',
-        description: 'Everyone who opted into the monthly digest',
         color: '#4f46e5',
         tags: ['digest'],
         notes: 'Grown from the website footer form.',
@@ -459,15 +458,13 @@ async function main(): Promise<void> {
       {
         tenantId: tid,
         name: 'Customers',
-        description: 'Paying workspaces, all plans',
         color: '#16a34a',
         tags: ['billing'],
-        notes: null,
+        notes: 'Paying workspaces, all plans.',
       },
       {
         tenantId: tid,
         name: 'Beta testers',
-        description: 'Early access to new channels',
         color: '#d97706',
         tags: ['product'],
         notes: 'Recruited from the onboarding webinar.',
@@ -475,18 +472,16 @@ async function main(): Promise<void> {
       {
         tenantId: tid,
         name: 'VIP customers',
-        description: 'Top accounts — hand-picked, high touch',
         color: '#7c3aed',
         tags: ['vip'],
-        notes: null,
+        notes: 'Top accounts — hand-picked, high touch.',
       },
       {
         tenantId: tid,
         name: 'Product updates',
-        description: 'Opted into launch and changelog announcements',
         color: '#0891b2',
         tags: ['product', 'digest'],
-        notes: null,
+        notes: 'Opted into launch and changelog announcements.',
       },
     ])
     .returning();

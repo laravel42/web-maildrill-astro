@@ -424,13 +424,30 @@ export const lists = pgTable(
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    description: text("description"),
     color: text("color"),
     // Free-form labels stored inline (like subscribers.tags) — a list carries a
     // handful, so a jsonb array is simpler than a join table here.
     tags: jsonb("tags").$type<string[]>().notNull().default([]),
     // A single free-text note kept with the list for the team's own context.
     notes: text("notes"),
+    // Consent & lifecycle configuration. Template references are SET NULL so
+    // deleting a template downgrades the list to its default behavior rather
+    // than blocking the delete.
+    gdprConsent: boolean("gdpr_consent").notNull().default(false),
+    doubleOptIn: boolean("double_opt_in").notNull().default(false),
+    doubleOptOut: boolean("double_opt_out").notNull().default(false),
+    doubleOptInTemplateId: uuid("double_opt_in_template_id").references(() => templates.id, {
+      onDelete: "set null",
+    }),
+    doubleOptOutTemplateId: uuid("double_opt_out_template_id").references(() => templates.id, {
+      onDelete: "set null",
+    }),
+    welcomeEmailTemplateId: uuid("welcome_email_template_id").references(() => templates.id, {
+      onDelete: "set null",
+    }),
+    goodbyeEmailTemplateId: uuid("goodbye_email_template_id").references(() => templates.id, {
+      onDelete: "set null",
+    }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
