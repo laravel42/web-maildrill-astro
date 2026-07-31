@@ -1,17 +1,19 @@
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
-import ListCustomFields from './ListCustomFields';
+import CustomFieldsModal from './CustomFieldsModal';
 import ListEditorModal, { type ListEditorValues } from './ListEditorModal';
+import { COLORS } from './ListEditorModal.logic';
 import { ago } from './shared/time';
-import {
-  AVATAR_GRADS,
-  fmtPct,
-  PAGE_SIZE,
-  rows as mockRows,
-  trendPath,
-  weeklyGain,
-} from './AppLists.logic';
+import { fmtPct, PAGE_SIZE, rows as mockRows, trendPath, weeklyGain } from './AppLists.logic';
 import type { ListRow, SortKey, View } from './AppLists.types';
 import { api, ApiError } from '@/lib/app/api';
 import { toListRow, type ApiList } from '@/lib/app/list-map';
@@ -75,57 +77,30 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
   }, []);
   const [closing, setClosing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [editor, setEditor] = useState<
-    | { mode: 'create' }
-    | { mode: 'edit'; id: string; name: string; color: string; notes: string }
-    | null
-  >(null);
+  // Create-only — edits save from the list drawer.
+  const [editor, setEditor] = useState<{ mode: 'create' } | null>(null);
+  const [fieldsOpen, setFieldsOpen] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
     window.setTimeout(() => setToast(null), 2800);
   };
 
-  const saveList = async (values: ListEditorValues) => {
-    const ed = editor;
-    if (!ed) return;
+  const createList = async (values: ListEditorValues) => {
     if (!live) {
       setEditor(null);
-      showToast(
-        ed.mode === 'create' ? `List “${values.name}” created` : `List “${values.name}” updated`,
-      );
+      showToast(`List “${values.name}” created`);
       return;
     }
     try {
-      if (ed.mode === 'create') {
-        const created = await api.post<ApiList>('lists', {
-          name: values.name,
-          notes: values.notes || null,
-          color: values.color,
-        });
-        setListRows((prev) => [toListRow(created), ...prev]);
-        showToast(`List “${values.name}” created`);
-      } else {
-        const updated = await api.patch<ApiList>(`lists/${ed.id}`, {
-          name: values.name,
-          notes: values.notes || null,
-          color: values.color,
-        });
-        setListRows((prev) =>
-          prev.map((l) =>
-            l.id === ed.id
-              ? {
-                  ...l,
-                  name: updated.name,
-                  color: updated.color || l.color,
-                  notes: updated.notes ?? values.notes,
-                }
-              : l,
-          ),
-        );
-        showToast(`List “${values.name}” updated`);
-      }
+      const created = await api.post<ApiList>('lists', {
+        name: values.name,
+        notes: values.notes || null,
+        color: values.color,
+      });
+      setListRows((prev) => [toListRow(created), ...prev]);
       setEditor(null);
+      showToast(`List “${values.name}” created`);
     } catch (e) {
       showToast(e instanceof ApiError ? e.message : 'Could not save list');
     }
@@ -134,15 +109,52 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
   // Set while a delete waits on confirmation.
   const [confirmList, setConfirmList] = useState<{ id: string; name: string } | null>(null);
 
-  /* Persist a tags/notes change from the drawer. Optimistic: the row updates
-     immediately so a reopen reflects it, then the PATCH syncs the service. */
-  const patchList = async (id: string, patch: { tags?: string[]; notes?: string }) => {
+  /* Persist tag changes from the drawer immediately. Name/notes/color save
+     together via Save list. */
+  const patchList = async (id: string, patch: { tags?: string[] }) => {
     setListRows((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
     if (!live) return;
     try {
       await api.patch(`lists/${id}`, patch);
     } catch (e) {
       showToast(e instanceof ApiError ? e.message : 'Could not save changes');
+    }
+  };
+
+  const saveListDetails = async (
+    id: string,
+    values: { name: string; notes: string; color: string },
+  ) => {
+    setListRows((prev) =>
+      prev.map((l) =>
+        l.id === id ? { ...l, name: values.name, notes: values.notes, color: values.color } : l,
+      ),
+    );
+    if (!live) {
+      showToast(`List “${values.name}” updated`);
+      return;
+    }
+    try {
+      const updated = await api.patch<ApiList>(`lists/${id}`, {
+        name: values.name,
+        notes: values.notes || null,
+        color: values.color,
+      });
+      setListRows((prev) =>
+        prev.map((l) =>
+          l.id === id
+            ? {
+                ...l,
+                name: updated.name,
+                color: updated.color || values.color,
+                notes: updated.notes ?? values.notes,
+              }
+            : l,
+        ),
+      );
+      showToast(`List “${values.name}” updated`);
+    } catch (e) {
+      showToast(e instanceof ApiError ? e.message : 'Could not save list');
     }
   };
 
@@ -223,10 +235,16 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
           <h1 className="screen__h1">Lists</h1>
           <p className="screen__sub">Organize your subscribers into lists.</p>
         </div>
-        <button type="button" className="pbtn" onClick={() => setEditor({ mode: 'create' })}>
-          <Icon name="plus" size={15} stroke={2.2} />
-          New list
-        </button>
+        <div className={styles.headActions}>
+          <button type="button" className="sbtn" onClick={() => setFieldsOpen(true)}>
+            <Icon name="settings" size={15} />
+            Custom fields
+          </button>
+          <button type="button" className="pbtn" onClick={() => setEditor({ mode: 'create' })}>
+            <Icon name="plus" size={15} stroke={2.2} />
+            New list
+          </button>
+        </div>
       </div>
 
       <div className={`atable ${styles.tablecard}`}>
@@ -424,10 +442,13 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
             <div className={styles.cards}>
               {pageRows.map((l) => {
                 const up = l.growthPct >= 0;
+                // `more` is "+N" from members added in the last 7 days.
+                const joined = Number.parseInt(l.more.replace(/^\+/, ''), 10) || 0;
                 return (
                   <div
                     key={l.id}
                     className={`acrd acrd--hover ${styles.card}`}
+                    style={{ '--list-color': l.color } as CSSProperties}
                     role="button"
                     tabIndex={0}
                     onClick={() => setOpenId(l.id)}
@@ -439,45 +460,47 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                     }}
                   >
                     <div className={styles.cardTop}>
-                      <span className={styles.dot} style={{ background: l.color }} />
-                      <span className={styles.cardName}>{l.name}</span>
+                      <span
+                        className={styles.cardDot}
+                        style={{ background: l.color }}
+                        aria-hidden="true"
+                      />
+                      <span className={styles.cardName} title={l.name}>
+                        {l.name}
+                      </span>
                       <span
                         className={`${styles.cardPct} tnum`}
-                        style={{ color: up ? 'var(--success-text)' : 'var(--danger-text)' }}
+                        style={{
+                          color: up ? 'var(--success-text)' : 'var(--danger-text)',
+                          background: up
+                            ? 'color-mix(in srgb, var(--success) 12%, transparent)'
+                            : 'color-mix(in srgb, var(--danger) 12%, transparent)',
+                        }}
                       >
                         {fmtPct(l.growthPct)}
                       </span>
                     </div>
+
                     <div className={styles.cardStat}>
                       <span className={`${styles.cardNum} tnum`}>
                         {l.subscribers.toLocaleString('en-US')}
                       </span>
-                      <span className={styles.cardStatSub}>
-                        {/* Label truncates under pressure; the delta never does. */}
-                        <span className={styles.cardStatLabel}>subscribers</span>
-                        <span className={styles.cardStatDelta}>
-                          ·{' '}
-                          <span
-                            className="tnum"
-                            style={{ color: up ? 'var(--success-text)' : 'var(--danger-text)' }}
-                          >
-                            {up ? '↑' : '↓'} {Math.abs(weeklyGain(l.trend)).toLocaleString('en-US')}
-                          </span>{' '}
-                          this week
-                        </span>
-                      </span>
+                      <span className={styles.cardStatLabel}>subscribers</span>
                     </div>
-                    <div className={styles.cardMeta}>
-                      <span className={styles.cardRecent}>Recent: {l.recentCampaign}</span>
-                      <span className={styles.cardUpdated}>Updated {ago(l.updatedAt)}</span>
-                    </div>
+
                     <div className={styles.cardFoot}>
-                      <div className={styles.avatars} aria-hidden="true">
-                        {AVATAR_GRADS.map((g, i) => (
-                          <span key={i} className={styles.avatar} style={{ background: g }} />
-                        ))}
-                      </div>
-                      <span className={`${styles.more} tnum`}>{l.more} more</span>
+                      <span className={styles.cardJoin}>
+                        <span
+                          className="tnum"
+                          style={{
+                            color: joined > 0 ? 'var(--success-text)' : 'var(--text4)',
+                          }}
+                        >
+                          {joined > 0 ? '↑' : '↓'} {joined}
+                        </span>{' '}
+                        joined this week
+                      </span>
+                      <span className={styles.cardUpdated}>Updated {ago(l.updatedAt)}</span>
                     </div>
                   </div>
                 );
@@ -542,7 +565,6 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
         <ListDrawer
           key={open.id}
           list={open}
-          live={live}
           closing={closing}
           onClose={closeDrawer}
           onToast={showToast}
@@ -553,28 +575,16 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
             showToast(`Filtered by “${t}”`);
           }}
           onDelete={() => setConfirmList({ id: open.id, name: open.name })}
-          onEdit={() => {
-            setEditor({
-              mode: 'edit',
-              id: open.id,
-              name: open.name,
-              color: open.color,
-              notes: open.notes,
-            });
-            closeDrawer();
-          }}
+          onSave={saveListDetails}
         />
       )}
 
+      {fieldsOpen && (
+        <CustomFieldsModal live={live} onToast={showToast} onClose={() => setFieldsOpen(false)} />
+      )}
+
       {editor && (
-        <ListEditorModal
-          mode={editor.mode}
-          initialName={editor.mode === 'edit' ? editor.name : ''}
-          initialNotes={editor.mode === 'edit' ? editor.notes : ''}
-          initialColor={editor.mode === 'edit' ? editor.color : undefined}
-          onClose={() => setEditor(null)}
-          onSave={saveList}
-        />
+        <ListEditorModal mode="create" onClose={() => setEditor(null)} onSave={createList} />
       )}
 
       {confirmList && (
@@ -609,29 +619,46 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
 
 function ListDrawer({
   list,
-  live,
   closing,
   onClose,
   onToast,
   onPatch,
   onFilterTag,
   onDelete,
-  onEdit,
+  onSave,
 }: {
   list: ListRow;
-  live: boolean;
   closing: boolean;
   onClose: () => void;
   onToast: (m: string) => void;
-  onPatch: (id: string, patch: { tags?: string[]; notes?: string }) => void;
+  onPatch: (id: string, patch: { tags?: string[] }) => void;
   onFilterTag: (tag: string) => void;
   onDelete: () => void;
-  onEdit: () => void;
+  onSave: (id: string, values: { name: string; notes: string; color: string }) => void;
 }) {
-  // Notes persist on Save; tags persist immediately as they're added/removed.
+  // Name / notes / color save together via Save list; tags still persist immediately.
+  const initialColor = COLORS.includes(list.color) ? list.color : COLORS[0];
+  const [name, setName] = useState(list.name);
   const [note, setNote] = useState(list.notes);
-  const [savedNote, setSavedNote] = useState(list.notes);
-  const dirty = note !== savedNote;
+  const [color, setColor] = useState(initialColor);
+  const [editingName, setEditingName] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const [saved, setSaved] = useState({
+    name: list.name,
+    notes: list.notes,
+    color: initialColor,
+  });
+  const trimmed = name.trim();
+  const dirty = trimmed !== saved.name || note !== saved.notes || color !== saved.color;
+  const canSave = dirty && trimmed.length > 0;
+
+  const startEditName = () => {
+    setEditingName(true);
+    requestAnimationFrame(() => {
+      nameRef.current?.focus();
+      nameRef.current?.select();
+    });
+  };
 
   const [tags, setTags] = useState<string[]>(list.tags);
   const [tagInput, setTagInput] = useState('');
@@ -651,10 +678,12 @@ function ListDrawer({
     onToast('Tags saved');
   };
 
-  const saveNote = () => {
-    setSavedNote(note);
-    onPatch(list.id, { notes: note });
-    onToast('Note saved');
+  const saveList = () => {
+    if (!canSave) return;
+    const values = { name: trimmed, notes: note, color };
+    setSaved(values);
+    setName(trimmed);
+    onSave(list.id, values);
   };
 
   const up = list.growthPct >= 0;
@@ -681,9 +710,48 @@ function ListDrawer({
         <div className="adrawer__body">
           {/* identity */}
           <div className={styles.dIdentity}>
-            <span className={styles.dDot} style={{ background: list.color }} />
             <div className={styles.dIdtext}>
-              <div className={styles.dName}>{list.name}</div>
+              <div className={styles.dNameRow}>
+                {editingName ? (
+                  <input
+                    ref={nameRef}
+                    className={styles.dName}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onBlur={() => setEditingName(false)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        (e.target as HTMLInputElement).blur();
+                      }
+                      if (e.key === 'Escape') {
+                        e.preventDefault();
+                        setName(saved.name);
+                        setEditingName(false);
+                      }
+                    }}
+                    aria-label="List name"
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    className={styles.dNameBtn}
+                    onClick={startEditName}
+                    title={name}
+                  >
+                    {name.trim() || 'Untitled list'}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={styles.dNameEdit}
+                  onClick={startEditName}
+                  aria-label="Edit list name"
+                  title="Edit list name"
+                >
+                  <Icon name="edit" size={14} />
+                </button>
+              </div>
               <div className={styles.dUpdated}>Updated {ago(list.updatedAt)}</div>
             </div>
           </div>
@@ -704,6 +772,14 @@ function ListDrawer({
               >
                 {fmtPct(list.growthPct)}
               </div>
+            </div>
+            <div className={styles.dStat}>
+              <div className={styles.dStatLbl}>Avg. Opens</div>
+              <div className={`tnum ${styles.dStatVal}`}>{list.openRate}</div>
+            </div>
+            <div className={styles.dStat}>
+              <div className={styles.dStatLbl}>Avg. Clicks</div>
+              <div className={`tnum ${styles.dStatVal}`}>{list.clickRate}</div>
             </div>
           </div>
 
@@ -797,20 +873,27 @@ function ListDrawer({
             </div>
           </div>
 
-          {/* custom fields — workspace-wide subscriber attribute schema */}
-          <ListCustomFields live={live} onToast={onToast} />
+          {/* color — saved with Save list */}
+          <div className={styles.dColorSection}>
+            <span className={`adrawer__eyebrow ${styles.dColorEyebrow}`}>Color</span>
+            <div className={styles.dSwatches} role="group" aria-label="List color">
+              {COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`${styles.dSwatch}${c === color ? ` ${styles.dSwatchOn}` : ''}`}
+                  style={{ background: c, color: c }}
+                  aria-label={`Color ${c}`}
+                  aria-pressed={c === color}
+                  onClick={() => setColor(c)}
+                />
+              ))}
+            </div>
+          </div>
 
           {/* notes */}
           <div className={styles.dNoteshead}>
             <span className="adrawer__eyebrow">Notes</span>
-            <button
-              type="button"
-              className={`${styles.dSavenote}${dirty ? ` ${styles.isDirty}` : ''}`}
-              disabled={!dirty}
-              onClick={saveNote}
-            >
-              Save note
-            </button>
           </div>
           <textarea
             className={styles.dNotes}
@@ -840,8 +923,15 @@ function ListDrawer({
             <Icon name="download" size={15} />
             Export
           </button>
-          <button type="button" className="pbtn" style={{ flex: 1 }} onClick={onEdit}>
-            Edit list
+          <button
+            type="button"
+            className="pbtn"
+            style={{ flex: 1 }}
+            disabled={!canSave}
+            onClick={saveList}
+          >
+            <Icon name="save" size={15} stroke={2} />
+            Save
           </button>
         </div>
       </div>

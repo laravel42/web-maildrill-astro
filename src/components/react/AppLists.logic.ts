@@ -51,12 +51,6 @@ export const rows: ListRow[] = baseLists.map((l) => ({
   }),
 }));
 
-export const AVATAR_GRADS = [
-  'linear-gradient(135deg,#fbbf24,#f59e0b)',
-  'linear-gradient(135deg,#818cf8,#4f46e5)',
-  'linear-gradient(135deg,#34d399,#059669)',
-];
-
 export function fmtPct(pct: number): string {
   const arrow = pct >= 0 ? '↑' : '↓';
   return `${arrow} ${Math.abs(pct).toFixed(1)}%`;

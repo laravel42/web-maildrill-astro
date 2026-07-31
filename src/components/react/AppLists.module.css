@@ -3,6 +3,12 @@
 .tablecard {
   overflow: visible;
 }
+.headActions {
+  display: flex;
+  gap: 10px;
+  flex: none;
+  flex-wrap: wrap;
+}
 .toolbar {
   display: flex;
   flex-direction: column;
@@ -177,129 +183,148 @@
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(262px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 14px;
   padding: 16px 19px;
 }
 .card {
+  /* Overridden inline per card with the list's color; transparent keeps the
+     shared .card base (cardNew) glow-free. */
+  --list-color: transparent;
   text-align: left;
-  padding: 18px 19px;
+  padding: 16px 18px 14px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  gap: 0;
   background: var(--surface);
+  min-height: 0;
+}
+/* Inner wash in the list's own color; elevation stays neutral. Scoped under
+   .cards so it outranks the flat .acrd shadow and the .acrd--hover:hover lift
+   without !important. */
+.cards .card {
+  box-shadow:
+    0 1px 2px rgba(30, 27, 22, 0.04),
+    inset 0 0 28px -8px color-mix(in srgb, var(--list-color) 22%, transparent);
+}
+.cards .card:hover {
+  box-shadow:
+    var(--shadow-md),
+    inset 0 0 34px -8px color-mix(in srgb, var(--list-color) 30%, transparent);
+}
+.cards .card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-tint);
+  border-color: var(--accent);
 }
 .cardTop {
   display: flex;
   align-items: center;
-  gap: 9px;
-  margin-bottom: 10px;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+/* List identity mark — a deliberate swatch, not a stray bullet. The inset
+   ring keeps pale list colors legible on the card surface. */
+.cardDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  flex: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 14%, transparent);
 }
 .cardName {
-  font-size: 14.5px;
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
   font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* Weekly growth %, right-aligned on the title row. */
+/* Period growth rate — soft chip so it doesn't fight the count. */
 .cardPct {
-  margin-left: auto;
   flex: none;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: -0.01em;
+  padding: 3px 7px;
+  border-radius: 999px;
+  line-height: 1.2;
 }
-/* One stat sentence: big count, then "subscribers · ↑ n this week" inline. */
 .cardStat {
   display: flex;
   align-items: baseline;
-  gap: 7px;
+  gap: 8px;
   min-width: 0;
 }
 .cardNum {
   flex: none;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 600;
-  letter-spacing: -0.5px;
-  line-height: 1.1;
+  letter-spacing: -0.7px;
+  line-height: 1;
+  color: var(--text);
 }
-.cardStatSub {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-  min-width: 0;
-  font-size: 12px;
-  color: var(--muted);
-  white-space: nowrap;
-}
-/* "subscribers" is the expendable word: it ellipsizes before data does. */
 .cardStatLabel {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 12.5px;
+  font-weight: 500;
+  /* text4, not muted: 12.5px informational text must clear the contrast floor. */
+  color: var(--text4);
 }
-.cardStatDelta {
-  flex: none;
-}
-/* Recent campaign (truncates) and updated-ago on a single split row. */
-.cardMeta {
+.cardFoot {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--muted);
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--divider);
+  font-size: 11.5px;
+  color: var(--text4);
 }
-.cardRecent {
+.cardJoin {
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--text3);
 }
 .cardUpdated {
   flex: none;
-}
-.cardFoot {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 12px;
-  padding-top: 11px;
-  border-top: 1px solid var(--divider);
-}
-.avatars {
-  display: flex;
-}
-.avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2px solid var(--surface);
-  margin-left: -8px;
-}
-.avatar:first-child {
-  margin-left: 0;
-}
-.more {
-  font-size: 11.5px;
-  color: var(--muted);
 }
 .cardNew {
   align-items: center;
   justify-content: center;
   gap: 8px;
   flex-direction: row;
-  min-height: 170px;
+  min-height: 132px;
   border: 1.5px dashed var(--border2);
   border-radius: 16px;
   box-shadow: none;
   color: var(--text4);
   font-size: 13px;
   font-weight: 600;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
 }
 .cardNew:hover {
   border-color: var(--accent);
   color: var(--accent-text);
+  background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+}
+/* Re-assert after the .cards .card glow rules, which otherwise outrank the
+   single-class .cardNew and would shadow the dashed create tile. */
+.cards .cardNew,
+.cards .cardNew:hover {
+  box-shadow: none;
 }
 .newplus {
   display: inline-flex;
@@ -376,27 +401,62 @@
 }
 
 .dIdentity {
-  display: flex;
-  align-items: center;
-  gap: 11px;
   margin-bottom: 18px;
-}
-.dDot {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  flex: none;
 }
 .dIdtext {
   min-width: 0;
 }
-.dName {
+.dNameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.dName,
+.dNameBtn {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
   font-size: 18px;
   font-weight: 600;
   letter-spacing: -0.3px;
+  color: var(--text);
+  text-align: left;
+  outline: none;
+}
+.dNameBtn {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: text;
+}
+.dName:focus {
+  box-shadow: inset 0 -1px 0 var(--accent);
+}
+.dNameEdit {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text4);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.dNameEdit:hover {
+  background: var(--surface2);
+  color: var(--text2);
 }
 .dUpdated {
   font-size: 12.5px;
@@ -513,27 +573,41 @@
   color: var(--muted);
 }
 
-.dNoteshead {
+.dColorSection {
+  margin-bottom: 22px;
+}
+.dColorEyebrow {
+  display: block;
+  margin-bottom: 10px;
+}
+.dSwatches {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 24px 0 10px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
-.dSavenote {
-  padding: 5px 11px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  background: var(--surface2);
-  color: var(--muted);
+.dSwatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
   border: none;
+  padding: 0;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
   transition:
-    background var(--duration-fast) var(--ease-out),
-    color var(--duration-fast) var(--ease-out);
+    box-shadow 0.12s var(--ease-out),
+    transform 0.12s var(--ease-out);
 }
-.dSavenote.isDirty {
-  background: var(--accent);
-  color: #fff;
+.dSwatch:hover {
+  transform: scale(1.08);
+}
+.dSwatchOn {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px currentColor;
+}
+
+.dNoteshead {
+  margin: 0 0 10px;
 }
 .dNotes {
   width: 100%;
