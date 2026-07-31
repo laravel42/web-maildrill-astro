@@ -27,6 +27,7 @@ export type IconName =
   | 'chevron-right'
   | 'check'
   | 'check-circle'
+  | 'alert-triangle'
   | 'minus'
   | 'pause'
   | 'x'
@@ -105,6 +106,8 @@ export const iconPaths: Record<IconName, string> = {
   'chevron-right': '<path d="m9 6 6 6-6 6"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
   'check-circle': '<circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/>',
+  'alert-triangle':
+    '<path d="m21.7 18-8.1-14a1.7 1.7 0 0 0-3.1 0L2.3 18a1.7 1.7 0 0 0 1.5 2.5h16.4a1.7 1.7 0 0 0 1.5-2.5Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
   minus: '<path d="M5 12h14"/>',
   pause: '<path d="M8 4v16M16 4v16"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',

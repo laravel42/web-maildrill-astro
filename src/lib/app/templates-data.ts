@@ -40,6 +40,8 @@ export type GalleryTemplate = {
   approvalStatus?: TemplateApprovalStatus | null;
   /** Meta rejection reason when approvalStatus === 'rejected'. */
   rejectionReason?: string | null;
+  /** True when html/text/WhatsApp components have something to submit. */
+  hasContent: boolean;
 };
 
 /** Category display colour (indigo / green / coral / tan). */

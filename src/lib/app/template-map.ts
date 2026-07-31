@@ -96,6 +96,42 @@ function rate(numerator?: number | null, tracked?: number | null): number {
   return Math.round(((numerator ?? 0) / tracked) * 100);
 }
 
+/** True when the template has body content worth submitting or previewing. */
+export function templateHasContent(
+  t: Pick<ApiTemplate, 'html' | 'text' | 'components'>,
+): boolean {
+  if (typeof t.html === 'string' && t.html.trim()) return true;
+  if (typeof t.text === 'string' && t.text.trim()) return true;
+  const c = t.components;
+  if (!c || typeof c !== 'object') return false;
+  const body = c.body;
+  if (
+    body &&
+    typeof body === 'object' &&
+    typeof (body as { text?: unknown }).text === 'string' &&
+    (body as { text: string }).text.trim()
+  ) {
+    return true;
+  }
+  const header = c.header;
+  if (header && typeof header === 'object') {
+    const h = header as { text?: unknown; format?: unknown };
+    if (typeof h.text === 'string' && h.text.trim()) return true;
+    const format = String(h.format ?? '').toUpperCase();
+    if (format && format !== 'TEXT') return true;
+  }
+  const footer = c.footer;
+  if (
+    footer &&
+    typeof footer === 'object' &&
+    typeof (footer as { text?: unknown }).text === 'string' &&
+    (footer as { text: string }).text.trim()
+  ) {
+    return true;
+  }
+  return Array.isArray(c.buttons) && c.buttons.length > 0;
+}
+
 /**
  * Map a live API template into the gallery card shape. Name/category/channel are
  * real; the thumbnail styling is deterministic from the id, and open/click rates
@@ -125,6 +161,7 @@ export function toGalleryTemplate(t: ApiTemplate): GalleryTemplate {
     avgClick: rate(t.clicked, t.trackedDelivered),
     approvalStatus: toApprovalStatus(t.approvalStatus),
     rejectionReason: t.rejectionReason ?? null,
+    hasContent: templateHasContent(t),
   };
 }
 

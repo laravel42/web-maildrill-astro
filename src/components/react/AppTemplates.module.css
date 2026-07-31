@@ -295,11 +295,16 @@
 .gcheck .box {
   box-shadow: 0 1px 2px rgba(30, 27, 22, 0.12);
 }
-.gbadge {
+.gTopRight {
   position: absolute;
   top: 12px;
   right: 12px;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.gbadge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -307,42 +312,82 @@
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(30, 27, 22, 0.12);
 }
-/* WhatsApp approval pill pinned inside the gallery card header. */
+/* WhatsApp approval status — icon chip next to the channel badge. */
 .gApproval {
-  position: absolute;
-  bottom: 12px;
-  left: 12px;
-  z-index: 2;
-}
-/* Previews are always light (chat mock), so dark-theme translucent
-   --*-bg tokens wash out here. Pin the light chip palette in both themes. */
-.gApproval :global(.astatus) {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
   box-shadow: 0 1px 2px rgba(30, 27, 22, 0.14);
+  outline: none;
 }
-.gApproval :global(.tstat--draft) {
-  background: #eef0ff;
-  color: #4f46e5;
+.gApproval:hover,
+.gApproval:focus-visible {
+  z-index: 4;
 }
-.gApproval :global(.tstat--pending) {
+.gApproval_warn {
   background: #fef3c7;
   color: #b45309;
 }
-.gApproval :global(.tstat--approved) {
-  background: #dcfce7;
-  color: #15803d;
+.gApproval_wait {
+  background: #e8e8e6;
+  color: #5c5a52;
 }
-.gApproval :global(.tstat--rejected) {
+.gApproval_bad {
   background: #fee2e2;
   color: #b91c1c;
 }
-.gApproval :global(.tstat--paused) {
-  background: #ede9fe;
-  color: #7c3aed;
+.gApproval_ok {
+  background: #dcfce7;
+  color: #15803d;
 }
-.gApproval :global(.tstat--disabled) {
-  background: #f6f5f2;
-  color: #57554e;
+/* Opens downward so it stays inside the overflow-hidden card. */
+.gApprovalTip {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  width: max-content;
+  max-width: 200px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: var(--ink, #1f1e1b);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
+  box-shadow: 0 8px 20px rgba(28, 25, 23, 0.28);
+  opacity: 0;
+  transform: translateY(-2px);
+  pointer-events: none;
+  transition:
+    opacity 0.12s var(--ease-out),
+    transform 0.12s var(--ease-out);
+}
+.gApprovalTip strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.gApprovalTip::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: 8px;
+  border: 5px solid transparent;
+  border-top: none;
+  border-bottom-color: var(--ink, #1f1e1b);
+}
+.gApproval:hover .gApprovalTip,
+.gApproval:focus-visible .gApprovalTip {
+  opacity: 1;
+  transform: translateY(0);
 }
 .ov {
   position: absolute;

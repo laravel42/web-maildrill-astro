@@ -47,13 +47,30 @@ const APPROVAL_HINT: Record<TemplateApprovalStatus, string> = {
   disabled: 'Disabled by Meta — this template can no longer be sent.',
 };
 
-/** Small approval-status pill for WhatsApp templates; renders nothing otherwise. */
+/** Top-right approval icon for WhatsApp gallery cards; renders nothing otherwise. */
 function ApprovalBadge({ t }: { t: GalleryTemplate }) {
   if (t.channel !== 'whatsapp') return null;
   const status = t.approvalStatus ?? 'draft';
+  const meta =
+    status === 'approved'
+      ? { icon: 'check' as const, tone: 'ok' as const }
+      : status === 'pending'
+        ? { icon: 'clock' as const, tone: 'wait' as const }
+        : status === 'rejected' || status === 'paused' || status === 'disabled'
+          ? { icon: 'x' as const, tone: 'bad' as const }
+          : { icon: 'alert-triangle' as const, tone: 'warn' as const };
+  const hint = APPROVAL_HINT[status];
   return (
-    <span className={`astatus tstat--${status}`} title={APPROVAL_HINT[status]}>
-      {APPROVAL_LABEL[status]}
+    <span
+      className={`${styles.gApproval} ${styles[`gApproval_${meta.tone}`]}`}
+      tabIndex={0}
+      aria-label={`${APPROVAL_LABEL[status]}. ${hint}`}
+    >
+      <Icon name={meta.icon} size={13} stroke={2.6} />
+      <span className={styles.gApprovalTip} role="tooltip">
+        <strong>{APPROVAL_LABEL[status]}</strong>
+        {hint}
+      </span>
     </span>
   );
 }
@@ -594,15 +611,13 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                         size={19}
                       />
                     </span>
-                    <span className={styles.gbadge} style={{ background: m.tint, color: m.color }}>
-                      <Icon name={m.icon} size={11} />
-                      {m.label}
-                    </span>
-                    {t.channel === 'whatsapp' && (
-                      <span className={styles.gApproval}>
-                        <ApprovalBadge t={t} />
+                    <span className={styles.gTopRight}>
+                      <span className={styles.gbadge} style={{ background: m.tint, color: m.color }}>
+                        <Icon name={m.icon} size={11} />
+                        {m.label}
                       </span>
-                    )}
+                      <ApprovalBadge t={t} />
+                    </span>
                     <GalleryPreview channel={t.channel} t={t} />
                     <div className={styles.ov}>
                       <button
@@ -1004,7 +1019,11 @@ function TemplateDrawer({
                   type="button"
                   className="pbtn"
                   style={{ width: '100%', marginTop: 12 }}
-                  disabled={busy || !live}
+                  disabled={
+                    busy ||
+                    !live ||
+                    (approval !== 'pending' && !t.hasContent)
+                  }
                   onClick={runBusy(approval === 'pending' ? onRefresh : onSubmit)}
                 >
                   {busy
@@ -1015,6 +1034,11 @@ function TemplateDrawer({
                         ? 'Resubmit for approval'
                         : 'Submit for approval'}
                 </button>
+              )}
+              {live && approval !== 'pending' && approval !== 'approved' && !t.hasContent && (
+                <p style={{ fontSize: 11, color: 'var(--muted)', margin: '8px 0 0' }}>
+                  Add template content before submitting for approval.
+                </p>
               )}
               {!live && (
                 <p style={{ fontSize: 11, color: 'var(--muted)', margin: '8px 0 0' }}>
