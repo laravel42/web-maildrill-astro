@@ -16,7 +16,7 @@ export type { ListEditorValues } from './ListEditorModal.types';
 type Props = {
   mode: 'create' | 'edit';
   initialName?: string;
-  initialDescription?: string;
+  initialNotes?: string;
   initialColor?: string;
   onClose: () => void;
   onSave: (values: ListEditorValues) => void;
@@ -25,13 +25,13 @@ type Props = {
 export default function ListEditorModal({
   mode,
   initialName = '',
-  initialDescription = '',
+  initialNotes = '',
   initialColor = COLORS[0],
   onClose,
   onSave,
 }: Props) {
   const [name, setName] = useState(initialName);
-  const [description, setDescription] = useState(initialDescription);
+  const [notes, setNotes] = useState(initialNotes);
   const [color, setColor] = useState(
     COLORS.includes(initialColor) ? initialColor : COLORS[0],
   );
@@ -43,7 +43,7 @@ export default function ListEditorModal({
 
   const submit = () => {
     if (!canSave) return;
-    onSave({ name: name.trim(), description: description.trim(), color });
+    onSave({ name: name.trim(), notes: notes.trim(), color });
   };
 
   return (
@@ -79,15 +79,15 @@ export default function ListEditorModal({
             }}
           />
 
-          <label className={styles.label} htmlFor="lem-desc">
-            Description <span className={styles.opt}>(optional)</span>
+          <label className={styles.label} htmlFor="lem-notes">
+            Notes <span className={styles.opt}>(optional)</span>
           </label>
           <textarea
-            id="lem-desc"
+            id="lem-notes"
             className={styles.textarea}
-            value={description}
-            placeholder="What is this list for?"
-            onChange={(e) => setDescription(e.target.value)}
+            value={notes}
+            placeholder="Add a note about this list…"
+            onChange={(e) => setNotes(e.target.value)}
           />
 
           <label className={styles.label}>Color label</label>

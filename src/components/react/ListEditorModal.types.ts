@@ -1,1 +1,1 @@
-export type ListEditorValues = { name: string; description: string; color: string };
+export type ListEditorValues = { name: string; notes: string; color: string };
