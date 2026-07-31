@@ -566,8 +566,11 @@ async function main(): Promise<void> {
         channel: 'whatsapp',
         text: 'Hi {{1}}, your order is on its way. Track it any time.',
         language: 'en',
-        approvalStatus: 'approved',
-        providerTemplateId: 'order_update_en_1',
+        // Draft, not 'approved': this template is NOT registered on the real
+        // WhatsApp Business Account. A fake approval lets campaigns pass the
+        // send gate only to die at Meta with EC_INVALID_TEMPLATE — sending
+        // requires the in-app "submit for approval" flow first.
+        approvalStatus: 'draft',
         components: {
           body: { text: 'Hi {{1}}, your order is on its way. Track it any time.' },
           placeholders: ['name'],
