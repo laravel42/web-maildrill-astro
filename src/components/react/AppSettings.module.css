@@ -152,12 +152,9 @@
   gap: 16px;
 }
 .ledgerKicker {
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text4);
+  color: var(--muted);
 }
 .ledgerLink {
   padding: 0;
@@ -200,12 +197,9 @@
   gap: 4px;
 }
 .heroStatLbl {
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text4);
+  color: var(--muted);
 }
 .heroStatVal {
   font-family: var(--font-mono);
@@ -268,9 +262,8 @@
 }
 .ledgerTable th {
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 500;
-  letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--text4);
