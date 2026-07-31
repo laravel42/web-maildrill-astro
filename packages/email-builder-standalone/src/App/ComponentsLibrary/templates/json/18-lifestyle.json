@@ -1,0 +1,736 @@
+{
+  "root": {
+    "type": "EmailLayout",
+    "data": {
+      "backdropColor": "#F2F4EF",
+      "canvasColor": "#FBFCF9",
+      "textColor": "#1F1E1B",
+      "fontFamily": "CLASSIC_SERIF",
+      "childrenIds": [
+        "section-ms8ix83g-2",
+        "section-ms8ix83g-8",
+        "cols-ms8ix83g-e",
+        "cols-ms8ix83h-k",
+        "section-ms8ix83h-o",
+        "section-ms8ix83h-s",
+        "section-ms8ix83h-y"
+      ],
+      "linkGlobal": {
+        "linkColor": "#6D7F66",
+        "underline": true
+      },
+      "borderColor": "#E2E7DC",
+      "borderRadius": 12
+    }
+  },
+  "section-ms8ix83g-2": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": "#E2E7DC",
+        "borderTop": 0,
+        "borderBottom": 1,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 26,
+          "right": 34,
+          "bottom": 20,
+          "left": 34
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83g-1"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83g-1": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#585F52",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.14em\">[ WORDMARK ]</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83g-8": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 32,
+          "right": 34,
+          "bottom": 26,
+          "left": 34
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83g-3",
+          "block-ms8ix83g-5",
+          "block-ms8ix83g-7"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83g-3": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#6D7F66",
+        "backgroundColor": null,
+        "fontSize": 11,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 14,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.2em;text-transform:uppercase\">Issue 12 · Out now</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83g-5": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#1C1F19",
+        "backgroundColor": null,
+        "fontSize": 28,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "lineHeight": "1.18",
+        "padding": {
+          "top": 0,
+          "bottom": 12,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">The case for doing less, properly</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83g-7": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#585F52",
+        "backgroundColor": null,
+        "fontSize": 16,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">This issue is about restraint, Elena: fewer things, chosen slowly, kept longer.</span></p>"
+      }
+    }
+  },
+  "cols-ms8ix83g-e": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "right": 34,
+          "bottom": 28,
+          "left": 34
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          50,
+          50,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "contentAlignment": "top",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "img-ms8ix83g-9"
+            ]
+          },
+          {
+            "childrenIds": [
+              "card-ms8ix83g-d"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "img-ms8ix83g-9": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 9,
+          "bottom": 0,
+          "left": 0
+        },
+        "backgroundColor": null,
+        "textAlign": "center",
+        "shape": {
+          "topLeft": 8,
+          "topRight": 8,
+          "bottomLeft": 8,
+          "bottomRight": 8
+        }
+      },
+      "props": {
+        "url": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?fm=jpg&q=72&w=500&auto=format&fit=crop",
+        "alt": "Buy once",
+        "width": 250,
+        "size": "pixel",
+        "scale": null,
+        "original_width": 250
+      }
+    }
+  },
+  "card-ms8ix83g-d": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 9
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83g-a",
+          "block-ms8ix83g-c"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83g-a": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#1C1F19",
+        "backgroundColor": null,
+        "fontSize": 19,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 8,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Buy once</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83g-c": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#585F52",
+        "backgroundColor": null,
+        "fontSize": 15,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Eleven everyday objects worth the money, and four that never are — with the receipts and the years of use behind each call.</span></p>"
+      }
+    }
+  },
+  "cols-ms8ix83h-k": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "right": 34,
+          "bottom": 28,
+          "left": 34
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          50,
+          50,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "contentAlignment": "top",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "img-ms8ix83g-f"
+            ]
+          },
+          {
+            "childrenIds": [
+              "card-ms8ix83h-j"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "img-ms8ix83g-f": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 9,
+          "bottom": 0,
+          "left": 0
+        },
+        "backgroundColor": null,
+        "textAlign": "center",
+        "shape": {
+          "topLeft": 8,
+          "topRight": 8,
+          "bottomLeft": 8,
+          "bottomRight": 8
+        }
+      },
+      "props": {
+        "url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?fm=jpg&q=72&w=500&auto=format&fit=crop",
+        "alt": "The long interview",
+        "width": 250,
+        "size": "pixel",
+        "scale": null,
+        "original_width": 250
+      }
+    }
+  },
+  "card-ms8ix83h-j": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 9
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83g-g",
+          "block-ms8ix83h-i"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83g-g": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#1C1F19",
+        "backgroundColor": null,
+        "fontSize": 19,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 8,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">The long interview</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83h-i": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#585F52",
+        "backgroundColor": null,
+        "fontSize": 15,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">A furniture maker on why she turned down her biggest commission, and what happened to the workshop in the two years after.</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83h-o": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 0,
+          "right": 34,
+          "bottom": 28,
+          "left": 34
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83h-l",
+          "block-ms8ix83h-n"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83h-l": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#1C1F19",
+        "backgroundColor": null,
+        "fontSize": 19,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 10,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">In print and in your inbox</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83h-n": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#585F52",
+        "backgroundColor": null,
+        "fontSize": 15,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.7",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Subscribers get the printed issue in the first week of the month and the digital edition the same morning. Back issues stay available while stock lasts.</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83h-s": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 4,
+          "right": 34,
+          "bottom": 30,
+          "left": 34
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "btn-ms8ix83h-p",
+          "block-ms8ix83h-r"
+        ]
+      }
+    }
+  },
+  "btn-ms8ix83h-p": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "fontSize": 16,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "lineHeight": "normal",
+        "textAlign": "center",
+        "padding": {
+          "top": 0,
+          "bottom": 12,
+          "right": 0,
+          "left": 0
+        },
+        "shape": {
+          "topLeft": 8,
+          "topRight": 8,
+          "bottomLeft": 8,
+          "bottomRight": 8
+        },
+        "borderColor": "#6D7F66",
+        "borderTop": 1,
+        "borderBottom": 1,
+        "borderLeft": 1,
+        "borderRight": 1
+      },
+      "props": {
+        "buttonBackgroundColor": "#FBFCF9",
+        "buttonTextColor": "#6D7F66",
+        "fullWidth": false,
+        "text": "Read issue 12",
+        "url": "https://example.com",
+        "size": {
+          "top": 16,
+          "bottom": 16,
+          "left": 30,
+          "right": 30
+        }
+      }
+    }
+  },
+  "block-ms8ix83h-r": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#585F52",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Already unlocked for elena.marsh@fieldnote.co.</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83h-y": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": "#E2E7DC",
+        "borderTop": 1,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 22,
+          "right": 34,
+          "bottom": 26,
+          "left": 34
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83h-t",
+          "block-ms8ix83h-v",
+          "block-ms8ix83h-w",
+          "block-ms8ix83h-x"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83h-t": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#585F52",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 14,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Current issue   ·   Back issues   ·   Subscribe   ·   Stockists</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83h-v": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#585F52",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.75",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">You subscribe to Slow Practice as elena.marsh@fieldnote.co. One letter a month, no more.</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83h-w": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#6D7F66",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.75",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Slow Practice · 5 Kerkstraat · 2000 Antwerp, Belgium</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83h-x": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#585F52",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.75",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Unsubscribe — <a href=\"https://example.com/unsubscribe\" style=\"color:#585f52;text-decoration:underline\">unsubscribe</a></span></p>"
+      }
+    }
+  }
+}

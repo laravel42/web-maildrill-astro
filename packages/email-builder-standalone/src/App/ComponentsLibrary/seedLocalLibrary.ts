@@ -3,10 +3,10 @@
  * `localStorage` the first time a `componentsStorage='local'`
  * deployment runs (or whenever the catalog version changes).
  *
- * Reconstructed faithfully from the published `email-builder-online`
- * dist (`seedLocalLibrary-*.js`):
- *   - Merge is append-by-id with dedupe (never overwrites user edits or
- *     re-adds a preset the user deleted within the same version).
+ * Behaviour:
+ *   - Templates: on each catalog version bump, replace all bundled
+ *     `preset-*` rows with the catalog (user-saved templates kept).
+ *   - Sections / layouts / primitives / themes: append-by-id with dedupe.
  *   - A version sentinel (`eb:lib:seeded`) gates the whole pass so it
  *     runs at most once per catalog version.
  *   - Themes are re-shaped to the local theme store's row format.
@@ -53,6 +53,21 @@ function mergeById<T extends WithId>(key: string, incoming: T[] | undefined): vo
   if (toAdd.length) localStorage.setItem(key, JSON.stringify([...existing, ...toAdd]));
 }
 
+/**
+ * Replace bundled `preset-*` template rows with the catalog, keeping any
+ * user-saved templates (ids that do not start with `preset-`). Append-only
+ * merge alone would leave obsolete gallery presets in localStorage forever.
+ */
+function replaceBundledTemplates<T extends WithId>(incoming: T[] | undefined): void {
+  if (!incoming?.length) return;
+  const existing = readArray<T>(TEMPLATES_KEY);
+  const userSaved = existing.filter((e) => !String(e.id).startsWith('preset-'));
+  const bundledIds = new Set(incoming.map((e) => e.id));
+  // Drop prior bundled presets not in the new catalog; keep user-saved.
+  const keptUser = userSaved.filter((e) => !bundledIds.has(e.id));
+  localStorage.setItem(TEMPLATES_KEY, JSON.stringify([...incoming, ...keptUser]));
+}
+
 export async function seedLocalLibrary(): Promise<void> {
   const { default: presets } = await import('./localPresets');
   const version = presets.version ?? '1';
@@ -72,7 +87,7 @@ export async function seedLocalLibrary(): Promise<void> {
   // Already seeded for this catalog version — nothing to do.
   if (localStorage.getItem(SEEDED_KEY) === version) return;
 
-  mergeById(TEMPLATES_KEY, presets.templates);
+  replaceBundledTemplates(presets.templates);
   mergeById(SECTIONS_KEY, presets.sections);
   mergeById(LAYOUTS_KEY, presets.layouts);
   mergeById(PRIMITIVES_KEY, presets.primitives);

@@ -272,6 +272,53 @@ function extractKeywords(metadata: Record<string, unknown>, ...extra: Array<stri
  */
 const USER_SLOT_BASE = 1000;
 
+/**
+ * Convert a flat EmailBuilder document (Record<id, block>) into the NDJSON
+ * line format the retrieval / few-shot pipeline expects. Root first.
+ */
+function documentToNdjson(doc: Record<string, unknown>): string {
+  const lines: string[] = [];
+  if (doc.root) lines.push(JSON.stringify({ id: 'root', block: doc.root }));
+  for (const [id, block] of Object.entries(doc)) {
+    if (id === 'root') continue;
+    lines.push(JSON.stringify({ id, block }));
+  }
+  return lines.join('\n');
+}
+
+function readPresetNdjson(
+  skillsDir: string,
+  presetsDir: string,
+  entry: { slot: number; slug: string; sourceFile?: string },
+): string {
+  const ndjsonName = `${String(entry.slot).padStart(2, '0')}-${entry.slug}.ndjson`;
+  const ndjsonPath = resolve(presetsDir, ndjsonName);
+  if (existsSync(ndjsonPath)) return safeReadFile(ndjsonPath);
+
+  // Gallery truth lives in references/json/NN.json (full documents). Prefer
+  // the index's sourceFile, then the conventional NN.json slot name.
+  const candidates = [
+    entry.sourceFile ? resolve(skillsDir, entry.sourceFile.replace(/^skills\/email-builder\//, '')) : null,
+    entry.sourceFile ? resolve(skillsDir, '..', entry.sourceFile) : null,
+    resolve(skillsDir, 'references/json', `${String(entry.slot).padStart(2, '0')}.json`),
+  ].filter((p): p is string => Boolean(p));
+
+  for (const path of candidates) {
+    if (!existsSync(path)) continue;
+    const raw = safeReadFile(path);
+    try {
+      const doc = JSON.parse(raw) as Record<string, unknown>;
+      return documentToNdjson(doc);
+    } catch {
+      return raw;
+    }
+  }
+
+  throw new Error(
+    `Preset ${entry.slot}-${entry.slug}: neither ${ndjsonName} nor references/json/${String(entry.slot).padStart(2, '0')}.json found`,
+  );
+}
+
 export function loadPresets(options: LoadSkillContextOptions = {}): PresetEntry[] {
   if (shouldCache() && presetsCache) return presetsCache;
 
@@ -280,14 +327,19 @@ export function loadPresets(options: LoadSkillContextOptions = {}): PresetEntry[
   const indexPath = resolve(presetsDir, 'index.json');
 
   const indexRaw = safeReadFile(indexPath);
-  const entries: Array<{ slot: number; slug: string; description: string; fontFamily: string; blockCount: number }> =
-    JSON.parse(indexRaw);
+  const entries: Array<{
+    slot: number;
+    slug: string;
+    description: string;
+    fontFamily: string;
+    blockCount: number;
+    sourceFile?: string;
+  }> = JSON.parse(indexRaw);
 
   const presets: PresetEntry[] = entries
     .sort((a, b) => a.slot - b.slot)
     .map((e) => {
-      const filename = `${String(e.slot).padStart(2, '0')}-${e.slug}.ndjson`;
-      const ndjson = safeReadFile(resolve(presetsDir, filename));
+      const ndjson = readPresetNdjson(skillsDir, presetsDir, e);
       return {
         slot: e.slot,
         slug: e.slug,

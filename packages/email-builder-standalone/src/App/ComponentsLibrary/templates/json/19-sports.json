@@ -1,0 +1,953 @@
+{
+  "root": {
+    "type": "EmailLayout",
+    "data": {
+      "backdropColor": "#161A1F",
+      "canvasColor": "#1F242B",
+      "textColor": "#1F1E1B",
+      "fontFamily": "COMPACT_SANS",
+      "childrenIds": [
+        "cols-ms8ix83k-3",
+        "section-ms8ix83k-9",
+        "img-ms8ix83k-a",
+        "section-ms8ix83k-g",
+        "cols-ms8ix83k-z",
+        "section-ms8ix83k-13",
+        "section-ms8ix83k-17",
+        "section-ms8ix83k-1d"
+      ],
+      "linkGlobal": {
+        "linkColor": "#A3E635",
+        "underline": true
+      },
+      "borderColor": "#333A42",
+      "borderRadius": 12
+    }
+  },
+  "cols-ms8ix83k-3": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 20,
+          "bottom": 20,
+          "right": 30,
+          "left": 30
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          27,
+          73,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "contentAlignment": "middle",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-ms8ix83k-1"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83k-2"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "block-ms8ix83k-1": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A7B0BA",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.1em\">[ LOGO ]</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83k-2": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A7B0BA",
+        "backgroundColor": null,
+        "fontSize": 11,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "right",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.08em;text-transform:uppercase\">Fixtures   ·   Tickets   ·   Shop</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83k-9": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#28303A",
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 28,
+          "bottom": 28,
+          "right": 30,
+          "left": 30
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83k-4",
+          "block-ms8ix83k-6",
+          "block-ms8ix83k-8"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83k-4": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A3E635",
+        "backgroundColor": null,
+        "fontSize": 11,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 8,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.3em\">VS</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83k-6": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#F2F4F6",
+        "backgroundColor": null,
+        "fontSize": 38,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 8,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">19:45</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83k-8": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A7B0BA",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.14em;text-transform:uppercase\">Saturday · Harbour Road · League</span></p>"
+      }
+    }
+  },
+  "img-ms8ix83k-a": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 28,
+          "left": 0
+        },
+        "backgroundColor": null,
+        "textAlign": "center",
+        "shape": "rectangle"
+      },
+      "props": {
+        "url": "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?fm=jpg&q=72&w=1200&auto=format&fit=crop",
+        "alt": "PHOTO — floodlit stadium, night",
+        "width": 600,
+        "size": "fill",
+        "scale": null,
+        "original_width": 600
+      }
+    }
+  },
+  "section-ms8ix83k-g": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 32,
+          "right": 30,
+          "bottom": 26,
+          "left": 30
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83k-b",
+          "block-ms8ix83k-d",
+          "block-ms8ix83k-f"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83k-b": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A3E635",
+        "backgroundColor": null,
+        "fontSize": 11,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 14,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.2em;text-transform:uppercase\">Match day</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83k-d": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#F2F4F6",
+        "backgroundColor": null,
+        "fontSize": 28,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.18",
+        "padding": {
+          "top": 0,
+          "bottom": 12,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Harbour City vs. Ashgrove</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83k-f": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A7B0BA",
+        "backgroundColor": null,
+        "fontSize": 16,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Elena, gates open at 18:00. With the away end sold out, expect the loudest night of the season so far.</span></p>"
+      }
+    }
+  },
+  "cols-ms8ix83k-z": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "right": 30,
+          "bottom": 28,
+          "left": 30
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          33,
+          33,
+          34
+        ],
+        "columnsCount": 3,
+        "layout": "layout-33-33-33",
+        "contentAlignment": "top",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "card-ms8ix83k-m"
+            ]
+          },
+          {
+            "childrenIds": [
+              "card-ms8ix83k-s"
+            ]
+          },
+          {
+            "childrenIds": [
+              "card-ms8ix83k-y"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "card-ms8ix83k-m": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#28303A",
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": {
+          "topLeft": 8,
+          "topRight": 8,
+          "bottomLeft": 8,
+          "bottomRight": 8
+        },
+        "padding": {
+          "top": 16,
+          "right": 26,
+          "bottom": 16,
+          "left": 16
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83k-h",
+          "block-ms8ix83k-j",
+          "block-ms8ix83k-l"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83k-h": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A7B0BA",
+        "backgroundColor": null,
+        "fontSize": 11,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 7,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.08em;text-transform:uppercase\">Your seat</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83k-j": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#F2F4F6",
+        "backgroundColor": null,
+        "fontSize": 22,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 4,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">C · 14</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83k-l": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A3E635",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">seat 22</span></p>"
+      }
+    }
+  },
+  "card-ms8ix83k-s": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#28303A",
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": {
+          "topLeft": 8,
+          "topRight": 8,
+          "bottomLeft": 8,
+          "bottomRight": 8
+        },
+        "padding": {
+          "top": 16,
+          "right": 26,
+          "bottom": 16,
+          "left": 16
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83k-n",
+          "block-ms8ix83k-p",
+          "block-ms8ix83k-r"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83k-n": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A7B0BA",
+        "backgroundColor": null,
+        "fontSize": 11,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 7,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.08em;text-transform:uppercase\">Form</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83k-p": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#F2F4F6",
+        "backgroundColor": null,
+        "fontSize": 22,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 4,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">W W D W</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83k-r": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A3E635",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">last four</span></p>"
+      }
+    }
+  },
+  "card-ms8ix83k-y": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#28303A",
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": {
+          "topLeft": 8,
+          "topRight": 8,
+          "bottomLeft": 8,
+          "bottomRight": 8
+        },
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 16,
+          "left": 16
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83k-t",
+          "block-ms8ix83k-v",
+          "block-ms8ix83k-x"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83k-t": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A7B0BA",
+        "backgroundColor": null,
+        "fontSize": 11,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 7,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.08em;text-transform:uppercase\">Gates</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83k-v": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#F2F4F6",
+        "backgroundColor": null,
+        "fontSize": 22,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 4,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">18:00</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83k-x": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A3E635",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">1h 45m early</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83k-13": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 0,
+          "right": 30,
+          "bottom": 28,
+          "left": 30
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83k-10",
+          "block-ms8ix83k-12"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83k-10": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#F2F4F6",
+        "backgroundColor": null,
+        "fontSize": 19,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 10,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Getting in faster</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83k-12": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A7B0BA",
+        "backgroundColor": null,
+        "fontSize": 15,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.7",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Your ticket lives in the app — screenshots will not scan. Bag checks are at every gate, and the north approach closes to traffic ninety minutes before kick-off.</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83k-17": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 4,
+          "right": 30,
+          "bottom": 30,
+          "left": 30
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "btn-ms8ix83k-14",
+          "block-ms8ix83k-16"
+        ]
+      }
+    }
+  },
+  "btn-ms8ix83k-14": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "fontSize": 16,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "lineHeight": "normal",
+        "textAlign": "center",
+        "padding": {
+          "top": 0,
+          "bottom": 12,
+          "right": 0,
+          "left": 0
+        },
+        "shape": {
+          "topLeft": 8,
+          "topRight": 8,
+          "bottomLeft": 8,
+          "bottomRight": 8
+        }
+      },
+      "props": {
+        "buttonBackgroundColor": "#A3E635",
+        "buttonTextColor": "#161A1F",
+        "fullWidth": true,
+        "text": "OPEN YOUR TICKET",
+        "url": "https://example.com",
+        "size": {
+          "top": 16,
+          "bottom": 16,
+          "left": 30,
+          "right": 30
+        }
+      }
+    }
+  },
+  "block-ms8ix83k-16": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A7B0BA",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Elena Marsh · elena.marsh@fieldnote.co</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83k-1d": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#28303A",
+        "borderColor": "#333A42",
+        "borderTop": 1,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 22,
+          "right": 30,
+          "bottom": 26,
+          "left": 30
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83k-18",
+          "block-ms8ix83k-1a",
+          "block-ms8ix83k-1b",
+          "block-ms8ix83k-1c"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83k-18": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A7B0BA",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 14,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Fixtures   ·   Travel and parking   ·   Club shop</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83k-1a": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A7B0BA",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.75",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Sent to elena.marsh@fieldnote.co because you hold a Harbour City FC season ticket or match ticket.</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83k-1b": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A3E635",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.75",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Harbour City FC · Harbour Road Stadium · Cardiff CF10 4AB, Wales</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83k-1c": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#A7B0BA",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.75",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Unsubscribe — <a href=\"https://example.com/unsubscribe\" style=\"color:#a7b0ba;text-decoration:underline\">unsubscribe</a></span></p>"
+      }
+    }
+  }
+}

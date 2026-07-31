@@ -1,0 +1,1562 @@
+{
+  "root": {
+    "type": "EmailLayout",
+    "data": {
+      "backdropColor": "#F1F2EF",
+      "canvasColor": "#FBFCFA",
+      "textColor": "#1F1E1B",
+      "fontFamily": "MODERN_SANS",
+      "childrenIds": [
+        "cols-ms8ix83d-3",
+        "section-ms8ix83d-9",
+        "cols-ms8ix83e-v",
+        "section-ms8ix83e-z",
+        "section-ms8ix83e-1k",
+        "section-ms8ix83e-1o",
+        "section-ms8ix83e-1u"
+      ],
+      "linkGlobal": {
+        "linkColor": "#B4525E",
+        "underline": true
+      },
+      "borderColor": "#E5E8E1",
+      "borderRadius": 14
+    }
+  },
+  "cols-ms8ix83d-3": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 20,
+          "bottom": 20,
+          "right": 34,
+          "left": 34
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          28,
+          72,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "contentAlignment": "middle",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-ms8ix83d-1"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83d-2"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "block-ms8ix83d-1": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#565A51",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.1em\">[ LOGO ]</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83d-2": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#565A51",
+        "backgroundColor": null,
+        "fontSize": 11,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "right",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.08em;text-transform:uppercase\">Careers   ·   Team   ·   Culture</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83d-9": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 32,
+          "right": 34,
+          "bottom": 26,
+          "left": 34
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83d-4",
+          "block-ms8ix83d-6",
+          "block-ms8ix83d-8"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83d-4": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#B4525E",
+        "backgroundColor": null,
+        "fontSize": 11,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 14,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.2em;text-transform:uppercase\">People note · Q3</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83d-6": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#191B17",
+        "backgroundColor": null,
+        "fontSize": 28,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.18",
+        "padding": {
+          "top": 0,
+          "bottom": 12,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Nine new colleagues, one better process</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83d-8": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#565A51",
+        "backgroundColor": null,
+        "fontSize": 16,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Hello Elena — who joined, what we changed about feedback, and the roles opening next month.</span></p>"
+      }
+    }
+  },
+  "cols-ms8ix83e-v": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "right": 34,
+          "bottom": 28,
+          "left": 34
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          50,
+          50,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "contentAlignment": "top",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "cols-ms8ix83d-k"
+            ]
+          },
+          {
+            "childrenIds": [
+              "cols-ms8ix83e-u"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "cols-ms8ix83d-k": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          50,
+          50,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "contentAlignment": "top",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "card-ms8ix83d-e"
+            ]
+          },
+          {
+            "childrenIds": [
+              "card-ms8ix83d-j"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "card-ms8ix83d-e": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "img-ms8ix83d-a",
+          "block-ms8ix83d-c",
+          "block-ms8ix83d-d"
+        ]
+      }
+    }
+  },
+  "img-ms8ix83d-a": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 10,
+          "right": 0,
+          "left": 0
+        },
+        "backgroundColor": null,
+        "textAlign": "center",
+        "shape": {
+          "topLeft": 60,
+          "topRight": 60,
+          "bottomLeft": 60,
+          "bottomRight": 60
+        }
+      },
+      "props": {
+        "url": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?fm=jpg&q=72&w=240&auto=format&fit=crop",
+        "alt": "Amara Böhm",
+        "width": 120,
+        "size": "pixel",
+        "scale": null,
+        "original_width": 120
+      }
+    }
+  },
+  "block-ms8ix83d-c": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#191B17",
+        "backgroundColor": null,
+        "fontSize": 14,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Amara Böhm</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83d-d": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#565A51",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Support lead · Berlin</span></p>"
+      }
+    }
+  },
+  "card-ms8ix83d-j": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "img-ms8ix83d-f",
+          "block-ms8ix83d-h",
+          "block-ms8ix83d-i"
+        ]
+      }
+    }
+  },
+  "img-ms8ix83d-f": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 10,
+          "right": 0,
+          "left": 0
+        },
+        "backgroundColor": null,
+        "textAlign": "center",
+        "shape": {
+          "topLeft": 60,
+          "topRight": 60,
+          "bottomLeft": 60,
+          "bottomRight": 60
+        }
+      },
+      "props": {
+        "url": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?fm=jpg&q=72&w=240&auto=format&fit=crop",
+        "alt": "Tomás Ruiz",
+        "width": 120,
+        "size": "pixel",
+        "scale": null,
+        "original_width": 120
+      }
+    }
+  },
+  "block-ms8ix83d-h": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#191B17",
+        "backgroundColor": null,
+        "fontSize": 14,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Tomás Ruiz</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83d-i": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#565A51",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Engineering · Madrid</span></p>"
+      }
+    }
+  },
+  "cols-ms8ix83e-u": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          50,
+          50,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "contentAlignment": "top",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "card-ms8ix83e-p"
+            ]
+          },
+          {
+            "childrenIds": [
+              "img-ms8ix83e-q",
+              "block-ms8ix83e-s",
+              "block-ms8ix83e-t"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "card-ms8ix83e-p": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 0,
+          "right": 10,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "img-ms8ix83e-l",
+          "block-ms8ix83e-n",
+          "block-ms8ix83e-o"
+        ]
+      }
+    }
+  },
+  "img-ms8ix83e-l": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 10,
+          "right": 0,
+          "left": 0
+        },
+        "backgroundColor": null,
+        "textAlign": "center",
+        "shape": {
+          "topLeft": 60,
+          "topRight": 60,
+          "bottomLeft": 60,
+          "bottomRight": 60
+        }
+      },
+      "props": {
+        "url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?fm=jpg&q=72&w=240&auto=format&fit=crop",
+        "alt": "Nia Clarke",
+        "width": 120,
+        "size": "pixel",
+        "scale": null,
+        "original_width": 120
+      }
+    }
+  },
+  "block-ms8ix83e-n": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#191B17",
+        "backgroundColor": null,
+        "fontSize": 14,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Nia Clarke</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83e-o": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#565A51",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Design · Bristol</span></p>"
+      }
+    }
+  },
+  "img-ms8ix83e-q": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 10,
+          "right": 0,
+          "left": 0
+        },
+        "backgroundColor": null,
+        "textAlign": "center",
+        "shape": {
+          "topLeft": 60,
+          "topRight": 60,
+          "bottomLeft": 60,
+          "bottomRight": 60
+        }
+      },
+      "props": {
+        "url": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?fm=jpg&q=72&w=240&auto=format&fit=crop",
+        "alt": "Jonas Vik",
+        "width": 120,
+        "size": "pixel",
+        "scale": null,
+        "original_width": 120
+      }
+    }
+  },
+  "block-ms8ix83e-s": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#191B17",
+        "backgroundColor": null,
+        "fontSize": 14,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Jonas Vik</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83e-t": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#565A51",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Finance · Oslo</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83e-z": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 0,
+          "right": 34,
+          "bottom": 28,
+          "left": 34
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83e-w",
+          "block-ms8ix83e-y"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83e-w": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#191B17",
+        "backgroundColor": null,
+        "fontSize": 21,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.45",
+        "padding": {
+          "top": 0,
+          "bottom": 12,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Reviews are quarterly and written now. No ratings, and managers write first — in public.</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83e-y": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#565A51",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">— How we work, revision 4</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83e-1k": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 0,
+          "right": 34,
+          "bottom": 28,
+          "left": 34
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "card-ms8ix83e-14",
+          "card-ms8ix83e-19",
+          "card-ms8ix83e-1e",
+          "card-ms8ix83e-1j"
+        ]
+      }
+    }
+  },
+  "card-ms8ix83e-14": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": "#E5E8E1",
+        "borderTop": 0,
+        "borderBottom": 1,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "cols-ms8ix83e-13"
+        ]
+      }
+    }
+  },
+  "cols-ms8ix83e-13": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          6,
+          70,
+          24
+        ],
+        "columnsCount": 3,
+        "layout": "layout-33-33-33",
+        "contentAlignment": "top",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-ms8ix83e-10"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83e-11"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83e-12"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "block-ms8ix83e-10": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#B4525E",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 13,
+          "right": 0,
+          "bottom": 13,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">01</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83e-11": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#191B17",
+        "backgroundColor": null,
+        "fontSize": 17,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 13,
+          "right": 0,
+          "bottom": 13,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Senior engineer, platform</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83e-12": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#565A51",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "right",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 13,
+          "right": 0,
+          "bottom": 13,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Remote · EU</span></p>"
+      }
+    }
+  },
+  "card-ms8ix83e-19": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": "#E5E8E1",
+        "borderTop": 0,
+        "borderBottom": 1,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "cols-ms8ix83e-18"
+        ]
+      }
+    }
+  },
+  "cols-ms8ix83e-18": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          6,
+          48,
+          46
+        ],
+        "columnsCount": 3,
+        "layout": "layout-33-33-33",
+        "contentAlignment": "top",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-ms8ix83e-15"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83e-16"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83e-17"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "block-ms8ix83e-15": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#B4525E",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 13,
+          "right": 0,
+          "bottom": 13,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">02</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83e-16": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#191B17",
+        "backgroundColor": null,
+        "fontSize": 17,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 13,
+          "right": 0,
+          "bottom": 13,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Support lead</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83e-17": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#565A51",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "right",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 13,
+          "right": 0,
+          "bottom": 13,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Berlin · hybrid</span></p>"
+      }
+    }
+  },
+  "card-ms8ix83e-1e": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": "#E5E8E1",
+        "borderTop": 0,
+        "borderBottom": 1,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "cols-ms8ix83e-1d"
+        ]
+      }
+    }
+  },
+  "cols-ms8ix83e-1d": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          6,
+          62,
+          32
+        ],
+        "columnsCount": 3,
+        "layout": "layout-33-33-33",
+        "contentAlignment": "top",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-ms8ix83e-1a"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83e-1b"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83e-1c"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "block-ms8ix83e-1a": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#B4525E",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 13,
+          "right": 0,
+          "bottom": 13,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">03</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83e-1b": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#191B17",
+        "backgroundColor": null,
+        "fontSize": 17,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 13,
+          "right": 0,
+          "bottom": 13,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Product designer</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83e-1c": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#565A51",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "right",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 13,
+          "right": 0,
+          "bottom": 13,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Remote · EU</span></p>"
+      }
+    }
+  },
+  "card-ms8ix83e-1j": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": "#E5E8E1",
+        "borderTop": 0,
+        "borderBottom": 1,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "cols-ms8ix83e-1i"
+        ]
+      }
+    }
+  },
+  "cols-ms8ix83e-1i": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          6,
+          57,
+          37
+        ],
+        "columnsCount": 3,
+        "layout": "layout-33-33-33",
+        "contentAlignment": "top",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-ms8ix83e-1f"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83e-1g"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83e-1h"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "block-ms8ix83e-1f": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#B4525E",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 13,
+          "right": 0,
+          "bottom": 13,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">04</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83e-1g": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#191B17",
+        "backgroundColor": null,
+        "fontSize": 17,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 13,
+          "right": 0,
+          "bottom": 13,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Finance analyst</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83e-1h": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#565A51",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "right",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 13,
+          "right": 0,
+          "bottom": 13,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Oslo · hybrid</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83e-1o": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 4,
+          "right": 34,
+          "bottom": 30,
+          "left": 34
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "btn-ms8ix83e-1l",
+          "block-ms8ix83e-1n"
+        ]
+      }
+    }
+  },
+  "btn-ms8ix83e-1l": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "fontSize": 16,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "lineHeight": "normal",
+        "textAlign": "left",
+        "padding": {
+          "top": 0,
+          "bottom": 12,
+          "right": 0,
+          "left": 0
+        },
+        "shape": {
+          "topLeft": 8,
+          "topRight": 8,
+          "bottomLeft": 8,
+          "bottomRight": 8
+        }
+      },
+      "props": {
+        "buttonBackgroundColor": "#B4525E",
+        "buttonTextColor": "#FFF6F7",
+        "fullWidth": false,
+        "text": "See open roles",
+        "url": "https://example.com",
+        "size": {
+          "top": 16,
+          "bottom": 16,
+          "left": 30,
+          "right": 30
+        }
+      }
+    }
+  },
+  "block-ms8ix83e-1n": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#565A51",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Referrals from Elena go straight to the hiring manager.</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83e-1u": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": "#F8E8EA",
+        "borderColor": "#E5E8E1",
+        "borderTop": 1,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 22,
+          "right": 34,
+          "bottom": 26,
+          "left": 34
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83e-1p",
+          "block-ms8ix83e-1r",
+          "block-ms8ix83e-1s",
+          "block-ms8ix83e-1t"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83e-1p": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#565A51",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 14,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Open roles   ·   How we work   ·   Benefits</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83e-1r": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#565A51",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.75",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Sent to elena.marsh@fieldnote.co because you asked to hear about roles and culture at Kindling.</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83e-1s": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#B4525E",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.75",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Kindling · Skalitzer Straße 104 · 10997 Berlin, Germany</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83e-1t": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#565A51",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.75",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Unsubscribe — <a href=\"https://example.com/unsubscribe\" style=\"color:#565a51;text-decoration:underline\">unsubscribe</a></span></p>"
+      }
+    }
+  }
+}

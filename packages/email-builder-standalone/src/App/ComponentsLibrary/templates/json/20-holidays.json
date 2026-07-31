@@ -1,0 +1,1528 @@
+{
+  "root": {
+    "type": "EmailLayout",
+    "data": {
+      "backdropColor": "#EAEFE9",
+      "canvasColor": "#FBFCF9",
+      "textColor": "#1F1E1B",
+      "fontFamily": "CLASSIC_SERIF",
+      "childrenIds": [
+        "section-ms8ix83m-2",
+        "section-ms8ix83m-8",
+        "cols-ms8ix83m-c",
+        "cols-ms8ix83m-r",
+        "section-ms8ix83m-1i",
+        "section-ms8ix83n-1m",
+        "section-ms8ix83n-1s"
+      ],
+      "linkGlobal": {
+        "linkColor": "#1F4D3A",
+        "underline": true
+      },
+      "borderColor": "#DBE4DD",
+      "borderRadius": null
+    }
+  },
+  "section-ms8ix83m-2": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": "#DBE4DD",
+        "borderTop": 0,
+        "borderBottom": 1,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 26,
+          "right": 38,
+          "bottom": 20,
+          "left": 38
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83m-1"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83m-1": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#4F6058",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.14em\">[ WORDMARK ]</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83m-8": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 32,
+          "right": 38,
+          "bottom": 26,
+          "left": 38
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83m-3",
+          "block-ms8ix83m-5",
+          "block-ms8ix83m-7"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83m-3": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#1F4D3A",
+        "backgroundColor": null,
+        "fontSize": 11,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 14,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.2em;text-transform:uppercase\">Gifting · Now open</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83m-5": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#16201A",
+        "backgroundColor": null,
+        "fontSize": 28,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "lineHeight": "1.18",
+        "padding": {
+          "top": 0,
+          "bottom": 12,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Fifty-two gifts, wrapped by hand</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83m-7": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#4F6058",
+        "backgroundColor": null,
+        "fontSize": 16,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Hello Elena — everything is wrapped in our workshop, and the posting dates below are the real ones, not the optimistic ones.</span></p>"
+      }
+    }
+  },
+  "cols-ms8ix83m-c": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "bottom": 22,
+          "right": 38,
+          "left": 38
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          37,
+          27,
+          36
+        ],
+        "columnsCount": 3,
+        "layout": "layout-33-33-33",
+        "contentAlignment": "middle",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "rule-ms8ix83m-9"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83m-a"
+            ]
+          },
+          {
+            "childrenIds": [
+              "rule-ms8ix83m-b"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "rule-ms8ix83m-9": {
+    "type": "Divider",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "color": "#DBE4DD",
+        "height": 1,
+        "width": 100,
+        "textAlign": "left",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      }
+    }
+  },
+  "block-ms8ix83m-a": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#1F4D3A",
+        "backgroundColor": null,
+        "fontSize": 10,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.3em;text-transform:uppercase\">Chosen for you</span></p>"
+      }
+    }
+  },
+  "rule-ms8ix83m-b": {
+    "type": "Divider",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "color": "#DBE4DD",
+        "height": 1,
+        "width": 100,
+        "textAlign": "left",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      }
+    }
+  },
+  "cols-ms8ix83m-r": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "right": 38,
+          "bottom": 28,
+          "left": 38
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          33,
+          33,
+          34
+        ],
+        "columnsCount": 3,
+        "layout": "layout-33-33-33",
+        "contentAlignment": "top",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "card-ms8ix83m-h"
+            ]
+          },
+          {
+            "childrenIds": [
+              "card-ms8ix83m-m"
+            ]
+          },
+          {
+            "childrenIds": [
+              "img-ms8ix83m-n",
+              "block-ms8ix83m-p",
+              "block-ms8ix83m-q"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "card-ms8ix83m-h": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 0,
+          "right": 12,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "img-ms8ix83m-d",
+          "block-ms8ix83m-f",
+          "block-ms8ix83m-g"
+        ]
+      }
+    }
+  },
+  "img-ms8ix83m-d": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 10,
+          "right": 0,
+          "left": 0
+        },
+        "backgroundColor": null,
+        "textAlign": "center",
+        "shape": "rectangle"
+      },
+      "props": {
+        "url": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?fm=jpg&q=72&w=330&auto=format&fit=crop",
+        "alt": "The Coast Hamper",
+        "width": 165,
+        "size": "fill",
+        "scale": null,
+        "original_width": 165
+      }
+    }
+  },
+  "block-ms8ix83m-f": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#16201A",
+        "backgroundColor": null,
+        "fontSize": 15,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">The Coast Hamper</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83m-g": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#1F4D3A",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">£68</span></p>"
+      }
+    }
+  },
+  "card-ms8ix83m-m": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 0,
+          "right": 12,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "img-ms8ix83m-i",
+          "block-ms8ix83m-k",
+          "block-ms8ix83m-l"
+        ]
+      }
+    }
+  },
+  "img-ms8ix83m-i": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 10,
+          "right": 0,
+          "left": 0
+        },
+        "backgroundColor": null,
+        "textAlign": "center",
+        "shape": "rectangle"
+      },
+      "props": {
+        "url": "https://images.unsplash.com/photo-1512909006721-3d6018887383?fm=jpg&q=72&w=330&auto=format&fit=crop",
+        "alt": "Wrapped Preserves Box",
+        "width": 165,
+        "size": "fill",
+        "scale": null,
+        "original_width": 165
+      }
+    }
+  },
+  "block-ms8ix83m-k": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#16201A",
+        "backgroundColor": null,
+        "fontSize": 15,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Wrapped Preserves Box</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83m-l": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#1F4D3A",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">£34</span></p>"
+      }
+    }
+  },
+  "img-ms8ix83m-n": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 10,
+          "right": 0,
+          "left": 0
+        },
+        "backgroundColor": null,
+        "textAlign": "center",
+        "shape": "rectangle"
+      },
+      "props": {
+        "url": "https://images.unsplash.com/photo-1610701596007-11502861dcfa?fm=jpg&q=72&w=330&auto=format&fit=crop",
+        "alt": "Stoneware Cup Set",
+        "width": 165,
+        "size": "pixel",
+        "scale": null,
+        "original_width": 165
+      }
+    }
+  },
+  "block-ms8ix83m-p": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#16201A",
+        "backgroundColor": null,
+        "fontSize": 15,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Stoneware Cup Set</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83m-q": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#1F4D3A",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">£54</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83m-1i": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 0,
+          "right": 38,
+          "bottom": 28,
+          "left": 38
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "cols-ms8ix83m-u",
+          "cols-ms8ix83m-z",
+          "cols-ms8ix83m-14",
+          "cols-ms8ix83m-19",
+          "cols-ms8ix83m-1e",
+          "cols-ms8ix83m-1h"
+        ]
+      }
+    }
+  },
+  "cols-ms8ix83m-u": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          58,
+          42,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "contentAlignment": "middle",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-ms8ix83m-s"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83m-t"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "block-ms8ix83m-s": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#4F6058",
+        "backgroundColor": null,
+        "fontSize": 10,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 9,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.14em;text-transform:uppercase\">Destination</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83m-t": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#4F6058",
+        "backgroundColor": null,
+        "fontSize": 10,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "right",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 9,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:.14em;text-transform:uppercase\">Order by</span></p>"
+      }
+    }
+  },
+  "cols-ms8ix83m-z": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          82,
+          18,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "contentAlignment": "top",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "card-ms8ix83m-x"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83m-y"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "card-ms8ix83m-x": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 13,
+          "bottom": 13,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83m-v",
+          "block-ms8ix83m-w"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83m-v": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#16201A",
+        "backgroundColor": null,
+        "fontSize": 15,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">United Kingdom · standard</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83m-w": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#4F6058",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Arrives before 24 December</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83m-y": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#16201A",
+        "backgroundColor": null,
+        "fontSize": 14,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "right",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 13,
+          "right": 0,
+          "bottom": 13,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">18 Dec</span></p>"
+      }
+    }
+  },
+  "cols-ms8ix83m-14": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          81,
+          19,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "contentAlignment": "top",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "card-ms8ix83m-12"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83m-13"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "card-ms8ix83m-12": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 13,
+          "bottom": 13,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83m-10",
+          "block-ms8ix83m-11"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83m-10": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#16201A",
+        "backgroundColor": null,
+        "fontSize": 15,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">United Kingdom · express</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83m-11": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#4F6058",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Next working day</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83m-13": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#16201A",
+        "backgroundColor": null,
+        "fontSize": 14,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "right",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 13,
+          "right": 0,
+          "bottom": 13,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">22 Dec</span></p>"
+      }
+    }
+  },
+  "cols-ms8ix83m-19": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          76,
+          24,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "contentAlignment": "top",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "card-ms8ix83m-17"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83m-18"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "card-ms8ix83m-17": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 13,
+          "bottom": 13,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83m-15",
+          "block-ms8ix83m-16"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83m-15": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#16201A",
+        "backgroundColor": null,
+        "fontSize": 15,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Europe</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83m-16": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#4F6058",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Tracked, duties paid</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83m-18": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#16201A",
+        "backgroundColor": null,
+        "fontSize": 14,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "right",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 13,
+          "right": 0,
+          "bottom": 13,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">12 Dec</span></p>"
+      }
+    }
+  },
+  "cols-ms8ix83m-1e": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          83,
+          17,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "contentAlignment": "top",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "card-ms8ix83m-1c"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83m-1d"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "card-ms8ix83m-1c": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 13,
+          "bottom": 13,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83m-1a",
+          "block-ms8ix83m-1b"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83m-1a": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#16201A",
+        "backgroundColor": null,
+        "fontSize": 15,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Rest of world</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83m-1b": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#4F6058",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Tracked, duties at customs</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83m-1d": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#16201A",
+        "backgroundColor": null,
+        "fontSize": 14,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "right",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 13,
+          "right": 0,
+          "bottom": 13,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">5 Dec</span></p>"
+      }
+    }
+  },
+  "cols-ms8ix83m-1h": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "fixedWidths": [
+          86,
+          14,
+          null
+        ],
+        "columnsCount": 2,
+        "layout": "layout-50-50",
+        "contentAlignment": "middle",
+        "stackColumnsOnMobile": true,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-ms8ix83m-1f"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-ms8ix83m-1g"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "block-ms8ix83m-1f": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#16201A",
+        "backgroundColor": null,
+        "fontSize": 16,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "left",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 15,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Free wrapping over</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83m-1g": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#16201A",
+        "backgroundColor": null,
+        "fontSize": 16,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "textAlign": "right",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 15,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">£60</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83n-1m": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": null,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 4,
+          "right": 38,
+          "bottom": 30,
+          "left": 38
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "btn-ms8ix83n-1j",
+          "block-ms8ix83n-1l"
+        ]
+      }
+    }
+  },
+  "btn-ms8ix83n-1j": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "fontSize": 16,
+        "fontFamily": null,
+        "fontWeight": "bold",
+        "lineHeight": "normal",
+        "textAlign": "center",
+        "padding": {
+          "top": 0,
+          "bottom": 12,
+          "right": 0,
+          "left": 0
+        },
+        "shape": {
+          "topLeft": 8,
+          "topRight": 8,
+          "bottomLeft": 8,
+          "bottomRight": 8
+        }
+      },
+      "props": {
+        "buttonBackgroundColor": "#1F4D3A",
+        "buttonTextColor": "#F4FBF7",
+        "fullWidth": false,
+        "text": "Shop gifting",
+        "url": "https://example.com",
+        "size": {
+          "top": 16,
+          "bottom": 16,
+          "left": 30,
+          "right": 30
+        }
+      }
+    }
+  },
+  "block-ms8ix83n-1l": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#4F6058",
+        "backgroundColor": null,
+        "fontSize": 13,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Members get early access to the limited hampers.</span></p>"
+      }
+    }
+  },
+  "section-ms8ix83n-1s": {
+    "type": "Container",
+    "data": {
+      "style": {
+        "backgroundColor": null,
+        "borderColor": "#DBE4DD",
+        "borderTop": 1,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "shape": "rectangle",
+        "padding": {
+          "top": 22,
+          "right": 38,
+          "bottom": 26,
+          "left": 38
+        }
+      },
+      "props": {
+        "childrenIds": [
+          "block-ms8ix83n-1n",
+          "block-ms8ix83n-1p",
+          "block-ms8ix83n-1q",
+          "block-ms8ix83n-1r"
+        ]
+      }
+    }
+  },
+  "block-ms8ix83n-1n": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#4F6058",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.65",
+        "padding": {
+          "top": 0,
+          "bottom": 14,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Gift guide   ·   Wrapping   ·   Delivery dates   ·   Returns</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83n-1p": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#4F6058",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.75",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Sent to elena.marsh@fieldnote.co because you shop with Fern &amp; Coast or joined our list.</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83n-1q": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#1F4D3A",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.75",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Fern &amp; Coast · The Old Dairy, Fore Street · Truro TR1 2HN, United Kingdom</span></p>"
+      }
+    }
+  },
+  "block-ms8ix83n-1r": {
+    "type": "NotionText",
+    "data": {
+      "style": {
+        "color": "#4F6058",
+        "backgroundColor": null,
+        "fontSize": 12,
+        "fontFamily": null,
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "lineHeight": "1.75",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "html": "<p><span style=\"letter-spacing:normal\">Unsubscribe — <a href=\"https://example.com/unsubscribe\" style=\"color:#4f6058;text-decoration:underline\">unsubscribe</a></span></p>"
+      }
+    }
+  }
+}
