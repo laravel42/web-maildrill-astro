@@ -42,7 +42,8 @@ async function resolveTenantId(nameOrId: string): Promise<string> {
 }
 
 async function makeThumb250(bytes: Buffer): Promise<Buffer> {
-  return sharp(bytes)
+  // failOn none: tolerate truncated/corrupt JPEG segments that still decode.
+  return sharp(bytes, { failOn: "none" })
     .autoOrient()
     .resize(MEDIA_THUMB_SIZE, MEDIA_THUMB_SIZE, {
       fit: "cover",
