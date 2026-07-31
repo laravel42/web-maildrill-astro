@@ -62,3 +62,6 @@ Desktop.ini
 scripts/.infobip-session.json
 scripts/.captures/
 scripts/.infobip-rates.internal.json
+
+# Session scratch artifacts (template import forensics etc.)
+tmp/
