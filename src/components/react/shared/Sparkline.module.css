@@ -1,0 +1,47 @@
+.wrap {
+  position: relative;
+  margin-top: auto;
+  cursor: crosshair;
+  min-width: 0;
+  width: 100%;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+}
+
+.tip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  z-index: 2;
+  min-width: 72px;
+  max-width: 160px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface, #fff);
+  box-shadow: 0 6px 18px rgba(31, 30, 27, 0.12);
+  pointer-events: none;
+  text-align: center;
+}
+
+.tipVal {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.tipLbl {
+  margin-top: 2px;
+  font-size: 10.5px;
+  color: var(--text3);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
