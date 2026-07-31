@@ -4,6 +4,9 @@
 .head {
   align-items: flex-start;
 }
+.headSub {
+  margin-top: 2px;
+}
 .controls {
   display: flex;
   align-items: center;
@@ -25,6 +28,24 @@
   flex: none;
 }
 
+.empty {
+  padding: 40px 24px;
+  text-align: center;
+}
+.emptyTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text2);
+}
+.emptyBody {
+  margin: 6px auto 0;
+  max-width: 42ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
 /* KPI strip */
 .kpis {
   /* fluid: however many KPIs render, they share the full row; on narrow
@@ -43,33 +64,39 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: 8px;
 }
 .kpiLbl {
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text4);
+  color: var(--muted);
 }
 .kpiDelta {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-size: 12px;
   font-weight: 600;
-  color: var(--success-strong);
+}
+.kpiDeltaUp {
+  color: var(--success-text);
+}
+.kpiDeltaDown {
+  color: var(--danger-text);
+}
+.kpiDeltaFlat {
+  color: var(--muted);
+  font-weight: 500;
 }
 .kpiVal {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 26px;
+  font-size: 25px;
   font-weight: 600;
-  letter-spacing: -0.02em;
-  margin-top: 8px;
+  letter-spacing: -0.6px;
+  margin-top: 6px;
 }
 .kpiSpark {
-  display: block;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 /* hero */
@@ -85,8 +112,8 @@
 }
 .cardSub {
   font-size: 12.5px;
-  color: var(--text4);
-  margin: 5px 0 0;
+  color: var(--muted);
+  margin: 3px 0 0;
 }
 .heroTotal {
   text-align: right;
@@ -98,14 +125,12 @@
   font-variant-numeric: tabular-nums;
   font-size: 20px;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.6px;
 }
 .heroLbl {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text4);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--muted);
 }
 .legend {
   display: flex;
@@ -131,8 +156,16 @@
 .leg:hover {
   border-color: var(--border2);
 }
+.leg:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .leg[aria-pressed='false'] {
   opacity: 0.5;
+}
+.leg[aria-pressed='true'] {
+  border-color: var(--border2);
+  background: var(--surface2);
 }
 .legSw {
   width: 10px;
@@ -200,24 +233,60 @@
 .row2 {
   grid-template-columns: 1.4fr 1fr;
 }
-.row3 {
-  grid-template-columns: repeat(3, 1fr);
-  margin-bottom: 0;
-}
 .panel {
   padding: 18px 20px;
 }
 .panelTitle {
   font-size: 14px;
   font-weight: 600;
-  margin: 0 0 16px;
+  margin: 0 0 14px;
+}
+.panelEmpty {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 36ch;
+}
+/* Denominator footnote under the engagement bars. */
+.panelNote {
+  margin: 14px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text4);
 }
 
-.barRow {
-  margin-bottom: 16px;
+.barRow,
+.barBtn {
+  display: block;
+  width: 100%;
+  margin-bottom: 14px;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
 }
-.barRow:last-child {
+.barRow:last-child,
+.barBtn:last-child {
   margin-bottom: 0;
+}
+.barBtn {
+  border-radius: 8px;
+  margin-left: -6px;
+  margin-right: -6px;
+  padding: 6px;
+  width: calc(100% + 12px);
+  cursor: pointer;
+  transition: background 0.12s var(--ease-out);
+}
+.barBtn:hover {
+  background: var(--surface2);
+}
+.barBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .barTop {
   display: flex;
@@ -237,7 +306,7 @@
   color: var(--text4);
 }
 .track {
-  height: 10px;
+  height: 8px;
   background: var(--surface2);
   border-radius: 6px;
   overflow: hidden;
@@ -255,7 +324,14 @@
 }
 .tableSub {
   font-size: 12px;
-  color: var(--text4);
+  color: var(--muted);
+}
+.tableEmpty {
+  margin: 0;
+  padding: 28px 20px;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
 }
 .ct {
   overflow-x: auto;
@@ -273,13 +349,14 @@
 }
 .ctHead {
   padding: 11px 20px;
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text4);
-  font-weight: 500;
-  letter-spacing: 0.08em;
+  font-weight: 600;
   text-transform: uppercase;
   border-bottom: 1px solid var(--border2);
+}
+.ctHead > * {
+  text-transform: uppercase;
 }
 .ctR {
   text-align: right;
@@ -351,92 +428,6 @@
   color: var(--text2);
 }
 
-/* top devices */
-.devRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 15px;
-}
-.devRow:last-child {
-  margin-bottom: 0;
-}
-.devLbl {
-  width: 66px;
-  font-size: 12.5px;
-  color: var(--text3);
-  font-weight: 500;
-  flex: none;
-}
-.devPct {
-  width: 42px;
-  text-align: right;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text2);
-  flex: none;
-}
-
-/* top campaigns */
-.tcRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-.tcRow:last-child {
-  margin-bottom: 0;
-}
-.tcName {
-  width: 120px;
-  flex: none;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--text2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.tcTrack {
-  flex: 1;
-  height: 8px;
-}
-.tcOpen {
-  width: 40px;
-  text-align: right;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--success-strong);
-  flex: none;
-}
-
-/* top links */
-.linkRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--divider);
-}
-.linkRow:last-child {
-  border-bottom: none;
-}
-.linkUrl {
-  flex: 1;
-  min-width: 0;
-  font-size: 12.5px;
-  color: var(--accent-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.linkClicks {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text3);
-  flex: none;
-}
-
 /* toast */
 .toast {
   position: fixed;
@@ -468,8 +459,7 @@
 }
 
 @media (max-width: 1040px) {
-  .row2,
-  .row3 {
+  .row2 {
     grid-template-columns: 1fr;
   }
 }
@@ -477,4 +467,47 @@
   .controls {
     width: 100%;
   }
+}
+
+/* Boot skeletons — same shimmer grammar as the dashboard. */
+.skelLine {
+  height: 13px;
+  width: 72px;
+  border-radius: 4px;
+}
+.skelLineSm {
+  height: 11px;
+  width: 48px;
+  border-radius: 4px;
+}
+.skelValue {
+  height: 26px;
+  width: 56%;
+  max-width: 96px;
+  margin-top: 6px;
+  border-radius: 6px;
+}
+.skelSpark {
+  height: 36px;
+  width: 100%;
+  margin-top: 8px;
+  border-radius: 8px;
+}
+.skelHero {
+  height: 300px;
+  width: 100%;
+  margin-top: 14px;
+  border-radius: 10px;
+}
+.skelBar {
+  height: 10px;
+  width: 100%;
+  margin-top: 6px;
+  border-radius: 5px;
+}
+.skelIc {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 8px;
 }

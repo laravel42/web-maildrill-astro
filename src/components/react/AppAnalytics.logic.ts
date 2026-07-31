@@ -31,6 +31,9 @@ export type ChannelBreakdown = {
   sent: number;
   delivered: number;
   failed: number;
+  /** Provider engagement receipts — optional so pre-upgrade cache entries parse. */
+  opened?: number;
+  clicked?: number;
 };
 
 /** Series plotted on the hero chart — delivery outcomes only. */
@@ -49,19 +52,6 @@ const CHANNEL_COLOR: Record<string, string> = {
 
 export function channelColor(ch: string): string {
   return CHANNEL_COLOR[ch] ?? 'var(--accent)';
-}
-
-export function sparkPoints(pts: number[], w: number, h: number): string {
-  if (pts.length < 2) return '';
-  const max = Math.max(...pts);
-  const min = Math.min(...pts);
-  const rng = max - min || 1;
-  return pts
-    .map(
-      (p, i) =>
-        `${((i / (pts.length - 1)) * w).toFixed(1)},${(h - ((p - min) / rng) * h).toFixed(1)}`,
-    )
-    .join(' ');
 }
 
 export function niceMax(v: number): number {
@@ -109,6 +99,8 @@ export function totalsOf(points: ActivityPoint[]) {
   return { sent, delivered, failed };
 }
 
+export type KpiTone = 'muted' | 'success' | 'danger';
+
 export function buildKpis(points: ActivityPoint[]) {
   const { sent, delivered, failed } = totalsOf(points);
   return [
@@ -116,19 +108,22 @@ export function buildKpis(points: ActivityPoint[]) {
       label: 'Messages sent',
       value: fmtCompact(sent),
       sub: 'in range',
-      spark: points.map((p) => p.sent),
+      tone: 'muted' as KpiTone,
+      series: points.map((p) => ({ value: p.sent, label: fmtDate(p.date) })),
     },
     {
       label: 'Delivered',
       value: fmtCompact(delivered),
       sub: pctOf(delivered, sent),
-      spark: points.map((p) => p.delivered),
+      tone: 'success' as KpiTone,
+      series: points.map((p) => ({ value: p.delivered, label: fmtDate(p.date) })),
     },
     {
       label: 'Failed',
       value: fmtCompact(failed),
       sub: pctOf(failed, sent),
-      spark: points.map((p) => p.failed),
+      tone: 'danger' as KpiTone,
+      series: points.map((p) => ({ value: p.failed, label: fmtDate(p.date) })),
     },
   ];
 }
