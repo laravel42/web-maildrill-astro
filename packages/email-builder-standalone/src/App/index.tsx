@@ -285,7 +285,7 @@ export default function App({
     <Container
       className={`${darkMode ? 'dark-email-builder' : 'light-email-builder'}`}
       maxWidth={false}
-      sx={(t) => {
+      sx={() => {
         // Con altura fija: sin scroll en el contenedor raíz; canvas y side panel tienen scroll propio
         const noRootScroll = hasFixedHeight;
 
@@ -299,8 +299,9 @@ export default function App({
           overflowX: 'hidden',
           overflowY: noRootScroll ? 'hidden' : 'auto',
           padding: '0!important',
-          border: `1px solid ${t.palette.divider}`,
-          borderRadius: 2,
+          // Full-screen host already frames the editor; side panels supply
+          // their own vertical dividers (left: borderRight, right: borderLeft).
+          border: 'none',
         };
       }}
     >
@@ -371,7 +372,7 @@ export default function App({
           backgroundColor: `${t.palette.background.paper} !important`,
           display: 'flex',
           alignItems: 'stretch',
-          borderTopRightRadius: 12,
+          border: 'none',
           borderLeft: inspectorDrawerOpen ? `1px solid ${t.palette.divider}` : 'none',
           overflow: 'visible',
           pointerEvents: inspectorDrawerOpen ? 'auto' : 'none',
@@ -399,7 +400,6 @@ export default function App({
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
-              borderBottomRightRadius: 12,
             }}
           >
             <InspectorDrawer sticky={sticky} heightContent={heightContent} />

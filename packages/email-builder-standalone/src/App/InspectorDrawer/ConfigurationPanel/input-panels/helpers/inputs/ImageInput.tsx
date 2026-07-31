@@ -18,7 +18,6 @@ import {
 import { atomicUpdateBlockProps } from '../../../../../../documents/editor/granular';
 import { clearUnsplashCredit } from '../../../../../../documents/editor/unsplashCreditsStore';
 
-import AiImageGeneration from './ai-image-generation';
 import FieldContainer from './components/FieldContainer';
 import { INPUT_TEXTFIELD_SX } from './components/inputStyles';
 import SourceImagePreview from './components/SourceImagePreview';
@@ -33,9 +32,6 @@ interface ImageInputProps {
 const ImageInput: React.FC<ImageInputProps> = ({ data, setData, blockId }) => {
   const { t } = useTranslation('inspector');
   const [isDragging, setIsDragging] = useState(false);
-  const [aiEnabled, setAiEnabled] = useState<boolean>(() => {
-    return Boolean((window as any).__emailBuilderEnableAI);
-  });
   const [, setErrors] = useState<z.ZodError | null>(null);
   const [urlValue, setUrlValue] = useState<string>('');
   const [isValidatingUrl, setIsValidatingUrl] = useState<boolean>(false);
@@ -291,26 +287,6 @@ const ImageInput: React.FC<ImageInputProps> = ({ data, setData, blockId }) => {
     window.dispatchEvent(customEvent);
   };
 
-  // AI generation listener - separate from data-dependent effects to avoid
-  // losing state when data changes and to catch events dispatched before mount
-  useEffect(() => {
-    // Sync from window variable in case event was dispatched before mount
-    const currentAI = (window as any).__emailBuilderEnableAI;
-    if (currentAI !== undefined) {
-      setAiEnabled(Boolean(currentAI));
-    }
-
-    const allowAIGeneration = (event: Event) => {
-      const { detail } = event as CustomEvent<boolean>;
-      setAiEnabled(Boolean(detail));
-    };
-
-    window.addEventListener('email-builder-ai-generation', allowAIGeneration);
-    return () => {
-      window.removeEventListener('email-builder-ai-generation', allowAIGeneration);
-    };
-  }, []);
-
   useEffect(() => {
     const setImage = (event: Event) => {
       const { detail } = event as CustomEvent<{ id: string; url: string; data: any }>;
@@ -532,16 +508,6 @@ const ImageInput: React.FC<ImageInputProps> = ({ data, setData, blockId }) => {
             label: t('inputs.tabs.upload'),
             visible: showUploadTab,
             render: renderUploadTab,
-          },
-          {
-            key: 'generate',
-            label: t('inputs.tabs.generate'),
-            visible: aiEnabled,
-            render: () => (
-              <Box sx={{ py: 1 }}>
-                <AiImageGeneration src={data.props?.url} style={{ width: '100%', margin: 0 }} />
-              </Box>
-            ),
           },
         ]}
         defaultTab="upload"

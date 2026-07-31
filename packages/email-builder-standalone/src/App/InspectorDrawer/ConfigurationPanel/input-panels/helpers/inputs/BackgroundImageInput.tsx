@@ -31,7 +31,6 @@ import {
 } from '../../../../../../documents/editor/EditorContext';
 import { clearUnsplashCredit } from '../../../../../../documents/editor/unsplashCreditsStore';
 
-import AiImageGeneration from './ai-image-generation';
 import FieldContainer from './components/FieldContainer';
 import { INPUT_TEXTFIELD_SX } from './components/inputStyles';
 import Select from './components/Select';
@@ -145,9 +144,6 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
   const [value, setValue] = useState<string | null>(defaultValue || null);
   const [backgroundParams, setBackgroundParams] = useState<BackgroundParams>(parseBackgroundValue(defaultValue));
   const [isDragging, setIsDragging] = useState(false);
-  const [aiEnabled, setAiEnabled] = useState<boolean>(() => {
-    return Boolean((window as any).__emailBuilderEnableAI);
-  });
   const [, _setErrors] = useState<ZodError | null>(null);
   const [urlValue, setUrlValue] = useState<string>(parseBackgroundValue(defaultValue).url || '');
   const [isValidatingUrl, setIsValidatingUrl] = useState<boolean>(false);
@@ -424,24 +420,6 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
     setIsSvgImage(false);
   };
 
-  // AI generation listener - separate from data-dependent effects
-  useEffect(() => {
-    const currentAI = (window as any).__emailBuilderEnableAI;
-    if (currentAI !== undefined) {
-      setAiEnabled(Boolean(currentAI));
-    }
-
-    const allowAIGeneration = (event: Event) => {
-      const { detail } = event as CustomEvent<boolean>;
-      setAiEnabled(Boolean(detail));
-    };
-
-    window.addEventListener('email-builder-ai-generation', allowAIGeneration);
-    return () => {
-      window.removeEventListener('email-builder-ai-generation', allowAIGeneration);
-    };
-  }, []);
-
   useEffect(() => {
     const setImage = (event: Event) => {
       const { detail } = event as CustomEvent<{ id: string; url: string; data: any; styles: any }>;
@@ -698,12 +676,6 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
                 )}
               </Stack>
             ),
-          },
-          {
-            key: 'generate',
-            label: t('inputs.tabs.generate'),
-            visible: aiEnabled,
-            render: () => <AiImageGeneration src={backgroundParams.url} style={{ width: '100%', margin: 0 }} />,
           },
         ]}
         defaultTab="upload"

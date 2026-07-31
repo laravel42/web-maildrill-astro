@@ -134,7 +134,7 @@
   },
   "inputs": {
     "tabs": {
-      "gallery": "Gallery",
+      "gallery": "Stock image",
       "yourGallery": "Your Gallery",
       "upload": "Upload",
       "generate": "Generate"
