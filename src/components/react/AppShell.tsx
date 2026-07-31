@@ -15,19 +15,24 @@ const PIN_SECTIONS: { kind: PinKind; label: string }[] = [
   { kind: 'list', label: 'Lists' },
   { kind: 'campaign', label: 'Campaigns' },
   { kind: 'template', label: 'Templates' },
+  { kind: 'subscriber', label: 'Subscribers' },
 ];
 
 function pinHref(p: Pin): string {
   if (p.kind === 'campaign') {
-    return `${routes.app.campaigns}?edit=${encodeURIComponent(p.id)}`;
+    return routes.app.campaignReport(p.id);
   }
   if (p.kind === 'template') {
-    return `${routes.app.templates}?edit=${encodeURIComponent(p.id)}`;
+    const channel = p.channel ?? 'email';
+    return `${routes.app.templateBuilder(channel)}?id=${encodeURIComponent(p.id)}`;
+  }
+  if (p.kind === 'subscriber') {
+    return routes.app.subscriber(p.id);
   }
   return `${routes.app.lists}?open=${encodeURIComponent(p.id)}`;
 }
 
-const PIN_KINDS = new Set(['campaign', 'list', 'template']);
+const PIN_KINDS = new Set(['campaign', 'list', 'template', 'subscriber']);
 
 function readPins(): Pin[] {
   try {
@@ -37,10 +42,7 @@ function readPins(): Pin[] {
     return Array.isArray(parsed)
       ? parsed.filter(
           (p): p is Pin =>
-            !!p &&
-            typeof p.id === 'string' &&
-            typeof p.label === 'string' &&
-            PIN_KINDS.has(p.kind),
+            !!p && typeof p.id === 'string' && typeof p.label === 'string' && PIN_KINDS.has(p.kind),
         )
       : [];
   } catch {
@@ -136,7 +138,11 @@ export default function AppShell({ currentPath, title, children, userEmail, user
     const [moved] = group.splice(from.index, 1);
     group.splice(over, 0, moved);
     dragFrom.current = { kind, index: over };
-    setPins(PIN_SECTIONS.flatMap((s) => (s.kind === kind ? group : pins.filter((p) => p.kind === s.kind))));
+    setPins(
+      PIN_SECTIONS.flatMap((s) =>
+        s.kind === kind ? group : pins.filter((p) => p.kind === s.kind),
+      ),
+    );
   };
 
   const isActive = (href: string) =>
@@ -283,8 +289,8 @@ export default function AppShell({ currentPath, title, children, userEmail, user
             ))}
             {pins.length === 0 && (
               <p className={styles.pinEmpty}>
-                Nothing pinned. Use <span className={styles.pinEmptyPlus}>+</span> to keep a
-                list, campaign, or template here.
+                Nothing pinned. Use <span className={styles.pinEmptyPlus}>+</span> to keep a list,
+                campaign, template, or subscriber here.
               </p>
             )}
           </div>
@@ -307,7 +313,10 @@ export default function AppShell({ currentPath, title, children, userEmail, user
                   style={{ animation: 'pop 0.14s var(--ease-out)' }}
                 >
                   <div className={styles.userMenuHead}>
-                    <span className={`${styles.ashsbAvatar} ${styles.userMenuAvatar}`} aria-hidden="true">
+                    <span
+                      className={`${styles.ashsbAvatar} ${styles.userMenuAvatar}`}
+                      aria-hidden="true"
+                    >
                       {avatarInitial}
                     </span>
                     <span className={styles.ashsbUsermeta}>
@@ -439,8 +448,8 @@ export default function AppShell({ currentPath, title, children, userEmail, user
       {pickerOpen && (
         <PinPickerModal
           pinned={pins}
-          onPin={(p) => {
-            savePins([...pins, p]);
+          onPin={(next) => {
+            savePins(next);
             setPickerOpen(false);
           }}
           onClose={() => setPickerOpen(false)}

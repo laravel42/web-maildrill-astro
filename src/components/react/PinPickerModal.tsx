@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api } from '@/lib/app/api';
 import { CHANNEL } from './shared/channels';
+import { ChannelPill } from './shared/CampaignPills';
 import { visiblePageNumbers } from './shared/pagination';
 import type { ChannelType } from '@/types/app';
 import Icon from './Icon';
 import styles from './PinPickerModal.module.css';
 
-export type PinKind = 'list' | 'campaign' | 'template';
+export type PinKind = 'list' | 'campaign' | 'template' | 'subscriber';
 
 /** A record kept in the sidebar's PINNED section. */
 export type Pin = {
@@ -15,22 +16,37 @@ export type Pin = {
   label: string;
   /** Dot colour — list colour, or channel accent for campaigns/templates. */
   color: string;
-  /** Channel for campaigns/templates; omitted for lists. */
+  /** Channel for campaigns/templates; omitted for lists/subscribers. */
   channel?: ChannelType;
+  /** Extra haystack for picker search (e.g. subscriber email). */
+  searchText?: string;
+  /** Member count for lists — picker badge only. */
+  count?: number;
 };
 
 const DEFAULT_PIN_COLOR = 'var(--accent)';
 const PAGE_SIZE = 8;
 
-const KINDS: { id: PinKind; label: string }[] = [
-  { id: 'list', label: 'Lists' },
-  { id: 'campaign', label: 'Campaigns' },
-  { id: 'template', label: 'Templates' },
+const KINDS: { id: PinKind; label: string; plural: string; search: string }[] = [
+  { id: 'list', label: 'Lists', plural: 'lists', search: 'Search lists…' },
+  { id: 'campaign', label: 'Campaigns', plural: 'campaigns', search: 'Search campaigns…' },
+  { id: 'template', label: 'Templates', plural: 'templates', search: 'Search templates…' },
+  { id: 'subscriber', label: 'Subscribers', plural: 'subscribers', search: 'Search subscribers…' },
 ];
+
+const EMPTY_QUERIES: Record<PinKind, string> = {
+  list: '',
+  campaign: '',
+  template: '',
+  subscriber: '',
+};
+
+const pinKey = (p: Pick<Pin, 'kind' | 'id'>) => `${p.kind}:${p.id}`;
 
 type Props = {
   pinned: Pin[];
-  onPin: (pin: Pin) => void;
+  /** Called with the selected records when the user confirms. */
+  onPin: (pins: Pin[]) => void;
   onClose: () => void;
 };
 
@@ -38,8 +54,14 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const [kind, setKind] = useState<PinKind>('list');
   const [page, setPage] = useState(1);
+  const [queries, setQueries] = useState<Record<PinKind, string>>(EMPTY_QUERIES);
   /** null = loading */
   const [items, setItems] = useState<Pin[] | null>(null);
+  /** Selected pins keyed by kind:id — survives tab/page changes. */
+  const [selected, setSelected] = useState<Map<string, Pin>>(() => new Map());
+
+  const query = queries[kind];
+  const kindMeta = KINDS.find((k) => k.id === kind)!;
 
   useEffect(() => {
     closeRef.current?.focus();
@@ -60,14 +82,29 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
     let cancelled = false;
     void (async () => {
       try {
-        const [lists, campaigns, templates] = await Promise.all([
-          api.get<{ data: Array<{ id: string; name: string; color?: string | null }> }>('lists'),
-          api.get<{ data: Array<{ id: string; name: string; channel?: string | null }> }>(
-            'campaigns',
-          ),
+        const [lists, campaigns, templates, subscribers] = await Promise.all([
+          api.get<{
+            data: Array<{
+              id: string;
+              name: string;
+              color?: string | null;
+              memberCount?: number | null;
+            }>;
+          }>('lists'),
+          api.get<{
+            data: Array<{
+              id: string;
+              name: string;
+              channel?: string | null;
+              status?: string | null;
+            }>;
+          }>('campaigns'),
           api.get<{
             data: Array<{ id: string; name: string; channel?: string | null }>;
           }>('templates'),
+          api.get<{
+            data: Array<{ id: string; name?: string | null; email: string }>;
+          }>('subscribers?limit=200'),
         ]);
         if (cancelled) return;
         const next: Pin[] = [
@@ -76,17 +113,20 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
             id: l.id,
             label: l.name,
             color: l.color || DEFAULT_PIN_COLOR,
+            count: l.memberCount ?? 0,
           })),
-          ...(campaigns.data ?? []).map((c) => {
-            const channel = (c.channel ?? 'email') as ChannelType;
-            return {
-              kind: 'campaign' as const,
-              id: c.id,
-              label: c.name,
-              channel,
-              color: CHANNEL[channel]?.color ?? DEFAULT_PIN_COLOR,
-            };
-          }),
+          ...(campaigns.data ?? [])
+            .filter((c) => c.status === 'sent')
+            .map((c) => {
+              const channel = (c.channel ?? 'email') as ChannelType;
+              return {
+                kind: 'campaign' as const,
+                id: c.id,
+                label: c.name,
+                channel,
+                color: CHANNEL[channel]?.color ?? DEFAULT_PIN_COLOR,
+              };
+            }),
           ...(templates.data ?? []).map((t) => {
             const channel = (t.channel ?? 'email') as ChannelType;
             return {
@@ -95,6 +135,16 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
               label: t.name,
               channel,
               color: CHANNEL[channel]?.color ?? DEFAULT_PIN_COLOR,
+            };
+          }),
+          ...(subscribers.data ?? []).map((s) => {
+            const name = s.name?.trim() || '';
+            return {
+              kind: 'subscriber' as const,
+              id: s.id,
+              label: name || s.email,
+              searchText: s.email,
+              color: DEFAULT_PIN_COLOR,
             };
           }),
         ];
@@ -108,27 +158,37 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
     };
   }, []);
 
-  const pinnedKeys = useMemo(
-    () => new Set(pinned.map((p) => `${p.kind}:${p.id}`)),
-    [pinned],
-  );
-
-  const available = useMemo(() => {
-    if (items == null) return null;
-    return items.filter((p) => !pinnedKeys.has(`${p.kind}:${p.id}`));
-  }, [items, pinnedKeys]);
+  // Pre-check anything already in the sidebar once the catalog loads.
+  useEffect(() => {
+    if (items == null) return;
+    const pinnedKeySet = new Set(pinned.map((p) => pinKey(p)));
+    setSelected(
+      new Map(items.filter((p) => pinnedKeySet.has(pinKey(p))).map((p) => [pinKey(p), p])),
+    );
+  }, [items, pinned]);
 
   const counts = useMemo(() => {
-    const c: Record<PinKind, number> = { list: 0, campaign: 0, template: 0 };
-    if (!available) return c;
-    for (const p of available) c[p.kind] += 1;
+    const c: Record<PinKind, number> = {
+      list: 0,
+      campaign: 0,
+      template: 0,
+      subscriber: 0,
+    };
+    if (!items) return c;
+    for (const p of items) c[p.kind] += 1;
     return c;
-  }, [available]);
+  }, [items]);
 
   const filtered = useMemo(() => {
-    if (!available) return null;
-    return available.filter((p) => p.kind === kind);
-  }, [available, kind]);
+    if (!items) return null;
+    const q = query.trim().toLowerCase();
+    return items.filter((p) => {
+      if (p.kind !== kind) return false;
+      if (!q) return true;
+      const hay = `${p.label} ${p.searchText ?? ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [items, kind, query]);
 
   const total = filtered?.length ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -142,6 +202,69 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
   const selectKind = (next: PinKind) => {
     setKind(next);
     setPage(1);
+  };
+
+  const setQuery = (value: string) => {
+    setQueries((prev) => ({ ...prev, [kind]: value }));
+    setPage(1);
+  };
+
+  const toggle = (p: Pin) => {
+    setSelected((prev) => {
+      const next = new Map(prev);
+      const key = pinKey(p);
+      if (next.has(key)) next.delete(key);
+      else next.set(key, p);
+      return next;
+    });
+  };
+
+  const stripPin = ({ kind: k, id, label, color, channel }: Pin): Pin => ({
+    kind: k,
+    id,
+    label,
+    color,
+    ...(channel ? { channel } : {}),
+  });
+
+  const confirm = () => {
+    const catalogKeys = new Set((items ?? []).map((p) => pinKey(p)));
+    // Keep any pins the catalog didn't load (e.g. beyond the subscriber page).
+    const outside = pinned.filter((p) => !catalogKeys.has(pinKey(p))).map(stripPin);
+    const chosenKeys = new Set(selected.keys());
+    // Preserve existing pin order, then append newly selected.
+    const ordered: Pin[] = [];
+    for (const p of pinned) {
+      const key = pinKey(p);
+      if (!chosenKeys.has(key)) continue;
+      const fresh = selected.get(key);
+      if (fresh) ordered.push(stripPin(fresh));
+      chosenKeys.delete(key);
+    }
+    for (const p of selected.values()) {
+      if (chosenKeys.has(pinKey(p))) ordered.push(stripPin(p));
+    }
+    onPin([...outside, ...ordered]);
+  };
+
+  const rowMeta = (p: Pin): ReactNode => {
+    if (p.kind === 'list') {
+      return <span className={`${styles.countBadge} tnum`}>{p.count ?? 0}</span>;
+    }
+    if ((p.kind === 'campaign' || p.kind === 'template') && p.channel) {
+      return <ChannelPill channel={p.channel} />;
+    }
+    if (p.kind === 'subscriber' && p.searchText && p.searchText !== p.label) {
+      return <span className={`${styles.emailBadge} tnum`}>{p.searchText}</span>;
+    }
+    return null;
+  };
+
+  const emptyMessage = () => {
+    const kindTotal = items?.filter((p) => p.kind === kind).length ?? 0;
+    if (kindTotal === 0) return `No ${kindMeta.plural} yet.`;
+    if (query.trim()) return `No ${kindMeta.plural} match “${query.trim()}”.`;
+    return `No ${kindMeta.plural} yet.`;
   };
 
   return (
@@ -161,10 +284,10 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
         <header className={styles.head}>
           <div className={styles.headText}>
             <h2 id="pin-picker-title" className={styles.title}>
-              Pin a record
+              Pin records
             </h2>
             <p className={styles.sub}>
-              Keep a list, campaign, or template in the sidebar for quick access.
+              Keep lists, campaigns, templates, or subscribers in the sidebar for quick access.
             </p>
           </div>
           <button
@@ -179,56 +302,83 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
         </header>
 
         <div className={styles.toolbar} role="tablist" aria-label="Record type">
-          <div className="aseg">
+          <div className={`aseg ${styles.kindSeg}`}>
             {KINDS.map((k) => (
               <button
                 key={k.id}
                 type="button"
                 role="tab"
                 aria-selected={kind === k.id}
-                className={`aseg__opt${kind === k.id ? ' is-active' : ''}`}
+                className={`${styles.kindOpt} aseg__opt${kind === k.id ? ' is-active' : ''}`}
                 onClick={() => selectKind(k.id)}
               >
-                {k.label}
+                <span>{k.label}</span>
                 <span className={`tnum ${styles.kindCount}`}>{counts[k.id]}</span>
               </button>
             ))}
           </div>
         </div>
 
-        <div className={`atable ${styles.table}`}>
-          <div className={`${styles.thead} athead`} aria-hidden="true">
-            <div>Name</div>
-            <div />
-          </div>
-
-          {filtered == null ? (
-            <div className="atable__empty">Loading…</div>
-          ) : pageItems.length === 0 ? (
-            <div className="atable__empty">
-              {total === 0 && available != null && available.length === 0
-                ? 'Everything is pinned.'
-                : `No ${kind === 'list' ? 'lists' : kind === 'campaign' ? 'campaigns' : 'templates'} left to pin.`}
-            </div>
-          ) : (
-            pageItems.map((p) => (
-              <button
-                key={`${p.kind}:${p.id}`}
-                type="button"
-                className={`${styles.row} atrow`}
-                onClick={() => onPin(p)}
-              >
-                <span className={styles.name}>
-                  <span className={styles.dot} style={{ background: p.color }} aria-hidden="true" />
-                  <span className={styles.label}>{p.label}</span>
-                </span>
-                <span className={styles.action}>
-                  Pin
-                  <Icon name="plus" size={13} stroke={2.3} />
-                </span>
-              </button>
-            ))
+        <div className={styles.search}>
+          <Icon name="search" size={15} className={styles.searchIc} />
+          <input
+            type="search"
+            className={styles.searchInput}
+            placeholder={kindMeta.search}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label={kindMeta.search}
+          />
+          {query && (
+            <button
+              type="button"
+              className={styles.searchClear}
+              aria-label="Clear search"
+              onClick={() => setQuery('')}
+            >
+              <Icon name="x" size={13} stroke={2.3} />
+            </button>
           )}
+        </div>
+
+        <div className={`atable ${styles.table}`}>
+          <div className={styles.body}>
+            {filtered == null ? (
+              <div className="atable__empty">Loading…</div>
+            ) : pageItems.length === 0 ? (
+              <div className="atable__empty">{emptyMessage()}</div>
+            ) : (
+              pageItems.map((p) => {
+                const key = pinKey(p);
+                const on = selected.has(key);
+                const meta = rowMeta(p);
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`${styles.row} atrow${on ? ` ${styles.rowOn}` : ''}`}
+                    onClick={() => toggle(p)}
+                    aria-pressed={on}
+                  >
+                    <span className={styles.check} aria-hidden="true">
+                      <span className={`${styles.box}${on ? ' is-on' : ''}`}>
+                        {on && <Icon name="check" size={12} stroke={3.5} />}
+                      </span>
+                    </span>
+                    <span className={styles.name}>
+                      <span
+                        className={styles.dot}
+                        style={{ background: p.color }}
+                        aria-hidden="true"
+                      />
+                      <span className={styles.label}>{p.label}</span>
+                    </span>
+                    <span className={styles.meta}>{meta}</span>
+                  </button>
+                );
+              })
+            )}
+          </div>
 
           <div className={`atable__foot ${styles.foot}`}>
             <span className={total === 0 ? undefined : 'tnum'}>
@@ -272,6 +422,15 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
               </div>
             )}
           </div>
+        </div>
+
+        <div className={styles.actions}>
+          <button type="button" className="sbtn" onClick={onClose}>
+            Cancel
+          </button>
+          <button type="button" className="pbtn" onClick={confirm}>
+            Pin selected
+          </button>
         </div>
       </div>
     </div>
