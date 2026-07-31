@@ -44,14 +44,6 @@ const n = (v: number) => v.toLocaleString('en-US');
 
 type DeltaTone = Kpi['tone'];
 
-/** Short prior-period label for the selected range length. */
-export function priorPeriodLabel(days: number): string {
-  if (days <= 7) return 'vs last week';
-  if (days <= 30) return 'vs prior 30d';
-  if (days <= 90) return 'vs prior 90d';
-  return 'vs prior year';
-}
-
 export function rangeSubtitle(days: number): string {
   if (days <= 7) return "Here's what's happening with your workspace this week.";
   if (days <= 30) return "Here's what's happening with your workspace over the last 30 days.";
@@ -73,20 +65,16 @@ export function sparkTitle(days: number): string {
   return 'Performance · last 12 months';
 }
 
-function relativeDelta(
-  cur: number,
-  prev: number,
-  prior: string,
-): { text: string; tone: DeltaTone } {
+function relativeDelta(cur: number, prev: number): { text: string; tone: DeltaTone } {
   if (prev === 0) {
-    if (cur === 0) return { text: `No change ${prior}`, tone: 'flat' };
-    return { text: `↑ ${n(cur)} ${prior}`, tone: 'up' };
+    if (cur === 0) return { text: 'No change', tone: 'flat' };
+    return { text: `↑ ${n(cur)}`, tone: 'up' };
   }
   const pct = ((cur - prev) / prev) * 100;
-  if (Math.abs(pct) < 0.05) return { text: `No change ${prior}`, tone: 'flat' };
+  if (Math.abs(pct) < 0.05) return { text: 'No change', tone: 'flat' };
   const arrow = pct > 0 ? '↑' : '↓';
   return {
-    text: `${arrow} ${Math.abs(pct).toFixed(1)}% ${prior}`,
+    text: `${arrow} ${Math.abs(pct).toFixed(1)}%`,
     tone: pct > 0 ? 'up' : 'down',
   };
 }
@@ -107,7 +95,6 @@ function periodNetCompare(
   series: number[] | undefined,
   days: number,
 ): { value: number | null; delta: { text: string; tone: DeltaTone } } {
-  const prior = priorPeriodLabel(days);
   if (!series || series.length < 2) {
     return { value: null, delta: { text: '—', tone: 'flat' } };
   }
@@ -120,7 +107,7 @@ function periodNetCompare(
     return { value: curNet, delta: { text: '—', tone: 'flat' } };
   }
   const prevNet = series[mid]! - series[start]!;
-  return { value: curNet, delta: relativeDelta(curNet, prevNet, prior) };
+  return { value: curNet, delta: relativeDelta(curNet, prevNet) };
 }
 
 /**
@@ -130,7 +117,6 @@ function periodRateCompare(
   series: number[] | undefined,
   days: number,
 ): { value: number | null; delta: { text: string; tone: DeltaTone } } {
-  const prior = priorPeriodLabel(days);
   if (!series || series.length === 0) {
     return { value: null, delta: { text: '—', tone: 'flat' } };
   }
@@ -150,13 +136,13 @@ function periodRateCompare(
   const prev = avg(prevSlice);
   const d = cur - prev;
   if (Math.abs(d) < 0.05) {
-    return { value: cur, delta: { text: `No change ${prior}`, tone: 'flat' } };
+    return { value: cur, delta: { text: 'No change', tone: 'flat' } };
   }
   const arrow = d > 0 ? '↑' : '↓';
   return {
     value: cur,
     delta: {
-      text: `${arrow} ${Math.abs(d).toFixed(1)}% ${prior}`,
+      text: `${arrow} ${Math.abs(d).toFixed(1)}%`,
       tone: d > 0 ? 'up' : 'down',
     },
   };
@@ -170,14 +156,13 @@ function periodSent(
   daily: ActivityPoint[],
   days: number,
 ): { total: number; inRange: ActivityPoint[]; delta: { text: string; tone: DeltaTone } } {
-  const prior = priorPeriodLabel(days);
   const inRange = daily.slice(-days);
   const total = inRange.reduce((t, d) => t + d.sent, 0);
   if (daily.length < days * 2) {
     return { total, inRange, delta: { text: '—', tone: 'flat' } };
   }
   const prevTotal = daily.slice(-days * 2, -days).reduce((t, d) => t + d.sent, 0);
-  return { total, inRange, delta: relativeDelta(total, prevTotal, prior) };
+  return { total, inRange, delta: relativeDelta(total, prevTotal) };
 }
 
 /** Daily send volume for the performance spark (empty when nothing to plot). */

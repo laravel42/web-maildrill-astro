@@ -4,7 +4,7 @@ export type Kpi = {
   label: string;
   value: string;
   delta: string;
-  /** Visual tone for the delta vs last week. */
+  /** Visual tone for the period-over-period delta. */
   tone: 'up' | 'down' | 'flat';
 };
 
