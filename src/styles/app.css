@@ -65,8 +65,13 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.16);
   transition: background var(--duration-fast) var(--ease-out);
 }
-.pbtn:hover {
+.pbtn:hover:not(:disabled) {
   background: var(--accent-hover);
+}
+.pbtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .sbtn {
@@ -86,9 +91,13 @@
     border-color var(--duration-fast) var(--ease-out),
     color var(--duration-fast) var(--ease-out);
 }
-.sbtn:hover {
+.sbtn:hover:not(:disabled) {
   background: var(--surface2);
   border-color: var(--border2);
+}
+.sbtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .kbtn {
