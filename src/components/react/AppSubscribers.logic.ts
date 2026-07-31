@@ -20,24 +20,6 @@ export const PAGE_SIZE = 15;
 
 export { MAX_VISIBLE_PAGES, visiblePageNumbers } from './shared/pagination';
 
-/**
- * Drawer lists line: the two most recent memberships, with `+n` for the rest.
- * Expects `names` newest-first (API orders by list_members.added_at desc).
- */
-export function recentListsSummary(
-  names: string[],
-  keep = 2,
-): { shown: string[]; more: number; rest: string[] } {
-  if (names.length <= keep) {
-    return { shown: names, more: 0, rest: [] };
-  }
-  return {
-    shown: names.slice(0, keep),
-    more: names.length - keep,
-    rest: names.slice(keep),
-  };
-}
-
 /* Reachable-channel logic (drives channel filter + drawer engagement). */
 export function reachOf(s: RichSubscriber) {
   const eng = s.status === 'active';

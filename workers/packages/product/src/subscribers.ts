@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNotNull, sql } from 'drizzle-orm';
 import type { PgUpdateSetSource } from 'drizzle-orm/pg-core';
 import {
   campaigns,
@@ -13,6 +13,57 @@ import {
   type Subscriber,
 } from '@maildrill/database';
 import { clamp } from './rules';
+
+const WEEK_MS = 7 * 86_400_000;
+const WEEKLY_POINTS = 12;
+
+/** Monday 00:00 UTC of the ISO week containing `d`. */
+function startOfIsoWeekUtc(d = new Date()): Date {
+  const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const day = x.getUTCDay(); // 0 = Sun
+  const diff = day === 0 ? -6 : 1 - day;
+  x.setUTCDate(x.getUTCDate() + diff);
+  x.setUTCHours(0, 0, 0, 0);
+  return x;
+}
+
+/** ISO week number (1–53) for a UTC date. */
+function isoWeekNumber(d: Date): number {
+  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const dayNum = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return Math.ceil(((t.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
+}
+
+/** Last `WEEKLY_POINTS` ISO weeks, oldest → newest. */
+function lastIsoWeeks(): { start: Date; label: string }[] {
+  const thisWeek = startOfIsoWeekUtc();
+  return Array.from({ length: WEEKLY_POINTS }, (_, i) => {
+    const start = new Date(thisWeek.getTime() - (WEEKLY_POINTS - 1 - i) * WEEK_MS);
+    return { start, label: `W${isoWeekNumber(start)}` };
+  });
+}
+
+function asDate(v: unknown): Date | null {
+  if (v instanceof Date) return Number.isNaN(v.getTime()) ? null : v;
+  if (typeof v === 'string' || typeof v === 'number') {
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
+function bucketByWeek(timestamps: Date[], weeks: { start: Date }[]): number[] {
+  return weeks.map((w, i) => {
+    const end = i + 1 < weeks.length ? weeks[i + 1]!.start.getTime() : w.start.getTime() + WEEK_MS;
+    const from = w.start.getTime();
+    return timestamps.filter((t) => {
+      const ms = t.getTime();
+      return ms >= from && ms < end;
+    }).length;
+  });
+}
 
 type SubscriberStatus = Subscriber['status'];
 
@@ -273,11 +324,22 @@ export interface SubscriberActivityEvent {
   /** ISO-8601 UTC timestamp. */
   at: string;
 }
+export interface SubscriberWeeklyPoint {
+  /** ISO week label, e.g. "W31". */
+  label: string;
+  /** Monday 00:00 UTC of the week (ISO-8601). */
+  weekStart: string;
+  opens: number;
+  clicks: number;
+}
+
 export interface SubscriberActivity {
   /** ISO-8601 UTC timestamp, or null when the subscriber has no messages. */
   lastActiveAt: string | null;
   channels: SubscriberChannelStat[];
   recent: SubscriberActivityEvent[];
+  /** Opens/clicks per ISO week for the trailing 12 weeks (oldest → newest). */
+  weekly: SubscriberWeeklyPoint[];
 }
 
 /** The latest known timestamp for a message row (read → delivered → sent → submitted → created). */
@@ -290,8 +352,10 @@ export async function subscriberActivity(
   subscriberId: string,
 ): Promise<SubscriberActivity> {
   const mine = and(eq(messages.tenantId, tenantId), eq(messages.recipientId, subscriberId));
+  const weeks = lastIsoWeeks();
+  const since = weeks[0]!.start;
 
-  const [channelRows, clickRows, lastRows, recentRows] = await Promise.all([
+  const [channelRows, clickRows, lastRows, recentRows, openTimes, clickTimes] = await Promise.all([
     db
       .select({
         channel: messages.channel,
@@ -332,7 +396,29 @@ export async function subscriberActivity(
       .where(mine)
       .orderBy(desc(messageAt))
       .limit(10),
+    db
+      .select({ at: messages.readAt })
+      .from(messages)
+      .where(and(mine, isNotNull(messages.readAt), gte(messages.readAt, since))),
+    db
+      .select({
+        at: sql<Date | null>`coalesce(${messageEvents.occurredAt}, ${messageEvents.createdAt})`,
+      })
+      .from(messageEvents)
+      .innerJoin(messages, eq(messageEvents.messageId, messages.id))
+      .where(
+        and(
+          mine,
+          eq(messageEvents.eventType, 'click'),
+          sql`coalesce(${messageEvents.occurredAt}, ${messageEvents.createdAt}) >= ${since}`,
+        ),
+      ),
   ]);
+
+  const openTs = openTimes.map((r) => asDate(r.at)).filter((t): t is Date => t != null);
+  const clickTs = clickTimes.map((r) => asDate(r.at)).filter((t): t is Date => t != null);
+  const opensByWeek = bucketByWeek(openTs, weeks);
+  const clicksByWeek = bucketByWeek(clickTs, weeks);
 
   return {
     lastActiveAt: lastRows[0]?.at ?? null,
@@ -349,6 +435,12 @@ export async function subscriberActivity(
       status: r.status,
       campaignName: r.campaignName ?? null,
       at: r.at,
+    })),
+    weekly: weeks.map((w, i) => ({
+      label: w.label,
+      weekStart: w.start.toISOString(),
+      opens: opensByWeek[i] ?? 0,
+      clicks: clicksByWeek[i] ?? 0,
     })),
   };
 }

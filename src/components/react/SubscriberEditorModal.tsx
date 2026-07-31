@@ -49,7 +49,6 @@ export default function SubscriberEditorModal({
   const [status] = useState<SubscriberStatus>(initialStatus);
   const [listIds, setListIds] = useState<string[]>(initialListIds);
   const [tags, setTags] = useState<string[]>(initialTags);
-  const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState('');
 
   useEscapeClose(onClose);
@@ -62,9 +61,10 @@ export default function SubscriberEditorModal({
 
   const addTag = () => {
     const t = draft.trim();
-    if (t && !tags.includes(t)) setTags((s) => [...s, t]);
+    if (t && !tags.some((x) => x.toLowerCase() === t.toLowerCase())) {
+      setTags((s) => [...s, t]);
+    }
     setDraft('');
-    setAdding(false);
   };
   const removeTag = (t: string) => setTags((s) => s.filter((x) => x !== t));
 
@@ -74,7 +74,11 @@ export default function SubscriberEditorModal({
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose} style={{ animation: 'ovfade .18s var(--ease-out)' }}>
+    <div
+      className={styles.overlay}
+      onClick={onClose}
+      style={{ animation: 'ovfade .18s var(--ease-out)' }}
+    >
       <div
         className={styles.sem}
         onClick={(e) => e.stopPropagation()}
@@ -146,7 +150,7 @@ export default function SubscriberEditorModal({
                     aria-pressed={on}
                     onClick={() => toggleList(l.id)}
                   >
-                    {on && <Icon name="check" size={15} stroke={3.5} />}
+                    {on && <Icon name="check" size={12} stroke={3.5} />}
                     {l.name}
                   </button>
                 );
@@ -159,7 +163,11 @@ export default function SubscriberEditorModal({
             {tags.map((t) => {
               const tone = toneFor(t);
               return (
-                <span key={t} className={styles.tag} style={{ background: tone.bg, color: tone.color }}>
+                <span
+                  key={t}
+                  className={styles.tag}
+                  style={{ background: tone.bg, color: tone.color }}
+                >
                   {t}
                   <button
                     type="button"
@@ -172,27 +180,19 @@ export default function SubscriberEditorModal({
                 </span>
               );
             })}
-            {adding ? (
-              <input
-                className={styles.taginput}
-                value={draft}
-                autoFocus
-                placeholder="Tag name"
-                onChange={(e) => setDraft(e.target.value)}
-                onBlur={addTag}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') addTag();
-                  if (e.key === 'Escape') {
-                    setDraft('');
-                    setAdding(false);
-                  }
-                }}
-              />
-            ) : (
-              <button type="button" className={styles.addtag} onClick={() => setAdding(true)}>
-                + Add tag
-              </button>
-            )}
+            <input
+              className={styles.taginput}
+              value={draft}
+              placeholder="Add tag…"
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addTag();
+                }
+              }}
+              aria-label="Add tag"
+            />
           </div>
         </div>
 

@@ -1,0 +1,1132 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Icon from './Icon';
+import ConfirmDialog from './shared/ConfirmDialog';
+import { useToast } from './shared/useToast';
+import { api, ApiError } from '@/lib/app/api';
+import { routes } from '@/config/routes';
+import { tagStyle } from '@/lib/app/tag-style';
+import {
+  buildSubscriberDetailView,
+  scoreArcLength,
+  type ActivityFilter,
+  type ApiSubscriberActivity,
+  type DetailTab,
+  type SubscriberDetailView,
+} from '@/lib/app/subscriber-detail';
+import type { RichSubscriber } from '@/lib/app/subscribers-data';
+import { STATUS_LABEL } from './AppSubscribers.logic';
+import SubscriberEditorModal from './SubscriberEditorModal';
+import styles from './AppSubscriberDetail.module.css';
+
+/*
+ * Subscriber profile — pixel port of design/subscriber-detail.html, bound to
+ * live workspace data. Sections the comp shows from data the backend doesn't
+ * record yet (timezone, signup IP, referrer, soft bounces, spam complaints)
+ * render the page's standard "—" placeholder rather than invented values.
+ */
+
+type Props = {
+  initial: RichSubscriber;
+  attributes?: Record<string, unknown>;
+  activity?: ApiSubscriberActivity | null;
+  allLists?: { id: string; name: string; color?: string | null }[];
+};
+
+const FILTERS: { id: ActivityFilter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'open', label: 'Email opens' },
+  { id: 'click', label: 'Clicks' },
+  { id: 'send', label: 'Sends' },
+  { id: 'life', label: 'Lifecycle' },
+];
+
+function EventIcon({ type }: { type: string }) {
+  const common = {
+    width: 14,
+    height: 14,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    strokeWidth: 2,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+  } as const;
+  if (type === 'click') {
+    return (
+      <span className={styles.eventIcon} style={{ background: 'var(--accent-tint)' }}>
+        <svg {...common} stroke="var(--accent)">
+          <path d="M9 9l5 12 2-5 5-2zM3 3l4 4" />
+        </svg>
+      </span>
+    );
+  }
+  if (type === 'open') {
+    return (
+      <span className={styles.eventIcon} style={{ background: 'var(--success-tint)' }}>
+        <svg {...common} stroke="#16a34a">
+          <path d="M4 4h16v16H4zM4 7l8 6 8-6" />
+        </svg>
+      </span>
+    );
+  }
+  if (type === 'life') {
+    return (
+      <span className={styles.eventIcon} style={{ background: 'var(--danger-bg)' }}>
+        <svg {...common} stroke="var(--danger)">
+          <path d="M12 9v4M12 17h.01M10.3 3.3 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.3a2 2 0 0 0-3.4 0Z" />
+        </svg>
+      </span>
+    );
+  }
+  return (
+    <span className={styles.eventIcon} style={{ background: 'var(--surface2)' }}>
+      <svg {...common} stroke="#8f8d84">
+        <path d="m22 2-7 20-4-9-9-4zM22 2 11 13" />
+      </svg>
+    </span>
+  );
+}
+
+export default function AppSubscriberDetail({
+  initial,
+  attributes = {},
+  activity = null,
+  allLists = [],
+}: Props) {
+  const [sub, setSub] = useState(initial);
+  const [attrs, setAttrs] = useState(attributes);
+  const [act, setAct] = useState(activity);
+  const [tab, setTab] = useState<DetailTab>('activity');
+  const [filter, setFilter] = useState<ActivityFilter>('all');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState<'unsubscribe' | 'delete' | null>(null);
+  const { toast, show } = useToast();
+  const [hoverWeek, setHoverWeek] = useState<number | null>(null);
+  /** Workspace tag catalogue (name → id) so rail chips can detach via the tags API. */
+  const [tagIndex, setTagIndex] = useState<Array<{ id: string; name: string }>>([]);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const data = await api.get<ApiSubscriberActivity>(`subscribers/${sub.id}/activity`);
+        if (!cancelled) setAct(data);
+      } catch {
+        /* keep SSR / empty activity */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [sub.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await api.get<{ data: Array<{ id: string; name: string }> }>('tags');
+        if (!cancelled) setTagIndex(res.data ?? []);
+      } catch {
+        /* rail remove falls back to looking up after create failure toast */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('click', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('click', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [menuOpen]);
+
+  const view: SubscriberDetailView = useMemo(
+    () => buildSubscriberDetailView(sub, act, attrs),
+    [sub, act, attrs],
+  );
+
+  const filteredEvents = useMemo(
+    () => (filter === 'all' ? view.events : view.events.filter((e) => e.type === filter)),
+    [view.events, filter],
+  );
+
+  const filterCounts = useMemo(() => {
+    const c: Record<ActivityFilter, number> = {
+      all: view.events.length,
+      open: 0,
+      click: 0,
+      send: 0,
+      life: 0,
+    };
+    for (const e of view.events) c[e.type] += 1;
+    return c;
+  }, [view.events]);
+
+  const BAR_H = 104;
+  const maxWeek = Math.max(1, ...view.weeks.map((w) => Math.max(w.opens, w.clicks)));
+  const weekTotal = view.weeks.reduce((n, w) => n + w.opens + w.clicks, 0);
+  const barPx = (n: number) => {
+    if (n <= 0) return 0;
+    return Math.max(3, Math.round((n / maxWeek) * BAR_H));
+  };
+  const statusLabel = STATUS_LABEL[sub.status] ?? sub.status;
+  const active = sub.status === 'active';
+  const [av0, av1] = sub.av;
+
+  // Internal notes persist into the subscriber's attributes bag.
+  const savedNotes = typeof attrs.notes === 'string' ? attrs.notes : '';
+  const [notesDraft, setNotesDraft] = useState(savedNotes);
+  const notesDirty = notesDraft !== savedNotes;
+  const saveNotes = async () => {
+    const nextAttrs = { ...attrs, notes: notesDraft };
+    try {
+      await api.patch(`subscribers/${sub.id}`, { attributes: nextAttrs });
+      setAttrs(nextAttrs);
+      show('Note saved');
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : 'Could not save the note');
+    }
+  };
+
+  const removeTag = async (name: string) => {
+    if (busy) return;
+    const tagId = tagIndex.find((t) => t.name.toLowerCase() === name.toLowerCase())?.id;
+    if (!tagId) {
+      show('Could not find that tag');
+      return;
+    }
+    const prev = sub.tags;
+    setSub((s) => ({ ...s, tags: s.tags.filter((t) => t !== name) }));
+    setBusy(true);
+    try {
+      await api.del(`subscribers/${sub.id}/tags/${tagId}`);
+      show(`Removed “${name}”`);
+    } catch (e) {
+      setSub((s) => ({ ...s, tags: prev }));
+      show(e instanceof ApiError ? e.message : 'Could not remove tag');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const unsubscribe = async () => {
+    if (busy || sub.status === 'unsubscribed') return;
+    setBusy(true);
+    setMenuOpen(false);
+    try {
+      await api.post(`subscribers/${sub.id}/unsubscribe`, {});
+      setSub((s) => ({ ...s, status: 'unsubscribed' }));
+      show('Subscriber unsubscribed');
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : 'Unsubscribe failed');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resubscribe = async () => {
+    if (busy || sub.status === 'active') return;
+    setBusy(true);
+    setMenuOpen(false);
+    try {
+      await api.patch(`subscribers/${sub.id}`, { status: 'active' });
+      setSub((s) => ({ ...s, status: 'active' }));
+      show('Subscriber re-subscribed');
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : 'Re-subscribe failed');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deleteSubscriber = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await api.del(`subscribers/${sub.id}`);
+      window.location.href = routes.app.subscribers;
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : 'Delete failed');
+      setBusy(false);
+    }
+  };
+
+  const exportCsv = () => {
+    const rows = [
+      ['id', 'email', 'name', 'status', 'phone', 'lists', 'tags'],
+      [sub.id, sub.email, sub.name, sub.status, sub.phone, sub.lists.join('|'), sub.tags.join('|')],
+    ];
+    const blob = new Blob(
+      [rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')],
+      {
+        type: 'text/csv',
+      },
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${sub.email || sub.id}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setMenuOpen(false);
+  };
+
+  const menuIcon = {
+    width: 15,
+    height: 15,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 2,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+  } as const;
+
+  return (
+    <div className={styles.wrap}>
+      <header className={styles.topbar}>
+        <div className={styles.topbarInner}>
+          <nav className={styles.breadcrumb} aria-label="Breadcrumb">
+            <a href={routes.app.subscribers}>Subscribers</a>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <path d="m9 18 6-6-6-6" />
+            </svg>
+            <strong>{sub.name}</strong>
+          </nav>
+          <div className={styles.topbarActions}>
+            <button className="pbtn" type="button" onClick={() => setEditorOpen(true)}>
+              <Icon name="edit" size={15} />
+              Edit
+            </button>
+            <div className={styles.menuWrap} ref={menuRef}>
+              <button
+                className={`sbtn ${styles.moreBtn}`}
+                type="button"
+                aria-haspopup="true"
+                aria-expanded={menuOpen}
+                aria-label="More actions"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen((v) => !v);
+                }}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                >
+                  <circle cx="12" cy="5" r=".6" />
+                  <circle cx="12" cy="12" r=".6" />
+                  <circle cx="12" cy="19" r=".6" />
+                </svg>
+              </button>
+              {menuOpen && (
+                <div className={styles.menu} role="menu">
+                  <button className={styles.menuItem} type="button" onClick={exportCsv}>
+                    <svg {...menuIcon}>
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg>
+                    Export profile (CSV)
+                  </button>
+                  {sub.status === 'unsubscribed' ? (
+                    <button
+                      className={`${styles.menuItem} ${styles.menuOk}`}
+                      type="button"
+                      onClick={() => void resubscribe()}
+                      disabled={busy}
+                    >
+                      <svg {...menuIcon}>
+                        <path d="M20 6 9 17l-5-5" />
+                      </svg>
+                      Re-subscribe
+                    </button>
+                  ) : (
+                    /* 'complained' is folded into 'unsubscribed' by mapStatus, so it
+                       lands in the Re-subscribe branch rather than needing a check here. */
+                    <button
+                      className={`${styles.menuItem} ${styles.menuWarn}`}
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setConfirm('unsubscribe');
+                      }}
+                      disabled={busy || sub.status === 'bounced'}
+                    >
+                      <svg {...menuIcon}>
+                        <path d="M18 6 6 18M6 6l12 12" />
+                      </svg>
+                      Unsubscribe
+                    </button>
+                  )}
+                  <button
+                    className={`${styles.menuItem} ${styles.menuDanger}`}
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setConfirm('delete');
+                    }}
+                    disabled={busy}
+                  >
+                    <svg {...menuIcon}>
+                      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    </svg>
+                    Delete subscriber
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className={styles.page}>
+        <section className={styles.identity}>
+          <div
+            className={styles.avatar}
+            aria-hidden="true"
+            style={{ background: `linear-gradient(135deg, ${av0}, ${av1})` }}
+          >
+            {view.initials}
+          </div>
+          <div>
+            <div className={styles.identityHead}>
+              <h1 className={styles.identityName}>{sub.name}</h1>
+              <span className={`${styles.badge} ${active ? styles.badgeActive : ''}`}>
+                <span
+                  className={styles.dot}
+                  style={{ background: active ? '#16a34a' : 'currentColor' }}
+                />
+                {statusLabel}
+              </span>
+              {active && (
+                <span className={styles.badge}>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#16a34a"
+                    strokeWidth="2.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                  Confirmed
+                </span>
+              )}
+              {active && (
+                <span className={`${styles.badge} ${styles.badgeGdpr}`}>GDPR consent</span>
+              )}
+            </div>
+            <div className={styles.identityMeta}>
+              <span className={styles.email}>{sub.email}</span>
+              <span className={styles.sep} />
+              <span>{view.subscribedLabel}</span>
+            </div>
+          </div>
+        </section>
+
+        <div className={styles.layout}>
+          <div className={styles.colMain}>
+            <section className={`${styles.card} ${styles.score}`} aria-label="Engagement score">
+              <div className={styles.scoreRing}>
+                <div className={styles.ring}>
+                  <svg width="96" height="96" viewBox="0 0 96 96" aria-hidden="true">
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r="41"
+                      fill="none"
+                      stroke="var(--surface2)"
+                      strokeWidth="10"
+                    />
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r="41"
+                      fill="none"
+                      stroke="var(--accent)"
+                      strokeWidth="10"
+                      strokeLinecap="round"
+                      strokeDasharray={scoreArcLength(view.score)}
+                      data-score-arc
+                    />
+                  </svg>
+                  <div className={styles.ringValue}>
+                    <span className={`${styles.ringNumber} ${styles.tnum}`}>{view.score}</span>
+                    <span className={styles.ringOf}>of 100</span>
+                  </div>
+                </div>
+                <div>
+                  <p className={styles.overline}>Engagement</p>
+                  <p className={styles.scoreTier}>{view.scoreTier}</p>
+                  {view.scoreDeltaLabel && (
+                    <p className={styles.scoreDelta}>
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#16a34a"
+                        strokeWidth="2.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m3 17 6-6 4 4 8-8" />
+                        <path d="M17 7h4v4" />
+                      </svg>
+                      {view.scoreDeltaLabel}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <ul className={styles.meters}>
+                <li>
+                  <div className={styles.meterHead}>
+                    <span className={styles.meterLabel}>Open rate</span>
+                    <span className={`${styles.meterValue} ${styles.tnum}`}>
+                      {view.openRate == null ? '—' : `${view.openRate}%`}
+                    </span>
+                  </div>
+                  <div className={styles.meterTrack}>
+                    <div
+                      className={styles.meterFill}
+                      style={{ width: `${view.openRate ?? 0}%`, background: '#4f46e5' }}
+                    />
+                  </div>
+                </li>
+                <li>
+                  <div className={styles.meterHead}>
+                    <span className={styles.meterLabel}>Click rate</span>
+                    <span className={`${styles.meterValue} ${styles.tnum}`}>
+                      {view.clickRate == null ? '—' : `${view.clickRate}%`}
+                    </span>
+                  </div>
+                  <div className={styles.meterTrack}>
+                    <div
+                      className={styles.meterFill}
+                      style={{ width: `${view.clickRate ?? 0}%`, background: '#6366f1' }}
+                    />
+                  </div>
+                </li>
+                <li>
+                  <div className={styles.meterHead}>
+                    <span className={styles.meterLabel}>Recency</span>
+                    <span className={`${styles.meterValue} ${styles.tnum}`}>
+                      {view.lastActiveLabel}
+                    </span>
+                  </div>
+                  <div className={styles.meterTrack}>
+                    <div
+                      className={styles.meterFill}
+                      style={{ width: `${view.recencyPct}%`, background: '#16a34a' }}
+                    />
+                  </div>
+                </li>
+                <li>
+                  <div className={styles.meterHead}>
+                    <span className={styles.meterLabel}>Frequency</span>
+                    <span className={`${styles.meterValue} ${styles.tnum}`}>
+                      {view.frequencyLabel}
+                    </span>
+                  </div>
+                  <div className={styles.meterTrack}>
+                    <div
+                      className={styles.meterFill}
+                      style={{ width: `${view.frequencyPct}%`, background: '#c2740a' }}
+                    />
+                  </div>
+                </li>
+              </ul>
+            </section>
+
+            <section className={styles.stats} aria-label="Lifetime analytics">
+              <div className={styles.stat}>
+                <p className={styles.overline}>Emails sent</p>
+                <p className={`${styles.statValue} ${styles.tnum}`}>{view.emailsSent}</p>
+                <p className={styles.statSub}>
+                  <span className={styles.statSubStrong}>+{view.sentLast30}</span> last 30 days
+                </p>
+              </div>
+              <div className={styles.stat}>
+                <p className={styles.overline}>Open rate</p>
+                <p className={`${styles.statValue} ${styles.tnum}`}>
+                  {view.openRate == null ? '—' : `${view.openRate}%`}
+                </p>
+                <p className={styles.statSub}>Of delivered messages</p>
+              </div>
+              <div className={styles.stat}>
+                <p className={styles.overline}>Click rate</p>
+                <p className={`${styles.statValue} ${styles.tnum}`}>
+                  {view.clickRate == null ? '—' : `${view.clickRate}%`}
+                </p>
+                <p className={styles.statSub}>Of delivered messages</p>
+              </div>
+              <div className={styles.stat}>
+                <p className={styles.overline}>Bounces</p>
+                <p className={`${styles.statValue} ${styles.tnum}`}>{view.bounces}</p>
+                <p className={styles.statSub}>
+                  {sub.status === 'bounced' ? 'Hard bounce on file' : 'No hard bounces'}
+                </p>
+              </div>
+            </section>
+
+            <section className={`${styles.card} ${styles.chart}`} aria-label="Engagement over time">
+              <div className={styles.chartHead}>
+                <div>
+                  <h2 className={styles.cardTitle}>Engagement over time</h2>
+                  <p className={styles.chartSub}>Opens and clicks per week, last 12 weeks</p>
+                </div>
+                <div className={styles.legend}>
+                  <span>
+                    <span className={styles.swatch} style={{ background: '#c7d2fe' }} />
+                    Opens
+                  </span>
+                  <span>
+                    <span className={styles.swatch} style={{ background: 'var(--accent)' }} />
+                    Clicks
+                  </span>
+                </div>
+              </div>
+              {weekTotal === 0 ? (
+                <p className={styles.chartEmpty}>No opens or clicks in the last 12 weeks.</p>
+              ) : (
+                <ul className={styles.barChart} onMouseLeave={() => setHoverWeek(null)}>
+                  {view.weeks.map((w, i) => (
+                    <li
+                      key={`${w.label}-${w.opens}-${w.clicks}`}
+                      className={`${styles.barGroup}${hoverWeek === i ? ` ${styles.barGroupHover}` : ''}`}
+                      onMouseEnter={() => setHoverWeek(i)}
+                    >
+                      {hoverWeek === i && (
+                        <div className={styles.barTip} role="tooltip">
+                          <div className={`${styles.barTipVal} ${styles.tnum}`}>
+                            {w.opens} open{w.opens === 1 ? '' : 's'} · {w.clicks} click
+                            {w.clicks === 1 ? '' : 's'}
+                          </div>
+                          <div className={styles.barTipLbl}>{w.label}</div>
+                        </div>
+                      )}
+                      <span className={styles.bars}>
+                        <span
+                          className={`${styles.bar} ${styles.barOpen}`}
+                          style={{ height: barPx(w.opens) }}
+                          aria-hidden="true"
+                        />
+                        <span
+                          className={`${styles.bar} ${styles.barClick}`}
+                          style={{ height: barPx(w.clicks) }}
+                          aria-hidden="true"
+                        />
+                      </span>
+                      <span className={styles.barLabel}>{w.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className={`${styles.card} ${styles.tabsCard}`}>
+              <div className={styles.tabs} role="tablist" aria-label="Subscriber detail sections">
+                {(
+                  [
+                    ['activity', 'Activity', view.events.length],
+                    ['campaigns', 'Campaigns', view.campaigns.length],
+                    ['links', 'Clicked links', view.links.length],
+                    ['fields', 'Custom fields', view.fields.length],
+                  ] as const
+                ).map(([id, label, count]) => (
+                  <button
+                    key={id}
+                    className={`${styles.tab} ${tab === id ? styles.isActive : ''}`}
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === id}
+                    onClick={() => setTab(id)}
+                  >
+                    {label}
+                    <span className={`${styles.tabCount} ${styles.tnum}`}>{count}</span>
+                  </button>
+                ))}
+              </div>
+
+              {tab === 'activity' && (
+                <div role="tabpanel">
+                  <div className={styles.filters}>
+                    {FILTERS.map((f) => (
+                      <button
+                        key={f.id}
+                        className={`${styles.chip} ${filter === f.id ? styles.isActive : ''}`}
+                        type="button"
+                        onClick={() => setFilter(f.id)}
+                      >
+                        {f.label} · {filterCounts[f.id]}
+                      </button>
+                    ))}
+                    <span className={`${styles.filtersCount} ${styles.tnum}`}>
+                      Showing {filteredEvents.length} of {view.events.length} events
+                    </span>
+                  </div>
+                  <ul className={styles.events}>
+                    {filteredEvents.length === 0 ? (
+                      <li className={styles.empty}>No activity of this type yet.</li>
+                    ) : (
+                      filteredEvents.map((e) => (
+                        <li key={e.id} className={styles.event}>
+                          <EventIcon type={e.type} />
+                          <div>
+                            <p className={styles.eventTitle}>{e.title}</p>
+                            {e.link ? (
+                              <a className={`${styles.eventLink} ${styles.mono}`} href={e.link}>
+                                {e.link}
+                              </a>
+                            ) : null}
+                            <p className={styles.eventMeta}>{e.meta}</p>
+                          </div>
+                          <div className={styles.eventTime}>
+                            <span className={styles.eventWhen}>{e.when}</span>
+                            <span className={`${styles.eventStamp} ${styles.tnum}`}>{e.stamp}</span>
+                          </div>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
+              )}
+
+              {tab === 'campaigns' && (
+                <div role="tabpanel">
+                  {view.campaigns.length === 0 ? (
+                    <p className={styles.empty}>No campaign sends yet.</p>
+                  ) : (
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th>Campaign</th>
+                          <th>Sent</th>
+                          <th>Opens</th>
+                          <th>Clicks</th>
+                          <th>Result</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {view.campaigns.map((c) => (
+                          <tr key={c.id}>
+                            <td>
+                              <span className={styles.cellTitle}>{c.name}</span>
+                              <span className={styles.cellSub}>{c.channel}</span>
+                            </td>
+                            <td className={styles.tnum}>{c.sentLabel}</td>
+                            <td className={styles.tnum}>{c.opens}</td>
+                            <td className={styles.tnum}>{c.clicks}</td>
+                            <td>
+                              <span className={styles.dotLabel} style={{ color: c.resultColor }}>
+                                <span
+                                  className={styles.dot}
+                                  style={{ background: c.resultColor }}
+                                />
+                                {c.result}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
+
+              {tab === 'links' && (
+                <div role="tabpanel">
+                  {view.links.length === 0 ? (
+                    <p className={styles.empty}>No clicked-link history yet.</p>
+                  ) : (
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th>Link</th>
+                          <th>Campaign</th>
+                          <th>Clicks</th>
+                          <th>Last clicked</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {view.links.map((l) => (
+                          <tr key={l.id}>
+                            <td>
+                              <span className={styles.cellTitle}>{l.label}</span>
+                              <a className={`${styles.cellLink} ${styles.mono}`} href={l.href}>
+                                {l.href}
+                              </a>
+                            </td>
+                            <td className={styles.cellMuted}>{l.campaign}</td>
+                            <td className={styles.tnum}>{l.clicks}</td>
+                            <td className={styles.cellMuted}>{l.lastClicked}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
+
+              {tab === 'fields' && (
+                <div role="tabpanel">
+                  <div className={styles.fields}>
+                    {view.fields.length === 0 ? (
+                      <p className={styles.empty}>No custom fields on this subscriber.</p>
+                    ) : (
+                      <div className={styles.fieldsGrid}>
+                        {view.fields.map((f) => (
+                          <div key={f.key} className={styles.field}>
+                            <span className={`${styles.fieldKey} ${styles.mono}`}>{f.key}</span>
+                            <span className={styles.fieldValue}>{f.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <p className={styles.fieldsNote}>
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      >
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M12 16v-5M12 8h.01" />
+                      </svg>
+                      Custom fields come from the workspace schema and the attributes stored on the
+                      subscriber.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </section>
+          </div>
+
+          <aside className={styles.colRail}>
+            <section className={`${styles.card} ${styles.cardPad}`}>
+              <h2 className={styles.cardTitle}>Details</h2>
+              <dl className={styles.kvList}>
+                <div className={styles.kv}>
+                  <dt>Status</dt>
+                  <dd>{active ? `${statusLabel} · confirmed` : statusLabel}</dd>
+                </div>
+                <div className={styles.kv}>
+                  <dt>Country</dt>
+                  <dd>{sub.location || '—'}</dd>
+                </div>
+                <div className={styles.kv}>
+                  <dt>Timezone</dt>
+                  <dd>—</dd>
+                </div>
+                <div className={styles.kv}>
+                  <dt>Signup IP</dt>
+                  <dd>—</dd>
+                </div>
+                <div className={styles.kv}>
+                  <dt>Referrer</dt>
+                  <dd>—</dd>
+                </div>
+                <div className={styles.kv}>
+                  <dt>Last activity</dt>
+                  <dd>{view.lastActiveLabel}</dd>
+                </div>
+                <div className={styles.kv}>
+                  <dt>Last campaign</dt>
+                  <dd>{view.lastCampaignLabel}</dd>
+                </div>
+              </dl>
+              <div className={styles.railSection}>
+                <p className={styles.railLabel}>Lists</p>
+                <div className={styles.pills}>
+                  {sub.lists.length === 0 ? (
+                    <span className={styles.cellMuted}>None</span>
+                  ) : (
+                    sub.lists.map((l) => (
+                      <span key={l} className={`${styles.pill} ${styles.pillList}`}>
+                        {l}
+                      </span>
+                    ))
+                  )}
+                </div>
+              </div>
+              <div className={styles.railSection}>
+                <p className={styles.railLabel}>Tags</p>
+                <div className={styles.pills}>
+                  {sub.tags.map((t) => {
+                    const st = tagStyle(t);
+                    return (
+                      <span key={t} className={styles.pillTag} style={st}>
+                        <span className={styles.pillTagLbl}>{t}</span>
+                        <button
+                          type="button"
+                          className={styles.pillTagx}
+                          aria-label={`Remove ${t}`}
+                          disabled={busy}
+                          onClick={() => void removeTag(t)}
+                        >
+                          <Icon name="x" size={14} stroke={3} />
+                        </button>
+                      </span>
+                    );
+                  })}
+                  <button
+                    className={styles.btnGhost}
+                    type="button"
+                    onClick={() => setEditorOpen(true)}
+                  >
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                    Add
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section className={`${styles.card} ${styles.cardPad}`}>
+              <div className={styles.cardHead}>
+                <h2 className={styles.cardTitle}>Deliverability</h2>
+                <span
+                  className={`${styles.badge} ${sub.status === 'bounced' ? '' : styles.badgeActive}`}
+                >
+                  {sub.status === 'bounced' ? 'Bounced' : 'Healthy'}
+                </span>
+              </div>
+              <div className={styles.rows}>
+                <div className={styles.rowBetween}>
+                  <span className={styles.rowLabel}>Delivery rate</span>
+                  <span
+                    className={`${styles.rowValue} ${styles.tnum}${view.deliveryRate != null ? ` ${styles.rowValueOk}` : ''}`}
+                  >
+                    {view.deliveryRate == null ? '—' : `${view.deliveryRate}%`}
+                  </span>
+                </div>
+                <div className={styles.rowBetween}>
+                  <span className={styles.rowLabel}>Soft bounces</span>
+                  <span className={`${styles.rowValue} ${styles.tnum}`}>—</span>
+                </div>
+                <div className={styles.rowBetween}>
+                  <span className={styles.rowLabel}>Hard bounces</span>
+                  <span className={`${styles.rowValue} ${styles.tnum}`}>{view.bounces}</span>
+                </div>
+                <div className={styles.rowBetween}>
+                  <span className={styles.rowLabel}>Spam complaints</span>
+                  <span className={`${styles.rowValue} ${styles.tnum}`}>—</span>
+                </div>
+              </div>
+            </section>
+
+            <section className={`${styles.card} ${styles.cardPad}`}>
+              <h2 className={styles.cardTitle} style={{ marginBottom: 13 }}>
+                Consent &amp; privacy
+              </h2>
+              <ul className={styles.consentList}>
+                <li className={styles.consentItem}>
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={active ? '#16a34a' : 'var(--muted)'}
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                  <div>
+                    <p className={styles.consentLabel}>
+                      {active ? 'Double opt-in confirmed' : statusLabel}
+                    </p>
+                    <p className={styles.consentMeta}>{view.subscribedLabel}</p>
+                  </div>
+                </li>
+                {active && (
+                  <li className={styles.consentItem}>
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#6d28d9"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+                    </svg>
+                    <div>
+                      <p className={styles.consentLabel}>GDPR consent on file</p>
+                      <p className={styles.consentMeta}>{view.subscribedLabel}</p>
+                    </div>
+                  </li>
+                )}
+                <li className={styles.consentItem}>
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--muted)"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 8v8M8 12h8" />
+                  </svg>
+                  <div>
+                    <p className={styles.consentLabel}>Data export requested</p>
+                    <p className={styles.consentMeta}>Never</p>
+                  </div>
+                </li>
+              </ul>
+            </section>
+
+            <section className={`${styles.card} ${styles.cardPad}`}>
+              <div className={styles.cardHead}>
+                <h2 className={styles.cardTitle}>Internal notes</h2>
+                {notesDirty && (
+                  <button
+                    className={styles.btnPrimary}
+                    type="button"
+                    onClick={() => void saveNotes()}
+                  >
+                    Save
+                  </button>
+                )}
+              </div>
+              <textarea
+                className={styles.notes}
+                value={notesDraft}
+                placeholder="Only your team can see this."
+                aria-label="Internal notes"
+                onChange={(e) => setNotesDraft(e.target.value)}
+              />
+            </section>
+          </aside>
+        </div>
+      </main>
+
+      {toast && (
+        <div
+          className={styles.toast}
+          role="status"
+          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
+        >
+          <span className={styles.toastIc}>
+            <Icon name="check" size={13} stroke={3} />
+          </span>
+          {toast}
+        </div>
+      )}
+
+      {confirm === 'unsubscribe' && (
+        <ConfirmDialog
+          title={`Unsubscribe “${sub.name}”?`}
+          message="They won’t receive future campaigns. You can re-subscribe them anytime from this menu."
+          confirmLabel="Unsubscribe"
+          tone="default"
+          onCancel={() => setConfirm(null)}
+          onConfirm={() => {
+            setConfirm(null);
+            void unsubscribe();
+          }}
+        />
+      )}
+
+      {confirm === 'delete' && (
+        <ConfirmDialog
+          title={`Delete “${sub.name}”?`}
+          message="This cannot be undone."
+          confirmLabel="Delete subscriber"
+          onCancel={() => setConfirm(null)}
+          onConfirm={() => {
+            setConfirm(null);
+            void deleteSubscriber();
+          }}
+        />
+      )}
+
+      {editorOpen && (
+        <SubscriberEditorModal
+          mode="edit"
+          initialEmail={sub.email}
+          initialPhone={sub.phone}
+          initialName={sub.name}
+          initialStatus={sub.status}
+          initialListIds={sub.listIds}
+          initialTags={sub.tags}
+          lists={
+            allLists.length > 0
+              ? allLists
+              : sub.lists.map((name, i) => ({ id: sub.listIds[i] ?? name, name }))
+          }
+          onClose={() => setEditorOpen(false)}
+          onSave={async (values) => {
+            try {
+              await api.patch(`subscribers/${sub.id}`, {
+                email: values.email,
+                phone: values.phone || null,
+                name: values.name || null,
+                status: values.status,
+              });
+              setSub((s) => ({
+                ...s,
+                email: values.email,
+                phone: values.phone,
+                name: values.name || values.email,
+                status: values.status,
+                listIds: values.listIds,
+                tags: values.tags,
+              }));
+              setEditorOpen(false);
+              show('Subscriber updated');
+            } catch (e) {
+              show(e instanceof ApiError ? e.message : 'Update failed');
+            }
+          }}
+        />
+      )}
+    </div>
+  );
+}

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
-import type { IconName } from '@/lib/icons';
 import type { ChannelType, SubscriberStatus } from '@/types/app';
 import {
   richSubscribers as mockSubscribers,
@@ -35,12 +34,12 @@ import {
   STATUS_TABS,
   PAGE_SIZE,
   visiblePageNumbers,
-  recentListsSummary,
   tagStyle,
   reachOf,
   initials,
 } from './AppSubscribers.logic';
 import type { SortKey, ViewMode } from './AppSubscribers.types';
+import { routes } from '@/config/routes';
 import styles from './AppSubscribers.module.css';
 
 export default function AppSubscribers({
@@ -835,9 +834,14 @@ export default function AppSubscribers({
                       style:
                         tab === 'active'
                           ? { background: 'var(--success-bg)', color: 'var(--success-strong)' }
-                          : tab === 'bounced'
-                            ? { background: 'var(--danger-bg)', color: 'var(--danger-text)' }
-                            : undefined,
+                          : tab === 'unsubscribed'
+                            ? {
+                                background: 'var(--warning-bg)',
+                                color: 'var(--warning-strong)',
+                              }
+                            : tab === 'bounced'
+                              ? { background: 'var(--danger-bg)', color: 'var(--danger)' }
+                              : undefined,
                     },
                   ]
                 : []),
@@ -1148,7 +1152,6 @@ export default function AppSubscribers({
           onClose={() => setOpenId(null)}
           onSaveTags={saveTags}
           onFilterTag={filterByTag}
-          onToast={showToast}
           onEdit={() => {
             const sub = openSub;
             setOpenId(null);
@@ -1311,31 +1314,6 @@ type ApiSubscriberActivity = {
     read: number;
     clicked?: number;
   }[];
-  recent: {
-    id: string;
-    channel: ChannelType;
-    status: string;
-    campaignName: string | null;
-    at: string;
-  }[];
-};
-
-/** Map a message status to its timeline presentation. */
-const EV_TONE: Record<string, { bg: string; color: string }> = {
-  accent: { bg: 'var(--accent-tint)', color: 'var(--accent)' },
-  success: { bg: 'var(--success-bg)', color: 'var(--success-strong)' },
-  muted: { bg: 'var(--surface2)', color: 'var(--text4)' },
-  danger: { bg: 'var(--danger-bg)', color: 'var(--danger)' },
-};
-const EV_STATUS: Record<string, { icon: IconName; verb: string; tone: keyof typeof EV_TONE }> = {
-  read: { icon: 'eye', verb: 'Opened', tone: 'accent' },
-  delivered: { icon: 'check-circle', verb: 'Delivered', tone: 'success' },
-  sent: { icon: 'send', verb: 'Sent', tone: 'muted' },
-  submitted: { icon: 'send', verb: 'Sent', tone: 'muted' },
-  queued: { icon: 'clock', verb: 'Queued', tone: 'muted' },
-  failed: { icon: 'x', verb: 'Delivery failed for', tone: 'danger' },
-  expired: { icon: 'x', verb: 'Expired', tone: 'danger' },
-  cancelled: { icon: 'x', verb: 'Cancelled', tone: 'muted' },
 };
 
 function SubscriberDrawer({
@@ -1346,7 +1324,6 @@ function SubscriberDrawer({
   onClose,
   onSaveTags,
   onFilterTag,
-  onToast,
   onEdit,
   onDelete,
 }: {
@@ -1358,7 +1335,6 @@ function SubscriberDrawer({
   onSaveTags: (id: string, tags: string[]) => void;
   onFilterTag: (tag: string) => void;
   onEdit: () => void;
-  onToast: (m: string) => void;
   onDelete: () => void;
 }) {
   const [draft, setDraft] = useState<string[]>(tags);
@@ -1401,7 +1377,6 @@ function SubscriberDrawer({
   const statusLabel = STATUS_LABEL[sub.status];
 
   type ChanRow = { ch: ChannelType; on: boolean; meta: string; open: string; click: string };
-  type Ev = { icon: IconName; bg: string; color: string; title: string; when: string };
 
   // "Last active" is the most recent real message timestamp; falls back to the
   // fixture value only in the marketing preview.
@@ -1414,10 +1389,8 @@ function SubscriberDrawer({
       : ago(sub.updatedAt);
 
   let channelRows: ChanRow[];
-  let activity: Ev[];
 
   if (act) {
-    // Real engagement + timeline from the service.
     const byChannel = new Map(act.channels.map((c) => [c.channel, c]));
     channelRows = CHANNEL_ORDER.map((ch) => {
       const s = byChannel.get(ch);
@@ -1438,24 +1411,6 @@ function SubscriberDrawer({
         click: pctOf(clicked),
       };
     });
-    activity = act.recent.map((e) => {
-      const p = EV_STATUS[e.status] ?? {
-        icon: 'inbox' as IconName,
-        verb: e.status,
-        tone: 'muted' as const,
-      };
-      const tone = EV_TONE[p.tone];
-      const subject = e.campaignName
-        ? `“${e.campaignName}”`
-        : `a ${CHANNEL[e.channel].label} message`;
-      return {
-        icon: p.icon,
-        bg: tone.bg,
-        color: tone.color,
-        title: `${p.verb} ${subject}`,
-        when: agoNow(e.at),
-      };
-    });
   } else if (live) {
     // Live but still loading — show empty channels rather than fake numbers.
     channelRows = CHANNEL_ORDER.map((ch) => ({
@@ -1465,7 +1420,6 @@ function SubscriberDrawer({
       open: '—',
       click: '—',
     }));
-    activity = [];
   } else {
     // Fixture/marketing preview keeps its illustrative values.
     channelRows = [
@@ -1492,49 +1446,7 @@ function SubscriberDrawer({
         click: '—',
       },
     ];
-    activity = [];
-    if (sub.status === 'active') {
-      activity.push({
-        icon: 'eye',
-        bg: 'var(--accent-tint)',
-        color: 'var(--accent)',
-        title: 'Opened “Summer Sale”',
-        when: ago(sub.updatedAt),
-      });
-      activity.push({
-        icon: 'target',
-        bg: 'var(--success-bg)',
-        color: 'var(--success-strong)',
-        title: 'Clicked a link in “Spring Preview”',
-        when: '3d ago',
-      });
-    } else if (sub.status === 'bounced') {
-      activity.push({
-        icon: 'x',
-        bg: 'var(--danger-bg)',
-        color: 'var(--danger)',
-        title: 'Email bounced (hard)',
-        when: ago(sub.updatedAt),
-      });
-    } else {
-      activity.push({
-        icon: 'x',
-        bg: 'var(--warning-bg)',
-        color: 'var(--warning)',
-        title: 'Unsubscribed from all lists',
-        when: ago(sub.updatedAt),
-      });
-    }
-    activity.push({
-      icon: 'plus',
-      bg: 'var(--surface2)',
-      color: 'var(--text4)',
-      title: `Joined ${sub.lists[0] ?? 'a list'}`,
-      when: sub.joined,
-    });
   }
-
-  const listsLine = recentListsSummary(sub.lists);
 
   return (
     <div className="adrawer-overlay" onClick={onClose}>
@@ -1621,33 +1533,8 @@ function SubscriberDrawer({
           <div className={styles.sbdSection}>
             <span className={`adrawer__eyebrow ${styles.sbdEyebrow}`}>Details</span>
             <div className="adetail">
-              <span className="adetail__k">Lists</span>
-              <span className="adetail__v">
-                {listsLine.shown.length === 0 ? (
-                  '—'
-                ) : (
-                  <>
-                    {listsLine.shown.join(', ')}
-                    {listsLine.more > 0 && (
-                      <span
-                        className={styles.listMore}
-                        title={listsLine.rest.join(', ')}
-                        aria-label={`${listsLine.more} more list${listsLine.more === 1 ? '' : 's'}: ${listsLine.rest.join(', ')}`}
-                      >
-                        +{listsLine.more}
-                      </span>
-                    )}
-                  </>
-                )}
-              </span>
-            </div>
-            <div className="adetail">
               <span className="adetail__k">Phone</span>
               <span className="adetail__v">{sub.phone || '—'}</span>
-            </div>
-            <div className="adetail">
-              <span className="adetail__k">Location</span>
-              <span className="adetail__v">{sub.location}</span>
             </div>
             <div className="adetail">
               <span className="adetail__k">Subscribed</span>
@@ -1674,49 +1561,28 @@ function SubscriberDrawer({
                         color: on ? m.color : 'var(--muted)',
                       }}
                     >
-                      <Icon name={m.icon} size={14} />
+                      <Icon name={m.icon} size={13} />
                     </span>
                     <div className={styles.sbdChanMain}>
-                      <div className={styles.sbdChanTop}>
-                        <span className={styles.sbdChanName}>{m.label}</span>
-                        <span className={`${styles.sbdChanPill}${on ? '' : ` ${styles.isOff}`}`}>
-                          {on ? 'Active' : 'Off'}
-                        </span>
-                      </div>
-                      <div className={styles.sbdChanMeta}>{meta}</div>
+                      <span className={styles.sbdChanName}>{m.label}</span>
+                      <span className={`${styles.sbdChanPill}${on ? '' : ` ${styles.isOff}`}`}>
+                        {on ? 'Active' : 'Off'}
+                      </span>
+                      <span className={styles.sbdChanMeta}>{meta}</span>
                     </div>
                     <div className={styles.sbdChanMetrics}>
-                      <div>
+                      <span className={styles.sbdChanMetric}>
                         <span className={`tnum ${styles.sbdChanNum}`}>{open}</span>
                         <span className={styles.sbdChanSub}>open</span>
-                      </div>
-                      <div>
+                      </span>
+                      <span className={styles.sbdChanMetric}>
                         <span className={`tnum ${styles.sbdChanNum}`}>{click}</span>
                         <span className={styles.sbdChanSub}>click</span>
-                      </div>
+                      </span>
                     </div>
                   </div>
                 );
               })}
-            </div>
-          </div>
-
-          {/* recent activity */}
-          <div className={styles.sbdSection}>
-            <span className={`adrawer__eyebrow ${styles.sbdEyebrow}`}>Recent activity</span>
-            <div className={styles.sbdTimeline}>
-              {activity.length === 0 && <div className={styles.sbdChanMeta}>No activity yet.</div>}
-              {activity.map((ev, i) => (
-                <div key={i} className={styles.sbdEv}>
-                  <span className={styles.sbdEvIc} style={{ background: ev.bg, color: ev.color }}>
-                    <Icon name={ev.icon} size={14} />
-                  </span>
-                  <div>
-                    <div className={styles.sbdEvTitle}>{ev.title}</div>
-                    <div className={styles.sbdEvWhen}>{ev.when}</div>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         </div>
@@ -1731,18 +1597,19 @@ function SubscriberDrawer({
           >
             <Icon name="trash" size={15} />
           </button>
-          <button
-            type="button"
-            className="sbtn"
-            style={{ flex: 1 }}
-            onClick={() => onToast('Opening campaign wizard…')}
-          >
-            <Icon name="send" size={15} />
-            Send email
-          </button>
-          <button type="button" className="pbtn" style={{ flex: 1 }} onClick={onEdit}>
+          <button type="button" className="sbtn" style={{ flex: 1 }} onClick={onEdit}>
             <Icon name="edit" size={15} />
             Edit
+          </button>
+          <button
+            type="button"
+            className="pbtn"
+            style={{ flex: 1 }}
+            onClick={() => {
+              window.location.href = routes.app.subscriber(sub.id);
+            }}
+          >
+            View profile
           </button>
         </div>
       </div>
