@@ -8,7 +8,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const JSON_DIR = path.join(ROOT, 'packages/email-builder-standalone/src/App/ComponentsLibrary/templates/json');
+const JSON_DIR = path.join(
+  ROOT,
+  'packages/email-builder-standalone/src/App/ComponentsLibrary/templates/json',
+);
 
 const slug = process.argv[2] ?? '01-business';
 const doc = JSON.parse(fs.readFileSync(path.join(JSON_DIR, `${slug}.json`), 'utf8'));
@@ -19,7 +22,7 @@ const label = (b) => {
   switch (b.type) {
     case 'NotionText':
       return `${s.fontSize}px/${s.fontWeight} ${s.color} ${JSON.stringify(
-        (b.data.props?.html || '').replace(/<[^>]+>/g, '').slice(0, 46)
+        (b.data.props?.html || '').replace(/<[^>]+>/g, '').slice(0, 46),
       )}`;
     case 'Image':
       return `size=${b.data.props?.size} scale=${b.data.props?.scale} w=${b.data.props?.width}`;
@@ -43,7 +46,8 @@ const walk = (id, depth = 0) => {
   if (!b) return console.log(`${'  '.repeat(depth)}!! missing ${id}`);
   console.log(`${'  '.repeat(depth)}${b.type} ${pad(b.data?.style?.padding)} ${label(b)}`);
   if (b.type === 'EmailLayout') (b.data.childrenIds || []).forEach((c) => walk(c, depth + 1));
-  else if (b.type === 'Container') (b.data.props?.childrenIds || []).forEach((c) => walk(c, depth + 1));
+  else if (b.type === 'Container')
+    (b.data.props?.childrenIds || []).forEach((c) => walk(c, depth + 1));
   else if (b.type === 'ColumnsContainer')
     (b.data.props?.columns || []).forEach((col, i) => {
       if (!col.childrenIds?.length) return;

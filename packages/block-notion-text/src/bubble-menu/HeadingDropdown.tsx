@@ -121,7 +121,7 @@ export default function HeadingDropdown({ editor }: Props) {
       });
       handleClose();
     },
-    [editor, handleClose]
+    [editor, handleClose],
   );
 
   const getCurrentIcon = () => {
@@ -189,7 +189,9 @@ export default function HeadingDropdown({ editor }: Props) {
               </ListItemIcon>
               <ListItemText
                 primary={item.label}
-                slotProps={{ primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } } }}
+                slotProps={{
+                  primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } },
+                }}
               />
             </ListItemButton>
           ))}

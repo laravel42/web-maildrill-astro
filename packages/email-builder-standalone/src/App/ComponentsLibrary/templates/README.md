@@ -2,9 +2,9 @@
 
 Source of truth for the 20 Components Library templates.
 
-| Path | Role |
-|------|------|
-| `html/` | Send-ready HTML (from MaildrillTemplates archive) |
+| Path    | Role                                               |
+| ------- | -------------------------------------------------- |
+| `html/` | Send-ready HTML (from MaildrillTemplates archive)  |
 | `json/` | Flat email-builder documents (`Record<id, block>`) |
 
 Regenerate JSON, AI presets, and `localPresets.data.json` templates:

@@ -7,7 +7,10 @@ const BodySchema = z.object({
   size: z.enum(['1024x1024', '1024x1792', '1792x1024']).optional().default('1024x1024'),
   model: z.enum(['gpt-image-1', 'dall-e-3', 'dall-e-2', 'image-01']).optional(),
   provider: z.enum(['openai', 'minimax']).optional(),
-  aspect_ratio: z.enum(['1:1', '16:9', '4:3', '3:2', '2:3', '3:4', '9:16']).optional().default('1:1'),
+  aspect_ratio: z
+    .enum(['1:1', '16:9', '4:3', '3:2', '2:3', '3:4', '9:16'])
+    .optional()
+    .default('1:1'),
 });
 
 function resolveProvider(explicit?: string, model?: string): 'openai' | 'minimax' {
@@ -51,7 +54,11 @@ async function generateWithMiniMax(prompt: string, aspectRatio: string): Promise
   return { url };
 }
 
-async function generateWithOpenAI(prompt: string, size: string, model: string): Promise<{ url: string }> {
+async function generateWithOpenAI(
+  prompt: string,
+  size: string,
+  model: string,
+): Promise<{ url: string }> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw Object.assign(new Error('OPENAI_API_KEY is not set'), { status: 503 });
 

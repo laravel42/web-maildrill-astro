@@ -149,7 +149,7 @@ posthog.init('<ph_project_token>', {
   api_host: 'https://us.i.posthog.com',
   // Optional: send PostHog session/user context to your backend
   tracing_headers: ['api.example.com'],
-})
+});
 ```
 
 This works in local development too, but match on the hostname alone: use `'localhost'`, not `'localhost:3000'`. Ports are never part of a hostname, so a value with one in it never matches anything. `localhost` and `127.0.0.1` are also different hostnames — use whichever your app actually calls.
@@ -186,9 +186,9 @@ For any technical questions for how to integrate specific PostHog features into 
 
 Alternatively, the following tutorials can help you get started:
 
--   [How to set up Astro analytics, feature flags, and more](/tutorials/astro-analytics.md)
--   [How to set up A/B tests in Astro](/tutorials/astro-ab-tests.md)
--   [How to set up surveys in Astro](/tutorials/astro-surveys.md)
+- [How to set up Astro analytics, feature flags, and more](/tutorials/astro-analytics.md)
+- [How to set up A/B tests in Astro](/tutorials/astro-ab-tests.md)
+- [How to set up surveys in Astro](/tutorials/astro-surveys.md)
 
 ### Community questions
 

@@ -15,7 +15,9 @@ import { CRITIQUE_DIMENSIONS, DIMENSION_LABEL } from '../audit/types.js';
 import { callLlmText, extractFirstJson, type LlmCallOptions } from './llm-text.js';
 
 const DimensionScoreSchema = z.object({
-  dimension: z.enum(CRITIQUE_DIMENSIONS as unknown as [CritiqueDimensionId, ...CritiqueDimensionId[]]),
+  dimension: z.enum(
+    CRITIQUE_DIMENSIONS as unknown as [CritiqueDimensionId, ...CritiqueDimensionId[]],
+  ),
   score: z.number().min(0).max(4).nullable(),
   note: z.string().max(280).optional(),
 });
@@ -28,7 +30,9 @@ const LlmCritiqueSchema = z.object({
     .array(
       z.object({
         severity: z.enum(['P0', 'P1', 'P2', 'P3']),
-        dimension: z.enum(CRITIQUE_DIMENSIONS as unknown as [CritiqueDimensionId, ...CritiqueDimensionId[]]),
+        dimension: z.enum(
+          CRITIQUE_DIMENSIONS as unknown as [CritiqueDimensionId, ...CritiqueDimensionId[]],
+        ),
         title: z.string().min(3).max(120),
         detail: z.string().min(3).max(400),
         fix: z.string().min(3).max(400),
@@ -75,7 +79,11 @@ function summariseDocument(document: EditorDocument): string {
     const props = (data.props as Record<string, unknown> | undefined) ?? {};
     let hint = '';
     if (type === 'NotionText' && typeof props.html === 'string') {
-      hint = props.html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+      hint = props.html
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 80);
     } else if (type === 'Button' && typeof props.text === 'string') {
       hint = `btn:"${props.text}" bg=${String(props.buttonBackgroundColor ?? style.buttonBackgroundColor ?? '')}`;
     } else if (type === 'Image') {
@@ -83,8 +91,11 @@ function summariseDocument(document: EditorDocument): string {
     } else if (type === 'EmailLayout') {
       hint = `canvas=${String(data.canvasColor ?? '')} font=${String(data.fontFamily ?? '')}`;
     } else if (type === 'Container' || type === 'ColumnsContainer') {
-      const kids = (props.childrenIds as string[] | undefined)
-        ?? (props.columns as Array<{ childrenIds?: string[] }> | undefined)?.flatMap((c) => c.childrenIds ?? []);
+      const kids =
+        (props.childrenIds as string[] | undefined) ??
+        (props.columns as Array<{ childrenIds?: string[] }> | undefined)?.flatMap(
+          (c) => c.childrenIds ?? [],
+        );
       hint = `kids=${(kids ?? []).length} pad=${JSON.stringify(style.padding ?? null)}`;
     }
     lines.push(`${id}|${type}|${hint}`);

@@ -24,7 +24,9 @@ export const ViewportContext = createContext<Viewport>('desktop');
 export const ViewportProvider: React.FC<{
   value: Viewport;
   children: React.ReactNode;
-}> = ({ value, children }) => <ViewportContext.Provider value={value}>{children}</ViewportContext.Provider>;
+}> = ({ value, children }) => (
+  <ViewportContext.Provider value={value}>{children}</ViewportContext.Provider>
+);
 
 /**
  * Read the effective viewport for the current render subtree.

@@ -4,7 +4,10 @@ import { type DividerProps, DividerPropsSchema } from '@eb/document-core';
 
 import Wrapper from '../../email-builder/src/blocks/helpers/Wrapper';
 import { getPadding } from '../../email-builder/src/helpers/getCssProperties';
-import { shortCssId, updateHexColorInBackgroundString } from '../../email-builder/src/helpers/utils';
+import {
+  shortCssId,
+  updateHexColorInBackgroundString,
+} from '../../email-builder/src/helpers/utils';
 import { useViewport } from '../../email-builder/src/Reader/viewport';
 
 export { DividerPropsSchema, type DividerProps };
@@ -19,17 +22,24 @@ export const DividerPropsDefaults = {
 export function Divider({ style, blockId }: DividerProps) {
   const selectedScreenSize = useViewport();
   const padding = getPadding(
-    selectedScreenSize === 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding)
+    selectedScreenSize === 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding),
   );
-  const height = selectedScreenSize === 'desktop' ? style?.height : (style?.heightMobile ?? style?.height);
+  const height =
+    selectedScreenSize === 'desktop' ? style?.height : (style?.heightMobile ?? style?.height);
   const color = style?.color;
-  const widthValue = selectedScreenSize === 'desktop' ? style?.width : (style?.widthMobile ?? style?.width);
+  const widthValue =
+    selectedScreenSize === 'desktop' ? style?.width : (style?.widthMobile ?? style?.width);
   const width = widthValue == null ? undefined : `${widthValue}%`;
-  const align = selectedScreenSize === 'desktop' ? style?.textAlign : (style?.textAlignMobile ?? style?.textAlign);
+  const align =
+    selectedScreenSize === 'desktop'
+      ? style?.textAlign
+      : (style?.textAlignMobile ?? style?.textAlign);
   const background = style?.background ?? '';
   const backgroundColor = style?.backgroundColor ?? '';
 
-  const backgroundString = backgroundColor ? updateHexColorInBackgroundString(background, backgroundColor) : background;
+  const backgroundString = backgroundColor
+    ? updateHexColorInBackgroundString(background, backgroundColor)
+    : background;
 
   const sid = shortCssId(blockId as any);
   return (
@@ -54,7 +64,16 @@ export function Divider({ style, blockId }: DividerProps) {
         lineHeight={0}
         fontSize={0}
       >
-        <div style={{ margin: 0, padding: 0, height: 0, overflow: 'hidden', fontSize: 0, lineHeight: 0 }} />
+        <div
+          style={{
+            margin: 0,
+            padding: 0,
+            height: 0,
+            overflow: 'hidden',
+            fontSize: 0,
+            lineHeight: 0,
+          }}
+        />
       </Wrapper>
     </Wrapper>
   );

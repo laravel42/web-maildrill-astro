@@ -76,7 +76,7 @@ export default function SampleImageGallery() {
     window.dispatchEvent(
       new CustomEvent('email-builder-set-image', {
         detail: imageUrl,
-      })
+      }),
     );
 
     // Update local state
@@ -124,7 +124,10 @@ export default function SampleImageGallery() {
             borderColor: 'primary.main',
           }}
         >
-          <Typography variant="caption" sx={{ display: 'block', mb: 1, fontWeight: 600, color: 'primary.main' }}>
+          <Typography
+            variant="caption"
+            sx={{ display: 'block', mb: 1, fontWeight: 600, color: 'primary.main' }}
+          >
             {currentImageUrl ? 'Current Image' : 'No Image Selected'}
           </Typography>
 
@@ -173,14 +176,19 @@ export default function SampleImageGallery() {
                 fontSize: '0.7rem',
               }}
             >
-              {currentImageUrl.length > 70 ? `${currentImageUrl.substring(0, 70)}...` : currentImageUrl}
+              {currentImageUrl.length > 70
+                ? `${currentImageUrl.substring(0, 70)}...`
+                : currentImageUrl}
             </Typography>
           )}
         </Box>
       )}
 
       {/* Gallery Grid */}
-      <Typography variant="caption" sx={{ display: 'block', mb: 1, color: 'text.secondary', fontWeight: 500 }}>
+      <Typography
+        variant="caption"
+        sx={{ display: 'block', mb: 1, color: 'text.secondary', fontWeight: 500 }}
+      >
         Select an image:
       </Typography>
 

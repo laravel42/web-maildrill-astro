@@ -1,33 +1,27 @@
 export const MESSAGE_STATES = [
-  "draft",
-  "scheduled",
-  "queued",
-  "processing",
-  "submitted",
-  "sent",
-  "delivered",
-  "read",
-  "failed",
-  "cancelled",
-  "expired",
+  'draft',
+  'scheduled',
+  'queued',
+  'processing',
+  'submitted',
+  'sent',
+  'delivered',
+  'read',
+  'failed',
+  'cancelled',
+  'expired',
 ] as const;
 export type MessageState = (typeof MESSAGE_STATES)[number];
 
 export const TERMINAL_STATES = [
-  "read",
-  "failed",
-  "cancelled",
-  "expired",
+  'read',
+  'failed',
+  'cancelled',
+  'expired',
 ] as const satisfies readonly MessageState[];
 
 export type ProviderOutcome =
-  | "submitted"
-  | "sent"
-  | "delivered"
-  | "read"
-  | "failed"
-  | "cancelled"
-  | "expired";
+  'submitted' | 'sent' | 'delivered' | 'read' | 'failed' | 'cancelled' | 'expired';
 
 export function isTerminal(state: MessageState): boolean {
   return (TERMINAL_STATES as readonly MessageState[]).includes(state);
@@ -39,10 +33,10 @@ export function isTerminal(state: MessageState): boolean {
  * messages remain in these states.
  */
 export const QUEUE_PENDING_STATES = [
-  "draft",
-  "scheduled",
-  "queued",
-  "processing",
+  'draft',
+  'scheduled',
+  'queued',
+  'processing',
 ] as const satisfies readonly MessageState[];
 
 export function isCampaignDispatched(state: MessageState): boolean {
@@ -54,11 +48,11 @@ export function isCampaignDispatched(state: MessageState): boolean {
  * analytics completeness — campaign status itself completes on dispatch.
  */
 export const CAMPAIGN_COMPLETE_STATES = [
-  "delivered",
-  "read",
-  "failed",
-  "cancelled",
-  "expired",
+  'delivered',
+  'read',
+  'failed',
+  'cancelled',
+  'expired',
 ] as const satisfies readonly MessageState[];
 
 export function isCampaignDeliveryComplete(state: MessageState): boolean {
@@ -67,10 +61,10 @@ export function isCampaignDeliveryComplete(state: MessageState): boolean {
 
 /** Open message statuses still awaiting a final DLR (or still in the send queue). */
 export const OPEN_DELIVERY_STATES = [
-  "queued",
-  "processing",
-  "submitted",
-  "sent",
+  'queued',
+  'processing',
+  'submitted',
+  'sent',
 ] as const satisfies readonly MessageState[];
 
 export function isOpenDeliveryState(state: MessageState): boolean {
@@ -78,37 +72,35 @@ export function isOpenDeliveryState(state: MessageState): boolean {
 }
 
 /** Map Infobip DLR `status.groupName` to our provider outcome. */
-export function outcomeFromInfobipStatusGroup(
-  groupName: string | undefined,
-): ProviderOutcome {
-  switch ((groupName ?? "").toUpperCase()) {
-    case "DELIVERED":
-      return "delivered";
-    case "PENDING":
-      return "submitted";
-    case "UNDELIVERABLE":
-    case "REJECTED":
-      return "failed";
-    case "EXPIRED":
-      return "expired";
+export function outcomeFromInfobipStatusGroup(groupName: string | undefined): ProviderOutcome {
+  switch ((groupName ?? '').toUpperCase()) {
+    case 'DELIVERED':
+      return 'delivered';
+    case 'PENDING':
+      return 'submitted';
+    case 'UNDELIVERABLE':
+    case 'REJECTED':
+      return 'failed';
+    case 'EXPIRED':
+      return 'expired';
     default:
-      return "sent";
+      return 'sent';
   }
 }
 
 /** Explicit allow-list of forward transitions. Everything else is rejected. */
 const ALLOWED: Record<MessageState, readonly MessageState[]> = {
-  draft: ["scheduled", "queued", "cancelled"],
-  scheduled: ["queued", "cancelled", "expired"],
-  queued: ["processing", "cancelled", "expired"],
-  processing: ["submitted", "failed", "cancelled"],
+  draft: ['scheduled', 'queued', 'cancelled'],
+  scheduled: ['queued', 'cancelled', 'expired'],
+  queued: ['processing', 'cancelled', 'expired'],
+  processing: ['submitted', 'failed', 'cancelled'],
   // A provider can accept a message (submitted/sent) and only later report it as
   // EXPIRED — WhatsApp/Voice/SMS routinely expire post-acceptance when they can't
   // deliver within the message TTL. Without `expired` here that terminal DLR is
   // dropped and the row (and its campaign) hangs in "sending" forever.
-  submitted: ["sent", "delivered", "read", "failed", "expired"],
-  sent: ["delivered", "read", "failed", "expired"],
-  delivered: ["read"],
+  submitted: ['sent', 'delivered', 'read', 'failed', 'expired'],
+  sent: ['delivered', 'read', 'failed', 'expired'],
+  delivered: ['read'],
   read: [],
   failed: [],
   cancelled: [],
@@ -131,10 +123,7 @@ const DELIVERY_ORDER: Partial<Record<MessageState, number>> = {
   read: 4,
 };
 
-export function isRegressiveDeliveryEvent(
-  current: MessageState,
-  candidate: MessageState,
-): boolean {
+export function isRegressiveDeliveryEvent(current: MessageState, candidate: MessageState): boolean {
   const c = DELIVERY_ORDER[current];
   const n = DELIVERY_ORDER[candidate];
   if (c === undefined || n === undefined) return false;
@@ -152,14 +141,14 @@ export function resolveEventTransition(
   current: MessageState,
   outcome: ProviderOutcome,
 ): MessageState | null {
-  if (current === "read" || current === "cancelled" || current === "expired") {
+  if (current === 'read' || current === 'cancelled' || current === 'expired') {
     return null;
   }
-  if (outcome === "failed") {
-    if (current === "delivered" || current === "sent") return null;
-    return canTransition(current, "failed") ? "failed" : null;
+  if (outcome === 'failed') {
+    if (current === 'delivered' || current === 'sent') return null;
+    return canTransition(current, 'failed') ? 'failed' : null;
   }
-  if (outcome === "cancelled" || outcome === "expired") {
+  if (outcome === 'cancelled' || outcome === 'expired') {
     return canTransition(current, outcome) ? outcome : null;
   }
   const target: MessageState = outcome;

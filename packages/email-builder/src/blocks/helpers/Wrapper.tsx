@@ -35,12 +35,17 @@ type Props = {
   fontSize?: React.CSSProperties['fontSize'];
 };
 
-function getBorder(border: Border | undefined, side: 'top' | 'bottom' | 'left' | 'right'): string | undefined {
+function getBorder(
+  border: Border | undefined,
+  side: 'top' | 'bottom' | 'left' | 'right',
+): string | undefined {
   if (!border || (border && border[side] === 0)) {
     return 'initial';
   }
 
-  return border[side] !== undefined ? `${border[side]}px solid ${border?.color ?? 'black'}` : 'initial';
+  return border[side] !== undefined
+    ? `${border[side]}px solid ${border?.color ?? 'black'}`
+    : 'initial';
 }
 
 /**
@@ -114,19 +119,29 @@ export default function Wrapper({
     >
       {/* Omit colgroup: with fixed layout on narrow widths it starved the center column; tds set side widths. */}
       <tbody>
-        <tr style={{ height: `${padding.top}px` }} className={isParent ? `t${className}` : `it${className}`}>
+        <tr
+          style={{ height: `${padding.top}px` }}
+          className={isParent ? `t${className}` : `it${className}`}
+        >
           <td style={leftColStyle} className={isParent ? `l${className}` : `il${className}`}></td>
           <td style={{ width: '100%' }} />
           <td style={rightColStyle} className={isParent ? `r${className}` : `ir${className}`}></td>
         </tr>
         <tr>
           <td style={leftColStyle} className={isParent ? `l${className}` : `il${className}`}></td>
-          <td className={alignClassName} align={align} style={{ width: '100%', ...centerTdMetrics }}>
+          <td
+            className={alignClassName}
+            align={align}
+            style={{ width: '100%', ...centerTdMetrics }}
+          >
             {children}
           </td>
           <td style={rightColStyle} className={isParent ? `r${className}` : `ir${className}`}></td>
         </tr>
-        <tr style={{ height: `${padding.bottom}px` }} className={isParent ? `b${className}` : `ib${className}`}>
+        <tr
+          style={{ height: `${padding.bottom}px` }}
+          className={isParent ? `b${className}` : `ib${className}`}
+        >
           <td style={leftColStyle} className={isParent ? `l${className}` : `il${className}`}></td>
           <td style={{ width: '100%' }} />
           <td style={rightColStyle} className={isParent ? `r${className}` : `ir${className}`}></td>

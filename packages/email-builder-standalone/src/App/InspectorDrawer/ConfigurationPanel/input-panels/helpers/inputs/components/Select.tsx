@@ -7,8 +7,19 @@ import { RADIUS_DROPDOWN } from '../../../../../../../constants';
 import { BORDER_RADIUS, INPUT_HEIGHT } from './inputStyles';
 
 // Componente SVG personalizado para el ícono (invertido: apuntando hacia abajo)
-const ChevronIcon: React.FC<{ className?: string } & React.SVGProps<SVGSVGElement>> = ({ className, ...rest }) => (
-  <svg width="15" height="10" viewBox="0 0 24 12" className={className} aria-hidden="true" focusable="false" {...rest}>
+const ChevronIcon: React.FC<{ className?: string } & React.SVGProps<SVGSVGElement>> = ({
+  className,
+  ...rest
+}) => (
+  <svg
+    width="15"
+    height="10"
+    viewBox="0 0 24 12"
+    className={className}
+    aria-hidden="true"
+    focusable="false"
+    {...rest}
+  >
     <path
       fill="none"
       stroke="currentColor"

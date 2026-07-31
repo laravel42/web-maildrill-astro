@@ -14,7 +14,10 @@ interface Props {
 /** Step 5: which sections the email should contain. */
 export default function StepSections({ brief, patch }: Props) {
   const { t } = useTranslation('aiWizard');
-  const sectionOptions = SECTION_CHIPS.map((v) => ({ value: v, label: t(`steps.step05.section.${v}`) }));
+  const sectionOptions = SECTION_CHIPS.map((v) => ({
+    value: v,
+    label: t(`steps.step05.section.${v}`),
+  }));
 
   return (
     <WizardStep title={t('steps.step05.title')}>

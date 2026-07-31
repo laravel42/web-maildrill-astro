@@ -10,7 +10,10 @@ import renderToStaticMarkup from './renderToStaticMarkup';
 export default function HtmlPanel() {
   const document = useDocument();
 
-  const code = useMemo(() => renderToStaticMarkup(document as TReaderDocument, { rootBlockId: 'root' }), [document]);
+  const code = useMemo(
+    () => renderToStaticMarkup(document as TReaderDocument, { rootBlockId: 'root' }),
+    [document],
+  );
 
   return (
     <div style={{ width: '100%', margin: '0 auto' }}>

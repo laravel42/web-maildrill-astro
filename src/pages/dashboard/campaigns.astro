@@ -7,10 +7,7 @@ import { toCampaigns, type ApiCampaign } from '@/lib/app/campaign-map';
 import { toApprovalStatus } from '@/lib/app/template-map';
 import type { Campaign } from '@/types/app';
 import type { ChannelSenders } from '@/lib/app/channel-senders';
-import type {
-  AudienceChoice,
-  TemplateChoice,
-} from '@/components/react/CampaignWizard.types';
+import type { AudienceChoice, TemplateChoice } from '@/components/react/CampaignWizard.types';
 import {
   enrichListAudienceCounts,
   enrichSegmentAudienceCounts,
@@ -93,7 +90,13 @@ if (session?.user?.id && session.activeTenantId) {
 
 <AppLayout title="Campaigns">
   {banner && <div class={`svc-banner ${banner.ok ? 'ok' : 'err'}`}>{banner.text}</div>}
-  <CampaignsBoard client:visible initial={initial} audiences={audiences} templates={templates} senders={senders} />
+  <CampaignsBoard
+    client:visible
+    initial={initial}
+    audiences={audiences}
+    templates={templates}
+    senders={senders}
+  />
 </AppLayout>
 
 <style>

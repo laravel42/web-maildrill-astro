@@ -9,11 +9,7 @@ import type { APIContext } from 'astro';
  * as its own process.
  */
 export function ebBaseUrl(): string {
-  return (
-    process.env.API_BASE_URL ??
-    import.meta.env.API_BASE_URL ??
-    'http://localhost:3001'
-  );
+  return process.env.API_BASE_URL ?? import.meta.env.API_BASE_URL ?? 'http://localhost:3001';
 }
 
 /**

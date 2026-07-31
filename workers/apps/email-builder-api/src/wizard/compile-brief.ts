@@ -34,7 +34,11 @@ function inferDensity(sectionsLen: number): 'concise' | 'standard' | 'rich' {
 /**
  * Format brand colors as an explicit string for injection into prompts.
  */
-function formatBrandColors(brandColors?: { primary?: string; secondary?: string; accent?: string }): string {
+function formatBrandColors(brandColors?: {
+  primary?: string;
+  secondary?: string;
+  accent?: string;
+}): string {
   if (!brandColors) return '';
   const parts: string[] = [];
   if (brandColors.primary) parts.push(`primary: ${brandColors.primary}`);
@@ -210,7 +214,10 @@ export interface CompileBriefOptions {
  * Compile a `VisualBrief` into a structured prompt + Unsplash queries.
  * Never throws — falls back deterministically.
  */
-export async function compileBrief(brief: VisualBrief, options: CompileBriefOptions = {}): Promise<CompileResult> {
+export async function compileBrief(
+  brief: VisualBrief,
+  options: CompileBriefOptions = {},
+): Promise<CompileResult> {
   const hints = {
     palette: brief.visual_strategy.palette,
     density: inferDensity(brief.layout_strategy.sections.length),
@@ -234,7 +241,8 @@ export async function compileBrief(brief: VisualBrief, options: CompileBriefOpti
     if (options.llmText) {
       raw = await options.llmText();
     } else {
-      const getProvider = options.getProvider ?? (await import('../providers/index.js')).getProvider;
+      const getProvider =
+        options.getProvider ?? (await import('../providers/index.js')).getProvider;
       const providerName: ProviderName =
         options.provider ?? (process.env.DEFAULT_PROVIDER as ProviderName | undefined) ?? 'openai';
       const provider = getProvider(providerName);

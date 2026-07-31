@@ -24,7 +24,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
     codeRequested = res.ok;
   } catch {
-    codeRequested = false;
+    // Unreachable backend counts as "not requested"; the response is 202 either way.
   }
 
   // Always 202 — do not reveal whether the address exists or the backend is up.

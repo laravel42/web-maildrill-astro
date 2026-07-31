@@ -12,7 +12,13 @@
  * with. Everything scored here cites the measurement behind it.
  */
 import { THRESHOLDS } from '../client-matrix.js';
-import { buttonColors, buttonText, countWords, extractHeadingLevels, type ResolvedBlock } from '../model.js';
+import {
+  buttonColors,
+  buttonText,
+  countWords,
+  extractHeadingLevels,
+  type ResolvedBlock,
+} from '../model.js';
 import type { Finding } from '../types.js';
 
 import { excerpt, finding, listPhrase, round, type RuleContext } from './context.js';
@@ -67,7 +73,8 @@ export function designRules(ctx: RuleContext): Finding[] {
         dimension: 'hierarchy',
         title: 'Every text block renders at the same size',
         detail: `${metrics.wordCount} words at a single size.`,
-        impact: 'Undifferentiated text gives the eye nowhere to land, so the email reads as a document rather than a message.',
+        impact:
+          'Undifferentiated text gives the eye nowhere to land, so the email reads as a document rather than a message.',
         fix: 'Introduce a headline and subheading size so the structure is visible before it is read.',
       }),
     );
@@ -83,7 +90,8 @@ export function designRules(ctx: RuleContext): Finding[] {
         dimension: 'typography',
         title: `${metrics.fontFamilies.length} font families in one email`,
         detail: `In use: ${listPhrase(metrics.fontFamilies)}.`,
-        impact: 'Past two or three families the typography stops reading as a system and starts reading as an accident.',
+        impact:
+          'Past two or three families the typography stops reading as a system and starts reading as an accident.',
         fix: 'Reduce to one family for body copy plus at most one display face for headlines.',
       }),
     );
@@ -97,7 +105,8 @@ export function designRules(ctx: RuleContext): Finding[] {
         dimension: 'typography',
         title: `${metrics.fontSizes.length} distinct type sizes`,
         detail: `Sizes: ${metrics.fontSizes.join(', ')}px.`,
-        impact: 'Sizes that differ by one or two pixels look like mistakes rather than levels, and blur the hierarchy they were meant to create.',
+        impact:
+          'Sizes that differ by one or two pixels look like mistakes rather than levels, and blur the hierarchy they were meant to create.',
         fix: `Collapse to a scale of four or five steps — for example 14, 16, 20, 28, 36.`,
       }),
     );
@@ -114,7 +123,8 @@ export function designRules(ctx: RuleContext): Finding[] {
         dimension: 'color',
         title: `${palette.length} distinct colours`,
         detail: `Including ${listPhrase(palette.slice(0, 6))}${palette.length > 6 ? `, +${palette.length - 6} more` : ''}.`,
-        impact: 'A sprawling palette dilutes the accent colour, so nothing reads as the thing to click.',
+        impact:
+          'A sprawling palette dilutes the accent colour, so nothing reads as the thing to click.',
         fix: `Cut to a background, two text tones, and one accent — about ${THRESHOLDS.maxPaletteSize} values total.`,
       }),
     );
@@ -158,7 +168,8 @@ export function designRules(ctx: RuleContext): Finding[] {
         dimension: 'spacing',
         title: `${offScale.length} of ${paddings.size} padding values sit outside a regular spacing scale`,
         detail: `For example ${listPhrase(offScale.slice(0, 6).map((p) => `${p}px`))}.`,
-        impact: 'Irregular spacing is felt before it is noticed — the layout reads as slightly unresolved without an obvious cause.',
+        impact:
+          'Irregular spacing is felt before it is noticed — the layout reads as slightly unresolved without an obvious cause.',
         fix: 'Snap padding to a 4px or 8px scale so the vertical rhythm repeats.',
       }),
     );
@@ -174,7 +185,8 @@ export function designRules(ctx: RuleContext): Finding[] {
         dimension: 'imagery',
         title: 'No imagery in a long email',
         detail: `${metrics.wordCount} words with no images.`,
-        impact: 'An unbroken column of text is harder to enter and easier to abandon than one with a visual anchor.',
+        impact:
+          'An unbroken column of text is harder to enter and easier to abandon than one with a visual anchor.',
         fix: 'Add one strong image near the top, or use colour blocks and rules to break the column.',
       }),
     );
@@ -207,7 +219,8 @@ export function designRules(ctx: RuleContext): Finding[] {
         dimension: 'ctaClarity',
         title: `${buttons.length} buttons compete for the click`,
         detail: `Labels: ${listPhrase(buttons.slice(0, 5).map((b) => `"${excerpt(buttonText(b), 24)}"`))}${buttons.length > 5 ? `, +${buttons.length - 5} more` : ''}.`,
-        impact: 'Every additional equally-weighted action splits attention and lowers the total number of clicks, not just the share each one gets.',
+        impact:
+          'Every additional equally-weighted action splits attention and lowers the total number of clicks, not just the share each one gets.',
         fix: `Choose one primary action, style the rest as text links, or repeat the same action rather than offering different ones.`,
         blocks: buttons,
       }),
@@ -233,7 +246,8 @@ export function designRules(ctx: RuleContext): Finding[] {
           dimension: 'ctaClarity',
           title: `First call to action sits about ${Math.round(firstButtonOffset)}px down`,
           detail: `That is roughly ${Math.max(2, Math.round(firstButtonOffset / 650))} phone screens of scrolling before any button appears.`,
-          impact: 'Readers who are already convinced have nothing to click, and most will not scroll to find it.',
+          impact:
+            'Readers who are already convinced have nothing to click, and most will not scroll to find it.',
           fix: 'Place a button within the first screen, and repeat it at the end for readers who need the full argument.',
           blocks: buttons.slice(0, 1),
         }),
@@ -253,7 +267,8 @@ export function designRules(ctx: RuleContext): Finding[] {
         dimension: 'content',
         title: `${walls.length} text block${walls.length === 1 ? '' : 's'} run past 120 words`,
         detail: `Longest holds ${countWords(worst.text)} words: "${excerpt(worst.text, 60)}"`,
-        impact: 'Email is scanned, not read. A dense block is skipped whole, taking whatever it contained with it.',
+        impact:
+          'Email is scanned, not read. A dense block is skipped whole, taking whatever it contained with it.',
         fix: 'Break into shorter paragraphs with subheadings, or move the detail to a linked page.',
         blocks: walls.map((t) => t.block),
       }),
@@ -268,7 +283,8 @@ export function designRules(ctx: RuleContext): Finding[] {
         dimension: 'content',
         title: `About ${Math.round(metrics.readingTimeSeconds / 60)} minutes of reading`,
         detail: `${metrics.wordCount} words.`,
-        impact: 'Well past the point where an email holds attention; the ending — usually where the action lives — is rarely reached.',
+        impact:
+          'Well past the point where an email holds attention; the ending — usually where the action lives — is rarely reached.',
         fix: 'Cut to the single message this send has to land, and link out for the rest.',
       }),
     );
@@ -285,8 +301,9 @@ export function designRules(ctx: RuleContext): Finding[] {
         dimension: 'scanability',
         title: 'A long email with almost no subheadings',
         detail: `${metrics.wordCount} words and ${headingCount} heading${headingCount === 1 ? '' : 's'}.`,
-        impact: 'Subheadings are what make an email skimmable; without them a reader deciding whether to engage has no summary to skim.',
-        fix: 'Add a subheading every two or three paragraphs, each stating its section\'s point rather than labelling it.',
+        impact:
+          'Subheadings are what make an email skimmable; without them a reader deciding whether to engage has no summary to skim.',
+        fix: "Add a subheading every two or three paragraphs, each stating its section's point rather than labelling it.",
       }),
     );
   }
@@ -301,7 +318,8 @@ export function designRules(ctx: RuleContext): Finding[] {
         dimension: 'scanability',
         title: 'Long email with no visible section breaks',
         detail: `About ${Math.round(metrics.estimatedHeightPx)}px tall with only ${separators + containers} structural separator${separators + containers === 1 ? '' : 's'}.`,
-        impact: 'Continuous content gives no sense of progress or of how much is left, which pushes readers to abandon early.',
+        impact:
+          'Continuous content gives no sense of progress or of how much is left, which pushes readers to abandon early.',
         fix: 'Group related content into `Container` sections with distinct backgrounds, or separate them with dividers.',
       }),
     );
@@ -334,7 +352,9 @@ export function designRules(ctx: RuleContext): Finding[] {
   }
 
   const alignments = new Set(
-    facts.texts.map((t) => (typeof t.block.style.textAlign === 'string' ? t.block.style.textAlign : 'left')),
+    facts.texts.map((t) =>
+      typeof t.block.style.textAlign === 'string' ? t.block.style.textAlign : 'left',
+    ),
   );
   if (alignments.size > 2 && facts.texts.length > 3) {
     out.push(
@@ -352,7 +372,9 @@ export function designRules(ctx: RuleContext): Finding[] {
 
   /* --- brand specificity ------------------------------------------------------------ */
 
-  const usesDefaultFont = metrics.fontFamilies.length === 0 || metrics.fontFamilies.every((f) => f === 'MODERN_SANS' || f === 'INHERIT');
+  const usesDefaultFont =
+    metrics.fontFamilies.length === 0 ||
+    metrics.fontFamilies.every((f) => f === 'MODERN_SANS' || f === 'INHERIT');
   if (chromatic.length === 0 && usesDefaultFont && metrics.blockCount > 6) {
     out.push(
       finding({
@@ -375,7 +397,8 @@ export function designRules(ctx: RuleContext): Finding[] {
 function containsButton(block: ResolvedBlock, byId: Map<string, ResolvedBlock>): boolean {
   if (block.type === 'Button') return true;
   const childIds: string[] = [];
-  if (Array.isArray(block.props.childrenIds)) childIds.push(...(block.props.childrenIds as string[]));
+  if (Array.isArray(block.props.childrenIds))
+    childIds.push(...(block.props.childrenIds as string[]));
   if (Array.isArray(block.props.columns)) {
     for (const column of block.props.columns as Record<string, unknown>[]) {
       if (Array.isArray(column?.childrenIds)) childIds.push(...(column.childrenIds as string[]));

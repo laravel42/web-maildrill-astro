@@ -27,7 +27,8 @@ export type NDJSONEvent =
   | { kind: 'malformed'; raw: string; reason: string; bytes: number };
 
 /** Input shapes accepted by {@link parseNDJSONStream}. */
-export type NDJSONSource = ReadableStream<string> | ReadableStream<Uint8Array> | AsyncIterable<string>;
+export type NDJSONSource =
+  ReadableStream<string> | ReadableStream<Uint8Array> | AsyncIterable<string>;
 
 /**
  * Normalises any supported source into an `AsyncIterable<string>`. Uses
@@ -135,8 +136,17 @@ function* parseFrame(frame: string): Generator<NDJSONEvent, void, void> {
   // Default / `event: message` → expect { id, block } NDJSON per the @eb/backend contract.
   try {
     const parsed = JSON.parse(data) as { id?: unknown; block?: unknown };
-    if (typeof parsed.id !== 'string' || typeof parsed.block !== 'object' || parsed.block === null) {
-      yield { kind: 'malformed', raw: frame, reason: 'Missing or invalid {id, block} payload', bytes };
+    if (
+      typeof parsed.id !== 'string' ||
+      typeof parsed.block !== 'object' ||
+      parsed.block === null
+    ) {
+      yield {
+        kind: 'malformed',
+        raw: frame,
+        reason: 'Missing or invalid {id, block} payload',
+        bytes,
+      };
       return;
     }
     yield {
@@ -177,7 +187,9 @@ function* parseFrame(frame: string): Generator<NDJSONEvent, void, void> {
  * - The `[DONE]` terminator yields a `done` event; callers must stop
  *   reading after it (subsequent frames would be undefined per the contract).
  */
-export async function* parseNDJSONStream(source: NDJSONSource): AsyncGenerator<NDJSONEvent, void, void> {
+export async function* parseNDJSONStream(
+  source: NDJSONSource,
+): AsyncGenerator<NDJSONEvent, void, void> {
   const iterable = toAsyncIterable(source);
   let buffer = '';
   for await (const chunk of iterable) {

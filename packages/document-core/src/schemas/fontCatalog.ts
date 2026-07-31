@@ -300,7 +300,9 @@ const QL_FONT_TOKEN_TO_KEY: Record<string, string> = {
  */
 export function buildGoogleFontsHref(keys: Iterable<string>): string | null {
   const requested = new Set<string>(keys);
-  const specs = FONT_CATALOG.filter((e) => e.google && requested.has(e.key)).map((e) => e.google as string);
+  const specs = FONT_CATALOG.filter((e) => e.google && requested.has(e.key)).map(
+    (e) => e.google as string,
+  );
   if (specs.length === 0) return null;
   return `https://fonts.googleapis.com/css2?${specs.map((s) => `family=${s}`).join('&')}&display=swap`;
 }
@@ -310,7 +312,8 @@ export function buildGoogleFontsHref(keys: Iterable<string>): string | null {
  * Used by the editor canvas / previews, where the user can switch to any
  * font at any time, so all faces must be available eagerly.
  */
-export const ALL_GOOGLE_FONTS_HREF: string = buildGoogleFontsHref(FONT_CATALOG.map((e) => e.key)) ?? '';
+export const ALL_GOOGLE_FONTS_HREF: string =
+  buildGoogleFontsHref(FONT_CATALOG.map((e) => e.key)) ?? '';
 
 function collectQlFontTokens(html: string, acc: Set<string>): void {
   const re = /ql-font-([a-z0-9-]+)/g;

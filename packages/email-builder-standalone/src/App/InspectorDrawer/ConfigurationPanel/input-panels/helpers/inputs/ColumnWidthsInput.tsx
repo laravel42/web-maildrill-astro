@@ -21,7 +21,11 @@ type ColumnsLayoutInputProps = {
   onChange: (v: FixedWidths | null | undefined) => void;
   columnsCount: 2 | 3;
 };
-export default function ColumnWidthsInput({ defaultValue, onChange, columnsCount }: ColumnsLayoutInputProps) {
+export default function ColumnWidthsInput({
+  defaultValue,
+  onChange,
+  columnsCount,
+}: ColumnsLayoutInputProps) {
   const { t } = useTranslation('inspector');
   const [currentValue, setCurrentValue] = useState<[TWidthValue, TWidthValue, TWidthValue]>(() => {
     if (defaultValue) {
@@ -79,7 +83,9 @@ export default function ColumnWidthsInput({ defaultValue, onChange, columnsCount
         />
         <TextDimensionInput
           width
-          label={columnsCount === 3 ? t('inputs.columnWidths.center') : t('inputs.columnWidths.right')}
+          label={
+            columnsCount === 3 ? t('inputs.columnWidths.center') : t('inputs.columnWidths.right')
+          }
           value={currentValue?.[1]}
           onChange={(v) => {
             setIndexValue(1, v);

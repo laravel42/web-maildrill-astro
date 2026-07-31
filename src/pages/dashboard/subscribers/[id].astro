@@ -61,10 +61,7 @@ const title = subscriber.name || subscriber.email;
 
 <AppLayout
   title={title}
-  crumbs={[
-    { label: 'Subscribers', href: routes.app.subscribers },
-    { label: title },
-  ]}
+  crumbs={[{ label: 'Subscribers', href: routes.app.subscribers }, { label: title }]}
 >
   <AppSubscriberDetail
     client:visible

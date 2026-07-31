@@ -31,7 +31,11 @@ import HeightInput from './helpers/inputs/HeightInput';
 import ImageInput from './helpers/inputs/ImageInput';
 import SizeSelector from './helpers/inputs/InputSizeSelector';
 import LabelProperty from './helpers/inputs/LabelProperty';
-import { getPositionI18nKey, getPositionIcon, POSITIONS_NINE } from './helpers/inputs/positionIcons';
+import {
+  getPositionI18nKey,
+  getPositionIcon,
+  POSITIONS_NINE,
+} from './helpers/inputs/positionIcons';
 import TextInput from './helpers/inputs/TextInput';
 import MultiStylePropertyPanel from './helpers/style-inputs/MultiStylePropertyPanel';
 
@@ -50,7 +54,8 @@ const getFitIcon = (fit: string): React.ReactElement => {
   return FIT_ICONS.cover;
 };
 
-const capitalize = (s: string): string => (s.length === 0 ? s : s.charAt(0).toUpperCase() + s.slice(1));
+const capitalize = (s: string): string =>
+  s.length === 0 ? s : s.charAt(0).toUpperCase() + s.slice(1);
 
 type ImageSidebarPanelProps = {
   data: ImageProps;
@@ -78,7 +83,7 @@ export default function ImageSidebarPanel({ data, setData }: ImageSidebarPanelPr
             alt: data.props?.alt || null,
             source: 'image',
           },
-        })
+        }),
       );
     }
   }, [blockSelected, data.props?.url, data.props?.alt]);
@@ -95,7 +100,7 @@ export default function ImageSidebarPanel({ data, setData }: ImageSidebarPanelPr
         setErrors(res.error);
       }
     },
-    [data, setData]
+    [data, setData],
   );
 
   const getSizeUpdate = useCallback(
@@ -170,7 +175,7 @@ export default function ImageSidebarPanel({ data, setData }: ImageSidebarPanelPr
 
       return baseProps;
     },
-    [blockSelected]
+    [blockSelected],
   );
 
   const handleSizeChange = useCallback(
@@ -181,7 +186,7 @@ export default function ImageSidebarPanel({ data, setData }: ImageSidebarPanelPr
         props: updatedProps,
       });
     },
-    [data, updateData, getSizeUpdate]
+    [data, updateData, getSizeUpdate],
   );
 
   const currentSizeValues = useMemo(() => {
@@ -208,7 +213,7 @@ export default function ImageSidebarPanel({ data, setData }: ImageSidebarPanelPr
     (alt) => {
       updateData({ ...data, props: { ...data.props, alt } });
     },
-    [data, updateData]
+    [data, updateData],
   );
 
   const handleUrlChange = useCallback(
@@ -216,14 +221,14 @@ export default function ImageSidebarPanel({ data, setData }: ImageSidebarPanelPr
       const linkHref = v.trim().length === 0 ? null : v.trim();
       updateData({ ...data, props: { ...data.props, linkHref } });
     },
-    [data, updateData]
+    [data, updateData],
   );
 
   const handleStyleChange = useCallback(
     (style) => {
       updateData({ ...data, style });
     },
-    [data, updateData]
+    [data, updateData],
   );
 
   const currentHeight = useMemo(() => {
@@ -244,7 +249,7 @@ export default function ImageSidebarPanel({ data, setData }: ImageSidebarPanelPr
       }
       updateData({ ...data, style: nextStyle });
     },
-    [data, updateData, selectedScreen]
+    [data, updateData, selectedScreen],
   );
 
   const handleObjectFitChange = useCallback(
@@ -258,7 +263,7 @@ export default function ImageSidebarPanel({ data, setData }: ImageSidebarPanelPr
       }
       updateData({ ...data, style: nextStyle });
     },
-    [data, updateData, selectedScreen]
+    [data, updateData, selectedScreen],
   );
 
   const handleObjectPositionChange = useCallback(
@@ -272,7 +277,7 @@ export default function ImageSidebarPanel({ data, setData }: ImageSidebarPanelPr
       }
       updateData({ ...data, style: nextStyle });
     },
-    [data, updateData, selectedScreen]
+    [data, updateData, selectedScreen],
   );
 
   return (
@@ -327,13 +332,24 @@ export default function ImageSidebarPanel({ data, setData }: ImageSidebarPanelPr
                       value={
                         (selectedScreen === 'desktop'
                           ? (data.style?.objectFit ?? 'cover')
-                          : (data.style?.objectFitMobile ?? data.style?.objectFit ?? 'cover')) as string
+                          : (data.style?.objectFitMobile ??
+                            data.style?.objectFit ??
+                            'cover')) as string
                       }
-                      onChange={(e) => handleObjectFitChange(e.target.value as 'cover' | 'contain' | 'fill')}
+                      onChange={(e) =>
+                        handleObjectFitChange(e.target.value as 'cover' | 'contain' | 'fill')
+                      }
                       renderValue={(v) => {
                         const value = String(v ?? 'cover');
                         return (
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, paddingRight: '1rem' }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              paddingRight: '1rem',
+                            }}
+                          >
                             {getFitIcon(value)}
                             {t(`inputs.panels.image.objectFit${capitalize(value)}`)}
                           </Box>
@@ -341,7 +357,11 @@ export default function ImageSidebarPanel({ data, setData }: ImageSidebarPanelPr
                       }}
                     >
                       {(['cover', 'contain', 'fill'] as const).map((fit) => (
-                        <MenuItem key={fit} value={fit} sx={{ padding: '0.5rem 1rem 0.5rem 0.5rem!important' }}>
+                        <MenuItem
+                          key={fit}
+                          value={fit}
+                          sx={{ padding: '0.5rem 1rem 0.5rem 0.5rem!important' }}
+                        >
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             {getFitIcon(fit)}
                             {t(`inputs.panels.image.objectFit${capitalize(fit)}`)}
@@ -359,7 +379,9 @@ export default function ImageSidebarPanel({ data, setData }: ImageSidebarPanelPr
                     const effectivePosition =
                       selectedScreen === 'desktop'
                         ? (data.style?.objectPosition ?? 'center')
-                        : (data.style?.objectPositionMobile ?? data.style?.objectPosition ?? 'center');
+                        : (data.style?.objectPositionMobile ??
+                          data.style?.objectPosition ??
+                          'center');
                     if (effectiveFit === 'fill') return null;
                     return (
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -372,7 +394,14 @@ export default function ImageSidebarPanel({ data, setData }: ImageSidebarPanelPr
                           renderValue={(v) => {
                             const value = String(v ?? 'center');
                             return (
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, paddingRight: '1rem' }}>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 1,
+                                  paddingRight: '1rem',
+                                }}
+                              >
                                 {getPositionIcon(value)}
                                 {t(`inputs.backgroundImage.positions.${getPositionI18nKey(value)}`)}
                               </Box>
@@ -387,7 +416,9 @@ export default function ImageSidebarPanel({ data, setData }: ImageSidebarPanelPr
                             >
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 {getPositionIcon(position)}
-                                {t(`inputs.backgroundImage.positions.${getPositionI18nKey(position)}`)}
+                                {t(
+                                  `inputs.backgroundImage.positions.${getPositionI18nKey(position)}`,
+                                )}
                               </Box>
                             </MenuItem>
                           ))}
@@ -404,7 +435,14 @@ export default function ImageSidebarPanel({ data, setData }: ImageSidebarPanelPr
 
       <CompactDivider />
       <MultiStylePropertyPanel
-        names={['textAlign', 'textAlignMobile', 'backgroundColor', 'shape', 'padding', 'mobilePadding']}
+        names={[
+          'textAlign',
+          'textAlignMobile',
+          'backgroundColor',
+          'shape',
+          'padding',
+          'mobilePadding',
+        ]}
         value={data.style}
         shapeMaxValue={300}
         shapeSteps={20}

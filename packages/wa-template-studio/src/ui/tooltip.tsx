@@ -1,7 +1,7 @@
-import * as React from "react";
-import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import * as React from 'react';
+import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 
-import { cn } from "@/lib/cn";
+import { cn } from '@/lib/cn';
 
 function TooltipProvider({
   delayDuration = 0,
@@ -16,9 +16,7 @@ function TooltipProvider({
   );
 }
 
-function Tooltip({
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+function Tooltip({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
   return (
     <TooltipProvider>
       <TooltipPrimitive.Root data-slot="tooltip" {...props} />
@@ -26,9 +24,7 @@ function Tooltip({
   );
 }
 
-function TooltipTrigger({
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
+function TooltipTrigger({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
   return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />;
 }
 
@@ -48,7 +44,7 @@ function TooltipContent({
           // solid charcoal #2c2c2c surface, white text, 1px hairline border, soft
           // drop shadow, and 6px radius. Explicit colors (not studio tokens)
           // because the tooltip portals to <body>, outside the .wa-studio scope.
-          "z-[1100] w-fit origin-(--radix-tooltip-content-transform-origin) rounded-[6px] border border-black/10 bg-[#2c2c2c] px-2 py-1 text-xs text-balance text-white shadow-[0_4px_12px_rgba(0,0,0,0.25)] animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+          'z-[1100] w-fit origin-(--radix-tooltip-content-transform-origin) rounded-[6px] border border-black/10 bg-[#2c2c2c] px-2 py-1 text-xs text-balance text-white shadow-[0_4px_12px_rgba(0,0,0,0.25)] animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
           className,
         )}
         {...props}

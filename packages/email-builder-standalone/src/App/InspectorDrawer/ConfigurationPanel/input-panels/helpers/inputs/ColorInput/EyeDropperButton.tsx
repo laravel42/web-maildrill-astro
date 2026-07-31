@@ -31,7 +31,7 @@ export default function EyeDropperButton({ onColorPicked }: Props) {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       onColorPicked(e.target.value);
     },
-    [onColorPicked]
+    [onColorPicked],
   );
 
   return (

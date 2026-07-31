@@ -1,18 +1,18 @@
-import { randomInt } from "node:crypto";
-import { and, eq, gt, isNull } from "drizzle-orm";
-import { config } from "@maildrill/config";
-import { db, magicLinkTokens, type User } from "@maildrill/database";
-import { sha256Hex } from "@maildrill/domain";
-import { getProvider } from "@maildrill/providers";
-import { createLogger } from "@maildrill/observability";
-import { findOrCreateUser, getUser } from "./users";
+import { randomInt } from 'node:crypto';
+import { and, eq, gt, isNull } from 'drizzle-orm';
+import { config } from '@maildrill/config';
+import { db, magicLinkTokens, type User } from '@maildrill/database';
+import { sha256Hex } from '@maildrill/domain';
+import { getProvider } from '@maildrill/providers';
+import { createLogger } from '@maildrill/observability';
+import { findOrCreateUser, getUser } from './users';
 import {
   ensurePersonalWorkspace,
   listMembershipsForUser,
   type WorkspaceMembership,
-} from "./memberships";
+} from './memberships';
 
-const log = createLogger({ component: "login-code" });
+const log = createLogger({ component: 'login-code' });
 
 export interface VerifyResult {
   user: User;
@@ -30,9 +30,7 @@ function codeHash(email: string, code: string): string {
  * directly via the provider (not the campaign pipeline), so sign-in never
  * depends on the workers.
  */
-export async function requestLoginCode(
-  email: string,
-): Promise<{ code: string; url: string }> {
+export async function requestLoginCode(email: string): Promise<{ code: string; url: string }> {
   const normalized = email.trim().toLowerCase();
   const code = String(randomInt(100_000, 1_000_000)); // 6 digits, CSPRNG
   const expiresAt = new Date(Date.now() + config.auth.magicLinkTtlMinutes * 60_000);
@@ -52,13 +50,13 @@ export async function requestLoginCode(
 }
 
 async function sendLoginEmail(email: string, code: string, url: string): Promise<void> {
-  if (!config.isProd) log.info({ email, code, url }, "login code (dev)");
+  if (!config.isProd) log.info({ email, code, url }, 'login code (dev)');
   const result = await getProvider().send({
     messageId: `code-${codeHash(email, code).slice(0, 12)}`,
-    tenantId: "system",
-    channel: "email",
+    tenantId: 'system',
+    channel: 'email',
     to: email,
-    correlationId: "auth-login-code",
+    correlationId: 'auth-login-code',
     content: {
       subject: `${code} is your Maildrill sign-in code`,
       html: loginEmailHtml(code, url),
@@ -71,20 +69,17 @@ async function sendLoginEmail(email: string, code: string, url: string): Promise
   if (result.accepted) {
     log.info(
       { email, provider: getProvider().name, providerMessageId: result.providerMessageId },
-      "login-code email sent",
+      'login-code email sent',
     );
   } else {
-    log.error({ email, error: result.error }, "login-code email send FAILED");
+    log.error({ email, error: result.error }, 'login-code email send FAILED');
   }
 }
 
 /** Verify + single-use consume a code for an email. Self-serve signup on first use. */
-export async function verifyLoginCode(
-  email: string,
-  code: string,
-): Promise<VerifyResult | null> {
+export async function verifyLoginCode(email: string, code: string): Promise<VerifyResult | null> {
   const normalized = email.trim().toLowerCase();
-  const clean = code.replace(/\D/g, "");
+  const clean = code.replace(/\D/g, '');
   if (clean.length !== 6) return null;
 
   const now = new Date();

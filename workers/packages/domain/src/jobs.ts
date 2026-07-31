@@ -1,31 +1,31 @@
-import { z } from "zod";
-import { channelSchema, type Channel } from "./channels";
+import { z } from 'zod';
+import { channelSchema, type Channel } from './channels';
 
 export const QUEUE_NAMES = {
-  dispatch: "message-dispatch",
-  events: "provider-events",
-  scheduled: "scheduled-messages",
-  maintenance: "maintenance",
-  deadLetter: "dead-letter",
+  dispatch: 'message-dispatch',
+  events: 'provider-events',
+  scheduled: 'scheduled-messages',
+  maintenance: 'maintenance',
+  deadLetter: 'dead-letter',
 } as const;
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
 
 export const JOB_NAMES = {
-  sendEmail: "send-email",
-  sendSms: "send-sms",
-  sendWhatsApp: "send-whatsapp",
-  sendVoice: "send-voice",
-  processDeliveryReport: "process-delivery-report",
-  processEngagementEvent: "process-engagement-event",
-  processVoiceEvent: "process-voice-event",
-  processProviderError: "process-provider-error",
-  activateMessage: "activate-message",
-  activateCampaignBatch: "activate-campaign-batch",
-  publishOutbox: "publish-outbox",
-  reconcileProviderStatus: "reconcile-provider-status",
-  recoverStalledMessages: "recover-stalled-messages",
-  expireIdempotencyRecords: "expire-idempotency-records",
-  purgeRetainedJobs: "purge-retained-jobs",
+  sendEmail: 'send-email',
+  sendSms: 'send-sms',
+  sendWhatsApp: 'send-whatsapp',
+  sendVoice: 'send-voice',
+  processDeliveryReport: 'process-delivery-report',
+  processEngagementEvent: 'process-engagement-event',
+  processVoiceEvent: 'process-voice-event',
+  processProviderError: 'process-provider-error',
+  activateMessage: 'activate-message',
+  activateCampaignBatch: 'activate-campaign-batch',
+  publishOutbox: 'publish-outbox',
+  reconcileProviderStatus: 'reconcile-provider-status',
+  recoverStalledMessages: 'recover-stalled-messages',
+  expireIdempotencyRecords: 'expire-idempotency-records',
+  purgeRetainedJobs: 'purge-retained-jobs',
 } as const;
 
 export const sendMessageJobV1 = z.object({
@@ -57,13 +57,13 @@ export type ActivateMessageJobV1 = z.infer<typeof activateMessageJobV1>;
 
 export function jobNameForChannel(channel: Channel): string {
   switch (channel) {
-    case "email":
+    case 'email':
       return JOB_NAMES.sendEmail;
-    case "sms":
+    case 'sms':
       return JOB_NAMES.sendSms;
-    case "whatsapp":
+    case 'whatsapp':
       return JOB_NAMES.sendWhatsApp;
-    case "voice":
+    case 'voice':
       return JOB_NAMES.sendVoice;
   }
 }

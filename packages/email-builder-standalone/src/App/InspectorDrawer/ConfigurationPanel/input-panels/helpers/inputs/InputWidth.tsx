@@ -56,7 +56,11 @@ export default function ResponsiveWidthInput({
   const currentValue = getCurrentValue();
 
   return (
-    <RadioGroupInput label={label} defaultValue={currentValue ? 'FULL_WIDTH' : 'AUTO'} onChange={handleChange}>
+    <RadioGroupInput
+      label={label}
+      defaultValue={currentValue ? 'FULL_WIDTH' : 'AUTO'}
+      onChange={handleChange}
+    >
       <ToggleButton value="FULL_WIDTH">
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}>
           <WidthFull fontSize="small" />

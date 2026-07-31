@@ -40,7 +40,8 @@ type StoredTheme = {
 };
 
 function uuid(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+    return crypto.randomUUID();
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
     const v = c === 'x' ? r : (r & 0x3) | 0x8;
@@ -209,7 +210,10 @@ export function localSaveTemplate(input: {
   return { id: entry.id, saved: `localStorage:${TEMPLATES_KEY}`, blockCount: entry.blocks.length };
 }
 
-export function localRenameTemplate(id: string, patch: { name?: string; description?: string; tags?: string[] }): void {
+export function localRenameTemplate(
+  id: string,
+  patch: { name?: string; description?: string; tags?: string[] },
+): void {
   const list = readArray<StoredTemplate>(TEMPLATES_KEY);
   const idx = list.findIndex((t) => t.id === id);
   if (idx === -1) throw new Error(`Template ${id} not found in local storage.`);
@@ -226,7 +230,7 @@ export function localRenameTemplate(id: string, patch: { name?: string; descript
 export function localDeleteTemplate(id: string): void {
   writeArray(
     TEMPLATES_KEY,
-    readArray<StoredTemplate>(TEMPLATES_KEY).filter((t) => t.id !== id)
+    readArray<StoredTemplate>(TEMPLATES_KEY).filter((t) => t.id !== id),
   );
 }
 
@@ -285,7 +289,9 @@ export type LocalSavedComponentListing = {
   block?: unknown;
 };
 
-export function localListSavedComponents(category: SavedComponentCategory): LocalSavedComponentListing[] {
+export function localListSavedComponents(
+  category: SavedComponentCategory,
+): LocalSavedComponentListing[] {
   return readArray<StoredSavedComponent>(SAVED_COMPONENT_KEYS[category]).map((c) => ({
     id: c.id,
     name: c.name,
@@ -303,16 +309,24 @@ export function localListSavedComponents(category: SavedComponentCategory): Loca
 
 export function localGetSavedComponent(
   category: SavedComponentCategory,
-  id: string
+  id: string,
 ): { id: string; name: string; description?: string; blocks: SavedBlock[] } {
-  const found = readArray<StoredSavedComponent>(SAVED_COMPONENT_KEYS[category]).find((c) => c.id === id);
+  const found = readArray<StoredSavedComponent>(SAVED_COMPONENT_KEYS[category]).find(
+    (c) => c.id === id,
+  );
   if (!found) throw new Error(`${category} ${id} not found in local storage.`);
   return { id: found.id, name: found.name, description: found.description, blocks: found.blocks };
 }
 
 export function localSaveSavedComponent(
   category: SavedComponentCategory,
-  input: { name: string; description?: string; tags?: string[]; axis: string; blocks: SavedBlock[] }
+  input: {
+    name: string;
+    description?: string;
+    tags?: string[];
+    axis: string;
+    blocks: SavedBlock[];
+  },
 ): { id: string; saved: string; blockCount: number } {
   const key = SAVED_COMPONENT_KEYS[category];
   const list = readArray<StoredSavedComponent>(key);
@@ -335,7 +349,7 @@ export function localSaveSavedComponent(
 export function localRenameSavedComponent(
   category: SavedComponentCategory,
   id: string,
-  patch: { name?: string; description?: string; tags?: string[] }
+  patch: { name?: string; description?: string; tags?: string[] },
 ): void {
   const key = SAVED_COMPONENT_KEYS[category];
   const list = readArray<StoredSavedComponent>(key);
@@ -355,7 +369,7 @@ export function localDeleteSavedComponent(category: SavedComponentCategory, id: 
   const key = SAVED_COMPONENT_KEYS[category];
   writeArray(
     key,
-    readArray<StoredSavedComponent>(key).filter((c) => c.id !== id)
+    readArray<StoredSavedComponent>(key).filter((c) => c.id !== id),
   );
 }
 
@@ -399,7 +413,11 @@ export function localGetTheme(id: string): ThemeBundle {
   } as ThemeBundle;
 }
 
-export function localSaveTheme(input: { name: string; description?: string; bundle: ThemeBundlePayload }): {
+export function localSaveTheme(input: {
+  name: string;
+  description?: string;
+  bundle: ThemeBundlePayload;
+}): {
   id: string;
   name: string;
   description?: string;
@@ -434,15 +452,23 @@ export function localSaveTheme(input: { name: string; description?: string; bund
 
 export function localUpdateTheme(
   id: string,
-  patch: { name?: string; description?: string; bundle?: ThemeBundlePayload }
-): { id: string; name: string; description?: string; createdAt: string; updatedAt: string; sizeBytes: number } {
+  patch: { name?: string; description?: string; bundle?: ThemeBundlePayload },
+): {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+  sizeBytes: number;
+} {
   const list = readArray<StoredTheme>(THEMES_KEY);
   const idx = list.findIndex((t) => t.id === id);
   if (idx === -1) throw new Error(`Theme ${id} not found in local storage.`);
   const next: StoredTheme = {
     ...list[idx],
     name: patch.name ?? list[idx].name,
-    description: patch.description === '' ? undefined : (patch.description ?? list[idx].description),
+    description:
+      patch.description === '' ? undefined : (patch.description ?? list[idx].description),
     globals: patch.bundle ? patch.bundle.globals : list[idx].globals,
     blocks: patch.bundle ? patch.bundle.blocks : list[idx].blocks,
     updatedAt: nowIso(),
@@ -462,7 +488,7 @@ export function localUpdateTheme(
 export function localDeleteTheme(id: string): { id: string; deleted: string } {
   writeArray(
     THEMES_KEY,
-    readArray<StoredTheme>(THEMES_KEY).filter((t) => t.id !== id)
+    readArray<StoredTheme>(THEMES_KEY).filter((t) => t.id !== id),
   );
   return { id, deleted: 'local' };
 }

@@ -26,7 +26,11 @@ export default function FilterChipsRow({
   return (
     <div className={styles.row} aria-label="Active filters">
       {chips.map((c) => (
-        <span key={c.key} className={`${styles.chip}${c.className ? ` ${c.className}` : ''}`} style={c.style}>
+        <span
+          key={c.key}
+          className={`${styles.chip}${c.className ? ` ${c.className}` : ''}`}
+          style={c.style}
+        >
           {c.label}
           <button
             type="button"

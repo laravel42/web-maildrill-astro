@@ -1,6 +1,11 @@
 import { minify as cssoMinify } from 'csso';
 
-import { type ResolvableBlock, resolveBlockData, type ThemeJson, type Viewport } from '@eb/document-core';
+import {
+  type ResolvableBlock,
+  resolveBlockData,
+  type ThemeJson,
+  type Viewport,
+} from '@eb/document-core';
 
 import { getFontFamily } from '../helpers/fontFamily';
 import { shortCssId } from '../helpers/utils';
@@ -175,7 +180,12 @@ const normalizeSize = (v: string | number | undefined | null): number | null => 
 };
 
 // Función corregida para generar CSS de padding
-const generatePaddingCSS = (blockId: string, padding: PaddingConfig, blockType: string, isMobile = false): string => {
+const generatePaddingCSS = (
+  blockId: string,
+  padding: PaddingConfig,
+  blockType: string,
+  isMobile = false,
+): string => {
   if (!padding) {
     return '';
   }
@@ -228,9 +238,15 @@ const generateBorderMobileCSS = (
     borderTopMobile?: string;
     borderColor?: string;
   },
-  _blockType: string
+  _blockType: string,
 ): string => {
-  const { borderBottomMobile, borderLeftMobile, borderRightMobile, borderTopMobile, borderColor = '#000' } = borderData;
+  const {
+    borderBottomMobile,
+    borderLeftMobile,
+    borderRightMobile,
+    borderTopMobile,
+    borderColor = '#000',
+  } = borderData;
 
   const t = normalizeSize(borderTopMobile);
   const r = normalizeSize(borderRightMobile);
@@ -250,7 +266,8 @@ const generateBorderMobileCSS = (
   const allDefined = [t, r, b, l].every((v) => v !== null);
   if (allDefined && t === r && r === b && b === l) {
     const v = t as number;
-    const body = v === 0 ? 'border:0 !important;' : `border:${v}px solid ${borderColor} !important;`;
+    const body =
+      v === 0 ? 'border:0 !important;' : `border:${v}px solid ${borderColor} !important;`;
     return `
 @media (max-width: 640px) {
   .${classId}{${body}}
@@ -276,7 +293,11 @@ type ButtonPadding = {
   right: number;
 };
 
-const generateInnerPaddingMobileCSS = (size: string | ButtonPadding, blockId: string, blockType: string): string => {
+const generateInnerPaddingMobileCSS = (
+  size: string | ButtonPadding,
+  blockId: string,
+  blockType: string,
+): string => {
   const paddingClassId = getPaddingClassId(blockId, blockType);
 
   if (typeof size !== 'string') {
@@ -339,7 +360,7 @@ const generateInnerPaddingMobileCSS = (size: string | ButtonPadding, blockId: st
 
 const cleanDocument = (
   document: TReaderDocument,
-  options: { viewport?: Viewport } = {}
+  options: { viewport?: Viewport } = {},
 ): { cleanedDocument: TReaderDocument; css: string } => {
   const cleanedDocument = JSON.parse(JSON.stringify(document));
 
@@ -715,7 +736,7 @@ const cleanDocument = (
         blockId: string,
         value: number | string | null | undefined,
         type: string,
-        allProps?: PropsData
+        allProps?: PropsData,
       ) => {
         if (type !== 'Image') return '';
         if (value === null || value === undefined) return '';
@@ -806,8 +827,18 @@ const cleanDocument = (
     // `!important` rules drift from the inline styles produced by the
     // renderer and the inline values get overridden. See L42-312.
     const schemaDefaults = READER_SCHEMA_DEFAULTS_BY_TYPE[rawBlock.type];
-    const baseBlock = resolveBlockData(rawBlock as unknown as ResolvableBlock, theme, baseViewport, schemaDefaults);
-    const mobileBlock = resolveBlockData(rawBlock as unknown as ResolvableBlock, theme, 'mobile', schemaDefaults);
+    const baseBlock = resolveBlockData(
+      rawBlock as unknown as ResolvableBlock,
+      theme,
+      baseViewport,
+      schemaDefaults,
+    );
+    const mobileBlock = resolveBlockData(
+      rawBlock as unknown as ResolvableBlock,
+      theme,
+      'mobile',
+      schemaDefaults,
+    );
     const baseStyle = (baseBlock.data?.style ?? {}) as StyleData;
     const mobileStyle = (mobileBlock.data?.style ?? {}) as StyleData;
     const mobileProps = (mobileBlock.data?.props ?? {}) as PropsData;
@@ -898,7 +929,7 @@ const cleanDocument = (
     if (length > CSS_HEADER_CHAR_LIMIT) {
       console.warn(
         `[EmailBuilder] El CSS de cabecera supera el umbral de ${CSS_HEADER_CHAR_LIMIT} caracteres. ` +
-          `Algunas plataformas Android pueden no aplicar correctamente los estilos.`
+          `Algunas plataformas Android pueden no aplicar correctamente los estilos.`,
       );
     }
   } catch {

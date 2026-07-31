@@ -19,7 +19,12 @@ function migrateHtmlBlock(block: any): any {
   // TipTap requires at least one block-level element. Wrap bare text in
   // a paragraph so the editor can hydrate without errors. Empty payloads
   // collapse to `<p></p>` (the NotionText empty-document baseline).
-  const html = trimmed.length === 0 ? '<p></p>' : /^<[a-zA-Z]/.test(trimmed) ? rawContents : `<p>${rawContents}</p>`;
+  const html =
+    trimmed.length === 0
+      ? '<p></p>'
+      : /^<[a-zA-Z]/.test(trimmed)
+        ? rawContents
+        : `<p>${rawContents}</p>`;
   return {
     ...block,
     type: 'NotionText',
@@ -38,7 +43,11 @@ function migrateHtmlBlock(block: any): any {
  * across in-memory documents and saved JSON.
  */
 function escapeHeadingText(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 /**

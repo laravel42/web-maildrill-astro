@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from 'drizzle-orm';
 import {
   db,
   segments,
@@ -6,10 +6,10 @@ import {
   type SegmentRow,
   type SegmentRule,
   type Subscriber,
-} from "@maildrill/database";
-import { buildSegmentWhere, clamp } from "./rules";
+} from '@maildrill/database';
+import { buildSegmentWhere, clamp } from './rules';
 
-type MatchType = SegmentRow["matchType"];
+type MatchType = SegmentRow['matchType'];
 
 export interface CreateSegmentInput {
   tenantId: string;
@@ -26,17 +26,14 @@ export async function createSegment(input: CreateSegmentInput): Promise<SegmentR
       tenantId: input.tenantId,
       name: input.name,
       description: input.description ?? null,
-      matchType: input.matchType ?? "all",
+      matchType: input.matchType ?? 'all',
       rules: input.rules ?? [],
     })
     .returning();
   return rows[0]!;
 }
 
-export async function getSegment(
-  tenantId: string,
-  id: string,
-): Promise<SegmentRow | null> {
+export async function getSegment(tenantId: string, id: string): Promise<SegmentRow | null> {
   const rows = await db
     .select()
     .from(segments)

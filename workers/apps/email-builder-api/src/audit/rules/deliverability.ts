@@ -11,7 +11,8 @@ import type { Finding } from '../types.js';
 import { excerpt, finding, listPhrase, type RuleContext } from './context.js';
 
 /** Hrefs that were never filled in. */
-const PLACEHOLDER_URL = /^(?:#|about:blank|https?:\/\/(?:example\.(?:com|org)|localhost|your-?(?:site|domain|company)))/i;
+const PLACEHOLDER_URL =
+  /^(?:#|about:blank|https?:\/\/(?:example\.(?:com|org)|localhost|your-?(?:site|domain|company)))/i;
 
 /**
  * Phrases with a long history in spam corpora. Presence is a nudge, not a
@@ -91,7 +92,8 @@ export function deliverabilityRules(ctx: RuleContext): Finding[] {
         severity: isTemplate ? 'P2' : 'P1',
         dimension: 'deliverability',
         title: 'No unsubscribe link found',
-        detail: 'No link or text in the document matches an unsubscribe or preference-centre pattern.',
+        detail:
+          'No link or text in the document matches an unsubscribe or preference-centre pattern.',
         impact:
           'Commercial email without a working opt-out breaches CAN-SPAM and GDPR, and recipients who cannot unsubscribe mark the mail as spam instead — which damages sending reputation far more.',
         fix: `Add an unsubscribe link to the footer.${isTemplate ? ' If the sending platform injects one, this is fine to leave out of the template itself.' : ''}`,
@@ -111,14 +113,17 @@ export function deliverabilityRules(ctx: RuleContext): Finding[] {
         dimension: 'deliverability',
         title: `${emptyHref.length} link${emptyHref.length === 1 ? '' : 's'} have no destination`,
         detail: `Including ${listPhrase(emptyHref.slice(0, 3).map((l) => (l.text ? `"${excerpt(l.text, 24)}"` : `a ${l.kind}`)))}.`,
-        impact: 'The primary action does nothing when clicked. This is the most damaging bug an email can ship with.',
+        impact:
+          'The primary action does nothing when clicked. This is the most damaging bug an email can ship with.',
         fix: 'Set a destination URL on every button and link.',
         blocks: [...new Set(emptyHref.map((l) => l.blockId))],
       }),
     );
   }
 
-  const placeholderHref = linked.filter((l) => l.href.trim() && PLACEHOLDER_URL.test(l.href.trim()));
+  const placeholderHref = linked.filter(
+    (l) => l.href.trim() && PLACEHOLDER_URL.test(l.href.trim()),
+  );
   if (placeholderHref.length > 0) {
     out.push(
       finding({
@@ -151,7 +156,8 @@ export function deliverabilityRules(ctx: RuleContext): Finding[] {
         dimension: 'deliverability',
         title: `${relativeHref.length} link${relativeHref.length === 1 ? '' : 's'} are not absolute URLs`,
         detail: `Including \`${excerpt(relativeHref[0].href, 40)}\`.`,
-        impact: 'An email has no base URL, so a relative link cannot resolve and will fail in every client.',
+        impact:
+          'An email has no base URL, so a relative link cannot resolve and will fail in every client.',
         fix: 'Use fully-qualified `https://` URLs, or a merge tag your sending platform expands into one.',
         blocks: [...new Set(relativeHref.map((l) => l.blockId))],
       }),
@@ -167,7 +173,8 @@ export function deliverabilityRules(ctx: RuleContext): Finding[] {
         dimension: 'deliverability',
         title: `${insecure.length} link${insecure.length === 1 ? '' : 's'} use plain http`,
         detail: `Including \`${excerpt(insecure[0].href, 40)}\`.`,
-        impact: 'Mixed or insecure links lower reputation scores and can trigger browser interstitials that lose the click.',
+        impact:
+          'Mixed or insecure links lower reputation scores and can trigger browser interstitials that lose the click.',
         fix: 'Switch to `https://`.',
         blocks: [...new Set(insecure.map((l) => l.blockId))],
         autoFixable: true,
@@ -190,7 +197,8 @@ export function deliverabilityRules(ctx: RuleContext): Finding[] {
           dimension: 'deliverability',
           title: 'Preheader is empty',
           detail: 'No preheader text is set on the campaign.',
-          impact: 'Clients fall back to scraping the first text in the body, which is often a logo alt or "View in browser".',
+          impact:
+            'Clients fall back to scraping the first text in the body, which is often a logo alt or "View in browser".',
           fix: 'Write 40-90 characters that continue the subject line and give a reason to open.',
         }),
       );
@@ -202,7 +210,8 @@ export function deliverabilityRules(ctx: RuleContext): Finding[] {
           dimension: 'deliverability',
           title: `Preheader is ${preheader.length} characters`,
           detail: `"${excerpt(preheader, 70)}"`,
-          impact: 'Most clients truncate around 90 characters, so the end of the sentence is never seen.',
+          impact:
+            'Most clients truncate around 90 characters, so the end of the sentence is never seen.',
           fix: 'Trim to about 90 characters and front-load the point.',
         }),
       );
@@ -219,7 +228,8 @@ export function deliverabilityRules(ctx: RuleContext): Finding[] {
           dimension: 'deliverability',
           title: 'Subject line is empty',
           detail: 'No subject was set.',
-          impact: 'An empty subject is both a strong spam signal and an immediate reason not to open.',
+          impact:
+            'An empty subject is both a strong spam signal and an immediate reason not to open.',
           fix: 'Write a subject of roughly 30-50 characters.',
         }),
       );
@@ -232,13 +242,15 @@ export function deliverabilityRules(ctx: RuleContext): Finding[] {
             dimension: 'deliverability',
             title: `Subject line is ${subject.length} characters`,
             detail: `"${excerpt(subject, 70)}"`,
-            impact: 'Mobile inbox lists cut off around 35-45 characters, so the tail is lost where most mail is triaged.',
+            impact:
+              'Mobile inbox lists cut off around 35-45 characters, so the tail is lost where most mail is triaged.',
             fix: 'Trim toward 40 characters and put the distinguishing word first.',
           }),
         );
       }
       const shouty = subject === subject.toUpperCase() && /[A-Z]{4,}/.test(subject);
-      const excessivePunctuation = /[!?]{2,}/.test(subject) || (subject.match(/!/g) ?? []).length > 1;
+      const excessivePunctuation =
+        /[!?]{2,}/.test(subject) || (subject.match(/!/g) ?? []).length > 1;
       if (shouty || excessivePunctuation) {
         out.push(
           finding({
@@ -247,7 +259,8 @@ export function deliverabilityRules(ctx: RuleContext): Finding[] {
             dimension: 'deliverability',
             title: 'Subject line uses spam-adjacent formatting',
             detail: `${shouty ? 'The subject is entirely uppercase.' : ''}${shouty && excessivePunctuation ? ' ' : ''}${excessivePunctuation ? 'It contains repeated exclamation or question marks.' : ''}`,
-            impact: 'Both patterns are weighted by content filters and read as pushy to recipients.',
+            impact:
+              'Both patterns are weighted by content filters and read as pushy to recipients.',
             fix: 'Use sentence case and at most one exclamation mark.',
           }),
         );

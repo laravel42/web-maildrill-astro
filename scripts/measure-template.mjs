@@ -25,7 +25,7 @@ for (const [label, url] of Object.entries(targets)) {
     [...document.querySelectorAll('table')].slice(0, 5).map((t) => {
       const r = t.getBoundingClientRect();
       return `${Math.round(r.width)}@${Math.round(r.left)}`;
-    })
+    }),
   );
   console.log(label.padEnd(9), widths.join('  '));
 }

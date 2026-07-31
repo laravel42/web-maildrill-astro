@@ -98,7 +98,10 @@ export default function BubbleMenuToolbar({ editor, hidden = false }: Props) {
           borderRadius: '10px',
           backgroundColor: theme.palette.mode === 'dark' ? '#1a1a1a' : '#ffffff',
           border: theme.palette.mode === 'dark' ? 'none' : '1px solid rgba(0,0,0,0.12)',
-          boxShadow: theme.palette.mode === 'dark' ? '0 2px 10px rgba(0,0,0,0.5)' : '0 2px 10px rgba(0,0,0,0.15)',
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? '0 2px 10px rgba(0,0,0,0.5)'
+              : '0 2px 10px rgba(0,0,0,0.15)',
           height: '37px',
           whiteSpace: 'nowrap',
         }}

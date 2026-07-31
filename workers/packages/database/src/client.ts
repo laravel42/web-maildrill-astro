@@ -1,8 +1,8 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import type { Logger } from "drizzle-orm";
-import { Pool } from "pg";
-import { config } from "@maildrill/config";
-import * as schema from "./schema";
+import { drizzle } from 'drizzle-orm/node-postgres';
+import type { Logger } from 'drizzle-orm';
+import { Pool } from 'pg';
+import { config } from '@maildrill/config';
+import * as schema from './schema';
 
 export const pool = new Pool({
   connectionString: config.db.url,
@@ -24,10 +24,10 @@ const drizzleLogger: Logger = {
   },
 };
 
-export const db = drizzle(pool, { schema, casing: "snake_case", logger: drizzleLogger });
+export const db = drizzle(pool, { schema, casing: 'snake_case', logger: drizzleLogger });
 
 export type DB = typeof db;
-export type Tx = Parameters<Parameters<DB["transaction"]>[0]>[0];
+export type Tx = Parameters<Parameters<DB['transaction']>[0]>[0];
 
 export async function closeDb(): Promise<void> {
   await pool.end();

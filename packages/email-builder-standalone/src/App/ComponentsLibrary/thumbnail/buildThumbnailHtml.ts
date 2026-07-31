@@ -61,7 +61,7 @@ const PLACEHOLDER_IMAGE_DATA_URI =
     // literal string `%23F0F0F0`, an invalid colour that falls back to
     // solid black — so every empty-container placeholder rendered black
     // instead of the intended light grey.
-    '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="120"><rect width="600" height="120" fill="#F0F0F0"/></svg>'
+    '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="120"><rect width="600" height="120" fill="#F0F0F0"/></svg>',
   );
 
 /**
@@ -162,7 +162,7 @@ export function buildSubtreeHtml(
      * save-time thumbnail capture) to render the subtree as saved.
      */
     rootData?: Record<string, unknown>;
-  }
+  },
 ): string {
   // If the document already roots at an EmailLayout (Template path),
   // pass through unchanged — templates carry their own theme.
@@ -178,8 +178,13 @@ export function buildSubtreeHtml(
     ? {
         ...options.rootData,
         backdropColor:
-          (options.rootData.backdropColor as string | undefined) ?? options.backdropColor ?? FALLBACK_BACKDROP,
-        canvasColor: (options.rootData.canvasColor as string | undefined) ?? options.canvasColor ?? FALLBACK_CANVAS,
+          (options.rootData.backdropColor as string | undefined) ??
+          options.backdropColor ??
+          FALLBACK_BACKDROP,
+        canvasColor:
+          (options.rootData.canvasColor as string | undefined) ??
+          options.canvasColor ??
+          FALLBACK_CANVAS,
         childrenIds: [rootBlockId],
       }
     : {
@@ -206,7 +211,7 @@ export function buildSubtreeHtml(
  */
 export function buildPrimitiveHtml(
   block: { id: string; block: unknown },
-  options?: { backdropColor?: string; canvasColor?: string; rootData?: Record<string, unknown> }
+  options?: { backdropColor?: string; canvasColor?: string; rootData?: Record<string, unknown> },
 ): string {
   const doc: TReaderDocument = {
     [block.id]: block.block as TReaderDocument[string],

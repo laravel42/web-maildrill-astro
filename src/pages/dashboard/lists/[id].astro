@@ -74,10 +74,7 @@ if (fieldsRes.ok) {
 
 <AppLayout
   title={list.name}
-  crumbs={[
-    { label: 'Lists', href: routes.app.lists },
-    { label: list.name },
-  ]}
+  crumbs={[{ label: 'Lists', href: routes.app.lists }, { label: list.name }]}
 >
   <AppListDetail
     client:visible

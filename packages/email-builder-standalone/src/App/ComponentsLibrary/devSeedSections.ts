@@ -51,7 +51,12 @@ const DARK = '#111827'; // text + dark band + button bg + emphasis
 const MUTED = '#6B7280'; // muted body text
 const SOFT = '#D1D5DB'; // muted text on dark bands
 
-const pad = (top: number, right: number, bottom: number, left: number): Pad => ({ top, right, bottom, left });
+const pad = (top: number, right: number, bottom: number, left: number): Pad => ({
+  top,
+  right,
+  bottom,
+  left,
+});
 const round = (r: number) => ({ topLeft: r, topRight: r, bottomLeft: r, bottomRight: r });
 
 // --- Base node builders ----------------------------------------------------
@@ -67,7 +72,7 @@ const button = (
     size?: 'x-small' | 'small' | 'medium';
     pt?: number;
     pb?: number;
-  } = {}
+  } = {},
 ): Node => {
   const { bg = DARK, color = WHITE, full = false, size = 'medium', pt = 8, pb = 0 } = opts;
   return {
@@ -79,7 +84,14 @@ const button = (
       buttonTextColor: color,
       shape: 'rectangle',
     },
-    props: { text: label, url: '#', buttonBackgroundColor: bg, buttonTextColor: color, fullWidth: full, size },
+    props: {
+      text: label,
+      url: '#',
+      buttonBackgroundColor: bg,
+      buttonTextColor: color,
+      fullWidth: full,
+      size,
+    },
   };
 };
 
@@ -95,14 +107,18 @@ const image = (alt: string, style: object = {}, props: object = {}): Node => ({
 // `useParentImageWidth`. A square box (height + objectFit cover) + pill shape
 // reads as a circle. `touched: true` also short-circuits the resize hook.
 const avatar = (alt: string): Node =>
-  image(alt, { shape: 'pill', height: 96, objectFit: 'cover' }, { size: 'scale', scale: 45, width: 96, touched: true });
+  image(
+    alt,
+    { shape: 'pill', height: 96, objectFit: 'cover' },
+    { size: 'scale', scale: 45, width: 96, touched: true },
+  );
 
 // Constrained logo image (same scale recipe to avoid the select-resize bug).
 const logo = (alt = 'Logo', align: 'left' | 'center' | 'right' = 'center'): Node =>
   image(
     alt,
     { textAlign: align, height: 40, objectFit: 'contain' },
-    { size: 'scale', scale: 24, width: 140, touched: true }
+    { size: 'scale', scale: 24, width: 140, touched: true },
   );
 
 const divider = (style: object = {}): Node => ({
@@ -110,13 +126,17 @@ const divider = (style: object = {}): Node => ({
   style: { color: BORDER, height: 1, width: 100, padding: pad(12, 0, 12, 0), ...style },
 });
 const spacer = (height = 16): Node => ({ t: 'spacer', style: { height } });
-const container = (children: Node[], style: object = {}): Node => ({ t: 'container', children, style });
+const container = (children: Node[], style: object = {}): Node => ({
+  t: 'container',
+  children,
+  style,
+});
 const cols = (
   columnsCount: 2 | 3,
   fixedWidths: (number | null)[],
   columns: Node[][],
   style: object = {},
-  props: object = {}
+  props: object = {},
 ): Node => ({
   t: 'cols',
   style,
@@ -134,7 +154,10 @@ function flatten(root: Node): BlockEntry[] {
     entries.push(entry);
     switch (node.t) {
       case 'text':
-        entry.block = { type: 'NotionText', data: { style: node.style ?? {}, props: { html: node.html } } };
+        entry.block = {
+          type: 'NotionText',
+          data: { style: node.style ?? {}, props: { html: node.html } },
+        };
         break;
       case 'button':
         entry.block = { type: 'Button', data: { style: node.style ?? {}, props: node.props } };
@@ -176,7 +199,8 @@ function flatten(root: Node): BlockEntry[] {
 // --- Text fragments (NotionText, bubble-menu-only HTML) --------------------
 
 type Align = 'left' | 'center' | 'right';
-const p = (s: string, align: Align = 'center'): string => `<p style="text-align:${align};">${s}</p>`;
+const p = (s: string, align: Align = 'center'): string =>
+  `<p style="text-align:${align};">${s}</p>`;
 const hTag = (lvl: 1 | 2 | 3, s: string, align: Align = 'center'): string =>
   `<h${lvl} style="text-align:${align};">${s}</h${lvl}>`;
 // Flat highlighted label (allowed). NOT a rounded pill: rounded pills need a
@@ -184,7 +208,8 @@ const hTag = (lvl: 1 | 2 | 3, s: string, align: Align = 'center'): string =>
 // span is the compliant, compact alternative per the plan's §2 note.
 const badge = (s: string, bg = DARK, color = WHITE): string =>
   `<span style="background-color:${bg};"><span style="color:${color};">&nbsp;${s}&nbsp;</span></span>`;
-const link = (s: string, color = DARK): string => `<a href="#"><span style="color:${color};">${s}</span></a>`;
+const link = (s: string, color = DARK): string =>
+  `<a href="#"><span style="color:${color};">${s}</span></a>`;
 const stars = (n = 5): string => '⭐'.repeat(n);
 
 // Heading block — size from the heading TAG (survives theme apply, which
@@ -192,7 +217,7 @@ const stars = (n = 5): string => '⭐'.repeat(n);
 const head = (
   lvl: 1 | 2 | 3,
   s: string,
-  opts: { color?: string; align?: Align; pt?: number; pb?: number } = {}
+  opts: { color?: string; align?: Align; pt?: number; pb?: number } = {},
 ): Node => {
   const { color = DARK, align = 'center', pt = 0, pb = 8 } = opts;
   return text(hTag(lvl, s, align), { color, padding: pad(pt, 0, pb, 0) });
@@ -200,23 +225,34 @@ const head = (
 // Body / sub / label paragraph.
 const para = (
   s: string,
-  opts: { color?: string; align?: Align; pt?: number; pb?: number; px?: number; fz?: number } = {}
+  opts: { color?: string; align?: Align; pt?: number; pb?: number; px?: number; fz?: number } = {},
 ): Node => {
   const { color = MUTED, align = 'center', pt = 0, pb = 8, px = 8, fz } = opts;
-  return text(p(s, align), { color, ...(fz ? { fontSize: fz } : {}), padding: pad(pt, px, pb, px) });
+  return text(p(s, align), {
+    color,
+    ...(fz ? { fontSize: fz } : {}),
+    padding: pad(pt, px, pb, px),
+  });
 };
 const eyebrow = (s: string, align: Align = 'center'): Node =>
   text(p(`<strong>${s}</strong>`, align), { color: MUTED, fontSize: 12, padding: pad(0, 0, 6, 0) });
 // ✓ / ✕ checklist as plain paragraphs (avoids the double-bullet look of <ul>).
-const checks = (items: string[], opts: { color?: string; align?: Align; mark?: string } = {}): Node => {
+const checks = (
+  items: string[],
+  opts: { color?: string; align?: Align; mark?: string } = {},
+): Node => {
   const { color = DARK, align = 'left', mark = '✓' } = opts;
-  return text(items.map((i) => p(`${mark} ${i}`, align)).join(''), { color, padding: pad(8, 4, 8, 4) });
+  return text(items.map((i) => p(`${mark} ${i}`, align)).join(''), {
+    color,
+    padding: pad(8, 4, 8, 4),
+  });
 };
 
 // --- Card / column fragments ----------------------------------------------
 
 const SECTION_PAD = pad(40, 40, 40, 40);
-const section = (children: Node[], style: object = {}): Node => container(children, { padding: SECTION_PAD, ...style });
+const section = (children: Node[], style: object = {}): Node =>
+  container(children, { padding: SECTION_PAD, ...style });
 const col3 = (a: Node[], b: Node[], c: Node[], props: object = {}, style: object = {}): Node =>
   cols(3, [33, 34, 33], [a, b, c], style, props);
 const col2 = (
@@ -224,7 +260,7 @@ const col2 = (
   b: Node[],
   widths: (number | null)[] = [50, 50, null],
   props: object = {},
-  style: object = {}
+  style: object = {},
 ): Node => cols(2, widths, [a, b], style, props);
 
 // Light bordered, rounded card.
@@ -245,17 +281,20 @@ const planCard = (
   period: string,
   feats: string[],
   cta: string,
-  opts: { highlight?: boolean; badgeText?: string } = {}
+  opts: { highlight?: boolean; badgeText?: string } = {},
 ): Node =>
   container(
     [
       ...(opts.badgeText ? [para(badge(opts.badgeText), { pb: 8 })] : []),
       head(3, name, { pb: 2 }),
-      text(`${hTag(1, priceStr)}${p(`<strong>${period}</strong>`)}`, { color: DARK, padding: pad(4, 0, 8, 0) }),
+      text(`${hTag(1, priceStr)}${p(`<strong>${period}</strong>`)}`, {
+        color: DARK,
+        padding: pad(4, 0, 8, 0),
+      }),
       checks(feats),
       button(cta, { full: true }),
     ],
-    cardStyle(opts.highlight)
+    cardStyle(opts.highlight),
   );
 
 const feature = (emoji: string, title: string, desc: string): Node[] => [
@@ -284,7 +323,7 @@ const testimonialCard = (quote: string, name: string, role: string): Node =>
       para(`<strong>${name}</strong>`, { color: DARK, pt: 8, pb: 2 }),
       para(role),
     ],
-    cardStyle()
+    cardStyle(),
   );
 
 const memberCard = (name: string, role: string, bio?: string): Node =>
@@ -296,7 +335,7 @@ const memberCard = (name: string, role: string, bio?: string): Node =>
       ...(bio ? [para(bio, { pb: 6 })] : []),
       para(`${link('Twitter')} · ${link('LinkedIn')}`, { color: DARK }),
     ],
-    { padding: pad(12, 8, 12, 8) }
+    { padding: pad(12, 8, 12, 8) },
   );
 
 const productCard = (title: string, priceStr: string): Node =>
@@ -307,7 +346,7 @@ const productCard = (title: string, priceStr: string): Node =>
       para(priceStr, { color: DARK, pb: 8 }),
       button('View', { full: true, size: 'small' }),
     ],
-    cardStyle()
+    cardStyle(),
   );
 
 const qa = (q: string, a: string): Node[] => [
@@ -315,7 +354,11 @@ const qa = (q: string, a: string): Node[] => [
   para(a, { align: 'left', px: 0, pb: 0 }),
 ];
 const tableRow = (feat: string, a: string, b: string): Node =>
-  col3([para(feat, { color: DARK, align: 'left' })], [para(a, { color: DARK })], [para(b, { color: DARK })]);
+  col3(
+    [para(feat, { color: DARK, align: 'left' })],
+    [para(a, { color: DARK })],
+    [para(b, { color: DARK })],
+  );
 
 // --- Advanced helpers (background images, button radius, card variants, mobile)
 //     See docs/plans/components-library-advanced-section-variants.md.
@@ -334,7 +377,10 @@ type BgSize = 'cover' | 'contain' | 'auto';
 type BgRepeat = 'no-repeat' | 'repeat' | 'repeat-x' | 'repeat-y';
 
 /** Build a CSS `background` shorthand string compatible with `BackgroundImageInput`. */
-const bg = (url: string = IMG, opts: { pos?: BgPos; size?: BgSize; repeat?: BgRepeat } = {}): string => {
+const bg = (
+  url: string = IMG,
+  opts: { pos?: BgPos; size?: BgSize; repeat?: BgRepeat } = {},
+): string => {
   const { pos = 'center center', size = 'cover', repeat = 'no-repeat' } = opts;
   return `url("${url}") ${repeat} ${pos} / ${size}`;
 };
@@ -347,7 +393,7 @@ const bg = (url: string = IMG, opts: { pos?: BgPos; size?: BgSize; repeat?: BgRe
 const sectionBg = (
   children: Node[],
   opts: { url?: string; tint?: string; pos?: BgPos } = {},
-  style: object = {}
+  style: object = {},
 ): Node =>
   section(children, {
     backgroundColor: opts.tint ?? DARK,
@@ -367,9 +413,17 @@ const pillButton = (
     fullMobile?: boolean;
     pt?: number;
     pb?: number;
-  } = {}
+  } = {},
 ): Node => {
-  const { bg: b = DARK, color = WHITE, full = false, size = 'medium', fullMobile = true, pt = 8, pb = 0 } = opts;
+  const {
+    bg: b = DARK,
+    color = WHITE,
+    full = false,
+    size = 'medium',
+    fullMobile = true,
+    pt = 8,
+    pb = 0,
+  } = opts;
   return {
     t: 'button',
     style: {
@@ -404,9 +458,17 @@ const corneredButton = (
     size?: 'x-small' | 'small' | 'medium';
     pt?: number;
     pb?: number;
-  } = {}
+  } = {},
 ): Node => {
-  const { bg: b = DARK, color = WHITE, full = false, fullMobile = true, size = 'medium', pt = 8, pb = 0 } = opts;
+  const {
+    bg: b = DARK,
+    color = WHITE,
+    full = false,
+    fullMobile = true,
+    size = 'medium',
+    pt = 8,
+    pb = 0,
+  } = opts;
   return {
     t: 'button',
     style: {
@@ -458,7 +520,7 @@ const corneredCardStyle = (
     topLeft: 24,
     bottomRight: 24,
   },
-  highlight = false
+  highlight = false,
 ): object => ({
   backgroundColor: highlight ? LIGHT : WHITE,
   borderColor: highlight ? DARK : BORDER,
@@ -505,7 +567,7 @@ const sectionM = (children: Node[], style: object = {}): Node =>
 const headM = (
   lvl: 1 | 2 | 3,
   s: string,
-  opts: { color?: string; align?: Align; pt?: number; pb?: number; fzMobile?: number } = {}
+  opts: { color?: string; align?: Align; pt?: number; pb?: number; fzMobile?: number } = {},
 ): Node => {
   const fallback = lvl === 1 ? 28 : lvl === 2 ? 22 : 18;
   const { color = DARK, align = 'center', pt = 0, pb = 8, fzMobile = fallback } = opts;
@@ -523,8 +585,15 @@ const col2Stack = (
   b: Node[],
   widths: (number | null)[] = [50, 50, null],
   props: object = {},
-  style: object = {}
-): Node => col2(a, b, widths, { stackColumnsOnMobile: true, contentAlignmentMobile: 'top', ...props }, style);
+  style: object = {},
+): Node =>
+  col2(
+    a,
+    b,
+    widths,
+    { stackColumnsOnMobile: true, contentAlignmentMobile: 'top', ...props },
+    style,
+  );
 
 /** 3-column with mobile-stack baked in. */
 const col3Stack = (a: Node[], b: Node[], c: Node[], props: object = {}, style: object = {}): Node =>
@@ -543,11 +612,14 @@ const SECTIONS: SectionDef[] = [
       [
         eyebrow('NEW'),
         head(1, 'Build emails your whole team will love'),
-        para('Hi [name], create beautiful, responsive emails in minutes — no code required.', { pb: 12, px: 24 }),
+        para('Hi [name], create beautiful, responsive emails in minutes — no code required.', {
+          pb: 12,
+          px: 24,
+        }),
         button('Get started'),
         para(link('or take the tour →'), { pt: 8 }),
       ],
-      { backgroundColor: LIGHT }
+      { backgroundColor: LIGHT },
     ),
   },
   {
@@ -566,7 +638,7 @@ const SECTIONS: SectionDef[] = [
         ],
         [image('Hero illustration')],
         [55, 45, null],
-        { contentAlignment: 'middle' }
+        { contentAlignment: 'middle' },
       ),
     ]),
   },
@@ -579,7 +651,7 @@ const SECTIONS: SectionDef[] = [
         para('Everything you need to design, test, and send.', { color: SOFT, pb: 12 }),
         button('Get started', { bg: WHITE, color: DARK }),
       ],
-      { backgroundColor: DARK }
+      { backgroundColor: DARK },
     ),
   },
   {
@@ -603,7 +675,7 @@ const SECTIONS: SectionDef[] = [
       col3(
         feature('⚡', 'Fast', 'Build and ship in minutes, not days.'),
         feature('🎨', 'On-brand', 'Themes keep every email consistent.'),
-        feature('📈', 'Insightful', 'Track opens and clicks in real time.')
+        feature('📈', 'Insightful', 'Track opens and clicks in real time.'),
       ),
     ]),
   },
@@ -618,7 +690,7 @@ const SECTIONS: SectionDef[] = [
           para('Compose with blocks and see results instantly.', { align: 'left', px: 0 }),
         ],
         [45, 55, null],
-        { contentAlignment: 'middle' }
+        { contentAlignment: 'middle' },
       ),
       spacer(20),
       col2(
@@ -628,7 +700,7 @@ const SECTIONS: SectionDef[] = [
         ],
         [image('Feature two')],
         [55, 45, null],
-        { contentAlignment: 'middle' }
+        { contentAlignment: 'middle' },
       ),
     ]),
   },
@@ -639,7 +711,7 @@ const SECTIONS: SectionDef[] = [
       head(2, 'What you get', { pb: 12 }),
       col2(
         [checks(['Unlimited templates', 'Custom themes', 'Image gallery'])],
-        [checks(['Merge tags', 'HTML & JSON export', 'Team sharing'])]
+        [checks(['Merge tags', 'HTML & JSON export', 'Team sharing'])],
       ),
     ]),
   },
@@ -650,10 +722,13 @@ const SECTIONS: SectionDef[] = [
       head(2, 'Built for teams', { pb: 16 }),
       col2(
         feature('🚀', 'Launch fast', 'From idea to inbox quickly.'),
-        feature('🔒', 'Secure', 'Your data stays protected.')
+        feature('🔒', 'Secure', 'Your data stays protected.'),
       ),
       spacer(20),
-      col2(feature('🧩', 'Modular', 'Mix and match blocks.'), feature('🌙', 'Dark mode', 'Looks great anywhere.')),
+      col2(
+        feature('🧩', 'Modular', 'Mix and match blocks.'),
+        feature('🌙', 'Dark mode', 'Looks great anywhere.'),
+      ),
     ]),
   },
 
@@ -664,9 +739,11 @@ const SECTIONS: SectionDef[] = [
     node: section(
       [
         eyebrow('TRUSTED BY TEAMS WORLDWIDE'),
-        col3([logo('Brand 1')], [logo('Brand 2')], [logo('Brand 3')], { contentAlignment: 'middle' }),
+        col3([logo('Brand 1')], [logo('Brand 2')], [logo('Brand 3')], {
+          contentAlignment: 'middle',
+        }),
       ],
-      { backgroundColor: LIGHT }
+      { backgroundColor: LIGHT },
     ),
   },
   {
@@ -678,7 +755,7 @@ const SECTIONS: SectionDef[] = [
         head(2, '4.9 / 5', { pb: 2 }),
         para('from 2,000+ verified reviews', { pb: 0 }),
       ],
-      { backgroundColor: LIGHT }
+      { backgroundColor: LIGHT },
     ),
   },
   {
@@ -688,7 +765,7 @@ const SECTIONS: SectionDef[] = [
       col3(
         [para('“A must-have tool.”', { color: DARK }), para('— The Verge')],
         [para('“Beautifully simple.”', { color: DARK }), para('— Wired')],
-        [para('“Saves hours weekly.”', { color: DARK }), para('— TechCrunch')]
+        [para('“Saves hours weekly.”', { color: DARK }), para('— TechCrunch')],
       ),
     ]),
   },
@@ -712,7 +789,7 @@ const SECTIONS: SectionDef[] = [
         para('Join thousands of teams building better emails.', { color: SOFT, pb: 12 }),
         button('Start free', { bg: WHITE, color: DARK }),
       ],
-      { backgroundColor: DARK }
+      { backgroundColor: DARK },
     ),
   },
   {
@@ -727,10 +804,10 @@ const SECTIONS: SectionDef[] = [
           ],
           [button('Get started', { full: true })],
           [60, 40, null],
-          { contentAlignment: 'middle' }
+          { contentAlignment: 'middle' },
         ),
       ],
-      { backgroundColor: LIGHT }
+      { backgroundColor: LIGHT },
     ),
   },
   {
@@ -744,7 +821,7 @@ const SECTIONS: SectionDef[] = [
           button('Start trial'),
           para('No credit card required.', { pt: 8 }),
         ],
-        cardStyle()
+        cardStyle(),
       ),
     ]),
   },
@@ -758,7 +835,7 @@ const SECTIONS: SectionDef[] = [
         button('Subscribe'),
         para('We respect your privacy. Unsubscribe anytime.', { pt: 8 }),
       ],
-      { backgroundColor: LIGHT }
+      { backgroundColor: LIGHT },
     ),
   },
 
@@ -778,27 +855,34 @@ const SECTIONS: SectionDef[] = [
             }),
           ],
           [40, 60, null],
-          { contentAlignment: 'middle' }
+          { contentAlignment: 'middle' },
         ),
       ],
-      { padding: pad(20, 40, 20, 40) }
+      { padding: pad(20, 40, 20, 40) },
     ),
   },
   {
     role: 'header',
     name: 'Centered logo',
-    node: container([logo(), para('Email made simple', { pt: 4 })], { padding: pad(24, 40, 24, 40) }),
+    node: container([logo(), para('Email made simple', { pt: 4 })], {
+      padding: pad(24, 40, 24, 40),
+    }),
   },
   {
     role: 'header',
     name: 'Logo + CTA',
     node: container(
       [
-        col2([logo('Logo', 'left')], [button('Sign in', { full: false, size: 'small' })], [50, 50, null], {
-          contentAlignment: 'middle',
-        }),
+        col2(
+          [logo('Logo', 'left')],
+          [button('Sign in', { full: false, size: 'small' })],
+          [50, 50, null],
+          {
+            contentAlignment: 'middle',
+          },
+        ),
       ],
-      { padding: pad(16, 40, 16, 40) }
+      { padding: pad(16, 40, 16, 40) },
     ),
   },
   {
@@ -818,15 +902,27 @@ const SECTIONS: SectionDef[] = [
         logo(),
         spacer(12),
         col3(
-          [para(`<strong>Product</strong><br>${link('Features')}<br>${link('Pricing')}`, { color: DARK })],
-          [para(`<strong>Company</strong><br>${link('About')}<br>${link('Careers')}`, { color: DARK })],
-          [para(`<strong>Legal</strong><br>${link('Privacy')}<br>${link('Terms')}`, { color: DARK })]
+          [
+            para(`<strong>Product</strong><br>${link('Features')}<br>${link('Pricing')}`, {
+              color: DARK,
+            }),
+          ],
+          [
+            para(`<strong>Company</strong><br>${link('About')}<br>${link('Careers')}`, {
+              color: DARK,
+            }),
+          ],
+          [
+            para(`<strong>Legal</strong><br>${link('Privacy')}<br>${link('Terms')}`, {
+              color: DARK,
+            }),
+          ],
         ),
         divider(),
         para('123 Market St, San Francisco, CA', { pb: 4 }),
         para(`{unsubscribe}Unsubscribe{/unsubscribe} · © [currentyear] Acme Inc.`),
       ],
-      { backgroundColor: LIGHT }
+      { backgroundColor: LIGHT },
     ),
   },
   {
@@ -837,7 +933,7 @@ const SECTIONS: SectionDef[] = [
         para('<strong>Acme Inc.</strong>', { color: DARK, pb: 4 }),
         para(`{unsubscribe}Unsubscribe{/unsubscribe} · © [currentyear]`),
       ],
-      { backgroundColor: LIGHT }
+      { backgroundColor: LIGHT },
     ),
   },
   {
@@ -851,12 +947,12 @@ const SECTIONS: SectionDef[] = [
         }),
         col2(
           [para(`${link('Features')}<br>${link('Pricing')}`, { color: DARK })],
-          [para(`${link('About')}<br>${link('Contact')}`, { color: DARK })]
+          [para(`${link('About')}<br>${link('Contact')}`, { color: DARK })],
         ),
         divider(),
         para('© [currentyear] Acme Inc. All rights reserved.'),
       ],
-      { backgroundColor: LIGHT }
+      { backgroundColor: LIGHT },
     ),
   },
   {
@@ -869,7 +965,7 @@ const SECTIONS: SectionDef[] = [
         para('[email] · +1 (555) 123-4567', { pb: 8 }),
         para(`{unsubscribe}Unsubscribe{/unsubscribe}`),
       ],
-      { backgroundColor: LIGHT }
+      { backgroundColor: LIGHT },
     ),
   },
 
@@ -881,10 +977,10 @@ const SECTIONS: SectionDef[] = [
       [
         para(
           `${link('Home')}&nbsp;&nbsp;${link('Products')}&nbsp;&nbsp;${link('Pricing')}&nbsp;&nbsp;${link('Blog')}&nbsp;&nbsp;${link('Contact')}`,
-          { color: DARK }
+          { color: DARK },
         ),
       ],
-      { padding: pad(16, 40, 16, 40) }
+      { padding: pad(16, 40, 16, 40) },
     ),
   },
   {
@@ -902,10 +998,10 @@ const SECTIONS: SectionDef[] = [
             }),
           ],
           [40, 60, null],
-          { contentAlignment: 'middle' }
+          { contentAlignment: 'middle' },
         ),
       ],
-      { padding: pad(16, 40, 16, 40) }
+      { padding: pad(16, 40, 16, 40) },
     ),
   },
   {
@@ -913,11 +1009,14 @@ const SECTIONS: SectionDef[] = [
     name: 'Pill links',
     node: container(
       [
-        para(`${badge('Home', SURFACE, DARK)} ${badge('Pricing', SURFACE, DARK)} ${badge('Blog', SURFACE, DARK)}`, {
-          color: DARK,
-        }),
+        para(
+          `${badge('Home', SURFACE, DARK)} ${badge('Pricing', SURFACE, DARK)} ${badge('Blog', SURFACE, DARK)}`,
+          {
+            color: DARK,
+          },
+        ),
       ],
-      { padding: pad(16, 40, 16, 40) }
+      { padding: pad(16, 40, 16, 40) },
     ),
   },
   {
@@ -925,22 +1024,47 @@ const SECTIONS: SectionDef[] = [
     name: 'Categories',
     node: section([
       col3(
-        [para(`<strong>Product</strong><br>${link('Features')}<br>${link('Pricing')}`, { color: DARK, align: 'left' })],
-        [para(`<strong>Resources</strong><br>${link('Blog')}<br>${link('Guides')}`, { color: DARK, align: 'left' })],
-        [para(`<strong>Company</strong><br>${link('About')}<br>${link('Careers')}`, { color: DARK, align: 'left' })]
+        [
+          para(`<strong>Product</strong><br>${link('Features')}<br>${link('Pricing')}`, {
+            color: DARK,
+            align: 'left',
+          }),
+        ],
+        [
+          para(`<strong>Resources</strong><br>${link('Blog')}<br>${link('Guides')}`, {
+            color: DARK,
+            align: 'left',
+          }),
+        ],
+        [
+          para(`<strong>Company</strong><br>${link('About')}<br>${link('Careers')}`, {
+            color: DARK,
+            align: 'left',
+          }),
+        ],
       ),
     ]),
   },
 
   // logo
   { role: 'logo', name: 'Centered', node: container([logo()], { padding: pad(24, 40, 24, 40) }) },
-  { role: 'logo', name: 'Left aligned', node: container([logo('Logo', 'left')], { padding: pad(24, 40, 24, 40) }) },
+  {
+    role: 'logo',
+    name: 'Left aligned',
+    node: container([logo('Logo', 'left')], { padding: pad(24, 40, 24, 40) }),
+  },
   {
     role: 'logo',
     name: 'Logo + tagline',
-    node: container([logo(), para('Your tagline here', { pt: 4 })], { padding: pad(24, 40, 24, 40) }),
+    node: container([logo(), para('Your tagline here', { pt: 4 })], {
+      padding: pad(24, 40, 24, 40),
+    }),
   },
-  { role: 'logo', name: 'Wordmark', node: container([head(2, 'ACME', { pb: 0 })], { padding: pad(24, 40, 24, 40) }) },
+  {
+    role: 'logo',
+    name: 'Wordmark',
+    node: container([head(2, 'ACME', { pb: 0 })], { padding: pad(24, 40, 24, 40) }),
+  },
 
   // pricing
   {
@@ -951,7 +1075,15 @@ const SECTIONS: SectionDef[] = [
       head(2, 'Simple, transparent pricing'),
       para('Choose the plan that fits your team.', { pb: 16 }),
       col3(
-        [planCard('Starter', '$9', '/mo', ['1 user', '10 templates', 'Email support'], 'Choose plan')],
+        [
+          planCard(
+            'Starter',
+            '$9',
+            '/mo',
+            ['1 user', '10 templates', 'Email support'],
+            'Choose plan',
+          ),
+        ],
         [
           planCard(
             'Pro',
@@ -959,10 +1091,18 @@ const SECTIONS: SectionDef[] = [
             '/mo',
             ['5 users', 'Unlimited templates', 'Priority support', 'Custom themes'],
             'Choose plan',
-            { highlight: true, badgeText: 'Most popular' }
+            { highlight: true, badgeText: 'Most popular' },
           ),
         ],
-        [planCard('Scale', '$99', '/mo', ['Unlimited users', 'SSO & roles', 'Dedicated support'], 'Choose plan')]
+        [
+          planCard(
+            'Scale',
+            '$99',
+            '/mo',
+            ['Unlimited users', 'SSO & roles', 'Dedicated support'],
+            'Choose plan',
+          ),
+        ],
       ),
     ]),
   },
@@ -978,7 +1118,7 @@ const SECTIONS: SectionDef[] = [
             highlight: true,
             badgeText: 'Save 20%',
           }),
-        ]
+        ],
       ),
     ]),
   },
@@ -989,15 +1129,18 @@ const SECTIONS: SectionDef[] = [
       container(
         [
           head(2, 'Pro'),
-          text(`${hTag(1, '$29')}${p('<strong>/mo</strong>')}`, { color: DARK, padding: pad(4, 0, 8, 0) }),
+          text(`${hTag(1, '$29')}${p('<strong>/mo</strong>')}`, {
+            color: DARK,
+            padding: pad(4, 0, 8, 0),
+          }),
           col2(
             [checks(['Unlimited templates', 'Custom themes', 'Priority support'])],
-            [checks(['Team sharing', 'HTML export', 'Analytics'])]
+            [checks(['Team sharing', 'HTML export', 'Analytics'])],
           ),
           button('Get started'),
           para('Billed monthly. Cancel anytime.', { pt: 8 }),
         ],
-        { ...cardStyle(), borderTop: 3, borderColor: DARK, padding: pad(32, 28, 32, 28) }
+        { ...cardStyle(), borderTop: 3, borderColor: DARK, padding: pad(32, 28, 32, 28) },
       ),
     ]),
   },
@@ -1011,7 +1154,7 @@ const SECTIONS: SectionDef[] = [
         [para('<strong>Free</strong>', { color: DARK })],
         [para('<strong>Pro</strong>', { color: DARK })],
         {},
-        { backgroundColor: SURFACE }
+        { backgroundColor: SURFACE },
       ),
       divider(),
       tableRow('Templates', '5', 'Unlimited'),
@@ -1044,7 +1187,7 @@ const SECTIONS: SectionDef[] = [
             padding: pad(10, 16, 10, 16),
           }),
           checks(['Limited projects', 'Slow support', 'Extra fees'], { mark: '✕', color: MUTED }),
-        ]
+        ],
       ),
     ]),
   },
@@ -1053,8 +1196,12 @@ const SECTIONS: SectionDef[] = [
     name: 'Before / After',
     node: section([
       col2(
-        [image('Before'), para(badge('BEFORE', SURFACE, DARK), { pt: 8, pb: 4 }), para('Cluttered and slow.')],
-        [image('After'), para(badge('AFTER'), { pt: 8, pb: 4 }), para('Clean and fast.')]
+        [
+          image('Before'),
+          para(badge('BEFORE', SURFACE, DARK), { pt: 8, pb: 4 }),
+          para('Cluttered and slow.'),
+        ],
+        [image('After'), para(badge('AFTER'), { pt: 8, pb: 4 }), para('Clean and fast.')],
       ),
     ]),
   },
@@ -1068,7 +1215,7 @@ const SECTIONS: SectionDef[] = [
         [para('<strong>Basic</strong>', { color: DARK })],
         [para('<strong>Premium</strong>', { color: DARK })],
         {},
-        { backgroundColor: SURFACE }
+        { backgroundColor: SURFACE },
       ),
       divider(),
       tableRow('Analytics', '—', '✓'),
@@ -1085,16 +1232,24 @@ const SECTIONS: SectionDef[] = [
       col2(
         [
           container(
-            [head(3, 'Option A'), checks(['Quick setup', 'Lower cost']), button('Choose A', { full: true })],
-            cardStyle()
+            [
+              head(3, 'Option A'),
+              checks(['Quick setup', 'Lower cost']),
+              button('Choose A', { full: true }),
+            ],
+            cardStyle(),
           ),
         ],
         [
           container(
-            [head(3, 'Option B'), checks(['More power', 'Scales further']), button('Choose B', { full: true })],
-            cardStyle()
+            [
+              head(3, 'Option B'),
+              checks(['More power', 'Scales further']),
+              button('Choose B', { full: true }),
+            ],
+            cardStyle(),
           ),
-        ]
+        ],
       ),
     ]),
   },
@@ -1119,7 +1274,7 @@ const SECTIONS: SectionDef[] = [
       col3(
         [testimonialCard('Best decision we made all year.', 'Sam', 'Founder')],
         [testimonialCard('Support is genuinely incredible.', 'Jo', 'Product')],
-        [testimonialCard('Saves our team hours weekly.', 'Lee', 'Ops')]
+        [testimonialCard('Saves our team hours weekly.', 'Lee', 'Ops')],
       ),
     ]),
   },
@@ -1135,7 +1290,7 @@ const SECTIONS: SectionDef[] = [
           para('Alex Rivera · CEO, Acme', { align: 'left', px: 0 }),
         ],
         [25, 75, null],
-        { contentAlignment: 'middle' }
+        { contentAlignment: 'middle' },
       ),
     ]),
   },
@@ -1158,10 +1313,10 @@ const SECTIONS: SectionDef[] = [
         col3(
           [head(1, '10k+', { color: WHITE, pb: 2 }), para('Active users', { color: SOFT })],
           [head(1, '99.9%', { color: WHITE, pb: 2 }), para('Uptime', { color: SOFT })],
-          [head(1, '4.9/5', { color: WHITE, pb: 2 }), para('Avg rating', { color: SOFT })]
+          [head(1, '4.9/5', { color: WHITE, pb: 2 }), para('Avg rating', { color: SOFT })],
         ),
       ],
-      { backgroundColor: DARK }
+      { backgroundColor: DARK },
     ),
   },
   {
@@ -1169,9 +1324,15 @@ const SECTIONS: SectionDef[] = [
     name: '4 metrics grid',
     node: section([
       head(2, 'By the numbers', { pb: 16 }),
-      col2([head(1, '2M', { pb: 2 }), para('Emails sent')], [head(1, '150+', { pb: 2 }), para('Countries')]),
+      col2(
+        [head(1, '2M', { pb: 2 }), para('Emails sent')],
+        [head(1, '150+', { pb: 2 }), para('Countries')],
+      ),
       spacer(16),
-      col2([head(1, '98%', { pb: 2 }), para('Deliverability')], [head(1, '24/7', { pb: 2 }), para('Support')]),
+      col2(
+        [head(1, '98%', { pb: 2 }), para('Deliverability')],
+        [head(1, '24/7', { pb: 2 }), para('Support')],
+      ),
     ]),
   },
   {
@@ -1181,11 +1342,15 @@ const SECTIONS: SectionDef[] = [
       col2(
         [head(1, '500%', { align: 'left' })],
         [
-          para('Average ROI reported by customers in their first year.', { align: 'left', px: 0, pb: 12 }),
+          para('Average ROI reported by customers in their first year.', {
+            align: 'left',
+            px: 0,
+            pb: 12,
+          }),
           button('See case studies'),
         ],
         [40, 60, null],
-        { contentAlignment: 'middle' }
+        { contentAlignment: 'middle' },
       ),
     ]),
   },
@@ -1193,7 +1358,11 @@ const SECTIONS: SectionDef[] = [
     role: 'stats',
     name: 'Stats with icons',
     node: section([
-      col3(iconStat('👥', '10k+', 'Users'), iconStat('⚡', '99.9%', 'Uptime'), iconStat('⭐', '4.9', 'Rating')),
+      col3(
+        iconStat('👥', '10k+', 'Users'),
+        iconStat('⚡', '99.9%', 'Uptime'),
+        iconStat('⭐', '4.9', 'Rating'),
+      ),
     ]),
   },
 
@@ -1207,7 +1376,7 @@ const SECTIONS: SectionDef[] = [
       col3(
         stepCol('1', 'Sign up', 'Create your free account in seconds.'),
         stepCol('2', 'Build', 'Drag and drop your first email.'),
-        stepCol('3', 'Send', 'Ship to your audience instantly.')
+        stepCol('3', 'Send', 'Ship to your audience instantly.'),
       ),
     ]),
   },
@@ -1217,23 +1386,32 @@ const SECTIONS: SectionDef[] = [
     node: section([
       col2(
         [para(badge('1'))],
-        [head(3, 'Connect', { align: 'left', pb: 2 }), para('Link your data source.', { align: 'left', px: 0 })],
+        [
+          head(3, 'Connect', { align: 'left', pb: 2 }),
+          para('Link your data source.', { align: 'left', px: 0 }),
+        ],
         [15, 85, null],
-        { contentAlignment: 'middle' }
+        { contentAlignment: 'middle' },
       ),
       divider(),
       col2(
         [para(badge('2'))],
-        [head(3, 'Build', { align: 'left', pb: 2 }), para('Design your first flow.', { align: 'left', px: 0 })],
+        [
+          head(3, 'Build', { align: 'left', pb: 2 }),
+          para('Design your first flow.', { align: 'left', px: 0 }),
+        ],
         [15, 85, null],
-        { contentAlignment: 'middle' }
+        { contentAlignment: 'middle' },
       ),
       divider(),
       col2(
         [para(badge('3'))],
-        [head(3, 'Launch', { align: 'left', pb: 2 }), para('Go live with confidence.', { align: 'left', px: 0 })],
+        [
+          head(3, 'Launch', { align: 'left', pb: 2 }),
+          para('Go live with confidence.', { align: 'left', px: 0 }),
+        ],
         [15, 85, null],
-        { contentAlignment: 'middle' }
+        { contentAlignment: 'middle' },
       ),
     ]),
   },
@@ -1242,14 +1420,24 @@ const SECTIONS: SectionDef[] = [
     name: 'Process with images',
     node: section([
       col3(
-        [image('Step 1'), para('STEP 1', { pt: 8, pb: 2 }), head(3, 'Plan', { pb: 4 }), para('Define your goal.')],
-        [image('Step 2'), para('STEP 2', { pt: 8, pb: 2 }), head(3, 'Create', { pb: 4 }), para('Design the content.')],
+        [
+          image('Step 1'),
+          para('STEP 1', { pt: 8, pb: 2 }),
+          head(3, 'Plan', { pb: 4 }),
+          para('Define your goal.'),
+        ],
+        [
+          image('Step 2'),
+          para('STEP 2', { pt: 8, pb: 2 }),
+          head(3, 'Create', { pb: 4 }),
+          para('Design the content.'),
+        ],
         [
           image('Step 3'),
           para('STEP 3', { pt: 8, pb: 2 }),
           head(3, 'Launch', { pb: 4 }),
           para('Go live with confidence.'),
-        ]
+        ],
       ),
     ]),
   },
@@ -1257,7 +1445,10 @@ const SECTIONS: SectionDef[] = [
     role: 'steps',
     name: '2-step + CTA',
     node: section([
-      col2(stepCol('1', 'Connect', 'Link your source.'), stepCol('2', 'Automate', 'Let the flows run.')),
+      col2(
+        stepCol('1', 'Connect', 'Link your source.'),
+        stepCol('2', 'Automate', 'Let the flows run.'),
+      ),
       spacer(20),
       button('Get started'),
     ]),
@@ -1291,7 +1482,7 @@ const SECTIONS: SectionDef[] = [
           ...qa('How is billing handled?', 'Monthly or yearly — your choice.'),
           spacer(10),
           ...qa('Is my data safe?', 'Encrypted at rest and in transit.'),
-        ]
+        ],
       ),
     ]),
   },
@@ -1305,8 +1496,12 @@ const SECTIONS: SectionDef[] = [
       ...qa('Do you offer refunds?', 'Yes, within 30 days.'),
       spacer(20),
       container(
-        [head(3, 'Still have questions?'), para('Our team is here to help.', { pb: 12 }), button('Contact us')],
-        cardStyle()
+        [
+          head(3, 'Still have questions?'),
+          para('Our team is here to help.', { pb: 12 }),
+          button('Contact us'),
+        ],
+        cardStyle(),
       ),
     ]),
   },
@@ -1331,7 +1526,7 @@ const SECTIONS: SectionDef[] = [
       col3(
         [memberCard('Maya Chen', 'CEO', 'Building tools that make teams faster.')],
         [memberCard('Tom Reed', 'CTO', 'Loves clean code and good coffee.')],
-        [memberCard('Ana Lopez', 'Head of Design', 'Obsessed with great UX.')]
+        [memberCard('Ana Lopez', 'Head of Design', 'Obsessed with great UX.')],
       ),
     ]),
   },
@@ -1344,10 +1539,16 @@ const SECTIONS: SectionDef[] = [
           memberCard(
             'Maya Chen',
             'Co-founder & CEO',
-            'Previously led design at two startups. Passionate about product.'
+            'Previously led design at two startups. Passionate about product.',
           ),
         ],
-        [memberCard('Tom Reed', 'Co-founder & CTO', 'Engineer at heart. Built systems used by millions.')]
+        [
+          memberCard(
+            'Tom Reed',
+            'Co-founder & CTO',
+            'Engineer at heart. Built systems used by millions.',
+          ),
+        ],
       ),
     ]),
   },
@@ -1358,7 +1559,11 @@ const SECTIONS: SectionDef[] = [
       eyebrow('OUR TEAM'),
       head(2, 'Meet the people behind it'),
       para('A small team with big ambitions.', { pb: 16 }),
-      col3([memberCard('Maya Chen', 'CEO')], [memberCard('Tom Reed', 'CTO')], [memberCard('Ana Lopez', 'Design')]),
+      col3(
+        [memberCard('Maya Chen', 'CEO')],
+        [memberCard('Tom Reed', 'CTO')],
+        [memberCard('Ana Lopez', 'Design')],
+      ),
     ]),
   },
   {
@@ -1373,7 +1578,7 @@ const SECTIONS: SectionDef[] = [
           para('“We’re building the email tool we always wished we had.”', { color: DARK, pb: 8 }),
           para(link('LinkedIn'), { color: DARK }),
         ],
-        cardStyle()
+        cardStyle(),
       ),
     ]),
   },
@@ -1386,7 +1591,7 @@ const SECTIONS: SectionDef[] = [
       col3(
         [productCard('Classic Tee', '$29')],
         [productCard('Canvas Bag', '$39')],
-        [productCard('Ceramic Mug', '$15')]
+        [productCard('Ceramic Mug', '$15')],
       ),
     ]),
   },
@@ -1404,14 +1609,18 @@ const SECTIONS: SectionDef[] = [
           image('Featured 2'),
           para('Summer essentials', { color: DARK, pt: 8, pb: 2 }),
           para(link('Shop now →'), { color: DARK }),
-        ]
+        ],
       ),
     ]),
   },
   {
     role: 'gallery',
     name: 'Hero + thumbnails',
-    node: section([image('Featured'), spacer(12), col3([image('Thumb 1')], [image('Thumb 2')], [image('Thumb 3')])]),
+    node: section([
+      image('Featured'),
+      spacer(12),
+      col3([image('Thumb 1')], [image('Thumb 2')], [image('Thumb 3')]),
+    ]),
   },
   {
     role: 'gallery',
@@ -1421,7 +1630,7 @@ const SECTIONS: SectionDef[] = [
       col3(
         [image('Look 1'), para('Morning', { pt: 6 })],
         [image('Look 2'), para('Daytime', { pt: 6 })],
-        [image('Look 3'), para('Evening', { pt: 6 })]
+        [image('Look 3'), para('Evening', { pt: 6 })],
       ),
     ]),
   },
@@ -1438,17 +1647,20 @@ const SECTIONS: SectionDef[] = [
           para('Ends Sunday. Don’t miss out.', { color: SOFT, pb: 12 }),
           button('Shop now', { bg: WHITE, color: DARK }),
         ],
-        { backgroundColor: DARK, shape: round(16), padding: pad(32, 28, 32, 28) }
+        { backgroundColor: DARK, shape: round(16), padding: pad(32, 28, 32, 28) },
       ),
     ]),
   },
   {
     role: 'banner',
     name: 'Announcement bar',
-    node: container([para(`🎉 New: dark mode is here! ${link('Learn more →', WHITE)}`, { color: WHITE, pb: 0 })], {
-      backgroundColor: DARK,
-      padding: pad(12, 16, 12, 16),
-    }),
+    node: container(
+      [para(`🎉 New: dark mode is here! ${link('Learn more →', WHITE)}`, { color: WHITE, pb: 0 })],
+      {
+        backgroundColor: DARK,
+        padding: pad(12, 16, 12, 16),
+      },
+    ),
   },
   {
     role: 'banner',
@@ -1462,10 +1674,10 @@ const SECTIONS: SectionDef[] = [
           ],
           [button('Claim offer', { bg: WHITE, color: DARK, full: true })],
           [60, 40, null],
-          { contentAlignment: 'middle' }
+          { contentAlignment: 'middle' },
         ),
       ],
-      { backgroundColor: DARK }
+      { backgroundColor: DARK },
     ),
   },
   {
@@ -1479,7 +1691,7 @@ const SECTIONS: SectionDef[] = [
           button('Subscribe'),
           para('No spam. Unsubscribe anytime.', { pt: 8 }),
         ],
-        cardStyle()
+        cardStyle(),
       ),
     ]),
   },
@@ -1496,11 +1708,15 @@ const SECTIONS: SectionDef[] = [
       [
         eyebrow('NEW LAUNCH'),
         headM(1, 'Build emails your team will love', { color: WHITE }),
-        para('Hi [name], create beautiful, responsive emails in minutes.', { color: SOFT, pb: 12, px: 24 }),
+        para('Hi [name], create beautiful, responsive emails in minutes.', {
+          color: SOFT,
+          pb: 12,
+          px: 24,
+        }),
         pillButton('Get started', { bg: WHITE, color: DARK }),
         para(link('or take the tour →', SOFT), { color: SOFT, pt: 8 }),
       ],
-      { tint: DARK }
+      { tint: DARK },
     ),
   },
   {
@@ -1517,7 +1733,7 @@ const SECTIONS: SectionDef[] = [
           }),
           pillButton('Start free', { bg: WHITE, color: DARK }),
         ],
-        imageCardStyle()
+        imageCardStyle(),
       ),
     ]),
   },
@@ -1533,7 +1749,7 @@ const SECTIONS: SectionDef[] = [
         ],
         [image('Hero illustration')],
         [55, 45, null],
-        { contentAlignment: 'middle' }
+        { contentAlignment: 'middle' },
       ),
     ]),
   },
@@ -1546,9 +1762,24 @@ const SECTIONS: SectionDef[] = [
       eyebrow('FEATURES'),
       headM(2, 'Everything you need', { pb: 16 }),
       col3Stack(
-        [container(feature('⚡', 'Fast', 'Build and ship in minutes, not days.'), gradientCardStyle())],
-        [container(feature('🎨', 'On-brand', 'Themes keep every email consistent.'), gradientCardStyle())],
-        [container(feature('📈', 'Insightful', 'Track opens and clicks in real time.'), gradientCardStyle())]
+        [
+          container(
+            feature('⚡', 'Fast', 'Build and ship in minutes, not days.'),
+            gradientCardStyle(),
+          ),
+        ],
+        [
+          container(
+            feature('🎨', 'On-brand', 'Themes keep every email consistent.'),
+            gradientCardStyle(),
+          ),
+        ],
+        [
+          container(
+            feature('📈', 'Insightful', 'Track opens and clicks in real time.'),
+            gradientCardStyle(),
+          ),
+        ],
       ),
     ]),
   },
@@ -1559,8 +1790,11 @@ const SECTIONS: SectionDef[] = [
       col2Stack(
         [
           container(
-            [para('FEATURED', { color: WHITE, pb: 6 }), headM(3, 'Design visually', { color: WHITE, align: 'left' })],
-            imageCardStyle()
+            [
+              para('FEATURED', { color: WHITE, pb: 6 }),
+              headM(3, 'Design visually', { color: WHITE, align: 'left' }),
+            ],
+            imageCardStyle(),
           ),
         ],
         [
@@ -1568,7 +1802,7 @@ const SECTIONS: SectionDef[] = [
           para('Compose with reusable blocks and see results instantly.', { align: 'left', px: 0 }),
         ],
         [45, 55, null],
-        { contentAlignment: 'middle' }
+        { contentAlignment: 'middle' },
       ),
       spacer(20),
       col2Stack(
@@ -1578,12 +1812,15 @@ const SECTIONS: SectionDef[] = [
         ],
         [
           container(
-            [para('LIBRARY', { color: WHITE, pb: 6 }), headM(3, 'Save & share', { color: WHITE, align: 'left' })],
-            imageCardStyle()
+            [
+              para('LIBRARY', { color: WHITE, pb: 6 }),
+              headM(3, 'Save & share', { color: WHITE, align: 'left' }),
+            ],
+            imageCardStyle(),
           ),
         ],
         [55, 45, null],
-        { contentAlignment: 'middle' }
+        { contentAlignment: 'middle' },
       ),
     ]),
   },
@@ -1593,13 +1830,18 @@ const SECTIONS: SectionDef[] = [
     node: sectionM([
       headM(2, 'Built for teams', { pb: 16 }),
       col2Stack(
-        [container(feature('🚀', 'Launch fast', 'From idea to inbox quickly.'), topAccentCardStyle())],
-        [container(feature('🔒', 'Secure', 'Your data stays protected.'), topAccentCardStyle())]
+        [
+          container(
+            feature('🚀', 'Launch fast', 'From idea to inbox quickly.'),
+            topAccentCardStyle(),
+          ),
+        ],
+        [container(feature('🔒', 'Secure', 'Your data stays protected.'), topAccentCardStyle())],
       ),
       spacer(20),
       col2Stack(
         [container(feature('🧩', 'Modular', 'Mix and match blocks.'), topAccentCardStyle())],
-        [container(feature('🌙', 'Dark mode', 'Looks great anywhere.'), topAccentCardStyle())]
+        [container(feature('🌙', 'Dark mode', 'Looks great anywhere.'), topAccentCardStyle())],
       ),
     ]),
   },
@@ -1616,7 +1858,7 @@ const SECTIONS: SectionDef[] = [
         para('<strong>Jordan Pike</strong>', { color: WHITE, pt: 8, pb: 2 }),
         para('Director of Design, Acme', { color: SOFT }),
       ],
-      { tint: DARK }
+      { tint: DARK },
     ),
   },
   {
@@ -1628,7 +1870,7 @@ const SECTIONS: SectionDef[] = [
           para(stars(), { color: DARK, pb: 4 }),
           para('<strong>4.9 / 5 from 2,000+ reviews</strong>', { color: DARK, pb: 0 }),
         ],
-        pillCardStyle()
+        pillCardStyle(),
       ),
     ]),
   },
@@ -1638,9 +1880,11 @@ const SECTIONS: SectionDef[] = [
     node: sectionM(
       [
         eyebrow('TRUSTED BY TEAMS WORLDWIDE'),
-        col3Stack([logo('Brand 1')], [logo('Brand 2')], [logo('Brand 3')], { contentAlignment: 'middle' }),
+        col3Stack([logo('Brand 1')], [logo('Brand 2')], [logo('Brand 3')], {
+          contentAlignment: 'middle',
+        }),
       ],
-      { backgroundColor: LIGHT }
+      { backgroundColor: LIGHT },
     ),
   },
 
@@ -1656,7 +1900,7 @@ const SECTIONS: SectionDef[] = [
           para('Ends Sunday. Don’t miss out.', { color: SOFT, pb: 12 }),
           pillButton('Shop now', { bg: WHITE, color: DARK, fullMobile: true }),
         ],
-        imageCardStyle()
+        imageCardStyle(),
       ),
     ]),
   },
@@ -1671,7 +1915,7 @@ const SECTIONS: SectionDef[] = [
           corneredButton('Start trial', { topLeft: 16, bottomRight: 16 }, { fullMobile: true }),
           para('No credit card required.', { pt: 8 }),
         ],
-        corneredCardStyle({ topLeft: 24, bottomRight: 24 })
+        corneredCardStyle({ topLeft: 24, bottomRight: 24 }),
       ),
     ]),
   },
@@ -1687,10 +1931,10 @@ const SECTIONS: SectionDef[] = [
           ],
           [pillButton('Get started', { full: true, fullMobile: true })],
           [60, 40, null],
-          { contentAlignment: 'middle' }
+          { contentAlignment: 'middle' },
         ),
       ],
-      { backgroundColor: LIGHT }
+      { backgroundColor: LIGHT },
     ),
   },
 
@@ -1705,7 +1949,7 @@ const SECTIONS: SectionDef[] = [
         headM(2, 'Welcome to Acme', { color: WHITE }),
         para('The fastest way to reach your audience.', { color: SOFT }),
       ],
-      { tint: DARK }
+      { tint: DARK },
     ),
   },
   {
@@ -1718,20 +1962,38 @@ const SECTIONS: SectionDef[] = [
           [
             container(
               [
-                pillButton('Home', { bg: SURFACE, color: DARK, size: 'small', fullMobile: false, pt: 0 }),
+                pillButton('Home', {
+                  bg: SURFACE,
+                  color: DARK,
+                  size: 'small',
+                  fullMobile: false,
+                  pt: 0,
+                }),
                 spacer(4),
-                pillButton('Pricing', { bg: SURFACE, color: DARK, size: 'small', fullMobile: false, pt: 0 }),
+                pillButton('Pricing', {
+                  bg: SURFACE,
+                  color: DARK,
+                  size: 'small',
+                  fullMobile: false,
+                  pt: 0,
+                }),
                 spacer(4),
-                pillButton('Blog', { bg: SURFACE, color: DARK, size: 'small', fullMobile: false, pt: 0 }),
+                pillButton('Blog', {
+                  bg: SURFACE,
+                  color: DARK,
+                  size: 'small',
+                  fullMobile: false,
+                  pt: 0,
+                }),
               ],
-              { textAlign: 'right', padding: pad(0, 0, 0, 0) }
+              { textAlign: 'right', padding: pad(0, 0, 0, 0) },
             ),
           ],
           [40, 60, null],
-          { contentAlignment: 'middle' }
+          { contentAlignment: 'middle' },
         ),
       ],
-      { padding: pad(16, 40, 16, 40), mobilePadding: pad(14, 20, 14, 20) }
+      { padding: pad(16, 40, 16, 40), mobilePadding: pad(14, 20, 14, 20) },
     ),
   },
   {
@@ -1755,18 +2017,30 @@ const SECTIONS: SectionDef[] = [
         spacer(12),
         col3Stack(
           [
-            para(`<strong>Product</strong><br>${link('Features', WHITE)}<br>${link('Pricing', WHITE)}`, {
+            para(
+              `<strong>Product</strong><br>${link('Features', WHITE)}<br>${link('Pricing', WHITE)}`,
+              {
+                color: WHITE,
+              },
+            ),
+          ],
+          [
+            para(
+              `<strong>Company</strong><br>${link('About', WHITE)}<br>${link('Careers', WHITE)}`,
+              { color: WHITE },
+            ),
+          ],
+          [
+            para(`<strong>Legal</strong><br>${link('Privacy', WHITE)}<br>${link('Terms', WHITE)}`, {
               color: WHITE,
             }),
           ],
-          [para(`<strong>Company</strong><br>${link('About', WHITE)}<br>${link('Careers', WHITE)}`, { color: WHITE })],
-          [para(`<strong>Legal</strong><br>${link('Privacy', WHITE)}<br>${link('Terms', WHITE)}`, { color: WHITE })]
         ),
         divider({ color: SOFT }),
         para('123 Market St, San Francisco, CA', { color: SOFT, pb: 4 }),
         para(`{unsubscribe}Unsubscribe{/unsubscribe} · © [currentyear] Acme Inc.`, { color: SOFT }),
       ],
-      { tint: DARK }
+      { tint: DARK },
     ),
   },
   {
@@ -1776,18 +2050,42 @@ const SECTIONS: SectionDef[] = [
       [
         para('<strong>Follow us</strong>', { color: DARK, pb: 8 }),
         col3Stack(
-          [pillButton('Twitter', { bg: SURFACE, color: DARK, size: 'small', fullMobile: false, pt: 0 })],
-          [pillButton('LinkedIn', { bg: SURFACE, color: DARK, size: 'small', fullMobile: false, pt: 0 })],
-          [pillButton('Instagram', { bg: SURFACE, color: DARK, size: 'small', fullMobile: false, pt: 0 })]
+          [
+            pillButton('Twitter', {
+              bg: SURFACE,
+              color: DARK,
+              size: 'small',
+              fullMobile: false,
+              pt: 0,
+            }),
+          ],
+          [
+            pillButton('LinkedIn', {
+              bg: SURFACE,
+              color: DARK,
+              size: 'small',
+              fullMobile: false,
+              pt: 0,
+            }),
+          ],
+          [
+            pillButton('Instagram', {
+              bg: SURFACE,
+              color: DARK,
+              size: 'small',
+              fullMobile: false,
+              pt: 0,
+            }),
+          ],
         ),
         divider(),
         col2Stack(
           [para(`${link('Features')}<br>${link('Pricing')}`, { color: DARK })],
-          [para(`${link('About')}<br>${link('Contact')}`, { color: DARK })]
+          [para(`${link('About')}<br>${link('Contact')}`, { color: DARK })],
         ),
         para('© [currentyear] Acme Inc. All rights reserved.', { pt: 12 }),
       ],
-      { backgroundColor: LIGHT }
+      { backgroundColor: LIGHT },
     ),
   },
   {
@@ -1803,13 +2101,17 @@ const SECTIONS: SectionDef[] = [
           ],
           [
             para('<strong>Quick links</strong>', { color: DARK, align: 'left', px: 0, pb: 4 }),
-            para(`${link('Features')}<br>${link('Pricing')}`, { color: DARK, align: 'left', px: 0 }),
-          ]
+            para(`${link('Features')}<br>${link('Pricing')}`, {
+              color: DARK,
+              align: 'left',
+              px: 0,
+            }),
+          ],
         ),
         divider(),
         para(`{unsubscribe}Unsubscribe{/unsubscribe}`),
       ],
-      { backgroundColor: LIGHT }
+      { backgroundColor: LIGHT },
     ),
   },
 
@@ -1821,10 +2123,10 @@ const SECTIONS: SectionDef[] = [
       [
         para(
           `${link('Home', WHITE)}&nbsp;&nbsp;${link('Products', WHITE)}&nbsp;&nbsp;${link('Pricing', WHITE)}&nbsp;&nbsp;${link('Blog', WHITE)}&nbsp;&nbsp;${link('Contact', WHITE)}`,
-          { color: WHITE }
+          { color: WHITE },
         ),
       ],
-      { tint: DARK }
+      { tint: DARK },
     ),
   },
   {
@@ -1833,12 +2135,36 @@ const SECTIONS: SectionDef[] = [
     node: container(
       [
         col3Stack(
-          [pillButton('Home', { bg: SURFACE, color: DARK, size: 'x-small', fullMobile: false, pt: 0 })],
-          [pillButton('Pricing', { bg: SURFACE, color: DARK, size: 'x-small', fullMobile: false, pt: 0 })],
-          [pillButton('Blog', { bg: SURFACE, color: DARK, size: 'x-small', fullMobile: false, pt: 0 })]
+          [
+            pillButton('Home', {
+              bg: SURFACE,
+              color: DARK,
+              size: 'x-small',
+              fullMobile: false,
+              pt: 0,
+            }),
+          ],
+          [
+            pillButton('Pricing', {
+              bg: SURFACE,
+              color: DARK,
+              size: 'x-small',
+              fullMobile: false,
+              pt: 0,
+            }),
+          ],
+          [
+            pillButton('Blog', {
+              bg: SURFACE,
+              color: DARK,
+              size: 'x-small',
+              fullMobile: false,
+              pt: 0,
+            }),
+          ],
         ),
       ],
-      { padding: pad(16, 40, 16, 40), mobilePadding: pad(14, 20, 14, 20) }
+      { padding: pad(16, 40, 16, 40), mobilePadding: pad(14, 20, 14, 20) },
     ),
   },
   {
@@ -1846,9 +2172,24 @@ const SECTIONS: SectionDef[] = [
     name: 'Mobile-stack categories',
     node: sectionM([
       col3Stack(
-        [para(`<strong>Product</strong><br>${link('Features')}<br>${link('Pricing')}`, { color: DARK, align: 'left' })],
-        [para(`<strong>Resources</strong><br>${link('Blog')}<br>${link('Guides')}`, { color: DARK, align: 'left' })],
-        [para(`<strong>Company</strong><br>${link('About')}<br>${link('Careers')}`, { color: DARK, align: 'left' })]
+        [
+          para(`<strong>Product</strong><br>${link('Features')}<br>${link('Pricing')}`, {
+            color: DARK,
+            align: 'left',
+          }),
+        ],
+        [
+          para(`<strong>Resources</strong><br>${link('Blog')}<br>${link('Guides')}`, {
+            color: DARK,
+            align: 'left',
+          }),
+        ],
+        [
+          para(`<strong>Company</strong><br>${link('About')}<br>${link('Careers')}`, {
+            color: DARK,
+            align: 'left',
+          }),
+        ],
       ),
     ]),
   },
@@ -1861,7 +2202,7 @@ const SECTIONS: SectionDef[] = [
     node: sectionM([
       container(
         [logo(), para('Your tagline here', { pt: 4, pb: 0 })],
-        corneredCardStyle({ topLeft: 24, topRight: 24 })
+        corneredCardStyle({ topLeft: 24, topRight: 24 }),
       ),
     ]),
   },
@@ -1883,20 +2224,41 @@ const SECTIONS: SectionDef[] = [
       headM(2, 'Simple, transparent pricing'),
       para('Choose the plan that fits your team.', { pb: 16 }),
       col3Stack(
-        [planCard('Starter', '$9', '/mo', ['1 user', '10 templates', 'Email support'], 'Choose plan')],
+        [
+          planCard(
+            'Starter',
+            '$9',
+            '/mo',
+            ['1 user', '10 templates', 'Email support'],
+            'Choose plan',
+          ),
+        ],
         [
           container(
             [
               para(badge('Most popular', WHITE, DARK), { color: WHITE, pb: 8 }),
               headM(3, 'Pro', { color: WHITE, pb: 2 }),
-              text(`${hTag(1, '$29')}${p('<strong>/mo</strong>')}`, { color: WHITE, padding: pad(4, 0, 8, 0) }),
-              checks(['5 users', 'Unlimited templates', 'Priority support', 'Custom themes'], { color: WHITE }),
+              text(`${hTag(1, '$29')}${p('<strong>/mo</strong>')}`, {
+                color: WHITE,
+                padding: pad(4, 0, 8, 0),
+              }),
+              checks(['5 users', 'Unlimited templates', 'Priority support', 'Custom themes'], {
+                color: WHITE,
+              }),
               pillButton('Choose plan', { bg: WHITE, color: DARK, full: true, fullMobile: true }),
             ],
-            imageCardStyle()
+            imageCardStyle(),
           ),
         ],
-        [planCard('Scale', '$99', '/mo', ['Unlimited users', 'SSO & roles', 'Dedicated support'], 'Choose plan')]
+        [
+          planCard(
+            'Scale',
+            '$99',
+            '/mo',
+            ['Unlimited users', 'SSO & roles', 'Dedicated support'],
+            'Choose plan',
+          ),
+        ],
       ),
     ]),
   },
@@ -1910,35 +2272,44 @@ const SECTIONS: SectionDef[] = [
           container(
             [
               headM(3, 'Starter', { pb: 2 }),
-              text(`${hTag(1, '$9')}${p('<strong>/mo</strong>')}`, { color: DARK, padding: pad(4, 0, 8, 0) }),
+              text(`${hTag(1, '$9')}${p('<strong>/mo</strong>')}`, {
+                color: DARK,
+                padding: pad(4, 0, 8, 0),
+              }),
               checks(['1 user', '10 templates', 'Email support']),
               pillButton('Choose', { full: true, fullMobile: true }),
             ],
-            corneredCardStyle({ topLeft: 24, bottomRight: 24 })
+            corneredCardStyle({ topLeft: 24, bottomRight: 24 }),
           ),
         ],
         [
           container(
             [
               headM(3, 'Pro', { pb: 2 }),
-              text(`${hTag(1, '$29')}${p('<strong>/mo</strong>')}`, { color: DARK, padding: pad(4, 0, 8, 0) }),
+              text(`${hTag(1, '$29')}${p('<strong>/mo</strong>')}`, {
+                color: DARK,
+                padding: pad(4, 0, 8, 0),
+              }),
               checks(['5 users', 'Unlimited', 'Priority support']),
               pillButton('Choose', { full: true, fullMobile: true }),
             ],
-            corneredCardStyle({ topLeft: 24, bottomRight: 24 }, true)
+            corneredCardStyle({ topLeft: 24, bottomRight: 24 }, true),
           ),
         ],
         [
           container(
             [
               headM(3, 'Scale', { pb: 2 }),
-              text(`${hTag(1, '$99')}${p('<strong>/mo</strong>')}`, { color: DARK, padding: pad(4, 0, 8, 0) }),
+              text(`${hTag(1, '$99')}${p('<strong>/mo</strong>')}`, {
+                color: DARK,
+                padding: pad(4, 0, 8, 0),
+              }),
               checks(['Unlimited users', 'SSO & roles', 'Dedicated']),
               pillButton('Choose', { full: true, fullMobile: true }),
             ],
-            corneredCardStyle({ topLeft: 24, bottomRight: 24 })
+            corneredCardStyle({ topLeft: 24, bottomRight: 24 }),
           ),
-        ]
+        ],
       ),
     ]),
   },
@@ -1952,11 +2323,14 @@ const SECTIONS: SectionDef[] = [
           container(
             [
               headM(3, 'Monthly', { pb: 2 }),
-              text(`${hTag(1, '$12')}${p('<strong>/mo</strong>')}`, { color: DARK, padding: pad(4, 0, 8, 0) }),
+              text(`${hTag(1, '$12')}${p('<strong>/mo</strong>')}`, {
+                color: DARK,
+                padding: pad(4, 0, 8, 0),
+              }),
               checks(['All features', 'Cancel anytime']),
               pillButton('Choose', { full: true, fullMobile: true }),
             ],
-            gradientCardStyle()
+            gradientCardStyle(),
           ),
         ],
         [
@@ -1964,13 +2338,16 @@ const SECTIONS: SectionDef[] = [
             [
               para(badge('Save 20%'), { pb: 8 }),
               headM(3, 'Annual', { pb: 2 }),
-              text(`${hTag(1, '$120')}${p('<strong>/yr</strong>')}`, { color: DARK, padding: pad(4, 0, 8, 0) }),
+              text(`${hTag(1, '$120')}${p('<strong>/yr</strong>')}`, {
+                color: DARK,
+                padding: pad(4, 0, 8, 0),
+              }),
               checks(['All features', '2 months free']),
               pillButton('Choose', { full: true, fullMobile: true }),
             ],
-            gradientCardStyle(SURFACE, WHITE)
+            gradientCardStyle(SURFACE, WHITE),
           ),
-        ]
+        ],
       ),
     ]),
   },
@@ -1985,25 +2362,31 @@ const SECTIONS: SectionDef[] = [
           headM(2, 'Why choose us', { color: WHITE }),
           para('See how we stack up against the alternatives.', { color: SOFT, pb: 0 }),
         ],
-        { tint: DARK }
+        { tint: DARK },
       ),
       spacer(16),
       col2Stack(
         [
           container(
-            [headM(3, 'Us', { pb: 8 }), checks(['Unlimited projects', 'Priority support', 'No hidden fees'])],
-            corneredCardStyle({ topLeft: 24, bottomRight: 24 }, true)
+            [
+              headM(3, 'Us', { pb: 8 }),
+              checks(['Unlimited projects', 'Priority support', 'No hidden fees']),
+            ],
+            corneredCardStyle({ topLeft: 24, bottomRight: 24 }, true),
           ),
         ],
         [
           container(
             [
               headM(3, 'Them', { pb: 8 }),
-              checks(['Limited projects', 'Slow support', 'Extra fees'], { mark: '✕', color: MUTED }),
+              checks(['Limited projects', 'Slow support', 'Extra fees'], {
+                mark: '✕',
+                color: MUTED,
+              }),
             ],
-            corneredCardStyle({ topRight: 24, bottomLeft: 24 })
+            corneredCardStyle({ topRight: 24, bottomLeft: 24 }),
           ),
-        ]
+        ],
       ),
     ]),
   },
@@ -2017,14 +2400,14 @@ const SECTIONS: SectionDef[] = [
           col3Stack(
             [para('<strong>Feature</strong>', { color: WHITE, align: 'left' })],
             [para('<strong>Basic</strong>', { color: WHITE })],
-            [para('<strong>Premium</strong>', { color: WHITE })]
+            [para('<strong>Premium</strong>', { color: WHITE })],
           ),
         ],
         {
           backgroundColor: DARK,
           shape: { topLeft: 12, topRight: 12, bottomLeft: 0, bottomRight: 0 },
           padding: pad(12, 16, 12, 16),
-        }
+        },
       ),
       tableRow('Analytics', '—', '✓'),
       divider(),
@@ -2045,7 +2428,7 @@ const SECTIONS: SectionDef[] = [
               checks(['Quick setup', 'Lower cost']),
               pillButton('Choose A', { full: true, fullMobile: true }),
             ],
-            gradientCardStyle()
+            gradientCardStyle(),
           ),
         ],
         [
@@ -2055,9 +2438,9 @@ const SECTIONS: SectionDef[] = [
               checks(['More power', 'Scales further']),
               pillButton('Choose B', { full: true, fullMobile: true }),
             ],
-            gradientCardStyle()
+            gradientCardStyle(),
           ),
-        ]
+        ],
       ),
     ]),
   },
@@ -2074,7 +2457,7 @@ const SECTIONS: SectionDef[] = [
         para('<strong>Alex Rivera</strong>', { color: WHITE, pt: 8, pb: 2 }),
         para('CEO, Acme', { color: SOFT }),
       ],
-      { tint: DARK }
+      { tint: DARK },
     ),
   },
   {
@@ -2090,9 +2473,15 @@ const SECTIONS: SectionDef[] = [
               avatar('Sam'),
               para('<strong>Sam</strong>', { color: DARK, pt: 8, pb: 2 }),
               para('Founder', { pb: 8 }),
-              pillButton('Read more', { bg: SURFACE, color: DARK, size: 'small', fullMobile: false, pt: 0 }),
+              pillButton('Read more', {
+                bg: SURFACE,
+                color: DARK,
+                size: 'small',
+                fullMobile: false,
+                pt: 0,
+              }),
             ],
-            corneredCardStyle({ topLeft: 24, topRight: 24 })
+            corneredCardStyle({ topLeft: 24, topRight: 24 }),
           ),
         ],
         [
@@ -2103,9 +2492,15 @@ const SECTIONS: SectionDef[] = [
               avatar('Jo'),
               para('<strong>Jo</strong>', { color: DARK, pt: 8, pb: 2 }),
               para('Product', { pb: 8 }),
-              pillButton('Read more', { bg: SURFACE, color: DARK, size: 'small', fullMobile: false, pt: 0 }),
+              pillButton('Read more', {
+                bg: SURFACE,
+                color: DARK,
+                size: 'small',
+                fullMobile: false,
+                pt: 0,
+              }),
             ],
-            corneredCardStyle({ topLeft: 24, topRight: 24 })
+            corneredCardStyle({ topLeft: 24, topRight: 24 }),
           ),
         ],
         [
@@ -2116,11 +2511,17 @@ const SECTIONS: SectionDef[] = [
               avatar('Lee'),
               para('<strong>Lee</strong>', { color: DARK, pt: 8, pb: 2 }),
               para('Ops', { pb: 8 }),
-              pillButton('Read more', { bg: SURFACE, color: DARK, size: 'small', fullMobile: false, pt: 0 }),
+              pillButton('Read more', {
+                bg: SURFACE,
+                color: DARK,
+                size: 'small',
+                fullMobile: false,
+                pt: 0,
+              }),
             ],
-            corneredCardStyle({ topLeft: 24, topRight: 24 })
+            corneredCardStyle({ topLeft: 24, topRight: 24 }),
           ),
-        ]
+        ],
       ),
     ]),
   },
@@ -2131,7 +2532,7 @@ const SECTIONS: SectionDef[] = [
       col3Stack(
         [testimonialCard('Best decision we made all year.', 'Sam', 'Founder')],
         [testimonialCard('Support is genuinely incredible.', 'Jo', 'Product')],
-        [testimonialCard('Saves our team hours weekly.', 'Lee', 'Ops')]
+        [testimonialCard('Saves our team hours weekly.', 'Lee', 'Ops')],
       ),
     ]),
   },
@@ -2145,10 +2546,10 @@ const SECTIONS: SectionDef[] = [
         col3Stack(
           [headM(1, '10k+', { color: WHITE, pb: 2 }), para('Active users', { color: SOFT })],
           [headM(1, '99.9%', { color: WHITE, pb: 2 }), para('Uptime', { color: SOFT })],
-          [headM(1, '4.9/5', { color: WHITE, pb: 2 }), para('Avg rating', { color: SOFT })]
+          [headM(1, '4.9/5', { color: WHITE, pb: 2 }), para('Avg rating', { color: SOFT })],
         ),
       ],
-      { tint: DARK }
+      { tint: DARK },
     ),
   },
   {
@@ -2160,30 +2561,30 @@ const SECTIONS: SectionDef[] = [
         [
           container(
             [headM(1, '2M', { pb: 2 }), para('Emails sent', { pb: 0 })],
-            corneredCardStyle({ topLeft: 16, bottomRight: 16 })
+            corneredCardStyle({ topLeft: 16, bottomRight: 16 }),
           ),
         ],
         [
           container(
             [headM(1, '150+', { pb: 2 }), para('Countries', { pb: 0 })],
-            corneredCardStyle({ topLeft: 16, bottomRight: 16 })
+            corneredCardStyle({ topLeft: 16, bottomRight: 16 }),
           ),
-        ]
+        ],
       ),
       spacer(16),
       col2Stack(
         [
           container(
             [headM(1, '98%', { pb: 2 }), para('Deliverability', { pb: 0 })],
-            corneredCardStyle({ topLeft: 16, bottomRight: 16 })
+            corneredCardStyle({ topLeft: 16, bottomRight: 16 }),
           ),
         ],
         [
           container(
             [headM(1, '24/7', { pb: 2 }), para('Support', { pb: 0 })],
-            corneredCardStyle({ topLeft: 16, bottomRight: 16 })
+            corneredCardStyle({ topLeft: 16, bottomRight: 16 }),
           ),
-        ]
+        ],
       ),
     ]),
   },
@@ -2191,7 +2592,11 @@ const SECTIONS: SectionDef[] = [
     role: 'stats',
     name: 'Mobile-stack with icons',
     node: sectionM([
-      col3Stack(iconStat('👥', '10k+', 'Users'), iconStat('⚡', '99.9%', 'Uptime'), iconStat('⭐', '4.9', 'Rating')),
+      col3Stack(
+        iconStat('👥', '10k+', 'Users'),
+        iconStat('⚡', '99.9%', 'Uptime'),
+        iconStat('⭐', '4.9', 'Rating'),
+      ),
     ]),
   },
 
@@ -2200,7 +2605,9 @@ const SECTIONS: SectionDef[] = [
     role: 'steps',
     name: 'BG image hero + numbered cards',
     node: sectionM([
-      sectionBg([eyebrow('HOW IT WORKS'), headM(2, 'Get started in 3 steps', { color: WHITE })], { tint: DARK }),
+      sectionBg([eyebrow('HOW IT WORKS'), headM(2, 'Get started in 3 steps', { color: WHITE })], {
+        tint: DARK,
+      }),
       spacer(16),
       col3Stack(
         [
@@ -2210,7 +2617,7 @@ const SECTIONS: SectionDef[] = [
               headM(3, 'Sign up', { pb: 4 }),
               para('Create your free account in seconds.', { pb: 0 }),
             ],
-            corneredCardStyle({ topLeft: 16, bottomRight: 16 })
+            corneredCardStyle({ topLeft: 16, bottomRight: 16 }),
           ),
         ],
         [
@@ -2220,7 +2627,7 @@ const SECTIONS: SectionDef[] = [
               headM(3, 'Build', { pb: 4 }),
               para('Drag and drop your first email.', { pb: 0 }),
             ],
-            corneredCardStyle({ topLeft: 16, bottomRight: 16 })
+            corneredCardStyle({ topLeft: 16, bottomRight: 16 }),
           ),
         ],
         [
@@ -2230,9 +2637,9 @@ const SECTIONS: SectionDef[] = [
               headM(3, 'Send', { pb: 4 }),
               para('Ship to your audience instantly.', { pb: 0 }),
             ],
-            corneredCardStyle({ topLeft: 16, bottomRight: 16 })
+            corneredCardStyle({ topLeft: 16, bottomRight: 16 }),
           ),
-        ]
+        ],
       ),
     ]),
   },
@@ -2245,18 +2652,27 @@ const SECTIONS: SectionDef[] = [
         [
           container([para('<strong>STEP 1</strong>', { color: DARK, pb: 0 })], pillCardStyle()),
           spacer(8),
-          container([headM(3, 'Connect', { pb: 4 }), para('Link your data source.', { pb: 0 })], topAccentCardStyle()),
+          container(
+            [headM(3, 'Connect', { pb: 4 }), para('Link your data source.', { pb: 0 })],
+            topAccentCardStyle(),
+          ),
         ],
         [
           container([para('<strong>STEP 2</strong>', { color: DARK, pb: 0 })], pillCardStyle()),
           spacer(8),
-          container([headM(3, 'Build', { pb: 4 }), para('Design your first flow.', { pb: 0 })], topAccentCardStyle()),
+          container(
+            [headM(3, 'Build', { pb: 4 }), para('Design your first flow.', { pb: 0 })],
+            topAccentCardStyle(),
+          ),
         ],
         [
           container([para('<strong>STEP 3</strong>', { color: DARK, pb: 0 })], pillCardStyle()),
           spacer(8),
-          container([headM(3, 'Launch', { pb: 4 }), para('Go live with confidence.', { pb: 0 })], topAccentCardStyle()),
-        ]
+          container(
+            [headM(3, 'Launch', { pb: 4 }), para('Go live with confidence.', { pb: 0 })],
+            topAccentCardStyle(),
+          ),
+        ],
       ),
     ]),
   },
@@ -2266,23 +2682,32 @@ const SECTIONS: SectionDef[] = [
     node: sectionM([
       col2Stack(
         [para(badge('1'))],
-        [headM(3, 'Connect', { align: 'left', pb: 2 }), para('Link your data source.', { align: 'left', px: 0 })],
+        [
+          headM(3, 'Connect', { align: 'left', pb: 2 }),
+          para('Link your data source.', { align: 'left', px: 0 }),
+        ],
         [15, 85, null],
-        { contentAlignment: 'middle' }
+        { contentAlignment: 'middle' },
       ),
       divider(),
       col2Stack(
         [para(badge('2'))],
-        [headM(3, 'Build', { align: 'left', pb: 2 }), para('Design your first flow.', { align: 'left', px: 0 })],
+        [
+          headM(3, 'Build', { align: 'left', pb: 2 }),
+          para('Design your first flow.', { align: 'left', px: 0 }),
+        ],
         [15, 85, null],
-        { contentAlignment: 'middle' }
+        { contentAlignment: 'middle' },
       ),
       divider(),
       col2Stack(
         [para(badge('3'))],
-        [headM(3, 'Launch', { align: 'left', pb: 2 }), para('Go live with confidence.', { align: 'left', px: 0 })],
+        [
+          headM(3, 'Launch', { align: 'left', pb: 2 }),
+          para('Go live with confidence.', { align: 'left', px: 0 }),
+        ],
         [15, 85, null],
-        { contentAlignment: 'middle' }
+        { contentAlignment: 'middle' },
       ),
     ]),
   },
@@ -2297,7 +2722,7 @@ const SECTIONS: SectionDef[] = [
           headM(2, 'Frequently asked questions', { color: WHITE }),
           para('Everything you need to know.', { color: SOFT, pb: 0 }),
         ],
-        { tint: DARK }
+        { tint: DARK },
       ),
       spacer(16),
       ...qa('Can I cancel anytime?', 'Yes, cancel with one click — no questions asked.'),
@@ -2312,11 +2737,20 @@ const SECTIONS: SectionDef[] = [
     name: 'Pill question rows',
     node: sectionM([
       headM(2, 'Common questions', { pb: 12 }),
-      container([para('<strong>Can I cancel anytime?</strong>', { color: DARK, pb: 0 })], pillCardStyle()),
+      container(
+        [para('<strong>Can I cancel anytime?</strong>', { color: DARK, pb: 0 })],
+        pillCardStyle(),
+      ),
       para('Yes, cancel with one click — no questions asked.', { align: 'left', pt: 8, pb: 12 }),
-      container([para('<strong>Is there a free trial?</strong>', { color: DARK, pb: 0 })], pillCardStyle()),
+      container(
+        [para('<strong>Is there a free trial?</strong>', { color: DARK, pb: 0 })],
+        pillCardStyle(),
+      ),
       para('Every plan includes a 14-day free trial.', { align: 'left', pt: 8, pb: 12 }),
-      container([para('<strong>Do you offer support?</strong>', { color: DARK, pb: 0 })], pillCardStyle()),
+      container(
+        [para('<strong>Do you offer support?</strong>', { color: DARK, pb: 0 })],
+        pillCardStyle(),
+      ),
       para('Priority support is on all paid plans.', { align: 'left', pt: 8, pb: 0 }),
     ]),
   },
@@ -2335,7 +2769,7 @@ const SECTIONS: SectionDef[] = [
           ...qa('How is billing handled?', 'Monthly or yearly — your choice.'),
           spacer(10),
           ...qa('Is my data safe?', 'Encrypted at rest and in transit.'),
-        ]
+        ],
       ),
     ]),
   },
@@ -2351,10 +2785,14 @@ const SECTIONS: SectionDef[] = [
           headM(2, 'Meet the people behind it', { color: WHITE }),
           para('A small team with big ambitions.', { color: SOFT, pb: 0 }),
         ],
-        { tint: DARK }
+        { tint: DARK },
       ),
       spacer(16),
-      col3Stack([memberCard('Maya Chen', 'CEO')], [memberCard('Tom Reed', 'CTO')], [memberCard('Ana Lopez', 'Design')]),
+      col3Stack(
+        [memberCard('Maya Chen', 'CEO')],
+        [memberCard('Tom Reed', 'CTO')],
+        [memberCard('Ana Lopez', 'Design')],
+      ),
     ]),
   },
   {
@@ -2368,9 +2806,15 @@ const SECTIONS: SectionDef[] = [
               avatar('Maya'),
               para('<strong>Maya Chen</strong>', { color: DARK, pt: 8, pb: 2 }),
               para('CEO', { pb: 8 }),
-              pillButton('Twitter', { bg: SURFACE, color: DARK, size: 'x-small', fullMobile: false, pt: 0 }),
+              pillButton('Twitter', {
+                bg: SURFACE,
+                color: DARK,
+                size: 'x-small',
+                fullMobile: false,
+                pt: 0,
+              }),
             ],
-            corneredCardStyle({ topLeft: 24, topRight: 24 })
+            corneredCardStyle({ topLeft: 24, topRight: 24 }),
           ),
         ],
         [
@@ -2379,9 +2823,15 @@ const SECTIONS: SectionDef[] = [
               avatar('Tom'),
               para('<strong>Tom Reed</strong>', { color: DARK, pt: 8, pb: 2 }),
               para('CTO', { pb: 8 }),
-              pillButton('Twitter', { bg: SURFACE, color: DARK, size: 'x-small', fullMobile: false, pt: 0 }),
+              pillButton('Twitter', {
+                bg: SURFACE,
+                color: DARK,
+                size: 'x-small',
+                fullMobile: false,
+                pt: 0,
+              }),
             ],
-            corneredCardStyle({ topLeft: 24, topRight: 24 })
+            corneredCardStyle({ topLeft: 24, topRight: 24 }),
           ),
         ],
         [
@@ -2390,11 +2840,17 @@ const SECTIONS: SectionDef[] = [
               avatar('Ana'),
               para('<strong>Ana Lopez</strong>', { color: DARK, pt: 8, pb: 2 }),
               para('Design', { pb: 8 }),
-              pillButton('Twitter', { bg: SURFACE, color: DARK, size: 'x-small', fullMobile: false, pt: 0 }),
+              pillButton('Twitter', {
+                bg: SURFACE,
+                color: DARK,
+                size: 'x-small',
+                fullMobile: false,
+                pt: 0,
+              }),
             ],
-            corneredCardStyle({ topLeft: 24, topRight: 24 })
+            corneredCardStyle({ topLeft: 24, topRight: 24 }),
           ),
-        ]
+        ],
       ),
     ]),
   },
@@ -2405,7 +2861,7 @@ const SECTIONS: SectionDef[] = [
       col3Stack(
         [memberCard('Maya Chen', 'CEO', 'Building tools that make teams faster.')],
         [memberCard('Tom Reed', 'CTO', 'Loves clean code and good coffee.')],
-        [memberCard('Ana Lopez', 'Head of Design', 'Obsessed with great UX.')]
+        [memberCard('Ana Lopez', 'Head of Design', 'Obsessed with great UX.')],
       ),
     ]),
   },
@@ -2421,7 +2877,7 @@ const SECTIONS: SectionDef[] = [
           para('Discover the latest collection.', { color: SOFT, pb: 12 }),
           pillButton('Shop the look', { bg: WHITE, color: DARK }),
         ],
-        { tint: DARK }
+        { tint: DARK },
       ),
       spacer(16),
       col3Stack([image('Look 1')], [image('Look 2')], [image('Look 3')]),
@@ -2440,7 +2896,7 @@ const SECTIONS: SectionDef[] = [
               para('$29', { color: DARK, pb: 8 }),
               pillButton('View', { full: true, fullMobile: true, size: 'small' }),
             ],
-            corneredCardStyle({ topLeft: 16, bottomRight: 16 })
+            corneredCardStyle({ topLeft: 16, bottomRight: 16 }),
           ),
         ],
         [
@@ -2451,7 +2907,7 @@ const SECTIONS: SectionDef[] = [
               para('$39', { color: DARK, pb: 8 }),
               pillButton('View', { full: true, fullMobile: true, size: 'small' }),
             ],
-            corneredCardStyle({ topLeft: 16, bottomRight: 16 })
+            corneredCardStyle({ topLeft: 16, bottomRight: 16 }),
           ),
         ],
         [
@@ -2462,9 +2918,9 @@ const SECTIONS: SectionDef[] = [
               para('$15', { color: DARK, pb: 8 }),
               pillButton('View', { full: true, fullMobile: true, size: 'small' }),
             ],
-            corneredCardStyle({ topLeft: 16, bottomRight: 16 })
+            corneredCardStyle({ topLeft: 16, bottomRight: 16 }),
           ),
-        ]
+        ],
       ),
     ]),
   },
@@ -2482,7 +2938,7 @@ const SECTIONS: SectionDef[] = [
           image('Featured 2'),
           para('Summer essentials', { color: DARK, pt: 8, pb: 2 }),
           para(link('Shop now →'), { color: DARK }),
-        ]
+        ],
       ),
     ]),
   },
@@ -2498,7 +2954,7 @@ const SECTIONS: SectionDef[] = [
         para('Ends Sunday. Don’t miss out.', { color: SOFT, pb: 12 }),
         pillButton('Shop now', { bg: WHITE, color: DARK, fullMobile: true }),
       ],
-      { tint: DARK }
+      { tint: DARK },
     ),
   },
   {
@@ -2513,10 +2969,14 @@ const SECTIONS: SectionDef[] = [
           corneredButton(
             'Claim offer',
             { topLeft: 16, bottomRight: 16 },
-            { bg: WHITE, color: DARK, full: true, fullMobile: true }
+            { bg: WHITE, color: DARK, full: true, fullMobile: true },
           ),
         ],
-        { ...corneredCardStyle({ topLeft: 24, bottomRight: 24 }, true), backgroundColor: DARK, borderColor: DARK }
+        {
+          ...corneredCardStyle({ topLeft: 24, bottomRight: 24 }, true),
+          backgroundColor: DARK,
+          borderColor: DARK,
+        },
       ),
     ]),
   },
@@ -2524,8 +2984,14 @@ const SECTIONS: SectionDef[] = [
     role: 'banner',
     name: 'Announcement mobile-tight',
     node: container(
-      [para(`🎉 New: dark mode is here! ${link('Learn more →', WHITE)}`, { color: WHITE, fz: 14, pb: 0 })],
-      { backgroundColor: DARK, padding: pad(12, 16, 12, 16), mobilePadding: pad(10, 14, 10, 14) }
+      [
+        para(`🎉 New: dark mode is here! ${link('Learn more →', WHITE)}`, {
+          color: WHITE,
+          fz: 14,
+          pb: 0,
+        }),
+      ],
+      { backgroundColor: DARK, padding: pad(12, 16, 12, 16), mobilePadding: pad(10, 14, 10, 14) },
     ),
   },
 ];
@@ -2533,7 +2999,7 @@ const SECTIONS: SectionDef[] = [
 type SeedSummary = { total: number; saved: number; skipped: number; failed: number };
 
 export async function seedSections(
-  options: { role?: string; limit?: number; force?: boolean } = {}
+  options: { role?: string; limit?: number; force?: boolean } = {},
 ): Promise<SeedSummary> {
   const base = resolveBackendUrl();
   let list = options.role ? SECTIONS.filter((s) => s.role === options.role) : SECTIONS;
@@ -2546,8 +3012,11 @@ export async function seedSections(
   try {
     const r = await fetch(`${base}/dev/sections`);
     if (r.ok) {
-      const { sections } = (await r.json()) as { sections: Array<{ role: string; name: string; id: string }> };
-      for (const s of sections) existing.set(`${s.role}/${s.name.trim()}`, { role: s.role, id: s.id });
+      const { sections } = (await r.json()) as {
+        sections: Array<{ role: string; name: string; id: string }>;
+      };
+      for (const s of sections)
+        existing.set(`${s.role}/${s.name.trim()}`, { role: s.role, id: s.id });
     }
   } catch {
     /* best-effort dedup */
@@ -2564,9 +3033,12 @@ export async function seedSections(
     }
     try {
       if (prev && options.force) {
-        await fetch(`${base}/dev/sections/${encodeURIComponent(prev.role)}/${encodeURIComponent(prev.id)}`, {
-          method: 'DELETE',
-        });
+        await fetch(
+          `${base}/dev/sections/${encodeURIComponent(prev.role)}/${encodeURIComponent(prev.id)}`,
+          {
+            method: 'DELETE',
+          },
+        );
       }
       const blocks = flatten(def.node);
       const res = await fetch(`${base}/dev/save-section`, {
@@ -2581,7 +3053,10 @@ export async function seedSections(
       summary.saved++;
     } catch (err) {
       summary.failed++;
-      console.warn(`[seedSections] "${def.role}/${def.name}" failed:`, err instanceof Error ? err.message : err);
+      console.warn(
+        `[seedSections] "${def.role}/${def.name}" failed:`,
+        err instanceof Error ? err.message : err,
+      );
     }
   }
 

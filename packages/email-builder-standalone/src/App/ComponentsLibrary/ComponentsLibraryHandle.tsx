@@ -22,7 +22,10 @@ import {
   useSelectedMainTab,
 } from '../../documents/editor/EditorContext';
 
-import { COMPACT_LIBRARY_DRAWER_WIDTH, COMPONENTS_LIBRARY_DRAWER_WIDTH } from './ComponentsLibraryDrawer';
+import {
+  COMPACT_LIBRARY_DRAWER_WIDTH,
+  COMPONENTS_LIBRARY_DRAWER_WIDTH,
+} from './ComponentsLibraryDrawer';
 
 export default function ComponentsLibraryHandle() {
   const open = useComponentsLibraryDrawerOpen();
@@ -49,12 +52,20 @@ export default function ComponentsLibraryHandle() {
       }}
     >
       <Tooltip
-        title={open ? t('componentsLibrary.drawer.handleClose') : t('componentsLibrary.drawer.handleOpen')}
+        title={
+          open
+            ? t('componentsLibrary.drawer.handleClose')
+            : t('componentsLibrary.drawer.handleOpen')
+        }
         placement="right"
       >
         <ButtonBase
           onClick={toggleComponentsLibraryDrawerOpen}
-          aria-label={open ? t('componentsLibrary.drawer.handleClose') : t('componentsLibrary.drawer.handleOpen')}
+          aria-label={
+            open
+              ? t('componentsLibrary.drawer.handleClose')
+              : t('componentsLibrary.drawer.handleOpen')
+          }
           sx={(theme) => ({
             width: 28,
             minHeight: 96,

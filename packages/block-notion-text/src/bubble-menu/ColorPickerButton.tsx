@@ -35,7 +35,7 @@ export default function ColorPickerButton({ editor }: Props) {
         }
       });
     },
-    [editor]
+    [editor],
   );
 
   return (

@@ -79,7 +79,13 @@ function fnv1a(str: string): string {
 }
 
 const contentVersion = fnv1a(
-  JSON.stringify([presets.templates, presets.sections, presets.layouts, presets.primitives, presets.themes])
+  JSON.stringify([
+    presets.templates,
+    presets.sections,
+    presets.layouts,
+    presets.primitives,
+    presets.themes,
+  ]),
 );
 
 export default { ...presets, version: contentVersion } satisfies LocalPresets;

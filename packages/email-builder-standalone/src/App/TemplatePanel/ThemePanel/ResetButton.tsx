@@ -31,7 +31,12 @@ export default function ResetButton({ onReset, visible }: ResetButtonProps) {
   const { t } = useTranslation('inspector');
 
   if (!visible) {
-    return <span aria-hidden="true" style={{ display: 'inline-block', width: 32, height: 32, flexShrink: 0 }} />;
+    return (
+      <span
+        aria-hidden="true"
+        style={{ display: 'inline-block', width: 32, height: 32, flexShrink: 0 }}
+      />
+    );
   }
 
   return (

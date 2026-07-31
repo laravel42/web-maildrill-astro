@@ -337,7 +337,7 @@ function heuristicQueries(prompt: string, count: number): string[] {
  */
 export async function queriesFromPrompt(
   userPrompt: string,
-  options: QueriesFromPromptOptions = {}
+  options: QueriesFromPromptOptions = {},
 ): Promise<QueriesFromPromptResult> {
   const count = clamp(options.count ?? DEFAULT_COUNT, MIN_COUNT, MAX_COUNT);
   const trimmedPrompt = userPrompt.trim();

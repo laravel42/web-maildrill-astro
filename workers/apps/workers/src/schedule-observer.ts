@@ -7,7 +7,7 @@ export interface ScheduleTickEvent {
   name: string;
   intervalMs: number;
   durationMs: number;
-  status: "ok" | "failed";
+  status: 'ok' | 'failed';
   output?: string;
   exception?: string;
 }

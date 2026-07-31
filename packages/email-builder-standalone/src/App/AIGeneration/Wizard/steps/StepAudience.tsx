@@ -33,7 +33,10 @@ export default function StepAudience({ brief, patch }: Props) {
         onChange={(e) => patch({ email_strategy: { audience: e.target.value } })}
         placeholder={t('steps.step01.audiencePlaceholder')}
       />
-      <FieldShell label={t('steps.step03.brandColorsTitle')} hint={t('steps.step03.brandColorsHint')}>
+      <FieldShell
+        label={t('steps.step03.brandColorsTitle')}
+        hint={t('steps.step03.brandColorsHint')}
+      >
         <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
           <Box sx={{ flex: 1 }}>
             <ColorSwatchField

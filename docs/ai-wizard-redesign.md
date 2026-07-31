@@ -31,21 +31,22 @@ EntryPicker (Direct | Wizard)         ← 2 cards
 
 Archivos:
 
-| Archivo | Rol |
-| --- | --- |
-| `AIGenerationDialog.tsx` | Orquesta `picker | direct | wizard`, estado de streaming, apply/retry |
-| `Wizard/EntryPicker.tsx` | Cards Direct vs Wizard |
-| `Wizard/GenerationTargetPicker.tsx` | Cards Template / Component / Theme |
-| `Wizard/AIVisualWizard.tsx` | Stepper, secuencia de steps por target, `MobileStepper` |
-| `Wizard/ChipQuestion.tsx` | Pregunta con `MUI Chip` (single/multi) + textfield opcional |
-| `Wizard/WizardField.tsx` | TextField con `LabelProperty` + `INPUT_TEXTFIELD_SX` ✅ ya alineado |
-| `Wizard/ColorPickerField.tsx` | Envuelve `BaseColorInput` del inspector ✅ |
-| `Wizard/steps/Step01..05`, `StepThemeColors`, `StepThemeTypography` | Steps concretos |
-| `Wizard/SummaryStep.tsx`, `ThemeSummaryStep.tsx` | Compilación de prompt / preview de tema |
+| Archivo                                                             | Rol                                                                 |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `AIGenerationDialog.tsx`                                            | Orquesta `picker                                                    | direct | wizard`, estado de streaming, apply/retry |
+| `Wizard/EntryPicker.tsx`                                            | Cards Direct vs Wizard                                              |
+| `Wizard/GenerationTargetPicker.tsx`                                 | Cards Template / Component / Theme                                  |
+| `Wizard/AIVisualWizard.tsx`                                         | Stepper, secuencia de steps por target, `MobileStepper`             |
+| `Wizard/ChipQuestion.tsx`                                           | Pregunta con `MUI Chip` (single/multi) + textfield opcional         |
+| `Wizard/WizardField.tsx`                                            | TextField con `LabelProperty` + `INPUT_TEXTFIELD_SX` ✅ ya alineado |
+| `Wizard/ColorPickerField.tsx`                                       | Envuelve `BaseColorInput` del inspector ✅                          |
+| `Wizard/steps/Step01..05`, `StepThemeColors`, `StepThemeTypography` | Steps concretos                                                     |
+| `Wizard/SummaryStep.tsx`, `ThemeSummaryStep.tsx`                    | Compilación de prompt / preview de tema                             |
 
 ### 1.2 Diagnóstico de complejidad e inconsistencia
 
 **Navegación / arquitectura**
+
 - Dos ejes de elección independientes presentados en cascada (Entry _y_ Target) + un `Switch`
   redundante en `WizardHeader` que vuelve a alternar el mismo eje. El usuario decide 2 veces lo
   mismo por caminos distintos.
@@ -53,6 +54,7 @@ Archivos:
   **Skip** por step), lo que transmite "esto es largo".
 
 **Controles (el núcleo del feedback)**
+
 - `ChipQuestion` usa **`MUI Chip`** con `variant filled/outlined`. Un `Chip` es semánticamente un
   _tag_, no un control de selección; para **single-select** el patrón correcto ya existente en la App
   es el **radio-pill** (`RadioGroupInput` / `InspectorPillToggleGroup`, que son `ToggleButtonGroup`
@@ -63,6 +65,7 @@ Archivos:
   `Chip` — cada uno con su propio spacing.
 
 **Layout de steps (falta de consistencia entre steps)**
+
 - Espaciados dispares: `Stack spacing={2}` (Step01), `spacing={3}` (Step02/03), `spacing={2.5}`
   (StepThemeColors/Typography).
 - Jerarquía de títulos duplicada: `AIVisualWizard` pinta un `subtitle2` con el título del step y
@@ -76,6 +79,7 @@ Archivos:
 ## 2. Objetivos y no-objetivos
 
 ### Objetivos
+
 1. **Menos capas de decisión**: del patrón `Entry → Target → Steps` a **una sola pantalla de
    entrada** + steps.
 2. **Un solo lenguaje de controles**, tomado del InspectorDrawer:
@@ -89,6 +93,7 @@ Archivos:
    `INPUT_TEXTFIELD_SX`, `INPUT_CONTAINER_SX`).
 
 ### No-objetivos
+
 - No se toca el contrato de red (`compileBriefClient`, `generateThemeClient`, NDJSON streaming) ni el
   shape de `DraftBrief`. Es un refactor de **presentación/UX**, no de datos.
 - No se rediseña el `AIPreviewPanel` ni la lógica de `apply/retry` de `AIGenerationDialog`.
@@ -133,6 +138,7 @@ AIGenerationDialog
 ```
 
 Notas:
+
 - **Refine / Generate-new** funcionan igual que antes; sólo cambió el estilo de los chips de
   sugerencia (ahora `PillButton`, mismo lenguaje pill que los selectores).
 - Los **brand colors** ocupan el 100% del ancho (3 swatches en `flex:1`).
@@ -143,6 +149,7 @@ Notas:
 Crear `Wizard/controls/` con wrappers finos sobre lo que ya existe:
 
 #### `WizardStep` — scaffold único de step
+
 ```tsx
 interface WizardStepProps {
   /** Título del step (una sola fuente; elimina el subtitle2 externo). */
@@ -156,8 +163,10 @@ interface WizardStepProps {
 ```
 
 #### `PillSelect` — single-select (radio-pill)
+
 Envuelve **`RadioGroupInput`** (o `InspectorPillToggleGroup` cuando el set entra en una fila). Es el
 mismo `ToggleButtonGroup` segmentado que usa `ContentAlignment`, `Shape`, `TextAlignInput`, etc.
+
 ```tsx
 interface PillSelectProps {
   label: string;
@@ -169,11 +178,13 @@ interface PillSelectProps {
   layout?: 'segmented' | 'wrap';
 }
 ```
+
 - Sets cortos (paleta, photoStyle, vertical…): `layout='segmented'` → barra segmentada full-width.
 - Sets largos (purpose: 8 opciones): `layout='wrap'` → pills que hacen wrap, mismo estilo
   `MuiToggleButton` seleccionado (fondo `primary.main`, texto `contrastText`) del tema.
 
 #### `PillMultiSelect` — multi-select (pill/badge toggles)
+
 ```tsx
 interface PillMultiSelectProps {
   label: string;
@@ -183,6 +194,7 @@ interface PillMultiSelectProps {
   onChange: (next: string[]) => void;
 }
 ```
+
 - Render: fila con `flexWrap`, cada opción es un `ToggleButton` **standalone** (no dentro de un
   `ToggleButtonGroup exclusive`) para permitir selección múltiple, heredando el look pill del tema.
   Estado seleccionado = `.Mui-selected` (mismo fondo `primary`). Esto sustituye al `Chip` multi.
@@ -195,21 +207,21 @@ interface PillMultiSelectProps {
 
 ### 4.3 Mapeo de controles por step
 
-| Step | Pregunta | Control actual | Control propuesto |
-| --- | --- | --- | --- |
-| Sobre | Purpose (8) | Chip single | **PillSelect** `wrap` |
-| Sobre | Brand / Audience | WizardField | WizardField ✅ (sin cambios) |
-| Sobre | Goal (sólo `purpose=custom`) | WizardField | WizardField ✅ |
-| Sobre | Moods (multi) | Chip multi | **PillMultiSelect** |
-| Sobre | Vertical (11) | Chip single | **PillSelect** `wrap` |
-| Estilo | Palette (6) | Chip single | **PillSelect** `segmented`/`wrap` |
-| Estilo | Brand colors ×3 | ColorPickerField (fila) | ColorPickerField, **layout unificado** (ver 4.5) |
-| Estilo | Photo style (5) | Chip single | **PillSelect** `wrap` |
-| Estilo | Escena concreta (opcional) | Chip multi + TextField | **WizardField** (una línea, opcional) |
-| ~~Layout~~ | ~~Sections (multi)~~ | ~~Chip multi~~ | **Eliminado — lo decide el LLM** (ver 4.7) |
-| ~~Imagery~~ | ~~Subjects (multi)~~ | ~~Chip multi~~ | **Eliminado — lo infiere el LLM** (ver 4.7) |
-| Theme colors | 3 colores + brand | ColorPickerField (columna) + WizardField | ColorPickerField (**mismo layout que Visual**) + WizardField |
-| Theme typo | Body/Headings + radius | Select inspector + Slider crudo | **Select** ✅ + **RawSliderInput** (del inspector) |
+| Step         | Pregunta                     | Control actual                           | Control propuesto                                            |
+| ------------ | ---------------------------- | ---------------------------------------- | ------------------------------------------------------------ |
+| Sobre        | Purpose (8)                  | Chip single                              | **PillSelect** `wrap`                                        |
+| Sobre        | Brand / Audience             | WizardField                              | WizardField ✅ (sin cambios)                                 |
+| Sobre        | Goal (sólo `purpose=custom`) | WizardField                              | WizardField ✅                                               |
+| Sobre        | Moods (multi)                | Chip multi                               | **PillMultiSelect**                                          |
+| Sobre        | Vertical (11)                | Chip single                              | **PillSelect** `wrap`                                        |
+| Estilo       | Palette (6)                  | Chip single                              | **PillSelect** `segmented`/`wrap`                            |
+| Estilo       | Brand colors ×3              | ColorPickerField (fila)                  | ColorPickerField, **layout unificado** (ver 4.5)             |
+| Estilo       | Photo style (5)              | Chip single                              | **PillSelect** `wrap`                                        |
+| Estilo       | Escena concreta (opcional)   | Chip multi + TextField                   | **WizardField** (una línea, opcional)                        |
+| ~~Layout~~   | ~~Sections (multi)~~         | ~~Chip multi~~                           | **Eliminado — lo decide el LLM** (ver 4.7)                   |
+| ~~Imagery~~  | ~~Subjects (multi)~~         | ~~Chip multi~~                           | **Eliminado — lo infiere el LLM** (ver 4.7)                  |
+| Theme colors | 3 colores + brand            | ColorPickerField (columna) + WizardField | ColorPickerField (**mismo layout que Visual**) + WizardField |
+| Theme typo   | Body/Headings + radius       | Select inspector + Slider crudo          | **Select** ✅ + **RawSliderInput** (del inspector)           |
 
 ### 4.4 Estructura de steps (Template, único objetivo)
 
@@ -236,14 +248,14 @@ interface PillMultiSelectProps {
 
 ### 4.6 Tokens y estilo — qué usar exactamente
 
-| Necesidad | Fuente única |
-| --- | --- |
-| Radio-pill / multi-pill | `MuiToggleButton`/`MuiToggleButtonGroup` del tema (ya `.Mui-selected` → `primary.main`) |
-| Alturas / paddings de input | `INPUT_HEIGHT`, `INPUT_TEXTFIELD_SX`, `INPUT_CONTAINER_SX` (`inputStyles.ts`) |
-| Radios | `RADIUS_INPUT` (6), `RADIUS_CARD` (8), `RADIUS_DIALOG` (10) (`constants.ts`) |
-| Labels de campo | `LabelProperty` (12.5px / 600) |
-| Colores/estado | `theme.palette` (`primary`, `text.secondary`, `divider`, `action.hover`) |
-| Tipografía | variantes del tema (`h6`, `body2`, `caption`) — **no** `fontSize` inline |
+| Necesidad                   | Fuente única                                                                            |
+| --------------------------- | --------------------------------------------------------------------------------------- |
+| Radio-pill / multi-pill     | `MuiToggleButton`/`MuiToggleButtonGroup` del tema (ya `.Mui-selected` → `primary.main`) |
+| Alturas / paddings de input | `INPUT_HEIGHT`, `INPUT_TEXTFIELD_SX`, `INPUT_CONTAINER_SX` (`inputStyles.ts`)           |
+| Radios                      | `RADIUS_INPUT` (6), `RADIUS_CARD` (8), `RADIUS_DIALOG` (10) (`constants.ts`)            |
+| Labels de campo             | `LabelProperty` (12.5px / 600)                                                          |
+| Colores/estado              | `theme.palette` (`primary`, `text.secondary`, `divider`, `action.hover`)                |
+| Tipografía                  | variantes del tema (`h6`, `body2`, `caption`) — **no** `fontSize` inline                |
 
 Regla de lint conceptual: en `Wizard/**` no debe aparecer ningún hex literal ni `fontSize` inline;
 todo pasa por tema/constantes.
@@ -253,13 +265,14 @@ todo pasa por tema/constantes.
 Se retiran de la interfaz los inputs de **baja señal** — aquellos donde el usuario del wizard
 tenderá a "marcar todo" o que el modelo puede inferir mejor desde la estrategia:
 
-| Campo del brief | Antes (UI) | Ahora |
-| --- | --- | --- |
-| `layout_strategy.sections` | Step Layout (multi-pill) | **Sin UI.** El modelo elige las secciones desde `purpose` + `vertical` + `moods`. |
-| `image_queries.subjects` | Step Imagery (multi-pill) | **Sin UI.** El modelo deriva los sujetos desde el propósito y la escena opcional. |
+| Campo del brief               | Antes (UI)                  | Ahora                                                                                                    |
+| ----------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `layout_strategy.sections`    | Step Layout (multi-pill)    | **Sin UI.** El modelo elige las secciones desde `purpose` + `vertical` + `moods`.                        |
+| `image_queries.subjects`      | Step Imagery (multi-pill)   | **Sin UI.** El modelo deriva los sujetos desde el propósito y la escena opcional.                        |
 | `image_queries.specificScene` | TextField dentro de Imagery | **Se conserva** como único campo de imagen: un input opcional de una línea ("¿alguna escena concreta?"). |
 
 **Compatibilidad de contrato:**
+
 - `DraftBrief` (cliente) **mantiene** `layout_strategy` e `image_queries.subjects`; sólo dejan de
   tener UI y quedan en `[]`. El tipo no cambia.
 - Cambio **in-repo** (este repositorio) — `compileBriefClient.toWireBrief()`
@@ -330,12 +343,13 @@ Cada fase compila y es verificable de forma aislada (`npm run check` + `npm run 
 Son **dos repositorios git independientes**; los cambios de backend **no** se mezclan con los del
 frontend:
 
-| Repo | Ubicación | Alcance | Rama |
-| --- | --- | --- | --- |
+| Repo            | Ubicación             | Alcance                                            | Rama                                                                                    |
+| --------------- | --------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | Frontend (este) | `web-maildrill-astro` | Wizard UX, primitivos, `toWireBrief` enviando `[]` | rama de trabajo del editor (p.ej. `work/email-builder-isolated` según `docs/AGENTS.md`) |
-| Backend | `workers/` | `brief-schema.ts` + `compile-brief.ts` | **rama aparte dedicada**, p.ej. `feat/wizard-llm-decides-structure` |
+| Backend         | `workers/`            | `brief-schema.ts` + `compile-brief.ts`             | **rama aparte dedicada**, p.ej. `feat/wizard-llm-decides-structure`                     |
 
 Orden de despliegue recomendado para no romper en producción:
+
 1. **Backend primero**: la rama del backend debe permitir `sections` vacío **antes** de que el
    cliente empiece a enviar `[]` (si no, `visual-brief/compile` respondería 400 por schema).
 2. Frontend después: una vez el backend acepta vacío, se libera el cambio de `toWireBrief` + la UI.
@@ -367,11 +381,14 @@ default actual; el cambio de `toWireBrief` se activa sólo cuando el backend ya 
 
 ## 8. Riesgos y mitigación
 
-| Riesgo | Mitigación |
-| --- | --- |
-| Sets largos (purpose 8, vertical 11) se ven apretados como pills | `PillSelect layout='wrap'`; validar en el ancho del diálogo `sm` (≈600px) |
-| Perder el "prompt directo" al fusionar la entrada | `WizardEntry` mantiene el textarea + `Generar` como acción de primer nivel (no un modo escondido) |
+| Riesgo                                                             | Mitigación                                                                                                          |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| Sets largos (purpose 8, vertical 11) se ven apretados como pills   | `PillSelect layout='wrap'`; validar en el ancho del diálogo `sm` (≈600px)                                           |
+| Perder el "prompt directo" al fusionar la entrada                  | `WizardEntry` mantiene el textarea + `Generar` como acción de primer nivel (no un modo escondido)                   |
 | Multi-select con `ToggleButton` standalone pierde estilos de grupo | Verificar `.Mui-selected` del tema aplica igual fuera de `ToggleButtonGroup`; si no, envolver en grupo `!exclusive` |
-| Regresiones i18n | Reusar claves `aiWizard` existentes; sólo mover, no renombrar |
-| Es código vendored | Cambios contenidos en `AIGeneration/**`; no tocar otros paquetes; gate = `build` |
+| Regresiones i18n                                                   | Reusar claves `aiWizard` existentes; sólo mover, no renombrar                                                       |
+| Es código vendored                                                 | Cambios contenidos en `AIGeneration/**`; no tocar otros paquetes; gate = `build`                                    |
+
+```
+
 ```

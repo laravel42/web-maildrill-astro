@@ -32,9 +32,7 @@ export default function ListEditorModal({
 }: Props) {
   const [name, setName] = useState(initialName);
   const [notes, setNotes] = useState(initialNotes);
-  const [color, setColor] = useState(
-    COLORS.includes(initialColor) ? initialColor : COLORS[0],
-  );
+  const [color, setColor] = useState(COLORS.includes(initialColor) ? initialColor : COLORS[0]);
 
   useEscapeClose(onClose);
 
@@ -47,7 +45,11 @@ export default function ListEditorModal({
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose} style={{ animation: 'ovfade .18s var(--ease-out)' }}>
+    <div
+      className={styles.overlay}
+      onClick={onClose}
+      style={{ animation: 'ovfade .18s var(--ease-out)' }}
+    >
       <div
         className={styles.lem}
         onClick={(e) => e.stopPropagation()}

@@ -92,19 +92,23 @@ type ReaderSchemaDictionary = {
  * and the !important rules win, hiding the resolved values. See
  * L42-312.
  */
-export const READER_SCHEMA_DEFAULTS_BY_TYPE: Record<string, BlockSchemaDefaults> = Object.fromEntries(
-  Object.entries(READER_DICTIONARY).map(([type, entry]) => [
-    type,
-    (getSchemaDefaults(entry.schema) as BlockSchemaDefaults | undefined) ?? {},
-  ])
-);
+export const READER_SCHEMA_DEFAULTS_BY_TYPE: Record<string, BlockSchemaDefaults> =
+  Object.fromEntries(
+    Object.entries(READER_DICTIONARY).map(([type, entry]) => [
+      type,
+      (getSchemaDefaults(entry.schema) as BlockSchemaDefaults | undefined) ?? {},
+    ]),
+  );
 
 const ReaderBlockSchemaInternal: z.ZodType<BlockConfiguration<ReaderSchemaDictionary>> =
   buildBlockConfigurationSchema(READER_DICTIONARY);
 export type TReaderBlock = z.infer<typeof ReaderBlockSchemaInternal>;
 export const ReaderBlockSchema: z.ZodType<TReaderBlock> = ReaderBlockSchemaInternal;
 export type TReaderDocument = Record<string, TReaderBlock>;
-export const ReaderDocumentSchema: z.ZodType<TReaderDocument> = z.record(z.string(), ReaderBlockSchema);
+export const ReaderDocumentSchema: z.ZodType<TReaderDocument> = z.record(
+  z.string(),
+  ReaderBlockSchema,
+);
 
 const BaseReaderBlock = buildBlockComponent(READER_DICTIONARY);
 
@@ -126,8 +130,11 @@ export function ReaderBlock({ id }: TReaderBlockProps) {
   const rootBlock = document.root as { data?: { theme?: ThemeJson } } | undefined;
   const theme = rootBlock?.data?.theme;
   const resolved = useMemo(
-    () => (block ? resolveBlockData(block, theme, viewport, READER_SCHEMA_DEFAULTS_BY_TYPE[block.type]) : undefined),
-    [block, theme, viewport]
+    () =>
+      block
+        ? resolveBlockData(block, theme, viewport, READER_SCHEMA_DEFAULTS_BY_TYPE[block.type])
+        : undefined,
+    [block, theme, viewport],
   );
 
   if (!resolved) return null;
@@ -156,7 +163,8 @@ export default function Reader({ document, rootBlockId, viewport }: TReaderProps
   // without touching any store — this is what makes the render tree
   // Node-safe. The editor still wraps its canvas in its own providers
   // for the live editing experience.
-  const rootData = (migratedDocument.root as { data?: Record<string, unknown> } | undefined)?.data ?? null;
+  const rootData =
+    (migratedDocument.root as { data?: Record<string, unknown> } | undefined)?.data ?? null;
 
   const tree = (
     <RootDataProvider value={rootData}>

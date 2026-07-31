@@ -18,7 +18,9 @@ function hasRoundedCorners(block: ResolvedBlock): boolean {
   const shape = block.style.shape;
   if (shape === 'pill') return true;
   if (shape && typeof shape === 'object') {
-    return Object.values(shape as Record<string, unknown>).some((v) => typeof v === 'number' && v > 0);
+    return Object.values(shape as Record<string, unknown>).some(
+      (v) => typeof v === 'number' && v > 0,
+    );
   }
   return typeof block.style.borderRadius === 'number' && block.style.borderRadius > 0;
 }
@@ -35,7 +37,9 @@ export function compatibilityRules(ctx: RuleContext): Finding[] {
   /* --- web fonts ------------------------------------------------------ */
 
   const usedFonts = [...new Set(facts.metrics.fontFamilies)];
-  const risky = usedFonts.map((key) => fontFact(key)).filter((f): f is NonNullable<typeof f> => f !== null && f.risk !== 'none');
+  const risky = usedFonts
+    .map((key) => fontFact(key))
+    .filter((f): f is NonNullable<typeof f> => f !== null && f.risk !== 'none');
   const highRisk = risky.filter((f) => f.risk === 'high');
   const mediumRisk = risky.filter((f) => f.risk === 'medium');
 
@@ -63,7 +67,8 @@ export function compatibilityRules(ctx: RuleContext): Finding[] {
         dimension: 'clientCompatibility',
         title: `${listPhrase(mediumRisk.map((f) => f.label))} degrades to the browser default`,
         detail: `${listPhrase(mediumRisk.map((f) => `${f.label}'s stack ends at a bare generic family`))}.`,
-        impact: 'Line breaks shift slightly where the web font does not load. Usually cosmetic, but it will not match the preview.',
+        impact:
+          'Line breaks shift slightly where the web font does not load. Usually cosmetic, but it will not match the preview.',
         fix: 'Acceptable for body copy. Check the design still reads once the fallback is in play.',
         clients: clientNames(SUPPORT.webFonts.failsIn),
       }),
@@ -85,7 +90,8 @@ export function compatibilityRules(ctx: RuleContext): Finding[] {
         dimension: 'clientCompatibility',
         title: `${rounded.length} block${rounded.length === 1 ? '' : 's'} rely on rounded corners`,
         detail: SUPPORT.borderRadius.effect,
-        impact: 'Cosmetic. It only becomes a real problem when the radius is what separates an element from its background.',
+        impact:
+          'Cosmetic. It only becomes a real problem when the radius is what separates an element from its background.',
         fix: SUPPORT.borderRadius.workaround,
         blocks: rounded,
         clients: clientNames(SUPPORT.borderRadius.failsIn),
@@ -95,7 +101,9 @@ export function compatibilityRules(ctx: RuleContext): Finding[] {
 
   /* --- object-fit ----------------------------------------------------- */
 
-  const objectFit = doc.blocks.filter((b) => b.type === 'Image' && typeof b.style.objectFit === 'string');
+  const objectFit = doc.blocks.filter(
+    (b) => b.type === 'Image' && typeof b.style.objectFit === 'string',
+  );
   if (objectFit.length > 0) {
     out.push(
       finding({
@@ -146,7 +154,8 @@ export function compatibilityRules(ctx: RuleContext): Finding[] {
         dimension: 'clientCompatibility',
         title: `${fluidImages.length} full-width image${fluidImages.length === 1 ? '' : 's'} without an explicit width`,
         detail: `${SUPPORT.maxWidth.effect} A fill-sized image resolves to \`width: 100%\` with no pixel width to fall back on.`,
-        impact: 'The image can render at its intrinsic size instead of the column width, overflowing the canvas.',
+        impact:
+          'The image can render at its intrinsic size instead of the column width, overflowing the canvas.',
         fix: `${SUPPORT.maxWidth.workaround} Set \`props.width\` to the column width the image occupies.`,
         blocks: fluidImages,
         clients: clientNames(SUPPORT.maxWidth.failsIn),
@@ -160,9 +169,7 @@ export function compatibilityRules(ctx: RuleContext): Finding[] {
   const columnBlocks = doc.blocks.filter((b) => b.type === 'ColumnsContainer');
   const threeUp = columnBlocks.filter((b) => b.props.columnsCount === 3);
   if (threeUp.length > 0) {
-    const narrowest = Math.min(
-      ...threeUp.flatMap((b) => columnWidths(b.props, b.contentWidth)),
-    );
+    const narrowest = Math.min(...threeUp.flatMap((b) => columnWidths(b.props, b.contentWidth)));
     out.push(
       finding({
         ruleId: 'compat/three-column-no-stack',
@@ -188,7 +195,8 @@ export function compatibilityRules(ctx: RuleContext): Finding[] {
         dimension: 'clientCompatibility',
         title: `${explicitlyNotStacking.length} column row${explicitlyNotStacking.length === 1 ? '' : 's'} opt out of mobile stacking`,
         detail: '`stackColumnsOnMobile` is false, so these stay side by side at every width.',
-        impact: 'Columns that never stack squeeze to a fraction of the screen on a phone, where most email is read.',
+        impact:
+          'Columns that never stack squeeze to a fraction of the screen on a phone, where most email is read.',
         fix: 'Leave stacking enabled unless the row is a deliberately compact pair such as a label and a value.',
         blocks: explicitlyNotStacking,
       }),
@@ -208,7 +216,7 @@ export function compatibilityRules(ctx: RuleContext): Finding[] {
         ruleId: 'compat/gmail-clipping',
         severity: 'P1',
         dimension: 'clientCompatibility',
-        title: 'Message likely exceeds Gmail\'s clipping threshold',
+        title: "Message likely exceeds Gmail's clipping threshold",
         detail: `${measuredBytes ? 'Rendered' : 'Estimated'} HTML is about ${Math.round(estimatedBytes / 1024)}KB against Gmail's ${Math.round(THRESHOLDS.gmailClipBytes / 1024)}KB limit.${measuredBytes ? '' : ' This is an estimate from the document size; render the HTML for an exact figure.'}`,
         impact:
           'Gmail truncates the message and hides the rest behind "View entire message" — which also cuts the tracking pixel, so opens stop being recorded.',

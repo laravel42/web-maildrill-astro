@@ -26,7 +26,9 @@ export function responsiveRules(ctx: RuleContext): Finding[] {
   const narrow: { block: ResolvedBlock; width: number }[] = [];
   for (const block of doc.blocks.filter((b) => b.type === 'ColumnsContainer')) {
     const widths = columnWidths(block.props, block.contentWidth);
-    const columns = Array.isArray(block.props.columns) ? (block.props.columns as Record<string, unknown>[]) : [];
+    const columns = Array.isArray(block.props.columns)
+      ? (block.props.columns as Record<string, unknown>[])
+      : [];
     widths.forEach((width, index) => {
       const column = columns[index];
       const childIds = Array.isArray(column?.childrenIds) ? (column.childrenIds as string[]) : [];
@@ -48,7 +50,8 @@ export function responsiveRules(ctx: RuleContext): Finding[] {
         dimension: 'responsive',
         title: `${narrow.length} column${narrow.length === 1 ? '' : 's'} narrower than ${THRESHOLDS.minColumnWidthPx}px`,
         detail: `Narrowest resolves to about ${Math.round(tightest.width)}px of content width on desktop.`,
-        impact: 'At that width a line of body copy holds two or three words, so text becomes a vertical ribbon that is painful to read.',
+        impact:
+          'At that width a line of body copy holds two or three words, so text becomes a vertical ribbon that is painful to read.',
         fix: 'Widen the column, reduce the column count, or move the content to its own full-width row.',
         blocks: [...new Set(narrow.map((n) => n.block))],
       }),
@@ -92,7 +95,8 @@ export function responsiveRules(ctx: RuleContext): Finding[] {
         dimension: 'responsive',
         title: `${wideBlocks.length} block${wideBlocks.length === 1 ? '' : 's'} set a fixed width wider than the mobile canvas`,
         detail: `These declare a width above ${MOBILE_WIDTH}px.`,
-        impact: 'Fixed widths do not shrink, so they overflow the canvas and can introduce a horizontal scrollbar.',
+        impact:
+          'Fixed widths do not shrink, so they overflow the canvas and can introduce a horizontal scrollbar.',
         fix: 'Express the width as a percentage, or remove it and let the container size the block.',
         blocks: wideBlocks,
       }),
@@ -117,7 +121,8 @@ export function responsiveRules(ctx: RuleContext): Finding[] {
         dimension: 'responsive',
         title: `${heavyPadding.length} block${heavyPadding.length === 1 ? '' : 's'} keep desktop side padding on mobile`,
         detail: `Heaviest is ${worst.padding.left + worst.padding.right}px of horizontal padding, leaving about ${Math.round(worst.mobileContentWidth)}px of the ${MOBILE_WIDTH}px mobile canvas for content.`,
-        impact: 'Generous gutters that look composed at 600px squeeze the readable column to a sliver on a phone.',
+        impact:
+          'Generous gutters that look composed at 600px squeeze the readable column to a sliver on a phone.',
         fix: 'Set `style.mobilePadding` with tighter side values — 16-24px is usually enough.',
         blocks: heavyPadding,
         autoFixable: true,
@@ -134,7 +139,10 @@ export function responsiveRules(ctx: RuleContext): Finding[] {
   });
   if (longLines.length > 0) {
     const worst = longLines.reduce((a, b) =>
-      b.block.contentWidth / (b.block.fontSize * 0.5) > a.block.contentWidth / (a.block.fontSize * 0.5) ? b : a,
+      b.block.contentWidth / (b.block.fontSize * 0.5) >
+      a.block.contentWidth / (a.block.fontSize * 0.5)
+        ? b
+        : a,
     );
     const chars = Math.round(worst.block.contentWidth / (worst.block.fontSize * 0.5));
     out.push(
@@ -144,7 +152,8 @@ export function responsiveRules(ctx: RuleContext): Finding[] {
         dimension: 'typography',
         title: `Body copy runs to about ${chars} characters per line`,
         detail: `${longLines.length} block${longLines.length === 1 ? '' : 's'} exceed the ${THRESHOLDS.maxLineLengthChars}-character comfort limit at ${round(worst.block.fontSize)}px in a ${Math.round(worst.block.contentWidth)}px column.`,
-        impact: 'Long measures make it harder to find the start of the next line, so readers lose their place and skim instead.',
+        impact:
+          'Long measures make it harder to find the start of the next line, so readers lose their place and skim instead.',
         fix: 'Raise the font size or add horizontal padding to bring the measure toward 50-75 characters.',
         blocks: longLines.map((t) => t.block),
       }),

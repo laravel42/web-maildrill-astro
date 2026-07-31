@@ -33,7 +33,12 @@ interface SourceImagePreviewProps {
  * preview (rounded box + cover image + optional dark credit band) so all
  * sources end up looking the same in the inspector.
  */
-const SourceImagePreview: React.FC<SourceImagePreviewProps> = ({ imageUrl, alt = '', blockId, onRemove }) => {
+const SourceImagePreview: React.FC<SourceImagePreviewProps> = ({
+  imageUrl,
+  alt = '',
+  blockId,
+  onRemove,
+}) => {
   const { t } = useTranslation('inspector');
   const credit = useUnsplashCredit(blockId ?? null);
 
@@ -50,7 +55,11 @@ const SourceImagePreview: React.FC<SourceImagePreviewProps> = ({ imageUrl, alt =
         borderColor: 'divider',
       }}
     >
-      <img src={imageUrl} alt={alt} style={{ width: '100%', display: 'block', maxHeight: 140, objectFit: 'cover' }} />
+      <img
+        src={imageUrl}
+        alt={alt}
+        style={{ width: '100%', display: 'block', maxHeight: 140, objectFit: 'cover' }}
+      />
 
       {onRemove && (
         <IconButton

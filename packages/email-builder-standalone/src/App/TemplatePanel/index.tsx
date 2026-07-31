@@ -1,4 +1,12 @@
-import React, { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  memo,
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -71,7 +79,10 @@ import renderToStaticMarkup from './renderToStaticMarkup';
 
 const CSS_HEADER_CHAR_LIMIT = 16350;
 
-const RenderWatcher: React.FC<{ onRendered?: () => void; children: React.ReactNode }> = ({ onRendered, children }) => {
+const RenderWatcher: React.FC<{ onRendered?: () => void; children: React.ReactNode }> = ({
+  onRendered,
+  children,
+}) => {
   useEffect(() => {
     if (typeof onRendered === 'function') {
       const id = requestAnimationFrame(() => onRendered());
@@ -175,7 +186,11 @@ export default function TemplatePanel({
       : 0;
   const inspectorOpen = useInspectorDrawerOpen();
   const inspectorMode = useInspectorDrawerMode();
-  const inspectorWidth = inspectorOpen ? (inspectorMode === 'compact' ? COMPACT_PANEL_WIDTH : lateralPanel) : 0;
+  const inspectorWidth = inspectorOpen
+    ? inspectorMode === 'compact'
+      ? COMPACT_PANEL_WIDTH
+      : lateralPanel
+    : 0;
 
   // The compact footprint of each side panel is now reserved as real layout
   // space by the flex spacers in App/index.tsx (so the canvas/preview never
@@ -184,7 +199,8 @@ export default function TemplatePanel({
   // header's own padding so the toolbar controls keep dodging the FULL panel
   // width exactly as before — only the EXTRA overflow beyond the compact rail
   // (i.e. the expanded portion that floats over the canvas) is padded here.
-  const leftReserved = libraryEnabled && selectedMainTab === 'editor' ? COMPACT_LIBRARY_DRAWER_WIDTH : 0;
+  const leftReserved =
+    libraryEnabled && selectedMainTab === 'editor' ? COMPACT_LIBRARY_DRAWER_WIDTH : 0;
   const rightReserved = inspectorOpen ? COMPACT_PANEL_WIDTH : 0;
   const headerPaddingLeft = Math.max(0, libraryOffset - leftReserved);
   const headerPaddingRight = Math.max(0, inspectorWidth + 8 - rightReserved);
@@ -295,7 +311,7 @@ export default function TemplatePanel({
       } catch (_e) {
         return { length: 0, threshold: CSS_HEADER_CHAR_LIMIT, exceeded: false };
       }
-    })
+    }),
   );
 
   useEffect(() => {
@@ -332,7 +348,9 @@ export default function TemplatePanel({
         // Ctrl+M — toggle mobile/desktop preview
         else if (event.key === 'm' && !event.shiftKey && !isEditable) {
           event.preventDefault();
-          setSelectedScreenSize(editorStateStore.getState().selectedScreenSize === 'mobile' ? 'desktop' : 'mobile');
+          setSelectedScreenSize(
+            editorStateStore.getState().selectedScreenSize === 'mobile' ? 'desktop' : 'mobile',
+          );
         }
         // Ctrl+1-8 — insert built-in block by index
         else if (!event.shiftKey && !isEditable && /^[1-8]$/.test(event.key)) {
@@ -400,7 +418,11 @@ export default function TemplatePanel({
         );
       case 'html':
         return (
-          <Tooltip title={t('header.copy_html')} placement="left-start" sx={{ color: 'text.primary' }}>
+          <Tooltip
+            title={t('header.copy_html')}
+            placement="left-start"
+            sx={{ color: 'text.primary' }}
+          >
             <IconButton onClick={() => handleCopy(templateHTML?.props.children || '')}>
               <ContentCopyOutlined fontSize="small" />
             </IconButton>
@@ -410,7 +432,11 @@ export default function TemplatePanel({
         return (
           <>
             <DownloadJson />
-            <Tooltip title={t('header.copy_json')} placement="left-start" sx={{ color: 'text.primary' }}>
+            <Tooltip
+              title={t('header.copy_json')}
+              placement="left-start"
+              sx={{ color: 'text.primary' }}
+            >
               <IconButton onClick={() => handleCopy(json)}>
                 <ContentCopyOutlined fontSize="small" />
               </IconButton>
@@ -423,8 +449,16 @@ export default function TemplatePanel({
           <>
             <div style={{ display: 'flex', gap: 8 }}>
               <Tooltip title={t('header.undo')}>
-                <div onClick={undo} className={`buttonsUndoRedo ${!canUndo ? 'disabledButton' : ''} `}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                <div
+                  onClick={undo}
+                  className={`buttonsUndoRedo ${!canUndo ? 'disabledButton' : ''} `}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                  >
                     <g
                       fill="none"
                       stroke="currentColor"
@@ -444,7 +478,12 @@ export default function TemplatePanel({
                   className={`buttonsUndoRedo ${!canRedo ? 'disabledButton' : ''} `}
                   style={{ transform: 'rotateY(180deg)' }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                  >
                     <g
                       fill="none"
                       stroke="currentColor"
@@ -581,41 +620,42 @@ export default function TemplatePanel({
                 />
               </Box>
             </div>
-            {cssHeaderInfo && (cssHeaderInfo.length / cssHeaderInfo.threshold >= 0.9 || cssHeaderInfo.exceeded) && (
-              <Alert
-                severity={cssHeaderInfo?.exceeded ? 'error' : 'warning'}
-                icon={<WarningIcon />}
-                sx={{
-                  borderRadius: 0,
-                  m: 0,
-                  '& .MuiAlert-message': {
-                    width: '100%',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: 2,
-                  },
-                }}
-              >
-                <span>
-                  <span style={{ fontWeight: 700 }}>Attention!</span>{' '}
-                  {cssHeaderInfo?.exceeded
-                    ? 'You have exceeded the style limit (≈16,000 characters). Some clients will ignore responsive design.'
-                    : 'The email is close to the style limit (≈16,000 characters). If you exceed it, some clients may ignore responsive design.'}
-                </span>
-                <Tooltip
-                  title={`CSS in header: ${cssHeaderInfo?.length.toLocaleString()} / ${cssHeaderInfo?.threshold.toLocaleString()} characters`}
-                  placement="bottom"
+            {cssHeaderInfo &&
+              (cssHeaderInfo.length / cssHeaderInfo.threshold >= 0.9 || cssHeaderInfo.exceeded) && (
+                <Alert
+                  severity={cssHeaderInfo?.exceeded ? 'error' : 'warning'}
+                  icon={<WarningIcon />}
+                  sx={{
+                    borderRadius: 0,
+                    m: 0,
+                    '& .MuiAlert-message': {
+                      width: '100%',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: 2,
+                    },
+                  }}
                 >
-                  <Chip
-                    size="small"
-                    label={`CSS: ${cssHeaderInfo?.length.toLocaleString()} / ${cssHeaderInfo?.threshold.toLocaleString()}`}
-                    color={cssHeaderInfo?.exceeded ? 'error' : 'warning'}
-                    variant={'filled'}
-                  />
-                </Tooltip>
-              </Alert>
-            )}
+                  <span>
+                    <span style={{ fontWeight: 700 }}>Attention!</span>{' '}
+                    {cssHeaderInfo?.exceeded
+                      ? 'You have exceeded the style limit (≈16,000 characters). Some clients will ignore responsive design.'
+                      : 'The email is close to the style limit (≈16,000 characters). If you exceed it, some clients may ignore responsive design.'}
+                  </span>
+                  <Tooltip
+                    title={`CSS in header: ${cssHeaderInfo?.length.toLocaleString()} / ${cssHeaderInfo?.threshold.toLocaleString()} characters`}
+                    placement="bottom"
+                  >
+                    <Chip
+                      size="small"
+                      label={`CSS: ${cssHeaderInfo?.length.toLocaleString()} / ${cssHeaderInfo?.threshold.toLocaleString()}`}
+                      color={cssHeaderInfo?.exceeded ? 'error' : 'warning'}
+                      variant={'filled'}
+                    />
+                  </Tooltip>
+                </Alert>
+              )}
           </div>
         </StickyWrapper>
       </Box>
@@ -627,7 +667,7 @@ export default function TemplatePanel({
             // No deseleccionar si el click viene de un portal MUI o del toolbar de NotionText
             const target = e.target as Element;
             const muiPortal = target?.closest?.(
-              '.MuiPopover-root, .MuiModal-root, .MuiMenu-root, .MuiBackdrop-root, [role="presentation"]'
+              '.MuiPopover-root, .MuiModal-root, .MuiMenu-root, .MuiBackdrop-root, [role="presentation"]',
             );
             const emojiPicker = target?.closest?.('em-emoji-picker');
             const toolbar = target?.closest?.('[data-notion-text-toolbar]');
@@ -698,16 +738,29 @@ export default function TemplatePanel({
               }}
             >
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.9rem' }}>
-                {tCommon('editor.emptyCanvasPaletteHint', 'Press {{key}} to open the command palette', {
-                  key: `${modKey}+K`,
-                })}
+                {tCommon(
+                  'editor.emptyCanvasPaletteHint',
+                  'Press {{key}} to open the command palette',
+                  {
+                    key: `${modKey}+K`,
+                  },
+                )}
               </Typography>
               <Stack sx={{ width: '100%', gap: '8px' }}>
                 {(
                   [
-                    { keys: [modKey, 'K'], label: tCommon('commandPalette.title', 'Command palette') },
-                    { keys: [modKey, 'B'], label: tCommon('editor.emptyCanvasShortcuts.openLibrary') },
-                    { keys: [modKey, 'I'], label: tCommon('commandPalette.action.toggleInspector') },
+                    {
+                      keys: [modKey, 'K'],
+                      label: tCommon('commandPalette.title', 'Command palette'),
+                    },
+                    {
+                      keys: [modKey, 'B'],
+                      label: tCommon('editor.emptyCanvasShortcuts.openLibrary'),
+                    },
+                    {
+                      keys: [modKey, 'I'],
+                      label: tCommon('commandPalette.action.toggleInspector'),
+                    },
                     { keys: [modKey, 'Z'], label: tCommon('editor.emptyCanvasShortcuts.undo') },
                     { keys: [modKey, 'Y'], label: tCommon('editor.emptyCanvasShortcuts.redo') },
                     { keys: [modKey, 'M'], label: tCommon('editor.emptyCanvasShortcuts.mobile') },
@@ -770,7 +823,8 @@ export default function TemplatePanel({
         {/* Paneles pesados solo cuando se seleccionan */}
         {renderMainPanel()}
 
-        {((selectedMainTab === 'preview' && isPreviewLoading) || (selectedMainTab === 'editor' && isEditorLoading)) && (
+        {((selectedMainTab === 'preview' && isPreviewLoading) ||
+          (selectedMainTab === 'editor' && isEditorLoading)) && (
           <Box
             sx={{
               position: 'absolute',
@@ -796,7 +850,9 @@ export default function TemplatePanel({
       </Box>
       <div className="preview-container-end" style={{ width: '100%' }}></div>
       {/* Panel flotante de árbol de bloques – fuera del scroll del canvas */}
-      {enableComponentTree && componentTreeOpen && selectedMainTab === 'editor' && <ComponentTreePanel />}
+      {enableComponentTree && componentTreeOpen && selectedMainTab === 'editor' && (
+        <ComponentTreePanel />
+      )}
       {/* Toast for copy success */}
       <Snackbar
         open={copySuccess}

@@ -42,9 +42,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix83m-1"
-        ]
+        "childrenIds": ["block-ms8ix83m-1"]
       }
     }
   },
@@ -90,11 +88,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix83m-3",
-          "block-ms8ix83m-5",
-          "block-ms8ix83m-7"
-        ]
+        "childrenIds": ["block-ms8ix83m-3", "block-ms8ix83m-5", "block-ms8ix83m-7"]
       }
     }
   },
@@ -180,30 +174,20 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          37,
-          27,
-          36
-        ],
+        "fixedWidths": [37, 27, 36],
         "columnsCount": 3,
         "layout": "layout-33-33-33",
         "contentAlignment": "middle",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "rule-ms8ix83m-9"
-            ]
+            "childrenIds": ["rule-ms8ix83m-9"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix83m-a"
-            ]
+            "childrenIds": ["block-ms8ix83m-a"]
           },
           {
-            "childrenIds": [
-              "rule-ms8ix83m-b"
-            ]
+            "childrenIds": ["rule-ms8ix83m-b"]
           }
         ]
       }
@@ -281,32 +265,20 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          33,
-          33,
-          34
-        ],
+        "fixedWidths": [33, 33, 34],
         "columnsCount": 3,
         "layout": "layout-33-33-33",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "card-ms8ix83m-h"
-            ]
+            "childrenIds": ["card-ms8ix83m-h"]
           },
           {
-            "childrenIds": [
-              "card-ms8ix83m-m"
-            ]
+            "childrenIds": ["card-ms8ix83m-m"]
           },
           {
-            "childrenIds": [
-              "img-ms8ix83m-n",
-              "block-ms8ix83m-p",
-              "block-ms8ix83m-q"
-            ]
+            "childrenIds": ["img-ms8ix83m-n", "block-ms8ix83m-p", "block-ms8ix83m-q"]
           }
         ]
       }
@@ -331,11 +303,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "img-ms8ix83m-d",
-          "block-ms8ix83m-f",
-          "block-ms8ix83m-g"
-        ]
+        "childrenIds": ["img-ms8ix83m-d", "block-ms8ix83m-f", "block-ms8ix83m-g"]
       }
     }
   },
@@ -428,11 +396,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "img-ms8ix83m-i",
-          "block-ms8ix83m-k",
-          "block-ms8ix83m-l"
-        ]
+        "childrenIds": ["img-ms8ix83m-i", "block-ms8ix83m-k", "block-ms8ix83m-l"]
       }
     }
   },
@@ -619,25 +583,17 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          58,
-          42,
-          null
-        ],
+        "fixedWidths": [58, 42, null],
         "columnsCount": 2,
         "layout": "layout-50-50",
         "contentAlignment": "middle",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "block-ms8ix83m-s"
-            ]
+            "childrenIds": ["block-ms8ix83m-s"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix83m-t"
-            ]
+            "childrenIds": ["block-ms8ix83m-t"]
           },
           {
             "childrenIds": []
@@ -705,25 +661,17 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          82,
-          18,
-          null
-        ],
+        "fixedWidths": [82, 18, null],
         "columnsCount": 2,
         "layout": "layout-50-50",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "card-ms8ix83m-x"
-            ]
+            "childrenIds": ["card-ms8ix83m-x"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix83m-y"
-            ]
+            "childrenIds": ["block-ms8ix83m-y"]
           },
           {
             "childrenIds": []
@@ -751,10 +699,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix83m-v",
-          "block-ms8ix83m-w"
-        ]
+        "childrenIds": ["block-ms8ix83m-v", "block-ms8ix83m-w"]
       }
     }
   },
@@ -840,25 +785,17 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          81,
-          19,
-          null
-        ],
+        "fixedWidths": [81, 19, null],
         "columnsCount": 2,
         "layout": "layout-50-50",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "card-ms8ix83m-12"
-            ]
+            "childrenIds": ["card-ms8ix83m-12"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix83m-13"
-            ]
+            "childrenIds": ["block-ms8ix83m-13"]
           },
           {
             "childrenIds": []
@@ -886,10 +823,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix83m-10",
-          "block-ms8ix83m-11"
-        ]
+        "childrenIds": ["block-ms8ix83m-10", "block-ms8ix83m-11"]
       }
     }
   },
@@ -975,25 +909,17 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          76,
-          24,
-          null
-        ],
+        "fixedWidths": [76, 24, null],
         "columnsCount": 2,
         "layout": "layout-50-50",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "card-ms8ix83m-17"
-            ]
+            "childrenIds": ["card-ms8ix83m-17"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix83m-18"
-            ]
+            "childrenIds": ["block-ms8ix83m-18"]
           },
           {
             "childrenIds": []
@@ -1021,10 +947,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix83m-15",
-          "block-ms8ix83m-16"
-        ]
+        "childrenIds": ["block-ms8ix83m-15", "block-ms8ix83m-16"]
       }
     }
   },
@@ -1110,25 +1033,17 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          83,
-          17,
-          null
-        ],
+        "fixedWidths": [83, 17, null],
         "columnsCount": 2,
         "layout": "layout-50-50",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "card-ms8ix83m-1c"
-            ]
+            "childrenIds": ["card-ms8ix83m-1c"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix83m-1d"
-            ]
+            "childrenIds": ["block-ms8ix83m-1d"]
           },
           {
             "childrenIds": []
@@ -1156,10 +1071,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix83m-1a",
-          "block-ms8ix83m-1b"
-        ]
+        "childrenIds": ["block-ms8ix83m-1a", "block-ms8ix83m-1b"]
       }
     }
   },
@@ -1245,25 +1157,17 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          86,
-          14,
-          null
-        ],
+        "fixedWidths": [86, 14, null],
         "columnsCount": 2,
         "layout": "layout-50-50",
         "contentAlignment": "middle",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "block-ms8ix83m-1f"
-            ]
+            "childrenIds": ["block-ms8ix83m-1f"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix83m-1g"
-            ]
+            "childrenIds": ["block-ms8ix83m-1g"]
           },
           {
             "childrenIds": []
@@ -1337,10 +1241,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "btn-ms8ix83n-1j",
-          "block-ms8ix83n-1l"
-        ]
+        "childrenIds": ["btn-ms8ix83n-1j", "block-ms8ix83n-1l"]
       }
     }
   },

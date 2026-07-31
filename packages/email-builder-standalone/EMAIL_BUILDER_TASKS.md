@@ -18,6 +18,7 @@ Bypass de auth activo en local vía `SKIP_AUTH_FOR_BUILDER_WORK=true` (`.env`, n
 `<input type="number">` editable; se muestra el valor actual como texto (`span`) de solo lectura.
 
 **Candidatos:**
+
 - `src/App/InspectorDrawer/ConfigurationPanel/input-panels/helpers/` (helpers de inputs numéricos compartidos)
 - `src/App/InspectorDrawer/ConfigurationPanel/input-panels/*SidebarPanel.tsx` (todos los paneles con controles de tamaño: Container, ColumnsContainer, Image, Spacer, EmailLayout)
 
@@ -28,10 +29,12 @@ Bypass de auth activo en local vía `SKIP_AUTH_FOR_BUILDER_WORK=true` (`.env`, n
 ## 2. Espaciado label ↔ input y entre propiedades
 
 **Objetivo:**
+
 - Separación label → su input: **4–6px**.
 - Separación entre una propiedad y la siguiente (grupos label+input): **mínimo 1rem**.
 
 **Candidatos:**
+
 - Mismos `*SidebarPanel.tsx` del punto 1.
 - Posible estilo compartido en `src/App/ComponentsLibrary/styles.ts` o clases MUI `sx` inline por panel (no hay un CSS module centralizado detectado aún para estos paneles — a confirmar).
 
@@ -46,6 +49,7 @@ Bypass de auth activo en local vía `SKIP_AUTH_FOR_BUILDER_WORK=true` (`.env`, n
 que lo separaba del header de tabs, para pegar el contenido al header.
 
 **Candidatos:**
+
 - `src/App/InspectorDrawer/index.tsx` (probable contenedor que renderiza el título antes del panel)
 - `src/App/InspectorDrawer/ConfigurationPanel/index.tsx`
 
@@ -59,6 +63,7 @@ que lo separaba del header de tabs, para pegar el contenido al header.
 indicando "modificado". Ya no es necesario — eliminar ese indicador.
 
 **Candidatos:**
+
 - `src/App/TemplatePanel/ThemePanel/ThemeFieldRow.tsx` (fila de campo del theme — candidato principal)
 - `src/App/TemplatePanel/ThemePanel/BlockTypeAccordion.tsx`
 - `src/App/TemplatePanel/ThemePanel/registry.ts`
@@ -70,6 +75,7 @@ indicando "modificado". Ya no es necesario — eliminar ese indicador.
 ## 5. Modo compacto de la librería de bloques: replicar estilo del modo abierto
 
 **Objetivo:**
+
 - Los botones de bloque en modo **compact** deben visualmente heredar el estilo que tienen en
   modo **open** (misma library, dos presentaciones).
 - Ancho del sidebar en modo compact: **164px** fijo.
@@ -77,6 +83,7 @@ indicando "modificado". Ya no es necesario — eliminar ese indicador.
   evitar overflow vertical.
 
 **Candidatos:**
+
 - `src/App/ComponentsLibrary/CompactBlocksList.tsx` (ya confirmado: hoy usa `aspectRatio: '1 / 1'` — línea a cambiar)
 - `src/App/ComponentsLibrary/dragTileShell.ts` (shell de estilos de los tiles, compartido con modo open vía `BlocksCategoryContent.tsx`)
 - `src/App/ComponentsLibrary/ComponentsLibraryDrawer.tsx` (donde probablemente se fija el ancho del drawer compact)
@@ -91,6 +98,7 @@ indicando "modificado". Ya no es necesario — eliminar ese indicador.
 (no aportan valor adicional al catálogo).
 
 **Candidatos:**
+
 - `src/App/ComponentsLibrary/builtInBlocks.tsx` (lista `BUTTONS` — fuente de verdad de qué bloques base se listan, usada tanto en compact como en open)
 
 **Estado:** pendiente — verificar las keys/labels exactas (`text`, `button`, `social`) dentro de `BUTTONS` antes de remover, y confirmar que no rompe drag-and-drop existente en documentos ya creados con esos bloques.
@@ -103,6 +111,7 @@ indicando "modificado". Ya no es necesario — eliminar ese indicador.
 (acordeones de secciones) se integran al final del tab **Blocks**, en vez de tener su propio tab.
 
 **Candidatos:**
+
 - `src/App/ComponentsLibrary/BlocksCategoryContent.tsx` (contenido del tab Blocks — destino)
 - `src/App/ComponentsLibrary/CategoryAccordion.tsx` (el acordeón de secciones a mover)
 - `src/App/ComponentsLibrary/ComponentsLibraryDrawer.tsx` (definición de tabs — quitar/fusionar el tab Sections)
@@ -117,6 +126,7 @@ indicando "modificado". Ya no es necesario — eliminar ese indicador.
 altura.
 
 **Candidatos:**
+
 - `src/App/ComponentsLibrary/thumbnail/LibraryCardThumbnail.tsx`
 - `src/App/ComponentsLibrary/ThemesList.tsx` (si comparte grid con Templates) — a confirmar si Templates tiene su propio listado o reusa este.
 
@@ -134,11 +144,13 @@ explícitamente si quiere uno. No se toca `SaveThemeDialog`, `ApplyThemeConfirmD
 listado de themes guardados.
 
 **Objetivo:**
+
 - Al cargar el builder, ningún theme queda marcado como "seleccionado" ni aplicado por defecto.
 - Todo el flujo de guardar/aplicar/listar themes sigue funcionando exactamente igual, solo que
   parte de un estado inicial "sin theme activo" en vez de un preset por defecto.
 
 **Candidatos:**
+
 - `src/App/TemplatePanel/ThemePresets/ThemePresetsButton.tsx` / `ThemePresetPreview.tsx` (candidato para dónde se marca el preset activo por defecto)
 - Estado inicial del documento/tema en `documents/editor/EditorContext.tsx` o `getConfiguration/index.tsx` (probable origen de qué theme se carga al inicializar)
 - `src/App/TemplatePanel/ThemePanel/index.tsx` (posible bandera de "selected theme id" a inicializar en `null`/`undefined`)
@@ -168,9 +180,11 @@ editor tarda cerca de 2 minutos por una causa distinta — generación de
 thumbnails de la Components Library.
 
 Evidencia (consola del navegador, `npm run preview`):
+
 ```
 captureThumbnail.BtyNo9RM.js:519 [captureSubtreeThumbnail] timeout after 6000 ms
 ```
+
 Se repite muchas veces en serie (uno por bloque/sección/template de la
 librería), cada uno agotando el timeout completo de 6000ms antes de seguir
 con el siguiente — de ahí los ~2 minutos.
@@ -178,21 +192,25 @@ con el siguiente — de ahí los ~2 minutos.
 Causa probable: cada captura usa un `<iframe>` (`about:srcdoc`) en modo
 `sandbox` para renderizar el bloque aislado y tomarle una "foto"
 (`html-to-image` es dependencia del paquete). El log también muestra:
+
 ```
 Blocked script execution in 'about:srcdoc' because the document's frame is
 sandboxed and the 'allow-scripts' permission is not set.
 ```
+
 Sin `allow-scripts` en el sandbox del iframe, el contenido nunca termina de
 montar/pintar dentro de él, así que cada captura falla por timeout en vez de
 resolver rápido — comportamiento consistente con "casi siempre tarda el
 timeout completo", no con una carga que varía según tamaño.
 
 **Archivos involucrados (a revisar cuando se retome):**
+
 - `src/App/ComponentsLibrary/thumbnail/captureThumbnail.ts` (línea ~519, el timeout de 6000ms y el iframe sandbox)
 - `src/App/ComponentsLibrary/lazyThumbnailGenerator.ts` (quién dispara las capturas, en qué orden/concurrencia)
 - `src/App/ComponentsLibrary/devSeedSections.ts` / `devSeedThemes.ts` / `devSeedTemplates.ts` / `devSeedLayouts.ts` / `devSeedPrimitives.ts` (posible origen de cuántos ítems se intentan capturar al inicio — el nombre "devSeed" sugiere que esto podría ser solo para desarrollo/seed local, no necesario en producción real con backend)
 
 **Preguntas a resolver antes de tocar código:**
+
 1. ¿Este flujo de captura de thumbnails corre siempre al abrir el editor, o solo la primera vez / solo en modo dev-seed? Si es dev-only, quizás no afecta usuarios reales con backend real.
 2. ¿Por qué el iframe no tiene `allow-scripts`? ¿Falta agregarlo, o es intencional por seguridad y hay que resolver la captura de otra forma (ej. renderizar sin iframe, o con un sandbox distinto)?
 3. ¿Se puede paralelizar las capturas en vez de serializarlas, y/o bajar el timeout, y/o cachear thumbnails ya generados para no repetir el trabajo en cada apertura?

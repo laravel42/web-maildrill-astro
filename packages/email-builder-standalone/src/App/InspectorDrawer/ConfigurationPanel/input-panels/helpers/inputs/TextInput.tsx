@@ -17,7 +17,15 @@ type Props = {
   onChange: (v: string) => void;
 };
 
-export default function TextInput({ helperText, label, placeholder, rows, InputProps, defaultValue, onChange }: Props) {
+export default function TextInput({
+  helperText,
+  label,
+  placeholder,
+  rows,
+  InputProps,
+  defaultValue,
+  onChange,
+}: Props) {
   const [value, setValue] = useState(defaultValue);
 
   useEffect(() => {

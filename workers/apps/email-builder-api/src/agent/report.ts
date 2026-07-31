@@ -5,7 +5,12 @@
  * technical scores before writing its own review. We then merge findings.
  */
 
-import { analyzeTemplate, isSendReady, type AnalyzeOptions, type EditorDocument } from '../audit/index.js';
+import {
+  analyzeTemplate,
+  isSendReady,
+  type AnalyzeOptions,
+  type EditorDocument,
+} from '../audit/index.js';
 import type { Finding, QualityReport, ScoreCard } from '../audit/types.js';
 import { bandFor, CRITIQUE_DIMENSIONS, DIMENSION_LABEL } from '../audit/types.js';
 
@@ -89,14 +94,31 @@ export async function buildQualityReport(
   document: EditorDocument,
   options: BuildReportOptions = {},
 ): Promise<FullQualityReport> {
-  const { skipLlm = false, brief, locale, provider, model, maxTokens, llmText, getProvider, ...analyzeOpts } =
-    options;
+  const {
+    skipLlm = false,
+    brief,
+    locale,
+    provider,
+    model,
+    maxTokens,
+    llmText,
+    getProvider,
+    ...analyzeOpts
+  } = options;
 
   const { report } = analyzeTemplate(document, analyzeOpts);
 
   let llm: LlmCritique | null = null;
   if (!skipLlm) {
-    llm = await runLlmCritique(document, { brief, locale, provider, model, maxTokens, llmText, getProvider });
+    llm = await runLlmCritique(document, {
+      brief,
+      locale,
+      provider,
+      model,
+      maxTokens,
+      llmText,
+      getProvider,
+    });
   }
 
   const llmFindings = llm ? llmIssuesToFindings(llm) : [];

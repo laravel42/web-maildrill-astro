@@ -1,6 +1,12 @@
 import { getBlockPlugin, getButtonPlugin, listBlockPlugins, listButtonPlugins } from './registry';
 import { hasErrors, validateTemplate } from './validation';
-import { newId, type MetaButton, type MetaComponent, type MetaTemplate, type TemplateDoc } from './types';
+import {
+  newId,
+  type MetaButton,
+  type MetaComponent,
+  type MetaTemplate,
+  type TemplateDoc,
+} from './types';
 
 /**
  * Serialization: TemplateDoc ⇄ Meta template JSON.
@@ -66,7 +72,11 @@ export function toMetaJson(doc: TemplateDoc, options: ExportOptions = {}): MetaT
 }
 
 /** Pretty / minified JSON string exports for the clipboard. */
-export function toMetaJsonString(doc: TemplateDoc, pretty: boolean, options?: ExportOptions): string {
+export function toMetaJsonString(
+  doc: TemplateDoc,
+  pretty: boolean,
+  options?: ExportOptions,
+): string {
   const json = toMetaJson(doc, options);
   return pretty ? JSON.stringify(json, null, 2) : JSON.stringify(json);
 }
@@ -83,7 +93,8 @@ export function toInternalJson(doc: TemplateDoc): string {
 const KNOWN_ROOT_KEYS = new Set(['name', 'language', 'category', 'components', 'id', 'status']);
 
 export function fromMetaJson(input: MetaTemplate | string): TemplateDoc {
-  const template: MetaTemplate = typeof input === 'string' ? (JSON.parse(input) as MetaTemplate) : input;
+  const template: MetaTemplate =
+    typeof input === 'string' ? (JSON.parse(input) as MetaTemplate) : input;
 
   const doc: TemplateDoc = {
     name: template.name ?? '',
@@ -149,5 +160,9 @@ function matchButton(button: MetaButton, template: MetaTemplate) {
 
 function emptyBody() {
   const plugin = getBlockPlugin('body');
-  return { id: newId('body'), type: 'body', data: plugin ? plugin.defaults() : { text: '', variables: {} } };
+  return {
+    id: newId('body'),
+    type: 'body',
+    data: plugin ? plugin.defaults() : { text: '', variables: {} },
+  };
 }

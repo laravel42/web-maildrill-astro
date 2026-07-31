@@ -33,7 +33,7 @@ export default function MergeTagsDropdown({ editor }: Props) {
       });
       handleClose();
     },
-    [editor, handleClose]
+    [editor, handleClose],
   );
 
   return (
@@ -61,13 +61,17 @@ export default function MergeTagsDropdown({ editor }: Props) {
                 }}
               >
                 {tag.icon && (
-                  <ListItemIcon sx={{ minWidth: 'auto', mr: 1, color: theme.palette.text.secondary }}>
+                  <ListItemIcon
+                    sx={{ minWidth: 'auto', mr: 1, color: theme.palette.text.secondary }}
+                  >
                     {tag.icon}
                   </ListItemIcon>
                 )}
                 <ListItemText
                   primary={tag.label}
-                  slotProps={{ primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } } }}
+                  slotProps={{
+                    primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } },
+                  }}
                 />
               </ListItemButton>
             );

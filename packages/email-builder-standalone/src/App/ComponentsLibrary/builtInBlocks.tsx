@@ -12,7 +12,10 @@ import {
 } from '@mui/icons-material';
 
 import { TEditorBlock } from '../../documents/editor/core';
-import { DEFAULT_IMAGE_PLACEHOLDER, getImagePlaceholder } from '../../documents/editor/EditorContext';
+import {
+  DEFAULT_IMAGE_PLACEHOLDER,
+  getImagePlaceholder,
+} from '../../documents/editor/EditorContext';
 import { generateUUID } from '../TemplatePanel/helper/extraFunctions';
 
 export type TButtonProps = {

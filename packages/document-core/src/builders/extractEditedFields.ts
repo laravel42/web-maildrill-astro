@@ -47,7 +47,10 @@ export function getSchemaDefaults(schema: any): unknown {
     (typeof zAny.ZodOptional === 'function' && schema instanceof (zAny.ZodOptional as any)) ||
     (typeof zAny.ZodNullable === 'function' && schema instanceof (zAny.ZodNullable as any))
   ) {
-    const inner = (typeof schema.unwrap === 'function' ? schema.unwrap() : undefined) ?? def?.innerType ?? def?.schema;
+    const inner =
+      (typeof schema.unwrap === 'function' ? schema.unwrap() : undefined) ??
+      def?.innerType ??
+      def?.schema;
     return getSchemaDefaults(inner);
   }
 
@@ -66,11 +69,12 @@ export function getSchemaDefaults(schema: any): unknown {
     return getSchemaDefaults(inner);
   }
 
-  if (typeName === 'ZodObject' || (typeof zAny.ZodObject === 'function' && schema instanceof (zAny.ZodObject as any))) {
-    const shape = (schema.shape ?? (typeof def?.shape === 'function' ? def.shape() : def?.shape)) as Record<
-      string,
-      any
-    >;
+  if (
+    typeName === 'ZodObject' ||
+    (typeof zAny.ZodObject === 'function' && schema instanceof (zAny.ZodObject as any))
+  ) {
+    const shape = (schema.shape ??
+      (typeof def?.shape === 'function' ? def.shape() : def?.shape)) as Record<string, any>;
     if (!shape) return undefined;
     const result: Record<string, unknown> = {};
     for (const key of Object.keys(shape)) {
@@ -105,7 +109,7 @@ export function getSchemaDefaults(schema: any): unknown {
  */
 export function extractEditedFields<TData>(
   block: ExtractableBlock<TData>,
-  schema: z.ZodTypeAny
+  schema: z.ZodTypeAny,
 ): ExtractableBlock<Partial<TData>> {
   const defaults = getSchemaDefaults(schema);
   const sparse = stripDefaults(block.data, defaults);
@@ -154,7 +158,7 @@ function deepEqual(a: unknown, b: unknown): boolean {
     return ak.every(
       (k) =>
         Object.prototype.hasOwnProperty.call(b, k) &&
-        deepEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k])
+        deepEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]),
     );
   }
   return false;

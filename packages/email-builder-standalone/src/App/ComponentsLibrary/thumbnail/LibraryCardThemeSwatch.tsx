@@ -71,7 +71,11 @@ export type LibraryCardThemeSwatchProps = {
   alt: string;
 };
 
-export default function LibraryCardThemeSwatch({ globals, height = DEFAULT_HEIGHT, alt }: LibraryCardThemeSwatchProps) {
+export default function LibraryCardThemeSwatch({
+  globals,
+  height = DEFAULT_HEIGHT,
+  alt,
+}: LibraryCardThemeSwatchProps) {
   const muiTheme = useTheme();
 
   // Resolve tokens with fallbacks. Several theme schemas use

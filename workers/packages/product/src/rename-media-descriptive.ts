@@ -11,35 +11,35 @@
  *   pnpm --dir workers exec tsx packages/product/src/rename-media-descriptive.ts --dry-run
  *   pnpm --dir workers exec tsx packages/product/src/rename-media-descriptive.ts --all
  */
-import { eq } from "drizzle-orm";
-import { config } from "@maildrill/config";
-import { db, mediaAssets, tenants } from "@maildrill/database";
-import { listMedia, updateMedia } from "./media";
+import { eq } from 'drizzle-orm';
+import { config } from '@maildrill/config';
+import { db, mediaAssets, tenants } from '@maildrill/database';
+import { listMedia, updateMedia } from './media';
 
-const TARGET_TENANT_NAME = "hello@laravel42.com";
+const TARGET_TENANT_NAME = 'hello@laravel42.com';
 
 /** Legacy search folders (pre-topics). */
 const SEARCH_CATEGORIES = [
-  "nature",
-  "business",
-  "technology",
-  "food",
-  "travel",
-  "architecture",
-  "people",
-  "fashion",
-  "animals",
-  "sports",
+  'nature',
+  'business',
+  'technology',
+  'food',
+  'travel',
+  'architecture',
+  'people',
+  'fashion',
+  'animals',
+  'sports',
 ] as const;
 
 /** Library folder → Unsplash topic slug used to bulk-fetch alt text. */
 const FOLDER_TOPIC_SLUG: Record<string, string> = {
-  architecture: "architecture-interior",
-  fashion: "fashion-beauty",
+  architecture: 'architecture-interior',
+  fashion: 'fashion-beauty',
 };
 
 const PAGE_SIZE = 30;
-const UNSPLASH_API_BASE = "https://api.unsplash.com";
+const UNSPLASH_API_BASE = 'https://api.unsplash.com';
 const PHOTO_ID_RE = /unsplash-([A-Za-z0-9_-]+)\.jpe?g$/i;
 const ID_NAME_RE = /^unsplash-[A-Za-z0-9_-]+\.jpe?g$/i;
 
@@ -52,14 +52,14 @@ interface UnsplashPhoto {
 function unsplashHeaders(apiKey: string): Record<string, string> {
   return {
     Authorization: `Client-ID ${apiKey}`,
-    "Accept-Version": "v1",
-    "User-Agent": `${process.env.UNSPLASH_APP_NAME ?? "maildrill"}/media-rename`,
+    'Accept-Version': 'v1',
+    'User-Agent': `${process.env.UNSPLASH_APP_NAME ?? 'maildrill'}/media-rename`,
   };
 }
 
 class RateLimitExhausted extends Error {
   constructor() {
-    super("Unsplash hourly rate limit exhausted");
+    super('Unsplash hourly rate limit exhausted');
   }
 }
 
@@ -70,16 +70,12 @@ async function unsplashJson<T>(apiKey: string, url: URL): Promise<T> {
   return (await res.json()) as T;
 }
 
-async function searchPage(
-  apiKey: string,
-  query: string,
-  page: number,
-): Promise<UnsplashPhoto[]> {
+async function searchPage(apiKey: string, query: string, page: number): Promise<UnsplashPhoto[]> {
   const url = new URL(`${UNSPLASH_API_BASE}/search/photos`);
-  url.searchParams.set("query", query);
-  url.searchParams.set("page", String(page));
-  url.searchParams.set("per_page", String(PAGE_SIZE));
-  url.searchParams.set("content_filter", "high");
+  url.searchParams.set('query', query);
+  url.searchParams.set('page', String(page));
+  url.searchParams.set('per_page', String(PAGE_SIZE));
+  url.searchParams.set('content_filter', 'high');
   const body = await unsplashJson<{ results: UnsplashPhoto[] }>(apiKey, url);
   return body.results;
 }
@@ -90,9 +86,9 @@ async function topicPhotosPage(
   page: number,
 ): Promise<UnsplashPhoto[]> {
   const url = new URL(`${UNSPLASH_API_BASE}/topics/${encodeURIComponent(slug)}/photos`);
-  url.searchParams.set("page", String(page));
-  url.searchParams.set("per_page", String(PAGE_SIZE));
-  url.searchParams.set("order_by", "popular");
+  url.searchParams.set('page', String(page));
+  url.searchParams.set('per_page', String(PAGE_SIZE));
+  url.searchParams.set('order_by', 'popular');
   return unsplashJson<UnsplashPhoto[]>(apiKey, url);
 }
 
@@ -109,17 +105,17 @@ async function fetchPhoto(apiKey: string, id: string): Promise<UnsplashPhoto | n
 /** Match createUploadTicket / updateMedia safeName rules. */
 function slugify(raw: string): string {
   const base = raw
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
     .slice(0, 80);
-  return base || "photo";
+  return base || 'photo';
 }
 
 function descriptiveName(photo: UnsplashPhoto, ext: string): string {
-  const phrase = (photo.alt_description || photo.description || "").trim();
+  const phrase = (photo.alt_description || photo.description || '').trim();
   const slug = phrase ? slugify(phrase) : `photo-${photo.id.slice(0, 8)}`;
   return `${slug.slice(0, 100)}.${ext}`.slice(0, 120);
 }
@@ -131,7 +127,7 @@ function photoIdFromKey(storageKey: string): string | null {
 
 function extFromName(name: string): string {
   const m = name.match(/\.([a-z0-9]+)$/i);
-  return (m?.[1] ?? "jpg").toLowerCase();
+  return (m?.[1] ?? 'jpg').toLowerCase();
 }
 
 function topicSlugForFolder(folder: string): string {
@@ -159,15 +155,15 @@ async function coverFromPages(
   }
   console.log(
     `${label}: covered ${start - want.size}/${start}` +
-      (want.size ? ` (${want.size} still missing)` : ""),
+      (want.size ? ` (${want.size} still missing)` : ''),
   );
 }
 
 async function main(): Promise<void> {
-  const dryRun = process.argv.includes("--dry-run");
-  const all = process.argv.includes("--all");
-  const apiKey = process.env.UNSPLASH_API_KEY ?? "";
-  if (!apiKey) throw new Error("UNSPLASH_API_KEY is not set in .env");
+  const dryRun = process.argv.includes('--dry-run');
+  const all = process.argv.includes('--all');
+  const apiKey = process.env.UNSPLASH_API_KEY ?? '';
+  if (!apiKey) throw new Error('UNSPLASH_API_KEY is not set in .env');
   void config.media.configured;
 
   const [target] = await db
@@ -200,8 +196,8 @@ async function main(): Promise<void> {
     if (!all && !ID_NAME_RE.test(row.name)) continue;
     const topic =
       (row.folder?.trim() ||
-        (Array.isArray(row.tags) && typeof row.tags[0] === "string" ? row.tags[0] : "")) ??
-      "";
+        (Array.isArray(row.tags) && typeof row.tags[0] === 'string' ? row.tags[0] : '')) ??
+      '';
     byPhotoId.set(photoId, {
       id: row.id,
       name: row.name,
@@ -212,12 +208,12 @@ async function main(): Promise<void> {
 
   console.log(
     `tenant ${target.name}: ${assets.length} assets, ${byPhotoId.size} to rename` +
-      (all ? " (--all)" : " (unsplash-id names only)") +
-      (dryRun ? " (dry-run)" : ""),
+      (all ? ' (--all)' : ' (unsplash-id names only)') +
+      (dryRun ? ' (dry-run)' : ''),
   );
 
   if (byPhotoId.size === 0) {
-    console.log("nothing to rename");
+    console.log('nothing to rename');
     return;
   }
 
@@ -251,7 +247,9 @@ async function main(): Promise<void> {
     }
   } catch (err) {
     if (err instanceof RateLimitExhausted) {
-      console.log("unsplash rate limit hit during bulk fetch — filling gaps via GET where possible");
+      console.log(
+        'unsplash rate limit hit during bulk fetch — filling gaps via GET where possible',
+      );
     } else {
       throw err;
     }
@@ -276,7 +274,7 @@ async function main(): Promise<void> {
   }
 
   const claimed = new Set(
-    rows.filter((r) => !byPhotoId.has(photoIdFromKey(r.storageKey) ?? "")).map((r) => r.name),
+    rows.filter((r) => !byPhotoId.has(photoIdFromKey(r.storageKey) ?? '')).map((r) => r.name),
   );
   // Also reserve names of assets we're not renaming this run.
   for (const r of rows) {
@@ -291,7 +289,7 @@ async function main(): Promise<void> {
     const photo = descriptions.get(photoId);
     if (!photo) continue;
     const ext = extFromName(asset.name);
-    const base = descriptiveName(photo, ext).replace(new RegExp(`\\.${ext}$`), "");
+    const base = descriptiveName(photo, ext).replace(new RegExp(`\\.${ext}$`), '');
     let to = `${base}.${ext}`;
     let n = 2;
     while (claimed.has(to) && to !== asset.name) {
@@ -311,7 +309,7 @@ async function main(): Promise<void> {
     if (descriptions.has(photoId)) continue;
     if (renamePlan.some((r) => r.id === asset.id)) continue;
     const ext = extFromName(asset.name);
-    const base = slugify(`${asset.topic || "photo"}-${photoId.slice(0, 8)}`);
+    const base = slugify(`${asset.topic || 'photo'}-${photoId.slice(0, 8)}`);
     let to = `${base}.${ext}`;
     let n = 2;
     while (claimed.has(to) && to !== asset.name) {
@@ -329,7 +327,7 @@ async function main(): Promise<void> {
   const missingDesc = byPhotoId.size - descriptions.size;
   console.log(
     `\nrenames planned: ${renamePlan.length}` +
-      (missingDesc ? ` (${missingDesc} used folder+id fallback — no Unsplash alt)` : ""),
+      (missingDesc ? ` (${missingDesc} used folder+id fallback — no Unsplash alt)` : ''),
   );
   for (const row of renamePlan.slice(0, 12)) {
     console.log(`  ${row.from}  →  ${row.to}`);
@@ -337,7 +335,7 @@ async function main(): Promise<void> {
   if (renamePlan.length > 12) console.log(`  … +${renamePlan.length - 12} more`);
 
   if (dryRun) {
-    console.log("\ndry-run: no writes");
+    console.log('\ndry-run: no writes');
     return;
   }
 

@@ -1,8 +1,8 @@
-import type { FastifyInstance, FastifyReply } from "fastify";
-import { z } from "zod";
-import { authenticate } from "@maildrill/authz";
-import { ConflictError, NotFoundError, ValidationError } from "@maildrill/domain";
-import type { ZodTypeProvider } from "@maildrill/httpkit";
+import type { FastifyInstance, FastifyReply } from 'fastify';
+import { z } from 'zod';
+import { authenticate } from '@maildrill/authz';
+import { ConflictError, NotFoundError, ValidationError } from '@maildrill/domain';
+import type { ZodTypeProvider } from '@maildrill/httpkit';
 import {
   confirmUpload,
   createUploadTicket,
@@ -12,9 +12,9 @@ import {
   mediaSuggestConfigured,
   suggestMediaMetadata,
   updateMedia,
-} from "@maildrill/product";
+} from '@maildrill/product';
 
-const TAG = ["Media"];
+const TAG = ['Media'];
 const idParam = z.object({ id: z.string().uuid() });
 
 const ticketSchema = z.object({
@@ -49,12 +49,12 @@ const suggestSchema = z.object({
 
 export async function mediaRoutes(appRaw: FastifyInstance): Promise<void> {
   const app = appRaw.withTypeProvider<ZodTypeProvider>();
-  app.addHook("preHandler", authenticate);
+  app.addHook('preHandler', authenticate);
 
   /* Lets the UI say "media isn't set up" instead of failing on first upload. */
   app.get(
-    "/v1/media/status",
-    { schema: { tags: TAG, summary: "Whether media storage is configured" } },
+    '/v1/media/status',
+    { schema: { tags: TAG, summary: 'Whether media storage is configured' } },
     async () => ({
       configured: mediaConfigured(),
       suggestConfigured: mediaSuggestConfigured(),
@@ -62,11 +62,11 @@ export async function mediaRoutes(appRaw: FastifyInstance): Promise<void> {
   );
 
   app.post(
-    "/v1/media/suggest-metadata",
+    '/v1/media/suggest-metadata',
     {
       schema: {
         tags: TAG,
-        summary: "Vision-powered name + tags for a staged image",
+        summary: 'Vision-powered name + tags for a staged image',
         body: suggestSchema,
       },
     },
@@ -79,16 +79,16 @@ export async function mediaRoutes(appRaw: FastifyInstance): Promise<void> {
     },
   );
 
-  app.get("/v1/media", { schema: { tags: TAG, summary: "List media assets" } }, async (req) => ({
+  app.get('/v1/media', { schema: { tags: TAG, summary: 'List media assets' } }, async (req) => ({
     data: await listMedia(req.tenantId),
   }));
 
   app.post(
-    "/v1/media/upload-url",
+    '/v1/media/upload-url',
     {
       schema: {
         tags: TAG,
-        summary: "Presigned S3 PUT for a direct browser upload",
+        summary: 'Presigned S3 PUT for a direct browser upload',
         body: ticketSchema,
       },
     },
@@ -102,11 +102,11 @@ export async function mediaRoutes(appRaw: FastifyInstance): Promise<void> {
   );
 
   app.post(
-    "/v1/media",
+    '/v1/media',
     {
       schema: {
         tags: TAG,
-        summary: "Register an uploaded object as a media asset",
+        summary: 'Register an uploaded object as a media asset',
         body: confirmSchema,
       },
     },
@@ -120,24 +120,24 @@ export async function mediaRoutes(appRaw: FastifyInstance): Promise<void> {
   );
 
   app.patch(
-    "/v1/media/:id",
+    '/v1/media/:id',
     {
       schema: {
         tags: TAG,
-        summary: "Rename, move, or retag an asset",
+        summary: 'Rename, move, or retag an asset',
         params: idParam,
         body: patchSchema,
       },
     },
     async (req, reply) => {
       const updated = await updateMedia(req.tenantId, req.params.id, req.body);
-      return updated ? updated : reply.code(404).send({ error: "not_found" });
+      return updated ? updated : reply.code(404).send({ error: 'not_found' });
     },
   );
 
   app.delete(
-    "/v1/media/:id",
-    { schema: { tags: TAG, summary: "Delete an asset and its stored object", params: idParam } },
+    '/v1/media/:id',
+    { schema: { tags: TAG, summary: 'Delete an asset and its stored object', params: idParam } },
     async (req, reply) => {
       try {
         await deleteMedia(req.tenantId, req.params.id);
@@ -152,13 +152,13 @@ export async function mediaRoutes(appRaw: FastifyInstance): Promise<void> {
 /** Storage misconfiguration and bad input are client-visible, not 500s. */
 function mapError(err: unknown, reply: FastifyReply) {
   if (err instanceof ValidationError) {
-    return reply.code(400).send({ error: "validation", message: err.message });
+    return reply.code(400).send({ error: 'validation', message: err.message });
   }
   if (err instanceof NotFoundError) {
-    return reply.code(404).send({ error: "not_found", message: err.message });
+    return reply.code(404).send({ error: 'not_found', message: err.message });
   }
   if (err instanceof ConflictError) {
-    return reply.code(503).send({ error: "unavailable", message: err.message });
+    return reply.code(503).send({ error: 'unavailable', message: err.message });
   }
   throw err;
 }

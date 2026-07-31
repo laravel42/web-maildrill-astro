@@ -48,8 +48,20 @@ function IssueList({ blockId }: { blockId: string }) {
   );
 }
 
-function SortableButtonRow({ id, label, active, onClick }: { id: string; label: string; active: boolean; onClick: () => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+function SortableButtonRow({
+  id,
+  label,
+  active,
+  onClick,
+}: {
+  id: string;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
   return (
     <div
       ref={setNodeRef}
@@ -58,7 +70,13 @@ function SortableButtonRow({ id, label, active, onClick }: { id: string; label: 
         active ? 'border-primary bg-primary/5' : 'border-border bg-card'
       } ${isDragging ? 'opacity-60' : ''}`}
     >
-      <button type="button" aria-label={`Reorder ${label}`} className="cursor-grab text-muted-foreground" {...attributes} {...listeners}>
+      <button
+        type="button"
+        aria-label={`Reorder ${label}`}
+        className="cursor-grab text-muted-foreground"
+        {...attributes}
+        {...listeners}
+      >
         <GripVertical className="size-3.5" />
       </button>
       <button type="button" className="min-w-0 flex-1 truncate text-left" onClick={onClick}>
@@ -92,8 +110,14 @@ function ButtonsOrderList() {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Button order</h3>
-      <DndContext collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd}>
+      <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        Button order
+      </h3>
+      <DndContext
+        collisionDetection={closestCenter}
+        modifiers={[restrictToVerticalAxis]}
+        onDragEnd={onDragEnd}
+      >
         <SortableContext items={buttons.map((b) => b.id)} strategy={verticalListSortingStrategy}>
           {buttons.map((b) => {
             const plugin = getButtonPlugin(b.type);
@@ -136,7 +160,11 @@ export function InspectorPanel() {
       const Editor = plugin.Editor;
       content = (
         <>
-          <Editor value={instance.data} onChange={(data) => updateBlockData(selection.slot, data)} doc={doc} />
+          <Editor
+            value={instance.data}
+            onChange={(data) => updateBlockData(selection.slot, data)}
+            doc={doc}
+          />
           <IssueList blockId={instance.id} />
         </>
       );
@@ -150,7 +178,11 @@ export function InspectorPanel() {
       const Editor = plugin.Editor;
       content = (
         <>
-          <Editor value={instance.data} onChange={(data) => updateButtonData(instance.id, data)} doc={doc} />
+          <Editor
+            value={instance.data}
+            onChange={(data) => updateButtonData(instance.id, data)}
+            doc={doc}
+          />
           <IssueList blockId={instance.id} />
         </>
       );
@@ -181,7 +213,12 @@ export function InspectorPanel() {
           <div className="flex items-center justify-between px-4 py-3">
             <h2 className="text-sm font-semibold">{title}</h2>
             {removable && (
-              <Button variant="ghost" size="icon" aria-label={`Remove ${title}`} onClick={removable}>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`Remove ${title}`}
+                onClick={removable}
+              >
                 <Trash2 className="size-4 text-muted-foreground hover:text-destructive" />
               </Button>
             )}

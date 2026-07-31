@@ -1,5 +1,5 @@
-import type { Logger } from "@maildrill/observability";
-import { emitScheduleTick, setScheduleTickSink } from "./schedule-observer";
+import type { Logger } from '@maildrill/observability';
+import { emitScheduleTick, setScheduleTickSink } from './schedule-observer';
 
 export type StopFn = () => Promise<void>;
 export { setScheduleTickSink };
@@ -27,17 +27,13 @@ export function startPoller(
       const durationMs = Math.round(performance.now() - started);
       // Record failures, non-idle ticks, the first tick, and periodic heartbeats
       // so Schedule stays populated without flooding on empty publisher loops.
-      if (
-        output != null ||
-        tickCount === 1 ||
-        tickCount % 30 === 0
-      ) {
+      if (output != null || tickCount === 1 || tickCount % 30 === 0) {
         emitScheduleTick({
           name,
           intervalMs,
           durationMs,
-          status: "ok",
-          output: typeof output === "string" ? output : "idle",
+          status: 'ok',
+          output: typeof output === 'string' ? output : 'idle',
         });
       }
     } catch (err) {
@@ -46,10 +42,10 @@ export function startPoller(
         name,
         intervalMs,
         durationMs: Math.round(performance.now() - started),
-        status: "failed",
+        status: 'failed',
         exception: message,
       });
-      log.error({ err: message, poller: name }, "poller error");
+      log.error({ err: message, poller: name }, 'poller error');
     }
     if (!stopped) timer = setTimeout(() => void tick(), intervalMs);
   };

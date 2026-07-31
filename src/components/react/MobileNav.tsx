@@ -59,7 +59,11 @@ export default function MobileNav({ items, primaryCta, secondaryCta }: Props) {
       {open &&
         typeof document !== 'undefined' &&
         createPortal(
-          <div className={styles.panel} id={panelId} style={{ animation: 'fade var(--duration) var(--ease-out)' }}>
+          <div
+            className={styles.panel}
+            id={panelId}
+            style={{ animation: 'fade var(--duration) var(--ease-out)' }}
+          >
             <nav aria-label="Mobile">
               {items.map((item) =>
                 item.children ? (

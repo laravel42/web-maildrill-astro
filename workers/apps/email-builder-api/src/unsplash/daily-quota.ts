@@ -100,7 +100,8 @@ function readPositiveIntEnv(name: string, defaultValue: number): number {
 function resolveLimits(override?: Partial<DailyQuotaLimits>): DailyQuotaLimits {
   return {
     ai: override?.ai ?? readPositiveIntEnv('UNSPLASH_DAILY_BUDGET_AI', DEFAULT_LIMITS.ai),
-    picker: override?.picker ?? readPositiveIntEnv('UNSPLASH_DAILY_BUDGET_PICKER', DEFAULT_LIMITS.picker),
+    picker:
+      override?.picker ?? readPositiveIntEnv('UNSPLASH_DAILY_BUDGET_PICKER', DEFAULT_LIMITS.picker),
   };
 }
 

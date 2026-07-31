@@ -1,33 +1,25 @@
-import { and, eq } from "drizzle-orm";
-import { config } from "@maildrill/config";
-import {
-  db,
-  deadLetters,
-  messageAttempts,
-  messages,
-} from "@maildrill/database";
+import { and, eq } from 'drizzle-orm';
+import { config } from '@maildrill/config';
+import { db, deadLetters, messageAttempts, messages } from '@maildrill/database';
 import {
   jobNameForChannel,
   QUEUE_NAMES,
   sendMessageJobV1,
   type MessageState,
-} from "@maildrill/domain";
-import { getProvider } from "@maildrill/providers";
-import { createLogger, metrics } from "@maildrill/observability";
-import { tryCompleteCampaign } from "./campaign-delivery";
-import { bumpVersion } from "./shared";
+} from '@maildrill/domain';
+import { getProvider } from '@maildrill/providers';
+import { createLogger, metrics } from '@maildrill/observability';
+import { tryCompleteCampaign } from './campaign-delivery';
+import { bumpVersion } from './shared';
 
-const log = createLogger({ component: "dispatch" });
+const log = createLogger({ component: 'dispatch' });
 
-async function maybeCompleteCampaign(
-  campaignId: string | null,
-  tenantId: string,
-): Promise<void> {
+async function maybeCompleteCampaign(campaignId: string | null, tenantId: string): Promise<void> {
   if (!campaignId) return;
   try {
     await tryCompleteCampaign(campaignId, tenantId);
   } catch (err) {
-    log.warn({ err, campaignId, tenantId }, "campaign complete after dispatch failed");
+    log.warn({ err, campaignId, tenantId }, 'campaign complete after dispatch failed');
   }
 }
 
@@ -35,15 +27,15 @@ async function maybeCompleteCampaign(
 export class DispatchRetryError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "DispatchRetryError";
+    this.name = 'DispatchRetryError';
   }
 }
 
 const ALREADY_SENT: ReadonlySet<MessageState> = new Set<MessageState>([
-  "submitted",
-  "sent",
-  "delivered",
-  "read",
+  'submitted',
+  'sent',
+  'delivered',
+  'read',
 ]);
 
 /**
@@ -55,29 +47,25 @@ const ALREADY_SENT: ReadonlySet<MessageState> = new Set<MessageState>([
 export async function handleDispatch(raw: unknown): Promise<void> {
   const job = sendMessageJobV1.parse(raw);
 
-  const rows = await db
-    .select()
-    .from(messages)
-    .where(eq(messages.id, job.messageId))
-    .limit(1);
+  const rows = await db.select().from(messages).where(eq(messages.id, job.messageId)).limit(1);
   const message = rows[0];
   if (!message) {
-    log.warn({ messageId: job.messageId }, "dispatch: message not found");
+    log.warn({ messageId: job.messageId }, 'dispatch: message not found');
     return;
   }
 
   // Eligibility / worker idempotency.
   if (message.generation !== job.generation) return; // stale generation
-  if (message.status === "cancelled" || message.status === "expired") return;
+  if (message.status === 'cancelled' || message.status === 'expired') return;
   if (ALREADY_SENT.has(message.status)) return; // already submitted — never resend
-  if (message.status !== "queued" && message.status !== "processing") return;
+  if (message.status !== 'queued' && message.status !== 'processing') return;
 
   // Claim the message (optimistic lock on version + generation).
   const now = new Date();
   const claimed = await db
     .update(messages)
     .set({
-      status: "processing",
+      status: 'processing',
       processingStartedAt: now,
       version: bumpVersion,
       updatedAt: now,
@@ -113,16 +101,16 @@ export async function handleDispatch(raw: unknown): Promise<void> {
         provider: message.provider,
         channel: message.channel,
         attemptNumber,
-        status: "succeeded",
+        status: 'succeeded',
         providerRequestId: result.providerRequestId ?? null,
-        providerResponseCode: "accepted",
+        providerResponseCode: 'accepted',
         requestStartedAt: startedAt,
         requestCompletedAt: completedAt,
       });
       await tx
         .update(messages)
         .set({
-          status: "submitted",
+          status: 'submitted',
           submittedAt: completedAt,
           providerMessageId: result.providerMessageId ?? null,
           attemptCount: attemptNumber,
@@ -133,18 +121,18 @@ export async function handleDispatch(raw: unknown): Promise<void> {
         })
         .where(eq(messages.id, message.id));
     });
-    metrics.inc("message_dispatch_total", {
+    metrics.inc('message_dispatch_total', {
       channel: message.channel,
       provider: message.provider,
     });
-    metrics.inc("provider_request_total", { provider: message.provider });
+    metrics.inc('provider_request_total', { provider: message.provider });
     await maybeCompleteCampaign(message.campaignId, message.tenantId);
     return;
   }
 
   const err = result.error ?? {
-    category: "unknown" as const,
-    message: "provider rejected without error detail",
+    category: 'unknown' as const,
+    message: 'provider rejected without error detail',
     retryable: true,
   };
 
@@ -154,14 +142,14 @@ export async function handleDispatch(raw: unknown): Promise<void> {
     provider: message.provider,
     channel: message.channel,
     attemptNumber,
-    status: "failed",
+    status: 'failed',
     providerRequestId: result.providerRequestId ?? null,
     providerErrorCode: err.code ?? null,
     errorCategory: err.category,
     requestStartedAt: startedAt,
     requestCompletedAt: completedAt,
   });
-  metrics.inc("provider_error_total", {
+  metrics.inc('provider_error_total', {
     provider: message.provider,
     category: err.category,
   });
@@ -170,7 +158,7 @@ export async function handleDispatch(raw: unknown): Promise<void> {
     await db
       .update(messages)
       .set({
-        status: "queued",
+        status: 'queued',
         attemptCount: attemptNumber,
         lastErrorCode: err.code ?? null,
         lastErrorMessage: err.message,
@@ -186,7 +174,7 @@ export async function handleDispatch(raw: unknown): Promise<void> {
     await tx
       .update(messages)
       .set({
-        status: "failed",
+        status: 'failed',
         failedAt: completedAt,
         attemptCount: attemptNumber,
         lastErrorCode: err.code ?? null,
@@ -204,7 +192,7 @@ export async function handleDispatch(raw: unknown): Promise<void> {
       error: `${err.category}: ${err.message}`,
     });
   });
-  metrics.inc("message_dispatch_failed_total", {
+  metrics.inc('message_dispatch_failed_total', {
     channel: message.channel,
     provider: message.provider,
   });

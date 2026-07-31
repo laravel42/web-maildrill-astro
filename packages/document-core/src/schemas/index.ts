@@ -7,9 +7,18 @@ export { ColumnsContainerPropsSchema, type ColumnsContainerProps } from './Colum
 export { ContainerPropsSchema, type ContainerProps } from './ContainerSchema';
 export { DividerPropsSchema, type DividerProps } from './DividerSchema';
 export { EmailLayoutPropsSchema, type EmailLayoutProps } from './EmailLayoutSchema';
-export { ImagePropsSchema, UnsplashMetadataSchema, type ImageProps, type UnsplashMetadata } from './ImageSchema';
+export {
+  ImagePropsSchema,
+  UnsplashMetadataSchema,
+  type ImageProps,
+  type UnsplashMetadata,
+} from './ImageSchema';
 export { NotionTextPropsSchema, type NotionTextProps } from './NotionTextSchema';
-export { SocialMediaPropsSchema, SocialMediaItemSchema, type SocialMediaProps } from './SocialMediaSchema';
+export {
+  SocialMediaPropsSchema,
+  SocialMediaItemSchema,
+  type SocialMediaProps,
+} from './SocialMediaSchema';
 export { SpacerPropsSchema, type SpacerProps } from './SpacerSchema';
 
 import { ButtonPropsSchema } from './ButtonSchema';

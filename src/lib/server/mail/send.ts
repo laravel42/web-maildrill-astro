@@ -93,7 +93,11 @@ export async function sendSignupNotification(sub: SignupData): Promise<boolean> 
     return false;
   }
   const email = sub.email.trim();
-  const name = [sub.firstName, sub.lastName].map((v) => v?.trim()).filter(Boolean).join(' ') || '—';
+  const name =
+    [sub.firstName, sub.lastName]
+      .map((v) => v?.trim())
+      .filter(Boolean)
+      .join(' ') || '—';
   const rows: [string, string][] = [
     ['Name', name],
     ['Email', email],

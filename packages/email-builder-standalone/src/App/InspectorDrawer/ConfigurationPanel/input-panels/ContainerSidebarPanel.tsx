@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ZodError } from 'zod';
 
-import ContainerPropsSchema, { ContainerProps } from '../../../../documents/blocks/Container/ContainerPropsSchema';
+import ContainerPropsSchema, {
+  ContainerProps,
+} from '../../../../documents/blocks/Container/ContainerPropsSchema';
 
 import BaseSidebarPanel from './helpers/BaseSidebarPanel';
 import MultiStylePropertyPanel from './helpers/style-inputs/MultiStylePropertyPanel';
@@ -29,7 +31,15 @@ export default function ContainerSidebarPanel({ data, setData }: ContainerSideba
   return (
     <BaseSidebarPanel title={t('inputs.panels.container.title')}>
       <MultiStylePropertyPanel
-        names={['backgroundColor', 'background', 'border', 'borderMobile', 'shape', 'padding', 'mobilePadding']}
+        names={[
+          'backgroundColor',
+          'background',
+          'border',
+          'borderMobile',
+          'shape',
+          'padding',
+          'mobilePadding',
+        ]}
         value={data.style}
         shapeSteps={30}
         onChange={(style) => updateData({ ...data, style })}

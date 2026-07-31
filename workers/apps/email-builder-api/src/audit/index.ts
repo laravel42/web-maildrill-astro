@@ -57,7 +57,10 @@ export type AnalyzeResult = {
   resolved: ResolvedDocument;
 };
 
-export function analyzeTemplate(document: EditorDocument, options: AnalyzeOptions = {}): AnalyzeResult {
+export function analyzeTemplate(
+  document: EditorDocument,
+  options: AnalyzeOptions = {},
+): AnalyzeResult {
   const { rootId = 'root', suppress = [], ...envelope } = options;
 
   const resolved = resolveDocument(document, rootId);
@@ -90,7 +93,9 @@ export function analyzeTemplate(document: EditorDocument, options: AnalyzeOption
 
   const notChecked: string[] = [];
   if (envelope.subject === undefined) {
-    notChecked.push('Subject line — not supplied, so length, casing, and spam signals were not reviewed.');
+    notChecked.push(
+      'Subject line — not supplied, so length, casing, and spam signals were not reviewed.',
+    );
   }
   if (envelope.preheader === undefined) {
     notChecked.push(
@@ -98,7 +103,9 @@ export function analyzeTemplate(document: EditorDocument, options: AnalyzeOption
     );
   }
   if (envelope.renderedHtmlBytes === undefined) {
-    notChecked.push('Rendered HTML size — estimated from the document rather than measured, so the Gmail clipping check is approximate.');
+    notChecked.push(
+      'Rendered HTML size — estimated from the document rather than measured, so the Gmail clipping check is approximate.',
+    );
   }
   notChecked.push(
     'Image content — the engine reads dimensions and alt text but never fetches the images, so it cannot tell whether one is broken, off-brand, or has text baked into it.',

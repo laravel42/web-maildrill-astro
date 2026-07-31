@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq } from 'drizzle-orm';
 import {
   db,
   messageEvents,
@@ -6,20 +6,20 @@ import {
   usageRecords,
   webhookEvents,
   type MessageRow,
-} from "@maildrill/database";
+} from '@maildrill/database';
 import {
   eventFingerprint,
   resolveEventTransition,
   type MessageState,
   type ProviderOutcome,
-} from "@maildrill/domain";
-import { getProvider, type NormalizedProviderEvent } from "@maildrill/providers";
-import { createLogger, emitAppEvent, metrics } from "@maildrill/observability";
-import { bumpVersion } from "./shared";
-import { applyTemplateStatusEvent } from "./templates-approval";
-import type { Tx } from "@maildrill/database";
+} from '@maildrill/domain';
+import { getProvider, type NormalizedProviderEvent } from '@maildrill/providers';
+import { createLogger, emitAppEvent, metrics } from '@maildrill/observability';
+import { bumpVersion } from './shared';
+import { applyTemplateStatusEvent } from './templates-approval';
+import type { Tx } from '@maildrill/database';
 
-const log = createLogger({ component: "events" });
+const log = createLogger({ component: 'events' });
 
 async function locateMessage(
   tx: Tx,
@@ -31,10 +31,7 @@ async function locateMessage(
       .select()
       .from(messages)
       .where(
-        and(
-          eq(messages.provider, provider),
-          eq(messages.providerMessageId, ev.providerMessageId),
-        ),
+        and(eq(messages.provider, provider), eq(messages.providerMessageId, ev.providerMessageId)),
       )
       .limit(1);
     if (rows[0]) return rows[0];
@@ -51,18 +48,21 @@ async function applyEventState(
 ): Promise<void> {
   const base = { status: next, version: bumpVersion, updatedAt: new Date() };
   const set = (extra: Record<string, unknown>) =>
-    tx.update(messages).set({ ...base, ...extra }).where(eq(messages.id, messageId));
+    tx
+      .update(messages)
+      .set({ ...base, ...extra })
+      .where(eq(messages.id, messageId));
   switch (next) {
-    case "sent":
+    case 'sent':
       await set({ sentAt: at });
       break;
-    case "delivered":
+    case 'delivered':
       await set({ deliveredAt: at });
       break;
-    case "read":
+    case 'read':
       await set({ readAt: at });
       break;
-    case "failed": {
+    case 'failed': {
       const code = error?.code?.trim() || null;
       const message = error?.message?.trim() || null;
       await set({
@@ -77,7 +77,7 @@ async function applyEventState(
       });
       break;
     }
-    case "cancelled":
+    case 'cancelled':
       await set({ cancelledAt: at });
       break;
     default:
@@ -93,7 +93,7 @@ async function applyEventState(
 export async function applyProviderOutcome(input: {
   messageId: string;
   tenantId: string;
-  channel: MessageRow["channel"];
+  channel: MessageRow['channel'];
   provider: string;
   currentStatus: MessageState;
   outcome: ProviderOutcome;
@@ -127,13 +127,13 @@ export async function applyProviderOutcome(input: {
         provider: input.provider,
         providerEventId: null,
         eventFingerprint: fingerprint,
-        eventType: "delivery_report",
+        eventType: 'delivery_report',
         providerStatus: input.statusGroup,
         occurredAt: at,
         receivedAt: new Date(),
         processedAt: new Date(),
         payload: {
-          source: "posthog_poller",
+          source: 'posthog_poller',
           status_group: input.statusGroup,
           outcome: input.outcome,
           ...(input.errorCode ? { error_name: input.errorCode } : {}),
@@ -149,7 +149,7 @@ export async function applyProviderOutcome(input: {
       message: input.errorMessage,
     });
     emitAppEvent({
-      name: "message.status_changed",
+      name: 'message.status_changed',
       payload: {
         messageId: input.messageId,
         tenantId: input.tenantId,
@@ -158,9 +158,9 @@ export async function applyProviderOutcome(input: {
         outcome: input.outcome,
         provider: input.provider,
       },
-      listeners: ["usage", "stats"],
+      listeners: ['usage', 'stats'],
     });
-    if (next === "delivered" || next === "sent") {
+    if (next === 'delivered' || next === 'sent') {
       await tx
         .insert(usageRecords)
         .values({
@@ -168,7 +168,7 @@ export async function applyProviderOutcome(input: {
           messageId: input.messageId,
           channel: input.channel,
           provider: input.provider,
-          usageType: "delivery",
+          usageType: 'delivery',
         })
         .onConflictDoNothing({
           target: [usageRecords.messageId, usageRecords.usageType],
@@ -179,11 +179,7 @@ export async function applyProviderOutcome(input: {
 }
 
 export type TrackingNotificationType =
-  | "OPENED"
-  | "CLICKED"
-  | "UNSUBSCRIBED"
-  | "COMPLAINED"
-  | "LATE_BOUNCE";
+  'OPENED' | 'CLICKED' | 'UNSUBSCRIBED' | 'COMPLAINED' | 'LATE_BOUNCE';
 
 /**
  * Apply an Infobip tracking notification (email open/click/unsub/complaint /
@@ -193,7 +189,7 @@ export type TrackingNotificationType =
 export async function applyTrackingOutcome(input: {
   messageId: string;
   tenantId: string;
-  channel: MessageRow["channel"];
+  channel: MessageRow['channel'];
   provider: string;
   currentStatus: MessageState;
   notificationType: TrackingNotificationType;
@@ -209,15 +205,15 @@ export async function applyTrackingOutcome(input: {
   const type = input.notificationType;
   const fingerprint = `posthog:track:${input.fingerprint}`;
 
-  if (type === "OPENED") {
+  if (type === 'OPENED') {
     const statusChanged = await applyProviderOutcome({
       messageId: input.messageId,
       tenantId: input.tenantId,
       channel: input.channel,
       provider: input.provider,
       currentStatus: input.currentStatus,
-      outcome: "read",
-      statusGroup: "OPENED",
+      outcome: 'read',
+      statusGroup: 'OPENED',
       occurredAt: at,
     });
     // Separate open event keeps Infobip device metadata for report breakdowns.
@@ -229,14 +225,14 @@ export async function applyTrackingOutcome(input: {
         provider: input.provider,
         providerEventId: null,
         eventFingerprint: fingerprint,
-        eventType: "open",
-        providerStatus: "OPENED",
+        eventType: 'open',
+        providerStatus: 'OPENED',
         occurredAt: at,
         receivedAt: new Date(),
         processedAt: new Date(),
         payload: {
-          source: "posthog_poller",
-          notification_type: "OPENED",
+          source: 'posthog_poller',
+          notification_type: 'OPENED',
           ...(input.deviceType ? { device_type: input.deviceType } : {}),
           ...(input.deviceName ? { device_name: input.deviceName } : {}),
           ...(input.os ? { os: input.os } : {}),
@@ -249,23 +245,23 @@ export async function applyTrackingOutcome(input: {
     return statusChanged || openInserted.length > 0;
   }
 
-  if (type === "LATE_BOUNCE") {
+  if (type === 'LATE_BOUNCE') {
     return applyProviderOutcome({
       messageId: input.messageId,
       tenantId: input.tenantId,
       channel: input.channel,
       provider: input.provider,
       currentStatus: input.currentStatus,
-      outcome: "failed",
-      statusGroup: "LATE_BOUNCE",
-      errorCode: "LATE_BOUNCE",
-      errorMessage: "Late bounce after initial acceptance",
+      outcome: 'failed',
+      statusGroup: 'LATE_BOUNCE',
+      errorCode: 'LATE_BOUNCE',
+      errorMessage: 'Late bounce after initial acceptance',
       occurredAt: at,
     });
   }
 
   const eventType =
-    type === "CLICKED" ? "click" : type === "UNSUBSCRIBED" ? "unsubscribed" : "complaint";
+    type === 'CLICKED' ? 'click' : type === 'UNSUBSCRIBED' ? 'unsubscribed' : 'complaint';
 
   const inserted = await db.transaction(async (tx) => {
     const result = await tx
@@ -282,7 +278,7 @@ export async function applyTrackingOutcome(input: {
         receivedAt: new Date(),
         processedAt: new Date(),
         payload: {
-          source: "posthog_poller",
+          source: 'posthog_poller',
           notification_type: type,
           ...(input.url ? { url: input.url } : {}),
           ...(input.deviceType ? { device_type: input.deviceType } : {}),
@@ -296,8 +292,8 @@ export async function applyTrackingOutcome(input: {
       .returning({ id: messageEvents.id });
 
     // First click / open-like engagement also counts as a read when still delivered.
-    if (type === "CLICKED" && result.length > 0) {
-      const next = resolveEventTransition(input.currentStatus, "read");
+    if (type === 'CLICKED' && result.length > 0) {
+      const next = resolveEventTransition(input.currentStatus, 'read');
       if (next && next !== input.currentStatus) {
         await applyEventState(tx, input.messageId, next, at);
       }
@@ -324,30 +320,30 @@ export async function processWebhookEvent(webhookEventId: string): Promise<void>
     .limit(1);
   const wh = whRows[0];
   if (!wh) {
-    log.warn({ webhookEventId }, "webhook row not found");
+    log.warn({ webhookEventId }, 'webhook row not found');
     return;
   }
-  if (wh.processingStatus === "processed") return;
+  if (wh.processingStatus === 'processed') return;
 
   const provider = getProvider(wh.provider);
 
   // WhatsApp template-status webhooks aren't message-correlated: parse the
   // status change and apply it to the matching template row, then finish.
-  if (wh.kind === "template") {
+  if (wh.kind === 'template') {
     const event = provider.normalizeTemplateWebhook?.({
       headers: wh.headers as Record<string, string | string[] | undefined>,
       body: wh.payload,
       rawBody: JSON.stringify(wh.payload),
-      kind: "template",
+      kind: 'template',
     });
     if (event) {
       await applyTemplateStatusEvent(event);
     }
     await db
       .update(webhookEvents)
-      .set({ processingStatus: "processed", processedAt: new Date() })
+      .set({ processingStatus: 'processed', processedAt: new Date() })
       .where(eq(webhookEvents.id, wh.id));
-    metrics.inc("provider_webhook_total", { provider: wh.provider });
+    metrics.inc('provider_webhook_total', { provider: wh.provider });
     return;
   }
 
@@ -357,13 +353,13 @@ export async function processWebhookEvent(webhookEventId: string): Promise<void>
       headers: wh.headers as Record<string, string | string[] | undefined>,
       body: wh.payload,
       rawBody: JSON.stringify(wh.payload),
-      kind: (wh.kind as "delivery" | "engagement" | "voice") ?? "delivery",
+      kind: (wh.kind as 'delivery' | 'engagement' | 'voice') ?? 'delivery',
     });
   } catch (err) {
     await db
       .update(webhookEvents)
       .set({
-        processingStatus: "failed",
+        processingStatus: 'failed',
         processingError: err instanceof Error ? err.message : String(err),
       })
       .where(eq(webhookEvents.id, wh.id));
@@ -375,8 +371,7 @@ export async function processWebhookEvent(webhookEventId: string): Promise<void>
       const message = await locateMessage(tx, wh.provider, ev);
       if (!message) continue; // retained but unmatched — not an error
 
-      const fingerprint =
-        ev.providerEventId ?? eventFingerprint(wh.provider, ev.fingerprintParts);
+      const fingerprint = ev.providerEventId ?? eventFingerprint(wh.provider, ev.fingerprintParts);
 
       const insertedEvent = await tx
         .insert(messageEvents)
@@ -404,7 +399,7 @@ export async function processWebhookEvent(webhookEventId: string): Promise<void>
       if (next && next !== message.status) {
         await applyEventState(tx, message.id, next, ev.occurredAt ?? new Date());
         emitAppEvent({
-          name: "message.status_changed",
+          name: 'message.status_changed',
           payload: {
             messageId: message.id,
             tenantId: message.tenantId,
@@ -413,9 +408,9 @@ export async function processWebhookEvent(webhookEventId: string): Promise<void>
             outcome: ev.outcome,
             provider: wh.provider,
           },
-          listeners: ["usage", "stats"],
+          listeners: ['usage', 'stats'],
         });
-        if (next === "delivered" || next === "sent") {
+        if (next === 'delivered' || next === 'sent') {
           await tx
             .insert(usageRecords)
             .values({
@@ -423,7 +418,7 @@ export async function processWebhookEvent(webhookEventId: string): Promise<void>
               messageId: message.id,
               channel: message.channel,
               provider: message.provider,
-              usageType: "delivery",
+              usageType: 'delivery',
             })
             .onConflictDoNothing({
               target: [usageRecords.messageId, usageRecords.usageType],
@@ -433,19 +428,19 @@ export async function processWebhookEvent(webhookEventId: string): Promise<void>
     }
     await tx
       .update(webhookEvents)
-      .set({ processingStatus: "processed", processedAt: new Date() })
+      .set({ processingStatus: 'processed', processedAt: new Date() })
       .where(eq(webhookEvents.id, wh.id));
   });
 
-  metrics.inc("provider_webhook_total", { provider: wh.provider });
+  metrics.inc('provider_webhook_total', { provider: wh.provider });
   emitAppEvent({
-    name: "webhook.processed",
+    name: 'webhook.processed',
     payload: {
       webhookEventId,
       provider: wh.provider,
       kind: wh.kind,
       events: normalized.length,
     },
-    listeners: ["message-state"],
+    listeners: ['message-state'],
   });
 }

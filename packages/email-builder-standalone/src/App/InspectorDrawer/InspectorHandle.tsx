@@ -41,7 +41,9 @@ export default function InspectorHandle() {
     >
       <Tooltip
         title={
-          isCompact ? t('inspector.handle.expand', 'Expand panel') : t('inspector.handle.compact', 'Compact panel')
+          isCompact
+            ? t('inspector.handle.expand', 'Expand panel')
+            : t('inspector.handle.compact', 'Compact panel')
         }
         placement="left"
       >
@@ -52,7 +54,9 @@ export default function InspectorHandle() {
             minHeight: 80,
             borderTopLeftRadius: 8,
             borderBottomLeftRadius: 8,
-            backgroundColor: isCompact ? theme.palette.primary.main : theme.palette.background.paper,
+            backgroundColor: isCompact
+              ? theme.palette.primary.main
+              : theme.palette.background.paper,
             color: isCompact ? theme.palette.primary.contrastText : theme.palette.text.secondary,
             border: `1px solid ${theme.palette.divider}`,
             borderRight: 'none',

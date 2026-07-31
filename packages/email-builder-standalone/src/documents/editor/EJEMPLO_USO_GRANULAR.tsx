@@ -42,7 +42,9 @@ export function TextInputGranular({ blockId }: { blockId: string }) {
     setText(newValue);
   };
 
-  return <input type="text" value={localValue} onChange={handleChange} placeholder="Escribe algo..." />;
+  return (
+    <input type="text" value={localValue} onChange={handleChange} placeholder="Escribe algo..." />
+  );
 }
 
 // ============================================================================
@@ -81,7 +83,10 @@ export function BlockFormGranular({ blockId }: { blockId: string }) {
     <form onSubmit={handleSubmit}>
       <div>
         <label>Texto:</label>
-        <input value={props.text || ''} onChange={(e) => batchUpdateProps({ text: e.target.value })} />
+        <input
+          value={props.text || ''}
+          onChange={(e) => batchUpdateProps({ text: e.target.value })}
+        />
       </div>
 
       <div>
@@ -104,7 +109,10 @@ export function BlockFormGranular({ blockId }: { blockId: string }) {
 
       <div>
         <label>Peso de fuente:</label>
-        <select value={props.fontWeight || 'normal'} onChange={(e) => batchUpdateProps({ fontWeight: e.target.value })}>
+        <select
+          value={props.fontWeight || 'normal'}
+          onChange={(e) => batchUpdateProps({ fontWeight: e.target.value })}
+        >
           <option value="normal">Normal</option>
           <option value="bold">Bold</option>
           <option value="lighter">Lighter</option>
@@ -124,7 +132,13 @@ export function BlockFormGranular({ blockId }: { blockId: string }) {
  * Toggle que actualiza una prop booleana
  * Usa actualización directa sin estado local
  */
-export function BooleanToggleGranular({ blockId, propName }: { blockId: string; propName: string }) {
+export function BooleanToggleGranular({
+  blockId,
+  propName,
+}: {
+  blockId: string;
+  propName: string;
+}) {
   // Solo leer la prop específica
   const value = useBlockPropGranular<boolean>(blockId, propName);
 
@@ -235,7 +249,7 @@ export function CheckboxListGranular({
 }) {
   const props = useBlockPropsMultiple(
     blockId,
-    options.map((opt) => opt.key)
+    options.map((opt) => opt.key),
   );
   const { batchUpdateProps } = useBlockUpdater(blockId);
 
@@ -249,7 +263,11 @@ export function CheckboxListGranular({
     <div>
       {options.map((option) => (
         <label key={option.key} style={{ display: 'block' }}>
-          <input type="checkbox" checked={Boolean(props[option.key])} onChange={() => handleToggle(option.key)} />
+          <input
+            type="checkbox"
+            checked={Boolean(props[option.key])}
+            onChange={() => handleToggle(option.key)}
+          />
           {option.label}
         </label>
       ))}
@@ -384,7 +402,11 @@ export function ValidatedInputGranular({
 
   return (
     <div>
-      <input value={localValue} onChange={handleChange} style={{ borderColor: error ? 'red' : undefined }} />
+      <input
+        value={localValue}
+        onChange={handleChange}
+        style={{ borderColor: error ? 'red' : undefined }}
+      />
       {error && <div style={{ color: 'red', fontSize: '12px' }}>{error}</div>}
     </div>
   );
@@ -441,7 +463,12 @@ export function UndoableEditorGranular({ blockId }: { blockId: string }) {
         </button>
       </div>
 
-      <textarea value={text || ''} onChange={(e) => handleChange(e.target.value)} rows={5} style={{ width: '100%' }} />
+      <textarea
+        value={text || ''}
+        onChange={(e) => handleChange(e.target.value)}
+        rows={5}
+        style={{ width: '100%' }}
+      />
     </div>
   );
 }

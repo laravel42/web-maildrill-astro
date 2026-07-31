@@ -12,14 +12,15 @@ const apiHost = import.meta.env.PUBLIC_POSTHOG_HOST;
     );
   }
   if (apiKey) {
+    /* eslint-disable @typescript-eslint/no-unused-expressions, prefer-rest-params -- vendored PostHog init snippet */
     !(function (t, e) {
-      var o, n, p, r;
+      let o, n, p, r;
       e.__SV ||
         ((window.posthog = e),
         (e._i = []),
         (e.init = function (i, s, a) {
           function g(t, e) {
-            var o = e.split('.');
+            const o = e.split('.');
             (2 == o.length && ((t = t[o[0]]), (e = o[1])),
               (t[e] = function () {
                 t.push([e].concat(Array.prototype.slice.call(arguments, 0)));
@@ -30,12 +31,12 @@ const apiHost = import.meta.env.PUBLIC_POSTHOG_HOST;
             (p.async = !0),
             (p.src = s.api_host + '/static/array.js'),
             (r = t.getElementsByTagName('script')[0]).parentNode.insertBefore(p, r));
-          var u = e;
+          let u = e;
           for (
             void 0 !== a ? (u = e[a] = []) : (a = 'posthog'),
               u.people = u.people || [],
               u.toString = function (t) {
-                var e = 'posthog';
+                let e = 'posthog';
                 return ('posthog' !== a && (e += '.' + a), t || (e += ' (stub)'), e);
               },
               u.people.toString = function () {
@@ -54,6 +55,7 @@ const apiHost = import.meta.env.PUBLIC_POSTHOG_HOST;
         }),
         (e.__SV = 1));
     })(document, window.posthog || []);
+    /* eslint-enable @typescript-eslint/no-unused-expressions, prefer-rest-params */
     posthog.init(apiKey, {
       api_host: apiHost || 'https://us.i.posthog.com',
       defaults: '2026-01-30',

@@ -756,7 +756,6 @@ export default function AppSubscriberDetail({
                   )}
                 </div>
               )}
-
             </section>
           </div>
 
@@ -766,9 +765,7 @@ export default function AppSubscriberDetail({
               <dl className={styles.kvList}>
                 <div className={styles.kv}>
                   <dt>Email</dt>
-                  <dd>
-                    {sub.email ? <a href={`mailto:${sub.email}`}>{sub.email}</a> : '—'}
-                  </dd>
+                  <dd>{sub.email ? <a href={`mailto:${sub.email}`}>{sub.email}</a> : '—'}</dd>
                 </div>
                 <div className={styles.kv}>
                   <dt>Subscribed</dt>

@@ -533,8 +533,9 @@ div.quill {
 .light-email-builder pre,
 .light-email-builder .preview-container {
   font-family:
-    'Figtree', ui-monospace, Menlo, Monaco, 'Cascadia Mono', 'Segoe UI Mono', 'Roboto Mono', 'Oxygen Mono',
-    'Ubuntu Monospace', 'Source Code Pro', 'Fira Mono', 'Droid Sans Mono', 'Courier New', monospace;
+    'Figtree', ui-monospace, Menlo, Monaco, 'Cascadia Mono', 'Segoe UI Mono', 'Roboto Mono',
+    'Oxygen Mono', 'Ubuntu Monospace', 'Source Code Pro', 'Fira Mono', 'Droid Sans Mono',
+    'Courier New', monospace;
 }
 .light-email-builder .hljs-tag,
 .light-email-builder .hljs-name,
@@ -569,8 +570,9 @@ div.quill {
 .dark-email-builder pre,
 .dark-email-builder .preview-container {
   font-family:
-    'Figtree', ui-monospace, Menlo, Monaco, 'Cascadia Mono', 'Segoe UI Mono', 'Roboto Mono', 'Oxygen Mono',
-    'Ubuntu Monospace', 'Source Code Pro', 'Fira Mono', 'Droid Sans Mono', 'Courier New', monospace;
+    'Figtree', ui-monospace, Menlo, Monaco, 'Cascadia Mono', 'Segoe UI Mono', 'Roboto Mono',
+    'Oxygen Mono', 'Ubuntu Monospace', 'Source Code Pro', 'Fira Mono', 'Droid Sans Mono',
+    'Courier New', monospace;
 }
 .dark-email-builder .hljs-tag,
 .dark-email-builder .hljs-name {

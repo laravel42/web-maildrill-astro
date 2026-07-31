@@ -56,7 +56,7 @@ export type SearchErrorKind =
 export class UnsplashSearchError extends Error {
   constructor(
     public readonly kind: SearchErrorKind,
-    message?: string
+    message?: string,
   ) {
     super(message ?? kind);
     this.name = 'UnsplashSearchError';
@@ -83,8 +83,8 @@ export function resolveBackendUrl(backendUrl?: string): string {
   if (fromArg) return fromArg;
   const fromWindow =
     typeof window !== 'undefined'
-      ? ((window as unknown as { __emailBuilderUnsplashBackendUrl?: string }).__emailBuilderUnsplashBackendUrl ??
-        undefined)
+      ? ((window as unknown as { __emailBuilderUnsplashBackendUrl?: string })
+          .__emailBuilderUnsplashBackendUrl ?? undefined)
       : undefined;
   const fromWindowClean = fromWindow?.replace(/\/+$/, '');
   if (fromWindowClean) return fromWindowClean;
@@ -106,7 +106,10 @@ async function errorFromResponse(response: Response): Promise<UnsplashSearchErro
   return new UnsplashSearchError('unknown', `Status ${response.status}`);
 }
 
-export async function searchUnsplash(backendUrl: string, params: SearchParams): Promise<UnsplashSearchResponse> {
+export async function searchUnsplash(
+  backendUrl: string,
+  params: SearchParams,
+): Promise<UnsplashSearchResponse> {
   const url = new URL(`${backendUrl}/api/images/search`);
   url.searchParams.set('query', params.query);
   url.searchParams.set('page', String(params.page ?? 1));

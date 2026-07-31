@@ -38,7 +38,11 @@ export const headerLocationPlugin: BlockPlugin<Data> = {
     return (
       <div className="flex flex-col gap-4">
         <Field label="Place name" hint="Preview only — real values are sent per message">
-          <Input value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })} placeholder="Maildrill HQ" />
+          <Input
+            value={value.name}
+            onChange={(e) => onChange({ ...value, name: e.target.value })}
+            placeholder="Maildrill HQ"
+          />
         </Field>
         <Field label="Address">
           <Input
@@ -62,8 +66,14 @@ export const headerLocationPlugin: BlockPlugin<Data> = {
         </div>
         {(data.name || data.address) && (
           <div className={`px-[9px] py-[5px] ${ctx.dark ? 'bg-[#1d282f]' : 'bg-[#f5f6f6]'}`}>
-            <div className={`text-[13px] font-semibold ${ctx.dark ? 'text-[#e9edef]' : 'text-[#111b21]'}`}>{data.name}</div>
-            <div className={`text-[11.5px] ${ctx.dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}>{data.address}</div>
+            <div
+              className={`text-[13px] font-semibold ${ctx.dark ? 'text-[#e9edef]' : 'text-[#111b21]'}`}
+            >
+              {data.name}
+            </div>
+            <div className={`text-[11.5px] ${ctx.dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}>
+              {data.address}
+            </div>
           </div>
         )}
       </div>

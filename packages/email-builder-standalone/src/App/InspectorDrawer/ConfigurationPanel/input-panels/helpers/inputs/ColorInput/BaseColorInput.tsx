@@ -96,7 +96,14 @@ export default function ColorInput({
     return (
       <Tooltip title={t('inputs.background.reset')} placement="left">
         <Box
-          sx={{ minWidth: 24, lineHeight: 1, flexShrink: 0, pr: '4px', display: 'grid', placeItems: 'center' }}
+          sx={{
+            minWidth: 24,
+            lineHeight: 1,
+            flexShrink: 0,
+            pr: '4px',
+            display: 'grid',
+            placeItems: 'center',
+          }}
           onClick={() => onChangeColor(null)}
         >
           <FormatColorReset sx={{ color: 'primary.main' }} />
@@ -141,7 +148,13 @@ export default function ColorInput({
 
   if (compact) {
     return (
-      <Box sx={{ display: 'inline-flex', opacity: inheritedFrom ? 0.55 : 1, transition: 'opacity 120ms ease-out' }}>
+      <Box
+        sx={{
+          display: 'inline-flex',
+          opacity: inheritedFrom ? 0.55 : 1,
+          transition: 'opacity 120ms ease-out',
+        }}
+      >
         {colorButton}
         {menu}
       </Box>
@@ -154,7 +167,11 @@ export default function ColorInput({
       <Stack
         direction="row"
         spacing={1}
-        sx={{ alignContent: 'center', opacity: inheritedFrom ? 0.55 : 1, transition: 'opacity 120ms ease-out' }}
+        sx={{
+          alignContent: 'center',
+          opacity: inheritedFrom ? 0.55 : 1,
+          transition: 'opacity 120ms ease-out',
+        }}
       >
         {colorButton}
         {renderResetButton()}

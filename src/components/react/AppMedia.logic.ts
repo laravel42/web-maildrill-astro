@@ -146,9 +146,7 @@ export function toKebabCase(value: string): string {
  * hyphens/underscores). Mirrors the workers descriptive-tagger heuristic.
  */
 export function tagsFromFilename(filename: string): string[] {
-  const cleaned = displayNameFromFile(filename)
-    .replace(/[-_]+/g, ' ')
-    .toLowerCase();
+  const cleaned = displayNameFromFile(filename).replace(/[-_]+/g, ' ').toLowerCase();
   const out: string[] = [];
   const seen = new Set<string>();
   for (const part of cleaned.split(/\s+/)) {
@@ -182,7 +180,11 @@ async function withDecodedImage<T>(
   }
 }
 
-function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob | null> {
+function canvasToBlob(
+  canvas: HTMLCanvasElement,
+  type: string,
+  quality: number,
+): Promise<Blob | null> {
   return new Promise((resolve) => {
     canvas.toBlob((blob) => resolve(blob), type, quality);
   });

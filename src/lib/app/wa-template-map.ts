@@ -1,4 +1,10 @@
-import type { MetaButton, MetaComponent, MetaTemplate, TemplateCategory, TemplateDoc } from 'wa-template-studio';
+import type {
+  MetaButton,
+  MetaComponent,
+  MetaTemplate,
+  TemplateCategory,
+  TemplateDoc,
+} from 'wa-template-studio';
 import { emptyDoc, extractVariables, fromMetaJson, toMetaJson } from 'wa-template-studio';
 
 import type { TplCategory } from '@/lib/app/templates-data';

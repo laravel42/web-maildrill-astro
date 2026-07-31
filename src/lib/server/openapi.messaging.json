@@ -1,1 +1,155 @@
-{"openapi":"3.0.3","info":{"title":"Maildrill Messaging API","version":"0.1.0","description":"The sending engine: submit messages, provider webhooks, and queue admin. Auth: x-api-key or Bearer JWT."},"components":{"securitySchemes":{"apiKey":{"type":"apiKey","in":"header","name":"x-api-key"},"bearer":{"type":"http","scheme":"bearer","bearerFormat":"JWT"}},"schemas":{}},"paths":{"/health/live":{"get":{"responses":{"200":{"description":"Default Response"}}}},"/health/ready":{"get":{"responses":{"200":{"description":"Default Response"}}}},"/metrics":{"get":{"responses":{"200":{"description":"Default Response"}}}},"/v1/messages":{"post":{"summary":"Submit a message (durable-then-return; idempotent on Idempotency-Key)","tags":["Messages"],"requestBody":{"required":true,"content":{"application/json":{"schema":{"type":"object","properties":{"channel":{"type":"string","enum":["email","sms","whatsapp","voice"]},"to":{"type":"string","minLength":1},"content":{"type":"object","additionalProperties":{}},"provider":{"type":"string","minLength":1},"recipientId":{"type":"string","minLength":1},"campaignId":{"type":"string","format":"uuid"},"scheduledAt":{"type":"string","format":"date-time"},"idempotencyKey":{"type":"string","minLength":1}},"required":["channel","to"],"additionalProperties":false}}}},"responses":{"200":{"description":"Default Response"}}}},"/v1/messages/{id}":{"get":{"summary":"Get a message","tags":["Messages"],"parameters":[{"schema":{"type":"string","format":"uuid"},"in":"path","name":"id","required":true}],"responses":{"200":{"description":"Default Response"}}}},"/v1/messages/{id}/events":{"get":{"summary":"List a message's normalized event history","tags":["Messages"],"parameters":[{"schema":{"type":"integer","exclusiveMinimum":true,"minimum":0,"maximum":200},"in":"query","name":"limit","required":false},{"schema":{"type":"string","format":"date-time"},"in":"query","name":"before","required":false},{"schema":{"type":"string","format":"uuid"},"in":"path","name":"id","required":true}],"responses":{"200":{"description":"Default Response"}}}},"/v1/messages/{id}/cancel":{"post":{"summary":"Cancel a message while eligible","tags":["Messages"],"parameters":[{"schema":{"type":"string","format":"uuid"},"in":"path","name":"id","required":true}],"responses":{"200":{"description":"Default Response"}}}},"/v1/messages/{id}/retry":{"post":{"summary":"Retry a failed message (new generation)","tags":["Messages"],"parameters":[{"schema":{"type":"string","format":"uuid"},"in":"path","name":"id","required":true}],"responses":{"200":{"description":"Default Response"}}}},"/webhooks/{provider}/{kind}":{"post":{"summary":"Provider delivery/engagement/voice webhook (secret-gated via x-webhook-secret or ?secret=)","tags":["Webhooks"],"parameters":[{"schema":{"type":"string"},"in":"query","name":"secret","required":false},{"schema":{"type":"string"},"in":"path","name":"provider","required":true},{"schema":{"type":"string"},"in":"path","name":"kind","required":true}],"responses":{"200":{"description":"Default Response"}}}},"/admin/queues":{"get":{"summary":"BullMQ queue job counts","tags":["Admin"],"responses":{"200":{"description":"Default Response"}}}},"/admin/dead-letters":{"get":{"summary":"List dead-lettered jobs","tags":["Admin"],"parameters":[{"schema":{"type":"integer","exclusiveMinimum":true,"minimum":0,"maximum":200},"in":"query","name":"limit","required":false}],"responses":{"200":{"description":"Default Response"}}}}}}
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Maildrill Messaging API",
+    "version": "0.1.0",
+    "description": "The sending engine: submit messages, provider webhooks, and queue admin. Auth: x-api-key or Bearer JWT."
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKey": { "type": "apiKey", "in": "header", "name": "x-api-key" },
+      "bearer": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "schemas": {}
+  },
+  "paths": {
+    "/health/live": { "get": { "responses": { "200": { "description": "Default Response" } } } },
+    "/health/ready": { "get": { "responses": { "200": { "description": "Default Response" } } } },
+    "/metrics": { "get": { "responses": { "200": { "description": "Default Response" } } } },
+    "/v1/messages": {
+      "post": {
+        "summary": "Submit a message (durable-then-return; idempotent on Idempotency-Key)",
+        "tags": ["Messages"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "channel": { "type": "string", "enum": ["email", "sms", "whatsapp", "voice"] },
+                  "to": { "type": "string", "minLength": 1 },
+                  "content": { "type": "object", "additionalProperties": {} },
+                  "provider": { "type": "string", "minLength": 1 },
+                  "recipientId": { "type": "string", "minLength": 1 },
+                  "campaignId": { "type": "string", "format": "uuid" },
+                  "scheduledAt": { "type": "string", "format": "date-time" },
+                  "idempotencyKey": { "type": "string", "minLength": 1 }
+                },
+                "required": ["channel", "to"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Default Response" } }
+      }
+    },
+    "/v1/messages/{id}": {
+      "get": {
+        "summary": "Get a message",
+        "tags": ["Messages"],
+        "parameters": [
+          {
+            "schema": { "type": "string", "format": "uuid" },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": { "200": { "description": "Default Response" } }
+      }
+    },
+    "/v1/messages/{id}/events": {
+      "get": {
+        "summary": "List a message's normalized event history",
+        "tags": ["Messages"],
+        "parameters": [
+          {
+            "schema": { "type": "integer", "exclusiveMinimum": true, "minimum": 0, "maximum": 200 },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": { "type": "string", "format": "date-time" },
+            "in": "query",
+            "name": "before",
+            "required": false
+          },
+          {
+            "schema": { "type": "string", "format": "uuid" },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": { "200": { "description": "Default Response" } }
+      }
+    },
+    "/v1/messages/{id}/cancel": {
+      "post": {
+        "summary": "Cancel a message while eligible",
+        "tags": ["Messages"],
+        "parameters": [
+          {
+            "schema": { "type": "string", "format": "uuid" },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": { "200": { "description": "Default Response" } }
+      }
+    },
+    "/v1/messages/{id}/retry": {
+      "post": {
+        "summary": "Retry a failed message (new generation)",
+        "tags": ["Messages"],
+        "parameters": [
+          {
+            "schema": { "type": "string", "format": "uuid" },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": { "200": { "description": "Default Response" } }
+      }
+    },
+    "/webhooks/{provider}/{kind}": {
+      "post": {
+        "summary": "Provider delivery/engagement/voice webhook (secret-gated via x-webhook-secret or ?secret=)",
+        "tags": ["Webhooks"],
+        "parameters": [
+          { "schema": { "type": "string" }, "in": "query", "name": "secret", "required": false },
+          { "schema": { "type": "string" }, "in": "path", "name": "provider", "required": true },
+          { "schema": { "type": "string" }, "in": "path", "name": "kind", "required": true }
+        ],
+        "responses": { "200": { "description": "Default Response" } }
+      }
+    },
+    "/admin/queues": {
+      "get": {
+        "summary": "BullMQ queue job counts",
+        "tags": ["Admin"],
+        "responses": { "200": { "description": "Default Response" } }
+      }
+    },
+    "/admin/dead-letters": {
+      "get": {
+        "summary": "List dead-lettered jobs",
+        "tags": ["Admin"],
+        "parameters": [
+          {
+            "schema": { "type": "integer", "exclusiveMinimum": true, "minimum": 0, "maximum": 200 },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "responses": { "200": { "description": "Default Response" } }
+      }
+    }
+  }
+}

@@ -20,9 +20,9 @@ import type {
   usageRecords,
   users,
   webhookEvents,
-} from "./schema";
+} from './schema';
 
-export type { SegmentRule } from "./schema";
+export type { SegmentRule } from './schema';
 
 export type Tenant = typeof tenants.$inferSelect;
 export type ProviderAccount = typeof providerAccounts.$inferSelect;

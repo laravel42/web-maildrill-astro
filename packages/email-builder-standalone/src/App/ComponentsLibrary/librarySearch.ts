@@ -11,7 +11,14 @@
 
 /** Sort options surfaced in the toolbar `Sort` select. */
 export type LibrarySortKey =
-  'updatedDesc' | 'createdDesc' | 'nameAsc' | 'nameDesc' | 'sizeAsc' | 'sizeDesc' | 'blocksAsc' | 'blocksDesc';
+  | 'updatedDesc'
+  | 'createdDesc'
+  | 'nameAsc'
+  | 'nameDesc'
+  | 'sizeAsc'
+  | 'sizeDesc'
+  | 'blocksAsc'
+  | 'blocksDesc';
 
 /** Order shown in the select; default is the first entry. */
 export const LIBRARY_SORT_KEYS: readonly LibrarySortKey[] = [
@@ -64,7 +71,7 @@ export function isLibraryQueryActive(q: LibraryQuery): boolean {
  */
 export function filterLibraryItems<T extends SearchableLibraryItem>(
   items: T[],
-  q: Pick<LibraryQuery, 'search' | 'axes' | 'tags'>
+  q: Pick<LibraryQuery, 'search' | 'axes' | 'tags'>,
 ): T[] {
   const search = q.search.trim().toLowerCase();
   return items.filter((it) => {
@@ -74,7 +81,9 @@ export function filterLibraryItems<T extends SearchableLibraryItem>(
       if (!q.tags.every((t) => tags.includes(t))) return false;
     }
     if (search.length > 0) {
-      const haystack = [it.name, it.description ?? '', it.axis, ...(it.tags ?? [])].join(' ').toLowerCase();
+      const haystack = [it.name, it.description ?? '', it.axis, ...(it.tags ?? [])]
+        .join(' ')
+        .toLowerCase();
       if (!haystack.includes(search)) return false;
     }
     return true;
@@ -82,7 +91,10 @@ export function filterLibraryItems<T extends SearchableLibraryItem>(
 }
 
 /** Return a new array sorted by the given key (stable; never mutates input). */
-export function sortLibraryItems<T extends SearchableLibraryItem>(items: T[], sort: LibrarySortKey): T[] {
+export function sortLibraryItems<T extends SearchableLibraryItem>(
+  items: T[],
+  sort: LibrarySortKey,
+): T[] {
   const sorted = [...items];
   const byName = (a: T, b: T) => a.name.localeCompare(b.name);
   switch (sort) {
@@ -91,7 +103,9 @@ export function sortLibraryItems<T extends SearchableLibraryItem>(items: T[], so
     case 'nameDesc':
       return sorted.sort((a, b) => byName(b, a));
     case 'createdDesc':
-      return sorted.sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
+      return sorted.sort((a, b) =>
+        a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0,
+      );
     case 'sizeAsc':
       return sorted.sort((a, b) => a.sizeBytes - b.sizeBytes);
     case 'sizeDesc':
@@ -102,7 +116,9 @@ export function sortLibraryItems<T extends SearchableLibraryItem>(items: T[], so
       return sorted.sort((a, b) => b.blockCount - a.blockCount);
     case 'updatedDesc':
     default:
-      return sorted.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0));
+      return sorted.sort((a, b) =>
+        a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0,
+      );
   }
 }
 

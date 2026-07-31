@@ -1,16 +1,13 @@
-import { and, desc, eq, lt } from "drizzle-orm";
+import { and, desc, eq, lt } from 'drizzle-orm';
 import {
   db,
   messageEvents,
   messages,
   type MessageEventRow,
   type MessageRow,
-} from "@maildrill/database";
+} from '@maildrill/database';
 
-export async function getMessage(
-  tenantId: string,
-  messageId: string,
-): Promise<MessageRow | null> {
+export async function getMessage(tenantId: string, messageId: string): Promise<MessageRow | null> {
   const rows = await db
     .select()
     .from(messages)
@@ -30,10 +27,7 @@ export async function listMessageEvents(
   opts: ListEventsOptions = {},
 ): Promise<MessageEventRow[]> {
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
-  const conds = [
-    eq(messageEvents.tenantId, tenantId),
-    eq(messageEvents.messageId, messageId),
-  ];
+  const conds = [eq(messageEvents.tenantId, tenantId), eq(messageEvents.messageId, messageId)];
   if (opts.before) conds.push(lt(messageEvents.createdAt, opts.before));
   return db
     .select()

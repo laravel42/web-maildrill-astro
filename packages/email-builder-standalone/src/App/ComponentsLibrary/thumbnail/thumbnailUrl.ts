@@ -36,7 +36,11 @@ const URL_SEGMENT: Record<ThumbnailUrlCategory, string> = {
  * / shape value verbatim — the backend validates against its own
  * enums.
  */
-export function resolveThumbnailUrl(category: ThumbnailUrlCategory, axis: string | null, id: string): string {
+export function resolveThumbnailUrl(
+  category: ThumbnailUrlCategory,
+  axis: string | null,
+  id: string,
+): string {
   const base = resolveBackendUrl();
   const segment = URL_SEGMENT[category];
   if (category === 'template') {

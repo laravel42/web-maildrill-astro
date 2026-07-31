@@ -5,7 +5,11 @@ import { ContainerPropsSchema } from '@eb/document-core';
 
 import Wrapper from '../../email-builder/src/blocks/helpers/Wrapper';
 import { getPadding } from '../../email-builder/src/helpers/getCssProperties';
-import { getRoundedCorners, shortCssId, updateHexColorInBackgroundString } from '../../email-builder/src/helpers/utils';
+import {
+  getRoundedCorners,
+  shortCssId,
+  updateHexColorInBackgroundString,
+} from '../../email-builder/src/helpers/utils';
 import { useImageUploading } from '../../email-builder/src/Reader/renderContext';
 import { useViewport } from '../../email-builder/src/Reader/viewport';
 
@@ -36,25 +40,33 @@ export function Container({ style, children, blockId }: ContainerProps) {
     border: {
       color: style?.borderColor ?? undefined,
       top:
-        (selectedScreenSize == 'desktop' ? style?.borderTop : (style?.borderTopMobile ?? style?.borderTop)) ??
-        undefined,
+        (selectedScreenSize == 'desktop'
+          ? style?.borderTop
+          : (style?.borderTopMobile ?? style?.borderTop)) ?? undefined,
       bottom:
-        (selectedScreenSize == 'desktop' ? style?.borderBottom : (style?.borderBottomMobile ?? style?.borderBottom)) ??
-        undefined,
+        (selectedScreenSize == 'desktop'
+          ? style?.borderBottom
+          : (style?.borderBottomMobile ?? style?.borderBottom)) ?? undefined,
       left:
-        (selectedScreenSize == 'desktop' ? style?.borderLeft : (style?.borderLeftMobile ?? style?.borderLeft)) ??
-        undefined,
+        (selectedScreenSize == 'desktop'
+          ? style?.borderLeft
+          : (style?.borderLeftMobile ?? style?.borderLeft)) ?? undefined,
       right:
-        (selectedScreenSize == 'desktop' ? style?.borderRight : (style?.borderRightMobile ?? style?.borderRight)) ??
-        undefined,
+        (selectedScreenSize == 'desktop'
+          ? style?.borderRight
+          : (style?.borderRightMobile ?? style?.borderRight)) ?? undefined,
     },
-    padding: getPadding(selectedScreenSize == 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding)),
+    padding: getPadding(
+      selectedScreenSize == 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding),
+    ),
   };
 
   const background = style?.background ?? '';
   const backgroundColor = style?.backgroundColor;
 
-  const backgroundString = backgroundColor ? updateHexColorInBackgroundString(background, backgroundColor) : background;
+  const backgroundString = backgroundColor
+    ? updateHexColorInBackgroundString(background, backgroundColor)
+    : background;
 
   const containerBorderRadius = getRoundedCorners(style);
 

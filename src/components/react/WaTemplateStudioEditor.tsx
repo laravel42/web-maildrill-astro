@@ -98,7 +98,7 @@ export default function WaTemplateStudioEditor({
         await import('wa-template-studio/style.css');
         const mod = await import('wa-template-studio');
         if (!alive) return;
-        const { replaceDoc, setGalleryCatalog, setTemplateField } = mod;
+        const { replaceDoc, setGalleryCatalog } = mod;
         // Ready-made template gallery shown in the inspector's default state.
         setGalleryCatalog(waTemplateCatalog);
         if (!studioReady.current) {
@@ -130,7 +130,7 @@ export default function WaTemplateStudioEditor({
     return () => {
       alive = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate once on mount
+    // Hydrate once on mount.
   }, []);
 
   const persist = async () => {
@@ -214,9 +214,7 @@ export default function WaTemplateStudioEditor({
       const next = await onSubmitForApproval();
       if (next) setApprovalStatus(next);
       else setApprovalStatus('pending');
-      show(
-        approvalStatus === 'rejected' ? 'Resubmitted for approval' : 'Submitted for approval',
-      );
+      show(approvalStatus === 'rejected' ? 'Resubmitted for approval' : 'Submitted for approval');
     } catch (e) {
       show(e instanceof Error ? e.message : 'Could not submit for approval');
     } finally {

@@ -1,9 +1,9 @@
-import "dotenv/config";
+import 'dotenv/config';
 
-import Fastify from "fastify";
-import cors from "@fastify/cors";
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
 
-import { emailBuilderHealth, emailBuilderRoutes } from "./app.js";
+import { emailBuilderHealth, emailBuilderRoutes } from './app.js';
 
 /**
  * Standalone entrypoint. Kept so the AI backend can still run on its own port;
@@ -16,30 +16,30 @@ import { emailBuilderHealth, emailBuilderRoutes } from "./app.js";
  */
 function resolveAllowedOrigins(): string | string[] {
   const raw = process.env.CORS_ORIGINS?.trim();
-  if (!raw) return "*";
+  if (!raw) return '*';
   const origins = raw
-    .split(",")
+    .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
-  return origins.length === 0 ? "*" : origins;
+  return origins.length === 0 ? '*' : origins;
 }
 
 const app = Fastify({ logger: false });
 
 await app.register(cors, {
   origin: resolveAllowedOrigins(),
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type"],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type'],
   maxAge: 600,
 });
 
-app.get("/", (_request, reply) => reply.send("EmailBuilder AI backend"));
-app.get("/health", (_request, reply) => reply.send(emailBuilderHealth()));
+app.get('/', (_request, reply) => reply.send('EmailBuilder AI backend'));
+app.get('/health', (_request, reply) => reply.send(emailBuilderHealth()));
 
 await app.register(emailBuilderRoutes);
 
 const port = Number(process.env.EB_PORT ?? process.env.PORT ?? 3100);
-await app.listen({ port, host: "0.0.0.0" });
+await app.listen({ port, host: '0.0.0.0' });
 console.log(`AI backend listening on http://localhost:${port}`);
 
 export default app;

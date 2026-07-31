@@ -13,7 +13,9 @@ import { usePluginForm } from './form';
 
 const schema = z.object({
   text: z.string(),
-  variables: z.record(z.string(), z.object({ name: z.string().optional(), example: z.string().optional() })).optional(),
+  variables: z
+    .record(z.string(), z.object({ name: z.string().optional(), example: z.string().optional() }))
+    .optional(),
 });
 
 type Data = z.infer<typeof schema>;
@@ -37,7 +39,12 @@ export const headerTextPlugin: BlockPlugin<Data> = {
   validate: (data) => {
     const issues: ValidationIssue[] = [];
     if (!data.text.trim()) {
-      issues.push({ severity: 'error', slot: 'header', code: 'header/empty', message: 'Header text is empty' });
+      issues.push({
+        severity: 'error',
+        slot: 'header',
+        code: 'header/empty',
+        message: 'Header text is empty',
+      });
     }
     if (data.text.length > LIMITS.HEADER_TEXT_MAX) {
       issues.push({
@@ -74,8 +81,16 @@ export const headerTextPlugin: BlockPlugin<Data> = {
 
     return (
       <div className="flex flex-col gap-4">
-        <Field label="Header text" counter={`${text.length}/${LIMITS.HEADER_TEXT_MAX}`} hint="Supports one {{1}} variable">
-          <Input {...form.register('text')} placeholder="Your order has shipped" aria-label="Header text" />
+        <Field
+          label="Header text"
+          counter={`${text.length}/${LIMITS.HEADER_TEXT_MAX}`}
+          hint="Supports one {{1}} variable"
+        >
+          <Input
+            {...form.register('text')}
+            placeholder="Your order has shipped"
+            aria-label="Header text"
+          />
         </Field>
         {vars.length === 0 && (
           <Button
@@ -95,7 +110,10 @@ export const headerTextPlugin: BlockPlugin<Data> = {
               onChange={(e) =>
                 onChange({
                   ...value,
-                  variables: { ...(value.variables ?? {}), [String(n)]: { ...(value.variables ?? {})[String(n)], example: e.target.value } },
+                  variables: {
+                    ...(value.variables ?? {}),
+                    [String(n)]: { ...(value.variables ?? {})[String(n)], example: e.target.value },
+                  },
                 })
               }
               placeholder="Sample value shown to Meta reviewers"
@@ -107,8 +125,14 @@ export const headerTextPlugin: BlockPlugin<Data> = {
   },
   Preview: function HeaderTextPreview({ data, ctx }) {
     return (
-      <div className={`px-[9px] pt-[6px] text-[15px] font-bold leading-[19px] ${ctx.dark ? 'text-[#e9edef]' : 'text-[#111b21]'}`}>
-        {data.text ? renderWaText(data.text, ctx.resolveVariable) : <span className="opacity-40">Header</span>}
+      <div
+        className={`px-[9px] pt-[6px] text-[15px] font-bold leading-[19px] ${ctx.dark ? 'text-[#e9edef]' : 'text-[#111b21]'}`}
+      >
+        {data.text ? (
+          renderWaText(data.text, ctx.resolveVariable)
+        ) : (
+          <span className="opacity-40">Header</span>
+        )}
       </div>
     );
   },
@@ -118,7 +142,9 @@ export const headerTextPlugin: BlockPlugin<Data> = {
       type: 'HEADER',
       format: 'TEXT',
       text: data.text,
-      ...(vars.length > 0 ? { example: { header_text: exampleRow(data.text, (data.variables ?? {}) as VariableMap) } } : {}),
+      ...(vars.length > 0
+        ? { example: { header_text: exampleRow(data.text, (data.variables ?? {}) as VariableMap) } }
+        : {}),
     };
   },
   fromMeta: (component) => {
@@ -126,7 +152,8 @@ export const headerTextPlugin: BlockPlugin<Data> = {
     if (String(component.format ?? '').toUpperCase() !== 'TEXT') return null;
     const text = typeof component.text === 'string' ? component.text : '';
     const variables: Data['variables'] = {};
-    const examples = (component.example as { header_text?: string[] } | undefined)?.header_text ?? [];
+    const examples =
+      (component.example as { header_text?: string[] } | undefined)?.header_text ?? [];
     uniqueVariables(text).forEach((n, i) => {
       const example = examples[i];
       if (example !== undefined) variables[String(n)] = { example };

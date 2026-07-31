@@ -36,13 +36,26 @@ import React, { startTransition, useCallback, useEffect, useMemo, useRef, useSta
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
-import { ALL_GOOGLE_FONTS_HREF, applyThemeBundle as applyThemeBundlePure, type ThemeJson } from '@eb/document-core';
+import {
+  ALL_GOOGLE_FONTS_HREF,
+  applyThemeBundle as applyThemeBundlePure,
+  type ThemeJson,
+} from '@eb/document-core';
 import { Reader, type TReaderDocument } from '@eb/email-builder';
 import DesktopWindowsOutlined from '@mui/icons-material/DesktopWindowsOutlined';
 import PhoneIphoneOutlined from '@mui/icons-material/PhoneIphoneOutlined';
 import ZoomInMapOutlined from '@mui/icons-material/ZoomInMapOutlined';
 import ZoomOutMapOutlined from '@mui/icons-material/ZoomOutMapOutlined';
-import { Box, CircularProgress, IconButton, Paper, Popper, Tooltip, Typography, useTheme } from '@mui/material';
+import {
+  Box,
+  CircularProgress,
+  IconButton,
+  Paper,
+  Popper,
+  Tooltip,
+  Typography,
+  useTheme,
+} from '@mui/material';
 
 import type { TEditorBlock } from '../../documents/editor/core';
 import { editorStateStore } from '../../documents/editor/EditorContext';
@@ -119,7 +132,7 @@ export function clearHoverPreviewCache(): void {
  * Throws on unrecoverable shape errors (caller handles).
  */
 async function buildReaderDoc(
-  descriptor: HoverPreviewDescriptor
+  descriptor: HoverPreviewDescriptor,
 ): Promise<{ doc: TReaderDocument; rootBlockId: string }> {
   const currentDocument = editorStateStore.getState().document;
   const currentRoot = currentDocument['root'];
@@ -148,7 +161,9 @@ async function buildReaderDoc(
       throw new Error('No active document — cannot preview theme.');
     }
     const newRootData = applyThemeBundlePure(currentRoot.data, {
-      globals: descriptor.themeBundle?.globals as Parameters<typeof applyThemeBundlePure>[1]['globals'],
+      globals: descriptor.themeBundle?.globals as Parameters<
+        typeof applyThemeBundlePure
+      >[1]['globals'],
       blocks: descriptor.themeBundle?.blocks,
     });
     const cloned: Record<string, unknown> = {
@@ -266,7 +281,9 @@ export default function LibraryHoverPreviewPortal(): React.ReactElement {
   const [previewViewport, setPreviewViewport] = useState<'desktop' | 'mobile'>('desktop');
   // Track the dynamic viewport height so template previews can cap at
   // 100dvh - 20%. Reactive to window resizes.
-  const [viewportH, setViewportH] = useState(() => (typeof window !== 'undefined' ? window.innerHeight : 800));
+  const [viewportH, setViewportH] = useState(() =>
+    typeof window !== 'undefined' ? window.innerHeight : 800,
+  );
 
   // Tracks the in-flight resolve target so an out-of-date result
   // (user moved on to another card) doesn't overwrite a fresher one.
@@ -278,7 +295,8 @@ export default function LibraryHoverPreviewPortal(): React.ReactElement {
     const contentDocument = iframe.contentDocument;
     if (contentDocument === null) return;
     const currentRoot = editorStateStore.getState().document['root'];
-    const backdrop = ((currentRoot?.data ?? {}) as { backdropColor?: string }).backdropColor ?? FALLBACK_BACKDROP;
+    const backdrop =
+      ((currentRoot?.data ?? {}) as { backdropColor?: string }).backdropColor ?? FALLBACK_BACKDROP;
     ensureIframeChrome(contentDocument, backdrop);
     setIframeBody(contentDocument.body);
   }, []);
@@ -349,7 +367,8 @@ export default function LibraryHoverPreviewPortal(): React.ReactElement {
     if (iframeBody === null) return;
     if (active === null) return;
     const currentRoot = editorStateStore.getState().document['root'];
-    const backdrop = ((currentRoot?.data ?? {}) as { backdropColor?: string }).backdropColor ?? FALLBACK_BACKDROP;
+    const backdrop =
+      ((currentRoot?.data ?? {}) as { backdropColor?: string }).backdropColor ?? FALLBACK_BACKDROP;
     iframeBody.style.backgroundColor = backdrop;
   }, [iframeBody, active]);
 
@@ -366,7 +385,9 @@ export default function LibraryHoverPreviewPortal(): React.ReactElement {
     const measure = () => {
       const contentEl = iframeBody.firstElementChild as HTMLElement | null;
       const measured =
-        contentEl !== null && contentEl.offsetHeight > 0 ? contentEl.offsetHeight : iframeBody.scrollHeight;
+        contentEl !== null && contentEl.offsetHeight > 0
+          ? contentEl.offsetHeight
+          : iframeBody.scrollHeight;
       setContentHeight(measured);
     };
     measure();
@@ -405,8 +426,11 @@ export default function LibraryHoverPreviewPortal(): React.ReactElement {
   // popper open/close, MUI theme) don't rebuild the full document.
   // Only a new `doc` / `rootBlockId` triggers reconciliation.
   const readerElement = useMemo(
-    () => (doc === null ? null : <Reader document={doc} rootBlockId={rootBlockId} viewport={previewViewport} />),
-    [doc, rootBlockId, previewViewport]
+    () =>
+      doc === null ? null : (
+        <Reader document={doc} rootBlockId={rootBlockId} viewport={previewViewport} />
+      ),
+    [doc, rootBlockId, previewViewport],
   );
 
   return (
@@ -488,7 +512,11 @@ export default function LibraryHoverPreviewPortal(): React.ReactElement {
             }
           >
             <IconButton size="small" onClick={() => setZoomed((z) => !z)} sx={{ flexShrink: 0 }}>
-              {zoomed ? <ZoomInMapOutlined fontSize="small" /> : <ZoomOutMapOutlined fontSize="small" />}
+              {zoomed ? (
+                <ZoomInMapOutlined fontSize="small" />
+              ) : (
+                <ZoomOutMapOutlined fontSize="small" />
+              )}
             </IconButton>
           </Tooltip>
         </Box>
@@ -510,7 +538,9 @@ export default function LibraryHoverPreviewPortal(): React.ReactElement {
         >
           {/* Inner scaler takes the SCALED size as its layout box so the
               transformed (out-of-flow) iframe never overflows in x. */}
-          <Box sx={{ position: 'relative', width: scaledWidth, height: scaledHeight, flexShrink: 0 }}>
+          <Box
+            sx={{ position: 'relative', width: scaledWidth, height: scaledHeight, flexShrink: 0 }}
+          >
             {/* The iframe is mounted ONCE for the entire session — its
                 srcDoc is the empty skeleton, content arrives via the
                 React portal below. */}
@@ -540,7 +570,10 @@ export default function LibraryHoverPreviewPortal(): React.ReactElement {
               }}
             />
           </Box>
-          {iframeBody !== null && readerElement !== null && error === null && createPortal(readerElement, iframeBody)}
+          {iframeBody !== null &&
+            readerElement !== null &&
+            error === null &&
+            createPortal(readerElement, iframeBody)}
           {loading && (
             <Box
               sx={{

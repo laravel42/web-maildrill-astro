@@ -39,17 +39,17 @@ across channels; a subscriber is addressed by `email` and/or `phone`.
 
 ### 1.3 Workspace screens
 
-| Screen          | Capabilities                                                                    |
-| --------------- | ------------------------------------------------------------------------------- |
-| **Dashboard**   | Workspace summary + per-channel breakdown, 30-day activity, recent campaigns    |
-| **Campaigns**   | Create/edit, draft→send lifecycle, status-guarded dispatch (no double-send)     |
-| **Templates**   | Email (visual EmailBuilder.js) + SMS/WA/Voice (composer), preview, clone        |
-| **Subscribers** | CRM view, add/edit (email, phone, name, status, tags), bulk actions, segments   |
-| **Lists**       | List CRUD, membership, workspace-wide custom fields, member counts              |
-| **Segments**    | Rule-based (field + op + value) compiled to SQL `EXISTS`; membership counts     |
-| **Media**       | S3-backed asset library (presigned upload, CloudFront delivery)                 |
-| **Analytics**   | Daily activity + channel breakdown (PostHog HogQL when configured; else PG)     |
-| **Settings**    | Workspace/account settings                                                      |
+| Screen          | Capabilities                                                                  |
+| --------------- | ----------------------------------------------------------------------------- |
+| **Dashboard**   | Workspace summary + per-channel breakdown, 30-day activity, recent campaigns  |
+| **Campaigns**   | Create/edit, draft→send lifecycle, status-guarded dispatch (no double-send)   |
+| **Templates**   | Email (visual EmailBuilder.js) + SMS/WA/Voice (composer), preview, clone      |
+| **Subscribers** | CRM view, add/edit (email, phone, name, status, tags), bulk actions, segments |
+| **Lists**       | List CRUD, membership, workspace-wide custom fields, member counts            |
+| **Segments**    | Rule-based (field + op + value) compiled to SQL `EXISTS`; membership counts   |
+| **Media**       | S3-backed asset library (presigned upload, CloudFront delivery)               |
+| **Analytics**   | Daily activity + channel breakdown (PostHog HogQL when configured; else PG)   |
+| **Settings**    | Workspace/account settings                                                    |
 
 ### 1.4 Personalization (merge tags)
 
@@ -81,20 +81,20 @@ negotiated rate card is **not** exposed by any API — it is scraped offline
 
 ### 2.1 Frontend (`web-maildrill-astro`)
 
-| Layer          | Choice                                                              |
-| -------------- | ------------------------------------------------------------------ |
-| Framework      | **Astro 7** — static-first marketing + islands; SSR via node adapter (`mode: standalone`); pages opt into SSR with `export const prerender = false` |
-| Interactive UI | **React 19** islands (`@astrojs/react`)                            |
-| Language       | **TypeScript 6** (pinned < 7 — TS 7 breaks `astro check` + typescript-eslint) |
-| Styling        | Hand-authored **CSS + design tokens** (`src/styles/tokens.css`) and CSS Modules; no utility framework |
-| Fonts          | **Geist** / **Geist Mono** (variable woff2)                        |
-| Content        | Astro **Content Collections** + **Zod 4** schemas (blog/guides/legal) |
-| Auth           | **auth-astro** (`@auth/core`) — session + credentials              |
-| Backend client | **openapi-fetch** + **openapi-typescript** (typed client generated from the backend OpenAPI) |
-| Email (in-repo)| **Nodemailer** (SMTP) — temporary embedded welcome-email sender    |
-| SEO            | `@astrojs/sitemap`, `@astrojs/rss`, JSON-LD structured data        |
-| Tests          | **Vitest** (unit/integration) + **Playwright** (e2e)              |
-| Quality gates  | ESLint 10 (+ jsx-a11y) · Prettier · `astro check` · `tsc`         |
+| Layer           | Choice                                                                                                                                              |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework       | **Astro 7** — static-first marketing + islands; SSR via node adapter (`mode: standalone`); pages opt into SSR with `export const prerender = false` |
+| Interactive UI  | **React 19** islands (`@astrojs/react`)                                                                                                             |
+| Language        | **TypeScript 6** (pinned < 7 — TS 7 breaks `astro check` + typescript-eslint)                                                                       |
+| Styling         | Hand-authored **CSS + design tokens** (`src/styles/tokens.css`) and CSS Modules; no utility framework                                               |
+| Fonts           | **Geist** / **Geist Mono** (variable woff2)                                                                                                         |
+| Content         | Astro **Content Collections** + **Zod 4** schemas (blog/guides/legal)                                                                               |
+| Auth            | **auth-astro** (`@auth/core`) — session + credentials                                                                                               |
+| Backend client  | **openapi-fetch** + **openapi-typescript** (typed client generated from the backend OpenAPI)                                                        |
+| Email (in-repo) | **Nodemailer** (SMTP) — temporary embedded welcome-email sender                                                                                     |
+| SEO             | `@astrojs/sitemap`, `@astrojs/rss`, JSON-LD structured data                                                                                         |
+| Tests           | **Vitest** (unit/integration) + **Playwright** (e2e)                                                                                                |
+| Quality gates   | ESLint 10 (+ jsx-a11y) · Prettier · `astro check` · `tsc`                                                                                           |
 
 ### 2.2 Email editor (vendored)
 
@@ -106,16 +106,16 @@ See [`../packages/VENDOR.md`](../packages/VENDOR.md) for the (few, documented) p
 
 ### 2.3 Backend (`workers/` — package name `workers`)
 
-| Layer         | Choice                                                        |
-| ------------- | ------------------------------------------------------------ |
-| Runtime       | Node 22, **pnpm workspace** monorepo, `tsx`                   |
-| HTTP          | **Fastify 5** (+ `@fastify/swagger` OpenAPI, `@fastify/cors`, `@fastify/multipart`) |
-| Validation    | **Zod 3** (via a Fastify zod type-provider)                  |
-| Database      | **PostgreSQL** via **Drizzle ORM** (+ `drizzle-kit` migrations) |
-| Queue         | **BullMQ 5** on **Redis** (`ioredis`)                         |
-| Storage       | **AWS S3** (`@aws-sdk/client-s3` + presigned PUT)            |
-| Logging       | **pino**                                                     |
-| Providers     | **Infobip** (delivery) + a network-free **mock** provider    |
+| Layer      | Choice                                                                              |
+| ---------- | ----------------------------------------------------------------------------------- |
+| Runtime    | Node 22, **pnpm workspace** monorepo, `tsx`                                         |
+| HTTP       | **Fastify 5** (+ `@fastify/swagger` OpenAPI, `@fastify/cors`, `@fastify/multipart`) |
+| Validation | **Zod 3** (via a Fastify zod type-provider)                                         |
+| Database   | **PostgreSQL** via **Drizzle ORM** (+ `drizzle-kit` migrations)                     |
+| Queue      | **BullMQ 5** on **Redis** (`ioredis`)                                               |
+| Storage    | **AWS S3** (`@aws-sdk/client-s3` + presigned PUT)                                   |
+| Logging    | **pino**                                                                            |
+| Providers  | **Infobip** (delivery) + a network-free **mock** provider                           |
 
 Workspace layout:
 
@@ -199,13 +199,13 @@ delivered via **CloudFront**. Requires `AWS_REGION`, `MEDIA_S3_BUCKET`,
 
 ### 3.6 Configuration (env)
 
-| Where | Key vars |
-| --- | --- |
-| Shared root `.env` | One file for Astro + workers (see `.env.example`) |
-| Frontend | `PUBLIC_SITE_URL`, `AUTH_SECRET`, `JWT_SECRET`, `API_BASE_URL`, `PUBLIC_POSTHOG_*` |
-| Frontend SMTP | `SMTP_HOST/PORT/USER/PASS/SECURE`, `MAIL_FROM` |
-| Backend | `DATABASE_URL`, `REDIS_URL`, `PROVIDER_DRIVER`, `INFOBIP_*`, `API_KEYS`, AWS/media |
-| PostHog query | `POSTHOG_PERSONAL_API_KEY` (`query:read`), `POSTHOG_PROJECT_ID=526344`, `POSTHOG_APP_HOST` |
+| Where              | Key vars                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------ |
+| Shared root `.env` | One file for Astro + workers (see `.env.example`)                                          |
+| Frontend           | `PUBLIC_SITE_URL`, `AUTH_SECRET`, `JWT_SECRET`, `API_BASE_URL`, `PUBLIC_POSTHOG_*`         |
+| Frontend SMTP      | `SMTP_HOST/PORT/USER/PASS/SECURE`, `MAIL_FROM`                                             |
+| Backend            | `DATABASE_URL`, `REDIS_URL`, `PROVIDER_DRIVER`, `INFOBIP_*`, `API_KEYS`, AWS/media         |
+| PostHog query      | `POSTHOG_PERSONAL_API_KEY` (`query:read`), `POSTHOG_PROJECT_ID=526344`, `POSTHOG_APP_HOST` |
 
 Secrets live only in gitignored `.env` — never committed. `/design` is local-only
 and gitignored.
@@ -233,8 +233,8 @@ These reflect how the system behaves **today**, not the end goal:
 
 ## 5. Repositories / paths
 
-| Path | Role |
-| --- | --- |
-| `web-maildrill-astro` (this repo) | Marketing + workspace UI + BFF + vendored editor + `workers/` |
-| `workers/` | Fastify + BullMQ + Drizzle backend (was `workers`) — see [`../workers/HANDOFF.md`](../workers/HANDOFF.md) |
-| `web-email-builder-js` | Upstream EmailBuilder.js (vendored into `packages/`) |
+| Path                              | Role                                                                                                      |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `web-maildrill-astro` (this repo) | Marketing + workspace UI + BFF + vendored editor + `workers/`                                             |
+| `workers/`                        | Fastify + BullMQ + Drizzle backend (was `workers`) — see [`../workers/HANDOFF.md`](../workers/HANDOFF.md) |
+| `web-email-builder-js`            | Upstream EmailBuilder.js (vendored into `packages/`)                                                      |

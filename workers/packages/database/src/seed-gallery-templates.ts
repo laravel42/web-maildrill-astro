@@ -37,26 +37,140 @@ type GalleryMeta = {
 
 /** Mirrors scripts/import-maildrill-templates.mjs META (+ product categories). */
 export const GALLERY_TEMPLATE_META: GalleryMeta[] = [
-  { nn: '01', slug: 'business', name: 'Business', description: 'Quarterly review letter', category: 'Newsletter' },
-  { nn: '02', slug: 'technology', name: 'Technology', description: 'Product launch', category: 'Promotional' },
-  { nn: '03', slug: 'ai', name: 'AI', description: 'Capability announcement', category: 'Newsletter' },
-  { nn: '04', slug: 'saas', name: 'SaaS', description: 'Welcome / onboarding', category: 'Transactional' },
-  { nn: '05', slug: 'marketing', name: 'Marketing', description: 'Campaign performance report', category: 'Newsletter' },
-  { nn: '06', slug: 'social-media', name: 'Social Media', description: 'Community roundup', category: 'Newsletter' },
-  { nn: '07', slug: 'finance', name: 'Finance', description: 'Statement', category: 'Transactional' },
-  { nn: '08', slug: 'healthcare', name: 'Healthcare', description: 'Appointment reminder', category: 'Transactional' },
-  { nn: '09', slug: 'education', name: 'Education', description: 'Term enrollment', category: 'Transactional' },
-  { nn: '10', slug: 'food', name: 'Food', description: 'Menu & recipe letter', category: 'Promotional' },
-  { nn: '11', slug: 'travel', name: 'Travel', description: 'Itinerary confirmation', category: 'Transactional' },
-  { nn: '12', slug: 'nature', name: 'Nature', description: 'Impact report', category: 'Newsletter' },
-  { nn: '13', slug: 'architecture', name: 'Architecture', description: 'Project showcase', category: 'Newsletter' },
-  { nn: '14', slug: 'backgrounds', name: 'Backgrounds', description: 'Asset pack release', category: 'Promotional' },
-  { nn: '15', slug: 'abstract', name: 'Abstract', description: 'Print drop', category: 'Promotional' },
-  { nn: '16', slug: 'textures', name: 'Textures', description: 'Material pack release', category: 'Promotional' },
-  { nn: '17', slug: 'people', name: 'People', description: 'Culture & hiring note', category: 'Newsletter' },
-  { nn: '18', slug: 'lifestyle', name: 'Lifestyle', description: 'Editorial promotion', category: 'Promotional' },
+  {
+    nn: '01',
+    slug: 'business',
+    name: 'Business',
+    description: 'Quarterly review letter',
+    category: 'Newsletter',
+  },
+  {
+    nn: '02',
+    slug: 'technology',
+    name: 'Technology',
+    description: 'Product launch',
+    category: 'Promotional',
+  },
+  {
+    nn: '03',
+    slug: 'ai',
+    name: 'AI',
+    description: 'Capability announcement',
+    category: 'Newsletter',
+  },
+  {
+    nn: '04',
+    slug: 'saas',
+    name: 'SaaS',
+    description: 'Welcome / onboarding',
+    category: 'Transactional',
+  },
+  {
+    nn: '05',
+    slug: 'marketing',
+    name: 'Marketing',
+    description: 'Campaign performance report',
+    category: 'Newsletter',
+  },
+  {
+    nn: '06',
+    slug: 'social-media',
+    name: 'Social Media',
+    description: 'Community roundup',
+    category: 'Newsletter',
+  },
+  {
+    nn: '07',
+    slug: 'finance',
+    name: 'Finance',
+    description: 'Statement',
+    category: 'Transactional',
+  },
+  {
+    nn: '08',
+    slug: 'healthcare',
+    name: 'Healthcare',
+    description: 'Appointment reminder',
+    category: 'Transactional',
+  },
+  {
+    nn: '09',
+    slug: 'education',
+    name: 'Education',
+    description: 'Term enrollment',
+    category: 'Transactional',
+  },
+  {
+    nn: '10',
+    slug: 'food',
+    name: 'Food',
+    description: 'Menu & recipe letter',
+    category: 'Promotional',
+  },
+  {
+    nn: '11',
+    slug: 'travel',
+    name: 'Travel',
+    description: 'Itinerary confirmation',
+    category: 'Transactional',
+  },
+  {
+    nn: '12',
+    slug: 'nature',
+    name: 'Nature',
+    description: 'Impact report',
+    category: 'Newsletter',
+  },
+  {
+    nn: '13',
+    slug: 'architecture',
+    name: 'Architecture',
+    description: 'Project showcase',
+    category: 'Newsletter',
+  },
+  {
+    nn: '14',
+    slug: 'backgrounds',
+    name: 'Backgrounds',
+    description: 'Asset pack release',
+    category: 'Promotional',
+  },
+  {
+    nn: '15',
+    slug: 'abstract',
+    name: 'Abstract',
+    description: 'Print drop',
+    category: 'Promotional',
+  },
+  {
+    nn: '16',
+    slug: 'textures',
+    name: 'Textures',
+    description: 'Material pack release',
+    category: 'Promotional',
+  },
+  {
+    nn: '17',
+    slug: 'people',
+    name: 'People',
+    description: 'Culture & hiring note',
+    category: 'Newsletter',
+  },
+  {
+    nn: '18',
+    slug: 'lifestyle',
+    name: 'Lifestyle',
+    description: 'Editorial promotion',
+    category: 'Promotional',
+  },
   { nn: '19', slug: 'sports', name: 'Sports', description: 'Match day', category: 'Promotional' },
-  { nn: '20', slug: 'holidays', name: 'Holidays', description: 'Seasonal promotion', category: 'Promotional' },
+  {
+    nn: '20',
+    slug: 'holidays',
+    name: 'Holidays',
+    description: 'Seasonal promotion',
+    category: 'Promotional',
+  },
 ];
 
 function extractTitle(html: string): string | null {
@@ -133,9 +247,7 @@ async function main() {
   process.exit(0);
 }
 
-const isDirectRun =
-  process.argv[1] &&
-  resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isDirectRun = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (isDirectRun) {
   main().catch((err) => {

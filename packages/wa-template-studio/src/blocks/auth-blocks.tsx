@@ -48,7 +48,9 @@ export const bodyAuthPlugin: BlockPlugin<AuthBodyData> = {
           <Label htmlFor="sec-rec" className="text-sm font-medium">
             Security recommendation
           </Label>
-          <p className="text-xs text-muted-foreground">Appends “For your security, do not share this code.”</p>
+          <p className="text-xs text-muted-foreground">
+            Appends “For your security, do not share this code.”
+          </p>
         </div>
         <Switch
           id="sec-rec"
@@ -60,8 +62,11 @@ export const bodyAuthPlugin: BlockPlugin<AuthBodyData> = {
   },
   Preview: function AuthBodyPreview({ data, ctx }) {
     return (
-      <div className={`px-[9px] py-[5px] text-[14.2px] leading-[19px] ${ctx.dark ? 'text-[#e9edef]' : 'text-[#111b21]'}`}>
-        <span className="rounded-[3px] bg-emerald-500/15 px-0.5 font-semibold">123456</span> is your verification code.
+      <div
+        className={`px-[9px] py-[5px] text-[14.2px] leading-[19px] ${ctx.dark ? 'text-[#e9edef]' : 'text-[#111b21]'}`}
+      >
+        <span className="rounded-[3px] bg-emerald-500/15 px-0.5 font-semibold">123456</span> is your
+        verification code.
         {data.securityRecommendation && ' For your security, do not share this code.'}
       </div>
     );
@@ -120,7 +125,10 @@ export const footerAuthPlugin: BlockPlugin<AuthFooterData> = {
   },
   Editor: function AuthFooterEditor({ value, onChange }) {
     return (
-      <Field label="Expires after (minutes)" hint={`${LIMITS.CODE_EXPIRATION_MIN}–${LIMITS.CODE_EXPIRATION_MAX} minutes`}>
+      <Field
+        label="Expires after (minutes)"
+        hint={`${LIMITS.CODE_EXPIRATION_MIN}–${LIMITS.CODE_EXPIRATION_MAX} minutes`}
+      >
         <Input
           type="number"
           min={LIMITS.CODE_EXPIRATION_MIN}
@@ -133,7 +141,9 @@ export const footerAuthPlugin: BlockPlugin<AuthFooterData> = {
   },
   Preview: function AuthFooterPreview({ data, ctx }) {
     return (
-      <div className={`px-[9px] pt-[2px] text-[12.5px] leading-[17px] ${ctx.dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}>
+      <div
+        className={`px-[9px] pt-[2px] text-[12.5px] leading-[17px] ${ctx.dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}
+      >
         This code expires in {data.codeExpirationMinutes} minutes.
       </div>
     );
@@ -141,7 +151,8 @@ export const footerAuthPlugin: BlockPlugin<AuthFooterData> = {
   toMeta: (data) => ({ type: 'FOOTER', code_expiration_minutes: data.codeExpirationMinutes }),
   fromMeta: (component, template) => {
     if (String(component.type).toUpperCase() !== 'FOOTER') return null;
-    if (template.category !== 'AUTHENTICATION' && component.code_expiration_minutes === undefined) return null;
+    if (template.category !== 'AUTHENTICATION' && component.code_expiration_minutes === undefined)
+      return null;
     const minutes = component.code_expiration_minutes;
     if (typeof minutes !== 'number') return null;
     return { codeExpirationMinutes: minutes };

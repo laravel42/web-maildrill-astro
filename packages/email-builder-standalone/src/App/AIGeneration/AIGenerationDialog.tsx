@@ -38,7 +38,7 @@ import WizardHeader from './Wizard/WizardHeader';
 
 type OnAIGenerateTemplate = (
   request: AIGenerateTemplateRequest,
-  options: { signal: AbortSignal }
+  options: { signal: AbortSignal },
 ) => Promise<AIGenerateTemplateResponse>;
 
 /**
@@ -269,7 +269,7 @@ export default function AIGenerationDialog({
       const currentDocument = mode === 'refine' ? editorStateStore.getState().document : undefined;
       const result = await onAIGenerateTemplate(
         { prompt: trimmed, currentDocument, locale },
-        { signal: controller.signal }
+        { signal: controller.signal },
       );
       if (controller.signal.aborted || epoch !== generateEpochRef.current) return;
       suppressPreviewErrorsRef.current = false;
@@ -347,7 +347,7 @@ export default function AIGenerationDialog({
   const handlePreviewComplete = useCallback(
     (
       document: TEditorConfiguration,
-      meta: { duplicateIds: string[]; streamErrors: string[]; streamWarnings: string[] }
+      meta: { duplicateIds: string[]; streamErrors: string[]; streamWarnings: string[] },
     ) => {
       if (suppressPreviewErrorsRef.current) return;
       // Two severities of issue coming out of the stream:
@@ -368,7 +368,7 @@ export default function AIGenerationDialog({
       const validation = validateGeneratedTemplate(document);
       const zodIssues = isValidationFailure(validation) ? validation.issues : [];
       const duplicateIssues = meta.duplicateIds.map(
-        (id) => `Block id "${id}" was emitted more than once and got overwritten`
+        (id) => `Block id "${id}" was emitted more than once and got overwritten`,
       );
       const blockingIssues = [...zodIssues, ...duplicateIssues];
       const warnings = [...meta.streamWarnings, ...meta.streamErrors];
@@ -386,7 +386,7 @@ export default function AIGenerationDialog({
       setCompletedDocument(isValidationFailure(validation) ? null : validation.data);
       setStatus('complete');
     },
-    []
+    [],
   );
 
   const handlePreviewError = useCallback((message: string) => {
@@ -403,7 +403,8 @@ export default function AIGenerationDialog({
   // NDJSON frames log and copy the full response for debugging — otherwise
   // the panel gets unmounted on the first error event and the frames are
   // lost.
-  const showPreview = (status === 'streaming' || status === 'complete' || status === 'error') && response !== null;
+  const showPreview =
+    (status === 'streaming' || status === 'complete' || status === 'error') && response !== null;
 
   // Example prompts shown as clickable chips under the textarea. Hidden while
   // a generation is in flight, after completion, and cleared from noise by
@@ -429,7 +430,7 @@ export default function AIGenerationDialog({
           typeof s === 'object' &&
           s !== null &&
           typeof (s as { label?: unknown }).label === 'string' &&
-          typeof (s as { prompt?: unknown }).prompt === 'string'
+          typeof (s as { prompt?: unknown }).prompt === 'string',
       ) as Array<{ label: string; prompt: string }>)
     : [];
 
@@ -515,10 +516,11 @@ export default function AIGenerationDialog({
       const { controller, epoch } = beginGeneration();
       setCompletedDocument(null);
       try {
-        const currentDocument = mode === 'refine' ? editorStateStore.getState().document : undefined;
+        const currentDocument =
+          mode === 'refine' ? editorStateStore.getState().document : undefined;
         const result = await onAIGenerateTemplate(
           { prompt: compiledPrompt, currentDocument, locale },
-          { signal: controller.signal }
+          { signal: controller.signal },
         );
         if (controller.signal.aborted || epoch !== generateEpochRef.current) return;
         suppressPreviewErrorsRef.current = false;
@@ -531,7 +533,7 @@ export default function AIGenerationDialog({
         setErrorMessage(err instanceof Error ? err.message : String(err));
       }
     },
-    [mode, locale, onAIGenerateTemplate, beginGeneration]
+    [mode, locale, onAIGenerateTemplate, beginGeneration],
   );
 
   /**
@@ -549,7 +551,7 @@ export default function AIGenerationDialog({
       try {
         const result = await onAIGenerateTemplate(
           { prompt: correctionsPrompt, currentDocument: document, locale },
-          { signal: controller.signal }
+          { signal: controller.signal },
         );
         if (controller.signal.aborted || epoch !== generateEpochRef.current) return;
         suppressPreviewErrorsRef.current = false;
@@ -562,12 +564,15 @@ export default function AIGenerationDialog({
         setErrorMessage(err instanceof Error ? err.message : String(err));
       }
     },
-    [locale, onAIGenerateTemplate, beginGeneration]
+    [locale, onAIGenerateTemplate, beginGeneration],
   );
 
   const qualityPanel =
     completedDocument &&
-    (status === 'complete' || status === 'thinking' || status === 'streaming' || status === 'error') ? (
+    (status === 'complete' ||
+      status === 'thinking' ||
+      status === 'streaming' ||
+      status === 'error') ? (
       <QualityPanel
         document={completedDocument}
         backendUrl={backendUrl}
@@ -604,7 +609,7 @@ export default function AIGenerationDialog({
       setValidationIssues(null);
       setStreamWarnings(null);
     },
-    [mode, prompt]
+    [mode, prompt],
   );
 
   const renderWarningsAlert = () => {
@@ -734,7 +739,9 @@ export default function AIGenerationDialog({
       }}
       maxWidth={showPreview ? 'lg' : 'sm'}
       fullWidth
-      slotProps={{ paper: { sx: { bgcolor: 'background.paper', color: 'text.primary', borderRadius: '10px' } } }}
+      slotProps={{
+        paper: { sx: { bgcolor: 'background.paper', color: 'text.primary', borderRadius: '10px' } },
+      }}
     >
       <DialogTitle sx={{ fontWeight: 700, fontSize: '24px' }}>
         {entryMode === 'picker' ? (
@@ -743,7 +750,11 @@ export default function AIGenerationDialog({
             <Box component="span">{t('aiGeneration.dialog.title')}</Box>
           </Stack>
         ) : (
-          <WizardHeader mode={entryMode as 'direct' | 'wizard'} onSwitch={handleModeSwitch} disabled={isBusy} />
+          <WizardHeader
+            mode={entryMode as 'direct' | 'wizard'}
+            onSwitch={handleModeSwitch}
+            disabled={isBusy}
+          />
         )}
       </DialogTitle>
       <DialogContent>
@@ -760,7 +771,9 @@ export default function AIGenerationDialog({
             initialRawIntent={prompt}
             backendUrl={backendUrl}
             brandColors={
-              primaryColor || secondaryColor ? { primary: primaryColor, secondary: secondaryColor } : undefined
+              primaryColor || secondaryColor
+                ? { primary: primaryColor, secondary: secondaryColor }
+                : undefined
             }
             locale={locale}
             onGenerate={handleWizardGenerate}
@@ -782,7 +795,11 @@ export default function AIGenerationDialog({
         )}
         {entryMode === 'wizard' && status === 'error' && renderStatusRow()}
         {entryMode === 'wizard' && showPreview && response && (
-          <AIPreviewPanel response={response} onComplete={handlePreviewComplete} onError={handlePreviewError} />
+          <AIPreviewPanel
+            response={response}
+            onComplete={handlePreviewComplete}
+            onError={handlePreviewError}
+          />
         )}
         {entryMode === 'wizard' && qualityPanel}
 
@@ -802,15 +819,23 @@ export default function AIGenerationDialog({
                 sx={{ mb: 1.5 }}
                 fullWidth
               >
-                <ToggleButton value="new" sx={{ textTransform: 'none', fontWeight: mode === 'new' ? 700 : 500 }}>
+                <ToggleButton
+                  value="new"
+                  sx={{ textTransform: 'none', fontWeight: mode === 'new' ? 700 : 500 }}
+                >
                   {t('aiGeneration.dialog.mode.new')}
                 </ToggleButton>
-                <ToggleButton value="refine" sx={{ textTransform: 'none', fontWeight: mode === 'refine' ? 700 : 500 }}>
+                <ToggleButton
+                  value="refine"
+                  sx={{ textTransform: 'none', fontWeight: mode === 'refine' ? 700 : 500 }}
+                >
                   {t('aiGeneration.dialog.mode.refine')}
                 </ToggleButton>
               </ToggleButtonGroup>
               <Typography sx={{ fontSize: '14px', fontWeight: 700 }}>
-                {mode === 'refine' ? t('aiGeneration.dialog.promptLabelRefine') : t('aiGeneration.dialog.promptLabel')}
+                {mode === 'refine'
+                  ? t('aiGeneration.dialog.promptLabelRefine')
+                  : t('aiGeneration.dialog.promptLabel')}
               </Typography>
               <TextField
                 autoFocus
@@ -852,11 +877,16 @@ export default function AIGenerationDialog({
                 />
               )}
               {showSuggestions && prompt.trim().length > 0 && (
-                <Stack direction="row" sx={{ mt: 1, gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+                <Stack
+                  direction="row"
+                  sx={{ mt: 1, gap: 1, alignItems: 'center', flexWrap: 'wrap' }}
+                >
                   <Button
                     size="small"
                     variant="outlined"
-                    startIcon={isImprovingPrompt ? <CircularProgress size={16} /> : <AiSparkleIcon />}
+                    startIcon={
+                      isImprovingPrompt ? <CircularProgress size={16} /> : <AiSparkleIcon />
+                    }
                     onClick={handleImprovePrompt}
                     disabled={isImprovingPrompt || !prompt.trim()}
                     sx={{ textTransform: 'none' }}
@@ -885,7 +915,11 @@ export default function AIGenerationDialog({
                 </Typography>
                 <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75, mt: 0.5 }}>
                   {suggestions.map((s) => (
-                    <PillButton key={s.label} label={s.label} onClick={() => handleSuggestionClick(s.prompt)} />
+                    <PillButton
+                      key={s.label}
+                      label={s.label}
+                      onClick={() => handleSuggestionClick(s.prompt)}
+                    />
                   ))}
                 </Stack>
               </Box>
@@ -905,7 +939,11 @@ export default function AIGenerationDialog({
             )}
             {status === 'error' && renderStatusRow()}
             {showPreview && response && (
-              <AIPreviewPanel response={response} onComplete={handlePreviewComplete} onError={handlePreviewError} />
+              <AIPreviewPanel
+                response={response}
+                onComplete={handlePreviewComplete}
+                onError={handlePreviewError}
+              />
             )}
             {entryMode === 'direct' && qualityPanel}
           </Stack>
@@ -970,7 +1008,12 @@ export default function AIGenerationDialog({
               </Button>
             )}
             {status === 'error' ? (
-              <Button onClick={handleGenerate} variant="contained" disabled={!canGenerate} startIcon={undefined}>
+              <Button
+                onClick={handleGenerate}
+                variant="contained"
+                disabled={!canGenerate}
+                startIcon={undefined}
+              >
                 {t('aiGeneration.dialog.retry')}
               </Button>
             ) : status === 'complete' ? (
@@ -1002,7 +1045,11 @@ export default function AIGenerationDialog({
         onClose={() => setConfirmCloseOpen(false)}
         maxWidth="xs"
         fullWidth
-        slotProps={{ paper: { sx: { bgcolor: 'background.paper', color: 'text.primary', borderRadius: '10px' } } }}
+        slotProps={{
+          paper: {
+            sx: { bgcolor: 'background.paper', color: 'text.primary', borderRadius: '10px' },
+          },
+        }}
       >
         <DialogTitle>{t('aiGeneration.dialog.confirmClose.title')}</DialogTitle>
         <DialogContent>
@@ -1011,7 +1058,9 @@ export default function AIGenerationDialog({
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmCloseOpen(false)}>{t('aiGeneration.dialog.confirmClose.stay')}</Button>
+          <Button onClick={() => setConfirmCloseOpen(false)}>
+            {t('aiGeneration.dialog.confirmClose.stay')}
+          </Button>
           <Button color="error" variant="contained" onClick={handleConfirmedClose}>
             {t('aiGeneration.dialog.confirmClose.leave')}
           </Button>

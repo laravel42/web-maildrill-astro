@@ -1,4 +1,4 @@
-import type { Channel, ErrorCategory, ProviderOutcome } from "@maildrill/domain";
+import type { Channel, ErrorCategory, ProviderOutcome } from '@maildrill/domain';
 
 export interface SendInput {
   messageId: string;
@@ -18,7 +18,7 @@ export interface ProviderSendError {
 
 export interface ProviderSendResult {
   accepted: boolean;
-  status: "submitted" | "rejected";
+  status: 'submitted' | 'rejected';
   providerMessageId?: string;
   providerRequestId?: string;
   error?: ProviderSendError;
@@ -37,7 +37,7 @@ export interface NormalizedProviderEvent {
   raw: Record<string, unknown>;
 }
 
-export type WebhookKind = "delivery" | "engagement" | "voice" | "template";
+export type WebhookKind = 'delivery' | 'engagement' | 'voice' | 'template';
 
 export interface ProviderWebhookInput {
   headers: Record<string, string | string[] | undefined>;
@@ -51,22 +51,17 @@ export interface ProviderWebhookInput {
 // ---------------------------------------------------------------------------
 
 export type TemplateApprovalStatus =
-  | "draft"
-  | "pending"
-  | "approved"
-  | "rejected"
-  | "paused"
-  | "disabled";
+  'draft' | 'pending' | 'approved' | 'rejected' | 'paused' | 'disabled';
 
 export interface WhatsAppTemplateButton {
-  type: "QUICK_REPLY" | "PHONE_NUMBER" | "URL";
+  type: 'QUICK_REPLY' | 'PHONE_NUMBER' | 'URL';
   text: string;
   url?: string;
   phoneNumber?: string;
 }
 
 export interface WhatsAppTemplateStructure {
-  header?: { format: "TEXT" | "IMAGE" | "VIDEO" | "DOCUMENT"; text?: string };
+  header?: { format: 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT'; text?: string };
   body: { text: string; examples?: string[] };
   footer?: { text: string };
   buttons?: WhatsAppTemplateButton[];
@@ -77,7 +72,7 @@ export interface RegisterTemplateInput {
   sender: string;
   name: string;
   language: string;
-  category: "MARKETING" | "UTILITY" | "AUTHENTICATION";
+  category: 'MARKETING' | 'UTILITY' | 'AUTHENTICATION';
   structure: WhatsAppTemplateStructure;
 }
 
@@ -125,10 +120,7 @@ export interface MessagingProvider {
    * Pull latest Infobip status groupName for an outbound message (Messages API
    * reports). Used by campaign-delivery when PostHog has no DLR yet.
    */
-  getDeliveryStatusGroup?(
-    channel: Channel,
-    providerMessageId: string,
-  ): Promise<string | null>;
+  getDeliveryStatusGroup?(channel: Channel, providerMessageId: string): Promise<string | null>;
   /**
    * Drain a batch of recent delivery reports (each Infobip report is returned
    * only once). Prefer over per-id polls when catching up many open messages.
@@ -146,11 +138,9 @@ export interface MessagingProvider {
 }
 
 export function asRecord(value: unknown): Record<string, unknown> {
-  return typeof value === "object" && value !== null
-    ? (value as Record<string, unknown>)
-    : {};
+  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
 }
 
 export function str(value: unknown): string | undefined {
-  return typeof value === "string" ? value : undefined;
+  return typeof value === 'string' ? value : undefined;
 }

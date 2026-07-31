@@ -1,6 +1,15 @@
 import { z } from 'zod';
 
-export const PurposeEnum = z.enum(['welcome', 'receipt', 'sale', 'newsletter', 'otp', 'event', 'reminder', 'custom']);
+export const PurposeEnum = z.enum([
+  'welcome',
+  'receipt',
+  'sale',
+  'newsletter',
+  'otp',
+  'event',
+  'reminder',
+  'custom',
+]);
 
 export const VerticalEnum = z.enum([
   'saas',
@@ -20,7 +29,15 @@ export const PaletteEnum = z.enum(['warm', 'cool', 'mono', 'pastel', 'dark', 'ne
 
 export const PhotoStyleEnum = z.enum(['photographic', 'illustrated', 'abstract', 'mixed', 'none']);
 
-export const SectionEnum = z.enum(['hero', 'features', 'testimonial', 'stats', 'cta', 'faq', 'footer']);
+export const SectionEnum = z.enum([
+  'hero',
+  'features',
+  'testimonial',
+  'stats',
+  'cta',
+  'faq',
+  'footer',
+]);
 
 export const VisualBriefSchema = z.object({
   email_strategy: z.object({

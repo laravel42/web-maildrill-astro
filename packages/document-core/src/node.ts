@@ -86,7 +86,11 @@ export {
   extractThemeBundlePayload,
   applyThemeBundle,
 } from './builders/themeBundleSchema';
-export type { ThemeBundle, ThemeBundlePayload, ThemeBundleGlobals } from './builders/themeBundleSchema';
+export type {
+  ThemeBundle,
+  ThemeBundlePayload,
+  ThemeBundleGlobals,
+} from './builders/themeBundleSchema';
 
 // ---------------------------------------------------------------------------
 // Pure resolvers (Node-safe, no browser deps)

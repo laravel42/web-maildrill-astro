@@ -19,7 +19,10 @@ export default function EmojiPickerButton({ editor, onOpenChange }: Props) {
   const theme = useTheme();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number }>({
+    top: 0,
+    left: 0,
+  });
 
   const insertionRef = useRef<{
     isFirstEmoji: boolean;
@@ -61,7 +64,7 @@ export default function EmojiPickerButton({ editor, onOpenChange }: Props) {
       setOpen(true);
       onOpenChange?.(true);
     },
-    [editor, onOpenChange]
+    [editor, onOpenChange],
   );
 
   const handleClose = useCallback(() => {
@@ -89,7 +92,7 @@ export default function EmojiPickerButton({ editor, onOpenChange }: Props) {
         insertionRef.current.insertPosition = insertPos + emojiLength;
       }
     },
-    [editor]
+    [editor],
   );
 
   return (

@@ -64,8 +64,8 @@ function ImportDialog() {
         <DialogHeader>
           <DialogTitle>Import Meta template</DialogTitle>
           <DialogDescription>
-            Paste a template JSON from the WhatsApp Business API — it becomes editable blocks. Unknown components are
-            preserved and re-exported untouched.
+            Paste a template JSON from the WhatsApp Business API — it becomes editable blocks.
+            Unknown components are preserved and re-exported untouched.
           </DialogDescription>
         </DialogHeader>
         <Textarea
@@ -141,7 +141,12 @@ function ExportDialog() {
         </DialogHeader>
         <div className="flex items-center gap-5">
           <div className="flex items-center gap-2">
-            <Switch id="exp-pretty" checked={pretty} onCheckedChange={setPretty} disabled={internal} />
+            <Switch
+              id="exp-pretty"
+              checked={pretty}
+              onCheckedChange={setPretty}
+              disabled={internal}
+            />
             <Label htmlFor="exp-pretty" className="text-xs">
               Pretty
             </Label>
@@ -159,7 +164,8 @@ function ExportDialog() {
         {blocked && !internal && (
           <p role="alert" className="flex items-center gap-1.5 text-xs text-destructive">
             <Braces className="size-3.5" />
-            {issues.filter((i) => i.severity === 'error').length} validation error(s) — fix them to copy a valid payload.
+            {issues.filter((i) => i.severity === 'error').length} validation error(s) — fix them to
+            copy a valid payload.
           </p>
         )}
         <DialogFooter>

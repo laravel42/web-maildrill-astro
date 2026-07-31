@@ -64,7 +64,9 @@ function MediaEditor({
           acceptFile(e.dataTransfer.files[0]);
         }}
         className={`flex h-24 flex-col items-center justify-center gap-1.5 rounded-md border border-dashed text-xs text-muted-foreground transition-colors ${
-          dragOver ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'
+          dragOver
+            ? 'border-primary bg-primary/5 text-primary'
+            : 'border-border hover:border-primary/50'
         }`}
       >
         <UploadCloud className="size-5" />
@@ -84,7 +86,9 @@ function MediaEditor({
           placeholder="https://cdn.example.com/hero.jpg"
         />
       </Field>
-      {value.fileName && <div className="text-xs text-muted-foreground">Uploaded: {value.fileName}</div>}
+      {value.fileName && (
+        <div className="text-xs text-muted-foreground">Uploaded: {value.fileName}</div>
+      )}
     </div>
   );
 }
@@ -135,7 +139,11 @@ function makeMediaHeaderPlugin(config: {
 
       if (config.format === 'IMAGE') {
         return data.url ? (
-          <img src={data.url} alt="" className="block max-h-[180px] w-full rounded-[6px] object-cover" />
+          <img
+            src={data.url}
+            alt=""
+            className="block max-h-[180px] w-full rounded-[6px] object-cover"
+          />
         ) : (
           <div className={placeholderClasses}>
             <ImageIcon className="size-7" />
@@ -165,8 +173,12 @@ function makeMediaHeaderPlugin(config: {
         >
           <FileText className={ctx.dark ? 'size-6 text-[#8696a0]' : 'size-6 text-[#667781]'} />
           <div className="min-w-0">
-            <div className="truncate text-[13px] font-medium">{data.fileName || data.url.split('/').pop() || 'Document.pdf'}</div>
-            <div className={`text-[11px] ${ctx.dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}>PDF</div>
+            <div className="truncate text-[13px] font-medium">
+              {data.fileName || data.url.split('/').pop() || 'Document.pdf'}
+            </div>
+            <div className={`text-[11px] ${ctx.dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}>
+              PDF
+            </div>
           </div>
         </div>
       );
@@ -179,7 +191,8 @@ function makeMediaHeaderPlugin(config: {
     fromMeta: (component) => {
       if (String(component.type).toUpperCase() !== 'HEADER') return null;
       if (String(component.format ?? '').toUpperCase() !== config.format) return null;
-      const handle = (component.example as { header_handle?: string[] } | undefined)?.header_handle?.[0];
+      const handle = (component.example as { header_handle?: string[] } | undefined)
+        ?.header_handle?.[0];
       return { url: handle ?? '' };
     },
   };

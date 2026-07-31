@@ -1,15 +1,13 @@
-import { and, eq } from "drizzle-orm";
-import { db, memberships, tenants, type Membership, type User } from "@maildrill/database";
+import { and, eq } from 'drizzle-orm';
+import { db, memberships, tenants, type Membership, type User } from '@maildrill/database';
 
 export interface WorkspaceMembership {
   tenantId: string;
-  role: Membership["role"];
+  role: Membership['role'];
   workspaceName: string;
 }
 
-export async function listMembershipsForUser(
-  userId: string,
-): Promise<WorkspaceMembership[]> {
+export async function listMembershipsForUser(userId: string): Promise<WorkspaceMembership[]> {
   return db
     .select({
       tenantId: memberships.tenantId,
@@ -31,9 +29,7 @@ export async function ensurePersonalWorkspace(user: User): Promise<void> {
   if (existing[0]) return;
 
   const tenant = (await db.insert(tenants).values({ name: user.email }).returning())[0]!;
-  await db
-    .insert(memberships)
-    .values({ userId: user.id, tenantId: tenant.id, role: "owner" });
+  await db.insert(memberships).values({ userId: user.id, tenantId: tenant.id, role: 'owner' });
 }
 
 export async function isMember(userId: string, tenantId: string): Promise<boolean> {

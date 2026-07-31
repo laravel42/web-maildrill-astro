@@ -23,24 +23,30 @@
  *
  * Requires UNSPLASH_API_KEY plus configured media storage.
  */
-import { eq } from "drizzle-orm";
-import { db, tenants } from "@maildrill/database";
-import { confirmUpload, createUploadTicket, listMedia, mediaConfigured, updateMedia } from "./media";
+import { eq } from 'drizzle-orm';
+import { db, tenants } from '@maildrill/database';
+import {
+  confirmUpload,
+  createUploadTicket,
+  listMedia,
+  mediaConfigured,
+  updateMedia,
+} from './media';
 
-const TARGET_TENANT_NAME = "hello@laravel42.com";
+const TARGET_TENANT_NAME = 'hello@laravel42.com';
 
 /** Legacy search categories (pre-topics seeding). */
 const CATEGORIES = [
-  "nature",
-  "business",
-  "technology",
-  "food",
-  "travel",
-  "architecture",
-  "people",
-  "fashion",
-  "animals",
-  "sports",
+  'nature',
+  'business',
+  'technology',
+  'food',
+  'travel',
+  'architecture',
+  'people',
+  'fashion',
+  'animals',
+  'sports',
 ] as const;
 
 /**
@@ -48,8 +54,8 @@ const CATEGORIES = [
  * folder we already filled are treated as present (not "missing").
  */
 const TOPIC_FOLDER_ALIASES: Record<string, string> = {
-  "architecture-interior": "architecture",
-  "fashion-beauty": "fashion",
+  'architecture-interior': 'architecture',
+  'fashion-beauty': 'fashion',
 };
 
 const DEFAULT_PER_CATEGORY = 50;
@@ -58,7 +64,7 @@ const PAGE_SIZE = 30;
 /** Parallel download+upload lanes; polite to both Unsplash CDN and S3. */
 const CONCURRENCY = 8;
 
-const UNSPLASH_API_BASE = "https://api.unsplash.com";
+const UNSPLASH_API_BASE = 'https://api.unsplash.com';
 
 interface UnsplashPhoto {
   id: string;
@@ -78,14 +84,14 @@ interface UnsplashTopic {
 function unsplashHeaders(apiKey: string): Record<string, string> {
   return {
     Authorization: `Client-ID ${apiKey}`,
-    "Accept-Version": "v1",
-    "User-Agent": `${process.env.UNSPLASH_APP_NAME ?? "maildrill"}/media-seeder`,
+    'Accept-Version': 'v1',
+    'User-Agent': `${process.env.UNSPLASH_APP_NAME ?? 'maildrill'}/media-seeder`,
   };
 }
 
 class RateLimitExhausted extends Error {
   constructor() {
-    super("Unsplash hourly rate limit exhausted");
+    super('Unsplash hourly rate limit exhausted');
   }
 }
 
@@ -97,16 +103,12 @@ async function unsplashJson<T>(apiKey: string, url: URL): Promise<T> {
   return (await res.json()) as T;
 }
 
-async function searchPage(
-  apiKey: string,
-  query: string,
-  page: number,
-): Promise<UnsplashPhoto[]> {
+async function searchPage(apiKey: string, query: string, page: number): Promise<UnsplashPhoto[]> {
   const url = new URL(`${UNSPLASH_API_BASE}/search/photos`);
-  url.searchParams.set("query", query);
-  url.searchParams.set("page", String(page));
-  url.searchParams.set("per_page", String(PAGE_SIZE));
-  url.searchParams.set("content_filter", "high");
+  url.searchParams.set('query', query);
+  url.searchParams.set('page', String(page));
+  url.searchParams.set('per_page', String(PAGE_SIZE));
+  url.searchParams.set('content_filter', 'high');
   const body = await unsplashJson<{ results: UnsplashPhoto[] }>(apiKey, url);
   return body.results;
 }
@@ -116,9 +118,9 @@ async function listAllTopics(apiKey: string): Promise<UnsplashTopic[]> {
   const out: UnsplashTopic[] = [];
   for (let page = 1; page <= 10; page++) {
     const url = new URL(`${UNSPLASH_API_BASE}/topics`);
-    url.searchParams.set("page", String(page));
-    url.searchParams.set("per_page", String(PAGE_SIZE));
-    url.searchParams.set("order_by", "position");
+    url.searchParams.set('page', String(page));
+    url.searchParams.set('per_page', String(PAGE_SIZE));
+    url.searchParams.set('order_by', 'position');
     const batch = await unsplashJson<UnsplashTopic[]>(apiKey, url);
     if (batch.length === 0) break;
     out.push(...batch);
@@ -133,9 +135,9 @@ async function topicPhotosPage(
   page: number,
 ): Promise<UnsplashPhoto[]> {
   const url = new URL(`${UNSPLASH_API_BASE}/topics/${encodeURIComponent(slug)}/photos`);
-  url.searchParams.set("page", String(page));
-  url.searchParams.set("per_page", String(PAGE_SIZE));
-  url.searchParams.set("order_by", "popular");
+  url.searchParams.set('page', String(page));
+  url.searchParams.set('per_page', String(PAGE_SIZE));
+  url.searchParams.set('order_by', 'popular');
   return unsplashJson<UnsplashPhoto[]>(apiKey, url);
 }
 
@@ -168,7 +170,7 @@ async function seedOne(
   const res = await fetch(photo.urls.regular);
   if (!res.ok) throw new Error(`download ${photo.id}: HTTP ${res.status}`);
   const bytes = Buffer.from(await res.arrayBuffer());
-  const contentType = res.headers.get("content-type")?.split(";")[0] || "image/jpeg";
+  const contentType = res.headers.get('content-type')?.split(';')[0] || 'image/jpeg';
 
   const name = `unsplash-${photo.id}.jpg`;
   const ticket = await createUploadTicket(tenantId, {
@@ -178,8 +180,8 @@ async function seedOne(
   });
 
   const put = await fetch(ticket.uploadUrl, {
-    method: "PUT",
-    headers: { "Content-Type": contentType },
+    method: 'PUT',
+    headers: { 'Content-Type': contentType },
     body: bytes,
   });
   if (!put.ok) throw new Error(`s3 put ${photo.id}: HTTP ${put.status}`);
@@ -193,15 +195,15 @@ async function seedOne(
       const tRes = await fetch(thumbSrc);
       if (tRes.ok) {
         const tBytes = Buffer.from(await tRes.arrayBuffer());
-        const tType = "image/jpeg";
+        const tType = 'image/jpeg';
         const tTicket = await createUploadTicket(tenantId, {
           filename: `unsplash-${photo.id}-thumb.jpg`,
           contentType: tType,
           sizeBytes: tBytes.byteLength,
         });
         const tPut = await fetch(tTicket.uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": tType },
+          method: 'PUT',
+          headers: { 'Content-Type': tType },
           body: tBytes,
         });
         if (tPut.ok) thumbStorageKey = tTicket.storageKey;
@@ -243,7 +245,12 @@ async function runPool(tasks: Array<() => Promise<void>>, width: number): Promis
   return errors;
 }
 
-type SeedJob = { key: string; label: string; folder: string; fetchPage: (page: number) => Promise<UnsplashPhoto[]> };
+type SeedJob = {
+  key: string;
+  label: string;
+  folder: string;
+  fetchPage: (page: number) => Promise<UnsplashPhoto[]>;
+};
 
 async function seedJobs(
   apiKey: string,
@@ -295,8 +302,8 @@ async function seedJobs(
     for (const e of errors.slice(0, 3)) console.log(`  ! ${job.key}: ${e.message}`);
     console.log(
       `${job.label}: +${fresh.length - errors.length} seeded` +
-        (picked.length - fresh.length ? `, ${picked.length - fresh.length} already present` : "") +
-        (errors.length ? `, ${errors.length} failed` : "") +
+        (picked.length - fresh.length ? `, ${picked.length - fresh.length} already present` : '') +
+        (errors.length ? `, ${errors.length} failed` : '') +
         ` → folder “${job.folder}”`,
     );
   }
@@ -305,18 +312,18 @@ async function seedJobs(
 }
 
 async function main(): Promise<void> {
-  const apiKey = process.env.UNSPLASH_API_KEY ?? "";
-  if (!apiKey) throw new Error("UNSPLASH_API_KEY is not set in .env");
+  const apiKey = process.env.UNSPLASH_API_KEY ?? '';
+  if (!apiKey) throw new Error('UNSPLASH_API_KEY is not set in .env');
   if (!mediaConfigured()) {
     throw new Error(
-      "media storage is not configured (set AWS_REGION, MEDIA_S3_BUCKET, MEDIA_CDN_DOMAIN)",
+      'media storage is not configured (set AWS_REGION, MEDIA_S3_BUCKET, MEDIA_CDN_DOMAIN)',
     );
   }
 
-  const missingTopics = process.argv.includes("--missing-topics");
-  const perCatArg = process.argv.find((a) => a.startsWith("--per-category="));
+  const missingTopics = process.argv.includes('--missing-topics');
+  const perCatArg = process.argv.find((a) => a.startsWith('--per-category='));
   const perCategory = perCatArg
-    ? Math.max(1, Number(perCatArg.split("=")[1]) || DEFAULT_PER_CATEGORY)
+    ? Math.max(1, Number(perCatArg.split('=')[1]) || DEFAULT_PER_CATEGORY)
     : DEFAULT_PER_CATEGORY;
 
   const [target] = await db
@@ -339,7 +346,7 @@ async function main(): Promise<void> {
   let jobs: SeedJob[] = [];
 
   if (missingTopics) {
-    console.log("mode: missing Unsplash topics (GET /topics)");
+    console.log('mode: missing Unsplash topics (GET /topics)');
     const topics = await listAllTopics(apiKey);
     console.log(`unsplash topics: ${topics.length}`);
 
@@ -351,7 +358,7 @@ async function main(): Promise<void> {
     for (const t of topics) {
       const folder = folderForTopic(t.slug);
       const have = folderCounts.get(folder) ?? 0;
-      const status = have >= perCategory ? "skip (have)" : "SEED";
+      const status = have >= perCategory ? 'skip (have)' : 'SEED';
       console.log(
         `  ${status.padEnd(12)} ${t.slug.padEnd(32)} → ${folder} (${have}/${perCategory})`,
       );
@@ -376,7 +383,7 @@ async function main(): Promise<void> {
   }
 
   if (jobs.length === 0) {
-    console.log("\nnothing to seed — library already covers every Unsplash topic.");
+    console.log('\nnothing to seed — library already covers every Unsplash topic.');
     process.exit(0);
   }
 

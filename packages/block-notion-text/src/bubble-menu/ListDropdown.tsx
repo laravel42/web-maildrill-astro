@@ -34,20 +34,26 @@ export default function ListDropdown({ editor }: Props) {
       });
       handleClose();
     },
-    [editor, handleClose]
+    [editor, handleClose],
   );
 
   const isActive = editor.isActive('bulletList') || editor.isActive('orderedList');
 
   const getCurrentIcon = () => {
     const iconColor = theme.palette.text.secondary;
-    if (editor.isActive('orderedList')) return <FormatListNumbered fontSize="small" sx={{ color: iconColor }} />;
+    if (editor.isActive('orderedList'))
+      return <FormatListNumbered fontSize="small" sx={{ color: iconColor }} />;
     return <FormatListBulleted fontSize="small" sx={{ color: iconColor }} />;
   };
 
   return (
     <>
-      <ToolbarIconButton tooltip={t('bubbleMenu.lists')} active={isActive} onClick={handleClick} showArrow>
+      <ToolbarIconButton
+        tooltip={t('bubbleMenu.lists')}
+        active={isActive}
+        onClick={handleClick}
+        showArrow
+      >
         {getCurrentIcon()}
       </ToolbarIconButton>
 
@@ -59,7 +65,9 @@ export default function ListDropdown({ editor }: Props) {
             sx={{
               p: '8px 10px',
               borderRadius: '6px',
-              backgroundColor: editor.isActive('bulletList') ? theme.palette.action.selected : 'transparent',
+              backgroundColor: editor.isActive('bulletList')
+                ? theme.palette.action.selected
+                : 'transparent',
               '&:hover': { backgroundColor: theme.palette.action.hover },
               transition: 'all 150ms ease',
             }}
@@ -69,7 +77,9 @@ export default function ListDropdown({ editor }: Props) {
             </ListItemIcon>
             <ListItemText
               primary={t('bubbleMenu.bulletList')}
-              slotProps={{ primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } } }}
+              slotProps={{
+                primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } },
+              }}
             />
           </ListItemButton>
           <ListItemButton
@@ -78,7 +88,9 @@ export default function ListDropdown({ editor }: Props) {
             sx={{
               p: '8px 10px',
               borderRadius: '6px',
-              backgroundColor: editor.isActive('orderedList') ? theme.palette.action.selected : 'transparent',
+              backgroundColor: editor.isActive('orderedList')
+                ? theme.palette.action.selected
+                : 'transparent',
               '&:hover': { backgroundColor: theme.palette.action.hover },
               transition: 'all 150ms ease',
             }}
@@ -88,7 +100,9 @@ export default function ListDropdown({ editor }: Props) {
             </ListItemIcon>
             <ListItemText
               primary={t('bubbleMenu.numberedList')}
-              slotProps={{ primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } } }}
+              slotProps={{
+                primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } },
+              }}
             />
           </ListItemButton>
         </List>

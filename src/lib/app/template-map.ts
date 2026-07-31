@@ -78,7 +78,13 @@ function fmtAgo(iso?: string | null): { updated: string; updatedMin: number } {
   if (Number.isNaN(t)) return { updated: '—', updatedMin: Number.MAX_SAFE_INTEGER };
   const min = Math.max(0, Math.round((Date.now() - t) / 60000));
   const updated =
-    min < 1 ? 'just now' : min < 60 ? `${min}m ago` : min < 1440 ? `${Math.round(min / 60)}h ago` : `${Math.round(min / 1440)}d ago`;
+    min < 1
+      ? 'just now'
+      : min < 60
+        ? `${min}m ago`
+        : min < 1440
+          ? `${Math.round(min / 60)}h ago`
+          : `${Math.round(min / 1440)}d ago`;
   return { updated, updatedMin: min };
 }
 
@@ -97,9 +103,7 @@ function rate(numerator?: number | null, tracked?: number | null): number {
 }
 
 /** True when the template has body content worth submitting or previewing. */
-export function templateHasContent(
-  t: Pick<ApiTemplate, 'html' | 'text' | 'components'>,
-): boolean {
+export function templateHasContent(t: Pick<ApiTemplate, 'html' | 'text' | 'components'>): boolean {
   if (typeof t.html === 'string' && t.html.trim()) return true;
   if (typeof t.text === 'string' && t.text.trim()) return true;
   const c = t.components;

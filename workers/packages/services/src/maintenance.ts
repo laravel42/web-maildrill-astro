@@ -1,7 +1,7 @@
-import { randomUUID } from "node:crypto";
-import { and, eq, inArray, lte, sql } from "drizzle-orm";
-import { db, messages, webhookEvents } from "@maildrill/database";
-import { bumpVersion, insertDispatchOutbox } from "./shared";
+import { randomUUID } from 'node:crypto';
+import { and, eq, inArray, lte, sql } from 'drizzle-orm';
+import { db, messages, webhookEvents } from '@maildrill/database';
+import { bumpVersion, insertDispatchOutbox } from './shared';
 
 /**
  * Requeue messages stuck in `processing` past a cutoff (e.g. a worker died
@@ -17,19 +17,14 @@ export async function recoverStalledMessages(
     const rows = await tx
       .select()
       .from(messages)
-      .where(
-        and(
-          eq(messages.status, "processing"),
-          lte(messages.processingStartedAt, cutoff),
-        ),
-      )
+      .where(and(eq(messages.status, 'processing'), lte(messages.processingStartedAt, cutoff)))
       .limit(batchSize)
-      .for("update", { skipLocked: true });
+      .for('update', { skipLocked: true });
 
     for (const m of rows) {
       await tx
         .update(messages)
-        .set({ status: "queued", version: bumpVersion, updatedAt: new Date() })
+        .set({ status: 'queued', version: bumpVersion, updatedAt: new Date() })
         .where(eq(messages.id, m.id));
       await insertDispatchOutbox(tx, m, randomUUID());
     }
@@ -52,10 +47,10 @@ export async function expireStalledDeliveries(olderThanMs: number): Promise<numb
   const cutoff = new Date(Date.now() - olderThanMs);
   const res = await db
     .update(messages)
-    .set({ status: "expired", version: bumpVersion, updatedAt: new Date() })
+    .set({ status: 'expired', version: bumpVersion, updatedAt: new Date() })
     .where(
       and(
-        inArray(messages.status, ["submitted", "sent"]),
+        inArray(messages.status, ['submitted', 'sent']),
         lte(sql`coalesce(${messages.submittedAt}, ${messages.createdAt})`, cutoff),
       ),
     );
@@ -68,10 +63,7 @@ export async function purgeProcessedWebhooks(retentionDays: number): Promise<num
   const res = await db
     .delete(webhookEvents)
     .where(
-      and(
-        eq(webhookEvents.processingStatus, "processed"),
-        lte(webhookEvents.receivedAt, cutoff),
-      ),
+      and(eq(webhookEvents.processingStatus, 'processed'), lte(webhookEvents.receivedAt, cutoff)),
     );
   return res.rowCount ?? 0;
 }

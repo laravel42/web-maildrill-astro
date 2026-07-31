@@ -38,7 +38,10 @@ type Font =
   | 'ROBOTO'
   | 'INHERIT';
 
-type Shape = 'rectangle' | 'pill' | { topLeft?: number; topRight?: number; bottomLeft?: number; bottomRight?: number };
+type Shape =
+  | 'rectangle'
+  | 'pill'
+  | { topLeft?: number; topRight?: number; bottomLeft?: number; bottomRight?: number };
 
 /** Palette tuple — every theme defines one. */
 type Palette = {
@@ -83,7 +86,16 @@ type ThemeDef = {
 
 /** Build a `ThemeBundlePayload` from a `ThemeDef`. */
 function buildBundle(def: ThemeDef): ThemeBundlePayload {
-  const { palette, font, radius, underline = true, buttonShape, buttonFont, buttonWeight, notionFont } = def;
+  const {
+    palette,
+    font,
+    radius,
+    underline = true,
+    buttonShape,
+    buttonFont,
+    buttonWeight,
+    notionFont,
+  } = def;
 
   const globals: NonNullable<ThemeBundlePayload['globals']> = {
     backdropColor: palette.backdrop,
@@ -120,7 +132,11 @@ function buildBundle(def: ThemeDef): ThemeBundlePayload {
 }
 
 /** Build the API payload (`name`, `description?`, `bundle`). */
-function buildPayload(def: ThemeDef): { name: string; description?: string; bundle: ThemeBundlePayload } {
+function buildPayload(def: ThemeDef): {
+  name: string;
+  description?: string;
+  bundle: ThemeBundlePayload;
+} {
   return {
     name: def.name,
     ...(def.description ? { description: def.description } : {}),
@@ -687,7 +703,9 @@ const THEMES: ThemeDef[] = [
 
 type SeedSummary = { total: number; saved: number; skipped: number; failed: number };
 
-export async function seedThemes(options: { limit?: number; force?: boolean } = {}): Promise<SeedSummary> {
+export async function seedThemes(
+  options: { limit?: number; force?: boolean } = {},
+): Promise<SeedSummary> {
   const base = resolveBackendUrl();
   const list = options.limit ? THEMES.slice(0, options.limit) : THEMES;
 

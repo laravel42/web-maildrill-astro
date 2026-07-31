@@ -59,11 +59,7 @@ export default function AppShell({
   userName,
 }: Props) {
   // Home uses title "Dashboard" — skip the trail so we don't show "Dashboard / Dashboard".
-  const trail = crumbs?.length
-    ? crumbs
-    : title && title !== 'Dashboard'
-      ? [{ label: title }]
-      : [];
+  const trail = crumbs?.length ? crumbs : title && title !== 'Dashboard' ? [{ label: title }] : [];
   // Display identity from the real session (no mock user).
   const displayName = userName?.trim() || (userEmail ? userEmail.split('@')[0] : 'Your workspace');
   const avatarInitial = displayName.charAt(0).toUpperCase();

@@ -1,7 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Alert, Box, Button, Chip, CircularProgress, Divider, Stack, TextField, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Divider,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 
 import { INPUT_TEXTFIELD_SX } from '../../InspectorDrawer/ConfigurationPanel/input-panels/helpers/inputs/components/inputStyles';
 
@@ -57,7 +67,10 @@ function parsePromptSections(prompt: string): Array<{ tag: string; content: stri
   return sections;
 }
 
-const TAG_COLORS: Record<string, 'primary' | 'secondary' | 'success' | 'warning' | 'info' | 'error'> = {
+const TAG_COLORS: Record<
+  string,
+  'primary' | 'secondary' | 'success' | 'warning' | 'info' | 'error'
+> = {
   PURPOSE: 'primary',
   GOAL: 'primary',
   TONE: 'secondary',

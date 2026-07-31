@@ -1,6 +1,14 @@
 import * as React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCheck, ExternalLink, LayoutGrid, Phone, ShoppingBag, Workflow, X } from 'lucide-react';
+import {
+  CheckCheck,
+  ExternalLink,
+  LayoutGrid,
+  Phone,
+  ShoppingBag,
+  Workflow,
+  X,
+} from 'lucide-react';
 
 import { getButtonPlugin } from '@/core/registry';
 import { closePreviewSheet, type PreviewReply } from '@/core/store';
@@ -30,10 +38,19 @@ export function ReplyBubble({ reply, dark }: { reply: PreviewReply; dark: boolea
         <span
           aria-hidden
           className="absolute -right-2 top-0 h-[13px] w-2"
-          style={{ backgroundColor: dark ? '#005c4b' : '#d9fdd3', clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
+          style={{
+            backgroundColor: dark ? '#005c4b' : '#d9fdd3',
+            clipPath: 'polygon(0 0, 100% 0, 0 100%)',
+          }}
         />
-        <span className={`text-[14.2px] leading-[19px] ${dark ? 'text-[#e9edef]' : 'text-[#111b21]'}`}>{reply.text}</span>
-        <span className={`ml-2 inline-flex translate-y-[2px] items-center gap-0.5 text-[11px] ${dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}>
+        <span
+          className={`text-[14.2px] leading-[19px] ${dark ? 'text-[#e9edef]' : 'text-[#111b21]'}`}
+        >
+          {reply.text}
+        </span>
+        <span
+          className={`ml-2 inline-flex translate-y-[2px] items-center gap-0.5 text-[11px] ${dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}
+        >
           {time}
           <CheckCheck className="size-3.5 text-[#53bdeb]" />
         </span>
@@ -92,7 +109,9 @@ function SheetShell({
           dark ? 'bg-[#233138] text-[#e9edef]' : 'bg-white text-[#111b21]'
         }`}
       >
-        <div className={`mx-auto mb-3 h-1 w-9 rounded-full ${dark ? 'bg-[#8696a0]/40' : 'bg-[#111b21]/15'}`} />
+        <div
+          className={`mx-auto mb-3 h-1 w-9 rounded-full ${dark ? 'bg-[#8696a0]/40' : 'bg-[#111b21]/15'}`}
+        />
         {title && <div className="mb-2 text-[15px] font-semibold">{title}</div>}
         {children}
       </motion.div>
@@ -149,7 +168,9 @@ export function PhoneSheet({
         <React.Fragment key={sheet.kind}>
           {sheet.kind === 'link' && (
             <SheetShell dark={dark} title="Open this link?">
-              <div className={`flex items-center gap-2 break-all text-[13px] ${dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}>
+              <div
+                className={`flex items-center gap-2 break-all text-[13px] ${dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}
+              >
                 <ExternalLink className="size-4 shrink-0" />
                 {sheet.url}
               </div>
@@ -181,15 +202,26 @@ export function PhoneSheet({
           )}
           {sheet.kind === 'flow' && (
             <SheetShell dark={dark} title={sheet.label}>
-              <div className={`flex flex-col items-center gap-2 py-6 ${dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}>
+              <div
+                className={`flex flex-col items-center gap-2 py-6 ${dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}
+              >
                 <Workflow className="size-8 text-[#00a884]" />
                 <div className="text-[13px]">
                   WhatsApp Flow <span className="font-mono">{sheet.flowId}</span>
                   {sheet.screen ? ` · ${sheet.screen}` : ''}
                 </div>
-                <div className="text-[12px] opacity-75">Flows render their own screens at send time.</div>
+                <div className="text-[12px] opacity-75">
+                  Flows render their own screens at send time.
+                </div>
               </div>
-              <SheetActions dark={dark} confirmLabel="Continue" onConfirm={() => { closePreviewSheet(); api.toast('Flow opened'); }} />
+              <SheetActions
+                dark={dark}
+                confirmLabel="Continue"
+                onConfirm={() => {
+                  closePreviewSheet();
+                  api.toast('Flow opened');
+                }}
+              />
             </SheetShell>
           )}
           {sheet.kind === 'catalog' && (
@@ -202,14 +234,25 @@ export function PhoneSheet({
                       dark ? 'bg-[#2a3942] text-[#8696a0]' : 'bg-[#f0f2f5] text-[#667781]'
                     }`}
                   >
-                    {sheet.multi ? <ShoppingBag className="size-5" /> : <LayoutGrid className="size-5" />}
+                    {sheet.multi ? (
+                      <ShoppingBag className="size-5" />
+                    ) : (
+                      <LayoutGrid className="size-5" />
+                    )}
                   </div>
                 ))}
               </div>
               <div className={`pt-1 text-[12px] ${dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}>
                 Products attach from your catalog at send time.
               </div>
-              <SheetActions dark={dark} confirmLabel="View" onConfirm={() => { closePreviewSheet(); api.toast('Catalog opened'); }} />
+              <SheetActions
+                dark={dark}
+                confirmLabel="View"
+                onConfirm={() => {
+                  closePreviewSheet();
+                  api.toast('Catalog opened');
+                }}
+              />
             </SheetShell>
           )}
           {sheet.kind === 'options' && (

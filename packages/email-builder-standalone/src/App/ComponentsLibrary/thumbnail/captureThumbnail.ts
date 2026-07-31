@@ -54,7 +54,8 @@ const DEFAULT_TIMEOUT_MS = 8000;
  * fails to fetch (cross-origin assets without CORS headers). See the
  * `imagePlaceholder` option in `toBlob` below.
  */
-const FAILED_IMAGE_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+const FAILED_IMAGE_PLACEHOLDER =
+  'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
 /**
  * Strip active content (`<script>` elements and inline `on*` event
@@ -235,14 +236,19 @@ export type CaptureOptions = {
  *   - Optionally show a toast ("Preview couldn't be generated...")
  *     when the result is null AND a thumbnail was expected.
  */
-export async function captureSubtreeThumbnail(html: string, options: CaptureOptions = {}): Promise<Blob | null> {
+export async function captureSubtreeThumbnail(
+  html: string,
+  options: CaptureOptions = {},
+): Promise<Blob | null> {
   const variant = options.variant ?? 'subtree';
   const renderWidth = options.renderWidth ?? DEFAULT_RENDER_WIDTH;
   const renderHeight =
-    options.renderHeight ?? (variant === 'template' ? TEMPLATE_RENDER_HEIGHT : SUBTREE_RENDER_HEIGHT);
+    options.renderHeight ??
+    (variant === 'template' ? TEMPLATE_RENDER_HEIGHT : SUBTREE_RENDER_HEIGHT);
   const canvasWidth = options.canvasWidth ?? DEFAULT_CANVAS_WIDTH;
   const canvasHeight =
-    options.canvasHeight ?? (variant === 'template' ? TEMPLATE_CANVAS_HEIGHT : SUBTREE_CANVAS_HEIGHT);
+    options.canvasHeight ??
+    (variant === 'template' ? TEMPLATE_CANVAS_HEIGHT : SUBTREE_CANVAS_HEIGHT);
   const pixelRatio = options.pixelRatio ?? DEFAULT_PIXEL_RATIO;
   const backgroundColor = options.backgroundColor ?? '#ffffff';
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
@@ -323,8 +329,10 @@ export async function captureSubtreeThumbnail(html: string, options: CaptureOpti
           const imgs = Array.from(doc.images);
           await Promise.all(
             imgs.map((img) =>
-              img.complete && img.naturalWidth > 0 ? Promise.resolve() : img.decode().catch(() => undefined)
-            )
+              img.complete && img.naturalWidth > 0
+                ? Promise.resolve()
+                : img.decode().catch(() => undefined),
+            ),
           );
 
           // Find the inner email "canvas" — the centered 600 px-wide
@@ -348,7 +356,8 @@ export async function captureSubtreeThumbnail(html: string, options: CaptureOpti
           // `doc.body` so the capture still works, just with the
           // backdrop included.
           const canvasEl =
-            (doc.querySelector('body > table > tbody > tr > td > table') as HTMLElement | null) ?? doc.body;
+            (doc.querySelector('body > table > tbody > tr > td > table') as HTMLElement | null) ??
+            doc.body;
 
           // Capture the iframe body. We pass our pixelRatio so the
           // resulting image is sharp on retina displays.

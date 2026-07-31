@@ -28,7 +28,11 @@ export default function LinkButton({ editor }: Props) {
 
   return (
     <>
-      <ToolbarIconButton tooltip={t('bubbleMenu.link')} active={editor.isActive('link')} onClick={handleClick}>
+      <ToolbarIconButton
+        tooltip={t('bubbleMenu.link')}
+        active={editor.isActive('link')}
+        onClick={handleClick}
+      >
         <LinkIcon fontSize="small" />
       </ToolbarIconButton>
 

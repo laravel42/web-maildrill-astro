@@ -40,7 +40,7 @@ export function ShadowDomProvider({ children }: ShadowDomProviderProps) {
     } else if (import.meta.env.DEV) {
       console.error(
         '[ShadowDomProvider] Expected to be mounted inside a ShadowRoot. ' +
-          'Styles will not be encapsulated. Check r2wc shadow config.'
+          'Styles will not be encapsulated. Check r2wc shadow config.',
       );
     }
   }, []);
@@ -57,7 +57,9 @@ export function ShadowDomProvider({ children }: ShadowDomProviderProps) {
 
   return (
     <CacheProvider value={emotionCache}>
-      <ShadowContainerContext.Provider value={container}>{children}</ShadowContainerContext.Provider>
+      <ShadowContainerContext.Provider value={container}>
+        {children}
+      </ShadowContainerContext.Provider>
     </CacheProvider>
   );
 }

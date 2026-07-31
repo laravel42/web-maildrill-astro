@@ -1,7 +1,11 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
-import { getProvider as defaultGetProvider, PROVIDER_NAMES, type ProviderName } from '../providers/index.js';
+import {
+  getProvider as defaultGetProvider,
+  PROVIDER_NAMES,
+  type ProviderName,
+} from '../providers/index.js';
 import { generateTheme } from '../wizard/generate-theme.js';
 import { GenerateThemeInputSchema } from '../wizard/theme-schema.js';
 

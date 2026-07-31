@@ -13,7 +13,12 @@ import { WaButtonRow } from './row';
 function labelIssues(text: string, code: string): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   if (!text.trim()) {
-    issues.push({ severity: 'error', slot: 'buttons', code: `${code}/label-required`, message: 'Button label is required' });
+    issues.push({
+      severity: 'error',
+      slot: 'buttons',
+      code: `${code}/label-required`,
+      message: 'Button label is required',
+    });
   }
   if (text.length > LIMITS.BUTTON_TEXT_MAX) {
     issues.push({
@@ -52,11 +57,21 @@ export const quickReplyPlugin: ButtonPlugin<z.infer<typeof quickReplySchema>> = 
   Editor: function QuickReplyEditor({ value, onChange }) {
     return (
       <Field label="Label" counter={`${value.text.length}/${LIMITS.BUTTON_TEXT_MAX}`}>
-        <Input value={value.text} onChange={(e) => onChange({ text: e.target.value })} placeholder="Yes, I'm in" />
+        <Input
+          value={value.text}
+          onChange={(e) => onChange({ text: e.target.value })}
+          placeholder="Yes, I'm in"
+        />
       </Field>
     );
   },
-  Preview: ({ data, ctx }) => <WaButtonRow dark={ctx.dark} icon={<Reply className="size-4" />} label={data.text || 'Quick reply'} />,
+  Preview: ({ data, ctx }) => (
+    <WaButtonRow
+      dark={ctx.dark}
+      icon={<Reply className="size-4" />}
+      label={data.text || 'Quick reply'}
+    />
+  ),
   onTap: (data, api) => api.reply(data.text || 'Quick reply'),
   toMeta: (data) => ({ type: 'QUICK_REPLY', text: data.text }),
   fromMeta: (button) => {
@@ -95,13 +110,28 @@ export const urlButtonPlugin: ButtonPlugin<z.infer<typeof urlSchema>> = {
   validate: (data) => {
     const issues = labelIssues(data.text, 'url');
     if (!data.url.trim()) {
-      issues.push({ severity: 'error', slot: 'buttons', code: 'url/required', message: 'Button URL is required' });
+      issues.push({
+        severity: 'error',
+        slot: 'buttons',
+        code: 'url/required',
+        message: 'Button URL is required',
+      });
     } else {
       if (!/^https?:\/\//i.test(data.url)) {
-        issues.push({ severity: 'error', slot: 'buttons', code: 'url/invalid', message: 'URL must start with http(s)://' });
+        issues.push({
+          severity: 'error',
+          slot: 'buttons',
+          code: 'url/invalid',
+          message: 'URL must start with http(s)://',
+        });
       }
       if (data.url.length > LIMITS.URL_MAX) {
-        issues.push({ severity: 'error', slot: 'buttons', code: 'url/too-long', message: `URL exceeds ${LIMITS.URL_MAX} characters` });
+        issues.push({
+          severity: 'error',
+          slot: 'buttons',
+          code: 'url/too-long',
+          message: `URL exceeds ${LIMITS.URL_MAX} characters`,
+        });
       }
       const vars = uniqueVariables(data.url);
       const dynamic = vars.length > 0;
@@ -129,10 +159,21 @@ export const urlButtonPlugin: ButtonPlugin<z.infer<typeof urlSchema>> = {
     return (
       <div className="flex flex-col gap-4">
         <Field label="Label" counter={`${value.text.length}/${LIMITS.BUTTON_TEXT_MAX}`}>
-          <Input value={value.text} onChange={(e) => onChange({ ...value, text: e.target.value })} placeholder="View order" />
+          <Input
+            value={value.text}
+            onChange={(e) => onChange({ ...value, text: e.target.value })}
+            placeholder="View order"
+          />
         </Field>
-        <Field label="URL" hint={'Append {{1}} for a dynamic suffix, e.g. https://shop.com/o/{{1}}'}>
-          <Input value={value.url} onChange={(e) => onChange({ ...value, url: e.target.value })} placeholder="https://example.com" />
+        <Field
+          label="URL"
+          hint={'Append {{1}} for a dynamic suffix, e.g. https://shop.com/o/{{1}}'}
+        >
+          <Input
+            value={value.url}
+            onChange={(e) => onChange({ ...value, url: e.target.value })}
+            placeholder="https://example.com"
+          />
         </Field>
         {dynamic && (
           <Field label="Example full URL" hint="Shown to Meta reviewers">
@@ -147,10 +188,16 @@ export const urlButtonPlugin: ButtonPlugin<z.infer<typeof urlSchema>> = {
     );
   },
   Preview: ({ data, ctx }) => (
-    <WaButtonRow dark={ctx.dark} icon={<ExternalLink className="size-4" />} label={data.text || 'Visit website'} />
+    <WaButtonRow
+      dark={ctx.dark}
+      icon={<ExternalLink className="size-4" />}
+      label={data.text || 'Visit website'}
+    />
   ),
   onTap: (data, api) => {
-    const url = data.url ? data.url.replace(/\{\{\s*1\s*\}\}$/, data.example?.split('/').pop() ?? '…') : 'https://example.com';
+    const url = data.url
+      ? data.url.replace(/\{\{\s*1\s*\}\}$/, data.example?.split('/').pop() ?? '…')
+      : 'https://example.com';
     api.openSheet({ kind: 'link', url });
   },
   toMeta: (data) => {
@@ -197,8 +244,16 @@ export const phoneButtonPlugin: ButtonPlugin<z.infer<typeof phoneSchema>> = {
   validate: (data) => {
     const issues = labelIssues(data.text, 'phone');
     if (!data.phoneNumber.trim()) {
-      issues.push({ severity: 'error', slot: 'buttons', code: 'phone/required', message: 'Phone number is required' });
-    } else if (!/^\+?[\d\s().-]{6,}$/.test(data.phoneNumber) || data.phoneNumber.length > LIMITS.PHONE_MAX) {
+      issues.push({
+        severity: 'error',
+        slot: 'buttons',
+        code: 'phone/required',
+        message: 'Phone number is required',
+      });
+    } else if (
+      !/^\+?[\d\s().-]{6,}$/.test(data.phoneNumber) ||
+      data.phoneNumber.length > LIMITS.PHONE_MAX
+    ) {
       issues.push({
         severity: 'error',
         slot: 'buttons',
@@ -212,7 +267,11 @@ export const phoneButtonPlugin: ButtonPlugin<z.infer<typeof phoneSchema>> = {
     return (
       <div className="flex flex-col gap-4">
         <Field label="Label" counter={`${value.text.length}/${LIMITS.BUTTON_TEXT_MAX}`}>
-          <Input value={value.text} onChange={(e) => onChange({ ...value, text: e.target.value })} placeholder="Call us" />
+          <Input
+            value={value.text}
+            onChange={(e) => onChange({ ...value, text: e.target.value })}
+            placeholder="Call us"
+          />
         </Field>
         <Field label="Phone number" hint="Include the country code">
           <Input
@@ -224,9 +283,15 @@ export const phoneButtonPlugin: ButtonPlugin<z.infer<typeof phoneSchema>> = {
       </div>
     );
   },
-  Preview: ({ data, ctx }) => <WaButtonRow dark={ctx.dark} icon={<Phone className="size-4" />} label={data.text || 'Call'} />,
+  Preview: ({ data, ctx }) => (
+    <WaButtonRow dark={ctx.dark} icon={<Phone className="size-4" />} label={data.text || 'Call'} />
+  ),
   onTap: (data, api) =>
-    api.openSheet({ kind: 'call', phoneNumber: data.phoneNumber || '+1 555 010 4477', label: data.text || 'Call' }),
+    api.openSheet({
+      kind: 'call',
+      phoneNumber: data.phoneNumber || '+1 555 010 4477',
+      label: data.text || 'Call',
+    }),
   toMeta: (data) => ({ type: 'PHONE_NUMBER', text: data.text, phone_number: data.phoneNumber }),
   fromMeta: (button) => {
     if (String(button.type).toUpperCase() !== 'PHONE_NUMBER') return null;
@@ -262,7 +327,12 @@ export const copyCodePlugin: ButtonPlugin<z.infer<typeof copyCodeSchema>> = {
   validate: (data) => {
     const issues: ValidationIssue[] = [];
     if (!data.example.trim()) {
-      issues.push({ severity: 'error', slot: 'buttons', code: 'copy-code/required', message: 'Offer code example is required' });
+      issues.push({
+        severity: 'error',
+        slot: 'buttons',
+        code: 'copy-code/required',
+        message: 'Offer code example is required',
+      });
     } else if (data.example.length > LIMITS.COPY_CODE_MAX) {
       issues.push({
         severity: 'error',
@@ -275,12 +345,22 @@ export const copyCodePlugin: ButtonPlugin<z.infer<typeof copyCodeSchema>> = {
   },
   Editor: function CopyCodeEditor({ value, onChange }) {
     return (
-      <Field label="Example code" counter={`${value.example.length}/${LIMITS.COPY_CODE_MAX}`} hint='Shows as "Copy offer code" in chat'>
-        <Input value={value.example} onChange={(e) => onChange({ example: e.target.value })} placeholder="SAVE20" />
+      <Field
+        label="Example code"
+        counter={`${value.example.length}/${LIMITS.COPY_CODE_MAX}`}
+        hint='Shows as "Copy offer code" in chat'
+      >
+        <Input
+          value={value.example}
+          onChange={(e) => onChange({ example: e.target.value })}
+          placeholder="SAVE20"
+        />
       </Field>
     );
   },
-  Preview: ({ ctx }) => <WaButtonRow dark={ctx.dark} icon={<Copy className="size-4" />} label="Copy offer code" />,
+  Preview: ({ ctx }) => (
+    <WaButtonRow dark={ctx.dark} icon={<Copy className="size-4" />} label="Copy offer code" />
+  ),
   onTap: (data, api) => api.copy(data.example || 'CODE', 'Offer code copied'),
   toMeta: (data) => ({ type: 'COPY_CODE', example: data.example }),
   fromMeta: (button) => {

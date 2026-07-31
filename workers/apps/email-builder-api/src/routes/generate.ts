@@ -3,7 +3,11 @@ import type { OutgoingHttpHeaders } from 'node:http';
 import { z } from 'zod';
 
 import { buildSystemPrompt } from '../context/system-prompt.js';
-import { getProvider as defaultGetProvider, PROVIDER_NAMES, type ProviderName } from '../providers/index.js';
+import {
+  getProvider as defaultGetProvider,
+  PROVIDER_NAMES,
+  type ProviderName,
+} from '../providers/index.js';
 import { buildImagePool, type PoolItem } from '../unsplash/build-image-pool.js';
 import { type DailyQuota, dailyQuota as defaultDailyQuota } from '../unsplash/daily-quota.js';
 
@@ -80,7 +84,8 @@ function applyRecipeSafetyNet(line: string): string {
     patched = patched.replace(TOKEN_RE, (m) => TOKEN_FALLBACKS[m] ?? '#0254FB');
   }
   if (SLUG_RE.test(patched)) {
-    if (!warned) console.warn('[safety-net] Unsubstituted REPLACE-WITH-SEMANTIC-SLUG in NDJSON output');
+    if (!warned)
+      console.warn('[safety-net] Unsubstituted REPLACE-WITH-SEMANTIC-SLUG in NDJSON output');
     patched = patched.replace(SLUG_RE, 'generic-email-content');
   }
   return patched;
@@ -97,7 +102,11 @@ export interface CreateGenerateRouteOptions {
  * Write a single SSE frame to the raw Node response.
  * Fastify's `reply.raw` gives us the underlying `http.ServerResponse`.
  */
-function writeSSE(raw: import('node:http').ServerResponse, event: string | undefined, data: string): void {
+function writeSSE(
+  raw: import('node:http').ServerResponse,
+  event: string | undefined,
+  data: string,
+): void {
   if (event) raw.write(`event: ${event}\n`);
   raw.write(`data: ${data}\n\n`);
 }
@@ -124,7 +133,9 @@ export function createGenerateRoute(options: CreateGenerateRouteOptions = {}) {
       const model = body.model ?? undefined;
       const provider = getProvider(providerName);
       const variationSeed =
-        body.currentDocument !== undefined ? undefined : (body.variationSeed ?? Math.floor(Math.random() * 1000));
+        body.currentDocument !== undefined
+          ? undefined
+          : (body.variationSeed ?? Math.floor(Math.random() * 1000));
 
       let imagePool: PoolItem[] = [];
       let poolSkipReason: 'refinement' | 'quota' | 'no-prompt' | null = null;
@@ -196,7 +207,7 @@ export function createGenerateRoute(options: CreateGenerateRouteOptions = {}) {
           status: poolSkipReason ?? (imagePool.length > 0 ? 'ready' : 'unavailable'),
           itemCount: imagePool.length,
           quotaRemaining: quota.remaining('ai'),
-        })
+        }),
       );
 
       let streamBuffer = '';
@@ -224,7 +235,7 @@ export function createGenerateRoute(options: CreateGenerateRouteOptions = {}) {
                 action: 'balanced_closing_braces',
                 originalLength: line.length,
                 repairedLength: repaired.length,
-              })
+              }),
             );
           } else {
             writeSSE(raw, 'warning', JSON.stringify({ type: 'malformed_line', line }));
@@ -242,7 +253,8 @@ export function createGenerateRoute(options: CreateGenerateRouteOptions = {}) {
           /* ignore */
         }
 
-        const parsedId = parsed && typeof parsed.id === 'string' ? (parsed.id as string) : undefined;
+        const parsedId =
+          parsed && typeof parsed.id === 'string' ? (parsed.id as string) : undefined;
 
         const blockType = extractBlockType(parsed);
         if (blockType !== undefined && !VALID_BLOCK_TYPES.has(blockType)) {
@@ -254,14 +266,18 @@ export function createGenerateRoute(options: CreateGenerateRouteOptions = {}) {
               id: parsedId,
               blockType,
               action: 'dropped',
-            })
+            }),
           );
           return;
         }
 
         if (parsedId !== undefined && parsed !== null) {
           if (seenIds.has(parsedId)) {
-            writeSSE(raw, 'warning', JSON.stringify({ type: 'duplicate_id', id: parsedId, action: 'dropped' }));
+            writeSSE(
+              raw,
+              'warning',
+              JSON.stringify({ type: 'duplicate_id', id: parsedId, action: 'dropped' }),
+            );
             return;
           }
           seenIds.add(parsedId);
@@ -273,7 +289,11 @@ export function createGenerateRoute(options: CreateGenerateRouteOptions = {}) {
           if (changes.length > 0) {
             parsed = normalized as Record<string, unknown>;
             outboundLine = JSON.stringify(normalized);
-            writeSSE(raw, 'warning', JSON.stringify({ type: 'coerced_fields', id: parsedId, changes }));
+            writeSSE(
+              raw,
+              'warning',
+              JSON.stringify({ type: 'coerced_fields', id: parsedId, changes }),
+            );
           }
         }
 

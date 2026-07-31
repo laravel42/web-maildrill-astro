@@ -73,9 +73,7 @@ export default function Sparkline({
     return { x, y };
   });
   const points = coords.map((c) => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
-  const areaPoints = area
-    ? `0,${H} ${points} ${W},${H}`
-    : '';
+  const areaPoints = area ? `0,${H} ${points} ${W},${H}` : '';
 
   const onMove = (e: ReactMouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -134,11 +132,7 @@ export default function Sparkline({
         )}
       </svg>
       {tip && (
-        <div
-          className={styles.tip}
-          style={{ left: `${(tipX / W) * 100}%` }}
-          role="tooltip"
-        >
+        <div className={styles.tip} style={{ left: `${(tipX / W) * 100}%` }} role="tooltip">
           <div className={`tnum ${styles.tipVal}`}>{formatValue(tip.value, format)}</div>
           <div className={styles.tipLbl}>{tip.label}</div>
         </div>

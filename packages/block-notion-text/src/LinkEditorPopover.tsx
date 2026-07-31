@@ -16,7 +16,12 @@ interface LinkEditorPopoverProps {
   initialUrl?: string;
 }
 
-export function LinkEditorPopover({ editor, anchorEl, onClose, initialUrl = '' }: LinkEditorPopoverProps) {
+export function LinkEditorPopover({
+  editor,
+  anchorEl,
+  onClose,
+  initialUrl = '',
+}: LinkEditorPopoverProps) {
   const theme = useTheme();
   const { t } = useTranslation();
   const [url, setUrl] = useState(initialUrl);

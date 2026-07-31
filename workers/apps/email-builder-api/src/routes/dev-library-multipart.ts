@@ -45,7 +45,7 @@ export type ParsedSavePayloadWithThumbnail<T> = {
 export async function parseSaveRequestWithThumbnail<TSchema extends z.ZodTypeAny>(
   request: FastifyRequest,
   reply: FastifyReply,
-  schema: TSchema
+  schema: TSchema,
 ): Promise<ParsedSavePayloadWithThumbnail<z.infer<TSchema>> | null> {
   let rawJson: unknown;
   let fileBuffer: Buffer | null = null;
@@ -71,7 +71,10 @@ export async function parseSaveRequestWithThumbnail<TSchema extends z.ZodTypeAny
     if (typeof payloadField !== 'string') {
       reply
         .status(400)
-        .send({ error: 'invalid_request', message: 'multipart body must include a string `payload` field' });
+        .send({
+          error: 'invalid_request',
+          message: 'multipart body must include a string `payload` field',
+        });
       return null;
     }
     try {
@@ -113,7 +116,9 @@ export async function parseSaveRequestWithThumbnail<TSchema extends z.ZodTypeAny
   }
   const format = detectThumbnailFormat(fileBuffer);
   if (format === null) {
-    reply.status(400).send({ error: 'invalid_thumbnail_format', hint: 'thumbnail must be a PNG or WebP image' });
+    reply
+      .status(400)
+      .send({ error: 'invalid_thumbnail_format', hint: 'thumbnail must be a PNG or WebP image' });
     return null;
   }
   const dims = extractImageDimensions(fileBuffer, format);
@@ -122,5 +127,8 @@ export async function parseSaveRequestWithThumbnail<TSchema extends z.ZodTypeAny
     return null;
   }
 
-  return { payload, thumbnail: { bytes: Buffer.from(fileBuffer), format, width: dims.width, height: dims.height } };
+  return {
+    payload,
+    thumbnail: { bytes: Buffer.from(fileBuffer), format, width: dims.width, height: dims.height },
+  };
 }

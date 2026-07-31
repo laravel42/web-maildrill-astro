@@ -18,7 +18,11 @@ import type { SuggestionProps } from '@tiptap/suggestion';
 
 import { type AIAction, requestAIFeature } from './ai-features-config';
 import SafeEmojiMartPicker from './SafeEmojiMartPicker';
-import { getFilteredSlashMenuItems, type SlashMenuItem, type SlashSubmenuItem } from './slash-menu-items';
+import {
+  getFilteredSlashMenuItems,
+  type SlashMenuItem,
+  type SlashSubmenuItem,
+} from './slash-menu-items';
 
 export interface SlashMenuRef {
   onKeyDown: (props: { event: KeyboardEvent }) => boolean;
@@ -36,7 +40,10 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
   } | null>(null);
   const [submenuSelectedIndex, setSubmenuSelectedIndex] = useState(0);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-  const [emojiAnchorPosition, setEmojiAnchorPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [emojiAnchorPosition, setEmojiAnchorPosition] = useState<{ top: number; left: number }>({
+    top: 0,
+    left: 0,
+  });
   const [aiLoading, setAiLoading] = useState<AIAction | null>(null);
   const mainMenuRef = useRef<HTMLDivElement>(null);
   const submenuRef = useRef<HTMLDivElement>(null);
@@ -87,7 +94,9 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
   // Auto-scroll para mantener el item seleccionado visible en el menú principal
   useEffect(() => {
     if (mainMenuRef.current) {
-      const selectedElement = mainMenuRef.current.querySelector(`[data-slash-menu-item="${selectedIndex}"]`);
+      const selectedElement = mainMenuRef.current.querySelector(
+        `[data-slash-menu-item="${selectedIndex}"]`,
+      );
       if (selectedElement) {
         selectedElement.scrollIntoView({
           block: 'nearest',
@@ -100,7 +109,9 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
   // Auto-scroll para mantener el item seleccionado visible en el submenú
   useEffect(() => {
     if (submenuRef.current && submenuAnchor) {
-      const selectedElement = submenuRef.current.querySelector(`[data-submenu-item="${submenuSelectedIndex}"]`);
+      const selectedElement = submenuRef.current.querySelector(
+        `[data-submenu-item="${submenuSelectedIndex}"]`,
+      );
       if (selectedElement) {
         selectedElement.scrollIntoView({
           block: 'nearest',
@@ -232,7 +243,12 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
       if (emojiInsertionRef.current.isFirstEmoji) {
         // Primer emoji: reemplazar el slash command (/)
         const { from, to } = emojiInsertionRef.current.slashRange;
-        props.editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, emoji.native).run();
+        props.editor
+          .chain()
+          .focus()
+          .deleteRange({ from, to })
+          .insertContentAt(from, emoji.native)
+          .run();
 
         // Actualizar la posición para el siguiente emoji (después del emoji insertado)
         emojiInsertionRef.current.insertPosition = from + emojiLength;
@@ -249,7 +265,7 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
       // NO cerrar el emoji picker - permitir seleccionar múltiples emojis
       // El picker se cerrará cuando el usuario haga clic fuera o presione Escape
     },
-    [props]
+    [props],
   );
 
   const handleEmojiPickerClose = useCallback(() => {
@@ -278,7 +294,9 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
         const submenuItems = submenuAnchor.item.submenu.filter((item) => item.type !== 'divider');
 
         if (event.key === 'ArrowUp') {
-          setSubmenuSelectedIndex((submenuSelectedIndex + submenuItems.length - 1) % submenuItems.length);
+          setSubmenuSelectedIndex(
+            (submenuSelectedIndex + submenuItems.length - 1) % submenuItems.length,
+          );
           return true;
         }
 
@@ -320,7 +338,9 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
         const item = filteredItems[selectedIndex];
         if (item?.submenu && item.submenu.length > 0) {
           // Simular hover para abrir submenu
-          const element = document.querySelector(`[data-slash-menu-item="${selectedIndex}"]`) as HTMLElement;
+          const element = document.querySelector(
+            `[data-slash-menu-item="${selectedIndex}"]`,
+          ) as HTMLElement;
           if (element) {
             setSubmenuAnchor({ element, item });
             setSubmenuSelectedIndex(0);
@@ -334,7 +354,9 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
         const item = filteredItems[selectedIndex];
         if (item?.submenu && item.submenu.length > 0) {
           // Abrir submenu en lugar de ejecutar
-          const element = document.querySelector(`[data-slash-menu-item="${selectedIndex}"]`) as HTMLElement;
+          const element = document.querySelector(
+            `[data-slash-menu-item="${selectedIndex}"]`,
+          ) as HTMLElement;
           if (element) {
             setSubmenuAnchor({ element, item });
             setSubmenuSelectedIndex(0);
@@ -364,7 +386,10 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
           overflow: 'auto',
           backgroundColor: theme.palette.background.paper,
           borderRadius: '12px',
-          boxShadow: theme.palette.mode === 'dark' ? '0 10px 40px rgba(0,0,0,0.5)' : '0 10px 40px rgba(0,0,0,0.15)',
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? '0 10px 40px rgba(0,0,0,0.5)'
+              : '0 10px 40px rgba(0,0,0,0.15)',
           '&::-webkit-scrollbar': {
             width: '4px',
           },
@@ -408,7 +433,8 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
                   justifyContent: 'space-between',
                   p: '4px 10px',
                   borderRadius: '6px',
-                  backgroundColor: index === selectedIndex ? theme.palette.action.selected : 'transparent',
+                  backgroundColor:
+                    index === selectedIndex ? theme.palette.action.selected : 'transparent',
                   '&:hover': {
                     backgroundColor: theme.palette.action.hover,
                   },
@@ -416,7 +442,14 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                  <Box sx={{ mr: 1.5, display: 'flex', alignItems: 'center', color: theme.palette.text.secondary }}>
+                  <Box
+                    sx={{
+                      mr: 1.5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: theme.palette.text.secondary,
+                    }}
+                  >
                     {item.icon}
                   </Box>
                   <ListItemText
@@ -428,7 +461,10 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
                   />
                 </Box>
                 {item.submenu && item.submenu.length > 0 && (
-                  <ChevronRight fontSize="small" sx={{ ml: 4, color: theme.palette.text.disabled }} />
+                  <ChevronRight
+                    fontSize="small"
+                    sx={{ ml: 4, color: theme.palette.text.disabled }}
+                  />
                 )}
               </ListItemButton>
             </ListItem>
@@ -468,7 +504,9 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
                 backgroundColor: theme.palette.background.paper,
                 borderRadius: '12px',
                 boxShadow:
-                  theme.palette.mode === 'dark' ? '0 10px 40px rgba(0,0,0,0.5)' : '0 10px 40px rgba(0,0,0,0.15)',
+                  theme.palette.mode === 'dark'
+                    ? '0 10px 40px rgba(0,0,0,0.5)'
+                    : '0 10px 40px rgba(0,0,0,0.15)',
               },
             } as any,
           }}
@@ -500,12 +538,15 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
             <List dense sx={{ p: '8px 4px' }}>
               {submenuAnchor.item.submenu.map((submenuItem, idx) => {
                 if (submenuItem.type === 'divider') {
-                  return <Divider key={idx} sx={{ my: 0.5, backgroundColor: theme.palette.divider }} />;
+                  return (
+                    <Divider key={idx} sx={{ my: 0.5, backgroundColor: theme.palette.divider }} />
+                  );
                 }
 
                 // Check if this is a section header (uppercase label)
                 const isSectionHeader =
-                  submenuItem.title === submenuItem.title.toUpperCase() && submenuItem.title.length > 3;
+                  submenuItem.title === submenuItem.title.toUpperCase() &&
+                  submenuItem.title.length > 3;
 
                 if (isSectionHeader) {
                   return (
@@ -535,14 +576,20 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
 
                 const nonDividerItems = submenuAnchor.item.submenu!.filter(
                   (item) =>
-                    item.type !== 'divider' && !(item.title === item.title.toUpperCase() && item.title.length > 3)
+                    item.type !== 'divider' &&
+                    !(item.title === item.title.toUpperCase() && item.title.length > 3),
                 );
                 const actualIndex = nonDividerItems.indexOf(submenuItem);
 
                 // Check if item has emoji (for Friendly/Professional)
-                const hasEmoji = submenuItem.title === 'Friendly' || submenuItem.title === 'Professional';
+                const hasEmoji =
+                  submenuItem.title === 'Friendly' || submenuItem.title === 'Professional';
                 const emoji =
-                  submenuItem.title === 'Friendly' ? '😊' : submenuItem.title === 'Professional' ? '💼' : null;
+                  submenuItem.title === 'Friendly'
+                    ? '😊'
+                    : submenuItem.title === 'Professional'
+                      ? '💼'
+                      : null;
 
                 return (
                   <ListItem key={idx} disablePadding>
@@ -561,7 +608,9 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
                         p: '4px 10px',
                         borderRadius: '6px',
                         backgroundColor:
-                          actualIndex === submenuSelectedIndex ? theme.palette.action.selected : 'transparent',
+                          actualIndex === submenuSelectedIndex
+                            ? theme.palette.action.selected
+                            : 'transparent',
                         '&:hover': {
                           backgroundColor: theme.palette.action.hover,
                         },
@@ -571,13 +620,30 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps>((props, ref) 
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                         {hasEmoji && emoji ? (
-                          <Box sx={{ mr: 1.5, fontSize: '16px', display: 'flex', alignItems: 'center' }}>{emoji}</Box>
+                          <Box
+                            sx={{
+                              mr: 1.5,
+                              fontSize: '16px',
+                              display: 'flex',
+                              alignItems: 'center',
+                            }}
+                          >
+                            {emoji}
+                          </Box>
                         ) : submenuItem.icon ? (
                           <Box
-                            sx={{ mr: 1.5, display: 'flex', alignItems: 'center', color: theme.palette.text.secondary }}
+                            sx={{
+                              mr: 1.5,
+                              display: 'flex',
+                              alignItems: 'center',
+                              color: theme.palette.text.secondary,
+                            }}
                           >
                             {aiLoading === submenuItem.value ? (
-                              <CircularProgress size={20} sx={{ color: theme.palette.text.secondary }} />
+                              <CircularProgress
+                                size={20}
+                                sx={{ color: theme.palette.text.secondary }}
+                              />
                             ) : (
                               submenuItem.icon
                             )}

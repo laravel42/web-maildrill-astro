@@ -1,7 +1,11 @@
 import { ImageProps } from '@eb/block-image';
 import { shortCssId } from '@eb/email-builder';
 
-export const changeWidth = (blockId: string, setData: (v: ImageProps) => void, data: ImageProps) => {
+export const changeWidth = (
+  blockId: string,
+  setData: (v: ImageProps) => void,
+  data: ImageProps,
+) => {
   if (!blockId || !document) return;
 
   const sid = shortCssId(blockId);

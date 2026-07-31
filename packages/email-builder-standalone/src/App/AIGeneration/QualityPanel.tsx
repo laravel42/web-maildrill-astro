@@ -37,7 +37,9 @@ export function buildCorrectionsPrompt(findings: Finding[]): string {
     const order: Record<Severity, number> = { P0: 0, P1: 1, P2: 2, P3: 3 };
     return order[a.severity] - order[b.severity];
   });
-  const actionable = ranked.filter((f) => f.severity === 'P0' || f.severity === 'P1' || f.severity === 'P2').slice(0, 10);
+  const actionable = ranked
+    .filter((f) => f.severity === 'P0' || f.severity === 'P1' || f.severity === 'P2')
+    .slice(0, 10);
   if (actionable.length === 0) {
     return [
       '[REFINE] Scope: email',
@@ -53,7 +55,9 @@ export function buildCorrectionsPrompt(findings: Finding[]): string {
   }
 
   const lines = actionable.map((f, i) => {
-    const blocks = f.location?.blockIds?.length ? ` (blocks: ${f.location.blockIds.join(', ')})` : '';
+    const blocks = f.location?.blockIds?.length
+      ? ` (blocks: ${f.location.blockIds.join(', ')})`
+      : '';
     const clients = f.clients?.length ? ` [clients: ${f.clients.join(', ')}]` : '';
     return `${i + 1}. [${f.severity}] ${f.title}${blocks}${clients}\n   Fix: ${f.fix}`;
   });
@@ -186,9 +190,11 @@ export default function QualityPanel({
         ...data.report,
         sendReady: data.sendReady ?? data.report.sendReady,
         clientWeaknesses:
-          data.clientWeaknesses?.map((w) => `${w.severity} · ${w.title}`) ?? data.report.clientWeaknesses,
+          data.clientWeaknesses?.map((w) => `${w.severity} · ${w.title}`) ??
+          data.report.clientWeaknesses,
         designWeaknesses:
-          data.designWeaknesses?.map((w) => `${w.severity} · ${w.title}`) ?? data.report.designWeaknesses,
+          data.designWeaknesses?.map((w) => `${w.severity} · ${w.title}`) ??
+          data.report.designWeaknesses,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -224,25 +230,46 @@ export default function QualityPanel({
   if (!document) return null;
 
   const findings = report?.findings ?? [];
-  const visible = showAll ? findings : findings.filter((f) => f.severity === 'P0' || f.severity === 'P1').slice(0, 8);
+  const visible = showAll
+    ? findings
+    : findings.filter((f) => f.severity === 'P0' || f.severity === 'P1').slice(0, 8);
   const needsCorrections =
     Boolean(report) &&
     !report?.sendReady &&
-    ((report?.severityCounts.P0 ?? 0) > 0 || (report?.severityCounts.P1 ?? 0) > 0 || (report?.severityCounts.P2 ?? 0) > 0);
+    ((report?.severityCounts.P0 ?? 0) > 0 ||
+      (report?.severityCounts.P1 ?? 0) > 0 ||
+      (report?.severityCounts.P2 ?? 0) > 0);
   const busy = loading || deepLoading || applying;
 
   return (
     <Box sx={{ mt: 2, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}
+      >
         <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
           {t('aiGeneration.quality.title', 'Template quality')}
         </Typography>
         <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
           <Button size="small" onClick={() => void runAudit()} disabled={busy}>
-            {loading ? <CircularProgress size={16} /> : t('aiGeneration.quality.recheck', 'Recheck')}
+            {loading ? (
+              <CircularProgress size={16} />
+            ) : (
+              t('aiGeneration.quality.recheck', 'Recheck')
+            )}
           </Button>
-          <Button size="small" variant="outlined" onClick={() => void runDeepCritique()} disabled={busy}>
-            {deepLoading ? <CircularProgress size={16} /> : t('aiGeneration.quality.deepCritique', 'Design critique')}
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => void runDeepCritique()}
+            disabled={busy}
+          >
+            {deepLoading ? (
+              <CircularProgress size={16} />
+            ) : (
+              t('aiGeneration.quality.deepCritique', 'Design critique')
+            )}
           </Button>
           {/* "Apply corrections" lives once, next to the findings it fixes —
               a second copy up here competed with it and dimmed to noise when
@@ -260,7 +287,12 @@ export default function QualityPanel({
 
       {report && (
         <>
-          <Stack direction="row" spacing={1} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap', mb: 1.5 }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            useFlexGap
+            sx={{ alignItems: 'center', flexWrap: 'wrap', mb: 1.5 }}
+          >
             <Chip
               color={bandColor(report.overallBand)}
               label={`${report.overall}% · ${report.overallBand}`}
@@ -269,12 +301,16 @@ export default function QualityPanel({
             <Chip
               size="small"
               variant="outlined"
-              label={t('aiGeneration.quality.auditScore', 'Tech {{n}}%', { n: report.audit.percentage })}
+              label={t('aiGeneration.quality.auditScore', 'Tech {{n}}%', {
+                n: report.audit.percentage,
+              })}
             />
             <Chip
               size="small"
               variant="outlined"
-              label={t('aiGeneration.quality.designScore', 'Design {{n}}%', { n: report.critique.percentage })}
+              label={t('aiGeneration.quality.designScore', 'Design {{n}}%', {
+                n: report.critique.percentage,
+              })}
             />
             <Chip
               size="small"
@@ -298,7 +334,10 @@ export default function QualityPanel({
 
           {report.strengths?.length > 0 && (
             <Box sx={{ mb: 1.5 }}>
-              <Typography variant="caption" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+              <Typography
+                variant="caption"
+                sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 }}
+              >
                 {t('aiGeneration.quality.strengths', 'Strengths')}
               </Typography>
               <List dense disablePadding>
@@ -341,9 +380,12 @@ export default function QualityPanel({
             </Alert>
           )}
 
-          <Typography variant="caption" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-            {t('aiGeneration.quality.findings', 'Findings')} ({report.severityCounts.P0} P0 · {report.severityCounts.P1}{' '}
-            P1 · {report.severityCounts.P2} P2)
+          <Typography
+            variant="caption"
+            sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 }}
+          >
+            {t('aiGeneration.quality.findings', 'Findings')} ({report.severityCounts.P0} P0 ·{' '}
+            {report.severityCounts.P1} P1 · {report.severityCounts.P2} P2)
           </Typography>
           <List dense>
             {visible.map((f, i) => (
@@ -385,7 +427,9 @@ export default function QualityPanel({
             <Button size="small" onClick={() => setShowAll((v) => !v)}>
               {showAll
                 ? t('aiGeneration.quality.showLess', 'Show less')
-                : t('aiGeneration.quality.showAll', 'Show all {{n}} findings', { n: findings.length })}
+                : t('aiGeneration.quality.showAll', 'Show all {{n}} findings', {
+                    n: findings.length,
+                  })}
             </Button>
           )}
 
@@ -404,10 +448,14 @@ export default function QualityPanel({
                   ? t('aiGeneration.quality.applyingCorrections', 'Applying…')
                   : t('aiGeneration.quality.applyCorrections', 'Apply corrections')}
               </Button>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.75 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', mt: 0.75 }}
+              >
                 {t(
                   'aiGeneration.quality.applyCorrectionsHint',
-                  'Re-generates this template in refine mode, fixing the P0/P1 findings above while keeping block IDs and brand.'
+                  'Re-generates this template in refine mode, fixing the P0/P1 findings above while keeping block IDs and brand.',
                 )}
               </Typography>
             </Box>

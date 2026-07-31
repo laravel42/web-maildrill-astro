@@ -77,7 +77,7 @@ export function analyzeVariables(text: string, map: VariableMap = {}): VariableA
  */
 export function renumberVariables(
   text: string,
-  map: VariableMap = {}
+  map: VariableMap = {},
 ): { text: string; map: VariableMap; mapping: Record<number, number> } {
   const order: number[] = [];
   for (const n of extractVariables(text)) {
@@ -136,7 +136,7 @@ export function insertVariableAt(
   text: string,
   map: VariableMap = {},
   start: number = text.length,
-  end: number = start
+  end: number = start,
 ): { text: string; map: VariableMap; caret: number } {
   const before = text.slice(0, start);
   const after = text.slice(end);
@@ -144,7 +144,11 @@ export function insertVariableAt(
   // distinct variable (never merged with an existing duplicate) until the
   // renumber pass assigns its final, position-based number.
   const tempNum = nextVariableNumber(text);
-  const { text: nextText, map: nextMap, mapping } = renumberVariables(`${before}{{${tempNum}}}${after}`, map);
+  const {
+    text: nextText,
+    map: nextMap,
+    mapping,
+  } = renumberVariables(`${before}{{${tempNum}}}${after}`, map);
   // The renumber only rewrites {{n}} digit runs, so applying the same mapping
   // to the prefix alone gives its post-renumber length — hence the caret.
   const remappedBefore = before.replace(VARIABLE_RE, (_m, d: string) => {

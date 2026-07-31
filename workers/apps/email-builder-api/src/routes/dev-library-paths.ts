@@ -16,4 +16,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export const SKILLS_REFERENCES_DIR = resolve(__dirname, '../../../../skills/email-builder/references');
+export const SKILLS_REFERENCES_DIR = resolve(
+  __dirname,
+  '../../../../skills/email-builder/references',
+);

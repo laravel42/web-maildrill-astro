@@ -54,7 +54,7 @@ function toWireBrief(draft: DraftBrief): object {
 export async function compileBriefClient(
   draft: DraftBrief,
   backendUrl: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<CompileBriefResult> {
   const res = await fetch(`${backendUrl}/visual-brief/compile`, {
     method: 'POST',

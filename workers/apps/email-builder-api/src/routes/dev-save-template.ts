@@ -12,7 +12,15 @@
  */
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { resolve } from 'node:path';
 import { z } from 'zod';
 
@@ -78,8 +86,12 @@ const UpdateTemplateSchema = z
       .optional(),
   })
   .refine(
-    (v) => v.name !== undefined || v.description !== undefined || v.tags !== undefined || v.blocks !== undefined,
-    { message: 'at least one of name, description, tags, blocks is required' }
+    (v) =>
+      v.name !== undefined ||
+      v.description !== undefined ||
+      v.tags !== undefined ||
+      v.blocks !== undefined,
+    { message: 'at least one of name, description, tags, blocks is required' },
   );
 
 type BlockEntry = LibraryBlockEntry;
@@ -101,7 +113,8 @@ function serialiseTemplate(meta: TemplateMetadata, entries: BlockEntry[]): strin
 
 function parseTemplateFile(raw: string): { metadata: TemplateMetadata; entries: BlockEntry[] } {
   const { metadata, entries } = parseLibraryFile<TemplateMetadata>(raw);
-  if (typeof metadata.usage !== 'string') throw new Error('malformed metadata header: missing usage');
+  if (typeof metadata.usage !== 'string')
+    throw new Error('malformed metadata header: missing usage');
   return { metadata, entries };
 }
 
@@ -167,7 +180,9 @@ function listTemplates(): TemplateListing[] {
   return out;
 }
 
-export const devSaveTemplatePlugin = async function devSaveTemplatePlugin(fastify: FastifyInstance) {
+export const devSaveTemplatePlugin = async function devSaveTemplatePlugin(
+  fastify: FastifyInstance,
+) {
   await fastify.register(multipart, { limits: { fileSize: MAX_THUMBNAIL_BYTES } });
 
   fastify.post('/dev/save-template', async (request: FastifyRequest, reply: FastifyReply) => {
@@ -207,13 +222,20 @@ export const devSaveTemplatePlugin = async function devSaveTemplatePlugin(fastif
       if (err instanceof PayloadTooLargeError)
         return reply
           .status(413)
-          .send({ error: 'payload_too_large', limitBytes: MAX_NDJSON_BYTES, actualBytes: err.bytes });
+          .send({
+            error: 'payload_too_large',
+            limitBytes: MAX_NDJSON_BYTES,
+            actualBytes: err.bytes,
+          });
       throw err;
     }
 
     if (thumbnail) {
       try {
-        writeThumbnailFile(getThumbnailPath('templates', body.usage.trim(), id, thumbnail.format), thumbnail.bytes);
+        writeThumbnailFile(
+          getThumbnailPath('templates', body.usage.trim(), id, thumbnail.format),
+          thumbnail.bytes,
+        );
       } catch (err) {
         if (err instanceof ThumbnailTooLargeError)
           return reply
@@ -221,7 +243,10 @@ export const devSaveTemplatePlugin = async function devSaveTemplatePlugin(fastif
             .send({ error: 'thumbnail_too_large', limitBytes: err.limit, actualBytes: err.bytes });
         return reply
           .status(500)
-          .send({ error: 'thumbnail_write_failed', message: err instanceof Error ? err.message : 'unknown' });
+          .send({
+            error: 'thumbnail_write_failed',
+            message: err instanceof Error ? err.message : 'unknown',
+          });
       }
     }
 
@@ -230,8 +255,11 @@ export const devSaveTemplatePlugin = async function devSaveTemplatePlugin(fastif
       if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
       writeFileSync(templateFilePath(body.usage.trim(), id), ndjson, 'utf8');
     } catch (err) {
-      if (thumbnail) deleteThumbnailFile(getThumbnailPath('templates', body.usage.trim(), id, thumbnail.format));
-      return reply.status(500).send({ error: 'write_failed', message: err instanceof Error ? err.message : 'unknown' });
+      if (thumbnail)
+        deleteThumbnailFile(getThumbnailPath('templates', body.usage.trim(), id, thumbnail.format));
+      return reply
+        .status(500)
+        .send({ error: 'write_failed', message: err instanceof Error ? err.message : 'unknown' });
     }
 
     return reply.send({
@@ -254,141 +282,175 @@ export const devSaveTemplatePlugin = async function devSaveTemplatePlugin(fastif
     return reply.send({ templates: listTemplates() });
   });
 
-  fastify.get<{ Params: { usage: string; id: string } }>('/dev/templates/:usage/:id', async (request, reply) => {
-    if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
-    const { usage, id } = request.params;
-    if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
-    const path = templateFilePath(usage, id);
-    if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', usage, id });
-    let parsed: { metadata: TemplateMetadata; entries: BlockEntry[] };
-    try {
-      parsed = parseTemplateFile(readFileSync(path, 'utf8'));
-    } catch (err) {
-      return reply.status(500).send({ error: 'read_failed', message: err instanceof Error ? err.message : 'unknown' });
-    }
-    return reply.send({
-      id: parsed.metadata.id,
-      usage: parsed.metadata.usage,
-      name: parsed.metadata.name,
-      description: parsed.metadata.description,
-      tags: parsed.metadata.tags ?? [],
-      createdAt: parsed.metadata.createdAt,
-      updatedAt: parsed.metadata.updatedAt,
-      blocks: parsed.entries,
-      hasThumbnail: parsed.metadata.thumbnail !== undefined,
-    });
-  });
-
-  fastify.put<{ Params: { usage: string; id: string } }>('/dev/templates/:usage/:id', async (request, reply) => {
-    if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
-    const { usage, id } = request.params;
-    if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
-
-    const parsedReq = await parseSaveRequestWithThumbnail(request, reply, UpdateTemplateSchema);
-    if (parsedReq === null) return;
-    const { payload: body, thumbnail } = parsedReq;
-
-    const path = templateFilePath(usage, id);
-    if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', usage, id });
-    let parsed: { metadata: TemplateMetadata; entries: BlockEntry[] };
-    try {
-      parsed = parseTemplateFile(readFileSync(path, 'utf8'));
-    } catch (err) {
-      return reply.status(500).send({ error: 'read_failed', message: err instanceof Error ? err.message : 'unknown' });
-    }
-
-    const nextMetadata: TemplateMetadata = { ...parsed.metadata, updatedAt: nowIso() };
-    if (body.name !== undefined) nextMetadata.name = body.name.trim();
-    if (body.description !== undefined) {
-      if (body.description === '') delete nextMetadata.description;
-      else nextMetadata.description = body.description;
-    }
-    if (body.tags !== undefined) {
-      const n = normalizeTags(body.tags);
-      if (n) nextMetadata.tags = n;
-      else delete nextMetadata.tags;
-    }
-    if (thumbnail) {
-      nextMetadata.thumbnail = buildThumbnailMetadata({
-        format: thumbnail.format,
-        width: thumbnail.width,
-        height: thumbnail.height,
-        sizeBytes: thumbnail.bytes.byteLength,
-        capturedAt: nextMetadata.updatedAt,
-      });
-    }
-
-    let nextEntries = parsed.entries;
-    let droppedRefs: string[] = [];
-    if (body.blocks !== undefined) {
-      const renumbered = renumberBlocks(body.blocks as BlockEntry[], id);
-      nextEntries = renumbered.entries;
-      droppedRefs = renumbered.droppedRefs;
-    }
-
-    let ndjson: string;
-    try {
-      ndjson = serialiseTemplate(nextMetadata, nextEntries);
-    } catch (err) {
-      if (err instanceof PayloadTooLargeError)
-        return reply
-          .status(413)
-          .send({ error: 'payload_too_large', limitBytes: MAX_NDJSON_BYTES, actualBytes: err.bytes });
-      throw err;
-    }
-
-    if (thumbnail) {
+  fastify.get<{ Params: { usage: string; id: string } }>(
+    '/dev/templates/:usage/:id',
+    async (request, reply) => {
+      if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
+      const { usage, id } = request.params;
+      if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
+      const path = templateFilePath(usage, id);
+      if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', usage, id });
+      let parsed: { metadata: TemplateMetadata; entries: BlockEntry[] };
       try {
-        writeThumbnailFile(getThumbnailPath('templates', usage, id, thumbnail.format), thumbnail.bytes);
+        parsed = parseTemplateFile(readFileSync(path, 'utf8'));
       } catch (err) {
-        if (err instanceof ThumbnailTooLargeError)
-          return reply
-            .status(413)
-            .send({ error: 'thumbnail_too_large', limitBytes: err.limit, actualBytes: err.bytes });
         return reply
           .status(500)
-          .send({ error: 'thumbnail_write_failed', message: err instanceof Error ? err.message : 'unknown' });
+          .send({ error: 'read_failed', message: err instanceof Error ? err.message : 'unknown' });
       }
-      deleteThumbnailFile(getThumbnailPath('templates', usage, id, thumbnail.format === 'webp' ? 'png' : 'webp'));
-    }
+      return reply.send({
+        id: parsed.metadata.id,
+        usage: parsed.metadata.usage,
+        name: parsed.metadata.name,
+        description: parsed.metadata.description,
+        tags: parsed.metadata.tags ?? [],
+        createdAt: parsed.metadata.createdAt,
+        updatedAt: parsed.metadata.updatedAt,
+        blocks: parsed.entries,
+        hasThumbnail: parsed.metadata.thumbnail !== undefined,
+      });
+    },
+  );
 
-    try {
-      writeFileSync(path, ndjson, 'utf8');
-    } catch (err) {
-      return reply.status(500).send({ error: 'write_failed', message: err instanceof Error ? err.message : 'unknown' });
-    }
+  fastify.put<{ Params: { usage: string; id: string } }>(
+    '/dev/templates/:usage/:id',
+    async (request, reply) => {
+      if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
+      const { usage, id } = request.params;
+      if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
 
-    return reply.send({
-      id: nextMetadata.id,
-      usage: nextMetadata.usage,
-      name: nextMetadata.name,
-      description: nextMetadata.description,
-      tags: nextMetadata.tags ?? [],
-      createdAt: nextMetadata.createdAt,
-      updatedAt: nextMetadata.updatedAt,
-      blockCount: nextEntries.length,
-      droppedRefs,
-      hasThumbnail: nextMetadata.thumbnail !== undefined,
-    });
-  });
+      const parsedReq = await parseSaveRequestWithThumbnail(request, reply, UpdateTemplateSchema);
+      if (parsedReq === null) return;
+      const { payload: body, thumbnail } = parsedReq;
 
-  fastify.delete<{ Params: { usage: string; id: string } }>('/dev/templates/:usage/:id', async (request, reply) => {
-    if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
-    const { usage, id } = request.params;
-    if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
-    const path = templateFilePath(usage, id);
-    if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', usage, id });
-    try {
-      unlinkSync(path);
-    } catch (err) {
-      return reply
-        .status(500)
-        .send({ error: 'delete_failed', message: err instanceof Error ? err.message : 'unknown' });
-    }
-    deleteThumbnailFile(getThumbnailPath('templates', usage, id, 'webp'));
-    deleteThumbnailFile(getThumbnailPath('templates', usage, id, 'png'));
-    return reply.send({ deleted: `templates/${usage}/${id}.ndjson`, usage, id });
-  });
+      const path = templateFilePath(usage, id);
+      if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', usage, id });
+      let parsed: { metadata: TemplateMetadata; entries: BlockEntry[] };
+      try {
+        parsed = parseTemplateFile(readFileSync(path, 'utf8'));
+      } catch (err) {
+        return reply
+          .status(500)
+          .send({ error: 'read_failed', message: err instanceof Error ? err.message : 'unknown' });
+      }
+
+      const nextMetadata: TemplateMetadata = { ...parsed.metadata, updatedAt: nowIso() };
+      if (body.name !== undefined) nextMetadata.name = body.name.trim();
+      if (body.description !== undefined) {
+        if (body.description === '') delete nextMetadata.description;
+        else nextMetadata.description = body.description;
+      }
+      if (body.tags !== undefined) {
+        const n = normalizeTags(body.tags);
+        if (n) nextMetadata.tags = n;
+        else delete nextMetadata.tags;
+      }
+      if (thumbnail) {
+        nextMetadata.thumbnail = buildThumbnailMetadata({
+          format: thumbnail.format,
+          width: thumbnail.width,
+          height: thumbnail.height,
+          sizeBytes: thumbnail.bytes.byteLength,
+          capturedAt: nextMetadata.updatedAt,
+        });
+      }
+
+      let nextEntries = parsed.entries;
+      let droppedRefs: string[] = [];
+      if (body.blocks !== undefined) {
+        const renumbered = renumberBlocks(body.blocks as BlockEntry[], id);
+        nextEntries = renumbered.entries;
+        droppedRefs = renumbered.droppedRefs;
+      }
+
+      let ndjson: string;
+      try {
+        ndjson = serialiseTemplate(nextMetadata, nextEntries);
+      } catch (err) {
+        if (err instanceof PayloadTooLargeError)
+          return reply
+            .status(413)
+            .send({
+              error: 'payload_too_large',
+              limitBytes: MAX_NDJSON_BYTES,
+              actualBytes: err.bytes,
+            });
+        throw err;
+      }
+
+      if (thumbnail) {
+        try {
+          writeThumbnailFile(
+            getThumbnailPath('templates', usage, id, thumbnail.format),
+            thumbnail.bytes,
+          );
+        } catch (err) {
+          if (err instanceof ThumbnailTooLargeError)
+            return reply
+              .status(413)
+              .send({
+                error: 'thumbnail_too_large',
+                limitBytes: err.limit,
+                actualBytes: err.bytes,
+              });
+          return reply
+            .status(500)
+            .send({
+              error: 'thumbnail_write_failed',
+              message: err instanceof Error ? err.message : 'unknown',
+            });
+        }
+        deleteThumbnailFile(
+          getThumbnailPath('templates', usage, id, thumbnail.format === 'webp' ? 'png' : 'webp'),
+        );
+      }
+
+      try {
+        writeFileSync(path, ndjson, 'utf8');
+      } catch (err) {
+        return reply
+          .status(500)
+          .send({ error: 'write_failed', message: err instanceof Error ? err.message : 'unknown' });
+      }
+
+      return reply.send({
+        id: nextMetadata.id,
+        usage: nextMetadata.usage,
+        name: nextMetadata.name,
+        description: nextMetadata.description,
+        tags: nextMetadata.tags ?? [],
+        createdAt: nextMetadata.createdAt,
+        updatedAt: nextMetadata.updatedAt,
+        blockCount: nextEntries.length,
+        droppedRefs,
+        hasThumbnail: nextMetadata.thumbnail !== undefined,
+      });
+    },
+  );
+
+  fastify.delete<{ Params: { usage: string; id: string } }>(
+    '/dev/templates/:usage/:id',
+    async (request, reply) => {
+      if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
+      const { usage, id } = request.params;
+      if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
+      const path = templateFilePath(usage, id);
+      if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', usage, id });
+      try {
+        unlinkSync(path);
+      } catch (err) {
+        return reply
+          .status(500)
+          .send({
+            error: 'delete_failed',
+            message: err instanceof Error ? err.message : 'unknown',
+          });
+      }
+      deleteThumbnailFile(getThumbnailPath('templates', usage, id, 'webp'));
+      deleteThumbnailFile(getThumbnailPath('templates', usage, id, 'png'));
+      return reply.send({ deleted: `templates/${usage}/${id}.ndjson`, usage, id });
+    },
+  );
 
   fastify.get<{ Params: { usage: string; id: string } }>(
     '/dev/templates/:usage/:id/thumbnail',
@@ -400,7 +462,11 @@ export const devSaveTemplatePlugin = async function devSaveTemplatePlugin(fastif
         { filePath: getThumbnailPath('templates', usage, id, 'webp'), contentType: 'image/webp' },
         { filePath: getThumbnailPath('templates', usage, id, 'png'), contentType: 'image/png' },
       ];
-      let chosen: { filePath: string; contentType: string; stats: { size: number; mtimeMs: number } } | null = null;
+      let chosen: {
+        filePath: string;
+        contentType: string;
+        stats: { size: number; mtimeMs: number };
+      } | null = null;
       for (const c of candidates) {
         const stats = statThumbnailFile(c.filePath);
         if (stats !== null) {
@@ -408,12 +474,17 @@ export const devSaveTemplatePlugin = async function devSaveTemplatePlugin(fastif
           break;
         }
       }
-      if (chosen === null) return reply.status(404).send({ error: 'thumbnail_not_found', usage, id });
+      if (chosen === null)
+        return reply.status(404).send({ error: 'thumbnail_not_found', usage, id });
       const etag = `W/"${chosen.stats.size}-${Math.floor(chosen.stats.mtimeMs)}"`;
       if (request.headers['if-none-match'] === etag)
-        return reply.status(304).headers({ ETag: etag, 'Cache-Control': 'public, max-age=300' }).send();
+        return reply
+          .status(304)
+          .headers({ ETag: etag, 'Cache-Control': 'public, max-age=300' })
+          .send();
       const buffer = readThumbnailFile(chosen.filePath);
-      if (buffer === null) return reply.status(404).send({ error: 'thumbnail_not_found', usage, id });
+      if (buffer === null)
+        return reply.status(404).send({ error: 'thumbnail_not_found', usage, id });
       return reply
         .status(200)
         .headers({
@@ -423,6 +494,6 @@ export const devSaveTemplatePlugin = async function devSaveTemplatePlugin(fastif
           ETag: etag,
         })
         .send(buffer);
-    }
+    },
   );
 };

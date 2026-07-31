@@ -72,7 +72,7 @@ export function NotionTextReader({ blockId, style, props }: NotionTextReaderProp
   // desktop value remains otherwise. The resolver chain has already
   // populated `style.padding` with the schema default at this point.
   const padding = getPadding(
-    selectedScreenSize === 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding)
+    selectedScreenSize === 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding),
   );
 
   const textAlign = style?.textAlign ?? undefined;

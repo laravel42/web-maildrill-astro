@@ -1,18 +1,18 @@
-import { config } from "@maildrill/config";
-import { getProvider } from "@maildrill/providers";
-import { createLogger } from "@maildrill/observability";
-import { sha256Hex } from "@maildrill/domain";
+import { config } from '@maildrill/config';
+import { getProvider } from '@maildrill/providers';
+import { createLogger } from '@maildrill/observability';
+import { sha256Hex } from '@maildrill/domain';
 
-const log = createLogger({ component: "welcome-email" });
+const log = createLogger({ component: 'welcome-email' });
 
 /** Escape a user-supplied name before it goes into the HTML email body. */
 function escapeHtml(s: string): string {
   return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /**
@@ -21,7 +21,7 @@ function escapeHtml(s: string): string {
  * so the service can send it without reaching into the frontend repo.
  */
 export function welcomeEmailHtml(firstName?: string): string {
-  const name = firstName?.trim() ? escapeHtml(firstName.trim()) : "there";
+  const name = firstName?.trim() ? escapeHtml(firstName.trim()) : 'there';
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -188,7 +188,7 @@ export function welcomeEmailHtml(firstName?: string): string {
 
 /** Plain-text fallback for clients that don't render HTML. */
 function welcomeEmailText(firstName?: string): string {
-  const name = firstName?.trim() || "there";
+  const name = firstName?.trim() || 'there';
   return (
     `Welcome to Maildrill\n\n` +
     `Hi ${name},\n\n` +
@@ -209,20 +209,17 @@ function welcomeEmailText(firstName?: string): string {
  * provider, not the campaign pipeline), the same path as the login code.
  * Returns whether the provider accepted it; never throws.
  */
-export async function sendWelcomeEmail(
-  email: string,
-  firstName?: string,
-): Promise<boolean> {
+export async function sendWelcomeEmail(email: string, firstName?: string): Promise<boolean> {
   const to = email.trim().toLowerCase();
   try {
     const result = await getProvider().send({
       messageId: `welcome-${sha256Hex(to).slice(0, 16)}`,
-      tenantId: "system",
-      channel: "email",
+      tenantId: 'system',
+      channel: 'email',
       to,
-      correlationId: "signup-welcome",
+      correlationId: 'signup-welcome',
       content: {
-        subject: "Welcome to Maildrill",
+        subject: 'Welcome to Maildrill',
         html: welcomeEmailHtml(firstName),
         text: welcomeEmailText(firstName),
       },
@@ -230,14 +227,14 @@ export async function sendWelcomeEmail(
     if (result.accepted) {
       log.info(
         { email: to, provider: getProvider().name, providerMessageId: result.providerMessageId },
-        "welcome email sent",
+        'welcome email sent',
       );
     } else {
-      log.error({ email: to, error: result.error }, "welcome email send FAILED");
+      log.error({ email: to, error: result.error }, 'welcome email send FAILED');
     }
     return result.accepted;
   } catch (err) {
-    log.error({ email: to, err }, "welcome email send threw");
+    log.error({ email: to, err }, 'welcome email send threw');
     return false;
   }
 }

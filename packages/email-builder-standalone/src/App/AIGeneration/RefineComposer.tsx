@@ -1,7 +1,14 @@
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Box, Button, CircularProgress, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from '@mui/material';
 
 import WrapPills from './Wizard/controls/WrapPills';
 
@@ -76,7 +83,10 @@ export default function RefineComposer({ backendUrl, description, onCompiled }: 
       <Box sx={{ mt: 0.5, mb: 1 }}>
         <WrapPills
           ariaLabel={t('aiGeneration.refine.changesLabel', 'What should change?')}
-          options={CHANGE_CHIPS.map((c) => ({ value: c, label: t(`aiGeneration.refine.changes.${c}`, c) }))}
+          options={CHANGE_CHIPS.map((c) => ({
+            value: c,
+            label: t(`aiGeneration.refine.changes.${c}`, c),
+          }))}
           isSelected={(v) => changes.includes(v)}
           onToggle={toggle}
         />

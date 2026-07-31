@@ -65,8 +65,10 @@ export default function AiFeaturesDropdown({ editor }: Props) {
 
       setFeaturesList((prev) =>
         prev.map((feature) =>
-          feature.value === action ? { ...feature, loading: true, disabled: true } : { ...feature, disabled: true }
-        )
+          feature.value === action
+            ? { ...feature, loading: true, disabled: true }
+            : { ...feature, disabled: true },
+        ),
       );
 
       requestAIFeature({
@@ -78,7 +80,7 @@ export default function AiFeaturesDropdown({ editor }: Props) {
         selectionTo: to,
       });
     },
-    [editor]
+    [editor],
   );
 
   useEffect(() => {
@@ -88,7 +90,7 @@ export default function AiFeaturesDropdown({ editor }: Props) {
           ...feature,
           loading: false,
           disabled: false,
-        }))
+        })),
       );
       handleClose();
     };
@@ -107,7 +109,11 @@ export default function AiFeaturesDropdown({ editor }: Props) {
         <AIIcon fontSize="small" />
       </ToolbarIconButton>
 
-      <Divider orientation="vertical" flexItem sx={{ backgroundColor: theme.palette.divider, mx: 0.5 }} />
+      <Divider
+        orientation="vertical"
+        flexItem
+        sx={{ backgroundColor: theme.palette.divider, mx: 0.5 }}
+      />
 
       <ToolbarPopover anchorEl={anchor} onClose={handleClose}>
         <List sx={{ maxHeight: 400, overflow: 'auto', p: '8px 4px' }}>
@@ -151,9 +157,13 @@ export default function AiFeaturesDropdown({ editor }: Props) {
                 }}
               >
                 {feature.emoji ? (
-                  <Box sx={{ mr: 1, fontSize: '18px', display: 'flex', alignItems: 'center' }}>{feature.emoji}</Box>
+                  <Box sx={{ mr: 1, fontSize: '18px', display: 'flex', alignItems: 'center' }}>
+                    {feature.emoji}
+                  </Box>
                 ) : (
-                  <ListItemIcon sx={{ minWidth: 'auto', mr: 1, color: theme.palette.text.secondary }}>
+                  <ListItemIcon
+                    sx={{ minWidth: 'auto', mr: 1, color: theme.palette.text.secondary }}
+                  >
                     {feature.loading ? (
                       <CircularProgress size={20} sx={{ color: theme.palette.text.secondary }} />
                     ) : (
@@ -163,7 +173,9 @@ export default function AiFeaturesDropdown({ editor }: Props) {
                 )}
                 <ListItemText
                   primary={feature.label}
-                  slotProps={{ primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } } }}
+                  slotProps={{
+                    primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } },
+                  }}
                 />
               </ListItemButton>
             );

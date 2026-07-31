@@ -29,7 +29,12 @@ export default function PillMultiSelect({ label, hint, values, options, onChange
 
   return (
     <FieldShell label={label} hint={hint}>
-      <WrapPills options={options} isSelected={(v) => values.includes(v)} onToggle={toggle} ariaLabel={label} />
+      <WrapPills
+        options={options}
+        isSelected={(v) => values.includes(v)}
+        onToggle={toggle}
+        ariaLabel={label}
+      />
     </FieldShell>
   );
 }

@@ -5,7 +5,11 @@ import { shortCssId } from '@eb/email-builder';
 
 import { useSelectedScreenSize } from '../../editor/EditorContext';
 
-const useParentImageWidth = (blockId: string, setData: (v: ImageProps) => void, data: ImageProps) => {
+const useParentImageWidth = (
+  blockId: string,
+  setData: (v: ImageProps) => void,
+  data: ImageProps,
+) => {
   const selectedScreen = useSelectedScreenSize();
 
   useEffect(() => {

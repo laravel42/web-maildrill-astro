@@ -37,16 +37,23 @@ export default function BackgroundPickerButton({ editor }: Props) {
         }
       });
     },
-    [editor]
+    [editor],
   );
 
   return (
     <>
-      <ToolbarIconButton tooltip={t('bubbleMenu.backgroundColor')} active={hasBackground} onClick={handleClick}>
+      <ToolbarIconButton
+        tooltip={t('bubbleMenu.backgroundColor')}
+        active={hasBackground}
+        onClick={handleClick}
+      >
         <BackgroundColorIcon
           fontSize="small"
           sx={{
-            color: currentBackground !== 'transparent' ? currentBackground : theme.palette.text.secondary,
+            color:
+              currentBackground !== 'transparent'
+                ? currentBackground
+                : theme.palette.text.secondary,
             ...(currentBackground === 'transparent' && {
               opacity: 1,
             }),

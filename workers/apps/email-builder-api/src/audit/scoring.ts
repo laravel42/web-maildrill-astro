@@ -65,7 +65,11 @@ export function computeApplicability(metrics: TemplateMetrics): Applicability {
   return na;
 }
 
-function scoreDimension(dimension: DimensionId, findings: Finding[], applicability: Applicability): DimensionScore {
+function scoreDimension(
+  dimension: DimensionId,
+  findings: Finding[],
+  applicability: Applicability,
+): DimensionScore {
   const reason = applicability[dimension];
   const mine = findings.filter((f) => f.dimension === dimension);
 
@@ -97,7 +101,11 @@ function scoreDimension(dimension: DimensionId, findings: Finding[], applicabili
   };
 }
 
-function buildCard(dimensions: readonly DimensionId[], findings: Finding[], applicability: Applicability): ScoreCard {
+function buildCard(
+  dimensions: readonly DimensionId[],
+  findings: Finding[],
+  applicability: Applicability,
+): ScoreCard {
   const scored = dimensions.map((d) => scoreDimension(d, findings, applicability));
   const applicable = scored.filter((d) => d.score !== null);
   const total = applicable.reduce((sum, d) => sum + (d.score ?? 0), 0);
@@ -166,7 +174,9 @@ export function detectPatterns(findings: Finding[]): string[] {
 
   for (const f of findings) {
     if (f.location.blockIds.length >= 4) {
-      patterns.push(`${f.title} — affects ${f.location.blockIds.length} blocks, so it is a systemic choice rather than an isolated slip.`);
+      patterns.push(
+        `${f.title} — affects ${f.location.blockIds.length} blocks, so it is a systemic choice rather than an isolated slip.`,
+      );
     }
   }
 
@@ -174,7 +184,9 @@ export function detectPatterns(findings: Finding[]): string[] {
   for (const f of findings) byDimension.set(f.dimension, (byDimension.get(f.dimension) ?? 0) + 1);
   for (const [dimension, count] of byDimension) {
     if (count >= 4) {
-      patterns.push(`${count} separate findings in ${DIMENSION_LABEL[dimension].toLowerCase()} — worth one focused pass rather than fixing them individually.`);
+      patterns.push(
+        `${count} separate findings in ${DIMENSION_LABEL[dimension].toLowerCase()} — worth one focused pass rather than fixing them individually.`,
+      );
     }
   }
 
@@ -192,28 +204,58 @@ export function detectStrengths(findings: Finding[], metrics: TemplateMetrics): 
   const fired = new Set(findings.map((f) => f.ruleId));
   const strengths: string[] = [];
 
-  if (!fired.has('a11y/text-contrast') && !fired.has('a11y/button-contrast') && metrics.wordCount > 0) {
+  if (
+    !fired.has('a11y/text-contrast') &&
+    !fired.has('a11y/button-contrast') &&
+    metrics.wordCount > 0
+  ) {
     strengths.push('Every text and button colour pair clears WCAG AA contrast.');
   }
-  if (metrics.imageCount > 0 && !fired.has('a11y/image-alt-missing') && !fired.has('a11y/image-alt-filename')) {
-    strengths.push(`All ${metrics.imageCount} images carry meaningful alt text, so the email still reads with images blocked.`);
+  if (
+    metrics.imageCount > 0 &&
+    !fired.has('a11y/image-alt-missing') &&
+    !fired.has('a11y/image-alt-filename')
+  ) {
+    strengths.push(
+      `All ${metrics.imageCount} images carry meaningful alt text, so the email still reads with images blocked.`,
+    );
   }
   if (!fired.has('compat/web-font-no-fallback') && !fired.has('compat/web-font-generic-fallback')) {
-    strengths.push('Typography uses stacks that degrade predictably in clients that do not load web fonts.');
+    strengths.push(
+      'Typography uses stacks that degrade predictably in clients that do not load web fonts.',
+    );
   }
-  if (metrics.ctaCount >= 1 && !fired.has('design/competing-ctas') && !fired.has('a11y/generic-button-text')) {
+  if (
+    metrics.ctaCount >= 1 &&
+    !fired.has('design/competing-ctas') &&
+    !fired.has('a11y/generic-button-text')
+  ) {
     strengths.push('The call to action is singular and specifically worded.');
   }
-  if (!fired.has('structure/orphan-blocks') && !fired.has('structure/dangling-reference') && !fired.has('structure/placeholder-content')) {
-    strengths.push('The document is structurally clean — no orphans, no dangling references, no placeholder copy.');
+  if (
+    !fired.has('structure/orphan-blocks') &&
+    !fired.has('structure/dangling-reference') &&
+    !fired.has('structure/placeholder-content')
+  ) {
+    strengths.push(
+      'The document is structurally clean — no orphans, no dangling references, no placeholder copy.',
+    );
   }
-  if (!fired.has('design/palette-sprawl') && !fired.has('design/no-accent-colour') && metrics.paletteSize > 0) {
+  if (
+    !fired.has('design/palette-sprawl') &&
+    !fired.has('design/no-accent-colour') &&
+    metrics.paletteSize > 0
+  ) {
     strengths.push(`A disciplined palette of ${metrics.paletteSize} colours with a clear accent.`);
   }
   if (!fired.has('deliver/no-unsubscribe')) {
     strengths.push('An unsubscribe path is present.');
   }
-  if (!fired.has('responsive/column-too-narrow') && !fired.has('responsive/image-wider-than-mobile') && !fired.has('compat/three-column-no-stack')) {
+  if (
+    !fired.has('responsive/column-too-narrow') &&
+    !fired.has('responsive/image-wider-than-mobile') &&
+    !fired.has('compat/three-column-no-stack')
+  ) {
     strengths.push('The layout survives a 370px phone canvas without overflow.');
   }
 

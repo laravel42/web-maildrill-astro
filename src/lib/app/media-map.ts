@@ -67,7 +67,10 @@ const THUMBS = [
  * twin for tiles; `url` stays the full original for download/insert/drawer.
  * Gradient `thumb` is only a fallback for non-image formats.
  */
-export function toMediaFile(a: ApiMediaAsset, index = 0): MediaFile & {
+export function toMediaFile(
+  a: ApiMediaAsset,
+  index = 0,
+): MediaFile & {
   preview: string;
   url: string;
   tags: string[];

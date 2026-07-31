@@ -238,10 +238,7 @@ function CampaignReport({
     ...(reportCfg.funnel.includes('opened') || reportCfg.funnel.includes('seen')
       ? ([['Click-to-open', cto == null ? '—' : `${cto.toFixed(1)}%`]] as [string, ReactNode][])
       : []),
-    [
-      'Sent',
-      sentAt ? <span className={styles.reportSentBadge}>{sentLabel}</span> : sentLabel,
-    ],
+    ['Sent', sentAt ? <span className={styles.reportSentBadge}>{sentLabel}</span> : sentLabel],
   ];
 
   useEffect(() => {

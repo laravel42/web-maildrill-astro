@@ -74,10 +74,7 @@ function preferRicherSource<T extends { sent: number }>(
   return totalSent(fromPh) >= totalSent(fromPg) ? fromPh : fromPg;
 }
 
-async function byChannelFromPostgres(
-  tenantId: string,
-  since?: Date,
-): Promise<ChannelBreakdown[]> {
+async function byChannelFromPostgres(tenantId: string, since?: Date): Promise<ChannelBreakdown[]> {
   const conds = [eq(messages.tenantId, tenantId)];
   if (since) conds.push(gte(messages.createdAt, since));
 
@@ -127,10 +124,7 @@ async function byChannelFromPostgres(
  * PostHog wins only when its volume covers the window; otherwise Postgres
  * (message `createdAt`) so timespans reflect historical sends, not just recent DLRs.
  */
-export async function channelBreakdown(
-  tenantId: string,
-  days = 30,
-): Promise<ChannelBreakdown[]> {
+export async function channelBreakdown(tenantId: string, days = 30): Promise<ChannelBreakdown[]> {
   const span = clamp(days, 1, 365);
   const since = new Date();
   since.setHours(0, 0, 0, 0);

@@ -107,7 +107,10 @@ const EXAMPLE_RULES: Array<[RegExp, string]> = [
   [/tracking number/, '1Z999AA10123456784'],
   [/carrier/, 'DHL'],
   [/invoice number|order number|return request number|booking reference|reference|order/, '10248'],
-  [/estimated delivery|renewal date|expiry date|delivery date|end date|date\/time|^date$/, 'May 14'],
+  [
+    /estimated delivery|renewal date|expiry date|delivery date|end date|date\/time|^date$/,
+    'May 14',
+  ],
   [/delivery time|^time$|\btime\b/, '3:00 PM'],
   [/address|location/, '221B Baker St'],
   [/items?/, '2× Aurora Headphones'],
@@ -136,7 +139,9 @@ function exampleForLabel(label: string, n: number): string {
 // Normalization
 // ---------------------------------------------------------------------------
 
-export function normalizeGalleryCatalog(raw: RawGalleryCatalog | null | undefined): GalleryCategory[] {
+export function normalizeGalleryCatalog(
+  raw: RawGalleryCatalog | null | undefined,
+): GalleryCategory[] {
   if (!raw?.categories) return [];
   const out: GalleryCategory[] = [];
   for (const cat of raw.categories) {
@@ -150,7 +155,11 @@ export function normalizeGalleryCatalog(raw: RawGalleryCatalog | null | undefine
       for (const hint of t.variables ?? []) {
         const parsed = parseVariableHint(hint);
         if (!parsed) continue;
-        variables.push({ n: parsed.n, label: parsed.label, example: exampleForLabel(parsed.label, parsed.n) });
+        variables.push({
+          n: parsed.n,
+          label: parsed.label,
+          example: exampleForLabel(parsed.label, parsed.n),
+        });
       }
       variables.sort((a, b) => a.n - b.n);
       templates.push({ id: t.id, name: t.name, category, text, variables });

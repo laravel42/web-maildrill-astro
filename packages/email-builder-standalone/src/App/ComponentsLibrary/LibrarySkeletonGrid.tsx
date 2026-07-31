@@ -44,7 +44,12 @@ export default function LibrarySkeletonGrid({
     >
       {Array.from({ length: count }).map((_, i) => (
         <Stack key={i} spacing={0.75} sx={{ p: 0.5 }}>
-          <Skeleton variant="rounded" animation="wave" height={thumbnailHeight} sx={{ borderRadius: 1 }} />
+          <Skeleton
+            variant="rounded"
+            animation="wave"
+            height={thumbnailHeight}
+            sx={{ borderRadius: 1 }}
+          />
           <Skeleton variant="text" animation="wave" width="70%" />
           <Skeleton variant="text" animation="wave" width="45%" />
         </Stack>

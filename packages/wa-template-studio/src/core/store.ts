@@ -52,7 +52,11 @@ export function emptyDoc(): TemplateDoc {
     category: 'MARKETING',
     blocks: {
       header: null,
-      body: { id: newId('body'), type: 'body', data: bodyPlugin ? bodyPlugin.defaults() : { text: '', variables: {} } },
+      body: {
+        id: newId('body'),
+        type: 'body',
+        data: bodyPlugin ? bodyPlugin.defaults() : { text: '', variables: {} },
+      },
       footer: null,
       buttons: [],
     },

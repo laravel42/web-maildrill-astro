@@ -45,7 +45,7 @@ export function resolveBlockProp<T = unknown>(
   section: BlockSection,
   key: string,
   theme: ThemeJson | undefined | null,
-  viewport: Viewport
+  viewport: Viewport,
 ): T | undefined {
   // Level 1 — block.data
   const blockSection = block?.data?.[section] as Record<string, unknown> | null | undefined;

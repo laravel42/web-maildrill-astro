@@ -25,7 +25,8 @@ async function main(): Promise<void> {
 
   if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_API_KEY) {
     console.error(
-      'GEMINI_API_KEY is not set. Fill it in packages/backend/.env first ' + '(GOOGLE_API_KEY is also accepted).'
+      'GEMINI_API_KEY is not set. Fill it in packages/backend/.env first ' +
+        '(GOOGLE_API_KEY is also accepted).',
     );
     process.exit(1);
   }

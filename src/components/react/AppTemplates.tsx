@@ -612,7 +612,10 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                       />
                     </span>
                     <span className={styles.gTopRight}>
-                      <span className={styles.gbadge} style={{ background: m.tint, color: m.color }}>
+                      <span
+                        className={styles.gbadge}
+                        style={{ background: m.tint, color: m.color }}
+                      >
                         <Icon name={m.icon} size={11} />
                         {m.label}
                       </span>
@@ -1019,11 +1022,7 @@ function TemplateDrawer({
                   type="button"
                   className="pbtn"
                   style={{ width: '100%', marginTop: 12 }}
-                  disabled={
-                    busy ||
-                    !live ||
-                    (approval !== 'pending' && !t.hasContent)
-                  }
+                  disabled={busy || !live || (approval !== 'pending' && !t.hasContent)}
                   onClick={runBusy(approval === 'pending' ? onRefresh : onSubmit)}
                 >
                   {busy

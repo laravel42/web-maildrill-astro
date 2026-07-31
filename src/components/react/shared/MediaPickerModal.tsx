@@ -136,17 +136,15 @@ export default function MediaPickerModal({
 
   const resetVisible = () => setVisibleCount(PAGE_SIZE);
 
-  const toggleSet =
-    (setter: typeof setOrientSel) =>
-    (v: string) => {
-      setter((prev) => {
-        const next = new Set(prev);
-        if (next.has(v)) next.delete(v);
-        else next.add(v);
-        return next;
-      });
-      resetVisible();
-    };
+  const toggleSet = (setter: typeof setOrientSel) => (v: string) => {
+    setter((prev) => {
+      const next = new Set(prev);
+      if (next.has(v)) next.delete(v);
+      else next.add(v);
+      return next;
+    });
+    resetVisible();
+  };
 
   const toggleTag = (t: string) => {
     setTagSel((prev) => {
@@ -357,9 +355,7 @@ export default function MediaPickerModal({
           )}
           {state === 'ready' && images.length > 0 && filtered.length === 0 && (
             <div className={styles.msg}>
-              {hasFilters
-                ? 'No images match your filters.'
-                : 'No images match your search.'}
+              {hasFilters ? 'No images match your filters.' : 'No images match your search.'}
             </div>
           )}
           {shown.length > 0 && (
@@ -391,9 +387,7 @@ export default function MediaPickerModal({
                   );
                 })}
               </div>
-              {hasMore && (
-                <div ref={sentinelRef} className={styles.sentinel} aria-hidden="true" />
-              )}
+              {hasMore && <div ref={sentinelRef} className={styles.sentinel} aria-hidden="true" />}
               <p className={styles.pageMeta} aria-live="polite">
                 Showing {shown.length} of {filtered.length}
               </p>

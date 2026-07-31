@@ -1,4 +1,4 @@
-import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, sql } from 'drizzle-orm';
 import {
   campaigns,
   db,
@@ -8,8 +8,8 @@ import {
   type NewTemplate,
   type Subscriber,
   type TemplateRow,
-} from "@maildrill/database";
-import type { Channel } from "@maildrill/domain";
+} from '@maildrill/database';
+import type { Channel } from '@maildrill/domain';
 
 export interface UpsertTemplateInput {
   tenantId: string;
@@ -34,7 +34,7 @@ export async function createTemplate(input: UpsertTemplateInput): Promise<Templa
     .values({
       tenantId: input.tenantId,
       name: input.name,
-      channel: input.channel ?? "email",
+      channel: input.channel ?? 'email',
       subject: input.subject ?? null,
       preheader: input.preheader ?? null,
       html: input.html ?? null,
@@ -46,16 +46,13 @@ export async function createTemplate(input: UpsertTemplateInput): Promise<Templa
       components: input.components ?? null,
       // WhatsApp templates start as an unsubmitted draft; other channels don't
       // carry an approval status at all.
-      approvalStatus: (input.channel ?? "email") === "whatsapp" ? "draft" : null,
+      approvalStatus: (input.channel ?? 'email') === 'whatsapp' ? 'draft' : null,
     })
     .returning();
   return rows[0]!;
 }
 
-export async function getTemplate(
-  tenantId: string,
-  id: string,
-): Promise<TemplateRow | null> {
+export async function getTemplate(tenantId: string, id: string): Promise<TemplateRow | null> {
   const rows = await db
     .select()
     .from(templates)
@@ -111,7 +108,7 @@ export async function listTemplates(
     .where(
       and(
         eq(messages.tenantId, tenantId),
-        eq(messageEvents.eventType, "click"),
+        eq(messageEvents.eventType, 'click'),
         isNotNull(campaigns.templateId),
       ),
     )
@@ -131,7 +128,7 @@ export async function listTemplates(
 export async function updateTemplate(
   tenantId: string,
   id: string,
-  patch: Partial<Omit<UpsertTemplateInput, "tenantId">>,
+  patch: Partial<Omit<UpsertTemplateInput, 'tenantId'>>,
 ): Promise<TemplateRow | null> {
   const set: Partial<NewTemplate> = { updatedAt: new Date() };
   if (patch.name !== undefined) set.name = patch.name;
@@ -170,14 +167,12 @@ export interface RenderedContent {
 
 /** Resolve one token (`email`/`name`/`phone`/`attributes.x`/bare attr) for a subscriber. */
 function subscriberToken(sub: Subscriber, key: string): string {
-  if (key === "email") return sub.email;
-  if (key === "name") return sub.name ?? "";
-  if (key === "phone") return sub.phone ?? "";
-  const attrKey = key.startsWith("attributes.")
-    ? key.slice("attributes.".length)
-    : key;
+  if (key === 'email') return sub.email;
+  if (key === 'name') return sub.name ?? '';
+  if (key === 'phone') return sub.phone ?? '';
+  const attrKey = key.startsWith('attributes.') ? key.slice('attributes.'.length) : key;
   const v = sub.attributes[attrKey];
-  return v == null ? "" : String(v);
+  return v == null ? '' : String(v);
 }
 
 /**
@@ -189,10 +184,7 @@ export function mergeSubscriberTokens(s: string, sub: Subscriber): string {
 }
 
 /** Render a template's copy fields for a subscriber. */
-export function renderTemplate(
-  tpl: TemplateRow,
-  sub: Subscriber,
-): Record<string, unknown> {
+export function renderTemplate(tpl: TemplateRow, sub: Subscriber): Record<string, unknown> {
   const merge = (s: string | null): string | undefined =>
     s == null ? undefined : mergeSubscriberTokens(s, sub);
 
@@ -212,15 +204,13 @@ const WA_VARIABLE_RE = /\{\{\s*(\d+)\s*\}\}/g;
  * editor stores each variable's merge tag as `source` (e.g. `{{attributes.x}}`).
  */
 function builderDocVariableSources(tpl: TemplateRow): Record<string, string> {
-  const doc = tpl.builderDoc as
-    | { blocks?: { body?: { data?: { variables?: unknown } } } }
-    | null;
+  const doc = tpl.builderDoc as { blocks?: { body?: { data?: { variables?: unknown } } } } | null;
   const vars = doc?.blocks?.body?.data?.variables;
   const out: Record<string, string> = {};
-  if (!vars || typeof vars !== "object") return out;
+  if (!vars || typeof vars !== 'object') return out;
   for (const [n, meta] of Object.entries(vars as Record<string, unknown>)) {
     const source = (meta as { source?: unknown } | null)?.source;
-    if (typeof source !== "string") continue;
+    if (typeof source !== 'string') continue;
     const m = /^\{\{\s*([\w.]+)\s*\}\}$/.exec(source.trim());
     if (m) out[n] = m[1]!;
   }
@@ -243,7 +233,7 @@ export function resolveTemplatePlaceholders(tpl: TemplateRow, sub: Subscriber): 
     body?: { text?: unknown; examples?: unknown };
   };
   const bodyText =
-    typeof components.body?.text === "string" ? components.body.text : (tpl.text ?? "");
+    typeof components.body?.text === 'string' ? components.body.text : (tpl.text ?? '');
   let count = 0;
   for (const m of bodyText.matchAll(WA_VARIABLE_RE)) count = Math.max(count, Number(m[1]));
 
@@ -256,7 +246,7 @@ export function resolveTemplatePlaceholders(tpl: TemplateRow, sub: Subscriber): 
 
   return Array.from({ length: count }, (_, i) => {
     const token = tokens[i];
-    let v = typeof token === "string" && token ? subscriberToken(sub, token) : "";
+    let v = typeof token === 'string' && token ? subscriberToken(sub, token) : '';
     if (!v) {
       const source = sources[String(i + 1)];
       if (source) v = subscriberToken(sub, source);
@@ -268,17 +258,17 @@ export function resolveTemplatePlaceholders(tpl: TemplateRow, sub: Subscriber): 
 
 /** Provider-facing body fields; strips UI metadata stored alongside (e.g. audienceIds). */
 const MESSAGE_CONTENT_KEYS = [
-  "subject",
-  "html",
-  "text",
-  "from",
-  "preheader",
+  'subject',
+  'html',
+  'text',
+  'from',
+  'preheader',
   // Voice TTS language / voice selection (ignored by email/SMS builders).
-  "language",
-  "voiceName",
-  "voiceGender",
-  "speechRate",
-  "audioFileUrl",
+  'language',
+  'voiceName',
+  'voiceGender',
+  'speechRate',
+  'audioFileUrl',
 ] as const;
 
 function messageContentOverrides(
@@ -288,13 +278,13 @@ function messageContentOverrides(
   const out: Record<string, unknown> = {};
   for (const key of MESSAGE_CONTENT_KEYS) {
     const v = raw[key];
-    if (v !== undefined && v !== null && v !== "") out[key] = v;
+    if (v !== undefined && v !== null && v !== '') out[key] = v;
   }
   return out;
 }
 
 /** User-authored copy fields that may carry {{merge}} tags, whichever source they came from. */
-const COPY_FIELDS = ["subject", "html", "text", "preheader"] as const;
+const COPY_FIELDS = ['subject', 'html', 'text', 'preheader'] as const;
 
 function renderCopyFields(
   content: Record<string, unknown>,
@@ -302,7 +292,7 @@ function renderCopyFields(
 ): Record<string, unknown> {
   for (const key of COPY_FIELDS) {
     const v = content[key];
-    if (typeof v === "string") content[key] = mergeSubscriberTokens(v, sub);
+    if (typeof v === 'string') content[key] = mergeSubscriberTokens(v, sub);
   }
   return content;
 }
@@ -325,19 +315,19 @@ export function resolveMessageContent(
 
   // Approved WhatsApp templates send via the template endpoint: pass the template
   // name/language plus the ordered placeholder values resolved per recipient.
-  if (channel === "whatsapp" && template.approvalStatus === "approved") {
+  if (channel === 'whatsapp' && template.approvalStatus === 'approved') {
     // Infobip/Meta template names are lowercase; DB may still hold a display name.
     const templateName = template.name
       .trim()
       .toLowerCase()
-      .replace(/[\s-]+/g, "_")
-      .replace(/[^a-z0-9_]/g, "")
-      .replace(/_+/g, "_")
-      .replace(/^_|_$/g, "");
+      .replace(/[\s-]+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
     return renderCopyFields(
       {
         templateName,
-        templateLanguage: template.language ?? "en",
+        templateLanguage: template.language ?? 'en',
         placeholders: resolveTemplatePlaceholders(template, sub),
         ...campaign,
       },
@@ -355,13 +345,13 @@ export function resolveMessageContent(
   // ({ voice: { name, gender, sayLanguage }, speechRate }) — surface it as
   // provider content so delivery speaks the authored voice. Campaign-level
   // overrides still win via the spread below.
-  if (channel === "voice" && template.builderDoc) {
+  if (channel === 'voice' && template.builderDoc) {
     const doc = template.builderDoc as Record<string, unknown>;
     const voice = (doc.voice ?? {}) as Record<string, unknown>;
-    if (typeof voice.sayLanguage === "string") body.language = voice.sayLanguage;
-    if (typeof voice.name === "string") body.voiceName = voice.name;
-    if (typeof voice.gender === "string") body.voiceGender = voice.gender;
-    if (typeof doc.speechRate === "number") body.speechRate = doc.speechRate;
+    if (typeof voice.sayLanguage === 'string') body.language = voice.sayLanguage;
+    if (typeof voice.name === 'string') body.voiceName = voice.name;
+    if (typeof voice.gender === 'string') body.voiceGender = voice.gender;
+    if (typeof doc.speechRate === 'number') body.speechRate = doc.speechRate;
   }
   return renderCopyFields({ ...body, ...campaign }, sub);
 }

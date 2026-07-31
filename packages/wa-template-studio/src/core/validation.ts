@@ -19,7 +19,12 @@ export function validateTemplate(doc: TemplateDoc): ValidationIssue[] {
 
   // ---- template level ----
   if (!doc.name.trim()) {
-    issues.push({ severity: 'error', slot: 'template', code: 'template/name-required', message: 'Template name is required' });
+    issues.push({
+      severity: 'error',
+      slot: 'template',
+      code: 'template/name-required',
+      message: 'Template name is required',
+    });
   } else if (!TEMPLATE_NAME_RE.test(doc.name)) {
     issues.push({
       severity: 'error',
@@ -36,7 +41,12 @@ export function validateTemplate(doc: TemplateDoc): ValidationIssue[] {
     });
   }
   if (!doc.language) {
-    issues.push({ severity: 'error', slot: 'template', code: 'template/language-required', message: 'Language is required' });
+    issues.push({
+      severity: 'error',
+      slot: 'template',
+      code: 'template/language-required',
+      message: 'Language is required',
+    });
   }
 
   // ---- per-block: header / body / footer ----
@@ -64,7 +74,9 @@ export function validateTemplate(doc: TemplateDoc): ValidationIssue[] {
         message: `${plugin.meta.label}: ${availability.reason}`,
       });
     }
-    issues.push(...plugin.validate(instance.data, doc).map((i) => ({ ...i, blockId: instance.id })));
+    issues.push(
+      ...plugin.validate(instance.data, doc).map((i) => ({ ...i, blockId: instance.id })),
+    );
   }
 
   // ---- buttons ----
@@ -175,7 +187,10 @@ export function canRequestApproval(doc: TemplateDoc): boolean {
 }
 
 /** Issues scoped to one slot (for panel badges). */
-export function issuesForSlot(issues: ValidationIssue[], slot: ValidationIssue['slot']): ValidationIssue[] {
+export function issuesForSlot(
+  issues: ValidationIssue[],
+  slot: ValidationIssue['slot'],
+): ValidationIssue[] {
   return issues.filter((i) => i.slot === slot);
 }
 

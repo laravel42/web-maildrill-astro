@@ -42,7 +42,11 @@ const BlockSocialMediaEditor: typeof BlockSocialMedia = (props) => {
   const selectedScreenSize = useSelectedScreenSize();
   const disableEdition = useDisableEdition();
   return (
-    <MemoizedBlockSocialMedia {...props} selectedScreenSize={selectedScreenSize} disableEdition={disableEdition} />
+    <MemoizedBlockSocialMedia
+      {...props}
+      selectedScreenSize={selectedScreenSize}
+      disableEdition={disableEdition}
+    />
   );
 };
 const MemoizedButton = memo(Button);
@@ -97,7 +101,8 @@ const EDITOR_DICTIONARY = buildBlockConfigurationDictionary({
         ...blockProps,
         props: {
           ...blockProps.props,
-          url: blockProps.props?.url ?? 'https://placehold.co/600x400@2x/F8F8F8/CCC?text=Your%20image',
+          url:
+            blockProps.props?.url ?? 'https://placehold.co/600x400@2x/F8F8F8/CCC?text=Your%20image',
         },
       };
       return (
@@ -149,12 +154,13 @@ export const EditorBlock = buildBlockComponent(EDITOR_DICTIONARY);
  * Keyed by block type string, mirroring `EDITOR_DICTIONARY`. Block types
  * with no schema defaults map to an empty object.
  */
-export const EDITOR_SCHEMA_DEFAULTS_BY_TYPE: Record<string, BlockSchemaDefaults> = Object.fromEntries(
-  Object.entries(EDITOR_DICTIONARY).map(([type, entry]) => [
-    type,
-    (getSchemaDefaults(entry.schema) as BlockSchemaDefaults | undefined) ?? {},
-  ])
-);
+export const EDITOR_SCHEMA_DEFAULTS_BY_TYPE: Record<string, BlockSchemaDefaults> =
+  Object.fromEntries(
+    Object.entries(EDITOR_DICTIONARY).map(([type, entry]) => [
+      type,
+      (getSchemaDefaults(entry.schema) as BlockSchemaDefaults | undefined) ?? {},
+    ]),
+  );
 
 // Canonical schemas re-exported from @eb/document-core (Node-safe, no browser deps).
 export type TEditorBlock = CoreTEditorBlock;

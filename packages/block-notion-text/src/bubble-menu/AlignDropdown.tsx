@@ -1,7 +1,12 @@
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { FormatAlignCenter, FormatAlignJustify, FormatAlignLeft, FormatAlignRight } from '@mui/icons-material';
+import {
+  FormatAlignCenter,
+  FormatAlignJustify,
+  FormatAlignLeft,
+  FormatAlignRight,
+} from '@mui/icons-material';
 import { List, ListItemButton, ListItemIcon, ListItemText, useTheme } from '@mui/material';
 import type { Editor } from '@tiptap/react';
 
@@ -47,7 +52,7 @@ export default function AlignDropdown({ editor }: Props) {
       });
       handleClose();
     },
-    [editor, handleClose]
+    [editor, handleClose],
   );
 
   const isActive = ALIGNMENTS.some((a) => a !== 'left' && editor.isActive({ textAlign: a }));
@@ -56,7 +61,8 @@ export default function AlignDropdown({ editor }: Props) {
     const iconColor = theme.palette.text.secondary;
     if (editor.isActive({ textAlign: 'center' }))
       return <FormatAlignCenter fontSize="small" sx={{ color: iconColor }} />;
-    if (editor.isActive({ textAlign: 'right' })) return <FormatAlignRight fontSize="small" sx={{ color: iconColor }} />;
+    if (editor.isActive({ textAlign: 'right' }))
+      return <FormatAlignRight fontSize="small" sx={{ color: iconColor }} />;
     if (editor.isActive({ textAlign: 'justify' }))
       return <FormatAlignJustify fontSize="small" sx={{ color: iconColor }} />;
     return <FormatAlignLeft fontSize="small" sx={{ color: iconColor }} />;
@@ -64,7 +70,12 @@ export default function AlignDropdown({ editor }: Props) {
 
   return (
     <>
-      <ToolbarIconButton tooltip={t('bubbleMenu.textAlign')} active={isActive} onClick={handleClick} showArrow>
+      <ToolbarIconButton
+        tooltip={t('bubbleMenu.textAlign')}
+        active={isActive}
+        onClick={handleClick}
+        showArrow
+      >
         {getCurrentIcon()}
       </ToolbarIconButton>
 
@@ -91,7 +102,9 @@ export default function AlignDropdown({ editor }: Props) {
                 </ListItemIcon>
                 <ListItemText
                   primary={t(ALIGN_KEYS[alignment])}
-                  slotProps={{ primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } } }}
+                  slotProps={{
+                    primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } },
+                  }}
                 />
               </ListItemButton>
             );

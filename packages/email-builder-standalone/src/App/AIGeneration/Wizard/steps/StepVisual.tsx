@@ -19,9 +19,18 @@ export default function StepVisual({ brief, patch }: Props) {
   const vs = brief.visual_strategy;
   const iq = brief.image_queries;
 
-  const paletteOptions = PALETTE_CHIPS.map((v) => ({ value: v, label: t(`steps.step03.palette.${v}`) }));
-  const photoOptions = PHOTO_STYLE_CHIPS.map((v) => ({ value: v, label: t(`steps.step03.photoStyle.${v}`) }));
-  const subjectOptions = SUBJECT_CHIPS.map((v) => ({ value: v, label: t(`steps.step04.subject.${v}`) }));
+  const paletteOptions = PALETTE_CHIPS.map((v) => ({
+    value: v,
+    label: t(`steps.step03.palette.${v}`),
+  }));
+  const photoOptions = PHOTO_STYLE_CHIPS.map((v) => ({
+    value: v,
+    label: t(`steps.step03.photoStyle.${v}`),
+  }));
+  const subjectOptions = SUBJECT_CHIPS.map((v) => ({
+    value: v,
+    label: t(`steps.step04.subject.${v}`),
+  }));
 
   const noImages = vs.photoStyle === 'none';
 

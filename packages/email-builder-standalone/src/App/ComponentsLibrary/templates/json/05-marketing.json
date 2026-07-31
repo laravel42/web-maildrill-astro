@@ -35,25 +35,17 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          29,
-          71,
-          null
-        ],
+        "fixedWidths": [29, 71, null],
         "columnsCount": 2,
         "layout": "layout-50-50",
         "contentAlignment": "middle",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "block-ms8ix82e-1"
-            ]
+            "childrenIds": ["block-ms8ix82e-1"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82e-2"
-            ]
+            "childrenIds": ["block-ms8ix82e-2"]
           },
           {
             "childrenIds": []
@@ -247,10 +239,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "div-ms8ix82e-c",
-          "cols-ms8ix82e-u"
-        ]
+        "childrenIds": ["div-ms8ix82e-c", "cols-ms8ix82e-u"]
       }
     }
   },
@@ -285,32 +274,20 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          33,
-          33,
-          34
-        ],
+        "fixedWidths": [33, 33, 34],
         "columnsCount": 3,
         "layout": "layout-33-33-33",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "card-ms8ix82e-i"
-            ]
+            "childrenIds": ["card-ms8ix82e-i"]
           },
           {
-            "childrenIds": [
-              "card-ms8ix82e-o"
-            ]
+            "childrenIds": ["card-ms8ix82e-o"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82e-p",
-              "block-ms8ix82e-r",
-              "block-ms8ix82e-t"
-            ]
+            "childrenIds": ["block-ms8ix82e-p", "block-ms8ix82e-r", "block-ms8ix82e-t"]
           }
         ]
       }
@@ -335,11 +312,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix82e-d",
-          "block-ms8ix82e-f",
-          "block-ms8ix82e-h"
-        ]
+        "childrenIds": ["block-ms8ix82e-d", "block-ms8ix82e-f", "block-ms8ix82e-h"]
       }
     }
   },
@@ -431,11 +404,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix82e-j",
-          "block-ms8ix82e-l",
-          "block-ms8ix82e-n"
-        ]
+        "childrenIds": ["block-ms8ix82e-j", "block-ms8ix82e-l", "block-ms8ix82e-n"]
       }
     }
   },
@@ -596,11 +565,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "card-ms8ix82e-10",
-          "card-ms8ix82e-15",
-          "card-ms8ix82e-1a"
-        ]
+        "childrenIds": ["card-ms8ix82e-10", "card-ms8ix82e-15", "card-ms8ix82e-1a"]
       }
     }
   },
@@ -623,9 +588,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "cols-ms8ix82e-z"
-        ]
+        "childrenIds": ["cols-ms8ix82e-z"]
       }
     }
   },
@@ -642,30 +605,20 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          6,
-          62,
-          32
-        ],
+        "fixedWidths": [6, 62, 32],
         "columnsCount": 3,
         "layout": "layout-33-33-33",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "block-ms8ix82e-w"
-            ]
+            "childrenIds": ["block-ms8ix82e-w"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82e-x"
-            ]
+            "childrenIds": ["block-ms8ix82e-x"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82e-y"
-            ]
+            "childrenIds": ["block-ms8ix82e-y"]
           }
         ]
       }
@@ -759,9 +712,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "cols-ms8ix82e-14"
-        ]
+        "childrenIds": ["cols-ms8ix82e-14"]
       }
     }
   },
@@ -778,30 +729,20 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          6,
-          73,
-          21
-        ],
+        "fixedWidths": [6, 73, 21],
         "columnsCount": 3,
         "layout": "layout-33-33-33",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "block-ms8ix82e-11"
-            ]
+            "childrenIds": ["block-ms8ix82e-11"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82e-12"
-            ]
+            "childrenIds": ["block-ms8ix82e-12"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82e-13"
-            ]
+            "childrenIds": ["block-ms8ix82e-13"]
           }
         ]
       }
@@ -895,9 +836,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "cols-ms8ix82e-19"
-        ]
+        "childrenIds": ["cols-ms8ix82e-19"]
       }
     }
   },
@@ -914,30 +853,20 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          6,
-          75,
-          19
-        ],
+        "fixedWidths": [6, 75, 19],
         "columnsCount": 3,
         "layout": "layout-33-33-33",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "block-ms8ix82e-16"
-            ]
+            "childrenIds": ["block-ms8ix82e-16"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82e-17"
-            ]
+            "childrenIds": ["block-ms8ix82e-17"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82e-18"
-            ]
+            "childrenIds": ["block-ms8ix82e-18"]
           }
         ]
       }
@@ -1031,11 +960,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "div-ms8ix82e-1c",
-          "block-ms8ix82f-1d",
-          "block-ms8ix82f-1f"
-        ]
+        "childrenIds": ["div-ms8ix82e-1c", "block-ms8ix82f-1d", "block-ms8ix82f-1f"]
       }
     }
   },

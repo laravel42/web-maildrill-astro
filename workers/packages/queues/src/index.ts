@@ -1,15 +1,15 @@
-import { Queue, Worker, type Job, type Processor, type WorkerOptions } from "bullmq";
-import type IORedis from "ioredis";
-import { QUEUE_NAMES, type QueueName } from "@maildrill/domain";
-import { createRedis, sharedConnection, closeSharedConnection } from "./connection";
+import { Queue, Worker, type Job, type Processor, type WorkerOptions } from 'bullmq';
+import type IORedis from 'ioredis';
+import { QUEUE_NAMES, type QueueName } from '@maildrill/domain';
+import { createRedis, sharedConnection, closeSharedConnection } from './connection';
 import {
   emitQueueJob,
   setQueueJobSink,
   summarizeJobData,
   type QueueJobEvent,
   type QueueJobStatus,
-} from "./job-observer";
-import { setRedisCommandSink, type RedisCommandEvent } from "./redis-observer";
+} from './job-observer';
+import { setRedisCommandSink, type RedisCommandEvent } from './redis-observer';
 
 export { QUEUE_NAMES, createRedis, sharedConnection };
 export { setQueueJobSink, type QueueJobEvent, type QueueJobStatus };
@@ -54,13 +54,11 @@ export async function enqueue(
     jobId: opts.jobId,
     delay: opts.delay,
     attempts: opts.attempts ?? 1,
-    backoff: opts.backoffMs
-      ? { type: "exponential", delay: opts.backoffMs }
-      : undefined,
+    backoff: opts.backoffMs ? { type: 'exponential', delay: opts.backoffMs } : undefined,
     ...DEFAULT_JOB_OPTIONS,
   });
   emitQueueJob({
-    status: "queued",
+    status: 'queued',
     queue,
     name: jobName,
     jobId: job.id,
@@ -72,9 +70,9 @@ export async function enqueue(
 export function createWorker<T = unknown, R = unknown>(
   name: QueueName,
   processor: Processor<T, R>,
-  opts?: Omit<WorkerOptions, "connection">,
+  opts?: Omit<WorkerOptions, 'connection'>,
 ): Worker<T, R> {
-  const connection = createRedis("worker");
+  const connection = createRedis('worker');
   workerConnections.add(connection);
   const worker = new Worker<T, R>(name, processor, { connection, ...opts });
   attachJobLifecycle(worker, name);
@@ -84,10 +82,10 @@ export function createWorker<T = unknown, R = unknown>(
 const activeStarted = new WeakMap<object, number>();
 
 function attachJobLifecycle<T, R>(worker: Worker<T, R>, queue: string): void {
-  worker.on("active", (job: Job<T, R>) => {
+  worker.on('active', (job: Job<T, R>) => {
     activeStarted.set(job, Date.now());
     emitQueueJob({
-      status: "processing",
+      status: 'processing',
       queue,
       name: job.name,
       jobId: job.id,
@@ -95,11 +93,11 @@ function attachJobLifecycle<T, R>(worker: Worker<T, R>, queue: string): void {
       attemptsMade: job.attemptsMade,
     });
   });
-  worker.on("completed", (job: Job<T, R>) => {
+  worker.on('completed', (job: Job<T, R>) => {
     const started = activeStarted.get(job);
     activeStarted.delete(job);
     emitQueueJob({
-      status: "completed",
+      status: 'completed',
       queue,
       name: job.name,
       jobId: job.id,
@@ -108,12 +106,12 @@ function attachJobLifecycle<T, R>(worker: Worker<T, R>, queue: string): void {
       attemptsMade: job.attemptsMade,
     });
   });
-  worker.on("failed", (job: Job<T, R> | undefined, err: Error) => {
+  worker.on('failed', (job: Job<T, R> | undefined, err: Error) => {
     if (!job) return;
     const started = activeStarted.get(job);
     activeStarted.delete(job);
     emitQueueJob({
-      status: "failed",
+      status: 'failed',
       queue,
       name: job.name,
       jobId: job.id,

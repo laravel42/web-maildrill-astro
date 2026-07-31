@@ -12,7 +12,10 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const HTML_DIR = path.join(ROOT, 'packages/email-builder-standalone/src/App/ComponentsLibrary/templates/html');
+const HTML_DIR = path.join(
+  ROOT,
+  'packages/email-builder-standalone/src/App/ComponentsLibrary/templates/html',
+);
 const OUT_DIR = path.join(ROOT, 'tmp/compare');
 
 // Measure the text box, not the element box: a source button puts its padding
@@ -25,7 +28,10 @@ const collectRuns = () =>
       const range = document.createRange();
       range.selectNodeContents(el);
       const r = range.getBoundingClientRect();
-      return { text: el.textContent.replace(/\s+/g, ' ').trim().slice(0, 40), top: Math.round(r.top) };
+      return {
+        text: el.textContent.replace(/\s+/g, ' ').trim().slice(0, 40),
+        top: Math.round(r.top),
+      };
     })
     .filter((r) => r.text);
 
@@ -77,7 +83,7 @@ for (const slug of slugs) {
   const missing = src.length - matched;
   console.log(
     `${slug.padEnd(16)} runs ${matched}/${src.length}` +
-      `${missing ? ` (${missing} missing)` : ''}  max drift ${worst.drift}px @ ${JSON.stringify(worst.text)}`
+      `${missing ? ` (${missing} missing)` : ''}  max drift ${worst.drift}px @ ${JSON.stringify(worst.text)}`,
   );
   if (filter.length) console.log(rows.join('\n'));
 }

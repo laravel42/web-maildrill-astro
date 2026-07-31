@@ -34,9 +34,7 @@ export default function FolderFilter({
   const [query, setQuery] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
   const active = value != null;
-  const activeLabel = active
-    ? (options.find((o) => o.key === value)?.label ?? value)
-    : null;
+  const activeLabel = active ? (options.find((o) => o.key === value)?.label ?? value) : null;
 
   // Surface an autofilled / unknown folder so it stays selectable & checked.
   const list = useMemo(() => {
@@ -47,9 +45,7 @@ export default function FolderFilter({
   const visible = useMemo(() => {
     const q = query.trim();
     if (!q) return list;
-    return list.filter(
-      (o) => matchesSearchQuery(o.label, q) || matchesSearchQuery(o.key, q),
-    );
+    return list.filter((o) => matchesSearchQuery(o.label, q) || matchesSearchQuery(o.key, q));
   }, [list, query]);
 
   useEffect(() => {

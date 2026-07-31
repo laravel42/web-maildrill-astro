@@ -95,7 +95,9 @@ export default function TemplateBuilderPage({
         const updated = await api.post<ApiTemplate>(`templates/${idRef.current}/submit`, {});
         return toApprovalStatus(updated.approvalStatus) ?? 'pending';
       } catch (e) {
-        throw new Error(e instanceof ApiError ? e.message : 'Could not submit for approval');
+        throw new Error(e instanceof ApiError ? e.message : 'Could not submit for approval', {
+          cause: e,
+        });
       }
     };
     const refreshApproval = async (): Promise<TemplateApprovalStatus> => {
@@ -107,7 +109,9 @@ export default function TemplateBuilderPage({
         );
         return toApprovalStatus(updated.approvalStatus) ?? 'pending';
       } catch (e) {
-        throw new Error(e instanceof ApiError ? e.message : 'Could not refresh status');
+        throw new Error(e instanceof ApiError ? e.message : 'Could not refresh status', {
+          cause: e,
+        });
       }
     };
 

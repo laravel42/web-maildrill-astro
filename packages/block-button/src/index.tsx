@@ -1,12 +1,21 @@
 import React, { CSSProperties } from 'react';
 import { z } from 'zod';
 
-import { type ButtonProps, ButtonPropsSchema, type EmailLayoutProps, PADDING_SCHEMA } from '@eb/document-core';
+import {
+  type ButtonProps,
+  ButtonPropsSchema,
+  type EmailLayoutProps,
+  PADDING_SCHEMA,
+} from '@eb/document-core';
 
 import Wrapper from '../../email-builder/src/blocks/helpers/Wrapper';
 import { useFontFamily } from '../../email-builder/src/helpers/fontFamily';
 import { getCleanURL } from '../../email-builder/src/helpers/formatting';
-import { getRoundedCorners, shortCssId, updateHexColorInBackgroundString } from '../../email-builder/src/helpers/utils';
+import {
+  getRoundedCorners,
+  shortCssId,
+  updateHexColorInBackgroundString,
+} from '../../email-builder/src/helpers/utils';
 import { useDisableEdition, useRootData } from '../../email-builder/src/Reader/renderContext';
 import { useViewport } from '../../email-builder/src/Reader/viewport';
 
@@ -75,7 +84,12 @@ export const ButtonPropsDefaults = {
   buttonBackgroundColor: '#999999',
 } as const;
 
-export function Button({ style, props, blockId, isNotClient = false }: ButtonProps & { isNotClient?: boolean }) {
+export function Button({
+  style,
+  props,
+  blockId,
+  isNotClient = false,
+}: ButtonProps & { isNotClient?: boolean }) {
   const root = useRootData<EmailLayoutProps>();
   const selectedScreenSize = useViewport();
   const disableEdition = useDisableEdition();
@@ -87,20 +101,29 @@ export function Button({ style, props, blockId, isNotClient = false }: ButtonPro
     selectedScreenSize === 'desktop'
       ? (props?.fullWidth ?? false)
       : (props?.fullWidthMobile ?? props?.fullWidth ?? false);
-  const buttonTextColor = style?.buttonTextColor ?? props?.buttonTextColor ?? root?.textColor ?? undefined;
+  const buttonTextColor =
+    style?.buttonTextColor ?? props?.buttonTextColor ?? root?.textColor ?? undefined;
   const buttonBackgroundColor =
-    style?.buttonBackgroundColor ?? props?.buttonBackgroundColor ?? ButtonPropsDefaults.buttonBackgroundColor;
+    style?.buttonBackgroundColor ??
+    props?.buttonBackgroundColor ??
+    ButtonPropsDefaults.buttonBackgroundColor;
 
   const wrapperStyle = {
     backgroundColor: style?.backgroundColor ?? undefined,
     textAlign:
-      (selectedScreenSize == 'desktop' ? style?.textAlign : (style?.textAlignMobile ?? style?.textAlign)) ?? undefined,
-    padding: getPadding(selectedScreenSize == 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding)),
+      (selectedScreenSize == 'desktop'
+        ? style?.textAlign
+        : (style?.textAlignMobile ?? style?.textAlign)) ?? undefined,
+    padding: getPadding(
+      selectedScreenSize == 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding),
+    ),
   };
   const linkStyle: CSSProperties = {
     color: buttonTextColor,
     fontSize:
-      (selectedScreenSize == 'desktop' ? style?.fontSize : (style?.fontSizeMobile ?? style?.fontSize)) ?? undefined,
+      (selectedScreenSize == 'desktop'
+        ? style?.fontSize
+        : (style?.fontSizeMobile ?? style?.fontSize)) ?? undefined,
     fontFamily: useFontFamily(style?.fontFamily),
     fontWeight: style?.fontWeight ?? undefined,
     lineHeight: style?.lineHeight ?? undefined,
@@ -126,7 +149,9 @@ export function Button({ style, props, blockId, isNotClient = false }: ButtonPro
   const background = style?.background ?? '';
   const backgroundColor = style?.backgroundColor;
 
-  const backgroundString = backgroundColor ? updateHexColorInBackgroundString(background, backgroundColor) : background;
+  const backgroundString = backgroundColor
+    ? updateHexColorInBackgroundString(background, backgroundColor)
+    : background;
 
   const buttonBorderRadius = getRoundedCorners(style);
 
@@ -145,7 +170,9 @@ export function Button({ style, props, blockId, isNotClient = false }: ButtonPro
         href={getCleanURL(url)}
         target="_blank"
         className={`abtn-${sid}`}
-        onClick={guardLinksWhileEditingOnCanvas ? (e: React.MouseEvent) => e.preventDefault() : undefined}
+        onClick={
+          guardLinksWhileEditingOnCanvas ? (e: React.MouseEvent) => e.preventDefault() : undefined
+        }
       >
         <Wrapper
           className={sid}

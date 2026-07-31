@@ -170,16 +170,19 @@ export default function DatePicker({
           <Icon name="chevron-down" size={14} />
         </button>
       )}
-      {inline ? (
-        calendarPanel
-      ) : (
-        open && (
-          <>
-            <button type="button" className={styles.scrim} aria-label="Close calendar" onClick={() => setOpen(false)} />
-            {calendarPanel}
-          </>
-        )
-      )}
+      {inline
+        ? calendarPanel
+        : open && (
+            <>
+              <button
+                type="button"
+                className={styles.scrim}
+                aria-label="Close calendar"
+                onClick={() => setOpen(false)}
+              />
+              {calendarPanel}
+            </>
+          )}
     </div>
   );
 }

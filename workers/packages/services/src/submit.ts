@@ -1,9 +1,9 @@
-import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
-import { config } from "@maildrill/config";
-import { db, messages, type MessageRow } from "@maildrill/database";
-import type { Channel } from "@maildrill/domain";
-import { insertDispatchOutbox, isUniqueViolation } from "./shared";
+import { randomUUID } from 'node:crypto';
+import { and, eq } from 'drizzle-orm';
+import { config } from '@maildrill/config';
+import { db, messages, type MessageRow } from '@maildrill/database';
+import type { Channel } from '@maildrill/domain';
+import { insertDispatchOutbox, isUniqueViolation } from './shared';
 
 export interface SubmitMessageInput {
   tenantId: string;
@@ -40,9 +40,7 @@ async function findByIdempotencyKey(
  * written in a single transaction (transactional outbox). Returns after the
  * commit — never after provider delivery. Idempotent on (tenant, key).
  */
-export async function submitMessage(
-  input: SubmitMessageInput,
-): Promise<SubmitResult> {
+export async function submitMessage(input: SubmitMessageInput): Promise<SubmitResult> {
   const provider = input.provider ?? config.provider.driver;
   const correlationId = input.correlationId ?? randomUUID();
 
@@ -51,9 +49,8 @@ export async function submitMessage(
     if (existing) return { message: existing, deduplicated: true };
   }
 
-  const scheduled =
-    input.scheduledAt != null && input.scheduledAt.getTime() > Date.now();
-  const status = scheduled ? "scheduled" : "queued";
+  const scheduled = input.scheduledAt != null && input.scheduledAt.getTime() > Date.now();
+  const status = scheduled ? 'scheduled' : 'queued';
   const now = new Date();
 
   try {

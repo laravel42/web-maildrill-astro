@@ -41,9 +41,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix82h-1"
-        ]
+        "childrenIds": ["block-ms8ix82h-1"]
       }
     }
   },
@@ -89,11 +87,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix82h-3",
-          "block-ms8ix82h-5",
-          "block-ms8ix82h-7"
-        ]
+        "childrenIds": ["block-ms8ix82h-3", "block-ms8ix82h-5", "block-ms8ix82h-7"]
       }
     }
   },
@@ -179,31 +173,20 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          33,
-          33,
-          34
-        ],
+        "fixedWidths": [33, 33, 34],
         "columnsCount": 3,
         "layout": "layout-33-33-33",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "card-ms8ix82h-c"
-            ]
+            "childrenIds": ["card-ms8ix82h-c"]
           },
           {
-            "childrenIds": [
-              "card-ms8ix82h-g"
-            ]
+            "childrenIds": ["card-ms8ix82h-g"]
           },
           {
-            "childrenIds": [
-              "img-ms8ix82h-h",
-              "block-ms8ix82h-j"
-            ]
+            "childrenIds": ["img-ms8ix82h-h", "block-ms8ix82h-j"]
           }
         ]
       }
@@ -228,10 +211,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "img-ms8ix82h-9",
-          "block-ms8ix82h-b"
-        ]
+        "childrenIds": ["img-ms8ix82h-9", "block-ms8ix82h-b"]
       }
     }
   },
@@ -306,10 +286,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "img-ms8ix82h-d",
-          "block-ms8ix82h-f"
-        ]
+        "childrenIds": ["img-ms8ix82h-d", "block-ms8ix82h-f"]
       }
     }
   },
@@ -436,11 +413,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "cols-ms8ix82h-q",
-          "cols-ms8ix82h-v",
-          "cols-ms8ix82h-10"
-        ]
+        "childrenIds": ["cols-ms8ix82h-q", "cols-ms8ix82h-v", "cols-ms8ix82h-10"]
       }
     }
   },
@@ -457,26 +430,17 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          21,
-          79,
-          null
-        ],
+        "fixedWidths": [21, 79, null],
         "columnsCount": 2,
         "layout": "layout-50-50",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "img-ms8ix82h-m"
-            ]
+            "childrenIds": ["img-ms8ix82h-m"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82h-n",
-              "block-ms8ix82h-p"
-            ]
+            "childrenIds": ["block-ms8ix82h-n", "block-ms8ix82h-p"]
           },
           {
             "childrenIds": []
@@ -573,26 +537,17 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          21,
-          79,
-          null
-        ],
+        "fixedWidths": [21, 79, null],
         "columnsCount": 2,
         "layout": "layout-50-50",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "img-ms8ix82h-r"
-            ]
+            "childrenIds": ["img-ms8ix82h-r"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82h-s",
-              "block-ms8ix82h-u"
-            ]
+            "childrenIds": ["block-ms8ix82h-s", "block-ms8ix82h-u"]
           },
           {
             "childrenIds": []
@@ -689,26 +644,17 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          21,
-          79,
-          null
-        ],
+        "fixedWidths": [21, 79, null],
         "columnsCount": 2,
         "layout": "layout-50-50",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "img-ms8ix82h-w"
-            ]
+            "childrenIds": ["img-ms8ix82h-w"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82h-x",
-              "block-ms8ix82h-z"
-            ]
+            "childrenIds": ["block-ms8ix82h-x", "block-ms8ix82h-z"]
           },
           {
             "childrenIds": []
@@ -811,10 +757,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "btn-ms8ix82h-12",
-          "block-ms8ix82h-14"
-        ]
+        "childrenIds": ["btn-ms8ix82h-12", "block-ms8ix82h-14"]
       }
     }
   },

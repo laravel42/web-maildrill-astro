@@ -10,13 +10,18 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const HTML_DIR = path.join(ROOT, 'packages/email-builder-standalone/src/App/ComponentsLibrary/templates/html');
+const HTML_DIR = path.join(
+  ROOT,
+  'packages/email-builder-standalone/src/App/ComponentsLibrary/templates/html',
+);
 const OUT_DIR = path.join(ROOT, 'tmp/compare');
 
 const [slug, label] = process.argv.slice(2);
 
 const probe = (text) => {
-  const leaf = [...document.querySelectorAll('*')].find((e) => !e.querySelector('*') && e.textContent.trim() === text);
+  const leaf = [...document.querySelectorAll('*')].find(
+    (e) => !e.querySelector('*') && e.textContent.trim() === text,
+  );
   if (!leaf) return null;
   const chain = [];
   for (let n = leaf, i = 0; n && i < 6; n = n.parentElement, i++) {

@@ -19,9 +19,15 @@ const DEFAULT_SKILLS_DIR = resolve(__dirname, '../../skills/email-builder');
  *   they always go where they belong (top / bottom / nav / logo anchor)
  *   when the prompt warrants them.
  */
-export type RecipeRole = 'hero' | 'features' | 'social_proof' | 'cta' | 'header' | 'footer' | 'nav' | 'logo';
+export type RecipeRole =
+  'hero' | 'features' | 'social_proof' | 'cta' | 'header' | 'footer' | 'nav' | 'logo';
 
-export const ROTATION_ROLES: ReadonlyArray<RecipeRole> = ['hero', 'features', 'social_proof', 'cta'];
+export const ROTATION_ROLES: ReadonlyArray<RecipeRole> = [
+  'hero',
+  'features',
+  'social_proof',
+  'cta',
+];
 
 // ---------------------------------------------------------------------------
 // L42-311 Layer A — five-category taxonomy
@@ -248,7 +254,10 @@ const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]
  * never embedded in the prompt — it is scored against the user prompt at
  * selection time only, so it is cheap to over-include here.
  */
-function extractKeywords(metadata: Record<string, unknown>, ...extra: Array<string | undefined>): string {
+function extractKeywords(
+  metadata: Record<string, unknown>,
+  ...extra: Array<string | undefined>
+): string {
   const parts: string[] = [];
   const push = (v: unknown) => {
     if (typeof v === 'string' && v.trim().length > 0) parts.push(v.trim());
@@ -298,7 +307,9 @@ function readPresetNdjson(
   // Gallery truth lives in references/json/NN.json (full documents). Prefer
   // the index's sourceFile, then the conventional NN.json slot name.
   const candidates = [
-    entry.sourceFile ? resolve(skillsDir, entry.sourceFile.replace(/^skills\/email-builder\//, '')) : null,
+    entry.sourceFile
+      ? resolve(skillsDir, entry.sourceFile.replace(/^skills\/email-builder\//, ''))
+      : null,
     entry.sourceFile ? resolve(skillsDir, '..', entry.sourceFile) : null,
     resolve(skillsDir, 'references/json', `${String(entry.slot).padStart(2, '0')}.json`),
   ].filter((p): p is string => Boolean(p));
@@ -412,7 +423,7 @@ export function loadRecipes(options: LoadSkillContextOptions = {}): RecipeEntry[
  */
 function parseLibraryNdjson(
   filePath: string,
-  basename: string
+  basename: string,
 ): {
   metadata: Record<string, unknown>;
   blockNdjson: string;
@@ -501,7 +512,9 @@ export function loadSections(options: LoadSkillContextOptions = {}): SectionEntr
 
       const id = typeof parsed.metadata.id === 'string' ? parsed.metadata.id : basename;
       const slug =
-        typeof parsed.metadata.name === 'string' && parsed.metadata.name.length > 0 ? parsed.metadata.name : id;
+        typeof parsed.metadata.name === 'string' && parsed.metadata.name.length > 0
+          ? parsed.metadata.name
+          : id;
       const description =
         typeof parsed.metadata.description === 'string' && parsed.metadata.description.length > 0
           ? parsed.metadata.description
@@ -556,7 +569,9 @@ export function loadUserTemplates(options: LoadSkillContextOptions = {}): Templa
 
     const id = typeof parsed.metadata.id === 'string' ? parsed.metadata.id : basename;
     const slug =
-      typeof parsed.metadata.name === 'string' && parsed.metadata.name.length > 0 ? parsed.metadata.name : id;
+      typeof parsed.metadata.name === 'string' && parsed.metadata.name.length > 0
+        ? parsed.metadata.name
+        : id;
     const description =
       typeof parsed.metadata.description === 'string' && parsed.metadata.description.length > 0
         ? parsed.metadata.description
@@ -609,7 +624,9 @@ export function loadLayouts(options: LoadSkillContextOptions = {}): LayoutEntry[
 
       const id = typeof parsed.metadata.id === 'string' ? parsed.metadata.id : basename;
       const slug =
-        typeof parsed.metadata.name === 'string' && parsed.metadata.name.length > 0 ? parsed.metadata.name : id;
+        typeof parsed.metadata.name === 'string' && parsed.metadata.name.length > 0
+          ? parsed.metadata.name
+          : id;
       const description =
         typeof parsed.metadata.description === 'string' && parsed.metadata.description.length > 0
           ? parsed.metadata.description
@@ -666,7 +683,9 @@ export function loadPrimitives(options: LoadSkillContextOptions = {}): Primitive
 
       const id = typeof parsed.metadata.id === 'string' ? parsed.metadata.id : basename;
       const slug =
-        typeof parsed.metadata.name === 'string' && parsed.metadata.name.length > 0 ? parsed.metadata.name : id;
+        typeof parsed.metadata.name === 'string' && parsed.metadata.name.length > 0
+          ? parsed.metadata.name
+          : id;
       const description =
         typeof parsed.metadata.description === 'string' && parsed.metadata.description.length > 0
           ? parsed.metadata.description

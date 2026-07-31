@@ -90,7 +90,10 @@ export function RightColumnTreeIcon(props: SvgIconProps) {
 
 export type ColumnTreeIconComponent = React.ComponentType<SvgIconProps>;
 
-export function selectSlotColumnIconComponent(columnsCount: 2 | 3, columnIndex: number): ColumnTreeIconComponent {
+export function selectSlotColumnIconComponent(
+  columnsCount: 2 | 3,
+  columnIndex: number,
+): ColumnTreeIconComponent {
   if (columnsCount === 2) {
     return columnIndex === 0 ? Columns2LeftSlotTreeIcon : Columns2RightSlotTreeIcon;
   }

@@ -16,7 +16,10 @@
  *     block is silently skipped.
  */
 
-import { resolveBackendUrl, trackUnsplashDownload } from '../../components/UnsplashImagePicker/unsplash-api';
+import {
+  resolveBackendUrl,
+  trackUnsplashDownload,
+} from '../../components/UnsplashImagePicker/unsplash-api';
 import type { TEditorConfiguration } from '../../documents/editor/core';
 
 interface UnsplashMetadataLike {
@@ -33,7 +36,9 @@ interface ImageLikeBlock {
  * blocks in the document. Exported separately so tests can assert on the
  * collection without observing fetch side effects.
  */
-export function collectUnsplashDownloadLocations(document: TEditorConfiguration | null | undefined): string[] {
+export function collectUnsplashDownloadLocations(
+  document: TEditorConfiguration | null | undefined,
+): string[] {
   if (!document || typeof document !== 'object') return [];
   const seen = new Set<string>();
   const result: string[] = [];
@@ -72,7 +77,7 @@ export interface TrackUnsplashOptions {
  */
 export function trackUnsplashFromDocument(
   document: TEditorConfiguration | null | undefined,
-  options: TrackUnsplashOptions = {}
+  options: TrackUnsplashOptions = {},
 ): string[] {
   let locations: string[];
   try {

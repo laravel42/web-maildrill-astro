@@ -222,17 +222,7 @@ export function isWizardStepBlocked(input: WizardValidationInput): boolean {
 
 /** Why the current step cannot advance, or null when Continue / Send is allowed. */
 export function getStepBlockedReason(input: WizardValidationInput): string | null {
-  const {
-    step,
-    name,
-    subject,
-    channel,
-    audienceIds,
-    audienceList,
-    message,
-    selTpl,
-    live,
-  } = input;
+  const { step, name, subject, channel, audienceIds, audienceList, message, selTpl, live } = input;
   const isEmail = channel === 'email';
 
   switch (step) {
@@ -329,7 +319,10 @@ export function buildReviewRows(
     {
       label: 'Delivery',
       kind: 'text',
-      value: schedule === 'now' ? 'Send immediately' : formatScheduleSummary(scheduledDate, scheduledTime),
+      value:
+        schedule === 'now'
+          ? 'Send immediately'
+          : formatScheduleSummary(scheduledDate, scheduledTime),
     },
   ];
   // Email carries a subject line; show it just under the campaign name.

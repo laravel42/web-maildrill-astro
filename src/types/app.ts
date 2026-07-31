@@ -3,12 +3,7 @@ export type ChannelType = 'email' | 'sms' | 'whatsapp' | 'voice';
 
 /** WhatsApp template approval state (Meta review). Null/absent for other channels. */
 export type TemplateApprovalStatus =
-  | 'draft'
-  | 'pending'
-  | 'approved'
-  | 'rejected'
-  | 'paused'
-  | 'disabled';
+  'draft' | 'pending' | 'approved' | 'rejected' | 'paused' | 'disabled';
 
 export type Campaign = {
   id: string;

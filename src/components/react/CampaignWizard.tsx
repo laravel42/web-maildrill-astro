@@ -341,7 +341,6 @@ export default function CampaignWizard({
 
   useEffect(() => {
     window.posthog?.capture('campaign_wizard_opened', { channel, mode });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isEmail = channel === 'email';

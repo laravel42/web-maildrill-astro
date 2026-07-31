@@ -2,10 +2,10 @@
 
 > **Two PostHog projects — do not confuse them**
 >
-> | Project | ID | Use |
-> | --- | --- | --- |
-> | Site / product UI (this report) | **526240** | Browser SDK + BFF product-analytics events below |
-> | **Maildrill messaging** | **526344** | Infobip → Hog ingest, HogQL stats, campaign-delivery poller |
+> | Project                         | ID         | Use                                                         |
+> | ------------------------------- | ---------- | ----------------------------------------------------------- |
+> | Site / product UI (this report) | **526240** | Browser SDK + BFF product-analytics events below            |
+> | **Maildrill messaging**         | **526344** | Infobip → Hog ingest, HogQL stats, campaign-delivery poller |
 >
 > Messaging/analytics ops: [`../workers/HANDOFF.md`](../workers/HANDOFF.md),
 > [`../workers/docs/posthog-infobip-hog.md`](../workers/docs/posthog-infobip-hog.md).
@@ -16,21 +16,21 @@ The wizard has completed a deep integration of PostHog into the Maildrill Astro 
 
 ## Events instrumented
 
-| Event name | Description | File |
-|---|---|---|
-| `signup_form_submitted` | User submits the signup form with name and email to start a free trial. | `src/components/react/AuthForm.tsx` |
-| `signup_completed` | User reaches the terminal 'on the waitlist' confirmation state after signup. | `src/components/react/AuthForm.tsx` |
-| `login_code_requested` | User submits their email on the login form to receive a magic-link/OTP code. | `src/components/react/AuthForm.tsx` |
-| `login_succeeded` | User successfully verifies their 6-digit OTP code and is signed in. | `src/components/react/AuthForm.tsx` |
-| `signup_welcome_sent` | Server successfully dispatched the signup welcome email to a new registrant. | `src/pages/api/signup-welcome.ts` |
-| `login_code_sent` | Server successfully forwarded the login code request to the auth service. | `src/pages/api/login-code.ts` |
-| `campaign_wizard_opened` | User opens the campaign creation wizard. | `src/components/react/CampaignWizard.tsx` |
-| `campaign_wizard_step_advanced` | User clicks Continue and advances from one wizard step to the next. | `src/components/react/CampaignWizard.tsx` |
-| `campaign_sent` | User confirms the review step and submits a campaign for sending or scheduling. | `src/components/react/CampaignWizard.tsx` |
-| `template_deleted` | User deletes one or more templates from the template library. | `src/components/react/AppTemplates.tsx` |
-| `template_duplicated` | User duplicates one or more templates in the template library. | `src/components/react/AppTemplates.tsx` |
-| `pricing_estimate_calculated` | User interacts with the pricing estimator to calculate their estimated cost. | `src/components/react/PricingEstimator.tsx` |
-| `contact_form_submitted` | User submits the contact / sales enquiry form on the contact page. | `src/components/react/ContactForm.tsx` |
+| Event name                      | Description                                                                     | File                                        |
+| ------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------- |
+| `signup_form_submitted`         | User submits the signup form with name and email to start a free trial.         | `src/components/react/AuthForm.tsx`         |
+| `signup_completed`              | User reaches the terminal 'on the waitlist' confirmation state after signup.    | `src/components/react/AuthForm.tsx`         |
+| `login_code_requested`          | User submits their email on the login form to receive a magic-link/OTP code.    | `src/components/react/AuthForm.tsx`         |
+| `login_succeeded`               | User successfully verifies their 6-digit OTP code and is signed in.             | `src/components/react/AuthForm.tsx`         |
+| `signup_welcome_sent`           | Server successfully dispatched the signup welcome email to a new registrant.    | `src/pages/api/signup-welcome.ts`           |
+| `login_code_sent`               | Server successfully forwarded the login code request to the auth service.       | `src/pages/api/login-code.ts`               |
+| `campaign_wizard_opened`        | User opens the campaign creation wizard.                                        | `src/components/react/CampaignWizard.tsx`   |
+| `campaign_wizard_step_advanced` | User clicks Continue and advances from one wizard step to the next.             | `src/components/react/CampaignWizard.tsx`   |
+| `campaign_sent`                 | User confirms the review step and submits a campaign for sending or scheduling. | `src/components/react/CampaignWizard.tsx`   |
+| `template_deleted`              | User deletes one or more templates from the template library.                   | `src/components/react/AppTemplates.tsx`     |
+| `template_duplicated`           | User duplicates one or more templates in the template library.                  | `src/components/react/AppTemplates.tsx`     |
+| `pricing_estimate_calculated`   | User interacts with the pricing estimator to calculate their estimated cost.    | `src/components/react/PricingEstimator.tsx` |
+| `contact_form_submitted`        | User submits the contact / sales enquiry form on the contact page.              | `src/components/react/ContactForm.tsx`      |
 
 ## Next steps
 

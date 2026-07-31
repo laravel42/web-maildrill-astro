@@ -1,28 +1,28 @@
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
-import { config } from "@maildrill/config";
-import { campaigns, db, messages, type MessageRow } from "@maildrill/database";
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
+import { config } from '@maildrill/config';
+import { campaigns, db, messages, type MessageRow } from '@maildrill/database';
 import {
   OPEN_DELIVERY_STATES,
   QUEUE_PENDING_STATES,
   isCampaignDispatched,
   outcomeFromInfobipStatusGroup,
   type MessageState,
-} from "@maildrill/domain";
+} from '@maildrill/domain';
 import {
   cellString,
   columnIndex,
   createLogger,
   hogqlLiteralList,
   runHogQL,
-} from "@maildrill/observability";
+} from '@maildrill/observability';
 import {
   applyProviderOutcome,
   applyTrackingOutcome,
   type TrackingNotificationType,
-} from "./events";
-import { getProvider } from "@maildrill/providers";
+} from './events';
+import { getProvider } from '@maildrill/providers';
 
-const log = createLogger({ component: "campaign-delivery" });
+const log = createLogger({ component: 'campaign-delivery' });
 
 const HOGQL_CHUNK = 200;
 const OPEN_MESSAGE_LIMIT = 1000;
@@ -34,9 +34,9 @@ const INFOBIP_STATUS_LIMIT = 50;
  * doesn't wait for opens) — so engagement sync loads them separately.
  */
 const ENGAGEMENT_CANDIDATE_STATES = [
-  "submitted",
-  "sent",
-  "delivered",
+  'submitted',
+  'sent',
+  'delivered',
 ] as const satisfies readonly MessageState[];
 /** How far back to look for delivered rows still awaiting a seen report. */
 const ENGAGEMENT_LOOKBACK_DAYS = 14;
@@ -55,14 +55,11 @@ export interface StatusGroupRow {
 }
 
 /** Pure: map HogQL rows → latest status_group (+ error) per maildrill message id. */
-export function mapLatestStatusGroups(
-  columns: string[],
-  results: unknown[][],
-): StatusGroupRow[] {
-  const iId = columnIndex(columns, "maildrill_message_id");
-  const iGroup = columnIndex(columns, "status_group");
-  const iErrName = columnIndex(columns, "error_name");
-  const iErrDesc = columnIndex(columns, "error_description");
+export function mapLatestStatusGroups(columns: string[], results: unknown[][]): StatusGroupRow[] {
+  const iId = columnIndex(columns, 'maildrill_message_id');
+  const iGroup = columnIndex(columns, 'status_group');
+  const iErrName = columnIndex(columns, 'error_name');
+  const iErrDesc = columnIndex(columns, 'error_description');
   if (iId < 0 || iGroup < 0) return [];
 
   // Query already returns argMax / latest; keep first row per id if duplicates.
@@ -87,7 +84,7 @@ export function mapLatestStatusGroups(
 
 /** Pure: HogQL rows → maildrill message ids that have a seen report. */
 export function mapSeenMessageIds(columns: string[], results: unknown[][]): string[] {
-  const iId = columnIndex(columns, "maildrill_message_id");
+  const iId = columnIndex(columns, 'maildrill_message_id');
   if (iId < 0) return [];
   const seen = new Set<string>();
   const out: string[] = [];
@@ -111,22 +108,22 @@ export interface TrackingRow {
 }
 
 const TRACKING_TYPES = new Set<string>([
-  "OPENED",
-  "CLICKED",
-  "UNSUBSCRIBED",
-  "COMPLAINED",
-  "LATE_BOUNCE",
+  'OPENED',
+  'CLICKED',
+  'UNSUBSCRIBED',
+  'COMPLAINED',
+  'LATE_BOUNCE',
 ]);
 
 /** Pure: map HogQL tracking rows into typed engagement events. */
 export function mapTrackingRows(columns: string[], results: unknown[][]): TrackingRow[] {
-  const iId = columnIndex(columns, "maildrill_message_id");
-  const iType = columnIndex(columns, "notification_type");
-  const iUrl = columnIndex(columns, "url");
-  const iDevice = columnIndex(columns, "device_type");
-  const iName = columnIndex(columns, "device_name");
-  const iOs = columnIndex(columns, "os");
-  const iFp = columnIndex(columns, "fingerprint");
+  const iId = columnIndex(columns, 'maildrill_message_id');
+  const iType = columnIndex(columns, 'notification_type');
+  const iUrl = columnIndex(columns, 'url');
+  const iDevice = columnIndex(columns, 'device_type');
+  const iName = columnIndex(columns, 'device_name');
+  const iOs = columnIndex(columns, 'os');
+  const iFp = columnIndex(columns, 'fingerprint');
   if (iId < 0 || iType < 0) return [];
 
   const out: TrackingRow[] = [];
@@ -135,21 +132,15 @@ export function mapTrackingRows(columns: string[], results: unknown[][]): Tracki
     const notificationType = cellString(row, iType).toUpperCase();
     if (!id || !TRACKING_TYPES.has(notificationType)) continue;
     const fingerprint =
-      (iFp >= 0 ? cellString(row, iFp) : "") ||
-      `${id}:${notificationType}:${iUrl >= 0 ? cellString(row, iUrl) : ""}`;
+      (iFp >= 0 ? cellString(row, iFp) : '') ||
+      `${id}:${notificationType}:${iUrl >= 0 ? cellString(row, iUrl) : ''}`;
     out.push({
       maildrillMessageId: id,
       notificationType: notificationType as TrackingNotificationType,
       fingerprint,
-      ...(iUrl >= 0 && cellString(row, iUrl)
-        ? { url: cellString(row, iUrl) }
-        : {}),
-      ...(iDevice >= 0 && cellString(row, iDevice)
-        ? { deviceType: cellString(row, iDevice) }
-        : {}),
-      ...(iName >= 0 && cellString(row, iName)
-        ? { deviceName: cellString(row, iName) }
-        : {}),
+      ...(iUrl >= 0 && cellString(row, iUrl) ? { url: cellString(row, iUrl) } : {}),
+      ...(iDevice >= 0 && cellString(row, iDevice) ? { deviceType: cellString(row, iDevice) } : {}),
+      ...(iName >= 0 && cellString(row, iName) ? { deviceName: cellString(row, iName) } : {}),
       ...(iOs >= 0 && cellString(row, iOs) ? { os: cellString(row, iOs) } : {}),
     });
   }
@@ -195,7 +186,7 @@ async function loadTrackingCandidates(): Promise<MessageRow[]> {
     .from(messages)
     .where(
       and(
-        inArray(messages.status, ["submitted", "sent", "delivered", "read"]),
+        inArray(messages.status, ['submitted', 'sent', 'delivered', 'read']),
         sql`${messages.updatedAt} > now() - (${ENGAGEMENT_LOOKBACK_DAYS} * interval '1 day')`,
       ),
     )
@@ -213,7 +204,7 @@ async function fetchStatusGroupsFromPostHog(
     const chunk = messageIds.slice(i, i + HOGQL_CHUNK);
     const lits = hogqlLiteralList(chunk);
     if (!lits) {
-      log.warn({ chunkSize: chunk.length }, "skip hogql chunk: unsafe message id");
+      log.warn({ chunkSize: chunk.length }, 'skip hogql chunk: unsafe message id');
       continue;
     }
 
@@ -228,11 +219,11 @@ SELECT
   argMax(toString(properties.error_description), timestamp) AS error_description
 FROM events
 WHERE event IN ('message_delivery_report', 'message_voice_report')
-  AND toString(properties.maildrill_message_id) IN (${lits.join(", ")})
+  AND toString(properties.maildrill_message_id) IN (${lits.join(', ')})
 GROUP BY maildrill_message_id
 `.trim();
 
-    const result = await runHogQL(query, "maildrill-campaign-delivery");
+    const result = await runHogQL(query, 'maildrill-campaign-delivery');
     if (!result) continue;
 
     for (const row of mapLatestStatusGroups(result.columns, result.results)) {
@@ -243,9 +234,7 @@ GROUP BY maildrill_message_id
   return byId;
 }
 
-async function fetchSeenMessageIdsFromPostHog(
-  messageIds: string[],
-): Promise<Set<string>> {
+async function fetchSeenMessageIdsFromPostHog(messageIds: string[]): Promise<Set<string>> {
   const ids = new Set<string>();
   if (messageIds.length === 0 || !config.posthog.statsEnabled) return ids;
 
@@ -253,7 +242,7 @@ async function fetchSeenMessageIdsFromPostHog(
     const chunk = messageIds.slice(i, i + HOGQL_CHUNK);
     const lits = hogqlLiteralList(chunk);
     if (!lits) {
-      log.warn({ chunkSize: chunk.length }, "skip hogql seen chunk: unsafe message id");
+      log.warn({ chunkSize: chunk.length }, 'skip hogql seen chunk: unsafe message id');
       continue;
     }
 
@@ -265,11 +254,11 @@ SELECT
 FROM events
 WHERE event = 'message_seen_report'
   AND timestamp > now() - INTERVAL 30 DAY
-  AND toString(properties.maildrill_message_id) IN (${lits.join(", ")})
+  AND toString(properties.maildrill_message_id) IN (${lits.join(', ')})
 GROUP BY maildrill_message_id
 `.trim();
 
-    const result = await runHogQL(query, "maildrill-campaign-seen");
+    const result = await runHogQL(query, 'maildrill-campaign-seen');
     if (!result) continue;
 
     for (const id of mapSeenMessageIds(result.columns, result.results)) {
@@ -293,8 +282,8 @@ async function syncSeenReports(candidates: MessageRow[]): Promise<number> {
       channel: msg.channel,
       provider: msg.provider,
       currentStatus: msg.status,
-      outcome: "read",
-      statusGroup: "SEEN",
+      outcome: 'read',
+      statusGroup: 'SEEN',
     });
     if (changed) updated += 1;
   }
@@ -302,15 +291,13 @@ async function syncSeenReports(candidates: MessageRow[]): Promise<number> {
   if (candidates.length > 0 || updated > 0) {
     log.debug(
       { candidates: candidates.length, seen: seenIds.size, updated },
-      "posthog seen report sync",
+      'posthog seen report sync',
     );
   }
   return updated;
 }
 
-async function fetchTrackingRowsFromPostHog(
-  messageIds: string[],
-): Promise<TrackingRow[]> {
+async function fetchTrackingRowsFromPostHog(messageIds: string[]): Promise<TrackingRow[]> {
   const out: TrackingRow[] = [];
   if (messageIds.length === 0 || !config.posthog.statsEnabled) return out;
 
@@ -318,7 +305,7 @@ async function fetchTrackingRowsFromPostHog(
     const chunk = messageIds.slice(i, i + HOGQL_CHUNK);
     const lits = hogqlLiteralList(chunk);
     if (!lits) {
-      log.warn({ chunkSize: chunk.length }, "skip hogql tracking chunk: unsafe message id");
+      log.warn({ chunkSize: chunk.length }, 'skip hogql tracking chunk: unsafe message id');
       continue;
     }
 
@@ -334,10 +321,10 @@ SELECT
 FROM events
 WHERE event = 'message_tracking_report'
   AND timestamp > now() - INTERVAL 30 DAY
-  AND toString(properties.maildrill_message_id) IN (${lits.join(", ")})
+  AND toString(properties.maildrill_message_id) IN (${lits.join(', ')})
 `.trim();
 
-    const result = await runHogQL(query, "maildrill-campaign-tracking");
+    const result = await runHogQL(query, 'maildrill-campaign-tracking');
     if (!result) continue;
     out.push(...mapTrackingRows(result.columns, result.results));
   }
@@ -370,10 +357,10 @@ async function syncTrackingReports(candidates: MessageRow[]): Promise<number> {
     });
     if (changed) {
       updated += 1;
-      if (row.notificationType === "OPENED" || row.notificationType === "CLICKED") {
-        byId.set(live.id, { ...live, status: "read" });
-      } else if (row.notificationType === "LATE_BOUNCE") {
-        byId.set(live.id, { ...live, status: "failed" });
+      if (row.notificationType === 'OPENED' || row.notificationType === 'CLICKED') {
+        byId.set(live.id, { ...live, status: 'read' });
+      } else if (row.notificationType === 'LATE_BOUNCE') {
+        byId.set(live.id, { ...live, status: 'failed' });
       }
     }
   }
@@ -381,7 +368,7 @@ async function syncTrackingReports(candidates: MessageRow[]): Promise<number> {
   if (candidates.length > 0 || updated > 0) {
     log.debug(
       { candidates: candidates.length, events: rows.length, updated },
-      "posthog tracking report sync",
+      'posthog tracking report sync',
     );
   }
   return updated;
@@ -411,9 +398,7 @@ async function syncOpenMessages(open: MessageRow[]): Promise<number> {
   }
 
   // PostHog miss → pull Infobip logs for remaining submitted/sent rows.
-  updated += await syncOpenMessagesFromInfobip(
-    open.filter((m) => !statusById.has(m.id)),
-  );
+  updated += await syncOpenMessagesFromInfobip(open.filter((m) => !statusById.has(m.id)));
 
   return updated;
 }
@@ -423,9 +408,7 @@ async function syncOpenMessagesFromInfobip(open: MessageRow[]): Promise<number> 
   if (!provider.getDeliveryStatusGroup && !provider.pullDeliveryReports) return 0;
 
   const byProviderId = new Map(
-    open
-      .filter((m) => m.providerMessageId)
-      .map((m) => [m.providerMessageId!, m] as const),
+    open.filter((m) => m.providerMessageId).map((m) => [m.providerMessageId!, m] as const),
   );
   if (byProviderId.size === 0) return 0;
 
@@ -441,7 +424,7 @@ async function syncOpenMessagesFromInfobip(open: MessageRow[]): Promise<number> 
         const msg = byProviderId.get(report.providerMessageId);
         if (!msg) continue;
         const outcome = outcomeFromInfobipStatusGroup(report.statusGroup);
-        if (outcome === "submitted") continue;
+        if (outcome === 'submitted') continue;
         const changed = await applyProviderOutcome({
           messageId: msg.id,
           tenantId: msg.tenantId,
@@ -460,7 +443,7 @@ async function syncOpenMessagesFromInfobip(open: MessageRow[]): Promise<number> 
   // 2) Per-id lookup for anything still open (messageId filter on reports API).
   if (!provider.getDeliveryStatusGroup) {
     if (updated > 0 || resolved.size > 0) {
-      log.debug({ updated, resolved: resolved.size }, "infobip delivery report sync");
+      log.debug({ updated, resolved: resolved.size }, 'infobip delivery report sync');
     }
     return updated;
   }
@@ -470,18 +453,15 @@ async function syncOpenMessagesFromInfobip(open: MessageRow[]): Promise<number> 
     if (resolved.has(msg.id)) continue;
     if (checked >= INFOBIP_STATUS_LIMIT) break;
     if (!msg.providerMessageId) continue;
-    if (msg.status !== "submitted" && msg.status !== "sent") continue;
+    if (msg.status !== 'submitted' && msg.status !== 'sent') continue;
     checked += 1;
 
-    const statusGroup = await provider.getDeliveryStatusGroup(
-      msg.channel,
-      msg.providerMessageId,
-    );
+    const statusGroup = await provider.getDeliveryStatusGroup(msg.channel, msg.providerMessageId);
     if (!statusGroup) continue;
 
     const outcome = outcomeFromInfobipStatusGroup(statusGroup);
     // PENDING maps to submitted — no transition; skip.
-    if (outcome === "submitted") continue;
+    if (outcome === 'submitted') continue;
 
     const changed = await applyProviderOutcome({
       messageId: msg.id,
@@ -496,7 +476,7 @@ async function syncOpenMessagesFromInfobip(open: MessageRow[]): Promise<number> 
   }
 
   if (checked > 0 || updated > 0) {
-    log.debug({ checked, updated, resolved: resolved.size }, "infobip delivery report sync");
+    log.debug({ checked, updated, resolved: resolved.size }, 'infobip delivery report sync');
   }
   return updated;
 }
@@ -505,16 +485,13 @@ async function syncOpenMessagesFromInfobip(open: MessageRow[]): Promise<number> 
  * Flip a single campaign to `sent` when every message has left the send queue.
  * Safe to call after each dispatch; no-ops if still pending or already sent.
  */
-export async function tryCompleteCampaign(
-  campaignId: string,
-  tenantId: string,
-): Promise<boolean> {
+export async function tryCompleteCampaign(campaignId: string, tenantId: string): Promise<boolean> {
   const camp = await db
     .select({ id: campaigns.id, status: campaigns.status })
     .from(campaigns)
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.tenantId, tenantId)))
     .limit(1);
-  if (camp[0]?.status !== "sending") return false;
+  if (camp[0]?.status !== 'sending') return false;
 
   const rows = await db
     .select({ status: messages.status })
@@ -529,22 +506,16 @@ export async function tryCompleteCampaign(
     .select({ n: sql<number>`count(*)::int` })
     .from(messages)
     .where(
-      and(
-        eq(messages.campaignId, campaignId),
-        inArray(messages.status, [...QUEUE_PENDING_STATES]),
-      ),
+      and(eq(messages.campaignId, campaignId), inArray(messages.status, [...QUEUE_PENDING_STATES])),
     );
   if (Number(queuedLeft[0]?.n ?? 0) > 0) return false;
 
   await db
     .update(campaigns)
-    .set({ status: "sent", completedAt: new Date(), updatedAt: new Date() })
-    .where(and(eq(campaigns.id, campaignId), eq(campaigns.status, "sending")));
+    .set({ status: 'sent', completedAt: new Date(), updatedAt: new Date() })
+    .where(and(eq(campaigns.id, campaignId), eq(campaigns.status, 'sending')));
 
-  log.info(
-    { campaignId, tenantId, messages: statuses.length },
-    "campaign dispatch complete",
-  );
+  log.info({ campaignId, tenantId, messages: statuses.length }, 'campaign dispatch complete');
   return true;
 }
 
@@ -552,7 +523,7 @@ async function completeFinishedCampaigns(): Promise<number> {
   const sending = await db
     .select({ id: campaigns.id, tenantId: campaigns.tenantId })
     .from(campaigns)
-    .where(eq(campaigns.status, "sending"))
+    .where(eq(campaigns.status, 'sending'))
     .orderBy(asc(campaigns.updatedAt), asc(campaigns.createdAt))
     .limit(200);
 
@@ -575,21 +546,21 @@ export async function pollCampaignDelivery(): Promise<DeliveryPollResult> {
   try {
     updated = await syncOpenMessages(open);
   } catch (err) {
-    log.warn({ err }, "posthog delivery sync failed");
+    log.warn({ err }, 'posthog delivery sync failed');
   }
 
   try {
     const candidates = await loadEngagementCandidates();
     updated += await syncSeenReports(candidates);
   } catch (err) {
-    log.warn({ err }, "posthog seen sync failed");
+    log.warn({ err }, 'posthog seen sync failed');
   }
 
   try {
     const trackingCandidates = await loadTrackingCandidates();
     updated += await syncTrackingReports(trackingCandidates);
   } catch (err) {
-    log.warn({ err }, "posthog tracking sync failed");
+    log.warn({ err }, 'posthog tracking sync failed');
   }
 
   const campaignsCompleted = await completeFinishedCampaigns();

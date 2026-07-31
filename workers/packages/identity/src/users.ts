@@ -1,10 +1,7 @@
-import { eq } from "drizzle-orm";
-import { db, users, type User } from "@maildrill/database";
+import { eq } from 'drizzle-orm';
+import { db, users, type User } from '@maildrill/database';
 
-export async function findOrCreateUser(
-  email: string,
-  name?: string | null,
-): Promise<User> {
+export async function findOrCreateUser(email: string, name?: string | null): Promise<User> {
   const normalized = email.trim().toLowerCase();
   const inserted = await db
     .insert(users)
@@ -12,11 +9,7 @@ export async function findOrCreateUser(
     .onConflictDoNothing({ target: users.email })
     .returning();
   if (inserted[0]) return inserted[0];
-  const existing = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, normalized))
-    .limit(1);
+  const existing = await db.select().from(users).where(eq(users.email, normalized)).limit(1);
   return existing[0]!;
 }
 

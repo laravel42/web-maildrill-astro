@@ -35,7 +35,8 @@ function resolveVariableFactory(doc: TemplateDoc, interactive: boolean): (n: num
   const bodyData = doc.blocks.body.data as { variables?: VariableMap };
   const headerData = (doc.blocks.header?.data ?? {}) as { variables?: VariableMap };
   return (n: number) => {
-    const example = bodyData.variables?.[String(n)]?.example ?? headerData.variables?.[String(n)]?.example ?? '';
+    const example =
+      bodyData.variables?.[String(n)]?.example ?? headerData.variables?.[String(n)]?.example ?? '';
     return example || `Sample ${n}`;
   };
 }
@@ -70,7 +71,9 @@ function SelectableRegion({
         }
       }}
       className={`relative cursor-pointer rounded-[5px] outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-ring ${
-        active ? 'ring-2 ring-primary ring-offset-1 ring-offset-transparent' : 'hover:ring-2 hover:ring-primary/35'
+        active
+          ? 'ring-2 ring-primary ring-offset-1 ring-offset-transparent'
+          : 'hover:ring-2 hover:ring-primary/35'
       }`}
     >
       {children}
@@ -95,7 +98,7 @@ export function CanvasPanel() {
 
   const ctx: PreviewContext = React.useMemo(
     () => ({ doc, dark, resolveVariable: resolveVariableFactory(doc, interactive) }),
-    [doc, dark, interactive]
+    [doc, dark, interactive],
   );
 
   const api: InteractionApi = React.useMemo(
@@ -108,7 +111,7 @@ export function CanvasPanel() {
       openSheet: openPreviewSheet,
       toast: showPreviewToast,
     }),
-    []
+    [],
   );
 
   const isSelected = (check: Selection) => JSON.stringify(selection) === JSON.stringify(check);
@@ -157,7 +160,9 @@ export function CanvasPanel() {
           }`}
         >
           <ChevronLeft className="size-5 opacity-90" />
-          <span className="flex size-8 items-center justify-center rounded-full bg-white/25 text-[13px] font-semibold">M</span>
+          <span className="flex size-8 items-center justify-center rounded-full bg-white/25 text-[13px] font-semibold">
+            M
+          </span>
           <div className="min-w-0 flex-1">
             <div className="truncate text-[14.5px] font-semibold leading-tight">Maildrill</div>
             <div className="text-[11px] leading-tight opacity-75">
@@ -199,7 +204,12 @@ export function CanvasPanel() {
                   const plugin = getBlockPlugin(header.type);
                   if (!plugin) return null;
                   return (
-                    <motion.div key={header.id} initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}>
+                    <motion.div
+                      key={header.id}
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                    >
                       <SelectableRegion
                         label="header"
                         interactive={interactive}
@@ -236,7 +246,12 @@ export function CanvasPanel() {
                   const plugin = getBlockPlugin(footer.type);
                   if (!plugin) return null;
                   return (
-                    <motion.div key={footer.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <motion.div
+                      key={footer.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
                       <SelectableRegion
                         label="footer"
                         interactive={interactive}
@@ -250,7 +265,9 @@ export function CanvasPanel() {
                 })()}
             </AnimatePresence>
 
-            <div className={`px-[9px] pb-[2px] pt-[3px] text-right text-[11px] leading-none ${dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}>
+            <div
+              className={`px-[9px] pb-[2px] pt-[3px] text-right text-[11px] leading-none ${dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}
+            >
               10:24
             </div>
 
@@ -261,7 +278,12 @@ export function CanvasPanel() {
                 if (!plugin) return null;
                 const row = <plugin.Preview data={button.data} ctx={ctx} />;
                 return (
-                  <motion.div key={button.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <motion.div
+                    key={button.id}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                  >
                     {interactive ? (
                       <button
                         type="button"

@@ -2,79 +2,79 @@
  * Vision-powered name + tag suggestions for media uploads.
  * Uses OpenAI gpt-4o against a base64 image the browser stages before confirm.
  */
-import OpenAI from "openai";
-import { ConflictError, ValidationError } from "@maildrill/domain";
+import OpenAI from 'openai';
+import { ConflictError, ValidationError } from '@maildrill/domain';
 
-const MODEL = process.env.MEDIA_SUGGEST_MODEL?.trim() || "gpt-4o";
+const MODEL = process.env.MEDIA_SUGGEST_MODEL?.trim() || 'gpt-4o';
 const MAX_BASE64_CHARS = 6_000_000; // ~4.5MB raw — client should shrink first
 const MAX_TAGS = 3;
 
 /** Color names, meta noise, and other tags that don't help library search. */
 const DROP_TAGS = new Set([
-  "abstract",
-  "aesthetic",
-  "background",
-  "backgrounds",
-  "beautiful",
-  "beauty",
-  "beige",
-  "black",
-  "blue",
-  "blur",
-  "bokeh",
-  "brown",
-  "closeup",
-  "close-up",
-  "color",
-  "colorful",
-  "colors",
-  "colour",
-  "colours",
-  "cool",
-  "cyan",
-  "dark",
-  "desktop",
-  "detail",
-  "editorial",
-  "file",
-  "gold",
-  "gray",
-  "grey",
-  "green",
-  "hd",
-  "image",
-  "indigo",
-  "jpg",
-  "jpeg",
-  "light",
-  "magenta",
-  "media",
-  "minimal",
-  "modern",
-  "none",
-  "orange",
-  "pastel",
-  "photo",
-  "photograph",
-  "photography",
-  "picture",
-  "pink",
-  "png",
-  "pretty",
-  "purple",
-  "red",
-  "silver",
-  "stock",
-  "style",
-  "teal",
-  "texture",
-  "vibrant",
-  "violet",
-  "wallpaper",
-  "wallpapers",
-  "webp",
-  "white",
-  "yellow",
+  'abstract',
+  'aesthetic',
+  'background',
+  'backgrounds',
+  'beautiful',
+  'beauty',
+  'beige',
+  'black',
+  'blue',
+  'blur',
+  'bokeh',
+  'brown',
+  'closeup',
+  'close-up',
+  'color',
+  'colorful',
+  'colors',
+  'colour',
+  'colours',
+  'cool',
+  'cyan',
+  'dark',
+  'desktop',
+  'detail',
+  'editorial',
+  'file',
+  'gold',
+  'gray',
+  'grey',
+  'green',
+  'hd',
+  'image',
+  'indigo',
+  'jpg',
+  'jpeg',
+  'light',
+  'magenta',
+  'media',
+  'minimal',
+  'modern',
+  'none',
+  'orange',
+  'pastel',
+  'photo',
+  'photograph',
+  'photography',
+  'picture',
+  'pink',
+  'png',
+  'pretty',
+  'purple',
+  'red',
+  'silver',
+  'stock',
+  'style',
+  'teal',
+  'texture',
+  'vibrant',
+  'violet',
+  'wallpaper',
+  'wallpapers',
+  'webp',
+  'white',
+  'yellow',
 ]);
 
 export type MediaSuggestInput = {
@@ -91,12 +91,12 @@ export type MediaSuggestResult = {
 };
 
 const IMAGE_TYPES = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/gif",
-  "image/webp",
-  "image/avif",
-  "image/svg+xml",
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+  'image/avif',
+  'image/svg+xml',
 ]);
 
 const SYSTEM = `You label images for a marketing media library.
@@ -117,18 +117,18 @@ function stripDataUrl(raw: string): { base64: string; contentType?: string } {
 function toKebabCase(value: string): string {
   return value
     .trim()
-    .replace(/['’]/g, "")
-    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
+    .replace(/['’]/g, '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
     .toLowerCase()
     .slice(0, 120);
 }
 
 function sanitizeName(raw: unknown): string | null {
-  if (typeof raw !== "string") return null;
-  const name = toKebabCase(raw.replace(/\.[a-z0-9]+$/i, ""));
+  if (typeof raw !== 'string') return null;
+  const name = toKebabCase(raw.replace(/\.[a-z0-9]+$/i, ''));
   if (name.length < 2) return null;
   return name;
 }
@@ -148,12 +148,8 @@ function sanitizeTags(raw: unknown): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
   for (const item of raw) {
-    if (typeof item !== "string") continue;
-    const tag = item
-      .toLowerCase()
-      .replace(/[_-]+/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+    if (typeof item !== 'string') continue;
+    const tag = item.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
     if (tag.length < 2 || tag.length > 40 || seen.has(tag)) continue;
     if (isWeakTag(tag)) continue;
     seen.add(tag);
@@ -165,12 +161,8 @@ function sanitizeTags(raw: unknown): string[] {
 
 function sanitizeFolder(raw: unknown): string | null {
   if (raw == null) return null;
-  if (typeof raw !== "string") return null;
-  const folder = raw
-    .toLowerCase()
-    .replace(/[_]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  if (typeof raw !== 'string') return null;
+  const folder = raw.toLowerCase().replace(/[_]+/g, ' ').replace(/\s+/g, ' ').trim();
   if (folder.length < 2 || folder.length > 48) return null;
   return folder;
 }
@@ -179,13 +171,13 @@ function parseJsonObject(text: string): Record<string, unknown> {
   const trimmed = text.trim();
   const fence = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
   const body = fence ? fence[1]!.trim() : trimmed;
-  const start = body.indexOf("{");
-  const end = body.lastIndexOf("}");
-  if (start < 0 || end <= start) throw new ValidationError("AI returned no JSON object");
+  const start = body.indexOf('{');
+  const end = body.lastIndexOf('}');
+  if (start < 0 || end <= start) throw new ValidationError('AI returned no JSON object');
   try {
     return JSON.parse(body.slice(start, end + 1)) as Record<string, unknown>;
   } catch {
-    throw new ValidationError("AI returned invalid JSON");
+    throw new ValidationError('AI returned invalid JSON');
   }
 }
 
@@ -198,22 +190,20 @@ export function mediaSuggestConfigured(): boolean {
  * Ask a vision model for a descriptive name + tags for an uploaded image.
  * Throws ConflictError when OpenAI is not configured; ValidationError on bad input.
  */
-export async function suggestMediaMetadata(
-  input: MediaSuggestInput,
-): Promise<MediaSuggestResult> {
+export async function suggestMediaMetadata(input: MediaSuggestInput): Promise<MediaSuggestResult> {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) {
-    throw new ConflictError("OPENAI_API_KEY is not configured");
+    throw new ConflictError('OPENAI_API_KEY is not configured');
   }
 
   const stripped = stripDataUrl(input.imageBase64.trim());
-  const contentType = (input.contentType || stripped.contentType || "").toLowerCase();
+  const contentType = (input.contentType || stripped.contentType || '').toLowerCase();
   if (!IMAGE_TYPES.has(contentType)) {
-    throw new ValidationError(`unsupported image type: ${contentType || "(empty)"}`);
+    throw new ValidationError(`unsupported image type: ${contentType || '(empty)'}`);
   }
-  const imageBase64 = stripped.base64.replace(/\s+/g, "");
+  const imageBase64 = stripped.base64.replace(/\s+/g, '');
   if (!imageBase64 || imageBase64.length > MAX_BASE64_CHARS) {
-    throw new ValidationError("image payload is empty or too large");
+    throw new ValidationError('image payload is empty or too large');
   }
 
   const client = new OpenAI({ apiKey });
@@ -221,21 +211,21 @@ export async function suggestMediaMetadata(
     model: MODEL,
     max_tokens: 400,
     temperature: 0.3,
-    response_format: { type: "json_object" },
+    response_format: { type: 'json_object' },
     messages: [
-      { role: "system", content: SYSTEM },
+      { role: 'system', content: SYSTEM },
       {
-        role: "user",
+        role: 'user',
         content: [
           {
-            type: "text",
-            text: "Describe this image for a media library. JSON only.",
+            type: 'text',
+            text: 'Describe this image for a media library. JSON only.',
           },
           {
-            type: "image_url",
+            type: 'image_url',
             image_url: {
               url: `data:${contentType};base64,${imageBase64}`,
-              detail: "low",
+              detail: 'low',
             },
           },
         ],
@@ -243,13 +233,13 @@ export async function suggestMediaMetadata(
     ],
   });
 
-  const text = completion.choices[0]?.message?.content ?? "";
+  const text = completion.choices[0]?.message?.content ?? '';
   const json = parseJsonObject(text);
   const name = sanitizeName(json.name);
   const tags = sanitizeTags(json.tags);
   const folder = sanitizeFolder(json.folder);
 
-  if (!name) throw new ValidationError("AI did not return a usable name");
+  if (!name) throw new ValidationError('AI did not return a usable name');
 
   return { name, tags, folder };
 }

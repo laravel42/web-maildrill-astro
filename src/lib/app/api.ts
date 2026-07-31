@@ -34,7 +34,7 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
 
   if (res.status === 204) return undefined as T;
   const ct = res.headers.get('content-type') ?? '';
-  return (ct.includes('application/json') ? ((await res.json()) as T) : (undefined as T));
+  return ct.includes('application/json') ? ((await res.json()) as T) : (undefined as T);
 }
 
 /** Tenant-scoped CRUD helpers. `path` is relative to `/api/v1/` (no leading slash). */

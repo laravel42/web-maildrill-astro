@@ -1,5 +1,5 @@
-import { config } from "@maildrill/config";
-import type { Channel } from "@maildrill/domain";
+import { config } from '@maildrill/config';
+import type { Channel } from '@maildrill/domain';
 
 export interface ChannelSenderDisplay {
   label: string;
@@ -10,9 +10,9 @@ export type ChannelSenders = Record<Channel, ChannelSenderDisplay>;
 
 /** Pretty-print E.164 digits for UI (Infobip stores digits without +). */
 function formatPhoneDisplay(raw: string): string {
-  const d = raw.replace(/\D/g, "");
+  const d = raw.replace(/\D/g, '');
   if (!d) return raw.trim();
-  if (d.length === 11 && d.startsWith("1")) {
+  if (d.length === 11 && d.startsWith('1')) {
     return `+1 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`;
   }
   if (d.length === 10) {
@@ -22,16 +22,14 @@ function formatPhoneDisplay(raw: string): string {
 }
 
 function emailDisplay(from: string): string {
-  if (from.includes("<")) return from;
-  const local = from.split("@")[0] ?? "Maildrill";
-  const brand = local
-    .replace(/[-_.]+/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  if (from.includes('<')) return from;
+  const local = from.split('@')[0] ?? 'Maildrill';
+  const brand = local.replace(/[-_.]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   return `${brand} <${from}>`;
 }
 
 function smsDisplay(from: string): string {
-  const digits = from.replace(/\D/g, "");
+  const digits = from.replace(/\D/g, '');
   if (digits.length >= 10) return formatPhoneDisplay(from);
   return from;
 }
@@ -44,18 +42,18 @@ export function getChannelSenders(): ChannelSenders {
   const voice = config.infobip.voiceFrom || phone;
 
   return {
-    email: { label: "Sender", value: emailDisplay(config.infobip.from) },
+    email: { label: 'Sender', value: emailDisplay(config.infobip.from) },
     sms: {
-      label: "Sender ID",
-      value: config.infobip.phoneFrom ? smsDisplay(config.infobip.phoneFrom) : "MAILDRILL",
+      label: 'Sender ID',
+      value: config.infobip.phoneFrom ? smsDisplay(config.infobip.phoneFrom) : 'MAILDRILL',
     },
     whatsapp: {
-      label: "Business number",
-      value: whatsapp ? formatPhoneDisplay(whatsapp) : (phoneDisplay ?? "Not configured"),
+      label: 'Business number',
+      value: whatsapp ? formatPhoneDisplay(whatsapp) : (phoneDisplay ?? 'Not configured'),
     },
     voice: {
-      label: "Caller ID",
-      value: voice ? formatPhoneDisplay(voice) : (phoneDisplay ?? "Not configured"),
+      label: 'Caller ID',
+      value: voice ? formatPhoneDisplay(voice) : (phoneDisplay ?? 'Not configured'),
     },
   };
 }

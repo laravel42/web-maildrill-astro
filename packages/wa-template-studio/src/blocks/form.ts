@@ -12,7 +12,7 @@ import type { z } from 'zod';
 export function usePluginForm<TSchema extends z.ZodType<FieldValues>>(
   schema: TSchema,
   value: z.infer<TSchema>,
-  onChange: (next: z.infer<TSchema>) => void
+  onChange: (next: z.infer<TSchema>) => void,
 ): UseFormReturn<z.infer<TSchema>> {
   const form = useForm<z.infer<TSchema>>({
     resolver: zodResolver(schema as never) as never,

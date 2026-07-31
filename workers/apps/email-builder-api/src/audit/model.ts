@@ -255,7 +255,12 @@ export function columnWidths(props: AnyRecord, available: number): number[] {
  * image-to-text ratio, and it is documented as an estimate everywhere it
  * surfaces.
  */
-function estimateTextHeight(text: string, width: number, fontSize: number, lineHeight: number): number {
+function estimateTextHeight(
+  text: string,
+  width: number,
+  fontSize: number,
+  lineHeight: number,
+): number {
   if (!text) return 0;
   const charsPerLine = Math.max(8, Math.floor(width / (fontSize * 0.5)));
   const lines = text
@@ -309,7 +314,9 @@ export function resolveDocument(document: EditorDocument, rootId = 'root'): Reso
   const rootData = bag(root?.data);
 
   const canvasColor = isHex(rootData.canvasColor) ? rootData.canvasColor : DEFAULT_CANVAS_COLOR;
-  const backdropColor = isHex(rootData.backdropColor) ? rootData.backdropColor : DEFAULT_BACKDROP_COLOR;
+  const backdropColor = isHex(rootData.backdropColor)
+    ? rootData.backdropColor
+    : DEFAULT_BACKDROP_COLOR;
   const layoutTextColor = isHex(rootData.textColor) ? rootData.textColor : DEFAULT_TEXT_COLOR;
   const layoutFontFamily = str(rootData.fontFamily);
 
@@ -340,7 +347,9 @@ export function resolveDocument(document: EditorDocument, rootId = 'root'): Reso
     const innerWidth = Math.max(0, ctx.width - padding.left - padding.right);
     const innerMobileWidth = Math.max(0, ctx.mobileWidth - padding.left - padding.right);
 
-    const background = isHex(style.backgroundColor) ? (style.backgroundColor as string) : ctx.background;
+    const background = isHex(style.backgroundColor)
+      ? (style.backgroundColor as string)
+      : ctx.background;
     const textColor = isHex(style.color) ? (style.color as string) : ctx.textColor;
     const fontSize = num(style.fontSize, ctx.fontSize);
     const fontFamily = str(style.fontFamily) ?? ctx.fontFamily;
@@ -395,7 +404,9 @@ export function resolveDocument(document: EditorDocument, rootId = 'root'): Reso
         const heights: number[] = [];
         widths.forEach((colWidth, index) => {
           const column = bag(columns[index]);
-          const childrenIds = Array.isArray(column.childrenIds) ? (column.childrenIds as string[]) : [];
+          const childrenIds = Array.isArray(column.childrenIds)
+            ? (column.childrenIds as string[])
+            : [];
           let columnHeight = 0;
           for (const childId of childrenIds) {
             columnHeight += visit(childId, {
@@ -416,7 +427,8 @@ export function resolveDocument(document: EditorDocument, rootId = 'root'): Reso
         const text = htmlToText(html);
         const lineHeight = parseLineHeight(style.lineHeight, LAYOUT_LINE_HEIGHT);
         const inlineSizes = extractInlineFontSizes(html);
-        const effectiveSize = inlineSizes.length > 0 ? Math.max(fontSize, ...inlineSizes) : fontSize;
+        const effectiveSize =
+          inlineSizes.length > 0 ? Math.max(fontSize, ...inlineSizes) : fontSize;
         contentHeight = estimateTextHeight(text, innerWidth, effectiveSize, lineHeight);
         break;
       }
@@ -458,7 +470,9 @@ export function resolveDocument(document: EditorDocument, rootId = 'root'): Reso
     return resolved.estimatedHeight;
   };
 
-  const rootChildren = Array.isArray(rootData.childrenIds) ? (rootData.childrenIds as string[]) : [];
+  const rootChildren = Array.isArray(rootData.childrenIds)
+    ? (rootData.childrenIds as string[])
+    : [];
   let total = 0;
   for (const childId of rootChildren) {
     total += visit(childId, {
@@ -505,7 +519,10 @@ export function buttonText(block: ResolvedBlock): string {
 }
 
 /** Button colours can live on `props` or `style`; `props` wins in the reader. */
-export function buttonColors(block: ResolvedBlock): { background: string | null; text: string | null } {
+export function buttonColors(block: ResolvedBlock): {
+  background: string | null;
+  text: string | null;
+} {
   const background =
     (isHex(block.props.buttonBackgroundColor) && (block.props.buttonBackgroundColor as string)) ||
     (isHex(block.style.buttonBackgroundColor) && (block.style.buttonBackgroundColor as string)) ||

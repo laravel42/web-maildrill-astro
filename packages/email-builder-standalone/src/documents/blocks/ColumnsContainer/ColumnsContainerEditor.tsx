@@ -5,25 +5,41 @@ import { ColumnsContainer as BaseColumnsContainer } from '@eb/block-columns-cont
 import ClientOnly from '../../editor/ClientOnly';
 import type { TEditorBlock } from '../../editor/core';
 import { useCurrentBlockId } from '../../editor/EditorBlock';
-import { applyBlockUpdates, editorStateStore, setSelectedBlockId } from '../../editor/EditorContext';
+import {
+  applyBlockUpdates,
+  editorStateStore,
+  setSelectedBlockId,
+} from '../../editor/EditorContext';
 import EditorChildrenIds, { EditorChildrenChange } from '../helpers/EditorChildrenIds';
 
 import ColumnsContainerPropsSchema, { ColumnsContainerProps } from './ColumnsContainerPropsSchema';
 const EMPTY_COLUMNS = [{ childrenIds: [] }, { childrenIds: [] }, { childrenIds: [] }];
 
-export default function ColumnsContainerEditor({ style, props, blockId, isNotClient }: ColumnsContainerProps) {
+export default function ColumnsContainerEditor({
+  style,
+  props,
+  blockId,
+  isNotClient,
+}: ColumnsContainerProps) {
   const currentBlockId = useCurrentBlockId();
   const { columns, ...restProps } = props ?? {};
   const columnsValue = columns ?? EMPTY_COLUMNS;
 
-  const updateColumn = (columnIndex: 0 | 1 | 2, { block, blockId, childrenIds }: EditorChildrenChange) => {
+  const updateColumn = (
+    columnIndex: 0 | 1 | 2,
+    { block, blockId, childrenIds }: EditorChildrenChange,
+  ) => {
     const state = editorStateStore.getState();
     const currentBlock = state.document[currentBlockId] as any;
     const currentColumns = currentBlock?.data?.props?.columns ?? columnsValue;
-    const currentRestProps = currentBlock?.data?.props ? { ...currentBlock.data.props } : { ...restProps };
+    const currentRestProps = currentBlock?.data?.props
+      ? { ...currentBlock.data.props }
+      : { ...restProps };
     delete (currentRestProps as any).columns;
     const nColumns =
-      currentColumns.length === 2 ? [...currentColumns, { childrenIds: [] as string[] }] : [...currentColumns];
+      currentColumns.length === 2
+        ? [...currentColumns, { childrenIds: [] as string[] }]
+        : [...currentColumns];
     nColumns[columnIndex] = { childrenIds };
     const correctColumnsStructure = {
       ...currentRestProps,

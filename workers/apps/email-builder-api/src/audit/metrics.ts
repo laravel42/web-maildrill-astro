@@ -22,7 +22,8 @@ import type { TemplateMetrics } from './types.js';
 /** Words per minute for the reading-time estimate. */
 const READING_WPM = 240;
 
-const UNSUBSCRIBE_PATTERN = /unsubscribe|opt[\s-]?out|manage\s+(?:your\s+)?preferences|email\s+preferences/i;
+const UNSUBSCRIBE_PATTERN =
+  /unsubscribe|opt[\s-]?out|manage\s+(?:your\s+)?preferences|email\s+preferences/i;
 
 /**
  * Context that lives outside the document but changes the verdict.
@@ -58,7 +59,12 @@ export type CollectedText = {
 export type DocumentFacts = {
   metrics: TemplateMetrics;
   texts: CollectedText[];
-  links: { href: string; text: string; blockId: string; kind: 'button' | 'text' | 'image' | 'social' }[];
+  links: {
+    href: string;
+    text: string;
+    blockId: string;
+    kind: 'button' | 'text' | 'image' | 'social';
+  }[];
   colors: Set<string>;
   envelope: EnvelopeContext;
 };
@@ -78,7 +84,12 @@ export function collectTexts(doc: ResolvedDocument): CollectedText[] {
 export function collectLinks(
   doc: ResolvedDocument,
 ): { href: string; text: string; blockId: string; kind: 'button' | 'text' | 'image' | 'social' }[] {
-  const out: { href: string; text: string; blockId: string; kind: 'button' | 'text' | 'image' | 'social' }[] = [];
+  const out: {
+    href: string;
+    text: string;
+    blockId: string;
+    kind: 'button' | 'text' | 'image' | 'social';
+  }[] = [];
   for (const block of doc.blocks) {
     switch (block.type) {
       case 'Button': {
@@ -99,9 +110,16 @@ export function collectLinks(
         break;
       }
       case 'SocialMedia': {
-        const items = Array.isArray(block.data.items) ? (block.data.items as Record<string, unknown>[]) : [];
+        const items = Array.isArray(block.data.items)
+          ? (block.data.items as Record<string, unknown>[])
+          : [];
         for (const item of items) {
-          const href = typeof item.url === 'string' ? item.url : typeof item.href === 'string' ? item.href : '';
+          const href =
+            typeof item.url === 'string'
+              ? item.url
+              : typeof item.href === 'string'
+                ? item.href
+                : '';
           const label = typeof item.label === 'string' ? item.label : '';
           out.push({ href, text: label, blockId: block.id, kind: 'social' });
         }
@@ -151,7 +169,9 @@ export function computeFacts(doc: ResolvedDocument, envelope: EnvelopeContext = 
 
   const wordCount =
     texts.reduce((sum, t) => sum + countWords(t.text), 0) +
-    doc.blocks.filter((b) => b.type === 'Button').reduce((sum, b) => sum + countWords(buttonText(b)), 0);
+    doc.blocks
+      .filter((b) => b.type === 'Button')
+      .reduce((sum, b) => sum + countWords(buttonText(b)), 0);
 
   const images = doc.blocks.filter((b) => b.type === 'Image');
   const imageHeight = images.reduce((sum, b) => sum + b.estimatedHeight, 0);

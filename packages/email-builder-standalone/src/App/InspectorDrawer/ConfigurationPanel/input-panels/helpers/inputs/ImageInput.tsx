@@ -4,7 +4,17 @@ import { z } from 'zod';
 
 import { ImagePropsSchema } from '@eb/block-image';
 import { Close, ImageSearchOutlined, PhotoOutlined } from '@mui/icons-material';
-import { Alert, Box, Button, CircularProgress, Divider, IconButton, Stack, TextField, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Divider,
+  IconButton,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 
 import ImageSourceTabs from '../../../../../../components/ImageSourceTabs';
 import UnsplashImagePicker from '../../../../../../components/UnsplashImagePicker';
@@ -73,7 +83,7 @@ const ImageInput: React.FC<ImageInputProps> = ({ data, setData, blockId }) => {
                 currentImageUrl: data.props?.url || null,
                 alt: data.props?.alt || null,
               },
-            })
+            }),
           );
         }
       }, 100);
@@ -94,7 +104,8 @@ const ImageInput: React.FC<ImageInputProps> = ({ data, setData, blockId }) => {
   const checkIfSvg = (url: string, contentType?: string | null): boolean => {
     const urlLower = url.toLowerCase();
     const isSvgUrl = urlLower.includes('.svg') || urlLower.includes('svg');
-    const isSvgContentType = contentType && (contentType.includes('image/svg+xml') || contentType.includes('svg'));
+    const isSvgContentType =
+      contentType && (contentType.includes('image/svg+xml') || contentType.includes('svg'));
     return isSvgUrl || Boolean(isSvgContentType);
   };
 
@@ -125,7 +136,12 @@ const ImageInput: React.FC<ImageInputProps> = ({ data, setData, blockId }) => {
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          setUrlError(t('inputs.image.httpError', { status: response.status, statusText: response.statusText }));
+          setUrlError(
+            t('inputs.image.httpError', {
+              status: response.status,
+              statusText: response.statusText,
+            }),
+          );
           return false;
         }
 
@@ -133,7 +149,7 @@ const ImageInput: React.FC<ImageInputProps> = ({ data, setData, blockId }) => {
         const validImageTypes = ['image/', 'image/svg+xml', 'text/xml', 'application/xml'];
 
         const isValidImageType = validImageTypes.some(
-          (type) => contentType && contentType.toLowerCase().includes(type.toLowerCase())
+          (type) => contentType && contentType.toLowerCase().includes(type.toLowerCase()),
         );
 
         if (!isValidImageType) {
@@ -221,7 +237,9 @@ const ImageInput: React.FC<ImageInputProps> = ({ data, setData, blockId }) => {
   const handleFileUpload = (files: File[]) => {
     const validTypes = ['image/png', 'image/jpeg', 'image/gif'];
     const maxSize = 5 * 1024 * 1024;
-    const validFiles = files.filter((file) => validTypes.includes(file.type) && file.size <= maxSize);
+    const validFiles = files.filter(
+      (file) => validTypes.includes(file.type) && file.size <= maxSize,
+    );
 
     if (validFiles.length !== files.length) {
       alert(t('inputs.common.invalidFiles'));
@@ -235,7 +253,7 @@ const ImageInput: React.FC<ImageInputProps> = ({ data, setData, blockId }) => {
           const reader = new FileReader();
           reader.onload = (e) => resolve(e.target?.result as string);
           reader.readAsDataURL(file);
-        })
+        }),
     );
 
     Promise.all(readerPromises).then((results) => {
@@ -369,7 +387,11 @@ const ImageInput: React.FC<ImageInputProps> = ({ data, setData, blockId }) => {
                 disabled={!urlValue.trim() || isValidatingUrl}
                 sx={{ minWidth: 'auto', px: 2 }}
               >
-                {isValidatingUrl ? <CircularProgress size={20} color="inherit" /> : t('inputs.common.add')}
+                {isValidatingUrl ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  t('inputs.common.add')
+                )}
               </Button>
             </Stack>
             {urlError && (
@@ -467,7 +489,12 @@ const ImageInput: React.FC<ImageInputProps> = ({ data, setData, blockId }) => {
             </Typography>
             <Divider sx={{ flexGrow: 1 }} />
           </Stack>
-          <Button variant="outlined" onClick={toggleMedia} startIcon={<ImageSearchOutlined />} fullWidth>
+          <Button
+            variant="outlined"
+            onClick={toggleMedia}
+            startIcon={<ImageSearchOutlined />}
+            fullWidth
+          >
             {t('inputs.backgroundImage.browseGallery')}
           </Button>
         </>

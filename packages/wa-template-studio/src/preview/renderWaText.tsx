@@ -11,7 +11,10 @@ import { VARIABLE_RE } from '../core/variables';
 
 const TOKEN_RE = /(\{\{\s*\d+\s*\}\})|```([\s\S]+?)```|\*([^*\n]+)\*|_([^_\n]+)_|~([^~\n]+)~/g;
 
-export function renderWaText(text: string, resolveVariable: (n: number) => string): React.ReactNode[] {
+export function renderWaText(
+  text: string,
+  resolveVariable: (n: number) => string,
+): React.ReactNode[] {
   const out: React.ReactNode[] = [];
   let last = 0;
   let key = 0;
@@ -42,13 +45,13 @@ export function renderWaText(text: string, resolveVariable: (n: number) => strin
           >
             {`{{${n}}}`}
           </span>
-        )
+        ),
       );
     } else if (mono !== undefined) {
       out.push(
         <code key={`m-${key++}`} className="font-mono text-[0.92em]">
           {mono}
-        </code>
+        </code>,
       );
     } else if (bold !== undefined) {
       out.push(<strong key={`b-${key++}`}>{bold}</strong>);

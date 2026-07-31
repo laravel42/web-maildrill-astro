@@ -3,8 +3,8 @@
  * is installed (e.g. Node Telescope Mail / Notifications tabs).
  */
 
-import type { Channel } from "@maildrill/domain";
-import type { ProviderSendResult, SendInput } from "./core";
+import type { Channel } from '@maildrill/domain';
+import type { ProviderSendResult, SendInput } from './core';
 
 export interface ProviderSendEvent {
   provider: string;
@@ -43,8 +43,8 @@ export function buildProviderSendEvent(
   result: ProviderSendResult,
   durationMs: number,
 ): ProviderSendEvent {
-  const subject = typeof input.content.subject === "string" ? input.content.subject : undefined;
-  const from = typeof input.content.from === "string" ? input.content.from : undefined;
+  const subject = typeof input.content.subject === 'string' ? input.content.subject : undefined;
+  const from = typeof input.content.from === 'string' ? input.content.from : undefined;
   return {
     provider,
     channel: input.channel,
@@ -56,7 +56,7 @@ export function buildProviderSendEvent(
     durationMs,
     subject,
     from,
-    hasHtml: typeof input.content.html === "string",
+    hasHtml: typeof input.content.html === 'string',
     providerMessageId: result.providerMessageId,
     error: result.error?.message,
   };

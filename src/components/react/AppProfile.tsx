@@ -239,444 +239,446 @@ export default function AppProfile({
             </header>
 
             <div className={styles.panelBody}>
-          {tab === 'profile' && (
-            <>
-              <div className={`${styles.section} ${styles.avatarCard}`}>
-                <div className={styles.avatar} aria-hidden="true">
-                  {initial}
-                </div>
-                <div className={styles.stackBody}>
-                  <p className={styles.avatarName}>{displayName}</p>
-                  <p className={styles.avatarMeta}>{roleLabel} · — · —</p>
-                  <p className={styles.avatarHint}>
-                    PNG or JPG, at least 256×256px. Used in the app, never in outgoing email.
-                  </p>
-                </div>
-                <div className={styles.avatarActions}>
-                  <button
-                    className={`${styles.btn} ${styles.btnSm}`}
-                    type="button"
-                    onClick={notAvailable}
-                  >
-                    Upload photo
-                  </button>
-                  <button
-                    className={`${styles.btn} ${styles.btnSm} ${styles.btnQuiet}`}
-                    type="button"
-                    onClick={notAvailable}
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-
-              <div className={styles.section}>
-                <div className={styles.sectionHead}>
-                  Personal details{' '}
-                  <span className={styles.note}>Visible to teammates in this workspace</span>
-                </div>
-                <div className={styles.fieldGrid}>
-                  <div>
-                    <label className={styles.fieldLabel} htmlFor="field-name">
-                      Full name
-                    </label>
-                    <input
-                      className={styles.input}
-                      id="field-name"
-                      name="name"
-                      type="text"
-                      value={fields.name}
-                      onChange={(e) => setField('name', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className={styles.fieldLabel} htmlFor="field-display">
-                      Display name
-                    </label>
-                    <input
-                      className={styles.input}
-                      id="field-display"
-                      name="display"
-                      type="text"
-                      value={fields.display}
-                      onChange={(e) => setField('display', e.target.value)}
-                    />
-                    <p className={styles.fieldHint}>Shown on comments and audit entries</p>
-                  </div>
-                  <div>
-                    <label className={styles.fieldLabel} htmlFor="field-email">
-                      Email
-                    </label>
-                    <input
-                      className={`${styles.input} ${styles.inputLocked}`}
-                      id="field-email"
-                      name="email"
-                      type="text"
-                      value={email ?? '—'}
-                      readOnly
-                    />
-                    <p className={styles.fieldHint}>
-                      Verified · used for sign-in and alerts{' '}
-                      <button className={styles.linkBtn} type="button" onClick={notAvailable}>
-                        Change email
+              {tab === 'profile' && (
+                <>
+                  <div className={`${styles.section} ${styles.avatarCard}`}>
+                    <div className={styles.avatar} aria-hidden="true">
+                      {initial}
+                    </div>
+                    <div className={styles.stackBody}>
+                      <p className={styles.avatarName}>{displayName}</p>
+                      <p className={styles.avatarMeta}>{roleLabel} · — · —</p>
+                      <p className={styles.avatarHint}>
+                        PNG or JPG, at least 256×256px. Used in the app, never in outgoing email.
+                      </p>
+                    </div>
+                    <div className={styles.avatarActions}>
+                      <button
+                        className={`${styles.btn} ${styles.btnSm}`}
+                        type="button"
+                        onClick={notAvailable}
+                      >
+                        Upload photo
                       </button>
-                    </p>
-                  </div>
-                  <div>
-                    <label className={styles.fieldLabel} htmlFor="field-title">
-                      Job title
-                    </label>
-                    <input
-                      className={styles.input}
-                      id="field-title"
-                      name="title"
-                      type="text"
-                      value={fields.title}
-                      onChange={(e) => setField('title', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className={styles.fieldLabel} htmlFor="field-tz">
-                      Timezone
-                    </label>
-                    <select
-                      className={styles.input}
-                      id="field-tz"
-                      name="tz"
-                      value={fields.tz}
-                      onChange={(e) => setField('tz', e.target.value)}
-                    >
-                      {TZ_OPTIONS.map((o) => (
-                        <option key={o}>{o}</option>
-                      ))}
-                    </select>
-                    <p className={styles.fieldHint}>Campaign schedules and reports follow this</p>
-                  </div>
-                  <div>
-                    <label className={styles.fieldLabel} htmlFor="field-lang">
-                      Language
-                    </label>
-                    <select
-                      className={styles.input}
-                      id="field-lang"
-                      name="lang"
-                      value={fields.lang}
-                      onChange={(e) => setField('lang', e.target.value)}
-                    >
-                      {LANG_OPTIONS.map((o) => (
-                        <option key={o}>{o}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className={`${styles.section} ${styles.sectionDanger}`}>
-                <div className={styles.sectionHead}>Danger zone</div>
-                <ul className={styles.stack}>
-                  <li className={styles.stackRow}>
-                    <div className={styles.stackBody}>
-                      <p className={styles.stackTitle}>Transfer ownership</p>
-                      <p className={styles.stackDesc}>
-                        Hand billing and workspace control to another Admin.
-                      </p>
+                      <button
+                        className={`${styles.btn} ${styles.btnSm} ${styles.btnQuiet}`}
+                        type="button"
+                        onClick={notAvailable}
+                      >
+                        Remove
+                      </button>
                     </div>
-                    <button
-                      className={`${styles.btn} ${styles.btnSm}`}
-                      type="button"
-                      onClick={notAvailable}
-                    >
-                      Choose person
-                    </button>
-                  </li>
-                  <li className={styles.stackRow}>
-                    <div className={styles.stackBody}>
-                      <p className={styles.stackTitle}>Close my account</p>
-                      <p className={styles.stackDesc}>
-                        Removes your access. Campaign history stays with the workspace.
-                      </p>
-                    </div>
-                    <button
-                      className={`${styles.btn} ${styles.btnSm} ${styles.btnDanger}`}
-                      type="button"
-                      onClick={notAvailable}
-                    >
-                      Close account
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            </>
-          )}
-
-          {tab === 'security' && (
-            <>
-              <div className={styles.section}>
-                <div className={styles.sectionHead}>Password</div>
-                <form
-                  className={styles.passwordForm}
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    show("Password sign-in isn't enabled yet");
-                  }}
-                >
-                  <div>
-                    <label className={styles.fieldLabel} htmlFor="pw-current">
-                      Current password
-                    </label>
-                    <input
-                      className={styles.input}
-                      id="pw-current"
-                      type="password"
-                      defaultValue="••••••••••"
-                      autoComplete="current-password"
-                    />
                   </div>
-                  <div>
-                    <label className={styles.fieldLabel} htmlFor="pw-new">
-                      New password
-                    </label>
-                    <input
-                      className={styles.input}
-                      id="pw-new"
-                      type="password"
-                      placeholder="At least 12 characters"
-                      autoComplete="new-password"
-                      value={pw}
-                      onChange={(e) => setPw(e.target.value)}
-                    />
-                    <div className={styles.strength}>
-                      <div className={styles.strengthBars}>
-                        {[0, 1, 2, 3].map((i) => (
+
+                  <div className={styles.section}>
+                    <div className={styles.sectionHead}>
+                      Personal details{' '}
+                      <span className={styles.note}>Visible to teammates in this workspace</span>
+                    </div>
+                    <div className={styles.fieldGrid}>
+                      <div>
+                        <label className={styles.fieldLabel} htmlFor="field-name">
+                          Full name
+                        </label>
+                        <input
+                          className={styles.input}
+                          id="field-name"
+                          name="name"
+                          type="text"
+                          value={fields.name}
+                          onChange={(e) => setField('name', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className={styles.fieldLabel} htmlFor="field-display">
+                          Display name
+                        </label>
+                        <input
+                          className={styles.input}
+                          id="field-display"
+                          name="display"
+                          type="text"
+                          value={fields.display}
+                          onChange={(e) => setField('display', e.target.value)}
+                        />
+                        <p className={styles.fieldHint}>Shown on comments and audit entries</p>
+                      </div>
+                      <div>
+                        <label className={styles.fieldLabel} htmlFor="field-email">
+                          Email
+                        </label>
+                        <input
+                          className={`${styles.input} ${styles.inputLocked}`}
+                          id="field-email"
+                          name="email"
+                          type="text"
+                          value={email ?? '—'}
+                          readOnly
+                        />
+                        <p className={styles.fieldHint}>
+                          Verified · used for sign-in and alerts{' '}
+                          <button className={styles.linkBtn} type="button" onClick={notAvailable}>
+                            Change email
+                          </button>
+                        </p>
+                      </div>
+                      <div>
+                        <label className={styles.fieldLabel} htmlFor="field-title">
+                          Job title
+                        </label>
+                        <input
+                          className={styles.input}
+                          id="field-title"
+                          name="title"
+                          type="text"
+                          value={fields.title}
+                          onChange={(e) => setField('title', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className={styles.fieldLabel} htmlFor="field-tz">
+                          Timezone
+                        </label>
+                        <select
+                          className={styles.input}
+                          id="field-tz"
+                          name="tz"
+                          value={fields.tz}
+                          onChange={(e) => setField('tz', e.target.value)}
+                        >
+                          {TZ_OPTIONS.map((o) => (
+                            <option key={o}>{o}</option>
+                          ))}
+                        </select>
+                        <p className={styles.fieldHint}>
+                          Campaign schedules and reports follow this
+                        </p>
+                      </div>
+                      <div>
+                        <label className={styles.fieldLabel} htmlFor="field-lang">
+                          Language
+                        </label>
+                        <select
+                          className={styles.input}
+                          id="field-lang"
+                          name="lang"
+                          value={fields.lang}
+                          onChange={(e) => setField('lang', e.target.value)}
+                        >
+                          {LANG_OPTIONS.map((o) => (
+                            <option key={o}>{o}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={`${styles.section} ${styles.sectionDanger}`}>
+                    <div className={styles.sectionHead}>Danger zone</div>
+                    <ul className={styles.stack}>
+                      <li className={styles.stackRow}>
+                        <div className={styles.stackBody}>
+                          <p className={styles.stackTitle}>Transfer ownership</p>
+                          <p className={styles.stackDesc}>
+                            Hand billing and workspace control to another Admin.
+                          </p>
+                        </div>
+                        <button
+                          className={`${styles.btn} ${styles.btnSm}`}
+                          type="button"
+                          onClick={notAvailable}
+                        >
+                          Choose person
+                        </button>
+                      </li>
+                      <li className={styles.stackRow}>
+                        <div className={styles.stackBody}>
+                          <p className={styles.stackTitle}>Close my account</p>
+                          <p className={styles.stackDesc}>
+                            Removes your access. Campaign history stays with the workspace.
+                          </p>
+                        </div>
+                        <button
+                          className={`${styles.btn} ${styles.btnSm} ${styles.btnDanger}`}
+                          type="button"
+                          onClick={notAvailable}
+                        >
+                          Close account
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                </>
+              )}
+
+              {tab === 'security' && (
+                <>
+                  <div className={styles.section}>
+                    <div className={styles.sectionHead}>Password</div>
+                    <form
+                      className={styles.passwordForm}
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        show("Password sign-in isn't enabled yet");
+                      }}
+                    >
+                      <div>
+                        <label className={styles.fieldLabel} htmlFor="pw-current">
+                          Current password
+                        </label>
+                        <input
+                          className={styles.input}
+                          id="pw-current"
+                          type="password"
+                          defaultValue="••••••••••"
+                          autoComplete="current-password"
+                        />
+                      </div>
+                      <div>
+                        <label className={styles.fieldLabel} htmlFor="pw-new">
+                          New password
+                        </label>
+                        <input
+                          className={styles.input}
+                          id="pw-new"
+                          type="password"
+                          placeholder="At least 12 characters"
+                          autoComplete="new-password"
+                          value={pw}
+                          onChange={(e) => setPw(e.target.value)}
+                        />
+                        <div className={styles.strength}>
+                          <div className={styles.strengthBars}>
+                            {[0, 1, 2, 3].map((i) => (
+                              <span
+                                key={i}
+                                style={
+                                  pw && i < pwScore
+                                    ? { background: STRENGTH_TONES[pwScore] }
+                                    : undefined
+                                }
+                              />
+                            ))}
+                          </div>
                           <span
-                            key={i}
-                            style={
-                              pw && i < pwScore
-                                ? { background: STRENGTH_TONES[pwScore] }
-                                : undefined
-                            }
-                          />
+                            className={styles.strengthLabel}
+                            style={pwScore ? { color: STRENGTH_TONES[pwScore] } : undefined}
+                          >
+                            {STRENGTH_LABELS[pwScore]}
+                          </span>
+                        </div>
+                        <p className={styles.fieldHint}>
+                          Mix upper and lower case, a number and a symbol. Changing it signs out
+                          every other device.
+                        </p>
+                      </div>
+                      <div>
+                        <button
+                          className={`${styles.btn} ${styles.btnPrimary}`}
+                          type="submit"
+                          disabled={pwScore < 3}
+                        >
+                          Update password
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  <div className={styles.section}>
+                    <div className={styles.sectionHead}>
+                      Two-factor authentication{' '}
+                      <span className={styles.note}>Required for Owners and Admins</span>
+                    </div>
+                    <ul className={styles.stack}>
+                      <li className={styles.stackRow}>
+                        <span className={styles.stackIcon}>
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <circle cx="8" cy="15" r="4.2" />
+                            <path d="m11 12 8-8M17.5 5.5l2 2M15 8l2 2" />
+                          </svg>
+                        </span>
+                        <div className={styles.stackBody}>
+                          <p className={styles.stackTitle}>Authenticator app</p>
+                          <p className={styles.stackDesc}>Not configured</p>
+                        </div>
+                        <span className={`${styles.chip} ${styles.chipOff}`}>Off</span>
+                        <button
+                          className={`${styles.btn} ${styles.btnSm}`}
+                          type="button"
+                          onClick={notAvailable}
+                        >
+                          Reconfigure
+                        </button>
+                      </li>
+                      <li className={styles.stackRow}>
+                        <span className={styles.stackIcon}>
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <rect x="3" y="4.5" width="18" height="15" rx="2.2" />
+                            <path d="M7.5 10h4M7.5 14h9" />
+                          </svg>
+                        </span>
+                        <div className={styles.stackBody}>
+                          <p className={styles.stackTitle}>Recovery codes</p>
+                          <p className={styles.stackDesc}>Not configured</p>
+                        </div>
+                        <span className={`${styles.chip} ${styles.chipOff}`}>Off</span>
+                        <button
+                          className={`${styles.btn} ${styles.btnSm}`}
+                          type="button"
+                          onClick={notAvailable}
+                        >
+                          Regenerate
+                        </button>
+                      </li>
+                      <li className={styles.stackRow}>
+                        <span className={styles.stackIcon}>
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M12 2.5 4 5.5v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10v-6Z" />
+                            <path d="m9 12 2.2 2.2L15.4 10" />
+                          </svg>
+                        </span>
+                        <div className={styles.stackBody}>
+                          <p className={styles.stackTitle}>Passkeys</p>
+                          <p className={styles.stackDesc}>No passkey registered on this account</p>
+                        </div>
+                        <span className={`${styles.chip} ${styles.chipOff}`}>Off</span>
+                        <button
+                          className={`${styles.btn} ${styles.btnSm}`}
+                          type="button"
+                          onClick={notAvailable}
+                        >
+                          Add passkey
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                </>
+              )}
+
+              {tab === 'notifications' && (
+                <>
+                  <div className={styles.section}>
+                    <div className={styles.notifHead}>
+                      <span>EVENT</span>
+                      <span>EMAIL</span>
+                      <span>IN-APP</span>
+                    </div>
+                    {NOTIF_GROUPS.map((group) => (
+                      <div key={group.label}>
+                        <p className={styles.notifGroupLabel}>{group.label}</p>
+                        {group.rows.map((row) => (
+                          <div key={row.key} className={styles.notifRow}>
+                            <div>
+                              <p className={styles.stackTitle}>{row.title}</p>
+                              <p className={styles.stackDesc}>{row.desc}</p>
+                            </div>
+                            {(['email', 'app'] as const).map((channel) => {
+                              const id = `${row.key}-${channel}`;
+                              return (
+                                <div key={channel} className={styles.notifCell}>
+                                  <Switch
+                                    on={switches[id]}
+                                    label={`${row.title} — ${channel === 'email' ? 'email' : 'in-app'}`}
+                                    onToggle={() => setSwitches((s) => ({ ...s, [id]: !s[id] }))}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
                         ))}
                       </div>
-                      <span
-                        className={styles.strengthLabel}
-                        style={pwScore ? { color: STRENGTH_TONES[pwScore] } : undefined}
-                      >
-                        {STRENGTH_LABELS[pwScore]}
-                      </span>
-                    </div>
-                    <p className={styles.fieldHint}>
-                      Mix upper and lower case, a number and a symbol. Changing it signs out every
-                      other device.
+                    ))}
+                    <p className={styles.sectionNote}>
+                      Deliverability and quota alerts also reach the workspace Owner regardless of
+                      these settings.
                     </p>
                   </div>
-                  <div>
-                    <button
-                      className={`${styles.btn} ${styles.btnPrimary}`}
-                      type="submit"
-                      disabled={pwScore < 3}
-                    >
-                      Update password
-                    </button>
-                  </div>
-                </form>
-              </div>
+                </>
+              )}
 
-              <div className={styles.section}>
-                <div className={styles.sectionHead}>
-                  Two-factor authentication{' '}
-                  <span className={styles.note}>Required for Owners and Admins</span>
-                </div>
-                <ul className={styles.stack}>
-                  <li className={styles.stackRow}>
-                    <span className={styles.stackIcon}>
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <circle cx="8" cy="15" r="4.2" />
-                        <path d="m11 12 8-8M17.5 5.5l2 2M15 8l2 2" />
-                      </svg>
-                    </span>
-                    <div className={styles.stackBody}>
-                      <p className={styles.stackTitle}>Authenticator app</p>
-                      <p className={styles.stackDesc}>Not configured</p>
-                    </div>
-                    <span className={`${styles.chip} ${styles.chipOff}`}>Off</span>
-                    <button
-                      className={`${styles.btn} ${styles.btnSm}`}
-                      type="button"
-                      onClick={notAvailable}
-                    >
-                      Reconfigure
-                    </button>
-                  </li>
-                  <li className={styles.stackRow}>
-                    <span className={styles.stackIcon}>
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect x="3" y="4.5" width="18" height="15" rx="2.2" />
-                        <path d="M7.5 10h4M7.5 14h9" />
-                      </svg>
-                    </span>
-                    <div className={styles.stackBody}>
-                      <p className={styles.stackTitle}>Recovery codes</p>
-                      <p className={styles.stackDesc}>Not configured</p>
-                    </div>
-                    <span className={`${styles.chip} ${styles.chipOff}`}>Off</span>
-                    <button
-                      className={`${styles.btn} ${styles.btnSm}`}
-                      type="button"
-                      onClick={notAvailable}
-                    >
-                      Regenerate
-                    </button>
-                  </li>
-                  <li className={styles.stackRow}>
-                    <span className={styles.stackIcon}>
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M12 2.5 4 5.5v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10v-6Z" />
-                        <path d="m9 12 2.2 2.2L15.4 10" />
-                      </svg>
-                    </span>
-                    <div className={styles.stackBody}>
-                      <p className={styles.stackTitle}>Passkeys</p>
-                      <p className={styles.stackDesc}>No passkey registered on this account</p>
-                    </div>
-                    <span className={`${styles.chip} ${styles.chipOff}`}>Off</span>
-                    <button
-                      className={`${styles.btn} ${styles.btnSm}`}
-                      type="button"
-                      onClick={notAvailable}
-                    >
-                      Add passkey
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            </>
-          )}
-
-          {tab === 'notifications' && (
-            <>
-              <div className={styles.section}>
-                <div className={styles.notifHead}>
-                  <span>EVENT</span>
-                  <span>EMAIL</span>
-                  <span>IN-APP</span>
-                </div>
-                {NOTIF_GROUPS.map((group) => (
-                  <div key={group.label}>
-                    <p className={styles.notifGroupLabel}>{group.label}</p>
-                    {group.rows.map((row) => (
-                      <div key={row.key} className={styles.notifRow}>
-                        <div>
-                          <p className={styles.stackTitle}>{row.title}</p>
-                          <p className={styles.stackDesc}>{row.desc}</p>
-                        </div>
-                        {(['email', 'app'] as const).map((channel) => {
-                          const id = `${row.key}-${channel}`;
-                          return (
-                            <div key={channel} className={styles.notifCell}>
-                              <Switch
-                                on={switches[id]}
-                                label={`${row.title} — ${channel === 'email' ? 'email' : 'in-app'}`}
-                                onToggle={() => setSwitches((s) => ({ ...s, [id]: !s[id] }))}
-                              />
-                            </div>
-                          );
-                        })}
+              {tab === 'sessions' && (
+                <>
+                  <div className={styles.section}>
+                    <div className={`${styles.sectionHead} ${styles.sectionHeadSplit}`}>
+                      <div>
+                        <p>Active sessions</p>
+                        <p className={styles.note}>1 device · this browser</p>
                       </div>
-                    ))}
-                  </div>
-                ))}
-                <p className={styles.sectionNote}>
-                  Deliverability and quota alerts also reach the workspace Owner regardless of these
-                  settings.
-                </p>
-              </div>
-            </>
-          )}
-
-          {tab === 'sessions' && (
-            <>
-              <div className={styles.section}>
-                <div className={`${styles.sectionHead} ${styles.sectionHeadSplit}`}>
-                  <div>
-                    <p>Active sessions</p>
-                    <p className={styles.note}>1 device · this browser</p>
-                  </div>
-                  <button
-                    className={`${styles.btn} ${styles.btnSm} ${styles.btnDanger}`}
-                    type="button"
-                    onClick={notAvailable}
-                  >
-                    Sign out everywhere
-                  </button>
-                </div>
-                <ul>
-                  <li className={styles.sessionRow}>
-                    <span className={`${styles.sessionIcon} ${styles.sessionIconCurrent}`}>
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                      <button
+                        className={`${styles.btn} ${styles.btnSm} ${styles.btnDanger}`}
+                        type="button"
+                        onClick={notAvailable}
                       >
-                        <rect x="3" y="4.5" width="18" height="12" rx="2" />
-                        <path d="M2 19.5h20" />
-                      </svg>
-                    </span>
-                    <div className={styles.stackBody}>
-                      <p className={styles.sessionDevice}>
-                        This browser{' '}
-                        <span className={`${styles.chip} ${styles.chipOn}`}>This device</span>
-                      </p>
-                      <p className={styles.stackDesc}>— · active now</p>
+                        Sign out everywhere
+                      </button>
                     </div>
-                  </li>
-                </ul>
-              </div>
+                    <ul>
+                      <li className={styles.sessionRow}>
+                        <span className={`${styles.sessionIcon} ${styles.sessionIconCurrent}`}>
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <rect x="3" y="4.5" width="18" height="12" rx="2" />
+                            <path d="M2 19.5h20" />
+                          </svg>
+                        </span>
+                        <div className={styles.stackBody}>
+                          <p className={styles.sessionDevice}>
+                            This browser{' '}
+                            <span className={`${styles.chip} ${styles.chipOn}`}>This device</span>
+                          </p>
+                          <p className={styles.stackDesc}>— · active now</p>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
 
-              <div className={styles.section}>
-                <div className={styles.sectionHead}>Recent sign-ins</div>
-                <table className={styles.table}>
-                  <tbody>
-                    <tr>
-                      <td>No sign-in history recorded yet.</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
+                  <div className={styles.section}>
+                    <div className={styles.sectionHead}>Recent sign-ins</div>
+                    <table className={styles.table}>
+                      <tbody>
+                        <tr>
+                          <td>No sign-in history recorded yet.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </div>
           </section>
         </div>

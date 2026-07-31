@@ -12,112 +12,107 @@
  *   pnpm --dir workers exec tsx packages/product/src/tag-media-descriptive.ts --offline
  *   pnpm --dir workers exec tsx packages/product/src/tag-media-descriptive.ts --regroup
  */
-import { eq } from "drizzle-orm";
-import { config } from "@maildrill/config";
-import { db, mediaAssets, tenants } from "@maildrill/database";
-import { updateMedia } from "./media";
-import {
-  canonicalizeTag,
-  groupSimilarTags,
-  MIN_TAG_ASSETS,
-  regroupLibraryTags,
-} from "./tag-group";
+import { eq } from 'drizzle-orm';
+import { config } from '@maildrill/config';
+import { db, mediaAssets, tenants } from '@maildrill/database';
+import { updateMedia } from './media';
+import { canonicalizeTag, groupSimilarTags, MIN_TAG_ASSETS, regroupLibraryTags } from './tag-group';
 
-const TARGET_TENANT_NAME = "hello@laravel42.com";
+const TARGET_TENANT_NAME = 'hello@laravel42.com';
 const CATEGORIES = [
-  "nature",
-  "business",
-  "technology",
-  "food",
-  "travel",
-  "architecture",
-  "people",
-  "fashion",
-  "animals",
-  "sports",
+  'nature',
+  'business',
+  'technology',
+  'food',
+  'travel',
+  'architecture',
+  'people',
+  'fashion',
+  'animals',
+  'sports',
 ] as const;
 
 const PAGE_SIZE = 30;
 const MAX_TAGS = 6;
-const UNSPLASH_API_BASE = "https://api.unsplash.com";
+const UNSPLASH_API_BASE = 'https://api.unsplash.com';
 const PHOTO_ID_RE = /unsplash-([A-Za-z0-9_-]+)\.jpe?g$/i;
 
 /** Low-value filler — keep colors, subjects, places, actions. */
 const STOP = new Set([
-  "a",
-  "an",
-  "the",
-  "of",
-  "on",
-  "in",
-  "at",
-  "to",
-  "for",
-  "and",
-  "or",
-  "with",
-  "near",
-  "beside",
-  "from",
-  "into",
-  "onto",
-  "by",
-  "during",
-  "daytime",
-  "photo",
-  "photography",
-  "image",
-  "picture",
-  "against",
-  "under",
-  "over",
-  "between",
-  "among",
-  "its",
-  "their",
-  "his",
-  "her",
-  "this",
-  "that",
-  "these",
-  "those",
-  "some",
-  "several",
-  "next",
-  "while",
-  "using",
-  "holding",
-  "standing",
-  "sitting",
-  "lying",
-  "walking",
-  "looking",
-  "surrounded",
-  "assorted",
-  "various",
-  "close",
-  "up",
-  "macro",
-  "low",
-  "angle",
-  "view",
-  "shot",
-  "jpg",
-  "jpeg",
-  "png",
-  "through",
-  "open",
-  "each",
-  "other",
-  "four",
-  "five",
-  "six",
-  "rests",
-  "performs",
-  "laying",
-  "viewed",
-  "colored",
-  "coloured",
+  'a',
+  'an',
+  'the',
+  'of',
+  'on',
+  'in',
+  'at',
+  'to',
+  'for',
+  'and',
+  'or',
+  'with',
+  'near',
+  'beside',
+  'from',
+  'into',
+  'onto',
+  'by',
+  'during',
+  'daytime',
+  'photo',
+  'photography',
+  'image',
+  'picture',
+  'against',
+  'under',
+  'over',
+  'between',
+  'among',
+  'its',
+  'their',
+  'his',
+  'her',
+  'this',
+  'that',
+  'these',
+  'those',
+  'some',
+  'several',
+  'next',
+  'while',
+  'using',
+  'holding',
+  'standing',
+  'sitting',
+  'lying',
+  'walking',
+  'looking',
+  'surrounded',
+  'assorted',
+  'various',
+  'close',
+  'up',
+  'macro',
+  'low',
+  'angle',
+  'view',
+  'shot',
+  'jpg',
+  'jpeg',
+  'png',
+  'through',
+  'open',
+  'each',
+  'other',
+  'four',
+  'five',
+  'six',
+  'rests',
+  'performs',
+  'laying',
+  'viewed',
+  'colored',
+  'coloured',
 ]);
 
 interface UnsplashTag {
@@ -135,27 +130,23 @@ interface UnsplashPhoto {
 function unsplashHeaders(apiKey: string): Record<string, string> {
   return {
     Authorization: `Client-ID ${apiKey}`,
-    "Accept-Version": "v1",
-    "User-Agent": `${process.env.UNSPLASH_APP_NAME ?? "maildrill"}/media-tag`,
+    'Accept-Version': 'v1',
+    'User-Agent': `${process.env.UNSPLASH_APP_NAME ?? 'maildrill'}/media-tag`,
   };
 }
 
 class RateLimitExhausted extends Error {
   constructor() {
-    super("Unsplash hourly rate limit exhausted");
+    super('Unsplash hourly rate limit exhausted');
   }
 }
 
-async function searchPage(
-  apiKey: string,
-  query: string,
-  page: number,
-): Promise<UnsplashPhoto[]> {
+async function searchPage(apiKey: string, query: string, page: number): Promise<UnsplashPhoto[]> {
   const url = new URL(`${UNSPLASH_API_BASE}/search/photos`);
-  url.searchParams.set("query", query);
-  url.searchParams.set("page", String(page));
-  url.searchParams.set("per_page", String(PAGE_SIZE));
-  url.searchParams.set("content_filter", "high");
+  url.searchParams.set('query', query);
+  url.searchParams.set('page', String(page));
+  url.searchParams.set('per_page', String(PAGE_SIZE));
+  url.searchParams.set('content_filter', 'high');
 
   const res = await fetch(url, { headers: unsplashHeaders(apiKey) });
   if (res.status === 403) throw new RateLimitExhausted();
@@ -170,9 +161,9 @@ async function topicPhotosPage(
   page: number,
 ): Promise<UnsplashPhoto[]> {
   const url = new URL(`${UNSPLASH_API_BASE}/topics/${encodeURIComponent(slug)}/photos`);
-  url.searchParams.set("page", String(page));
-  url.searchParams.set("per_page", String(PAGE_SIZE));
-  url.searchParams.set("order_by", "popular");
+  url.searchParams.set('page', String(page));
+  url.searchParams.set('per_page', String(PAGE_SIZE));
+  url.searchParams.set('order_by', 'popular');
   const res = await fetch(url, { headers: unsplashHeaders(apiKey) });
   if (res.status === 403) throw new RateLimitExhausted();
   if (!res.ok) throw new Error(`unsplash topic ${slug} p${page}: HTTP ${res.status}`);
@@ -204,8 +195,8 @@ function normalizeTag(raw: string): string | null {
 /** Pull subject tokens from a descriptive slug or sentence. */
 export function tagsFromText(text: string): string[] {
   const cleaned = text
-    .replace(/\.[a-z0-9]+$/i, "")
-    .replace(/[-_]+/g, " ")
+    .replace(/\.[a-z0-9]+$/i, '')
+    .replace(/[-_]+/g, ' ')
     .toLowerCase();
   const out: string[] = [];
   const seen = new Set<string>();
@@ -222,10 +213,10 @@ function tagsFromUnsplash(photo: UnsplashPhoto): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
   for (const t of photo.tags ?? []) {
-    const tag = normalizeTag(t.title ?? "");
+    const tag = normalizeTag(t.title ?? '');
     if (!tag || seen.has(tag)) continue;
     // Prefer search/editorial tags; skip noisy camera EXIF-ish if any
-    if (t.type === "search" || t.type === "landing_page" || !t.type) {
+    if (t.type === 'search' || t.type === 'landing_page' || !t.type) {
       seen.add(tag);
       out.push(tag);
     }
@@ -245,7 +236,7 @@ export function mergeTags(parts: {
 }): string[] {
   const folderSlug = parts.folder?.trim().toLowerCase() || null;
   // Prefer spaced form for hyphenated topic folders ("street photography").
-  const folderTag = folderSlug ? folderSlug.replace(/-/g, " ") : null;
+  const folderTag = folderSlug ? folderSlug.replace(/-/g, ' ') : null;
 
   const rest = groupSimilarTags(
     [...(parts.unsplash ?? []), ...(parts.fromName ?? [])]
@@ -269,19 +260,18 @@ async function regroupExisting(
     ...protect,
     ...rows.map((r) => r.folder).filter((f): f is string => Boolean(f)),
   ];
-  const { tags: toLists, freq, pruned } = regroupLibraryTags(
-    fromLists,
-    MAX_TAGS,
-    MIN_TAG_ASSETS,
-    protectSet,
-  );
+  const {
+    tags: toLists,
+    freq,
+    pruned,
+  } = regroupLibraryTags(fromLists, MAX_TAGS, MIN_TAG_ASSETS, protectSet);
 
   const keep = [...freq.entries()].filter(([, n]) => n >= MIN_TAG_ASSETS);
   console.log(
     `corpus: ${freq.size} tags after alias → keep ${keep.length} (≥${MIN_TAG_ASSETS} images), prune ${pruned.length}`,
   );
   if (pruned.length) {
-    console.log(`  pruned: ${pruned.slice(0, 40).join(", ")}${pruned.length > 40 ? ", …" : ""}`);
+    console.log(`  pruned: ${pruned.slice(0, 40).join(', ')}${pruned.length > 40 ? ', …' : ''}`);
   }
 
   const plan = rows
@@ -296,13 +286,13 @@ async function regroupExisting(
   console.log(`regroup plans: ${plan.length}`);
   for (const row of plan.slice(0, 10)) {
     console.log(`  ${row.name.slice(0, 40)}`);
-    console.log(`    was [${row.from.join(", ")}]`);
-    console.log(`    now [${row.tags.join(", ")}]`);
+    console.log(`    was [${row.from.join(', ')}]`);
+    console.log(`    now [${row.tags.join(', ')}]`);
   }
   if (plan.length > 10) console.log(`  … +${plan.length - 10} more`);
 
   if (dryRun) {
-    console.log("\ndry-run: no writes");
+    console.log('\ndry-run: no writes');
     return;
   }
 
@@ -315,14 +305,14 @@ async function regroupExisting(
 }
 
 async function main(): Promise<void> {
-  const dryRun = process.argv.includes("--dry-run");
-  const offline = process.argv.includes("--offline");
-  const regroup = process.argv.includes("--regroup");
-  const apiKey = process.env.UNSPLASH_API_KEY ?? "";
+  const dryRun = process.argv.includes('--dry-run');
+  const offline = process.argv.includes('--offline');
+  const regroup = process.argv.includes('--regroup');
+  const apiKey = process.env.UNSPLASH_API_KEY ?? '';
   void config.media.configured;
 
   if (!regroup && !offline && !apiKey) {
-    throw new Error("UNSPLASH_API_KEY is not set (or pass --offline / --regroup)");
+    throw new Error('UNSPLASH_API_KEY is not set (or pass --offline / --regroup)');
   }
 
   const [target] = await db
@@ -349,7 +339,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const untaggedOnly = !process.argv.includes("--all");
+  const untaggedOnly = !process.argv.includes('--all');
   const byPhotoId = new Map<
     string,
     { id: string; name: string; folder: string | null; tags: string[] }
@@ -368,18 +358,20 @@ async function main(): Promise<void> {
 
   console.log(
     `tenant ${target.name}: ${byPhotoId.size} assets to tag` +
-      (untaggedOnly ? " (untagged only)" : " (--all)") +
-      (offline ? " (offline)" : "") +
-      (dryRun ? " (dry-run)" : ""),
+      (untaggedOnly ? ' (untagged only)' : ' (--all)') +
+      (offline ? ' (offline)' : '') +
+      (dryRun ? ' (dry-run)' : ''),
   );
 
   const photos = new Map<string, UnsplashPhoto>();
 
   if (!offline) {
-    const folders = [...new Set([...byPhotoId.values()].map((a) => a.folder).filter(Boolean))] as string[];
+    const folders = [
+      ...new Set([...byPhotoId.values()].map((a) => a.folder).filter(Boolean)),
+    ] as string[];
     for (const category of folders) {
       const needed = [...byPhotoId.entries()]
-        .filter(([, a]) => (a.folder ?? "") === category)
+        .filter(([, a]) => (a.folder ?? '') === category)
         .map(([id]) => id);
       const want = new Set(needed.filter((id) => !photos.has(id)));
       if (want.size === 0) continue;
@@ -399,11 +391,13 @@ async function main(): Promise<void> {
         }
         console.log(
           `${category}: bulk covered ${needed.length - want.size}/${needed.length}` +
-            (want.size ? ` (${want.size} missing)` : ""),
+            (want.size ? ` (${want.size} missing)` : ''),
         );
       } catch (err) {
         if (err instanceof RateLimitExhausted) {
-          console.log("unsplash rate limit during bulk fetch — filling gaps via GET where possible");
+          console.log(
+            'unsplash rate limit during bulk fetch — filling gaps via GET where possible',
+          );
           break;
         }
         throw err;
@@ -420,7 +414,9 @@ async function main(): Promise<void> {
         if (photo) photos.set(photoId, photo);
       } catch (err) {
         if (err instanceof RateLimitExhausted) {
-          console.log(`unsplash rate limit after ${fetched} photo GETs — using filename tags for the rest`);
+          console.log(
+            `unsplash rate limit after ${fetched} photo GETs — using filename tags for the rest`,
+          );
           break;
         }
         console.log(`  ! photo ${photoId}: ${err instanceof Error ? err.message : err}`);
@@ -434,9 +430,7 @@ async function main(): Promise<void> {
     const tags = mergeTags({
       folder: asset.folder,
       unsplash: photo ? tagsFromUnsplash(photo) : [],
-      fromName: tagsFromText(
-        photo?.alt_description || photo?.description || asset.name,
-      ),
+      fromName: tagsFromText(photo?.alt_description || photo?.description || asset.name),
     });
     if (tags.length === 0) continue;
     draft.push({ id: asset.id, name: asset.name, tags });
@@ -461,19 +455,17 @@ async function main(): Promise<void> {
     tags: prunedCorpus[i] ?? [],
   }));
   if (pruned.length) {
-    console.log(
-      `\npruned ${pruned.length} tags appearing on <${MIN_TAG_ASSETS} images`,
-    );
+    console.log(`\npruned ${pruned.length} tags appearing on <${MIN_TAG_ASSETS} images`);
   }
 
   console.log(`\ntag plans: ${plan.length}`);
   for (const row of plan.slice(0, 10)) {
-    console.log(`  ${row.name.slice(0, 48)}  →  [${row.tags.join(", ")}]`);
+    console.log(`  ${row.name.slice(0, 48)}  →  [${row.tags.join(', ')}]`);
   }
   if (plan.length > 10) console.log(`  … +${plan.length - 10} more`);
 
   if (dryRun) {
-    console.log("\ndry-run: no writes");
+    console.log('\ndry-run: no writes');
     return;
   }
 

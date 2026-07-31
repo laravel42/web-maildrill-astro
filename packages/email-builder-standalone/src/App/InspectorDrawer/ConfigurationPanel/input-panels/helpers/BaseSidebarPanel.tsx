@@ -3,7 +3,10 @@ import React from 'react';
 import { Box, Container, Divider, Tooltip } from '@mui/material';
 
 import { useBlockTypeSelected } from '../../../../../documents/editor/EditorContext';
-import { THEME_BLOCK_REGISTRY, ThemeBlockType } from '../../../../TemplatePanel/ThemePanel/registry';
+import {
+  THEME_BLOCK_REGISTRY,
+  ThemeBlockType,
+} from '../../../../TemplatePanel/ThemePanel/registry';
 import { useCompactMode } from '../../../CompactModeContext';
 
 type SidebarPanelProps = {
@@ -34,7 +37,9 @@ export default function BaseSidebarPanel({ title, children }: SidebarPanelProps)
           and a `gap` set via sx on an actual MuiStack-root. A Box sidesteps
           that override entirely. 1rem between properties in full mode;
           compact keeps its tighter rhythm since it's icon-only rows. */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', mb: 3, gap: compact ? 0.5 : 2 }}>{children}</Box>
+      <Box sx={{ display: 'flex', flexDirection: 'column', mb: 3, gap: compact ? 0.5 : 2 }}>
+        {children}
+      </Box>
     </Container>
   );
 }

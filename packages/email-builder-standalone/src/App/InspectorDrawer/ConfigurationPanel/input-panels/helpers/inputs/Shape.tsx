@@ -116,7 +116,11 @@ const Shape: FC<ShapeProps> = ({
 
   return (
     <>
-      <RadioGroupInput label={resolvedLabel} defaultValue={selectedShape} onChange={handleShapeChange}>
+      <RadioGroupInput
+        label={resolvedLabel}
+        defaultValue={selectedShape}
+        onChange={handleShapeChange}
+      >
         <ToggleButton value="rectangle">
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}>
             <CropSquare fontSize="small" />
@@ -139,7 +143,10 @@ const Shape: FC<ShapeProps> = ({
 
       {selectedShape === 'rounded' && (
         <Stack spacing={2} sx={{ width: '100%', pb: 1 }}>
-          <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <Stack
+            direction="row"
+            sx={{ justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
+          >
             <LabelProperty label={t('shape.borderRadius')} />
             <Tooltip title={isLocked ? t('lockValues.unlockTooltip') : t('lockValues.lockTooltip')}>
               <IconButton

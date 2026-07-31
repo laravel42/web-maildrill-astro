@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* The dev harness's Vite root is `dev/`, so point Tailwind's source
    scanner at the package source explicitly (paths are relative to this
@@ -585,4 +585,3 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-

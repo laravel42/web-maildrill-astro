@@ -26,25 +26,38 @@ if (only) {
   const document = JSON.parse(readFileSync(join(jsonDir, only), 'utf8')) as EditorDocument;
   const { report } = analyzeTemplate(document, { intent: 'template' });
   console.log(`\n${only} — overall ${report.overall}/100 (${report.overallBand})`);
-  console.log(`Technical ${report.audit.total}/${report.audit.max} · Design signals ${report.critique.total}/${report.critique.max}\n`);
+  console.log(
+    `Technical ${report.audit.total}/${report.audit.max} · Design signals ${report.critique.total}/${report.critique.max}\n`,
+  );
   for (const f of report.findings) {
     console.log(`[${f.severity}] ${f.ruleId} — ${f.title}`);
     console.log(`      ${f.detail}`);
-    if (f.location.blockIds.length) console.log(`      blocks: ${f.location.blockIds.slice(0, 6).join(', ')}`);
+    if (f.location.blockIds.length)
+      console.log(`      blocks: ${f.location.blockIds.slice(0, 6).join(', ')}`);
   }
   console.log('\nStrengths:');
   for (const s of report.strengths) console.log(`  + ${s}`);
   process.exit(0);
 }
 
-const files = readdirSync(jsonDir).filter((f) => f.endsWith('.json')).sort();
+const files = readdirSync(jsonDir)
+  .filter((f) => f.endsWith('.json'))
+  .sort();
 if (files.length === 0) {
   console.error(`No reference templates in ${jsonDir}`);
   process.exit(1);
 }
 
 const ruleTally = new Map<string, number>();
-const rows: { file: string; overall: number; audit: string; critique: string; p0: number; p1: number; ready: string }[] = [];
+const rows: {
+  file: string;
+  overall: number;
+  audit: string;
+  critique: string;
+  p0: number;
+  p1: number;
+  ready: string;
+}[] = [];
 
 for (const file of files) {
   const document = JSON.parse(readFileSync(join(jsonDir, file), 'utf8')) as EditorDocument;
@@ -81,5 +94,9 @@ console.log('\nMost frequent findings');
 console.table(
   [...ruleTally.entries()]
     .sort((a, b) => b[1] - a[1])
-    .map(([ruleId, count]) => ({ ruleId, templates: count, pct: `${Math.round((count / files.length) * 100)}%` })),
+    .map(([ruleId, count]) => ({
+      ruleId,
+      templates: count,
+      pct: `${Math.round((count / files.length) * 100)}%`,
+    })),
 );

@@ -39,8 +39,7 @@ export function emitProviderHttp(event: ProviderHttpEvent): void {
 export function redactHeaders(headers: Record<string, string>): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(headers)) {
-    out[k] =
-      k.toLowerCase() === "authorization" ? `${v.split(" ")[0] ?? "App"} ***` : v;
+    out[k] = k.toLowerCase() === 'authorization' ? `${v.split(' ')[0] ?? 'App'} ***` : v;
   }
   return out;
 }

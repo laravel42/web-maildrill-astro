@@ -1,18 +1,18 @@
-import type { FastifyInstance } from "fastify";
-import { z } from "zod";
-import { channelSchema } from "@maildrill/domain";
+import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
+import { channelSchema } from '@maildrill/domain';
 import {
   cancelMessage,
   getMessage,
   listMessageEvents,
   retryMessage,
   submitMessage,
-} from "@maildrill/services";
-import { authenticate } from "@maildrill/authz";
-import type { ZodTypeProvider } from "@maildrill/httpkit";
-import { messageSummary } from "../serialize";
+} from '@maildrill/services';
+import { authenticate } from '@maildrill/authz';
+import type { ZodTypeProvider } from '@maildrill/httpkit';
+import { messageSummary } from '../serialize';
 
-const TAG = ["Messages"];
+const TAG = ['Messages'];
 const submitSchema = z.object({
   channel: channelSchema,
   to: z.string().min(1),
@@ -31,15 +31,21 @@ const eventsQuery = z.object({
 
 export async function messageRoutes(appRaw: FastifyInstance): Promise<void> {
   const app = appRaw.withTypeProvider<ZodTypeProvider>();
-  app.addHook("preHandler", authenticate);
+  app.addHook('preHandler', authenticate);
 
   app.post(
-    "/v1/messages",
-    { schema: { tags: TAG, summary: "Submit a message (durable-then-return; idempotent on Idempotency-Key)", body: submitSchema } },
+    '/v1/messages',
+    {
+      schema: {
+        tags: TAG,
+        summary: 'Submit a message (durable-then-return; idempotent on Idempotency-Key)',
+        body: submitSchema,
+      },
+    },
     async (req, reply) => {
-      const headerKey = req.headers["idempotency-key"];
+      const headerKey = req.headers['idempotency-key'];
       const idempotencyKey =
-        req.body.idempotencyKey ?? (typeof headerKey === "string" ? headerKey : undefined);
+        req.body.idempotencyKey ?? (typeof headerKey === 'string' ? headerKey : undefined);
 
       const { message, deduplicated } = await submitMessage({
         tenantId: req.tenantId,
@@ -56,15 +62,26 @@ export async function messageRoutes(appRaw: FastifyInstance): Promise<void> {
     },
   );
 
-  app.get("/v1/messages/:id", { schema: { tags: TAG, summary: "Get a message", params: idParam } }, async (req, reply) => {
-    const m = await getMessage(req.tenantId, req.params.id);
-    if (!m) return reply.code(404).send({ error: "not_found" });
-    return messageSummary(m);
-  });
+  app.get(
+    '/v1/messages/:id',
+    { schema: { tags: TAG, summary: 'Get a message', params: idParam } },
+    async (req, reply) => {
+      const m = await getMessage(req.tenantId, req.params.id);
+      if (!m) return reply.code(404).send({ error: 'not_found' });
+      return messageSummary(m);
+    },
+  );
 
   app.get(
-    "/v1/messages/:id/events",
-    { schema: { tags: TAG, summary: "List a message's normalized event history", params: idParam, querystring: eventsQuery } },
+    '/v1/messages/:id/events',
+    {
+      schema: {
+        tags: TAG,
+        summary: "List a message's normalized event history",
+        params: idParam,
+        querystring: eventsQuery,
+      },
+    },
     async (req) => {
       const events = await listMessageEvents(req.tenantId, req.params.id, {
         limit: req.query.limit,
@@ -82,19 +99,27 @@ export async function messageRoutes(appRaw: FastifyInstance): Promise<void> {
     },
   );
 
-  app.post("/v1/messages/:id/cancel", { schema: { tags: TAG, summary: "Cancel a message while eligible", params: idParam } }, async (req, reply) => {
-    const { message, cancelled } = await cancelMessage(req.tenantId, req.params.id);
-    if (!message) return reply.code(404).send({ error: "not_found" });
-    return cancelled
-      ? messageSummary(message)
-      : reply.code(409).send({ error: "not_cancellable", status: message.status });
-  });
+  app.post(
+    '/v1/messages/:id/cancel',
+    { schema: { tags: TAG, summary: 'Cancel a message while eligible', params: idParam } },
+    async (req, reply) => {
+      const { message, cancelled } = await cancelMessage(req.tenantId, req.params.id);
+      if (!message) return reply.code(404).send({ error: 'not_found' });
+      return cancelled
+        ? messageSummary(message)
+        : reply.code(409).send({ error: 'not_cancellable', status: message.status });
+    },
+  );
 
-  app.post("/v1/messages/:id/retry", { schema: { tags: TAG, summary: "Retry a failed message (new generation)", params: idParam } }, async (req, reply) => {
-    const { message, retried } = await retryMessage(req.tenantId, req.params.id);
-    if (!message) return reply.code(404).send({ error: "not_found" });
-    return retried
-      ? messageSummary(message)
-      : reply.code(409).send({ error: "not_retryable", status: message.status });
-  });
+  app.post(
+    '/v1/messages/:id/retry',
+    { schema: { tags: TAG, summary: 'Retry a failed message (new generation)', params: idParam } },
+    async (req, reply) => {
+      const { message, retried } = await retryMessage(req.tenantId, req.params.id);
+      if (!message) return reply.code(404).send({ error: 'not_found' });
+      return retried
+        ? messageSummary(message)
+        : reply.code(409).send({ error: 'not_retryable', status: message.status });
+    },
+  );
 }

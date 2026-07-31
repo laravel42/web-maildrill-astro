@@ -1,6 +1,7 @@
 import { EditorConfigurationSchema, TEditorConfiguration } from '../../../documents/editor/core';
 
-type TResult = { error: string; data?: undefined } | { data: TEditorConfiguration; error?: undefined };
+type TResult =
+  { error: string; data?: undefined } | { data: TEditorConfiguration; error?: undefined };
 
 export default function validateTextAreaValue(value: string): TResult {
   let jsonObject: unknown;

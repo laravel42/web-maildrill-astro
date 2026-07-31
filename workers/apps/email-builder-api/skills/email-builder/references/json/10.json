@@ -43,9 +43,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix82u-1"
-        ]
+        "childrenIds": ["block-ms8ix82u-1"]
       }
     }
   },
@@ -91,10 +89,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix82u-3",
-          "block-ms8ix82u-5"
-        ]
+        "childrenIds": ["block-ms8ix82u-3", "block-ms8ix82u-5"]
       }
     }
   },
@@ -187,9 +182,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix82u-8"
-        ]
+        "childrenIds": ["block-ms8ix82u-8"]
       }
     }
   },
@@ -229,30 +222,20 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          37,
-          27,
-          36
-        ],
+        "fixedWidths": [37, 27, 36],
         "columnsCount": 3,
         "layout": "layout-33-33-33",
         "contentAlignment": "middle",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "rule-ms8ix82u-a"
-            ]
+            "childrenIds": ["rule-ms8ix82u-a"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82u-b"
-            ]
+            "childrenIds": ["block-ms8ix82u-b"]
           },
           {
-            "childrenIds": [
-              "rule-ms8ix82u-c"
-            ]
+            "childrenIds": ["rule-ms8ix82u-c"]
           }
         ]
       }
@@ -336,11 +319,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "card-ms8ix82u-i",
-          "card-ms8ix82v-n",
-          "card-ms8ix82v-s"
-        ]
+        "childrenIds": ["card-ms8ix82u-i", "card-ms8ix82v-n", "card-ms8ix82v-s"]
       }
     }
   },
@@ -363,9 +342,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "cols-ms8ix82u-h"
-        ]
+        "childrenIds": ["cols-ms8ix82u-h"]
       }
     }
   },
@@ -382,30 +359,20 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          7,
-          73,
-          20
-        ],
+        "fixedWidths": [7, 73, 20],
         "columnsCount": 3,
         "layout": "layout-33-33-33",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "block-ms8ix82u-e"
-            ]
+            "childrenIds": ["block-ms8ix82u-e"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82u-f"
-            ]
+            "childrenIds": ["block-ms8ix82u-f"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82u-g"
-            ]
+            "childrenIds": ["block-ms8ix82u-g"]
           }
         ]
       }
@@ -499,9 +466,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "cols-ms8ix82v-m"
-        ]
+        "childrenIds": ["cols-ms8ix82v-m"]
       }
     }
   },
@@ -518,30 +483,20 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          7,
-          64,
-          29
-        ],
+        "fixedWidths": [7, 64, 29],
         "columnsCount": 3,
         "layout": "layout-33-33-33",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "block-ms8ix82v-j"
-            ]
+            "childrenIds": ["block-ms8ix82v-j"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82v-k"
-            ]
+            "childrenIds": ["block-ms8ix82v-k"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82v-l"
-            ]
+            "childrenIds": ["block-ms8ix82v-l"]
           }
         ]
       }
@@ -635,9 +590,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "cols-ms8ix82v-r"
-        ]
+        "childrenIds": ["cols-ms8ix82v-r"]
       }
     }
   },
@@ -654,30 +607,20 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          7,
-          85,
-          8
-        ],
+        "fixedWidths": [7, 85, 8],
         "columnsCount": 3,
         "layout": "layout-33-33-33",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "block-ms8ix82v-o"
-            ]
+            "childrenIds": ["block-ms8ix82v-o"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82v-p"
-            ]
+            "childrenIds": ["block-ms8ix82v-p"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix82v-q"
-            ]
+            "childrenIds": ["block-ms8ix82v-q"]
           }
         ]
       }
@@ -771,10 +714,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "btn-ms8ix82v-u",
-          "block-ms8ix82v-w"
-        ]
+        "childrenIds": ["btn-ms8ix82v-u", "block-ms8ix82v-w"]
       }
     }
   },

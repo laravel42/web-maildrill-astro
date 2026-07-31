@@ -3,7 +3,10 @@ import React, { CSSProperties, memo, useEffect, useMemo, useRef, useState } from
 import { useDrag, useDrop } from 'react-dnd';
 import { useTranslation } from 'react-i18next';
 
-import { DragIndicator as DragIndicatorIcon, EditOutlined as EditIconOutlined } from '@mui/icons-material';
+import {
+  DragIndicator as DragIndicatorIcon,
+  EditOutlined as EditIconOutlined,
+} from '@mui/icons-material';
 import { Box, Chip, Fade, IconButton, Tooltip } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
@@ -65,7 +68,7 @@ function scheduleCanvasHoverApply(
   blockId: string,
   delayMs: number,
   isWrapperMounted: () => boolean,
-  applyMouseInside: () => void
+  applyMouseInside: () => void,
 ) {
   clearPendingCanvasHoverApply();
   pendingCanvasHoverApplyBlockId = blockId;
@@ -149,7 +152,11 @@ function resolveCanvasHoverTargetFromRelatedTarget(related: EventTarget | null):
   return id;
 }
 
-function EditorBlockWrapperInner({ children, canEdit = true, isNotClient = false }: TEditorBlockWrapperProps) {
+function EditorBlockWrapperInner({
+  children,
+  canEdit = true,
+  isNotClient = false,
+}: TEditorBlockWrapperProps) {
   const blockId = useCurrentBlockId();
   const { t } = useTranslation();
   const canvasHoveredBlockId = useCanvasHoveredBlockId();
@@ -289,14 +296,16 @@ function EditorBlockWrapperInner({ children, canEdit = true, isNotClient = false
           }
           return;
         }
-        const libItem = item as Omit<LibraryComponentDragItem, 'category'> & { category: FetchableLibraryCategory };
+        const libItem = item as Omit<LibraryComponentDragItem, 'category'> & {
+          category: FetchableLibraryCategory;
+        };
         if (libItem.category === 'template') {
           // Templates do not insert inline — they replace the entire
           // document. The user applies them by clicking the template
           // card in the drawer (see TemplatesCategoryContent).
 
           console.warn(
-            '[ComponentsLibrary] templates cannot be dropped inline; click the card in the drawer to apply.'
+            '[ComponentsLibrary] templates cannot be dropped inline; click the card in the drawer to apply.',
           );
           return;
         }
@@ -417,7 +426,12 @@ function EditorBlockWrapperInner({ children, canEdit = true, isNotClient = false
           />
         </svg>
         <svg
-          style={{ position: 'absolute', right: '-25px', top: '50%', transform: 'translateY(-50%) scaleX(-1)' }}
+          style={{
+            position: 'absolute',
+            right: '-25px',
+            top: '50%',
+            transform: 'translateY(-50%) scaleX(-1)',
+          }}
           width="20"
           height="20"
           viewBox="0 0 32 32"
@@ -437,7 +451,9 @@ function EditorBlockWrapperInner({ children, canEdit = true, isNotClient = false
       item: () => {
         const editingId = editorStateStore.getState().notionTextInlineEditingBlockId;
         if (editingId) {
-          window.dispatchEvent(new CustomEvent('notion-text-force-save', { detail: { blockId: editingId } }));
+          window.dispatchEvent(
+            new CustomEvent('notion-text-force-save', { detail: { blockId: editingId } }),
+          );
         }
         return { blockId };
       },
@@ -450,7 +466,7 @@ function EditorBlockWrapperInner({ children, canEdit = true, isNotClient = false
         setDragStartTime(Date.now());
       },
     }),
-    [isDragDisabled, blockId]
+    [isDragDisabled, blockId],
   );
 
   const [{ borderDrag = '', isDragging }, dragRef] = dragResult || [
@@ -464,7 +480,9 @@ function EditorBlockWrapperInner({ children, canEdit = true, isNotClient = false
     selectedMainTab !== 'preview' &&
     !isDragDisabled &&
     !isInFocusedEditingMode &&
-    (isDragging || canvasHoveredBlockId === blockId || (canvasHoveredBlockId == null && isSelected));
+    (isDragging ||
+      canvasHoveredBlockId === blockId ||
+      (canvasHoveredBlockId == null && isSelected));
 
   useEffect(() => {
     wrapperMountedRef.current = true;
@@ -566,7 +584,7 @@ function EditorBlockWrapperInner({ children, canEdit = true, isNotClient = false
             blockId,
             delayMs,
             () => wrapperMountedRef.current,
-            () => setMouseInside(true)
+            () => setMouseInside(true),
           );
         }}
         onMouseLeave={(ev) => {
@@ -613,7 +631,10 @@ function EditorBlockWrapperInner({ children, canEdit = true, isNotClient = false
                 alignItems: 'center',
                 borderRadius: '6px 6px 0 0',
                 overflow: 'hidden',
-                backgroundColor: isThisBlockEditing && canEdit ? editingHighlightColor : theme.palette.secondary.main,
+                backgroundColor:
+                  isThisBlockEditing && canEdit
+                    ? editingHighlightColor
+                    : theme.palette.secondary.main,
               }}
             >
               {/* Botón: Drag handle */}

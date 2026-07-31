@@ -41,7 +41,10 @@ const ImageSourceTabs: React.FC<ImageSourceTabsProps> = ({ tabs, defaultTab }) =
   // visible one so we never render nothing while a strip is still shown.
   useEffect(() => {
     if (active && visible.some((t) => t.key === active)) return;
-    const next = defaultTab && visible.some((t) => t.key === defaultTab) ? defaultTab : (visible[0]?.key ?? null);
+    const next =
+      defaultTab && visible.some((t) => t.key === defaultTab)
+        ? defaultTab
+        : (visible[0]?.key ?? null);
     setActive(next);
   }, [visible, defaultTab, active]);
 

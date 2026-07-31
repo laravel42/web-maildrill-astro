@@ -163,7 +163,7 @@ const UnsplashImagePicker: React.FC<UnsplashImagePickerProps> = ({
         }
       }
     },
-    [resolvedBackendUrl]
+    [resolvedBackendUrl],
   );
 
   useEffect(() => {
@@ -284,7 +284,10 @@ const UnsplashImagePicker: React.FC<UnsplashImagePickerProps> = ({
       </Tabs>
 
       {errorKind && (
-        <Alert severity={errorKind === 'not_configured' ? 'warning' : 'error'} sx={{ mb: 1.5, fontSize: '0.75rem' }}>
+        <Alert
+          severity={errorKind === 'not_configured' ? 'warning' : 'error'}
+          sx={{ mb: 1.5, fontSize: '0.75rem' }}
+        >
           {t(`inputs.unsplash.error.${errorKind}`)}
         </Alert>
       )}
@@ -323,14 +326,26 @@ const UnsplashImagePicker: React.FC<UnsplashImagePickerProps> = ({
         >
           {photos.map((photo) => {
             const selected = currentImageUrl?.includes(photo.id) ?? false;
-            return <UnsplashTile key={photo.id} photo={photo} selected={selected} onPick={() => handlePick(photo)} />;
+            return (
+              <UnsplashTile
+                key={photo.id}
+                photo={photo}
+                selected={selected}
+                onPick={() => handlePick(photo)}
+              />
+            );
           })}
         </Box>
       )}
 
       {canLoadMore && (
         <Box sx={{ textAlign: 'center', mt: 2 }}>
-          <Link component="button" variant="caption" onClick={handleLoadMore} sx={{ cursor: 'pointer' }}>
+          <Link
+            component="button"
+            variant="caption"
+            onClick={handleLoadMore}
+            sx={{ cursor: 'pointer' }}
+          >
             {t('inputs.unsplash.loadMore')}
           </Link>
         </Box>

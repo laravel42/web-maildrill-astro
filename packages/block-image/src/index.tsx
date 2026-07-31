@@ -1,12 +1,25 @@
 import React, { CSSProperties } from 'react';
 
-import { type ImageProps, ImagePropsSchema, type UnsplashMetadata, UnsplashMetadataSchema } from '@eb/document-core';
+import {
+  type ImageProps,
+  ImagePropsSchema,
+  type UnsplashMetadata,
+  UnsplashMetadataSchema,
+} from '@eb/document-core';
 
 import Wrapper from '../../email-builder/src/blocks/helpers/Wrapper';
 import { getCleanURL } from '../../email-builder/src/helpers/formatting';
 import { getPadding } from '../../email-builder/src/helpers/getCssProperties';
-import { getRoundedCorners, shortCssId, updateHexColorInBackgroundString } from '../../email-builder/src/helpers/utils';
-import { useDisableEdition, useImageAutoWidth, useImageUploading } from '../../email-builder/src/Reader/renderContext';
+import {
+  getRoundedCorners,
+  shortCssId,
+  updateHexColorInBackgroundString,
+} from '../../email-builder/src/helpers/utils';
+import {
+  useDisableEdition,
+  useImageAutoWidth,
+  useImageUploading,
+} from '../../email-builder/src/Reader/renderContext';
 import { useViewport } from '../../email-builder/src/Reader/viewport';
 
 export { ImagePropsSchema, UnsplashMetadataSchema, type ImageProps, type UnsplashMetadata };
@@ -15,7 +28,12 @@ export const ImagePropsDefaults = {
   shape: 'rectangle',
 } as const;
 
-export function Image({ style, props, blockId, isNotClient = false }: ImageProps & { isNotClient?: boolean }) {
+export function Image({
+  style,
+  props,
+  blockId,
+  isNotClient = false,
+}: ImageProps & { isNotClient?: boolean }) {
   const selectedScreenSize = useViewport();
   const imageUploading = useImageUploading();
   const disableEdition = useDisableEdition();
@@ -24,7 +42,9 @@ export function Image({ style, props, blockId, isNotClient = false }: ImageProps
   const guardLinksWhileEditingOnCanvas = !disableEdition && !isNotClient;
 
   const sectionStyle = {
-    padding: getPadding(selectedScreenSize == 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding)),
+    padding: getPadding(
+      selectedScreenSize == 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding),
+    ),
     backgroundColor: style?.backgroundColor ?? undefined,
     textAlign:
       selectedScreenSize == 'desktop'
@@ -52,7 +72,8 @@ export function Image({ style, props, blockId, isNotClient = false }: ImageProps
   const width =
     (selectedScreenSize == 'desktop'
       ? getWidth(props?.size, props?.scale, props?.width)
-      : getWidth(props?.sizeMobile, props?.scaleMobile, props?.widthMobile ?? props?.width)) ?? undefined;
+      : getWidth(props?.sizeMobile, props?.scaleMobile, props?.widthMobile ?? props?.width)) ??
+    undefined;
 
   /**
    * `style.height` (and `style.heightMobile`) is the user-defined fixed-height
@@ -62,7 +83,8 @@ export function Image({ style, props, blockId, isNotClient = false }: ImageProps
    * still occupies the requested space (stretched).
    */
   const heightPx =
-    (selectedScreenSize == 'desktop' ? style?.height : (style?.heightMobile ?? style?.height)) ?? undefined;
+    (selectedScreenSize == 'desktop' ? style?.height : (style?.heightMobile ?? style?.height)) ??
+    undefined;
   /* Object-fit and object-position are per-viewport so a tall mobile
    * crop can use 'cover' while desktop keeps 'contain' (or vice versa).
    * Mobile inherits desktop when the *Mobile counterpart is missing. */
@@ -91,7 +113,9 @@ export function Image({ style, props, blockId, isNotClient = false }: ImageProps
   const background = style?.background ?? '';
   const backgroundColor = style?.backgroundColor;
 
-  const backgroundString = backgroundColor ? updateHexColorInBackgroundString(background, backgroundColor) : background;
+  const backgroundString = backgroundColor
+    ? updateHexColorInBackgroundString(background, backgroundColor)
+    : background;
 
   const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
     const imgElement = event.currentTarget;
@@ -186,7 +210,9 @@ export function Image({ style, props, blockId, isNotClient = false }: ImageProps
           pointerEvents: guardLinksWhileEditingOnCanvas ? 'none' : undefined,
         }}
         target={guardLinksWhileEditingOnCanvas ? undefined : '_blank'}
-        onClick={guardLinksWhileEditingOnCanvas ? (e: React.MouseEvent) => e.preventDefault() : undefined}
+        onClick={
+          guardLinksWhileEditingOnCanvas ? (e: React.MouseEvent) => e.preventDefault() : undefined
+        }
       >
         {imageElement}
       </a>

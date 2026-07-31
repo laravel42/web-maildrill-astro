@@ -42,9 +42,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix830-1"
-        ]
+        "childrenIds": ["block-ms8ix830-1"]
       }
     }
   },
@@ -114,11 +112,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix830-4",
-          "block-ms8ix830-6",
-          "block-ms8ix831-8"
-        ]
+        "childrenIds": ["block-ms8ix830-4", "block-ms8ix830-6", "block-ms8ix831-8"]
       }
     }
   },
@@ -210,10 +204,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix831-a",
-          "block-ms8ix831-c"
-        ]
+        "childrenIds": ["block-ms8ix831-a", "block-ms8ix831-c"]
       }
     }
   },
@@ -282,10 +273,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix831-e",
-          "block-ms8ix831-g"
-        ]
+        "childrenIds": ["block-ms8ix831-e", "block-ms8ix831-g"]
       }
     }
   },
@@ -354,10 +342,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "btn-ms8ix831-i",
-          "block-ms8ix831-k"
-        ]
+        "childrenIds": ["btn-ms8ix831-i", "block-ms8ix831-k"]
       }
     }
   },

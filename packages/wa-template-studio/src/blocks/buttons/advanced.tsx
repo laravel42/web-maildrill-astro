@@ -76,7 +76,12 @@ export const otpPlugin: ButtonPlugin<OtpData> = {
     return (
       <div className="flex flex-col gap-4">
         <Field label="OTP delivery" hint="How the code reaches your app">
-          <Select value={value.otpType} onValueChange={(otpType) => onChange({ ...value, otpType: otpType as OtpData['otpType'] })}>
+          <Select
+            value={value.otpType}
+            onValueChange={(otpType) =>
+              onChange({ ...value, otpType: otpType as OtpData['otpType'] })
+            }
+          >
             <SelectTrigger aria-label="OTP type">
               <SelectValue />
             </SelectTrigger>
@@ -87,8 +92,15 @@ export const otpPlugin: ButtonPlugin<OtpData> = {
             </SelectContent>
           </Select>
         </Field>
-        <Field label="Button label" counter={`${(value.text ?? '').length}/${LIMITS.BUTTON_TEXT_MAX}`}>
-          <Input value={value.text ?? ''} onChange={(e) => onChange({ ...value, text: e.target.value })} placeholder="Copy code" />
+        <Field
+          label="Button label"
+          counter={`${(value.text ?? '').length}/${LIMITS.BUTTON_TEXT_MAX}`}
+        >
+          <Input
+            value={value.text ?? ''}
+            onChange={(e) => onChange({ ...value, text: e.target.value })}
+            placeholder="Copy code"
+          />
         </Field>
         {value.otpType !== 'COPY_CODE' && (
           <>
@@ -119,7 +131,11 @@ export const otpPlugin: ButtonPlugin<OtpData> = {
     );
   },
   Preview: ({ data, ctx }) => (
-    <WaButtonRow dark={ctx.dark} icon={<Copy className="size-4" />} label={data.text || 'Copy code'} />
+    <WaButtonRow
+      dark={ctx.dark}
+      icon={<Copy className="size-4" />}
+      label={data.text || 'Copy code'}
+    />
   ),
   onTap: (data, api) => {
     if (data.otpType === 'ONE_TAP' || data.otpType === 'ZERO_TAP') {
@@ -186,7 +202,12 @@ export const flowPlugin: ButtonPlugin<FlowData> = {
   validate: (data) => {
     const issues: ValidationIssue[] = [];
     if (!data.text.trim()) {
-      issues.push({ severity: 'error', slot: 'buttons', code: 'flow/label-required', message: 'Button label is required' });
+      issues.push({
+        severity: 'error',
+        slot: 'buttons',
+        code: 'flow/label-required',
+        message: 'Button label is required',
+      });
     }
     if (data.text.length > LIMITS.BUTTON_TEXT_MAX) {
       issues.push({
@@ -197,7 +218,12 @@ export const flowPlugin: ButtonPlugin<FlowData> = {
       });
     }
     if (!data.flowId.trim()) {
-      issues.push({ severity: 'error', slot: 'buttons', code: 'flow/id-required', message: 'Flow ID is required' });
+      issues.push({
+        severity: 'error',
+        slot: 'buttons',
+        code: 'flow/id-required',
+        message: 'Flow ID is required',
+      });
     }
     if (data.flowAction === 'navigate' && !(data.navigateScreen ?? '').trim()) {
       issues.push({
@@ -213,15 +239,25 @@ export const flowPlugin: ButtonPlugin<FlowData> = {
     return (
       <div className="flex flex-col gap-4">
         <Field label="Label" counter={`${value.text.length}/${LIMITS.BUTTON_TEXT_MAX}`}>
-          <Input value={value.text} onChange={(e) => onChange({ ...value, text: e.target.value })} placeholder="Book appointment" />
+          <Input
+            value={value.text}
+            onChange={(e) => onChange({ ...value, text: e.target.value })}
+            placeholder="Book appointment"
+          />
         </Field>
         <Field label="Flow ID" hint="From WhatsApp Manager → Flows">
-          <Input value={value.flowId} onChange={(e) => onChange({ ...value, flowId: e.target.value })} placeholder="1234567890" />
+          <Input
+            value={value.flowId}
+            onChange={(e) => onChange({ ...value, flowId: e.target.value })}
+            placeholder="1234567890"
+          />
         </Field>
         <Field label="Flow action">
           <Select
             value={value.flowAction}
-            onValueChange={(flowAction) => onChange({ ...value, flowAction: flowAction as FlowData['flowAction'] })}
+            onValueChange={(flowAction) =>
+              onChange({ ...value, flowAction: flowAction as FlowData['flowAction'] })
+            }
           >
             <SelectTrigger aria-label="Flow action">
               <SelectValue />
@@ -244,15 +280,28 @@ export const flowPlugin: ButtonPlugin<FlowData> = {
       </div>
     );
   },
-  Preview: ({ data, ctx }) => <WaButtonRow dark={ctx.dark} icon={<Workflow className="size-4" />} label={data.text || 'Open Flow'} />,
+  Preview: ({ data, ctx }) => (
+    <WaButtonRow
+      dark={ctx.dark}
+      icon={<Workflow className="size-4" />}
+      label={data.text || 'Open Flow'}
+    />
+  ),
   onTap: (data, api) =>
-    api.openSheet({ kind: 'flow', label: data.text || 'Flow', flowId: data.flowId || '—', screen: data.navigateScreen }),
+    api.openSheet({
+      kind: 'flow',
+      label: data.text || 'Flow',
+      flowId: data.flowId || '—',
+      screen: data.navigateScreen,
+    }),
   toMeta: (data) => ({
     type: 'FLOW',
     text: data.text,
     flow_id: data.flowId,
     flow_action: data.flowAction,
-    ...(data.flowAction === 'navigate' && data.navigateScreen ? { navigate_screen: data.navigateScreen } : {}),
+    ...(data.flowAction === 'navigate' && data.navigateScreen
+      ? { navigate_screen: data.navigateScreen }
+      : {}),
   }),
   fromMeta: (button) => {
     if (String(button.type).toUpperCase() !== 'FLOW') return null;
@@ -260,8 +309,11 @@ export const flowPlugin: ButtonPlugin<FlowData> = {
     return {
       text: typeof button.text === 'string' ? button.text : '',
       flowId: String(button.flow_id ?? ''),
-      flowAction: (flowAction === 'data_exchange' ? 'data_exchange' : 'navigate') as FlowData['flowAction'],
-      navigateScreen: typeof button.navigate_screen === 'string' ? button.navigate_screen : undefined,
+      flowAction: (flowAction === 'data_exchange'
+        ? 'data_exchange'
+        : 'navigate') as FlowData['flowAction'],
+      navigateScreen:
+        typeof button.navigate_screen === 'string' ? button.navigate_screen : undefined,
     };
   },
 };
@@ -297,11 +349,19 @@ function makeCommercePlugin(config: {
     availableIn: (category) =>
       category === 'MARKETING'
         ? { available: true }
-        : { available: false, reason: `${config.label} buttons are only available in Marketing templates` },
+        : {
+            available: false,
+            reason: `${config.label} buttons are only available in Marketing templates`,
+          },
     validate: (data) => {
       const issues: ValidationIssue[] = [];
       if (!data.text.trim()) {
-        issues.push({ severity: 'error', slot: 'buttons', code: `${config.type}/label-required`, message: 'Button label is required' });
+        issues.push({
+          severity: 'error',
+          slot: 'buttons',
+          code: `${config.type}/label-required`,
+          message: 'Button label is required',
+        });
       }
       if (data.text.length > LIMITS.BUTTON_TEXT_MAX) {
         issues.push({
@@ -315,17 +375,35 @@ function makeCommercePlugin(config: {
     },
     Editor: function CommerceEditor({ value, onChange }) {
       return (
-        <Field label="Label" counter={`${value.text.length}/${LIMITS.BUTTON_TEXT_MAX}`} hint="Products attach at send time">
-          <Input value={value.text} onChange={(e) => onChange({ text: e.target.value })} placeholder={config.defaultLabel} />
+        <Field
+          label="Label"
+          counter={`${value.text.length}/${LIMITS.BUTTON_TEXT_MAX}`}
+          hint="Products attach at send time"
+        >
+          <Input
+            value={value.text}
+            onChange={(e) => onChange({ text: e.target.value })}
+            placeholder={config.defaultLabel}
+          />
         </Field>
       );
     },
     Preview: ({ data, ctx }) => {
       const Icon = config.icon;
-      return <WaButtonRow dark={ctx.dark} icon={<Icon className="size-4" />} label={data.text || config.defaultLabel} />;
+      return (
+        <WaButtonRow
+          dark={ctx.dark}
+          icon={<Icon className="size-4" />}
+          label={data.text || config.defaultLabel}
+        />
+      );
     },
     onTap: (data, api) =>
-      api.openSheet({ kind: 'catalog', label: data.text || config.defaultLabel, multi: config.metaType === 'MPM' }),
+      api.openSheet({
+        kind: 'catalog',
+        label: data.text || config.defaultLabel,
+        multi: config.metaType === 'MPM',
+      }),
     toMeta: (data) => ({ type: config.metaType, text: data.text }),
     fromMeta: (button) => {
       if (String(button.type).toUpperCase() !== config.metaType) return null;

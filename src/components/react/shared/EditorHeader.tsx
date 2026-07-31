@@ -212,9 +212,7 @@ export default function EditorHeader({
 
       <div className={styles.center}>
         <div className={styles.nameRow}>
-          <div
-            className={`${styles.nameField}${nameError ? ` ${styles.nameFieldInvalid}` : ''}`}
-          >
+          <div className={`${styles.nameField}${nameError ? ` ${styles.nameFieldInvalid}` : ''}`}>
             <span
               className={styles.nameIcon}
               style={{ background: meta.tint, color: meta.color }}
@@ -269,7 +267,11 @@ export default function EditorHeader({
         /* Bottom badge in the app's toast position, in its alert tone. Sits
            outside the header so it can never affect the bar's height, and
            auto-dismisses like every other notification. */
-        <div className={styles.alertBadge} role="alert" style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}>
+        <div
+          className={styles.alertBadge}
+          role="alert"
+          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
+        >
           <span className={styles.alertBadgeIcon}>
             <Icon name="x" size={13} stroke={3} />
           </span>

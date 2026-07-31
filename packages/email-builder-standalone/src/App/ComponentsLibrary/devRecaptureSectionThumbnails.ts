@@ -27,7 +27,7 @@ type Listing = { role: string; id: string; name: string; hasThumbnail: boolean }
 type Summary = { total: number; captured: number; skipped: number; failed: number };
 
 export async function recaptureSectionThumbnails(
-  options: { role?: string; onlyMissing?: boolean } = {}
+  options: { role?: string; onlyMissing?: boolean } = {},
 ): Promise<Summary> {
   const base = resolveBackendUrl();
   const summary: Summary = { total: 0, captured: 0, skipped: 0, failed: 0 };
@@ -52,7 +52,10 @@ export async function recaptureSectionThumbnails(
     try {
       const r = await fetch(url);
       if (!r.ok) throw new Error(`GET HTTP ${r.status}`);
-      const { name, blocks } = (await r.json()) as { name: string; blocks: Array<{ id: string; block: unknown }> };
+      const { name, blocks } = (await r.json()) as {
+        name: string;
+        blocks: Array<{ id: string; block: unknown }>;
+      };
       if (!blocks?.length) {
         summary.skipped++;
         continue;
@@ -80,7 +83,7 @@ export async function recaptureSectionThumbnails(
       summary.failed++;
       console.warn(
         `[recaptureSectionThumbnails] "${s.role}/${s.name}" failed:`,
-        err instanceof Error ? err.message : err
+        err instanceof Error ? err.message : err,
       );
     }
   }

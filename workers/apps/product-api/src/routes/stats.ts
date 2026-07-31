@@ -1,11 +1,16 @@
-import type { FastifyInstance } from "fastify";
-import { z } from "zod";
-import { channelSchema } from "@maildrill/domain";
-import { authenticate } from "@maildrill/authz";
-import type { ZodTypeProvider } from "@maildrill/httpkit";
-import { activityFeed, channelBreakdown, dailyActivity, workspaceSummary } from "@maildrill/product";
+import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
+import { channelSchema } from '@maildrill/domain';
+import { authenticate } from '@maildrill/authz';
+import type { ZodTypeProvider } from '@maildrill/httpkit';
+import {
+  activityFeed,
+  channelBreakdown,
+  dailyActivity,
+  workspaceSummary,
+} from '@maildrill/product';
 
-const TAG = ["Stats"];
+const TAG = ['Stats'];
 const seriesQuery = z.object({
   days: z.coerce.number().int().positive().max(365).optional(),
   channel: channelSchema.optional(),
@@ -13,26 +18,26 @@ const seriesQuery = z.object({
 
 export async function statsRoutes(appRaw: FastifyInstance): Promise<void> {
   const app = appRaw.withTypeProvider<ZodTypeProvider>();
-  app.addHook("preHandler", authenticate);
+  app.addHook('preHandler', authenticate);
 
   app.get(
-    "/v1/stats/summary",
-    { schema: { tags: TAG, summary: "Workspace counters for the dashboard" } },
+    '/v1/stats/summary',
+    { schema: { tags: TAG, summary: 'Workspace counters for the dashboard' } },
     async (req) => workspaceSummary(req.tenantId),
   );
 
   app.get(
-    "/v1/stats/feed",
-    { schema: { tags: TAG, summary: "Recent workspace activity for the dashboard feed" } },
+    '/v1/stats/feed',
+    { schema: { tags: TAG, summary: 'Recent workspace activity for the dashboard feed' } },
     async (req) => ({ data: await activityFeed(req.tenantId) }),
   );
 
   app.get(
-    "/v1/stats/activity",
+    '/v1/stats/activity',
     {
       schema: {
         tags: TAG,
-        summary: "Daily send activity, zero-filled (no open/click data yet)",
+        summary: 'Daily send activity, zero-filled (no open/click data yet)',
         querystring: seriesQuery,
       },
     },
@@ -42,11 +47,11 @@ export async function statsRoutes(appRaw: FastifyInstance): Promise<void> {
   );
 
   app.get(
-    "/v1/stats/channels",
+    '/v1/stats/channels',
     {
       schema: {
         tags: TAG,
-        summary: "Per-channel delivery + engagement breakdown for a date range",
+        summary: 'Per-channel delivery + engagement breakdown for a date range',
         querystring: z.object({
           days: z.coerce.number().int().positive().max(365).optional(),
         }),

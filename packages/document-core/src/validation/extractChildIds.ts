@@ -33,7 +33,11 @@ export function extractAllChildIds(block: TEditorBlock): string[] {
   const columns = data?.props?.columns;
   if (Array.isArray(columns)) {
     for (const col of columns) {
-      if (col && typeof col === 'object' && Array.isArray((col as { childrenIds?: unknown }).childrenIds)) {
+      if (
+        col &&
+        typeof col === 'object' &&
+        Array.isArray((col as { childrenIds?: unknown }).childrenIds)
+      ) {
         for (const id of (col as { childrenIds: unknown[] }).childrenIds) {
           if (typeof id === 'string') ids.push(id);
         }

@@ -1,7 +1,11 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
-import { getProvider as defaultGetProvider, PROVIDER_NAMES, type ProviderName } from '../providers/index.js';
+import {
+  getProvider as defaultGetProvider,
+  PROVIDER_NAMES,
+  type ProviderName,
+} from '../providers/index.js';
 
 const AI_ACTIONS = [
   'rewrite',
@@ -88,7 +92,9 @@ export function createAiTextProcessRoute() {
         return reply.send({ processedContent: result.trim(), action: body.action });
       } catch (err: any) {
         console.error('❌ AI text-process error:', err?.message ?? err);
-        return reply.status(500).send({ error: 'processing_failed', message: err?.message ?? 'Unknown error' });
+        return reply
+          .status(500)
+          .send({ error: 'processing_failed', message: err?.message ?? 'Unknown error' });
       }
     });
   };

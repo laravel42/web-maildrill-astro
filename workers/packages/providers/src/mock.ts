@@ -1,4 +1,4 @@
-import { sha256Hex, type ProviderOutcome } from "@maildrill/domain";
+import { sha256Hex, type ProviderOutcome } from '@maildrill/domain';
 import {
   asRecord,
   str,
@@ -12,31 +12,31 @@ import {
   type ListTemplatesResult,
   type TemplateApprovalStatus,
   type TemplateStatusEvent,
-} from "./core";
+} from './core';
 
 const TEMPLATE_STATUSES: ReadonlyArray<TemplateApprovalStatus> = [
-  "draft",
-  "pending",
-  "approved",
-  "rejected",
-  "paused",
-  "disabled",
+  'draft',
+  'pending',
+  'approved',
+  'rejected',
+  'paused',
+  'disabled',
 ];
 
 const OUTCOMES: ReadonlyArray<ProviderOutcome> = [
-  "submitted",
-  "sent",
-  "delivered",
-  "read",
-  "failed",
-  "cancelled",
-  "expired",
+  'submitted',
+  'sent',
+  'delivered',
+  'read',
+  'failed',
+  'cancelled',
+  'expired',
 ];
 
 function toOutcome(value: unknown): ProviderOutcome {
-  return typeof value === "string" && (OUTCOMES as readonly string[]).includes(value)
+  return typeof value === 'string' && (OUTCOMES as readonly string[]).includes(value)
     ? (value as ProviderOutcome)
-    : "delivered";
+    : 'delivered';
 }
 
 /**
@@ -46,42 +46,40 @@ function toOutcome(value: unknown): ProviderOutcome {
  * - otherwise the send is accepted with a stable provider message id
  */
 export class MockProvider implements MessagingProvider {
-  readonly name = "mock";
+  readonly name = 'mock';
 
   async send(input: SendInput): Promise<ProviderSendResult> {
-    if (input.to.includes("reject@")) {
+    if (input.to.includes('reject@')) {
       return {
         accepted: false,
-        status: "rejected",
+        status: 'rejected',
         error: {
-          category: "validation",
-          message: "mock: recipient rejected",
+          category: 'validation',
+          message: 'mock: recipient rejected',
           retryable: false,
         },
       };
     }
-    if (input.to.includes("boom@")) {
+    if (input.to.includes('boom@')) {
       return {
         accepted: false,
-        status: "rejected",
+        status: 'rejected',
         error: {
-          category: "temporary",
-          message: "mock: transient provider error",
+          category: 'temporary',
+          message: 'mock: transient provider error',
           retryable: true,
         },
       };
     }
     return {
       accepted: true,
-      status: "submitted",
+      status: 'submitted',
       providerMessageId: `mock-${sha256Hex(input.messageId).slice(0, 24)}`,
       providerRequestId: input.correlationId,
     };
   }
 
-  async normalizeWebhook(
-    input: ProviderWebhookInput,
-  ): Promise<NormalizedProviderEvent[]> {
+  async normalizeWebhook(input: ProviderWebhookInput): Promise<NormalizedProviderEvent[]> {
     const body = asRecord(input.body);
     const raw = Array.isArray(body.events) ? body.events : [body];
     return raw.map((entry): NormalizedProviderEvent => {
@@ -93,7 +91,7 @@ export class MockProvider implements MessagingProvider {
         fingerprintParts: [str(e.eventId) ?? str(e.messageId), str(e.status)],
         providerMessageId: str(e.messageId),
         correlationId: str(e.correlationId),
-        eventType: str(e.type) ?? "delivery",
+        eventType: str(e.type) ?? 'delivery',
         outcome,
         providerStatus: str(e.status),
         occurredAt: at ? new Date(at) : undefined,
@@ -103,12 +101,10 @@ export class MockProvider implements MessagingProvider {
   }
 
   /** Deterministic: a template name containing "reject" is rejected, else pending. */
-  async registerWhatsAppTemplate(
-    input: RegisterTemplateInput,
-  ): Promise<RegisterTemplateResult> {
-    const status: TemplateApprovalStatus = input.name.toLowerCase().includes("reject")
-      ? "rejected"
-      : "pending";
+  async registerWhatsAppTemplate(input: RegisterTemplateInput): Promise<RegisterTemplateResult> {
+    const status: TemplateApprovalStatus = input.name.toLowerCase().includes('reject')
+      ? 'rejected'
+      : 'pending';
     return {
       ok: true,
       providerTemplateId: `mock-tpl-${sha256Hex(
@@ -132,7 +128,7 @@ export class MockProvider implements MessagingProvider {
       name: str(body.name),
       status: (TEMPLATE_STATUSES as readonly string[]).includes(status)
         ? (status as TemplateApprovalStatus)
-        : "pending",
+        : 'pending',
     };
   }
 }

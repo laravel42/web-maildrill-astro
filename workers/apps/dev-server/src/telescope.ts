@@ -1,9 +1,5 @@
-import type { FastifyInstance } from "fastify";
-import {
-  EntryType,
-  IncomingEntry,
-  getContext,
-} from "@node-telescope/core";
+import type { FastifyInstance } from 'fastify';
+import { EntryType, IncomingEntry, getContext } from '@node-telescope/core';
 import type {
   BatchWatcher,
   CacheWatcher,
@@ -21,24 +17,21 @@ import type {
   RedisWatcher,
   ScheduleWatcher,
   ViewWatcher,
-} from "@node-telescope/core";
-import { setQuerySink } from "@maildrill/database";
-import {
-  setProviderHttpSink,
-  setProviderSendSink,
-} from "@maildrill/providers";
-import { setQueueJobSink, setRedisCommandSink } from "@maildrill/queues";
-import { setAuthCacheSink, setAuthGateSink } from "@maildrill/authz";
+} from '@node-telescope/core';
+import { setQuerySink } from '@maildrill/database';
+import { setProviderHttpSink, setProviderSendSink } from '@maildrill/providers';
+import { setQueueJobSink, setRedisCommandSink } from '@maildrill/queues';
+import { setAuthCacheSink, setAuthGateSink } from '@maildrill/authz';
 import {
   setAppBatchSink,
   setAppCommandSink,
   setAppEventSink,
   setAppLogSink,
-} from "@maildrill/observability";
-import { setScheduleTickSink } from "../../workers/src/poller";
+} from '@maildrill/observability';
+import { setScheduleTickSink } from '../../workers/src/poller';
 
 function parseBody(raw: string | undefined): unknown {
-  if (raw == null || raw === "") return undefined;
+  if (raw == null || raw === '') return undefined;
   try {
     return JSON.parse(raw);
   } catch {
@@ -47,21 +40,21 @@ function parseBody(raw: string | undefined): unknown {
 }
 
 function mailableName(correlationId: string): string {
-  if (correlationId === "auth-login-code") return "LoginCode";
-  if (correlationId === "signup-welcome") return "Welcome";
-  return "CampaignEmail";
+  if (correlationId === 'auth-login-code') return 'LoginCode';
+  if (correlationId === 'signup-welcome') return 'Welcome';
+  return 'CampaignEmail';
 }
 
 /** Parse simple Drizzle SQL into a Model action for the Models tab. */
 function modelFromSql(
   sql: string,
-): { model: string; action: "created" | "updated" | "deleted" } | null {
+): { model: string; action: 'created' | 'updated' | 'deleted' } | null {
   const created = /^\s*insert\s+into\s+"?([a-z0-9_]+)"?/i.exec(sql);
-  if (created) return { model: created[1]!, action: "created" };
+  if (created) return { model: created[1]!, action: 'created' };
   const updated = /^\s*update\s+"?([a-z0-9_]+)"?/i.exec(sql);
-  if (updated) return { model: updated[1]!, action: "updated" };
+  if (updated) return { model: updated[1]!, action: 'updated' };
   const deleted = /^\s*delete\s+from\s+"?([a-z0-9_]+)"?/i.exec(sql);
-  if (deleted) return { model: deleted[1]!, action: "deleted" };
+  if (deleted) return { model: deleted[1]!, action: 'deleted' };
   return null;
 }
 
@@ -105,7 +98,7 @@ export function instrumentDbQueries(app: FastifyInstance): void {
     try {
       if (!getContext() || !telescope.isRecording()) return;
       qw.recordQuery(telescope, {
-        connection: "postgres",
+        connection: 'postgres',
         sql,
         bindings: params,
         // Drizzle's logger fires pre-execution, so duration isn't available here.
@@ -167,7 +160,7 @@ export function instrumentQueueJobs(app: FastifyInstance): void {
         job: e.name,
         queue: e.queue,
         status: e.status,
-        connection: "redis",
+        connection: 'redis',
         duration: e.durationMs,
         tries: e.attemptsMade,
         error: e.error,
@@ -214,13 +207,13 @@ export function instrumentProviderSend(app: FastifyInstance): void {
     try {
       if (!telescope.isRecording()) return;
       const viaQueue = !getContext();
-      if (e.channel === "email" && mail) {
+      if (e.channel === 'email' && mail) {
         mail.recordMail(telescope, {
           mailable: mailableName(e.correlationId),
           class: mailableName(e.correlationId),
           to: e.to,
-          from: e.from ?? "",
-          subject: e.subject ?? "",
+          from: e.from ?? '',
+          subject: e.subject ?? '',
           html: e.hasHtml ?? false,
           queued: viaQueue,
           data: {
@@ -433,14 +426,14 @@ export function instrumentViews(app: FastifyInstance): void {
   const vw = telescope?.watchers.get<ViewWatcher>(EntryType.View);
   if (!telescope || !vw) return;
 
-  app.addHook("onResponse", (req, reply, done) => {
+  app.addHook('onResponse', (req, reply, done) => {
     try {
       if (!telescope.isRecording()) {
         done();
         return;
       }
-      const path = req.url.split("?")[0] ?? req.url;
-      if (path === "/docs" || path === "/openapi.json") {
+      const path = req.url.split('?')[0] ?? req.url;
+      if (path === '/docs' || path === '/openapi.json') {
         vw.recordView(telescope, {
           name: path,
           view: path,
@@ -478,7 +471,7 @@ export function instrumentDump(app: FastifyInstance): void {
   // Seed one entry so the Dumps tab isn't empty on a fresh boot; use dump() in
   // app code anytime for more.
   dump({
-    tip: "Call globalThis.dump(value) from anywhere in the process to capture here",
+    tip: 'Call globalThis.dump(value) from anywhere in the process to capture here',
     telescope: true,
   });
 }

@@ -23,14 +23,23 @@ function baseDocument(): EditorDocument {
     headline: {
       type: 'NotionText',
       data: {
-        style: { fontSize: 32, fontWeight: 'bold', color: '#1F1E1B', padding: { top: 24, bottom: 8, left: 24, right: 24 } },
+        style: {
+          fontSize: 32,
+          fontWeight: 'bold',
+          color: '#1F1E1B',
+          padding: { top: 24, bottom: 8, left: 24, right: 24 },
+        },
         props: { html: '<h1>Your March report is ready</h1>' },
       },
     },
     body: {
       type: 'NotionText',
       data: {
-        style: { fontSize: 16, color: '#3F3D39', padding: { top: 8, bottom: 16, left: 24, right: 24 } },
+        style: {
+          fontSize: 16,
+          color: '#3F3D39',
+          padding: { top: 8, bottom: 16, left: 24, right: 24 },
+        },
         props: {
           html: '<p>Revenue grew 12% against February, driven mostly by the new onboarding flow. The full breakdown is in the dashboard.</p>',
         },
@@ -52,8 +61,14 @@ function baseDocument(): EditorDocument {
     footer: {
       type: 'NotionText',
       data: {
-        style: { fontSize: 12, color: '#6B6862', padding: { top: 16, bottom: 24, left: 24, right: 24 } },
-        props: { html: '<p><a href="https://maildrill.test/unsubscribe">Unsubscribe</a> from these reports.</p>' },
+        style: {
+          fontSize: 12,
+          color: '#6B6862',
+          padding: { top: 16, bottom: 24, left: 24, right: 24 },
+        },
+        props: {
+          html: '<p><a href="https://maildrill.test/unsubscribe">Unsubscribe</a> from these reports.</p>',
+        },
       },
     },
   };
@@ -70,11 +85,17 @@ function findingIds(document: EditorDocument, options = {}): string[] {
 describe('resolveDocument', () => {
   it('resolves inherited background, text colour, and content width', () => {
     const doc = resolveDocument({
-      root: { type: 'EmailLayout', data: { canvasColor: '#FFFFFF', textColor: '#111111', childrenIds: ['box'] } },
+      root: {
+        type: 'EmailLayout',
+        data: { canvasColor: '#FFFFFF', textColor: '#111111', childrenIds: ['box'] },
+      },
       box: {
         type: 'Container',
         data: {
-          style: { backgroundColor: '#000000', padding: { top: 10, bottom: 10, left: 50, right: 50 } },
+          style: {
+            backgroundColor: '#000000',
+            padding: { top: 10, bottom: 10, left: 50, right: 50 },
+          },
           props: { childrenIds: ['text'] },
         },
       },
@@ -104,7 +125,9 @@ describe('resolveDocument', () => {
   it('treats fixedWidths as percentages of the available width', () => {
     // Regression: these were briefly read as pixels, which made a [7,54,39]
     // row report a 7px column.
-    expect(columnWidths({ columnsCount: 3, fixedWidths: [7, 54, 39] }, 600)).toEqual([42, 324, 234]);
+    expect(columnWidths({ columnsCount: 3, fixedWidths: [7, 54, 39] }, 600)).toEqual([
+      42, 324, 234,
+    ]);
   });
 
   it('falls back to an even split when a width slot is null', () => {
@@ -174,7 +197,10 @@ describe('structural rules', () => {
 
   it('flags orphaned blocks', () => {
     const doc = baseDocument();
-    doc.stranded = { type: 'NotionText', data: { style: {}, props: { html: '<p>never rendered</p>' } } };
+    doc.stranded = {
+      type: 'NotionText',
+      data: { style: {}, props: { html: '<p>never rendered</p>' } },
+    };
     expect(findingIds(doc)).toContain('structure/orphan-blocks');
   });
 });
@@ -212,14 +238,20 @@ describe('accessibility rules', () => {
   it('flags missing image alt text', () => {
     const doc = baseDocument();
     doc.root.data.childrenIds = ['hero', ...(doc.root.data.childrenIds as string[])];
-    doc.hero = { type: 'Image', data: { style: {}, props: { url: 'https://cdn.test/a.png', alt: '' } } };
+    doc.hero = {
+      type: 'Image',
+      data: { style: {}, props: { url: 'https://cdn.test/a.png', alt: '' } },
+    };
     expect(findingIds(doc)).toContain('a11y/image-alt-missing');
   });
 
   it('treats a filename as no better than missing alt text', () => {
     const doc = baseDocument();
     doc.root.data.childrenIds = ['hero', ...(doc.root.data.childrenIds as string[])];
-    doc.hero = { type: 'Image', data: { style: {}, props: { url: 'https://cdn.test/a.png', alt: 'hero-image-2.png' } } };
+    doc.hero = {
+      type: 'Image',
+      data: { style: {}, props: { url: 'https://cdn.test/a.png', alt: 'hero-image-2.png' } },
+    };
     expect(findingIds(doc)).toContain('a11y/image-alt-filename');
   });
 
@@ -237,17 +269,26 @@ describe('accessibility rules', () => {
 
   it('separates the 24px conformance floor from the 44px comfort target', () => {
     const doc = baseDocument();
-    doc.cta.data.style = { ...(doc.cta.data.style as object), fontSize: 12, padding: { top: 0, bottom: 0, left: 20, right: 20 } };
+    doc.cta.data.style = {
+      ...(doc.cta.data.style as object),
+      fontSize: 12,
+      padding: { top: 0, bottom: 0, left: 20, right: 20 },
+    };
     expect(findingIds(doc)).toContain('a11y/tap-target-fails-minimum');
 
     const roomy = baseDocument();
-    roomy.cta.data.style = { ...(roomy.cta.data.style as object), padding: { top: 8, bottom: 8, left: 20, right: 20 } };
+    roomy.cta.data.style = {
+      ...(roomy.cta.data.style as object),
+      padding: { top: 8, bottom: 8, left: 20, right: 20 },
+    };
     expect(findingIds(roomy)).toContain('a11y/tap-target-below-target');
   });
 
   it('flags non-descriptive link text', () => {
     const doc = baseDocument();
-    doc.body.data.props = { html: '<p>For the numbers, <a href="https://maildrill.test/x">click here</a>.</p>' };
+    doc.body.data.props = {
+      html: '<p>For the numbers, <a href="https://maildrill.test/x">click here</a>.</p>',
+    };
     expect(findingIds(doc)).toContain('a11y/vague-link-text');
   });
 });
@@ -261,7 +302,9 @@ describe('client compatibility rules', () => {
     const doc = baseDocument();
     doc.headline.data.style = { ...(doc.headline.data.style as object), fontFamily: 'PACIFICO' };
 
-    const hit = analyzeTemplate(doc).report.findings.find((f) => f.ruleId === 'compat/web-font-no-fallback');
+    const hit = analyzeTemplate(doc).report.findings.find(
+      (f) => f.ruleId === 'compat/web-font-no-fallback',
+    );
     expect(hit).toBeDefined();
     expect(hit?.clients?.join(' ')).toMatch(/Outlook/);
   });
@@ -276,7 +319,10 @@ describe('client compatibility rules', () => {
     doc.root.data.childrenIds = ['hero', ...(doc.root.data.childrenIds as string[])];
     doc.hero = {
       type: 'Image',
-      data: { style: { objectFit: 'cover', height: 200 }, props: { url: 'https://cdn.test/a.png', alt: 'Team at work' } },
+      data: {
+        style: { objectFit: 'cover', height: 200 },
+        props: { url: 'https://cdn.test/a.png', alt: 'Team at work' },
+      },
     };
     expect(findingIds(doc)).toContain('compat/object-fit');
   });
@@ -340,7 +386,9 @@ describe('deliverability rules', () => {
 
   it('reviews the subject line only when one is supplied', () => {
     expect(findingIds(baseDocument())).not.toContain('deliver/subject-shouty');
-    expect(findingIds(baseDocument(), { subject: 'ACT NOW!!!' })).toContain('deliver/subject-shouty');
+    expect(findingIds(baseDocument(), { subject: 'ACT NOW!!!' })).toContain(
+      'deliver/subject-shouty',
+    );
   });
 });
 
@@ -373,7 +421,13 @@ describe('design rules', () => {
         },
       };
     }
-    doc.root.data.childrenIds = [...(doc.root.data.childrenIds as string[]), 'cta1', 'cta2', 'cta3', 'cta4'];
+    doc.root.data.childrenIds = [
+      ...(doc.root.data.childrenIds as string[]),
+      'cta1',
+      'cta2',
+      'cta3',
+      'cta4',
+    ];
     expect(findingIds(doc)).toContain('design/competing-ctas');
   });
 
@@ -383,7 +437,12 @@ describe('design rules', () => {
     doc.spacerA = { type: 'Spacer', data: { style: { height: 8 } } };
     doc.spacerB = { type: 'Spacer', data: { style: { height: 8 } } };
     doc.spacerC = { type: 'Spacer', data: { style: { height: 8 } } };
-    doc.root.data.childrenIds = [...(doc.root.data.childrenIds as string[]), 'spacerA', 'spacerB', 'spacerC'];
+    doc.root.data.childrenIds = [
+      ...(doc.root.data.childrenIds as string[]),
+      'spacerA',
+      'spacerB',
+      'spacerC',
+    ];
     expect(findingIds(doc)).toContain('design/category-interchangeable');
   });
 });
@@ -414,7 +473,10 @@ describe('scoring', () => {
   it('orders findings worst-first', () => {
     const doc = baseDocument();
     doc.body.data.props = { html: '<p>Lorem ipsum dolor sit amet</p>' };
-    doc.cta.data.style = { ...(doc.cta.data.style as object), padding: { top: 8, bottom: 8, left: 20, right: 20 } };
+    doc.cta.data.style = {
+      ...(doc.cta.data.style as object),
+      padding: { top: 8, bottom: 8, left: 20, right: 20 },
+    };
 
     const { report } = analyzeTemplate(doc);
     const severities = report.findings.map((f) => f.severity);
@@ -425,7 +487,10 @@ describe('scoring', () => {
   it('survives a malformed document without throwing', () => {
     const junk = {
       root: { type: 'EmailLayout', data: { childrenIds: ['a'] } },
-      a: { type: 'NotionText', data: { style: { fontSize: 'huge', color: 'not-a-colour' }, props: { html: 42 } } },
+      a: {
+        type: 'NotionText',
+        data: { style: { fontSize: 'huge', color: 'not-a-colour' }, props: { html: 42 } },
+      },
     } as unknown as EditorDocument;
 
     expect(() => analyzeTemplate(junk)).not.toThrow();

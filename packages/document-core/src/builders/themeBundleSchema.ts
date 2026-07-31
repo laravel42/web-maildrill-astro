@@ -38,7 +38,9 @@ export const themeBundleIdSchema = z.string().regex(UUID_V4_REGEX, 'must be a lo
  * or epoch numbers at the boundary.
  */
 const ISO_DATETIME_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
-const isoDatetimeSchema = z.string().regex(ISO_DATETIME_REGEX, 'must be ISO 8601 UTC (e.g. 2026-05-25T18:00:00.000Z)');
+const isoDatetimeSchema = z
+  .string()
+  .regex(ISO_DATETIME_REGEX, 'must be ISO 8601 UTC (e.g. 2026-05-25T18:00:00.000Z)');
 
 /**
  * Mirror of the color shape used by `EmailLayoutPropsSchema`. Inlined
@@ -110,7 +112,11 @@ export const themeBundleSchema = z.object({
   id: themeBundleIdSchema,
   createdAt: isoDatetimeSchema,
   updatedAt: isoDatetimeSchema,
-  name: z.string().trim().min(1, 'name is required').max(100, 'name must be at most 100 characters'),
+  name: z
+    .string()
+    .trim()
+    .min(1, 'name is required')
+    .max(100, 'name must be at most 100 characters'),
   description: z.string().max(280, 'description must be at most 280 characters').optional(),
   globals: themeBundleGlobalsSchema.optional(),
   blocks: themeJsonSchema.shape.blocks,
@@ -169,7 +175,7 @@ export function extractThemeBundlePayload(rootData: unknown): ThemeBundlePayload
  */
 export function applyThemeBundle(
   rootData: unknown,
-  bundle: Pick<ThemeBundle, 'globals' | 'blocks'>
+  bundle: Pick<ThemeBundle, 'globals' | 'blocks'>,
 ): Record<string, unknown> {
   const base: Record<string, unknown> =
     rootData && typeof rootData === 'object' && !Array.isArray(rootData)

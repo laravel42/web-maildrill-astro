@@ -46,7 +46,8 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
   },
   'structure/empty-document': {
     dimension: 'structuralIntegrity',
-    guidance: "Give `EmailLayout.data.childrenIds` at least one entry — a root with no children renders a blank email.",
+    guidance:
+      'Give `EmailLayout.data.childrenIds` at least one entry — a root with no children renders a blank email.',
   },
   'structure/dangling-reference': {
     dimension: 'structuralIntegrity',
@@ -59,7 +60,8 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
   },
   'structure/orphan-blocks': {
     dimension: 'structuralIntegrity',
-    guidance: 'Attach every block you emit to a parent; an unreferenced block is invisible but still costs bytes.',
+    guidance:
+      'Attach every block you emit to a parent; an unreferenced block is invisible but still costs bytes.',
   },
   'structure/unknown-block-type': {
     dimension: 'structuralIntegrity',
@@ -73,7 +75,8 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
   },
   'structure/empty-text-block': {
     dimension: 'structuralIntegrity',
-    guidance: 'Delete text blocks you have nothing to put in; use a Spacer when you want vertical room.',
+    guidance:
+      'Delete text blocks you have nothing to put in; use a Spacer when you want vertical room.',
   },
   'structure/empty-column': {
     dimension: 'structuralIntegrity',
@@ -102,7 +105,8 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
   },
   'a11y/button-contrast': {
     dimension: 'accessibility',
-    guidance: 'Check `buttonTextColor` against `buttonBackgroundColor` for 4.5:1, not against the page.',
+    guidance:
+      'Check `buttonTextColor` against `buttonBackgroundColor` for 4.5:1, not against the page.',
   },
   'a11y/image-alt-missing': {
     dimension: 'accessibility',
@@ -111,11 +115,13 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
   },
   'a11y/image-alt-filename': {
     dimension: 'accessibility',
-    guidance: 'Alt text is a description, not a filename — "Team reviewing quarterly numbers", never "hero-2.png".',
+    guidance:
+      'Alt text is a description, not a filename — "Team reviewing quarterly numbers", never "hero-2.png".',
   },
   'a11y/text-tiny': {
     dimension: 'accessibility',
-    guidance: 'Never set text below 11px; it is illegible on a phone and some clients will scale the whole email to compensate.',
+    guidance:
+      'Never set text below 11px; it is illegible on a phone and some clients will scale the whole email to compensate.',
   },
   'a11y/body-text-small': {
     dimension: 'accessibility',
@@ -136,7 +142,8 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
   },
   'a11y/generic-button-text': {
     dimension: 'accessibility',
-    guidance: 'Label buttons with the action and its object: "Start your trial", not "Submit" or "Go".',
+    guidance:
+      'Label buttons with the action and its object: "Start your trial", not "Submit" or "Go".',
   },
   'a11y/no-semantic-headings': {
     dimension: 'accessibility',
@@ -149,7 +156,8 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
   },
   'a11y/social-icons-unlabelled': {
     dimension: 'accessibility',
-    guidance: 'Give every SocialMedia item a `title`, so the icon announces as "Instagram" rather than "link".',
+    guidance:
+      'Give every SocialMedia item a `title`, so the icon announces as "Instagram" rather than "link".',
   },
   'a11y/justified-text': {
     dimension: 'accessibility',
@@ -166,7 +174,8 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
   },
   'compat/web-font-generic-fallback': {
     dimension: 'clientCompatibility',
-    guidance: 'A stack ending in bare `sans-serif` gives Outlook nothing to work with — name a concrete fallback family.',
+    guidance:
+      'A stack ending in bare `sans-serif` gives Outlook nothing to work with — name a concrete fallback family.',
   },
   'compat/border-radius': {
     dimension: 'clientCompatibility',
@@ -185,7 +194,8 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
   },
   'compat/image-no-explicit-width': {
     dimension: 'clientCompatibility',
-    guidance: 'Set an explicit pixel `width` on every Image. Outlook does not infer intrinsic size and will render it full-bleed.',
+    guidance:
+      'Set an explicit pixel `width` on every Image. Outlook does not infer intrinsic size and will render it full-bleed.',
   },
   'compat/three-column-no-stack': {
     dimension: 'clientCompatibility',
@@ -209,11 +219,13 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
   },
   'responsive/fixed-width-exceeds-mobile': {
     dimension: 'responsive',
-    guidance: 'Keep fixed widths under the 370px mobile canvas, or the reader gets a horizontal scrollbar.',
+    guidance:
+      'Keep fixed widths under the 370px mobile canvas, or the reader gets a horizontal scrollbar.',
   },
   'responsive/image-wider-than-mobile': {
     dimension: 'responsive',
-    guidance: 'Set `widthMobile` on any image wider than 370px, or use `size: "fill"` so it scales with its container.',
+    guidance:
+      'Set `widthMobile` on any image wider than 370px, or use `size: "fill"` so it scales with its container.',
   },
   'responsive/padding-crowds-mobile': {
     dimension: 'responsive',
@@ -229,7 +241,8 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
 
   'deliver/no-text-content': {
     dimension: 'deliverability',
-    guidance: 'Never build an email out of one big image. Filters read text, and image blocking leaves the reader nothing.',
+    guidance:
+      'Never build an email out of one big image. Filters read text, and image blocking leaves the reader nothing.',
   },
   'deliver/image-heavy': {
     dimension: 'deliverability',
@@ -242,7 +255,8 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
   },
   'deliver/placeholder-href': {
     dimension: 'deliverability',
-    guidance: 'Give every link a real destination or a merge tag. `#` and `https://example.com` must not survive to send.',
+    guidance:
+      'Give every link a real destination or a merge tag. `#` and `https://example.com` must not survive to send.',
   },
   'deliver/empty-href': {
     dimension: 'deliverability',
@@ -254,11 +268,13 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
   },
   'deliver/insecure-href': {
     dimension: 'deliverability',
-    guidance: 'Use `https://`. Plain `http://` links trip security warnings and depress click rates.',
+    guidance:
+      'Use `https://`. Plain `http://` links trip security warnings and depress click rates.',
   },
   'deliver/spam-phrases': {
     dimension: 'deliverability',
-    guidance: 'Avoid "act now", "risk free", "100% free", "limited time only" and their neighbours — they score against you at the filter.',
+    guidance:
+      'Avoid "act now", "risk free", "100% free", "limited time only" and their neighbours — they score against you at the filter.',
   },
   'deliver/subject-empty': {
     dimension: 'deliverability',
@@ -291,7 +307,8 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
   },
   'design/single-type-size': {
     dimension: 'hierarchy',
-    guidance: 'Use at least three sizes — display, body, and caption — so the eye has somewhere to land.',
+    guidance:
+      'Use at least three sizes — display, body, and caption — so the eye has somewhere to land.',
   },
   'design/too-many-type-sizes': {
     dimension: 'typography',
@@ -307,19 +324,23 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
   },
   'design/no-accent-colour': {
     dimension: 'color',
-    guidance: 'Choose one accent and let it own the CTA. An all-grey email has nothing for the eye to catch on.',
+    guidance:
+      'Choose one accent and let it own the CTA. An all-grey email has nothing for the eye to catch on.',
   },
   'design/spacing-off-scale': {
     dimension: 'spacing',
-    guidance: 'Draw padding from a 4px scale (8/12/16/24/32/40/56/64/80). Arbitrary values like 27 or 43 make the rhythm feel accidental.',
+    guidance:
+      'Draw padding from a 4px scale (8/12/16/24/32/40/56/64/80). Arbitrary values like 27 or 43 make the rhythm feel accidental.',
   },
   'design/no-imagery': {
     dimension: 'imagery',
-    guidance: 'A long email with no image is a wall. Add a hero, or section imagery that carries meaning rather than filling space.',
+    guidance:
+      'A long email with no image is a wall. Add a hero, or section imagery that carries meaning rather than filling space.',
   },
   'design/no-call-to-action': {
     dimension: 'ctaClarity',
-    guidance: 'Every email wants one thing. Make it a real Button with a verb, not a link buried in a paragraph.',
+    guidance:
+      'Every email wants one thing. Make it a real Button with a verb, not a link buried in a paragraph.',
   },
   'design/competing-ctas': {
     dimension: 'ctaClarity',
@@ -327,7 +348,8 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
   },
   'design/cta-far-down': {
     dimension: 'ctaClarity',
-    guidance: 'Put the primary CTA in the first screen as well as the end. Most readers never scroll.',
+    guidance:
+      'Put the primary CTA in the first screen as well as the end. Most readers never scroll.',
   },
   'design/wall-of-text': {
     dimension: 'content',
@@ -343,11 +365,13 @@ export const RULE_CATALOG: Record<string, RuleDoc> = {
   },
   'design/no-section-breaks': {
     dimension: 'scanability',
-    guidance: 'Separate sections with a Divider or a background change, not just more vertical space.',
+    guidance:
+      'Separate sections with a Divider or a background change, not just more vertical space.',
   },
   'design/inconsistent-buttons': {
     dimension: 'consistency',
-    guidance: 'Buttons of the same rank share a shape, colour, and padding. Vary them only to signal a different rank.',
+    guidance:
+      'Buttons of the same rank share a shape, colour, and padding. Vary them only to signal a different rank.',
   },
   'design/mixed-text-alignment': {
     dimension: 'consistency',

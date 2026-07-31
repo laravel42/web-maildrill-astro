@@ -14,7 +14,11 @@ import ColorInput from './helpers/inputs/ColorInput';
 import LinkUnderlineInput from './helpers/inputs/ColorInput/LinkUnderlineInput';
 import CompactableInput from './helpers/inputs/CompactableInput';
 import { NullableFontFamily } from './helpers/inputs/FontFamily';
-import { BackgroundColorIcon, FontFamilyIcon, TextColorIcon } from './helpers/style-inputs/SingleStylePropertyPanel';
+import {
+  BackgroundColorIcon,
+  FontFamilyIcon,
+  TextColorIcon,
+} from './helpers/style-inputs/SingleStylePropertyPanel';
 
 type EmailLayoutSidebarFieldsProps = {
   data: EmailLayoutProps;
@@ -41,7 +45,10 @@ export default function EmailLayoutSidebarFields({ data, setData }: EmailLayoutS
   // spacing used everywhere else in the inspector.
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <CompactableInput icon={BackgroundColorIcon} label={t('inputs.panels.emailLayout.backgroundColor')}>
+      <CompactableInput
+        icon={BackgroundColorIcon}
+        label={t('inputs.panels.emailLayout.backgroundColor')}
+      >
         <ColorInput
           label={t('inputs.panels.emailLayout.backgroundColor')}
           defaultValue={data.backdropColor ?? '#F5F5F5'}
@@ -49,7 +56,10 @@ export default function EmailLayoutSidebarFields({ data, setData }: EmailLayoutS
         />
       </CompactableInput>
 
-      <CompactableInput icon={CropSquareOutlined} label={t('inputs.panels.emailLayout.canvasColor')}>
+      <CompactableInput
+        icon={CropSquareOutlined}
+        label={t('inputs.panels.emailLayout.canvasColor')}
+      >
         <ColorInput
           label={t('inputs.panels.emailLayout.canvasColor')}
           defaultValue={data.canvasColor ?? '#FFFFFF'}

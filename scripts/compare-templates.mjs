@@ -27,8 +27,14 @@ globalThis.React = (await import('react')).default;
 const { renderEmailHtml } = await import('../packages/email-builder/src/node.ts');
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const HTML_DIR = path.join(ROOT, 'packages/email-builder-standalone/src/App/ComponentsLibrary/templates/html');
-const JSON_DIR = path.join(ROOT, 'packages/email-builder-standalone/src/App/ComponentsLibrary/templates/json');
+const HTML_DIR = path.join(
+  ROOT,
+  'packages/email-builder-standalone/src/App/ComponentsLibrary/templates/html',
+);
+const JSON_DIR = path.join(
+  ROOT,
+  'packages/email-builder-standalone/src/App/ComponentsLibrary/templates/json',
+);
 const OUT_DIR = path.join(ROOT, 'tmp/compare');
 
 // Must stay above the 640px breakpoint `cleanDocument` emits, otherwise the

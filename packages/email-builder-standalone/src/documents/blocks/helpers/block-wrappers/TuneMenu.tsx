@@ -135,7 +135,11 @@ function TuneMenuInner({ blockId }: Props) {
     const document = editorStateStore.getState().document;
     const currentEditingId = editorStateStore.getState().notionTextInlineEditingBlockId;
 
-    const collectNestedChildrenIds = (id: string, doc: typeof document, collected = new Set<string>()) => {
+    const collectNestedChildrenIds = (
+      id: string,
+      doc: typeof document,
+      collected = new Set<string>(),
+    ) => {
       if (collected.has(id)) return; // evitar ciclos
       collected.add(id);
       const block = doc[id] as TEditorBlock;
@@ -150,7 +154,9 @@ function TuneMenuInner({ blockId }: Props) {
       if (block.type === 'ColumnsContainer') {
         const columns = block.data?.props?.columns || [];
         columns.forEach((col: any) => {
-          (col.childrenIds || []).forEach((childId: string) => collectNestedChildrenIds(childId, doc, collected));
+          (col.childrenIds || []).forEach((childId: string) =>
+            collectNestedChildrenIds(childId, doc, collected),
+          );
         });
       }
     };
@@ -220,7 +226,10 @@ function TuneMenuInner({ blockId }: Props) {
     }
 
     // Limpiar estado de edición inline si el bloque eliminado estaba editándose
-    if (currentEditingId && (currentEditingId === blockId || blocksToDelete.has(currentEditingId))) {
+    if (
+      currentEditingId &&
+      (currentEditingId === blockId || blocksToDelete.has(currentEditingId))
+    ) {
       setNotionTextInlineEditingBlockId(null);
     }
 
@@ -265,7 +274,12 @@ function TuneMenuInner({ blockId }: Props) {
 
   return (
     <>
-      <Paper ref={menuRef} sx={getSx(positionBelow)} onClick={(ev) => ev.stopPropagation()} elevation={10}>
+      <Paper
+        ref={menuRef}
+        sx={getSx(positionBelow)}
+        onClick={(ev) => ev.stopPropagation()}
+        elevation={10}
+      >
         <Tooltip title={t('actions.copyFormat')} placement="left-start">
           <span>
             <IconButton
@@ -277,7 +291,13 @@ function TuneMenuInner({ blockId }: Props) {
               }}
               disabled={!(currentBlock && 'style' in currentBlock.data && currentBlock.data.style)}
             >
-              <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg
+                width="24"
+                height="25"
+                viewBox="0 0 24 25"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
                 <path
                   d="M12 22.5C6.49 22.5 2 18.01 2 12.5C2 6.99 6.49 2.5 12 2.5C17.51 2.5 22 6.54 22 11.5C22 14.81 19.31 17.5 16 17.5H14.23C13.95 17.5 13.73 17.72 13.73 18C13.73 18.12 13.78 18.23 13.86 18.33C14.27 18.8 14.5 19.39 14.5 20C14.5 21.38 13.38 22.5 12 22.5ZM12 4.5C7.59 4.5 4 8.09 4 12.5C4 16.91 7.59 20.5 12 20.5C12.28 20.5 12.5 20.28 12.5 20C12.5 19.84 12.42 19.72 12.36 19.65C11.95 19.19 11.73 18.6 11.73 18C11.73 16.62 12.85 15.5 14.23 15.5H16C18.21 15.5 20 13.71 20 11.5C20 7.64 16.41 4.5 12 4.5Z"
                   fill="currentColor"
@@ -317,7 +337,13 @@ function TuneMenuInner({ blockId }: Props) {
               }}
               disabled={!canPasteFormat}
             >
-              <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg
+                width="24"
+                height="25"
+                viewBox="0 0 24 25"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
                 <path
                   d="M10.9551 22.6497C10.5139 22.6497 10.1287 22.4888 9.79934 22.167C9.47017 21.8451 9.30559 21.4582 9.30559 21.0062V16.1317H5.54784C5.09367 16.1317 4.69725 15.9624 4.35859 15.6237C4.01992 15.2851 3.85059 14.8886 3.85059 14.4345V7.10448C3.85059 6.07631 4.21 5.19264 4.92884 4.45348C5.6475 3.71431 6.52667 3.34473 7.56634 3.34473H19.2978C19.5378 3.34473 19.7408 3.42773 19.9066 3.59373C20.0726 3.75956 20.1556 3.96248 20.1556 4.20248V14.4345C20.1556 14.8886 19.9871 15.2851 19.6501 15.6237C19.3131 15.9624 18.9138 16.1317 18.4523 16.1317H14.7006V21.0062C14.7006 21.4582 14.536 21.8451 14.2068 22.167C13.8775 22.4888 13.4923 22.6497 13.0511 22.6497H10.9551ZM5.54784 10.6145H18.4523V5.04798H17.0463V8.41773C17.0463 8.63189 16.9744 8.81139 16.8306 8.95623C16.6869 9.10106 16.5063 9.17348 16.2888 9.17348C16.0715 9.17348 15.8924 9.10106 15.7516 8.95623C15.6108 8.81139 15.5403 8.63189 15.5403 8.41773V5.04798H13.7533V6.40148C13.7533 6.61814 13.6815 6.79789 13.5378 6.94073C13.394 7.08373 13.2134 7.15523 12.9961 7.15523C12.7786 7.15523 12.5994 7.08373 12.4586 6.94073C12.3178 6.79789 12.2473 6.61814 12.2473 6.40148V5.04798H7.56634C6.97717 5.04798 6.4935 5.24764 6.11534 5.64698C5.737 6.04631 5.54784 6.53214 5.54784 7.10448V10.6145ZM5.54784 14.4345H18.4523V12.0965H5.54784V14.4345Z"
                   fill="currentColor"
@@ -349,7 +375,13 @@ function TuneMenuInner({ blockId }: Props) {
               padding: '4px',
             }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="25"
+              viewBox="0 0 24 25"
+              fill="none"
+            >
               <path
                 d="M16 9.5V19.5H8V9.5H16ZM14.5 3.5H9.5L8.5 4.5H5V6.5H19V4.5H15.5L14.5 3.5ZM18 7.5H6V19.5C6 20.6 6.9 21.5 8 21.5H16C17.1 21.5 18 20.6 18 19.5V7.5Z"
                 fill="currentColor"
@@ -378,7 +410,11 @@ function TuneMenuInner({ blockId }: Props) {
         )}
       </Paper>
       {canSaveSubtree && saveComponentOpen && canSaveComponent && (
-        <SaveSubtreeDialog open={saveComponentOpen} rootBlockId={blockId} onClose={() => setSaveComponentOpen(false)} />
+        <SaveSubtreeDialog
+          open={saveComponentOpen}
+          rootBlockId={blockId}
+          onClose={() => setSaveComponentOpen(false)}
+        />
       )}
     </>
   );

@@ -52,7 +52,10 @@ describe('studio store', () => {
 
     const removedId = buttons[0]!.id;
     removeButton(removedId);
-    expect(useStudio.getState().doc.blocks.buttons.map((b) => b.type)).toEqual(['copy-code', 'url']);
+    expect(useStudio.getState().doc.blocks.buttons.map((b) => b.type)).toEqual([
+      'copy-code',
+      'url',
+    ]);
   });
 
   it('undo/redo restore document states across mutation kinds', () => {

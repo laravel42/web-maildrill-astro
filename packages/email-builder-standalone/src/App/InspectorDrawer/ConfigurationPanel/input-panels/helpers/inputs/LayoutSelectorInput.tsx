@@ -124,7 +124,12 @@ type LayoutSelectorProps = {
   columns: 2 | 3;
 };
 
-const LayoutSelector: FC<LayoutSelectorProps> = ({ defaultValue, fixedWidths, onChange, columns }) => {
+const LayoutSelector: FC<LayoutSelectorProps> = ({
+  defaultValue,
+  fixedWidths,
+  onChange,
+  columns,
+}) => {
   const { t } = useTranslation('inspector');
   const theme = useTheme();
   const [selectionOverride, setSelectionOverride] = useState<string | null>(null);
@@ -138,7 +143,9 @@ const LayoutSelector: FC<LayoutSelectorProps> = ({ defaultValue, fixedWidths, on
   const normalizedDefault = rawLayout === 'layout-33-34-33' ? 'layout-33-33-33' : rawLayout;
   const effectiveLayout = selectionOverride ?? normalizedDefault;
 
-  const [columnsCount, setColumnsCount] = useState(columns === 2 ? LAYOUTS_TWO_COLUMNS : LAYOUTS_THREE_COLUMNS);
+  const [columnsCount, setColumnsCount] = useState(
+    columns === 2 ? LAYOUTS_TWO_COLUMNS : LAYOUTS_THREE_COLUMNS,
+  );
 
   const applyPreset = (layoutId: string, distribution: (null | number)[]) => {
     setSelectionOverride(null);
@@ -182,12 +189,18 @@ const LayoutSelector: FC<LayoutSelectorProps> = ({ defaultValue, fixedWidths, on
   useEffect(() => {
     const id = defaultValue;
     if (columns === 2) {
-      if (id !== LAYOUT_CUSTOM_ID && (id == null || !LAYOUTS_TWO_COLUMNS.some((l) => l.id === id))) {
+      if (
+        id !== LAYOUT_CUSTOM_ID &&
+        (id == null || !LAYOUTS_TWO_COLUMNS.some((l) => l.id === id))
+      ) {
         onChange({ layout: 'layout-50-50', fixedWidths: [50, 50, null] });
       }
     } else if (id === 'layout-33-34-33') {
       onChange({ layout: 'layout-33-33-33', fixedWidths: [33.34, 33.33, 33.33] });
-    } else if (id !== LAYOUT_CUSTOM_ID && (id == null || !LAYOUTS_THREE_COLUMNS.some((l) => l.id === id))) {
+    } else if (
+      id !== LAYOUT_CUSTOM_ID &&
+      (id == null || !LAYOUTS_THREE_COLUMNS.some((l) => l.id === id))
+    ) {
       onChange({ layout: 'layout-33-33-33', fixedWidths: [33.34, 33.33, 33.33] });
     }
   }, [columns, defaultValue, onChange]);
@@ -220,7 +233,10 @@ const LayoutSelector: FC<LayoutSelectorProps> = ({ defaultValue, fixedWidths, on
             onClick={() => applyPreset(layout.id, layout.distribution)}
             style={{
               ...styles.card,
-              border: effectiveLayout === layout.id ? `2px solid ${theme.palette.secondary.main}` : styles.card.border,
+              border:
+                effectiveLayout === layout.id
+                  ? `2px solid ${theme.palette.secondary.main}`
+                  : styles.card.border,
             }}
           >
             <div style={styles.cardContent}>
@@ -236,7 +252,9 @@ const LayoutSelector: FC<LayoutSelectorProps> = ({ defaultValue, fixedWidths, on
           onClick={openCustomEditor}
           style={{
             ...styles.card,
-            border: customCardSelected ? `2px solid ${theme.palette.secondary.main}` : styles.card.border,
+            border: customCardSelected
+              ? `2px solid ${theme.palette.secondary.main}`
+              : styles.card.border,
           }}
           role="button"
           tabIndex={0}
@@ -308,7 +326,14 @@ const LayoutSelector: FC<LayoutSelectorProps> = ({ defaultValue, fixedWidths, on
                 <Typography variant="caption" color="text.secondary" component="div">
                   {t('inputs.layout.custom.firstColumn')}
                 </Typography>
-                <Slider value={threeW1} min={1} max={98} step={1} valueLabelDisplay="auto" onChange={handleThreeW1} />
+                <Slider
+                  value={threeW1}
+                  min={1}
+                  max={98}
+                  step={1}
+                  valueLabelDisplay="auto"
+                  onChange={handleThreeW1}
+                />
               </Box>
               <Box>
                 <Typography variant="caption" color="text.secondary" component="div">
@@ -328,7 +353,11 @@ const LayoutSelector: FC<LayoutSelectorProps> = ({ defaultValue, fixedWidths, on
           )}
 
           <Button variant="contained" size="small" sx={{ mt: 2 }} onClick={confirmCustom}>
-            <Typography variant="button" component="span" sx={{ color: '#FFFFFF', fontWeight: 'bold' }}>
+            <Typography
+              variant="button"
+              component="span"
+              sx={{ color: '#FFFFFF', fontWeight: 'bold' }}
+            >
               {t('inputs.layout.custom.apply')}
             </Typography>
           </Button>

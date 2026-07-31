@@ -1,5 +1,5 @@
-import { desc } from "drizzle-orm";
-import { db, deadLetters, type DeadLetterRow } from "@maildrill/database";
+import { desc } from 'drizzle-orm';
+import { db, deadLetters, type DeadLetterRow } from '@maildrill/database';
 
 export async function listDeadLetters(limit = 50): Promise<DeadLetterRow[]> {
   return db

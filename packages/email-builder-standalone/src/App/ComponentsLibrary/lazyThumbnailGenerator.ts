@@ -18,12 +18,19 @@
 
 import type { TReaderDocument } from '@eb/email-builder';
 
-import { bumpComponentsLibraryRefresh, getComponentsStorageMode } from '../../documents/editor/EditorContext';
+import {
+  bumpComponentsLibraryRefresh,
+  getComponentsStorageMode,
+} from '../../documents/editor/EditorContext';
 
 import { hasLocalThumbnail, setLocalThumbnail } from './localLibraryStore';
 import { buildSubtreeHtml } from './thumbnail/buildThumbnailHtml';
 import { captureSubtreeThumbnail } from './thumbnail/captureThumbnail';
-import { clearThumbnailsPending, markThumbnailDone, markThumbnailsPending } from './thumbnailStatus';
+import {
+  clearThumbnailsPending,
+  markThumbnailDone,
+  markThumbnailsPending,
+} from './thumbnailStatus';
 
 const CAPTURE_TIMEOUT_MS = 6000;
 
@@ -64,7 +71,12 @@ function yieldToBrowser(): Promise<void> {
   });
 }
 
-type StoredItem = { id: string; updatedAt?: string; createdAt?: string; blocks?: Array<{ id: string; block: unknown }> };
+type StoredItem = {
+  id: string;
+  updatedAt?: string;
+  createdAt?: string;
+  blocks?: Array<{ id: string; block: unknown }>;
+};
 
 function readArray(key: string): StoredItem[] {
   try {

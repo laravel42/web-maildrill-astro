@@ -54,11 +54,7 @@ export const CATEGORY_COLOR: Record<TplCategory, string> = {
 // No seed templates — the gallery renders live workspace templates.
 export const galleryTemplates: GalleryTemplate[] = [];
 
-export const TEMPLATE_CATEGORIES: TplCategory[] = [
-  'Newsletter',
-  'Promotional',
-  'Transactional',
-];
+export const TEMPLATE_CATEGORIES: TplCategory[] = ['Newsletter', 'Promotional', 'Transactional'];
 
 /** SMS template categories shown in the editor header. */
 export const SMS_TEMPLATE_CATEGORIES = ['Transactional', 'Promotional', 'Standard'] as const;
@@ -74,10 +70,7 @@ export function templateCategoriesForChannel(channel: ChannelType): readonly str
   return TEMPLATE_CATEGORIES;
 }
 
-export function defaultTemplateCategory(
-  channel: ChannelType,
-  initial?: string | null,
-): string {
+export function defaultTemplateCategory(channel: ChannelType, initial?: string | null): string {
   const categories = templateCategoriesForChannel(channel);
   if (initial === 'Announcement') return 'Newsletter';
   if (initial && categories.includes(initial)) return initial;

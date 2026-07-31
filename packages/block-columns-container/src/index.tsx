@@ -5,7 +5,10 @@ import { ColumnsContainerPropsSchema, PADDING_SCHEMA } from '@eb/document-core';
 
 import Wrapper from '../../email-builder/src/blocks/helpers/Wrapper';
 import { getPadding } from '../../email-builder/src/helpers/getCssProperties';
-import { shortCssId, updateHexColorInBackgroundString } from '../../email-builder/src/helpers/utils';
+import {
+  shortCssId,
+  updateHexColorInBackgroundString,
+} from '../../email-builder/src/helpers/utils';
 import { useImageUploading } from '../../email-builder/src/Reader/renderContext';
 import { useViewport } from '../../email-builder/src/Reader/viewport';
 
@@ -38,7 +41,7 @@ export function ColumnsContainer({ style, columns, props, blockId }: ColumnsCont
 
   const wStyle: CSSProperties = {
     padding: getPadding(
-      selectedScreenSize == 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding)
+      selectedScreenSize == 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding),
     ) as any,
   };
   const blockProps = {
@@ -46,7 +49,9 @@ export function ColumnsContainer({ style, columns, props, blockId }: ColumnsCont
     contentAlignment:
       selectedScreenSize == 'desktop'
         ? (props?.contentAlignment ?? ColumnsContainerPropsDefaults.contentAlignment)
-        : (props?.contentAlignmentMobile ?? props?.contentAlignment ?? ColumnsContainerPropsDefaults.contentAlignment),
+        : (props?.contentAlignmentMobile ??
+          props?.contentAlignment ??
+          ColumnsContainerPropsDefaults.contentAlignment),
     fixedWidths: props?.fixedWidths,
     blockId,
   };
@@ -54,11 +59,16 @@ export function ColumnsContainer({ style, columns, props, blockId }: ColumnsCont
   const background = style?.background ?? '';
   const backgroundColor = style?.backgroundColor;
 
-  const backgroundString = backgroundColor ? updateHexColorInBackgroundString(background, backgroundColor) : background;
+  const backgroundString = backgroundColor
+    ? updateHexColorInBackgroundString(background, backgroundColor)
+    : background;
 
   const sid = shortCssId(blockId as any);
-  const stackMobilePreview = selectedScreenSize === 'mobile' && Boolean(props?.stackColumnsOnMobile);
-  const rowStackStyle: CSSProperties | undefined = stackMobilePreview ? { display: 'block', width: '100%' } : undefined;
+  const stackMobilePreview =
+    selectedScreenSize === 'mobile' && Boolean(props?.stackColumnsOnMobile);
+  const rowStackStyle: CSSProperties | undefined = stackMobilePreview
+    ? { display: 'block', width: '100%' }
+    : undefined;
 
   return (
     <Wrapper
@@ -95,8 +105,18 @@ export function ColumnsContainer({ style, columns, props, blockId }: ColumnsCont
       <table border={0} cellSpacing="0" cellPadding="0" style={{ width: '100%', ...rowStackStyle }}>
         <tbody style={{ width: '100%', ...rowStackStyle }}>
           <tr style={{ width: '100%', ...rowStackStyle }}>
-            <TableCell index={0} props={blockProps as any} columns={columns} stackMobilePreview={stackMobilePreview} />
-            <TableCell index={1} props={blockProps as any} columns={columns} stackMobilePreview={stackMobilePreview} />
+            <TableCell
+              index={0}
+              props={blockProps as any}
+              columns={columns}
+              stackMobilePreview={stackMobilePreview}
+            />
+            <TableCell
+              index={1}
+              props={blockProps as any}
+              columns={columns}
+              stackMobilePreview={stackMobilePreview}
+            />
             {blockProps.columnsCount === 3 && (
               <TableCell
                 index={2}
@@ -115,7 +135,10 @@ export function ColumnsContainer({ style, columns, props, blockId }: ColumnsCont
 type Props = {
   props: {
     padding: z.infer<typeof PADDING_SCHEMA>;
-    fixedWidths: [number | null | undefined, number | null | undefined, number | null | undefined] | null | undefined;
+    fixedWidths:
+      | [number | null | undefined, number | null | undefined, number | null | undefined]
+      | null
+      | undefined;
     columnsCount: 2 | 3;
     contentAlignment: 'top' | 'middle' | 'bottom';
     blockId?: string;
@@ -125,7 +148,8 @@ type Props = {
   stackMobilePreview?: boolean;
 };
 function TableCell({ index, props, columns, stackMobilePreview }: Props) {
-  const contentAlignment = props?.contentAlignment ?? ColumnsContainerPropsDefaults.contentAlignment;
+  const contentAlignment =
+    props?.contentAlignment ?? ColumnsContainerPropsDefaults.contentAlignment;
   const columnsCount = props?.columnsCount ?? ColumnsContainerPropsDefaults.columnsCount;
 
   const fixedWidthPct = props.fixedWidths?.[index];

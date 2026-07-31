@@ -19,7 +19,11 @@ type LinkUnderlineInputProps = {
  * (each in its own CompactableInput, each with its own title) instead of
  * one merged field.
  */
-const LinkUnderlineInput: FC<LinkUnderlineInputProps> = ({ label, underline = false, onChange }) => {
+const LinkUnderlineInput: FC<LinkUnderlineInputProps> = ({
+  label,
+  underline = false,
+  onChange,
+}) => {
   const [isUnderlined, setIsUnderlined] = useState(underline);
   const { t } = useTranslation('inspector');
   const value = isUnderlined ? 'enabled' : 'disabled';
@@ -41,17 +45,29 @@ const LinkUnderlineInput: FC<LinkUnderlineInputProps> = ({ label, underline = fa
   return (
     <Box sx={{ width: '100%' }}>
       <LabelProperty label={label ?? t('inputs.links.underline')} />
-      <ToggleButtonGroup value={value} exclusive fullWidth onChange={handleToggle} sx={{ width: '100%' }}>
+      <ToggleButtonGroup
+        value={value}
+        exclusive
+        fullWidth
+        onChange={handleToggle}
+        sx={{ width: '100%' }}
+      >
         <ToggleButton value="enabled">
           <Tooltip title={t('inputs.links.underlineOn')}>
-            <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Box
+              component="span"
+              sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+            >
               <FormatUnderlined fontSize="small" />
             </Box>
           </Tooltip>
         </ToggleButton>
         <ToggleButton value="disabled">
           <Tooltip title={t('inputs.links.underlineOff')}>
-            <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Box
+              component="span"
+              sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+            >
               <FormatClear fontSize="small" />
             </Box>
           </Tooltip>

@@ -18,7 +18,10 @@ export default function StepTone({ brief, patch }: Props) {
   const ts = brief.tone_strategy;
 
   const moodOptions = MOOD_CHIPS.map((v) => ({ value: v, label: t(`steps.step02.mood.${v}`) }));
-  const verticalOptions = VERTICAL_CHIPS.map((v) => ({ value: v, label: t(`steps.step02.vertical.${v}`) }));
+  const verticalOptions = VERTICAL_CHIPS.map((v) => ({
+    value: v,
+    label: t(`steps.step02.vertical.${v}`),
+  }));
 
   return (
     <WizardStep title={t('steps.step02.title')}>

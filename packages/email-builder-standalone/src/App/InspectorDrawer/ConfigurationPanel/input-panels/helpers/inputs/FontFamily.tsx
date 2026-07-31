@@ -44,7 +44,12 @@ export function NullableFontFamily({ label, labelAction, onChange, defaultValue 
   return (
     <FieldContainer>
       <LabelProperty label={label} action={labelAction} />
-      <Select style={{ width: '100%', fontFamily: selectedFont }} value={value} size="small" onChange={onValueChange}>
+      <Select
+        style={{ width: '100%', fontFamily: selectedFont }}
+        value={value}
+        size="small"
+        onChange={onValueChange}
+      >
         {OPTIONS}
       </Select>
     </FieldContainer>

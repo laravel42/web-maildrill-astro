@@ -109,10 +109,16 @@ function pad4(style, fallback = ZERO) {
   let out = { ...fallback };
   const p = style.padding;
   if (p) {
-    const parts = p.trim().split(/\s+/).map((x) => px(x) ?? 0);
-    if (parts.length === 1) out = { top: parts[0], bottom: parts[0], right: parts[0], left: parts[0] };
-    else if (parts.length === 2) out = { top: parts[0], bottom: parts[0], right: parts[1], left: parts[1] };
-    else if (parts.length === 3) out = { top: parts[0], right: parts[1], bottom: parts[2], left: parts[1] };
+    const parts = p
+      .trim()
+      .split(/\s+/)
+      .map((x) => px(x) ?? 0);
+    if (parts.length === 1)
+      out = { top: parts[0], bottom: parts[0], right: parts[0], left: parts[0] };
+    else if (parts.length === 2)
+      out = { top: parts[0], bottom: parts[0], right: parts[1], left: parts[1] };
+    else if (parts.length === 3)
+      out = { top: parts[0], right: parts[1], bottom: parts[2], left: parts[1] };
     else out = { top: parts[0], right: parts[1], bottom: parts[2], left: parts[3] };
   }
   // Longhands win over the shorthand, mirroring CSS cascade order in these
@@ -132,7 +138,10 @@ function marginY(style) {
   let top = 0;
   let bottom = 0;
   if (style.margin) {
-    const parts = style.margin.trim().split(/\s+/).map((x) => px(x) ?? 0);
+    const parts = style.margin
+      .trim()
+      .split(/\s+/)
+      .map((x) => px(x) ?? 0);
     if (parts.length === 1) [top, bottom] = [parts[0], parts[0]];
     else if (parts.length >= 3) [top, bottom] = [parts[0], parts[2]];
     else [top, bottom] = [parts[0], parts[0]];
@@ -263,7 +272,11 @@ function extractWrapTable(html) {
   const closeStart = findMatchingClose(html, 'table', start);
   if (closeStart < 0) throw new Error('wrap table unclosed');
   const open = m[0];
-  return { open, inner: html.slice(start + open.length, closeStart), style: parseStyle(attrs(open).style || '') };
+  return {
+    open,
+    inner: html.slice(start + open.length, closeStart),
+    style: parseStyle(attrs(open).style || ''),
+  };
 }
 
 function borderFromStyle(style) {
@@ -423,7 +436,10 @@ function parseImage(openTag, outerPad = ZERO, align = 'center', avail = CANVAS_W
 function notionFromDiv(style, innerHtml, pad = ZERO, alignHint, rootFont) {
   const text = stripTags(innerHtml);
   if (!text) return null;
-  let body = innerHtml.trim().replace(/<div[^>]*>/gi, '').replace(/<\/div>/gi, '');
+  let body = innerHtml
+    .trim()
+    .replace(/<div[^>]*>/gi, '')
+    .replace(/<\/div>/gi, '');
   // Preserve anchors; wrap in a styled span for letter-spacing / text-transform.
   // EmailLayout puts `letter-spacing:0.15008px` on the root, which every text
   // block inherits — so tracking has to be written out even when the source
@@ -559,7 +575,12 @@ function soleTable(inner) {
  */
 function emptyCellBlock(cell, doc) {
   if (/<img\b/i.test(cell.inner)) return undefined;
-  if (stripTags(cell.inner).replace(/\u00a0|&nbsp;/gi, '').trim()) return undefined;
+  if (
+    stripTags(cell.inner)
+      .replace(/\u00a0|&nbsp;/gi, '')
+      .trim()
+  )
+    return undefined;
   const style = parseStyle(attrs(cell.open).style || '');
   const border = borderFromStyle(style);
   if (!border.color) return [];
@@ -643,7 +664,9 @@ function naturalWidth(cell) {
   }
   if (!total) {
     const img = /<img\b[^>]*>/i.exec(cell.inner);
-    if (img) total = px(parseStyle(attrs(img[0]).style || '')['max-width']) || Number(attrs(img[0]).width) || 0;
+    if (img)
+      total =
+        px(parseStyle(attrs(img[0]).style || '')['max-width']) || Number(attrs(img[0]).width) || 0;
   }
   return total || 1;
 }
@@ -678,7 +701,11 @@ function makeColumns(colChildArrays, doc, pad, percents, alignment) {
   const cols = [...colChildArrays];
   while (cols.length < 3) cols.push([]);
   const count = colChildArrays.length === 3 ? 3 : 2;
-  const widths = [percents[0] ?? null, percents[1] ?? null, count === 3 ? (percents[2] ?? null) : null];
+  const widths = [
+    percents[0] ?? null,
+    percents[1] ?? null,
+    count === 3 ? (percents[2] ?? null) : null,
+  ];
   const id = nid('cols');
   doc[id] = {
     type: 'ColumnsContainer',
@@ -713,7 +740,9 @@ function parseBarRow(tableEl, doc) {
     const a = attrs(c.open);
     const style = parseStyle(a.style || '');
     return {
-      empty: !stripTags(c.inner).replace(/\u00a0|&nbsp;/gi, '').trim(),
+      empty: !stripTags(c.inner)
+        .replace(/\u00a0|&nbsp;/gi, '')
+        .trim(),
       height: px(style.height),
       bg: hex6(a.bgcolor) || hex6(style['background-color']),
       pct: cellPct(c, 0),
@@ -764,7 +793,10 @@ function buildCells(cells, doc, ctx, percents) {
   return cells.map((cell, i) => {
     const cellStyle = parseStyle(attrs(cell.open).style || '');
     const padding = pad4(cellStyle, ZERO);
-    const inner = Math.max(40, Math.round((ctx.width * (percents[i] || 50)) / 100) - padding.left - padding.right);
+    const inner = Math.max(
+      40,
+      Math.round((ctx.width * (percents[i] || 50)) / 100) - padding.left - padding.right,
+    );
     const align = /align\s*=\s*["']?right/i.test(cell.open)
       ? 'right'
       : /align\s*=\s*["']?center/i.test(cell.open)
@@ -822,7 +854,13 @@ function parseColumnRow(cells, doc, pad, ctx) {
   }
 
   const percents = columnPercents(cells, rowWidth);
-  return makeColumns(buildCells(cells, doc, { ...ctx, width: rowWidth }, percents), doc, pad, percents, alignment);
+  return makeColumns(
+    buildCells(cells, doc, { ...ctx, width: rowWidth }, percents),
+    doc,
+    pad,
+    percents,
+    alignment,
+  );
 }
 
 function isColumnRow(cells) {
@@ -933,7 +971,8 @@ function parseFlow(html, doc, ctx) {
         // Prefer Divider over Spacer when a hairline is present (spacer check
         // would otherwise match on height:Npx empty divs).
         const id = nid('div');
-        const color = hex6((style['border-top'] || '').match(/#[0-9a-fA-F]{3,6}/)?.[0]) || '#E0DDD4';
+        const color =
+          hex6((style['border-top'] || '').match(/#[0-9a-fA-F]{3,6}/)?.[0]) || '#E0DDD4';
         const gap = px(style.height) || 16;
         doc[id] = {
           type: 'Divider',
@@ -943,7 +982,12 @@ function parseFlow(html, doc, ctx) {
               color,
               height: px(style['border-top']) || 1,
               width: 100,
-              padding: { top: Math.max(4, Math.round(gap / 2)), bottom: Math.max(4, Math.round(gap / 2)), right: 0, left: 0 },
+              padding: {
+                top: Math.max(4, Math.round(gap / 2)),
+                bottom: Math.max(4, Math.round(gap / 2)),
+                right: 0,
+                left: 0,
+              },
               textAlign: 'left',
             },
           },
@@ -951,7 +995,10 @@ function parseFlow(html, doc, ctx) {
         ids.push(id);
       } else if (isSpacerDiv(style, el.inner)) {
         const id = nid('sp');
-        doc[id] = { type: 'Spacer', data: { style: { height: px(style.height) || 12, backgroundColor: null } } };
+        doc[id] = {
+          type: 'Spacer',
+          data: { style: { height: px(style.height) || 12, backgroundColor: null } },
+        };
         ids.push(id);
       } else {
         const n = notionFromDiv(style, el.inner, ZERO, ctx.alignHint, ctx.rootFont);
@@ -1061,7 +1108,13 @@ function parseFlow(html, doc, ctx) {
       if (!el) break;
       const style = parseStyle(attrs(el.open).style || '');
       const href = attrs(el.open).href || '#';
-      const n = notionFromDiv(style, `<a href="${href}">${el.inner}</a>`, ZERO, ctx.alignHint, ctx.rootFont);
+      const n = notionFromDiv(
+        style,
+        `<a href="${href}">${el.inner}</a>`,
+        ZERO,
+        ctx.alignHint,
+        ctx.rootFont,
+      );
       if (n) {
         doc[n.id] = n.block;
         ids.push(n.id);
@@ -1075,7 +1128,12 @@ function parseFlow(html, doc, ctx) {
       if (gt < 0) break;
       const tag = s.slice(i, gt + 1);
       const name = /^<\/?([a-zA-Z0-9]+)/.exec(tag)?.[1]?.toLowerCase();
-      if (name && !tag.startsWith('</') && !/\/>$/.test(tag) && !['img', 'br', 'hr'].includes(name)) {
+      if (
+        name &&
+        !tag.startsWith('</') &&
+        !/\/>$/.test(tag) &&
+        !['img', 'br', 'hr'].includes(name)
+      ) {
         const el = extractElement(s, name, i);
         if (el) {
           ids.push(...parseFlow(el.inner, doc, ctx));
@@ -1094,7 +1152,13 @@ function parseFlow(html, doc, ctx) {
       doc[id] = {
         type: 'NotionText',
         data: {
-          style: { color: '#1F1E1B', fontSize: 15, fontWeight: 'normal', textAlign: 'left', padding: { ...ZERO } },
+          style: {
+            color: '#1F1E1B',
+            fontSize: 15,
+            fontWeight: 'normal',
+            textAlign: 'left',
+            padding: { ...ZERO },
+          },
           props: { html: `<p>${text}</p>` },
         },
       };
@@ -1171,7 +1235,10 @@ function convertHtml(html) {
     if (alignHint === 'center' || alignHint === 'right') {
       for (const id of childIds) {
         const b = doc[id];
-        if (b?.type === 'NotionText' && (!b.data.style.textAlign || b.data.style.textAlign === 'left')) {
+        if (
+          b?.type === 'NotionText' &&
+          (!b.data.style.textAlign || b.data.style.textAlign === 'left')
+        ) {
           // only override if HTML didn't set align
           if (!/text-align/i.test(b.data.props.html || '')) {
             b.data.style.textAlign = alignHint;
@@ -1184,7 +1251,13 @@ function convertHtml(html) {
     if (!childIds.length) continue;
 
     // Hoist a lone image, folding the section padding into it
-    if (childIds.length === 1 && doc[childIds[0]]?.type === 'Image' && !bg && !border.top && !border.bottom) {
+    if (
+      childIds.length === 1 &&
+      doc[childIds[0]]?.type === 'Image' &&
+      !bg &&
+      !border.top &&
+      !border.bottom
+    ) {
       const img = doc[childIds[0]];
       img.data.style.padding = addPad(img.data.style.padding, padding);
       rootChildren.push(childIds[0]);
@@ -1322,11 +1395,19 @@ async function main() {
 
     const result = await validateDoc(doc);
     if (!result.ok) {
-      errors.push(`${meta.slug}: invalid — ${JSON.stringify(result.errors?.slice?.(0, 6) ?? result)}`);
+      errors.push(
+        `${meta.slug}: invalid — ${JSON.stringify(result.errors?.slice?.(0, 6) ?? result)}`,
+      );
     }
 
-    fs.writeFileSync(path.join(JSON_DIR, `${meta.nn}-${meta.slug}.json`), JSON.stringify(doc, null, 2) + '\n');
-    fs.writeFileSync(path.join(AI_JSON_DIR, `${meta.nn}.json`), JSON.stringify(doc, null, 2) + '\n');
+    fs.writeFileSync(
+      path.join(JSON_DIR, `${meta.nn}-${meta.slug}.json`),
+      JSON.stringify(doc, null, 2) + '\n',
+    );
+    fs.writeFileSync(
+      path.join(AI_JSON_DIR, `${meta.nn}.json`),
+      JSON.stringify(doc, null, 2) + '\n',
+    );
 
     const blocks = toBlocksArray(doc);
     fs.writeFileSync(

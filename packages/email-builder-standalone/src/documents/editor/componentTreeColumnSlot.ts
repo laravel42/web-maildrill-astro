@@ -8,7 +8,9 @@ export function makeComponentTreeColumnSlotId(parentBlockId: string, columnIndex
   return `${COMPONENT_TREE_COLUMN_SLOT_PREFIX}${parentBlockId}:${columnIndex}`;
 }
 
-export function parseComponentTreeColumnSlotId(id: string): { parentBlockId: string; columnIndex: number } | null {
+export function parseComponentTreeColumnSlotId(
+  id: string,
+): { parentBlockId: string; columnIndex: number } | null {
   if (!id.startsWith(COMPONENT_TREE_COLUMN_SLOT_PREFIX)) return null;
   const rest = id.slice(COMPONENT_TREE_COLUMN_SLOT_PREFIX.length);
   const lastColon = rest.lastIndexOf(':');

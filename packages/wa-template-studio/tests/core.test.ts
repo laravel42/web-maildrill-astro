@@ -32,7 +32,15 @@ function marketingDoc(): TemplateDoc {
       },
       footer: { id: newId('footer'), type: 'footer', data: { text: 'Reply STOP to opt out' } },
       buttons: [
-        { id: newId('btn'), type: 'url', data: { text: 'Shop now', url: 'https://shop.example.com/sale/{{1}}', example: 'https://shop.example.com/sale/spring' } },
+        {
+          id: newId('btn'),
+          type: 'url',
+          data: {
+            text: 'Shop now',
+            url: 'https://shop.example.com/sale/{{1}}',
+            example: 'https://shop.example.com/sale/spring',
+          },
+        },
         { id: newId('btn'), type: 'copy-code', data: { example: 'SPRING20' } },
       ],
     },
@@ -45,7 +53,9 @@ function marketingDoc(): TemplateDoc {
 
 describe('variable engine', () => {
   it('analyzes usage, duplicates, gaps and malformed syntax', () => {
-    const analysis = analyzeVariables('Hi {{1}} and {{3}} and {{1}} and {{name}}', { '2': { example: 'x' } });
+    const analysis = analyzeVariables('Hi {{1}} and {{3}} and {{1}} and {{name}}', {
+      '2': { example: 'x' },
+    });
     expect(analysis.used).toEqual([1, 3]);
     expect(analysis.duplicated).toEqual([1]);
     expect(analysis.sequential).toBe(false);
@@ -54,7 +64,10 @@ describe('variable engine', () => {
   });
 
   it('renumbers to a sequential series and remaps metadata', () => {
-    const result = renumberVariables('A {{4}} B {{2}} C {{4}}', { '4': { example: 'four' }, '2': { example: 'two' } });
+    const result = renumberVariables('A {{4}} B {{2}} C {{4}}', {
+      '4': { example: 'four' },
+      '2': { example: 'two' },
+    });
     expect(result.text).toBe('A {{1}} B {{2}} C {{1}}');
     expect(result.map).toEqual({ '1': { example: 'four' }, '2': { example: 'two' } });
     expect(result.mapping).toEqual({ 4: 1, 2: 2 });
@@ -69,7 +82,11 @@ describe('variable engine', () => {
   it('inserts by position and pushes later variables up, following metadata', () => {
     const text = 'Hi {{1}}, order {{2}} shipped';
     const caretAt = 'Hi {{1}}, '.length; // right before {{2}}'s text, mid-message
-    const result = insertVariableAt(text, { '1': { name: 'Name' }, '2': { example: 'A123' } }, caretAt);
+    const result = insertVariableAt(
+      text,
+      { '1': { name: 'Name' }, '2': { example: 'A123' } },
+      caretAt,
+    );
     // The inserted placeholder takes position 2; the old {{2}} becomes {{3}}.
     expect(result.text).toBe('Hi {{1}}, {{2}}order {{3}} shipped');
     // Metadata follows its variable: old {{2}} → {{3}}, {{1}} unchanged, new {{2}} empty.
@@ -167,13 +184,19 @@ describe('validation engine', () => {
     };
     expect(validateTemplate(doc).some((i) => i.code === 'auth/otp-required')).toBe(true);
 
-    doc.blocks.buttons.push({ id: newId('btn'), type: 'otp', data: { otpType: 'COPY_CODE', text: 'Copy code' } });
+    doc.blocks.buttons.push({
+      id: newId('btn'),
+      type: 'otp',
+      data: { otpType: 'COPY_CODE', text: 'Copy code' },
+    });
     expect(hasErrors(validateTemplate(doc))).toBe(false);
   });
 
   it('flags dynamic URLs that are not a trailing {{1}}', () => {
     const doc = marketingDoc();
-    doc.blocks.buttons = [{ id: newId('btn'), type: 'url', data: { text: 'Go', url: 'https://a.com/{{2}}/x' } }];
+    doc.blocks.buttons = [
+      { id: newId('btn'), type: 'url', data: { text: 'Go', url: 'https://a.com/{{2}}/x' } },
+    ];
     expect(validateTemplate(doc).some((i) => i.code === 'url/dynamic-suffix')).toBe(true);
   });
 });
@@ -219,7 +242,14 @@ describe('meta serialization', () => {
         {
           type: 'BUTTONS',
           buttons: [
-            { type: 'OTP', otp_type: 'ONE_TAP', text: 'Copy code', autofill_text: 'Autofill', package_name: 'com.x', signature_hash: 'hash' },
+            {
+              type: 'OTP',
+              otp_type: 'ONE_TAP',
+              text: 'Copy code',
+              autofill_text: 'Autofill',
+              package_name: 'com.x',
+              signature_hash: 'hash',
+            },
           ],
         },
       ],
@@ -261,7 +291,13 @@ describe('meta serialization', () => {
             { type: 'URL', text: 'Web', url: 'https://x.com' },
             { type: 'PHONE_NUMBER', text: 'Call', phone_number: '+1555' },
             { type: 'COPY_CODE', example: 'SAVE' },
-            { type: 'FLOW', text: 'Book', flow_id: '123', flow_action: 'navigate', navigate_screen: 'HOME' },
+            {
+              type: 'FLOW',
+              text: 'Book',
+              flow_id: '123',
+              flow_action: 'navigate',
+              navigate_screen: 'HOME',
+            },
             { type: 'CATALOG', text: 'View catalog' },
             { type: 'MPM', text: 'View items' },
           ],

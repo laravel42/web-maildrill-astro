@@ -22,7 +22,8 @@ import { getUndoRedoState, resetUndoRedoStore, updateUndoRedoState } from './Und
 // Inspector width when expanded. 385 crowded the canvas; 320 still fits the
 // widest control rows (colour + swatch, paired number inputs) without wrapping.
 export const lateralPanel = 320;
-export const DEFAULT_IMAGE_PLACEHOLDER = 'https://ddc4vowthkjlv.cloudfront.net/uploads/gallery/1/69cc1b1083b90.jpg';
+export const DEFAULT_IMAGE_PLACEHOLDER =
+  'https://ddc4vowthkjlv.cloudfront.net/uploads/gallery/1/69cc1b1083b90.jpg';
 
 const INSPECTOR_STORAGE_KEY = 'eb-inspector-drawer';
 
@@ -449,7 +450,7 @@ export function setNotionTextInlineEditingBlockId(blockId: string | null) {
     window.dispatchEvent(
       new CustomEvent('notion-text-force-save', {
         detail: { blockId: currentEditingId },
-      })
+      }),
     );
   }
   return editorStateStore.setState({ notionTextInlineEditingBlockId: blockId });
@@ -584,7 +585,8 @@ function pushSnapshot(documentBeforeChange: TValue['document'], blockId?: string
 
   const now = Date.now();
   const elapsed = now - lastSnapshotTimestamp;
-  const isSameBlockDebounce = blockId && blockId === lastSnapshotBlockId && elapsed < SAME_BLOCK_DEBOUNCE_MS;
+  const isSameBlockDebounce =
+    blockId && blockId === lastSnapshotBlockId && elapsed < SAME_BLOCK_DEBOUNCE_MS;
 
   if (isSameBlockDebounce) {
     if (getUndoRedoState().future.length > 0) {
@@ -617,7 +619,9 @@ export function setSelectedBlockId(selectedBlockId: TValue['selectedBlockId']) {
   }
 
   const type = editorStateStore.getState().document[selectedBlockId || '']?.type;
-  const selectedSidebarTab = BLOCKS_DEFAULT_CSS.includes(type || null) ? 'styles' : 'block-configuration';
+  const selectedSidebarTab = BLOCKS_DEFAULT_CSS.includes(type || null)
+    ? 'styles'
+    : 'block-configuration';
   const options: Partial<TValue> = {};
   if (selectedBlockId !== null && editorStateStore.getState().selectedMainTab === 'editor') {
     options.inspectorDrawerOpen = true;
@@ -793,7 +797,11 @@ export function useInspectorDrawerMode() {
  * narrow viewport) stops overriding the mode, and persists the choice.
  */
 export function setInspectorDrawerMode(mode: 'full' | 'compact') {
-  editorStateStore.setState({ inspectorDrawerMode: mode, inspectorDrawerOpen: true, inspectorModeUserOverride: true });
+  editorStateStore.setState({
+    inspectorDrawerMode: mode,
+    inspectorDrawerOpen: true,
+    inspectorModeUserOverride: true,
+  });
   saveInspectorPreference(true, mode, true);
 }
 
@@ -848,7 +856,8 @@ export function useComponentsLibraryDrawerOpen() {
 }
 
 export function toggleComponentsLibraryDrawerOpen() {
-  const { componentsLibraryDrawerOpen, inspectorDrawerOpen, inspectorModeUserOverride } = editorStateStore.getState();
+  const { componentsLibraryDrawerOpen, inspectorDrawerOpen, inspectorModeUserOverride } =
+    editorStateStore.getState();
   const next = !componentsLibraryDrawerOpen;
   const update: Partial<TValue> = { componentsLibraryDrawerOpen: next };
   if (next && inspectorDrawerOpen && !inspectorModeUserOverride) {
@@ -906,7 +915,8 @@ export function setComponentsLibraryDrawerMode(mode: 'full' | 'compact') {
 }
 
 export function toggleComponentsLibraryDrawerMode() {
-  const next = editorStateStore.getState().componentsLibraryDrawerMode === 'full' ? 'compact' : 'full';
+  const next =
+    editorStateStore.getState().componentsLibraryDrawerMode === 'full' ? 'compact' : 'full';
   return editorStateStore.setState({ componentsLibraryDrawerMode: next });
 }
 
@@ -955,7 +965,8 @@ export function getParentColumnCount(blockId: string): number {
         }
       }
       const dataWithProps = block.data as { props?: { childrenIds?: string[] } };
-      const blockProps = block.type !== 'EmailLayout' && dataWithProps.props ? dataWithProps.props : undefined;
+      const blockProps =
+        block.type !== 'EmailLayout' && dataWithProps.props ? dataWithProps.props : undefined;
       if (blockProps?.childrenIds?.includes(currentId)) {
         if (block.type === 'ColumnsContainer') {
           return block.data.props?.columnsCount ?? 0;
@@ -983,7 +994,8 @@ export function getParentColumn(blockId: string) {
       }
 
       const dataWithProps = block.data as { props?: { childrenIds?: string[] } };
-      const blockProps = block.type !== 'EmailLayout' && dataWithProps.props ? dataWithProps.props : undefined;
+      const blockProps =
+        block.type !== 'EmailLayout' && dataWithProps.props ? dataWithProps.props : undefined;
       if (blockProps?.childrenIds?.includes(currentId)) {
         if (block.type === 'ColumnsContainer') {
           return block.data.props ?? null;
@@ -999,7 +1011,9 @@ export function getParentColumn(blockId: string) {
 
 export function getWidthActualColumn(blockId: string) {
   const parentColumns = getParentColumn(blockId) as any;
-  const columnPosition = parentColumns?.columns?.findIndex((column: any) => column.childrenIds.includes(blockId));
+  const columnPosition = parentColumns?.columns?.findIndex((column: any) =>
+    column.childrenIds.includes(blockId),
+  );
   if (columnPosition !== -1 && parentColumns?.fixedWidths) {
     return parentColumns?.fixedWidths[columnPosition];
   }
@@ -1052,7 +1066,8 @@ export function useLinkGlobal() {
 export type ThemeSection = 'style' | 'props';
 
 function readThemeBlockOverride(theme: ThemeJson | undefined | null, blockType: string) {
-  return theme?.blocks?.[blockType] as { style?: Record<string, unknown>; props?: Record<string, unknown> } | undefined;
+  return theme?.blocks?.[blockType] as
+    { style?: Record<string, unknown>; props?: Record<string, unknown> } | undefined;
 }
 
 /**
@@ -1072,7 +1087,11 @@ export function useThemeBlockOverride(blockType: string) {
  * value as stored in the theme (NOT collapsed by viewport). Useful when
  * the panel needs to render a `Responsive<T>` editor.
  */
-export function useThemeOverrideRaw(blockType: string, section: ThemeSection, key: string): unknown {
+export function useThemeOverrideRaw(
+  blockType: string,
+  section: ThemeSection,
+  key: string,
+): unknown {
   return editorStateStore((s) => {
     const data = s.document?.root?.data as { theme?: ThemeJson } | undefined;
     const override = readThemeBlockOverride(data?.theme, blockType);
@@ -1093,7 +1112,7 @@ export function useThemeOverrideRaw(blockType: string, section: ThemeSection, ke
 export function useThemeOverrideValue<T = unknown>(
   blockType: string,
   section: ThemeSection,
-  key: string
+  key: string,
 ): T | undefined {
   return editorStateStore((s) => {
     const data = s.document?.root?.data as { theme?: ThemeJson } | undefined;
@@ -1113,7 +1132,12 @@ export function useThemeOverrideValue<T = unknown>(
  * dedicated `resetThemeValue` helper is preferred for that case but
  * this guard prevents accidental dead writes.
  */
-export function setThemeValue(blockType: string, section: ThemeSection, key: string, value: unknown) {
+export function setThemeValue(
+  blockType: string,
+  section: ThemeSection,
+  key: string,
+  value: unknown,
+) {
   if (value === undefined || value === null) {
     resetThemeValue(blockType, section, key);
     return;
@@ -1129,7 +1153,8 @@ export function setThemeValue(blockType: string, section: ThemeSection, key: str
     const theme: ThemeJson = data.theme ? { ...data.theme } : {};
     const blocks = theme.blocks ? { ...theme.blocks } : {};
     const current =
-      (blocks[blockType] as { style?: Record<string, unknown>; props?: Record<string, unknown> } | undefined) ?? {};
+      (blocks[blockType] as
+        { style?: Record<string, unknown>; props?: Record<string, unknown> } | undefined) ?? {};
     const sectionObj = (current[section] as Record<string, unknown> | undefined) ?? {};
 
     if (sectionObj[key] === value) {
@@ -1194,7 +1219,8 @@ export function resetThemeValue(blockType: string, section: ThemeSection, key: s
       nextBlocks[blockType] = { ...blockOverride, [section]: nextSection };
     }
 
-    const nextTheme: ThemeJson = Object.keys(nextBlocks).length === 0 ? {} : { ...theme, blocks: nextBlocks };
+    const nextTheme: ThemeJson =
+      Object.keys(nextBlocks).length === 0 ? {} : { ...theme, blocks: nextBlocks };
     const nextData = { ...data } as Record<string, unknown>;
     if (Object.keys(nextTheme).length === 0) {
       delete nextData.theme;
@@ -1280,7 +1306,7 @@ export function applyThemeBundle(bundle: ThemeBundle | ThemeBundlePayload): void
  */
 function stripGovernedKeys<T extends { data: unknown }>(
   block: T,
-  override: { style?: Record<string, unknown>; props?: Record<string, unknown> }
+  override: { style?: Record<string, unknown>; props?: Record<string, unknown> },
 ): T {
   const keys = new Set<string>();
   for (const section of ['style', 'props'] as const) {
@@ -1341,7 +1367,10 @@ function stripInlineTextColor(html: string): string {
  * `color` from `props.html`, leaving backgrounds/highlights intact.
  */
 function stripNotionTextColor<T extends { data: unknown }>(block: T): T {
-  const data = block.data as { style?: Record<string, unknown> | null; props?: { html?: unknown } | null };
+  const data = block.data as {
+    style?: Record<string, unknown> | null;
+    props?: { html?: unknown } | null;
+  };
   let nextData = data as Record<string, unknown>;
   let changed = false;
 
@@ -1383,7 +1412,10 @@ function stripNotionTextColor<T extends { data: unknown }>(block: T): T {
  * colour is still normalised to inherit the document's global text
  * colour, matching `applyThemePreset`).
  */
-export function stripBlockStylesForTheme<T extends TEditorBlock>(block: T, theme: ThemeJson | undefined): T {
+export function stripBlockStylesForTheme<T extends TEditorBlock>(
+  block: T,
+  theme: ThemeJson | undefined,
+): T {
   if (block.type === 'EmailLayout') return block;
   const override = theme?.blocks?.[block.type] as
     { style?: Record<string, unknown>; props?: Record<string, unknown> } | undefined;
@@ -1403,7 +1435,9 @@ export function stripBlockStylesForTheme<T extends TEditorBlock>(block: T, theme
 export function applyThemePreset(bundle: ThemeBundlePayload, themeId?: string | null): void {
   const current = editorStateStore.getState().document;
   if (!current) return;
-  const themeForStrip: ThemeJson | undefined = bundle.blocks ? { blocks: bundle.blocks } : undefined;
+  const themeForStrip: ThemeJson | undefined = bundle.blocks
+    ? { blocks: bundle.blocks }
+    : undefined;
 
   const next = {} as typeof current;
   for (const [id, block] of Object.entries(current)) {
@@ -1505,7 +1539,9 @@ export function applyTemplateDocument(saved: TSavedComponentBlock[]): boolean {
             const childIds = Array.isArray(col.childrenIds) ? (col.childrenIds as string[]) : [];
             return {
               ...col,
-              childrenIds: childIds.map((id) => remap(id)).filter((v): v is string => typeof v === 'string'),
+              childrenIds: childIds
+                .map((id) => remap(id))
+                .filter((v): v is string => typeof v === 'string'),
             };
           });
         }
@@ -1649,7 +1685,7 @@ export function changeBlockPosition(
   actualId: string,
   draggedId: string,
   position: string,
-  appendBlock: boolean = true
+  appendBlock: boolean = true,
 ) {
   if (
     isChildOf({
@@ -1701,7 +1737,10 @@ export function changeBlockPosition(
         }
         break;
       case 'Container':
-        if (block.data.props?.childrenIds?.length && block.data.props.childrenIds.includes(draggedId)) {
+        if (
+          block.data.props?.childrenIds?.length &&
+          block.data.props.childrenIds.includes(draggedId)
+        ) {
           fromId = id;
           nDocument[id] = {
             ...block,
@@ -1770,7 +1809,10 @@ export function changeBlockPosition(
           }
           break;
         case 'Container':
-          if (block.data.props?.childrenIds?.length && block.data.props.childrenIds.includes(actualId)) {
+          if (
+            block.data.props?.childrenIds?.length &&
+            block.data.props.childrenIds.includes(actualId)
+          ) {
             toId = id;
             nDocument[id] = {
               ...block,
@@ -1888,7 +1930,13 @@ export function insertNewChildInColumn({
   });
 }
 
-export function insertNewChildInContainer({ parentId, blockId }: { parentId: string; blockId: string }) {
+export function insertNewChildInContainer({
+  parentId,
+  blockId,
+}: {
+  parentId: string;
+  blockId: string;
+}) {
   if (
     isChildOf({
       draggedId: blockId,
@@ -1921,7 +1969,13 @@ export function insertNewChildInContainer({ parentId, blockId }: { parentId: str
   });
 }
 
-export function isChildOf({ draggedId, targetId }: { draggedId: string; targetId: string }): boolean {
+export function isChildOf({
+  draggedId,
+  targetId,
+}: {
+  draggedId: string;
+  targetId: string;
+}): boolean {
   if (draggedId === targetId) return true;
 
   const columnSlot = parseComponentTreeColumnSlotId(targetId);
@@ -2052,7 +2106,9 @@ export function updateBlockSync(blockId: string, updater: (block: any) => any) {
 export function updateBlockProps(blockId: string, newProps: object | ((props: any) => any)) {
   updateBlock(blockId, (block) => {
     const updatedProps =
-      typeof newProps === 'function' ? newProps(block.data.props) : { ...block.data.props, ...newProps };
+      typeof newProps === 'function'
+        ? newProps(block.data.props)
+        : { ...block.data.props, ...newProps };
 
     return {
       ...block,
@@ -2072,7 +2128,9 @@ export function updateBlockProps(blockId: string, newProps: object | ((props: an
 export function updateBlockPropsSync(blockId: string, newProps: object | ((props: any) => any)) {
   updateBlockSync(blockId, (block) => {
     const updatedProps =
-      typeof newProps === 'function' ? newProps(block.data.props) : { ...block.data.props, ...newProps };
+      typeof newProps === 'function'
+        ? newProps(block.data.props)
+        : { ...block.data.props, ...newProps };
 
     return {
       ...block,
@@ -2108,7 +2166,7 @@ export function insertChildAndUpdateParent(
   parentBlockId: string,
   newBlockId: string,
   newBlock: TEditorBlock,
-  newChildrenIds: string[]
+  newChildrenIds: string[],
 ) {
   const originalDocument = editorStateStore.getState().document;
   const parent = originalDocument[parentBlockId] as any;
@@ -2146,7 +2204,7 @@ export function updateColumnAndAddBlock(
   columnIndex: number,
   newBlockId: string,
   newBlock: TEditorBlock,
-  newChildrenIds: string[]
+  newChildrenIds: string[],
 ) {
   const originalDocument = editorStateStore.getState().document;
   const parent = originalDocument[parentBlockId] as any;
@@ -2184,7 +2242,10 @@ function generateNewBlockId(): string {
   return `block-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
 }
 
-function cloneChildrenBlocksForDuplicate(nDocument: Record<string, TEditorBlock>, childrenIds: string[]): string[] {
+function cloneChildrenBlocksForDuplicate(
+  nDocument: Record<string, TEditorBlock>,
+  childrenIds: string[],
+): string[] {
   const newChildrenIds: string[] = [];
 
   for (const childId of childrenIds) {
@@ -2200,16 +2261,16 @@ function cloneChildrenBlocksForDuplicate(nDocument: Record<string, TEditorBlock>
     } as TEditorBlock;
 
     if (childBlock.type === 'Container' || childBlock.type === 'ColumnsContainer') {
-      const grandChildrenIds = (childBlock.data as { props?: { childrenIds?: string[] } }).props?.childrenIds || [];
+      const grandChildrenIds =
+        (childBlock.data as { props?: { childrenIds?: string[] } }).props?.childrenIds || [];
       (nDocument[newChildId].data as { props: Record<string, unknown> }).props.childrenIds =
         cloneChildrenBlocksForDuplicate(nDocument, grandChildrenIds);
 
       if (childBlock.type === 'ColumnsContainer') {
-        const columns = (childBlock.data as { props?: { columns?: unknown[] } }).props?.columns || [];
-        (nDocument[newChildId].data as { props: Record<string, unknown> }).props.columns = cloneColumnsForDuplicate(
-          nDocument,
-          columns
-        );
+        const columns =
+          (childBlock.data as { props?: { columns?: unknown[] } }).props?.columns || [];
+        (nDocument[newChildId].data as { props: Record<string, unknown> }).props.columns =
+          cloneColumnsForDuplicate(nDocument, columns);
       }
     }
 
@@ -2240,17 +2301,16 @@ export function duplicateBlock(blockId: string) {
   nDocument[newParentId] = JSON.parse(JSON.stringify(parentBlock));
 
   if (parentBlock.type === 'Container') {
-    const childrenIds = (parentBlock.data as { props?: { childrenIds?: string[] } }).props?.childrenIds || [];
+    const childrenIds =
+      (parentBlock.data as { props?: { childrenIds?: string[] } }).props?.childrenIds || [];
     if (childrenIds.length > 0) {
       (nDocument[newParentId].data as { props: { childrenIds: string[] } }).props.childrenIds =
         cloneChildrenBlocksForDuplicate(nDocument, childrenIds);
     }
   } else if (parentBlock.type === 'ColumnsContainer') {
     const columns = (parentBlock.data as { props?: { columns?: any[] } }).props?.columns || [];
-    (nDocument[newParentId].data as { props: { columns: any[] } }).props.columns = cloneColumnsForDuplicate(
-      nDocument,
-      columns
-    );
+    (nDocument[newParentId].data as { props: { columns: any[] } }).props.columns =
+      cloneColumnsForDuplicate(nDocument, columns);
   }
 
   const rootBlk = nDocument.root;
@@ -2275,7 +2335,9 @@ export function duplicateBlock(blockId: string) {
       }
       if (b.type === 'ColumnsContainer') {
         b.data.props?.columns?.forEach((column: { childrenIds: string[] }) => {
-          const originalBlockIndex = column.childrenIds.findIndex((child: string) => child === blockId);
+          const originalBlockIndex = column.childrenIds.findIndex(
+            (child: string) => child === blockId,
+          );
           if (originalBlockIndex >= 0) {
             column.childrenIds.splice(originalBlockIndex, 0, newParentId);
           }
@@ -2343,7 +2405,9 @@ function buildRenamedSubtreeFromSaved(saved: TSavedComponentBlock[]): {
             const childIds = Array.isArray(col.childrenIds) ? (col.childrenIds as string[]) : [];
             return {
               ...col,
-              childrenIds: childIds.map((id) => remap(id)).filter((v): v is string => typeof v === 'string'),
+              childrenIds: childIds
+                .map((id) => remap(id))
+                .filter((v): v is string => typeof v === 'string'),
             };
           });
         }
@@ -2400,7 +2464,7 @@ function commitInsertSavedComponent(
   original: TValue['document'],
   subtree: Record<string, TEditorBlock>,
   parentUpdate: { id: string; nextBlock: TEditorBlock },
-  rootId: string
+  rootId: string,
 ): string {
   const newDocument: TValue['document'] = {
     ...original,
@@ -2423,7 +2487,10 @@ function commitInsertSavedComponent(
  * the new root id of the inserted subtree, or null if the sibling could
  * not be located (or the saved array was empty).
  */
-export function insertSavedComponentAfterSibling(siblingBlockId: string, saved: TSavedComponentBlock[]): string | null {
+export function insertSavedComponentAfterSibling(
+  siblingBlockId: string,
+  saved: TSavedComponentBlock[],
+): string | null {
   const { rootId, subtree } = buildRenamedSubtreeFromSaved(saved);
   if (!rootId) return null;
 
@@ -2437,7 +2504,10 @@ export function insertSavedComponentAfterSibling(siblingBlockId: string, saved: 
   if (located.kind === 'root') {
     const parent = original.root;
     if (!parent || parent.type !== 'EmailLayout') return null;
-    const nextBlock = { ...parent, data: { ...parent.data, childrenIds: nextSiblings } } as TEditorBlock;
+    const nextBlock = {
+      ...parent,
+      data: { ...parent.data, childrenIds: nextSiblings },
+    } as TEditorBlock;
     return commitInsertSavedComponent(original, subtree, { id: 'root', nextBlock }, rootId);
   }
 
@@ -2448,14 +2518,21 @@ export function insertSavedComponentAfterSibling(siblingBlockId: string, saved: 
       ...parent,
       data: { ...parent.data, props: { ...parent.data.props, childrenIds: nextSiblings } },
     } as TEditorBlock;
-    return commitInsertSavedComponent(original, subtree, { id: located.parentId, nextBlock }, rootId);
+    return commitInsertSavedComponent(
+      original,
+      subtree,
+      { id: located.parentId, nextBlock },
+      rootId,
+    );
   }
 
   // column
   const parent = original[located.parentId];
   if (!parent || parent.type !== 'ColumnsContainer') return null;
   const cols = (parent.data.props?.columns ?? []) as Array<Record<string, unknown>>;
-  const nextCols = cols.map((c, i) => (i === located.columnIndex ? { ...c, childrenIds: nextSiblings } : c));
+  const nextCols = cols.map((c, i) =>
+    i === located.columnIndex ? { ...c, childrenIds: nextSiblings } : c,
+  );
   const nextBlock = {
     ...parent,
     data: { ...parent.data, props: { ...parent.data.props, columns: nextCols } },
@@ -2470,7 +2547,7 @@ export function insertSavedComponentAfterSibling(siblingBlockId: string, saved: 
  */
 export function insertSavedComponentBeforeSibling(
   siblingBlockId: string,
-  saved: TSavedComponentBlock[]
+  saved: TSavedComponentBlock[],
 ): string | null {
   const { rootId, subtree } = buildRenamedSubtreeFromSaved(saved);
   if (!rootId) return null;
@@ -2485,7 +2562,10 @@ export function insertSavedComponentBeforeSibling(
   if (located.kind === 'root') {
     const parent = original.root;
     if (!parent || parent.type !== 'EmailLayout') return null;
-    const nextBlock = { ...parent, data: { ...parent.data, childrenIds: nextSiblings } } as TEditorBlock;
+    const nextBlock = {
+      ...parent,
+      data: { ...parent.data, childrenIds: nextSiblings },
+    } as TEditorBlock;
     return commitInsertSavedComponent(original, subtree, { id: 'root', nextBlock }, rootId);
   }
 
@@ -2496,14 +2576,21 @@ export function insertSavedComponentBeforeSibling(
       ...parent,
       data: { ...parent.data, props: { ...parent.data.props, childrenIds: nextSiblings } },
     } as TEditorBlock;
-    return commitInsertSavedComponent(original, subtree, { id: located.parentId, nextBlock }, rootId);
+    return commitInsertSavedComponent(
+      original,
+      subtree,
+      { id: located.parentId, nextBlock },
+      rootId,
+    );
   }
 
   // column
   const parent = original[located.parentId];
   if (!parent || parent.type !== 'ColumnsContainer') return null;
   const cols = (parent.data.props?.columns ?? []) as Array<Record<string, unknown>>;
-  const nextCols = cols.map((c, i) => (i === located.columnIndex ? { ...c, childrenIds: nextSiblings } : c));
+  const nextCols = cols.map((c, i) =>
+    i === located.columnIndex ? { ...c, childrenIds: nextSiblings } : c,
+  );
   const nextBlock = {
     ...parent,
     data: { ...parent.data, props: { ...parent.data.props, columns: nextCols } },
@@ -2525,7 +2612,7 @@ export function insertSavedComponentBeforeSibling(
 export function appendSavedComponentToParent(
   parentId: string,
   saved: TSavedComponentBlock[],
-  columnIndex?: number
+  columnIndex?: number,
 ): string | null {
   const { rootId, subtree } = buildRenamedSubtreeFromSaved(saved);
   if (!rootId) return null;
@@ -2537,7 +2624,10 @@ export function appendSavedComponentToParent(
   if (parent.type === 'EmailLayout') {
     const children = parent.data.childrenIds ?? [];
     const nextChildren = [...children, rootId];
-    const nextBlock = { ...parent, data: { ...parent.data, childrenIds: nextChildren } } as TEditorBlock;
+    const nextBlock = {
+      ...parent,
+      data: { ...parent.data, childrenIds: nextChildren },
+    } as TEditorBlock;
     return commitInsertSavedComponent(original, subtree, { id: parentId, nextBlock }, rootId);
   }
 
@@ -2590,7 +2680,10 @@ function wrapBuiltInBlock(block: TEditorBlock): TSavedComponentBlock[] {
  * insertion semantics. Returns the new block's id, or null if the
  * sibling could not be located.
  */
-export function insertBuiltInBlockAfterSibling(siblingBlockId: string, block: TEditorBlock): string | null {
+export function insertBuiltInBlockAfterSibling(
+  siblingBlockId: string,
+  block: TEditorBlock,
+): string | null {
   return insertSavedComponentAfterSibling(siblingBlockId, wrapBuiltInBlock(block));
 }
 
@@ -2598,7 +2691,10 @@ export function insertBuiltInBlockAfterSibling(siblingBlockId: string, block: TE
  * Insert a fresh built-in block right before the given sibling. Thin
  * wrapper around {@link insertSavedComponentBeforeSibling}.
  */
-export function insertBuiltInBlockBeforeSibling(siblingBlockId: string, block: TEditorBlock): string | null {
+export function insertBuiltInBlockBeforeSibling(
+  siblingBlockId: string,
+  block: TEditorBlock,
+): string | null {
   return insertSavedComponentBeforeSibling(siblingBlockId, wrapBuiltInBlock(block));
 }
 
@@ -2609,14 +2705,21 @@ export function insertBuiltInBlockBeforeSibling(siblingBlockId: string, block: T
  * click-to-insert from the Blocks tab (empty canvas → root, or "insert
  * at end" convenience) and empty-canvas drops.
  */
-export function appendBuiltInBlockToParent(parentId: string, block: TEditorBlock, columnIndex?: number): string | null {
+export function appendBuiltInBlockToParent(
+  parentId: string,
+  block: TEditorBlock,
+  columnIndex?: number,
+): string | null {
   return appendSavedComponentToParent(parentId, wrapBuiltInBlock(block), columnIndex);
 }
 
 /**
  * Inserta un bloque nuevo justo después del bloque indicado (mismo padre: EmailLayout, Container o celda de columnas).
  */
-export function insertBlockAfterSibling(siblingBlockId: string, newBlock: TEditorBlock): string | null {
+export function insertBlockAfterSibling(
+  siblingBlockId: string,
+  newBlock: TEditorBlock,
+): string | null {
   const newBlockId = generateNewBlockId();
   const document = editorStateStore.getState().document;
 
@@ -2664,7 +2767,10 @@ export function insertBlockAfterSibling(siblingBlockId: string, newBlock: TEdito
 /**
  * Inserta un bloque nuevo justo antes del bloque indicado (mismo padre: EmailLayout, Container o celda de columnas).
  */
-export function insertBlockBeforeSibling(siblingBlockId: string, newBlock: TEditorBlock): string | null {
+export function insertBlockBeforeSibling(
+  siblingBlockId: string,
+  newBlock: TEditorBlock,
+): string | null {
   const newBlockId = generateNewBlockId();
   const document = editorStateStore.getState().document;
 

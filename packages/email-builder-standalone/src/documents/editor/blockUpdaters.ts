@@ -36,10 +36,14 @@ export function atomicUpdateBlockProps(blockId: string, propsUpdater: BlockUpdat
     };
 
     const nextPartial: unknown =
-      typeof propsUpdater === 'function' ? propsUpdater(currentProps) : (propsUpdater as Record<string, unknown>);
+      typeof propsUpdater === 'function'
+        ? propsUpdater(currentProps)
+        : (propsUpdater as Record<string, unknown>);
     const updatedProps: Record<string, unknown> = {
       ...currentProps,
-      ...(typeof nextPartial === 'object' && nextPartial !== null ? (nextPartial as Record<string, unknown>) : {}),
+      ...(typeof nextPartial === 'object' && nextPartial !== null
+        ? (nextPartial as Record<string, unknown>)
+        : {}),
     };
 
     if (currentProps === updatedProps) {
@@ -86,12 +90,18 @@ export function atomicUpdateBlockProp<T = any>(blockId: string, propName: string
 /**
  * Actualización atómica de estilos de un bloque
  */
-export function atomicUpdateBlockStyles(blockId: string, stylesUpdater: BlockUpdater | Partial<any>) {
+export function atomicUpdateBlockStyles(
+  blockId: string,
+  stylesUpdater: BlockUpdater | Partial<any>,
+) {
   atomicUpdateBlock(blockId, (block): TEditorBlock => {
-    const currentStyles = block.data && 'style' in block.data && block.data.style ? block.data.style : {};
+    const currentStyles =
+      block.data && 'style' in block.data && block.data.style ? block.data.style : {};
 
     const updatedStyles =
-      typeof stylesUpdater === 'function' ? stylesUpdater(currentStyles) : { ...currentStyles, ...stylesUpdater };
+      typeof stylesUpdater === 'function'
+        ? stylesUpdater(currentStyles)
+        : { ...currentStyles, ...stylesUpdater };
 
     if (currentStyles === updatedStyles) {
       return block;
@@ -159,7 +169,7 @@ export function atomicBatchUpdateStyles(blockId: string, updates: Record<string,
 export function atomicConditionalUpdate(
   blockId: string,
   condition: (block: TEditorBlock) => boolean,
-  updater: BlockUpdater<TEditorBlock>
+  updater: BlockUpdater<TEditorBlock>,
 ) {
   const currentBlock = editorStateStore.getState().document[blockId];
 
@@ -176,7 +186,7 @@ export function atomicConditionalUpdate(
 export function atomicOptimisticUpdate(
   blockId: string,
   updater: BlockUpdater<TEditorBlock>,
-  onError?: (error: Error) => void
+  onError?: (error: Error) => void,
 ): () => void {
   const state = editorStateStore.getState();
   const originalBlock = state.document[blockId];

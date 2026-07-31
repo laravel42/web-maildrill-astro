@@ -31,7 +31,11 @@ const DEFAULT_ICON_OPTIONS = {
   size: 'medium' as SizeType,
 };
 
-export const getIconUrl = (iconName: string, theme: ThemeType, size: SizeType = 'medium'): string => {
+export const getIconUrl = (
+  iconName: string,
+  theme: ThemeType,
+  size: SizeType = 'medium',
+): string => {
   const sizeValue = optionsSizes.find((opt) => opt.key === size)?.value;
   const themeValue = optionsThemes.find((opt) => opt.key === theme)?.value;
   return `${URL_BASE}${iconName}_${themeValue}_${sizeValue}.png`;

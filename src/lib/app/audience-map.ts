@@ -161,7 +161,9 @@ export async function enrichSegmentAudienceCounts(
       let phoneCount = seg.phoneMemberCount ?? null;
 
       if (count == null) {
-        const res = await client.POST('/v1/segments/preview', { body: { matchType, rules, limit: 1 } });
+        const res = await client.POST('/v1/segments/preview', {
+          body: { matchType, rules, limit: 1 },
+        });
         if (!res.error) count = previewCount(res.data);
       }
 

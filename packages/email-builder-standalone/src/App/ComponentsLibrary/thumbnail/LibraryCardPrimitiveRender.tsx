@@ -100,7 +100,7 @@ export default function LibraryCardPrimitiveRender({
           }
         }
       },
-      { rootMargin: '200px' }
+      { rootMargin: '200px' },
     );
     observer.observe(node);
     return () => observer.disconnect();

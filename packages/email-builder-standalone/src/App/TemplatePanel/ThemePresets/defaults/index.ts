@@ -22,7 +22,7 @@ function preset(
   globals: NonNullable<ThemeBundlePayload['globals']>,
   buttonBg: string,
   buttonText: string,
-  dividerColor: string
+  dividerColor: string,
 ): ThemeBundlePayload {
   const surface = globals.canvasColor ?? undefined;
   return {
@@ -51,7 +51,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       },
       '#2563eb',
       '#ffffff',
-      '#e2e8f0'
+      '#e2e8f0',
     ),
   },
   {
@@ -68,7 +68,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       },
       '#38bdf8',
       '#0f172a',
-      '#1e293b'
+      '#1e293b',
     ),
   },
   {
@@ -85,7 +85,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       },
       '#0891b2',
       '#ffffff',
-      '#a5f3fc'
+      '#a5f3fc',
     ),
   },
   {
@@ -102,7 +102,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       },
       '#ea580c',
       '#ffffff',
-      '#fed7aa'
+      '#fed7aa',
     ),
   },
   {
@@ -119,7 +119,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       },
       '#16a34a',
       '#ffffff',
-      '#bbf7d0'
+      '#bbf7d0',
     ),
   },
   {
@@ -136,7 +136,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       },
       '#7c3aed',
       '#ffffff',
-      '#e9d5ff'
+      '#e9d5ff',
     ),
   },
   {
@@ -153,7 +153,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       },
       '#475569',
       '#ffffff',
-      '#cbd5e1'
+      '#cbd5e1',
     ),
   },
   {
@@ -170,7 +170,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       },
       '#e11d48',
       '#ffffff',
-      '#fecdd3'
+      '#fecdd3',
     ),
   },
   {
@@ -187,7 +187,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       },
       '#92400e',
       '#ffffff',
-      '#e7d3bf'
+      '#e7d3bf',
     ),
   },
   {
@@ -204,7 +204,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       },
       '#111111',
       '#ffffff',
-      '#d4d4d4'
+      '#d4d4d4',
     ),
   },
 ];

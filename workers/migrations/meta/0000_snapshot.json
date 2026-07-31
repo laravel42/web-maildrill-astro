@@ -89,12 +89,8 @@
           "name": "campaigns_tenant_id_tenants_id_fk",
           "tableFrom": "campaigns",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -321,12 +317,8 @@
           "name": "message_attempts_message_id_messages_id_fk",
           "tableFrom": "message_attempts",
           "tableTo": "messages",
-          "columnsFrom": [
-            "message_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["message_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -467,12 +459,8 @@
           "name": "message_events_message_id_messages_id_fk",
           "tableFrom": "message_events",
           "tableTo": "messages",
-          "columnsFrom": [
-            "message_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["message_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -761,12 +749,8 @@
           "name": "messages_tenant_id_tenants_id_fk",
           "tableFrom": "messages",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -774,12 +758,8 @@
           "name": "messages_campaign_id_campaigns_id_fk",
           "tableFrom": "messages",
           "tableTo": "campaigns",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["campaign_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -990,12 +970,8 @@
           "name": "provider_accounts_tenant_id_tenants_id_fk",
           "tableFrom": "provider_accounts",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1168,12 +1144,8 @@
           "name": "usage_records_message_id_messages_id_fk",
           "tableFrom": "usage_records",
           "tableTo": "messages",
-          "columnsFrom": [
-            "message_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["message_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1324,21 +1296,12 @@
     "public.attempt_status": {
       "name": "attempt_status",
       "schema": "public",
-      "values": [
-        "started",
-        "succeeded",
-        "failed"
-      ]
+      "values": ["started", "succeeded", "failed"]
     },
     "public.channel": {
       "name": "channel",
       "schema": "public",
-      "values": [
-        "email",
-        "sms",
-        "whatsapp",
-        "voice"
-      ]
+      "values": ["email", "sms", "whatsapp", "voice"]
     },
     "public.message_status": {
       "name": "message_status",
@@ -1360,30 +1323,17 @@
     "public.outbox_status": {
       "name": "outbox_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "publishing",
-        "published",
-        "failed"
-      ]
+      "values": ["pending", "publishing", "published", "failed"]
     },
     "public.tenant_status": {
       "name": "tenant_status",
       "schema": "public",
-      "values": [
-        "active",
-        "suspended"
-      ]
+      "values": ["active", "suspended"]
     },
     "public.webhook_status": {
       "name": "webhook_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "processing",
-        "processed",
-        "failed"
-      ]
+      "values": ["pending", "processing", "processed", "failed"]
     }
   },
   "schemas": {},

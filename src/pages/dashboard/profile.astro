@@ -12,10 +12,7 @@ const role = session?.role ?? null;
 
 <AppLayout
   title="Your profile"
-  crumbs={[
-    { label: 'Settings', href: routes.app.settings },
-    { label: 'Your profile' },
-  ]}
+  crumbs={[{ label: 'Settings', href: routes.app.settings }, { label: 'Your profile' }]}
 >
   <AppProfile client:visible name={name} email={email} role={role} />
 </AppLayout>

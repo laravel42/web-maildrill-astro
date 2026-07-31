@@ -35,13 +35,17 @@ export function BlockSocialMedia({
   const background = style?.background ?? '';
 
   const textAlign: 'left' | 'center' | 'right' | undefined =
-    (selectedScreenSize === 'desktop' ? style?.textAlign : (style?.textAlignMobile ?? style?.textAlign)) ?? undefined;
+    (selectedScreenSize === 'desktop'
+      ? style?.textAlign
+      : (style?.textAlignMobile ?? style?.textAlign)) ?? undefined;
 
   const wStyle: SocialWrapperLayout = {
     background,
     backgroundColor: style?.backgroundColor,
     textAlign,
-    padding: getPadding(selectedScreenSize === 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding)),
+    padding: getPadding(
+      selectedScreenSize === 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding),
+    ),
   };
   const localGap = selectedScreenSize === 'desktop' ? gap : (gapMobile ?? gap);
   const sid = shortCssId(blockId as any);
@@ -131,7 +135,11 @@ const SocialContainer = ({
                       key={`item_${index}`}
                       target="_blank"
                       href={guardLinksWhileEditingOnCanvas ? undefined : getCleanURL(item.href)}
-                      onClick={guardLinksWhileEditingOnCanvas ? (e: React.MouseEvent) => e.preventDefault() : undefined}
+                      onClick={
+                        guardLinksWhileEditingOnCanvas
+                          ? (e: React.MouseEvent) => e.preventDefault()
+                          : undefined
+                      }
                       style={{
                         display: 'block',
                         lineHeight: 0,

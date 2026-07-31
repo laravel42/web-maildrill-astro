@@ -127,7 +127,11 @@ function getDirectChildBlockIdsForHierarchy(block: any): string[] {
   }
 }
 
-function isDescendantInDocumentSubtree(document: any, rootBlockId: string, targetId: string): boolean {
+function isDescendantInDocumentSubtree(
+  document: any,
+  rootBlockId: string,
+  targetId: string,
+): boolean {
   const children = getDirectChildBlockIdsForHierarchy(document[rootBlockId]);
   for (const cid of children) {
     if (cid === targetId) return true;
@@ -144,7 +148,7 @@ export function isSelectedBlockInColumnsSlot(
   document: any,
   columnsParentId: string,
   columnIndex: number,
-  selectedId: string | null
+  selectedId: string | null,
 ): boolean {
   if (!selectedId) return false;
   const columnsBlock = document[columnsParentId];

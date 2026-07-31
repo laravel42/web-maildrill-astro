@@ -1,7 +1,7 @@
-import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
-import { db, messages, type MessageRow } from "@maildrill/database";
-import { bumpVersion, insertDispatchOutbox } from "./shared";
+import { randomUUID } from 'node:crypto';
+import { and, eq } from 'drizzle-orm';
+import { db, messages, type MessageRow } from '@maildrill/database';
+import { bumpVersion, insertDispatchOutbox } from './shared';
 
 export interface RetryResult {
   message: MessageRow | null;
@@ -25,12 +25,12 @@ export async function retryMessage(
       .limit(1);
     const m = rows[0];
     if (!m) return { message: null, retried: false };
-    if (m.status !== "failed") return { message: m, retried: false };
+    if (m.status !== 'failed') return { message: m, retried: false };
 
     const upd = await tx
       .update(messages)
       .set({
-        status: "queued",
+        status: 'queued',
         generation: m.generation + 1,
         queuedAt: new Date(),
         lastErrorCode: null,

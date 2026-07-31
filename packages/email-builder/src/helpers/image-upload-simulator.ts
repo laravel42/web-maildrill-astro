@@ -73,7 +73,9 @@ export const initImageUploadSimulator = (config: SimulatorConfig = {}) => {
         ? base64ToBlobUrl(images[0])
         : 'https://placehold.co/600x400/EEE/31343C?text=Upload+Simulado';
 
-      console.log(`[ImageSimulator] Upload complete — blockId: ${id}, url: ${url.substring(0, 60)}...`);
+      console.log(
+        `[ImageSimulator] Upload complete — blockId: ${id}, url: ${url.substring(0, 60)}...`,
+      );
 
       window.dispatchEvent(
         new CustomEvent('email-builder-upload-image-receive', {

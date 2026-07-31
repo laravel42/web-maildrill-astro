@@ -42,9 +42,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix7yz-1"
-        ]
+        "childrenIds": ["block-ms8ix7yz-1"]
       }
     }
   },
@@ -90,11 +88,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix7z0-3",
-          "block-ms8ix7z0-5",
-          "block-ms8ix7z0-7"
-        ]
+        "childrenIds": ["block-ms8ix7z0-3", "block-ms8ix7z0-5", "block-ms8ix7z0-7"]
       }
     }
   },
@@ -186,10 +180,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "div-ms8ix7z0-9",
-          "cols-ms8ix7z1-r"
-        ]
+        "childrenIds": ["div-ms8ix7z0-9", "cols-ms8ix7z1-r"]
       }
     }
   },
@@ -224,32 +215,20 @@
         }
       },
       "props": {
-        "fixedWidths": [
-          33,
-          33,
-          34
-        ],
+        "fixedWidths": [33, 33, 34],
         "columnsCount": 3,
         "layout": "layout-33-33-33",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "card-ms8ix7z1-f"
-            ]
+            "childrenIds": ["card-ms8ix7z1-f"]
           },
           {
-            "childrenIds": [
-              "card-ms8ix7z1-l"
-            ]
+            "childrenIds": ["card-ms8ix7z1-l"]
           },
           {
-            "childrenIds": [
-              "block-ms8ix7z1-m",
-              "block-ms8ix7z1-o",
-              "block-ms8ix7z1-q"
-            ]
+            "childrenIds": ["block-ms8ix7z1-m", "block-ms8ix7z1-o", "block-ms8ix7z1-q"]
           }
         ]
       }
@@ -274,11 +253,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix7z1-a",
-          "block-ms8ix7z1-c",
-          "block-ms8ix7z1-e"
-        ]
+        "childrenIds": ["block-ms8ix7z1-a", "block-ms8ix7z1-c", "block-ms8ix7z1-e"]
       }
     }
   },
@@ -370,11 +345,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix7z1-g",
-          "block-ms8ix7z1-i",
-          "block-ms8ix7z1-k"
-        ]
+        "childrenIds": ["block-ms8ix7z1-g", "block-ms8ix7z1-i", "block-ms8ix7z1-k"]
       }
     }
   },
@@ -535,10 +506,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix7z1-t",
-          "block-ms8ix7z1-v"
-        ]
+        "childrenIds": ["block-ms8ix7z1-t", "block-ms8ix7z1-v"]
       }
     }
   },
@@ -607,10 +575,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "block-ms8ix7z1-x",
-          "block-ms8ix7z1-z"
-        ]
+        "childrenIds": ["block-ms8ix7z1-x", "block-ms8ix7z1-z"]
       }
     }
   },
@@ -679,11 +644,7 @@
         }
       },
       "props": {
-        "childrenIds": [
-          "div-ms8ix7z1-11",
-          "block-ms8ix7z1-12",
-          "block-ms8ix7z1-14"
-        ]
+        "childrenIds": ["div-ms8ix7z1-11", "block-ms8ix7z1-12", "block-ms8ix7z1-14"]
       }
     }
   },

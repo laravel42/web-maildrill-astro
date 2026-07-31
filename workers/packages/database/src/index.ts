@@ -1,6 +1,6 @@
-export * from "./client";
-export * from "./types";
-export * as schema from "./schema";
+export * from './client';
+export * from './types';
+export * as schema from './schema';
 export {
   tenants,
   providerAccounts,
@@ -25,4 +25,4 @@ export {
   users,
   memberships,
   magicLinkTokens,
-} from "./schema";
+} from './schema';

@@ -10,16 +10,16 @@
  *   pnpm --dir workers db:backfill:thumbs --limit=20
  *   pnpm --dir workers db:backfill:thumbs --tenant=hello@laravel42.com
  */
-import sharp from "sharp";
-import { eq } from "drizzle-orm";
-import { db, tenants } from "@maildrill/database";
+import sharp from 'sharp';
+import { eq } from 'drizzle-orm';
+import { db, tenants } from '@maildrill/database';
 import {
   attachMediaThumb,
   getMediaObjectBytes,
   listMediaMissingThumbs,
   MEDIA_THUMB_SIZE,
   mediaConfigured,
-} from "./media";
+} from './media';
 
 const DEFAULT_CONCURRENCY = 4;
 
@@ -27,7 +27,7 @@ function argValue(flag: string): string | null {
   const eqArg = process.argv.find((a) => a.startsWith(`${flag}=`));
   if (eqArg) return eqArg.slice(flag.length + 1);
   const i = process.argv.indexOf(flag);
-  if (i >= 0 && process.argv[i + 1] && !process.argv[i + 1]!.startsWith("-")) {
+  if (i >= 0 && process.argv[i + 1] && !process.argv[i + 1]!.startsWith('-')) {
     return process.argv[i + 1]!;
   }
   return null;
@@ -43,11 +43,11 @@ async function resolveTenantId(nameOrId: string): Promise<string> {
 
 async function makeThumb250(bytes: Buffer): Promise<Buffer> {
   // failOn none: tolerate truncated/corrupt JPEG segments that still decode.
-  return sharp(bytes, { failOn: "none" })
+  return sharp(bytes, { failOn: 'none' })
     .autoOrient()
     .resize(MEDIA_THUMB_SIZE, MEDIA_THUMB_SIZE, {
-      fit: "cover",
-      position: "centre",
+      fit: 'cover',
+      position: 'centre',
     })
     .webp({ quality: 82 })
     .toBuffer();
@@ -78,40 +78,40 @@ async function runPool<T>(
 }
 
 async function main(): Promise<void> {
-  const dryRun = process.argv.includes("--dry-run");
-  const limitRaw = argValue("--limit");
+  const dryRun = process.argv.includes('--dry-run');
+  const limitRaw = argValue('--limit');
   const limit = limitRaw ? Math.max(1, parseInt(limitRaw, 10)) : null;
-  const tenantArg = argValue("--tenant");
-  const concurrencyRaw = argValue("--concurrency");
+  const tenantArg = argValue('--tenant');
+  const concurrencyRaw = argValue('--concurrency');
   const concurrency = concurrencyRaw
     ? Math.max(1, parseInt(concurrencyRaw, 10))
     : DEFAULT_CONCURRENCY;
 
   if (!mediaConfigured()) {
     throw new Error(
-      "media storage is not configured (AWS_REGION, MEDIA_S3_BUCKET, MEDIA_CDN_DOMAIN)",
+      'media storage is not configured (AWS_REGION, MEDIA_S3_BUCKET, MEDIA_CDN_DOMAIN)',
     );
   }
 
   const tenantId = tenantArg ? await resolveTenantId(tenantArg) : undefined;
   let rows = await listMediaMissingThumbs(tenantId);
   rows = rows.filter((r) => {
-    const ct = r.contentType ?? "";
+    const ct = r.contentType ?? '';
     // Rasterize anything image/* (including SVG via sharp/librsvg when available).
-    return ct.startsWith("image/");
+    return ct.startsWith('image/');
   });
   if (limit != null) rows = rows.slice(0, limit);
 
   console.log(
     `missing thumbs: ${rows.length}` +
-      (tenantId ? ` (tenant ${tenantId})` : " (all tenants)") +
-      (dryRun ? " [dry-run]" : ""),
+      (tenantId ? ` (tenant ${tenantId})` : ' (all tenants)') +
+      (dryRun ? ' [dry-run]' : ''),
   );
   if (rows.length === 0) return;
 
   if (dryRun) {
     for (const row of rows.slice(0, 15)) {
-      console.log(`  would thumb: ${row.name} (${row.contentType ?? "?"})`);
+      console.log(`  would thumb: ${row.name} (${row.contentType ?? '?'})`);
     }
     if (rows.length > 15) console.log(`  … +${rows.length - 15} more`);
     return;
@@ -123,8 +123,8 @@ async function main(): Promise<void> {
     const thumb = await makeThumb250(original);
     await attachMediaThumb(row.tenantId, row.id, {
       body: thumb,
-      contentType: "image/webp",
-      filename: "thumb-250.webp",
+      contentType: 'image/webp',
+      filename: 'thumb-250.webp',
     });
     done += 1;
     if (done % 25 === 0 || done === rows.length) {

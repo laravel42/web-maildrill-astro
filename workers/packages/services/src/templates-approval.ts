@@ -1,46 +1,46 @@
-import { and, eq } from "drizzle-orm";
-import { db, templates, type TemplateRow } from "@maildrill/database";
-import { config } from "@maildrill/config";
+import { and, eq } from 'drizzle-orm';
+import { db, templates, type TemplateRow } from '@maildrill/database';
+import { config } from '@maildrill/config';
 import {
   getProvider,
   type RegisterTemplateInput,
   type TemplateStatusEvent,
   type WhatsAppTemplateStructure,
-} from "@maildrill/providers";
+} from '@maildrill/providers';
 
 /** The configured WhatsApp sender, digits only — the Infobip `{sender}` path param. */
 function whatsappSender(): string {
-  return config.infobip.whatsappFrom.replace(/\D/g, "");
+  return config.infobip.whatsappFrom.replace(/\D/g, '');
 }
 
 /** Reconstruct the WhatsApp template structure a template was authored with. */
 function structureOf(row: TemplateRow): WhatsAppTemplateStructure | null {
   const c = (row.components ?? {}) as Record<string, unknown>;
   const body = (c.body ?? {}) as { text?: unknown; examples?: unknown };
-  const text = typeof body.text === "string" ? body.text : (row.text ?? "");
+  const text = typeof body.text === 'string' ? body.text : (row.text ?? '');
   if (!text) return null;
 
   const structure: WhatsAppTemplateStructure = { body: { text } };
   if (Array.isArray(body.examples)) {
-    const examples = body.examples.filter((e): e is string => typeof e === "string");
+    const examples = body.examples.filter((e): e is string => typeof e === 'string');
     if (examples.length) structure.body.examples = examples;
   }
-  if (c.header && typeof c.header === "object") {
-    structure.header = c.header as WhatsAppTemplateStructure["header"];
+  if (c.header && typeof c.header === 'object') {
+    structure.header = c.header as WhatsAppTemplateStructure['header'];
   }
-  if (c.footer && typeof c.footer === "object") {
-    structure.footer = c.footer as WhatsAppTemplateStructure["footer"];
+  if (c.footer && typeof c.footer === 'object') {
+    structure.footer = c.footer as WhatsAppTemplateStructure['footer'];
   }
   if (Array.isArray(c.buttons) && c.buttons.length) {
-    structure.buttons = c.buttons as WhatsAppTemplateStructure["buttons"];
+    structure.buttons = c.buttons as WhatsAppTemplateStructure['buttons'];
   }
   return structure;
 }
 
-function categoryOf(row: TemplateRow): RegisterTemplateInput["category"] {
+function categoryOf(row: TemplateRow): RegisterTemplateInput['category'] {
   const c = (row.components ?? {}) as Record<string, unknown>;
-  const cat = typeof c.category === "string" ? c.category.toUpperCase() : "";
-  return cat === "UTILITY" || cat === "AUTHENTICATION" ? cat : "MARKETING";
+  const cat = typeof c.category === 'string' ? c.category.toUpperCase() : '';
+  return cat === 'UTILITY' || cat === 'AUTHENTICATION' ? cat : 'MARKETING';
 }
 
 async function loadTemplate(tenantId: string, id: string): Promise<TemplateRow | null> {
@@ -66,15 +66,15 @@ export async function submitTemplateForApproval(
   id: string,
 ): Promise<TemplateApprovalResult> {
   const row = await loadTemplate(tenantId, id);
-  if (!row) return { template: null, error: "not_found" };
-  if (row.channel !== "whatsapp") {
-    return { template: row, error: "only WhatsApp templates require approval" };
+  if (!row) return { template: null, error: 'not_found' };
+  if (row.channel !== 'whatsapp') {
+    return { template: row, error: 'only WhatsApp templates require approval' };
   }
   const structure = structureOf(row);
-  if (!structure) return { template: row, error: "template body text is required" };
+  if (!structure) return { template: row, error: 'template body text is required' };
   const sender = whatsappSender();
   if (!sender) {
-    return { template: row, error: "no WhatsApp sender configured (INFOBIP_WHATSAPP_FROM)" };
+    return { template: row, error: 'no WhatsApp sender configured (INFOBIP_WHATSAPP_FROM)' };
   }
 
   const provider = getProvider();
@@ -85,7 +85,7 @@ export async function submitTemplateForApproval(
     sender,
     // Infobip/Meta require lowercase alphanumeric + underscores.
     name: row.name,
-    language: row.language ?? "en",
+    language: row.language ?? 'en',
     category: categoryOf(row),
     structure,
   };
@@ -94,25 +94,25 @@ export async function submitTemplateForApproval(
     input.name = input.name
       .trim()
       .toLowerCase()
-      .replace(/[\s-]+/g, "_")
-      .replace(/[^a-z0-9_]/g, "")
-      .replace(/_+/g, "_")
-      .replace(/^_|_$/g, "");
+      .replace(/[\s-]+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
   }
   if (!input.name) {
     return {
       template: row,
       error:
-        "WhatsApp template name must contain lowercase letters, numbers, or underscores (e.g. welcome_offer)",
+        'WhatsApp template name must contain lowercase letters, numbers, or underscores (e.g. welcome_offer)',
     };
   }
   const result = await provider.registerWhatsAppTemplate(input);
-  if (!result.ok) return { template: row, error: result.error?.message ?? "submission failed" };
+  if (!result.ok) return { template: row, error: result.error?.message ?? 'submission failed' };
 
   const updated = await db
     .update(templates)
     .set({
-      approvalStatus: result.status ?? "pending",
+      approvalStatus: result.status ?? 'pending',
       providerTemplateId: result.providerTemplateId ?? row.providerTemplateId ?? null,
       rejectionReason: null,
       updatedAt: new Date(),
@@ -131,19 +131,19 @@ export async function refreshTemplateStatus(
   id: string,
 ): Promise<TemplateApprovalResult> {
   const row = await loadTemplate(tenantId, id);
-  if (!row) return { template: null, error: "not_found" };
-  if (row.channel !== "whatsapp") {
-    return { template: row, error: "only WhatsApp templates have an approval status" };
+  if (!row) return { template: null, error: 'not_found' };
+  if (row.channel !== 'whatsapp') {
+    return { template: row, error: 'only WhatsApp templates have an approval status' };
   }
   const sender = whatsappSender();
-  if (!sender) return { template: row, error: "no WhatsApp sender configured" };
+  if (!sender) return { template: row, error: 'no WhatsApp sender configured' };
 
   const provider = getProvider();
   if (!provider.listWhatsAppTemplates) {
     return { template: row, error: `provider ${provider.name} cannot list templates` };
   }
   const result = await provider.listWhatsAppTemplates(sender);
-  if (!result.ok) return { template: row, error: result.error?.message ?? "status refresh failed" };
+  if (!result.ok) return { template: row, error: result.error?.message ?? 'status refresh failed' };
 
   const match =
     result.templates.find((t) => t.id === row.providerTemplateId) ??
@@ -207,12 +207,7 @@ export async function pollPendingWhatsAppTemplates(): Promise<PollPendingTemplat
       approvalStatus: templates.approvalStatus,
     })
     .from(templates)
-    .where(
-      and(
-        eq(templates.channel, "whatsapp"),
-        eq(templates.approvalStatus, "pending"),
-      ),
-    );
+    .where(and(eq(templates.channel, 'whatsapp'), eq(templates.approvalStatus, 'pending')));
 
   const withProviderId = pending.filter((r) => Boolean(r.providerTemplateId));
   if (withProviderId.length === 0) {

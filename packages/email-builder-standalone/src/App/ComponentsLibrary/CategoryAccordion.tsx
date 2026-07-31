@@ -9,7 +9,14 @@
 import React from 'react';
 
 import ExpandMoreOutlined from '@mui/icons-material/ExpandMore';
-import { Accordion, AccordionDetails, AccordionSummary, Chip, Stack, Typography } from '@mui/material';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Chip,
+  Stack,
+  Typography,
+} from '@mui/material';
 
 export default function CategoryAccordion({
   title,
@@ -45,11 +52,19 @@ export default function CategoryAccordion({
     >
       <AccordionSummary
         expandIcon={<ExpandMoreOutlined />}
-        sx={{ px: 0, minHeight: 40, '& .MuiAccordionSummary-content': { my: 0.75, alignItems: 'center' } }}
+        sx={{
+          px: 0,
+          minHeight: 40,
+          '& .MuiAccordionSummary-content': { my: 0.75, alignItems: 'center' },
+        }}
       >
         <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
           <Typography variant="subtitle2">{title}</Typography>
-          <Chip size="small" label={badge} sx={{ height: 18, fontSize: '0.65rem', '& .MuiChip-label': { px: 0.75 } }} />
+          <Chip
+            size="small"
+            label={badge}
+            sx={{ height: 18, fontSize: '0.65rem', '& .MuiChip-label': { px: 0.75 } }}
+          />
         </Stack>
       </AccordionSummary>
       <AccordionDetails sx={{ p: 0, pb: 1.5 }}>{children}</AccordionDetails>
@@ -90,7 +105,11 @@ export function SubcategoryAccordion({
     >
       <AccordionSummary
         expandIcon={<ExpandMoreOutlined sx={{ fontSize: 18 }} />}
-        sx={{ px: 0, minHeight: 32, '& .MuiAccordionSummary-content': { my: 0.25, alignItems: 'center', gap: 0.5 } }}
+        sx={{
+          px: 0,
+          minHeight: 32,
+          '& .MuiAccordionSummary-content': { my: 0.25, alignItems: 'center', gap: 0.5 },
+        }}
       >
         <Typography variant="overline" color="text.secondary" sx={{ lineHeight: 1.4 }}>
           {title}

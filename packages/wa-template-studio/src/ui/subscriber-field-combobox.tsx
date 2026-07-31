@@ -125,7 +125,9 @@ export function SubscriberFieldCombobox({
         <div className="wts-combobox-list">
           <div className="p-1">
             {filtered.length === 0 ? (
-              <p className="px-2 py-4 text-center text-sm text-muted-foreground">No fields match.</p>
+              <p className="px-2 py-4 text-center text-sm text-muted-foreground">
+                No fields match.
+              </p>
             ) : (
               <>
                 {renderGroup('Subscriber fields', core)}

@@ -4,7 +4,8 @@
  * once storage is wired. Only the record shape and folder buckets remain.
  */
 
-export type MediaFileType = 'JPEG' | 'PNG' | 'SVG' | 'PDF' | 'XLSX' | 'DOCX' | 'MP3' | 'WAV' | 'AUDIO';
+export type MediaFileType =
+  'JPEG' | 'PNG' | 'SVG' | 'PDF' | 'XLSX' | 'DOCX' | 'MP3' | 'WAV' | 'AUDIO';
 
 export type MediaFile = {
   id: string;
@@ -25,13 +26,7 @@ export type MediaFile = {
 };
 
 /** Built-in type buckets used when an asset has no custom `folder`. */
-export const TYPE_FOLDER_ORDER = [
-  'Images',
-  'Audio',
-  'PDF',
-  'Spreadsheets',
-  'Docs',
-] as const;
+export const TYPE_FOLDER_ORDER = ['Images', 'Audio', 'PDF', 'Spreadsheets', 'Docs'] as const;
 
 export type MediaTypeFolder = (typeof TYPE_FOLDER_ORDER)[number];
 /** Folder tab value: all files, a custom library folder, or a type bucket. */
@@ -47,10 +42,7 @@ export function folderOf(type: MediaFileType): MediaTypeFolder {
 }
 
 /** Effective library folder for filtering/tabs — custom folder wins over type. */
-export function libraryFolderOf(file: {
-  folder?: string | null;
-  type: MediaFileType;
-}): string {
+export function libraryFolderOf(file: { folder?: string | null; type: MediaFileType }): string {
   const custom = file.folder?.trim();
   return custom || folderOf(file.type);
 }

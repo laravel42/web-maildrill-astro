@@ -6,7 +6,10 @@ import { Box, Button, Stack, SxProps } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 import { RADIUS_INPUT } from '../../../../../../../constants';
-import { setColorPickerState, useColorPickerState } from '../../../../../../../documents/editor/EditorContext';
+import {
+  setColorPickerState,
+  useColorPickerState,
+} from '../../../../../../../documents/editor/EditorContext';
 
 import EyeDropperButton from './EyeDropperButton';
 import Swatch from './Swatch';
@@ -90,7 +93,7 @@ export default function Picker({ value, nullable, onChange }: Props) {
 
       setDebounceTimer(newTimer);
     },
-    [debounceTimer, isLocked, paletteColors]
+    [debounceTimer, isLocked, paletteColors],
   );
 
   const toggleLock = () => {

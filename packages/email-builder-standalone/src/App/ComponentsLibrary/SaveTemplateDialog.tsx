@@ -126,7 +126,7 @@ export default function SaveTemplateDialog({ open, onClose }: SaveTemplateDialog
           t('componentsLibrary.save.successDetailed', 'Saved → {{path}} ({{count}} blocks)', {
             path: result.saved,
             count: result.blockCount,
-          })
+          }),
         );
         setName('');
         setTags([]);
@@ -149,7 +149,7 @@ export default function SaveTemplateDialog({ open, onClose }: SaveTemplateDialog
           console.info(
             '[SaveTemplateDialog] captured thumbnail',
             `${(thumbnailBlob.size / 1024).toFixed(1)} KB`,
-            thumbnailBlob.type || '(unknown type)'
+            thumbnailBlob.type || '(unknown type)',
           );
         }
       } catch (captureErr) {
@@ -189,7 +189,7 @@ export default function SaveTemplateDialog({ open, onClose }: SaveTemplateDialog
         if (response.status === 413) {
           console.warn(
             '[SaveTemplateDialog] thumbnail rejected as too large; retrying save without it',
-            `${(thumbnailBlob.size / 1024).toFixed(1)} KB`
+            `${(thumbnailBlob.size / 1024).toFixed(1)} KB`,
           );
           response = await postJson();
         }
@@ -197,7 +197,10 @@ export default function SaveTemplateDialog({ open, onClose }: SaveTemplateDialog
         response = await postJson();
       }
       if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as { error?: string; issues?: unknown } | null;
+        const body = (await response.json().catch(() => null)) as {
+          error?: string;
+          issues?: unknown;
+        } | null;
         throw new Error(body?.error ?? `HTTP ${response.status}`);
       }
       const result = (await response.json()) as { id: string; saved: string; blockCount: number };
@@ -205,7 +208,7 @@ export default function SaveTemplateDialog({ open, onClose }: SaveTemplateDialog
         t('componentsLibrary.save.successDetailed', 'Saved → {{path}} ({{count}} blocks)', {
           path: result.saved,
           count: result.blockCount,
-        })
+        }),
       );
       setName('');
       setTags([]);
@@ -226,14 +229,16 @@ export default function SaveTemplateDialog({ open, onClose }: SaveTemplateDialog
       fullWidth
       slotProps={{ paper: DIALOG_PAPER_PROPS }}
     >
-      <DialogTitle>{t('componentsLibrary.save.titleTemplate', 'Save document as template')}</DialogTitle>
+      <DialogTitle>
+        {t('componentsLibrary.save.titleTemplate', 'Save document as template')}
+      </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <Typography variant="body2" color="text.secondary">
             {t(
               'componentsLibrary.saveTemplate.body',
               'Captures the full document ({{count}} blocks) as a reusable template. Apply it later from the Components Library Templates tab; applying replaces the current document.',
-              { count: blocks.length }
+              { count: blocks.length },
             )}
           </Typography>
 
@@ -242,7 +247,10 @@ export default function SaveTemplateDialog({ open, onClose }: SaveTemplateDialog
             <TextField
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={t('componentsLibrary.saveTemplate.namePlaceholder', 'e.g. Welcome newsletter')}
+              placeholder={t(
+                'componentsLibrary.saveTemplate.namePlaceholder',
+                'e.g. Welcome newsletter',
+              )}
               autoFocus
               fullWidth
               disabled={submitting}
@@ -262,7 +270,11 @@ export default function SaveTemplateDialog({ open, onClose }: SaveTemplateDialog
         <Button onClick={onClose} disabled={submitting}>
           {t('componentsLibrary.save.close', 'Close')}
         </Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={!isValid || submitting || blocks.length === 0}>
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          disabled={!isValid || submitting || blocks.length === 0}
+        >
           {submitting
             ? t('componentsLibrary.save.submitting', 'Saving…')
             : t('componentsLibrary.saveTemplate.submit', 'Save template')}

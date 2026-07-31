@@ -9,7 +9,12 @@ type ToolbarPopoverProps = {
   disableAutoFocus?: boolean;
 };
 
-export default function ToolbarPopover({ anchorEl, onClose, children, disableAutoFocus = false }: ToolbarPopoverProps) {
+export default function ToolbarPopover({
+  anchorEl,
+  onClose,
+  children,
+  disableAutoFocus = false,
+}: ToolbarPopoverProps) {
   const theme = useTheme();
 
   return (
@@ -25,7 +30,10 @@ export default function ToolbarPopover({ anchorEl, onClose, children, disableAut
           sx: {
             backgroundColor: theme.palette.background.paper,
             borderRadius: '12px',
-            boxShadow: theme.palette.mode === 'dark' ? '0 10px 40px rgba(0,0,0,0.5)' : '0 10px 40px rgba(0,0,0,0.15)',
+            boxShadow:
+              theme.palette.mode === 'dark'
+                ? '0 10px 40px rgba(0,0,0,0.5)'
+                : '0 10px 40px rgba(0,0,0,0.15)',
           },
         },
       }}

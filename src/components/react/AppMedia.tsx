@@ -123,10 +123,7 @@ export default function AppMedia({
   const openUpload = () => {
     resetUploadForm();
     // Prefill folder from the active toolbar filter when it's a custom library folder.
-    if (
-      folder !== 'All files' &&
-      !(TYPE_FOLDER_ORDER as readonly string[]).includes(folder)
-    ) {
+    if (folder !== 'All files' && !(TYPE_FOLDER_ORDER as readonly string[]).includes(folder)) {
       setUploadFolder(folder);
     }
     setUploadOpen(true);
@@ -138,17 +135,15 @@ export default function AppMedia({
     resetUploadForm();
   };
 
-  const toggleSet =
-    (setter: typeof setOrientSel) =>
-    (v: string) => {
-      setter((prev) => {
-        const next = new Set(prev);
-        if (next.has(v)) next.delete(v);
-        else next.add(v);
-        return next;
-      });
-      resetPage();
-    };
+  const toggleSet = (setter: typeof setOrientSel) => (v: string) => {
+    setter((prev) => {
+      const next = new Set(prev);
+      if (next.has(v)) next.delete(v);
+      else next.add(v);
+      return next;
+    });
+    resetPage();
+  };
 
   // Folder counts: custom library folders (topics) win over type buckets.
   const folderCounts = useMemo(() => {
@@ -277,8 +272,7 @@ export default function AppMedia({
     const file = images[0]!;
     // Keep toolbar folder if the user opened Upload filtered to a custom folder.
     const keepFolder =
-      uploadFolder.trim() &&
-      !(TYPE_FOLDER_ORDER as readonly string[]).includes(uploadFolder.trim())
+      uploadFolder.trim() && !(TYPE_FOLDER_ORDER as readonly string[]).includes(uploadFolder.trim())
         ? uploadFolder.trim()
         : '';
 
@@ -345,10 +339,11 @@ export default function AppMedia({
 
     setUploading(true);
     try {
-      const ticket = await api.post<{ storageKey: string; uploadUrl: string }>(
-        'media/upload-url',
-        { filename: file.name, contentType: file.type, sizeBytes: file.size },
-      );
+      const ticket = await api.post<{ storageKey: string; uploadUrl: string }>('media/upload-url', {
+        filename: file.name,
+        contentType: file.type,
+        sizeBytes: file.size,
+      });
       // Straight to S3 — the bytes never pass through our server.
       const put = await fetch(ticket.uploadUrl, {
         method: 'PUT',
@@ -997,7 +992,11 @@ export default function AppMedia({
                 {uploadTags.map((tag) => {
                   const st = tagStyle(tag);
                   return (
-                    <span key={tag} className={styles.tag} style={{ background: st.bg, color: st.c }}>
+                    <span
+                      key={tag}
+                      className={styles.tag}
+                      style={{ background: st.bg, color: st.c }}
+                    >
                       <span className={styles.tagLabel} style={{ color: st.c }}>
                         {tag}
                       </span>
@@ -1217,13 +1216,19 @@ function MediaDrawer({
               <img className={styles.previewImg} src={url} alt={file.name} />
             ) : isAudio && url ? (
               <div className={styles.audioPreview}>
-                <span className={styles.audioBadge} style={{ background: file.thumb, color: file.fg }}>
+                <span
+                  className={styles.audioBadge}
+                  style={{ background: file.thumb, color: file.fg }}
+                >
                   {file.type}
                 </span>
                 <audio className={styles.audioPlayer} controls preload="none" src={url} />
               </div>
             ) : (
-              <div className={styles.previewInner} style={{ background: file.thumb, color: file.fg }}>
+              <div
+                className={styles.previewInner}
+                style={{ background: file.thumb, color: file.fg }}
+              >
                 {file.label || file.type}
               </div>
             )}

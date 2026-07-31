@@ -110,7 +110,7 @@ function searchText(entry: { keywords?: string; slug: string; description: strin
 function scoreEntry(
   prompt: string,
   promptCategory: string,
-  entry: { keywords?: string; slug: string; description: string }
+  entry: { keywords?: string; slug: string; description: string },
 ): number {
   const text = searchText(entry);
   // Keyword overlap (dominant signal).
@@ -127,7 +127,9 @@ function scoreEntry(
  * order is deterministic for a given pool (important for tests and for the
  * "bundled defaults first" intuition).
  */
-function byScoreThenSlot<T extends { slot: number }>(scored: Array<{ entry: T; score: number }>): T[] {
+function byScoreThenSlot<T extends { slot: number }>(
+  scored: Array<{ entry: T; score: number }>,
+): T[] {
   return scored
     .slice()
     .sort((a, b) => (b.score !== a.score ? b.score - a.score : a.entry.slot - b.entry.slot))
@@ -152,7 +154,7 @@ export interface SelectTemplatesOptions {
 export function selectTemplates(
   prompt: string,
   pool: readonly TemplateEntry[],
-  options: SelectTemplatesOptions = {}
+  options: SelectTemplatesOptions = {},
 ): TemplateEntry[] {
   const topN = options.topN ?? RETRIEVAL_DEFAULTS.templates;
   if (pool.length === 0 || topN <= 0) return [];
@@ -186,7 +188,7 @@ export interface SelectSectionsOptions {
 export function selectSections(
   prompt: string,
   pool: readonly SectionEntry[],
-  options: SelectSectionsOptions = {}
+  options: SelectSectionsOptions = {},
 ): SectionEntry[] {
   const perRole = options.perRole ?? RETRIEVAL_DEFAULTS.sectionsPerRole;
   const maxRoles = options.maxRoles ?? RETRIEVAL_DEFAULTS.maxRoles;
@@ -242,7 +244,7 @@ export interface SelectThemesOptions {
 export function selectThemes(
   prompt: string,
   pool: readonly ThemeEntry[],
-  options: SelectThemesOptions = {}
+  options: SelectThemesOptions = {},
 ): ThemeEntry[] {
   const topN = options.topN ?? RETRIEVAL_DEFAULTS.themes;
   if (pool.length === 0 || topN <= 0) return [];

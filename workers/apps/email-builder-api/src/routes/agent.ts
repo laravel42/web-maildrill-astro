@@ -11,7 +11,11 @@ import { z } from 'zod';
 import { buildQualityReport } from '../agent/report.js';
 import { compileRefineBrief } from '../agent/refine.js';
 import { analyzeTemplate, isSendReady, type EditorDocument } from '../audit/index.js';
-import { getProvider as defaultGetProvider, PROVIDER_NAMES, type ProviderName } from '../providers/index.js';
+import {
+  getProvider as defaultGetProvider,
+  PROVIDER_NAMES,
+  type ProviderName,
+} from '../providers/index.js';
 import { RefineBriefSchema } from '../wizard/brief-schema.js';
 
 const DocumentBodySchema = z.object({
@@ -66,7 +70,9 @@ export function createAgentRoute(options: CreateAgentRouteOptions = {}) {
           report,
           sendReady: isSendReady(report),
           clientWeaknesses: report.findings
-            .filter((f) => f.dimension === 'clientCompatibility' || (f.clients && f.clients.length > 0))
+            .filter(
+              (f) => f.dimension === 'clientCompatibility' || (f.clients && f.clients.length > 0),
+            )
             .slice(0, 10)
             .map((f) => ({
               title: f.title,
