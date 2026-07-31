@@ -22,6 +22,11 @@
   --surface3: #fbfaf8;
   --border: #ecebe6;
   --border2: #e4e2da;
+  /* Workspace sidebar panel (rgb 242 241 239). */
+  --sidebar-bg: #f2f1ef;
+  /* Workspace sidebar ink-based hover (the panel is sidebar-bg, so a matching
+     hover fill would vanish). */
+  --sidebar-hover: rgba(31, 30, 27, 0.055);
   --divider: #efeee9;
   --header-bg: rgba(246, 245, 242, 0.75);
 
@@ -171,6 +176,8 @@
   --surface2: #2a261e;
   --surface3: #26221b;
   --border: #332f26;
+  --sidebar-bg: #15130d;
+  --sidebar-hover: rgba(245, 243, 236, 0.06);
   --border2: #3c372c;
   --divider: #29251d;
   --header-bg: rgba(21, 19, 13, 0.75);

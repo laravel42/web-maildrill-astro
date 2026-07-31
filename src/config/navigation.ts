@@ -134,15 +134,36 @@ export type AppNavItem = {
   icon: IconName;
 };
 
-export const appNav: AppNavItem[] = [
-  { label: 'Dashboard', href: routes.app.dashboard, icon: 'dashboard' },
-  { label: 'Campaigns', href: routes.app.campaigns, icon: 'campaigns' },
-  { label: 'Templates', href: routes.app.templates, icon: 'templates' },
-  { label: 'Lists', href: routes.app.lists, icon: 'lists' },
-  { label: 'Subscribers', href: routes.app.subscribers, icon: 'subscribers' },
-  { label: 'Media Library', href: routes.app.media, icon: 'media' },
-  { label: 'Analytics', href: routes.app.analytics, icon: 'analytics' },
+export type AppNavGroup = { label: string; items: AppNavItem[] };
+
+/** Workspace sidebar — labeled sections separated by hairlines. */
+export const appNavGroups: AppNavGroup[] = [
+  {
+    label: 'Workspace',
+    items: [
+      { label: 'Dashboard', href: routes.app.dashboard, icon: 'dashboard' },
+      { label: 'Campaigns', href: routes.app.campaigns, icon: 'campaigns' },
+      { label: 'Templates', href: routes.app.templates, icon: 'templates' },
+    ],
+  },
+  {
+    label: 'Audience',
+    items: [
+      { label: 'Subscribers', href: routes.app.subscribers, icon: 'subscribers' },
+      { label: 'Lists', href: routes.app.lists, icon: 'lists' },
+    ],
+  },
+  {
+    label: 'Content & Data',
+    items: [
+      { label: 'Media Library', href: routes.app.media, icon: 'media' },
+      { label: 'Analytics', href: routes.app.analytics, icon: 'analytics' },
+    ],
+  },
 ];
+
+/** Flat view of the grouped nav, for the command palette and search. */
+export const appNav: AppNavItem[] = appNavGroups.flatMap((g) => g.items);
 
 export const appSettingsNav: AppNavItem = {
   label: 'Settings',
