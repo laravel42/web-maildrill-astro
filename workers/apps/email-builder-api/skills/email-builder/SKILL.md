@@ -13,6 +13,12 @@ metadata:
 
 Generate valid email template JSON documents that can be loaded into EmailBuilder.js, rendered to HTML, and sent via any email provider.
 
+**Agent surface** (see `src/agent/README.md`): every generation call also receives
+Impeccable-inspired design-craft guidance; after generate, the editor can run
+`POST /api/audit` (deterministic) and `POST /api/critique` (audit + LLM design
+review) to score technical/HTML-client readiness and design quality. The wizard
+composer and refine brief routes live under `/api/visual-brief/*`.
+
 ## Document Structure
 
 A template is a flat `Record<string, TEditorBlock>` — a JSON object where keys are block IDs and values are block definitions. There is NO nesting in the data structure; parent-child relationships are expressed via `childrenIds` arrays.

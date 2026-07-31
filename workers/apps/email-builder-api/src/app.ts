@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 
+import { agentPlugin } from "./routes/agent.js";
 import { aiImageGeneratePlugin } from "./routes/ai-image-generate.js";
 import { aiTextProcessPlugin } from "./routes/ai-text-process.js";
 import { devSaveLayoutPlugin } from "./routes/dev-save-layout.js";
@@ -31,6 +32,7 @@ export async function emailBuilderRoutes(app: FastifyInstance): Promise<void> {
   await app.register(imagesPlugin, { prefix: "/api" });
   await app.register(improvePromptPlugin, { prefix: "/api/improve-prompt" });
   await app.register(visualBriefPlugin, { prefix: "/api" });
+  await app.register(agentPlugin, { prefix: "/api" });
   await app.register(aiImageGeneratePlugin, { prefix: "/api" });
   await app.register(aiTextProcessPlugin, { prefix: "/api" });
 
@@ -51,6 +53,12 @@ export function emailBuilderHealth(): Record<string, unknown> {
       dedupStrategy: "remap-duplicate-ids",
       skillCache: process.env.NODE_ENV === "production" ? "enabled" : "disabled",
       qualityExpectations: "v1",
+      agent: {
+        audit: true,
+        critique: true,
+        refineBrief: true,
+        designCraft: "impeccable-v1",
+      },
     },
   };
 }

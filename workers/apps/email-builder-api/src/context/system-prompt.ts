@@ -1,3 +1,4 @@
+import { DESIGN_CRAFT_GUIDANCE } from '../agent/design-craft.js';
 import { formatPoolForPrompt, type PoolItem } from '../unsplash/build-image-pool.js';
 
 import { generateFewShotPrompt } from './few-shot.js';
@@ -307,7 +308,7 @@ export function buildSystemPrompt(options: BuildSystemPromptOptions = {}): strin
 
   const hasPool = imagePool !== undefined && imagePool.length > 0;
 
-  const sections: string[] = [buildBaseInstructions(hasPool)];
+  const sections: string[] = [buildBaseInstructions(hasPool), DESIGN_CRAFT_GUIDANCE];
 
   // Add few-shot examples if user prompt is provided. The seed is
   // forwarded so the "ensure at least one backgroundImage example" branch
