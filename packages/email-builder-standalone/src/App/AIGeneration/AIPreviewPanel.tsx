@@ -470,9 +470,23 @@ export default function AIPreviewPanel({ response, onComplete, onError }: AIPrev
 
         {/* Live preview */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          <Typography sx={{ fontSize: '14px', fontWeight: 700, mb: 0.5 }}>
-            {t('aiGeneration.preview.previewTitle')}
-          </Typography>
+          <Stack
+            direction="row"
+            sx={{ alignItems: 'baseline', justifyContent: 'space-between', gap: 1, mb: 0.5 }}
+          >
+            <Typography sx={{ fontSize: '14px', fontWeight: 700 }}>
+              {t('aiGeneration.preview.previewTitle')}
+            </Typography>
+            {!streamFinished && (
+              <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+                {t('aiGeneration.dialog.status.streaming')}
+                {blockCount > 0 ? ` · ${t('aiGeneration.preview.blocksCount', { count: blockCount })}` : ''}
+              </Typography>
+            )}
+          </Stack>
+          {/* Streaming is otherwise only visible as blocks appearing; the bar
+              says "still working" during quiet gaps between frames. */}
+          {!streamFinished && <LinearProgress sx={{ borderRadius: '2px', height: 3, mb: 0.5 }} />}
           <Box
             sx={{
               flex: 1,

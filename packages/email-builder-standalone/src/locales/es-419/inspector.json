@@ -34,7 +34,32 @@
       "suggestionsLabel": "¿Necesitas inspiración?",
       "improvePrompt": "✨ Mejorar prompt",
       "improvingPrompt": "Mejorando...",
-      "suggestions": [],
+      "suggestions": [
+        {
+          "label": "Correo de bienvenida",
+          "prompt": "Un correo de bienvenida cálido para nuevos usuarios de un producto SaaS moderno. Abre con un saludo breve y amistoso, explica la primera acción que deben realizar y cierra con un único botón CTA destacado para comenzar. Máximo 150 palabras y espaciado generoso."
+        },
+        {
+          "label": "Lanzamiento de producto",
+          "prompt": "Un correo de anuncio de lanzamiento de producto. Comienza con una sección hero llamativa (titular + línea de apoyo + imagen hero de marcador de posición), luego tres destacados breves de funcionalidades con íconos o imágenes pequeñas, y termina con un botón CTA contundente para probar el producto. Tono seguro y enérgico."
+        },
+        {
+          "label": "Boletín mensual",
+          "prompt": "Un boletín mensual limpio con una introducción breve del equipo, tres avances de artículos (título, resumen de una oración y enlace Leer más en cada uno) y un pie con enlaces sociales y una línea para cancelar la suscripción. Tono editorial y calmado, con separación clara entre historias."
+        },
+        {
+          "label": "Carrito abandonado",
+          "prompt": "Un correo de recordatorio de carrito abandonado. Recuerda con amabilidad que quedaron artículos pendientes, muestra una imagen de producto de marcador de posición con nombre y precio, agrega una línea de confianza (devoluciones gratis o soporte) y un único botón CTA para completar la compra. Tono útil, sin presión."
+        },
+        {
+          "label": "Invitación a evento",
+          "prompt": "Un correo de invitación a un webinar en vivo. Abre con el nombre del evento y una promesa de valor en una línea, presenta fecha, hora y duración en un bloque fácil de escanear, introduce a la persona ponente en una oración y cierra con un botón CTA de confirmación más un enlace para agregar al calendario."
+        },
+        {
+          "label": "Código de verificación",
+          "prompt": "Un correo minimalista de código de verificación de un solo uso. Una línea breve que explique que se solicitó el código, el código de 6 dígitos en grande y centrado, una nota de que expira en 10 minutos y una línea discreta indicando ignorar el correo si no fue solicitado. Sin imágenes ni marketing."
+        }
+      ],
       "suggestionsRefine": [
         {
           "label": "Cambiar color del CTA",
@@ -87,7 +112,9 @@
         "message": "Tu prompt y las respuestas del wizard se perderán.",
         "stay": "Seguir trabajando",
         "leave": "Sí, salir"
-      }
+      },
+      "undoImprove": "Deshacer",
+      "improveFailed": "No se pudo mejorar el prompt: tu texto quedó sin cambios. Inténtalo de nuevo."
     },
     "preview": {
       "framesTitle": "Flujo",
@@ -97,6 +124,11 @@
       "renderError": "No se pudo renderizar este bloque — se reintentará cuando lleguen más fragmentos.",
       "blocksCount": "{{count}} bloques",
       "bytesCount": "{{bytes}} bytes"
+    },
+    "score": {
+      "button": "Puntaje de la plantilla",
+      "tooltip": "Evalúa esta plantilla: auditoría técnica más crítica de diseño con IA",
+      "title": "Puntaje de la plantilla"
     }
   },
   "actions": {
@@ -550,15 +582,33 @@
       "badge": "Seleccionado"
     },
     "blocks": {
-      "root": { "title": "Raíz" },
-      "notionText": { "title": "Texto" },
-      "button": { "title": "Botón" },
-      "image": { "title": "Imagen" },
-      "divider": { "title": "Divisor" },
-      "spacer": { "title": "Espaciador" },
-      "socialMedia": { "title": "Redes sociales" },
-      "container": { "title": "Contenedor" },
-      "columnsContainer": { "title": "Columnas" }
+      "root": {
+        "title": "Raíz"
+      },
+      "notionText": {
+        "title": "Texto"
+      },
+      "button": {
+        "title": "Botón"
+      },
+      "image": {
+        "title": "Imagen"
+      },
+      "divider": {
+        "title": "Divisor"
+      },
+      "spacer": {
+        "title": "Espaciador"
+      },
+      "socialMedia": {
+        "title": "Redes sociales"
+      },
+      "container": {
+        "title": "Contenedor"
+      },
+      "columnsContainer": {
+        "title": "Columnas"
+      }
     },
     "fields": {
       "color": "Color del texto",
