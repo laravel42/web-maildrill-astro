@@ -59,6 +59,7 @@ import {
   users,
   webhookEvents,
 } from './index';
+import { seedGalleryTemplates } from './seed-gallery-templates';
 
 const TARGET_TENANT_NAME = 'hello@laravel42.com';
 const WINDOW_WEEKS = 26;
@@ -595,6 +596,10 @@ async function main(): Promise<void> {
     (typeof tplRows)[0],
     (typeof tplRows)[0],
   ];
+
+  /* ---- 3c2. gallery email templates (Components Library × 20) ---------- */
+  const galleryCount = await seedGalleryTemplates(tid);
+  console.log(`seeded ${galleryCount} gallery email templates`);
 
   /* ---- 3d. campaigns + messages + provider events ---------------------- */
   let eventCount = 0;

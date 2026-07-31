@@ -10,6 +10,7 @@
     "dev:all": "node scripts/dev-all.mjs",
     "db:reset": "pnpm --filter workers db:reset",
     "db:seed": "pnpm --filter workers db:seed",
+    "db:seed:gallery": "pnpm --filter workers db:seed:gallery",
     "db:seed:images": "pnpm --filter workers db:seed:images",
     "db:backfill:thumbs": "pnpm --filter workers db:backfill:thumbs",
     "build": "astro build",
