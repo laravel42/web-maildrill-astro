@@ -1,4 +1,3 @@
-import type { ChannelType } from '@/types/app';
 import type { IconName } from '@/lib/icons';
 
 export type Kpi = {
@@ -23,6 +22,8 @@ export type FeedItem = {
   title: string;
   detail: string | null;
   at: string;
+  /** Deep-link target for campaign_sent entries (absent in older cache entries). */
+  campaignId?: string | null;
 };
 
 export type GetStartedStep = {

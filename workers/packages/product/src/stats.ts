@@ -395,6 +395,8 @@ export interface FeedItem {
   title: string;
   detail: string | null;
   at: Date;
+  /** Deep-link target for campaign_sent entries. */
+  campaignId: string | null;
 }
 
 /**
@@ -405,7 +407,12 @@ export interface FeedItem {
 export async function activityFeed(tenantId: string, limit = 16): Promise<FeedItem[]> {
   const [sentCampaigns, newSubs, unsubEvents] = await Promise.all([
     db
-      .select({ name: campaigns.name, channel: campaigns.channel, at: campaigns.completedAt })
+      .select({
+        id: campaigns.id,
+        name: campaigns.name,
+        channel: campaigns.channel,
+        at: campaigns.completedAt,
+      })
       .from(campaigns)
       .where(
         and(
@@ -447,12 +454,14 @@ export async function activityFeed(tenantId: string, limit = 16): Promise<FeedIt
         title: `“${c.name}” was sent`,
         detail: c.channel,
         at: c.at!,
+        campaignId: c.id,
       })),
     ...newSubs.map((s) => ({
       type: 'subscriber_added' as const,
       title: `${s.name ?? s.email} subscribed`,
       detail: null,
       at: s.at,
+      campaignId: null,
     })),
     ...unsubEvents
       .filter((u) => u.at)
@@ -461,6 +470,7 @@ export async function activityFeed(tenantId: string, limit = 16): Promise<FeedIt
         title: `${u.name ?? u.email ?? 'A subscriber'} unsubscribed`,
         detail: null,
         at: u.at!,
+        campaignId: null,
       })),
   ];
   return items.sort((a, b) => b.at.getTime() - a.at.getTime()).slice(0, limit);

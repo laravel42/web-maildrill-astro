@@ -2,10 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Campaign, ChannelType } from '@/types/app';
 import { api } from '@/lib/app/api';
 import { toCampaigns, type ApiCampaign } from '@/lib/app/campaign-map';
-import {
-  readDashboardCache,
-  writeDashboardCache,
-} from '@/lib/app/dashboard-cache';
+import { readDashboardCache, writeDashboardCache } from '@/lib/app/dashboard-cache';
 import { RANGES, type ChannelBreakdown } from './AppAnalytics.logic';
 import type { FeedItem } from './AppDashboard.types';
 import Icon from './Icon';
@@ -15,15 +12,17 @@ import {
   buildGetStarted,
   buildKpis,
   buildRecent,
-  buildSpark,
   campaignSentAt,
+  feedHref,
   FEED_META,
   isStepDone,
   rangeSubtitle,
+  sparkSeries,
   sparkTitle,
   type ActivityPoint,
   type Summary,
 } from './AppDashboard.logic';
+import Sparkline from './shared/Sparkline';
 import styles from './AppDashboard.module.css';
 
 export default function AppDashboard({
@@ -208,7 +207,7 @@ export default function AppDashboard({
   const kpis = buildKpis(summary, daily, days);
   const recent = buildRecent(campaigns);
   const getStarted = buildGetStarted(summary);
-  const spark = buildSpark(inRange);
+  const volumeSpark = sparkSeries(inRange);
   const sentInWindow = inRange.reduce((t, d) => t + d.sent, 0);
 
   return (
@@ -293,7 +292,11 @@ export default function AppDashboard({
                 </p>
               )}
               {recent.map((c) => (
-                <a key={c.id} href="/dashboard/campaigns" className={styles.ctRow}>
+                <a
+                  key={c.id}
+                  href={`/dashboard/campaigns?open=${encodeURIComponent(c.id)}`}
+                  className={styles.ctRow}
+                >
                   <span className={styles.ctName}>{c.name}</span>
                   <span className={`tnum ${styles.muted3}`}>
                     {c.recipients.toLocaleString('en-US')}
@@ -355,7 +358,11 @@ export default function AppDashboard({
                 {activity.map((a, i) => {
                   const meta = FEED_META[a.type];
                   return (
-                    <div key={`${a.type}-${a.at}-${i}`} className={styles.act}>
+                    <a
+                      key={`${a.type}-${a.at}-${i}`}
+                      href={feedHref(a)}
+                      className={`${styles.act} ${styles.actLink}`}
+                    >
                       <span
                         className={styles.actIc}
                         style={{ background: meta.bg, color: meta.color }}
@@ -366,7 +373,7 @@ export default function AppDashboard({
                         <div className={styles.actText}>{a.title}</div>
                         <div className={styles.actTime}>{agoNow(a.at)}</div>
                       </div>
-                    </div>
+                    </a>
                   );
                 })}
               </div>
@@ -384,7 +391,7 @@ export default function AppDashboard({
               · {RANGES.find((r) => r.key === range)?.label ?? '7 days'}
             </span>
           </h2>
-          <a href="/dashboard/analytics" className="acrd__link">
+          <a href={`/dashboard/analytics?range=${range}`} className="acrd__link">
             View analytics
           </a>
         </div>
@@ -417,7 +424,12 @@ export default function AppDashboard({
                   const meta = CHANNEL[(p.channel as ChannelType) ?? 'email'] ?? CHANNEL.email;
                   const share = channelTotal > 0 ? (p.sent / channelTotal) * 100 : 0;
                   return (
-                    <div key={p.channel} className={styles.perfRow}>
+                    <a
+                      key={p.channel}
+                      href={`/dashboard/analytics?channel=${p.channel}&range=${range}`}
+                      className={`${styles.perfRow} ${styles.perfLink}`}
+                      aria-label={`${meta.label} analytics`}
+                    >
                       <span
                         className={styles.perfIc}
                         style={{ background: meta.tint, color: meta.color }}
@@ -449,7 +461,7 @@ export default function AppDashboard({
                           />
                         </div>
                       </div>
-                    </div>
+                    </a>
                   );
                 })}
             </div>
@@ -482,37 +494,20 @@ export default function AppDashboard({
                 </div>
                 <div className={`tnum ${styles.sparkDelta}`} />
               </div>
-              {!spark.line && (
+              {volumeSpark.length < 2 && (
                 <p className={styles.cardEmpty} style={{ padding: '0 0 4px' }}>
                   Daily send volume plots here once there is activity to chart.
                 </p>
               )}
-              {spark.line && (
-                <svg
-                  width="100%"
-                  height="70"
-                  viewBox="0 0 100 32"
-                  preserveAspectRatio="none"
+              {volumeSpark.length >= 2 && (
+                <Sparkline
                   className={styles.sparkSvg}
-                  aria-hidden="true"
-                >
-                  <defs>
-                    <linearGradient id="dashspk" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0" stopColor="#4f46e5" stopOpacity="0.18" />
-                      <stop offset="1" stopColor="#4f46e5" stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
-                  <polyline points={spark.area} fill="url(#dashspk)" stroke="none" />
-                  <polyline
-                    points={spark.line}
-                    fill="none"
-                    stroke="#4f46e5"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    vectorEffect="non-scaling-stroke"
-                  />
-                </svg>
+                  series={volumeSpark}
+                  color="#4f46e5"
+                  format="number"
+                  height={70}
+                  area
+                />
               )}
             </div>
           )}

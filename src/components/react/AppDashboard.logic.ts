@@ -1,4 +1,5 @@
 import type { Campaign } from '@/types/app';
+import { fmtDate } from './AppAnalytics.logic';
 import type { FeedItem, GetStartedStep, Kpi } from './AppDashboard.types';
 import type { IconName } from '@/lib/icons';
 
@@ -155,7 +156,7 @@ function periodRateCompare(
   return {
     value: cur,
     delta: {
-      text: `${arrow} ${Math.abs(d).toFixed(1)}pp ${prior}`,
+      text: `${arrow} ${Math.abs(d).toFixed(1)}% ${prior}`,
       tone: d > 0 ? 'up' : 'down',
     },
   };
@@ -177,6 +178,14 @@ function periodSent(
   }
   const prevTotal = daily.slice(-days * 2, -days).reduce((t, d) => t + d.sent, 0);
   return { total, inRange, delta: relativeDelta(total, prevTotal, prior) };
+}
+
+/** Daily send volume for the performance spark (empty when nothing to plot). */
+export function sparkSeries(points: ActivityPoint[]): Array<{ value: number; label: string }> {
+  if (points.length < 2) return [];
+  const max = Math.max(...points.map((p) => p.sent));
+  if (max === 0) return [];
+  return points.map((p) => ({ value: p.sent, label: fmtDate(p.date) }));
 }
 
 /**
@@ -268,28 +277,14 @@ export const FEED_META: Record<FeedItem['type'], { icon: IconName; bg: string; c
   unsubscribed: { icon: 'x', bg: 'var(--danger-bg)', color: 'var(--danger-text)' },
 };
 
-/**
- * Sparkline path over daily sends. Returns empty strings when there is nothing
- * to plot so the caller can show an empty state instead of a flat line that
- * reads as "zero activity measured".
- */
-export function buildSpark(points: ActivityPoint[]): { line: string; area: string; max: number } {
-  if (points.length < 2) return { line: '', area: '', max: 0 };
-  const max = Math.max(...points.map((p) => p.sent));
-  if (max === 0) return { line: '', area: '', max: 0 };
-  const W = 100;
-  const H = 32;
-  const step = W / (points.length - 1);
-  const coords = points.map((p, i) => {
-    const x = i * step;
-    const y = H - (p.sent / max) * H;
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
-  });
-  return {
-    line: coords.join(' '),
-    area: `0,${H} ${coords.join(' ')} ${W},${H}`,
-    max,
-  };
+/** Where a feed entry leads: the campaign it announces, or the audience it changed. */
+export function feedHref(item: FeedItem): string {
+  if (item.type === 'campaign_sent') {
+    return item.campaignId
+      ? `/dashboard/campaigns?open=${encodeURIComponent(item.campaignId)}`
+      : '/dashboard/campaigns';
+  }
+  return '/dashboard/subscribers';
 }
 
 /**
