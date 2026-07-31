@@ -5,8 +5,9 @@ import type {
   MergeTagGroup,
   TEditorConfiguration,
 } from 'email-builder-standalone';
-import { api } from '@/lib/app/api';
+import { api, ApiError } from '@/lib/app/api';
 import { buildMergeTagMenu, type CustomField } from '@/lib/app/custom-fields';
+import { dataUrlToFile, uploadMediaFile } from '@/lib/app/media-upload';
 import { builderGenerateTemplate, builderTextAction } from '@/lib/app/services';
 import { TEMPLATE_CATEGORIES, defaultTemplateCategory } from '@/lib/app/templates-data';
 import {
@@ -86,6 +87,40 @@ export default function VisualEmailBuilder({
     window.addEventListener('toggle-media-library', onToggle);
     return () => window.removeEventListener('toggle-media-library', onToggle);
   }, []);
+
+  // Image/background Upload tab → workspace media library (S3 + register).
+  // ImageInput reads the file as a data URL and fires this event; we PUT to
+  // storage and answer with the public URL so the block can commit it.
+  useEffect(() => {
+    const onUpload = (event: Event) => {
+      const { images, id } = (event as CustomEvent<{ images: string[]; id: string }>).detail ?? {
+        images: [],
+        id: '',
+      };
+      void (async () => {
+        try {
+          const dataUrl = images[0];
+          if (!dataUrl) throw new Error('No image to upload');
+          const file = dataUrlToFile(dataUrl, `email-${Date.now()}`);
+          const asset = await uploadMediaFile(file);
+          window.dispatchEvent(
+            new CustomEvent('email-builder-upload-image-receive', {
+              detail: { id, url: asset.url, data: null },
+            }),
+          );
+        } catch (err) {
+          window.dispatchEvent(
+            new CustomEvent('email-builder-toggle-upload-file', {
+              detail: { uploading: false, id },
+            }),
+          );
+          show(err instanceof ApiError ? err.message : 'Could not upload image');
+        }
+      })();
+    };
+    window.addEventListener('email-builder-upload-image', onUpload);
+    return () => window.removeEventListener('email-builder-upload-image', onUpload);
+  }, [show]);
 
   // The image (or background-image) panel that opened the picker listens for
   // this event and applies the URL to the block it's editing on the canvas.
