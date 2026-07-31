@@ -24,6 +24,9 @@ export const ButtonPropsSchema = z
         fontSize: z.number().min(0).default(16).optional().nullable(),
         fontSizeMobile: z.number().min(0).optional().nullable(),
         fontFamily: FONT_FAMILY_SCHEMA,
+        /** Label leading. Without it the pill inherits the layout's 1.5 and
+         *  ends up taller than the authored `size` padding implies. */
+        lineHeight: z.string().optional().nullable(),
         background: z.string().nullable().optional(),
         buttonBackgroundColor: COLOR_SCHEMA,
         buttonTextColor: COLOR_SCHEMA,

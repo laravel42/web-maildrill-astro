@@ -103,6 +103,7 @@ export function Button({ style, props, blockId, isNotClient = false }: ButtonPro
       (selectedScreenSize == 'desktop' ? style?.fontSize : (style?.fontSizeMobile ?? style?.fontSize)) ?? undefined,
     fontFamily: useFontFamily(style?.fontFamily),
     fontWeight: style?.fontWeight ?? undefined,
+    lineHeight: style?.lineHeight ?? undefined,
     display: 'inline-block',
     textDecoration: 'none',
   };
@@ -161,6 +162,9 @@ export function Button({ style, props, blockId, isNotClient = false }: ButtonPro
           width={fullWidth ? '100%' : undefined}
           display={fullWidth ? 'block' : 'inline-block'}
           border={border}
+          /* The cell's own strut sizes the line box, so the label's leading
+             has to reach the wrapper too — not just the span. */
+          lineHeight={style?.lineHeight ?? undefined}
         >
           <span className={`btn${sid}`} style={linkStyle}>
             {text}

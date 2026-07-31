@@ -62,7 +62,7 @@ export default function ButtonSidebarPanel({ data, setData }: ButtonSidebarPanel
         <>
           <MultiStylePropertyPanel
             disabledCSSValidation
-            names={['fontFamily', 'fontSize', 'fontSizeMobile', 'fontWeight']}
+            names={['fontFamily', 'fontSize', 'fontSizeMobile', 'fontWeight', 'lineHeight']}
             value={data.style}
             onChange={(style) => updateData({ ...data, style })}
           />
