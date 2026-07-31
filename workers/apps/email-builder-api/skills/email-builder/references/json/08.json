@@ -40,7 +40,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/360x241/EEE/999?text=Image+Placeholder",
+        "url": "https://placehold.co/360x241/EEE/999?text=Logo",
         "alt": "Logo",
         "scale": 60,
         "scaleMobile": 60,
@@ -122,7 +122,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/540x361/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/travel-hospitality-hero-image/540/361",
         "alt": "Hero Image",
         "scale": 90,
         "scaleMobile": 90,
@@ -260,7 +260,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/travel-hospitality-illustration/600/402",
         "alt": "Illustration",
         "scale": 100,
         "scaleMobile": 100,
@@ -358,7 +358,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/300x201/EEE/999?text=Image+Placeholder",
+        "url": "https://placehold.co/300x201/EEE/999?text=Icon",
         "alt": "Icon",
         "scale": 50,
         "scaleMobile": 50,
@@ -440,7 +440,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/300x201/EEE/999?text=Image+Placeholder",
+        "url": "https://placehold.co/300x201/EEE/999?text=Icon",
         "alt": "Icon",
         "scale": 50,
         "scaleMobile": 50,
@@ -522,7 +522,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/300x201/EEE/999?text=Image+Placeholder",
+        "url": "https://placehold.co/300x201/EEE/999?text=Icon",
         "alt": "Icon",
         "scale": 50,
         "scaleMobile": 50,

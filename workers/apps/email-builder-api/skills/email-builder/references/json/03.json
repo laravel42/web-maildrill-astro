@@ -42,7 +42,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/390x261/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/ecommerce-flash-sale-placeholder-image/390/261",
         "alt": "Placeholder image",
         "scale": 65,
         "scaleMobile": 65,
@@ -236,7 +236,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/504x337/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/ecommerce-flash-sale-placeholder-image-2/504/337",
         "alt": "Placeholder image",
         "scale": 84,
         "scaleMobile": 84,
@@ -351,7 +351,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/504x337/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/ecommerce-flash-sale-placeholder-image-3/504/337",
         "alt": "Placeholder image",
         "scale": 84,
         "scaleMobile": 84,
@@ -528,7 +528,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/504x337/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/ecommerce-flash-sale-placeholder-image-4/504/337",
         "alt": "Placeholder image",
         "scale": 84,
         "scaleMobile": 84,
@@ -643,7 +643,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/504x337/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/ecommerce-flash-sale-placeholder-image-5/504/337",
         "alt": "Placeholder image",
         "scale": 84,
         "scaleMobile": 84,

@@ -45,7 +45,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/174x116/EEE/999?text=Image+Placeholder",
+        "url": "https://placehold.co/174x116/EEE/999?text=Logo",
         "alt": "Logo",
         "scale": 29,
         "scaleMobile": 29,
@@ -125,7 +125,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/528x353/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/saas-onboarding-hero-image/528/353",
         "alt": "Hero Image",
         "scale": 88,
         "scaleMobile": 88,
@@ -391,7 +391,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/288x192/EEE/999?text=Image+Placeholder",
+        "url": "https://placehold.co/288x192/EEE/999?text=Icon",
         "alt": "Icon",
         "scale": 48,
         "scaleMobile": 48,
@@ -559,7 +559,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://placehold.co/600x402/EEE/999?text=curve+border",
         "alt": "curve border",
         "scale": 100,
         "scaleMobile": 100,

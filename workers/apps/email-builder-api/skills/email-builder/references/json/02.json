@@ -128,7 +128,7 @@
         "sizeMobile": "cover",
         "width": 300,
         "scaleMobile": 100,
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/editorial-newsletter-placeholder-image/600/402",
         "alt": "Placeholder image"
       }
     }
@@ -269,7 +269,7 @@
         "sizeMobile": "cover",
         "width": 201,
         "scaleMobile": 100,
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/editorial-newsletter-placeholder-image-2/600/402",
         "alt": "Placeholder image"
       }
     }
@@ -326,7 +326,7 @@
         "sizeMobile": "cover",
         "width": 200,
         "scaleMobile": 100,
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/editorial-newsletter-placeholder-image-3/600/402",
         "alt": "Placeholder image"
       }
     }
@@ -383,7 +383,7 @@
         "sizeMobile": "cover",
         "width": 200,
         "scaleMobile": 100,
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/editorial-newsletter-placeholder-image-4/600/402",
         "alt": "Placeholder image"
       }
     }
@@ -506,7 +506,7 @@
         "sizeMobile": "cover",
         "width": 300,
         "scaleMobile": 100,
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/editorial-newsletter-placeholder-image-5/600/402",
         "alt": "Placeholder image"
       }
     }
@@ -903,7 +903,7 @@
         "sizeMobile": "scale",
         "width": 600,
         "scaleMobile": 50,
-        "url": "https://placehold.co/300x201/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/editorial-newsletter-placeholder-image-6/300/201",
         "alt": "Placeholder image",
         "linkHref": "https://picsum/logo"
       }

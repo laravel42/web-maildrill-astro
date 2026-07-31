@@ -40,7 +40,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://placehold.co/600x402/EEE/999?text=Logo",
         "alt": "Logo",
         "scale": 100,
         "scaleMobile": 100,
@@ -95,7 +95,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/receipt-otp-past-due-invoice/600/402",
         "alt": "Past Due Invoice",
         "scale": 100,
         "scaleMobile": 100,
@@ -804,7 +804,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://placehold.co/600x402/EEE/999?text=Logo",
         "alt": "Logo",
         "scale": 100,
         "scaleMobile": 100,

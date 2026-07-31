@@ -146,7 +146,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/real-estate-placeholder-image/600/402",
         "alt": "Placeholder image",
         "scale": 100,
         "scaleMobile": 100,
@@ -355,7 +355,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/real-estate-placeholder-image-2/600/402",
         "alt": "Placeholder image",
         "scale": 100,
         "scaleMobile": 100,
@@ -561,7 +561,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/real-estate-placeholder-image-3/600/402",
         "alt": "Placeholder image",
         "scale": 100,
         "scaleMobile": 100,
@@ -669,7 +669,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/real-estate-placeholder-image-4/600/402",
         "alt": "Placeholder image",
         "scale": 100,
         "scaleMobile": 100,
@@ -777,7 +777,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/real-estate-placeholder-image-5/600/402",
         "alt": "Placeholder image",
         "scale": 100,
         "scaleMobile": 100,
@@ -1142,7 +1142,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/552x369/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/real-estate-placeholder-image-6/552/369",
         "alt": "Placeholder image",
         "scale": 92,
         "scaleMobile": 92,

@@ -65,7 +65,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/318x213/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/nonprofit-cause-header-image/318/213",
         "alt": "header image",
         "scale": 53,
         "scaleMobile": 53,
@@ -228,7 +228,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/480x321/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/nonprofit-cause-globe/480/321",
         "alt": "globe",
         "scale": 80,
         "scaleMobile": 80,
@@ -436,7 +436,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/nonprofit-cause-bottom-image/600/402",
         "alt": "bottom image",
         "scale": 100,
         "scaleMobile": 100,

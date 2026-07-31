@@ -171,7 +171,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/abandoned-cart-shoes/600/402",
         "alt": "shoes",
         "scale": 100,
         "scaleMobile": 100,
@@ -256,7 +256,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/abandoned-cart-shoes-2/600/402",
         "alt": "shoes",
         "scale": 100,
         "scaleMobile": 100,
@@ -397,7 +397,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/abandoned-cart-shoes-3/600/402",
         "alt": "shoes",
         "scale": 100,
         "scaleMobile": 100,
@@ -538,7 +538,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/abandoned-cart-shoes-4/600/402",
         "alt": "shoes",
         "scale": 100,
         "scaleMobile": 100,
@@ -843,7 +843,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/198x132/EEE/999?text=Image+Placeholder",
+        "url": "https://placehold.co/198x132/EEE/999?text=Logo",
         "alt": "Logo",
         "scale": 33,
         "scaleMobile": 33,

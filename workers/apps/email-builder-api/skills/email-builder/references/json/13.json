@@ -43,7 +43,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/156x104/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/product-launch-saas-placeholder-image/156/104",
         "alt": "Placeholder image",
         "scale": 26,
         "scaleMobile": 26,
@@ -233,7 +233,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/product-launch-saas-placeholder-image-2/600/402",
         "alt": "Placeholder image",
         "scale": 100,
         "scaleMobile": 100,
@@ -382,7 +382,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/product-launch-saas-placeholder-image-3/600/402",
         "alt": "Placeholder image",
         "scale": 100,
         "scaleMobile": 100,
@@ -531,7 +531,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/product-launch-saas-placeholder-image-4/600/402",
         "alt": "Placeholder image",
         "scale": 100,
         "scaleMobile": 100,
@@ -731,7 +731,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/product-launch-saas-placeholder-image-5/600/402",
         "alt": "Placeholder image",
         "scale": 100,
         "scaleMobile": 100,
@@ -800,7 +800,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/product-launch-saas-placeholder-image-6/600/402",
         "alt": "Placeholder image",
         "scale": 100,
         "scaleMobile": 100,
@@ -1145,7 +1145,7 @@
         "sizeMobile": "scale",
         "width": 600,
         "scaleMobile": 34,
-        "url": "https://placehold.co/204x136/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/product-launch-saas-placeholder-image-7/204/136",
         "alt": "Placeholder image"
       }
     }
@@ -1342,7 +1342,7 @@
         "widthMobile": 150,
         "scaleMobile": 50,
         "height": null,
-        "url": "https://placehold.co/300x201/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/product-launch-saas-image-8/300/201",
         "alt": null,
         "linkHref": null,
         "contentAlignment": "middle"
@@ -1371,7 +1371,7 @@
         "widthMobile": 153,
         "scaleMobile": 51,
         "height": null,
-        "url": "https://placehold.co/306x205/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/product-launch-saas-image-9/306/205",
         "alt": null,
         "linkHref": null,
         "contentAlignment": "middle"

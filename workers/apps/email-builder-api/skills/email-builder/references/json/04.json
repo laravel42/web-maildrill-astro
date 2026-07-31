@@ -286,7 +286,7 @@
         "sizeMobile": "cover",
         "width": 225,
         "scaleMobile": 100,
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://placehold.co/600x402/EEE/999?text=Logo",
         "alt": "Logo"
       }
     }
@@ -703,7 +703,7 @@
         "sizeMobile": "cover",
         "width": 284,
         "scaleMobile": 100,
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/event-celebration-women/600/402",
         "alt": "Women"
       }
     }

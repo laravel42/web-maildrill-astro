@@ -46,7 +46,7 @@
         "sizeMobile": "scale",
         "width": 600,
         "scaleMobile": 33,
-        "url": "https://placehold.co/198x132/EEE/999?text=Image+Placeholder",
+        "url": "https://placehold.co/198x132/EEE/999?text=Logo",
         "alt": "Logo"
       }
     }
@@ -176,7 +176,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/198x132/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/confirmation-reservation-hero-image/198/132",
         "alt": "Hero Image",
         "scale": 33,
         "scaleMobile": 33,
@@ -282,7 +282,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/90x60/EEE/999?text=Image+Placeholder",
+        "url": "https://placehold.co/90x60/EEE/999?text=Contract+icon",
         "alt": "Contract icon",
         "scale": 15,
         "scaleMobile": 15,
@@ -417,7 +417,7 @@
       "props": {
         "size": "scale",
         "sizeMobile": "scale",
-        "url": "https://placehold.co/108x72/EEE/999?text=Image+Placeholder",
+        "url": "https://placehold.co/108x72/EEE/999?text=Payment+Icon",
         "alt": "Payment Icon",
         "scale": 18,
         "scaleMobile": 18,

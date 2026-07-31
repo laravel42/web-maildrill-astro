@@ -172,7 +172,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/education-coaching-placeholder-image/600/402",
         "alt": "Placeholder image",
         "scale": 100,
         "scaleMobile": 100,
@@ -428,7 +428,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/education-coaching-placeholder-image-2/600/402",
         "alt": "Placeholder image",
         "scale": 100,
         "scaleMobile": 100,
@@ -458,7 +458,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/education-coaching-placeholder-image-3/600/402",
         "alt": "Placeholder image",
         "scale": 100,
         "scaleMobile": 100,
@@ -610,7 +610,7 @@
         "sizeMobile": "scale",
         "width": 190,
         "scaleMobile": 54,
-        "url": "https://placehold.co/324x217/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/education-coaching-placeholder-image-4/324/217",
         "alt": "Placeholder image"
       }
     }
@@ -858,7 +858,7 @@
       "props": {
         "size": "cover",
         "sizeMobile": "cover",
-        "url": "https://placehold.co/600x402/EEE/999?text=Image+Placeholder",
+        "url": "https://picsum.photos/seed/education-coaching-placeholder-image-5/600/402",
         "alt": "Placeholder image",
         "scale": 100,
         "scaleMobile": 100,
