@@ -22,6 +22,8 @@ export interface ApiCampaign {
   clicked?: number | null;
   /** Recipients who unsubscribed off this campaign. */
   unsubscribed?: number | null;
+  /** Recipients who marked the message as spam (email). */
+  complaints?: number | null;
   failed?: number | null;
   /** Messages past queued/processing (submitted → terminal). */
   accepted?: number | null;
@@ -70,6 +72,8 @@ export function toCampaign(c: ApiCampaign): Campaign {
     failed: c.failed ?? 0,
     accepted: c.accepted ?? 0,
     unsubscribed: c.unsubscribed ?? 0,
+    complaints: c.complaints ?? 0,
+    lastErrorMessage: c.lastErrorMessage ?? null,
   };
 }
 

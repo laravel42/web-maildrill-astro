@@ -16,10 +16,8 @@ import type { Channel } from '@maildrill/domain';
  * (channel + audience selector + template/content + schedule) so a saved draft
  * can be handed straight to the messaging engine.
  *
- * Delivery counters are derived from the `messages` table rather than stored,
- * so they can never drift from reality. Open/click rates are intentionally
- * absent: no provider open/click events are normalized yet, and inventing them
- * would be worse than reporting nothing.
+ * Delivery / open / click / unsub / complaint counters are derived from
+ * `messages` + `message_events` (Infobip → PostHog → campaign-delivery poller).
  */
 
 export interface UpsertCampaignInput {
@@ -46,6 +44,8 @@ export interface CampaignWithStats extends Campaign {
   clicked: number;
   /** Recipients who unsubscribed off this campaign (unsubscribe events). */
   unsubscribed: number;
+  /** Recipients who marked the message as spam (email complaint events). */
+  complaints: number;
   failed: number;
   /**
    * Messages past the send queue (submitted/sent/terminal). Drives the
@@ -54,6 +54,11 @@ export interface CampaignWithStats extends Campaign {
   accepted: number;
   /** Most recent provider error when any message failed (detail GET only). */
   lastErrorMessage?: string | null;
+}
+
+export interface CampaignEngagementBreakdown {
+  devices: Array<{ device: string; count: number }>;
+  links: Array<{ url: string; count: number }>;
 }
 
 /** Per-campaign message counters, keyed by campaign id. */
@@ -66,6 +71,7 @@ async function statsFor(tenantId: string): Promise<
       opened: number;
       clicked: number;
       unsubscribed: number;
+      complaints: number;
       failed: number;
       accepted: number;
     }
@@ -85,12 +91,13 @@ async function statsFor(tenantId: string): Promise<
     .where(eq(messages.tenantId, tenantId))
     .groupBy(messages.campaignId);
 
-  /* Click / unsubscribe live in message_events, not message status. */
+  /* Click / unsubscribe / complaint live in message_events, not message status. */
   const engagement = await db
     .select({
       campaignId: messages.campaignId,
       clicked: sql<number>`count(distinct ${messageEvents.messageId}) filter (where ${messageEvents.eventType} = 'click')::int`,
       unsubscribed: sql<number>`count(distinct ${messageEvents.messageId}) filter (where ${messageEvents.eventType} = 'unsubscribed')::int`,
+      complaints: sql<number>`count(distinct ${messageEvents.messageId}) filter (where ${messageEvents.eventType} = 'complaint')::int`,
     })
     .from(messageEvents)
     .innerJoin(messages, eq(messageEvents.messageId, messages.id))
@@ -101,7 +108,11 @@ async function statsFor(tenantId: string): Promise<
       .filter((r) => r.campaignId)
       .map((r) => [
         r.campaignId as string,
-        { clicked: Number(r.clicked), unsubscribed: Number(r.unsubscribed) },
+        {
+          clicked: Number(r.clicked),
+          unsubscribed: Number(r.unsubscribed),
+          complaints: Number(r.complaints),
+        },
       ]),
   );
 
@@ -113,18 +124,21 @@ async function statsFor(tenantId: string): Promise<
       opened: number;
       clicked: number;
       unsubscribed: number;
+      complaints: number;
       failed: number;
       accepted: number;
     }
   >();
   for (const r of rows) {
     if (r.campaignId) {
+      const eng = engagementMap.get(r.campaignId);
       map.set(r.campaignId, {
         recipients: Number(r.recipients),
         delivered: Number(r.delivered),
         opened: Number(r.opened),
-        clicked: engagementMap.get(r.campaignId)?.clicked ?? 0,
-        unsubscribed: engagementMap.get(r.campaignId)?.unsubscribed ?? 0,
+        clicked: eng?.clicked ?? 0,
+        unsubscribed: eng?.unsubscribed ?? 0,
+        complaints: eng?.complaints ?? 0,
         failed: Number(r.failed),
         accepted: Number(r.accepted),
       });
@@ -179,6 +193,7 @@ export async function listCampaigns(tenantId: string): Promise<CampaignWithStats
     opened: stats.get(r.campaign.id)?.opened ?? 0,
     clicked: stats.get(r.campaign.id)?.clicked ?? 0,
     unsubscribed: stats.get(r.campaign.id)?.unsubscribed ?? 0,
+    complaints: stats.get(r.campaign.id)?.complaints ?? 0,
     failed: stats.get(r.campaign.id)?.failed ?? 0,
     accepted: stats.get(r.campaign.id)?.accepted ?? 0,
   }));
@@ -211,9 +226,64 @@ export async function getCampaign(tenantId: string, id: string): Promise<Campaig
     opened: counters?.opened ?? 0,
     clicked: counters?.clicked ?? 0,
     unsubscribed: counters?.unsubscribed ?? 0,
+    complaints: counters?.complaints ?? 0,
     failed,
     accepted: counters?.accepted ?? 0,
     lastErrorMessage: failed > 0 ? await lastFailedMessageError(tenantId, row.campaign.id) : null,
+  };
+}
+
+/**
+ * Device + top-link breakdown for a campaign report, sourced from Infobip
+ * tracking payloads stored on message_events.
+ */
+export async function getCampaignEngagement(
+  tenantId: string,
+  campaignId: string,
+): Promise<CampaignEngagementBreakdown> {
+  const deviceExpr = sql<string>`coalesce(nullif(${messageEvents.payload}->>'device_type', ''), 'Unknown')`;
+  const devices = await db
+    .select({
+      device: deviceExpr,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(messageEvents)
+    .innerJoin(messages, eq(messageEvents.messageId, messages.id))
+    .where(
+      and(
+        eq(messages.tenantId, tenantId),
+        eq(messages.campaignId, campaignId),
+        sql`${messageEvents.eventType} in ('click', 'open')`,
+        sql`coalesce(${messageEvents.payload}->>'device_type', '') <> ''`,
+      ),
+    )
+    .groupBy(deviceExpr)
+    .orderBy(desc(sql`count(*)`))
+    .limit(8);
+
+  const urlExpr = sql<string>`${messageEvents.payload}->>'url'`;
+  const links = await db
+    .select({
+      url: urlExpr,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(messageEvents)
+    .innerJoin(messages, eq(messageEvents.messageId, messages.id))
+    .where(
+      and(
+        eq(messages.tenantId, tenantId),
+        eq(messages.campaignId, campaignId),
+        eq(messageEvents.eventType, 'click'),
+        sql`coalesce(${messageEvents.payload}->>'url', '') <> ''`,
+      ),
+    )
+    .groupBy(urlExpr)
+    .orderBy(desc(sql`count(*)`))
+    .limit(10);
+
+  return {
+    devices: devices.map((r) => ({ device: r.device, count: Number(r.count) })),
+    links: links.map((r) => ({ url: r.url, count: Number(r.count) })),
   };
 }
 

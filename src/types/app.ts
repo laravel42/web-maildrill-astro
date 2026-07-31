@@ -36,6 +36,10 @@ export type Campaign = {
   /** Messages past the send queue (dispatched / finished) — drives send progress %. */
   accepted: number;
   unsubscribed: number;
+  /** Spam complaints (email Infobip COMPLAINED events). */
+  complaints: number;
+  /** Most recent provider error when any message failed (detail / report). */
+  lastErrorMessage?: string | null;
 };
 
 export type SubscriberStatus = 'active' | 'unsubscribed' | 'bounced';

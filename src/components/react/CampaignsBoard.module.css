@@ -373,12 +373,18 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-top: 18px;
+  overflow: visible;
 }
 .drawerKpi {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px 13px;
+  min-width: 0;
+  overflow: visible;
 }
 .drawerKpiLbl {
   font-size: 11px;
@@ -387,7 +393,6 @@
 .drawerKpiVal {
   font-size: 19px;
   font-weight: 600;
-  margin-top: 4px;
 }
 .drawerEyebrow {
   margin: 24px 0 10px;
@@ -462,12 +467,9 @@
   box-shadow: 0 1px 2px rgba(30, 27, 22, 0.04);
 }
 .reportKpiLbl {
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text4);
+  color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -697,11 +699,6 @@
   letter-spacing: -0.02em;
   color: var(--text);
 }
-.rateSpark {
-  display: block;
-  margin-top: auto;
-}
-
 /* rate-card deltas vs the previous same-channel campaign */
 .rateValWrap {
   display: flex;

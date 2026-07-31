@@ -7,6 +7,7 @@ import {
   createCampaign,
   deleteCampaign,
   getCampaign,
+  getCampaignEngagement,
   listCampaignMessages,
   listCampaigns,
   sendCampaign,
@@ -153,6 +154,22 @@ export async function campaignRoutes(appRaw: FastifyInstance): Promise<void> {
     async (req) => ({
       data: await listCampaignMessages(req.tenantId, req.params.id, req.query.limit ?? 200),
     }),
+  );
+
+  app.get(
+    '/v1/campaigns/:id/engagement',
+    {
+      schema: {
+        tags: TAG,
+        summary: 'Device and top-link breakdown from Infobip tracking events',
+        params: idParam,
+      },
+    },
+    async (req, reply) => {
+      const campaign = await getCampaign(req.tenantId, req.params.id);
+      if (!campaign) return reply.code(404).send({ error: 'not_found' });
+      return getCampaignEngagement(req.tenantId, req.params.id);
+    },
   );
 
   app.patch(
