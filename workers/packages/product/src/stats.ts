@@ -9,17 +9,20 @@ import { clamp } from './rules';
 const log = createLogger({ component: 'stats' });
 
 /**
- * Workspace counters for the dashboard.
+ * Per-channel delivery and engagement counts.
  *
- * Engagement rates are deliberately absent rather than zero: no provider open
- * or click events are normalized yet, so any number here would be invented.
- * Callers render "—" for what isn't measured.
+ * Engagement comes from provider receipts: `opened` is messages with a
+ * read/seen report, `clicked` is messages with at least one click event.
+ * Only email and WhatsApp can produce them — SMS/voice rows stay at zero,
+ * and callers must not fold those into rate denominators.
  */
 export interface ChannelBreakdown {
   channel: string;
   sent: number;
   delivered: number;
   failed: number;
+  opened: number;
+  clicked: number;
 }
 
 export interface WorkspaceSummary {
@@ -78,22 +81,42 @@ async function byChannelFromPostgres(
   const conds = [eq(messages.tenantId, tenantId)];
   if (since) conds.push(gte(messages.createdAt, since));
 
-  const channelRows = await db
-    .select({
-      channel: messages.channel,
-      sent: countOf,
-      delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read'))::int`,
-      failed: sql<number>`count(*) filter (where ${messages.status} = 'failed')::int`,
-    })
-    .from(messages)
-    .where(and(...conds))
-    .groupBy(messages.channel);
+  // Clicks attribute to the message's send window (createdAt), matching how
+  // delivered/opened attach to the send rather than to when the receipt landed.
+  const clickConds = [eq(messages.tenantId, tenantId), eq(messageEvents.eventType, 'click')];
+  if (since) clickConds.push(gte(messages.createdAt, since));
 
+  const [channelRows, clickRows] = await Promise.all([
+    db
+      .select({
+        channel: messages.channel,
+        sent: countOf,
+        delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read'))::int`,
+        failed: sql<number>`count(*) filter (where ${messages.status} = 'failed')::int`,
+        opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
+      })
+      .from(messages)
+      .where(and(...conds))
+      .groupBy(messages.channel),
+    db
+      .select({
+        channel: messages.channel,
+        clicked: sql<number>`count(distinct ${messageEvents.messageId})::int`,
+      })
+      .from(messageEvents)
+      .innerJoin(messages, eq(messageEvents.messageId, messages.id))
+      .where(and(...clickConds))
+      .groupBy(messages.channel),
+  ]);
+
+  const clicksBy = new Map(clickRows.map((r) => [r.channel, Number(r.clicked)]));
   return channelRows.map((r) => ({
     channel: r.channel,
     sent: Number(r.sent),
     delivered: Number(r.delivered),
     failed: Number(r.failed),
+    opened: Number(r.opened),
+    clicked: clicksBy.get(r.channel) ?? 0,
   }));
 }
 
@@ -118,7 +141,18 @@ export async function channelBreakdown(
   if (config.posthog.statsEnabled) {
     try {
       const fromPh = await byChannelFromPostHog(tenantId, since);
-      return preferRicherSource(fromPh, fromPg);
+      const rows = preferRicherSource(fromPh, fromPg);
+      if (rows !== fromPg) {
+        // PostHog carries delivery volume only; engagement receipts live in
+        // Postgres (the system of record), so graft them onto the winning rows.
+        const eng = new Map(fromPg.map((r) => [r.channel, r]));
+        return rows.map((r) => ({
+          ...r,
+          opened: eng.get(r.channel)?.opened ?? 0,
+          clicked: eng.get(r.channel)?.clicked ?? 0,
+        }));
+      }
+      return rows;
     } catch (err) {
       log.warn({ err, tenantId }, 'posthog byChannel failed; using postgres');
     }

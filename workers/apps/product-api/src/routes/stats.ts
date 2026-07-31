@@ -46,7 +46,7 @@ export async function statsRoutes(appRaw: FastifyInstance): Promise<void> {
     {
       schema: {
         tags: TAG,
-        summary: "Per-channel delivery breakdown for a date range",
+        summary: "Per-channel delivery + engagement breakdown for a date range",
         querystring: z.object({
           days: z.coerce.number().int().positive().max(365).optional(),
         }),

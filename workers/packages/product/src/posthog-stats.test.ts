@@ -61,8 +61,8 @@ describe("mapHogQLChannelRows", () => {
       ["email", 0, 0, 0],
     ]);
     expect(rows).toEqual([
-      { channel: "sms", sent: 10, delivered: 8, failed: 2 },
-      { channel: "email", sent: 0, delivered: 0, failed: 0 },
+      { channel: "sms", sent: 10, delivered: 8, failed: 2, opened: 0, clicked: 0 },
+      { channel: "email", sent: 0, delivered: 0, failed: 0, opened: 0, clicked: 0 },
     ]);
   });
 

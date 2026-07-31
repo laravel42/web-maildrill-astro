@@ -74,6 +74,10 @@ export function mapHogQLChannelRows(columns: string[], results: unknown[][]): Ch
       sent: cellNumber(row, iSent),
       delivered: cellNumber(row, iDelivered),
       failed: cellNumber(row, iFailed),
+      // Delivery reports carry no engagement; channelBreakdown() grafts the
+      // real opened/clicked counts from Postgres before returning.
+      opened: 0,
+      clicked: 0,
     }))
     .filter((r) => Boolean(r.channel));
 }
