@@ -1,6 +1,9 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import {
+  campaigns,
   db,
+  messageEvents,
+  messages,
   templates,
   type NewTemplate,
   type Subscriber,
@@ -61,12 +64,68 @@ export async function getTemplate(
   return rows[0] ?? null;
 }
 
-export async function listTemplates(tenantId: string): Promise<TemplateRow[]> {
-  return db
+export interface TemplateEngagement {
+  /**
+   * Deliveries on open-trackable channels (email + WhatsApp) across campaigns
+   * that sent this template — the open/click rate denominator. SMS and voice
+   * deliveries can never produce an open, so counting them would dilute rates.
+   */
+  trackedDelivered: number;
+  opened: number;
+  clicked: number;
+}
+
+/**
+ * Templates with real engagement aggregated from the campaigns that used them
+ * (via campaigns.template_id → messages / message_events), mirroring the
+ * lists/subscribers convention. Templates never sent report zeroes.
+ */
+export async function listTemplates(
+  tenantId: string,
+): Promise<Array<TemplateRow & TemplateEngagement>> {
+  const rows = await db
     .select()
     .from(templates)
     .where(eq(templates.tenantId, tenantId))
     .orderBy(desc(templates.createdAt));
+
+  const outcomes = await db
+    .select({
+      templateId: campaigns.templateId,
+      trackedDelivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read') and ${messages.channel} in ('email', 'whatsapp'))::int`,
+      opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
+    })
+    .from(messages)
+    .innerJoin(campaigns, eq(messages.campaignId, campaigns.id))
+    .where(and(eq(messages.tenantId, tenantId), isNotNull(campaigns.templateId)))
+    .groupBy(campaigns.templateId);
+
+  const clicks = await db
+    .select({
+      templateId: campaigns.templateId,
+      clicked: sql<number>`count(distinct ${messageEvents.messageId})::int`,
+    })
+    .from(messageEvents)
+    .innerJoin(messages, eq(messageEvents.messageId, messages.id))
+    .innerJoin(campaigns, eq(messages.campaignId, campaigns.id))
+    .where(
+      and(
+        eq(messages.tenantId, tenantId),
+        eq(messageEvents.eventType, "click"),
+        isNotNull(campaigns.templateId),
+      ),
+    )
+    .groupBy(campaigns.templateId);
+
+  const outcomeByTpl = new Map(outcomes.filter((o) => o.templateId).map((o) => [o.templateId!, o]));
+  const clicksByTpl = new Map(clicks.filter((c) => c.templateId).map((c) => [c.templateId!, c]));
+
+  return rows.map((t) => ({
+    ...t,
+    trackedDelivered: outcomeByTpl.get(t.id)?.trackedDelivered ?? 0,
+    opened: outcomeByTpl.get(t.id)?.opened ?? 0,
+    clicked: clicksByTpl.get(t.id)?.clicked ?? 0,
+  }));
 }
 
 export async function updateTemplate(
