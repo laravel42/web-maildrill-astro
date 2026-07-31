@@ -466,11 +466,11 @@
 
 /* Tags editor — identical UX to the subscriber drawer. */
 .dTagsSection {
-  margin-bottom: 22px;
+  margin-bottom: 14px;
 }
 .dTagsEyebrow {
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .dTags {
   display: flex;
@@ -574,11 +574,11 @@
 }
 
 .dColorSection {
-  margin-bottom: 22px;
+  margin-bottom: 14px;
 }
 .dColorEyebrow {
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .dSwatches {
   display: flex;
@@ -607,7 +607,7 @@
 }
 
 .dNoteshead {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
 }
 .dNotes {
   width: 100%;
