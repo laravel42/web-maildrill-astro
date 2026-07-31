@@ -149,6 +149,22 @@ type InfobipEmailWebhooks = {
   callbackData: string;
 };
 
+/** Email open/click tracking (`options.tracking` on `/email/4/messages`). */
+type InfobipEmailTracking = {
+  track: boolean;
+  trackOpens: boolean;
+  trackClicks: boolean;
+  trackingUrl: string;
+};
+
+/** SMS / WhatsApp URL shorten + click tracking. */
+type InfobipUrlOptions = {
+  shortenUrl: boolean;
+  trackClicks: boolean;
+  trackingUrl: string;
+  removeProtocol?: boolean;
+};
+
 /** `POST /email/4/messages` */
 type InfobipEmailBody = {
   messages: Array<{
@@ -158,6 +174,9 @@ type InfobipEmailBody = {
     callbackData: string;
     webhooks: InfobipEmailWebhooks;
   }>;
+  options?: {
+    tracking?: InfobipEmailTracking;
+  };
 };
 
 /** `POST /sms/2/text/advanced` */
@@ -168,6 +187,7 @@ type InfobipSmsBody = {
       destinations: Array<{ to: string }>;
       text: string;
       callbackData: string;
+      urlOptions?: InfobipUrlOptions;
     } & InfobipNotifyFields &
       InfobipPlatformFields
   >;
@@ -187,6 +207,7 @@ type InfobipWhatsAppTextBody = {
   messageId: string;
   content: InfobipWhatsAppTextContent;
   callbackData: string;
+  urlOptions?: InfobipUrlOptions;
 } & InfobipNotifyFields &
   InfobipPlatformFields;
 
@@ -203,6 +224,7 @@ type InfobipWhatsAppTemplateBody = {
         templateData: { body: { placeholders: string[] } };
         language: string;
       };
+      urlOptions?: InfobipUrlOptions;
     } & InfobipNotifyFields &
       InfobipPlatformFields
   >;
@@ -309,6 +331,35 @@ export class InfobipProvider implements MessagingProvider {
     return notifyUrl ? { notifyUrl } : {};
   }
 
+  /** PostHog (or portal) URL for open/click/unsub/complaint callbacks. */
+  private trackingUrl(): string {
+    return config.infobip.trackingUrl.trim();
+  }
+
+  private emailTrackingOptions(): InfobipEmailTracking | undefined {
+    const trackingUrl = this.trackingUrl();
+    if (!trackingUrl) return undefined;
+    return {
+      track: true,
+      trackOpens: true,
+      trackClicks: true,
+      trackingUrl,
+    };
+  }
+
+  /** Only stamp urlOptions when the body has a URL Infobip can shorten/track. */
+  private urlOptionsForText(text: string): InfobipUrlOptions | undefined {
+    const trackingUrl = this.trackingUrl();
+    if (!trackingUrl) return undefined;
+    if (!/https?:\/\//i.test(text)) return undefined;
+    return {
+      shortenUrl: true,
+      trackClicks: true,
+      trackingUrl,
+      removeProtocol: true,
+    };
+  }
+
   async send(input: SendInput): Promise<ProviderSendResult> {
     switch (input.channel) {
       case 'email':
@@ -386,6 +437,7 @@ export class InfobipProvider implements MessagingProvider {
     // Empty notifyUrl → omit delivery so portal subscription settings apply.
     const notifyUrl = config.infobip.notifyUrl.trim();
     if (notifyUrl) webhooks.delivery = { url: notifyUrl, notify: true };
+    const tracking = this.emailTrackingOptions();
     return {
       messages: [
         {
@@ -396,19 +448,23 @@ export class InfobipProvider implements MessagingProvider {
           webhooks,
         },
       ],
+      ...(tracking ? { options: { tracking } } : {}),
     };
   }
 
   private buildSms(input: SendInput): InfobipSmsBody {
     const c = input.content;
     const from = str(c.from) ?? (config.infobip.smsFrom || 'Maildrill');
+    const text = str(c.text) ?? '';
+    const urlOptions = this.urlOptionsForText(text);
     return {
       messages: [
         {
           from,
           destinations: [{ to: e164Digits(input.to) }],
-          text: str(c.text) ?? '',
+          text,
           callbackData: this.callbackData(input),
+          ...(urlOptions ? { urlOptions } : {}),
           ...this.notifyFields(),
           ...this.platformFields(),
         },
@@ -419,14 +475,17 @@ export class InfobipProvider implements MessagingProvider {
 
   private buildWhatsApp(input: SendInput): InfobipWhatsAppTextBody {
     const c = input.content;
-    const content: InfobipWhatsAppTextContent = { text: str(c.text) ?? '' };
+    const text = str(c.text) ?? '';
+    const content: InfobipWhatsAppTextContent = { text };
     if (c.previewUrl === true) content.previewUrl = true;
+    const urlOptions = this.urlOptionsForText(text);
     return {
       from: phoneSender(c.from, config.infobip.whatsappFrom),
       to: e164Digits(input.to),
       messageId: input.messageId,
       content,
       callbackData: this.callbackData(input),
+      ...(urlOptions ? { urlOptions } : {}),
       ...this.notifyFields(),
       ...this.platformFields(),
     };
@@ -469,6 +528,16 @@ export class InfobipProvider implements MessagingProvider {
     const placeholders = Array.isArray(c.placeholders)
       ? c.placeholders.map((p) => str(p) ?? String(p ?? ''))
       : [];
+    // Template bodies can embed URLs Infobip shortens when urlOptions is set.
+    const trackingUrl = this.trackingUrl();
+    const urlOptions: InfobipUrlOptions | undefined = trackingUrl
+      ? {
+          shortenUrl: true,
+          trackClicks: true,
+          trackingUrl,
+          removeProtocol: true,
+        }
+      : undefined;
     return {
       messages: [
         {
@@ -477,6 +546,7 @@ export class InfobipProvider implements MessagingProvider {
           messageId: input.messageId,
           callbackData: this.callbackData(input),
           ...this.notifyFields(),
+          ...(urlOptions ? { urlOptions } : {}),
           content: {
             templateName,
             templateData: { body: { placeholders } },

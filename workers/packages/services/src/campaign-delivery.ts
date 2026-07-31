@@ -15,7 +15,11 @@ import {
   hogqlLiteralList,
   runHogQL,
 } from "@maildrill/observability";
-import { applyProviderOutcome } from "./events";
+import {
+  applyProviderOutcome,
+  applyTrackingOutcome,
+  type TrackingNotificationType,
+} from "./events";
 import { getProvider } from "@maildrill/providers";
 
 const log = createLogger({ component: "campaign-delivery" });
@@ -24,6 +28,18 @@ const HOGQL_CHUNK = 200;
 const OPEN_MESSAGE_LIMIT = 1000;
 /** Cap Infobip log lookups per poll so a large backlog can't stall the loop. */
 const INFOBIP_STATUS_LIMIT = 50;
+/**
+ * Messages in these states can still advance to `read` from a seen report.
+ * Delivered is intentionally outside OPEN_DELIVERY_STATES (campaign completion
+ * doesn't wait for opens) — so engagement sync loads them separately.
+ */
+const ENGAGEMENT_CANDIDATE_STATES = [
+  "submitted",
+  "sent",
+  "delivered",
+] as const satisfies readonly MessageState[];
+/** How far back to look for delivered rows still awaiting a seen report. */
+const ENGAGEMENT_LOOKBACK_DAYS = 14;
 
 export interface DeliveryPollResult {
   openMessages: number;
@@ -69,6 +85,77 @@ export function mapLatestStatusGroups(
   return out;
 }
 
+/** Pure: HogQL rows → maildrill message ids that have a seen report. */
+export function mapSeenMessageIds(columns: string[], results: unknown[][]): string[] {
+  const iId = columnIndex(columns, "maildrill_message_id");
+  if (iId < 0) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const row of results) {
+    const id = cellString(row, iId);
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
+}
+
+export interface TrackingRow {
+  maildrillMessageId: string;
+  notificationType: TrackingNotificationType;
+  url?: string;
+  deviceType?: string;
+  deviceName?: string;
+  os?: string;
+  fingerprint: string;
+}
+
+const TRACKING_TYPES = new Set<string>([
+  "OPENED",
+  "CLICKED",
+  "UNSUBSCRIBED",
+  "COMPLAINED",
+  "LATE_BOUNCE",
+]);
+
+/** Pure: map HogQL tracking rows into typed engagement events. */
+export function mapTrackingRows(columns: string[], results: unknown[][]): TrackingRow[] {
+  const iId = columnIndex(columns, "maildrill_message_id");
+  const iType = columnIndex(columns, "notification_type");
+  const iUrl = columnIndex(columns, "url");
+  const iDevice = columnIndex(columns, "device_type");
+  const iName = columnIndex(columns, "device_name");
+  const iOs = columnIndex(columns, "os");
+  const iFp = columnIndex(columns, "fingerprint");
+  if (iId < 0 || iType < 0) return [];
+
+  const out: TrackingRow[] = [];
+  for (const row of results) {
+    const id = cellString(row, iId);
+    const notificationType = cellString(row, iType).toUpperCase();
+    if (!id || !TRACKING_TYPES.has(notificationType)) continue;
+    const fingerprint =
+      (iFp >= 0 ? cellString(row, iFp) : "") ||
+      `${id}:${notificationType}:${iUrl >= 0 ? cellString(row, iUrl) : ""}`;
+    out.push({
+      maildrillMessageId: id,
+      notificationType: notificationType as TrackingNotificationType,
+      fingerprint,
+      ...(iUrl >= 0 && cellString(row, iUrl)
+        ? { url: cellString(row, iUrl) }
+        : {}),
+      ...(iDevice >= 0 && cellString(row, iDevice)
+        ? { deviceType: cellString(row, iDevice) }
+        : {}),
+      ...(iName >= 0 && cellString(row, iName)
+        ? { deviceName: cellString(row, iName) }
+        : {}),
+      ...(iOs >= 0 && cellString(row, iOs) ? { os: cellString(row, iOs) } : {}),
+    });
+  }
+  return out;
+}
+
 /** Pure: flip to `sent` once every message has left the send queue. */
 export function shouldCompleteCampaign(statuses: MessageState[]): boolean {
   if (statuses.length === 0) return true;
@@ -83,6 +170,35 @@ async function loadOpenMessages(): Promise<MessageRow[]> {
     .select()
     .from(messages)
     .where(inArray(messages.status, [...OPEN_DELIVERY_STATES]))
+    .orderBy(asc(messages.updatedAt), asc(messages.createdAt))
+    .limit(OPEN_MESSAGE_LIMIT);
+}
+
+async function loadEngagementCandidates(): Promise<MessageRow[]> {
+  return db
+    .select()
+    .from(messages)
+    .where(
+      and(
+        inArray(messages.status, [...ENGAGEMENT_CANDIDATE_STATES]),
+        sql`${messages.updatedAt} > now() - (${ENGAGEMENT_LOOKBACK_DAYS} * interval '1 day')`,
+      ),
+    )
+    .orderBy(asc(messages.updatedAt), asc(messages.createdAt))
+    .limit(OPEN_MESSAGE_LIMIT);
+}
+
+/** Delivered / read rows still eligible for click / unsub / complaint sync. */
+async function loadTrackingCandidates(): Promise<MessageRow[]> {
+  return db
+    .select()
+    .from(messages)
+    .where(
+      and(
+        inArray(messages.status, ["submitted", "sent", "delivered", "read"]),
+        sql`${messages.updatedAt} > now() - (${ENGAGEMENT_LOOKBACK_DAYS} * interval '1 day')`,
+      ),
+    )
     .orderBy(asc(messages.updatedAt), asc(messages.createdAt))
     .limit(OPEN_MESSAGE_LIMIT);
 }
@@ -125,6 +241,150 @@ GROUP BY maildrill_message_id
   }
 
   return byId;
+}
+
+async function fetchSeenMessageIdsFromPostHog(
+  messageIds: string[],
+): Promise<Set<string>> {
+  const ids = new Set<string>();
+  if (messageIds.length === 0 || !config.posthog.statsEnabled) return ids;
+
+  for (let i = 0; i < messageIds.length; i += HOGQL_CHUNK) {
+    const chunk = messageIds.slice(i, i + HOGQL_CHUNK);
+    const lits = hogqlLiteralList(chunk);
+    if (!lits) {
+      log.warn({ chunkSize: chunk.length }, "skip hogql seen chunk: unsafe message id");
+      continue;
+    }
+
+    // Seen reports have no status.groupName (Infobip payload is seenAt-only).
+    // Presence of the event is the open signal — apply outcome `read`.
+    const query = `
+SELECT
+  toString(properties.maildrill_message_id) AS maildrill_message_id
+FROM events
+WHERE event = 'message_seen_report'
+  AND timestamp > now() - INTERVAL 30 DAY
+  AND toString(properties.maildrill_message_id) IN (${lits.join(", ")})
+GROUP BY maildrill_message_id
+`.trim();
+
+    const result = await runHogQL(query, "maildrill-campaign-seen");
+    if (!result) continue;
+
+    for (const id of mapSeenMessageIds(result.columns, result.results)) {
+      ids.add(id);
+    }
+  }
+
+  return ids;
+}
+
+async function syncSeenReports(candidates: MessageRow[]): Promise<number> {
+  const seenIds = await fetchSeenMessageIdsFromPostHog(candidates.map((m) => m.id));
+  let updated = 0;
+
+  for (const msg of candidates) {
+    if (!seenIds.has(msg.id)) continue;
+
+    const changed = await applyProviderOutcome({
+      messageId: msg.id,
+      tenantId: msg.tenantId,
+      channel: msg.channel,
+      provider: msg.provider,
+      currentStatus: msg.status,
+      outcome: "read",
+      statusGroup: "SEEN",
+    });
+    if (changed) updated += 1;
+  }
+
+  if (candidates.length > 0 || updated > 0) {
+    log.debug(
+      { candidates: candidates.length, seen: seenIds.size, updated },
+      "posthog seen report sync",
+    );
+  }
+  return updated;
+}
+
+async function fetchTrackingRowsFromPostHog(
+  messageIds: string[],
+): Promise<TrackingRow[]> {
+  const out: TrackingRow[] = [];
+  if (messageIds.length === 0 || !config.posthog.statsEnabled) return out;
+
+  for (let i = 0; i < messageIds.length; i += HOGQL_CHUNK) {
+    const chunk = messageIds.slice(i, i + HOGQL_CHUNK);
+    const lits = hogqlLiteralList(chunk);
+    if (!lits) {
+      log.warn({ chunkSize: chunk.length }, "skip hogql tracking chunk: unsafe message id");
+      continue;
+    }
+
+    const query = `
+SELECT
+  toString(properties.maildrill_message_id) AS maildrill_message_id,
+  upper(toString(properties.notification_type)) AS notification_type,
+  toString(properties.url) AS url,
+  toString(properties.device_type) AS device_type,
+  toString(properties.device_name) AS device_name,
+  toString(properties.os) AS os,
+  toString(properties.$insert_id) AS fingerprint
+FROM events
+WHERE event = 'message_tracking_report'
+  AND timestamp > now() - INTERVAL 30 DAY
+  AND toString(properties.maildrill_message_id) IN (${lits.join(", ")})
+`.trim();
+
+    const result = await runHogQL(query, "maildrill-campaign-tracking");
+    if (!result) continue;
+    out.push(...mapTrackingRows(result.columns, result.results));
+  }
+
+  return out;
+}
+
+async function syncTrackingReports(candidates: MessageRow[]): Promise<number> {
+  const byId = new Map(candidates.map((m) => [m.id, m] as const));
+  const rows = await fetchTrackingRowsFromPostHog([...byId.keys()]);
+  let updated = 0;
+
+  for (const row of rows) {
+    const msg = byId.get(row.maildrillMessageId);
+    if (!msg) continue;
+    // Refresh status if an earlier row in this batch advanced it.
+    const live = byId.get(msg.id)!;
+    const changed = await applyTrackingOutcome({
+      messageId: live.id,
+      tenantId: live.tenantId,
+      channel: live.channel,
+      provider: live.provider,
+      currentStatus: live.status,
+      notificationType: row.notificationType,
+      fingerprint: row.fingerprint,
+      url: row.url,
+      deviceType: row.deviceType,
+      deviceName: row.deviceName,
+      os: row.os,
+    });
+    if (changed) {
+      updated += 1;
+      if (row.notificationType === "OPENED" || row.notificationType === "CLICKED") {
+        byId.set(live.id, { ...live, status: "read" });
+      } else if (row.notificationType === "LATE_BOUNCE") {
+        byId.set(live.id, { ...live, status: "failed" });
+      }
+    }
+  }
+
+  if (candidates.length > 0 || updated > 0) {
+    log.debug(
+      { candidates: candidates.length, events: rows.length, updated },
+      "posthog tracking report sync",
+    );
+  }
+  return updated;
 }
 
 async function syncOpenMessages(open: MessageRow[]): Promise<number> {
@@ -305,8 +565,9 @@ async function completeFinishedCampaigns(): Promise<number> {
 }
 
 /**
- * Sync open message DLRs from PostHog and flip fully-dispatched campaigns to
- * `sent`. Safe to call when PostHog is unset — completion is queue-based.
+ * Sync open message DLRs + seen reports from PostHog and flip fully-dispatched
+ * campaigns to `sent`. Safe to call when PostHog is unset — completion is
+ * queue-based; seen sync no-ops without the personal API key.
  */
 export async function pollCampaignDelivery(): Promise<DeliveryPollResult> {
   const open = await loadOpenMessages();
@@ -315,6 +576,20 @@ export async function pollCampaignDelivery(): Promise<DeliveryPollResult> {
     updated = await syncOpenMessages(open);
   } catch (err) {
     log.warn({ err }, "posthog delivery sync failed");
+  }
+
+  try {
+    const candidates = await loadEngagementCandidates();
+    updated += await syncSeenReports(candidates);
+  } catch (err) {
+    log.warn({ err }, "posthog seen sync failed");
+  }
+
+  try {
+    const trackingCandidates = await loadTrackingCandidates();
+    updated += await syncTrackingReports(trackingCandidates);
+  } catch (err) {
+    log.warn({ err }, "posthog tracking sync failed");
   }
 
   const campaignsCompleted = await completeFinishedCampaigns();

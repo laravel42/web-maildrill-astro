@@ -76,6 +76,12 @@ const EnvSchema = z.object({
    * Leave empty to rely on portal subscriptions + Messages API report pull.
    */
   INFOBIP_NOTIFY_URL: z.string().default(''),
+  /**
+   * Optional Infobip open/click/unsub/complaint push target (typically the
+   * PostHog Infobip webhook `?kind=tracking`). Empty → derive from
+   * INFOBIP_NOTIFY_URL by swapping `kind=tracking`, or disable tracking stamp.
+   */
+  INFOBIP_TRACKING_URL: z.string().default(''),
   PROVIDER_DRIVER: z.enum(['mock', 'infobip']).default('mock'),
   WEBHOOK_INFOBIP_SECRET: z.string().default('change-me'),
   DISPATCH_CONCURRENCY: int(10),
@@ -187,6 +193,24 @@ export const config = {
     applicationId: env.INFOBIP_APPLICATION_ID,
     entityId: env.INFOBIP_ENTITY_ID,
     notifyUrl: env.INFOBIP_NOTIFY_URL,
+    /**
+     * Engagement tracking callback. Prefer explicit INFOBIP_TRACKING_URL; else
+     * rewrite notifyUrl's `kind` query to `tracking` so open/click payloads
+     * don't collide with DLR/seen mapping in Hog.
+     */
+    get trackingUrl(): string {
+      const explicit = env.INFOBIP_TRACKING_URL.trim();
+      if (explicit) return explicit;
+      const notify = env.INFOBIP_NOTIFY_URL.trim();
+      if (!notify) return '';
+      try {
+        const u = new URL(notify);
+        u.searchParams.set('kind', 'tracking');
+        return u.toString();
+      } catch {
+        return '';
+      }
+    },
   },
   provider: { driver: env.PROVIDER_DRIVER },
   media: {

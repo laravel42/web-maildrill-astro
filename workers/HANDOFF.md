@@ -85,7 +85,9 @@ PostHog webhook (Maildrill project `526344`):
 https://webhooks.us.posthog.com/public/webhooks/019f9251-bee2-0000-231d-064eff754e26?kind=delivery
 ```
 
-Kinds: `delivery` → `message_delivery_report`, `engagement` → `message_seen_report`, `voice` → `message_voice_report`, `template` → `whatsapp_template_status`.
+Kinds: `delivery` → `message_delivery_report`, `engagement` → `message_seen_report`,
+`tracking` → `message_tracking_report` (open/click/unsub/complaint), `voice` →
+`message_voice_report`, `template` → `whatsapp_template_status`.
 
 Details + Hog source: [`docs/posthog-infobip-hog.md`](docs/posthog-infobip-hog.md), [`docs/posthog-infobip.hog`](docs/posthog-infobip.hog).
 
@@ -107,9 +109,11 @@ Implementation: `packages/providers/src/infobip.ts` → `callbackData()`.
 2. Empty audience (`queued === 0`) → immediate **`sent`**.
 3. Worker role **`campaign-delivery`** (also under `worker all` / should be on unified `dev` when wired) every `CAMPAIGN_DELIVERY_POLL_INTERVAL_MS` (default **5s**):
    - Loads open messages (`queued|processing|submitted|sent`), campaign and one-off.
-   - HogQL: latest `status_group` per `maildrill_message_id`.
+   - HogQL: latest `status_group` per `maildrill_message_id` (delivery + voice).
    - Applies outcomes via `applyProviderOutcome` / `resolveEventTransition`.
-   - When every campaign message is complete (`delivered|read|failed|expired|cancelled`) → campaign **`sent`** + `completedAt`.
+   - Also syncs `message_seen_report` → `read` for recent submitted/sent/delivered
+     rows (opens; campaign completion does **not** wait for these).
+   - When every campaign message has left the send queue → campaign **`sent`** + `completedAt`.
 4. UI: Campaigns board shows a progress bar while `sending` (`accepted` /
    recipients — advances when Infobip accepts, not only after PostHog DLRs).
 

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { outcomeFromInfobipStatusGroup } from "@maildrill/domain";
-import { mapLatestStatusGroups, shouldCompleteCampaign } from "./campaign-delivery";
+import {
+  mapLatestStatusGroups,
+  mapSeenMessageIds,
+  mapTrackingRows,
+  shouldCompleteCampaign,
+} from "./campaign-delivery";
 
 describe("outcomeFromInfobipStatusGroup", () => {
   it("maps Infobip groups to provider outcomes", () => {
@@ -36,6 +41,62 @@ describe("mapLatestStatusGroups", () => {
 
   it("returns empty when columns missing", () => {
     expect(mapLatestStatusGroups(["day"], [["x"]])).toEqual([]);
+  });
+});
+
+describe("mapSeenMessageIds", () => {
+  it("maps distinct maildrill message ids from seen HogQL rows", () => {
+    expect(
+      mapSeenMessageIds(
+        ["maildrill_message_id"],
+        [["msg-1"], ["msg-2"], ["msg-1"]],
+      ),
+    ).toEqual(["msg-1", "msg-2"]);
+  });
+
+  it("returns empty when the id column is missing", () => {
+    expect(mapSeenMessageIds(["other"], [["msg-1"]])).toEqual([]);
+  });
+});
+
+describe("mapTrackingRows", () => {
+  it("maps open/click tracking rows", () => {
+    expect(
+      mapTrackingRows(
+        [
+          "maildrill_message_id",
+          "notification_type",
+          "url",
+          "device_type",
+          "device_name",
+          "os",
+          "fingerprint",
+        ],
+        [
+          ["msg-1", "OPENED", "", "Phone", "Apple", "iOS", "fp-1"],
+          ["msg-2", "CLICKED", "https://example.com", "Desktop", "PC", "Windows", "fp-2"],
+          ["msg-3", "IGNORED", "", "", "", "", "fp-3"],
+        ],
+      ),
+    ).toEqual([
+      {
+        maildrillMessageId: "msg-1",
+        notificationType: "OPENED",
+        fingerprint: "fp-1",
+        deviceType: "Phone",
+        deviceName: "Apple",
+        os: "iOS",
+      },
+      {
+        maildrillMessageId: "msg-2",
+        notificationType: "CLICKED",
+        fingerprint: "fp-2",
+        url: "https://example.com",
+        deviceType: "Desktop",
+        deviceName: "PC",
+        os: "Windows",
+      },
+    ]);
   });
 });
 

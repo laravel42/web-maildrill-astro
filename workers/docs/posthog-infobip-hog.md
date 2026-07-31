@@ -40,10 +40,14 @@ but must **not** be configured in Infobip (unused).
 2. Worker role `campaign-delivery` (also under `all`) every
    `CAMPAIGN_DELIVERY_POLL_INTERVAL_MS` (default 5s):
    - Loads open messages (`queued|processing|submitted|sent`), including one-offs.
-   - HogQL: latest `status_group` per `properties.maildrill_message_id`.
+   - HogQL: latest `status_group` per `properties.maildrill_message_id`
+     (`message_delivery_report` / `message_voice_report`).
    - Applies outcomes via the same transition rules as Infobip DLRs.
-   - When every campaign message is complete (`delivered|read|failed|expired|cancelled`)
-     → campaign `sent` + `completedAt`.
+   - Separately loads recent `submitted|sent|delivered` rows and HogQL-polls
+     `message_seen_report` → outcome `read` (opens). Delivered rows are outside
+     the open-DLR set on purpose — campaign completion does not wait for opens.
+   - When every campaign message has left the send queue → campaign `sent` +
+     `completedAt`.
 
 ## callbackData (tenancy on DLR events)
 
@@ -97,8 +101,14 @@ Kinds:
 
 - `?kind=delivery` → `message_delivery_report`
 - `?kind=engagement` → `message_seen_report`
+- `?kind=tracking` → `message_tracking_report` (email/SMS/WA open·click·unsub·complaint; also auto-detected via `notificationType`)
 - `?kind=voice` → `message_voice_report`
 - `?kind=template` (or omit; auto-detected via `messageTemplateId`) → `whatsapp_template_status`
+
+Outbound sends stamp `options.tracking` / `urlOptions` with `INFOBIP_TRACKING_URL`
+(or `INFOBIP_NOTIFY_URL` rewritten to `kind=tracking`) so Infobip pushes engagement
+to PostHog. The campaign-delivery poller syncs those into message status /
+`message_events` for the channel-adapted campaign report.
 
 Idempotency: `$insert_id` = `infobip:{messageId|templateId}:{status}:{timestamp|name}`.
 

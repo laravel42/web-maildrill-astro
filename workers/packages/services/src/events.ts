@@ -178,6 +178,137 @@ export async function applyProviderOutcome(input: {
   });
 }
 
+export type TrackingNotificationType =
+  | "OPENED"
+  | "CLICKED"
+  | "UNSUBSCRIBED"
+  | "COMPLAINED"
+  | "LATE_BOUNCE";
+
+/**
+ * Apply an Infobip tracking notification (email open/click/unsub/complaint /
+ * late bounce, or SMS/WA click) synced from PostHog. Returns true when a
+ * message row or engagement event was newly recorded.
+ */
+export async function applyTrackingOutcome(input: {
+  messageId: string;
+  tenantId: string;
+  channel: MessageRow["channel"];
+  provider: string;
+  currentStatus: MessageState;
+  notificationType: TrackingNotificationType;
+  url?: string;
+  deviceType?: string;
+  deviceName?: string;
+  os?: string;
+  /** Stable id from PostHog $insert_id / Infobip eventId for dedupe. */
+  fingerprint: string;
+  occurredAt?: Date;
+}): Promise<boolean> {
+  const at = input.occurredAt ?? new Date();
+  const type = input.notificationType;
+  const fingerprint = `posthog:track:${input.fingerprint}`;
+
+  if (type === "OPENED") {
+    const statusChanged = await applyProviderOutcome({
+      messageId: input.messageId,
+      tenantId: input.tenantId,
+      channel: input.channel,
+      provider: input.provider,
+      currentStatus: input.currentStatus,
+      outcome: "read",
+      statusGroup: "OPENED",
+      occurredAt: at,
+    });
+    // Separate open event keeps Infobip device metadata for report breakdowns.
+    const openInserted = await db
+      .insert(messageEvents)
+      .values({
+        messageId: input.messageId,
+        tenantId: input.tenantId,
+        provider: input.provider,
+        providerEventId: null,
+        eventFingerprint: fingerprint,
+        eventType: "open",
+        providerStatus: "OPENED",
+        occurredAt: at,
+        receivedAt: new Date(),
+        processedAt: new Date(),
+        payload: {
+          source: "posthog_poller",
+          notification_type: "OPENED",
+          ...(input.deviceType ? { device_type: input.deviceType } : {}),
+          ...(input.deviceName ? { device_name: input.deviceName } : {}),
+          ...(input.os ? { os: input.os } : {}),
+        },
+      })
+      .onConflictDoNothing({
+        target: [messageEvents.provider, messageEvents.eventFingerprint],
+      })
+      .returning({ id: messageEvents.id });
+    return statusChanged || openInserted.length > 0;
+  }
+
+  if (type === "LATE_BOUNCE") {
+    return applyProviderOutcome({
+      messageId: input.messageId,
+      tenantId: input.tenantId,
+      channel: input.channel,
+      provider: input.provider,
+      currentStatus: input.currentStatus,
+      outcome: "failed",
+      statusGroup: "LATE_BOUNCE",
+      errorCode: "LATE_BOUNCE",
+      errorMessage: "Late bounce after initial acceptance",
+      occurredAt: at,
+    });
+  }
+
+  const eventType =
+    type === "CLICKED" ? "click" : type === "UNSUBSCRIBED" ? "unsubscribed" : "complaint";
+
+  const inserted = await db.transaction(async (tx) => {
+    const result = await tx
+      .insert(messageEvents)
+      .values({
+        messageId: input.messageId,
+        tenantId: input.tenantId,
+        provider: input.provider,
+        providerEventId: null,
+        eventFingerprint: fingerprint,
+        eventType,
+        providerStatus: type,
+        occurredAt: at,
+        receivedAt: new Date(),
+        processedAt: new Date(),
+        payload: {
+          source: "posthog_poller",
+          notification_type: type,
+          ...(input.url ? { url: input.url } : {}),
+          ...(input.deviceType ? { device_type: input.deviceType } : {}),
+          ...(input.deviceName ? { device_name: input.deviceName } : {}),
+          ...(input.os ? { os: input.os } : {}),
+        },
+      })
+      .onConflictDoNothing({
+        target: [messageEvents.provider, messageEvents.eventFingerprint],
+      })
+      .returning({ id: messageEvents.id });
+
+    // First click / open-like engagement also counts as a read when still delivered.
+    if (type === "CLICKED" && result.length > 0) {
+      const next = resolveEventTransition(input.currentStatus, "read");
+      if (next && next !== input.currentStatus) {
+        await applyEventState(tx, input.messageId, next, at);
+      }
+    }
+
+    return result.length > 0;
+  });
+
+  return inserted;
+}
+
 /**
  * Process one persisted webhook: normalize it, correlate to a message, dedupe
  * on (provider, fingerprint), apply guarded state transitions, and write an
