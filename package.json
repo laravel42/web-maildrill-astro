@@ -47,6 +47,7 @@
     "posthog-node": "^5.46.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "tslib": "^2.8.1",
     "wa-template-studio": "workspace:*",
     "zod": "^4.4.3"
   },
