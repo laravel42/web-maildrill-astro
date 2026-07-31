@@ -91,8 +91,8 @@ export default function AppMedia({
   const [filterOpen, setFilterOpen] = useState<'orientation' | 'ratio' | null>(null);
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'uploaded', dir: -1 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  // Set while a destructive action waits on confirmation.
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  // Ids waiting on the delete confirm dialog (bulk toolbar or drawer).
+  const [confirmDelete, setConfirmDelete] = useState<string[] | null>(null);
   const [page, setPage] = useState(1);
   const [openId, setOpenId] = useState<string | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -412,8 +412,7 @@ export default function AppMedia({
   };
 
   /* Delete for real, and only drop rows the server actually removed. */
-  const deleteSelected = async () => {
-    const ids = [...selected];
+  const deleteMedia = async (ids: string[]) => {
     if (ids.length === 0) return;
     if (!live) {
       show('Media storage is not configured yet');
@@ -422,13 +421,14 @@ export default function AppMedia({
     const results = await Promise.allSettled(ids.map((id) => api.del(`media/${id}`)));
     const okIds = new Set(ids.filter((_, i) => results[i].status === 'fulfilled'));
     setMediaFiles((prev) => prev.filter((f) => !okIds.has(f.id)));
+    setSelected((prev) => new Set([...prev].filter((id) => !okIds.has(id))));
+    if (openId && okIds.has(openId)) setOpenId(null);
     const failed = ids.length - okIds.size;
     show(
       failed
         ? `Deleted ${okIds.size}, ${failed} failed`
         : `Deleted ${okIds.size} file${okIds.size === 1 ? '' : 's'}`,
     );
-    setSelected(new Set());
   };
 
   /* Open each selected asset's real CDN URL — no fake "Downloading" toast. */
@@ -636,7 +636,7 @@ export default function AppMedia({
             <button
               type="button"
               className={`${styles.bulkBtn} ${styles.bulkBtnDanger}`}
-              onClick={() => setConfirmDelete(true)}
+              onClick={() => setConfirmDelete([...selected])}
             >
               <Icon name="trash" size={13} />
               Delete
@@ -859,6 +859,7 @@ export default function AppMedia({
             setOpenId(null);
             show(`Filtered by “${tag}”`);
           }}
+          onDelete={() => setConfirmDelete([openFile.id])}
         />
       )}
 
@@ -1048,13 +1049,14 @@ export default function AppMedia({
 
       {confirmDelete && (
         <ConfirmDialog
-          title={`Delete ${selected.size} file${selected.size === 1 ? '' : 's'}?`}
+          title={`Delete ${confirmDelete.length} file${confirmDelete.length === 1 ? '' : 's'}?`}
           message="This can’t be undone."
           confirmLabel="Delete"
-          onCancel={() => setConfirmDelete(false)}
+          onCancel={() => setConfirmDelete(null)}
           onConfirm={() => {
-            setConfirmDelete(false);
-            void deleteSelected();
+            const ids = confirmDelete;
+            setConfirmDelete(null);
+            void deleteMedia(ids);
           }}
         />
       )}
@@ -1141,6 +1143,7 @@ function MediaDrawer({
   onToast,
   onSaveTags,
   onFilterTag,
+  onDelete,
 }: {
   file: MediaFile & { url?: string; preview?: string };
   initialTags: string[];
@@ -1148,6 +1151,7 @@ function MediaDrawer({
   onToast: (m: string) => void;
   onSaveTags: (id: string, tags: string[]) => void;
   onFilterTag: (tag: string) => void;
+  onDelete: () => void;
 }) {
   const [tags, setTags] = useState<string[]>(initialTags);
   const [draft, setDraft] = useState('');
@@ -1286,6 +1290,15 @@ function MediaDrawer({
         </div>
 
         <div className="adrawer__foot">
+          <button
+            type="button"
+            className="sbtn"
+            style={{ flex: 'none', color: 'var(--danger)' }}
+            aria-label={`Delete ${file.name}`}
+            onClick={onDelete}
+          >
+            <Icon name="trash" size={15} />
+          </button>
           <button type="button" className="sbtn" style={{ flex: 1 }} onClick={copyUrl}>
             <Icon name="copy" size={14} />
             Copy URL

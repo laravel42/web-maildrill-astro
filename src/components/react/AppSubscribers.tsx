@@ -79,8 +79,8 @@ export default function AppSubscribers({
   const [tagSel, setTagSel] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'name', dir: 1 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  // Set while a destructive action waits on confirmation.
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  // Ids waiting on the delete confirm dialog (bulk toolbar or drawer).
+  const [confirmDelete, setConfirmDelete] = useState<string[] | null>(null);
   const [confirmSegment, setConfirmSegment] = useState<{ id: string; name: string } | null>(null);
   const [page, setPage] = useState(1);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -348,26 +348,28 @@ export default function AppSubscribers({
     setSelected(new Set());
   };
 
-  /* Delete selected — persists to the service in live mode, else local-only. */
-  const removeSelected = async () => {
-    const ids = [...selected];
+  /* Delete by id list — persists to the service in live mode, else local-only. */
+  const removeSubscribers = async (ids: string[]) => {
     if (ids.length === 0) return;
+    const doomed = new Set(ids);
     if (!live) {
-      setRichSubscribers((prev) => prev.filter((s) => !selected.has(s.id)));
+      setRichSubscribers((prev) => prev.filter((s) => !doomed.has(s.id)));
       showToast(`Removed ${ids.length} subscriber${ids.length === 1 ? '' : 's'}`);
-      setSelected(new Set());
+      setSelected((prev) => new Set([...prev].filter((id) => !doomed.has(id))));
+      if (openId && doomed.has(openId)) setOpenId(null);
       return;
     }
     const results = await Promise.allSettled(ids.map((id) => api.del(`subscribers/${id}`)));
     const okIds = new Set(ids.filter((_, i) => results[i].status === 'fulfilled'));
     setRichSubscribers((prev) => prev.filter((s) => !okIds.has(s.id)));
+    setSelected((prev) => new Set([...prev].filter((id) => !okIds.has(id))));
+    if (openId && okIds.has(openId)) setOpenId(null);
     const failed = ids.length - okIds.size;
     showToast(
       failed
         ? `Removed ${okIds.size}, ${failed} failed`
         : `Removed ${okIds.size} subscriber${okIds.size === 1 ? '' : 's'}`,
     );
-    setSelected(new Set());
   };
 
   const filterByTag = (tag: string) => {
@@ -903,7 +905,7 @@ export default function AppSubscribers({
             <button
               type="button"
               className={`${styles.bulkbtn} ${styles.bulkbtnDanger}`}
-              onClick={() => setConfirmDelete(true)}
+              onClick={() => setConfirmDelete([...selected])}
             >
               <Icon name="trash" size={13} />
               Remove
@@ -1152,6 +1154,7 @@ export default function AppSubscribers({
             setOpenId(null);
             setSubEditor({ mode: 'edit', sub });
           }}
+          onDelete={() => setConfirmDelete([openSub.id])}
         />
       )}
 
@@ -1247,13 +1250,14 @@ export default function AppSubscribers({
 
       {confirmDelete && (
         <ConfirmDialog
-          title={`Delete ${selected.size} subscriber${selected.size === 1 ? '' : 's'}?`}
+          title={`Delete ${confirmDelete.length} subscriber${confirmDelete.length === 1 ? '' : 's'}?`}
           message="This can’t be undone."
           confirmLabel="Delete"
-          onCancel={() => setConfirmDelete(false)}
+          onCancel={() => setConfirmDelete(null)}
           onConfirm={() => {
-            setConfirmDelete(false);
-            void removeSelected();
+            const ids = confirmDelete;
+            setConfirmDelete(null);
+            void removeSubscribers(ids);
           }}
         />
       )}
@@ -1344,6 +1348,7 @@ function SubscriberDrawer({
   onFilterTag,
   onToast,
   onEdit,
+  onDelete,
 }: {
   sub: RichSubscriber;
   tags: string[];
@@ -1354,6 +1359,7 @@ function SubscriberDrawer({
   onFilterTag: (tag: string) => void;
   onEdit: () => void;
   onToast: (m: string) => void;
+  onDelete: () => void;
 }) {
   const [draft, setDraft] = useState<string[]>(tags);
   const [input, setInput] = useState('');
@@ -1716,6 +1722,15 @@ function SubscriberDrawer({
         </div>
 
         <div className="adrawer__foot">
+          <button
+            type="button"
+            className="sbtn"
+            style={{ flex: 'none', color: 'var(--danger)' }}
+            aria-label={`Delete ${sub.name}`}
+            onClick={onDelete}
+          >
+            <Icon name="trash" size={15} />
+          </button>
           <button
             type="button"
             className="sbtn"
