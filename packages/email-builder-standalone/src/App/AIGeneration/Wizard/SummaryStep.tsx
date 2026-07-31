@@ -101,9 +101,16 @@ export default function SummaryStep({ brief, backendUrl, onGenerate, onBack, gen
 
   return (
     <Stack spacing={2}>
-      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-        {t('summary.title')}
-      </Typography>
+      <Box>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          {t('summary.title')}
+        </Typography>
+        {/* The explainer belongs with the title, before the artifact it
+            explains — not orphaned under a divider at the bottom. */}
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+          {t('summary.finalPromptHelp')}
+        </Typography>
+      </Box>
 
       {/* Structured prompt display */}
       {loading ? (
@@ -168,10 +175,6 @@ export default function SummaryStep({ brief, backendUrl, onGenerate, onBack, gen
       )}
 
       <Divider />
-
-      <Typography variant="caption" color="text.secondary">
-        {t('summary.finalPromptHelp')}
-      </Typography>
 
       <Stack direction="row" sx={{ justifyContent: 'space-between', mt: 1 }}>
         <Button onClick={onBack} disabled={generating}>

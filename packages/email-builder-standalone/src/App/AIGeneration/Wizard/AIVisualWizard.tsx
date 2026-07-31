@@ -6,6 +6,9 @@ import type { DraftBrief } from './briefDefaults';
 import WizardNav from './controls/WizardNav';
 import StepAudience from './steps/StepAudience';
 import StepBrand from './steps/StepBrand';
+import StepSections from './steps/StepSections';
+import StepTone from './steps/StepTone';
+import StepVisual from './steps/StepVisual';
 import SummaryStep from './SummaryStep';
 import { useVisualBrief } from './useVisualBrief';
 
@@ -18,16 +21,14 @@ interface Props {
   generating: boolean;
 }
 
-type StepId = 'brand' | 'audience';
+type StepId = 'brand' | 'audience' | 'tone' | 'visual' | 'sections';
 
 /**
- * Guided template wizard. Only "Full Template" generation exists, so there is
- * no target picker and no theme/component flows: the wizard goes straight to
- * two high-signal steps (brand + type, then audience + brand colours) and then
- * the summary. Tone, vertical, palette, imagery and structure are derived by
- * the model.
+ * Step-by-step template composer. Collects brand, audience/colours, tone,
+ * visual direction, and section structure, then compiles a craft-aware
+ * prompt via `/visual-brief/compile` before handing off to `/generate`.
  */
-const STEP_SEQUENCE: StepId[] = ['brand', 'audience'];
+const STEP_SEQUENCE: StepId[] = ['brand', 'audience', 'tone', 'visual', 'sections'];
 
 export default function AIVisualWizard({
   initialRawIntent = '',
@@ -39,7 +40,6 @@ export default function AIVisualWizard({
   const { brief, patch } = useVisualBrief(initialRawIntent);
   const [step, setStep] = React.useState(0);
 
-  // Initialise brand colors from props once on mount
   React.useEffect(() => {
     if (brandColors?.primary || brandColors?.secondary) {
       patch({ visual_strategy: { brandColors } });
@@ -75,6 +75,12 @@ export default function AIVisualWizard({
         return <StepBrand brief={brief} patch={patch} />;
       case 'audience':
         return <StepAudience brief={brief} patch={patch} />;
+      case 'tone':
+        return <StepTone brief={brief} patch={patch} />;
+      case 'visual':
+        return <StepVisual brief={brief} patch={patch} />;
+      case 'sections':
+        return <StepSections brief={brief} patch={patch} />;
       default:
         return null;
     }

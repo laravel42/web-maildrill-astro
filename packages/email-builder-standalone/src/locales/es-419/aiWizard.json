@@ -18,12 +18,15 @@
     "title": "¿Cómo querés crear tu correo?",
     "directCard": {
       "title": "Directo",
-      "description": "Escribí tu propio prompt. Ideal cuando ya sabés lo que querés."
+      "description": "Escribí tu propio prompt. Ideal cuando ya sabés lo que querés.",
+      "hint": "Más rápido: un solo prompt"
     },
     "wizardCard": {
       "title": "Wizard",
-      "description": "Respondé unas preguntas rápidas. Ideal para dar forma a tu idea."
-    }
+      "description": "Respondé unas preguntas rápidas. Ideal para dar forma a tu idea.",
+      "hint": "Guiado: alrededor de un minuto"
+    },
+    "switchNote": "Puedes cambiar entre los dos modos en cualquier momento desde el encabezado del diálogo."
   },
   "header": {
     "directTitle": "Generar con IA",

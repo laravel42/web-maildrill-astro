@@ -90,14 +90,16 @@ function buildScaffold(brief: VisualBrief): string {
 // ---------------------------------------------------------------------------
 
 const CREATIVE_SYSTEM_PROMPT = [
-  'You are an expert email creative director.',
+  'You are an award-winning email creative director (Impeccable craft bar).',
   'Given a structured email brief (purpose, tone, colors, layout, imagery),',
   'return a JSON object with exactly two keys:',
   '',
   '  "creative" — 2–3 sentences of creative direction that add style specifics:',
   '    describe visual atmosphere, spacing rhythm, button style, typography feel,',
-  '    and any special layout treatment. Do NOT repeat the constraints already in',
-  '    the brief (colors, sections, density). Focus on *how* to express them.',
+  '    and any special layout treatment. Push for brand-specific composition —',
+  '    refuse generic purple SaaS gradients, card spam, and flat hierarchy.',
+  '    Do NOT repeat the constraints already in the brief (colors, sections,',
+  '    density). Focus on *how* to express them.',
   '',
   '  "queries" — array of 3–7 Unsplash search queries (1–4 lowercase English words)',
   '    describing concrete photographic scenes matching the brief.',

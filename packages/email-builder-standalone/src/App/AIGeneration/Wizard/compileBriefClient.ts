@@ -11,11 +11,20 @@ export interface CompileBriefResult {
 }
 
 /**
- * Build a VisualBrief from the DraftBrief. Only high-signal fields the wizard
- * collects are sent; tone, vertical, palette, photo style and sections are left
- * empty/omitted so the backend lets the model decide them.
+ * Build a VisualBrief from the DraftBrief. Wizard fields are preferred;
+ * sensible defaults fill any step the user skipped so the zod schema stays
+ * satisfied and the model still has a complete brief.
  */
 function toWireBrief(draft: DraftBrief): object {
+  const moods = draft.tone_strategy.moods.length > 0 ? draft.tone_strategy.moods : ['friendly'];
+  const sections =
+    draft.layout_strategy.sections.length > 0
+      ? draft.layout_strategy.sections
+      : ['hero', 'features', 'cta', 'footer'];
+  const subjects = draft.image_queries.specificScene.trim()
+    ? [draft.image_queries.specificScene.trim(), ...draft.image_queries.subjects]
+    : draft.image_queries.subjects;
+
   return {
     email_strategy: {
       purpose: draft.email_strategy.purpose ?? 'custom',
@@ -25,28 +34,19 @@ function toWireBrief(draft: DraftBrief): object {
       rawIntent: draft.email_strategy.rawIntent,
     },
     tone_strategy: {
-      // Not asked anymore — the model infers tone/vertical from purpose + brand.
-      moods: draft.tone_strategy.moods,
-      vertical: draft.tone_strategy.vertical,
+      moods,
+      vertical: draft.tone_strategy.vertical ?? 'other',
     },
     visual_strategy: {
-      // Palette / photo style are derived by the model; only brand colours are
-      // collected (they steer the palette when present).
-      palette: draft.visual_strategy.palette,
-      photoStyle: draft.visual_strategy.photoStyle,
+      palette: draft.visual_strategy.palette ?? 'neutral',
+      photoStyle: draft.visual_strategy.photoStyle ?? 'photographic',
       brandColors: draft.visual_strategy.brandColors,
     },
     layout_strategy: {
-      // Empty ⇒ the backend instructs the model to choose the most effective
-      // section structure. The wizard no longer asks the user for sections.
-      sections: draft.layout_strategy.sections,
+      sections,
     },
     image_queries: {
-      // Subjects are no longer a wizard question; when the user typed a specific
-      // scene, forward it as the single subject so it steers the image queries.
-      subjects: draft.image_queries.specificScene.trim()
-        ? [draft.image_queries.specificScene.trim()]
-        : draft.image_queries.subjects,
+      subjects: subjects.slice(0, 7),
     },
   };
 }
