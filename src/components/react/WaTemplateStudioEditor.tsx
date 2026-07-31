@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import type { TemplateDoc } from 'wa-template-studio';
+import type { ApprovalStatus, TemplateDoc } from 'wa-template-studio';
 import waTemplateCatalog from '../../../docs/whatsapp-message-templates.json';
+import type { TemplateApprovalStatus } from '@/types/app';
 import Icon from './Icon';
 import ChannelEditorShell, { shellStyles } from './shared/ChannelEditorShell';
 import { CHANNEL } from './shared/channels';
@@ -23,7 +24,14 @@ import {
 
 export type WaTemplateStudioSave = ReturnType<typeof docToApiFields>;
 
-type StudioComponent = React.ComponentType<{ restoreDraft?: boolean; dark?: boolean; accentColor?: string }>;
+type StudioComponent = React.ComponentType<{
+  restoreDraft?: boolean;
+  dark?: boolean;
+  accentColor?: string;
+  approvalStatus?: ApprovalStatus | null;
+  approvalBusy?: boolean;
+  onRequestApproval?: () => void | Promise<void>;
+}>;
 
 type Props = {
   name: string | null;
@@ -32,8 +40,13 @@ type Props = {
   category?: string | null;
   builderDoc?: Record<string, unknown> | null;
   components?: Record<string, unknown> | null;
+  /** Current Meta approval state for this template row. */
+  approvalStatus?: TemplateApprovalStatus | null;
   onClose: () => void;
   onSave: (value: WaTemplateStudioSave) => void | Promise<void>;
+  /** Persist then submit Meta approval. Host owns the API call; omit offline. */
+  onSubmitForApproval?: () => Promise<TemplateApprovalStatus | void>;
+  onRefreshApproval?: () => Promise<TemplateApprovalStatus | void>;
 };
 
 function normalizeWaCategoryLabel(value: string | null | undefined): WaTemplateCategoryLabel {
@@ -54,8 +67,11 @@ export default function WaTemplateStudioEditor({
   category,
   builderDoc,
   components,
+  approvalStatus: initialApproval = null,
   onClose,
   onSave,
+  onSubmitForApproval,
+  onRefreshApproval,
 }: Props) {
   const [Studio, setStudio] = useState<StudioComponent | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -64,8 +80,16 @@ export default function WaTemplateStudioEditor({
     normalizeWaCategoryLabel(category),
   );
   const [waLanguage, setWaLanguage] = useState(() => normalizeTemplateLanguageCode(language));
+  const [approvalStatus, setApprovalStatus] = useState<TemplateApprovalStatus | null>(
+    initialApproval,
+  );
+  const [approvalBusy, setApprovalBusy] = useState(false);
   const studioReady = useRef(false);
   const { toast, show } = useToast();
+
+  useEffect(() => {
+    setApprovalStatus(initialApproval);
+  }, [initialApproval]);
 
   useEffect(() => {
     let alive = true;
@@ -154,6 +178,52 @@ export default function WaTemplateStudioEditor({
     show(ok ? `“${title.trim() || 'Untitled template'}” saved` : 'Could not save.');
   };
 
+  const handleRequestApproval = async () => {
+    if (approvalBusy || !onSubmitForApproval) return;
+    setApprovalBusy(true);
+    try {
+      const mod = await import('wa-template-studio');
+      const doc = {
+        ...mod.useStudio.getState().doc,
+        name: title.trim() || mod.useStudio.getState().doc.name || 'untitled',
+      } as TemplateDoc;
+      mod.setTemplateField('name', doc.name);
+
+      if (approvalStatus === 'pending') {
+        if (!onRefreshApproval) {
+          show('Approval is already in review');
+          return;
+        }
+        const next = await onRefreshApproval();
+        if (next) setApprovalStatus(next);
+        show('Approval status refreshed');
+        return;
+      }
+
+      if (!mod.canRequestApproval(doc)) {
+        const first = mod.validateTemplate(doc).find((i) => i.severity === 'error');
+        show(first?.message ?? 'Template must pass Meta requirements before approval');
+        return;
+      }
+
+      const saved = await flush();
+      if (!saved) {
+        show('Could not save before requesting approval');
+        return;
+      }
+      const next = await onSubmitForApproval();
+      if (next) setApprovalStatus(next);
+      else setApprovalStatus('pending');
+      show(
+        approvalStatus === 'rejected' ? 'Resubmitted for approval' : 'Submitted for approval',
+      );
+    } catch (e) {
+      show(e instanceof Error ? e.message : 'Could not submit for approval');
+    } finally {
+      setApprovalBusy(false);
+    }
+  };
+
   return (
     <ChannelEditorShell
       channel="whatsapp"
@@ -206,7 +276,13 @@ export default function WaTemplateStudioEditor({
           <p className={shellStyles.muted}>{loadError}</p>
         </div>
       ) : Studio ? (
-        <Studio restoreDraft={false} accentColor={CHANNEL.whatsapp.hex} />
+        <Studio
+          restoreDraft={false}
+          accentColor={CHANNEL.whatsapp.hex}
+          approvalStatus={approvalStatus}
+          approvalBusy={approvalBusy}
+          onRequestApproval={onSubmitForApproval ? handleRequestApproval : undefined}
+        />
       ) : (
         <div className={shellStyles.state}>
           <span

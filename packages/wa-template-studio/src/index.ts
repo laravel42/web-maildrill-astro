@@ -8,6 +8,7 @@
  */
 
 export { Studio, type StudioProps } from './app/Studio';
+export type { ApprovalStatus } from './app/TopBar';
 
 // Plugin system
 export { registerBlock, registerButton, listBlockPlugins, listButtonPlugins } from './core/registry';
@@ -55,7 +56,14 @@ export {
 } from './core/store';
 
 // Validation + serialization
-export { hasErrors, issuesForBlock, issuesForSlot, validateTemplate } from './core/validation';
+export {
+  canRequestApproval,
+  docHasContent,
+  hasErrors,
+  issuesForBlock,
+  issuesForSlot,
+  validateTemplate,
+} from './core/validation';
 export {
   fromMetaJson,
   InvalidTemplateError,

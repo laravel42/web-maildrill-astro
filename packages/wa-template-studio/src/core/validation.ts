@@ -154,6 +154,26 @@ export function hasErrors(issues: ValidationIssue[]): boolean {
   return issues.some((i) => i.severity === 'error');
 }
 
+/** True when the document has any authorable content (body/header/buttons). */
+export function docHasContent(doc: TemplateDoc): boolean {
+  const bodyText = (doc.blocks.body?.data as { text?: unknown } | undefined)?.text;
+  if (typeof bodyText === 'string' && bodyText.trim()) return true;
+  if (doc.blocks.header) return true;
+  if (doc.blocks.footer) {
+    const footerText = (doc.blocks.footer.data as { text?: unknown } | undefined)?.text;
+    if (typeof footerText === 'string' && footerText.trim()) return true;
+  }
+  return doc.blocks.buttons.length > 0;
+}
+
+/**
+ * Ready to submit for Meta review: some content is present and validation
+ * has no errors (name/language/limits/structure all pass).
+ */
+export function canRequestApproval(doc: TemplateDoc): boolean {
+  return docHasContent(doc) && !hasErrors(validateTemplate(doc));
+}
+
 /** Issues scoped to one slot (for panel badges). */
 export function issuesForSlot(issues: ValidationIssue[], slot: ValidationIssue['slot']): ValidationIssue[] {
   return issues.filter((i) => i.slot === slot);

@@ -1,9 +1,10 @@
 import { lazy, Suspense, useRef } from 'react';
-import type { ChannelType } from '@/types/app';
+import type { ChannelType, TemplateApprovalStatus } from '@/types/app';
 import type { TEditorConfiguration } from 'email-builder-standalone';
 import { routes } from '@/config/routes';
-import { api } from '@/lib/app/api';
+import { api, ApiError } from '@/lib/app/api';
 import type { ApiTemplate } from '@/lib/app/template-map';
+import { toApprovalStatus } from '@/lib/app/template-map';
 import EmailBuilder from './EmailBuilder';
 import LazyBoundary from './shared/LazyBoundary';
 
@@ -86,6 +87,30 @@ export default function TemplateBuilderPage({
   }
 
   if (channel === 'whatsapp') {
+    const submitApproval = async (): Promise<TemplateApprovalStatus> => {
+      if (!live) throw new Error('Connect a workspace to submit templates');
+      // Ensure the row exists before POST /submit (create-on-first-save).
+      if (!idRef.current) throw new Error('Save the template before requesting approval');
+      try {
+        const updated = await api.post<ApiTemplate>(`templates/${idRef.current}/submit`, {});
+        return toApprovalStatus(updated.approvalStatus) ?? 'pending';
+      } catch (e) {
+        throw new Error(e instanceof ApiError ? e.message : 'Could not submit for approval');
+      }
+    };
+    const refreshApproval = async (): Promise<TemplateApprovalStatus> => {
+      if (!live || !idRef.current) throw new Error('Connect a workspace to refresh status');
+      try {
+        const updated = await api.post<ApiTemplate>(
+          `templates/${idRef.current}/refresh-status`,
+          {},
+        );
+        return toApprovalStatus(updated.approvalStatus) ?? 'pending';
+      } catch (e) {
+        throw new Error(e instanceof ApiError ? e.message : 'Could not refresh status');
+      }
+    };
+
     return (
       <LazyBoundary label="the WhatsApp template editor" onClose={close}>
         <Suspense fallback={null}>
@@ -96,6 +121,7 @@ export default function TemplateBuilderPage({
             category={category}
             builderDoc={template?.builderDoc}
             components={template?.components}
+            approvalStatus={toApprovalStatus(template?.approvalStatus)}
             onClose={close}
             onSave={(fields) =>
               persist({
@@ -108,6 +134,8 @@ export default function TemplateBuilderPage({
                 components: fields.components,
               })
             }
+            onSubmitForApproval={live ? submitApproval : undefined}
+            onRefreshApproval={live ? refreshApproval : undefined}
           />
         </Suspense>
       </LazyBoundary>
