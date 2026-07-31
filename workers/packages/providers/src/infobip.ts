@@ -849,8 +849,14 @@ export class InfobipProvider implements MessagingProvider {
 
     // Unified reports API covers standalone WhatsApp/SMS/email sends too.
     // Voice reports are NOT in the unified API — they live at /tts/3/reports.
+    // Reports are one-shot (consumed on read); the WhatsApp logs endpoint is
+    // idempotent with ~48h retention, so it recovers messages whose report
+    // was already drained (e.g. REJECTED sends with no PostHog DLR).
     const paths = [
       `/messages-api/1/reports?${q.toString()}`,
+      ...(channel === 'whatsapp'
+        ? [`/whatsapp/2/logs?messageId=${encodeURIComponent(providerMessageId)}`]
+        : []),
       ...(channel === 'sms'
         ? [`/sms/1/reports?messageId=${encodeURIComponent(providerMessageId)}`]
         : []),

@@ -58,6 +58,10 @@ export async function runHogQL(
         name,
         query: { kind: "HogQLQuery", query },
       }),
+      // Hard deadline: a hung request (e.g. a socket killed by laptop sleep)
+      // must error out, not freeze the caller — the delivery poller awaits
+      // this in its tick loop, and an unresolved await stalls it forever.
+      signal: AbortSignal.timeout(30_000),
     });
 
     if (!res.ok) {
