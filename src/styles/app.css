@@ -158,23 +158,41 @@
   gap: 4px;
   padding: 5px 8px;
   border-radius: 4px;
-  background: #6b675c;
-  color: #fff;
+  background: var(--surface2);
+  color: var(--text3);
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
   line-height: 1.2;
 }
-.astatus--draft,
-.astatus--scheduled,
-.astatus--sending,
+.astatus--draft {
+  background: var(--surface2);
+  color: var(--text3);
+}
+.astatus--scheduled {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+.astatus--sending {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
 .astatus--sent,
-.astatus--paused,
-.astatus--active,
-.astatus--unsubscribed,
+.astatus--active {
+  background: var(--success-bg);
+  color: var(--success-strong);
+}
+.astatus--paused {
+  background: var(--surface2);
+  color: var(--muted);
+}
+.astatus--unsubscribed {
+  background: var(--warning-bg);
+  color: var(--warning-strong);
+}
 .astatus--bounced {
-  background: #6b675c;
-  color: #fff;
+  background: var(--danger-bg);
+  color: var(--danger);
 }
 /* WhatsApp template approval — a distinct background per status. Scoped to its
    own `tstat--*` classes so it never recolors the shared campaign `.astatus--*`
@@ -206,8 +224,7 @@
 
 /* Outlined for visibility — a solid currentColor border (matching each
    status hue) makes the WhatsApp approval badge read clearly against the
-   tinted card backgrounds. Restores pill shape since `.astatus` is now a
-   plain label. */
+   tinted card backgrounds. */
 .tstat--draft,
 .tstat--pending,
 .tstat--approved,
