@@ -55,6 +55,24 @@ export const FONT_CATALOG = [
     value: '"Helvetica Neue", "Arial Nova", "Nimbus Sans", Arial, sans-serif',
     google: null,
   },
+  {
+    key: 'WIDE_SANS',
+    label: 'Wide sans',
+    value: 'Verdana, Geneva, Tahoma, sans-serif',
+    google: null,
+  },
+  {
+    key: 'COMPACT_SANS',
+    label: 'Compact sans',
+    value: 'Tahoma, Verdana, Geneva, sans-serif',
+    google: null,
+  },
+  {
+    key: 'CLASSIC_SERIF',
+    label: 'Classic serif',
+    value: 'Georgia, "Times New Roman", Times, serif',
+    google: null,
+  },
 
   // --- Sans-serif ---------------------------------------------------------
   {
