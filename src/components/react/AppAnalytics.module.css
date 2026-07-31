@@ -248,14 +248,16 @@
   color: var(--muted);
   max-width: 36ch;
 }
-/* Denominator footnote under the engagement bars. */
-.panelNote {
-  margin: 14px 0 0;
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--text4);
+.channelGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 18px;
 }
-
+.channelStack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 .barRow,
 .barBtn {
   display: block;
@@ -272,6 +274,12 @@
 .barBtn:last-child {
   margin-bottom: 0;
 }
+.channelGrid .barRow,
+.channelGrid .barBtn,
+.channelStack .barRow,
+.channelStack .barBtn {
+  margin-bottom: 0;
+}
 .barBtn {
   border-radius: 8px;
   margin-left: -6px;
@@ -280,6 +288,11 @@
   width: calc(100% + 12px);
   cursor: pointer;
   transition: background 0.12s var(--ease-out);
+}
+.channelGrid .barBtn {
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
 }
 .barBtn:hover {
   background: var(--surface2);

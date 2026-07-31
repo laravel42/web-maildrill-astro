@@ -418,67 +418,71 @@ export default function AppAnalytics({ live = false }: { live?: boolean } = {}) 
             <section className={`acrd ${styles.panel}`} aria-busy={loading}>
               <h2 className={styles.panelTitle}>By channel</h2>
               {loading ? (
-                [0, 1, 2, 3].map((i) => (
-                  <div key={i} className={styles.barRow} aria-hidden="true">
-                    <div className={styles.barTop}>
-                      <div className={`skeleton ${styles.skelLine}`} />
-                      <div className={`skeleton ${styles.skelLineSm}`} />
+                <div className={channel === 'all' ? styles.channelGrid : styles.channelStack}>
+                  {(channel === 'all' ? [0, 1, 2, 3] : [0]).map((i) => (
+                    <div key={i} className={styles.barRow} aria-hidden="true">
+                      <div className={styles.barTop}>
+                        <div className={`skeleton ${styles.skelLine}`} />
+                        <div className={`skeleton ${styles.skelLineSm}`} />
+                      </div>
+                      <div className={`skeleton ${styles.skelBar}`} />
                     </div>
-                    <div className={`skeleton ${styles.skelBar}`} />
-                  </div>
-                ))
+                  ))}
+                </div>
               ) : channelRows.length === 0 ? (
                 <p className={styles.panelEmpty}>Nothing sent on this channel yet.</p>
               ) : (
-                channelRows.map((c) => {
-                  const share = totalChannelSends > 0 ? (c.sent / totalChannelSends) * 100 : 0;
-                  const ch = c.channel as ChannelType;
-                  const canFocus =
-                    (CHANNEL_ORDER as readonly string[]).includes(c.channel) && channel === 'all';
-                  return canFocus ? (
-                    <button
-                      key={c.channel}
-                      type="button"
-                      className={styles.barBtn}
-                      onClick={() => setChannel(ch)}
-                      aria-label={`Focus analytics on ${channelLabelOf(c.channel)}`}
-                    >
-                      <div className={styles.barTop}>
-                        <span className={styles.barLbl}>{channelLabelOf(c.channel)}</span>
-                        <span className={`${styles.barMeta} tnum`}>
-                          {c.sent.toLocaleString('en-US')} · {share.toFixed(1)}%
-                        </span>
+                <div className={channel === 'all' ? styles.channelGrid : styles.channelStack}>
+                  {channelRows.map((c) => {
+                    const share = totalChannelSends > 0 ? (c.sent / totalChannelSends) * 100 : 0;
+                    const ch = c.channel as ChannelType;
+                    const canFocus =
+                      (CHANNEL_ORDER as readonly string[]).includes(c.channel) && channel === 'all';
+                    return canFocus ? (
+                      <button
+                        key={c.channel}
+                        type="button"
+                        className={styles.barBtn}
+                        onClick={() => setChannel(ch)}
+                        aria-label={`Focus analytics on ${channelLabelOf(c.channel)}`}
+                      >
+                        <div className={styles.barTop}>
+                          <span className={styles.barLbl}>{channelLabelOf(c.channel)}</span>
+                          <span className={`${styles.barMeta} tnum`}>
+                            {c.sent.toLocaleString('en-US')} · {share.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className={styles.track}>
+                          <div
+                            className={styles.fill}
+                            style={{
+                              width: `${Math.max(share, 1.5)}%`,
+                              background: channelColor(c.channel),
+                            }}
+                          />
+                        </div>
+                      </button>
+                    ) : (
+                      <div key={c.channel} className={styles.barRow}>
+                        <div className={styles.barTop}>
+                          <span className={styles.barLbl}>{channelLabelOf(c.channel)}</span>
+                          <span className={`${styles.barMeta} tnum`}>
+                            {c.sent.toLocaleString('en-US')} · {share.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className={styles.track}>
+                          <div
+                            className={styles.fill}
+                            style={{
+                              width: `${Math.max(share, 1.5)}%`,
+                              background: channelColor(c.channel),
+                            }}
+                          />
+                        </div>
                       </div>
-                      <div className={styles.track}>
-                        <div
-                          className={styles.fill}
-                          style={{
-                            width: `${Math.max(share, 1.5)}%`,
-                            background: channelColor(c.channel),
-                          }}
-                        />
-                      </div>
-                    </button>
-                  ) : (
-                    <div key={c.channel} className={styles.barRow}>
-                      <div className={styles.barTop}>
-                        <span className={styles.barLbl}>{channelLabelOf(c.channel)}</span>
-                        <span className={`${styles.barMeta} tnum`}>
-                          {c.sent.toLocaleString('en-US')} · {share.toFixed(1)}%
-                        </span>
-                      </div>
-                      <div className={styles.track}>
-                        <div
-                          className={styles.fill}
-                          style={{
-                            width: `${Math.max(share, 1.5)}%`,
-                            background: channelColor(c.channel),
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })
+                    );
+                  })}
+                </div>
               )}
             </section>
 
@@ -505,37 +509,30 @@ export default function AppAnalytics({ live = false }: { live?: boolean } = {}) 
                   or WhatsApp sends land.
                 </p>
               ) : (
-                <>
-                  {(
-                    [
-                      { label: 'Opened', count: engOpened, color: 'var(--accent)' },
-                      { label: 'Clicked', count: engClicked, color: 'var(--success)' },
-                    ] as const
-                  ).map((m) => (
-                    <div key={m.label} className={styles.barRow}>
-                      <div className={styles.barTop}>
-                        <span className={styles.barLbl}>{m.label}</span>
-                        <span className={`${styles.barMeta} tnum`}>
-                          {m.count.toLocaleString('en-US')} · {pctOf(m.count, engDelivered)}
-                        </span>
-                      </div>
-                      <div className={styles.track}>
-                        <div
-                          className={styles.fill}
-                          style={{
-                            width: `${m.count > 0 ? Math.max((m.count / engDelivered) * 100, 1.5) : 0}%`,
-                            background: m.color,
-                          }}
-                        />
-                      </div>
+                (
+                  [
+                    { label: 'Opened', count: engOpened, color: 'var(--accent)' },
+                    { label: 'Clicked', count: engClicked, color: 'var(--success)' },
+                  ] as const
+                ).map((m) => (
+                  <div key={m.label} className={styles.barRow}>
+                    <div className={styles.barTop}>
+                      <span className={styles.barLbl}>{m.label}</span>
+                      <span className={`${styles.barMeta} tnum`}>
+                        {m.count.toLocaleString('en-US')} · {pctOf(m.count, engDelivered)}
+                      </span>
                     </div>
-                  ))}
-                  <p className={`${styles.panelNote} tnum`}>
-                    Of {engDelivered.toLocaleString('en-US')} tracked deliveries
-                    {channel === 'all' ? ' (email + WhatsApp)' : ''}. Opens are provider read
-                    receipts; clicks are link and button events.
-                  </p>
-                </>
+                    <div className={styles.track}>
+                      <div
+                        className={styles.fill}
+                        style={{
+                          width: `${m.count > 0 ? Math.max((m.count / engDelivered) * 100, 1.5) : 0}%`,
+                          background: m.color,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))
               )}
             </section>
           </div>
