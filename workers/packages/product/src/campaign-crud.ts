@@ -58,7 +58,13 @@ export interface CampaignWithStats extends Campaign {
 
 export interface CampaignEngagementBreakdown {
   devices: Array<{ device: string; count: number }>;
-  links: Array<{ url: string; count: number }>;
+  links: Array<{
+    url: string;
+    /** All click events on this URL. */
+    total: number;
+    /** Distinct recipients (messages) that clicked this URL. */
+    unique: number;
+  }>;
 }
 
 /** Per-campaign message counters, keyed by campaign id. */
@@ -265,7 +271,8 @@ export async function getCampaignEngagement(
   const links = await db
     .select({
       url: urlExpr,
-      count: sql<number>`count(*)::int`,
+      total: sql<number>`count(*)::int`,
+      unique: sql<number>`count(distinct ${messageEvents.messageId})::int`,
     })
     .from(messageEvents)
     .innerJoin(messages, eq(messageEvents.messageId, messages.id))
@@ -283,7 +290,11 @@ export async function getCampaignEngagement(
 
   return {
     devices: devices.map((r) => ({ device: r.device, count: Number(r.count) })),
-    links: links.map((r) => ({ url: r.url, count: Number(r.count) })),
+    links: links.map((r) => ({
+      url: r.url,
+      total: Number(r.total),
+      unique: Number(r.unique),
+    })),
   };
 }
 

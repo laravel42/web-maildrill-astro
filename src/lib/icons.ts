@@ -27,6 +27,7 @@ export type IconName =
   | 'chevron-right'
   | 'check'
   | 'check-circle'
+  | 'minus'
   | 'pause'
   | 'x'
   | 'search'
@@ -104,6 +105,7 @@ export const iconPaths: Record<IconName, string> = {
   'chevron-right': '<path d="m9 6 6 6-6 6"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
   'check-circle': '<circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/>',
+  minus: '<path d="M5 12h14"/>',
   pause: '<path d="M8 4v16M16 4v16"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
@@ -158,8 +160,7 @@ export const iconPaths: Record<IconName, string> = {
   save: '<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>',
   eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
   zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/>',
-  user:
-    '<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5v-1.2A4.3 4.3 0 0 1 8.8 15h6.4a4.3 4.3 0 0 1 4.3 4.3v1.2"/>',
+  user: '<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5v-1.2A4.3 4.3 0 0 1 8.8 15h6.4a4.3 4.3 0 0 1 4.3 4.3v1.2"/>',
   logout:
     '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
 };

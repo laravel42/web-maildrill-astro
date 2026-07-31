@@ -29,14 +29,7 @@ export type ReportEventTab =
 
 /** Compact KPI tiles in the campaign detail drawer. */
 export type DrawerKpiKey =
-  | 'recipients'
-  | 'delivered'
-  | 'open'
-  | 'seen'
-  | 'click'
-  | 'cto'
-  | 'unsubscribed'
-  | 'failed';
+  'recipients' | 'delivered' | 'open' | 'seen' | 'click' | 'cto' | 'unsubscribed' | 'failed';
 
 export type ChannelReportConfig = {
   /** Rate cards under the header (delivery / open / click / unsub). */
@@ -53,8 +46,6 @@ export type ChannelReportConfig = {
   eventTabs: ReportEventTab[];
   /** Label for the open/seen stage. */
   openLabel: string;
-  /** Short note for empty engagement panels. */
-  emptyEngagement: string;
 };
 
 const EMAIL: ChannelReportConfig = {
@@ -65,7 +56,6 @@ const EMAIL: ChannelReportConfig = {
   panels: ['devices', 'links', 'details'],
   eventTabs: ['all', 'delivered', 'opened', 'clicked', 'unsubscribed', 'sent', 'bounced', 'queued'],
   openLabel: 'Opened',
-  emptyEngagement: 'Open and click tracking from Infobip appear here once recipients engage.',
 };
 
 const WHATSAPP: ChannelReportConfig = {
@@ -76,7 +66,6 @@ const WHATSAPP: ChannelReportConfig = {
   panels: ['links', 'details'],
   eventTabs: ['all', 'delivered', 'seen', 'clicked', 'unsubscribed', 'sent', 'failed', 'queued'],
   openLabel: 'Seen',
-  emptyEngagement: 'WhatsApp seen receipts and tracked link clicks from Infobip show up here.',
 };
 
 const SMS: ChannelReportConfig = {
@@ -87,7 +76,6 @@ const SMS: ChannelReportConfig = {
   panels: ['links', 'details'],
   eventTabs: ['all', 'delivered', 'clicked', 'unsubscribed', 'sent', 'failed', 'queued'],
   openLabel: 'Opened',
-  emptyEngagement: 'SMS does not report opens — tracked short-link clicks from Infobip appear here.',
 };
 
 const VOICE: ChannelReportConfig = {
@@ -98,7 +86,6 @@ const VOICE: ChannelReportConfig = {
   panels: ['details'],
   eventTabs: ['all', 'delivered', 'sent', 'failed', 'queued'],
   openLabel: 'Opened',
-  emptyEngagement: 'Voice reports delivery outcomes only — no open or click tracking.',
 };
 
 const BY_CHANNEL: Record<ChannelType, ChannelReportConfig> = {
