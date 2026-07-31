@@ -34,15 +34,19 @@ export interface DeliveryPollResult {
 export interface StatusGroupRow {
   maildrillMessageId: string;
   statusGroup: string;
+  errorName?: string;
+  errorDescription?: string;
 }
 
-/** Pure: map HogQL rows → latest status_group per maildrill message id. */
+/** Pure: map HogQL rows → latest status_group (+ error) per maildrill message id. */
 export function mapLatestStatusGroups(
   columns: string[],
   results: unknown[][],
 ): StatusGroupRow[] {
   const iId = columnIndex(columns, "maildrill_message_id");
   const iGroup = columnIndex(columns, "status_group");
+  const iErrName = columnIndex(columns, "error_name");
+  const iErrDesc = columnIndex(columns, "error_description");
   if (iId < 0 || iGroup < 0) return [];
 
   // Query already returns argMax / latest; keep first row per id if duplicates.
@@ -53,7 +57,14 @@ export function mapLatestStatusGroups(
     const statusGroup = cellString(row, iGroup);
     if (!id || !statusGroup || seen.has(id)) continue;
     seen.add(id);
-    out.push({ maildrillMessageId: id, statusGroup });
+    const errorName = iErrName >= 0 ? cellString(row, iErrName) : undefined;
+    const errorDescription = iErrDesc >= 0 ? cellString(row, iErrDesc) : undefined;
+    out.push({
+      maildrillMessageId: id,
+      statusGroup,
+      ...(errorName ? { errorName } : {}),
+      ...(errorDescription ? { errorDescription } : {}),
+    });
   }
   return out;
 }
@@ -78,8 +89,8 @@ async function loadOpenMessages(): Promise<MessageRow[]> {
 
 async function fetchStatusGroupsFromPostHog(
   messageIds: string[],
-): Promise<Map<string, string>> {
-  const byId = new Map<string, string>();
+): Promise<Map<string, StatusGroupRow>> {
+  const byId = new Map<string, StatusGroupRow>();
   if (messageIds.length === 0 || !config.posthog.statsEnabled) return byId;
 
   for (let i = 0; i < messageIds.length; i += HOGQL_CHUNK) {
@@ -92,10 +103,13 @@ async function fetchStatusGroupsFromPostHog(
 
     // Voice DLRs land as message_voice_report when Infobip notify is routed via
     // the portal's ?kind=voice URL — same status_group shape as delivery.
+    // error_* come from Infobip DLR payloads (e.g. EC_FREQUENCY_CAPPING).
     const query = `
 SELECT
   toString(properties.maildrill_message_id) AS maildrill_message_id,
-  argMax(toString(properties.status_group), timestamp) AS status_group
+  argMax(toString(properties.status_group), timestamp) AS status_group,
+  argMax(toString(properties.error_name), timestamp) AS error_name,
+  argMax(toString(properties.error_description), timestamp) AS error_description
 FROM events
 WHERE event IN ('message_delivery_report', 'message_voice_report')
   AND toString(properties.maildrill_message_id) IN (${lits.join(", ")})
@@ -106,7 +120,7 @@ GROUP BY maildrill_message_id
     if (!result) continue;
 
     for (const row of mapLatestStatusGroups(result.columns, result.results)) {
-      byId.set(row.maildrillMessageId, row.statusGroup);
+      byId.set(row.maildrillMessageId, row);
     }
   }
 
@@ -118,10 +132,10 @@ async function syncOpenMessages(open: MessageRow[]): Promise<number> {
   let updated = 0;
 
   for (const msg of open) {
-    const statusGroup = statusById.get(msg.id);
-    if (!statusGroup) continue;
+    const row = statusById.get(msg.id);
+    if (!row) continue;
 
-    const outcome = outcomeFromInfobipStatusGroup(statusGroup);
+    const outcome = outcomeFromInfobipStatusGroup(row.statusGroup);
     const changed = await applyProviderOutcome({
       messageId: msg.id,
       tenantId: msg.tenantId,
@@ -129,7 +143,9 @@ async function syncOpenMessages(open: MessageRow[]): Promise<number> {
       provider: msg.provider,
       currentStatus: msg.status,
       outcome,
-      statusGroup,
+      statusGroup: row.statusGroup,
+      errorCode: row.errorName,
+      errorMessage: row.errorDescription,
     });
     if (changed) updated += 1;
   }

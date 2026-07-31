@@ -16,16 +16,21 @@ describe("outcomeFromInfobipStatusGroup", () => {
 describe("mapLatestStatusGroups", () => {
   it("maps fixture HogQL rows", () => {
     const rows = mapLatestStatusGroups(
-      ["maildrill_message_id", "status_group"],
+      ["maildrill_message_id", "status_group", "error_name", "error_description"],
       [
-        ["msg-1", "DELIVERED"],
-        ["msg-2", "REJECTED"],
-        ["msg-1", "PENDING"], // duplicate id ignored
+        ["msg-1", "DELIVERED", "", ""],
+        ["msg-2", "UNDELIVERABLE", "EC_FREQUENCY_CAPPING", "Frequency capping limit reached"],
+        ["msg-1", "PENDING", "", ""], // duplicate id ignored
       ],
     );
     expect(rows).toEqual([
       { maildrillMessageId: "msg-1", statusGroup: "DELIVERED" },
-      { maildrillMessageId: "msg-2", statusGroup: "REJECTED" },
+      {
+        maildrillMessageId: "msg-2",
+        statusGroup: "UNDELIVERABLE",
+        errorName: "EC_FREQUENCY_CAPPING",
+        errorDescription: "Frequency capping limit reached",
+      },
     ]);
   });
 

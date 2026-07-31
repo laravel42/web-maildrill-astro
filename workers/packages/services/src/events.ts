@@ -47,6 +47,7 @@ async function applyEventState(
   messageId: string,
   next: MessageState,
   at: Date,
+  error?: { code?: string; message?: string },
 ): Promise<void> {
   const base = { status: next, version: bumpVersion, updatedAt: new Date() };
   const set = (extra: Record<string, unknown>) =>
@@ -61,9 +62,21 @@ async function applyEventState(
     case "read":
       await set({ readAt: at });
       break;
-    case "failed":
-      await set({ failedAt: at });
+    case "failed": {
+      const code = error?.code?.trim() || null;
+      const message = error?.message?.trim() || null;
+      await set({
+        failedAt: at,
+        ...(code || message
+          ? {
+              lastErrorCode: code,
+              lastErrorMessage:
+                message && code && message !== code ? `${message} (${code})` : (message ?? code),
+            }
+          : {}),
+      });
       break;
+    }
     case "cancelled":
       await set({ cancelledAt: at });
       break;
@@ -85,6 +98,10 @@ export async function applyProviderOutcome(input: {
   currentStatus: MessageState;
   outcome: ProviderOutcome;
   statusGroup: string;
+  /** Infobip `error.name` from the DLR (e.g. EC_FREQUENCY_CAPPING). */
+  errorCode?: string;
+  /** Infobip `error.description` from the DLR. */
+  errorMessage?: string;
   occurredAt?: Date;
 }): Promise<boolean> {
   const at = input.occurredAt ?? new Date();
@@ -119,13 +136,18 @@ export async function applyProviderOutcome(input: {
           source: "posthog_poller",
           status_group: input.statusGroup,
           outcome: input.outcome,
+          ...(input.errorCode ? { error_name: input.errorCode } : {}),
+          ...(input.errorMessage ? { error_description: input.errorMessage } : {}),
         },
       })
       .onConflictDoNothing({
         target: [messageEvents.provider, messageEvents.eventFingerprint],
       });
 
-    await applyEventState(tx, input.messageId, next, at);
+    await applyEventState(tx, input.messageId, next, at, {
+      code: input.errorCode,
+      message: input.errorMessage,
+    });
     emitAppEvent({
       name: "message.status_changed",
       payload: {
