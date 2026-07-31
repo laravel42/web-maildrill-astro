@@ -315,9 +315,9 @@
 .athead > div {
   padding: 12px 19px;
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text4);
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -330,7 +330,8 @@
   letter-spacing: inherit;
   text-transform: inherit;
 }
-.athead button:hover {
+.athead button:hover,
+.athead button.is-active {
   color: var(--text);
 }
 .atrow {

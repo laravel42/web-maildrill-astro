@@ -710,27 +710,47 @@ export default function AppMedia({
                 </button>
               </div>
               <div>
-                <button type="button" onClick={() => toggleSort('name')}>
+                <button
+                  type="button"
+                  className={sort.key === 'name' ? styles.isActive : undefined}
+                  onClick={() => toggleSort('name')}
+                >
                   Name <span className="tnum">{sortArrow('name')}</span>
                 </button>
               </div>
               <div>
-                <button type="button" onClick={() => toggleSort('type')}>
+                <button
+                  type="button"
+                  className={sort.key === 'type' ? styles.isActive : undefined}
+                  onClick={() => toggleSort('type')}
+                >
                   Type <span className="tnum">{sortArrow('type')}</span>
                 </button>
               </div>
               <div className={styles.r}>
-                <button type="button" onClick={() => toggleSort('dim')}>
+                <button
+                  type="button"
+                  className={sort.key === 'dim' ? styles.isActive : undefined}
+                  onClick={() => toggleSort('dim')}
+                >
                   Dimensions <span className="tnum">{sortArrow('dim')}</span>
                 </button>
               </div>
               <div className={styles.r}>
-                <button type="button" onClick={() => toggleSort('size')}>
+                <button
+                  type="button"
+                  className={sort.key === 'size' ? styles.isActive : undefined}
+                  onClick={() => toggleSort('size')}
+                >
                   Size <span className="tnum">{sortArrow('size')}</span>
                 </button>
               </div>
               <div className={styles.r}>
-                <button type="button" onClick={() => toggleSort('uploaded')}>
+                <button
+                  type="button"
+                  className={sort.key === 'uploaded' ? styles.isActive : undefined}
+                  onClick={() => toggleSort('uploaded')}
+                >
                   Uploaded <span className="tnum">{sortArrow('uploaded')}</span>
                 </button>
               </div>

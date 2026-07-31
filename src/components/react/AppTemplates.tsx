@@ -765,6 +765,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               <div>
                 <button
                   type="button"
+                  className={sort.key === 'name' ? styles.isActive : undefined}
                   onClick={() => toggleSort('name')}
                   aria-label="Sort by template"
                 >
@@ -774,6 +775,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               <div>
                 <button
                   type="button"
+                  className={sort.key === 'channel' ? styles.isActive : undefined}
                   onClick={() => toggleSort('channel')}
                   aria-label="Sort by type"
                 >
@@ -783,6 +785,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               <div>
                 <button
                   type="button"
+                  className={sort.key === 'cat' ? styles.isActive : undefined}
                   onClick={() => toggleSort('cat')}
                   aria-label="Sort by category"
                 >
@@ -792,6 +795,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               <div className={styles.lcenter}>
                 <button
                   type="button"
+                  className={sort.key === 'updated' ? styles.isActive : undefined}
                   onClick={() => toggleSort('updated')}
                   aria-label="Sort by updated"
                 >
@@ -801,6 +805,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               <div className={styles.lcenter}>
                 <button
                   type="button"
+                  className={sort.key === 'avgOpen' ? styles.isActive : undefined}
                   onClick={() => toggleSort('avgOpen')}
                   aria-label="Sort by opens"
                 >
@@ -810,6 +815,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               <div className={styles.lcenter}>
                 <button
                   type="button"
+                  className={sort.key === 'avgClick' ? styles.isActive : undefined}
                   onClick={() => toggleSort('avgClick')}
                   aria-label="Sort by clicks"
                 >
@@ -819,6 +825,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               <div className={styles.lcenter}>
                 <button
                   type="button"
+                  className={sort.key === 'fav' ? styles.isActive : undefined}
                   onClick={() => toggleSort('fav')}
                   aria-label="Sort by favorite"
                 >

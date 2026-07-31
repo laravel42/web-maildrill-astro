@@ -934,37 +934,65 @@ export default function AppSubscribers({
                 </button>
               </div>
               <div>
-                <button type="button" onClick={() => toggleSort('name')}>
+                <button
+                  type="button"
+                  className={sort.key === 'name' ? 'is-active' : undefined}
+                  onClick={() => toggleSort('name')}
+                >
                   Subscriber <span className="tnum">{sortArrow('name')}</span>
                 </button>
               </div>
               <div className={styles.colCenter}>
-                <button type="button" onClick={() => toggleSort('opens')}>
+                <button
+                  type="button"
+                  className={sort.key === 'opens' ? 'is-active' : undefined}
+                  onClick={() => toggleSort('opens')}
+                >
                   Avg. open <span className="tnum">{sortArrow('opens')}</span>
                 </button>
               </div>
               <div className={styles.colCenter}>
-                <button type="button" onClick={() => toggleSort('clicks')}>
+                <button
+                  type="button"
+                  className={sort.key === 'clicks' ? 'is-active' : undefined}
+                  onClick={() => toggleSort('clicks')}
+                >
                   Avg. click <span className="tnum">{sortArrow('clicks')}</span>
                 </button>
               </div>
               <div>
-                <button type="button" onClick={() => toggleSort('tags')}>
+                <button
+                  type="button"
+                  className={sort.key === 'tags' ? 'is-active' : undefined}
+                  onClick={() => toggleSort('tags')}
+                >
                   Tags <span className="tnum">{sortArrow('tags')}</span>
                 </button>
               </div>
               <div className={styles.colCenter}>
-                <button type="button" onClick={() => toggleSort('status')}>
+                <button
+                  type="button"
+                  className={sort.key === 'status' ? 'is-active' : undefined}
+                  onClick={() => toggleSort('status')}
+                >
                   Status <span className="tnum">{sortArrow('status')}</span>
                 </button>
               </div>
               <div className={styles.colCenter}>
-                <button type="button" onClick={() => toggleSort('subscribed')}>
+                <button
+                  type="button"
+                  className={sort.key === 'subscribed' ? 'is-active' : undefined}
+                  onClick={() => toggleSort('subscribed')}
+                >
                   Subscribed <span className="tnum">{sortArrow('subscribed')}</span>
                 </button>
               </div>
               <div className={styles.colCenter}>
-                <button type="button" onClick={() => toggleSort('last')}>
+                <button
+                  type="button"
+                  className={sort.key === 'last' ? 'is-active' : undefined}
+                  onClick={() => toggleSort('last')}
+                >
                   Last activity <span className="tnum">{sortArrow('last')}</span>
                 </button>
               </div>

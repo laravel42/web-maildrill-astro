@@ -724,29 +724,49 @@ export default function CampaignsBoard({
             </button>
           </div>
           <div>
-            <button type="button" onClick={() => toggleSort('name')}>
+            <button
+              type="button"
+              className={sort.key === 'name' ? 'is-active' : undefined}
+              onClick={() => toggleSort('name')}
+            >
               Campaign <span className="tnum">{sortArrow('name')}</span>
             </button>
           </div>
           <div>Status</div>
           <div>Channel</div>
           <div className={styles.colCenter}>
-            <button type="button" onClick={() => toggleSort('recipients')}>
+            <button
+              type="button"
+              className={sort.key === 'recipients' ? 'is-active' : undefined}
+              onClick={() => toggleSort('recipients')}
+            >
               Recipients <span className="tnum">{sortArrow('recipients')}</span>
             </button>
           </div>
           <div className={styles.colCenter}>
-            <button type="button" onClick={() => toggleSort('openRate')}>
+            <button
+              type="button"
+              className={sort.key === 'openRate' ? 'is-active' : undefined}
+              onClick={() => toggleSort('openRate')}
+            >
               Open <span className="tnum">{sortArrow('openRate')}</span>
             </button>
           </div>
           <div className={styles.colCenter}>
-            <button type="button" onClick={() => toggleSort('clickRate')}>
+            <button
+              type="button"
+              className={sort.key === 'clickRate' ? 'is-active' : undefined}
+              onClick={() => toggleSort('clickRate')}
+            >
               Click <span className="tnum">{sortArrow('clickRate')}</span>
             </button>
           </div>
           <div className={styles.colCenter}>
-            <button type="button" onClick={() => toggleSort('updatedAt')}>
+            <button
+              type="button"
+              className={sort.key === 'updatedAt' ? 'is-active' : undefined}
+              onClick={() => toggleSort('updatedAt')}
+            >
               Updated <span className="tnum">{sortArrow('updatedAt')}</span>
             </button>
           </div>

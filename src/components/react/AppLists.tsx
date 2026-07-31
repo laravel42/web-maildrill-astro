@@ -313,24 +313,40 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
           <>
             <div className={`athead ${styles.grid}`}>
               <div>
-                <button type="button" onClick={() => toggleSort('name')}>
+                <button
+                  type="button"
+                  className={sort.key === 'name' ? 'is-active' : undefined}
+                  onClick={() => toggleSort('name')}
+                >
                   List <span className="tnum">{sortArrow('name')}</span>
                 </button>
               </div>
               <div>Tags</div>
               <div className={styles.colCenter}>
-                <button type="button" onClick={() => toggleSort('subscribers')}>
+                <button
+                  type="button"
+                  className={sort.key === 'subscribers' ? 'is-active' : undefined}
+                  onClick={() => toggleSort('subscribers')}
+                >
                   Subscribers <span className="tnum">{sortArrow('subscribers')}</span>
                 </button>
               </div>
               <div className={styles.colCenter}>
-                <button type="button" onClick={() => toggleSort('growthPct')}>
+                <button
+                  type="button"
+                  className={sort.key === 'growthPct' ? 'is-active' : undefined}
+                  onClick={() => toggleSort('growthPct')}
+                >
                   Growth <span className="tnum">{sortArrow('growthPct')}</span>
                 </button>
               </div>
               <div>Recent campaign</div>
               <div className={styles.colCenter}>
-                <button type="button" onClick={() => toggleSort('updatedAt')}>
+                <button
+                  type="button"
+                  className={sort.key === 'updatedAt' ? 'is-active' : undefined}
+                  onClick={() => toggleSort('updatedAt')}
+                >
                   Updated <span className="tnum">{sortArrow('updatedAt')}</span>
                 </button>
               </div>

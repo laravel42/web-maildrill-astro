@@ -196,9 +196,9 @@
 }
 .lhead > div {
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text4);
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -211,7 +211,8 @@
   letter-spacing: inherit;
   text-transform: inherit;
 }
-.lhead button:hover {
+.lhead button:hover,
+.lhead button.isActive {
   color: var(--text);
 }
 .r {
