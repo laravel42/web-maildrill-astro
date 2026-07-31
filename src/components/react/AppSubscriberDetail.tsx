@@ -184,7 +184,6 @@ export default function AppSubscriberDetail({
   };
   const statusLabel = STATUS_LABEL[sub.status] ?? sub.status;
   const active = sub.status === 'active';
-  const [av0, av1] = sub.av;
 
   // Internal notes persist into the subscriber's attributes bag.
   const savedNotes = typeof attrs.notes === 'string' ? attrs.notes : '';
@@ -297,24 +296,52 @@ export default function AppSubscriberDetail({
 
   return (
     <div className={styles.wrap}>
-      <header className={styles.topbar}>
-        <div className={styles.topbarInner}>
-          <nav className={styles.breadcrumb} aria-label="Breadcrumb">
-            <a href={routes.app.subscribers}>Subscribers</a>
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            >
-              <path d="m9 18 6-6-6-6" />
-            </svg>
-            <strong>{sub.name}</strong>
-          </nav>
-          <div className={styles.topbarActions}>
+      <main className={styles.page}>
+        <button
+          type="button"
+          className={styles.back}
+          onClick={() => {
+            window.location.assign(routes.app.subscribers);
+          }}
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          Subscribers
+        </button>
+        <section className={styles.identity}>
+          <div className={styles.identityBody}>
+            <div className={styles.identityHead}>
+              <h1 className={styles.identityName}>{sub.name}</h1>
+              <span className={`${styles.badge} ${active ? styles.badgeActive : ''}`}>
+                <span
+                  className={styles.dot}
+                  style={{ background: active ? '#16a34a' : 'currentColor' }}
+                />
+                {statusLabel}
+              </span>
+              {active && (
+                <span className={`${styles.badge} ${styles.badgeGdpr}`}>
+                  <Icon name="shield" size={12} stroke={2.4} />
+                  GDPR consent
+                  <span className={styles.badgeGdprCheck} aria-hidden="true">
+                    <Icon name="check" size={8} stroke={3.5} />
+                  </span>
+                </span>
+              )}
+            </div>
+          </div>
+          <div className={styles.identityActions}>
             <button className="pbtn" type="button" onClick={() => setEditorOpen(true)}>
               <Icon name="edit" size={15} />
               Edit
@@ -399,55 +426,6 @@ export default function AppSubscriberDetail({
                   </button>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className={styles.page}>
-        <section className={styles.identity}>
-          <div
-            className={styles.avatar}
-            aria-hidden="true"
-            style={{ background: `linear-gradient(135deg, ${av0}, ${av1})` }}
-          >
-            {view.initials}
-          </div>
-          <div>
-            <div className={styles.identityHead}>
-              <h1 className={styles.identityName}>{sub.name}</h1>
-              <span className={`${styles.badge} ${active ? styles.badgeActive : ''}`}>
-                <span
-                  className={styles.dot}
-                  style={{ background: active ? '#16a34a' : 'currentColor' }}
-                />
-                {statusLabel}
-              </span>
-              {active && (
-                <span className={styles.badge}>
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#16a34a"
-                    strokeWidth="2.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M20 6 9 17l-5-5" />
-                  </svg>
-                  Confirmed
-                </span>
-              )}
-              {active && (
-                <span className={`${styles.badge} ${styles.badgeGdpr}`}>GDPR consent</span>
-              )}
-            </div>
-            <div className={styles.identityMeta}>
-              <span className={styles.email}>{sub.email}</span>
-              <span className={styles.sep} />
-              <span>{view.subscribedLabel}</span>
             </div>
           </div>
         </section>
@@ -537,20 +515,6 @@ export default function AppSubscriberDetail({
                 </li>
                 <li>
                   <div className={styles.meterHead}>
-                    <span className={styles.meterLabel}>Recency</span>
-                    <span className={`${styles.meterValue} ${styles.tnum}`}>
-                      {view.lastActiveLabel}
-                    </span>
-                  </div>
-                  <div className={styles.meterTrack}>
-                    <div
-                      className={styles.meterFill}
-                      style={{ width: `${view.recencyPct}%`, background: '#16a34a' }}
-                    />
-                  </div>
-                </li>
-                <li>
-                  <div className={styles.meterHead}>
                     <span className={styles.meterLabel}>Frequency</span>
                     <span className={`${styles.meterValue} ${styles.tnum}`}>
                       {view.frequencyLabel}
@@ -570,9 +534,7 @@ export default function AppSubscriberDetail({
               <div className={styles.stat}>
                 <p className={styles.overline}>Emails sent</p>
                 <p className={`${styles.statValue} ${styles.tnum}`}>{view.emailsSent}</p>
-                <p className={styles.statSub}>
-                  <span className={styles.statSubStrong}>+{view.sentLast30}</span> last 30 days
-                </p>
+                <p className={styles.statSub}>All time</p>
               </div>
               <div className={styles.stat}>
                 <p className={styles.overline}>Open rate</p>
@@ -659,7 +621,6 @@ export default function AppSubscriberDetail({
                     ['activity', 'Activity', view.events.length],
                     ['campaigns', 'Campaigns', view.campaigns.length],
                     ['links', 'Clicked links', view.links.length],
-                    ['fields', 'Custom fields', view.fields.length],
                   ] as const
                 ).map(([id, label, count]) => (
                   <button
@@ -796,40 +757,6 @@ export default function AppSubscriberDetail({
                 </div>
               )}
 
-              {tab === 'fields' && (
-                <div role="tabpanel">
-                  <div className={styles.fields}>
-                    {view.fields.length === 0 ? (
-                      <p className={styles.empty}>No custom fields on this subscriber.</p>
-                    ) : (
-                      <div className={styles.fieldsGrid}>
-                        {view.fields.map((f) => (
-                          <div key={f.key} className={styles.field}>
-                            <span className={`${styles.fieldKey} ${styles.mono}`}>{f.key}</span>
-                            <span className={styles.fieldValue}>{f.value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <p className={styles.fieldsNote}>
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      >
-                        <circle cx="12" cy="12" r="9" />
-                        <path d="M12 16v-5M12 8h.01" />
-                      </svg>
-                      Custom fields come from the workspace schema and the attributes stored on the
-                      subscriber.
-                    </p>
-                  </div>
-                </div>
-              )}
             </section>
           </div>
 
@@ -838,8 +765,14 @@ export default function AppSubscriberDetail({
               <h2 className={styles.cardTitle}>Details</h2>
               <dl className={styles.kvList}>
                 <div className={styles.kv}>
-                  <dt>Status</dt>
-                  <dd>{active ? `${statusLabel} · confirmed` : statusLabel}</dd>
+                  <dt>Email</dt>
+                  <dd>
+                    {sub.email ? <a href={`mailto:${sub.email}`}>{sub.email}</a> : '—'}
+                  </dd>
+                </div>
+                <div className={styles.kv}>
+                  <dt>Subscribed</dt>
+                  <dd>{view.subscribedLabel.replace(/^Subscribed\s+/i, '') || '—'}</dd>
                 </div>
                 <div className={styles.kv}>
                   <dt>Country</dt>
@@ -947,7 +880,9 @@ export default function AppSubscriberDetail({
                 </div>
                 <div className={styles.rowBetween}>
                   <span className={styles.rowLabel}>Hard bounces</span>
-                  <span className={`${styles.rowValue} ${styles.tnum}`}>{view.bounces}</span>
+                  <span className={`${styles.rowValue} ${styles.tnum}`}>
+                    {view.bounces === 0 ? '—' : view.bounces}
+                  </span>
                 </div>
                 <div className={styles.rowBetween}>
                   <span className={styles.rowLabel}>Spam complaints</span>
@@ -996,7 +931,7 @@ export default function AppSubscriberDetail({
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
                     </svg>
                     <div>
-                      <p className={styles.consentLabel}>GDPR consent on file</p>
+                      <p className={styles.consentLabel}>GDPR consent</p>
                       <p className={styles.consentMeta}>{view.subscribedLabel}</p>
                     </div>
                   </li>

@@ -1,0 +1,90 @@
+---
+export const prerender = false;
+import AppLayout from '@/layouts/AppLayout.astro';
+import AppListDetail from '@/components/react/AppListDetail';
+import { productClient, mintServiceToken, serviceBaseUrl } from '@/lib/server/service';
+import type { ApiList } from '@/lib/app/list-map';
+import type { ApiCampaign } from '@/lib/app/campaign-map';
+import type { ApiCustomFieldDef, ApiListMember, ApiSegment } from '@/lib/app/list-detail';
+import { routes } from '@/config/routes';
+
+const id = Astro.params.id;
+if (!id) {
+  return Astro.redirect(routes.app.lists);
+}
+
+const session = Astro.locals.session;
+if (!session?.user?.id || !session.activeTenantId) {
+  return Astro.redirect(routes.auth.login);
+}
+
+const ctx = {
+  userId: session.user.id,
+  activeTenantId: session.activeTenantId,
+  role: session.role,
+};
+const client = productClient(ctx);
+const token = mintServiceToken(ctx);
+const base = serviceBaseUrl();
+
+const unwrap = <T,>(d: unknown): T[] => (d as { data?: T[] } | undefined)?.data ?? [];
+
+// The LIST endpoint's rows carry the computed stats the health card needs
+// (memberCount, delivered, trackedDelivered, opened, clicked, trend, added7s)
+// which GET /v1/lists/{id} does not — so load the collection and pick the row.
+const [listsRes, membersRes, campaignsRes, segmentsRes, fieldsRes] = await Promise.all([
+  client.GET('/v1/lists'),
+  fetch(`${base}/v1/lists/${id}/members?limit=1000`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }),
+  client.GET('/v1/campaigns'),
+  client.GET('/v1/segments'),
+  fetch(`${base}/v1/custom-fields`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }),
+]);
+
+const list = unwrap<ApiList>(listsRes.data).find((l) => l.id === id);
+if (listsRes.error || !list) {
+  return Astro.redirect(routes.app.lists);
+}
+
+let members: ApiListMember[] = [];
+if (membersRes.ok) {
+  try {
+    members = ((await membersRes.json()) as { data?: ApiListMember[] }).data ?? [];
+  } catch {
+    members = [];
+  }
+}
+
+// No listId query param on /v1/campaigns — filter client-side.
+const campaigns = unwrap<ApiCampaign>(campaignsRes.data).filter((c) => c.listId === id);
+const segments = unwrap<ApiSegment>(segmentsRes.data);
+
+let fields: ApiCustomFieldDef[] = [];
+if (fieldsRes.ok) {
+  try {
+    fields = ((await fieldsRes.json()) as { data?: ApiCustomFieldDef[] }).data ?? [];
+  } catch {
+    fields = [];
+  }
+}
+---
+
+<AppLayout
+  title={list.name}
+  crumbs={[
+    { label: 'Lists', href: routes.app.lists },
+    { label: list.name },
+  ]}
+>
+  <AppListDetail
+    client:visible
+    initial={list}
+    members={members}
+    campaigns={campaigns}
+    segments={segments}
+    fields={fields}
+  />
+</AppLayout>

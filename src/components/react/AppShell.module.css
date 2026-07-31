@@ -443,11 +443,37 @@
   color: var(--text3);
 }
 .topbarWs {
+  font-weight: 600;
   color: var(--text4);
+}
+.topbarCrumbSeg {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.topbarSep {
+  color: var(--muted);
+}
+.topbarCrumbLink {
+  color: var(--text4);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color var(--motion);
+}
+.topbarCrumbLink:hover {
+  color: var(--text2);
+}
+.topbarCrumbPlain {
+  color: var(--text4);
+  font-weight: 500;
 }
 .topbarTitle {
   font-weight: 600;
   color: var(--text2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .topbarControls {
   display: flex;

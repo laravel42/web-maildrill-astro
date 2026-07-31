@@ -52,7 +52,13 @@ if (session?.user?.id && session.activeTenantId) {
 }
 ---
 
-<AppLayout title={initial ? `${initial.name} · Report` : 'Campaign report'}>
+<AppLayout
+  title={initial ? `${initial.name} · Report` : 'Campaign report'}
+  crumbs={[
+    { label: 'Campaigns', href: routes.app.campaigns },
+    { label: initial ? `${initial.name} · Report` : 'Campaign report' },
+  ]}
+>
   <AppCampaignReport
     client:visible
     id={id}

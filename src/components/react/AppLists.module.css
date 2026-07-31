@@ -52,7 +52,7 @@
 }
 
 .grid {
-  grid-template-columns: 1.8fr 1.2fr 0.85fr 0.9fr 1.1fr 0.75fr;
+  grid-template-columns: 1.8fr 1.2fr 0.85fr 0.9fr 0.95fr 0.75fr;
   column-gap: 16px;
 }
 .grid:global(.athead) {
@@ -92,6 +92,27 @@
 }
 .muted3 {
   color: var(--text3);
+}
+.gdprCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gdprBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  background: #f3f0ff;
+  color: #6d28d9;
+  white-space: nowrap;
+}
+:global([data-theme='dark']) .gdprBadge {
+  background: rgba(109, 40, 217, 0.22);
+  color: #c4b5fd;
 }
 .colCenter {
   display: flex;

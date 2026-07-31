@@ -8,7 +8,7 @@ const META: Record<string, ListMeta> = {
   list_1: {
     color: '#4f46e5',
     trend: [16800, 17150, 17480, 17720, 17980, 18220, 18420],
-    recentCampaign: 'Spring Launch',
+    gdprConsent: true,
     tags: ['Marketing', 'VIP', 'Opt-in'],
     notes: 'Used for the weekly product newsletter. Keep double opt-in on for GDPR.',
     more: '+240',
@@ -18,7 +18,7 @@ const META: Record<string, ListMeta> = {
   list_2: {
     color: '#f59e0b',
     trend: [58200, 58720, 59180, 59520, 59810, 60050, 60211],
-    recentCampaign: 'Welcome Series',
+    gdprConsent: true,
     tags: ['Weekly', 'Opt-in'],
     notes: '',
     more: '+18',
@@ -28,7 +28,7 @@ const META: Record<string, ListMeta> = {
   list_3: {
     color: '#22c55e',
     trend: [2510, 2680, 2840, 2980, 3080, 3160, 3200],
-    recentCampaign: 'Order shipped SMS',
+    gdprConsent: false,
     tags: ['Automation', 'Transactional'],
     notes: '',
     more: '+12',
@@ -42,7 +42,7 @@ export const rows: ListRow[] = baseLists.map((l) => ({
   ...(META[l.id] ?? {
     color: '#4f46e5',
     trend: [l.subscribers],
-    recentCampaign: '—',
+    gdprConsent: false,
     tags: [],
     notes: '',
     more: '+0',

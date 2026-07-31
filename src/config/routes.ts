@@ -38,6 +38,7 @@ export const routes = {
     // reopens a saved template for editing.
     templateBuilder: (channel: ChannelType) => `/dashboard/templates/${channel}`,
     lists: '/dashboard/lists',
+    list: (id: string) => `/dashboard/lists/${id}`,
     subscribers: '/dashboard/subscribers',
     subscriber: (id: string) => `/dashboard/subscribers/${id}`,
     media: '/dashboard/media',

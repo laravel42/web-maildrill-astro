@@ -6,10 +6,12 @@ import type { PageSeo } from '@/config/seo';
 
 interface Props {
   title: string;
+  /** Optional trail after the workspace name in the shell topbar. */
+  crumbs?: { label: string; href?: string }[];
   seo?: PageSeo;
 }
 
-const { title, seo } = Astro.props;
+const { title, crumbs, seo } = Astro.props;
 const userEmail = Astro.locals.session?.user?.email ?? null;
 const userName = Astro.locals.session?.user?.name ?? null;
 const pageSeo: PageSeo = seo ?? {
@@ -33,6 +35,7 @@ const pageSeo: PageSeo = seo ?? {
     client:idle
     currentPath={Astro.url.pathname}
     title={title}
+    crumbs={crumbs}
     userEmail={userEmail}
     userName={userName}
   >

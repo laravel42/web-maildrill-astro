@@ -17,6 +17,7 @@ import { fmtPct, PAGE_SIZE, rows as mockRows, trendPath, weeklyGain } from './Ap
 import type { ListRow, SortKey, View } from './AppLists.types';
 import { api, ApiError } from '@/lib/app/api';
 import { toListRow, type ApiList } from '@/lib/app/list-map';
+import { routes } from '@/config/routes';
 import { RATE_BUCKETS, parseRatePercent, rateBucket } from '@/lib/app/templates-data';
 import { matchesSearchQuery } from '@/lib/app/search-match';
 import { tagStyle } from '@/lib/app/tag-style';
@@ -109,52 +110,21 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
   // Set while a delete waits on confirmation.
   const [confirmList, setConfirmList] = useState<{ id: string; name: string } | null>(null);
 
-  /* Persist tag changes from the drawer immediately. Name/notes/color save
-     together via Save list. */
-  const patchList = async (id: string, patch: { tags?: string[] }) => {
+  /* Persist drawer edits immediately (tags, notes, color, name). */
+  const patchList = async (
+    id: string,
+    patch: { tags?: string[]; notes?: string; color?: string; name?: string },
+  ) => {
+    const body = {
+      ...patch,
+      ...(patch.notes !== undefined ? { notes: patch.notes || null } : {}),
+    };
     setListRows((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
     if (!live) return;
     try {
-      await api.patch(`lists/${id}`, patch);
+      await api.patch(`lists/${id}`, body);
     } catch (e) {
       showToast(e instanceof ApiError ? e.message : 'Could not save changes');
-    }
-  };
-
-  const saveListDetails = async (
-    id: string,
-    values: { name: string; notes: string; color: string },
-  ) => {
-    setListRows((prev) =>
-      prev.map((l) =>
-        l.id === id ? { ...l, name: values.name, notes: values.notes, color: values.color } : l,
-      ),
-    );
-    if (!live) {
-      showToast(`List “${values.name}” updated`);
-      return;
-    }
-    try {
-      const updated = await api.patch<ApiList>(`lists/${id}`, {
-        name: values.name,
-        notes: values.notes || null,
-        color: values.color,
-      });
-      setListRows((prev) =>
-        prev.map((l) =>
-          l.id === id
-            ? {
-                ...l,
-                name: updated.name,
-                color: updated.color || values.color,
-                notes: updated.notes ?? values.notes,
-              }
-            : l,
-        ),
-      );
-      showToast(`List “${values.name}” updated`);
-    } catch (e) {
-      showToast(e instanceof ApiError ? e.message : 'Could not save list');
     }
   };
 
@@ -182,7 +152,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
       return (
         matchesSearchQuery(l.name, q) ||
         l.tags.some((t) => matchesSearchQuery(t, q)) ||
-        matchesSearchQuery(l.recentCampaign, q)
+        (l.gdprConsent && matchesSearchQuery('gdpr', q))
       );
     });
     const { key, dir } = sort;
@@ -370,7 +340,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                   Growth <span className="tnum">{sortArrow('growthPct')}</span>
                 </button>
               </div>
-              <div>Recent campaign</div>
+              <div className={styles.colCenter}>GDPR consent</div>
               <div className={styles.colCenter}>
                 <button
                   type="button"
@@ -425,7 +395,15 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                     >
                       {fmtPct(l.growthPct)}
                     </div>
-                    <div className={styles.muted3}>{l.recentCampaign}</div>
+                    <div className={styles.gdprCell}>
+                      {l.gdprConsent ? (
+                        <span className={styles.gdprBadge} title="GDPR consent required">
+                          Yes
+                        </span>
+                      ) : (
+                        <span className={styles.dash}>—</span>
+                      )}
+                    </div>
                     <div className={styles.dateCell}>{ago(l.updatedAt)}</div>
                   </div>
                 );
@@ -575,7 +553,6 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
             showToast(`Filtered by “${t}”`);
           }}
           onDelete={() => setConfirmList({ id: open.id, name: open.name })}
-          onSave={saveListDetails}
         />
       )}
 
@@ -625,32 +602,34 @@ function ListDrawer({
   onPatch,
   onFilterTag,
   onDelete,
-  onSave,
 }: {
   list: ListRow;
   closing: boolean;
   onClose: () => void;
   onToast: (m: string) => void;
-  onPatch: (id: string, patch: { tags?: string[] }) => void;
+  onPatch: (
+    id: string,
+    patch: { tags?: string[]; notes?: string; color?: string; name?: string },
+  ) => void;
   onFilterTag: (tag: string) => void;
   onDelete: () => void;
-  onSave: (id: string, values: { name: string; notes: string; color: string }) => void;
 }) {
-  // Name / notes / color save together via Save list; tags still persist immediately.
+  // Name, notes, color, and tags all persist as you edit — no Save button.
   const initialColor = COLORS.includes(list.color) ? list.color : COLORS[0];
   const [name, setName] = useState(list.name);
+  const [savedName, setSavedName] = useState(list.name);
   const [note, setNote] = useState(list.notes);
+  const savedNoteRef = useRef(list.notes);
   const [color, setColor] = useState(initialColor);
   const [editingName, setEditingName] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
-  const [saved, setSaved] = useState({
-    name: list.name,
-    notes: list.notes,
-    color: initialColor,
-  });
-  const trimmed = name.trim();
-  const dirty = trimmed !== saved.name || note !== saved.notes || color !== saved.color;
-  const canSave = dirty && trimmed.length > 0;
+  const noteTimer = useRef<number | null>(null);
+  const noteRef = useRef(list.notes);
+  const onPatchRef = useRef(onPatch);
+  const listIdRef = useRef(list.id);
+  noteRef.current = note;
+  onPatchRef.current = onPatch;
+  listIdRef.current = list.id;
 
   const startEditName = () => {
     setEditingName(true);
@@ -658,6 +637,23 @@ function ListDrawer({
       nameRef.current?.focus();
       nameRef.current?.select();
     });
+  };
+
+  const commitName = () => {
+    setEditingName(false);
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setName(savedName);
+      return;
+    }
+    if (trimmed === savedName) {
+      setName(trimmed);
+      return;
+    }
+    setName(trimmed);
+    setSavedName(trimmed);
+    onPatch(list.id, { name: trimmed });
+    onToast('Name saved');
   };
 
   const [tags, setTags] = useState<string[]>(list.tags);
@@ -678,13 +674,40 @@ function ListDrawer({
     onToast('Tags saved');
   };
 
-  const saveList = () => {
-    if (!canSave) return;
-    const values = { name: trimmed, notes: note, color };
-    setSaved(values);
-    setName(trimmed);
-    onSave(list.id, values);
+  const pickColor = (c: string) => {
+    if (c === color) return;
+    setColor(c);
+    onPatch(list.id, { color: c });
+    onToast('Color saved');
   };
+
+  const flushNote = (value: string) => {
+    if (value === savedNoteRef.current) return;
+    savedNoteRef.current = value;
+    onPatch(list.id, { notes: value });
+    onToast('Note saved');
+  };
+
+  const onNoteChange = (value: string) => {
+    setNote(value);
+    if (noteTimer.current != null) window.clearTimeout(noteTimer.current);
+    noteTimer.current = window.setTimeout(() => flushNote(value), 500);
+  };
+
+  // Flush a pending note when the drawer unmounts so a close mid-type still saves.
+  useEffect(
+    () => () => {
+      if (noteTimer.current != null) {
+        window.clearTimeout(noteTimer.current);
+        noteTimer.current = null;
+      }
+      const value = noteRef.current;
+      if (value !== savedNoteRef.current) {
+        onPatchRef.current(listIdRef.current, { notes: value });
+      }
+    },
+    [],
+  );
 
   const up = list.growthPct >= 0;
   const gain = weeklyGain(list.trend);
@@ -718,7 +741,7 @@ function ListDrawer({
                     className={styles.dName}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    onBlur={() => setEditingName(false)}
+                    onBlur={commitName}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -726,7 +749,7 @@ function ListDrawer({
                       }
                       if (e.key === 'Escape') {
                         e.preventDefault();
-                        setName(saved.name);
+                        setName(savedName);
                         setEditingName(false);
                       }
                     }}
@@ -873,7 +896,7 @@ function ListDrawer({
             </div>
           </div>
 
-          {/* color — saved with Save list */}
+          {/* color — saved on pick */}
           <div className={styles.dColorSection}>
             <span className={`adrawer__eyebrow ${styles.dColorEyebrow}`}>Color</span>
             <div className={styles.dSwatches} role="group" aria-label="List color">
@@ -885,20 +908,27 @@ function ListDrawer({
                   style={{ background: c, color: c }}
                   aria-label={`Color ${c}`}
                   aria-pressed={c === color}
-                  onClick={() => setColor(c)}
+                  onClick={() => pickColor(c)}
                 />
               ))}
             </div>
           </div>
 
-          {/* notes */}
+          {/* notes — autosave shortly after you stop typing */}
           <div className={styles.dNoteshead}>
             <span className="adrawer__eyebrow">Notes</span>
           </div>
           <textarea
             className={styles.dNotes}
             value={note}
-            onChange={(e) => setNote(e.target.value)}
+            onChange={(e) => onNoteChange(e.target.value)}
+            onBlur={() => {
+              if (noteTimer.current != null) {
+                window.clearTimeout(noteTimer.current);
+                noteTimer.current = null;
+              }
+              flushNote(note);
+            }}
             placeholder="Add a note about this list…"
             aria-label="List notes"
           />
@@ -927,11 +957,16 @@ function ListDrawer({
             type="button"
             className="pbtn"
             style={{ flex: 1 }}
-            disabled={!canSave}
-            onClick={saveList}
+            onClick={() => {
+              if (noteTimer.current != null) {
+                window.clearTimeout(noteTimer.current);
+                noteTimer.current = null;
+              }
+              flushNote(note);
+              window.location.href = routes.app.list(list.id);
+            }}
           >
-            <Icon name="save" size={15} stroke={2} />
-            Save
+            Open list
           </button>
         </div>
       </div>

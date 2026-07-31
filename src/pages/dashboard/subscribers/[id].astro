@@ -59,7 +59,13 @@ const allLists = (
 const title = subscriber.name || subscriber.email;
 ---
 
-<AppLayout title={title}>
+<AppLayout
+  title={title}
+  crumbs={[
+    { label: 'Subscribers', href: routes.app.subscribers },
+    { label: title },
+  ]}
+>
   <AppSubscriberDetail
     client:visible
     initial={subscriber}

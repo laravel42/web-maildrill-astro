@@ -5,7 +5,7 @@
 import type { RichSubscriber } from '@/lib/app/subscribers-data';
 
 export type ActivityFilter = 'all' | 'open' | 'click' | 'send' | 'life';
-export type DetailTab = 'activity' | 'campaigns' | 'links' | 'fields';
+export type DetailTab = 'activity' | 'campaigns' | 'links';
 
 export type ApiSubscriberWeeklyPoint = {
   label: string;
@@ -129,19 +129,19 @@ function fmtStamp(iso?: string | null): string {
 
 function tenureLabel(createdAt?: string | null): string {
   if (!createdAt) return '—';
-  const start = new Date(createdAt).getTime();
-  if (Number.isNaN(start)) return '—';
-  const joined = new Date(start).toLocaleDateString('en-GB', {
+  const d = new Date(createdAt);
+  if (Number.isNaN(d.getTime())) return '—';
+  const joined = d.toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   });
-  const months = Math.max(0, Math.round((Date.now() - start) / (30.44 * 86400000)));
-  if (months < 1) return `Subscribed ${joined}`;
-  if (months < 12) return `Subscribed ${joined} · ${months} mo`;
-  const years = Math.floor(months / 12);
-  const rem = months % 12;
-  return `Subscribed ${joined} · ${years} yr${rem ? ` ${rem} mo` : ''}`;
+  const time = d.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  return `Subscribed ${joined} · ${time}`;
 }
 
 function initialsOf(name: string): string {

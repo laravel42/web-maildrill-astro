@@ -1473,11 +1473,21 @@ function SubscriberDrawer({
               <div className={styles.sbdEmail}>{sub.email}</div>
               <div className={styles.sbdBadges}>
                 <span className={`astatus astatus--${sub.status} ${styles.sbdIdstatus}`}>
+                  <span
+                    className={styles.sbdStatusDot}
+                    style={{
+                      background: sub.status === 'active' ? '#16a34a' : 'currentColor',
+                    }}
+                  />
                   {statusLabel}
                 </span>
                 {sub.status === 'active' && (
-                  <span className={styles.sbdGdpr} title="GDPR consent on file">
+                  <span className={styles.sbdGdpr} title="GDPR consent">
+                    <Icon name="shield" size={12} stroke={2.4} />
                     GDPR
+                    <span className={styles.sbdGdprCheck} aria-hidden="true">
+                      <Icon name="check" size={8} stroke={3.5} />
+                    </span>
                   </span>
                 )}
               </div>

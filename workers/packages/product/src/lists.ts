@@ -214,13 +214,16 @@ export async function removeFromList(listId: string, subscriberId: string): Prom
     .where(and(eq(listMembers.listId, listId), eq(listMembers.subscriberId, subscriberId)));
 }
 
+/** A list member: the subscriber plus when they joined this list. */
+export type ListMember = Subscriber & { joinedAt: Date };
+
 export async function listMembersOf(
   tenantId: string,
   listId: string,
   opts: { limit?: number; offset?: number } = {},
-): Promise<Subscriber[]> {
+): Promise<ListMember[]> {
   return db
-    .select(getTableColumns(subscribers))
+    .select({ ...getTableColumns(subscribers), joinedAt: listMembers.addedAt })
     .from(listMembers)
     .innerJoin(subscribers, eq(listMembers.subscriberId, subscribers.id))
     .where(and(eq(listMembers.listId, listId), eq(subscribers.tenantId, tenantId)))

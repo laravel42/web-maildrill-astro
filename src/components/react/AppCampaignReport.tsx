@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { Campaign } from '@/types/app';
-import { api, ApiError } from '@/lib/app/api';
+import { api } from '@/lib/app/api';
 import { campaigns as mockCampaigns } from '@/lib/app/mock-data';
 import { toCampaign, type ApiCampaign } from '@/lib/app/campaign-map';
 import {
@@ -26,7 +26,6 @@ import {
   type RecipientEvent,
 } from './shared/campaign-events';
 import { ago } from './shared/time';
-import { useToast } from './shared/useToast';
 import { visiblePageNumbers } from './shared/pagination';
 import { pct } from './CampaignsBoard.logic';
 import styles from './AppCampaignReport.module.css';
@@ -86,7 +85,6 @@ function CampaignReport({
   live: boolean;
 }) {
   const [campaign, setCampaign] = useState(campaignProp);
-  const { toast, show } = useToast(2600);
 
   // Fresh counters + lastErrorMessage — the SSR snapshot can be stale after DLRs/opens.
   useEffect(() => {
@@ -106,31 +104,6 @@ function CampaignReport({
   }, [live, campaignProp.id]);
 
   const onBack = () => window.location.assign(routes.app.campaigns);
-
-  /* Copy this campaign into a fresh draft on the board. The copy deliberately
-     resets status and schedule: duplicating a sent campaign must not produce
-     something that looks already-sent, or that a scheduler could pick up. */
-  const duplicate = async () => {
-    if (!live) {
-      show('Campaign duplicated');
-      return;
-    }
-    try {
-      const full = await api.get<ApiCampaign>(`campaigns/${campaign.id}`);
-      await api.post<ApiCampaign>('campaigns', {
-        name: `${full.name} (copy)`,
-        channel: full.channel ?? 'email',
-        status: 'draft',
-        listId: full.listId ?? null,
-        segmentId: full.segmentId ?? null,
-        templateId: full.templateId ?? null,
-        content: full.content ?? {},
-      });
-      show(`Duplicated — “${full.name} (copy)” is in your drafts`);
-    } catch (e) {
-      show(e instanceof ApiError ? e.message : 'Could not duplicate campaign');
-    }
-  };
 
   /** Same-channel sent campaigns, chronological, ending with this one. */
   const history = sameChannelHistory(allCampaigns, campaign);
@@ -254,17 +227,21 @@ function CampaignReport({
     : campaign.segmentId
       ? ['Segment', campaign.audience]
       : ['Audience', campaign.audience];
+  const countOrDash = (n: number) => (n === 0 ? '—' : n.toLocaleString('en-US'));
   const details: [string, ReactNode][] = [
     ['Channel', <ChannelPill channel={campaign.channel} />],
     audienceDetail,
-    ['Recipients', campaign.recipients.toLocaleString('en-US')],
+    ['Recipients', countOrDash(campaign.recipients)],
     ...(reportCfg.kpis.includes('unsubscribed')
-      ? ([['Unsubscribed', campaign.unsubscribed.toLocaleString('en-US')]] as [string, ReactNode][])
+      ? ([['Unsubscribed', countOrDash(campaign.unsubscribed)]] as [string, ReactNode][])
       : []),
     ...(reportCfg.funnel.includes('opened') || reportCfg.funnel.includes('seen')
       ? ([['Click-to-open', cto == null ? '—' : `${cto.toFixed(1)}%`]] as [string, ReactNode][])
       : []),
-    ['Sent', sentLabel],
+    [
+      'Sent',
+      sentAt ? <span className={styles.reportSentBadge}>{sentLabel}</span> : sentLabel,
+    ],
   ];
 
   useEffect(() => {
@@ -477,16 +454,10 @@ function CampaignReport({
 
       <div className={styles.reportHead}>
         <div className={styles.reportHeadMain}>
-          <div className={styles.reportTitleRow}>
-            <h1 className={styles.reportName}>{campaign.name}</h1>
+          <h1 className={styles.reportName}>
+            {campaign.name}
             <StatusBadge status={campaign.status} />
-          </div>
-          {sentAt ? <p className={styles.reportSub}>Sent {sentLabel}</p> : null}
-        </div>
-        <div className={styles.reportHeadActions}>
-          <button type="button" className="sbtn" onClick={() => void duplicate()}>
-            <Icon name="copy" size={14} /> Duplicate
-          </button>
+          </h1>
         </div>
       </div>
 
@@ -513,13 +484,7 @@ function CampaignReport({
         ))}
       </div>
 
-      <div
-        className={`${styles.reportRow}${
-          !(reportCfg.panels.includes('devices') && devices.length > 0)
-            ? ` ${styles.reportRowSolo}`
-            : ''
-        }`}
-      >
+      <div className={styles.reportRow}>
         <div className={styles.reportCard}>
           <div className={styles.reportCardTitle}>Engagement funnel</div>
           {funnel.map((f) => (
@@ -535,7 +500,7 @@ function CampaignReport({
                 </span>
               </div>
               <div className={styles.funnelTrack}>
-                {f.barPct != null && (
+                {f.barPct != null && f.barPct > 0 && (
                   <div
                     className={styles.funnelBar}
                     style={{ width: `${Math.max(f.barPct, 1.5)}%`, background: f.color }}
@@ -546,28 +511,6 @@ function CampaignReport({
           ))}
         </div>
 
-        {reportCfg.panels.includes('devices') && devices.length > 0 && (
-          <div className={styles.reportCard}>
-            <div className={styles.reportCardTitle}>Top devices</div>
-            {devices.map((d) => (
-              <div key={d.device} className={styles.reportDetail}>
-                <span className={styles.reportDetailK}>{d.device}</span>
-                <span className={`tnum ${styles.reportDetailV}`}>
-                  {d.count.toLocaleString('en-US')}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div
-        className={`${styles.reportRow} ${styles.reportRow2}${
-          !(reportCfg.panels.includes('links') && links.length > 0)
-            ? ` ${styles.reportRowSolo}`
-            : ''
-        }`}
-      >
         <div className={styles.reportCard}>
           <div className={styles.reportCardTitle}>Campaign details</div>
           {details.map(([k, v]) => (
@@ -577,48 +520,91 @@ function CampaignReport({
             </div>
           ))}
         </div>
-
-        {reportCfg.panels.includes('links') && links.length > 0 && (
-          <div className={styles.reportCard}>
-            <div className={styles.reportCardTitle}>Top links clicked</div>
-            {links.map((l) => {
-              const short = l.url.replace(/^https?:\/\//, '');
-              const recipPct =
-                campaign.recipients > 0
-                  ? `${((l.unique / campaign.recipients) * 100).toFixed(1)}%`
-                  : '—';
-              return (
-                <div key={l.url} className={styles.linkRow}>
-                  <a
-                    className={styles.linkUrl}
-                    href={l.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={l.url}
-                  >
-                    {short.slice(0, 48)}
-                    {short.length > 48 ? '…' : ''}
-                  </a>
-                  <dl className={styles.linkStats}>
-                    <div>
-                      <dt>Total clicks</dt>
-                      <dd className="tnum">{l.total.toLocaleString('en-US')}</dd>
-                    </div>
-                    <div>
-                      <dt>Unique clicks</dt>
-                      <dd className="tnum">{l.unique.toLocaleString('en-US')}</dd>
-                    </div>
-                    <div>
-                      <dt>% recipients</dt>
-                      <dd className="tnum">{recipPct}</dd>
-                    </div>
-                  </dl>
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
+
+      {(reportCfg.panels.includes('devices') && devices.length > 0) ||
+      (reportCfg.panels.includes('links') && links.length > 0) ? (
+        <div
+          className={`${styles.reportRow} ${styles.reportRow2}${
+            !(
+              reportCfg.panels.includes('devices') &&
+              devices.length > 0 &&
+              reportCfg.panels.includes('links') &&
+              links.length > 0
+            )
+              ? ` ${styles.reportRowSolo}`
+              : ''
+          }`}
+        >
+          {reportCfg.panels.includes('devices') && devices.length > 0 && (
+            <div className={styles.reportCard}>
+              <div className={styles.reportCardTitle}>Top devices</div>
+              {devices.map((d) => (
+                <div key={d.device} className={styles.reportDetail}>
+                  <span className={styles.reportDetailK}>{d.device}</span>
+                  <span className={`tnum ${styles.reportDetailV}`}>
+                    {d.count.toLocaleString('en-US')}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {reportCfg.panels.includes('links') && links.length > 0 && (
+            <div className={styles.reportCard}>
+              <div className={styles.reportCardTitle}>Top links clicked</div>
+              <table className={styles.linksTable}>
+                <thead>
+                  <tr>
+                    <th scope="col">Link</th>
+                    <th scope="col" className={styles.linksNum}>
+                      Total clicks
+                    </th>
+                    <th scope="col" className={styles.linksNum}>
+                      Unique clicks
+                    </th>
+                    <th scope="col" className={styles.linksNum}>
+                      % recipients
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {links.map((l) => {
+                    const short = l.url.replace(/^https?:\/\//, '');
+                    const recipPct =
+                      campaign.recipients > 0
+                        ? `${((l.unique / campaign.recipients) * 100).toFixed(1)}%`
+                        : '—';
+                    return (
+                      <tr key={l.url}>
+                        <td>
+                          <a
+                            className={styles.linkUrl}
+                            href={l.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={l.url}
+                          >
+                            {short.slice(0, 64)}
+                            {short.length > 64 ? '…' : ''}
+                          </a>
+                        </td>
+                        <td className={`tnum ${styles.linksNum}`}>
+                          {l.total.toLocaleString('en-US')}
+                        </td>
+                        <td className={`tnum ${styles.linksNum}`}>
+                          {l.unique.toLocaleString('en-US')}
+                        </td>
+                        <td className={`tnum ${styles.linksNum}`}>{recipPct}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ) : null}
 
       <div className={styles.reportKpis}>
         {kpis.map((k) => (
@@ -628,7 +614,16 @@ function CampaignReport({
               <div className={`tnum ${styles.reportKpiVal}${k.cls ? ` ${k.cls}` : ''}`}>
                 {k.value}
               </div>
-              {k.pct != null && <div className={`tnum ${styles.reportKpiPct}`}>{k.pct}</div>}
+              {k.pct != null && (
+                <>
+                  <span className={styles.reportKpiSep} aria-hidden="true">
+                    /
+                  </span>
+                  <div className={`tnum ${styles.reportKpiPct}${k.cls ? ` ${k.cls}` : ''}`}>
+                    {k.pct}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         ))}
@@ -643,11 +638,11 @@ function CampaignReport({
           </div>
           <button
             type="button"
-            className="sbtn"
+            className={`sbtn ${styles.exportBtn}`}
             onClick={exportEvents}
             disabled={filteredEvents.length === 0}
           >
-            <Icon name="download" size={14} /> Export
+            <Icon name="download" size={12} /> Export
           </button>
         </div>
 
@@ -785,19 +780,6 @@ function CampaignReport({
           )}
         </div>
       </section>
-
-      {toast && (
-        <div
-          className={styles.toast}
-          role="status"
-          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-        >
-          <span className={styles.toastIc}>
-            <Icon name="check" size={13} stroke={3} />
-          </span>
-          {toast}
-        </div>
-      )}
     </div>
   );
 }

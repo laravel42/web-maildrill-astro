@@ -29,7 +29,7 @@ function pinHref(p: Pin): string {
   if (p.kind === 'subscriber') {
     return routes.app.subscriber(p.id);
   }
-  return `${routes.app.lists}?open=${encodeURIComponent(p.id)}`;
+  return routes.app.list(p.id);
 }
 
 const PIN_KINDS = new Set(['campaign', 'list', 'template', 'subscriber']);
@@ -50,7 +50,20 @@ function readPins(): Pin[] {
   }
 }
 
-export default function AppShell({ currentPath, title, children, userEmail, userName }: Props) {
+export default function AppShell({
+  currentPath,
+  title,
+  crumbs,
+  children,
+  userEmail,
+  userName,
+}: Props) {
+  // Home uses title "Dashboard" — skip the trail so we don't show "Dashboard / Dashboard".
+  const trail = crumbs?.length
+    ? crumbs
+    : title && title !== 'Dashboard'
+      ? [{ label: title }]
+      : [];
   // Display identity from the real session (no mock user).
   const displayName = userName?.trim() || (userEmail ? userEmail.split('@')[0] : 'Your workspace');
   const avatarInitial = displayName.charAt(0).toUpperCase();
@@ -395,7 +408,7 @@ export default function AppShell({ currentPath, title, children, userEmail, user
 
       <div className={styles.ashMain}>
         <header className={styles.topbar}>
-          <div className={styles.topbarCrumb}>
+          <div className={styles.topbarCrumb} aria-label="Breadcrumb">
             <button
               type="button"
               className={styles.topbarMenu}
@@ -404,9 +417,26 @@ export default function AppShell({ currentPath, title, children, userEmail, user
             >
               <Icon name="menu" size={18} />
             </button>
-            <span className={styles.topbarWs}>Maildrill</span>
-            <span className="topbar__sep">/</span>
-            <span className={styles.topbarTitle}>{title}</span>
+            <span className={styles.topbarWs}>Dashboard</span>
+            {trail.map((crumb, i) => {
+              const isLast = i === trail.length - 1;
+              return (
+                <span key={`${crumb.label}-${i}`} className={styles.topbarCrumbSeg}>
+                  <span className={styles.topbarSep} aria-hidden="true">
+                    /
+                  </span>
+                  {crumb.href && !isLast ? (
+                    <a className={styles.topbarCrumbLink} href={crumb.href}>
+                      {crumb.label}
+                    </a>
+                  ) : (
+                    <span className={isLast ? styles.topbarTitle : styles.topbarCrumbPlain}>
+                      {crumb.label}
+                    </span>
+                  )}
+                </span>
+              );
+            })}
           </div>
           <div className={styles.topbarControls}>
             <button

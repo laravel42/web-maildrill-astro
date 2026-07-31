@@ -26,8 +26,6 @@ export interface ApiList {
   addedPrev7?: number | null;
   /** Cumulative member count at 7 weekly points, oldest → now. */
   trend?: number[] | null;
-  /** Most recent sent campaign that targeted this list. */
-  recentCampaign?: string | null;
   /** Message outcomes across campaigns sent to this list. */
   delivered?: number | null;
   /** Deliveries on channels with engagement tracking (email, WhatsApp). */
@@ -58,7 +56,7 @@ export function toListRow(l: ApiList): ListRow {
     updatedAt: l.updatedAt ?? l.createdAt ?? new Date().toISOString(),
     color: l.color || '#4f46e5',
     trend: l.trend && l.trend.length > 1 ? l.trend : [0],
-    recentCampaign: l.recentCampaign ?? '—',
+    gdprConsent: Boolean(l.gdprConsent),
     tags: l.tags ?? [],
     notes: l.notes ?? '',
     more: last7 > 0 ? `+${last7}` : '+0',
