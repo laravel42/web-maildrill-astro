@@ -1471,9 +1471,16 @@ function SubscriberDrawer({
             <div className={styles.sbdIdtext}>
               <div className={styles.sbdName}>{sub.name}</div>
               <div className={styles.sbdEmail}>{sub.email}</div>
-              <span className={`astatus astatus--${sub.status} ${styles.sbdIdstatus}`}>
-                {statusLabel}
-              </span>
+              <div className={styles.sbdBadges}>
+                <span className={`astatus astatus--${sub.status} ${styles.sbdIdstatus}`}>
+                  {statusLabel}
+                </span>
+                {sub.status === 'active' && (
+                  <span className={styles.sbdGdpr} title="GDPR consent on file">
+                    GDPR
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1533,10 +1540,6 @@ function SubscriberDrawer({
           <div className={styles.sbdSection}>
             <span className={`adrawer__eyebrow ${styles.sbdEyebrow}`}>Details</span>
             <div className="adetail">
-              <span className="adetail__k">Phone</span>
-              <span className="adetail__v">{sub.phone || '—'}</span>
-            </div>
-            <div className="adetail">
               <span className="adetail__k">Subscribed</span>
               <span className="adetail__v">{sub.joined}</span>
             </div>
@@ -1561,24 +1564,26 @@ function SubscriberDrawer({
                         color: on ? m.color : 'var(--muted)',
                       }}
                     >
-                      <Icon name={m.icon} size={13} />
+                      <Icon name={m.icon} size={14} />
                     </span>
                     <div className={styles.sbdChanMain}>
-                      <span className={styles.sbdChanName}>{m.label}</span>
-                      <span className={`${styles.sbdChanPill}${on ? '' : ` ${styles.isOff}`}`}>
-                        {on ? 'Active' : 'Off'}
-                      </span>
-                      <span className={styles.sbdChanMeta}>{meta}</span>
+                      <div className={styles.sbdChanTop}>
+                        <span className={styles.sbdChanName}>{m.label}</span>
+                        <span className={`${styles.sbdChanPill}${on ? '' : ` ${styles.isOff}`}`}>
+                          {on ? 'Active' : 'Off'}
+                        </span>
+                      </div>
+                      <div className={styles.sbdChanMeta}>{meta}</div>
                     </div>
                     <div className={styles.sbdChanMetrics}>
-                      <span className={styles.sbdChanMetric}>
+                      <div>
                         <span className={`tnum ${styles.sbdChanNum}`}>{open}</span>
                         <span className={styles.sbdChanSub}>open</span>
-                      </span>
-                      <span className={styles.sbdChanMetric}>
+                      </div>
+                      <div>
                         <span className={`tnum ${styles.sbdChanNum}`}>{click}</span>
                         <span className={styles.sbdChanSub}>click</span>
-                      </span>
+                      </div>
                     </div>
                   </div>
                 );
