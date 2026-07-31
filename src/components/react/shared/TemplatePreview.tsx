@@ -182,26 +182,47 @@ interface WaStoredComponents {
   buttons?: Array<{ type?: string; text?: string }>;
 }
 
-/** True when the blob carries anything worth rendering as a WhatsApp message. */
-export function hasWaStructure(
-  components?: Record<string, unknown> | null,
-): components is Record<string, unknown> {
-  if (!components || typeof components !== 'object') return false;
-  const c = components as WaStoredComponents;
-  return Boolean(
-    c.header ||
-      c.footer ||
-      (Array.isArray(c.buttons) && c.buttons.length > 0) ||
-      (typeof c.body?.text === 'string' && c.body.text.trim()),
-  );
-}
-
 const WA_MEDIA_LABEL: Record<string, string> = {
   IMAGE: 'Image',
   VIDEO: 'Video',
   DOCUMENT: 'Document',
   LOCATION: 'Location',
 };
+
+/** Visible parts of a WhatsApp template blob (empty shells don't count). */
+function waVisibleParts(
+  components: WaStoredComponents,
+  bodyText?: string | null,
+): {
+  headerText: string;
+  mediaLabel: string | undefined;
+  body: string;
+  footer: string;
+  buttons: Array<{ type?: string; text?: string }>;
+} {
+  const headerFormat = String(components.header?.format ?? '').toUpperCase();
+  const headerText = headerFormat === 'TEXT' ? (components.header?.text ?? '').trim() : '';
+  const mediaLabel = WA_MEDIA_LABEL[headerFormat];
+  const body = (bodyText ?? '').trim() || (components.body?.text ?? '').trim();
+  const footer =
+    (components.footer?.text ?? '').trim() ||
+    (typeof components.footer?.code_expiration_minutes === 'number'
+      ? `This code expires in ${components.footer.code_expiration_minutes} minutes.`
+      : '');
+  const buttons = Array.isArray(components.buttons) ? components.buttons : [];
+  return { headerText, mediaLabel, body, footer, buttons };
+}
+
+/** True when the blob carries anything worth rendering as a WhatsApp message. */
+export function hasWaStructure(
+  components?: Record<string, unknown> | null,
+): components is Record<string, unknown> {
+  if (!components || typeof components !== 'object') return false;
+  const { headerText, mediaLabel, body, footer, buttons } = waVisibleParts(
+    components as WaStoredComponents,
+  );
+  return Boolean(headerText || mediaLabel || body || footer || buttons.length > 0);
+}
 
 function waButtonIcon(type?: string): IconName | null {
   switch (String(type ?? '').toUpperCase()) {
@@ -230,17 +251,14 @@ function WaPreview({
   components: Record<string, unknown>;
   bodyText?: string | null;
 }) {
-  const c = components as WaStoredComponents;
-  const headerFormat = String(c.header?.format ?? '').toUpperCase();
-  const headerText = headerFormat === 'TEXT' ? (c.header?.text ?? '').trim() : '';
-  const mediaLabel = WA_MEDIA_LABEL[headerFormat];
-  const body = (bodyText ?? '').trim() || (c.body?.text ?? '').trim();
-  const footer =
-    (c.footer?.text ?? '').trim() ||
-    (typeof c.footer?.code_expiration_minutes === 'number'
-      ? `This code expires in ${c.footer.code_expiration_minutes} minutes.`
-      : '');
-  const buttons = Array.isArray(c.buttons) ? c.buttons : [];
+  const { headerText, mediaLabel, body, footer, buttons } = waVisibleParts(
+    components as WaStoredComponents,
+    bodyText,
+  );
+  const empty = !headerText && !mediaLabel && !body && !footer && buttons.length === 0;
+  if (empty) {
+    return <div className={styles.pvMsg}>This template has no saved content yet.</div>;
+  }
 
   return (
     <div className={styles.pvText}>

@@ -1,13 +1,4 @@
-import {
-  lazy,
-  Suspense,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type Dispatch,
-  type SetStateAction,
-} from 'react';
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import type { ChannelType, TemplateApprovalStatus } from '@/types/app';
 
 import {
@@ -23,15 +14,6 @@ import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
 import ColFilter from './shared/ColFilter';
 import FilterChipsRow from './shared/FilterChipsRow';
-import EmailBuilder from './EmailBuilder';
-// Lazy: email-builder-standalone (MUI, tiptap, DnD, image tools…) is a large
-// bundle. A static import here pulled it into this route's module graph even
-// though the visual editor only renders once a user opens an email template
-// — everyone visiting /app/templates paid for it upfront. React.lazy defers
-// the fetch until <VisualEmailBuilder> actually mounts.
-const VisualEmailBuilder = lazy(() => import('./VisualEmailBuilder'));
-const WaTemplateStudioEditor = lazy(() => import('./WaTemplateStudioEditor'));
-import LazyBoundary from './shared/LazyBoundary';
 import TemplatePreview from './shared/TemplatePreview';
 import GalleryPreview, { FauxEmail } from './shared/GalleryPreview';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
@@ -41,7 +23,7 @@ import { CHANNEL_TABS, VIEWS, ASC_FIRST, PAGE_SIZE } from './AppTemplates.logic'
 import type { ViewKey, SortKey } from './AppTemplates.types';
 import { api, ApiError } from '@/lib/app/api';
 import { toGalleryTemplate, type ApiTemplate } from '@/lib/app/template-map';
-import type { TEditorConfiguration } from 'email-builder-standalone';
+import { routes } from '@/config/routes';
 import styles from './AppTemplates.module.css';
 
 /* --------------------------------------------------------- small pieces ---- */
@@ -134,19 +116,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
   const [page, setPage] = useState(1);
   const [openId, setOpenId] = useState<string | null>(null);
   const { toast, show } = useToast();
-  const [builder, setBuilder] = useState<{
-    channel: ChannelType;
-    name: string | null;
-    id?: string;
-    document?: TEditorConfiguration;
-    category?: string;
-    /** Saved body for the SMS/Voice composer when reopening. */
-    message?: string;
-    /** WhatsApp studio / voice composer round-trip fields (raw builderDoc). */
-    language?: string | null;
-    waComponents?: Record<string, unknown> | null;
-    waDoc?: Record<string, unknown> | null;
-  } | null>(null);
 
   const resetPage = () => setPage(1);
 
@@ -318,39 +287,19 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
 
   const openTpl = openId ? (templates.find((t) => t.id === openId) ?? null) : null;
 
-  /* Open an editor on an existing template. The saved row is fetched for every
-     channel — carrying `id` is what makes the editor PATCH in place instead of
-     POSTing a copy, and the body has to come back with it or the first save
-     would overwrite the stored content with an empty editor. */
-  const openForEdit = async (tpl: GalleryTemplate) => {
-    setOpenId(null);
-    if (!live) {
-      setBuilder({ channel: tpl.channel, name: tpl.name, category: tpl.category });
-      return;
-    }
-    let full: ApiTemplate;
-    try {
-      full = await api.get<ApiTemplate>(`templates/${tpl.id}`);
-    } catch (e) {
-      // Opening without the saved content would let the next save destroy it,
-      // so refuse to open rather than risk the template.
-      show(e instanceof ApiError ? e.message : `Could not open “${tpl.name}”`);
-      return;
-    }
-    setBuilder({
-      channel: tpl.channel,
-      name: tpl.name,
-      id: tpl.id,
-      category: full.category ?? tpl.category,
-      document: (full.builderDoc as TEditorConfiguration | null) ?? undefined,
-      message: full.text ?? undefined,
-      language: full.language,
-      waComponents: full.components ?? undefined,
-      waDoc: full.builderDoc ?? undefined,
-    });
+  /* Each channel's builder lives on its own page (/dashboard/templates/<channel>);
+     editing hands the id over via ?id= and the page SSR-fetches the saved row.
+     Demo mode has no row to fetch, so it passes name/category prefills instead. */
+  const builderHref = (tpl: GalleryTemplate) => {
+    const params = new URLSearchParams(
+      live ? { id: tpl.id } : { name: tpl.name, category: tpl.category },
+    );
+    return `${routes.app.templateBuilder(tpl.channel)}?${params}`;
   };
+  const openForEdit = (tpl: GalleryTemplate) => window.location.assign(builderHref(tpl));
 
-  // Sidebar pins: /dashboard/templates?edit=<id> opens the editor directly.
+  // Sidebar pins: /dashboard/templates?edit=<id> forwards to that template's
+  // channel builder page.
   const editDeepLinkDone = useRef(false);
   useEffect(() => {
     if (editDeepLinkDone.current) return;
@@ -359,10 +308,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
     const tpl = templates.find((t) => t.id === editId);
     if (!tpl) return;
     editDeepLinkDone.current = true;
-    void openForEdit(tpl);
-    const url = new URL(window.location.href);
-    url.searchParams.delete('edit');
-    window.history.replaceState(null, '', `${url.pathname}${url.search}`);
+    window.location.replace(builderHref(tpl));
   }, [templates]);
 
   const setTab = (t: ChannelType | 'all') => {
@@ -418,7 +364,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                       className={styles.colopt}
                       onClick={() => {
                         setNewOpen(false);
-                        setBuilder({ channel: ch, name: null });
+                        window.location.assign(routes.app.templateBuilder(ch));
                       }}
                     >
                       <span
@@ -664,7 +610,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                         className={styles.ovUse}
                         onClick={(e) => {
                           e.stopPropagation();
-                          void openForEdit(t);
+                          openForEdit(t);
                         }}
                       >
                         Edit
@@ -872,7 +818,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           onRefresh={() => refreshApproval(openTpl.id)}
           onClose={() => setOpenId(null)}
           onUse={() => {
-            if (openTpl) void openForEdit(openTpl);
+            if (openTpl) openForEdit(openTpl);
           }}
           onClone={() => {
             const id = openTpl.id;
@@ -880,136 +826,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
             void duplicateTemplates([id]);
           }}
           onDelete={() => setConfirmDelete([openTpl.id])}
-        />
-      )}
-
-      {/* Email → EmailBuilder.js visual editor; WhatsApp → wa-template-studio;
-          SMS/Voice keep the lightweight text composer. */}
-      {builder && builder.channel === 'email' && (
-        <LazyBoundary label="the email editor" onClose={() => setBuilder(null)}>
-          <Suspense fallback={null}>
-            <VisualEmailBuilder
-              name={builder.name}
-              initialDocument={builder.document}
-              initialCategory={builder.category}
-              initialLanguage={builder.language}
-              onClose={() => setBuilder(null)}
-              onSave={async ({ name, html, document, category, language }) => {
-                const ed = builder;
-                if (!ed) return;
-                // Stay in the editor and let it show a saved badge; don't close.
-                // Errors propagate so the editor surfaces them. Local (no-service)
-                // mode just acknowledges.
-                if (!live) return;
-                const body = {
-                  name: name && name !== 'Untitled' ? name : 'Untitled template',
-                  channel: 'email' as const,
-                  html,
-                  builderDoc: document as Record<string, unknown>,
-                  category,
-                  language,
-                };
-                if (ed.id) {
-                  // Editing an existing template — update it in place.
-                  const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
-                  setTemplates((prev) =>
-                    prev.map((t) => (t.id === ed.id ? toGalleryTemplate(updated) : t)),
-                  );
-                } else {
-                  const created = await api.post<ApiTemplate>('templates', body);
-                  setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
-                  // Switch to update mode so subsequent saves patch this template
-                  // instead of creating duplicates.
-                  setBuilder((prev) => (prev ? { ...prev, id: created.id, language } : prev));
-                }
-              }}
-            />
-          </Suspense>
-        </LazyBoundary>
-      )}
-
-      {builder && builder.channel === 'whatsapp' && (
-        <LazyBoundary label="the WhatsApp template editor" onClose={() => setBuilder(null)}>
-          <Suspense fallback={null}>
-            <WaTemplateStudioEditor
-              name={builder.name}
-              language={builder.language}
-              text={builder.message}
-              category={builder.category}
-              builderDoc={builder.waDoc}
-              components={builder.waComponents}
-              onClose={() => setBuilder(null)}
-              onSave={async (fields) => {
-                const ed = builder;
-                if (!ed || !live) return;
-                const body = {
-                  name: fields.name,
-                  channel: 'whatsapp' as const,
-                  text: fields.text,
-                  category: fields.category,
-                  language: fields.language,
-                  builderDoc: fields.builderDoc,
-                  components: fields.components,
-                };
-                if (ed.id) {
-                  const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
-                  setTemplates((prev) =>
-                    prev.map((t) => (t.id === ed.id ? toGalleryTemplate(updated) : t)),
-                  );
-                } else {
-                  const created = await api.post<ApiTemplate>('templates', body);
-                  setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
-                  setBuilder((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          id: created.id,
-                          waDoc: fields.builderDoc,
-                          waComponents: fields.components,
-                          message: fields.text ?? undefined,
-                          language: fields.language,
-                        }
-                      : prev,
-                  );
-                }
-              }}
-            />
-          </Suspense>
-        </LazyBoundary>
-      )}
-
-      {builder && builder.channel !== 'email' && builder.channel !== 'whatsapp' && (
-        <EmailBuilder
-          channel={builder.channel}
-          name={builder.name}
-          kind="template"
-          initialCategory={builder.category}
-          initialLanguage={builder.language}
-          initialMessage={builder.message}
-          initialBuilderDoc={builder.waDoc ?? null}
-          onClose={() => setBuilder(null)}
-          onSave={async ({ channel, name, message, category, language, builderDoc }) => {
-            const ed = builder;
-            if (!ed || !live) return;
-            const body = {
-              name: name && name !== 'Untitled' ? name : 'Untitled template',
-              channel,
-              text: message || null,
-              category,
-              language,
-              ...(builderDoc !== undefined ? { builderDoc } : {}),
-            };
-            if (ed.id) {
-              const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
-              setTemplates((prev) =>
-                prev.map((t) => (t.id === ed.id ? toGalleryTemplate(updated) : t)),
-              );
-            } else {
-              const created = await api.post<ApiTemplate>('templates', body);
-              setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
-              setBuilder((prev) => (prev ? { ...prev, id: created.id, language } : prev));
-            }
-          }}
         />
       )}
 
@@ -1070,8 +886,6 @@ function TemplateDrawer({
   const approval: TemplateApprovalStatus | null =
     t.channel === 'whatsapp' ? (t.approvalStatus ?? 'draft') : null;
   const details: [string, string][] = [
-    ['Category', t.category],
-    ['Channel', CHANNEL[t.channel].label],
     ['Created on', t.createdOn ?? '—'],
     ['Last edited', t.updated],
   ];

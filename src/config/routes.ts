@@ -1,3 +1,5 @@
+import type { ChannelType } from '@/types/app';
+
 export const routes = {
   home: '/',
   product: '/product',
@@ -30,9 +32,14 @@ export const routes = {
     root: '/dashboard',
     dashboard: '/dashboard',
     campaigns: '/dashboard/campaigns',
+    campaignReport: (id: string) => `/dashboard/campaigns/${id}/report`,
     templates: '/dashboard/templates',
+    // Each channel's template builder is its own page; `?id=<templateId>`
+    // reopens a saved template for editing.
+    templateBuilder: (channel: ChannelType) => `/dashboard/templates/${channel}`,
     lists: '/dashboard/lists',
     subscribers: '/dashboard/subscribers',
+    subscriber: (id: string) => `/dashboard/subscribers/${id}`,
     media: '/dashboard/media',
     analytics: '/dashboard/analytics',
     settings: '/dashboard/settings',

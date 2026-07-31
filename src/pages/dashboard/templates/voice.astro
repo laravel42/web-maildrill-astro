@@ -1,0 +1,22 @@
+---
+export const prerender = false;
+import AppLayout from '@/layouts/AppLayout.astro';
+import TemplateBuilderPage from '@/components/react/TemplateBuilderPage';
+import { loadTemplateBuilder } from '@/lib/server/template-builder';
+
+const load = await loadTemplateBuilder(Astro.locals.session, 'voice', Astro.url);
+if ('redirect' in load) {
+  return Astro.redirect(load.redirect);
+}
+---
+
+<AppLayout title={load.template?.name ?? 'New voice template'}>
+  <TemplateBuilderPage
+    client:only="react"
+    channel="voice"
+    template={load.template}
+    live={load.live}
+    presetName={load.presetName}
+    presetCategory={load.presetCategory}
+  />
+</AppLayout>
