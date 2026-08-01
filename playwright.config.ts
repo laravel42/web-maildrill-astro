@@ -1,4 +1,7 @@
+import path from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
+
+const STORAGE_STATE = path.resolve('tests/e2e/.auth/user.json');
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -6,14 +9,33 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   use: {
-    baseURL: 'http://127.0.0.1:4321',
+    baseURL: 'http://localhost:4321',
     trace: 'on-first-retry',
   },
-  webServer: {
-    command: 'npm run build && npm run preview -- --host 127.0.0.1 --port 4321',
-    url: 'http://127.0.0.1:4321',
-    reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
-  },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  // Reuses running dev servers locally; boots both stacks otherwise. The
+  // authenticated specs also need Postgres (login-code mint + live data).
+  webServer: [
+    {
+      command: 'pnpm --filter workers dev',
+      url: 'http://localhost:3001/health',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+    },
+    {
+      command: 'npm run build && npm run preview -- --host localhost --port 4321',
+      url: 'http://localhost:4321',
+      reuseExistingServer: !process.env.CI,
+      timeout: 180_000,
+    },
+  ],
+  projects: [
+    // Signs in once (dev-DB minted login code) and saves storage state.
+    { name: 'setup', testMatch: /auth\.setup\.ts/ },
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'], storageState: STORAGE_STATE },
+      dependencies: ['setup'],
+      testIgnore: /auth\.setup\.ts/,
+    },
+  ],
 });

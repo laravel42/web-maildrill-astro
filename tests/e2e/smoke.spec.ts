@@ -43,21 +43,18 @@ test.describe('marketing smoke', () => {
 
 test.describe('app shell', () => {
   test('dashboard and campaigns navigation work', async ({ page }) => {
-    // Legacy /app 301s to /dashboard — land there directly.
     await page.goto('/dashboard');
-    // The dashboard's single H1 is the greeting (per the design).
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Good evening');
+    // The dashboard's single H1 is the time-of-day greeting.
+    await expect(page.getByRole('heading', { level: 1 })).toContainText(
+      /Good (morning|afternoon|evening)/,
+    );
     await page.getByRole('link', { name: 'Campaigns' }).first().click();
     await expect(page).toHaveURL(/\/dashboard\/campaigns$/);
     await expect(page.getByRole('heading', { level: 1, name: 'Campaigns' })).toBeVisible();
-    await expect(page.getByText('Spring Launch')).toBeVisible();
   });
 
-  test('login placeholder routes into the dashboard', async ({ page }) => {
-    await page.goto('/login');
-    await page.getByLabel('Work email').fill('andrea@acme.com');
-    await page.getByLabel('Password').fill('password123');
-    await page.getByRole('button', { name: 'Log in' }).click();
+  test('legacy /app path lands on the dashboard', async ({ page }) => {
+    await page.goto('/app');
     await expect(page).toHaveURL(/\/dashboard\/?$/);
   });
 });
@@ -68,7 +65,9 @@ test.describe('SEO artifacts', () => {
     expect(robots.ok()).toBeTruthy();
     expect(await robots.text()).toContain('Sitemap:');
 
+    // @astrojs/sitemap writes the index at build time only; the dev server 404s it.
     const sitemap = await request.get('/sitemap-index.xml');
+    test.skip(!sitemap.ok() && !process.env.CI, 'sitemap exists only in the built site');
     expect(sitemap.ok()).toBeTruthy();
     expect(await sitemap.text()).toContain('sitemap');
   });

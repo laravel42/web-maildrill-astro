@@ -65,3 +65,7 @@ scripts/.infobip-rates.internal.json
 
 # Session scratch artifacts (template import forensics etc.)
 tmp/
+tests/e2e/.auth/
+
+# Generated dashboard presentation assets (mp3/mp4/webm)
+presentation-out/
