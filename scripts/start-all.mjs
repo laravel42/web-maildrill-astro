@@ -89,20 +89,38 @@ let alive = 0;
 let shuttingDown = false;
 let exitCode = 0;
 
+/**
+ * Signal a child's whole process GROUP, not just the direct child. The workers
+ * child is a pnpm wrapper around tsx — killing only pnpm can orphan tsx, which
+ * then squats on :3001 and EADDRINUSEs every later start.
+ */
+function killTree(child, signal) {
+  if (child.exitCode !== null || !child.pid) return;
+  if (process.platform === 'win32') {
+    child.kill(signal);
+    return;
+  }
+  try {
+    process.kill(-child.pid, signal);
+  } catch {
+    try {
+      child.kill(signal);
+    } catch {
+      /* already gone */
+    }
+  }
+}
+
 function shutdown(code = 0) {
   if (shuttingDown) return;
   shuttingDown = true;
   exitCode = code;
   if (alive === 0) process.exit(exitCode);
-  for (const child of children) {
-    if (!child.killed && child.exitCode === null) child.kill('SIGTERM');
-  }
+  for (const child of children) killTree(child, 'SIGTERM');
   // Last resort for a hung child; keep below supervisor's stopwaitsecs so the
   // parent still exits cleanly instead of being SIGKILLed with children leaked.
   setTimeout(() => {
-    for (const child of children) {
-      if (child.exitCode === null) child.kill('SIGKILL');
-    }
+    for (const child of children) killTree(child, 'SIGKILL');
   }, 30_000).unref();
 }
 
@@ -112,6 +130,9 @@ function run(label, command, args, env = childEnv) {
     stdio: 'inherit',
     env,
     shell: process.platform === 'win32',
+    // Own process group per child so killTree can take out the whole
+    // pnpm → tsx / node tree in one signal.
+    detached: process.platform !== 'win32',
   });
   children.push(child);
   alive += 1;
@@ -129,6 +150,33 @@ function run(label, command, args, env = childEnv) {
 
 process.on('SIGINT', () => shutdown(0));
 process.on('SIGTERM', () => shutdown(0));
+
+/**
+ * Fail fast if the workers port is already owned. Without this check a stale
+ * instance answers the readiness probe, Astro boots against the OLD backend,
+ * and the new workers child dies with a confusing EADDRINUSE seconds later.
+ */
+function portInUse(p) {
+  return new Promise((resolvePort) => {
+    const socket = net.connect({ port: p, host }, () => {
+      socket.end();
+      resolvePort(true);
+    });
+    socket.on('error', () => {
+      socket.destroy();
+      resolvePort(false);
+    });
+  });
+}
+
+if (await portInUse(port)) {
+  console.error(
+    `[start:all] ${host}:${port} is already in use — a previous instance is still running.\n` +
+      `  Find it with: ss -tlnp | grep ${port}   (or: lsof -i :${port})\n` +
+      `  Kill that pid, make sure only one supervisor daemon runs this script, then retry.`,
+  );
+  process.exit(1);
+}
 
 console.log(`[start:all] starting workers — waiting for ${host}:${port}…`);
 run('workers', 'pnpm', ['--dir', 'workers', 'start']);
