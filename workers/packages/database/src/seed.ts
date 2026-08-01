@@ -324,6 +324,20 @@ async function flushPostHog(): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  /* Dev-workspace tool: keeps only the hardcoded dev tenant and DELETES every
+     other tenant before (re)seeding demo data. Running that against real
+     customer data would be catastrophic — refuse outright in production.
+     Fresh production databases need `pnpm db:migrate`, not a seed. */
+  if (process.env.NODE_ENV === 'production') {
+    console.error(
+      'seed: refusing to run with NODE_ENV=production — this tool deletes every ' +
+        `tenant except the dev workspace ("${TARGET_TENANT_NAME}"). ` +
+        'To initialize a production database run `pnpm db:migrate`; accounts ' +
+        'self-provision on first sign-in.',
+    );
+    process.exit(1);
+  }
+
   /* ---- resolve target tenant ------------------------------------------- */
   const target = (
     await db.select().from(tenants).where(eq(tenants.name, TARGET_TENANT_NAME)).limit(1)
