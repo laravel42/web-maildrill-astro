@@ -1,4 +1,4 @@
-import React, { CSSProperties } from 'react';
+import React, { type CSSProperties } from 'react';
 import { z } from 'zod';
 
 import { ColumnsContainerPropsSchema, PADDING_SCHEMA } from '@eb/document-core';

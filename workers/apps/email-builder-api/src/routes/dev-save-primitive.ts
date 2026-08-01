@@ -263,13 +263,11 @@ export const devSavePrimitivePlugin = async function devSavePrimitivePlugin(
       ndjson = serialisePrimitive(metadata, entries);
     } catch (err) {
       if (err instanceof PayloadTooLargeError) {
-        return reply
-          .status(413)
-          .send({
-            error: 'payload_too_large',
-            limitBytes: MAX_NDJSON_BYTES,
-            actualBytes: err.bytes,
-          });
+        return reply.status(413).send({
+          error: 'payload_too_large',
+          limitBytes: MAX_NDJSON_BYTES,
+          actualBytes: err.bytes,
+        });
       }
       throw err;
     }
@@ -438,13 +436,11 @@ export const devSavePrimitivePlugin = async function devSavePrimitivePlugin(
         ndjson = serialisePrimitive(nextMetadata, nextEntries);
       } catch (err) {
         if (err instanceof PayloadTooLargeError) {
-          return reply
-            .status(413)
-            .send({
-              error: 'payload_too_large',
-              limitBytes: MAX_NDJSON_BYTES,
-              actualBytes: err.bytes,
-            });
+          return reply.status(413).send({
+            error: 'payload_too_large',
+            limitBytes: MAX_NDJSON_BYTES,
+            actualBytes: err.bytes,
+          });
         }
         throw err;
       }

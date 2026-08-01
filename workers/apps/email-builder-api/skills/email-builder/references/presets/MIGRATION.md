@@ -12,8 +12,8 @@ All presets must pass through a migration pipeline to ensure compatibility with 
 
 **Required transformations:**
 
-| Legacy Type | New Type | Notes |
-|-------------|----------|-------|
+| Legacy Type    | New Type     | Notes                                                        |
+| -------------- | ------------ | ------------------------------------------------------------ |
 | `CustomEditor` | `NotionText` | Rich text editor migration (only remaining legacy migrator). |
 
 `Wysiwyg`, `Text`, and `Avatar` were retired in commit `e9493ce` — they are no longer migrated and will be silently dropped if encountered.
@@ -22,11 +22,11 @@ All presets must pass through a migration pipeline to ensure compatibility with 
 
 **SocialMedia block themes:**
 
-| Legacy Theme | New Theme | Description |
-|--------------|-----------|-------------|
-| `"circle-white"` | `"negative"` | White icons on dark background |
-| `"circle-black"` | `"positive"` | Dark icons on light background |
-| `"square-*"` | `"negative"` or `"positive"` | Convert based on background |
+| Legacy Theme     | New Theme                    | Description                    |
+| ---------------- | ---------------------------- | ------------------------------ |
+| `"circle-white"` | `"negative"`                 | White icons on dark background |
+| `"circle-black"` | `"positive"`                 | Dark icons on light background |
+| `"square-*"`     | `"negative"` or `"positive"` | Convert based on background    |
 
 **Valid themes:** `"positive"`, `"negative"`, `"brand"`
 
@@ -121,6 +121,7 @@ After automated migration, verify:
 **Problem:** Legacy templates using fonts not in archetype table.
 
 **Solution:** Map to closest archetype font:
+
 - Sans-serif → `MONTSERRAT`, `LATO`, `OPEN_SANS`, or `MODERN_SANS`
 - Serif → `PLAYFAIR` or `MERRIWEATHER`
 - Display → `OSWALD`
@@ -131,12 +132,12 @@ After automated migration, verify:
 
 Each preset should clearly map to one of the 16 archetipos (A-P):
 
-| Archetype | Font | Use Case |
-|-----------|------|----------|
-| A | MONTSERRAT | SaaS/Onboarding |
-| B | PLAYFAIR | Editorial/Newsletter |
-| C | OSWALD | Ecommerce/Flash Sale |
-| ... | ... | ... |
+| Archetype | Font       | Use Case             |
+| --------- | ---------- | -------------------- |
+| A         | MONTSERRAT | SaaS/Onboarding      |
+| B         | PLAYFAIR   | Editorial/Newsletter |
+| C         | OSWALD     | Ecommerce/Flash Sale |
+| ...       | ...        | ...                  |
 
 ### Visual Consistency
 

@@ -4,17 +4,17 @@ LLM agent layer for Maildrill's EmailBuilder: craft-aware generation, structured
 
 ## Capabilities
 
-| Capability | Entry | Notes |
-|---|---|---|
-| Create from prompt | `POST /api/generate` | System prompt now includes `DESIGN_CRAFT_GUIDANCE` (Impeccable-inspired) |
-| Wizard composer | `POST /api/visual-brief/compile` | 5-step UI → structured brief → craft prompt |
-| Refine editing | `POST /api/visual-brief/refine` + generate with `currentDocument` | Change chips + scope → refine prompt |
-| Quality score | `POST /api/audit` | Deterministic /20 tech + /40 design seed |
-| Design + client report | `POST /api/critique` | Audit first, then LLM design critique (no anchoring) |
+| Capability             | Entry                                                             | Notes                                                                    |
+| ---------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Create from prompt     | `POST /api/generate`                                              | System prompt now includes `DESIGN_CRAFT_GUIDANCE` (Impeccable-inspired) |
+| Wizard composer        | `POST /api/visual-brief/compile`                                  | 5-step UI → structured brief → craft prompt                              |
+| Refine editing         | `POST /api/visual-brief/refine` + generate with `currentDocument` | Change chips + scope → refine prompt                                     |
+| Quality score          | `POST /api/audit`                                                 | Deterministic /20 tech + /40 design seed                                 |
+| Design + client report | `POST /api/critique`                                              | Audit first, then LLM design critique (no anchoring)                     |
 
 ## Two-pass quality (Impeccable invariant)
 
-1. **Assessment A** — `runLlmCritique` reviews the document *without* seeing technical scores.
+1. **Assessment A** — `runLlmCritique` reviews the document _without_ seeing technical scores.
 2. **Assessment B** — `analyzeTemplate` runs the deterministic rule packs (structure, a11y, compatibility matrix, responsive, deliverability, design signals).
 3. **Synthesis** — `buildQualityReport` merges findings, blends critique dimension scores, and surfaces `designWeaknesses` + `clientWeaknesses`.
 

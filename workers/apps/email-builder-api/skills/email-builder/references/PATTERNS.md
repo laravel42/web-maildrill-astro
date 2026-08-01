@@ -190,7 +190,6 @@ The simplest valid template — use as a base:
 }
 ```
 
-
 ---
 
 ## Layout Preset: Editorial Newsletter (PLAYFAIR + serif headers + accent dividers)

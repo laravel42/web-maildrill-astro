@@ -85,16 +85,16 @@ The root wrapper. Controls global email styles.
 }
 ```
 
-| Prop          | Type       | Description                                                                   |
-| ------------- | ---------- | ----------------------------------------------------------------------------- |
-| backdropColor | hex string | Background behind the email canvas                                            |
-| canvasColor   | hex string | Email body background                                                         |
-| textColor     | hex string | Default text color                                                            |
+| Prop          | Type       | Description                                                                                                                                                              |
+| ------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| backdropColor | hex string | Background behind the email canvas                                                                                                                                       |
+| canvasColor   | hex string | Email body background                                                                                                                                                    |
+| textColor     | hex string | Default text color                                                                                                                                                       |
 | fontFamily    | enum       | `LATO`, `MODERN_SANS`, `MONTSERRAT`, `ROBOTO`, `OPEN_SANS`, `MERRIWEATHER`, `OSWALD`, `PLAYFAIR`, `PACIFICO`. Do NOT default to `LATO` — match to tone (guidance below). |
-| childrenIds   | string[]   | Top-level block IDs                                                           |
-| borderColor   | hex string | Optional border around canvas                                                 |
-| borderRadius  | number     | Optional border radius                                                        |
-| linkGlobal    | object     | `{ linkColor: hex, underline: boolean }`                                      |
+| childrenIds   | string[]   | Top-level block IDs                                                                                                                                                      |
+| borderColor   | hex string | Optional border around canvas                                                                                                                                            |
+| borderRadius  | number     | Optional border radius                                                                                                                                                   |
+| linkGlobal    | object     | `{ linkColor: hex, underline: boolean }`                                                                                                                                 |
 
 **Font family guidance — match to tone, do not default to `LATO` for every template.**
 
@@ -229,7 +229,11 @@ Multi-column layout (2 or 3 columns). Each column has its own `childrenIds`.
       "layout": "layout-50-50",
       "fixedWidths": [50, 50, null],
       "contentAlignment": "middle",
-      "columns": [{ "childrenIds": ["block-col1-a"] }, { "childrenIds": ["block-col2-a"] }, { "childrenIds": [] }]
+      "columns": [
+        { "childrenIds": ["block-col1-a"] },
+        { "childrenIds": ["block-col2-a"] },
+        { "childrenIds": [] }
+      ]
     }
   }
 }
@@ -275,13 +279,13 @@ Multi-column layout (2 or 3 columns). Each column has its own `childrenIds`.
 
 **Common mistakes — DO NOT emit these:**
 
-| ❌ Wrong                                     | ✅ Instead                                                       |
-| -------------------------------------------- | --------------------------------------------------------------- |
-| `columnsCount: 4` for a receipt table        | Stack 2-col rows (`[70,30,null]`) per line: subtotal, tax, total |
-| `columnsCount: 1` for a boxed quote          | Use a plain Container with a single NotionText inside            |
-| `fixedWidths: [50, 50]` (length 2)           | `fixedWidths: [50, 50, null]` (length 3, pad with null)          |
-| `columns: [{...}, {...}]` (length 2)         | `columns: [{...}, {...}, { "childrenIds": [] }]` (length 3)      |
-| 4-column product row (img / name / qty / price) | 2-col `[30,70,null]` (image on left, stacked details on right) |
+| ❌ Wrong                                        | ✅ Instead                                                       |
+| ----------------------------------------------- | ---------------------------------------------------------------- |
+| `columnsCount: 4` for a receipt table           | Stack 2-col rows (`[70,30,null]`) per line: subtotal, tax, total |
+| `columnsCount: 1` for a boxed quote             | Use a plain Container with a single NotionText inside            |
+| `fixedWidths: [50, 50]` (length 2)              | `fixedWidths: [50, 50, null]` (length 3, pad with null)          |
+| `columns: [{...}, {...}]` (length 2)            | `columns: [{...}, {...}, { "childrenIds": [] }]` (length 3)      |
+| 4-column product row (img / name / qty / price) | 2-col `[30,70,null]` (image on left, stacked details on right)   |
 
 When in doubt, **prefer a stacked Container over a ColumnsContainer**. Columns are only for genuine side-by-side layouts (label/value, image/text, or three feature highlights).
 
@@ -316,28 +320,28 @@ A call-to-action button. Has two top-level keys:
 }
 ```
 
-| Style Prop                  | Type                                                                          | Description                                                    |
-| --------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| fontSize                    | number (px)                                                                   | Label size                                                     |
-| fontSizeMobile              | number (px)                                                                   | Mobile-specific label size                                     |
-| fontFamily                  | enum                                                                          | Override the EmailLayout font on this button                   |
-| fontWeight                  | `"bold"` \| `"normal"`                                                        | Label weight                                                   |
-| textAlign                   | `"left"` \| `"center"` \| `"right"`                                           | Align the button block within its parent Container             |
+| Style Prop                  | Type                                                                          | Description                                                                        |
+| --------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| fontSize                    | number (px)                                                                   | Label size                                                                         |
+| fontSizeMobile              | number (px)                                                                   | Mobile-specific label size                                                         |
+| fontFamily                  | enum                                                                          | Override the EmailLayout font on this button                                       |
+| fontWeight                  | `"bold"` \| `"normal"`                                                        | Label weight                                                                       |
+| textAlign                   | `"left"` \| `"center"` \| `"right"`                                           | Align the button block within its parent Container                                 |
 | shape                       | `"rectangle"` \| `"pill"` \| `{ topLeft, topRight, bottomLeft, bottomRight }` | Corner shape. `"pill"` = fully rounded ends. Equivalent to a large `borderRadius`. |
-| backgroundColor             | hex string                                                                    | Wrapper bg behind the button (separate from the button itself) |
-| borderColor                 | hex string                                                                    | Outline for ghost / outlined buttons                           |
-| borderTop/Bottom/Left/Right | number (px)                                                                   | Per-side border widths                                         |
-| padding                     | `{ top, bottom, right, left }`                                                | Outer padding around the button                                |
-| mobilePadding               | `{ top, bottom, right, left }`                                                | Mobile-specific outer padding                                  |
+| backgroundColor             | hex string                                                                    | Wrapper bg behind the button (separate from the button itself)                     |
+| borderColor                 | hex string                                                                    | Outline for ghost / outlined buttons                                               |
+| borderTop/Bottom/Left/Right | number (px)                                                                   | Per-side border widths                                                             |
+| padding                     | `{ top, bottom, right, left }`                                                | Outer padding around the button                                                    |
+| mobilePadding               | `{ top, bottom, right, left }`                                                | Mobile-specific outer padding                                                      |
 
-| Prop                  | Type                                                                          | Default     |
-| --------------------- | ----------------------------------------------------------------------------- | ----------- |
-| text                  | string                                                                        | `""`        |
-| url                   | string                                                                        | `""`        |
-| buttonBackgroundColor | hex                                                                           | `"#999999"` |
-| buttonTextColor       | hex                                                                           | `"#FFFFFF"` |
-| fullWidth             | boolean                                                                       | `false`     |
-| size                  | `"x-small"` \| `"small"` \| `"medium"` \| `{ top, bottom, left, right }`      | `"medium"`  |
+| Prop                  | Type                                                                     | Default     |
+| --------------------- | ------------------------------------------------------------------------ | ----------- |
+| text                  | string                                                                   | `""`        |
+| url                   | string                                                                   | `""`        |
+| buttonBackgroundColor | hex                                                                      | `"#999999"` |
+| buttonTextColor       | hex                                                                      | `"#FFFFFF"` |
+| fullWidth             | boolean                                                                  | `false`     |
+| size                  | `"x-small"` \| `"small"` \| `"medium"` \| `{ top, bottom, left, right }` | `"medium"`  |
 
 > ⚠️ **`size: "large"` does NOT exist and will fail validation.** The only string values are `"x-small"`, `"small"`, and `"medium"`. For a visually larger button, use `size: "medium"` and increase `style.fontSize` instead.
 
@@ -427,25 +431,25 @@ A call-to-action button. Has two top-level keys:
 > - `"scale"` — anything smaller than its container (avatar 32–80px, logo, icon in a feature grid). Pair with `"scale": <1-100>`. Example: a 64px avatar on a 600px canvas → `"scale": 11`.
 > - `"original"` — image at its natural pixel size (rare; mostly for retina-fixed icons).
 
-| Style Prop      | Type                                  | Description                                          |
-| --------------- | ------------------------------------- | ---------------------------------------------------- |
-| backgroundColor | hex string                            | Frame the image on a coloured panel (common in heroes) |
-| textAlign       | `"left"` \| `"center"` \| `"right"`   | Horizontal alignment of the image inside its wrapper |
-| padding         | `{ top, bottom, right, left }`        |                                                      |
-| mobilePadding   | `{ top, bottom, right, left }`        |                                                      |
+| Style Prop      | Type                                | Description                                            |
+| --------------- | ----------------------------------- | ------------------------------------------------------ |
+| backgroundColor | hex string                          | Frame the image on a coloured panel (common in heroes) |
+| textAlign       | `"left"` \| `"center"` \| `"right"` | Horizontal alignment of the image inside its wrapper   |
+| padding         | `{ top, bottom, right, left }`      |                                                        |
+| mobilePadding   | `{ top, bottom, right, left }`      |                                                        |
 
-| Props            | Type                                       | Description                   |
-| ---------------- | ------------------------------------------ | ----------------------------- |
-| url              | string                                     | Image URL (use absolute URLs) |
-| alt              | string                                     | Alt text                      |
-| width            | number                                     | Image width in px             |
-| height           | number                                     | Optional fixed height         |
-| size             | `"original"` \| `"fill"` \| `"scale"`      | Sizing mode (strict enum — see note above) |
-| sizeMobile       | `"original"` \| `"fill"` \| `"scale"`      | Mobile sizing mode |
-| scale            | number (1–100)                             | Scale percentage; required when `size === "scale"` |
-| scaleMobile      | number (1–100)                             | Mobile scale |
-| linkHref         | string                                     | Optional click-through URL    |
-| contentAlignment | `"top"` \| `"middle"` \| `"bottom"`        | Vertical alignment            |
+| Props            | Type                                  | Description                                        |
+| ---------------- | ------------------------------------- | -------------------------------------------------- |
+| url              | string                                | Image URL (use absolute URLs)                      |
+| alt              | string                                | Alt text                                           |
+| width            | number                                | Image width in px                                  |
+| height           | number                                | Optional fixed height                              |
+| size             | `"original"` \| `"fill"` \| `"scale"` | Sizing mode (strict enum — see note above)         |
+| sizeMobile       | `"original"` \| `"fill"` \| `"scale"` | Mobile sizing mode                                 |
+| scale            | number (1–100)                        | Scale percentage; required when `size === "scale"` |
+| scaleMobile      | number (1–100)                        | Mobile scale                                       |
+| linkHref         | string                                | Optional click-through URL                         |
+| contentAlignment | `"top"` \| `"middle"` \| `"bottom"`   | Vertical alignment                                 |
 
 ### NotionText (Rich Text)
 
@@ -471,17 +475,17 @@ Rich text block using HTML content. This is the primary text block.
 }
 ```
 
-| Style Prop      | Type                                                | Description                                                                                 |
-| --------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| fontSize        | number (px)                                         | See Font size for headings below                                                            |
-| fontSizeMobile  | number (px)                                         | Mobile-specific override                                                                    |
-| fontFamily      | enum                                                | Override the EmailLayout font on this block (e.g. `PLAYFAIR` title + `LATO` body)           |
-| fontWeight      | `"bold"` \| `"normal"`                              | Do not rely only on `<h1>` / `<h2>` tags for emphasis                                       |
-| color           | hex string                                          | Accent (on coloured bg) / muted (dark footer) / brand — e.g. `#0C4271`, `#B8C7D9`, `#374151` |
-| lineHeight      | string                                              | `"1.1"` for oversized titles, `"1.4"`–`"1.6"` for body copy                                 |
-| textAlign       | `"left"` \| `"center"` \| `"right"` \| `"justify"`  | Block alignment                                                                             |
-| padding         | `{ top, bottom, right, left }`                      |                                                                                             |
-| mobilePadding   | `{ top, bottom, right, left }`                      |                                                                                             |
+| Style Prop     | Type                                               | Description                                                                                  |
+| -------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| fontSize       | number (px)                                        | See Font size for headings below                                                             |
+| fontSizeMobile | number (px)                                        | Mobile-specific override                                                                     |
+| fontFamily     | enum                                               | Override the EmailLayout font on this block (e.g. `PLAYFAIR` title + `LATO` body)            |
+| fontWeight     | `"bold"` \| `"normal"`                             | Do not rely only on `<h1>` / `<h2>` tags for emphasis                                        |
+| color          | hex string                                         | Accent (on coloured bg) / muted (dark footer) / brand — e.g. `#0C4271`, `#B8C7D9`, `#374151` |
+| lineHeight     | string                                             | `"1.1"` for oversized titles, `"1.4"`–`"1.6"` for body copy                                  |
+| textAlign      | `"left"` \| `"center"` \| `"right"` \| `"justify"` | Block alignment                                                                              |
+| padding        | `{ top, bottom, right, left }`                     |                                                                                              |
+| mobilePadding  | `{ top, bottom, right, left }`                     |                                                                                              |
 
 | Props | Type          | Default                            |
 | ----- | ------------- | ---------------------------------- |
@@ -520,14 +524,14 @@ Rich text block using HTML content. This is the primary text block.
 }
 ```
 
-| Style Props  | Type                                | Default    |
-| ------------ | ----------------------------------- | ---------- |
-| height       | number (px)                         | `1`        |
-| heightMobile | number (px)                         | —          |
+| Style Props  | Type                                | Default     |
+| ------------ | ----------------------------------- | ----------- |
+| height       | number (px)                         | `1`         |
+| heightMobile | number (px)                         | —           |
 | color        | hex string                          | `"#333333"` |
-| width        | number (percentage)                 | `100`      |
-| widthMobile  | number (percentage)                 | —          |
-| textAlign    | `"left"` \| `"center"` \| `"right"` | `"left"`   |
+| width        | number (percentage)                 | `100`       |
+| widthMobile  | number (percentage)                 | —           |
+| textAlign    | `"left"` \| `"center"` \| `"right"` | `"left"`    |
 
 **Note:** Divider uses `"props": []` (empty array), not an object.
 
@@ -667,9 +671,7 @@ A production-ready anchor template at the upper end of the 15–28 block density
         }
       },
       "props": {
-        "childrenIds": [
-          "block-logo"
-        ]
+        "childrenIds": ["block-logo"]
       }
     }
   },
@@ -841,10 +843,7 @@ A production-ready anchor template at the upper end of the 15–28 block density
         }
       },
       "props": {
-        "childrenIds": [
-          "block-features-title",
-          "block-features-grid"
-        ]
+        "childrenIds": ["block-features-title", "block-features-grid"]
       }
     }
   },
@@ -882,30 +881,20 @@ A production-ready anchor template at the upper end of the 15–28 block density
         }
       },
       "props": {
-        "fixedWidths": [
-          33.333,
-          33.333,
-          33.334
-        ],
+        "fixedWidths": [33.333, 33.333, 33.334],
         "columnsCount": 3,
         "layout": "layout-33-33-33",
         "contentAlignment": "top",
         "stackColumnsOnMobile": true,
         "columns": [
           {
-            "childrenIds": [
-              "block-1778205087519-fpn"
-            ]
+            "childrenIds": ["block-1778205087519-fpn"]
           },
           {
-            "childrenIds": [
-              "block-1778205072892-k7t"
-            ]
+            "childrenIds": ["block-1778205072892-k7t"]
           },
           {
-            "childrenIds": [
-              "block-1778204977529-yw2"
-            ]
+            "childrenIds": ["block-1778204977529-yw2"]
           }
         ]
       }
@@ -1128,10 +1117,7 @@ A production-ready anchor template at the upper end of the 15–28 block density
         }
       },
       "props": {
-        "childrenIds": [
-          "block-body-heading",
-          "block-body-para"
-        ]
+        "childrenIds": ["block-body-heading", "block-body-para"]
       }
     }
   },
@@ -1202,11 +1188,7 @@ A production-ready anchor template at the upper end of the 15–28 block density
         "borderSidesLinked": false
       },
       "props": {
-        "childrenIds": [
-          "block-cta-title",
-          "block-cta-body",
-          "block-cta-button"
-        ]
+        "childrenIds": ["block-cta-title", "block-cta-body", "block-cta-button"]
       }
     }
   },
@@ -1319,10 +1301,7 @@ A production-ready anchor template at the upper end of the 15–28 block density
         }
       },
       "props": {
-        "childrenIds": [
-          "block-footer-social",
-          "block-footer-legal"
-        ]
+        "childrenIds": ["block-footer-social", "block-footer-legal"]
       }
     }
   },
@@ -1398,11 +1377,7 @@ A production-ready anchor template at the upper end of the 15–28 block density
         "mobilePadding": null
       },
       "props": {
-        "childrenIds": [
-          "block-feat3-image",
-          "block-feat3-title",
-          "block-feat3-desc"
-        ]
+        "childrenIds": ["block-feat3-image", "block-feat3-title", "block-feat3-desc"]
       }
     }
   },
@@ -1419,11 +1394,7 @@ A production-ready anchor template at the upper end of the 15–28 block density
         "mobilePadding": null
       },
       "props": {
-        "childrenIds": [
-          "block-feat2-image",
-          "block-feat2-title",
-          "block-feat2-desc"
-        ]
+        "childrenIds": ["block-feat2-image", "block-feat2-title", "block-feat2-desc"]
       }
     }
   },
@@ -1440,11 +1411,7 @@ A production-ready anchor template at the upper end of the 15–28 block density
         "mobilePadding": null
       },
       "props": {
-        "childrenIds": [
-          "block-feat1-image",
-          "block-feat1-title",
-          "block-feat1-desc"
-        ]
+        "childrenIds": ["block-feat1-image", "block-feat1-title", "block-feat1-desc"]
       }
     }
   }

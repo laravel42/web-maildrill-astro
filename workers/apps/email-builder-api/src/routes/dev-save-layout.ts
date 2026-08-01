@@ -272,13 +272,11 @@ export const devSaveLayoutPlugin = async function devSaveLayoutPlugin(fastify: F
       ndjson = serialiseLayout(metadata, entries);
     } catch (err) {
       if (err instanceof PayloadTooLargeError)
-        return reply
-          .status(413)
-          .send({
-            error: 'payload_too_large',
-            limitBytes: MAX_NDJSON_BYTES,
-            actualBytes: err.bytes,
-          });
+        return reply.status(413).send({
+          error: 'payload_too_large',
+          limitBytes: MAX_NDJSON_BYTES,
+          actualBytes: err.bytes,
+        });
       throw err;
     }
 
@@ -306,12 +304,10 @@ export const devSaveLayoutPlugin = async function devSaveLayoutPlugin(fastify: F
       writeFileSync(layoutFilePath(shape, id), ndjson, 'utf8');
     } catch (err) {
       if (thumbnail) deleteThumbnailFile(getThumbnailPath('layouts', shape, id, thumbnail.format));
-      return reply
-        .status(500)
-        .send({
-          error: 'write_failed',
-          message: err instanceof Error ? err.message : 'unknown write error',
-        });
+      return reply.status(500).send({
+        error: 'write_failed',
+        message: err instanceof Error ? err.message : 'unknown write error',
+      });
     }
 
     return reply.send({
@@ -348,23 +344,19 @@ export const devSaveLayoutPlugin = async function devSaveLayoutPlugin(fastify: F
       try {
         raw = readFileSync(path, 'utf8');
       } catch (err) {
-        return reply
-          .status(500)
-          .send({
-            error: 'read_failed',
-            message: err instanceof Error ? err.message : 'unknown read error',
-          });
+        return reply.status(500).send({
+          error: 'read_failed',
+          message: err instanceof Error ? err.message : 'unknown read error',
+        });
       }
       let parsed: { metadata: LayoutMetadata; entries: BlockEntry[] };
       try {
         parsed = parseLayoutFile(raw);
       } catch (err) {
-        return reply
-          .status(500)
-          .send({
-            error: 'malformed_file',
-            message: err instanceof Error ? err.message : 'malformed file',
-          });
+        return reply.status(500).send({
+          error: 'malformed_file',
+          message: err instanceof Error ? err.message : 'malformed file',
+        });
       }
       return reply.send({
         id: parsed.metadata.id,
@@ -404,23 +396,19 @@ export const devSaveLayoutPlugin = async function devSaveLayoutPlugin(fastify: F
       try {
         raw = readFileSync(path, 'utf8');
       } catch (err) {
-        return reply
-          .status(500)
-          .send({
-            error: 'read_failed',
-            message: err instanceof Error ? err.message : 'unknown read error',
-          });
+        return reply.status(500).send({
+          error: 'read_failed',
+          message: err instanceof Error ? err.message : 'unknown read error',
+        });
       }
       let parsed: { metadata: LayoutMetadata; entries: BlockEntry[] };
       try {
         parsed = parseLayoutFile(raw);
       } catch (err) {
-        return reply
-          .status(500)
-          .send({
-            error: 'malformed_file',
-            message: err instanceof Error ? err.message : 'malformed file',
-          });
+        return reply.status(500).send({
+          error: 'malformed_file',
+          message: err instanceof Error ? err.message : 'malformed file',
+        });
       }
 
       if (body.blocks !== undefined) {
@@ -480,25 +468,21 @@ export const devSaveLayoutPlugin = async function devSaveLayoutPlugin(fastify: F
         ndjson = serialiseLayout(nextMetadata, nextEntries);
       } catch (err) {
         if (err instanceof PayloadTooLargeError)
-          return reply
-            .status(413)
-            .send({
-              error: 'payload_too_large',
-              limitBytes: MAX_NDJSON_BYTES,
-              actualBytes: err.bytes,
-            });
+          return reply.status(413).send({
+            error: 'payload_too_large',
+            limitBytes: MAX_NDJSON_BYTES,
+            actualBytes: err.bytes,
+          });
         throw err;
       }
 
       try {
         writeFileSync(path, ndjson, 'utf8');
       } catch (err) {
-        return reply
-          .status(500)
-          .send({
-            error: 'write_failed',
-            message: err instanceof Error ? err.message : 'unknown write error',
-          });
+        return reply.status(500).send({
+          error: 'write_failed',
+          message: err instanceof Error ? err.message : 'unknown write error',
+        });
       }
 
       return reply.send({
@@ -528,12 +512,10 @@ export const devSaveLayoutPlugin = async function devSaveLayoutPlugin(fastify: F
       try {
         unlinkSync(path);
       } catch (err) {
-        return reply
-          .status(500)
-          .send({
-            error: 'delete_failed',
-            message: err instanceof Error ? err.message : 'unknown unlink error',
-          });
+        return reply.status(500).send({
+          error: 'delete_failed',
+          message: err instanceof Error ? err.message : 'unknown unlink error',
+        });
       }
       deleteThumbnailFile(getThumbnailPath('layouts', shape as LayoutShape, id, 'webp'));
       deleteThumbnailFile(getThumbnailPath('layouts', shape as LayoutShape, id, 'png'));

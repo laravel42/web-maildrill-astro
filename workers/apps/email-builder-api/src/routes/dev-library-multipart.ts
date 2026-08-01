@@ -69,12 +69,10 @@ export async function parseSaveRequestWithThumbnail<TSchema extends z.ZodTypeAny
     }
 
     if (typeof payloadField !== 'string') {
-      reply
-        .status(400)
-        .send({
-          error: 'invalid_request',
-          message: 'multipart body must include a string `payload` field',
-        });
+      reply.status(400).send({
+        error: 'invalid_request',
+        message: 'multipart body must include a string `payload` field',
+      });
       return null;
     }
     try {

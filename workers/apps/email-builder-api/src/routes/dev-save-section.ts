@@ -245,13 +245,11 @@ export const devSaveSectionPlugin = async function devSaveSectionPlugin(fastify:
       ndjson = serialiseSection(metadata, entries);
     } catch (err) {
       if (err instanceof PayloadTooLargeError)
-        return reply
-          .status(413)
-          .send({
-            error: 'payload_too_large',
-            limitBytes: MAX_NDJSON_BYTES,
-            actualBytes: err.bytes,
-          });
+        return reply.status(413).send({
+          error: 'payload_too_large',
+          limitBytes: MAX_NDJSON_BYTES,
+          actualBytes: err.bytes,
+        });
       throw err;
     }
 
@@ -266,12 +264,10 @@ export const devSaveSectionPlugin = async function devSaveSectionPlugin(fastify:
           return reply
             .status(413)
             .send({ error: 'thumbnail_too_large', limitBytes: err.limit, actualBytes: err.bytes });
-        return reply
-          .status(500)
-          .send({
-            error: 'thumbnail_write_failed',
-            message: err instanceof Error ? err.message : 'unknown',
-          });
+        return reply.status(500).send({
+          error: 'thumbnail_write_failed',
+          message: err instanceof Error ? err.message : 'unknown',
+        });
       }
     }
 
@@ -401,13 +397,11 @@ export const devSaveSectionPlugin = async function devSaveSectionPlugin(fastify:
         ndjson = serialiseSection(nextMetadata, nextEntries);
       } catch (err) {
         if (err instanceof PayloadTooLargeError)
-          return reply
-            .status(413)
-            .send({
-              error: 'payload_too_large',
-              limitBytes: MAX_NDJSON_BYTES,
-              actualBytes: err.bytes,
-            });
+          return reply.status(413).send({
+            error: 'payload_too_large',
+            limitBytes: MAX_NDJSON_BYTES,
+            actualBytes: err.bytes,
+          });
         throw err;
       }
 
@@ -419,19 +413,15 @@ export const devSaveSectionPlugin = async function devSaveSectionPlugin(fastify:
           );
         } catch (err) {
           if (err instanceof ThumbnailTooLargeError)
-            return reply
-              .status(413)
-              .send({
-                error: 'thumbnail_too_large',
-                limitBytes: err.limit,
-                actualBytes: err.bytes,
-              });
-          return reply
-            .status(500)
-            .send({
-              error: 'thumbnail_write_failed',
-              message: err instanceof Error ? err.message : 'unknown',
+            return reply.status(413).send({
+              error: 'thumbnail_too_large',
+              limitBytes: err.limit,
+              actualBytes: err.bytes,
             });
+          return reply.status(500).send({
+            error: 'thumbnail_write_failed',
+            message: err instanceof Error ? err.message : 'unknown',
+          });
         }
         deleteThumbnailFile(
           getThumbnailPath(
@@ -481,12 +471,10 @@ export const devSaveSectionPlugin = async function devSaveSectionPlugin(fastify:
       try {
         unlinkSync(path);
       } catch (err) {
-        return reply
-          .status(500)
-          .send({
-            error: 'delete_failed',
-            message: err instanceof Error ? err.message : 'unknown',
-          });
+        return reply.status(500).send({
+          error: 'delete_failed',
+          message: err instanceof Error ? err.message : 'unknown',
+        });
       }
 
       deleteThumbnailFile(getThumbnailPath('sections', role as Role, id, 'webp'));
