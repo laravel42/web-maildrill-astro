@@ -70,7 +70,7 @@ const sdks: Sdk[] = [
   { name: 'Node', install: 'npm i @maildrill/node', delay: 0 },
   { name: 'Python', install: 'pip install maildrill', delay: 80 },
   { name: 'PHP', install: 'composer require maildrill/sdk', delay: 160 },
-  { name: 'Go', install: 'go get maildrill.com/go', delay: 240 },
+  { name: 'Go', install: 'go get maildrill.net/go', delay: 240 },
 ];
 ---
 
@@ -109,7 +109,7 @@ const sdks: Sdk[] = [
         </div>
         <pre
           class="codecard__code mono"><span class="c-cmt"># Send an email in one call</span>
-curl https://api.maildrill.com/v1/messages \
+curl https://api.maildrill.net/v1/messages \
   -H <span class="c-str">"Authorization: Bearer $MD_KEY"</span> \
   -d channel=<span class="c-val">email</span> \
   -d to=<span class="c-val">maya@acme.com</span> \

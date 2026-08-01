@@ -339,6 +339,6 @@ export function buildListDetailView(
     bounceRate: loaded > 0 ? `${(share(bucket.bounced) * 100).toFixed(2)}%` : '—',
     complaintRate: loaded > 0 ? `${(share(bucket.complained) * 100).toFixed(2)}%` : '—',
     unsubRate: loaded > 0 ? `${(share(bucket.unsubscribed) * 100).toFixed(2)}%` : '—',
-    embedSnippet: `<script src="https://js.maildrill.com/embed.js" data-list="${list.id}"></script>`,
+    embedSnippet: `<script src="https://js.maildrill.net/embed.js" data-list="${list.id}"></script>`,
   };
 }

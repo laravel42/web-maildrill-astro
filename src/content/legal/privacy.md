@@ -8,7 +8,7 @@ noun: 'policy'
 
 ## Overview
 
-Maildrill ("we", "us") provides a multichannel messaging workspace. This policy explains what data we process when you visit maildrill.com, create an account, or send messages through the product.
+Maildrill ("we", "us") provides a multichannel messaging workspace. This policy explains what data we process when you visit maildrill.net, create an account, or send messages through the product.
 
 ## Data we collect
 
@@ -31,8 +31,8 @@ We retain account and operational data for as long as your workspace is active a
 
 ## Your rights
 
-Depending on your location, you may request access, correction, deletion, or export of personal data by contacting legal@maildrill.com.
+Depending on your location, you may request access, correction, deletion, or export of personal data by contacting legal@maildrill.net.
 
 ## Contact
 
-Questions about this policy: legal@maildrill.com.
+Questions about this policy: legal@maildrill.net.

@@ -32,4 +32,4 @@ The service is provided on an "as is" basis. To the fullest extent permitted by 
 
 ## Contact
 
-Questions about these terms: legal@maildrill.com.
+Questions about these terms: legal@maildrill.net.
