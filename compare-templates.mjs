@@ -18,7 +18,9 @@ import { chromium } from '@playwright/test';
 // The Reader barrel pulls in the editor NotionText, which imports CSS.
 // Node can't parse that, so stub style imports before loading the tree.
 const require = createRequire(import.meta.url);
-for (const ext of ['.css', '.scss']) require.extensions[ext] = () => {};
+// Reflect.get avoids a direct reference to the deprecated `extensions` API.
+const extensions = Reflect.get(require, 'extensions');
+for (const ext of ['.css', '.scss']) extensions[ext] = () => {};
 
 // Some workspace packages are transpiled with the classic JSX runtime and
 // rely on an ambient React binding.
