@@ -138,6 +138,4 @@ export function voicesForLanguage(code: string | null | undefined): readonly Voi
   return VOICES_BY_LANGUAGE[canonical] ?? VOICES_BY_LANGUAGE.en_US;
 }
 
-/** @deprecated Use `voicesForLanguage('en_US')`. */
-export const VOICE_OPTS = VOICES_BY_LANGUAGE.en_US;
 export const SPEED_OPTS = ['Slow', 'Normal', 'Fast'];

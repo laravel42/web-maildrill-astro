@@ -11,7 +11,6 @@ import {
   SPEED_OPTS,
   TIPS,
   truncatePreview,
-  VOICE_OPTS,
   voicesForLanguage,
 } from './EmailBuilder.logic';
 import type { Props } from './EmailBuilder.types';
@@ -120,7 +119,9 @@ export default function EmailBuilder({
     const savedDoc = initialBuilderDoc as { voice?: { label?: unknown } } | null | undefined;
     const saved = typeof savedDoc?.voice?.label === 'string' ? savedDoc.voice.label : null;
     const opts = voicesForLanguage(initialLanguage);
-    return saved && opts.some((o) => o.label === saved) ? saved : (opts[0] ?? VOICE_OPTS[0]).label;
+    return saved && opts.some((o) => o.label === saved)
+      ? saved
+      : (opts[0] ?? voicesForLanguage('en_US')[0]).label;
   });
   const [speed, setSpeed] = useState<string>(() => {
     const saved = (initialBuilderDoc as { speed?: unknown } | null | undefined)?.speed;
@@ -500,7 +501,7 @@ export default function EmailBuilder({
             <div style={{ ...fauxField, marginBottom: 16 }}>Teacher portrait</div>
 
             <label style={fieldLabel}>Link</label>
-            <div style={{ ...fauxField, marginBottom: 14 }}>https://maildrill.app</div>
+            <div style={{ ...fauxField, marginBottom: 14 }}>https://maildrill.net</div>
 
             <div
               style={{

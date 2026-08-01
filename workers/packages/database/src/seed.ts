@@ -686,7 +686,7 @@ async function main(): Promise<void> {
         readAt,
         failedAt,
         clickedAt,
-        clickUrl: clicked ? pick(opts.clickUrls ?? ['https://maildrill.app']) : null,
+        clickUrl: clicked ? pick(opts.clickUrls ?? ['https://maildrill.net']) : null,
         unsubscribedAt,
         messageId,
         providerMessageId: detId(`ib:${opts.name}:${sub.email}`),
@@ -913,7 +913,7 @@ async function main(): Promise<void> {
         templateId: emailTpl.id,
         content: {
           subject: `${monthName(sentAt)} digest — Maildrill`,
-          from: 'Maildrill Team <hello@maildrill.app>',
+          from: 'Maildrill Team <hello@maildrill.net>',
         },
         sentAt,
         recipients: membersAt(newsletter.id, sentAt, false).filter(() => chance(0.72)),
@@ -921,9 +921,9 @@ async function main(): Promise<void> {
         clickOfRead: 0.18 + 0.14 * p,
         unsubOfDelivered: 0.012,
         clickUrls: [
-          'https://maildrill.app/blog/whats-new',
-          'https://maildrill.app/pricing',
-          'https://maildrill.app/guides/deliverability',
+          'https://maildrill.net/blog/whats-new',
+          'https://maildrill.net/pricing',
+          'https://maildrill.net/guides/deliverability',
         ],
       });
     } else if (slot === 1) {
@@ -948,14 +948,14 @@ async function main(): Promise<void> {
         templateId: emailTpl.id,
         content: {
           subject: `${PRODUCT_NAMES[nth]} — Maildrill`,
-          from: 'Maildrill Team <hello@maildrill.app>',
+          from: 'Maildrill Team <hello@maildrill.net>',
         },
         sentAt,
         recipients: membersAt(productUpdates.id, sentAt, false).filter(() => chance(0.75)),
         outcome: () => (chance(0.05 - 0.02 * p) ? 'failed' : chance(open) ? 'read' : 'delivered'),
         clickOfRead: 0.2 + 0.12 * p,
         unsubOfDelivered: 0.008,
-        clickUrls: ['https://maildrill.app/blog/whats-new', 'https://maildrill.app/changelog'],
+        clickUrls: ['https://maildrill.net/blog/whats-new', 'https://maildrill.net/changelog'],
       });
     } else if (slot === 3) {
       const read = 0.5 + 0.2 * p;
@@ -970,7 +970,7 @@ async function main(): Promise<void> {
         outcome: () => (chance(0.05 - 0.02 * p) ? 'failed' : chance(read) ? 'read' : 'delivered'),
         clickOfRead: 0.14 + 0.1 * p,
         unsubOfDelivered: 0.008,
-        clickUrls: ['https://maildrill.app/orders/track'],
+        clickUrls: ['https://maildrill.net/orders/track'],
       });
     } else if (slot === 4) {
       const open = 0.4 + 0.12 * p + rand() * 0.02;
@@ -981,14 +981,14 @@ async function main(): Promise<void> {
         templateId: emailTpl.id,
         content: {
           subject: `${VIP_NAMES[nth]} — Maildrill`,
-          from: 'Maildrill Team <hello@maildrill.app>',
+          from: 'Maildrill Team <hello@maildrill.net>',
         },
         sentAt,
         recipients: membersAt(vip.id, sentAt, false).filter(() => chance(0.85)),
         outcome: () => (chance(0.03) ? 'failed' : chance(open) ? 'read' : 'delivered'),
         clickOfRead: 0.24 + 0.12 * p,
         unsubOfDelivered: 0.004,
-        clickUrls: ['https://maildrill.app/pricing', 'https://maildrill.app/roadmap'],
+        clickUrls: ['https://maildrill.net/pricing', 'https://maildrill.net/roadmap'],
       });
     } else {
       const fail = 0.2 - 0.09 * p;
@@ -1013,7 +1013,7 @@ async function main(): Promise<void> {
     templateId: emailTpl.id,
     content: {
       subject: 'Back in stock — your saved items',
-      from: 'Maildrill Team <hello@maildrill.app>',
+      from: 'Maildrill Team <hello@maildrill.net>',
     },
     sentAt: minutesAfter(days(0), 8 * 60, 30),
     recipients: membersAt(newsletter.id, days(0), false).slice(0, 18),
@@ -1032,7 +1032,7 @@ async function main(): Promise<void> {
       templateId: emailTpl.id,
       content: {
         subject: 'Join our live product webinar',
-        from: 'Maildrill Team <hello@maildrill.app>',
+        from: 'Maildrill Team <hello@maildrill.net>',
       },
       scheduledAt: days(-3),
     },
