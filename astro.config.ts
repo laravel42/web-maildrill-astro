@@ -83,6 +83,11 @@ export default defineConfig({
   ],
   vite: {
     plugins: [waTemplateStudioAlias(), tailwindcss()],
+    // The Cloudflare tunnel (scripts/local-tunnel.sh) fronts the dev server
+    // with this Host header; Vite rejects non-localhost hosts by default.
+    server: {
+      allowedHosts: ['local.maildrill.net'],
+    },
     resolve: {
       alias: [
         {
