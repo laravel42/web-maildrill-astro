@@ -15,7 +15,7 @@ export async function meRoutes(app: FastifyInstance): Promise<void> {
       const me = await getMe(req.userId);
       if (!me) return reply.code(404).send({ error: 'not_found' });
       return {
-        user: { id: me.user.id, email: me.user.email, name: me.user.name },
+        user: { id: me.user.id, email: me.user.email, name: me.user.name, phone: me.user.phone },
         workspaces: me.workspaces,
         activeTenantId: req.tenantId,
         role: req.role,

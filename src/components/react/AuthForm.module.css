@@ -76,7 +76,8 @@
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
-.af label.field {
+.af label.field,
+.af .field {
   display: block;
   margin-bottom: 14px;
 }

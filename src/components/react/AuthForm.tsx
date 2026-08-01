@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { signIn } from 'auth-astro/client';
 import { mockResetPassword } from '@/lib/app/services';
+import PhoneField from './PhoneField';
 import type { Mode, Status } from './AuthForm.types';
 import styles from './AuthForm.module.css';
 
@@ -8,6 +9,9 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState('');
+  // Sign-up captures these so verify can stamp them on the new account.
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
   const [stage, setStage] = useState<'form' | 'code' | 'done'>('form');
   // Six positional slots so a digit typed into any box stays in place.
   const [code, setCode] = useState<string[]>(['', '', '', '', '', '']);
@@ -69,24 +73,38 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       if (mode === 'signup') {
         const firstName = String(data.get('firstName') || '').trim();
         const lastName = String(data.get('lastName') || '').trim();
+        // PhoneField emits E.164 (guided country prefix + length validation);
+        // this is only a backstop behind the form's native validity gate.
+        const phoneRaw = String(data.get('phone') || '').trim();
         const terms = data.get('terms') === 'on';
-        if (!firstName || !lastName || !email) {
+        if (!firstName || !lastName || !email || !phoneRaw) {
           throw new Error('Please complete all fields.');
+        }
+        if (!/^\+\d{7,16}$/.test(phoneRaw)) {
+          throw new Error('Enter a valid phone number.');
         }
         if (!terms) throw new Error('Please accept the Terms and Privacy Policy.');
         window.posthog?.capture('signup_form_submitted', { channel: 'email' });
-        // All required fields are in — send the welcome email. Fire-and-forget:
-        // the endpoint is 202-always and the UX shouldn't wait on delivery.
+        // Registration is the same code exchange as login: request a code, and
+        // verifying it creates the account + personal workspace server-side.
+        const res = await fetch('/api/login-code', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        if (!res.ok) throw new Error('Could not send your code. Try again.');
+        // Team heads-up only — the user-facing welcome email is sent by the
+        // backend when the account is created. Fire-and-forget (202-always).
         void fetch('/api/signup-welcome', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ email, firstName, lastName }),
         }).catch(() => undefined);
-        // No code to enter — the welcome email is the confirmation. Land on the
-        // terminal "you're on the list" state.
         setSentTo(email);
-        setStage('done');
-        window.posthog?.capture('signup_completed', { channel: 'email' });
+        setFullName(`${firstName} ${lastName}`);
+        setPhone(phoneRaw);
+        setCode(['', '', '', '', '', '']);
+        setStage('code');
         setStatus('idle');
         return;
       }
@@ -118,6 +136,10 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       const res = await doSignIn('credentials', {
         email: sentTo,
         code: clean,
+        // First verify of a fresh email creates the account — carry the
+        // sign-up name + phone so they land on the new user row.
+        ...(fullName ? { name: fullName } : {}),
+        ...(phone ? { phone } : {}),
         redirect: false,
         callbackUrl: '/dashboard',
       });
@@ -129,6 +151,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       // Success: show the "You're in" beat, then hand off to the workspace.
       window.posthog?.identify(sentTo, { email: sentTo });
       window.posthog?.capture('login_succeeded');
+      if (mode === 'signup') window.posthog?.capture('signup_completed', { channel: 'email' });
       setStatus('idle');
       setStage('done');
       window.setTimeout(() => window.location.assign('/dashboard'), 1100);
@@ -138,17 +161,15 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     }
   }
 
-  // Send the email again for the same address (login re-requests a real code;
-  // signup is client-side, so it just clears the boxes).
+  // Send a fresh code to the same address (login and signup both use the
+  // real code exchange).
   async function onResend() {
     try {
-      if (mode === 'login') {
-        await fetch('/api/login-code', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ email: sentTo }),
-        });
-      }
+      await fetch('/api/login-code', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: sentTo }),
+      });
       setCode(['', '', '', '', '', '']);
       setError(null);
       focusBox(0);
@@ -170,67 +191,31 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const isSignup = mode === 'signup';
   const resetLabel = 'Use a different email';
 
-  // The terminal state. Login reaches it after verifying a code ("you're in");
-  // sign-up reaches it straight from submit — the welcome email is the
-  // confirmation, so it reads "you're on the list" and points at the inbox.
+  // The terminal state — login and sign-up both reach it only after verifying
+  // a code, so it always reads "you're in" and hands off to the workspace.
   const doneMiddle = (
     <div role="status" style={{ animation: 'pop .5s var(--ease-out) both' }}>
-      <div
-        className={`${styles.successicon} ${styles.iconTile} ${
-          isSignup ? styles.iconTileMail : styles.iconTileCheck
-        }`}
-      >
-        {isSignup ? (
-          <svg
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <rect x="2" y="4" width="20" height="16" rx="2" />
-            <path d="m22 7-10 6L2 7" />
-          </svg>
-        ) : (
-          <svg
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M20 6 9 17l-5-5" />
-          </svg>
-        )}
+      <div className={`${styles.successicon} ${styles.iconTile} ${styles.iconTileCheck}`}>
+        <svg
+          width="26"
+          height="26"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
       </div>
-      <h2 className={styles.substep}>{isSignup ? 'You’re on the list' : 'You’re in'}</h2>
-      {isSignup ? (
-        <>
-          <p className={styles.sub} style={{ margin: '0 0 16px' }}>
-            We’re thrilled to have you. Because demand has been far higher than we expected, we’re
-            rolling out new accounts in controlled waves to keep deliverability and support quality
-            high for everyone.
-          </p>
-          <p className={styles.sub} style={{ margin: 0 }}>
-            <strong style={{ color: 'var(--text)', fontWeight: 600 }}>
-              Your workspace will be ready within the next 7 days — and most likely sooner.
-            </strong>{' '}
-            You don’t need to do anything: we’ll email you the moment it’s live.
-          </p>
-        </>
-      ) : (
-        <p className={styles.sub} style={{ margin: 0 }}>
-          Code verified — taking you to your workspace.
-        </p>
-      )}
+      <h2 className={styles.substep}>You’re in</h2>
+      <p className={styles.sub} style={{ margin: 0 }}>
+        {isSignup
+          ? 'Account created — taking you to your new workspace.'
+          : 'Code verified — taking you to your workspace.'}
+      </p>
     </div>
   );
 
@@ -462,6 +447,13 @@ export default function AuthForm({ mode }: { mode: Mode }) {
               }}
             />
           </label>
+
+          {mode === 'signup' && (
+            <div className={styles.field}>
+              <span className={styles.label}>Phone number</span>
+              <PhoneField name="phone" required />
+            </div>
+          )}
 
           {mode === 'signup' && (
             <label className={styles.check}>

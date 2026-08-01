@@ -3,9 +3,10 @@ import { and, eq, gt, isNull } from 'drizzle-orm';
 import { config } from '@maildrill/config';
 import { db, magicLinkTokens, type User } from '@maildrill/database';
 import { sha256Hex } from '@maildrill/domain';
-import { getProvider } from '@maildrill/providers';
+import { sendTransactionalEmail } from '@maildrill/providers';
 import { createLogger } from '@maildrill/observability';
 import { findOrCreateUser, getUser } from './users';
+import { sendWelcomeEmail } from './welcome';
 import {
   ensurePersonalWorkspace,
   listMembershipsForUser,
@@ -26,9 +27,9 @@ function codeHash(email: string, code: string): string {
 
 /**
  * Issue a 6-digit login code plus a matching auto-login link. Stores only a
- * hash; prior unconsumed codes for the email are invalidated. Email is sent
- * directly via the provider (not the campaign pipeline), so sign-in never
- * depends on the workers.
+ * hash; prior unconsumed codes for the email are invalidated. The email rides
+ * the Cloudflare transactional relay (never Infobip / the campaign pipeline),
+ * so sign-in never depends on the workers.
  */
 export async function requestLoginCode(email: string): Promise<{ code: string; url: string }> {
   const normalized = email.trim().toLowerCase();
@@ -51,33 +52,36 @@ export async function requestLoginCode(email: string): Promise<{ code: string; u
 
 async function sendLoginEmail(email: string, code: string, url: string): Promise<void> {
   if (!config.isProd) log.info({ email, code, url }, 'login code (dev)');
-  const result = await getProvider().send({
-    messageId: `code-${codeHash(email, code).slice(0, 12)}`,
-    tenantId: 'system',
-    channel: 'email',
+  const result = await sendTransactionalEmail({
     to: email,
-    correlationId: 'auth-login-code',
-    content: {
-      subject: `${code} is your Maildrill sign-in code`,
-      html: loginEmailHtml(code, url),
-      text:
-        `Your Maildrill sign-in code is ${code}. ` +
-        `It expires in ${config.auth.magicLinkTtlMinutes} minutes.\n\n` +
-        `Or sign in directly: ${url}`,
-    },
+    subject: `${code} is your Maildrill sign-in code`,
+    html: loginEmailHtml(code, url),
+    text:
+      `Your Maildrill sign-in code is ${code}. ` +
+      `It expires in ${config.auth.magicLinkTtlMinutes} minutes.\n\n` +
+      `Or sign in directly: ${url}`,
   });
   if (result.accepted) {
-    log.info(
-      { email, provider: getProvider().name, providerMessageId: result.providerMessageId },
-      'login-code email sent',
-    );
+    log.info({ email }, 'login-code email sent (cloudflare relay)');
+  } else if (result.skipped) {
+    log.warn({ email }, 'SMTP not configured — login-code email skipped');
   } else {
     log.error({ email, error: result.error }, 'login-code email send FAILED');
   }
 }
 
-/** Verify + single-use consume a code for an email. Self-serve signup on first use. */
-export async function verifyLoginCode(email: string, code: string): Promise<VerifyResult | null> {
+/**
+ * Verify + single-use consume a code for an email. Self-serve signup on first
+ * use: a fresh email gets a user + personal workspace, the optional `name` and
+ * `phone` (captured by the sign-up form), and the welcome email
+ * (fire-and-forget).
+ */
+export async function verifyLoginCode(
+  email: string,
+  code: string,
+  name?: string | null,
+  phone?: string | null,
+): Promise<VerifyResult | null> {
   const normalized = email.trim().toLowerCase();
   const clean = code.replace(/\D/g, '');
   if (clean.length !== 6) return null;
@@ -97,8 +101,9 @@ export async function verifyLoginCode(email: string, code: string): Promise<Veri
     .returning();
   if (!consumed[0]) return null;
 
-  const user = await findOrCreateUser(normalized);
+  const { user, created } = await findOrCreateUser(normalized, name, phone);
   await ensurePersonalWorkspace(user);
+  if (created) void sendWelcomeEmail(normalized, name?.trim().split(/\s+/)[0]);
   const workspaces = await listMembershipsForUser(user.id);
   return { user, workspaces };
 }

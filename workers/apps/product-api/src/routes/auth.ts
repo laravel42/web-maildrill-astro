@@ -5,7 +5,18 @@ import { requestLoginCode, sendWelcomeEmail, verifyLoginCode } from '@maildrill/
 
 const TAG = ['Auth'];
 const requestSchema = z.object({ email: z.string().email() });
-const verifySchema = z.object({ email: z.string().email(), code: z.string().min(4).max(8) });
+const verifySchema = z.object({
+  email: z.string().email(),
+  code: z.string().min(4).max(8),
+  /** Sign-up form's full name — stored only when this verify creates the user. */
+  name: z.string().trim().max(240).optional(),
+  /** Sign-up form's phone (E.164-ish) — stored only when this verify creates the user. */
+  phone: z
+    .string()
+    .trim()
+    .regex(/^\+?[0-9 ()-]{6,24}$/)
+    .optional(),
+});
 const welcomeSchema = z.object({
   email: z.string().email(),
   firstName: z.string().max(120).optional(),
@@ -44,10 +55,20 @@ export async function authRoutes(appRaw: FastifyInstance): Promise<void> {
       },
     },
     async (req, reply) => {
-      const result = await verifyLoginCode(req.body.email, req.body.code);
+      const result = await verifyLoginCode(
+        req.body.email,
+        req.body.code,
+        req.body.name || null,
+        req.body.phone || null,
+      );
       if (!result) return reply.code(401).send({ error: 'invalid_or_expired' });
       return {
-        user: { id: result.user.id, email: result.user.email, name: result.user.name },
+        user: {
+          id: result.user.id,
+          email: result.user.email,
+          name: result.user.name,
+          phone: result.user.phone,
+        },
         workspaces: result.workspaces,
       };
     },

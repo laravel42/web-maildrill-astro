@@ -602,6 +602,8 @@ export const users = pgTable(
     id: id(),
     email: text('email').notNull(),
     name: text('name'),
+    /** E.164-ish contact number captured at sign-up; nullable for older accounts. */
+    phone: text('phone'),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

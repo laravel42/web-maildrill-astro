@@ -118,10 +118,12 @@ function Switch({ on, label, onToggle }: { on: boolean; label: string; onToggle:
 export default function AppProfile({
   name = null,
   email = null,
+  phone = null,
   role = null,
 }: {
   name?: string | null;
   email?: string | null;
+  phone?: string | null;
   role?: string | null;
 } = {}) {
   const displayName = name?.trim() || (email ? email.split('@')[0] : 'Your account');
@@ -319,6 +321,25 @@ export default function AppProfile({
                           Verified · used for sign-in and alerts{' '}
                           <button className={styles.linkBtn} type="button" onClick={notAvailable}>
                             Change email
+                          </button>
+                        </p>
+                      </div>
+                      <div>
+                        <label className={styles.fieldLabel} htmlFor="field-phone">
+                          Phone number
+                        </label>
+                        <input
+                          className={`${styles.input} ${styles.inputLocked}`}
+                          id="field-phone"
+                          name="phone"
+                          type="tel"
+                          value={phone ?? '—'}
+                          readOnly
+                        />
+                        <p className={styles.fieldHint}>
+                          Captured at sign-up{' '}
+                          <button className={styles.linkBtn} type="button" onClick={notAvailable}>
+                            Change phone
                           </button>
                         </p>
                       </div>

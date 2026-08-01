@@ -17,11 +17,14 @@ describe('welcomeEmailHtml', () => {
     expect(html).toContain('Hi &lt;script&gt;alert(1)&lt;/script&gt;,');
   });
 
-  it('carries the welcome content and trial quotas', () => {
+  it('carries the welcome content, login CTA, and trial quotas', () => {
     const html = welcomeEmailHtml('Ada');
     expect(html).toContain('Welcome to <span style="color:#ff441f;">Maildrill</span>');
-    expect(html).toContain('Within 7 days');
+    expect(html).toContain('Live now');
+    expect(html).toContain('/login');
     expect(html).toContain('100');
     expect(html).toContain('WhatsApp messages');
+    // The waitlist copy is gone — accounts provision on first verified code.
+    expect(html).not.toContain('Within 7 days');
   });
 });

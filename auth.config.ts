@@ -34,21 +34,36 @@ export default defineConfig({
       // callback endpoint (which runs authorize); any other id hits /signin/*.
       id: 'credentials',
       name: 'Login code',
-      credentials: { email: { type: 'text' }, code: { type: 'text' } },
+      credentials: {
+        email: { type: 'text' },
+        code: { type: 'text' },
+        name: { type: 'text' },
+        phone: { type: 'text' },
+      },
       authorize: async (creds) => {
         const email = typeof creds?.email === 'string' ? creds.email : null;
         const code = typeof creds?.code === 'string' ? creds.code : null;
+        // Sign-up sends the captured name + phone; verify stamps them on a
+        // newly created user.
+        const name = typeof creds?.name === 'string' && creds.name.trim() ? creds.name.trim() : null;
+        const phone =
+          typeof creds?.phone === 'string' && creds.phone.trim() ? creds.phone.trim() : null;
         if (!email || !code) return null;
         const base =
           process.env.API_BASE_URL ?? import.meta.env.API_BASE_URL ?? 'http://localhost:3001';
         const res = await fetch(`${base}/v1/auth/code/verify`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ email, code }),
+          body: JSON.stringify({
+            email,
+            code,
+            ...(name ? { name } : {}),
+            ...(phone ? { phone } : {}),
+          }),
         });
         if (!res.ok) return null;
         const data = (await res.json()) as {
-          user: { id: string; email: string; name: string | null };
+          user: { id: string; email: string; name: string | null; phone?: string | null };
           workspaces: Array<{ tenantId: string; role: string; workspaceName: string }>;
         };
         const active = data.workspaces[0];
@@ -56,6 +71,7 @@ export default defineConfig({
           id: data.user.id,
           email: data.user.email,
           name: data.user.name ?? undefined,
+          phone: data.user.phone ?? null,
           workspaces: data.workspaces,
           activeTenantId: active?.tenantId ?? null,
           role: active?.role ?? null,
@@ -70,16 +86,21 @@ export default defineConfig({
           workspaces?: unknown;
           activeTenantId?: string | null;
           role?: string | null;
+          phone?: string | null;
         };
         token.userId = u.id;
         token.workspaces = u.workspaces;
         token.activeTenantId = u.activeTenantId;
         token.role = u.role;
+        token.phone = u.phone;
       }
       return token;
     },
     session({ session, token }) {
-      if (session.user) (session.user as { id?: string }).id = token.userId as string;
+      if (session.user) {
+        (session.user as { id?: string }).id = token.userId as string;
+        (session.user as { phone?: string | null }).phone = (token.phone as string | null) ?? null;
+      }
       const s = session as typeof session & {
         activeTenantId?: string | null;
         role?: string | null;

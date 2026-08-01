@@ -7,6 +7,7 @@ import { routes } from '@/config/routes';
 const session = Astro.locals.session;
 const name = session?.user?.name ?? null;
 const email = session?.user?.email ?? null;
+const phone = (session?.user as { phone?: string | null } | undefined)?.phone ?? null;
 const role = session?.role ?? null;
 ---
 
@@ -14,5 +15,5 @@ const role = session?.role ?? null;
   title="Your profile"
   crumbs={[{ label: 'Settings', href: routes.app.settings }, { label: 'Your profile' }]}
 >
-  <AppProfile client:visible name={name} email={email} role={role} />
+  <AppProfile client:visible name={name} email={email} phone={phone} role={role} />
 </AppLayout>
