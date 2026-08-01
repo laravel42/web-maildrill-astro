@@ -612,9 +612,7 @@ export default function AppListDetail({
             </section>
 
             <section className={`${styles.card} ${styles.cardPad}`}>
-              <h2 className={styles.cardTitle} style={{ marginBottom: 10 }}>
-                Custom fields
-              </h2>
+              <p className={`adrawer__eyebrow ${styles.railEyebrow}`}>Custom fields</p>
               {view.fields.length === 0 ? (
                 <p className={styles.railEmpty}>No custom fields defined yet.</p>
               ) : (
@@ -650,9 +648,7 @@ export default function AppListDetail({
             </section>
 
             <section className={`${styles.card} ${styles.cardPad}`}>
-              <h2 className={styles.cardTitle} style={{ marginBottom: 4 }}>
-                Settings
-              </h2>
+              <p className={`adrawer__eyebrow ${styles.railEyebrow}`}>Settings</p>
               <ul className={styles.settings}>
                 <li className={styles.settingRow}>
                   <div className={styles.stackBody}>
@@ -752,8 +748,8 @@ export default function AppListDetail({
             </section>
 
             <section className={`${styles.card} ${styles.cardPad}`}>
-              <div className={styles.cardHead} style={{ marginBottom: 11 }}>
-                <h2 className={styles.cardTitle}>Signup form</h2>
+              <div className={styles.railHead}>
+                <p className={`adrawer__eyebrow ${styles.railEyebrow}`}>Signup form</p>
                 <button
                   className={`sbtn ${styles.copyBtn}`}
                   type="button"

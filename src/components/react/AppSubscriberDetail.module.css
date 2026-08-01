@@ -813,43 +813,49 @@
 }
 
 /* ---------- Rail ---------- */
-.kvList {
+.railEyebrow {
+  display: block;
+  margin: 0 0 4px;
+}
+.railHead {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  margin-top: 14px;
+  margin-bottom: 4px;
 }
-.kv {
-  display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  gap: 12px;
-  align-items: baseline;
+.railHead .railEyebrow {
+  margin-bottom: 0;
 }
-.kv dt {
-  font-size: 12px;
-  color: var(--muted);
-}
-.kv dd {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--text2);
+.railValue {
+  max-width: 58%;
+  text-align: right;
   word-break: break-word;
+}
+.railValueOk {
+  color: var(--success-ink);
+}
+.cardPad :global(.adetail:last-of-type) {
+  border-bottom: 0;
+  padding-bottom: 0;
 }
 .railSection {
   border-top: 1px solid var(--divider);
-  margin-top: 15px;
-  padding-top: 14px;
+  margin-top: 14px;
+  padding-top: 12px;
 }
-.railLabel {
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 9px;
+/* The adetail row above already draws the divider. */
+:global(.adetail) + .railSection {
+  border-top: 0;
+  margin-top: 12px;
+  padding-top: 0;
 }
 .pills {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+  margin-top: 10px;
 }
 /* Same squared chip language as list tags, sized up for the detail rail. */
 .pill {
@@ -903,39 +909,11 @@
   background: var(--accent-tint);
   color: var(--accent);
 }
-.cardHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 13px;
-}
-.rows {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.rowBetween {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.rowLabel {
-  font-size: 12.5px;
-  color: var(--text3);
-}
-.rowValue {
-  font-size: 12.5px;
-  font-weight: 600;
-}
-.rowValueOk {
-  color: var(--success-ink);
-}
 .consentList {
   display: flex;
   flex-direction: column;
   gap: 11px;
+  margin-top: 6px;
 }
 .consentItem {
   display: flex;
@@ -959,6 +937,7 @@
 .notes {
   width: 100%;
   min-height: 86px;
+  margin-top: 6px;
   resize: vertical;
   padding: 11px 12px;
   border: 1px solid var(--border);

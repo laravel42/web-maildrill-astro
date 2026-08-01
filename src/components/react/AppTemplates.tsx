@@ -954,16 +954,16 @@ function TemplateDrawer({
               {t.category}
             </span>
           </div>
-          <div className={styles.dStats}>
-            <div className={styles.dStat}>
-              <div className={styles.dStatLbl}>Avg. opens</div>
-              <div className={`tnum ${styles.dStatVal}`} style={{ color: '#4f46e5' }}>
+          <div className={`adrawer__kpis ${styles.dStats}`}>
+            <div className="adrawer__kpi">
+              <div className="adrawer__kpi-k">Avg. opens</div>
+              <div className="tnum adrawer__kpi-v" style={{ color: '#4f46e5' }}>
                 {t.avgOpen}%
               </div>
             </div>
-            <div className={styles.dStat}>
-              <div className={styles.dStatLbl}>Avg. clicks</div>
-              <div className={`tnum ${styles.dStatVal}`} style={{ color: '#0891b2' }}>
+            <div className="adrawer__kpi">
+              <div className="adrawer__kpi-k">Avg. clicks</div>
+              <div className="tnum adrawer__kpi-v" style={{ color: '#0891b2' }}>
                 {t.avgClick}%
               </div>
             </div>

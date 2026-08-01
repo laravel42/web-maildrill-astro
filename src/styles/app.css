@@ -540,6 +540,36 @@
   color: var(--muted);
 }
 
+/* Drawer KPI cards — one look across every record drawer (lists, subscribers,
+   templates, campaigns, team members). Modules add only columns + margins. */
+.adrawer__kpis {
+  display: grid;
+  gap: 10px;
+}
+.adrawer__kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.adrawer__kpi-k {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.adrawer__kpi-v {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+.adrawer__kpi-v--sm {
+  font-size: 14px;
+}
+
 /* Detail row */
 .adetail {
   display: flex;

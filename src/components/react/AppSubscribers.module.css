@@ -697,26 +697,8 @@
   box-shadow: 0 0 0 2px var(--surface);
 }
 .sbdStats {
-  display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
   margin-bottom: 22px;
-}
-.sbdStat {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 13px;
-  min-width: 0;
-}
-.sbdStatLbl {
-  font-size: 11px;
-  color: var(--muted);
-}
-.sbdStatVal {
-  font-size: 19px;
-  font-weight: 600;
-  margin-top: 3px;
 }
 .sbdSection {
   margin-bottom: 22px;

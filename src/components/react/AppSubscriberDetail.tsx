@@ -761,43 +761,45 @@ export default function AppSubscriberDetail({
 
           <aside className={styles.colRail}>
             <section className={`${styles.card} ${styles.cardPad}`}>
-              <h2 className={styles.cardTitle}>Details</h2>
-              <dl className={styles.kvList}>
-                <div className={styles.kv}>
-                  <dt>Email</dt>
-                  <dd>{sub.email ? <a href={`mailto:${sub.email}`}>{sub.email}</a> : '—'}</dd>
-                </div>
-                <div className={styles.kv}>
-                  <dt>Subscribed</dt>
-                  <dd>{view.subscribedLabel.replace(/^Subscribed\s+/i, '') || '—'}</dd>
-                </div>
-                <div className={styles.kv}>
-                  <dt>Country</dt>
-                  <dd>{sub.location || '—'}</dd>
-                </div>
-                <div className={styles.kv}>
-                  <dt>Timezone</dt>
-                  <dd>—</dd>
-                </div>
-                <div className={styles.kv}>
-                  <dt>Signup IP</dt>
-                  <dd>—</dd>
-                </div>
-                <div className={styles.kv}>
-                  <dt>Referrer</dt>
-                  <dd>—</dd>
-                </div>
-                <div className={styles.kv}>
-                  <dt>Last activity</dt>
-                  <dd>{view.lastActiveLabel}</dd>
-                </div>
-                <div className={styles.kv}>
-                  <dt>Last campaign</dt>
-                  <dd>{view.lastCampaignLabel}</dd>
-                </div>
-              </dl>
+              <p className={`adrawer__eyebrow ${styles.railEyebrow}`}>Details</p>
+              <div className="adetail">
+                <span className="adetail__k">Email</span>
+                <span className={`adetail__v ${styles.railValue}`}>
+                  {sub.email ? <a href={`mailto:${sub.email}`}>{sub.email}</a> : '—'}
+                </span>
+              </div>
+              <div className="adetail">
+                <span className="adetail__k">Subscribed</span>
+                <span className="adetail__v">
+                  {view.subscribedLabel.replace(/^Subscribed\s+/i, '') || '—'}
+                </span>
+              </div>
+              <div className="adetail">
+                <span className="adetail__k">Country</span>
+                <span className="adetail__v">{sub.location || '—'}</span>
+              </div>
+              <div className="adetail">
+                <span className="adetail__k">Timezone</span>
+                <span className="adetail__v">—</span>
+              </div>
+              <div className="adetail">
+                <span className="adetail__k">Signup IP</span>
+                <span className="adetail__v">—</span>
+              </div>
+              <div className="adetail">
+                <span className="adetail__k">Referrer</span>
+                <span className="adetail__v">—</span>
+              </div>
+              <div className="adetail">
+                <span className="adetail__k">Last activity</span>
+                <span className="adetail__v">{view.lastActiveLabel}</span>
+              </div>
+              <div className="adetail">
+                <span className="adetail__k">Last campaign</span>
+                <span className="adetail__v">{view.lastCampaignLabel}</span>
+              </div>
               <div className={styles.railSection}>
-                <p className={styles.railLabel}>Lists</p>
+                <p className={`adrawer__eyebrow ${styles.railEyebrow}`}>Lists</p>
                 <div className={styles.pills}>
                   {sub.lists.length === 0 ? (
                     <span className={styles.cellMuted}>None</span>
@@ -811,7 +813,7 @@ export default function AppSubscriberDetail({
                 </div>
               </div>
               <div className={styles.railSection}>
-                <p className={styles.railLabel}>Tags</p>
+                <p className={`adrawer__eyebrow ${styles.railEyebrow}`}>Tags</p>
                 <div className={styles.pills}>
                   {sub.tags.map((t) => {
                     const st = tagStyle(t);
@@ -854,44 +856,40 @@ export default function AppSubscriberDetail({
             </section>
 
             <section className={`${styles.card} ${styles.cardPad}`}>
-              <div className={styles.cardHead}>
-                <h2 className={styles.cardTitle}>Deliverability</h2>
+              <div className={styles.railHead}>
+                <p className={`adrawer__eyebrow ${styles.railEyebrow}`}>Deliverability</p>
                 <span
                   className={`${styles.badge} ${sub.status === 'bounced' ? '' : styles.badgeActive}`}
                 >
                   {sub.status === 'bounced' ? 'Bounced' : 'Healthy'}
                 </span>
               </div>
-              <div className={styles.rows}>
-                <div className={styles.rowBetween}>
-                  <span className={styles.rowLabel}>Delivery rate</span>
-                  <span
-                    className={`${styles.rowValue} ${styles.tnum}${view.deliveryRate != null ? ` ${styles.rowValueOk}` : ''}`}
-                  >
-                    {view.deliveryRate == null ? '—' : `${view.deliveryRate}%`}
-                  </span>
-                </div>
-                <div className={styles.rowBetween}>
-                  <span className={styles.rowLabel}>Soft bounces</span>
-                  <span className={`${styles.rowValue} ${styles.tnum}`}>—</span>
-                </div>
-                <div className={styles.rowBetween}>
-                  <span className={styles.rowLabel}>Hard bounces</span>
-                  <span className={`${styles.rowValue} ${styles.tnum}`}>
-                    {view.bounces === 0 ? '—' : view.bounces}
-                  </span>
-                </div>
-                <div className={styles.rowBetween}>
-                  <span className={styles.rowLabel}>Spam complaints</span>
-                  <span className={`${styles.rowValue} ${styles.tnum}`}>—</span>
-                </div>
+              <div className="adetail">
+                <span className="adetail__k">Delivery rate</span>
+                <span
+                  className={`adetail__v tnum${
+                    view.deliveryRate != null ? ` ${styles.railValueOk}` : ''
+                  }`}
+                >
+                  {view.deliveryRate == null ? '—' : `${view.deliveryRate}%`}
+                </span>
+              </div>
+              <div className="adetail">
+                <span className="adetail__k">Soft bounces</span>
+                <span className="adetail__v tnum">—</span>
+              </div>
+              <div className="adetail">
+                <span className="adetail__k">Hard bounces</span>
+                <span className="adetail__v tnum">{view.bounces === 0 ? '—' : view.bounces}</span>
+              </div>
+              <div className="adetail">
+                <span className="adetail__k">Spam complaints</span>
+                <span className="adetail__v tnum">—</span>
               </div>
             </section>
 
             <section className={`${styles.card} ${styles.cardPad}`}>
-              <h2 className={styles.cardTitle} style={{ marginBottom: 13 }}>
-                Consent &amp; privacy
-              </h2>
+              <p className={`adrawer__eyebrow ${styles.railEyebrow}`}>Consent &amp; privacy</p>
               <ul className={styles.consentList}>
                 <li className={styles.consentItem}>
                   <svg
@@ -955,8 +953,8 @@ export default function AppSubscriberDetail({
             </section>
 
             <section className={`${styles.card} ${styles.cardPad}`}>
-              <div className={styles.cardHead}>
-                <h2 className={styles.cardTitle}>Internal notes</h2>
+              <div className={styles.railHead}>
+                <p className={`adrawer__eyebrow ${styles.railEyebrow}`}>Internal notes</p>
                 {notesDirty && (
                   <button
                     className={styles.btnPrimary}

@@ -696,25 +696,8 @@
   flex: none;
 }
 .dStats {
-  display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
   margin-top: 12px;
-}
-.dStat {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 13px;
-}
-.dStatLbl {
-  font-size: 11px;
-  color: var(--muted);
-}
-.dStatVal {
-  font-size: 21px;
-  font-weight: 600;
-  margin-top: 3px;
 }
 .dEyebrow {
   margin: 24px 0 8px;

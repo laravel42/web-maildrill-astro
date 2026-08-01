@@ -1495,14 +1495,14 @@ function SubscriberDrawer({
           </div>
 
           {/* stat cards */}
-          <div className={styles.sbdStats}>
-            <div className={styles.sbdStat}>
-              <div className={styles.sbdStatLbl}>Open rate</div>
-              <div className={`tnum ${styles.sbdStatVal}`}>{sub.opens}</div>
+          <div className={`adrawer__kpis ${styles.sbdStats}`}>
+            <div className="adrawer__kpi">
+              <div className="adrawer__kpi-k">Open rate</div>
+              <div className="tnum adrawer__kpi-v">{sub.opens}</div>
             </div>
-            <div className={styles.sbdStat}>
-              <div className={styles.sbdStatLbl}>Click rate</div>
-              <div className={`tnum ${styles.sbdStatVal}`}>{sub.clicks}</div>
+            <div className="adrawer__kpi">
+              <div className="adrawer__kpi-k">Click rate</div>
+              <div className="tnum adrawer__kpi-v">{sub.clicks}</div>
             </div>
           </div>
 

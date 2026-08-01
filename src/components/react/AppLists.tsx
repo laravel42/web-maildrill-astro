@@ -780,29 +780,27 @@ function ListDrawer({
           </div>
 
           {/* stat cards */}
-          <div className={styles.dStats}>
-            <div className={styles.dStat}>
-              <div className={styles.dStatLbl}>Subscribers</div>
-              <div className={`tnum ${styles.dStatVal}`}>
-                {list.subscribers.toLocaleString('en-US')}
-              </div>
+          <div className={`adrawer__kpis ${styles.dStats}`}>
+            <div className="adrawer__kpi">
+              <div className="adrawer__kpi-k">Subscribers</div>
+              <div className="tnum adrawer__kpi-v">{list.subscribers.toLocaleString('en-US')}</div>
             </div>
-            <div className={styles.dStat}>
-              <div className={styles.dStatLbl}>Growth</div>
+            <div className="adrawer__kpi">
+              <div className="adrawer__kpi-k">Growth</div>
               <div
-                className={`tnum ${styles.dStatVal}`}
+                className="tnum adrawer__kpi-v"
                 style={{ color: up ? 'var(--success)' : 'var(--danger)' }}
               >
                 {fmtPct(list.growthPct)}
               </div>
             </div>
-            <div className={styles.dStat}>
-              <div className={styles.dStatLbl}>Avg. Opens</div>
-              <div className={`tnum ${styles.dStatVal}`}>{list.openRate}</div>
+            <div className="adrawer__kpi">
+              <div className="adrawer__kpi-k">Avg. Opens</div>
+              <div className="tnum adrawer__kpi-v">{list.openRate}</div>
             </div>
-            <div className={styles.dStat}>
-              <div className={styles.dStatLbl}>Avg. Clicks</div>
-              <div className={`tnum ${styles.dStatVal}`}>{list.clickRate}</div>
+            <div className="adrawer__kpi">
+              <div className="adrawer__kpi-k">Avg. Clicks</div>
+              <div className="tnum adrawer__kpi-v">{list.clickRate}</div>
             </div>
           </div>
 

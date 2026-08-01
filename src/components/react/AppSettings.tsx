@@ -533,16 +533,14 @@ function TeamDrawer({
           </div>
 
           {/* stats */}
-          <div className={styles.setdStats}>
-            <div className={styles.setdStat}>
-              <div className={styles.setdStatLbl}>Campaigns created</div>
-              <div className={`${styles.setdStatVal} tnum`}>{member.campaigns}</div>
+          <div className={`adrawer__kpis ${styles.setdStats}`}>
+            <div className="adrawer__kpi">
+              <div className="adrawer__kpi-k">Campaigns created</div>
+              <div className="tnum adrawer__kpi-v">{member.campaigns}</div>
             </div>
-            <div className={styles.setdStat}>
-              <div className={styles.setdStatLbl}>Last active</div>
-              <div className={`${styles.setdStatVal} ${styles.setdStatValSm}`}>
-                {member.lastActive}
-              </div>
+            <div className="adrawer__kpi">
+              <div className="adrawer__kpi-k">Last active</div>
+              <div className="adrawer__kpi-v adrawer__kpi-v--sm">{member.lastActive}</div>
             </div>
           </div>
 

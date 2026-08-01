@@ -540,27 +540,8 @@
 }
 
 .dStats {
-  display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 11px;
   margin-bottom: 20px;
-}
-.dStat {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 13px 15px;
-}
-.dStatLbl {
-  font-size: 11px;
-  color: var(--muted);
-  font-weight: 500;
-}
-.dStatVal {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
-  margin-top: 6px;
 }
 
 .dTrend {
