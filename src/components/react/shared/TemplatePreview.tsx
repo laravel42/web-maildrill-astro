@@ -98,6 +98,9 @@ export function MessagePreview({
  * Renders exported email HTML in a sandboxed iframe scaled to fit the drawer.
  * The frame allows same-origin (so the rendered height can be measured) but not
  * scripts, so any JS embedded in a template can't run.
+ *
+ * Height cap: uses the nearest `[data-preview-fit]` ancestor's clientHeight when
+ * present (campaign wizard column), otherwise PREVIEW_MAX_HEIGHT (drawer).
  */
 const EMAIL_LOGICAL_WIDTH = 600;
 const PREVIEW_MAX_HEIGHT = 400;
@@ -107,15 +110,21 @@ function HtmlPreview({ html }: { html: string }) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [scale, setScale] = useState(0.55);
   const [docHeight, setDocHeight] = useState(EMAIL_LOGICAL_WIDTH);
+  const [maxHeight, setMaxHeight] = useState(PREVIEW_MAX_HEIGHT);
 
   useLayoutEffect(() => {
+    const vp = viewportRef.current;
+    if (!vp) return;
+    const fit = vp.closest('[data-preview-fit]') as HTMLElement | null;
     const measure = () => {
-      const w = viewportRef.current?.clientWidth ?? EMAIL_LOGICAL_WIDTH;
-      setScale(Math.min(1, w / EMAIL_LOGICAL_WIDTH));
+      setScale(Math.min(1, (vp.clientWidth || EMAIL_LOGICAL_WIDTH) / EMAIL_LOGICAL_WIDTH));
+      const available = fit?.clientHeight ?? 0;
+      setMaxHeight(available > 0 ? available : PREVIEW_MAX_HEIGHT);
     };
     measure();
     const ro = new ResizeObserver(measure);
-    if (viewportRef.current) ro.observe(viewportRef.current);
+    ro.observe(vp);
+    if (fit) ro.observe(fit);
     return () => ro.disconnect();
   }, []);
 
@@ -137,7 +146,7 @@ function HtmlPreview({ html }: { html: string }) {
     <div
       ref={viewportRef}
       className={styles.pvViewport}
-      style={{ height: Math.min(docHeight * scale, PREVIEW_MAX_HEIGHT) }}
+      style={{ height: Math.min(docHeight * scale, maxHeight) }}
     >
       {/* reserves the scaled height so the viewport can scroll the whole email */}
       <div style={{ height: docHeight * scale, position: 'relative' }}>

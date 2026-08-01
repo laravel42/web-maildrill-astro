@@ -1056,7 +1056,7 @@ export default function CampaignWizard({
               borderLeft: `1px solid color-mix(in srgb, ${channelMeta.color} 28%, var(--divider))`,
             }}
           >
-            <div className={styles.previewFit}>
+            <div className={styles.previewFit} data-preview-fit>
               {isEmail ? (
                 selTpl ? (
                   <div className={styles.previewEmailLive}>
