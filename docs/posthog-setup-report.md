@@ -43,13 +43,19 @@ We've built a dashboard and five insights to keep an eye on user behavior based 
 - [Campaigns sent by channel (wizard)](https://us.posthog.com/project/526240/insights/7urGrMtf)
 - [Pricing estimator engagement (wizard)](https://us.posthog.com/project/526240/insights/dXa7Siin)
 
-## Verify before merging
+## Status
 
-- [ ] Run a full production build (the wizard only verified the files it touched) and fix any lint or type errors introduced by the generated code.
-- [ ] Run the test suite — call sites that were rewritten or instrumented may need updated mocks or fixtures.
-- [ ] Add `PUBLIC_POSTHOG_PROJECT_TOKEN` and `PUBLIC_POSTHOG_HOST` to `.env.example` and any monorepo/bootstrap scripts so collaborators know what to set.
-- [ ] Wire source-map upload (`posthog-cli sourcemap` or your bundler's upload step) into CI so production stack traces de-minify.
-- [ ] Confirm the returning-visitor path also calls `identify` — currently `identify` is called only on fresh OTP verification; a returning session that skips the login flow will stay on an anonymous distinct ID until the user logs in again.
+The original post-wizard checklist is done where it mattered: the production build, lint,
+and test suite pass with the instrumentation in place, and `PUBLIC_POSTHOG_PROJECT_TOKEN` /
+`PUBLIC_POSTHOG_HOST` are documented in [`.env.example`](../.env.example).
+
+Still open:
+
+- [ ] Wire source-map upload (`posthog-cli sourcemap` or a bundler upload step) into a CI/deploy
+      step so production stack traces de-minify (no CI pipeline exists yet).
+- [ ] Confirm the returning-visitor path also calls `identify` — currently `identify` fires only
+      on fresh OTP verification; a returning session that skips the login flow stays on an
+      anonymous distinct ID until the next login.
 
 ### Agent skill
 

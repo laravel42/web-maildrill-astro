@@ -25,10 +25,10 @@ so the HogQL paths return realistic data without any real Infobip traffic.
 
 ## Infobip URL split
 
-| Infobip notify | Target |
-| --- | --- |
+| Infobip notify          | Target                                              |
+| ----------------------- | --------------------------------------------------- |
 | Delivery / seen / voice | PostHog webhook `?kind=delivery\|engagement\|voice` |
-| Template status | PostHog webhook `?kind=template` |
+| Template status         | PostHog webhook `?kind=template`                    |
 
 Maildrill `/webhooks/infobip/{delivery|engagement|voice}` routes remain in code
 but must **not** be configured in Infobip (unused).
@@ -99,7 +99,11 @@ Manage in PostHog → Data pipelines → Sources → **Infobip webhooks**.
 
 Kinds:
 
-- `?kind=delivery` → `message_delivery_report`
+- `?kind=delivery` → `message_delivery_report` — **except** a result whose payload
+  is seen-shaped (`seenAt` present, no `status` object) → `message_seen_report`.
+  WhatsApp/Viber push seen reports to the _same_ per-send `notifyUrl` as DLRs
+  (the send APIs have no separate seen URL), so the Hog classifies per result by
+  shape rather than trusting the `kind` param.
 - `?kind=engagement` → `message_seen_report`
 - `?kind=tracking` → `message_tracking_report` (email/SMS/WA open·click·unsub·complaint; also auto-detected via `notificationType`)
 - `?kind=voice` → `message_voice_report`
@@ -116,13 +120,13 @@ Enable the CDP Hog sources feature preview if the source UI is hidden.
 
 ## Env (product-api + workers)
 
-| Variable | Purpose |
-| --- | --- |
-| `POSTHOG_PERSONAL_API_KEY` | Personal key with **Query Read** (Bearer). Not `phc_`. Required for Analytics + delivery poller. |
-| `POSTHOG_PROJECT_ID` | Default `526344` (Maildrill). |
-| `POSTHOG_APP_HOST` | Default `https://us.posthog.com`. |
-| `POSTHOG_STATS_ENABLED` | Empty = on when key set; `0`/`false` forces Postgres for Analytics (poller also skips HogQL). |
-| `CAMPAIGN_DELIVERY_POLL_INTERVAL_MS` | Default `5000`. |
+| Variable                             | Purpose                                                                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `POSTHOG_PERSONAL_API_KEY`           | Personal key with **Query Read** (Bearer). Not `phc_`. Required for Analytics + delivery poller. |
+| `POSTHOG_PROJECT_ID`                 | Default `526344` (Maildrill).                                                                    |
+| `POSTHOG_APP_HOST`                   | Default `https://us.posthog.com`.                                                                |
+| `POSTHOG_STATS_ENABLED`              | Empty = on when key set; `0`/`false` forces Postgres for Analytics (poller also skips HogQL).    |
+| `CAMPAIGN_DELIVERY_POLL_INTERVAL_MS` | Default `5000`.                                                                                  |
 
 Restart product-api and workers after setting the personal key.
 
@@ -148,11 +152,11 @@ Manual refresh still works via `refreshTemplateStatus`.
 
 ## Events in PostHog
 
-| Event | Source |
-| --- | --- |
-| `message_delivery_report` | Infobip DLR → PostHog Hog |
-| `message_seen_report` | Infobip seen → PostHog Hog |
-| `message_voice_report` | Infobip voice → PostHog Hog |
+| Event                      | Source                                |
+| -------------------------- | ------------------------------------- |
+| `message_delivery_report`  | Infobip DLR → PostHog Hog             |
+| `message_seen_report`      | Infobip seen → PostHog Hog            |
+| `message_voice_report`     | Infobip voice → PostHog Hog           |
 | `whatsapp_template_status` | Infobip template notify → PostHog Hog |
 
 `message_submitted` is **not** captured anymore (was Maildrill dispatch fan-out).
@@ -168,5 +172,5 @@ See [`posthog-views.sql`](./posthog-views.sql) / [`posthog-views.json`](./postho
 3. Set `POSTHOG_PERSONAL_API_KEY` on product-api + workers; restart.
 4. Send a campaign → stays `sending` with progress; Live events show `message_delivery_report` with `tenant_id` / `maildrill_message_id`.
 5. Within a few poll intervals messages update and campaign flips to `sent`.
-6. `/app/analytics` series moves from HogQL.
+6. `/dashboard/analytics` series moves from HogQL.
 7. Leave a template `pending` → Infobip poller flips Maildrill DB without a Maildrill template webhook.

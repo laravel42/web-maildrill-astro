@@ -12,16 +12,17 @@ feel like _Linear meets Resend_, not an admin panel.
 
 ## Tech stack
 
-| Layer          | Choice                                                     |
-| -------------- | ---------------------------------------------------------- |
-| Framework      | **Astro 5** — static-first marketing, islands architecture |
-| Interactive UI | **React 19** — app shell, pricing estimator, forms         |
-| Language       | **TypeScript** (strict, `astro/tsconfigs/strict`)          |
-| Styling        | Hand-authored CSS + design tokens (CSS custom properties)  |
-| Content        | Astro **Content Collections** + **Zod** schemas            |
-| Fonts          | **Geist** / **Geist Mono** (variable woff2)                |
-| Tests          | **Vitest** (unit/integration) + **Playwright** (e2e)       |
-| Quality gates  | ESLint (+ jsx-a11y) · Prettier · `astro check` · `tsc`     |
+| Layer          | Choice                                                                               |
+| -------------- | ------------------------------------------------------------------------------------ |
+| Framework      | **Astro 7** — static-first marketing, islands architecture                           |
+| SSR            | **@astrojs/node** (standalone) — app/auth/api routes opt in with `prerender = false` |
+| Interactive UI | **React 19** — app shell, pricing estimator, forms                                   |
+| Language       | **TypeScript** (strict, `astro/tsconfigs/strict`)                                    |
+| Styling        | Hand-authored CSS + design tokens (CSS custom properties)                            |
+| Content        | Astro **Content Collections** + **Zod** schemas                                      |
+| Fonts          | **Geist** / **Geist Mono** (variable woff2)                                          |
+| Tests          | **Vitest** (unit/integration) + **Playwright** (e2e)                                 |
+| Quality gates  | ESLint (+ jsx-a11y) · Prettier · `astro check` · `tsc`                               |
 
 ---
 
@@ -91,7 +92,7 @@ JavaScript is opt-in per island, with the cheapest directive that works:
 | Marketing mobile nav            | `client:idle`    | only needed after first paint                                                                       |
 | Pricing calculator              | `client:visible` | below the fold; hydrate when scrolled                                                               |
 | Auth / contact forms            | `client:load`    | the sole purpose of those pages                                                                     |
-| App shell (sidebar/topbar/⌘K)   | `client:idle`    | interactive chrome for `/app/*` only                                                                |
+| App shell (sidebar/topbar/⌘K)   | `client:idle`    | interactive chrome for `/dashboard/*` only                                                          |
 | App screens (dashboard, boards) | `client:visible` | nested inside the shell                                                                             |
 
 No marketing route ships page-wide React hydration.
@@ -117,10 +118,14 @@ No marketing route ships page-wide React hydration.
 
 - `/login` · `/signup` · `/forgot-password`
 
-### App (noindex, mock auth)
+### App (noindex, SSR, session-gated)
 
-- `/app` — Dashboard
-- `/app/{campaigns,templates,lists,subscribers,media,analytics,settings}`
+- `/dashboard` — Overview
+- `/dashboard/{campaigns,templates,lists,subscribers,media,analytics,settings,profile}`
+- `/dashboard/campaigns/[id]/report` — campaign report
+- `/dashboard/lists/[id]` · `/dashboard/subscribers/[id]` — detail pages
+- `/dashboard/templates/{email,sms,whatsapp,voice}` — per-channel template builders
+  (email: vendored EmailBuilder.js; WhatsApp: wa-template-studio with Meta approval)
 
 ### System
 
@@ -134,29 +139,31 @@ No marketing route ships page-wide React hydration.
 ```bash
 pnpm install
 cp .env.example .env          # one file for Astro + workers
+pnpm --dir workers db:up      # Docker Postgres + Redis (or point .env at your own)
 pnpm --dir workers db:migrate
-pnpm --dir workers db:up      # optional: Docker Postgres + Redis
 pnpm dev:all                  # workers (:3001, includes delivery pollers) then Astro (:4321)
 # or separately: pnpm --filter workers dev   +   pnpm dev
+# or the whole stack in containers: docker compose up --build
 ```
 
 `pnpm --dir workers dev` (unified `dev-server`) starts dispatch, events, publisher,
 scheduler, maintenance, **campaign-delivery**, and **template-approval**. Set
 `DEV_WORKERS=0` to serve HTTP only. One root `pnpm install` covers Astro and
 `workers/` (no second install under `workers/`).
+
 ### Environment variables
 
-| Variable | Client? | Purpose |
-| --- | --- | --- |
-| `PUBLIC_SITE_URL` | yes | Canonical base, sitemap, OG |
-| `PUBLIC_POSTHOG_PROJECT_TOKEN` | yes | Browser PostHog project token (`phc_…`) |
-| `PUBLIC_POSTHOG_HOST` | yes | PostHog ingest host |
-| `AUTH_SECRET` | **no** | Auth.js session |
-| `API_BASE_URL` | **no** | workers product-api (default `http://localhost:3001`) |
-| `JWT_SECRET` | **no** | Shared with workers — BFF mints tenant JWTs |
-| `DATABASE_URL` / `REDIS_URL` | **no** | workers (same root `.env`) |
-| `POSTHOG_PERSONAL_API_KEY` | **no** | HogQL for stats + campaign-delivery (`query:read`) |
-| `POSTHOG_PROJECT_ID` | **no** | Maildrill messaging project (`526344`) |
+| Variable                       | Client? | Purpose                                               |
+| ------------------------------ | ------- | ----------------------------------------------------- |
+| `PUBLIC_SITE_URL`              | yes     | Canonical base, sitemap, OG                           |
+| `PUBLIC_POSTHOG_PROJECT_TOKEN` | yes     | Browser PostHog project token (`phc_…`)               |
+| `PUBLIC_POSTHOG_HOST`          | yes     | PostHog ingest host                                   |
+| `AUTH_SECRET`                  | **no**  | Auth.js session                                       |
+| `API_BASE_URL`                 | **no**  | workers product-api (default `http://localhost:3001`) |
+| `JWT_SECRET`                   | **no**  | Shared with workers — BFF mints tenant JWTs           |
+| `DATABASE_URL` / `REDIS_URL`   | **no**  | workers (same root `.env`)                            |
+| `POSTHOG_PERSONAL_API_KEY`     | **no**  | HogQL for stats + campaign-delivery (`query:read`)    |
+| `POSTHOG_PROJECT_ID`           | **no**  | Maildrill messaging project (`526344`)                |
 
 Only `PUBLIC_*` reach the browser. Full list: [`.env.example`](.env.example). Server
 helpers: [`src/lib/env.ts`](src/lib/env.ts). Backend config: `workers/packages/config`.
@@ -220,32 +227,37 @@ rollout caveats. Backend ops and Infobip→PostHog setup: [`workers/HANDOFF.md`]
 
 ## Deployment
 
-Static output (`build.format: 'file'` for clean, no-trailing-slash URLs) — deploy `dist/` to any
-static host. **Always build with `PUBLIC_SITE_URL` set to the deploy origin** so canonicals, the
-sitemap, robots.txt, OG tags, and RSS all agree.
+`astro build` produces a **Node server** (`dist/server/entry.mjs`, `@astrojs/node` standalone —
+it also serves the prerendered marketing pages and client assets) plus the `workers/` backend
+processes. **Always build with `PUBLIC_SITE_URL` set to the deploy origin** so canonicals, the
+sitemap, robots.txt, OG tags, and RSS all agree. Note that `API_BASE_URL` is **baked into the SSR
+bundle at build time** — set it before building.
 
-### Cloudflare Pages (current)
+### Ploi VPS (current)
 
-Live at **https://maildrill-astro.pages.dev**. Deployed as a static site (no adapter/Functions
-needed). `public/_redirects` provides clean 301s on Pages.
+Two moving parts behind nginx, each run as Ploi daemons (Supervisor):
+
+- **Astro SSR** — `node dist/server/entry.mjs` (`HOST`/`PORT` env; nginx proxies to it).
+- **workers backend** — Fastify APIs + BullMQ workers; see
+  [`workers/deploy/README.md`](workers/deploy/README.md) for the daemon layout, discovery-based
+  restarts, and the traps already hit once (login shell, supervisor env, directory).
+
+The site deploy script is [`deploy/ploi-deploy.sh`](deploy/ploi-deploy.sh) (git pull → pnpm
+install → build → restart daemons). Infobip webhooks target PostHog, not this host — see
+`workers/HANDOFF.md` §3.
+
+### Docker (full stack)
+
+[`docker-compose.yml`](docker-compose.yml) runs the whole system — `web` (Astro SSR), `workers`
+(unified Fastify + BullMQ, runs migrations on boot), Postgres, and Redis — from one image
+([`Dockerfile`](Dockerfile)):
 
 ```bash
-# one-time: create the project
-wrangler pages project create maildrill-astro --production-branch main
-
-# build against the production origin, then deploy
-PUBLIC_SITE_URL=https://maildrill-astro.pages.dev npm run build
-wrangler pages deploy dist --project-name maildrill-astro --branch main
+docker compose up --build     # web :4321, APIs :3001
 ```
 
-To use a **custom domain** (e.g. `maildrill.com`): add it in the Pages project → Custom domains,
-then rebuild/redeploy with `PUBLIC_SITE_URL=https://maildrill.com` (or set that as a Pages build
-environment variable if you wire up Git-connected builds).
-
-### Any other static host
-
-1. `PUBLIC_SITE_URL=https://your-domain npm run build`
-2. Deploy `dist/`.
+Containers run `NODE_ENV=production`, so the root `.env` must carry strong (non-`change-me`)
+`JWT_SECRET` and `WEBHOOK_INFOBIP_SECRET` values or the workers refuse to boot.
 
 ---
 

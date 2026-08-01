@@ -6,7 +6,7 @@ Astro and this tree (`workers`, `workers/packages/*`, `workers/apps/*`).
 
 > **Start here for current architecture & ops:** [`HANDOFF.md`](HANDOFF.md)
 
-Two Fastify apps (or one unified `dev-server`) + BullMQ workers on Postgres
+Three Fastify apps (or one unified `dev-server`) + BullMQ workers on Postgres
 (Drizzle) + Redis/Valkey:
 
 - **Messaging** (`apps/api`) — submit/cancel/retry messages, webhook routes (kept
@@ -60,6 +60,9 @@ pnpm --dir workers dev          # unified :3001
 
 # Astro + workers together:
 pnpm dev:all
+
+# Or the whole stack in containers (repo root — web + workers + Postgres + Redis):
+docker compose up --build
 ```
 
 Split processes (prod-style):
@@ -85,6 +88,7 @@ pnpm worker campaign-delivery
 > **Dev-server:** unified `pnpm dev` starts dispatch, events, publisher, scheduler,
 > maintenance, **template-approval**, and **campaign-delivery**. Set `DEV_WORKERS=0`
 > for HTTP-only.
+
 ## Delivery & analytics (locked)
 
 ```

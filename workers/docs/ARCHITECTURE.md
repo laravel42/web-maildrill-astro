@@ -16,17 +16,17 @@ This is the **messaging engine** (`apps/api`) — one app in the backend monorep
 
 ## Settled decisions
 
-| Area | Decision |
-|---|---|
-| Runtime | **Fastify (Node) on a dedicated VPS.** Cloudflare Workers is *out* for this service — BullMQ + long-lived workers + Redis/Valkey rule out edge. |
-| Datastore | **PostgreSQL** = source of truth; **Redis/Valkey** = BullMQ jobs, queue metadata, rate-limit state, locks, short-lived cache only. |
-| ORM / migrations | **Drizzle** (`packages/database`, `migrations/`). |
-| Tenancy | **Shared schema + `tenant_id` discriminator**, isolated at the query/API layer; **Postgres RLS optional** as defense-in-depth. (`tenant` here == the product's `workspace`.) |
-| Voice | **In-scope as channel plumbing** (enum, queues, states, separate concurrency); the product UI may still treat it as a spike. |
-| Auth | **Auth.js** for user login in the Astro frontend; **API keys / signed JWT + tenant scoping** for this service's machine-facing API. |
-| Queue / ops | **BullMQ** on Redis/Valkey; **Pino** logging; **Bull Board** for protected queue admin. |
+| Area             | Decision                                                                                                                                                                     |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime          | **Fastify (Node) on a dedicated VPS.** Cloudflare Workers is _out_ for this service — BullMQ + long-lived workers + Redis/Valkey rule out edge.                              |
+| Datastore        | **PostgreSQL** = source of truth; **Redis/Valkey** = BullMQ jobs, queue metadata, rate-limit state, locks, short-lived cache only.                                           |
+| ORM / migrations | **Drizzle** (`packages/database`, `migrations/`).                                                                                                                            |
+| Tenancy          | **Shared schema + `tenant_id` discriminator**, isolated at the query/API layer; **Postgres RLS optional** as defense-in-depth. (`tenant` here == the product's `workspace`.) |
+| Voice            | **In-scope as channel plumbing** (enum, queues, states, separate concurrency); the product UI may still treat it as a spike.                                                 |
+| Auth             | **Auth.js** for user login in the Astro frontend; **API keys / signed JWT + tenant scoping** for this service's machine-facing API.                                          |
+| Queue / ops      | **BullMQ** on Redis/Valkey; **Pino** logging; **Bull Board** for protected queue admin.                                                                                      |
 
-> ✅ **Resolved:** the *product CRUD API* runs as a second app (`apps/product-api`, :3001) in this monorepo, sharing `packages/database`. Identity/auth (magic-link + `/v1/me`) and an OpenAPI/Scalar reference (`/docs`) were added too. `web-maildrill-astro` is the frontend (UI + Auth.js login), integrated over the API only (no DB access). The README is canonical for current state.
+> ✅ **Resolved:** the _product CRUD API_ runs as a second app (`apps/product-api`, :3001) in this monorepo, sharing `packages/database`. Identity/auth (magic-link + `/v1/me`) and an OpenAPI/Scalar reference (`/docs`) were added too. `web-maildrill-astro` is the frontend (UI + Auth.js login), integrated over the API only (no DB access). The README is canonical for current state.
 
 ---
 
@@ -36,32 +36,32 @@ Design and implement the asynchronous message-processing layer for Maildrill, a 
 
 Maildrill sends communications through external provider APIs, initially Infobip, across the following channels:
 
-* Email
-* SMS
-* WhatsApp
-* Voice
+- Email
+- SMS
+- WhatsApp
+- Voice
 
 The system must support:
 
-* Immediate message sending
-* Scheduled message sending
-* Bulk campaign dispatch
-* Provider rate limiting
-* Automatic retries
-* Delivery-status ingestion
-* Provider webhook ingestion
-* Message event history
-* Failed-job inspection and replay
-* Multitenant isolation
-* Reliable message processing without duplicate sends
+- Immediate message sending
+- Scheduled message sending
+- Bulk campaign dispatch
+- Provider rate limiting
+- Automatic retries
+- Delivery-status ingestion
+- Provider webhook ingestion
+- Message event history
+- Failed-job inspection and replay
+- Multitenant isolation
+- Reliable message processing without duplicate sends
 
 The initial implementation must remain operationally simple and use only:
 
-* Fastify
-* TypeScript
-* PostgreSQL
-* Redis or Valkey
-* BullMQ
+- Fastify
+- TypeScript
+- PostgreSQL
+- Redis or Valkey
+- BullMQ
 
 Do not introduce Kafka, Redpanda, RabbitMQ, ClickHouse, Temporal, Elasticsearch, or other infrastructure unless explicitly requested.
 
@@ -75,13 +75,13 @@ Fastify
 
 Fastify handles:
 
-* Public and internal HTTP APIs
-* Campaign creation requests
-* Message submission requests
-* Provider webhook endpoints
-* Message-status queries
-* Administrative queue operations
-* Request validation and authentication
+- Public and internal HTTP APIs
+- Campaign creation requests
+- Message submission requests
+- Provider webhook endpoints
+- Message-status queries
+- Administrative queue operations
+- Request validation and authentication
 
 Fastify must not execute provider sends synchronously inside HTTP request handlers.
 
@@ -89,17 +89,17 @@ PostgreSQL
 
 PostgreSQL is the authoritative source of truth for:
 
-* Tenants
-* Campaigns
-* Messages
-* Recipients
-* Message state
-* Provider attempts
-* Provider events
-* Webhook payloads
-* Outbox records
-* Idempotency records
-* Usage and billing records
+- Tenants
+- Campaigns
+- Messages
+- Recipients
+- Message state
+- Provider attempts
+- Provider events
+- Webhook payloads
+- Outbox records
+- Idempotency records
+- Usage and billing records
 
 Business state must never depend exclusively on Redis or BullMQ.
 
@@ -107,14 +107,14 @@ BullMQ
 
 BullMQ is responsible for:
 
-* Asynchronous message dispatch
-* Scheduled messages
-* Retries
-* Backoff
-* Provider-event processing
-* Reconciliation
-* Maintenance jobs
-* Failed-job management
+- Asynchronous message dispatch
+- Scheduled messages
+- Retries
+- Backoff
+- Provider-event processing
+- Reconciliation
+- Maintenance jobs
+- Failed-job management
 
 BullMQ must be treated as an execution system, not as the permanent business datastore.
 
@@ -122,11 +122,11 @@ Redis or Valkey
 
 Redis or Valkey stores:
 
-* BullMQ job state
-* Queue metadata
-* Rate-limit state
-* Temporary locks
-* Short-lived caches
+- BullMQ job state
+- Queue metadata
+- Rate-limit state
+- Temporary locks
+- Short-lived caches
 
 Permanent message or campaign state must not exist only in Redis.
 
@@ -236,10 +236,10 @@ must be rejected.
 
 State changes must use:
 
-* Explicit transition rules
-* Provider event timestamps
-* Internal processing timestamps
-* Optimistic concurrency or row locking where appropriate
+- Explicit transition rules
+- Provider event timestamps
+- Internal processing timestamps
+- Optimistic concurrency or row locking where appropriate
 
 ⸻
 
@@ -472,25 +472,25 @@ All jobs must use versioned, strongly typed payloads.
 Example:
 
 interface SendMessageJobV1 {
-  version: 1;
-  tenantId: string;
-  messageId: string;
-  channel: "email" | "sms" | "whatsapp" | "voice";
-  provider: "infobip";
-  correlationId: string;
+version: 1;
+tenantId: string;
+messageId: string;
+channel: "email" | "sms" | "whatsapp" | "voice";
+provider: "infobip";
+correlationId: string;
 }
 
 Job payloads must contain references, not full business records.
 
 Do not place the following directly in BullMQ payloads:
 
-* Full message bodies when avoidable
-* Provider credentials
-* Access tokens
-* Large recipient lists
-* Binary files
-* Large attachments
-* Complete database entities
+- Full message bodies when avoidable
+- Provider credentials
+- Access tokens
+- Large recipient lists
+- Binary files
+- Large attachments
+- Complete database entities
 
 Workers must retrieve the authoritative message state from PostgreSQL.
 
@@ -524,10 +524,10 @@ Worker idempotency
 
 Before sending, the worker must verify:
 
-* The message has not already been submitted.
-* The message has not been cancelled.
-* The message has not expired.
-* The same send generation has not already succeeded.
+- The message has not already been submitted.
+- The message has not been cancelled.
+- The message has not expired.
+- The same send generation has not already succeeded.
 
 Webhook idempotency
 
@@ -546,12 +546,12 @@ Implement provider integrations behind a common interface.
 Example:
 
 interface MessagingProvider {
-  sendEmail(input: SendEmailInput): Promise<ProviderSendResult>;
-  sendSms(input: SendSmsInput): Promise<ProviderSendResult>;
-  sendWhatsApp(input: SendWhatsAppInput): Promise<ProviderSendResult>;
-  startVoiceCall(input: StartVoiceCallInput): Promise<ProviderSendResult>;
-  normalizeWebhook(input: ProviderWebhookInput): Promise<NormalizedProviderEvent[]>;
-  getMessageStatus?(input: ProviderStatusInput): Promise<ProviderStatusResult>;
+sendEmail(input: SendEmailInput): Promise<ProviderSendResult>;
+sendSms(input: SendSmsInput): Promise<ProviderSendResult>;
+sendWhatsApp(input: SendWhatsAppInput): Promise<ProviderSendResult>;
+startVoiceCall(input: StartVoiceCallInput): Promise<ProviderSendResult>;
+normalizeWebhook(input: ProviderWebhookInput): Promise<NormalizedProviderEvent[]>;
+getMessageStatus?(input: ProviderStatusInput): Promise<ProviderStatusResult>;
 }
 
 Implement Infobip as the first provider.
@@ -563,22 +563,22 @@ Normalize provider responses into internal types.
 Example result:
 
 interface ProviderSendResult {
-  accepted: boolean;
-  providerMessageId?: string;
-  providerRequestId?: string;
-  status: "submitted" | "rejected";
-  error?: {
-    category:
-      | "validation"
-      | "authentication"
-      | "rate_limit"
-      | "temporary"
-      | "permanent"
-      | "unknown";
-    code?: string;
-    message: string;
-    retryable: boolean;
-  };
+accepted: boolean;
+providerMessageId?: string;
+providerRequestId?: string;
+status: "submitted" | "rejected";
+error?: {
+category:
+| "validation"
+| "authentication"
+| "rate_limit"
+| "temporary"
+| "permanent"
+| "unknown";
+code?: string;
+message: string;
+retryable: boolean;
+};
 }
 
 The architecture must allow additional providers to be introduced without rewriting queue workers or domain services.
@@ -591,22 +591,22 @@ Retries must depend on error classification.
 
 Retryable failures include:
 
-* Network timeouts
-* Connection failures
-* HTTP 429 responses
-* Temporary provider unavailability
-* Most HTTP 5xx responses
-* Temporary database or Redis failures
+- Network timeouts
+- Connection failures
+- HTTP 429 responses
+- Temporary provider unavailability
+- Most HTTP 5xx responses
+- Temporary database or Redis failures
 
 Non-retryable failures include:
 
-* Invalid recipient data
-* Invalid message content
-* Invalid provider template
-* Missing required fields
-* Unsupported destination
-* Authentication or authorization errors that require configuration changes
-* Permanent provider rejection
+- Invalid recipient data
+- Invalid message content
+- Invalid provider template
+- Missing required fields
+- Unsupported destination
+- Authentication or authorization errors that require configuration changes
+- Permanent provider rejection
 
 Recommended initial retry policy:
 
@@ -632,10 +632,10 @@ When attempts are exhausted:
 
 Support rate limiting by:
 
-* Provider
-* Channel
-* Tenant
-* Provider account
+- Provider
+- Channel
+- Tenant
+- Provider account
 
 Initial implementation may use BullMQ rate limiting combined with Redis counters.
 
@@ -644,11 +644,11 @@ Rate limits must be configurable rather than hardcoded.
 Example configuration:
 
 interface ChannelRateLimit {
-  provider: string;
-  channel: string;
-  maxRequests: number;
-  durationMs: number;
-  maxConcurrency?: number;
+provider: string;
+channel: string;
+maxRequests: number;
+durationMs: number;
+maxConcurrency?: number;
 }
 
 One tenant must not be able to consume all available worker capacity.
@@ -719,12 +719,12 @@ scheduled_at <= current time
 
 The scheduler must:
 
-* Use safe database locking.
-* Support multiple scheduler instances.
-* Process messages in configurable batches.
-* Insert outbox records for dispatch.
-* Avoid duplicate activation.
-* Support campaign pause and cancellation.
+- Use safe database locking.
+- Support multiple scheduler instances.
+- Process messages in configurable batches.
+- Insert outbox records for dispatch.
+- Avoid duplicate activation.
+- Support campaign pause and cancellation.
 
 Large campaigns must not enqueue all recipients in one synchronous API request.
 
@@ -786,13 +786,13 @@ POST /v1/messages
 
 Must support:
 
-* Tenant context
-* Channel
-* Recipient reference
-* Content or template reference
-* Optional scheduling
-* Provider selection or automatic provider resolution
-* Idempotency key
+- Tenant context
+- Channel
+- Recipient reference
+- Content or template reference
+- Optional scheduling
+- Provider selection or automatic provider resolution
+- Idempotency key
 
 The endpoint must return after durable database acceptance, not after provider delivery.
 
@@ -802,13 +802,13 @@ GET /v1/messages/:messageId
 
 Returns:
 
-* Current state
-* Channel
-* Provider
-* Relevant timestamps
-* Provider message reference where safe
-* Latest error
-* Attempt count
+- Current state
+- Channel
+- Provider
+- Relevant timestamps
+- Provider message reference where safe
+- Latest error
+- Attempt count
 
 List message events
 
@@ -839,11 +839,11 @@ Administrative queue endpoints
 
 Provide protected internal endpoints for:
 
-* Queue summaries
-* Failed-job inspection
-* Controlled replay
-* Pausing and resuming workers or dispatch
-* Outbox backlog inspection
+- Queue summaries
+- Failed-job inspection
+- Controlled replay
+- Pausing and resuming workers or dispatch
+- Outbox backlog inspection
 
 Do not expose raw BullMQ administration publicly.
 
@@ -857,22 +857,22 @@ All request and job payloads must be validated.
 
 Authentication model:
 
-* User-facing login is handled by Auth.js in the Astro frontend (outside this service).
-* This service authenticates machine callers with API keys or signed JWTs, each bound to a tenant. Tenant identity is always derived from the credential, never from the request body.
-* Provider webhooks are authenticated by signature or shared secret where Infobip supports it.
+- User-facing login is handled by Auth.js in the Astro frontend (outside this service).
+- This service authenticates machine callers with API keys or signed JWTs, each bound to a tenant. Tenant identity is always derived from the credential, never from the request body.
+- Provider webhooks are authenticated by signature or shared secret where Infobip supports it.
 
 Security requirements:
 
-* Tenant authorization on every business query
-* No cross-tenant message access
-* Provider webhook authentication where supported
-* Request-size limits
-* Rate limiting for public APIs
-* Secure secret handling
-* Sanitized logs
-* No credentials in job payloads
-* No access tokens in database error fields
-* No sensitive recipient content in routine logs
+- Tenant authorization on every business query
+- No cross-tenant message access
+- Provider webhook authentication where supported
+- Request-size limits
+- Rate limiting for public APIs
+- Secure secret handling
+- Sanitized logs
+- No credentials in job payloads
+- No access tokens in database error fields
+- No sensitive recipient content in routine logs
 
 Generate and propagate:
 
@@ -894,19 +894,19 @@ Use Pino for structured logging.
 
 Every worker execution must log:
 
-* Job start
-* Job completion
-* Job retry
-* Permanent failure
-* Processing duration
-* Queue name
-* Job name
-* Attempt number
-* Tenant ID
-* Message ID
-* Provider
-* Channel
-* Correlation ID
+- Job start
+- Job completion
+- Job retry
+- Permanent failure
+- Processing duration
+- Queue name
+- Job name
+- Attempt number
+- Tenant ID
+- Message ID
+- Provider
+- Channel
+- Correlation ID
 
 Do not log message content or credentials by default.
 
@@ -963,22 +963,22 @@ Use a clear monorepo or modular repository structure.
 Recommended structure:
 
 apps/
-  api/
-  worker-dispatch/
-  worker-events/
-  worker-scheduler/
-  worker-maintenance/
+api/
+worker-dispatch/
+worker-events/
+worker-scheduler/
+worker-maintenance/
 packages/
-  config/
-  database/
-  domain/
-  queues/
-  providers/
-    core/
-    infobip/
-  observability/
-  validation/
-  testing/
+config/
+database/
+domain/
+queues/
+providers/
+core/
+infobip/
+observability/
+validation/
+testing/
 migrations/
 scripts/
 docker/
@@ -988,11 +988,11 @@ Shared packages must not create circular dependencies.
 Recommended dependency direction:
 
 domain
-  ↑
+↑
 application services
-  ↑
+↑
 API and workers
-  ↑
+↑
 infrastructure adapters
 
 Provider-specific code must remain isolated inside provider adapter packages.
@@ -1035,14 +1035,14 @@ Unit tests
 
 Cover:
 
-* State-transition rules
-* Retry classification
-* Provider error normalization
-* Event normalization
-* Idempotency-key generation
-* Job payload validation
-* Rate-limit configuration
-* Message eligibility checks
+- State-transition rules
+- Retry classification
+- Provider error normalization
+- Event normalization
+- Idempotency-key generation
+- Job payload validation
+- Rate-limit configuration
+- Message eligibility checks
 
 Integration tests
 
@@ -1050,16 +1050,16 @@ Use real PostgreSQL and Redis or Valkey test containers where practical.
 
 Cover:
 
-* Transactional outbox publishing
-* Duplicate API requests
-* Duplicate webhook events
-* Job retry behavior
-* Worker idempotency
-* Concurrent outbox publishers
-* Scheduled-message activation
-* Campaign batch activation
-* Cancellation races
-* Out-of-order delivery events
+- Transactional outbox publishing
+- Duplicate API requests
+- Duplicate webhook events
+- Job retry behavior
+- Worker idempotency
+- Concurrent outbox publishers
+- Scheduled-message activation
+- Campaign batch activation
+- Cancellation races
+- Out-of-order delivery events
 
 End-to-end tests
 
@@ -1105,59 +1105,59 @@ Phase 1 — Foundation
 
 Deliver:
 
-* Repository structure
-* Typed configuration
-* PostgreSQL connection
-* Redis or Valkey connection
-* BullMQ queue definitions
-* Base migrations
-* Fastify health endpoints
-* Structured logging
+- Repository structure
+- Typed configuration
+- PostgreSQL connection
+- Redis or Valkey connection
+- BullMQ queue definitions
+- Base migrations
+- Fastify health endpoints
+- Structured logging
 
 Phase 2 — Outbound dispatch
 
 Deliver:
 
-* Message submission API
-* Transactional outbox
-* Outbox publisher
-* Dispatch worker
-* Provider abstraction
-* Infobip adapter
-* Attempts and retry classification
-* Idempotent sending
+- Message submission API
+- Transactional outbox
+- Outbox publisher
+- Dispatch worker
+- Provider abstraction
+- Infobip adapter
+- Attempts and retry classification
+- Idempotent sending
 
 Phase 3 — Provider events
 
 Deliver:
 
-* Infobip webhook endpoints
-* Raw webhook persistence
-* Event deduplication
-* Event-processing worker
-* Message event history
-* Controlled state transitions
+- Infobip webhook endpoints
+- Raw webhook persistence
+- Event deduplication
+- Event-processing worker
+- Message event history
+- Controlled state transitions
 
 Phase 4 — Scheduling and campaigns
 
 Deliver:
 
-* Scheduled-message activation
-* Campaign batching
-* Campaign pause and cancellation
-* Tenant-aware dispatch controls
+- Scheduled-message activation
+- Campaign batching
+- Campaign pause and cancellation
+- Tenant-aware dispatch controls
 
 Phase 5 — Operations
 
 Deliver:
 
-* Dead-letter handling
-* Manual replay
-* Reconciliation worker
-* Bull Board
-* Metrics
-* Retention jobs
-* Operational documentation
+- Dead-letter handling
+- Manual replay
+- Reconciliation worker
+- Bull Board
+- Metrics
+- Retention jobs
+- Operational documentation
 
 ⸻
 
@@ -1188,21 +1188,21 @@ The implementation is accepted when all of the following are true:
 
 Do not implement during this scope:
 
-* Visual campaign editor
-* Contact-list management
-* Email template designer
-* AI content generation
-* Full billing and invoicing
-* Kafka or Redpanda
-* ClickHouse analytics
-* Temporal workflows
-* Multiple provider-routing optimization
-* Cross-region active-active deployment
-* Exactly-once delivery guarantees
-* Full customer-facing analytics dashboards
-* Provider cost optimization
-* Advanced workflow branching
-* Machine-learning delivery optimization
+- Visual campaign editor
+- Contact-list management
+- Email template designer
+- AI content generation
+- Full billing and invoicing
+- Kafka or Redpanda
+- ClickHouse analytics
+- Temporal workflows
+- Multiple provider-routing optimization
+- Cross-region active-active deployment
+- Exactly-once delivery guarantees
+- Full customer-facing analytics dashboards
+- Provider cost optimization
+- Advanced workflow branching
+- Machine-learning delivery optimization
 
 The design must leave room for these features without prematurely implementing them.
 
@@ -1233,13 +1233,13 @@ When implementing this project:
 
 For every implementation phase, provide:
 
-* Files created or modified
-* Architectural decisions
-* Database changes
-* Environment variables
-* Commands to run
-* Tests added
-* Remaining limitations
-* Next implementation step
+- Files created or modified
+- Architectural decisions
+- Database changes
+- Environment variables
+- Commands to run
+- Tests added
+- Remaining limitations
+- Next implementation step
 
 This can also be reduced into a shorter system prompt plus separate technical specification for lower Claude API token consumption.

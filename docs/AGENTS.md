@@ -9,12 +9,14 @@ Guidance for AI coding agents working in this repository. Read this before makin
 ## What this is
 
 Marketing website **and** authenticated campaign-workspace UI for **Maildrill**, a multichannel
-messaging workspace (email, SMS, WhatsApp, voice). Astro 5, static-first, with React 19 islands,
+messaging workspace (email, SMS, WhatsApp, voice). Astro 7 — static-first marketing plus
+SSR app/auth/api routes via `@astrojs/node` (standalone) — with React 19 islands,
 plus the nested `workers/` Fastify backend. See [`../README.md`](../README.md) / `PRODUCT.md` for architecture.
 
 ## Stack
 
-- **Astro 5** (static-first, islands) · **React 19** islands · **TypeScript** (strict)
+- **Astro 7** (static-first marketing; app routes opt into SSR with `export const prerender = false`;
+  `@astrojs/node` standalone adapter) · **React 19** islands · **TypeScript** (strict)
 - Hand-authored CSS + design tokens (`src/styles/tokens.css`) — reuse tokens, never scatter raw hex
 - Content Collections + Zod (`src/content.config.ts`)
 - **pnpm** workspaces at the repo root (`packages/*` email editor + `workers` / `workers/{packages,apps}/*`) · Vitest + Playwright
@@ -38,17 +40,18 @@ pnpm --filter workers dev   # product-api :3001 + messaging + workers
 
 # Or both from the repo root (workers first, then Astro once :3001 is up):
 pnpm dev:all
-```
 
-Shell note: the dev environment is **Windows PowerShell** — chain commands with `;`, not `&&`.
+# Full stack in containers (web + workers + Postgres + Redis):
+docker compose up --build
+```
 
 ## Verification gates (important)
 
 - **`npm run check` (astro check) is the authoritative type gate — it must be 0 errors.**
 - **`npm run build` must pass** (it compiles the vendored email-builder from source).
-- `tsc --noEmit` currently reports ~160 **pre-existing** errors, almost all inside the vendored
-  editor packages (`verbatimModuleSyntax` type-only import nits, MUI prop typings). These are **not
-  introduced by your change** — do not try to "fix" them wholesale. When verifying, confirm your
+- `tsc --noEmit` currently reports ~460 **pre-existing** errors, all but a handful inside the
+  vendored editor packages (`verbatimModuleSyntax` type-only import nits, MUI prop typings). These
+  are **not introduced by your change** — do not try to "fix" them wholesale. When verifying, confirm your
   edited files add **no new** errors and that `astro check` + `build` are green.
 
 Always run `astro check` and `build` after changes. Write/run tests for new behavior.
@@ -67,7 +70,7 @@ Always run `astro check` and `build` after changes. Write/run tests for new beha
 src/
   components/{navigation,react,seo,ui}   # React islands live in react/
   config/ content/ layouts/ lib/ pages/ styles/ types/
-  middleware.ts                          # auth gate for /app + /dashboard
+  middleware.ts                          # auth gate for /dashboard (Auth.js session)
 packages/
   email-builder-standalone/              # vendored visual email editor (compiled from source)
   email-builder/ document-core/ block-*/ # editor sub-packages
@@ -115,10 +118,11 @@ The visual editor is **vendored and compiled from source**, wrapped by
 
 ## Local development caveats
 
-- **Auth is mocked / being reworked.** `getSession` (auth-astro) in `src/middleware.ts` throws
-  "problem with the server configuration" without `AUTH_SECRET`. For isolated builder work, set
-  `SKIP_AUTH_FOR_BUILDER_WORK=true` in a local `.env` (gitignored) to bypass the session check on
-  `/app` + `/dashboard`. **This bypass must never be committed.**
+- **Auth is real (passwordless login code, allowlisted during the private rollout — see
+  `PRODUCT.md` §1.5).** `getSession` (auth-astro) in `src/middleware.ts` throws "problem with the
+  server configuration" without `AUTH_SECRET`; unauthenticated visits to `/dashboard/*` redirect
+  to `/login`. Logging in locally needs the workers backend running (code storage + verify live in
+  Postgres).
 - `/api/v1/*` calls (e.g. `custom-fields`) return **401** without a real session — callers handle
   this gracefully (they're wrapped in try/catch); it's benign console noise, not a failure.
 - `about:srcdoc` console messages ("Blocked script execution" / "can escape its sandboxing") come
@@ -136,5 +140,4 @@ The visual editor is **vendored and compiled from source**, wrapped by
 - `main` is protected — don't push directly or force-push it.
 - Isolated editor work happens on `work/email-builder-isolated`.
 - Commit only when asked; stage specific files (never blanket `git add .` that could sweep in
-  `.env` or the auth bypass). Conventional-commit style messages (`feat(...)`, `fix(...)`).
-- Never commit `src/middleware.ts`'s `SKIP_AUTH_FOR_BUILDER_WORK` bypass.
+  `.env`). Conventional-commit style messages (`feat(...)`, `fix(...)`).

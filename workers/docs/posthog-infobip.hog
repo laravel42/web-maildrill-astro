@@ -255,10 +255,15 @@ for (let raw in results) {
         doneAt := raw.sentAt
     }
 
-    // WhatsApp/Viber seen payloads have seenAt but no status object — stamp SEEN
-    // so insert_id / HogQL diagnostics aren't blank, and the delivery poller can
-    // treat message_seen_report as an open without relying on status_group.
-    if (kind == 'engagement') {
+    // WhatsApp/Viber seen payloads have seenAt but no status object. They are
+    // pushed to the SAME per-send notifyUrl as DLRs (Infobip has no separate
+    // seen URL on the send APIs), so they arrive on the ?kind=delivery URL —
+    // the kind param alone cannot route them. Classify per result by payload
+    // shape and stamp SEEN so insert_id / HogQL diagnostics aren't blank and
+    // the delivery poller can treat message_seen_report as an open.
+    let resultEvent := eventName
+    if (kind == 'engagement' or (kind == 'delivery' and empty(statusObj.groupName) and not empty(raw.seenAt))) {
+        resultEvent := 'message_seen_report'
         if (empty(statusGroup)) {
             statusGroup := 'SEEN'
         }
@@ -311,7 +316,7 @@ for (let raw in results) {
     }
 
     let ev := {
-        'event': eventName,
+        'event': resultEvent,
         'distinct_id': distinctId,
         'properties': {
             '$insert_id': insertId,
