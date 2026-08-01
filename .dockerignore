@@ -1,0 +1,24 @@
+# Dependencies and build output are produced inside the image.
+node_modules
+**/node_modules
+dist
+.astro
+**/.astro
+
+# Never bake secrets into layers; env_file/build args supply them.
+.env
+.env.*
+!.env.example
+
+.git
+.github
+.vscode
+.claude
+
+coverage
+playwright-report
+test-results
+
+Dockerfile
+docker-compose.yml
+deploy

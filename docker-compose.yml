@@ -1,0 +1,122 @@
+# Full Maildrill stack: Astro SSR (web) + unified Fastify/BullMQ backend
+# (workers) + Postgres + Redis.
+#
+#   docker compose up --build
+#     web     → http://localhost:4321
+#     workers → http://localhost:3001   (product/messaging/email-builder APIs + /webhooks/*)
+#
+# Secrets (AUTH_SECRET, JWT_SECRET, INFOBIP_*, SMTP_*) come from the repo-root
+# `.env` (see .env.example) via env_file. JWT_SECRET must match between web and
+# workers — web mints tenant JWTs, product-api verifies them. Values set under
+# `environment:` below override `.env` so the in-network URLs always win.
+#
+# The containers run NODE_ENV=production, and workers/packages/config refuses
+# to boot with empty or change-me* values for JWT_SECRET and
+# WEBHOOK_INFOBIP_SECRET — set both in `.env` (openssl rand -base64 32).
+#
+# workers/docker-compose.yml (db-only, `pnpm db:up`) stays for plain local dev;
+# this file is the whole stack. Neither publishes conflicting ports.
+
+name: maildrill
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: maildrill
+      POSTGRES_PASSWORD: maildrill
+      POSTGRES_DB: maildrill
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U maildrill']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  workers:
+    image: maildrill-app
+    build: &app-build
+      context: .
+      args:
+        API_BASE_URL: http://workers:3001
+        PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-}
+        PUBLIC_POSTHOG_PROJECT_TOKEN: ${PUBLIC_POSTHOG_PROJECT_TOKEN:-}
+    command: sh -c "pnpm --dir workers db:migrate && exec pnpm --dir workers start"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://maildrill:maildrill@postgres:5432/maildrill
+      REDIS_URL: redis://redis:6379
+      PRODUCT_API_PORT: '3001'
+      # Public URL used in magic links / emails; defaults to the local web port.
+      APP_URL: ${PUBLIC_SITE_URL:-http://localhost:4321}
+    ports:
+      - '3001:3001'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3001/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+
+  web:
+    image: maildrill-app
+    build: *app-build
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: '4321'
+      # Runtime override for code paths that read process.env (eb-proxy); the
+      # same value is baked into the SSR bundle at image build time.
+      API_BASE_URL: http://workers:3001
+    ports:
+      - '4321:4321'
+    depends_on:
+      workers:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4321/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
