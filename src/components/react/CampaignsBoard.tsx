@@ -108,6 +108,8 @@ export default function CampaignsBoard({
         channel: ChannelType;
         name: string;
         subject: string;
+        trackOpens: boolean;
+        trackClicks: boolean;
         audienceIds: string[];
         templateId: string | null;
         message: string;
@@ -318,6 +320,8 @@ export default function CampaignsBoard({
         channel: c.channel,
         name: c.name,
         subject: '',
+        trackOpens: false,
+        trackClicks: false,
         audienceIds: [],
         templateId: null,
         message: '',
@@ -328,13 +332,21 @@ export default function CampaignsBoard({
     }
     try {
       const full = await api.get<ApiCampaign>(`campaigns/${c.id}`);
-      const content = (full.content ?? {}) as { text?: string; subject?: string };
+      const content = (full.content ?? {}) as {
+        text?: string;
+        subject?: string;
+        trackOpens?: unknown;
+        trackClicks?: unknown;
+      };
       setWizard({
         mode: 'edit',
         id: c.id,
         channel: (full.channel as ChannelType) ?? c.channel,
         name: full.name,
         subject: typeof content.subject === 'string' ? content.subject : '',
+        // Absent on pre-flag campaigns → treated as on, matching the provider.
+        trackOpens: content.trackOpens !== false,
+        trackClicks: content.trackClicks !== false,
         audienceIds: audienceIdsFromApiCampaign(full),
         templateId: full.templateId ?? null,
         message: typeof content.text === 'string' ? content.text : '',
@@ -885,6 +897,8 @@ export default function CampaignsBoard({
           initialChannel={wizard.mode === 'edit' ? wizard.channel : 'email'}
           initialName={wizard.mode === 'edit' ? wizard.name : ''}
           initialSubject={wizard.mode === 'edit' ? wizard.subject : ''}
+          initialTrackOpens={wizard.mode === 'edit' ? wizard.trackOpens : undefined}
+          initialTrackClicks={wizard.mode === 'edit' ? wizard.trackClicks : undefined}
           initialAudienceIds={wizard.mode === 'edit' ? wizard.audienceIds : []}
           initialTemplateId={wizard.mode === 'edit' ? wizard.templateId : null}
           initialMessage={wizard.mode === 'edit' ? wizard.message : ''}
@@ -1212,11 +1226,11 @@ function CampaignDrawer({
           </div>
 
           {showReport ? (
-            <div className={styles.drawerKpis}>
+            <div className={`adrawer__kpis ${styles.drawerKpis}`}>
               {kpis.map((k) => (
-                <div key={k.label} className={styles.drawerKpi}>
-                  <div className={styles.drawerKpiLbl}>{k.label}</div>
-                  <div className={`tnum ${styles.drawerKpiVal}`} style={{ color: k.color }}>
+                <div key={k.label} className="adrawer__kpi">
+                  <div className="adrawer__kpi-k">{k.label}</div>
+                  <div className="tnum adrawer__kpi-v" style={{ color: k.color }}>
                     {k.value}
                   </div>
                   <Sparkline series={k.series} color={k.color} format={k.format} height={28} />

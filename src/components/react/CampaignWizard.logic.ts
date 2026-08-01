@@ -214,7 +214,7 @@ export type WizardValidationInput = {
 /** Whether Continue / Send should be disabled (includes schedule validity without a user-facing message). */
 export function isWizardStepBlocked(input: WizardValidationInput): boolean {
   if (getStepBlockedReason(input) !== null) return true;
-  if (input.step === 4 && input.schedule === 'later') {
+  if (input.step === 5 && input.schedule === 'later') {
     return !isScheduledInFuture(input.scheduledDate, input.scheduledTime);
   }
   return false;
@@ -249,9 +249,9 @@ export function getStepBlockedReason(input: WizardValidationInput): string | nul
         return 'Write a message or choose a template to continue.';
       }
       return null;
-    case 4:
-      return null;
-    case 5:
+    // 4 (tracking) and 5 (schedule) have no text-blocking conditions; the
+    // schedule step's time validity gates via isWizardStepBlocked only.
+    case 6:
       return getCampaignSendBlockedReason(input);
     default:
       return null;
@@ -285,9 +285,89 @@ export function buildStepDefs(contentSub: string): [string, string][] {
     ['Sender', 'Basics'],
     ['Audience', 'Choose recipients'],
     ['Content', contentSub],
+    ['Tracking', 'Engagement options'],
     ['Schedule', 'Set delivery'],
     ['Review', 'Check everything'],
   ];
+}
+
+/* ---------------------------------------------------------------------------
+ * Tracking step (step 4)
+ * ------------------------------------------------------------------------- */
+
+export type TrackingCapability = {
+  enabled: boolean;
+  /** What the mechanism does here — or why it doesn't apply on this channel. */
+  note: string;
+};
+
+export type TrackingCapabilities = {
+  opens: TrackingCapability;
+  clicks: TrackingCapability;
+};
+
+/**
+ * What each channel can actually measure, mirroring the provider adapter:
+ * email embeds an open pixel and rewrites links; SMS/WhatsApp shorten and
+ * track links only (WhatsApp read receipts come from the channel itself);
+ * voice has nothing to instrument.
+ */
+export function trackingCapabilities(channel: ChannelType): TrackingCapabilities {
+  switch (channel) {
+    case 'email':
+      return {
+        opens: {
+          enabled: true,
+          note: 'A transparent 1×1 pixel is embedded in the message and loads when it is opened.',
+        },
+        clicks: {
+          enabled: true,
+          note: 'Every link is rewritten through your tracking domain to record the click before redirecting.',
+        },
+      };
+    case 'sms':
+      return {
+        opens: {
+          enabled: false,
+          note: 'Not available for SMS — a text message can’t embed a tracking pixel.',
+        },
+        clicks: {
+          enabled: true,
+          note: 'Links in the message are shortened and routed through your tracking domain.',
+        },
+      };
+    case 'whatsapp':
+      return {
+        opens: {
+          enabled: false,
+          note: 'Not needed on WhatsApp — read receipts arrive from the channel itself.',
+        },
+        clicks: {
+          enabled: true,
+          note: 'Links are shortened and routed through your tracking domain to record taps.',
+        },
+      };
+    case 'voice':
+      return {
+        opens: { enabled: false, note: 'Not available for voice — calls carry no pixel.' },
+        clicks: { enabled: false, note: 'Not available for voice — calls carry no links.' },
+      };
+  }
+}
+
+/** Human summary of the effective tracking choice ("Opens & Clicks" … "Off"). */
+export function trackingSummary(
+  channel: ChannelType,
+  trackOpens: boolean,
+  trackClicks: boolean,
+): string | null {
+  const caps = trackingCapabilities(channel);
+  if (!caps.opens.enabled && !caps.clicks.enabled) return null;
+  const on = [
+    caps.opens.enabled && trackOpens ? 'Opens' : null,
+    caps.clicks.enabled && trackClicks ? 'Clicks' : null,
+  ].filter(Boolean);
+  return on.length > 0 ? on.join(' & ') : 'Off';
 }
 
 /** One row in the review-step summary — text or structured channel/audience. */
@@ -307,6 +387,7 @@ export function buildReviewRows(
   scheduledDate: ScheduleDate,
   scheduledTime: ScheduleTime,
   senders?: ChannelSenders,
+  tracking?: { trackOpens: boolean; trackClicks: boolean },
 ): ReviewRow[] {
   const isEmail = channel === 'email';
   const sender = channelSender(channel, senders);
@@ -327,5 +408,12 @@ export function buildReviewRows(
   ];
   // Email carries a subject line; show it just under the campaign name.
   if (isEmail) rows.splice(1, 0, { label: 'Subject', kind: 'text', value: subject.trim() || '—' });
+  // Channels that can track anything get a Tracking row (voice never does).
+  const summary = tracking
+    ? trackingSummary(channel, tracking.trackOpens, tracking.trackClicks)
+    : null;
+  if (summary) {
+    rows.splice(isEmail ? 2 : 1, 0, { label: 'Tracking', kind: 'text', value: summary });
+  }
   return rows;
 }

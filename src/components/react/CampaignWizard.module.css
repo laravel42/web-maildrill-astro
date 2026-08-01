@@ -631,3 +631,153 @@
   color: var(--accent-text);
   border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border2));
 }
+
+/* ---------- Step 4: engagement tracking ---------- */
+.trackList {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.trackCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 15px 16px;
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  background: var(--surface);
+  transition:
+    border-color var(--motion),
+    background var(--motion);
+}
+.trackCardOn {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border2));
+  background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+}
+.trackCardDisabled {
+  background: color-mix(in srgb, var(--muted2) 8%, var(--surface));
+}
+.trackCardIcon {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: var(--accent-tint);
+  color: var(--accent-text);
+}
+.trackCardDisabled .trackCardIcon {
+  background: color-mix(in srgb, var(--muted2) 22%, transparent);
+  color: var(--muted);
+}
+.trackCardBody {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+.trackCardTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+.trackCardDisabled .trackCardTitle {
+  color: var(--text2);
+}
+.trackCardNote {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text2);
+}
+.trackCard .switch {
+  margin-top: 6px;
+}
+/* Same switch as list settings (AppListDetail) so toggles read identically app-wide. */
+.switch {
+  width: 38px;
+  height: 22px;
+  flex: none;
+  padding: 2px;
+  border: 0;
+  border-radius: 99px;
+  background: var(--muted2);
+  cursor: pointer;
+  transition: background var(--motion);
+}
+.switch.isOn {
+  background: var(--accent);
+}
+.switch:disabled {
+  background: var(--border2);
+  cursor: not-allowed;
+}
+.switchKnob {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(30, 27, 22, 0.28);
+  transition: transform var(--motion);
+}
+.switch.isOn .switchKnob {
+  transform: translateX(16px);
+}
+.trackCallout {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--warning) 34%, var(--border2));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--warning) 7%, var(--surface));
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text2);
+}
+.trackCalloutIcon {
+  flex: none;
+  margin-top: 1px;
+  color: var(--warning-strong);
+}
+.trackCalloutTitle {
+  font-weight: 600;
+  color: var(--text);
+}
+/* Effective-choice readout: a stateful strip, not a footnote. Green when the
+   campaign sends clean (the deliverability-positive state), accent when
+   engagement will be recorded. */
+.trackStatus {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 12px 0 0;
+  padding: 11px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.trackStatusClean {
+  border: 1px solid color-mix(in srgb, var(--success) 32%, var(--border2));
+  background: color-mix(in srgb, var(--success) 7%, var(--surface));
+  color: var(--success-text);
+}
+.trackStatusOn {
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border2));
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  color: var(--accent-text);
+}
+.trackStatusIcon {
+  flex: none;
+  display: inline-flex;
+}
+.trackEmpty {
+  padding: 14px 16px;
+  border: 1px dashed var(--border2);
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text2);
+}

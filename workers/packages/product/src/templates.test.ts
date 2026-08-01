@@ -80,6 +80,23 @@ describe('resolveMessageContent merge tags', () => {
     expect(out.text).toBe('override Jane');
   });
 
+  it('passes email tracking opt-outs through to message content (false survives)', () => {
+    const out = resolveMessageContent(
+      tpl({ html: '<p>Hi</p>' }),
+      jane,
+      { subject: 'S', trackOpens: false, trackClicks: true },
+      'email',
+    );
+    expect(out.trackOpens).toBe(false);
+    expect(out.trackClicks).toBe(true);
+  });
+
+  it('leaves tracking keys absent when the campaign never set them (legacy drafts)', () => {
+    const out = resolveMessageContent(tpl({ html: '<p>Hi</p>' }), jane, { subject: 'S' }, 'email');
+    expect('trackOpens' in out).toBe(false);
+    expect('trackClicks' in out).toBe(false);
+  });
+
   it('resolves approved WhatsApp template placeholders per recipient', () => {
     const out = resolveMessageContent(
       tpl({

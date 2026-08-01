@@ -150,12 +150,41 @@ type InfobipEmailWebhooks = {
 };
 
 /** Email open/click tracking (`options.tracking` on `/email/4/messages`). */
-type InfobipEmailTracking = {
+export type InfobipEmailTracking = {
   track: boolean;
   trackOpens: boolean;
   trackClicks: boolean;
-  trackingUrl: string;
+  /** Omitted on explicit opt-outs — there is nothing to call back about. */
+  trackingUrl?: string;
 };
+
+/**
+ * Per-message tracking options from campaign flags riding the message content
+ * (`trackOpens` / `trackClicks`; absent = on, matching Infobip's domain-level
+ * default). Pure and exported for tests.
+ *
+ * Both off returns an explicit `track: false` block — merely omitting
+ * `options.tracking` would leave the sending domain's default (tracking ON)
+ * in charge, and the whole point of the opt-out is deliverability: no open
+ * pixel, no links rewritten through the tracking subdomain.
+ */
+export function resolveEmailTracking(
+  content: Record<string, unknown>,
+  trackingUrl: string,
+): InfobipEmailTracking | undefined {
+  const trackOpens = content.trackOpens !== false;
+  const trackClicks = content.trackClicks !== false;
+  if (!trackOpens && !trackClicks) {
+    return { track: false, trackOpens: false, trackClicks: false };
+  }
+  if (!trackingUrl) {
+    // No engagement callback configured: stamp only explicit downgrades so
+    // flag-less sends keep today's behavior (domain-level settings apply).
+    if (!trackOpens || !trackClicks) return { track: true, trackOpens, trackClicks };
+    return undefined;
+  }
+  return { track: true, trackOpens, trackClicks, trackingUrl };
+}
 
 /** SMS / WhatsApp URL shorten + click tracking. */
 type InfobipUrlOptions = {
@@ -336,19 +365,20 @@ export class InfobipProvider implements MessagingProvider {
     return config.infobip.trackingUrl.trim();
   }
 
-  private emailTrackingOptions(): InfobipEmailTracking | undefined {
-    const trackingUrl = this.trackingUrl();
-    if (!trackingUrl) return undefined;
-    return {
-      track: true,
-      trackOpens: true,
-      trackClicks: true,
-      trackingUrl,
-    };
+  private emailTrackingOptions(content: Record<string, unknown>): InfobipEmailTracking | undefined {
+    return resolveEmailTracking(content, this.trackingUrl());
   }
 
-  /** Only stamp urlOptions when the body has a URL Infobip can shorten/track. */
-  private urlOptionsForText(text: string): InfobipUrlOptions | undefined {
+  /**
+   * Only stamp urlOptions when the body has a URL Infobip can shorten/track
+   * and the campaign didn't opt out of click tracking (content.trackClicks
+   * === false; absent = on, matching email semantics).
+   */
+  private urlOptionsForText(
+    text: string,
+    content: Record<string, unknown>,
+  ): InfobipUrlOptions | undefined {
+    if (content.trackClicks === false) return undefined;
     const trackingUrl = this.trackingUrl();
     if (!trackingUrl) return undefined;
     if (!/https?:\/\//i.test(text)) return undefined;
@@ -437,7 +467,7 @@ export class InfobipProvider implements MessagingProvider {
     // Empty notifyUrl → omit delivery so portal subscription settings apply.
     const notifyUrl = config.infobip.notifyUrl.trim();
     if (notifyUrl) webhooks.delivery = { url: notifyUrl, notify: true };
-    const tracking = this.emailTrackingOptions();
+    const tracking = this.emailTrackingOptions(c);
     return {
       messages: [
         {
@@ -456,7 +486,7 @@ export class InfobipProvider implements MessagingProvider {
     const c = input.content;
     const from = str(c.from) ?? (config.infobip.smsFrom || 'Maildrill');
     const text = str(c.text) ?? '';
-    const urlOptions = this.urlOptionsForText(text);
+    const urlOptions = this.urlOptionsForText(text, c);
     return {
       messages: [
         {
@@ -478,7 +508,7 @@ export class InfobipProvider implements MessagingProvider {
     const text = str(c.text) ?? '';
     const content: InfobipWhatsAppTextContent = { text };
     if (c.previewUrl === true) content.previewUrl = true;
-    const urlOptions = this.urlOptionsForText(text);
+    const urlOptions = this.urlOptionsForText(text, c);
     return {
       from: phoneSender(c.from, config.infobip.whatsappFrom),
       to: e164Digits(input.to),
@@ -528,16 +558,18 @@ export class InfobipProvider implements MessagingProvider {
     const placeholders = Array.isArray(c.placeholders)
       ? c.placeholders.map((p) => str(p) ?? String(p ?? ''))
       : [];
-    // Template bodies can embed URLs Infobip shortens when urlOptions is set.
+    // Template bodies can embed URLs Infobip shortens when urlOptions is set —
+    // unless the campaign opted out of click tracking.
     const trackingUrl = this.trackingUrl();
-    const urlOptions: InfobipUrlOptions | undefined = trackingUrl
-      ? {
-          shortenUrl: true,
-          trackClicks: true,
-          trackingUrl,
-          removeProtocol: true,
-        }
-      : undefined;
+    const urlOptions: InfobipUrlOptions | undefined =
+      trackingUrl && c.trackClicks !== false
+        ? {
+            shortenUrl: true,
+            trackClicks: true,
+            trackingUrl,
+            removeProtocol: true,
+          }
+        : undefined;
     return {
       messages: [
         {

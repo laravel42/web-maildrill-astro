@@ -263,6 +263,11 @@ const MESSAGE_CONTENT_KEYS = [
   'text',
   'from',
   'preheader',
+  // Email open/click tracking opt-outs chosen in the campaign wizard
+  // (`false` disables; absent = provider default). Booleans survive the
+  // empty-value filter below.
+  'trackOpens',
+  'trackClicks',
   // Voice TTS language / voice selection (ignored by email/SMS builders).
   'language',
   'voiceName',

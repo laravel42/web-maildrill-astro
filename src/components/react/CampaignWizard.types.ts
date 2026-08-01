@@ -1,7 +1,7 @@
 import type { ChannelSenders } from '@/lib/app/channel-senders';
 import type { ChannelType, TemplateApprovalStatus } from '@/types/app';
 
-export type Step = 1 | 2 | 3 | 4 | 5;
+export type Step = 1 | 2 | 3 | 4 | 5 | 6;
 export type Schedule = 'now' | 'later';
 
 /**
@@ -74,6 +74,9 @@ export type Props = {
   initialName?: string; // default '' (create) or the campaign name (edit)
   /** Saved email subject of the campaign being edited (email channel only). */
   initialSubject?: string;
+  /** Saved email open/click tracking flags (email channel only; default on). */
+  initialTrackOpens?: boolean;
+  initialTrackClicks?: boolean;
   /** Saved audiences of the campaign being edited (list and/or segment ids). */
   initialAudienceIds?: string[];
   /** Saved template of the campaign being edited. */

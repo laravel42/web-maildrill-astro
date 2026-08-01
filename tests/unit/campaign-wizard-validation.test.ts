@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  getStepBlockedReason,
-  isWizardStepBlocked,
-} from '@/components/react/CampaignWizard.logic';
+import { getStepBlockedReason, isWizardStepBlocked } from '@/components/react/CampaignWizard.logic';
 import type { WizardValidationInput } from '@/components/react/CampaignWizard.logic';
 
 const base: Omit<WizardValidationInput, 'step'> = {
@@ -56,12 +53,18 @@ describe('getStepBlockedReason', () => {
     expect(getStepBlockedReason({ ...sms, step: 3, message: 'Hi there' })).toBeNull();
   });
 
-  it('blocks step 4 without a message when schedule is in the past', () => {
-    expect(getStepBlockedReason({ ...base, step: 4, schedule: 'now' })).toBeNull();
+  it('never blocks the tracking step (step 4) — toggles are optional', () => {
+    expect(getStepBlockedReason({ ...base, step: 4 })).toBeNull();
+    expect(isWizardStepBlocked({ ...base, step: 4 })).toBe(false);
+    expect(getStepBlockedReason({ ...base, step: 4, channel: 'voice' })).toBeNull();
+  });
+
+  it('blocks step 5 without a message when schedule is in the past', () => {
+    expect(getStepBlockedReason({ ...base, step: 5, schedule: 'now' })).toBeNull();
     expect(
       getStepBlockedReason({
         ...base,
-        step: 4,
+        step: 5,
         schedule: 'later',
         scheduledDate: '2020-01-01',
         scheduledTime: '09:00',
@@ -70,7 +73,7 @@ describe('getStepBlockedReason', () => {
     expect(
       isWizardStepBlocked({
         ...base,
-        step: 4,
+        step: 5,
         schedule: 'later',
         scheduledDate: '2020-01-01',
         scheduledTime: '09:00',
@@ -79,7 +82,7 @@ describe('getStepBlockedReason', () => {
     expect(
       isWizardStepBlocked({
         ...base,
-        step: 4,
+        step: 5,
         schedule: 'later',
         scheduledDate: '2099-06-15',
         scheduledTime: '09:00',
@@ -87,10 +90,10 @@ describe('getStepBlockedReason', () => {
     ).toBe(false);
   });
 
-  it('reuses send guard on step 5 in live create mode', () => {
+  it('reuses send guard on step 6 in live create mode', () => {
     expect(
-      getStepBlockedReason({ ...base, step: 5, audienceIds: new Set(), selTpl: null }),
+      getStepBlockedReason({ ...base, step: 6, audienceIds: new Set(), selTpl: null }),
     ).toMatch(/audience before sending/i);
-    expect(getStepBlockedReason({ ...base, step: 5, mode: 'edit' })).toBeNull();
+    expect(getStepBlockedReason({ ...base, step: 6, mode: 'edit' })).toBeNull();
   });
 });
