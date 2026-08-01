@@ -1,12 +1,13 @@
 import type { APIRoute } from 'astro';
-import { sendSignupNotification, sendWelcomeEmail } from '@/lib/server/mail/send';
+import { sendSignupNotification } from '@/lib/server/mail/send';
 import { getPostHogServer } from '@/lib/posthog-server';
 
 export const prerender = false;
 
 /**
- * On sign-up: email the subscriber the welcome email AND notify the team
- * (SIGNUP_NOTIFY_TO) with the submitted details. Both are in-repo over SMTP.
+ * On sign-up: notify the team (SIGNUP_NOTIFY_TO) with the submitted details,
+ * in-repo over SMTP. The user-facing welcome email is NOT sent here — the
+ * backend sends it when the first verified code creates the account.
  * Fire-and-forget: always 202 so the sign-up UX doesn't wait on delivery. No
  * address enumeration.
  */
@@ -26,7 +27,6 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 
-  void sendWelcomeEmail(email, firstName).catch(() => undefined);
   void sendSignupNotification({ email, firstName, lastName }).catch(() => undefined);
 
   const posthog = getPostHogServer();

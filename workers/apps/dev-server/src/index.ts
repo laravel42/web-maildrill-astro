@@ -11,6 +11,7 @@ import { messagingRoutes } from '../../api/src/server';
 import { productRoutes } from '../../product-api/src/server';
 import {
   startCampaignDeliveryPoller,
+  startCloudflareEmailEventsPoller,
   startDispatchWorker,
   startEventsWorker,
   startMaintenance,
@@ -153,6 +154,7 @@ if (process.env.DEV_WORKERS !== '0') {
     startMaintenance(),
     startTemplateApprovalPoller(),
     startCampaignDeliveryPoller(),
+    startCloudflareEmailEventsPoller(),
   );
   logger.info({ provider: config.provider.driver }, 'dev-server workers started');
 }

@@ -9,6 +9,7 @@ export * from './retry';
 export * from './messages';
 export * from './templates-approval';
 export * from './campaign-delivery';
+export * from './cloudflare-events';
 export * from './maintenance';
 export * from './admin';
 export * from './tenants';

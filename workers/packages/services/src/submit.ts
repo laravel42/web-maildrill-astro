@@ -41,7 +41,11 @@ async function findByIdempotencyKey(
  * commit — never after provider delivery. Idempotent on (tenant, key).
  */
 export async function submitMessage(input: SubmitMessageInput): Promise<SubmitResult> {
-  const provider = input.provider ?? config.provider.driver;
+  // Email may ride a different driver (PROVIDER_EMAIL_DRIVER, e.g. Cloudflare
+  // Email Service) than the phone channels; the driver is stamped per message.
+  const provider =
+    input.provider ??
+    (input.channel === 'email' ? config.provider.emailDriver : config.provider.driver);
   const correlationId = input.correlationId ?? randomUUID();
 
   if (input.idempotencyKey) {

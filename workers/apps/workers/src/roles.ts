@@ -3,12 +3,14 @@ import { createLogger, emitAppCommand, metrics } from '@maildrill/observability'
 import { createWorker, getQueue, QUEUE_NAMES } from '@maildrill/queues';
 import {
   activateDueMessages,
+  cloudflareEventsConfigured,
   expireStalledDeliveries,
   handleDispatch,
   pollCampaignDelivery,
   pollPendingWhatsAppTemplates,
   processWebhookEvent,
   publishOutbox,
+  pullCloudflareEmailEvents,
   purgeProcessedWebhooks,
   recoverStalledMessages,
 } from '@maildrill/services';
@@ -152,6 +154,33 @@ export function startTemplateApprovalPoller(): StopFn {
       }
       if (result.checked > 0) {
         return `checked=${result.checked} updated=0`;
+      }
+      return undefined;
+    },
+    log,
+  );
+}
+
+/**
+ * Poller: pull Cloudflare Email Sending lifecycle events (delivered/bounced/…)
+ * from their event-subscription queue into the webhook intake. No-ops unless
+ * CLOUDFLARE_EVENTS_QUEUE_ID (and a token) is configured.
+ */
+export function startCloudflareEmailEventsPoller(): StopFn {
+  const log = createLogger({ worker: 'cloudflare-email-events' });
+  if (!cloudflareEventsConfigured()) {
+    log.debug('cloudflare email events poller disabled (CLOUDFLARE_EVENTS_QUEUE_ID unset)');
+    return async () => {};
+  }
+  recordWorkerStart('worker:cloudflare-email-events');
+  return startPoller(
+    'cloudflare-email-events',
+    config.cloudflare.eventsPollIntervalMs,
+    async () => {
+      const result = await pullCloudflareEmailEvents();
+      if (result.pulled > 0) {
+        log.info(result, 'pulled cloudflare email events');
+        return `pulled=${result.pulled} ingested=${result.ingested} dup=${result.duplicates} failed=${result.failed}`;
       }
       return undefined;
     },

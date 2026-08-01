@@ -6,7 +6,10 @@ import { ingestWebhook } from '@maildrill/services';
 import type { WebhookKind } from '@maildrill/providers';
 import type { ZodTypeProvider } from '@maildrill/httpkit';
 
-const KNOWN_PROVIDERS = new Set(['infobip', 'mock']);
+// Cloudflare Email Sending events normally arrive via the queue pull poller
+// (cloudflare-email-events); this route additionally accepts them pushed —
+// e.g. a Worker queue consumer forwarding to /webhooks/cloudflare/delivery.
+const KNOWN_PROVIDERS = new Set(['infobip', 'mock', 'cloudflare']);
 const KNOWN_KINDS = new Set<WebhookKind>(['delivery', 'engagement', 'voice', 'template']);
 
 const params = z.object({ provider: z.string(), kind: z.string() });

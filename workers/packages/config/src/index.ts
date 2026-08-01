@@ -39,9 +39,23 @@ const EnvSchema = z.object({
   JWT_SECRET: z.string().default('change-me'),
   APP_URL: z.string().default('http://localhost:4321'),
   MAGIC_LINK_TTL_MINUTES: int(15),
+  /**
+   * Cloudflare Email Service SMTP relay (smtp.mx.cloudflare.net) — carries ALL
+   * transactional mail (login codes, welcome). Campaign email rides the
+   * provider drivers (PROVIDER_DRIVER / PROVIDER_EMAIL_DRIVER), never this relay.
+   * Shared with the Astro sender via the root `.env`. Unset host/user/pass →
+   * transactional sends no-op, for dev without credentials.
+   */
+  SMTP_HOST: z.string().default(''),
+  SMTP_PORT: int(587),
+  SMTP_USER: z.string().default(''),
+  SMTP_PASS: z.string().default(''),
+  /** Explicit TLS override; empty → implicit TLS iff port 465, else STARTTLS. */
+  SMTP_SECURE: z.string().default(''),
+  MAIL_FROM: z.string().default('Maildrill <hello@maildrill.net>'),
   INFOBIP_BASE_URL: z.string().default(''),
   INFOBIP_API_KEY: z.string().default(''),
-  INFOBIP_FROM: z.string().default('no-reply@maildrill.app'),
+  INFOBIP_FROM: z.string().default('no-reply@maildrill.net'),
   /** E.164 numeric sender shared by SMS / WhatsApp / Voice when a channel override is unset. */
   INFOBIP_PHONE_FROM: z.string().default(''),
   /** Per-channel sender overrides; each falls back to INFOBIP_PHONE_FROM. */
@@ -82,7 +96,33 @@ const EnvSchema = z.object({
    * INFOBIP_NOTIFY_URL by swapping `kind=tracking`, or disable tracking stamp.
    */
   INFOBIP_TRACKING_URL: z.string().default(''),
-  PROVIDER_DRIVER: z.enum(['mock', 'infobip']).default('mock'),
+  PROVIDER_DRIVER: z.enum(['mock', 'infobip', 'cloudflare']).default('mock'),
+  /**
+   * Optional per-channel override: route ONLY the email channel through a
+   * different driver (e.g. Cloudflare Email Service, which carries no other
+   * channel) while SMS/WhatsApp/Voice stay on PROVIDER_DRIVER. Empty → email
+   * follows PROVIDER_DRIVER.
+   */
+  PROVIDER_EMAIL_DRIVER: z.enum(['', 'mock', 'infobip', 'cloudflare']).default(''),
+  /**
+   * Cloudflare Email Service — Email Sending REST API, used by the
+   * `cloudflare` campaign email driver (distinct from the SMTP relay that
+   * carries transactional mail). The From domain must be onboarded to Email
+   * Sending on this account; the token needs the Email Sending permission.
+   */
+  CLOUDFLARE_ACCOUNT_ID: z.string().default(''),
+  CLOUDFLARE_EMAIL_API_TOKEN: z.string().default(''),
+  /** Default sender when a campaign doesn't carry its own From address. */
+  CLOUDFLARE_EMAIL_FROM: z.string().default('no-reply@maildrill.net'),
+  /**
+   * Cloudflare Queue that Email Sending event subscriptions publish to
+   * (delivered/deferred/bounced/failed/rejected/complained). Empty → the
+   * cloudflare-email-events poller stays off. The token needs Queues
+   * Read+Write; empty CLOUDFLARE_EVENTS_API_TOKEN reuses the email token.
+   */
+  CLOUDFLARE_EVENTS_QUEUE_ID: z.string().default(''),
+  CLOUDFLARE_EVENTS_API_TOKEN: z.string().default(''),
+  CLOUDFLARE_EVENTS_POLL_INTERVAL_MS: int(10_000),
   WEBHOOK_INFOBIP_SECRET: z.string().default('change-me'),
   DISPATCH_CONCURRENCY: int(10),
   DISPATCH_MAX_ATTEMPTS: int(5),
@@ -181,6 +221,14 @@ export const config = {
     jwtSecret: env.JWT_SECRET,
     magicLinkTtlMinutes: env.MAGIC_LINK_TTL_MINUTES,
   },
+  mail: {
+    host: env.SMTP_HOST,
+    port: env.SMTP_PORT,
+    user: env.SMTP_USER,
+    pass: env.SMTP_PASS,
+    secure: env.SMTP_SECURE ? env.SMTP_SECURE === 'true' : env.SMTP_PORT === 465,
+    from: env.MAIL_FROM,
+  },
   infobip: {
     baseUrl: env.INFOBIP_BASE_URL,
     apiKey: env.INFOBIP_API_KEY,
@@ -212,7 +260,19 @@ export const config = {
       }
     },
   },
-  provider: { driver: env.PROVIDER_DRIVER },
+  provider: {
+    driver: env.PROVIDER_DRIVER,
+    /** Driver for the email channel: PROVIDER_EMAIL_DRIVER when set, else PROVIDER_DRIVER. */
+    emailDriver: env.PROVIDER_EMAIL_DRIVER || env.PROVIDER_DRIVER,
+  },
+  cloudflare: {
+    accountId: env.CLOUDFLARE_ACCOUNT_ID,
+    apiToken: env.CLOUDFLARE_EMAIL_API_TOKEN,
+    from: env.CLOUDFLARE_EMAIL_FROM,
+    eventsQueueId: env.CLOUDFLARE_EVENTS_QUEUE_ID,
+    eventsApiToken: env.CLOUDFLARE_EVENTS_API_TOKEN || env.CLOUDFLARE_EMAIL_API_TOKEN,
+    eventsPollIntervalMs: env.CLOUDFLARE_EVENTS_POLL_INTERVAL_MS,
+  },
   media: {
     region: env.AWS_REGION,
     accessKeyId: env.AWS_ACCESS_KEY_ID,

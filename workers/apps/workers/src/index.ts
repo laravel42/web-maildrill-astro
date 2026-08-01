@@ -3,6 +3,7 @@ import { closeDb } from '@maildrill/database';
 import { shutdownQueues } from '@maildrill/queues';
 import {
   startCampaignDeliveryPoller,
+  startCloudflareEmailEventsPoller,
   startDispatchWorker,
   startEventsWorker,
   startMaintenance,
@@ -20,6 +21,7 @@ type Role =
   | 'maintenance'
   | 'template-approval'
   | 'campaign-delivery'
+  | 'cloudflare-email-events'
   | 'all';
 
 const stops: StopFn[] = [];
@@ -47,6 +49,9 @@ function start(role: Role): void {
     case 'campaign-delivery':
       stops.push(startCampaignDeliveryPoller());
       break;
+    case 'cloudflare-email-events':
+      stops.push(startCloudflareEmailEventsPoller());
+      break;
     case 'all':
       start('dispatch');
       start('events');
@@ -55,6 +60,7 @@ function start(role: Role): void {
       start('maintenance');
       start('template-approval');
       start('campaign-delivery');
+      start('cloudflare-email-events');
       break;
     default:
       throw new Error(`unknown worker role: ${String(role)}`);
