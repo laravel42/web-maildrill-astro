@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@maildrill/config": "workspace:*",
-    "@maildrill/domain": "workspace:*"
+    "@maildrill/domain": "workspace:*",
+    "nodemailer": "^9.0.3"
   }
 }

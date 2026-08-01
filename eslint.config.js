@@ -17,6 +17,7 @@ export default [
       'design/**',
       'test-results/**',
       'playwright-report/**',
+      'coverage/**',
       'src/env.d.ts',
     ],
   },
