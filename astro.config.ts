@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'astro/config';
+import type { AstroUserConfig } from 'astro';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import node from '@astrojs/node';
@@ -53,6 +54,21 @@ function waTemplateStudioAlias() {
 // (set at build, e.g. on Cloudflare Pages) with the config default as fallback.
 const siteUrl = process.env.PUBLIC_SITE_URL || siteConfig.url;
 
+// Astro 7 ignores X-Forwarded-Proto/Host unless the proxy hosts are listed
+// here. Without this, requests proxied by nginx resolve to
+// http://localhost:4321, so the CSRF origin check 403s every same-origin form
+// POST in production — including the Auth.js credentials callback, which
+// breaks login. The proxy must still send X-Forwarded-Proto: https.
+// (Typed and hoisted out of defineConfig: inlining it trips TS 2589
+// "excessive stack depth" against the deep AstroUserConfig type.)
+const security: AstroUserConfig['security'] = {
+  allowedDomains: [
+    { hostname: 'maildrill.net', protocol: 'https' },
+    // Cloudflare tunnel in front of the local dev server (pnpm tunnel).
+    { hostname: 'local.maildrill.net', protocol: 'https' },
+  ],
+};
+
 export default defineConfig({
   site: siteUrl,
   trailingSlash: 'never',
@@ -67,6 +83,7 @@ export default defineConfig({
   // Marketing pages stay static; the app/auth/api routes opt into on-demand
   // rendering with `export const prerender = false`.
   adapter: node({ mode: 'standalone' }),
+  security,
   integrations: [
     react(),
     auth(),
