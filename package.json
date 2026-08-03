@@ -40,7 +40,7 @@
     "@astrojs/react": "^6.0.1",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
-    "@auth/core": "^0.37.3",
+    "@auth/core": "^0.41.3",
     "astro": "^7.1.1",
     "auth-astro": "^4.2.0",
     "email-builder-standalone": "workspace:*",

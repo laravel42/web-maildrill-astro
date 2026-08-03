@@ -23,9 +23,17 @@ allowBuilds:
 # eslint-plugin-jsx-a11y@6.10.2 (its latest) hasn't widened its `eslint` peer
 # range to include v10, but eslint-plugin-astro@3 requires exactly this pairing
 # and it lints cleanly against ESLint 10. Declare the combination allowed.
+#
+# auth-astro@4.2.0 (its latest) still peers `@auth/core: ^0.37.3`, but 0.37.x
+# carries a critical advisory: the email normalizer validates before Unicode
+# normalization, so a homoglyph `@` can impersonate another address — which is
+# exactly the sign-in path this app ships (passwordless email codes). auth-astro
+# only consumes `Auth()` plus types, and that surface is unchanged in 0.41.x, so
+# the pairing is safe; the login flow is verified end to end against it.
 peerDependencyRules:
   allowedVersions:
     eslint-plugin-jsx-a11y>eslint: '10'
+    auth-astro>@auth/core: '0.41.x'
 
 # Dependencies allowed to run their (native) install/build scripts. pnpm 10
 # blocks build scripts by default; these two are approved because the toolchain
