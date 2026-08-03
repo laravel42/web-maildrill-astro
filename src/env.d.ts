@@ -22,9 +22,15 @@ interface ImportMeta {
 declare namespace App {
   interface Locals {
     session: {
-      user?: { id?: string; email?: string | null; name?: string | null };
+      user?: {
+        id?: string;
+        email?: string | null;
+        name?: string | null;
+        phone?: string | null;
+      };
       activeTenantId?: string | null;
       role?: string | null;
+      authTime?: number | null;
       workspaces?: Array<{ tenantId: string; role: string; workspaceName: string }>;
     } | null;
   }

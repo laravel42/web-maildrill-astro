@@ -93,6 +93,8 @@ export default defineConfig({
         token.activeTenantId = u.activeTenantId;
         token.role = u.role;
         token.phone = u.phone;
+        // Capture login instant for "sign out everywhere" (compare to sessionsRevokedAt).
+        token.authTime = Math.floor(Date.now() / 1000);
       }
       return token;
     },
@@ -105,10 +107,17 @@ export default defineConfig({
         activeTenantId?: string | null;
         role?: string | null;
         workspaces?: unknown;
+        authTime?: number | null;
       };
       s.activeTenantId = (token.activeTenantId as string | null) ?? null;
       s.role = (token.role as string | null) ?? null;
       s.workspaces = token.workspaces;
+      s.authTime =
+        typeof token.authTime === 'number'
+          ? token.authTime
+          : typeof token.iat === 'number'
+            ? token.iat
+            : null;
       return session;
     },
   },

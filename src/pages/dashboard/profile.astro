@@ -3,17 +3,67 @@ export const prerender = false;
 import AppLayout from '@/layouts/AppLayout.astro';
 import AppProfile from '@/components/react/AppProfile';
 import { routes } from '@/config/routes';
+import { mintServiceToken, serviceBaseUrl } from '@/lib/server/service';
 
 const session = Astro.locals.session;
-const name = session?.user?.name ?? null;
-const email = session?.user?.email ?? null;
-const phone = (session?.user as { phone?: string | null } | undefined)?.phone ?? null;
+let name = session?.user?.name ?? null;
+let email = session?.user?.email ?? null;
+let phone = (session?.user as { phone?: string | null } | undefined)?.phone ?? null;
 const role = session?.role ?? null;
+let createdAt: string | null = null;
+let preferences: Record<string, unknown> = {};
+let recentSignIns: Array<{ at: string; method: string }> = [];
+
+// Session JWT may lag behind the DB (phone added at sign-up or later PATCH).
+// Hydrate from /v1/me so the phone field is populated on first paint.
+if (session?.user?.id && session.activeTenantId) {
+  try {
+    const token = mintServiceToken({
+      userId: session.user.id,
+      activeTenantId: session.activeTenantId,
+      role: session.role,
+    });
+    const res = await fetch(`${serviceBaseUrl()}/v1/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      const me = (await res.json()) as {
+        user?: {
+          name?: string | null;
+          email?: string;
+          phone?: string | null;
+          createdAt?: string;
+          preferences?: Record<string, unknown>;
+        };
+        recentSignIns?: Array<{ at: string; method: string }>;
+      };
+      if (me.user) {
+        name = me.user.name ?? name;
+        email = me.user.email ?? email;
+        phone = me.user.phone ?? phone;
+        createdAt = me.user.createdAt ?? null;
+        preferences = me.user.preferences ?? {};
+      }
+      recentSignIns = me.recentSignIns ?? [];
+    }
+  } catch {
+    /* fall back to session props */
+  }
+}
 ---
 
 <AppLayout
   title="Your profile"
   crumbs={[{ label: 'Settings', href: routes.app.settings }, { label: 'Your profile' }]}
 >
-  <AppProfile client:visible name={name} email={email} phone={phone} role={role} />
+  <AppProfile
+    client:load
+    name={name}
+    email={email}
+    phone={phone}
+    role={role}
+    createdAt={createdAt}
+    preferences={preferences}
+    recentSignIns={recentSignIns}
+  />
 </AppLayout>
