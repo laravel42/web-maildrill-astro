@@ -4,8 +4,8 @@ import { config } from '@maildrill/config';
 
 /**
  * Pure TOTP helpers (RFC 6238 via otpauth) — SHA-1 / 6 digits / 30s period,
- * the profile every mainstream authenticator app (1Password, Google &
- * Microsoft Authenticator, Authy, Bitwarden) supports.
+ * the profile every mainstream authenticator app (Google & Microsoft
+ * Authenticator, 1Password, Authy, Bitwarden) supports.
  */
 
 export const TOTP_PERIOD_SECONDS = 30;

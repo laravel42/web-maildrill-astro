@@ -430,7 +430,7 @@ export default function AppProfileSecurity({
                 {loading
                   ? 'Loading…'
                   : totp?.enabled
-                    ? `On since ${formatDate(totp.enabledAt)} — codes from 1Password, Google Authenticator, Authy, and friends`
+                    ? `On since ${formatDate(totp.enabledAt)} — codes from Google Authenticator, 1Password, Authy, and friends`
                     : 'Six-digit codes as a second step after your email code'}
               </p>
             </div>
@@ -580,8 +580,8 @@ export default function AppProfileSecurity({
           }
         >
           <p className={styles.modalSub}>
-            Scan the QR code with 1Password, Google Authenticator, Microsoft Authenticator, Authy,
-            or Bitwarden — then enter the 6-digit code it shows.
+            Scan the QR code with Google Authenticator (or 1Password, Microsoft Authenticator,
+            Authy, Bitwarden) — then enter the 6-digit code it shows.
           </p>
           <div className={styles.qrBox} aria-hidden={totpModal.qrDataUrl ? undefined : true}>
             {totpModal.qrDataUrl ? (
