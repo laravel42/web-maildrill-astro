@@ -487,7 +487,7 @@ export default function AppSubscriberDetail({
               <ul className={styles.meters}>
                 <li>
                   <div className={styles.meterHead}>
-                    <span className={styles.meterLabel}>Open rate</span>
+                    <span className={styles.meterLabel}>Avg. Opens</span>
                     <span className={`${styles.meterValue} ${styles.tnum}`}>
                       {view.openRate == null ? '—' : `${view.openRate}%`}
                     </span>
@@ -501,7 +501,7 @@ export default function AppSubscriberDetail({
                 </li>
                 <li>
                   <div className={styles.meterHead}>
-                    <span className={styles.meterLabel}>Click rate</span>
+                    <span className={styles.meterLabel}>Avg. Clicks</span>
                     <span className={`${styles.meterValue} ${styles.tnum}`}>
                       {view.clickRate == null ? '—' : `${view.clickRate}%`}
                     </span>
@@ -537,14 +537,14 @@ export default function AppSubscriberDetail({
                 <p className={styles.statSub}>All time</p>
               </div>
               <div className={styles.stat}>
-                <p className={styles.overline}>Open rate</p>
+                <p className={styles.overline}>Avg. Opens</p>
                 <p className={`${styles.statValue} ${styles.tnum}`}>
                   {view.openRate == null ? '—' : `${view.openRate}%`}
                 </p>
                 <p className={styles.statSub}>Of delivered messages</p>
               </div>
               <div className={styles.stat}>
-                <p className={styles.overline}>Click rate</p>
+                <p className={styles.overline}>Avg. Clicks</p>
                 <p className={`${styles.statValue} ${styles.tnum}`}>
                   {view.clickRate == null ? '—' : `${view.clickRate}%`}
                 </p>

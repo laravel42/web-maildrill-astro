@@ -1497,11 +1497,11 @@ function SubscriberDrawer({
           {/* stat cards */}
           <div className={`adrawer__kpis ${styles.sbdStats}`}>
             <div className="adrawer__kpi">
-              <div className="adrawer__kpi-k">Open rate</div>
+              <div className="adrawer__kpi-k">Avg. Opens</div>
               <div className="tnum adrawer__kpi-v">{sub.opens}</div>
             </div>
             <div className="adrawer__kpi">
-              <div className="adrawer__kpi-k">Click rate</div>
+              <div className="adrawer__kpi-k">Avg. Clicks</div>
               <div className="tnum adrawer__kpi-v">{sub.clicks}</div>
             </div>
           </div>
