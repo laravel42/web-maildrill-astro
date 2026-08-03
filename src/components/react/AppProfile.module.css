@@ -33,12 +33,23 @@
   --radius-btn: 10px;
   --radius-card: 16px;
   --motion: 160ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  --savebar-pad-x: 40px;
   margin: 0;
   color: var(--text);
   font-family: var(--font-sans);
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
-  min-height: 100%;
+  min-height: calc(100dvh - 56px);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+.wrapSavebar {
+  /* Screen default bottom padding becomes the bar; keep content clear above it. */
+  padding-bottom: 0;
+}
+.body {
+  flex: 1 0 auto;
 }
 :global([data-theme='dark']) .wrap {
   --green-tint: rgba(34, 197, 94, 0.16);
@@ -648,13 +659,22 @@ select.input {
 .savebar {
   position: sticky;
   bottom: 0;
-  z-index: 10;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 26px;
+  /* Bleed to the edges of the capped screen wrapper (cancel .screen padding). */
+  margin-top: auto;
+  margin-left: calc(-1 * var(--savebar-pad-x));
+  margin-right: calc(-1 * var(--savebar-pad-x));
+  margin-bottom: calc(-1 * 56px);
+  width: calc(100% + 2 * var(--savebar-pad-x));
+  box-sizing: border-box;
+  padding: 12px var(--savebar-pad-x);
   border-top: 1px solid var(--border2);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   box-shadow: var(--savebar-shadow);
   animation: rise 180ms ease;
 }
@@ -692,6 +712,9 @@ select.input {
   box-shadow: 0 12px 32px rgba(28, 25, 23, 0.3);
   font-size: 13px;
   font-weight: 500;
+}
+.wrapSavebar .toast {
+  bottom: 76px;
 }
 .toastIc {
   width: 22px;
@@ -757,9 +780,11 @@ select.input {
   .panel {
     padding: 20px 18px;
   }
+  .wrap {
+    --savebar-pad-x: 16px;
+  }
   .savebar {
-    padding-left: 18px;
-    padding-right: 18px;
+    margin-bottom: calc(-1 * 40px);
   }
   .fieldGrid {
     grid-template-columns: 1fr;
@@ -789,4 +814,12 @@ select.input {
   .section {
     break-inside: avoid;
   }
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  object-fit: cover;
 }

@@ -160,6 +160,52 @@ export async function createUploadTicket(
   };
 }
 
+/** Profile photos: tight type set, small cap, own top-level prefix. */
+const AVATAR_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
+
+/** Storage prefix owned by one user's profile photos. */
+export function avatarPrefixFor(userId: string): string {
+  return `avatars/${userId}/`;
+}
+
+/**
+ * Presigned PUT for a profile photo. Avatars live under their own top-level
+ * `avatars/<userId>/` prefix — deliberately apart from `tenants/<id>/` where
+ * the media library (template images) stores objects — and are never
+ * registered as media assets.
+ */
+export async function createAvatarUploadTicket(
+  userId: string,
+  input: { filename: string; contentType: string; sizeBytes: number },
+): Promise<UploadTicket> {
+  if (!AVATAR_TYPES.has(input.contentType)) {
+    throw new ValidationError('profile photos must be PNG, JPG, or WebP');
+  }
+  if (input.sizeBytes <= 0 || input.sizeBytes > AVATAR_MAX_BYTES) {
+    throw new ValidationError('profile photo must be 5MB or smaller');
+  }
+
+  const storageKey = `${avatarPrefixFor(userId)}${randomUUID()}-${safeName(input.filename)}`;
+  const uploadUrl = await getSignedUrl(
+    s3(),
+    new PutObjectCommand({
+      Bucket: config.media.bucket,
+      Key: storageKey,
+      ContentType: input.contentType,
+      ContentLength: input.sizeBytes,
+    }),
+    { expiresIn: UPLOAD_URL_TTL_SECONDS },
+  );
+
+  return {
+    storageKey,
+    uploadUrl,
+    publicUrl: publicUrlFor(storageKey),
+    expiresInSeconds: UPLOAD_URL_TTL_SECONDS,
+  };
+}
+
 /**
  * Register an object that has finished uploading. Keyed on storage_key, so a
  * retried confirm returns the existing asset instead of duplicating it.

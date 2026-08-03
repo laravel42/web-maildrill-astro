@@ -14,6 +14,8 @@ export type Props = {
   children: ReactNode;
   userEmail?: string | null;
   userName?: string | null;
+  /** Profile “Display name” (`preferences.displayName`); preferred in the sidebar. */
+  userDisplayName?: string | null;
 };
 
 export type Cmd = { label: string; hint: 'Navigate' | 'Action'; href?: string; icon: IconName };

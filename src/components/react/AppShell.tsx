@@ -10,6 +10,8 @@ import styles from './AppShell.module.css';
 import { signOut } from 'auth-astro/client';
 
 const PINS_KEY = 'md:pins:v1';
+/** Session echo of the profile photo — the auth session carries no avatar. */
+const AVATAR_CACHE_KEY = 'md:avatar:v1';
 
 const PIN_SECTIONS: { kind: PinKind; label: string }[] = [
   { kind: 'list', label: 'Lists' },
@@ -57,12 +59,18 @@ export default function AppShell({
   children,
   userEmail,
   userName,
+  userDisplayName = null,
 }: Props) {
   // Home uses title "Dashboard" — skip the trail so we don't show "Dashboard / Dashboard".
   const trail = crumbs?.length ? crumbs : title && title !== 'Dashboard' ? [{ label: title }] : [];
-  // Display identity from the real session (no mock user).
-  const displayName = userName?.trim() || (userEmail ? userEmail.split('@')[0] : 'Your workspace');
+  // Prefer profile display name, then full name, then email local-part.
+  const fallbackName = userName?.trim() || (userEmail ? userEmail.split('@')[0] : 'Your workspace');
+  const [labelName, setLabelName] = useState(() => userDisplayName?.trim() || fallbackName);
+  const displayName = labelName.trim() || fallbackName;
   const avatarInitial = displayName.charAt(0).toUpperCase();
+  // Profile photo — event/sessionStorage fed (see the maildrill:profile hook);
+  // starts null on purpose so SSR and hydration render the same initial.
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [cmdOpen, setCmdOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -89,6 +97,40 @@ export default function AppShell({
     const attr = document.documentElement.getAttribute('data-theme');
     setTheme(attr === 'dark' ? 'dark' : 'light');
   }, []);
+
+  // Keep sidebar in sync when Profile saves display name or photo (same tab).
+  // The photo also echoes through sessionStorage so it survives navigation —
+  // the session token carries no avatar, so this is the shell's only source.
+  useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem(AVATAR_CACHE_KEY);
+      if (cached) setAvatarUrl(cached);
+    } catch {
+      /* private mode */
+    }
+    const onProfile = (e: Event) => {
+      const detail = (e as CustomEvent<{ displayName?: string; avatarUrl?: string | null }>).detail;
+      const next = detail?.displayName?.trim();
+      if (next) setLabelName(next);
+      if (detail && 'avatarUrl' in detail) {
+        setAvatarUrl(detail.avatarUrl ?? null);
+        try {
+          if (detail.avatarUrl) sessionStorage.setItem(AVATAR_CACHE_KEY, detail.avatarUrl);
+          else sessionStorage.removeItem(AVATAR_CACHE_KEY);
+        } catch {
+          /* private mode */
+        }
+      }
+    };
+    window.addEventListener('maildrill:profile', onProfile);
+    return () => window.removeEventListener('maildrill:profile', onProfile);
+  }, []);
+
+  // SSR prop may arrive/update after first paint (e.g. soft nav) — prefer it.
+  useEffect(() => {
+    const next = userDisplayName?.trim();
+    if (next) setLabelName(next);
+  }, [userDisplayName]);
 
   useEffect(() => {
     setPins(readPins());
@@ -326,7 +368,11 @@ export default function AppShell({
                       className={`${styles.ashsbAvatar} ${styles.userMenuAvatar}`}
                       aria-hidden="true"
                     >
-                      {avatarInitial}
+                      {avatarUrl ? (
+                        <img className={styles.ashsbAvatarImg} src={avatarUrl} alt="" />
+                      ) : (
+                        avatarInitial
+                      )}
                     </span>
                     <span className={styles.ashsbUsermeta}>
                       <span className={styles.ashsbUsername}>{displayName}</span>
@@ -390,7 +436,11 @@ export default function AppShell({
               aria-expanded={userMenu}
             >
               <span className={styles.ashsbAvatar} aria-hidden="true">
-                {avatarInitial}
+                {avatarUrl ? (
+                  <img className={styles.ashsbAvatarImg} src={avatarUrl} alt="" />
+                ) : (
+                  avatarInitial
+                )}
               </span>
               <span className={styles.ashsbUsermeta}>
                 <span className={styles.ashsbUsername}>{displayName}</span>

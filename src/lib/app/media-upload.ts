@@ -40,6 +40,27 @@ async function imageSize(file: File): Promise<{ width: number; height: number } 
   }
 }
 
+/**
+ * Upload a profile photo. Avatars go through the `/me/avatar` endpoints and
+ * live under their own `avatars/<userId>/` S3 prefix — apart from the
+ * `tenants/<id>/` media-library objects — and are never registered as media
+ * assets. Returns the public URL the profile should display.
+ */
+export async function uploadAvatarPhoto(file: File): Promise<string> {
+  const ticket = await api.post<{ storageKey: string; uploadUrl: string; publicUrl: string }>(
+    'me/avatar/upload-ticket',
+    { filename: file.name, contentType: file.type, sizeBytes: file.size },
+  );
+  const put = await fetch(ticket.uploadUrl, {
+    method: 'PUT',
+    headers: { 'content-type': file.type },
+    body: file,
+  });
+  if (!put.ok) throw new Error(`upload failed (${put.status})`);
+  await api.post('me/avatar', { storageKey: ticket.storageKey });
+  return ticket.publicUrl;
+}
+
 export async function uploadMediaFile(
   file: File,
   opts?: { name?: string; folder?: string | null },
