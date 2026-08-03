@@ -11,5 +11,5 @@ const live = Boolean(session?.user?.id && session.activeTenantId);
 ---
 
 <AppLayout title="Analytics">
-  <AppAnalytics client:load live={live} />
+  <AppAnalytics client:load live={live} tenantId={session?.activeTenantId ?? null} />
 </AppLayout>

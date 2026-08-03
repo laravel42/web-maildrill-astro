@@ -16,5 +16,10 @@ const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Go
 ---
 
 <AppLayout title="Dashboard">
-  <AppDashboard client:load greeting={greeting} live={live} />
+  <AppDashboard
+    client:load
+    greeting={greeting}
+    live={live}
+    tenantId={session?.activeTenantId ?? null}
+  />
 </AppLayout>

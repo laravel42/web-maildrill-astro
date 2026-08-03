@@ -28,10 +28,13 @@ import styles from './AppDashboard.module.css';
 export default function AppDashboard({
   greeting = 'Hello',
   live = false,
+  tenantId = null,
 }: {
   greeting?: string;
   /** When true, fetch aggregates from the BFF (no SSR data blocking). */
   live?: boolean;
+  /** Active workspace — scopes the aggregate cache to it. */
+  tenantId?: string | null;
 } = {}) {
   const [range, setRange] = useState('7d');
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -51,7 +54,7 @@ export default function AppDashboard({
     if (!live) return;
     let cancelled = false;
     const fetchDays = Math.min(days * 2, 365);
-    const cached = readDashboardCache();
+    const cached = readDashboardCache(tenantId);
     const cachedDaily = cached?.activityByDays[String(fetchDays)];
     const cachedChannels = cached?.channelsByDays[String(days)];
 
@@ -124,7 +127,7 @@ export default function AppDashboard({
             .catch(() => {}),
     ]).finally(() => {
       if (cancelled) return;
-      writeDashboardCache({
+      writeDashboardCache(tenantId, {
         summary: nextSummary,
         campaigns: nextCampaigns,
         feed: nextFeed,
@@ -144,7 +147,7 @@ export default function AppDashboard({
   useEffect(() => {
     if (!live || !bootedRef.current) return;
     const fetchDays = Math.min(days * 2, 365);
-    const cached = readDashboardCache();
+    const cached = readDashboardCache(tenantId);
     const hitDaily = cached?.activityByDays[String(fetchDays)];
     const hitChannels = cached?.channelsByDays[String(days)];
     if (hitDaily && hitChannels) {
@@ -174,7 +177,7 @@ export default function AppDashboard({
         if (cancelled) return;
         setDaily(act);
         setChannels(ch);
-        writeDashboardCache({
+        writeDashboardCache(tenantId, {
           activityByDays: { [String(fetchDays)]: act },
           channelsByDays: { [String(days)]: ch },
         });

@@ -28,7 +28,14 @@ import styles from './AppAnalytics.module.css';
  * Every chart is hand-built inline SVG / CSS — no chart library.
  * ------------------------------------------------------------------ */
 
-export default function AppAnalytics({ live = false }: { live?: boolean } = {}) {
+export default function AppAnalytics({
+  live = false,
+  tenantId = null,
+}: {
+  live?: boolean;
+  /** Active workspace — scopes the aggregate cache to it. */
+  tenantId?: string | null;
+} = {}) {
   const [range, setRange] = useState('30d');
   const [channel, setChannel] = useState<ChannelType | 'all'>('all');
   const [daily, setDaily] = useState<ActivityPoint[]>([]);
@@ -69,7 +76,7 @@ export default function AppAnalytics({ live = false }: { live?: boolean } = {}) 
     const bootKey = bootChannel === 'all' ? String(bootDays) : `${bootDays}:${bootChannel}`;
 
     let cancelled = false;
-    const cached = readDashboardCache();
+    const cached = readDashboardCache(tenantId);
     const hitDaily = cached?.activityByDays[bootKey];
     const hitChannels = cached?.channelsByDays[String(bootDays)];
     if (hitDaily) setDaily(hitDaily);
@@ -111,7 +118,7 @@ export default function AppAnalytics({ live = false }: { live?: boolean } = {}) 
             }),
     ]).finally(() => {
       if (cancelled) return;
-      writeDashboardCache({
+      writeDashboardCache(tenantId, {
         activityByDays: { [bootKey]: nextDaily },
         channelsByDays: { [String(bootDays)]: nextChannels },
       });
@@ -141,7 +148,7 @@ export default function AppAnalytics({ live = false }: { live?: boolean } = {}) 
      than restyling the same data. */
   useEffect(() => {
     if (!live || !bootedRef.current) return;
-    const cached = readDashboardCache();
+    const cached = readDashboardCache(tenantId);
     const hitDaily = cached?.activityByDays[actKey];
     const hitChannels = cached?.channelsByDays[String(days)];
     if (hitDaily && hitChannels) {
@@ -175,7 +182,7 @@ export default function AppAnalytics({ live = false }: { live?: boolean } = {}) 
         if (cancelled) return;
         setDaily(act);
         setByChannel(ch);
-        writeDashboardCache({
+        writeDashboardCache(tenantId, {
           activityByDays: { [actKey]: act },
           channelsByDays: { [String(days)]: ch },
         });
