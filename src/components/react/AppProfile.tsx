@@ -4,6 +4,13 @@ import Icon from './Icon';
 import type { IconName } from '@/lib/icons';
 import { api, ApiError } from '@/lib/app/api';
 import { uploadAvatarPhoto } from '@/lib/app/media-upload';
+import {
+  browserTimeZone,
+  normalizeTimeZone,
+  timeZoneOptions,
+  zoneOffsetLabel,
+} from '@/lib/app/timezones';
+import SearchableSelect from './shared/SearchableSelect';
 import PhoneField from './PhoneField';
 import { useToast } from './shared/useToast';
 import styles from './AppProfile.module.css';
@@ -14,14 +21,8 @@ type Fields = Record<FieldKey, string>;
 
 const FIELD_KEYS: FieldKey[] = ['name', 'display', 'title', 'tz', 'lang'];
 
-const TZ_OPTIONS = [
-  'Europe/Rome (GMT+2)',
-  'Europe/London (GMT+1)',
-  'Europe/Berlin (GMT+2)',
-  'America/New_York (GMT-4)',
-  'Asia/Singapore (GMT+8)',
-];
-const LANG_OPTIONS = ['English (UK)', 'English (US)', 'Italiano', 'Deutsch', 'Français'];
+// Language is intentionally absent: the field is hidden until the app is
+// actually localized, so nothing offers a choice it cannot honor.
 
 const HEADS: Record<TabKey, { title: string; sub: string }> = {
   profile: {
@@ -161,11 +162,11 @@ function fieldsFromPrefs(name: string | null | undefined, prefs: Record<string, 
     name: bootstrapName,
     display: prefString(prefs, 'displayName') || bootstrapName.split(/\s+/)[0] || '',
     title: prefString(prefs, 'title'),
-    tz: prefString(prefs, 'timezone', TZ_OPTIONS[0]),
-    lang: prefString(prefs, 'language', LANG_OPTIONS[0]),
+    // Stored values were once display strings ("Europe/Rome (GMT+2)");
+    // normalize so those profiles keep their zone.
+    tz: normalizeTimeZone(prefString(prefs, 'timezone')) || browserTimeZone(),
+    lang: prefString(prefs, 'language'),
   };
-  if (!TZ_OPTIONS.includes(next.tz)) next.tz = TZ_OPTIONS[0];
-  if (!LANG_OPTIONS.includes(next.lang)) next.lang = LANG_OPTIONS[0];
   return next;
 }
 
@@ -212,6 +213,9 @@ export default function AppProfile({
   );
   const [avatarBusy, setAvatarBusy] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  // ~400 zones with live offsets — built once, not per render.
+  const tzOptions = useMemo(() => timeZoneOptions(), []);
+  const tzOffset = fields.tz ? zoneOffsetLabel(fields.tz) : '';
   const { toast, show } = useToast();
 
   useEffect(() => {
@@ -285,7 +289,9 @@ export default function AppProfile({
           displayName: fields.display.trim(),
           title: fields.title.trim(),
           timezone: fields.tz,
-          language: fields.lang,
+          // The language picker is hidden, so only carry an existing value
+          // through — never write an empty one over what a profile already has.
+          ...(fields.lang ? { language: fields.lang } : {}),
           notifications: switches,
         },
       };
@@ -597,75 +603,28 @@ export default function AppProfile({
                           <label className={styles.fieldLabel} htmlFor="field-tz">
                             Timezone
                           </label>
-                          <select
-                            className={styles.input}
+                          <SearchableSelect
                             id="field-tz"
-                            name="tz"
                             value={fields.tz}
-                            onChange={(e) => setField('tz', e.target.value)}
-                          >
-                            {TZ_OPTIONS.map((o) => (
-                              <option key={o}>{o}</option>
-                            ))}
-                          </select>
+                            options={tzOptions}
+                            placeholder="Search timezones…"
+                            emptyMessage="No timezone matches that search"
+                            onChange={(v) => setField('tz', v)}
+                          />
                           <p className={styles.fieldHint}>
                             Campaign schedules and reports follow this
+                            {tzOffset ? ` · currently ${tzOffset}` : ''}
                           </p>
                         </div>
-                        <div>
-                          <label className={styles.fieldLabel} htmlFor="field-lang">
-                            Language
-                          </label>
-                          <select
-                            className={styles.input}
-                            id="field-lang"
-                            name="lang"
-                            value={fields.lang}
-                            onChange={(e) => setField('lang', e.target.value)}
-                          >
-                            {LANG_OPTIONS.map((o) => (
-                              <option key={o}>{o}</option>
-                            ))}
-                          </select>
-                        </div>
+                        {/* Language is hidden until the app is localized —
+                            offering a picker that changes nothing is a promise
+                            the product cannot keep. */}
                       </div>
                     </div>
 
-                    <div className={`${styles.section} ${styles.sectionDanger}`}>
-                      <div className={styles.sectionHead}>Danger zone</div>
-                      <ul className={styles.stack}>
-                        <li className={styles.stackRow}>
-                          <div className={styles.stackBody}>
-                            <p className={styles.stackTitle}>Transfer ownership</p>
-                            <p className={styles.stackDesc}>
-                              Hand billing and workspace control to another Admin.
-                            </p>
-                          </div>
-                          <button
-                            className={`${styles.btn} ${styles.btnSm}`}
-                            type="button"
-                            onClick={notAvailable}
-                          >
-                            Choose person
-                          </button>
-                        </li>
-                        <li className={styles.stackRow}>
-                          <div className={styles.stackBody}>
-                            <p className={styles.stackTitle}>Close my account</p>
-                            <p className={styles.stackDesc}>
-                              Removes your access. Campaign history stays with the workspace.
-                            </p>
-                          </div>
-                          <button
-                            className={`${styles.btn} ${styles.btnSm} ${styles.btnDanger}`}
-                            type="button"
-                            onClick={notAvailable}
-                          >
-                            Close account
-                          </button>
-                        </li>
-                      </ul>
-                    </div>
+                    {/* Danger zone (transfer ownership, close account) is hidden:
+                        neither action is wired to a service, and a destructive
+                        button that silently does nothing is worse than none. */}
                   </>
                 )}
 
