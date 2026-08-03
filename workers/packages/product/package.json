@@ -7,15 +7,15 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1090.0",
-    "@aws-sdk/s3-request-presigner": "^3.1090.0",
+    "@aws-sdk/client-s3": "^3.1101.0",
+    "@aws-sdk/s3-request-presigner": "^3.1101.0",
     "@maildrill/config": "workspace:*",
     "@maildrill/database": "workspace:*",
     "@maildrill/domain": "workspace:*",
     "@maildrill/observability": "workspace:*",
     "@maildrill/services": "workspace:*",
-    "drizzle-orm": "^0.38.0",
-    "openai": "^6.48.0",
+    "drizzle-orm": "^0.38.4",
+    "openai": "^6.49.0",
     "sharp": "^0.35.3"
   }
 }

@@ -9,7 +9,7 @@
   "dependencies": {
     "@maildrill/config": "workspace:*",
     "@maildrill/domain": "workspace:*",
-    "bullmq": "^5.34.0",
-    "ioredis": "^5.4.2"
+    "bullmq": "^5.81.3",
+    "ioredis": "^5.11.1"
   }
 }

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@fastify/cors": "^11.3.0",
+    "@maildrill/authz": "workspace:*",
     "@maildrill/config": "workspace:*",
     "@maildrill/database": "workspace:*",
     "@maildrill/email-builder-api": "workspace:*",
@@ -17,12 +18,11 @@
     "@maildrill/observability": "workspace:*",
     "@maildrill/providers": "workspace:*",
     "@maildrill/queues": "workspace:*",
-    "@maildrill/authz": "workspace:*",
     "@node-telescope/core": "^1.0.0",
     "@node-telescope/dashboard": "^1.0.0",
     "@node-telescope/fastify": "^1.0.0",
     "@node-telescope/storage-postgres": "^1.0.0",
     "dotenv": "^17.4.2",
-    "fastify": "^5.10.0"
+    "fastify": "^5.11.0"
   }
 }

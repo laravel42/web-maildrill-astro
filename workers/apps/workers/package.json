@@ -10,6 +10,6 @@
     "@maildrill/observability": "workspace:*",
     "@maildrill/queues": "workspace:*",
     "@maildrill/services": "workspace:*",
-    "bullmq": "^5.34.0"
+    "bullmq": "^5.81.3"
   }
 }
