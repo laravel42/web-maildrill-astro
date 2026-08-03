@@ -46,7 +46,11 @@ describe('CloudflareProvider', () => {
     const provider = new CloudflareProvider(settings);
     const r = await provider.send({
       ...base,
-      content: { ...base.content, from: 'Maildrill News <news@maildrill.net>', replyTo: 'help@maildrill.net' },
+      content: {
+        ...base.content,
+        from: 'Maildrill News <news@maildrill.net>',
+        replyTo: 'help@maildrill.net',
+      },
     });
 
     expect(r.accepted).toBe(true);
@@ -69,7 +73,9 @@ describe('CloudflareProvider', () => {
   });
 
   it('falls back to the configured From when the campaign carries none', async () => {
-    const fetchMock = stubFetch(jsonResponse(200, { success: true, result: { queued: [base.to] } }));
+    const fetchMock = stubFetch(
+      jsonResponse(200, { success: true, result: { queued: [base.to] } }),
+    );
     const provider = new CloudflareProvider(settings);
     await provider.send(base);
     const body = JSON.parse((fetchMock.mock.calls[0]![1] as RequestInit).body as string);
@@ -109,7 +115,9 @@ describe('CloudflareProvider', () => {
   });
 
   it('maps 429 to a retryable rate_limit error', async () => {
-    stubFetch(jsonResponse(429, { success: false, errors: [{ code: 971, message: 'rate limited' }] }));
+    stubFetch(
+      jsonResponse(429, { success: false, errors: [{ code: 971, message: 'rate limited' }] }),
+    );
     const provider = new CloudflareProvider(settings);
     const r = await provider.send(base);
     expect(r.accepted).toBe(false);

@@ -1002,6 +1002,9 @@ importers:
       '@maildrill/domain':
         specifier: workspace:*
         version: link:../domain
+      '@maildrill/identity':
+        specifier: workspace:*
+        version: link:../identity
       '@maildrill/observability':
         specifier: workspace:*
         version: link:../observability
