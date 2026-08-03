@@ -390,9 +390,9 @@ export const channelPages: Record<ChannelPageKey, ChannelPage> = {
     glow: 'rgba(217, 119, 6, 0.14)',
     visual: 'voice',
     href: routes.channels.voice,
-    tag: 'Automated calls & IVR',
+    tag: 'Automated calls',
     h1: 'Voice that closes the loop.',
-    sub: "Reach people who don't open messages with automated calls and IVR flows — natural text-to-speech, call tracking, and smart fallbacks when a call goes unanswered.",
+    sub: "Reach people who don't open messages with automated calls — natural text-to-speech, call tracking, and smart fallbacks when a call goes unanswered.",
     featuresTitle: 'Automated calls, done right.',
     useTitle: 'What teams send with voice.',
     features: [

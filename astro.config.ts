@@ -82,22 +82,13 @@ export default defineConfig({
     }),
   ],
   vite: {
+    // `@/` is resolved by waTemplateStudioAlias (resolveId + enforce: 'pre').
+    // Do not use resolve.alias.customResolver — deprecated, removed in Vite 9.
     plugins: [waTemplateStudioAlias(), tailwindcss()],
     // The Cloudflare tunnel (scripts/local-tunnel.sh) fronts the dev server
     // with this Host header; Vite rejects non-localhost hosts by default.
     server: {
       allowedHosts: ['local.maildrill.net'],
-    },
-    resolve: {
-      alias: [
-        {
-          find: /^@\/(.*)$/,
-          replacement: '$1',
-          customResolver(source, importer) {
-            return resolveAtImport(source, importer);
-          },
-        },
-      ],
     },
     // nodemailer is a Node-only CJS dep (used by the SMTP welcome sender) —
     // keep it out of Vite's SSR transform/optimizer so it's required at runtime

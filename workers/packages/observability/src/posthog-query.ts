@@ -35,14 +35,29 @@ interface HogQLQueryResponse {
 }
 
 /**
+ * PostHog throttles /query hard (~120 requests/hour on personal API keys) and
+ * the delivery poller ticks every few seconds, issuing two queries per tick.
+ * After a 429, skip the API entirely for a cooldown window instead of burning
+ * the remaining quota on guaranteed rejections — every caller already treats
+ * null as "no data" and falls back (Infobip report pulls, Postgres stats).
+ * Consecutive throttles double the window, up to 10 minutes.
+ */
+const THROTTLE_COOLDOWN_BASE_MS = 60_000;
+const THROTTLE_COOLDOWN_MAX_MS = 600_000;
+let throttledUntil = 0;
+let throttleStreak = 0;
+
+/**
  * Run a HogQL query against the configured PostHog project.
- * Returns null when stats are disabled, the query is refused, or the API errors.
+ * Returns null when stats are disabled, the query is refused, the API errors,
+ * or a rate-limit cooldown is in effect.
  */
 export async function runHogQL(
   query: string,
   name = 'maildrill-stats',
 ): Promise<HogQLResult | null> {
   if (!config.posthog.statsEnabled) return null;
+  if (Date.now() < throttledUntil) return null;
 
   const { personalApiKey, projectId, appHost } = config.posthog;
   const url = `${appHost}/api/projects/${encodeURIComponent(projectId)}/query/`;
@@ -64,6 +79,20 @@ export async function runHogQL(
       signal: AbortSignal.timeout(30_000),
     });
 
+    if (res.status === 429) {
+      throttleStreak += 1;
+      const cooldownMs = Math.min(
+        THROTTLE_COOLDOWN_BASE_MS * 2 ** (throttleStreak - 1),
+        THROTTLE_COOLDOWN_MAX_MS,
+      );
+      throttledUntil = Date.now() + cooldownMs;
+      log.warn(
+        { name, cooldownMs, streak: throttleStreak },
+        'posthog hogql throttled — pausing queries',
+      );
+      return null;
+    }
+
     if (!res.ok) {
       const body = await res.text().catch(() => '');
       log.warn(
@@ -72,6 +101,7 @@ export async function runHogQL(
       );
       return null;
     }
+    throttleStreak = 0;
 
     const data = (await res.json()) as HogQLQueryResponse;
     if (data.error) {
