@@ -42,9 +42,9 @@ export const CEREMONY_TIMEOUT_MS = 90_000;
 /**
  * Deadline when the device has NO built-in authenticator: the browser sits
  * waiting for a security key or phone that may simply not exist, so give up
- * sooner and tell the user what the device is missing.
+ * quickly and tell the user what the device is missing.
  */
-export const NO_PLATFORM_AUTH_TIMEOUT_MS = 30_000;
+export const NO_PLATFORM_AUTH_TIMEOUT_MS = 10_000;
 
 /**
  * Race a WebAuthn ceremony against a deadline. On timeout, `onTimeout` runs

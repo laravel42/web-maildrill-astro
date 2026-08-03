@@ -31,7 +31,7 @@ export type ChallengePurpose = 'registration' | 'authentication' | 'reauth';
 const CHALLENGE_TTL_MS = 5 * 60_000;
 /**
  * Browser-enforced ceremony deadline, sent in the options. Deliberately above
- * the frontend's own timers (30s without a platform authenticator, 90s with —
+ * the frontend's own timers (10s without a platform authenticator, 90s with —
  * see src/lib/app/webauthn.ts) so the client aborts first with a message that
  * names the missing hardware, instead of the browser's opaque NotAllowedError.
  */
