@@ -35,16 +35,51 @@ export type TogglePanel = { kind: 'toggles'; title: string; desc: string; toggle
 export type Panel = FormPanel | UsagePanel | TablePanel | TogglePanel;
 
 /* ----------------------------- team roster ------------------------------ */
-export type Role = 'Owner' | 'Editor' | 'Viewer';
+export type Role = 'Owner' | 'Admin' | 'Editor' | 'Viewer';
+export type MemberStatus = 'Active' | 'Pending';
 export type Member = {
+  /** Service user id — required for role/remove calls; absent in demo mode. */
+  userId?: string;
   email: string;
   name: string;
   role: Role;
-  title: string;
+  /** Derived: a member who has never signed in is Pending, not Active. */
+  status: MemberStatus;
   avBg: string;
   avColor: string;
   init: string;
   joined: string;
   lastActive: string;
-  campaigns: number;
+};
+
+/* --------------------------- service payloads --------------------------- */
+export type ApiWorkspace = {
+  id: string;
+  name: string;
+  settings: Record<string, unknown>;
+  createdAt: string;
+};
+export type ApiMember = {
+  userId: string;
+  email: string;
+  name: string | null;
+  role: 'owner' | 'admin' | 'editor' | 'viewer';
+  joinedAt: string;
+  /** ISO timestamp of the member's last sign-in; null when never signed in. */
+  lastSignInAt: string | null;
+};
+export type ApiDnsRecord = {
+  recordType: string;
+  name: string;
+  expectedValue: string;
+  verified: boolean;
+};
+export type ApiDomain = { domainName: string; active: boolean; dnsRecords: ApiDnsRecord[] };
+export type ApiWorkspaceKey = {
+  id: string;
+  name: string;
+  keyId: string;
+  scope: string;
+  createdAt: string;
+  revokedAt: string | null;
 };

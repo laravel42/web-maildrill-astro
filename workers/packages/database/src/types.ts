@@ -1,4 +1,5 @@
 import type {
+  apiKeys,
   campaigns,
   customFieldDefs,
   deadLetters,
@@ -86,3 +87,5 @@ export type NewMembership = typeof memberships.$inferInsert;
 
 export type MagicLinkToken = typeof magicLinkTokens.$inferSelect;
 export type NewMagicLinkToken = typeof magicLinkTokens.$inferInsert;
+
+export type ApiKeyRow = typeof apiKeys.$inferSelect;

@@ -25,4 +25,5 @@ export {
   users,
   memberships,
   magicLinkTokens,
+  apiKeys,
 } from './schema';

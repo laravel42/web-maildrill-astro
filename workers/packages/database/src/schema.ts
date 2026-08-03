@@ -83,6 +83,12 @@ export const tenants = pgTable('tenants', {
   id: id(),
   name: text('name').notNull(),
   status: tenantStatusEnum('status').notNull().default('active'),
+  /**
+   * Workspace settings bag (not first-class columns), mirroring
+   * users.preferences: branding {brandName, logoUrl, accentColor,
+   * emailFooter}, ai {summaries, subject, sendtime}.
+   */
+  settings: jsonb('settings').$type<Record<string, unknown>>().notNull().default({}),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -604,6 +610,13 @@ export const users = pgTable(
     name: text('name'),
     /** E.164-ish contact number captured at sign-up; nullable for older accounts. */
     phone: text('phone'),
+    /**
+     * Profile extras + notification toggles (not first-class columns):
+     * displayName, title, timezone, language, notifications.
+     */
+    preferences: jsonb('preferences').$type<Record<string, unknown>>().notNull().default({}),
+    /** When set, Auth.js sessions with iat before this instant are rejected. */
+    sessionsRevokedAt: ts('sessions_revoked_at'),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -641,5 +654,31 @@ export const magicLinkTokens = pgTable(
   (t) => [
     uniqueIndex('magic_link_tokens_hash_uq').on(t.tokenHash),
     index('magic_link_tokens_email_idx').on(t.email),
+  ],
+);
+
+/**
+ * Workspace-scoped API keys created from Settings. The env `API_KEYS` pairs
+ * remain as the ops fallback; these are per-tenant, revocable, and stored as
+ * a sha256 hash — the plaintext secret is shown exactly once at creation.
+ */
+export const apiKeys = pgTable(
+  'api_keys',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    /** Public identifier (the part before the colon in `keyId:secret`). */
+    keyId: text('key_id').notNull(),
+    secretHash: text('secret_hash').notNull(),
+    scope: text('scope').notNull().default('full'),
+    createdAt: createdAt(),
+    revokedAt: ts('revoked_at'),
+  },
+  (t) => [
+    uniqueIndex('api_keys_key_id_uq').on(t.keyId),
+    index('api_keys_tenant_idx').on(t.tenantId),
   ],
 );

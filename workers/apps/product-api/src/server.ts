@@ -16,6 +16,7 @@ import { tagRoutes } from './routes/tags';
 import { templateRoutes } from './routes/templates';
 import { channelRoutes } from './routes/channels';
 import { voicePreviewRoutes } from './routes/voice-preview';
+import { workspaceRoutes } from './routes/workspace';
 
 /**
  * The product app's business routes, without health. Exported so the unified
@@ -36,6 +37,7 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
   await app.register(voicePreviewRoutes);
   await app.register(statsRoutes);
   await app.register(mediaRoutes);
+  await app.register(workspaceRoutes);
 }
 
 export function buildProductServer(): FastifyInstance {

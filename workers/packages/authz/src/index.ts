@@ -1,7 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { config } from '@maildrill/config';
-import { ensureTenantByName } from '@maildrill/services';
+import { ensureTenantByName, matchWorkspaceApiKey } from '@maildrill/services';
 import { verifyJwtHS256 } from './jwt';
 import { emitAuthCache, emitAuthGate } from './observers';
 
@@ -52,14 +52,16 @@ async function tenantForApiKey(keyId: string): Promise<string> {
   return tenant.id;
 }
 
-function matchApiKey(pair: string): Promise<string> | null {
+async function matchApiKey(pair: string): Promise<string | null> {
   const idx = pair.indexOf(':');
   if (idx === -1) return null;
   const id = pair.slice(0, idx);
   const secret = pair.slice(idx + 1);
   const match = config.auth.apiKeys.find((k) => k.id === id);
   if (match && safeEqual(secret, match.secret)) return tenantForApiKey(id);
-  return null;
+  // Env pairs are the ops fallback; workspace-created keys (Settings → API
+  // keys, `mk_…` ids) live in the database and are revocable per tenant.
+  return matchWorkspaceApiKey(pair);
 }
 
 type AuthMethod = 'api-key' | 'jwt' | 'bearer-api-key' | 'none';

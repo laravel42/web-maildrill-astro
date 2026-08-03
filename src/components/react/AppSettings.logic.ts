@@ -7,9 +7,12 @@ import type { Tone } from './shared/tones';
 import type { Member, Panel, Role, SectionKey, ToggleKey } from './AppSettings.types';
 
 /* ------------------------------ nav model ------------------------------- */
-// Branding, Integrations, and AI stay out of the nav (unreachable) until their
-// sections are wired to the service; their PANELS entries below are kept so
-// restoring them is just re-adding a row here.
+// Branding, AI features, and Integrations stay out of the nav (unreachable)
+// for the first release. Branding and AI already persist through
+// GET/PATCH /v1/workspace, but nothing consumes those values yet — no send
+// path reads the footer, no editor reads the subject toggle, no scheduler
+// reads send-time — so showing them would promise behavior that does not
+// exist. Re-add a row here once the feature behind it ships.
 export const NAV: { key: SectionKey; label: string; icon: IconName }[] = [
   { key: 'usage', label: 'Usage', icon: 'chart' },
   { key: 'domains', label: 'Domains', icon: 'globe' },
@@ -176,6 +179,7 @@ export const isEmail = (v: string) => /^\S+@\S+\.\S+$/.test(v.trim());
 /* ----------------------------- team roster ------------------------------ */
 export const roleTone: Record<Role, Tone> = {
   Owner: 'violet',
+  Admin: 'accent',
   Editor: 'accent',
   Viewer: 'neutral',
 };
@@ -184,6 +188,12 @@ export const roleTone: Record<Role, Tone> = {
 export const ROSTER: Member[] = [];
 
 export const ROLE_PERMS: Record<Role, string[]> = {
+  Admin: [
+    'Invite & remove users',
+    'Create & send campaigns',
+    'Manage integrations & domains',
+    'Manage API keys',
+  ],
   Owner: [
     'Full account access',
     'Manage billing & balance',
@@ -207,9 +217,10 @@ export const DEFAULT_TOGGLES: Record<ToggleKey, boolean> = {
 };
 
 /* ------------------------------ role editor ----------------------------- */
-export const ROLE_LIST: Role[] = ['Owner', 'Editor', 'Viewer'];
+export const ROLE_LIST: Role[] = ['Owner', 'Admin', 'Editor', 'Viewer'];
 export const ROLE_DESC: Record<Role, string> = {
   Owner: 'Full access, including billing and members.',
+  Admin: 'Manage members, domains, and keys — no billing.',
   Editor: 'Create and send campaigns, manage content.',
   Viewer: 'Read-only access to campaigns and reports.',
 };
