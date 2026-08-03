@@ -28,25 +28,42 @@ export default function PhoneField({
   name = 'phone',
   required = false,
   defaultIso = 'US',
+  defaultValue,
+  onValueChange,
   onInvalidMessage,
+  compact = false,
 }: {
   name?: string;
   required?: boolean;
   defaultIso?: string;
+  /** Optional E.164 seed (e.g. profile edit). Skips locale auto-detect when set. */
+  defaultValue?: string | null;
+  /** Fires with the current E.164 value (empty string when national digits are blank). */
+  onValueChange?: (e164: string) => void;
   /** Override the native too-short message, e.g. to match host-form copy. */
   onInvalidMessage?: (message: string) => string;
+  /** Dense settings-form sizing (37px, matching AppProfile inputs); default is the auth-page size. */
+  compact?: boolean;
 }) {
-  const [iso, setIso] = useState(defaultIso);
-  const [digits, setDigits] = useState('');
+  const seeded = defaultValue ? matchInternational(defaultValue) : null;
+  const [iso, setIso] = useState(seeded?.country.iso ?? defaultIso);
+  const [digits, setDigits] = useState(seeded?.digits ?? '');
   const [open, setOpen] = useState(false);
   // CDN flag failed to load (offline dev) — fall back to the emoji flag.
   const [flagBroken, setFlagBroken] = useState(false);
-  const touched = useRef(false);
+  const touched = useRef(Boolean(seeded));
   const wrapRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const numRef = useRef<HTMLInputElement>(null);
 
   const country = phoneCountry(iso) ?? PHONE_COUNTRIES[0];
+  const e164 = toE164(digits, country);
+  const onValueChangeRef = useRef(onValueChange);
+  onValueChangeRef.current = onValueChange;
+
+  useEffect(() => {
+    onValueChangeRef.current?.(e164);
+  }, [e164]);
 
   useEffect(() => {
     if (!open) return;
@@ -77,7 +94,8 @@ export default function PhoneField({
   useEffect(() => setFlagBroken(false), [iso]);
 
   // Deterministic SSR (defaultIso), then localize the initial country from the
-  // browser locale after hydration — only while the field is untouched.
+  // browser locale after hydration — only while the field is untouched and no
+  // E.164 default was provided.
   useEffect(() => {
     if (touched.current) return;
     try {
@@ -91,7 +109,9 @@ export default function PhoneField({
   // Too-short numbers block submit through native form validity.
   useEffect(() => {
     const message = nationalLengthError(digits, country);
-    numRef.current?.setCustomValidity(message && onInvalidMessage ? onInvalidMessage(message) : message);
+    numRef.current?.setCustomValidity(
+      message && onInvalidMessage ? onInvalidMessage(message) : message,
+    );
   }, [digits, country, onInvalidMessage]);
 
   const onNumChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -110,7 +130,7 @@ export default function PhoneField({
 
   return (
     <div
-      className={styles.wrap}
+      className={`${styles.wrap}${compact ? ` ${styles.wrapCompact}` : ''}`}
       ref={wrapRef}
       onKeyDown={(e) => {
         if (e.key === 'Escape' && open) {
@@ -183,6 +203,7 @@ export default function PhoneField({
       )}
       <input
         ref={numRef}
+        id={name === 'phone' ? 'field-phone' : undefined}
         className={styles.num}
         type="tel"
         inputMode="tel"
@@ -193,7 +214,7 @@ export default function PhoneField({
         value={formatNational(digits, country)}
         onChange={onNumChange}
       />
-      <input type="hidden" name={name} value={toE164(digits, country)} />
+      <input type="hidden" name={name} value={e164} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { SubscriberStatus } from '@/types/app';
 import Icon from './Icon';
+import PhoneField from './PhoneField';
 import { useEscapeClose } from './shared/useEscapeClose';
 import { toneFor } from './SubscriberEditorModal.logic';
 import type { SubscriberEditorValues } from './SubscriberEditorModal.types';
@@ -123,15 +124,16 @@ export default function SubscriberEditorModal({
             Phone <span className={styles.opt}>(optional)</span>
           </label>
           {/* Addressing field for SMS/WhatsApp/Voice, the same way email is for
-              email. Kept permissive: numbers vary too much to validate here. */}
-          <input
-            id="sem-phone"
-            type="tel"
-            className={styles.input}
-            value={phone}
-            placeholder="+1 555 123 4567"
-            onChange={(e) => setPhone(e.target.value)}
-          />
+              email. Guided country + national-number input; the value handed to
+              onSave is E.164 (or empty). */}
+          <div className={styles.phoneField}>
+            <PhoneField
+              name="sem-phone"
+              defaultValue={initialPhone || null}
+              onValueChange={setPhone}
+              compact
+            />
+          </div>
 
           <label className={styles.label}>
             Add to lists <span className={styles.opt}>(optional)</span>

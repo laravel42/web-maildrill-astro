@@ -41,6 +41,13 @@ export const ALL: APIRoute = async ({ request, params, locals }) => {
   const res = await fetch(target, { method: request.method, headers, body });
   return new Response(res.body, {
     status: res.status,
-    headers: { 'content-type': res.headers.get('content-type') ?? 'application/json' },
+    headers: {
+      'content-type': res.headers.get('content-type') ?? 'application/json',
+      // Every route here is authenticated, tenant-scoped, and mutable — a
+      // browser or intermediary reusing a response would show one workspace's
+      // data as another's, or serve provider state (e.g. domain verification)
+      // that has since changed.
+      'cache-control': 'no-store, no-cache, must-revalidate',
+    },
   });
 };

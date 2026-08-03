@@ -120,3 +120,18 @@
   font-size: 15px;
   color: var(--text);
 }
+
+/* Dense variant for settings forms — 37px overall (35px + the wrap's 1px
+   borders), matching AppProfile's .input. The default sizing stays the
+   auth-page one. */
+.wrapCompact .num {
+  height: 35px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+.wrapCompact .country {
+  padding: 0 8px 0 11px;
+}
+.wrapCompact .dial {
+  font-size: 13px;
+}

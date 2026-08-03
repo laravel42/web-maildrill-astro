@@ -196,3 +196,8 @@
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+/* PhoneField carries no outer margin of its own — match .input's rhythm. */
+.phoneField {
+  margin-bottom: 18px;
+}

@@ -146,15 +146,29 @@ export default function VisualEmailBuilder({
   }, []);
 
   // Client-only load of the editor + its stylesheet (kept out of SSR).
+  // A dynamic import can fail transiently — in dev when the server restarts
+  // or Vite re-optimizes mid-session (504 Outdated Optimize Dep), in prod
+  // when a redeploy invalidates a stale tab's chunk URLs — so retry briefly
+  // before surfacing the error. The error state offers a page reload, the
+  // reliable fix once this tab's module graph no longer matches the server.
   useEffect(() => {
     let alive = true;
     void (async () => {
-      try {
-        await import('email-builder-standalone/style.css');
-        const mod = await import('email-builder-standalone');
-        if (alive) setBuilder(() => mod.EmailBuilder as unknown as BuilderComponent);
-      } catch (err) {
-        if (alive) setLoadError(err instanceof Error ? err.message : 'Failed to load the editor.');
+      let lastErr: unknown;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 1_500));
+        if (!alive) return;
+        try {
+          await import('email-builder-standalone/style.css');
+          const mod = await import('email-builder-standalone');
+          if (alive) setBuilder(() => mod.EmailBuilder as unknown as BuilderComponent);
+          return;
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+      if (alive) {
+        setLoadError(lastErr instanceof Error ? lastErr.message : 'Failed to load the editor.');
       }
     })();
     return () => {
@@ -270,6 +284,12 @@ export default function VisualEmailBuilder({
         <div className={shellStyles.state}>
           <p>Couldn’t load the email editor.</p>
           <p className={shellStyles.muted}>{loadError}</p>
+          <p className={shellStyles.muted}>
+            This usually means the page outlived a server restart or an update — reloading fixes it.
+          </p>
+          <button type="button" className="sbtn" onClick={() => window.location.reload()}>
+            Reload page
+          </button>
         </div>
       ) : Builder ? (
         <Builder
