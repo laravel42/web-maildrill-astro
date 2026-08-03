@@ -29,6 +29,13 @@ const log = createLogger({ component: 'webauthn' });
 export type ChallengePurpose = 'registration' | 'authentication' | 'reauth';
 
 const CHALLENGE_TTL_MS = 5 * 60_000;
+/**
+ * Browser-enforced ceremony deadline, sent in the options. Deliberately above
+ * the frontend's own timers (30s without a platform authenticator, 90s with —
+ * see src/lib/app/webauthn.ts) so the client aborts first with a message that
+ * names the missing hardware, instead of the browser's opaque NotAllowedError.
+ */
+const CEREMONY_TIMEOUT_MS = 120_000;
 
 async function storeChallenge(
   purpose: ChallengePurpose,
@@ -98,6 +105,7 @@ export async function startPasskeyRegistration(
     rpID: config.security.rpId,
     userName: email,
     userDisplayName: displayName ?? email,
+    timeout: CEREMONY_TIMEOUT_MS,
     attestationType: 'none',
     excludeCredentials: existing.map((p) => ({
       id: p.credentialId,
@@ -125,7 +133,10 @@ export async function completePasskeyRegistration(
   response: RegistrationResponseJSON,
   name: string | null,
   ctx: RequestContext & { sessionId?: string | null },
-): Promise<CompletedRegistration | { error: 'invalid_challenge' | 'verification_failed' | 'duplicate_credential' }> {
+): Promise<
+  | CompletedRegistration
+  | { error: 'invalid_challenge' | 'verification_failed' | 'duplicate_credential' }
+> {
   const challenge = await consumeChallenge(challengeId, 'registration', userId);
   if (!challenge) return { error: 'invalid_challenge' };
 
@@ -210,6 +221,7 @@ export async function startPasskeyAuthentication(
 ): Promise<AuthenticationOptionsResult> {
   const options = await generateAuthenticationOptions({
     rpID: config.security.rpId,
+    timeout: CEREMONY_TIMEOUT_MS,
     userVerification: 'preferred',
     allowCredentials: [],
   });
@@ -245,7 +257,11 @@ export async function verifyPasskeyAssertion(
     .limit(1);
   const passkey = rows[0];
   if (!passkey || (expectedUserId && passkey.userId !== expectedUserId)) {
-    await logSuspiciousAssertion(expectedUserId ?? passkey?.userId ?? null, ctx, 'unknown_credential');
+    await logSuspiciousAssertion(
+      expectedUserId ?? passkey?.userId ?? null,
+      ctx,
+      'unknown_credential',
+    );
     return null;
   }
 

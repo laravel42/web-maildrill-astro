@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Icon from '../Icon';
 import { api, ApiError } from '@/lib/app/api';
-import { isWebAuthnCancel, passkeysSupported, registerPasskey } from '@/lib/app/webauthn';
+import {
+  isWebAuthnCancel,
+  passkeysSupported,
+  registerPasskey,
+  WebAuthnTimeoutError,
+} from '@/lib/app/webauthn';
 import type { ToastTone } from '../shared/useToast';
 import ConfirmDialog from '../shared/ConfirmDialog';
 import styles from '../AppProfile.module.css';
@@ -110,6 +115,12 @@ export default function AppProfileSecurity({
       show(`Passkey “${passkey.name}” added`);
     } catch (err) {
       if (isWebAuthnCancel(err)) return;
+      // Timed out waiting on hardware (e.g. no built-in authenticator and no
+      // key inserted) — the error's message says exactly what to do.
+      if (err instanceof WebAuthnTimeoutError) {
+        show(err.message, 'alert');
+        return;
+      }
       if (err instanceof ApiError && err.message === 'duplicate_credential') {
         show('That passkey is already registered on this account', 'alert');
         return;

@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '@/lib/app/api';
-import { isWebAuthnCancel, passkeysSupported, reauthWithPasskey } from '@/lib/app/webauthn';
+import {
+  isWebAuthnCancel,
+  passkeysSupported,
+  reauthWithPasskey,
+  WebAuthnTimeoutError,
+} from '@/lib/app/webauthn';
 import Icon from '../Icon';
 import styles from '../AppProfile.module.css';
 import SecurityModal from './SecurityModal';
@@ -61,7 +66,11 @@ export default function ReauthDialog({
       await reauthWithPasskey();
       onSuccess();
     } catch (err) {
-      if (!isWebAuthnCancel(err)) fail(err, 'That passkey was not recognized.');
+      if (err instanceof WebAuthnTimeoutError) {
+        setError(err.message);
+      } else if (!isWebAuthnCancel(err)) {
+        fail(err, 'That passkey was not recognized.');
+      }
     } finally {
       setBusy(false);
     }
