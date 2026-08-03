@@ -1,5 +1,6 @@
 import type {
   apiKeys,
+  emailDomains,
   campaigns,
   customFieldDefs,
   deadLetters,
@@ -98,6 +99,9 @@ export type NewMagicLinkToken = typeof magicLinkTokens.$inferInsert;
 
 export type ApiKeyRow = typeof apiKeys.$inferSelect;
 export type NewApiKey = typeof apiKeys.$inferInsert;
+
+export type EmailDomainRow = typeof emailDomains.$inferSelect;
+export type NewEmailDomain = typeof emailDomains.$inferInsert;
 
 // --- account security ---
 

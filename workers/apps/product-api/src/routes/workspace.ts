@@ -194,17 +194,16 @@ export async function workspaceRoutes(appRaw: FastifyInstance): Promise<void> {
   );
 
   /* ------------------------------- domains ------------------------------ */
-  // Account-level on the provider side (see email-domains.ts); acceptable
-  // while every install is effectively one workspace.
+  // Infobip domains are account-level; ownership is tenant-scoped in Postgres
+  // (see email-domains.ts). Every handler passes req.tenantId.
 
   app.get(
     '/v1/workspace/domains',
     { schema: { tags: TAG, summary: 'Sending domains with DNS records and verification state' } },
     async (req, reply) => {
-      void req;
       if (!emailDomainsConfigured()) return { data: [], configured: false };
       try {
-        return { data: await listEmailDomains(), configured: true };
+        return { data: await listEmailDomains(req.tenantId), configured: true };
       } catch (err) {
         return mapError(err, reply);
       }
@@ -230,7 +229,11 @@ export async function workspaceRoutes(appRaw: FastifyInstance): Promise<void> {
         return reply.code(409).send({ error: 'email provider is not configured' });
       }
       try {
-        return await registerEmailDomain(req.body.domainName, req.body.targetedDailyTraffic);
+        return await registerEmailDomain(
+          req.tenantId,
+          req.body.domainName,
+          req.body.targetedDailyTraffic,
+        );
       } catch (err) {
         return mapError(err, reply);
       }
@@ -252,7 +255,7 @@ export async function workspaceRoutes(appRaw: FastifyInstance): Promise<void> {
         return reply.code(409).send({ error: 'email provider is not configured' });
       }
       try {
-        await deleteEmailDomain(req.params.domainName);
+        await deleteEmailDomain(req.tenantId, req.params.domainName);
         return reply.code(204).send();
       } catch (err) {
         return mapError(err, reply);
@@ -275,7 +278,7 @@ export async function workspaceRoutes(appRaw: FastifyInstance): Promise<void> {
         return reply.code(409).send({ error: 'email provider is not configured' });
       }
       try {
-        return await verifyEmailDomain(req.params.domainName);
+        return await verifyEmailDomain(req.tenantId, req.params.domainName);
       } catch (err) {
         return mapError(err, reply);
       }

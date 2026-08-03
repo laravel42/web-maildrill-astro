@@ -26,6 +26,7 @@ export {
   memberships,
   magicLinkTokens,
   apiKeys,
+  emailDomains,
   authSessions,
   passkeys,
   webauthnChallenges,
