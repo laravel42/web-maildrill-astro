@@ -26,4 +26,12 @@ export {
   memberships,
   magicLinkTokens,
   apiKeys,
+  authSessions,
+  passkeys,
+  webauthnChallenges,
+  userTotp,
+  recoveryCodes,
+  trustedDevices,
+  authTickets,
+  securityEvents,
 } from './schema';

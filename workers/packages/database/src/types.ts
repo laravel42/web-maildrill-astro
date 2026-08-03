@@ -21,6 +21,14 @@ import type {
   usageRecords,
   users,
   webhookEvents,
+  authSessions,
+  passkeys,
+  webauthnChallenges,
+  userTotp,
+  recoveryCodes,
+  trustedDevices,
+  authTickets,
+  securityEvents,
 } from './schema';
 
 export type { SegmentRule } from './schema';
@@ -89,3 +97,30 @@ export type MagicLinkToken = typeof magicLinkTokens.$inferSelect;
 export type NewMagicLinkToken = typeof magicLinkTokens.$inferInsert;
 
 export type ApiKeyRow = typeof apiKeys.$inferSelect;
+export type NewApiKey = typeof apiKeys.$inferInsert;
+
+// --- account security ---
+
+export type AuthSessionRow = typeof authSessions.$inferSelect;
+export type NewAuthSession = typeof authSessions.$inferInsert;
+
+export type PasskeyRow = typeof passkeys.$inferSelect;
+export type NewPasskey = typeof passkeys.$inferInsert;
+
+export type WebauthnChallengeRow = typeof webauthnChallenges.$inferSelect;
+export type NewWebauthnChallenge = typeof webauthnChallenges.$inferInsert;
+
+export type UserTotpRow = typeof userTotp.$inferSelect;
+export type NewUserTotp = typeof userTotp.$inferInsert;
+
+export type RecoveryCodeRow = typeof recoveryCodes.$inferSelect;
+export type NewRecoveryCode = typeof recoveryCodes.$inferInsert;
+
+export type TrustedDeviceRow = typeof trustedDevices.$inferSelect;
+export type NewTrustedDevice = typeof trustedDevices.$inferInsert;
+
+export type AuthTicketRow = typeof authTickets.$inferSelect;
+export type NewAuthTicket = typeof authTickets.$inferInsert;
+
+export type SecurityEventRow = typeof securityEvents.$inferSelect;
+export type NewSecurityEvent = typeof securityEvents.$inferInsert;

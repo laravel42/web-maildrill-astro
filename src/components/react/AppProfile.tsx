@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { signOut } from 'auth-astro/client';
 import Icon from './Icon';
 import type { IconName } from '@/lib/icons';
 import { api, ApiError } from '@/lib/app/api';
@@ -13,6 +12,8 @@ import {
 import SearchableSelect from './shared/SearchableSelect';
 import PhoneField from './PhoneField';
 import { useToast } from './shared/useToast';
+import AppProfileSecurity from './profile/AppProfileSecurity';
+import AppProfileSessions from './profile/AppProfileSessions';
 import styles from './AppProfile.module.css';
 
 type TabKey = 'profile' | 'security' | 'notifications' | 'sessions';
@@ -30,16 +31,16 @@ const HEADS: Record<TabKey, { title: string; sub: string }> = {
     sub: 'How you appear to teammates and in campaign audit logs.',
   },
   security: {
-    title: 'Password & security',
-    sub: 'Keep your account and everything your workspace sends protected.',
+    title: 'Sign-in & security',
+    sub: 'Passkeys, two-factor authentication, and how you sign in — all passwordless.',
   },
   notifications: {
     title: 'Notifications',
     sub: 'Pick the events worth interrupting you for, and where they land.',
   },
   sessions: {
-    title: 'Sessions',
-    sub: 'Devices signed in to your account, and recent sign-in attempts.',
+    title: 'Sessions & devices',
+    sub: 'Where you’re signed in, which devices you trust, and recent security activity.',
   },
 };
 
@@ -78,9 +79,9 @@ const INITIAL_SWITCHES: Record<string, boolean> = {
 
 const TABS: { key: TabKey; label: string; icon: IconName }[] = [
   { key: 'profile', label: 'Profile', icon: 'user' },
-  { key: 'security', label: 'Password & security', icon: 'shield' },
+  { key: 'security', label: 'Sign-in & security', icon: 'shield' },
   { key: 'notifications', label: 'Notifications', icon: 'inbox' },
-  { key: 'sessions', label: 'Sessions', icon: 'clock' },
+  { key: 'sessions', label: 'Sessions & devices', icon: 'clock' },
 ];
 
 type MeResponse = {
@@ -118,27 +119,6 @@ function formatJoined(iso: string | null): string {
   } catch {
     return '—';
   }
-}
-
-function formatSignInAt(iso: string): string {
-  try {
-    return new Intl.DateTimeFormat(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(iso));
-  } catch {
-    return iso;
-  }
-}
-
-function browserLabel(): string {
-  if (typeof navigator === 'undefined') return 'This browser';
-  const ua = navigator.userAgent;
-  if (/Edg\//.test(ua)) return 'Microsoft Edge';
-  if (/Chrome\//.test(ua) && !/Edg\//.test(ua)) return 'Chrome';
-  if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) return 'Safari';
-  if (/Firefox\//.test(ua)) return 'Firefox';
-  return 'This browser';
 }
 
 function Switch({ on, label, onToggle }: { on: boolean; label: string; onToggle: () => void }) {
@@ -206,7 +186,6 @@ export default function AppProfile({
   const [committedSwitches, setCommittedSwitches] = useState(initialSwitches);
   const [phoneKey, setPhoneKey] = useState(0);
   const [saving, setSaving] = useState(false);
-  const [deviceLabel, setDeviceLabel] = useState('This browser');
   // Profile photo — stored under its own avatars/ S3 prefix via /me/avatar.
   const [avatarUrl, setAvatarUrl] = useState<string | null>(
     () => prefString(preferencesProp ?? {}, 'avatarUrl') || null,
@@ -216,11 +195,7 @@ export default function AppProfile({
   // ~400 zones with live offsets — built once, not per render.
   const tzOptions = useMemo(() => timeZoneOptions(), []);
   const tzOffset = fields.tz ? zoneOffsetLabel(fields.tz) : '';
-  const { toast, show } = useToast();
-
-  useEffect(() => {
-    setDeviceLabel(browserLabel());
-  }, []);
+  const { toast, tone, show } = useToast();
 
   useEffect(() => {
     let alive = true;
@@ -341,8 +316,6 @@ export default function AppProfile({
     setPhoneKey((k) => k + 1);
   };
 
-  const notAvailable = () => show('Not available yet');
-
   /* Photo upload: ticket → S3 PUT → confirm (avatars/ prefix, never a media
      asset). The shell listens on maildrill:profile, same as display-name saves. */
   const broadcastAvatar = (url: string | null) => {
@@ -388,22 +361,6 @@ export default function AppProfile({
         setAvatarBusy(false);
       }
     })();
-  };
-
-  const signOutHere = () => {
-    // auth-astro runtime accepts callbackUrl; published SignOutParams types omit it.
-    void signOut({ callbackUrl: '/login' } as Parameters<typeof signOut>[0]);
-  };
-
-  const signOutEverywhere = async () => {
-    try {
-      await api.post('me/sessions/revoke-all');
-    } catch {
-      /* still sign out locally */
-    }
-    void signOut({
-      callbackUrl: '/login?reason=signed-out',
-    } as Parameters<typeof signOut>[0]);
   };
 
   const head = HEADS[tab];
@@ -628,79 +585,7 @@ export default function AppProfile({
                   </>
                 )}
 
-                {tab === 'security' && (
-                  <>
-                    <div className={styles.section}>
-                      <div className={styles.sectionHead}>Sign-in</div>
-                      <ul className={styles.stack}>
-                        <li className={styles.stackRow}>
-                          <span className={styles.stackIcon}>
-                            <Icon name="mail" size={18} />
-                          </span>
-                          <div className={styles.stackBody}>
-                            <p className={styles.stackTitle}>Passwordless email codes</p>
-                            <p className={styles.stackDesc}>
-                              You sign in with a 6-digit code sent to {liveEmail ?? 'your email'}
-                            </p>
-                          </div>
-                          <span className={`${styles.chip} ${styles.chipOn}`}>On</span>
-                        </li>
-                      </ul>
-                    </div>
-
-                    <div className={styles.section}>
-                      <div className={styles.sectionHead}>
-                        Two-factor authentication <span className={styles.note}>Coming soon</span>
-                      </div>
-                      <ul className={styles.stack}>
-                        <li className={styles.stackRow}>
-                          <div className={styles.stackBody}>
-                            <p className={styles.stackTitle}>Authenticator app</p>
-                            <p className={styles.stackDesc}>Not configured</p>
-                          </div>
-                          <span className={`${styles.chip} ${styles.chipOff}`}>Off</span>
-                          <button
-                            className={`${styles.btn} ${styles.btnSm}`}
-                            type="button"
-                            onClick={notAvailable}
-                          >
-                            Set up
-                          </button>
-                        </li>
-                        <li className={styles.stackRow}>
-                          <div className={styles.stackBody}>
-                            <p className={styles.stackTitle}>Recovery codes</p>
-                            <p className={styles.stackDesc}>Not configured</p>
-                          </div>
-                          <span className={`${styles.chip} ${styles.chipOff}`}>Off</span>
-                          <button
-                            className={`${styles.btn} ${styles.btnSm}`}
-                            type="button"
-                            onClick={notAvailable}
-                          >
-                            Generate
-                          </button>
-                        </li>
-                        <li className={styles.stackRow}>
-                          <div className={styles.stackBody}>
-                            <p className={styles.stackTitle}>Passkeys</p>
-                            <p className={styles.stackDesc}>
-                              No passkey registered on this account
-                            </p>
-                          </div>
-                          <span className={`${styles.chip} ${styles.chipOff}`}>Off</span>
-                          <button
-                            className={`${styles.btn} ${styles.btnSm}`}
-                            type="button"
-                            onClick={notAvailable}
-                          >
-                            Add passkey
-                          </button>
-                        </li>
-                      </ul>
-                    </div>
-                  </>
-                )}
+                {tab === 'security' && <AppProfileSecurity email={liveEmail} show={show} />}
 
                 {tab === 'notifications' && (
                   <>
@@ -744,66 +629,7 @@ export default function AppProfile({
                 )}
 
                 {tab === 'sessions' && (
-                  <>
-                    <div className={styles.section}>
-                      <div className={`${styles.sectionHead} ${styles.sectionHeadSplit}`}>
-                        <div>
-                          <p>Active sessions</p>
-                          <p className={styles.note}>1 device · this browser</p>
-                        </div>
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                          <button
-                            className={`${styles.btn} ${styles.btnSm}`}
-                            type="button"
-                            onClick={signOutHere}
-                          >
-                            Sign out
-                          </button>
-                          <button
-                            className={`${styles.btn} ${styles.btnSm} ${styles.btnDanger}`}
-                            type="button"
-                            onClick={() => void signOutEverywhere()}
-                          >
-                            Sign out everywhere
-                          </button>
-                        </div>
-                      </div>
-                      <ul>
-                        <li className={styles.sessionRow}>
-                          <span className={`${styles.sessionIcon} ${styles.sessionIconCurrent}`}>
-                            <Icon name="globe" size={18} />
-                          </span>
-                          <div className={styles.stackBody}>
-                            <p className={styles.sessionDevice}>
-                              {deviceLabel}{' '}
-                              <span className={`${styles.chip} ${styles.chipOn}`}>This device</span>
-                            </p>
-                            <p className={styles.stackDesc}>Active now · JWT session</p>
-                          </div>
-                        </li>
-                      </ul>
-                    </div>
-
-                    <div className={styles.section}>
-                      <div className={styles.sectionHead}>Recent sign-ins</div>
-                      <table className={styles.table}>
-                        <tbody>
-                          {recentSignIns.length === 0 ? (
-                            <tr>
-                              <td>No sign-in history recorded yet.</td>
-                            </tr>
-                          ) : (
-                            recentSignIns.map((row) => (
-                              <tr key={`${row.at}-${row.method}`}>
-                                <td>{formatSignInAt(row.at)}</td>
-                                <td>Login code</td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
+                  <AppProfileSessions email={liveEmail} recentSignIns={recentSignIns} show={show} />
                 )}
               </div>
             </section>
@@ -833,12 +659,12 @@ export default function AppProfile({
 
       {toast && (
         <div
-          className={styles.toast}
+          className={`${styles.toast}${tone === 'alert' ? ` ${styles.toastAlert}` : ''}`}
           role="status"
           style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
         >
           <span className={styles.toastIc}>
-            <Icon name="check" size={13} stroke={3} />
+            <Icon name={tone === 'alert' ? 'minus' : 'check'} size={13} stroke={3} />
           </span>
           {toast}
         </div>

@@ -69,7 +69,11 @@ export type IconName =
   | 'eye'
   | 'zap'
   | 'user'
-  | 'logout';
+  | 'logout'
+  | 'key'
+  | 'fingerprint'
+  | 'smartphone'
+  | 'monitor';
 
 export const filledIcons: ReadonlySet<IconName> = new Set<IconName>([
   'whatsapp',
@@ -166,4 +170,10 @@ export const iconPaths: Record<IconName, string> = {
   user: '<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5v-1.2A4.3 4.3 0 0 1 8.8 15h6.4a4.3 4.3 0 0 1 4.3 4.3v1.2"/>',
   logout:
     '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+  key: '<circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.8-9.8"/><path d="m15 7 3 3"/><path d="m18 4 2 2"/>',
+  fingerprint:
+    '<path d="M12 11a3 3 0 0 0-3 3c0 1.8-.3 3.5-.9 5"/><path d="M15 14c0 2.4-.3 4.6-.9 6.7"/><path d="M17.8 18.4c.1-.9.2-2 .2-3.4a6 6 0 0 0-9-5.2"/><path d="M5.4 12.9A6 6 0 0 0 6 14c0 1.4-.2 2.7-.5 4"/><path d="M3.7 9.4A9 9 0 0 1 12 5a9 9 0 0 1 8.3 4.4"/><path d="M6.2 3.9A11 11 0 0 1 12 2c2.1 0 4.1.6 5.8 1.7"/>',
+  smartphone: '<rect x="6.5" y="2.5" width="11" height="19" rx="2.4"/><path d="M11 18.4h2"/>',
+  monitor:
+    '<rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>',
 };

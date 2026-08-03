@@ -4,33 +4,46 @@ import { mintServiceToken, serviceBaseUrl } from '@/lib/server/service';
 
 const PROTECTED = /^\/(app|dashboard)(\/|$)/;
 
-/** In-process cache of sessionsRevokedAt ISO strings (or null), TTL 30s. */
-const revokeCache = new Map<string, { at: string | null; expires: number }>();
+/** In-process cache of session revocation state, TTL 30s. */
+interface RevokeStatus {
+  at: string | null;
+  sessionRevoked: boolean;
+}
+const revokeCache = new Map<string, { status: RevokeStatus; expires: number }>();
 const REVOKE_TTL_MS = 30_000;
 
-async function fetchSessionsRevokedAt(
+async function fetchRevokeStatus(
   userId: string,
   activeTenantId: string,
   role: string | null | undefined,
-): Promise<string | null> {
-  const hit = revokeCache.get(userId);
-  if (hit && hit.expires > Date.now()) return hit.at;
+  sessionId: string | null,
+): Promise<RevokeStatus> {
+  const key = `${userId}:${sessionId ?? '-'}`;
+  const hit = revokeCache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.status;
 
+  const fallback: RevokeStatus = { at: null, sessionRevoked: false };
   try {
-    const token = mintServiceToken({ userId, activeTenantId, role });
+    const token = mintServiceToken({ userId, activeTenantId, role, sessionId });
     const res = await fetch(`${serviceBaseUrl()}/v1/me/session-status`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) {
-      revokeCache.set(userId, { at: null, expires: Date.now() + REVOKE_TTL_MS });
-      return null;
+      revokeCache.set(key, { status: fallback, expires: Date.now() + REVOKE_TTL_MS });
+      return fallback;
     }
-    const data = (await res.json()) as { sessionsRevokedAt?: string | null };
-    const at = data.sessionsRevokedAt ?? null;
-    revokeCache.set(userId, { at, expires: Date.now() + REVOKE_TTL_MS });
-    return at;
+    const data = (await res.json()) as {
+      sessionsRevokedAt?: string | null;
+      sessionRevoked?: boolean;
+    };
+    const status: RevokeStatus = {
+      at: data.sessionsRevokedAt ?? null,
+      sessionRevoked: Boolean(data.sessionRevoked),
+    };
+    revokeCache.set(key, { status, expires: Date.now() + REVOKE_TTL_MS });
+    return status;
   } catch {
-    return null;
+    return fallback;
   }
 }
 
@@ -44,10 +57,7 @@ function clearAuthCookies(headers: Headers): void {
     '__Host-authjs.csrf-token',
   ];
   for (const name of names) {
-    headers.append(
-      'Set-Cookie',
-      `${name}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`,
-    );
+    headers.append('Set-Cookie', `${name}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`);
   }
 }
 
@@ -71,20 +81,21 @@ export const onRequest = defineMiddleware(async (context, next) => {
       authTime?: number | null;
       activeTenantId?: string | null;
       role?: string | null;
+      sid?: string | null;
     };
     const userId = session.user && 'id' in session.user ? String(session.user.id) : null;
     const authTime = typeof s.authTime === 'number' ? s.authTime : null;
     const tenantId = s.activeTenantId ?? null;
 
     if (userId && authTime && tenantId) {
-      const revokedIso = await fetchSessionsRevokedAt(userId, tenantId, s.role);
-      if (revokedIso) {
-        const revokedSec = Math.floor(new Date(revokedIso).getTime() / 1000);
-        if (authTime < revokedSec) {
-          const headers = new Headers({ Location: '/login?reason=signed-out' });
-          clearAuthCookies(headers);
-          return new Response(null, { status: 302, headers });
-        }
+      const status = await fetchRevokeStatus(userId, tenantId, s.role, s.sid ?? null);
+      // Per-session revocation (Profile → Sessions) or the account-wide
+      // kill switch — either signs this request out.
+      const revokedSec = status.at ? Math.floor(new Date(status.at).getTime() / 1000) : null;
+      if (status.sessionRevoked || (revokedSec !== null && authTime < revokedSec)) {
+        const headers = new Headers({ Location: '/login?reason=signed-out' });
+        clearAuthCookies(headers);
+        return new Response(null, { status: 302, headers });
       }
     }
   }

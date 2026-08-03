@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  bigint,
   boolean,
   index,
   integer,
@@ -655,6 +656,204 @@ export const magicLinkTokens = pgTable(
     uniqueIndex('magic_link_tokens_hash_uq').on(t.tokenHash),
     index('magic_link_tokens_email_idx').on(t.email),
   ],
+);
+
+// ===========================================================================
+// Account security — passkeys, TOTP, recovery codes, trusted devices,
+// revocable sessions, and the security activity log. All rows hang off the
+// user (cascade delete) and never store plaintext secrets: passkeys keep only
+// the public key, TOTP secrets are AES-256-GCM encrypted, recovery codes and
+// trusted-device tokens are sha256 hashes.
+// ===========================================================================
+
+/**
+ * One row per Auth.js login. The JWT carries this row's id as `sid`; the
+ * frontend middleware checks the row (30s cache) so a session can be revoked
+ * server-side even though the cookie is a stateless JWT. `elevated_until`
+ * marks a fresh second-factor/reauth challenge for sensitive mutations.
+ */
+export const authSessions = pgTable(
+  'auth_sessions',
+  {
+    id: id(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** Auth methods used at login, e.g. ["code"], ["webauthn"], ["code","totp"]. */
+    amr: jsonb('amr').$type<string[]>().notNull().default([]),
+    ip: text('ip'),
+    userAgent: text('user_agent'),
+    browser: text('browser'),
+    os: text('os'),
+    deviceType: text('device_type'),
+    expiresAt: ts('expires_at').notNull(),
+    revokedAt: ts('revoked_at'),
+    elevatedUntil: ts('elevated_until'),
+    lastSeenAt: ts('last_seen_at'),
+    createdAt: createdAt(),
+  },
+  (t) => [index('auth_sessions_user_idx').on(t.userId)],
+);
+
+/** WebAuthn credentials. `credential_id` and `public_key` are base64url. */
+export const passkeys = pgTable(
+  'passkeys',
+  {
+    id: id(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    credentialId: text('credential_id').notNull(),
+    publicKey: text('public_key').notNull(),
+    /** WebAuthn signature counter (uint32 — integer would overflow). */
+    counter: bigint('counter', { mode: 'number' }).notNull().default(0),
+    transports: jsonb('transports').$type<string[]>().notNull().default([]),
+    /** simplewebauthn's credentialDeviceType: singleDevice | multiDevice. */
+    deviceType: text('device_type').notNull().default('singleDevice'),
+    backedUp: boolean('backed_up').notNull().default(false),
+    name: text('name').notNull(),
+    createdAt: createdAt(),
+    lastUsedAt: ts('last_used_at'),
+  },
+  (t) => [
+    uniqueIndex('passkeys_credential_id_uq').on(t.credentialId),
+    index('passkeys_user_idx').on(t.userId),
+  ],
+);
+
+/**
+ * Single-use, short-lived WebAuthn challenges. `user_id` is null for
+ * discoverable-credential login (the user isn't known until the assertion).
+ */
+export const webauthnChallenges = pgTable(
+  'webauthn_challenges',
+  {
+    id: id(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    /** registration | authentication | reauth */
+    purpose: text('purpose').notNull(),
+    challenge: text('challenge').notNull(),
+    expiresAt: ts('expires_at').notNull(),
+    consumedAt: ts('consumed_at'),
+    createdAt: createdAt(),
+  },
+  (t) => [index('webauthn_challenges_user_idx').on(t.userId)],
+);
+
+/**
+ * TOTP authenticator config, one row per user. `secret_enc` is AES-256-GCM
+ * (see identity/security/crypto). A row with `confirmed_at` null is a pending
+ * setup and never satisfies a second-factor challenge. `last_used_step`
+ * prevents replay of an accepted code within its time window.
+ */
+export const userTotp = pgTable(
+  'user_totp',
+  {
+    id: id(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    secretEnc: text('secret_enc').notNull(),
+    confirmedAt: ts('confirmed_at'),
+    lastUsedStep: bigint('last_used_step', { mode: 'number' }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex('user_totp_user_uq').on(t.userId)],
+);
+
+/** One-time 2FA recovery codes; only sha256 hashes are stored. */
+export const recoveryCodes = pgTable(
+  'recovery_codes',
+  {
+    id: id(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    codeHash: text('code_hash').notNull(),
+    usedAt: ts('used_at'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('recovery_codes_user_hash_uq').on(t.userId, t.codeHash),
+    index('recovery_codes_user_idx').on(t.userId),
+  ],
+);
+
+/**
+ * Devices the user chose to trust after a second-factor challenge. The cookie
+ * holds `<id>.<secret>`; only sha256(secret) is stored. A valid, unexpired,
+ * unrevoked row lets a login skip the 2FA challenge.
+ */
+export const trustedDevices = pgTable(
+  'trusted_devices',
+  {
+    id: id(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    tokenHash: text('token_hash').notNull(),
+    name: text('name').notNull(),
+    browser: text('browser'),
+    os: text('os'),
+    ip: text('ip'),
+    expiresAt: ts('expires_at').notNull(),
+    revokedAt: ts('revoked_at'),
+    lastUsedAt: ts('last_used_at'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('trusted_devices_token_hash_uq').on(t.tokenHash),
+    index('trusted_devices_user_idx').on(t.userId),
+  ],
+);
+
+/**
+ * Single-use tickets bridging the multi-step login (code verify → 2FA
+ * challenge → Auth.js session) and the passkey login. The ticket value is
+ * `<id>.<secret>`; only sha256(secret) is stored. `purpose` is `login`
+ * (exchangeable for a session) or `twofa` (first factor passed, second
+ * pending).
+ */
+export const authTickets = pgTable(
+  'auth_tickets',
+  {
+    id: id(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    purpose: text('purpose').notNull(),
+    secretHash: text('secret_hash').notNull(),
+    /** Auth methods accumulated so far, copied onto the session at exchange. */
+    amr: jsonb('amr').$type<string[]>().notNull().default([]),
+    expiresAt: ts('expires_at').notNull(),
+    consumedAt: ts('consumed_at'),
+    createdAt: createdAt(),
+  },
+  (t) => [index('auth_tickets_user_idx').on(t.userId)],
+);
+
+/**
+ * Security activity log shown on the Profile page. Append-only; metadata is
+ * safe/structured only — never secrets, tokens, codes, or key material.
+ */
+export const securityEvents = pgTable(
+  'security_events',
+  {
+    id: id(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    eventType: text('event_type').notNull(),
+    sessionId: uuid('session_id').references(() => authSessions.id, { onDelete: 'set null' }),
+    ip: text('ip'),
+    userAgent: text('user_agent'),
+    /** Id of the affected entity (passkey id, device id, session id…). */
+    entityId: text('entity_id'),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: createdAt(),
+  },
+  (t) => [index('security_events_user_created_idx').on(t.userId, t.createdAt)],
 );
 
 /**

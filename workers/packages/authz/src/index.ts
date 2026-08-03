@@ -22,6 +22,10 @@ declare module 'fastify' {
     userId?: string;
     /** Membership role carried in the session JWT, when present. */
     role?: string;
+    /** Auth.js session row id (`auth_sessions.id`), when the JWT carries one. */
+    sessionId?: string;
+    /** Login instant (unix seconds) from the Auth.js JWT, when present. */
+    authTime?: number;
   }
 }
 
@@ -29,6 +33,8 @@ export interface AuthContext {
   tenantId: string;
   userId?: string;
   role?: string;
+  sessionId?: string;
+  authTime?: number;
 }
 
 const tenantCache = new Map<string, string>();
@@ -87,6 +93,8 @@ async function resolveAuth(
             tenantId: claims.tenantId,
             userId: typeof claims.userId === 'string' ? claims.userId : undefined,
             role: typeof claims.role === 'string' ? claims.role : undefined,
+            sessionId: typeof claims.sessionId === 'string' ? claims.sessionId : undefined,
+            authTime: typeof claims.authTime === 'number' ? claims.authTime : undefined,
           },
           method: 'jwt',
         };
@@ -125,4 +133,6 @@ export async function authenticate(req: FastifyRequest, reply: FastifyReply): Pr
   req.tenantId = ctx.tenantId;
   req.userId = ctx.userId;
   req.role = ctx.role;
+  req.sessionId = ctx.sessionId;
+  req.authTime = ctx.authTime;
 }

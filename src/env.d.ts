@@ -31,6 +31,10 @@ declare namespace App {
       activeTenantId?: string | null;
       role?: string | null;
       authTime?: number | null;
+      /** Server-side session row id (auth_sessions) carried in the JWT. */
+      sid?: string | null;
+      /** Auth methods used at login (code, totp, recovery, webauthn…). */
+      amr?: string[] | null;
       workspaces?: Array<{ tenantId: string; role: string; workspaceName: string }>;
     } | null;
   }

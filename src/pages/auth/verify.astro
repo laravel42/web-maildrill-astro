@@ -95,8 +95,11 @@ const code = Astro.url.searchParams.get('code') ?? '';
       <p class="fallback"><a href="/login">Enter your code manually</a></p>
     </div>
     <script>
-      // Drive the credentials callback directly so we control the outcome:
-      // success -> /dashboard, failure -> branded /login (never Auth.js's default page).
+      // Verify through the BFF (which owns the 2FA policy), then drive the
+      // credentials callback with the resulting one-time ticket so we control
+      // the outcome: success -> /dashboard, 2FA -> branded challenge on
+      // /login (the challenge ticket rides an HttpOnly cookie), failure ->
+      // branded /login (never Auth.js's default page).
       const el = document.getElementById('msg');
       const email = el?.getAttribute('data-email') ?? '';
       const code = el?.getAttribute('data-code') ?? '';
@@ -107,6 +110,20 @@ const code = Astro.url.searchParams.get('code') ?? '';
           return;
         }
         try {
+          const verifyRes = await fetch('/api/login-verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, code }),
+          });
+          if (!verifyRes.ok) {
+            window.location.replace('/login?error=expired');
+            return;
+          }
+          const verify = await verifyRes.json();
+          if (verify.requiresSecondFactor) {
+            window.location.replace(`/login?stage=2fa&email=${encodeURIComponent(email)}`);
+            return;
+          }
           const csrfRes = await fetch('/api/auth/csrf');
           const { csrfToken } = await csrfRes.json();
           const res = await fetch('/api/auth/callback/credentials', {
@@ -117,8 +134,7 @@ const code = Astro.url.searchParams.get('code') ?? '';
             },
             body: new URLSearchParams({
               csrfToken,
-              email,
-              code,
+              ticket: verify.ticket,
               callbackUrl: '/dashboard',
               json: 'true',
             }),

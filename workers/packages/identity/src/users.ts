@@ -1,5 +1,12 @@
 import { and, desc, eq, isNotNull, isNull } from 'drizzle-orm';
-import { db, magicLinkTokens, users, type User } from '@maildrill/database';
+import {
+  authSessions,
+  db,
+  magicLinkTokens,
+  securityEvents,
+  users,
+  type User,
+} from '@maildrill/database';
 
 const E164 = /^\+\d{7,16}$/;
 
@@ -145,10 +152,25 @@ export async function revokeAllSessions(
   const user = await getUser(userId);
   if (!user) return null;
   const now = new Date();
-  await db.update(users).set({ sessionsRevokedAt: now, updatedAt: now }).where(eq(users.id, userId));
-  await db
-    .delete(magicLinkTokens)
-    .where(and(eq(magicLinkTokens.email, user.email), isNull(magicLinkTokens.consumedAt)));
+  await db.transaction(async (tx) => {
+    await tx
+      .update(users)
+      .set({ sessionsRevokedAt: now, updatedAt: now })
+      .where(eq(users.id, userId));
+    await tx
+      .delete(magicLinkTokens)
+      .where(and(eq(magicLinkTokens.email, user.email), isNull(magicLinkTokens.consumedAt)));
+    // Session rows too, so the per-session registry agrees with the kill switch.
+    await tx
+      .update(authSessions)
+      .set({ revokedAt: now })
+      .where(and(eq(authSessions.userId, userId), isNull(authSessions.revokedAt)));
+    await tx.insert(securityEvents).values({
+      userId,
+      eventType: 'sessions_revoked_all',
+      metadata: {},
+    });
+  });
   return { sessionsRevokedAt: now };
 }
 

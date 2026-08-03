@@ -6,8 +6,10 @@ import type { ZodTypeProvider } from '@maildrill/httpkit';
 import {
   getMe,
   getSessionsRevokedAt,
+  isSessionActive,
   listRecentSignIns,
   revokeAllSessions,
+  touchSession,
   updateMe,
 } from '@maildrill/identity';
 import {
@@ -193,16 +195,26 @@ export async function meRoutes(appRaw: FastifyInstance): Promise<void> {
     },
   );
 
-  /** Lightweight revoke check for Astro middleware (cached client-side). */
+  /**
+   * Lightweight revoke check for Astro middleware (cached client-side). When
+   * the JWT carries a session row id (`sid`), the row's liveness is included
+   * so individual sessions can be revoked server-side; the row's activity
+   * stamp is bumped as a side effect.
+   */
   app.get(
     '/v1/me/session-status',
-    { schema: { tags: TAG, summary: 'Session revocation timestamp for the current user' } },
+    { schema: { tags: TAG, summary: 'Session revocation status for the current user' } },
     async (req, reply) => {
       if (!req.userId) {
         return reply.code(400).send({ error: 'user_session_required' });
       }
       const at = await getSessionsRevokedAt(req.userId);
-      return { sessionsRevokedAt: at?.toISOString() ?? null };
+      let sessionRevoked = false;
+      if (req.sessionId) {
+        sessionRevoked = !(await isSessionActive(req.userId, req.sessionId));
+        if (!sessionRevoked) void touchSession(req.userId, req.sessionId);
+      }
+      return { sessionsRevokedAt: at?.toISOString() ?? null, sessionRevoked };
     },
   );
 }

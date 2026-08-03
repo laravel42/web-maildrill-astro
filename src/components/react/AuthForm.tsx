@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { signIn } from 'auth-astro/client';
 import { mockResetPassword } from '@/lib/app/services';
+import { isWebAuthnCancel, passkeyLoginTicket, passkeysSupported } from '@/lib/app/webauthn';
 import PhoneField from './PhoneField';
 import type { Mode, Status } from './AuthForm.types';
 import styles from './AuthForm.module.css';
@@ -12,9 +13,14 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   // Sign-up captures these so verify can stamp them on the new account.
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
-  const [stage, setStage] = useState<'form' | 'code' | 'done'>('form');
+  const [stage, setStage] = useState<'form' | 'code' | 'twofa' | 'done'>('form');
   // Six positional slots so a digit typed into any box stays in place.
   const [code, setCode] = useState<string[]>(['', '', '', '', '', '']);
+  // Two-factor challenge (accounts with an authenticator app enabled).
+  const [twofaMode, setTwofaMode] = useState<'totp' | 'recovery'>('totp');
+  const [twofaValue, setTwofaValue] = useState('');
+  const [rememberDevice, setRememberDevice] = useState(false);
+  const [pkSupported, setPkSupported] = useState(false);
   const boxesRef = useRef<HTMLDivElement>(null);
 
   const focusBox = (i: number) => {
@@ -33,13 +39,48 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     setError(null);
   };
 
-  // Surface a friendly note when an expired/used sign-in link bounced here.
+  // Surface a friendly note when an expired/used sign-in link bounced here,
+  // and resume a two-factor challenge handed over by the magic-link page
+  // (the challenge ticket rides an HttpOnly cookie, never the URL).
   useEffect(() => {
     if (mode !== 'login') return;
-    if (new URLSearchParams(window.location.search).get('error')) {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('error')) {
       setError('That sign-in link expired or was already used — enter your email for a new code.');
     }
+    if (params.get('stage') === '2fa') {
+      setSentTo(params.get('email') ?? '');
+      setStage('twofa');
+    }
   }, [mode]);
+
+  useEffect(() => {
+    setPkSupported(passkeysSupported());
+  }, []);
+
+  /**
+   * Terminal step for every path: exchange a one-time login ticket for the
+   * Auth.js session, then play the "you're in" beat and hand off.
+   */
+  async function completeTicket(ticket: string) {
+    const doSignIn = signIn as (p: string, o: Record<string, unknown>) => Promise<unknown>;
+    const res = await doSignIn('credentials', {
+      ticket,
+      redirect: false,
+      callbackUrl: '/dashboard',
+    });
+    if (res !== undefined) {
+      setError('That sign-in expired — request a new code.');
+      setStatus('error');
+      return;
+    }
+    if (sentTo) window.posthog?.identify(sentTo, { email: sentTo });
+    window.posthog?.capture('login_succeeded');
+    if (mode === 'signup') window.posthog?.capture('signup_completed', { channel: 'email' });
+    setStatus('idle');
+    setStage('done');
+    window.setTimeout(() => window.location.assign('/dashboard'), 1100);
+  }
 
   async function onSubmit(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -129,34 +170,105 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     setStatus('loading');
     setError(null);
     try {
-      const doSignIn = signIn as (p: string, o: Record<string, unknown>) => Promise<unknown>;
-      // redirect:false so we control the transition: on success it resolves to
-      // undefined (session cookie already set); a bad code resolves to the raw
-      // Response without navigating.
-      const res = await doSignIn('credentials', {
-        email: sentTo,
-        code: clean,
-        // First verify of a fresh email creates the account — carry the
-        // sign-up name + phone so they land on the new user row.
-        ...(fullName ? { name: fullName } : {}),
-        ...(phone ? { phone } : {}),
-        redirect: false,
-        callbackUrl: '/dashboard',
+      // The BFF verifies (and consumes) the code, then answers with either a
+      // one-time login ticket or a two-factor challenge. First verify of a
+      // fresh email creates the account — carry the sign-up name + phone.
+      const res = await fetch('/api/login-verify', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          email: sentTo,
+          code: clean,
+          ...(fullName ? { name: fullName } : {}),
+          ...(phone ? { phone } : {}),
+        }),
       });
-      if (res !== undefined) {
+      if (res.status === 429) {
+        setError('Too many attempts — wait a few minutes and try again.');
+        setStatus('error');
+        return;
+      }
+      if (!res.ok) {
         setError('That code is invalid or expired.');
         setStatus('error');
         return;
       }
-      // Success: show the "You're in" beat, then hand off to the workspace.
-      window.posthog?.identify(sentTo, { email: sentTo });
-      window.posthog?.capture('login_succeeded');
-      if (mode === 'signup') window.posthog?.capture('signup_completed', { channel: 'email' });
-      setStatus('idle');
-      setStage('done');
-      window.setTimeout(() => window.location.assign('/dashboard'), 1100);
+      const data = (await res.json()) as { requiresSecondFactor?: boolean; ticket?: string };
+      if (data.requiresSecondFactor) {
+        setTwofaMode('totp');
+        setTwofaValue('');
+        setError(null);
+        setStatus('idle');
+        setStage('twofa');
+        return;
+      }
+      await completeTicket(data.ticket ?? '');
     } catch {
       setError('Something went wrong. Try again.');
+      setStatus('error');
+    }
+  }
+
+  async function onTwofa(event: React.SyntheticEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (status === 'loading') return;
+    const value = twofaValue.trim();
+    if (!value) return;
+    setStatus('loading');
+    setError(null);
+    try {
+      const res = await fetch('/api/twofa-verify', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...(twofaMode === 'totp' ? { totp: value } : { recoveryCode: value }),
+          rememberDevice,
+        }),
+      });
+      if (res.status === 429) {
+        setError('Too many attempts — wait a few minutes and try again.');
+        setStatus('error');
+        return;
+      }
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        if (data.error === 'challenge_expired') {
+          setStage('form');
+          setStatus('idle');
+          setError('That two-factor challenge expired — sign in again.');
+          return;
+        }
+        setError(
+          twofaMode === 'recovery'
+            ? 'That recovery code is invalid or already used.'
+            : 'That code didn’t match. Codes rotate every 30 seconds — try the current one.',
+        );
+        setStatus('error');
+        return;
+      }
+      const data = (await res.json()) as { ticket: string };
+      window.posthog?.capture('login_2fa_succeeded', { method: twofaMode });
+      await completeTicket(data.ticket);
+    } catch {
+      setError('Something went wrong. Try again.');
+      setStatus('error');
+    }
+  }
+
+  async function onPasskey() {
+    if (status === 'loading') return;
+    setStatus('loading');
+    setError(null);
+    try {
+      const ticket = await passkeyLoginTicket();
+      window.posthog?.capture('login_passkey_succeeded');
+      await completeTicket(ticket);
+    } catch (err) {
+      if (isWebAuthnCancel(err)) {
+        setStatus('idle');
+        return;
+      }
+      setError(err instanceof Error ? err.message : 'Passkey sign-in failed. Try an email code.');
       setStatus('error');
     }
   }
@@ -183,6 +295,8 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     setStatus('idle');
     setError(null);
     setCode(['', '', '', '', '', '']);
+    setTwofaValue('');
+    setRememberDevice(false);
   }
 
   // Login and signup share one column: the header (and, for login, the footer)
@@ -315,6 +429,96 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     </div>
   );
 
+  // Two-factor challenge — after a valid email code, before the session.
+  const twofaMiddle = (
+    <div style={{ animation: 'pop .5s var(--ease-out) both' }}>
+      <div className={`${styles.successicon} ${styles.iconTile} ${styles.iconTileMail}`}>
+        <svg
+          width="26"
+          height="26"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 2 4 5.5v5.2c0 4.9 3.4 9.5 8 10.8 4.6-1.3 8-5.9 8-10.8V5.5L12 2Z" />
+          <path d="m9 12 2 2 4-4.5" />
+        </svg>
+      </div>
+      <h2 className={styles.substep}>Two-factor check</h2>
+      <p className={styles.sub} style={{ margin: '0 0 18px' }}>
+        {twofaMode === 'totp'
+          ? 'Your account is protected with an authenticator app. Enter the 6-digit code it shows.'
+          : 'Enter one of your recovery codes (like AB12-CD34). Each works once.'}
+      </p>
+      <form onSubmit={onTwofa} noValidate>
+        <label className={styles.field}>
+          <span className={styles.label}>
+            {twofaMode === 'totp' ? 'Authenticator code' : 'Recovery code'}
+          </span>
+          <input
+            className={styles.input}
+            inputMode={twofaMode === 'totp' ? 'numeric' : 'text'}
+            autoComplete="one-time-code"
+            maxLength={twofaMode === 'totp' ? 6 : 9}
+            value={twofaValue}
+            autoFocus
+            aria-label={twofaMode === 'totp' ? 'Authenticator code' : 'Recovery code'}
+            onChange={(e) => {
+              const raw = e.target.value;
+              setTwofaValue(twofaMode === 'totp' ? raw.replace(/\D/g, '') : raw.toUpperCase());
+              if (error) setError(null);
+            }}
+          />
+        </label>
+        <label className={styles.check}>
+          <input
+            type="checkbox"
+            checked={rememberDevice}
+            onChange={(e) => setRememberDevice(e.target.checked)}
+          />
+          <span>Trust this device for 60 days — skip this step next time.</span>
+        </label>
+        {error && (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
+        )}
+        <button
+          className={styles.submit}
+          type="submit"
+          disabled={status === 'loading' || !twofaValue.trim()}
+        >
+          {status === 'loading' ? 'Verifying…' : 'Verify'}
+        </button>
+      </form>
+      <div className={styles.hintCard}>
+        <p className={styles.hintText}>
+          <button
+            type="button"
+            className={styles.linkbtn}
+            onClick={() => {
+              setTwofaMode((m) => (m === 'totp' ? 'recovery' : 'totp'));
+              setTwofaValue('');
+              setError(null);
+            }}
+          >
+            {twofaMode === 'totp'
+              ? 'Use a recovery code instead'
+              : 'Use your authenticator instead'}
+          </button>{' '}
+          ·{' '}
+          <button type="button" className={styles.linkbtn} onClick={onReset}>
+            Start over
+          </button>
+        </p>
+      </div>
+    </div>
+  );
+
   // ---------- success screen (forgot) ----------
   if (status === 'success' && mode === 'forgot') {
     return (
@@ -405,6 +609,8 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
       {stage === 'code' ? (
         codeMiddle
+      ) : stage === 'twofa' ? (
+        twofaMiddle
       ) : stage === 'done' ? (
         doneMiddle
       ) : (
@@ -474,6 +680,40 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           <button className={styles.submit} type="submit" disabled={status === 'loading'}>
             {submitLabel}
           </button>
+
+          {mode === 'login' && pkSupported && (
+            <>
+              <div className={styles.orRow} aria-hidden="true">
+                <span>or</span>
+              </div>
+              <button
+                type="button"
+                className={styles.pkbtn}
+                onClick={() => void onPasskey()}
+                disabled={status === 'loading'}
+              >
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 11a3 3 0 0 0-3 3c0 1.8-.3 3.5-.9 5" />
+                  <path d="M15 14c0 2.4-.3 4.6-.9 6.7" />
+                  <path d="M17.8 18.4c.1-.9.2-2 .2-3.4a6 6 0 0 0-9-5.2" />
+                  <path d="M5.4 12.9A6 6 0 0 0 6 14c0 1.4-.2 2.7-.5 4" />
+                  <path d="M3.7 9.4A9 9 0 0 1 12 5a9 9 0 0 1 8.3 4.4" />
+                  <path d="M6.2 3.9A11 11 0 0 1 12 2c2.1 0 4.1.6 5.8 1.7" />
+                </svg>
+                Sign in with a passkey
+              </button>
+            </>
+          )}
 
           {mode === 'login' && (
             <p className={`${styles.note} ${styles.noteCenter}`}>

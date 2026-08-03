@@ -129,6 +129,10 @@ export default defineConfig({
       ],
       include: [
         'infobip-rtc',
+        // Profile security: QR render is lazy-imported; the WebAuthn client
+        // rides the statically-imported auth islands.
+        'qrcode',
+        '@simplewebauthn/browser',
         'wa-template-studio > @dnd-kit/core',
         'wa-template-studio > @dnd-kit/modifiers',
         'wa-template-studio > @dnd-kit/sortable',

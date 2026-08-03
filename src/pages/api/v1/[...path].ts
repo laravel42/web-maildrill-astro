@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { mintServiceToken, serviceBaseUrl } from '@/lib/server/service';
+import { TRUSTED_DEVICE_COOKIE, clientHeaders } from '@/lib/server/client-context';
 
 export const prerender = false;
 
@@ -8,7 +9,8 @@ export const prerender = false;
  * tenant-scoped JWT and forwards to workers. The browser never holds
  * a service credential.
  */
-export const ALL: APIRoute = async ({ request, params, locals }) => {
+export const ALL: APIRoute = async (ctx) => {
+  const { request, params, locals, cookies } = ctx;
   const session = locals.session;
   if (!session?.user?.id || !session.activeTenantId) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), {
@@ -21,6 +23,10 @@ export const ALL: APIRoute = async ({ request, params, locals }) => {
     userId: session.user.id,
     activeTenantId: session.activeTenantId,
     role: session.role,
+    // Session id + login instant power per-session revocation and the
+    // recent-authentication gate on sensitive security mutations.
+    sessionId: session.sid ?? null,
+    authTime: session.authTime ?? null,
   });
   const url = new URL(request.url);
   const target = `${serviceBaseUrl()}/v1/${params.path ?? ''}${url.search}`;
@@ -28,7 +34,13 @@ export const ALL: APIRoute = async ({ request, params, locals }) => {
   // Only forward a body (and its content-type) when there actually is one — a
   // bodyless request (e.g. DELETE) must not carry `content-type: application/json`
   // with an empty body, which Fastify rejects as a malformed JSON payload.
-  const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    // Browser context for session/device bookkeeping in the security routes.
+    ...clientHeaders(ctx),
+  };
+  const trustedDevice = cookies.get(TRUSTED_DEVICE_COOKIE)?.value;
+  if (trustedDevice) headers['x-trusted-device'] = trustedDevice;
   let body: string | undefined;
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     const raw = await request.text();

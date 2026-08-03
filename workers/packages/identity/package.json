@@ -12,6 +12,8 @@
     "@maildrill/domain": "workspace:*",
     "@maildrill/observability": "workspace:*",
     "@maildrill/providers": "workspace:*",
-    "drizzle-orm": "^0.38.4"
+    "@simplewebauthn/server": "^13.3.2",
+    "drizzle-orm": "^0.38.4",
+    "otpauth": "^9.5.1"
   }
 }

@@ -9,6 +9,7 @@ import { customFieldRoutes } from './routes/custom-fields';
 import { healthRoutes } from './routes/health';
 import { listRoutes } from './routes/lists';
 import { meRoutes } from './routes/me';
+import { securityRoutes } from './routes/security';
 import { segmentRoutes } from './routes/segments';
 import { subscriberRoutes } from './routes/subscribers';
 import { suppressionRoutes } from './routes/suppressions';
@@ -25,6 +26,7 @@ import { workspaceRoutes } from './routes/workspace';
 export async function productRoutes(app: FastifyInstance): Promise<void> {
   await app.register(authRoutes);
   await app.register(meRoutes);
+  await app.register(securityRoutes);
   await app.register(subscriberRoutes);
   await app.register(listRoutes);
   await app.register(segmentRoutes);

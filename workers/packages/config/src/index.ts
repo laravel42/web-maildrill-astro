@@ -40,6 +40,21 @@ const EnvSchema = z.object({
   APP_URL: z.string().default('http://localhost:4321'),
   MAGIC_LINK_TTL_MINUTES: int(15),
   /**
+   * Account security (passkeys / TOTP 2FA). SECURITY_ENCRYPTION_KEY encrypts
+   * TOTP secrets at rest (AES-256-GCM) — 32 bytes, base64 or hex. Empty in dev
+   * derives a key from JWT_SECRET with a boot warning; production requires it
+   * once 2FA is used. WEBAUTHN_RP_ID must be the registrable domain the app is
+   * served on; WEBAUTHN_ORIGINS is a comma-separated list of exact origins
+   * allowed to complete WebAuthn ceremonies.
+   */
+  SECURITY_ENCRYPTION_KEY: z.string().default(''),
+  WEBAUTHN_RP_ID: z.string().default('localhost'),
+  WEBAUTHN_RP_NAME: z.string().default('Maildrill'),
+  WEBAUTHN_ORIGINS: z.string().default('http://localhost:4321'),
+  TRUSTED_DEVICE_TTL_DAYS: int(60),
+  SESSION_TTL_DAYS: int(30),
+  REAUTH_WINDOW_MINUTES: int(10),
+  /**
    * Cloudflare Email Service SMTP relay (smtp.mx.cloudflare.net) — carries ALL
    * transactional mail (login codes, welcome). Campaign email rides the
    * provider drivers (PROVIDER_DRIVER / PROVIDER_EMAIL_DRIVER), never this relay.
@@ -220,6 +235,17 @@ export const config = {
     apiKeys: parseApiKeys(env.API_KEYS),
     jwtSecret: env.JWT_SECRET,
     magicLinkTtlMinutes: env.MAGIC_LINK_TTL_MINUTES,
+  },
+  security: {
+    encryptionKey: env.SECURITY_ENCRYPTION_KEY,
+    rpId: env.WEBAUTHN_RP_ID,
+    rpName: env.WEBAUTHN_RP_NAME,
+    webauthnOrigins: env.WEBAUTHN_ORIGINS.split(',')
+      .map((o) => o.trim())
+      .filter(Boolean),
+    trustedDeviceTtlDays: env.TRUSTED_DEVICE_TTL_DAYS,
+    sessionTtlDays: env.SESSION_TTL_DAYS,
+    reauthWindowMinutes: env.REAUTH_WINDOW_MINUTES,
   },
   mail: {
     host: env.SMTP_HOST,

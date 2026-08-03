@@ -823,3 +823,178 @@ select.input {
   border-radius: inherit;
   object-fit: cover;
 }
+
+/* ── Security: modals, reauth, recovery codes ─────────────────────────────
+   Modal shell mirrors the Settings modal (head + body + footer on surface2)
+   so the two screens read as one system. */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background: rgba(28, 25, 23, 0.4);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+.modal {
+  width: 440px;
+  max-width: 100%;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(28, 25, 23, 0.28);
+}
+.modalHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--divider);
+}
+.modalTitle {
+  font-weight: 600;
+  font-size: 15px;
+}
+.modalX {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: var(--surface2);
+  border-radius: 9px;
+  cursor: pointer;
+  color: var(--text4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modalX:hover {
+  color: var(--text2);
+  background: var(--border2);
+}
+.modalBody {
+  padding: 20px 22px;
+}
+.modalFoot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--divider);
+  background: var(--surface2);
+}
+.modalSub {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text4);
+}
+
+/* Reauth method switcher (radiogroup of chips). */
+.methodRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+.methodChip {
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  color: var(--text3);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.methodChip:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+.methodChipOn {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+}
+
+/* One-time recovery-code display. */
+.codeGrid {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 18px;
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  background: var(--surface2);
+}
+.codeGrid code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+.codeActions {
+  display: flex;
+  gap: 8px;
+}
+
+/* TOTP enrolment. */
+.qrBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 196px;
+  min-height: 196px;
+  margin: 0 auto 14px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+}
+.secretBox {
+  display: block;
+  margin: 4px 0 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  background: var(--surface2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.inlineErr {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--danger, #dc2626);
+}
+
+.loadingRow {
+  margin: 0;
+  padding: 18px 2px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Alert-tinted icons: failed 2FA / rejected WebAuthn in the activity feed. */
+.sessionIconAlert {
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  color: var(--warning);
+}
+
+.toastAlert .toastIc {
+  background: var(--warning);
+}
+.toastAlert {
+  box-shadow: 0 12px 32px rgba(217, 119, 6, 0.32);
+}

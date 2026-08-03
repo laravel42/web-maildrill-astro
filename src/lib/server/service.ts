@@ -6,6 +6,10 @@ export interface ServiceCtx {
   userId: string;
   activeTenantId: string;
   role?: string | null;
+  /** Auth.js session row id (`sid` claim) — enables per-session checks. */
+  sessionId?: string | null;
+  /** Login instant (unix seconds) — enables recent-auth enforcement. */
+  authTime?: number | null;
 }
 
 export function serviceBaseUrl(): string {
@@ -28,6 +32,8 @@ export function mintServiceToken(ctx: ServiceCtx): string {
       tenantId: ctx.activeTenantId,
       userId: ctx.userId,
       role: ctx.role ?? undefined,
+      sessionId: ctx.sessionId ?? undefined,
+      authTime: ctx.authTime ?? undefined,
       exp: Math.floor(Date.now() / 1000) + 300,
     }),
   );
