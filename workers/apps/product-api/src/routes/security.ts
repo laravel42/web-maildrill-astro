@@ -548,7 +548,7 @@ export async function securityRoutes(appRaw: FastifyInstance): Promise<void> {
       if (!rateLimiter.hit(`reauth-code-req:${userId}`, max, windowMs).ok) {
         return reply.code(429).send({ error: 'rate_limited' });
       }
-      await requestReauthCode(userId);
+      await requestReauthCode(userId, clientCtx(req));
       return reply.code(202).send({ ok: true });
     },
   );
