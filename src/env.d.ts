@@ -8,6 +8,10 @@ interface ImportMetaEnv {
   readonly PUBLIC_POSTHOG_PROJECT_TOKEN?: string;
   readonly AUTH_SECRET?: string;
   readonly API_BASE_URL?: string;
+  /** Messaging API when split from product (default: same as API_BASE_URL). */
+  readonly MESSAGING_API_BASE_URL?: string;
+  /** Email-builder AI API when split (default: same as API_BASE_URL). */
+  readonly EB_API_BASE_URL?: string;
   readonly JWT_SECRET?: string;
 }
 

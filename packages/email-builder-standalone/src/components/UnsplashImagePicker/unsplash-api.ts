@@ -89,7 +89,7 @@ export function resolveBackendUrl(backendUrl?: string): string {
   const fromWindowClean = fromWindow?.replace(/\/+$/, '');
   if (fromWindowClean) return fromWindowClean;
   const fromEnv = (import.meta.env.VITE_AI_BACKEND_URL as string | undefined)?.replace(/\/+$/, '');
-  return fromEnv ?? 'http://localhost:3100';
+  return fromEnv ?? 'http://localhost:3003';
 }
 
 /** Map an HTTP response to a typed `UnsplashSearchError` for 4xx/5xx responses. */

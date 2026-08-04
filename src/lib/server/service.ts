@@ -16,6 +16,27 @@ export function serviceBaseUrl(): string {
   return process.env.API_BASE_URL ?? import.meta.env.API_BASE_URL ?? 'http://localhost:3001';
 }
 
+/**
+ * Messaging API origin (`/v1/messages*`, `/webhooks/*`, `/admin/*`).
+ * Defaults to the product API URL when running the unified `pnpm dev` process.
+ * Set `MESSAGING_API_BASE_URL` (e.g. http://localhost:3002) for a split deploy.
+ */
+export function messagingBaseUrl(): string {
+  return (
+    process.env.MESSAGING_API_BASE_URL ??
+    import.meta.env.MESSAGING_API_BASE_URL ??
+    serviceBaseUrl()
+  );
+}
+
+/** Pick the backend that owns a `/v1/...` path segment (no leading slash). */
+export function v1BackendBaseUrl(path: string): string {
+  if (path === 'messages' || path.startsWith('messages/')) {
+    return messagingBaseUrl();
+  }
+  return serviceBaseUrl();
+}
+
 /** Mint a short-lived HS256 JWT the workers accepts (tenant-scoped). */
 export function mintServiceToken(ctx: ServiceCtx): string {
   const secret = process.env.JWT_SECRET ?? import.meta.env.JWT_SECRET;

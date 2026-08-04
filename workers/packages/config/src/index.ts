@@ -27,7 +27,7 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   API_HOST: z.string().default('0.0.0.0'),
-  API_PORT: int(3000),
+  API_PORT: int(3002),
   PRODUCT_API_PORT: int(3001),
   DATABASE_URL: z
     .string()
@@ -62,7 +62,8 @@ const EnvSchema = z.object({
    * transactional sends no-op, for dev without credentials.
    */
   SMTP_HOST: z.string().default(''),
-  SMTP_PORT: int(587),
+  // Cloudflare Email Service SMTP is SMTPS on 465 only (no STARTTLS / 587).
+  SMTP_PORT: int(465),
   SMTP_USER: z.string().default(''),
   SMTP_PASS: z.string().default(''),
   /** Explicit TLS override; empty → implicit TLS iff port 465, else STARTTLS. */

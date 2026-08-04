@@ -30,9 +30,9 @@ Vitest. Node on a VPS (not edge).
 
 ```
 apps/
-  api                 messaging HTTP (:3000 alone)
+  api                 messaging HTTP (:3002 alone)
   product-api         product HTTP (:3001 alone)
-  email-builder-api   AI / Unsplash (:3100 alone)
+  email-builder-api   AI / Unsplash (:3003 alone)
   workers             role processes (see below)
   dev-server          unified local process (HTTP + core workers on :3001)
 packages/
@@ -58,17 +58,17 @@ pnpm --dir workers db:migrate
 pnpm --dir workers dev          # unified :3001
 # or: pnpm --filter workers dev
 
-# Astro + workers together:
+# Astro + split backends (product :3001 · messaging :3002 · EB :3003 · BullMQ):
 pnpm dev:all
 
-# Or the whole stack in containers (repo root — web + workers + Postgres + Redis):
+# Or the whole stack in containers (repo root — web + split APIs + Postgres + Redis):
 docker compose up --build
 ```
 
 Split processes (prod-style):
 
 ```bash
-pnpm start:api                  # :3000
+pnpm start:api                  # :3002
 pnpm start:product-api          # :3001
 pnpm worker all                 # includes campaign-delivery + template-approval
 ```
@@ -123,7 +123,7 @@ curl -sX POST 'localhost:3001/webhooks/mock/delivery?secret=change-me' \
 
 OpenAPI + Scalar:
 
-- Messaging `:3000` → `/docs` · `/openapi.json` (standalone api)
+- Messaging `:3002` → `/docs` · `/openapi.json` (standalone api)
 - Product / unified `:3001` → `/docs` · `/openapi.json`
 
 ## Auth

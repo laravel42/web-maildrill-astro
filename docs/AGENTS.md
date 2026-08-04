@@ -35,13 +35,13 @@ npm run test         # vitest
 npm run test:e2e     # playwright
 
 # Backend (same install — included in root workspace)
-pnpm --filter workers dev   # product-api :3001 + messaging + workers
+pnpm --filter workers dev   # unified single process on :3001 (product+messaging+EB+workers)
 # or: pnpm --dir workers dev
 
-# Or both from the repo root (workers first, then Astro once :3001 is up):
+# Or both from the repo root (split APIs + workers, then Astro when ports are up):
 pnpm dev:all
 
-# Full stack in containers (web + workers + Postgres + Redis):
+# Full stack in containers (split APIs + BullMQ + Postgres + Redis):
 docker compose up --build
 ```
 
@@ -82,7 +82,8 @@ workers/                                 # messaging + product backend (was work
 **Backend lives in [`../workers/`](../workers/)** and is part of the **root**
 `pnpm-workspace.yaml` (`workers`, `workers/packages/*`, `workers/apps/*`). One
 `pnpm install` at the repo root installs everything. Frontend talks to it via
-`API_BASE_URL` (default `http://localhost:3001`). Read [`../workers/HANDOFF.md`](../workers/HANDOFF.md)
+`API_BASE_URL` (default `http://localhost:3001`; Docker also sets
+`MESSAGING_API_BASE_URL` / `EB_API_BASE_URL` for the split). Read [`../workers/HANDOFF.md`](../workers/HANDOFF.md)
 before changing delivery, stats, or Infobip notify wiring.
 
 **Env:** one file at the **repo root** (`.env` / `.env.example`). `workers/packages/config`

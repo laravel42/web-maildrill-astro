@@ -44,7 +44,7 @@ that isn't public API. Postgres removes every one of those problems.
 ## Architecture
 
 ```
-Fastify apps on a VPS (messaging :3000 · product :3001 · workers)
+Fastify apps on a VPS (messaging :3002 · product :3001 · workers)
         │
         ├──────────────► Postgres  ── SYSTEM OF RECORD (shared schema, tenant_id)
         │                            tenants, users, memberships, subscribers, lists,

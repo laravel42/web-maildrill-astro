@@ -14,10 +14,19 @@ dist
 .github
 .vscode
 .claude
+.cursor
 
 coverage
 playwright-report
 test-results
+presentation-out
+
+# Local design/dev artefacts — not needed at runtime.
+design/screenshots
+design/uploads
+**/*.mp4
+**/*.webm
+**/*.mp3
 
 Dockerfile
 docker-compose.yml
