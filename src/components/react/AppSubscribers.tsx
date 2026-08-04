@@ -98,6 +98,15 @@ export default function AppSubscribers({
     { mode: 'create' } | { mode: 'edit'; sub: RichSubscriber } | null
   >(null);
 
+  // Quick action: /dashboard/subscribers?new opens a blank editor.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('new') == null) return;
+    setSubEditor({ mode: 'create' });
+    url.searchParams.delete('new');
+    window.history.replaceState(null, '', `${url.pathname}${url.search}`);
+  }, []);
+
   const effTags = (s: RichSubscriber): string[] => tagStore[s.id] ?? s.tags;
 
   // Tags actually present on subscribers, with counts for the filter dropdown.

@@ -2,6 +2,7 @@ import type { Campaign } from '@/types/app';
 import { fmtDate } from './AppAnalytics.logic';
 import type { FeedItem, GetStartedStep, Kpi } from './AppDashboard.types';
 import type { IconName } from '@/lib/icons';
+import type { SparkPoint } from './shared/Sparkline';
 
 export const statusLabel: Record<string, string> = {
   draft: 'Draft',
@@ -58,12 +59,68 @@ export function sentLabel(days: number): string {
   return 'Sent (12 months)';
 }
 
-export function sparkTitle(days: number): string {
-  if (days <= 7) return 'Performance · last 7 days';
-  if (days <= 30) return 'Performance · last 30 days';
-  if (days <= 90) return 'Performance · last 90 days';
-  return 'Performance · last 12 months';
-}
+/**
+ * Quick-action tiles: the workspace's most-used jumps. `?new` opens the create
+ * flow on the target screen (wizard / editor modal); the rest are plain
+ * navigation and say so in their labels.
+ */
+export const QUICK_ACTIONS: Array<{
+  icon: IconName;
+  label: string;
+  desc: string;
+  tint: string;
+  color: string;
+  href: string;
+}> = [
+  {
+    icon: 'campaigns',
+    label: 'New campaign',
+    desc: 'Draft and send in any channel',
+    tint: 'var(--accent-tint)',
+    color: 'var(--accent-text)',
+    href: '/dashboard/campaigns?new',
+  },
+  {
+    icon: 'subscribers',
+    label: 'Add subscriber',
+    desc: 'Create a contact by hand',
+    tint: 'var(--success-bg)',
+    color: 'var(--success-text)',
+    href: '/dashboard/subscribers?new',
+  },
+  {
+    icon: 'templates',
+    label: 'New email template',
+    desc: 'Open the visual builder',
+    tint: 'var(--ch-email-tint)',
+    color: 'var(--ch-email)',
+    href: '/dashboard/templates/email',
+  },
+  {
+    icon: 'lists',
+    label: 'New list',
+    desc: 'Group your audience',
+    tint: 'var(--ch-sms-tint)',
+    color: 'var(--ch-sms)',
+    href: '/dashboard/lists?new',
+  },
+  {
+    icon: 'media',
+    label: 'Media library',
+    desc: 'Upload images and assets',
+    tint: 'var(--ch-voice-tint)',
+    color: 'var(--ch-voice)',
+    href: '/dashboard/media',
+  },
+  {
+    icon: 'analytics',
+    label: 'View analytics',
+    desc: 'Volume and engagement',
+    tint: 'var(--brand-tint)',
+    color: 'var(--brand)',
+    href: '/dashboard/analytics',
+  },
+];
 
 function relativeDelta(cur: number, prev: number): { text: string; tone: DeltaTone } {
   if (prev === 0) {
@@ -174,20 +231,91 @@ export function sparkSeries(points: ActivityPoint[]): Array<{ value: number; lab
 }
 
 /**
+ * Presentation for each KPI card: icon + tinted chip (channel/status token
+ * pairs, same grammar as FEED_META and the channel strip) + destination.
+ */
+export const KPI_META: Record<
+  Kpi['key'],
+  { icon: IconName; tint: string; color: string; href: string }
+> = {
+  subscribers: {
+    icon: 'subscribers',
+    tint: 'var(--success-bg)',
+    color: 'var(--success-text)',
+    href: '/dashboard/subscribers',
+  },
+  lists: {
+    icon: 'lists',
+    tint: 'var(--ch-sms-tint)',
+    color: 'var(--ch-sms)',
+    href: '/dashboard/lists',
+  },
+  campaigns: {
+    icon: 'campaigns',
+    tint: 'var(--accent-tint)',
+    color: 'var(--accent-text)',
+    href: '/dashboard/campaigns',
+  },
+  sent: {
+    icon: 'send',
+    tint: 'var(--brand-tint)',
+    color: 'var(--brand)',
+    href: '/dashboard/analytics',
+  },
+  open: {
+    icon: 'mail',
+    tint: 'var(--ch-voice-tint)',
+    color: 'var(--ch-voice)',
+    href: '/dashboard/analytics',
+  },
+  click: {
+    icon: 'target',
+    tint: 'var(--accent-tint)',
+    color: 'var(--accent-text)',
+    href: '/dashboard/analytics',
+  },
+};
+
+/**
+ * Window slice of a weekly trend series as spark points (oldest → newest).
+ * Floored at 5 points so short ranges still draw a real shape — the labels
+ * name each week, so the extra history never masquerades as in-window data.
+ */
+function weeklySpark(series: number[] | undefined, days: number): SparkPoint[] {
+  if (!series || series.length < 2) return [];
+  const sliced = series.slice(-(Math.max(weeksFor(days), 4) + 1));
+  if (sliced.length < 2 || !sliced.some((v) => v !== 0)) return [];
+  const last = sliced.length - 1;
+  return sliced.map((value, i) => ({
+    value,
+    label: i === last ? 'This week' : `${last - i}w ago`,
+  }));
+}
+
+/**
  * KPI cards scoped to the selected timespan. Headline values and deltas both
  * move with the range — counts are in-range activity; rates are in-range averages.
  */
 export function buildKpis(s: Summary | null, daily: ActivityPoint[] = [], days = 7): Kpi[] {
   const sent = periodSent(daily, days);
+  const sentSpark = sparkSeries(sent.inRange);
   const emptySent = sentLabel(days);
+  const bare = { delta: '—', tone: 'flat' as const, context: null, spark: [] as SparkPoint[] };
   if (!s) {
     return [
-      { label: 'Subscribers', value: '—', delta: '—', tone: 'flat' },
-      { label: 'Lists', value: '—', delta: '—', tone: 'flat' },
-      { label: 'Campaigns', value: '—', delta: '—', tone: 'flat' },
-      { label: emptySent, value: '—', delta: '—', tone: 'flat' },
-      { label: 'Open rate', value: '—', delta: '—', tone: 'flat' },
-      { label: 'Click rate', value: '—', delta: '—', tone: 'flat' },
+      { key: 'subscribers', label: 'Subscribers', value: '—', sparkFormat: 'number', ...bare },
+      { key: 'lists', label: 'Lists', value: '—', sparkFormat: 'number', ...bare },
+      { key: 'campaigns', label: 'Campaigns', value: '—', sparkFormat: 'number', ...bare },
+      {
+        key: 'sent',
+        label: emptySent,
+        value: '—',
+        sparkFormat: 'number',
+        ...bare,
+        spark: sentSpark,
+      },
+      { key: 'open', label: 'Open rate', value: '—', sparkFormat: 'percent', ...bare },
+      { key: 'click', label: 'Click rate', value: '—', sparkFormat: 'percent', ...bare },
     ];
   }
 
@@ -197,43 +325,80 @@ export function buildKpis(s: Summary | null, daily: ActivityPoint[] = [], days =
   const open = periodRateCompare(s.trends?.openRate, days);
   const click = periodRateCompare(s.trends?.clickRate, days);
   const hasTracked = (s.messages.trackedDelivered ?? s.messages.delivered) > 0;
+  const deliveredInRange = sent.inRange.reduce((t, d) => t + d.delivered, 0);
+  const deliveryPct = sent.total > 0 ? (deliveredInRange / sent.total) * 100 : null;
 
   return [
     {
+      key: 'subscribers',
       label: 'Subscribers',
       value: subs.value != null ? n(subs.value) : n(s.subscribers.active),
       delta: subs.delta.text,
       tone: subs.delta.tone,
+      context:
+        subs.value != null
+          ? `${n(s.subscribers.active)} active`
+          : `${n(s.subscribers.total)} total`,
+      spark: weeklySpark(s.trends?.subscribers, days),
+      sparkFormat: 'number',
     },
     {
+      key: 'lists',
       label: 'Lists',
       value: lists.value != null ? n(lists.value) : n(s.lists),
       delta: lists.delta.text,
       tone: lists.delta.tone,
+      context: lists.value != null ? `${n(s.lists)} total` : null,
+      spark: weeklySpark(s.trends?.lists, days),
+      sparkFormat: 'number',
     },
     {
+      key: 'campaigns',
       label: 'Campaigns',
       value: camps.value != null ? n(camps.value) : n(s.campaigns.total),
       delta: camps.delta.text,
       tone: camps.delta.tone,
+      context:
+        s.campaigns.total > 0 ? `${n(s.campaigns.sent)} of ${n(s.campaigns.total)} sent` : null,
+      spark: weeklySpark(s.trends?.campaigns, days),
+      sparkFormat: 'number',
     },
     {
+      key: 'sent',
       label: sentLabel(days),
       value: n(sent.total),
       delta: sent.delta.text,
       tone: sent.delta.tone,
+      context:
+        deliveryPct != null
+          ? `${deliveryPct.toFixed(1)}% delivered`
+          : s.messages.sentToday > 0
+            ? `${n(s.messages.sentToday)} today`
+            : null,
+      spark: sentSpark,
+      sparkFormat: 'number',
     },
     {
+      key: 'open',
       label: 'Open rate',
       value: open.value != null ? `${open.value.toFixed(1)}%` : '—',
       delta: open.value != null || hasTracked ? open.delta.text : 'No deliveries yet',
       tone: open.delta.tone,
+      context:
+        s.messages.opened != null && hasTracked ? `${n(s.messages.opened)} total opens` : null,
+      spark: weeklySpark(s.trends?.openRate, days),
+      sparkFormat: 'percent',
     },
     {
+      key: 'click',
       label: 'Click rate',
       value: click.value != null ? `${click.value.toFixed(1)}%` : '—',
       delta: click.value != null || hasTracked ? click.delta.text : 'No deliveries yet',
       tone: click.delta.tone,
+      context:
+        s.messages.clicked != null && hasTracked ? `${n(s.messages.clicked)} total clicks` : null,
+      spark: weeklySpark(s.trends?.clickRate, days),
+      sparkFormat: 'percent',
     },
   ];
 }

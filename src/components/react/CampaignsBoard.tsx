@@ -98,6 +98,7 @@ export default function CampaignsBoard({
     const id = new URLSearchParams(window.location.search).get('open');
     if (id) setOpenId(id);
   }, []);
+
   const editDeepLinkDone = useRef(false);
   const { toast, show } = useToast(2600);
   const [wizard, setWizard] = useState<
@@ -118,6 +119,15 @@ export default function CampaignsBoard({
       }
     | null
   >(null);
+
+  // Quick action: /dashboard/campaigns?new opens a blank wizard.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('new') == null) return;
+    setWizard({ mode: 'create' });
+    url.searchParams.delete('new');
+    window.history.replaceState(null, '', `${url.pathname}${url.search}`);
+  }, []);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: campaigns.length };
