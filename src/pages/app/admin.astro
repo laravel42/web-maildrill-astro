@@ -1,0 +1,62 @@
+---
+export const prerender = false;
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import AppAdmin from '@/components/react/admin/AppAdmin';
+import { blogLive, guidesLive, legalLive, loadAdminApiData, type AdminApiSlices } from '@/lib/server/admin-live';
+import type { AdminLiveData } from '@/components/react/admin/live-types';
+import '@/styles/app.css';
+import type { PageSeo } from '@/config/seo';
+
+const session = Astro.locals.session;
+const userName = session?.user?.name ?? null;
+const role = session?.role ?? null;
+
+// Content collections drive the CMS screens (Blog / Guides / Legal) — real data
+// that needs no backend. API slices are workspace-scoped and best-effort: any
+// failure leaves that slice null and the screen falls back to preview data.
+const [blogEntries, guideEntries, legalEntries] = await Promise.all([
+  getCollection('blog'),
+  getCollection('guides'),
+  getCollection('legal'),
+]);
+
+let apiSlices: AdminApiSlices = { overview: null, campaigns: null, deliver: null, queues: null };
+let workspaceName: string | null = null;
+
+if (session?.user?.id && session.activeTenantId) {
+  workspaceName =
+    session.workspaces?.find((w) => w.tenantId === session.activeTenantId)?.workspaceName ?? null;
+  apiSlices = await loadAdminApiData(
+    { userId: session.user.id, activeTenantId: session.activeTenantId, role },
+    workspaceName ?? 'This workspace',
+  );
+}
+
+const live: AdminLiveData = {
+  workspaceName,
+  ...apiSlices,
+  blog: blogLive(blogEntries),
+  guides: guidesLive(guideEntries),
+  legal: legalLive(legalEntries),
+};
+
+const pageSeo: PageSeo = {
+  title: 'Admin console · Maildrill',
+  description: 'Platform administration for Maildrill.',
+  noindex: true,
+};
+---
+
+<BaseLayout seo={pageSeo}>
+  {/* Apply the saved workspace theme before paint to avoid a flash. */}
+  <script is:inline>
+    try {
+      const t = localStorage.getItem('md-theme');
+      if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+    } catch {
+      /* no-op */
+    }
+  </script>
+  <AppAdmin client:load userName={userName} role={role} live={live} />
+</BaseLayout>
