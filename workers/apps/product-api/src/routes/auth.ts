@@ -72,7 +72,7 @@ export async function authRoutes(appRaw: FastifyInstance): Promise<void> {
       const { max, windowMs } = RATE_LIMITS.codeRequest;
       const emailOk = rateLimiter.hit(`code-req:${req.body.email.toLowerCase()}`, max, windowMs).ok;
       const ipOk = ctx.ip ? rateLimiter.hit(`code-req-ip:${ctx.ip}`, max * 3, windowMs).ok : true;
-      if (emailOk && ipOk) await requestLoginCode(req.body.email);
+      if (emailOk && ipOk) await requestLoginCode(req.body.email, ctx);
       return reply.code(202).send({ ok: true });
     },
   );

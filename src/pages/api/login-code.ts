@@ -1,12 +1,14 @@
 import type { APIRoute } from 'astro';
 import { serviceBaseUrl } from '@/lib/server/service';
 import { isAllowedLoginEmail } from '@/lib/auth/login-allowlist';
+import { clientHeaders } from '@/lib/server/client-context';
 import { getPostHogServer } from '@/lib/posthog-server';
 
 export const prerender = false;
 
 /** BFF: ask workers to email a 6-digit sign-in code. No enumeration. */
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async (ctx) => {
+  const { request } = ctx;
   const body = (await request.json().catch(() => ({}))) as { email?: unknown };
   const email = typeof body.email === 'string' ? body.email.trim() : '';
   if (!email) {
@@ -24,7 +26,7 @@ export const POST: APIRoute = async ({ request }) => {
     try {
       const res = await fetch(`${serviceBaseUrl()}/v1/auth/code/request`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', ...clientHeaders(ctx) },
         body: JSON.stringify({ email }),
       });
       codeRequested = res.ok;

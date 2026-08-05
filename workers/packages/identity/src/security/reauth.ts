@@ -79,10 +79,10 @@ export async function reauthWithPasskey(
 }
 
 /** Email a fresh code to the account address (magic-link-only accounts). */
-export async function requestReauthCode(userId: string): Promise<boolean> {
+export async function requestReauthCode(userId: string, ctx?: RequestContext): Promise<boolean> {
   const user = await getUser(userId);
   if (!user) return false;
-  await requestLoginCode(user.email);
+  await requestLoginCode(user.email, ctx);
   return true;
 }
 
