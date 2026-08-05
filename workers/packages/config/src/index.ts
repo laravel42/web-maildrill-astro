@@ -38,6 +38,19 @@ const EnvSchema = z.object({
   API_KEYS: z.string().default(''),
   JWT_SECRET: z.string().default('change-me'),
   APP_URL: z.string().default('http://localhost:4321'),
+
+  // --- Billing (Stripe checkout/portal/webhooks; wallet lives in Postgres) ---
+  /** `stripe` for real payments, `mock` for dev/tests without network. */
+  BILLING_PROVIDER: z.enum(['stripe', 'mock']).default('stripe'),
+  STRIPE_SECRET_KEY: z.string().default(''),
+  STRIPE_WEBHOOK_SECRET: z.string().default(''),
+  /**
+   * `1` blocks sends when credits run out (reserve → commit → release).
+   * Default off so existing installs keep sending while billing is rolled out.
+   */
+  BILLING_ENFORCEMENT: z.string().default('0'),
+  /** Held credits are swept back to the wallet after this long. */
+  BILLING_RESERVATION_TTL_MINUTES: int(120),
   MAGIC_LINK_TTL_MINUTES: int(15),
   /**
    * Account security (passkeys / TOTP 2FA). SECURITY_ENCRYPTION_KEY encrypts
@@ -219,6 +232,12 @@ if (env.NODE_ENV === 'production') {
       'WEBHOOK_INFOBIP_SECRET must be set to a strong non-default value when NODE_ENV=production',
     );
   }
+  // Accepting unverifiable payment webhooks is worse than accepting none.
+  if (env.STRIPE_SECRET_KEY.trim() && WEAK_SECRETS.has(env.STRIPE_WEBHOOK_SECRET.trim())) {
+    throw new Error(
+      'STRIPE_WEBHOOK_SECRET must be set when STRIPE_SECRET_KEY is configured in production',
+    );
+  }
 }
 
 export const config = {
@@ -231,6 +250,18 @@ export const config = {
   db: { url: env.DATABASE_URL, poolMax: env.PG_POOL_MAX },
   redis: { url: env.REDIS_URL },
   app: { url: env.APP_URL },
+  billing: {
+    provider: env.BILLING_PROVIDER,
+    stripeSecretKey: env.STRIPE_SECRET_KEY,
+    stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
+    enforcement: env.BILLING_ENFORCEMENT === '1' || env.BILLING_ENFORCEMENT === 'true',
+    reservationTtlMinutes: env.BILLING_RESERVATION_TTL_MINUTES,
+    get configured(): boolean {
+      return env.BILLING_PROVIDER === 'mock'
+        ? true
+        : Boolean(env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET);
+    },
+  },
   auth: {
     apiKeys: parseApiKeys(env.API_KEYS),
     jwtSecret: env.JWT_SECRET,

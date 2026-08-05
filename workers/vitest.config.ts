@@ -35,6 +35,7 @@ export default defineConfig({
       '@maildrill/product': r('./packages/product/src/index.ts'),
       '@maildrill/identity': r('./packages/identity/src/index.ts'),
       '@maildrill/httpkit': r('./packages/httpkit/src/index.ts'),
+      '@maildrill/billing': r('./packages/billing/src/index.ts'),
     },
   },
 });

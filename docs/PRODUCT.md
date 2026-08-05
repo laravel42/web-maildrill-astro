@@ -79,6 +79,14 @@ under Twilio/SendGrid, generated into `pricing-rates.json`. Infobip's internal
 negotiated rate card is **not** exposed by any API — it is scraped offline
 (`scripts/sync-infobip-rates.mjs`) and kept out of the repo.
 
+**Billing** is prepaid credits: each workspace owns a wallet (micro-USD,
+immutable ledger in Postgres), tops up via **Stripe Checkout** (packages +
+commitment tiers are DB-configured), and consumption draws the balance per
+delivered message at the channel rate card. Stripe handles payments, portal,
+taxes, and invoices only — never balances. Enforcement (reserve → commit →
+release around sends) is off by default (`BILLING_ENFORCEMENT`). See
+[`../workers/docs/billing-architecture.md`](../workers/docs/billing-architecture.md).
+
 ---
 
 ## 2. Tech stack

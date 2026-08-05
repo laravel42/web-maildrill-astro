@@ -29,6 +29,15 @@ import type {
   trustedDevices,
   authTickets,
   securityEvents,
+  wallets,
+  walletTransactions,
+  creditReservations,
+  creditPackages,
+  pricingTiers,
+  channelPricing,
+  stripeEvents,
+  paymentAttempts,
+  paymentCustomers,
 } from './schema';
 
 export type { SegmentRule } from './schema';
@@ -124,3 +133,32 @@ export type NewAuthTicket = typeof authTickets.$inferInsert;
 
 export type SecurityEventRow = typeof securityEvents.$inferSelect;
 export type NewSecurityEvent = typeof securityEvents.$inferInsert;
+
+// --- billing ---
+
+export type WalletRow = typeof wallets.$inferSelect;
+export type NewWallet = typeof wallets.$inferInsert;
+
+export type WalletTransactionRow = typeof walletTransactions.$inferSelect;
+export type NewWalletTransaction = typeof walletTransactions.$inferInsert;
+
+export type CreditReservationRow = typeof creditReservations.$inferSelect;
+export type NewCreditReservation = typeof creditReservations.$inferInsert;
+
+export type CreditPackageRow = typeof creditPackages.$inferSelect;
+export type NewCreditPackage = typeof creditPackages.$inferInsert;
+
+export type PricingTierRow = typeof pricingTiers.$inferSelect;
+export type NewPricingTier = typeof pricingTiers.$inferInsert;
+
+export type ChannelPricingRow = typeof channelPricing.$inferSelect;
+export type NewChannelPricing = typeof channelPricing.$inferInsert;
+
+export type StripeEventRow = typeof stripeEvents.$inferSelect;
+export type NewStripeEvent = typeof stripeEvents.$inferInsert;
+
+export type PaymentAttemptRow = typeof paymentAttempts.$inferSelect;
+export type NewPaymentAttempt = typeof paymentAttempts.$inferInsert;
+
+export type PaymentCustomerRow = typeof paymentCustomers.$inferSelect;
+export type NewPaymentCustomer = typeof paymentCustomers.$inferInsert;

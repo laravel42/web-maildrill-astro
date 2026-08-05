@@ -14,6 +14,7 @@ import {
   type ProviderOutcome,
 } from '@maildrill/domain';
 import { getProvider, type NormalizedProviderEvent } from '@maildrill/providers';
+import { billingEnforced, chargeMessageDelivered } from '@maildrill/billing';
 import { createLogger, emitAppEvent, metrics } from '@maildrill/observability';
 import { bumpVersion } from './shared';
 import { applyTemplateStatusEvent } from './templates-approval';
@@ -114,7 +115,7 @@ export async function applyProviderOutcome(input: {
   const next = resolveEventTransition(input.currentStatus, input.outcome);
   if (!next || next === input.currentStatus) return false;
 
-  return db.transaction(async (tx) => {
+  const applied = await db.transaction(async (tx) => {
     // Record the synthetic event. A conflict means a previous attempt recorded
     // it but may not have applied the state — the transition guard above is the
     // real dedupe (once applied, `next === current` short-circuits), so apply
@@ -175,6 +176,33 @@ export async function applyProviderOutcome(input: {
         });
     }
     return true;
+  });
+
+  // Post-commit so the wallet transaction never extends the delivery
+  // transaction. Idempotent per message; a crash in between is caught by
+  // wallet reconciliation, not by blocking delivery bookkeeping.
+  if (applied && (next === 'delivered' || next === 'sent')) {
+    await chargeDeliveredMessage(input.tenantId, input.messageId, input.channel);
+  }
+  return applied;
+}
+
+/** Billing commit for a delivered/sent message (no-op unless enforcement on). */
+async function chargeDeliveredMessage(
+  tenantId: string,
+  messageId: string,
+  channel: MessageRow['channel'],
+): Promise<void> {
+  if (!billingEnforced()) return;
+  const [row] = await db
+    .select({ campaignId: messages.campaignId })
+    .from(messages)
+    .where(eq(messages.id, messageId));
+  await chargeMessageDelivered({
+    tenantId,
+    messageId,
+    channel,
+    campaignId: row?.campaignId ?? null,
   });
 }
 
@@ -366,6 +394,9 @@ export async function processWebhookEvent(webhookEventId: string): Promise<void>
     throw err;
   }
 
+  // Deliveries to bill after the transaction commits (see chargeDeliveredMessage).
+  const toCharge: { tenantId: string; messageId: string; channel: MessageRow['channel'] }[] = [];
+
   await db.transaction(async (tx) => {
     for (const ev of normalized) {
       const message = await locateMessage(tx, wh.provider, ev);
@@ -423,6 +454,11 @@ export async function processWebhookEvent(webhookEventId: string): Promise<void>
             .onConflictDoNothing({
               target: [usageRecords.messageId, usageRecords.usageType],
             });
+          toCharge.push({
+            tenantId: message.tenantId,
+            messageId: message.id,
+            channel: message.channel,
+          });
         }
       }
     }
@@ -431,6 +467,10 @@ export async function processWebhookEvent(webhookEventId: string): Promise<void>
       .set({ processingStatus: 'processed', processedAt: new Date() })
       .where(eq(webhookEvents.id, wh.id));
   });
+
+  for (const charge of toCharge) {
+    await chargeDeliveredMessage(charge.tenantId, charge.messageId, charge.channel);
+  }
 
   metrics.inc('provider_webhook_total', { provider: wh.provider });
   emitAppEvent({

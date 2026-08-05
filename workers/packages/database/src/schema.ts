@@ -64,6 +64,45 @@ export const webhookStatusEnum = pgEnum('webhook_status', [
 ]);
 export const attemptStatusEnum = pgEnum('attempt_status', ['started', 'succeeded', 'failed']);
 
+// --- billing ---
+
+/**
+ * Immutable ledger entry kinds. Signs are enforced in code (`@maildrill/billing`):
+ * purchase/promotion/bonus are positive; consumption is negative; refund is
+ * negative (credits leave the wallet when money is returned); adjustment and
+ * correction may carry either sign.
+ */
+export const walletEntryTypeEnum = pgEnum('wallet_entry_type', [
+  'purchase',
+  'consumption',
+  'refund',
+  'promotion',
+  'bonus',
+  'adjustment',
+  'correction',
+]);
+
+export const reservationStatusEnum = pgEnum('reservation_status', [
+  'held',
+  'committed',
+  'released',
+  'expired',
+]);
+
+export const paymentAttemptStatusEnum = pgEnum('payment_attempt_status', [
+  'pending',
+  'succeeded',
+  'failed',
+  'refunded',
+  'expired',
+]);
+
+export const paymentEventStatusEnum = pgEnum('payment_event_status', [
+  'processed',
+  'skipped',
+  'failed',
+]);
+
 // ---------------------------------------------------------------------------
 // Shared column helpers
 // ---------------------------------------------------------------------------
@@ -879,5 +918,293 @@ export const apiKeys = pgTable(
   (t) => [
     uniqueIndex('api_keys_key_id_uq').on(t.keyId),
     index('api_keys_tenant_idx').on(t.tenantId),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Billing: wallet + immutable ledger + reservations + payment provider state
+//
+// Credits are integer micro-USD (1 USD = 1_000_000 micro) so per-message
+// prices like $0.0005 stay exact. The wallet row is a cached projection of
+// the ledger, maintained in the SAME transaction as every ledger append and
+// guarded by `SELECT … FOR UPDATE`; the invariant, checked by
+// `reconcileWallet`, is  balance + reserved = SUM(wallet_transactions.amount).
+// Reservations are holds, not financial events — they never touch the ledger
+// until committed (consumption) or die silently (release/expire).
+// ---------------------------------------------------------------------------
+
+/** One wallet per workspace. Users never own balances. */
+export const wallets = pgTable(
+  'wallets',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    /** Billing is always USD; the marketing currency switcher is display-only. */
+    currency: text('currency').notNull().default('USD'),
+    /** Spendable micro-credits. Never written outside a ledger transaction. */
+    balanceMicro: bigint('balance_micro', { mode: 'number' }).notNull().default(0),
+    /** Micro-credits held by open reservations. */
+    reservedMicro: bigint('reserved_micro', { mode: 'number' }).notNull().default(0),
+    /** Bumped on every balance mutation — cheap staleness signal for caches. */
+    version: integer('version').notNull().default(0),
+    /** Low-balance warning threshold (UI + notifications). */
+    lowBalanceMicro: bigint('low_balance_micro', { mode: 'number' }).notNull().default(10_000_000),
+    /** Commitment tier the workspace bought into (discount source). */
+    pricingTierId: uuid('pricing_tier_id').references(() => pricingTiers.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex('wallets_tenant_uq').on(t.tenantId)],
+);
+
+/**
+ * Append-only financial ledger. Rows are never updated or deleted; corrections
+ * are new `correction` entries. `balanceAfterMicro` snapshots the wallet
+ * balance the append produced, making the history independently auditable.
+ */
+export const walletTransactions = pgTable(
+  'wallet_transactions',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id').notNull(),
+    walletId: uuid('wallet_id')
+      .notNull()
+      .references(() => wallets.id, { onDelete: 'cascade' }),
+    entryType: walletEntryTypeEnum('entry_type').notNull(),
+    /** Signed micro-credits. Positive credits the wallet, negative debits it. */
+    amountMicro: bigint('amount_micro', { mode: 'number' }).notNull(),
+    /** Wallet balance immediately after this entry was applied. */
+    balanceAfterMicro: bigint('balance_after_micro', { mode: 'number' }).notNull(),
+    currency: text('currency').notNull().default('USD'),
+    /** Set on consumption entries; null for money-side entries. */
+    channel: channelEnum('channel'),
+    /** Domain object this entry points at (campaign, message, payment attempt…). */
+    referenceType: text('reference_type'),
+    referenceId: text('reference_id'),
+    /**
+     * Dedupe key for at-most-once financial effects (e.g. `purchase:<attempt>`,
+     * `consume:<messageId>`). Unique per tenant where present.
+     */
+    idempotencyKey: text('idempotency_key'),
+    description: text('description'),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('wallet_tx_tenant_idem_uq').on(t.tenantId, t.idempotencyKey),
+    index('wallet_tx_tenant_created_idx').on(t.tenantId, t.createdAt),
+    index('wallet_tx_wallet_created_idx').on(t.walletId, t.createdAt),
+    index('wallet_tx_reference_idx').on(t.referenceType, t.referenceId),
+  ],
+);
+
+/**
+ * Credit holds backing in-flight sends: reserve → (commit per message)* →
+ * release remainder. `reference` makes reserve idempotent per business action
+ * (e.g. `campaign:<id>`); `remainingMicro` shrinks as commits land.
+ */
+export const creditReservations = pgTable(
+  'credit_reservations',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id').notNull(),
+    walletId: uuid('wallet_id')
+      .notNull()
+      .references(() => wallets.id, { onDelete: 'cascade' }),
+    status: reservationStatusEnum('status').notNull().default('held'),
+    /** Micro-credits originally held. */
+    amountMicro: bigint('amount_micro', { mode: 'number' }).notNull(),
+    /** Micro-credits still held (amount − committed − released). */
+    remainingMicro: bigint('remaining_micro', { mode: 'number' }).notNull(),
+    referenceType: text('reference_type').notNull(),
+    referenceId: text('reference_id').notNull(),
+    /** Stale holds are swept back to the wallet after this instant. */
+    expiresAt: ts('expires_at').notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('credit_reservations_ref_uq').on(t.tenantId, t.referenceType, t.referenceId),
+    index('credit_reservations_wallet_idx').on(t.walletId),
+    index('credit_reservations_expiry_idx').on(t.status, t.expiresAt),
+  ],
+);
+
+/**
+ * Purchasable credit packages — database-configured, never hardcoded.
+ * `creditsMicro` is what the buyer's wallet receives; `bonusMicro` on top of
+ * it is the volume incentive. Price is charged via the payment provider in
+ * `priceCents` of `currency`.
+ */
+export const creditPackages = pgTable(
+  'credit_packages',
+  {
+    id: id(),
+    /** Stable machine identifier the frontend sends at checkout (`starter`…). */
+    code: text('code').notNull(),
+    name: text('name').notNull(),
+    description: text('description'),
+    priceCents: integer('price_cents').notNull(),
+    currency: text('currency').notNull().default('USD'),
+    creditsMicro: bigint('credits_micro', { mode: 'number' }).notNull(),
+    bonusMicro: bigint('bonus_micro', { mode: 'number' }).notNull().default(0),
+    /** Buying this package can move the workspace onto a commitment tier. */
+    grantsTierId: uuid('grants_tier_id').references(() => pricingTiers.id, {
+      onDelete: 'set null',
+    }),
+    sortOrder: integer('sort_order').notNull().default(0),
+    active: boolean('active').notNull().default(true),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex('credit_packages_code_uq').on(t.code)],
+);
+
+/**
+ * Commitment levels (pay-as-you-go, monthly, quarterly, annual, enterprise…).
+ * The discount applies on top of channel base pricing; the pricing engine
+ * resolves the final effective rate.
+ */
+export const pricingTiers = pgTable(
+  'pricing_tiers',
+  {
+    id: id(),
+    code: text('code').notNull(),
+    name: text('name').notNull(),
+    /** Discount in basis points (1500 = 15%). */
+    discountBps: integer('discount_bps').notNull().default(0),
+    /** Minimum purchase to qualify, in cents. */
+    minPurchaseCents: integer('min_purchase_cents').notNull().default(0),
+    /** Prepaid commitment length; 0 = no commitment. */
+    commitmentMonths: integer('commitment_months').notNull().default(0),
+    sortOrder: integer('sort_order').notNull().default(0),
+    active: boolean('active').notNull().default(true),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex('pricing_tiers_code_uq').on(t.code)],
+);
+
+/**
+ * Per-channel, per-region unit pricing — the pricing engine's raw material.
+ * `volumeTiers` holds the volume-discount ladder as `[{ minUnits, priceMicro }]`
+ * (sorted ascending; the highest matching step wins) so price changes are
+ * data changes, not deploys. Provider cost + margin are recorded for
+ * reporting only and never leave the backend.
+ */
+export const channelPricing = pgTable(
+  'channel_pricing',
+  {
+    id: id(),
+    channel: channelEnum('channel').notNull(),
+    /** Rate-card region (`default` = worldwide fallback, e.g. email). */
+    region: text('region').notNull().default('default'),
+    /** Micro-USD per billable unit before discounts. */
+    basePriceMicro: bigint('base_price_micro', { mode: 'number' }).notNull(),
+    /** What one unit is: message, conversation (WhatsApp), minute (voice). */
+    unit: text('unit').notNull().default('message'),
+    /** Smallest billable quantity (voice bills at least this many units). */
+    minBillableUnits: integer('min_billable_units').notNull().default(1),
+    /** Decimal places of a displayed credit price (display concern, stored). */
+    billingPrecision: integer('billing_precision').notNull().default(4),
+    /** Our provider cost per unit (internal margin reporting only). */
+    providerCostMicro: bigint('provider_cost_micro', { mode: 'number' }).notNull().default(0),
+    /** Target margin in basis points (internal reporting only). */
+    marginBps: integer('margin_bps').notNull().default(0),
+    volumeTiers: jsonb('volume_tiers')
+      .$type<{ minUnits: number; priceMicro: number }[]>()
+      .notNull()
+      .default([]),
+    active: boolean('active').notNull().default(true),
+    effectiveFrom: ts('effective_from').defaultNow().notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('channel_pricing_channel_region_uq').on(t.channel, t.region),
+    index('channel_pricing_channel_idx').on(t.channel),
+  ],
+);
+
+/**
+ * Processed payment-provider events (Stripe first). The unique `eventId` is
+ * the webhook idempotency gate: duplicate deliveries insert-conflict and are
+ * skipped before any financial effect runs.
+ */
+export const stripeEvents = pgTable(
+  'stripe_events',
+  {
+    id: id(),
+    provider: text('provider').notNull().default('stripe'),
+    eventId: text('event_id').notNull(),
+    eventType: text('event_type').notNull(),
+    status: paymentEventStatusEnum('status').notNull().default('processed'),
+    error: text('error'),
+    payload: jsonb('payload').$type<Record<string, unknown>>().notNull().default({}),
+    processedAt: ts('processed_at').defaultNow().notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('stripe_events_event_id_uq').on(t.provider, t.eventId),
+    index('stripe_events_type_idx').on(t.eventType),
+  ],
+);
+
+/**
+ * One row per checkout started — the bridge between a provider session and
+ * the credits it should grant. Only webhooks flip it to `succeeded`, and the
+ * ledger grant is keyed `purchase:<id>` so replays can't double-credit.
+ */
+export const paymentAttempts = pgTable(
+  'payment_attempts',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id').notNull(),
+    walletId: uuid('wallet_id')
+      .notNull()
+      .references(() => wallets.id, { onDelete: 'cascade' }),
+    provider: text('provider').notNull().default('stripe'),
+    packageId: uuid('package_id').references(() => creditPackages.id, { onDelete: 'set null' }),
+    /** Denormalized so history survives package deletion/repricing. */
+    packageCode: text('package_code').notNull(),
+    amountCents: integer('amount_cents').notNull(),
+    currency: text('currency').notNull().default('USD'),
+    /** Credits (incl. bonus) this attempt grants when it succeeds. */
+    creditsMicro: bigint('credits_micro', { mode: 'number' }).notNull(),
+    status: paymentAttemptStatusEnum('status').notNull().default('pending'),
+    providerSessionId: text('provider_session_id'),
+    providerPaymentIntentId: text('provider_payment_intent_id'),
+    failureReason: text('failure_reason'),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('payment_attempts_session_uq').on(t.provider, t.providerSessionId),
+    index('payment_attempts_tenant_idx').on(t.tenantId, t.createdAt),
+    index('payment_attempts_intent_idx').on(t.providerPaymentIntentId),
+  ],
+);
+
+/** Provider-side customer handles, one per (tenant, provider). */
+export const paymentCustomers = pgTable(
+  'payment_customers',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    provider: text('provider').notNull().default('stripe'),
+    externalCustomerId: text('external_customer_id').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('payment_customers_tenant_provider_uq').on(t.tenantId, t.provider),
+    uniqueIndex('payment_customers_external_uq').on(t.provider, t.externalCustomerId),
   ],
 );

@@ -1,4 +1,5 @@
 import { and, eq, inArray, sql } from 'drizzle-orm';
+import { reserveCampaignCredits } from '@maildrill/billing';
 import { campaigns, db, messages, subscribers, type Campaign } from '@maildrill/database';
 import { ConflictError, NotFoundError, type Channel } from '@maildrill/domain';
 import { submitMessage } from '@maildrill/services';
@@ -177,6 +178,21 @@ export async function sendCampaign(input: SendCampaignInput): Promise<SendCampai
     limit: MAX_AUDIENCE,
   });
   const truncated = resolved.length >= MAX_AUDIENCE;
+
+  // Billing gate (no-op unless BILLING_ENFORCEMENT=1): hold the estimated
+  // campaign cost before any message row exists. An empty wallet rejects the
+  // whole send here and puts the draft back — nothing is half-sent.
+  if (!scheduled && resolved.length > 0) {
+    try {
+      await reserveCampaignCredits(input.tenantId, camp.id, input.channel, resolved.length);
+    } catch (err) {
+      await db
+        .update(campaigns)
+        .set({ status: 'draft', startedAt: null, updatedAt: new Date() })
+        .where(eq(campaigns.id, camp.id));
+      throw err;
+    }
+  }
 
   let queued = 0;
   for (const sub of resolved) {

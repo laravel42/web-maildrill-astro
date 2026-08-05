@@ -4,6 +4,7 @@ import { createWorker, getQueue, QUEUE_NAMES } from '@maildrill/queues';
 import {
   activateDueMessages,
   cloudflareEventsConfigured,
+  expireStaleCreditHolds,
   expireStalledDeliveries,
   handleDispatch,
   pollCampaignDelivery,
@@ -126,6 +127,8 @@ export function startMaintenance(): StopFn {
       if (expired > 0) {
         log.warn({ expired }, 'expired stalled deliveries (no final DLR within TTL)');
       }
+      const sweptHolds = await expireStaleCreditHolds();
+      if (sweptHolds > 0) log.warn({ sweptHolds }, 'released expired credit reservations');
       await purgeProcessedWebhooks(WEBHOOK_RETENTION_DAYS);
       // Surface queue depth as gauges.
       for (const name of Object.values(QUEUE_NAMES)) {

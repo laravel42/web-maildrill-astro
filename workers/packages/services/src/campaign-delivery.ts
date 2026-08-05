@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { config } from '@maildrill/config';
+import { settleCampaignReservation } from '@maildrill/billing';
 import { campaigns, db, messages, type MessageRow } from '@maildrill/database';
 import {
   OPEN_DELIVERY_STATES,
@@ -514,6 +515,10 @@ export async function tryCompleteCampaign(campaignId: string, tenantId: string):
     .update(campaigns)
     .set({ status: 'sent', completedAt: new Date(), updatedAt: new Date() })
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.status, 'sending')));
+
+  // Return the campaign's unspent credit hold now that the batch is settled
+  // (no-op unless billing enforcement is on).
+  await settleCampaignReservation(tenantId, campaignId);
 
   log.info({ campaignId, tenantId, messages: statuses.length }, 'campaign dispatch complete');
   return true;

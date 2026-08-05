@@ -34,4 +34,13 @@ export {
   trustedDevices,
   authTickets,
   securityEvents,
+  wallets,
+  walletTransactions,
+  creditReservations,
+  creditPackages,
+  pricingTiers,
+  channelPricing,
+  stripeEvents,
+  paymentAttempts,
+  paymentCustomers,
 } from './schema';

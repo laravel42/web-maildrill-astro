@@ -170,6 +170,7 @@ flowchart LR
 | PostHog query | `POSTHOG_PERSONAL_API_KEY`, `POSTHOG_PROJECT_ID=526344`, `POSTHOG_APP_HOST=https://us.posthog.com`, `POSTHOG_STATS_ENABLED` |
 | Pollers       | `CAMPAIGN_DELIVERY_POLL_INTERVAL_MS`, `TEMPLATE_APPROVAL_POLL_INTERVAL_MS`                                                  |
 | Media         | `AWS_REGION`, `MEDIA_S3_BUCKET`, `MEDIA_CDN_DOMAIN`, keys optional                                                          |
+| Billing       | `BILLING_PROVIDER`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `BILLING_ENFORCEMENT`, `BILLING_RESERVATION_TTL_MINUTES`  |
 | EB AI         | `OPENAI_API_KEY`, `UNSPLASH_*`, `DEFAULT_PROVIDER`                                                                          |
 
 `workers/.env.example` is a pointer only — do not create `workers/.env`.
@@ -220,6 +221,7 @@ Worker roles: `dispatch`, `events`, `publisher`, `scheduler`, `maintenance`, `te
 | `providers`                      | Infobip + mock; `callbackData`                                             |
 | `services`                       | submit, outbox, dispatch, events, campaign-delivery, template-approval     |
 | `product`                        | CRM, campaigns, stats (PostHog + PG)                                       |
+| `billing`                        | Prepaid wallet, immutable ledger, pricing engine, Stripe checkout/webhooks |
 | `observability`                  | pino, metrics, `runHogQL`                                                  |
 | `queues`                         | BullMQ                                                                     |
 | `authz` / `identity` / `httpkit` | Auth, magic link, OpenAPI helpers                                          |
@@ -228,14 +230,17 @@ Worker roles: `dispatch`, `events`, `publisher`, `scheduler`, `maintenance`, `te
 
 ## 8. Docs map (backend)
 
-| Doc                                                          | Contents                                                                                  |
-| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| **This file**                                                | Current handoff / ops truth                                                               |
-| [`README.md`](README.md)                                     | Quick start, API surface                                                                  |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)               | Original messaging-engine design (long; some webhook-centric language is **stale** vs §3) |
-| [`docs/posthog-infobip-hog.md`](docs/posthog-infobip-hog.md) | Infobip→PostHog + poller + HogQL env                                                      |
-| [`docs/infobip-api-scheme.md`](docs/infobip-api-scheme.md)   | Product/Infobip data model notes                                                          |
-| [`docs/posthog-views.sql`](docs/posthog-views.sql)           | Optional PostHog SQL views                                                                |
+| Doc                                                            | Contents                                                                                  |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **This file**                                                  | Current handoff / ops truth                                                               |
+| [`README.md`](README.md)                                       | Quick start, API surface                                                                  |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)                 | Original messaging-engine design (long; some webhook-centric language is **stale** vs §3) |
+| [`docs/posthog-infobip-hog.md`](docs/posthog-infobip-hog.md)   | Infobip→PostHog + poller + HogQL env                                                      |
+| [`docs/infobip-api-scheme.md`](docs/infobip-api-scheme.md)     | Product/Infobip data model notes                                                          |
+| [`docs/posthog-views.sql`](docs/posthog-views.sql)             | Optional PostHog SQL views                                                                |
+| [`docs/billing-architecture.md`](docs/billing-architecture.md) | Wallet/ledger/pricing design, ER + sequence diagrams, API surface                         |
+| [`docs/billing-stripe.md`](docs/billing-stripe.md)             | Stripe setup: env, webhook endpoint, seeding, go-live checklist                           |
+| [`docs/billing-runbook.md`](docs/billing-runbook.md)           | Billing ops: incidents, invariants, disaster recovery                                     |
 
 When `ARCHITECTURE.md` conflicts with this handoff or `posthog-infobip-hog.md` on DLR routing, **prefer the PostHog poller model**.
 

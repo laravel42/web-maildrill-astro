@@ -800,6 +800,9 @@ importers:
       '@maildrill/authz':
         specifier: workspace:*
         version: link:../../packages/authz
+      '@maildrill/billing':
+        specifier: workspace:*
+        version: link:../../packages/billing
       '@maildrill/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -866,6 +869,27 @@ importers:
       fastify:
         specifier: ^5.11.0
         version: 5.11.0
+
+  workers/packages/billing:
+    dependencies:
+      '@maildrill/config':
+        specifier: workspace:*
+        version: link:../config
+      '@maildrill/database':
+        specifier: workspace:*
+        version: link:../database
+      '@maildrill/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@maildrill/observability':
+        specifier: workspace:*
+        version: link:../observability
+      drizzle-orm:
+        specifier: ^0.38.4
+        version: 0.38.4(@types/pg@8.20.3)(@types/react@19.2.18)(pg@8.22.0)(react@19.2.8)
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
 
   workers/packages/config:
     dependencies:
@@ -960,6 +984,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.1101.0
         version: 3.1101.0
+      '@maildrill/billing':
+        specifier: workspace:*
+        version: link:../billing
       '@maildrill/config':
         specifier: workspace:*
         version: link:../config
@@ -1014,6 +1041,9 @@ importers:
 
   workers/packages/services:
     dependencies:
+      '@maildrill/billing':
+        specifier: workspace:*
+        version: link:../billing
       '@maildrill/config':
         specifier: workspace:*
         version: link:../config
@@ -1214,6 +1244,9 @@ packages:
   '@aws-sdk/core@3.977.4':
     resolution: {integrity: sha512-CEkcQlMOQJCvul60U7wdAOACjtdgFWDsfJI+6wUOGdhGNV2lGbuJpi/R50QLpFG3Tp+sQxa/RmzC3X7KHbhuTA==}
     engines: {node: '>=20.0.0'}
+    deprecated: |-
+      Deprecated due to Document number parsing bug in JSON, see
+        https://github.com/aws/aws-sdk-js-v3/issues/8246. Newer version available.
 
   '@aws-sdk/credential-provider-env@3.972.65':
     resolution: {integrity: sha512-lJT2aRw9wCV8jPHyFJjdZLD4HTydL6/22AnCSOB8e/LqOc55nEJGLHkJQeSxhn8QiqyjFwPKQFtMw0ovjRUY/g==}
@@ -4583,6 +4616,7 @@ packages:
   cron-parser@4.9.0:
     resolution: {integrity: sha512-p0SaNjrHOnQeR8/VnfGbmg9te2kfyYSQ7Sc/j/6DtPL3JQvKxmjO9TSjNFpujqV3vEYYBvNNvXSxzyksBWAx1Q==}
     engines: {node: '>=12.0.0'}
+    deprecated: v4 is no longer maintained, upgrade to v5
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}

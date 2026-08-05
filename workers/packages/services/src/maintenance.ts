@@ -1,7 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import { and, eq, inArray, lte, sql } from 'drizzle-orm';
+import { billingEnforced, expireStaleReservations } from '@maildrill/billing';
 import { db, messages, webhookEvents } from '@maildrill/database';
 import { bumpVersion, insertDispatchOutbox } from './shared';
+
+/**
+ * Billing backstop: sweep credit holds whose campaign never settled (crash
+ * between send and completion) back into their wallets after the TTL.
+ */
+export async function expireStaleCreditHolds(): Promise<number> {
+  if (!billingEnforced()) return 0;
+  return expireStaleReservations();
+}
 
 /**
  * Requeue messages stuck in `processing` past a cutoff (e.g. a worker died

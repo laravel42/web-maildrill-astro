@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { api, ApiError } from '@/lib/app/api';
+import {
+  fetchBillingPackages,
+  fetchWallet,
+  startCheckout,
+  type BillingPackage,
+  type WalletInfo,
+} from '@/lib/app/billing';
 import Icon from './Icon';
 import type { ChannelBreakdown } from './AppAnalytics.logic';
 import { CHANNEL } from './shared/channels';
@@ -180,6 +187,8 @@ export default function AppSettings({
   const [keys, setKeys] = useState<ApiWorkspaceKey[]>([]);
   const [openDomain, setOpenDomain] = useState<ApiDomain | null>(null);
   const [sectionLoading, setSectionLoading] = useState(false);
+  /** Prepaid wallet (null until the billing service answers). */
+  const [wallet, setWallet] = useState<WalletInfo | null>(null);
   /** Per-domain timestamp of the last DNS re-check, for the cooldown below. */
   const [lastCheckedAt, setLastCheckedAt] = useState<Record<string, number>>({});
   /** One in-app dialog serves every destructive action (no window.confirm). */
@@ -214,6 +223,27 @@ export default function AppSettings({
       })
       .catch(() => undefined);
   }, [live]);
+
+  // Wallet balance; also greet a return from hosted checkout. Credits are
+  // granted by the Stripe webhook (never the redirect), so "success" means
+  // "processing" until the wallet refetch shows the new balance.
+  useEffect(() => {
+    if (!live) return;
+    void fetchWallet()
+      .then(setWallet)
+      .catch(() => undefined);
+    const billingReturn = new URLSearchParams(window.location.search).get('billing');
+    if (billingReturn === 'success') {
+      showToast('Payment received — credits will appear in a moment');
+      window.setTimeout(() => {
+        void fetchWallet()
+          .then(setWallet)
+          .catch(() => undefined);
+      }, 4000);
+    } else if (billingReturn === 'cancelled') {
+      showToast('Checkout cancelled — no charge was made', 'alert');
+    }
+  }, [live, showToast]);
 
   /*
    * Section data is fetched every time a section is opened — deliberately no
@@ -555,11 +585,15 @@ export default function AppSettings({
                     </div>
                     <div
                       className={`${styles.heroStat}${
-                        PREPAID_BALANCE_USD < LOW_BALANCE_USD ? ` ${styles.heroStatAlert}` : ''
+                        (wallet ? wallet.lowBalance : PREPAID_BALANCE_USD < LOW_BALANCE_USD)
+                          ? ` ${styles.heroStatAlert}`
+                          : ''
                       }`}
                     >
                       <span className={styles.heroStatLbl}>Balance left</span>
-                      <span className={styles.heroStatVal}>{fmtUsd(PREPAID_BALANCE_USD)}</span>
+                      <span className={styles.heroStatVal}>
+                        {fmtUsd(wallet?.balanceUsd ?? PREPAID_BALANCE_USD)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1417,11 +1451,46 @@ function AddBalanceModal({
   onClose: () => void;
   onDone: (msg: string) => void;
 }) {
-  const [amount, setAmount] = useState('50');
-  const value = Number.parseFloat(amount);
-  const ok = Number.isFinite(value) && value > 0;
+  // Packages come from the billing service — prices and credits are decided
+  // server-side; this modal only ever sends a package code. When the service
+  // isn't reachable (mock/demo mode) the presets stand in, disabled.
+  const [packages, setPackages] = useState<BillingPackage[] | null>(null);
+  const [unavailable, setUnavailable] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetchBillingPackages()
+      .then((data) => {
+        const topups = data.filter((p) => !p.grantsTier);
+        setPackages(topups);
+        if (topups.length > 0) setSelected(topups[Math.min(1, topups.length - 1)].code);
+        if (topups.length === 0) setUnavailable(true);
+      })
+      .catch(() => setUnavailable(true));
+  }, []);
+
+  const chosen = packages?.find((p) => p.code === selected) ?? null;
   const submit = () => {
-    if (ok) onDone(`Added ${fmtUsd(value)} to your balance`);
+    if (!chosen || busy) return;
+    setBusy(true);
+    setError(null);
+    startCheckout(chosen.code)
+      .then((url) => {
+        onDone('Redirecting to secure checkout…');
+        window.location.assign(url);
+      })
+      .catch((err: unknown) => {
+        setBusy(false);
+        setError(
+          err instanceof ApiError && err.status === 403
+            ? 'Only workspace owners and admins can add balance.'
+            : err instanceof ApiError && err.status === 409
+              ? 'Billing isn’t configured on this environment yet.'
+              : 'Could not start checkout — try again.',
+        );
+      });
   };
 
   return (
@@ -1429,52 +1498,59 @@ function AddBalanceModal({
       title="Add balance"
       onClose={onClose}
       foot={
-        <button type="button" className={styles.modalSave} disabled={!ok} onClick={submit}>
-          {ok ? `Add ${fmtUsd(value)}` : 'Add balance'}
+        <button
+          type="button"
+          className={styles.modalSave}
+          disabled={!chosen || busy || unavailable}
+          onClick={submit}
+        >
+          {busy ? 'Opening checkout…' : chosen ? `Buy ${fmtUsd(chosen.priceUsd)}` : 'Add balance'}
         </button>
       }
     >
-      <div className={styles.chips} role="group" aria-label="Quick amounts">
-        {BALANCE_PRESETS.map((p) => (
+      <div className={styles.chips} role="group" aria-label="Credit packages">
+        {(packages ?? []).map((p) => (
           <button
-            key={p}
+            key={p.code}
             type="button"
-            className={`${styles.chip}${value === p ? ' is-on' : ''}`}
-            aria-pressed={value === p}
-            onClick={() => setAmount(String(p))}
+            className={`${styles.chip}${selected === p.code ? ' is-on' : ''}`}
+            aria-pressed={selected === p.code}
+            onClick={() => setSelected(p.code)}
           >
-            ${p}
+            ${p.priceUsd}
+            {p.bonusUsd > 0 ? ` +$${p.bonusUsd}` : ''}
           </button>
         ))}
+        {packages === null &&
+          !unavailable &&
+          BALANCE_PRESETS.map((p) => (
+            <button key={p} type="button" className={styles.chip} disabled>
+              ${p}
+            </button>
+          ))}
       </div>
-      <div className={styles.modalField}>
-        <label htmlFor="am-amount" className={styles.label}>
-          Amount
-        </label>
-        <div className={styles.amount}>
-          <span className={styles.amountPrefix} aria-hidden="true">
-            $
-          </span>
-          <input
-            id="am-amount"
-            inputMode="decimal"
-            className={`${styles.input} ${styles.inputMoney}`}
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && submit()}
-          />
-        </div>
-        {ok && (
-          <p className={styles.convert}>
-            ≈ {fmt(Math.floor(value / EST_RATE_USD.email))} emails ·{' '}
-            {fmt(Math.floor(value / EST_RATE_USD.sms))} SMS ·{' '}
-            {fmt(Math.floor(value / EST_RATE_USD.whatsapp))} WhatsApp
-          </p>
-        )}
-      </div>
+      {chosen && (
+        <p className={styles.convert}>
+          {fmtUsd(chosen.totalCreditsUsd)} credit
+          {chosen.bonusUsd > 0 ? ` (includes ${fmtUsd(chosen.bonusUsd)} bonus)` : ''} ≈{' '}
+          {fmt(Math.floor(chosen.totalCreditsUsd / EST_RATE_USD.email))} emails ·{' '}
+          {fmt(Math.floor(chosen.totalCreditsUsd / EST_RATE_USD.sms))} SMS ·{' '}
+          {fmt(Math.floor(chosen.totalCreditsUsd / EST_RATE_USD.whatsapp))} WhatsApp
+        </p>
+      )}
+      {unavailable && (
+        <p className={styles.modalHelp}>
+          Billing isn’t available in this environment yet — no packages to buy.
+        </p>
+      )}
+      {error && (
+        <p className={styles.modalHelp} role="alert">
+          {error}
+        </p>
+      )}
       <p className={styles.modalHelp}>
-        Credit is drawn down at per-message rates and never expires. Auto-recharge tops you up when
-        it runs low.
+        You’ll pay on a secure Stripe checkout page. Credit is drawn down at per-message rates and
+        never expires.
       </p>
     </Modal>
   );
