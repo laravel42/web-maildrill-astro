@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { signIn } from 'auth-astro/client';
 import { mockResetPassword } from '@/lib/app/services';
+import { isAllowedLoginEmail } from '@/lib/auth/login-allowlist';
 import { isWebAuthnCancel, passkeyLoginTicket, passkeysSupported } from '@/lib/app/webauthn';
 import PhoneField from './PhoneField';
 import type { Mode, Status } from './AuthForm.types';
@@ -10,9 +11,8 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState('');
-  // Sign-up captures these so verify can stamp them on the new account.
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
+  // Set when a login is attempted with an address that isn't on the allowlist.
+  const [notInvited, setNotInvited] = useState(false);
   const [stage, setStage] = useState<'form' | 'code' | 'twofa' | 'done'>('form');
   // Six positional slots so a digit typed into any box stays in place.
   const [code, setCode] = useState<string[]>(['', '', '', '', '', '']);
@@ -76,7 +76,6 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     }
     if (sentTo) window.posthog?.identify(sentTo, { email: sentTo });
     window.posthog?.capture('login_succeeded');
-    if (mode === 'signup') window.posthog?.capture('signup_completed', { channel: 'email' });
     setStatus('idle');
     setStage('done');
     window.setTimeout(() => window.location.assign('/dashboard'), 1100);
@@ -95,9 +94,17 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
     setStatus('loading');
     setError(null);
+    setNotInvited(false);
     try {
       if (mode === 'login') {
         if (!email) throw new Error('Enter your work email.');
+        // Private rollout: only allowlisted accounts get a sign-in code. Anyone
+        // else is pointed at the waitlist rather than emailed a code.
+        if (!isAllowedLoginEmail(email)) {
+          setNotInvited(true);
+          setStatus('idle');
+          return;
+        }
         const res = await fetch('/api/login-code', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
@@ -126,26 +133,18 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         }
         if (!terms) throw new Error('Please accept the Terms and Privacy Policy.');
         window.posthog?.capture('signup_form_submitted', { channel: 'email' });
-        // Registration is the same code exchange as login: request a code, and
-        // verifying it creates the account + personal workspace server-side.
-        const res = await fetch('/api/login-code', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ email }),
-        });
-        if (!res.ok) throw new Error('Could not send your code. Try again.');
-        // Team heads-up only — the user-facing welcome email is sent by the
-        // backend when the account is created. Fire-and-forget (202-always).
+        // Rollout period: no code to enter — the waitlist email is the
+        // confirmation. It (plus the team heads-up) is sent by the endpoint;
+        // fire-and-forget (202-always) so the UX doesn't wait on delivery.
         void fetch('/api/signup-welcome', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ email, firstName, lastName }),
+          body: JSON.stringify({ email, firstName, lastName, phone: phoneRaw }),
         }).catch(() => undefined);
+        // Land on the terminal "you're on the list" state.
         setSentTo(email);
-        setFullName(`${firstName} ${lastName}`);
-        setPhone(phoneRaw);
-        setCode(['', '', '', '', '', '']);
-        setStage('code');
+        setStage('done');
+        window.posthog?.capture('signup_completed', { channel: 'email' });
         setStatus('idle');
         return;
       }
@@ -171,17 +170,11 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     setError(null);
     try {
       // The BFF verifies (and consumes) the code, then answers with either a
-      // one-time login ticket or a two-factor challenge. First verify of a
-      // fresh email creates the account — carry the sign-up name + phone.
+      // one-time login ticket or a two-factor challenge.
       const res = await fetch('/api/login-verify', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          email: sentTo,
-          code: clean,
-          ...(fullName ? { name: fullName } : {}),
-          ...(phone ? { phone } : {}),
-        }),
+        body: JSON.stringify({ email: sentTo, code: clean }),
       });
       if (res.status === 429) {
         setError('Too many attempts — wait a few minutes and try again.');
@@ -305,31 +298,67 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const isSignup = mode === 'signup';
   const resetLabel = 'Use a different email';
 
-  // The terminal state — login and sign-up both reach it only after verifying
-  // a code, so it always reads "you're in" and hands off to the workspace.
+  // The terminal state. Login reaches it after verifying a code ("you're in");
+  // sign-up reaches it straight from submit — the waitlist email is the
+  // confirmation, so it reads "you're on the list" and points at the inbox.
   const doneMiddle = (
     <div role="status" style={{ animation: 'pop .5s var(--ease-out) both' }}>
-      <div className={`${styles.successicon} ${styles.iconTile} ${styles.iconTileCheck}`}>
-        <svg
-          width="26"
-          height="26"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M20 6 9 17l-5-5" />
-        </svg>
+      <div
+        className={`${styles.successicon} ${styles.iconTile} ${
+          isSignup ? styles.iconTileMail : styles.iconTileCheck
+        }`}
+      >
+        {isSignup ? (
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <path d="m22 7-10 6L2 7" />
+          </svg>
+        ) : (
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+        )}
       </div>
-      <h2 className={styles.substep}>You’re in</h2>
-      <p className={styles.sub} style={{ margin: 0 }}>
-        {isSignup
-          ? 'Account created — taking you to your new workspace.'
-          : 'Code verified — taking you to your workspace.'}
-      </p>
+      <h2 className={styles.substep}>{isSignup ? 'You’re on the list' : 'You’re in'}</h2>
+      {isSignup ? (
+        <>
+          <p className={styles.sub} style={{ margin: '0 0 16px' }}>
+            We’re thrilled to have you. Because demand has been far higher than we expected, we’re
+            rolling out new accounts in controlled waves to keep deliverability and support quality
+            high for everyone.
+          </p>
+          <p className={styles.sub} style={{ margin: 0 }}>
+            <strong style={{ color: 'var(--text)', fontWeight: 600 }}>
+              Your workspace will be ready within the next 7 days — and most likely sooner.
+            </strong>{' '}
+            You don’t need to do anything: we’ll email you the moment it’s live.
+          </p>
+        </>
+      ) : (
+        <p className={styles.sub} style={{ margin: 0 }}>
+          Code verified — taking you to your workspace.
+        </p>
+      )}
     </div>
   );
 
@@ -649,6 +678,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
               placeholder="you@company.com"
               required
               onChange={() => {
+                if (notInvited) setNotInvited(false);
                 if (error) setError(null);
               }}
             />
@@ -675,6 +705,15 @@ export default function AuthForm({ mode }: { mode: Mode }) {
             <p className={styles.error} role="alert">
               {error}
             </p>
+          )}
+
+          {mode === 'login' && notInvited && (
+            <div className={styles.gate} role="status">
+              We couldn&rsquo;t find an active account for that email. If you already signed up,
+              your confirmation email is on its way — expect it within a few days. Otherwise{' '}
+              <a href="/signup">join the waitlist</a> and you&rsquo;ll be part of the crew in
+              3&ndash;7 days.
+            </div>
           )}
 
           <button className={styles.submit} type="submit" disabled={status === 'loading'}>
