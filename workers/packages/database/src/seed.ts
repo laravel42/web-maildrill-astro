@@ -338,11 +338,29 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  /* ---- resolve target tenant ------------------------------------------- */
-  const target = (
+  /* ---- resolve (or bootstrap) target tenant ----------------------------
+     Fresh local DBs have no rows yet — the allowlisted workspace is normally
+     created on first sign-in via ensurePersonalWorkspace. Bootstrap the same
+     user + owner membership here so `pnpm db:seed` works before the first login. */
+  let target = (
     await db.select().from(tenants).where(eq(tenants.name, TARGET_TENANT_NAME)).limit(1)
   )[0];
-  if (!target) throw new Error(`target tenant "${TARGET_TENANT_NAME}" not found`);
+  if (!target) {
+    const [user] = await db
+      .insert(users)
+      .values({ email: TARGET_TENANT_NAME, name: 'Maildrill Dev' })
+      .onConflictDoNothing({ target: users.email })
+      .returning();
+    const owner =
+      user ??
+      (await db.select().from(users).where(eq(users.email, TARGET_TENANT_NAME)).limit(1))[0]!;
+    target = (await db.insert(tenants).values({ name: TARGET_TENANT_NAME }).returning())[0]!;
+    await db
+      .insert(memberships)
+      .values({ userId: owner.id, tenantId: target.id, role: 'owner' })
+      .onConflictDoNothing();
+    console.log(`bootstrapped tenant + owner for ${TARGET_TENANT_NAME}`);
+  }
   const tid = target.id;
   console.log(`target tenant: ${target.name} (${tid})`);
 
