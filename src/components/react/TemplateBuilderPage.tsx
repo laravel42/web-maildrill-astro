@@ -1,18 +1,21 @@
-import { lazy, Suspense, useRef } from 'react';
-import type { ChannelType, TemplateApprovalStatus } from '@/types/app';
+import { Suspense, useRef } from 'react';
+import type { ChannelType } from '@/types/app';
 import type { TEditorConfiguration } from 'email-builder-standalone';
 import { routes } from '@/config/routes';
 import { api, ApiError } from '@/lib/app/api';
+import { lazyWithRetry } from '@/lib/app/lazy-with-retry';
 import type { ApiTemplate } from '@/lib/app/template-map';
-import { toApprovalStatus } from '@/lib/app/template-map';
-import EmailBuilder from './EmailBuilder';
 import LazyBoundary from './shared/LazyBoundary';
+import SmsBuilder from './SmsBuilder';
+import VoiceBuilder from './VoiceBuilder';
+import type { ComposerSavePayload } from './shared/useMessageDraft';
 
 // Lazy: both visual editors are large bundles (MUI/tiptap for email, the WA
 // studio's Tailwind/Radix build for WhatsApp). Each channel page mounts only
 // its own editor, so defer the fetch until that editor actually renders.
-const VisualEmailBuilder = lazy(() => import('./VisualEmailBuilder'));
-const WaTemplateStudioEditor = lazy(() => import('./WaTemplateStudioEditor'));
+// lazyWithRetry: Vite can 504 mid-session while re-optimizing these deps.
+const VisualEmailBuilder = lazyWithRetry(() => import('./VisualEmailBuilder'));
+const WaTemplateStudioEditor = lazyWithRetry(() => import('./WaTemplateStudioEditor'));
 
 type Props = {
   channel: ChannelType;
@@ -87,34 +90,6 @@ export default function TemplateBuilderPage({
   }
 
   if (channel === 'whatsapp') {
-    const submitApproval = async (): Promise<TemplateApprovalStatus> => {
-      if (!live) throw new Error('Connect a workspace to submit templates');
-      // Ensure the row exists before POST /submit (create-on-first-save).
-      if (!idRef.current) throw new Error('Save the template before requesting approval');
-      try {
-        const updated = await api.post<ApiTemplate>(`templates/${idRef.current}/submit`, {});
-        return toApprovalStatus(updated.approvalStatus) ?? 'pending';
-      } catch (e) {
-        throw new Error(e instanceof ApiError ? e.message : 'Could not submit for approval', {
-          cause: e,
-        });
-      }
-    };
-    const refreshApproval = async (): Promise<TemplateApprovalStatus> => {
-      if (!live || !idRef.current) throw new Error('Connect a workspace to refresh status');
-      try {
-        const updated = await api.post<ApiTemplate>(
-          `templates/${idRef.current}/refresh-status`,
-          {},
-        );
-        return toApprovalStatus(updated.approvalStatus) ?? 'pending';
-      } catch (e) {
-        throw new Error(e instanceof ApiError ? e.message : 'Could not refresh status', {
-          cause: e,
-        });
-      }
-    };
-
     return (
       <LazyBoundary label="the WhatsApp template editor" onClose={close}>
         <Suspense fallback={null}>
@@ -125,7 +100,6 @@ export default function TemplateBuilderPage({
             category={category}
             builderDoc={template?.builderDoc}
             components={template?.components}
-            approvalStatus={toApprovalStatus(template?.approvalStatus)}
             onClose={close}
             onSave={(fields) =>
               persist({
@@ -138,42 +112,39 @@ export default function TemplateBuilderPage({
                 components: fields.components,
               })
             }
-            onSubmitForApproval={live ? submitApproval : undefined}
-            onRefreshApproval={live ? refreshApproval : undefined}
           />
         </Suspense>
       </LazyBoundary>
     );
   }
 
-  /* SMS / Voice keep the lightweight text composer. */
-  return (
-    <EmailBuilder
-      channel={channel}
-      name={name}
-      kind="template"
-      initialCategory={category}
-      initialLanguage={template?.language}
-      initialMessage={template?.text ?? undefined}
-      initialBuilderDoc={template?.builderDoc ?? null}
-      onClose={close}
-      onSave={({
-        channel: savedChannel,
-        name: savedName,
-        message,
-        category: savedCategory,
-        language,
-        builderDoc,
-      }) =>
-        persist({
-          name: savedName && savedName !== 'Untitled' ? savedName : 'Untitled template',
-          channel: savedChannel,
-          text: message || null,
-          category: savedCategory,
-          language,
-          ...(builderDoc !== undefined ? { builderDoc } : {}),
-        })
-      }
-    />
-  );
+  /* SMS / Voice: the lightweight text composers. */
+  const saveComposer = ({
+    channel: savedChannel,
+    name: savedName,
+    message,
+    category: savedCategory,
+    language,
+    builderDoc,
+  }: ComposerSavePayload) =>
+    persist({
+      name: savedName && savedName !== 'Untitled' ? savedName : 'Untitled template',
+      channel: savedChannel,
+      text: message || null,
+      category: savedCategory,
+      language,
+      ...(builderDoc !== undefined ? { builderDoc } : {}),
+    });
+
+  const composerProps = {
+    name,
+    initialCategory: category,
+    initialLanguage: template?.language,
+    initialMessage: template?.text ?? undefined,
+    onClose: close,
+    onSave: saveComposer,
+  };
+
+  if (channel === 'sms') return <SmsBuilder {...composerProps} />;
+  return <VoiceBuilder {...composerProps} initialBuilderDoc={template?.builderDoc ?? null} />;
 }
