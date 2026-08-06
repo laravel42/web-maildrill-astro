@@ -107,6 +107,22 @@ export default function AppSubscribers({
     window.history.replaceState(null, '', `${url.pathname}${url.search}`);
   }, []);
 
+  // Custom-field keys feed the import wizard's column-mapping targets.
+  const [customFieldKeys, setCustomFieldKeys] = useState<string[]>([]);
+  useEffect(() => {
+    if (!live) return;
+    let alive = true;
+    void api
+      .get<{ data: Array<{ key: string }> }>('custom-fields')
+      .then((res) => {
+        if (alive) setCustomFieldKeys(res.data.map((f) => f.key));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [live]);
+
   const effTags = (s: RichSubscriber): string[] => tagStore[s.id] ?? s.tags;
 
   // Tags actually present on subscribers, with counts for the filter dropdown.
@@ -1180,6 +1196,21 @@ export default function AppSubscribers({
           initialListIds={subEditor.mode === 'edit' ? subEditor.sub.listIds : []}
           initialTags={subEditor.mode === 'edit' ? effTags(subEditor.sub) : []}
           lists={allLists}
+          customFieldKeys={customFieldKeys}
+          onImport={async ({ rows, listIds }) => {
+            if (!live) {
+              showToast(`${rows.length.toLocaleString('en-US')} subscribers imported`);
+              return { imported: rows.length, failed: 0 };
+            }
+            const res = await api.post<{
+              imported: number;
+              failed: Array<{ email: string; error: string }>;
+            }>('subscribers/import', { rows, ...(listIds.length ? { listIds } : {}) });
+            // Refresh the table so the new arrivals (and merges) show at once.
+            const fresh = await api.get<{ data: ApiSubscriber[] }>('subscribers?limit=200');
+            setRichSubscribers(fresh.data.map(toRichSubscriber));
+            return { imported: res.imported, failed: res.failed.length };
+          }}
           onClose={() => setSubEditor(null)}
           onSave={async (values) => {
             const editor = subEditor;

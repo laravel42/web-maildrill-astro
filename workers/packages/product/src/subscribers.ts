@@ -12,6 +12,7 @@ import {
   tags,
   type Subscriber,
 } from '@maildrill/database';
+import { addToList } from './lists';
 import { clamp } from './rules';
 
 const WEEK_MS = 7 * 86_400_000;
@@ -102,6 +103,33 @@ export async function upsertSubscriber(input: UpsertSubscriberInput): Promise<Su
     })
     .returning();
   return rows[0]!;
+}
+
+export type ImportSubscriberRow = Omit<UpsertSubscriberInput, 'tenantId'>;
+
+/**
+ * Bulk upsert for file imports. Rows share upsertSubscriber's merge semantics
+ * (upsert by email, never clobber existing values with null); every imported
+ * subscriber also joins `listIds`. A failing row is reported, not fatal — the
+ * rest of the batch still lands.
+ */
+export async function importSubscribers(
+  tenantId: string,
+  rows: ImportSubscriberRow[],
+  listIds: string[] = [],
+): Promise<{ imported: number; failed: Array<{ email: string; error: string }> }> {
+  let imported = 0;
+  const failed: Array<{ email: string; error: string }> = [];
+  for (const row of rows) {
+    try {
+      const sub = await upsertSubscriber({ tenantId, ...row });
+      for (const listId of listIds) await addToList(tenantId, listId, sub.id);
+      imported += 1;
+    } catch (e) {
+      failed.push({ email: row.email, error: e instanceof Error ? e.message : 'import_failed' });
+    }
+  }
+  return { imported, failed };
 }
 
 export async function getSubscriber(tenantId: string, id: string): Promise<Subscriber | null> {

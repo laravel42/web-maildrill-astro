@@ -6,6 +6,7 @@ import {
   assignTag,
   deleteSubscriber,
   getSubscriberWithRelations,
+  importSubscribers,
   listSubscribersWithRelations,
   subscriberActivity,
   subscriberLists,
@@ -23,6 +24,12 @@ const upsertSchema = z.object({
   name: z.string().optional(),
   attributes: z.record(z.unknown()).optional(),
   status: statusEnum.optional(),
+});
+
+const importSchema = z.object({
+  rows: z.array(upsertSchema).min(1).max(5000),
+  /** Every imported subscriber joins these lists. */
+  listIds: z.array(z.string().uuid()).max(50).optional(),
 });
 
 const patchSchema = z.object({
@@ -60,6 +67,18 @@ export async function subscriberRoutes(appRaw: FastifyInstance): Promise<void> {
       const sub = await upsertSubscriber({ tenantId: req.tenantId, ...req.body });
       return reply.code(201).send(sub);
     },
+  );
+
+  app.post(
+    '/v1/subscribers/import',
+    {
+      schema: {
+        tags: TAG,
+        summary: 'Bulk import subscribers (upsert by email, optional list membership)',
+        body: importSchema,
+      },
+    },
+    async (req) => importSubscribers(req.tenantId, req.body.rows, req.body.listIds ?? []),
   );
 
   app.get(
