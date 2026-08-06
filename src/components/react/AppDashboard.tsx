@@ -242,7 +242,6 @@ export default function AppDashboard({
             return (
               <div key={k.key} className={`akpi ${styles.boxLoading}`}>
                 <div className={styles.kpiHead}>
-                  <span className={`skeleton ${styles.skelChip}`} aria-hidden="true" />
                   <div className="akpi__label">{k.label}</div>
                 </div>
                 <div className={`skeleton ${styles.skelValue}`} aria-hidden="true" />
@@ -256,9 +255,6 @@ export default function AppDashboard({
           return (
             <a key={k.key} href={href} className={`akpi ${styles.kpiLink}`}>
               <div className={styles.kpiHead}>
-                <span className={styles.kpiIc} style={{ background: meta.tint, color: meta.color }}>
-                  <Icon name={meta.icon} size={13} />
-                </span>
                 <div className="akpi__label">{k.label}</div>
                 <Icon name="arrow-up-right" size={13} className={styles.kpiGo} />
               </div>

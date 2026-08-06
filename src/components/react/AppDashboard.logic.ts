@@ -230,47 +230,29 @@ export function sparkSeries(points: ActivityPoint[]): Array<{ value: number; lab
   return points.map((p) => ({ value: p.sent, label: fmtDate(p.date) }));
 }
 
-/**
- * Presentation for each KPI card: icon + tinted chip (channel/status token
- * pairs, same grammar as FEED_META and the channel strip) + destination.
- */
-export const KPI_META: Record<
-  Kpi['key'],
-  { icon: IconName; tint: string; color: string; href: string }
-> = {
+/** Presentation for each KPI card: sparkline accent + destination. */
+export const KPI_META: Record<Kpi['key'], { color: string; href: string }> = {
   subscribers: {
-    icon: 'subscribers',
-    tint: 'var(--success-bg)',
     color: 'var(--success-text)',
     href: '/dashboard/subscribers',
   },
   lists: {
-    icon: 'lists',
-    tint: 'var(--ch-sms-tint)',
     color: 'var(--ch-sms)',
     href: '/dashboard/lists',
   },
   campaigns: {
-    icon: 'campaigns',
-    tint: 'var(--accent-tint)',
     color: 'var(--accent-text)',
     href: '/dashboard/campaigns',
   },
   sent: {
-    icon: 'send',
-    tint: 'var(--brand-tint)',
     color: 'var(--brand)',
     href: '/dashboard/analytics',
   },
   open: {
-    icon: 'mail',
-    tint: 'var(--ch-voice-tint)',
     color: 'var(--ch-voice)',
     href: '/dashboard/analytics',
   },
   click: {
-    icon: 'target',
-    tint: 'var(--accent-tint)',
     color: 'var(--accent-text)',
     href: '/dashboard/analytics',
   },

@@ -2,7 +2,7 @@ import type { IconName } from '@/lib/icons';
 import type { SparkPoint } from './shared/Sparkline';
 
 export type Kpi = {
-  /** Stable identity — picks the card's icon, accent, and destination. */
+  /** Stable identity — picks the card's accent and destination. */
   key: 'subscribers' | 'lists' | 'campaigns' | 'sent' | 'open' | 'click';
   label: string;
   value: string;
