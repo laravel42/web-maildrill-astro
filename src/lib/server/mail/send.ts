@@ -1,10 +1,11 @@
 import nodemailer, { type Transporter } from 'nodemailer';
+import { waitlistEmailHtml, waitlistEmailText } from './waitlist-template';
 
 /**
  * In-repo email sending over SMTP (Nodemailer → Cloudflare Email Service
- * relay). Only the internal sign-up notification lives here — the user-facing
- * welcome email is sent by workers when the first verified code creates the
- * account.
+ * relay). Two messages live here: the user-facing waitlist confirmation sent
+ * on every registration during the rollout period, and the internal sign-up
+ * notification to the team.
  *
  * Config comes from server-only env (never PUBLIC_*):
  *   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE?, MAIL_FROM
@@ -52,6 +53,35 @@ export interface SignupData {
   email: string;
   firstName?: string;
   lastName?: string;
+  phone?: string;
+}
+
+/**
+ * Send the registration waitlist email to the person who just signed up.
+ * Never throws — returns whether SMTP accepted it, so the caller can log
+ * without letting a mail hiccup break the request.
+ */
+export async function sendWaitlistEmail(email: string, firstName?: string): Promise<boolean> {
+  const to = email.trim();
+  const transport = getTransport();
+  if (!transport) {
+    console.warn('[mail] SMTP not configured — skipping waitlist email to', to);
+    return false;
+  }
+  try {
+    await transport.sendMail({
+      from: mailFrom(),
+      to,
+      subject: "You're on the Maildrill waiting list",
+      html: waitlistEmailHtml(firstName),
+      text: waitlistEmailText(firstName),
+    });
+    console.info('[mail] waitlist email sent to', to);
+    return true;
+  } catch (err) {
+    console.error('[mail] waitlist email send failed for', to, err);
+    return false;
+  }
 }
 
 /**
@@ -75,6 +105,7 @@ export async function sendSignupNotification(sub: SignupData): Promise<boolean> 
   const rows: [string, string][] = [
     ['Name', name],
     ['Email', email],
+    ...(sub.phone?.trim() ? ([['Phone', sub.phone.trim()]] as [string, string][]) : []),
   ];
   const html =
     `<div style="font-family:Arial,Helvetica,sans-serif;color:#1f1e1b;">` +
@@ -88,7 +119,9 @@ export async function sendSignupNotification(sub: SignupData): Promise<boolean> 
       )
       .join('') +
     `</table></div>`;
-  const text = `New Maildrill sign-up\n\nName: ${name}\nEmail: ${email}\n`;
+  const text =
+    `New Maildrill sign-up\n\nName: ${name}\nEmail: ${email}\n` +
+    (sub.phone?.trim() ? `Phone: ${sub.phone.trim()}\n` : '');
   try {
     await transport.sendMail({
       from: mailFrom(),

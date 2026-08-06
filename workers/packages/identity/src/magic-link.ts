@@ -31,7 +31,8 @@ function codeHash(email: string, code: string): string {
  * Issue a 6-digit login code plus a matching auto-login link. Stores only a
  * hash; prior unconsumed codes for the email are invalidated. The email rides
  * the Cloudflare transactional relay (never Infobip / the campaign pipeline),
- * so sign-in never depends on the workers.
+ * so sign-in never depends on the workers. The optional client context (IP,
+ * user agent) is shown in the email's security note.
  */
 export async function requestLoginCode(
   email: string,
@@ -62,14 +63,16 @@ async function sendLoginEmail(
   ctx?: RequestContext,
 ): Promise<void> {
   if (!config.isProd) log.info({ email, code, url }, 'login code (dev)');
+  const ttl = config.auth.magicLinkTtlMinutes;
   const result = await sendTransactionalEmail({
     to: email,
-    subject: `${code} is your Maildrill sign-in code`,
+    subject: `Sign in to Maildrill — code ${code}`,
     html: loginEmailHtml(email, code, url, ctx),
     text:
-      `Your Maildrill sign-in code is ${code}. ` +
-      `It expires in ${config.auth.magicLinkTtlMinutes} minutes.\n\n` +
-      `Or sign in directly: ${url}`,
+      `Sign in to Maildrill — your one-time code is ${code}, requested for ${email}.\n\n` +
+      `Enter it on the sign-in screen, or sign in with one tap: ${url}\n\n` +
+      `The link and the code are single-use and expire in ${ttl} minutes. ` +
+      `If that wasn't you, ignore this email — nobody can sign in without it.`,
   });
   if (result.accepted) {
     log.info({ email }, 'login-code email sent (cloudflare relay)');
@@ -148,7 +151,7 @@ function loginEmailHtml(email: string, code: string, url: string, ctx?: RequestC
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <meta name="supported-color-schemes" content="light dark">
-<title>Sign in to Maildrill — code ${code}</title>
+<title>Sign in to Maildrill &mdash; code ${code}</title>
 <style>
   body{margin:0;padding:0;width:100%!important;background:#eceae3;}
   table{border-collapse:collapse;}
