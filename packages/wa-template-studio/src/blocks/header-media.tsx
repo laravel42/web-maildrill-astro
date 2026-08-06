@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { FileText, Film, Image as ImageIcon, Play, UploadCloud } from 'lucide-react';
 
 import { Field } from '@/ui/field';
+import { ImagePicker } from '@/ui/image-picker';
 import { Input } from '@/ui/input';
 import type { BlockPlugin, ValidationIssue } from '@/core/types';
 
@@ -18,6 +19,14 @@ const schema = z.object({
   url: z.string(),
   /** Original file name (uploads); shown in the document chip. */
   fileName: z.string().optional(),
+  /** Unsplash attribution when the image came from the stock picker. */
+  credit: z
+    .object({
+      name: z.string(),
+      profileUrl: z.string(),
+      unsplashUrl: z.string(),
+    })
+    .optional(),
 });
 
 type Data = z.infer<typeof schema>;
@@ -130,6 +139,9 @@ function makeMediaHeaderPlugin(config: {
       return issues;
     },
     Editor: function HeaderMediaEditor({ value, onChange }) {
+      // Images get the full stock-search + media-library picker (same UX as
+      // the email editor's image inspector); video/document keep the URL flow.
+      if (config.format === 'IMAGE') return <ImagePicker value={value} onChange={onChange} />;
       return <MediaEditor value={value} onChange={onChange} format={config.format} />;
     },
     Preview: function HeaderMediaPreview({ data, ctx }) {

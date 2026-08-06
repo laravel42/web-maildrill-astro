@@ -740,6 +740,8 @@ export class InfobipProvider implements MessagingProvider {
     if (s.header) structure.header = s.header;
     if (s.footer) structure.footer = s.footer;
     if (s.buttons?.length) structure.buttons = s.buttons;
+    if (input.structureType) structure.type = input.structureType;
+    else if (s.header || s.footer || s.buttons?.length) structure.type = 'MEDIA';
     const body = {
       name,
       language: input.language,
@@ -755,7 +757,15 @@ export class InfobipProvider implements MessagingProvider {
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
           const res = await this.rawRequest('POST', path, body);
-          if (!res.ok) return { ok: false, error: this.httpError(res.status, res.json) };
+          if (!res.ok) {
+            if (process.env.NODE_ENV !== 'production') {
+              console.warn(
+                '[infobip] registerWhatsAppTemplate failed',
+                JSON.stringify({ status: res.status, path, body, response: res.json }, null, 2),
+              );
+            }
+            return { ok: false, error: this.httpError(res.status, res.json) };
+          }
           return {
             ok: true,
             providerTemplateId: str(res.json.id),

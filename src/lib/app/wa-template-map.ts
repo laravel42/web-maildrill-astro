@@ -114,10 +114,33 @@ function normalizeButton(btn: MetaButton): Record<string, unknown> {
     return { type: 'PHONE_NUMBER', text: btn.text, ...(phone ? { phoneNumber: phone } : {}) };
   }
   if (type === 'URL') {
+    const example =
+      typeof btn.example === 'string'
+        ? btn.example
+        : Array.isArray(btn.example)
+          ? String(btn.example[0] ?? '')
+          : undefined;
     return {
       type: 'URL',
       text: btn.text,
       ...(typeof btn.url === 'string' ? { url: btn.url } : {}),
+      ...(example ? { example } : {}),
+    };
+  }
+  if (type === 'COPY_CODE') {
+    return {
+      type: 'COPY_CODE',
+      ...(typeof btn.example === 'string' ? { example: btn.example } : {}),
+    };
+  }
+  if (type === 'OTP') {
+    return {
+      type: 'OTP',
+      otp_type: btn.otp_type ?? btn.otpType ?? 'COPY_CODE',
+      ...(btn.text ? { text: btn.text } : {}),
+      ...(btn.autofill_text ? { autofill_text: btn.autofill_text } : {}),
+      ...(btn.package_name ? { package_name: btn.package_name } : {}),
+      ...(btn.signature_hash ? { signature_hash: btn.signature_hash } : {}),
     };
   }
   return { type, text: btn.text };
@@ -143,9 +166,9 @@ export function metaToStoredComponents(meta: MetaTemplate): Record<string, unkno
       if (comp.example) header.example = comp.example;
       out.header = header;
     } else if (type === 'BODY') {
-      const body: Record<string, unknown> = {
-        text: typeof comp.text === 'string' ? comp.text : '',
-      };
+      const body: Record<string, unknown> = {};
+      if (typeof comp.text === 'string') body.text = comp.text;
+      if (comp.add_security_recommendation) body.add_security_recommendation = true;
       const rows = (comp.example as { body_text?: string[][] } | undefined)?.body_text?.[0];
       if (rows?.length) body.examples = rows;
       out.body = body;

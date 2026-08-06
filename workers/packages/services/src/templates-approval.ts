@@ -5,36 +5,17 @@ import {
   getProvider,
   type RegisterTemplateInput,
   type TemplateStatusEvent,
-  type WhatsAppTemplateStructure,
 } from '@maildrill/providers';
+import {
+  normalizeWhatsAppTemplateName,
+  sanitizeInfobipTemplatePayload,
+  storedComponentsToInfobipStructure,
+  validateInfobipStructure,
+} from './wa-infobip-structure';
 
 /** The configured WhatsApp sender, digits only — the Infobip `{sender}` path param. */
 function whatsappSender(): string {
   return config.infobip.whatsappFrom.replace(/\D/g, '');
-}
-
-/** Reconstruct the WhatsApp template structure a template was authored with. */
-function structureOf(row: TemplateRow): WhatsAppTemplateStructure | null {
-  const c = (row.components ?? {}) as Record<string, unknown>;
-  const body = (c.body ?? {}) as { text?: unknown; examples?: unknown };
-  const text = typeof body.text === 'string' ? body.text : (row.text ?? '');
-  if (!text) return null;
-
-  const structure: WhatsAppTemplateStructure = { body: { text } };
-  if (Array.isArray(body.examples)) {
-    const examples = body.examples.filter((e): e is string => typeof e === 'string');
-    if (examples.length) structure.body.examples = examples;
-  }
-  if (c.header && typeof c.header === 'object') {
-    structure.header = c.header as WhatsAppTemplateStructure['header'];
-  }
-  if (c.footer && typeof c.footer === 'object') {
-    structure.footer = c.footer as WhatsAppTemplateStructure['footer'];
-  }
-  if (Array.isArray(c.buttons) && c.buttons.length) {
-    structure.buttons = c.buttons as WhatsAppTemplateStructure['buttons'];
-  }
-  return structure;
 }
 
 function categoryOf(row: TemplateRow): RegisterTemplateInput['category'] {
@@ -70,8 +51,13 @@ export async function submitTemplateForApproval(
   if (row.channel !== 'whatsapp') {
     return { template: row, error: 'only WhatsApp templates require approval' };
   }
-  const structure = structureOf(row);
-  if (!structure) return { template: row, error: 'template body text is required' };
+  const category = categoryOf(row);
+  const validationError = validateInfobipStructure(row.components, row.text, category, {
+    templateName: row.name,
+  });
+  if (validationError) return { template: row, error: validationError };
+  const built = storedComponentsToInfobipStructure(row.components, row.text, category);
+  if (!built) return { template: row, error: 'template body text is required' };
   const sender = whatsappSender();
   if (!sender) {
     return { template: row, error: 'no WhatsApp sender configured (INFOBIP_WHATSAPP_FROM)' };
@@ -83,22 +69,12 @@ export async function submitTemplateForApproval(
   }
   const input: RegisterTemplateInput = {
     sender,
-    // Infobip/Meta require lowercase alphanumeric + underscores.
-    name: row.name,
+    name: normalizeWhatsAppTemplateName(row.name),
     language: row.language ?? 'en',
-    category: categoryOf(row),
-    structure,
+    category,
+    structure: built.structure,
+    structureType: built.type,
   };
-  if (!/^[a-z0-9_]+$/.test(input.name)) {
-    // Soft-normalize for the provider call; keep DB display name as authored.
-    input.name = input.name
-      .trim()
-      .toLowerCase()
-      .replace(/[\s-]+/g, '_')
-      .replace(/[^a-z0-9_]/g, '')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '');
-  }
   if (!input.name) {
     return {
       template: row,
@@ -107,7 +83,28 @@ export async function submitTemplateForApproval(
     };
   }
   const result = await provider.registerWhatsAppTemplate(input);
-  if (!result.ok) return { template: row, error: result.error?.message ?? 'submission failed' };
+  if (!result.ok) {
+    if (process.env.NODE_ENV !== 'production') {
+      const payload = sanitizeInfobipTemplatePayload({
+        sender: input.sender,
+        name: input.name,
+        language: input.language,
+        category: input.category,
+        structure: built.structure,
+        structureType: built.type,
+      });
+      console.warn(
+        '[wa-template-submit] Infobip rejected payload:',
+        JSON.stringify(payload, null, 2),
+      );
+    }
+    let message = result.error?.message ?? 'submission failed';
+    if (/GENERAL_ERROR/i.test(message)) {
+      message +=
+        ' — Infobip rejected the payload (often a media sample URL, missing variable example, or duplicate template name). Fix the template and retry; if it persists, check the sender in Infobip portal.';
+    }
+    return { template: row, error: message };
+  }
 
   const updated = await db
     .update(templates)

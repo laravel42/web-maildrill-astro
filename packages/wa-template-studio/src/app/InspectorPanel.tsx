@@ -3,7 +3,7 @@ import { closestCenter, DndContext, type DragEndEvent } from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2 } from 'lucide-react';
+import { AlertCircle, AlertTriangle, GripVertical, Trash2 } from 'lucide-react';
 
 import { Button } from '@/ui/button';
 import { ScrollArea } from '@/ui/scroll-area';
@@ -32,16 +32,20 @@ function IssueList({ blockId }: { blockId: string }) {
   const doc = useStudio((s) => s.doc);
   const issues = issuesForBlock(validateTemplate(doc), blockId);
   if (issues.length === 0) return null;
+  const hasErrors = issues.some((issue) => issue.severity === 'error');
   return (
-    <ul className="flex flex-col gap-1 rounded-md border border-border bg-muted/40 p-2.5">
+    <ul
+      className={`wts-issue-list${hasErrors ? ' has-errors' : ' has-warnings'}`}
+      role="alert"
+    >
       {issues.map((issue, i) => (
-        <li
-          key={i}
-          className={`text-[11px] leading-snug ${
-            issue.severity === 'error' ? 'text-destructive' : 'text-amber-600 dark:text-amber-400'
-          }`}
-        >
-          {issue.message}
+        <li key={i} className={`wts-issue-item wts-issue-item--${issue.severity}`}>
+          {issue.severity === 'error' ? (
+            <AlertCircle className="wts-issue-icon" aria-hidden="true" />
+          ) : (
+            <AlertTriangle className="wts-issue-icon" aria-hidden="true" />
+          )}
+          <span>{issue.message}</span>
         </li>
       ))}
     </ul>
@@ -82,14 +86,16 @@ function SortableButtonRow({
       <button type="button" className="min-w-0 flex-1 truncate text-left" onClick={onClick}>
         {label}
       </button>
-      <button
+      <Button
         type="button"
+        variant="ghost-destructive"
+        size="icon"
+        className="size-6 shrink-0"
         aria-label={`Remove ${label}`}
-        className="text-muted-foreground hover:text-destructive"
         onClick={() => removeButton(id)}
       >
         <Trash2 className="size-3.5" />
-      </button>
+      </Button>
     </div>
   );
 }
@@ -214,12 +220,12 @@ export function InspectorPanel() {
             <h2 className="text-sm font-semibold">{title}</h2>
             {removable && (
               <Button
-                variant="ghost"
+                variant="ghost-destructive"
                 size="icon"
                 aria-label={`Remove ${title}`}
                 onClick={removable}
               >
-                <Trash2 className="size-4 text-muted-foreground hover:text-destructive" />
+                <Trash2 className="size-4" />
               </Button>
             )}
           </div>
