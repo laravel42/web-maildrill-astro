@@ -17,10 +17,38 @@ const usd = (v: number): number => Math.round(v * MICRO);
 
 /** Commitment tiers — discounts match marketing `TIERS` (base, non-promo). */
 const TIER_SEED = [
-  { code: 'payg', name: 'Pay as you go', discountBps: 0, minPurchaseCents: 0, commitmentMonths: 0, sortOrder: 0 },
-  { code: 'starter', name: 'Starter', discountBps: 1000, minPurchaseCents: 300_000, commitmentMonths: 12, sortOrder: 1 },
-  { code: 'growth', name: 'Growth', discountBps: 2000, minPurchaseCents: 600_000, commitmentMonths: 12, sortOrder: 2 },
-  { code: 'scale', name: 'Scale', discountBps: 3000, minPurchaseCents: 1_200_000, commitmentMonths: 12, sortOrder: 3 },
+  {
+    code: 'payg',
+    name: 'Pay as you go',
+    discountBps: 0,
+    minPurchaseCents: 0,
+    commitmentMonths: 0,
+    sortOrder: 0,
+  },
+  {
+    code: 'starter',
+    name: 'Starter',
+    discountBps: 1000,
+    minPurchaseCents: 300_000,
+    commitmentMonths: 12,
+    sortOrder: 1,
+  },
+  {
+    code: 'growth',
+    name: 'Growth',
+    discountBps: 2000,
+    minPurchaseCents: 600_000,
+    commitmentMonths: 12,
+    sortOrder: 2,
+  },
+  {
+    code: 'scale',
+    name: 'Scale',
+    discountBps: 3000,
+    minPurchaseCents: 1_200_000,
+    commitmentMonths: 12,
+    sortOrder: 3,
+  },
 ];
 
 /**
@@ -29,13 +57,76 @@ const TIER_SEED = [
  * are the volume incentive on the one-off top-ups.
  */
 const PACKAGE_SEED = [
-  { code: 'topup-25', name: 'Top-up $25', priceCents: 2_500, creditsMicro: usd(25), bonusMicro: 0, tier: null, sortOrder: 0, description: 'Quick balance top-up.' },
-  { code: 'topup-50', name: 'Top-up $50', priceCents: 5_000, creditsMicro: usd(50), bonusMicro: usd(2), tier: null, sortOrder: 1, description: '$2 bonus credit included.' },
-  { code: 'topup-100', name: 'Top-up $100', priceCents: 10_000, creditsMicro: usd(100), bonusMicro: usd(8), tier: null, sortOrder: 2, description: '$8 bonus credit included.' },
-  { code: 'topup-250', name: 'Top-up $250', priceCents: 25_000, creditsMicro: usd(250), bonusMicro: usd(30), tier: null, sortOrder: 3, description: '$30 bonus credit included.' },
-  { code: 'commit-starter', name: 'Starter (annual prepay)', priceCents: 300_000, creditsMicro: usd(3000), bonusMicro: 0, tier: 'starter', sortOrder: 10, description: 'Annual prepay — unlocks 10% off every rate. Unused balance rolls over all year.' },
-  { code: 'commit-growth', name: 'Growth (annual prepay)', priceCents: 600_000, creditsMicro: usd(6000), bonusMicro: 0, tier: 'growth', sortOrder: 11, description: 'Annual prepay — unlocks 20% off every rate. Unused balance rolls over all year.' },
-  { code: 'commit-scale', name: 'Scale (annual prepay)', priceCents: 1_200_000, creditsMicro: usd(12000), bonusMicro: 0, tier: 'scale', sortOrder: 12, description: 'Annual prepay — unlocks 30% off every rate. Unused balance rolls over all year.' },
+  {
+    code: 'topup-25',
+    name: 'Top-up $25',
+    priceCents: 2_500,
+    creditsMicro: usd(25),
+    bonusMicro: 0,
+    tier: null,
+    sortOrder: 0,
+    description: 'Quick balance top-up.',
+  },
+  {
+    code: 'topup-50',
+    name: 'Top-up $50',
+    priceCents: 5_000,
+    creditsMicro: usd(50),
+    bonusMicro: usd(2),
+    tier: null,
+    sortOrder: 1,
+    description: '$2 bonus credit included.',
+  },
+  {
+    code: 'topup-100',
+    name: 'Top-up $100',
+    priceCents: 10_000,
+    creditsMicro: usd(100),
+    bonusMicro: usd(8),
+    tier: null,
+    sortOrder: 2,
+    description: '$8 bonus credit included.',
+  },
+  {
+    code: 'topup-250',
+    name: 'Top-up $250',
+    priceCents: 25_000,
+    creditsMicro: usd(250),
+    bonusMicro: usd(30),
+    tier: null,
+    sortOrder: 3,
+    description: '$30 bonus credit included.',
+  },
+  {
+    code: 'commit-starter',
+    name: 'Starter (annual prepay)',
+    priceCents: 300_000,
+    creditsMicro: usd(3000),
+    bonusMicro: 0,
+    tier: 'starter',
+    sortOrder: 10,
+    description: 'Annual prepay — unlocks 10% off every rate. Unused balance rolls over all year.',
+  },
+  {
+    code: 'commit-growth',
+    name: 'Growth (annual prepay)',
+    priceCents: 600_000,
+    creditsMicro: usd(6000),
+    bonusMicro: 0,
+    tier: 'growth',
+    sortOrder: 11,
+    description: 'Annual prepay — unlocks 20% off every rate. Unused balance rolls over all year.',
+  },
+  {
+    code: 'commit-scale',
+    name: 'Scale (annual prepay)',
+    priceCents: 1_200_000,
+    creditsMicro: usd(12000),
+    bonusMicro: 0,
+    tier: 'scale',
+    sortOrder: 12,
+    description: 'Annual prepay — unlocks 30% off every rate. Unused balance rolls over all year.',
+  },
 ];
 
 /**

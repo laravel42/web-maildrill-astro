@@ -2,7 +2,13 @@ import { and, eq, lte, sql } from 'drizzle-orm';
 import { config } from '@maildrill/config';
 import { ConflictError, ValidationError, type Channel } from '@maildrill/domain';
 import { createLogger } from '@maildrill/observability';
-import { db, creditReservations, wallets, type Tx, type CreditReservationRow } from '@maildrill/database';
+import {
+  db,
+  creditReservations,
+  wallets,
+  type Tx,
+  type CreditReservationRow,
+} from '@maildrill/database';
 import { appendLedgerEntry, lockWallet } from './ledger';
 import { getOrCreateWallet } from './wallet';
 import { assertMicro } from './money';
@@ -48,7 +54,9 @@ export async function reserveCredits(input: ReserveInput): Promise<CreditReserva
       );
     if (existing && existing.status === 'held') return existing;
     if (existing) {
-      throw new ConflictError(`reservation for ${input.referenceType}:${input.referenceId} already ${existing.status}`);
+      throw new ConflictError(
+        `reservation for ${input.referenceType}:${input.referenceId} already ${existing.status}`,
+      );
     }
 
     const locked = await lockWallet(tx, wallet.id);
@@ -137,7 +145,10 @@ export async function commitReservedCredits(input: CommitInput): Promise<{ dupli
     if (fromReserved && reservation) {
       await tx
         .update(creditReservations)
-        .set({ remainingMicro: reservation.remainingMicro - input.amountMicro, updatedAt: new Date() })
+        .set({
+          remainingMicro: reservation.remainingMicro - input.amountMicro,
+          updatedAt: new Date(),
+        })
         .where(eq(creditReservations.id, reservation.id));
     }
     return { duplicate: false };

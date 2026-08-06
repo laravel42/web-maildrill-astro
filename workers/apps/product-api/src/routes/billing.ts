@@ -219,7 +219,12 @@ export async function billingRoutes(appRaw: FastifyInstance): Promise<void> {
 
   app.post(
     '/v1/billing/portal',
-    { schema: { tags: TAG, summary: 'Open the hosted customer portal (payment methods, invoices, tax)' } },
+    {
+      schema: {
+        tags: TAG,
+        summary: 'Open the hosted customer portal (payment methods, invoices, tax)',
+      },
+    },
     async (req, reply) => {
       if (!requireManager(req, reply)) return;
       if (rateLimited(req, reply)) return;

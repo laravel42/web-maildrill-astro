@@ -82,7 +82,10 @@ export async function chargeMessageDelivered(input: {
         'delivered message could not be charged — wallet empty',
       );
     } else {
-      log.error({ err, tenantId: input.tenantId, messageId: input.messageId }, 'billing charge failed');
+      log.error(
+        { err, tenantId: input.tenantId, messageId: input.messageId },
+        'billing charge failed',
+      );
     }
   }
 }

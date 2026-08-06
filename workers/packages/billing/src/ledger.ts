@@ -85,7 +85,10 @@ export async function lockWallet(tx: Tx, walletId: string): Promise<WalletRow> {
   return wallet;
 }
 
-export async function appendLedgerEntry(tx: Tx, input: AppendEntryInput): Promise<AppendEntryResult> {
+export async function appendLedgerEntry(
+  tx: Tx,
+  input: AppendEntryInput,
+): Promise<AppendEntryResult> {
   validateEntryAmount(input.entryType, input.amountMicro);
 
   // Idempotency short-circuit before locking: replays are cheap and common

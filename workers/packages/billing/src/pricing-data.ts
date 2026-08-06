@@ -1,6 +1,12 @@
 import { eq } from 'drizzle-orm';
 import type { Channel } from '@maildrill/domain';
-import { db, channelPricing, pricingTiers, type ChannelPricingRow, type PricingTierRow } from '@maildrill/database';
+import {
+  db,
+  channelPricing,
+  pricingTiers,
+  type ChannelPricingRow,
+  type PricingTierRow,
+} from '@maildrill/database';
 import { getOrCreateWallet } from './wallet';
 import { quotePrice, resolveChannelPricing, type PriceQuote } from './pricing';
 

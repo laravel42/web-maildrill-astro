@@ -112,9 +112,7 @@ export function toE164(digits: string, country: PhoneCountry): string {
  * to a known country. Longest dial prefix wins; shared prefixes (e.g. +1)
  * resolve by `pri`. Returns the remaining national digits.
  */
-export function matchInternational(
-  raw: string,
-): { country: PhoneCountry; digits: string } | null {
+export function matchInternational(raw: string): { country: PhoneCountry; digits: string } | null {
   const cleaned = raw.replace(/[^\d+]/g, '').replace(/^00/, '+');
   if (!cleaned.startsWith('+')) return null;
   const digits = cleaned.slice(1).replace(/\D/g, '');

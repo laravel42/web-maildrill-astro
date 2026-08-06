@@ -1,5 +1,11 @@
 import { asc, eq } from 'drizzle-orm';
-import { db, creditPackages, pricingTiers, type CreditPackageRow, type PricingTierRow } from '@maildrill/database';
+import {
+  db,
+  creditPackages,
+  pricingTiers,
+  type CreditPackageRow,
+  type PricingTierRow,
+} from '@maildrill/database';
 import { quotePackage, type PackageQuote } from './pricing';
 
 /**
@@ -38,10 +44,7 @@ export async function listActivePackages(): Promise<PackageView[]> {
 
 /** Load one active package by its public code (checkout validation). */
 export async function getActivePackage(code: string): Promise<CreditPackageRow | null> {
-  const [row] = await db
-    .select()
-    .from(creditPackages)
-    .where(eq(creditPackages.code, code));
+  const [row] = await db.select().from(creditPackages).where(eq(creditPackages.code, code));
   return row && row.active ? row : null;
 }
 

@@ -106,12 +106,18 @@ export class StripeProvider implements PaymentProvider {
     });
     const body = (await res.json().catch(() => ({}))) as T & StripeErrorBody;
     if (!res.ok) {
-      throw new Error(`stripe ${path} failed (${res.status}): ${body.error?.message ?? 'unknown error'}`);
+      throw new Error(
+        `stripe ${path} failed (${res.status}): ${body.error?.message ?? 'unknown error'}`,
+      );
     }
     return body;
   }
 
-  async createCustomer(input: { tenantId: string; email?: string; name?: string }): Promise<string> {
+  async createCustomer(input: {
+    tenantId: string;
+    email?: string;
+    name?: string;
+  }): Promise<string> {
     const customer = await this.request<{ id: string }>('/v1/customers', {
       email: input.email,
       name: input.name,

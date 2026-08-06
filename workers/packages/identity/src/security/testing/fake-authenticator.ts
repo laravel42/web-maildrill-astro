@@ -6,7 +6,13 @@
  * so tests exercise genuine signature/origin/rpId/challenge/counter checks
  * instead of mocking the verifier.
  */
-import { createHash, createSign, generateKeyPairSync, randomBytes, type KeyObject } from 'node:crypto';
+import {
+  createHash,
+  createSign,
+  generateKeyPairSync,
+  randomBytes,
+  type KeyObject,
+} from 'node:crypto';
 
 const b64url = (b: Buffer | Uint8Array): string => Buffer.from(b).toString('base64url');
 
@@ -93,7 +99,11 @@ export class FakeAuthenticator {
     return createHash('sha256').update(rpId).digest();
   }
 
-  private clientDataJSON(type: 'webauthn.create' | 'webauthn.get', challenge: string, origin?: string): Buffer {
+  private clientDataJSON(
+    type: 'webauthn.create' | 'webauthn.get',
+    challenge: string,
+    origin?: string,
+  ): Buffer {
     return Buffer.from(
       JSON.stringify({ type, challenge, origin: origin ?? this.origin, crossOrigin: false }),
       'utf8',
@@ -140,7 +150,11 @@ export class FakeAuthenticator {
     const flags = 0x05; // UP | UV
     const counterBuf = Buffer.alloc(4);
     counterBuf.writeUInt32BE(this.counter, 0);
-    const authenticatorData = Buffer.concat([this.rpIdHash(overrides.rpId), Buffer.from([flags]), counterBuf]);
+    const authenticatorData = Buffer.concat([
+      this.rpIdHash(overrides.rpId),
+      Buffer.from([flags]),
+      counterBuf,
+    ]);
     const clientData = this.clientDataJSON('webauthn.get', challenge, overrides.origin);
     const clientDataHash = createHash('sha256').update(clientData).digest();
     const signature = createSign('SHA256')

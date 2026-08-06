@@ -16,8 +16,7 @@ const host = process.env.SMTP_HOST;
 const user = process.env.SMTP_USER;
 const pass = process.env.SMTP_PASS;
 const port = Number(process.env.SMTP_PORT ?? 465);
-const secure =
-  process.env.SMTP_SECURE != null ? process.env.SMTP_SECURE === 'true' : port === 465;
+const secure = process.env.SMTP_SECURE != null ? process.env.SMTP_SECURE === 'true' : port === 465;
 
 if (!host || !user || !pass) {
   console.error('✗ Need SMTP_HOST, SMTP_USER, and SMTP_PASS in .env or shell. Aborting.');

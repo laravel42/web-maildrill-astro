@@ -9,12 +9,12 @@ domain boundary — the API returns Maildrill domain objects only.
 
 ## Division of responsibility
 
-| Stripe (via `PaymentProvider`) | Maildrill (`@maildrill/billing`) |
-| --- | --- |
-| Hosted checkout, payment processing | Wallet, balance, reservations |
-| Customer + payment methods, portal | Credit packages, pricing rules, discounts |
-| Taxes, invoices, receipts | Volume + commitment pricing, channel rates |
-| Refund events, payment auth (3DS) | Immutable ledger, consumption, reporting |
+| Stripe (via `PaymentProvider`)      | Maildrill (`@maildrill/billing`)           |
+| ----------------------------------- | ------------------------------------------ |
+| Hosted checkout, payment processing | Wallet, balance, reservations              |
+| Customer + payment methods, portal  | Credit packages, pricing rules, discounts  |
+| Taxes, invoices, receipts           | Volume + commitment pricing, channel rates |
+| Refund events, payment auth (3DS)   | Immutable ledger, consumption, reporting   |
 
 The provider is an interface (`src/provider/types.ts`). Adding Paddle/Adyen/
 MercadoPago later = one new adapter + a `registry.ts` entry; the domain never
@@ -129,7 +129,7 @@ sequenceDiagram
 
 Idempotency is two independent layers: the `stripe_events` unique event id
 (skips redelivered events) and ledger keys (`purchase:<attempt>`), so even two
-*different* events for the same payment (checkout.session.completed +
+_different_ events for the same payment (checkout.session.completed +
 payment_intent.succeeded) grant once. Unexpected processing errors roll back
 the whole transaction (including the event row) and answer 5xx so Stripe
 redelivers; permanent impossibilities record `skipped` and answer 2xx.
@@ -160,18 +160,18 @@ erDiagram
 
 ## API surface (`/v1/billing/*`, tenant from JWT, all domain-shaped)
 
-| Route | What | Access |
-| --- | --- | --- |
-| `GET /wallet` | balance/reserved/low-balance/tier | any member |
-| `GET /transactions` | ledger, keyset-paginated newest-first | any member |
-| `GET /packages` | active packages + effective economics | any member |
-| `GET /pricing` | effective per-channel rates for this workspace | any member |
-| `GET /tier` | current + available commitment levels | any member |
-| `POST /checkout` | `{ packageCode }` → hosted checkout URL | owner/admin, rate-limited |
-| `POST /portal` | hosted customer portal URL | owner/admin, rate-limited |
-| `GET /invoices` | domain-mapped invoices | any member |
-| `GET /reconciliation` | ledger-vs-wallet audit | owner/admin |
-| `POST /webhooks/stripe` | signature-authenticated intake | public (HMAC) |
+| Route                   | What                                           | Access                    |
+| ----------------------- | ---------------------------------------------- | ------------------------- |
+| `GET /wallet`           | balance/reserved/low-balance/tier              | any member                |
+| `GET /transactions`     | ledger, keyset-paginated newest-first          | any member                |
+| `GET /packages`         | active packages + effective economics          | any member                |
+| `GET /pricing`          | effective per-channel rates for this workspace | any member                |
+| `GET /tier`             | current + available commitment levels          | any member                |
+| `POST /checkout`        | `{ packageCode }` → hosted checkout URL        | owner/admin, rate-limited |
+| `POST /portal`          | hosted customer portal URL                     | owner/admin, rate-limited |
+| `GET /invoices`         | domain-mapped invoices                         | any member                |
+| `GET /reconciliation`   | ledger-vs-wallet audit                         | owner/admin               |
+| `POST /webhooks/stripe` | signature-authenticated intake                 | public (HMAC)             |
 
 Frontend: the Settings → Usage/Billing panels (`AppSettings.tsx`) read
 `/api/v1/billing/*` through the generic BFF proxy; `AddBalanceModal` sends a

@@ -225,9 +225,9 @@ describe.skipIf(!run)('account security flows (e2e — needs Postgres)', () => {
     expect(regenerated).toHaveLength(10);
     const oldCode = confirmed!.recoveryCodes[1]!;
     expect(await consumeRecoveryCode(user.id, oldCode, { ...CTX, sessionId: null })).toBe(false);
-    expect(
-      await consumeRecoveryCode(user.id, regenerated![0]!, { ...CTX, sessionId: null }),
-    ).toBe(true);
+    expect(await consumeRecoveryCode(user.id, regenerated![0]!, { ...CTX, sessionId: null })).toBe(
+      true,
+    );
 
     // A recovery code also satisfies the login challenge.
     const code3 = await plantLoginCode(user.email);

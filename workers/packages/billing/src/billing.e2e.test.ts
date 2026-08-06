@@ -60,9 +60,7 @@ describe.skipIf(!run)('billing wallet + ledger (e2e — needs Postgres)', () => 
   }
 
   it('creates exactly one wallet per tenant under concurrency', async () => {
-    const results = await Promise.all(
-      Array.from({ length: 5 }, () => getOrCreateWallet(tenantId)),
-    );
+    const results = await Promise.all(Array.from({ length: 5 }, () => getOrCreateWallet(tenantId)));
     expect(new Set(results.map((w) => w.id)).size).toBe(1);
   });
 

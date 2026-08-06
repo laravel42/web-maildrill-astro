@@ -16,9 +16,10 @@ Quick reference for operating the wallet/Stripe subsystem. Design:
 ## Common incidents
 
 **"Customer paid but has no credits"**
+
 1. Stripe Dashboard → the payment → check the webhook delivery status.
 2. `SELECT * FROM stripe_events WHERE event_id = 'evt_…'` — absent = delivery
-   never arrived (check endpoint URL/secret; *Resend* from Stripe is safe —
+   never arrived (check endpoint URL/secret; _Resend_ from Stripe is safe —
    everything is idempotent). Present with `status='skipped'` = no matching
    `payment_attempts` row (see error column).
 3. `SELECT * FROM payment_attempts WHERE provider_session_id = 'cs_…'`.

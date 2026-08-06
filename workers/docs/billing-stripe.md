@@ -19,7 +19,7 @@ than accepting none. Keys are server-only; nothing Stripe-related is `PUBLIC_*`.
 
 ## 2. Webhook endpoint
 
-Dashboard → Developers → Webhooks → *Add endpoint*:
+Dashboard → Developers → Webhooks → _Add endpoint_:
 
 - URL: `https://maildrill.net/api/stripe-webhook` (the Astro route forwards the
   raw body + `Stripe-Signature` verbatim to product-api

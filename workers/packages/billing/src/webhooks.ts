@@ -153,7 +153,11 @@ async function findAttempt(tx: Tx, event: PaymentEvent): Promise<PaymentAttemptR
   return null;
 }
 
-async function grantPurchase(tx: Tx, attempt: PaymentAttemptRow, event: PaymentEvent): Promise<void> {
+async function grantPurchase(
+  tx: Tx,
+  attempt: PaymentAttemptRow,
+  event: PaymentEvent,
+): Promise<void> {
   const meta = attempt.metadata as {
     baseCreditsMicro?: number;
     bonusMicro?: number;

@@ -46,9 +46,9 @@ describe('verifyStripeSignature', () => {
   });
 
   it('rejects a tampered payload', () => {
-    expect(() => verifyStripeSignature(payload.replace('evt_1', 'evt_2'), sign(payload), SECRET)).toThrow(
-      WebhookVerificationError,
-    );
+    expect(() =>
+      verifyStripeSignature(payload.replace('evt_1', 'evt_2'), sign(payload), SECRET),
+    ).toThrow(WebhookVerificationError);
   });
 
   it('rejects stale timestamps (replay window)', () => {
@@ -165,9 +165,11 @@ describe('Stripe API client', () => {
   it('surfaces Stripe API errors', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValueOnce(
-        new Response(JSON.stringify({ error: { message: 'Invalid API key' } }), { status: 401 }),
-      ),
+      vi
+        .fn()
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ error: { message: 'Invalid API key' } }), { status: 401 }),
+        ),
     );
     const provider = new StripeProvider('sk_bad', SECRET);
     await expect(provider.createCustomer({ tenantId: 't1' })).rejects.toThrow(/Invalid API key/);

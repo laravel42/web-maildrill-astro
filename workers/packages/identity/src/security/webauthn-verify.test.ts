@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  verifyAuthenticationResponse,
-  verifyRegistrationResponse,
-} from '@simplewebauthn/server';
+import { verifyAuthenticationResponse, verifyRegistrationResponse } from '@simplewebauthn/server';
 import { FakeAuthenticator } from './testing/fake-authenticator';
 
 /**
