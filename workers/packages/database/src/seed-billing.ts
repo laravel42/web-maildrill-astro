@@ -5,9 +5,16 @@ import { channelPricing, creditPackages, pricingTiers } from './schema';
 /**
  * Idempotent billing catalog seed: commitment tiers, credit packages, and the
  * channel rate card. Mirrors the marketing pricing config
- * (`src/config/pricing.ts` — TIERS discounts, EMAIL_RATE, REGION_TIERS) so
- * what the site advertises is what the wallet charges. Rerunnable: upserts by
- * code / (channel, region), never deletes.
+ * (`src/config/pricing.ts` — TIERS discounts incl. the launch promo,
+ * EMAIL_RATE, REGION_TIERS) so what the site advertises is what the wallet
+ * charges. Rerunnable: upserts by code / (channel, region), never deletes.
+ *
+ * Launch promo (mirrors `PROMO`/`TIERS.promo*`): while the promo is live the
+ * catalog sells the `-promo` commit packages (deeper discount, lower prepay)
+ * and hides the regular ones; afterwards the same seed swaps them back.
+ * Promo buyers keep their `-promo` tier row — and its locked discount — for
+ * their whole commitment either way. Like pricing.astro, the switch is
+ * evaluated at run time: RE-RUN THIS SEED AFTER THE PROMO END DATE.
  *
  *   pnpm --dir workers db:seed:billing
  */
@@ -15,7 +22,16 @@ import { channelPricing, creditPackages, pricingTiers } from './schema';
 const MICRO = 1_000_000;
 const usd = (v: number): number => Math.round(v * MICRO);
 
-/** Commitment tiers — discounts match marketing `TIERS` (base, non-promo). */
+/** Mirror of marketing `PROMO.endsAt` — promo is live while now < endsAt. */
+const PROMO_ENDS_AT = Date.UTC(2027, 0, 1);
+const promoActive = Date.now() < PROMO_ENDS_AT;
+
+/**
+ * Commitment tiers — discounts match marketing `TIERS`: the base rows carry
+ * `disc`/`commit`, the `-promo` rows `promoDisc`/`promoCommit`. Both families
+ * stay active; only the packages toggle. Display names are shared on purpose
+ * (the wallet badge should read "Starter · 15% off", not a promo codename).
+ */
 const TIER_SEED = [
   {
     code: 'payg',
@@ -49,14 +65,52 @@ const TIER_SEED = [
     commitmentMonths: 12,
     sortOrder: 3,
   },
+  {
+    code: 'starter-promo',
+    name: 'Starter',
+    discountBps: 1500,
+    minPurchaseCents: 150_000,
+    commitmentMonths: 12,
+    sortOrder: 4,
+  },
+  {
+    code: 'growth-promo',
+    name: 'Growth',
+    discountBps: 3000,
+    minPurchaseCents: 300_000,
+    commitmentMonths: 12,
+    sortOrder: 5,
+  },
+  {
+    code: 'scale-promo',
+    name: 'Scale',
+    discountBps: 5000,
+    minPurchaseCents: 600_000,
+    commitmentMonths: 12,
+    sortOrder: 6,
+  },
 ];
 
 /**
  * Credit packages — the app's Add-balance presets ($25/$50/$100/$250) plus the
- * annual commitment packages that move a workspace onto a tier. Bonus credits
- * are the volume incentive on the one-off top-ups.
+ * annual commitment packages that move a workspace onto a tier. Top-ups carry
+ * no bonus credit; commitment tiers are the only volume incentive. `active`
+ * gates which commit family the catalog sells right now (promo vs regular);
+ * omitted means true.
  */
-const PACKAGE_SEED = [
+type PackageSeedRow = {
+  code: string;
+  name: string;
+  priceCents: number;
+  creditsMicro: number;
+  bonusMicro: number;
+  tier: string | null;
+  sortOrder: number;
+  description: string;
+  active?: boolean;
+};
+
+const PACKAGE_SEED: PackageSeedRow[] = [
   {
     code: 'topup-25',
     name: 'Top-up $25',
@@ -72,30 +126,30 @@ const PACKAGE_SEED = [
     name: 'Top-up $50',
     priceCents: 5_000,
     creditsMicro: usd(50),
-    bonusMicro: usd(2),
+    bonusMicro: 0,
     tier: null,
     sortOrder: 1,
-    description: '$2 bonus credit included.',
+    description: 'Quick balance top-up.',
   },
   {
     code: 'topup-100',
     name: 'Top-up $100',
     priceCents: 10_000,
     creditsMicro: usd(100),
-    bonusMicro: usd(8),
+    bonusMicro: 0,
     tier: null,
     sortOrder: 2,
-    description: '$8 bonus credit included.',
+    description: 'Quick balance top-up.',
   },
   {
     code: 'topup-250',
     name: 'Top-up $250',
     priceCents: 25_000,
     creditsMicro: usd(250),
-    bonusMicro: usd(30),
+    bonusMicro: 0,
     tier: null,
     sortOrder: 3,
-    description: '$30 bonus credit included.',
+    description: 'Quick balance top-up.',
   },
   {
     code: 'commit-starter',
@@ -106,6 +160,7 @@ const PACKAGE_SEED = [
     tier: 'starter',
     sortOrder: 10,
     description: 'Annual prepay — unlocks 10% off every rate. Unused balance rolls over all year.',
+    active: !promoActive,
   },
   {
     code: 'commit-growth',
@@ -116,6 +171,7 @@ const PACKAGE_SEED = [
     tier: 'growth',
     sortOrder: 11,
     description: 'Annual prepay — unlocks 20% off every rate. Unused balance rolls over all year.',
+    active: !promoActive,
   },
   {
     code: 'commit-scale',
@@ -126,6 +182,43 @@ const PACKAGE_SEED = [
     tier: 'scale',
     sortOrder: 12,
     description: 'Annual prepay — unlocks 30% off every rate. Unused balance rolls over all year.',
+    active: !promoActive,
+  },
+  {
+    code: 'commit-starter-promo',
+    name: 'Starter (launch promo)',
+    priceCents: 150_000,
+    creditsMicro: usd(1500),
+    bonusMicro: 0,
+    tier: 'starter-promo',
+    sortOrder: 10,
+    description:
+      'Launch promo — unlocks 15% off every rate, regularly 10%. Unused balance rolls over all year.',
+    active: promoActive,
+  },
+  {
+    code: 'commit-growth-promo',
+    name: 'Growth (launch promo)',
+    priceCents: 300_000,
+    creditsMicro: usd(3000),
+    bonusMicro: 0,
+    tier: 'growth-promo',
+    sortOrder: 11,
+    description:
+      'Launch promo — unlocks 30% off every rate, regularly 20%. Unused balance rolls over all year.',
+    active: promoActive,
+  },
+  {
+    code: 'commit-scale-promo',
+    name: 'Scale (launch promo)',
+    priceCents: 600_000,
+    creditsMicro: usd(6000),
+    bonusMicro: 0,
+    tier: 'scale-promo',
+    sortOrder: 12,
+    description:
+      'Launch promo — unlocks 50% off every rate, regularly 30%. Unused balance rolls over all year.',
+    active: promoActive,
   },
 ];
 
@@ -187,6 +280,7 @@ export async function seedBilling(): Promise<void> {
         bonusMicro: pkg.bonusMicro,
         grantsTierId: pkg.tier ? tierIds.get(pkg.tier) : null,
         sortOrder: pkg.sortOrder,
+        active: pkg.active ?? true,
       })
       .onConflictDoUpdate({
         target: [creditPackages.code],
@@ -198,7 +292,7 @@ export async function seedBilling(): Promise<void> {
           bonusMicro: pkg.bonusMicro,
           grantsTierId: pkg.tier ? tierIds.get(pkg.tier) : null,
           sortOrder: pkg.sortOrder,
-          active: true,
+          active: pkg.active ?? true,
           updatedAt: new Date(),
         },
       });

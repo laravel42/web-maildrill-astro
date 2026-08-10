@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { api, ApiError } from '@/lib/app/api';
 import {
   fetchBillingPackages,
@@ -25,10 +25,8 @@ import type {
   ToggleKey,
 } from './AppSettings.types';
 import {
-  BALANCE_PRESETS,
   buildChannelUsageRows,
   DEFAULT_TOGGLES,
-  EST_RATE_USD,
   estCost,
   fmt,
   fmtUsd,
@@ -226,21 +224,32 @@ export default function AppSettings({
 
   // Wallet balance; also greet a return from hosted checkout. Credits are
   // granted by the Stripe webhook (never the redirect), so "success" means
-  // "processing" until the wallet refetch shows the new balance.
+  // "processing" until a wallet refetch shows the new balance.
   useEffect(() => {
     if (!live) return;
-    void fetchWallet()
-      .then(setWallet)
-      .catch(() => undefined);
-    const billingReturn = new URLSearchParams(window.location.search).get('billing');
+    const refetch = () => {
+      void fetchWallet()
+        .then(setWallet)
+        .catch(() => undefined);
+    };
+    refetch();
+    const params = new URLSearchParams(window.location.search);
+    const billingReturn = params.get('billing');
+    if (!billingReturn) return;
+    // One-shot greeting: drop the param so a refresh doesn't re-toast.
+    params.delete('billing');
+    const qs = params.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
     if (billingReturn === 'success') {
       showToast('Payment received — credits will appear in a moment');
-      window.setTimeout(() => {
-        void fetchWallet()
-          .then(setWallet)
-          .catch(() => undefined);
-      }, 4000);
-    } else if (billingReturn === 'cancelled') {
+      const t1 = window.setTimeout(refetch, 4000);
+      const t2 = window.setTimeout(refetch, 10_000);
+      return () => {
+        window.clearTimeout(t1);
+        window.clearTimeout(t2);
+      };
+    }
+    if (billingReturn === 'cancelled') {
       showToast('Checkout cancelled — no charge was made', 'alert');
     }
   }, [live, showToast]);
@@ -852,7 +861,7 @@ export default function AppSettings({
         />
       )}
       {action === 'billing' && (
-        <AddBalanceModal onClose={() => setAction(null)} onDone={finishAction} />
+        <AddBalanceModal wallet={wallet} onClose={() => setAction(null)} onDone={finishAction} />
       )}
       {action === 'api' && (
         <CreateKeyModal
@@ -1444,17 +1453,26 @@ function AddDomainModal({
   );
 }
 
+/** "$3,000" for whole dollars, "$3,012.40" otherwise (fmtUsd lacks grouping). */
+const usd = (n: number) =>
+  Number.isInteger(n)
+    ? `$${fmt(n)}`
+    : `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
 function AddBalanceModal({
+  wallet,
   onClose,
   onDone,
 }: {
+  wallet: WalletInfo | null;
   onClose: () => void;
   onDone: (msg: string) => void;
 }) {
-  // Packages come from the billing service — prices and credits are decided
-  // server-side; this modal only ever sends a package code. When the service
-  // isn't reachable (mock/demo mode) the presets stand in, disabled.
-  const [packages, setPackages] = useState<BillingPackage[] | null>(null);
+  // Packages come from the billing service — prices, credits, and tier grants
+  // are decided server-side; this modal only ever sends a package code. One
+  // selection spans both groups: a purchase is a purchase.
+  const [topups, setTopups] = useState<BillingPackage[] | null>(null);
+  const [commits, setCommits] = useState<BillingPackage[]>([]);
   const [unavailable, setUnavailable] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -1463,15 +1481,32 @@ function AddBalanceModal({
   useEffect(() => {
     void fetchBillingPackages()
       .then((data) => {
-        const topups = data.filter((p) => !p.grantsTier);
-        setPackages(topups);
-        if (topups.length > 0) setSelected(topups[Math.min(1, topups.length - 1)].code);
-        if (topups.length === 0) setUnavailable(true);
+        const oneOff = data.filter((p) => !p.grantsTier);
+        setTopups(oneOff);
+        setCommits(data.filter((p) => p.grantsTier));
+        if (oneOff.length > 0) setSelected(oneOff[Math.min(1, oneOff.length - 1)].code);
+        if (data.length === 0) setUnavailable(true);
       })
       .catch(() => setUnavailable(true));
   }, []);
 
-  const chosen = packages?.find((p) => p.code === selected) ?? null;
+  const loading = topups === null && !unavailable;
+  const chosen = [...(topups ?? []), ...commits].find((p) => p.code === selected) ?? null;
+
+  /** Roving arrow-key selection inside one radiogroup. */
+  const arrowSelect = (list: BillingPackage[]) => (e: KeyboardEvent<HTMLDivElement>) => {
+    const delta =
+      e.key === 'ArrowRight' || e.key === 'ArrowDown'
+        ? 1
+        : e.key === 'ArrowLeft' || e.key === 'ArrowUp'
+          ? -1
+          : 0;
+    if (delta === 0 || list.length === 0) return;
+    e.preventDefault();
+    const idx = list.findIndex((p) => p.code === selected);
+    setSelected(list[idx < 0 ? 0 : (idx + delta + list.length) % list.length]!.code);
+  };
+
   const submit = () => {
     if (!chosen || busy) return;
     setBusy(true);
@@ -1493,6 +1528,8 @@ function AddBalanceModal({
       });
   };
 
+  const after = wallet && chosen ? wallet.balanceUsd + chosen.totalCreditsUsd : null;
+
   return (
     <Modal
       title="Add balance"
@@ -1504,54 +1541,138 @@ function AddBalanceModal({
           disabled={!chosen || busy || unavailable}
           onClick={submit}
         >
-          {busy ? 'Opening checkout…' : chosen ? `Buy ${fmtUsd(chosen.priceUsd)}` : 'Add balance'}
+          {busy ? 'Opening checkout…' : chosen ? `Buy ${usd(chosen.priceUsd)}` : 'Add balance'}
         </button>
       }
     >
-      <div className={styles.chips} role="group" aria-label="Credit packages">
-        {(packages ?? []).map((p) => (
-          <button
-            key={p.code}
-            type="button"
-            className={`${styles.chip}${selected === p.code ? ' is-on' : ''}`}
-            aria-pressed={selected === p.code}
-            onClick={() => setSelected(p.code)}
-          >
-            ${p.priceUsd}
-            {p.bonusUsd > 0 ? ` +$${p.bonusUsd}` : ''}
-          </button>
-        ))}
-        {packages === null &&
-          !unavailable &&
-          BALANCE_PRESETS.map((p) => (
-            <button key={p} type="button" className={styles.chip} disabled>
-              ${p}
-            </button>
-          ))}
+      <div aria-busy={loading}>
+        {wallet && (
+          <div className={styles.balBar}>
+            <span className={styles.balLbl}>
+              Balance
+              {wallet.tier && (
+                <Badge tone="accent">
+                  {wallet.tier.name} · {wallet.tier.discountBps / 100}% off
+                </Badge>
+              )}
+            </span>
+            <span
+              className={styles.balVal}
+              aria-label={
+                after === null
+                  ? `Current balance ${usd(wallet.balanceUsd)}`
+                  : `Current balance ${usd(wallet.balanceUsd)}, ${usd(after)} after purchase`
+              }
+            >
+              {usd(wallet.balanceUsd)}
+              {after !== null && (
+                <>
+                  <span className={styles.balArrow} aria-hidden="true">
+                    →
+                  </span>
+                  <strong>{usd(after)}</strong>
+                </>
+              )}
+            </span>
+          </div>
+        )}
+
+        <p className={styles.balKicker} id="bal-topup-lbl">
+          One-time top-up
+        </p>
+        <div
+          className={styles.chips}
+          role="radiogroup"
+          aria-labelledby="bal-topup-lbl"
+          onKeyDown={arrowSelect(topups ?? [])}
+        >
+          {loading
+            ? [0, 1, 2, 3].map((i) => (
+                <span key={i} className={`${styles.skel} ${styles.skelChip}`} aria-hidden="true" />
+              ))
+            : (topups ?? []).map((p) => {
+                const on = selected === p.code;
+                return (
+                  <button
+                    key={p.code}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    className={`${styles.chip}${on ? ' is-on' : ''}`}
+                    onClick={() => setSelected(p.code)}
+                  >
+                    {usd(p.priceUsd)}
+                    {p.bonusUsd > 0 && <span className={styles.chipBonus}>+{usd(p.bonusUsd)}</span>}
+                  </button>
+                );
+              })}
+        </div>
+
+        {(loading || commits.length > 0) && (
+          <div className={styles.balSection}>
+            <p className={styles.balKicker} id="bal-commit-lbl">
+              Commit &amp; save
+            </p>
+            {loading ? (
+              [0, 1].map((i) => (
+                <span key={i} className={`${styles.skel} ${styles.skelRow}`} aria-hidden="true" />
+              ))
+            ) : (
+              <div
+                role="radiogroup"
+                aria-labelledby="bal-commit-lbl"
+                onKeyDown={arrowSelect(commits)}
+              >
+                {commits.map((p) => {
+                  const on = selected === p.code;
+                  const tier = p.grantsTier!;
+                  return (
+                    <button
+                      key={p.code}
+                      type="button"
+                      role="radio"
+                      aria-checked={on}
+                      className={`${styles.modalOpt}${on ? ' is-on' : ''}`}
+                      onClick={() => setSelected(p.code)}
+                    >
+                      <span
+                        className={`${styles.modalRadio}${on ? ' is-on' : ''}`}
+                        aria-hidden="true"
+                      />
+                      <span className={styles.modalOptmain}>
+                        <span className={styles.modalOptrow}>
+                          <span className={styles.optName}>
+                            <span className={styles.modalOptname}>{tier.name}</span>
+                            <Badge tone="success">{tier.discountBps / 100}% off</Badge>
+                            {wallet?.tier?.code === tier.code && (
+                              <Badge tone="neutral">Current</Badge>
+                            )}
+                          </span>
+                          <span className={styles.optPrice}>{usd(p.priceUsd)}</span>
+                        </span>
+                        <span className={styles.modalOptdesc}>
+                          {p.description ?? `${usd(p.totalCreditsUsd)} credit`}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {unavailable && (
+          <p className={styles.modalHelp}>
+            Billing isn’t available in this environment yet — no packages to buy.
+          </p>
+        )}
+        {error && (
+          <p className={styles.modalHelp} role="alert">
+            {error}
+          </p>
+        )}
       </div>
-      {chosen && (
-        <p className={styles.convert}>
-          {fmtUsd(chosen.totalCreditsUsd)} credit
-          {chosen.bonusUsd > 0 ? ` (includes ${fmtUsd(chosen.bonusUsd)} bonus)` : ''} ≈{' '}
-          {fmt(Math.floor(chosen.totalCreditsUsd / EST_RATE_USD.email))} emails ·{' '}
-          {fmt(Math.floor(chosen.totalCreditsUsd / EST_RATE_USD.sms))} SMS ·{' '}
-          {fmt(Math.floor(chosen.totalCreditsUsd / EST_RATE_USD.whatsapp))} WhatsApp
-        </p>
-      )}
-      {unavailable && (
-        <p className={styles.modalHelp}>
-          Billing isn’t available in this environment yet — no packages to buy.
-        </p>
-      )}
-      {error && (
-        <p className={styles.modalHelp} role="alert">
-          {error}
-        </p>
-      )}
-      <p className={styles.modalHelp}>
-        You’ll pay on a secure Stripe checkout page. Credit is drawn down at per-message rates and
-        never expires.
-      </p>
     </Modal>
   );
 }
