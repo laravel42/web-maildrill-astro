@@ -429,7 +429,10 @@
   padding: 0 28px;
   border-bottom: 1px solid var(--border);
   position: relative;
-  z-index: 5;
+  /* Above in-page chrome (sticky headers top out ~41) so the notifications
+     popover clears it; below drawers/modals/toasts (70+), which stay fixed
+     at root level and must cover the bar. */
+  z-index: var(--z-header);
 }
 .topbarCrumb {
   display: flex;
@@ -509,17 +512,6 @@
   border-radius: 5px;
   padding: 1px 5px;
 }
-.topbarDot {
-  position: absolute;
-  top: 7px;
-  right: 8px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #ea580c;
-  border: 1.5px solid var(--surface);
-}
-
 /* command palette */
 .cmdk {
   position: fixed;

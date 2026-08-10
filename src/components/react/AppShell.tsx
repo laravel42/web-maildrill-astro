@@ -6,6 +6,7 @@ import type { IconName } from '@/lib/icons';
 import type { Props } from './AppShell.types';
 import { COMMANDS } from './AppShell.logic';
 import PinPickerModal, { type Pin, type PinKind } from './PinPickerModal';
+import NotificationsInbox from './shared/NotificationsInbox';
 import styles from './AppShell.module.css';
 import { signOut } from 'auth-astro/client';
 
@@ -504,15 +505,7 @@ export default function AppShell({
             >
               <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={16} />
             </button>
-            <button
-              type="button"
-              className="iconbtn"
-              title="Notifications"
-              aria-label="Notifications"
-            >
-              <Icon name="inbox" size={16} />
-              <span className={styles.topbarDot} aria-hidden="true" />
-            </button>
+            <NotificationsInbox />
           </div>
         </header>
 
