@@ -20,7 +20,7 @@
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx packages/database/src/migrate.ts",
-    "db:seed": "tsx packages/database/src/seed.ts",
+    "db:seed": "tsx packages/product/src/seed-all.ts",
     "db:seed:billing": "tsx packages/database/src/seed-billing.ts",
     "db:seed:gallery": "tsx packages/database/src/seed-gallery-templates.ts",
     "db:seed:images": "tsx packages/product/src/seed-images.ts",

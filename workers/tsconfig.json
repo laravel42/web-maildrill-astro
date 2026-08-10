@@ -6,6 +6,7 @@
       "@maildrill/observability": ["./packages/observability/src/index.ts"],
       "@maildrill/domain": ["./packages/domain/src/index.ts"],
       "@maildrill/database": ["./packages/database/src/index.ts"],
+      "@maildrill/database/seed": ["./packages/database/src/seed.ts"],
       "@maildrill/queues": ["./packages/queues/src/index.ts"],
       "@maildrill/providers": ["./packages/providers/src/index.ts"],
       "@maildrill/services": ["./packages/services/src/index.ts"],

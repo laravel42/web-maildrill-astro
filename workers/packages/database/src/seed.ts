@@ -29,9 +29,12 @@
  * counts DISTINCT message ids (which do not change), so aggregate numbers
  * stay correct.
  *
+ * Also seeds the billing catalog (tiers, credit packages, rate card) via
+ * seed-billing — pure upserts, safe everywhere the rest of this is.
+ *
  * Run (workers/ or repo root; env comes from the root .env):
- *   pnpm db:seed    reset (steps 1-2) then seed fresh data — safe to re-run,
- *                   it can never duplicate in Postgres
+ *   pnpm db:seed    the full seed via seed-all (this + the media library) —
+ *                   safe to re-run, it can never duplicate in Postgres
  *   pnpm db:reset   steps 1-2 only: wipe to an empty workspace, seed nothing
  *   --no-posthog    skip the PostHog mirror (step 4)
  */
@@ -59,6 +62,7 @@ import {
   users,
   webhookEvents,
 } from './index';
+import { seedBilling } from './seed-billing';
 import { seedGalleryTemplates } from './seed-gallery-templates';
 
 const TARGET_TENANT_NAME = 'hello@laravel42.com';
@@ -323,19 +327,18 @@ async function flushPostHog(): Promise<void> {
   );
 }
 
-async function main(): Promise<void> {
+export async function seedDev(): Promise<void> {
   /* Dev-workspace tool: keeps only the hardcoded dev tenant and DELETES every
      other tenant before (re)seeding demo data. Running that against real
      customer data would be catastrophic — refuse outright in production.
      Fresh production databases need `pnpm db:migrate`, not a seed. */
   if (process.env.NODE_ENV === 'production') {
-    console.error(
+    throw new Error(
       'seed: refusing to run with NODE_ENV=production — this tool deletes every ' +
         `tenant except the dev workspace ("${TARGET_TENANT_NAME}"). ` +
         'To initialize a production database run `pnpm db:migrate`; accounts ' +
         'self-provision on first sign-in.',
     );
-    process.exit(1);
   }
 
   /* ---- resolve (or bootstrap) target tenant ----------------------------
@@ -416,8 +419,11 @@ async function main(): Promise<void> {
 
   if (process.argv.includes('--reset-only')) {
     console.log('reset only — seeding skipped');
-    process.exit(0);
+    return;
   }
+
+  /* ---- 2b. billing catalog — global config, upsert-only ----------------- */
+  await seedBilling();
 
   /* ---- 3a. custom fields, tags, subscribers ---------------------------- */
   await db.insert(customFieldDefs).values([
@@ -1090,12 +1096,17 @@ async function main(): Promise<void> {
   console.log(`seeded ${eventCount} provider events`);
 
   await flushPostHog();
-
-  console.log('done');
-  process.exit(0);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+const isMain = process.argv[1]?.endsWith('seed.ts');
+if (isMain) {
+  seedDev()
+    .then(() => {
+      console.log('done');
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
+}

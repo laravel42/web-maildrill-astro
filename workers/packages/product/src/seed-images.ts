@@ -21,7 +21,8 @@
  *   pnpm db:seed:images --missing-topics             Unsplash topics we lack
  *   pnpm db:seed:images --missing-topics --per-category=50
  *
- * Requires UNSPLASH_API_KEY plus configured media storage.
+ * Requires UNSPLASH_API_KEY plus configured media storage. Also invoked from
+ * the full `pnpm db:seed` (seed-all), which skips it when either is missing.
  */
 import { eq } from 'drizzle-orm';
 import { db, tenants } from '@maildrill/database';
@@ -311,7 +312,11 @@ async function seedJobs(
   return { seeded, skipped, failed };
 }
 
-async function main(): Promise<void> {
+export async function seedImages(): Promise<{
+  seeded: number;
+  skipped: number;
+  failed: number;
+}> {
   const apiKey = process.env.UNSPLASH_API_KEY ?? '';
   if (!apiKey) throw new Error('UNSPLASH_API_KEY is not set in .env');
   if (!mediaConfigured()) {
@@ -384,7 +389,7 @@ async function main(): Promise<void> {
 
   if (jobs.length === 0) {
     console.log('\nnothing to seed — library already covers every Unsplash topic.');
-    process.exit(0);
+    return { seeded: 0, skipped: 0, failed: 0 };
   }
 
   const { seeded, skipped, failed } = await seedJobs(
@@ -399,10 +404,15 @@ async function main(): Promise<void> {
     `\ndone: ${seeded} seeded, ${skipped} already present, ${failed} failed ` +
       `(library total: ${(await listMedia(target.id)).length})`,
   );
-  process.exit(failed > 0 ? 1 : 0);
+  return { seeded, skipped, failed };
 }
 
-main().catch((err) => {
-  console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
-});
+const isMain = process.argv[1]?.endsWith('seed-images.ts');
+if (isMain) {
+  seedImages()
+    .then(({ failed }) => process.exit(failed > 0 ? 1 : 0))
+    .catch((err) => {
+      console.error(err instanceof Error ? err.message : err);
+      process.exit(1);
+    });
+}
