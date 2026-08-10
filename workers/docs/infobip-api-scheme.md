@@ -61,10 +61,18 @@ Infobip ── delivery/open/click webhook ──► Worker ──► writes mes
   implemented as the `tenants` table), isolated at the query/API layer. **Postgres RLS is
   optional** defense-in-depth; **schema-per-tenant was considered and rejected.** No Infobip
   sub-accounts or entities are required for isolation.
-- **Infobip stays a single account.** A per-workspace **Entity** (`entityId`) is _optional_
-  and only worth it for per-workspace **billing-usage / metrics** tagging on sends — never
-  for data. If used, pass `platform:{applicationId:"default", entityId:"<workspace>"}` on
-  send calls; it does not change where data lives.
+- **Infobip stays a single account.** A per-workspace **Entity** (`entityId`) is used for
+  per-workspace **billing-usage / metrics** tagging on sends — never for data. **Implemented
+  (2026-08):** every workspace is assigned `ws-<tenant-uuid>` at creation, stored on
+  `tenants.infobip_entity_id`, and stamped on every Infobip request (sends via
+  `SendInput.entityId`, WhatsApp template registration via `RegisterTemplateInput.entityId`).
+  `INFOBIP_ENTITY_ID` remains the account-wide fallback. It does not change where data lives.
+  - Explicit `POST /provisioning/1/entities` at signup is **best-effort**: the live account's
+    key still answers **403 UNAUTHORIZED** on `/provisioning` (re-verified 2026-08-10, same as
+    the 2026-07 probe). This is not a blocker — per the API spec, *"an entity attached to a
+    submitted message will get auto created if it doesn't exist yet"*, with `entityName`
+    defaulting to the id. Explicit creation only buys a readable name in the portal, so grant
+    the API key the provisioning scope if that matters; nothing else changes.
 - **Postgres host:** a **dedicated VPS** (self-managed), co-located with the Fastify apps
   and Redis/Valkey.
 

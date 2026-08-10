@@ -7,6 +7,12 @@ export interface SendInput {
   to: string;
   content: Record<string, unknown>;
   correlationId: string;
+  /**
+   * CPaaS X entity this workspace's traffic is tagged with. Resolved by the
+   * caller (providers has no database access) and falls back to the
+   * account-wide INFOBIP_ENTITY_ID when absent.
+   */
+  entityId?: string;
 }
 
 export interface ProviderSendError {
@@ -67,6 +73,16 @@ export interface WhatsAppTemplateStructure {
   buttons?: WhatsAppTemplateButton[];
 }
 
+export interface EntityProvisionResult {
+  ok: boolean;
+  /** The entity already existed (409) — treated as success, it is idempotent. */
+  existed?: boolean;
+  /** The API key lacks the provisioning scope (403). Non-fatal: traffic tagged
+   *  with an unknown entityId auto-creates it on the first send. */
+  forbidden?: boolean;
+  error?: string;
+}
+
 export interface RegisterTemplateInput {
   /** Registered WhatsApp sender number, international format without a leading +. */
   sender: string;
@@ -76,6 +92,8 @@ export interface RegisterTemplateInput {
   structure: WhatsAppTemplateStructure;
   /** Infobip `structure.type` — TEXT for body-only, MEDIA when header/footer/buttons exist. */
   structureType?: 'TEXT' | 'MEDIA';
+  /** CPaaS X entity to attribute the template to. */
+  entityId?: string;
 }
 
 export interface RegisterTemplateResult {
@@ -131,6 +149,11 @@ export interface MessagingProvider {
     channel?: Channel,
     limit?: number,
   ): Promise<Array<{ providerMessageId: string; statusGroup: string }>>;
+  /**
+   * Provision a CPaaS X entity for a workspace. Infobip only — providers that
+   * have no such concept leave it undefined and callers skip provisioning.
+   */
+  createEntity?(input: { entityId: string; entityName: string }): Promise<EntityProvisionResult>;
   /** Register a WhatsApp template with the provider for Meta review. */
   registerWhatsAppTemplate?(input: RegisterTemplateInput): Promise<RegisterTemplateResult>;
   /** List a sender's WhatsApp templates and their current approval statuses. */

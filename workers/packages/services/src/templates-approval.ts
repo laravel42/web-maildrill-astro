@@ -1,6 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { db, templates, type TemplateRow } from '@maildrill/database';
 import { config } from '@maildrill/config';
+import { tenantInfobipEntityId } from '@maildrill/identity';
 import {
   getProvider,
   type RegisterTemplateInput,
@@ -74,6 +75,8 @@ export async function submitTemplateForApproval(
     category,
     structure: built.structure,
     structureType: built.type,
+    // Attribute the template to the workspace's own entity, like its sends.
+    entityId: (await tenantInfobipEntityId(tenantId)) ?? undefined,
   };
   if (!input.name) {
     return {

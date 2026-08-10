@@ -7,6 +7,7 @@ import {
   sendMessageJobV1,
   type MessageState,
 } from '@maildrill/domain';
+import { tenantInfobipEntityId } from '@maildrill/identity';
 import { getProvider } from '@maildrill/providers';
 import { createLogger, metrics } from '@maildrill/observability';
 import { tryCompleteCampaign } from './campaign-delivery';
@@ -90,6 +91,9 @@ export async function handleDispatch(raw: unknown): Promise<void> {
     to: message.toAddress,
     content: message.content,
     correlationId: job.correlationId,
+    // Tag the send with the workspace's own CPaaS X entity (memoised; falls
+    // back to the account-wide INFOBIP_ENTITY_ID when unset).
+    entityId: (await tenantInfobipEntityId(message.tenantId)) ?? undefined,
   });
   const completedAt = new Date();
 

@@ -124,6 +124,14 @@ export const tenants = pgTable('tenants', {
   name: text('name').notNull(),
   status: tenantStatusEnum('status').notNull().default('active'),
   /**
+   * CPaaS X entity this workspace's traffic is tagged with, for per-workspace
+   * usage and billing reporting inside the single shared Infobip account. Not
+   * a data boundary — see docs/infobip-api-scheme.md. Assigned at workspace
+   * creation; null on rows that predate the column (they fall back to the
+   * account-wide INFOBIP_ENTITY_ID).
+   */
+  infobipEntityId: text('infobip_entity_id').unique(),
+  /**
    * Workspace settings bag (not first-class columns), mirroring
    * users.preferences: branding {brandName, logoUrl, accentColor,
    * emailFooter}, ai {summaries, subject, sendtime}.

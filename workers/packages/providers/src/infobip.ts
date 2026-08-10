@@ -18,6 +18,7 @@ import {
   type SendInput,
   type ProviderSendResult,
   type ProviderSendError,
+  type EntityProvisionResult,
   type RegisterTemplateInput,
   type RegisterTemplateResult,
   type ListTemplatesResult,
@@ -168,6 +169,31 @@ export type InfobipEmailTracking = {
  * in charge, and the whole point of the opt-out is deliverability: no open
  * pixel, no links rewritten through the tracking subdomain.
  */
+/** Placeholders people leave in `.env`; Infobip answers UNAUTHORIZED for them. */
+const PLACEHOLDER_ENTITY_RE = /^(local|test|example|changeme)$/i;
+
+/**
+ * CPaaS X identity stamped on every Infobip request.
+ *
+ * The workspace's own entity wins; `INFOBIP_ENTITY_ID` is the account-wide
+ * fallback for workspaces provisioned before per-workspace entities existed.
+ * Empty and placeholder values are dropped rather than sent, because Infobip
+ * rejects the whole message for an unknown entity even when every API-key
+ * scope is correct.
+ */
+export function resolvePlatformFields(
+  applicationId: string,
+  configuredEntityId: string,
+  tenantEntityId?: string,
+): InfobipPlatformFields {
+  const out: InfobipPlatformFields = {};
+  const app = applicationId.trim();
+  const entity = (tenantEntityId ?? '').trim() || configuredEntityId.trim();
+  if (app) out.applicationId = app;
+  if (entity && !PLACEHOLDER_ENTITY_RE.test(entity)) out.entityId = entity;
+  return out;
+}
+
 export function resolveEmailTracking(
   content: Record<string, unknown>,
   trackingUrl: string,
@@ -321,21 +347,20 @@ export class InfobipProvider implements MessagingProvider {
    * Omits empty values and common `.env` placeholders for entityId (e.g. `local`)
    * that produce Infobip UNAUTHORIZED even when every API-key scope is checked.
    */
-  private platformFields(): InfobipPlatformFields {
-    const out: InfobipPlatformFields = {};
-    const app = config.infobip.applicationId.trim();
-    const entity = config.infobip.entityId.trim();
-    if (app) out.applicationId = app;
-    if (entity && !/^(local|test|example|changeme)$/i.test(entity)) out.entityId = entity;
-    return out;
+  private platformFields(entityId?: string): InfobipPlatformFields {
+    return resolvePlatformFields(
+      config.infobip.applicationId,
+      config.infobip.entityId,
+      entityId,
+    );
   }
 
   /**
    * CPaaS X identity for WhatsApp template management — Infobip expects a nested
    * `platform: { applicationId, entityId }` object on create/edit.
    */
-  private platformBlock(): { platform?: InfobipPlatformFields } {
-    const platform = this.platformFields();
+  private platformBlock(entityId?: string): { platform?: InfobipPlatformFields } {
+    const platform = this.platformFields(entityId);
     return Object.keys(platform).length > 0 ? { platform } : {};
   }
 
@@ -496,7 +521,7 @@ export class InfobipProvider implements MessagingProvider {
           callbackData: this.callbackData(input),
           ...(urlOptions ? { urlOptions } : {}),
           ...this.notifyFields(),
-          ...this.platformFields(),
+          ...this.platformFields(input.entityId),
         },
       ],
       bulkId: input.correlationId,
@@ -517,7 +542,7 @@ export class InfobipProvider implements MessagingProvider {
       callbackData: this.callbackData(input),
       ...(urlOptions ? { urlOptions } : {}),
       ...this.notifyFields(),
-      ...this.platformFields(),
+      ...this.platformFields(input.entityId),
     };
   }
 
@@ -529,7 +554,7 @@ export class InfobipProvider implements MessagingProvider {
       destinations: [{ to: e164Digits(input.to), messageId: input.messageId }],
       callbackData: this.callbackData(input),
       ...this.notifyFields(),
-      ...this.platformFields(),
+      ...this.platformFields(input.entityId),
     };
     if (audioFileUrl) {
       message.audioFileUrl = audioFileUrl;
@@ -585,7 +610,7 @@ export class InfobipProvider implements MessagingProvider {
             // Must match the language code used when the template was registered.
             language: str(c.templateLanguage) ?? 'en',
           },
-          ...this.platformFields(),
+          ...this.platformFields(input.entityId),
         },
       ],
     };
@@ -717,6 +742,37 @@ export class InfobipProvider implements MessagingProvider {
     return { ok: res.ok, status: res.status, json: text ? safeJson(text) : {} };
   }
 
+  /**
+   * Create the CPaaS X entity a workspace's traffic is tagged with.
+   *
+   * Idempotent: 409 means it already exists, which is success. A 403 means the
+   * account's API key has no provisioning scope — non-fatal by design, because
+   * Infobip auto-creates an entity from the `entityId` carried on the first
+   * message. Explicit creation only buys a friendly `entityName` in the portal,
+   * so the caller logs and continues rather than failing the signup.
+   */
+  async createEntity(input: {
+    entityId: string;
+    entityName: string;
+  }): Promise<EntityProvisionResult> {
+    try {
+      const { res, text } = await this.fetchInfobip(
+        'POST',
+        'provisioning/1/entities',
+        JSON.stringify({ entityId: input.entityId, entityName: input.entityName }),
+      );
+      if (res.ok) return { ok: true };
+      if (res.status === 409) return { ok: true, existed: true };
+      const message = this.extractError(text ? safeJson(text) : {}) ?? `infobip ${res.status}`;
+      if (res.status === 403 || res.status === 401) {
+        return { ok: false, forbidden: true, error: message };
+      }
+      return { ok: false, error: message };
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : 'network error' };
+    }
+  }
+
   async registerWhatsAppTemplate(input: RegisterTemplateInput): Promise<RegisterTemplateResult> {
     const name = normalizeWhatsAppTemplateName(input.name);
     if (!name) {
@@ -748,7 +804,7 @@ export class InfobipProvider implements MessagingProvider {
       category: input.category,
       structure,
       // CPaaS X: nested platform block (not top-level fields).
-      ...this.platformBlock(),
+      ...this.platformBlock(input.entityId),
     };
     const path = `/whatsapp/2/senders/${encodeURIComponent(input.sender)}/templates`;
     try {
