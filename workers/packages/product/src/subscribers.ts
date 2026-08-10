@@ -12,6 +12,7 @@ import {
   tags,
   type Subscriber,
 } from '@maildrill/database';
+import { addToList } from './lists';
 import { clamp } from './rules';
 
 const WEEK_MS = 7 * 86_400_000;
@@ -102,6 +103,61 @@ export async function upsertSubscriber(input: UpsertSubscriberInput): Promise<Su
     })
     .returning();
   return rows[0]!;
+}
+
+export interface ImportSubscribersResult {
+  created: number;
+  updated: number;
+  failed: number;
+  /** Per-row failures, capped — the summary counts stay complete regardless. */
+  errors: { index: number; email: string; error: string }[];
+}
+
+const IMPORT_ERRORS_CAP = 50;
+
+/**
+ * Bulk upsert for file imports: same merge semantics as upsertSubscriber, one
+ * row at a time so a bad row fails alone, with optional list membership.
+ * Created/updated is judged against the emails present before the batch ran.
+ */
+export async function importSubscribers(
+  tenantId: string,
+  rows: Omit<UpsertSubscriberInput, 'tenantId'>[],
+  listId?: string,
+): Promise<ImportSubscribersResult> {
+  const emails = [...new Set(rows.map((r) => r.email.trim().toLowerCase()))];
+  const existing = new Set(
+    (
+      await db
+        .select({ email: subscribers.email })
+        .from(subscribers)
+        .where(and(eq(subscribers.tenantId, tenantId), inArray(subscribers.email, emails)))
+    ).map((r) => r.email),
+  );
+
+  const result: ImportSubscribersResult = { created: 0, updated: 0, failed: 0, errors: [] };
+  for (const [index, row] of rows.entries()) {
+    try {
+      const sub = await upsertSubscriber({ tenantId, ...row });
+      if (existing.has(sub.email)) {
+        result.updated += 1;
+      } else {
+        result.created += 1;
+        existing.add(sub.email);
+      }
+      if (listId) await addToList(tenantId, listId, sub.id);
+    } catch (err) {
+      result.failed += 1;
+      if (result.errors.length < IMPORT_ERRORS_CAP) {
+        result.errors.push({
+          index,
+          email: row.email,
+          error: err instanceof Error ? err.message : 'could not import row',
+        });
+      }
+    }
+  }
+  return result;
 }
 
 export async function getSubscriber(tenantId: string, id: string): Promise<Subscriber | null> {

@@ -22,6 +22,14 @@ import { toRichSubscriber, type ApiSubscriber } from '@/lib/app/subscriber-map';
 import { matchesSearchQuery } from '@/lib/app/search-match';
 import { RATE_BUCKETS, parseRatePercent, rateBucket } from '@/lib/app/templates-data';
 import SubscriberEditorModal from './SubscriberEditorModal';
+import SubscriberImportModal from './SubscriberImportModal';
+import {
+  buildCsv,
+  downloadCsv,
+  exportFilename,
+  subscribersCsv,
+} from '@/lib/app/subscriber-export';
+import type { CustomField } from '@/lib/app/custom-fields';
 import TagFilter from './shared/TagFilter';
 import ColFilter from './shared/ColFilter';
 import FilterChipsRow from './shared/FilterChipsRow';
@@ -97,6 +105,52 @@ export default function AppSubscribers({
   const [subEditor, setSubEditor] = useState<
     { mode: 'create' } | { mode: 'edit'; sub: RichSubscriber } | null
   >(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  /* Full CSV export. The table only holds the first page, so live workspaces
+     re-fetch every subscriber (200 a page); demo mode exports what's on
+     screen. Columns mirror the import mapper for clean round-trips. */
+  const exportSubscribers = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      if (!live) {
+        const csv = buildCsv(
+          ['email', 'name', 'phone', 'status', 'tags', 'lists'],
+          richSubscribers.map((s) => [
+            s.email,
+            s.name,
+            s.phone,
+            s.status,
+            s.tags.join('; '),
+            s.lists.join('; '),
+          ]),
+        );
+        downloadCsv(exportFilename('subscribers'), csv);
+        showToast(`Exported ${richSubscribers.length} subscribers`);
+        return;
+      }
+      const all: ApiSubscriber[] = [];
+      for (let offset = 0; offset < 10_000; offset += 200) {
+        const page = await api.get<{ data: ApiSubscriber[] }>(
+          `subscribers?limit=200&offset=${offset}`,
+        );
+        all.push(...page.data);
+        if (page.data.length < 200) break;
+      }
+      const fields = await api
+        .get<{ data: CustomField[] }>('custom-fields')
+        .then((r) => r.data)
+        .catch(() => [] as CustomField[]);
+      downloadCsv(exportFilename('subscribers'), subscribersCsv(all, fields));
+      showToast(`Exported ${all.length.toLocaleString('en-US')} subscribers`);
+    } catch (e) {
+      showToast(e instanceof ApiError ? e.message : 'Could not export subscribers');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const effTags = (s: RichSubscriber): string[] => tagStore[s.id] ?? s.tags;
 
@@ -528,10 +582,21 @@ export default function AppSubscribers({
             <Icon name="filter" size={15} />
             Create segment
           </button>
-          <button type="button" className="sbtn" onClick={() => showToast('Preparing export…')}>
+          <button
+            type="button"
+            className="sbtn"
+            disabled={exporting}
+            onClick={() => void exportSubscribers()}
+          >
             <Icon name="download" size={15} />
-            Export
+            {exporting ? 'Exporting…' : 'Export'}
           </button>
+          {live && (
+            <button type="button" className="sbtn" onClick={() => setImportOpen(true)}>
+              <Icon name="upload" size={15} />
+              Import
+            </button>
+          )}
           <button type="button" className="pbtn" onClick={() => setSubEditor({ mode: 'create' })}>
             <Icon name="plus" size={15} stroke={2.2} />
             Add subscriber
@@ -1220,6 +1285,27 @@ export default function AppSubscribers({
             } catch (e) {
               showToast(e instanceof ApiError ? e.message : 'Could not save subscriber');
             }
+          }}
+        />
+      )}
+
+      {importOpen && (
+        <SubscriberImportModal
+          lists={allLists}
+          onClose={() => setImportOpen(false)}
+          onDone={async ({ created, updated, failed }) => {
+            setImportOpen(false);
+            try {
+              const res = await api.get<{ data: ApiSubscriber[] }>('subscribers?limit=200');
+              setRichSubscribers(res.data.map(toRichSubscriber));
+            } catch {
+              /* list refresh is cosmetic; the import itself already landed */
+            }
+            const landed = created + updated;
+            showToast(
+              `Imported ${landed.toLocaleString('en-US')} subscriber${landed === 1 ? '' : 's'}` +
+                (failed ? ` · ${failed} failed` : ''),
+            );
           }}
         />
       )}

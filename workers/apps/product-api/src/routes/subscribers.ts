@@ -5,7 +5,9 @@ import type { ZodTypeProvider } from '@maildrill/httpkit';
 import {
   assignTag,
   deleteSubscriber,
+  getList,
   getSubscriberWithRelations,
+  importSubscribers,
   listSubscribersWithRelations,
   subscriberActivity,
   subscriberLists,
@@ -30,6 +32,24 @@ const patchSchema = z.object({
   phone: z.string().nullable().optional(),
   status: statusEnum.optional(),
   attributes: z.record(z.unknown()).optional(),
+});
+
+const importSchema = z.object({
+  /** One batch of file rows; the client chunks large files. */
+  rows: z
+    .array(
+      z.object({
+        email: z.string().email().max(320),
+        name: z.string().max(200).optional(),
+        phone: z.string().max(40).optional(),
+        status: statusEnum.optional(),
+        attributes: z.record(z.unknown()).optional(),
+      }),
+    )
+    .min(1)
+    .max(500),
+  /** Every imported subscriber also joins this list. */
+  listId: z.string().uuid().optional(),
 });
 
 const listQuery = z.object({
@@ -59,6 +79,24 @@ export async function subscriberRoutes(appRaw: FastifyInstance): Promise<void> {
     async (req, reply) => {
       const sub = await upsertSubscriber({ tenantId: req.tenantId, ...req.body });
       return reply.code(201).send(sub);
+    },
+  );
+
+  app.post(
+    '/v1/subscribers/import',
+    {
+      schema: {
+        tags: TAG,
+        summary: 'Bulk import subscribers (upsert by email, per-row errors)',
+        body: importSchema,
+      },
+    },
+    async (req, reply) => {
+      if (req.body.listId) {
+        const list = await getList(req.tenantId, req.body.listId);
+        if (!list) return reply.code(400).send({ error: 'list not found' });
+      }
+      return importSubscribers(req.tenantId, req.body.rows, req.body.listId);
     },
   );
 
