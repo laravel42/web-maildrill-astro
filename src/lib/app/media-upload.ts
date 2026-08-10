@@ -5,7 +5,11 @@
  */
 import { api } from '@/lib/app/api';
 import type { ApiMediaAsset } from '@/lib/app/media-map';
-import { imageToThumb250File, toKebabCase } from '@/components/react/AppMedia.logic';
+import {
+  downscaleToMaxEdge,
+  imageToThumb250File,
+  toKebabCase,
+} from '@/components/react/AppMedia.logic';
 
 /** Turn a `data:` URL (what ImageInput reads via FileReader) into a File. */
 export function dataUrlToFile(dataUrl: string, baseName = 'upload'): File {
@@ -62,9 +66,11 @@ export async function uploadAvatarPhoto(file: File): Promise<string> {
 }
 
 export async function uploadMediaFile(
-  file: File,
+  input: File,
   opts?: { name?: string; folder?: string | null },
 ): Promise<ApiMediaAsset> {
+  // Cap the longest edge at 1024 before any bytes leave the browser.
+  const file = await downscaleToMaxEdge(input);
   const ticket = await api.post<{ storageKey: string; uploadUrl: string; publicUrl?: string }>(
     'media/upload-url',
     { filename: file.name, contentType: file.type, sizeBytes: file.size },

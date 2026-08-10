@@ -23,6 +23,7 @@ import {
   agoMin,
   dimFirst,
   displayNameFromFile,
+  downscaleToMaxEdge,
   imageToSuggestPayload,
   imageToThumb250File,
   matchesAspectRatio,
@@ -335,10 +336,12 @@ export default function AppMedia({
 
     const folder = uploadFolder.trim() || null;
     const tags = uploadTags;
-    const file = uploadQueue[0]!;
+    const queued = uploadQueue[0]!;
 
     setUploading(true);
     try {
+      // Cap the longest edge at 1024 before any bytes leave the browser.
+      const file = await downscaleToMaxEdge(queued);
       const ticket = await api.post<{ storageKey: string; uploadUrl: string }>('media/upload-url', {
         filename: file.name,
         contentType: file.type,
@@ -393,7 +396,7 @@ export default function AppMedia({
       setUploadOpen(false);
       resetUploadForm();
     } catch (e) {
-      show(e instanceof ApiError ? e.message : `Could not upload ${file.name}`);
+      show(e instanceof ApiError ? e.message : `Could not upload ${queued.name}`);
     } finally {
       setUploading(false);
     }

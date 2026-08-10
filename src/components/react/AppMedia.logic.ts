@@ -228,6 +228,63 @@ export async function imageToSuggestPayload(
   });
 }
 
+/** Longest-edge cap applied to library/template uploads before the S3 PUT. */
+export const MEDIA_MAX_EDGE = 1024;
+
+/**
+ * Downscale an oversized raster upload so its longest edge is `maxEdge`,
+ * keeping the aspect ratio and (where the browser can encode it) the source
+ * format; AVIF falls through to WebP with a matching rename. Vectors (SVG)
+ * and GIFs (canvas would freeze the animation) pass through untouched, as
+ * does anything that fails to decode or re-encode — best-effort by design:
+ * the upload must never fail because the resize did.
+ */
+export async function downscaleToMaxEdge(file: File, maxEdge = MEDIA_MAX_EDGE): Promise<File> {
+  if (!file.type.startsWith('image/')) return file;
+  if (file.type === 'image/svg+xml' || file.type === 'image/gif') return file;
+  try {
+    return await withDecodedImage(file, async (img) => {
+      const w = img.naturalWidth || img.width;
+      const h = img.naturalHeight || img.height;
+      if (w < 1 || h < 1 || Math.max(w, h) <= maxEdge) return file;
+
+      const scale = maxEdge / Math.max(w, h);
+      const tw = Math.max(1, Math.round(w * scale));
+      const th = Math.max(1, Math.round(h * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = tw;
+      canvas.height = th;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return file;
+      ctx.drawImage(img, 0, 0, tw, th);
+
+      const attempts: Array<{ type: string; ext: string; quality: number }> =
+        file.type === 'image/png'
+          ? [{ type: 'image/png', ext: 'png', quality: 0.92 }]
+          : file.type === 'image/webp'
+            ? [{ type: 'image/webp', ext: 'webp', quality: 0.9 }]
+            : file.type === 'image/avif'
+              ? [
+                  { type: 'image/avif', ext: 'avif', quality: 0.9 },
+                  { type: 'image/webp', ext: 'webp', quality: 0.9 },
+                ]
+              : [{ type: 'image/jpeg', ext: 'jpg', quality: 0.9 }];
+      for (const attempt of attempts) {
+        const blob = await canvasToBlob(canvas, attempt.type, attempt.quality);
+        // toBlob silently falls back to PNG for unsupported types — only
+        // accept a blob that is actually the format we asked for.
+        if (blob && blob.size > 0 && blob.type === attempt.type) {
+          const base = file.name.replace(/\.[^.]+$/, '') || 'upload';
+          return new File([blob], `${base}.${attempt.ext}`, { type: attempt.type });
+        }
+      }
+      return file;
+    });
+  } catch {
+    return file;
+  }
+}
+
 /**
  * Build a 250×250 cover-crop twin for library tiles. Prefer WebP; fall back to
  * JPEG. Returns null when the browser can't rasterize the file (best-effort —
