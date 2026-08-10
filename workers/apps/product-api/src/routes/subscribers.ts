@@ -27,6 +27,12 @@ const upsertSchema = z.object({
   status: statusEnum.optional(),
 });
 
+const importSchema = z.object({
+  rows: z.array(upsertSchema).min(1).max(5000),
+  /** Every imported subscriber joins these lists. */
+  listIds: z.array(z.string().uuid()).max(50).optional(),
+});
+
 const patchSchema = z.object({
   name: z.string().nullable().optional(),
   phone: z.string().nullable().optional(),
@@ -34,23 +40,6 @@ const patchSchema = z.object({
   attributes: z.record(z.unknown()).optional(),
 });
 
-const importSchema = z.object({
-  /** One batch of file rows; the client chunks large files. */
-  rows: z
-    .array(
-      z.object({
-        email: z.string().email().max(320),
-        name: z.string().max(200).optional(),
-        phone: z.string().max(40).optional(),
-        status: statusEnum.optional(),
-        attributes: z.record(z.unknown()).optional(),
-      }),
-    )
-    .min(1)
-    .max(500),
-  /** Every imported subscriber also joins this list. */
-  listId: z.string().uuid().optional(),
-});
 
 const listQuery = z.object({
   status: statusEnum.optional(),
@@ -87,16 +76,20 @@ export async function subscriberRoutes(appRaw: FastifyInstance): Promise<void> {
     {
       schema: {
         tags: TAG,
-        summary: 'Bulk import subscribers (upsert by email, per-row errors)',
+        summary: 'Bulk import subscribers (upsert by email, optional list membership)',
         body: importSchema,
       },
     },
     async (req, reply) => {
-      if (req.body.listId) {
-        const list = await getList(req.tenantId, req.body.listId);
-        if (!list) return reply.code(400).send({ error: 'list not found' });
+      // Validate membership targets up front: a stray id would otherwise fail
+      // silently per row, after some of the batch had already landed.
+      const listIds = req.body.listIds ?? [];
+      for (const listId of listIds) {
+        if (!(await getList(req.tenantId, listId))) {
+          return reply.code(400).send({ error: `list ${listId} not found` });
+        }
       }
-      return importSubscribers(req.tenantId, req.body.rows, req.body.listId);
+      return importSubscribers(req.tenantId, req.body.rows, listIds);
     },
   );
 

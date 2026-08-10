@@ -1,8 +1,18 @@
 import * as React from 'react';
 import { z } from 'zod';
-import { AlignLeft, Bold, Braces, Code, Italic, ListRestart, Strikethrough } from 'lucide-react';
+import { AlignLeft, ListRestart } from 'lucide-react';
 
 import { Button } from '@/ui/button';
+import { EmojiPickerButton } from '@/ui/emoji-picker-button';
+import {
+  ClearFormattingButton,
+  FormatBarButton,
+  FormatBarDivider,
+  InsertVariableButton,
+  TextFormatBar,
+} from '@/ui/text-format-bar';
+import { AiFeaturesButton } from '@/ui/ai-features-menu';
+import { FormatIcon, WA_TEXT_FORMATS } from '@/ui/text-format-icons';
 import { Field } from '@/ui/field';
 import { Textarea } from '@/ui/textarea';
 import { SubscriberFieldCombobox } from '@/ui/subscriber-field-combobox';
@@ -10,6 +20,8 @@ import { LIMITS } from '@/core/limits';
 import { matchSubscriberField } from '@/core/subscriber-fields';
 import type { BlockPlugin, ValidationIssue } from '@/core/types';
 import { useSubscriberFields } from '@/hooks/use-subscriber-fields';
+import { processWaText, type WaAiAction } from '@/core/ai';
+import { clearWaFormatting } from '@/core/text-format';
 import {
   analyzeVariables,
   exampleRow,
@@ -40,19 +52,6 @@ type Data = z.infer<typeof schema>;
 /** URL / phone detection for the live helper hints (never blocking). */
 const URL_IN_TEXT_RE = /https?:\/\/[^\s]+/g;
 const PHONE_IN_TEXT_RE = /\+\d[\d\s().-]{7,}\d/g;
-
-/** WhatsApp's inline markup — the only formatting the client understands. */
-const WA_FORMATS: ReadonlyArray<{
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  before: string;
-  after: string;
-}> = [
-  { label: 'Bold', icon: Bold, before: '*', after: '*' },
-  { label: 'Italic', icon: Italic, before: '_', after: '_' },
-  { label: 'Strikethrough', icon: Strikethrough, before: '~', after: '~' },
-  { label: 'Monospace', icon: Code, before: '```', after: '```' },
-];
 
 export const bodyPlugin: BlockPlugin<Data> = {
   type: 'body',
@@ -141,6 +140,14 @@ export const bodyPlugin: BlockPlugin<Data> = {
     const detectedUrls = value.text.match(URL_IN_TEXT_RE) ?? [];
     const detectedPhones = value.text.match(PHONE_IN_TEXT_RE) ?? [];
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+    // Last known caret/selection, so inserts land in place even after the
+    // textarea loses focus to a popover (the emoji picker's cells blur it).
+    const selectionRef = React.useRef({ start: 0, end: 0 });
+    const rememberSelection = () => {
+      const el = textareaRef.current;
+      if (!el) return;
+      selectionRef.current = { start: el.selectionStart ?? 0, end: el.selectionEnd ?? 0 };
+    };
     const subscriberFields = useSubscriberFields();
 
     const setVariableMeta = (
@@ -161,30 +168,41 @@ export const bodyPlugin: BlockPlugin<Data> = {
     // synchronously. Using setRangeText (instead of onChange + a deferred
     // setSelectionRange) avoids a race with the controlled re-render driven by
     // the external store, which would otherwise fling the caret to the end.
-    // When the textarea isn't focused we have no meaningful caret, so we append.
+    // When the textarea isn't focused, fall back to the last remembered
+    // selection (append only when there was never one). `make` may return
+    // from/to to replace a different range than the selection (whole-field
+    // operations); selStart/selEnd are relative to that range's start.
     const spliceText = (
       make: (ctx: { start: number; end: number; text: string }) => {
         insert: string;
         selStart: number;
         selEnd: number;
+        from?: number;
+        to?: number;
       },
     ) => {
       const el = textareaRef.current;
       const text = value.text;
       const focused = !!el && document.activeElement === el;
-      const start = focused ? (el.selectionStart ?? text.length) : text.length;
-      const end = focused ? (el.selectionEnd ?? text.length) : text.length;
-      const { insert, selStart, selEnd } = make({ start, end, text });
+      const fallback =
+        selectionRef.current.end <= text.length
+          ? selectionRef.current
+          : { start: text.length, end: text.length };
+      const start = focused ? (el.selectionStart ?? text.length) : fallback.start;
+      const end = focused ? (el.selectionEnd ?? text.length) : fallback.end;
+      const { insert, selStart, selEnd, from = start, to = end } = make({ start, end, text });
       if (el) {
         el.focus();
         // setRangeText mutates el.value in place; because React receives the
         // exact same string, its controlled-value guard skips the DOM write and
         // the selection we set below survives the re-render.
-        el.setRangeText(insert, start, end, 'end');
-        el.setSelectionRange(start + selStart, start + selEnd);
+        el.setRangeText(insert, from, to, 'end');
+        el.setSelectionRange(from + selStart, from + selEnd);
+        selectionRef.current = { start: from + selStart, end: from + selEnd };
         onChange({ ...value, text: el.value });
       } else {
-        onChange({ ...value, text: text.slice(0, start) + insert + text.slice(end) });
+        selectionRef.current = { start: from + selEnd, end: from + selEnd };
+        onChange({ ...value, text: text.slice(0, from) + insert + text.slice(to) });
       }
     };
 
@@ -200,6 +218,38 @@ export const bodyPlugin: BlockPlugin<Data> = {
         };
       });
 
+    // Strip WhatsApp markers from the selection — or the whole field when
+    // nothing is selected — and keep the cleared range selected.
+    const clearFormatting = () =>
+      spliceText(({ start, end, text }) => {
+        const [from, to] = start === end ? [0, text.length] : [start, end];
+        const insert = clearWaFormatting(text.slice(from, to));
+        return { insert, from, to, selStart: 0, selEnd: insert.length };
+      });
+
+    // Send the selection (or the whole body) through the host's AI backend
+    // and splice the result over the same range. The menu owns loading and
+    // error UI; edits made while the request was in flight abort the splice.
+    const runAiAction = async (action: WaAiAction) => {
+      const el = textareaRef.current;
+      const text = value.text;
+      const focused = !!el && document.activeElement === el;
+      const fallback =
+        selectionRef.current.end <= text.length
+          ? selectionRef.current
+          : { start: text.length, end: text.length };
+      const start = focused ? (el.selectionStart ?? 0) : fallback.start;
+      const end = focused ? (el.selectionEnd ?? 0) : fallback.end;
+      const [from, to] = start === end ? [0, text.length] : [start, end];
+      const source = text.slice(from, to);
+      if (!source.trim()) throw new Error('Write some text first.');
+      const insert = await processWaText(source, action);
+      if (textareaRef.current && textareaRef.current.value !== text) {
+        throw new Error('The text changed while AI was working — try again.');
+      }
+      spliceText(() => ({ insert, from, to, selStart: 0, selEnd: insert.length }));
+    };
+
     // Insert a variable at the caret and renumber so placeholders stay
     // sequential 1..n by position. This rewrites the whole text (numbers may
     // shift), so we replace the field's full contents and restore the caret in
@@ -209,13 +259,18 @@ export const bodyPlugin: BlockPlugin<Data> = {
       const el = textareaRef.current;
       const text = value.text;
       const focused = !!el && document.activeElement === el;
-      const start = focused ? (el.selectionStart ?? text.length) : text.length;
-      const end = focused ? (el.selectionEnd ?? text.length) : text.length;
+      const fallback =
+        selectionRef.current.end <= text.length
+          ? selectionRef.current
+          : { start: text.length, end: text.length };
+      const start = focused ? (el.selectionStart ?? text.length) : fallback.start;
+      const end = focused ? (el.selectionEnd ?? text.length) : fallback.end;
       const result = insertVariableAt(text, value.variables ?? {}, start, end);
       if (el) {
         el.focus();
         el.setRangeText(result.text, 0, el.value.length, 'end');
         el.setSelectionRange(result.caret, result.caret);
+        selectionRef.current = { start: result.caret, end: result.caret };
         onChange({ ...value, text: el.value, variables: result.map });
       } else {
         onChange({ ...value, text: result.text, variables: result.map });
@@ -225,42 +280,41 @@ export const bodyPlugin: BlockPlugin<Data> = {
     return (
       <div className="flex flex-col gap-4">
         <Field label="Message text" counter={`${value.text.length}/${LIMITS.BODY_TEXT_MAX}`}>
-          <div
-            role="group"
-            aria-label="Text formatting"
-            className="flex items-center gap-0.5 rounded-md border border-border bg-muted/40 p-0.5"
-          >
-            {WA_FORMATS.map((f) => (
-              <button
+          <TextFormatBar>
+            {WA_TEXT_FORMATS.map((f) => (
+              <FormatBarButton
                 key={f.label}
-                type="button"
                 aria-label={f.label}
                 title={f.label}
-                // Keep the textarea's focus/selection when the button is pressed.
-                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => applyFormat(f.before, f.after)}
-                className="inline-flex size-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <f.icon className="size-3.5" />
-              </button>
+                <FormatIcon icon={f.icon} />
+              </FormatBarButton>
             ))}
-            <span aria-hidden="true" className="mx-0.5 h-4 w-px bg-border" />
-            <button
-              type="button"
-              aria-label="Insert variable"
-              title="Insert variable"
-              // Keep the textarea's caret/selection when the button is pressed.
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={insertVariable}
-              className="inline-flex size-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Braces className="size-3.5" />
-            </button>
-          </div>
+            <FormatBarDivider />
+            <InsertVariableButton onInsert={insertVariable} />
+            <FormatBarDivider />
+            <EmojiPickerButton
+              onPick={(native) =>
+                spliceText(() => ({
+                  insert: native,
+                  selStart: native.length,
+                  selEnd: native.length,
+                }))
+              }
+            />
+            <FormatBarDivider />
+            <AiFeaturesButton onRun={runAiAction} />
+            <FormatBarDivider />
+            <ClearFormattingButton onClear={clearFormatting} />
+          </TextFormatBar>
           <Textarea
             ref={textareaRef}
             value={value.text}
             onChange={(e) => onChange({ ...value, text: e.target.value })}
+            onSelect={rememberSelection}
+            onKeyUp={rememberSelection}
+            onBlur={rememberSelection}
             rows={8}
             className="min-h-32"
             placeholder={'Hi {{1}}, your order {{2}} has shipped! 🎉'}

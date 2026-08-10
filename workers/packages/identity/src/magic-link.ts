@@ -7,7 +7,8 @@ import { sendTransactionalEmail } from '@maildrill/providers';
 import { createLogger } from '@maildrill/observability';
 import { findOrCreateUser, getUser } from './users';
 import type { RequestContext } from './security/sessions';
-import { sendWelcomeEmail } from './welcome';
+import { deviceLabel } from './security/ua';
+import { escapeHtml, sendWelcomeEmail } from './welcome';
 import {
   ensurePersonalWorkspace,
   listMembershipsForUser,
@@ -127,31 +128,22 @@ export async function getMe(userId: string): Promise<VerifyResult | null> {
   return { user, workspaces };
 }
 
-/** Escape user-influenced values (email, user agent) before they enter the HTML. */
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 /**
- * Sign-in email (design/MagicLinkEmail.html): house layout with the one-time
- * code, one-tap link, and a security note showing where the request came from.
- * Also serves step-up reauth (same code exchange).
+ * The sign-in email (design/MagicLinkEmail.html). The "Requested from" line
+ * shows the classified device + IP when the caller passes the browser context;
+ * without it (e.g. step-up re-auth without headers) it degrades to plain
+ * "didn't request this" copy.
  */
 function loginEmailHtml(email: string, code: string, url: string, ctx?: RequestContext): string {
   const expiry = `${config.auth.magicLinkTtlMinutes} minutes`;
-  const requestedFrom = [ctx?.userAgent, ctx?.ip]
-    .map((v) => v?.trim())
-    .filter((v): v is string => Boolean(v))
+  const href = escapeHtml(url);
+  const requestedFrom = [ctx?.userAgent ? deviceLabel(ctx.userAgent) : null, ctx?.ip ?? null]
+    .filter((part): part is string => Boolean(part))
     .map(escapeHtml)
     .join(' &middot; ');
-  const securityNote = requestedFrom
+  const securityLine = requestedFrom
     ? `Requested from ${requestedFrom}. If that wasn't you, ignore this email &mdash; nobody can sign in without it.`
-    : `If you didn't request this, ignore this email &mdash; nobody can sign in without it.`;
+    : `Didn't request this? Ignore this email &mdash; nobody can sign in without it.`;
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -228,7 +220,7 @@ function loginEmailHtml(email: string, code: string, url: string, ctx?: RequestC
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0;">
                       <tr>
                         <td bgcolor="#4f46e5" style="border-radius:10px;">
-                          <a href="${url}" style="display:block;padding:13px 26px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:10px;">Sign in with one tap</a>
+                          <a href="${href}" style="display:block;padding:13px 26px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:10px;">Sign in with one tap</a>
                         </td>
                       </tr>
                     </table>
@@ -246,7 +238,7 @@ function loginEmailHtml(email: string, code: string, url: string, ctx?: RequestC
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                       <tr><td height="1" style="height:1px;background:#eceae3;font-size:0;line-height:1px;">&nbsp;</td></tr>
                     </table>
-                    <p style="margin:18px 0 0;font-size:14px;line-height:1.6;mso-line-height-rule:exactly;color:#77756c;">${securityNote}</p>
+                    <p style="margin:18px 0 0;font-size:14px;line-height:1.6;mso-line-height-rule:exactly;color:#77756c;">${securityLine}</p>
                   </td>
                 </tr>
 

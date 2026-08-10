@@ -303,43 +303,45 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   // confirmation, so it reads "you're on the list" and points at the inbox.
   const doneMiddle = (
     <div role="status" style={{ animation: 'pop .5s var(--ease-out) both' }}>
-      <div
-        className={`${styles.successicon} ${styles.iconTile} ${
-          isSignup ? styles.iconTileMail : styles.iconTileCheck
-        }`}
-      >
-        {isSignup ? (
-          <svg
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <rect x="2" y="4" width="20" height="16" rx="2" />
-            <path d="m22 7-10 6L2 7" />
-          </svg>
-        ) : (
-          <svg
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M20 6 9 17l-5-5" />
-          </svg>
-        )}
+      <div className={styles.stepHead}>
+        <div
+          className={`${styles.successicon} ${styles.iconTile} ${
+            isSignup ? styles.iconTileMail : styles.iconTileCheck
+          }`}
+        >
+          {isSignup ? (
+            <svg
+              width="26"
+              height="26"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="m22 7-10 6L2 7" />
+            </svg>
+          ) : (
+            <svg
+              width="26"
+              height="26"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          )}
+        </div>
+        <h2 className={styles.substep}>{isSignup ? 'You’re on the list' : 'You’re in'}</h2>
       </div>
-      <h2 className={styles.substep}>{isSignup ? 'You’re on the list' : 'You’re in'}</h2>
       {isSignup ? (
         <>
           <p className={styles.sub} style={{ margin: '0 0 16px' }}>
@@ -364,23 +366,25 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
   const codeMiddle = (
     <div style={{ animation: 'pop .5s var(--ease-out) both' }}>
-      <div className={`${styles.successicon} ${styles.iconTile} ${styles.iconTileMail}`}>
-        <svg
-          width="26"
-          height="26"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <rect x="2" y="4" width="20" height="16" rx="2" />
-          <path d="m22 7-10 6L2 7" />
-        </svg>
+      <div className={styles.stepHead}>
+        <div className={`${styles.successicon} ${styles.iconTile} ${styles.iconTileMail}`}>
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <path d="m22 7-10 6L2 7" />
+          </svg>
+        </div>
+        <h2 className={styles.substep}>Check your email</h2>
       </div>
-      <h2 className={styles.substep}>Check your email</h2>
       <p className={styles.sub} style={{ margin: '0 0 22px' }}>
         We sent a magic link to <strong>{sentTo}</strong>. Click it to sign in — no password needed.
         The link expires in 15 minutes.
@@ -461,23 +465,25 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   // Two-factor challenge — after a valid email code, before the session.
   const twofaMiddle = (
     <div style={{ animation: 'pop .5s var(--ease-out) both' }}>
-      <div className={`${styles.successicon} ${styles.iconTile} ${styles.iconTileMail}`}>
-        <svg
-          width="26"
-          height="26"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M12 2 4 5.5v5.2c0 4.9 3.4 9.5 8 10.8 4.6-1.3 8-5.9 8-10.8V5.5L12 2Z" />
-          <path d="m9 12 2 2 4-4.5" />
-        </svg>
+      <div className={styles.stepHead}>
+        <div className={`${styles.successicon} ${styles.iconTile} ${styles.iconTileMail}`}>
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 2 4 5.5v5.2c0 4.9 3.4 9.5 8 10.8 4.6-1.3 8-5.9 8-10.8V5.5L12 2Z" />
+            <path d="m9 12 2 2 4-4.5" />
+          </svg>
+        </div>
+        <h2 className={styles.substep}>Two-factor check</h2>
       </div>
-      <h2 className={styles.substep}>Two-factor check</h2>
       <p className={styles.sub} style={{ margin: '0 0 18px' }}>
         {twofaMode === 'totp'
           ? 'Your account is protected with an authenticator app. Enter the 6-digit code it shows.'

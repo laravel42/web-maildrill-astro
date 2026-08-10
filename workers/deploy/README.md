@@ -57,7 +57,7 @@ A daemon can report `RUNNING` while the app inside it is broken, so also check
 the sockets and the logs:
 
 ```bash
-ss -tlnp | grep -E ':(3000|3001|3100)'
+ss -tlnp | grep -E ':(3002|3001|3003)'
 sudo supervisorctl tail -10000 <daemon-id> stderr
 ```
 
@@ -93,9 +93,9 @@ the site root and **user** set to the site's system user:
 
 | Command                                        | Port | Notes                                          |
 | ---------------------------------------------- | ---- | ---------------------------------------------- |
-| `bash -lc 'exec pnpm start:api'`               | 3000 | messaging API                                  |
+| `bash -lc 'exec pnpm start:api'`               | 3002 | messaging API                                  |
 | `bash -lc 'exec pnpm start:product-api'`       | 3001 | product API                                    |
-| `bash -lc 'exec pnpm start:email-builder-api'` | 3100 | AI backend; only if the frontend uses `/api/*` |
+| `bash -lc 'exec pnpm start:email-builder-api'` | 3003 | AI backend; only if the frontend uses `/api/*` |
 | `bash -lc 'exec pnpm worker all'`              | —    | BullMQ workers; or one daemon per role         |
 
 Three things that will bite you, all of which have already happened once:

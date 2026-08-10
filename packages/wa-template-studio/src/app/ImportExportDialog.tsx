@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Braces, Check, Copy } from 'lucide-react';
+import { AlertCircle, Check, Copy } from 'lucide-react';
 
 import { Button } from '@/ui/button';
 import {
@@ -163,7 +163,7 @@ function ExportDialog() {
         </pre>
         {blocked && !internal && (
           <p role="alert" className="flex items-center gap-1.5 text-xs text-destructive">
-            <Braces className="size-3.5" />
+            <AlertCircle className="size-3.5" aria-hidden="true" />
             {issues.filter((i) => i.severity === 'error').length} validation error(s) — fix them to
             copy a valid payload.
           </p>

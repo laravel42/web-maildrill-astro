@@ -141,7 +141,7 @@ pnpm install
 cp .env.example .env          # one file for Astro + workers
 pnpm --dir workers db:up      # Docker Postgres + Redis (or point .env at your own)
 pnpm --dir workers db:migrate
-pnpm dev:all                  # workers (:3001, includes delivery pollers) then Astro (:4321)
+pnpm dev:all                  # product :3001 · messaging :3002 · EB :3003 · workers, then Astro :4321
 # or separately: pnpm --filter workers dev   +   pnpm dev
 # or the whole stack in containers: docker compose up --build
 ```
@@ -160,6 +160,8 @@ scheduler, maintenance, **campaign-delivery**, and **template-approval**. Set
 | `PUBLIC_POSTHOG_HOST`          | yes     | PostHog ingest host                                   |
 | `AUTH_SECRET`                  | **no**  | Auth.js session                                       |
 | `API_BASE_URL`                 | **no**  | workers product-api (default `http://localhost:3001`) |
+| `MESSAGING_API_BASE_URL`       | **no**  | messaging API when split (default: same as `API_BASE_URL`) |
+| `EB_API_BASE_URL`              | **no**  | email-builder API when split (default: same as `API_BASE_URL`) |
 | `JWT_SECRET`                   | **no**  | Shared with workers — BFF mints tenant JWTs           |
 | `DATABASE_URL` / `REDIS_URL`   | **no**  | workers (same root `.env`)                            |
 | `POSTHOG_PERSONAL_API_KEY`     | **no**  | HogQL for stats + campaign-delivery (`query:read`)    |
@@ -174,8 +176,8 @@ helpers: [`src/lib/env.ts`](src/lib/env.ts). Backend config: `workers/packages/c
 
 ```bash
 pnpm dev             # Astro only (:4321)
-pnpm dev:workers     # workers unified process (:3001)
-pnpm dev:all         # workers first, then Astro when :3001 is up
+pnpm dev:workers     # unified Fastify + BullMQ on :3001 (single process)
+pnpm dev:all         # split backends (:3002/:3001/:3003 + workers), then Astro
 pnpm build           # production build (compiles vendored editor)
 pnpm check           # astro check (authoritative type gate)
 pnpm typecheck       # astro check && tsc --noEmit
@@ -248,16 +250,27 @@ install → build → restart daemons). Infobip webhooks target PostHog, not thi
 
 ### Docker (full stack)
 
-[`docker-compose.yml`](docker-compose.yml) runs the whole system — `web` (Astro SSR), `workers`
-(unified Fastify + BullMQ, runs migrations on boot), Postgres, and Redis — from one image
-([`Dockerfile`](Dockerfile)):
+[`docker-compose.yml`](docker-compose.yml) runs the production-style split from one
+image ([`Dockerfile`](Dockerfile)):
 
 ```bash
-docker compose up --build     # web :4321, APIs :3001
+docker compose up --build
+# web http://localhost (:80) · product-api :3001 · messaging-api :3002 · email-builder-api :3003
+# (+ Postgres, Redis, BullMQ workers; migrate runs once before APIs)
 ```
 
+Startup order: Postgres/Redis healthy → `migrate` → APIs in parallel → BullMQ
+`workers` (after product + messaging ready) → `web` (after all three APIs ready).
+
 Containers run `NODE_ENV=production`, so the root `.env` must carry strong (non-`change-me`)
-`JWT_SECRET` and `WEBHOOK_INFOBIP_SECRET` values or the workers refuse to boot.
+`JWT_SECRET` and `WEBHOOK_INFOBIP_SECRET` values or the backends refuse to boot. Also set
+`AUTH_SECRET`, `SECURITY_ENCRYPTION_KEY` (before enabling 2FA), and Cloudflare SMTP
+(`SMTP_HOST`/`USER`/`PASS` on port **465**). Passkeys need `WEBAUTHN_RP_ID` /
+`WEBAUTHN_ORIGINS` matching the public site URL.
+
+The Astro BFF uses `API_BASE_URL` (product), optional `MESSAGING_API_BASE_URL`, and
+optional `EB_API_BASE_URL`. Compose sets the in-network hostnames automatically;
+local `pnpm dev` can leave the split URLs unset (they fall back to `:3001`).
 
 ---
 

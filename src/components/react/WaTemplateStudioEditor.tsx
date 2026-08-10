@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ApprovalStatus, TemplateDoc } from 'wa-template-studio';
+import type { TemplateDoc } from 'wa-template-studio';
 import waTemplateCatalog from '../../../docs/whatsapp-message-templates.json';
-import type { TemplateApprovalStatus } from '@/types/app';
 import Icon from './Icon';
 import ChannelEditorShell, { shellStyles } from './shared/ChannelEditorShell';
 import { CHANNEL } from './shared/channels';
@@ -12,6 +11,7 @@ import {
   TEMPLATE_LANGUAGE_OPTIONS,
   templateLanguageFlagSrc,
 } from '@/lib/app/template-language';
+import { retryDynamicImport } from '@/lib/app/retry-dynamic-import';
 import {
   docToApiFields,
   hydrateTemplateDoc,
@@ -28,9 +28,6 @@ type StudioComponent = React.ComponentType<{
   restoreDraft?: boolean;
   dark?: boolean;
   accentColor?: string;
-  approvalStatus?: ApprovalStatus | null;
-  approvalBusy?: boolean;
-  onRequestApproval?: () => void | Promise<void>;
 }>;
 
 type Props = {
@@ -40,13 +37,8 @@ type Props = {
   category?: string | null;
   builderDoc?: Record<string, unknown> | null;
   components?: Record<string, unknown> | null;
-  /** Current Meta approval state for this template row. */
-  approvalStatus?: TemplateApprovalStatus | null;
   onClose: () => void;
   onSave: (value: WaTemplateStudioSave) => void | Promise<void>;
-  /** Persist then submit Meta approval. Host owns the API call; omit offline. */
-  onSubmitForApproval?: () => Promise<TemplateApprovalStatus | void>;
-  onRefreshApproval?: () => Promise<TemplateApprovalStatus | void>;
 };
 
 function normalizeWaCategoryLabel(value: string | null | undefined): WaTemplateCategoryLabel {
@@ -55,6 +47,13 @@ function normalizeWaCategoryLabel(value: string | null | undefined): WaTemplateC
   }
   return waCategoryLabel(maildrillCategoryToMeta(value ?? undefined));
 }
+
+const LOADING_STEPS = [
+  'Loading WhatsApp template studio…',
+  'Preparing the studio — loading components…',
+  'Still working on it — first load can take a minute…',
+  'Almost there — setting up the canvas…',
+];
 
 /**
  * Full-screen wrapper around wa-template-studio for WhatsApp template authoring.
@@ -67,11 +66,8 @@ export default function WaTemplateStudioEditor({
   category,
   builderDoc,
   components,
-  approvalStatus: initialApproval = null,
   onClose,
   onSave,
-  onSubmitForApproval,
-  onRefreshApproval,
 }: Props) {
   const [Studio, setStudio] = useState<StudioComponent | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -80,23 +76,16 @@ export default function WaTemplateStudioEditor({
     normalizeWaCategoryLabel(category),
   );
   const [waLanguage, setWaLanguage] = useState(() => normalizeTemplateLanguageCode(language));
-  const [approvalStatus, setApprovalStatus] = useState<TemplateApprovalStatus | null>(
-    initialApproval,
-  );
-  const [approvalBusy, setApprovalBusy] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
   const studioReady = useRef(false);
   const { toast, show } = useToast();
-
-  useEffect(() => {
-    setApprovalStatus(initialApproval);
-  }, [initialApproval]);
 
   useEffect(() => {
     let alive = true;
     void (async () => {
       try {
-        await import('wa-template-studio/style.css');
-        const mod = await import('wa-template-studio');
+        await retryDynamicImport(() => import('wa-template-studio/style.css'));
+        const mod = await retryDynamicImport(() => import('wa-template-studio'));
         if (!alive) return;
         const { replaceDoc, setGalleryCatalog } = mod;
         // Ready-made template gallery shown in the inspector's default state.
@@ -132,6 +121,16 @@ export default function WaTemplateStudioEditor({
     };
     // Hydrate once on mount.
   }, []);
+
+  useEffect(() => {
+    if (Studio || loadError) return;
+    const timers = [
+      setTimeout(() => setLoadingStep(1), 4_000),
+      setTimeout(() => setLoadingStep(2), 20_000),
+      setTimeout(() => setLoadingStep(3), 60_000),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [Studio, loadError]);
 
   const persist = async () => {
     const mod = await import('wa-template-studio');
@@ -176,50 +175,6 @@ export default function WaTemplateStudioEditor({
   const handleSave = async () => {
     const ok = await flush();
     show(ok ? `“${title.trim() || 'Untitled template'}” saved` : 'Could not save.');
-  };
-
-  const handleRequestApproval = async () => {
-    if (approvalBusy || !onSubmitForApproval) return;
-    setApprovalBusy(true);
-    try {
-      const mod = await import('wa-template-studio');
-      const doc = {
-        ...mod.useStudio.getState().doc,
-        name: title.trim() || mod.useStudio.getState().doc.name || 'untitled',
-      } as TemplateDoc;
-      mod.setTemplateField('name', doc.name);
-
-      if (approvalStatus === 'pending') {
-        if (!onRefreshApproval) {
-          show('Approval is already in review');
-          return;
-        }
-        const next = await onRefreshApproval();
-        if (next) setApprovalStatus(next);
-        show('Approval status refreshed');
-        return;
-      }
-
-      if (!mod.canRequestApproval(doc)) {
-        const first = mod.validateTemplate(doc).find((i) => i.severity === 'error');
-        show(first?.message ?? 'Template must pass Meta requirements before approval');
-        return;
-      }
-
-      const saved = await flush();
-      if (!saved) {
-        show('Could not save before requesting approval');
-        return;
-      }
-      const next = await onSubmitForApproval();
-      if (next) setApprovalStatus(next);
-      else setApprovalStatus('pending');
-      show(approvalStatus === 'rejected' ? 'Resubmitted for approval' : 'Submitted for approval');
-    } catch (e) {
-      show(e instanceof Error ? e.message : 'Could not submit for approval');
-    } finally {
-      setApprovalBusy(false);
-    }
   };
 
   return (
@@ -272,15 +227,15 @@ export default function WaTemplateStudioEditor({
         <div className={shellStyles.state}>
           <p>Couldn’t load the WhatsApp template editor.</p>
           <p className={shellStyles.muted}>{loadError}</p>
+          <p className={shellStyles.muted}>
+            This usually means the page outlived a server restart or an update — reloading fixes it.
+          </p>
+          <button type="button" className="sbtn" onClick={() => window.location.reload()}>
+            Reload page
+          </button>
         </div>
       ) : Studio ? (
-        <Studio
-          restoreDraft={false}
-          accentColor={CHANNEL.whatsapp.hex}
-          approvalStatus={approvalStatus}
-          approvalBusy={approvalBusy}
-          onRequestApproval={onSubmitForApproval ? handleRequestApproval : undefined}
-        />
+        <Studio restoreDraft={false} accentColor={CHANNEL.whatsapp.hex} />
       ) : (
         <div className={shellStyles.state}>
           <span
@@ -288,7 +243,7 @@ export default function WaTemplateStudioEditor({
             style={{ borderTopColor: '#00a884' }}
             aria-hidden="true"
           />
-          <p className={shellStyles.muted}>Loading WhatsApp template studio…</p>
+          <p className={shellStyles.muted}>{LOADING_STEPS[loadingStep]}</p>
         </div>
       )}
     </ChannelEditorShell>

@@ -7,6 +7,8 @@ type ToolbarPopoverProps = {
   onClose: () => void;
   children: React.ReactNode;
   disableAutoFocus?: boolean;
+  /** Merged into the Popover paper sx — used by merge-tag menus to match host app skin. */
+  paperSx?: Record<string, unknown>;
 };
 
 export default function ToolbarPopover({
@@ -14,6 +16,7 @@ export default function ToolbarPopover({
   onClose,
   children,
   disableAutoFocus = false,
+  paperSx,
 }: ToolbarPopoverProps) {
   const theme = useTheme();
 
@@ -34,6 +37,7 @@ export default function ToolbarPopover({
               theme.palette.mode === 'dark'
                 ? '0 10px 40px rgba(0,0,0,0.5)'
                 : '0 10px 40px rgba(0,0,0,0.15)',
+            ...paperSx,
           },
         },
       }}

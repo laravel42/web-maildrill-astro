@@ -21,14 +21,13 @@
   justify-content: flex-end;
 }
 .kpis {
-  /* fluid: cards share the full row; wrapped cards grow to fill their row */
-  display: flex;
-  flex-wrap: wrap;
+  /* equal-width tracks at every wrap point (no stretched orphan on the last row) */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(164px, 1fr));
   gap: 14px;
   margin-bottom: 18px;
 }
 .kpis :global(.akpi) {
-  flex: 1 1 160px;
   min-width: 0;
 }
 /* the global .akpi__label carries the kicker style; this strip only clips */
@@ -36,6 +35,79 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* Enriched KPI card: label header, value + spark, delta + context. */
+.kpiLink {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color 0.12s var(--ease-out),
+    box-shadow 0.12s var(--ease-out);
+}
+.kpiLink:hover {
+  border-color: var(--border2);
+  box-shadow: var(--shadow-md);
+}
+.kpiHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.kpiGo {
+  margin-left: auto;
+  color: var(--muted);
+  opacity: 0;
+  transform: translate(-2px, 2px);
+  transition:
+    opacity 0.15s var(--ease-out),
+    transform 0.15s var(--ease-out);
+}
+.kpiLink:hover .kpiGo,
+.kpiLink:focus-visible .kpiGo {
+  opacity: 1;
+  transform: none;
+}
+.kpiMid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+.kpiMid :global(.akpi__value) {
+  margin-top: 0;
+}
+.kpiSpark {
+  flex: 1 1 56px;
+  min-width: 48px;
+  max-width: 110px;
+}
+.kpiFoot {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 7px;
+  min-width: 0;
+}
+.kpiFoot :global(.akpi__delta) {
+  margin-top: 0;
+  white-space: nowrap;
+}
+.kpiCtx {
+  font-size: 11.5px;
+  color: var(--muted);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kpiCtx::before {
+  content: '·';
+  margin-right: 6px;
 }
 
 /* Range refetch: shimmer placeholders inside each updating box */
@@ -78,12 +150,6 @@
   width: 100%;
   border-radius: 6px;
   margin-top: 4px;
-}
-.skelChart {
-  flex: 1;
-  height: 70px;
-  min-width: 0;
-  border-radius: 8px;
 }
 .row {
   display: grid;
@@ -302,39 +368,67 @@
   margin-bottom: 4px;
 }
 
-.spark {
-  padding: 17px 20px;
+/* Quick actions: 3×2 grid of chip + label tiles (2-col when the row stacks). */
+.quick {
+  padding: 17px 19px;
 }
-.sparkBody {
+.qaGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px 10px;
+}
+.qaTile {
   display: flex;
-  gap: 28px;
-  align-items: flex-end;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 10px;
+  margin: -2px;
+  border-radius: 12px;
+  color: inherit;
+  min-width: 0;
+  transition: background 0.12s var(--ease-out);
 }
-.sparkStat {
+.qaTile:hover {
+  background: var(--surface2);
+}
+.qaIc {
+  width: 30px;
+  height: 30px;
   flex: none;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.sparkLbl {
+.qaText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.qaLabel {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.qaDesc {
   font-size: 11.5px;
   color: var(--muted);
-  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.sparkVal {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 25px;
-  font-weight: 600;
-  letter-spacing: -0.6px;
-  margin-top: 10px;
+@media (max-width: 640px) {
+  .qaGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
-.sparkDelta {
-  font-size: 11.5px;
-  color: var(--success-text);
-  font-weight: 500;
-  margin-top: 3px;
-}
-.sparkSvg {
-  flex: 1;
-  min-width: 0;
+@media (max-width: 480px) {
+  .qaGrid {
+    grid-template-columns: 1fr;
+  }
 }
 .start {
   padding: 17px 19px;

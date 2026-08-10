@@ -25,7 +25,7 @@ import { InspectorPanel } from './InspectorPanel';
 import { InspectorPanelHandle } from './InspectorPanelHandle';
 import { LibraryPanel } from './LibraryPanel';
 import { LibraryPanelHandle } from './LibraryPanelHandle';
-import { TopBar, type ApprovalStatus } from './TopBar';
+import { TopBar } from './TopBar';
 
 registerBuiltInPlugins();
 
@@ -36,16 +36,6 @@ export interface StudioProps {
   dark?: boolean;
   /** Toolbar accent (channel identity). Falls back to `--primary`. */
   accentColor?: string;
-  /** Current Meta approval state when hosted by Maildrill. */
-  approvalStatus?: ApprovalStatus | null;
-  /** True while save/submit/refresh is in flight. */
-  approvalBusy?: boolean;
-  /**
-   * Host callback for the top-bar approval control. When omitted the button
-   * is hidden (standalone studio). Enabled only when the doc has content and
-   * passes Meta validation (or when refreshing a pending review).
-   */
-  onRequestApproval?: () => void | Promise<void>;
 }
 
 /**
@@ -56,9 +46,6 @@ export function Studio({
   restoreDraft = true,
   dark = false,
   accentColor,
-  approvalStatus,
-  approvalBusy,
-  onRequestApproval,
 }: StudioProps) {
   const libraryOpen = useStudio((s) => s.libraryOpen);
   const inspectorMode = useStudio((s) => s.inspectorMode);
@@ -128,11 +115,7 @@ export function Studio({
     >
       <TooltipProvider delayDuration={250}>
         <div className="flex h-full min-h-0 flex-col bg-background font-sans text-foreground antialiased">
-          <TopBar
-            approvalStatus={approvalStatus}
-            approvalBusy={approvalBusy}
-            onRequestApproval={onRequestApproval}
-          />
+          <TopBar />
           <DndContext sensors={sensors} onDragEnd={onDragEnd}>
             <div className="relative flex min-h-0 flex-1 overflow-hidden">
               {/* Left floating panel */}

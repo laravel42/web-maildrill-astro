@@ -130,6 +130,9 @@ export async function sendSignupNotification(sub: SignupData): Promise<boolean> 
       subject: `New sign-up: ${email}`,
       html,
       text,
+      // Nodemailer's default `--_NmP` prefix yields `----_NmP-…` delimiters that
+      // Cloudflare's SMTP MIME ingress can drop, delivering an empty body.
+      ...({ boundaryPrefix: 'md' } as Record<string, string>),
     });
     console.info('[mail] signup notification sent for', email);
     return true;

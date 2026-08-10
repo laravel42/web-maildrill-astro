@@ -4,8 +4,8 @@ import { createLogger } from '@maildrill/observability';
 
 const log = createLogger({ component: 'welcome-email' });
 
-/** Escape a user-supplied name before it goes into the HTML email body. */
-function escapeHtml(s: string): string {
+/** Escape a user-supplied value before it goes into an HTML email body. */
+export function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

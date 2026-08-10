@@ -4,6 +4,7 @@ import { registerBuiltInPlugins } from '../src/blocks';
 import { newId, type MetaTemplate, type TemplateDoc } from '../src/core/types';
 import { fromMetaJson, toMetaJson } from '../src/core/serialize';
 import { hasErrors, validateTemplate } from '../src/core/validation';
+import { clearWaFormatting } from '../src/core/text-format';
 import { analyzeVariables, insertVariableAt, renumberVariables } from '../src/core/variables';
 import { buildSubscriberFieldOptions, matchSubscriberField } from '../src/core/subscriber-fields';
 
@@ -98,6 +99,33 @@ describe('variable engine', () => {
     const result = insertVariableAt('', {}, 0);
     expect(result.text).toBe('{{1}}');
     expect(result.caret).toBe('{{1}}'.length);
+  });
+});
+
+describe('clear formatting', () => {
+  it('strips every WhatsApp marker the preview would render', () => {
+    expect(clearWaFormatting('*bold* _italic_ ~strike~ ```mono```')).toBe(
+      'bold italic strike mono',
+    );
+  });
+
+  it('unwraps nested markers', () => {
+    expect(clearWaFormatting('*_both_*')).toBe('both');
+    expect(clearWaFormatting('~*_all three_*~')).toBe('all three');
+  });
+
+  it('keeps variables, unpaired and empty markers', () => {
+    expect(clearWaFormatting('Hi *{{1}}*, your code is {{2}}')).toBe(
+      'Hi {{1}}, your code is {{2}}',
+    );
+    expect(clearWaFormatting('5 * 3 = 15 and a lone _underscore')).toBe(
+      '5 * 3 = 15 and a lone _underscore',
+    );
+    expect(clearWaFormatting('**')).toBe('**');
+  });
+
+  it('does not pair markers across lines', () => {
+    expect(clearWaFormatting('*line\nbreak*')).toBe('*line\nbreak*');
   });
 });
 

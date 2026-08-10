@@ -74,6 +74,8 @@ export interface RegisterTemplateInput {
   language: string;
   category: 'MARKETING' | 'UTILITY' | 'AUTHENTICATION';
   structure: WhatsAppTemplateStructure;
+  /** Infobip `structure.type` — TEXT for body-only, MEDIA when header/footer/buttons exist. */
+  structureType?: 'TEXT' | 'MEDIA';
 }
 
 export interface RegisterTemplateResult {

@@ -1,11 +1,15 @@
+import { and, eq } from 'drizzle-orm';
 import { config } from '@maildrill/config';
-import { ConflictError, ValidationError } from '@maildrill/domain';
+import { db, emailDomains } from '@maildrill/database';
+import { ConflictError, NotFoundError, ValidationError } from '@maildrill/domain';
 
 /**
- * Sending-domain management (Settings → Domains), proxying Infobip's email
- * domain API. NOTE: Infobip domains are ACCOUNT-level, not per-tenant — every
- * workspace on this install sees the same list. Fine for the current
- * single-workspace reality; revisit before real multi-tenancy.
+ * Sending-domain management (Settings → Domains). Infobip's domain API is
+ * account-level — one registration per domain name across the whole Infobip
+ * account — so we keep a local `email_domains` row that ties each domain to a
+ * workspace. List/mutate only return or touch domains this tenant has
+ * explicitly registered (or claimed via register when the name already exists
+ * on Infobip and is unowned). Never auto-inherit the full Infobip account list.
  */
 
 export interface EmailDomainDnsRecord {
@@ -88,7 +92,44 @@ function toDomain(raw: Record<string, unknown>): EmailDomain {
   };
 }
 
-export async function listEmailDomains(): Promise<EmailDomain[]> {
+function normalizeDomain(domainName: string): string {
+  return domainName.trim().toLowerCase();
+}
+
+async function ownedNames(tenantId: string): Promise<Set<string>> {
+  const rows = await db
+    .select({ domainName: emailDomains.domainName })
+    .from(emailDomains)
+    .where(eq(emailDomains.tenantId, tenantId));
+  return new Set(rows.map((r) => r.domainName));
+}
+
+async function assertOwned(tenantId: string, domainName: string): Promise<string> {
+  const name = normalizeDomain(domainName);
+  const rows = await db
+    .select({ domainName: emailDomains.domainName })
+    .from(emailDomains)
+    .where(and(eq(emailDomains.tenantId, tenantId), eq(emailDomains.domainName, name)))
+    .limit(1);
+  if (!rows[0]) throw new NotFoundError(`${name} is not registered in this workspace`);
+  return name;
+}
+
+async function claimDomain(tenantId: string, domainName: string): Promise<void> {
+  const name = normalizeDomain(domainName);
+  const existing = await db
+    .select()
+    .from(emailDomains)
+    .where(eq(emailDomains.domainName, name))
+    .limit(1);
+  if (existing[0]) {
+    if (existing[0].tenantId === tenantId) return;
+    throw new ConflictError(`${name} is already claimed by another workspace`);
+  }
+  await db.insert(emailDomains).values({ tenantId, domainName: name });
+}
+
+async function listProviderDomains(): Promise<EmailDomain[]> {
   // 20 is Infobip's hard maximum for this endpoint — larger values 400.
   const { status, json } = await infobip('GET', '/email/1/domains?size=20');
   if (status !== 200) {
@@ -96,6 +137,14 @@ export async function listEmailDomains(): Promise<EmailDomain[]> {
   }
   const results = Array.isArray(json.results) ? json.results : [];
   return results.map((r) => toDomain(r as Record<string, unknown>));
+}
+
+export async function listEmailDomains(tenantId: string): Promise<EmailDomain[]> {
+  const mine = await ownedNames(tenantId);
+  if (mine.size === 0) return [];
+  const all = await listProviderDomains();
+  // Infobip may echo mixed-case names; ownership rows are always lowercase.
+  return all.filter((d) => mine.has(normalizeDomain(d.domainName)));
 }
 
 /**
@@ -106,38 +155,62 @@ export async function listEmailDomains(): Promise<EmailDomain[]> {
 const DEFAULT_TARGETED_DAILY_TRAFFIC = 1000;
 
 export async function registerEmailDomain(
+  tenantId: string,
   domainName: string,
   targetedDailyTraffic = DEFAULT_TARGETED_DAILY_TRAFFIC,
 ): Promise<EmailDomain> {
-  const name = domainName.trim().toLowerCase();
+  const name = normalizeDomain(domainName);
   if (!/^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/.test(name)) {
     throw new ValidationError('enter a valid domain, e.g. mail.acme.com');
   }
+
+  // Already claimed locally — short-circuit before hitting Infobip.
+  const local = await db.select().from(emailDomains).where(eq(emailDomains.domainName, name)).limit(1);
+  if (local[0]) {
+    if (local[0].tenantId !== tenantId) {
+      throw new ConflictError(`${name} is already claimed by another workspace`);
+    }
+    const existing = await getEmailDomain(tenantId, name);
+    if (existing) return existing;
+    throw new ConflictError(`${name} is already registered`);
+  }
+
   const { status, json } = await infobip('POST', '/email/1/domains', {
     domainName: name,
     targetedDailyTraffic,
   });
-  if (status === 200 || status === 201) return toDomain(json);
+  if (status === 200 || status === 201) {
+    await claimDomain(tenantId, name);
+    return toDomain(json);
+  }
 
-  // Already registered → surface it as a conflict, not a generic failure.
-  // Infobip words this as "associated with another account" even when the
-  // domain belongs to *this* account, so confirm against our own list before
-  // passing that confusing message on.
+  // Already registered on Infobip → claim it for this workspace if nobody
+  // else owns it locally (covers domains that predate tenant scoping).
   const reason = infobipErrorText(json);
   if (/exist|already|associated/i.test(`${reason ?? ''}${JSON.stringify(json)}`)) {
-    const ours = (await listEmailDomains().catch(() => [])).some((d) => d.domainName === name);
-    if (ours) throw new ConflictError(`${name} is already registered`);
+    const onProvider = (await listProviderDomains().catch(() => [])).find((d) => d.domainName === name);
+    if (onProvider) {
+      await claimDomain(tenantId, name);
+      return onProvider;
+    }
   }
   throw new ValidationError(
     reason ? `could not register ${name}: ${reason}` : `could not register ${name} (${status})`,
   );
 }
 
-export async function getEmailDomain(domainName: string): Promise<EmailDomain | null> {
-  const { status, json } = await infobip(
-    'GET',
-    `/email/1/domains/${encodeURIComponent(domainName)}`,
-  );
+export async function getEmailDomain(
+  tenantId: string,
+  domainName: string,
+): Promise<EmailDomain | null> {
+  const name = normalizeDomain(domainName);
+  const owned = await db
+    .select({ domainName: emailDomains.domainName })
+    .from(emailDomains)
+    .where(and(eq(emailDomains.tenantId, tenantId), eq(emailDomains.domainName, name)))
+    .limit(1);
+  if (!owned[0]) return null;
+  const { status, json } = await infobip('GET', `/email/1/domains/${encodeURIComponent(name)}`);
   if (status === 404) return null;
   if (status !== 200) {
     throw new ValidationError(infobipErrorText(json) ?? `domain lookup failed (${status})`);
@@ -150,18 +223,26 @@ export async function getEmailDomain(domainName: string): Promise<EmailDomain | 
  * sending identity are destroyed, so re-adding the same domain later issues
  * new DNS records that must be published again.
  */
-export async function deleteEmailDomain(domainName: string): Promise<void> {
-  const name = domainName.trim().toLowerCase();
+export async function deleteEmailDomain(tenantId: string, domainName: string): Promise<void> {
+  const name = await assertOwned(tenantId, domainName);
   const { status, json } = await infobip('DELETE', `/email/1/domains/${encodeURIComponent(name)}`);
   // Already gone is a success for the caller's purposes.
-  if (status === 204 || status === 200 || status === 404) return;
-  throw new ValidationError(infobipErrorText(json) ?? `could not delete ${name} (${status})`);
+  if (status !== 204 && status !== 200 && status !== 404) {
+    throw new ValidationError(infobipErrorText(json) ?? `could not delete ${name} (${status})`);
+  }
+  await db
+    .delete(emailDomains)
+    .where(and(eq(emailDomains.tenantId, tenantId), eq(emailDomains.domainName, name)));
 }
 
 /** Ask Infobip to re-check DNS, then return the refreshed state. */
-export async function verifyEmailDomain(domainName: string): Promise<EmailDomain> {
-  await infobip('POST', `/email/1/domains/${encodeURIComponent(domainName)}/verify`);
-  const domain = await getEmailDomain(domainName);
-  if (!domain) throw new ValidationError(`${domainName} is not registered`);
+export async function verifyEmailDomain(
+  tenantId: string,
+  domainName: string,
+): Promise<EmailDomain> {
+  const name = await assertOwned(tenantId, domainName);
+  await infobip('POST', `/email/1/domains/${encodeURIComponent(name)}/verify`);
+  const domain = await getEmailDomain(tenantId, name);
+  if (!domain) throw new ValidationError(`${name} is not registered`);
   return domain;
 }

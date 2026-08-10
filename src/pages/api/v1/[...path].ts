@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { mintServiceToken, serviceBaseUrl } from '@/lib/server/service';
+import { mintServiceToken, v1BackendBaseUrl } from '@/lib/server/service';
 import { TRUSTED_DEVICE_COOKIE, clientHeaders } from '@/lib/server/client-context';
 
 export const prerender = false;
@@ -7,7 +7,8 @@ export const prerender = false;
 /**
  * BFF proxy: island mutations/reads hit this same-origin route, which mints a
  * tenant-scoped JWT and forwards to workers. The browser never holds
- * a service credential.
+ * a service credential. `/v1/messages*` goes to the messaging API when
+ * `MESSAGING_API_BASE_URL` is set; everything else hits the product API.
  */
 export const ALL: APIRoute = async (ctx) => {
   const { request, params, locals, cookies } = ctx;
@@ -29,7 +30,8 @@ export const ALL: APIRoute = async (ctx) => {
     authTime: session.authTime ?? null,
   });
   const url = new URL(request.url);
-  const target = `${serviceBaseUrl()}/v1/${params.path ?? ''}${url.search}`;
+  const path = params.path ?? '';
+  const target = `${v1BackendBaseUrl(path)}/v1/${path}${url.search}`;
 
   // Only forward a body (and its content-type) when there actually is one — a
   // bodyless request (e.g. DELETE) must not carry `content-type: application/json`

@@ -21,6 +21,7 @@ import SendTestModal from './shared/SendTestModal';
 import { useToast } from './shared/useToast';
 import ChannelEditorShell, { shellStyles } from './shared/ChannelEditorShell';
 import { CHANNEL } from './shared/channels';
+import { retryDynamicImport } from '@/lib/app/retry-dynamic-import';
 import { useAutosave } from './shared/useAutosave';
 
 /**
@@ -151,29 +152,17 @@ export default function VisualEmailBuilder({
   }, []);
 
   // Client-only load of the editor + its stylesheet (kept out of SSR).
-  // A dynamic import can fail transiently — in dev when the server restarts
-  // or Vite re-optimizes mid-session (504 Outdated Optimize Dep), in prod
-  // when a redeploy invalidates a stale tab's chunk URLs — so retry briefly
-  // before surfacing the error. The error state offers a page reload, the
-  // reliable fix once this tab's module graph no longer matches the server.
   useEffect(() => {
     let alive = true;
     void (async () => {
-      let lastErr: unknown;
-      for (let attempt = 0; attempt < 3; attempt++) {
-        if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 1_500));
-        if (!alive) return;
-        try {
-          await import('email-builder-standalone/style.css');
-          const mod = await import('email-builder-standalone');
-          if (alive) setBuilder(() => mod.EmailBuilder as unknown as BuilderComponent);
-          return;
-        } catch (err) {
-          lastErr = err;
+      try {
+        await retryDynamicImport(() => import('email-builder-standalone/style.css'));
+        const mod = await retryDynamicImport(() => import('email-builder-standalone'));
+        if (alive) setBuilder(() => mod.EmailBuilder as unknown as BuilderComponent);
+      } catch (err) {
+        if (alive) {
+          setLoadError(err instanceof Error ? err.message : 'Failed to load the editor.');
         }
-      }
-      if (alive) {
-        setLoadError(lastErr instanceof Error ? lastErr.message : 'Failed to load the editor.');
       }
     })();
     return () => {

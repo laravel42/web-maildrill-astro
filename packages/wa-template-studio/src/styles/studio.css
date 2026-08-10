@@ -518,6 +518,7 @@
 }
 
 .wa-studio .wts-panel-handle-btn {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -527,12 +528,41 @@
   background: var(--card);
   color: var(--foreground);
   cursor: pointer;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
   transition:
     background-color 120ms ease,
     color 120ms ease;
 }
 
+/* MUI ButtonBase TouchRipple equivalent — currentColor overlay on press. */
+.wa-studio .wts-panel-handle-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  pointer-events: none;
+}
+
+.wa-studio .wts-panel-handle-btn > * {
+  position: relative;
+  z-index: 1;
+}
+
+.wa-studio .wts-panel-handle-btn:active::before {
+  opacity: 0.12;
+}
+
 .wa-studio .wts-panel-handle-btn:hover {
+  background: var(--muted);
+}
+
+.wa-studio .wts-panel-handle-btn:active:not(.is-active) {
   background: var(--muted);
 }
 
@@ -556,6 +586,10 @@
   filter: brightness(0.92);
 }
 
+.wa-studio .wts-panel-handle-btn--library.is-active:active::before {
+  opacity: 0.3;
+}
+
 .wa-studio .wts-panel-handle-btn--inspector {
   width: 24px;
   min-height: 80px;
@@ -577,6 +611,10 @@
   filter: brightness(0.92);
 }
 
+.wa-studio .wts-panel-handle-btn--inspector.is-active:active::before {
+  opacity: 0.3;
+}
+
 .wa-studio .wts-panel-handle-label {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
@@ -584,4 +622,458 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+/* Inspector validation issues — mirrors CampaignWizard .trackCallout and
+   app .inlineErr / .field__error. Uses Maildrill tokens when embedded;
+   literal fallbacks for standalone dev harness. Plain CSS so the styles
+   load without relying on Tailwind scanning this markup. */
+.wa-studio .wts-issue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 11px 13px;
+  list-style: none;
+  border-radius: 12px;
+  border: 1px solid #e4e2da; /* --border2 */
+  background: #ffffff; /* --surface */
+}
+
+.wa-studio .wts-issue-list.has-errors {
+  border-color: color-mix(in srgb, #dc2626 34%, #e4e2da); /* --danger + --border2 */
+  background: color-mix(in srgb, #dc2626 7%, #ffffff); /* --danger + --surface */
+}
+
+.wa-studio .wts-issue-list.has-warnings {
+  border-color: color-mix(in srgb, #d97706 34%, #e4e2da); /* --warning + --border2 */
+  background: color-mix(in srgb, #d97706 7%, #ffffff); /* --warning + --surface */
+}
+
+.wa-studio .wts-issue-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.wa-studio .wts-issue-icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 1px;
+}
+
+.wa-studio .wts-issue-item--error {
+  color: #b91c1c; /* --danger-text */
+}
+
+.wa-studio .wts-issue-item--error .wts-issue-icon {
+  color: #dc2626; /* --danger */
+}
+
+.wa-studio .wts-issue-item--warning {
+  color: #b45309; /* --warning-strong */
+}
+
+.wa-studio .wts-issue-item--warning .wts-issue-icon {
+  color: #d97706; /* --warning */
+}
+
+.wa-studio.dark .wts-issue-list {
+  border-color: #242c28;
+  background: #151b18; /* --card */
+}
+
+.wa-studio.dark .wts-issue-list.has-errors {
+  border-color: color-mix(in srgb, #ef4444 34%, #242c28);
+  background: color-mix(in srgb, #ef4444 10%, #151b18);
+}
+
+.wa-studio.dark .wts-issue-list.has-warnings {
+  border-color: color-mix(in srgb, #d97706 34%, #242c28);
+  background: color-mix(in srgb, #d97706 10%, #151b18);
+}
+
+/* Text-formatting bar (body editor) — mirrors the email editor's bubble-menu
+   toolbar (Paper + MUI IconButton metrics: 37px pill, radius 10, 1px gaps,
+   round 30px buttons, hairline group dividers) so both template editors read
+   as one system. Plain CSS for the same reason as .wts-lib-tile above. */
+.wa-studio .wts-fmtbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  height: 37px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.wa-studio .wts-fmtbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--wts-text-secondary);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.wa-studio .wts-fmtbtn svg {
+  /* 20px = MUI fontSize="small", same as the bubble-menu icons. */
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.wa-studio .wts-fmtbtn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--foreground);
+}
+
+.wa-studio .wts-fmtbtn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.wa-studio .wts-fmtbtn[aria-pressed='true'] {
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--foreground);
+}
+
+.wa-studio .wts-fmtdivider {
+  width: 1px;
+  align-self: stretch;
+  margin: 4px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.wa-studio.dark .wts-fmtbar {
+  background: #1a1a1a;
+  border-color: transparent;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.wa-studio.dark .wts-fmtbtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.wa-studio.dark .wts-fmtbtn[aria-pressed='true'] {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.wa-studio.dark .wts-fmtdivider {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* AI features menu — mirrors the email bubble menu's AI dropdown (list rows,
+   section headers, per-item spinner). Radix portals it to document.body,
+   outside .wa-studio, so like .wts-select-menu these rules are unscoped and
+   self-contained (explicit colors, light-only like the host). */
+.wts-ai-menu {
+  min-width: 200px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  background: #ffffff;
+  color: #1f1e1b; /* --text */
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.wts-ai-menu .wts-ai-menu-header {
+  padding: 8px 10px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #a5a297; /* --muted */
+}
+
+.wts-ai-menu .wts-ai-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 13px;
+  text-align: left;
+  color: #1f1e1b;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.wts-ai-menu .wts-ai-menu-item:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.wts-ai-menu .wts-ai-menu-item:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.wts-ai-menu .wts-ai-menu-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  flex: none;
+  color: #77756c; /* --text4 */
+  font-size: 14px;
+}
+
+.wts-ai-menu .wts-ai-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: wts-ai-spin 0.7s linear infinite;
+}
+
+@keyframes wts-ai-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.wts-ai-menu .wts-ai-menu-error {
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  max-width: 220px;
+  color: #dc2626;
+}
+
+/* Emoji picker popup: solid surface while the picker chunk + data load
+   (em-emoji-picker is transparent until its data resolves). Plain CSS for the
+   same reason as .wts-lib-tile above. */
+.wa-studio .wts-emoji-popup {
+  background: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.wa-studio .wts-emoji-loading {
+  width: 320px;
+  padding: 24px;
+  font-size: 12px;
+  color: var(--wts-text-secondary);
+  text-align: center;
+}
+
+.wa-studio.dark .wts-emoji-popup {
+  background: #1a1a1a;
+}
+
+/* Image picker (media headers) — email-inspector UX: preview with credit,
+   stock grid with per-tile attribution, load-more, Powered by Unsplash.
+   Plain CSS for the same reason as .wts-lib-tile above. */
+.wa-studio .wts-imgpick-preview {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.wa-studio .wts-imgpick-preview > img {
+  display: block;
+  width: 100%;
+  max-height: 190px;
+  object-fit: cover;
+}
+.wa-studio .wts-imgpick-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+.wa-studio .wts-imgpick-remove:hover {
+  background: #ffffff;
+}
+.wa-studio .wts-imgpick-previewcredit {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: #d1d5db;
+  background: rgba(10, 10, 10, 0.78);
+}
+.wa-studio .wts-imgpick-previewcredit a {
+  color: #ffffff;
+  font-weight: 600;
+  text-decoration: none;
+}
+.wa-studio .wts-imgpick-previewcredit a:hover {
+  text-decoration: underline;
+}
+.wa-studio .wts-imgpick-search {
+  position: relative;
+}
+.wa-studio .wts-imgpick-search > svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--wts-text-secondary);
+  pointer-events: none;
+}
+.wa-studio .wts-imgpick-search input {
+  padding-left: 32px;
+}
+.wa-studio .wts-imgpick-orients {
+  display: flex;
+  gap: 2px;
+}
+.wa-studio .wts-imgpick-orient {
+  flex: 1;
+  padding: 5px 2px 7px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--wts-text-secondary);
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    border-color 150ms ease;
+}
+.wa-studio .wts-imgpick-orient:hover {
+  color: var(--foreground);
+}
+.wa-studio .wts-imgpick-orient[aria-pressed='true'] {
+  color: var(--wts-accent);
+  border-bottom-color: var(--wts-accent);
+}
+.wa-studio .wts-imgpick-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+.wa-studio .wts-imgpick-tile {
+  margin: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  background: var(--muted);
+  transition: border-color 150ms ease;
+}
+.wa-studio .wts-imgpick-tile:hover {
+  border-color: var(--wts-accent);
+}
+.wa-studio .wts-imgpick-tile > button {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.wa-studio .wts-imgpick-tile > button > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.wa-studio .wts-imgpick-tile > figcaption {
+  padding: 4px 7px;
+  font-size: 9.5px;
+  line-height: 1.3;
+  background: #1a1a1a;
+  color: #cccccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wa-studio .wts-imgpick-tile > figcaption a {
+  color: #ffffff;
+  font-weight: 500;
+  text-decoration: none;
+}
+.wa-studio .wts-imgpick-tile > figcaption a:hover {
+  text-decoration: underline;
+}
+.wa-studio .wts-imgpick-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 0;
+  font-size: 11.5px;
+  color: var(--wts-text-secondary);
+  text-align: center;
+}
+.wa-studio .wts-imgpick-error {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  color: #b91c1c; /* --danger-text */
+  background: color-mix(in srgb, #ef4444 10%, transparent);
+  border: 1px solid color-mix(in srgb, #ef4444 30%, transparent);
+}
+.wa-studio .wts-imgpick-more {
+  border: none;
+  background: transparent;
+  padding: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--wts-accent);
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: center;
+}
+.wa-studio .wts-imgpick-more:disabled {
+  color: var(--wts-text-secondary);
+  cursor: progress;
+}
+.wa-studio .wts-imgpick-powered {
+  margin: 0;
+  font-size: 10.5px;
+  color: var(--wts-text-secondary);
+  text-align: center;
+}
+.wa-studio .wts-imgpick-powered a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.wa-studio.dark .wts-imgpick-remove {
+  background: rgba(26, 26, 26, 0.92);
+  color: #fca5a5;
+}
+.wa-studio.dark .wts-imgpick-remove:hover {
+  background: #1a1a1a;
+}
+.wa-studio.dark .wts-imgpick-error {
+  color: #fca5a5;
 }

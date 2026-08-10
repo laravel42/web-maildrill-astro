@@ -22,13 +22,7 @@ import { toRichSubscriber, type ApiSubscriber } from '@/lib/app/subscriber-map';
 import { matchesSearchQuery } from '@/lib/app/search-match';
 import { RATE_BUCKETS, parseRatePercent, rateBucket } from '@/lib/app/templates-data';
 import SubscriberEditorModal from './SubscriberEditorModal';
-import SubscriberImportModal from './SubscriberImportModal';
-import {
-  buildCsv,
-  downloadCsv,
-  exportFilename,
-  subscribersCsv,
-} from '@/lib/app/subscriber-export';
+import { buildCsv, downloadCsv, exportFilename, subscribersCsv } from '@/lib/app/subscriber-export';
 import type { CustomField } from '@/lib/app/custom-fields';
 import TagFilter from './shared/TagFilter';
 import ColFilter from './shared/ColFilter';
@@ -105,7 +99,6 @@ export default function AppSubscribers({
   const [subEditor, setSubEditor] = useState<
     { mode: 'create' } | { mode: 'edit'; sub: RichSubscriber } | null
   >(null);
-  const [importOpen, setImportOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   /* Full CSV export. The table only holds the first page, so live workspaces
@@ -151,6 +144,31 @@ export default function AppSubscribers({
       setExporting(false);
     }
   };
+
+  // Quick action: /dashboard/subscribers?new opens a blank editor.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('new') == null) return;
+    setSubEditor({ mode: 'create' });
+    url.searchParams.delete('new');
+    window.history.replaceState(null, '', `${url.pathname}${url.search}`);
+  }, []);
+
+  // Custom-field keys feed the import wizard's column-mapping targets.
+  const [customFieldKeys, setCustomFieldKeys] = useState<string[]>([]);
+  useEffect(() => {
+    if (!live) return;
+    let alive = true;
+    void api
+      .get<{ data: Array<{ key: string }> }>('custom-fields')
+      .then((res) => {
+        if (alive) setCustomFieldKeys(res.data.map((f) => f.key));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [live]);
 
   const effTags = (s: RichSubscriber): string[] => tagStore[s.id] ?? s.tags;
 
@@ -591,12 +609,6 @@ export default function AppSubscribers({
             <Icon name="download" size={15} />
             {exporting ? 'Exporting…' : 'Export'}
           </button>
-          {live && (
-            <button type="button" className="sbtn" onClick={() => setImportOpen(true)}>
-              <Icon name="upload" size={15} />
-              Import
-            </button>
-          )}
           <button type="button" className="pbtn" onClick={() => setSubEditor({ mode: 'create' })}>
             <Icon name="plus" size={15} stroke={2.2} />
             Add subscriber
@@ -1236,6 +1248,31 @@ export default function AppSubscribers({
           initialListIds={subEditor.mode === 'edit' ? subEditor.sub.listIds : []}
           initialTags={subEditor.mode === 'edit' ? effTags(subEditor.sub) : []}
           lists={allLists}
+          customFieldKeys={customFieldKeys}
+          onImport={async ({ rows, listIds, newFields }) => {
+            if (!live) {
+              showToast(`${rows.length.toLocaleString('en-US')} subscribers imported`);
+              return { created: rows.length, updated: 0, failed: 0 };
+            }
+            // Columns mapped to a brand-new field need the definition to exist
+            // before the values land, or they stay loose attribute keys. An
+            // already-present key is a benign conflict, so failures are ignored.
+            for (const key of newFields) {
+              await api.post('custom-fields', { key, type: 'text' }).catch(() => undefined);
+            }
+            const res = await api.post<{
+              created: number;
+              updated: number;
+              failed: number;
+              errors: Array<{ index: number; email: string; error: string }>;
+            }>('subscribers/import', { rows, ...(listIds.length ? { listIds } : {}) });
+            if (newFields.length)
+              setCustomFieldKeys((prev) => [...new Set([...prev, ...newFields])]);
+            // Refresh the table so the new arrivals (and merges) show at once.
+            const fresh = await api.get<{ data: ApiSubscriber[] }>('subscribers?limit=200');
+            setRichSubscribers(fresh.data.map(toRichSubscriber));
+            return { created: res.created, updated: res.updated, failed: res.failed };
+          }}
           onClose={() => setSubEditor(null)}
           onSave={async (values) => {
             const editor = subEditor;
@@ -1285,27 +1322,6 @@ export default function AppSubscribers({
             } catch (e) {
               showToast(e instanceof ApiError ? e.message : 'Could not save subscriber');
             }
-          }}
-        />
-      )}
-
-      {importOpen && (
-        <SubscriberImportModal
-          lists={allLists}
-          onClose={() => setImportOpen(false)}
-          onDone={async ({ created, updated, failed }) => {
-            setImportOpen(false);
-            try {
-              const res = await api.get<{ data: ApiSubscriber[] }>('subscribers?limit=200');
-              setRichSubscribers(res.data.map(toRichSubscriber));
-            } catch {
-              /* list refresh is cosmetic; the import itself already landed */
-            }
-            const landed = created + updated;
-            showToast(
-              `Imported ${landed.toLocaleString('en-US')} subscriber${landed === 1 ? '' : 's'}` +
-                (failed ? ` · ${failed} failed` : ''),
-            );
           }}
         />
       )}

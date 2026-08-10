@@ -27,9 +27,9 @@ web-maildrill-astro/
   packages/email-builder-*     # vendored editor
   workers/                     # THIS backend
     apps/
-      api/                     # messaging + webhooks (:3000 alone)
+      api/                     # messaging + webhooks (:3002 alone)
       product-api/             # product CRUD + stats (:3001 alone)
-      email-builder-api/       # AI / Unsplash (:3100 alone)
+      email-builder-api/       # AI / Unsplash (:3003 alone)
       workers/                 # BullMQ role processes
       dev-server/              # unified local process (HTTP + workers on :3001)
     packages/
@@ -50,7 +50,7 @@ cp .env.example .env          # once; fill secrets
 pnpm install                  # Astro + workers (one workspace)
 pnpm --dir workers db:up      # Postgres + Redis via docker compose (optional)
 pnpm --dir workers db:migrate
-pnpm dev:all                  # workers first (wait :3001), then Astro :4321
+pnpm dev:all                  # product :3001 · messaging :3002 · EB :3003 · workers, then Astro :4321
 ```
 
 Or separately:
@@ -61,10 +61,11 @@ pnpm --filter workers dev   # unified Fastify on PRODUCT_API_PORT (default 3001)
 pnpm dev                              # Astro only
 ```
 
-`API_BASE_URL` in root `.env` must point at the unified server (default `http://localhost:3001`).  
+`pnpm dev:all` sets `API_BASE_URL` / `MESSAGING_API_BASE_URL` / `EB_API_BASE_URL` for Astro.
+With unified `pnpm --filter workers dev`, leave those unset (or point `API_BASE_URL` at `:3001`).
 `JWT_SECRET` must match between Astro BFF and workers.
 
-Production-style split (optional): `pnpm --dir workers start:api`, `start:product-api`, `worker all`.
+Docker / Ploi split: `start:api`, `start:product-api`, `start:email-builder-api`, `worker all`.
 
 ---
 
@@ -190,8 +191,8 @@ Two PostHog **projects** (do not confuse):
 | ------------------------------ | ------------------------- | ---------------------------------------------------------------- |
 | `apps/dev-server` (`pnpm dev`) | `PRODUCT_API_PORT` (3001) | Product + messaging + EB routes + several workers in one process |
 | `apps/product-api`             | 3001                      | Deploy alone in prod                                             |
-| `apps/api`                     | 3000                      | Messaging + webhooks                                             |
-| `apps/email-builder-api`       | 3100                      | AI / images                                                      |
+| `apps/api`                     | 3002                      | Messaging + webhooks                                             |
+| `apps/email-builder-api`       | 3003                      | AI / images                                                      |
 | `apps/workers`                 | —                         | `pnpm worker <role>`                                             |
 
 Worker roles: `dispatch`, `events`, `publisher`, `scheduler`, `maintenance`, `template-approval`, `campaign-delivery`, `all`.

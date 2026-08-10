@@ -73,7 +73,8 @@ export type IconName =
   | 'key'
   | 'fingerprint'
   | 'smartphone'
-  | 'monitor';
+  | 'monitor'
+  | 'smile';
 
 export const filledIcons: ReadonlySet<IconName> = new Set<IconName>([
   'whatsapp',
@@ -167,6 +168,8 @@ export const iconPaths: Record<IconName, string> = {
   save: '<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>',
   eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
   zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/>',
+  smile:
+    '<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>',
   user: '<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5v-1.2A4.3 4.3 0 0 1 8.8 15h6.4a4.3 4.3 0 0 1 4.3 4.3v1.2"/>',
   logout:
     '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',

@@ -1,63 +1,4 @@
-import type { ChannelType } from '@/types/app';
 import { normalizeTemplateLanguageCode } from '@/lib/app/template-language';
-import type { BlockDef } from './EmailBuilder.types';
-
-/** Structure blocks shown in the email canvas palette. */
-export const BLOCKS: BlockDef[] = [
-  { label: 'Heading', icon: 'templates' },
-  { label: 'Text', icon: 'lists' },
-  { label: 'Image', icon: 'media' },
-  { label: 'Button', icon: 'zap' },
-  { label: 'Divider', icon: 'menu' },
-  { label: 'Columns', icon: 'dashboard' },
-  { label: 'Spacer', icon: 'chevron-down' },
-  { label: 'Social', icon: 'star' },
-];
-
-/** Per-channel textarea placeholder copy. */
-export const PLACEHOLDER: Record<ChannelType, string> = {
-  email: '',
-  sms: 'Type your SMS… keep it short — 160 characters fit a single segment.',
-  whatsapp: 'Write your WhatsApp message. You can use *bold* and _italic_ formatting.',
-  voice: 'Write the script your recipients will hear when they answer the call.',
-};
-
-/** Per-channel best-practice tips shown in the left rail. */
-export const TIPS: Record<ChannelType, string[]> = {
-  email: [],
-  sms: [
-    'Keep it under 160 characters to fit one segment.',
-    'Always include a clear opt-out such as “Reply STOP”.',
-    'Use a short branded link instead of a long URL.',
-  ],
-  whatsapp: [
-    'Lead with the value in your very first line.',
-    'Add quick-reply buttons to drive responses.',
-    'Marketing templates must be pre-approved by Meta.',
-  ],
-  voice: [
-    'Write the way people speak — short, plain sentences.',
-    'Say who is calling in the first sentence.',
-    'Aim to keep the whole call under 30 seconds.',
-  ],
-};
-
-/** Per-channel fallback preview text when the message is empty. */
-export const PREVIEW_FALLBACK: Record<ChannelType, string> = {
-  email: '',
-  sms: 'Hi {{name}}, your order is on its way! Track it here: mldr.io/go',
-  whatsapp: 'Hi {{name}} 👋 thanks for shopping with us. Reply here if you need anything.',
-  voice: 'Hello {{name}}, this is a courtesy call from Maildrill about your recent order.',
-};
-
-/** Max characters shown in the device preview bubbles. */
-export const PREVIEW_MAX_CHARS = 190;
-
-/** Clip long copy for the side-panel device mockups (full text still used for TTS). */
-export function truncatePreview(text: string, max = PREVIEW_MAX_CHARS): string {
-  if (text.length <= max) return text;
-  return `${text.slice(0, max).trimEnd()}…`;
-}
 
 /** A TTS voice as Infobip's Voice APIs know it. */
 export type VoiceOption = {
@@ -139,3 +80,15 @@ export function voicesForLanguage(code: string | null | undefined): readonly Voi
 }
 
 export const SPEED_OPTS = ['Slow', 'Normal', 'Fast'];
+
+/** Playback rate applied per speed option (delivery mirrors via speechRate). */
+export const PREVIEW_RATES: Record<string, number> = { Slow: 0.85, Normal: 1, Fast: 1.15 };
+
+/** Sample values spoken in place of {{tokens}} during the voice preview. */
+export const TOKEN_SAMPLES: Record<string, string> = {
+  name: 'Alex',
+  first_name: 'Alex',
+  last_name: 'Rivera',
+  email: 'alex at example dot com',
+  phone: '5 5 5, 0 1 0 0',
+};

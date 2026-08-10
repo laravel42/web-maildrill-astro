@@ -16,9 +16,9 @@ import {
   feedHref,
   FEED_META,
   isStepDone,
+  KPI_META,
+  QUICK_ACTIONS,
   rangeSubtitle,
-  sparkSeries,
-  sparkTitle,
   type ActivityPoint,
   type Summary,
 } from './AppDashboard.logic';
@@ -206,12 +206,9 @@ export default function AppDashboard({
 
   const busy = bootLoading || rangeLoading;
   const channelTotal = channels.reduce((t, c) => t + c.sent, 0);
-  const inRange = daily.slice(-days);
   const kpis = buildKpis(summary, daily, days);
   const recent = buildRecent(campaigns);
   const getStarted = buildGetStarted(summary);
-  const volumeSpark = sparkSeries(inRange);
-  const sentInWindow = inRange.reduce((t, d) => t + d.sent, 0);
 
   return (
     <div className="screen" style={{ animation: 'fade .3s ease' }}>
@@ -239,23 +236,48 @@ export default function AppDashboard({
       </div>
 
       <div className={styles.kpis} aria-busy={busy}>
-        {kpis.map((k) => (
-          <div key={k.label} className={`akpi${busy ? ` ${styles.boxLoading}` : ''}`}>
-            <div className="akpi__label">{k.label}</div>
-            {busy ? (
-              <>
+        {kpis.map((k) => {
+          const meta = KPI_META[k.key];
+          if (busy) {
+            return (
+              <div key={k.key} className={`akpi ${styles.boxLoading}`}>
+                <div className={styles.kpiHead}>
+                  <div className="akpi__label">{k.label}</div>
+                </div>
                 <div className={`skeleton ${styles.skelValue}`} aria-hidden="true" />
                 <div className={`skeleton ${styles.skelDelta}`} aria-hidden="true" />
                 <span className="sr-only">Loading</span>
-              </>
-            ) : (
-              <>
+              </div>
+            );
+          }
+          const href =
+            meta.href === '/dashboard/analytics' ? `${meta.href}?range=${range}` : meta.href;
+          return (
+            <a key={k.key} href={href} className={`akpi ${styles.kpiLink}`}>
+              <div className={styles.kpiHead}>
+                <div className="akpi__label">{k.label}</div>
+                <Icon name="arrow-up-right" size={13} className={styles.kpiGo} />
+              </div>
+              <div className={styles.kpiMid}>
                 <div className="akpi__value tnum">{k.value}</div>
-                <div className={`akpi__delta akpi__delta--${k.tone} tnum`}>{k.delta}</div>
-              </>
-            )}
-          </div>
-        ))}
+                {k.spark.length >= 2 && (
+                  <span className={styles.kpiSpark} style={{ color: meta.color }}>
+                    <Sparkline
+                      series={k.spark}
+                      color="currentColor"
+                      format={k.sparkFormat}
+                      height={26}
+                    />
+                  </span>
+                )}
+              </div>
+              <div className={styles.kpiFoot}>
+                <span className={`akpi__delta akpi__delta--${k.tone} tnum`}>{k.delta}</span>
+                {k.context && <span className={styles.kpiCtx}>{k.context}</span>}
+              </div>
+            </a>
+          );
+        })}
       </div>
 
       <div className={styles.row}>
@@ -473,47 +495,27 @@ export default function AppDashboard({
       </div>
 
       <div className={styles.row} style={{ marginBottom: 0 }}>
-        <div
-          className={`acrd ${styles.spark}${busy ? ` ${styles.boxLoading}` : ''}`}
-          aria-busy={busy}
-        >
-          <div className={styles.perfHead}>
-            <h2 className="acrd__title">{sparkTitle(days)}</h2>
+        <div className={`acrd ${styles.quick}`}>
+          <h2 className="acrd__title" style={{ marginBottom: 13 }}>
+            Quick actions
+          </h2>
+          <div className={styles.qaGrid}>
+            {QUICK_ACTIONS.map((a) => (
+              <a
+                key={a.label}
+                href={a.href === '/dashboard/analytics' ? `${a.href}?range=${range}` : a.href}
+                className={styles.qaTile}
+              >
+                <span className={styles.qaIc} style={{ background: a.tint, color: a.color }}>
+                  <Icon name={a.icon} size={15} />
+                </span>
+                <span className={styles.qaText}>
+                  <span className={styles.qaLabel}>{a.label}</span>
+                  <span className={styles.qaDesc}>{a.desc}</span>
+                </span>
+              </a>
+            ))}
           </div>
-          {busy ? (
-            <div className={styles.sparkBody} aria-hidden="true">
-              <div className={styles.sparkStat}>
-                <div className={styles.sparkLbl}>Messages sent</div>
-                <div className={`skeleton ${styles.skelValue}`} />
-              </div>
-              <div className={`skeleton ${styles.skelChart}`} />
-            </div>
-          ) : (
-            <div className={styles.sparkBody}>
-              <div className={styles.sparkStat}>
-                <div className={styles.sparkLbl}>Messages sent</div>
-                <div className={`tnum ${styles.sparkVal}`}>
-                  {sentInWindow.toLocaleString('en-US')}
-                </div>
-                <div className={`tnum ${styles.sparkDelta}`} />
-              </div>
-              {volumeSpark.length < 2 && (
-                <p className={styles.cardEmpty} style={{ padding: '0 0 4px' }}>
-                  Daily send volume plots here once there is activity to chart.
-                </p>
-              )}
-              {volumeSpark.length >= 2 && (
-                <Sparkline
-                  className={styles.sparkSvg}
-                  series={volumeSpark}
-                  color="#4f46e5"
-                  format="number"
-                  height={70}
-                  area
-                />
-              )}
-            </div>
-          )}
         </div>
 
         <div

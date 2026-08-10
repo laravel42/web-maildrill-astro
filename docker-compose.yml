@@ -1,33 +1,81 @@
-# Full Maildrill stack: Astro SSR (web) + unified Fastify/BullMQ backend
-# (workers) + Postgres + Redis.
+# Full Maildrill stack — split backend processes (production-style), matching
+# workers/deploy daemon layout:
+#
+#   postgres / redis  → healthy first
+#   migrate           → one-shot schema apply
+#   product-api       → :3001  (/v1/* product, CRM, auth, campaigns, …)
+#   messaging-api     → :3002  (/v1/messages*, /webhooks/*, /admin/*)
+#   email-builder-api → :3003  (/api/* AI + images)
+#   workers           → BullMQ roles (no HTTP port)
+#   web               → :80 → Astro SSR on container :4321 (after APIs are ready)
 #
 #   docker compose up --build
-#     web     → http://localhost:4321
-#     workers → http://localhost:3001   (product/messaging/email-builder APIs + /webhooks/*)
+#     web               → http://localhost  (host :80)
+#     product-api       → http://localhost:3001
+#     messaging-api     → http://localhost:3002
+#     email-builder-api → http://localhost:3003
 #
-# Secrets (AUTH_SECRET, JWT_SECRET, INFOBIP_*, SMTP_*) come from the repo-root
-# `.env` (see .env.example) via env_file. JWT_SECRET must match between web and
-# workers — web mints tenant JWTs, product-api verifies them. Values set under
-# `environment:` below override `.env` so the in-network URLs always win.
+# Secrets and provider keys come from the repo-root `.env` (see .env.example)
+# via env_file. Values under `environment:` below override `.env` so in-network
+# URLs (and the Cloudflare SMTP port) always win.
 #
-# The containers run NODE_ENV=production, and workers/packages/config refuses
-# to boot with empty or change-me* values for JWT_SECRET and
-# WEBHOOK_INFOBIP_SECRET — set both in `.env` (openssl rand -base64 32).
+# Set PUBLIC_SITE_URL to the public origin browsers/emails/passkeys use
+# (default http://localhost on host port 80).
 #
-# workers/docker-compose.yml (db-only, `pnpm db:up`) stays for plain local dev;
-# this file is the whole stack. Neither publishes conflicting ports.
+# Required for NODE_ENV=production boots (backends refuse weak defaults):
+#   JWT_SECRET, WEBHOOK_INFOBIP_SECRET
+# Also set for a usable stack:
+#   AUTH_SECRET              — Auth.js sessions (web)
+#   SECURITY_ENCRYPTION_KEY  — TOTP/passkey secrets at rest; required
+#                              before anyone enables an authenticator
+#   SMTP_HOST/USER/PASS      — Cloudflare Email Service relay (login + welcome)
+#   WEBAUTHN_RP_ID/ORIGINS   — must match the public origin (passkeys)
+# Optional: CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_EMAIL_API_TOKEN (transactional
+# REST lane), INFOBIP_* (campaigns + sending domains), MEDIA_*/AWS_* .
+#
+# workers/docker-compose.yml (db-only, `pnpm db:up`) stays for plain local
+# Postgres/Redis; this file is the whole stack.
 
 name: maildrill
 
+x-app-build: &app-build
+  context: .
+  args:
+    API_BASE_URL: http://product-api:3001
+    MESSAGING_API_BASE_URL: http://messaging-api:3002
+    EB_API_BASE_URL: http://email-builder-api:3003
+    PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-}
+    PUBLIC_POSTHOG_PROJECT_TOKEN: ${PUBLIC_POSTHOG_PROJECT_TOKEN:-}
+    PUBLIC_POSTHOG_HOST: ${PUBLIC_POSTHOG_HOST:-https://us.i.posthog.com}
+
+x-backend-env: &backend-env
+  NODE_ENV: production
+  DATABASE_URL: postgres://maildrill:maildrill@postgres:5432/maildrill
+  REDIS_URL: redis://redis:6379
+  API_HOST: 0.0.0.0
+  API_PORT: '3002'
+  PRODUCT_API_PORT: '3001'
+  EB_PORT: '3003'
+  # Public URL used in magic links / welcome / login emails.
+  APP_URL: ${PUBLIC_SITE_URL:-http://localhost}
+  # Cloudflare Email Service SMTP is SMTPS on 465 only (overrides a stale
+  # SMTP_PORT=587 from older .env files).
+  SMTP_PORT: ${SMTP_PORT:-465}
+  # Passkeys: if WEBAUTHN_ORIGINS is unset, match APP_URL / PUBLIC_SITE_URL.
+  # Set WEBAUTHN_RP_ID in `.env` to the registrable domain (e.g. maildrill.net).
+  WEBAUTHN_ORIGINS: ${WEBAUTHN_ORIGINS:-${PUBLIC_SITE_URL:-http://localhost}}
+
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18.1-alpine
     environment:
       POSTGRES_USER: maildrill
       POSTGRES_PASSWORD: maildrill
       POSTGRES_DB: maildrill
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      # Postgres 18+ images expect the mount at /var/lib/postgresql (versioned
+      # subdirs), not the old /var/lib/postgresql/data path used by ≤16.
+      - pg18:/var/lib/postgresql
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U maildrill']
       interval: 5s
@@ -45,30 +93,35 @@ services:
       timeout: 3s
       retries: 10
 
-  workers:
+  # One-shot: apply Drizzle migrations before any app process starts.
+  migrate:
     image: maildrill-app
-    build: &app-build
-      context: .
-      args:
-        API_BASE_URL: http://workers:3001
-        PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-}
-        PUBLIC_POSTHOG_PROJECT_TOKEN: ${PUBLIC_POSTHOG_PROJECT_TOKEN:-}
-    command: sh -c "pnpm --dir workers db:migrate && exec pnpm --dir workers start"
+    build: *app-build
+    command: ['pnpm', '--dir', 'workers', 'db:migrate']
     env_file:
       - path: .env
         required: false
     environment:
-      NODE_ENV: production
-      DATABASE_URL: postgres://maildrill:maildrill@postgres:5432/maildrill
-      REDIS_URL: redis://redis:6379
-      PRODUCT_API_PORT: '3001'
-      # Public URL used in magic links / emails; defaults to the local web port.
-      APP_URL: ${PUBLIC_SITE_URL:-http://localhost:4321}
-    ports:
-      - '3001:3001'
+      <<: *backend-env
     depends_on:
       postgres:
         condition: service_healthy
+    restart: 'no'
+
+  product-api:
+    image: maildrill-app
+    build: *app-build
+    command: ['pnpm', '--dir', 'workers', 'start:product-api']
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      <<: *backend-env
+    ports:
+      - '3001:3001'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     healthcheck:
@@ -82,7 +135,90 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
+      start_period: 45s
+    restart: unless-stopped
+
+  messaging-api:
+    image: maildrill-app
+    build: *app-build
+    command: ['pnpm', '--dir', 'workers', 'start:api']
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      <<: *backend-env
+    ports:
+      - '3002:3002'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3002/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+    restart: unless-stopped
+
+  email-builder-api:
+    image: maildrill-app
+    build: *app-build
+    command: ['pnpm', '--dir', 'workers', 'start:email-builder-api']
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      <<: *backend-env
+      # EB reads CORS_ORIGINS; default allow the public site origin.
+      CORS_ORIGINS: ${CORS_ORIGINS:-${PUBLIC_SITE_URL:-http://localhost}}
+    ports:
+      - '3003:3003'
+    # No DB/Redis; still wait for migrate so the image is built once first.
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3003/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
       start_period: 30s
+    restart: unless-stopped
+
+  # BullMQ consumers (dispatch, events, publisher, scheduler, delivery, …).
+  workers:
+    image: maildrill-app
+    build: *app-build
+    command: ['pnpm', '--dir', 'workers', 'worker', 'all']
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      <<: *backend-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      # Campaign submit / webhooks enqueue into Redis; prefer APIs up first.
+      product-api:
+        condition: service_healthy
+      messaging-api:
+        condition: service_healthy
     restart: unless-stopped
 
   web:
@@ -94,14 +230,22 @@ services:
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0
+      # Astro still listens on 4321 inside the container; host maps :80 → public URL.
       PORT: '4321'
-      # Runtime override for code paths that read process.env (eb-proxy); the
-      # same value is baked into the SSR bundle at image build time.
-      API_BASE_URL: http://workers:3001
+      # Runtime overrides for BFF proxies (also baked as build args above).
+      API_BASE_URL: http://product-api:3001
+      MESSAGING_API_BASE_URL: http://messaging-api:3002
+      EB_API_BASE_URL: http://email-builder-api:3003
+      # Auth.js behind Docker / reverse proxies — trust X-Forwarded-* Host.
+      AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-true}
     ports:
-      - '4321:4321'
+      - '80:4321'
     depends_on:
-      workers:
+      product-api:
+        condition: service_healthy
+      messaging-api:
+        condition: service_healthy
+      email-builder-api:
         condition: service_healthy
     healthcheck:
       test:
@@ -114,9 +258,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 6
-      start_period: 15s
+      start_period: 20s
     restart: unless-stopped
 
 volumes:
-  pgdata:
+  pg18:
   redisdata:

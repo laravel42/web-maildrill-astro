@@ -80,6 +80,15 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
   const [toast, setToast] = useState<string | null>(null);
   // Create-only — edits save from the list drawer.
   const [editor, setEditor] = useState<{ mode: 'create' } | null>(null);
+
+  // Quick action: /dashboard/lists?new opens the create editor.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('new') == null) return;
+    setEditor({ mode: 'create' });
+    url.searchParams.delete('new');
+    window.history.replaceState(null, '', `${url.pathname}${url.search}`);
+  }, []);
   const [fieldsOpen, setFieldsOpen] = useState(false);
 
   const showToast = (msg: string) => {

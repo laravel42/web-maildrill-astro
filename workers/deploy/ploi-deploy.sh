@@ -120,7 +120,7 @@ check() {
 }
 
 echo "→ health checks"
-check "messaging api" http://127.0.0.1:3000/health/ready
+check "messaging api" http://127.0.0.1:3002/health/ready
 check "product api"   http://127.0.0.1:3001/health/ready
 
 echo "✓ deployed $(git rev-parse --short HEAD)"

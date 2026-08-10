@@ -16,6 +16,19 @@ const rootDir = fileURLToPath(new URL('.', import.meta.url));
 const appSrc = path.resolve(rootDir, 'src');
 const waStudioSrc = path.resolve(rootDir, 'packages/wa-template-studio/src');
 
+/**
+ * `astro build` prerenders routes through its own Vite pass, whose dep
+ * optimizer rewrites the cacheDir with a production dep set (observed
+ * 320 → 163 files). On the shared default `node_modules/.vite` that lands
+ * UNDER a running `astro dev` daemon: the daemon's in-memory metadata then
+ * points at chunk files that no longer exist, every lazy island 504s with
+ * "Outdated Optimize Dep", and only a server restart recovers — page reloads
+ * can't. Builds (including the Playwright e2e webServer's `npm run build`)
+ * therefore get their own cache directory. NODE_ENV can't drive this split:
+ * the root `.env` pins NODE_ENV=development.
+ */
+const isAstroBuild = process.argv.includes('build');
+
 const RESOLVE_EXTS = ['.tsx', '.ts', '.jsx', '.js'];
 
 function resolveWithExtensions(base: string): string | undefined {
@@ -99,6 +112,9 @@ export default defineConfig({
     }),
   ],
   vite: {
+    // Keep build-time dep optimization out of the dev daemon's cache (see
+    // isAstroBuild above).
+    cacheDir: isAstroBuild ? 'node_modules/.vite-build' : 'node_modules/.vite',
     // `@/` is resolved by waTemplateStudioAlias (resolveId + enforce: 'pre').
     // Do not use resolve.alias.customResolver — deprecated, removed in Vite 9.
     plugins: [waTemplateStudioAlias(), tailwindcss()],
@@ -129,6 +145,13 @@ export default defineConfig({
       ],
       include: [
         'infobip-rtc',
+        // Subscriber file import: SheetJS is lazy-loaded on first spreadsheet.
+        'xlsx',
+        // Emoji picker (SMS composer): lazy-loaded on first open.
+        '@emoji-mart/react',
+        'emoji-mart',
+        'wa-template-studio > @emoji-mart/react',
+        'wa-template-studio > emoji-mart',
         // Profile security: QR render is lazy-imported; the WebAuthn client
         // rides the statically-imported auth islands.
         'qrcode',
@@ -157,6 +180,27 @@ export default defineConfig({
         'wa-template-studio > tailwind-merge',
         'wa-template-studio > zod',
         'wa-template-studio > zustand',
+        // email-builder-standalone: MUI + tiptap + dnd (lazy-loaded island).
+        'email-builder-standalone > @mui/material',
+        'email-builder-standalone > @mui/icons-material',
+        'email-builder-standalone > @emotion/react',
+        'email-builder-standalone > @emotion/styled',
+        'email-builder-standalone > @emotion/cache',
+        'email-builder-standalone > @tiptap/core',
+        'email-builder-standalone > @tiptap/react',
+        'email-builder-standalone > @tiptap/react/menus',
+        'email-builder-standalone > @tiptap/starter-kit',
+        'email-builder-standalone > @tiptap/suggestion',
+        'email-builder-standalone > @tiptap/extension-color',
+        'email-builder-standalone > @tiptap/extension-placeholder',
+        'email-builder-standalone > @tiptap/extension-text-align',
+        'email-builder-standalone > @tiptap/extension-text-style',
+        'email-builder-standalone > react-dnd',
+        'email-builder-standalone > react-dnd-html5-backend',
+        'email-builder-standalone > react-colorful',
+        'email-builder-standalone > zustand',
+        'email-builder-standalone > i18next',
+        'email-builder-standalone > react-i18next',
       ],
     },
   },

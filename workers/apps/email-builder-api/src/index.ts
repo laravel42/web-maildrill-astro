@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './env.js';
 
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
@@ -38,7 +38,7 @@ app.get('/health', (_request, reply) => reply.send(emailBuilderHealth()));
 
 await app.register(emailBuilderRoutes);
 
-const port = Number(process.env.EB_PORT ?? process.env.PORT ?? 3100);
+const port = Number(process.env.EB_PORT ?? process.env.PORT ?? 3003);
 await app.listen({ port, host: '0.0.0.0' });
 console.log(`AI backend listening on http://localhost:${port}`);
 

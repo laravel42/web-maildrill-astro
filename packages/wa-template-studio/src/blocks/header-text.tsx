@@ -4,7 +4,7 @@ import { Heading1 } from 'lucide-react';
 
 import { Field } from '@/ui/field';
 import { Input } from '@/ui/input';
-import { Button } from '@/ui/button';
+import { InsertVariableButton, TextFormatBar } from '@/ui/text-format-bar';
 import { LIMITS } from '@/core/limits';
 import type { BlockPlugin, ValidationIssue } from '@/core/types';
 import { analyzeVariables, exampleRow, uniqueVariables, type VariableMap } from '@/core/variables';
@@ -93,15 +93,11 @@ export const headerTextPlugin: BlockPlugin<Data> = {
           />
         </Field>
         {vars.length === 0 && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="self-start"
-            onClick={() => onChange({ ...value, text: `${value.text}{{1}}` })}
-          >
-            Insert {'{{1}}'} variable
-          </Button>
+          <TextFormatBar>
+            <InsertVariableButton
+              onInsert={() => onChange({ ...value, text: `${value.text}{{1}}` })}
+            />
+          </TextFormatBar>
         )}
         {vars.map((n) => (
           <Field key={n} label={`Example for {{${n}}}`}>

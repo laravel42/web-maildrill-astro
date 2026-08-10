@@ -230,9 +230,10 @@ and gitignored.
   processes run as Ploi daemons behind nginx. Site script:
   [`../deploy/ploi-deploy.sh`](../deploy/ploi-deploy.sh); backend daemon layout and
   restart mechanics: [`../workers/deploy/README.md`](../workers/deploy/README.md).
-- **Docker** — [`../docker-compose.yml`](../docker-compose.yml) runs web + unified
-  workers + Postgres + Redis from one image (`../Dockerfile`); workers run
-  migrations on boot. Production mode requires strong `JWT_SECRET` and
+- **Docker** — [`../docker-compose.yml`](../docker-compose.yml) runs web + split
+  backends (product-api :3001, messaging :3002, email-builder :3003, BullMQ
+  workers) + Postgres + Redis from one image (`../Dockerfile`); migrate runs
+  once before APIs start. Production mode requires strong `JWT_SECRET` and
   `WEBHOOK_INFOBIP_SECRET` values in the root `.env`.
 
 ---

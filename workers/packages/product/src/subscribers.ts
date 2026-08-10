@@ -105,25 +105,32 @@ export async function upsertSubscriber(input: UpsertSubscriberInput): Promise<Su
   return rows[0]!;
 }
 
+export type ImportSubscriberRow = Omit<UpsertSubscriberInput, 'tenantId'>;
+
 export interface ImportSubscribersResult {
   created: number;
   updated: number;
   failed: number;
-  /** Per-row failures, capped — the summary counts stay complete regardless. */
+  /** Per-row detail, capped — `failed` stays a complete count regardless. */
   errors: { index: number; email: string; error: string }[];
 }
 
 const IMPORT_ERRORS_CAP = 50;
 
 /**
- * Bulk upsert for file imports: same merge semantics as upsertSubscriber, one
- * row at a time so a bad row fails alone, with optional list membership.
- * Created/updated is judged against the emails present before the batch ran.
+ * Bulk upsert for file imports. Rows share upsertSubscriber's merge semantics
+ * (upsert by email, never clobber existing values with null); every imported
+ * subscriber also joins `listIds`. A failing row is reported, not fatal — the
+ * rest of the batch still lands.
+ *
+ * Created vs updated is judged against the emails present before the batch
+ * ran, so re-importing the same file reports honestly instead of counting
+ * every row as new.
  */
 export async function importSubscribers(
   tenantId: string,
-  rows: Omit<UpsertSubscriberInput, 'tenantId'>[],
-  listId?: string,
+  rows: ImportSubscriberRow[],
+  listIds: string[] = [],
 ): Promise<ImportSubscribersResult> {
   const emails = [...new Set(rows.map((r) => r.email.trim().toLowerCase()))];
   const existing = new Set(
@@ -145,14 +152,14 @@ export async function importSubscribers(
         result.created += 1;
         existing.add(sub.email);
       }
-      if (listId) await addToList(tenantId, listId, sub.id);
-    } catch (err) {
+      for (const listId of listIds) await addToList(tenantId, listId, sub.id);
+    } catch (e) {
       result.failed += 1;
       if (result.errors.length < IMPORT_ERRORS_CAP) {
         result.errors.push({
           index,
           email: row.email,
-          error: err instanceof Error ? err.message : 'could not import row',
+          error: e instanceof Error ? e.message : 'import_failed',
         });
       }
     }

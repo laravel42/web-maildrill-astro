@@ -921,6 +921,28 @@ export const apiKeys = pgTable(
   ],
 );
 
+/**
+ * Workspace ownership of Infobip sending domains. Infobip's domain API is
+ * account-level (one registration per domain name), so we keep a local
+ * tenant → domain map and filter every list/mutate through it. Domain names
+ * are unique globally: only one workspace can claim a given domain.
+ */
+export const emailDomains = pgTable(
+  'email_domains',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    domainName: text('domain_name').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('email_domains_name_uq').on(t.domainName),
+    index('email_domains_tenant_idx').on(t.tenantId),
+  ],
+);
+
 // ---------------------------------------------------------------------------
 // Billing: wallet + immutable ledger + reservations + payment provider state
 //
