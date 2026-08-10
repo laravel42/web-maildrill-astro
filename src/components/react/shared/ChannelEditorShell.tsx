@@ -18,6 +18,8 @@ type Props = {
   onLanguageChange?: (value: string) => void;
   getLanguageFlagSrc?: (code: string) => string;
   onBack: () => void;
+  /** Sends a real test message to the signed-in user; button hidden when omitted. */
+  onSendTest?: () => void;
   onSaveDraft: () => void;
   children: ReactNode;
   toast?: ReactNode;

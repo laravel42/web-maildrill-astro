@@ -26,6 +26,8 @@ type Props = {
   /** Square flag image URL for a language code. */
   getLanguageFlagSrc?: (code: string) => string;
   onBack: () => void;
+  /** Sends a real test message to the signed-in user; button hidden when omitted. */
+  onSendTest?: () => void;
   onSaveDraft: () => void;
 };
 
@@ -152,6 +154,7 @@ export default function EditorHeader({
   onLanguageChange,
   getLanguageFlagSrc,
   onBack,
+  onSendTest,
   onSaveDraft,
 }: Props) {
   const meta = CHANNEL[channel];
@@ -262,6 +265,12 @@ export default function EditorHeader({
           <span className={`${styles.dot} ${status === 'saving' ? styles.dotSaving : ''}`} />
           {STATUS_LABEL[status]}
         </span>
+        {onSendTest && (
+          <button type="button" className={styles.sbtn} onClick={onSendTest}>
+            <Icon name="send" size={14} />
+            Send test
+          </button>
+        )}
       </div>
       {nameError && (
         /* Bottom badge in the app's toast position, in its alert tone. Sits

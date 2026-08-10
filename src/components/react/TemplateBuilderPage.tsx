@@ -60,6 +60,18 @@ export default function TemplateBuilderPage({
   const name = template?.name ?? presetName ?? null;
   const category = template?.category ?? presetCategory ?? undefined;
 
+  /* Real test send to the addresses picked in the builders' recipient dialog,
+     via the same content assembly campaigns use. The builders flush before
+     calling, so the row always exists and reflects the canvas. */
+  const sendTest = async (to: string[]): Promise<{ to: string[] }> => {
+    if (!idRef.current) throw new Error('Save the template before sending a test');
+    try {
+      return await api.post<{ to: string[] }>(`templates/${idRef.current}/test-send`, { to });
+    } catch (e) {
+      throw new Error(e instanceof ApiError ? e.message : 'Could not send test', { cause: e });
+    }
+  };
+
   if (channel === 'email') {
     return (
       <LazyBoundary label="the email editor" onClose={close}>
@@ -80,6 +92,7 @@ export default function TemplateBuilderPage({
                 language,
               })
             }
+            onSendTest={live ? sendTest : undefined}
           />
         </Suspense>
       </LazyBoundary>

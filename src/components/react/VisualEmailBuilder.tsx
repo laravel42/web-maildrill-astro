@@ -17,6 +17,7 @@ import {
 } from '@/lib/app/template-language';
 import Icon from './Icon';
 import MediaPickerModal, { type MediaPickerImage } from './shared/MediaPickerModal';
+import SendTestModal from './shared/SendTestModal';
 import { useToast } from './shared/useToast';
 import ChannelEditorShell, { shellStyles } from './shared/ChannelEditorShell';
 import { CHANNEL } from './shared/channels';
@@ -53,6 +54,8 @@ type Props = {
   kind?: 'template' | 'campaign';
   onClose: () => void;
   onSave: (value: VisualEmailBuilderSave) => void | Promise<void>;
+  /** Sends the saved template to the given recipients; host owns the API call. */
+  onSendTest?: (to: string[]) => Promise<{ to: string[] }>;
 };
 
 export default function VisualEmailBuilder({
@@ -63,6 +66,7 @@ export default function VisualEmailBuilder({
   kind = 'template',
   onClose,
   onSave,
+  onSendTest,
 }: Props) {
   const builderRef = useRef<EmailBuilderRef>(null);
   const [Builder, setBuilder] = useState<BuilderComponent | null>(null);
@@ -78,6 +82,7 @@ export default function VisualEmailBuilder({
   const [mergeTags, setMergeTags] = useState<MergeTagGroup>(() => buildMergeTagMenu([]));
   // Media-library picker behind the image panel's "Browse gallery" button.
   const [mediaOpen, setMediaOpen] = useState(false);
+  const [testOpen, setTestOpen] = useState(false);
   const { toast, show } = useToast();
 
   // The builder's image/background inputs dispatch `toggle-media-library` when
@@ -199,16 +204,17 @@ export default function VisualEmailBuilder({
     return () => timers.forEach(clearTimeout);
   }, [Builder, loadError]);
 
-  // Esc closes the media picker when open, else the editor.
+  // Esc closes the media picker or test dialog when open, else the editor.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       if (mediaOpen) setMediaOpen(false);
+      else if (testOpen) setTestOpen(false);
       else onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose, mediaOpen]);
+  }, [onClose, mediaOpen, testOpen]);
 
   // Persist current content (throws on failure so autosave/flush can react).
   const persist = async () => {
@@ -230,6 +236,21 @@ export default function VisualEmailBuilder({
   const handleSaveDraft = async () => {
     const ok = await flush();
     show(ok ? `“${title.trim() || 'Untitled template'}” saved` : 'Could not save.');
+  };
+
+  // Save first so the test carries exactly what's on the canvas. Errors throw
+  // so the recipient dialog can show them inline.
+  const handleSendTest = async (to: string[]) => {
+    if (!onSendTest) return;
+    const ok = await flush();
+    if (!ok) throw new Error('Could not save before sending');
+    const res = await onSendTest(to);
+    setTestOpen(false);
+    show(
+      res.to.length > 1
+        ? `Test email queued to ${res.to.length} recipients`
+        : `Test email queued to ${res.to[0]}`,
+    );
   };
 
   return (
@@ -264,6 +285,7 @@ export default function VisualEmailBuilder({
           : undefined
       }
       onBack={onClose}
+      onSendTest={onSendTest ? () => setTestOpen(true) : undefined}
       onSaveDraft={() => void handleSaveDraft()}
       toast={
         toast ? (
@@ -332,6 +354,9 @@ export default function VisualEmailBuilder({
       )}
       {mediaOpen && (
         <MediaPickerModal onPick={pickMediaImage} onClose={() => setMediaOpen(false)} />
+      )}
+      {testOpen && onSendTest && (
+        <SendTestModal onClose={() => setTestOpen(false)} onSend={handleSendTest} />
       )}
     </ChannelEditorShell>
   );
