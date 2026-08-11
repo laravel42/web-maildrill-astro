@@ -3,6 +3,7 @@
 #
 #   postgres / redis  → healthy first
 #   migrate           → one-shot schema apply
+#   seed              → one-shot demo data (opt-in, `--profile seed`)
 #   product-api       → :3001  (/v1/* product, CRM, auth, campaigns, …)
 #   messaging-api     → :3002  (/v1/messages*, /webhooks/*, /admin/*)
 #   email-builder-api → :3003  (/api/* AI + images)
@@ -10,6 +11,7 @@
 #   web               → :80 → Astro SSR on container :4321 (after APIs are ready)
 #
 #   docker compose up --build
+#   docker compose --profile seed run --rm seed     # demo data (destructive)
 #     web               → http://localhost  (host :80)
 #     product-api       → http://localhost:3001
 #     messaging-api     → http://localhost:3002
@@ -29,6 +31,10 @@
 #   SECURITY_ENCRYPTION_KEY  — TOTP/passkey secrets at rest; required
 #                              before anyone enables an authenticator
 #   SMTP_HOST/USER/PASS      — Cloudflare Email Service relay (login + welcome)
+#   AWS_REGION, MEDIA_S3_BUCKET, MEDIA_CDN_DOMAIN — media library (uploads 501
+#                              without all three); AWS_ACCESS_KEY_ID/
+#                              AWS_SECRET_ACCESS_KEY unless the host supplies
+#                              credentials another way (IAM role, SSO)
 #   WEBAUTHN_RP_ID/ORIGINS   — must match the public origin (passkeys)
 # Optional: CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_EMAIL_API_TOKEN (transactional
 # REST lane), INFOBIP_* (campaigns + sending domains), MEDIA_*/AWS_* .
@@ -56,6 +62,21 @@ x-backend-env: &backend-env
   API_PORT: '3002'
   PRODUCT_API_PORT: '3001'
   EB_PORT: '3003'
+  # --- Media library: S3 storage + CloudFront delivery ---
+  # Only @maildrill/product talks to S3 (presigned upload/delete, thumbnails,
+  # the Unsplash seeder), so these ride the backend env and are deliberately
+  # absent from `web` — the BFF proxies uploads through product-api and never
+  # holds AWS credentials. Declared here rather than left to env_file so the
+  # dependency is visible and can be overridden per environment; each falls
+  # back to the repo-root `.env`. Media stays disabled unless AWS_REGION,
+  # MEDIA_S3_BUCKET and MEDIA_CDN_DOMAIN are all set (config.media.configured),
+  # in which case uploads 501 and the image seeder skips with a printed reason.
+  AWS_REGION: ${AWS_REGION:-}
+  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+  MEDIA_S3_BUCKET: ${MEDIA_S3_BUCKET:-}
+  MEDIA_CDN_DOMAIN: ${MEDIA_CDN_DOMAIN:-}
+  MEDIA_MAX_BYTES: ${MEDIA_MAX_BYTES:-15728640}
   # Public URL used in magic links / welcome / login emails.
   APP_URL: ${PUBLIC_SITE_URL:-http://localhost}
   # Cloudflare Email Service SMTP is SMTPS on 465 only (overrides a stale
@@ -106,6 +127,38 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    restart: 'no'
+
+  # One-shot, OPT-IN: fill an empty stack with a usable dev workspace.
+  #
+  #   docker compose --profile seed run --rm seed
+  #
+  # Behind a profile because it is destructive: seedDev() keeps the hardcoded
+  # dev tenant and DELETES every other tenant before reseeding, so it must
+  # never ride along with a plain `docker compose up`. For the same reason the
+  # seeder refuses to run when NODE_ENV=production (which the image sets), so
+  # this service overrides it — that override is also the safety interlock:
+  # point it at a production database and the seeder aborts instead of wiping.
+  #
+  # Runs everything `pnpm db:seed` does: reset + six months of demo data, the
+  # billing catalog, gallery email templates, and the Unsplash media library
+  # (skipped with a printed reason when UNSPLASH_API_KEY or media storage is
+  # unset). Append flags after the command, e.g. `... run --rm seed
+  # pnpm --dir workers db:seed --no-images`.
+  seed:
+    image: maildrill-app
+    build: *app-build
+    profiles: ['seed']
+    command: ['pnpm', '--dir', 'workers', 'db:seed']
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      <<: *backend-env
+      NODE_ENV: development
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     restart: 'no'
 
   product-api:
@@ -180,7 +233,10 @@ services:
       # EB reads CORS_ORIGINS; default allow the public site origin.
       CORS_ORIGINS: ${CORS_ORIGINS:-${PUBLIC_SITE_URL:-http://localhost}}
     ports:
-      - '3003:3003'
+      # Host side only — the container port stays 3003 (other services and the
+      # healthcheck address it by name). Override when something else on the
+      # host already publishes 3003: EB_HOST_PORT=3103 docker compose up
+      - '${EB_HOST_PORT:-3003}:3003'
     # No DB/Redis; still wait for migrate so the image is built once first.
     depends_on:
       migrate:
@@ -236,6 +292,14 @@ services:
       API_BASE_URL: http://product-api:3001
       MESSAGING_API_BASE_URL: http://messaging-api:3002
       EB_API_BASE_URL: http://email-builder-api:3003
+      # `env_file` hands the whole `.env` to every service, which would put the
+      # AWS keys inside the only internet-facing container for no reason: the
+      # BFF proxies uploads to product-api and never signs an S3 request
+      # itself. env_file cannot exclude keys, so blank them here — `environment`
+      # wins over `env_file`. Media keeps working; the signing happens in
+      # product-api, which does hold the credentials.
+      AWS_ACCESS_KEY_ID: ''
+      AWS_SECRET_ACCESS_KEY: ''
       # Auth.js behind Docker / reverse proxies — trust X-Forwarded-* Host.
       AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-true}
     ports:

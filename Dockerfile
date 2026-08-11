@@ -2,6 +2,7 @@
 # One image for every runtime process (command chosen per Compose service):
 #   web               → node dist/server/entry.mjs   (Astro SSR)
 #   migrate           → pnpm --dir workers db:migrate
+#   seed              → pnpm --dir workers db:seed   (opt-in compose profile)
 #   product-api       → pnpm --dir workers start:product-api   (:3001)
 #   messaging-api     → pnpm --dir workers start:api           (:3002)
 #   email-builder-api → pnpm --dir workers start:email-builder-api (:3003)
@@ -9,7 +10,8 @@
 #
 # Backends run uncompiled via tsx; the Astro server keeps runtime deps external
 # (nodemailer, sharp), so both need the full workspace + node_modules — hence a
-# single image. Compose runs migrate once before APIs/workers start.
+# single image. Compose runs migrate once before APIs/workers start; the seed
+# service reuses the image behind a profile (it is destructive — see compose).
 
 FROM node:24-bookworm-slim
 
