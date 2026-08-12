@@ -99,8 +99,8 @@ test.describe('campaigns', () => {
   test('board walks every channel tab', async ({ page }) => {
     await gotoApp(page, '/dashboard/campaigns');
     await expect(page.getByRole('heading', { level: 1, name: 'Campaigns' })).toBeVisible();
-    // Tabs split by channel; status is a toolbar filter.
-    for (const channel of ['All', 'Email', 'SMS', 'WhatsApp', 'Voice']) {
+    // Tabs split by channel; status is a toolbar filter. No "All" tab.
+    for (const channel of ['Email', 'SMS', 'WhatsApp', 'Voice']) {
       await selectTab(page, channel);
     }
     await expect(page.getByRole('button', { name: 'Status', exact: true })).toBeVisible();

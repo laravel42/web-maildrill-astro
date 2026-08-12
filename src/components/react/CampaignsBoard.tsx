@@ -27,13 +27,6 @@ import CampaignWizard from './CampaignWizard';
 import TemplatePreview, { MessagePreview } from './shared/TemplatePreview';
 import { CHANNEL } from './shared/channels';
 import { ChannelPill, ListPill } from './shared/CampaignPills';
-import {
-  buildEventRateSeries,
-  historySparkPoints,
-  pickSpark,
-  sameChannelHistory,
-  type RecipientEvent,
-} from './shared/campaign-events';
 import StatusBadge from './shared/StatusBadge';
 import { ago } from './shared/time';
 import { useToast } from './shared/useToast';
@@ -46,7 +39,6 @@ import {
 } from './CampaignsBoard.logic';
 import type { SortKey } from './CampaignsBoard.types';
 import { visiblePageNumbers } from './shared/pagination';
-import Sparkline, { type SparkPoint } from './shared/Sparkline';
 import { routes } from '@/config/routes';
 import styles from './CampaignsBoard.module.css';
 
@@ -86,7 +78,7 @@ export default function CampaignsBoard({
   // Live workspace campaigns from SSR when provided; else the fixture preview.
   const live = initial !== undefined;
   const [campaigns, setCampaigns] = useState<Campaign[]>(initial ?? mockCampaigns);
-  const [tab, setTab] = useState<ChannelType | 'all'>('all');
+  const [tab, setTab] = useState<ChannelType>('email');
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Set<CampaignStatus>>(new Set());
   const [opensSel, setOpensSel] = useState<Set<string>>(new Set());
@@ -135,11 +127,50 @@ export default function CampaignsBoard({
     window.history.replaceState(null, '', `${url.pathname}${url.search}`);
   }, []);
 
-  const counts = useMemo(() => {
-    const c: Record<string, number> = { all: campaigns.length };
-    for (const t of CHANNEL_TABS) {
-      if (t !== 'all') c[t] = campaigns.filter((x) => x.channel === t).length;
+  /* What the selected channel can report — drives which filters exist, the
+     same source the table columns and drawer KPIs read. */
+  const tabCfg = channelReportConfig(tab);
+  /* Rate columns exist only where the channel reports them; otherwise the
+     table carried an Open and a Click column of dashes on every row. */
+  const showOpenCol = tabCfg.rateCards.some((r) => r === 'open' || r === 'seen');
+  const showClickCol = tabCfg.rateCards.includes('click');
+  // Every channel reports a failure outcome — a bounce on email, a failed
+  // send everywhere else — so the column is always present, only relabelled.
+  const failLabel = tabCfg.kpis.includes('bounced') ? 'Bounced' : 'Failed';
+  const gridClass = `${styles.grid}${showOpenCol || showClickCol ? '' : ` ${styles.gridPlain}`}`;
+
+  /* A rate filter that disappears must stop filtering with it: leaving an
+     Opens selection active while switching to SMS would silently empty the
+     table with no visible control to undo it. */
+  useEffect(() => {
+    if (!tabCfg.rateCards.some((r) => r === 'open' || r === 'seen')) setOpensSel(new Set());
+    if (!tabCfg.rateCards.includes('click')) setClicksSel(new Set());
+    setOpenFilter(null);
+  }, [tab, tabCfg]);
+
+  /* Only statuses that exist in this channel, with counts. Offering "Paused"
+     on a channel with no paused campaign gives a control whose every use
+     empties the table. */
+  const statusCounts = useMemo(() => {
+    const inChannel = campaigns.filter((c) => c.channel === tab);
+    const c: Record<string, number> = {};
+    for (const st of STATUS_FILTERS) {
+      const n = inChannel.filter((x) => x.status === st).length;
+      if (n > 0) c[st] = n;
     }
+    return c;
+  }, [campaigns, tab]);
+
+useEffect(() => {
+    setStatusFilter((prev) => {
+      const next = new Set([...prev].filter((st) => st in statusCounts));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [statusCounts]);
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const t of CHANNEL_TABS) c[t] = campaigns.filter((x) => x.channel === t).length;
     return c;
   }, [campaigns]);
 
@@ -157,7 +188,7 @@ export default function CampaignsBoard({
 
   const rows = useMemo(() => {
     let list = campaigns.filter((c) => {
-      if (tab !== 'all' && c.channel !== tab) return false;
+      if (c.channel !== tab) return false;
       if (statusFilter.size > 0 && !statusFilter.has(c.status)) return false;
       if (opensSel.size && !opensSel.has(rateBucket((c.openRate ?? 0) * 100))) return false;
       if (clicksSel.size && !clicksSel.has(rateBucket((c.clickRate ?? 0) * 100))) return false;
@@ -537,23 +568,40 @@ export default function CampaignsBoard({
 
       <div className={`atable ${styles.card}`}>
         {/* channel tabs — status is the toolbar filter */}
-        <div className={`${styles.tabs} atabs`} role="tablist" aria-label="Campaign channel">
-          {CHANNEL_TABS.map((t) => (
-            <button
-              key={t}
-              type="button"
-              role="tab"
-              aria-selected={tab === t}
-              className={`atab${tab === t ? ' is-active' : ''}`}
-              onClick={() => {
-                setTab(t);
-                setSelected(new Set());
-              }}
-            >
-              {t === 'all' ? 'All' : CHANNEL[t].label}
-              <span className="atab__count tnum">{counts[t] ?? 0}</span>
-            </button>
-          ))}
+        <div className={styles.tabs} role="tablist" aria-label="Campaign channel">
+          {CHANNEL_TABS.map((t) => {
+            const active = tab === t;
+            const m = CHANNEL[t];
+            return (
+              <button
+                key={t}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                className={`${styles.tab}${active ? ' is-active' : ''}`}
+                style={{
+                  color: active ? 'var(--text)' : 'var(--muted)',
+                  borderBottomColor: active ? m.color : 'transparent',
+                }}
+                onClick={() => {
+                  setTab(t);
+                  setSelected(new Set());
+                }}
+              >
+                <Icon name={m.icon} size={12} />
+                {m.label}
+                <span
+                  className={`${styles.tabcount} tnum`}
+                  style={{
+                    background: active ? m.tint : 'var(--surface2)',
+                    color: active ? m.color : 'var(--muted)',
+                  }}
+                >
+                  {counts[t] ?? 0}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* toolbar: controls on row 1; active filter chips always on their own row */}
@@ -595,14 +643,15 @@ export default function CampaignsBoard({
                     onClick={() => setOpenFilter(null)}
                   />
                   <div className={styles.filterpop} style={{ animation: 'pop .14s ease' }}>
-                    {STATUS_FILTERS.map((st) => (
+                    {STATUS_FILTERS.filter((st) => st in statusCounts).map((st) => (
                       <label key={st} className={styles.filteropt}>
                         <input
                           type="checkbox"
                           checked={statusFilter.has(st)}
                           onChange={() => toggleStatus(st)}
                         />
-                        <span className={`astatus astatus--${st}`}>{STATUS_LABEL[st]}</span>
+                        <span className={`cstat cstat--${st}`}>{STATUS_LABEL[st]}</span>
+                        <span className={`${styles.filtercount} tnum`}>{statusCounts[st]}</span>
                       </label>
                     ))}
                     {statusFilter.size > 0 && (
@@ -621,39 +670,47 @@ export default function CampaignsBoard({
                 </>
               )}
             </div>
-            <ColFilter
-              label="Opens"
-              icon="eye"
-              options={RATE_BUCKETS}
-              selected={opensSel}
-              onToggle={toggleSet(setOpensSel)}
-              onClear={() => {
-                setOpensSel(new Set());
-                resetPage();
-              }}
-              open={openFilter === 'opens'}
-              onOpenToggle={() => setOpenFilter((o) => (o === 'opens' ? null : 'opens'))}
-            />
-            <ColFilter
-              label="Clicks"
-              icon="target"
-              options={RATE_BUCKETS}
-              selected={clicksSel}
-              onToggle={toggleSet(setClicksSel)}
-              onClear={() => {
-                setClicksSel(new Set());
-                resetPage();
-              }}
-              open={openFilter === 'clicks'}
-              onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
-            />
+            {/* Rate filters exist only where the channel reports the rate.
+                Offering "Opens" on SMS would filter every row to nothing. */}
+            {tabCfg.rateCards.some((r) => r === 'open' || r === 'seen') && (
+              <ColFilter
+                label={tabCfg.openLabel === 'Seen' ? 'Seen' : 'Opens'}
+                icon="eye"
+                options={RATE_BUCKETS}
+                selected={opensSel}
+                onToggle={toggleSet(setOpensSel)}
+                onClear={() => {
+                  setOpensSel(new Set());
+                  resetPage();
+                }}
+                open={openFilter === 'opens'}
+                onOpenToggle={() => setOpenFilter((o) => (o === 'opens' ? null : 'opens'))}
+              />
+            )}
+            {tabCfg.rateCards.includes('click') && (
+              <ColFilter
+                label="Clicks"
+                icon="target"
+                options={RATE_BUCKETS}
+                selected={clicksSel}
+                onToggle={toggleSet(setClicksSel)}
+                onClear={() => {
+                  setClicksSel(new Set());
+                  resetPage();
+                }}
+                open={openFilter === 'clicks'}
+                onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
+              />
+            )}
           </div>
           <FilterChipsRow
             chips={[
               ...[...statusFilter].map((st) => ({
                 key: `status:${st}`,
-                label: `Status: ${STATUS_LABEL[st]}`,
+                label: STATUS_LABEL[st],
                 onRemove: () => toggleStatus(st),
+                // Same fill as the menu badge that selected it.
+                className: `cstat cstat--${st}`,
               })),
               ...[...opensSel].map((b) => ({
                 key: `opens:${b}`,
@@ -709,7 +766,7 @@ export default function CampaignsBoard({
         )}
 
         {/* table head */}
-        <div className={`athead ${styles.grid}`}>
+        <div className={`athead ${gridClass}`}>
           <div className={styles.check}>
             <button
               type="button"
@@ -744,21 +801,35 @@ export default function CampaignsBoard({
           <div className={styles.colCenter}>
             <button
               type="button"
-              className={sort.key === 'openRate' ? 'is-active' : undefined}
-              onClick={() => toggleSort('openRate')}
+              className={sort.key === 'failed' ? 'is-active' : undefined}
+              onClick={() => toggleSort('failed')}
             >
-              Open <span className="tnum">{sortArrow('openRate')}</span>
+              {failLabel} <span className="tnum">{sortArrow('failed')}</span>
             </button>
           </div>
-          <div className={styles.colCenter}>
-            <button
-              type="button"
-              className={sort.key === 'clickRate' ? 'is-active' : undefined}
-              onClick={() => toggleSort('clickRate')}
-            >
-              Click <span className="tnum">{sortArrow('clickRate')}</span>
-            </button>
-          </div>
+          {showOpenCol && (
+            <div className={styles.colCenter}>
+              <button
+                type="button"
+                className={sort.key === 'openRate' ? 'is-active' : undefined}
+                onClick={() => toggleSort('openRate')}
+              >
+                {tabCfg.openLabel === 'Seen' ? 'Seen' : 'Open'}{' '}
+                <span className="tnum">{sortArrow('openRate')}</span>
+              </button>
+            </div>
+          )}
+          {showClickCol && (
+            <div className={styles.colCenter}>
+              <button
+                type="button"
+                className={sort.key === 'clickRate' ? 'is-active' : undefined}
+                onClick={() => toggleSort('clickRate')}
+              >
+                Click <span className="tnum">{sortArrow('clickRate')}</span>
+              </button>
+            </div>
+          )}
           <div className={styles.colCenter}>
             <button
               type="button"
@@ -776,7 +847,7 @@ export default function CampaignsBoard({
           pageRows.map((c) => (
             <div
               key={c.id}
-              className={`atrow ${styles.grid}${selected.has(c.id) ? ' is-selected' : ''}`}
+              className={`atrow ${gridClass}${selected.has(c.id) ? ' is-selected' : ''}`}
               onClick={() => setOpenId(c.id)}
               role="button"
               tabIndex={0}
@@ -816,22 +887,23 @@ export default function CampaignsBoard({
               <div className={`tnum ${styles.muted3} ${styles.colCenter}`}>
                 {c.recipients.toLocaleString('en-US')}
               </div>
-              <div className={`tnum ${styles.muted3} ${styles.colCenter}`}>
-                {channelReportConfig(c.channel).rateCards.some((r) => r === 'open' || r === 'seen')
-                  ? c.openRate != null
-                    ? `${Math.round(c.openRate * 100)}%`
-                    : '—'
-                  : '—'}
+              <div
+                className={`tnum ${styles.colCenter} ${c.failed > 0 ? styles.fail : styles.muted3}`}
+              >
+                {c.failed.toLocaleString('en-US')}
               </div>
-              <div className={`tnum ${styles.muted3} ${styles.colCenter}`}>
-                {/* A channel that cannot report the metric shows a dash, not 0% —
-                    zero would read as "nobody opened it" rather than "never measured". */}
-                {channelReportConfig(c.channel).rateCards.includes('click')
-                  ? c.clickRate != null
-                    ? `${Math.round(c.clickRate * 100)}%`
-                    : '—'
-                  : '—'}
-              </div>
+              {/* Every row in the table is the selected channel, so the column
+                  itself is present or absent — no per-row dashes needed. */}
+              {showOpenCol && (
+                <div className={`tnum ${styles.muted3} ${styles.colCenter}`}>
+                  {c.openRate != null ? `${Math.round(c.openRate * 100)}%` : '—'}
+                </div>
+              )}
+              {showClickCol && (
+                <div className={`tnum ${styles.muted3} ${styles.colCenter}`}>
+                  {c.clickRate != null ? `${Math.round(c.clickRate * 100)}%` : '—'}
+                </div>
+              )}
               <div className={`${styles.muted} ${styles.colCenter}`}>{ago(c.updatedAt)}</div>
             </div>
           ))
@@ -893,7 +965,6 @@ export default function CampaignsBoard({
       {open && (
         <CampaignDrawer
           campaign={open}
-          history={sameChannelHistory(campaigns, open)}
           listColor={listColorFor(open)}
           live={live}
           onClose={() => setOpenId(null)}
@@ -1042,7 +1113,6 @@ function CampaignPreview({ campaign, live }: { campaign: Campaign; live: boolean
 
 function CampaignDrawer({
   campaign,
-  history,
   listColor,
   live,
   onClose,
@@ -1052,7 +1122,6 @@ function CampaignDrawer({
   onDelete,
 }: {
   campaign: Campaign;
-  history: Campaign[];
   listColor?: string;
   live: boolean;
   onClose: () => void;
@@ -1068,120 +1137,63 @@ function CampaignDrawer({
   const cto =
     campaign.openRate && campaign.clickRate ? (campaign.clickRate / campaign.openRate) * 100 : null;
 
-  const [events, setEvents] = useState<RecipientEvent[]>([]);
-  useEffect(() => {
-    if (!live || !showReport) return;
-    let cancelled = false;
-    api
-      .get<{ data: RecipientEvent[] }>(`campaigns/${campaign.id}/messages`)
-      .then((res) => {
-        if (!cancelled) setEvents(res.data ?? []);
-      })
-      .catch(() => {
-        /* keep empty sparks on failure */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [live, showReport, campaign.id]);
 
-  const eventSeries = buildEventRateSeries(events, campaign.recipients, campaign.channel);
-  const historySeries = {
-    delivery: historySparkPoints(history, (c) =>
-      c.recipients > 0 ? (c.delivered / c.recipients) * 100 : null,
-    ),
-    open: historySparkPoints(history, (c) => (c.openRate != null ? c.openRate * 100 : null)),
-    click: historySparkPoints(history, (c) => (c.clickRate != null ? c.clickRate * 100 : null)),
-    unsub: historySparkPoints(history, (c) =>
-      c.recipients > 0 ? (c.unsubscribed / c.recipients) * 100 : null,
-    ),
-    recipients: historySparkPoints(history, (c) => c.recipients),
-    failed: historySparkPoints(history, (c) => c.failed),
-    unsubCount: historySparkPoints(history, (c) => c.unsubscribed),
-    cto: historySparkPoints(history, (c) =>
-      c.openRate && c.clickRate ? (c.clickRate / c.openRate) * 100 : null,
-    ),
-  };
-  const openPct = campaign.openRate != null ? campaign.openRate * 100 : 0;
-  const clickPct = campaign.clickRate != null ? campaign.clickRate * 100 : 0;
-
-  const drawerKpi = (
-    key: DrawerKpiKey,
-  ): {
-    label: string;
-    value: string;
-    color: string;
-    series: SparkPoint[];
-    format: 'number' | 'percent';
-  } => {
+  const drawerKpi = (key: DrawerKpiKey): { label: string; value: string; color: string } => {
     switch (key) {
       case 'recipients':
         return {
           label: 'Recipients',
           value: campaign.recipients.toLocaleString('en-US'),
           color: 'var(--text)',
-          series: pickSpark([], historySeries.recipients, campaign.recipients, 'Now'),
-          format: 'number',
         };
       case 'delivered':
         return {
           label: 'Delivered',
           value: `${deliveredPct.toFixed(1)}%`,
           color: 'var(--text)',
-          series: pickSpark(eventSeries.delivery, historySeries.delivery, deliveredPct, 'Now'),
-          format: 'percent',
         };
       case 'open':
         return {
           label: 'Open rate',
           value: pct(campaign.openRate),
           color: 'var(--success-strong)',
-          series: pickSpark(eventSeries.open, historySeries.open, openPct, 'Now'),
-          format: 'percent',
         };
       case 'seen':
         return {
           label: 'Seen rate',
           value: pct(campaign.openRate),
           color: 'var(--success-strong)',
-          series: pickSpark(eventSeries.open, historySeries.open, openPct, 'Now'),
-          format: 'percent',
         };
       case 'click':
         return {
           label: 'Click rate',
           value: pct(campaign.clickRate),
           color: 'var(--accent)',
-          series: pickSpark(eventSeries.click, historySeries.click, clickPct, 'Now'),
-          format: 'percent',
         };
       case 'cto':
         return {
           label: campaign.channel === 'whatsapp' ? 'Click-to-seen' : 'Click-to-open',
           value: cto == null ? '—' : `${cto.toFixed(1)}%`,
           color: 'var(--warning-strong)',
-          series: pickSpark([], historySeries.cto, cto ?? 0, 'Now'),
-          format: 'percent',
         };
       case 'unsubscribed':
         return {
           label: 'Unsubscribed',
           value: campaign.unsubscribed.toLocaleString('en-US'),
           color: 'var(--danger)',
-          series: pickSpark([], historySeries.unsubCount, campaign.unsubscribed, 'Now'),
-          format: 'number',
         };
       case 'failed':
         return {
           label: campaign.channel === 'email' ? 'Bounced' : 'Failed',
           value: campaign.failed.toLocaleString('en-US'),
           color: 'var(--danger)',
-          series: pickSpark([], historySeries.failed, campaign.failed, 'Now'),
-          format: 'number',
         };
     }
   };
   const kpis = reportCfg.drawerKpis.map(drawerKpi);
+  // Six KPIs read best as two rows of three; four (SMS) would leave a lone
+  // tile on a second row, so those get a single row of four instead.
+  const kpiCols = kpis.length % 3 === 0 ? 3 : Math.min(kpis.length, 4);
 
   // Focus management: focus into the panel on open, trap Tab, Esc closes, restore focus.
   const panelRef = useRef<HTMLDivElement>(null);
@@ -1250,14 +1262,16 @@ function CampaignDrawer({
           </div>
 
           {showReport ? (
-            <div className={`adrawer__kpis ${styles.drawerKpis}`}>
+            <div
+              className={`adrawer__kpis ${styles.drawerKpis}`}
+              style={{ gridTemplateColumns: `repeat(${kpiCols}, minmax(0, 1fr))` }}
+            >
               {kpis.map((k) => (
                 <div key={k.label} className="adrawer__kpi">
                   <div className="adrawer__kpi-k">{k.label}</div>
                   <div className="tnum adrawer__kpi-v" style={{ color: k.color }}>
                     {k.value}
                   </div>
-                  <Sparkline series={k.series} color={k.color} format={k.format} height={28} />
                 </div>
               ))}
             </div>

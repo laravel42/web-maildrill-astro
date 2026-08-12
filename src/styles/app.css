@@ -222,6 +222,42 @@
   border-color: color-mix(in srgb, var(--text3) 35%, transparent);
   color: var(--text3);
 }
+/* Solid campaign-status badges, used in the Status filter menu. An outline
+   badge on a menu row reads as a control rather than a label, so the filled
+   variant is clearer there. Scoped to its own `cstat--*` classes for the same
+   reason `tstat--*` is: it must never recolor the shared `.astatus--*` labels
+   in the table, which carry the same status names. */
+.cstat {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.cstat--draft {
+  background: var(--surface2);
+  color: var(--text3);
+}
+.cstat--scheduled {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+.cstat--sending {
+  background: var(--warning-bg);
+  color: var(--warning-strong);
+}
+.cstat--sent {
+  background: var(--success-bg);
+  color: var(--success-strong);
+}
+.cstat--paused {
+  background: var(--ink-tint);
+  color: var(--muted2);
+}
+
 /* WhatsApp template approval — a distinct background per status. Scoped to its
    own `tstat--*` classes so it never recolors the shared campaign `.astatus--*`
    labels (which also have draft/paused). */

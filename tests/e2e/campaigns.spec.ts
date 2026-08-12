@@ -6,10 +6,13 @@ test.describe('campaigns', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Campaigns' })).toBeVisible();
 
     // Channel is the primary cut: campaigns on different channels report
-    // different things and are rarely compared side by side.
-    for (const channel of ['All', 'Email', 'SMS', 'WhatsApp', 'Voice']) {
+    // different things and are rarely compared side by side. There is no "All"
+    // — a mixed list has to blank the columns the channel cannot report.
+    for (const channel of ['Email', 'SMS', 'WhatsApp', 'Voice']) {
       await expect(page.getByRole('tab', { name: new RegExp(`^${channel}`) })).toBeVisible();
     }
+    await expect(page.getByRole('tab', { name: /^All/ })).toHaveCount(0);
+    await expect(page.getByRole('tab', { selected: true })).toContainText('Email');
     // Status moved to the toolbar, where several can be combined.
     await expect(page.getByRole('button', { name: 'Status', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Channel', exact: true })).toHaveCount(0);
