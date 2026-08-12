@@ -745,6 +745,8 @@ export async function seedDev(): Promise<void> {
       failedAt: Date;
       clickedAt: Date | null;
       clickUrl: string | null;
+      /** Spam complaint — a delivered message the recipient reported. */
+      complainedAt: Date | null;
       unsubscribedAt: Date | null;
       messageId: string;
       providerMessageId: string;
@@ -762,6 +764,19 @@ export async function seedDev(): Promise<void> {
       const failedAt = minutesAfter(sentAt, 1, 4);
       const clicked = outcome === 'read' && chance(opts.clickOfRead ?? 0);
       const clickedAt = clicked ? minutesAfter(readAt, 4, 240) : null;
+      /* Complaints are rare and only possible on a message that arrived —
+         Gmail and Yahoo treat anything above 0.3% as a problem, so seeding
+         near that keeps the analytics realistic without tripping our own
+         complaint gate. */
+      /* Only email and WhatsApp have a report-as-spam mechanism at all; an SMS
+         or voice complaint is not a thing that exists. */
+      const complained =
+        (opts.channel === 'email' || opts.channel === 'whatsapp') &&
+        (outcome === 'read' || outcome === 'delivered') &&
+        chance(0.004);
+      const complainedAt = complained
+        ? minutesAfter(outcome === 'read' ? readAt : deliveredAt, 20, 900)
+        : null;
       const unsubscribed =
         (outcome === 'read' || outcome === 'delivered') && chance(opts.unsubOfDelivered ?? 0);
       const unsubscribedAt = unsubscribed
@@ -778,6 +793,7 @@ export async function seedDev(): Promise<void> {
         failedAt,
         clickedAt,
         clickUrl: clicked ? pick(opts.clickUrls ?? ['https://maildrill.net']) : null,
+        complainedAt,
         unsubscribedAt,
         messageId,
         providerMessageId: detId(`ib:${opts.name}:${sub.email}`),
@@ -808,8 +824,17 @@ export async function seedDev(): Promise<void> {
                   submittedAt: sentAt,
                   sentAt,
                   failedAt,
-                  lastErrorCode: 'EC_DESTINATION_UNAVAILABLE',
-                  lastErrorMessage: 'Destination rejected the message',
+                  ...(chance(0.65)
+                    ? {
+                        lastErrorCode: 'EC_ABSENT_SUBSCRIBER',
+                        lastErrorMessage: 'Mailbox does not exist',
+                        lastErrorPermanent: true,
+                      }
+                    : {
+                        lastErrorCode: 'EC_DESTINATION_UNAVAILABLE',
+                        lastErrorMessage: 'Destination rejected the message',
+                        lastErrorPermanent: false,
+                      }),
                   updatedAt: failedAt,
                 }
               : outcome === 'read'
@@ -885,6 +910,9 @@ export async function seedDev(): Promise<void> {
       if (meta.outcome === 'failed') pushEvent(meta.messageId, 'failed', meta.failedAt, meta.to);
       if (meta.clickedAt) {
         pushEvent(meta.messageId, 'click', meta.clickedAt, meta.to, { url: meta.clickUrl });
+      }
+      if (meta.complainedAt) {
+        pushEvent(meta.messageId, 'complaint', meta.complainedAt, meta.to);
       }
       if (meta.unsubscribedAt) {
         pushEvent(meta.messageId, 'unsubscribed', meta.unsubscribedAt, meta.to);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DELIVERABILITY_LIMITS,
+  MIN_COMPLAINT_SAMPLE,
   MIN_SAMPLE,
   deliverabilityBreach,
   type Deliverability,
@@ -33,8 +34,20 @@ describe('deliverabilityBreach', () => {
 
   it('blocks on complaints above the limit', () => {
     // 0.4% — under any bounce limit, but past what Gmail/Yahoo tolerate.
-    const breach = deliverabilityBreach(stats({ complaints: 4 }));
+    const breach = deliverabilityBreach(stats({ sample: 1000, complaints: 4 }));
     expect(breach).toMatch(/spam complaint rate is 0\.40%/);
+  });
+
+  it('does not let a single complaint block a small sender', () => {
+    // The bar is 0.3%, so one complaint exceeds it under ~334 messages. That is
+    // one person pressing "spam", not a pattern, and must not stop a workspace.
+    for (const sample of [MIN_SAMPLE, 100, 333, MIN_COMPLAINT_SAMPLE - 1]) {
+      expect(deliverabilityBreach(stats({ sample, complaints: 1 }))).toBeNull();
+    }
+    // Three complaints in a thousand is a real signal, and does block.
+    expect(deliverabilityBreach(stats({ sample: MIN_COMPLAINT_SAMPLE, complaints: 4 }))).toMatch(
+      /spam complaint rate/,
+    );
   });
 
   it('does not act on a sample too small to mean anything', () => {
@@ -59,9 +72,9 @@ describe('deliverabilityBreach', () => {
   });
 
   it('reports bounces first when both are breached — it is the bigger problem', () => {
-    expect(deliverabilityBreach(stats({ hardBounces: 200, complaints: 50 }))).toMatch(
-      /hard bounce rate/,
-    );
+    expect(
+      deliverabilityBreach(stats({ sample: 1000, hardBounces: 200, complaints: 50 })),
+    ).toMatch(/hard bounce rate/);
   });
 
   it('never divides by zero on a workspace that has sent nothing', () => {

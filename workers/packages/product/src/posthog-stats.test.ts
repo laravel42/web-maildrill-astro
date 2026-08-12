@@ -38,13 +38,37 @@ describe('mapHogQLActivityRows + zeroFill', () => {
       since,
       3,
     );
-    // Engagement is always zero here: HogQL delivery reports carry no open or
-    // click data, and dailyActivity merges the reconciled Postgres figures in
-    // afterwards.
+    // Engagement and complaints are always zero here: HogQL delivery reports
+    // carry neither, and dailyActivity merges the reconciled Postgres figures
+    // in afterwards.
     expect(filled).toEqual([
-      { date: '2026-07-20', sent: 3, delivered: 2, failed: 1, opened: 0, clicked: 0 },
-      { date: '2026-07-21', sent: 0, delivered: 0, failed: 0, opened: 0, clicked: 0 },
-      { date: '2026-07-22', sent: 0, delivered: 0, failed: 0, opened: 0, clicked: 0 },
+      {
+        date: '2026-07-20',
+        sent: 3,
+        delivered: 2,
+        failed: 1,
+        opened: 0,
+        clicked: 0,
+        complained: 0,
+      },
+      {
+        date: '2026-07-21',
+        sent: 0,
+        delivered: 0,
+        failed: 0,
+        opened: 0,
+        clicked: 0,
+        complained: 0,
+      },
+      {
+        date: '2026-07-22',
+        sent: 0,
+        delivered: 0,
+        failed: 0,
+        opened: 0,
+        clicked: 0,
+        complained: 0,
+      },
     ]);
   });
 

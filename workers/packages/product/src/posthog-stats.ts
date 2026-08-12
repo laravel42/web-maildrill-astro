@@ -43,6 +43,7 @@ export function zeroFillDailyActivity(
       // reconciled Postgres figures in over these.
       opened: 0,
       clicked: 0,
+      complained: 0,
     });
   }
   return out;

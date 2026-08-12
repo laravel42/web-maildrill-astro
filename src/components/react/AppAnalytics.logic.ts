@@ -1,4 +1,4 @@
-import type { EngagementKey, SeriesKey } from './AppAnalytics.types';
+import type { ChartKey, EngagementKey, SeriesKey } from './AppAnalytics.types';
 
 /* ------------------------------------------------------------------ *
  * Chart math + config for the account-wide analytics screen.
@@ -37,9 +37,16 @@ export type ActivityPoint = {
   date: string;
   sent: number;
   delivered: number;
+  /** Delivery failures. Surfaced as "Bounced" — the message never arrived. */
   failed: number;
   opened?: number;
   clicked?: number;
+  /**
+   * Spam complaints. Deliberately not part of `failed`: the message *was*
+   * delivered and then reported, so adding the two would double-count a send
+   * and overstate the failure rate.
+   */
+  complained?: number;
 };
 
 export type ChannelBreakdown = {
@@ -52,11 +59,18 @@ export type ChannelBreakdown = {
   clicked?: number;
 };
 
-/** Series plotted on the delivery chart. */
+/**
+ * Series plotted on the delivery chart. The old single "Failed" line is split
+ * into the two outcomes that actually matter to a sender: a bounce (never
+ * arrived) and a complaint (arrived and was reported as spam). They are
+ * different failure modes with different remedies, and only one of them is a
+ * delivery failure at all.
+ */
 export const SERIES: { key: SeriesKey; label: string; color: string }[] = [
   { key: 'sent', label: 'Sent', color: '#4f46e5' },
   { key: 'delivered', label: 'Delivered', color: '#22c55e' },
-  { key: 'failed', label: 'Failed', color: '#ef4444' },
+  { key: 'bounced', label: 'Bounced', color: '#ef4444' },
+  { key: 'complained', label: 'Complained', color: '#1f1e1b' },
 ];
 
 /** Series plotted on the engagement chart. */
@@ -64,6 +78,28 @@ export const ENGAGEMENT_SERIES: { key: EngagementKey; label: string; color: stri
   { key: 'opened', label: 'Opened', color: '#4f46e5' },
   { key: 'clicked', label: 'Clicked', color: '#f59e0b' },
 ];
+
+/**
+ * Read one series' value off a day. `bounced` is stored as `failed` (the
+ * message status) but presented as a bounce, so the mapping lives here rather
+ * than being duplicated at every read site.
+ */
+export function pointValue(p: ActivityPoint, key: ChartKey): number {
+  switch (key) {
+    case 'sent':
+      return p.sent;
+    case 'delivered':
+      return p.delivered;
+    case 'bounced':
+      return p.failed;
+    case 'complained':
+      return p.complained ?? 0;
+    case 'opened':
+      return p.opened ?? 0;
+    case 'clicked':
+      return p.clicked ?? 0;
+  }
+}
 
 /** Channels whose providers report opens and clicks at all. */
 export const ENGAGEMENT_CHANNELS = ['email', 'whatsapp'] as const;
@@ -120,16 +156,17 @@ export function pctOf(part: number, whole: number): string {
 export function totalsOf(points: ActivityPoint[]) {
   const sent = points.reduce((t, p) => t + p.sent, 0);
   const delivered = points.reduce((t, p) => t + p.delivered, 0);
-  const failed = points.reduce((t, p) => t + p.failed, 0);
+  const bounced = points.reduce((t, p) => t + p.failed, 0);
+  const complained = points.reduce((t, p) => t + (p.complained ?? 0), 0);
   const opened = points.reduce((t, p) => t + (p.opened ?? 0), 0);
   const clicked = points.reduce((t, p) => t + (p.clicked ?? 0), 0);
-  return { sent, delivered, failed, opened, clicked };
+  return { sent, delivered, bounced, complained, opened, clicked };
 }
 
 export type KpiTone = 'muted' | 'success' | 'danger';
 
 export function buildKpis(points: ActivityPoint[]) {
-  const { sent, delivered, failed } = totalsOf(points);
+  const { sent, delivered, bounced, complained, opened, clicked } = totalsOf(points);
   return [
     {
       label: 'Messages sent',
@@ -146,20 +183,44 @@ export function buildKpis(points: ActivityPoint[]) {
       series: points.map((p) => ({ value: p.delivered, label: fmtDate(p.date) })),
     },
     {
-      label: 'Failed',
-      value: fmtCompact(failed),
-      sub: pctOf(failed, sent),
+      label: 'Bounced',
+      value: fmtCompact(bounced),
+      sub: pctOf(bounced, sent),
       tone: 'danger' as KpiTone,
       series: points.map((p) => ({ value: p.failed, label: fmtDate(p.date) })),
+    },
+    {
+      label: 'Complained',
+      value: fmtCompact(complained),
+      // Against delivered, not sent: only a message that arrived can be reported.
+      sub: pctOf(complained, delivered),
+      tone: 'danger' as KpiTone,
+      series: points.map((p) => ({ value: p.complained ?? 0, label: fmtDate(p.date) })),
+    },
+    {
+      label: 'Opened',
+      value: fmtCompact(opened),
+      sub: pctOf(opened, delivered),
+      tone: 'success' as KpiTone,
+      series: points.map((p) => ({ value: p.opened ?? 0, label: fmtDate(p.date) })),
+    },
+    {
+      label: 'Clicked',
+      value: fmtCompact(clicked),
+      sub: pctOf(clicked, delivered),
+      tone: 'success' as KpiTone,
+      series: points.map((p) => ({ value: p.clicked ?? 0, label: fmtDate(p.date) })),
     },
   ];
 }
 
 /** CSV of the visible series — the export button writes exactly what's shown. */
 export function toCsv(points: ActivityPoint[]): string {
-  const head = 'date,sent,delivered,failed,opened,clicked';
+  const head = 'date,sent,delivered,bounced,complained,opened,clicked';
   const rows = points.map(
-    (p) => `${p.date},${p.sent},${p.delivered},${p.failed},${p.opened ?? 0},${p.clicked ?? 0}`,
+    (p) =>
+      `${p.date},${p.sent},${p.delivered},${p.failed},${p.complained ?? 0},` +
+      `${p.opened ?? 0},${p.clicked ?? 0}`,
   );
   return [head, ...rows].join('\n');
 }

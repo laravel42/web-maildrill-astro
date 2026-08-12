@@ -38,6 +38,15 @@ export const DELIVERABILITY_LIMITS = Object.freeze({
  */
 export const MIN_SAMPLE = 50;
 
+/**
+ * Complaints need a far larger sample than bounces, because the bar is two
+ * orders of magnitude tighter. At 0.3%, a single complaint exceeds the limit
+ * for any workspace under ~334 resolved messages — so `MIN_SAMPLE` would have
+ * blocked a small sender because one person pressed "spam", which is noise,
+ * not a pattern. At 1,000 it takes three complaints to breach.
+ */
+export const MIN_COMPLAINT_SAMPLE = 1_000;
+
 /** How far back the rates look. Old failures should stop counting. */
 export const WINDOW_DAYS = 30;
 
@@ -112,7 +121,10 @@ export function deliverabilityBreach(stats: Deliverability): string | null {
       `(${stats.hardBounces} of ${stats.sample}), above the ${pct(DELIVERABILITY_LIMITS.hardBounceRate)} limit`
     );
   }
-  if (stats.complaintRate > DELIVERABILITY_LIMITS.complaintRate) {
+  if (
+    stats.sample >= MIN_COMPLAINT_SAMPLE &&
+    stats.complaintRate > DELIVERABILITY_LIMITS.complaintRate
+  ) {
     return (
       `spam complaint rate is ${pct(stats.complaintRate)} over the last ${WINDOW_DAYS} days ` +
       `(${stats.complaints} of ${stats.sample}), above the ${pct(DELIVERABILITY_LIMITS.complaintRate)} limit`

@@ -320,6 +320,12 @@ export interface DailyPoint {
    */
   opened: number;
   clicked: number;
+  /**
+   * Spam complaints. Not a subset of `failed`: the message was delivered and
+   * then reported, which is why it is counted separately rather than folded
+   * into the failure bucket.
+   */
+  complained: number;
 }
 
 async function dailyActivityFromPostgres(
@@ -359,6 +365,17 @@ async function dailyActivityFromPostgres(
     .groupBy(sql`date_trunc('day', ${messages.createdAt})`);
   const clicksBy = new Map(clickRows.map((r) => [r.day, Number(r.clicked)]));
 
+  const complaintRows = await db
+    .select({
+      day: sql<string>`to_char(date_trunc('day', ${messages.createdAt}), 'YYYY-MM-DD')`,
+      complained: sql<number>`count(distinct ${messageEvents.messageId})::int`,
+    })
+    .from(messageEvents)
+    .innerJoin(messages, eq(messageEvents.messageId, messages.id))
+    .where(and(...conds, eq(messageEvents.eventType, 'complaint')))
+    .groupBy(sql`date_trunc('day', ${messages.createdAt})`);
+  const complaintsBy = new Map(complaintRows.map((r) => [r.day, Number(r.complained)]));
+
   const byDay = new Map(rows.map((r) => [r.day, r]));
   const out: DailyPoint[] = [];
   for (let i = 0; i < span; i += 1) {
@@ -373,6 +390,7 @@ async function dailyActivityFromPostgres(
       failed: Number(hit?.failed ?? 0),
       opened: Number(hit?.opened ?? 0),
       clicked: clicksBy.get(key) ?? 0,
+      complained: complaintsBy.get(key) ?? 0,
     });
   }
   return out;
@@ -398,6 +416,7 @@ function withEngagementFrom(series: DailyPoint[], pg: DailyPoint[]): DailyPoint[
     ...p,
     opened: byDay.get(p.date)?.opened ?? p.opened,
     clicked: byDay.get(p.date)?.clicked ?? p.clicked,
+    complained: byDay.get(p.date)?.complained ?? p.complained,
   }));
 }
 

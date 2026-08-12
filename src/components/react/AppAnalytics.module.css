@@ -48,15 +48,25 @@
 
 /* KPI strip */
 .kpis {
-  /* fluid: however many KPIs render, they share the full row; on narrow
-     screens a wrapped card grows to fill its whole row (no orphan gaps) */
-  display: flex;
-  flex-wrap: wrap;
+  /* Six KPIs: a fixed three-column grid so they land 3 + 3 with equal widths.
+     The old flex row stretched whatever wrapped last across its whole row,
+     which left the sixth card full-width and twice the height of the rest. */
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 18px;
 }
+@media (max-width: 1100px) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .kpis {
+    grid-template-columns: 1fr;
+  }
+}
 .kpi {
-  flex: 1 1 200px;
   min-width: 0;
   padding: 16px 18px;
 }

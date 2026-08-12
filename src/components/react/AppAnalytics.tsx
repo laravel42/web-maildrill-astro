@@ -10,6 +10,7 @@ import {
   ENGAGEMENT_SERIES,
   RANGES,
   SERIES,
+  pointValue,
   buildKpis,
   fmtCompact,
   fmtDate,
@@ -51,7 +52,7 @@ export default function AppAnalytics({
   const [rangeLoading, setRangeLoading] = useState(false);
   const bootedRef = useRef(false);
   const [visible, setVisible] = useState<Set<SeriesKey>>(
-    new Set<SeriesKey>(['sent', 'delivered', 'failed']),
+    new Set<SeriesKey>(['sent', 'delivered', 'bounced', 'complained']),
   );
   const [engVisible, setEngVisible] = useState<Set<EngagementKey>>(
     new Set<EngagementKey>(['opened', 'clicked']),
@@ -541,7 +542,7 @@ function TrendChart({
   const n = series.length;
   const active = config.filter((s) => visible.has(s.key));
 
-  const at = (p: ActivityPoint, k: ChartKey) => p[k] ?? 0;
+  const at = pointValue;
   const maxVal = Math.max(1, ...active.flatMap((s) => series.map((p) => at(p, s.key))));
   const yMax = niceMax(maxVal);
 
