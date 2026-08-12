@@ -1,7 +1,7 @@
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { assertTrialAllowance, reserveCampaignCredits } from '@maildrill/billing';
 import { campaigns, db, messages, subscribers, type Campaign } from '@maildrill/database';
-import { ConflictError, NotFoundError, type Channel } from '@maildrill/domain';
+import { ConflictError, estimateVoiceSeconds, NotFoundError, type Channel } from '@maildrill/domain';
 import { submitMessage } from '@maildrill/services';
 import { createLogger } from '@maildrill/observability';
 import { addressForChannel, resolveAudience, type AudienceSelector } from './audience';
@@ -196,7 +196,20 @@ export async function sendCampaign(input: SendCampaignInput): Promise<SendCampai
       // Unlike the wallet reservation, this is not behind
       // BILLING_ENFORCEMENT: a workspace that never paid stays capped at what
       // /signup advertises even while the wallet is switched off.
-      await assertTrialAllowance(input.tenantId, input.channel, resolved.length);
+      // Voice spends seconds, not calls: size the request from the script this
+      // campaign will actually read (template text when one is attached,
+      // otherwise the campaign's own content) times the audience.
+      const requested =
+        input.channel === 'voice'
+          ? estimateVoiceSeconds({
+              // The campaign's own content wins; a template supplies the
+              // script when the campaign only references it.
+              ...(template?.components ?? {}),
+              ...(input.content ?? {}),
+              text: (input.content?.text as string | undefined) ?? template?.text ?? undefined,
+            }) * resolved.length
+          : resolved.length;
+      await assertTrialAllowance(input.tenantId, input.channel, requested);
       if (!scheduled) {
         await reserveCampaignCredits(input.tenantId, camp.id, input.channel, resolved.length);
       }

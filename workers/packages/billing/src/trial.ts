@@ -8,8 +8,11 @@ import {
 } from '@maildrill/database';
 import {
   ConflictError,
+  estimateVoiceSeconds,
   TRIAL_ALLOWANCES,
   TRIAL_ALLOWANCE_UNITS,
+  TRIAL_ALLOWANCE_UNIT_KIND,
+  TRIAL_VOICE_SECONDS,
   type Channel,
 } from '@maildrill/domain';
 
@@ -60,27 +63,32 @@ export async function isTenantOnTrial(tenantId: string, tx: Tx | typeof db = db)
 }
 
 /**
- * Allowance already spent on a channel. Counts messages that actually went
- * out; queued/failed/cancelled rows never consumed anything, so a failed send
- * does not cost the trial.
+ * Allowance already spent on a channel — messages for most, estimated seconds
+ * for voice. Counts only messages that actually went out; queued/failed rows
+ * never consumed anything, so a failed send does not cost the trial.
  *
- * Voice counts calls — see TRIAL_ALLOWANCES for why minutes are not summed.
+ * Voice re-estimates from each call's stored content rather than reading a
+ * recorded duration, because no provider reports one back. The scan is bounded
+ * by the budget itself: the gate stops the workspace long before the row count
+ * gets interesting, and a paid workspace never reaches this code.
  */
 export async function trialUsage(
   tenantId: string,
   channel: Channel,
   tx: Tx | typeof db = db,
 ): Promise<number> {
-  const [row] = await tx
-    .select({ used: count() })
-    .from(messages)
-    .where(
-      and(
-        eq(messages.tenantId, tenantId),
-        eq(messages.channel, channel),
-        inArray(messages.status, [...SPENT_STATUSES]),
-      ),
-    );
+  const spent = and(
+    eq(messages.tenantId, tenantId),
+    eq(messages.channel, channel),
+    inArray(messages.status, [...SPENT_STATUSES]),
+  );
+
+  if (channel === 'voice') {
+    const rows = await tx.select({ content: messages.content }).from(messages).where(spent);
+    return rows.reduce((total, r) => total + estimateVoiceSeconds(r.content), 0);
+  }
+
+  const [row] = await tx.select({ used: count() }).from(messages).where(spent);
   return row?.used ?? 0;
 }
 
@@ -89,6 +97,13 @@ export interface TrialAllowance {
   allowed: number;
   used: number;
   remaining: number;
+  /** What `allowed`/`used`/`remaining` are counted in. Voice is time. */
+  unit: 'messages' | 'seconds';
+}
+
+/** The budget for a channel, in the unit the gate spends. */
+function allowanceFor(channel: Channel): number {
+  return channel === 'voice' ? TRIAL_VOICE_SECONDS : TRIAL_ALLOWANCES[channel];
 }
 
 /** Current standing on one channel — powers both the gate and any UI meter. */
@@ -96,16 +111,20 @@ export async function trialAllowance(
   tenantId: string,
   channel: Channel,
 ): Promise<TrialAllowance> {
-  const allowed = TRIAL_ALLOWANCES[channel];
+  const allowed = allowanceFor(channel);
+  const unit = TRIAL_ALLOWANCE_UNIT_KIND[channel];
   if (!(await isTenantOnTrial(tenantId))) {
-    return { onTrial: false, allowed, used: 0, remaining: Number.POSITIVE_INFINITY };
+    return { onTrial: false, allowed, used: 0, remaining: Number.POSITIVE_INFINITY, unit };
   }
   const used = await trialUsage(tenantId, channel);
-  return { onTrial: true, allowed, used, remaining: Math.max(0, allowed - used) };
+  return { onTrial: true, allowed, used, remaining: Math.max(0, allowed - used), unit };
 }
 
 /**
- * Gate `count` outbound messages on `channel`.
+ * Gate an outbound send. `requested` is messages for most channels and
+ * **estimated seconds** for voice — callers size it with
+ * `estimateVoiceSeconds`, since a 10-second call and a 3-minute one cannot
+ * both cost \"one\".
  *
  * Throws `ConflictError('trial_allowance_exhausted')` when the send would take
  * the workspace past its trial allowance — all-or-nothing, matching how the
@@ -121,10 +140,13 @@ export async function assertTrialAllowance(
   const state = await trialAllowance(tenantId, channel);
   if (!state.onTrial || requested <= state.remaining) return;
 
-  const unit = TRIAL_ALLOWANCE_UNITS[channel];
+  // Voice reads in minutes even though it is spent in seconds — nobody thinks
+  // about a call budget in seconds.
+  const toDisplay = (n: number) => (channel === 'voice' ? Math.round((n / 60) * 10) / 10 : n);
   throw new ConflictError(
-    `trial_allowance_exhausted: the free trial covers ${state.allowed} ${unit} — ` +
-      `${state.used} used, ${state.remaining} left, ${requested} requested. ` +
+    `trial_allowance_exhausted: the free trial covers ${TRIAL_ALLOWANCES[channel]} ` +
+      `${TRIAL_ALLOWANCE_UNITS[channel]} — ${toDisplay(state.used)} used, ` +
+      `${toDisplay(state.remaining)} left, ${toDisplay(requested)} requested. ` +
       'Add credit to keep sending.',
   );
 }

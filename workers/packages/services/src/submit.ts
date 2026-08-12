@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import { config } from '@maildrill/config';
 import { db, messages, type MessageRow } from '@maildrill/database';
-import type { Channel } from '@maildrill/domain';
+import { estimateVoiceSeconds, type Channel } from '@maildrill/domain';
 import { assertTrialAllowance } from '@maildrill/billing';
 import { insertDispatchOutbox, isUniqueViolation } from './shared';
 
@@ -59,7 +59,10 @@ export async function submitMessage(input: SubmitMessageInput): Promise<SubmitRe
   // the whole audience up front — re-checking per message would both waste two
   // queries per recipient and risk rejecting a campaign halfway through.
   if (!input.campaignId) {
-    await assertTrialAllowance(input.tenantId, input.channel, 1);
+    // Voice spends estimated seconds; every other channel spends one message.
+    const requested =
+      input.channel === 'voice' ? estimateVoiceSeconds(input.content) : 1;
+    await assertTrialAllowance(input.tenantId, input.channel, requested);
   }
 
   const scheduled = input.scheduledAt != null && input.scheduledAt.getTime() > Date.now();

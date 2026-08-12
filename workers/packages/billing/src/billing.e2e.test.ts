@@ -431,6 +431,34 @@ describe.skipIf(!run)('billing wallet + ledger (e2e — needs Postgres)', () => 
       await expect(assertTrialAllowance(trialTenantId, 'sms', 11)).rejects.toThrow(ConflictError);
     });
 
+    it('spends voice in estimated seconds, not calls', async () => {
+      const state = await trialAllowance(trialTenantId, 'voice');
+      expect(state.unit).toBe('seconds');
+      expect(state.allowed).toBe(3600);
+
+      // Two calls with a ~60-second script: 65s each by the estimator.
+      const script = Array.from({ length: 150 }, () => 'word').join(' ');
+      await db.insert(messages).values(
+        Array.from({ length: 2 }, () => ({
+          tenantId: trialTenantId,
+          channel: 'voice' as const,
+          toAddress: '+15550100000',
+          status: 'sent' as const,
+          provider: 'mock',
+          content: { text: script },
+        })),
+      );
+
+      const after = await trialAllowance(trialTenantId, 'voice');
+      expect(after.used).toBe(130);
+      expect(after.remaining).toBe(3470);
+      // A long call is sized by its script, so it can exhaust what is left.
+      await expect(assertTrialAllowance(trialTenantId, 'voice', 3470)).resolves.toBeUndefined();
+      await expect(assertTrialAllowance(trialTenantId, 'voice', 3471)).rejects.toThrow(
+        /trial_allowance_exhausted/,
+      );
+    });
+
     it('keeps each channel on its own budget', async () => {
       const email = await trialAllowance(trialTenantId, 'email');
       expect(email.used).toBe(0);
