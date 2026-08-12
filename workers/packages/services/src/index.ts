@@ -16,4 +16,6 @@ export * from './email-domains';
 export * from './maintenance';
 export * from './admin';
 export * from './tenants';
+export * from './reputation';
+export * from './suppression';
 export { insertDispatchOutbox, isUniqueViolation } from './shared';

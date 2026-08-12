@@ -2,7 +2,7 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 import { assertTrialAllowance, reserveCampaignCredits } from '@maildrill/billing';
 import { campaigns, db, messages, subscribers, type Campaign } from '@maildrill/database';
 import { ConflictError, estimateVoiceSeconds, NotFoundError, type Channel } from '@maildrill/domain';
-import { submitMessage } from '@maildrill/services';
+import { submitMessage, assertDeliverabilityOk } from '@maildrill/services';
 import { createLogger } from '@maildrill/observability';
 import { addressForChannel, resolveAudience, type AudienceSelector } from './audience';
 import { getTemplate, resolveMessageContent } from './templates';
@@ -210,6 +210,10 @@ export async function sendCampaign(input: SendCampaignInput): Promise<SendCampai
             }) * resolved.length
           : resolved.length;
       await assertTrialAllowance(input.tenantId, input.channel, requested);
+      // Refuse to start a send from a workspace whose recent list quality is
+      // bad enough to endanger the sending domain — for them and for every
+      // other workspace on the shared account.
+      await assertDeliverabilityOk(input.tenantId, input.channel);
       if (!scheduled) {
         await reserveCampaignCredits(input.tenantId, camp.id, input.channel, resolved.length);
       }
