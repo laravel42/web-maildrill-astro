@@ -84,8 +84,22 @@ export async function trialUsage(
   );
 
   if (channel === 'voice') {
-    const rows = await tx.select({ content: messages.content }).from(messages).where(spent);
-    return rows.reduce((total, r) => total + estimateVoiceSeconds(r.content), 0);
+    // Reconciled: a call the provider has reported on costs what it actually
+    // ran; one still in flight costs what we estimated at send time. So the
+    // budget is right from the moment of sending and self-corrects as DLRs
+    // land, instead of drifting on scripts that were cut short or went to
+    // voicemail. `voiceSeconds` of 0 is a real answer (nobody picked up) and
+    // must not fall back to the estimate — hence the null check, not `??` on a
+    // falsy value.
+    const rows = await tx
+      .select({ content: messages.content, voiceSeconds: messages.voiceSeconds })
+      .from(messages)
+      .where(spent);
+    return rows.reduce(
+      (total, r) =>
+        total + (r.voiceSeconds === null ? estimateVoiceSeconds(r.content) : r.voiceSeconds),
+      0,
+    );
   }
 
   const [row] = await tx.select({ used: count() }).from(messages).where(spent);

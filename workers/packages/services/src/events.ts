@@ -103,10 +103,28 @@ export async function applyProviderOutcome(input: {
   errorCode?: string;
   /** Infobip `error.description` from the DLR. */
   errorMessage?: string;
+  /**
+   * Real call length in seconds from a voice DLR. Recorded whenever it
+   * arrives, independently of whether the status transition is accepted — a
+   * duplicate DLR still carries the truth, and the trial gate settles its
+   * pre-send estimate against it.
+   */
+  voiceSeconds?: number;
   occurredAt?: Date;
 }): Promise<boolean> {
   const at = input.occurredAt ?? new Date();
   const fingerprint = `posthog:${input.messageId}:${input.statusGroup.toUpperCase()}`;
+
+  // A call's length is a fact about the call, not a state transition: record it
+  // before the transition guard below can return early. A DLR redelivered after
+  // the message already settled still carries the real duration, and that is
+  // exactly what the trial gate needs to settle its pre-send estimate.
+  if (input.channel === 'voice' && input.voiceSeconds !== undefined) {
+    await db
+      .update(messages)
+      .set({ voiceSeconds: Math.round(input.voiceSeconds), updatedAt: new Date() })
+      .where(eq(messages.id, input.messageId));
+  }
 
   // Resolve the transition BEFORE consuming the dedupe fingerprint. Inserting
   // first would burn the fingerprint on a refused transition (stale snapshot

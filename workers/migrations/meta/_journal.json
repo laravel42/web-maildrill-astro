@@ -120,6 +120,13 @@
       "when": 1786480000000,
       "tag": "0016_user_tier",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1786560000000,
+      "tag": "0017_message_voice_seconds",
+      "breakpoints": true
     }
   ]
 }

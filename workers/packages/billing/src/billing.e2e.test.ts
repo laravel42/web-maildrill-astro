@@ -459,6 +459,39 @@ describe.skipIf(!run)('billing wallet + ledger (e2e — needs Postgres)', () => 
       );
     });
 
+    it('settles the estimate against the reported call length', async () => {
+      const before = await trialAllowance(trialTenantId, 'voice');
+      const script = Array.from({ length: 150 }, () => 'word').join(' '); // est. 65s
+      const [inflight] = await db
+        .insert(messages)
+        .values({
+          tenantId: trialTenantId,
+          channel: 'voice' as const,
+          toAddress: '+15550100001',
+          status: 'sent' as const,
+          provider: 'mock',
+          content: { text: script },
+        })
+        .returning();
+
+      // No DLR yet → the pre-send estimate holds the budget.
+      const estimated = await trialAllowance(trialTenantId, 'voice');
+      expect(estimated.used - before.used).toBe(65);
+
+      // DLR says the call was cut short → the budget settles to the truth.
+      await db
+        .update(messages)
+        .set({ voiceSeconds: 12 })
+        .where(eq(messages.id, inflight!.id));
+      const settled = await trialAllowance(trialTenantId, 'voice');
+      expect(settled.used - before.used).toBe(12);
+
+      // Nobody answered: 0 is a real duration, not "no report yet".
+      await db.update(messages).set({ voiceSeconds: 0 }).where(eq(messages.id, inflight!.id));
+      const unanswered = await trialAllowance(trialTenantId, 'voice');
+      expect(unanswered.used - before.used).toBe(0);
+    });
+
     it('keeps each channel on its own budget', async () => {
       const email = await trialAllowance(trialTenantId, 'email');
       expect(email.used).toBe(0);

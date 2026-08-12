@@ -53,6 +53,8 @@ export interface StatusGroupRow {
   statusGroup: string;
   errorName?: string;
   errorDescription?: string;
+  /** Real call length in seconds from a voice DLR; absent for other channels. */
+  voiceSeconds?: number;
 }
 
 /** Pure: map HogQL rows → latest status_group (+ error) per maildrill message id. */
@@ -61,6 +63,7 @@ export function mapLatestStatusGroups(columns: string[], results: unknown[][]): 
   const iGroup = columnIndex(columns, 'status_group');
   const iErrName = columnIndex(columns, 'error_name');
   const iErrDesc = columnIndex(columns, 'error_description');
+  const iVoice = columnIndex(columns, 'voice_seconds');
   if (iId < 0 || iGroup < 0) return [];
 
   // Query already returns argMax / latest; keep first row per id if duplicates.
@@ -73,11 +76,16 @@ export function mapLatestStatusGroups(columns: string[], results: unknown[][]): 
     seen.add(id);
     const errorName = iErrName >= 0 ? cellString(row, iErrName) : undefined;
     const errorDescription = iErrDesc >= 0 ? cellString(row, iErrDesc) : undefined;
+    // 0 is a real answer (an unanswered call) — only a missing/NaN cell is
+    // "no report yet", so guard on finiteness rather than truthiness.
+    const voiceRaw = iVoice >= 0 ? Number(row[iVoice]) : Number.NaN;
+    const voiceSeconds = Number.isFinite(voiceRaw) && voiceRaw >= 0 ? voiceRaw : undefined;
     out.push({
       maildrillMessageId: id,
       statusGroup,
       ...(errorName ? { errorName } : {}),
       ...(errorDescription ? { errorDescription } : {}),
+      ...(voiceSeconds === undefined ? {} : { voiceSeconds }),
     });
   }
   return out;
@@ -217,7 +225,17 @@ SELECT
   toString(properties.maildrill_message_id) AS maildrill_message_id,
   argMax(toString(properties.status_group), timestamp) AS status_group,
   argMax(toString(properties.error_name), timestamp) AS error_name,
-  argMax(toString(properties.error_description), timestamp) AS error_description
+  argMax(toString(properties.error_description), timestamp) AS error_description,
+  -- Voice only: what the call actually ran, so the trial gate can settle its
+  -- pre-send estimate. chargedDuration is what Infobip bills; duration is the
+  -- wall-clock fallback when the report omits it.
+  argMax(
+    coalesce(
+      toFloat(properties.voice_call.chargedDuration),
+      toFloat(properties.voice_call.duration)
+    ),
+    timestamp
+  ) AS voice_seconds
 FROM events
 WHERE event IN ('message_delivery_report', 'message_voice_report')
   AND toString(properties.maildrill_message_id) IN (${lits.join(', ')})
@@ -394,6 +412,7 @@ async function syncOpenMessages(open: MessageRow[]): Promise<number> {
       statusGroup: row.statusGroup,
       errorCode: row.errorName,
       errorMessage: row.errorDescription,
+      voiceSeconds: row.voiceSeconds,
     });
     if (changed) updated += 1;
   }

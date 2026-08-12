@@ -220,6 +220,13 @@ export const messages = pgTable(
     failedAt: ts('failed_at'),
     cancelledAt: ts('cancelled_at'),
     providerMessageId: text('provider_message_id'),
+    /**
+     * Real call length in seconds, reconciled from the provider's voice DLR
+     * (Infobip `voiceCall.chargedDuration`, falling back to `duration`).
+     * Voice only, and null until a report arrives — consumers that need a
+     * number before then fall back to `estimateVoiceSeconds`.
+     */
+    voiceSeconds: integer('voice_seconds'),
     idempotencyKey: text('idempotency_key'),
     // Controlled execution generation; bumped on retry so a new send job id is used.
     generation: integer('generation').notNull().default(0),
