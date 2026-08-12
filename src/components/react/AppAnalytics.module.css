@@ -248,58 +248,17 @@
   color: var(--muted);
   max-width: 36ch;
 }
-.channelGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px 18px;
-}
 .channelStack {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
-.barRow,
-.barBtn {
+.barRow {
   display: block;
   width: 100%;
-  margin-bottom: 14px;
   text-align: left;
-  background: none;
-  border: 0;
-  padding: 0;
   color: inherit;
   font: inherit;
-}
-.barRow:last-child,
-.barBtn:last-child {
-  margin-bottom: 0;
-}
-.channelGrid .barRow,
-.channelGrid .barBtn,
-.channelStack .barRow,
-.channelStack .barBtn {
-  margin-bottom: 0;
-}
-.barBtn {
-  border-radius: 8px;
-  margin-left: -6px;
-  margin-right: -6px;
-  padding: 6px;
-  width: calc(100% + 12px);
-  cursor: pointer;
-  transition: background 0.12s var(--ease-out);
-}
-.channelGrid .barBtn {
-  margin-left: 0;
-  margin-right: 0;
-  width: 100%;
-}
-.barBtn:hover {
-  background: var(--surface2);
-}
-.barBtn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
 .barTop {
   display: flex;

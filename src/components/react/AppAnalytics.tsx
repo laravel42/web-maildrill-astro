@@ -37,7 +37,12 @@ export default function AppAnalytics({
   tenantId?: string | null;
 } = {}) {
   const [range, setRange] = useState('30d');
-  const [channel, setChannel] = useState<ChannelType | 'all'>('all');
+  /* Analytics is always scoped to one channel. An "all channels" roll-up
+     aggregated series whose events are not comparable — SMS and voice can
+     produce no opens or clicks at all — so the combined open/click rates it
+     showed were arithmetic over mismatched denominators. Email is the default
+     because it is the only channel with the full event set. */
+  const [channel, setChannel] = useState<ChannelType>('email');
   const [daily, setDaily] = useState<ActivityPoint[]>([]);
   const [byChannel, setByChannel] = useState<ChannelBreakdown[]>([]);
   const [bootLoading, setBootLoading] = useState(live);
@@ -54,9 +59,8 @@ export default function AppAnalytics({
   };
 
   const days = RANGES.find((r) => r.key === range)?.days ?? 30;
-  /* Channel-filtered activity gets its own cache slot; the unfiltered window
-     shares keys with the dashboard so either page warms the other. */
-  const actKey = channel === 'all' ? String(days) : `${days}:${channel}`;
+  /* Channel-filtered activity gets its own cache slot, keyed per channel. */
+  const actKey = `${days}:${channel}`;
 
   /* Boot: honor ?channel= / ?range= deep links (dashboard performance rows),
      then serve a fresh 30-min cache immediately, otherwise fetch. */
@@ -65,15 +69,15 @@ export default function AppAnalytics({
     const params = new URLSearchParams(window.location.search);
     const urlChannel = params.get('channel');
     const urlRange = params.get('range');
-    const bootChannel: ChannelType | 'all' =
+    const bootChannel: ChannelType =
       urlChannel && (CHANNEL_ORDER as readonly string[]).includes(urlChannel)
         ? (urlChannel as ChannelType)
-        : 'all';
+        : 'email';
     const bootRange = RANGES.some((r) => r.key === urlRange) ? urlRange! : '30d';
-    if (bootChannel !== 'all') setChannel(bootChannel);
+    if (bootChannel !== 'email') setChannel(bootChannel);
     if (bootRange !== '30d') setRange(bootRange);
     const bootDays = RANGES.find((r) => r.key === bootRange)?.days ?? 30;
-    const bootKey = bootChannel === 'all' ? String(bootDays) : `${bootDays}:${bootChannel}`;
+    const bootKey = `${bootDays}:${bootChannel}`;
 
     let cancelled = false;
     const cached = readDashboardCache(tenantId);
@@ -89,7 +93,7 @@ export default function AppAnalytics({
 
     setBootLoading(true);
     const qs = new URLSearchParams({ days: String(bootDays) });
-    if (bootChannel !== 'all') qs.set('channel', bootChannel);
+    qs.set('channel', bootChannel);
     let nextDaily = hitDaily ?? [];
     let nextChannels = hitChannels ?? [];
     let bootFailed = false;
@@ -136,8 +140,7 @@ export default function AppAnalytics({
   useEffect(() => {
     if (!live || !bootedRef.current) return;
     const url = new URL(window.location.href);
-    if (channel === 'all') url.searchParams.delete('channel');
-    else url.searchParams.set('channel', channel);
+    url.searchParams.set('channel', channel);
     if (range === '30d') url.searchParams.delete('range');
     else url.searchParams.set('range', range);
     window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
@@ -160,7 +163,7 @@ export default function AppAnalytics({
     let cancelled = false;
     setRangeLoading(true);
     const qs = new URLSearchParams({ days: String(days) });
-    if (channel !== 'all') qs.set('channel', channel);
+    qs.set('channel', channel);
     void Promise.all([
       hitDaily
         ? Promise.resolve(hitDaily)
@@ -201,8 +204,7 @@ export default function AppAnalytics({
 
   const kpis = buildKpis(daily);
   const totals = totalsOf(daily);
-  const channelRows =
-    channel === 'all' ? byChannel : byChannel.filter((c) => c.channel === channel);
+  const channelRows = byChannel.filter((c) => c.channel === channel);
   const totalChannelSends = byChannel.reduce((t, c) => t + c.sent, 0);
 
   /* Engagement: provider receipts on the tracked channels (email + WhatsApp).
@@ -219,7 +221,7 @@ export default function AppAnalytics({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `maildrill-activity-${range}${channel === 'all' ? '' : `-${channel}`}.csv`;
+    a.download = `maildrill-activity-${range}-${channel}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -250,21 +252,11 @@ export default function AppAnalytics({
         <div>
           <h1 className="screen__h1">Analytics</h1>
           <p className={`screen__sub ${styles.headSub}`}>
-            {channel === 'all'
-              ? 'Delivery across all channels.'
-              : `${CHANNEL[channel].label} delivery.`}
+            {`${CHANNEL[channel].label} delivery.`}
           </p>
         </div>
         <div className={styles.controls}>
           <div className={`aseg ${styles.seg}`} role="group" aria-label="Filter by channel">
-            <button
-              type="button"
-              className={`aseg__opt${channel === 'all' ? ' is-active' : ''}`}
-              aria-pressed={channel === 'all'}
-              onClick={() => setChannel('all')}
-            >
-              All channels
-            </button>
             {CHANNEL_ORDER.map((ch) => (
               <button
                 type="button"
@@ -302,9 +294,7 @@ export default function AppAnalytics({
         <div className={`acrd ${styles.empty}`}>
           <p className={styles.emptyTitle}>No delivery yet</p>
           <p className={styles.emptyBody}>
-            {channel === 'all'
-              ? 'Charts appear here once campaigns start sending in this range.'
-              : `Nothing sent on ${CHANNEL[channel].label} in this range. Try another channel or wider range.`}
+            {`Nothing sent on ${CHANNEL[channel].label} in this range. Try another channel or wider range.`}
           </p>
         </div>
       ) : (
@@ -425,8 +415,8 @@ export default function AppAnalytics({
             <section className={`acrd ${styles.panel}`} aria-busy={loading}>
               <h2 className={styles.panelTitle}>By channel</h2>
               {loading ? (
-                <div className={channel === 'all' ? styles.channelGrid : styles.channelStack}>
-                  {(channel === 'all' ? [0, 1, 2, 3] : [0]).map((i) => (
+                <div className={styles.channelStack}>
+                  {[0].map((i) => (
                     <div key={i} className={styles.barRow} aria-hidden="true">
                       <div className={styles.barTop}>
                         <div className={`skeleton ${styles.skelLine}`} />
@@ -439,37 +429,10 @@ export default function AppAnalytics({
               ) : channelRows.length === 0 ? (
                 <p className={styles.panelEmpty}>Nothing sent on this channel yet.</p>
               ) : (
-                <div className={channel === 'all' ? styles.channelGrid : styles.channelStack}>
+                <div className={styles.channelStack}>
                   {channelRows.map((c) => {
                     const share = totalChannelSends > 0 ? (c.sent / totalChannelSends) * 100 : 0;
-                    const ch = c.channel as ChannelType;
-                    const canFocus =
-                      (CHANNEL_ORDER as readonly string[]).includes(c.channel) && channel === 'all';
-                    return canFocus ? (
-                      <button
-                        key={c.channel}
-                        type="button"
-                        className={styles.barBtn}
-                        onClick={() => setChannel(ch)}
-                        aria-label={`Focus analytics on ${channelLabelOf(c.channel)}`}
-                      >
-                        <div className={styles.barTop}>
-                          <span className={styles.barLbl}>{channelLabelOf(c.channel)}</span>
-                          <span className={`${styles.barMeta} tnum`}>
-                            {c.sent.toLocaleString('en-US')} · {share.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className={styles.track}>
-                          <div
-                            className={styles.fill}
-                            style={{
-                              width: `${Math.max(share, 1.5)}%`,
-                              background: channelColor(c.channel),
-                            }}
-                          />
-                        </div>
-                      </button>
-                    ) : (
+                    return (
                       <div key={c.channel} className={styles.barRow}>
                         <div className={styles.barTop}>
                           <span className={styles.barLbl}>{channelLabelOf(c.channel)}</span>
@@ -549,9 +512,7 @@ export default function AppAnalytics({
             <div className="acrd__head">
               <h2 className="acrd__title">Channel performance</h2>
               <span className={styles.tableSub}>
-                {channel === 'all'
-                  ? 'Delivery per channel'
-                  : `Focused on ${CHANNEL[channel].label}`}
+                {`Focused on ${CHANNEL[channel].label}`}
               </span>
             </div>
             <div className={styles.ct}>
