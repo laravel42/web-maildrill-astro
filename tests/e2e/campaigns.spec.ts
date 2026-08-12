@@ -1,12 +1,18 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('campaigns', () => {
-  test('board renders the pipeline with status tabs', async ({ page }) => {
+  test('board tabs split by channel, with status as a filter', async ({ page }) => {
     await page.goto('/dashboard/campaigns');
     await expect(page.getByRole('heading', { level: 1, name: 'Campaigns' })).toBeVisible();
-    for (const status of ['Draft', 'Scheduled', 'Sending', 'Sent']) {
-      await expect(page.getByRole('tab', { name: new RegExp(`^${status}`) })).toBeVisible();
+
+    // Channel is the primary cut: campaigns on different channels report
+    // different things and are rarely compared side by side.
+    for (const channel of ['All', 'Email', 'SMS', 'WhatsApp', 'Voice']) {
+      await expect(page.getByRole('tab', { name: new RegExp(`^${channel}`) })).toBeVisible();
     }
+    // Status moved to the toolbar, where several can be combined.
+    await expect(page.getByRole('button', { name: 'Status', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Channel', exact: true })).toHaveCount(0);
   });
 
   test('a sent campaign opens its report page', async ({ page }) => {

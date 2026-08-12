@@ -17,7 +17,9 @@ test.describe('remaining sections', () => {
   test('analytics renders activity and channel panels', async ({ page }) => {
     await page.goto('/dashboard/analytics');
     await expect(page.getByRole('heading', { level: 1 })).toContainText(/analytics/i);
-    await expect(page.getByText('By channel')).toBeVisible();
+    // Analytics is scoped to one channel now, so the cross-channel panels are
+    // gone; it charts delivery and (where the provider reports it) engagement.
+    await expect(page.getByRole('heading', { name: 'Delivery over time' })).toBeVisible();
   });
 
   test('settings renders', async ({ page }) => {

@@ -1,5 +1,5 @@
 import type { IconName } from '@/lib/icons';
-import type { CampaignStatus } from '@/types/app';
+import type { CampaignStatus, ChannelType } from '@/types/app';
 
 export const STATUS_LABEL: Record<CampaignStatus, string> = {
   draft: 'Draft',
@@ -17,8 +17,18 @@ export const STATUS_ICON: Record<CampaignStatus, IconName> = {
   paused: 'pause',
 };
 
-export const TABS: (CampaignStatus | 'all')[] = [
-  'all',
+/**
+ * The table tabs split by channel, not status.
+ *
+ * Campaigns on different channels are barely comparable — their KPIs differ,
+ * their failure modes differ, and a sender almost always works within one
+ * channel at a time. Status is the secondary cut and lives in the toolbar
+ * filter instead, where several can be combined.
+ */
+export const CHANNEL_TABS: (ChannelType | 'all')[] = ['all', 'email', 'sms', 'whatsapp', 'voice'];
+
+/** Statuses offered by the toolbar filter, in lifecycle order. */
+export const STATUS_FILTERS: CampaignStatus[] = [
   'draft',
   'scheduled',
   'sending',

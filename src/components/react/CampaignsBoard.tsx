@@ -25,7 +25,7 @@ import FilterChipsRow from './shared/FilterChipsRow';
 import ConfirmDialog from './shared/ConfirmDialog';
 import CampaignWizard from './CampaignWizard';
 import TemplatePreview, { MessagePreview } from './shared/TemplatePreview';
-import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
+import { CHANNEL } from './shared/channels';
 import { ChannelPill, ListPill } from './shared/CampaignPills';
 import {
   buildEventRateSeries,
@@ -37,7 +37,13 @@ import {
 import StatusBadge from './shared/StatusBadge';
 import { ago } from './shared/time';
 import { useToast } from './shared/useToast';
-import { STATUS_LABEL, TABS, PAGE_SIZE, pct } from './CampaignsBoard.logic';
+import {
+  CHANNEL_TABS,
+  PAGE_SIZE,
+  STATUS_FILTERS,
+  STATUS_LABEL,
+  pct,
+} from './CampaignsBoard.logic';
 import type { SortKey } from './CampaignsBoard.types';
 import { visiblePageNumbers } from './shared/pagination';
 import Sparkline, { type SparkPoint } from './shared/Sparkline';
@@ -80,12 +86,12 @@ export default function CampaignsBoard({
   // Live workspace campaigns from SSR when provided; else the fixture preview.
   const live = initial !== undefined;
   const [campaigns, setCampaigns] = useState<Campaign[]>(initial ?? mockCampaigns);
-  const [tab, setTab] = useState<CampaignStatus | 'all'>('all');
+  const [tab, setTab] = useState<ChannelType | 'all'>('all');
   const [query, setQuery] = useState('');
-  const [channelFilter, setChannelFilter] = useState<Set<ChannelType>>(new Set());
+  const [statusFilter, setStatusFilter] = useState<Set<CampaignStatus>>(new Set());
   const [opensSel, setOpensSel] = useState<Set<string>>(new Set());
   const [clicksSel, setClicksSel] = useState<Set<string>>(new Set());
-  const [openFilter, setOpenFilter] = useState<'channel' | 'opens' | 'clicks' | null>(null);
+  const [openFilter, setOpenFilter] = useState<'status' | 'opens' | 'clicks' | null>(null);
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updatedAt', dir: -1 });
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -131,7 +137,9 @@ export default function CampaignsBoard({
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: campaigns.length };
-    for (const t of TABS) if (t !== 'all') c[t] = campaigns.filter((x) => x.status === t).length;
+    for (const t of CHANNEL_TABS) {
+      if (t !== 'all') c[t] = campaigns.filter((x) => x.channel === t).length;
+    }
     return c;
   }, [campaigns]);
 
@@ -149,8 +157,8 @@ export default function CampaignsBoard({
 
   const rows = useMemo(() => {
     let list = campaigns.filter((c) => {
-      if (tab !== 'all' && c.status !== tab) return false;
-      if (channelFilter.size > 0 && !channelFilter.has(c.channel)) return false;
+      if (tab !== 'all' && c.channel !== tab) return false;
+      if (statusFilter.size > 0 && !statusFilter.has(c.status)) return false;
       if (opensSel.size && !opensSel.has(rateBucket((c.openRate ?? 0) * 100))) return false;
       if (clicksSel.size && !clicksSel.has(rateBucket((c.clickRate ?? 0) * 100))) return false;
       if (query) {
@@ -172,7 +180,7 @@ export default function CampaignsBoard({
       return 0;
     });
     return list;
-  }, [tab, query, channelFilter, opensSel, clicksSel, sort, campaigns]);
+  }, [tab, query, statusFilter, opensSel, clicksSel, sort, campaigns]);
 
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -184,7 +192,7 @@ export default function CampaignsBoard({
   // Snap back to the first page whenever the filtered set changes underneath.
   useEffect(() => {
     setPage(1);
-  }, [tab, query, channelFilter, opensSel, clicksSel, sort]);
+  }, [tab, query, statusFilter, opensSel, clicksSel, sort]);
 
   // While any campaign is sending, refresh list so the progress bar advances.
   const hasSending = campaigns.some((c) => c.status === 'sending');
@@ -493,11 +501,11 @@ export default function CampaignsBoard({
     );
   };
 
-  const toggleChannel = (ch: ChannelType) => {
-    setChannelFilter((prev) => {
+  const toggleStatus = (st: CampaignStatus) => {
+    setStatusFilter((prev) => {
       const next = new Set(prev);
-      if (next.has(ch)) next.delete(ch);
-      else next.add(ch);
+      if (next.has(st)) next.delete(st);
+      else next.add(st);
       return next;
     });
     setSelected(new Set()); // changing filters clears selection (spec §12)
@@ -528,9 +536,9 @@ export default function CampaignsBoard({
       </div>
 
       <div className={`atable ${styles.card}`}>
-        {/* status tabs */}
-        <div className={`${styles.tabs} atabs`} role="tablist" aria-label="Campaign status">
-          {TABS.map((t) => (
+        {/* channel tabs — status is the toolbar filter */}
+        <div className={`${styles.tabs} atabs`} role="tablist" aria-label="Campaign channel">
+          {CHANNEL_TABS.map((t) => (
             <button
               key={t}
               type="button"
@@ -542,7 +550,7 @@ export default function CampaignsBoard({
                 setSelected(new Set());
               }}
             >
-              {t === 'all' ? 'All' : STATUS_LABEL[t]}
+              {t === 'all' ? 'All' : CHANNEL[t].label}
               <span className="atab__count tnum">{counts[t] ?? 0}</span>
             </button>
           ))}
@@ -567,18 +575,18 @@ export default function CampaignsBoard({
             <div className={styles.filterwrap}>
               <button
                 type="button"
-                className={`${styles.filter}${channelFilter.size ? ' is-on' : ''}`}
-                aria-expanded={openFilter === 'channel'}
-                onClick={() => setOpenFilter((o) => (o === 'channel' ? null : 'channel'))}
+                className={`${styles.filter}${statusFilter.size ? ' is-on' : ''}`}
+                aria-expanded={openFilter === 'status'}
+                onClick={() => setOpenFilter((o) => (o === 'status' ? null : 'status'))}
               >
                 <Icon name="filter" size={14} />
-                Channel
-                {channelFilter.size > 0 && (
-                  <span className={styles.filtercount}>{channelFilter.size}</span>
+                Status
+                {statusFilter.size > 0 && (
+                  <span className={styles.filtercount}>{statusFilter.size}</span>
                 )}
                 <Icon name="chevron-down" size={12} className={styles.filtercaret} />
               </button>
-              {openFilter === 'channel' && (
+              {openFilter === 'status' && (
                 <>
                   <button
                     type="button"
@@ -587,22 +595,22 @@ export default function CampaignsBoard({
                     onClick={() => setOpenFilter(null)}
                   />
                   <div className={styles.filterpop} style={{ animation: 'pop .14s ease' }}>
-                    {CHANNEL_ORDER.map((ch) => (
-                      <label key={ch} className={styles.filteropt}>
+                    {STATUS_FILTERS.map((st) => (
+                      <label key={st} className={styles.filteropt}>
                         <input
                           type="checkbox"
-                          checked={channelFilter.has(ch)}
-                          onChange={() => toggleChannel(ch)}
+                          checked={statusFilter.has(st)}
+                          onChange={() => toggleStatus(st)}
                         />
-                        <ChannelPill channel={ch} />
+                        <span className={`astatus astatus--${st}`}>{STATUS_LABEL[st]}</span>
                       </label>
                     ))}
-                    {channelFilter.size > 0 && (
+                    {statusFilter.size > 0 && (
                       <button
                         type="button"
                         className={styles.filterclear}
                         onClick={() => {
-                          setChannelFilter(new Set());
+                          setStatusFilter(new Set());
                           setSelected(new Set());
                         }}
                       >
@@ -642,15 +650,11 @@ export default function CampaignsBoard({
           </div>
           <FilterChipsRow
             chips={[
-              ...[...channelFilter].map((ch) => {
-                const m = CHANNEL[ch];
-                return {
-                  key: `ch:${ch}`,
-                  label: m.label,
-                  onRemove: () => toggleChannel(ch),
-                  style: { background: m.tint, color: m.color },
-                };
-              }),
+              ...[...statusFilter].map((st) => ({
+                key: `status:${st}`,
+                label: `Status: ${STATUS_LABEL[st]}`,
+                onRemove: () => toggleStatus(st),
+              })),
               ...[...opensSel].map((b) => ({
                 key: `opens:${b}`,
                 label: `Opens: ${b}`,
@@ -663,7 +667,7 @@ export default function CampaignsBoard({
               })),
             ]}
             onClearAll={() => {
-              setChannelFilter(new Set());
+              setStatusFilter(new Set());
               setOpensSel(new Set());
               setClicksSel(new Set());
               setSelected(new Set());
@@ -813,10 +817,20 @@ export default function CampaignsBoard({
                 {c.recipients.toLocaleString('en-US')}
               </div>
               <div className={`tnum ${styles.muted3} ${styles.colCenter}`}>
-                {c.openRate != null ? `${Math.round(c.openRate * 100)}%` : '—'}
+                {channelReportConfig(c.channel).rateCards.some((r) => r === 'open' || r === 'seen')
+                  ? c.openRate != null
+                    ? `${Math.round(c.openRate * 100)}%`
+                    : '—'
+                  : '—'}
               </div>
               <div className={`tnum ${styles.muted3} ${styles.colCenter}`}>
-                {c.clickRate != null ? `${Math.round(c.clickRate * 100)}%` : '—'}
+                {/* A channel that cannot report the metric shows a dash, not 0% —
+                    zero would read as "nobody opened it" rather than "never measured". */}
+                {channelReportConfig(c.channel).rateCards.includes('click')
+                  ? c.clickRate != null
+                    ? `${Math.round(c.clickRate * 100)}%`
+                    : '—'
+                  : '—'}
               </div>
               <div className={`${styles.muted} ${styles.colCenter}`}>{ago(c.updatedAt)}</div>
             </div>

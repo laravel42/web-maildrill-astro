@@ -96,12 +96,14 @@ test.describe('dashboard', () => {
 });
 
 test.describe('campaigns', () => {
-  test('board walks every status tab', async ({ page }) => {
+  test('board walks every channel tab', async ({ page }) => {
     await gotoApp(page, '/dashboard/campaigns');
     await expect(page.getByRole('heading', { level: 1, name: 'Campaigns' })).toBeVisible();
-    for (const status of ['All', 'Draft', 'Scheduled', 'Sending', 'Sent', 'Paused']) {
-      await selectTab(page, status);
+    // Tabs split by channel; status is a toolbar filter.
+    for (const channel of ['All', 'Email', 'SMS', 'WhatsApp', 'Voice']) {
+      await selectTab(page, channel);
     }
+    await expect(page.getByRole('button', { name: 'Status', exact: true })).toBeVisible();
   });
 
   test('the wizard opens on step one and closes without dispatching', async ({ page }) => {
@@ -150,7 +152,6 @@ test.describe('campaigns', () => {
 
   test('a sent campaign opens its report', async ({ page }) => {
     await gotoApp(page, '/dashboard/campaigns');
-    await selectTab(page, 'Sent');
     await page.getByText('August digest', { exact: true }).first().click();
     const report = page.getByRole('button', { name: /View report|Open report/ }).first();
     if (!(await report.isVisible().catch(() => false))) test.skip();
@@ -315,11 +316,12 @@ test.describe('analytics', () => {
   test('renders every panel', async ({ page }) => {
     await gotoApp(page, '/dashboard/analytics');
     await expect(page.getByRole('heading', { level: 1, name: 'Analytics' })).toBeVisible();
-    for (const panel of ['Delivery over time', 'By channel', 'Engagement', 'Channel performance']) {
-      await expect(
-        page.getByRole('heading', { name: panel }),
-        `${panel} panel`,
-      ).toBeVisible({ timeout: 30_000 });
+    // Email reports the full set, so both charts render; the cross-channel
+    // panels were removed when Analytics became single-channel.
+    for (const panel of ['Delivery over time', 'Engagement over time']) {
+      await expect(page.getByRole('heading', { name: panel }), `${panel} panel`).toBeVisible({
+        timeout: 30_000,
+      });
     }
   });
 });

@@ -44,7 +44,10 @@ export type ChannelReportConfig = {
   panels: ReportPanelKey[];
   /** Recipient-event tabs. */
   eventTabs: ReportEventTab[];
-  /** Label for the open/seen stage. */
+  /**
+   * Label for the open/seen stage — "Opened" on email, "Seen" on WhatsApp.
+   * Unused on SMS and voice, which have no such stage.
+   */
   openLabel: string;
 };
 
@@ -68,13 +71,24 @@ const WHATSAPP: ChannelReportConfig = {
   openLabel: 'Seen',
 };
 
+/**
+ * SMS reports delivery and STOP replies, and nothing else.
+ *
+ * Infobip can attach click tracking to an SMS when the body carries a link it
+ * shortens, but nothing in the product uses that today and no click has ever
+ * been recorded — so a "Click rate" tile sat at 0.0% on every SMS campaign,
+ * implying nobody clicked rather than that nothing was measured. The
+ * Analytics screen already treats SMS as delivery-only; this brings the
+ * campaign views into line. Restore the click keys if link shortening is
+ * turned on.
+ */
 const SMS: ChannelReportConfig = {
-  rateCards: ['delivery', 'click', 'unsub'],
-  kpis: ['delivered', 'clicked', 'failed', 'unsubscribed'],
-  drawerKpis: ['recipients', 'delivered', 'click', 'unsubscribed', 'failed'],
-  funnel: ['recipients', 'delivered', 'clicked'],
-  panels: ['links', 'details'],
-  eventTabs: ['all', 'delivered', 'clicked', 'unsubscribed', 'sent', 'failed', 'queued'],
+  rateCards: ['delivery', 'unsub'],
+  kpis: ['delivered', 'failed', 'unsubscribed'],
+  drawerKpis: ['recipients', 'delivered', 'unsubscribed', 'failed'],
+  funnel: ['recipients', 'delivered'],
+  panels: ['details'],
+  eventTabs: ['all', 'delivered', 'unsubscribed', 'sent', 'failed', 'queued'],
   openLabel: 'Opened',
 };
 

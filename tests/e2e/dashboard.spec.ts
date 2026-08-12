@@ -11,11 +11,13 @@ test.describe('dashboard', () => {
     // resolves (PostHog-backed aggregate can take several seconds), so the
     // first row assertion carries the wait for the loading skeletons to clear.
     await expect(page.getByText('Performance by channel')).toBeVisible();
-    for (const channel of ['Email', 'WhatsApp', 'SMS', 'Voice']) {
-      await expect(
-        page.getByText(channel, { exact: true }).first(),
-        `${channel} row in channel breakdown`,
-      ).toBeVisible({ timeout: 20_000 });
+    // The breakdown omits channels with nothing sent in the range, so asserting
+    // all four assumed the seed happened to have recent activity on every one.
+    // What the panel guarantees is that the channels it *does* show are real.
+    const rows = page.locator('a[href*="/dashboard/analytics?channel="]');
+    await expect(rows.first()).toBeVisible({ timeout: 20_000 });
+    for (const href of await rows.evaluateAll((els) => els.map((e) => e.getAttribute('href')))) {
+      expect(href).toMatch(/channel=(email|sms|whatsapp|voice)\b/);
     }
     await expect(page.getByText('Recent campaigns')).toBeVisible();
   });

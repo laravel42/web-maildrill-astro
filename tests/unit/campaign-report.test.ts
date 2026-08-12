@@ -18,11 +18,19 @@ describe('channelReportConfig', () => {
     expect(c.panels).not.toContain('devices');
   });
 
-  it('sms cannot report opens at all', () => {
+  it('sms is delivery-only — no open, seen or click', () => {
+    // Infobip can track clicks on a shortened SMS link, but nothing in the
+    // product uses that and no click has ever been recorded, so a Click rate
+    // tile sat at 0.0% forever — implying nobody clicked rather than that
+    // nothing was measured. Analytics treats SMS the same way.
     const c = channelReportConfig('sms');
-    expect(c.funnel).toEqual(['recipients', 'delivered', 'clicked']);
+    expect(c.funnel).toEqual(['recipients', 'delivered']);
     expect(c.rateCards).not.toContain('open');
     expect(c.rateCards).not.toContain('seen');
+    expect(c.rateCards).not.toContain('click');
+    expect(c.kpis).not.toContain('clicked');
+    expect(c.drawerKpis).not.toContain('click');
+    expect(c.eventTabs).not.toContain('clicked');
   });
 
   it('voice is delivery-only', () => {
