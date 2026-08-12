@@ -14,6 +14,12 @@ import {
 } from '@maildrill/database';
 import { addToList } from './lists';
 import { clamp } from './rules';
+import {
+  invalidReasonLabel,
+  validateEmailAddress,
+  validateEmailAddresses,
+  type EmailValidation,
+} from './email-validation';
 
 const WEEK_MS = 7 * 86_400_000;
 const WEEKLY_POINTS = 12;
@@ -78,8 +84,28 @@ export interface UpsertSubscriberInput {
 }
 
 /** Create or update a subscriber, keyed by (tenant, lowercased email). */
+/**
+ * Attributes recording why an address was rejected, so the `invalid` badge in
+ * the CRM can explain itself instead of being an unexplained state.
+ */
+function invalidAttributes(result: EmailValidation): Record<string, unknown> {
+  if (result.valid || !result.reason) return {};
+  return {
+    invalid_reason: result.reason,
+    invalid_detail: invalidReasonLabel(result.reason, result.suggestion),
+    ...(result.suggestion ? { did_you_mean: result.suggestion } : {}),
+  };
+}
+
 export async function upsertSubscriber(input: UpsertSubscriberInput): Promise<Subscriber> {
   const email = input.email.trim().toLowerCase();
+  // Validate at the point of entry unless the caller already decided a status
+  // (a bulk import passing its own verdict, or an explicit unsubscribe/bounce).
+  // Anything the local checks reject is stored as `invalid` — which
+  // resolveAudience never sends to — rather than refused, so the row still
+  // lands in the CRM with a reason attached.
+  const checked = input.status ? null : await validateEmailAddress(email);
+  const status: SubscriberStatus = input.status ?? (checked?.valid === false ? 'invalid' : 'active');
   const rows = await db
     .insert(subscribers)
     .values({
@@ -87,8 +113,11 @@ export async function upsertSubscriber(input: UpsertSubscriberInput): Promise<Su
       email,
       phone: input.phone ?? null,
       name: input.name ?? null,
-      attributes: input.attributes ?? {},
-      status: input.status ?? 'active',
+      attributes: {
+        ...(input.attributes ?? {}),
+        ...(checked ? invalidAttributes(checked) : {}),
+      },
+      status,
     })
     .onConflictDoUpdate({
       target: [subscribers.tenantId, subscribers.email],
@@ -142,10 +171,33 @@ export async function importSubscribers(
     ).map((r) => r.email),
   );
 
+  // Validate the whole batch up front: the MX lookup is the only slow part and
+  // it is cached per domain, so one pass over a file of a few hundred domains
+  // costs a few hundred DNS queries instead of one per row.
+  const verdicts = await validateEmailAddresses(rows.map((r) => r.email));
+
   const result: ImportSubscribersResult = { created: 0, updated: 0, failed: 0, errors: [] };
   for (const [index, row] of rows.entries()) {
     try {
-      const sub = await upsertSubscriber({ tenantId, ...row });
+      const verdict = verdicts.get(row.email.trim().toLowerCase());
+      // A file may carry its own status column; an explicit unsubscribe or
+      // bounce from the source is respected over our verdict, but an address
+      // the file calls active still has to pass validation.
+      const status =
+        row.status && row.status !== 'active'
+          ? row.status
+          : verdict?.valid === false
+            ? ('invalid' as const)
+            : ('active' as const);
+      const sub = await upsertSubscriber({
+        tenantId,
+        ...row,
+        status,
+        attributes: {
+          ...(row.attributes ?? {}),
+          ...(verdict ? invalidAttributes(verdict) : {}),
+        },
+      });
       if (existing.has(sub.email)) {
         result.updated += 1;
       } else {

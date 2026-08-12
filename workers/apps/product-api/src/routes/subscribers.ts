@@ -17,7 +17,7 @@ import {
   upsertSubscriber,
 } from '@maildrill/product';
 
-const statusEnum = z.enum(['active', 'unsubscribed', 'bounced', 'complained']);
+const statusEnum = z.enum(['active', 'unsubscribed', 'bounced', 'complained', 'invalid']);
 
 const upsertSchema = z.object({
   email: z.string().email(),

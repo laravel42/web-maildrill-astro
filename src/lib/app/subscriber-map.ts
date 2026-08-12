@@ -40,9 +40,14 @@ function pickAv(id: string): [string, string] {
   return AV[h % AV.length] ?? ['#818cf8', '#4f46e5'];
 }
 
-// The app UI knows 3 statuses; the API can also return 'complained'.
+// The API can also return 'complained', which the UI folds into
+// 'unsubscribed' — both mean "they asked us to stop". 'invalid' is kept
+// distinct: nobody asked for anything, the address simply cannot receive mail,
+// and showing it as unsubscribed would misreport why the send is suppressed.
 function mapStatus(s: string): SubscriberStatus {
-  return s === 'active' || s === 'unsubscribed' || s === 'bounced' ? s : 'unsubscribed';
+  return s === 'active' || s === 'unsubscribed' || s === 'bounced' || s === 'invalid'
+    ? s
+    : 'unsubscribed';
 }
 
 function fmtDate(iso?: string | null): string {

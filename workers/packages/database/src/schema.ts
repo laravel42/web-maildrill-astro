@@ -418,6 +418,13 @@ export const subscriberStatusEnum = pgEnum('subscriber_status', [
   'unsubscribed',
   'bounced',
   'complained',
+  /**
+   * Failed address validation at add/import time — bad syntax, a typo'd or
+   * non-existent domain, or a disposable provider. Never mailed:
+   * `resolveAudience` only sends to `active`. Distinct from `bounced`, which
+   * is a verdict from a real delivery attempt.
+   */
+  'invalid',
 ]);
 export const segmentMatchEnum = pgEnum('segment_match', ['all', 'any']);
 export const customFieldTypeEnum = pgEnum('custom_field_type', [

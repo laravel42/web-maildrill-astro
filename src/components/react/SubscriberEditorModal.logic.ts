@@ -4,6 +4,7 @@ export const STATUS_OPTS: { value: SubscriberStatus; label: string }[] = [
   { value: 'active', label: 'Active' },
   { value: 'unsubscribed', label: 'Unsubscribed' },
   { value: 'bounced', label: 'Bounced' },
+  { value: 'invalid', label: 'Invalid' },
 ];
 
 // Uniform tag chip colours (matches `@/lib/app/tag-style`).

@@ -134,6 +134,13 @@
       "when": 1786600000000,
       "tag": "0018_message_error_permanent",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1786620000000,
+      "tag": "0019_subscriber_status_invalid",
+      "breakpoints": true
     }
   ]
 }

@@ -98,7 +98,7 @@ export const SEG_OPS: Record<SegField, { op: SegOp; label: string }[]> = {
 
 export const SEG_FIELD_LIST: SegField[] = ['Status', 'Tag', 'List', 'Email', 'Name'];
 
-export const STATUS_VALUES = ['active', 'unsubscribed', 'bounced', 'complained'];
+export const STATUS_VALUES = ['active', 'unsubscribed', 'bounced', 'complained', 'invalid'];
 
 /** Ops that take no value, so the value control is hidden for them. */
 export function opNeedsValue(op: SegOp): boolean {

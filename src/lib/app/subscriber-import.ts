@@ -27,7 +27,7 @@ export type ImportTarget =
   | { kind: 'skip' };
 
 /** Mirrors the `subscriber_status` enum in workers. */
-export type ImportStatus = 'active' | 'unsubscribed' | 'bounced' | 'complained';
+export type ImportStatus = 'active' | 'unsubscribed' | 'bounced' | 'complained' | 'invalid';
 
 /** One row in the shape POST /v1/subscribers/import accepts. */
 export type SubscriberImportRow = {
@@ -59,6 +59,7 @@ const STATUS_ALIASES: Record<string, ImportStatus> = {
   complaint: 'complained',
   spam: 'complained',
   abuse: 'complained',
+  invalid: 'invalid',
 };
 
 export function normalizeStatus(value: string): ImportStatus | undefined {

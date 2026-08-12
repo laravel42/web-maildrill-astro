@@ -37,7 +37,7 @@ export type Campaign = {
   lastErrorMessage?: string | null;
 };
 
-export type SubscriberStatus = 'active' | 'unsubscribed' | 'bounced';
+export type SubscriberStatus = 'active' | 'unsubscribed' | 'bounced' | 'invalid';
 
 export type Subscriber = {
   id: string;

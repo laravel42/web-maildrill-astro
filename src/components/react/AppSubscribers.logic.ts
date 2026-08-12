@@ -8,12 +8,14 @@ export const STATUS_LABEL: Record<SubscriberStatus, string> = {
   active: 'Active',
   unsubscribed: 'Unsubscribed',
   bounced: 'Bounced',
+  invalid: 'Invalid',
 };
 export const STATUS_TABS: ('all' | SubscriberStatus)[] = [
   'all',
   'active',
   'unsubscribed',
   'bounced',
+  'invalid',
 ];
 
 export const PAGE_SIZE = 15;
