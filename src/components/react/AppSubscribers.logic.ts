@@ -11,6 +11,21 @@ export const STATUS_LABEL: Record<SubscriberStatus, string> = {
   complained: 'Complained',
   invalid: 'Invalid',
 };
+/**
+ * Chip tint per status, so an active status filter reads as the status rather
+ * than as the generic accent every other filter chip uses. Complained takes
+ * the neutral ink tint at full text weight (the worst signal a sender can
+ * collect); invalid takes the same tint muted, because the address is inert
+ * rather than alarming. Both tokens invert with the theme.
+ */
+export const STATUS_CHIP_STYLE: Record<SubscriberStatus, { background: string; color: string }> = {
+  active: { background: 'var(--success-bg)', color: 'var(--success-strong)' },
+  unsubscribed: { background: 'var(--warning-bg)', color: 'var(--warning-strong)' },
+  bounced: { background: 'var(--danger-bg)', color: 'var(--danger)' },
+  complained: { background: 'var(--ink-tint)', color: 'var(--ink)' },
+  invalid: { background: 'var(--ink-tint)', color: 'var(--text3)' },
+};
+
 export const STATUS_TABS: ('all' | SubscriberStatus)[] = [
   'all',
   'active',

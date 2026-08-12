@@ -32,6 +32,7 @@ import { ago, agoNow } from './shared/time';
 import { useToast } from './shared/useToast';
 import { useEscapeClose } from './shared/useEscapeClose';
 import {
+  STATUS_CHIP_STYLE,
   STATUS_LABEL,
   STATUS_TABS,
   PAGE_SIZE,
@@ -908,17 +909,7 @@ export default function AppSubscribers({
                         setTab('all');
                         resetPageAndSel();
                       },
-                      style:
-                        tab === 'active'
-                          ? { background: 'var(--success-bg)', color: 'var(--success-strong)' }
-                          : tab === 'unsubscribed'
-                            ? {
-                                background: 'var(--warning-bg)',
-                                color: 'var(--warning-strong)',
-                              }
-                            : tab === 'bounced'
-                              ? { background: 'var(--danger-bg)', color: 'var(--danger)' }
-                              : undefined,
+                      style: STATUS_CHIP_STYLE[tab],
                     },
                   ]
                 : []),
