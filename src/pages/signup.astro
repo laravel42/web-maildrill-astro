@@ -3,6 +3,7 @@ import AuthLayout from '@/layouts/AuthLayout.astro';
 import AuthForm from '@/components/react/AuthForm';
 import Icon from '@/components/ui/Icon.astro';
 import type { IconName } from '@/lib/icons';
+import { TRIAL_ALLOWANCES } from '@/config/pricing';
 
 const seo = {
   title: 'Start free trial',
@@ -11,12 +12,13 @@ const seo = {
   noindex: true,
 };
 
-// What the free trial includes — matches the sign-up design's panel.
+// What the free trial includes. Built from TRIAL_ALLOWANCES so this panel and
+// the backend gate that enforces it cannot drift apart.
 const perks: { icon: IconName; t: string }[] = [
-  { icon: 'bolt', t: '100 emails included' },
-  { icon: 'chart', t: '15 SMS messages' },
-  { icon: 'code', t: '100 WhatsApp messages' },
-  { icon: 'shield', t: '60 min of voice calls' },
+  { icon: 'bolt', t: `${TRIAL_ALLOWANCES.email} emails included` },
+  { icon: 'chart', t: `${TRIAL_ALLOWANCES.sms} SMS messages` },
+  { icon: 'code', t: `${TRIAL_ALLOWANCES.whatsapp} WhatsApp messages` },
+  { icon: 'shield', t: `${TRIAL_ALLOWANCES.voice} min of voice calls` },
 ];
 ---
 

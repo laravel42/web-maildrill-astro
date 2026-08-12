@@ -357,3 +357,18 @@ export const pricingFaqs = [
       'Yes. For committed volume above the Scale tier, dedicated infrastructure, or custom contracts, get in touch with sales for bespoke rates.',
   },
 ] as const;
+
+/**
+ * Free-trial allowances shown on `/signup`. Mirrored by the backend gate in
+ * `workers/packages/domain/src/trial.ts` — change both together, or the site
+ * promises something the gate will not honour.
+ *
+ * Voice is advertised in minutes; the gate counts calls as minutes because no
+ * call duration is recorded yet (see the backend mirror for the detail).
+ */
+export const TRIAL_ALLOWANCES = {
+  email: 100,
+  sms: 15,
+  whatsapp: 100,
+  voice: 60,
+} as const;

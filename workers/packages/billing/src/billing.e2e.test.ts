@@ -5,6 +5,7 @@ import {
   closeDb,
   db,
   memberships,
+  messages,
   paymentAttempts,
   pricingTiers,
   users,
@@ -15,6 +16,7 @@ import { appendLedgerEntry } from './ledger';
 import { getOrCreateWallet, listWalletTransactions, reconcileWallet } from './wallet';
 import { commitReservedCredits, releaseReservation, reserveCredits } from './reservations';
 import { processPaymentWebhook } from './webhooks';
+import { assertTrialAllowance, isTenantOnTrial, trialAllowance } from './trial';
 import { MockPaymentProvider } from './provider/mock';
 import { setPaymentProviderForTests } from './provider/registry';
 
@@ -374,6 +376,83 @@ describe.skipIf(!run)('billing wallet + ledger (e2e — needs Postgres)', () => 
       const attempt = await newAttempt(5_000_000);
       await purchase(attempt.id, attempt.providerSessionId!);
       expect(await tierOf(second)).toBe('payg');
+    });
+  });
+
+  describe('trial allowance gate', () => {
+    let trialTenantId: string;
+
+    /** Record messages as already sent, so they consume allowance. */
+    async function spend(
+      channel: 'email' | 'sms' | 'whatsapp' | 'voice',
+      n: number,
+      status: 'sent' | 'queued' | 'failed' = 'sent',
+    ) {
+      if (n === 0) return;
+      await db.insert(messages).values(
+        Array.from({ length: n }, () => ({
+          tenantId: trialTenantId,
+          channel,
+          toAddress: `trial-${Math.random().toString(36).slice(2)}@example.com`,
+          status,
+          provider: 'mock',
+        })),
+      );
+    }
+
+    beforeAll(async () => {
+      // A tenant of its own: the suite's main tenant has purchases by now.
+      const tenant = await ensureTenantByName(`trial-e2e-${uniq}`);
+      trialTenantId = tenant.id;
+    });
+
+    it('treats a workspace that never paid as on trial', async () => {
+      expect(await isTenantOnTrial(trialTenantId)).toBe(true);
+    });
+
+    it('allows sending inside the advertised allowance', async () => {
+      await expect(assertTrialAllowance(trialTenantId, 'sms', 15)).resolves.toBeUndefined();
+    });
+
+    it('rejects a batch that would exceed the allowance, all or nothing', async () => {
+      await expect(assertTrialAllowance(trialTenantId, 'sms', 16)).rejects.toThrow(
+        /trial_allowance_exhausted/,
+      );
+    });
+
+    it('counts only messages that actually went out', async () => {
+      await spend('sms', 5, 'sent');
+      await spend('sms', 3, 'queued'); // never left — must not consume
+      await spend('sms', 2, 'failed');
+      const state = await trialAllowance(trialTenantId, 'sms');
+      expect(state.used).toBe(5);
+      expect(state.remaining).toBe(10);
+      await expect(assertTrialAllowance(trialTenantId, 'sms', 10)).resolves.toBeUndefined();
+      await expect(assertTrialAllowance(trialTenantId, 'sms', 11)).rejects.toThrow(ConflictError);
+    });
+
+    it('keeps each channel on its own budget', async () => {
+      const email = await trialAllowance(trialTenantId, 'email');
+      expect(email.used).toBe(0);
+      expect(email.remaining).toBe(100);
+      await expect(assertTrialAllowance(trialTenantId, 'email', 100)).resolves.toBeUndefined();
+    });
+
+    it('exhausts precisely at the limit', async () => {
+      await spend('whatsapp', 100);
+      const state = await trialAllowance(trialTenantId, 'whatsapp');
+      expect(state.remaining).toBe(0);
+      await expect(assertTrialAllowance(trialTenantId, 'whatsapp', 1)).rejects.toThrow(
+        /trial_allowance_exhausted/,
+      );
+    });
+
+    it('stops gating once the workspace has paid', async () => {
+      expect(await isTenantOnTrial(tenantId)).toBe(false);
+      const state = await trialAllowance(tenantId, 'sms');
+      expect(state.onTrial).toBe(false);
+      expect(state.remaining).toBe(Number.POSITIVE_INFINITY);
+      await expect(assertTrialAllowance(tenantId, 'sms', 10_000)).resolves.toBeUndefined();
     });
   });
 });

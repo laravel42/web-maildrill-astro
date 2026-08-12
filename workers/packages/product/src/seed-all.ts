@@ -4,7 +4,9 @@
  *   1. seedDev()     dev-workspace reset + six months of demo data, the
  *                    billing catalog, and the gallery email templates
  *                    (packages/database/src/seed.ts)
- *   2. seedImages()  Unsplash media library — skipped when UNSPLASH_API_KEY
+ *   2. seedDevWallet() dev workspace starting credit, which also takes it off
+ *                    the free-trial allowance gate (seed-wallet.ts)
+ *   3. seedImages()  Unsplash media library — skipped when UNSPLASH_API_KEY
  *                    or media storage (AWS_REGION, MEDIA_S3_BUCKET,
  *                    MEDIA_CDN_DOMAIN) is not configured
  *
@@ -19,10 +21,15 @@
 import { seedDev } from '@maildrill/database/seed';
 import { mediaConfigured } from './media';
 import { seedImages } from './seed-images';
+import { seedDevWallet } from './seed-wallet';
 
 async function main(): Promise<void> {
   await seedDev();
   if (process.argv.includes('--reset-only')) return;
+
+  // Fund the workspace so the trial gate does not read six months of demo
+  // history as trial spend and block every send.
+  await seedDevWallet();
 
   if (process.argv.includes('--no-images')) {
     console.log('images: skipped (--no-images)');

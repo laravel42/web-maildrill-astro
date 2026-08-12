@@ -9,6 +9,7 @@ export * from './checkout';
 export * from './customer';
 export * from './webhooks';
 export * from './consumption';
+export * from './trial';
 export * from './provider/types';
 export { getPaymentProvider, setPaymentProviderForTests } from './provider/registry';
 export { StripeProvider, verifyStripeSignature, toFormBody } from './provider/stripe';

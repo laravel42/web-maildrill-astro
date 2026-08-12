@@ -1,5 +1,5 @@
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import { reserveCampaignCredits } from '@maildrill/billing';
+import { assertTrialAllowance, reserveCampaignCredits } from '@maildrill/billing';
 import { campaigns, db, messages, subscribers, type Campaign } from '@maildrill/database';
 import { ConflictError, NotFoundError, type Channel } from '@maildrill/domain';
 import { submitMessage } from '@maildrill/services';
@@ -182,9 +182,24 @@ export async function sendCampaign(input: SendCampaignInput): Promise<SendCampai
   // Billing gate (no-op unless BILLING_ENFORCEMENT=1): hold the estimated
   // campaign cost before any message row exists. An empty wallet rejects the
   // whole send here and puts the draft back — nothing is half-sent.
-  if (!scheduled && resolved.length > 0) {
+  if (resolved.length > 0) {
     try {
-      await reserveCampaignCredits(input.tenantId, camp.id, input.channel, resolved.length);
+      // Trial allowance is checked for scheduled sends too. The scheduler
+      // activates due messages one at a time across every tenant, so gating
+      // there would half-activate a campaign or leave rows stuck as
+      // `scheduled` forever; refusing at schedule time gives the user an
+      // actionable error instead. Usage only ever grows, so what does not fit
+      // now will not fit later — the residual gap is a campaign scheduled
+      // within budget whose budget is then spent by other sends before it
+      // fires, which goes out over-allowance.
+      //
+      // Unlike the wallet reservation, this is not behind
+      // BILLING_ENFORCEMENT: a workspace that never paid stays capped at what
+      // /signup advertises even while the wallet is switched off.
+      await assertTrialAllowance(input.tenantId, input.channel, resolved.length);
+      if (!scheduled) {
+        await reserveCampaignCredits(input.tenantId, camp.id, input.channel, resolved.length);
+      }
     } catch (err) {
       await db
         .update(campaigns)

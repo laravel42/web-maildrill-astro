@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { config } from '@maildrill/config';
 import { db, messages, type MessageRow } from '@maildrill/database';
 import type { Channel } from '@maildrill/domain';
+import { assertTrialAllowance } from '@maildrill/billing';
 import { insertDispatchOutbox, isUniqueViolation } from './shared';
 
 export interface SubmitMessageInput {
@@ -51,6 +52,14 @@ export async function submitMessage(input: SubmitMessageInput): Promise<SubmitRe
   if (input.idempotencyKey) {
     const existing = await findByIdempotencyKey(input.tenantId, input.idempotencyKey);
     if (existing) return { message: existing, deduplicated: true };
+  }
+
+  // Trial gate for un-batched sends (test sends, transactional, API one-offs).
+  // Campaign fan-out comes through here too, but `sendCampaign` already gated
+  // the whole audience up front — re-checking per message would both waste two
+  // queries per recipient and risk rejecting a campaign halfway through.
+  if (!input.campaignId) {
+    await assertTrialAllowance(input.tenantId, input.channel, 1);
   }
 
   const scheduled = input.scheduledAt != null && input.scheduledAt.getTime() > Date.now();
