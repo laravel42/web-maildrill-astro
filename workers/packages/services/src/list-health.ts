@@ -1,4 +1,4 @@
-import { and, count, eq, inArray, sql } from 'drizzle-orm';
+import { and, count, eq, gte, inArray, sql } from 'drizzle-orm';
 import { db, listMembers, lists, subscribers } from '@maildrill/database';
 import { ConflictError } from '@maildrill/domain';
 import { createLogger, metrics } from '@maildrill/observability';
@@ -39,13 +39,25 @@ const DEAD_STATUSES = ['invalid', 'bounced', 'complained'] as const;
  * therefore be a third dead and still be healthy — so the combined bar has to
  * stay well above the invalid one.
  *
- * KNOWN LIMITATION: the combined share has no time window, so a very old list
- * can eventually trip it through nothing but honest decay. Scoping it to
- * members added recently (`list_members.added_at`) would separate "bad import"
- * from "old list" properly; until then 20% is the compromise.
+ * Both shares are scoped to members added inside `LIST_WINDOW_DAYS`, which is
+ * what makes them mean anything: the question is "of what you have put on this
+ * list recently, how much is bad?", not "how old is this list?". Without the
+ * window a well-run three-year-old list trips the bar through nothing but
+ * honest decay, because a bounced member stays in the list forever.
+ *
+ * A list nobody has added to inside the window is not judged here at all —
+ * there is no recent sourcing to judge. It is still covered downstream by the
+ * send-time bounce gate and the in-flight campaign breaker.
  */
 export const LIST_INVALID_SHARE_LIMIT = 0.1;
 export const LIST_DEAD_SHARE_LIMIT = 0.2;
+
+/**
+ * How far back "recently added" reaches. Six months is long enough that a
+ * normal drip of sign-ups accumulates a meaningful sample, and short enough
+ * that a list's ancient history stops counting against it.
+ */
+export const LIST_WINDOW_DAYS = 180;
 
 /**
  * Below this, the share is noise. A five-member list with two bounces is 40%
@@ -54,6 +66,7 @@ export const LIST_DEAD_SHARE_LIMIT = 0.2;
 export const LIST_MIN_MEMBERS = 25;
 
 export interface ListHealth {
+  /** Members added inside the window — the denominator for both shares. */
   members: number;
   dead: number;
   deadShare: number;
@@ -65,7 +78,11 @@ export interface ListHealth {
   reason?: string | null;
 }
 
-export async function listHealth(tenantId: string, listId: string): Promise<ListHealth> {
+export async function listHealth(
+  tenantId: string,
+  listId: string,
+  since = new Date(Date.now() - LIST_WINDOW_DAYS * 86_400_000),
+): Promise<ListHealth> {
   const [row] = await db
     .select({
       members: count(),
@@ -74,7 +91,14 @@ export async function listHealth(tenantId: string, listId: string): Promise<List
     })
     .from(listMembers)
     .innerJoin(subscribers, eq(listMembers.subscriberId, subscribers.id))
-    .where(and(eq(listMembers.listId, listId), eq(subscribers.tenantId, tenantId)));
+    .where(
+      and(
+        eq(listMembers.listId, listId),
+        eq(subscribers.tenantId, tenantId),
+        // Judge recent sourcing, not the list's whole history.
+        gte(listMembers.addedAt, since),
+      ),
+    );
 
   const [meta] = await db
     .select({ suspendedAt: lists.suspendedAt, reason: lists.suspendedReason })

@@ -5,6 +5,8 @@ import { deleteSubscriber, importSubscribers, updateSubscriber, upsertSubscriber
 import { resolveAudience } from './audience';
 import { addToList, createList } from './lists';
 import { assertListSendable, listHealth } from '@maildrill/services';
+import { db, listMembers } from '@maildrill/database';
+import { eq } from 'drizzle-orm';
 
 // Needs real Postgres. Enable with: RUN_E2E=1 pnpm test
 const run = process.env.RUN_E2E === '1';
@@ -162,5 +164,25 @@ describe.skipIf(!run)('list suspension (e2e — needs Postgres)', () => {
   it('ignores a list too small for the share to mean anything', async () => {
     const { tenantId, listId } = await listWith(5, 4, 'tiny'); // 80% of 5
     await expect(assertListSendable(tenantId, listId)).resolves.toBeUndefined();
+  });
+
+  it('does not judge a list nobody has added to recently', async () => {
+    // Same rotten membership, but every member was added before the window —
+    // that is an old list, not a bad import, and the bar must not fire.
+    const { tenantId, listId } = await listWith(30, 15, 'aged');
+    await db
+      .update(listMembers)
+      .set({ addedAt: new Date(Date.now() - 400 * 86_400_000) })
+      .where(eq(listMembers.listId, listId));
+
+    const windowed = await listHealth(tenantId, listId);
+    expect(windowed.members).toBe(0);
+    expect(windowed.significant).toBe(false);
+    await expect(assertListSendable(tenantId, listId)).resolves.toBeUndefined();
+
+    // Widening the window back over them shows the rot is still there.
+    const lifetime = await listHealth(tenantId, listId, new Date(0));
+    expect(lifetime.members).toBe(30);
+    expect(lifetime.deadShare).toBeCloseTo(0.5);
   });
 });
