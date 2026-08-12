@@ -258,12 +258,12 @@ export default function AppListDetail({
               <button
                 className="pbtn"
                 type="button"
-                onClick={() => {
-                  window.location.href = routes.app.subscribers;
-                }}
+                onClick={() => setEditorOpen(true)}
               >
-                <Icon name="upload" size={15} />
-                Import subscribers
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z" />
+                </svg>
+                Edit list details
               </button>
               <div className={styles.menuWrap} ref={menuRef}>
                 <button
@@ -281,19 +281,6 @@ export default function AppListDetail({
                 </button>
                 {menuOpen && (
                   <div className={styles.menu} role="menu">
-                    <button
-                      className={styles.menuItem}
-                      type="button"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setEditorOpen(true);
-                      }}
-                    >
-                      <svg {...menuIcon}>
-                        <path d="M11 4h2M4 11v2M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z" />
-                      </svg>
-                      Edit list details
-                    </button>
                     <button className={styles.menuItem} type="button" onClick={exportCsv}>
                       <svg {...menuIcon}>
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
