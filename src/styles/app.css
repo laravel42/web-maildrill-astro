@@ -204,14 +204,16 @@
   border-color: color-mix(in srgb, var(--danger) 30%, transparent);
   color: var(--danger);
 }
-/* A spam complaint is the worst signal a sender can collect, so it gets the
-   heaviest badge in the set: full-strength ink and a denser border than the
-   others. `--ink` inverts to near-white on the dark theme, so this reads as
-   "black" in light mode without going invisible in dark. */
+/* A spam complaint is the worst signal a sender can collect, so in the table it
+   is the only badge with a solid, full-strength border rather than the 30%
+   tint the others use — it reads as outlined-in-black on white without
+   shouting the way a filled row badge would. (The filter chip stays filled;
+   there is only ever one of those on screen.) `--surface` and `--ink` both
+   invert, so the pairing holds on the dark theme. */
 .astatus--complained {
-  background: var(--ink);
+  background: var(--surface);
   border-color: var(--ink);
-  color: var(--on-ink);
+  color: var(--ink);
 }
 /* Invalid is inert rather than alarming — nobody did anything wrong, the
    address simply cannot receive mail — so it sits in neutral dark gray
