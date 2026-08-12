@@ -13,16 +13,20 @@ export const STATUS_LABEL: Record<SubscriberStatus, string> = {
 };
 /**
  * Chip tint per status, so an active status filter reads as the status rather
- * than as the generic accent every other filter chip uses. Complained takes
- * the neutral ink tint at full text weight (the worst signal a sender can
- * collect); invalid takes the same tint muted, because the address is inert
- * rather than alarming. Both tokens invert with the theme.
+ * than as the generic accent every other filter chip uses.
+ *
+ * Complained is the only filled chip — solid `--ink` with `--on-ink` text —
+ * because it is the worst signal a sender can collect and shared a tint with
+ * `invalid` too closely to tell apart. Invalid keeps the muted neutral: the
+ * address is inert, not alarming. Both pairs invert with the theme.
  */
 export const STATUS_CHIP_STYLE: Record<SubscriberStatus, { background: string; color: string }> = {
   active: { background: 'var(--success-bg)', color: 'var(--success-strong)' },
   unsubscribed: { background: 'var(--warning-bg)', color: 'var(--warning-strong)' },
   bounced: { background: 'var(--danger-bg)', color: 'var(--danger)' },
-  complained: { background: 'var(--ink-tint)', color: 'var(--ink)' },
+  // Solid ink with inverted text: the only filled chip in the set, so a
+  // complaint cannot be mistaken for the muted `invalid` beside it.
+  complained: { background: 'var(--ink)', color: 'var(--on-ink)' },
   invalid: { background: 'var(--ink-tint)', color: 'var(--text3)' },
 };
 

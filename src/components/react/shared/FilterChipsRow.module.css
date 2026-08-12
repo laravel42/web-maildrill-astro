@@ -27,7 +27,9 @@
   color: inherit;
 }
 .x:hover {
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  /* Follows the chip's own colour — the accent was wrong on every tinted chip
+     and unreadable on the filled one. */
+  background: color-mix(in srgb, currentColor 18%, transparent);
 }
 .clear {
   font-size: 12px;

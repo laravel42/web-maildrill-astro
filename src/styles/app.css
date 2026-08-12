@@ -209,8 +209,9 @@
    others. `--ink` inverts to near-white on the dark theme, so this reads as
    "black" in light mode without going invisible in dark. */
 .astatus--complained {
-  border-color: color-mix(in srgb, var(--ink) 45%, transparent);
-  color: var(--ink);
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-ink);
 }
 /* Invalid is inert rather than alarming — nobody did anything wrong, the
    address simply cannot receive mail — so it sits in neutral dark gray
