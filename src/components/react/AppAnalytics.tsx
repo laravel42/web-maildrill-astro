@@ -217,7 +217,7 @@ export default function AppAnalytics({
   const kpis = buildKpis(daily, channel);
   const talk = cfg.showTalkTime ? talkTimeOf(daily) : null;
   const totals = totalsOf(daily);
-  const engUntracked = cfg.engagement === null;
+  const engagement = cfg.engagement;
 
   /* Download exactly the series on screen, rather than claiming an export. */
   const exportCsv = () => {
@@ -263,9 +263,7 @@ export default function AppAnalytics({
       <div className={`screen__head ${styles.head}`}>
         <div>
           <h1 className="screen__h1">Analytics</h1>
-          <p className={`screen__sub ${styles.headSub}`}>
-            {`${CHANNEL[channel].label} delivery.`}
-          </p>
+          <p className={`screen__sub ${styles.headSub}`}>{`${CHANNEL[channel].label} delivery.`}</p>
         </div>
         <div className={styles.controls}>
           <div className={`aseg ${styles.seg}`} role="group" aria-label="Filter by channel">
@@ -438,74 +436,76 @@ export default function AppAnalytics({
             )}
           </section>
 
-          {/* engagement over time — same chart as delivery, tracked channels only */}
-          <section
-            className={`acrd ${styles.hero}`}
-            aria-label={cfg.engagement?.title ?? 'Engagement'}
-            aria-busy={loading}
-          >
-            <div className={styles.cardHead}>
-              <div>
-                <h2 className="acrd__title">{cfg.engagement?.title ?? 'Engagement'}</h2>
-                {loading ? (
-                  <div
-                    className={`skeleton ${styles.skelLine}`}
-                    style={{ width: 180, marginTop: 6 }}
-                  />
-                ) : engUntracked ? null : (
-                  <p className={`${styles.cardSub} tnum`}>
-                    Daily receipts · {fmtDate(daily[0].date)} –{' '}
-                    {fmtDate(daily[daily.length - 1].date)}
-                  </p>
+          {/* Engagement chart only where the provider reports something to
+             plot. SMS and voice emit no receipts at all, so the panel is
+             absent rather than present-and-empty. */}
+          {engagement && (
+            <section
+              className={`acrd ${styles.hero}`}
+              aria-label={engagement.title}
+              aria-busy={loading}
+            >
+              <div className={styles.cardHead}>
+                <div>
+                  <h2 className="acrd__title">{cfg.engagement?.title ?? 'Engagement'}</h2>
+                  {loading ? (
+                    <div
+                      className={`skeleton ${styles.skelLine}`}
+                      style={{ width: 180, marginTop: 6 }}
+                    />
+                  ) : (
+                    <p className={`${styles.cardSub} tnum`}>
+                      Daily receipts · {fmtDate(daily[0].date)} –{' '}
+                      {fmtDate(daily[daily.length - 1].date)}
+                    </p>
+                  )}
+                </div>
+                {!loading && (
+                  <div className={styles.heroTotal}>
+                    <span className={`${styles.heroNum} tnum`}>
+                      {totals.opened.toLocaleString('en-US')}
+                    </span>
+                    <span className={styles.heroLbl}>opens</span>
+                  </div>
                 )}
               </div>
-              {!engUntracked && !loading && (
-                <div className={styles.heroTotal}>
-                  <span className={`${styles.heroNum} tnum`}>
-                    {totals.opened.toLocaleString('en-US')}
-                  </span>
-                  <span className={styles.heroLbl}>opens</span>
-                </div>
+
+              {loading ? (
+                <div className={`skeleton ${styles.skelHero}`} aria-hidden="true" />
+              ) : (
+                <>
+                  <div className={styles.legend}>
+                    {engagement.series.map((s) => {
+                      const on = engVisible.has(s.key);
+                      return (
+                        <button
+                          key={s.key}
+                          type="button"
+                          className={styles.leg}
+                          aria-pressed={on}
+                          onClick={() => toggleEngagement(s.key)}
+                        >
+                          <span
+                            className={styles.legSw}
+                            style={{ background: on ? s.color : 'var(--muted2)' }}
+                          />
+                          {s.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <TrendChart
+                    visible={engVisible}
+                    series={daily}
+                    config={engagement.series}
+                    areaKey="opened"
+                    label="engagement"
+                  />
+                </>
               )}
-            </div>
-
-            {loading ? (
-              <div className={`skeleton ${styles.skelHero}`} aria-hidden="true" />
-            ) : engUntracked ? (
-              <p className={styles.panelEmpty}>{cfg.engagementNote}</p>
-            ) : (
-              <>
-                <div className={styles.legend}>
-                  {(cfg.engagement?.series ?? []).map((s) => {
-                    const on = engVisible.has(s.key);
-                    return (
-                      <button
-                        key={s.key}
-                        type="button"
-                        className={styles.leg}
-                        aria-pressed={on}
-                        onClick={() => toggleEngagement(s.key)}
-                      >
-                        <span
-                          className={styles.legSw}
-                          style={{ background: on ? s.color : 'var(--muted2)' }}
-                        />
-                        {s.label}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <TrendChart
-                  visible={engVisible}
-                  series={daily}
-                  config={cfg.engagement?.series ?? []}
-                  areaKey="opened"
-                  label="engagement"
-                />
-              </>
-            )}
-          </section>
+            </section>
+          )}
         </>
       )}
 

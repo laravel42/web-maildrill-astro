@@ -135,8 +135,6 @@ export type ChannelAnalytics = {
   delivery: { key: SeriesKey; label: string; color: string }[];
   /** Engagement chart, or null when the provider reports nothing to plot. */
   engagement: { title: string; series: { key: EngagementKey; label: string; color: string }[] } | null;
-  /** Shown instead of the engagement chart when there is none. */
-  engagementNote?: string;
   /** Voice-only talk-time summary. */
   showTalkTime?: boolean;
 };
@@ -213,9 +211,8 @@ export const CHANNEL_ANALYTICS: Record<string, ChannelAnalytics> = {
       { key: 'bounced', label: 'Failed', color: C.failed },
       { key: 'unsubscribed', label: 'Opted out', color: C.unsubscribed },
     ],
+    // No open, click or complaint receipt exists to chart.
     engagement: null,
-    engagementNote:
-      'SMS carriers report delivery only — there is no open, click or complaint receipt to chart.',
   },
 
   voice: {
@@ -230,9 +227,8 @@ export const CHANNEL_ANALYTICS: Record<string, ChannelAnalytics> = {
       { key: 'delivered', label: 'Answered', color: C.delivered },
       { key: 'bounced', label: 'Failed', color: C.failed },
     ],
+    // A call reports an outcome and a duration; there is nothing to plot.
     engagement: null,
-    engagementNote:
-      'Voice calls report an outcome and a duration — there is no open or click to chart.',
     showTalkTime: true,
   },
 };
