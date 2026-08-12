@@ -250,10 +250,13 @@ export default function AppSubscribers({
   }, [segSel, segMembers, richSubscribers]);
 
   const tabCounts = useMemo(() => {
+    // Derived from STATUS_TABS rather than a hand-written subset: the previous
+    // literal list silently reported 0 for every status added after it.
     const c: Record<string, number> = { all: segFiltered.length };
-    (['active', 'unsubscribed', 'bounced'] as SubscriberStatus[]).forEach((st) => {
+    for (const st of STATUS_TABS) {
+      if (st === 'all') continue;
       c[st] = segFiltered.filter((s) => s.status === st).length;
-    });
+    }
     return c;
   }, [segFiltered]);
 

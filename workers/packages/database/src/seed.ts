@@ -455,19 +455,72 @@ export async function seedDev(): Promise<void> {
       cohortDays.push(Math.max(0, week * 7 - Math.floor(rand() * 7)));
     }
   }
+  /**
+   * A slice of the roster is undeliverable, the way a real one is — so the
+   * Subscribers screen has something in every status tab and the list-health
+   * and deliverability gates have data to read.
+   *
+   * The invalid addresses are the three shapes our own validator actually
+   * produces (disposable provider, typo'd domain, domain with no MX), carrying
+   * the same `invalid_reason` / `invalid_detail` attributes the live path
+   * writes, so seeded rows are indistinguishable from imported ones.
+   *
+   * Shares are deliberately modest: ~2% invalid and ~6% undeliverable overall
+   * keeps the dev workspace under the 10% invalid and 20% dead list-suspension
+   * bars, so seeded lists stay sendable.
+   */
+  const INVALID_SHAPES = [
+    {
+      domain: 'mailinator.com',
+      reason: 'disposable',
+      detail: 'Disposable/temporary address provider',
+    },
+    {
+      domain: 'gmial.com',
+      reason: 'typo',
+      detail: 'Looks like a typo — did you mean gmail.com?',
+      suggestion: 'gmail.com',
+    },
+    {
+      domain: 'nonexistent-domain-xyzq.com',
+      reason: 'mx',
+      detail: 'Domain does not accept email (no MX record)',
+    },
+  ] as const;
+
   const subValues = cohortDays.map((ago, i) => {
     // Shift the surname cycle on every lap through FIRST so no full-name pair
     // ever repeats across the generated subscribers.
     const first = FIRST[i % FIRST.length]!;
     const last = LAST[(i * 5 + Math.floor(i / FIRST.length)) % LAST.length]!;
-    const email = `${first.toLowerCase()}.${last.toLowerCase().replace(/[^a-z]/g, '')}${i}@${pick(DOMAINS)}`;
+    const local = `${first.toLowerCase()}.${last.toLowerCase().replace(/[^a-z]/g, '')}${i}`;
+    const bad = chance(0.02) ? pick([...INVALID_SHAPES]) : null;
+    const status = bad
+      ? 'invalid'
+      : chance(0.015)
+        ? 'complained'
+        : chance(0.025)
+          ? 'bounced'
+          : 'active';
     return {
       tenantId: tid,
-      email,
+      // An invalid row wears the address that made it invalid.
+      email: `${local}@${bad ? bad.domain : pick(DOMAINS)}`,
       name: `${first} ${last}`,
       phone: chance(0.85) ? `+1415555${String(1000 + i).padStart(4, '0')}` : null,
-      status: (chance(0.025) ? 'bounced' : 'active') as 'active' | 'unsubscribed' | 'bounced',
-      attributes: { plan: pick(PLANS), company: pick(COMPANIES), city: pick(CITIES) },
+      status: status as 'active' | 'unsubscribed' | 'bounced' | 'complained' | 'invalid',
+      attributes: {
+        plan: pick(PLANS),
+        company: pick(COMPANIES),
+        city: pick(CITIES),
+        ...(bad
+          ? {
+              invalid_reason: bad.reason,
+              invalid_detail: bad.detail,
+              ...('suggestion' in bad ? { did_you_mean: bad.suggestion } : {}),
+            }
+          : {}),
+      },
       createdAt: days(ago),
     };
   });
