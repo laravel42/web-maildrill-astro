@@ -425,6 +425,12 @@
 .drawerKpis {
   margin-top: 18px;
 }
+/* Centred here only. `.adrawer__kpi` is the shared card used by every record
+   drawer, so the override is scoped to this grid rather than applied globally. */
+.drawerKpis :global(.adrawer__kpi) {
+  align-items: center;
+  text-align: center;
+}
 .drawerEyebrow {
   margin: 24px 0 10px;
 }
