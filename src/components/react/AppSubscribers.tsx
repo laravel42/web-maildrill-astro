@@ -99,6 +99,8 @@ export default function AppSubscribers({
     { mode: 'create' } | { mode: 'edit'; sub: RichSubscriber } | null
   >(null);
   const [exporting, setExporting] = useState(false);
+  const [bulkListOpen, setBulkListOpen] = useState(false);
+  const [bulkListIds, setBulkListIds] = useState<string[]>([]);
 
   /* Full CSV export. The table only holds the first page, so live workspaces
      re-fetch every subscriber (200 a page); demo mode exports what's on
@@ -486,7 +488,8 @@ export default function AppSubscribers({
 
   /* Esc closes drawer/modal. */
   useEscapeClose(() => {
-    if (segModal.open) setSegModal({ open: false, edit: null });
+    if (bulkListOpen) setBulkListOpen(false);
+    else if (segModal.open) setSegModal({ open: false, edit: null });
     else if (openId) setOpenId(null);
   });
 
@@ -556,6 +559,41 @@ export default function AppSubscribers({
       ...toRemove.map((id) => api.del(`lists/${id}/members/${subscriberId}`)),
       ...toAdd.map((id) => api.post(`lists/${id}/members`, { subscriberId })),
     ]);
+  };
+
+  /** Bulk-add every currently selected subscriber to the chosen lists. */
+  const bulkAddToLists = async () => {
+    if (!live || bulkListIds.length === 0 || selected.size === 0) return;
+    const subscriberIds = [...selected];
+    try {
+      await Promise.allSettled(
+        subscriberIds.flatMap((subId) =>
+          bulkListIds.map((listId) => api.post(`lists/${listId}/members`, { subscriberId: subId })),
+        ),
+      );
+      const listNames = bulkListIds
+        .map((id) => allLists.find((l) => l.id === id)?.name)
+        .filter(Boolean)
+        .join(', ');
+      showToast(
+        `Added ${subscriberIds.length} subscriber${subscriberIds.length === 1 ? '' : 's'} to ${listNames}`,
+      );
+      // Refresh subscriber data so list badges update.
+      const freshSubs = await Promise.all(
+        subscriberIds.map((id) => api.get<ApiSubscriber>(`subscribers/${id}`).catch(() => null)),
+      );
+      setRichSubscribers((prev) =>
+        prev.map((s) => {
+          const fresh = freshSubs.find((f) => f?.id === s.id);
+          return fresh ? toRichSubscriber(fresh) : s;
+        }),
+      );
+    } catch (e) {
+      showToast(e instanceof ApiError ? e.message : 'Could not add to lists');
+    }
+    setBulkListOpen(false);
+    setBulkListIds([]);
+    setSelected(new Set());
   };
 
   /* Segments are workspace resources: they persist to the service so teammates
@@ -1011,9 +1049,16 @@ export default function AppSubscribers({
               <Icon name="star" size={13} />
               Tag
             </button>
-            <button type="button" className={styles.bulkbtn} onClick={() => bulk('Added')}>
-              <Icon name="filter" size={13} />
-              Add to segment
+            <button
+              type="button"
+              className={styles.bulkbtn}
+              onClick={() => {
+                setBulkListIds([]);
+                setBulkListOpen(true);
+              }}
+            >
+              <Icon name="lists" size={13} />
+              Add to list
             </button>
             <button type="button" className={styles.bulkbtn} onClick={() => bulk('Exporting')}>
               <Icon name="download" size={13} />
@@ -1359,6 +1404,89 @@ export default function AppSubscribers({
             }
           }}
         />
+      )}
+
+      {bulkListOpen && (
+        <div
+          className={styles.segmOverlay}
+          style={{ animation: 'ovfade .2s ease' }}
+          onClick={() => setBulkListOpen(false)}
+        >
+          <div
+            className={styles.segm}
+            style={{ animation: 'pop .18s ease', maxWidth: 400 }}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Add to list"
+          >
+            <div className={styles.segmHead}>
+              <div>
+                <div className={styles.segmTitle}>Add to list</div>
+                <div className={styles.segmSub}>
+                  Select lists to add {selected.size} subscriber{selected.size === 1 ? '' : 's'} to.
+                </div>
+              </div>
+              <button type="button" className="iconbtn" onClick={() => setBulkListOpen(false)} aria-label="Close">
+                <Icon name="x" size={16} />
+              </button>
+            </div>
+            <div className={styles.segmBody}>
+              {allLists.length === 0 ? (
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                  No lists yet — create one first.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {allLists.map((l) => {
+                    const on = bulkListIds.includes(l.id);
+                    return (
+                      <button
+                        key={l.id}
+                        type="button"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          padding: '5px 10px',
+                          borderRadius: 6,
+                          fontSize: '12.5px',
+                          fontWeight: 500,
+                          border: on ? '1.5px solid var(--accent)' : '1px solid var(--border2)',
+                          background: on ? 'var(--accent-tint)' : 'var(--surface)',
+                          color: on ? 'var(--accent-text)' : 'var(--text)',
+                          cursor: 'pointer',
+                        }}
+                        aria-pressed={on}
+                        onClick={() =>
+                          setBulkListIds((prev) =>
+                            on ? prev.filter((x) => x !== l.id) : [...prev, l.id],
+                          )
+                        }
+                      >
+                        {on && <Icon name="check" size={12} stroke={3.5} />}
+                        {l.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <div className={styles.segmFoot}>
+              <button type="button" className={`sbtn ${styles.segmCancel}`} onClick={() => setBulkListOpen(false)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="pbtn"
+                disabled={bulkListIds.length === 0}
+                onClick={bulkAddToLists}
+              >
+                Add to {bulkListIds.length === 0 ? 'list' : `${bulkListIds.length} list${bulkListIds.length === 1 ? '' : 's'}`}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {segModal.open && (
