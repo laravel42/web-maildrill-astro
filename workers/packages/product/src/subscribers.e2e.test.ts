@@ -147,7 +147,7 @@ describe.skipIf(!run)('list suspension (e2e — needs Postgres)', () => {
   });
 
   it('lets a normally-decayed list send', async () => {
-    const { tenantId, listId } = await listWith(30, 3, 'ok'); // 10%
+    const { tenantId, listId } = await listWith(30, 3, 'ok'); // 10% bounced, none invalid
     await expect(assertListSendable(tenantId, listId)).resolves.toBeUndefined();
   });
 

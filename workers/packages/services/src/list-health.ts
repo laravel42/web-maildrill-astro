@@ -25,14 +25,27 @@ const log = createLogger({ component: 'list-health' });
 const DEAD_STATUSES = ['invalid', 'bounced', 'complained'] as const;
 
 /**
- * Share of dead members that suspends a list.
+ * Two bars, because the two signals mean opposite things.
  *
- * Deliberately far above the 8% hard-bounce send limit: that one measures a
- * *send* going wrong, while this measures a list that was bad before anyone
- * pressed send. A third of a list being undeliverable is not a bad import, it
- * is a list that should not be mailed.
+ * `invalid` is an address that failed validation *before it was ever mailed* —
+ * bad syntax, a domain with no MX, a disposable provider. That is the
+ * fingerprint of a purchased or scraped list, and a legitimately collected one
+ * should have almost none. Measured against the real lists in this workspace,
+ * healthy sits at 0–1.4% dead overall, so 10% here is already generous.
+ *
+ * `bounced`/`complained` are verdicts from real sends, and they accumulate with
+ * age: a list decays roughly 20–30% a year as people change jobs, and nothing
+ * removes those members automatically. A well-run three-year-old list can
+ * therefore be a third dead and still be healthy — so the combined bar has to
+ * stay well above the invalid one.
+ *
+ * KNOWN LIMITATION: the combined share has no time window, so a very old list
+ * can eventually trip it through nothing but honest decay. Scoping it to
+ * members added recently (`list_members.added_at`) would separate "bad import"
+ * from "old list" properly; until then 20% is the compromise.
  */
-export const LIST_DEAD_SHARE_LIMIT = 0.3;
+export const LIST_INVALID_SHARE_LIMIT = 0.1;
+export const LIST_DEAD_SHARE_LIMIT = 0.2;
 
 /**
  * Below this, the share is noise. A five-member list with two bounces is 40%
@@ -44,6 +57,9 @@ export interface ListHealth {
   members: number;
   dead: number;
   deadShare: number;
+  /** Members that failed validation and were never mailed. */
+  invalid: number;
+  invalidShare: number;
   significant: boolean;
   suspended: boolean;
   reason?: string | null;
@@ -54,6 +70,7 @@ export async function listHealth(tenantId: string, listId: string): Promise<List
     .select({
       members: count(),
       dead: sql<number>`count(*) filter (where ${inArray(subscribers.status, [...DEAD_STATUSES])})::int`,
+      invalid: sql<number>`count(*) filter (where ${eq(subscribers.status, 'invalid')})::int`,
     })
     .from(listMembers)
     .innerJoin(subscribers, eq(listMembers.subscriberId, subscribers.id))
@@ -67,10 +84,13 @@ export async function listHealth(tenantId: string, listId: string): Promise<List
 
   const members = Number(row?.members ?? 0);
   const dead = Number(row?.dead ?? 0);
+  const invalid = Number(row?.invalid ?? 0);
   return {
     members,
     dead,
     deadShare: members === 0 ? 0 : dead / members,
+    invalid,
+    invalidShare: members === 0 ? 0 : invalid / members,
     significant: members >= LIST_MIN_MEMBERS,
     suspended: Boolean(meta?.suspendedAt),
     reason: meta?.reason ?? null,
@@ -87,14 +107,35 @@ export async function listHealth(tenantId: string, listId: string): Promise<List
  * current membership, so removing the dead addresses lifts the suspension on
  * the next attempt.
  */
+/**
+ * Why a list should not be mailed, or null when it is fine. Either bar alone
+ * is enough: a list can be freshly scraped (high invalid) or long dead (high
+ * bounced), and both are reasons to stop.
+ */
+export function listBreach(health: ListHealth): string | null {
+  if (!health.significant) return null;
+  const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
+  if (health.invalidShare > LIST_INVALID_SHARE_LIMIT) {
+    return (
+      `${pct(health.invalidShare)} of members failed address validation and have never ` +
+      `been mailed (${health.invalid} of ${health.members}) — this list looks purchased or scraped`
+    );
+  }
+  if (health.deadShare > LIST_DEAD_SHARE_LIMIT) {
+    return `${pct(health.deadShare)} of members are undeliverable (${health.dead} of ${health.members})`;
+  }
+  return null;
+}
+
 export async function assertListSendable(tenantId: string, listId: string): Promise<void> {
   const health = await listHealth(tenantId, listId);
+  const breach = listBreach(health);
 
   if (health.suspended) {
     // Re-derive: a list cleaned since suspension should not stay locked out.
-    if (health.significant && health.deadShare > LIST_DEAD_SHARE_LIMIT) {
+    if (breach) {
       throw new ConflictError(
-        `list_suspended: ${health.reason ?? 'too many undeliverable addresses'}. ` +
+        `list_suspended: ${health.reason ?? breach}. ` +
           'Remove the invalid, bounced and complained members to send to this list again.',
       );
     }
@@ -106,10 +147,9 @@ export async function assertListSendable(tenantId: string, listId: string): Prom
     return;
   }
 
-  if (!health.significant || health.deadShare <= LIST_DEAD_SHARE_LIMIT) return;
+  if (!breach) return;
 
-  const pct = `${(health.deadShare * 100).toFixed(1)}%`;
-  const reason = `${pct} of members are undeliverable (${health.dead} of ${health.members})`;
+  const reason = breach;
   await db
     .update(lists)
     .set({ suspendedAt: new Date(), suspendedReason: reason, updatedAt: new Date() })
