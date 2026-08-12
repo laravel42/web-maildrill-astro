@@ -4,11 +4,21 @@ import { toRichSubscriber, type ApiSubscriber } from '@/lib/app/subscriber-map';
 const base: ApiSubscriber = { id: 's1', email: 'ada@example.com', status: 'active' };
 
 describe('toRichSubscriber', () => {
-  it('folds unknown statuses (complained) into unsubscribed', () => {
-    expect(toRichSubscriber({ ...base, status: 'complained' }).status).toBe('unsubscribed');
-    expect(toRichSubscriber({ ...base, status: 'weird' }).status).toBe('unsubscribed');
+  it('shows every real status as itself', () => {
+    // A complaint is not an unsubscribe — someone pressed "this is spam" — and
+    // 'invalid' means the address cannot receive mail at all. Folding either
+    // into 'unsubscribed' hid why the send was suppressed.
+    expect(toRichSubscriber({ ...base, status: 'complained' }).status).toBe('complained');
+    expect(toRichSubscriber({ ...base, status: 'invalid' }).status).toBe('invalid');
     expect(toRichSubscriber({ ...base, status: 'bounced' }).status).toBe('bounced');
+    expect(toRichSubscriber({ ...base, status: 'unsubscribed' }).status).toBe('unsubscribed');
     expect(toRichSubscriber(base).status).toBe('active');
+  });
+
+  it('still falls back for a status it does not recognise', () => {
+    // Unknown means the API grew a status this build predates; suppressing is
+    // the safe reading, not assuming the subscriber is mailable.
+    expect(toRichSubscriber({ ...base, status: 'weird' }).status).toBe('unsubscribed');
   });
 
   it('falls back to the email when the name is empty', () => {

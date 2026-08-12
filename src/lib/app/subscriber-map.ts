@@ -40,14 +40,20 @@ function pickAv(id: string): [string, string] {
   return AV[h % AV.length] ?? ['#818cf8', '#4f46e5'];
 }
 
-// The API can also return 'complained', which the UI folds into
-// 'unsubscribed' — both mean "they asked us to stop". 'invalid' is kept
-// distinct: nobody asked for anything, the address simply cannot receive mail,
-// and showing it as unsubscribed would misreport why the send is suppressed.
+// Every status the API can return is shown as itself. A complaint is not an
+// unsubscribe — someone pressed "this is spam", which is the single worst
+// signal a sender can collect — and 'invalid' means nobody asked for anything,
+// the address simply cannot receive mail. Folding either into 'unsubscribed'
+// hides why the send is suppressed from the person who has to act on it.
+const KNOWN_STATUSES: SubscriberStatus[] = [
+  'active',
+  'unsubscribed',
+  'bounced',
+  'complained',
+  'invalid',
+];
 function mapStatus(s: string): SubscriberStatus {
-  return s === 'active' || s === 'unsubscribed' || s === 'bounced' || s === 'invalid'
-    ? s
-    : 'unsubscribed';
+  return KNOWN_STATUSES.includes(s as SubscriberStatus) ? (s as SubscriberStatus) : 'unsubscribed';
 }
 
 function fmtDate(iso?: string | null): string {

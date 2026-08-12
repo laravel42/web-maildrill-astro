@@ -380,7 +380,7 @@ export default function AppSubscriberDetail({
                     </svg>
                     Export profile (CSV)
                   </button>
-                  {sub.status === 'unsubscribed' ? (
+                  {sub.status === 'unsubscribed' || sub.status === 'complained' ? (
                     <button
                       className={`${styles.menuItem} ${styles.menuOk}`}
                       type="button"
@@ -393,8 +393,10 @@ export default function AppSubscriberDetail({
                       Re-subscribe
                     </button>
                   ) : (
-                    /* 'complained' is folded into 'unsubscribed' by mapStatus, so it
-                       lands in the Re-subscribe branch rather than needing a check here. */
+                    /* Reached only by 'active', 'bounced' and 'invalid'. The two
+                       already-stopped states share the Re-subscribe branch above:
+                       a complaint is not an unsubscribe, but the action on both
+                       is the same — restore, or leave them alone. */
                     <button
                       className={`${styles.menuItem} ${styles.menuWarn}`}
                       type="button"

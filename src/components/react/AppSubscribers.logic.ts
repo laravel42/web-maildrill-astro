@@ -8,6 +8,7 @@ export const STATUS_LABEL: Record<SubscriberStatus, string> = {
   active: 'Active',
   unsubscribed: 'Unsubscribed',
   bounced: 'Bounced',
+  complained: 'Complained',
   invalid: 'Invalid',
 };
 export const STATUS_TABS: ('all' | SubscriberStatus)[] = [
@@ -15,6 +16,7 @@ export const STATUS_TABS: ('all' | SubscriberStatus)[] = [
   'active',
   'unsubscribed',
   'bounced',
+  'complained',
   'invalid',
 ];
 
