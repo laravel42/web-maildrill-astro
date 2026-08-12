@@ -1,10 +1,13 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { createLogger } from '@maildrill/observability';
 import { metrics } from '@maildrill/observability';
 import {
   db,
+  memberships,
   paymentAttempts,
+  pricingTiers,
   stripeEvents,
+  users,
   wallets,
   type PaymentAttemptRow,
   type Tx,
@@ -153,6 +156,44 @@ async function findAttempt(tx: Tx, event: PaymentEvent): Promise<PaymentAttemptR
   return null;
 }
 
+/**
+ * Mirror the purchase onto `users.tier`, the commercial lifecycle label.
+ *
+ * A commitment package writes the tier's code; a plain top-up writes `payg`
+ * but only over `trial`, so topping up mid-contract cannot silently demote
+ * someone off the plan they are still paying for. Billing is per workspace,
+ * so this applies to every member of the purchasing tenant.
+ *
+ * Called only for a non-duplicate purchase, inside the same transaction as
+ * the ledger append — a webhook replay re-runs neither.
+ */
+async function applyUserTier(tx: Tx, tenantId: string, grantsTierId: string | null): Promise<void> {
+  const memberIds = tx
+    .select({ userId: memberships.userId })
+    .from(memberships)
+    .where(eq(memberships.tenantId, tenantId));
+
+  if (!grantsTierId) {
+    await tx
+      .update(users)
+      .set({ tier: 'payg', updatedAt: new Date() })
+      .where(and(inArray(users.id, memberIds), eq(users.tier, 'trial')));
+    return;
+  }
+
+  const [tier] = await tx
+    .select({ code: pricingTiers.code })
+    .from(pricingTiers)
+    .where(eq(pricingTiers.id, grantsTierId))
+    .limit(1);
+  if (!tier) return; // package points at a deleted tier — leave the label alone
+
+  await tx
+    .update(users)
+    .set({ tier: tier.code, updatedAt: new Date() })
+    .where(inArray(users.id, memberIds));
+}
+
 async function grantPurchase(
   tx: Tx,
   attempt: PaymentAttemptRow,
@@ -193,12 +234,15 @@ async function grantPurchase(
     });
   }
 
-  if (!purchase.duplicate && meta.grantsTierId) {
-    // Buying a commitment package moves the workspace onto its tier.
-    await tx
-      .update(wallets)
-      .set({ pricingTierId: meta.grantsTierId, updatedAt: new Date() })
-      .where(eq(wallets.id, attempt.walletId));
+  if (!purchase.duplicate) {
+    if (meta.grantsTierId) {
+      // Buying a commitment package moves the workspace onto its tier.
+      await tx
+        .update(wallets)
+        .set({ pricingTierId: meta.grantsTierId, updatedAt: new Date() })
+        .where(eq(wallets.id, attempt.walletId));
+    }
+    await applyUserTier(tx, attempt.tenantId, meta.grantsTierId ?? null);
   }
 
   if (attempt.status === 'pending' || attempt.status === 'failed') {

@@ -659,6 +659,18 @@ export const users = pgTable(
     /** E.164-ish contact number captured at sign-up; nullable for older accounts. */
     phone: text('phone'),
     /**
+     * Commercial lifecycle label: `trial` until the first purchase, then
+     * `payg` for top-ups or a `pricing_tiers.code` once a commitment plan is
+     * bought. Free text because tier codes are DB-configured (seed-billing).
+     *
+     * Display/lifecycle only — the discount a send is actually charged at
+     * comes from `wallets.pricing_tier_id`, which stays the billing authority.
+     * Billing is per workspace, so this mirrors the wallet of the workspaces a
+     * user belongs to; a member of two differently-planned workspaces shows
+     * whichever was purchased last.
+     */
+    tier: text('tier').notNull().default('trial'),
+    /**
      * Profile extras + notification toggles (not first-class columns):
      * displayName, title, timezone, language, notifications.
      */

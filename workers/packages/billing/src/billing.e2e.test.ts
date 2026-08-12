@@ -1,7 +1,15 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { ConflictError } from '@maildrill/domain';
-import { closeDb, db, paymentAttempts, wallets } from '@maildrill/database';
+import {
+  closeDb,
+  db,
+  memberships,
+  paymentAttempts,
+  pricingTiers,
+  users,
+  wallets,
+} from '@maildrill/database';
 import { ensureTenantByName } from '@maildrill/services';
 import { appendLedgerEntry } from './ledger';
 import { getOrCreateWallet, listWalletTransactions, reconcileWallet } from './wallet';
@@ -275,5 +283,97 @@ describe.skipIf(!run)('billing wallet + ledger (e2e — needs Postgres)', () => 
     expect(page.data.length).toBeLessThanOrEqual(5);
     const times = page.data.map((t) => t.createdAt.getTime());
     expect([...times].sort((a, b) => b - a)).toEqual(times);
+  });
+
+  describe('users.tier follows what was purchased', () => {
+    let userId: string;
+
+    /** A member of the purchasing workspace, fresh on the trial default. */
+    async function newMember() {
+      const [user] = await db
+        .insert(users)
+        .values({ email: `tier-${uniq}-${Math.random().toString(36).slice(2)}@example.com` })
+        .returning();
+      await db.insert(memberships).values({ userId: user!.id, tenantId, role: 'owner' });
+      return user!.id;
+    }
+
+    async function tierOf(id: string) {
+      const [row] = await db.select({ tier: users.tier }).from(users).where(eq(users.id, id));
+      return row!.tier;
+    }
+
+    /** Drive a purchase all the way through the webhook path. */
+    async function purchase(attemptId: string, sessionId: string) {
+      const res = await processPaymentWebhook(
+        JSON.stringify({
+          eventId: `evt-tier-${attemptId}`,
+          eventType: 'checkout.session.completed',
+          kind: 'checkout_completed',
+          sessionId,
+          attemptId,
+        }),
+        undefined,
+      );
+      expect(res.outcome).toBe('processed');
+    }
+
+    beforeAll(async () => {
+      userId = await newMember();
+    });
+
+    it('starts on trial', async () => {
+      expect(await tierOf(userId)).toBe('trial');
+    });
+
+    it('moves to payg on a plain top-up', async () => {
+      const attempt = await newAttempt(5_000_000);
+      await purchase(attempt.id, attempt.providerSessionId!);
+      expect(await tierOf(userId)).toBe('payg');
+    });
+
+    it('takes the tier code when a commitment package is bought', async () => {
+      const [tier] = await db
+        .select({ id: pricingTiers.id, code: pricingTiers.code })
+        .from(pricingTiers)
+        .where(eq(pricingTiers.code, 'growth'));
+      expect(tier, 'seed-billing has run (pnpm db:seed:billing)').toBeTruthy();
+
+      const [attempt] = await db
+        .insert(paymentAttempts)
+        .values({
+          tenantId,
+          walletId,
+          provider: 'mock',
+          packageCode: 'commit-growth',
+          amountCents: 300_000,
+          creditsMicro: 3_000_000_000,
+          providerSessionId: `sess-commit-${uniq}-${Math.random().toString(36).slice(2)}`,
+          metadata: { baseCreditsMicro: 3_000_000_000, bonusMicro: 0, grantsTierId: tier!.id },
+        })
+        .returning();
+
+      await purchase(attempt!.id, attempt!.providerSessionId!);
+      expect(await tierOf(userId)).toBe(tier!.code);
+      // The wallet, which is what discounts actually read, moved too.
+      expect((await walletRow()).pricingTierId).toBe(tier!.id);
+    });
+
+    it('a later top-up does not demote a committed plan', async () => {
+      const before = await tierOf(userId);
+      expect(before).toBe('growth');
+      const attempt = await newAttempt(5_000_000);
+      await purchase(attempt.id, attempt.providerSessionId!);
+      // payg only ever overwrites trial — a contract mid-term stays put.
+      expect(await tierOf(userId)).toBe('growth');
+    });
+
+    it('applies to every member of the workspace, not just the buyer', async () => {
+      const second = await newMember();
+      expect(await tierOf(second)).toBe('trial');
+      const attempt = await newAttempt(5_000_000);
+      await purchase(attempt.id, attempt.providerSessionId!);
+      expect(await tierOf(second)).toBe('payg');
+    });
   });
 });
