@@ -17,7 +17,9 @@ export default defineConfig({
   webServer: [
     {
       command: 'pnpm --filter workers dev',
-      url: 'http://localhost:3001/health',
+      // The workers server exposes /health/live and /health/ready; a bare
+      // /health is a 404, so waiting on it never becomes ready.
+      url: 'http://localhost:3001/health/live',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
     },
