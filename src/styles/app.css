@@ -204,6 +204,21 @@
   border-color: color-mix(in srgb, var(--danger) 30%, transparent);
   color: var(--danger);
 }
+/* A spam complaint is the worst signal a sender can collect, so it gets the
+   heaviest badge in the set: full-strength ink and a denser border than the
+   others. `--ink` inverts to near-white on the dark theme, so this reads as
+   "black" in light mode without going invisible in dark. */
+.astatus--complained {
+  border-color: color-mix(in srgb, var(--ink) 45%, transparent);
+  color: var(--ink);
+}
+/* Invalid is inert rather than alarming — nobody did anything wrong, the
+   address simply cannot receive mail — so it sits in neutral dark gray
+   instead of taking a warning colour. */
+.astatus--invalid {
+  border-color: color-mix(in srgb, var(--text3) 35%, transparent);
+  color: var(--text3);
+}
 /* WhatsApp template approval — a distinct background per status. Scoped to its
    own `tstat--*` classes so it never recolors the shared campaign `.astatus--*`
    labels (which also have draft/paused). */
