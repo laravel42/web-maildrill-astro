@@ -768,10 +768,11 @@ export async function seedDev(): Promise<void> {
          Gmail and Yahoo treat anything above 0.3% as a problem, so seeding
          near that keeps the analytics realistic without tripping our own
          complaint gate. */
-      /* Only email and WhatsApp have a report-as-spam mechanism at all; an SMS
-         or voice complaint is not a thing that exists. */
+      /* Only email produces a spam complaint. Infobip's tracking notify
+         (?kind=tracking) reports open/click/unsub/complaint for email; SMS,
+         voice and WhatsApp have no report-as-spam signal to forward. */
       const complained =
-        (opts.channel === 'email' || opts.channel === 'whatsapp') &&
+        opts.channel === 'email' &&
         (outcome === 'read' || outcome === 'delivered') &&
         chance(0.004);
       const complainedAt = complained

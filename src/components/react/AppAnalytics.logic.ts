@@ -37,16 +37,19 @@ export type ActivityPoint = {
   date: string;
   sent: number;
   delivered: number;
-  /** Delivery failures. Surfaced as "Bounced" — the message never arrived. */
+  /** Delivery failures. Labelled per channel — a failed SMS is not a bounce. */
   failed: number;
   opened?: number;
   clicked?: number;
   /**
    * Spam complaints. Deliberately not part of `failed`: the message *was*
    * delivered and then reported, so adding the two would double-count a send
-   * and overstate the failure rate.
+   * and overstate the failure rate. Email only.
    */
   complained?: number;
+  unsubscribed?: number;
+  /** Voice only: reconciled talk time in seconds. */
+  voiceSeconds?: number;
 };
 
 export type ChannelBreakdown = {
@@ -94,6 +97,8 @@ export function pointValue(p: ActivityPoint, key: ChartKey): number {
       return p.failed;
     case 'complained':
       return p.complained ?? 0;
+    case 'unsubscribed':
+      return p.unsubscribed ?? 0;
     case 'opened':
       return p.opened ?? 0;
     case 'clicked':
@@ -101,8 +106,175 @@ export function pointValue(p: ActivityPoint, key: ChartKey): number {
   }
 }
 
-/** Channels whose providers report opens and clicks at all. */
-export const ENGAGEMENT_CHANNELS = ['email', 'whatsapp'] as const;
+/* ------------------------------------------------------------------ *
+ * What each channel can actually report.
+ *
+ * The channels are not the same product with different transports — their
+ * providers emit genuinely different events, and a screen that showed the
+ * same six cards everywhere would be inventing four of them for voice. Read
+ * off the live account: email produces the full set; WhatsApp has read
+ * receipts and link clicks but no spam complaint; SMS has delivery and STOP
+ * replies only; voice has delivery plus a call duration nothing else has.
+ *
+ * Terminology follows the channel too — a failed SMS is not a "bounce", and a
+ * WhatsApp receipt is "Read", not "Opened".
+ * ------------------------------------------------------------------ */
+
+export type KpiSpec = {
+  key: 'sent' | 'delivered' | 'failed' | 'opened' | 'clicked' | 'complained' | 'unsubscribed';
+  label: string;
+  /** What the percentage is measured against. */
+  of: 'sent' | 'delivered' | null;
+  tone: KpiTone;
+};
+
+export type ChannelAnalytics = {
+  /** Cards across the top, in order. */
+  kpis: KpiSpec[];
+  /** Series on the delivery chart. */
+  delivery: { key: SeriesKey; label: string; color: string }[];
+  /** Engagement chart, or null when the provider reports nothing to plot. */
+  engagement: { title: string; series: { key: EngagementKey; label: string; color: string }[] } | null;
+  /** Shown instead of the engagement chart when there is none. */
+  engagementNote?: string;
+  /** Voice-only talk-time summary. */
+  showTalkTime?: boolean;
+};
+
+const C = {
+  sent: '#4f46e5',
+  delivered: '#22c55e',
+  failed: '#ef4444',
+  complained: '#1f1e1b',
+  unsubscribed: '#a5a39a',
+  clicked: '#f59e0b',
+};
+
+export const CHANNEL_ANALYTICS: Record<string, ChannelAnalytics> = {
+  email: {
+    kpis: [
+      { key: 'sent', label: 'Messages sent', of: null, tone: 'muted' },
+      { key: 'delivered', label: 'Delivered', of: 'sent', tone: 'success' },
+      { key: 'failed', label: 'Bounced', of: 'sent', tone: 'danger' },
+      { key: 'opened', label: 'Opened', of: 'delivered', tone: 'success' },
+      { key: 'clicked', label: 'Clicked', of: 'delivered', tone: 'success' },
+      { key: 'complained', label: 'Complained', of: 'delivered', tone: 'danger' },
+    ],
+    delivery: [
+      { key: 'sent', label: 'Sent', color: C.sent },
+      { key: 'delivered', label: 'Delivered', color: C.delivered },
+      { key: 'bounced', label: 'Bounced', color: C.failed },
+      { key: 'complained', label: 'Complained', color: C.complained },
+    ],
+    engagement: {
+      title: 'Engagement over time',
+      series: [
+        { key: 'opened', label: 'Opened', color: C.sent },
+        { key: 'clicked', label: 'Clicked', color: C.clicked },
+      ],
+    },
+  },
+
+  whatsapp: {
+    // Read receipts and link clicks, but no complaint signal exists.
+    kpis: [
+      { key: 'sent', label: 'Messages sent', of: null, tone: 'muted' },
+      { key: 'delivered', label: 'Delivered', of: 'sent', tone: 'success' },
+      { key: 'failed', label: 'Failed', of: 'sent', tone: 'danger' },
+      { key: 'opened', label: 'Read', of: 'delivered', tone: 'success' },
+      { key: 'clicked', label: 'Clicked', of: 'delivered', tone: 'success' },
+      { key: 'unsubscribed', label: 'Opted out', of: 'delivered', tone: 'muted' },
+    ],
+    delivery: [
+      { key: 'sent', label: 'Sent', color: C.sent },
+      { key: 'delivered', label: 'Delivered', color: C.delivered },
+      { key: 'bounced', label: 'Failed', color: C.failed },
+    ],
+    engagement: {
+      title: 'Read & clicks over time',
+      series: [
+        { key: 'opened', label: 'Read', color: C.sent },
+        { key: 'clicked', label: 'Clicked', color: C.clicked },
+      ],
+    },
+  },
+
+  sms: {
+    // Delivery and STOP replies. No opens, no clicks, no complaints.
+    kpis: [
+      { key: 'sent', label: 'Messages sent', of: null, tone: 'muted' },
+      { key: 'delivered', label: 'Delivered', of: 'sent', tone: 'success' },
+      { key: 'failed', label: 'Failed', of: 'sent', tone: 'danger' },
+      { key: 'unsubscribed', label: 'Opted out', of: 'delivered', tone: 'muted' },
+    ],
+    delivery: [
+      { key: 'sent', label: 'Sent', color: C.sent },
+      { key: 'delivered', label: 'Delivered', color: C.delivered },
+      { key: 'bounced', label: 'Failed', color: C.failed },
+      { key: 'unsubscribed', label: 'Opted out', color: C.unsubscribed },
+    ],
+    engagement: null,
+    engagementNote:
+      'SMS carriers report delivery only — there is no open, click or complaint receipt to chart.',
+  },
+
+  voice: {
+    // A call is answered or not; talk time is the only depth available.
+    kpis: [
+      { key: 'sent', label: 'Calls placed', of: null, tone: 'muted' },
+      { key: 'delivered', label: 'Answered', of: 'sent', tone: 'success' },
+      { key: 'failed', label: 'Failed', of: 'sent', tone: 'danger' },
+    ],
+    delivery: [
+      { key: 'sent', label: 'Placed', color: C.sent },
+      { key: 'delivered', label: 'Answered', color: C.delivered },
+      { key: 'bounced', label: 'Failed', color: C.failed },
+    ],
+    engagement: null,
+    engagementNote:
+      'Voice calls report an outcome and a duration — there is no open or click to chart.',
+    showTalkTime: true,
+  },
+};
+
+/**
+ * Sparkline colour per KPI. Keyed rather than positional: the cards differ per
+ * channel now, so index-matching them to the delivery series would have tinted
+ * "Opted out" with whatever happened to be third in the chart.
+ */
+export function kpiColor(key: KpiSpec['key']): string {
+  switch (key) {
+    case 'delivered':
+      return C.delivered;
+    case 'failed':
+      return C.failed;
+    case 'complained':
+      return C.complained;
+    case 'unsubscribed':
+      return C.unsubscribed;
+    case 'clicked':
+      return C.clicked;
+    default:
+      return C.sent;
+  }
+}
+
+/** Total reconciled talk time in the window, as a human string. */
+export function talkTimeOf(points: ActivityPoint[]): { total: string; avg: string; calls: number } {
+  const seconds = points.reduce((t, p) => t + (p.voiceSeconds ?? 0), 0);
+  const answered = points.reduce((t, p) => t + p.delivered, 0);
+  const fmt = (s: number) => {
+    if (s < 60) return `${Math.round(s)}s`;
+    const m = Math.floor(s / 60);
+    if (m < 60) return `${m}m ${Math.round(s % 60)}s`;
+    return `${Math.floor(m / 60)}h ${m % 60}m`;
+  };
+  return {
+    total: fmt(seconds),
+    avg: answered > 0 ? fmt(seconds / answered) : '—',
+    calls: answered,
+  };
+}
 
 const CHANNEL_COLOR: Record<string, string> = {
   email: '#4f46e5',
@@ -158,60 +330,44 @@ export function totalsOf(points: ActivityPoint[]) {
   const delivered = points.reduce((t, p) => t + p.delivered, 0);
   const bounced = points.reduce((t, p) => t + p.failed, 0);
   const complained = points.reduce((t, p) => t + (p.complained ?? 0), 0);
+  const unsubscribed = points.reduce((t, p) => t + (p.unsubscribed ?? 0), 0);
   const opened = points.reduce((t, p) => t + (p.opened ?? 0), 0);
   const clicked = points.reduce((t, p) => t + (p.clicked ?? 0), 0);
-  return { sent, delivered, bounced, complained, opened, clicked };
+  return { sent, delivered, bounced, complained, unsubscribed, opened, clicked };
 }
 
 export type KpiTone = 'muted' | 'success' | 'danger';
 
-export function buildKpis(points: ActivityPoint[]) {
-  const { sent, delivered, bounced, complained, opened, clicked } = totalsOf(points);
-  return [
-    {
-      label: 'Messages sent',
-      value: fmtCompact(sent),
-      sub: 'in range',
-      tone: 'muted' as KpiTone,
-      series: points.map((p) => ({ value: p.sent, label: fmtDate(p.date) })),
-    },
-    {
-      label: 'Delivered',
-      value: fmtCompact(delivered),
-      sub: pctOf(delivered, sent),
-      tone: 'success' as KpiTone,
-      series: points.map((p) => ({ value: p.delivered, label: fmtDate(p.date) })),
-    },
-    {
-      label: 'Bounced',
-      value: fmtCompact(bounced),
-      sub: pctOf(bounced, sent),
-      tone: 'danger' as KpiTone,
-      series: points.map((p) => ({ value: p.failed, label: fmtDate(p.date) })),
-    },
-    {
-      label: 'Complained',
-      value: fmtCompact(complained),
-      // Against delivered, not sent: only a message that arrived can be reported.
-      sub: pctOf(complained, delivered),
-      tone: 'danger' as KpiTone,
-      series: points.map((p) => ({ value: p.complained ?? 0, label: fmtDate(p.date) })),
-    },
-    {
-      label: 'Opened',
-      value: fmtCompact(opened),
-      sub: pctOf(opened, delivered),
-      tone: 'success' as KpiTone,
-      series: points.map((p) => ({ value: p.opened ?? 0, label: fmtDate(p.date) })),
-    },
-    {
-      label: 'Clicked',
-      value: fmtCompact(clicked),
-      sub: pctOf(clicked, delivered),
-      tone: 'success' as KpiTone,
-      series: points.map((p) => ({ value: p.clicked ?? 0, label: fmtDate(p.date) })),
-    },
-  ];
+/** KPI cards for one channel, driven by what that channel can report. */
+export function buildKpis(points: ActivityPoint[], channel: string) {
+  const t = totalsOf(points);
+  const value: Record<KpiSpec['key'], number> = {
+    sent: t.sent,
+    delivered: t.delivered,
+    failed: t.bounced,
+    opened: t.opened,
+    clicked: t.clicked,
+    complained: t.complained,
+    unsubscribed: t.unsubscribed,
+  };
+  const seriesFor: Record<KpiSpec['key'], (p: ActivityPoint) => number> = {
+    sent: (p) => p.sent,
+    delivered: (p) => p.delivered,
+    failed: (p) => p.failed,
+    opened: (p) => p.opened ?? 0,
+    clicked: (p) => p.clicked ?? 0,
+    complained: (p) => p.complained ?? 0,
+    unsubscribed: (p) => p.unsubscribed ?? 0,
+  };
+
+  return (CHANNEL_ANALYTICS[channel] ?? CHANNEL_ANALYTICS.email).kpis.map((spec) => ({
+    label: spec.label,
+    color: kpiColor(spec.key),
+    value: fmtCompact(value[spec.key]),
+    sub: spec.of === null ? 'in range' : pctOf(value[spec.key], spec.of === 'sent' ? t.sent : t.delivered),
+    tone: spec.tone,
+    series: points.map((p) => ({ value: seriesFor[spec.key](p), label: fmtDate(p.date) })),
+  }));
 }
 
 /** CSV of the visible series — the export button writes exactly what's shown. */

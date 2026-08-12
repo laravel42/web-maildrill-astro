@@ -50,6 +50,8 @@ describe('mapHogQLActivityRows + zeroFill', () => {
         opened: 0,
         clicked: 0,
         complained: 0,
+        unsubscribed: 0,
+        voiceSeconds: 0,
       },
       {
         date: '2026-07-21',
@@ -59,6 +61,8 @@ describe('mapHogQLActivityRows + zeroFill', () => {
         opened: 0,
         clicked: 0,
         complained: 0,
+        unsubscribed: 0,
+        voiceSeconds: 0,
       },
       {
         date: '2026-07-22',
@@ -68,6 +72,8 @@ describe('mapHogQLActivityRows + zeroFill', () => {
         opened: 0,
         clicked: 0,
         complained: 0,
+        unsubscribed: 0,
+        voiceSeconds: 0,
       },
     ]);
   });

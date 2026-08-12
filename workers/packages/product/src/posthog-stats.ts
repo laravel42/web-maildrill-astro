@@ -44,6 +44,8 @@ export function zeroFillDailyActivity(
       opened: 0,
       clicked: 0,
       complained: 0,
+      unsubscribed: 0,
+      voiceSeconds: 0,
     });
   }
   return out;

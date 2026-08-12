@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { ChannelType } from '@/types/app';
 import { api } from '@/lib/app/api';
 import { readDashboardCache, writeDashboardCache } from '@/lib/app/dashboard-cache';
@@ -6,11 +6,10 @@ import Icon from './Icon';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import type { ChartKey, EngagementKey, SeriesKey } from './AppAnalytics.types';
 import {
-  ENGAGEMENT_CHANNELS,
-  ENGAGEMENT_SERIES,
+  CHANNEL_ANALYTICS,
   RANGES,
-  SERIES,
   pointValue,
+  talkTimeOf,
   buildKpis,
   fmtCompact,
   fmtDate,
@@ -57,6 +56,14 @@ export default function AppAnalytics({
   const [engVisible, setEngVisible] = useState<Set<EngagementKey>>(
     new Set<EngagementKey>(['opened', 'clicked']),
   );
+
+  /* Channels plot different series, so a legend selection cannot survive a
+     channel switch — a key that no longer exists would leave the chart blank. */
+  useEffect(() => {
+    const c = CHANNEL_ANALYTICS[channel] ?? CHANNEL_ANALYTICS.email;
+    setVisible(new Set(c.delivery.map((d) => d.key)));
+    setEngVisible(new Set((c.engagement?.series ?? []).map((e) => e.key)));
+  }, [channel]);
   const [toast, setToast] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -204,11 +211,13 @@ export default function AppAnalytics({
      the cache repaint as shimmer rather than restyling stale numbers. */
   const loading = bootLoading || rangeLoading;
 
-  const kpis = buildKpis(daily);
+  /* Everything the screen renders is decided by what this channel's provider
+     actually reports — see CHANNEL_ANALYTICS. */
+  const cfg = CHANNEL_ANALYTICS[channel] ?? CHANNEL_ANALYTICS.email;
+  const kpis = buildKpis(daily, channel);
+  const talk = cfg.showTalkTime ? talkTimeOf(daily) : null;
   const totals = totalsOf(daily);
-  /* SMS and voice providers report no opens or clicks at all, so the chart is
-     replaced by an explanation rather than drawing a flat zero line. */
-  const engUntracked = !(ENGAGEMENT_CHANNELS as readonly string[]).includes(channel);
+  const engUntracked = cfg.engagement === null;
 
   /* Download exactly the series on screen, rather than claiming an export. */
   const exportCsv = () => {
@@ -303,7 +312,11 @@ export default function AppAnalytics({
       ) : (
         <>
           {/* KPI trend strip */}
-          <div className={styles.kpis} aria-busy={loading}>
+          <div
+            className={styles.kpis}
+            aria-busy={loading}
+            style={{ '--kpi-cols': kpis.length + (talk ? 1 : 0) <= 4 ? 2 : 3 } as CSSProperties}
+          >
             {loading &&
               [0, 1, 2].map((i) => (
                 <div key={i} className={`acrd ${styles.kpi}`} aria-hidden="true">
@@ -316,8 +329,8 @@ export default function AppAnalytics({
                 </div>
               ))}
             {!loading &&
-              kpis.map((k, i) => {
-                const color = SERIES[i]?.color ?? '#4f46e5';
+              kpis.map((k) => {
+                const color = k.color;
                 const last = k.series[k.series.length - 1]?.value ?? 0;
                 const series = ensureSpark(k.series, last, 'Now');
                 return (
@@ -346,6 +359,18 @@ export default function AppAnalytics({
                   </div>
                 );
               })}
+            {/* Voice only: the one depth metric no other channel has. */}
+            {!loading && talk && (
+              <div className={`acrd ${styles.kpi}`}>
+                <div className={styles.kpiTop}>
+                  <span className={styles.kpiLbl}>Talk time</span>
+                  <span className={`${styles.kpiDelta} ${styles.kpiDeltaFlat} tnum`}>
+                    avg {talk.avg}
+                  </span>
+                </div>
+                <div className={`${styles.kpiVal} tnum`}>{talk.total}</div>
+              </div>
+            )}
           </div>
 
           {/* hero trend chart */}
@@ -388,7 +413,7 @@ export default function AppAnalytics({
             ) : (
               <>
                 <div className={styles.legend}>
-                  {SERIES.map((s) => {
+                  {cfg.delivery.map((s) => {
                     const on = visible.has(s.key);
                     return (
                       <button
@@ -408,7 +433,7 @@ export default function AppAnalytics({
                   })}
                 </div>
 
-                <TrendChart visible={visible} series={daily} />
+                <TrendChart visible={visible} series={daily} config={cfg.delivery} />
               </>
             )}
           </section>
@@ -416,18 +441,18 @@ export default function AppAnalytics({
           {/* engagement over time — same chart as delivery, tracked channels only */}
           <section
             className={`acrd ${styles.hero}`}
-            aria-label="Engagement over time"
+            aria-label={cfg.engagement?.title ?? 'Engagement'}
             aria-busy={loading}
           >
             <div className={styles.cardHead}>
               <div>
-                <h2 className="acrd__title">Engagement over time</h2>
+                <h2 className="acrd__title">{cfg.engagement?.title ?? 'Engagement'}</h2>
                 {loading ? (
                   <div
                     className={`skeleton ${styles.skelLine}`}
                     style={{ width: 180, marginTop: 6 }}
                   />
-                ) : (
+                ) : engUntracked ? null : (
                   <p className={`${styles.cardSub} tnum`}>
                     Daily receipts · {fmtDate(daily[0].date)} –{' '}
                     {fmtDate(daily[daily.length - 1].date)}
@@ -447,14 +472,11 @@ export default function AppAnalytics({
             {loading ? (
               <div className={`skeleton ${styles.skelHero}`} aria-hidden="true" />
             ) : engUntracked ? (
-              <p className={styles.panelEmpty}>
-                {CHANNEL[channel].label} deliveries can&rsquo;t report opens or clicks — engagement
-                receipts exist only on email and WhatsApp.
-              </p>
+              <p className={styles.panelEmpty}>{cfg.engagementNote}</p>
             ) : (
               <>
                 <div className={styles.legend}>
-                  {ENGAGEMENT_SERIES.map((s) => {
+                  {(cfg.engagement?.series ?? []).map((s) => {
                     const on = engVisible.has(s.key);
                     return (
                       <button
@@ -477,7 +499,7 @@ export default function AppAnalytics({
                 <TrendChart
                   visible={engVisible}
                   series={daily}
-                  config={ENGAGEMENT_SERIES}
+                  config={cfg.engagement?.series ?? []}
                   areaKey="opened"
                   label="engagement"
                 />
@@ -517,13 +539,13 @@ export default function AppAnalytics({
 function TrendChart({
   visible,
   series,
-  config = SERIES,
+  config,
   areaKey = 'sent',
   label = 'delivery',
 }: {
   visible: Set<ChartKey>;
   series: ActivityPoint[];
-  config?: { key: ChartKey; label: string; color: string }[];
+  config: { key: ChartKey; label: string; color: string }[];
   areaKey?: ChartKey;
   label?: string;
 }) {

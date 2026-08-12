@@ -326,6 +326,13 @@ export interface DailyPoint {
    * into the failure bucket.
    */
   complained: number;
+  /** Opt-outs recorded against the send. Every channel can produce these. */
+  unsubscribed: number;
+  /**
+   * Voice only: total reconciled talk time in seconds for the day. Zero
+   * elsewhere — no other channel has a duration.
+   */
+  voiceSeconds: number;
 }
 
 async function dailyActivityFromPostgres(
@@ -346,6 +353,7 @@ async function dailyActivityFromPostgres(
       // 'read' is the terminal engagement state, so a message that was opened
       // no longer counts as merely delivered — matching byChannel's shape.
       opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
+      voiceSeconds: sql<number>`coalesce(sum(${messages.voiceSeconds}), 0)::int`,
     })
     .from(messages)
     .where(and(...conds))
@@ -376,6 +384,17 @@ async function dailyActivityFromPostgres(
     .groupBy(sql`date_trunc('day', ${messages.createdAt})`);
   const complaintsBy = new Map(complaintRows.map((r) => [r.day, Number(r.complained)]));
 
+  const unsubRows = await db
+    .select({
+      day: sql<string>`to_char(date_trunc('day', ${messages.createdAt}), 'YYYY-MM-DD')`,
+      unsubscribed: sql<number>`count(distinct ${messageEvents.messageId})::int`,
+    })
+    .from(messageEvents)
+    .innerJoin(messages, eq(messageEvents.messageId, messages.id))
+    .where(and(...conds, eq(messageEvents.eventType, 'unsubscribed')))
+    .groupBy(sql`date_trunc('day', ${messages.createdAt})`);
+  const unsubsBy = new Map(unsubRows.map((r) => [r.day, Number(r.unsubscribed)]));
+
   const byDay = new Map(rows.map((r) => [r.day, r]));
   const out: DailyPoint[] = [];
   for (let i = 0; i < span; i += 1) {
@@ -391,6 +410,8 @@ async function dailyActivityFromPostgres(
       opened: Number(hit?.opened ?? 0),
       clicked: clicksBy.get(key) ?? 0,
       complained: complaintsBy.get(key) ?? 0,
+      unsubscribed: unsubsBy.get(key) ?? 0,
+      voiceSeconds: Number(hit?.voiceSeconds ?? 0),
     });
   }
   return out;
@@ -417,6 +438,8 @@ function withEngagementFrom(series: DailyPoint[], pg: DailyPoint[]): DailyPoint[
     opened: byDay.get(p.date)?.opened ?? p.opened,
     clicked: byDay.get(p.date)?.clicked ?? p.clicked,
     complained: byDay.get(p.date)?.complained ?? p.complained,
+    unsubscribed: byDay.get(p.date)?.unsubscribed ?? p.unsubscribed,
+    voiceSeconds: byDay.get(p.date)?.voiceSeconds ?? p.voiceSeconds,
   }));
 }
 

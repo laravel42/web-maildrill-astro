@@ -51,8 +51,10 @@
   /* Six KPIs: a fixed three-column grid so they land 3 + 3 with equal widths.
      The old flex row stretched whatever wrapped last across its whole row,
      which left the sixth card full-width and twice the height of the rest. */
+  /* Column count comes from the component (--kpi-cols): channels render
+     different numbers of cards, and a fixed grid left four cards as 3 + 1. */
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--kpi-cols, 3), minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 18px;
 }
