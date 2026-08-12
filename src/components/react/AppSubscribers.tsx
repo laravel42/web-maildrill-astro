@@ -58,7 +58,6 @@ export default function AppSubscribers({
   /** Real workspace tags (id + name), for segment rules and tagging. */
   allTagRows?: { id: string; name: string }[];
 } = {}) {
-  const allTags = allTagRows.map((t) => t.name);
   // Live data from the SSR page when provided (even if empty); otherwise fixtures.
   // `live` gates persistence: connected workspaces write through the BFF proxy;
   // the fixture demo stays local-only so the marketing preview still works.
@@ -170,6 +169,22 @@ export default function AppSubscribers({
     };
   }, [live]);
 
+  // Fetch workspace tags client-side so the segment modal is always populated
+  // even if SSR-time fetch returned empty (e.g. transient backend error).
+  useEffect(() => {
+    if (!live) return;
+    let alive = true;
+    void api
+      .get<{ data: Array<{ id: string; name: string }> }>('tags')
+      .then((res) => {
+        if (alive && res.data.length > 0) setTagIndex(res.data);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [live]);
+
   const effTags = (s: RichSubscriber): string[] => tagStore[s.id] ?? s.tags;
 
   // Tags actually present on subscribers, with counts for the filter dropdown.
@@ -182,6 +197,14 @@ export default function AppSubscribers({
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [richSubscribers, tagStore]);
+
+  // All known tag names: workspace tags (relational) + any legacy tags on subscribers.
+  // This ensures the segment modal and other dropdowns show every tag in use.
+  const allTags = useMemo(() => {
+    const set = new Set(tagIndex.map((t) => t.name));
+    for (const { name } of tagUniverse) set.add(name);
+    return [...set].sort((a, b) => a.localeCompare(b));
+  }, [tagIndex, tagUniverse]);
 
   const segById = useMemo(() => new Map(segments.map((s) => [s.id, s])), [segments]);
 
@@ -483,7 +506,11 @@ export default function AppSubscribers({
     const removed = before.filter((t) => !tags.includes(t));
     try {
       const known = new Map(tagIndex.map((t) => [t.name.toLowerCase(), t.id]));
-      for (const name of added) {
+
+      // Ensure every tag involved (added or removed) exists in the workspace
+      // tags table. Legacy tags stored only in attributes.tags won't have an
+      // entry yet, so we create them first to get a relational id.
+      const ensureTag = async (name: string): Promise<string> => {
         let tagId = known.get(name.toLowerCase());
         if (!tagId) {
           const created = await api.post<{ id: string; name: string }>('tags', { name });
@@ -491,12 +518,21 @@ export default function AppSubscribers({
           known.set(name.toLowerCase(), tagId);
           setTagIndex((prev) => [...prev, created]);
         }
+        return tagId;
+      };
+
+      for (const name of added) {
+        const tagId = await ensureTag(name);
         await api.post(`subscribers/${id}/tags/${tagId}`, {});
       }
       for (const name of removed) {
-        const tagId = known.get(name.toLowerCase());
-        if (tagId) await api.del(`subscribers/${id}/tags/${tagId}`);
+        const tagId = await ensureTag(name);
+        await api.del(`subscribers/${id}/tags/${tagId}`);
       }
+      // Also sync attributes.tags so legacy data doesn't resurrect removed tags.
+      // The relational join (tagNames) is authoritative, but toRichSubscribers
+      // falls back to attributes.tags when tagNames is empty.
+      await api.patch(`subscribers/${id}`, { attributes: { tags } });
       setRichSubscribers((prev) => prev.map((s) => (s.id === id ? { ...s, tags } : s)));
       showToast('Tags saved');
     } catch (e) {
@@ -1293,29 +1329,28 @@ export default function AppSubscribers({
                   phone: values.phone || undefined,
                   name: values.name || undefined,
                   status: values.status,
-                  attributes: { tags: values.tags },
                 });
+                await saveTags(created.id, values.tags);
                 await applyListMembership(created.id, [], values.listIds);
                 const withList = await api.get<ApiSubscriber>(`subscribers/${created.id}`);
                 setRichSubscribers((prev) => [toRichSubscriber(withList), ...prev]);
                 showToast(`${values.email} added`);
               } else {
-                const updated = await api.patch<ApiSubscriber>(`subscribers/${editor.sub.id}`, {
+                await api.patch<ApiSubscriber>(`subscribers/${editor.sub.id}`, {
                   name: values.name || null,
                   // Empty clears the number; a value updates it.
                   phone: values.phone || null,
                   status: values.status,
                   attributes: {
-                    tags: values.tags,
                     ...(editor.sub.location !== '—' ? { location: editor.sub.location } : {}),
                   },
                 });
+                await saveTags(editor.sub.id, values.tags);
                 await applyListMembership(editor.sub.id, editor.sub.listIds, values.listIds);
                 const fresh = await api.get<ApiSubscriber>(`subscribers/${editor.sub.id}`);
                 setRichSubscribers((prev) =>
                   prev.map((s) => (s.id === editor.sub.id ? toRichSubscriber(fresh) : s)),
                 );
-                void updated;
                 showToast(`${values.name || values.email} updated`);
               }
               setSubEditor(null);
