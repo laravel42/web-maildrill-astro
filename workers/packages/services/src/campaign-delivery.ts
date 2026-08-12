@@ -1,5 +1,7 @@
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { config } from '@maildrill/config';
+import { DELIVERABILITY_LIMITS, MIN_SAMPLE } from './reputation';
+import { bumpVersion } from './shared';
 import { settleCampaignReservation } from '@maildrill/billing';
 import { campaigns, db, messages, type MessageRow } from '@maildrill/database';
 import {
@@ -14,6 +16,7 @@ import {
   columnIndex,
   createLogger,
   hogqlLiteralList,
+  metrics,
   runHogQL,
 } from '@maildrill/observability';
 import {
@@ -55,6 +58,8 @@ export interface StatusGroupRow {
   errorDescription?: string;
   /** Real call length in seconds from a voice DLR; absent for other channels. */
   voiceSeconds?: number;
+  /** Provider said the failure is permanent — a dead mailbox, not a full one. */
+  errorPermanent?: boolean;
 }
 
 /** Pure: map HogQL rows → latest status_group (+ error) per maildrill message id. */
@@ -64,6 +69,7 @@ export function mapLatestStatusGroups(columns: string[], results: unknown[][]): 
   const iErrName = columnIndex(columns, 'error_name');
   const iErrDesc = columnIndex(columns, 'error_description');
   const iVoice = columnIndex(columns, 'voice_seconds');
+  const iPermanent = columnIndex(columns, 'error_permanent');
   if (iId < 0 || iGroup < 0) return [];
 
   // Query already returns argMax / latest; keep first row per id if duplicates.
@@ -80,12 +86,22 @@ export function mapLatestStatusGroups(columns: string[], results: unknown[][]): 
     // "no report yet", so guard on finiteness rather than truthiness.
     const voiceRaw = iVoice >= 0 ? Number(row[iVoice]) : Number.NaN;
     const voiceSeconds = Number.isFinite(voiceRaw) && voiceRaw >= 0 ? voiceRaw : undefined;
+    // Tri-state: true / false / "the report did not say". Only an explicit
+    // true suppresses, so an unknown never costs someone their subscriber.
+    const permanentCell = iPermanent >= 0 ? cellString(row, iPermanent).toLowerCase() : '';
+    const permanent =
+      permanentCell === 'true' || permanentCell === '1'
+        ? true
+        : permanentCell === 'false' || permanentCell === '0'
+          ? false
+          : undefined;
     out.push({
       maildrillMessageId: id,
       statusGroup,
       ...(errorName ? { errorName } : {}),
       ...(errorDescription ? { errorDescription } : {}),
       ...(voiceSeconds === undefined ? {} : { voiceSeconds }),
+      ...(permanent === undefined ? {} : { errorPermanent: permanent }),
     });
   }
   return out;
@@ -235,7 +251,10 @@ SELECT
       toFloat(properties.voice_call.duration)
     ),
     timestamp
-  ) AS voice_seconds
+  ) AS voice_seconds,
+  -- Hard vs soft bounce. The Hog forwards Infobip's error.permanent; without
+  -- it a dead mailbox is indistinguishable from a full one.
+  argMax(toString(properties.error_permanent), timestamp) AS error_permanent
 FROM events
 WHERE event IN ('message_delivery_report', 'message_voice_report')
   AND toString(properties.maildrill_message_id) IN (${lits.join(', ')})
@@ -413,6 +432,7 @@ async function syncOpenMessages(open: MessageRow[]): Promise<number> {
       errorCode: row.errorName,
       errorMessage: row.errorDescription,
       voiceSeconds: row.voiceSeconds,
+      errorPermanent: row.errorPermanent,
     });
     if (changed) updated += 1;
   }
@@ -543,6 +563,60 @@ export async function tryCompleteCampaign(campaignId: string, tenantId: string):
   return true;
 }
 
+/**
+ * In-flight circuit breaker.
+ *
+ * A pre-send gate only catches the *next* bad list; it cannot help a campaign
+ * that is already 50,000 addresses deep into one. This runs on every delivery
+ * poll and stops a campaign whose own hard-bounce rate has gone bad, so the
+ * damage is bounded by one poll interval instead of the whole audience.
+ *
+ * Judged on the campaign's own messages, not the workspace's history — a list
+ * that is rotten now should stop now, whatever the 30-day average says.
+ * Remaining un-sent messages are cancelled, because pausing the campaign alone
+ * would leave the queue to drain into the same dead addresses.
+ */
+async function tripCampaignBreaker(campaignId: string, tenantId: string): Promise<boolean> {
+  const [row] = await db
+    .select({
+      resolved: sql<number>`count(*) filter (where ${messages.status} in ('delivered','read','failed'))::int`,
+      hardBounces: sql<number>`count(*) filter (where ${messages.lastErrorPermanent} is true)::int`,
+    })
+    .from(messages)
+    .where(and(eq(messages.campaignId, campaignId), eq(messages.tenantId, tenantId)));
+
+  const resolved = Number(row?.resolved ?? 0);
+  const hardBounces = Number(row?.hardBounces ?? 0);
+  if (resolved < MIN_SAMPLE) return false;
+  if (hardBounces / resolved <= DELIVERABILITY_LIMITS.hardBounceRate) return false;
+
+  const paused = await db
+    .update(campaigns)
+    .set({ status: 'paused', updatedAt: new Date() })
+    .where(and(eq(campaigns.id, campaignId), eq(campaigns.status, 'sending')))
+    .returning({ id: campaigns.id });
+  if (paused.length === 0) return false; // someone else moved it first
+
+  // Stop the queue draining into the rest of the list.
+  const stopped = await db
+    .update(messages)
+    .set({ status: 'cancelled', version: bumpVersion, updatedAt: new Date() })
+    .where(
+      and(
+        eq(messages.campaignId, campaignId),
+        inArray(messages.status, [...QUEUE_PENDING_STATES]),
+      ),
+    )
+    .returning({ id: messages.id });
+
+  log.warn(
+    { campaignId, tenantId, resolved, hardBounces, cancelled: stopped.length },
+    'campaign paused: hard bounce rate above limit',
+  );
+  metrics.inc('campaign_breaker_tripped_total');
+  return true;
+}
+
 async function completeFinishedCampaigns(): Promise<number> {
   const sending = await db
     .select({ id: campaigns.id, tenantId: campaigns.tenantId })
@@ -553,6 +627,9 @@ async function completeFinishedCampaigns(): Promise<number> {
 
   let completed = 0;
   for (const camp of sending) {
+    // Check the breaker first: a campaign that trips must not also be
+    // reported as a normal completion.
+    if (await tripCampaignBreaker(camp.id, camp.tenantId)) continue;
     if (await tryCompleteCampaign(camp.id, camp.tenantId)) completed += 1;
   }
 

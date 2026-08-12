@@ -233,6 +233,13 @@ export const messages = pgTable(
     attemptCount: integer('attempt_count').notNull().default(0),
     lastErrorCode: text('last_error_code'),
     lastErrorMessage: text('last_error_message'),
+    /**
+     * Whether the provider called the failure permanent (Infobip
+     * `error.permanent`). This is what separates a hard bounce — bad mailbox,
+     * suppress the address — from a soft one like a full inbox. Null when the
+     * report did not say.
+     */
+    lastErrorPermanent: boolean('last_error_permanent'),
     // Optimistic-concurrency guard against out-of-order overwrites.
     version: integer('version').notNull().default(0),
     createdAt: createdAt(),

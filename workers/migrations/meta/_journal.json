@@ -127,6 +127,13 @@
       "when": 1786560000000,
       "tag": "0017_message_voice_seconds",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1786600000000,
+      "tag": "0018_message_error_permanent",
+      "breakpoints": true
     }
   ]
 }

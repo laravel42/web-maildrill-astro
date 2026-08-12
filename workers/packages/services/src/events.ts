@@ -15,6 +15,7 @@ import {
 } from '@maildrill/domain';
 import { getProvider, type NormalizedProviderEvent } from '@maildrill/providers';
 import { billingEnforced, chargeMessageDelivered } from '@maildrill/billing';
+import { suppressAddress } from './suppression';
 import { createLogger, emitAppEvent, metrics } from '@maildrill/observability';
 import { bumpVersion } from './shared';
 import { applyTemplateStatusEvent } from './templates-approval';
@@ -45,7 +46,7 @@ async function applyEventState(
   messageId: string,
   next: MessageState,
   at: Date,
-  error?: { code?: string; message?: string },
+  error?: { code?: string; message?: string; permanent?: boolean },
 ): Promise<void> {
   const base = { status: next, version: bumpVersion, updatedAt: new Date() };
   const set = (extra: Record<string, unknown>) =>
@@ -71,6 +72,7 @@ async function applyEventState(
         ...(code || message
           ? {
               lastErrorCode: code,
+              ...(error?.permanent === undefined ? {} : { lastErrorPermanent: error.permanent }),
               lastErrorMessage:
                 message && code && message !== code ? `${message} (${code})` : (message ?? code),
             }
@@ -104,6 +106,11 @@ export async function applyProviderOutcome(input: {
   /** Infobip `error.description` from the DLR. */
   errorMessage?: string;
   /**
+   * Infobip `error.permanent`. A permanent failure is a dead mailbox, so the
+   * address is suppressed; a temporary one (full inbox, handset off) is not.
+   */
+  errorPermanent?: boolean;
+  /**
    * Real call length in seconds from a voice DLR. Recorded whenever it
    * arrives, independently of whether the status transition is accepted — a
    * duplicate DLR still carries the truth, and the trial gate settles its
@@ -119,6 +126,27 @@ export async function applyProviderOutcome(input: {
   // before the transition guard below can return early. A DLR redelivered after
   // the message already settled still carries the real duration, and that is
   // exactly what the trial gate needs to settle its pre-send estimate.
+  // Close the feedback loop on a hard bounce, before the transition guard: a
+  // redelivered DLR is refused as a transition but still reports a dead
+  // mailbox, and suppression is idempotent either way.
+  if (input.outcome === 'failed' && input.errorPermanent === true) {
+    const [msg] = await db
+      .select({ toAddress: messages.toAddress, recipientId: messages.recipientId })
+      .from(messages)
+      .where(eq(messages.id, input.messageId))
+      .limit(1);
+    if (msg) {
+      await suppressAddress({
+        tenantId: input.tenantId,
+        channel: input.channel,
+        address: msg.toAddress,
+        recipientId: msg.recipientId,
+        cause: 'hard_bounce',
+        detail: input.errorCode ?? null,
+      });
+    }
+  }
+
   if (input.channel === 'voice' && input.voiceSeconds !== undefined) {
     await db
       .update(messages)
@@ -166,6 +194,7 @@ export async function applyProviderOutcome(input: {
     await applyEventState(tx, input.messageId, next, at, {
       code: input.errorCode,
       message: input.errorMessage,
+      permanent: input.errorPermanent,
     });
     emitAppEvent({
       name: 'message.status_changed',
@@ -347,6 +376,26 @@ export async function applyTrackingOutcome(input: {
 
     return result.length > 0;
   });
+
+  // A spam complaint takes the address out of circulation just like a hard
+  // bounce — continuing to mail a complainer is what wrecks a sending domain.
+  if (inserted && eventType === 'complaint') {
+    const [msg] = await db
+      .select({ toAddress: messages.toAddress, recipientId: messages.recipientId })
+      .from(messages)
+      .where(eq(messages.id, input.messageId))
+      .limit(1);
+    if (msg) {
+      await suppressAddress({
+        tenantId: input.tenantId,
+        channel: input.channel,
+        address: msg.toAddress,
+        recipientId: msg.recipientId,
+        cause: 'complaint',
+        detail: type,
+      });
+    }
+  }
 
   return inserted;
 }
