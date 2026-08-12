@@ -17,5 +17,7 @@ export * from './maintenance';
 export * from './admin';
 export * from './tenants';
 export * from './reputation';
+export * from './list-health';
+export * from './trial-screening';
 export * from './suppression';
 export { insertDispatchOutbox, isUniqueViolation } from './shared';

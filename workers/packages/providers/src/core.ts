@@ -83,6 +83,16 @@ export interface EntityProvisionResult {
   error?: string;
 }
 
+/** One address's verdict from a provider-side validation service. */
+export interface AddressValidation {
+  /** False only when the provider positively says the mailbox is bad. */
+  valid: boolean;
+  /** Provider's own explanation, e.g. `known_hardbounce`, `invalid_syntax`. */
+  reason?: string;
+  /** True when the provider could not decide — treated as "not proven bad". */
+  unknown?: boolean;
+}
+
 export interface RegisterTemplateInput {
   /** Registered WhatsApp sender number, international format without a leading +. */
   sender: string;
@@ -154,6 +164,12 @@ export interface MessagingProvider {
    * have no such concept leave it undefined and callers skip provisioning.
    */
   createEntity?(input: { entityId: string; entityName: string }): Promise<EntityProvisionResult>;
+  /**
+   * Provider-side mailbox validation (Infobip `/email/2/validation`). Paid per
+   * address, so callers must bound how many they send. Undefined on providers
+   * without the capability, and callers skip validation entirely.
+   */
+  validateEmailAddresses?(addresses: string[]): Promise<Map<string, AddressValidation>>;
   /** Register a WhatsApp template with the provider for Meta review. */
   registerWhatsAppTemplate?(input: RegisterTemplateInput): Promise<RegisterTemplateResult>;
   /** List a sender's WhatsApp templates and their current approval statuses. */

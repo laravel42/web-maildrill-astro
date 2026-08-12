@@ -18,6 +18,7 @@ import {
   type SendInput,
   type ProviderSendResult,
   type ProviderSendError,
+  type AddressValidation,
   type EntityProvisionResult,
   type RegisterTemplateInput,
   type RegisterTemplateResult,
@@ -751,6 +752,58 @@ export class InfobipProvider implements MessagingProvider {
    * message. Explicit creation only buys a friendly `entityName` in the portal,
    * so the caller logs and continues rather than failing the signup.
    */
+  /**
+   * Mailbox validation via Infobip `/email/2/validation`, one address per call
+   * with bounded concurrency.
+   *
+   * The bulk endpoint (`/email/2/validations`) is asynchronous — measured
+   * ~13s of warm-up before results start and 2.5–4.4 addresses/s — which is
+   * fine for a background job but not for something a send is waiting on. The
+   * singular endpoint answers in ~500ms, so a bounded fan-out returns a whole
+   * trial-sized audience in a few seconds.
+   *
+   * **Every call is billed** ($0.0077 at the time of writing, 15× the cost of
+   * sending the email), so callers must cap the address count themselves.
+   *
+   * Fails open: an address we could not check is returned `valid: true,
+   * unknown: true`. A provider outage must not silently block sending, and the
+   * caller decides what to do with an unknown.
+   */
+  async validateEmailAddresses(addresses: string[]): Promise<Map<string, AddressValidation>> {
+    const out = new Map<string, AddressValidation>();
+    const unique = [...new Set(addresses.map((a) => a.trim().toLowerCase()).filter(Boolean))];
+    const CONCURRENCY = 10;
+
+    for (let i = 0; i < unique.length; i += CONCURRENCY) {
+      const wave = unique.slice(i, i + CONCURRENCY);
+      const results = await Promise.all(
+        wave.map(async (to): Promise<AddressValidation> => {
+          try {
+            const { res, text } = await this.fetchInfobip(
+              'POST',
+              'email/2/validation',
+              JSON.stringify({ to }),
+            );
+            if (!res.ok) return { valid: true, unknown: true };
+            const json = safeJson(text);
+            // `validMailbox` is a STRING ("true"/"false"/"unknown") while every
+            // sibling flag is a real boolean — a truthiness check here would
+            // read "false" as valid and defeat the whole exercise.
+            const mailbox = String(str(json.validMailbox) ?? '').toLowerCase();
+            const reason = str(json.detailedReasons) ?? str(json.reason);
+            if (mailbox === 'false') return { valid: false, ...(reason ? { reason } : {}) };
+            if (mailbox === 'true') return { valid: true };
+            return { valid: true, unknown: true };
+          } catch {
+            return { valid: true, unknown: true };
+          }
+        }),
+      );
+      wave.forEach((address, j) => out.set(address, results[j]!));
+    }
+    return out;
+  }
+
   async createEntity(input: {
     entityId: string;
     entityName: string;

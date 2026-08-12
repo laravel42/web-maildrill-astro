@@ -2,7 +2,12 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 import { assertTrialAllowance, reserveCampaignCredits } from '@maildrill/billing';
 import { campaigns, db, messages, subscribers, type Campaign } from '@maildrill/database';
 import { ConflictError, estimateVoiceSeconds, NotFoundError, type Channel } from '@maildrill/domain';
-import { submitMessage, assertDeliverabilityOk } from '@maildrill/services';
+import {
+  assertDeliverabilityOk,
+  assertListSendable,
+  screenTrialAudience,
+  submitMessage,
+} from '@maildrill/services';
 import { createLogger } from '@maildrill/observability';
 import { addressForChannel, resolveAudience, type AudienceSelector } from './audience';
 import { getTemplate, resolveMessageContent } from './templates';
@@ -174,7 +179,21 @@ export async function sendCampaign(input: SendCampaignInput): Promise<SendCampai
           .returning()
       )[0]!;
 
-  const resolved = await resolveAudience(input.tenantId, input.selector, input.channel, {
+  // A list whose membership has gone bad is refused before anything else —
+  // there is no point resolving or pricing an audience we will not mail.
+  if (input.selector.listId) {
+    try {
+      await assertListSendable(input.tenantId, input.selector.listId);
+    } catch (err) {
+      await db
+        .update(campaigns)
+        .set({ status: 'draft', startedAt: null, updatedAt: new Date() })
+        .where(eq(campaigns.id, camp.id));
+      throw err;
+    }
+  }
+
+  let resolved = await resolveAudience(input.tenantId, input.selector, input.channel, {
     limit: MAX_AUDIENCE,
   });
   const truncated = resolved.length >= MAX_AUDIENCE;
@@ -217,6 +236,11 @@ export async function sendCampaign(input: SendCampaignInput): Promise<SendCampai
       if (!scheduled) {
         await reserveCampaignCredits(input.tenantId, camp.id, input.channel, resolved.length);
       }
+      // Last, and only for trials: put every surviving recipient to Infobip's
+      // paid mailbox validation. Deliberately after the allowance and wallet
+      // gates so an audience we would have refused is never paid to validate.
+      const screen = await screenTrialAudience(input.tenantId, input.channel, resolved);
+      resolved = screen.recipients;
     } catch (err) {
       await db
         .update(campaigns)

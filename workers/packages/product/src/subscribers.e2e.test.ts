@@ -3,6 +3,8 @@ import { closeDb } from '@maildrill/database';
 import { ensureTenantByName } from '@maildrill/services';
 import { deleteSubscriber, importSubscribers, updateSubscriber, upsertSubscriber } from './subscribers';
 import { resolveAudience } from './audience';
+import { addToList, createList } from './lists';
+import { assertListSendable, listHealth } from '@maildrill/services';
 
 // Needs real Postgres. Enable with: RUN_E2E=1 pnpm test
 const run = process.env.RUN_E2E === '1';
@@ -114,5 +116,51 @@ describe.skipIf(!run)('address validation on add (e2e — needs Postgres)', () =
     const addresses = audience.map((s) => s.email);
     expect(addresses).toContain(`reachable-${uniq}@gmail.com`);
     expect(addresses).not.toContain(`unreachable-${uniq}@nonexistent-domain-xyzq.com`);
+  });
+});
+
+describe.skipIf(!run)('list suspension (e2e — needs Postgres)', () => {
+  const uniq = `${process.pid}-${process.hrtime.bigint()}`;
+
+  /** Build a list with `dead` undeliverable members out of `total`. */
+  async function listWith(total: number, dead: number, tag: string) {
+    const tenant = await ensureTenantByName(`listhealth-${tag}-${uniq}`);
+    const list = await createList({ tenantId: tenant.id, name: `list-${tag}-${uniq}` });
+    for (let i = 0; i < total; i++) {
+      const sub = await upsertSubscriber({
+        tenantId: tenant.id,
+        email: `lh-${tag}-${uniq}-${i}@gmail.com`,
+        status: i < dead ? 'bounced' : 'active',
+      });
+      await addToList(tenant.id, list.id, sub.id);
+    }
+    return { tenantId: tenant.id, listId: list.id };
+  }
+
+  it('measures the undeliverable share of a list', async () => {
+    const { tenantId, listId } = await listWith(30, 3, 'healthy');
+    const health = await listHealth(tenantId, listId);
+    expect(health.members).toBe(30);
+    expect(health.dead).toBe(3);
+    expect(health.significant).toBe(true);
+    expect(health.suspended).toBe(false);
+  });
+
+  it('lets a normally-decayed list send', async () => {
+    const { tenantId, listId } = await listWith(30, 3, 'ok'); // 10%
+    await expect(assertListSendable(tenantId, listId)).resolves.toBeUndefined();
+  });
+
+  it('suspends a list that is mostly undeliverable', async () => {
+    const { tenantId, listId } = await listWith(30, 15, 'rotten'); // 50%
+    await expect(assertListSendable(tenantId, listId)).rejects.toThrow(/list_suspended/);
+    expect((await listHealth(tenantId, listId)).suspended).toBe(true);
+    // Still refused on the next attempt, while the membership is unchanged.
+    await expect(assertListSendable(tenantId, listId)).rejects.toThrow(/list_suspended/);
+  });
+
+  it('ignores a list too small for the share to mean anything', async () => {
+    const { tenantId, listId } = await listWith(5, 4, 'tiny'); // 80% of 5
+    await expect(assertListSendable(tenantId, listId)).resolves.toBeUndefined();
   });
 });

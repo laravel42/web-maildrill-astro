@@ -509,6 +509,13 @@ export const lists = pgTable(
     goodbyeEmailTemplateId: uuid('goodbye_email_template_id').references(() => templates.id, {
       onDelete: 'set null',
     }),
+    /**
+     * Set when too much of the list turned out to be undeliverable. A
+     * suspended list cannot be sent to until someone cleans it — see
+     * `list-health.ts`. Null is the normal state.
+     */
+    suspendedAt: ts('suspended_at'),
+    suspendedReason: text('suspended_reason'),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
