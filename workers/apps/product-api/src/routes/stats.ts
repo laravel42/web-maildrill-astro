@@ -37,7 +37,7 @@ export async function statsRoutes(appRaw: FastifyInstance): Promise<void> {
     {
       schema: {
         tags: TAG,
-        summary: 'Daily send activity, zero-filled (no open/click data yet)',
+        summary: 'Daily send activity + engagement, zero-filled',
         querystring: seriesQuery,
       },
     },

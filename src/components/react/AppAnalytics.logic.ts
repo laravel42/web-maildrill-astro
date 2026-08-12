@@ -1,12 +1,17 @@
-import type { SeriesKey } from './AppAnalytics.types';
+import type { EngagementKey, SeriesKey } from './AppAnalytics.types';
 
 /* ------------------------------------------------------------------ *
  * Chart math + config for the account-wide analytics screen.
  *
- * The screen reports delivery, not engagement. Opens and clicks are absent
- * on purpose: nothing in the product records them yet (no tracking pixel, no
- * link rewriting, no normalized provider engagement events), so any number
- * here would be invented. Add them back when there is a source.
+ * The screen reports delivery and engagement, each on its own chart and always
+ * scoped to a single channel. They are never combined: SMS and voice cannot
+ * report an open or a click at all, so any cross-channel engagement rate would
+ * divide real receipts by a denominator that includes channels structurally
+ * incapable of producing them.
+ *
+ * Engagement comes from provider receipts reconciled into Postgres — `opened`
+ * is a message that reached `read`, `clicked` one with at least one click
+ * event — attributed to the send day so both charts share an x-axis.
  * ------------------------------------------------------------------ */
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -23,8 +28,19 @@ export const RANGES: { key: string; label: string; days: number }[] = [
   { key: '12m', label: '12 months', days: 365 },
 ];
 
-/** One day of send activity, as returned by /v1/stats/activity. */
-export type ActivityPoint = { date: string; sent: number; delivered: number; failed: number };
+/**
+ * One day of send activity, as returned by /v1/stats/activity. Engagement is
+ * optional so cache entries written before it existed still parse; the charts
+ * coerce a missing value to 0.
+ */
+export type ActivityPoint = {
+  date: string;
+  sent: number;
+  delivered: number;
+  failed: number;
+  opened?: number;
+  clicked?: number;
+};
 
 export type ChannelBreakdown = {
   channel: string;
@@ -36,12 +52,21 @@ export type ChannelBreakdown = {
   clicked?: number;
 };
 
-/** Series plotted on the hero chart — delivery outcomes only. */
+/** Series plotted on the delivery chart. */
 export const SERIES: { key: SeriesKey; label: string; color: string }[] = [
   { key: 'sent', label: 'Sent', color: '#4f46e5' },
   { key: 'delivered', label: 'Delivered', color: '#22c55e' },
   { key: 'failed', label: 'Failed', color: '#ef4444' },
 ];
+
+/** Series plotted on the engagement chart. */
+export const ENGAGEMENT_SERIES: { key: EngagementKey; label: string; color: string }[] = [
+  { key: 'opened', label: 'Opened', color: '#4f46e5' },
+  { key: 'clicked', label: 'Clicked', color: '#f59e0b' },
+];
+
+/** Channels whose providers report opens and clicks at all. */
+export const ENGAGEMENT_CHANNELS = ['email', 'whatsapp'] as const;
 
 const CHANNEL_COLOR: Record<string, string> = {
   email: '#4f46e5',
@@ -96,7 +121,9 @@ export function totalsOf(points: ActivityPoint[]) {
   const sent = points.reduce((t, p) => t + p.sent, 0);
   const delivered = points.reduce((t, p) => t + p.delivered, 0);
   const failed = points.reduce((t, p) => t + p.failed, 0);
-  return { sent, delivered, failed };
+  const opened = points.reduce((t, p) => t + (p.opened ?? 0), 0);
+  const clicked = points.reduce((t, p) => t + (p.clicked ?? 0), 0);
+  return { sent, delivered, failed, opened, clicked };
 }
 
 export type KpiTone = 'muted' | 'success' | 'danger';
@@ -130,8 +157,10 @@ export function buildKpis(points: ActivityPoint[]) {
 
 /** CSV of the visible series — the export button writes exactly what's shown. */
 export function toCsv(points: ActivityPoint[]): string {
-  const head = 'date,sent,delivered,failed';
-  const rows = points.map((p) => `${p.date},${p.sent},${p.delivered},${p.failed}`);
+  const head = 'date,sent,delivered,failed,opened,clicked';
+  const rows = points.map(
+    (p) => `${p.date},${p.sent},${p.delivered},${p.failed},${p.opened ?? 0},${p.clicked ?? 0}`,
+  );
   return [head, ...rows].join('\n');
 }
 

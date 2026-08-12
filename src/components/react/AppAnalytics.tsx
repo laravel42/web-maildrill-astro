@@ -4,17 +4,16 @@ import { api } from '@/lib/app/api';
 import { readDashboardCache, writeDashboardCache } from '@/lib/app/dashboard-cache';
 import Icon from './Icon';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
-import type { SeriesKey } from './AppAnalytics.types';
+import type { ChartKey, EngagementKey, SeriesKey } from './AppAnalytics.types';
 import {
+  ENGAGEMENT_CHANNELS,
+  ENGAGEMENT_SERIES,
   RANGES,
   SERIES,
   buildKpis,
-  channelColor,
-  channelLabelOf,
   fmtCompact,
   fmtDate,
   niceMax,
-  pctOf,
   toCsv,
   totalsOf,
   type ActivityPoint,
@@ -44,12 +43,18 @@ export default function AppAnalytics({
      because it is the only channel with the full event set. */
   const [channel, setChannel] = useState<ChannelType>('email');
   const [daily, setDaily] = useState<ActivityPoint[]>([]);
-  const [byChannel, setByChannel] = useState<ChannelBreakdown[]>([]);
+  /* No per-channel breakdown is rendered here any more, but the fetch stays:
+     it writes `channelsByDays` into the shared dashboard cache, so opening
+     Analytics still warms the Dashboard (and vice versa). Nothing on this
+     screen reads the result. */
   const [bootLoading, setBootLoading] = useState(live);
   const [rangeLoading, setRangeLoading] = useState(false);
   const bootedRef = useRef(false);
   const [visible, setVisible] = useState<Set<SeriesKey>>(
     new Set<SeriesKey>(['sent', 'delivered', 'failed']),
+  );
+  const [engVisible, setEngVisible] = useState<Set<EngagementKey>>(
+    new Set<EngagementKey>(['opened', 'clicked']),
   );
   const [toast, setToast] = useState<string | null>(null);
 
@@ -84,7 +89,6 @@ export default function AppAnalytics({
     const hitDaily = cached?.activityByDays[bootKey];
     const hitChannels = cached?.channelsByDays[String(bootDays)];
     if (hitDaily) setDaily(hitDaily);
-    if (hitChannels) setByChannel(hitChannels);
     if (hitDaily && hitChannels) {
       bootedRef.current = true;
       setBootLoading(false);
@@ -115,7 +119,6 @@ export default function AppAnalytics({
             .get<{ data: ChannelBreakdown[] }>(`stats/channels?days=${bootDays}`)
             .then((res) => {
               nextChannels = res.data ?? [];
-              if (!cancelled) setByChannel(nextChannels);
             })
             .catch(() => {
               bootFailed = true;
@@ -156,7 +159,6 @@ export default function AppAnalytics({
     const hitChannels = cached?.channelsByDays[String(days)];
     if (hitDaily && hitChannels) {
       setDaily(hitDaily);
-      setByChannel(hitChannels);
       return;
     }
 
@@ -184,7 +186,6 @@ export default function AppAnalytics({
       .then(([act, ch]) => {
         if (cancelled) return;
         setDaily(act);
-        setByChannel(ch);
         writeDashboardCache(tenantId, {
           activityByDays: { [actKey]: act },
           channelsByDays: { [String(days)]: ch },
@@ -204,16 +205,9 @@ export default function AppAnalytics({
 
   const kpis = buildKpis(daily);
   const totals = totalsOf(daily);
-  const channelRows = byChannel.filter((c) => c.channel === channel);
-  const totalChannelSends = byChannel.reduce((t, c) => t + c.sent, 0);
-
-  /* Engagement: provider receipts on the tracked channels (email + WhatsApp).
-     SMS/voice can't produce opens or clicks, so they never join the denominator. */
-  const trackedRows = channelRows.filter((c) => c.channel === 'email' || c.channel === 'whatsapp');
-  const engDelivered = trackedRows.reduce((t, c) => t + c.delivered, 0);
-  const engOpened = trackedRows.reduce((t, c) => t + (c.opened ?? 0), 0);
-  const engClicked = trackedRows.reduce((t, c) => t + (c.clicked ?? 0), 0);
-  const engUntrackedFilter = channel === 'sms' || channel === 'voice';
+  /* SMS and voice providers report no opens or clicks at all, so the chart is
+     replaced by an explanation rather than drawing a flat zero line. */
+  const engUntracked = !(ENGAGEMENT_CHANNELS as readonly string[]).includes(channel);
 
   /* Download exactly the series on screen, rather than claiming an export. */
   const exportCsv = () => {
@@ -228,6 +222,14 @@ export default function AppAnalytics({
     URL.revokeObjectURL(url);
     showToast(`Exported ${daily.length} days`);
   };
+
+  const toggleEngagement = (key: EngagementKey) =>
+    setEngVisible((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next.size === 0 ? new Set<EngagementKey>(['opened']) : next;
+    });
 
   const toggleSeries = (key: SeriesKey) =>
     setVisible((prev) => {
@@ -410,189 +412,76 @@ export default function AppAnalytics({
             )}
           </section>
 
-          {/* by channel — real send/delivery counts per channel */}
-          <div className={`${styles.row} ${styles.row2}`}>
-            <section className={`acrd ${styles.panel}`} aria-busy={loading}>
-              <h2 className={styles.panelTitle}>By channel</h2>
-              {loading ? (
-                <div className={styles.channelStack}>
-                  {[0].map((i) => (
-                    <div key={i} className={styles.barRow} aria-hidden="true">
-                      <div className={styles.barTop}>
-                        <div className={`skeleton ${styles.skelLine}`} />
-                        <div className={`skeleton ${styles.skelLineSm}`} />
-                      </div>
-                      <div className={`skeleton ${styles.skelBar}`} />
-                    </div>
-                  ))}
-                </div>
-              ) : channelRows.length === 0 ? (
-                <p className={styles.panelEmpty}>Nothing sent on this channel yet.</p>
-              ) : (
-                <div className={styles.channelStack}>
-                  {channelRows.map((c) => {
-                    const share = totalChannelSends > 0 ? (c.sent / totalChannelSends) * 100 : 0;
-                    return (
-                      <div key={c.channel} className={styles.barRow}>
-                        <div className={styles.barTop}>
-                          <span className={styles.barLbl}>{channelLabelOf(c.channel)}</span>
-                          <span className={`${styles.barMeta} tnum`}>
-                            {c.sent.toLocaleString('en-US')} · {share.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className={styles.track}>
-                          <div
-                            className={styles.fill}
-                            style={{
-                              width: `${Math.max(share, 1.5)}%`,
-                              background: channelColor(c.channel),
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-
-            <section className={`acrd ${styles.panel}`} aria-busy={loading}>
-              <h2 className={styles.panelTitle}>Engagement</h2>
-              {loading ? (
-                [0, 1].map((i) => (
-                  <div key={i} className={styles.barRow} aria-hidden="true">
-                    <div className={styles.barTop}>
-                      <div className={`skeleton ${styles.skelLine}`} />
-                      <div className={`skeleton ${styles.skelLineSm}`} />
-                    </div>
-                    <div className={`skeleton ${styles.skelBar}`} />
-                  </div>
-                ))
-              ) : engUntrackedFilter ? (
-                <p className={styles.panelEmpty}>
-                  {channel === 'sms' ? 'SMS' : 'Voice'} deliveries can't report opens or clicks —
-                  engagement receipts exist only on email and WhatsApp.
-                </p>
-              ) : engDelivered === 0 ? (
-                <p className={styles.panelEmpty}>
-                  No tracked deliveries in this range yet. Opens and clicks appear here once email
-                  or WhatsApp sends land.
-                </p>
-              ) : (
-                (
-                  [
-                    { label: 'Opened', count: engOpened, color: 'var(--accent)' },
-                    { label: 'Clicked', count: engClicked, color: 'var(--success)' },
-                  ] as const
-                ).map((m) => (
-                  <div key={m.label} className={styles.barRow}>
-                    <div className={styles.barTop}>
-                      <span className={styles.barLbl}>{m.label}</span>
-                      <span className={`${styles.barMeta} tnum`}>
-                        {m.count.toLocaleString('en-US')} · {pctOf(m.count, engDelivered)}
-                      </span>
-                    </div>
-                    <div className={styles.track}>
-                      <div
-                        className={styles.fill}
-                        style={{
-                          width: `${m.count > 0 ? Math.max((m.count / engDelivered) * 100, 1.5) : 0}%`,
-                          background: m.color,
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))
-              )}
-            </section>
-          </div>
-
-          {/* channel performance table */}
-          <section className={`acrd ${styles.table}`} aria-busy={loading}>
-            <div className="acrd__head">
-              <h2 className="acrd__title">Channel performance</h2>
-              <span className={styles.tableSub}>
-                {`Focused on ${CHANNEL[channel].label}`}
-              </span>
-            </div>
-            <div className={styles.ct}>
-              <div className={styles.ctInner}>
-                <div className={styles.ctHead}>
-                  <div>Channel</div>
-                  <div className={styles.ctR}>Sent</div>
-                  <div className={styles.ctR}>Delivered</div>
-                  <div className={styles.ctR}>Failed</div>
-                  <div>Delivery rate</div>
-                </div>
-                {loading &&
-                  [0, 1, 2, 3].map((i) => (
-                    <div key={i} className={styles.ctRow} aria-hidden="true">
-                      <div className={styles.ctCh}>
-                        <span className={`skeleton ${styles.skelIc}`} />
-                        <div className={`skeleton ${styles.skelLine}`} />
-                      </div>
-                      <div
-                        className={`skeleton ${styles.skelLineSm}`}
-                        style={{ marginLeft: 'auto' }}
-                      />
-                      <div
-                        className={`skeleton ${styles.skelLineSm}`}
-                        style={{ marginLeft: 'auto' }}
-                      />
-                      <div
-                        className={`skeleton ${styles.skelLineSm}`}
-                        style={{ marginLeft: 'auto' }}
-                      />
-                      <div className={`skeleton ${styles.skelBar}`} style={{ marginTop: 0 }} />
-                    </div>
-                  ))}
-                {!loading && channelRows.length === 0 && (
-                  <p className={styles.tableEmpty}>No channel activity in this range.</p>
+          {/* engagement over time — same chart as delivery, tracked channels only */}
+          <section
+            className={`acrd ${styles.hero}`}
+            aria-label="Engagement over time"
+            aria-busy={loading}
+          >
+            <div className={styles.cardHead}>
+              <div>
+                <h2 className="acrd__title">Engagement over time</h2>
+                {loading ? (
+                  <div
+                    className={`skeleton ${styles.skelLine}`}
+                    style={{ width: 180, marginTop: 6 }}
+                  />
+                ) : (
+                  <p className={`${styles.cardSub} tnum`}>
+                    Daily receipts · {fmtDate(daily[0].date)} –{' '}
+                    {fmtDate(daily[daily.length - 1].date)}
+                  </p>
                 )}
-                {!loading &&
-                  channelRows.map((row) => {
-                    const ch = (row.channel as ChannelType) ?? 'email';
-                    const m = CHANNEL[ch] ?? CHANNEL.email;
-                    const rate = row.sent > 0 ? (row.delivered / row.sent) * 100 : 0;
+              </div>
+              {!engUntracked && !loading && (
+                <div className={styles.heroTotal}>
+                  <span className={`${styles.heroNum} tnum`}>
+                    {totals.opened.toLocaleString('en-US')}
+                  </span>
+                  <span className={styles.heroLbl}>opens</span>
+                </div>
+              )}
+            </div>
+
+            {loading ? (
+              <div className={`skeleton ${styles.skelHero}`} aria-hidden="true" />
+            ) : engUntracked ? (
+              <p className={styles.panelEmpty}>
+                {CHANNEL[channel].label} deliveries can&rsquo;t report opens or clicks — engagement
+                receipts exist only on email and WhatsApp.
+              </p>
+            ) : (
+              <>
+                <div className={styles.legend}>
+                  {ENGAGEMENT_SERIES.map((s) => {
+                    const on = engVisible.has(s.key);
                     return (
-                      <div key={row.channel} className={styles.ctRow}>
-                        <div className={styles.ctCh}>
-                          <span
-                            className={styles.ctChip}
-                            style={{ background: m.tint, color: m.color }}
-                          >
-                            <Icon name={m.icon} size={14} />
-                          </span>
-                          <span className={styles.ctChname}>{m.label}</span>
-                        </div>
-                        <div className={`${styles.ctNum} tnum`}>
-                          {row.sent.toLocaleString('en-US')}
-                        </div>
-                        <div className={`${styles.ctDel} tnum`}>
-                          {row.delivered.toLocaleString('en-US')}
-                        </div>
-                        <div className={`${styles.ctNum} tnum`}>
-                          {row.failed.toLocaleString('en-US')}
-                        </div>
-                        <div className={styles.ctRate}>
-                          <div className={styles.ctMini}>
-                            <div
-                              className={styles.ctMiniFill}
-                              style={{
-                                width: `${rate}%`,
-                                background: m.color,
-                              }}
-                            />
-                          </div>
-                          <span className={`${styles.ctRateVal} tnum`}>
-                            {pctOf(row.delivered, row.sent)}
-                          </span>
-                        </div>
-                      </div>
+                      <button
+                        key={s.key}
+                        type="button"
+                        className={styles.leg}
+                        aria-pressed={on}
+                        onClick={() => toggleEngagement(s.key)}
+                      >
+                        <span
+                          className={styles.legSw}
+                          style={{ background: on ? s.color : 'var(--muted2)' }}
+                        />
+                        {s.label}
+                      </button>
                     );
                   })}
-              </div>
-            </div>
+                </div>
+
+                <TrendChart
+                  visible={engVisible}
+                  series={daily}
+                  config={ENGAGEMENT_SERIES}
+                  areaKey="opened"
+                  label="engagement"
+                />
+              </>
+            )}
           </section>
         </>
       )}
@@ -619,7 +508,24 @@ export default function AppAnalytics({
  * Fixed 900×280 viewBox scales uniformly, so tooltip positions can be
  * expressed as simple percentages of the viewBox.
  * ------------------------------------------------------------------ */
-function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: ActivityPoint[] }) {
+/**
+ * Shared line chart for both the delivery and engagement series. `config`
+ * decides which keys are plotted, `areaKey` which one gets the filled area
+ * beneath it (the headline metric of that chart).
+ */
+function TrendChart({
+  visible,
+  series,
+  config = SERIES,
+  areaKey = 'sent',
+  label = 'delivery',
+}: {
+  visible: Set<ChartKey>;
+  series: ActivityPoint[];
+  config?: { key: ChartKey; label: string; color: string }[];
+  areaKey?: ChartKey;
+  label?: string;
+}) {
   const [hover, setHover] = useState<number | null>(null);
 
   const W = 900;
@@ -633,9 +539,10 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
   const baseY = MT + plotH;
 
   const n = series.length;
-  const active = SERIES.filter((s) => visible.has(s.key));
+  const active = config.filter((s) => visible.has(s.key));
 
-  const maxVal = Math.max(1, ...active.flatMap((s) => series.map((p) => p[s.key])));
+  const at = (p: ActivityPoint, k: ChartKey) => p[k] ?? 0;
+  const maxVal = Math.max(1, ...active.flatMap((s) => series.map((p) => at(p, s.key))));
   const yMax = niceMax(maxVal);
 
   const x = (i: number) => ML + (i / (n - 1)) * plotW;
@@ -651,10 +558,9 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
   const showLabel = (i: number) =>
     i === n - 1 || (i % labelEvery === 0 && n - 1 - i >= labelEvery / 2);
 
-  const sentVisible = visible.has('sent');
-  const areaPath = sentVisible
-    ? `M ${x(0)},${y(series[0].sent)} ` +
-      series.map((p, i) => `L ${x(i)},${y(p.sent)}`).join(' ') +
+  const areaPath = visible.has(areaKey)
+    ? `M ${x(0)},${y(at(series[0], areaKey))} ` +
+      series.map((p, i) => `L ${x(i)},${y(at(p, areaKey))}`).join(' ') +
       ` L ${x(n - 1)},${baseY} L ${x(0)},${baseY} Z`
     : '';
 
@@ -664,7 +570,7 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
         className={styles.chart}
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label={`Daily delivery from ${fmtDate(series[0].date)} to ${fmtDate(series[n - 1].date)}`}
+        aria-label={`Daily ${label} from ${fmtDate(series[0].date)} to ${fmtDate(series[n - 1].date)}`}
       >
         <defs>
           <linearGradient id="an-area" x1="0" y1="0" x2="0" y2="1">
@@ -728,14 +634,14 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
           />
         )}
 
-        {/* area under sent */}
-        {sentVisible && <path d={areaPath} fill="url(#an-area)" stroke="none" />}
+        {/* area under the headline series */}
+        {areaPath && <path d={areaPath} fill="url(#an-area)" stroke="none" />}
 
         {/* series lines */}
         {active.map((s) => (
           <polyline
             key={s.key}
-            points={series.map((p, i) => `${x(i)},${y(p[s.key])}`).join(' ')}
+            points={series.map((p, i) => `${x(i)},${y(at(p, s.key))}`).join(' ')}
             fill="none"
             stroke={s.color}
             strokeWidth="2.5"
@@ -750,7 +656,7 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
             <circle
               key={`${s.key}-${i}`}
               cx={x(i)}
-              cy={y(p[s.key])}
+              cy={y(at(p, s.key))}
               r={hover === i ? 4 : 2.5}
               fill={s.color}
               stroke={hover === i ? 'var(--surface)' : 'none'}
@@ -796,7 +702,7 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
               <span className={styles.tipSw} style={{ background: s.color }} />
               <span className={styles.tipLbl}>{s.label}</span>
               <span className={`${styles.tipVal} tnum`}>
-                {series[hover][s.key].toLocaleString('en-US')}
+                {at(series[hover], s.key).toLocaleString('en-US')}
               </span>
             </div>
           ))}

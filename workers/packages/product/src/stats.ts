@@ -313,6 +313,13 @@ export interface DailyPoint {
   sent: number;
   delivered: number;
   failed: number;
+  /**
+   * Engagement receipts, attributed to the day the message was sent rather
+   * than the day the receipt landed — so a chart lines up with the delivery
+   * series above it. Zero on SMS and voice, which cannot report either.
+   */
+  opened: number;
+  clicked: number;
 }
 
 async function dailyActivityFromPostgres(
@@ -330,11 +337,27 @@ async function dailyActivityFromPostgres(
       sent: countOf,
       delivered: sql<number>`count(*) filter (where ${messages.status} = 'delivered')::int`,
       failed: sql<number>`count(*) filter (where ${messages.status} = 'failed')::int`,
+      // 'read' is the terminal engagement state, so a message that was opened
+      // no longer counts as merely delivered — matching byChannel's shape.
+      opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
     })
     .from(messages)
     .where(and(...conds))
     .groupBy(sql`date_trunc('day', ${messages.createdAt})`)
     .orderBy(sql`date_trunc('day', ${messages.createdAt})`);
+
+  // Clicks live on message_events, so they need their own pass: one row per
+  // message that produced at least one click, bucketed by the send day.
+  const clickRows = await db
+    .select({
+      day: sql<string>`to_char(date_trunc('day', ${messages.createdAt}), 'YYYY-MM-DD')`,
+      clicked: sql<number>`count(distinct ${messageEvents.messageId})::int`,
+    })
+    .from(messageEvents)
+    .innerJoin(messages, eq(messageEvents.messageId, messages.id))
+    .where(and(...conds, eq(messageEvents.eventType, 'click')))
+    .groupBy(sql`date_trunc('day', ${messages.createdAt})`);
+  const clicksBy = new Map(clickRows.map((r) => [r.day, Number(r.clicked)]));
 
   const byDay = new Map(rows.map((r) => [r.day, r]));
   const out: DailyPoint[] = [];
@@ -348,6 +371,8 @@ async function dailyActivityFromPostgres(
       sent: Number(hit?.sent ?? 0),
       delivered: Number(hit?.delivered ?? 0),
       failed: Number(hit?.failed ?? 0),
+      opened: Number(hit?.opened ?? 0),
+      clicked: clicksBy.get(key) ?? 0,
     });
   }
   return out;
@@ -360,6 +385,22 @@ async function dailyActivityFromPostgres(
  * PostHog HogQL wins when its volume covers the window; otherwise Postgres
  * message rows so range selectors show historical activity, not only recent DLRs.
  */
+/**
+ * Delivery counts may come from HogQL, but engagement never does: the delivery
+ * reports PostHog receives carry no open or click data. Those receipts are
+ * reconciled into Postgres by the campaign-delivery poller, so they are lifted
+ * from the Postgres series and merged onto whichever source won — otherwise an
+ * engagement chart silently reads zero wherever PostHog is the richer source.
+ */
+function withEngagementFrom(series: DailyPoint[], pg: DailyPoint[]): DailyPoint[] {
+  const byDay = new Map(pg.map((p) => [p.date, p]));
+  return series.map((p) => ({
+    ...p,
+    opened: byDay.get(p.date)?.opened ?? p.opened,
+    clicked: byDay.get(p.date)?.clicked ?? p.clicked,
+  }));
+}
+
 export async function dailyActivity(
   tenantId: string,
   days = 30,
@@ -375,7 +416,7 @@ export async function dailyActivity(
   if (config.posthog.statsEnabled) {
     try {
       const fromPh = await dailyActivityFromPostHog(tenantId, span, since, channel);
-      return preferRicherSource(fromPh, fromPg);
+      return withEngagementFrom(preferRicherSource(fromPh, fromPg), fromPg);
     } catch (err) {
       log.warn({ err, tenantId }, 'posthog dailyActivity failed; using postgres');
     }

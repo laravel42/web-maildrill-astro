@@ -39,6 +39,10 @@ export function zeroFillDailyActivity(
       sent: hit?.sent ?? 0,
       delivered: hit?.delivered ?? 0,
       failed: hit?.failed ?? 0,
+      // HogQL delivery reports carry no engagement; `dailyActivity` merges the
+      // reconciled Postgres figures in over these.
+      opened: 0,
+      clicked: 0,
     });
   }
   return out;
