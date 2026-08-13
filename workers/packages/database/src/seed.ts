@@ -65,7 +65,7 @@ import {
 import { seedBilling } from './seed-billing';
 import { seedGalleryTemplates } from './seed-gallery-templates';
 
-const TARGET_TENANT_NAME = 'hello@laravel42.com';
+const TARGET_TENANT_NAME = 'team@laravel42.com';
 const WINDOW_WEEKS = 26;
 
 /* --------------------------- tiny seeded RNG ---------------------------- */

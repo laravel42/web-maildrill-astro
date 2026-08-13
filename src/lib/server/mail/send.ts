@@ -86,11 +86,11 @@ export async function sendWaitlistEmail(email: string, firstName?: string): Prom
 
 /**
  * Notify the team of a new sign-up, with the subscriber's details. Sent to
- * SIGNUP_NOTIFY_TO (default hello@laravel42.com); reply-to is the subscriber so
+ * SIGNUP_NOTIFY_TO (default team@laravel42.com); reply-to is the subscriber so
  * a reply reaches them directly. Never throws.
  */
 export async function sendSignupNotification(sub: SignupData): Promise<boolean> {
-  const to = process.env.SIGNUP_NOTIFY_TO ?? 'hello@laravel42.com';
+  const to = process.env.SIGNUP_NOTIFY_TO ?? 'team@laravel42.com';
   const transport = getTransport();
   if (!transport) {
     console.warn('[mail] SMTP not configured — skipping signup notification');

@@ -10,7 +10,7 @@ import { mintLoginCode } from './helpers/login-code';
  */
 test.use({ storageState: { cookies: [], origins: [] } });
 
-const EMAIL = process.env.E2E_EMAIL ?? 'hello@laravel42.com';
+const EMAIL = process.env.E2E_EMAIL ?? 'team@laravel42.com';
 
 test.describe('login', () => {
   test('code request → 6-digit entry → dashboard', async ({ page }) => {

@@ -6,7 +6,7 @@
  * Shared by the login form (client) and the /api/login-code proxy (server) so
  * the gate can't be bypassed by hitting the endpoint directly.
  */
-export const LOGIN_ALLOWLIST: readonly string[] = ['hello@laravel42.com'];
+export const LOGIN_ALLOWLIST: readonly string[] = ['team@laravel42.com'];
 
 /** Case-insensitive, whitespace-tolerant membership check. */
 export function isAllowedLoginEmail(email: string): boolean {

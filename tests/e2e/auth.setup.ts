@@ -5,7 +5,7 @@ import { mintLoginCode } from './helpers/login-code';
 
 export const STORAGE_STATE = path.resolve('tests/e2e/.auth/user.json');
 
-const EMAIL = process.env.E2E_EMAIL ?? 'hello@laravel42.com';
+const EMAIL = process.env.E2E_EMAIL ?? 'team@laravel42.com';
 
 /**
  * Sign in once for the whole suite. Dev-only: mints a one-time login code by

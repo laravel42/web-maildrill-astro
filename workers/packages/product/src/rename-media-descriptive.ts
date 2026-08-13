@@ -16,7 +16,7 @@ import { config } from '@maildrill/config';
 import { db, mediaAssets, tenants } from '@maildrill/database';
 import { listMedia, updateMedia } from './media';
 
-const TARGET_TENANT_NAME = 'hello@laravel42.com';
+const TARGET_TENANT_NAME = 'team@laravel42.com';
 
 /** Legacy search folders (pre-topics). */
 const SEARCH_CATEGORIES = [

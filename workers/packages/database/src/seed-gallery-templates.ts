@@ -18,7 +18,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 
 import { db, templates, tenants } from './index';
 
-const TARGET_TENANT_NAME = 'hello@laravel42.com';
+const TARGET_TENANT_NAME = 'team@laravel42.com';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const GALLERY_ROOT = resolve(

@@ -8,7 +8,7 @@
  *   pnpm --dir workers db:backfill:thumbs
  *   pnpm --dir workers db:backfill:thumbs --dry-run
  *   pnpm --dir workers db:backfill:thumbs --limit=20
- *   pnpm --dir workers db:backfill:thumbs --tenant=hello@laravel42.com
+ *   pnpm --dir workers db:backfill:thumbs --tenant=team@laravel42.com
  */
 import sharp from 'sharp';
 import { eq } from 'drizzle-orm';

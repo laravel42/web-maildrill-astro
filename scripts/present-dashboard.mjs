@@ -17,7 +17,7 @@ import path from 'node:path';
 import { chromium } from '@playwright/test';
 
 const BASE = process.env.PRESENT_BASE_URL ?? 'http://localhost:4321';
-const EMAIL = process.env.PRESENT_EMAIL ?? 'hello@laravel42.com';
+const EMAIL = process.env.PRESENT_EMAIL ?? 'team@laravel42.com';
 const VOICE = process.env.PRESENT_VOICE ?? 'en-US-AndrewMultilingualNeural';
 const TARGET_SECONDS = 180;
 const SIZE = { width: 1440, height: 900 };

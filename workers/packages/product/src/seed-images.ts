@@ -34,7 +34,7 @@ import {
   updateMedia,
 } from './media';
 
-const TARGET_TENANT_NAME = 'hello@laravel42.com';
+const TARGET_TENANT_NAME = 'team@laravel42.com';
 
 /** Legacy search categories (pre-topics seeding). */
 const CATEGORIES = [
