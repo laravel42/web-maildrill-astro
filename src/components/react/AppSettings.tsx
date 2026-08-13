@@ -194,6 +194,12 @@ export default function AppSettings({
   const [confirmBusy, setConfirmBusy] = useState(false);
   const { toast, tone: toastTone, show: showToast } = useToast();
 
+  // Email templates section state.
+  const [templates, setTemplates] = useState<{ id: string; name: string }[]>([]);
+  const [doubleOptInTemplateId, setDoubleOptInTemplateId] = useState<string | null>(null);
+  const [doubleOptOutTemplateId, setDoubleOptOutTemplateId] = useState<string | null>(null);
+  const [emailsSaving, setEmailsSaving] = useState(false);
+
   const refreshMembers = useCallback(async () => {
     const res = await api.get<{ data: ApiMember[] }>('workspace/members');
     setMembers(res.data.map(toMember));
@@ -277,6 +283,26 @@ export default function AppSettings({
       .finally(() => setSectionLoading(false));
   }, [live, section, refreshDomains, refreshMembers, refreshKeys]);
 
+  // Load templates + current workspace settings when the emails tab is shown.
+  useEffect(() => {
+    if (!live || section !== 'emails') return;
+    let alive = true;
+    void Promise.all([
+      api.get<{ data: { id: string; name: string }[] }>('templates'),
+      api.get<{ id: string; settings: Record<string, unknown> }>('workspace'),
+    ])
+      .then(([tplRes, ws]) => {
+        if (!alive) return;
+        setTemplates(tplRes.data);
+        setDoubleOptInTemplateId((ws.settings.doubleOptInTemplateId as string) ?? null);
+        setDoubleOptOutTemplateId((ws.settings.doubleOptOutTemplateId as string) ?? null);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [live, section]);
+
   const saveBranding = async () => {
     if (!live) {
       showToast('Settings saved');
@@ -297,6 +323,27 @@ export default function AppSettings({
       showToast('Branding saved');
     } catch (e) {
       showToast(errMsg(e, 'Could not save branding'));
+    }
+  };
+
+  const saveEmailTemplates = async () => {
+    if (!live) {
+      showToast('Settings saved');
+      return;
+    }
+    setEmailsSaving(true);
+    try {
+      await api.patch('workspace', {
+        settings: {
+          doubleOptInTemplateId: doubleOptInTemplateId || null,
+          doubleOptOutTemplateId: doubleOptOutTemplateId || null,
+        },
+      });
+      showToast('Email templates saved');
+    } catch (e) {
+      showToast(errMsg(e, 'Could not save email templates'));
+    } finally {
+      setEmailsSaving(false);
     }
   };
 
@@ -525,7 +572,7 @@ export default function AppSettings({
             </header>
 
             {/* ---- FORM ---- */}
-            {panel.kind === 'form' && (
+            {panel.kind === 'form' && section !== 'emails' && (
               <form
                 className={styles.form}
                 onSubmit={(e) => {
@@ -566,6 +613,39 @@ export default function AppSettings({
                   </button>
                 </div>
               </form>
+            )}
+
+            {/* ---- EMAILS (template selectors) ---- */}
+            {section === 'emails' && (
+              <div className={styles.form}>
+                <EmailTemplateSelector
+                  id="set-doi-tpl"
+                  label="Double opt-in template"
+                  desc="Sent when a subscriber joins a list with double opt-in enabled."
+                  templates={templates}
+                  value={doubleOptInTemplateId}
+                  onChange={setDoubleOptInTemplateId}
+                />
+                <EmailTemplateSelector
+                  id="set-doo-tpl"
+                  label="Double opt-out template"
+                  desc="Sent when a subscriber tries to leave a list with double opt-out enabled."
+                  templates={templates}
+                  value={doubleOptOutTemplateId}
+                  onChange={setDoubleOptOutTemplateId}
+                />
+
+                <div className={styles.formfoot}>
+                  <button
+                    type="button"
+                    className="pbtn"
+                    disabled={emailsSaving}
+                    onClick={saveEmailTemplates}
+                  >
+                    {emailsSaving ? 'Saving…' : 'Save changes'}
+                  </button>
+                </div>
+              </div>
             )}
 
             {/* ---- USAGE (metered ledger) ---- */}
@@ -1864,5 +1944,157 @@ function InviteUserModal({
         to accept.
       </p>
     </Modal>
+  );
+}
+
+/* ---------------------- Email template selector ----------------------- */
+
+function EmailTemplateSelector({
+  id,
+  label,
+  desc,
+  templates,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  desc: string;
+  templates: { id: string; name: string }[];
+  value: string | null;
+  onChange: (id: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = templates.find((t) => t.id === value);
+
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <label htmlFor={id} className={styles.label} style={{ marginBottom: 2 }}>
+        {label}
+      </label>
+      <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '0 0 8px' }}>{desc}</p>
+      <div style={{ position: 'relative' }}>
+        <button
+          id={id}
+          type="button"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%',
+            padding: '8px 12px',
+            fontSize: '13px',
+            border: '1px solid var(--border2)',
+            borderRadius: 8,
+            background: 'var(--surface)',
+            color: selected ? 'var(--text)' : 'var(--text-muted)',
+            cursor: 'pointer',
+            textAlign: 'left',
+          }}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span>{selected?.name ?? '— None —'}</span>
+          <Icon name="chevron-down" size={13} />
+        </button>
+        {open && (
+          <>
+            <button
+              type="button"
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'transparent',
+                border: 'none',
+                zIndex: 90,
+              }}
+              aria-label="Close"
+              onClick={() => setOpen(false)}
+            />
+            <div
+              role="listbox"
+              aria-label={label}
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 4px)',
+                left: 0,
+                right: 0,
+                maxHeight: 220,
+                overflowY: 'auto',
+                background: 'var(--surface)',
+                border: '1px solid var(--border2)',
+                borderRadius: 10,
+                boxShadow: '0 8px 24px rgba(0,0,0,.12)',
+                padding: 4,
+                zIndex: 100,
+                animation: 'pop .14s ease',
+              }}
+            >
+              <button
+                type="button"
+                role="option"
+                aria-selected={value === null}
+                onClick={() => {
+                  onChange(null);
+                  setOpen(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  width: '100%',
+                  padding: '7px 10px',
+                  fontSize: '13px',
+                  border: 'none',
+                  borderRadius: 6,
+                  background: value === null ? 'var(--accent-tint)' : 'transparent',
+                  color: value === null ? 'var(--accent-text)' : 'var(--text)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  fontWeight: value === null ? 600 : 400,
+                }}
+              >
+                {value === null && <Icon name="check" size={13} stroke={3} />}
+                <span>— None (disabled) —</span>
+              </button>
+              {templates.map((t) => {
+                const on = t.id === value;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    role="option"
+                    aria-selected={on}
+                    onClick={() => {
+                      onChange(t.id);
+                      setOpen(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      width: '100%',
+                      padding: '7px 10px',
+                      fontSize: '13px',
+                      border: 'none',
+                      borderRadius: 6,
+                      background: on ? 'var(--accent-tint)' : 'transparent',
+                      color: on ? 'var(--accent-text)' : 'var(--text)',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      fontWeight: on ? 600 : 400,
+                    }}
+                  >
+                    {on && <Icon name="check" size={13} stroke={3} />}
+                    <span>{t.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }

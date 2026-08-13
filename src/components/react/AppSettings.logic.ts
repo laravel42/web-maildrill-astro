@@ -16,6 +16,7 @@ import type { Member, Panel, Role, SectionKey, ToggleKey } from './AppSettings.t
 export const NAV: { key: SectionKey; label: string; icon: IconName }[] = [
   { key: 'usage', label: 'Usage', icon: 'chart' },
   { key: 'domains', label: 'Domains', icon: 'globe' },
+  { key: 'emails', label: 'Emails', icon: 'mail' },
   { key: 'billing', label: 'Billing', icon: 'target' },
   { key: 'api', label: 'API keys', icon: 'code' },
   { key: 'users', label: 'Users', icon: 'users' },
@@ -102,6 +103,12 @@ export const PANELS: Record<SectionKey, Panel> = {
         desc: 'Deliver to each subscriber at their most active hour.',
       },
     ],
+  },
+  emails: {
+    kind: 'form',
+    title: 'Email templates',
+    desc: 'Default templates for double opt-in and double opt-out confirmations.',
+    fields: [],
   },
 };
 

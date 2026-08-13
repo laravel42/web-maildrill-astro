@@ -2,7 +2,7 @@ import type { Tone } from './shared/tones';
 
 /* ------------------------------ nav model ------------------------------- */
 export type SectionKey =
-  'usage' | 'branding' | 'domains' | 'billing' | 'api' | 'users' | 'integrations' | 'ai';
+  'usage' | 'branding' | 'domains' | 'billing' | 'api' | 'users' | 'integrations' | 'ai' | 'emails';
 
 /* ------------------------------- panels --------------------------------- */
 export type ToggleKey = 'summaries' | 'subject' | 'sendtime';
