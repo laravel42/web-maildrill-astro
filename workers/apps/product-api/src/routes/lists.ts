@@ -12,6 +12,7 @@ import {
   listLists,
   listMembersOf,
   removeFromList,
+  renderTemplate,
   updateList,
   createListConfirmation,
   listRequiresConfirmation,
@@ -124,6 +125,7 @@ export async function listRoutes(appRaw: FastifyInstance): Promise<void> {
 
         // Send the confirmation email via the messaging pipeline.
         const confirmUrl = `${process.env.APP_URL ?? 'https://app.maildrill.net'}/confirm/${pending.id}/${pending.token}`;
+        const rendered = tpl ? renderTemplate(tpl, sub) : {};
         await submitMessage({
           tenantId: req.tenantId,
           channel: 'email',
@@ -131,8 +133,8 @@ export async function listRoutes(appRaw: FastifyInstance): Promise<void> {
           recipientId: sub.id,
           content: {
             templateId,
-            subject: tpl?.subject ?? `Confirm your subscription to ${list.name}`,
-            html: tpl?.html ?? undefined,
+            subject: (rendered.subject as string) ?? `Confirm your subscription to ${list.name}`,
+            html: (rendered.html as string) ?? undefined,
             confirmUrl,
             listName: list.name,
           },
@@ -143,6 +145,31 @@ export async function listRoutes(appRaw: FastifyInstance): Promise<void> {
       }
 
       await addToList(req.tenantId, req.params.id, req.body.subscriberId);
+
+      // Send welcome email if configured for this list.
+      if (list.welcomeEmailTemplateId) {
+        const sub = await getSubscriber(req.tenantId, req.body.subscriberId);
+        if (sub) {
+          const tpl = await getTemplate(req.tenantId, list.welcomeEmailTemplateId);
+          if (tpl) {
+            const rendered = renderTemplate(tpl, sub);
+            void submitMessage({
+              tenantId: req.tenantId,
+              channel: 'email',
+              to: sub.email,
+              recipientId: sub.id,
+              content: {
+                templateId: list.welcomeEmailTemplateId,
+                subject: (rendered.subject as string) ?? `Welcome to ${list.name}`,
+                html: (rendered.html as string) ?? undefined,
+                listName: list.name,
+              },
+              idempotencyKey: `welcome:${list.id}:${sub.id}:${Date.now()}`,
+            }).catch(() => {});
+          }
+        }
+      }
+
       return reply.code(204).send();
     },
   );
@@ -172,6 +199,7 @@ export async function listRoutes(appRaw: FastifyInstance): Promise<void> {
         });
 
         const confirmUrl = `${process.env.APP_URL ?? 'https://app.maildrill.net'}/confirm/${pending.id}/${pending.token}`;
+        const rendered = tpl ? renderTemplate(tpl, sub) : {};
         await submitMessage({
           tenantId: req.tenantId,
           channel: 'email',
@@ -179,8 +207,8 @@ export async function listRoutes(appRaw: FastifyInstance): Promise<void> {
           recipientId: sub.id,
           content: {
             templateId,
-            subject: tpl?.subject ?? `Confirm removal from ${list.name}`,
-            html: tpl?.html ?? undefined,
+            subject: (rendered.subject as string) ?? `Confirm removal from ${list.name}`,
+            html: (rendered.html as string) ?? undefined,
             confirmUrl,
             listName: list.name,
           },
@@ -191,6 +219,31 @@ export async function listRoutes(appRaw: FastifyInstance): Promise<void> {
       }
 
       await removeFromList(req.params.id, req.params.subscriberId);
+
+      // Send goodbye email if configured for this list.
+      if (list.goodbyeEmailTemplateId) {
+        const sub = await getSubscriber(req.tenantId, req.params.subscriberId);
+        if (sub) {
+          const tpl = await getTemplate(req.tenantId, list.goodbyeEmailTemplateId);
+          if (tpl) {
+            const rendered = renderTemplate(tpl, sub);
+            void submitMessage({
+              tenantId: req.tenantId,
+              channel: 'email',
+              to: sub.email,
+              recipientId: sub.id,
+              content: {
+                templateId: list.goodbyeEmailTemplateId,
+                subject: (rendered.subject as string) ?? `You've been removed from ${list.name}`,
+                html: (rendered.html as string) ?? undefined,
+                listName: list.name,
+              },
+              idempotencyKey: `goodbye:${list.id}:${sub.id}:${Date.now()}`,
+            }).catch(() => {});
+          }
+        }
+      }
+
       return reply.code(204).send();
     },
   );

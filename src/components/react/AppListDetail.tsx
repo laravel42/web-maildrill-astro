@@ -64,6 +64,15 @@ export default function AppListDetail({
   const [hoverWeek, setHoverWeek] = useState<number | null>(null);
   const { toast, show } = useToast();
   const menuRef = useRef<HTMLDivElement>(null);
+  const [templates, setTemplates] = useState<{ id: string; name: string }[]>([]);
+
+  // Fetch workspace templates on mount for the welcome/goodbye selectors.
+  useEffect(() => {
+    void api
+      .get<{ data: { id: string; name: string }[] }>('templates')
+      .then((res) => setTemplates(res.data))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -119,23 +128,51 @@ export default function AppListDetail({
     }
   };
 
+  // Local toggle state for welcome/goodbye — shows the selector without saving
+  // until the user picks a template.
+  const [welcomeOpen, setWelcomeOpen] = useState(list.welcomeEmailTemplateId != null);
+  const [goodbyeOpen, setGoodbyeOpen] = useState(list.goodbyeEmailTemplateId != null);
+
   const toggleTemplateSetting = async (
     key: 'welcomeEmailTemplateId' | 'goodbyeEmailTemplateId',
     label: string,
+    openSetter: (v: boolean) => void,
+    isOpen: boolean,
   ) => {
-    const current = list[key] ?? null;
-    if (current == null) {
-      // No template picker yet — turning the switch on has nothing to point at.
-      show(`Pick a ${label} template first`);
-      return;
+    if (isOpen) {
+      // Turning off — clear the template.
+      openSetter(false);
+      const prev = list[key] ?? null;
+      setList((l) => ({ ...l, [key]: null }));
+      if (prev) {
+        try {
+          await api.patch(`lists/${list.id}`, { [key]: null });
+          show(`${label[0]!.toUpperCase()}${label.slice(1)} email disabled`);
+        } catch (e) {
+          setList((l) => ({ ...l, [key]: prev }));
+          openSetter(true);
+          show(e instanceof ApiError ? e.message : 'Could not save changes');
+        }
+      }
+    } else {
+      // Turning on — just show the selector, don't save yet.
+      openSetter(true);
     }
-    setList((l) => ({ ...l, [key]: null }));
-    try {
-      await api.patch(`lists/${list.id}`, { [key]: null });
-      show(`${label[0]!.toUpperCase()}${label.slice(1)} email disabled`);
-    } catch (e) {
-      setList((l) => ({ ...l, [key]: current }));
-      show(e instanceof ApiError ? e.message : 'Could not save changes');
+  };
+
+  const changeTemplateSetting = async (
+    key: 'welcomeEmailTemplateId' | 'goodbyeEmailTemplateId',
+    tplId: string | null,
+  ) => {
+    const prev = list[key] ?? null;
+    setList((l) => ({ ...l, [key]: tplId }));
+    if (tplId) {
+      try {
+        await api.patch(`lists/${list.id}`, { [key]: tplId });
+      } catch (e) {
+        setList((l) => ({ ...l, [key]: prev }));
+        show(e instanceof ApiError ? e.message : 'Could not save changes');
+      }
     }
   };
 
@@ -657,7 +694,7 @@ export default function AppListDetail({
                     <span className={styles.switchKnob} />
                   </button>
                 </li>
-                <li className={styles.settingRow}>
+                <li className={styles.settingRow} style={{ flexWrap: 'wrap' }}>
                   <div className={styles.stackBody}>
                     <p className={styles.stackTitle}>Send welcome email</p>
                     <p className={styles.stackDesc}>
@@ -665,17 +702,27 @@ export default function AppListDetail({
                     </p>
                   </div>
                   <button
-                    className={`${styles.switch} ${list.welcomeEmailTemplateId != null ? styles.isOn : ''}`}
+                    className={`${styles.switch} ${welcomeOpen ? styles.isOn : ''}`}
                     type="button"
                     role="switch"
-                    aria-checked={list.welcomeEmailTemplateId != null}
+                    aria-checked={welcomeOpen}
                     aria-label="Send welcome email"
-                    onClick={() => void toggleTemplateSetting('welcomeEmailTemplateId', 'welcome')}
+                    onClick={() => void toggleTemplateSetting('welcomeEmailTemplateId', 'welcome', setWelcomeOpen, welcomeOpen)}
                   >
                     <span className={styles.switchKnob} />
                   </button>
+                  {welcomeOpen && (
+                    <div style={{ width: '100%' }}>
+                      <TemplateDropdown
+                        label="Welcome email template"
+                        templates={templates}
+                        value={list.welcomeEmailTemplateId ?? null}
+                        onChange={(id) => void changeTemplateSetting('welcomeEmailTemplateId', id)}
+                      />
+                    </div>
+                  )}
                 </li>
-                <li className={styles.settingRow}>
+                <li className={styles.settingRow} style={{ flexWrap: 'wrap' }}>
                   <div className={styles.stackBody}>
                     <p className={styles.stackTitle}>Send goodbye email</p>
                     <p className={styles.stackDesc}>
@@ -683,15 +730,25 @@ export default function AppListDetail({
                     </p>
                   </div>
                   <button
-                    className={`${styles.switch} ${list.goodbyeEmailTemplateId != null ? styles.isOn : ''}`}
+                    className={`${styles.switch} ${goodbyeOpen ? styles.isOn : ''}`}
                     type="button"
                     role="switch"
-                    aria-checked={list.goodbyeEmailTemplateId != null}
+                    aria-checked={goodbyeOpen}
                     aria-label="Send goodbye email"
-                    onClick={() => void toggleTemplateSetting('goodbyeEmailTemplateId', 'goodbye')}
+                    onClick={() => void toggleTemplateSetting('goodbyeEmailTemplateId', 'goodbye', setGoodbyeOpen, goodbyeOpen)}
                   >
                     <span className={styles.switchKnob} />
                   </button>
+                  {goodbyeOpen && (
+                    <div style={{ width: '100%' }}>
+                      <TemplateDropdown
+                        label="Goodbye email template"
+                        templates={templates}
+                        value={list.goodbyeEmailTemplateId ?? null}
+                        onChange={(id) => void changeTemplateSetting('goodbyeEmailTemplateId', id)}
+                      />
+                    </div>
+                  )}
                 </li>
                 <li className={styles.settingRow}>
                   <div className={styles.stackBody}>
@@ -805,6 +862,126 @@ export default function AppListDetail({
             }
           }}
         />
+      )}
+    </div>
+  );
+}
+
+/* ---------------------- Template dropdown (popover) ---------------------- */
+
+function TemplateDropdown({
+  label,
+  templates,
+  value,
+  onChange,
+}: {
+  label: string;
+  templates: { id: string; name: string }[];
+  value: string | null;
+  onChange: (id: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = templates.find((t) => t.id === value);
+
+  return (
+    <div style={{ width: '100%', position: 'relative' }}>
+      <button
+        type="button"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          padding: '8px 12px',
+          fontSize: '12.5px',
+          border: '1px solid var(--border2)',
+          borderRadius: 8,
+          background: 'var(--surface)',
+          color: selected ? 'var(--text)' : 'var(--text-muted)',
+          cursor: 'pointer',
+          textAlign: 'left',
+        }}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={label}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span>{selected?.name ?? '— Select a template —'}</span>
+        <Icon name="chevron-down" size={13} />
+      </button>
+      {open && (
+        <>
+          <button
+            type="button"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'transparent',
+              border: 'none',
+              zIndex: 90,
+            }}
+            aria-label="Close"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            role="listbox"
+            aria-label={label}
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + 4px)',
+              left: 0,
+              right: 0,
+              maxHeight: 220,
+              overflowY: 'auto',
+              background: 'var(--surface)',
+              border: '1px solid var(--border2)',
+              borderRadius: 10,
+              boxShadow: '0 8px 24px rgba(0,0,0,.12)',
+              padding: 4,
+              zIndex: 100,
+              animation: 'pop .14s ease',
+            }}
+          >
+            {templates.map((t) => {
+              const on = t.id === value;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="option"
+                  aria-selected={on}
+                  onClick={() => {
+                    onChange(t.id);
+                    setOpen(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '7px 10px',
+                    fontSize: '12.5px',
+                    border: 'none',
+                    borderRadius: 6,
+                    background: on ? 'var(--accent-tint)' : 'transparent',
+                    color: on ? 'var(--accent-text)' : 'var(--text)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    fontWeight: on ? 600 : 400,
+                  }}
+                >
+                  {on && <Icon name="check" size={13} stroke={3} />}
+                  <span>{t.name}</span>
+                </button>
+              );
+            })}
+            {templates.length === 0 && (
+              <p style={{ padding: '8px 10px', fontSize: '12.5px', color: 'var(--text-muted)', margin: 0 }}>
+                No templates yet — create one first.
+              </p>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
