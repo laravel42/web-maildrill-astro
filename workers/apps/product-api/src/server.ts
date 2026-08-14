@@ -9,6 +9,7 @@ import { customFieldRoutes } from './routes/custom-fields';
 import { healthRoutes } from './routes/health';
 import { listRoutes } from './routes/lists';
 import { listConfirmRoutes } from './routes/list-confirm';
+import { unsubscribeRoutes } from './routes/unsubscribe';
 import { meRoutes } from './routes/me';
 import { securityRoutes } from './routes/security';
 import { segmentRoutes } from './routes/segments';
@@ -28,6 +29,7 @@ import { billingWebhookRoutes } from './routes/billing-webhooks';
  */
 export async function productRoutes(app: FastifyInstance): Promise<void> {
   await app.register(listConfirmRoutes); // Public — no auth needed (token is the proof)
+  await app.register(unsubscribeRoutes); // Public — HMAC signature is the proof
   await app.register(authRoutes);
   await app.register(meRoutes);
   await app.register(securityRoutes);

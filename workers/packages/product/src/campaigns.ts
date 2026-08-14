@@ -6,6 +6,7 @@ import { submitMessage } from '@maildrill/services';
 import { createLogger } from '@maildrill/observability';
 import { addressForChannel, resolveAudience, type AudienceSelector } from './audience';
 import { getTemplate, resolveMessageContent } from './templates';
+import { generateUnsubscribeUrl } from './unsubscribe';
 
 const log = createLogger({ component: 'campaigns' });
 const MAX_AUDIENCE = 5000;
@@ -199,6 +200,18 @@ export async function sendCampaign(input: SendCampaignInput): Promise<SendCampai
     const to = addressForChannel(sub, input.channel);
     if (!to) continue;
     const content = resolveMessageContent(template, sub, input.content, input.channel);
+    // Inject a per-subscriber unsubscribe URL when the campaign targets a list.
+    if (input.selector.listId && input.channel === 'email') {
+      const unsubUrl = generateUnsubscribeUrl(input.selector.listId, sub.id);
+      content.unsubscribeUrl = unsubUrl;
+      // Replace {{unsubscribeUrl}} in HTML/text (merge tags only cover subscriber fields).
+      if (typeof content.html === 'string') {
+        content.html = content.html.replace(/\{\{\s*unsubscribeUrl\s*\}\}/g, unsubUrl);
+      }
+      if (typeof content.text === 'string') {
+        content.text = content.text.replace(/\{\{\s*unsubscribeUrl\s*\}\}/g, unsubUrl);
+      }
+    }
     await submitMessage({
       tenantId: input.tenantId,
       channel: input.channel,
