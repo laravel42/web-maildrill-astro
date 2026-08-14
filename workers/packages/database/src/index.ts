@@ -16,6 +16,7 @@ export {
   customFieldDefs,
   lists,
   listMembers,
+  pendingListConfirmations,
   segments,
   tags,
   subscriberTags,

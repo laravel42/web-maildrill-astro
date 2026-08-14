@@ -1,5 +1,6 @@
 export * from './subscribers';
 export * from './lists';
+export * from './list-confirmations';
 export * from './tags';
 export * from './segments';
 export * from './templates';

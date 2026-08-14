@@ -5,6 +5,7 @@ import type {
   customFieldDefs,
   deadLetters,
   lists,
+  pendingListConfirmations,
   magicLinkTokens,
   mediaAssets,
   memberships,
@@ -76,6 +77,8 @@ export type NewSubscriber = typeof subscribers.$inferInsert;
 
 export type ListRow = typeof lists.$inferSelect;
 export type NewList = typeof lists.$inferInsert;
+
+export type PendingListConfirmationRow = typeof pendingListConfirmations.$inferSelect;
 
 export type SegmentRow = typeof segments.$inferSelect;
 export type NewSegment = typeof segments.$inferInsert;

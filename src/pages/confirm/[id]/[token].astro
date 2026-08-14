@@ -1,0 +1,102 @@
+---
+export const prerender = false;
+import { serviceBaseUrl } from '@/lib/server/service';
+
+const { id, token } = Astro.params;
+if (!id || !token) {
+  return Astro.redirect('/');
+}
+
+// Call the public confirmation endpoint (no auth needed).
+let result: { ok: boolean; action?: string; listName?: string; message?: string } | null = null;
+let error: string | null = null;
+
+try {
+  const res = await fetch(`${serviceBaseUrl()}/v1/confirm/${id}/${token}`);
+  const body = await res.json();
+  if (res.ok) {
+    result = body as { ok: boolean; action: string; listName: string; message: string };
+  } else {
+    error = (body as { message?: string }).message ?? 'This link is invalid or has expired.';
+  }
+} catch {
+  error = 'Could not reach the server. Please try again later.';
+}
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{result ? 'Confirmed' : 'Confirmation'} — Maildrill</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #f8f7f4;
+        color: #1f1e1b;
+      }
+      .card {
+        max-width: 420px;
+        width: 100%;
+        margin: 24px;
+        padding: 40px 32px;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+        text-align: center;
+      }
+      .icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 16px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .icon.ok { background: #dcfce7; color: #16a34a; }
+      .icon.err { background: #fef2f2; color: #dc2626; }
+      h1 { font-size: 22px; margin: 0 0 8px; font-weight: 700; }
+      p { font-size: 15px; line-height: 1.6; color: #4b4a47; margin: 0; }
+      .home {
+        display: inline-block;
+        margin-top: 24px;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        background: #1f1e1b;
+        border-radius: 8px;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      {result ? (
+        <>
+          <div class="icon ok">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h1>Confirmed</h1>
+          <p>{result.message}</p>
+        </>
+      ) : (
+        <>
+          <div class="icon err">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </div>
+          <h1>Link expired</h1>
+          <p>{error}</p>
+        </>
+      )}
+      <a href="/" class="home">Go to Maildrill</a>
+    </div>
+  </body>
+</html>

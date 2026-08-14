@@ -7,11 +7,16 @@ import {
   createList,
   deleteList,
   getList,
+  getSubscriber,
+  getTemplate,
   listLists,
   listMembersOf,
   removeFromList,
   updateList,
+  createListConfirmation,
+  listRequiresConfirmation,
 } from '@maildrill/product';
+import { getWorkspace, submitMessage } from '@maildrill/services';
 
 const TAG = ['Lists'];
 const createSchema = z.object({
@@ -97,6 +102,46 @@ export async function listRoutes(appRaw: FastifyInstance): Promise<void> {
       },
     },
     async (req, reply) => {
+      const list = await getList(req.tenantId, req.params.id);
+      if (!list) return reply.code(404).send({ error: 'not_found' });
+
+      // Check if double opt-in is required.
+      const ws = await getWorkspace(req.tenantId);
+      const templateId = listRequiresConfirmation(list, 'subscribe', ws?.settings);
+
+      if (templateId) {
+        // Double opt-in flow: create a pending confirmation and send the email.
+        const sub = await getSubscriber(req.tenantId, req.body.subscriberId);
+        if (!sub) return reply.code(404).send({ error: 'subscriber_not_found' });
+
+        const tpl = await getTemplate(req.tenantId, templateId);
+        const pending = await createListConfirmation({
+          tenantId: req.tenantId,
+          listId: list.id,
+          subscriberId: sub.id,
+          action: 'subscribe',
+        });
+
+        // Send the confirmation email via the messaging pipeline.
+        const confirmUrl = `${process.env.APP_URL ?? 'https://app.maildrill.net'}/confirm/${pending.id}/${pending.token}`;
+        await submitMessage({
+          tenantId: req.tenantId,
+          channel: 'email',
+          to: sub.email,
+          recipientId: sub.id,
+          content: {
+            templateId,
+            subject: tpl?.subject ?? `Confirm your subscription to ${list.name}`,
+            html: tpl?.html ?? undefined,
+            confirmUrl,
+            listName: list.name,
+          },
+          idempotencyKey: `doi:${list.id}:${sub.id}:${Date.now()}`,
+        });
+
+        return reply.code(202).send({ pending: true, message: 'Confirmation email sent' });
+      }
+
       await addToList(req.tenantId, req.params.id, req.body.subscriberId);
       return reply.code(204).send();
     },
@@ -106,6 +151,45 @@ export async function listRoutes(appRaw: FastifyInstance): Promise<void> {
     '/v1/lists/:id/members/:subscriberId',
     { schema: { tags: TAG, summary: 'Remove a subscriber from a list', params: memberParams } },
     async (req, reply) => {
+      const list = await getList(req.tenantId, req.params.id);
+      if (!list) return reply.code(404).send({ error: 'not_found' });
+
+      // Check if double opt-out is required.
+      const ws = await getWorkspace(req.tenantId);
+      const templateId = listRequiresConfirmation(list, 'unsubscribe', ws?.settings);
+
+      if (templateId) {
+        // Double opt-out flow: create a pending confirmation and send the email.
+        const sub = await getSubscriber(req.tenantId, req.params.subscriberId);
+        if (!sub) return reply.code(404).send({ error: 'subscriber_not_found' });
+
+        const tpl = await getTemplate(req.tenantId, templateId);
+        const pending = await createListConfirmation({
+          tenantId: req.tenantId,
+          listId: list.id,
+          subscriberId: sub.id,
+          action: 'unsubscribe',
+        });
+
+        const confirmUrl = `${process.env.APP_URL ?? 'https://app.maildrill.net'}/confirm/${pending.id}/${pending.token}`;
+        await submitMessage({
+          tenantId: req.tenantId,
+          channel: 'email',
+          to: sub.email,
+          recipientId: sub.id,
+          content: {
+            templateId,
+            subject: tpl?.subject ?? `Confirm removal from ${list.name}`,
+            html: tpl?.html ?? undefined,
+            confirmUrl,
+            listName: list.name,
+          },
+          idempotencyKey: `doo:${list.id}:${sub.id}:${Date.now()}`,
+        });
+
+        return reply.code(202).send({ pending: true, message: 'Confirmation email sent' });
+      }
+
       await removeFromList(req.params.id, req.params.subscriberId);
       return reply.code(204).send();
     },

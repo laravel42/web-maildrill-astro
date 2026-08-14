@@ -512,6 +512,30 @@ export const listMembers = pgTable(
   ],
 );
 
+export const pendingListConfirmations = pgTable(
+  'pending_list_confirmations',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    listId: uuid('list_id')
+      .notNull()
+      .references(() => lists.id, { onDelete: 'cascade' }),
+    subscriberId: uuid('subscriber_id')
+      .notNull()
+      .references(() => subscribers.id, { onDelete: 'cascade' }),
+    action: text('action').$type<'subscribe' | 'unsubscribe'>().notNull(),
+    tokenHash: text('token_hash').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('pending_list_conf_tenant_idx').on(t.tenantId),
+    index('pending_list_conf_expires_idx').on(t.expiresAt),
+  ],
+);
+
 export const segments = pgTable(
   'segments',
   {
