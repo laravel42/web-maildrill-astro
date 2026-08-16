@@ -13,6 +13,11 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const [sentTo, setSentTo] = useState('');
   // Set when a login is attempted with an address that isn't on the allowlist.
   const [notInvited, setNotInvited] = useState(false);
+  // Signup collects a name and phone before the code is sent; verification is
+  // what actually creates the user, so they ride along to that call.
+  const [pendingProfile, setPendingProfile] = useState<{ name: string; phone: string } | null>(
+    null,
+  );
   const [stage, setStage] = useState<'form' | 'code' | 'twofa' | 'done'>('form');
   // Six positional slots so a digit typed into any box stays in place.
   const [code, setCode] = useState<string[]>(['', '', '', '', '', '']);
@@ -133,18 +138,19 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         }
         if (!terms) throw new Error('Please accept the Terms and Privacy Policy.');
         window.posthog?.capture('signup_form_submitted', { channel: 'email' });
-        // Rollout period: no code to enter — the waitlist email is the
-        // confirmation. It (plus the team heads-up) is sent by the endpoint;
-        // fire-and-forget (202-always) so the UX doesn't wait on delivery.
-        void fetch('/api/signup-welcome', {
+        // Registration is self-service: the same code flow as login, and
+        // verifying it creates the user, their workspace and its Infobip
+        // entity. The name and phone are held until that call.
+        const res = await fetch('/api/login-code', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ email, firstName, lastName, phone: phoneRaw }),
-        }).catch(() => undefined);
-        // Land on the terminal "you're on the list" state.
+          body: JSON.stringify({ email }),
+        });
+        if (!res.ok) throw new Error('Could not send your code. Try again.');
+        setPendingProfile({ name: `${firstName} ${lastName}`.trim(), phone: phoneRaw });
         setSentTo(email);
-        setStage('done');
-        window.posthog?.capture('signup_completed', { channel: 'email' });
+        setCode(['', '', '', '', '', '']);
+        setStage('code');
         setStatus('idle');
         return;
       }
@@ -174,7 +180,11 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       const res = await fetch('/api/login-verify', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email: sentTo, code: clean }),
+        body: JSON.stringify({
+          email: sentTo,
+          code: clean,
+          ...(pendingProfile ?? {}),
+        }),
       });
       if (res.status === 429) {
         setError('Too many attempts — wait a few minutes and try again.');
@@ -295,36 +305,16 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   // Login and signup share one column: the header (and, for login, the footer)
   // stay put per the design and only this middle swaps. Copy differs by mode.
   const codeComplete = code.join('').length === 6;
-  const isSignup = mode === 'signup';
   const resetLabel = 'Use a different email';
 
-  // The terminal state. Login reaches it after verifying a code ("you're in");
-  // sign-up reaches it straight from submit — the waitlist email is the
-  // confirmation, so it reads "you're on the list" and points at the inbox.
+  // The terminal state, shared by both modes: registration is self-service, so
+  // sign-up now ends where login does — a verified code, an account created and
+  // a workspace to land in.
   const doneMiddle = (
     <div role="status" style={{ animation: 'pop .5s var(--ease-out) both' }}>
       <div className={styles.stepHead}>
-        <div
-          className={`${styles.successicon} ${styles.iconTile} ${
-            isSignup ? styles.iconTileMail : styles.iconTileCheck
-          }`}
-        >
-          {isSignup ? (
-            <svg
-              width="26"
-              height="26"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <rect x="2" y="4" width="20" height="16" rx="2" />
-              <path d="m22 7-10 6L2 7" />
-            </svg>
-          ) : (
+        <div className={`${styles.successicon} ${styles.iconTile} ${styles.iconTileCheck}`}>
+          {
             <svg
               width="26"
               height="26"
@@ -338,29 +328,13 @@ export default function AuthForm({ mode }: { mode: Mode }) {
             >
               <path d="M20 6 9 17l-5-5" />
             </svg>
-          )}
+          }
         </div>
-        <h2 className={styles.substep}>{isSignup ? 'You’re on the list' : 'You’re in'}</h2>
+        <h2 className={styles.substep}>You’re in</h2>
       </div>
-      {isSignup ? (
-        <>
-          <p className={styles.sub} style={{ margin: '0 0 16px' }}>
-            We’re thrilled to have you. Because demand has been far higher than we expected, we’re
-            rolling out new accounts in controlled waves to keep deliverability and support quality
-            high for everyone.
-          </p>
-          <p className={styles.sub} style={{ margin: 0 }}>
-            <strong style={{ color: 'var(--text)', fontWeight: 600 }}>
-              Your workspace will be ready within the next 7 days — and most likely sooner.
-            </strong>{' '}
-            You don’t need to do anything: we’ll email you the moment it’s live.
-          </p>
-        </>
-      ) : (
-        <p className={styles.sub} style={{ margin: 0 }}>
-          Code verified — taking you to your workspace.
-        </p>
-      )}
+      <p className={styles.sub} style={{ margin: 0 }}>
+        Code verified — taking you to your workspace.
+      </p>
     </div>
   );
 
