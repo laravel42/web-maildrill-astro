@@ -4,10 +4,11 @@ import ConfirmDialog from './shared/ConfirmDialog';
 import type { ChannelType, SubscriberStatus } from '@/types/app';
 import {
   richSubscribers as mockSubscribers,
-  SEG_FIELD_LIST,
-  SEG_OPS,
+  CORE_SEG_FIELDS,
   STATUS_VALUES,
+  isCoreSegField,
   opNeedsValue,
+  opsForSegField,
   toApiRules,
   toSavedSegment,
   type ApiSegment,
@@ -30,6 +31,7 @@ import TagFilter from './shared/TagFilter';
 import ColFilter from './shared/ColFilter';
 import FilterChipsRow from './shared/FilterChipsRow';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
+import { ChannelPill } from './shared/CampaignPills';
 import { channelReportConfig } from '@/lib/app/campaign-report';
 import { ago, agoNow } from './shared/time';
 import { useToast } from './shared/useToast';
@@ -37,7 +39,8 @@ import { useEscapeClose } from './shared/useEscapeClose';
 import {
   STATUS_CHIP_STYLE,
   STATUS_LABEL,
-  STATUS_TABS,
+  channelStatuses,
+  statusForChannel,
   PAGE_SIZE,
   visiblePageNumbers,
   tagStyle,
@@ -58,7 +61,13 @@ export default function AppSubscribers({
   /** Saved segments from the service — the workspace's, not this browser's. */
   initialSegments?: SavedSegment[];
   /** Real lists, used for segment rules and list membership; color tints chips. */
-  allLists?: { id: string; name: string; color?: string | null }[];
+  allLists?: {
+    id: string;
+    name: string;
+    color?: string | null;
+    /** Channels the list is set up for; empty or missing reads as email-only. */
+    channels?: string[] | null;
+  }[];
   /** Real workspace tags (id + name), for segment rules and tagging. */
   allTagRows?: { id: string; name: string }[];
 } = {}) {
@@ -91,7 +100,27 @@ export default function AppSubscribers({
     if (!showOpenFilter) setOpensSel(new Set());
     if (!showClickFilter) setClicksSel(new Set());
     setRateFilterOpen(null);
+    // Drop a sort key the new channel doesn't surface, so the arrow doesn't
+    // point at a column that isn't there.
+    setSort((s) => {
+      if (s.key === 'opens' && !showOpenFilter) return { key: 'name', dir: 1 };
+      if (s.key === 'clicks' && !showClickFilter) return { key: 'name', dir: 1 };
+      return s;
+    });
   }, [tab, showOpenFilter, showClickFilter]);
+
+  // Table columns track the same channel report surface as the rate filters:
+  // SMS and voice have no open/click stage, so those two fr tracks drop out.
+  const tableGridCols = [
+    '36px',
+    '2fr',
+    ...(showOpenFilter ? ['0.7fr'] : []),
+    ...(showClickFilter ? ['0.7fr'] : []),
+    '1.2fr',
+    '0.85fr',
+    '0.85fr',
+    '0.85fr',
+  ].join(' ');
   const [segSel, setSegSel] = useState<Set<string>>(new Set());
   const [tagSel, setTagSel] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'name', dir: 1 });
@@ -177,15 +206,16 @@ export default function AppSubscribers({
     if (id) window.location.replace(routes.app.subscriber(id));
   }, []);
 
-  // Custom-field keys feed the import wizard's column-mapping targets.
-  const [customFieldKeys, setCustomFieldKeys] = useState<string[]>([]);
+  // Custom fields feed the import wizard and segment rule builder.
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
+  const customFieldKeys = useMemo(() => customFields.map((f) => f.key), [customFields]);
   useEffect(() => {
     if (!live) return;
     let alive = true;
     void api
-      .get<{ data: Array<{ key: string }> }>('custom-fields')
+      .get<{ data: CustomField[] }>('custom-fields')
       .then((res) => {
-        if (alive) setCustomFieldKeys(res.data.map((f) => f.key));
+        if (alive) setCustomFields(res.data);
       })
       .catch(() => {});
     return () => {
@@ -208,6 +238,47 @@ export default function AppSubscribers({
 
   const segById = useMemo(() => new Map(segments.map((s) => [s.id, s])), [segments]);
 
+  // Segments are bound to channels; only show ones declared for the active tab.
+  const channelSegments = useMemo(
+    () =>
+      segments.filter((s) => {
+        const chans = s.channels?.length ? s.channels : (['email'] as ChannelType[]);
+        return chans.includes(tab);
+      }),
+    [segments, tab],
+  );
+
+  // Drop selections that belong to another channel when the tab changes.
+  useEffect(() => {
+    const visible = new Set(channelSegments.map((s) => s.id));
+    setSegSel((prev) => {
+      const next = new Set([...prev].filter((id) => visible.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [channelSegments]);
+
+  // Lists are set up per channel too, so the Lists filter offers the ones this
+  // tab can actually send to. Membership editors keep the full set.
+  const channelLists = useMemo(
+    () =>
+      allLists.filter((l) => {
+        const chans = l.channels?.length
+          ? (l.channels as ChannelType[])
+          : (['email'] as ChannelType[]);
+        return chans.includes(tab);
+      }),
+    [allLists, tab],
+  );
+
+  useEffect(() => {
+    const visible = new Set(channelLists.map((l) => l.id));
+    setListFilter((prev) => {
+      if (prev.size === 0) return prev;
+      const next = new Set([...prev].filter((id) => visible.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [channelLists]);
+
   /* Segment sizes come from the service, which evaluates against every
      subscriber. Counting in the browser would only ever see the loaded page. */
   const refreshCounts = async (segs: SavedSegment[]) => {
@@ -217,7 +288,7 @@ export default function AppSubscribers({
         api
           .post<{ count: number }>('segments/preview', {
             matchType: seg.matchType,
-            rules: toApiRules(seg.rows),
+            rules: toApiRules(seg.rows, customFields),
             limit: 1,
           })
           .then((r) => [seg.id, r.count] as const),
@@ -232,7 +303,7 @@ export default function AppSubscribers({
 
   useEffect(() => {
     void refreshCounts(segments);
-  }, [segments, live]);
+  }, [segments, live, customFields]);
 
   /* Membership for a selected segment is resolved by the service too, so
      filtering isn't limited to the rows this page happens to hold. */
@@ -277,21 +348,47 @@ export default function AppSubscribers({
     return c;
   }, [segFiltered]);
 
-  /** Statuses actually present on the selected channel, for the Status menu. */
+  /**
+   * Statuses present on the selected channel, for the Status menu.
+   *
+   * Counted on the channel reading of each status, so the number beside an
+   * option matches the rows the table will show for it.
+   */
   const statusCounts = useMemo(() => {
     const c = new Map<SubscriberStatus, number>();
     for (const s of segFiltered) {
       if (!reachOf(s)[tab]) continue;
-      c.set(s.status, (c.get(s.status) ?? 0) + 1);
+      const st = statusForChannel(s.status, tab);
+      c.set(st, (c.get(st) ?? 0) + 1);
     }
     return c;
   }, [segFiltered, tab]);
+
+  /**
+   * Menu options: statuses the channel reports, minus the ones nobody here
+   * holds. An option that can only ever return nothing is not a filter.
+   */
+  const statusOptions = useMemo(
+    () => channelStatuses(tab).filter((st) => (statusCounts.get(st) ?? 0) > 0),
+    [tab, statusCounts],
+  );
+
+  // Drop a selected status the new channel doesn't report, so switching tabs
+  // can't leave a chip filtering on something invisible in the menu.
+  useEffect(() => {
+    setStatusFilter((prev) => {
+      if (prev.size === 0) return prev;
+      const allowed = new Set(channelStatuses(tab));
+      const next = new Set([...prev].filter((st) => allowed.has(st)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [tab]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let list = segFiltered.filter((s) => {
       if (!reachOf(s)[tab]) return false;
-      if (statusFilter.size > 0 && !statusFilter.has(s.status)) return false;
+      if (statusFilter.size > 0 && !statusFilter.has(statusForChannel(s.status, tab))) return false;
       if (q) {
         const hit =
           matchesSearchQuery(s.name, q) ||
@@ -301,11 +398,7 @@ export default function AppSubscribers({
       }
       if (listFilter.size > 0 && !s.listIds.some((id) => listFilter.has(id))) return false;
       if (tagSel.size > 0 && !effTags(s).some((t) => tagSel.has(t))) return false;
-      if (
-        showOpenFilter &&
-        opensSel.size &&
-        !opensSel.has(rateBucket(parseRatePercent(s.opens)))
-      )
+      if (showOpenFilter && opensSel.size && !opensSel.has(rateBucket(parseRatePercent(s.opens))))
         return false;
       if (
         showClickFilter &&
@@ -332,8 +425,8 @@ export default function AppSubscribers({
         av = effTags(a).length;
         bv = effTags(b).length;
       } else if (key === 'status') {
-        av = a.status;
-        bv = b.status;
+        av = statusForChannel(a.status, tab);
+        bv = statusForChannel(b.status, tab);
       } else if (key === 'subscribed') {
         av = new Date(a.createdAt).getTime();
         bv = new Date(b.createdAt).getTime();
@@ -539,7 +632,8 @@ export default function AppSubscribers({
     const body = {
       name: seg.name,
       matchType: seg.matchType,
-      rules: toApiRules(seg.rows),
+      rules: toApiRules(seg.rows, customFields),
+      channels: seg.channels,
     };
     if (!live) {
       showToast('Not connected to workers');
@@ -627,7 +721,7 @@ export default function AppSubscribers({
         </div>
       </div>
 
-      {/* saved segments chip row */}
+      {/* saved segments — scoped to the active channel tab below */}
       <div className={styles.segrow} role="group" aria-label="Saved segments">
         <button
           type="button"
@@ -639,9 +733,11 @@ export default function AppSubscribers({
           aria-pressed={segSel.size === 0}
         >
           All subscribers
-          <span className={`${styles.segn} tnum`}>{richSubscribers.length}</span>
+          <span className={`${styles.segn} tnum`}>
+            {richSubscribers.filter((s) => reachOf(s)[tab]).length}
+          </span>
         </button>
-        {segments.map((seg) => {
+        {channelSegments.map((seg) => {
           const on = segSel.has(seg.id);
           return (
             <span key={seg.id} className={`${styles.segwrap}${on ? ' is-on' : ''}`}>
@@ -746,11 +842,7 @@ export default function AppSubscribers({
                   />
                   <div className={styles.pop} style={{ animation: 'pop .14s ease' }} role="menu">
                     <div className={styles.poptitle}>Status</div>
-                    {/* Only statuses present on this channel: an option that can
-                        only ever return nothing is not a filter. */}
-                    {STATUS_TABS.filter(
-                      (st): st is SubscriberStatus => st !== 'all' && (statusCounts.get(st) ?? 0) > 0,
-                    ).map((st) => {
+                    {statusOptions.map((st) => {
                       const on = statusFilter.has(st);
                       return (
                         <button
@@ -772,7 +864,7 @@ export default function AppSubscribers({
                           <span className={`${styles.box}${on ? ' is-on' : ''}`}>
                             {on && <Icon name="check" size={15} stroke={3.5} />}
                           </span>
-                          <span className={`astatus astatus--${st}`}>{STATUS_LABEL[st]}</span>
+                          <StatusChip status={st} />
                           <span className={`${styles.popcount} tnum`}>{statusCounts.get(st)}</span>
                         </button>
                       );
@@ -800,7 +892,7 @@ export default function AppSubscribers({
                 className={`${styles.filter}${listFilter.size ? ' is-on' : ''}`}
                 aria-expanded={listOpen}
                 aria-haspopup="true"
-                disabled={allLists.length === 0}
+                disabled={channelLists.length === 0}
                 onClick={() => setListOpen((v) => !v)}
               >
                 <Icon name="lists" size={14} />
@@ -820,7 +912,7 @@ export default function AppSubscribers({
                   />
                   <div className={styles.pop} style={{ animation: 'pop .14s ease' }} role="menu">
                     <div className={styles.poptitle}>On list</div>
-                    {allLists.map((l) => {
+                    {channelLists.map((l) => {
                       const on = listFilter.has(l.id);
                       const color = l.color || tagStyle(l.name).color;
                       return (
@@ -836,7 +928,9 @@ export default function AppSubscribers({
                             {on && <Icon name="check" size={15} stroke={3.5} />}
                           </span>
                           <span className={styles.listfdot} style={{ background: color }} />
-                          {l.name}
+                          <span className={styles.popname} title={l.name}>
+                            {l.name}
+                          </span>
                         </button>
                       );
                     })}
@@ -1020,7 +1114,7 @@ export default function AppSubscribers({
         {/* TABLE VIEW */}
         {view === 'table' && (
           <>
-            <div className={`athead ${styles.grid}`}>
+            <div className={`athead ${styles.grid}`} style={{ gridTemplateColumns: tableGridCols }}>
               <div className={styles.check}>
                 <button
                   type="button"
@@ -1041,24 +1135,29 @@ export default function AppSubscribers({
                   Subscriber <span className="tnum">{sortArrow('name')}</span>
                 </button>
               </div>
-              <div className={styles.colCenter}>
-                <button
-                  type="button"
-                  className={sort.key === 'opens' ? 'is-active' : undefined}
-                  onClick={() => toggleSort('opens')}
-                >
-                  Avg. open <span className="tnum">{sortArrow('opens')}</span>
-                </button>
-              </div>
-              <div className={styles.colCenter}>
-                <button
-                  type="button"
-                  className={sort.key === 'clicks' ? 'is-active' : undefined}
-                  onClick={() => toggleSort('clicks')}
-                >
-                  Avg. click <span className="tnum">{sortArrow('clicks')}</span>
-                </button>
-              </div>
+              {showOpenFilter && (
+                <div className={styles.colCenter}>
+                  <button
+                    type="button"
+                    className={sort.key === 'opens' ? 'is-active' : undefined}
+                    onClick={() => toggleSort('opens')}
+                  >
+                    Avg. {tabCfg.openLabel === 'Seen' ? 'seen' : 'open'}{' '}
+                    <span className="tnum">{sortArrow('opens')}</span>
+                  </button>
+                </div>
+              )}
+              {showClickFilter && (
+                <div className={styles.colCenter}>
+                  <button
+                    type="button"
+                    className={sort.key === 'clicks' ? 'is-active' : undefined}
+                    onClick={() => toggleSort('clicks')}
+                  >
+                    Avg. click <span className="tnum">{sortArrow('clicks')}</span>
+                  </button>
+                </div>
+              )}
               <div>
                 <button
                   type="button"
@@ -1104,6 +1203,7 @@ export default function AppSubscribers({
                 <div
                   key={s.id}
                   className={`atrow ${styles.grid}${selected.has(s.id) ? ' is-selected' : ''}`}
+                  style={{ gridTemplateColumns: tableGridCols }}
                   role="button"
                   tabIndex={0}
                   onClick={() => setOpenId(s.id)}
@@ -1132,8 +1232,8 @@ export default function AppSubscribers({
                       <div className={styles.email}>{s.email}</div>
                     </div>
                   </div>
-                  <div className={`tnum ${styles.rate}`}>{s.opens}</div>
-                  <div className={`tnum ${styles.rate}`}>{s.clicks}</div>
+                  {showOpenFilter && <div className={`tnum ${styles.rate}`}>{s.opens}</div>}
+                  {showClickFilter && <div className={`tnum ${styles.rate}`}>{s.clicks}</div>}
                   <div className={styles.tagcell}>
                     {effTags(s).length === 0 ? (
                       <span className={styles.dash}>—</span>
@@ -1146,7 +1246,7 @@ export default function AppSubscribers({
                     )}
                   </div>
                   <div className={styles.colCenter}>
-                    <span className={`astatus astatus--${s.status}`}>{STATUS_LABEL[s.status]}</span>
+                    <StatusChip status={statusForChannel(s.status, tab)} />
                   </div>
                   <div className={styles.last}>{ago(s.createdAt)}</div>
                   <div className={styles.last}>{ago(s.updatedAt)}</div>
@@ -1178,7 +1278,7 @@ export default function AppSubscribers({
                 <Avatar sub={s} size={26} />
                 <span className={styles.cname}>{s.name}</span>
                 <span className={styles.cemail}>{s.email}</span>
-                <span className={`astatus astatus--${s.status}`}>{STATUS_LABEL[s.status]}</span>
+                <StatusChip status={statusForChannel(s.status, tab)} />
                 <span className={`${styles.last} ${styles.clast}`}>{ago(s.updatedAt)}</span>
               </div>
             ))
@@ -1262,8 +1362,27 @@ export default function AppSubscribers({
           onClose={() => setSubEditor(null)}
           onError={showToast}
           onImported={async (outcome, newFields) => {
-            if (newFields.length)
-              setCustomFieldKeys((prev) => [...new Set([...prev, ...newFields])]);
+            if (newFields.length) {
+              if (live) {
+                const res = await api
+                  .get<{ data: CustomField[] }>('custom-fields')
+                  .catch(() => null);
+                if (res) setCustomFields(res.data);
+              } else {
+                setCustomFields((prev) => [
+                  ...prev,
+                  ...newFields
+                    .filter((k) => !prev.some((f) => f.key === k))
+                    .map((key) => ({
+                      id: key,
+                      key,
+                      label: key,
+                      type: 'text' as const,
+                      createdAt: new Date().toISOString(),
+                    })),
+                ]);
+              }
+            }
             if (!live) {
               showToast(`${outcome.created.toLocaleString('en-US')} subscribers imported`);
               return;
@@ -1323,13 +1442,15 @@ export default function AppSubscribers({
 
       {segModal.open && (
         <SegmentModal
-          key={segModal.edit?.id ?? 'new'}
+          key={segModal.edit?.id ?? `new-${tab}`}
           edit={segModal.edit}
+          defaultChannel={tab}
           onClose={() => setSegModal({ open: false, edit: null })}
           onSave={saveSegment}
           onDelete={(id) => setConfirmSegment({ id, name: segById.get(id)?.name ?? 'Segment' })}
           lists={allLists}
           tags={allTags}
+          customFields={customFields}
           live={live}
         />
       )}
@@ -1376,6 +1497,10 @@ export default function AppSubscribers({
       )}
     </div>
   );
+}
+
+function StatusChip({ status }: { status: SubscriberStatus }) {
+  return <span className={`astatus astatus--${status}`}>{STATUS_LABEL[status]}</span>;
 }
 
 function Avatar({ sub, size }: { sub: RichSubscriber; size: number }) {
@@ -1509,7 +1634,10 @@ function SubscriberDrawer({
         denom > 0 ? `${Math.round((v / denom) * 100)}%` : '—';
       const metrics: ChanMetric[] = [];
       if (hasOpen) {
-        metrics.push({ label: cfg.openLabel === 'Seen' ? 'seen' : 'open', value: pctOf(read, delivered) });
+        metrics.push({
+          label: cfg.openLabel === 'Seen' ? 'seen' : 'open',
+          value: pctOf(read, delivered),
+        });
       }
       if (hasClick) metrics.push({ label: 'click', value: pctOf(clicked, delivered) });
       if (!hasOpen && !hasClick) {
@@ -1536,10 +1664,14 @@ function SubscriberDrawer({
       on: false,
       meta: 'No messages yet',
       metrics: [
-        { label: channelReportConfig(ch).rateCards.some((r) => r === 'open' || r === 'seen')
-            ? (channelReportConfig(ch).openLabel === 'Seen' ? 'seen' : 'open')
+        {
+          label: channelReportConfig(ch).rateCards.some((r) => r === 'open' || r === 'seen')
+            ? channelReportConfig(ch).openLabel === 'Seen'
+              ? 'seen'
+              : 'open'
             : 'delivered',
-          value: '—' },
+          value: '—',
+        },
         { label: 'failed', value: '—' },
       ],
     }));
@@ -1770,38 +1902,62 @@ function SubscriberDrawer({
 /* ----------------------------- Segment modal ------------------------------ */
 function SegmentModal({
   edit,
+  defaultChannel,
   onClose,
   onSave,
   onDelete,
   lists,
   tags,
+  customFields,
   live,
 }: {
   edit: SavedSegment | null;
+  /** Seed channel when creating — the active subscribers tab. */
+  defaultChannel: ChannelType;
   onClose: () => void;
   onSave: (seg: SavedSegment) => void;
   onDelete: (id: string) => void;
   lists: { id: string; name: string }[];
   tags: string[];
+  customFields: CustomField[];
   live: boolean;
 }) {
   const [name, setName] = useState(edit?.name ?? '');
   const [matchType, setMatchType] = useState<'all' | 'any'>(edit?.matchType ?? 'all');
+  // A segment belongs to exactly one channel: its rules describe reachability
+  // on that channel, and the subscribers tab shows one channel at a time. The
+  // badge is read-only — switch tabs to create a segment for another channel.
+  const channel: ChannelType = edit?.channels?.[0] ?? defaultChannel;
   const [rows, setRows] = useState<SegRule[]>(
     edit?.rows ?? [{ field: 'Status', op: 'eq', val: 'active' }],
   );
   const [count, setCount] = useState<number | null>(null);
 
-  /** Values offered for a field — real lists and tags, not a fixed vocabulary. */
+  const fieldLabel = (field: SegField): string => {
+    if (isCoreSegField(field)) return field;
+    return customFields.find((f) => f.key === field)?.label ?? field;
+  };
+
+  const customType = (field: SegField) =>
+    isCoreSegField(field) ? null : (customFields.find((f) => f.key === field)?.type ?? 'text');
+
+  /** Values offered for a field — real lists, tags, or boolean custom fields. */
   const valuesFor = (field: SegField): { value: string; label: string }[] => {
     if (field === 'Status') return STATUS_VALUES.map((v) => ({ value: v, label: v }));
     if (field === 'List') return lists.map((l) => ({ value: l.id, label: l.name }));
     if (field === 'Tag') return tags.map((t) => ({ value: t, label: t }));
+    if (customType(field) === 'boolean') {
+      return [
+        { value: 'true', label: 'True' },
+        { value: 'false', label: 'False' },
+      ];
+    }
     return [];
   };
 
   const setField = (i: number, field: SegField) => {
-    const op = SEG_OPS[field][0]!.op;
+    const ops = opsForSegField(field, customFields);
+    const op = ops[0]!.op;
     const vals = valuesFor(field);
     setRows((r) =>
       r.map((row, idx) => (idx === i ? { field, op, val: vals[0]?.value ?? '' } : row)),
@@ -1824,7 +1980,7 @@ function SegmentModal({
       api
         .post<{ count: number }>('segments/preview', {
           matchType,
-          rules: toApiRules(rows),
+          rules: toApiRules(rows, customFields),
           limit: 1,
         })
         .then((r) => {
@@ -1838,7 +1994,7 @@ function SegmentModal({
       cancelled = true;
       window.clearTimeout(t);
     };
-  }, [rows, matchType, live]);
+  }, [rows, matchType, live, customFields]);
 
   const submit = () => {
     onSave({
@@ -1848,6 +2004,7 @@ function SegmentModal({
       name: name.trim() || 'Untitled segment',
       matchType,
       rows,
+      channels: [channel],
       custom: true,
     });
   };
@@ -1875,6 +2032,9 @@ function SegmentModal({
         </div>
 
         <div className={styles.segmBody}>
+          <span className={styles.segmChan}>
+            <ChannelPill channel={channel} />
+          </span>
           <label className={styles.segmLabel} htmlFor="segname">
             Segment name
           </label>
@@ -1907,7 +2067,14 @@ function SegmentModal({
           <div className={styles.segmRows}>
             {rows.map((row, i) => {
               const opts = valuesFor(row.field);
-              const freeText = row.field === 'Email' || row.field === 'Name';
+              const type = customType(row.field);
+              const freeText =
+                row.field === 'Email' ||
+                row.field === 'Name' ||
+                type === 'text' ||
+                type === 'number' ||
+                type === 'date';
+              const ops = opsForSegField(row.field, customFields);
               return (
                 <div key={i} className={styles.segmRow}>
                   <select
@@ -1916,11 +2083,22 @@ function SegmentModal({
                     onChange={(e) => setField(i, e.target.value as SegField)}
                     aria-label="Field"
                   >
-                    {SEG_FIELD_LIST.map((f) => (
-                      <option key={f} value={f}>
-                        {f}
-                      </option>
-                    ))}
+                    <optgroup label="Subscriber">
+                      {CORE_SEG_FIELDS.map((f) => (
+                        <option key={f} value={f}>
+                          {f}
+                        </option>
+                      ))}
+                    </optgroup>
+                    {customFields.length > 0 && (
+                      <optgroup label="Custom fields">
+                        {customFields.map((f) => (
+                          <option key={f.key} value={f.key}>
+                            {f.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
                   <select
                     className={styles.segmSel}
@@ -1928,7 +2106,7 @@ function SegmentModal({
                     onChange={(e) => setOp(i, e.target.value as SegOp)}
                     aria-label="Operator"
                   >
-                    {SEG_OPS[row.field].map((o) => (
+                    {ops.map((o) => (
                       <option key={o.op} value={o.op}>
                         {o.label}
                       </option>
@@ -1944,7 +2122,18 @@ function SegmentModal({
                       className={styles.segmSel}
                       value={row.val}
                       onChange={(e) => setVal(i, e.target.value)}
-                      placeholder={row.field === 'Email' ? 'example.com' : 'Ada'}
+                      placeholder={
+                        row.field === 'Email'
+                          ? 'example.com'
+                          : row.field === 'Name'
+                            ? 'Ada'
+                            : type === 'number'
+                              ? '0'
+                              : type === 'date'
+                                ? '2026-01-01'
+                                : fieldLabel(row.field)
+                      }
+                      type={type === 'number' ? 'number' : type === 'date' ? 'date' : 'text'}
                       aria-label="Value"
                     />
                   ) : (

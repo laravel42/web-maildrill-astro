@@ -30,14 +30,38 @@ export const STATUS_CHIP_STYLE: Record<SubscriberStatus, { background: string; c
   invalid: { background: 'var(--ink-tint)', color: 'var(--text3)' },
 };
 
-export const STATUS_TABS: ('all' | SubscriberStatus)[] = [
-  'all',
-  'active',
-  'unsubscribed',
-  'bounced',
-  'complained',
-  'invalid',
-];
+/**
+ * Statuses a channel can actually produce, in display order.
+ *
+ * `status` is one global value per subscriber. Unsubscribe is a workspace-wide
+ * opt-out — it applies on every channel, so it appears on all four tabs. Bounce
+ * and spam complaint, by contrast, are inbox events email alone records, so
+ * they only surface on the email tab. Offering "Bounced" on the SMS tab invites
+ * a filter that describes something SMS never reports.
+ */
+const CHANNEL_STATUSES: Record<ChannelType, SubscriberStatus[]> = {
+  email: ['active', 'unsubscribed', 'bounced', 'complained', 'invalid'],
+  sms: ['active', 'unsubscribed', 'invalid'],
+  whatsapp: ['active', 'unsubscribed', 'invalid'],
+  voice: ['active', 'unsubscribed', 'invalid'],
+};
+
+export function channelStatuses(channel: ChannelType): SubscriberStatus[] {
+  return CHANNEL_STATUSES[channel] ?? CHANNEL_STATUSES.email;
+}
+
+/**
+ * How a status reads on one channel.
+ *
+ * A bounce or a spam complaint is something an inbox did; it says nothing about
+ * whether the person answers their phone, so on SMS, WhatsApp and voice those
+ * subscribers read as active. Unsubscribe is a global opt-out and is kept on
+ * every channel. The subscriber drawer and detail page still show the stored
+ * status, which is where the email-side cause belongs.
+ */
+export function statusForChannel(status: SubscriberStatus, channel: ChannelType): SubscriberStatus {
+  return channelStatuses(channel).includes(status) ? status : 'active';
+}
 
 export { PAGE_SIZE, MAX_VISIBLE_PAGES, visiblePageNumbers } from './shared/pagination';
 
