@@ -102,9 +102,11 @@ export default function AppDashboard({
       cached?.campaigns
         ? Promise.resolve()
         : api
-            .get<{ data: ApiCampaign[] }>('campaigns')
+            // The card shows the four most recent sent campaigns, so ask for a
+            // page of those rather than every campaign in the workspace.
+            .get<{ items: ApiCampaign[] }>('campaigns?status=sent&limit=25&sort=updatedAt&dir=desc')
             .then((res) => {
-              fetched.campaigns = toCampaigns(res.data ?? []);
+              fetched.campaigns = toCampaigns(res.items ?? []);
               if (!cancelled) setCampaigns(fetched.campaigns);
             })
             .catch(() => {}),

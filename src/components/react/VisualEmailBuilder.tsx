@@ -135,9 +135,12 @@ export default function VisualEmailBuilder({
     setMediaOpen(false);
   };
 
+  // Refetched on focus, not just on mount: custom fields are defined elsewhere
+  // (list drawer, subscriber import), so an editor left open would otherwise
+  // offer a merge-tag menu missing every field added since it was opened.
   useEffect(() => {
     let alive = true;
-    void (async () => {
+    const load = async () => {
       try {
         const res = await api.get<{ data: CustomField[] }>('custom-fields');
         if (alive) setMergeTags(buildMergeTagMenu(res.data));
@@ -145,9 +148,18 @@ export default function VisualEmailBuilder({
         // No workspace/custom fields reachable — keep the default subscriber
         // fields; the menu is still real, just without custom ones.
       }
-    })();
+    };
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') void load();
+    };
+
+    void load();
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
     return () => {
       alive = false;
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
     };
   }, []);
 

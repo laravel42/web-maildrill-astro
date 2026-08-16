@@ -16,6 +16,7 @@
     "db:seed:gallery": "pnpm --filter workers db:seed:gallery",
     "db:seed:images": "pnpm --filter workers db:seed:images",
     "db:backfill:thumbs": "pnpm --filter workers db:backfill:thumbs",
+    "db:backfill:engagement": "pnpm --filter workers db:backfill:engagement",
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",

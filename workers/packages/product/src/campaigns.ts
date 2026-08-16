@@ -254,7 +254,10 @@ export async function sendCampaign(input: SendCampaignInput): Promise<SendCampai
   for (const sub of resolved) {
     const to = addressForChannel(sub, input.channel);
     if (!to) continue;
-    const content = resolveMessageContent(template, sub, input.content, input.channel);
+    // The campaign id rides along so {{webview}} can name this send.
+    const content = resolveMessageContent(template, sub, input.content, input.channel, {
+      campaignId: camp.id,
+    });
     await submitMessage({
       tenantId: input.tenantId,
       channel: input.channel,

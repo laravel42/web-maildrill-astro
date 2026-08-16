@@ -13,10 +13,8 @@ if (!id) {
   return Astro.redirect(routes.app.campaigns);
 }
 
-const unwrap = <T,>(d: unknown): T[] => (d as { data?: T[] } | undefined)?.data ?? [];
-
-// Live workspace: fetch the campaign (redirecting home if it's gone), the full
-// campaign list for same-channel history sparks, and the lists for the target
+// Live workspace: fetch the campaign (redirecting home if it's gone), the
+// same-channel sends that preceded it for the history sparks, and the target
 // list's colour. No connected workspace = demo mode; the island falls back to
 // the fixture campaigns.
 const session = Astro.locals.session;
@@ -31,21 +29,42 @@ if (session?.user?.id && session.activeTenantId) {
     role: session.role,
   });
   try {
-    const [campaignRes, campaignsRes, listsRes] = await Promise.all([
-      client.GET('/v1/campaigns/{id}', { params: { path: { id } } }),
-      client.GET('/v1/campaigns'),
-      client.GET('/v1/lists'),
-    ]);
+    const campaignRes = await client.GET('/v1/campaigns/{id}', { params: { path: { id } } });
     if (campaignRes.error || !campaignRes.data) {
       return Astro.redirect(routes.app.campaigns);
     }
     const apiCampaign = campaignRes.data as unknown as ApiCampaign;
     initial = toCampaign(apiCampaign);
-    campaigns = toCampaigns(unwrap<ApiCampaign>(campaignsRes.data));
-    if (apiCampaign.listId) {
-      listColor =
-        unwrap<ApiList>(listsRes.data).find((l) => l.id === apiCampaign.listId)?.color ?? null;
-    }
+    /* The history spark plots this campaign against the sends that preceded it
+       on the SAME channel, so channel, status and the window's end are all
+       server-side filters. `updatedBefore` is what makes the window end at
+       this campaign: without it the newest 50 of the workspace come back, and
+       for any campaign older than those the browser's `updatedAt <= anchor`
+       filter throws every one of them away and the sparks go flat.
+
+       Sequenced after the campaign because its channel and updatedAt are what
+       we are filtering on. The list colour is a single-row read alongside it. */
+    const [historyRes, listRes] = await Promise.all([
+      client.GET('/v1/campaigns', {
+        params: {
+          query: {
+            channel: (apiCampaign.channel as 'email' | 'sms' | 'whatsapp' | 'voice') ?? 'email',
+            status: 'sent' as const,
+            updatedBefore: apiCampaign.updatedAt,
+            limit: 50,
+            sort: 'updatedAt' as const,
+            dir: 'desc' as const,
+          },
+        },
+      }),
+      apiCampaign.listId
+        ? client.GET('/v1/lists/{id}', { params: { path: { id: apiCampaign.listId } } })
+        : Promise.resolve(null),
+    ]);
+    campaigns = toCampaigns(
+      (historyRes.data as unknown as { items?: ApiCampaign[] } | undefined)?.items ?? [],
+    );
+    listColor = (listRes?.data as unknown as ApiList | undefined)?.color ?? null;
   } catch {
     return Astro.redirect(routes.app.campaigns);
   }

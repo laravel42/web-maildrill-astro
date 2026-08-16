@@ -98,8 +98,8 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
             }>;
           }>('campaigns'),
           api.get<{
-            data: Array<{ id: string; name?: string | null; email: string }>;
-          }>('subscribers?limit=200'),
+            items: Array<{ id: string; name?: string | null; email: string }>;
+          }>('subscribers?limit=100'),
         ]);
         if (cancelled) return;
         const next: Pin[] = [
@@ -122,7 +122,7 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
                 color: CHANNEL[channel]?.color ?? DEFAULT_PIN_COLOR,
               };
             }),
-          ...(subscribers.data ?? []).map((s) => {
+          ...(subscribers.items ?? []).map((s) => {
             const name = s.name?.trim() || '';
             return {
               kind: 'subscriber' as const,

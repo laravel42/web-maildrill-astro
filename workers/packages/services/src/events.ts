@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import {
   db,
   messageEvents,
@@ -16,12 +16,37 @@ import {
 import { getProvider, type NormalizedProviderEvent } from '@maildrill/providers';
 import { billingEnforced, chargeMessageDelivered } from '@maildrill/billing';
 import { suppressAddress } from './suppression';
+import {
+  applyEngagementDelta,
+  engagementClickDelta,
+  engagementDeltaFor,
+  messageAlreadyClicked,
+  recipientOf,
+} from './engagement';
 import { createLogger, emitAppEvent, metrics } from '@maildrill/observability';
 import { bumpVersion } from './shared';
 import { applyTemplateStatusEvent } from './templates-approval';
 import type { Tx } from '@maildrill/database';
 
 const log = createLogger({ component: 'events' });
+
+/**
+ * The campaign a message belongs to, read from that message inside the INSERT
+ * that records the event.
+ *
+ * `message_events.campaign_id` is a copy, and a copy is only worth having if it
+ * is never wrong. Threading a campaign id down through every caller would make
+ * that a promise each of five insert sites has to keep — and any future one
+ * too. Reading it from the row the event's own foreign key already points at
+ * makes it structurally impossible to pass the wrong campaign, or to forget.
+ *
+ * It costs nothing measurable: the FK check on `message_id` already probes
+ * `messages_pkey` for this exact row in the same statement, so the page is in
+ * cache when this subquery reads it.
+ */
+function campaignOfMessage(messageId: string) {
+  return sql<string | null>`(select ${messages.campaignId} from ${messages} where ${messages.id} = ${messageId})`;
+}
 
 async function locateMessage(
   tx: Tx,
@@ -41,51 +66,63 @@ async function locateMessage(
   return undefined;
 }
 
+/**
+ * Apply the new status, and hand back the recipient it belonged to.
+ *
+ * The recipient rides out on the UPDATE's RETURNING rather than being fetched:
+ * the per-subscriber engagement rollup has to move in the same transaction as
+ * the status that moved it, and `applyProviderOutcome`'s callers pass a message
+ * id, not a subscriber. A second SELECT here would be one extra round trip on
+ * every delivery report in the system.
+ */
 async function applyEventState(
   tx: Tx,
   messageId: string,
   next: MessageState,
   at: Date,
   error?: { code?: string; message?: string; permanent?: boolean },
-): Promise<void> {
+): Promise<{ recipientId: string | null }> {
   const base = { status: next, version: bumpVersion, updatedAt: new Date() };
   const set = (extra: Record<string, unknown>) =>
     tx
       .update(messages)
       .set({ ...base, ...extra })
-      .where(eq(messages.id, messageId));
+      .where(eq(messages.id, messageId))
+      .returning({ recipientId: messages.recipientId });
   switch (next) {
     case 'sent':
-      await set({ sentAt: at });
-      break;
+      return first(await set({ sentAt: at }));
     case 'delivered':
-      await set({ deliveredAt: at });
-      break;
+      return first(await set({ deliveredAt: at }));
     case 'read':
-      await set({ readAt: at });
-      break;
+      return first(await set({ readAt: at }));
     case 'failed': {
       const code = error?.code?.trim() || null;
       const message = error?.message?.trim() || null;
-      await set({
-        failedAt: at,
-        ...(code || message
-          ? {
-              lastErrorCode: code,
-              ...(error?.permanent === undefined ? {} : { lastErrorPermanent: error.permanent }),
-              lastErrorMessage:
-                message && code && message !== code ? `${message} (${code})` : (message ?? code),
-            }
-          : {}),
-      });
-      break;
+      return first(
+        await set({
+          failedAt: at,
+          ...(code || message
+            ? {
+                lastErrorCode: code,
+                ...(error?.permanent === undefined ? {} : { lastErrorPermanent: error.permanent }),
+                lastErrorMessage:
+                  message && code && message !== code ? `${message} (${code})` : (message ?? code),
+              }
+            : {}),
+        }),
+      );
     }
     case 'cancelled':
-      await set({ cancelledAt: at });
-      break;
+      return first(await set({ cancelledAt: at }));
     default:
-      await set({});
+      return first(await set({}));
   }
+}
+
+/** The single row an id-keyed UPDATE returns, or an empty recipient if it matched nothing. */
+function first(rows: { recipientId: string | null }[]): { recipientId: string | null } {
+  return rows[0] ?? { recipientId: null };
 }
 
 /**
@@ -171,6 +208,7 @@ export async function applyProviderOutcome(input: {
       .values({
         messageId: input.messageId,
         tenantId: input.tenantId,
+        campaignId: campaignOfMessage(input.messageId),
         provider: input.provider,
         providerEventId: null,
         eventFingerprint: fingerprint,
@@ -191,10 +229,18 @@ export async function applyProviderOutcome(input: {
         target: [messageEvents.provider, messageEvents.eventFingerprint],
       });
 
-    await applyEventState(tx, input.messageId, next, at, {
+    const { recipientId } = await applyEventState(tx, input.messageId, next, at, {
       code: input.errorCode,
       message: input.errorMessage,
       permanent: input.errorPermanent,
+    });
+    // Same transaction as the status it follows from. The roster's rate filter
+    // reads the rollup, so a counter that commits separately is a window in
+    // which a page can be built from a bucket the message no longer belongs to.
+    await applyEngagementDelta(tx, {
+      tenantId: input.tenantId,
+      recipientId,
+      delta: engagementDeltaFor(input.currentStatus, next, input.channel),
     });
     emitAppEvent({
       name: 'message.status_changed',
@@ -297,6 +343,7 @@ export async function applyTrackingOutcome(input: {
       .values({
         messageId: input.messageId,
         tenantId: input.tenantId,
+        campaignId: campaignOfMessage(input.messageId),
         provider: input.provider,
         providerEventId: null,
         eventFingerprint: fingerprint,
@@ -339,11 +386,17 @@ export async function applyTrackingOutcome(input: {
     type === 'CLICKED' ? 'click' : type === 'UNSUBSCRIBED' ? 'unsubscribed' : 'complaint';
 
   const inserted = await db.transaction(async (tx) => {
+    // Asked before the insert: the click rate counts messages with at least one
+    // click (`count(distinct message_id)`), so a second click on a message this
+    // subscriber already clicked must not move the counter. After the insert
+    // the answer would always be yes.
+    const firstClick = type === 'CLICKED' ? !(await messageAlreadyClicked(tx, input.messageId)) : false;
     const result = await tx
       .insert(messageEvents)
       .values({
         messageId: input.messageId,
         tenantId: input.tenantId,
+        campaignId: campaignOfMessage(input.messageId),
         provider: input.provider,
         providerEventId: null,
         eventFingerprint: fingerprint,
@@ -369,8 +422,24 @@ export async function applyTrackingOutcome(input: {
     // First click / open-like engagement also counts as a read when still delivered.
     if (type === 'CLICKED' && result.length > 0) {
       const next = resolveEventTransition(input.currentStatus, 'read');
+      let recipientId: string | null = null;
       if (next && next !== input.currentStatus) {
-        await applyEventState(tx, input.messageId, next, at);
+        ({ recipientId } = await applyEventState(tx, input.messageId, next, at));
+        await applyEngagementDelta(tx, {
+          tenantId: input.tenantId,
+          recipientId,
+          delta: engagementDeltaFor(input.currentStatus, next, input.channel),
+        });
+      }
+      if (firstClick) {
+        // A click on an already-`read` message moves no status, so there is no
+        // RETURNING to ride on and the recipient has to be looked up.
+        const resolved = recipientId ?? (await recipientOf(tx, input.messageId));
+        await applyEngagementDelta(tx, {
+          tenantId: input.tenantId,
+          recipientId: resolved,
+          delta: engagementClickDelta(),
+        });
       }
     }
 
@@ -476,6 +545,8 @@ export async function processWebhookEvent(webhookEventId: string): Promise<void>
         .values({
           messageId: message.id,
           tenantId: message.tenantId,
+          // Already in hand here — locateMessage selected the whole row.
+          campaignId: message.campaignId,
           provider: wh.provider,
           providerEventId: ev.providerEventId ?? null,
           eventFingerprint: fingerprint,
@@ -496,6 +567,12 @@ export async function processWebhookEvent(webhookEventId: string): Promise<void>
       const next = resolveEventTransition(message.status, ev.outcome);
       if (next && next !== message.status) {
         await applyEventState(tx, message.id, next, ev.occurredAt ?? new Date());
+        // `message` is already loaded here, so the recipient comes free.
+        await applyEngagementDelta(tx, {
+          tenantId: message.tenantId,
+          recipientId: message.recipientId,
+          delta: engagementDeltaFor(message.status, next, message.channel),
+        });
         emitAppEvent({
           name: 'message.status_changed',
           payload: {

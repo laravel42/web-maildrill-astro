@@ -90,7 +90,10 @@ const usd = (n: number): string =>
 async function loadInbox(): Promise<InboxItem[]> {
   const cutoff = Date.now() - WINDOW_MS;
   const [campaignsRes, templatesRes, walletRes, txRes] = await Promise.allSettled([
-    api.get<{ data: ApiCampaign[] }>('campaigns'),
+    // Only campaigns touched inside the inbox window can produce an item, and
+    // they are exactly the newest by updatedAt — so a page of those is the
+    // whole answer, not a sample of it.
+    api.get<{ items: ApiCampaign[] }>('campaigns?limit=50&sort=updatedAt&dir=desc'),
     api.get<{ data: ApiTemplate[] }>('templates'),
     fetchWallet(),
     fetchWalletTransactions(),
@@ -112,7 +115,7 @@ async function loadInbox(): Promise<InboxItem[]> {
   }
 
   if (campaignsRes.status === 'fulfilled') {
-    for (const c of toCampaigns(campaignsRes.value.data)) {
+    for (const c of toCampaigns(campaignsRes.value.items ?? [])) {
       const meta = CHANNEL[c.channel];
       const report = routes.app.campaignReport(c.id);
       if (c.status === 'sent' && c.completedAt) {

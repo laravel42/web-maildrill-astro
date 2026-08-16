@@ -74,7 +74,7 @@
         },
         "/v1/auth/code/verify": {
             "post": {
-                "summary": "Verify a login code \u2014 identity + session, or a 2FA challenge",
+                "summary": "Verify a login code — identity + session, or a 2FA challenge",
                 "tags": [
                     "Auth"
                 ],
@@ -1017,7 +1017,7 @@
                 "tags": [
                     "Subscribers"
                 ],
-                "description": "Returns { items, next_cursor, has_more }; pass next_cursor back as ?cursor= for the following page. `total` is included only with ?withTotal=1, because counting the filtered set is a full scan. Passing ?offset= without ?cursor= selects the deprecated { data, total } contract. ?segmentId= filters by a saved segment (repeatable, unioned); an id this workspace does not own is 404, never an unfiltered page. ?opens= / ?clicks= filter on the engagement rollup (never|none|low|mid|high, repeatable, unioned) \u2014 `never` means no delivery on a channel that reports engagement, which `none` (delivered, never engaged) does not.",
+                "description": "Returns { items, next_cursor, has_more }; pass next_cursor back as ?cursor= for the following page. `total` is included only with ?withTotal=1, because counting the filtered set is a full scan. Passing ?offset= without ?cursor= selects the deprecated { data, total } contract. ?segmentId= filters by a saved segment (repeatable, unioned); an id this workspace does not own is 404, never an unfiltered page. ?opens= / ?clicks= filter on the engagement rollup (never|none|low|mid|high, repeatable, unioned) — `never` means no delivery on a channel that reports engagement, which `none` (delivered, never engaged) does not.",
                 "parameters": [
                     {
                         "schema": {
@@ -1372,7 +1372,7 @@
                 "tags": [
                     "Subscribers"
                 ],
-                "description": "One scan for all four channels. The table fetches this once per filter set, not per page \u2014 the tab counts describe the workspace, not the page in hand. Honours ?segmentId=, ?opens=/?clicks=, ?status= and the rest, so a tab count and the list endpoint's ?withTotal=1 for the same channel are the same number. `byStatus` deliberately ignores ?status= (a menu that counted only the selected status would report every other option as zero) but honours ?channel=, so the menu describes the tab it is on rather than the whole workspace.",
+                "description": "One scan for all four channels. The table fetches this once per filter set, not per page — the tab counts describe the workspace, not the page in hand. Honours ?segmentId=, ?opens=/?clicks=, ?status= and the rest, so a tab count and the list endpoint's ?withTotal=1 for the same channel are the same number. `byStatus` deliberately ignores ?status= (a menu that counted only the selected status would report every other option as zero) but honours ?channel=, so the menu describes the tab it is on rather than the whole workspace.",
                 "parameters": [
                     {
                         "schema": {
@@ -1898,11 +1898,11 @@
                 }
             },
             "get": {
-                "summary": "List lists",
+                "summary": "List lists (keyset-paginated)",
                 "tags": [
                     "Lists"
                 ],
-                "description": "Full aggregation by default. Pass ?options=1 for a bounded, searchable name/colour slice \u2014 pickers do not need member counts, and computing them walks every membership row in the workspace.",
+                "description": "Returns { items, next_cursor, has_more }; pass next_cursor back as ?cursor= for the following page. `total` is included only with ?withTotal=1. Member counts, growth, the 7-point trend and the engagement counters are rolled up in SQL for the lists on the page only, so the cost of a page does not grow with the size of `list_members`. Sorting by subscribers/growthPct, or filtering by ?opens=/?clicks=, orders the whole workspace by an aggregate and so rolls up every membership once — ask for it only when you mean it. Pass ?options=1 for a bounded name/colour projection with no aggregates at all.",
                 "parameters": [
                     {
                         "schema": {
@@ -1915,8 +1915,45 @@
                     {
                         "schema": {
                             "type": "string",
+                            "enum": [
+                                "email",
+                                "sms",
+                                "whatsapp",
+                                "voice"
+                            ]
+                        },
+                        "in": "query",
+                        "name": "channel",
+                        "required": false
+                    },
+                    {
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 80
+                                },
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 80
+                                    },
+                                    "maxItems": 24
+                                }
+                            ]
+                        },
+                        "in": "query",
+                        "name": "tag",
+                        "required": false
+                    },
+                    {
+                        "schema": {
+                            "type": "string",
                             "minLength": 1,
-                            "maxLength": 100
+                            "maxLength": 200
                         },
                         "in": "query",
                         "name": "q",
@@ -1924,13 +1961,130 @@
                     },
                     {
                         "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "enum": [
+                                        "none",
+                                        "low",
+                                        "mid",
+                                        "high"
+                                    ]
+                                },
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "enum": [
+                                            "none",
+                                            "low",
+                                            "mid",
+                                            "high"
+                                        ]
+                                    },
+                                    "maxItems": 4
+                                }
+                            ]
+                        },
+                        "in": "query",
+                        "name": "opens",
+                        "required": false
+                    },
+                    {
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "enum": [
+                                        "none",
+                                        "low",
+                                        "mid",
+                                        "high"
+                                    ]
+                                },
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "enum": [
+                                            "none",
+                                            "low",
+                                            "mid",
+                                            "high"
+                                        ]
+                                    },
+                                    "maxItems": 4
+                                }
+                            ]
+                        },
+                        "in": "query",
+                        "name": "clicks",
+                        "required": false
+                    },
+                    {
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "updatedAt",
+                                "name",
+                                "subscribers",
+                                "growthPct"
+                            ]
+                        },
+                        "in": "query",
+                        "name": "sort",
+                        "required": false
+                    },
+                    {
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        },
+                        "in": "query",
+                        "name": "dir",
+                        "required": false
+                    },
+                    {
+                        "schema": {
                             "type": "integer",
                             "exclusiveMinimum": true,
                             "minimum": 0,
-                            "maximum": 50
+                            "maximum": 1000
                         },
                         "in": "query",
                         "name": "limit",
+                        "required": false
+                    },
+                    {
+                        "schema": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1024
+                        },
+                        "in": "query",
+                        "name": "cursor",
+                        "required": false
+                    },
+                    {
+                        "schema": {
+                            "type": "integer",
+                            "exclusiveMinimum": true,
+                            "minimum": 0,
+                            "maximum": 100000
+                        },
+                        "in": "query",
+                        "name": "page",
+                        "required": false
+                    },
+                    {
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "query",
+                        "name": "withTotal",
                         "required": false
                     }
                 ],
@@ -1947,7 +2101,46 @@
                 "tags": [
                     "Lists"
                 ],
-                "description": "One query, both member and phone-reach counts. Separate from /v1/lists because the picker renders none of that endpoint's growth, trend or engagement aggregates, and does need phone reach \u2014 which /v1/lists does not return, and which the wizard used to resolve with a segment preview per list.",
+                "description": "One query, both member and phone-reach counts. Separate from /v1/lists because the picker renders none of that endpoint's growth, trend or engagement aggregates, and does need phone reach — which /v1/lists does not return, and which the wizard used to resolve with a segment preview per list.",
+                "responses": {
+                    "200": {
+                        "description": "Default Response"
+                    }
+                }
+            }
+        },
+        "/v1/lists/facets": {
+            "get": {
+                "summary": "Per-channel list counts and the workspace tag menu",
+                "tags": [
+                    "Lists"
+                ],
+                "description": "One grouped read of `lists` — no membership or message data. The board fetches this once per workspace, not per page, so its tab counts and tag menu describe the workspace rather than the rows in hand.",
+                "responses": {
+                    "200": {
+                        "description": "Default Response"
+                    }
+                }
+            }
+        },
+        "/v1/lists/{id}/stats": {
+            "get": {
+                "summary": "One list with every stat the detail page renders",
+                "tags": [
+                    "Lists"
+                ],
+                "description": "The list row plus its membership counts, growth, 7-point trend, engagement counters, per-channel send totals across ALL of its campaigns, and the start of its most recent send. Scoped to one list, so it never aggregates the workspace.",
+                "parameters": [
+                    {
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "in": "path",
+                        "name": "id",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Default Response"
@@ -3401,7 +3594,7 @@
                 "tags": [
                     "Campaigns"
                 ],
-                "description": "Returns { items, next_cursor, has_more }; pass next_cursor back as ?cursor= for the following page. `total` is included only with ?withTotal=1. Outcome counters are rolled up in SQL for the campaigns on the page only, so the cost of a page does not grow with the size of `messages`. Sorting by recipients/failed/openRate/clickRate, or filtering by ?opens=/?clicks=, orders the whole workspace by an aggregate and so rolls up every message once \u2014 ask for it only when you mean it.",
+                "description": "Returns { items, next_cursor, has_more }; pass next_cursor back as ?cursor= for the following page. `total` is included only with ?withTotal=1. Outcome counters are rolled up in SQL for the campaigns on the page only, so the cost of a page does not grow with the size of `messages`. Sorting by recipients/failed/openRate/clickRate, or filtering by ?opens=/?clicks=, orders the whole workspace by an aggregate and so rolls up every message once — ask for it only when you mean it.",
                 "parameters": [
                     {
                         "schema": {
@@ -3467,6 +3660,15 @@
                         },
                         "in": "query",
                         "name": "q",
+                        "required": false
+                    },
+                    {
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "in": "query",
+                        "name": "updatedBefore",
                         "required": false
                     },
                     {
@@ -3613,7 +3815,7 @@
                 "tags": [
                     "Campaigns"
                 ],
-                "description": "One grouped read of `campaigns` \u2014 no message data. The board fetches this once per channel, not per page, so its tab and status counts describe the workspace rather than the ten rows in hand.",
+                "description": "One grouped read of `campaigns` — no message data. The board fetches this once per channel, not per page, so its tab and status counts describe the workspace rather than the ten rows in hand.",
                 "parameters": [
                     {
                         "schema": {
@@ -4436,7 +4638,7 @@
                 }
             },
             "post": {
-                "summary": "Create an API key \u2014 the secret is returned once, here only",
+                "summary": "Create an API key — the secret is returned once, here only",
                 "tags": [
                     "Workspace"
                 ],

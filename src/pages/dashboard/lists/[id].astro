@@ -37,7 +37,9 @@ const [listsRes, membersRes, campaignsRes, segmentsRes, fieldsRes] = await Promi
   fetch(`${base}/v1/lists/${id}/members?limit=1000`, {
     headers: { Authorization: `Bearer ${token}` },
   }),
-  client.GET('/v1/campaigns'),
+  client.GET('/v1/campaigns', {
+    params: { query: { listId: id, limit: 50, sort: 'updatedAt' as const, dir: 'desc' as const } },
+  }),
   client.GET('/v1/segments'),
   fetch(`${base}/v1/custom-fields`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -58,8 +60,10 @@ if (membersRes.ok) {
   }
 }
 
-// No listId query param on /v1/campaigns — filter client-side.
-const campaigns = unwrap<ApiCampaign>(campaignsRes.data).filter((c) => c.listId === id);
+// ?listId= is a SQL filter now, so this is the list's campaigns rather than
+// every campaign in the workspace minus the ones that aren't.
+const campaigns =
+  (campaignsRes.data as unknown as { items?: ApiCampaign[] } | undefined)?.items ?? [];
 const segments = unwrap<ApiSegment>(segmentsRes.data);
 
 let fields: ApiCustomFieldDef[] = [];

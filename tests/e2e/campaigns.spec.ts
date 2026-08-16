@@ -19,10 +19,10 @@ test.describe('campaigns', () => {
   });
 
   test('a sent campaign opens its report page', async ({ page }) => {
-    const res = await page.request.get('/api/v1/campaigns');
+    const res = await page.request.get('/api/v1/campaigns?status=sent&limit=1');
     expect(res.ok()).toBe(true);
-    const body = (await res.json()) as { data: Array<{ id: string; status: string }> };
-    const sent = body.data.find((c) => c.status === 'sent');
+    const body = (await res.json()) as { items: Array<{ id: string; status: string }> };
+    const sent = body.items[0];
     test.skip(!sent, 'no sent campaign in this workspace');
 
     await page.goto(`/dashboard/campaigns/${sent!.id}/report`);

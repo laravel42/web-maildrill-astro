@@ -162,6 +162,41 @@
       "when": 1786740000000,
       "tag": "0022_segment_channels",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1786740040000,
+      "tag": "0023_subscriber_keyset_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1786740080000,
+      "tag": "0024_subscriber_search_trgm",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1786740120000,
+      "tag": "0025_subscriber_engagement",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1786740160000,
+      "tag": "0026_campaign_rollup",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1786740200000,
+      "tag": "0027_engagement_index_narrow",
+      "breakpoints": true
     }
   ]
 }

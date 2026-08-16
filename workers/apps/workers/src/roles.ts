@@ -14,10 +14,21 @@ import {
   pullCloudflareEmailEvents,
   purgeProcessedWebhooks,
   recoverStalledMessages,
+  reconcileSubscriberEngagement,
 } from '@maildrill/services';
 import { startPoller, type StopFn } from './poller';
 
 const MAINTENANCE_INTERVAL_MS = 60_000;
+/**
+ * Engagement rollup repair: a slice every five minutes rather than one nightly
+ * pass. A full pass over a million subscribers is ~90s of database work; run as
+ * a single job it is a thundering herd that also fires on every worker restart,
+ * and a run killed halfway leaves no record of where it got to. Sliced, each
+ * tick costs ~2s, a restart loses at most one slice, and the sweep wraps
+ * continuously — 1M subscribers come round roughly every 3.5 hours.
+ */
+const ENGAGEMENT_SWEEP_INTERVAL_MS = 5 * 60_000;
+const ENGAGEMENT_SWEEP_SLICE = 25_000;
 const STALLED_AFTER_MS = 5 * 60_000;
 const WEBHOOK_RETENTION_DAYS = 30;
 
@@ -137,6 +148,48 @@ export function startMaintenance(): StopFn {
         metrics.setGauge('queue_failed_jobs', counts.failed ?? 0, { queue: name });
       }
       return recovered > 0 || expired > 0 ? `recovered=${recovered} expired=${expired}` : undefined;
+    },
+    log,
+  );
+}
+
+/**
+ * Poller: keep `subscriber_engagement` honest.
+ *
+ * The delivery pipeline already increments the rollup inside the transaction
+ * that moves a message's status, so this is not how the numbers get there — it
+ * is what repairs a counter after a webhook is dropped, a provider replays
+ * history, or a subscriber is created by a path that never seeds a row. Without
+ * it a single lost event skews a bucket permanently, because nothing else ever
+ * recomputes.
+ */
+export function startEngagementSweep(): StopFn {
+  const log = createLogger({ worker: 'engagement-sweep' });
+  recordWorkerStart('worker:engagement-sweep');
+  // Resume point for the next slice. Restarting the process restarts the sweep
+  // from the beginning, which is correct but not free — the slice is sized so
+  // that costs one tick, not one pass.
+  let cursor: string | undefined;
+  return startPoller(
+    'engagement-sweep',
+    ENGAGEMENT_SWEEP_INTERVAL_MS,
+    async () => {
+      const result = await reconcileSubscriberEngagement({
+        after: cursor,
+        maxSubscribers: ENGAGEMENT_SWEEP_SLICE,
+        // Recompute everything, not just missing rows: repairing drift is the
+        // whole point, and an absent row is repaired by the same statement.
+        onlyMissing: false,
+      });
+      cursor = result.complete ? undefined : (result.lastId ?? undefined);
+      if (result.written > 0) {
+        log.info(
+          { scanned: result.scanned, written: result.written, ms: result.durationMs },
+          'engagement rollup drift repaired',
+        );
+        return `scanned=${result.scanned} repaired=${result.written}`;
+      }
+      return undefined;
     },
     log,
   );

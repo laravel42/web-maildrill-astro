@@ -42,6 +42,26 @@ import { visiblePageNumbers } from './shared/pagination';
 import { routes } from '@/config/routes';
 import styles from './CampaignsBoard.module.css';
 
+/** Workspace-wide counts behind the channel tabs and the status menu. */
+interface BoardCounts {
+  byChannel: Record<string, number>;
+  byStatus: Record<string, number>;
+}
+
+/**
+ * The rate bands, as the API names them.
+ *
+ * The labels are display strings ("20 – 40%", with an en dash); the wire wants
+ * stable slugs, and the server re-derives the band from the counters rather
+ * than trusting a parsed percentage.
+ */
+const RATE_SLUG: Record<string, string> = {
+  None: 'none',
+  'Under 20%': 'low',
+  '20 – 40%': 'mid',
+  '40%+': 'high',
+};
+
 function DispatchProgress({ progress, status }: { progress: number; status: 'sending' | 'sent' }) {
   return (
     <div className={styles.sendProgress} title={`${progress}% dispatched`}>
@@ -66,18 +86,46 @@ function DispatchProgress({ progress, status }: { progress: number; status: 'sen
 
 export default function CampaignsBoard({
   initial,
+  initialTotal,
+  initialCounts,
   audiences,
   templates,
   senders,
 }: {
   initial?: Campaign[];
+  /** Campaigns matching the first page's filters, for the pager. */
+  initialTotal?: number;
+  /** Workspace tab/status counts, so the tabs render before the first fetch. */
+  initialCounts?: BoardCounts;
   audiences?: AudienceChoice[];
   templates?: TemplateChoice[];
   senders?: ChannelSenders;
 } = {}) {
   // Live workspace campaigns from SSR when provided; else the fixture preview.
   const live = initial !== undefined;
+  /*
+   * In live mode this holds ONE page, not the workspace. Everything that used
+   * to be derived by filtering it in the browser — the rows, the tab counts,
+   * the status counts, the footer total — now comes from the server, because
+   * ten rows cannot answer questions about a thousand campaigns.
+   */
   const [campaigns, setCampaigns] = useState<Campaign[]>(initial ?? mockCampaigns);
+  const [serverTotal, setServerTotal] = useState<number>(initialTotal ?? 0);
+  const [serverCounts, setServerCounts] = useState<BoardCounts | null>(initialCounts ?? null);
+  const [loadingPage, setLoadingPage] = useState(false);
+  /*
+   * Keyset paging state. A cursor names the row a page resumes from, so pages
+   * are walked rather than jumped to; a page the user has never reached has no
+   * cursor and falls back to the server's `page` param for that one request.
+   */
+  const [cursors, setCursors] = useState<{ key: string; byPage: Record<number, string> }>({
+    key: '',
+    byPage: {},
+  });
+  /* Bumped after any mutation, to re-read the page and the counts together —
+     a create or a delete changes the total and the tab counts, not just a row. */
+  const [refreshTick, setRefreshTick] = useState(0);
+  const refresh = () => setRefreshTick((n) => n + 1);
   const [tab, setTab] = useState<ChannelType>('email');
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Set<CampaignStatus>>(new Set());
@@ -85,7 +133,7 @@ export default function CampaignsBoard({
   const [clicksSel, setClicksSel] = useState<Set<string>>(new Set());
   const [openFilter, setOpenFilter] = useState<'status' | 'opens' | 'clicks' | null>(null);
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updatedAt', dir: -1 });
-  const [page, setPage] = useState(1);
+  const [pageState, setPageState] = useState<{ key: string; page: number }>({ key: '', page: 1 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Ids waiting on the delete confirm dialog (bulk toolbar or drawer).
   const [confirmDelete, setConfirmDelete] = useState<string[] | null>(null);
@@ -152,14 +200,19 @@ export default function CampaignsBoard({
      on a channel with no paused campaign gives a control whose every use
      empties the table. */
   const statusCounts = useMemo(() => {
-    const inChannel = campaigns.filter((c) => c.channel === tab);
     const c: Record<string, number> = {};
+    // Live: from the server's single grouped read of `campaigns`. Counting the
+    // fetched rows would report at most a page — "10 sent" on a workspace of
+    // nine hundred.
+    const inChannel = live
+      ? null
+      : campaigns.filter((x) => x.channel === tab);
     for (const st of STATUS_FILTERS) {
-      const n = inChannel.filter((x) => x.status === st).length;
+      const n = inChannel ? inChannel.filter((x) => x.status === st).length : (serverCounts?.byStatus[st] ?? 0);
       if (n > 0) c[st] = n;
     }
     return c;
-  }, [campaigns, tab]);
+  }, [live, campaigns, tab, serverCounts]);
 
 useEffect(() => {
     setStatusFilter((prev) => {
@@ -170,9 +223,41 @@ useEffect(() => {
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
-    for (const t of CHANNEL_TABS) c[t] = campaigns.filter((x) => x.channel === t).length;
+    for (const t of CHANNEL_TABS) {
+      c[t] = live ? (serverCounts?.byChannel[t] ?? 0) : campaigns.filter((x) => x.channel === t).length;
+    }
     return c;
-  }, [campaigns]);
+  }, [live, campaigns, serverCounts]);
+
+  /*
+   * One string naming the filter set and ordering that a page number and a
+   * cursor belong to.
+   *
+   * Derived during render rather than reset from an effect, and that is the
+   * point: an effect that calls setPage(1) has not run by the time the fetch
+   * effect fires in the same commit, so switching channel used to issue one
+   * request carrying the previous channel's cursor. The server refused it
+   * (cursor_shape_mismatch — the guard working as intended) and the right
+   * request followed, but it was a wasted round trip and a console error on
+   * every filter change. Keying the state makes the reset simultaneous.
+   */
+  const queryKey = useMemo(
+    () =>
+      JSON.stringify([
+        tab,
+        query.trim(),
+        [...statusFilter].sort(),
+        [...opensSel].sort(),
+        [...clicksSel].sort(),
+        sort.key,
+        sort.dir,
+      ]),
+    [tab, query, statusFilter, opensSel, clicksSel, sort],
+  );
+  const page = pageState.key === queryKey ? pageState.page : 1;
+  const setPage = (next: number | ((p: number) => number)) =>
+    setPageState({ key: queryKey, page: typeof next === 'function' ? next(page) : next });
+  const cursorFor = cursors.key === queryKey ? cursors.byPage : {};
 
   const resetPage = () => setPage(1);
 
@@ -186,7 +271,17 @@ useEffect(() => {
     resetPage();
   };
 
-  const rows = useMemo(() => {
+  /*
+   * The fixture pipeline: filter and sort the whole set in the browser.
+   *
+   * Unreachable in live mode — there the server applies every one of these
+   * filters and the sort in SQL and hands back exactly one page, so the rows
+   * in hand are already the answer. Filtering them again here is what made the
+   * old board need all 1,029 campaigns (and their message rollups) before it
+   * could draw ten.
+   */
+  const fixtureRows = useMemo(() => {
+    if (live) return [];
     let list = campaigns.filter((c) => {
       if (c.channel !== tab) return false;
       if (statusFilter.size > 0 && !statusFilter.has(c.status)) return false;
@@ -211,39 +306,110 @@ useEffect(() => {
       return 0;
     });
     return list;
-  }, [tab, query, statusFilter, opensSel, clicksSel, sort, campaigns]);
+  }, [live, tab, query, statusFilter, opensSel, clicksSel, sort, campaigns]);
 
-  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  // Live: `campaigns` is the page the server returned, and `serverTotal` counts
+  // the whole filtered set — so the rows on screen and the footer count always
+  // describe the same set.
+  const totalRows = live ? serverTotal : fixtureRows.length;
+  const pageCount = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
   const pagerPages = visiblePageNumbers(safePage, pageCount);
-  const startIdx = rows.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
-  const endIdx = Math.min(safePage * PAGE_SIZE, rows.length);
-  const pageRows = rows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const startIdx = totalRows === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const endIdx = Math.min(safePage * PAGE_SIZE, totalRows);
+  const pageRows = live
+    ? campaigns
+    : fixtureRows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-  // Snap back to the first page whenever the filtered set changes underneath.
+  /*
+   * The server owns every filter the board offers — channel, status, search,
+   * open/click band — plus the sort and the page window. Nothing below narrows
+   * a live page any more.
+   */
   useEffect(() => {
-    setPage(1);
-  }, [tab, query, statusFilter, opensSel, clicksSel, sort]);
-
-  // While any campaign is sending, refresh list so the progress bar advances.
-  const hasSending = campaigns.some((c) => c.status === 'sending');
-  useEffect(() => {
-    if (!live || !hasSending) return;
+    if (!live) return;
     let cancelled = false;
-    const tick = async () => {
-      try {
-        const res = await api.get<{ data: ApiCampaign[] }>('campaigns');
-        if (!cancelled) setCampaigns(toCampaigns(res.data ?? []));
-      } catch {
-        /* keep last snapshot */
-      }
-    };
-    const id = window.setInterval(() => void tick(), 3000);
-    void tick();
+    const qs = new URLSearchParams({
+      limit: String(PAGE_SIZE),
+      channel: tab,
+      sort: sort.key,
+      dir: sort.dir === 1 ? 'asc' : 'desc',
+    });
+    // Only `updatedAt` is a timestamp, so only it can carry a keyset cursor;
+    // the other columns page by number over the small `campaigns` table.
+    const cursor = sort.key === 'updatedAt' ? cursorFor[page] : undefined;
+    if (cursor) qs.set('cursor', cursor);
+    else if (page > 1) qs.set('page', String(page));
+    if (query.trim()) qs.set('q', query.trim());
+    for (const st of statusFilter) qs.append('status', st);
+    // Bands are only sent on channels that report them — the same rule that
+    // decides whether the column exists at all.
+    if (showOpenCol) for (const b of opensSel) qs.append('opens', RATE_SLUG[b]);
+    if (showClickCol) for (const b of clicksSel) qs.append('clicks', RATE_SLUG[b]);
+    // Count once per filter set: the pager needs a page count, but counting on
+    // every Next would be a scan per click.
+    if (page === 1) qs.set('withTotal', '1');
+
+    setLoadingPage(true);
+    api
+      .get<{
+        items: ApiCampaign[];
+        next_cursor: string | null;
+        total?: number;
+      }>(`campaigns?${qs}`)
+      .then((res) => {
+        if (cancelled) return;
+        setCampaigns(toCampaigns(res.items ?? []));
+        // Remember the doorway to the following page so Next stays keyset.
+        if (res.next_cursor) {
+          const token = res.next_cursor;
+          setCursors((c) => ({
+            key: queryKey,
+            byPage: { ...(c.key === queryKey ? c.byPage : {}), [page + 1]: token },
+          }));
+        }
+        if (res.total !== undefined) setServerTotal(res.total);
+      })
+      .catch(() => {
+        /* keep the page on screen rather than blanking the table */
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPage(false);
+      });
     return () => {
       cancelled = true;
-      window.clearInterval(id);
     };
+    // `cursorFor` is read but deliberately not depended on: this effect fills
+    // it, so listing it would re-run the fetch on its own result. `queryKey`
+    // is a function of the filters already listed.
+  }, [live, queryKey, tab, sort, page, refreshTick, showOpenCol, showClickCol]);
+
+  /* Tab and status counts describe the workspace, so they are fetched once per
+     channel — never per page. One grouped read of `campaigns`, no message data. */
+  useEffect(() => {
+    if (!live) return;
+    let cancelled = false;
+    api
+      .get<BoardCounts>(`campaigns/counts?channel=${tab}`)
+      .then((c) => {
+        if (!cancelled) setServerCounts(c);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [live, tab, refreshTick]);
+
+  // While a campaign on this channel is sending, re-read so the progress bar
+  // advances. This used to refetch every campaign in the workspace — and with
+  // it a full rollup of every message — every three seconds, per open tab.
+  const hasSending = live
+    ? (serverCounts?.byStatus.sending ?? 0) > 0
+    : campaigns.some((c) => c.status === 'sending');
+  useEffect(() => {
+    if (!live || !hasSending) return;
+    const id = window.setInterval(refresh, 3000);
+    return () => window.clearInterval(id);
   }, [live, hasSending]);
 
   // Keep the dispatch bar at 100% for 1s after status flips to `sent`, then drop it.
@@ -304,6 +470,7 @@ useEffect(() => {
     show(`“${name}” is sending…`);
     const outcome = await waitForCampaignDelivery(id);
     setCampaigns((prev) => prev.map((c) => (c.id === id ? toCampaign(outcome) : c)));
+    refresh();
     show(campaignDeliveryToast(name, outcome));
   };
 
@@ -332,6 +499,7 @@ useEffect(() => {
         });
         const created = await api.get<ApiCampaign>(`campaigns/${res.campaignId}`);
         setCampaigns((prev) => [toCampaign(created), ...prev]);
+        refresh();
         void reportSendOutcome(res.campaignId, name);
       } catch (e) {
         show(e instanceof ApiError ? e.message : `Could not send “${name}”`);
@@ -352,6 +520,7 @@ useEffect(() => {
         scheduledAt: draft.scheduledAt ?? null,
       });
       setCampaigns((prev) => [toCampaign(created), ...prev]);
+      refresh();
       show(`“${created.name}” scheduled`);
     } catch (e) {
       show(e instanceof ApiError ? e.message : 'Could not create campaign');
@@ -415,18 +584,34 @@ useEffect(() => {
     if (reportDeepLinkId) window.location.replace(routes.app.campaignReport(reportDeepLinkId));
   }, []);
 
+  /* A deep link names a campaign that need not be on the page in hand — the
+     dashboard links straight to one that may sit anywhere in the workspace —
+     so fall back to fetching it by id rather than silently doing nothing. */
+  const findCampaign = async (id: string): Promise<Campaign | null> => {
+    const local = campaigns.find((x) => x.id === id);
+    if (local || !live) return local ?? null;
+    try {
+      return toCampaign(await api.get<ApiCampaign>(`campaigns/${id}`));
+    } catch {
+      return null;
+    }
+  };
+
   useEffect(() => {
     if (editDeepLinkDone.current) return;
     const editId = new URLSearchParams(window.location.search).get('edit');
     if (!editId) return;
-    const c = campaigns.find((x) => x.id === editId);
-    if (!c) return;
     editDeepLinkDone.current = true;
-    void openForEdit(c);
-    const url = new URL(window.location.href);
-    url.searchParams.delete('edit');
-    window.history.replaceState(null, '', `${url.pathname}${url.search}`);
-  }, [campaigns]);
+    void findCampaign(editId).then((c) => {
+      if (!c) return;
+      void openForEdit(c);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('edit');
+      window.history.replaceState(null, '', `${url.pathname}${url.search}`);
+    });
+    // Runs once, on the id in the URL; `campaigns` is read through
+    // findCampaign, which falls back to the API when the row is off-page.
+  }, [live]);
 
   /* Persist edits to an existing campaign; dispatch when the user chose send now. */
   const saveEdit = async (id: string, draft: CampaignDraft) => {
@@ -452,6 +637,7 @@ useEffect(() => {
         status: draft.schedule === 'later' ? 'scheduled' : undefined,
       });
       setCampaigns((prev) => prev.map((c) => (c.id === id ? toCampaign(updated) : c)));
+      refresh();
 
       if (draft.schedule === 'now' && sendable) {
         await sendCampaign(id, updated.name);
@@ -488,6 +674,7 @@ useEffect(() => {
     );
     const made = results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
     setCampaigns((prev) => [...made.map(toCampaign), ...prev]);
+    refresh();
     const failed = ids.length - made.length;
     show(
       failed
@@ -522,6 +709,7 @@ useEffect(() => {
     const results = await Promise.allSettled(ids.map((id) => api.del(`campaigns/${id}`)));
     const okIds = new Set(ids.filter((_, i) => results[i].status === 'fulfilled'));
     setCampaigns((prev) => prev.filter((c) => !okIds.has(c.id)));
+    refresh();
     setSelected((prev) => new Set([...prev].filter((id) => !okIds.has(id))));
     if (openId && okIds.has(openId)) setOpenId(null);
     const failed = ids.length - okIds.size;
@@ -542,7 +730,24 @@ useEffect(() => {
     setSelected(new Set()); // changing filters clears selection (spec §12)
   };
 
-  const open = openId ? (campaigns.find((c) => c.id === openId) ?? null) : null;
+  /* The drawer's row, which ?open=<id> can name from off-page. */
+  const [openFallback, setOpenFallback] = useState<Campaign | null>(null);
+  useEffect(() => {
+    if (!openId || campaigns.some((c) => c.id === openId)) {
+      setOpenFallback(null);
+      return;
+    }
+    let cancelled = false;
+    void findCampaign(openId).then((c) => {
+      if (!cancelled) setOpenFallback(c);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [openId, campaigns]);
+  const open = openId
+    ? (campaigns.find((c) => c.id === openId) ?? (openFallback?.id === openId ? openFallback : null))
+    : null;
   const sortArrow = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? '↑' : '↓') : '');
 
   // Resolve a campaign's target-list colour from the audience picker data so the
@@ -841,7 +1046,7 @@ useEffect(() => {
           </div>
         </div>
 
-        {rows.length === 0 ? (
+        {pageRows.length === 0 ? (
           <div className="atable__empty">No campaigns match your filters.</div>
         ) : (
           pageRows.map((c) => (
@@ -911,10 +1116,10 @@ useEffect(() => {
 
         {/* footer / pagination */}
         <div className={`atable__foot ${styles.foot}`}>
-          <span className={rows.length === 0 ? undefined : 'tnum'}>
-            {rows.length === 0
+          <span className={totalRows === 0 ? undefined : 'tnum'}>
+            {totalRows === 0
               ? 'No campaigns match your filters'
-              : `${startIdx}–${endIdx} of ${rows.length} campaign${rows.length === 1 ? '' : 's'}`}
+              : `${startIdx}–${endIdx} of ${totalRows.toLocaleString('en-US')} campaign${totalRows === 1 ? '' : 's'}${loadingPage ? ' · loading…' : ''}`}
           </span>
           {pageCount > 1 && (
             <div className={styles.pager}>

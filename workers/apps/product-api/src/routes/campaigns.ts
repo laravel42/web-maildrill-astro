@@ -2,21 +2,72 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { channelSchema, ConflictError, NotFoundError } from '@maildrill/domain';
 import { authenticate } from '@maildrill/authz';
-import type { ZodTypeProvider } from '@maildrill/httpkit';
+import { config } from '@maildrill/config';
 import {
+  PAGE,
+  clampLimit,
+  decodeCursor,
+  encodeCursor,
+  overFetch,
+  shapeOf,
+  toCursorPage,
+  type ZodTypeProvider,
+} from '@maildrill/httpkit';
+import {
+  CAMPAIGN_RATE_BUCKETS,
+  CAMPAIGN_SORTS,
+  campaignBoardCounts,
+  countCampaigns,
   createCampaign,
   deleteCampaign,
   getCampaign,
   getCampaignEngagement,
   listCampaignMessages,
-  listCampaigns,
+  listCampaignsPage,
   sendCampaign,
   sendCampaignDraft,
   updateCampaign,
+  type CampaignRateBucket,
 } from '@maildrill/product';
 
 const TAG = ['Campaigns'];
 const idParam = z.object({ id: z.string().uuid() });
+
+const campaignStatus = z.enum(['draft', 'scheduled', 'sending', 'sent', 'paused']);
+const bucketEnum = z.enum(CAMPAIGN_RATE_BUCKETS);
+const bucketParam = z.union([bucketEnum, z.array(bucketEnum).max(CAMPAIGN_RATE_BUCKETS.length)]);
+
+const listQuery = z.object({
+  channel: channelSchema.optional(),
+  /** Repeatable: ?status=sent&status=sending — the union of those statuses. */
+  status: z.union([campaignStatus, z.array(campaignStatus).max(8)]).optional(),
+  /** Campaigns targeting one list, for the list detail page. */
+  listId: z.string().uuid().optional(),
+  /** Case-insensitive match on campaign name or audience label. */
+  q: z.string().trim().min(1).max(200).optional(),
+  /** Only campaigns updated at or before this ISO moment — a history window. */
+  updatedBefore: z.coerce.date().optional(),
+  /** Repeatable open-rate bands: ?opens=high&opens=mid. */
+  opens: bucketParam.optional(),
+  /** Repeatable click-rate bands. */
+  clicks: bucketParam.optional(),
+  sort: z.enum(CAMPAIGN_SORTS).optional(),
+  dir: z.enum(['asc', 'desc']).optional(),
+  limit: z.coerce.number().int().positive().max(100).optional(),
+  /** Opaque keyset token from a previous page's `next_cursor`. */
+  cursor: z.string().min(1).max(1024).optional(),
+  /** Numbered jump to a page never walked to. Sequential paging uses `cursor`. */
+  page: z.coerce.number().int().positive().max(100_000).optional(),
+  // A string, not z.coerce.boolean(): Boolean('0') is true, so coercion would
+  // read `withTotal=0` as a request for the count.
+  withTotal: z.string().optional(),
+});
+
+/** Normalise a repeatable query param to an array, or undefined when absent. */
+function asArray<T>(v: T | T[] | undefined): T[] | undefined {
+  if (v === undefined) return undefined;
+  return Array.isArray(v) ? v : [v];
+}
 const createSchema = z.object({
   name: z.string().min(1),
   channel: channelSchema.optional(),
@@ -127,9 +178,118 @@ export async function campaignRoutes(appRaw: FastifyInstance): Promise<void> {
       ),
   );
 
-  app.get('/v1/campaigns', { schema: { tags: TAG, summary: 'List campaigns' } }, async (req) => ({
-    data: await listCampaigns(req.tenantId),
-  }));
+  app.get(
+    '/v1/campaigns',
+    {
+      schema: {
+        tags: TAG,
+        summary: 'List campaigns (keyset-paginated)',
+        description:
+          'Returns { items, next_cursor, has_more }; pass next_cursor back as ?cursor= for the ' +
+          'following page. `total` is included only with ?withTotal=1. Outcome counters are ' +
+          'rolled up in SQL for the campaigns on the page only, so the cost of a page does not ' +
+          'grow with the size of `messages`. Sorting by recipients/failed/openRate/clickRate, ' +
+          'or filtering by ?opens=/?clicks=, orders the whole workspace by an aggregate and so ' +
+          'rolls up every message once — ask for it only when you mean it.',
+        querystring: listQuery,
+      },
+    },
+    async (req, reply) => {
+      const sort = req.query.sort ?? 'updatedAt';
+      const dir = req.query.dir === 'asc' ? 'asc' : 'desc';
+      const limit = clampLimit(req.query.limit ?? PAGE.default);
+      const filters = {
+        channel: req.query.channel,
+        statuses: asArray(req.query.status),
+        listId: req.query.listId,
+        q: req.query.q,
+        updatedBefore: req.query.updatedBefore,
+        opens: asArray<CampaignRateBucket>(req.query.opens),
+        clicks: asArray<CampaignRateBucket>(req.query.clicks),
+      };
+
+      // Everything that changes which rows come back, and in what order, is
+      // bound into the cursor, so a token minted under one filter or sort is
+      // refused rather than resuming from a position that means nothing in the
+      // new ordering.
+      const shape = shapeOf({
+        ...filters,
+        statuses: filters.statuses?.slice().sort().join(','),
+        // Part of the shape: it changes which rows the cursor is walking.
+        updatedBefore: filters.updatedBefore?.toISOString(),
+        // Sorted, so ?opens=low&opens=mid and ?opens=mid&opens=low are one
+        // cursor shape rather than two.
+        opens: filters.opens?.slice().sort().join(','),
+        clicks: filters.clicks?.slice().sort().join(','),
+        sort,
+        dir,
+      });
+
+      // Only `updatedAt` is a timestamp, and a keyset cursor carries a
+      // timestamp. The other sorts page by number instead — affordable here in
+      // a way it is not on the roster, because `campaigns` is a small table
+      // (a workspace has thousands, not millions) and OFFSET over it never
+      // touches `messages`.
+      const after =
+        req.query.cursor && sort === 'updatedAt'
+          ? decodeCursor(config.auth.jwtSecret, req.query.cursor, {
+              tenantId: req.tenantId,
+              shape,
+            })
+          : null;
+      if (req.query.cursor && sort !== 'updatedAt') {
+        return reply.code(400).send({
+          error: 'unsupported_cursor',
+          message: `cursor pagination is only available with sort=updatedAt; use ?page= with sort=${sort}`,
+        });
+      }
+
+      const rows = await listCampaignsPage(req.tenantId, {
+        ...filters,
+        sort,
+        dir,
+        limit: overFetch(limit),
+        ...(after ? { after: { at: after.at, id: after.id } } : {}),
+        // A jump pays the OFFSET cost once; the cursor it returns puts the
+        // caller back on the keyset path for Next.
+        ...(!after && req.query.page && req.query.page > 1
+          ? { offset: (req.query.page - 1) * limit }
+          : {}),
+      });
+
+      const page = toCursorPage(rows, limit, (row) =>
+        // row.cursorAt, not updatedAt: the key has to survive the round trip at
+        // the precision Postgres stores it.
+        encodeCursor(config.auth.jwtSecret, {
+          at: row.cursorAt,
+          id: row.id,
+          t: req.tenantId,
+          s: shape,
+        }),
+      );
+      const body = { ...page, items: page.items.map(({ cursorAt: _c, ...row }) => row) };
+
+      const wantsTotal = req.query.withTotal === '1' || req.query.withTotal === 'true';
+      if (!wantsTotal) return body;
+      return { ...body, total: await countCampaigns(req.tenantId, { ...filters, sort, dir }) };
+    },
+  );
+
+  app.get(
+    '/v1/campaigns/counts',
+    {
+      schema: {
+        tags: TAG,
+        summary: 'Per-channel and per-status campaign counts',
+        description:
+          'One grouped read of `campaigns` — no message data. The board fetches this once per ' +
+          'channel, not per page, so its tab and status counts describe the workspace rather ' +
+          'than the ten rows in hand.',
+        querystring: z.object({ channel: channelSchema.optional() }),
+      },
+    },
+    async (req) => campaignBoardCounts(req.tenantId, { channel: req.query.channel }),
+  );
 
   app.get(
     '/v1/campaigns/:id',

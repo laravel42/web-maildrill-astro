@@ -872,6 +872,8 @@ export async function seedDev(): Promise<void> {
       evRows.push({
         messageId,
         tenantId: tid,
+        // Same copy the delivery pipeline writes — see message_events.campaignId.
+        campaignId: camp.id,
         provider: 'infobip',
         providerEventId: `evt-${messageId.slice(0, 8)}-${type}`,
         eventFingerprint: `${messageId}:${type}`,

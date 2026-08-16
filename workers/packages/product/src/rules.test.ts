@@ -2,7 +2,7 @@ import { PgDialect } from 'drizzle-orm/pg-core';
 import type { SQL } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import type { SegmentRule } from '@maildrill/database';
-import { buildSegmentWhere, clamp } from './rules';
+import { buildSegmentWhere, clamp, segmentRuleError } from './rules';
 
 const dialect = new PgDialect();
 
@@ -67,6 +67,48 @@ describe('buildSegmentWhere', () => {
     expect(num).toContain('::numeric');
     const str = render(buildSegmentWhere([rule({ field: 'orders', op: 'gt', value: '3' })], 'all'));
     expect(str).not.toContain('::numeric');
+  });
+
+  it('compiles contains against the trigram indexes, not ilike', () => {
+    // 0024's GINs are on lower(email) / lower(coalesce(name,'')), so `ilike`
+    // cannot use them: emitted that way a zero-match contains segment walked
+    // all 1,000,229 rows of the perf tenant (1,013,052 buffers, 1,058ms) on
+    // every page, against 285 buffers / 3.1ms written this way.
+    const sql = render(buildSegmentWhere([rule({ op: 'contains', value: 'acme' })], 'all'));
+    expect(sql).toContain('lower(');
+    expect(sql).toContain(' like ');
+    expect(sql).not.toContain('ilike');
+  });
+
+  it('escapes LIKE metacharacters in a contains value', () => {
+    // `email contains %` is not a filter, it is "return the workspace" — and it
+    // also defeats the trigram index, so the typo bought a full scan.
+    const q = dialect.sqlToQuery(
+      buildSegmentWhere([rule({ op: 'contains', value: '50%_x' })], 'all')!,
+    );
+    expect(q.params).toContain('%50\\%\\_x%');
+  });
+
+  it('guards a numeric comparison so a non-numeric attribute cannot raise', () => {
+    // (attributes->>'plan')::numeric > 5 raises 22P02 on the first row holding
+    // "pro". CASE, not AND: Postgres may hoist a cast above a bare guard.
+    const sql = render(buildSegmentWhere([rule({ field: 'plan', op: 'gt', value: 5 })], 'all'));
+    expect(sql).toContain('case when');
+    expect(sql).toContain('::numeric');
+  });
+
+  it('refuses a status value the enum does not hold', () => {
+    // Not "matches nothing" — `status = 'bogus'` raises 22P02 from inside the
+    // page query, which the roster surfaced as internal_error for as long as
+    // the segment chip stayed selected.
+    const bad = rule({ field: 'status', op: 'eq', value: 'bogus-status' });
+    expect(segmentRuleError(bad)).toMatch(/status rule value/);
+    expect(() => buildSegmentWhere([bad], 'all')).toThrow(/status rule value/);
+    expect(segmentRuleError(rule({ field: 'status', op: 'eq', value: 'active' }))).toBeNull();
+    // gt/lt compare against the enum too, so they need the same check.
+    expect(segmentRuleError(rule({ field: 'status', op: 'lt', value: 'zzz' }))).toMatch(
+      /status rule value/,
+    );
   });
 
   it('maps exists/not_exists to null checks on plain fields', () => {

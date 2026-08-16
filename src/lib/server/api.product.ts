@@ -1828,15 +1828,24 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List lists
-         * @description Full aggregation by default. Pass ?options=1 for a bounded, searchable name/colour slice — pickers do not need member counts, and computing them walks every membership row in the workspace.
+         * List lists (keyset-paginated)
+         * @description Returns { items, next_cursor, has_more }; pass next_cursor back as ?cursor= for the following page. `total` is included only with ?withTotal=1. Member counts, growth, the 7-point trend and the engagement counters are rolled up in SQL for the lists on the page only, so the cost of a page does not grow with the size of `list_members`. Sorting by subscribers/growthPct, or filtering by ?opens=/?clicks=, orders the whole workspace by an aggregate and so rolls up every membership once — ask for it only when you mean it. Pass ?options=1 for a bounded name/colour projection with no aggregates at all.
          */
         get: {
             parameters: {
                 query?: {
                     options?: string;
+                    channel?: "email" | "sms" | "whatsapp" | "voice";
+                    tag?: string | string[];
                     q?: string;
+                    opens?: ("none" | "low" | "mid" | "high") | ("none" | "low" | "mid" | "high")[];
+                    clicks?: ("none" | "low" | "mid" | "high") | ("none" | "low" | "mid" | "high")[];
+                    sort?: "updatedAt" | "name" | "subscribers" | "growthPct";
+                    dir?: "asc" | "desc";
                     limit?: number;
+                    cursor?: string;
+                    page?: number;
+                    withTotal?: string;
                 };
                 header?: never;
                 path?: never;
@@ -1916,6 +1925,82 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/lists/facets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Per-channel list counts and the workspace tag menu
+         * @description One grouped read of `lists` — no membership or message data. The board fetches this once per workspace, not per page, so its tab counts and tag menu describe the workspace rather than the rows in hand.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/lists/{id}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One list with every stat the detail page renders
+         * @description The list row plus its membership counts, growth, 7-point trend, engagement counters, per-channel send totals across ALL of its campaigns, and the start of its most recent send. Scoped to one list, so it never aggregates the workspace.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
                 cookie?: never;
             };
             requestBody?: never;
@@ -3168,6 +3253,7 @@ export interface paths {
                     status?: ("draft" | "scheduled" | "sending" | "sent" | "paused") | ("draft" | "scheduled" | "sending" | "sent" | "paused")[];
                     listId?: string;
                     q?: string;
+                    updatedBefore?: string;
                     opens?: ("none" | "low" | "mid" | "high") | ("none" | "low" | "mid" | "high")[];
                     clicks?: ("none" | "low" | "mid" | "high") | ("none" | "low" | "mid" | "high")[];
                     sort?: "updatedAt" | "name" | "recipients" | "failed" | "openRate" | "clickRate";

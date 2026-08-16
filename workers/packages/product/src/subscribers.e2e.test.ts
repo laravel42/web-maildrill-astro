@@ -1,7 +1,14 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { closeDb } from '@maildrill/database';
 import { ensureTenantByName } from '@maildrill/services';
-import { deleteSubscriber, importSubscribers, updateSubscriber, upsertSubscriber } from './subscribers';
+import {
+  countSubscribers,
+  deleteSubscriber,
+  importSubscribers,
+  subscriberChannelCounts,
+  updateSubscriber,
+  upsertSubscriber,
+} from './subscribers';
 import { resolveAudience } from './audience';
 import { addToList, createList } from './lists';
 import { assertListSendable, listHealth } from '@maildrill/services';
@@ -184,5 +191,90 @@ describe.skipIf(!run)('list suspension (e2e — needs Postgres)', () => {
     const lifetime = await listHealth(tenantId, listId, new Date(0));
     expect(lifetime.members).toBe(30);
     expect(lifetime.deadShare).toBeCloseTo(0.5);
+  });
+});
+
+describe.skipIf(!run)('roster filters: list and counts agree (e2e — needs Postgres)', () => {
+  const uniq = `${process.pid}-${process.hrtime.bigint()}`;
+  /**
+   * A tenant with a known shape: 3 active (2 with a phone), 1 bounced (phone),
+   * 1 unsubscribed (no phone). Statuses are passed explicitly so address
+   * validation stays out of it — this is about the filter builder, not MX.
+   */
+  const seed = async () => {
+    const tenant = await ensureTenantByName(`counts-e2e-${uniq}`);
+    const rows: [string, string | undefined, 'active' | 'bounced' | 'unsubscribed'][] = [
+      ['a1', '+15550000001', 'active'],
+      ['a2', '+15550000002', 'active'],
+      ['a3', undefined, 'active'],
+      ['b1', '+15550000003', 'bounced'],
+      ['u1', undefined, 'unsubscribed'],
+    ];
+    for (const [tag, phone, status] of rows) {
+      await upsertSubscriber({
+        tenantId: tenant.id,
+        email: `${tag}-${uniq}@gmail.com`,
+        ...(phone ? { phone } : {}),
+        status,
+      });
+    }
+    return tenant;
+  };
+
+  it('gives the same number for a channel tab and the list total', async () => {
+    const tenant = await seed();
+    for (const filters of [
+      {},
+      { status: 'active' as const },
+      { statuses: ['active', 'bounced'] as const },
+    ]) {
+      for (const channel of ['email', 'sms'] as const) {
+        const opts = {
+          ...filters,
+          channel,
+          statuses: filters.statuses ? [...filters.statuses] : undefined,
+        };
+        const total = await countSubscribers(tenant.id, opts);
+        const counts = await subscriberChannelCounts(tenant.id, opts);
+        // The tab and the footer describe one set. They did not: the channel
+        // aggregates used to be computed over a status-agnostic filter set, so
+        // Status=Active read 1,000,229 on the Email tab against a footer of
+        // 920,211 on the perf workspace.
+        expect(counts[channel]).toBe(total);
+      }
+    }
+  });
+
+  it('keeps byStatus blind to the status filter and bound to the channel', async () => {
+    const tenant = await seed();
+    const withFilter = await subscriberChannelCounts(tenant.id, {
+      channel: 'email',
+      status: 'active',
+    });
+    // A menu that counted only the selected status would report every other
+    // option as zero, so the roster could never leave the status it is on.
+    expect(withFilter.byStatus.unsubscribed).toBe(1);
+    expect(withFilter.byStatus.bounced).toBe(1);
+    expect(withFilter.byStatus.active).toBe(3);
+
+    // ...but it IS scoped to the tab: only 3 of the 5 have a phone number, so
+    // the SMS tab's menu must not count the two who do not.
+    const sms = await subscriberChannelCounts(tenant.id, { channel: 'sms' });
+    expect(sms.byStatus.active).toBe(2);
+    expect(sms.byStatus.unsubscribed).toBe(0);
+    expect(sms.byStatus.bounced).toBe(1);
+    const smsTotal = Object.values(sms.byStatus).reduce((a, b) => a + b, 0);
+    expect(smsTotal).toBe(sms.sms);
+  });
+
+  it('binds a hostile tag name as a parameter instead of building a literal', async () => {
+    const tenant = await seed();
+    // The tag/list filters used to hand-build `array['…']` with sql.raw. This
+    // payload closed the literal on the list branch, which did not escape at
+    // all. Bound, it is data: zero matches, no error, no widening.
+    const hostile = ["x' or 1=1) or (select 1=1) --", "o'brien"];
+    expect(await countSubscribers(tenant.id, { tagNames: hostile })).toBe(0);
+    const counts = await subscriberChannelCounts(tenant.id, { tagNames: hostile });
+    expect(counts.email).toBe(0);
   });
 });

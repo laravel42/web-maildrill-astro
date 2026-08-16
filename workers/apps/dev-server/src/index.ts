@@ -6,7 +6,7 @@ import { config } from '@maildrill/config';
 import { logger, metrics } from '@maildrill/observability';
 import { closeDb, pool } from '@maildrill/database';
 import { sharedConnection, shutdownQueues } from '@maildrill/queues';
-import { isValidationError, setupOpenApi } from '@maildrill/httpkit';
+import { asClientError, isValidationError, setupOpenApi } from '@maildrill/httpkit';
 import { messagingRoutes } from '../../api/src/server';
 import { productRoutes } from '../../product-api/src/server';
 import {
@@ -120,6 +120,10 @@ app.setErrorHandler((err, req, reply) => {
   if (isValidationError(err)) {
     return reply.code(400).send({ error: 'validation', issues: err.validation });
   }
+  // Same as the product server: a caller-caused 400 (invalid cursor) names
+  // itself rather than reading as a server fault.
+  const client = asClientError(err);
+  if (client) return reply.code(client.statusCode).send({ error: client.error });
   // Route plugins don't set their own error handler, so real errors walk up to
   // here — record them in Telescope's Exceptions tab (validation 400s excluded).
   if (telescopeEnabled) recordTelescopeException(app, err);

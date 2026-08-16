@@ -122,42 +122,6 @@ function previewCount(data: unknown): number | null {
   return typeof count === 'number' ? count : null;
 }
 
-/** Resolve list phone reach via preview when /v1/lists omits phoneMemberCount. */
-export async function enrichListAudienceCounts(
-  client: SegmentPreviewClient,
-  lists: ApiList[],
-): Promise<Map<string, { phoneCount: number | null }>> {
-  const out = new Map<string, { phoneCount: number | null }>();
-
-  await Promise.all(
-    lists.map(async (list) => {
-      let phoneCount = list.phoneMemberCount ?? null;
-
-      if (phoneCount == null) {
-        if (list.memberCount === 0) {
-          phoneCount = 0;
-        } else {
-          const res = await client.POST('/v1/segments/preview', {
-            body: {
-              matchType: 'all',
-              rules: [
-                { field: 'list', op: 'eq', value: list.id },
-                { field: 'phone', op: 'exists' },
-              ],
-              limit: 1,
-            },
-          });
-          if (!res.error) phoneCount = previewCount(res.data);
-        }
-      }
-
-      out.set(list.id, { phoneCount });
-    }),
-  );
-
-  return out;
-}
-
 /** Resolve segment member + phone counts via preview when the list payload omits them. */
 export async function enrichSegmentAudienceCounts(
   client: SegmentPreviewClient,

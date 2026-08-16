@@ -225,10 +225,10 @@ test.describe('subscribers', () => {
     await expect(page.getByText(email, { exact: true }).first()).toBeVisible({ timeout: 20_000 });
 
     const rows = (
-      (await (await page.request.get('/api/v1/subscribers?limit=200')).json()) as {
-        data: { id: string; email: string }[];
+      (await (await page.request.get('/api/v1/subscribers?limit=100')).json()) as {
+        items: { id: string; email: string }[];
       }
-    ).data;
+    ).items;
     const created = rows.find((r) => r.email === email);
     expect(created, 'created subscriber is returned by the API').toBeTruthy();
     const removed = await page.request.delete(`/api/v1/subscribers/${created!.id}`, {
