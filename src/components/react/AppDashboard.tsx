@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import type { Campaign, ChannelType } from '@/types/app';
 import { api } from '@/lib/app/api';
 import { toCampaigns, type ApiCampaign } from '@/lib/app/campaign-map';
-import { readDashboardCache, writeDashboardCache } from '@/lib/app/dashboard-cache';
+import {
+  readDashboardCache,
+  writeDashboardCache,
+  type DashboardCache,
+} from '@/lib/app/dashboard-cache';
 import { RANGES, type ChannelBreakdown } from './AppAnalytics.logic';
 import type { FeedItem } from './AppDashboard.types';
 import Icon from './Icon';
@@ -59,12 +63,18 @@ export default function AppDashboard({
     const cachedChannels = cached?.channelsByDays[String(days)];
 
     if (cached) {
-      setSummary(cached.summary);
-      setCampaigns(cached.campaigns);
-      setActivity(cached.feed);
+      if (cached.summary) setSummary(cached.summary);
+      if (cached.campaigns) setCampaigns(cached.campaigns);
+      if (cached.feed) setActivity(cached.feed);
       if (cachedDaily) setDaily(cachedDaily);
       if (cachedChannels) setChannels(cachedChannels);
-      if (cachedDaily && cachedChannels) {
+      if (
+        cached.summary &&
+        cached.campaigns &&
+        cached.feed &&
+        cachedDaily &&
+        cachedChannels
+      ) {
         bootedRef.current = true;
         setBootLoading(false);
         return;
@@ -73,29 +83,28 @@ export default function AppDashboard({
 
     setBootLoading(true);
 
-    let nextSummary = cached?.summary ?? null;
-    let nextCampaigns = cached?.campaigns ?? [];
-    let nextFeed = cached?.feed ?? [];
-    let nextDaily = cachedDaily ?? [];
-    let nextChannels = cachedChannels ?? [];
+    // Each slice is cached only once its own request lands, so one failure
+    // (a throttled stats query, say) can't freeze the others behind a
+    // half-empty entry until the TTL runs out.
+    const fetched: Partial<DashboardCache> = {};
 
     void Promise.all([
-      cached
+      cached?.summary
         ? Promise.resolve()
         : api
             .get<Summary>('stats/summary')
             .then((s) => {
-              nextSummary = s;
+              fetched.summary = s;
               if (!cancelled) setSummary(s);
             })
             .catch(() => {}),
-      cached
+      cached?.campaigns
         ? Promise.resolve()
         : api
             .get<{ data: ApiCampaign[] }>('campaigns')
             .then((res) => {
-              nextCampaigns = toCampaigns(res.data ?? []);
-              if (!cancelled) setCampaigns(nextCampaigns);
+              fetched.campaigns = toCampaigns(res.data ?? []);
+              if (!cancelled) setCampaigns(fetched.campaigns);
             })
             .catch(() => {}),
       cachedDaily
@@ -103,8 +112,8 @@ export default function AppDashboard({
         : api
             .get<{ data: ActivityPoint[] }>(`stats/activity?days=${fetchDays}`)
             .then((act) => {
-              nextDaily = act.data ?? [];
-              if (!cancelled) setDaily(nextDaily);
+              fetched.activityByDays = { [String(fetchDays)]: act.data ?? [] };
+              if (!cancelled) setDaily(act.data ?? []);
             })
             .catch(() => {}),
       cachedChannels
@@ -112,28 +121,22 @@ export default function AppDashboard({
         : api
             .get<{ data: ChannelBreakdown[] }>(`stats/channels?days=${days}`)
             .then((ch) => {
-              nextChannels = ch.data ?? [];
-              if (!cancelled) setChannels(nextChannels);
+              fetched.channelsByDays = { [String(days)]: ch.data ?? [] };
+              if (!cancelled) setChannels(ch.data ?? []);
             })
             .catch(() => {}),
-      cached
+      cached?.feed
         ? Promise.resolve()
         : api
             .get<{ data: FeedItem[] }>('stats/feed')
             .then((feed) => {
-              nextFeed = feed.data ?? [];
-              if (!cancelled) setActivity(nextFeed);
+              fetched.feed = feed.data ?? [];
+              if (!cancelled) setActivity(fetched.feed);
             })
             .catch(() => {}),
     ]).finally(() => {
       if (cancelled) return;
-      writeDashboardCache(tenantId, {
-        summary: nextSummary,
-        campaigns: nextCampaigns,
-        feed: nextFeed,
-        activityByDays: { [String(fetchDays)]: nextDaily },
-        channelsByDays: { [String(days)]: nextChannels },
-      });
+      if (Object.keys(fetched).length > 0) writeDashboardCache(tenantId, fetched);
       bootedRef.current = true;
       setBootLoading(false);
     });
@@ -159,28 +162,37 @@ export default function AppDashboard({
     let cancelled = false;
     setRangeLoading(true);
 
+    // Same rule as boot: a window is only cached once its request succeeds,
+    // so a failed range never sticks as an empty chart for the whole TTL.
+    const fetched: Partial<DashboardCache> = {};
+
     void Promise.all([
       hitDaily
         ? Promise.resolve(hitDaily)
         : api
             .get<{ data: ActivityPoint[] }>(`stats/activity?days=${fetchDays}`)
-            .then((act) => act.data ?? [])
+            .then((act) => {
+              const points = act.data ?? [];
+              fetched.activityByDays = { [String(fetchDays)]: points };
+              return points;
+            })
             .catch(() => [] as ActivityPoint[]),
       hitChannels
         ? Promise.resolve(hitChannels)
         : api
             .get<{ data: ChannelBreakdown[] }>(`stats/channels?days=${days}`)
-            .then((ch) => ch.data ?? [])
+            .then((ch) => {
+              const rows = ch.data ?? [];
+              fetched.channelsByDays = { [String(days)]: rows };
+              return rows;
+            })
             .catch(() => [] as ChannelBreakdown[]),
     ])
       .then(([act, ch]) => {
         if (cancelled) return;
         setDaily(act);
         setChannels(ch);
-        writeDashboardCache(tenantId, {
-          activityByDays: { [String(fetchDays)]: act },
-          channelsByDays: { [String(days)]: ch },
-        });
+        if (Object.keys(fetched).length > 0) writeDashboardCache(tenantId, fetched);
       })
       .finally(() => {
         if (!cancelled) setRangeLoading(false);

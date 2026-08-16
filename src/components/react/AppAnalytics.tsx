@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { ChannelType } from '@/types/app';
 import { api } from '@/lib/app/api';
-import { readDashboardCache, writeDashboardCache } from '@/lib/app/dashboard-cache';
+import {
+  readDashboardCache,
+  writeDashboardCache,
+  type DashboardCache,
+} from '@/lib/app/dashboard-cache';
 import Icon from './Icon';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import type { ChartKey, EngagementKey, SeriesKey } from './AppAnalytics.types';
@@ -106,8 +110,9 @@ export default function AppAnalytics({
     setBootLoading(true);
     const qs = new URLSearchParams({ days: String(bootDays) });
     qs.set('channel', bootChannel);
-    let nextDaily = hitDaily ?? [];
-    let nextChannels = hitChannels ?? [];
+    // Only a window that actually loaded gets cached — caching a failed fetch
+    // as an empty window would hide it behind the TTL on every later visit.
+    const fetched: Partial<DashboardCache> = {};
     let bootFailed = false;
     void Promise.all([
       hitDaily
@@ -115,8 +120,8 @@ export default function AppAnalytics({
         : api
             .get<{ data: ActivityPoint[] }>(`stats/activity?${qs.toString()}`)
             .then((res) => {
-              nextDaily = res.data ?? [];
-              if (!cancelled) setDaily(nextDaily);
+              fetched.activityByDays = { [bootKey]: res.data ?? [] };
+              if (!cancelled) setDaily(res.data ?? []);
             })
             .catch(() => {
               bootFailed = true;
@@ -126,17 +131,14 @@ export default function AppAnalytics({
         : api
             .get<{ data: ChannelBreakdown[] }>(`stats/channels?days=${bootDays}`)
             .then((res) => {
-              nextChannels = res.data ?? [];
+              fetched.channelsByDays = { [String(bootDays)]: res.data ?? [] };
             })
             .catch(() => {
               bootFailed = true;
             }),
     ]).finally(() => {
       if (cancelled) return;
-      writeDashboardCache(tenantId, {
-        activityByDays: { [bootKey]: nextDaily },
-        channelsByDays: { [String(bootDays)]: nextChannels },
-      });
+      if (Object.keys(fetched).length > 0) writeDashboardCache(tenantId, fetched);
       bootedRef.current = true;
       setBootLoading(false);
       if (bootFailed) showToast('Could not load analytics');
@@ -174,12 +176,17 @@ export default function AppAnalytics({
     setRangeLoading(true);
     const qs = new URLSearchParams({ days: String(days) });
     qs.set('channel', channel);
+    const fetched: Partial<DashboardCache> = {};
     void Promise.all([
       hitDaily
         ? Promise.resolve(hitDaily)
         : api
             .get<{ data: ActivityPoint[] }>(`stats/activity?${qs.toString()}`)
-            .then((res) => res.data ?? [])
+            .then((res) => {
+              const points = res.data ?? [];
+              fetched.activityByDays = { [actKey]: points };
+              return points;
+            })
             .catch(() => {
               showToast('Could not load analytics');
               return [] as ActivityPoint[];
@@ -188,16 +195,16 @@ export default function AppAnalytics({
         ? Promise.resolve(hitChannels)
         : api
             .get<{ data: ChannelBreakdown[] }>(`stats/channels?days=${days}`)
-            .then((res) => res.data ?? [])
+            .then((res) => {
+              fetched.channelsByDays = { [String(days)]: res.data ?? [] };
+              return res.data ?? [];
+            })
             .catch(() => [] as ChannelBreakdown[]),
     ])
-      .then(([act, ch]) => {
+      .then(([act]) => {
         if (cancelled) return;
         setDaily(act);
-        writeDashboardCache(tenantId, {
-          activityByDays: { [actKey]: act },
-          channelsByDays: { [String(days)]: ch },
-        });
+        if (Object.keys(fetched).length > 0) writeDashboardCache(tenantId, fetched);
       })
       .finally(() => {
         if (!cancelled) setRangeLoading(false);

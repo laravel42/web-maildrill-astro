@@ -18,11 +18,17 @@ const KEY_PREFIX = 'md:dashboard:v1';
 /** Null tenant (demo/preview) gets its own bucket rather than sharing one. */
 const keyFor = (tenantId: string | null | undefined) => `${KEY_PREFIX}:${tenantId ?? 'anon'}`;
 
+/**
+ * Slices are optional on purpose: absent means "never fetched successfully",
+ * which is what lets the dashboard retry them. Storing `summary: null` for a
+ * failed request instead made the entry look complete, so every visit for the
+ * rest of the TTL skipped the fetch and rendered em-dash KPIs.
+ */
 export type DashboardCache = {
   savedAt: number;
-  summary: Summary | null;
-  campaigns: Campaign[];
-  feed: FeedItem[];
+  summary?: Summary;
+  campaigns?: Campaign[];
+  feed?: FeedItem[];
   /** Daily activity keyed by requested `days` query (e.g. 14 for a 7d window). */
   activityByDays: Record<string, ActivityPoint[]>;
   /** Channel breakdown keyed by selected window days. */
@@ -32,9 +38,6 @@ export type DashboardCache = {
 function empty(): DashboardCache {
   return {
     savedAt: 0,
-    summary: null,
-    campaigns: [],
-    feed: [],
     activityByDays: {},
     channelsByDays: {},
   };
@@ -54,6 +57,8 @@ export function readDashboardCache(tenantId: string | null | undefined): Dashboa
     return {
       ...empty(),
       ...parsed,
+      // A legacy entry (or a poisoned one) can carry an explicit null here.
+      summary: parsed.summary ?? undefined,
       activityByDays: parsed.activityByDays ?? {},
       channelsByDays: parsed.channelsByDays ?? {},
     };
