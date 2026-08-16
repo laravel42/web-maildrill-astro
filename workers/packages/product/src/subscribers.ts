@@ -30,6 +30,7 @@ import {
 import { seedSubscriberEngagement } from '@maildrill/services';
 import { addToList } from './lists';
 import { bucketOrdinals, type EngagementBucket } from './engagement';
+import { FAILED_STATUSES } from './message-status';
 import { buildSegmentWhere, clamp } from './rules';
 import {
   invalidReasonLabel,
@@ -946,23 +947,30 @@ export async function subscriberActivity(
              Status-based rather than timestamp-based so a message still counts
              when the pipeline skipped a timestamp (delivered without a sent_at).
 
-             KNOWN DEFECT (audit #9): the status vocabulary here is incomplete.
-             `sent` lists submitted/sent/delivered/read and `failed` lists only
-             `failed`, so `expired` and `cancelled` belong to neither — an
-             expired message is subtracted from the record entirely rather than
-             counted as the non-delivery it is. It affects 47,653 messages across
-             47,653 subscribers (4.8% of the seeded workspace), and it is visible
-             on screen: the KPI tiles read "SENT 8 / DELIVERED 7 of 8" while the
-             activity feed directly beneath lists 9 rows, one of them `expired`. */
+             `sent` lists the states that left successfully
+             (submitted/sent/delivered/read) and `failed` is `FAILED_STATUSES` —
+             failed + expired, the one definition (message-status.ts). Together
+             they cover every dispatched message, which is what lets the detail
+             view compute `attempted = sent + failed` without losing rows: an
+             expired message used to belong to neither and was subtracted from
+             the record entirely (47,653 messages across 47,653 subscribers,
+             4.8% of the seeded workspace — tiles reading "SENT 8 / DELIVERED 7
+             of 8" over an activity feed listing 9 rows, one of them `expired`).
+
+             `cancelled` is still in neither, and belongs in neither: it is only
+             reachable before dispatch, so the message was never attempted. */
           sent: sql<number>`count(*) filter (where ${messages.status} in ('submitted','sent','delivered','read'))::int`,
           delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered','read'))::int`,
           read: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
           // Per-subscriber failures are the actionable signal on every channel:
           // they say this person's address or number is not reachable.
-          failed: sql<number>`count(*) filter (where ${messages.status} = 'failed')::int`,
+          failed: sql<number>`count(*) filter (where ${messages.status} in ${FAILED_STATUSES})::int`,
           // A permanent failure is the address itself being dead — a hard bounce
           // on email. A transient one (full mailbox, handset off) is not, and the
           // two call for different action, so the deliverability panel splits them.
+          // Narrower than `failed` on purpose: `last_error_permanent` is written
+          // by the failure path only, and is null on every `expired` row, so an
+          // expiry can never be read as a dead address.
           failedPermanent: sql<number>`count(*) filter (where ${messages.status} = 'failed' and ${messages.lastErrorPermanent} is true)::int`,
         })
         .from(messages)

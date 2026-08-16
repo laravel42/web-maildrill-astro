@@ -1,8 +1,10 @@
 import { and, desc, eq, gte, isNotNull, sql } from 'drizzle-orm';
+import type { PgColumn } from 'drizzle-orm/pg-core';
 import { config } from '@maildrill/config';
 import { campaigns, db, lists, messageEvents, messages, subscribers } from '@maildrill/database';
 import type { Channel } from '@maildrill/domain';
 import { createLogger } from '@maildrill/observability';
+import { FAILED_STATUSES } from './message-status';
 import { byChannelFromPostHog, dailyActivityFromPostHog } from './posthog-stats';
 import { clamp } from './rules';
 
@@ -40,20 +42,72 @@ export interface WorkspaceSummary {
     trackedDelivered: number;
     failed: number;
     sentToday: number;
-    /** Messages with a read/seen receipt, and with at least one click event. */
+    /**
+     * Read receipts and clicked messages on the TRACKED channels only — the
+     * same email + WhatsApp set as `trackedDelivered`, so `opened /
+     * trackedDelivered` is a rate whose two sides are drawn from one set.
+     *
+     * Narrowing these is what the dashboard's open-rate card needed: reads
+     * exist on `sms` and `voice` rows in the data even though neither provider
+     * can report one, and counting them made the card's context line
+     * (300,332) 2.13x the numerator of the rate printed above it (140,919).
+     */
     opened: number;
     clicked: number;
   };
   byChannel: ChannelBreakdown[];
-  /** Weekly series for the dashboard KPI sparklines (52 weeks), oldest → newest. */
+  /**
+   * Daily series for the dashboard KPI cards and their sparklines — exactly
+   * `TREND_DAYS` entries, oldest → newest, zero-filled and day-aligned so
+   * entry `k` is always the same calendar day for every series here.
+   *
+   * DAILY, not weekly, and RAW COUNTS, not cumulative stock or precomputed
+   * rates. Both of those are deliberate:
+   *
+   *  - Weekly buckets could not express the range chips. The dashboard offers
+   *    7 / 30 / 90 days and 12 months, and the browser rounded each to whole
+   *    weeks (`round(days / 7)`), so "30 days" was really 28 and "12 months"
+   *    357 — while the "Sent (30 days)" card beside them sliced a true 30 days
+   *    of the daily activity series. One chip, two windows: 38,387 subscribers
+   *    against a true 41,129. At daily resolution every card slices exactly
+   *    the days its chip names.
+   *  - Per-day adds, rather than a running total, are the quantity the cards
+   *    actually print. The headline is net adds in the window and the spark
+   *    beneath it plotted the cumulative stock, so a card read "9,596" over a
+   *    line climbing 962,000 -> 1,000,229 — two subjects on one card.
+   *  - Engagement ships as its numerator and denominator rather than as a
+   *    rate, so the browser can divide sums over the window it wants. A mean
+   *    of daily rates is not the window's rate, and only the summed form can
+   *    match the headline, which is Σ opened / Σ delivered from
+   *    `channelBreakdown` over the same window and the same two channels.
+   */
   trends: {
+    /** Subscribers created that day. */
     subscribers: number[];
+    /** Lists created that day. */
     lists: number[];
+    /** Campaigns that finished sending that day (`completed_at`, status sent). */
     campaigns: number[];
-    openRate: number[];
-    clickRate: number[];
+    /**
+     * Engagement inputs, tracked channels only (email + WhatsApp) and bucketed
+     * on `messages.created_at` — the same column and the same channel set
+     * `channelBreakdown` uses, so a window slice of these reproduces the card's
+     * headline exactly instead of approximating it.
+     */
+    trackedDelivered: number[];
+    opened: number[];
+    clicked: number[];
   };
 }
+
+/**
+ * Length of every `trends` series: one year of daily points.
+ *
+ * Sized to the widest range chip (12 months). A card's delta compares its
+ * window against the one before it, so a 12-month delta would need two years
+ * here; it renders "—" instead, which is what it did at weekly resolution too.
+ */
+const TREND_DAYS = 365;
 
 const countOf = sql<number>`count(*)::int`;
 
@@ -66,12 +120,13 @@ function totalSent(rows: ReadonlyArray<{ sent: number }>): number {
  * window (live DLRs caught up). Otherwise use Postgres so seeded / historical
  * message rows still drive range-scoped charts when HogQL only has recent events.
  *
- * The two sources do not define `failed` identically: Postgres counts
- * `status = 'failed'`, HogQL counts `FAILED_STATUS_GROUPS`, which also includes
- * EXPIRED and REJECTED. So whichever source wins also silently decides what the
- * word means on the chart. Postgres wins at every range on the seeded 1M-message
- * tenant; a quiet tenant whose PostHog volume catches up flips the definition
- * with no visible change on screen.
+ * The two sources now define `failed` identically, which is what makes the swap
+ * safe: Postgres counts `FAILED_STATUSES` (failed + expired) and HogQL counts
+ * `FAILED_STATUS_GROUPS` (UNDELIVERABLE + REJECTED -> failed, EXPIRED ->
+ * expired) — the same set either way. Whichever source wins, the word on the
+ * chart means the same thing. Before this, Postgres counted `status = 'failed'`
+ * alone and a quiet tenant whose PostHog volume caught up flipped the
+ * definition with nothing on screen to say so.
  */
 function preferRicherSource<T extends { sent: number }>(
   fromPh: T[] | null | undefined,
@@ -94,17 +149,18 @@ function preferRicherSource<T extends { sent: number }>(
  * delivered, and counting only `status = 'delivered'` undercounts as receipts
  * arrive, which pushes any opened/delivered rate past 100%.
  *
- * `opened` has no channel filter — it is reads on every channel. That is only
- * safe because the caller pairs it per-channel; folding it into a cross-channel
- * rate is the defect flagged in `workspaceSummary` below.
+ * `opened` carries no channel predicate because the GROUP BY already supplies
+ * one: every row here is a single channel's reads beside that same channel's
+ * deliveries. Callers must keep them paired — summing `opened` across all four
+ * rows and dividing by the two tracked channels' deliveries is the mismatch
+ * that put a 112.47% point on the dashboard's open-rate spark.
  *
- * KNOWN DEFECT (audit #6): `failed` here means `status = 'failed'` alone, while
- * `messageCounters` (campaign-crud), the list detail rollup and the campaigns
- * board all count `failed | cancelled | expired`. `expired` is a terminal
- * non-delivery, so this definition under-reports and the product carries two
- * incompatible meanings of the same word. On the seeded tenant, 30 days: voice
- * renders 0 failures against 1,176 expired calls; email renders 8 against 13.
- * Analytics and the dashboard read this one.
+ * `failed` is `FAILED_STATUSES` — failed + expired, the one definition shared
+ * with the campaign counters, the list rollup and HogQL (see message-status.ts).
+ * `expired` is a terminal non-delivery: the provider accepted the message and
+ * then gave up, so the send failed. Counting `status = 'failed'` alone used to
+ * halve every failure rate on this screen — 30 days on the seeded tenant: voice
+ * 0 against 1,176 expired calls, WhatsApp 1,178 against a true 2,354.
  */
 async function byChannelFromPostgres(tenantId: string, since?: Date): Promise<ChannelBreakdown[]> {
   const conds = [eq(messages.tenantId, tenantId)];
@@ -121,7 +177,7 @@ async function byChannelFromPostgres(tenantId: string, since?: Date): Promise<Ch
         channel: messages.channel,
         sent: countOf,
         delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read'))::int`,
-        failed: sql<number>`count(*) filter (where ${messages.status} = 'failed')::int`,
+        failed: sql<number>`count(*) filter (where ${messages.status} in ${FAILED_STATUSES})::int`,
         opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
       })
       .from(messages)
@@ -219,17 +275,18 @@ export async function workspaceSummary(tenantId: string): Promise<WorkspaceSumma
         // open/click denominator: an SMS delivery can never produce an open, so
         // counting it would dilute the rate toward zero.
         //
-        // KNOWN DEFECT (audit #5): `opened` below carries NO channel filter, so
-        // it counts reads on every channel while `trackedDelivered` counts
-        // deliveries on two. Divide one by the other and the numerator is drawn
-        // from a wider set than the denominator. On the seeded tenant that is
-        // 300,332 all-channel reads over 140,919 tracked deliveries, and the
-        // weekly version of the same pairing below produces rates above 100%.
+        // `opened` carries THE SAME channel predicate, and must: it is the
+        // numerator over that denominator, and the dashboard prints it as the
+        // context line under the open-rate card. Counted across all four
+        // channels it read 300,332 — 2.13x the 140,919 reads the rate above it
+        // was actually built from, because `sms` and `voice` rows carry a
+        // `read` status neither provider can produce.
         total: countOf,
         delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read'))::int`,
         trackedDelivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read') and ${messages.channel} in ('email', 'whatsapp'))::int`,
-        opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
-        failed: sql<number>`count(*) filter (where ${messages.status} = 'failed')::int`,
+        opened: sql<number>`count(*) filter (where ${messages.status} = 'read' and ${messages.channel} in ('email', 'whatsapp'))::int`,
+        // failed + expired — `FAILED_STATUSES`, the one definition (message-status.ts).
+        failed: sql<number>`count(*) filter (where ${messages.status} in ${FAILED_STATUSES})::int`,
       })
       .from(messages)
       .where(eq(messages.tenantId, tenantId)),
@@ -240,116 +297,124 @@ export async function workspaceSummary(tenantId: string): Promise<WorkspaceSumma
       .where(and(eq(messages.tenantId, tenantId), gte(messages.submittedAt, startOfToday))),
   ]);
 
-  /* Weekly engagement + growth series for the KPI sparklines (52 weeks —
-     enough to cover the dashboard's 12-month timespan selector).
-     
-     Engagement weeks bucket on `messages.sent_at` (the send), clicks on
-     `message_events.occurred_at` (the receipt) — the two are joined by week key
-     below, so a click that lands in the week after its send is credited to the
-     week it happened rather than the week the message left. That asymmetry is
-     deliberate for a "click rate this week" reading, and it is why the click
-     numerator can exceed its own week's sends on a slow-clicking audience.
-     
-     Growth series are raw timestamp lists reduced in this process, not in SQL:
-     `subscribers.created_at`, `lists.created_at`, and `campaigns.completed_at`
-     for sent campaigns only. Full set, one row per record — on the 1M-subscriber
-     tenant that is a million Dates crossing the wire to build 52 integers. */
-  const TREND_WEEKS = 52;
-  const weekOfSent = sql`date_trunc('week', ${messages.sentAt})`;
-  const [clickTotalRows, weeklyMsgRows, weeklyClickRows, subDates, listDates, campDates] =
-    await Promise.all([
-      db
-        .select({ clicked: sql<number>`count(distinct ${messageEvents.messageId})::int` })
-        .from(messageEvents)
-        .innerJoin(messages, eq(messageEvents.messageId, messages.id))
-        .where(and(eq(messages.tenantId, tenantId), eq(messageEvents.eventType, 'click'))),
-      db
-        .select({
-          week: sql<string>`${weekOfSent}::text`,
-          trackedDelivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read') and ${messages.channel} in ('email', 'whatsapp'))::int`,
-          opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
-        })
-        .from(messages)
-        .where(
-          and(
-            eq(messages.tenantId, tenantId),
-            isNotNull(messages.sentAt),
-            gte(messages.sentAt, sql`now() - interval '52 weeks'`),
-          ),
-        )
-        .groupBy(weekOfSent)
-        .orderBy(weekOfSent),
-      db
-        .select({
-          week: sql<string>`date_trunc('week', ${messageEvents.occurredAt})::text`,
-          clicked: sql<number>`count(distinct ${messageEvents.messageId})::int`,
-        })
-        .from(messageEvents)
-        .innerJoin(messages, eq(messageEvents.messageId, messages.id))
-        .where(
-          and(
-            eq(messages.tenantId, tenantId),
-            eq(messageEvents.eventType, 'click'),
-            gte(messageEvents.occurredAt, sql`now() - interval '52 weeks'`),
-          ),
-        )
-        .groupBy(sql`date_trunc('week', ${messageEvents.occurredAt})`)
-        .orderBy(sql`date_trunc('week', ${messageEvents.occurredAt})`),
-      db
-        .select({ at: subscribers.createdAt })
-        .from(subscribers)
-        .where(eq(subscribers.tenantId, tenantId)),
-      db.select({ at: lists.createdAt }).from(lists).where(eq(lists.tenantId, tenantId)),
-      db
-        .select({ at: campaigns.completedAt })
-        .from(campaigns)
-        .where(and(eq(campaigns.tenantId, tenantId), eq(campaigns.status, 'sent'))),
-    ]);
+  /* Daily growth + engagement series for the KPI cards (TREND_DAYS days).
 
-  const WEEK = 7 * 86_400_000;
-  const now = Date.now();
+     `since` is local midnight TREND_DAYS-1 days back — the same anchor
+     `channelBreakdown` and `dailyActivity` compute for their own windows, so
+     slicing the last N of these covers exactly the calendar days the "Sent
+     (N days)" card beside them covers. That agreement is the whole point: the
+     row used to hold two windows at once, because these series were weekly and
+     the browser rounded a day-range to the nearest whole number of them.
+
+     Each row carries a DAY INDEX, not a date string: `col::date - since::date`
+     is an integer offset whose two sides Postgres renders in one timezone,
+     which makes the zero-fill below a plain array write. (The activity
+     zero-fill nearby matches a `to_char` day against `toISOString()` instead,
+     and empties the entire chart on any UTC+ host; nothing here can drift.)
+
+     All five are aggregates rather than row dumps. The growth series used to
+     select every `created_at` the tenant owns — a million Dates across the
+     wire, then one full scan of that array per output point — to produce 52
+     integers; these produce 365 without leaving Postgres. */
+  const since = new Date();
+  since.setHours(0, 0, 0, 0);
+  since.setDate(since.getDate() - (TREND_DAYS - 1));
+  const dayOf = (col: PgColumn) => sql<number>`(${col}::date - ${since}::timestamptz::date)::int`;
+  const subDay = dayOf(subscribers.createdAt);
+  const listDay = dayOf(lists.createdAt);
+  const campDay = dayOf(campaigns.completedAt);
+  const msgDay = dayOf(messages.createdAt);
+  /* GROUP BY the select-list ORDINAL, not the expression: `since` is a bound
+     parameter, and repeating the fragment binds it a second time, so the two
+     copies read `$1` and `$2` and Postgres rejects them as different
+     expressions ("column must appear in the GROUP BY clause"). The ordinal
+     names the one already in the select list. */
+  const firstColumn = sql`1`;
+  /* Tracked channels only, everywhere engagement is counted — email and
+     WhatsApp are the only two whose providers report a read or a click, and a
+     numerator drawn from a wider set than its denominator is what produced
+     weekly "open rates" of 112.47%. */
+  const trackedChannel = sql`${messages.channel} in ('email', 'whatsapp')`;
+
+  const [clickTotalRows, subDaily, listDaily, campDaily, msgDaily, clickDaily] = await Promise.all([
+    db
+      .select({ clicked: sql<number>`count(distinct ${messageEvents.messageId})::int` })
+      .from(messageEvents)
+      .innerJoin(messages, eq(messageEvents.messageId, messages.id))
+      .where(
+        and(eq(messages.tenantId, tenantId), eq(messageEvents.eventType, 'click'), trackedChannel),
+      ),
+    db
+      .select({ idx: subDay, n: countOf })
+      .from(subscribers)
+      .where(and(eq(subscribers.tenantId, tenantId), gte(subscribers.createdAt, since)))
+      .groupBy(firstColumn),
+    db
+      .select({ idx: listDay, n: countOf })
+      .from(lists)
+      .where(and(eq(lists.tenantId, tenantId), gte(lists.createdAt, since)))
+      .groupBy(firstColumn),
+    // Campaigns are dated by the send that finished, not by the row's creation
+    // — the same `completed_at` the activity feed orders by. `gte` also drops
+    // the NULLs, which is right: an unsent campaign was added to no day.
+    db
+      .select({ idx: campDay, n: countOf })
+      .from(campaigns)
+      .where(
+        and(
+          eq(campaigns.tenantId, tenantId),
+          eq(campaigns.status, 'sent'),
+          gte(campaigns.completedAt, since),
+        ),
+      )
+      .groupBy(firstColumn),
+    db
+      .select({
+        idx: msgDay,
+        trackedDelivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read'))::int`,
+        opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
+      })
+      .from(messages)
+      .where(
+        and(eq(messages.tenantId, tenantId), trackedChannel, gte(messages.createdAt, since)),
+      )
+      .groupBy(firstColumn),
+    // Clicks bucket on the MESSAGE's day, not the event's, so a click and the
+    // delivery it belongs to land in the same slot and their ratio is a rate.
+    // Bucketed on `occurred_at` the numerator could outrun its own bucket's
+    // sends, which is exactly what the weekly series did.
+    db
+      .select({
+        idx: msgDay,
+        n: sql<number>`count(distinct ${messageEvents.messageId})::int`,
+      })
+      .from(messageEvents)
+      .innerJoin(messages, eq(messageEvents.messageId, messages.id))
+      .where(
+        and(
+          eq(messages.tenantId, tenantId),
+          eq(messageEvents.eventType, 'click'),
+          trackedChannel,
+          gte(messages.createdAt, since),
+        ),
+      )
+      .groupBy(firstColumn),
+  ]);
+
   /**
-   * A cumulative STOCK series: point k is how many records existed by that
-   * week's cutoff, not how many were added in it. Consumers that want net adds
-   * must difference two points — which `periodNetCompare` in AppDashboard.logic
-   * does for the headline, while `weeklySpark` beside it plots these raw
-   * cumulative values under that net-adds headline (audit #18: a card reading
-   * "9,596" over a line running 962k -> 1,000,229).
-   *
-   * Computed in this process over the full set of timestamps, not in SQL.
+   * Scatter day-indexed rows into a zero-filled `TREND_DAYS` array, oldest →
+   * newest. Zero-filled rather than compacted: a quiet day has to hold its
+   * slot, or entry `k` stops naming the same date in every series and a
+   * consumer's `slice(-days)` reaches further back than the days it asked for.
    */
-  const cumulative = (dates: (Date | null)[]): number[] => {
-    const times = dates.filter((d): d is Date => d != null).map((d) => d.getTime());
-    return Array.from({ length: TREND_WEEKS }, (_, k) => {
-      const cutoff = now - (TREND_WEEKS - 1 - k) * WEEK;
-      return times.filter((t) => t <= cutoff).length;
-    });
+  const daily = <R extends { idx: number }>(rows: readonly R[], pick: (row: R) => number) => {
+    const out = new Array<number>(TREND_DAYS).fill(0);
+    for (const row of rows) {
+      const i = Number(row.idx);
+      if (i >= 0 && i < TREND_DAYS) out[i] = Number(pick(row));
+    }
+    return out;
   };
-  const clicksByWeek = new Map(weeklyClickRows.map((r) => [r.week, Number(r.clicked)]));
-  const openRateTrend: number[] = [];
-  const clickRateTrend: number[] = [];
-  for (const w of weeklyMsgRows) {
-    /* Denominator: tracked-channel deliveries only (email, WhatsApp), because
-       a week that only delivered SMS and voice has no measurable open rate at
-       all — a 0% there would read as "nobody engaged" rather than "nothing was
-       measured".
-
-       KNOWN DEFECT (audit #5): the numerator `w.opened` is reads on EVERY
-       channel (see the select above), so this is an all-channel numerator over
-       a two-channel denominator. Reproduced on the seeded tenant: week of
-       2026-08-03 yields 10,587 / 9,413 = 112.47%, and the week before 57.00%.
-       Those feed the dashboard's open-rate sparkline and its delta, so the card
-       renders a mathematically impossible spark peak and a delta (-55.5%) that
-       is 2.6x the honest -21.07pp.
-
-       Weeks with no tracked delivery are DROPPED, not zero-filled, so the array
-       is not week-aligned and a consumer's `slice(-weeks)` can silently reach
-       further back than it thinks. Zero such weeks on this tenant today. */
-    const delivered = Number(w.trackedDelivered);
-    if (delivered <= 0) continue;
-    openRateTrend.push((Number(w.opened) / delivered) * 100);
-    clickRateTrend.push(((clicksByWeek.get(w.week) ?? 0) / delivered) * 100);
-  }
 
   /* KNOWN DEFECT (audit #1): unlike `channelBreakdown` above, this swap is
      UNGUARDED — any non-null PostHog result replaces Postgres wholesale, with
@@ -395,11 +460,12 @@ export async function workspaceSummary(tenantId: string): Promise<WorkspaceSumma
     },
     byChannel,
     trends: {
-      subscribers: cumulative(subDates.map((r) => r.at)),
-      lists: cumulative(listDates.map((r) => r.at)),
-      campaigns: cumulative(campDates.map((r) => r.at)),
-      openRate: openRateTrend,
-      clickRate: clickRateTrend,
+      subscribers: daily(subDaily, (r) => r.n),
+      lists: daily(listDaily, (r) => r.n),
+      campaigns: daily(campDaily, (r) => r.n),
+      trackedDelivered: daily(msgDaily, (r) => r.trackedDelivered),
+      opened: daily(msgDaily, (r) => r.opened),
+      clicked: daily(clickDaily, (r) => r.n),
     },
   };
 }
@@ -447,11 +513,15 @@ export interface DailyPoint {
  * and then reported, so adding the two would count one send twice and overstate
  * the failure rate.
  *
- * KNOWN DEFECT (audit #6): `failed` is `status = 'failed'` alone — `expired`
- * and `cancelled` fall into neither this nor `delivered`, so they vanish from
- * the chart entirely. This is what renders Voice "Failed 0.0% / 0" on the
- * analytics screen over 1,176 expired calls, and hides 12,946 expired email
- * messages from the 12-month email view (6.2% shown vs 11.73% true).
+ * `failed` is `FAILED_STATUSES` — failed + expired (message-status.ts). An
+ * expired send is a terminal non-delivery and belongs on the failure line; when
+ * this counted `status = 'failed'` alone, `expired` fell into neither this nor
+ * `delivered` and left the chart entirely — Voice read "Failed 0.0% / 0" over
+ * 1,176 expired calls and the 12-month email view read 6.2% against 11.73%.
+ *
+ * `cancelled` is still in neither bucket, and correctly so: it is only
+ * reachable before dispatch, so the message was never attempted. It is carried
+ * by `sent` (count(*)) the same way a queued message is.
  *
  * KNOWN DEFECT (audit #20): `voiceSeconds` sums a column populated on 0 of the
  * tenant's 294,204 voice messages, so the talk-time card reads a measured "0s"
@@ -474,7 +544,7 @@ async function dailyActivityFromPostgres(
       // Counting only status='delivered' undercounts once opens land and can
       // push open rate (opened / delivered) over 100%.
       delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read'))::int`,
-      failed: sql<number>`count(*) filter (where ${messages.status} = 'failed')::int`,
+      failed: sql<number>`count(*) filter (where ${messages.status} in ${FAILED_STATUSES})::int`,
       opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
       voiceSeconds: sql<number>`coalesce(sum(${messages.voiceSeconds}), 0)::int`,
     })

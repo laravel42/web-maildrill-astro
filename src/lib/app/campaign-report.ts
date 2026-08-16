@@ -15,6 +15,15 @@ export type ReportFunnelKey = 'recipients' | 'delivered' | 'opened' | 'seen' | '
 
 export type ReportPanelKey = 'devices' | 'links' | 'details';
 
+/**
+ * Recipient-event tabs. Mirrors `CAMPAIGN_EVENT_KINDS` in @maildrill/product,
+ * which decides the kind in SQL — the tabs a channel actually shows are the
+ * `eventTabs` list on its config below.
+ *
+ * `cancelled` is its own tab, not part of bounced/failed: a cancelled message
+ * never reached the provider, so counting it as a delivery failure would report
+ * the sender's own withdrawal as the recipient's address failing.
+ */
 export type ReportEventTab =
   | 'all'
   | 'delivered'
@@ -24,6 +33,7 @@ export type ReportEventTab =
   | 'unsubscribed'
   | 'sent'
   | 'bounced'
+  | 'cancelled'
   | 'queued'
   | 'failed';
 
@@ -57,7 +67,17 @@ const EMAIL: ChannelReportConfig = {
   drawerKpis: ['recipients', 'delivered', 'open', 'click', 'cto', 'unsubscribed'],
   funnel: ['recipients', 'delivered', 'opened', 'clicked'],
   panels: ['devices', 'links', 'details'],
-  eventTabs: ['all', 'delivered', 'opened', 'clicked', 'unsubscribed', 'sent', 'bounced', 'queued'],
+  eventTabs: [
+    'all',
+    'delivered',
+    'opened',
+    'clicked',
+    'unsubscribed',
+    'sent',
+    'bounced',
+    'cancelled',
+    'queued',
+  ],
   openLabel: 'Opened',
 };
 
@@ -67,7 +87,17 @@ const WHATSAPP: ChannelReportConfig = {
   drawerKpis: ['recipients', 'delivered', 'seen', 'click', 'cto', 'unsubscribed'],
   funnel: ['recipients', 'delivered', 'seen', 'clicked'],
   panels: ['links', 'details'],
-  eventTabs: ['all', 'delivered', 'seen', 'clicked', 'unsubscribed', 'sent', 'failed', 'queued'],
+  eventTabs: [
+    'all',
+    'delivered',
+    'seen',
+    'clicked',
+    'unsubscribed',
+    'sent',
+    'failed',
+    'cancelled',
+    'queued',
+  ],
   openLabel: 'Seen',
 };
 
@@ -88,7 +118,7 @@ const SMS: ChannelReportConfig = {
   drawerKpis: ['recipients', 'delivered', 'unsubscribed', 'failed'],
   funnel: ['recipients', 'delivered'],
   panels: ['details'],
-  eventTabs: ['all', 'delivered', 'unsubscribed', 'sent', 'failed', 'queued'],
+  eventTabs: ['all', 'delivered', 'unsubscribed', 'sent', 'failed', 'cancelled', 'queued'],
   openLabel: 'Opened',
 };
 
@@ -98,7 +128,7 @@ const VOICE: ChannelReportConfig = {
   drawerKpis: ['recipients', 'delivered', 'failed'],
   funnel: ['recipients', 'delivered'],
   panels: ['details'],
-  eventTabs: ['all', 'delivered', 'sent', 'failed', 'queued'],
+  eventTabs: ['all', 'delivered', 'sent', 'failed', 'cancelled', 'queued'],
   openLabel: 'Opened',
 };
 

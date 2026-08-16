@@ -18,12 +18,17 @@ import type { ChartKey, EngagementKey, SeriesKey } from './AppAnalytics.types';
  * tenant's messages in the window and zero-filled day by day. Nothing here is a
  * page or a sample; the arithmetic in this file is only summation and division.
  *
- * The one thing that is NOT full is the vocabulary: `failed` in that series
- * means `status = 'failed'` alone, so `expired` and `cancelled` appear in
- * neither the delivered nor the failed line and simply leave the chart. See
- * `dailyActivityFromPostgres` (audit #6) — it is why the Voice tab renders
- * "Failed 0.0% / 0" over 1,176 expired calls, and why 12-month email reads
- * 6.2% / 14.7k against a true 11.73% / 27,684.
+ * `failed` in that series is `FAILED_DELIVERY_STATES` — `failed` + `expired`,
+ * the one definition the whole product uses (message-status.ts in
+ * @maildrill/product, and the matching `FAILED_STATUS_GROUPS` on the HogQL
+ * side). An expired send is a terminal non-delivery: the provider accepted it
+ * and then gave up. When this counted `status = 'failed'` alone every failure
+ * rate on this screen was roughly halved — the Voice tab read "Failed 0.0% / 0"
+ * over 1,176 expired calls, WhatsApp read 5.3% / 1,178 against a true 10.5% /
+ * 2,354, and 12-month email read 6.2% / 14.7k against 11.73% / 27,684.
+ *
+ * `cancelled` is in neither line, deliberately: it is only reachable before
+ * dispatch, so nothing was attempted. It stays inside `sent`.
  * ------------------------------------------------------------------ */
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

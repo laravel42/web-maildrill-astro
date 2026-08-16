@@ -54,6 +54,9 @@ export const EVENT_META: Record<EventKind, { label: string; cls: string }> = {
   sent: { label: 'Sent', cls: 'astatus--scheduled' },
   bounced: { label: 'Bounced', cls: 'astatus--bounced' },
   failed: { label: 'Failed', cls: 'astatus--bounced' },
+  // Withdrawn before dispatch — not a delivery failure and not still waiting,
+  // so it carries neither the bounce badge nor the queued one.
+  cancelled: { label: 'Cancelled', cls: 'astatus--draft' },
   queued: { label: 'Queued', cls: 'astatus--draft' },
 };
 
@@ -67,6 +70,7 @@ export const EVENT_TAB_LABEL: Record<ReportEventTab, string> = {
   sent: 'Sent',
   bounced: 'Bounced',
   failed: 'Failed',
+  cancelled: 'Cancelled',
   queued: 'Queued',
 };
 

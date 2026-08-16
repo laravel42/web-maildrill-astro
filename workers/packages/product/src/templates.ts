@@ -12,6 +12,7 @@ import {
 import type { Channel } from '@maildrill/domain';
 import { config } from '@maildrill/config';
 import { unsubscribeUrl, webviewUrl } from '@maildrill/services';
+import { FAILED_STATUSES } from './message-status';
 
 export interface UpsertTemplateInput {
   tenantId: string;
@@ -126,13 +127,14 @@ export async function listTemplates(
       templateId: campaigns.templateId,
       // `delivered` counts delivered + read for the usual reason: a read message
       // was delivered, so excluding it would make rates climb past 100% as
-      // receipts land. `failed` is `status='failed'` alone here — the narrow
-      // definition, see audit #6 in stats.ts.
+      // receipts land. `failed` is `FAILED_STATUSES` — failed + expired, the one
+      // definition (message-status.ts), so a template's failure count matches
+      // the campaigns that used it.
       trackedDelivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read') and ${messages.channel} in ('email', 'whatsapp'))::int`,
       opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
       sent: sql<number>`count(*)::int`,
       delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read'))::int`,
-      failed: sql<number>`count(*) filter (where ${messages.status} = 'failed')::int`,
+      failed: sql<number>`count(*) filter (where ${messages.status} in ${FAILED_STATUSES})::int`,
     })
     .from(messages)
     .innerJoin(campaigns, eq(messages.campaignId, campaigns.id))

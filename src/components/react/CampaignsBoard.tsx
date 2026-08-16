@@ -208,8 +208,20 @@ export default function CampaignsBoard({
      table carried an Open and a Click column of dashes on every row. */
   const showOpenCol = tabCfg.rateCards.some((r) => r === 'open' || r === 'seen');
   const showClickCol = tabCfg.rateCards.includes('click');
-  // Every channel reports a failure outcome — a bounce on email, a failed
-  // send everywhere else — so the column is always present, only relabelled.
+  /* Every channel reports a failure outcome — a bounce on email, a failed send
+     everywhere else — so the column is always present, only relabelled.
+
+     Either label names the same server figure, `campaign.failed`, and that
+     figure is now exactly `FAILED_DELIVERY_STATES`: a message the provider
+     tried and never delivered (`failed`), or one it accepted and then abandoned
+     at TTL (`expired`). Both descriptions fit the words in this header.
+
+     `cancelled` used to be in that count and is not any more. A cancelled
+     message never reached the provider — the send was withdrawn, or the
+     in-flight breaker stopped the queue draining into a bad list — so putting
+     it under "Bounced" reported the sender's own decision as the recipient's
+     address failing. It now has its own tab on the campaign report and is in
+     neither the delivered nor the failed count here. */
   const failLabel = tabCfg.kpis.includes('bounced') ? 'Bounced' : 'Failed';
   const gridClass = `${styles.grid}${showOpenCol || showClickCol ? '' : ` ${styles.gridPlain}`}`;
 
