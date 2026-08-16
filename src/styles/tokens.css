@@ -173,6 +173,8 @@
   --z-dropdown: 60;
   --z-drawer: 70;
   --z-modal: 80;
+  /* Confirmations interrupt whatever modal opened them, so they sit above it. */
+  --z-confirm: 85;
   --z-toast: 90;
 }
 
