@@ -64,23 +64,25 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers());
 
 describe('buildSubscriberDetailView', () => {
-  it('computes open/click rates over all delivered messages', () => {
+  it('computes open/click rates over email and WhatsApp deliveries only', () => {
     const v = buildSubscriberDetailView(sub(), activity);
-    expect(v.openRate).toBe(40); // 4 / 10 delivered
-    expect(v.clickRate).toBe(20); // 2 / 10 delivered
+    // 4 opens / 8 email+WA delivered — SMS deliveries are excluded.
+    expect(v.openRate).toBe(50);
+    expect(v.clickRate).toBe(25);
   });
 
-  it('falls back to sent when nothing is delivered yet', () => {
+  it('returns null open/click rates when nothing is delivered yet', () => {
     const v = buildSubscriberDetailView(sub(), {
-      channels: [{ channel: 'email', sent: 4, delivered: 0, read: 1, clicked: 0 }],
+      channels: [{ channel: 'email', sent: 4, delivered: 0, read: 0, clicked: 0 }],
     });
-    expect(v.openRate).toBe(25);
+    expect(v.openRate).toBeNull();
+    expect(v.clickRate).toBeNull();
   });
 
   it('scores engagement and names the tier', () => {
     const v = buildSubscriberDetailView(sub(), activity);
-    // 40 * 0.7 + 20 * 1.2 = 52 → moderately engaged
-    expect(v.score).toBe(52);
+    // 50 * 0.7 + 25 * 1.2 = 65 → moderately engaged
+    expect(v.score).toBe(65);
     expect(v.scoreTier).toBe('Moderately engaged');
     const none = buildSubscriberDetailView(sub(), null);
     expect(none.score).toBe(0);

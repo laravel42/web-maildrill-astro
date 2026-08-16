@@ -260,12 +260,17 @@ export function buildSubscriberDetailView(
   }
   const emailCh = channels.find((c) => c.channel === 'email');
   const sent = channels.reduce((n, c) => n + (c.sent ?? 0), 0);
-  const delivered = channels.reduce((n, c) => n + (c.delivered ?? 0), 0);
-  const opened = channels.reduce((n, c) => n + (c.read ?? 0), 0);
-  const clicked = channels.reduce((n, c) => n + (c.clicked ?? 0), 0);
-  const denom = delivered > 0 ? delivered : sent;
-  const openRate = denom > 0 ? Math.round((opened / denom) * 100) : null;
-  const clickRate = denom > 0 ? Math.round((clicked / denom) * 100) : null;
+  const allDelivered = channels.reduce((n, c) => n + (c.delivered ?? 0), 0);
+  // Open/click rates only make sense on channels that report engagement —
+  // folding SMS/voice deliveries into the denominator dilutes the score.
+  const tracked = channels.filter((c) => c.channel === 'email' || c.channel === 'whatsapp');
+  const trackedDelivered = tracked.reduce((n, c) => n + (c.delivered ?? 0), 0);
+  const opened = tracked.reduce((n, c) => n + (c.read ?? 0), 0);
+  const clicked = tracked.reduce((n, c) => n + (c.clicked ?? 0), 0);
+  const openRate =
+    trackedDelivered > 0 ? Math.round((opened / trackedDelivered) * 100) : null;
+  const clickRate =
+    trackedDelivered > 0 ? Math.round((clicked / trackedDelivered) * 100) : null;
 
   const score = engagementScore(openRate, clickRate);
   const scoreTier = engagementTier(score);
@@ -349,7 +354,7 @@ export function buildSubscriberDetailView(
     return !Number.isNaN(t) && Date.now() - t <= 30 * 86400000;
   }).length;
 
-  const deliveryRate = sent > 0 ? Math.round((delivered / sent) * 1000) / 10 : null;
+  const deliveryRate = sent > 0 ? Math.round((allDelivered / sent) * 1000) / 10 : null;
 
   return {
     subscriber,

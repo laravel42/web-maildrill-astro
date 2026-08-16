@@ -1623,6 +1623,9 @@ function SubscriberDrawer({
       const read = s?.read ?? 0;
       const clicked = s?.clicked ?? 0;
       const failed = s?.failed ?? 0;
+      // `sent` excludes failures; attempted restores them so delivery % matches
+      // the detail page (delivered / attempted), not "of successful sends".
+      const attempted = sent + failed;
       // Each channel reports only what it can measure, read from the same
       // config the campaign and template views use. Email and WhatsApp track
       // engagement; SMS and voice know delivery and nothing else, so showing
@@ -1641,7 +1644,7 @@ function SubscriberDrawer({
       }
       if (hasClick) metrics.push({ label: 'click', value: pctOf(clicked, delivered) });
       if (!hasOpen && !hasClick) {
-        metrics.push({ label: 'delivered', value: pctOf(delivered, sent) });
+        metrics.push({ label: 'delivered', value: pctOf(delivered, attempted) });
       }
       // Failures are the one number that tells you to act on this subscriber,
       // so every channel carries it.
