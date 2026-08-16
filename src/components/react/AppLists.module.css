@@ -628,3 +628,11 @@
 .dNotes:focus {
   border-color: var(--accent);
 }
+
+/* Secondary figure under a drawer stat — the mailable count sitting below the
+   total membership, so the gap between the two is visible before a send. */
+.dStatSub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: -2px;
+}

@@ -60,6 +60,12 @@ export async function getList(tenantId: string, id: string): Promise<ListRow | n
 /** A list plus its member count and computed engagement/growth stats. */
 export interface ListWithCount extends ListRow {
   memberCount: number;
+  /**
+   * Members a campaign would actually reach. `resolveAudience` mails only
+   * subscribers whose status is 'active', so a list whose members have since
+   * bounced, complained or unsubscribed reaches fewer people than it holds.
+   */
+  activeMemberCount: number;
   /** Members added in the trailing 7 days / the 7 days before that. */
   addedLast7: number;
   addedPrev7: number;
@@ -89,9 +95,11 @@ export async function listLists(tenantId: string): Promise<ListWithCount[]> {
     .select({
       ...getTableColumns(lists),
       memberCount: sql<number>`count(${listMembers.subscriberId})::int`,
+      activeMemberCount: sql<number>`count(*) filter (where ${subscribers.status} = 'active')::int`,
     })
     .from(lists)
     .leftJoin(listMembers, eq(listMembers.listId, lists.id))
+    .leftJoin(subscribers, eq(subscribers.id, listMembers.subscriberId))
     .where(eq(lists.tenantId, tenantId))
     .groupBy(lists.id)
     .orderBy(desc(lists.createdAt));
@@ -155,6 +163,7 @@ export async function listLists(tenantId: string): Promise<ListWithCount[]> {
     return {
       ...r,
       memberCount: Number(r.memberCount),
+      activeMemberCount: Number(r.activeMemberCount),
       addedLast7: added.filter((t) => t > now - WEEK).length,
       addedPrev7: added.filter((t) => t > now - 2 * WEEK && t <= now - WEEK).length,
       trend,

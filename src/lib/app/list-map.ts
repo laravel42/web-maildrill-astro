@@ -19,6 +19,8 @@ export interface ApiList {
   notes?: string | null;
   /** Subscribers on the list, counted server-side by /v1/lists. */
   memberCount?: number | null;
+  /** Of those, the ones a send would actually reach (status 'active'). */
+  activeMemberCount?: number | null;
   /** List members with a phone number — for SMS / WhatsApp / Voice reach. */
   phoneMemberCount?: number | null;
   /** Members added in the trailing 7 days / the 7 days before that. */
@@ -52,6 +54,7 @@ export function toListRow(l: ApiList): ListRow {
     id: l.id,
     name: l.name,
     subscribers: l.memberCount ?? 0,
+    mailable: l.activeMemberCount ?? l.memberCount ?? 0,
     growthPct: prev7 > 0 ? ((last7 - prev7) / prev7) * 100 : last7 > 0 ? 100 : 0,
     updatedAt: l.updatedAt ?? l.createdAt ?? new Date().toISOString(),
     color: l.color || '#4f46e5',

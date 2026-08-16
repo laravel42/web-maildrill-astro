@@ -346,7 +346,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                   className={sort.key === 'growthPct' ? 'is-active' : undefined}
                   onClick={() => toggleSort('growthPct')}
                 >
-                  Growth <span className="tnum">{sortArrow('growthPct')}</span>
+                  Signups vs last week <span className="tnum">{sortArrow('growthPct')}</span>
                 </button>
               </div>
               <div className={styles.colCenter}>GDPR consent</div>
@@ -720,6 +720,10 @@ function ListDrawer({
 
   const up = list.growthPct >= 0;
   const gain = weeklyGain(list.trend);
+  // Members the list holds but cannot mail — bounced, complained, invalid or
+  // unsubscribed. `resolveAudience` drops them, so the headline count alone
+  // overstates the reach of a send.
+  const unmailable = Math.max(0, list.subscribers - list.mailable);
   const chart = trendPath(list.trend, 346, 88);
 
   return (
@@ -793,9 +797,14 @@ function ListDrawer({
             <div className="adrawer__kpi">
               <div className="adrawer__kpi-k">Subscribers</div>
               <div className="tnum adrawer__kpi-v">{list.subscribers.toLocaleString('en-US')}</div>
+              {unmailable > 0 && (
+                <div className={`tnum ${styles.dStatSub}`}>
+                  {list.mailable.toLocaleString('en-US')} mailable
+                </div>
+              )}
             </div>
             <div className="adrawer__kpi">
-              <div className="adrawer__kpi-k">Growth</div>
+              <div className="adrawer__kpi-k">Signups vs last week</div>
               <div
                 className="tnum adrawer__kpi-v"
                 style={{ color: up ? 'var(--success)' : 'var(--danger)' }}
@@ -803,14 +812,9 @@ function ListDrawer({
                 {fmtPct(list.growthPct)}
               </div>
             </div>
-            <div className="adrawer__kpi">
-              <div className="adrawer__kpi-k">Avg. Opens</div>
-              <div className="tnum adrawer__kpi-v">{list.openRate}</div>
-            </div>
-            <div className="adrawer__kpi">
-              <div className="adrawer__kpi-k">Avg. Clicks</div>
-              <div className="tnum adrawer__kpi-v">{list.clickRate}</div>
-            </div>
+            {/* No open/click tiles: both divide by deliveries on email and
+                WhatsApp only, but a list is mailed on all four channels, so a
+                single pair of rates spoke for sends they never measured. */}
           </div>
 
           {/* subscriber trend */}
@@ -819,9 +823,9 @@ function ListDrawer({
               <span className="adrawer__eyebrow">Subscriber trend</span>
               <span
                 className={`tnum ${styles.dTrendGain}`}
-                style={{ color: up ? 'var(--success)' : 'var(--danger)' }}
+                style={{ color: gain > 0 ? 'var(--success)' : 'var(--muted)' }}
               >
-                {up ? '↑' : '↓'} {Math.abs(gain).toLocaleString('en-US')} this week
+                +{gain.toLocaleString('en-US')} joined this week
               </span>
             </div>
             <div className={styles.dChart}>

@@ -9,6 +9,12 @@ import type { ListSummary } from '@/types/app';
 export type ListMeta = {
   color: string;
   trend: number[];
+  /**
+   * Members a send would actually reach — sending mails only subscribers whose
+   * status is 'active', so this is below `subscribers` on any list carrying
+   * bounced, complained, invalid or unsubscribed addresses.
+   */
+  mailable: number;
   /** Whether the list requires / records GDPR consent. */
   gdprConsent: boolean;
   tags: string[];
