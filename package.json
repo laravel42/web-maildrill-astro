@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",
-    "@astrojs/node": "^11.1.0",
+    "@astrojs/node": "^11.1.2",
     "@astrojs/react": "^6.0.2",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
@@ -44,15 +44,15 @@
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
     "@simplewebauthn/browser": "^13.3.0",
-    "astro": "^7.2.0",
+    "astro": "^7.2.2",
     "auth-astro": "^4.2.0",
     "email-builder-standalone": "workspace:*",
     "emoji-mart": "^5.6.0",
-    "infobip-rtc": "^2.7.36",
+    "infobip-rtc": "^2.7.37",
     "nodemailer": "^9.0.5",
     "openapi-fetch": "^0.17.0",
-    "posthog-js": "^1.414.0",
-    "posthog-node": "^5.48.1",
+    "posthog-js": "^1.417.1",
+    "posthog-node": "^5.49.1",
     "qrcode": "^1.5.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -75,16 +75,16 @@
     "eslint": "^10.8.1",
     "eslint-plugin-astro": "^3.1.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
-    "globals": "^17.9.0",
+    "globals": "^17.11.0",
     "openapi-typescript": "^7.13.0",
     "prettier": "^3.9.6",
     "prettier-plugin-astro": "^0.14.1",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.66.0",
+    "typescript-eslint": "^8.67.0",
     "vitest": "^4.1.10"
   },
   "engines": {
     "node": ">=22.12.0"
   },
-  "packageManager": "pnpm@11.20.0+sha512.9a6f330a95b66446ea088faf1521405a8a01f07fde7124cc9958dfed52d4bb436737e65b08f85f37b46fcba375092558ac51262b816844b22f63406ed166bfee"
+  "packageManager": "pnpm@11.22.0+sha512.1ff870c4c6133dfd88fb2afc46dd13d47f09c9794b438c6fdb47ca98caf3bc16381ee0be93a091b8e3824cf01f889f46d7d9e20910fb0be1ab0fb5baa80dd621"
 }
