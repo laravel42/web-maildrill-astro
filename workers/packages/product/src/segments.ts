@@ -7,6 +7,7 @@ import {
   type SegmentRule,
   type Subscriber,
 } from '@maildrill/database';
+import { ValidationError, type Channel } from '@maildrill/domain';
 import { buildSegmentWhere, clamp } from './rules';
 
 type MatchType = SegmentRow['matchType'];
@@ -17,6 +18,21 @@ export interface CreateSegmentInput {
   description?: string | null;
   matchType?: MatchType;
   rules?: SegmentRule[];
+  /** Channels the segment is for. Must hold at least one; defaults to email. */
+  channels?: Channel[];
+}
+
+/**
+ * A segment with no channel cannot be used on any tab, so an empty selection
+ * is refused rather than quietly defaulted.
+ */
+function assertChannels(channels: Channel[] | undefined): Channel[] | undefined {
+  if (channels === undefined) return undefined;
+  const unique = [...new Set(channels)];
+  if (unique.length === 0) {
+    throw new ValidationError('channels_required: pick at least one channel for this segment.');
+  }
+  return unique;
 }
 
 export async function createSegment(input: CreateSegmentInput): Promise<SegmentRow> {
@@ -28,6 +44,7 @@ export async function createSegment(input: CreateSegmentInput): Promise<SegmentR
       description: input.description ?? null,
       matchType: input.matchType ?? 'all',
       rules: input.rules ?? [],
+      channels: assertChannels(input.channels) ?? ['email'],
     })
     .returning();
   return rows[0]!;
@@ -58,11 +75,13 @@ export async function updateSegment(
     description?: string | null;
     matchType?: MatchType;
     rules?: SegmentRule[];
+    channels?: Channel[];
   },
 ): Promise<SegmentRow | null> {
+  const channels = assertChannels(patch.channels);
   const rows = await db
     .update(segments)
-    .set({ ...patch, updatedAt: new Date() })
+    .set({ ...patch, ...(channels ? { channels } : {}), updatedAt: new Date() })
     .where(and(eq(segments.id, id), eq(segments.tenantId, tenantId)))
     .returning();
   return rows[0] ?? null;

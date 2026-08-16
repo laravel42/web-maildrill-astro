@@ -560,6 +560,15 @@ export const segments = pgTable(
     description: text('description'),
     matchType: segmentMatchEnum('match_type').notNull().default('all'),
     rules: jsonb('rules').$type<SegmentRule[]>().notNull().default([]),
+    /**
+     * Channels this segment is meant to be used on. At least one is required —
+     * mirrors lists so the subscribers tab and campaign picker can filter by
+     * channel. Stored as a jsonb array: the set is tiny and always read whole.
+     */
+    channels: jsonb('channels')
+      .$type<(typeof channelEnum.enumValues)[number][]>()
+      .notNull()
+      .default(['email']),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

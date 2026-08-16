@@ -25,12 +25,16 @@ const evalQuery = z.object({
   limit: z.coerce.number().int().positive().max(1000).optional(),
   offset: z.coerce.number().int().nonnegative().optional(),
 });
+const channelsSchema = z
+  .array(z.enum(['email', 'sms', 'whatsapp', 'voice']))
+  .min(1, 'pick at least one channel for this segment');
 
 const createSchema = z.object({
   name: z.string().min(1),
   description: z.string().nullable().optional(),
   matchType: matchType.default('all'),
   rules: z.array(ruleSchema).default([]),
+  channels: channelsSchema.optional(),
 });
 const previewSchema = z.object({
   matchType: matchType.default('all'),
