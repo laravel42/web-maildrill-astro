@@ -22,11 +22,14 @@ const log = createLogger({ component: 'suppression' });
  */
 
 /** Why an address stopped being mailable. Stored on the suppression row. */
-export type SuppressionCause = 'hard_bounce' | 'complaint';
+export type SuppressionCause = 'hard_bounce' | 'complaint' | 'unsubscribe';
 
 const STATUS_FOR_CAUSE = {
   hard_bounce: 'bounced',
   complaint: 'complained',
+  // A one-click unsubscribe is a request, not a delivery failure, but it takes
+  // the address out of circulation the same way.
+  unsubscribe: 'unsubscribed',
 } as const;
 
 export interface SuppressInput {

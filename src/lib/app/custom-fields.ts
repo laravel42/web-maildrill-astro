@@ -74,6 +74,12 @@ export function buildMergeTagMenu(fields: CustomField[]): MergeTagMenu {
     label,
     value: token,
   }));
+  // Email-only, and deliberately not in `buildPersonalizationTokens`: an SMS or
+  // voice script has nowhere to put a link like this. It resolves to a signed
+  // per-recipient URL at send time (see `subscriberToken` in workers).
+  children.push({ type: 'divider' });
+  children.push({ label: 'Unsubscribe link', value: '{{unsubscribe}}' });
+  children.push({ label: 'View in browser', value: '{{webview}}' });
   if (fields.length > 0) {
     children.push({ type: 'divider' });
     for (const f of fields) {

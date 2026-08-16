@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Subscriber, TemplateRow } from '@maildrill/database';
-import { renderTemplate, resolveMessageContent } from './templates';
+import { mergeSubscriberTokens, renderTemplate, resolveMessageContent } from './templates';
 
 // renderTemplate is pure (no DB); build just the fields it reads.
 function tpl(parts: Partial<TemplateRow>): TemplateRow {
@@ -180,5 +180,16 @@ describe('resolveMessageContent merge tags', () => {
       'whatsapp',
     );
     expect(out.placeholders).toEqual(['there']);
+  });
+});
+
+describe('link tokens on a synthetic test-send recipient', () => {
+  it('never emits a token over "undefined"', () => {
+    // The test-send route casts a bare object to Subscriber: no id, no tenant.
+    const tester = { email: 't@e.co', name: 'T', phone: '', attributes: {} } as never;
+    const out = mergeSubscriberTokens('u={{unsubscribe}} v={{webview}}', tester);
+    expect(out).not.toContain('undefined');
+    expect(out).toContain('/unsubscribe');
+    expect(out).toContain('/view');
   });
 });

@@ -1,4 +1,5 @@
 export * from './subscribers';
+export * from './engagement';
 export * from './lists';
 export * from './tags';
 export * from './segments';
@@ -8,8 +9,9 @@ export * from './custom-fields';
 export * from './audience';
 export * from './campaigns';
 export * from './campaign-crud';
-export { buildSegmentWhere } from './rules';
+export { buildSegmentWhere, segmentRuleError } from './rules';
 export * from './stats';
 export * from './media';
 export * from './media-suggest';
 export * from './channel-senders';
+export * from './webview';

@@ -10,6 +10,8 @@ import {
   type TemplateRow,
 } from '@maildrill/database';
 import type { Channel } from '@maildrill/domain';
+import { config } from '@maildrill/config';
+import { unsubscribeUrl, webviewUrl } from '@maildrill/services';
 
 export interface UpsertTemplateInput {
   tenantId: string;
@@ -180,7 +182,32 @@ export interface RenderedContent {
 }
 
 /** Resolve one token (`email`/`name`/`phone`/`attributes.x`/bare attr) for a subscriber. */
-function subscriberToken(sub: Subscriber, key: string): string {
+/** Extra context a token may need beyond the subscriber record. */
+export interface MergeContext {
+  campaignId?: string;
+}
+
+function subscriberToken(sub: Subscriber, key: string, ctx?: MergeContext): string {
+  // The unsubscribe link is per recipient and signed, so it resolves from the
+  // subscriber rather than a stored value. Anything unresolved still falls
+  // through to attributes and renders empty, so an unknown tag stays harmless
+  // — but this one must never render empty in a marketing email.
+  // A test send builds a synthetic recipient with no id or tenant, so there is
+  // nobody to sign a token for. Emit the bare page — which says the link is
+  // incomplete — rather than a token over the string "undefined".
+  const real = Boolean(sub.id && sub.tenantId);
+  if (key === 'unsubscribe')
+    return real
+      ? unsubscribeUrl({ tenantId: sub.tenantId, subscriberId: sub.id })
+      : `${config.app.url}/unsubscribe`;
+  if (key === 'webview')
+    return real
+      ? webviewUrl({
+          tenantId: sub.tenantId,
+          subscriberId: sub.id,
+          ...(ctx?.campaignId ? { campaignId: ctx.campaignId } : {}),
+        })
+      : `${config.app.url}/view`;
   if (key === 'email') return sub.email;
   if (key === 'name') return sub.name ?? '';
   if (key === 'phone') return sub.phone ?? '';
@@ -190,11 +217,12 @@ function subscriberToken(sub: Subscriber, key: string): string {
 }
 
 /**
- * Substitute `{{email}}`, `{{name}}`, `{{phone}}`, and `{{attributes.key}}`
- * (or bare `{{key}}`) tokens anywhere in a string from the subscriber record.
+ * Substitute `{{email}}`, `{{name}}`, `{{phone}}`, `{{unsubscribe}}` and
+ * `{{attributes.key}}` (or bare `{{key}}`) tokens anywhere in a string from the
+ * subscriber record.
  */
-export function mergeSubscriberTokens(s: string, sub: Subscriber): string {
-  return s.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_m, k: string) => subscriberToken(sub, k));
+export function mergeSubscriberTokens(s: string, sub: Subscriber, ctx?: MergeContext): string {
+  return s.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_m, k: string) => subscriberToken(sub, k, ctx));
 }
 
 /** Render a template's copy fields for a subscriber. */
@@ -308,10 +336,11 @@ const COPY_FIELDS = ['subject', 'html', 'text', 'preheader'] as const;
 function renderCopyFields(
   content: Record<string, unknown>,
   sub: Subscriber,
+  ctx?: MergeContext,
 ): Record<string, unknown> {
   for (const key of COPY_FIELDS) {
     const v = content[key];
-    if (typeof v === 'string') content[key] = mergeSubscriberTokens(v, sub);
+    if (typeof v === 'string') content[key] = mergeSubscriberTokens(v, sub, ctx);
   }
   return content;
 }
@@ -328,9 +357,10 @@ export function resolveMessageContent(
   sub: Subscriber,
   overrides: Record<string, unknown> | undefined,
   channel: Channel,
+  ctx?: MergeContext,
 ): Record<string, unknown> {
   const campaign = messageContentOverrides(overrides);
-  if (!template) return renderCopyFields(campaign, sub);
+  if (!template) return renderCopyFields(campaign, sub, ctx);
 
   // Approved WhatsApp templates send via the template endpoint: pass the template
   // name/language plus the ordered placeholder values resolved per recipient.
@@ -351,6 +381,7 @@ export function resolveMessageContent(
         ...campaign,
       },
       sub,
+      ctx,
     );
   }
 
@@ -372,5 +403,5 @@ export function resolveMessageContent(
     if (typeof voice.gender === 'string') body.voiceGender = voice.gender;
     if (typeof doc.speechRate === 'number') body.speechRate = doc.speechRate;
   }
-  return renderCopyFields({ ...body, ...campaign }, sub);
+  return renderCopyFields({ ...body, ...campaign }, sub, ctx);
 }

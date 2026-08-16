@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from 'fastify';
+import { DomainError } from '@maildrill/domain';
 import { logger } from '@maildrill/observability';
-import { isValidationError, setupOpenApi } from '@maildrill/httpkit';
+import { asClientError, isValidationError, setupOpenApi } from '@maildrill/httpkit';
 import { authRoutes } from './routes/auth';
 import { statsRoutes } from './routes/stats';
 import { mediaRoutes } from './routes/media';
@@ -8,6 +9,7 @@ import { campaignRoutes } from './routes/campaigns';
 import { customFieldRoutes } from './routes/custom-fields';
 import { healthRoutes } from './routes/health';
 import { listRoutes } from './routes/lists';
+import { unsubscribeRoutes } from './routes/unsubscribe';
 import { meRoutes } from './routes/me';
 import { securityRoutes } from './routes/security';
 import { segmentRoutes } from './routes/segments';
@@ -31,6 +33,7 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
   await app.register(securityRoutes);
   await app.register(subscriberRoutes);
   await app.register(listRoutes);
+  await app.register(unsubscribeRoutes);
   await app.register(segmentRoutes);
   await app.register(tagRoutes);
   await app.register(customFieldRoutes);
@@ -62,6 +65,18 @@ export function buildProductServer(): FastifyInstance {
   app.setErrorHandler((err, req, reply) => {
     if (isValidationError(err)) {
       return reply.code(400).send({ error: 'validation', issues: err.validation });
+    }
+    // A bad request the caller can act on (an invalid cursor) must say so —
+    // masking it as `internal_error` invites a retry that can only fail again.
+    const client = asClientError(err);
+    if (client) return reply.code(client.statusCode).send({ error: client.error });
+    // Same rule one layer down. A ValidationError is the domain saying "this
+    // input is wrong", and it carried no statusCode, so every one of them fell
+    // through to 500 — including the segment-rule checks whose whole purpose is
+    // to answer 400 before the page query throws. `internal_error` on bad input
+    // tells the caller to retry and tells us to go looking for an outage.
+    if (err instanceof DomainError && err.category === 'validation') {
+      return reply.code(400).send({ error: 'validation', message: err.message });
     }
     const statusCode = (err as { statusCode?: number }).statusCode ?? 500;
     logger.error(

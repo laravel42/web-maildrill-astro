@@ -1,0 +1,115 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { serviceBaseUrl } from '@/lib/server/service';
+
+export const prerender = false;
+
+/*
+ * Public one-click unsubscribe landing.
+ *
+ * GET only ever *shows* the confirmation — it never unsubscribes. Mail clients
+ * and security scanners prefetch links in email, so acting on GET would
+ * unsubscribe people who never clicked. The POST below is the action.
+ */
+const token = Astro.url.searchParams.get('t') ?? '';
+let done = false;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData().catch(() => null);
+  const posted = String(form?.get('t') ?? token);
+  if (posted) {
+    try {
+      await fetch(`${serviceBaseUrl()}/v1/public/unsubscribe`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ token: posted }),
+      });
+    } catch {
+      // The endpoint always answers 204 and never reports whether the token
+      // resolved; an unreachable backend must not leak either, so the page
+      // shows the same confirmation regardless.
+    }
+  }
+  done = true;
+}
+
+const seo = { title: 'Unsubscribe', description: 'Manage your email preferences.', noindex: true };
+---
+
+<BaseLayout seo={seo}>
+  <main class="unsub">
+    <div class="unsub__card">
+      {
+        done ? (
+          <>
+            <h1 class="unsub__h1">You're unsubscribed</h1>
+            <p class="unsub__p">
+              You won't receive any further emails from this sender. It can take a few minutes for
+              sends already in flight to stop.
+            </p>
+          </>
+        ) : !token ? (
+          <>
+            <h1 class="unsub__h1">Link not valid</h1>
+            <p class="unsub__p">
+              This unsubscribe link is incomplete. Use the link from the bottom of the email you
+              received.
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 class="unsub__h1">Unsubscribe?</h1>
+            <p class="unsub__p">
+              Confirm and this sender will stop emailing you. You can always sign up again later.
+            </p>
+            <form method="POST">
+              <input type="hidden" name="t" value={token} />
+              <button type="submit" class="unsub__btn">Unsubscribe me</button>
+            </form>
+          </>
+        )
+      }
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .unsub {
+    min-height: 70vh;
+    display: grid;
+    place-items: center;
+    padding: 48px 20px;
+  }
+  .unsub__card {
+    width: 100%;
+    max-width: 460px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+  }
+  .unsub__h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    margin: 0 0 10px;
+  }
+  .unsub__p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text3);
+    margin: 0 0 22px;
+  }
+  .unsub__btn {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: none;
+    background: var(--ink);
+    color: var(--on-ink);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+</style>
