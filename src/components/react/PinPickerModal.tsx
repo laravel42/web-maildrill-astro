@@ -7,16 +7,16 @@ import type { ChannelType } from '@/types/app';
 import Icon from './Icon';
 import styles from './PinPickerModal.module.css';
 
-export type PinKind = 'list' | 'campaign' | 'template' | 'subscriber';
+export type PinKind = 'list' | 'campaign' | 'subscriber';
 
 /** A record kept in the sidebar's PINNED section. */
 export type Pin = {
   kind: PinKind;
   id: string;
   label: string;
-  /** Dot colour — list colour, or channel accent for campaigns/templates. */
+  /** Dot colour — list colour, or channel accent for campaigns. */
   color: string;
-  /** Channel for campaigns/templates; omitted for lists/subscribers. */
+  /** Channel for campaigns; omitted for lists/subscribers. */
   channel?: ChannelType;
   /** Extra haystack for picker search (e.g. subscriber email). */
   searchText?: string;
@@ -30,14 +30,12 @@ const PAGE_SIZE = 8;
 const KINDS: { id: PinKind; label: string; plural: string; search: string }[] = [
   { id: 'list', label: 'Lists', plural: 'lists', search: 'Search lists…' },
   { id: 'campaign', label: 'Campaigns', plural: 'campaigns', search: 'Search campaigns…' },
-  { id: 'template', label: 'Templates', plural: 'templates', search: 'Search templates…' },
   { id: 'subscriber', label: 'Subscribers', plural: 'subscribers', search: 'Search subscribers…' },
 ];
 
 const EMPTY_QUERIES: Record<PinKind, string> = {
   list: '',
   campaign: '',
-  template: '',
   subscriber: '',
 };
 
@@ -82,7 +80,7 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
     let cancelled = false;
     void (async () => {
       try {
-        const [lists, campaigns, templates, subscribers] = await Promise.all([
+        const [lists, campaigns, subscribers] = await Promise.all([
           api.get<{
             data: Array<{
               id: string;
@@ -99,9 +97,6 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
               status?: string | null;
             }>;
           }>('campaigns'),
-          api.get<{
-            data: Array<{ id: string; name: string; channel?: string | null }>;
-          }>('templates'),
           api.get<{
             data: Array<{ id: string; name?: string | null; email: string }>;
           }>('subscribers?limit=200'),
@@ -127,16 +122,6 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
                 color: CHANNEL[channel]?.color ?? DEFAULT_PIN_COLOR,
               };
             }),
-          ...(templates.data ?? []).map((t) => {
-            const channel = (t.channel ?? 'email') as ChannelType;
-            return {
-              kind: 'template' as const,
-              id: t.id,
-              label: t.name,
-              channel,
-              color: CHANNEL[channel]?.color ?? DEFAULT_PIN_COLOR,
-            };
-          }),
           ...(subscribers.data ?? []).map((s) => {
             const name = s.name?.trim() || '';
             return {
@@ -171,7 +156,6 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
     const c: Record<PinKind, number> = {
       list: 0,
       campaign: 0,
-      template: 0,
       subscriber: 0,
     };
     if (!items) return c;
@@ -251,7 +235,7 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
     if (p.kind === 'list') {
       return <span className={`${styles.countBadge} tnum`}>{p.count ?? 0}</span>;
     }
-    if ((p.kind === 'campaign' || p.kind === 'template') && p.channel) {
+    if (p.kind === 'campaign' && p.channel) {
       return <ChannelPill channel={p.channel} />;
     }
     if (p.kind === 'subscriber' && p.searchText && p.searchText !== p.label) {
@@ -287,7 +271,7 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
               Pin records
             </h2>
             <p className={styles.sub}>
-              Keep lists, campaigns, templates, or subscribers in the sidebar for quick access.
+              Keep lists, campaigns, or subscribers in the sidebar for quick access.
             </p>
           </div>
           <button

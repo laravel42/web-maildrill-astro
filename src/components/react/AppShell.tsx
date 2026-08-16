@@ -18,7 +18,6 @@ const AVATAR_CACHE_KEY = 'md:avatar:v1';
 const PIN_SECTIONS: { kind: PinKind; label: string }[] = [
   { kind: 'list', label: 'Lists' },
   { kind: 'campaign', label: 'Campaigns' },
-  { kind: 'template', label: 'Templates' },
   { kind: 'subscriber', label: 'Subscribers' },
 ];
 
@@ -29,14 +28,12 @@ function pinHref(p: Pin): string {
       return routes.app.list(p.id);
     case 'campaign':
       return routes.app.campaignReport(p.id);
-    case 'template':
-      return `${routes.app.templateBuilder(p.channel ?? 'email')}?id=${encodeURIComponent(p.id)}`;
     case 'subscriber':
       return routes.app.subscriber(p.id);
   }
 }
 
-const PIN_KINDS = new Set(['campaign', 'list', 'template', 'subscriber']);
+const PIN_KINDS = new Set(['campaign', 'list', 'subscriber']);
 
 function parsePins(raw: string | null): Pin[] {
   if (!raw) return [];
@@ -55,8 +52,20 @@ function parsePins(raw: string | null): Pin[] {
 
 function readPins(): Pin[] {
   try {
-    const current = parsePins(localStorage.getItem(PINS_KEY));
-    if (current.length) return current;
+    const currentRaw = localStorage.getItem(PINS_KEY);
+    if (currentRaw != null) {
+      const current = parsePins(currentRaw);
+      // Drop retired kinds (templates) from storage so they don't linger.
+      try {
+        const all = JSON.parse(currentRaw) as unknown[];
+        if (Array.isArray(all) && all.length !== current.length) {
+          localStorage.setItem(PINS_KEY, JSON.stringify(current));
+        }
+      } catch {
+        /* ignore */
+      }
+      return current;
+    }
     const legacy = parsePins(localStorage.getItem(PINS_KEY_LEGACY));
     if (legacy.length) {
       localStorage.setItem(PINS_KEY, JSON.stringify(legacy));
@@ -363,7 +372,7 @@ export default function AppShell({
             {pins.length === 0 && (
               <p className={styles.pinEmpty}>
                 Nothing pinned. Use <span className={styles.pinEmptyPlus}>+</span> to keep a list,
-                campaign, template, or subscriber here.
+                campaign, or subscriber here.
               </p>
             )}
           </div>
