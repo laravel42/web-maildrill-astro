@@ -181,7 +181,7 @@ export const CHANNEL_ANALYTICS: Record<string, ChannelAnalytics> = {
       { key: 'failed', label: 'Failed', of: 'sent', tone: 'danger' },
       { key: 'opened', label: 'Read', of: 'delivered', tone: 'success' },
       { key: 'clicked', label: 'Clicked', of: 'delivered', tone: 'success' },
-      { key: 'unsubscribed', label: 'Opted out', of: 'delivered', tone: 'muted' },
+      { key: 'unsubscribed', label: 'Unsubscribed', of: 'delivered', tone: 'muted' },
     ],
     delivery: [
       { key: 'sent', label: 'Sent', color: C.sent },
@@ -203,13 +203,13 @@ export const CHANNEL_ANALYTICS: Record<string, ChannelAnalytics> = {
       { key: 'sent', label: 'Messages sent', of: null, tone: 'muted' },
       { key: 'delivered', label: 'Delivered', of: 'sent', tone: 'success' },
       { key: 'failed', label: 'Failed', of: 'sent', tone: 'danger' },
-      { key: 'unsubscribed', label: 'Opted out', of: 'delivered', tone: 'muted' },
+      { key: 'unsubscribed', label: 'Unsubscribed', of: 'delivered', tone: 'muted' },
     ],
     delivery: [
       { key: 'sent', label: 'Sent', color: C.sent },
       { key: 'delivered', label: 'Delivered', color: C.delivered },
       { key: 'bounced', label: 'Failed', color: C.failed },
-      { key: 'unsubscribed', label: 'Opted out', color: C.unsubscribed },
+      { key: 'unsubscribed', label: 'Unsubscribed', color: C.unsubscribed },
     ],
     // No open, click or complaint receipt exists to chart.
     engagement: null,
@@ -236,7 +236,7 @@ export const CHANNEL_ANALYTICS: Record<string, ChannelAnalytics> = {
 /**
  * Sparkline colour per KPI. Keyed rather than positional: the cards differ per
  * channel now, so index-matching them to the delivery series would have tinted
- * "Opted out" with whatever happened to be third in the chart.
+ * "Unsubscribed" with whatever happened to be third in the chart.
  */
 export function kpiColor(key: KpiSpec['key']): string {
   switch (key) {
