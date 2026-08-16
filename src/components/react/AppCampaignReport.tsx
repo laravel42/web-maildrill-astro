@@ -26,11 +26,9 @@ import {
   type RecipientEvent,
 } from './shared/campaign-events';
 import { ago } from './shared/time';
-import { visiblePageNumbers } from './shared/pagination';
+import { PAGE_SIZE, visiblePageNumbers } from './shared/pagination';
 import { pct } from './CampaignsBoard.logic';
 import styles from './AppCampaignReport.module.css';
-
-const EVENT_PAGE_SIZE = 15;
 
 type Props = {
   /** Campaign id from the URL — used for the demo-mode fixture lookup. */
@@ -393,15 +391,15 @@ function CampaignReport({
   }
   const filteredEvents =
     eventTab === 'all' ? events : events.filter((e) => eventKind(e, campaign.channel) === eventTab);
-  const eventPages = Math.max(1, Math.ceil(filteredEvents.length / EVENT_PAGE_SIZE));
+  const eventPages = Math.max(1, Math.ceil(filteredEvents.length / PAGE_SIZE));
   const safeEventPage = Math.min(eventPage, eventPages);
   const eventPagerPages = visiblePageNumbers(safeEventPage, eventPages);
   const pageEvents = filteredEvents.slice(
-    (safeEventPage - 1) * EVENT_PAGE_SIZE,
-    safeEventPage * EVENT_PAGE_SIZE,
+    (safeEventPage - 1) * PAGE_SIZE,
+    safeEventPage * PAGE_SIZE,
   );
-  const eventStart = filteredEvents.length === 0 ? 0 : (safeEventPage - 1) * EVENT_PAGE_SIZE + 1;
-  const eventEnd = Math.min(safeEventPage * EVENT_PAGE_SIZE, filteredEvents.length);
+  const eventStart = filteredEvents.length === 0 ? 0 : (safeEventPage - 1) * PAGE_SIZE + 1;
+  const eventEnd = Math.min(safeEventPage * PAGE_SIZE, filteredEvents.length);
 
   const openColLabel = campaign.channel === 'whatsapp' ? 'Seen' : 'Opened';
   const exportEvents = () => {

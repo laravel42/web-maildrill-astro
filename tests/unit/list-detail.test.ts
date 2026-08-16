@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildListDetailView, type ApiListMember } from '@/lib/app/list-detail';
+import {
+  buildListDetailView,
+  rosterMatchesFilter,
+  type ApiListMember,
+} from '@/lib/app/list-detail';
 import type { ApiList } from '@/lib/app/list-map';
 
 const list: ApiList = {
@@ -24,7 +28,13 @@ const member = (over: Partial<ApiListMember>): ApiListMember =>
   }) as ApiListMember;
 
 const members: ApiListMember[] = [
-  member({ id: 'm1', email: 'a@x.com', name: 'Ada Lovelace', status: 'active' }),
+  member({
+    id: 'm1',
+    email: 'a@x.com',
+    name: 'Ada Lovelace',
+    status: 'active',
+    lastCampaignAt: '2026-07-30T10:00:00Z',
+  }),
   member({ id: 'm2', email: 'b@x.com', status: 'active', attributes: { city: 'Rome' } }),
   member({ id: 'm3', email: 'c@x.com', status: 'unsubscribed' }),
   member({ id: 'm4', email: 'd@x.com', status: 'bounced' }),
@@ -42,11 +52,63 @@ describe('buildListDetailView', () => {
     const byKey = Object.fromEntries(v.health.map((h) => [h.key, h]));
     expect(byKey.active.value).toBe(2);
     expect(byKey.active.pct).toBe(50);
+    expect(byKey.delivered.value).toBe(0);
+    expect(byKey.delivered.pct).toBe(0);
     expect(byKey.unsubscribed.value).toBe(1);
-    expect(byKey.bounced.value).toBe(1);
-    expect(byKey.unconfirmed.value).toBe(0); // no such backend status
+    expect(byKey.failed.value).toBe(1);
+    expect(byKey.unconfirmed).toBeUndefined();
+    expect(byKey.bounced).toBeUndefined();
     expect(v.total).toBe(4);
     expect(v.sampled).toBe(false);
+  });
+
+  it('reports delivered from the list row, falling back to campaign totals', () => {
+    const fromList = buildListDetailView({ ...list, delivered: 80 }, members, [], [], []);
+    expect(fromList.health.find((h) => h.key === 'delivered')).toMatchObject({
+      value: 80,
+      pct: 0,
+    });
+    const fromCampaigns = buildListDetailView(
+      list,
+      members,
+      [
+        {
+          id: 'c1',
+          name: 'Spring',
+          channel: 'email',
+          status: 'sent',
+          recipients: 100,
+          delivered: 92,
+        },
+      ],
+      [],
+      [],
+    );
+    expect(fromCampaigns.health.find((h) => h.key === 'delivered')).toMatchObject({
+      value: 92,
+      pct: 92,
+    });
+    expect(fromCampaigns.deliveredRate).toBe('92.00%');
+    expect(fromCampaigns.failedRate).toBe('0.00%');
+    const withFail = buildListDetailView(
+      list,
+      members,
+      [
+        {
+          id: 'c1',
+          name: 'Spring',
+          channel: 'email',
+          status: 'sent',
+          recipients: 100,
+          delivered: 92,
+          failed: 8,
+        },
+      ],
+      [],
+      [],
+    );
+    expect(withFail.failedRate).toBe('8.00%');
+    expect(withFail.unsubRate).toBe('25.00%');
   });
 
   it('scales sampled shares up to the real member count when capped', () => {
@@ -74,11 +136,23 @@ describe('buildListDetailView', () => {
 
   it('builds roster rows with initials, email fallback and status meta', () => {
     const v = buildListDetailView(list, members, [], [], []);
-    expect(v.roster[0]).toMatchObject({ initials: 'AL', name: 'Ada Lovelace' });
+    expect(v.roster[0]).toMatchObject({
+      initials: 'AL',
+      name: 'Ada Lovelace',
+      lastCampaignAt: '2026-07-30T10:00:00.000Z',
+    });
     expect(v.roster[1].name).toBe('b@x.com');
     expect(v.roster[2].statusLabel).toBe('Unsubscribed');
     expect(v.rosterCounts.all).toBe(4);
     expect(v.rosterCounts.active).toBe(2);
+    expect(v.rosterCounts.delivered).toBe(2);
+    expect(v.rosterCounts.unsubscribed).toBe(1);
+    expect(v.rosterCounts.failed).toBe(1);
+    expect(v.roster.find((r) => r.email === 'd@x.com')?.group).toBe('failed');
+    const bounced = v.roster.find((r) => r.email === 'd@x.com')!;
+    expect(rosterMatchesFilter(bounced, 'failed')).toBe(true);
+    expect(rosterMatchesFilter(bounced, 'delivered')).toBe(false);
+    expect(rosterMatchesFilter(v.roster[0]!, 'delivered')).toBe(true);
   });
 
   it('embeds the real list id in the signup snippet', () => {

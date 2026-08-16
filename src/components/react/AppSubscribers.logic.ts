@@ -39,22 +39,25 @@ export const STATUS_TABS: ('all' | SubscriberStatus)[] = [
   'invalid',
 ];
 
-export const PAGE_SIZE = 15;
-
-export { MAX_VISIBLE_PAGES, visiblePageNumbers } from './shared/pagination';
+export { PAGE_SIZE, MAX_VISIBLE_PAGES, visiblePageNumbers } from './shared/pagination';
 
 /* Reachable-channel logic (drives channel filter + drawer engagement). */
+/**
+ * Which channels this subscriber can be addressed on.
+ *
+ * Mirrors `addressForChannel` on the send path: email needs an email address,
+ * every other channel needs a phone number. This used to be derived from the
+ * letters in the subscriber's name — `/[aeiou]/` on the last two — which made
+ * the channel tabs and filter sort people by spelling.
+ */
 export function reachOf(s: RichSubscriber) {
-  const eng = s.status === 'active';
-  const tail = s.name
-    .replace(/[^a-z]/gi, '')
-    .slice(-2)
-    .toLowerCase();
-  const sms = eng && /[aeiou]/.test(tail);
-  return { email: true, sms, whatsapp: eng && !sms, voice: eng && sms } as Record<
-    ChannelType,
-    boolean
-  >;
+  const phone = Boolean(s.phone?.trim());
+  return {
+    email: Boolean(s.email?.trim()),
+    sms: phone,
+    whatsapp: phone,
+    voice: phone,
+  } as Record<ChannelType, boolean>;
 }
 
 export function initials(name: string): string {

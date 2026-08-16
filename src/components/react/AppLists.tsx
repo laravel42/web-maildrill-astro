@@ -1,7 +1,6 @@
 import {
   useEffect,
   useMemo,
-  useRef,
   useState,
   type CSSProperties,
   type Dispatch,
@@ -17,7 +16,10 @@ import { fmtPct, PAGE_SIZE, rows as mockRows, trendPath, weeklyGain } from './Ap
 import type { ListRow, SortKey, View } from './AppLists.types';
 import { api, ApiError } from '@/lib/app/api';
 import { toListRow, type ApiList } from '@/lib/app/list-map';
+import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
+import type { ChannelType } from '@/types/app';
 import { routes } from '@/config/routes';
+import { channelReportConfig } from '@/lib/app/campaign-report';
 import { RATE_BUCKETS, parseRatePercent, rateBucket } from '@/lib/app/templates-data';
 import { matchesSearchQuery } from '@/lib/app/search-match';
 import { tagStyle } from '@/lib/app/tag-style';
@@ -36,7 +38,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
   const [opensSel, setOpensSel] = useState<Set<string>>(new Set());
   const [clicksSel, setClicksSel] = useState<Set<string>>(new Set());
   const [openFilter, setOpenFilter] = useState<'opens' | 'clicks' | null>(null);
-  const [view, setView] = useState<View>('table');
+  const [view, setView] = useState<View>('cards');
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updatedAt', dir: -1 });
   const [page, setPage] = useState(1);
 
@@ -71,15 +73,29 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
   };
   const [openId, setOpenId] = useState<string | null>(null);
 
-  // Deep link from sidebar pins: /dashboard/lists?open=<id> opens the drawer.
+  // Legacy pin / bookmark: /dashboard/lists?open=<id> used to open the
+  // drawer on this table. Pins now go to the list detail page.
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('open');
-    if (id) setOpenId(id);
+    if (id) window.location.replace(routes.app.list(id));
   }, []);
   const [closing, setClosing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  // Create-only — edits save from the list drawer.
+  // Create-only — name/settings edits live on the list detail page.
   const [editor, setEditor] = useState<{ mode: 'create' } | null>(null);
+  // Tabs cut the table by the channels a list is declared for. Email leads: it
+  // is every list's default and the only channel needing no subscriber phone.
+  const [tab, setTab] = useState<ChannelType>('email');
+  const tabCfg = channelReportConfig(tab);
+  const showOpenFilter = tabCfg.rateCards.some((r) => r === 'open' || r === 'seen');
+  const showClickFilter = tabCfg.rateCards.includes('click');
+  const openFilterLabel = tabCfg.openLabel === 'Seen' ? 'Seen' : 'Opens';
+
+  useEffect(() => {
+    if (!showOpenFilter) setOpensSel(new Set());
+    if (!showClickFilter) setClicksSel(new Set());
+    setOpenFilter(null);
+  }, [tab, showOpenFilter, showClickFilter]);
 
   // Quick action: /dashboard/lists?new opens the create editor.
   useEffect(() => {
@@ -107,6 +123,8 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
         name: values.name,
         notes: values.notes || null,
         color: values.color,
+        channels: values.channels,
+        gdprConsent: values.gdprConsent,
       });
       setListRows((prev) => [toListRow(created), ...prev]);
       setEditor(null);
@@ -119,10 +137,12 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
   // Set while a delete waits on confirmation.
   const [confirmList, setConfirmList] = useState<{ id: string; name: string } | null>(null);
 
-  /* Persist drawer edits immediately (tags, notes, color, name). */
+  /* Optimistic: the row updates immediately and only reverts via a toast if
+     the API rejects it. Tags and color are single clicks — waiting on a round
+     trip to redraw a chip reads as lag. */
   const patchList = async (
     id: string,
-    patch: { tags?: string[]; notes?: string; color?: string; name?: string },
+    patch: { tags?: string[]; notes?: string; color?: string },
   ) => {
     const body = {
       ...patch,
@@ -151,12 +171,30 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
     showToast(`List “${name}” deleted`);
   };
 
+  const tabCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const ch of CHANNEL_ORDER)
+      c[ch] = listRows.filter((l) => (l.channels ?? ['email']).includes(ch)).length;
+    return c;
+  }, [listRows]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let list = listRows.filter((l) => {
+      if (!(l.channels ?? ['email']).includes(tab)) return false;
       if (tagSel.size > 0 && !l.tags.some((t) => tagSel.has(t))) return false;
-      if (opensSel.size && !opensSel.has(rateBucket(parseRatePercent(l.openRate)))) return false;
-      if (clicksSel.size && !clicksSel.has(rateBucket(parseRatePercent(l.clickRate)))) return false;
+      if (
+        showOpenFilter &&
+        opensSel.size &&
+        !opensSel.has(rateBucket(parseRatePercent(l.openRate)))
+      )
+        return false;
+      if (
+        showClickFilter &&
+        clicksSel.size &&
+        !clicksSel.has(rateBucket(parseRatePercent(l.clickRate)))
+      )
+        return false;
       if (!q) return true;
       return (
         matchesSearchQuery(l.name, q) ||
@@ -180,7 +218,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
       return 0;
     });
     return list;
-  }, [query, tagSel, opensSel, clicksSel, sort, listRows]);
+  }, [tab, query, tagSel, opensSel, clicksSel, sort, listRows, showOpenFilter, showClickFilter]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -227,6 +265,31 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
       </div>
 
       <div className={`atable ${styles.tablecard}`}>
+        {/* channel tabs — which channels each list is declared for */}
+        <div className={`${styles.tabs} atabs`} role="tablist" aria-label="Channel">
+          {CHANNEL_ORDER.map((ch) => {
+            const m = CHANNEL[ch];
+            const active = tab === ch;
+            return (
+              <button
+                key={ch}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                className={`atab${active ? ' is-active' : ''}`}
+                onClick={() => {
+                  setTab(ch);
+                  setPage(1);
+                }}
+              >
+                <Icon name={m.icon} size={13} />
+                {m.label}
+                <span className="atab__count tnum">{tabCounts[ch] ?? 0}</span>
+              </button>
+            );
+          })}
+        </div>
+
         {/* toolbar: controls on row 1; active filter chips always on their own row */}
         <div className={styles.toolbar}>
           <div className={styles.toolbarRow}>
@@ -249,32 +312,38 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                 resetPage();
               }}
             />
-            <ColFilter
-              label="Opens"
-              icon="eye"
-              options={RATE_BUCKETS}
-              selected={opensSel}
-              onToggle={toggleSet(setOpensSel)}
-              onClear={() => {
-                setOpensSel(new Set());
-                resetPage();
-              }}
-              open={openFilter === 'opens'}
-              onOpenToggle={() => setOpenFilter((o) => (o === 'opens' ? null : 'opens'))}
-            />
-            <ColFilter
-              label="Clicks"
-              icon="target"
-              options={RATE_BUCKETS}
-              selected={clicksSel}
-              onToggle={toggleSet(setClicksSel)}
-              onClear={() => {
-                setClicksSel(new Set());
-                resetPage();
-              }}
-              open={openFilter === 'clicks'}
-              onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
-            />
+            {/* Rate filters exist only where the channel reports the rate.
+                Offering "Opens" on SMS would filter every row to nothing. */}
+            {showOpenFilter && (
+              <ColFilter
+                label={openFilterLabel}
+                icon="eye"
+                options={RATE_BUCKETS}
+                selected={opensSel}
+                onToggle={toggleSet(setOpensSel)}
+                onClear={() => {
+                  setOpensSel(new Set());
+                  resetPage();
+                }}
+                open={openFilter === 'opens'}
+                onOpenToggle={() => setOpenFilter((o) => (o === 'opens' ? null : 'opens'))}
+              />
+            )}
+            {showClickFilter && (
+              <ColFilter
+                label="Clicks"
+                icon="target"
+                options={RATE_BUCKETS}
+                selected={clicksSel}
+                onToggle={toggleSet(setClicksSel)}
+                onClear={() => {
+                  setClicksSel(new Set());
+                  resetPage();
+                }}
+                open={openFilter === 'clicks'}
+                onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
+              />
+            )}
             <div className={styles.spacer} />
             <div className="aseg" role="group" aria-label="View mode">
               {(['cards', 'table'] as View[]).map((v) => (
@@ -297,16 +366,20 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                 label: `Tag: ${t}`,
                 onRemove: () => toggleTag(t),
               })),
-              ...[...opensSel].map((b) => ({
-                key: `opens:${b}`,
-                label: `Opens: ${b}`,
-                onRemove: () => toggleSet(setOpensSel)(b),
-              })),
-              ...[...clicksSel].map((b) => ({
-                key: `clicks:${b}`,
-                label: `Clicks: ${b}`,
-                onRemove: () => toggleSet(setClicksSel)(b),
-              })),
+              ...(showOpenFilter
+                ? [...opensSel].map((b) => ({
+                    key: `opens:${b}`,
+                    label: `${openFilterLabel}: ${b}`,
+                    onRemove: () => toggleSet(setOpensSel)(b),
+                  }))
+                : []),
+              ...(showClickFilter
+                ? [...clicksSel].map((b) => ({
+                    key: `clicks:${b}`,
+                    label: `Clicks: ${b}`,
+                    onRemove: () => toggleSet(setClicksSel)(b),
+                  }))
+                : []),
             ]}
             onClearAll={() => {
               setTagSel(new Set());
@@ -346,7 +419,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                   className={sort.key === 'growthPct' ? 'is-active' : undefined}
                   onClick={() => toggleSort('growthPct')}
                 >
-                  Signups vs last week <span className="tnum">{sortArrow('growthPct')}</span>
+                  Growth (1w) <span className="tnum">{sortArrow('growthPct')}</span>
                 </button>
               </div>
               <div className={styles.colCenter}>GDPR consent</div>
@@ -406,8 +479,8 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                     </div>
                     <div className={styles.gdprCell}>
                       {l.gdprConsent ? (
-                        <span className={styles.gdprBadge} title="GDPR consent required">
-                          Yes
+                        <span className={styles.gdprCheck} title="GDPR consent" aria-label="GDPR consent">
+                          <Icon name="check" size={15} stroke={3} />
                         </span>
                       ) : (
                         <span className={styles.dash}>—</span>
@@ -455,6 +528,14 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                       <span className={styles.cardName} title={l.name}>
                         {l.name}
                       </span>
+                      {l.gdprConsent ? (
+                        <span className={styles.cardGdpr} title="GDPR consent" aria-label="GDPR consent">
+                          <Icon name="shield" size={14} stroke={2.4} />
+                          <span className={styles.cardGdprCheck} aria-hidden="true">
+                            <Icon name="check" size={8} stroke={3.5} />
+                          </span>
+                        </span>
+                      ) : null}
                       <span
                         className={`${styles.cardPct} tnum`}
                         style={{
@@ -618,52 +699,18 @@ function ListDrawer({
   onToast: (m: string) => void;
   onPatch: (
     id: string,
-    patch: { tags?: string[]; notes?: string; color?: string; name?: string },
+    patch: { tags?: string[]; notes?: string; color?: string },
   ) => void;
   onFilterTag: (tag: string) => void;
   onDelete: () => void;
 }) {
-  // Name, notes, color, and tags all persist as you edit — no Save button.
+  // Tags and color persist as you edit. Notes do not: a note is prose,
+  // and a debounce either fires mid-sentence or silently drops the tail, so it
+  // gets an explicit Save that appears only once the text differs.
   const initialColor = COLORS.includes(list.color) ? list.color : COLORS[0];
-  const [name, setName] = useState(list.name);
-  const [savedName, setSavedName] = useState(list.name);
   const [note, setNote] = useState(list.notes);
-  const savedNoteRef = useRef(list.notes);
+  const [savedNote, setSavedNote] = useState(list.notes);
   const [color, setColor] = useState(initialColor);
-  const [editingName, setEditingName] = useState(false);
-  const nameRef = useRef<HTMLInputElement>(null);
-  const noteTimer = useRef<number | null>(null);
-  const noteRef = useRef(list.notes);
-  const onPatchRef = useRef(onPatch);
-  const listIdRef = useRef(list.id);
-  noteRef.current = note;
-  onPatchRef.current = onPatch;
-  listIdRef.current = list.id;
-
-  const startEditName = () => {
-    setEditingName(true);
-    requestAnimationFrame(() => {
-      nameRef.current?.focus();
-      nameRef.current?.select();
-    });
-  };
-
-  const commitName = () => {
-    setEditingName(false);
-    const trimmed = name.trim();
-    if (!trimmed) {
-      setName(savedName);
-      return;
-    }
-    if (trimmed === savedName) {
-      setName(trimmed);
-      return;
-    }
-    setName(trimmed);
-    setSavedName(trimmed);
-    onPatch(list.id, { name: trimmed });
-    onToast('Name saved');
-  };
 
   const [tags, setTags] = useState<string[]>(list.tags);
   const [tagInput, setTagInput] = useState('');
@@ -690,33 +737,13 @@ function ListDrawer({
     onToast('Color saved');
   };
 
-  const flushNote = (value: string) => {
-    if (value === savedNoteRef.current) return;
-    savedNoteRef.current = value;
-    onPatch(list.id, { notes: value });
+  const noteDirty = note !== savedNote;
+  const saveNote = () => {
+    if (!noteDirty) return;
+    setSavedNote(note);
+    onPatch(list.id, { notes: note });
     onToast('Note saved');
   };
-
-  const onNoteChange = (value: string) => {
-    setNote(value);
-    if (noteTimer.current != null) window.clearTimeout(noteTimer.current);
-    noteTimer.current = window.setTimeout(() => flushNote(value), 500);
-  };
-
-  // Flush a pending note when the drawer unmounts so a close mid-type still saves.
-  useEffect(
-    () => () => {
-      if (noteTimer.current != null) {
-        window.clearTimeout(noteTimer.current);
-        noteTimer.current = null;
-      }
-      const value = noteRef.current;
-      if (value !== savedNoteRef.current) {
-        onPatchRef.current(listIdRef.current, { notes: value });
-      }
-    },
-    [],
-  );
 
   const up = list.growthPct >= 0;
   const gain = weeklyGain(list.trend);
@@ -748,45 +775,18 @@ function ListDrawer({
           <div className={styles.dIdentity}>
             <div className={styles.dIdtext}>
               <div className={styles.dNameRow}>
-                {editingName ? (
-                  <input
-                    ref={nameRef}
-                    className={styles.dName}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    onBlur={commitName}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        (e.target as HTMLInputElement).blur();
-                      }
-                      if (e.key === 'Escape') {
-                        e.preventDefault();
-                        setName(savedName);
-                        setEditingName(false);
-                      }
-                    }}
-                    aria-label="List name"
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    className={styles.dNameBtn}
-                    onClick={startEditName}
-                    title={name}
-                  >
-                    {name.trim() || 'Untitled list'}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className={styles.dNameEdit}
-                  onClick={startEditName}
-                  aria-label="Edit list name"
-                  title="Edit list name"
-                >
-                  <Icon name="edit" size={14} />
-                </button>
+                <h2 className={styles.dName} title={list.name}>
+                  {list.name.trim() || 'Untitled list'}
+                </h2>
+                {list.gdprConsent ? (
+                  <span className={styles.gdprBadge} title="GDPR consent">
+                    <Icon name="shield" size={12} stroke={2.4} />
+                    GDPR
+                    <span className={styles.gdprBadgeCheck} aria-hidden="true">
+                      <Icon name="check" size={8} stroke={3.5} />
+                    </span>
+                  </span>
+                ) : null}
               </div>
               <div className={styles.dUpdated}>Updated {ago(list.updatedAt)}</div>
             </div>
@@ -867,6 +867,70 @@ function ListDrawer({
             </div>
           </div>
 
+          <div className={styles.dChanSection}>
+            <span className={`adrawer__eyebrow ${styles.dTagsEyebrow}`}>Channels</span>
+            <div className={styles.dChans}>
+              {(list.channels ?? ['email']).map((ch) => {
+                const m = CHANNEL[ch];
+                return (
+                  <span key={ch} className="apill" style={{ background: m.tint, color: m.color }}>
+                    <Icon name={m.icon} size={12} />
+                    {m.label}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* color — saved on pick */}
+          <div className={styles.dColorSection}>
+            <span className={`adrawer__eyebrow ${styles.dColorEyebrow}`}>Color</span>
+            <div className={styles.dSwatches} role="group" aria-label="List color">
+              {COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`${styles.dSwatch}${c === color ? ` ${styles.dSwatchOn}` : ''}`}
+                  style={{ background: c, color: c }}
+                  aria-label={`Color ${c}`}
+                  aria-pressed={c === color}
+                  onClick={() => pickColor(c)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* notes — explicit Save, sitting in the header so the actions are
+              visible without scrolling past a long note */}
+          <div className={styles.dNoteshead}>
+            <span className="adrawer__eyebrow">Notes</span>
+            {noteDirty && (
+              <span className={styles.dNoteActions}>
+                <button
+                  type="button"
+                  className={styles.dNoteBtn}
+                  onClick={() => setNote(savedNote)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.dNoteBtn} ${styles.dNoteSave}`}
+                  onClick={saveNote}
+                >
+                  Save
+                </button>
+              </span>
+            )}
+          </div>
+          <textarea
+            className={styles.dNotes}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Add a note about this list…"
+            aria-label="List notes"
+          />
+
           {/* editable tags — saved as you add or remove them */}
           <div className={styles.dTagsSection}>
             <span className={`adrawer__eyebrow ${styles.dTagsEyebrow}`}>Tags</span>
@@ -906,43 +970,6 @@ function ListDrawer({
               />
             </div>
           </div>
-
-          {/* color — saved on pick */}
-          <div className={styles.dColorSection}>
-            <span className={`adrawer__eyebrow ${styles.dColorEyebrow}`}>Color</span>
-            <div className={styles.dSwatches} role="group" aria-label="List color">
-              {COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={`${styles.dSwatch}${c === color ? ` ${styles.dSwatchOn}` : ''}`}
-                  style={{ background: c, color: c }}
-                  aria-label={`Color ${c}`}
-                  aria-pressed={c === color}
-                  onClick={() => pickColor(c)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* notes — autosave shortly after you stop typing */}
-          <div className={styles.dNoteshead}>
-            <span className="adrawer__eyebrow">Notes</span>
-          </div>
-          <textarea
-            className={styles.dNotes}
-            value={note}
-            onChange={(e) => onNoteChange(e.target.value)}
-            onBlur={() => {
-              if (noteTimer.current != null) {
-                window.clearTimeout(noteTimer.current);
-                noteTimer.current = null;
-              }
-              flushNote(note);
-            }}
-            placeholder="Add a note about this list…"
-            aria-label="List notes"
-          />
         </div>
 
         <div className="adrawer__foot">
@@ -969,11 +996,6 @@ function ListDrawer({
             className="pbtn"
             style={{ flex: 1 }}
             onClick={() => {
-              if (noteTimer.current != null) {
-                window.clearTimeout(noteTimer.current);
-                noteTimer.current = null;
-              }
-              flushNote(note);
               window.location.href = routes.app.list(list.id);
             }}
           >

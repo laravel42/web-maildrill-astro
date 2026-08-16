@@ -9,4 +9,4 @@ export const VIEWS = [
 ] as const;
 
 export const ASC_FIRST = new Set<SortKey>(['name', 'channel', 'cat']);
-export const PAGE_SIZE = 15;
+export { PAGE_SIZE } from './shared/pagination';

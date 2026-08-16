@@ -41,8 +41,7 @@ export const STATUS_FILTERS: CampaignStatus[] = [
   'paused',
 ];
 
-/** Rows shown per page in the campaigns table. */
-export const PAGE_SIZE = 15;
+export { PAGE_SIZE } from './shared/pagination';
 
 export function pct(v: number | null): string {
   return v == null ? '—' : `${(v * 100).toFixed(1)}%`;

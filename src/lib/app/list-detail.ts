@@ -8,7 +8,10 @@ import type { ApiCampaign } from '@/lib/app/campaign-map';
 import { EMPTY_TOTALS, type ChannelTotals } from '@/lib/app/channel-kpis';
 import type { ChannelType } from '@/types/app';
 
-export type RosterFilter = 'all' | 'active' | 'unconfirmed' | 'unsubscribed' | 'bounced';
+export type RosterFilter = 'all' | 'active' | 'delivered' | 'unsubscribed' | 'failed';
+
+/** Roster bucket used by the status tabs (Failed folds bounce/complaint/invalid). */
+export type RosterGroup = 'active' | 'unsubscribed' | 'failed';
 
 /** Member row from /v1/lists/{id}/members — subscriber columns + joinedAt. */
 export type ApiListMember = {
@@ -22,6 +25,8 @@ export type ApiListMember = {
   updatedAt?: string | null;
   /** list_members.addedAt — when they joined this list. */
   joinedAt?: string | null;
+  /** When this subscriber last received a campaign message, if ever. */
+  lastCampaignAt?: string | Date | null;
 };
 
 /** Custom field definition from /v1/custom-fields. */
@@ -40,7 +45,7 @@ export type ApiSegment = {
 };
 
 export type HealthSegment = {
-  key: 'active' | 'unconfirmed' | 'unsubscribed' | 'bounced' | 'complained';
+  key: 'active' | 'delivered' | 'unsubscribed' | 'failed';
   label: string;
   color: string;
   value: number;
@@ -55,10 +60,12 @@ export type RosterRow = {
   initials: string;
   avBg: string;
   avInk: string;
-  status: RosterFilter | 'complained';
+  status: string;
+  group: RosterGroup;
   statusLabel: string;
   statusColor: string;
   joinedLabel: string;
+  lastCampaignAt: string | null;
   search: string;
 };
 
@@ -104,6 +111,8 @@ export type ListDetailView = {
   bounceRate: string;
   complaintRate: string;
   unsubRate: string;
+  deliveredRate: string;
+  failedRate: string;
   /**
    * Send outcomes for this list, split by the channel that carried them —
    * aggregated from the campaigns targeting the list, which each know their
@@ -134,7 +143,21 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
   unsubscribed: { label: 'Unsubscribed', color: '#8f8d84' },
   bounced: { label: 'Bounced', color: '#dc2626' },
   complained: { label: 'Complained', color: '#9f1239' },
+  invalid: { label: 'Failed', color: '#dc2626' },
 };
+
+function groupOf(status: string): RosterGroup {
+  if (status === 'unsubscribed') return 'unsubscribed';
+  if (status === 'active') return 'active';
+  return 'failed';
+}
+
+/** True when a roster row belongs to the selected status tab. */
+export function rosterMatchesFilter(row: RosterRow, filter: RosterFilter): boolean {
+  if (filter === 'all') return true;
+  if (filter === 'delivered') return row.group === 'active';
+  return row.group === filter;
+}
 
 function initialsOf(name: string): string {
   return name
@@ -194,14 +217,17 @@ export function buildListDetailView(
   const total = Math.max(list.memberCount ?? loaded, loaded);
   const sampled = total > loaded;
 
-  // Status buckets from the loaded roster. "Unconfirmed" exists in the comp
-  // but the backend has no such subscriber status — it stays 0.
-  const bucket = { active: 0, unconfirmed: 0, unsubscribed: 0, bounced: 0, complained: 0 };
+  // Failed folds bounced, complained, and invalid (plus any leftover status
+  // that isn't active or unsubscribed). Unconfirmed is not a backend status.
+  const bucket = { active: 0, unsubscribed: 0, failed: 0, bounced: 0, complained: 0 };
   for (const m of members) {
     if (m.status === 'active') bucket.active += 1;
     else if (m.status === 'unsubscribed') bucket.unsubscribed += 1;
-    else if (m.status === 'bounced') bucket.bounced += 1;
-    else if (m.status === 'complained') bucket.complained += 1;
+    else {
+      bucket.failed += 1;
+      if (m.status === 'bounced') bucket.bounced += 1;
+      else if (m.status === 'complained') bucket.complained += 1;
+    }
   }
 
   // When the roster is capped at 1000, shares come from the loaded sample and
@@ -220,12 +246,25 @@ export function buildListDetailView(
     value: value(count),
     pct: Math.round(share(count) * 1000) / 10,
   });
+  const deliveredCount = list.delivered ?? campaigns.reduce((n, c) => n + (c.delivered ?? 0), 0);
+  const attemptedCount = campaigns.reduce((n, c) => n + (c.recipients ?? 0), 0);
+  const failedCount = campaigns.reduce((n, c) => n + (c.failed ?? 0), 0);
+  const deliveredPct =
+    attemptedCount > 0 ? Math.round((deliveredCount / attemptedCount) * 1000) / 10 : 0;
+  const sendRate = (n: number) =>
+    attemptedCount > 0 ? `${((n / attemptedCount) * 100).toFixed(2)}%` : '—';
+
   const health: HealthSegment[] = [
     seg('active', 'Active', '#4f46e5', bucket.active),
-    seg('unconfirmed', 'Unconfirmed', '#c2740a', bucket.unconfirmed),
+    {
+      key: 'delivered',
+      label: 'Delivered',
+      color: '#16a34a',
+      value: deliveredCount,
+      pct: deliveredPct,
+    },
     seg('unsubscribed', 'Unsubscribed', '#a5a39a', bucket.unsubscribed),
-    seg('bounced', 'Bounced', '#dc2626', bucket.bounced),
-    seg('complained', 'Complaints', '#9f1239', bucket.complained),
+    seg('failed', 'Failed', '#dc2626', bucket.failed),
   ];
 
   const last7 = list.addedLast7 ?? 0;
@@ -259,19 +298,21 @@ export function buildListDetailView(
       initials: initialsOf(name),
       avBg,
       avInk,
-      status: (m.status in STATUS_META ? m.status : 'active') as RosterRow['status'],
+      status: m.status,
+      group: groupOf(m.status),
       statusLabel: meta.label,
       statusColor: meta.color,
       joinedLabel: fmtDate(m.joinedAt ?? m.createdAt),
+      lastCampaignAt: m.lastCampaignAt ? new Date(m.lastCampaignAt).toISOString() : null,
       search: `${name} ${m.email}`.toLowerCase(),
     };
   });
   const rosterCounts: Record<RosterFilter, number> = {
     all: roster.length,
     active: bucket.active,
-    unconfirmed: bucket.unconfirmed,
+    delivered: bucket.active,
     unsubscribed: bucket.unsubscribed,
-    bounced: bucket.bounced,
+    failed: bucket.failed,
   };
 
   const campaignRows: ListCampaignRow[] = campaigns.map((c) => {
@@ -368,6 +409,8 @@ export function buildListDetailView(
     bounceRate: loaded > 0 ? `${(share(bucket.bounced) * 100).toFixed(2)}%` : '—',
     complaintRate: loaded > 0 ? `${(share(bucket.complained) * 100).toFixed(2)}%` : '—',
     unsubRate: loaded > 0 ? `${(share(bucket.unsubscribed) * 100).toFixed(2)}%` : '—',
+    deliveredRate: sendRate(deliveredCount),
+    failedRate: sendRate(failedCount),
     channelTotals,
     embedSnippet: `<script src="https://js.maildrill.net/embed.js" data-list="${list.id}"></script>`,
   };

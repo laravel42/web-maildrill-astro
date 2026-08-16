@@ -83,5 +83,6 @@ if (fieldsRes.ok) {
     campaigns={campaigns}
     segments={segments}
     fields={fields}
+    lists={unwrap<ApiList>(listsRes.data).map((l) => ({ id: l.id, name: l.name }))}
   />
 </AppLayout>

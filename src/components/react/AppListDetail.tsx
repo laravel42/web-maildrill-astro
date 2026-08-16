@@ -2,23 +2,26 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
 import ListEditorModal from './ListEditorModal';
+import SubscriberImportModal from './shared/SubscriberImportModal';
 import { useToast } from './shared/useToast';
 import { api, ApiError } from '@/lib/app/api';
 import { routes } from '@/config/routes';
-import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
-import { channelKpis, EMPTY_TOTALS } from '@/lib/app/channel-kpis';
 import type { ChannelType } from '@/types/app';
 import type { ApiList } from '@/lib/app/list-map';
 import type { ApiCampaign } from '@/lib/app/campaign-map';
 import {
   buildListDetailView,
+  rosterMatchesFilter,
   type ApiCustomFieldDef,
   type ApiListMember,
   type ApiSegment,
   type ListDetailView,
   type RosterFilter,
 } from '@/lib/app/list-detail';
-import { visiblePageNumbers } from './shared/pagination';
+import { PAGE_SIZE, visiblePageNumbers } from './shared/pagination';
+import { ChannelPill } from './shared/CampaignPills';
+import { CHANNEL_ORDER } from './shared/channels';
+import { agoNow } from './shared/time';
 import styles from './AppListDetail.module.css';
 
 /*
@@ -35,26 +38,29 @@ type Props = {
   campaigns?: ApiCampaign[];
   fields?: ApiCustomFieldDef[];
   segments?: ApiSegment[];
+  /** Workspace lists for the import picker; defaults to this list alone. */
+  lists?: { id: string; name: string }[];
 };
-
-const PAGE_SIZE = 12;
 
 const FILTERS: { id: RosterFilter; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'active', label: 'Active' },
-  { id: 'unconfirmed', label: 'Unconfirmed' },
+  { id: 'delivered', label: 'Delivered' },
   { id: 'unsubscribed', label: 'Unsubscribed' },
-  { id: 'bounced', label: 'Bounced' },
+  { id: 'failed', label: 'Failed' },
 ];
 
 export default function AppListDetail({
   initial,
-  members = [],
+  members: initialMembers = [],
   campaigns = [],
   fields = [],
   segments = [],
+  lists,
 }: Props) {
   const [list, setList] = useState(initial);
+  const [members, setMembers] = useState(initialMembers);
+  const [importOpen, setImportOpen] = useState(false);
   const [filter, setFilter] = useState<RosterFilter>('all');
   const [page, setPage] = useState(1);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -90,7 +96,7 @@ export default function AppListDetail({
   );
 
   const filtered = useMemo(
-    () => view.roster.filter((r) => filter === 'all' || r.status === filter),
+    () => view.roster.filter((r) => rosterMatchesFilter(r, filter)),
     [view.roster, filter],
   );
 
@@ -107,7 +113,7 @@ export default function AppListDetail({
   const desc = (list.notes ?? '').trim();
 
   const patchSetting = async (
-    key: 'doubleOptIn' | 'doubleOptOut',
+    key: 'doubleOptIn' | 'doubleOptOut' | 'gdprConsent',
     next: boolean,
     label: string,
   ) => {
@@ -156,15 +162,8 @@ export default function AppListDetail({
 
   const exportCsv = () => {
     const rows = [
-      ['id', 'email', 'name', 'status', 'phone', 'joined'],
-      ...members.map((m) => [
-        m.id,
-        m.email,
-        m.name ?? '',
-        m.status,
-        m.phone ?? '',
-        m.joinedAt ?? '',
-      ]),
+      ['email', 'name', 'status', 'phone'],
+      ...members.map((m) => [m.email, m.name ?? '', m.status, m.phone ?? '']),
     ];
     const blob = new Blob(
       [rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')],
@@ -200,11 +199,10 @@ export default function AppListDetail({
     strokeLinejoin: 'round',
   } as const;
 
-  const [channel, setChannel] = useState<ChannelType>('email');
-  const kpis = channelKpis(channel, view.channelTotals?.[channel] ?? EMPTY_TOTALS);
-
-  const listColor = list.color || 'var(--accent)';
   const gdprOn = Boolean(list.gdprConsent);
+  const listChannels = CHANNEL_ORDER.filter((ch) =>
+    ((list.channels as ChannelType[] | undefined) ?? ['email']).includes(ch),
+  );
 
   return (
     <div className={styles.wrap}>
@@ -235,38 +233,20 @@ export default function AppListDetail({
           <div className={styles.identityMain}>
             <h1 className={styles.identityName}>
               {list.name}
-              <span
-                className={styles.listColorPill}
-                style={{
-                  background: `color-mix(in srgb, ${listColor} 14%, transparent)`,
-                  color: listColor,
-                }}
-              >
-                <span className={styles.listColorDot} style={{ background: listColor }} />
-                List
+              <span className={styles.identityChans}>
+                {listChannels.map((ch) => (
+                  <ChannelPill key={ch} channel={ch} />
+                ))}
               </span>
             </h1>
             {desc ? <p className={styles.identityDesc}>{desc}</p> : null}
           </div>
           <div className={styles.identityAside}>
-            <div className={styles.identityBadges}>
-              {gdprOn && (
-                <span className={`${styles.badge} ${styles.badgeGdpr}`}>
-                  <Icon name="shield" size={12} stroke={2.4} />
-                  GDPR consent
-                  <span className={styles.badgeGdprCheck} aria-hidden="true">
-                    <Icon name="check" size={8} stroke={3.5} />
-                  </span>
-                </span>
-              )}
-            </div>
             <div className={styles.identityActions}>
               <button
                 className="pbtn"
                 type="button"
-                onClick={() => {
-                  window.location.href = routes.app.subscribers;
-                }}
+                onClick={() => setImportOpen(true)}
               >
                 <Icon name="upload" size={15} />
                 Import subscribers
@@ -307,19 +287,6 @@ export default function AppListDetail({
                       Export subscribers (CSV)
                     </button>
                     <button
-                      className={`${styles.menuItem} ${styles.menuWarn}`}
-                      type="button"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        show('Cleaning isn’t available yet');
-                      }}
-                    >
-                      <svg {...menuIcon}>
-                        <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
-                      </svg>
-                      Clean inactive addresses
-                    </button>
-                    <button
                       className={`${styles.menuItem} ${styles.menuDanger}`}
                       type="button"
                       onClick={() => {
@@ -338,24 +305,6 @@ export default function AppListDetail({
             </div>
           </div>
         </section>
-
-        <div className={styles.chanBar}>
-          <span className={styles.chanBarLabel}>Channel</span>
-          <div className={`aseg ${styles.chanSeg}`} role="group" aria-label="Filter by channel">
-            {CHANNEL_ORDER.map((ch) => (
-              <button
-                type="button"
-                key={ch}
-                className={`aseg__opt ${styles.chanSegOpt}${channel === ch ? ' is-active' : ''}`}
-                aria-pressed={channel === ch}
-                onClick={() => setChannel(ch)}
-              >
-                <span className={styles.chanDot} style={{ background: CHANNEL[ch].color }} />
-                {CHANNEL[ch].label}
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div className={styles.layout}>
           <div className={styles.colMain}>
@@ -397,16 +346,18 @@ export default function AppListDetail({
                 </div>
               </div>
               <div className={styles.healthBar}>
-                {view.health.map((s) =>
-                  s.pct > 0 ? (
-                    <span
-                      key={s.key}
-                      className={styles.healthSeg}
-                      style={{ width: `${s.pct}%`, background: s.color }}
-                      title={`${s.label} · ${s.value.toLocaleString('en-US')}`}
-                    />
-                  ) : null,
-                )}
+                {view.health
+                  .filter((s) => s.key !== 'delivered')
+                  .map((s) =>
+                    s.pct > 0 ? (
+                      <span
+                        key={s.key}
+                        className={styles.healthSeg}
+                        style={{ width: `${s.pct}%`, background: s.color }}
+                        title={`${s.label} · ${s.value.toLocaleString('en-US')}`}
+                      />
+                    ) : null,
+                  )}
               </div>
               <div className={styles.healthLegend}>
                 {view.health.map((s) => (
@@ -419,31 +370,6 @@ export default function AppListDetail({
                       {s.value.toLocaleString('en-US')}
                     </p>
                     <p className={`${styles.healthPct} ${styles.tnum}`}>{s.pct.toFixed(1)}%</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className={`${styles.card} ${styles.cardPad}`} aria-label="Channel performance">
-              <div className={styles.chanHead}>
-                <div>
-                  <h2 className={styles.cardTitle}>Channel performance</h2>
-                  <p className={styles.chartSub}>
-                    {`Every ${CHANNEL[channel].label} campaign sent to this list`}
-                  </p>
-                </div>
-              </div>
-              <div className={styles.chanKpis}>
-                {kpis.map((k) => (
-                  <div key={k.key} className={styles.chanKpi}>
-                    <p className={styles.overline}>{k.label}</p>
-                    <p
-                      className={`${styles.chanKpiV} ${styles.tnum}`}
-                      style={k.alert ? { color: 'var(--danger-text)' } : undefined}
-                    >
-                      {k.value}
-                    </p>
-                    <p className={styles.chanKpiSub}>{k.sub}</p>
                   </div>
                 ))}
               </div>
@@ -531,7 +457,7 @@ export default function AppListDetail({
                         <th>Subscriber</th>
                         <th>Status</th>
                         <th>Joined</th>
-                        <th>Last open</th>
+                        <th>Last campaign</th>
                         <th>Source</th>
                       </tr>
                     </thead>
@@ -578,7 +504,9 @@ export default function AppListDetail({
                             </span>
                           </td>
                           <td className={styles.tnum}>{r.joinedLabel}</td>
-                          <td className={styles.tnum}>—</td>
+                          <td className={styles.tnum}>
+                            {r.lastCampaignAt ? agoNow(r.lastCampaignAt) : '—'}
+                          </td>
                           <td className={styles.cellMuted}>—</td>
                         </tr>
                       ))}
@@ -641,21 +569,15 @@ export default function AppListDetail({
                 <span className="adetail__v">{view.lastCampaignLabel}</span>
               </div>
               <div className="adetail">
-                <span className="adetail__k">Bounce rate</span>
-                <span className="adetail__v tnum">{view.bounceRate}</span>
+                <span className="adetail__k">Delivery rate</span>
+                <span className="adetail__v tnum">{view.deliveredRate}</span>
               </div>
               <div className="adetail">
-                <span className="adetail__k">Complaint rate</span>
-                <span
-                  className={`adetail__v tnum${
-                    view.complaintRate !== '—' ? ` ${styles.railValueOk}` : ''
-                  }`}
-                >
-                  {view.complaintRate}
-                </span>
+                <span className="adetail__k">Failed rate</span>
+                <span className="adetail__v tnum">{view.failedRate}</span>
               </div>
               <div className="adetail">
-                <span className="adetail__k">Unsub rate</span>
+                <span className="adetail__k">Unsubscribe rate</span>
                 <span className="adetail__v tnum">{view.unsubRate}</span>
               </div>
             </section>
@@ -777,6 +699,24 @@ export default function AppListDetail({
                 </li>
                 <li className={styles.settingRow}>
                   <div className={styles.stackBody}>
+                    <p className={styles.stackTitle}>GDPR consent</p>
+                    <p className={styles.stackDesc}>
+                      Mark this list as requiring or recording GDPR consent.
+                    </p>
+                  </div>
+                  <button
+                    className={`${styles.switch} ${gdprOn ? styles.isOn : ''}`}
+                    type="button"
+                    role="switch"
+                    aria-checked={gdprOn}
+                    aria-label="GDPR consent"
+                    onClick={() => void patchSetting('gdprConsent', !gdprOn, 'GDPR consent')}
+                  >
+                    <span className={styles.switchKnob} />
+                  </button>
+                </li>
+                <li className={styles.settingRow}>
+                  <div className={styles.stackBody}>
                     <p className={styles.stackTitle}>Public signup form</p>
                     <p className={styles.stackDesc}>
                       Anyone with the hosted link or embed can join this list.
@@ -796,20 +736,22 @@ export default function AppListDetail({
               </ul>
             </section>
 
-            <section className={`${styles.card} ${styles.cardPad}`}>
-              <div className={styles.railHead}>
-                <p className={`adrawer__eyebrow ${styles.railEyebrow}`}>Signup form</p>
-                <button
-                  className={`sbtn ${styles.copyBtn}`}
-                  type="button"
-                  onClick={() => void copyEmbed()}
-                >
-                  <Icon name="copy" size={12} stroke={2.2} />
-                  {copyLabel}
-                </button>
-              </div>
-              <code className={`${styles.embed} ${styles.mono}`}>{view.embedSnippet}</code>
-            </section>
+            {publicForm && (
+              <section className={`${styles.card} ${styles.cardPad}`}>
+                <div className={styles.railHead}>
+                  <p className={`adrawer__eyebrow ${styles.railEyebrow}`}>Signup form</p>
+                  <button
+                    className={`sbtn ${styles.copyBtn}`}
+                    type="button"
+                    onClick={() => void copyEmbed()}
+                  >
+                    <Icon name="copy" size={12} stroke={2.2} />
+                    {copyLabel}
+                  </button>
+                </div>
+                <code className={`${styles.embed} ${styles.mono}`}>{view.embedSnippet}</code>
+              </section>
+            )}
           </aside>
         </div>
       </main>
@@ -840,12 +782,52 @@ export default function AppListDetail({
         />
       )}
 
+      {importOpen && (
+        <SubscriberImportModal
+          initialStep="file"
+          initialListIds={[list.id]}
+          initialImportListIds={[list.id]}
+          hideImportLists
+          lists={lists?.length ? lists : [{ id: list.id, name: list.name }]}
+          customFieldKeys={fields.map((f) => f.key)}
+          onClose={() => setImportOpen(false)}
+          onError={show}
+          onImported={async () => {
+            try {
+              const [freshMembers, listsRes] = await Promise.all([
+                api.get<{ data: ApiListMember[] }>(`lists/${list.id}/members?limit=1000`),
+                api.get<{ data: ApiList[] }>('lists'),
+              ]);
+              setMembers(freshMembers.data ?? []);
+              const updated = listsRes.data?.find((l) => l.id === list.id);
+              if (updated) setList((l) => ({ ...l, ...updated }));
+            } catch {
+              /* roster refresh is best-effort; the import itself succeeded */
+            }
+          }}
+          onCreated={async (_created, values) => {
+            const fresh = await api.get<{ data: ApiListMember[] }>(
+              `lists/${list.id}/members?limit=1000`,
+            );
+            setMembers(fresh.data ?? []);
+            setList((l) => ({
+              ...l,
+              memberCount: (l.memberCount ?? 0) + 1,
+              activeMemberCount: (l.activeMemberCount ?? 0) + 1,
+            }));
+            show(`${values.email} added`);
+          }}
+        />
+      )}
+
       {editorOpen && (
         <ListEditorModal
           mode="edit"
           initialName={list.name}
           initialNotes={list.notes ?? ''}
           initialColor={list.color ?? undefined}
+          initialChannels={(list.channels as ChannelType[] | undefined) ?? ['email']}
+          initialGdprConsent={Boolean(list.gdprConsent)}
           onClose={() => setEditorOpen(false)}
           onSave={async (values) => {
             try {
@@ -853,12 +835,16 @@ export default function AppListDetail({
                 name: values.name,
                 notes: values.notes || null,
                 color: values.color,
+                channels: values.channels,
+                gdprConsent: values.gdprConsent,
               });
               setList((l) => ({
                 ...l,
                 name: updated.name,
                 notes: updated.notes ?? values.notes,
                 color: updated.color || values.color,
+                channels: updated.channels ?? values.channels,
+                gdprConsent: updated.gdprConsent ?? values.gdprConsent,
               }));
               setEditorOpen(false);
               show(`List “${values.name}” updated`);

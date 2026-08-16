@@ -10,7 +10,8 @@ import NotificationsInbox from './shared/NotificationsInbox';
 import styles from './AppShell.module.css';
 import { signOut } from 'auth-astro/client';
 
-const PINS_KEY = 'md:pins:v1';
+const PINS_KEY = 'md:pins:v2';
+const PINS_KEY_LEGACY = 'md:pins:v1';
 /** Session echo of the profile photo — the auth session carries no avatar. */
 const AVATAR_CACHE_KEY = 'md:avatar:v1';
 
@@ -21,26 +22,25 @@ const PIN_SECTIONS: { kind: PinKind; label: string }[] = [
   { kind: 'subscriber', label: 'Subscribers' },
 ];
 
+/** Detail page for a pin — never the index table / drawer. */
 function pinHref(p: Pin): string {
-  if (p.kind === 'campaign') {
-    return routes.app.campaignReport(p.id);
+  switch (p.kind) {
+    case 'list':
+      return routes.app.list(p.id);
+    case 'campaign':
+      return routes.app.campaignReport(p.id);
+    case 'template':
+      return `${routes.app.templateBuilder(p.channel ?? 'email')}?id=${encodeURIComponent(p.id)}`;
+    case 'subscriber':
+      return routes.app.subscriber(p.id);
   }
-  if (p.kind === 'template') {
-    const channel = p.channel ?? 'email';
-    return `${routes.app.templateBuilder(channel)}?id=${encodeURIComponent(p.id)}`;
-  }
-  if (p.kind === 'subscriber') {
-    return routes.app.subscriber(p.id);
-  }
-  return routes.app.list(p.id);
 }
 
 const PIN_KINDS = new Set(['campaign', 'list', 'template', 'subscriber']);
 
-function readPins(): Pin[] {
+function parsePins(raw: string | null): Pin[] {
+  if (!raw) return [];
   try {
-    const raw = localStorage.getItem(PINS_KEY);
-    if (!raw) return [];
     const parsed = JSON.parse(raw) as Pin[];
     return Array.isArray(parsed)
       ? parsed.filter(
@@ -48,6 +48,21 @@ function readPins(): Pin[] {
             !!p && typeof p.id === 'string' && typeof p.label === 'string' && PIN_KINDS.has(p.kind),
         )
       : [];
+  } catch {
+    return [];
+  }
+}
+
+function readPins(): Pin[] {
+  try {
+    const current = parsePins(localStorage.getItem(PINS_KEY));
+    if (current.length) return current;
+    const legacy = parsePins(localStorage.getItem(PINS_KEY_LEGACY));
+    if (legacy.length) {
+      localStorage.setItem(PINS_KEY, JSON.stringify(legacy));
+      localStorage.removeItem(PINS_KEY_LEGACY);
+    }
+    return legacy;
   } catch {
     return [];
   }
@@ -298,11 +313,16 @@ export default function AppShell({
             {pinGroups.map((group) => (
               <div key={group.kind} className={styles.pinSection}>
                 <p className={styles.pinSectionLabel}>{group.label}</p>
-                {group.items.map((p, i) => (
+                {group.items.map((p, i) => {
+                  const href = pinHref(p);
+                  const pinPath = href.split('?')[0] ?? href;
+                  const active = currentPath === pinPath;
+                  return (
                   <a
                     key={`${p.kind}:${p.id}`}
-                    href={pinHref(p)}
-                    className={`${styles.pinRow}${draggingId === p.id ? ` ${styles.pinRowDragging}` : ''}`}
+                    href={href}
+                    className={`${styles.pinRow}${active ? ` ${styles.pinRowActive}` : ''}${draggingId === p.id ? ` ${styles.pinRowDragging}` : ''}`}
+                    aria-current={active ? 'page' : undefined}
                     draggable
                     onDragStart={(e) => {
                       dragFrom.current = { kind: group.kind, index: i };
@@ -336,7 +356,8 @@ export default function AppShell({
                       <Icon name="x" size={12} stroke={2.3} />
                     </button>
                   </a>
-                ))}
+                  );
+                })}
               </div>
             ))}
             {pins.length === 0 && (

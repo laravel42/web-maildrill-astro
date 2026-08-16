@@ -212,6 +212,10 @@
   background: var(--sidebar-hover);
   color: var(--text);
 }
+.pinRowActive {
+  background: var(--sidebar-hover);
+  color: var(--text);
+}
 .pinRowDragging {
   opacity: 0.45;
 }

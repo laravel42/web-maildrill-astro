@@ -1,4 +1,5 @@
 import type { ListRow } from '@/components/react/AppLists.types';
+import type { ChannelType } from '@/types/app';
 
 /** Shape of a list as returned by workers /v1/lists. */
 export interface ApiList {
@@ -15,6 +16,8 @@ export interface ApiList {
   goodbyeEmailTemplateId?: string | null;
   /** Free-form labels stored on the list (jsonb array). */
   tags?: string[] | null;
+  /** Channels the list is for; at least one, defaulting to email. */
+  channels?: string[] | null;
   /** Free-text note kept with the list. */
   notes?: string | null;
   /** Subscribers on the list, counted server-side by /v1/lists. */
@@ -60,6 +63,8 @@ export function toListRow(l: ApiList): ListRow {
     color: l.color || '#4f46e5',
     trend: l.trend && l.trend.length > 1 ? l.trend : [0],
     gdprConsent: Boolean(l.gdprConsent),
+    channels:
+      l.channels && l.channels.length > 0 ? (l.channels as ChannelType[]) : (['email'] as ChannelType[]),
     tags: l.tags ?? [],
     notes: l.notes ?? '',
     more: last7 > 0 ? `+${last7}` : '+0',

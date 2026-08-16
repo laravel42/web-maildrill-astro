@@ -53,7 +53,7 @@ export const ASC_FIRST: Record<SortKey, boolean> = {
   size: false,
   uploaded: false,
 };
-export const PAGE_SIZE = 15;
+export { PAGE_SIZE } from './shared/pagination';
 
 /** Orientation filter options (square images match both). */
 export const ORIENTATIONS = ['Landscape', 'Portrait'] as const;

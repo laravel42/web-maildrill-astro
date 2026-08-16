@@ -55,6 +55,9 @@ describe('guessTarget / guessMapping', () => {
     expect(guessTarget('Mobile').kind).toBe('phone');
     expect(guessTarget('Tags').kind).toBe('tags');
     expect(guessTarget('Anything else').kind).toBe('skip');
+    expect(guessTarget('id').kind).toBe('skip');
+    expect(guessTarget('Joined').kind).toBe('skip');
+    expect(guessTarget('joined_at').kind).toBe('skip');
   });
 
   it('matches workspace custom fields by key', () => {

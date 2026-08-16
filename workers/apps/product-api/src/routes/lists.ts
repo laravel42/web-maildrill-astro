@@ -14,10 +14,15 @@ import {
 } from '@maildrill/product';
 
 const TAG = ['Lists'];
+const channelsSchema = z
+  .array(z.enum(['email', 'sms', 'whatsapp', 'voice']))
+  .min(1, 'pick at least one channel for this list');
+
 const createSchema = z.object({
   name: z.string().min(1),
   color: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
+  channels: channelsSchema.optional(),
   notes: z.string().nullable().optional(),
   gdprConsent: z.boolean().optional(),
   doubleOptIn: z.boolean().optional(),

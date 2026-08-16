@@ -20,6 +20,11 @@ export type AudienceChoice = {
   phoneCount?: number | null;
   /** List colour (hex), for the list badge. Only set for `kind: 'list'`. */
   color?: string | null;
+  /**
+   * Channels the list is declared for. Only set for `kind: 'list'`.
+   * Defaults to email when the API omits it. Segments have no channel set.
+   */
+  channels?: ChannelType[];
 };
 
 /** A saved template the campaign can send, narrowed to the chosen channel. */

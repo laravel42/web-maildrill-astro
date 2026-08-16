@@ -1,3 +1,6 @@
+/** Rows shown per page on every workspace datatable. */
+export const PAGE_SIZE = 10;
+
 /** Max numbered buttons shown in table pagers (prev/next are separate). */
 export const MAX_VISIBLE_PAGES = 5;
 

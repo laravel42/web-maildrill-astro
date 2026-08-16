@@ -7,12 +7,14 @@ import { routes } from '@/config/routes';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { channelKpis, EMPTY_TOTALS } from '@/lib/app/channel-kpis';
 import { channelReportConfig } from '@/lib/app/campaign-report';
-import { engagementScore, engagementTier } from '@/lib/app/subscriber-detail';
 import type { ChannelType } from '@/types/app';
 import { tagStyle } from '@/lib/app/tag-style';
 import {
   buildSubscriberDetailView,
+  engagementScore,
+  engagementTier,
   scoreArcLength,
+  subscriberFrequency,
   type ApiSubscriberActivity,
   type DetailTab,
   type SubscriberDetailView,
@@ -194,6 +196,13 @@ export default function AppSubscriberDetail({
     chanTotals.attempted > 0
       ? Math.round((chanTotals.delivered / chanTotals.attempted) * 100)
       : null;
+  // Frequency used to always use email volume; scope it to the selected channel
+  // the same way the meters above do. `attempted - failed` is the activity
+  // payload's `sent` (successes), which is what the overall frequency used.
+  const chanFrequency = subscriberFrequency(
+    Math.max(0, chanTotals.attempted - chanTotals.failed),
+    sub.createdAt,
+  );
 
   const filteredEvents = useMemo(
     () => {
@@ -536,11 +545,6 @@ export default function AppSubscriberDetail({
                         ? `No ${CHANNEL[channel].label} sends yet`
                         : `${chanTotals.delivered} of ${chanTotals.attempted} delivered`}
                   </p>
-                  {!tracksEngagement && (
-                    <p className={styles.scoreNote}>
-                      {`${CHANNEL[channel].label} reports delivery only — no opens or clicks exist to score.`}
-                    </p>
-                  )}
                   {tracksEngagement && view.scoreDeltaLabel && (
                     <p className={styles.scoreDelta}>
                       <svg
@@ -602,13 +606,13 @@ export default function AppSubscriberDetail({
                   <div className={styles.meterHead}>
                     <span className={styles.meterLabel}>Frequency</span>
                     <span className={`${styles.meterValue} ${styles.tnum}`}>
-                      {view.frequencyLabel}
+                      {chanFrequency.label}
                     </span>
                   </div>
                   <div className={styles.meterTrack}>
                     <div
                       className={styles.meterFill}
-                      style={{ width: `${view.frequencyPct}%`, background: '#c2740a' }}
+                      style={{ width: `${chanFrequency.pct}%`, background: '#c2740a' }}
                     />
                   </div>
                 </li>

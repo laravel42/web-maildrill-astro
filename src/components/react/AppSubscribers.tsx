@@ -22,6 +22,8 @@ import { toRichSubscriber, type ApiSubscriber } from '@/lib/app/subscriber-map';
 import { matchesSearchQuery } from '@/lib/app/search-match';
 import { RATE_BUCKETS, parseRatePercent, rateBucket } from '@/lib/app/templates-data';
 import SubscriberEditorModal from './SubscriberEditorModal';
+import SubscriberImportModal from './shared/SubscriberImportModal';
+import { applyListMembership } from '@/lib/app/subscriber-write';
 import { buildCsv, downloadCsv, exportFilename, subscribersCsv } from '@/lib/app/subscriber-export';
 import type { CustomField } from '@/lib/app/custom-fields';
 import TagFilter from './shared/TagFilter';
@@ -69,15 +71,27 @@ export default function AppSubscribers({
     initial !== undefined ? initial : mockSubscribers,
   );
   const [view, setView] = useState<ViewMode>('table');
-  const [tab, setTab] = useState<'all' | SubscriberStatus>('all');
+  // Tabs cut the table by channel, as on the campaigns board. Email leads: it
+  // is the only channel every subscriber can be addressed on.
+  const [tab, setTab] = useState<ChannelType>('email');
+  const [statusFilter, setStatusFilter] = useState<Set<SubscriberStatus>>(new Set());
+  const [statusOpen, setStatusOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [channelFilter, setChannelFilter] = useState<Set<ChannelType>>(new Set());
-  const [channelOpen, setChannelOpen] = useState(false);
   const [listFilter, setListFilter] = useState<Set<string>>(new Set());
   const [listOpen, setListOpen] = useState(false);
   const [opensSel, setOpensSel] = useState<Set<string>>(new Set());
   const [clicksSel, setClicksSel] = useState<Set<string>>(new Set());
   const [rateFilterOpen, setRateFilterOpen] = useState<'opens' | 'clicks' | null>(null);
+  const tabCfg = channelReportConfig(tab);
+  const showOpenFilter = tabCfg.rateCards.some((r) => r === 'open' || r === 'seen');
+  const showClickFilter = tabCfg.rateCards.includes('click');
+  const openFilterLabel = tabCfg.openLabel === 'Seen' ? 'Seen' : 'Opens';
+
+  useEffect(() => {
+    if (!showOpenFilter) setOpensSel(new Set());
+    if (!showClickFilter) setClicksSel(new Set());
+    setRateFilterOpen(null);
+  }, [tab, showOpenFilter, showClickFilter]);
   const [segSel, setSegSel] = useState<Set<string>>(new Set());
   const [tagSel, setTagSel] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'name', dir: 1 });
@@ -154,6 +168,13 @@ export default function AppSubscribers({
     setSubEditor({ mode: 'create' });
     url.searchParams.delete('new');
     window.history.replaceState(null, '', `${url.pathname}${url.search}`);
+  }, []);
+
+  // Legacy pin / bookmark: /dashboard/subscribers?open=<id> used to sit on
+  // this table. Pins now go to the subscriber profile.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('open');
+    if (id) window.location.replace(routes.app.subscriber(id));
   }, []);
 
   // Custom-field keys feed the import wizard's column-mapping targets.
@@ -251,20 +272,26 @@ export default function AppSubscribers({
   }, [segSel, segMembers, richSubscribers]);
 
   const tabCounts = useMemo(() => {
-    // Derived from STATUS_TABS rather than a hand-written subset: the previous
-    // literal list silently reported 0 for every status added after it.
-    const c: Record<string, number> = { all: segFiltered.length };
-    for (const st of STATUS_TABS) {
-      if (st === 'all') continue;
-      c[st] = segFiltered.filter((s) => s.status === st).length;
-    }
+    const c: Record<string, number> = {};
+    for (const ch of CHANNEL_ORDER) c[ch] = segFiltered.filter((s) => reachOf(s)[ch]).length;
     return c;
   }, [segFiltered]);
+
+  /** Statuses actually present on the selected channel, for the Status menu. */
+  const statusCounts = useMemo(() => {
+    const c = new Map<SubscriberStatus, number>();
+    for (const s of segFiltered) {
+      if (!reachOf(s)[tab]) continue;
+      c.set(s.status, (c.get(s.status) ?? 0) + 1);
+    }
+    return c;
+  }, [segFiltered, tab]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let list = segFiltered.filter((s) => {
-      if (tab !== 'all' && s.status !== tab) return false;
+      if (!reachOf(s)[tab]) return false;
+      if (statusFilter.size > 0 && !statusFilter.has(s.status)) return false;
       if (q) {
         const hit =
           matchesSearchQuery(s.name, q) ||
@@ -272,14 +299,20 @@ export default function AppSubscribers({
           effTags(s).some((t) => matchesSearchQuery(t, q));
         if (!hit) return false;
       }
-      if (channelFilter.size > 0) {
-        const r = reachOf(s);
-        if (![...channelFilter].some((ch) => r[ch])) return false;
-      }
       if (listFilter.size > 0 && !s.listIds.some((id) => listFilter.has(id))) return false;
       if (tagSel.size > 0 && !effTags(s).some((t) => tagSel.has(t))) return false;
-      if (opensSel.size && !opensSel.has(rateBucket(parseRatePercent(s.opens)))) return false;
-      if (clicksSel.size && !clicksSel.has(rateBucket(parseRatePercent(s.clicks)))) return false;
+      if (
+        showOpenFilter &&
+        opensSel.size &&
+        !opensSel.has(rateBucket(parseRatePercent(s.opens)))
+      )
+        return false;
+      if (
+        showClickFilter &&
+        clicksSel.size &&
+        !clicksSel.has(rateBucket(parseRatePercent(s.clicks)))
+      )
+        return false;
       return true;
     });
     const { key, dir } = sort;
@@ -317,13 +350,15 @@ export default function AppSubscribers({
     segFiltered,
     tab,
     query,
-    channelFilter,
+    statusFilter,
     listFilter,
     tagSel,
     opensSel,
     clicksSel,
     sort,
     tagStore,
+    showOpenFilter,
+    showClickFilter,
   ]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -357,16 +392,6 @@ export default function AppSubscribers({
       else pageRows.forEach((r) => next.add(r.id));
       return next;
     });
-
-  const toggleChannel = (ch: ChannelType) => {
-    setChannelFilter((prev) => {
-      const next = new Set(prev);
-      if (next.has(ch)) next.delete(ch);
-      else next.add(ch);
-      return next;
-    });
-    resetPageAndSel();
-  };
 
   const toggleListFilter = (id: string) => {
     setListFilter((prev) => {
@@ -456,9 +481,8 @@ export default function AppSubscribers({
 
   const clearAll = () => {
     setSegSel(new Set());
-    setTab('all');
+    setStatusFilter(new Set());
     setTagSel(new Set());
-    setChannelFilter(new Set());
     setListFilter(new Set());
     setOpensSel(new Set());
     setClicksSel(new Set());
@@ -507,24 +531,6 @@ export default function AppSubscribers({
     } catch (e) {
       showToast(e instanceof ApiError ? e.message : 'Could not save tags');
     }
-  };
-
-  /* Reconcile list membership against the service. The editor now offers a
-     multi-select, so this adds every newly chosen list and removes the ones the
-     subscriber was dropped from — all in one save. */
-  const applyListMembership = async (
-    subscriberId: string,
-    currentListIds: string[],
-    nextListIds: string[],
-  ) => {
-    const next = new Set(nextListIds);
-    const current = new Set(currentListIds);
-    const toRemove = currentListIds.filter((id) => !next.has(id));
-    const toAdd = nextListIds.filter((id) => !current.has(id));
-    await Promise.allSettled([
-      ...toRemove.map((id) => api.del(`lists/${id}/members/${subscriberId}`)),
-      ...toAdd.map((id) => api.post(`lists/${id}/members`, { subscriberId })),
-    ]);
   };
 
   /* Segments are workspace resources: they persist to the service so teammates
@@ -673,24 +679,29 @@ export default function AppSubscribers({
       </div>
 
       <div className={`atable ${styles.card}`}>
-        {/* status tabs */}
-        <div className={`${styles.tabs} atabs`} role="tablist" aria-label="Subscriber status">
-          {STATUS_TABS.map((t) => (
-            <button
-              key={t}
-              type="button"
-              role="tab"
-              aria-selected={tab === t}
-              className={`atab${tab === t ? ' is-active' : ''}`}
-              onClick={() => {
-                setTab(t);
-                resetPageAndSel();
-              }}
-            >
-              {t === 'all' ? 'All' : STATUS_LABEL[t]}
-              <span className="atab__count tnum">{tabCounts[t] ?? 0}</span>
-            </button>
-          ))}
+        {/* channel tabs — who can actually be reached on each channel */}
+        <div className={`${styles.tabs} atabs`} role="tablist" aria-label="Channel">
+          {CHANNEL_ORDER.map((ch) => {
+            const m = CHANNEL[ch];
+            const active = tab === ch;
+            return (
+              <button
+                key={ch}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                className={`atab${active ? ' is-active' : ''}`}
+                onClick={() => {
+                  setTab(ch);
+                  resetPageAndSel();
+                }}
+              >
+                <Icon name={m.icon} size={13} />
+                {m.label}
+                <span className="atab__count tnum">{tabCounts[ch] ?? 0}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* toolbar: controls on row 1; active filter chips always on their own row */}
@@ -713,56 +724,65 @@ export default function AppSubscribers({
             <div className={styles.filterwrap}>
               <button
                 type="button"
-                className={`${styles.filter}${channelFilter.size ? ' is-on' : ''}`}
-                aria-expanded={channelOpen}
+                className={`${styles.filter}${statusFilter.size ? ' is-on' : ''}`}
+                aria-expanded={statusOpen}
                 aria-haspopup="true"
-                onClick={() => setChannelOpen((v) => !v)}
+                onClick={() => setStatusOpen((v) => !v)}
               >
                 <Icon name="filter" size={14} />
-                Channel
-                {channelFilter.size > 0 && (
-                  <span className={`${styles.filtercount} tnum`}>{channelFilter.size}</span>
+                Status
+                {statusFilter.size > 0 && (
+                  <span className={`${styles.filtercount} tnum`}>{statusFilter.size}</span>
                 )}
                 <Icon name="chevron-down" size={12} className={styles.filtercaret} />
               </button>
-              {channelOpen && (
+              {statusOpen && (
                 <>
                   <button
                     type="button"
                     className={styles.scrim}
                     aria-label="Close"
-                    onClick={() => setChannelOpen(false)}
+                    onClick={() => setStatusOpen(false)}
                   />
                   <div className={styles.pop} style={{ animation: 'pop .14s ease' }} role="menu">
-                    <div className={styles.poptitle}>Subscribed to</div>
-                    {CHANNEL_ORDER.map((ch) => {
-                      const m = CHANNEL[ch];
-                      const on = channelFilter.has(ch);
+                    <div className={styles.poptitle}>Status</div>
+                    {/* Only statuses present on this channel: an option that can
+                        only ever return nothing is not a filter. */}
+                    {STATUS_TABS.filter(
+                      (st): st is SubscriberStatus => st !== 'all' && (statusCounts.get(st) ?? 0) > 0,
+                    ).map((st) => {
+                      const on = statusFilter.has(st);
                       return (
                         <button
-                          key={ch}
+                          key={st}
                           type="button"
                           role="menuitemcheckbox"
                           aria-checked={on}
                           className={styles.popopt}
-                          onClick={() => toggleChannel(ch)}
+                          onClick={() => {
+                            setStatusFilter((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(st)) next.delete(st);
+                              else next.add(st);
+                              return next;
+                            });
+                            resetPageAndSel();
+                          }}
                         >
                           <span className={`${styles.box}${on ? ' is-on' : ''}`}>
                             {on && <Icon name="check" size={15} stroke={3.5} />}
                           </span>
-                          <span className="apill" style={{ background: m.tint, color: m.color }}>
-                            <Icon name={m.icon} size={12} />
-                            {m.label}
-                          </span>
+                          <span className={`astatus astatus--${st}`}>{STATUS_LABEL[st]}</span>
+                          <span className={`${styles.popcount} tnum`}>{statusCounts.get(st)}</span>
                         </button>
                       );
                     })}
-                    {channelFilter.size > 0 && (
+                    {statusFilter.size > 0 && (
                       <button
                         type="button"
                         className={styles.popclear}
                         onClick={() => {
-                          setChannelFilter(new Set());
+                          setStatusFilter(new Set());
                           resetPageAndSel();
                         }}
                       >
@@ -847,32 +867,36 @@ export default function AppSubscribers({
               }}
             />
 
-            <ColFilter
-              label="Opens"
-              icon="eye"
-              options={RATE_BUCKETS}
-              selected={opensSel}
-              onToggle={toggleSet(setOpensSel)}
-              onClear={() => {
-                setOpensSel(new Set());
-                resetPageAndSel();
-              }}
-              open={rateFilterOpen === 'opens'}
-              onOpenToggle={() => setRateFilterOpen((o) => (o === 'opens' ? null : 'opens'))}
-            />
-            <ColFilter
-              label="Clicks"
-              icon="target"
-              options={RATE_BUCKETS}
-              selected={clicksSel}
-              onToggle={toggleSet(setClicksSel)}
-              onClear={() => {
-                setClicksSel(new Set());
-                resetPageAndSel();
-              }}
-              open={rateFilterOpen === 'clicks'}
-              onOpenToggle={() => setRateFilterOpen((o) => (o === 'clicks' ? null : 'clicks'))}
-            />
+            {showOpenFilter && (
+              <ColFilter
+                label={openFilterLabel}
+                icon="eye"
+                options={RATE_BUCKETS}
+                selected={opensSel}
+                onToggle={toggleSet(setOpensSel)}
+                onClear={() => {
+                  setOpensSel(new Set());
+                  resetPageAndSel();
+                }}
+                open={rateFilterOpen === 'opens'}
+                onOpenToggle={() => setRateFilterOpen((o) => (o === 'opens' ? null : 'opens'))}
+              />
+            )}
+            {showClickFilter && (
+              <ColFilter
+                label="Clicks"
+                icon="target"
+                options={RATE_BUCKETS}
+                selected={clicksSel}
+                onToggle={toggleSet(setClicksSel)}
+                onClear={() => {
+                  setClicksSel(new Set());
+                  resetPageAndSel();
+                }}
+                open={rateFilterOpen === 'clicks'}
+                onOpenToggle={() => setRateFilterOpen((o) => (o === 'clicks' ? null : 'clicks'))}
+              />
+            )}
 
             <div className={styles.spacer} />
 
@@ -904,26 +928,19 @@ export default function AppSubscribers({
                   },
                 ];
               }),
-              ...(tab !== 'all'
-                ? [
-                    {
-                      key: `status:${tab}`,
-                      label: `Status: ${STATUS_LABEL[tab]}`,
-                      onRemove: () => {
-                        setTab('all');
-                        resetPageAndSel();
-                      },
-                      style: STATUS_CHIP_STYLE[tab],
-                    },
-                  ]
-                : []),
-              ...[...channelFilter].map((ch) => {
-                const m = CHANNEL[ch];
+              ...[...statusFilter].map((st) => {
                 return {
-                  key: `ch:${ch}`,
-                  label: m.label,
-                  onRemove: () => toggleChannel(ch),
-                  style: { background: m.tint, color: m.color },
+                  key: `status:${st}`,
+                  label: STATUS_LABEL[st],
+                  style: STATUS_CHIP_STYLE[st],
+                  onRemove: () => {
+                    setStatusFilter((prev) => {
+                      const next = new Set(prev);
+                      next.delete(st);
+                      return next;
+                    });
+                    resetPageAndSel();
+                  },
                 };
               }),
               ...[...listFilter].map((id) => {
@@ -946,16 +963,20 @@ export default function AppSubscribers({
                 onRemove: () => toggleTag(t),
                 style: tagStyle(t),
               })),
-              ...[...opensSel].map((b) => ({
-                key: `opens:${b}`,
-                label: `Opens: ${b}`,
-                onRemove: () => toggleRateBucket('opens', b),
-              })),
-              ...[...clicksSel].map((b) => ({
-                key: `clicks:${b}`,
-                label: `Clicks: ${b}`,
-                onRemove: () => toggleRateBucket('clicks', b),
-              })),
+              ...(showOpenFilter
+                ? [...opensSel].map((b) => ({
+                    key: `opens:${b}`,
+                    label: `${openFilterLabel}: ${b}`,
+                    onRemove: () => toggleRateBucket('opens', b),
+                  }))
+                : []),
+              ...(showClickFilter
+                ? [...clicksSel].map((b) => ({
+                    key: `clicks:${b}`,
+                    label: `Clicks: ${b}`,
+                    onRemove: () => toggleRateBucket('clicks', b),
+                  }))
+                : []),
             ]}
             onClearAll={clearAll}
           />
@@ -1233,87 +1254,66 @@ export default function AppSubscribers({
         />
       )}
 
-      {subEditor && (
-        <SubscriberEditorModal
-          mode={subEditor.mode}
-          initialEmail={subEditor.mode === 'edit' ? subEditor.sub.email : ''}
-          initialPhone={subEditor.mode === 'edit' ? subEditor.sub.phone : ''}
-          initialName={subEditor.mode === 'edit' ? subEditor.sub.name : ''}
-          initialStatus={subEditor.mode === 'edit' ? subEditor.sub.status : 'active'}
-          initialListIds={subEditor.mode === 'edit' ? subEditor.sub.listIds : []}
-          initialTags={subEditor.mode === 'edit' ? effTags(subEditor.sub) : []}
+      {subEditor?.mode === 'create' && (
+        <SubscriberImportModal
           lists={allLists}
           customFieldKeys={customFieldKeys}
-          onImport={async ({ rows, listIds, newFields }) => {
-            if (!live) {
-              showToast(`${rows.length.toLocaleString('en-US')} subscribers imported`);
-              return { created: rows.length, updated: 0, failed: 0 };
-            }
-            // Columns mapped to a brand-new field need the definition to exist
-            // before the values land, or they stay loose attribute keys. An
-            // already-present key is a benign conflict, so failures are ignored.
-            for (const key of newFields) {
-              await api.post('custom-fields', { key, type: 'text' }).catch(() => undefined);
-            }
-            const res = await api.post<{
-              created: number;
-              updated: number;
-              failed: number;
-              errors: Array<{ index: number; email: string; error: string }>;
-            }>('subscribers/import', { rows, ...(listIds.length ? { listIds } : {}) });
+          live={live}
+          onClose={() => setSubEditor(null)}
+          onError={showToast}
+          onImported={async (outcome, newFields) => {
             if (newFields.length)
               setCustomFieldKeys((prev) => [...new Set([...prev, ...newFields])]);
-            // Refresh the table so the new arrivals (and merges) show at once.
+            if (!live) {
+              showToast(`${outcome.created.toLocaleString('en-US')} subscribers imported`);
+              return;
+            }
             const fresh = await api.get<{ data: ApiSubscriber[] }>('subscribers?limit=200');
             setRichSubscribers(fresh.data.map(toRichSubscriber));
-            return { created: res.created, updated: res.updated, failed: res.failed };
           }}
+          onCreated={async (created, values) => {
+            if (created) setRichSubscribers((prev) => [toRichSubscriber(created), ...prev]);
+            showToast(`${values.email} added`);
+          }}
+        />
+      )}
+
+      {subEditor?.mode === 'edit' && (
+        <SubscriberEditorModal
+          mode="edit"
+          initialEmail={subEditor.sub.email}
+          initialPhone={subEditor.sub.phone}
+          initialName={subEditor.sub.name}
+          initialStatus={subEditor.sub.status}
+          initialListIds={subEditor.sub.listIds}
+          initialTags={effTags(subEditor.sub)}
+          lists={allLists}
+          customFieldKeys={customFieldKeys}
           onClose={() => setSubEditor(null)}
           onSave={async (values) => {
-            const editor = subEditor;
             if (!live) {
-              if (editor.mode === 'edit') saveTags(editor.sub.id, values.tags);
+              saveTags(subEditor.sub.id, values.tags);
               setSubEditor(null);
-              showToast(
-                editor.mode === 'create'
-                  ? `${values.email} added`
-                  : `${values.name || values.email} updated`,
-              );
+              showToast(`${values.name || values.email} updated`);
               return;
             }
             try {
-              if (editor.mode === 'create') {
-                const created = await api.post<ApiSubscriber>('subscribers', {
-                  email: values.email,
-                  phone: values.phone || undefined,
-                  name: values.name || undefined,
-                  status: values.status,
-                  attributes: { tags: values.tags },
-                });
-                await applyListMembership(created.id, [], values.listIds);
-                const withList = await api.get<ApiSubscriber>(`subscribers/${created.id}`);
-                setRichSubscribers((prev) => [toRichSubscriber(withList), ...prev]);
-                showToast(`${values.email} added`);
-              } else {
-                const updated = await api.patch<ApiSubscriber>(`subscribers/${editor.sub.id}`, {
-                  name: values.name || null,
-                  // Empty clears the number; a value updates it.
-                  phone: values.phone || null,
-                  status: values.status,
-                  attributes: {
-                    tags: values.tags,
-                    ...(editor.sub.location !== '—' ? { location: editor.sub.location } : {}),
-                  },
-                });
-                await applyListMembership(editor.sub.id, editor.sub.listIds, values.listIds);
-                const fresh = await api.get<ApiSubscriber>(`subscribers/${editor.sub.id}`);
-                setRichSubscribers((prev) =>
-                  prev.map((s) => (s.id === editor.sub.id ? toRichSubscriber(fresh) : s)),
-                );
-                void updated;
-                showToast(`${values.name || values.email} updated`);
-              }
+              await api.patch<ApiSubscriber>(`subscribers/${subEditor.sub.id}`, {
+                name: values.name || null,
+                phone: values.phone || null,
+                status: values.status,
+                attributes: {
+                  tags: values.tags,
+                  ...(subEditor.sub.location !== '—' ? { location: subEditor.sub.location } : {}),
+                },
+              });
+              await applyListMembership(subEditor.sub.id, subEditor.sub.listIds, values.listIds);
+              const fresh = await api.get<ApiSubscriber>(`subscribers/${subEditor.sub.id}`);
+              setRichSubscribers((prev) =>
+                prev.map((s) => (s.id === subEditor.sub.id ? toRichSubscriber(fresh) : s)),
+              );
               setSubEditor(null);
+              showToast(`${values.name || values.email} updated`);
             } catch (e) {
               showToast(e instanceof ApiError ? e.message : 'Could not save subscriber');
             }
@@ -1638,46 +1638,6 @@ function SubscriberDrawer({
               single pair of rates misreported them as the whole picture. The
               per-channel breakdown below carries the real numbers. */}
 
-          {/* editable tags — saved as you add or remove them */}
-          <div className={styles.sbdSection}>
-            <span className={`adrawer__eyebrow ${styles.sbdEyebrow}`}>Tags</span>
-            <div className={styles.sbdTags}>
-              {draft.map((t) => (
-                <span key={t} className={styles.sbdTag} style={tagStyle(t)}>
-                  <button
-                    type="button"
-                    className={styles.sbdTaglbl}
-                    title={`Filter by “${t}”`}
-                    onClick={() => onFilterTag(t)}
-                  >
-                    {t}
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.sbdTagx}
-                    aria-label={`Remove ${t}`}
-                    onClick={() => removeTag(t)}
-                  >
-                    <Icon name="x" size={14} stroke={3} />
-                  </button>
-                </span>
-              ))}
-              <input
-                className={styles.sbdTagin}
-                placeholder="Add tag…"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addTag();
-                  }
-                }}
-                aria-label="Add tag"
-              />
-            </div>
-          </div>
-
           {/* details */}
           <div className={styles.sbdSection}>
             <span className={`adrawer__eyebrow ${styles.sbdEyebrow}`}>Details</span>
@@ -1733,6 +1693,46 @@ function SubscriberDrawer({
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          {/* editable tags — saved as you add or remove them */}
+          <div className={styles.sbdSection}>
+            <span className={`adrawer__eyebrow ${styles.sbdEyebrow}`}>Tags</span>
+            <div className={styles.sbdTags}>
+              {draft.map((t) => (
+                <span key={t} className={styles.sbdTag} style={tagStyle(t)}>
+                  <button
+                    type="button"
+                    className={styles.sbdTaglbl}
+                    title={`Filter by “${t}”`}
+                    onClick={() => onFilterTag(t)}
+                  >
+                    {t}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.sbdTagx}
+                    aria-label={`Remove ${t}`}
+                    onClick={() => removeTag(t)}
+                  >
+                    <Icon name="x" size={14} stroke={3} />
+                  </button>
+                </span>
+              ))}
+              <input
+                className={styles.sbdTagin}
+                placeholder="Add tag…"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag();
+                  }
+                }}
+                aria-label="Add tag"
+              />
             </div>
           </div>
         </div>

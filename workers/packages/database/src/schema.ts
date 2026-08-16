@@ -491,6 +491,15 @@ export const lists = pgTable(
     tags: jsonb('tags').$type<string[]>().notNull().default([]),
     // A single free-text note kept with the list for the team's own context.
     notes: text('notes'),
+    /**
+     * Channels this list is meant to be used on. At least one is required —
+     * a list nobody can send to is not a list. Stored as a jsonb array like
+     * `tags`: the set is tiny and always read whole.
+     */
+    channels: jsonb('channels')
+      .$type<(typeof channelEnum.enumValues)[number][]>()
+      .notNull()
+      .default(['email']),
     // Consent & lifecycle configuration. Template references are SET NULL so
     // deleting a template downgrades the list to its default behavior rather
     // than blocking the delete.

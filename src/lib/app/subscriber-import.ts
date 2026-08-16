@@ -38,6 +38,17 @@ export type SubscriberImportRow = {
   attributes?: Record<string, unknown>;
 };
 
+/** Body the add-subscribers wizard hands to the bulk import. */
+export type SubscriberImportPayload = {
+  rows: SubscriberImportRow[];
+  listIds: string[];
+  /** Custom-field keys mapped from the file that do not exist yet. */
+  newFields: string[];
+};
+
+/** What one import run did, as reported by the API. */
+export type SubscriberImportOutcome = { created: number; updated: number; failed: number };
+
 /**
  * Spellings seen in real exports from other ESPs. Anything unrecognised falls
  * back to the server default rather than failing the row.
@@ -178,8 +189,21 @@ export async function parseImportFile(file: File): Promise<ParsedSheet> {
   return sheet;
 }
 
+/**
+ * Export metadata that must not become a subscriber field. `id` is ours;
+ * `joined` is a list-membership timestamp, not a profile attribute.
+ */
+export function isIgnoredImportHeader(header: string): boolean {
+  const h = header
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, ' ');
+  return h === 'id' || h === 'joined' || h === 'joined at';
+}
+
 /** Column-header heuristics for the initial mapping. */
 export function guessTarget(header: string, customFieldKeys: string[] = []): ImportTarget {
+  if (isIgnoredImportHeader(header)) return { kind: 'skip' };
   const h = header
     .trim()
     .toLowerCase()

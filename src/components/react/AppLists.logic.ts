@@ -1,14 +1,14 @@
 import { lists as baseLists } from '@/lib/app/mock-data';
 import type { ListMeta, ListRow } from './AppLists.types';
 
-/** Rows shown per page in the lists table/cards. */
-export const PAGE_SIZE = 15;
+export { PAGE_SIZE } from './shared/pagination';
 
 const META: Record<string, ListMeta> = {
   list_1: {
     color: '#4f46e5',
     trend: [16800, 17150, 17480, 17720, 17980, 18220, 18420],
     mailable: 18244,
+    channels: ['email'],
     gdprConsent: true,
     tags: ['Marketing', 'VIP', 'Opt-in'],
     notes: 'Used for the weekly product newsletter. Keep double opt-in on for GDPR.',
@@ -20,6 +20,7 @@ const META: Record<string, ListMeta> = {
     color: '#f59e0b',
     trend: [58200, 58720, 59180, 59520, 59810, 60050, 60211],
     mailable: 59702,
+    channels: ['email'],
     gdprConsent: true,
     tags: ['Weekly', 'Opt-in'],
     notes: '',
@@ -31,6 +32,7 @@ const META: Record<string, ListMeta> = {
     color: '#22c55e',
     trend: [2510, 2680, 2840, 2980, 3080, 3160, 3200],
     mailable: 3187,
+    channels: ['email'],
     gdprConsent: false,
     tags: ['Automation', 'Transactional'],
     notes: '',
@@ -46,6 +48,7 @@ export const rows: ListRow[] = baseLists.map((l) => ({
     color: '#4f46e5',
     trend: [l.subscribers],
     mailable: l.subscribers,
+    channels: ['email'],
     gdprConsent: false,
     tags: [],
     notes: '',

@@ -1,4 +1,4 @@
-import { and, desc, eq, getTableColumns, sql } from 'drizzle-orm';
+import { and, desc, eq, getTableColumns, inArray, sql } from 'drizzle-orm';
 import {
   campaigns,
   db,
@@ -10,6 +10,7 @@ import {
   type ListRow,
   type Subscriber,
 } from '@maildrill/database';
+import { ValidationError, type Channel } from '@maildrill/domain';
 import { clamp } from './rules';
 
 export interface CreateListInput {
@@ -17,6 +18,8 @@ export interface CreateListInput {
   name: string;
   color?: string | null;
   tags?: string[];
+  /** Channels the list is for. Must hold at least one; defaults to email. */
+  channels?: Channel[];
   notes?: string | null;
   gdprConsent?: boolean;
   doubleOptIn?: boolean;
@@ -27,6 +30,21 @@ export interface CreateListInput {
   goodbyeEmailTemplateId?: string | null;
 }
 
+/**
+ * A list with no channel cannot be sent to, so an empty selection is refused
+ * rather than quietly defaulted — the caller asked for something impossible.
+ * Enforced here as well as in the route schema: this is the invariant, and
+ * every writer goes through these two functions.
+ */
+function assertChannels(channels: Channel[] | undefined): Channel[] | undefined {
+  if (channels === undefined) return undefined;
+  const unique = [...new Set(channels)];
+  if (unique.length === 0) {
+    throw new ValidationError('channels_required: pick at least one channel for this list.');
+  }
+  return unique;
+}
+
 export async function createList(input: CreateListInput): Promise<ListRow> {
   const rows = await db
     .insert(lists)
@@ -35,6 +53,7 @@ export async function createList(input: CreateListInput): Promise<ListRow> {
       name: input.name,
       color: input.color ?? null,
       tags: input.tags ?? [],
+      channels: assertChannels(input.channels) ?? ['email'],
       notes: input.notes ?? null,
       gdprConsent: input.gdprConsent ?? false,
       doubleOptIn: input.doubleOptIn ?? false,
@@ -183,6 +202,7 @@ export async function updateList(
     name?: string;
     color?: string | null;
     tags?: string[];
+    channels?: Channel[];
     notes?: string | null;
     gdprConsent?: boolean;
     doubleOptIn?: boolean;
@@ -193,9 +213,10 @@ export async function updateList(
     goodbyeEmailTemplateId?: string | null;
   },
 ): Promise<ListRow | null> {
+  const channels = assertChannels(patch.channels);
   const rows = await db
     .update(lists)
-    .set({ ...patch, updatedAt: new Date() })
+    .set({ ...patch, ...(channels ? { channels } : {}), updatedAt: new Date() })
     .where(and(eq(lists.id, id), eq(lists.tenantId, tenantId)))
     .returning();
   return rows[0] ?? null;
@@ -224,14 +245,16 @@ export async function removeFromList(listId: string, subscriberId: string): Prom
 }
 
 /** A list member: the subscriber plus when they joined this list. */
-export type ListMember = Subscriber & { joinedAt: Date };
+export type ListMember = Subscriber & { joinedAt: Date; lastCampaignAt: Date | null };
+
+const lastMessageAt = sql`coalesce(${messages.readAt}, ${messages.deliveredAt}, ${messages.sentAt}, ${messages.submittedAt}, ${messages.createdAt})`;
 
 export async function listMembersOf(
   tenantId: string,
   listId: string,
   opts: { limit?: number; offset?: number } = {},
 ): Promise<ListMember[]> {
-  return db
+  const rows = await db
     .select({ ...getTableColumns(subscribers), joinedAt: listMembers.addedAt })
     .from(listMembers)
     .innerJoin(subscribers, eq(listMembers.subscriberId, subscribers.id))
@@ -239,4 +262,27 @@ export async function listMembersOf(
     .orderBy(desc(subscribers.createdAt))
     .limit(clamp(opts.limit ?? 100, 1, 1000))
     .offset(Math.max(opts.offset ?? 0, 0));
+
+  if (rows.length === 0) return [];
+
+  const lastRows = await db
+    .select({
+      recipientId: messages.recipientId,
+      at: sql<Date>`max(${lastMessageAt})`,
+    })
+    .from(messages)
+    .where(
+      and(
+        eq(messages.tenantId, tenantId),
+        inArray(
+          messages.recipientId,
+          rows.map((r) => r.id),
+        ),
+        sql`${messages.campaignId} is not null`,
+      ),
+    )
+    .groupBy(messages.recipientId);
+
+  const lastById = new Map(lastRows.map((r) => [r.recipientId, r.at]));
+  return rows.map((r) => ({ ...r, lastCampaignAt: lastById.get(r.id) ?? null }));
 }

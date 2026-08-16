@@ -714,7 +714,7 @@ useEffect(() => {
               })),
               ...[...opensSel].map((b) => ({
                 key: `opens:${b}`,
-                label: `Opens: ${b}`,
+                label: `${tabCfg.openLabel === 'Seen' ? 'Seen' : 'Opens'}: ${b}`,
                 onRemove: () => toggleSet(setOpensSel)(b),
               })),
               ...[...clicksSel].map((b) => ({
@@ -1191,9 +1191,11 @@ function CampaignDrawer({
     }
   };
   const kpis = reportCfg.drawerKpis.map(drawerKpi);
-  // Six KPIs read best as two rows of three; four (SMS) would leave a lone
-  // tile on a second row, so those get a single row of four instead.
-  const kpiCols = kpis.length % 3 === 0 ? 3 : Math.min(kpis.length, 4);
+  // Six KPIs read best as two rows of three. SMS has four delivery-only
+  // tiles — a 2×2 grid keeps them readable; a single row of four squeezes
+  // the labels. Voice's three stay on one row.
+  const kpiCols =
+    campaign.channel === 'sms' ? 2 : kpis.length % 3 === 0 ? 3 : Math.min(kpis.length, 4);
 
   // Focus management: focus into the panel on open, trap Tab, Esc closes, restore focus.
   const panelRef = useRef<HTMLDivElement>(null);

@@ -31,6 +31,10 @@ export function listToAudienceChoice(
     count: memberCount,
     phoneCount: zeroPhoneWhenEmptyMembers(memberCount, counts?.phoneCount ?? l.phoneMemberCount),
     color: l.color ?? null,
+    channels:
+      l.channels && l.channels.length > 0
+        ? (l.channels as ChannelType[])
+        : (['email'] as ChannelType[]),
   };
 }
 
@@ -61,8 +65,13 @@ export function audienceRecipientCount(a: AudienceChoice, channel: ChannelType):
   return a.count;
 }
 
-/** Hide audiences whose effective reach is explicitly zero; keep unknown (null) counts. */
+/** Hide audiences whose effective reach is explicitly zero; keep unknown (null) counts.
+ *  Lists are also gated on declaring the campaign channel. */
 export function isAudienceSelectable(a: AudienceChoice, channel: ChannelType): boolean {
+  if (a.kind === 'list') {
+    const chans = a.channels && a.channels.length > 0 ? a.channels : (['email'] as ChannelType[]);
+    if (!chans.includes(channel)) return false;
+  }
   const n = audienceRecipientCount(a, channel);
   return n === null || n > 0;
 }

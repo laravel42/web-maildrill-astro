@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildSubscriberDetailView,
   scoreArcLength,
+  subscriberFrequency,
   type ApiSubscriberActivity,
 } from '@/lib/app/subscriber-detail';
 import type { RichSubscriber } from '@/lib/app/subscribers-data';
@@ -144,6 +145,17 @@ describe('buildSubscriberDetailView', () => {
     expect(v.sentLast30).toBe(2); // m1 + m2 fall inside the window, m3 does not
     expect(v.deliveryRate).toBeCloseTo(83.3, 1); // 10 delivered of 12 sent
     expect(v.lastCampaignLabel).not.toBe('—');
+  });
+
+  it('scopes frequency to the selected channel send volume', () => {
+    // Same tenure as the fixture (~6 months). 3 SMS sends → ~0.5 / mo.
+    const sms = subscriberFrequency(3, sub().createdAt);
+    expect(sms.label).toMatch(/\/ mo$/);
+    expect(Number.parseFloat(sms.label)).toBeGreaterThan(0.3);
+    expect(Number.parseFloat(sms.label)).toBeLessThan(0.7);
+    expect(sms.pct).toBeLessThan(20);
+    // Zero sends on a channel reads as 0.0 / mo, not the email rate.
+    expect(subscriberFrequency(0, sub().createdAt).label).toBe('0.0 / mo');
   });
 });
 

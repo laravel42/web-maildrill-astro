@@ -78,11 +78,17 @@
   resize: none;
   margin-bottom: 18px;
 }
+/* Both focus states, matching components.css: with only `:focus` handled, a
+   keyboard-opened modal also matched the global `:focus-visible` rule and drew
+   its 2px outline on top of this ring — so the same field looked different
+   depending on how the modal was opened. */
 .input:focus,
-.textarea:focus {
+.input:focus-visible,
+.textarea:focus,
+.textarea:focus-visible {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-tint);
+  box-shadow: var(--focus-ring);
 }
 .swatches {
   display: flex;
@@ -145,4 +151,70 @@
 .save:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+/* Channel picker — multi-select chips; at least one must stay on. The group
+   carries the 18px rhythm because it is label + chips + an optional hint,
+   unlike the single-control fields above it. */
+.field {
+  margin-bottom: 18px;
+}
+.channels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.channel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  color: var(--text3);
+  font-size: 12.5px;
+  font-weight: 600;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.channel:hover {
+  background: var(--surface2);
+}
+.hint {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin: 8px 0 0;
+}
+.setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+  padding: 11px 12px;
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  background: var(--surface2);
+}
+.settingTitle,
+.settingDesc {
+  display: block;
+}
+.settingTitle {
+  color: var(--text2);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.settingDesc {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+/* A textarea is inline-block, so its line box adds a few stray pixels below
+   the element — enough to push this gap to 25px against the 18px elsewhere. */
+.textarea {
+  display: block;
 }

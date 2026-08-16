@@ -1,3 +1,4 @@
+import type { ChannelType } from '@/types/app';
 import type { ListSummary } from '@/types/app';
 
 /**
@@ -8,6 +9,8 @@ import type { ListSummary } from '@/types/app';
  */
 export type ListMeta = {
   color: string;
+  /** Channels the list is meant for; never empty. */
+  channels: ChannelType[];
   trend: number[];
   /**
    * Members a send would actually reach — sending mails only subscribers whose

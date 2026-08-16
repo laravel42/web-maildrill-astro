@@ -7,11 +7,13 @@ import {
   buildImportRows,
   guessMapping,
   IMPORT_ACCEPT,
+  isIgnoredImportHeader,
   newFieldKeys,
   parseImportFile,
   type ImportTarget,
   type ParsedSheet,
-  type SubscriberImportRow,
+  type SubscriberImportOutcome,
+  type SubscriberImportPayload,
 } from '@/lib/app/subscriber-import';
 import { normalizeKey } from '@/lib/app/custom-fields';
 import { toneFor } from './SubscriberEditorModal.logic';
@@ -31,16 +33,7 @@ import styles from './SubscriberEditorModal.module.css';
  */
 
 export type { SubscriberEditorValues } from './SubscriberEditorModal.types';
-
-export type SubscriberImportPayload = {
-  rows: SubscriberImportRow[];
-  listIds: string[];
-  /** Custom-field keys mapped from the file that do not exist yet. */
-  newFields: string[];
-};
-
-/** What one import run did, as reported by the API. */
-export type SubscriberImportOutcome = { created: number; updated: number; failed: number };
+export type { SubscriberImportOutcome, SubscriberImportPayload };
 
 type Step = 'method' | 'details' | 'file' | 'mapping' | 'summary';
 
@@ -61,6 +54,12 @@ type Props = {
   onSave: (values: SubscriberEditorValues) => void;
   /** Runs the bulk import (create mode); resolves with the outcome counts. */
   onImport?: (payload: SubscriberImportPayload) => Promise<SubscriberImportOutcome>;
+  /** Create-mode start step — `file` opens the importer without the method picker. */
+  initialStep?: Step;
+  /** Lists pre-checked on the import mapping step. */
+  initialImportListIds?: string[];
+  /** Hide the list picker — the caller already chose the destination list. */
+  hideImportLists?: boolean;
 };
 
 /** Serialize an ImportTarget for a <select> value. */
@@ -94,9 +93,12 @@ export default function SubscriberEditorModal({
   onClose,
   onSave,
   onImport,
+  initialStep,
+  initialImportListIds = [],
+  hideImportLists = false,
 }: Props) {
   const isEdit = mode === 'edit';
-  const [step, setStep] = useState<Step>(isEdit ? 'details' : 'method');
+  const [step, setStep] = useState<Step>(isEdit ? 'details' : (initialStep ?? 'method'));
 
   /* ------------------------------ single form ------------------------------ */
   const [email, setEmail] = useState(initialEmail);
@@ -117,7 +119,7 @@ export default function SubscriberEditorModal({
   const [fileName, setFileName] = useState('');
   const [sheet, setSheet] = useState<ParsedSheet | null>(null);
   const [mapping, setMapping] = useState<ImportTarget[]>([]);
-  const [importListIds, setImportListIds] = useState<string[]>([]);
+  const [importListIds, setImportListIds] = useState<string[]>(initialImportListIds);
   const [importPhase, setImportPhase] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
   const [importResult, setImportResult] = useState<SubscriberImportOutcome | null>(null);
 
@@ -428,6 +430,7 @@ export default function SubscriberEditorModal({
             <span>Imports as</span>
           </div>
           {sheet.headers.map((h, col) => {
+            if (isIgnoredImportHeader(h)) return null;
             const novel = normalizeKey(h);
             return (
               <div key={`${h}-${col}`} className={styles.mapRow}>
@@ -459,10 +462,14 @@ export default function SubscriberEditorModal({
           })}
         </div>
 
-        <label className={styles.label} style={{ marginTop: 18 }}>
-          Add everyone to lists <span className={styles.opt}>(optional)</span>
-        </label>
-        {listPicker(importListIds, toggleImportList, 'Add everyone to lists')}
+        {!hideImportLists && (
+          <>
+            <label className={styles.label} style={{ marginTop: 18 }}>
+              Add everyone to lists <span className={styles.opt}>(optional)</span>
+            </label>
+            {listPicker(importListIds, toggleImportList, 'Add everyone to lists')}
+          </>
+        )}
         {!emailMapped && (
           <p className={styles.mapWarn}>Map a column to “Email address” to continue.</p>
         )}

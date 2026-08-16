@@ -208,6 +208,21 @@ export function engagementTier(score: number): string {
   return score > 0 ? 'Low engagement' : 'No engagement yet';
 }
 
+/** Sends per month over tenure, plus a meter fill capped at ~8 / mo. */
+export function subscriberFrequency(
+  sent: number,
+  createdAt: string | null | undefined,
+): { label: string; pct: number } {
+  const tenureMonths = createdAt
+    ? Math.max(1, (Date.now() - new Date(createdAt).getTime()) / (30.44 * 86400000))
+    : 1;
+  const perMonth = Math.max(0, sent) / tenureMonths;
+  return {
+    label: `${perMonth >= 10 ? Math.round(perMonth) : perMonth.toFixed(1)} / mo`,
+    pct: Math.min(100, Math.round((perMonth / 8) * 100)),
+  };
+}
+
 function resultFor(status: string): { result: string; resultColor: string } {
   const s = status.toLowerCase();
   if (s === 'read') return { result: 'Opened', resultColor: '#16a34a' };
@@ -324,12 +339,10 @@ export function buildSubscriberDetailView(
     ageDays <= 1 ? 94 : ageDays <= 7 ? 72 : ageDays <= 30 ? 45 : ageDays <= 90 ? 20 : 8;
 
   const emailsSent = emailCh?.sent ?? sent;
-  const tenureMonths = subscriber.createdAt
-    ? Math.max(1, (Date.now() - new Date(subscriber.createdAt).getTime()) / (30.44 * 86400000))
-    : 1;
-  const perMonth = emailsSent / tenureMonths;
-  const frequencyLabel = `${perMonth >= 10 ? Math.round(perMonth) : perMonth.toFixed(1)} / mo`;
-  const frequencyPct = Math.min(100, Math.round((perMonth / 8) * 100));
+  const { label: frequencyLabel, pct: frequencyPct } = subscriberFrequency(
+    emailsSent,
+    subscriber.createdAt,
+  );
 
   const sentLast30 = recent.filter((m) => {
     const t = new Date(m.at).getTime();

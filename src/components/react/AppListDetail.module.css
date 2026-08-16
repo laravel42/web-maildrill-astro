@@ -66,8 +66,12 @@
 }
 
 /* Scoped: a bare :focus-visible here would leak a global focus style into
-   every screen that loads this module. */
-.wrap :focus-visible {
+   every screen that loads this module.
+   `:where()` keeps this a page-level default at .wrap's specificity, so a
+   component that styles its own focus still wins — otherwise this reached into
+   the list editor modal and drew a second ring over its own, making the same
+   modal look different on this page than on the lists index. */
+.wrap :where(:focus-visible) {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 6px;
@@ -179,21 +183,11 @@
   letter-spacing: -0.6px;
   color: var(--text);
 }
-.listColorPill {
+.identityChans {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 4px;
-  padding: 3px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.listColorDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex: none;
 }
 .identityDesc {
   margin: 6px 0 0;
@@ -209,13 +203,6 @@
   flex: none;
   margin-left: auto;
 }
-.identityBadges {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-}
 .identityActions {
   display: flex;
   align-items: center;
@@ -223,48 +210,6 @@
   flex: none;
 }
 
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-.badgeOptin {
-  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
-  background: color-mix(in srgb, currentColor 10%, transparent);
-  color: #6d28d9;
-}
-:global([data-theme='dark']) .badgeOptin {
-  color: #c4b5fd;
-}
-.badgeGdpr {
-  position: relative;
-  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
-  background: color-mix(in srgb, currentColor 10%, transparent);
-  color: #6d28d9;
-}
-:global([data-theme='dark']) .badgeGdpr {
-  color: #c4b5fd;
-}
-.badgeGdprCheck {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #16a34a;
-  color: #fff;
-  box-shadow: 0 0 0 2px var(--bg);
-}
 .dot {
   width: 6px;
   height: 6px;
@@ -368,7 +313,7 @@
 }
 .healthLegend {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
 .healthLabel {
@@ -842,9 +787,6 @@
   text-align: right;
   word-break: break-word;
 }
-.railValueOk {
-  color: var(--success-ink);
-}
 .cardPad :global(.adetail:last-of-type) {
   border-bottom: 0;
   padding-bottom: 0;
@@ -1031,9 +973,6 @@
     justify-content: flex-start;
     margin-left: 0;
   }
-  .identityBadges {
-    justify-content: flex-start;
-  }
   .identityName {
     font-size: 22px;
   }
@@ -1054,63 +993,3 @@
   }
 }
 
-/* Channel performance — selector + per-channel KPI tiles. The tile count
-   varies by channel (delivery-only channels report three, tracked ones five),
-   so the grid fits as many as the column allows rather than a fixed count. */
-.chanHead {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-.chanSeg {
-  flex-wrap: wrap;
-}
-.chanSegOpt {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.chanDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex: none;
-}
-.chanKpis {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
-  gap: 12px;
-}
-.chanKpi {
-  min-width: 0;
-}
-.chanKpiV {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.4px;
-  margin: 4px 0 2px;
-}
-.chanKpiSub {
-  font-size: 11.5px;
-  color: var(--muted);
-}
-
-/* Page-level channel filter, directly under the identity block: everything
-   channel-scoped on this page follows it, mirroring the Analytics header. */
-.chanBar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin: 0 0 18px;
-}
-.chanBarLabel {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--muted);
-}

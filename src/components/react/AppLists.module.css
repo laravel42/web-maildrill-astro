@@ -98,21 +98,45 @@
   align-items: center;
   justify-content: center;
 }
-.gdprBadge {
+.gdprCheck {
   display: inline-flex;
   align-items: center;
-  padding: 4px 8px;
+  justify-content: center;
+  color: var(--success);
+}
+/* Same badge the subscriber drawer uses — kept for the list drawer. */
+.gdprBadge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 4px 7px;
   border-radius: 4px;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
   font-size: 11px;
   font-weight: 600;
   line-height: 1.2;
-  background: #f3f0ff;
+  background: transparent;
   color: #6d28d9;
   white-space: nowrap;
 }
 :global([data-theme='dark']) .gdprBadge {
-  background: rgba(109, 40, 217, 0.22);
   color: #c4b5fd;
+}
+.gdprBadgeCheck {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #16a34a;
+  color: #fff;
+  box-shadow: 0 0 0 2px var(--surface);
 }
 .colCenter {
   display: flex;
@@ -265,6 +289,32 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* Compact GDPR mark — icon only so the name keeps the row. */
+.cardGdpr {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #6d28d9;
+}
+:global([data-theme='dark']) .cardGdpr {
+  color: #c4b5fd;
+}
+.cardGdprCheck {
+  position: absolute;
+  top: -4px;
+  right: -5px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #16a34a;
+  color: #fff;
+  box-shadow: 0 0 0 2px var(--surface);
 }
 /* Period growth rate — soft chip so it doesn't fight the count. */
 .cardPct {
@@ -433,51 +483,17 @@
   gap: 6px;
   min-width: 0;
 }
-.dName,
-.dNameBtn {
+.dName {
   flex: 1;
   min-width: 0;
-  box-sizing: border-box;
   margin: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
-  font: inherit;
   font-size: 18px;
   font-weight: 600;
   letter-spacing: -0.3px;
   color: var(--text);
-  text-align: left;
-  outline: none;
-}
-.dNameBtn {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  cursor: text;
-}
-.dName:focus {
-  box-shadow: inset 0 -1px 0 var(--accent);
-}
-.dNameEdit {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text4);
-  cursor: pointer;
-  transition:
-    background var(--duration-fast) var(--ease-out),
-    color var(--duration-fast) var(--ease-out);
-}
-.dNameEdit:hover {
-  background: var(--surface2);
-  color: var(--text2);
 }
 .dUpdated {
   font-size: 12.5px;
@@ -609,6 +625,10 @@
 }
 
 .dNoteshead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 24px;
   margin: 0 0 8px;
 }
 .dNotes {
@@ -636,3 +656,60 @@
   color: var(--muted);
   margin-top: -2px;
 }
+
+/* Channel tab bar — same treatment as the campaigns and subscribers tables. */
+.tabs {
+  gap: 20px;
+  padding: 0 19px;
+  border-bottom: 1px solid var(--divider);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+.tabs :global(.atab) {
+  padding: 14px 0 13px;
+  white-space: nowrap;
+}
+
+/* Channels are read-only here: the editor owns them, because that is where the
+   "at least one channel" rule lives. */
+.dChanSection {
+  margin-bottom: 22px;
+}
+.dChans {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+/* Notes save explicitly. The actions live in the section header, inline with
+   the label, so they stay in view regardless of how long the note runs. */
+.dNoteActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.dNoteBtn {
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 5px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  color: var(--text3);
+}
+.dNoteBtn:hover {
+  background: var(--surface2);
+}
+.dNoteSave {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+.dNoteSave:hover {
+  background: var(--accent-hover);
+}
+

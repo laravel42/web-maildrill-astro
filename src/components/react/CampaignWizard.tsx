@@ -927,7 +927,7 @@ export default function CampaignWizard({
                     <AudienceSection
                       heading="Lists"
                       items={listAudiences}
-                      emptyMessage="No lists yet. Create one under Audience → Lists."
+                      emptyMessage={`No lists for ${channelLabel(channel)} yet. Enable the channel on a list under Audience → Lists.`}
                       selectedIds={audienceIds}
                       onToggle={toggleAudience}
                     />

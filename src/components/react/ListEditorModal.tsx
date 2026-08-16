@@ -2,6 +2,8 @@ import { useState } from 'react';
 import Icon from './Icon';
 import { useEscapeClose } from './shared/useEscapeClose';
 import { COLORS } from './ListEditorModal.logic';
+import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
+import type { ChannelType } from '@/types/app';
 import type { ListEditorValues } from './ListEditorModal.types';
 import styles from './ListEditorModal.module.css';
 
@@ -18,6 +20,8 @@ type Props = {
   initialName?: string;
   initialNotes?: string;
   initialColor?: string;
+  initialChannels?: ChannelType[];
+  initialGdprConsent?: boolean;
   onClose: () => void;
   onSave: (values: ListEditorValues) => void;
 };
@@ -27,21 +31,32 @@ export default function ListEditorModal({
   initialName = '',
   initialNotes = '',
   initialColor = COLORS[0],
+  initialChannels = ['email'],
+  initialGdprConsent = false,
   onClose,
   onSave,
 }: Props) {
   const [name, setName] = useState(initialName);
   const [notes, setNotes] = useState(initialNotes);
   const [color, setColor] = useState(COLORS.includes(initialColor) ? initialColor : COLORS[0]);
+  const [channels, setChannels] = useState<ChannelType[]>(
+    initialChannels.length > 0 ? initialChannels : ['email'],
+  );
+  const [gdprConsent, setGdprConsent] = useState(initialGdprConsent);
 
   useEscapeClose(onClose);
 
   const isEdit = mode === 'edit';
-  const canSave = name.trim().length > 0;
+  // A list with no channel cannot be sent to, so saving is blocked rather than
+  // silently defaulted — the same rule the API enforces.
+  const canSave = name.trim().length > 0 && channels.length > 0;
+
+  const toggleChannel = (ch: ChannelType) =>
+    setChannels((prev) => (prev.includes(ch) ? prev.filter((c) => c !== ch) : [...prev, ch]));
 
   const submit = () => {
     if (!canSave) return;
-    onSave({ name: name.trim(), notes: notes.trim(), color });
+    onSave({ name: name.trim(), notes: notes.trim(), color, channels, gdprConsent });
   };
 
   return (
@@ -91,6 +106,54 @@ export default function ListEditorModal({
             placeholder="Add a note about this list…"
             onChange={(e) => setNotes(e.target.value)}
           />
+
+          <div className={styles.field}>
+            <label className={styles.label} id="lem-channels">
+              Channels
+            </label>
+            <div className={styles.channels} role="group" aria-labelledby="lem-channels">
+              {CHANNEL_ORDER.map((ch) => {
+                const m = CHANNEL[ch];
+                const on = channels.includes(ch);
+                return (
+                  <button
+                    key={ch}
+                    type="button"
+                    role="checkbox"
+                    aria-checked={on}
+                    className={`${styles.channel}${on ? ' is-on' : ''}`}
+                    style={
+                      on ? { background: m.tint, color: m.color, borderColor: m.color } : undefined
+                    }
+                    onClick={() => toggleChannel(ch)}
+                  >
+                    <Icon name={m.icon} size={13} />
+                    {m.label}
+                  </button>
+                );
+              })}
+            </div>
+            {channels.length === 0 && <p className={styles.hint}>Pick at least one channel.</p>}
+          </div>
+
+          <div className={styles.setting}>
+            <div>
+              <span className={styles.settingTitle}>GDPR consent</span>
+              <span className={styles.settingDesc}>
+                Mark this list as requiring or recording GDPR consent.
+              </span>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={gdprConsent}
+              aria-label="Require GDPR consent"
+              className={`atoggle${gdprConsent ? ' is-on' : ''}`}
+              onClick={() => setGdprConsent((on) => !on)}
+            >
+              <span />
+            </button>
+          </div>
 
           <label className={styles.label}>Color label</label>
           <div className={styles.swatches}>

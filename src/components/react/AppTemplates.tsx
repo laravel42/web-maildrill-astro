@@ -316,8 +316,8 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
   };
   const openForEdit = (tpl: GalleryTemplate) => window.location.assign(builderHref(tpl));
 
-  // Sidebar pins: /dashboard/templates?edit=<id> forwards to that template's
-  // channel builder page.
+  // Legacy pin / bookmark: /dashboard/templates?edit=<id> forwards to the
+  // channel builder. New pins link there directly.
   const editDeepLinkDone = useRef(false);
   useEffect(() => {
     if (editDeepLinkDone.current) return;
