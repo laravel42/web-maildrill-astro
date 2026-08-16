@@ -14,15 +14,17 @@ import {
   type ZodTypeProvider,
 } from '@maildrill/httpkit';
 import {
+  CAMPAIGN_EVENT_KINDS,
   CAMPAIGN_RATE_BUCKETS,
   CAMPAIGN_SORTS,
   campaignBoardCounts,
+  campaignMessageSummary,
   countCampaigns,
   createCampaign,
   deleteCampaign,
   getCampaign,
   getCampaignEngagement,
-  listCampaignMessages,
+  listCampaignMessagesPage,
   listCampaignsPage,
   sendCampaign,
   sendCampaignDraft,
@@ -306,14 +308,98 @@ export async function campaignRoutes(appRaw: FastifyInstance): Promise<void> {
     {
       schema: {
         tags: TAG,
-        summary: 'Per-recipient message outcomes for a campaign report',
+        summary: 'Per-recipient message outcomes for a campaign report (keyset-paginated)',
+        description:
+          'Returns { items, next_cursor, has_more }; pass next_cursor back as ?cursor= for the ' +
+          'following page. ?kind= narrows to one report event tab IN SQL, so the rows and the ' +
+          'per-tab counts from /messages/counts always describe the same set — this used to ' +
+          'return an uncapped-looking 200-row sample that the browser then filtered and ' +
+          'counted, which made every tab on a campaign over 200 recipients report the sample. ' +
+          'The campaign id and the kind are both bound into the cursor, so a token cannot be ' +
+          'replayed against another campaign or another tab.',
         params: idParam,
-        querystring: z.object({ limit: z.coerce.number().int().min(1).max(500).optional() }),
+        querystring: z.object({
+          limit: z.coerce.number().int().positive().max(100).optional(),
+          /** Opaque keyset token from a previous page's `next_cursor`. */
+          cursor: z.string().min(1).max(1024).optional(),
+          /** Numbered jump to a page never walked to. Sequential paging uses `cursor`. */
+          page: z.coerce.number().int().positive().max(100_000).optional(),
+          kind: z.enum(CAMPAIGN_EVENT_KINDS).optional(),
+        }),
       },
     },
-    async (req) => ({
-      data: await listCampaignMessages(req.tenantId, req.params.id, req.query.limit ?? 200),
-    }),
+    async (req, reply) => {
+      const limit = clampLimit(req.query.limit ?? PAGE.default);
+      // The campaign is part of the shape, not just the path: without it a
+      // cursor minted on one report would resume another one's rows.
+      const shape = shapeOf({ campaignId: req.params.id, kind: req.query.kind });
+      // Throws CursorError (400 via the app error handler) on a malformed,
+      // forged, cross-tenant or stale-shape token.
+      const after = req.query.cursor
+        ? decodeCursor(config.auth.jwtSecret, req.query.cursor, {
+            tenantId: req.tenantId,
+            shape,
+          })
+        : null;
+
+      try {
+        const rows = await listCampaignMessagesPage(req.tenantId, req.params.id, {
+          kind: req.query.kind,
+          limit: overFetch(limit),
+          ...(after ? { after: { at: after.at, id: after.id } } : {}),
+          // A numbered jump resolves its start position in SQL and comes back
+          // with a cursor, so Next from there is an ordinary keyset page.
+          ...(!after && req.query.page && req.query.page > 1
+            ? { offset: (req.query.page - 1) * limit }
+            : {}),
+        });
+        const page = toCursorPage(rows, limit, (row) =>
+          // row.cursorAt, not `at`: the key has to survive the round trip at
+          // the precision Postgres stores it (see the data layer's cursorAt).
+          encodeCursor(config.auth.jwtSecret, {
+            at: row.cursorAt,
+            id: row.id,
+            t: req.tenantId,
+            s: shape,
+          }),
+        );
+        // The resume key travels in the cursor, not on the row.
+        return { ...page, items: page.items.map(({ cursorAt: _c, ...row }) => row) };
+      } catch (err) {
+        if (err instanceof NotFoundError) {
+          return reply.code(404).send({ error: 'not_found', message: err.message });
+        }
+        throw err;
+      }
+    },
+  );
+
+  app.get(
+    '/v1/campaigns/:id/messages/counts',
+    {
+      schema: {
+        tags: TAG,
+        summary: 'Per-tab recipient-event counts and rate series for a campaign report',
+        description:
+          "One grouped scan of the campaign's messages. The report fetches this once per " +
+          'campaign, never per page, so its event tabs describe the campaign rather than the ' +
+          'ten rows in hand. `byKind` partitions the campaign — furthest stage wins, so a ' +
+          'message that was read counts under opened/seen and not also under delivered — and ' +
+          'sums to `total`. `series` is the same scan bucketed over time, cumulative, for the ' +
+          'rate-card sparks.',
+        params: idParam,
+      },
+    },
+    async (req, reply) => {
+      try {
+        return await campaignMessageSummary(req.tenantId, req.params.id);
+      } catch (err) {
+        if (err instanceof NotFoundError) {
+          return reply.code(404).send({ error: 'not_found', message: err.message });
+        }
+        throw err;
+      }
+    },
   );
 
   app.get(

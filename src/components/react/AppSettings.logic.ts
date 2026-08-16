@@ -48,6 +48,13 @@ export const PANELS: Record<SectionKey, Panel> = {
       'No domains authenticated yet. Add one to send from your own address with SPF and DKIM aligned.',
     rows: [],
   },
+  /* KNOWN DEFECT (audit #3): `rows: []` is not "no data yet", it is "this panel
+     has no data source". `liveRows` in AppSettings.tsx only ever populates
+     domains, users and api — billing has no branch — so this `empty` string is
+     unconditional. It renders "No balance or payment method yet" for a tenant
+     whose `wallets.balance_micro` is 500000000, with one `purchase` transaction
+     and a `payment_customers` Stripe row on file, while the Usage tab two
+     clicks away prints "Balance left $500.00" from that same wallet. */
   billing: {
     kind: 'table',
     title: 'Billing',
@@ -113,7 +120,27 @@ export type ChannelUsageRow = {
 
 export const fmt = (n: number) => n.toLocaleString('en-US');
 
-/** One row per channel in stable order; missing channels default to zero. */
+/**
+ * One row per channel in stable order; missing channels default to zero.
+ *
+ * Source: `summary.byChannel` from /v1/stats/summary — `count(*)` on `messages`
+ * grouped by channel, ALL TIME, with no date window and no status filter.
+ *
+ * KNOWN DEFECT (audit #2), and it compounds three ways in the panel above:
+ *   - The panel's kicker says "This period". This is every message the tenant
+ *     has ever sent: 1,001,068 all-time against 48,468 this calendar month.
+ *   - `sent` is `count(*)`, so it bills states that never left: 70,066 failed,
+ *     47,653 expired, 2,352 submitted, 6 queued.
+ *   - There is no ledger behind it at all. The tenant has 0 consumption rows in
+ *     `wallet_transactions` and 5 in `usage_records`, against 1,001,068
+ *     messages. This is a list-price estimate rendered under the word "Cost".
+ *
+ * KNOWN DEFECT (audit #1): which source produced these counts is decided
+ * per-request. `workspaceSummary` replaces the Postgres breakdown with PostHog's
+ * whenever HogQL answers, unguarded — 48 events vs 1,001,068 rows on this
+ * tenant, i.e. a ~20,850x swing in the number this function formats, and the
+ * same swing in the dollar figure beside it.
+ */
 export function buildChannelUsageRows(byChannel: ChannelBreakdown[]): ChannelUsageRow[] {
   const map = new Map(byChannel.map((c) => [c.channel, c]));
   return CHANNEL_ORDER.map((channel) => ({ channel, sent: map.get(channel)?.sent ?? 0 }));
@@ -128,6 +155,22 @@ export function totalSent(rows: ChannelUsageRow[]): number {
  * SMS/WhatsApp/voice are regional and the workspace has no destination mix yet,
  * so the North America tier stands in (voice assumes one minute per call).
  * Real billing draws the prepaid balance at the destination's actual rate.
+ *
+ * The rates themselves are correct — the total reproduces to the cent against
+ * REGION_TIERS — so every remaining error is in what they multiply:
+ *
+ *   region  — NA_TIER is hardcoded. EU SMS is 0.055 against this 0.0079 (7.0x);
+ *             EU WhatsApp 0.085 against 0.028 (3.0x). A workspace sending to
+ *             Europe is shown a figure several times under its real cost.
+ *   voice   — one minute assumed per call. `voice_seconds` is populated on 0 of
+ *             the tenant's 294,204 voice messages, so there is nothing to
+ *             assume from (same missing column as the Analytics talk-time card).
+ *   tier    — `estCost` never applies `wallet.tier.discountBps`. A tenant on the
+ *             50%-off `scale-promo` tier — the top row of this same page's
+ *             pricing modal — reads exactly 2x its real rate.
+ *
+ * Flagged, not fixed (audit #2). Anything presented next to this must say
+ * "estimate", never "cost".
  */
 const NA_TIER = REGION_TIERS[0];
 export const EST_RATE_USD: Record<ChannelType, number> = {
@@ -145,13 +188,27 @@ export function totalEstCost(rows: ChannelUsageRow[]): number {
   return rows.reduce((s, r) => s + estCost(r), 0);
 }
 
-/** Prepaid balance on file — zero until the billing service is wired. */
+/**
+ * Fallback prepaid balance for when the wallet endpoint returns nothing.
+ *
+ * KNOWN DEFECT (audit #4): zero is the wrong fallback for "unknown". The hero
+ * stat renders `wallet ? wallet.lowBalance : PREPAID_BALANCE_USD < LOW_BALANCE_USD`,
+ * so a null wallet evaluates `0 < 10` — true — and a funded $500 workspace
+ * renders an alert-red "$0.00" on any blip of the wallet request, visually
+ * identical to a genuinely empty account. An unknown balance should render "—".
+ */
 export const PREPAID_BALANCE_USD = 0;
 
 /** Below this remaining credit the balance reads as an alert. */
 export const LOW_BALANCE_USD = 10;
 
-/** "$4.10"; sub-cent but nonzero renders as "< $0.01". */
+/**
+ * "$4.10"; sub-cent but nonzero renders as "< $0.01".
+ *
+ * KNOWN DEFECT (audit #37, cosmetic): no thousands separator, so the largest
+ * money figure on the product renders "$12246.06" while the pricing modal's
+ * `usd()` on the same page groups its digits.
+ */
 export const fmtUsd = (n: number) => (n > 0 && n < 0.005 ? '< $0.01' : `$${n.toFixed(2)}`);
 
 /* ----------------------------- action modals ---------------------------- */

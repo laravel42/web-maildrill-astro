@@ -2,6 +2,16 @@ import type { MediaFileType } from '@/lib/app/media-data';
 import type { SortKey } from './AppMedia.types';
 
 // ---- helpers (deterministic; no Date.now / no randomness) -------------------
+/**
+ * Minutes-ago parsed out of a relative label, for the Uploaded sort key.
+ *
+ * KNOWN DEFECT (audit #26): the value it is handed is not a relative label.
+ * `media-map.ts` sets `uploaded` to the raw ISO timestamp, and this regex wants
+ * a lowercase s/m/h/d/w unit — an ISO string has none, so every row returns 0
+ * and the sort is a no-op. Confirmed live: the Uploaded arrow toggles
+ * ↓ → ↑ → ↓ while the same file stays in row 1 through all three states, and
+ * clicking SIZE beside it does reorder. The control looks functional and is not.
+ */
 export function agoMin(s: string): number {
   const m = s.match(/(\d+)\s*([smhdw])/);
   if (!m) return 0;

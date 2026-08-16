@@ -92,6 +92,9 @@ export function toMediaFile(
     fg: '#fff',
     size: fmtSize(a.sizeBytes),
     type,
+    /* LATENT DEFECT: `media_assets.created_at` is NOT NULL, so the fallback is
+       unreachable — but it fabricates rather than admitting absence, and would
+       stamp every affected row "just now" if the column ever went nullable. */
     uploaded: a.createdAt ?? new Date().toISOString(),
     preview: isImage ? tileUrl : '',
     url: a.url ?? '',

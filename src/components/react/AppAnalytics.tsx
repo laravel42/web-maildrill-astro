@@ -260,8 +260,16 @@ export default function AppAnalytics({
       return next;
     });
 
-  // The charts below assume a non-empty series (skeletons cover fetches, and
-  // the empty branch renders inside the layout so the filters stay usable).
+  /* The charts below assume a non-empty series (skeletons cover fetches, and
+     the empty branch renders inside the layout so the filters stay usable).
+
+     KNOWN DEFECT (audit #17): this gate cannot mean what the empty card says.
+     `dailyActivity` ALWAYS zero-fills `span` points, so a genuinely quiet
+     window arrives as N zero-valued days, never as a zero-length array. The
+     only way `daily.length === 0` is a failed request — at which point the card
+     asserts "No delivery yet · Nothing sent on Email in this range" over a
+     window that in fact contains 21,416 sends. An endpoint failure is being
+     rendered as a fact about the data. */
   const empty = !loading && daily.length === 0;
 
   return (
@@ -407,6 +415,10 @@ export default function AppAnalytics({
                     <span className={`${styles.heroNum} tnum`}>
                       {totals.sent.toLocaleString('en-US')}
                     </span>
+                    {/* KNOWN DEFECT (audit #30): caption is hardcoded while the
+                        rest of the screen speaks each channel's own language.
+                        On the Voice tab this reads "25,885 messages sent" under
+                        KPI cards labelled "Calls placed" / "Answered". */}
                     <span className={styles.heroLbl}>messages sent</span>
                   </>
                 )}
@@ -472,6 +484,9 @@ export default function AppAnalytics({
                     <span className={`${styles.heroNum} tnum`}>
                       {totals.opened.toLocaleString('en-US')}
                     </span>
+                    {/* KNOWN DEFECT (audit #30): same hardcoding — on WhatsApp
+                        this reads "8,252 opens" on a chart whose legend, KPI
+                        card and title all say "Read". */}
                     <span className={styles.heroLbl}>opens</span>
                   </div>
                 )}

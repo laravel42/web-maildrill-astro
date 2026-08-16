@@ -70,6 +70,16 @@ function toChannel(c?: string | null): ChannelType {
   return c === 'sms' || c === 'whatsapp' || c === 'voice' ? c : 'email';
 }
 
+/**
+ * Stored category → one of the three the gallery filter offers.
+ *
+ * KNOWN DEFECT (audit #32): the fallback silently REWRITES rather than passing
+ * through. `CATEGORIES` holds only the email editor's three, so a template
+ * stored as `promo`, `billing`, `Marketing` or `Customer Service` — values the
+ * SMS and voice editors themselves write — all render as "Newsletter". Four
+ * templates on the seeded tenant are mislabelled this way, and no filter option
+ * exists that would reveal them.
+ */
 function toCategory(c?: string | null): TplCategory {
   if (c === 'Announcement') return 'Newsletter';
   return CATEGORIES.includes(c as TplCategory) ? (c as TplCategory) : 'Newsletter';
@@ -99,7 +109,24 @@ function fmtDate(iso?: string | null): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-/** Whole-percent rate against tracked deliveries; 0 until sends report back. */
+/**
+ * Whole-percent rate against TRACKED deliveries (email + WhatsApp only, counted
+ * in SQL over every campaign that sent this template). SMS and voice deliveries
+ * are excluded from the denominator because no provider on those channels
+ * reports an open, so counting them would only drag the rate toward zero.
+ *
+ * KNOWN DEFECT (audit #13): the zero-denominator branch returns the NUMBER 0,
+ * which the gallery card renders as a confident "0% opens · 0% clicks". For an
+ * SMS or voice template `tracked` is 0 by construction, so that reads as "nobody
+ * engaged" where the truth is "this channel measures nothing". 148 of the seeded
+ * tenant's 229 templates render that literal zero — 92 of them with real reads
+ * behind it. The drawer's `templateKpis` in AppTemplates.tsx gets this right and
+ * returns "—"; this helper is the one missing the branch.
+ *
+ * Second half of the same defect: `opened` upstream counts reads on every
+ * channel while `trackedDelivered` counts two, so 32 sms/voice templates render
+ * a NON-ZERO opens % under a badge for a channel the product says reports none.
+ */
 function rate(numerator?: number | null, tracked?: number | null): number {
   if (!tracked || tracked <= 0) return 0;
   return Math.round(((numerator ?? 0) / tracked) * 100);

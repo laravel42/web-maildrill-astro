@@ -13,6 +13,7 @@ import {
 } from 'drizzle-orm';
 import {
   campaigns,
+  customFieldDefs,
   db,
   listMembers,
   lists,
@@ -216,7 +217,27 @@ function unmailableSubscribers(tenantId: string) {
     );
 }
 
-/** Membership counts, growth and the 7-point trend, grouped by list. */
+/**
+ * Membership counts, growth and the 7-point trend — in SQL, grouped by list,
+ * over the FULL membership of every list asked about.
+ *
+ * `memberCount` is every row in `list_members` for the list; `activeMemberCount`
+ * subtracts subscribers in an unmailable status, so it answers "how many of
+ * these can we actually send to" rather than "how many rows are there".
+ *
+ * `addedLast7` / `addedPrev7` count JOINS in the two trailing 7-day windows,
+ * bucketed on `list_members.added_at` — when the subscriber joined THIS list,
+ * not when the subscriber record was created. They are additions only: nothing
+ * here measures departures, because leaving a list is a delete and leaves no row
+ * behind to count.
+ *
+ * KNOWN DEFECT (audit #24): the board and the detail header divide these two
+ * into a percentage and present it as list growth ("↓ 10.0%"), which reads as
+ * the list shrinking. It is week-over-week SIGNUP RATE, and it can fall while
+ * the list grows — Perf list 629 renders a red "↓ 10.0%" directly above a green
+ * "↑ 27 joined this week". Only the drawer names it honestly. See
+ * `growthPct` in src/lib/app/list-detail.ts and `fmtPct` in AppLists.logic.ts.
+ */
 function memberRollup(tenantId: string, cutoffs: readonly Date[], listIds?: string[]) {
   const [w6, w5, w4, w3, w2, w1, w0] = cutoffs as [Date, Date, Date, Date, Date, Date, Date];
   const unmailable = unmailableSubscribers(tenantId).as('unmailable');
@@ -262,6 +283,16 @@ function engagementRollup(tenantId: string, listIds?: string[]) {
   return db
     .select({
       listId: campaigns.listId,
+      /* Denominators, spelled deliberately. `delivered` counts delivered + read
+         (a read message was delivered). `trackedDelivered` narrows to email +
+         whatsapp because those are the only channels whose providers report a
+         read — an SMS delivery in the denominator only pushes the rate toward
+         zero for a reason that has nothing to do with the audience.
+
+         KNOWN DEFECT (audit, latent): `opened` below is reads on EVERY channel
+         while `trackedDelivered` is two, so a list mailed on several channels
+         would divide a wider numerator by a narrower denominator. Zero lists on
+         the seeded tenant do; the shape is wrong, no row is. */
       delivered:
         sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read'))::int`.as(
           'delivered',
@@ -726,6 +757,201 @@ export async function listBoardFacets(tenantId: string): Promise<ListBoardFacets
 // One list, fully measured
 // ---------------------------------------------------------------------------
 
+/**
+ * The health bar's partition of a roster.
+ *
+ * `failed` is the complement of the two named statuses rather than a sum of
+ * bounced + complained + invalid, which is what the browser computed and is the
+ * stronger property: active + unsubscribed + failed is every member that joined
+ * the aggregate, whatever the status enum grows to hold. `bounced` and
+ * `complained` overlap it — they are two of its statuses, broken out because
+ * the detail rail prints a rate for each.
+ */
+export interface ListStatusCounts {
+  active: number;
+  unsubscribed: number;
+  failed: number;
+  bounced: number;
+  complained: number;
+}
+
+/** One bar of the growth chart: joins in the week starting at `weekStart`. */
+export interface ListWeeklyJoins {
+  /**
+   * Monday 00:00 in the API's zone — the left edge this count actually used.
+   *
+   * Returned rather than left for the browser to re-derive: the label under the
+   * bar has to name the week the number was counted over, and a browser in
+   * another zone reconstructing its own Mondays would drift off by a day.
+   */
+  weekStart: string;
+  /**
+   * The ISO week that edge falls in, e.g. "W31" — the label under the bar.
+   *
+   * Named here rather than derived in the browser from `weekStart`, for the
+   * same reason `weekStart` is returned at all: it is an *instant*, and reading
+   * its calendar fields in a zone west of this one lands on the Sunday before,
+   * one ISO week early. Every bar then carried a label naming a week its count
+   * did not come from — and on an SSR page, a hydration mismatch as well.
+   */
+  label: string;
+  joins: number;
+}
+
+/** How many of a list's members carry a value for one custom field. */
+export interface ListFieldFill {
+  key: string;
+  filled: number;
+}
+
+/** Bars on the growth chart, and so weeks of membership history it reads. */
+const GROWTH_WEEKS = 12;
+
+/**
+ * The 13 edges of the trailing 12 weeks: 12 starts, oldest first, plus the
+ * exclusive end of the current one.
+ *
+ * Monday 00:00 local and then fixed 7-day steps backwards — the arithmetic the
+ * browser used while it bucketed the member array, kept exactly so no bar
+ * moves. Bound as parameters for the measured reason `weekCutoffs` gives:
+ * `now() - interval` is STABLE and is re-evaluated per row.
+ *
+ * A membership dated past the final edge lands in no bar. That is deliberate
+ * and is what the browser did with the seed's future-dated rows; the chart
+ * describes the last twelve weeks, not "everything up to now plus whatever is
+ * scheduled".
+ */
+/**
+ * ISO week number (1–53) of a date, read in the API's own zone.
+ *
+ * Local getters where `subscribers.ts` uses UTC ones, because the edges this
+ * labels are local midnights rather than UTC ones — the label has to name the
+ * week the bar's `filter` actually counted over.
+ */
+function isoWeekNumber(d: Date): number {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const yearStart = Date.UTC(t.getUTCFullYear(), 0, 1);
+  return Math.ceil(((t.getTime() - yearStart) / 86_400_000 + 1) / 7);
+}
+
+function growthWeekEdges(now = new Date()): Date[] {
+  const WEEK = 7 * 86_400_000;
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  monday.setDate(monday.getDate() - ((monday.getDay() || 7) - 1));
+  const first = monday.getTime() - (GROWTH_WEEKS - 1) * WEEK;
+  return Array.from({ length: GROWTH_WEEKS + 1 }, (_, i) => new Date(first + i * WEEK));
+}
+
+/** Everything the detail page derives from a list's membership. */
+export interface ListRosterRollup {
+  statusCounts: ListStatusCounts;
+  /** Oldest week first, always GROWTH_WEEKS long. */
+  weeklyJoins: ListWeeklyJoins[];
+  /** One entry per custom field the workspace defines, by key. */
+  fieldFill: ListFieldFill[];
+}
+
+/**
+ * The health partition, the growth chart and custom-field fill — in ONE pass
+ * over the list's whole membership.
+ *
+ * The page used to derive all three in the browser from
+ * `GET /v1/lists/{id}/members?limit=1000`, so on the perf tenant's 2,000-member
+ * lists each of them described half a list: 494 of the 997 active members, and
+ * whichever joins belonged to the 1,000 subscribers with the newest
+ * `subscribers.created_at` — which is not `list_members.created_at`, the column
+ * the chart buckets on. A bulk import of old subscribers into a new list makes
+ * those two disagree completely, silently.
+ *
+ * One query rather than three because all three describe the same roster: run
+ * separately they read three snapshots, and the bar could then sum to something
+ * other than the "Recipients" figure printed above it. Folding costs nothing
+ * either — the status buckets have to join `subscribers` regardless, and the
+ * week bars are `filter` clauses over a scan that is already happening.
+ */
+async function rosterRollup(tenantId: string, listId: string): Promise<ListRosterRollup> {
+  // Read first, because the aggregate below needs the keys to name its columns.
+  // The catalogue is workspace-wide and tiny — unique on (tenant_id, key) — and
+  // this read overlaps with the other rollups getListWithStats runs.
+  const defs = await db
+    .select({ key: customFieldDefs.key })
+    .from(customFieldDefs)
+    .where(eq(customFieldDefs.tenantId, tenantId))
+    .orderBy(asc(customFieldDefs.key));
+
+  const edges = growthWeekEdges();
+  const starts = edges.slice(0, GROWTH_WEEKS);
+  const bars = starts.map(
+    (start, i) =>
+      sql`count(*) filter (where ${listMembers.addedAt} >= ${start} and ${listMembers.addedAt} < ${edges[i + 1]})::int`,
+  );
+  /* `attributes ->> key` is null both when the key is absent and when its value
+     is JSON null, and '' is the empty string the browser also read as unset —
+     so this one predicate is the browser's `v != null && v !== ''`, exactly.
+     The key is bound, not interpolated: it is workspace input. */
+  const filled = (key: string) =>
+    sql`count(*) filter (where coalesce(${subscribers.attributes} ->> ${key}, '') <> '')::int`;
+
+  const [row] = await db
+    .select({
+      /* These five are a partition of the ROSTER by subscriber status — a
+         property of the person, counted over the list's whole membership. They
+         are not send outcomes and share no denominator with them.
+
+         Worth stating because the detail page puts both on one screen under
+         overlapping words (audit #21, #22): a list can read "Failed 1,065
+         (53.3%)" in the health card from these counts and "Failed rate 0.00%"
+         in the rail from `channelTotals`, and both are true. Likewise
+         "Unsubscribe rate 50.00%" is 1,000 of 2,000 members carrying the
+         unsubscribed status — not one opt-out event across 1,176 sends. */
+      active: sql<number>`count(*) filter (where ${subscribers.status} = 'active')::int`,
+      unsubscribed: sql<number>`count(*) filter (where ${subscribers.status} = 'unsubscribed')::int`,
+      failed: sql<number>`count(*) filter (where ${subscribers.status} not in ('active', 'unsubscribed'))::int`,
+      bounced: sql<number>`count(*) filter (where ${subscribers.status} = 'bounced')::int`,
+      complained: sql<number>`count(*) filter (where ${subscribers.status} = 'complained')::int`,
+      weeks: sql<number[]>`array[${sql.join(bars, sql`, `)}]`,
+      // `array[]` carries no type to infer from, so a workspace with no custom
+      // fields gets a typed empty literal instead of a syntax error.
+      fill: defs.length
+        ? sql<number[]>`array[${sql.join(
+            defs.map((d) => filled(d.key)),
+            sql`, `,
+          )}]`
+        : sql<number[]>`'{}'::int[]`,
+    })
+    .from(listMembers)
+    // Inner, and `subscribers` carries its own tenant predicate: the roster is
+    // the members whose subscriber this workspace still owns — the same set the
+    // page's member fetch joined, so the partition keeps its old meaning.
+    .innerJoin(
+      subscribers,
+      and(eq(subscribers.id, listMembers.subscriberId), eq(subscribers.tenantId, tenantId)),
+    )
+    .where(and(eq(listMembers.tenantId, tenantId), eq(listMembers.listId, listId)));
+
+  // An ungrouped aggregate always returns its one row, so an empty list comes
+  // back as zeros rather than as no row — nothing here has to special-case it.
+  const weeks = row?.weeks ?? [];
+  const fill = row?.fill ?? [];
+  return {
+    statusCounts: {
+      active: Number(row?.active ?? 0),
+      unsubscribed: Number(row?.unsubscribed ?? 0),
+      failed: Number(row?.failed ?? 0),
+      bounced: Number(row?.bounced ?? 0),
+      complained: Number(row?.complained ?? 0),
+    },
+    weeklyJoins: starts.map((start, i) => ({
+      weekStart: start.toISOString(),
+      label: `W${isoWeekNumber(start)}`,
+      joins: Number(weeks[i] ?? 0),
+    })),
+    fieldFill: defs.map((d, i) => ({ key: d.key, filled: Number(fill[i] ?? 0) })),
+  };
+}
+
 /** Send outcomes for one list on one channel. */
 export interface ListChannelTotals {
   channel: string;
@@ -737,7 +963,7 @@ export interface ListChannelTotals {
 }
 
 /** A list with every stat the detail page renders. */
-export interface ListWithStats extends ListWithCount {
+export interface ListWithStats extends ListWithCount, ListRosterRollup {
   /**
    * Outcomes across EVERY campaign that targeted this list, split by the
    * channel that carried them.
@@ -764,6 +990,14 @@ export interface ListWithStats extends ListWithCount {
  * The detail page used to load `GET /v1/lists` — the whole workspace's triple
  * aggregate — and keep one row of it. That is the same anti-pattern
  * `getCampaign` removed from the campaigns drawer, left in place here.
+ *
+ * The roster rollup lives here, on `/stats`, rather than behind a sibling
+ * endpoint, for two reasons. It answers the same question at the same scope —
+ * one list, bounded by one list's membership — so it is the same cost as the
+ * counters already returned. And its numbers have to agree with them: the
+ * health bar's segments sum to `memberCount` and the field-fill percentages
+ * divide by it, so served as a second request they would be a second snapshot,
+ * free to disagree with the "Recipients" figure printed directly above them.
  */
 export async function getListWithStats(
   tenantId: string,
@@ -772,10 +1006,24 @@ export async function getListWithStats(
   const row = await getList(tenantId, id);
   if (!row) return null;
 
-  const [stats, channelRows, lastRows, clicksByChannel] = await Promise.all([
+  const [stats, roster, channelRows, lastRows, clicksByChannel] = await Promise.all([
     statsForLists(tenantId, [id]),
-    /* Grouped by the CAMPAIGN's channel, which is what the detail page splits
-       on: a campaign's messages all leave on the channel it was sent for. */
+    rosterRollup(tenantId, id),
+    /* Send outcomes for this list, in SQL, over EVERY campaign that ever
+       targeted it — not the campaign strip below, which is one page.
+
+       Grouped by the CAMPAIGN's channel, which is what the detail page splits
+       on: a campaign's messages all leave on the channel it was sent for.
+
+       `attempted` is `count(*)` — every message the list's campaigns produced,
+       failures included — and it is the single denominator for both the delivery
+       rate and the failure rate, so the two cannot be read against different
+       wholes.
+
+       `failed` here uses the WIDE definition (failed | cancelled | expired),
+       matching `messageCounters` in campaign-crud and unlike `stats.ts`, which
+       counts `failed` alone. Both are defensible; having both is the defect
+       (audit #6). This is the one that includes terminal non-deliveries. */
     db
       .select({
         channel: campaigns.channel,
@@ -791,8 +1039,11 @@ export async function getListWithStats(
       )
       .where(and(eq(messages.tenantId, tenantId), eq(campaigns.listId, id)))
       .groupBy(campaigns.channel),
+    /* `max()` over a timestamptz comes back from the driver as Postgres' own
+       text form, not a Date — typed honestly here and normalised below, so the
+       wire format stays ISO like every other timestamp on this API. */
     db
-      .select({ at: sql<Date | null>`max(${campaigns.startedAt})` })
+      .select({ at: sql<string | null>`max(${campaigns.startedAt})` })
       .from(campaigns)
       .where(
         and(
@@ -825,6 +1076,7 @@ export async function getListWithStats(
   return {
     ...row,
     ...(stats.get(id) ?? noListStats()),
+    ...roster,
     channelTotals: channelRows.map((c) => ({
       channel: c.channel,
       attempted: Number(c.attempted),
@@ -833,7 +1085,7 @@ export async function getListWithStats(
       clicked: clickBy.get(c.channel) ?? 0,
       failed: Number(c.failed),
     })),
-    lastCampaignAt: lastRows[0]?.at ?? null,
+    lastCampaignAt: lastRows[0]?.at ? new Date(lastRows[0].at) : null,
   };
 }
 

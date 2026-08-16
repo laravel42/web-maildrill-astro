@@ -254,15 +254,28 @@ export const messages = pgTable(
     index('messages_status_scheduled_idx').on(t.status, t.scheduledAt),
     index('messages_provider_msg_idx').on(t.provider, t.providerMessageId),
     /**
-     * The campaigns board's outcome rollup, in index-only form.
+     * The campaigns board's and the Lists board's outcome rollups, in
+     * index-only form.
      *
-     * Every counter the board shows is `count(*) filter (where status = ...)`
-     * grouped by campaign under one tenant, so those three columns in that
-     * order are the whole query — Postgres never touches the heap. It replaced
+     * Every counter either board shows is `count(*) filter (where status = ...)`
+     * grouped by campaign under one tenant, so these columns in this order are
+     * the whole query — Postgres never touches the heap. It replaced
      * `messages_tenant_idx (tenant_id)`, of which it is a strict prefix, so the
      * table carries no extra index for it.
+     *
+     * `channel` is the fourth KEY column, not INCLUDE, because the Lists board
+     * splits deliveries by whether the channel can report an open. Every
+     * message of a campaign leaves on the same channel, so the four-column
+     * tuple repeats exactly as often as the three-column one did and btree
+     * deduplication keeps the index at the same 7,632 kB; INCLUDE reaches the
+     * same plan but disables deduplication and measured 57MB. See 0028.
      */
-    index('messages_tenant_campaign_status_idx').on(t.tenantId, t.campaignId, t.status),
+    index('messages_tenant_campaign_status_idx').on(
+      t.tenantId,
+      t.campaignId,
+      t.status,
+      t.channel,
+    ),
     index('messages_campaign_idx').on(t.campaignId),
   ],
 );

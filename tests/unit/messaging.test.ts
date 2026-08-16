@@ -6,7 +6,7 @@ import {
   wordCount,
 } from '@/components/react/shared/messaging';
 import { CHANNEL, CHANNEL_ORDER, channelLabel } from '@/components/react/shared/channels';
-import { eventKind, EVENT_TAB_LABEL } from '@/components/react/shared/campaign-events';
+import { EVENT_META, EVENT_TAB_LABEL } from '@/components/react/shared/campaign-events';
 
 describe('smsSegments', () => {
   it('fits one segment up to 160 and splits beyond', () => {
@@ -46,7 +46,12 @@ describe('campaign event kinds', () => {
     for (const label of Object.values(EVENT_TAB_LABEL)) expect(label).toBeTruthy();
   });
 
-  it('classifies raw event statuses', () => {
-    expect(typeof eventKind).toBe('function');
+  // Kinds are decided in SQL now (eventKindExpr in @maildrill/product), so
+  // what the browser still owns is a badge for each one it can be handed.
+  it('renders a badge for every kind a tab can select', () => {
+    for (const tab of Object.keys(EVENT_TAB_LABEL)) {
+      if (tab === 'all') continue;
+      expect(EVENT_META[tab as keyof typeof EVENT_META].label).toBeTruthy();
+    }
   });
 });

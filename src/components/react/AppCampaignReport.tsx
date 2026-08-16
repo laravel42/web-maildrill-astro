@@ -16,19 +16,28 @@ import Sparkline, { type SparkPoint } from './shared/Sparkline';
 import { CHANNEL } from './shared/channels';
 import { ChannelPill, ListPill } from './shared/CampaignPills';
 import {
-  buildEventRateSeries,
-  eventKind,
+  eventRateSeries,
   EVENT_META,
   EVENT_TAB_LABEL,
   historySparkPoints,
   pickSpark,
   sameChannelHistory,
+  type CampaignEventSummary,
   type RecipientEvent,
 } from './shared/campaign-events';
 import { ago } from './shared/time';
 import { PAGE_SIZE, visiblePageNumbers } from './shared/pagination';
 import { pct } from './CampaignsBoard.logic';
+import { buildCsv, downloadCsv, exportFilename } from '@/lib/app/subscriber-export';
 import styles from './AppCampaignReport.module.css';
+
+/**
+ * CSV export window. `EXPORT_PAGE` is the cursor endpoint's own ceiling
+ * (httpkit PAGE.max), so asking for more just gets clamped; `EXPORT_MAX` caps
+ * a single download — every page after the first costs what the first did.
+ */
+const EXPORT_PAGE = 100;
+const EXPORT_MAX = 10_000;
 
 type Props = {
   /** Campaign id from the URL — used for the demo-mode fixture lookup. */
@@ -51,6 +60,10 @@ type Props = {
  * campaigns board only links here — all report logic lives on this page.
  */
 export default function AppCampaignReport({ id, initial, campaigns, listColor, live }: Props) {
+  /* LATENT DEFECT (fixture leakage): same shape as AppLists — on an SSR failure
+     this falls back to the mock campaign set, so a live report page can render
+     an entire campaign's figures from fixture data with nothing on screen
+     saying so. Reached only when the API errors for this request. */
   const resolved = initial ?? mockCampaigns.find((c) => c.id === id) ?? null;
   if (!resolved) {
     return (
@@ -106,6 +119,16 @@ function CampaignReport({
   /** Same-channel sent campaigns, chronological, ending with this one. */
   const history = sameChannelHistory(allCampaigns, campaign);
 
+  /* Every figure below divides server-side counters from
+     `messageRollup`/`eventRollup`, computed in SQL over the campaign's whole
+     message set. `recipients` (count(*), failures included) is the denominator
+     for delivery and unsub; `delivered` is the denominator for open and click.
+
+     KNOWN DEFECT (audit #34): `cto` is guarded with truthiness, so a MEASURED
+     zero click rate takes the null branch and renders "—" — indistinguishable
+     from "not measured". Confirmed live on Perf campaign 12, whose click rate
+     is a real 0.0%. The label is additionally "Click-to-open" on WhatsApp,
+     where every other word on the page says "Seen". */
   const reportCfg = channelReportConfig(campaign.channel);
   const base = campaign.recipients || 1;
   const deliveredPct = (campaign.delivered / base) * 100;
@@ -116,6 +139,10 @@ function CampaignReport({
     campaign.openRate != null ? Math.round(campaign.openRate * campaign.delivered) : null;
   const clicked =
     campaign.clickRate != null ? Math.round(campaign.clickRate * campaign.delivered) : null;
+  /* KNOWN DEFECT (audit #34): the `updatedAt` fallback turns "when was this
+     sent" into "when was this row last touched", and the detail row above still
+     labels it "Sent". A draft with all three send timestamps NULL renders
+     "Sent Aug 16". A send that never happened should read "—". */
   const sentAt =
     campaign.completedAt ?? campaign.startedAt ?? campaign.scheduledAt ?? campaign.updatedAt;
   const sentLabel = sentAt
@@ -214,6 +241,10 @@ function CampaignReport({
     return {
       label: funnelLabel(key),
       count,
+      /* Recipients is the funnel's base, so its bar is 100% by definition — a
+         literal, not a measurement. KNOWN DEFECT (audit #34): on a campaign
+         with 0 recipients that literal still renders, giving "Recipients 0 ·
+         100.0%". A zero base has no share. */
       barPct: key === 'recipients' ? 100 : count != null ? (count / base) * 100 : null,
       color: funnelColor[key],
       empty: '—',
@@ -247,33 +278,107 @@ function CampaignReport({
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
-  // Per-recipient outcomes + Infobip engagement breakdown (devices / top links).
+  /*
+   * The recipient-event section. `events` is ONE page — never the campaign.
+   * Everything that describes the whole of it (the tab counts, the footer
+   * total, the rate-card sparks) comes from `summary`, because ten rows cannot
+   * answer questions about 1,177 messages. They used to try: the island
+   * fetched a 200-row sample and counted it, so every tab on a campaign over
+   * 200 recipients reported 200 while the funnel beside it reported 1,177.
+   */
   const [events, setEvents] = useState<RecipientEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
+  const [summary, setSummary] = useState<CampaignEventSummary | null>(null);
   const [eventTab, setEventTab] = useState<ReportEventTab>('all');
-  const [eventPage, setEventPage] = useState(1);
+  const [exporting, setExporting] = useState(false);
   const [devices, setDevices] = useState<Array<{ device: string; count: number }>>([]);
   const [links, setLinks] = useState<Array<{ url: string; total: number; unique: number }>>([]);
 
+  /*
+   * One string naming the query a page number and a cursor belong to. Derived
+   * during render rather than reset from an effect: an effect that calls
+   * setEventPage(1) has not run by the time the fetch effect fires in the same
+   * commit, so switching tab would issue one request carrying the previous
+   * tab's cursor — refused (cursor_shape_mismatch) and wasted. Keying the state
+   * makes the reset simultaneous.
+   */
+  const eventKey = `${campaign.id}|${eventTab}`;
+  const [eventPageState, setEventPageState] = useState<{ key: string; page: number }>({
+    key: '',
+    page: 1,
+  });
+  const eventPage = eventPageState.key === eventKey ? eventPageState.page : 1;
+  const setEventPage = (next: number | ((p: number) => number)) =>
+    setEventPageState({
+      key: eventKey,
+      page: typeof next === 'function' ? next(eventPage) : next,
+    });
+  const [cursors, setCursors] = useState<{ key: string; byPage: Record<number, string> }>({
+    key: '',
+    byPage: {},
+  });
+  const cursorFor = cursors.key === eventKey ? cursors.byPage : {};
+
+  // A different channel offers a different set of tabs, so the selected one
+  // may no longer exist. The page and cursors reset with it, via `eventKey`.
   useEffect(() => {
     setEventTab('all');
-    setEventPage(1);
   }, [campaign.channel, campaign.id]);
 
+  /* One page of rows, filtered and ordered server-side. The tab is a `?kind=`
+     the database applies, not a predicate the browser runs over what it
+     happens to hold — that is what keeps these rows and the counts above them
+     describing the same set. */
   useEffect(() => {
     if (!live) return;
     let cancelled = false;
     setEventsLoading(true);
+    const qs = new URLSearchParams({ limit: String(PAGE_SIZE) });
+    if (eventTab !== 'all') qs.set('kind', eventTab);
+    const cursor = cursorFor[eventPage];
+    if (cursor) qs.set('cursor', cursor);
+    else if (eventPage > 1) qs.set('page', String(eventPage));
     api
-      .get<{ data: RecipientEvent[] }>(`campaigns/${campaign.id}/messages`)
+      .get<{ items: RecipientEvent[]; next_cursor: string | null }>(
+        `campaigns/${campaign.id}/messages?${qs}`,
+      )
       .then((res) => {
-        if (!cancelled) setEvents(res.data ?? []);
+        if (cancelled) return;
+        setEvents(res.items ?? []);
+        // Remember the doorway to the following page so Next stays keyset.
+        if (res.next_cursor) {
+          const token = res.next_cursor;
+          setCursors((c) => ({
+            key: eventKey,
+            byPage: { ...(c.key === eventKey ? c.byPage : {}), [eventPage + 1]: token },
+          }));
+        }
       })
       .catch(() => {
         /* keep the empty state on failure */
       })
       .finally(() => {
         if (!cancelled) setEventsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // `cursorFor` is read but deliberately not depended on: this effect fills
+    // it, so listing it would re-run the fetch on its own result.
+  }, [live, campaign.id, eventTab, eventPage]);
+
+  /* Tab counts and the rate-card series describe the whole campaign, so they
+     are fetched once per campaign — never per page. One grouped scan. */
+  useEffect(() => {
+    if (!live) return;
+    let cancelled = false;
+    api
+      .get<CampaignEventSummary>(`campaigns/${campaign.id}/messages/counts`)
+      .then((res) => {
+        if (!cancelled) setSummary(res);
+      })
+      .catch(() => {
+        /* leave the tabs at zero rather than at a page-sized lie */
       });
     api
       .get<{
@@ -304,7 +409,7 @@ function CampaignReport({
      campaign history; always pad so every card has a real spark. */
   const unsubPct =
     campaign.recipients > 0 ? (campaign.unsubscribed / campaign.recipients) * 100 : 0;
-  const eventSeries = buildEventRateSeries(events, campaign.recipients, campaign.channel);
+  const eventSeries = eventRateSeries(summary?.series ?? [], campaign.recipients);
   const historySeries = {
     delivery: historySparkPoints(history, (c) =>
       c.recipients > 0 ? (c.delivered / c.recipients) * 100 : null,
@@ -384,48 +489,59 @@ function CampaignReport({
   };
   const rateCards = reportCfg.rateCards.map((key) => rateCardDefs[key]);
 
-  const eventCounts: Record<string, number> = { all: events.length };
-  for (const e of events) {
-    const k = eventKind(e, campaign.channel);
-    eventCounts[k] = (eventCounts[k] ?? 0) + 1;
-  }
-  const filteredEvents =
-    eventTab === 'all' ? events : events.filter((e) => eventKind(e, campaign.channel) === eventTab);
-  const eventPages = Math.max(1, Math.ceil(filteredEvents.length / PAGE_SIZE));
+  /* Every number in this section is the server's, counted over the whole
+     campaign: the tab badges, the "x–y of N" footer and the page count alike.
+     `events` only ever supplies the rows. */
+  const eventCounts: Record<string, number> = summary
+    ? { all: summary.total, ...summary.byKind }
+    : {};
+  const eventTotal = eventTab === 'all' ? (summary?.total ?? 0) : (eventCounts[eventTab] ?? 0);
+  const eventPages = Math.max(1, Math.ceil(eventTotal / PAGE_SIZE));
   const safeEventPage = Math.min(eventPage, eventPages);
   const eventPagerPages = visiblePageNumbers(safeEventPage, eventPages);
-  const pageEvents = filteredEvents.slice(
-    (safeEventPage - 1) * PAGE_SIZE,
-    safeEventPage * PAGE_SIZE,
-  );
-  const eventStart = filteredEvents.length === 0 ? 0 : (safeEventPage - 1) * PAGE_SIZE + 1;
-  const eventEnd = Math.min(safeEventPage * PAGE_SIZE, filteredEvents.length);
+  const eventStart = eventTotal === 0 ? 0 : (safeEventPage - 1) * PAGE_SIZE + 1;
+  const eventEnd = Math.min(safeEventPage * PAGE_SIZE, eventTotal);
 
   const openColLabel = campaign.channel === 'whatsapp' ? 'Seen' : 'Opened';
-  const exportEvents = () => {
-    const head = `recipient,address,event,${openColLabel.toLowerCase()},clicked,at`;
-    const lines = filteredEvents.map((e) => {
-      const opened = e.status === 'read' || Boolean(e.clicked);
-      return [
-        e.name ?? '',
-        e.address,
-        EVENT_META[eventKind(e, campaign.channel)].label,
-        opened ? 'yes' : 'no',
-        e.clicked ? 'yes' : 'no',
-        e.at ?? '',
-      ]
-        .map((v) => `"${String(v).replaceAll('"', '""')}"`)
-        .join(',');
-    });
-    const blob = new Blob([[head, ...lines].join('\n')], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `maildrill-${campaign.name.replaceAll(/\s+/g, '-').toLowerCase()}-events.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+
+  /* Export the tab, not the page. The table holds ten rows, so the download
+     re-walks the same server-side filter a cursor at a time — the last page
+     costs what the first did. */
+  const exportEvents = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const all: RecipientEvent[] = [];
+      let cursor: string | null = null;
+      for (let fetched = 0; fetched < EXPORT_MAX; fetched += EXPORT_PAGE) {
+        const qs = new URLSearchParams({ limit: String(EXPORT_PAGE) });
+        if (eventTab !== 'all') qs.set('kind', eventTab);
+        if (cursor) qs.set('cursor', cursor);
+        const res: { items?: RecipientEvent[]; next_cursor: string | null } = await api.get(
+          `campaigns/${campaign.id}/messages?${qs}`,
+        );
+        all.push(...(res.items ?? []));
+        cursor = res.next_cursor;
+        if (!cursor) break;
+      }
+      const csv = buildCsv(
+        ['recipient', 'address', 'event', openColLabel.toLowerCase(), 'clicked', 'at'],
+        all.map((e) => [
+          e.name ?? '',
+          e.address,
+          EVENT_META[e.kind].label,
+          e.status === 'read' || e.clicked ? 'yes' : 'no',
+          e.clicked ? 'yes' : 'no',
+          e.at ?? '',
+        ]),
+      );
+      const slug = campaign.name.replaceAll(/\s+/g, '-').toLowerCase();
+      downloadCsv(exportFilename(`maildrill-${slug}-events`), csv);
+    } catch {
+      /* leave the table as it is rather than blanking it for a failed download */
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -634,10 +750,10 @@ function CampaignReport({
           <button
             type="button"
             className={`sbtn ${styles.exportBtn}`}
-            onClick={exportEvents}
-            disabled={filteredEvents.length === 0}
+            onClick={() => void exportEvents()}
+            disabled={eventTotal === 0 || exporting}
           >
-            <Icon name="download" size={12} /> Export
+            <Icon name="download" size={12} /> {exporting ? 'Exporting…' : 'Export'}
           </button>
         </div>
 
@@ -668,8 +784,8 @@ function CampaignReport({
           <div className={styles.revWhenHead}>When</div>
         </div>
 
-        {pageEvents.map((e) => {
-          const kind = EVENT_META[eventKind(e, campaign.channel)];
+        {events.map((e) => {
+          const kind = EVENT_META[e.kind];
           const meta = CHANNEL[e.channel] ?? CHANNEL.email;
           const display = e.name?.trim() || e.address;
           const opened = e.status === 'read' || Boolean(e.clicked);
@@ -727,7 +843,7 @@ function CampaignReport({
             Recipient events load from the delivery service once the workspace is connected.
           </div>
         )}
-        {live && !eventsLoading && filteredEvents.length === 0 && (
+        {live && !eventsLoading && events.length === 0 && (
           <div className="atable__empty">No recipient events for this campaign yet.</div>
         )}
         {live && eventsLoading && events.length === 0 && (
@@ -735,10 +851,10 @@ function CampaignReport({
         )}
 
         <div className="atable__foot">
-          <span className={filteredEvents.length === 0 ? undefined : 'tnum'}>
-            {filteredEvents.length === 0
+          <span className={eventTotal === 0 ? undefined : 'tnum'}>
+            {eventTotal === 0
               ? 'No recipient events match this filter yet'
-              : `${eventStart}–${eventEnd} of ${filteredEvents.length} events`}
+              : `${eventStart}–${eventEnd} of ${eventTotal.toLocaleString('en-US')} events`}
           </span>
           {eventPages > 1 && (
             <div className={styles.pager}>

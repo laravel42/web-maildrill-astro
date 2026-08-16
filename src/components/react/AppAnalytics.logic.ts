@@ -12,6 +12,18 @@ import type { ChartKey, EngagementKey, SeriesKey } from './AppAnalytics.types';
  * Engagement comes from provider receipts reconciled into Postgres — `opened`
  * is a message that reached `read`, `clicked` one with at least one click
  * event — attributed to the send day so both charts share an x-axis.
+ *
+ * Everything on this screen is a fold over the daily series from
+ * /v1/stats/activity, which is aggregated in SQL over the FULL set of the
+ * tenant's messages in the window and zero-filled day by day. Nothing here is a
+ * page or a sample; the arithmetic in this file is only summation and division.
+ *
+ * The one thing that is NOT full is the vocabulary: `failed` in that series
+ * means `status = 'failed'` alone, so `expired` and `cancelled` appear in
+ * neither the delivered nor the failed line and simply leave the chart. See
+ * `dailyActivityFromPostgres` (audit #6) — it is why the Voice tab renders
+ * "Failed 0.0% / 0" over 1,176 expired calls, and why 12-month email reads
+ * 6.2% / 14.7k against a true 11.73% / 27,684.
  * ------------------------------------------------------------------ */
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -255,7 +267,17 @@ export function kpiColor(key: KpiSpec['key']): string {
   }
 }
 
-/** Total reconciled talk time in the window, as a human string. */
+/**
+ * Total reconciled talk time in the window.
+ *
+ * Sums `voiceSeconds` (SQL `sum(messages.voice_seconds)` per day) and divides by
+ * answered calls — `delivered`, since an unanswered call has no duration.
+ *
+ * KNOWN DEFECT (audit #20): `voice_seconds` is populated on 0 of the seeded
+ * tenant's 294,204 voice messages, so this renders a confident "Talk time 0s ·
+ * avg 0s" next to "Answered 24.1k". That is unmeasured being sold as
+ * measured-zero; there is no branch here that can say "not recorded".
+ */
 export function talkTimeOf(points: ActivityPoint[]): { total: string; avg: string; calls: number } {
   const seconds = points.reduce((t, p) => t + (p.voiceSeconds ?? 0), 0);
   const answered = points.reduce((t, p) => t + p.delivered, 0);
@@ -283,6 +305,16 @@ export function channelColor(ch: string): string {
   return CHANNEL_COLOR[ch] ?? 'var(--accent)';
 }
 
+/**
+ * Round a series maximum up to a readable axis top.
+ *
+ * KNOWN DEFECT (audit #27): the caller floors the maximum at 1
+ * (`Math.max(1, …)`), so an all-zero chart gets `niceMax(1) = 1`, gridlines at
+ * 0/.25/.5/.75/1, and `fmtCompact`'s `Math.round` then labels them
+ * "0","0","1","1","1" — five lines at five heights carrying three distinct
+ * labels. Reproduced live in three clicks by toggling off every series on the
+ * email tab.
+ */
 export function niceMax(v: number): number {
   if (v <= 0) return 1;
   const pow = Math.pow(10, Math.floor(Math.log10(v)));
@@ -320,7 +352,14 @@ export function pctOf(part: number, whole: number): string {
   return whole > 0 ? `${((part / whole) * 100).toFixed(1)}%` : '—';
 }
 
-/** Headline totals over the visible window. */
+/**
+ * Headline totals over the visible window — a plain sum of the daily series, so
+ * they cover every message in the range, not a page of them.
+ *
+ * These are counts of MESSAGES, not events: the server counts distinct message
+ * ids for click / complaint / unsubscribe, so a recipient who clicked four
+ * links is one click here.
+ */
 export function totalsOf(points: ActivityPoint[]) {
   const sent = points.reduce((t, p) => t + p.sent, 0);
   const delivered = points.reduce((t, p) => t + p.delivered, 0);
@@ -334,7 +373,19 @@ export function totalsOf(points: ActivityPoint[]) {
 
 export type KpiTone = 'muted' | 'success' | 'danger';
 
-/** KPI cards for one channel, driven by what that channel can report. */
+/**
+ * KPI cards for one channel, driven by what that channel can report.
+ *
+ * Denominators come from each card's `of`: delivery and failure divide by
+ * `sent` (everything addressed in the window, failures included), engagement
+ * and complaints divide by `delivered`. Both wholes are the window's, so a card
+ * and its sparkline describe the same range.
+ *
+ * The card set is per channel on purpose — `CHANNEL_ANALYTICS` above — so a
+ * voice tab never renders an open rate that no provider could ever report. That
+ * is the correct handling of "not measured": omit the card rather than print 0%.
+ * `pctOf` returns "—" on a zero denominator for the same reason.
+ */
 export function buildKpis(points: ActivityPoint[], channel: string) {
   const t = totalsOf(points);
   const value: Record<KpiSpec['key'], number> = {
@@ -366,7 +417,16 @@ export function buildKpis(points: ActivityPoint[], channel: string) {
   }));
 }
 
-/** CSV of the visible series — the export button writes exactly what's shown. */
+/**
+ * CSV of the window's daily series.
+ *
+ * KNOWN DEFECT (audit #29): the header is fixed while the screen's series are
+ * per channel, so the file is neither a superset nor a subset of what is on
+ * screen. On SMS it exports an `opened` column (9,409 reads the UI deliberately
+ * suppresses, because SMS reports no opens) and omits `unsubscribed`, which is
+ * the series the SMS chart actually plots. The button is captioned "Download
+ * exactly the series on screen".
+ */
 export function toCsv(points: ActivityPoint[]): string {
   const head = 'date,sent,delivered,bounced,complained,opened,clicked';
   const rows = points.map(

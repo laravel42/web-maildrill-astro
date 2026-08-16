@@ -657,6 +657,11 @@ export default function AppSettings({
                   <tbody>
                     {usageRows.map((u) => {
                       const meta = CHANNEL[u.channel];
+                      /* Share of all-time volume. KNOWN DEFECT — independently rounded per
+                         row, so the column need not total 100 — live it reads
+                         24+24+24+29 = 101% against true shares of 23.57 /
+                         23.53 / 23.51 / 29.39 (audit #36). Same shape as the
+                         dashboard's channel mix. */
                       const share =
                         workspaceSent > 0 ? Math.round((u.sent / workspaceSent) * 100) : 0;
                       return (

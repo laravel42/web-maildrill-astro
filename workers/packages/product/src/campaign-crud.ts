@@ -94,6 +94,27 @@ const NO_COUNTERS: CampaignCounters = {
 /**
  * The status readings, spelled once.
  *
+ * Source: `messages`, grouped by `campaign_id`, over the FULL set of messages
+ * belonging to whichever campaigns are asked about — never a page of them.
+ *
+ * `recipients` is `count(*)`: every message the campaign produced, failures
+ * included. It is the denominator for delivery rate and for unsub rate, so
+ * those two are shares of the same whole.
+ *
+ * `delivered` counts delivered + read — a read message was delivered, and
+ * excluding it would drive opened/delivered past 100% as receipts land.
+ *
+ * `failed` uses the WIDE definition: failed | cancelled | expired. `expired` is
+ * a terminal non-delivery (the provider gave up), so it belongs with the
+ * failures rather than in an "other" bucket nobody renders. Note that
+ * `stats.ts` counts `failed` alone, which is why the same 588 WhatsApp messages
+ * render as "Failed 588" on a campaign report and as 0 on Analytics (audit #6).
+ *
+ * KNOWN DEFECT (audit #23): the campaigns board labels this figure "Bounced" on
+ * the email tab. An expired send never reached a mailbox and is not a bounce;
+ * 23 email campaigns on the seeded tenant have a "Bounced" figure composed
+ * entirely of expired messages.
+ *
  * Both the page-scoped rollup and the whole-tenant one below have to define
  * "delivered" and "failed" identically — if they ever drifted, sorting the
  * board by a column would reorder it by a different definition of the number
@@ -249,7 +270,22 @@ function audienceLabel(listName: string | null, segmentName: string | null): str
 // The board's page
 // ---------------------------------------------------------------------------
 
-/** Columns the board offers as a sort. */
+/**
+ * Columns the board offers as a sort.
+ *
+ * `updatedAt` is the only time column here, and it is the row's last WRITE, not
+ * its send. There is no `completedAt` option, so no caller can ask the server
+ * for "most recently sent".
+ *
+ * KNOWN DEFECT (audit #10): the dashboard's "Recent campaigns" strip asks a
+ * completedAt question through this updatedAt door — it fetches one page sorted
+ * by `updatedAt` and then re-sorts what came back by `completedAt`, which can
+ * only reorder rows that were already in the page. On the seeded tenant the two
+ * genuinely-newest sends rank 616th and 632nd by `updated_at` (their
+ * `completed_at` is 20 minutes ahead of it), so they never reach the browser and
+ * the strip renders four zero-recipient campaigns beside an activity feed —
+ * ordered by `completed_at` in SQL — naming two entirely different ones.
+ */
 export const CAMPAIGN_SORTS = [
   'updatedAt',
   'name',
@@ -306,6 +342,19 @@ export interface CampaignPageOptions {
    * needs the newest N *up to that campaign* — asking for the newest N of the
    * workspace and filtering in the browser returns nothing at all for any
    * campaign that is not itself among them.
+   *
+   * KNOWN DEFECT (audit #7): the bound is applied as `lte` against a value that
+   * has lost precision on the way here. `campaigns.updated_at` is a MICROsecond
+   * timestamptz; JSON serialises the anchor to MILLIseconds, so the truncated
+   * bound sorts BELOW the anchor's own row and excludes it — and with it every
+   * campaign sharing that timestamp. 952 of the seeded tenant's 1,029 campaigns
+   * carry sub-millisecond precision, so this is the normal case, not the edge.
+   *
+   * The consequence is not an empty window but a WRONG one: the report page's
+   * rate-card deltas are then computed against whichever older campaigns
+   * survived the truncated bound. Perf campaign 12 renders "Click rate 0.0%
+   * ↑ 1.9%" — an upward delta on a campaign with zero click events ever,
+   * belonging to two other campaigns that appear nowhere on the screen.
    */
   updatedBefore?: Date;
   opens?: CampaignRateBucket[];

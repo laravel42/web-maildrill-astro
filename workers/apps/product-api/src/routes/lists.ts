@@ -242,8 +242,12 @@ export async function listRoutes(appRaw: FastifyInstance): Promise<void> {
         summary: 'One list with every stat the detail page renders',
         description:
           'The list row plus its membership counts, growth, 7-point trend, engagement counters, ' +
-          'per-channel send totals across ALL of its campaigns, and the start of its most recent ' +
-          'send. Scoped to one list, so it never aggregates the workspace.',
+          'per-channel send totals across ALL of its campaigns, the start of its most recent ' +
+          'send, and the three rollups over its whole membership the detail page draws from: ' +
+          'the status partition behind the health bar, joins per week for the last 12 weeks, and ' +
+          'per-custom-field fill counts. Scoped to one list, so it never aggregates the ' +
+          'workspace — and one response, so every figure on the page comes from one snapshot of ' +
+          'the roster rather than from a sample of it fetched separately.',
         params: idParam,
       },
     },

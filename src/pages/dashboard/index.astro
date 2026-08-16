@@ -7,6 +7,11 @@ import AppDashboard from '@/components/react/AppDashboard';
 const session = Astro.locals.session;
 const live = Boolean(session?.user?.id && session.activeTenantId);
 
+/* KNOWN DEFECT (audit #35): the greeting is computed from UTC on the server, so
+   it names the server's hour rather than the reader's. On this UTC-6 host it
+   renders "Good evening" at 15:11 local. UTC was chosen to keep SSR and
+   hydration agreeing; the honest fix is to greet client-side after mount, or
+   from the workspace timezone, not to pick a zone nobody is in. */
 const hour = Number(
   new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'UTC' }).format(
     new Date(),

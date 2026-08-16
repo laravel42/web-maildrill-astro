@@ -4,17 +4,9 @@ import AppLayout from '@/layouts/AppLayout.astro';
 import CampaignsBoard from '@/components/react/CampaignsBoard';
 import { productClient, mintServiceToken, serviceBaseUrl } from '@/lib/server/service';
 import { toCampaigns, type ApiCampaign } from '@/lib/app/campaign-map';
-import { toApprovalStatus } from '@/lib/app/template-map';
 import type { Campaign } from '@/types/app';
 import type { ChannelSenders } from '@/lib/app/channel-senders';
 import type { AudienceChoice, TemplateChoice } from '@/components/react/CampaignWizard.types';
-import {
-  enrichSegmentAudienceCounts,
-  listToAudienceChoice,
-  segmentToAudienceChoice,
-  type ApiAudienceSegment,
-} from '@/lib/app/audience-map';
-import type { ApiList } from '@/lib/app/list-map';
 import { PAGE_SIZE } from '@/components/react/shared/pagination';
 
 // Load real campaigns for the signed-in workspace; undefined = not connected
@@ -31,7 +23,6 @@ let templates: TemplateChoice[] | undefined = undefined;
 let senders: ChannelSenders | undefined = undefined;
 let banner: { ok: boolean; text: string } | null = null;
 
-const unwrap = <T,>(d: unknown): T[] => (d as { data?: T[] } | undefined)?.data ?? [];
 
 if (session?.user?.id && session.activeTenantId) {
   try {
@@ -51,13 +42,16 @@ if (session?.user?.id && session.activeTenantId) {
       dir: 'desc' as const,
       withTotal: '1',
     };
-    const [campaignsRes, countsRes, listsRes, segmentsRes, templatesRes, sendersRes] =
+    // Audiences and templates are NOT fetched here: they belong to the campaign
+    // wizard, cost ~876ms of blocking SSR between them (/v1/lists/audience 601ms,
+    // /v1/templates 275ms and 1.1MB), and most visits never open the dialog. The
+    // board fetches them on first open instead.
+    const [campaignsRes, countsRes, sendersRes] =
       await Promise.all([
         client.GET('/v1/campaigns', { params: { query: boardQuery } }),
         client.GET('/v1/campaigns/counts', { params: { query: { channel: 'email' } } }),
-        client.GET('/v1/lists/audience'),
-        client.GET('/v1/segments'),
-        client.GET('/v1/templates'),
+
+  
         fetch(`${serviceBaseUrl()}/v1/channels/senders`, {
           headers: { Authorization: `Bearer ${mintServiceToken(ctx)}` },
         }),
@@ -75,38 +69,7 @@ if (session?.user?.id && session.activeTenantId) {
       initialCounts = countsRes.data as unknown as typeof initialCounts;
     }
 
-    /* A failed lookup leaves the wizard with an empty picker and its own
-       explanatory empty state — it must not take the whole page down.
-
-       /v1/lists/audience carries both reach counts, so nothing here has to go
-       back and ask. The picker used to be assembled from /v1/lists (714KB of
-       growth, trends and engagement it renders none of) plus one
-       POST /v1/segments/preview per list to discover phone reach — 1,005 round
-       trips and 2,010 queries through a pool of ten, ~2.5s of this page's
-       load. */
-    const apiLists = unwrap<ApiList>(listsRes.data);
-    const apiSegments = unwrap<ApiAudienceSegment>(segmentsRes.data);
-    const segmentCounts = await enrichSegmentAudienceCounts(client, apiSegments);
-    audiences = [
-      ...apiLists.map((l) => listToAudienceChoice(l)),
-      ...apiSegments.map((s) => segmentToAudienceChoice(s, segmentCounts.get(s.id))),
-    ];
-    templates = unwrap<{
-      id: string;
-      name: string;
-      channel?: string | null;
-      category?: string | null;
-      approvalStatus?: string | null;
-    }>(templatesRes.data).map((t): TemplateChoice => ({
-      id: t.id,
-      name: t.name,
-      category: t.category ?? null,
-      channel: (t.channel as TemplateChoice['channel']) ?? 'email',
-      approvalStatus: toApprovalStatus(t.approvalStatus),
-    }));
-    if (sendersRes.ok) {
-      senders = (await sendersRes.json()) as ChannelSenders;
-    }
+    if (sendersRes.ok) senders = (await sendersRes.json()) as ChannelSenders;
   } catch (err) {
     banner = { ok: false, text: err instanceof Error ? err.message : 'Service unreachable.' };
   }

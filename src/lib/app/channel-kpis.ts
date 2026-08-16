@@ -53,6 +53,13 @@ export const EMPTY_TOTALS: ChannelTotals = Object.freeze({
   complaints: 0,
 });
 
+/**
+ * Every rate on these tiles names its denominator in the `sub` line beneath it,
+ * and returns "—" rather than 0% on an empty denominator — a zero rate means
+ * "measured, nobody engaged", which is a claim we cannot make about a channel
+ * or a record with no sends. Both counts come from server-side SQL over the
+ * record's full history; nothing on these tiles is a page.
+ */
 const pct = (n: number, d: number) => (d > 0 ? `${Math.round((n / d) * 100)}%` : '—');
 const num = (n: number) => n.toLocaleString('en-US');
 

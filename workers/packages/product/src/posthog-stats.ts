@@ -8,7 +8,15 @@ import {
 } from '@maildrill/observability';
 import type { ChannelBreakdown, DailyPoint } from './stats';
 
-/** Infobip status groups that count as delivery failures on charts. */
+/**
+ * Infobip status groups that count as delivery failures on charts.
+ *
+ * Note this is the WIDE reading — EXPIRED is a failure here — while the Postgres
+ * side of the same chart (`byChannelFromPostgres` in stats.ts) counts
+ * `status = 'failed'` alone. Whichever source `preferRicherSource` picks
+ * therefore also picks what "failed" means, with nothing on screen to say so
+ * (audit #6, latent half).
+ */
 export const FAILED_STATUS_GROUPS = ['UNDELIVERABLE', 'EXPIRED', 'REJECTED'] as const;
 
 export interface ActivityRow {
@@ -21,6 +29,17 @@ export interface ActivityRow {
 /**
  * Zero-fill HogQL activity rows into a continuous daily series matching
  * `dailyActivity`'s Postgres shape.
+ *
+ * Counts are DISTINCT message ids from `message_delivery_report` /
+ * `message_voice_report` events — so this measures messages the provider
+ * reported on, which is a subset of messages sent. It is not comparable in
+ * scale to the Postgres row count and must never replace it unguarded (see
+ * `workspaceSummary`, audit #1).
+ *
+ * LATENT DEFECT: the fill key is `toISOString().slice(0,10)` over a
+ * local-midnight Date, while HogQL bucketed on `toStartOfDay(timestamp)` in the
+ * project's zone. They agree on this host; on a UTC+ host every key misses by a
+ * day and the series zero-fills flat. Same shape as `dailyActivityFromPostgres`.
  */
 export function zeroFillDailyActivity(
   rows: ActivityRow[],

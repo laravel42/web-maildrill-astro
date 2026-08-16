@@ -86,6 +86,31 @@ export interface TemplateEngagement {
  * Templates with real engagement aggregated from the campaigns that used them
  * (via campaigns.template_id → messages / message_events), mirroring the
  * lists/subscribers convention. Templates never sent report zeroes.
+ *
+ * FULL SET, twice over: the template rows carry no `limit` at all — every
+ * template the tenant owns crosses the wire — and the outcome aggregate scans
+ * every message belonging to a campaign with a template. So the gallery's "229"
+ * footer is a true table count, not a page count. (That is a correctness win and
+ * a scale risk: nothing here degrades gracefully as the table grows.)
+ *
+ * Denominators: `trackedDelivered` is deliveries on email + whatsapp only —
+ * the channels whose providers report a read — because an SMS delivery cannot
+ * produce an open and would only dilute the rate. `sent` / `delivered` /
+ * `failed` are all-channel, so an SMS or voice template still has real numbers
+ * to show rather than a row of zeroed engagement rates.
+ *
+ * KNOWN DEFECT (audit, latent): `opened` counts reads on every channel while
+ * `trackedDelivered` counts two, so a template sent on more than one channel
+ * would divide a wider numerator by a narrower denominator. Zero templates on
+ * the seeded tenant span more than one message channel, so no row is wrong
+ * today — the shape is, and it is the same pairing that is actively wrong in
+ * `workspaceSummary`.
+ *
+ * KNOWN DEFECT (audit #13): `trackedDelivered` is 0 by construction for every
+ * SMS and voice template, and the gallery's `rate()` helper turns that into a
+ * literal 0% instead of "—". 148 of 229 templates render "0% opens · 0% clicks"
+ * — 92 of them with real reads behind the zero. See `rate()` in
+ * src/lib/app/template-map.ts, which is where the em-dash branch is missing.
  */
 export async function listTemplates(
   tenantId: string,
@@ -99,6 +124,10 @@ export async function listTemplates(
   const outcomes = await db
     .select({
       templateId: campaigns.templateId,
+      // `delivered` counts delivered + read for the usual reason: a read message
+      // was delivered, so excluding it would make rates climb past 100% as
+      // receipts land. `failed` is `status='failed'` alone here — the narrow
+      // definition, see audit #6 in stats.ts.
       trackedDelivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read') and ${messages.channel} in ('email', 'whatsapp'))::int`,
       opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
       sent: sql<number>`count(*)::int`,

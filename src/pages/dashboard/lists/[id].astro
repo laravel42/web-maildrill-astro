@@ -5,7 +5,7 @@ import AppListDetail from '@/components/react/AppListDetail';
 import { productClient, mintServiceToken, serviceBaseUrl } from '@/lib/server/service';
 import type { ApiList } from '@/lib/app/list-map';
 import type { ApiCampaign } from '@/lib/app/campaign-map';
-import type { ApiCustomFieldDef, ApiListMember, ApiSegment } from '@/lib/app/list-detail';
+import type { ApiCustomFieldDef, ApiListStats, ApiSegment } from '@/lib/app/list-detail';
 import { routes } from '@/config/routes';
 
 const id = Astro.params.id;
@@ -29,14 +29,21 @@ const base = serviceBaseUrl();
 
 const unwrap = <T,>(d: unknown): T[] => (d as { data?: T[] } | undefined)?.data ?? [];
 
-// The LIST endpoint's rows carry the computed stats the health card needs
-// (memberCount, delivered, trackedDelivered, opened, clicked, trend, added7s)
-// which GET /v1/lists/{id} does not — so load the collection and pick the row.
-const [listsRes, membersRes, campaignsRes, segmentsRes, fieldsRes] = await Promise.all([
-  client.GET('/v1/lists'),
-  fetch(`${base}/v1/lists/${id}/members?limit=1000`, {
-    headers: { Authorization: `Bearer ${token}` },
-  }),
+/* One list, measured server-side: /v1/lists/{id}/stats carries the health
+   card's counters (memberCount, trend, added7s, delivered/opened/clicked), the
+   per-channel send totals across every campaign this list ever ran, AND the
+   three rollups over the whole membership the page draws from — the status
+   partition, joins per week, and per-custom-field fill. So the page neither
+   aggregates the workspace to read one row, nor sums a truncated campaign page
+   in the browser, nor describes a 2,000-member list from the 1,000 members it
+   could fit in one request. The name map for the import picker is the bounded
+   name/colour projection, not the aggregation. */
+const [statsRes, listsRes, campaignsRes, segmentsRes, fieldsRes] = await Promise.all([
+  client.GET('/v1/lists/{id}/stats', { params: { path: { id } } }),
+  /* KNOWN DEFECT (audit #37, minor): a hard cap under the workspace's own size
+     — the tenant has 1,006 lists, so 6 are unreachable in this picker. It is a
+     bounded sample presented as the whole set, with no "more" affordance. */
+  client.GET('/v1/lists', { params: { query: { options: '1', limit: 1000 } } }),
   client.GET('/v1/campaigns', {
     params: { query: { listId: id, limit: 50, sort: 'updatedAt' as const, dir: 'desc' as const } },
   }),
@@ -46,18 +53,9 @@ const [listsRes, membersRes, campaignsRes, segmentsRes, fieldsRes] = await Promi
   }),
 ]);
 
-const list = unwrap<ApiList>(listsRes.data).find((l) => l.id === id);
-if (listsRes.error || !list) {
+const list = statsRes.data as unknown as ApiListStats | undefined;
+if (statsRes.error || !list) {
   return Astro.redirect(routes.app.lists);
-}
-
-let members: ApiListMember[] = [];
-if (membersRes.ok) {
-  try {
-    members = ((await membersRes.json()) as { data?: ApiListMember[] }).data ?? [];
-  } catch {
-    members = [];
-  }
 }
 
 // ?listId= is a SQL filter now, so this is the list's campaigns rather than
@@ -83,7 +81,6 @@ if (fieldsRes.ok) {
   <AppListDetail
     client:visible
     initial={list}
-    members={members}
     campaigns={campaigns}
     segments={segments}
     fields={fields}

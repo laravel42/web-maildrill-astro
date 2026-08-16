@@ -15,7 +15,7 @@ import { ago } from './shared/time';
 import { fmtPct, PAGE_SIZE, rows as mockRows, trendPath, weeklyGain } from './AppLists.logic';
 import type { ListRow, SortKey, View } from './AppLists.types';
 import { api, ApiError } from '@/lib/app/api';
-import { toListRow, type ApiList } from '@/lib/app/list-map';
+import { toListRow, toListRows, type ApiList } from '@/lib/app/list-map';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import type { ChannelType } from '@/types/app';
 import { routes } from '@/config/routes';
@@ -29,10 +29,65 @@ import FilterChipsRow from './shared/FilterChipsRow';
 import { visiblePageNumbers } from './shared/pagination';
 import styles from './AppLists.module.css';
 
-export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
+/** Workspace-wide counts behind the channel tabs and the tag menu. */
+export type ListFacets = {
+  byChannel: Record<string, number>;
+  tags: { name: string; count: number }[];
+};
+
+/* The rate bands the filter menu shows, as the slugs the API takes. The
+   boundaries are the same on both sides — see LIST_RATE_BUCKETS. */
+const RATE_SLUG: Record<string, string> = {
+  None: 'none',
+  'Under 20%': 'low',
+  '20 – 40%': 'mid',
+  '40%+': 'high',
+};
+
+export default function AppLists({
+  initial,
+  initialTotal,
+  initialFacets,
+}: {
+  initial?: ListRow[];
+  /** Lists matching the first page's filters, for the pager. */
+  initialTotal?: number;
+  /** Workspace tab counts and tag menu, so both render before the first fetch. */
+  initialFacets?: ListFacets;
+} = {}) {
   // Live workspace lists from SSR when provided; otherwise the fixture preview.
   const live = initial !== undefined;
+  /*
+   * In live mode this holds ONE page, not the workspace. Everything that used
+   * to be derived by filtering it in the browser — the rows, the tab counts,
+   * the tag menu, the footer total — now comes from the server, because ten
+   * rows cannot answer questions about a thousand lists, and because deriving
+   * them here is what forced the endpoint to aggregate every membership row in
+   * the workspace before the first list could be drawn.
+   */
+  /* LATENT DEFECT (fixture leakage): `mockRows` is a FIXTURE — three lists with
+     invented trends, open rates and "58.2%"-style strings. It stands in only
+     when `initial` is `undefined`, which SSR passes on an API error or a session
+     with no `activeTenantId`. In that case a live workspace renders fabricated
+     rows with no banner distinguishing them from real ones. The values are
+     fictional; only the empty case is safe. */
   const [listRows, setListRows] = useState<ListRow[]>(initial !== undefined ? initial : mockRows);
+  const [serverTotal, setServerTotal] = useState<number>(initialTotal ?? 0);
+  const [serverFacets, setServerFacets] = useState<ListFacets | null>(initialFacets ?? null);
+  const [loadingPage, setLoadingPage] = useState(false);
+  /*
+   * Keyset paging state. A cursor names the row a page resumes from, so pages
+   * are walked rather than jumped to; a page the user has never reached has no
+   * cursor and falls back to the server's `page` param for that one request.
+   */
+  const [cursors, setCursors] = useState<{ key: string; byPage: Record<number, string> }>({
+    key: '',
+    byPage: {},
+  });
+  /* Bumped after any mutation, to re-read the page and the facets together — a
+     create or a delete changes the total and the tab counts, not just a row. */
+  const [refreshTick, setRefreshTick] = useState(0);
+  const refresh = () => setRefreshTick((n) => n + 1);
   const [query, setQuery] = useState('');
   const [tagSel, setTagSel] = useState<Set<string>>(new Set());
   const [opensSel, setOpensSel] = useState<Set<string>>(new Set());
@@ -40,10 +95,12 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
   const [openFilter, setOpenFilter] = useState<'opens' | 'clicks' | null>(null);
   const [view, setView] = useState<View>('cards');
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updatedAt', dir: -1 });
-  const [page, setPage] = useState(1);
+  const [pageState, setPageState] = useState<{ key: string; page: number }>({ key: '', page: 1 });
 
-  // Every tag present across the workspace's lists, with list counts.
+  // Every tag in the workspace, with list counts. Server-side when live: the
+  // page in hand knows only its own twelve rows' tags.
   const allTags = useMemo(() => {
+    if (live) return serverFacets?.tags ?? [];
     const freq = new Map<string, number>();
     for (const l of listRows) {
       for (const t of l.tags) freq.set(t, (freq.get(t) ?? 0) + 1);
@@ -51,16 +108,16 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
     return [...freq.entries()]
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [listRows]);
-  const toggleTag = (t: string) =>
+  }, [live, serverFacets, listRows]);
+  const toggleTag = (t: string) => {
     setTagSel((prev) => {
       const next = new Set(prev);
       if (next.has(t)) next.delete(t);
       else next.add(t);
       return next;
     });
-
-  const resetPage = () => setPage(1);
+    resetPage();
+  };
 
   const toggleSet = (setter: Dispatch<SetStateAction<Set<string>>>) => (v: string) => {
     setter((prev) => {
@@ -89,6 +146,37 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
   const tabCfg = channelReportConfig(tab);
   const showOpenFilter = tabCfg.rateCards.some((r) => r === 'open' || r === 'seen');
   const showClickFilter = tabCfg.rateCards.includes('click');
+
+  /*
+   * One string naming the filter set and ordering that a page number and a
+   * cursor belong to.
+   *
+   * Derived during render rather than reset from an effect, and that is the
+   * point: an effect that calls setPage(1) has not run by the time the fetch
+   * effect fires in the same commit, so switching channel would issue one
+   * request carrying the previous channel's cursor. The server refuses it
+   * (cursor_shape_mismatch — the guard working as intended) and the right
+   * request follows, but it is a wasted round trip on every filter change.
+   * Keying the state makes the reset simultaneous.
+   */
+  const queryKey = useMemo(
+    () =>
+      JSON.stringify([
+        tab,
+        query.trim(),
+        [...tagSel].sort(),
+        [...opensSel].sort(),
+        [...clicksSel].sort(),
+        sort.key,
+        sort.dir,
+      ]),
+    [tab, query, tagSel, opensSel, clicksSel, sort],
+  );
+  const page = pageState.key === queryKey ? pageState.page : 1;
+  const setPage = (next: number | ((p: number) => number)) =>
+    setPageState({ key: queryKey, page: typeof next === 'function' ? next(page) : next });
+  const cursorFor = cursors.key === queryKey ? cursors.byPage : {};
+  const resetPage = () => setPage(1);
   const openFilterLabel = tabCfg.openLabel === 'Seen' ? 'Seen' : 'Opens';
 
   useEffect(() => {
@@ -126,7 +214,10 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
         channels: values.channels,
         gdprConsent: values.gdprConsent,
       });
-      setListRows((prev) => [toListRow(created), ...prev]);
+      // The new list belongs to a page the server decides, and it moves the
+      // total and the tab counts — so re-read rather than splice it in here.
+      if (live) refresh();
+      else setListRows((prev) => [toListRow(created), ...prev]);
       setEditor(null);
       showToast(`List “${values.name}” created`);
     } catch (e) {
@@ -166,19 +257,35 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
         return;
       }
     }
-    setListRows((prev) => prev.filter((l) => l.id !== id));
+    // Dropping the row locally would leave the page one short and the footer
+    // total stale; the page and the facets are re-read together instead.
+    if (live) refresh();
+    else setListRows((prev) => prev.filter((l) => l.id !== id));
     closeDrawer();
     showToast(`List “${name}” deleted`);
   };
 
   const tabCounts = useMemo(() => {
     const c: Record<string, number> = {};
-    for (const ch of CHANNEL_ORDER)
-      c[ch] = listRows.filter((l) => (l.channels ?? ['email']).includes(ch)).length;
+    for (const ch of CHANNEL_ORDER) {
+      c[ch] = live
+        ? (serverFacets?.byChannel[ch] ?? 0)
+        : listRows.filter((l) => (l.channels ?? ['email']).includes(ch)).length;
+    }
     return c;
-  }, [listRows]);
+  }, [live, serverFacets, listRows]);
 
-  const filtered = useMemo(() => {
+  /*
+   * The fixture pipeline: filter and sort the whole set in the browser.
+   *
+   * Unreachable in live mode — there the server applies every one of these
+   * filters and the sort in SQL and hands back exactly one page, so the rows in
+   * hand are already the answer. Filtering them again here is what made the old
+   * board need all 1,006 lists (and a membership aggregate over the entire
+   * workspace) before it could draw ten.
+   */
+  const fixtureRows = useMemo(() => {
+    if (live) return [];
     const q = query.trim().toLowerCase();
     let list = listRows.filter((l) => {
       if (!(l.channels ?? ['email']).includes(tab)) return false;
@@ -218,19 +325,96 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
       return 0;
     });
     return list;
-  }, [tab, query, tagSel, opensSel, clicksSel, sort, listRows, showOpenFilter, showClickFilter]);
+  }, [live, tab, query, tagSel, opensSel, clicksSel, sort, listRows, showOpenFilter, showClickFilter]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  // Live: `listRows` is the page the server returned and `serverTotal` counts
+  // the whole filtered set. Fixtures: both come from the array in hand.
+  const totalRows = live ? serverTotal : fixtureRows.length;
+  const pageCount = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
   const pagerPages = visiblePageNumbers(safePage, pageCount);
-  const startIdx = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
-  const endIdx = Math.min(safePage * PAGE_SIZE, filtered.length);
-  const pageRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const startIdx = totalRows === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const endIdx = Math.min(safePage * PAGE_SIZE, totalRows);
+  const pageRows = live
+    ? listRows
+    : fixtureRows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-  // Snap back to the first page whenever the filtered set changes underneath.
+  /*
+   * One page of the board, from the server.
+   *
+   * The server owns every filter the screen offers — channel, tags, search,
+   * open/click band — plus the sort and the page window. Nothing above narrows
+   * a live page any more.
+   */
   useEffect(() => {
-    setPage(1);
-  }, [query, tagSel, opensSel, clicksSel, sort]);
+    if (!live) return;
+    let cancelled = false;
+    const qs = new URLSearchParams({
+      limit: String(PAGE_SIZE),
+      channel: tab,
+      sort: sort.key,
+      dir: sort.dir === 1 ? 'asc' : 'desc',
+    });
+    // Only `updatedAt` is a timestamp, so only it can carry a keyset cursor;
+    // the other columns page by number over the small `lists` table.
+    const cursor = sort.key === 'updatedAt' ? cursorFor[page] : undefined;
+    if (cursor) qs.set('cursor', cursor);
+    else if (page > 1) qs.set('page', String(page));
+    if (query.trim()) qs.set('q', query.trim());
+    for (const t of tagSel) qs.append('tag', t);
+    // Bands are only sent on channels that report them — the same rule that
+    // decides whether the filter control exists at all.
+    if (showOpenFilter) for (const b of opensSel) qs.append('opens', RATE_SLUG[b] ?? b);
+    if (showClickFilter) for (const b of clicksSel) qs.append('clicks', RATE_SLUG[b] ?? b);
+    // Count once per filter set: the pager needs a page count, but counting on
+    // every Next would be a scan per click.
+    if (page === 1) qs.set('withTotal', '1');
+
+    setLoadingPage(true);
+    api
+      .get<{ items: ApiList[]; next_cursor: string | null; total?: number }>(`lists?${qs}`)
+      .then((res) => {
+        if (cancelled) return;
+        setListRows(toListRows(res.items ?? []));
+        // Remember the doorway to the following page so Next stays keyset.
+        if (res.next_cursor) {
+          const token = res.next_cursor;
+          setCursors((c) => ({
+            key: queryKey,
+            byPage: { ...(c.key === queryKey ? c.byPage : {}), [page + 1]: token },
+          }));
+        }
+        if (res.total !== undefined) setServerTotal(res.total);
+      })
+      .catch(() => {
+        /* keep the page on screen rather than blanking the table */
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPage(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // `cursorFor` is read but deliberately not depended on: this effect fills
+    // it, so listing it would re-run the fetch on its own result. `queryKey` is
+    // a function of the filters already listed.
+  }, [live, queryKey, tab, sort, page, refreshTick, showOpenFilter, showClickFilter]);
+
+  /* Tab counts and the tag menu describe the workspace, so they are fetched
+     once — never per page. One grouped read of `lists`, no membership data. */
+  useEffect(() => {
+    if (!live) return;
+    let cancelled = false;
+    api
+      .get<ListFacets>('lists/facets')
+      .then((f) => {
+        if (!cancelled) setServerFacets(f);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [live, refreshTick]);
 
   const toggleSort = (key: SortKey) =>
     setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: 1 }));
@@ -440,7 +624,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
               </div>
             </div>
 
-            {filtered.length === 0 ? (
+            {pageRows.length === 0 ? (
               <div className="atable__empty">No lists match your search.</div>
             ) : (
               pageRows.map((l) => {
@@ -523,7 +707,7 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
 
         {/* CARDS VIEW */}
         {view === 'cards' &&
-          (filtered.length === 0 ? (
+          (pageRows.length === 0 ? (
             <div className="atable__empty">No lists match your search.</div>
           ) : (
             <div className={styles.cards}>
@@ -624,10 +808,10 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
 
         {/* footer / pagination */}
         <div className={`atable__foot ${styles.foot}`}>
-          <span className={filtered.length === 0 ? undefined : 'tnum'}>
-            {filtered.length === 0
+          <span className={totalRows === 0 ? undefined : 'tnum'}>
+            {totalRows === 0
               ? 'No lists match your search'
-              : `${startIdx}–${endIdx} of ${filtered.length} list${filtered.length === 1 ? '' : 's'}`}
+              : `${startIdx}–${endIdx} of ${totalRows.toLocaleString('en-US')} list${totalRows === 1 ? '' : 's'}${loadingPage ? ' · loading…' : ''}`}
           </span>
           {pageCount > 1 && (
             <div className={styles.pager}>

@@ -9,19 +9,18 @@ import { routes } from '@/config/routes';
 import type { ChannelType } from '@/types/app';
 import type { ApiList } from '@/lib/app/list-map';
 import type { ApiCampaign } from '@/lib/app/campaign-map';
+import type { ApiSubscriber } from '@/lib/app/subscriber-map';
+import type { CustomField } from '@/lib/app/custom-fields';
+import { downloadCsv, exportFilename, subscribersCsv } from '@/lib/app/subscriber-export';
 import {
   buildListDetailView,
-  rosterMatchesFilter,
   type ApiCustomFieldDef,
-  type ApiListMember,
+  type ApiListStats,
   type ApiSegment,
   type ListDetailView,
-  type RosterFilter,
 } from '@/lib/app/list-detail';
-import { PAGE_SIZE, visiblePageNumbers } from './shared/pagination';
 import { ChannelPill } from './shared/CampaignPills';
 import { CHANNEL_ORDER } from './shared/channels';
-import { agoNow } from './shared/time';
 import styles from './AppListDetail.module.css';
 
 /*
@@ -32,9 +31,15 @@ import styles from './AppListDetail.module.css';
  * than invented values.
  */
 
+/**
+ * CSV export window, matching the Subscribers screen: `EXPORT_PAGE` is the
+ * cursor endpoint's own ceiling and `EXPORT_MAX` the browser-memory guard.
+ */
+const EXPORT_PAGE = 100;
+const EXPORT_MAX = 10_000;
+
 type Props = {
-  initial: ApiList;
-  members?: ApiListMember[];
+  initial: ApiListStats;
   campaigns?: ApiCampaign[];
   fields?: ApiCustomFieldDef[];
   segments?: ApiSegment[];
@@ -42,27 +47,16 @@ type Props = {
   lists?: { id: string; name: string }[];
 };
 
-const FILTERS: { id: RosterFilter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'active', label: 'Active' },
-  { id: 'delivered', label: 'Delivered' },
-  { id: 'unsubscribed', label: 'Unsubscribed' },
-  { id: 'failed', label: 'Failed' },
-];
-
 export default function AppListDetail({
   initial,
-  members: initialMembers = [],
   campaigns = [],
   fields = [],
   segments = [],
   lists,
 }: Props) {
   const [list, setList] = useState(initial);
-  const [members, setMembers] = useState(initialMembers);
+  const [exporting, setExporting] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
-  const [filter, setFilter] = useState<RosterFilter>('all');
-  const [page, setPage] = useState(1);
   const [menuOpen, setMenuOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -91,21 +85,20 @@ export default function AppListDetail({
   }, [menuOpen]);
 
   const view: ListDetailView = useMemo(
-    () => buildListDetailView(list, members, campaigns, fields, segments),
-    [list, members, campaigns, fields, segments],
+    () => buildListDetailView(list, campaigns, fields, segments),
+    [list, campaigns, fields, segments],
   );
 
-  const filtered = useMemo(
-    () => view.roster.filter((r) => rosterMatchesFilter(r, filter)),
-    [view.roster, filter],
-  );
-
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, pageCount);
-  const pageRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
-  const startIdx = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
-  const endIdx = Math.min(safePage * PAGE_SIZE, filtered.length);
-  const pagerPages = visiblePageNumbers(safePage, pageCount);
+  /* Every counter on this page comes from one endpoint, so one re-read puts
+     all of them back in agreement after a write — no field-by-field patching
+     of a number the server derives. */
+  const refreshStats = async () => {
+    try {
+      setList(await api.get<ApiListStats>(`lists/${list.id}/stats`));
+    } catch {
+      /* best-effort: the write itself succeeded, the page is just one stale read */
+    }
+  };
 
   const maxJoin = Math.max(1, ...view.weeks.map((w) => w.joins));
   const barPct = (n: number) => (n <= 0 ? 0 : Math.max(4, Math.round((n / maxJoin) * 96)));
@@ -160,22 +153,45 @@ export default function AppListDetail({
     }
   };
 
-  const exportCsv = () => {
-    const rows = [
-      ['email', 'name', 'status', 'phone'],
-      ...members.map((m) => [m.email, m.name ?? '', m.status, m.phone ?? '']),
-    ];
-    const blob = new Blob(
-      [rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')],
-      { type: 'text/csv' },
-    );
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${list.name || list.id}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  /* Fetched when the button is pressed, and paged with cursors, rather than
+     read out of a roster the page had already loaded. That roster was one
+     `members?limit=1000` request, so on this workspace's 2,000-member lists
+     "Export subscribers" wrote out half the list and said nothing. Same
+     endpoint, filters and columns as the Subscribers screen's export, so the
+     two files round-trip through the import mapper identically. */
+  const exportCsv = async () => {
+    if (exporting) return;
+    setExporting(true);
     setMenuOpen(false);
+    try {
+      const all: ApiSubscriber[] = [];
+      let cursor: string | null = null;
+      for (let fetched = 0; fetched < EXPORT_MAX; fetched += EXPORT_PAGE) {
+        const qs = new URLSearchParams({
+          listId: list.id,
+          limit: String(EXPORT_PAGE),
+          sort: 'created',
+          dir: 'desc',
+        });
+        if (cursor) qs.set('cursor', cursor);
+        const res: { items?: ApiSubscriber[]; next_cursor: string | null } = await api.get(
+          `subscribers?${qs}`,
+        );
+        all.push(...(res.items ?? []));
+        cursor = res.next_cursor;
+        if (!cursor) break;
+      }
+      const customFields = await api
+        .get<{ data: CustomField[] }>('custom-fields')
+        .then((r) => r.data)
+        .catch(() => [] as CustomField[]);
+      downloadCsv(exportFilename(list.name || list.id), subscribersCsv(all, customFields));
+      show(`Exported ${all.length.toLocaleString('en-US')} subscribers`);
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : 'Could not export subscribers');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const copyEmbed = async () => {
@@ -243,11 +259,7 @@ export default function AppListDetail({
           </div>
           <div className={styles.identityAside}>
             <div className={styles.identityActions}>
-              <button
-                className="pbtn"
-                type="button"
-                onClick={() => setImportOpen(true)}
-              >
+              <button className="pbtn" type="button" onClick={() => setImportOpen(true)}>
                 <Icon name="upload" size={15} />
                 Import subscribers
               </button>
@@ -280,11 +292,16 @@ export default function AppListDetail({
                       </svg>
                       Edit list details
                     </button>
-                    <button className={styles.menuItem} type="button" onClick={exportCsv}>
+                    <button
+                      className={styles.menuItem}
+                      type="button"
+                      disabled={exporting}
+                      onClick={() => void exportCsv()}
+                    >
                       <svg {...menuIcon}>
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
                       </svg>
-                      Export subscribers (CSV)
+                      {exporting ? 'Exporting…' : 'Export subscribers (CSV)'}
                     </button>
                     <button
                       className={`${styles.menuItem} ${styles.menuDanger}`}
@@ -419,136 +436,11 @@ export default function AppListDetail({
               </ul>
             </section>
 
-            <section className={`${styles.card} ${styles.tabsCard}`}>
-              <div className={styles.tabs} role="tablist" aria-label="Subscriber status">
-                {FILTERS.map((f) => (
-                  <button
-                    key={f.id}
-                    className={`${styles.tab} ${filter === f.id ? styles.isActive : ''}`}
-                    type="button"
-                    role="tab"
-                    aria-selected={filter === f.id}
-                    onClick={() => {
-                      setFilter(f.id);
-                      setPage(1);
-                    }}
-                  >
-                    {f.label}
-                    <span className={`${styles.tabCount} ${styles.tnum}`}>
-                      {view.rosterCounts[f.id].toLocaleString('en-US')}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              <div role="tabpanel">
-                {filtered.length === 0 ? (
-                  <p className={styles.empty}>No subscribers in this status.</p>
-                ) : (
-                  <table className={styles.table}>
-                    <thead>
-                      <tr>
-                        <th>Subscriber</th>
-                        <th>Status</th>
-                        <th>Joined</th>
-                        <th>Last campaign</th>
-                        <th>Source</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pageRows.map((r) => (
-                        <tr
-                          key={r.id}
-                          className={styles.person}
-                          role="link"
-                          tabIndex={0}
-                          onClick={() => {
-                            window.location.href = routes.app.subscriber(r.id);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              window.location.href = routes.app.subscriber(r.id);
-                            }
-                          }}
-                        >
-                          <td>
-                            <div className={styles.personCell}>
-                              <span
-                                className={styles.personAvatar}
-                                style={{ background: r.avBg, color: r.avInk }}
-                              >
-                                {r.initials}
-                              </span>
-                              <div className={styles.personId}>
-                                <span className={styles.personName}>{r.name}</span>
-                                <span className={styles.personEmail}>{r.email}</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span className={`astatus astatus--${r.status}`}>
-                              <span
-                                className={styles.dot}
-                                style={{
-                                  background: r.status === 'active' ? '#16a34a' : 'currentColor',
-                                }}
-                              />
-                              {r.statusLabel}
-                            </span>
-                          </td>
-                          <td className={styles.tnum}>{r.joinedLabel}</td>
-                          <td className={styles.tnum}>
-                            {r.lastCampaignAt ? agoNow(r.lastCampaignAt) : '—'}
-                          </td>
-                          <td className={styles.cellMuted}>—</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-                <div className="atable__foot">
-                  <span className={filtered.length === 0 ? undefined : 'tnum'}>
-                    {filtered.length === 0
-                      ? 'No subscribers match your filters'
-                      : `${startIdx}–${endIdx} of ${filtered.length} subscribers`}
-                  </span>
-                  {pageCount > 1 && (
-                    <div className={styles.pager}>
-                      <button
-                        type="button"
-                        className={styles.pg}
-                        disabled={safePage === 1}
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        aria-label="Previous page"
-                      >
-                        <Icon name="chevron-right" size={15} className={styles.pgflip} />
-                      </button>
-                      {pagerPages.map((n) => (
-                        <button
-                          key={n}
-                          type="button"
-                          className={`${styles.pgn} tnum${n === safePage ? ' is-on' : ''}`}
-                          aria-current={n === safePage ? 'page' : undefined}
-                          onClick={() => setPage(n)}
-                        >
-                          {n}
-                        </button>
-                      ))}
-                      <button
-                        type="button"
-                        className={styles.pg}
-                        disabled={safePage === pageCount}
-                        onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-                        aria-label="Next page"
-                      >
-                        <Icon name="chevron-right" size={15} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </section>
+            {/* The member roster used to live here: a 1,000-row table of every
+                subscriber on the list, fetched in full on page load. It
+                duplicated the Subscribers screen, which does the same job with
+                server-side keyset pagination and real filters, and cost ~86KB
+                per view to render something nobody drilled into from here. */}
           </div>
 
           <aside className={styles.colRail}>
@@ -786,29 +678,9 @@ export default function AppListDetail({
           customFieldKeys={fields.map((f) => f.key)}
           onClose={() => setImportOpen(false)}
           onError={show}
-          onImported={async () => {
-            try {
-              const [freshMembers, listsRes] = await Promise.all([
-                api.get<{ data: ApiListMember[] }>(`lists/${list.id}/members?limit=1000`),
-                api.get<{ data: ApiList[] }>('lists'),
-              ]);
-              setMembers(freshMembers.data ?? []);
-              const updated = listsRes.data?.find((l) => l.id === list.id);
-              if (updated) setList((l) => ({ ...l, ...updated }));
-            } catch {
-              /* roster refresh is best-effort; the import itself succeeded */
-            }
-          }}
+          onImported={() => void refreshStats()}
           onCreated={async (_created, values) => {
-            const fresh = await api.get<{ data: ApiListMember[] }>(
-              `lists/${list.id}/members?limit=1000`,
-            );
-            setMembers(fresh.data ?? []);
-            setList((l) => ({
-              ...l,
-              memberCount: (l.memberCount ?? 0) + 1,
-              activeMemberCount: (l.activeMemberCount ?? 0) + 1,
-            }));
+            await refreshStats();
             show(`${values.email} added`);
           }}
         />

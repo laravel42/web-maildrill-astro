@@ -2129,7 +2129,7 @@
                 "tags": [
                     "Lists"
                 ],
-                "description": "The list row plus its membership counts, growth, 7-point trend, engagement counters, per-channel send totals across ALL of its campaigns, and the start of its most recent send. Scoped to one list, so it never aggregates the workspace.",
+                "description": "The list row plus its membership counts, growth, 7-point trend, engagement counters, per-channel send totals across ALL of its campaigns, the start of its most recent send, and the three rollups over its whole membership the detail page draws from: the status partition behind the health bar, joins per week for the last 12 weeks, and per-custom-field fill counts. Scoped to one list, so it never aggregates the workspace — and one response, so every figure on the page comes from one snapshot of the roster rather than from a sample of it fetched separately.",
                 "parameters": [
                     {
                         "schema": {
@@ -3969,21 +3969,88 @@
         },
         "/v1/campaigns/{id}/messages": {
             "get": {
-                "summary": "Per-recipient message outcomes for a campaign report",
+                "summary": "Per-recipient message outcomes for a campaign report (keyset-paginated)",
                 "tags": [
                     "Campaigns"
                 ],
+                "description": "Returns { items, next_cursor, has_more }; pass next_cursor back as ?cursor= for the following page. ?kind= narrows to one report event tab IN SQL, so the rows and the per-tab counts from /messages/counts always describe the same set — this used to return an uncapped-looking 200-row sample that the browser then filtered and counted, which made every tab on a campaign over 200 recipients report the sample. The campaign id and the kind are both bound into the cursor, so a token cannot be replayed against another campaign or another tab.",
                 "parameters": [
                     {
                         "schema": {
                             "type": "integer",
-                            "minimum": 1,
-                            "maximum": 500
+                            "exclusiveMinimum": true,
+                            "minimum": 0,
+                            "maximum": 100
                         },
                         "in": "query",
                         "name": "limit",
                         "required": false
                     },
+                    {
+                        "schema": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1024
+                        },
+                        "in": "query",
+                        "name": "cursor",
+                        "required": false
+                    },
+                    {
+                        "schema": {
+                            "type": "integer",
+                            "exclusiveMinimum": true,
+                            "minimum": 0,
+                            "maximum": 100000
+                        },
+                        "in": "query",
+                        "name": "page",
+                        "required": false
+                    },
+                    {
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "delivered",
+                                "opened",
+                                "seen",
+                                "clicked",
+                                "unsubscribed",
+                                "sent",
+                                "bounced",
+                                "failed",
+                                "queued"
+                            ]
+                        },
+                        "in": "query",
+                        "name": "kind",
+                        "required": false
+                    },
+                    {
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "in": "path",
+                        "name": "id",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Default Response"
+                    }
+                }
+            }
+        },
+        "/v1/campaigns/{id}/messages/counts": {
+            "get": {
+                "summary": "Per-tab recipient-event counts and rate series for a campaign report",
+                "tags": [
+                    "Campaigns"
+                ],
+                "description": "One grouped scan of the campaign's messages. The report fetches this once per campaign, never per page, so its event tabs describe the campaign rather than the ten rows in hand. `byKind` partitions the campaign — furthest stage wins, so a message that was read counts under opened/seen and not also under delivered — and sums to `total`. `series` is the same scan bucketed over time, cumulative, for the rate-card sparks.",
+                "parameters": [
                     {
                         "schema": {
                             "type": "string",

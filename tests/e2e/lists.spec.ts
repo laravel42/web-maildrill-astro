@@ -20,7 +20,9 @@ test.describe('lists', () => {
     await page.goto('/dashboard/lists');
 
     // Create via the editor modal.
-    await page.getByRole('button', { name: 'New list' }).click();
+    // `exact`: the cards grid also renders a "Create new list" tile, whose
+    // accessible name contains this one as a substring.
+    await page.getByRole('button', { name: 'New list', exact: true }).click();
     await page
       .getByLabel(/list name/i)
       .or(page.getByPlaceholder(/Autumn newsletter/))
@@ -29,9 +31,11 @@ test.describe('lists', () => {
     await expect(page.getByText(`List “${name}” created`)).toBeVisible();
 
     // Resolve the new id through the same-origin BFF and open the detail page.
-    const res = await page.request.get('/api/v1/lists');
+    // The board is keyset-paginated now, so this asks for the one list by name
+    // rather than scanning a page that may not contain it.
+    const res = await page.request.get(`/api/v1/lists?q=${encodeURIComponent(name)}`);
     expect(res.ok()).toBe(true);
-    const lists = ((await res.json()) as { data: Array<{ id: string; name: string }> }).data;
+    const lists = ((await res.json()) as { items: Array<{ id: string; name: string }> }).items;
     const created = lists.find((l) => l.name === name);
     expect(created, 'created list is returned by the API').toBeTruthy();
 

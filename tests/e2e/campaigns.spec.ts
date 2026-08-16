@@ -28,6 +28,9 @@ test.describe('campaigns', () => {
     await page.goto(`/dashboard/campaigns/${sent!.id}/report`);
     await expect(page.getByText('Engagement funnel')).toBeVisible();
     await expect(page.getByText('Delivery rate')).toBeVisible();
-    await expect(page.getByText('Recipient events')).toBeVisible();
+    // The heading, by role: a campaign with no events also renders "No recipient
+    // events for this campaign yet." and "No recipient events match this filter
+    // yet", and getByText matches all three case-insensitively.
+    await expect(page.getByRole('heading', { name: 'Recipient events' })).toBeVisible();
   });
 });

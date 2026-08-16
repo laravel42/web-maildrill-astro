@@ -1005,6 +1005,19 @@ export default function AppSubscriberDetail({
                     <path d="M20 6 9 17l-5-5" />
                   </svg>
                   <div>
+                    {/* KNOWN DEFECT (audit #14): FABRICATED — this whole panel
+                        has no data path. The `subscribers` table has no consent
+                        column at all (id, tenant_id, email, phone, name, status,
+                        attributes, created_at, updated_at); consent is recorded
+                        per LIST, where `double_opt_in` is set on 0 of the 1,006
+                        lists and `gdpr_consent` on 503. So "Double opt-in
+                        confirmed" is really `status === 'active'` rephrased as a
+                        legal assertion, and the date under it is the signup
+                        date, not a consent date. Live on a subscriber with 0
+                        messages and 0 list memberships it renders "Double opt-in
+                        confirmed · 14 Jul 2026" above a "Lists: None" section.
+                        The GDPR block below is the same `active` flag, and
+                        "Data export requested: Never" is a literal. */}
                     <p className={styles.consentLabel}>
                       {active ? 'Double opt-in confirmed' : statusLabel}
                     </p>

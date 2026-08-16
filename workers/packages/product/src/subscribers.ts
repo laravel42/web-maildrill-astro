@@ -938,8 +938,22 @@ export async function subscriberActivity(
       db
         .select({
           channel: messages.channel,
-          // Status-based so a message counts even when the pipeline skipped a
-          // timestamp (e.g. delivered without a sent_at).
+          /* One subscriber's message outcomes, in SQL, over their FULL message
+             history — no window, no cap. Grouped by `messages.channel` so the
+             detail page can report per-channel rather than describing an
+             SMS-heavy contact with email-shaped numbers.
+
+             Status-based rather than timestamp-based so a message still counts
+             when the pipeline skipped a timestamp (delivered without a sent_at).
+
+             KNOWN DEFECT (audit #9): the status vocabulary here is incomplete.
+             `sent` lists submitted/sent/delivered/read and `failed` lists only
+             `failed`, so `expired` and `cancelled` belong to neither — an
+             expired message is subtracted from the record entirely rather than
+             counted as the non-delivery it is. It affects 47,653 messages across
+             47,653 subscribers (4.8% of the seeded workspace), and it is visible
+             on screen: the KPI tiles read "SENT 8 / DELIVERED 7 of 8" while the
+             activity feed directly beneath lists 9 rows, one of them `expired`. */
           sent: sql<number>`count(*) filter (where ${messages.status} in ('submitted','sent','delivered','read'))::int`,
           delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered','read'))::int`,
           read: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
@@ -990,6 +1004,17 @@ export async function subscriberActivity(
         .leftJoin(campaigns, eq(campaigns.id, messages.campaignId))
         .where(mine)
         .orderBy(desc(messageAt))
+        /* A BOUNDED SAMPLE: the 10 most recent messages across ALL channels,
+           for the activity feed. Correct as a feed — it is a list of events,
+           not a count.
+
+           KNOWN DEFECT (audit #8): the island counts these rows to label its
+           Activity and Campaigns tabs, so a per-channel "total" on the detail
+           page is really this cap sliced by channel. A subscriber with 11 email,
+           4 sms, 3 whatsapp and 1 voice message renders "Activity 6 / Campaigns
+           6" under a KPI tile reading "SENT 11", and the four channel tabs sum
+           to exactly 10. The honest per-channel counts are already in
+           `channelRows` above; the tabs simply do not read them. */
         .limit(10),
       db
         // Channel comes along so the weekly series can be split per channel —

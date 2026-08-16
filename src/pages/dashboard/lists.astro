@@ -5,11 +5,15 @@ import AppLists from '@/components/react/AppLists';
 import { productClient } from '@/lib/server/service';
 import { toListRows, type ApiList } from '@/lib/app/list-map';
 import type { ListRow } from '@/components/react/AppLists.types';
+import type { ListFacets } from '@/components/react/AppLists';
+import { PAGE_SIZE } from '@/components/react/shared/pagination';
 
 // Load real lists for the signed-in workspace; undefined = not connected (island
 // falls back to fixtures), an array = live data (even if empty).
 const session = Astro.locals.session;
 let initial: ListRow[] | undefined = undefined;
+let initialTotal = 0;
+let initialFacets: ListFacets | undefined = undefined;
 let banner: { ok: boolean; text: string } | null = null;
 
 if (session?.user?.id && session.activeTenantId) {
@@ -19,12 +23,30 @@ if (session?.user?.id && session.activeTenantId) {
       activeTenantId: session.activeTenantId,
       role: session.role,
     });
-    const { data, error } = await client.GET('/v1/lists');
-    if (error) {
+    /* The board opens on the email tab, newest first — so SSR fetches exactly
+       that page and the facets behind the tabs and the tag menu, not every list
+       in the workspace with a membership aggregate attached to each. */
+    const [pageRes, facetsRes] = await Promise.all([
+      client.GET('/v1/lists', {
+        params: {
+          query: {
+            limit: PAGE_SIZE,
+            channel: 'email' as const,
+            sort: 'updatedAt' as const,
+            dir: 'desc' as const,
+            withTotal: '1',
+          },
+        },
+      }),
+      client.GET('/v1/lists/facets'),
+    ]);
+    if (pageRes.error) {
       banner = { ok: false, text: 'workers returned an error.' };
     } else {
-      const rows = (data as unknown as { data?: ApiList[] })?.data ?? [];
-      initial = toListRows(rows);
+      const body = pageRes.data as unknown as { items?: ApiList[]; total?: number } | undefined;
+      initial = toListRows(body?.items ?? []);
+      initialTotal = body?.total ?? 0;
+      initialFacets = (facetsRes.data as unknown as ListFacets | undefined) ?? undefined;
     }
   } catch (err) {
     banner = { ok: false, text: err instanceof Error ? err.message : 'Service unreachable.' };
@@ -34,7 +56,12 @@ if (session?.user?.id && session.activeTenantId) {
 
 <AppLayout title="Lists">
   {banner && <div class={`svc-banner ${banner.ok ? 'ok' : 'err'}`}>{banner.text}</div>}
-  <AppLists client:visible initial={initial} />
+  <AppLists
+    client:visible
+    initial={initial}
+    initialTotal={initialTotal}
+    initialFacets={initialFacets}
+  />
 </AppLayout>
 
 <style>

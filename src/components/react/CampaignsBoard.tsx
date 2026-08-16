@@ -88,8 +88,8 @@ export default function CampaignsBoard({
   initial,
   initialTotal,
   initialCounts,
-  audiences,
-  templates,
+  audiences: initialAudiences,
+  templates: initialTemplates,
   senders,
 }: {
   initial?: Campaign[];
@@ -147,6 +147,31 @@ export default function CampaignsBoard({
 
   const editDeepLinkDone = useRef(false);
   const { toast, show } = useToast(2600);
+  /**
+   * Audience and template choices are lazy: they belong to the wizard, not the
+   * board, and fetching them cost ~876ms of blocking SSR (/v1/lists/audience
+   * 601ms, /v1/templates 275ms / 1.1MB) on every board view — for a dialog most
+   * visits never open. Fetched on first open and kept for the session.
+   */
+  const [audiences, setAudiences] = useState(initialAudiences);
+  const [templates, setTemplates] = useState(initialTemplates);
+  const [choicesFetched, setChoicesFetched] = useState(
+    initialAudiences !== undefined && initialTemplates !== undefined,
+  );
+  const loadWizardChoices = () => {
+    if (choicesFetched || !live) return;
+    setChoicesFetched(true);
+    void fetch('/api/wizard-choices')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { audiences?: AudienceChoice[]; templates?: TemplateChoice[] } | null) => {
+        if (!d) return;
+        setAudiences(d.audiences ?? []);
+        setTemplates(d.templates ?? []);
+      })
+      // Let a reopen retry rather than leaving the wizard permanently empty.
+      .catch(() => setChoicesFetched(false));
+  };
+
   const [wizard, setWizard] = useState<
     | { mode: 'create' }
     | {
@@ -170,6 +195,7 @@ export default function CampaignsBoard({
   useEffect(() => {
     const url = new URL(window.location.href);
     if (url.searchParams.get('new') == null) return;
+    loadWizardChoices();
     setWizard({ mode: 'create' });
     url.searchParams.delete('new');
     window.history.replaceState(null, '', `${url.pathname}${url.search}`);
@@ -385,7 +411,15 @@ useEffect(() => {
   }, [live, queryKey, tab, sort, page, refreshTick, showOpenCol, showClickCol]);
 
   /* Tab and status counts describe the workspace, so they are fetched once per
-     channel — never per page. One grouped read of `campaigns`, no message data. */
+     channel — never per page. One grouped read of `campaigns`, no message data.
+
+     KNOWN DEFECT (audit #33): "the workspace" is the wrong scope once a search
+     or a rate band is active, because only `channel` is passed — `q`, `opens`
+     and `clicks` are not. The status menu then offers counts for a set the
+     table is not showing: with `?q=Back-in-stock&status=draft` the table reads
+     "1–1 of 1" while the menu beside it offers "Draft 50 / Sent 213", and every
+     option a reader picks empties the table. The counts are right about the
+     channel and wrong about the query. */
   useEffect(() => {
     if (!live) return;
     let cancelled = false;
@@ -532,6 +566,7 @@ useEffect(() => {
      wizard would open blank and "save" would wipe the campaign's targeting. */
   const openForEdit = async (c: Campaign) => {
     if (!live) {
+      loadWizardChoices();
       setWizard({
         mode: 'edit',
         id: c.id,
@@ -556,6 +591,7 @@ useEffect(() => {
         trackOpens?: unknown;
         trackClicks?: unknown;
       };
+      loadWizardChoices();
       setWizard({
         mode: 'edit',
         id: c.id,
@@ -765,7 +801,14 @@ useEffect(() => {
           <h1 className="screen__h1">Campaigns</h1>
           <p className="screen__sub">Create, schedule, and measure every send in one place.</p>
         </div>
-        <button type="button" className="pbtn" onClick={() => setWizard({ mode: 'create' })}>
+        <button
+          type="button"
+          className="pbtn"
+          onClick={() => {
+            loadWizardChoices();
+            setWizard({ mode: 'create' });
+          }}
+        >
           <Icon name="plus" size={15} stroke={2.2} />
           Create campaign
         </button>

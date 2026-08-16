@@ -50,7 +50,9 @@ if (session?.user?.id && session.activeTenantId) {
           query: {
             channel: (apiCampaign.channel as 'email' | 'sms' | 'whatsapp' | 'voice') ?? 'email',
             status: 'sent' as const,
-            updatedBefore: apiCampaign.updatedAt,
+            // Omitted when the row somehow carries no updatedAt, which would
+            // otherwise widen the window back to the newest 50 of the workspace.
+            ...(apiCampaign.updatedAt ? { updatedBefore: apiCampaign.updatedAt } : {}),
             limit: 50,
             sort: 'updatedAt' as const,
             dir: 'desc' as const,

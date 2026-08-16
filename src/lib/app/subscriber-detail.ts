@@ -193,9 +193,18 @@ function eventFromMessage(m: NonNullable<ApiSubscriberActivity['recent']>[number
 }
 
 /**
- * Engagement score from open and click rates. Exported so the detail page can
- * score a single channel with the same weighting the all-channel figure uses —
- * a channel-filtered view must not show a score earned on another channel.
+ * Engagement score from open and click rates.
+ *
+ * A COMPOSITE INDEX, not a measurement: 0.7 x open% + 1.2 x click%, capped at
+ * 100. The weights are a product judgement — a click is worth more than an open
+ * — and nothing in the database corresponds to this number. It exists to rank
+ * subscribers against each other, and should never be read as a percentage of
+ * anything. Its inputs are real: both rates divide tracked-channel reads/clicks
+ * by tracked-channel deliveries.
+ *
+ * Exported so the detail page can score a single channel with the same
+ * weighting the all-channel figure uses — a channel-filtered view must not show
+ * a score earned on another channel.
  */
 export function engagementScore(openRate: number | null, clickRate: number | null): number {
   if (openRate == null && clickRate == null) return 0;
@@ -247,6 +256,21 @@ export function buildSubscriberDetailView(
     whatsapp: { ...EMPTY_TOTALS },
     voice: { ...EMPTY_TOTALS },
   };
+  /* Per-channel totals for the KPI tiles. Source: /v1/subscribers/{id}/activity
+     `channels`, which the API counts in SQL over this subscriber's ENTIRE
+     message history — no window, no cap.
+
+     `attempted` is `sent + failed` because the API's `sent` counts only the
+     states that left successfully; adding failures back gives the one
+     denominator delivery rate and failure rate can share. (A campaign's
+     `recipients` already includes its failures — hence the different arithmetic
+     for the two sources, and the note on `attempted` in channel-kpis.ts.)
+
+     KNOWN DEFECT (audit #9): neither side of that sum counts `expired` or
+     `cancelled`, because the API's status vocabulary omits them. So an expired
+     message is subtracted from the record rather than counted as the
+     non-delivery it is — visible as a tile reading "SENT 8 / DELIVERED 7 of 8"
+     beside an activity feed listing 9 rows, one of them `Email · expired`. */
   for (const c of channels) {
     const t = channelTotals[c.channel as ChannelType];
     if (!t) continue;
@@ -263,6 +287,10 @@ export function buildSubscriberDetailView(
   const allDelivered = channels.reduce((n, c) => n + (c.delivered ?? 0), 0);
   // Open/click rates only make sense on channels that report engagement —
   // folding SMS/voice deliveries into the denominator dilutes the score.
+  // Numerator and denominator are both restricted to the same two channels
+  // here, which is what makes this pairing honest (unlike stats.ts, audit #5).
+  // Null rather than 0 when nothing tracked was delivered: the engagement ring
+  // then renders "—" instead of claiming the person ignored us.
   const tracked = channels.filter((c) => c.channel === 'email' || c.channel === 'whatsapp');
   const trackedDelivered = tracked.reduce((n, c) => n + (c.delivered ?? 0), 0);
   const opened = tracked.reduce((n, c) => n + (c.read ?? 0), 0);
@@ -286,6 +314,13 @@ export function buildSubscriberDetailView(
       channel: m.channel || 'email',
       sentLabel: fmtStamp(m.at).split(',')[0] ?? fmtStamp(m.at),
       opens: m.status === 'read' ? 1 : 0,
+      /* KNOWN DEFECT (audit #16): a hardcoded literal, not a derivation. The
+         activity payload carries no per-message click flag, so this column can
+         never be non-zero — while the KPI tile directly above the table reads
+         "CLICKED 14% · 1 of 7 delivered" from `channelTotals`, which does count
+         clicks. Two contradictory statements about the same subscriber, on one
+         screen. `links: []` below is the same defect: the "Clicked links" tab
+         renders 0 for a subscriber with a real click. */
       clicks: 0,
       result,
       resultColor,
@@ -336,6 +371,16 @@ export function buildSubscriberDetailView(
       ? null
       : `${last4 - prev4 >= 0 ? '+' : '−'}${Math.abs(last4 - prev4)} vs. last month`;
 
+  /* `lastActiveAt` is the API's `max(coalesce(read_at, delivered_at, sent_at,
+     submitted_at, created_at))` over this subscriber's messages — a real
+     activity timestamp, unlike the roster column of the same name, which is the
+     row's `updated_at` (audit #12). The `?? subscriber.updatedAt` fallback here
+     inherits that confusion for a subscriber with no messages at all.
+
+     `recencyPct` is a PRESENTATION FILL, not a measurement: five hardcoded bar
+     heights for five recency bands. The band boundaries are real (days since
+     last activity); the 94/72/45/20/8 are chosen so the meter reads well.
+     Same for `frequencyPct` below, which caps its meter at ~8 sends/month. */
   const lastActiveAt = activity?.lastActiveAt ?? subscriber.updatedAt;
   const ageDays = lastActiveAt
     ? Math.max(0, (Date.now() - new Date(lastActiveAt).getTime()) / 86400000)
@@ -354,6 +399,14 @@ export function buildSubscriberDetailView(
     return !Number.isNaN(t) && Date.now() - t <= 30 * 86400000;
   }).length;
 
+  /* All-channel delivery rate: delivered / sent across every channel, since
+     delivery is the one outcome every channel reports. Null (rendering "—")
+     rather than 0 when nothing was sent.
+
+     Denominator caveat (audit #9): `sent` here is the API's status list, which
+     omits `expired` and `cancelled`, so both sides of this fraction are missing
+     the same messages and the rate reads higher than the truth — 88% where the
+     honest figure over 9 attempts is 78%. */
   const deliveryRate = sent > 0 ? Math.round((allDelivered / sent) * 1000) / 10 : null;
 
   return {
@@ -366,6 +419,10 @@ export function buildSubscriberDetailView(
     openRate,
     clickRate,
     emailsSent,
+    /* Not a count of bounces — the subscriber's current STATUS rendered as a
+       0-or-1 tally. A contact who bounced three times and a contact who bounced
+       once both read "1"; one who bounced and was later reactivated reads "0".
+       The real per-channel figure is `failedPermanent` in `channelTotals`. */
     bounces: subscriber.status === 'bounced' ? 1 : 0,
     lastActiveLabel: fmtAgo(lastActiveAt),
     events,

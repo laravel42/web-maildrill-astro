@@ -47,10 +47,20 @@ export interface ApiList {
  * and campaign message outcomes.
  */
 export function toListRow(l: ApiList): ListRow {
+  /* KNOWN DEFECT (audit #24): `growthPct` below is week-over-week change in
+     JOINS — server-counted on `list_members.added_at` over the whole
+     membership — not change in list size. The board renders it as a red/green
+     pill beside "joined this week", where it reads as shrinkage; the fuller
+     note is on `growthPct` in list-detail.ts. `more` is the raw join count for
+     that same week, which is why the two can point opposite ways on one card. */
   const last7 = l.addedLast7 ?? 0;
   const prev7 = l.addedPrev7 ?? 0;
-  // Rates divide by deliveries on channels that track engagement (email,
-  // WhatsApp); SMS/voice deliveries can never open, so they don't count.
+  /* Rates divide by deliveries on channels that track engagement (email,
+     WhatsApp); SMS/voice deliveries can never open, so they don't count.
+     "—" rather than 0% when nothing tracked was delivered — an unmeasured list
+     must not read as an unengaged one. The `?? l.delivered` fallback is for
+     payloads written before `trackedDelivered` existed and widens the
+     denominator to all channels when it fires. */
   const denom = l.trackedDelivered ?? l.delivered ?? 0;
   const rate = (n: number) => (denom > 0 ? `${Math.round((n / denom) * 100)}%` : '—');
   return {

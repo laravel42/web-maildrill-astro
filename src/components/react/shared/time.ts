@@ -1,13 +1,30 @@
 /**
  * Deterministic relative-time helpers.
  *
- * `NOW` is a fixed reference instant that matches the mock-data window, so
+ * `NOW` is a fixed reference instant that matches the MOCK-DATA window, so
  * server render and client hydration agree (no `Date.now()` nondeterminism and
- * no hydration mismatch).
+ * no hydration mismatch). It is a fixture clock, not a wall clock.
+ *
+ * KNOWN DEFECT (audit #11): `ago()` is called on LIVE timestamps by AppLists
+ * (card "Updated", table date column, drawer) and AppSubscribers (the
+ * SUBSCRIBED and LAST ACTIVITY columns). Every one of those rows is newer than
+ * this instant — 1,006 of 1,006 lists and 1,000,223 of 1,000,229 subscribers —
+ * so the subtraction goes negative and `Math.max(mins, 1)` below floors it at
+ * "1m ago". The live Lists board reads "Updated 1m ago" on every card,
+ * including one genuinely updated 4 days 11 hours ago, and the Subscribers
+ * roster reads "1m ago" in both date columns on every row.
+ *
+ * `agoNow()` below is the correct helper for live data and is already used by
+ * Media and the Dashboard. The fix is a call-site change, not a change here:
+ * this constant still has a legitimate job for the fixture screens.
  */
 export const NOW = new Date('2026-07-17T18:00:00Z').getTime();
 
-/** Human "…ago" label: minutes → hours → days → weeks. */
+/**
+ * Human "…ago" label: minutes → hours → days → weeks, measured against the
+ * FIXTURE instant above. The `Math.max(mins, 1)` floor is what silently turns a
+ * future timestamp into "1m ago" rather than a negative — see the defect note.
+ */
 export function ago(iso: string): string {
   const mins = Math.round((NOW - new Date(iso).getTime()) / 60000);
   if (mins < 60) return `${Math.max(mins, 1)}m ago`;

@@ -1471,6 +1471,15 @@ export default function AppSubscribers({
                   className={sort.key === 'last' ? 'is-active' : undefined}
                   onClick={() => toggleSort('last')}
                 >
+                  {/* KNOWN DEFECT (audit #12): this column, and the sort behind
+                      it, read `subscribers.updated_at` — when the ROW was last
+                      written — and label it activity. They are different facts:
+                      perf767230@p31.perf-maildrill.test shows updated_at of
+                      2026-08-16 against a last message of 2025-11-05. The
+                      detail page uses the same two words for `max(message ts)`,
+                      which the roster payload does not carry. Compounded by
+                      audit #11: both date columns here call the fixture-clock
+                      `ago()`, so every row renders "1m ago" regardless. */}
                   Last activity <span className="tnum">{sortArrow('last')}</span>
                 </button>
               </div>

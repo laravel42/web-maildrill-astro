@@ -8,25 +8,62 @@ import type { ApiCampaign } from '@/lib/app/campaign-map';
 import { EMPTY_TOTALS, type ChannelTotals } from '@/lib/app/channel-kpis';
 import type { ChannelType } from '@/types/app';
 
-export type RosterFilter = 'all' | 'active' | 'delivered' | 'unsubscribed' | 'failed';
+/** Send outcomes for this list on one channel, across ALL of its campaigns. */
+export type ApiListChannelTotals = {
+  channel: string;
+  attempted: number;
+  delivered: number;
+  opened: number;
+  clicked: number;
+  failed: number;
+};
 
-/** Roster bucket used by the status tabs (Failed folds bounce/complaint/invalid). */
-export type RosterGroup = 'active' | 'unsubscribed' | 'failed';
+/** The health bar's partition of the roster, counted over ALL of its members. */
+export type ApiListStatusCounts = {
+  active: number;
+  unsubscribed: number;
+  /** The complement of the two above, so the three always sum to the roster. */
+  failed: number;
+  /** Two statuses inside `failed`, broken out for the rail's rates. */
+  bounced: number;
+  complained: number;
+};
 
-/** Member row from /v1/lists/{id}/members — subscriber columns + joinedAt. */
-export type ApiListMember = {
-  id: string;
-  email: string;
-  phone?: string | null;
-  name?: string | null;
-  status: string;
-  attributes?: Record<string, unknown> | null;
-  createdAt?: string | null;
-  updatedAt?: string | null;
-  /** list_members.addedAt — when they joined this list. */
-  joinedAt?: string | null;
-  /** When this subscriber last received a campaign message, if ever. */
-  lastCampaignAt?: string | Date | null;
+/** One bar of the growth chart: joins in the week starting at `weekStart`. */
+export type ApiListWeeklyJoins = {
+  /** Monday 00:00 as the API computed it — the edge the count actually used. */
+  weekStart: string;
+  /** "W31" — named by the API, from that same edge. See `weeks` below. */
+  label: string;
+  joins: number;
+};
+
+/** Members carrying a value for one custom field, out of ALL of them. */
+export type ApiListFieldFill = { key: string; filled: number };
+
+/**
+ * GET /v1/lists/{id}/stats — the list row plus every counter this page renders.
+ *
+ * `channelTotals` and `lastCampaignAt` come from SQL over the list's whole
+ * campaign history. They used to be summed in the browser from the campaign
+ * strip, which is a page: any list with more campaigns than the strip holds had
+ * its delivery and failure rates silently under-reported, and "last campaign"
+ * was picked by `startedAt` out of a set the server had ordered by `updatedAt`.
+ *
+ * `statusCounts`, `weeklyJoins` and `fieldFill` are the same correction applied
+ * to the roster. All three used to be derived here from
+ * `GET /v1/lists/{id}/members?limit=1000`, so a 2,000-member list had its
+ * health bar, its growth chart and its field-fill bars all computed from half
+ * of itself — and the growth chart from the wrong half, since that endpoint
+ * orders by `subscribers.createdAt` while the chart buckets on when a member
+ * joined THIS list.
+ */
+export type ApiListStats = ApiList & {
+  channelTotals?: ApiListChannelTotals[] | null;
+  lastCampaignAt?: string | null;
+  statusCounts?: ApiListStatusCounts | null;
+  weeklyJoins?: ApiListWeeklyJoins[] | null;
+  fieldFill?: ApiListFieldFill[] | null;
 };
 
 /** Custom field definition from /v1/custom-fields. */
@@ -53,22 +90,6 @@ export type HealthSegment = {
   pct: number;
 };
 
-export type RosterRow = {
-  id: string;
-  name: string;
-  email: string;
-  initials: string;
-  avBg: string;
-  avInk: string;
-  status: string;
-  group: RosterGroup;
-  statusLabel: string;
-  statusColor: string;
-  joinedLabel: string;
-  lastCampaignAt: string | null;
-  search: string;
-};
-
 export type WeeklyJoins = { label: string; joins: number; left: number };
 
 export type ListCampaignRow = {
@@ -93,15 +114,11 @@ export type ListFieldRow = {
 
 export type ListDetailView = {
   total: number;
-  /** True when the roster sample is capped below the real member count. */
-  sampled: boolean;
   growthLabel: string;
   growthUp: boolean;
   deliverableLabel: string;
   health: HealthSegment[];
   weeks: WeeklyJoins[];
-  roster: RosterRow[];
-  rosterCounts: Record<RosterFilter, number>;
   campaigns: ListCampaignRow[];
   fields: ListFieldRow[];
   segments: string[];
@@ -123,52 +140,6 @@ export type ListDetailView = {
   embedSnippet: string;
 };
 
-/** Comp avatar palette (bg / ink), assigned per member id like subscriber-map. */
-const AV: Array<[string, string]> = [
-  ['#eef0ff', '#4f46e5'],
-  ['#e8f6ee', '#127a45'],
-  ['#fdf3e3', '#c2740a'],
-  ['#f3f0ff', '#6d28d9'],
-  ['#e6f6fa', '#0e7490'],
-];
-
-function pickAv(id: string): [string, string] {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return AV[h % AV.length] ?? AV[0];
-}
-
-const STATUS_META: Record<string, { label: string; color: string }> = {
-  active: { label: 'Active', color: '#16a34a' },
-  unsubscribed: { label: 'Unsubscribed', color: '#8f8d84' },
-  bounced: { label: 'Bounced', color: '#dc2626' },
-  complained: { label: 'Complained', color: '#9f1239' },
-  invalid: { label: 'Failed', color: '#dc2626' },
-};
-
-function groupOf(status: string): RosterGroup {
-  if (status === 'unsubscribed') return 'unsubscribed';
-  if (status === 'active') return 'active';
-  return 'failed';
-}
-
-/** True when a roster row belongs to the selected status tab. */
-export function rosterMatchesFilter(row: RosterRow, filter: RosterFilter): boolean {
-  if (filter === 'all') return true;
-  if (filter === 'delivered') return row.group === 'active';
-  return row.group === filter;
-}
-
-function initialsOf(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0] ?? '')
-    .join('')
-    .toUpperCase();
-}
-
 function fmtDate(iso?: string | null): string {
   if (!iso) return '—';
   const d = new Date(iso);
@@ -183,57 +154,35 @@ function fmtDayMonth(iso?: string | null): string {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
-/** ISO week number (1–53) for the bar-chart labels. */
-function isoWeek(d: Date): number {
-  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const day = t.getUTCDay() || 7;
-  t.setUTCDate(t.getUTCDate() + 4 - day);
-  const yearStart = Date.UTC(t.getUTCFullYear(), 0, 1);
-  return Math.ceil(((t.getTime() - yearStart) / 86400000 + 1) / 7);
-}
-
-/** Start (Monday 00:00 local) of the ISO week containing `d`. */
-function weekStart(d: Date): Date {
-  const out = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const day = out.getDay() || 7;
-  out.setDate(out.getDate() - (day - 1));
-  return out;
-}
-
 function pctLabel(n: number, denom: number): string {
   if (denom <= 0) return '—';
   return `${((n / denom) * 100).toFixed(1)}%`;
 }
 
-/** Build the list-detail view model from the list row + roster + related data. */
+/** A list nobody has joined yet — every bucket empty, not "unknown". */
+const NO_STATUS_COUNTS: ApiListStatusCounts = {
+  active: 0,
+  unsubscribed: 0,
+  failed: 0,
+  bounced: 0,
+  complained: 0,
+};
+
+/** Build the list-detail view model from the list row + its related data. */
 export function buildListDetailView(
-  list: ApiList,
-  members: ApiListMember[],
+  list: ApiListStats,
   campaigns: ApiCampaign[],
   fields: ApiCustomFieldDef[],
   segments: ApiSegment[],
 ): ListDetailView {
-  const loaded = members.length;
-  const total = Math.max(list.memberCount ?? loaded, loaded);
-  const sampled = total > loaded;
+  const total = list.memberCount ?? 0;
 
-  // Failed folds bounced, complained, and invalid (plus any leftover status
-  // that isn't active or unsubscribed). Unconfirmed is not a backend status.
-  const bucket = { active: 0, unsubscribed: 0, failed: 0, bounced: 0, complained: 0 };
-  for (const m of members) {
-    if (m.status === 'active') bucket.active += 1;
-    else if (m.status === 'unsubscribed') bucket.unsubscribed += 1;
-    else {
-      bucket.failed += 1;
-      if (m.status === 'bounced') bucket.bounced += 1;
-      else if (m.status === 'complained') bucket.complained += 1;
-    }
-  }
+  /* Counted in SQL over the whole membership, not tallied here from a page of
+     it. `failed` is the server's complement of active + unsubscribed, so the
+     three segments always sum to the roster the "Recipients" figure names. */
+  const bucket = list.statusCounts ?? NO_STATUS_COUNTS;
 
-  // When the roster is capped at 1000, shares come from the loaded sample and
-  // the legend counts scale those shares up to the real member count.
-  const share = (n: number) => (loaded > 0 ? n / loaded : 0);
-  const value = (n: number) => (sampled ? Math.round(total * share(n)) : n);
+  const share = (n: number) => (total > 0 ? n / total : 0);
   const seg = (
     key: HealthSegment['key'],
     label: string,
@@ -243,12 +192,18 @@ export function buildListDetailView(
     key,
     label,
     color,
-    value: value(count),
+    value: count,
     pct: Math.round(share(count) * 1000) / 10,
   });
-  const deliveredCount = list.delivered ?? campaigns.reduce((n, c) => n + (c.delivered ?? 0), 0);
-  const attemptedCount = campaigns.reduce((n, c) => n + (c.recipients ?? 0), 0);
-  const failedCount = campaigns.reduce((n, c) => n + (c.failed ?? 0), 0);
+  /* Server-side totals over the list's whole campaign history. The campaign
+     strip below is one page of it, so summing that page would under-report
+     every rate as soon as a list outgrows the page. */
+  const serverTotals = list.channelTotals ?? [];
+  const sumOf = (pick: (t: ApiListChannelTotals) => number) =>
+    serverTotals.reduce((n, t) => n + (pick(t) || 0), 0);
+  const deliveredCount = list.delivered ?? sumOf((t) => t.delivered);
+  const attemptedCount = sumOf((t) => t.attempted);
+  const failedCount = sumOf((t) => t.failed);
   const sendRate = (n: number) =>
     attemptedCount > 0 ? `${((n / attemptedCount) * 100).toFixed(2)}%` : '—';
 
@@ -261,53 +216,39 @@ export function buildListDetailView(
     seg('failed', 'Failed', '#dc2626', bucket.failed),
   ];
 
+  /* Week-over-week change in SIGNUP RATE: joins in the trailing 7 days against
+     joins in the 7 before, both counted in SQL on `list_members.added_at` over
+     the whole membership. Additions only — leaving a list is a delete, so there
+     is no departure count to net against.
+
+     KNOWN DEFECT (audit #24): the label built from it says "this week" beside a
+     red down-arrow, which reads as the list shrinking. It is not: a list can
+     add fewer people this week than last while growing every day. Perf list 629
+     renders a red "↓ 10.0%" directly above a green "↑ 27 joined this week" —
+     both correct, describing the same 27 joins. Only the drawer names it
+     honestly. (The detail header's arrow path is additionally hardcoded
+     up-and-right; only its colour is conditional.) */
   const last7 = list.addedLast7 ?? 0;
   const prev7 = list.addedPrev7 ?? 0;
   const growthPct = prev7 > 0 ? ((last7 - prev7) / prev7) * 100 : last7 > 0 ? 100 : 0;
   const growthUp = growthPct >= 0;
   const growthLabel = `${growthUp ? '+' : '−'}${Math.abs(growthPct).toFixed(1)}% this week`;
 
-  // Joins per ISO week, trailing 12 weeks. "Left" has no data source — zero.
-  const now = new Date();
-  const thisWeek = weekStart(now).getTime();
-  const WEEK = 7 * 86400000;
-  const weeks: WeeklyJoins[] = Array.from({ length: 12 }, (_, i) => {
-    const start = thisWeek - (11 - i) * WEEK;
-    const end = start + WEEK;
-    const joins = members.filter((m) => {
-      const t = m.joinedAt ? new Date(m.joinedAt).getTime() : NaN;
-      return !Number.isNaN(t) && t >= start && t < end;
-    }).length;
-    return { label: `W${isoWeek(new Date(start))}`, joins, left: 0 };
-  });
-
-  const roster: RosterRow[] = members.map((m) => {
-    const meta = STATUS_META[m.status] ?? STATUS_META.active;
-    const name = m.name || m.email;
-    const [avBg, avInk] = pickAv(m.id);
-    return {
-      id: m.id,
-      name,
-      email: m.email,
-      initials: initialsOf(name),
-      avBg,
-      avInk,
-      status: m.status,
-      group: groupOf(m.status),
-      statusLabel: meta.label,
-      statusColor: meta.color,
-      joinedLabel: fmtDate(m.joinedAt ?? m.createdAt),
-      lastCampaignAt: m.lastCampaignAt ? new Date(m.lastCampaignAt).toISOString() : null,
-      search: `${name} ${m.email}`.toLowerCase(),
-    };
-  });
-  const rosterCounts: Record<RosterFilter, number> = {
-    all: roster.length,
-    active: bucket.active,
-    delivered: bucket.active,
-    unsubscribed: bucket.unsubscribed,
-    failed: bucket.failed,
-  };
+  /* Joins per week, trailing 12 weeks, bucketed in SQL on when a member joined
+     THIS list. The browser used to bucket the member sample instead, which
+     answered a different question with a different column: that sample is the
+     1,000 subscribers with the newest `subscribers.createdAt`, so importing old
+     subscribers into a new list emptied the chart while the list filled up.
+     The label is the API's too, for the same reason `subscriber-detail.ts`
+     takes its week labels from the API: `weekStart` is an instant, and reading
+     its calendar fields here — in the viewer's zone, not the API's — named the
+     week before it for anyone west of the API, under bars counted over the
+     API's Mondays. "Left" has no data source, so it stays zero. */
+  const weeks: WeeklyJoins[] = (list.weeklyJoins ?? []).map((w) => ({
+    label: w.label,
+    joins: w.joins,
+    left: 0,
+  }));
 
   const campaignRows: ListCampaignRow[] = campaigns.map((c) => {
     const channel = c.channel ? c.channel[0]!.toUpperCase() + c.channel.slice(1) : 'Email';
@@ -328,15 +269,13 @@ export function buildListDetailView(
     };
   });
 
+  /* Fill counts are per key, over the whole membership; the definitions the
+     row is labelled with still come from /v1/custom-fields, which is the
+     workspace catalogue this list's counts are a slice of. */
+  const filledByKey = new Map((list.fieldFill ?? []).map((f) => [f.key, f.filled]));
   const fieldRows: ListFieldRow[] = fields.map((f) => {
-    const filled =
-      loaded > 0
-        ? members.filter((m) => {
-            const v = (m.attributes ?? {})[f.key];
-            return v != null && v !== '';
-          }).length
-        : 0;
-    const fillPct = loaded > 0 ? Math.round((filled / loaded) * 100) : 0;
+    const filled = filledByKey.get(f.key) ?? 0;
+    const fillPct = total > 0 ? Math.round((filled / total) * 100) : 0;
     return {
       id: f.id,
       label: f.label,
@@ -354,55 +293,65 @@ export function buildListDetailView(
     )
     .map((s) => s.name);
 
-  // Only campaigns that actually went out carry outcomes worth totalling; a
-  // draft has recipients of 0 and would drag every rate toward nothing.
+  // Grouped by channel in SQL across every campaign the list ever ran, for the
+  // same reason as the rates above.
   const channelTotals: Record<ChannelType, ChannelTotals> = {
     email: { ...EMPTY_TOTALS },
     sms: { ...EMPTY_TOTALS },
     whatsapp: { ...EMPTY_TOTALS },
     voice: { ...EMPTY_TOTALS },
   };
-  for (const c of campaigns) {
-    const ch = (c.channel ?? 'email') as ChannelType;
-    const t = channelTotals[ch];
+  for (const row of serverTotals) {
+    const t = channelTotals[row.channel as ChannelType];
     if (!t) continue;
-    // `recipients` already counts the failures, so it is the attempted total.
-    t.attempted += c.recipients ?? 0;
-    t.delivered += c.delivered ?? 0;
-    t.opened += c.opened ?? 0;
-    t.clicked += c.clicked ?? 0;
-    t.failed += c.failed ?? 0;
+    // `attempted` already counts the failures — it is every message the
+    // campaign produced on this channel.
+    t.attempted += row.attempted || 0;
+    t.delivered += row.delivered || 0;
+    t.opened += row.opened || 0;
+    t.clicked += row.clicked || 0;
+    t.failed += row.failed || 0;
   }
 
-  const sent = campaigns
-    .filter((c) => c.status === 'sent' && c.startedAt)
-    .sort((a, b) => new Date(b.startedAt!).getTime() - new Date(a.startedAt!).getTime());
-  const lastCampaign = sent[0] ?? null;
+  const lastCampaignAt = list.lastCampaignAt ?? null;
   const createdLabel = fmtDate(list.createdAt);
-  const createdLine = lastCampaign
-    ? `Created ${createdLabel} · last campaign ${fmtDate(lastCampaign.startedAt)}`
+  const createdLine = lastCampaignAt
+    ? `Created ${createdLabel} · last campaign ${fmtDate(lastCampaignAt)}`
     : `Created ${createdLabel}`;
-  const lastCampaignLabel = lastCampaign ? fmtDate(lastCampaign.startedAt) : '—';
+  const lastCampaignLabel = fmtDate(lastCampaignAt);
 
   return {
     total,
-    sampled,
     growthLabel,
     growthUp,
-    deliverableLabel: loaded > 0 ? `${(share(bucket.active) * 100).toFixed(1)}%` : '—',
+    deliverableLabel: total > 0 ? `${(share(bucket.active) * 100).toFixed(1)}%` : '—',
     health,
     weeks,
-    roster,
-    rosterCounts,
     campaigns: campaignRows,
     fields: fieldRows,
     segments: segmentNames,
     createdLabel,
     createdLine,
     lastCampaignLabel,
-    bounceRate: loaded > 0 ? `${(share(bucket.bounced) * 100).toFixed(2)}%` : '—',
-    complaintRate: loaded > 0 ? `${(share(bucket.complained) * 100).toFixed(2)}%` : '—',
-    unsubRate: loaded > 0 ? `${(share(bucket.unsubscribed) * 100).toFixed(2)}%` : '—',
+    /* Two different denominators, adjacent in the rail, and the labels do not
+       say which is which (audit #21, #22):
+
+         bounce/complaint/unsubRate — share of the ROSTER carrying that
+           subscriber status. Denominator: `memberCount`. A property of the
+           people on the list.
+         delivered/failedRate — share of MESSAGES ATTEMPTED across every
+           campaign that targeted the list. Denominator: `attemptedCount` from
+           `channelTotals`. A property of the sends.
+
+       Live consequence on Perf list 877: "Delivery rate 100.00%" and "Failed
+       rate 0.00%" (0 of 1,176 messages) sitting either side of "Unsubscribe
+       rate 50.00%" (1,000 of 2,000 members). Zero unsubscribe EVENTS exist
+       across those 1,176 sends. Both figures are right; the rail reads as one
+       series. The same collision appears between the health card's roster
+       "Failed" and the rail's message "Failed rate". */
+    bounceRate: total > 0 ? `${(share(bucket.bounced) * 100).toFixed(2)}%` : '—',
+    complaintRate: total > 0 ? `${(share(bucket.complained) * 100).toFixed(2)}%` : '—',
+    unsubRate: total > 0 ? `${(share(bucket.unsubscribed) * 100).toFixed(2)}%` : '—',
     deliveredRate: sendRate(deliveredCount),
     failedRate: sendRate(failedCount),
     channelTotals,

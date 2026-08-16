@@ -471,6 +471,18 @@ export default function AppDashboard({
                 .filter((p) => p.sent > 0)
                 .map((p) => {
                   const meta = CHANNEL[(p.channel as ChannelType) ?? 'email'] ?? CHANNEL.email;
+                  /* Channel mix over the selected window, from the SQL channel
+                     breakdown — `sent` is every message addressed on the
+                     channel, `delivered` and `failed` its outcomes.
+
+                     KNOWN DEFECT — two things this strip does not say. (1) delivered + failed
+                     does NOT equal sent: `failed` counts `status='failed'`
+                     alone, so submitted / queued / expired / cancelled fall in
+                     neither. Measured over 7 days: 21,337 sent, 16,617
+                     delivered, 593 failed — 4,127 messages (19.3%) in neither
+                     bar (audit #25, #6). (2) the shares are independently
+                     rounded, so the column sums to 101% at 7 days and 99% at 30
+                     (audit #36); the same rounding runs on the Settings ledger. */
                   const share = channelTotal > 0 ? (p.sent / channelTotal) * 100 : 0;
                   return (
                     <a

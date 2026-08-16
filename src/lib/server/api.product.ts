@@ -1992,7 +1992,7 @@ export interface paths {
         };
         /**
          * One list with every stat the detail page renders
-         * @description The list row plus its membership counts, growth, 7-point trend, engagement counters, per-channel send totals across ALL of its campaigns, and the start of its most recent send. Scoped to one list, so it never aggregates the workspace.
+         * @description The list row plus its membership counts, growth, 7-point trend, engagement counters, per-channel send totals across ALL of its campaigns, the start of its most recent send, and the three rollups over its whole membership the detail page draws from: the status partition behind the health bar, joins per week for the last 12 weeks, and per-custom-field fill counts. Scoped to one list, so it never aggregates the workspace — and one response, so every figure on the page comes from one snapshot of the roster rather than from a sample of it fetched separately.
          */
         get: {
             parameters: {
@@ -3468,12 +3468,57 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Per-recipient message outcomes for a campaign report */
+        /**
+         * Per-recipient message outcomes for a campaign report (keyset-paginated)
+         * @description Returns { items, next_cursor, has_more }; pass next_cursor back as ?cursor= for the following page. ?kind= narrows to one report event tab IN SQL, so the rows and the per-tab counts from /messages/counts always describe the same set — this used to return an uncapped-looking 200-row sample that the browser then filtered and counted, which made every tab on a campaign over 200 recipients report the sample. The campaign id and the kind are both bound into the cursor, so a token cannot be replayed against another campaign or another tab.
+         */
         get: {
             parameters: {
                 query?: {
                     limit?: number;
+                    cursor?: string;
+                    page?: number;
+                    kind?: "delivered" | "opened" | "seen" | "clicked" | "unsubscribed" | "sent" | "bounced" | "failed" | "queued";
                 };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/campaigns/{id}/messages/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Per-tab recipient-event counts and rate series for a campaign report
+         * @description One grouped scan of the campaign's messages. The report fetches this once per campaign, never per page, so its event tabs describe the campaign rather than the ten rows in hand. `byKind` partitions the campaign — furthest stage wins, so a message that was read counts under opened/seen and not also under delivered — and sums to `total`. `series` is the same scan bucketed over time, cumulative, for the rate-card sparks.
+         */
+        get: {
+            parameters: {
+                query?: never;
                 header?: never;
                 path: {
                     id: string;

@@ -31,7 +31,10 @@ const [subRes, activityRes, listsRes] = await Promise.all([
   fetch(`${base}/v1/subscribers/${id}/activity`, {
     headers: { Authorization: `Bearer ${token}` },
   }),
-  client.GET('/v1/lists'),
+  /* Name + colour only. This used to be `GET /v1/lists`, whose every row
+     carries a membership aggregate, a 7-point trend and four engagement
+     counters — 691KB of computation to render a chip per list. */
+  client.GET('/v1/lists', { params: { query: { options: '1', limit: 1000 } } }),
 ]);
 
 if (subRes.error || !subRes.data) {
