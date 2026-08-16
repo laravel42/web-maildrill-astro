@@ -5,6 +5,8 @@
  */
 import type { ApiList } from '@/lib/app/list-map';
 import type { ApiCampaign } from '@/lib/app/campaign-map';
+import { EMPTY_TOTALS, type ChannelTotals } from '@/lib/app/channel-kpis';
+import type { ChannelType } from '@/types/app';
 
 export type RosterFilter = 'all' | 'active' | 'unconfirmed' | 'unsubscribed' | 'bounced';
 
@@ -102,6 +104,13 @@ export type ListDetailView = {
   bounceRate: string;
   complaintRate: string;
   unsubRate: string;
+  /**
+   * Send outcomes for this list, split by the channel that carried them —
+   * aggregated from the campaigns targeting the list, which each know their
+   * own channel. Lets the detail view report per-channel numbers instead of
+   * one email-shaped set for a list mailed on all four.
+   */
+  channelTotals: Record<ChannelType, ChannelTotals>;
   embedSnippet: string;
 };
 
@@ -310,6 +319,26 @@ export function buildListDetailView(
     )
     .map((s) => s.name);
 
+  // Only campaigns that actually went out carry outcomes worth totalling; a
+  // draft has recipients of 0 and would drag every rate toward nothing.
+  const channelTotals: Record<ChannelType, ChannelTotals> = {
+    email: { ...EMPTY_TOTALS },
+    sms: { ...EMPTY_TOTALS },
+    whatsapp: { ...EMPTY_TOTALS },
+    voice: { ...EMPTY_TOTALS },
+  };
+  for (const c of campaigns) {
+    const ch = (c.channel ?? 'email') as ChannelType;
+    const t = channelTotals[ch];
+    if (!t) continue;
+    // `recipients` already counts the failures, so it is the attempted total.
+    t.attempted += c.recipients ?? 0;
+    t.delivered += c.delivered ?? 0;
+    t.opened += c.opened ?? 0;
+    t.clicked += c.clicked ?? 0;
+    t.failed += c.failed ?? 0;
+  }
+
   const sent = campaigns
     .filter((c) => c.status === 'sent' && c.startedAt)
     .sort((a, b) => new Date(b.startedAt!).getTime() - new Date(a.startedAt!).getTime());
@@ -339,6 +368,7 @@ export function buildListDetailView(
     bounceRate: loaded > 0 ? `${(share(bucket.bounced) * 100).toFixed(2)}%` : '—',
     complaintRate: loaded > 0 ? `${(share(bucket.complained) * 100).toFixed(2)}%` : '—',
     unsubRate: loaded > 0 ? `${(share(bucket.unsubscribed) * 100).toFixed(2)}%` : '—',
+    channelTotals,
     embedSnippet: `<script src="https://js.maildrill.net/embed.js" data-list="${list.id}"></script>`,
   };
 }

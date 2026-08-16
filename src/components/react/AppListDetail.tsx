@@ -5,6 +5,9 @@ import ListEditorModal from './ListEditorModal';
 import { useToast } from './shared/useToast';
 import { api, ApiError } from '@/lib/app/api';
 import { routes } from '@/config/routes';
+import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
+import { channelKpis, EMPTY_TOTALS } from '@/lib/app/channel-kpis';
+import type { ChannelType } from '@/types/app';
 import type { ApiList } from '@/lib/app/list-map';
 import type { ApiCampaign } from '@/lib/app/campaign-map';
 import {
@@ -197,6 +200,9 @@ export default function AppListDetail({
     strokeLinejoin: 'round',
   } as const;
 
+  const [channel, setChannel] = useState<ChannelType>('email');
+  const kpis = channelKpis(channel, view.channelTotals?.[channel] ?? EMPTY_TOTALS);
+
   const listColor = list.color || 'var(--accent)';
   const gdprOn = Boolean(list.gdprConsent);
 
@@ -333,6 +339,24 @@ export default function AppListDetail({
           </div>
         </section>
 
+        <div className={styles.chanBar}>
+          <span className={styles.chanBarLabel}>Channel</span>
+          <div className={`aseg ${styles.chanSeg}`} role="group" aria-label="Filter by channel">
+            {CHANNEL_ORDER.map((ch) => (
+              <button
+                type="button"
+                key={ch}
+                className={`aseg__opt ${styles.chanSegOpt}${channel === ch ? ' is-active' : ''}`}
+                aria-pressed={channel === ch}
+                onClick={() => setChannel(ch)}
+              >
+                <span className={styles.chanDot} style={{ background: CHANNEL[ch].color }} />
+                {CHANNEL[ch].label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className={styles.layout}>
           <div className={styles.colMain}>
             <section className={`${styles.card} ${styles.health}`} aria-label="List health">
@@ -395,6 +419,31 @@ export default function AppListDetail({
                       {s.value.toLocaleString('en-US')}
                     </p>
                     <p className={`${styles.healthPct} ${styles.tnum}`}>{s.pct.toFixed(1)}%</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className={`${styles.card} ${styles.cardPad}`} aria-label="Channel performance">
+              <div className={styles.chanHead}>
+                <div>
+                  <h2 className={styles.cardTitle}>Channel performance</h2>
+                  <p className={styles.chartSub}>
+                    {`Every ${CHANNEL[channel].label} campaign sent to this list`}
+                  </p>
+                </div>
+              </div>
+              <div className={styles.chanKpis}>
+                {kpis.map((k) => (
+                  <div key={k.key} className={styles.chanKpi}>
+                    <p className={styles.overline}>{k.label}</p>
+                    <p
+                      className={`${styles.chanKpiV} ${styles.tnum}`}
+                      style={k.alert ? { color: 'var(--danger-text)' } : undefined}
+                    >
+                      {k.value}
+                    </p>
+                    <p className={styles.chanKpiSub}>{k.sub}</p>
                   </div>
                 ))}
               </div>
