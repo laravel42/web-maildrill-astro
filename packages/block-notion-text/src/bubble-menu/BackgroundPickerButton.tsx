@@ -2,12 +2,13 @@ import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { FormatColorFill as BackgroundColorIcon } from '@mui/icons-material';
-import { Popover, useTheme } from '@mui/material';
+import { useTheme } from '@mui/material';
 import type { Editor } from '@tiptap/react';
 
 import PickerColor from '../../../email-builder-standalone/src/App/InspectorDrawer/ConfigurationPanel/input-panels/helpers/inputs/ColorInput/Picker';
 
 import ToolbarIconButton from './ToolbarIconButton';
+import ToolbarPopover from './ToolbarPopover';
 
 type Props = { editor: Editor };
 
@@ -61,17 +62,9 @@ export default function BackgroundPickerButton({ editor }: Props) {
         />
       </ToolbarIconButton>
 
-      <Popover
-        open={Boolean(anchor)}
-        anchorEl={anchor}
-        onClose={handleClose}
-        disableEnforceFocus
-        disableAutoFocus
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
+      <ToolbarPopover anchorEl={anchor} onClose={handleClose} disableAutoFocus>
         <PickerColor value={currentBackground} nullable={true} onChange={handleChange} />
-      </Popover>
+      </ToolbarPopover>
     </>
   );
 }

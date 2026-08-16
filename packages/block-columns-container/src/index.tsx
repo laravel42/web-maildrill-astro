@@ -33,6 +33,7 @@ export type ColumnsContainerProps = z.infer<typeof ColumnsContainerPropsSchema> 
 const ColumnsContainerPropsDefaults = {
   columnsCount: 2,
   contentAlignment: 'middle',
+  columnsGap: 0,
 } as const;
 
 export function ColumnsContainer({ style, columns, props, blockId }: ColumnsContainerProps) {
@@ -53,6 +54,7 @@ export function ColumnsContainer({ style, columns, props, blockId }: ColumnsCont
           props?.contentAlignment ??
           ColumnsContainerPropsDefaults.contentAlignment),
     fixedWidths: props?.fixedWidths,
+    columnsGap: props?.columnsGap ?? ColumnsContainerPropsDefaults.columnsGap,
     blockId,
   };
 
@@ -141,6 +143,7 @@ type Props = {
       | undefined;
     columnsCount: 2 | 3;
     contentAlignment: 'top' | 'middle' | 'bottom';
+    columnsGap?: number | null;
     blockId?: string;
   };
   index: number;
@@ -157,10 +160,25 @@ function TableCell({ index, props, columns, stackMobilePreview }: Props) {
   // Auto-distribute width when no fixed widths are set
   const autoWidth = fixedWidthPct == null ? `${100 / columnsCount}%` : undefined;
 
+  // The gap is carried as padding on the facing edges of adjacent cells, half
+  // on each, so the outer edges stay flush with the block and the column
+  // percentages still add up to the full width. Stacked cells are full width,
+  // so the horizontal inset would only shrink them — the export sheet drops it
+  // in the mobile media query for the same reason.
+  const gap = Math.max(0, props.columnsGap ?? ColumnsContainerPropsDefaults.columnsGap);
+  const gapStyle: CSSProperties =
+    gap > 0 && !stackMobilePreview
+      ? {
+          paddingLeft: index === 0 ? 0 : gap / 2,
+          paddingRight: index === columnsCount - 1 ? 0 : gap / 2,
+        }
+      : {};
+
   const style: CSSProperties = {
     boxSizing: 'border-box',
     verticalAlign: contentAlignment,
     width: fixedWidthPct != null ? `${fixedWidthPct}%` : autoWidth,
+    ...gapStyle,
     ...(stackMobilePreview ? { display: 'block', width: '100%' } : {}),
   };
   const children = (columns && columns[index]) ?? null;

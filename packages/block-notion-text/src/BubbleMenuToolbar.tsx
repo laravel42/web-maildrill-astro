@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import { FormatClear } from '@mui/icons-material';
 import { Divider, Paper, useTheme } from '@mui/material';
+import type { ResolvedPos } from '@tiptap/pm/model';
 import { type Editor, useEditorState } from '@tiptap/react';
 
 import {
@@ -70,16 +71,55 @@ export default function BubbleMenuToolbar({ editor, hidden = false }: Props) {
 
   const dividerSx = { backgroundColor: theme.palette.divider, mx: 0.5 } as const;
 
+  /**
+   * Anchor the bar to the block that owns the selection rather than to the
+   * selection itself. The default rect tracks the caret's own line, which would
+   * drag the bar between the lines of a wrapped paragraph as the caret moves.
+   */
+  const getReferencedVirtualElement = useCallback(() => {
+    const { state, view } = editor;
+    const blockRect = (pos: ResolvedPos) => {
+      if (pos.depth === 0) return null;
+      const dom = view.nodeDOM(pos.before(pos.depth));
+      return dom instanceof HTMLElement ? dom.getBoundingClientRect() : null;
+    };
+
+    const { $from, $to } = state.selection;
+    const first = blockRect($from);
+    const last = blockRect($to) ?? first;
+    // Falsy hands positioning back to the plugin's own selection rect.
+    if (!first || !last) return null;
+
+    const left = Math.min(first.left, last.left);
+    const top = Math.min(first.top, last.top);
+    const rect = new DOMRect(
+      left,
+      top,
+      Math.max(first.right, last.right) - left,
+      Math.max(first.bottom, last.bottom) - top,
+    );
+    return { getBoundingClientRect: () => rect, getClientRects: () => [rect] };
+  }, [editor]);
+
   return (
     <BubbleMenuComponent
       ref={bubbleMenuRef}
       editor={editor}
+      getReferencedVirtualElement={getReferencedVirtualElement}
       options={{
-        placement: 'top',
-        offset: 30,
-        flip: {
-          padding: { top: 60 },
-        },
+        // Under the block by preference: anchored to the whole block (see
+        // getReferencedVirtualElement) that clears the text being edited and
+        // leaves room below for the toolbar's own dropdowns. Flip only kicks
+        // in for the last block on screen, where there is no room under it —
+        // above the block still clears the text, unlike the caret-following
+        // default this component replaces.
+        placement: 'bottom',
+        offset: 12,
+        flip: { padding: 8 },
+        // crossAxis lets the bar slide vertically too, so a block taller than
+        // the viewport keeps its bar on screen instead of parking it off the
+        // edge with the block's far end.
+        shift: { padding: 8, crossAxis: true },
       }}
       shouldShow={({ editor }: { editor: Editor }) => {
         if (hidden) return false;

@@ -6,6 +6,7 @@ import type { ImageProps } from '@eb/block-image';
 import {
   AlignVerticalCenterOutlined,
   PhoneIphoneOutlined,
+  SpaceBarOutlined,
   SplitscreenOutlined,
   type SvgIconComponent,
   TableChartOutlined,
@@ -37,6 +38,7 @@ import InspectorPillToggleGroup from './helpers/inputs/InspectorPillToggleGroup'
 import LabelProperty from './helpers/inputs/LabelProperty';
 import LayoutSelectorInput from './helpers/inputs/LayoutSelectorInput';
 import PropertyLabelWithWarning from './helpers/inputs/PropertyLabelWithWarning';
+import SliderInput from './helpers/inputs/SliderInput';
 import MultiStylePropertyPanel from './helpers/style-inputs/MultiStylePropertyPanel';
 
 const ColumnsCountIcon: SvgIconComponent = ((props: SvgIconProps) => (
@@ -198,6 +200,24 @@ export default function ColumnsContainerPanel({ data, setData }: ColumnsContaine
                   ...data,
                   props: { ...data.props, layout, fixedWidths, columns: columnsArray },
                 });
+              }}
+            />
+          </CompactableInput>
+          <CompactableInput
+            icon={SpaceBarOutlined}
+            label={t('inputs.panels.columns.gapLabel', 'Space between columns')}
+          >
+            <SliderInput
+              iconLabel={<SpaceBarOutlined />}
+              units="px"
+              step={2}
+              marks
+              min={0}
+              max={48}
+              label={t('inputs.panels.columns.gapLabel', 'Space between columns')}
+              defaultValue={data.props?.columnsGap ?? 0}
+              onChange={(columnsGap) => {
+                updateData({ ...data, props: { ...data.props, columnsGap } });
               }}
             />
           </CompactableInput>

@@ -398,6 +398,8 @@
       "columns": {
         "title": "Columns block",
         "countLabel": "Number of columns",
+        "layoutLabel": "Layout",
+        "gapLabel": "Space between columns",
         "stackColumnsOnMobile": "Stack columns on mobile",
         "stackColumnsOnMobileWarning": "Some email clients (Outlook.com, Yahoo Mail) have limited support for responsive column stacking. In those clients, columns will remain side-by-side.",
         "stackToggleSideBySide": "Side by side",

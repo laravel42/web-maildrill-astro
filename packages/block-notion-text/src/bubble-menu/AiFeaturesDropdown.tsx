@@ -16,10 +16,22 @@ import type { Editor } from '@tiptap/react';
 
 import { type AIAction, aiFeatures, requestAIFeature } from '../ai-features-config';
 
+import {
+  MENU_ICON_SX,
+  MENU_ITEM_SX,
+  MENU_ITEM_TEXT_SX,
+  MENU_LABEL_SX,
+  MENU_LIST_SX,
+  MENU_MUTED,
+  MENU_SECTION_SX,
+} from './menu-skin';
 import ToolbarIconButton from './ToolbarIconButton';
 import ToolbarPopover from './ToolbarPopover';
 
 type Props = { editor: Editor };
+
+/** Tallest the list may get; ToolbarPopover trims further when the room is tighter. */
+const MAX_LIST_HEIGHT = 400;
 
 export default function AiFeaturesDropdown({ editor }: Props) {
   const theme = useTheme();
@@ -116,29 +128,12 @@ export default function AiFeaturesDropdown({ editor }: Props) {
       />
 
       <ToolbarPopover anchorEl={anchor} onClose={handleClose}>
-        <List sx={{ maxHeight: 400, overflow: 'auto', p: '8px 4px' }}>
+        <List sx={{ ...MENU_LIST_SX, maxHeight: MAX_LIST_HEIGHT, overflow: 'auto' }}>
           {featuresList.map((feature, idx) => {
             if (feature.type === 'section-header') {
               return (
-                <Box
-                  key={idx}
-                  sx={{
-                    px: '10px',
-                    py: '8px',
-                    mt: idx > 0 ? 1 : 0,
-                  }}
-                >
-                  <Box
-                    component="span"
-                    sx={{
-                      fontSize: '11px',
-                      color: theme.palette.text.disabled,
-                      fontWeight: 600,
-                      letterSpacing: '0.5px',
-                    }}
-                  >
-                    {feature.label}
-                  </Box>
+                <Box key={idx} sx={{ ...MENU_SECTION_SX, mt: idx > 0 ? 1 : 0 }}>
+                  {feature.label}
                 </Box>
               );
             }
@@ -148,24 +143,16 @@ export default function AiFeaturesDropdown({ editor }: Props) {
                 key={idx}
                 onClick={() => !feature.disabled && processFeature(feature.value)}
                 disabled={feature.disabled}
-                sx={{
-                  p: '8px 10px',
-                  borderRadius: '6px',
-                  '&:hover': { backgroundColor: theme.palette.action.hover },
-                  transition: 'all 150ms ease',
-                  opacity: feature.disabled ? 0.5 : 1,
-                }}
+                sx={{ ...MENU_ITEM_SX, opacity: feature.disabled ? 0.5 : 1 }}
               >
                 {feature.emoji ? (
-                  <Box sx={{ mr: 1, fontSize: '18px', display: 'flex', alignItems: 'center' }}>
+                  <Box sx={{ mr: 0.75, fontSize: '15px', display: 'flex', alignItems: 'center' }}>
                     {feature.emoji}
                   </Box>
                 ) : (
-                  <ListItemIcon
-                    sx={{ minWidth: 'auto', mr: 1, color: theme.palette.text.secondary }}
-                  >
+                  <ListItemIcon sx={MENU_ICON_SX}>
                     {feature.loading ? (
-                      <CircularProgress size={20} sx={{ color: theme.palette.text.secondary }} />
+                      <CircularProgress size={16} sx={{ color: MENU_MUTED }} />
                     ) : (
                       feature.icon
                     )}
@@ -173,9 +160,8 @@ export default function AiFeaturesDropdown({ editor }: Props) {
                 )}
                 <ListItemText
                   primary={feature.label}
-                  slotProps={{
-                    primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } },
-                  }}
+                  sx={MENU_ITEM_TEXT_SX}
+                  slotProps={{ primary: { sx: MENU_LABEL_SX } }}
                 />
               </ListItemButton>
             );

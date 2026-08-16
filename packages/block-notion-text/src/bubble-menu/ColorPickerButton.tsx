@@ -2,12 +2,12 @@ import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { FormatColorText } from '@mui/icons-material';
-import { Popover } from '@mui/material';
 import type { Editor } from '@tiptap/react';
 
 import PickerColor from '../../../email-builder-standalone/src/App/InspectorDrawer/ConfigurationPanel/input-panels/helpers/inputs/ColorInput/Picker';
 
 import ToolbarIconButton from './ToolbarIconButton';
+import ToolbarPopover from './ToolbarPopover';
 
 type Props = { editor: Editor };
 
@@ -48,17 +48,9 @@ export default function ColorPickerButton({ editor }: Props) {
         <FormatColorText fontSize="small" sx={{ color: currentColor }} />
       </ToolbarIconButton>
 
-      <Popover
-        open={Boolean(anchor)}
-        anchorEl={anchor}
-        onClose={handleClose}
-        disableEnforceFocus
-        disableAutoFocus
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
+      <ToolbarPopover anchorEl={anchor} onClose={handleClose} disableAutoFocus>
         <PickerColor value={currentColor} nullable={true} onChange={handleChange} />
-      </Popover>
+      </ToolbarPopover>
     </>
   );
 }

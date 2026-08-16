@@ -29,6 +29,8 @@ export const ColumnsContainerPropsSchema = z
           .optional()
           .nullable(),
         layout: z.string().optional().nullable(),
+        /** Space between adjacent columns, in px. Split across their facing edges. */
+        columnsGap: z.number().min(0).optional().nullable(),
         contentAlignment: z.enum(['top', 'middle', 'bottom']).optional().nullable(),
         contentAlignmentMobile: z.enum(['top', 'middle', 'bottom']).optional().nullable(),
         stackColumnsOnMobile: z.boolean().optional().nullable(),

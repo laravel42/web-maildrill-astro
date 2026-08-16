@@ -239,6 +239,12 @@ function EditorBlockWrapperInner({
     if (!isSelected || !canEdit) {
       return null;
     }
+    // While the block is in inline text editing its own format bar owns the
+    // space around it, so the block actions would sit on top of that bar
+    // whichever edge they take. They come back as soon as editing ends.
+    if (notionTextInlineEditingBlockId === blockId) {
+      return null;
+    }
     return <TuneMenu blockId={blockId} />;
   };
 

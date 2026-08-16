@@ -8,20 +8,15 @@ import type { Editor } from '@tiptap/react';
 import { groupMergeTagsForDisplay } from '../merge-tags-groups';
 import { getMergeTags } from '../merge-tags-config';
 
+import {
+  MENU_ITEM_SX,
+  MENU_LABEL_SX,
+  MENU_LIST_SX,
+  MENU_SECTION_SX,
+  MENU_SUBLABEL_SX,
+} from './menu-skin';
 import ToolbarIconButton from './ToolbarIconButton';
 import ToolbarPopover from './ToolbarPopover';
-
-/** Matches wa-template-studio `.wts-select-menu` panel skin (light). */
-const MENU_SKIN = {
-  border: '1px solid #e4e2da',
-  borderRadius: '10px',
-  backgroundColor: '#ffffff',
-  color: '#1f1e1b',
-  boxShadow: '0 6px 18px rgba(0, 0, 0, 0.1)',
-} as const;
-
-const ITEM_HOVER_BG = '#eef0ff';
-const TOKEN_COLOR = '#77756c';
 
 type Props = { editor: Editor };
 
@@ -61,75 +56,33 @@ export default function MergeTagsDropdown({ editor }: Props) {
       <ToolbarPopover
         anchorEl={anchor}
         onClose={handleClose}
-        paperSx={{
-          ...MENU_SKIN,
-          p: 0,
-          overflow: 'hidden',
-          minWidth: 288,
-        }}
+        paperSx={{ p: 0, overflow: 'hidden', minWidth: 268 }}
       >
         <Box
           sx={{
-            maxHeight: '14rem',
+            maxHeight: '13rem',
             overflowX: 'hidden',
             overflowY: 'auto',
             overscrollBehavior: 'contain',
             WebkitOverflowScrolling: 'touch',
-            p: 0.5,
+            ...MENU_LIST_SX,
           }}
         >
           {groups.map((group) => (
-            <Box key={group.title} sx={{ py: 0.5 }}>
-              <Typography
-                component="div"
-                sx={{
-                  px: 1,
-                  py: 0.75,
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
-                  color: TOKEN_COLOR,
-                  lineHeight: 1.2,
-                }}
-              >
+            <Box key={group.title} sx={{ py: 0.25 }}>
+              <Typography component="div" sx={MENU_SECTION_SX}>
                 {group.title}
               </Typography>
               {group.items.map((tag) => (
                 <ListItemButton
                   key={tag.value}
                   onClick={() => tag.value && insertTag(tag.value)}
-                  sx={{
-                    display: 'block',
-                    px: 1,
-                    py: 0.75,
-                    borderRadius: '6px',
-                    transition: 'background-color 150ms ease',
-                    '&:hover': { backgroundColor: ITEM_HOVER_BG },
-                    '&:focus-visible': { backgroundColor: ITEM_HOVER_BG },
-                  }}
+                  sx={{ ...MENU_ITEM_SX, display: 'block' }}
                 >
-                  <Typography
-                    component="span"
-                    sx={{
-                      display: 'block',
-                      fontSize: '0.9375rem',
-                      fontWeight: 500,
-                      lineHeight: 1.25,
-                      color: MENU_SKIN.color,
-                    }}
-                  >
+                  <Typography component="span" sx={{ ...MENU_LABEL_SX, display: 'block' }}>
                     {tag.label}
                   </Typography>
-                  <Typography
-                    component="span"
-                    sx={{
-                      display: 'block',
-                      mt: 0.25,
-                      fontSize: '0.75rem',
-                      lineHeight: 1.3,
-                      color: TOKEN_COLOR,
-                      wordBreak: 'break-word',
-                    }}
-                  >
+                  <Typography component="span" sx={MENU_SUBLABEL_SX}>
                     {tag.value}
                   </Typography>
                 </ListItemButton>

@@ -20,8 +20,11 @@ import {
   useDevMode,
 } from '../../../editor/EditorContext';
 
+/** Clearance the strip keeps from the top of the canvas viewport. */
+const MENU_EDGE_GAP = 8;
+
 const getSx =
-  (positionBelow: boolean): SxProps<Theme> =>
+  (positionBelow: boolean, alignBottom: boolean): SxProps<Theme> =>
   (theme) => ({
     position: 'absolute',
     ...(positionBelow
@@ -33,7 +36,12 @@ const getSx =
           width: 'auto',
         }
       : {
-          top: 0,
+          // Bottom-aligned with the block rather than top-aligned: the strip is
+          // taller than a short block, and hanging off the bottom put it level
+          // with the inline-text format bar that opens under the block. Blocks
+          // near the top of the canvas fall back to top-aligned, otherwise the
+          // overhang disappears behind the editor's toolbar.
+          ...(alignBottom ? { bottom: 0 } : { top: 0 }),
           right: '-3rem',
           flexDirection: 'column',
           width: '2.5rem',
@@ -92,6 +100,7 @@ function TuneMenuInner({ blockId }: Props) {
   const canPasteFormat = copiedFormat && copiedFormat.blockType === currentBlock?.type;
   const menuRef = useRef<HTMLDivElement>(null);
   const [positionBelow, setPositionBelow] = useState(false);
+  const [alignBottom, setAlignBottom] = useState(true);
 
   useEffect(() => {
     const checkPosition = () => {
@@ -115,6 +124,11 @@ function TuneMenuInner({ blockId }: Props) {
       } else {
         setPositionBelow(false);
       }
+
+      // Bottom-aligning a strip taller than the room above the block's bottom
+      // edge would run it up under the editor toolbar, so top-align instead.
+      const roomAbove = blockRect.bottom - containerRect.top;
+      setAlignBottom(roomAbove >= menuElement.offsetHeight + MENU_EDGE_GAP);
     };
 
     checkPosition();
@@ -276,7 +290,7 @@ function TuneMenuInner({ blockId }: Props) {
     <>
       <Paper
         ref={menuRef}
-        sx={getSx(positionBelow)}
+        sx={getSx(positionBelow, alignBottom)}
         onClick={(ev) => ev.stopPropagation()}
         elevation={10}
       >

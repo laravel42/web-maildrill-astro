@@ -355,6 +355,8 @@
       "columns": {
         "title": "Blocco colonne",
         "countLabel": "Numero di colonne",
+        "layoutLabel": "Layout",
+        "gapLabel": "Spazio tra le colonne",
         "stackColumnsOnMobile": "Impila colonne su mobile",
         "stackColumnsOnMobileWarning": "Alcuni client di posta (Outlook.com, Yahoo Mail) hanno un supporto limitato per l'impilamento delle colonne responsive. In quei client, le colonne rimarranno affiancate.",
         "stackToggleSideBySide": "Affiancate",

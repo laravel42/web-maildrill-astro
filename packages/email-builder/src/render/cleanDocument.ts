@@ -784,7 +784,10 @@ const cleanDocument = (
          * The image's `<td class="a${imgId}" style="width:100%">` cell stopped
          * being rendered as a table-cell and the picture stayed at the desktop
          * column width on mobile. Direct-child combinators keep the rule
-         * scoped to the columns layout. */
+         * scoped to the columns layout.
+         *
+         * The horizontal padding reset drops `props.columnsGap`: once stacked,
+         * the cells are full width and the inset would just narrow them. */
         return `
 @media (max-width: 640px) {
   .${id} td.a${id} > table,
@@ -796,6 +799,8 @@ const cleanDocument = (
   .col${id} {
     display: block !important;
     width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 }`;
       },

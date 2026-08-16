@@ -355,6 +355,8 @@
       "columns": {
         "title": "Bloque de columnas",
         "countLabel": "Número de columnas",
+        "layoutLabel": "Diseño",
+        "gapLabel": "Espacio entre columnas",
         "stackColumnsOnMobile": "Apilar columnas en móvil",
         "stackColumnsOnMobileWarning": "Algunos clientes de correo (Outlook.com, Yahoo Mail) tienen soporte limitado para el apilado de columnas responsive. En esos clientes, las columnas se mantendrán lado a lado.",
         "stackToggleSideBySide": "Lado a lado",

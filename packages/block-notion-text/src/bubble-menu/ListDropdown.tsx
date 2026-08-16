@@ -5,6 +5,13 @@ import { FormatListBulleted, FormatListNumbered } from '@mui/icons-material';
 import { List, ListItemButton, ListItemIcon, ListItemText, useTheme } from '@mui/material';
 import type { Editor } from '@tiptap/react';
 
+import {
+  MENU_ICON_SX,
+  MENU_ITEM_SX,
+  MENU_ITEM_TEXT_SX,
+  MENU_LABEL_SX,
+  MENU_LIST_SX,
+} from './menu-skin';
 import ToolbarIconButton from './ToolbarIconButton';
 import ToolbarPopover from './ToolbarPopover';
 
@@ -58,51 +65,33 @@ export default function ListDropdown({ editor }: Props) {
       </ToolbarIconButton>
 
       <ToolbarPopover anchorEl={anchor} onClose={handleClose}>
-        <List sx={{ p: '8px 4px' }}>
+        <List sx={MENU_LIST_SX}>
           <ListItemButton
             onClick={() => toggleList('bullet')}
             selected={editor.isActive('bulletList')}
-            sx={{
-              p: '8px 10px',
-              borderRadius: '6px',
-              backgroundColor: editor.isActive('bulletList')
-                ? theme.palette.action.selected
-                : 'transparent',
-              '&:hover': { backgroundColor: theme.palette.action.hover },
-              transition: 'all 150ms ease',
-            }}
+            sx={MENU_ITEM_SX}
           >
-            <ListItemIcon sx={{ minWidth: 'auto', mr: 1, color: theme.palette.text.secondary }}>
+            <ListItemIcon sx={MENU_ICON_SX}>
               <FormatListBulleted fontSize="small" />
             </ListItemIcon>
             <ListItemText
               primary={t('bubbleMenu.bulletList')}
-              slotProps={{
-                primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } },
-              }}
+              sx={MENU_ITEM_TEXT_SX}
+              slotProps={{ primary: { sx: MENU_LABEL_SX } }}
             />
           </ListItemButton>
           <ListItemButton
             onClick={() => toggleList('ordered')}
             selected={editor.isActive('orderedList')}
-            sx={{
-              p: '8px 10px',
-              borderRadius: '6px',
-              backgroundColor: editor.isActive('orderedList')
-                ? theme.palette.action.selected
-                : 'transparent',
-              '&:hover': { backgroundColor: theme.palette.action.hover },
-              transition: 'all 150ms ease',
-            }}
+            sx={MENU_ITEM_SX}
           >
-            <ListItemIcon sx={{ minWidth: 'auto', mr: 1, color: theme.palette.text.secondary }}>
+            <ListItemIcon sx={MENU_ICON_SX}>
               <FormatListNumbered fontSize="small" />
             </ListItemIcon>
             <ListItemText
               primary={t('bubbleMenu.numberedList')}
-              slotProps={{
-                primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } },
-              }}
+              sx={MENU_ITEM_TEXT_SX}
+              slotProps={{ primary: { sx: MENU_LABEL_SX } }}
             />
           </ListItemButton>
         </List>
