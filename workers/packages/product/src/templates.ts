@@ -70,6 +70,14 @@ export interface TemplateEngagement {
   trackedDelivered: number;
   opened: number;
   clicked: number;
+  /**
+   * Outcomes on every channel, so SMS and voice templates have something real
+   * to report — their `trackedDelivered` is 0 by construction, which would
+   * otherwise peg their open/click rates at 0% forever.
+   */
+  sent: number;
+  delivered: number;
+  failed: number;
 }
 
 /**
@@ -91,6 +99,9 @@ export async function listTemplates(
       templateId: campaigns.templateId,
       trackedDelivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read') and ${messages.channel} in ('email', 'whatsapp'))::int`,
       opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
+      sent: sql<number>`count(*)::int`,
+      delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read'))::int`,
+      failed: sql<number>`count(*) filter (where ${messages.status} = 'failed')::int`,
     })
     .from(messages)
     .innerJoin(campaigns, eq(messages.campaignId, campaigns.id))
@@ -122,6 +133,9 @@ export async function listTemplates(
     trackedDelivered: outcomeByTpl.get(t.id)?.trackedDelivered ?? 0,
     opened: outcomeByTpl.get(t.id)?.opened ?? 0,
     clicked: clicksByTpl.get(t.id)?.clicked ?? 0,
+    sent: outcomeByTpl.get(t.id)?.sent ?? 0,
+    delivered: outcomeByTpl.get(t.id)?.delivered ?? 0,
+    failed: outcomeByTpl.get(t.id)?.failed ?? 0,
   }));
 }
 

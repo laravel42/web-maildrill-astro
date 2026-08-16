@@ -36,6 +36,15 @@ export type GalleryTemplate = {
   avgOpen: number;
   /** Average click rate, whole percent. */
   avgClick: number;
+  /**
+   * Raw send outcomes across campaigns that used this template. The drawer
+   * needs these to tell "never sent" apart from "sent and nobody opened", and
+   * to report something real on SMS and voice, which track neither.
+   */
+  trackedDelivered?: number;
+  sent?: number;
+  delivered?: number;
+  failed?: number;
   /** WhatsApp Meta-approval state; null for non-WhatsApp templates. */
   approvalStatus?: TemplateApprovalStatus | null;
   /** Meta rejection reason when approvalStatus === 'rejected'. */

@@ -38,6 +38,9 @@ export interface ApiTemplate {
   updatedAt?: string | null;
   /** Engagement across campaigns that sent this template (absent pre-rollout). */
   trackedDelivered?: number | null;
+  sent?: number | null;
+  delivered?: number | null;
+  failed?: number | null;
   opened?: number | null;
   clicked?: number | null;
 }
@@ -163,6 +166,10 @@ export function toGalleryTemplate(t: ApiTemplate): GalleryTemplate {
     favorite: !!t.favorite,
     avgOpen: rate(t.opened, t.trackedDelivered),
     avgClick: rate(t.clicked, t.trackedDelivered),
+    trackedDelivered: t.trackedDelivered ?? 0,
+    sent: t.sent ?? 0,
+    delivered: t.delivered ?? 0,
+    failed: t.failed ?? 0,
     approvalStatus: toApprovalStatus(t.approvalStatus),
     rejectionReason: t.rejectionReason ?? null,
     hasContent: templateHasContent(t),

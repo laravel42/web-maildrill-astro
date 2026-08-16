@@ -23,6 +23,7 @@ import { CHANNEL_TABS, VIEWS, ASC_FIRST, PAGE_SIZE } from './AppTemplates.logic'
 import type { ViewKey, SortKey } from './AppTemplates.types';
 import { api, ApiError } from '@/lib/app/api';
 import { toGalleryTemplate, type ApiTemplate } from '@/lib/app/template-map';
+import { channelReportConfig } from '@/lib/app/campaign-report';
 import { routes } from '@/config/routes';
 import styles from './AppTemplates.module.css';
 
@@ -879,6 +880,55 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
 
 /* --------------------------------------------------------------- drawer ---- */
 
+
+/**
+ * Drawer KPIs for a template, cut to what its channel actually reports.
+ *
+ * Open and click tracking is read from the same channel config the campaign
+ * views use, so the three screens can never disagree about what a channel
+ * measures. SMS and voice track neither — their `trackedDelivered` is 0 by
+ * construction, so the old fixed pair of rate tiles read "0%" on every SMS
+ * and voice template no matter how well it performed.
+ *
+ * A template that has never been sent reports "—" rather than 0%, which would
+ * claim nobody engaged when in truth nothing was measured.
+ */
+function templateKpis(t: GalleryTemplate): Array<{ label: string; value: string; color: string }> {
+  const cfg = channelReportConfig(t.channel);
+  const hasOpen = cfg.rateCards.some((r) => r === 'open' || r === 'seen');
+  const hasClick = cfg.rateCards.includes('click');
+  const pct = (n: number, denom: number) => (denom > 0 ? `${n}%` : '—');
+  if (hasOpen || hasClick) {
+    const tracked = t.trackedDelivered ?? 0;
+    const kpis = [
+      {
+        label: cfg.openLabel === 'Seen' ? 'Avg. seen' : 'Avg. opens',
+        value: pct(t.avgOpen, tracked),
+        color: '#4f46e5',
+      },
+    ];
+    if (hasClick) {
+      kpis.push({ label: 'Avg. clicks', value: pct(t.avgClick, tracked), color: '#0891b2' });
+    }
+    return kpis;
+  }
+  // Delivery-only channels: report the send outcomes they do produce.
+  const sent = t.sent ?? 0;
+  const delivered = t.delivered ?? 0;
+  return [
+    {
+      label: 'Avg. delivered',
+      value: sent > 0 ? `${Math.round((delivered / sent) * 100)}%` : '—',
+      color: 'var(--success-strong)',
+    },
+    {
+      label: 'Failed',
+      value: sent > 0 ? (t.failed ?? 0).toLocaleString('en-US') : '—',
+      color: (t.failed ?? 0) > 0 ? 'var(--danger)' : 'var(--text)',
+    },
+  ];
+}
+
 function TemplateDrawer({
   t,
   live,
@@ -955,18 +1005,14 @@ function TemplateDrawer({
             </span>
           </div>
           <div className={`adrawer__kpis ${styles.dStats}`}>
-            <div className="adrawer__kpi">
-              <div className="adrawer__kpi-k">Avg. opens</div>
-              <div className="tnum adrawer__kpi-v" style={{ color: '#4f46e5' }}>
-                {t.avgOpen}%
+            {templateKpis(t).map((k) => (
+              <div key={k.label} className="adrawer__kpi">
+                <div className="adrawer__kpi-k">{k.label}</div>
+                <div className="tnum adrawer__kpi-v" style={{ color: k.color }}>
+                  {k.value}
+                </div>
               </div>
-            </div>
-            <div className="adrawer__kpi">
-              <div className="adrawer__kpi-k">Avg. clicks</div>
-              <div className="tnum adrawer__kpi-v" style={{ color: '#0891b2' }}>
-                {t.avgClick}%
-              </div>
-            </div>
+            ))}
           </div>
 
           {approval && (
