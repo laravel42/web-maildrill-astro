@@ -299,9 +299,9 @@ function CampaignReport({
     };
   }, [live, campaign.id]);
 
-  /* Rate-card sparks: prefer this campaign's event timeline (cumulative % of
-     recipients); fall back to same-channel campaign history; always pad so
-     every card has a real spark ending at the current KPI. */
+  /* Rate-card sparks: prefer this campaign's event timeline (delivery/unsub
+     of recipients; open/click of delivered); fall back to same-channel
+     campaign history; always pad so every card has a real spark. */
   const unsubPct =
     campaign.recipients > 0 ? (campaign.unsubscribed / campaign.recipients) * 100 : 0;
   const eventSeries = buildEventRateSeries(events, campaign.recipients, campaign.channel);

@@ -63,13 +63,17 @@ export const EVENT_TAB_LABEL: Record<ReportEventTab, string> = {
   queued: 'Queued',
 };
 
-/** Cumulative engagement rates (% of recipients) as recipient events arrive. */
+/**
+ * Cumulative rates as recipient events arrive.
+ * Delivery and unsub are % of recipients; open/seen and click are % of
+ * delivered so far — matching campaign rate cards (`opened / delivered`).
+ */
 export function buildEventRateSeries(
   events: RecipientEvent[],
   recipients: number,
   channel: ChannelType,
 ): Record<'delivery' | 'open' | 'click' | 'unsub', SparkPoint[]> {
-  const base = Math.max(recipients, 1);
+  const recipientBase = Math.max(recipients, 1);
   const timeline = [...events]
     .filter((e) => e.at != null)
     .sort((a, b) => new Date(a.at!).getTime() - new Date(b.at!).getTime());
@@ -108,10 +112,11 @@ export function buildEventRateSeries(
     if (k === 'clicked') clicked += 1;
     if (k === 'unsubscribed') unsub += 1;
     const label = fmt(e.at!);
-    out.delivery.push({ value: (delivered / base) * 100, label });
-    out.open.push({ value: (opened / base) * 100, label });
-    out.click.push({ value: (clicked / base) * 100, label });
-    out.unsub.push({ value: (unsub / base) * 100, label });
+    const deliveredBase = Math.max(delivered, 1);
+    out.delivery.push({ value: (delivered / recipientBase) * 100, label });
+    out.open.push({ value: (opened / deliveredBase) * 100, label });
+    out.click.push({ value: (clicked / deliveredBase) * 100, label });
+    out.unsub.push({ value: (unsub / recipientBase) * 100, label });
   }
   return out;
 }
