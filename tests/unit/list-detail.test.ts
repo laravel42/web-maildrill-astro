@@ -52,22 +52,18 @@ describe('buildListDetailView', () => {
     const byKey = Object.fromEntries(v.health.map((h) => [h.key, h]));
     expect(byKey.active.value).toBe(2);
     expect(byKey.active.pct).toBe(50);
-    expect(byKey.delivered.value).toBe(0);
-    expect(byKey.delivered.pct).toBe(0);
     expect(byKey.unsubscribed.value).toBe(1);
     expect(byKey.failed.value).toBe(1);
+    expect(byKey.delivered).toBeUndefined();
     expect(byKey.unconfirmed).toBeUndefined();
     expect(byKey.bounced).toBeUndefined();
     expect(v.total).toBe(4);
     expect(v.sampled).toBe(false);
   });
 
-  it('reports delivered from the list row, falling back to campaign totals', () => {
+  it('reports delivery and failed rates from campaign totals', () => {
     const fromList = buildListDetailView({ ...list, delivered: 80 }, members, [], [], []);
-    expect(fromList.health.find((h) => h.key === 'delivered')).toMatchObject({
-      value: 80,
-      pct: 0,
-    });
+    expect(fromList.deliveredRate).toBe('—');
     const fromCampaigns = buildListDetailView(
       list,
       members,
@@ -84,10 +80,6 @@ describe('buildListDetailView', () => {
       [],
       [],
     );
-    expect(fromCampaigns.health.find((h) => h.key === 'delivered')).toMatchObject({
-      value: 92,
-      pct: 92,
-    });
     expect(fromCampaigns.deliveredRate).toBe('92.00%');
     expect(fromCampaigns.failedRate).toBe('0.00%');
     const withFail = buildListDetailView(

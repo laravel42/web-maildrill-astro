@@ -45,7 +45,7 @@ export type ApiSegment = {
 };
 
 export type HealthSegment = {
-  key: 'active' | 'delivered' | 'unsubscribed' | 'failed';
+  key: 'active' | 'unsubscribed' | 'failed';
   label: string;
   color: string;
   value: number;
@@ -249,20 +249,14 @@ export function buildListDetailView(
   const deliveredCount = list.delivered ?? campaigns.reduce((n, c) => n + (c.delivered ?? 0), 0);
   const attemptedCount = campaigns.reduce((n, c) => n + (c.recipients ?? 0), 0);
   const failedCount = campaigns.reduce((n, c) => n + (c.failed ?? 0), 0);
-  const deliveredPct =
-    attemptedCount > 0 ? Math.round((deliveredCount / attemptedCount) * 1000) / 10 : 0;
   const sendRate = (n: number) =>
     attemptedCount > 0 ? `${((n / attemptedCount) * 100).toFixed(2)}%` : '—';
 
+  // Roster partition only — delivery outcomes live on the rail (Delivery /
+  // Failed rate). Mixing campaign-attempt % into this bar made the legend
+  // look like one whole when the segments used two different denominators.
   const health: HealthSegment[] = [
     seg('active', 'Active', '#4f46e5', bucket.active),
-    {
-      key: 'delivered',
-      label: 'Delivered',
-      color: '#16a34a',
-      value: deliveredCount,
-      pct: deliveredPct,
-    },
     seg('unsubscribed', 'Unsubscribed', '#a5a39a', bucket.unsubscribed),
     seg('failed', 'Failed', '#dc2626', bucket.failed),
   ];

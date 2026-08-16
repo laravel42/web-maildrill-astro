@@ -346,18 +346,16 @@ export default function AppListDetail({
                 </div>
               </div>
               <div className={styles.healthBar}>
-                {view.health
-                  .filter((s) => s.key !== 'delivered')
-                  .map((s) =>
-                    s.pct > 0 ? (
-                      <span
-                        key={s.key}
-                        className={styles.healthSeg}
-                        style={{ width: `${s.pct}%`, background: s.color }}
-                        title={`${s.label} · ${s.value.toLocaleString('en-US')}`}
-                      />
-                    ) : null,
-                  )}
+                {view.health.map((s) =>
+                  s.pct > 0 ? (
+                    <span
+                      key={s.key}
+                      className={styles.healthSeg}
+                      style={{ width: `${s.pct}%`, background: s.color }}
+                      title={`${s.label} · ${s.value.toLocaleString('en-US')}`}
+                    />
+                  ) : null,
+                )}
               </div>
               <div className={styles.healthLegend}>
                 {view.health.map((s) => (
@@ -379,16 +377,12 @@ export default function AppListDetail({
               <div className={styles.chartHead}>
                 <div>
                   <h2 className={styles.cardTitle}>List growth</h2>
-                  <p className={styles.chartSub}>Joins and leaves per week, last 12 weeks</p>
+                  <p className={styles.chartSub}>Joins per week, last 12 weeks</p>
                 </div>
                 <div className={styles.legend}>
                   <span>
                     <span className={styles.swatch} style={{ background: 'var(--accent)' }} />
                     Joined
-                  </span>
-                  <span>
-                    <span className={styles.swatch} style={{ background: '#f0c8c2' }} />
-                    Left
                   </span>
                 </div>
               </div>
@@ -402,7 +396,7 @@ export default function AppListDetail({
                     {hoverWeek === i && (
                       <div className={styles.barTip} role="tooltip">
                         <div className={`${styles.barTipVal} ${styles.tnum}`}>
-                          +{w.joins} joined · −{w.left} left
+                          +{w.joins} joined
                         </div>
                         <div className={styles.barTipLbl}>{w.label}</div>
                       </div>
