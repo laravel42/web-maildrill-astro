@@ -10,6 +10,7 @@ import {
   type NewCampaign,
 } from '@maildrill/database';
 import type { Channel } from '@maildrill/domain';
+import { FAILED_STATUSES } from './message-status';
 import { clamp } from './rules';
 
 /**
@@ -104,16 +105,20 @@ const NO_COUNTERS: CampaignCounters = {
  * `delivered` counts delivered + read — a read message was delivered, and
  * excluding it would drive opened/delivered past 100% as receipts land.
  *
- * `failed` uses the WIDE definition: failed | cancelled | expired. `expired` is
- * a terminal non-delivery (the provider gave up), so it belongs with the
- * failures rather than in an "other" bucket nobody renders. Note that
- * `stats.ts` counts `failed` alone, which is why the same 588 WhatsApp messages
- * render as "Failed 588" on a campaign report and as 0 on Analytics (audit #6).
+ * `failed` is `FAILED_STATUSES` — failed + expired (message-status.ts), the one
+ * definition the whole product now uses. `expired` is a terminal non-delivery
+ * (the provider accepted the send and then gave up), so it belongs with the
+ * failures, and it is what the board's "Bounced" column on the email tab names:
+ * a message that never reached the mailbox. `stats.ts` counts the same set, so
+ * the same 588 WhatsApp messages no longer read 588 on a campaign report and 0
+ * on Analytics.
  *
- * KNOWN DEFECT (audit #23): the campaigns board labels this figure "Bounced" on
- * the email tab. An expired send never reached a mailbox and is not a bounce;
- * 23 email campaigns on the seeded tenant have a "Bounced" figure composed
- * entirely of expired messages.
+ * `cancelled` was here and is not any more. It is only reachable from the
+ * pre-dispatch states (`ALLOWED` in @maildrill/domain), so the provider never
+ * saw the message — the sender withdrew it, or the in-flight breaker stopped
+ * the queue draining into a bad list. Calling that a bounce blames the list for
+ * the sender's own decision. It is carried by `recipients` (count(*)) and by
+ * neither `delivered` nor `failed`, the same way a queued message is.
  *
  * Both the page-scoped rollup and the whole-tenant one below have to define
  * "delivered" and "failed" identically — if they ever drifted, sorting the
@@ -126,7 +131,7 @@ const messageCounters = {
     'delivered',
   ),
   opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`.as('opened'),
-  failed: sql<number>`count(*) filter (where ${messages.status} in ('failed', 'cancelled', 'expired'))::int`.as(
+  failed: sql<number>`count(*) filter (where ${messages.status} in ${FAILED_STATUSES})::int`.as(
     'failed',
   ),
   // Dispatched: left the send queue (provider handoff or permanent failure).
@@ -273,21 +278,23 @@ function audienceLabel(listName: string | null, segmentName: string | null): str
 /**
  * Columns the board offers as a sort.
  *
- * `updatedAt` is the only time column here, and it is the row's last WRITE, not
- * its send. There is no `completedAt` option, so no caller can ask the server
- * for "most recently sent".
+ * Two time columns, and they answer different questions. `updatedAt` is the
+ * row's last WRITE; `completedAt` is when the send finished, which is what any
+ * caller asking for "most recently sent" actually means. They are not
+ * interchangeable — on the seeded tenant `completed_at` runs ~20 minutes ahead
+ * of the row's final write, so the two genuinely-newest sends rank 616th and
+ * 632nd by `updated_at`.
  *
- * KNOWN DEFECT (audit #10): the dashboard's "Recent campaigns" strip asks a
- * completedAt question through this updatedAt door — it fetches one page sorted
- * by `updatedAt` and then re-sorts what came back by `completedAt`, which can
- * only reorder rows that were already in the page. On the seeded tenant the two
- * genuinely-newest sends rank 616th and 632nd by `updated_at` (their
- * `completed_at` is 20 minutes ahead of it), so they never reach the browser and
- * the strip renders four zero-recipient campaigns beside an activity feed —
- * ordered by `completed_at` in SQL — naming two entirely different ones.
+ * `completedAt` exists because the dashboard's "Recent campaigns" strip was
+ * asking the completedAt question through the updatedAt door: it fetched one
+ * page ordered by `updatedAt` and re-sorted it in the browser, which can only
+ * reorder rows already in the page. It rendered four zero-recipient campaigns
+ * beside an activity feed — ordered by `completed_at` in SQL — naming two
+ * entirely different ones.
  */
 export const CAMPAIGN_SORTS = [
   'updatedAt',
+  'completedAt',
   'name',
   'recipients',
   'failed',
@@ -479,6 +486,7 @@ function statExpressions(ms: Rollups['ms'], es: Rollups['es']): Record<CampaignS
     sql`coalesce(${hits}::numeric / nullif(${ms.delivered}, 0), 0)`;
   return {
     updatedAt: sql`${campaigns.updatedAt}`,
+    completedAt: sql`${campaigns.completedAt}`,
     name: sql`${campaigns.name}`,
     recipients: sql`coalesce(${ms.recipients}, 0)`,
     failed: sql`coalesce(${ms.failed}, 0)`,
@@ -509,6 +517,19 @@ function orderBy(sort: CampaignSort, dir: 'asc' | 'desc', stat?: Record<Campaign
   const tie = d(campaigns.id);
   if (sort === 'name') return [d(campaigns.name), tie];
   if (sort === 'updatedAt') return [d(campaigns.updatedAt), tie];
+  // `completed_at` is NULL on everything that has not finished sending, and
+  // Postgres sorts NULLs FIRST on DESC — so "newest send" would have opened
+  // with every draft in the workspace. NULLS LAST puts the unsent at the end in
+  // both directions, where an absent send belongs, and keeps them visible
+  // rather than filtered out.
+  if (sort === 'completedAt') {
+    return [
+      dir === 'asc'
+        ? sql`${campaigns.completedAt} asc nulls last`
+        : sql`${campaigns.completedAt} desc nulls last`,
+      tie,
+    ];
+  }
   return [d(stat![sort]), tie];
 }
 

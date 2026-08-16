@@ -24,6 +24,7 @@ import {
   type Subscriber,
 } from '@maildrill/database';
 import { ValidationError, type Channel } from '@maildrill/domain';
+import { FAILED_STATUSES } from './message-status';
 import { clamp } from './rules';
 
 export interface CreateListInput {
@@ -1020,17 +1021,19 @@ export async function getListWithStats(
        rate and the failure rate, so the two cannot be read against different
        wholes.
 
-       `failed` here uses the WIDE definition (failed | cancelled | expired),
-       matching `messageCounters` in campaign-crud and unlike `stats.ts`, which
-       counts `failed` alone. Both are defensible; having both is the defect
-       (audit #6). This is the one that includes terminal non-deliveries. */
+       `failed` is `FAILED_STATUSES` — failed + expired (message-status.ts), the
+       same definition `messageCounters` in campaign-crud and `stats.ts` now
+       use, so a list's failure rate and the failure rate of the campaigns that
+       targeted it are the same number. `cancelled` is not a failure: it is only
+       reachable before dispatch, so nothing was ever attempted. It stays in
+       `attempted` and in neither outcome, like a queued message. */
     db
       .select({
         channel: campaigns.channel,
         attempted: sql<number>`count(*)::int`,
         delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read'))::int`,
         opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
-        failed: sql<number>`count(*) filter (where ${messages.status} in ('failed', 'cancelled', 'expired'))::int`,
+        failed: sql<number>`count(*) filter (where ${messages.status} in ${FAILED_STATUSES})::int`,
       })
       .from(messages)
       .innerJoin(

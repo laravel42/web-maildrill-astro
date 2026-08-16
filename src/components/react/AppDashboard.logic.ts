@@ -1,5 +1,5 @@
 import type { Campaign } from '@/types/app';
-import { fmtDate, type ChannelBreakdown } from './AppAnalytics.logic';
+import { fmtDate } from './AppAnalytics.logic';
 import type { FeedItem, GetStartedStep, Kpi } from './AppDashboard.types';
 import type { IconName } from '@/lib/icons';
 import type { SparkPoint } from './shared/Sparkline';
@@ -24,17 +24,33 @@ export type Summary = {
     trackedDelivered?: number;
     failed: number;
     sentToday: number;
-    /** Read receipts / click events, when the service provides them. */
+    /**
+     * Read receipts / clicked messages on the tracked channels only — the same
+     * email + WhatsApp set as `trackedDelivered`, so these are the all-time
+     * numerators over that all-time denominator.
+     */
     opened?: number;
     clicked?: number;
   };
-  /** Weekly KPI series for the card sparklines (up to 52 weeks), oldest → newest. */
+  /**
+   * Daily KPI series, oldest → newest, one entry per day, zero-filled and
+   * day-aligned across every series (entry `k` is the same date in all six).
+   *
+   * Counts, not cumulative stock and not precomputed rates. Every card on the
+   * strip slices `-days` of these, which is what makes the range chip mean one
+   * thing across the whole row: at weekly resolution the browser rounded a
+   * range to whole weeks and "30 days" was really 28.
+   */
   trends?: {
+    /** Records created that day. */
     subscribers: number[];
     lists: number[];
+    /** Campaigns that finished sending that day. */
     campaigns: number[];
-    openRate: number[];
-    clickRate: number[];
+    /** Engagement numerator + denominator, tracked channels only. */
+    trackedDelivered: number[];
+    opened: number[];
+    clicked: number[];
   };
 };
 
@@ -137,33 +153,36 @@ function relativeDelta(cur: number, prev: number): { text: string; tone: DeltaTo
 }
 
 /**
- * How many weekly trend points a day-range covers.
+ * A window of a daily series and the window of equal length before it.
  *
- * KNOWN DEFECT (audit #19): rounding makes the range chips lie about their own
- * window. 30 days rounds to 4 weeks = 28 days, 90 rounds to 13 weeks = 91.
- * So on one "30 days" screen the Subscribers / Lists / Campaigns cards report
- * 28 days off this weekly series while "Sent (30 days)" beside them slices a
- * true 30 days of the daily series (`periodSent`). Measured: true 30-day
- * signups 41,129, card shows 38,387 — exactly the 28-day figure.
+ * Both are exact day counts — `days` entries, and the `days` entries that
+ * precede them — because the series is daily and zero-filled. It used to be
+ * weekly, and a day-range was rounded to the nearest whole number of weeks, so
+ * the chip saying "30 days" bought a 28-day window on three of the six cards
+ * while "Sent (30 days)" beside them sliced a true 30 days of the daily
+ * activity series. Measured on the seeded tenant: 38,387 signups shown against
+ * a true 41,129.
+ *
+ * `prev` is null when the series does not reach back far enough to hold a
+ * second window — 12 months against 365 days of history, which is why that
+ * chip's deltas read "—" rather than comparing against a shorter period.
  */
-function weeksFor(days: number): number {
-  return Math.max(1, Math.round(days / 7));
+function windows(series: number[], days: number): { cur: number[]; prev: number[] | null } {
+  const cur = series.slice(-days);
+  const prev = series.length >= days * 2 ? series.slice(-days * 2, -days) : null;
+  return { cur, prev };
 }
 
-function avg(nums: number[]): number {
-  return nums.reduce((a, b) => a + b, 0) / nums.length;
-}
+const sum = (nums: number[]): number => nums.reduce((a, b) => a + b, 0);
 
 /**
- * Net additions in the selected window vs the prior window, from a cumulative
- * weekly series (oldest → newest). Value is activity in-range, not all-time stock.
+ * Net additions in the selected window vs the prior window of equal length.
  *
- * The series arriving here is CUMULATIVE (`trends.subscribers` etc. from
- * stats.ts, where point k is how many records existed by week k), so net adds
- * are a difference of two endpoints, computed in the browser. Nothing is
- * sampled — the endpoints summarise the full table — but the resolution is one
- * week, so any range is really the nearest whole number of weeks (see
- * `weeksFor`).
+ * The series is per-day adds, so the window value is their sum — the same
+ * quantity the card prints and the same quantity its sparkline plots. When the
+ * series was cumulative this was a difference of two endpoints, and the spark
+ * beside it drew the stock: a card reading "9,596" over a line climbing from
+ * ~962,000 to 1,000,229, which says nothing about the number printed on it.
  *
  * The delta is a percentage change between two ADDITION counts, not between two
  * stock levels: it can fall while the record grows.
@@ -172,66 +191,57 @@ function periodNetCompare(
   series: number[] | undefined,
   days: number,
 ): { value: number | null; delta: { text: string; tone: DeltaTone } } {
-  if (!series || series.length < 2) {
-    return { value: null, delta: { text: '—', tone: 'flat' } };
-  }
-  const weeks = weeksFor(days);
-  const end = series.length - 1;
-  const mid = Math.max(0, end - weeks);
-  const start = Math.max(0, mid - weeks);
-  const curNet = series[end]! - series[mid]!;
-  if (mid === start) {
-    return { value: curNet, delta: { text: '—', tone: 'flat' } };
-  }
-  const prevNet = series[mid]! - series[start]!;
-  return { value: curNet, delta: relativeDelta(curNet, prevNet) };
-}
-
-/**
- * Average rate in the selected window vs the prior window, in percentage points.
- *
- * An unweighted mean of weekly rates, not a rate of the summed window — a quiet
- * week counts the same as a busy one. That is deliberate for a trend reading,
- * and it is why this only ever drives the DELTA and the sparkline while the
- * headline value is recomputed from window totals in `buildKpis` below.
- *
- * KNOWN DEFECT (audit #5, inherited): the `openRate` / `clickRate` series it
- * averages are built in stats.ts from an all-channel numerator over a
- * tracked-channel denominator, so individual weeks can exceed 100%. The
- * resulting delta on the live dashboard reads "↓ 55.5%" where the honest
- * change is -21.07pp — 2.6x too large — and the spark drawn from the same
- * series peaks at 112.5% under a headline of 28.9%.
- */
-function periodRateCompare(
-  series: number[] | undefined,
-  days: number,
-): { value: number | null; delta: { text: string; tone: DeltaTone } } {
   if (!series || series.length === 0) {
     return { value: null, delta: { text: '—', tone: 'flat' } };
   }
-  const weeks = weeksFor(days);
-  const curSlice = series.slice(-Math.min(weeks, series.length));
-  const cur = avg(curSlice);
-  if (series.length < weeks + 1) {
-    return { value: cur, delta: { text: '—', tone: 'flat' } };
-  }
-  const prevSlice =
-    series.length >= weeks * 2
-      ? series.slice(-weeks * 2, -weeks)
-      : series.slice(0, Math.max(0, series.length - weeks));
-  if (prevSlice.length === 0) {
-    return { value: cur, delta: { text: '—', tone: 'flat' } };
-  }
-  const prev = avg(prevSlice);
-  const d = cur - prev;
-  if (Math.abs(d) < 0.05) {
-    return { value: cur, delta: { text: 'No change', tone: 'flat' } };
-  }
-  const arrow = d > 0 ? '↑' : '↓';
+  const { cur, prev } = windows(series, days);
+  const value = sum(cur);
+  if (!prev) return { value, delta: { text: '—', tone: 'flat' } };
+  return { value, delta: relativeDelta(value, sum(prev)) };
+}
+
+/**
+ * A rate over the selected window vs the prior window, in percentage POINTS.
+ *
+ * Σ numerator / Σ denominator across the window — not a mean of daily rates.
+ * The two differ whenever volume is uneven (a mean lets a quiet day count as
+ * much as a busy one), and only the summed form is the rate the card's
+ * headline states, so this returns both the value and its delta and the card
+ * has one number computed one way.
+ *
+ * Both sides come from the same channel set. That is the whole fix: the
+ * numerator used to be reads on all four channels while the denominator was
+ * deliveries on the two that can report one, which produced weekly "rates" up
+ * to 112.47% on the sparkline and a delta of -55.5pp where the honest change
+ * was -21.1pp.
+ *
+ * The delta carries "pp", not "%": it is a difference of two percentages, and
+ * the count cards beside it show a relative percentage change. Printing both
+ * as "%" made two different operations look like one.
+ */
+function periodRate(
+  hits: number[] | undefined,
+  base: number[] | undefined,
+  days: number,
+): { value: number | null; delta: { text: string; tone: DeltaTone } } {
+  const none = { text: '—', tone: 'flat' as const };
+  if (!hits || !base || base.length === 0) return { value: null, delta: none };
+  const rate = (h: number[], b: number[]): number | null => {
+    const denom = sum(b);
+    return denom > 0 ? (sum(h) / denom) * 100 : null;
+  };
+  const h = windows(hits, days);
+  const b = windows(base, days);
+  const value = rate(h.cur, b.cur);
+  if (value == null || !h.prev || !b.prev) return { value, delta: none };
+  const before = rate(h.prev, b.prev);
+  if (before == null) return { value, delta: none };
+  const d = value - before;
+  if (Math.abs(d) < 0.05) return { value, delta: { text: 'No change', tone: 'flat' } };
   return {
-    value: cur,
+    value,
     delta: {
-      text: `${arrow} ${Math.abs(d).toFixed(1)}%`,
+      text: `${d > 0 ? '↑' : '↓'} ${Math.abs(d).toFixed(1)}pp`,
       tone: d > 0 ? 'up' : 'down',
     },
   };
@@ -243,8 +253,9 @@ function periodRateCompare(
  *
  * Source: the daily series from /v1/stats/activity, which is zero-filled in SQL
  * over the full set — so `slice(-days)` is exactly `days` calendar days, with
- * no missing-day drift. This is the one card on the strip whose window really
- * is the number on its label; the weekly-series cards round to whole weeks.
+ * no missing-day drift. Every other card on the strip now slices its own daily
+ * series the same way, over the same `days`; this one used to be the only one
+ * whose window matched the chip above it.
  */
 function periodSent(
   daily: ActivityPoint[],
@@ -296,68 +307,105 @@ export const KPI_META: Record<Kpi['key'], { color: string; href: string }> = {
 };
 
 /**
- * Window slice of a weekly trend series as spark points (oldest → newest).
- * Floored at 5 points so short ranges still draw a real shape — the labels
- * name each week, so the extra history never masquerades as in-window data.
+ * The calendar date of entry `i` in a daily trend series, as `YYYY-MM-DD`.
  *
- * Plots the series AS GIVEN. For the rate series that is a rate, which is what
- * the card shows; for subscribers / lists / campaigns it is the CUMULATIVE
- * stock, while the headline above it is net adds.
- *
- * KNOWN DEFECT (audit #18): those two do not describe the same quantity. The
- * Subscribers card renders "9,596" (a correct 7-day net-add figure) over a line
- * climbing from ~962,000 to 1,000,229 — a shape that can only ever rise and
- * says nothing about the number printed on it.
+ * The series carries no dates — it is `length` consecutive days ending today —
+ * so the label is reconstructed from the viewer's clock, walking back from
+ * today by local days. Local, because the server anchored the window on local
+ * midnight too, and because a date on a sparkline should be the reader's date.
  */
-function weeklySpark(series: number[] | undefined, days: number): SparkPoint[] {
+function trendDay(i: number, length: number): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - (length - 1 - i));
+  const pad = (v: number) => String(v).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/**
+ * The selected window of a daily count series as spark points, oldest → newest.
+ *
+ * Plots the same quantity the headline prints — additions per day, which sum to
+ * the card's value — and labels each point with its date, exactly like the
+ * "Sent" card's spark beside it. It used to plot the CUMULATIVE stock under a
+ * net-adds headline: a line that can only ever rise, climbing 962,000 ->
+ * 1,000,229 beneath the number 9,596.
+ */
+function dailySpark(series: number[] | undefined, days: number): SparkPoint[] {
   if (!series || series.length < 2) return [];
-  const sliced = series.slice(-(Math.max(weeksFor(days), 4) + 1));
+  const sliced = series.slice(-days);
   if (sliced.length < 2 || !sliced.some((v) => v !== 0)) return [];
-  const last = sliced.length - 1;
   return sliced.map((value, i) => ({
     value,
-    label: i === last ? 'This week' : `${last - i}w ago`,
+    label: fmtDate(trendDay(series.length - sliced.length + i, series.length)),
   }));
+}
+
+/**
+ * The selected window as a spark of per-day RATES, oldest → newest.
+ *
+ * Each point is one day's hits over that same day's deliveries on the same two
+ * tracked channels, so no point can exceed 100% — the series this replaced
+ * divided all-channel reads by tracked deliveries and put a 112.5% point under
+ * a card reading 28.9%.
+ *
+ * Days that delivered nothing trackable are DROPPED rather than plotted as 0%:
+ * on those days the rate was not measured, and a zero would read as "nobody
+ * opened". Dropping is safe here because the window is sliced first — the gap
+ * cannot pull the spark back beyond the days the chip names — and every
+ * surviving point carries its own date as its label.
+ */
+function rateSpark(
+  hits: number[] | undefined,
+  base: number[] | undefined,
+  days: number,
+): SparkPoint[] {
+  if (!hits || !base || base.length < 2) return [];
+  const offset = base.length - Math.min(days, base.length);
+  const points: SparkPoint[] = [];
+  for (let i = offset; i < base.length; i += 1) {
+    const denom = base[i] ?? 0;
+    if (denom <= 0) continue;
+    points.push({
+      value: ((hits[i] ?? 0) / denom) * 100,
+      label: fmtDate(trendDay(i, base.length)),
+    });
+  }
+  return points.length >= 2 ? points : [];
 }
 
 /**
  * KPI cards scoped to the selected timespan. Headline values and deltas both
  * move with the range — counts are in-range activity; rates are in-range averages.
  *
- * Three different sources feed one strip, and it is worth being explicit about
- * which number comes from where:
+ * Value, delta and spark on a card are now three views of ONE quantity over
+ * ONE window, which is the property this strip did not have:
  *
- *   value   — subscribers/lists/campaigns: difference of two points on the
- *             cumulative weekly series (full-set counts, weekly resolution).
- *             sent: sum of the daily series over exactly `days` days.
- *             open/click: Σ opened / Σ delivered over the window's CHANNEL
- *             breakdown, restricted to email + whatsapp. That restriction is
- *             the honest one — SMS and voice deliveries cannot produce an open,
- *             so including them would drive the rate toward zero for a reason
- *             that has nothing to do with the audience. Computed here, in the
+ *   value   — subscribers/lists/campaigns: Σ of `trends.*` over exactly `days`
+ *             days. sent: Σ of the daily activity series over the same `days`.
+ *             open/click: Σ hits / Σ tracked deliveries over that window, both
+ *             sides restricted to email + whatsapp. Computed here, in the
  *             browser, from server-side aggregates; nothing is sampled.
- *   delta   — always the weekly trend series, never the value above it.
- *   context — whole-workspace all-time counters from the same summary payload.
+ *   delta   — the same computation over the `days` immediately before, so it
+ *             can never describe a different quantity than the value above it.
+ *   spark   — the same window, one point per day (per-day adds for the counts,
+ *             per-day rates for the rates).
+ *   context — whole-workspace ALL-TIME counters from the same payload, and the
+ *             only figure here that is not window-scoped. `opened` / `clicked`
+ *             are tracked-channel counts, so the context line under a rate is
+ *             the all-time version of that rate's own numerator (140,919, not
+ *             the 300,332 all-channel reads it used to print).
  *
- * KNOWN DEFECT (audit #5): the open card's three parts do not agree with each
- * other. The value is channel-correct (28.9% live, reproduced exactly in SQL).
- * The delta and spark come from `trends.openRate`, which divides all-channel
- * reads by tracked deliveries. And the context line prints `s.messages.opened`
- * — 300,332 all-channel reads, all-time — as "total opens" beneath a rate whose
- * numerator is the 140,919 tracked ones. The context is 2.13x its own rate's
- * numerator.
+ * The open card previously disagreed with itself three ways: a channel-correct
+ * value (28.9%), a delta and spark built from all-channel reads over tracked
+ * deliveries (-55.5%, with a 112.5% point on the line), and a context line
+ * 2.13x its own numerator.
  *
- * `hasTracked` reads the ALL-TIME tracked counter, not the window's, so a
- * range containing no email or WhatsApp still shows a rate — falling back to a
- * 52-week average. Every window on the seeded tenant contains email, so this is
- * latent today.
+ * A window with no tracked delivery gets "—" and "No deliveries yet" rather
+ * than a rate carried in from somewhere else; the previous fallback averaged 52
+ * weeks of history under a card labelled with a much shorter range.
  */
-export function buildKpis(
-  s: Summary | null,
-  daily: ActivityPoint[] = [],
-  days = 7,
-  channels: ChannelBreakdown[] = [],
-): Kpi[] {
+export function buildKpis(s: Summary | null, daily: ActivityPoint[] = [], days = 7): Kpi[] {
   const sent = periodSent(daily, days);
   const sentSpark = sparkSeries(sent.inRange);
   const emptySent = sentLabel(days);
@@ -383,21 +431,13 @@ export function buildKpis(
   const subs = periodNetCompare(s.trends?.subscribers, days);
   const lists = periodNetCompare(s.trends?.lists, days);
   const camps = periodNetCompare(s.trends?.campaigns, days);
-  const openTrend = periodRateCompare(s.trends?.openRate, days);
-  const clickTrend = periodRateCompare(s.trends?.clickRate, days);
-  const hasTracked = (s.messages.trackedDelivered ?? s.messages.delivered) > 0;
+  // Both rates divide the window's tracked hits by the window's tracked
+  // deliveries — one series pair, one window, so the headline and its delta are
+  // the same arithmetic over adjacent periods.
+  const open = periodRate(s.trends?.opened, s.trends?.trackedDelivered, days);
+  const click = periodRate(s.trends?.clicked, s.trends?.trackedDelivered, days);
   const deliveredInRange = sent.inRange.reduce((t, d) => t + d.delivered, 0);
   const deliveryPct = sent.total > 0 ? (deliveredInRange / sent.total) * 100 : null;
-
-  // Email + WhatsApp only — SMS/voice deliveries never produce an open/click.
-  const tracked = channels.filter((c) => c.channel === 'email' || c.channel === 'whatsapp');
-  const trackedDelivered = tracked.reduce((n, c) => n + c.delivered, 0);
-  const trackedOpened = tracked.reduce((n, c) => n + (c.opened ?? 0), 0);
-  const trackedClicked = tracked.reduce((n, c) => n + (c.clicked ?? 0), 0);
-  const openValue =
-    trackedDelivered > 0 ? (trackedOpened / trackedDelivered) * 100 : openTrend.value;
-  const clickValue =
-    trackedDelivered > 0 ? (trackedClicked / trackedDelivered) * 100 : clickTrend.value;
 
   return [
     {
@@ -410,7 +450,7 @@ export function buildKpis(
         subs.value != null
           ? `${n(s.subscribers.active)} active`
           : `${n(s.subscribers.total)} total`,
-      spark: weeklySpark(s.trends?.subscribers, days),
+      spark: dailySpark(s.trends?.subscribers, days),
       sparkFormat: 'number',
     },
     {
@@ -420,7 +460,7 @@ export function buildKpis(
       delta: lists.delta.text,
       tone: lists.delta.tone,
       context: lists.value != null ? `${n(s.lists)} total` : null,
-      spark: weeklySpark(s.trends?.lists, days),
+      spark: dailySpark(s.trends?.lists, days),
       sparkFormat: 'number',
     },
     {
@@ -431,7 +471,7 @@ export function buildKpis(
       tone: camps.delta.tone,
       context:
         s.campaigns.total > 0 ? `${n(s.campaigns.sent)} of ${n(s.campaigns.total)} sent` : null,
-      spark: weeklySpark(s.trends?.campaigns, days),
+      spark: dailySpark(s.trends?.campaigns, days),
       sparkFormat: 'number',
     },
     {
@@ -452,23 +492,21 @@ export function buildKpis(
     {
       key: 'open',
       label: 'Open rate',
-      value: openValue != null ? `${openValue.toFixed(1)}%` : '—',
-      delta: openValue != null || hasTracked ? openTrend.delta.text : 'No deliveries yet',
-      tone: openTrend.delta.tone,
-      context:
-        s.messages.opened != null && hasTracked ? `${n(s.messages.opened)} total opens` : null,
-      spark: weeklySpark(s.trends?.openRate, days),
+      value: open.value != null ? `${open.value.toFixed(1)}%` : '—',
+      delta: open.value != null ? open.delta.text : 'No deliveries yet',
+      tone: open.delta.tone,
+      context: s.messages.opened != null ? `${n(s.messages.opened)} total opens` : null,
+      spark: rateSpark(s.trends?.opened, s.trends?.trackedDelivered, days),
       sparkFormat: 'percent',
     },
     {
       key: 'click',
       label: 'Click rate',
-      value: clickValue != null ? `${clickValue.toFixed(1)}%` : '—',
-      delta: clickValue != null || hasTracked ? clickTrend.delta.text : 'No deliveries yet',
-      tone: clickTrend.delta.tone,
-      context:
-        s.messages.clicked != null && hasTracked ? `${n(s.messages.clicked)} total clicks` : null,
-      spark: weeklySpark(s.trends?.clickRate, days),
+      value: click.value != null ? `${click.value.toFixed(1)}%` : '—',
+      delta: click.value != null ? click.delta.text : 'No deliveries yet',
+      tone: click.delta.tone,
+      context: s.messages.clicked != null ? `${n(s.messages.clicked)} total clicks` : null,
+      spark: rateSpark(s.trends?.clicked, s.trends?.trackedDelivered, days),
       sparkFormat: 'percent',
     },
   ];
@@ -477,16 +515,18 @@ export function buildKpis(
 /**
  * Most recently sent campaigns for the dashboard strip (newest send first).
  *
- * A BOUNDED SAMPLE, and the binding constraint is upstream: this re-sorts by
- * `completedAt` a page the server already selected and ordered by `updatedAt`,
- * because `CAMPAIGN_SORTS` offers no `completedAt`. A local sort cannot recover
- * a row that was never in the page.
+ * The page this trims is already ordered by `completedAt` in SQL (the caller
+ * asks for `sort=completedAt`), so the local sort only re-states the server's
+ * order and the top four really are the workspace's four newest sends.
  *
- * KNOWN DEFECT (audit #10): on the seeded tenant the two genuinely newest sends
- * rank 616th and 632nd by `updated_at` — their `completed_at` runs 20 minutes
- * ahead of it — so they are far outside the 25-row page and the strip renders
- * four campaigns with 0 recipients and "—" for every rate. The "Recent activity"
- * feed 200px away orders by `completed_at` in SQL and names the right two.
+ * It used to ask a completedAt question through an updatedAt door: the server
+ * had no `completedAt` sort, so the strip fetched 25 rows ordered by
+ * `updated_at` and re-sorted those in the browser. A local sort cannot recover
+ * a row that was never in the page — on the seeded tenant the two genuinely
+ * newest sends rank 616th and 632nd by `updated_at`, because `completed_at`
+ * runs ~20 minutes ahead of it, so the strip showed four campaigns with 0
+ * recipients and "—" for every rate while the "Recent activity" feed 200px
+ * away, ordered by `completed_at` in SQL, named the right two.
  */
 export function buildRecent(campaigns: Campaign[]): Campaign[] {
   return campaigns

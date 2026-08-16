@@ -7,24 +7,13 @@ import AppDashboard from '@/components/react/AppDashboard';
 const session = Astro.locals.session;
 const live = Boolean(session?.user?.id && session.activeTenantId);
 
-/* KNOWN DEFECT (audit #35): the greeting is computed from UTC on the server, so
-   it names the server's hour rather than the reader's. On this UTC-6 host it
-   renders "Good evening" at 15:11 local. UTC was chosen to keep SSR and
-   hydration agreeing; the honest fix is to greet client-side after mount, or
-   from the workspace timezone, not to pick a zone nobody is in. */
-const hour = Number(
-  new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'UTC' }).format(
-    new Date(),
-  ),
-);
-const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+/* No time-of-day greeting is computed here, and that is the point: the server
+   knows no zone but its own. This page used to render the hour in UTC to keep
+   SSR and hydration agreeing, so a reader at 14:52 was told "Good evening".
+   The island greets from the viewer's clock once mounted; the SSR heading is a
+   greeting that is true at every hour rather than a guess at the reader's. */
 ---
 
 <AppLayout title="Dashboard">
-  <AppDashboard
-    client:load
-    greeting={greeting}
-    live={live}
-    tenantId={session?.activeTenantId ?? null}
-  />
+  <AppDashboard client:load live={live} tenantId={session?.activeTenantId ?? null} />
 </AppLayout>

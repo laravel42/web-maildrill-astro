@@ -133,7 +133,9 @@ export const fmt = (n: number) => n.toLocaleString('en-US');
  *     47,653 expired, 2,352 submitted, 6 queued.
  *   - There is no ledger behind it at all. The tenant has 0 consumption rows in
  *     `wallet_transactions` and 5 in `usage_records`, against 1,001,068
- *     messages. This is a list-price estimate rendered under the word "Cost".
+ *     messages. The money column derived from these counts is therefore a
+ *     list-price model, and is now labelled "Est. cost" and carries its rate
+ *     assumption on screen (`EST_RATE_BASIS`) rather than reading as a charge.
  *
  * KNOWN DEFECT (audit #1): which source produced these counts is decided
  * per-request. `workspaceSummary` replaces the Postgres breakdown with PostHog's
@@ -154,23 +156,30 @@ export function totalSent(rows: ChannelUsageRow[]): number {
  * Estimated per-send USD rate by channel. Email is the flat worldwide rate;
  * SMS/WhatsApp/voice are regional and the workspace has no destination mix yet,
  * so the North America tier stands in (voice assumes one minute per call).
- * Real billing draws the prepaid balance at the destination's actual rate.
+ *
+ * This is a LIST-PRICE MODEL, not the ledger, and the screen says so — see
+ * `EST_RATE_BASIS` below and the "Est. cost" labels in AppSettings.tsx. It is
+ * modelled rather than read because the ledger cannot answer the question yet:
+ * on the seeded workspace `wallet_transactions` holds one `purchase` row and
+ * zero `consumption` rows, and `usage_records` holds 5 rows against 1,001,068
+ * messages. A figure sourced from those would read $0.00 next to a million
+ * sends, which is not more honest — it is a different wrong number. The moment
+ * the metering path writes `consumption` entries, this whole block should be
+ * replaced by a sum over them, and the "estimate" wording removed with it.
  *
  * The rates themselves are correct — the total reproduces to the cent against
- * REGION_TIERS — so every remaining error is in what they multiply:
+ * REGION_TIERS — so every remaining error is in what they multiply, and each is
+ * named in `EST_RATE_BASIS` so the reader can judge the gap:
  *
  *   region  — NA_TIER is hardcoded. EU SMS is 0.055 against this 0.0079 (7.0x);
  *             EU WhatsApp 0.085 against 0.028 (3.0x). A workspace sending to
- *             Europe is shown a figure several times under its real cost.
+ *             Europe would be shown a figure several times under its real cost.
  *   voice   — one minute assumed per call. `voice_seconds` is populated on 0 of
  *             the tenant's 294,204 voice messages, so there is nothing to
  *             assume from (same missing column as the Analytics talk-time card).
- *   tier    — `estCost` never applies `wallet.tier.discountBps`. A tenant on the
- *             50%-off `scale-promo` tier — the top row of this same page's
- *             pricing modal — reads exactly 2x its real rate.
- *
- * Flagged, not fixed (audit #2). Anything presented next to this must say
- * "estimate", never "cost".
+ *   tier    — no `wallet.tier.discountBps` is applied. A tenant on the 50%-off
+ *             `scale-promo` tier — the top row of this same page's pricing
+ *             modal — would read exactly 2x its real rate.
  */
 const NA_TIER = REGION_TIERS[0];
 export const EST_RATE_USD: Record<ChannelType, number> = {
@@ -179,6 +188,25 @@ export const EST_RATE_USD: Record<ChannelType, number> = {
   whatsapp: NA_TIER.whatsapp,
   voice: NA_TIER.voice,
 };
+
+/** Per-send rate as printed in the basis note: `$0.028`, not `$0.03`. */
+const fmtRate = (n: number) => `$${n.toFixed(4).replace(/0+$/, '').replace(/\.$/, '')}`;
+
+/**
+ * The assumption behind every "Est." figure on the usage panel, in words.
+ *
+ * Built from the same constants `estCost` multiplies by, so the sentence on
+ * screen cannot drift from the arithmetic behind the number above it — which
+ * is the whole reason a money figure is allowed to be an estimate at all.
+ */
+export const EST_RATE_BASIS =
+  `Estimate, not a charge — no ledger entry exists for these sends. ` +
+  `Priced at ${NA_TIER.name} list rates ` +
+  `(email ${fmtRate(EMAIL_RATE)}, SMS ${fmtRate(NA_TIER.sms)}, ` +
+  `WhatsApp ${fmtRate(NA_TIER.whatsapp)}, voice ${fmtRate(NA_TIER.voice)}/min ` +
+  `at one minute per call), before any volume-tier discount. ` +
+  `Sends to other regions cost more, and real charges draw your balance at each ` +
+  `destination's actual rate.`;
 
 export function estCost(row: ChannelUsageRow): number {
   return row.sent * EST_RATE_USD[row.channel];

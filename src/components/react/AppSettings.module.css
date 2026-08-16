@@ -324,6 +324,15 @@
   color: var(--text);
   font-weight: 500;
 }
+/* the estimate's basis: quiet, but never hidden — a money figure that is a
+   model owes the reader the model */
+.ledgerNote {
+  margin: 14px 0 0;
+  max-width: 68ch;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text4);
+}
 .ledgerEmpty {
   margin: 14px 0 0;
   font-size: 13px;

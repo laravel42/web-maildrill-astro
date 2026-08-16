@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { canTransition, isTerminal, resolveEventTransition } from './state';
+import {
+  canTransition,
+  FAILED_DELIVERY_STATES,
+  isFailedDelivery,
+  isTerminal,
+  outcomeFromInfobipStatusGroup,
+  resolveEventTransition,
+} from './state';
 
 describe('state machine', () => {
   it('allows forward transitions', () => {
@@ -19,6 +26,35 @@ describe('state machine', () => {
   it('allows expiry after a message is accepted (submitted/sent)', () => {
     expect(canTransition('submitted', 'expired')).toBe(true);
     expect(canTransition('sent', 'expired')).toBe(true);
+  });
+
+  /* The failure definition is the product's most duplicated number — Analytics,
+     the dashboard channel strip, the campaigns board's Bounced column, the
+     campaign report tabs, the list rollup, the template tiles and the
+     subscriber detail all divide by it. Locking the SET here is what stops the
+     next counter from quietly picking its own. */
+  it('counts failed and expired as delivery failures, and nothing else', () => {
+    expect([...FAILED_DELIVERY_STATES]).toEqual(['failed', 'expired']);
+    expect(isFailedDelivery('failed')).toBe(true);
+    expect(isFailedDelivery('expired')).toBe(true);
+  });
+
+  it('never counts a withdrawn send as a delivery failure', () => {
+    // `cancelled` is only reachable before dispatch, so nothing was attempted.
+    expect(isFailedDelivery('cancelled')).toBe(false);
+    expect(isFailedDelivery('queued')).toBe(false);
+    expect(isFailedDelivery('delivered')).toBe(false);
+    expect(isFailedDelivery('read')).toBe(false);
+  });
+
+  it('maps every Infobip failure group onto a failed state', () => {
+    // FAILED_STATUS_GROUPS in posthog-stats is the HogQL half of the same
+    // definition; if these ever diverge, one chart silently redefines "failed".
+    for (const group of ['UNDELIVERABLE', 'REJECTED', 'EXPIRED']) {
+      expect(isFailedDelivery(outcomeFromInfobipStatusGroup(group) as never)).toBe(true);
+    }
+    expect(isFailedDelivery(outcomeFromInfobipStatusGroup('DELIVERED') as never)).toBe(false);
+    expect(isFailedDelivery(outcomeFromInfobipStatusGroup('PENDING') as never)).toBe(false);
   });
 
   it('marks terminal states', () => {

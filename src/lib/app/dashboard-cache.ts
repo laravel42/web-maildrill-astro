@@ -13,7 +13,12 @@ import type { FeedItem } from '@/components/react/AppDashboard.types';
 import type { ActivityPoint, Summary } from '@/components/react/AppDashboard.logic';
 
 export const DASHBOARD_CACHE_TTL_MS = 30 * 60 * 1000;
-const KEY_PREFIX = 'md:dashboard:v1';
+/* Bumped to v2 with the summary's `trends` block: it went from five weekly
+   series (two of them precomputed rates) to six daily count series. A v1 entry
+   parses fine and would have fed the KPI cards a shape whose fields no longer
+   exist — em-dash cards for the rest of the TTL. The version is part of the
+   key rather than a field so a stale entry is never read at all. */
+const KEY_PREFIX = 'md:dashboard:v2';
 
 /** Null tenant (demo/preview) gets its own bucket rather than sharing one. */
 const keyFor = (tenantId: string | null | undefined) => `${KEY_PREFIX}:${tenantId ?? 'anon'}`;

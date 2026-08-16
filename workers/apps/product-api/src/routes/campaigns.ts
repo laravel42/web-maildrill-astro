@@ -227,11 +227,12 @@ export async function campaignRoutes(appRaw: FastifyInstance): Promise<void> {
         dir,
       });
 
-      // Only `updatedAt` is a timestamp, and a keyset cursor carries a
-      // timestamp. The other sorts page by number instead — affordable here in
-      // a way it is not on the roster, because `campaigns` is a small table
-      // (a workspace has thousands, not millions) and OFFSET over it never
-      // touches `messages`.
+      // The keyset cursor carries `updated_at` (see `campaignCursorAt`), so it
+      // can only resume an ordering by that column — `completedAt` is a
+      // timestamp too, but not the one in the token. Every other sort pages by
+      // number instead: affordable here in a way it is not on the roster,
+      // because `campaigns` is a small table (a workspace has thousands, not
+      // millions) and OFFSET over it never touches `messages`.
       const after =
         req.query.cursor && sort === 'updatedAt'
           ? decodeCursor(config.auth.jwtSecret, req.query.cursor, {

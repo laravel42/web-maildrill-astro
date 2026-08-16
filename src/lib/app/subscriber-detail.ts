@@ -266,11 +266,14 @@ export function buildSubscriberDetailView(
      `recipients` already includes its failures — hence the different arithmetic
      for the two sources, and the note on `attempted` in channel-kpis.ts.)
 
-     KNOWN DEFECT (audit #9): neither side of that sum counts `expired` or
-     `cancelled`, because the API's status vocabulary omits them. So an expired
-     message is subtracted from the record rather than counted as the
-     non-delivery it is — visible as a tile reading "SENT 8 / DELIVERED 7 of 8"
-     beside an activity feed listing 9 rows, one of them `Email · expired`. */
+     The API's `failed` is `FAILED_DELIVERY_STATES` — failed + expired — so the
+     sum now covers every dispatched message. It used to omit `expired`, which
+     subtracted an expired send from the record entirely rather than counting it
+     as the non-delivery it is: a tile reading "SENT 8 / DELIVERED 7 of 8" beside
+     an activity feed listing 9 rows, one of them `Email · expired`.
+
+     `cancelled` is still outside both, and belongs outside both: it is only
+     reachable before dispatch, so the message was never attempted. */
   for (const c of channels) {
     const t = channelTotals[c.channel as ChannelType];
     if (!t) continue;

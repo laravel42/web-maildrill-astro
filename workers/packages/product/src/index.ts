@@ -10,6 +10,7 @@ export * from './audience';
 export * from './campaigns';
 export * from './campaign-crud';
 export { buildSegmentWhere, segmentRuleError } from './rules';
+export * from './message-status';
 export * from './stats';
 export * from './media';
 export * from './media-suggest';

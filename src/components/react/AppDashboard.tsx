@@ -30,11 +30,27 @@ import {
 import Sparkline from './shared/Sparkline';
 import styles from './AppDashboard.module.css';
 
+/**
+ * Time-of-day greeting from the VIEWER's clock.
+ *
+ * Deliberately not computed during render: this component is server-rendered
+ * for the initial HTML, and any zone chosen there is the host's, not the
+ * reader's. The page used to greet from UTC on a UTC-6 host and said "Good
+ * evening" at 14:52 local. So the server ships a greeting that is true at every
+ * hour and this replaces it once mounted, where `getHours()` is the reader's.
+ */
+function localGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  return hour < 18 ? 'Good afternoon' : 'Good evening';
+}
+
 export default function AppDashboard({
-  greeting = 'Hello',
+  greeting = 'Welcome back',
   live = false,
   tenantId = null,
 }: {
+  /** Shown until mount, then replaced by the viewer's own time of day. */
   greeting?: string;
   /** When true, fetch aggregates from the BFF (no SSR data blocking). */
   live?: boolean;
@@ -42,6 +58,7 @@ export default function AppDashboard({
   tenantId?: string | null;
 } = {}) {
   const [range, setRange] = useState('7d');
+  const [hello, setHello] = useState(greeting);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [daily, setDaily] = useState<ActivityPoint[]>([]);
@@ -53,6 +70,11 @@ export default function AppDashboard({
   const activityRef = useRef<HTMLDivElement>(null);
   const [activityEdge, setActivityEdge] = useState({ top: false, bottom: false });
   const bootedRef = useRef(false);
+
+  /* The reader's clock is only available after hydration. */
+  useEffect(() => {
+    setHello(localGreeting());
+  }, []);
 
   /* Boot: serve a fresh 30‑min cache immediately, otherwise fetch aggregates. */
   useEffect(() => {
@@ -103,8 +125,15 @@ export default function AppDashboard({
         ? Promise.resolve()
         : api
             // The card shows the four most recent sent campaigns, so ask for a
-            // page of those rather than every campaign in the workspace.
-            .get<{ items: ApiCampaign[] }>('campaigns?status=sent&limit=25&sort=updatedAt&dir=desc')
+            // page of those rather than every campaign in the workspace — and
+            // ask for them in the order the card displays, `completedAt`.
+            // Sorted by `updatedAt` the server returned a page the browser then
+            // re-sorted, which cannot bring back a row that was never in it:
+            // the tenant's two newest sends sit 616th and 632nd by `updated_at`
+            // (completed ~20 min after their last write) and never arrived.
+            .get<{ items: ApiCampaign[] }>(
+              'campaigns?status=sent&limit=25&sort=completedAt&dir=desc',
+            )
             .then((res) => {
               fetched.campaigns = toCampaigns(res.items ?? []);
               if (!cancelled) setCampaigns(fetched.campaigns);
@@ -221,7 +250,7 @@ export default function AppDashboard({
 
   const busy = bootLoading || rangeLoading;
   const channelTotal = channels.reduce((t, c) => t + c.sent, 0);
-  const kpis = buildKpis(summary, daily, days, channels);
+  const kpis = buildKpis(summary, daily, days);
   const recent = buildRecent(campaigns);
   const getStarted = buildGetStarted(summary);
 
@@ -229,7 +258,7 @@ export default function AppDashboard({
     <div className="screen" style={{ animation: 'fade .3s ease' }}>
       <div className={styles.greet}>
         <div>
-          <h1 className="screen__h1">{greeting} 👋</h1>
+          <h1 className="screen__h1">{hello} 👋</h1>
           <p className="screen__sub">{rangeSubtitle(days)}</p>
         </div>
         <div className={styles.greetRight}>
@@ -476,13 +505,18 @@ export default function AppDashboard({
                      channel, `delivered` and `failed` its outcomes.
 
                      KNOWN DEFECT — two things this strip does not say. (1) delivered + failed
-                     does NOT equal sent: `failed` counts `status='failed'`
-                     alone, so submitted / queued / expired / cancelled fall in
-                     neither. Measured over 7 days: 21,337 sent, 16,617
-                     delivered, 593 failed — 4,127 messages (19.3%) in neither
-                     bar (audit #25, #6). (2) the shares are independently
-                     rounded, so the column sums to 101% at 7 days and 99% at 30
-                     (audit #36); the same rounding runs on the Settings ledger. */
+                     still does NOT equal sent, though the gap is now only the
+                     messages that have not resolved yet: `failed` counts
+                     `FAILED_DELIVERY_STATES` (failed + expired), so what falls
+                     in neither bar is submitted / queued / processing /
+                     cancelled — sends with no outcome, not sends with a hidden
+                     one. Measured over 7 days: 21,337 sent, 16,617 delivered,
+                     2,362 failed — 2,358 in neither bar (11.0%), down from
+                     4,127 (19.3%) when `failed` was `status='failed'` alone and
+                     1,769 expired messages were reported nowhere (audit #25).
+                     (2) the shares are independently rounded, so the column sums
+                     to 101% at 7 days and 99% at 30 (audit #36); the same
+                     rounding runs on the Settings ledger. */
                   const share = channelTotal > 0 ? (p.sent / channelTotal) * 100 : 0;
                   return (
                     <a

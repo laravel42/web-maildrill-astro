@@ -28,6 +28,7 @@ import {
   buildChannelUsageRows,
   DEFAULT_TOGGLES,
   estCost,
+  EST_RATE_BASIS,
   fmt,
   fmtUsd,
   isDomain,
@@ -588,9 +589,21 @@ export default function AppSettings({
                     <span className={styles.ledgerUnit}>messages · pay as you go</span>
                   </div>
                   <div className={styles.heroStats}>
+                    {/* Labelled "Est. cost", never "Cost". The figure is
+                        `sent x list rate` (AppSettings.logic `estCost`), not a
+                        ledger read — the workspace has no `consumption` wallet
+                        entries to read. `aria-describedby` ties it to the basis
+                        note under the table so the assumption reaches a screen
+                        reader on the value itself, not only sighted readers who
+                        scroll. */}
                     <div className={styles.heroStat}>
-                      <span className={styles.heroStatLbl}>Cost</span>
-                      <span className={styles.heroStatVal}>{fmtUsd(totalEstCost(usageRows))}</span>
+                      <span className={styles.heroStatLbl}>Est. cost</span>
+                      <span
+                        className={styles.heroStatVal}
+                        aria-describedby="usage-est-basis"
+                      >
+                        ~{fmtUsd(totalEstCost(usageRows))}
+                      </span>
                     </div>
                     <div
                       className={`${styles.heroStat}${
@@ -647,7 +660,7 @@ export default function AppSettings({
                         Sent
                       </th>
                       <th scope="col" className={styles.thNum}>
-                        Cost
+                        Est. cost
                       </th>
                       <th scope="col" className={styles.thNum}>
                         Share
@@ -685,6 +698,15 @@ export default function AppSettings({
                     })}
                   </tbody>
                 </table>
+
+                {/* The rate every "Est." figure above assumes, spelled out.
+                    Generated from the same constants `estCost` multiplies by
+                    (`EST_RATE_BASIS`), so the sentence cannot drift from the
+                    arithmetic. Rendered whether or not anything was sent: on an
+                    empty workspace it is what the zero means. */}
+                <p className={styles.ledgerNote} id="usage-est-basis">
+                  {EST_RATE_BASIS}
+                </p>
 
                 {workspaceSent === 0 && (
                   <p className={styles.ledgerEmpty}>

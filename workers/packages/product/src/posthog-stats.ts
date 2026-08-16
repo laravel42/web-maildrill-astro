@@ -11,11 +11,12 @@ import type { ChannelBreakdown, DailyPoint } from './stats';
 /**
  * Infobip status groups that count as delivery failures on charts.
  *
- * Note this is the WIDE reading — EXPIRED is a failure here — while the Postgres
- * side of the same chart (`byChannelFromPostgres` in stats.ts) counts
- * `status = 'failed'` alone. Whichever source `preferRicherSource` picks
- * therefore also picks what "failed" means, with nothing on screen to say so
- * (audit #6, latent half).
+ * The same set as `FAILED_DELIVERY_STATES` (@maildrill/domain), spelled in
+ * Infobip's vocabulary: UNDELIVERABLE and REJECTED are the `failed` status,
+ * EXPIRED is the `expired` status. That correspondence is the point — either
+ * source of a chart may win in `preferRicherSource`, so both must mean the same
+ * thing by "failed". Anything added here needs its Postgres counterpart added
+ * to `FAILED_DELIVERY_STATES`, and vice versa.
  */
 export const FAILED_STATUS_GROUPS = ['UNDELIVERABLE', 'EXPIRED', 'REJECTED'] as const;
 

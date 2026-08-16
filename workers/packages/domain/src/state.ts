@@ -59,6 +59,35 @@ export function isCampaignDeliveryComplete(state: MessageState): boolean {
   return (CAMPAIGN_COMPLETE_STATES as readonly MessageState[]).includes(state);
 }
 
+/**
+ * THE definition of a delivery failure, for every counter the product renders.
+ *
+ * A message failed when the provider tried and the message never arrived:
+ *   - `failed`  — rejected or undeliverable (Infobip UNDELIVERABLE / REJECTED)
+ *   - `expired` — accepted, then abandoned when the TTL ran out (EXPIRED)
+ *
+ * `cancelled` is deliberately NOT here. Cancellation happens only from the
+ * pre-dispatch states (`ALLOWED` below: draft/scheduled/queued/processing), so
+ * nothing was ever attempted — the sender withdrew the send, or the in-flight
+ * breaker stopped the queue draining into a bad list. Counting a withdrawal as
+ * a bounce charges the recipient list for a decision the sender made.
+ *
+ * This is exactly the set `FAILED_STATUS_GROUPS` in posthog-stats maps to
+ * (UNDELIVERABLE + REJECTED -> failed, EXPIRED -> expired), so the Postgres and
+ * HogQL sources of the same chart now agree on what the word means.
+ *
+ * Every SQL counter reads this through `failedStatusesSql` in
+ * @maildrill/product; no site spells the statuses out again.
+ */
+export const FAILED_DELIVERY_STATES = [
+  'failed',
+  'expired',
+] as const satisfies readonly MessageState[];
+
+export function isFailedDelivery(state: MessageState): boolean {
+  return (FAILED_DELIVERY_STATES as readonly MessageState[]).includes(state);
+}
+
 /** Open message statuses still awaiting a final DLR (or still in the send queue). */
 export const OPEN_DELIVERY_STATES = [
   'queued',

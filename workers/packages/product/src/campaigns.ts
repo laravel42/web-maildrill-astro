@@ -16,6 +16,7 @@ import {
 } from '@maildrill/services';
 import { createLogger } from '@maildrill/observability';
 import { addressForChannel, resolveAudience, type AudienceSelector } from './audience';
+import { FAILED_STATUSES } from './message-status';
 import { getTemplate, resolveMessageContent } from './templates';
 
 const log = createLogger({ component: 'campaigns' });
@@ -56,11 +57,17 @@ export interface CampaignRecipientEvent {
  * Every message falls in exactly one — furthest stage wins — so the per-kind
  * counts partition the campaign instead of overlapping, and "All" is their sum.
  *
- * Two of the nine are channel-dependent names for the same underlying state: a
+ * Two of the ten are channel-dependent names for the same underlying state: a
  * read receipt is "seen" on WhatsApp and "opened" everywhere else, and a hard
  * failure is a "bounce" on email and a "failure" on the rest. The slugs live
  * here, not only in the browser, because the server now both counts and filters
- * by them — `eventKind` in the report island renders the same nine.
+ * by them — `eventKind` in the report island renders the same ten.
+ *
+ * `cancelled` is its own kind rather than sharing the failure tab. Cancellation
+ * is only reachable before dispatch, so the provider never saw the message —
+ * folding it into "bounced" would report the sender's own withdrawal as the
+ * recipient's address failing, and folding it into "queued" would label a
+ * finished message as still waiting.
  */
 export const CAMPAIGN_EVENT_KINDS = [
   'delivered',
@@ -71,6 +78,7 @@ export const CAMPAIGN_EVENT_KINDS = [
   'sent',
   'bounced',
   'failed',
+  'cancelled',
   'queued',
 ] as const;
 
@@ -101,11 +109,10 @@ const hasEvent = (type: 'click' | 'unsubscribed', m: MessagesTable = messages) =
  * series alike: the tabs disagreeing with the rows beneath them is the whole
  * failure this replaces, and two copies of this CASE would reintroduce it.
  *
- * `cancelled` sits with the hard failures rather than in the `else` because
- * that is where the Failed KPI already counts it (`messageCounters.failed` in
- * campaign-crud). Routed to Queued it would put one number in the card and a
- * different one in the tab beside it — the same disagreement this section
- * exists to remove, just waiting for the first cancelled send.
+ * The hard-failure branch is `FAILED_STATUSES` (failed + expired), the same set
+ * `messageCounters.failed` in campaign-crud counts, so the Bounced/Failed tab
+ * and the KPI card above it can never disagree. `cancelled` gets its own kind
+ * for the reason above: it is not a failure and it is not still queued.
  *
  * `m` is a parameter so the keyset anchor below can reuse the definition
  * through a table alias: a second copy of the CASE for the anchor is how the
@@ -119,7 +126,8 @@ function eventKindExpr(channel: Channel, m: MessagesTable = messages) {
     when ${hasEvent('click', m)} then 'clicked'
     when ${m.status} = 'read' then ${read}::text
     when ${m.status} = 'delivered' then 'delivered'
-    when ${m.status} in ('failed', 'expired', 'cancelled') then ${hardFail}::text
+    when ${m.status} in ${FAILED_STATUSES} then ${hardFail}::text
+    when ${m.status} = 'cancelled' then 'cancelled'
     when ${m.status} in ('sent', 'submitted') then 'sent'
     else 'queued'
   end`;
@@ -353,11 +361,11 @@ interface SummaryRow extends Record<string, unknown> {
  *
  * One query, not two, because the kind and the time bucket are two groupings of
  * the same scan: `group by bucket, kind` answers both at once and returns at
- * most 24 x 9 aggregate rows. The running totals below are folded over those
+ * most 24 x 10 aggregate rows. The running totals below are folded over those
  * aggregates, never over messages.
  *
  * `byKind` is a PARTITION of the campaign: `eventKindExpr` assigns each message
- * exactly one kind — the furthest stage it reached — so the nine buckets sum to
+ * exactly one kind — the furthest stage it reached — so the ten buckets sum to
  * `total` and no message is counted twice. That is what makes the tab badges
  * add up, and it is also why a tab count is not a KPI count: the Delivered tab
  * on Perf campaign 12 reads 588 because the other 589 delivered messages were
