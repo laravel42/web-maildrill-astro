@@ -419,9 +419,15 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                   className={sort.key === 'growthPct' ? 'is-active' : undefined}
                   onClick={() => toggleSort('growthPct')}
                 >
-                  Growth (1w) <span className="tnum">{sortArrow('growthPct')}</span>
+                  {/* One flex item: the header button gaps its children, which
+                      would space out the parenthesised unit. */}
+                  <span>
+                    Growth (<span className={styles.keepCase}>1w</span>)
+                  </span>
+                  <span className="tnum">{sortArrow('growthPct')}</span>
                 </button>
               </div>
+              <div className={styles.colCenter}>Channels</div>
               <div className={styles.colCenter}>GDPR consent</div>
               <div className={styles.colCenter}>
                 <button
@@ -477,9 +483,30 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                     >
                       {fmtPct(l.growthPct)}
                     </div>
+                    <div className={styles.chanCell}>
+                      {(l.channels ?? ['email']).map((ch) => {
+                        const m = CHANNEL[ch];
+                        return (
+                          <span
+                            key={ch}
+                            className={styles.chanTile}
+                            style={{ background: m.tint, color: m.color }}
+                            role="img"
+                            aria-label={m.label}
+                            title={m.label}
+                          >
+                            <Icon name={m.icon} size={11} />
+                          </span>
+                        );
+                      })}
+                    </div>
                     <div className={styles.gdprCell}>
                       {l.gdprConsent ? (
-                        <span className={styles.gdprCheck} title="GDPR consent" aria-label="GDPR consent">
+                        <span
+                          className={styles.gdprCheck}
+                          title="GDPR consent"
+                          aria-label="GDPR consent"
+                        >
                           <Icon name="check" size={15} stroke={3} />
                         </span>
                       ) : (
@@ -528,14 +555,6 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                       <span className={styles.cardName} title={l.name}>
                         {l.name}
                       </span>
-                      {l.gdprConsent ? (
-                        <span className={styles.cardGdpr} title="GDPR consent" aria-label="GDPR consent">
-                          <Icon name="shield" size={14} stroke={2.4} />
-                          <span className={styles.cardGdprCheck} aria-hidden="true">
-                            <Icon name="check" size={8} stroke={3.5} />
-                          </span>
-                        </span>
-                      ) : null}
                       <span
                         className={`${styles.cardPct} tnum`}
                         style={{
@@ -554,6 +573,23 @@ export default function AppLists({ initial }: { initial?: ListRow[] } = {}) {
                         {l.subscribers.toLocaleString('en-US')}
                       </span>
                       <span className={styles.cardStatLabel}>subscribers</span>
+                      <span className={styles.cardChans}>
+                        {(l.channels ?? ['email']).map((ch) => {
+                          const m = CHANNEL[ch];
+                          return (
+                            <span
+                              key={ch}
+                              className={styles.chanTile}
+                              style={{ background: m.tint, color: m.color }}
+                              role="img"
+                              aria-label={m.label}
+                              title={m.label}
+                            >
+                              <Icon name={m.icon} size={11} />
+                            </span>
+                          );
+                        })}
+                      </span>
                     </div>
 
                     <div className={styles.cardFoot}>
@@ -697,10 +733,7 @@ function ListDrawer({
   closing: boolean;
   onClose: () => void;
   onToast: (m: string) => void;
-  onPatch: (
-    id: string,
-    patch: { tags?: string[]; notes?: string; color?: string },
-  ) => void;
+  onPatch: (id: string, patch: { tags?: string[]; notes?: string; color?: string }) => void;
   onFilterTag: (tag: string) => void;
   onDelete: () => void;
 }) {

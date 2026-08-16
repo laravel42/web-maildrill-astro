@@ -52,7 +52,7 @@
 }
 
 .grid {
-  grid-template-columns: 1.8fr 1.2fr 0.85fr 0.9fr 0.95fr 0.75fr;
+  grid-template-columns: 1.8fr 1.2fr 0.85fr 0.9fr 0.8fr 0.95fr 0.75fr;
   column-gap: 16px;
 }
 .grid:global(.athead) {
@@ -143,6 +143,10 @@
   align-items: center;
   justify-content: center;
   text-align: center;
+}
+/* Escape the header's uppercase transform for unit abbreviations like "1w". */
+.keepCase {
+  text-transform: none;
 }
 .grid:global(.athead) > .colCenter button {
   width: 100%;
@@ -237,7 +241,7 @@
      shared .card base (cardNew) glow-free. */
   --list-color: transparent;
   text-align: left;
-  padding: 16px 18px 14px;
+  padding: 14px 16px 12px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -267,7 +271,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 28px;
 }
 /* List identity mark — a deliberate swatch, not a stray bullet. The inset
    ring keeps pale list colors legible on the card surface. */
@@ -290,32 +294,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* Compact GDPR mark — icon only so the name keeps the row. */
-.cardGdpr {
-  position: relative;
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #6d28d9;
-}
-:global([data-theme='dark']) .cardGdpr {
-  color: #c4b5fd;
-}
-.cardGdprCheck {
-  position: absolute;
-  top: -4px;
-  right: -5px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #16a34a;
-  color: #fff;
-  box-shadow: 0 0 0 2px var(--surface);
-}
 /* Period growth rate — soft chip so it doesn't fight the count. */
 .cardPct {
   flex: none;
@@ -334,9 +312,9 @@
 }
 .cardNum {
   flex: none;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 600;
-  letter-spacing: -0.7px;
+  letter-spacing: -0.6px;
   line-height: 1;
   color: var(--text);
 }
@@ -346,13 +324,37 @@
   /* text4, not muted: 12.5px informational text must clear the contrast floor. */
   color: var(--text4);
 }
+/* Channel marks close the count row. Icon-only tiles: four labelled pills would
+   crowd a 292px card, and the drawer already spells the channels out. */
+.cardChans {
+  margin-left: auto;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+/* Table column runs the same tiles, so cards and rows read as one language. */
+.chanCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+.chanTile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+}
 .cardFoot {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 14px;
-  padding-top: 12px;
+  margin-top: 2px;
+  padding-top: 10px;
   border-top: 1px solid var(--divider);
   font-size: 11.5px;
   color: var(--text4);
@@ -712,4 +714,3 @@
 .dNoteSave:hover {
   background: var(--accent-hover);
 }
-
