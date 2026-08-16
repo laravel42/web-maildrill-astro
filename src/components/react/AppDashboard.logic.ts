@@ -1,5 +1,5 @@
 import type { Campaign } from '@/types/app';
-import { fmtDate } from './AppAnalytics.logic';
+import { fmtDate, type ChannelBreakdown } from './AppAnalytics.logic';
 import type { FeedItem, GetStartedStep, Kpi } from './AppDashboard.types';
 import type { IconName } from '@/lib/icons';
 import type { SparkPoint } from './shared/Sparkline';
@@ -277,8 +277,17 @@ function weeklySpark(series: number[] | undefined, days: number): SparkPoint[] {
 /**
  * KPI cards scoped to the selected timespan. Headline values and deltas both
  * move with the range — counts are in-range activity; rates are in-range averages.
+ *
+ * Open/click prefer the channel breakdown for the window (Σ opened / Σ
+ * tracked deliveries) so quiet weeks don't drop out of an averaged weekly
+ * series. Trends still drive the delta and sparkline.
  */
-export function buildKpis(s: Summary | null, daily: ActivityPoint[] = [], days = 7): Kpi[] {
+export function buildKpis(
+  s: Summary | null,
+  daily: ActivityPoint[] = [],
+  days = 7,
+  channels: ChannelBreakdown[] = [],
+): Kpi[] {
   const sent = periodSent(daily, days);
   const sentSpark = sparkSeries(sent.inRange);
   const emptySent = sentLabel(days);
@@ -304,11 +313,21 @@ export function buildKpis(s: Summary | null, daily: ActivityPoint[] = [], days =
   const subs = periodNetCompare(s.trends?.subscribers, days);
   const lists = periodNetCompare(s.trends?.lists, days);
   const camps = periodNetCompare(s.trends?.campaigns, days);
-  const open = periodRateCompare(s.trends?.openRate, days);
-  const click = periodRateCompare(s.trends?.clickRate, days);
+  const openTrend = periodRateCompare(s.trends?.openRate, days);
+  const clickTrend = periodRateCompare(s.trends?.clickRate, days);
   const hasTracked = (s.messages.trackedDelivered ?? s.messages.delivered) > 0;
   const deliveredInRange = sent.inRange.reduce((t, d) => t + d.delivered, 0);
   const deliveryPct = sent.total > 0 ? (deliveredInRange / sent.total) * 100 : null;
+
+  // Email + WhatsApp only — SMS/voice deliveries never produce an open/click.
+  const tracked = channels.filter((c) => c.channel === 'email' || c.channel === 'whatsapp');
+  const trackedDelivered = tracked.reduce((n, c) => n + c.delivered, 0);
+  const trackedOpened = tracked.reduce((n, c) => n + (c.opened ?? 0), 0);
+  const trackedClicked = tracked.reduce((n, c) => n + (c.clicked ?? 0), 0);
+  const openValue =
+    trackedDelivered > 0 ? (trackedOpened / trackedDelivered) * 100 : openTrend.value;
+  const clickValue =
+    trackedDelivered > 0 ? (trackedClicked / trackedDelivered) * 100 : clickTrend.value;
 
   return [
     {
@@ -363,9 +382,9 @@ export function buildKpis(s: Summary | null, daily: ActivityPoint[] = [], days =
     {
       key: 'open',
       label: 'Open rate',
-      value: open.value != null ? `${open.value.toFixed(1)}%` : '—',
-      delta: open.value != null || hasTracked ? open.delta.text : 'No deliveries yet',
-      tone: open.delta.tone,
+      value: openValue != null ? `${openValue.toFixed(1)}%` : '—',
+      delta: openValue != null || hasTracked ? openTrend.delta.text : 'No deliveries yet',
+      tone: openTrend.delta.tone,
       context:
         s.messages.opened != null && hasTracked ? `${n(s.messages.opened)} total opens` : null,
       spark: weeklySpark(s.trends?.openRate, days),
@@ -374,9 +393,9 @@ export function buildKpis(s: Summary | null, daily: ActivityPoint[] = [], days =
     {
       key: 'click',
       label: 'Click rate',
-      value: click.value != null ? `${click.value.toFixed(1)}%` : '—',
-      delta: click.value != null || hasTracked ? click.delta.text : 'No deliveries yet',
-      tone: click.delta.tone,
+      value: clickValue != null ? `${clickValue.toFixed(1)}%` : '—',
+      delta: clickValue != null || hasTracked ? clickTrend.delta.text : 'No deliveries yet',
+      tone: clickTrend.delta.tone,
       context:
         s.messages.clicked != null && hasTracked ? `${n(s.messages.clicked)} total clicks` : null,
       spark: weeklySpark(s.trends?.clickRate, days),

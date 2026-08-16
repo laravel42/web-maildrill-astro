@@ -12,6 +12,7 @@ import type { FeedItem } from './AppDashboard.types';
 import Icon from './Icon';
 import { CHANNEL } from './shared/channels';
 import { agoNow } from './shared/time';
+import { channelReportConfig } from '@/lib/app/campaign-report';
 import {
   buildGetStarted,
   buildKpis,
@@ -218,7 +219,7 @@ export default function AppDashboard({
 
   const busy = bootLoading || rangeLoading;
   const channelTotal = channels.reduce((t, c) => t + c.sent, 0);
-  const kpis = buildKpis(summary, daily, days);
+  const kpis = buildKpis(summary, daily, days, channels);
   const recent = buildRecent(campaigns);
   const getStarted = buildGetStarted(summary);
 
@@ -307,7 +308,7 @@ export default function AppDashboard({
           <div className={styles.ctHead}>
             <span>Campaign</span>
             <span>Recipients</span>
-            <span>Open</span>
+            <span>Open / Seen</span>
             <span>Sent</span>
           </div>
           {bootLoading ? (
@@ -328,22 +329,31 @@ export default function AppDashboard({
                   Sent campaigns show up here once a send finishes.
                 </p>
               )}
-              {recent.map((c) => (
-                <a
-                  key={c.id}
-                  href={`/dashboard/campaigns?open=${encodeURIComponent(c.id)}`}
-                  className={styles.ctRow}
-                >
-                  <span className={styles.ctName}>{c.name}</span>
-                  <span className={`tnum ${styles.muted3}`}>
-                    {c.recipients.toLocaleString('en-US')}
-                  </span>
-                  <span className={`tnum ${styles.muted3}`}>
-                    {c.openRate != null ? `${Math.round(c.openRate * 100)}%` : '—'}
-                  </span>
-                  <span className={styles.muted}>{agoNow(campaignSentAt(c))}</span>
-                </a>
-              ))}
+              {recent.map((c) => {
+                const cfg = channelReportConfig(c.channel);
+                const tracksOpen = cfg.rateCards.some((r) => r === 'open' || r === 'seen');
+                return (
+                  <a
+                    key={c.id}
+                    href={`/dashboard/campaigns?open=${encodeURIComponent(c.id)}`}
+                    className={styles.ctRow}
+                  >
+                    <span className={styles.ctName}>{c.name}</span>
+                    <span className={`tnum ${styles.muted3}`}>
+                      {c.recipients.toLocaleString('en-US')}
+                    </span>
+                    <span
+                      className={`tnum ${styles.muted3}`}
+                      title={tracksOpen ? cfg.openLabel : 'Not tracked on this channel'}
+                    >
+                      {tracksOpen && c.openRate != null
+                        ? `${Math.round(c.openRate * 100)}%`
+                        : '—'}
+                    </span>
+                    <span className={styles.muted}>{agoNow(campaignSentAt(c))}</span>
+                  </a>
+                );
+              })}
             </>
           )}
         </div>
