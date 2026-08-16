@@ -696,10 +696,6 @@
   color: #fff;
   box-shadow: 0 0 0 2px var(--surface);
 }
-.sbdStats {
-  grid-template-columns: 1fr 1fr;
-  margin-bottom: 22px;
-}
 .sbdSection {
   margin-bottom: 22px;
 }

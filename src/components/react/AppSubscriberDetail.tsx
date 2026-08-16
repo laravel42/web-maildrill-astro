@@ -4,11 +4,15 @@ import ConfirmDialog from './shared/ConfirmDialog';
 import { useToast } from './shared/useToast';
 import { api, ApiError } from '@/lib/app/api';
 import { routes } from '@/config/routes';
+import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
+import { channelKpis, EMPTY_TOTALS } from '@/lib/app/channel-kpis';
+import { channelReportConfig } from '@/lib/app/campaign-report';
+import { engagementScore, engagementTier } from '@/lib/app/subscriber-detail';
+import type { ChannelType } from '@/types/app';
 import { tagStyle } from '@/lib/app/tag-style';
 import {
   buildSubscriberDetailView,
   scoreArcLength,
-  type ActivityFilter,
   type ApiSubscriberActivity,
   type DetailTab,
   type SubscriberDetailView,
@@ -31,14 +35,6 @@ type Props = {
   activity?: ApiSubscriberActivity | null;
   allLists?: { id: string; name: string; color?: string | null }[];
 };
-
-const FILTERS: { id: ActivityFilter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'open', label: 'Email opens' },
-  { id: 'click', label: 'Clicks' },
-  { id: 'send', label: 'Sends' },
-  { id: 'life', label: 'Lifecycle' },
-];
 
 function EventIcon({ type }: { type: string }) {
   const common = {
@@ -96,7 +92,7 @@ export default function AppSubscriberDetail({
   const [attrs, setAttrs] = useState(attributes);
   const [act, setAct] = useState(activity);
   const [tab, setTab] = useState<DetailTab>('activity');
-  const [filter, setFilter] = useState<ActivityFilter>('all');
+  const [channel, setChannel] = useState<ChannelType>('email');
   const [menuOpen, setMenuOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -158,26 +154,64 @@ export default function AppSubscriberDetail({
     [sub, act, attrs],
   );
 
+  // Engagement only exists where the channel reports opens or clicks. On SMS
+  // and voice the ring, the meters and the weekly chart were all rendering 0,
+  // which claims the subscriber ignored the message rather than saying the
+  // channel never measured it.
+  const chanCfg = channelReportConfig(channel);
+  const tracksEngagement = chanCfg.rateCards.some(
+    (r) => r === 'open' || r === 'seen' || r === 'click',
+  );
+  const chanTotals = view.channelTotals?.[channel] ?? EMPTY_TOTALS;
+  const chanWeeks = view.weeksByChannel?.[channel] ?? [];
+  const chanOpenRate =
+    chanTotals.delivered > 0 ? Math.round((chanTotals.opened / chanTotals.delivered) * 100) : null;
+  const chanClickRate =
+    chanTotals.delivered > 0 ? Math.round((chanTotals.clicked / chanTotals.delivered) * 100) : null;
+  // Score the selected channel, not the subscriber overall: under a WhatsApp
+  // filter with no WhatsApp sends the all-channel score read "Low engagement"
+  // off email activity.
+  const chanScore = engagementScore(chanOpenRate, chanClickRate);
+  const chanTier =
+    chanTotals.attempted === 0
+      ? `No ${CHANNEL[channel].label} sends yet`
+      : engagementTier(chanScore);
+  const softFailures = Math.max(0, chanTotals.failed - chanTotals.failedPermanent);
+  // A permanent failure on this channel is the address being dead; a run of
+  // transient ones still deserves attention, but is not the same verdict.
+  const chanHealthBad = chanTotals.failedPermanent > 0 || chanTotals.complaints > 0;
+  const chanHealthLabel =
+    chanTotals.attempted === 0
+      ? 'No sends'
+      : chanTotals.complaints > 0
+        ? 'Complained'
+        : chanTotals.failedPermanent > 0
+          ? channel === 'email'
+            ? 'Bounced'
+            : 'Unreachable'
+          : 'Healthy';
+  const chanDeliveryRate =
+    chanTotals.attempted > 0
+      ? Math.round((chanTotals.delivered / chanTotals.attempted) * 100)
+      : null;
+
   const filteredEvents = useMemo(
-    () => (filter === 'all' ? view.events : view.events.filter((e) => e.type === filter)),
-    [view.events, filter],
+    () => {
+      return view.events.filter((e) => e.channel === channel);
+    },
+    [view.events, channel],
   );
 
-  const filterCounts = useMemo(() => {
-    const c: Record<ActivityFilter, number> = {
-      all: view.events.length,
-      open: 0,
-      click: 0,
-      send: 0,
-      life: 0,
-    };
-    for (const e of view.events) c[e.type] += 1;
-    return c;
-  }, [view.events]);
+  // The campaigns tab lists sends, so it belongs to the channel filter too.
+  const chanCampaigns = useMemo(
+    () => view.campaigns.filter((c) => c.channel.toLowerCase() === channel),
+    [view.campaigns, channel],
+  );
 
   const BAR_H = 104;
-  const maxWeek = Math.max(1, ...view.weeks.map((w) => Math.max(w.opens, w.clicks)));
-  const weekTotal = view.weeks.reduce((n, w) => n + w.opens + w.clicks, 0);
+  const chartWeeks = chanWeeks.length > 0 ? chanWeeks : view.weeks;
+  const maxWeek = Math.max(1, ...chartWeeks.map((w) => Math.max(w.opens, w.clicks)));
+  const weekTotal = chartWeeks.reduce((n, w) => n + w.opens + w.clicks, 0);
   const barPx = (n: number) => {
     if (n <= 0) return 0;
     return Math.max(3, Math.round((n / maxWeek) * BAR_H));
@@ -432,6 +466,24 @@ export default function AppSubscriberDetail({
           </div>
         </section>
 
+        <div className={styles.chanBar}>
+          <span className={styles.chanBarLabel}>Channel</span>
+          <div className={`aseg ${styles.chanSeg}`} role="group" aria-label="Filter by channel">
+            {CHANNEL_ORDER.map((ch) => (
+              <button
+                type="button"
+                key={ch}
+                className={`aseg__opt ${styles.chanSegOpt}${channel === ch ? ' is-active' : ''}`}
+                aria-pressed={channel === ch}
+                onClick={() => setChannel(ch)}
+              >
+                <span className={styles.chanDot} style={{ background: CHANNEL[ch].color }} />
+                {CHANNEL[ch].label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className={styles.layout}>
           <div className={styles.colMain}>
             <section className={`${styles.card} ${styles.score}`} aria-label="Engagement score">
@@ -454,19 +506,42 @@ export default function AppSubscriberDetail({
                       stroke="var(--accent)"
                       strokeWidth="10"
                       strokeLinecap="round"
-                      strokeDasharray={scoreArcLength(view.score)}
+                      strokeDasharray={scoreArcLength(
+                        tracksEngagement ? chanScore : (chanDeliveryRate ?? 0),
+                      )}
                       data-score-arc
                     />
                   </svg>
                   <div className={styles.ringValue}>
-                    <span className={`${styles.ringNumber} ${styles.tnum}`}>{view.score}</span>
-                    <span className={styles.ringOf}>of 100</span>
+                    <span className={`${styles.ringNumber} ${styles.tnum}`}>
+                      {tracksEngagement
+                        ? chanTotals.attempted === 0
+                          ? '—'
+                          : chanScore
+                        : chanDeliveryRate == null
+                          ? '—'
+                          : `${chanDeliveryRate}%`}
+                    </span>
+                    <span className={styles.ringOf}>{tracksEngagement ? 'of 100' : 'delivered'}</span>
                   </div>
                 </div>
                 <div>
-                  <p className={styles.overline}>Engagement</p>
-                  <p className={styles.scoreTier}>{view.scoreTier}</p>
-                  {view.scoreDeltaLabel && (
+                  <p className={styles.overline}>
+                    {tracksEngagement ? 'Engagement' : 'Delivery'}
+                  </p>
+                  <p className={styles.scoreTier}>
+                    {tracksEngagement
+                      ? chanTier
+                      : chanTotals.attempted === 0
+                        ? `No ${CHANNEL[channel].label} sends yet`
+                        : `${chanTotals.delivered} of ${chanTotals.attempted} delivered`}
+                  </p>
+                  {!tracksEngagement && (
+                    <p className={styles.scoreNote}>
+                      {`${CHANNEL[channel].label} reports delivery only — no opens or clicks exist to score.`}
+                    </p>
+                  )}
+                  {tracksEngagement && view.scoreDeltaLabel && (
                     <p className={styles.scoreDelta}>
                       <svg
                         width="12"
@@ -487,34 +562,42 @@ export default function AppSubscriberDetail({
                 </div>
               </div>
               <ul className={styles.meters}>
-                <li>
-                  <div className={styles.meterHead}>
-                    <span className={styles.meterLabel}>Avg. Opens</span>
-                    <span className={`${styles.meterValue} ${styles.tnum}`}>
-                      {view.openRate == null ? '—' : `${view.openRate}%`}
-                    </span>
-                  </div>
-                  <div className={styles.meterTrack}>
-                    <div
-                      className={styles.meterFill}
-                      style={{ width: `${view.openRate ?? 0}%`, background: '#4f46e5' }}
-                    />
-                  </div>
-                </li>
-                <li>
-                  <div className={styles.meterHead}>
-                    <span className={styles.meterLabel}>Avg. Clicks</span>
-                    <span className={`${styles.meterValue} ${styles.tnum}`}>
-                      {view.clickRate == null ? '—' : `${view.clickRate}%`}
-                    </span>
-                  </div>
-                  <div className={styles.meterTrack}>
-                    <div
-                      className={styles.meterFill}
-                      style={{ width: `${view.clickRate ?? 0}%`, background: '#6366f1' }}
-                    />
-                  </div>
-                </li>
+                {(tracksEngagement
+                  ? [
+                      {
+                        label: chanCfg.openLabel === 'Seen' ? 'Seen rate' : 'Avg. Opens',
+                        pct: chanOpenRate,
+                        color: '#4f46e5',
+                      },
+                      { label: 'Avg. Clicks', pct: chanClickRate, color: '#6366f1' },
+                    ]
+                  : [
+                      { label: 'Delivered', pct: chanDeliveryRate, color: '#16a34a' },
+                      {
+                        label: 'Failed',
+                        pct:
+                          chanTotals.attempted > 0
+                            ? Math.round((chanTotals.failed / chanTotals.attempted) * 100)
+                            : null,
+                        color: 'var(--danger)',
+                      },
+                    ]
+                ).map((m) => (
+                  <li key={m.label}>
+                    <div className={styles.meterHead}>
+                      <span className={styles.meterLabel}>{m.label}</span>
+                      <span className={`${styles.meterValue} ${styles.tnum}`}>
+                        {m.pct == null ? '—' : `${m.pct}%`}
+                      </span>
+                    </div>
+                    <div className={styles.meterTrack}>
+                      <div
+                        className={styles.meterFill}
+                        style={{ width: `${m.pct ?? 0}%`, background: m.color }}
+                      />
+                    </div>
+                  </li>
+                ))}
                 <li>
                   <div className={styles.meterHead}>
                     <span className={styles.meterLabel}>Frequency</span>
@@ -532,40 +615,39 @@ export default function AppSubscriberDetail({
               </ul>
             </section>
 
-            <section className={styles.stats} aria-label="Lifetime analytics">
-              <div className={styles.stat}>
-                <p className={styles.overline}>Emails sent</p>
-                <p className={`${styles.statValue} ${styles.tnum}`}>{view.emailsSent}</p>
-                <p className={styles.statSub}>All time</p>
+            <section aria-label="Channel performance">
+              <div className={styles.chanHead}>
+                <div>
+                  <h2 className={styles.cardTitle}>Channel performance</h2>
+                  <p className={styles.chanSub}>
+                    {`${CHANNEL[channel].label} messages sent to this subscriber`}
+                  </p>
+                </div>
               </div>
-              <div className={styles.stat}>
-                <p className={styles.overline}>Avg. Opens</p>
-                <p className={`${styles.statValue} ${styles.tnum}`}>
-                  {view.openRate == null ? '—' : `${view.openRate}%`}
-                </p>
-                <p className={styles.statSub}>Of delivered messages</p>
-              </div>
-              <div className={styles.stat}>
-                <p className={styles.overline}>Avg. Clicks</p>
-                <p className={`${styles.statValue} ${styles.tnum}`}>
-                  {view.clickRate == null ? '—' : `${view.clickRate}%`}
-                </p>
-                <p className={styles.statSub}>Of delivered messages</p>
-              </div>
-              <div className={styles.stat}>
-                <p className={styles.overline}>Bounces</p>
-                <p className={`${styles.statValue} ${styles.tnum}`}>{view.bounces}</p>
-                <p className={styles.statSub}>
-                  {sub.status === 'bounced' ? 'Hard bounce on file' : 'No hard bounces'}
-                </p>
+              <div className={styles.stats}>
+                {channelKpis(channel, view.channelTotals?.[channel] ?? EMPTY_TOTALS).map((k) => (
+                  <div key={k.key} className={styles.stat}>
+                    <p className={styles.overline}>{k.label}</p>
+                    <p
+                      className={`${styles.statValue} ${styles.tnum}`}
+                      style={k.alert ? { color: 'var(--danger-text)' } : undefined}
+                    >
+                      {k.value}
+                    </p>
+                    <p className={styles.statSub}>{k.sub}</p>
+                  </div>
+                ))}
               </div>
             </section>
 
+            {!tracksEngagement ? null : (
             <section className={`${styles.card} ${styles.chart}`} aria-label="Engagement over time">
               <div className={styles.chartHead}>
                 <div>
                   <h2 className={styles.cardTitle}>Engagement over time</h2>
-                  <p className={styles.chartSub}>Opens and clicks per week, last 12 weeks</p>
+                  <p className={styles.chartSub}>
+                    {`${chanCfg.openLabel === 'Seen' ? 'Reads' : 'Opens'} and clicks per week on ${CHANNEL[channel].label}, last 12 weeks`}
+                  </p>
                 </div>
                 <div className={styles.legend}>
                   <span>
@@ -582,7 +664,7 @@ export default function AppSubscriberDetail({
                 <p className={styles.chartEmpty}>No opens or clicks in the last 12 weeks.</p>
               ) : (
                 <ul className={styles.barChart} onMouseLeave={() => setHoverWeek(null)}>
-                  {view.weeks.map((w, i) => (
+                  {chartWeeks.map((w, i) => (
                     <li
                       key={`${w.label}-${w.opens}-${w.clicks}`}
                       className={`${styles.barGroup}${hoverWeek === i ? ` ${styles.barGroupHover}` : ''}`}
@@ -615,13 +697,14 @@ export default function AppSubscriberDetail({
                 </ul>
               )}
             </section>
+            )}
 
             <section className={`${styles.card} ${styles.tabsCard}`}>
               <div className={styles.tabs} role="tablist" aria-label="Subscriber detail sections">
                 {(
                   [
-                    ['activity', 'Activity', view.events.length],
-                    ['campaigns', 'Campaigns', view.campaigns.length],
+                    ['activity', 'Activity', filteredEvents.length],
+                    ['campaigns', 'Campaigns', chanCampaigns.length],
                     ['links', 'Clicked links', view.links.length],
                   ] as const
                 ).map(([id, label, count]) => (
@@ -641,24 +724,14 @@ export default function AppSubscriberDetail({
 
               {tab === 'activity' && (
                 <div role="tabpanel">
-                  <div className={styles.filters}>
-                    {FILTERS.map((f) => (
-                      <button
-                        key={f.id}
-                        className={`${styles.chip} ${filter === f.id ? styles.isActive : ''}`}
-                        type="button"
-                        onClick={() => setFilter(f.id)}
-                      >
-                        {f.label} · {filterCounts[f.id]}
-                      </button>
-                    ))}
-                    <span className={`${styles.filtersCount} ${styles.tnum}`}>
-                      Showing {filteredEvents.length} of {view.events.length} events
-                    </span>
-                  </div>
+                  {/* The type filter (opens / clicks / sends / lifecycle) is
+                      hidden until it follows the channel selection: on a
+                      delivery-only channel its Opens and Clicks chips can only
+                      ever read 0, which says the subscriber ignored the message
+                      rather than that the channel never measured one. */}
                   <ul className={styles.events}>
                     {filteredEvents.length === 0 ? (
-                      <li className={styles.empty}>No activity of this type yet.</li>
+                      <li className={styles.empty}>No activity in the last 12 weeks.</li>
                     ) : (
                       filteredEvents.map((e) => (
                         <li key={e.id} className={styles.event}>
@@ -685,7 +758,7 @@ export default function AppSubscriberDetail({
 
               {tab === 'campaigns' && (
                 <div role="tabpanel">
-                  {view.campaigns.length === 0 ? (
+                  {chanCampaigns.length === 0 ? (
                     <p className={styles.empty}>No campaign sends yet.</p>
                   ) : (
                     <table className={styles.table}>
@@ -699,7 +772,7 @@ export default function AppSubscriberDetail({
                         </tr>
                       </thead>
                       <tbody>
-                        {view.campaigns.map((c) => (
+                        {chanCampaigns.map((c) => (
                           <tr key={c.id}>
                             <td>
                               <span className={styles.cellTitle}>{c.name}</span>
@@ -861,33 +934,54 @@ export default function AppSubscriberDetail({
               <div className={styles.railHead}>
                 <p className={`adrawer__eyebrow ${styles.railEyebrow}`}>Deliverability</p>
                 <span
-                  className={`${styles.badge} ${sub.status === 'bounced' ? '' : styles.badgeActive}`}
+                  className={`${styles.badge} ${chanHealthBad ? '' : styles.badgeActive}`}
                 >
-                  {sub.status === 'bounced' ? 'Bounced' : 'Healthy'}
+                  {chanHealthLabel}
+                </span>
+              </div>
+              <div className="adetail">
+                <span className="adetail__k">{CHANNEL[channel].label}</span>
+                <span className="adetail__v tnum">
+                  {chanTotals.attempted === 0
+                    ? 'No sends'
+                    : `${chanTotals.attempted.toLocaleString('en-US')} sent`}
                 </span>
               </div>
               <div className="adetail">
                 <span className="adetail__k">Delivery rate</span>
                 <span
                   className={`adetail__v tnum${
-                    view.deliveryRate != null ? ` ${styles.railValueOk}` : ''
+                    chanDeliveryRate != null ? ` ${styles.railValueOk}` : ''
                   }`}
                 >
-                  {view.deliveryRate == null ? '—' : `${view.deliveryRate}%`}
+                  {chanDeliveryRate == null ? '—' : `${chanDeliveryRate}%`}
                 </span>
               </div>
               <div className="adetail">
-                <span className="adetail__k">Soft bounces</span>
-                <span className="adetail__v tnum">—</span>
+                <span className="adetail__k">
+                  {channel === 'email' ? 'Soft bounces' : 'Temporary failures'}
+                </span>
+                <span className="adetail__v tnum">{softFailures === 0 ? '—' : softFailures}</span>
               </div>
               <div className="adetail">
-                <span className="adetail__k">Hard bounces</span>
-                <span className="adetail__v tnum">{view.bounces === 0 ? '—' : view.bounces}</span>
+                <span className="adetail__k">
+                  {channel === 'email' ? 'Hard bounces' : 'Permanent failures'}
+                </span>
+                <span className="adetail__v tnum">
+                  {chanTotals.failedPermanent === 0 ? '—' : chanTotals.failedPermanent}
+                </span>
               </div>
-              <div className="adetail">
-                <span className="adetail__k">Spam complaints</span>
-                <span className="adetail__v tnum">—</span>
-              </div>
+              {/* Only email has a complaint feedback loop — WhatsApp, SMS and
+                  voice have no such signal, so the row would sit at "—" for
+                  ever and read as "never complained". */}
+              {channel === 'email' && (
+                <div className="adetail">
+                  <span className="adetail__k">Spam complaints</span>
+                  <span className="adetail__v tnum">
+                    {chanTotals.complaints === 0 ? '—' : chanTotals.complaints}
+                  </span>
+                </div>
+              )}
             </section>
 
             <section className={`${styles.card} ${styles.cardPad}`}>

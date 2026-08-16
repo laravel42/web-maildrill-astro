@@ -105,7 +105,8 @@ export async function upsertSubscriber(input: UpsertSubscriberInput): Promise<Su
   // resolveAudience never sends to — rather than refused, so the row still
   // lands in the CRM with a reason attached.
   const checked = input.status ? null : await validateEmailAddress(email);
-  const status: SubscriberStatus = input.status ?? (checked?.valid === false ? 'invalid' : 'active');
+  const status: SubscriberStatus =
+    input.status ?? (checked?.valid === false ? 'invalid' : 'active');
   const rows = await db
     .insert(subscribers)
     .values({
@@ -430,6 +431,12 @@ export interface SubscriberChannelStat {
   read: number;
   /** Messages with at least one click event. */
   clicked: number;
+  /** Permanently or temporarily undeliverable to this subscriber. */
+  failed: number;
+  /** Of those, the ones whose error was permanent — a hard bounce on email. */
+  failedPermanent: number;
+  /** Spam complaints. Only email reports these; every other channel stays 0. */
+  complaints: number;
 }
 export interface SubscriberActivityEvent {
   id: string;
@@ -455,6 +462,11 @@ export interface SubscriberActivity {
   recent: SubscriberActivityEvent[];
   /** Opens/clicks per ISO week for the trailing 12 weeks (oldest → newest). */
   weekly: SubscriberWeeklyPoint[];
+  /**
+   * The same series split by channel, for the channel-filtered detail page.
+   * Only email and WhatsApp appear — no other channel reports an open.
+   */
+  weeklyByChannel: Record<string, SubscriberWeeklyPoint[]>;
 }
 
 /** The latest known timestamp for a message row (read → delivered → sent → submitted → created). */
@@ -470,70 +482,107 @@ export async function subscriberActivity(
   const weeks = lastIsoWeeks();
   const since = weeks[0]!.start;
 
-  const [channelRows, clickRows, lastRows, recentRows, openTimes, clickTimes] = await Promise.all([
-    db
-      .select({
-        channel: messages.channel,
-        // Status-based so a message counts even when the pipeline skipped a
-        // timestamp (e.g. delivered without a sent_at).
-        sent: sql<number>`count(*) filter (where ${messages.status} in ('submitted','sent','delivered','read'))::int`,
-        delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered','read'))::int`,
-        read: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
-      })
-      .from(messages)
-      .where(mine)
-      .groupBy(messages.channel),
-    db
-      .select({
-        channel: messages.channel,
-        clicked: sql<number>`count(distinct ${messageEvents.messageId})::int`,
-      })
-      .from(messageEvents)
-      .innerJoin(messages, eq(messageEvents.messageId, messages.id))
-      .where(and(mine, eq(messageEvents.eventType, 'click')))
-      .groupBy(messages.channel),
-    db
-      .select({
-        at: sql<string | null>`to_char(max(${messageAt}) at time zone 'utc', ${isoFmt})`,
-      })
-      .from(messages)
-      .where(mine),
-    db
-      .select({
-        id: messages.id,
-        channel: messages.channel,
-        status: messages.status,
-        campaignName: campaigns.name,
-        at: sql<string>`to_char(${messageAt} at time zone 'utc', ${isoFmt})`,
-      })
-      .from(messages)
-      .leftJoin(campaigns, eq(campaigns.id, messages.campaignId))
-      .where(mine)
-      .orderBy(desc(messageAt))
-      .limit(10),
-    db
-      .select({ at: messages.readAt })
-      .from(messages)
-      .where(and(mine, isNotNull(messages.readAt), gte(messages.readAt, since))),
-    db
-      .select({
-        at: sql<Date | null>`coalesce(${messageEvents.occurredAt}, ${messageEvents.createdAt})`,
-      })
-      .from(messageEvents)
-      .innerJoin(messages, eq(messageEvents.messageId, messages.id))
-      .where(
-        and(
-          mine,
-          eq(messageEvents.eventType, 'click'),
-          sql`coalesce(${messageEvents.occurredAt}, ${messageEvents.createdAt}) >= ${since}`,
+  const [channelRows, clickRows, complaintRows, lastRows, recentRows, openTimes, clickTimes] =
+    await Promise.all([
+      db
+        .select({
+          channel: messages.channel,
+          // Status-based so a message counts even when the pipeline skipped a
+          // timestamp (e.g. delivered without a sent_at).
+          sent: sql<number>`count(*) filter (where ${messages.status} in ('submitted','sent','delivered','read'))::int`,
+          delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered','read'))::int`,
+          read: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
+          // Per-subscriber failures are the actionable signal on every channel:
+          // they say this person's address or number is not reachable.
+          failed: sql<number>`count(*) filter (where ${messages.status} = 'failed')::int`,
+          // A permanent failure is the address itself being dead — a hard bounce
+          // on email. A transient one (full mailbox, handset off) is not, and the
+          // two call for different action, so the deliverability panel splits them.
+          failedPermanent: sql<number>`count(*) filter (where ${messages.status} = 'failed' and ${messages.lastErrorPermanent} is true)::int`,
+        })
+        .from(messages)
+        .where(mine)
+        .groupBy(messages.channel),
+      db
+        .select({
+          channel: messages.channel,
+          clicked: sql<number>`count(distinct ${messageEvents.messageId})::int`,
+        })
+        .from(messageEvents)
+        .innerJoin(messages, eq(messageEvents.messageId, messages.id))
+        .where(and(mine, eq(messageEvents.eventType, 'click')))
+        .groupBy(messages.channel),
+      db
+        .select({
+          channel: messages.channel,
+          complaints: sql<number>`count(distinct ${messageEvents.messageId})::int`,
+        })
+        .from(messageEvents)
+        .innerJoin(messages, eq(messageEvents.messageId, messages.id))
+        .where(and(mine, eq(messageEvents.eventType, 'complaint')))
+        .groupBy(messages.channel),
+      db
+        .select({
+          at: sql<string | null>`to_char(max(${messageAt}) at time zone 'utc', ${isoFmt})`,
+        })
+        .from(messages)
+        .where(mine),
+      db
+        .select({
+          id: messages.id,
+          channel: messages.channel,
+          status: messages.status,
+          campaignName: campaigns.name,
+          at: sql<string>`to_char(${messageAt} at time zone 'utc', ${isoFmt})`,
+        })
+        .from(messages)
+        .leftJoin(campaigns, eq(campaigns.id, messages.campaignId))
+        .where(mine)
+        .orderBy(desc(messageAt))
+        .limit(10),
+      db
+        // Channel comes along so the weekly series can be split per channel —
+        // the detail page filters by channel and must not credit an email open
+        // to WhatsApp.
+        .select({ at: messages.readAt, channel: messages.channel })
+        .from(messages)
+        .where(and(mine, isNotNull(messages.readAt), gte(messages.readAt, since))),
+      db
+        .select({
+          at: sql<Date | null>`coalesce(${messageEvents.occurredAt}, ${messageEvents.createdAt})`,
+          channel: messages.channel,
+        })
+        .from(messageEvents)
+        .innerJoin(messages, eq(messageEvents.messageId, messages.id))
+        .where(
+          and(
+            mine,
+            eq(messageEvents.eventType, 'click'),
+            sql`coalesce(${messageEvents.occurredAt}, ${messageEvents.createdAt}) >= ${since}`,
+          ),
         ),
-      ),
-  ]);
+    ]);
 
-  const openTs = openTimes.map((r) => asDate(r.at)).filter((t): t is Date => t != null);
-  const clickTs = clickTimes.map((r) => asDate(r.at)).filter((t): t is Date => t != null);
-  const opensByWeek = bucketByWeek(openTs, weeks);
-  const clicksByWeek = bucketByWeek(clickTs, weeks);
+  const tsFor = (rows: Array<{ at: unknown; channel?: string | null }>, channel?: string) =>
+    rows
+      .filter((r) => (channel ? r.channel === channel : true))
+      .map((r) => asDate(r.at as never))
+      .filter((t): t is Date => t != null);
+  const opensByWeek = bucketByWeek(tsFor(openTimes), weeks);
+  const clicksByWeek = bucketByWeek(tsFor(clickTimes), weeks);
+  // Same buckets, one series per channel that can report engagement at all.
+  const ENGAGEMENT_CHANNELS = ['email', 'whatsapp'] as const;
+  const weeklyByChannel: Record<string, SubscriberWeeklyPoint[]> = {};
+  for (const ch of ENGAGEMENT_CHANNELS) {
+    const o = bucketByWeek(tsFor(openTimes, ch), weeks);
+    const c = bucketByWeek(tsFor(clickTimes, ch), weeks);
+    weeklyByChannel[ch] = weeks.map((w, i) => ({
+      label: w.label,
+      weekStart: w.start.toISOString(),
+      opens: o[i] ?? 0,
+      clicks: c[i] ?? 0,
+    }));
+  }
 
   return {
     lastActiveAt: lastRows[0]?.at ?? null,
@@ -543,6 +592,9 @@ export async function subscriberActivity(
       delivered: Number(r.delivered),
       read: Number(r.read),
       clicked: Number(clickRows.find((c) => c.channel === r.channel)?.clicked ?? 0),
+      failed: Number(r.failed),
+      failedPermanent: Number(r.failedPermanent),
+      complaints: Number(complaintRows.find((c) => c.channel === r.channel)?.complaints ?? 0),
     })),
     recent: recentRows.map((r) => ({
       id: r.id,
@@ -551,6 +603,7 @@ export async function subscriberActivity(
       campaignName: r.campaignName ?? null,
       at: r.at,
     })),
+    weeklyByChannel,
     weekly: weeks.map((w, i) => ({
       label: w.label,
       weekStart: w.start.toISOString(),

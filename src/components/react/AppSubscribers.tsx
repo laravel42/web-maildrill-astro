@@ -28,6 +28,7 @@ import TagFilter from './shared/TagFilter';
 import ColFilter from './shared/ColFilter';
 import FilterChipsRow from './shared/FilterChipsRow';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
+import { channelReportConfig } from '@/lib/app/campaign-report';
 import { ago, agoNow } from './shared/time';
 import { useToast } from './shared/useToast';
 import { useEscapeClose } from './shared/useEscapeClose';
@@ -1409,6 +1410,7 @@ type ApiSubscriberActivity = {
     delivered: number;
     read: number;
     clicked?: number;
+    failed?: number;
   }[];
 };
 
@@ -1472,7 +1474,8 @@ function SubscriberDrawer({
 
   const statusLabel = STATUS_LABEL[sub.status];
 
-  type ChanRow = { ch: ChannelType; on: boolean; meta: string; open: string; click: string };
+  type ChanMetric = { label: string; value: string; alert?: boolean };
+  type ChanRow = { ch: ChannelType; on: boolean; meta: string; metrics: ChanMetric[] };
 
   // "Last active" is the most recent real message timestamp; falls back to the
   // fixture value only in the marketing preview.
@@ -1494,17 +1497,36 @@ function SubscriberDrawer({
       const delivered = s?.delivered ?? 0;
       const read = s?.read ?? 0;
       const clicked = s?.clicked ?? 0;
-      // Email and WhatsApp track engagement, so a real 0% is shown; SMS and
-      // voice have no open/click signal at all, so they stay "—".
-      const tracked = ch === 'email' || ch === 'whatsapp';
-      const pctOf = (v: number) =>
-        tracked && delivered > 0 ? `${Math.round((v / delivered) * 100)}%` : '—';
+      const failed = s?.failed ?? 0;
+      // Each channel reports only what it can measure, read from the same
+      // config the campaign and template views use. Email and WhatsApp track
+      // engagement; SMS and voice know delivery and nothing else, so showing
+      // them an open rate only ever produced a meaningless dash.
+      const cfg = channelReportConfig(ch);
+      const hasOpen = cfg.rateCards.some((r) => r === 'open' || r === 'seen');
+      const hasClick = cfg.rateCards.includes('click');
+      const pctOf = (v: number, denom: number) =>
+        denom > 0 ? `${Math.round((v / denom) * 100)}%` : '—';
+      const metrics: ChanMetric[] = [];
+      if (hasOpen) {
+        metrics.push({ label: cfg.openLabel === 'Seen' ? 'seen' : 'open', value: pctOf(read, delivered) });
+      }
+      if (hasClick) metrics.push({ label: 'click', value: pctOf(clicked, delivered) });
+      if (!hasOpen && !hasClick) {
+        metrics.push({ label: 'delivered', value: pctOf(delivered, sent) });
+      }
+      // Failures are the one number that tells you to act on this subscriber,
+      // so every channel carries it.
+      metrics.push({
+        label: 'failed',
+        value: sent > 0 ? failed.toLocaleString('en-US') : '—',
+        alert: failed > 0,
+      });
       return {
         ch,
         on: sent > 0,
         meta: sent > 0 ? `${sent.toLocaleString('en-US')} sent` : 'No messages yet',
-        open: pctOf(read),
-        click: pctOf(clicked),
+        metrics,
       };
     });
   } else if (live) {
@@ -1513,33 +1535,54 @@ function SubscriberDrawer({
       ch,
       on: false,
       meta: 'No messages yet',
-      open: '—',
-      click: '—',
+      metrics: [
+        { label: channelReportConfig(ch).rateCards.some((r) => r === 'open' || r === 'seen')
+            ? (channelReportConfig(ch).openLabel === 'Seen' ? 'seen' : 'open')
+            : 'delivered',
+          value: '—' },
+        { label: 'failed', value: '—' },
+      ],
     }));
   } else {
     // Fixture/marketing preview keeps its illustrative values.
     channelRows = [
-      { ch: 'email', on: reach.email, meta: '24 sent', open: sub.opens, click: sub.clicks },
+      {
+        ch: 'email',
+        on: reach.email,
+        meta: '24 sent',
+        metrics: [
+          { label: 'open', value: sub.opens },
+          { label: 'click', value: sub.clicks },
+          { label: 'failed', value: '1', alert: true },
+        ],
+      },
       {
         ch: 'sms',
         on: reach.sms,
         meta: reach.sms ? '6 sent' : 'Not opted in',
-        open: reach.sms ? '58%' : '—',
-        click: reach.sms ? '21%' : '—',
+        metrics: [
+          { label: 'delivered', value: reach.sms ? '83%' : '—' },
+          { label: 'failed', value: reach.sms ? '1' : '—', alert: reach.sms },
+        ],
       },
       {
         ch: 'whatsapp',
         on: reach.whatsapp,
         meta: reach.whatsapp ? '3 sent' : 'Not opted in',
-        open: reach.whatsapp ? '92%' : '—',
-        click: reach.whatsapp ? '34%' : '—',
+        metrics: [
+          { label: 'seen', value: reach.whatsapp ? '92%' : '—' },
+          { label: 'click', value: reach.whatsapp ? '34%' : '—' },
+          { label: 'failed', value: reach.whatsapp ? '0' : '—' },
+        ],
       },
       {
         ch: 'voice',
         on: reach.voice,
         meta: reach.voice ? '2 calls' : 'Not opted in',
-        open: reach.voice ? '75%' : '—',
-        click: '—',
+        metrics: [
+          { label: 'delivered', value: reach.voice ? '75%' : '—' },
+          { label: 'failed', value: reach.voice ? '0' : '—' },
+        ],
       },
     ];
   }
@@ -1590,17 +1633,10 @@ function SubscriberDrawer({
             </div>
           </div>
 
-          {/* stat cards */}
-          <div className={`adrawer__kpis ${styles.sbdStats}`}>
-            <div className="adrawer__kpi">
-              <div className="adrawer__kpi-k">Avg. Opens</div>
-              <div className="tnum adrawer__kpi-v">{sub.opens}</div>
-            </div>
-            <div className="adrawer__kpi">
-              <div className="adrawer__kpi-k">Avg. Clicks</div>
-              <div className="tnum adrawer__kpi-v">{sub.clicks}</div>
-            </div>
-          </div>
+          {/* No headline stat cards: opens and clicks exist only on email (and
+              partly WhatsApp), but a subscriber spans all four channels, so a
+              single pair of rates misreported them as the whole picture. The
+              per-channel breakdown below carries the real numbers. */}
 
           {/* editable tags — saved as you add or remove them */}
           <div className={styles.sbdSection}>
@@ -1659,7 +1695,7 @@ function SubscriberDrawer({
           <div className={styles.sbdSection}>
             <span className={`adrawer__eyebrow ${styles.sbdEyebrow}`}>Channel engagement</span>
             <div className={styles.sbdChans}>
-              {channelRows.map(({ ch, on, meta, open, click }) => {
+              {channelRows.map(({ ch, on, meta, metrics }) => {
                 const m = CHANNEL[ch];
                 return (
                   <div key={ch} className={styles.sbdChan}>
@@ -1682,14 +1718,17 @@ function SubscriberDrawer({
                       <div className={styles.sbdChanMeta}>{meta}</div>
                     </div>
                     <div className={styles.sbdChanMetrics}>
-                      <div>
-                        <span className={`tnum ${styles.sbdChanNum}`}>{open}</span>
-                        <span className={styles.sbdChanSub}>open</span>
-                      </div>
-                      <div>
-                        <span className={`tnum ${styles.sbdChanNum}`}>{click}</span>
-                        <span className={styles.sbdChanSub}>click</span>
-                      </div>
+                      {metrics.map((mt) => (
+                        <div key={mt.label}>
+                          <span
+                            className={`tnum ${styles.sbdChanNum}`}
+                            style={mt.alert ? { color: 'var(--danger)' } : undefined}
+                          >
+                            {mt.value}
+                          </span>
+                          <span className={styles.sbdChanSub}>{mt.label}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );

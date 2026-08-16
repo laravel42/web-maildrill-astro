@@ -3,6 +3,8 @@
  * shape the AppSubscriberDetail island renders.
  */
 import type { RichSubscriber } from '@/lib/app/subscribers-data';
+import { EMPTY_TOTALS, type ChannelTotals } from '@/lib/app/channel-kpis';
+import type { ChannelType } from '@/types/app';
 
 export type ActivityFilter = 'all' | 'open' | 'click' | 'send' | 'life';
 export type DetailTab = 'activity' | 'campaigns' | 'links';
@@ -22,6 +24,9 @@ export type ApiSubscriberActivity = {
     delivered: number;
     read: number;
     clicked: number;
+    failed?: number;
+    failedPermanent?: number;
+    complaints?: number;
   }>;
   recent?: Array<{
     id: string;
@@ -32,10 +37,13 @@ export type ApiSubscriberActivity = {
   }>;
   /** Trailing 12 ISO weeks of opens/clicks when provided by the activity API. */
   weekly?: ApiSubscriberWeeklyPoint[];
+  weeklyByChannel?: Record<string, ApiSubscriberWeeklyPoint[]>;
 };
 
 export type DetailEvent = {
   id: string;
+  /** Raw channel key, so the detail page's channel filter can scope the feed. */
+  channel: string;
   type: Exclude<ActivityFilter, 'all'>;
   title: string;
   meta: string;
@@ -96,6 +104,10 @@ export type SubscriberDetailView = {
   sentLast30: number;
   deliveryRate: number | null;
   lastCampaignLabel: string;
+  /** Weekly opens/clicks per channel; absent for channels that track neither. */
+  weeksByChannel: Record<string, WeeklyEngagement[]>;
+  /** Send outcomes split by channel, for the detail view's channel selector. */
+  channelTotals: Record<ChannelType, ChannelTotals>;
 };
 
 function fmtAgo(iso?: string | null): string {
@@ -171,12 +183,29 @@ function eventFromMessage(m: NonNullable<ApiSubscriberActivity['recent']>[number
   const channel = m.channel ? m.channel[0]!.toUpperCase() + m.channel.slice(1) : 'Email';
   return {
     id: m.id,
+    channel: (m.channel ?? 'email').toLowerCase(),
     type,
     title,
     meta: `${channel} · ${status || 'sent'}`,
     when: fmtAgo(m.at),
     stamp: fmtStamp(m.at),
   };
+}
+
+/**
+ * Engagement score from open and click rates. Exported so the detail page can
+ * score a single channel with the same weighting the all-channel figure uses —
+ * a channel-filtered view must not show a score earned on another channel.
+ */
+export function engagementScore(openRate: number | null, clickRate: number | null): number {
+  if (openRate == null && clickRate == null) return 0;
+  return Math.min(100, Math.round((openRate ?? 0) * 0.7 + (clickRate ?? 0) * 1.2));
+}
+
+export function engagementTier(score: number): string {
+  if (score >= 75) return 'Highly engaged';
+  if (score >= 45) return 'Moderately engaged';
+  return score > 0 ? 'Low engagement' : 'No engagement yet';
 }
 
 function resultFor(status: string): { result: string; resultColor: string } {
@@ -195,6 +224,25 @@ export function buildSubscriberDetailView(
   attributes: Record<string, unknown> = {},
 ): SubscriberDetailView {
   const channels = activity?.channels ?? [];
+  // A subscriber's `sent` excludes failures, so attempted has to add them back
+  // — the campaign-side totals count the other way round.
+  const channelTotals: Record<ChannelType, ChannelTotals> = {
+    email: { ...EMPTY_TOTALS },
+    sms: { ...EMPTY_TOTALS },
+    whatsapp: { ...EMPTY_TOTALS },
+    voice: { ...EMPTY_TOTALS },
+  };
+  for (const c of channels) {
+    const t = channelTotals[c.channel as ChannelType];
+    if (!t) continue;
+    t.attempted += (c.sent ?? 0) + (c.failed ?? 0);
+    t.delivered += c.delivered ?? 0;
+    t.opened += c.read ?? 0;
+    t.clicked += c.clicked ?? 0;
+    t.failed += c.failed ?? 0;
+    t.failedPermanent += c.failedPermanent ?? 0;
+    t.complaints += c.complaints ?? 0;
+  }
   const emailCh = channels.find((c) => c.channel === 'email');
   const sent = channels.reduce((n, c) => n + (c.sent ?? 0), 0);
   const delivered = channels.reduce((n, c) => n + (c.delivered ?? 0), 0);
@@ -204,19 +252,8 @@ export function buildSubscriberDetailView(
   const openRate = denom > 0 ? Math.round((opened / denom) * 100) : null;
   const clickRate = denom > 0 ? Math.round((clicked / denom) * 100) : null;
 
-  const scoreBase =
-    openRate == null && clickRate == null
-      ? 0
-      : Math.min(100, Math.round((openRate ?? 0) * 0.7 + (clickRate ?? 0) * 1.2));
-  const score = scoreBase;
-  const scoreTier =
-    score >= 75
-      ? 'Highly engaged'
-      : score >= 45
-        ? 'Moderately engaged'
-        : score > 0
-          ? 'Low engagement'
-          : 'No engagement yet';
+  const score = engagementScore(openRate, clickRate);
+  const scoreTier = engagementTier(score);
 
   const recent = activity?.recent ?? [];
   const events = recent.map(eventFromMessage);
@@ -259,6 +296,15 @@ export function buildSubscriberDetailView(
           opens: 0,
           clicks: 0,
         }));
+
+  const weeksByChannel: Record<string, WeeklyEngagement[]> = {};
+  for (const [ch, series] of Object.entries(activity?.weeklyByChannel ?? {})) {
+    weeksByChannel[ch] = series.map((w) => ({
+      label: w.label,
+      opens: w.opens ?? 0,
+      clicks: w.clicks ?? 0,
+    }));
+  }
 
   // Month-over-month movement from the weekly series: last 4 weeks vs the 4 before.
   const sumWindow = (from: number, to: number) =>
@@ -317,6 +363,8 @@ export function buildSubscriberDetailView(
     sentLast30,
     deliveryRate,
     lastCampaignLabel: recent.length > 0 ? fmtStamp(recent[0]!.at) : '—',
+    channelTotals,
+    weeksByChannel,
   };
 }
 

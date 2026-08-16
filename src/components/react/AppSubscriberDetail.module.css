@@ -389,6 +389,10 @@
 .ring svg {
   transform: rotate(-90deg);
 }
+/* The two lines must clear the stroke at their own height, not just the ring's
+   widest point: the inner edge is a circle, so a wide word sitting off-centre
+   collides while still being narrower than the diameter. Sized for the longest
+   pair either state produces — "100%" over "delivered". */
 .ringValue {
   position: absolute;
   inset: 0;
@@ -396,16 +400,21 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 1px;
+  padding: 0 6px;
+  text-align: center;
 }
 .ringNumber {
-  font-size: 25px;
+  font-size: 20px;
   font-weight: 600;
   letter-spacing: -0.5px;
+  line-height: 1.1;
 }
 .ringOf {
-  font-size: 10px;
+  font-size: 8.5px;
   font-weight: 600;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.3px;
+  line-height: 1.1;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -457,9 +466,11 @@
 }
 
 /* ---------- Stats ---------- */
+/* Tile count varies by channel — email and WhatsApp report five, SMS and
+   voice three — so the row fits what the column allows instead of a fixed 4. */
 .stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
   gap: 14px;
 }
 .stat {
@@ -1084,4 +1095,59 @@
   .stat {
     break-inside: avoid;
   }
+}
+
+/* Channel performance header — selector beside the section title. */
+.chanHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.chanSub {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.chanSeg {
+  flex-wrap: wrap;
+}
+.chanSegOpt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.chanDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}
+
+/* Page-level channel filter: the KPI tiles, activity feed and campaigns tab
+   all read from it, mirroring the Analytics header. */
+.chanBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 18px;
+}
+.chanBarLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Why a channel has no engagement score, said plainly rather than shown as 0. */
+.scoreNote {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.45;
+  margin-top: 4px;
+  max-width: 28ch;
 }
