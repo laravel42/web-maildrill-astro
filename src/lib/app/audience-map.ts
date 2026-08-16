@@ -52,6 +52,10 @@ export function segmentToAudienceChoice(
       counts?.count ?? s.memberCount,
       counts?.phoneCount ?? s.phoneMemberCount,
     ),
+    channels:
+      s.channels && s.channels.length > 0
+        ? (s.channels as ChannelType[])
+        : (['email'] as ChannelType[]),
   };
 }
 
@@ -66,9 +70,9 @@ export function audienceRecipientCount(a: AudienceChoice, channel: ChannelType):
 }
 
 /** Hide audiences whose effective reach is explicitly zero; keep unknown (null) counts.
- *  Lists are also gated on declaring the campaign channel. */
+ *  Lists and segments are also gated on declaring the campaign channel. */
 export function isAudienceSelectable(a: AudienceChoice, channel: ChannelType): boolean {
-  if (a.kind === 'list') {
+  if (a.kind === 'list' || a.kind === 'segment') {
     const chans = a.channels && a.channels.length > 0 ? a.channels : (['email'] as ChannelType[]);
     if (!chans.includes(channel)) return false;
   }

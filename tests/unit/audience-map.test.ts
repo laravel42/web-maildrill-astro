@@ -35,6 +35,7 @@ const unknownPhoneSegment: AudienceChoice = {
   desc: 'Segment',
   count: 12,
   phoneCount: null,
+  channels: ['email', 'sms', 'whatsapp', 'voice'],
 };
 
 describe('audienceRecipientCount', () => {
@@ -103,6 +104,30 @@ describe('prepareAudiencesForChannel', () => {
     expect(prepareAudiencesForChannel([emailOnly, smsReady], 'email').map((a) => a.id)).toEqual([
       'email-only',
       'sms-ready',
+    ]);
+  });
+
+  it('hides segments that do not declare the selected channel', () => {
+    const emailSeg: AudienceChoice = {
+      id: 'seg-email',
+      kind: 'segment',
+      name: 'Email VIPs',
+      desc: 'Segment',
+      count: 10,
+      phoneCount: 8,
+      channels: ['email'],
+    };
+    const smsSeg: AudienceChoice = {
+      id: 'seg-sms',
+      kind: 'segment',
+      name: 'SMS VIPs',
+      desc: 'Segment',
+      count: 10,
+      phoneCount: 8,
+      channels: ['sms'],
+    };
+    expect(prepareAudiencesForChannel([emailSeg, smsSeg], 'sms').map((a) => a.id)).toEqual([
+      'seg-sms',
     ]);
   });
 });

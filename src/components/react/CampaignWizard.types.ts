@@ -21,8 +21,8 @@ export type AudienceChoice = {
   /** List colour (hex), for the list badge. Only set for `kind: 'list'`. */
   color?: string | null;
   /**
-   * Channels the list is declared for. Only set for `kind: 'list'`.
-   * Defaults to email when the API omits it. Segments have no channel set.
+   * Channels the list or segment is declared for.
+   * Defaults to email when the API omits it.
    */
   channels?: ChannelType[];
 };

@@ -934,7 +934,7 @@ export default function CampaignWizard({
                     <AudienceSection
                       heading="Segments"
                       items={segmentAudiences}
-                      emptyMessage="No segments yet. Create one under Audience → Segments."
+                      emptyMessage={`No segments for ${channelLabel(channel)} yet. Enable the channel on a segment under Audience → Subscribers.`}
                       selectedIds={audienceIds}
                       onToggle={toggleAudience}
                     />
