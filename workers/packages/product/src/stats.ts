@@ -348,10 +348,11 @@ async function dailyActivityFromPostgres(
     .select({
       day: sql<string>`to_char(date_trunc('day', ${messages.createdAt}), 'YYYY-MM-DD')`,
       sent: countOf,
-      delivered: sql<number>`count(*) filter (where ${messages.status} = 'delivered')::int`,
+      // Same as byChannel / campaign counters: a read message was delivered.
+      // Counting only status='delivered' undercounts once opens land and can
+      // push open rate (opened / delivered) over 100%.
+      delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read'))::int`,
       failed: sql<number>`count(*) filter (where ${messages.status} = 'failed')::int`,
-      // 'read' is the terminal engagement state, so a message that was opened
-      // no longer counts as merely delivered — matching byChannel's shape.
       opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
       voiceSeconds: sql<number>`coalesce(sum(${messages.voiceSeconds}), 0)::int`,
     })
