@@ -700,14 +700,6 @@ export default function AppSubscribers({
           <button
             type="button"
             className="sbtn"
-            onClick={() => setSegModal({ open: true, edit: null })}
-          >
-            <Icon name="filter" size={15} />
-            Create segment
-          </button>
-          <button
-            type="button"
-            className="sbtn"
             disabled={exporting}
             onClick={() => void exportSubscribers()}
           >
