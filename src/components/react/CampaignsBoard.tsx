@@ -1168,7 +1168,7 @@ function CampaignDrawer({
         return {
           label: 'Click rate',
           value: pct(campaign.clickRate),
-          color: 'var(--accent)',
+          color: 'var(--accent-text)',
         };
       case 'cto':
         return {
