@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import {
   db,
   segments,
@@ -57,6 +57,23 @@ export async function getSegment(tenantId: string, id: string): Promise<SegmentR
     .where(and(eq(segments.id, id), eq(segments.tenantId, tenantId)))
     .limit(1);
   return rows[0] ?? null;
+}
+
+/**
+ * Several segments in one round trip, scoped to the tenant.
+ *
+ * The roster resolves every selected segment before it can build a page, so
+ * this exists to keep that one query instead of N× `getSegment`. The tenant
+ * predicate is in the query rather than a check afterwards: an id belonging to
+ * another workspace simply does not come back, so the caller sees "missing"
+ * and can answer 404 without ever having read the row.
+ */
+export async function getSegments(tenantId: string, ids: string[]): Promise<SegmentRow[]> {
+  if (ids.length === 0) return [];
+  return db
+    .select()
+    .from(segments)
+    .where(and(eq(segments.tenantId, tenantId), inArray(segments.id, ids)));
 }
 
 export async function listSegments(tenantId: string): Promise<SegmentRow[]> {

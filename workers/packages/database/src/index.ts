@@ -13,6 +13,8 @@ export {
   usageRecords,
   deadLetters,
   subscribers,
+  subscriberEngagement,
+  subscriberStatusEnum,
   customFieldDefs,
   lists,
   listMembers,

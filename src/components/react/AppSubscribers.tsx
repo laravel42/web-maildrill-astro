@@ -19,9 +19,14 @@ import {
   type SegRule,
 } from '@/lib/app/subscribers-data';
 import { api, ApiError } from '@/lib/app/api';
-import { toRichSubscriber, type ApiSubscriber } from '@/lib/app/subscriber-map';
+import { toRichSubscriber, toRichSubscribers, type ApiSubscriber } from '@/lib/app/subscriber-map';
 import { matchesSearchQuery } from '@/lib/app/search-match';
-import { RATE_BUCKETS, parseRatePercent, rateBucket } from '@/lib/app/templates-data';
+import { parseRatePercent } from '@/lib/app/templates-data';
+import {
+  ENGAGEMENT_BUCKET_SLUGS,
+  engagementBucketLabel,
+  fixtureEngagementBucket,
+} from '@/lib/app/engagement-buckets';
 import SubscriberEditorModal from './SubscriberEditorModal';
 import SubscriberImportModal from './shared/SubscriberImportModal';
 import { applyListMembership } from '@/lib/app/subscriber-write';
@@ -45,19 +50,48 @@ import {
   visiblePageNumbers,
   tagStyle,
   reachOf,
+  rosterFilterParams,
   initials,
 } from './AppSubscribers.logic';
 import type { SortKey, ViewMode } from './AppSubscribers.types';
 import { routes } from '@/config/routes';
 import styles from './AppSubscribers.module.css';
 
+/**
+ * CSV export window. `EXPORT_PAGE` is the cursor endpoint's own ceiling
+ * (httpkit PAGE.max), so asking for more just gets clamped; `EXPORT_MAX` is a
+ * product cap, not a cost one — every page after the first costs the same as
+ * the first now that the export walks cursors instead of OFFSET.
+ */
+const EXPORT_PAGE = 100;
+const EXPORT_MAX = 10_000;
+
 export default function AppSubscribers({
   initial,
+  initialTotal = 0,
+  initialCounts = null,
   initialSegments,
-  allLists = [],
+  allLists: initialLists = [],
   allTagRows = [],
 }: {
   initial?: RichSubscriber[];
+  /** How many subscribers match with no filters — the server's count, not this page's. */
+  initialTotal?: number;
+  /**
+   * The unfiltered roster, per channel, from the SSR scan.
+   *
+   * Two jobs: it is the first paint's tab counts and Status menu, and it stays
+   * the "All subscribers" chip's number for the whole session — that chip means
+   * "the roster, no segment", so it must not follow the filtered counts the way
+   * the tabs do.
+   */
+  initialCounts?: {
+    email?: number;
+    sms?: number;
+    whatsapp?: number;
+    voice?: number;
+    byStatus?: Record<string, number>;
+  } | null;
   /** Saved segments from the service — the workspace's, not this browser's. */
   initialSegments?: SavedSegment[];
   /** Real lists, used for segment rules and list membership; color tints chips. */
@@ -79,6 +113,27 @@ export default function AppSubscribers({
   const [richSubscribers, setRichSubscribers] = useState<RichSubscriber[]>(
     initial !== undefined ? initial : mockSubscribers,
   );
+  /**
+   * Server-side paging. A workspace can hold millions of subscribers, so the
+   * browser never receives more than one page: the table asks the API for a
+   * window and trusts its `total` for the pager and the footer.
+   */
+  const [serverTotal, setServerTotal] = useState(initialTotal);
+  /**
+   * Keyset paging state. A cursor names the row a page resumes from, so pages
+   * can only be walked, not jumped to: `cursorStack` holds the cursor used for
+   * each page already visited, which is what makes Previous work without OFFSET.
+   * Empty stack = first page.
+   */
+  const [hasMore, setHasMore] = useState(false);
+  /**
+   * Cursor that opens each page we have seen the doorway to (page 1 needs none).
+   * Next/Previous walk these — O(1) regardless of depth. Jumping to a page we
+   * have never reached has no cursor to resume from, so it falls back to the
+   * server's `page` param for that one request and returns to cursors after.
+   */
+  const [cursorFor, setCursorFor] = useState<Record<number, string>>({});
+  const [loadingPage, setLoadingPage] = useState(false);
   const [view, setView] = useState<ViewMode>('table');
   // Tabs cut the table by channel, as on the campaigns board. Email leads: it
   // is the only channel every subscriber can be addressed on.
@@ -88,6 +143,42 @@ export default function AppSubscribers({
   const [query, setQuery] = useState('');
   const [listFilter, setListFilter] = useState<Set<string>>(new Set());
   const [listOpen, setListOpen] = useState(false);
+  /**
+   * Lists are lazy. /v1/lists computes member counts, growth and trends over
+   * every membership row — 3.4s and 710KB on a million-subscriber workspace —
+   * and this screen only needs id/name/color for the filter menu and the
+   * segment builder. Blocking the page render on it made the first page slow
+   * for a control most visits never open.
+   */
+  const [allLists, setAllLists] = useState(initialLists);
+  const [listSearch, setListSearch] = useState('');
+  /**
+   * Whether a fetch has come back. The button must not be disabled on an empty
+   * list before we have asked — lists load on open, so disabling first would
+   * make it permanently unclickable.
+   */
+  const [listsFetched, setListsFetched] = useState(initialLists.length > 0);
+  /** A workspace can hold thousands of lists; the menu shows a slice and searches for the rest. */
+  const LIST_OPTIONS_LIMIT = 10;
+  const fetchLists = (q: string) => {
+    if (!live) return;
+    const qs = new URLSearchParams({ options: '1', limit: String(LIST_OPTIONS_LIMIT) });
+    if (q.trim()) qs.set('q', q.trim());
+    api
+      .get<{
+        data: { id: string; name: string; color?: string | null; channels?: string[] | null }[];
+      }>(`lists?${qs}`)
+      .then((res) => {
+        setAllLists(res.data ?? []);
+        setListsFetched(true);
+      })
+      // Leave the menu as-is rather than blanking it; reopening retries.
+      .catch(() => undefined);
+  };
+  const loadLists = () => {
+    if (!live || allLists.length > 0) return;
+    fetchLists('');
+  };
   const [opensSel, setOpensSel] = useState<Set<string>>(new Set());
   const [clicksSel, setClicksSel] = useState<Set<string>>(new Set());
   const [rateFilterOpen, setRateFilterOpen] = useState<'opens' | 'clicks' | null>(null);
@@ -136,7 +227,6 @@ export default function AppSubscribers({
   const [segments, setSegments] = useState<SavedSegment[]>(initialSegments ?? []);
   const [tagIndex, setTagIndex] = useState<{ id: string; name: string }[]>(allTagRows);
   const [segCounts, setSegCounts] = useState<Record<string, number>>({});
-  const [segMembers, setSegMembers] = useState<Record<string, Set<string>>>({});
   const [segModal, setSegModal] = useState<{ open: boolean; edit: SavedSegment | null }>({
     open: false,
     edit: null,
@@ -147,7 +237,7 @@ export default function AppSubscribers({
   const [exporting, setExporting] = useState(false);
 
   /* Full CSV export. The table only holds the first page, so live workspaces
-     re-fetch every subscriber (200 a page); demo mode exports what's on
+     re-fetch the filtered set a page at a time; demo mode exports what's on
      screen. Columns mirror the import mapper for clean round-trips. */
   const exportSubscribers = async () => {
     if (exporting) return;
@@ -169,13 +259,26 @@ export default function AppSubscribers({
         showToast(`Exported ${richSubscribers.length} subscribers`);
         return;
       }
+      // Same filters as the table, and keyset rather than OFFSET: the export
+      // used to ask for `subscribers?limit=200&offset=…` with no filters at
+      // all, so pressing Export under a segment chip reading 333,533 wrote out
+      // the first 10,000 rows of the unfiltered roster and said "Exported
+      // 10,000 subscribers". Cursors also mean the last page of the export
+      // costs what the first one did instead of walking 10,000 rows to reach it.
       const all: ApiSubscriber[] = [];
-      for (let offset = 0; offset < 10_000; offset += 200) {
-        const page = await api.get<{ data: ApiSubscriber[] }>(
-          `subscribers?limit=200&offset=${offset}`,
+      let cursor: string | null = null;
+      for (let fetched = 0; fetched < EXPORT_MAX; fetched += EXPORT_PAGE) {
+        const qs = new URLSearchParams(filterQs);
+        qs.set('limit', String(EXPORT_PAGE));
+        qs.set('sort', 'created');
+        qs.set('dir', 'desc');
+        if (cursor) qs.set('cursor', cursor);
+        const res: { items?: ApiSubscriber[]; next_cursor: string | null } = await api.get(
+          `subscribers?${qs}`,
         );
-        all.push(...page.data);
-        if (page.data.length < 200) break;
+        all.push(...(res.items ?? []));
+        cursor = res.next_cursor;
+        if (!cursor) break;
       }
       const fields = await api
         .get<{ data: CustomField[] }>('custom-fields')
@@ -225,8 +328,21 @@ export default function AppSubscribers({
 
   const effTags = (s: RichSubscriber): string[] => tagStore[s.id] ?? s.tags;
 
-  // Tags actually present on subscribers, with counts for the filter dropdown.
+  /**
+   * The tags the filter offers.
+   *
+   * Live, that is the workspace's tag list (`/v1/tags`) with no counts — the
+   * browser holds ten rows, so counting them would describe the page, and
+   * offering only the tags those ten carry would hide every other tag in the
+   * workspace behind a control that looks complete. Fixtures hold everything,
+   * so they still get real counts.
+   */
   const tagUniverse = useMemo(() => {
+    if (live) {
+      return [...tagIndex]
+        .map((t) => ({ name: t.name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    }
     const freq = new Map<string, number>();
     for (const s of richSubscribers) {
       for (const t of effTags(s)) freq.set(t, (freq.get(t) ?? 0) + 1);
@@ -234,7 +350,7 @@ export default function AppSubscribers({
     return [...freq.entries()]
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [richSubscribers, tagStore]);
+  }, [live, tagIndex, richSubscribers, tagStore]);
 
   const segById = useMemo(() => new Map(segments.map((s) => [s.id, s])), [segments]);
 
@@ -305,48 +421,40 @@ export default function AppSubscribers({
     void refreshCounts(segments);
   }, [segments, live, customFields]);
 
-  /* Membership for a selected segment is resolved by the service too, so
-     filtering isn't limited to the rows this page happens to hold. */
-  useEffect(() => {
-    if (!live) return;
-    const missing = [...segSel].filter((id) => !segMembers[id]);
-    if (missing.length === 0) return;
-    let cancelled = false;
-    void Promise.allSettled(
-      missing.map((id) =>
-        api
-          .get<{ data: { id: string }[] }>(`segments/${id}/subscribers?limit=1000`)
-          .then((r) => [id, new Set(r.data.map((x) => x.id))] as const),
-      ),
-    ).then((results) => {
-      if (cancelled) return;
-      setSegMembers((prev) => {
-        const next = { ...prev };
-        for (const r of results) if (r.status === 'fulfilled') next[r.value[0]] = r.value[1];
-        return next;
-      });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [segSel, live, segMembers]);
-
   const segCount = (seg: SavedSegment): number => segCounts[seg.id] ?? 0;
 
-  /* Pipeline: segment → status → search+channel → tag filter → sort. */
-  const segFiltered = useMemo(() => {
-    if (segSel.size === 0) return richSubscribers;
-    // Union of the service-resolved memberships for the selected segments.
-    const ids = new Set<string>();
-    for (const segId of segSel) for (const id of segMembers[segId] ?? []) ids.add(id);
-    return richSubscribers.filter((s) => ids.has(s.id));
-  }, [segSel, segMembers, richSubscribers]);
+  /* Segment membership is a SQL filter now (?segmentId=), so the rows in hand
+     are already the segmented set — and so are `serverTotal` and the tab
+     counts. It used to be a client pass over the ~1000 ids /segments/:id/
+     subscribers happened to return, which intersected with a 10-row page to
+     near nothing: the workspace's "Has phone" segment matches 333,533 people
+     and left one row on screen.
 
-  const tabCounts = useMemo(() => {
+     Unlike status/tag/list there is no `!live` counterpart to keep: saved
+     segments only exist on a connected workspace (both the segment editor and
+     the delete path refuse when `!live`), so fixture mode can never hold a
+     selection to filter by. A local pass here would be unreachable code
+     pretending to be a filter. */
+
+  /**
+   * Tab counts describe the workspace, not the page in hand. Counting the
+   * fetched rows was right when the browser held every subscriber; with
+   * server-side paging it would report 10. Fetched once per filter set — never
+   * per page — because it scans.
+   */
+  const [serverTabCounts, setServerTabCounts] = useState<Record<string, number> | null>(
+    initialCounts as Record<string, number> | null,
+  );
+  /** Per-status totals for the Status menu, from the same scan as the tabs. */
+  const [serverStatusCounts, setServerStatusCounts] = useState<Record<string, number> | null>(
+    initialCounts?.byStatus ?? null,
+  );
+  const fixtureTabCounts = useMemo(() => {
     const c: Record<string, number> = {};
-    for (const ch of CHANNEL_ORDER) c[ch] = segFiltered.filter((s) => reachOf(s)[ch]).length;
+    for (const ch of CHANNEL_ORDER) c[ch] = richSubscribers.filter((s) => reachOf(s)[ch]).length;
     return c;
-  }, [segFiltered]);
+  }, [richSubscribers]);
+  const tabCounts = live ? (serverTabCounts ?? {}) : fixtureTabCounts;
 
   /**
    * Statuses present on the selected channel, for the Status menu.
@@ -356,13 +464,30 @@ export default function AppSubscribers({
    */
   const statusCounts = useMemo(() => {
     const c = new Map<SubscriberStatus, number>();
-    for (const s of segFiltered) {
+    // Live: counts describe the workspace under the current filters, from the
+    // server's single scan. Counting the fetched page would report at most a
+    // page's worth — "10 active" on a million-subscriber workspace.
+    if (live) {
+      // Summed, not assigned. On SMS/WhatsApp/voice `statusForChannel` folds
+      // bounced and complained into active, so three server keys land on one
+      // menu row; `set` made the last one win and the SMS tab read
+      // "Active 10,002" — verbatim the complained count — under a footer of
+      // 333,533. The fixture branch below already summed.
+      for (const [st, n] of Object.entries(serverStatusCounts ?? {})) {
+        const count = Number(n);
+        if (count <= 0) continue;
+        const shown = statusForChannel(st as SubscriberStatus, tab);
+        c.set(shown, (c.get(shown) ?? 0) + count);
+      }
+      return c;
+    }
+    for (const s of richSubscribers) {
       if (!reachOf(s)[tab]) continue;
       const st = statusForChannel(s.status, tab);
       c.set(st, (c.get(st) ?? 0) + 1);
     }
     return c;
-  }, [segFiltered, tab]);
+  }, [live, serverStatusCounts, richSubscribers, tab]);
 
   /**
    * Menu options: statuses the channel reports, minus the ones nobody here
@@ -384,26 +509,156 @@ export default function AppSubscribers({
     });
   }, [tab]);
 
+  /**
+   * Every filter the roster has selected, as query parameters.
+   *
+   * One object, three consumers — the page query, the counts query and the CSV
+   * export — so none of them can be updated without the others. A string, not
+   * the params object, because it is also the effect's dependency: a new
+   * URLSearchParams every render would refire the fetch on every render.
+   */
+  const filterQs = useMemo(
+    () =>
+      rosterFilterParams({
+        channel: tab,
+        query,
+        statuses: statusFilter,
+        listIds: listFilter,
+        tags: tagSel,
+        segmentIds: segSel,
+        opens: showOpenFilter ? opensSel : [],
+        clicks: showClickFilter ? clicksSel : [],
+      }).toString(),
+    [
+      tab,
+      query,
+      statusFilter,
+      listFilter,
+      tagSel,
+      segSel,
+      opensSel,
+      clicksSel,
+      showOpenFilter,
+      showClickFilter,
+    ],
+  );
+
+  /**
+   * The server owns every filter the roster offers — channel, status, search,
+   * tag, list, segment, open/click rate — plus the sort and the page window.
+   * Nothing here narrows a live page any more, which is what lets the footer
+   * count and the rows on screen describe the same set.
+   */
+  useEffect(() => {
+    if (!live) return;
+    let cancelled = false;
+    const cursor = cursorFor[page];
+    // Every filter, plus the window. Saved segments and rate buckets are in
+    // here like everything else: the API unions the segments and reads the
+    // buckets off the `subscriber_engagement` rollup in the same WHERE as the
+    // rest, so the rows, the footer count and the tab counts describe one set.
+    // Both used to be applied in the browser over the ten rows in hand while
+    // the footer went on reporting the unfiltered total — "1–10 of 920,211"
+    // above three rows.
+    const qs = new URLSearchParams(filterQs);
+    qs.set('limit', String(PAGE_SIZE));
+    // Only `created` is index-backed, and the API rejects other sorts with a
+    // 400. Column sorting therefore reorders the page in hand, not the
+    // workspace — sorting a million rows per keystroke is the thing this whole
+    // change exists to avoid.
+    qs.set('sort', 'created');
+    qs.set('dir', 'desc');
+    if (cursor) qs.set('cursor', cursor);
+    else if (page > 1) qs.set('page', String(page));
+    // No ?withTotal=1. `countSubscribers` is a second independent full scan of
+    // the same filtered set, and now that the channel counts honour every
+    // filter (status included) `counts[tab]` IS that number — byte-identical in
+    // every case measured. Asking for both doubled the cost of a filter change
+    // (235ms vs 128ms for opens=high) to compute the same integer twice.
+    if (page === 1) {
+      api
+        .get<Record<string, number> & { byStatus?: Record<string, number> }>(
+          `subscribers/counts?${filterQs}`,
+        )
+        .then((c) => {
+          if (cancelled) return;
+          setServerTabCounts(c);
+          if (c.byStatus) setServerStatusCounts(c.byStatus);
+          // The active tab's count is the footer's total: same filters, same
+          // scan, one request instead of two.
+          const n = Number(c[tab] ?? 0);
+          if (Number.isFinite(n)) setServerTotal(n);
+        })
+        .catch(() => undefined);
+    }
+    setLoadingPage(true);
+    api
+      .get<{
+        items: ApiSubscriber[];
+        next_cursor: string | null;
+        has_more: boolean;
+      }>(`subscribers?${qs}`)
+      .then((res) => {
+        if (cancelled) return;
+        setRichSubscribers(toRichSubscribers(res.items ?? []));
+        setHasMore(Boolean(res.has_more));
+        // Remember the doorway to the following page so Next stays keyset.
+        if (res.next_cursor) setCursorFor((m) => ({ ...m, [page + 1]: res.next_cursor! }));
+      })
+      .catch(() => {
+        /* keep the current page rather than blanking the table */
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPage(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [live, page, tab, filterQs]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = segFiltered.filter((s) => {
-      if (!reachOf(s)[tab]) return false;
-      if (statusFilter.size > 0 && !statusFilter.has(statusForChannel(s.status, tab))) return false;
-      if (q) {
+    let list = richSubscribers.filter((s) => {
+      // Fixtures only, like every other pass below. `reachOf` requires a
+      // non-empty email while the server's email predicate is `email <> ''` —
+      // the same rule, but re-deciding it here means any future divergence
+      // silently deletes rows the footer has already counted.
+      if (!live && !reachOf(s)[tab]) return false;
+      if (!live && statusFilter.size > 0 && !statusFilter.has(statusForChannel(s.status, tab)))
+        return false;
+      // Search is a SQL predicate on a live workspace, and NOT the same one:
+      // the server matches `lower(email) like %q%` or the same on name, while
+      // `matchesSearchQuery` is word/prefix-only on the name. Any mid-word name
+      // hit survived the server and died here — q="ubscriber" against "Perf
+      // Subscriber 786940" returned 10 rows and a total of 1,000,000, and the
+      // screen said "No subscribers match your filters" over a 100,000-page
+      // pager. It also matches tags, which the server does not, so it was not a
+      // superset in either direction.
+      if (!live && q) {
         const hit =
           matchesSearchQuery(s.name, q) ||
           s.email.toLowerCase().includes(q) ||
           effTags(s).some((t) => matchesSearchQuery(t, q));
         if (!hit) return false;
       }
-      if (listFilter.size > 0 && !s.listIds.some((id) => listFilter.has(id))) return false;
-      if (tagSel.size > 0 && !effTags(s).some((t) => tagSel.has(t))) return false;
-      if (showOpenFilter && opensSel.size && !opensSel.has(rateBucket(parseRatePercent(s.opens))))
+      if (!live && listFilter.size > 0 && !s.listIds.some((id) => listFilter.has(id))) return false;
+      if (!live && tagSel.size > 0 && !effTags(s).some((t) => tagSel.has(t))) return false;
+      // Fixtures only, like the status/list/tag passes above it. Live, the rate
+      // bucket is a WHERE clause on the rollup, so re-deciding it here from the
+      // rendered percentage would at best agree and at worst hide rows the
+      // footer has already counted.
+      if (
+        !live &&
+        showOpenFilter &&
+        opensSel.size &&
+        !opensSel.has(fixtureEngagementBucket(s.opens))
+      )
         return false;
       if (
+        !live &&
         showClickFilter &&
         clicksSel.size &&
-        !clicksSel.has(rateBucket(parseRatePercent(s.clicks)))
+        !clicksSel.has(fixtureEngagementBucket(s.clicks))
       )
         return false;
       return true;
@@ -440,7 +695,8 @@ export default function AppSubscribers({
     });
     return list;
   }, [
-    segFiltered,
+    live,
+    richSubscribers,
     tab,
     query,
     statusFilter,
@@ -454,13 +710,19 @@ export default function AppSubscribers({
     showClickFilter,
   ]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  // Live: the API already returned exactly this page, and `serverTotal` counts
+  // every match. Fixtures keep the old in-memory slice.
+  const totalRows = live ? serverTotal : filtered.length;
+  const pageCount = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
-  const pageRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const pageRows = live
+    ? filtered
+    : filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
   const pagerPages = visiblePageNumbers(safePage, pageCount);
 
   const resetPageAndSel = () => {
     setPage(1);
+    setCursorFor({});
     setSelected(new Set());
   };
 
@@ -648,12 +910,8 @@ export default function AppSubscribers({
       setSegments((prev) =>
         editing ? prev.map((s) => (s.id === mapped.id ? mapped : s)) : [...prev, mapped],
       );
-      // Drop any cached membership so the filter re-resolves against new rules.
-      setSegMembers((prev) => {
-        const next = { ...prev };
-        delete next[mapped.id];
-        return next;
-      });
+      // A fresh Set even when the id was already selected: the page effect keys
+      // off `segSel`, and edited rules mean a different set of rows.
       setSegSel((prev) => new Set(prev).add(mapped.id));
       setSegModal({ open: false, edit: null });
       resetPageAndSel();
@@ -686,8 +944,8 @@ export default function AppSubscribers({
 
   const openSub = openId ? (richSubscribers.find((s) => s.id === openId) ?? null) : null;
 
-  const startIdx = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
-  const endIdx = Math.min(safePage * PAGE_SIZE, filtered.length);
+  const startIdx = totalRows === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const endIdx = Math.min(safePage * PAGE_SIZE, totalRows);
 
   return (
     <div className="screen" style={{ animation: 'fade .3s ease' }}>
@@ -725,8 +983,17 @@ export default function AppSubscribers({
           aria-pressed={segSel.size === 0}
         >
           All subscribers
+          {/* The roster on this tab, unfiltered — the same context-free reading
+              the segment chips beside it give (segCount comes from
+              /segments/preview, which ignores the other filters). Following
+              `tabCounts` instead would make this chip report the selected
+              segment's size under a label that says the opposite. It used to
+              read `richSubscribers.filter(...).length`, which is the ten rows
+              in hand: 10, beside a segment chip reading 333,533. */}
           <span className={`${styles.segn} tnum`}>
-            {richSubscribers.filter((s) => reachOf(s)[tab]).length}
+            {(live ? (initialCounts?.[tab] ?? 0) : (fixtureTabCounts[tab] ?? 0)).toLocaleString(
+              'en-US',
+            )}
           </span>
         </button>
         {channelSegments.map((seg) => {
@@ -884,8 +1151,11 @@ export default function AppSubscribers({
                 className={`${styles.filter}${listFilter.size ? ' is-on' : ''}`}
                 aria-expanded={listOpen}
                 aria-haspopup="true"
-                disabled={channelLists.length === 0}
-                onClick={() => setListOpen((v) => !v)}
+                disabled={listsFetched && channelLists.length === 0}
+                onClick={() => {
+                  loadLists();
+                  setListOpen((v) => !v);
+                }}
               >
                 <Icon name="lists" size={14} />
                 Lists
@@ -904,6 +1174,22 @@ export default function AppSubscribers({
                   />
                   <div className={styles.pop} style={{ animation: 'pop .14s ease' }} role="menu">
                     <div className={styles.poptitle}>On list</div>
+                    {/* The menu holds a bounded slice, so finding a list beyond
+                        it is a server search rather than a longer list. */}
+                    <input
+                      className={styles.popsearch}
+                      value={listSearch}
+                      placeholder="Search lists…"
+                      aria-label="Search lists"
+                      autoFocus
+                      onChange={(e) => {
+                        setListSearch(e.target.value);
+                        fetchLists(e.target.value);
+                      }}
+                    />
+                    {channelLists.length === 0 && (
+                      <div className={styles.popempty}>No lists match.</div>
+                    )}
                     {channelLists.map((l) => {
                       const on = listFilter.has(l.id);
                       const color = l.color || tagStyle(l.name).color;
@@ -957,7 +1243,8 @@ export default function AppSubscribers({
               <ColFilter
                 label={openFilterLabel}
                 icon="eye"
-                options={RATE_BUCKETS}
+                options={ENGAGEMENT_BUCKET_SLUGS}
+                optionLabel={engagementBucketLabel}
                 selected={opensSel}
                 onToggle={toggleSet(setOpensSel)}
                 onClear={() => {
@@ -972,7 +1259,8 @@ export default function AppSubscribers({
               <ColFilter
                 label="Clicks"
                 icon="target"
-                options={RATE_BUCKETS}
+                options={ENGAGEMENT_BUCKET_SLUGS}
+                optionLabel={engagementBucketLabel}
                 selected={clicksSel}
                 onToggle={toggleSet(setClicksSel)}
                 onClear={() => {
@@ -1052,14 +1340,14 @@ export default function AppSubscribers({
               ...(showOpenFilter
                 ? [...opensSel].map((b) => ({
                     key: `opens:${b}`,
-                    label: `${openFilterLabel}: ${b}`,
+                    label: `${openFilterLabel}: ${engagementBucketLabel(b)}`,
                     onRemove: () => toggleRateBucket('opens', b),
                   }))
                 : []),
               ...(showClickFilter
                 ? [...clicksSel].map((b) => ({
                     key: `clicks:${b}`,
-                    label: `Clicks: ${b}`,
+                    label: `Clicks: ${engagementBucketLabel(b)}`,
                     onRemove: () => toggleRateBucket('clicks', b),
                   }))
                 : []),
@@ -1281,7 +1569,7 @@ export default function AppSubscribers({
           <span className={filtered.length === 0 ? undefined : 'tnum'}>
             {filtered.length === 0
               ? 'No subscribers match your filters'
-              : `${startIdx}–${endIdx} of ${filtered.length} subscribers`}
+              : `${startIdx}–${endIdx} of ${totalRows.toLocaleString('en-US')} subscribers${loadingPage ? ' · loading…' : ''}`}
           </span>
           {pageCount > 1 && (
             <div className={styles.pager}>
@@ -1314,7 +1602,7 @@ export default function AppSubscribers({
               <button
                 type="button"
                 className={styles.pg}
-                disabled={safePage === pageCount}
+                disabled={live ? !hasMore : safePage === pageCount}
                 onClick={() => {
                   setPage((p) => Math.min(pageCount, p + 1));
                   setSelected(new Set());
@@ -1379,8 +1667,8 @@ export default function AppSubscribers({
               showToast(`${outcome.created.toLocaleString('en-US')} subscribers imported`);
               return;
             }
-            const fresh = await api.get<{ data: ApiSubscriber[] }>('subscribers?limit=200');
-            setRichSubscribers(fresh.data.map(toRichSubscriber));
+            const fresh = await api.get<{ items: ApiSubscriber[] }>('subscribers?limit=100');
+            setRichSubscribers((fresh.items ?? []).map(toRichSubscriber));
           }}
           onCreated={async (created, values) => {
             if (created) setRichSubscribers((prev) => [toRichSubscriber(created), ...prev]);

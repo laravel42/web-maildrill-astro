@@ -8,6 +8,7 @@ import {
   pgEnum,
   pgTable,
   primaryKey,
+  smallint,
   text,
   timestamp,
   uniqueIndex,
@@ -252,7 +253,16 @@ export const messages = pgTable(
       .where(sql`${t.idempotencyKey} is not null`),
     index('messages_status_scheduled_idx').on(t.status, t.scheduledAt),
     index('messages_provider_msg_idx').on(t.provider, t.providerMessageId),
-    index('messages_tenant_idx').on(t.tenantId),
+    /**
+     * The campaigns board's outcome rollup, in index-only form.
+     *
+     * Every counter the board shows is `count(*) filter (where status = ...)`
+     * grouped by campaign under one tenant, so those three columns in that
+     * order are the whole query — Postgres never touches the heap. It replaced
+     * `messages_tenant_idx (tenant_id)`, of which it is a strict prefix, so the
+     * table carries no extra index for it.
+     */
+    index('messages_tenant_campaign_status_idx').on(t.tenantId, t.campaignId, t.status),
     index('messages_campaign_idx').on(t.campaignId),
   ],
 );
@@ -291,6 +301,21 @@ export const messageEvents = pgTable(
       .notNull()
       .references(() => messages.id, { onDelete: 'cascade' }),
     tenantId: uuid('tenant_id').notNull(),
+    /**
+     * The campaign the event's message belonged to, copied from that message.
+     *
+     * Denormalised because there is otherwise no route from a campaign to its
+     * events except joining `messages`, and that join is O(all tenant events)
+     * no matter how few campaigns are asked about: measured on a 2M-event table
+     * it costs 923ms and spills 94MB to temp files, against 6.7ms reading this
+     * column. Safe to copy where a counter on `campaigns` would not be —
+     * events are append-only, written once and never updated, so there is no
+     * write amplification and nothing to keep in sync after the insert.
+     *
+     * `on delete set null` matches `messages.campaign_id`, so deleting a
+     * campaign leaves the two agreeing rather than leaving a dangling id here.
+     */
+    campaignId: uuid('campaign_id').references(() => campaigns.id, { onDelete: 'set null' }),
     provider: text('provider').notNull(),
     providerEventId: text('provider_event_id'),
     // Stable dedupe key: provider_event_id when present, else a payload fingerprint.
@@ -306,6 +331,20 @@ export const messageEvents = pgTable(
   (t) => [
     uniqueIndex('message_events_provider_fingerprint_uq').on(t.provider, t.eventFingerprint),
     index('message_events_message_idx').on(t.messageId),
+    /**
+     * Click / unsubscribe / complaint counts per campaign, index-only.
+     *
+     * `message_id` is the trailing column because those counters are
+     * `count(distinct message_id)` — with it here the index already yields
+     * (campaign, type, message) in order, so the DISTINCT collapses in a Unique
+     * node and the whole rollup runs without a sort.
+     */
+    index('message_events_tenant_campaign_type_idx').on(
+      t.tenantId,
+      t.campaignId,
+      t.eventType,
+      t.messageId,
+    ),
   ],
 );
 
@@ -456,9 +495,54 @@ export const subscribers = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
+  (t) => [uniqueIndex('subscribers_tenant_email_uq').on(t.tenantId, t.email)],
+);
+
+/**
+ * Per-subscriber engagement rollup, maintained by the delivery pipeline and
+ * reconciled nightly. See migration 0025 for why this is a table rather than
+ * columns on `subscribers` (write amplification, measured) and for the
+ * `engagement_bucket()` function that owns the boundaries.
+ */
+export const subscriberEngagement = pgTable(
+  'subscriber_engagement',
+  {
+    subscriberId: uuid('subscriber_id')
+      .primaryKey()
+      .references(() => subscribers.id, { onDelete: 'cascade' }),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    /**
+     * Denormalised copy of `subscribers.created_at`, written once when the
+     * rollup row is seeded.
+     *
+     * 0025 claimed it let one index answer the bucket predicate and the
+     * roster's keyset order together. It does not: the ORDER BY is on
+     * `subscribers.created_at`, and the planner cannot prove this copy equals
+     * it, so every rollup-driven plan sorts regardless. Migration 0027 dropped
+     * it from both bucket indexes for that reason. The column stays because it
+     * is the only record of when a rollup row's subject joined — nothing reads
+     * it in a query path, so do not add one expecting an index to be there.
+     */
+    createdAt: ts('created_at').notNull(),
+    delivered: integer('delivered').notNull().default(0),
+    /** Deliveries on channels that can report engagement (email, WhatsApp). */
+    trackedDelivered: integer('tracked_delivered').notNull().default(0),
+    opened: integer('opened').notNull().default(0),
+    clicked: integer('clicked').notNull().default(0),
+    /** -1 never mailed, 0 none, 1 under 20%, 2 20-40%, 3 40%+. */
+    opensBucket: smallint('opens_bucket').notNull().default(-1),
+    clicksBucket: smallint('clicks_bucket').notNull().default(-1),
+    updatedAt: ts('updated_at').defaultNow().notNull(),
+  },
   (t) => [
-    uniqueIndex('subscribers_tenant_email_uq').on(t.tenantId, t.email),
-    index('subscribers_tenant_status_idx').on(t.tenantId, t.status),
+    // (tenant, bucket, subscriber_id) — subscriber_id third, not a trailing
+    // created_at, because the plan that matters probes this table by id from a
+    // `subscribers` scan and that position is what makes the probe index-only.
+    // See migration 0027 for the measured before/after.
+    index('subscriber_engagement_opens_idx').on(t.tenantId, t.opensBucket, t.subscriberId),
+    index('subscriber_engagement_clicks_idx').on(t.tenantId, t.clicksBucket, t.subscriberId),
   ],
 );
 

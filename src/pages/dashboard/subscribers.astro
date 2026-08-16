@@ -17,6 +17,18 @@ import {
 const session = Astro.locals.session;
 // undefined = not connected (island uses fixtures); an array = live data (even if empty).
 let initial: RichSubscriber[] | undefined = undefined;
+let initialTotal = 0;
+/** Per-channel roster sizes + byStatus, unfiltered, for the first paint. */
+type SubscriberCounts = {
+  email?: number;
+  sms?: number;
+  whatsapp?: number;
+  voice?: number;
+  byStatus?: Record<string, number>;
+};
+let initialCounts: SubscriberCounts | null = null;
+/** Server page size — must match the island's, which pages from the API. */
+const PAGE_SIZE = 10;
 // Segments, lists and tags are workspace resources the segment builder and the
 // list-membership editor both need.
 let initialSegments: SavedSegment[] = [];
@@ -38,28 +50,36 @@ if (session?.user?.id && session.activeTenantId) {
       activeTenantId: session.activeTenantId,
       role: session.role,
     });
-    const [subsRes, segsRes, listsRes, tagsRes] = await Promise.all([
-      client.GET('/v1/subscribers', { params: { query: { limit: 200 } } }),
+    // Lists are deliberately absent: /v1/lists aggregates every membership row
+    // (3.4s / 710KB at a million subscribers) and this page needs it only when
+    // the Lists filter or the segment builder is opened. The island fetches it
+    // on demand.
+    const [subsRes, countsRes, segsRes, tagsRes] = await Promise.all([
+      // First page only. The island pages from the API — a workspace can hold
+      // millions of subscribers, and none of it belongs in the browser.
+      client.GET('/v1/subscribers', {
+        params: { query: { limit: PAGE_SIZE, sort: 'created', dir: 'desc' } },
+      }),
+      // The unfiltered roster, per channel, from one scan — this replaces the
+      // page query's ?withTotal=1, which cost the same scan and answered only
+      // one of the three questions the first paint has to answer (the footer's
+      // total, the four tab counts, and the Status menu).
+      client.GET('/v1/subscribers/counts', { params: { query: { channel: 'email' } } }),
       client.GET('/v1/segments'),
-      client.GET('/v1/lists'),
       client.GET('/v1/tags'),
     ]);
     if (subsRes.error) {
       banner = { ok: false, text: 'workers returned an error.' };
     } else {
-      initial = toRichSubscribers(unwrap<ApiSubscriber>(subsRes.data));
+      // Cursor contract: { items, next_cursor, has_more }. `unwrap` reads
+      // `data` for the older endpoints, so items are taken directly.
+      const payload = subsRes.data as { items?: ApiSubscriber[] } | undefined;
+      initial = toRichSubscribers(payload?.items ?? []);
+      initialCounts = (countsRes.data as SubscriberCounts | undefined) ?? null;
+      // The island opens on the email tab, so that is the total the footer
+      // needs before the first client fetch lands.
+      initialTotal = initialCounts?.email ?? initial.length;
       initialSegments = unwrap<ApiSegment>(segsRes.data).map(toSavedSegment);
-      allLists = unwrap<{
-        id: string;
-        name: string;
-        color?: string | null;
-        channels?: string[] | null;
-      }>(listsRes.data).map((l) => ({
-        id: l.id,
-        name: l.name,
-        color: l.color ?? null,
-        channels: l.channels ?? null,
-      }));
       allTagRows = unwrap<{ id: string; name: string }>(tagsRes.data).map((t) => ({
         id: t.id,
         name: t.name,
@@ -74,6 +94,8 @@ if (session?.user?.id && session.activeTenantId) {
 <AppLayout title="Subscribers">
   {banner && <div class={`svc-banner ${banner.ok ? 'ok' : 'err'}`}>{banner.text}</div>}
   <AppSubscribers
+    initialTotal={initialTotal}
+    initialCounts={initialCounts}
     client:visible
     initial={initial}
     initialSegments={initialSegments}

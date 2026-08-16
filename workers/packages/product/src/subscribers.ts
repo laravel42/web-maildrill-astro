@@ -1,4 +1,17 @@
-import { and, desc, eq, gte, inArray, isNotNull, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  getTableColumns,
+  gte,
+  inArray,
+  isNotNull,
+  or,
+  sql,
+  type SQL,
+} from 'drizzle-orm';
 import type { PgUpdateSetSource } from 'drizzle-orm/pg-core';
 import {
   campaigns,
@@ -7,13 +20,17 @@ import {
   lists,
   messageEvents,
   messages,
+  subscriberEngagement,
   subscriberTags,
   subscribers,
   tags,
+  type SegmentRule,
   type Subscriber,
 } from '@maildrill/database';
+import { seedSubscriberEngagement } from '@maildrill/services';
 import { addToList } from './lists';
-import { clamp } from './rules';
+import { bucketOrdinals, type EngagementBucket } from './engagement';
+import { buildSegmentWhere, clamp } from './rules';
 import {
   invalidReasonLabel,
   validateEmailAddress,
@@ -132,7 +149,15 @@ export async function upsertSubscriber(input: UpsertSubscriberInput): Promise<Su
       },
     })
     .returning();
-  return rows[0]!;
+  const row = rows[0]!;
+  // Give every subscriber a rollup row the moment it exists, so the `never`
+  // bucket — no send yet on a channel that reports opens, which is exactly the
+  // people nobody has reached — can actually find them. Idempotent, so the
+  // update half of this upsert just pays one index probe. The delivery pipeline
+  // can materialise a missing row too, but only once someone is mailed, which
+  // is too late for the bucket that means the opposite.
+  await seedSubscriberEngagement(db, input.tenantId, row.id);
+  return row;
 }
 
 export type ImportSubscriberRow = Omit<UpsertSubscriberInput, 'tenantId'>;
@@ -229,26 +254,448 @@ export async function getSubscriber(tenantId: string, id: string): Promise<Subsc
   return rows[0] ?? null;
 }
 
+/** A saved segment as the roster filter needs it: its stored rules and how they join. */
+export interface SegmentFilter {
+  rules: SegmentRule[];
+  matchType: 'all' | 'any';
+}
+
 export interface ListSubscribersOptions {
   limit?: number;
   offset?: number;
   status?: SubscriberStatus;
+  /** Free-text match on name or email, applied in SQL. */
+  q?: string;
+  /** Only subscribers addressable on this channel (email needs an address, the rest a phone). */
+  channel?: 'email' | 'sms' | 'whatsapp' | 'voice';
+  /** Only members of these lists (OR). */
+  listIds?: string[];
+  /** Only subscribers carrying one of these tag names (OR). */
+  tagNames?: string[];
+  /** Any of these statuses (OR). Supersedes `status` when both are given. */
+  statuses?: SubscriberStatus[];
+  /**
+   * Saved segments to match against (OR), already resolved to their rules.
+   *
+   * Rows, not ids: `listConditions` is synchronous so the page query, the count
+   * and the channel counts can all share it, and reading `segments` here would
+   * make it async and infect all three. The route owns the lookup.
+   */
+  segments?: SegmentFilter[];
+  /**
+   * Open-rate buckets to match (OR), read from the `subscriber_engagement`
+   * rollup rather than recomputed from `messages`.
+   *
+   * Buckets, not a rate range: the filter offers five discrete choices, and an
+   * equality predicate is what lets one index answer both the bucket and the
+   * roster's keyset order. See ./engagement.
+   */
+  opensBuckets?: EngagementBucket[];
+  /** Click-rate buckets to match (OR). Same storage, same index shape. */
+  clicksBuckets?: EngagementBucket[];
+  sort?: 'name' | 'email' | 'status' | 'created';
+  dir?: 'asc' | 'desc';
+}
+
+/**
+ * Keyset page: rows strictly after `(at, id)` in `created_at, id` order.
+ * Constant cost with depth — Postgres walks the composite index and stops at
+ * LIMIT, instead of counting past N rows the way OFFSET does.
+ *
+ * `created_at` is the only key offered. `subscribers_tenant_created_id_idx`
+ * covers it in both directions (a btree scans backwards for the ascending
+ * case), while ordering by name/email/status under a tenant has no index at
+ * all and would sort the whole million-row filtered set per page. The callers
+ * that want those orders already re-sort the page they hold in the browser.
+ */
+export interface KeysetPageOptions extends Omit<ListSubscribersOptions, 'sort'> {
+  /** Resume point: `at` is a `cursorAt` from the previous page, never a Date. */
+  after?: { at: string; id: string };
+  /**
+   * Only for an explicit numbered jump to a page never walked to. Sequential
+   * paging resumes from `after` and never pays the OFFSET cost.
+   */
+  offset?: number;
+}
+
+/**
+ * The exact sort key, rendered in SQL as microsecond-precision text.
+ *
+ * `created_at` is a microsecond timestamptz but a JS Date only holds
+ * milliseconds, so a cursor built from the parsed row would resume up to 999µs
+ * *before* the row it names. Descending, that silently skips every row sharing
+ * that millisecond (342 of them at one boundary in the 1M-row fixture);
+ * ascending, it serves them twice. Round-tripping the key as text keeps the
+ * resume point exact, and `::timestamptz` on the way back in keeps the
+ * predicate index-friendly.
+ */
+const cursorAt = sql<string>`to_char(${subscribers.createdAt} at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`;
+
+/**
+ * The page's WHERE / ORDER BY / LIMIT, shared so the narrow and full selects
+ * below can never drift into paginating differently.
+ *
+ * The ceiling is the page cap plus one, because callers fetch limit+1 to learn
+ * whether another page exists.
+ */
+const MAX_KEYSET_ROWS = 101;
+
+function keysetPlan(tenantId: string, opts: KeysetPageOptions) {
+  const ascending = opts.dir === 'asc';
+  const conds = listConditions(tenantId, opts);
+  if (opts.after) {
+    // Row-value comparison: one index-friendly predicate, and the id breaks
+    // ties so a page boundary can never repeat or skip a row.
+    conds.push(
+      ascending
+        ? sql`(${subscribers.createdAt}, ${subscribers.id}) > (${opts.after.at}::timestamptz, ${opts.after.id}::uuid)`
+        : sql`(${subscribers.createdAt}, ${subscribers.id}) < (${opts.after.at}::timestamptz, ${opts.after.id}::uuid)`,
+    );
+  }
+  return {
+    where: and(...conds),
+    order: ascending
+      ? [asc(subscribers.createdAt), asc(subscribers.id)]
+      : [desc(subscribers.createdAt), desc(subscribers.id)],
+    limit: clamp(opts.limit ?? 10, 1, MAX_KEYSET_ROWS),
+  };
+}
+
+/**
+ * The same page as the CRM table needs it: whole rows plus memberships, tags
+ * and engagement counters.
+ *
+ * `attributes` stays in this projection deliberately — the CSV export and the
+ * profile's Location field read custom fields straight off it, so trimming it
+ * here would blank those columns with no error anywhere to show for it.
+ */
+export async function listSubscribersKeysetWithRelations(
+  tenantId: string,
+  opts: KeysetPageOptions = {},
+): Promise<SubscriberKeysetRow[]> {
+  const plan = keysetPlan(tenantId, opts);
+  const rows = await db
+    .select({ ...getTableColumns(subscribers), cursorAt })
+    .from(subscribers)
+    .where(plan.where)
+    .orderBy(...plan.order)
+    .limit(plan.limit)
+    // Set only for an explicit numbered jump to a page never walked to; the
+    // sequential path resumes from a cursor and never pays this.
+    .offset(Math.max(opts.offset ?? 0, 0));
+  const enriched = await withRelations(rows);
+  // withRelations is typed on Subscriber, so carry the key across explicitly
+  // rather than leaning on the spread that happens to preserve it.
+  return enriched.map((row, i) => ({ ...row, cursorAt: rows[i]!.cursorAt }));
+}
+
+/**
+ * The status predicate on its own, or undefined when no status is selected.
+ *
+ * Split out because `subscriberChannelCounts` needs the filter set with the
+ * status and the filter set without it in the SAME scan: the four channel tabs
+ * have to honour it, and the status menu has to ignore it or every unselected
+ * option reads zero.
+ */
+function statusCondition(
+  opts: Pick<ListSubscribersOptions, 'status' | 'statuses'>,
+): SQL | undefined {
+  if (opts.statuses?.length) return inArray(subscribers.status, opts.statuses);
+  if (opts.status) return eq(subscribers.status, opts.status);
+  return undefined;
+}
+
+/**
+ * Addressability on one channel, mirroring `addressForChannel` on the send
+ * path: email needs an address, everything else needs a phone number.
+ *
+ * `email` is a real predicate rather than nothing. The column is NOT NULL but
+ * it is `text`, so `''` is storable, and the channel-count aggregate has always
+ * spelled it `email <> ''` — leaving the page filter empty meant the Email tab
+ * could count a row the page then had to show under a filter that excludes it.
+ * One expression, so the page, the count and the tab cannot disagree.
+ */
+function reachCondition(channel: NonNullable<ListSubscribersOptions['channel']>): SQL {
+  return channel === 'email'
+    ? sql`${subscribers.email} <> ''`
+    : sql`${subscribers.phone} is not null and ${subscribers.phone} <> ''`;
+}
+
+/** Every filter the list endpoint understands, as SQL. */
+function listConditions(tenantId: string, opts: ListSubscribersOptions) {
+  const conds = [eq(subscribers.tenantId, tenantId)];
+  const status = statusCondition(opts);
+  if (status) conds.push(status);
+  if (opts.q?.trim()) conds.push(searchCondition(opts.q));
+  if (opts.channel) conds.push(reachCondition(opts.channel));
+  if (opts.tagNames?.length) {
+    // Matched by name because that is what the UI filters on; EXISTS keeps the
+    // subscriber row single even when several of its tags match.
+    //
+    // The selection is bound as one array parameter, not interpolated. Both
+    // this and the list filter below used to build the array literal by hand
+    // with sql.raw — the tag branch hand-escaped quotes, and the list branch
+    // did not escape at all, so it was one non-uuid id away from a caller
+    // closing the literal and appending SQL. Route-level uuid validation was
+    // the only thing standing in front of it, which puts the safety of a
+    // shared filter builder in the hands of every future caller's schema.
+    conds.push(
+      sql`exists (
+        select 1 from subscriber_tags st
+        join tags tg on tg.id = st.tag_id
+        where st.subscriber_id = ${subscribers.id} and tg.name = any(${sql.param(opts.tagNames)}::text[])
+      )`,
+    );
+  }
+  if (opts.listIds?.length) {
+    // EXISTS rather than a join: it short-circuits on the first matching
+    // membership and cannot duplicate the subscriber row.
+    conds.push(
+      sql`exists (select 1 from list_members lm where lm.subscriber_id = ${subscribers.id} and lm.list_id = any(${sql.param(opts.listIds)}::uuid[]))`,
+    );
+  }
+  // Open/click rate buckets, read from the rollup rather than recomputed.
+  //
+  // EXISTS against `subscriber_engagement`, and that is the whole filter — the
+  // planner picks its own driver from the two indexes available and gets both
+  // ends of the distribution right without any help: for a bucket holding 140k
+  // people it walks subscribers_tenant_created_id_idx and index-only-probes
+  // subscriber_engagement_opens_idx, stopping at LIMIT (0.62ms, 263 buffers);
+  // for one holding 33 it drives from that same index instead and top-N sorts
+  // the handful it finds (0.38ms, 143 buffers). An empty bucket costs 0.13ms
+  // and never touches `subscribers`. Computed on the fly from `messages`, the
+  // same rare-bucket page was 1,122ms and 618,794 buffers.
+  //
+  // Cost is flat with depth, which is the point: the page at row 140,000 is
+  // 0.59ms / 259 buffers against 0.62ms / 263 at row 1.
+  if (opts.opensBuckets?.length) {
+    conds.push(engagementBucketCondition(tenantId, 'opens_bucket', opts.opensBuckets));
+  }
+  if (opts.clicksBuckets?.length) {
+    conds.push(engagementBucketCondition(tenantId, 'clicks_bucket', opts.clicksBuckets));
+  }
+  if (opts.segments?.length) {
+    // A saved segment is a stored WHERE clause, so it belongs here rather than
+    // in the browser: buildSegmentWhere emits a fragment scoped to a single
+    // subscribers row (bare columns plus correlated EXISTS), which drops
+    // straight into the page predicate — and therefore into the count and the
+    // channel counts too, which is the whole reason a filter lives in this
+    // function. Filtering the fetched page instead meant a segment matching a
+    // third of the workspace emptied the table, because the page and the
+    // segment's first 1000 rows are unrelated sets.
+    //
+    // COST, stated plainly, because this is the one filter here that is not
+    // bounded. Unlike the rate buckets above — five fixed ordinals with an
+    // index behind them — a segment's rules are whatever the user built, and
+    // only some of them are indexable. `email`/`name contains` reaches 0024's
+    // trigram GINs (rules.ts spells it `lower(col) like` for exactly that
+    // reason: as `ilike` the same predicate was a 1,058ms full scan per page).
+    // `phone exists` and `status` reach their own indexes. A rule on
+    // `attributes ->>` has no index at all, so the keyset walk degenerates into
+    // a scan of the whole tenant on EVERY page — measured at 26ms for a
+    // selective attribute and 374-818ms for one matching nothing, per page, on
+    // the 1M-row workspace. Bounding that needs an expression index per
+    // attribute or a materialised membership table; neither exists yet, so the
+    // roster offers it next to a filter engineered to cost 0.5ms and the two
+    // are three orders of magnitude apart.
+    const wheres = opts.segments.map((s) => buildSegmentWhere(s.rules, s.matchType));
+    // Several selected segments read as a union, matching how the chips read.
+    // buildSegmentWhere returns undefined for a rule-less segment, which
+    // matches everyone: one of those in the selection has to widen the union to
+    // everything, not silently narrow it to the segments that do have rules.
+    if (wheres.every((w) => w !== undefined)) conds.push(or(...(wheres as SQL[]))!);
+  }
+  return conds;
+}
+
+/**
+ * One bucket column against a selection of ordinals.
+ *
+ * The tenant predicate is restated on the rollup even though `subscriber_id`
+ * already implies it through the foreign key: it is what lets the planner use
+ * the leading column of subscriber_engagement_opens_idx, which is the
+ * difference between an index-only scan of one bucket and a scan of every
+ * tenant's. It is also what makes a mis-tenanted rollup row fail closed — the
+ * EXISTS needs both `subscriber_id` (already tenant-restricted by the outer
+ * query) and this, so a mismatch can only ever hide a row, never leak one.
+ */
+function engagementBucketCondition(
+  tenantId: string,
+  column: 'opens_bucket' | 'clicks_bucket',
+  buckets: EngagementBucket[],
+): SQL {
+  // Distinct alias per column so selecting an opens bucket AND a clicks bucket
+  // does not produce two subqueries named `e`.
+  const alias = sql.raw(column === 'opens_bucket' ? 'eo' : 'ec');
+  const col = sql.raw(column);
+  return sql`exists (
+    select 1 from subscriber_engagement ${alias}
+     where ${alias}.subscriber_id = ${subscribers.id}
+       and ${alias}.tenant_id = ${tenantId}::uuid
+       and ${alias}.${col} = any(${sql.param(bucketOrdinals(buckets))}::smallint[])
+  )`;
+}
+
+/**
+ * How many subscribers match, ignoring pagination.
+ *
+ * Opt-in only on the keyset path: this is a full scan of the filtered set, so
+ * a page must never pay for it unless the caller asked. The signature names
+ * every filter `listConditions` actually applies — it previously claimed only
+ * status/q while silently honouring channel and listId too.
+ */
+export async function countSubscribers(
+  tenantId: string,
+  opts: Pick<
+    ListSubscribersOptions,
+    | 'status'
+    | 'statuses'
+    | 'q'
+    | 'channel'
+    | 'listIds'
+    | 'tagNames'
+    | 'segments'
+    | 'opensBuckets'
+    | 'clicksBuckets'
+  > = {},
+): Promise<number> {
+  const [row] = await db
+    .select({ n: count() })
+    .from(subscribers)
+    .where(and(...listConditions(tenantId, opts)));
+  return Number(row?.n ?? 0);
+}
+
+/**
+ * Per-channel reach counts for the table's tabs, in ONE scan.
+ *
+ * The tabs previously counted the rows the browser happened to hold, which was
+ * the whole set at 200 rows and is 10 rows once paging moved server-side. Four
+ * separate COUNTs would be four scans of a million rows; filtered aggregates
+ * get all four from one, and email/phone presence is the same rule
+ * `addressForChannel` uses on the send path.
+ */
+export async function subscriberChannelCounts(
+  tenantId: string,
+  opts: Pick<
+    ListSubscribersOptions,
+    | 'status'
+    | 'statuses'
+    | 'q'
+    | 'channel'
+    | 'listIds'
+    | 'tagNames'
+    | 'segments'
+    | 'opensBuckets'
+    | 'clicksBuckets'
+  > = {},
+): Promise<{
+  email: number;
+  sms: number;
+  whatsapp: number;
+  voice: number;
+  byStatus: Record<string, number>;
+}> {
+  // Two filter sets out of one scan, because the tabs and the status menu need
+  // different ones and neither is allowed to cost a second pass:
+  //
+  //  - The four channel tabs must honour EVERY filter, status included, or the
+  //    tab and the footer describe different sets. They did: with Status=Active
+  //    selected the Email tab read 1,000,229 against a footer of 920,211,
+  //    because the destructure below stripped the status out of the whole
+  //    select rather than out of the status counters alone.
+  //  - The status menu must ignore the status filter, or a menu that counts
+  //    only the status already selected reports every other option as zero.
+  //  - The status menu must honour the CHANNEL, or the SMS tab's menu counts
+  //    people with no phone number — describing the workspace under a heading
+  //    that says otherwise.
+  //
+  // A selected segment stays in both, even one whose rules mention status: the
+  // "don't zero your own options" rule protects the status *menu* from the
+  // status *filter*. A segment is a saved audience the user chose, so the menu
+  // should describe that audience.
+  const { status: _s, statuses: _ss, channel, ...shared } = opts;
+  const status = statusCondition(opts);
+  // `and(x)` with one operand is just x; the `true` keeps the template legible
+  // when a filter is absent and costs nothing — the planner folds it away.
+  const st = status ?? sql`true`;
+  const reach = channel ? reachCondition(channel) : sql`true`;
+  const [row] = await db
+    .select({
+      email: sql<number>`count(*) filter (where ${subscribers.email} <> '' and ${st})::int`,
+      phone: sql<number>`count(*) filter (where ${subscribers.phone} is not null and ${subscribers.phone} <> '' and ${st})::int`,
+      active: sql<number>`count(*) filter (where ${subscribers.status} = 'active' and ${reach})::int`,
+      unsubscribed: sql<number>`count(*) filter (where ${subscribers.status} = 'unsubscribed' and ${reach})::int`,
+      bounced: sql<number>`count(*) filter (where ${subscribers.status} = 'bounced' and ${reach})::int`,
+      complained: sql<number>`count(*) filter (where ${subscribers.status} = 'complained' and ${reach})::int`,
+      invalid: sql<number>`count(*) filter (where ${subscribers.status} = 'invalid' and ${reach})::int`,
+    })
+    .from(subscribers)
+    // Neither status nor channel in the base predicate: both are applied per
+    // aggregate above, to the counters that should see them.
+    .where(and(...listConditions(tenantId, shared)));
+  const byStatus = {
+    active: Number(row?.active ?? 0),
+    unsubscribed: Number(row?.unsubscribed ?? 0),
+    bounced: Number(row?.bounced ?? 0),
+    complained: Number(row?.complained ?? 0),
+    invalid: Number(row?.invalid ?? 0),
+  };
+  const email = Number(row?.email ?? 0);
+  // SMS, WhatsApp and voice all address the same phone number, so one count
+  // serves all three until per-channel opt-in exists.
+  const phone = Number(row?.phone ?? 0);
+  return { email, sms: phone, whatsapp: phone, voice: phone, byStatus };
+}
+
+/**
+ * Name/email match, case-insensitive — the same search the table offers.
+ *
+ * `lower(col) like` rather than `col ilike` because migration 0024's trigram
+ * GINs are built on `lower(email)` and `lower(coalesce(name,''))`; ilike cannot
+ * use them.
+ *
+ * The needle's own LIKE metacharacters are escaped. `?q=%` is not a search, it
+ * is "return the workspace" — 1,000,229 rows on the perf tenant — and it also
+ * defeats the trigram index, so an unauthenticated-looking typo bought a full
+ * scan. Escaped, it searches for a literal per-cent sign, which is what someone
+ * typing one means.
+ */
+function searchCondition(q: string) {
+  const like = `%${q
+    .trim()
+    .toLowerCase()
+    .replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  return sql`(lower(${subscribers.email}) like ${like} or lower(coalesce(${subscribers.name}, '')) like ${like})`;
 }
 
 export async function listSubscribers(
   tenantId: string,
   opts: ListSubscribersOptions = {},
 ): Promise<Subscriber[]> {
-  const conds = [eq(subscribers.tenantId, tenantId)];
-  if (opts.status) conds.push(eq(subscribers.status, opts.status));
-  return db
-    .select()
-    .from(subscribers)
-    .where(and(...conds))
-    .orderBy(desc(subscribers.createdAt))
-    .limit(clamp(opts.limit ?? 50, 1, 200))
-    .offset(Math.max(opts.offset ?? 0, 0));
+  const col =
+    opts.sort === 'name'
+      ? subscribers.name
+      : opts.sort === 'email'
+        ? subscribers.email
+        : opts.sort === 'status'
+          ? subscribers.status
+          : subscribers.createdAt;
+  const order = opts.dir === 'asc' ? asc(col) : desc(col);
+  return (
+    db
+      .select()
+      .from(subscribers)
+      .where(and(...listConditions(tenantId, opts)))
+      // A stable tiebreak keeps deep pages from repeating or skipping rows.
+      .orderBy(order, desc(subscribers.id))
+      .limit(clamp(opts.limit ?? 50, 1, 200))
+      .offset(Math.max(opts.offset ?? 0, 0))
+  );
 }
+
+/** A keyset page row: everything the table renders, plus its resume key. */
+export type SubscriberKeysetRow = SubscriberWithRelations & { cursorAt: string };
 
 /** A subscriber plus the lists and tags it actually belongs to. */
 export interface SubscriberWithRelations extends Subscriber {
@@ -276,7 +723,7 @@ async function withRelations(rows: Subscriber[]): Promise<SubscriberWithRelation
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
 
-  const [memberships, tagRows, outcomeRows, clickRows] = await Promise.all([
+  const [memberships, tagRows, engagementRows] = await Promise.all([
     db
       .select({
         subscriberId: listMembers.subscriberId,
@@ -293,25 +740,26 @@ async function withRelations(rows: Subscriber[]): Promise<SubscriberWithRelation
       .from(subscriberTags)
       .innerJoin(tags, eq(tags.id, subscriberTags.tagId))
       .where(inArray(subscriberTags.subscriberId, ids)),
+    // Read the rollup, don't recompute. These four counters used to come from
+    // two aggregates over `messages` keyed on `recipient_id`, which had no
+    // index: every render of a ten-row page parallel-seq-scanned a million
+    // messages (66ms, 32,080 buffers) to print two percentages. Ten primary-key
+    // lookups now.
+    //
+    // It also makes the number on screen and the bucket the row was filtered
+    // into come from the same place. Computing the display rate separately
+    // meant a row could show "0%" while sitting in the 40%+ page, which is
+    // exactly the disagreement this filter existed to remove.
     db
       .select({
-        recipientId: messages.recipientId,
-        delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read'))::int`,
-        trackedDelivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read') and ${messages.channel} in ('email', 'whatsapp'))::int`,
-        opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
+        subscriberId: subscriberEngagement.subscriberId,
+        delivered: subscriberEngagement.delivered,
+        trackedDelivered: subscriberEngagement.trackedDelivered,
+        opened: subscriberEngagement.opened,
+        clicked: subscriberEngagement.clicked,
       })
-      .from(messages)
-      .where(inArray(messages.recipientId, ids))
-      .groupBy(messages.recipientId),
-    db
-      .select({
-        recipientId: messages.recipientId,
-        clicked: sql<number>`count(distinct ${messageEvents.messageId})::int`,
-      })
-      .from(messageEvents)
-      .innerJoin(messages, eq(messageEvents.messageId, messages.id))
-      .where(and(inArray(messages.recipientId, ids), eq(messageEvents.eventType, 'click')))
-      .groupBy(messages.recipientId),
+      .from(subscriberEngagement)
+      .where(inArray(subscriberEngagement.subscriberId, ids)),
   ]);
 
   const listsBySub = new Map<string, { id: string; name: string }[]>();
@@ -327,17 +775,20 @@ async function withRelations(rows: Subscriber[]): Promise<SubscriberWithRelation
     tagsBySub.set(t.subscriberId, bucket);
   }
 
-  const outcomeBySub = new Map(outcomeRows.map((o) => [o.recipientId, o]));
-  const clicksBySub = new Map(clickRows.map((c) => [c.recipientId, c]));
+  // A subscriber with no rollup row reads as zero engagement. That is the same
+  // answer the old aggregate gave for someone who had never been mailed, and
+  // the only other population it can describe is a row the backfill has not
+  // reached yet.
+  const engagementBySub = new Map(engagementRows.map((e) => [e.subscriberId, e]));
 
   return rows.map((r) => ({
     ...r,
     lists: listsBySub.get(r.id) ?? [],
     tagNames: tagsBySub.get(r.id) ?? [],
-    delivered: Number(outcomeBySub.get(r.id)?.delivered ?? 0),
-    trackedDelivered: Number(outcomeBySub.get(r.id)?.trackedDelivered ?? 0),
-    opened: Number(outcomeBySub.get(r.id)?.opened ?? 0),
-    clicked: Number(clicksBySub.get(r.id)?.clicked ?? 0),
+    delivered: Number(engagementBySub.get(r.id)?.delivered ?? 0),
+    trackedDelivered: Number(engagementBySub.get(r.id)?.trackedDelivered ?? 0),
+    opened: Number(engagementBySub.get(r.id)?.opened ?? 0),
+    clicked: Number(engagementBySub.get(r.id)?.clicked ?? 0),
   }));
 }
 

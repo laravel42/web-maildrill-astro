@@ -6,8 +6,16 @@ import styles from './TagFilter.module.css';
 
 export type TagFilterOption = {
   name: string;
-  /** How many items carry this tag (images, lists, subscribers, …). */
-  count: number;
+  /**
+   * How many items carry this tag (images, lists, subscribers, …), or
+   * undefined when the caller cannot know.
+   *
+   * Undefined is not zero. A screen that pages server-side holds ten rows and
+   * can only count the tags on those ten; printing that beside a workspace-wide
+   * tag list would state, in numerals, that a tag nobody on this page carries
+   * is a tag nobody carries. The row renders without a number instead.
+   */
+  count?: number;
 };
 
 /**
@@ -122,7 +130,9 @@ export default function TagFilter({
                       </span>
                       <span className={styles.dot} style={{ background: s.color }} />
                       <span className={styles.name}>{t.name}</span>
-                      <span className={`${styles.n} tnum`}>{t.count}</span>
+                      {t.count !== undefined && (
+                        <span className={`${styles.n} tnum`}>{t.count}</span>
+                      )}
                     </button>
                   );
                 })
