@@ -181,7 +181,9 @@
 }
 .astatus--scheduled {
   border-color: color-mix(in srgb, var(--accent) 30%, transparent);
-  color: var(--accent);
+  /* Text role: --accent is a fill token and dark mode never flips it, which
+     left this badge at 2.7:1 on the dark surface. */
+  color: var(--accent-text);
 }
 .astatus--sending {
   border-color: color-mix(in srgb, var(--warning) 30%, transparent);
@@ -243,7 +245,7 @@
 }
 .cstat--scheduled {
   background: var(--accent-tint);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .cstat--sending {
   background: var(--warning-bg);
@@ -278,8 +280,8 @@
   color: var(--danger-strong);
 }
 .tstat--paused {
-  background: rgba(139, 92, 246, 0.16);
-  color: #7c3aed;
+  background: var(--violet-bg);
+  color: var(--violet-strong);
 }
 .tstat--disabled {
   background: var(--surface2);

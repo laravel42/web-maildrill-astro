@@ -23,7 +23,13 @@ export function ListPill({ name, color }: { name: string; color?: string | null 
   return (
     <span
       className="apill"
-      style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c }}
+      // The list colour is user-chosen and never theme-aware; carried straight
+      // as text it drops to ~2.7:1 on the dark surface. Mixing it toward the
+      // theme's text colour keeps the identity while staying readable on both.
+      style={{
+        background: `color-mix(in srgb, ${c} 14%, transparent)`,
+        color: `color-mix(in srgb, ${c} 60%, var(--text))`,
+      }}
     >
       <span style={{ width: 7, height: 7, borderRadius: '50%', background: c, flex: 'none' }} />
       {name}

@@ -416,7 +416,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           {CHANNEL_TABS.map((t) => {
             const active = channelTab === t;
             const m = t === 'all' ? null : CHANNEL[t];
-            const color = t === 'all' ? 'var(--accent)' : m!.color;
+            const color = t === 'all' ? 'var(--accent-text)' : m!.color;
             return (
               <button
                 key={t}

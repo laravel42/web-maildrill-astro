@@ -356,7 +356,9 @@
   padding: 8px 10px;
   border-radius: 9px;
   background: var(--ink, #1f1e1b);
-  color: #fff;
+  /* --ink inverts with the theme, so the text must ride its paired token —
+     a hardcoded white left this tooltip white-on-white in dark mode. */
+  color: var(--on-ink, #fff);
   font-size: 11.5px;
   font-weight: 500;
   line-height: 1.4;

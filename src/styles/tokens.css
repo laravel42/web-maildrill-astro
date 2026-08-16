@@ -74,6 +74,10 @@
   --danger-bg: #fee2e2;
   --info: #4f46e5;
   --info-bg: #eef0ff;
+  /* Violet — only the WhatsApp "paused" approval badge uses it, but it needs a
+     theme pair like every other status hue or it cannot flip for dark. */
+  --violet-strong: #7c3aed;
+  --violet-bg: rgba(139, 92, 246, 0.16);
 
   /* Channels (color + tint pairs, used everywhere consistently) */
   --ch-email: #4f46e5;
@@ -191,8 +195,8 @@
   --text2: #e6e2d8;
   --text3: #d6d1c3;
   --text4: #bdb8a9;
-  --muted: #8b8778;
-  --muted2: #817c6d;
+  --muted: #9a9585;
+  --muted2: #949080;
   --on-ink: #15130d;
 
   --brand-tint: rgba(255, 68, 31, 0.16);
@@ -212,6 +216,8 @@
   --warning-bg: rgba(217, 119, 6, 0.16);
   --danger-bg: rgba(220, 38, 38, 0.16);
   --info-bg: rgba(99, 91, 245, 0.18);
+  --violet-strong: #c4b5fd;
+  --violet-bg: rgba(139, 92, 246, 0.22);
 
   --ch-email: #a5b4fc;
   --ch-sms: #22d3ee;
