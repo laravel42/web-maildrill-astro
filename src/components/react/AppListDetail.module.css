@@ -768,6 +768,16 @@
 }
 
 /* ---------- Rail ---------- */
+/* The whole a rail percentage is a share of, printed beside it. Two of the
+   three divide by messages attempted and the third by the roster, and without
+   this they read as one series — see AppListDetail.tsx. Muted and lighter so
+   the figure still leads. */
+.railBasis {
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--text4);
+  white-space: nowrap;
+}
 .railEyebrow {
   display: block;
   margin: 0 0 4px;

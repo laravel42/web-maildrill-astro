@@ -438,7 +438,7 @@ export async function applyTrackingOutcome(input: {
         await applyEngagementDelta(tx, {
           tenantId: input.tenantId,
           recipientId: resolved,
-          delta: engagementClickDelta(),
+          delta: engagementClickDelta(input.channel),
         });
       }
     }

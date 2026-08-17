@@ -376,15 +376,26 @@ export function buildSubscriberDetailView(
 
   /* `lastActiveAt` is the API's `max(coalesce(read_at, delivered_at, sent_at,
      submitted_at, created_at))` over this subscriber's messages — a real
-     activity timestamp, unlike the roster column of the same name, which is the
-     row's `updated_at` (audit #12). The `?? subscriber.updatedAt` fallback here
-     inherits that confusion for a subscriber with no messages at all.
+     activity timestamp. The roster column of the same name reads THE SAME
+     field from the same expression (`withRelations` in workers subscribers.ts,
+     rendered at AppSubscribers.tsx), so the two surfaces agree by construction.
+     They did not while the column rendered the row's `updated_at`, and this
+     comment went on describing that state after the column was fixed.
+
+     No `?? subscriber.updatedAt` fallback any more, and that was the last of
+     the same confusion: `updated_at` is when the ROW was written, so a
+     subscriber who has never been messaged read "Last activity 5d ago" here —
+     ines.nilsen18@acme.io, 0 messages, `updated_at` 2026-08-12 — while the
+     roster and the drawer said "Never" about the same person. Null now means
+     "never messaged" and prints as such; `undefined` (the activity payload has
+     not arrived) still prints "—", because "never" is a claim and "not loaded
+     yet" is not.
 
      `recencyPct` is a PRESENTATION FILL, not a measurement: five hardcoded bar
      heights for five recency bands. The band boundaries are real (days since
      last activity); the 94/72/45/20/8 are chosen so the meter reads well.
      Same for `frequencyPct` below, which caps its meter at ~8 sends/month. */
-  const lastActiveAt = activity?.lastActiveAt ?? subscriber.updatedAt;
+  const lastActiveAt = activity ? activity.lastActiveAt : undefined;
   const ageDays = lastActiveAt
     ? Math.max(0, (Date.now() - new Date(lastActiveAt).getTime()) / 86400000)
     : Infinity;
@@ -427,7 +438,7 @@ export function buildSubscriberDetailView(
        once both read "1"; one who bounced and was later reactivated reads "0".
        The real per-channel figure is `failedPermanent` in `channelTotals`. */
     bounces: subscriber.status === 'bounced' ? 1 : 0,
-    lastActiveLabel: fmtAgo(lastActiveAt),
+    lastActiveLabel: activity ? (lastActiveAt ? fmtAgo(lastActiveAt) : 'Never') : '—',
     events,
     campaigns,
     links: [],

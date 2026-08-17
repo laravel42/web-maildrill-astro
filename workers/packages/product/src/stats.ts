@@ -82,6 +82,20 @@ export interface WorkspaceSummary {
    *    `channelBreakdown` over the same window and the same two channels.
    */
   trends: {
+    /**
+     * Calendar date of entry 0, `YYYY-MM-DD` — the window's anchor, rendered by
+     * Postgres from the very expression the day index is computed against
+     * (`since::timestamptz::date`), so it names the same day the buckets do.
+     *
+     * It ships because the series carry no dates of their own and the browser
+     * cannot reconstruct them: walking back from the READER's midnight labels
+     * entry `k` with the reader's calendar, not the window's. A viewer in
+     * Asia/Tokyo is already on the next date while this host is still on the
+     * previous one, so every sparkline point read one day late — under a "Sent"
+     * spark on the same row whose dates come from `/stats/activity` and are the
+     * server's. One row, two calendars.
+     */
+    since: string;
     /** Subscribers created that day. */
     subscribers: number[];
     /** Lists created that day. */
@@ -337,8 +351,19 @@ export async function workspaceSummary(tenantId: string): Promise<WorkspaceSumma
   const trackedChannel = sql`${messages.channel} in ('email', 'whatsapp')`;
 
   const [clickTotalRows, subDaily, listDaily, campDaily, msgDaily, clickDaily] = await Promise.all([
+    // Rides along with the all-time click count: `since` is a bound constant,
+    // not a column, so Postgres accepts it beside an aggregate with no GROUP BY
+    // — the anchor date costs no extra round trip. Rendering it HERE rather
+    // than formatting the JS `Date` in this process is what makes it
+    // trustworthy: it is the same cast, in the same session timezone, that
+    // `dayOf` subtracts against, so anchor and bucket cannot disagree even if
+    // the database session and this process ever resolve local time
+    // differently.
     db
-      .select({ clicked: sql<number>`count(distinct ${messageEvents.messageId})::int` })
+      .select({
+        clicked: sql<number>`count(distinct ${messageEvents.messageId})::int`,
+        since: sql<string>`to_char(${since}::timestamptz::date, 'YYYY-MM-DD')`,
+      })
       .from(messageEvents)
       .innerJoin(messages, eq(messageEvents.messageId, messages.id))
       .where(
@@ -375,9 +400,7 @@ export async function workspaceSummary(tenantId: string): Promise<WorkspaceSumma
         opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
       })
       .from(messages)
-      .where(
-        and(eq(messages.tenantId, tenantId), trackedChannel, gte(messages.createdAt, since)),
-      )
+      .where(and(eq(messages.tenantId, tenantId), trackedChannel, gte(messages.createdAt, since)))
       .groupBy(firstColumn),
     // Clicks bucket on the MESSAGE's day, not the event's, so a click and the
     // delivery it belongs to land in the same slot and their ratio is a rate.
@@ -460,6 +483,7 @@ export async function workspaceSummary(tenantId: string): Promise<WorkspaceSumma
     },
     byChannel,
     trends: {
+      since: String(clickTotalRows[0]?.since ?? ''),
       subscribers: daily(subDaily, (r) => r.n),
       lists: daily(listDaily, (r) => r.n),
       campaigns: daily(campDaily, (r) => r.n),
@@ -688,9 +712,14 @@ export interface FeedItem {
  * count — nothing here is ever summed or divided, so the cap costs nothing.
  *
  * Campaign sends are ordered by `completed_at`, which is the moment the send
- * actually finished. Worth noting against the "Recent campaigns" strip beside
- * this feed on the same screen, which orders by `updated_at` instead and so
- * disagrees about which campaigns are the latest (audit #10).
+ * actually finished. The "Recent campaigns" strip beside this feed on the same
+ * screen now asks for the same ordering — `campaigns?status=sent&sort=
+ * completedAt&dir=desc` (AppDashboard.tsx) against `CAMPAIGN_SORTS` — so the
+ * two panels agree about which campaigns are the latest. They did not while the
+ * strip sorted by `updated_at`: the tenant's two newest sends ranked 616th and
+ * 632nd by that key and never reached a 25-row page, so the strip showed four
+ * zero-recipient campaigns beside a feed listing the real ones (audit #10).
+ * Keep the two keys the same if either side ever changes.
  */
 export async function activityFeed(tenantId: string, limit = 16): Promise<FeedItem[]> {
   const [sentCampaigns, newSubs, unsubEvents] = await Promise.all([

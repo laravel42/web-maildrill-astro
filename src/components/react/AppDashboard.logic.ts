@@ -42,6 +42,12 @@ export type Summary = {
    * range to whole weeks and "30 days" was really 28.
    */
   trends?: {
+    /**
+     * Calendar date of entry 0, `YYYY-MM-DD`, rendered by the database from the
+     * same expression the day buckets are indexed against. Sparkline labels
+     * come from it — see `trendDay`.
+     */
+    since?: string;
     /** Records created that day. */
     subscribers: number[];
     lists: number[];
@@ -309,17 +315,27 @@ export const KPI_META: Record<Kpi['key'], { color: string; href: string }> = {
 /**
  * The calendar date of entry `i` in a daily trend series, as `YYYY-MM-DD`.
  *
- * The series carries no dates — it is `length` consecutive days ending today —
- * so the label is reconstructed from the viewer's clock, walking back from
- * today by local days. Local, because the server anchored the window on local
- * midnight too, and because a date on a sparkline should be the reader's date.
+ * `since` is entry 0's date, shipped with the series because the series itself
+ * carries no dates and only the server knows which days it bucketed. The walk
+ * is pure calendar arithmetic in UTC — `Date.UTC` on a date-only anchor, never
+ * a local `Date` — so it neither reads the reader's clock nor slips an hour at
+ * a DST boundary; the string in equals the string out plus `i` days.
+ *
+ * This used to reconstruct the dates by walking back from the READER's
+ * midnight, which labels entry `i` with the reader's calendar rather than the
+ * window's. Any viewer whose local date differs from this host's read every
+ * point one day off — measured from Asia/Tokyo, the subscribers spark ran
+ * "Aug 12 … Aug 18" over buckets the server had filled for Aug 11 … Aug 17,
+ * beside a "Sent" spark on the same row labelled from the server's own dates.
+ *
+ * The reader's clock is still the right source for the greeting — that IS a
+ * claim about the reader — but never for naming a day the server counted.
  */
-function trendDay(i: number, length: number): string {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - (length - 1 - i));
+function trendDay(since: string, i: number): string {
+  const [y, m, d] = since.split('-').map(Number);
+  const t = new Date(Date.UTC(y ?? 1970, (m ?? 1) - 1, d ?? 1) + i * 86_400_000);
   const pad = (v: number) => String(v).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}`;
 }
 
 /**
@@ -330,14 +346,23 @@ function trendDay(i: number, length: number): string {
  * "Sent" card's spark beside it. It used to plot the CUMULATIVE stock under a
  * net-adds headline: a line that can only ever rise, climbing 962,000 ->
  * 1,000,229 beneath the number 9,596.
+ *
+ * No `since`, no spark. A payload that predates the anchor cannot be labelled
+ * with dates that are certainly the server's, and a plausible-looking wrong
+ * date is worse than a card with no line on it.
  */
-function dailySpark(series: number[] | undefined, days: number): SparkPoint[] {
-  if (!series || series.length < 2) return [];
+function dailySpark(
+  since: string | undefined,
+  series: number[] | undefined,
+  days: number,
+): SparkPoint[] {
+  if (!since || !series || series.length < 2) return [];
   const sliced = series.slice(-days);
   if (sliced.length < 2 || !sliced.some((v) => v !== 0)) return [];
+  const offset = series.length - sliced.length;
   return sliced.map((value, i) => ({
     value,
-    label: fmtDate(trendDay(series.length - sliced.length + i, series.length)),
+    label: fmtDate(trendDay(since, offset + i)),
   }));
 }
 
@@ -349,6 +374,9 @@ function dailySpark(series: number[] | undefined, days: number): SparkPoint[] {
  * divided all-channel reads by tracked deliveries and put a 112.5% point under
  * a card reading 28.9%.
  *
+ * Labels come from the server's window anchor (see `trendDay`); without one the
+ * spark is omitted rather than dated from the reader's calendar.
+ *
  * Days that delivered nothing trackable are DROPPED rather than plotted as 0%:
  * on those days the rate was not measured, and a zero would read as "nobody
  * opened". Dropping is safe here because the window is sliced first — the gap
@@ -356,11 +384,12 @@ function dailySpark(series: number[] | undefined, days: number): SparkPoint[] {
  * surviving point carries its own date as its label.
  */
 function rateSpark(
+  since: string | undefined,
   hits: number[] | undefined,
   base: number[] | undefined,
   days: number,
 ): SparkPoint[] {
-  if (!hits || !base || base.length < 2) return [];
+  if (!since || !hits || !base || base.length < 2) return [];
   const offset = base.length - Math.min(days, base.length);
   const points: SparkPoint[] = [];
   for (let i = offset; i < base.length; i += 1) {
@@ -368,7 +397,7 @@ function rateSpark(
     if (denom <= 0) continue;
     points.push({
       value: ((hits[i] ?? 0) / denom) * 100,
-      label: fmtDate(trendDay(i, base.length)),
+      label: fmtDate(trendDay(since, i)),
     });
   }
   return points.length >= 2 ? points : [];
@@ -389,7 +418,8 @@ function rateSpark(
  *   delta   — the same computation over the `days` immediately before, so it
  *             can never describe a different quantity than the value above it.
  *   spark   — the same window, one point per day (per-day adds for the counts,
- *             per-day rates for the rates).
+ *             per-day rates for the rates), each labelled with the date the
+ *             SERVER bucketed it under, from `trends.since`.
  *   context — whole-workspace ALL-TIME counters from the same payload, and the
  *             only figure here that is not window-scoped. `opened` / `clicked`
  *             are tracked-channel counts, so the context line under a rate is
@@ -450,7 +480,7 @@ export function buildKpis(s: Summary | null, daily: ActivityPoint[] = [], days =
         subs.value != null
           ? `${n(s.subscribers.active)} active`
           : `${n(s.subscribers.total)} total`,
-      spark: dailySpark(s.trends?.subscribers, days),
+      spark: dailySpark(s.trends?.since, s.trends?.subscribers, days),
       sparkFormat: 'number',
     },
     {
@@ -460,7 +490,7 @@ export function buildKpis(s: Summary | null, daily: ActivityPoint[] = [], days =
       delta: lists.delta.text,
       tone: lists.delta.tone,
       context: lists.value != null ? `${n(s.lists)} total` : null,
-      spark: dailySpark(s.trends?.lists, days),
+      spark: dailySpark(s.trends?.since, s.trends?.lists, days),
       sparkFormat: 'number',
     },
     {
@@ -471,7 +501,7 @@ export function buildKpis(s: Summary | null, daily: ActivityPoint[] = [], days =
       tone: camps.delta.tone,
       context:
         s.campaigns.total > 0 ? `${n(s.campaigns.sent)} of ${n(s.campaigns.total)} sent` : null,
-      spark: dailySpark(s.trends?.campaigns, days),
+      spark: dailySpark(s.trends?.since, s.trends?.campaigns, days),
       sparkFormat: 'number',
     },
     {
@@ -496,7 +526,7 @@ export function buildKpis(s: Summary | null, daily: ActivityPoint[] = [], days =
       delta: open.value != null ? open.delta.text : 'No deliveries yet',
       tone: open.delta.tone,
       context: s.messages.opened != null ? `${n(s.messages.opened)} total opens` : null,
-      spark: rateSpark(s.trends?.opened, s.trends?.trackedDelivered, days),
+      spark: rateSpark(s.trends?.since, s.trends?.opened, s.trends?.trackedDelivered, days),
       sparkFormat: 'percent',
     },
     {
@@ -506,7 +536,7 @@ export function buildKpis(s: Summary | null, daily: ActivityPoint[] = [], days =
       delta: click.value != null ? click.delta.text : 'No deliveries yet',
       tone: click.delta.tone,
       context: s.messages.clicked != null ? `${n(s.messages.clicked)} total clicks` : null,
-      spark: rateSpark(s.trends?.clicked, s.trends?.trackedDelivered, days),
+      spark: rateSpark(s.trends?.since, s.trends?.clicked, s.trends?.trackedDelivered, days),
       sparkFormat: 'percent',
     },
   ];

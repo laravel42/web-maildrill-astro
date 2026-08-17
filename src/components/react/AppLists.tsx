@@ -11,7 +11,7 @@ import ConfirmDialog from './shared/ConfirmDialog';
 import CustomFieldsModal from './CustomFieldsModal';
 import ListEditorModal, { type ListEditorValues } from './ListEditorModal';
 import { COLORS } from './ListEditorModal.logic';
-import { ago } from './shared/time';
+import TimeAgo from './shared/TimeAgo';
 import { fmtPct, PAGE_SIZE, rows as mockRows, trendPath, weeklyGain } from './AppLists.logic';
 import type { ListRow, SortKey, View } from './AppLists.types';
 import { api, ApiError } from '@/lib/app/api';
@@ -697,7 +697,7 @@ export default function AppLists({
                         <span className={styles.dash}>—</span>
                       )}
                     </div>
-                    <div className={styles.dateCell}>{ago(l.updatedAt)}</div>
+                    <TimeAgo className={styles.dateCell} at={l.updatedAt} />
                   </div>
                 );
               })
@@ -788,7 +788,7 @@ export default function AppLists({
                         </span>{' '}
                         joined this week
                       </span>
-                      <span className={styles.cardUpdated}>Updated {ago(l.updatedAt)}</span>
+                      <TimeAgo className={styles.cardUpdated} prefix="Updated " at={l.updatedAt} />
                     </div>
                   </div>
                 );
@@ -1005,7 +1005,7 @@ function ListDrawer({
                   </span>
                 ) : null}
               </div>
-              <div className={styles.dUpdated}>Updated {ago(list.updatedAt)}</div>
+              <TimeAgo className={styles.dUpdated} prefix="Updated " at={list.updatedAt} />
             </div>
           </div>
 

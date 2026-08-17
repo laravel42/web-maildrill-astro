@@ -6,6 +6,16 @@
   flex-wrap: wrap;
 }
 
+/* Names what every number in the row beside it counts. The row reports
+   populations (whole-roster segment sizes) while the channel tabs below report
+   the filtered result set, and with nothing saying so the two read as one
+   series — "All subscribers 1,000,229" over "Email 111". */
+.segcaption {
+  margin: 0 0 6px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--text4);
+}
 .segrow {
   display: flex;
   align-items: center;
@@ -531,6 +541,20 @@
 .foot {
   flex-wrap: wrap;
   gap: 10px;
+}
+/* Scope of the active column sort, beside the "1-10 of N" count it qualifies.
+   Quiet on purpose: it is a caveat on the arrow above, not a status. Sits
+   immediately after the count so the two read as one sentence about the same
+   rows -- `margin-right: auto` keeps the pager hard right. */
+.sortScope {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.sortScope::before {
+  content: '·';
+  margin-right: 8px;
 }
 .pager {
   display: flex;

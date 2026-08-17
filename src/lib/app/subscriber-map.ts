@@ -21,6 +21,14 @@ export interface ApiSubscriber {
   clicked?: number | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+  /**
+   * Real last activity: `max()` of this recipient's message timestamps, joined
+   * server-side per page. Null when they have never been messaged — and
+   * `undefined` from an older service that does not send the field, which is
+   * why the mapper below tells the two apart instead of coalescing to
+   * `updatedAt`.
+   */
+  lastActiveAt?: string | null;
 }
 
 const AV: Array<[string, string]> = [
@@ -94,6 +102,10 @@ export function toRichSubscribers(rows: ApiSubscriber[]): RichSubscriber[] {
             : [],
       updatedAt: r.updatedAt ?? r.createdAt ?? new Date().toISOString(),
       createdAt: r.createdAt ?? r.updatedAt ?? new Date().toISOString(),
+      // No fallback to `updatedAt` on purpose: that is a row-write timestamp,
+      // and substituting it here is exactly the defect this field exists to
+      // fix. Null means "never messaged", which the column renders as "Never".
+      lastActiveAt: r.lastActiveAt ?? null,
       location: typeof attrs.location === 'string' ? attrs.location : '—',
       joined: fmtDate(r.createdAt),
       opens: denom > 0 ? `${Math.round(((r.opened ?? 0) / denom) * 100)}%` : '—',

@@ -3,6 +3,11 @@ import { buildKpis, type Summary } from '@/components/react/AppDashboard.logic';
 
 const DAYS = 365;
 
+/* Entry 0's calendar date, as the server ships it. Fixed, not derived from the
+   clock this test runs on: the point of the anchor is that the labels do not
+   depend on the reader's zone. `SINCE` + 364 days = 2026-08-17. */
+const SINCE = '2025-08-18';
+
 /** A daily series of `DAYS` entries, newest last, filled by a per-index rule. */
 function series(fill: (daysAgo: number) => number): number[] {
   return Array.from({ length: DAYS }, (_, i) => fill(DAYS - 1 - i));
@@ -23,6 +28,7 @@ function summaryWith(trends: Partial<Summary['trends']> = {}): Summary {
       clicked: 8,
     },
     trends: {
+      since: SINCE,
       subscribers: series(() => 0),
       lists: series(() => 0),
       campaigns: series(() => 0),
@@ -130,5 +136,44 @@ describe('buildKpis sparklines', () => {
 
   it('draws nothing when the window is entirely empty', () => {
     expect(card(summaryWith(), 7, 'subscribers').spark).toEqual([]);
+  });
+
+  it("labels points with the server's dates, not the reader's calendar", () => {
+    // The series has no dates of its own; only `trends.since` says which day
+    // entry 0 is. Reconstructing from the reader's midnight instead labelled
+    // every point a day late for any viewer ahead of the host.
+    const s = summaryWith({ subscribers: series(() => 1) });
+    expect(card(s, 7, 'subscribers').spark.map((p) => p.label)).toEqual([
+      'Aug 11',
+      'Aug 12',
+      'Aug 13',
+      'Aug 14',
+      'Aug 15',
+      'Aug 16',
+      'Aug 17',
+    ]);
+  });
+
+  it('labels a rate spark from the same anchor, gaps included', () => {
+    // Only every other day delivered anything, so the surviving points must
+    // still carry their own dates rather than a compacted run.
+    const s = summaryWith({
+      trackedDelivered: series((ago) => (ago % 2 === 0 ? 100 : 0)),
+      opened: series((ago) => (ago % 2 === 0 ? 50 : 0)),
+    });
+    expect(card(s, 7, 'open').spark.map((p) => p.label)).toEqual([
+      'Aug 11',
+      'Aug 13',
+      'Aug 15',
+      'Aug 17',
+    ]);
+  });
+
+  it('omits the spark entirely when the payload carries no anchor', () => {
+    // A cache entry written before the anchor existed. No line beats a line
+    // dated from the wrong calendar.
+    const s = summaryWith({ subscribers: series(() => 1) });
+    delete (s.trends as { since?: string }).since;
+    expect(card(s, 7, 'subscribers').spark).toEqual([]);
   });
 });

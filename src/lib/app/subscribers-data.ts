@@ -13,6 +13,16 @@ export type RichSubscriber = Subscriber & {
   location: string;
   /** ISO timestamp of signup (for sorting / relative ago). */
   createdAt: string;
+  /**
+   * When this person was last reached or last reacted — the API's
+   * `max(coalesce(read_at, delivered_at, sent_at, submitted_at, created_at))`
+   * over their messages. `null` when they have never been messaged.
+   *
+   * Distinct from `updatedAt`, which is when the ROW was last written. The
+   * roster's "Last activity" column rendered `updatedAt` and so counted a tag
+   * edit as activity.
+   */
+  lastActiveAt: string | null;
   joined: string; // human display, e.g. "Jan 12, 2025"
   opens: string; // "87%" | "—"
   clicks: string; // "34%" | "—"

@@ -125,6 +125,41 @@ describe('buildListDetailView', () => {
     expect(withFail.unsubRate).toBe('25.00%');
   });
 
+  it('states the whole each rail percentage is a share of', () => {
+    /* Three percentages, two denominators. "Delivery rate" and "Failed rate"
+       divide by messages attempted; "Unsubscribed" divides by the roster. Perf
+       list 877 read "Delivery rate 100.00% / Failed rate 0.00% / Unsubscribe
+       rate 50.00%" — the last being 1,000 of 2,000 MEMBERS, against zero
+       unsubscribe events on its 1,176 sends. The bases are what stop the three
+       reading as one series. */
+    const v = buildListDetailView(
+      {
+        ...list,
+        channelTotals: [
+          { channel: 'email', attempted: 100, delivered: 92, opened: 0, clicked: 0, failed: 8 },
+        ],
+      },
+      [],
+      [],
+      [],
+    );
+    expect(v.sendBasis).toBe('of 100 sent');
+    expect(v.rosterBasis).toBe('of 4 members');
+  });
+
+  it('says so when there is no whole to divide by', () => {
+    const v = buildListDetailView(
+      { id: 'list-3', name: 'Nobody', memberCount: 0, createdAt: '2026-02-12T10:00:00Z' },
+      [],
+      [],
+      [],
+    );
+    expect(v.sendBasis).toBe('nothing sent yet');
+    expect(v.rosterBasis).toBe('no members yet');
+    expect(v.unsubRate).toBe('—');
+    expect(v.deliveredRate).toBe('—');
+  });
+
   it('labels weekly growth with its direction', () => {
     expect(buildListDetailView(list, [], [], []).growthLabel).toBe('+50.0% this week');
     const down = buildListDetailView({ ...list, addedLast7: 1, addedPrev7: 2 }, [], [], []);

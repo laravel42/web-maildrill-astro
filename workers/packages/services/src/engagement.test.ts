@@ -4,6 +4,7 @@ import { closeDb, db, messages, subscribers } from '@maildrill/database';
 import { ensureTenantByName } from './tenants';
 import { applyProviderOutcome, applyTrackingOutcome } from './events';
 import {
+  engagementClickDelta,
   engagementDeltaFor,
   reconcileSubscriberEngagement,
   seedSubscriberEngagement,
@@ -50,6 +51,28 @@ describe('engagementDeltaFor', () => {
       opened: -1,
       clicked: 0,
     });
+  });
+
+  it('keeps SMS and voice out of the rate NUMERATOR too', () => {
+    // The rollup's `opened` is divided by `tracked_delivered`. Gating only the
+    // denominator is how `opened` came to exceed it on 159,413 rows of the perf
+    // tenant: `sms` and `voice` messages sitting in `read`, a status neither
+    // provider can produce. Both sides take the same channel set or the rate
+    // has no ceiling.
+    expect(engagementDeltaFor('delivered', 'read', 'sms').opened).toBe(0);
+    expect(engagementDeltaFor('delivered', 'read', 'voice').opened).toBe(0);
+    expect(engagementDeltaFor('delivered', 'read', 'email').opened).toBe(1);
+    expect(engagementDeltaFor('delivered', 'read', 'whatsapp').opened).toBe(1);
+    // And symmetrically on the way back out, so a reversal cannot leave a
+    // negative numerator behind on a channel that never contributed one.
+    expect(engagementDeltaFor('read', 'failed', 'sms').opened).toBe(0);
+  });
+
+  it('gates clicks on the same channel set as the denominator', () => {
+    expect(engagementClickDelta('email').clicked).toBe(1);
+    expect(engagementClickDelta('whatsapp').clicked).toBe(1);
+    expect(engagementClickDelta('sms').clicked).toBe(0);
+    expect(engagementClickDelta('voice').clicked).toBe(0);
   });
 });
 

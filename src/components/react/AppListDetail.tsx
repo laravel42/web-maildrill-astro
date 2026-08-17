@@ -454,17 +454,33 @@ export default function AppListDetail({
                 <span className="adetail__k">Last campaign</span>
                 <span className="adetail__v">{view.lastCampaignLabel}</span>
               </div>
+              {/* Three percentages, two denominators. The first two divide by
+                  MESSAGES attempted across every campaign that targeted this
+                  list; the third divides by the ROSTER. Each one now carries
+                  the whole it is a share of, and the third is labelled
+                  "Unsubscribed" rather than "Unsubscribe rate" — it counts
+                  members holding that status, not opt-outs from a send. See
+                  the derivation note in lib/app/list-detail.ts. */}
               <div className="adetail">
                 <span className="adetail__k">Delivery rate</span>
-                <span className="adetail__v tnum">{view.deliveredRate}</span>
+                <span className="adetail__v tnum">
+                  {view.deliveredRate}
+                  <span className={styles.railBasis}> {view.sendBasis}</span>
+                </span>
               </div>
               <div className="adetail">
                 <span className="adetail__k">Failed rate</span>
-                <span className="adetail__v tnum">{view.failedRate}</span>
+                <span className="adetail__v tnum">
+                  {view.failedRate}
+                  <span className={styles.railBasis}> {view.sendBasis}</span>
+                </span>
               </div>
               <div className="adetail">
-                <span className="adetail__k">Unsubscribe rate</span>
-                <span className="adetail__v tnum">{view.unsubRate}</span>
+                <span className="adetail__k">Unsubscribed</span>
+                <span className="adetail__v tnum">
+                  {view.unsubRate}
+                  <span className={styles.railBasis}> {view.rosterBasis}</span>
+                </span>
               </div>
             </section>
 

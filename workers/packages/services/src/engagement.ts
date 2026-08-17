@@ -20,8 +20,25 @@ import type { MessageState } from '@maildrill/domain';
  * bucket its displayed rate contradicts.
  */
 
-/** Only these channels can report an open or a click, so only they belong in the rate's denominator. */
+/**
+ * Only these channels can report an open or a click, so they bound BOTH sides
+ * of every rate this rollup feeds — `tracked_delivered` (the denominator) and
+ * `opened` / `clicked` (the numerators) alike.
+ *
+ * Both sides, not just the denominator: gating only `tracked_delivered` is how
+ * `opened` came to exceed it on 159,413 rows of the perf tenant, every one of
+ * them an `sms` or `voice` message carrying a `read` status no such provider
+ * can produce. `subscriber-map.ts` divides these two fields and
+ * `engagement_bucket(opened, tracked)` files the row from the same pair, so a
+ * numerator counting channels the denominator excludes is a rate above 100%
+ * waiting for one subscriber to be mailed on two channels.
+ */
 const TRACKING_CHANNELS: readonly MessageRow['channel'][] = ['email', 'whatsapp'];
+
+/** Can this channel's provider report a read or a click at all? */
+function tracksEngagement(channel: MessageRow['channel']): boolean {
+  return TRACKING_CHANNELS.includes(channel);
+}
 
 /** A message counts as delivered for rate purposes once it reaches either settled state. */
 function isSettled(state: MessageState): boolean {
@@ -55,19 +72,29 @@ export function engagementDeltaFor(
   to: MessageState,
   channel: MessageRow['channel'],
 ): EngagementDelta {
+  const tracked = tracksEngagement(channel);
   const delivered = (isSettled(to) ? 1 : 0) - (isSettled(from) ? 1 : 0);
   const opened = (to === 'read' ? 1 : 0) - (from === 'read' ? 1 : 0);
   return {
     delivered,
-    trackedDelivered: TRACKING_CHANNELS.includes(channel) ? delivered : 0,
-    opened,
+    trackedDelivered: tracked ? delivered : 0,
+    // Same gate as the denominator above. An `sms` or `voice` row reaching
+    // `read` is a provider status this rollup cannot price as an open, so it
+    // contributes to neither side rather than to the numerator alone.
+    opened: tracked ? opened : 0,
     clicked: 0,
   };
 }
 
-/** A click on a message the subscriber had never clicked before. */
-export function engagementClickDelta(): EngagementDelta {
-  return { ...NO_DELTA, clicked: 1 };
+/**
+ * A click on a message the subscriber had never clicked before.
+ *
+ * Channel-gated for the same reason `opened` is: `clicked` is divided by
+ * `tracked_delivered`, so a click recorded against a channel that never
+ * entered the denominator would inflate the rate without bound.
+ */
+export function engagementClickDelta(channel: MessageRow['channel']): EngagementDelta {
+  return { ...NO_DELTA, clicked: tracksEngagement(channel) ? 1 : 0 };
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -285,11 +312,18 @@ export async function reconcileSubscriberEngagement(
             count(*) filter (where mm.status in ('delivered','read'))::int as delivered,
             count(*) filter (where mm.status in ('delivered','read')
                                and mm.channel in ('email','whatsapp'))::int as tracked,
-            count(*) filter (where mm.status = 'read')::int as opened,
+            -- The channel gate is on the NUMERATORS too, and must be: it is
+            -- the same set that bounds tracked above. Without it this recompute
+            -- wrote an all-channel read count against a two-channel
+            -- denominator, and 159,413 rows on the perf tenant stored an opened
+            -- their tracked_delivered of 0 could never justify -- every one an
+            -- sms or voice row sitting in read. See TRACKING_CHANNELS.
+            count(*) filter (where mm.status = 'read'
+                               and mm.channel in ('email','whatsapp'))::int as opened,
             -- "messages with at least one click" is the same number as
             -- count(distinct message_id) over click events, and it reads the
             -- events index once per message instead of building a distinct set.
-            count(*) filter (where exists (
+            count(*) filter (where mm.channel in ('email','whatsapp') and exists (
               select 1 from message_events me
                where me.message_id = mm.id and me.event_type = 'click'
             ))::int as clicked

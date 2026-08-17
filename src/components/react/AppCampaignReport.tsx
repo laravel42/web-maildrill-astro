@@ -25,7 +25,7 @@ import {
   type CampaignEventSummary,
   type RecipientEvent,
 } from './shared/campaign-events';
-import { ago } from './shared/time';
+import TimeAgo from './shared/TimeAgo';
 import { PAGE_SIZE, visiblePageNumbers } from './shared/pagination';
 import { pct } from './CampaignsBoard.logic';
 import { buildCsv, downloadCsv, exportFilename } from '@/lib/app/subscriber-export';
@@ -833,7 +833,7 @@ function CampaignReport({
                   <Icon name="minus" size={14} stroke={2.2} />
                 )}
               </div>
-              <div className={`${styles.revWhen} tnum`}>{e.at ? ago(e.at) : '—'}</div>
+              <TimeAgo className={`${styles.revWhen} tnum`} at={e.at} />
             </div>
           );
         })}

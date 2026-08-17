@@ -712,7 +712,25 @@ export interface SubscriberWithRelations extends Subscriber {
   trackedDelivered: number;
   opened: number;
   clicked: number;
+  /**
+   * When this person was last reached or last reacted — `max()` of the same
+   * `messageAt` coalesce the detail page's `subscriberActivity` reduces to
+   * `lastActiveAt`, so the roster column and the drawer report one fact.
+   * `null` when they have never been messaged.
+   *
+   * NOT `subscribers.updated_at`, which is when the ROW was last written:
+   * editing a tag, joining a list or a backfill pass all move it, and the
+   * roster labelled it "Last activity". perf767230@p31.perf-maildrill.test
+   * carried an `updated_at` of 2026-08-16 against a last message of
+   * 2025-11-05 — nine months of dormancy rendered as active yesterday.
+   */
+  lastActiveAt: string | null;
 }
+
+/** The latest known timestamp for a message row (read → delivered → sent → submitted → created). */
+const messageAt = sql`coalesce(${messages.readAt}, ${messages.deliveredAt}, ${messages.sentAt}, ${messages.submittedAt}, ${messages.createdAt})`;
+/** Same, formatted as an ISO-8601 UTC string so browsers parse it reliably. */
+const isoFmt = sql.raw(`'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'`);
 
 /**
  * Attach list and tag memberships to a page of subscribers.
@@ -723,8 +741,12 @@ export interface SubscriberWithRelations extends Subscriber {
 async function withRelations(rows: Subscriber[]): Promise<SubscriberWithRelations[]> {
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
+  // Read off the rows rather than threaded through a parameter: every caller
+  // already scoped its select to one tenant, so this is that tenant — and it
+  // stays right if a future caller ever hands over a mixed page.
+  const tenantIds = [...new Set(rows.map((r) => r.tenantId))];
 
-  const [memberships, tagRows, engagementRows] = await Promise.all([
+  const [memberships, tagRows, engagementRows, lastActiveRows] = await Promise.all([
     db
       .select({
         subscriberId: listMembers.subscriberId,
@@ -761,6 +783,41 @@ async function withRelations(rows: Subscriber[]): Promise<SubscriberWithRelation
       })
       .from(subscriberEngagement)
       .where(inArray(subscriberEngagement.subscriberId, ids)),
+    /* Real last activity for the page in hand — `max(messageAt)` per recipient,
+       the same expression `subscriberActivity` reduces for one subscriber, so
+       the roster column and the drawer's "Last active" cannot disagree.
+       Formatted to ISO here for the same reason the drawer does it: `max()` over
+       a timestamptz comes back from the driver as Postgres' own text form.
+
+       Deliberately not in the engagement rollup: that table is keyed for bucket
+       filtering and has no activity timestamp, and adding one would need a
+       migration plus a backfill over a million rows to serve a column nothing
+       filters on. This is a `= any($1)` probe of `messages_recipient_idx` for
+       the ten ids already on screen — 10 index searches, 37 buffers, 0.24ms of
+       index time (4.6ms total, planning-dominated) — and it rides the same
+       `Promise.all` as the tag and list lookups, so it costs the page no extra
+       round trip: /v1/subscribers?limit=10 answers in 7-8ms warm, and
+       ?limit=100 in 10-14ms. No index was added; that one already existed.
+
+       Tenant-scoped explicitly, unlike the three queries above it. Those read
+       `subscriber_lists`, `subscriber_tags` and `subscriber_engagement`, whose
+       `subscriber_id` is a FOREIGN KEY into `subscribers` — the database itself
+       guarantees a row keyed by one of `ids` belongs to this tenant. This one
+       reads `messages.recipient_id`, which is untyped `text` with no key of any
+       kind, so the only thing standing between it and another workspace's rows
+       is uuid uniqueness. That holds today (0 rows across 106 tenants where a
+       message's tenant differs from its recipient's) but nothing enforces it,
+       and "Last activity" is not the column to learn that on. The predicate is
+       free: `messages_recipient_idx` has already narrowed to the ten ids on
+       screen and the tenant is a recheck on what it returns. */
+    db
+      .select({
+        recipientId: messages.recipientId,
+        at: sql<string | null>`to_char(max(${messageAt}) at time zone 'utc', ${isoFmt})`,
+      })
+      .from(messages)
+      .where(and(inArray(messages.tenantId, tenantIds), inArray(messages.recipientId, ids)))
+      .groupBy(messages.recipientId),
   ]);
 
   const listsBySub = new Map<string, { id: string; name: string }[]>();
@@ -781,6 +838,12 @@ async function withRelations(rows: Subscriber[]): Promise<SubscriberWithRelation
   // the only other population it can describe is a row the backfill has not
   // reached yet.
   const engagementBySub = new Map(engagementRows.map((e) => [e.subscriberId, e]));
+  // Absent = never messaged. `null`, not the row's `updated_at`: "we have no
+  // record of reaching this person" is a different answer from a date, and the
+  // column renders it as "Never" rather than inventing one.
+  const lastActiveBySub = new Map(
+    lastActiveRows.flatMap((r) => (r.recipientId ? [[r.recipientId, r.at] as const] : [])),
+  );
 
   return rows.map((r) => ({
     ...r,
@@ -790,6 +853,7 @@ async function withRelations(rows: Subscriber[]): Promise<SubscriberWithRelation
     trackedDelivered: Number(engagementBySub.get(r.id)?.trackedDelivered ?? 0),
     opened: Number(engagementBySub.get(r.id)?.opened ?? 0),
     clicked: Number(engagementBySub.get(r.id)?.clicked ?? 0),
+    lastActiveAt: lastActiveBySub.get(r.id) ?? null,
   }));
 }
 
@@ -920,11 +984,6 @@ export interface SubscriberActivity {
    */
   weeklyByChannel: Record<string, SubscriberWeeklyPoint[]>;
 }
-
-/** The latest known timestamp for a message row (read → delivered → sent → submitted → created). */
-const messageAt = sql`coalesce(${messages.readAt}, ${messages.deliveredAt}, ${messages.sentAt}, ${messages.submittedAt}, ${messages.createdAt})`;
-/** Same, formatted as an ISO-8601 UTC string so browsers parse it reliably. */
-const isoFmt = sql.raw(`'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'`);
 
 export async function subscriberActivity(
   tenantId: string,

@@ -28,7 +28,7 @@ import TemplatePreview, { MessagePreview } from './shared/TemplatePreview';
 import { CHANNEL } from './shared/channels';
 import { ChannelPill, ListPill } from './shared/CampaignPills';
 import StatusBadge from './shared/StatusBadge';
-import { ago } from './shared/time';
+import TimeAgo from './shared/TimeAgo';
 import { useToast } from './shared/useToast';
 import {
   CHANNEL_TABS,
@@ -1164,7 +1164,7 @@ useEffect(() => {
                   {c.clickRate != null ? `${Math.round(c.clickRate * 100)}%` : '—'}
                 </div>
               )}
-              <div className={`${styles.muted} ${styles.colCenter}`}>{ago(c.updatedAt)}</div>
+              <TimeAgo className={`${styles.muted} ${styles.colCenter}`} at={c.updatedAt} />
             </div>
           ))
         )}

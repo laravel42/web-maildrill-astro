@@ -32,10 +32,18 @@ export type GalleryTemplate = {
   /** CTA pill background colour. */
   accent: string;
   favorite: boolean;
-  /** Average open rate, whole percent. */
-  avgOpen: number;
-  /** Average click rate, whole percent. */
-  avgClick: number;
+  /**
+   * Average open rate, whole percent — `null` when nothing was measured.
+   *
+   * `null`, not 0: a template never sent, and one whose channel reports no
+   * opens, both have no rate. Rendering either as "0%" claims nobody engaged.
+   * Read it through `templateEngagement` (template-map.ts), never directly —
+   * that helper is what keeps the card, the list column and the drawer saying
+   * the same thing about the same template.
+   */
+  avgOpen: number | null;
+  /** Average click rate, whole percent — `null` when nothing was measured. */
+  avgClick: number | null;
   /**
    * Raw send outcomes across campaigns that used this template. The drawer
    * needs these to tell "never sent" apart from "sent and nobody opened", and
@@ -86,10 +94,20 @@ export function defaultTemplateCategory(channel: ChannelType, initial?: string |
   if (channel === 'email') return 'Newsletter';
   return categories[0];
 }
-export const RATE_BUCKETS = ['None', 'Under 20%', '20 – 40%', '40%+'] as const;
+/**
+ * Rate filter options.
+ *
+ * "Not measured" is its own bucket, and has to be: it used to fall into "None"
+ * along with genuine zeroes, so filtering for templates nobody opened returned
+ * 148 of the workspace's 229 — almost all of them SMS and voice templates that
+ * never reported an open in the first place. "None" now means what it says,
+ * measured and zero.
+ */
+export const RATE_BUCKETS = ['Not measured', 'None', 'Under 20%', '20 – 40%', '40%+'] as const;
 export type RateBucket = (typeof RATE_BUCKETS)[number];
 
-export function rateBucket(v: number): RateBucket {
+export function rateBucket(v: number | null | undefined): RateBucket {
+  if (v == null) return 'Not measured';
   if (v === 0) return 'None';
   if (v < 20) return 'Under 20%';
   if (v < 40) return '20 – 40%';

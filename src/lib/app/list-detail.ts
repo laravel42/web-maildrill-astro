@@ -127,9 +127,19 @@ export type ListDetailView = {
   lastCampaignLabel: string;
   bounceRate: string;
   complaintRate: string;
+  /**
+   * Share of the ROSTER currently carrying the `unsubscribed` status — a
+   * property of the people on the list, not of anything sent to it. Rendered
+   * under the label "Unsubscribed", never "Unsubscribe rate": see the
+   * derivation note where it is built.
+   */
   unsubRate: string;
   deliveredRate: string;
   failedRate: string;
+  /** "of 2,000 members" — the denominator `unsubRate` divides by, spelled out. */
+  rosterBasis: string;
+  /** "of 1,176 sent" — the denominator the two send rates divide by. */
+  sendBasis: string;
   /**
    * Send outcomes for this list, split by the channel that carried them —
    * aggregated from the campaigns targeting the list, which each know their
@@ -333,8 +343,7 @@ export function buildListDetailView(
     createdLabel,
     createdLine,
     lastCampaignLabel,
-    /* Two different denominators, adjacent in the rail, and the labels do not
-       say which is which (audit #21, #22):
+    /* Two different denominators, adjacent in the rail (audit #21, #22):
 
          bounce/complaint/unsubRate — share of the ROSTER carrying that
            subscriber status. Denominator: `memberCount`. A property of the
@@ -343,17 +352,32 @@ export function buildListDetailView(
            campaign that targeted the list. Denominator: `attemptedCount` from
            `channelTotals`. A property of the sends.
 
-       Live consequence on Perf list 877: "Delivery rate 100.00%" and "Failed
-       rate 0.00%" (0 of 1,176 messages) sitting either side of "Unsubscribe
-       rate 50.00%" (1,000 of 2,000 members). Zero unsubscribe EVENTS exist
-       across those 1,176 sends. Both figures are right; the rail reads as one
-       series. The same collision appears between the health card's roster
-       "Failed" and the rail's message "Failed rate". */
+       The labels used to hide that. On Perf list 877 the rail read "Delivery
+       rate 100.00%", "Failed rate 0.00%" (both of 1,176 messages) and
+       "Unsubscribe rate 50.00%" — which is 1,000 of 2,000 MEMBERS carrying the
+       unsubscribed status, while zero unsubscribe events exist across those
+       1,176 sends. Three "rate"s in a column, two wholes, nothing saying so.
+
+       Fixed on the label side rather than the query side, because there is no
+       send-denominated unsubscribe rate to compute: `message_events` holds 8
+       `unsubscribed` rows in the entire database and none on any list's
+       campaigns, so a send-denominated rate would render 0.00% next to a roster half
+       opted out — a different wrong number. So the figure keeps its meaning and
+       the rail states each denominator: `rosterBasis` beside "Unsubscribed",
+       `sendBasis` beside the two send rates. The same collision between the
+       health card's roster "Failed" and the rail's message "Failed rate" is
+       now visible for the same reason. */
     bounceRate: total > 0 ? `${(share(bucket.bounced) * 100).toFixed(2)}%` : '—',
     complaintRate: total > 0 ? `${(share(bucket.complained) * 100).toFixed(2)}%` : '—',
     unsubRate: total > 0 ? `${(share(bucket.unsubscribed) * 100).toFixed(2)}%` : '—',
     deliveredRate: sendRate(deliveredCount),
     failedRate: sendRate(failedCount),
+    rosterBasis:
+      total > 0
+        ? `of ${total.toLocaleString('en-US')} member${total === 1 ? '' : 's'}`
+        : 'no members yet',
+    sendBasis:
+      attemptedCount > 0 ? `of ${attemptedCount.toLocaleString('en-US')} sent` : 'nothing sent yet',
     channelTotals,
     embedSnippet: `<script src="https://js.maildrill.net/embed.js" data-list="${list.id}"></script>`,
   };

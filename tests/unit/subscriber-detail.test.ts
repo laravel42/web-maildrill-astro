@@ -17,7 +17,8 @@ const sub = (over: Partial<RichSubscriber> = {}): RichSubscriber => ({
   listIds: [],
   tags: [],
   updatedAt: '2026-07-30T12:00:00Z',
-  createdAt: '2026-01-31T12:00:00Z', // six months before the frozen clock
+  createdAt: '2026-01-31T12:00:00Z',
+  lastActiveAt: null,
   location: '—',
   joined: 'Jan 31, 2026',
   opens: '—',
@@ -87,6 +88,26 @@ describe('buildSubscriberDetailView', () => {
     const none = buildSubscriberDetailView(sub(), null);
     expect(none.score).toBe(0);
     expect(none.scoreTier).toBe('No engagement yet');
+  });
+
+  it('never dresses a row-write timestamp up as activity', () => {
+    // `updated_at` is when the subscriber ROW was written — a tag edit moves it.
+    // The profile used to fall back to it, so ines.nilsen18@acme.io (0 messages,
+    // `updated_at` five days old) read "Last activity 5d ago" while the roster
+    // and the drawer said "Never" about the same person.
+    const never = buildSubscriberDetailView(sub({ updatedAt: '2026-07-26T12:00:00Z' }), {
+      lastActiveAt: null,
+      channels: [],
+      recent: [],
+    });
+    expect(never.lastActiveLabel).toBe('Never');
+
+    // Not loaded yet is not the same claim as never: a dash, not a verdict.
+    const unknown = buildSubscriberDetailView(sub({ updatedAt: '2026-07-26T12:00:00Z' }), null);
+    expect(unknown.lastActiveLabel).toBe('—');
+
+    // And a real timestamp still reads as one.
+    expect(buildSubscriberDetailView(sub(), activity).lastActiveLabel).toBe('3h ago');
   });
 
   it('maps recent messages onto typed events', () => {

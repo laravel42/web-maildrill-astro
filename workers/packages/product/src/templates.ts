@@ -64,19 +64,51 @@ export async function getTemplate(tenantId: string, id: string): Promise<Templat
   return rows[0] ?? null;
 }
 
+/**
+ * Messages that may count toward a template's engagement rates.
+ *
+ * Two conditions, both required, and both the reason the old shape produced
+ * nonsense:
+ *
+ *   1. The message left on THIS TEMPLATE'S OWN channel. `campaigns.template_id`
+ *      does not constrain the campaign's channel, and on the seeded workspace
+ *      775 of 1,025 campaigns disagree with the template they sent — so the
+ *      aggregate happily charged an SMS template with a run of email. "Perf
+ *      template 113", badged SMS, rendered "33% opens": 1,765 reads over 5,294
+ *      EMAIL deliveries. The rate now describes the channel on the badge, or it
+ *      does not exist.
+ *   2. That channel reports a read at all — email and WhatsApp. No SMS or voice
+ *      provider does, so an open counted there is noise and a delivery counted
+ *      there is only a bigger denominator.
+ *
+ * Applied to the NUMERATORS as well as the denominator. `opened` used to count
+ * reads on every channel while `trackedDelivered` counted two: a wider
+ * numerator over a narrower denominator, the same pairing that had the
+ * dashboard rendering a 112% open rate.
+ */
+const templateTrackedMessage = sql`${messages.channel} = ${templates.channel} and ${messages.channel} in ('email', 'whatsapp')`;
+
 export interface TemplateEngagement {
   /**
-   * Deliveries on open-trackable channels (email + WhatsApp) across campaigns
-   * that sent this template — the open/click rate denominator. SMS and voice
-   * deliveries can never produce an open, so counting them would dilute rates.
+   * Deliveries this template's open/click rates divide by: sent on its own
+   * channel, and only when that channel reports reads (email + WhatsApp).
+   * 0 both for a template never sent and for one on a channel that measures
+   * nothing — the gallery, the list and the drawer all render "—" rather than
+   * a 0% that would claim nobody engaged.
    */
   trackedDelivered: number;
+  /** Reads over the same set as `trackedDelivered`, never a wider one. */
   opened: number;
+  /** Clicks over the same set as `trackedDelivered`, never a wider one. */
   clicked: number;
   /**
-   * Outcomes on every channel, so SMS and voice templates have something real
-   * to report — their `trackedDelivered` is 0 by construction, which would
-   * otherwise peg their open/click rates at 0% forever.
+   * Outcomes on EVERY channel the template was actually sent on, unscoped.
+   *
+   * Deliberately wider than the engagement counters above, because they answer
+   * a different question: "delivered" and "failed" are facts every channel
+   * produces, and they carry no claim about what the channel can measure. This
+   * is what gives an SMS or voice template — whose `trackedDelivered` is 0 by
+   * construction — something real to report instead of a row of zeroed rates.
    */
   sent: number;
   delivered: number;
@@ -94,24 +126,17 @@ export interface TemplateEngagement {
  * footer is a true table count, not a page count. (That is a correctness win and
  * a scale risk: nothing here degrades gracefully as the table grows.)
  *
- * Denominators: `trackedDelivered` is deliveries on email + whatsapp only —
- * the channels whose providers report a read — because an SMS delivery cannot
- * produce an open and would only dilute the rate. `sent` / `delivered` /
- * `failed` are all-channel, so an SMS or voice template still has real numbers
- * to show rather than a row of zeroed engagement rates.
+ * Denominators: `trackedDelivered`, `opened` and `clicked` all count the SAME
+ * set — messages matching `templateTrackedMessage` above, i.e. sent on the
+ * template's own channel AND on a channel that reports reads. One set, so no
+ * rate can exceed 100% and none can be charged to a channel it did not happen
+ * on. `sent` / `delivered` / `failed` stay all-channel on purpose; see
+ * `TemplateEngagement`.
  *
- * KNOWN DEFECT (audit, latent): `opened` counts reads on every channel while
- * `trackedDelivered` counts two, so a template sent on more than one channel
- * would divide a wider numerator by a narrower denominator. Zero templates on
- * the seeded tenant span more than one message channel, so no row is wrong
- * today — the shape is, and it is the same pairing that is actively wrong in
- * `workspaceSummary`.
- *
- * KNOWN DEFECT (audit #13): `trackedDelivered` is 0 by construction for every
- * SMS and voice template, and the gallery's `rate()` helper turns that into a
- * literal 0% instead of "—". 148 of 229 templates render "0% opens · 0% clicks"
- * — 92 of them with real reads behind the zero. See `rate()` in
- * src/lib/app/template-map.ts, which is where the em-dash branch is missing.
+ * A template with `trackedDelivered = 0` has nothing measured, not zero
+ * engagement, and every surface renders it as "—" (template-map.ts
+ * `templateEngagement`). That covers both populations: never sent, and sent on
+ * a channel that measures nothing.
  */
 export async function listTemplates(
   tenantId: string,
@@ -122,6 +147,13 @@ export async function listTemplates(
     .where(eq(templates.tenantId, tenantId))
     .orderBy(desc(templates.createdAt));
 
+  /* The `templates` join is what makes `templateTrackedMessage` possible: the
+     engagement filters compare each message's channel with the channel of the
+     template that produced it, which `campaigns` alone cannot answer. It costs
+     a hash of 229 rows against a scan this query was already doing: 105ms
+     against 78ms for the pre-change shape (median of 5, 1,001,068 messages,
+     warm), on a parallel seq scan that dominates either way. No index added —
+     one would not help a full-table aggregate. */
   const outcomes = await db
     .select({
       templateId: campaigns.templateId,
@@ -130,14 +162,18 @@ export async function listTemplates(
       // receipts land. `failed` is `FAILED_STATUSES` — failed + expired, the one
       // definition (message-status.ts), so a template's failure count matches
       // the campaigns that used it.
-      trackedDelivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read') and ${messages.channel} in ('email', 'whatsapp'))::int`,
-      opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`,
+      trackedDelivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read') and ${templateTrackedMessage})::int`,
+      opened: sql<number>`count(*) filter (where ${messages.status} = 'read' and ${templateTrackedMessage})::int`,
       sent: sql<number>`count(*)::int`,
       delivered: sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read'))::int`,
       failed: sql<number>`count(*) filter (where ${messages.status} in ${FAILED_STATUSES})::int`,
     })
     .from(messages)
     .innerJoin(campaigns, eq(messages.campaignId, campaigns.id))
+    .innerJoin(
+      templates,
+      and(eq(templates.id, campaigns.templateId), eq(templates.tenantId, tenantId)),
+    )
     .where(and(eq(messages.tenantId, tenantId), isNotNull(campaigns.templateId)))
     .groupBy(campaigns.templateId);
 
@@ -149,11 +185,18 @@ export async function listTemplates(
     .from(messageEvents)
     .innerJoin(messages, eq(messageEvents.messageId, messages.id))
     .innerJoin(campaigns, eq(messages.campaignId, campaigns.id))
+    .innerJoin(
+      templates,
+      and(eq(templates.id, campaigns.templateId), eq(templates.tenantId, tenantId)),
+    )
     .where(
       and(
         eq(messages.tenantId, tenantId),
         eq(messageEvents.eventType, 'click'),
         isNotNull(campaigns.templateId),
+        // Same set as `trackedDelivered`, so the click rate divides one
+        // channel's clicks by that channel's deliveries.
+        templateTrackedMessage,
       ),
     )
     .groupBy(campaigns.templateId);

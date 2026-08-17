@@ -22,8 +22,13 @@ import { visiblePageNumbers } from './shared/pagination';
 import { CHANNEL_TABS, VIEWS, ASC_FIRST, PAGE_SIZE } from './AppTemplates.logic';
 import type { ViewKey, SortKey } from './AppTemplates.types';
 import { api, ApiError } from '@/lib/app/api';
-import { toGalleryTemplate, type ApiTemplate } from '@/lib/app/template-map';
-import { channelReportConfig } from '@/lib/app/campaign-report';
+import {
+  toGalleryTemplate,
+  templateEngagement,
+  templateOpenMetric,
+  templateClickMetric,
+  type ApiTemplate,
+} from '@/lib/app/template-map';
 import { routes } from '@/config/routes';
 import styles from './AppTemplates.module.css';
 
@@ -155,7 +160,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
       return true;
     });
     const { key, dir } = sort;
-    const val = (t: GalleryTemplate): string | number => {
+    const val = (t: GalleryTemplate): string | number | null => {
       switch (key) {
         case 'name':
           return t.name.toLowerCase();
@@ -176,6 +181,13 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
     return [...list].sort((a, b) => {
       const av = val(a);
       const bv = val(b);
+      /* Unmeasured sorts last in BOTH directions, because it is not a value —
+         it is the absence of one. Treating it as 0 (which is what it was, as a
+         literal zero) put 148 templates at the head of "Opens ↑" as if they
+         were the worst performers, when nothing about them was ever measured. */
+      if (av == null && bv == null) return a.name.localeCompare(b.name);
+      if (av == null) return 1;
+      if (bv == null) return -1;
       if (av < bv) return -1 * dir;
       if (av > bv) return 1 * dir;
       return a.name.localeCompare(b.name);
@@ -660,13 +672,26 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                   </div>
                   <div className={styles.gmeta}>
                     <div className={styles.gname}>{t.name}</div>
+                    {/* Whatever this template's CHANNEL can actually report,
+                        from the same helper the drawer and the list columns
+                        read. Email and WhatsApp get opens/seen + clicks; SMS
+                        and voice get delivered + failed, because no provider on
+                        those channels has ever reported a read. This line used
+                        to be a fixed "{avgOpen}% opens · {avgClick}% clicks" on
+                        every card: 148 of 229 read "0% opens · 0% clicks", and
+                        "Perf template 113" — badged SMS — read "33% opens" off
+                        5,294 email deliveries. */}
                     <div className={styles.gsub}>
-                      <span className={styles.metric}>
-                        <span className="tnum">{t.avgOpen}%</span> opens
-                      </span>
-                      <span className={styles.metric}>
-                        · <span className="tnum">{t.avgClick}%</span> clicks
-                      </span>
+                      {templateEngagement(t).map((m, i) => (
+                        <span
+                          key={m.key}
+                          className={`${styles.metric}${m.measured ? '' : ` ${styles.metricNone}`}`}
+                          title={m.hint}
+                        >
+                          {i > 0 ? '· ' : ''}
+                          <span className="tnum">{m.value}</span> {m.label}
+                        </span>
+                      ))}
                       <span className={styles.updated} title={`Updated ${t.updated}`}>
                         {t.updated}
                       </span>
@@ -777,8 +802,19 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                     <span className={styles.catpill}>{t.category}</span>
                   </div>
                   <div className={`${styles.lcenter} ${styles.lmuted}`}>{t.updated}</div>
-                  <div className={`${styles.lcenter} tnum ${styles.lmuted3}`}>{t.avgOpen}%</div>
-                  <div className={`${styles.lcenter} tnum ${styles.lmuted3}`}>{t.avgClick}%</div>
+                  {/* The columns are fixed ("Opens", "Clicks") but what a
+                      channel measures is not, so a template that reports
+                      neither renders "—" with the reason on hover rather than a
+                      confident 0%. Same helper as the card and the drawer. */}
+                  {[templateOpenMetric(t), templateClickMetric(t)].map((m) => (
+                    <div
+                      key={m.key}
+                      className={`${styles.lcenter} tnum ${m.measured ? styles.lmuted3 : styles.lNotMeasured}`}
+                      title={m.hint}
+                    >
+                      {m.value}
+                    </div>
+                  ))}
                 </div>
               );
             })}
@@ -882,51 +918,39 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
 
 
 /**
- * Drawer KPIs for a template, cut to what its channel actually reports.
+ * Drawer KPIs for a template — the same metrics the gallery card and the list
+ * columns show, wearing tile labels and colours.
  *
- * Open and click tracking is read from the same channel config the campaign
- * views use, so the three screens can never disagree about what a channel
- * measures. SMS and voice track neither — their `trackedDelivered` is 0 by
- * construction, so the old fixed pair of rate tiles read "0%" on every SMS
- * and voice template no matter how well it performed.
- *
- * A template that has never been sent reports "—" rather than 0%, which would
- * claim nobody engaged when in truth nothing was measured.
+ * The drawer used to own this decision alone, which is how the three surfaces
+ * came to disagree about one template. `templateEngagement` (template-map.ts)
+ * is now the only place that decides what a template can report; everything
+ * here is presentation.
  */
-function templateKpis(t: GalleryTemplate): Array<{ label: string; value: string; color: string }> {
-  const cfg = channelReportConfig(t.channel);
-  const hasOpen = cfg.rateCards.some((r) => r === 'open' || r === 'seen');
-  const hasClick = cfg.rateCards.includes('click');
-  const pct = (n: number, denom: number) => (denom > 0 ? `${n}%` : '—');
-  if (hasOpen || hasClick) {
-    const tracked = t.trackedDelivered ?? 0;
-    const kpis = [
-      {
-        label: cfg.openLabel === 'Seen' ? 'Avg. seen' : 'Avg. opens',
-        value: pct(t.avgOpen, tracked),
-        color: '#4f46e5',
-      },
-    ];
-    if (hasClick) {
-      kpis.push({ label: 'Avg. clicks', value: pct(t.avgClick, tracked), color: '#0891b2' });
-    }
-    return kpis;
-  }
-  // Delivery-only channels: report the send outcomes they do produce.
-  const sent = t.sent ?? 0;
-  const delivered = t.delivered ?? 0;
-  return [
-    {
-      label: 'Avg. delivered',
-      value: sent > 0 ? `${Math.round((delivered / sent) * 100)}%` : '—',
-      color: 'var(--success-strong)',
-    },
-    {
-      label: 'Failed',
-      value: sent > 0 ? (t.failed ?? 0).toLocaleString('en-US') : '—',
-      color: (t.failed ?? 0) > 0 ? 'var(--danger)' : 'var(--text)',
-    },
-  ];
+const KPI_LABEL: Record<string, string> = {
+  opens: 'Avg. opens',
+  seen: 'Avg. seen',
+  clicks: 'Avg. clicks',
+  delivered: 'Avg. delivered',
+  failed: 'Failed',
+};
+function templateKpis(
+  t: GalleryTemplate,
+): Array<{ label: string; value: string; color: string; hint: string }> {
+  return templateEngagement(t).map((m) => ({
+    label: KPI_LABEL[m.label] ?? m.label,
+    value: m.value,
+    color:
+      m.key === 'open'
+        ? '#4f46e5'
+        : m.key === 'click'
+          ? '#0891b2'
+          : m.key === 'delivery'
+            ? 'var(--success-strong)'
+            : (t.failed ?? 0) > 0
+              ? 'var(--danger)'
+              : 'var(--text)',
+    hint: m.hint,
+  }));
 }
 
 function TemplateDrawer({
@@ -1006,7 +1030,7 @@ function TemplateDrawer({
           </div>
           <div className={`adrawer__kpis ${styles.dStats}`}>
             {templateKpis(t).map((k) => (
-              <div key={k.label} className="adrawer__kpi">
+              <div key={k.label} className="adrawer__kpi" title={k.hint}>
                 <div className="adrawer__kpi-k">{k.label}</div>
                 <div className="tnum adrawer__kpi-v" style={{ color: k.color }}>
                   {k.value}

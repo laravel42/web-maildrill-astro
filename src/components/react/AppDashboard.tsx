@@ -510,10 +510,14 @@ export default function AppDashboard({
                      `FAILED_DELIVERY_STATES` (failed + expired), so what falls
                      in neither bar is submitted / queued / processing /
                      cancelled — sends with no outcome, not sends with a hidden
-                     one. Measured over 7 days: 21,337 sent, 16,617 delivered,
-                     2,362 failed — 2,358 in neither bar (11.0%), down from
-                     4,127 (19.3%) when `failed` was `status='failed'` alone and
-                     1,769 expired messages were reported nowhere (audit #25).
+                     one. Measured 2026-08-17 over the 7-day window (2026-08-11
+                     to 2026-08-16): 17,654 sent, 12,950 delivered, 2,940 failed
+                     — 1,764 in neither bar (10.0%), every one of them
+                     `submitted` and nothing else. Under the old
+                     `status='failed'` alone the window's `failed` was 588, so
+                     4,116 (23.3%) fell nowhere and 2,352 expired messages were
+                     reported nowhere at all (audit #25). Figures move with the
+                     window; the shape does not — re-measure before editing them.
                      (2) the shares are independently rounded, so the column sums
                      to 101% at 7 days and 99% at 30 (audit #36); the same
                      rounding runs on the Settings ledger. */

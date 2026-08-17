@@ -290,10 +290,14 @@ function engagementRollup(tenantId: string, listIds?: string[]) {
          read — an SMS delivery in the denominator only pushes the rate toward
          zero for a reason that has nothing to do with the audience.
 
-         KNOWN DEFECT (audit, latent): `opened` below is reads on EVERY channel
-         while `trackedDelivered` is two, so a list mailed on several channels
-         would divide a wider numerator by a narrower denominator. Zero lists on
-         the seeded tenant do; the shape is wrong, no row is. */
+         `opened` carries THE SAME channel predicate, and must: the Lists screen
+         and the rate filter at `listRateCondition` both divide it by
+         `trackedDelivered`, and a numerator counting four channels over a
+         denominator counting two is a rate with no ceiling. It used to be
+         all-channel and was flagged latent — no list on the seeded tenant is
+         mailed on more than one channel, so no rendered figure moved — but the
+         shape was the same one that printed a 112% open rate on the dashboard,
+         and latent is only a statement about today's data. */
       delivered:
         sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read'))::int`.as(
           'delivered',
@@ -302,7 +306,10 @@ function engagementRollup(tenantId: string, listIds?: string[]) {
         sql<number>`count(*) filter (where ${messages.status} in ('delivered', 'read') and ${messages.channel} in ('email', 'whatsapp'))::int`.as(
           'tracked_delivered',
         ),
-      opened: sql<number>`count(*) filter (where ${messages.status} = 'read')::int`.as('opened'),
+      opened:
+        sql<number>`count(*) filter (where ${messages.status} = 'read' and ${messages.channel} in ('email', 'whatsapp'))::int`.as(
+          'opened',
+        ),
     })
     .from(messages)
     .innerJoin(
@@ -320,12 +327,20 @@ function engagementRollup(tenantId: string, listIds?: string[]) {
  * rather than joining back through `messages`. That join is O(all tenant
  * events) however few lists are asked about, which is the exact shape 0026 was
  * written to remove; this path was still paying it.
+ *
+ * Narrowed to `campaigns.channel in ('email','whatsapp')` for the same reason
+ * `opened` is: the click rate divides this by `engagementRollup`'s
+ * `trackedDelivered`, so both sides have to name one channel set.
+ * `campaigns.channel` rather than `messages.channel` because this path never
+ * touches `messages` — and it is the same fact: zero of the tenant's 1,001,068
+ * messages carry a channel differing from their campaign's.
  */
 function clickRollup(tenantId: string, listIds?: string[]) {
   const conds = [
     eq(messageEvents.tenantId, tenantId),
     eq(messageEvents.eventType, 'click'),
     isNotNull(campaigns.listId),
+    inArray(campaigns.channel, ['email', 'whatsapp']),
   ];
   if (listIds) conds.push(inArray(campaigns.listId, listIds));
   return db

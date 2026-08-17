@@ -29,6 +29,7 @@ import {
   DEFAULT_TOGGLES,
   estCost,
   EST_RATE_BASIS,
+  USAGE_VOLUME_BASIS,
   fmt,
   fmtUsd,
   isDomain,
@@ -573,7 +574,16 @@ export default function AppSettings({
             {panel.kind === 'usage' && (
               <div>
                 <div className={styles.ledgerHead}>
-                  <span className={styles.ledgerKicker}>This period</span>
+                  {/* "All time", not "This period". The number below is
+                      `workspaceSummary.messages.total` — `count(*)` over
+                      `messages` with no date predicate, documented as such at
+                      stats.ts ("NO DATE WINDOW … any caller labelling it 'this
+                      period' is wrong"). It read 1,001,068 under a kicker
+                      claiming a period that holds 48,468. The label moved
+                      rather than the query because this product has no billing
+                      period: prepaid wallet, no cycle on `usage_records`, no
+                      boundary anywhere in the schema to window to. */}
+                  <span className={styles.ledgerKicker}>All time</span>
                   <button
                     type="button"
                     className={styles.ledgerLink}
@@ -585,7 +595,9 @@ export default function AppSettings({
 
                 <div className={styles.ledgerHero}>
                   <div className={styles.heroMain}>
-                    <span className={styles.ledgerTotal}>{fmt(workspaceSent)}</span>
+                    <span className={styles.ledgerTotal} aria-describedby="usage-volume-basis">
+                      {fmt(workspaceSent)}
+                    </span>
                     <span className={styles.ledgerUnit}>messages · pay as you go</span>
                   </div>
                   <div className={styles.heroStats}>
@@ -699,11 +711,20 @@ export default function AppSettings({
                   </tbody>
                 </table>
 
-                {/* The rate every "Est." figure above assumes, spelled out.
-                    Generated from the same constants `estCost` multiplies by
-                    (`EST_RATE_BASIS`), so the sentence cannot drift from the
-                    arithmetic. Rendered whether or not anything was sent: on an
-                    empty workspace it is what the zero means. */}
+                {/* Two assumptions, two sentences, both always rendered — on an
+                    empty workspace they are what the zero means.
+
+                    `USAGE_VOLUME_BASIS` is the window and the scope of the
+                    counts: all time, failures and queued sends included. It is
+                    wired to the hero total via `aria-describedby` so the
+                    correction reaches a screen reader on the number itself.
+
+                    `EST_RATE_BASIS` is the rate the money column assumes,
+                    generated from the same constants `estCost` multiplies by so
+                    the sentence cannot drift from the arithmetic. */}
+                <p className={styles.ledgerNote} id="usage-volume-basis">
+                  {USAGE_VOLUME_BASIS}
+                </p>
                 <p className={styles.ledgerNote} id="usage-est-basis">
                   {EST_RATE_BASIS}
                 </p>

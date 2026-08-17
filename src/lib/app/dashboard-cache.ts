@@ -13,12 +13,17 @@ import type { FeedItem } from '@/components/react/AppDashboard.types';
 import type { ActivityPoint, Summary } from '@/components/react/AppDashboard.logic';
 
 export const DASHBOARD_CACHE_TTL_MS = 30 * 60 * 1000;
-/* Bumped to v2 with the summary's `trends` block: it went from five weekly
-   series (two of them precomputed rates) to six daily count series. A v1 entry
-   parses fine and would have fed the KPI cards a shape whose fields no longer
-   exist — em-dash cards for the rest of the TTL. The version is part of the
-   key rather than a field so a stale entry is never read at all. */
-const KEY_PREFIX = 'md:dashboard:v2';
+/* Bumped with every change to the SHAPE of what is cached, because a stale
+   entry parses fine and then feeds the KPI cards fields that no longer mean
+   what they did — em-dash cards, or worse, plausible wrong ones, for the rest
+   of the TTL. The version is part of the key rather than a field so a stale
+   entry is never read at all.
+
+   v2: the summary's `trends` went from five weekly series (two of them
+       precomputed rates) to six daily count series.
+   v3: `trends.since` was added — the window's anchor date. A v3-less entry
+       would render every sparkline unlabelled, so it is not read. */
+const KEY_PREFIX = 'md:dashboard:v3';
 
 /** Null tenant (demo/preview) gets its own bucket rather than sharing one. */
 const keyFor = (tenantId: string | null | undefined) => `${KEY_PREFIX}:${tenantId ?? 'anon'}`;

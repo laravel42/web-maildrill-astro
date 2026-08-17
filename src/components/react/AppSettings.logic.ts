@@ -26,7 +26,7 @@ export const PANELS: Record<SectionKey, Panel> = {
   usage: {
     kind: 'usage',
     title: 'Usage',
-    desc: 'Pay-per-use volume this period, by channel. Every send draws from your prepaid balance — no plan caps.',
+    desc: 'Pay-per-use volume to date, by channel. Every send draws from your prepaid balance — no plan caps.',
   },
   branding: {
     kind: 'form',
@@ -126,15 +126,24 @@ export const fmt = (n: number) => n.toLocaleString('en-US');
  * Source: `summary.byChannel` from /v1/stats/summary — `count(*)` on `messages`
  * grouped by channel, ALL TIME, with no date window and no status filter.
  *
- * KNOWN DEFECT (audit #2), and it compounds three ways in the panel above:
- *   - The panel's kicker says "This period". This is every message the tenant
- *     has ever sent: 1,001,068 all-time against 48,468 this calendar month.
- *   - `sent` is `count(*)`, so it bills states that never left: 70,066 failed,
- *     47,653 expired, 2,352 submitted, 6 queued.
- *   - There is no ledger behind it at all. The tenant has 0 consumption rows in
- *     `wallet_transactions` and 5 in `usage_records`, against 1,001,068
+ * The panel now says so, on all three axes it used to overclaim on:
+ *   - WINDOW. The kicker read "This period" over an all-time count: 1,001,068
+ *     ever against 48,468 this calendar month, a 20.7x overstatement of the
+ *     word. It reads "All time", and `USAGE_VOLUME_BASIS` states the window in
+ *     words beside the number. Relabelled rather than re-queried because this
+ *     product has no billing period to query for: `wallets` is a prepaid
+ *     balance with no cycle, `usage_records` carries an `occurred_at` and no
+ *     period, and `wallet_transactions` is a running ledger. Windowing to an
+ *     invented 30 days would put a number under the balance that no boundary
+ *     in the schema justifies.
+ *   - SCOPE. `sent` is `count(*)`, so it counts states that never left the
+ *     building — measured on this tenant today: 70,066 failed, 47,653 expired,
+ *     2,352 submitted, 6 queued. `USAGE_VOLUME_BASIS` says that too, as a rule
+ *     rather than as four numbers that would drift by tomorrow.
+ *   - LEDGER. There is no ledger behind it at all. The tenant has 0 consumption
+ *     rows in `wallet_transactions` and 5 in `usage_records`, against 1,001,068
  *     messages. The money column derived from these counts is therefore a
- *     list-price model, and is now labelled "Est. cost" and carries its rate
+ *     list-price model, and is labelled "Est. cost" carrying its rate
  *     assumption on screen (`EST_RATE_BASIS`) rather than reading as a charge.
  *
  * KNOWN DEFECT (audit #1): which source produced these counts is decided
@@ -199,6 +208,21 @@ const fmtRate = (n: number) => `$${n.toFixed(4).replace(/0+$/, '').replace(/\.$/
  * screen cannot drift from the arithmetic behind the number above it — which
  * is the whole reason a money figure is allowed to be an estimate at all.
  */
+/**
+ * What the volume figure counts, in words — the window and the scope.
+ *
+ * Stated rather than computed for the same reason the kicker was relabelled:
+ * the number above it is `count(*)` over `messages` with no date predicate and
+ * no status filter (stats.ts `workspaceSummary`, "NO DATE WINDOW — this is
+ * all-time stock, not a period"), and the schema holds no billing cycle to
+ * window it to. A rule survives the data changing under it; the four state
+ * counts it replaces would have gone stale the next time the queue moved.
+ */
+export const USAGE_VOLUME_BASIS =
+  `Volume is every message this workspace has ever created — all time, not a ` +
+  `billing period — and counts sends that failed, expired or are still queued ` +
+  `alongside the ones that arrived.`;
+
 export const EST_RATE_BASIS =
   `Estimate, not a charge — no ledger entry exists for these sends. ` +
   `Priced at ${NA_TIER.name} list rates ` +

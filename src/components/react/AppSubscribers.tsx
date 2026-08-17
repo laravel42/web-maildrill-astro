@@ -38,7 +38,8 @@ import FilterChipsRow from './shared/FilterChipsRow';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { ChannelPill } from './shared/CampaignPills';
 import { channelReportConfig } from '@/lib/app/campaign-report';
-import { ago, agoNow } from './shared/time';
+import { agoNow } from './shared/time';
+import TimeAgo from './shared/TimeAgo';
 import { useToast } from './shared/useToast';
 import { useEscapeClose } from './shared/useEscapeClose';
 import {
@@ -215,6 +216,43 @@ export default function AppSubscribers({
   const [segSel, setSegSel] = useState<Set<string>>(new Set());
   const [tagSel, setTagSel] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'name', dir: 1 });
+  /**
+   * The direction to ask the API for.
+   *
+   * `created_at` is the only key `subscribers_tenant_created_id_idx` can order
+   * a million rows by, and the API rejects the rest with a 400 — but it serves
+   * BOTH directions of that one key, cursor comparison included (`keysetPlan`,
+   * workers subscribers.ts). So "Subscribed" is wired through to the server and
+   * is a true whole-roster ordering in either direction.
+   */
+  const serverDir: 'asc' | 'desc' = sort.key === 'subscribed' && sort.dir === 1 ? 'asc' : 'desc';
+
+  /**
+   * True when the arrow the reader just clicked reorders only the rows in hand.
+   *
+   * Live, the server hands back one keyset page ordered by `created_at` and
+   * `pageRows = filtered` IS that page, so every column except "Subscribed" is
+   * re-sorted in the browser over ten rows out of 1,000,229. Descending on
+   * "Last activity" that put "9w ago" at the top of a roster whose most recent
+   * activity is 1d ago (perf100219@p20.perf-maildrill.test, 2026-08-16 05:47).
+   *
+   * The scope is stated rather than removed, and the query was NOT changed to
+   * match: ordering the roster by `max(coalesce(read_at, delivered_at, sent_at,
+   * submitted_at, created_at))` needs that aggregate materialised on
+   * `subscribers` plus an index to keyset on, and maintained on every status
+   * transition — a schema change, a million-row backfill and a new write-path
+   * invariant, to reorder a list. Sorting it live is worse: a full sort of the
+   * filtered million per keystroke, which is the exact cost keyset paging
+   * exists to avoid. Fixtures hold the whole set in memory, so there the sort
+   * really is complete and no note is shown.
+   */
+  const sortIsPageScoped = live && sort.key !== 'subscribed';
+
+  /** What a page-scoped sort actually did, for the header tooltip and the footer note. */
+  const PAGE_SORT_NOTE =
+    `Reorders the ${PAGE_SIZE} rows on this page only. The roster itself is ordered by sign-up date — ` +
+    `"Subscribed" is the one column that sorts all of it.`;
+
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Ids waiting on the delete confirm dialog (bulk toolbar or drawer).
   const [confirmDelete, setConfirmDelete] = useState<string[] | null>(null);
@@ -449,6 +487,40 @@ export default function AppSubscribers({
   const [serverStatusCounts, setServerStatusCounts] = useState<Record<string, number> | null>(
     initialCounts?.byStatus ?? null,
   );
+  /**
+   * The roster with NO filters, per channel — what the segment row's counts
+   * mean, and only that row.
+   *
+   * Held apart from `serverTabCounts` because the two answer different
+   * questions and must be free to differ: the tabs count the current result
+   * set, this counts the population. It used to be `initialCounts` read
+   * directly at the render site, which froze it at the SSR snapshot for the
+   * whole session — import 50,000 people and the tabs moved while the chip did
+   * not. Refreshed below without paying a second scan in the common case.
+   */
+  const [rosterCounts, setRosterCounts] = useState<Record<string, number>>(
+    (initialCounts as Record<string, number> | null) ?? {},
+  );
+  /** Bumped by every roster mutation, so the unfiltered counts above refetch. */
+  const [rosterVersion, setRosterVersion] = useState(0);
+  /* The unfiltered roster, refetched only when it can have changed: an import,
+     a delete or a create. Not on every filter change — that is a full scan of
+     a million rows to redraw a number that by definition did not move. The
+     `rosterVersion === 0` guard skips the first pass entirely, because SSR
+     already handed us that exact scan's result. */
+  useEffect(() => {
+    if (!live || rosterVersion === 0) return;
+    let cancelled = false;
+    api
+      .get<Record<string, number>>('subscribers/counts')
+      .then((c) => {
+        if (!cancelled) setRosterCounts(c);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [live, rosterVersion]);
   const fixtureTabCounts = useMemo(() => {
     const c: Record<string, number> = {};
     for (const ch of CHANNEL_ORDER) c[ch] = richSubscribers.filter((s) => reachOf(s)[ch]).length;
@@ -544,6 +616,15 @@ export default function AppSubscribers({
   );
 
   /**
+   * True when `filterQs` narrows nothing — only the channel tab is set. Drives
+   * the free refresh of the unfiltered roster count above.
+   */
+  const isUnfiltered = useMemo(() => {
+    for (const key of new URLSearchParams(filterQs).keys()) if (key !== 'channel') return false;
+    return true;
+  }, [filterQs]);
+
+  /**
    * The server owns every filter the roster offers — channel, status, search,
    * tag, list, segment, open/click rate — plus the sort and the page window.
    * Nothing here narrows a live page any more, which is what lets the footer
@@ -562,12 +643,15 @@ export default function AppSubscribers({
     // above three rows.
     const qs = new URLSearchParams(filterQs);
     qs.set('limit', String(PAGE_SIZE));
-    // Only `created` is index-backed, and the API rejects other sorts with a
-    // 400. Column sorting therefore reorders the page in hand, not the
-    // workspace — sorting a million rows per keystroke is the thing this whole
-    // change exists to avoid.
+    // `created` is the only index-backed key and the API rejects the rest with
+    // a 400 — but it serves both DIRECTIONS of it, so the "Subscribed" column
+    // is a real whole-roster sort and `serverDir` carries the arrow through.
+    // Every other column reorders the page in hand rather than the workspace
+    // (sorting a million rows per keystroke is the thing keyset paging exists
+    // to avoid), and `sortIsPageScoped` puts that on screen instead of leaving
+    // the arrow to imply otherwise.
     qs.set('sort', 'created');
-    qs.set('dir', 'desc');
+    qs.set('dir', serverDir);
     if (cursor) qs.set('cursor', cursor);
     else if (page > 1) qs.set('page', String(page));
     // No ?withTotal=1. `countSubscribers` is a second independent full scan of
@@ -584,6 +668,13 @@ export default function AppSubscribers({
           if (cancelled) return;
           setServerTabCounts(c);
           if (c.byStatus) setServerStatusCounts(c.byStatus);
+          // With nothing narrowing the set, this scan IS the unfiltered
+          // roster, so the segment row's population count refreshes for free.
+          // `channel` is not a narrowing filter — it names the tab, and
+          // `/subscribers/counts` returns all four channel totals regardless
+          // of it (it scopes only `byStatus`). Every other key
+          // `rosterFilterParams` can set is.
+          if (isUnfiltered) setRosterCounts(c);
           // The active tab's count is the footer's total: same filters, same
           // scan, one request instead of two.
           const n = Number(c[tab] ?? 0);
@@ -614,7 +705,7 @@ export default function AppSubscribers({
     return () => {
       cancelled = true;
     };
-  }, [live, page, tab, filterQs]);
+  }, [live, page, tab, filterQs, isUnfiltered, serverDir]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -686,8 +777,20 @@ export default function AppSubscribers({
         av = new Date(a.createdAt).getTime();
         bv = new Date(b.createdAt).getTime();
       } else {
-        av = new Date(a.updatedAt).getTime();
-        bv = new Date(b.updatedAt).getTime();
+        /* key === 'last'. The column below renders `lastActiveAt`, so the sort
+           reads it too — sorting on `updatedAt` under a "Last activity" arrow
+           would reorder the page by a number the page does not show. Never
+           messaged sorts as the far past rather than as "now": a subscriber
+           with no messages is the least recently active, not the most.
+
+           SCOPE, not just value: live, `list` is the ten rows the server
+           returned in `created_at` order, so this comparator reorders those and
+           no others. That is stated on screen by `sortIsPageScoped` — fixing
+           the value without saying so is what turned a visibly inert sort
+           (every row's `updated_at` was the same day) into a plausible-looking
+           wrong one. */
+        av = a.lastActiveAt ? new Date(a.lastActiveAt).getTime() : -Infinity;
+        bv = b.lastActiveAt ? new Date(b.lastActiveAt).getTime() : -Infinity;
       }
       if (av < bv) return -1 * dir;
       if (av > bv) return 1 * dir;
@@ -728,9 +831,13 @@ export default function AppSubscribers({
 
   const toggleSort = (key: SortKey) => {
     setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: 1 }));
+    // Clears `cursorFor` as well as the page, which is what lets `serverDir`
+    // below flip safely: a cursor minted walking one direction is not a resume
+    // point for the other.
     resetPageAndSel();
   };
   const sortArrow = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? '↑' : '↓') : '');
+
 
   const toggleSelect = (id: string) =>
     setSelected((prev) => {
@@ -818,6 +925,8 @@ export default function AppSubscribers({
     const results = await Promise.allSettled(ids.map((id) => api.del(`subscribers/${id}`)));
     const okIds = new Set(ids.filter((_, i) => results[i].status === 'fulfilled'));
     setRichSubscribers((prev) => prev.filter((s) => !okIds.has(s.id)));
+    // The roster shrank: the segment row's population count has to follow.
+    if (okIds.size > 0) setRosterVersion((v) => v + 1);
     setSelected((prev) => new Set([...prev].filter((id) => !okIds.has(id))));
     if (openId && okIds.has(openId)) setOpenId(null);
     const failed = ids.length - okIds.size;
@@ -971,8 +1080,24 @@ export default function AppSubscribers({
         </div>
       </div>
 
-      {/* saved segments — scoped to the active channel tab below */}
-      <div className={styles.segrow} role="group" aria-label="Saved segments">
+      {/* Saved segments — scoped to the active channel tab below.
+          Every number in this row is a POPULATION: the size of the set each
+          chip selects, on this channel, ignoring the search and filters in the
+          toolbar underneath. That is what makes "All subscribers 1,000,229"
+          legitimately sit above a tab reading "Email 111" under an active
+          search — but only if the row says so, which the caption does. Segment
+          sizes come from /segments/preview, which ignores the other filters
+          too, so the row is one consistent reading. */}
+      <p className={styles.segcaption} id="segrow-basis">
+        Segment sizes — the whole {CHANNEL[tab].label.toLowerCase()} roster, before the filters
+        below.
+      </p>
+      <div
+        className={styles.segrow}
+        role="group"
+        aria-describedby="segrow-basis"
+        aria-label="Saved segments"
+      >
         <button
           type="button"
           className={`${styles.seg}${segSel.size === 0 ? ' is-on' : ''}`}
@@ -983,15 +1108,14 @@ export default function AppSubscribers({
           aria-pressed={segSel.size === 0}
         >
           All subscribers
-          {/* The roster on this tab, unfiltered — the same context-free reading
-              the segment chips beside it give (segCount comes from
-              /segments/preview, which ignores the other filters). Following
-              `tabCounts` instead would make this chip report the selected
-              segment's size under a label that says the opposite. It used to
-              read `richSubscribers.filter(...).length`, which is the ten rows
-              in hand: 10, beside a segment chip reading 333,533. */}
+          {/* `rosterCounts`, not `tabCounts`: following the tabs would make this
+              chip report the SELECTED segment's size under a label that says the
+              opposite. Not `initialCounts` either — that is the SSR scan, frozen
+              for the session, so an import moved the tabs and left this behind.
+              (Before that it read `richSubscribers.filter(...).length`, the ten
+              rows in hand: 10, beside a segment chip reading 333,533.) */}
           <span className={`${styles.segn} tnum`}>
-            {(live ? (initialCounts?.[tab] ?? 0) : (fixtureTabCounts[tab] ?? 0)).toLocaleString(
+            {(live ? (rosterCounts[tab] ?? 0) : (fixtureTabCounts[tab] ?? 0)).toLocaleString(
               'en-US',
             )}
           </span>
@@ -1007,7 +1131,9 @@ export default function AppSubscribers({
                 aria-pressed={on}
               >
                 {seg.name}
-                <span className={`${styles.segn} tnum`}>{segCount(seg)}</span>
+                <span className={`${styles.segn} tnum`}>
+                  {segCount(seg).toLocaleString('en-US')}
+                </span>
               </button>
               {seg.custom && (
                 <button
@@ -1053,7 +1179,13 @@ export default function AppSubscribers({
               >
                 <Icon name={m.icon} size={13} />
                 {m.label}
-                <span className="atab__count tnum">{tabCounts[ch] ?? 0}</span>
+                {/* Grouped like every other figure on the screen. This one
+                    rendered raw — "Email 1000229" directly under a chip
+                    reading "1,000,229", the same number twice in two
+                    notations. */}
+                <span className="atab__count tnum">
+                  {(tabCounts[ch] ?? 0).toLocaleString('en-US')}
+                </span>
               </button>
             );
           })}
@@ -1411,6 +1543,7 @@ export default function AppSubscribers({
                   type="button"
                   className={sort.key === 'name' ? 'is-active' : undefined}
                   onClick={() => toggleSort('name')}
+                  title={live ? PAGE_SORT_NOTE : undefined}
                 >
                   Subscriber <span className="tnum">{sortArrow('name')}</span>
                 </button>
@@ -1421,6 +1554,7 @@ export default function AppSubscribers({
                     type="button"
                     className={sort.key === 'opens' ? 'is-active' : undefined}
                     onClick={() => toggleSort('opens')}
+                    title={live ? PAGE_SORT_NOTE : undefined}
                   >
                     Avg. {tabCfg.openLabel === 'Seen' ? 'seen' : 'open'}{' '}
                     <span className="tnum">{sortArrow('opens')}</span>
@@ -1433,6 +1567,7 @@ export default function AppSubscribers({
                     type="button"
                     className={sort.key === 'clicks' ? 'is-active' : undefined}
                     onClick={() => toggleSort('clicks')}
+                    title={live ? PAGE_SORT_NOTE : undefined}
                   >
                     Avg. click <span className="tnum">{sortArrow('clicks')}</span>
                   </button>
@@ -1443,6 +1578,7 @@ export default function AppSubscribers({
                   type="button"
                   className={sort.key === 'tags' ? 'is-active' : undefined}
                   onClick={() => toggleSort('tags')}
+                  title={live ? PAGE_SORT_NOTE : undefined}
                 >
                   Tags <span className="tnum">{sortArrow('tags')}</span>
                 </button>
@@ -1452,6 +1588,7 @@ export default function AppSubscribers({
                   type="button"
                   className={sort.key === 'status' ? 'is-active' : undefined}
                   onClick={() => toggleSort('status')}
+                  title={live ? PAGE_SORT_NOTE : undefined}
                 >
                   Status <span className="tnum">{sortArrow('status')}</span>
                 </button>
@@ -1461,6 +1598,11 @@ export default function AppSubscribers({
                   type="button"
                   className={sort.key === 'subscribed' ? 'is-active' : undefined}
                   onClick={() => toggleSort('subscribed')}
+                  title={
+                    live
+                      ? 'Sorts the whole roster — this is the key the server pages on.'
+                      : undefined
+                  }
                 >
                   Subscribed <span className="tnum">{sortArrow('subscribed')}</span>
                 </button>
@@ -1470,16 +1612,16 @@ export default function AppSubscribers({
                   type="button"
                   className={sort.key === 'last' ? 'is-active' : undefined}
                   onClick={() => toggleSort('last')}
+                  title={live ? PAGE_SORT_NOTE : undefined}
                 >
-                  {/* KNOWN DEFECT (audit #12): this column, and the sort behind
-                      it, read `subscribers.updated_at` — when the ROW was last
-                      written — and label it activity. They are different facts:
-                      perf767230@p31.perf-maildrill.test shows updated_at of
-                      2026-08-16 against a last message of 2025-11-05. The
-                      detail page uses the same two words for `max(message ts)`,
-                      which the roster payload does not carry. Compounded by
-                      audit #11: both date columns here call the fixture-clock
-                      `ago()`, so every row renders "1m ago" regardless. */}
+                  {/* `lastActiveAt` — `max(coalesce(read_at, delivered_at,
+                      sent_at, submitted_at, created_at))` over this person's
+                      messages, joined per page in `withRelations`. It used to
+                      render `subscribers.updated_at`, which is when the ROW was
+                      last written: perf767230@p31.perf-maildrill.test showed
+                      2026-08-16 against a last message of 2025-11-05, so a tag
+                      edit read as activity. Same expression the drawer's "Last
+                      active" reduces, so the two agree by construction. */}
                   Last activity <span className="tnum">{sortArrow('last')}</span>
                 </button>
               </div>
@@ -1537,8 +1679,17 @@ export default function AppSubscribers({
                   <div className={styles.colCenter}>
                     <StatusChip status={statusForChannel(s.status, tab)} />
                   </div>
-                  <div className={styles.last}>{ago(s.createdAt)}</div>
-                  <div className={styles.last}>{ago(s.updatedAt)}</div>
+                  <TimeAgo className={styles.last} at={s.createdAt} />
+                  {s.lastActiveAt ? (
+                    <TimeAgo className={styles.last} at={s.lastActiveAt} />
+                  ) : (
+                    <div
+                      className={styles.last}
+                      title="No message has ever been sent to this subscriber"
+                    >
+                      Never
+                    </div>
+                  )}
                 </div>
               ))
             )}
@@ -1568,7 +1719,16 @@ export default function AppSubscribers({
                 <span className={styles.cname}>{s.name}</span>
                 <span className={styles.cemail}>{s.email}</span>
                 <StatusChip status={statusForChannel(s.status, tab)} />
-                <span className={`${styles.last} ${styles.clast}`}>{ago(s.updatedAt)}</span>
+                {s.lastActiveAt ? (
+                  <TimeAgo className={`${styles.last} ${styles.clast}`} at={s.lastActiveAt} />
+                ) : (
+                  <span
+                    className={`${styles.last} ${styles.clast}`}
+                    title="No message has ever been sent to this subscriber"
+                  >
+                    Never
+                  </span>
+                )}
               </div>
             ))
           ))}
@@ -1580,6 +1740,16 @@ export default function AppSubscribers({
               ? 'No subscribers match your filters'
               : `${startIdx}–${endIdx} of ${totalRows.toLocaleString('en-US')} subscribers${loadingPage ? ' · loading…' : ''}`}
           </span>
+          {/* The arrow in the header says "sorted"; this says by how much of the
+              set. `pageRows = filtered` is one keyset page in live mode, so every
+              column but "Subscribed" reorders those rows and nothing else —
+              which read as a working sort the moment "Last activity" started
+              showing real, varying timestamps. See `sortIsPageScoped`. */}
+          {sortIsPageScoped && filtered.length > 0 && (
+            <span className={styles.sortScope} title={PAGE_SORT_NOTE}>
+              Sorted within this page
+            </span>
+          )}
           {pageCount > 1 && (
             <div className={styles.pager}>
               <button
@@ -1678,9 +1848,13 @@ export default function AppSubscribers({
             }
             const fresh = await api.get<{ items: ApiSubscriber[] }>('subscribers?limit=100');
             setRichSubscribers((fresh.items ?? []).map(toRichSubscriber));
+            setRosterVersion((v) => v + 1);
           }}
           onCreated={async (created, values) => {
-            if (created) setRichSubscribers((prev) => [toRichSubscriber(created), ...prev]);
+            if (created) {
+              setRichSubscribers((prev) => [toRichSubscriber(created), ...prev]);
+              setRosterVersion((v) => v + 1);
+            }
             showToast(`${values.email} added`);
           }}
         />
@@ -1889,17 +2063,23 @@ function SubscriberDrawer({
   const statusLabel = STATUS_LABEL[sub.status];
 
   type ChanMetric = { label: string; value: string; alert?: boolean };
-  type ChanRow = { ch: ChannelType; on: boolean; meta: string; metrics: ChanMetric[] };
+  type ChanRow = {
+    ch: ChannelType;
+    on: boolean;
+    meta: string;
+    /** Hover expansion of `meta` — what the profile's "Including failures" says. */
+    metaTitle?: string;
+    metrics: ChanMetric[];
+  };
 
-  // "Last active" is the most recent real message timestamp; falls back to the
-  // fixture value only in the marketing preview.
-  const lastActive = act
-    ? act.lastActiveAt
-      ? agoNow(act.lastActiveAt)
-      : 'Never'
-    : live
-      ? '—'
-      : ago(sub.updatedAt);
+  /* "Last active" is the most recent real message timestamp, from
+     /subscribers/:id/activity. Until that lands it is "—" rather than a
+     stand-in: the roster row's own `lastActiveAt` is the same fact from the
+     same expression, but the drawer opens before the fetch resolves and a
+     value that changes meaning mid-render is worse than a dash. It used to
+     fall back to `ago(sub.updatedAt)` — the row-write clock, measured against a
+     frozen fixture instant. */
+  const lastActive = act ? (act.lastActiveAt ? agoNow(act.lastActiveAt) : 'Never') : '—';
 
   let channelRows: ChanRow[];
 
@@ -1914,6 +2094,16 @@ function SubscriberDrawer({
       const failed = s?.failed ?? 0;
       // `sent` excludes failures; attempted restores them so delivery % matches
       // the detail page (delivered / attempted), not "of successful sends".
+      //
+      // It is also the number this row PRINTS as "sent". The API's `sent` is
+      // `status in ('submitted','sent','delivered','read')`, i.e. dispatched
+      // and not yet known to have failed — so under the bare word "sent" it
+      // read 7 for 92b4c42d… (4 delivered + 3 read) while the profile one
+      // click away rendered its "Sent" tile as `attempted` = 9 with the sub
+      // "Including failures" (channel-kpis.ts:79-82, from the same
+      // /activity `channels` payload). One word, one subscriber, two numbers.
+      // Printing `attempted` here makes the drawer and the profile the same
+      // fact; `title` carries what the profile's sub-label says out loud.
       const attempted = sent + failed;
       // Each channel reports only what it can measure, read from the same
       // config the campaign and template views use. Email and WhatsApp track
@@ -1939,13 +2129,19 @@ function SubscriberDrawer({
       // so every channel carries it.
       metrics.push({
         label: 'failed',
-        value: sent > 0 ? failed.toLocaleString('en-US') : '—',
+        value: attempted > 0 ? failed.toLocaleString('en-US') : '—',
         alert: failed > 0,
       });
       return {
         ch,
-        on: sent > 0,
-        meta: sent > 0 ? `${sent.toLocaleString('en-US')} sent` : 'No messages yet',
+        // `attempted`, not `sent`: a subscriber whose only message failed has
+        // been mailed, and this row used to call that "No messages yet".
+        on: attempted > 0,
+        meta: attempted > 0 ? `${attempted.toLocaleString('en-US')} sent` : 'No messages yet',
+        metaTitle:
+          attempted > 0
+            ? `${attempted.toLocaleString('en-US')} dispatched, including ${failed.toLocaleString('en-US')} failed`
+            : undefined,
         metrics,
       };
     });
@@ -2079,7 +2275,7 @@ function SubscriberDrawer({
           <div className={styles.sbdSection}>
             <span className={`adrawer__eyebrow ${styles.sbdEyebrow}`}>Channel engagement</span>
             <div className={styles.sbdChans}>
-              {channelRows.map(({ ch, on, meta, metrics }) => {
+              {channelRows.map(({ ch, on, meta, metaTitle, metrics }) => {
                 const m = CHANNEL[ch];
                 return (
                   <div key={ch} className={styles.sbdChan}>
@@ -2099,7 +2295,9 @@ function SubscriberDrawer({
                           {on ? 'Active' : 'Off'}
                         </span>
                       </div>
-                      <div className={styles.sbdChanMeta}>{meta}</div>
+                      <div className={styles.sbdChanMeta} title={metaTitle}>
+                        {meta}
+                      </div>
                     </div>
                     <div className={styles.sbdChanMetrics}>
                       {metrics.map((mt) => (
