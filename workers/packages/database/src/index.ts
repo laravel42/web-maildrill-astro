@@ -46,4 +46,7 @@ export {
   stripeEvents,
   paymentAttempts,
   paymentCustomers,
+  billingUsageRequests,
+  billingUsageLines,
+  creditRecharges,
 } from './schema';

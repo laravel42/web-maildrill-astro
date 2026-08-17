@@ -5,6 +5,7 @@ import {
   startCampaignDeliveryPoller,
   startCloudflareEmailEventsPoller,
   startDispatchWorker,
+  startBillingUsageSweep,
   startEngagementSweep,
   startEventsWorker,
   startMaintenance,
@@ -21,6 +22,7 @@ type Role =
   | 'scheduler'
   | 'maintenance'
   | 'engagement-sweep'
+  | 'billing-usage-sweep'
   | 'template-approval'
   | 'campaign-delivery'
   | 'cloudflare-email-events'
@@ -48,6 +50,9 @@ function start(role: Role): void {
     case 'engagement-sweep':
       stops.push(startEngagementSweep());
       break;
+    case 'billing-usage-sweep':
+      stops.push(startBillingUsageSweep());
+      break;
     case 'template-approval':
       stops.push(startTemplateApprovalPoller());
       break;
@@ -64,6 +69,7 @@ function start(role: Role): void {
       start('scheduler');
       start('maintenance');
       start('engagement-sweep');
+      start('billing-usage-sweep');
       start('template-approval');
       start('campaign-delivery');
       start('cloudflare-email-events');

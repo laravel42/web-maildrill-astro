@@ -1,5 +1,8 @@
 import type {
   apiKeys,
+  billingUsageLines,
+  billingUsageRequests,
+  creditRecharges,
   emailDomains,
   campaigns,
   customFieldDefs,
@@ -166,3 +169,14 @@ export type NewPaymentAttempt = typeof paymentAttempts.$inferInsert;
 
 export type PaymentCustomerRow = typeof paymentCustomers.$inferSelect;
 export type NewPaymentCustomer = typeof paymentCustomers.$inferInsert;
+
+// --- provider-billed usage + recharge history ---
+
+export type BillingUsageRequestRow = typeof billingUsageRequests.$inferSelect;
+export type NewBillingUsageRequest = typeof billingUsageRequests.$inferInsert;
+
+export type BillingUsageLineRow = typeof billingUsageLines.$inferSelect;
+export type NewBillingUsageLine = typeof billingUsageLines.$inferInsert;
+
+export type CreditRechargeRow = typeof creditRecharges.$inferSelect;
+export type NewCreditRecharge = typeof creditRecharges.$inferInsert;

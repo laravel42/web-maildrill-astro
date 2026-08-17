@@ -8,6 +8,7 @@ import {
   type WalletTransactionRow,
 } from '@maildrill/database';
 import { assertMicro } from './money';
+import { recordRecharge, rechargeSourceFor } from './recharges';
 
 /**
  * The append-only ledger core. Every financial effect in Maildrill funnels
@@ -152,6 +153,25 @@ export async function appendLedgerEntry(
     })
     .where(eq(wallets.id, wallet.id))
     .returning();
+
+  // Every credit that enters a wallet gets a recharge row, recorded here
+  // rather than at each grant site. Wiring it per-caller was the first
+  // attempt and it immediately drifted: a positive `adjustment` posted
+  // directly through this function bypassed it, leaving 42 recharges against
+  // 43 credits. This is the one funnel every financial effect passes through,
+  // so it is the only place the two can be kept in step.
+  if (input.amountMicro > 0) {
+    await recordRecharge(tx, {
+      tenantId: input.tenantId,
+      walletId: input.walletId,
+      walletTransactionId: entry!.id,
+      amountMicro: input.amountMicro,
+      currency: wallet.currency,
+      source: rechargeSourceFor(input.entryType, input.referenceType ?? null),
+      paymentAttemptId:
+        input.referenceType === 'payment_attempt' ? (input.referenceId ?? null) : null,
+    });
+  }
 
   return { entry: entry!, duplicate: false, wallet: updated! };
 }

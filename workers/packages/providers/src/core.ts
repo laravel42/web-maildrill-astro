@@ -13,6 +13,14 @@ export interface SendInput {
    * account-wide INFOBIP_ENTITY_ID when absent.
    */
   entityId?: string;
+  /**
+   * Infobip `campaignReferenceId` — the tag that makes provider-side billing
+   * attributable to one campaign. Without it Infobip's Billing Usage API can
+   * only answer account-wide totals, so the campaign cost we report would be
+   * an estimate forever. Set to the Maildrill campaign id; omitted for
+   * one-off/transactional sends, which belong to no campaign.
+   */
+  campaignReferenceId?: string;
 }
 
 export interface ProviderSendError {

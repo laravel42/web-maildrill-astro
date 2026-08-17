@@ -2,7 +2,7 @@ import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { config } from '@maildrill/config';
 import { DELIVERABILITY_LIMITS, MIN_SAMPLE } from './reputation';
 import { bumpVersion } from './shared';
-import { settleCampaignReservation } from '@maildrill/billing';
+import { requestCampaignUsage, settleCampaignReservation } from '@maildrill/billing';
 import { campaigns, db, messages, type MessageRow } from '@maildrill/database';
 import {
   OPEN_DELIVERY_STATES,
@@ -558,6 +558,20 @@ export async function tryCompleteCampaign(campaignId: string, tenantId: string):
   // Return the campaign's unspent credit hold now that the batch is settled
   // (no-op unless billing enforcement is on).
   await settleCampaignReservation(tenantId, campaignId);
+
+  // Ask Infobip what this campaign actually cost. Fire-and-forget by design:
+  // the answer arrives on a callback minutes to hours later, and a billing
+  // query that fails must never hold up (or roll back) marking the campaign
+  // sent. Pass 1 is provisional — usage isn't finalized this soon — and the
+  // sweeper opens a finalization pass once the billing period closes.
+  void requestCampaignUsage(tenantId, campaignId).then(
+    (result) => {
+      if (!result.submitted && result.reason && result.reason !== 'not_configured') {
+        log.info({ campaignId, reason: result.reason }, 'billing usage query not submitted');
+      }
+    },
+    (err) => log.warn({ campaignId, err }, 'billing usage query threw'),
+  );
 
   log.info({ campaignId, tenantId, messages: statuses.length }, 'campaign dispatch complete');
   return true;

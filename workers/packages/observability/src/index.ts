@@ -27,6 +27,7 @@ export {
   cellString,
   type HogQLResult,
 } from './posthog-query';
+export { capturePostHogEvent, capturePostHogEvents } from './posthog-capture';
 
 const LEVEL_LABEL: Record<number, string> = {
   10: 'debug',

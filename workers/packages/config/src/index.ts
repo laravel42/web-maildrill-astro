@@ -125,6 +125,29 @@ const EnvSchema = z.object({
    * INFOBIP_NOTIFY_URL by swapping `kind=tracking`, or disable tracking stamp.
    */
   INFOBIP_TRACKING_URL: z.string().default(''),
+  /**
+   * Public URL Infobip POSTs billing-usage results to, e.g.
+   * `https://api.example.com/v1/billing/webhooks/infobip-usage`. Empty turns
+   * the whole provider-usage reconciliation off: without a reachable callback
+   * the query API has nowhere to answer, and Infobip delivers each result
+   * exactly once with no retry, so firing queries we cannot receive would
+   * burn the (current month + previous two) data window for nothing.
+   */
+  INFOBIP_BILLING_CALLBACK_URL: z.string().default(''),
+  /**
+   * Channels whose sends carry `campaignReferenceId`. Defaults to the two
+   * whose field placement the Infobip OpenAPI spec actually documents; adding
+   * `whatsapp,voice` is a one-line change once verified against a live
+   * account, and until then those channels reconcile at account level rather
+   * than risking a rejected send.
+   */
+  INFOBIP_CAMPAIGN_REF_CHANNELS: z.string().default('email,sms'),
+  /**
+   * Shared secret appended to the callback URL as `?token=` and required back
+   * on every delivery. Infobip signs nothing, so the unguessable URL IS the
+   * authentication — the same reasoning as the unsubscribe token.
+   */
+  INFOBIP_BILLING_CALLBACK_TOKEN: z.string().default(''),
   PROVIDER_DRIVER: z.enum(['mock', 'infobip', 'cloudflare']).default('mock'),
   /**
    * Optional per-channel override: route ONLY the email channel through a
@@ -189,6 +212,14 @@ const EnvSchema = z.object({
   POSTHOG_PERSONAL_API_KEY: z.string().default(''),
   POSTHOG_PROJECT_ID: z.string().default('526344'),
   POSTHOG_APP_HOST: z.string().default('https://us.posthog.com'),
+  /**
+   * Ingestion (write) key — distinct from POSTHOG_PERSONAL_API_KEY, which only
+   * reads via HogQL. Already used by the seeder to mirror events; capture
+   * reuses it rather than introducing a second name for the same secret.
+   * Ingestion goes to `us.i.posthog.com`, not the app host.
+   */
+  POSTHOG_PROJECT_API_KEY: z.string().default(''),
+  POSTHOG_INGEST_HOST: z.string().default('https://us.i.posthog.com'),
   /** Empty = auto-on when personal key set. Set 0/false to force Postgres. */
   POSTHOG_STATS_ENABLED: z.string().default(''),
 });
@@ -231,6 +262,16 @@ if (env.NODE_ENV === 'production') {
   if (WEAK_SECRETS.has(env.WEBHOOK_INFOBIP_SECRET.trim())) {
     throw new Error(
       'WEBHOOK_INFOBIP_SECRET must be set to a strong non-default value when NODE_ENV=production',
+    );
+  }
+  // The billing callback carries spend data and drives wallet adjustments; an
+  // unguessable token is the only thing standing in front of it.
+  if (
+    env.INFOBIP_BILLING_CALLBACK_URL.trim() &&
+    WEAK_SECRETS.has(env.INFOBIP_BILLING_CALLBACK_TOKEN.trim())
+  ) {
+    throw new Error(
+      'INFOBIP_BILLING_CALLBACK_TOKEN must be set to a strong non-default value when INFOBIP_BILLING_CALLBACK_URL is configured',
     );
   }
   // Accepting unverifiable payment webhooks is worse than accepting none.
@@ -299,6 +340,20 @@ export const config = {
     applicationId: env.INFOBIP_APPLICATION_ID,
     entityId: env.INFOBIP_ENTITY_ID,
     notifyUrl: env.INFOBIP_NOTIFY_URL,
+    campaignRefChannels: env.INFOBIP_CAMPAIGN_REF_CHANNELS.split(',')
+      .map((c) => c.trim().toLowerCase())
+      .filter(Boolean),
+    billingCallbackUrl: env.INFOBIP_BILLING_CALLBACK_URL,
+    billingCallbackToken: env.INFOBIP_BILLING_CALLBACK_TOKEN,
+    /** Provider-usage reconciliation needs both a key and a reachable callback. */
+    get billingUsageEnabled(): boolean {
+      return Boolean(
+        env.INFOBIP_API_KEY &&
+          env.INFOBIP_BASE_URL &&
+          env.INFOBIP_BILLING_CALLBACK_URL &&
+          env.INFOBIP_BILLING_CALLBACK_TOKEN,
+      );
+    },
     /**
      * Engagement tracking callback. Prefer explicit INFOBIP_TRACKING_URL; else
      * rewrite notifyUrl's `kind` query to `tracking` so open/click payloads
@@ -348,6 +403,12 @@ export const config = {
     personalApiKey: env.POSTHOG_PERSONAL_API_KEY,
     projectId: env.POSTHOG_PROJECT_ID,
     appHost: env.POSTHOG_APP_HOST.replace(/\/$/, ''),
+    projectToken: env.POSTHOG_PROJECT_API_KEY,
+    ingestHost: env.POSTHOG_INGEST_HOST.replace(/\/$/, ''),
+    /** Capture is a separate capability from stats: writing needs the token. */
+    get captureEnabled(): boolean {
+      return Boolean(env.POSTHOG_PROJECT_API_KEY);
+    },
     /**
      * Query-backed stats: on when a personal key is set, unless explicitly
      * disabled via POSTHOG_STATS_ENABLED=0|false|no.

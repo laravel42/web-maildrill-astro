@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import {
   bigint,
   boolean,
+  date,
   index,
   integer,
   jsonb,
@@ -1391,5 +1392,208 @@ export const paymentCustomers = pgTable(
   (t) => [
     uniqueIndex('payment_customers_tenant_provider_uq').on(t.tenantId, t.provider),
     uniqueIndex('payment_customers_external_uq').on(t.provider, t.externalCustomerId),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Provider-billed usage (Infobip Billing Usage API) + recharge allocation
+// ---------------------------------------------------------------------------
+
+/**
+ * Lifecycle of one `POST /billing/1/usage/query` submission.
+ *
+ * `pending` is written when Infobip returns 201 with a requestId; only the
+ * callback moves it on. `expired` is set by the sweeper for requests whose
+ * callback never arrived — Infobip delivers the result *once*, with no retry,
+ * so a lost callback is a permanent hole that must be re-queried rather than
+ * waited on.
+ */
+export const billingUsageRequestStatusEnum = pgEnum('billing_usage_request_status', [
+  'pending',
+  'succeeded',
+  'failed',
+  'expired',
+]);
+
+/**
+ * One row per billing-usage query we submit to Infobip.
+ *
+ * Why a table and not a queue job: the query is asynchronous and the result
+ * arrives on a *different* process (an HTTP callback) minutes to hours later,
+ * so the correlation between "what we asked" and "what came back" has to
+ * outlive both. `providerRequestId` is the join key Infobip echoes in the
+ * callback, and its unique index is the callback's idempotency guard — a
+ * replayed delivery hits the same row and is skipped before any money moves.
+ *
+ * `pass` exists because usage is not final when a campaign finishes. Pass 1
+ * runs immediately with `includeUnfinalizedData: true` and produces a
+ * provisional cost; later passes re-ask the same window once
+ * `metadata.billingPeriods[].volumeFinalized` has flipped, and the difference
+ * between passes is what gets reconciled against the wallet. The unique index
+ * on (campaign, pass) keeps a retry storm from firing the same pass twice.
+ */
+export const billingUsageRequests = pgTable(
+  'billing_usage_requests',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    /** Null for account-wide sweeps that aren't attributable to one campaign. */
+    campaignId: uuid('campaign_id').references(() => campaigns.id, { onDelete: 'set null' }),
+    /** `requestId` from the 201 response; echoed by the callback. */
+    providerRequestId: text('provider_request_id').notNull(),
+    provider: text('provider').notNull().default('infobip'),
+    status: billingUsageRequestStatusEnum('status').notNull().default('pending'),
+    /** 1 = provisional (fired at campaign completion), 2+ = finalization re-ask. */
+    pass: integer('pass').notNull().default(1),
+    /** Inclusive, `yyyy-MM-dd` as sent. Stored as date: the API has day granularity. */
+    sentSince: date('sent_since').notNull(),
+    /** Exclusive, `yyyy-MM-dd` as sent. */
+    sentUntil: date('sent_until').notNull(),
+    /** What we asked for; false only on a finalization pass. */
+    includeUnfinalized: boolean('include_unfinalized').notNull().default(true),
+    /**
+     * From `metadata.billingPeriods[].volumeFinalized` — true only when every
+     * period the answer covers is closed. While false the totals can still
+     * move, so the campaign stays on the re-query schedule.
+     */
+    volumeFinalized: boolean('volume_finalized').notNull().default(false),
+    /** The campaignReferenceId filter this query used (see `campaigns.id`). */
+    campaignReference: text('campaign_reference'),
+    /** Verbatim callback body, kept so lines can be re-parsed without re-asking. */
+    rawResponse: jsonb('raw_response').$type<Record<string, unknown>>(),
+    failureMessage: text('failure_message'),
+    requestedAt: ts('requested_at').defaultNow().notNull(),
+    respondedAt: ts('responded_at'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('billing_usage_requests_provider_uq').on(t.provider, t.providerRequestId),
+    uniqueIndex('billing_usage_requests_campaign_pass_uq').on(t.campaignId, t.pass),
+    index('billing_usage_requests_tenant_idx').on(t.tenantId, t.requestedAt),
+    // Drives both the callback-timeout sweeper and the finalization re-ask.
+    index('billing_usage_requests_status_idx').on(t.status, t.requestedAt),
+  ],
+);
+
+/**
+ * The callback's `response.rows`, exploded into one row per line item.
+ *
+ * Infobip returns a columnar payload — `columns: [{name, dataType}]` plus
+ * `rows: [[...]]` — whose column set depends on the `aggregateBy` we sent.
+ * Parsing it into fixed columns here means every consumer (wallet
+ * reconciliation, the campaign report, PostHog) reads the same shape instead
+ * of each re-deriving column offsets from the raw JSON.
+ *
+ * `ordinal` is the row's index in that array. It is part of the uniqueness
+ * key so re-parsing a stored `rawResponse` is idempotent: the same payload
+ * always produces the same rows, and an interrupted ingest can simply be run
+ * again.
+ */
+export const billingUsageLines = pgTable(
+  'billing_usage_lines',
+  {
+    id: id(),
+    requestId: uuid('request_id')
+      .notNull()
+      .references(() => billingUsageRequests.id, { onDelete: 'cascade' }),
+    tenantId: uuid('tenant_id').notNull(),
+    campaignId: uuid('campaign_id').references(() => campaigns.id, { onDelete: 'set null' }),
+    /** Position in `response.rows` — makes re-ingest of one payload idempotent. */
+    ordinal: integer('ordinal').notNull(),
+    /** Infobip's own category (SMS, EMAIL, WHATSAPP, VOICE_VIDEO…), kept verbatim. */
+    categoryCode: text('category_code').notNull(),
+    /** Our channel, mapped from `categoryCode`; null when nothing maps (e.g. AI). */
+    channel: channelEnum('channel'),
+    countryName: text('country_name'),
+    countryCode: text('country_code'),
+    sender: text('sender'),
+    trafficType: text('traffic_type'),
+    /** Present only when DAY was in `aggregateBy`. */
+    usageDay: date('usage_day'),
+    /** Billed message count for this line. */
+    quantity: integer('quantity').notNull().default(0),
+    /** Per-unit price in micro-units of `currency` (price × 1e6, integer). */
+    unitPriceMicro: bigint('unit_price_micro', { mode: 'number' }).notNull().default(0),
+    /** Line total in micro-units. Infobip's own total — never quantity × unit. */
+    totalMicro: bigint('total_micro', { mode: 'number' }).notNull().default(0),
+    currency: text('currency').notNull().default('EUR'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('billing_usage_lines_request_ordinal_uq').on(t.requestId, t.ordinal),
+    index('billing_usage_lines_campaign_idx').on(t.campaignId),
+    index('billing_usage_lines_tenant_idx').on(t.tenantId, t.usageDay),
+  ],
+);
+
+/** Where a recharge's credits came from. Mirrors the crediting ledger entry. */
+export const rechargeSourceEnum = pgEnum('recharge_source', [
+  'purchase',
+  'promotion',
+  'bonus',
+  'adjustment',
+  'trial',
+]);
+
+/**
+ * One row per credit recharge — the 1-N history behind a wallet's balance.
+ *
+ * The wallet holds a single `balance_micro`; this table records each top-up
+ * that fed it, so "when did this credit arrive, and what did it pay for" is
+ * answerable. Rows are created only alongside a positive ledger entry, and
+ * `walletTransactionId` points back at it, so the sum of recharge amounts
+ * always equals the sum of positive `wallet_transactions` for the tenant.
+ *
+ * `spending` is a DERIVED rollup, never a running total written by whoever
+ * happens to be charging at the time: concurrent campaigns would contend on
+ * one row and a lost update would silently corrupt the history. It is
+ * recomputed from the ledger by `rebuildRechargeSpending`, which allocates
+ * consumption to recharges oldest-first (FIFO — credits are spent in the
+ * order they arrived), so a bad rollup is fixed by rebuilding rather than by
+ * hand-editing money. `rebuiltAt` says how stale the snapshot is.
+ */
+export const creditRecharges = pgTable(
+  'credit_recharges',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    walletId: uuid('wallet_id')
+      .notNull()
+      .references(() => wallets.id, { onDelete: 'cascade' }),
+    source: rechargeSourceEnum('source').notNull().default('purchase'),
+    /** Micro-credits added. Always positive. */
+    amountMicro: bigint('amount_micro', { mode: 'number' }).notNull(),
+    currency: text('currency').notNull().default('USD'),
+    /** The checkout that produced it, when there was one. */
+    paymentAttemptId: uuid('payment_attempt_id').references(() => paymentAttempts.id, {
+      onDelete: 'set null',
+    }),
+    /** The crediting ledger entry. One recharge ⇄ one positive transaction. */
+    walletTransactionId: uuid('wallet_transaction_id').references(() => walletTransactions.id, {
+      onDelete: 'set null',
+    }),
+    /** Materialized from the FIFO allocation; ≤ `amountMicro`. */
+    consumedMicro: bigint('consumed_micro', { mode: 'number' }).notNull().default(0),
+    /**
+     * Rebuildable rollup of what this recharge paid for. Shape:
+     * `{ consumedMicro, remainingMicro, campaigns: [{ campaignId, name,
+     * channel, messages, estimatedMicro, actualMicro, currency }],
+     * other: [{ referenceType, referenceId, amountMicro }], rebuiltAt }`
+     */
+    spending: jsonb('spending').$type<Record<string, unknown>>().notNull().default({}),
+    rebuiltAt: ts('rebuilt_at'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    // One recharge per crediting ledger entry — the ledger stays the source of
+    // truth and a replayed grant can't produce a second recharge row.
+    uniqueIndex('credit_recharges_transaction_uq').on(t.walletTransactionId),
+    index('credit_recharges_tenant_created_idx').on(t.tenantId, t.createdAt),
+    index('credit_recharges_wallet_fifo_idx').on(t.walletId, t.createdAt),
   ],
 );

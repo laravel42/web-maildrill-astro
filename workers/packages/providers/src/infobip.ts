@@ -134,6 +134,16 @@ type InfobipNotifyFields = {
   notifyUrl?: string;
 };
 
+/**
+ * Infobip's campaign tag. Present on the message for `/sms/2/text/advanced`
+ * and nested under `messages[].options` for `/email/4/messages` — the two
+ * placements are NOT interchangeable, which is why this is spread explicitly
+ * per builder rather than folded into a shared helper like platformFields.
+ */
+type InfobipCampaignFields = {
+  campaignReferenceId?: string;
+};
+
 /** Email v4 message content (`POST /email/4/messages`). */
 type InfobipEmailContent = {
   subject: string;
@@ -229,6 +239,8 @@ type InfobipEmailBody = {
     content: InfobipEmailContent;
     callbackData: string;
     webhooks: InfobipEmailWebhooks;
+    /** Per-message options. `/email/4/messages` nests campaignReferenceId here. */
+    options?: { campaignReferenceId?: string };
   }>;
   options?: {
     tracking?: InfobipEmailTracking;
@@ -245,7 +257,8 @@ type InfobipSmsBody = {
       callbackData: string;
       urlOptions?: InfobipUrlOptions;
     } & InfobipNotifyFields &
-      InfobipPlatformFields
+      InfobipPlatformFields &
+      InfobipCampaignFields
   >;
   bulkId: string;
 };
@@ -363,6 +376,31 @@ export class InfobipProvider implements MessagingProvider {
   private platformBlock(entityId?: string): { platform?: InfobipPlatformFields } {
     const platform = this.platformFields(entityId);
     return Object.keys(platform).length > 0 ? { platform } : {};
+  }
+
+  /**
+   * The campaign tag Infobip bills against.
+   *
+   * `campaignReferenceId` is what makes `POST /billing/1/usage/query` able to
+   * answer "what did campaign X cost" instead of only "what did the account
+   * spend this month" — the Billing Usage API filters on
+   * `campaignReferenceIds` and can aggregate by `CAMPAIGN_REFERENCE`, but only
+   * for traffic that carried the tag at send time. Untagged traffic is
+   * unattributable forever; there is no backfill.
+   *
+   * Gated per channel because the placement of this field is only *documented*
+   * for `/sms/2/text/advanced` (message level) and `/email/4/messages`
+   * (`messages[].options`). The WhatsApp v1 and TTS v3 request schemas do not
+   * publish it, and a rejected unknown property would fail the send itself —
+   * a far worse outcome than missing cost attribution. Flip
+   * `INFOBIP_CAMPAIGN_REF_CHANNELS` once it is confirmed against a live
+   * account.
+   */
+  private campaignFields(input: SendInput): InfobipCampaignFields {
+    const ref = input.campaignReferenceId?.trim();
+    if (!ref) return {};
+    if (!config.infobip.campaignRefChannels.includes(input.channel)) return {};
+    return { campaignReferenceId: ref };
   }
 
   /**
@@ -502,6 +540,11 @@ export class InfobipProvider implements MessagingProvider {
           content,
           callbackData: this.callbackData(input),
           webhooks,
+          // Email v4 nests the campaign tag under the MESSAGE's options —
+          // distinct from the request-level `options.tracking` below.
+          ...(this.campaignFields(input).campaignReferenceId
+            ? { options: { campaignReferenceId: input.campaignReferenceId } }
+            : {}),
         },
       ],
       ...(tracking ? { options: { tracking } } : {}),
@@ -523,6 +566,7 @@ export class InfobipProvider implements MessagingProvider {
           ...(urlOptions ? { urlOptions } : {}),
           ...this.notifyFields(),
           ...this.platformFields(input.entityId),
+          ...this.campaignFields(input),
         },
       ],
       bulkId: input.correlationId,
