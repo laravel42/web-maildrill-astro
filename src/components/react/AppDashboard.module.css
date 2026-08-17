@@ -21,11 +21,24 @@
   justify-content: flex-end;
 }
 .kpis {
-  /* equal-width tracks at every wrap point (no stretched orphan on the last row) */
+  /* Six cards as two rows of three, fixed rather than auto-fit: the two rows
+     group by meaning — audience (subscribers, lists, campaigns) above delivery
+     (sent, open, click) — and auto-fit reflowed that into 4+2 or 5+1 at some
+     widths, splitting the pairing arbitrarily. */
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(164px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 18px;
+}
+@media (max-width: 720px) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 460px) {
+  .kpis {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .kpis :global(.akpi) {
   min-width: 0;
