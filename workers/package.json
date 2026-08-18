@@ -33,7 +33,8 @@
     "db:down": "docker compose down",
     "dev": "tsx watch apps/dev-server/src/index.ts",
     "start": "tsx apps/dev-server/src/index.ts",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "db:seed:demo": "tsx packages/database/src/seed-demo.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

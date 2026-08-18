@@ -33,7 +33,8 @@
     "test:all": "pnpm test && pnpm test:e2e && pnpm test:coverage",
     "sync:rates:login": "node scripts/sync-infobip-rates.mjs login",
     "sync:rates": "node scripts/sync-infobip-rates.mjs",
-    "gen:api": "openapi-typescript src/lib/server/openapi.product.json -o src/lib/server/api.product.ts && openapi-typescript src/lib/server/openapi.messaging.json -o src/lib/server/api.messaging.ts"
+    "gen:api": "openapi-typescript src/lib/server/openapi.product.json -o src/lib/server/api.product.ts && openapi-typescript src/lib/server/openapi.messaging.json -o src/lib/server/api.messaging.ts",
+    "db:seed:demo": "pnpm --filter workers db:seed:demo"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",
@@ -42,13 +43,11 @@
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
     "@auth/core": "^0.41.3",
-    "@emoji-mart/data": "^1.2.1",
-    "@emoji-mart/react": "^1.1.1",
+    "@md/emoji-picker": "workspace:*",
     "@simplewebauthn/browser": "^13.3.0",
     "astro": "^7.2.2",
     "auth-astro": "^4.2.0",
     "email-builder-standalone": "workspace:*",
-    "emoji-mart": "^5.6.0",
     "infobip-rtc": "^2.7.37",
     "nodemailer": "^9.0.5",
     "openapi-fetch": "^0.17.0",
