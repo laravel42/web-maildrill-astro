@@ -423,25 +423,15 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
       </button>
     </div>
 
-    <div class="tour__dots" data-tour-dots role="tablist" aria-label="Choose a screenshot" hidden>
-      {
-        shots.map((shot, i) => (
-          <button
-            type="button"
-            class="tour__dot"
-            role="tab"
-            aria-controls={`tour-slide-${i}`}
-            aria-label={shot.title}
-            aria-selected={i === 0 ? 'true' : 'false'}
-            data-tour-dot={i}
-          />
-        ))
-      }
-    </div>
   </section>
 </MarketingLayout>
 
 <style>
+  /* Homepage-only separation before the shared footer. */
+  :global(footer.foot) {
+    margin-top: 90px;
+  }
+
   /* ---- HERO ---- */
   .hero {
     position: relative;
@@ -950,45 +940,28 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
      disagree about where the carousel is. */
   .tour {
     --tour-gap: 34px;
-    /* Generous above, modest below. The section runs into the footer's
-       "Get started" banner, which supplies its own top spacing, so a full
-       matching pad here produced a dead band twice the page's rhythm — but
-       zero left the dot pager sitting right on the banner's edge. 52px is the
-       pager's own breathing room, not section spacing. */
-    padding-block: 128px 52px;
+    /* Room the raised centre card overflows into. The track reserves it as
+       padding and pulls it back out with a negative margin (see .tour__track),
+       and that negative margin collapses through the frame — so whatever
+       follows the strip has to add it back to look spaced. Covers half the
+       30% overflow on the tallest card plus its shadow. */
+    --tour-overflow: 88px;
+    /* Generous above, nothing below: the section runs into the footer's
+       "Get started" banner, which supplies its own top spacing. */
+    padding-block: 128px 0;
   }
   .tour__title {
-    margin: 14px 0 40px;
+    /* Owns the gap down to the strip: a top margin on .tour__frame would just
+       collapse into this one. */
+    margin: 14px 0 112px;
   }
   .tour__frame {
     position: relative;
   }
-  /* A deliberate backdrop behind the strip.
-   *
-   * There was already grey back here, but not on purpose: it was the pooled
-   * box-shadow of the raised centre card, clipped flat by the scroller's
-   * padding edge. That read as a band that stopped partway down the carousel.
-   * This spans the full track height instead, so the shading is a panel the
-   * cards sit on rather than an artefact of one card's shadow.
-   *
-   * Inset horizontally beyond the container so it reads as a band the strip
-   * rides through, and faded at both ends so it has no hard vertical edge. */
-  .tour__frame::before {
-    content: '';
-    position: absolute;
-    inset: 0 -6vw;
-    border-radius: 28px;
-    background: linear-gradient(
-      180deg,
-      transparent 0%,
-      rgba(128, 122, 112, 0.07) 14%,
-      rgba(128, 122, 112, 0.07) 86%,
-      transparent 100%
-    );
-    pointer-events: none;
-    z-index: 0;
-  }
-  /* Above the backdrop; the track creates no stacking context of its own. */
+  /* The strip sits under the arrows; the track creates no stacking context of
+     its own. Scoping stamps an attribute on both compound selectors here, so
+     this outweighs a bare `.tour__arrow` — anything that needs different
+     positioning has to say so through the same child selector. */
   .tour__frame > * {
     position: relative;
     z-index: 1;
@@ -1010,10 +983,9 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     /* A scroll container clips on BOTH axes, so the centre card — scaled to
        1.1 — was being cut off top and bottom, and the cards' shadows with it.
        The padding reserves that room and the negative margin takes it back
-       out of the layout, so the strip sits exactly where it did. 44px covers
-       half the 10% overflow on the tallest card plus the shadow. */
-    padding-block: 44px;
-    margin-block: -44px;
+       out of the layout, so the strip sits exactly where it did. */
+    padding-block: var(--tour-overflow);
+    margin-block: calc(var(--tour-overflow) * -1);
     scrollbar-width: none;
   }
   .tour__track::-webkit-scrollbar {
@@ -1041,7 +1013,7 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
       opacity 0.32s ease;
   }
   .tour__slide.is-active {
-    transform: scale(1.1);
+    transform: scale(1.3);
     opacity: 1;
     /* Above its neighbours so the raised card's shadow reads correctly. */
     position: relative;
@@ -1109,7 +1081,7 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     border: 1px solid var(--border);
     border-bottom: 0;
     margin-bottom: -1px;
-    font-size: 12.5px;
+    font-size: 8.75px;
     font-weight: 500;
     color: var(--ink);
     white-space: nowrap;
@@ -1170,9 +1142,10 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     min-height: 2lh;
   }
 
-  .tour__arrow {
+  .tour__frame > .tour__arrow {
     position: absolute;
     top: 0;
+    z-index: 2;
     /* Centred on the IMAGE, not the figure: the caption below would drag the
        arrows off-centre and they would drift as caption lengths differ. */
     height: 68%;
@@ -1211,33 +1184,6 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     pointer-events: none;
   }
 
-  .tour__dots {
-    display: flex;
-    justify-content: center;
-    gap: 9px;
-    margin-top: 26px;
-  }
-  .tour__dot {
-    width: 8px;
-    height: 8px;
-    padding: 0;
-    border: 0;
-    border-radius: 999px;
-    background: var(--border);
-    cursor: pointer;
-    transition:
-      background 0.18s ease,
-      width 0.18s ease;
-  }
-  .tour__dot[aria-selected='true'] {
-    width: 26px;
-    background: var(--brand);
-  }
-  .tour__dot:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 3px;
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .tour__track {
       scroll-behavior: auto;
@@ -1250,14 +1196,15 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   }
   @media (max-width: 720px) {
     .tour {
-      padding-block: 84px 40px;
+      padding-block: 84px 0;
     }
     .tour__track {
       grid-auto-columns: 88%;
     }
     /* Arrows assume a pointer that can hover; touch gets the swipe it already
-       has, and the dots stay for position. */
-    .tour__arrow {
+       has, and the dots stay for position. Matched through .tour__frame to
+       outrank the base rule's `display: grid`. */
+    .tour__frame > .tour__arrow {
       display: none;
     }
     /* The tab label is the least load-bearing part of the chrome, and the URL
@@ -1283,14 +1230,12 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
    * buttons that do nothing.
    */
   const track = document.getElementById('tour-track');
-  const dotsBar = document.querySelector<HTMLElement>('[data-tour-dots]');
   const prev = document.querySelector<HTMLButtonElement>('[data-tour-prev]');
   const next = document.querySelector<HTMLButtonElement>('[data-tour-next]');
 
-  if (track && dotsBar && prev && next) {
+  if (track && prev && next) {
     const slides = Array.from(track.children) as HTMLElement[];
-    const dots = Array.from(dotsBar.querySelectorAll<HTMLButtonElement>('[data-tour-dot]'));
-    for (const el of [dotsBar, prev, next]) el.hidden = false;
+    for (const el of [prev, next]) el.hidden = false;
 
     /** Index whose centre is nearest the scroller's centre. */
     const current = (): number => {
@@ -1315,7 +1260,6 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     const sync = (): void => {
       const i = current();
       slides.forEach((slide, n) => slide.classList.toggle('is-active', n === i));
-      dots.forEach((dot, n) => dot.setAttribute('aria-selected', n === i ? 'true' : 'false'));
       // Disabled rather than wrapped: an arrow that silently jumps from the
       // last slide back to the first reads as a bug at the edge of a strip
       // the visitor can also see is at its end.
@@ -1325,8 +1269,6 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
 
     prev.addEventListener('click', () => goTo(current() - 1));
     next.addEventListener('click', () => goTo(current() + 1));
-    dots.forEach((dot, i) => dot.addEventListener('click', () => goTo(i)));
-
     track.addEventListener('keydown', (e) => {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
       e.preventDefault();
@@ -1378,7 +1320,7 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     for (const evt of ['pointerdown', 'keydown'] as const) {
       track.addEventListener(evt, stopForever, { once: true });
     }
-    [prev, next, ...dots].forEach((el) => el.addEventListener('click', stopForever, { once: true }));
+    [prev, next].forEach((el) => el.addEventListener('click', stopForever, { once: true }));
 
     const frame = track.closest('.tour__frame');
     frame?.addEventListener('pointerenter', stop);
