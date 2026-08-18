@@ -323,7 +323,7 @@ export const includedItems: string[] = [
   'One shared audience across all channels',
   'Live segments & subscriber CRM',
   'Deep analytics, funnels & comparisons',
-  'AI copilot for copy & subject lines',
+  'AI assistant for copy & subject lines',
   'Deliverability & reputation monitoring',
   'Template gallery & media library',
   'Team roles, permissions & audit log',

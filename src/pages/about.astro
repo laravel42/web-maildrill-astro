@@ -68,7 +68,7 @@ const milestones: Milestone[] = [
   {
     year: '2025',
     title: 'Multichannel',
-    desc: 'SMS and WhatsApp joined email on one shared audience — and the AI copilot arrived.',
+    desc: 'SMS and WhatsApp joined email on one shared audience — and the AI assistant arrived.',
     delay: 160,
   },
   {
@@ -215,7 +215,7 @@ const jsonLd = [
   /* ---- HERO ---- */
   .about-hero {
     position: relative;
-    padding-block: 64px 40px;
+    padding-block: calc(64px * var(--sec-y)) calc(40px * var(--sec-y));
   }
 
   .about-hero__glow {
@@ -252,7 +252,7 @@ const jsonLd = [
     display: grid;
     gap: 24px 56px;
     align-items: start;
-    padding-block: 80px;
+    padding-block: calc(80px * var(--sec-y));
   }
 
   .mission__title {
@@ -284,7 +284,7 @@ const jsonLd = [
 
   /* ---- PRINCIPLES ---- */
   .values {
-    padding-block: 80px 48px;
+    padding-block: calc(80px * var(--sec-y)) calc(48px * var(--sec-y));
   }
 
   .values__title {
@@ -350,7 +350,7 @@ const jsonLd = [
   }
 
   .story .container--wide {
-    padding-block: 80px;
+    padding-block: calc(80px * var(--sec-y));
   }
 
   .story__title {
@@ -437,7 +437,7 @@ const jsonLd = [
 
   .stats__inner {
     position: relative;
-    padding-block: 88px;
+    padding-block: calc(88px * var(--sec-y));
   }
 
   .stats__eyebrow {

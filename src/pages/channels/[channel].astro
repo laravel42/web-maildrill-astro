@@ -399,7 +399,7 @@ const eqBars = [8, 15, 11, 20, 9, 17, 13, 22, 10];
   /* ============================================================= HERO */
   .ch-hero {
     position: relative;
-    padding-block: 56px 40px;
+    padding-block: calc(56px * var(--sec-y)) calc(40px * var(--sec-y));
   }
 
   .ch-hero__glow {
@@ -861,7 +861,7 @@ const eqBars = [8, 15, 11, 20, 9, 17, 13, 22, 10];
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
-    padding-block: 36px;
+    padding-block: calc(36px * var(--sec-y));
   }
 
   .ch-stat {
@@ -886,7 +886,7 @@ const eqBars = [8, 15, 11, 20, 9, 17, 13, 22, 10];
 
   /* ==================================================== IN THE WORKSPACE */
   .ch-shot {
-    padding-block: 80px 8px;
+    padding-block: calc(80px * var(--sec-y)) calc(8px * var(--sec-y));
   }
 
   .ch-shot__title {
@@ -1107,7 +1107,7 @@ const eqBars = [8, 15, 11, 20, 9, 17, 13, 22, 10];
 
   /* ======================================================= CAPABILITIES */
   .ch-features {
-    padding-block: 80px 48px;
+    padding-block: calc(80px * var(--sec-y)) calc(48px * var(--sec-y));
   }
 
   .ch-features__title {
@@ -1168,7 +1168,7 @@ const eqBars = [8, 15, 11, 20, 9, 17, 13, 22, 10];
   .ch-uses {
     background: var(--surface);
     border-block: 1px solid var(--border);
-    padding-block: 80px;
+    padding-block: calc(80px * var(--sec-y));
   }
 
   .ch-uses__title {
@@ -1210,7 +1210,7 @@ const eqBars = [8, 15, 11, 20, 9, 17, 13, 22, 10];
 
   /* ======================================================= HOW IT WORKS */
   .ch-steps {
-    padding-block: 80px 40px;
+    padding-block: calc(80px * var(--sec-y)) calc(40px * var(--sec-y));
   }
 
   .ch-steps__title {
@@ -1252,7 +1252,7 @@ const eqBars = [8, 15, 11, 20, 9, 17, 13, 22, 10];
 
   /* ==================================================== OTHER CHANNELS */
   .ch-others {
-    padding-block: 56px 88px;
+    padding-block: calc(56px * var(--sec-y)) calc(88px * var(--sec-y));
   }
 
   .ch-others__title {
@@ -1371,10 +1371,10 @@ const eqBars = [8, 15, 11, 20, 9, 17, 13, 22, 10];
     .ch-features,
     .ch-uses,
     .ch-steps {
-      padding-block: 60px;
+      padding-block: calc(60px * var(--sec-y));
     }
     .ch-others {
-      padding-block: 40px 64px;
+      padding-block: calc(40px * var(--sec-y)) calc(64px * var(--sec-y));
     }
   }
 

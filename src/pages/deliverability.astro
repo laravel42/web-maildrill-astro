@@ -246,7 +246,7 @@ const jsonLd = [
   /* ---- HERO ---- */
   .dl-hero {
     position: relative;
-    padding-block: 64px 40px;
+    padding-block: calc(64px * var(--sec-y)) calc(40px * var(--sec-y));
   }
 
   .dl-hero__glow {
@@ -411,7 +411,7 @@ const jsonLd = [
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
-    padding-block: 36px;
+    padding-block: calc(36px * var(--sec-y));
   }
 
   .dl-metric {
@@ -442,7 +442,7 @@ const jsonLd = [
 
   /* ---- PILLARS ---- */
   .dl-pillars {
-    padding-block: 80px 48px;
+    padding-block: calc(80px * var(--sec-y)) calc(48px * var(--sec-y));
   }
 
   .dl-pillars__title {
@@ -502,7 +502,7 @@ const jsonLd = [
   }
 
   .dl-checks > .container--wide {
-    padding-block: 80px;
+    padding-block: calc(80px * var(--sec-y));
   }
 
   .dl-checks__title {
@@ -550,7 +550,7 @@ const jsonLd = [
 
   /* ---- CTA ---- */
   .dl-cta-sec {
-    padding-block: 56px 88px;
+    padding-block: calc(56px * var(--sec-y)) calc(88px * var(--sec-y));
   }
 
   .dl-cta-card {

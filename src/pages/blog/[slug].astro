@@ -225,7 +225,7 @@ const jsonLd = [
 
   /* ---- Shells ---- */
   .art {
-    padding-block: 56px 0;
+    padding-block: calc(56px * var(--sec-y)) 0;
   }
 
   .art__wrap {
@@ -418,7 +418,7 @@ const jsonLd = [
     width: 100%;
     max-width: 1100px;
     margin: 0 auto;
-    padding: 56px var(--gutter) 40px;
+    padding: calc(56px * var(--sec-y)) var(--gutter) calc(40px * var(--sec-y));
   }
 
   .related__grid {

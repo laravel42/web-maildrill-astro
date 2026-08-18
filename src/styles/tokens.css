@@ -134,6 +134,12 @@
   --sidebar-width: 280px;
   --nav-height: 72px; /* marketing header */
   --header-height: 64px; /* app header */
+  /* Section rhythm scale. Marketing sections multiply their block padding by
+     this — `padding-block: calc(72px * var(--sec-y))` — so the page's vertical
+     rhythm can be tightened everywhere from one place. The desktop figures
+     assume a section roughly fills the viewport on its own; on a phone they
+     turn the page into a column of gaps between short blocks. */
+  --sec-y: 1;
 
   /* Typography */
   --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -235,4 +241,12 @@
   --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
   --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.5);
   --shadow-float: 0 40px 100px rgba(0, 0, 0, 0.6);
+}
+
+/* Half the section rhythm on phones. Set on :root so it reaches the scoped
+   styles of every page — the sections themselves stay in their own files. */
+@media (max-width: 720px) {
+  :root {
+    --sec-y: 0.5;
+  }
 }

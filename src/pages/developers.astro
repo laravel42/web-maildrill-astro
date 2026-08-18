@@ -220,7 +220,7 @@ curl https://api.maildrill.net/v1/messages \
   /* ---------------------------------------------------------------- HERO */
   .dev-hero {
     position: relative;
-    padding-block: 64px 40px;
+    padding-block: calc(64px * var(--sec-y)) calc(40px * var(--sec-y));
   }
 
   .dev-hero__glow {
@@ -333,7 +333,7 @@ curl https://api.maildrill.net/v1/messages \
   .band {
     background: var(--surface);
     border-block: 1px solid var(--border);
-    padding-block: 88px;
+    padding-block: calc(88px * var(--sec-y));
     scroll-margin-top: 88px;
   }
 
@@ -426,7 +426,7 @@ curl https://api.maildrill.net/v1/messages \
 
   /* ---------------------------------------------------------- Endpoints */
   .endpoints-section {
-    padding-block: 88px 48px;
+    padding-block: calc(88px * var(--sec-y)) calc(48px * var(--sec-y));
   }
 
   .endpoints-section__title {
@@ -536,7 +536,7 @@ curl https://api.maildrill.net/v1/messages \
 
   /* ---------------------------------------------------------------- CTA */
   .dev-cta-section {
-    padding-block: 48px 88px;
+    padding-block: calc(48px * var(--sec-y)) calc(88px * var(--sec-y));
   }
 
   .dev-cta {

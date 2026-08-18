@@ -92,7 +92,7 @@ const features: Feature[] = [
   },
   {
     icon: 'sparkle',
-    title: 'AI copilot',
+    title: 'AI assistant',
     desc: 'Draft subject lines, rewrite copy, and generate variants without leaving the editor.',
   },
 ];
@@ -434,13 +434,13 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
 <style>
   /* Homepage-only separation before the shared footer. */
   :global(footer.foot) {
-    margin-top: 90px;
+    margin-top: calc(90px * var(--sec-y));
   }
 
   /* ---- HERO ---- */
   .hero {
     position: relative;
-    padding-block: 64px 48px;
+    padding-block: calc(64px * var(--sec-y)) calc(48px * var(--sec-y));
     /* Contain the hero glow blob (positioned 40px past the container edge).
        Narrow viewports leave no gutter for it to bleed into, so it was pushing
        the whole page 40px wider than the screen. `clip` rather than `hidden`:
@@ -741,7 +741,7 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
 
   /* ---- CHANNELS ---- */
   .channels {
-    padding-block: 88px 40px;
+    padding-block: calc(88px * var(--sec-y)) calc(40px * var(--sec-y));
   }
 
   .channels__head {
@@ -845,7 +845,7 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   .workspace {
     background: var(--surface);
     border-block: 1px solid var(--border);
-    padding-block: 88px;
+    padding-block: calc(88px * var(--sec-y));
   }
 
   .workspace__title {
@@ -912,7 +912,7 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
 
   .results__inner {
     position: relative;
-    padding-block: 96px;
+    padding-block: calc(96px * var(--sec-y));
   }
 
   .results__eyebrow {
@@ -969,9 +969,12 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
        follows the strip has to add it back to look spaced. Covers half the
        30% overflow on the tallest card plus its shadow. */
     --tour-overflow: 88px;
+    /* The only real space below the strip — the section's own bottom padding is
+       0 and --tour-overflow is pulled back out of the layout. */
+    --tour-tail: calc(60px * var(--sec-y));
     /* Generous above, nothing below: the section runs into the footer's
        "Get started" banner, which supplies its own top spacing. */
-    padding-block: 88px 0;
+    padding-block: calc(88px * var(--sec-y)) 0;
   }
   .tour__title {
     /* Owns the gap down to the strip: a top margin on .tour__frame would just
@@ -1011,9 +1014,9 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
        1.3 — was being cut off top and bottom, and the cards' shadows with it.
        The padding reserves that room and the negative margin takes it back
        out of the layout, so the strip sits exactly where it did. The extra
-       60px below is the one part that is NOT pulled back, so it reads as real
-       space under the strip. */
-    padding-block: var(--tour-overflow) calc(var(--tour-overflow) + 60px);
+       --tour-tail below is the one part that is NOT pulled back, so it reads as
+       real space under the strip. */
+    padding-block: var(--tour-overflow) calc(var(--tour-overflow) + var(--tour-tail));
     margin-block: calc(var(--tour-overflow) * -1);
     scrollbar-width: none;
   }
@@ -1253,7 +1256,6 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   }
   @media (max-width: 720px) {
     .tour {
-      padding-block: 84px 0;
       /* One card at a time, and no raise: scaling the centre card up here
          would force it narrower than the desktop card to avoid the scroller's
          clipping edges, which leaves the fixed-size caption dwarfing the
