@@ -391,7 +391,10 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
                       loading="lazy"
                       decoding="async"
                     />
-                    Maildrill
+                    {/* One flex item, not two text runs: the tab's 4px gap is
+                        meant to sit between the mark and the label, and a bare
+                        `drill` span would take a gap of its own mid-word. */}
+                    <span class="tour__tabname">Mail<span class="tour__brand">drill</span></span>
                   </span>
                   <span class="tour__url" aria-hidden="true">
                     <svg viewBox="0 0 24 24" class="tour__lock"><path d="M7 11V8a5 5 0 0110 0v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
@@ -949,6 +952,11 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     /* Room either side so the first and last card can reach dead centre —
        without it they pin to the edges and can never become the active one. */
     --tour-edge-pad: calc((100cqi - var(--tour-card-w)) / 2);
+    /* The raised centre card. Card width x scale must stay under 100cqi or the
+       scroller — which clips on both axes — cuts the card off left and right,
+       so every breakpoint that changes --tour-card-w has to check this. */
+    --tour-scale-on: 1.3;
+    --tour-scale-off: 0.84;
     /* Room the raised centre card overflows into. The track reserves it as
        padding and pulls it back out with a negative margin (see .tour__track),
        and that negative margin collapses through the frame — so whatever
@@ -1021,14 +1029,14 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     min-width: 0;
     /* The centre card grows past its track while its neighbours shrink well
        back — the 34px gap absorbs the overflow, so nothing overlaps. */
-    transform: scale(0.84);
+    transform: scale(var(--tour-scale-off));
     opacity: 0.42;
     transition:
       transform 0.32s var(--ease-out, cubic-bezier(0.2, 0.7, 0.3, 1)),
       opacity 0.32s ease;
   }
   .tour__slide.is-active {
-    transform: scale(1.3);
+    transform: scale(var(--tour-scale-on));
     opacity: 1;
     /* Above its neighbours so the raised card's shadow reads correctly. */
     position: relative;
@@ -1106,6 +1114,15 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
+  }
+  .tour__tabname {
+    min-width: 0;
+    overflow: hidden;
+  }
+  /* Same split as the real wordmark in Logo.astro, so the chrome shows the
+     brand as it's actually written rather than as flat text. */
+  .tour__brand {
+    color: var(--brand);
   }
   .tour__favicon {
     width: 8.8px;
@@ -1222,7 +1239,16 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   @media (max-width: 720px) {
     .tour {
       padding-block: 84px 0;
-      --tour-card-w: 88cqi;
+      /* One card at a time, and no raise: scaling the centre card up here
+         would force it narrower than the desktop card to avoid the scroller's
+         clipping edges, which leaves the fixed-size caption dwarfing the
+         screenshot. Opacity alone marks the active card instead, and the width
+         goes to the screenshot. A sliver of the neighbours still shows as the
+         cue that the strip scrolls. */
+      --tour-card-w: 84cqi;
+      --tour-gap: 16px;
+      --tour-scale-on: 1;
+      --tour-scale-off: 0.9;
     }
     /* Arrows assume a pointer that can hover; touch gets the swipe it already
        has, and the dots stay for position. Matched through .tour__frame to
