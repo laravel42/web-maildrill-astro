@@ -34,7 +34,8 @@
     "dev": "tsx watch apps/dev-server/src/index.ts",
     "start": "tsx apps/dev-server/src/index.ts",
     "test:coverage": "vitest run --coverage",
-    "db:seed:demo": "tsx packages/database/src/seed-demo.ts"
+    "db:seed:demo": "tsx packages/database/src/seed-demo.ts",
+    "db:migrate:verify": "tsx packages/database/src/migrate-verify.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

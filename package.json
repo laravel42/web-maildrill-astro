@@ -34,7 +34,8 @@
     "sync:rates:login": "node scripts/sync-infobip-rates.mjs login",
     "sync:rates": "node scripts/sync-infobip-rates.mjs",
     "gen:api": "openapi-typescript src/lib/server/openapi.product.json -o src/lib/server/api.product.ts && openapi-typescript src/lib/server/openapi.messaging.json -o src/lib/server/api.messaging.ts",
-    "db:seed:demo": "pnpm --filter workers db:seed:demo"
+    "db:seed:demo": "pnpm --filter workers db:seed:demo",
+    "db:migrate:verify": "pnpm --filter workers db:migrate:verify"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",
