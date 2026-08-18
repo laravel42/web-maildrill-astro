@@ -32,7 +32,8 @@ export function EmojiPickerButton({ onPick }: { onPick: (native: string) => void
       {everOpened && (
         <PopoverContent
           forceMount
-          align="start"
+          // Opens leftward from the toolbar button (see the composer picker).
+          align="end"
           sideOffset={6}
           style={open ? undefined : { display: 'none' }}
           className="wts-emoji-popup w-auto border-none p-0 shadow-lg"

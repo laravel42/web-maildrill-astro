@@ -34,7 +34,9 @@
 .panel {
   position: absolute;
   top: calc(100% + 8px);
-  left: 0;
+  /* Opens leftward: the trigger sits at the composer's right edge, so aligning
+     the panel's left edge would push it past the field. */
+  right: 0;
   z-index: var(--z-modal, 1000);
   background: var(--surface);
   border: 1px solid var(--border);
