@@ -12,6 +12,7 @@ export * from './consumption';
 export * from './usage-provider';
 export * from './usage';
 export * from './recharges';
+export * from './invoice-pdf';
 export * from './trial';
 export * from './provider/types';
 export { getPaymentProvider, setPaymentProviderForTests } from './provider/registry';

@@ -1,10 +1,19 @@
-import { useCallback, useEffect, useState, type KeyboardEvent, type ReactNode } from 'react';
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
 import { api, ApiError } from '@/lib/app/api';
 import {
   fetchBillingPackages,
   fetchWallet,
+  fetchRecharges,
   startCheckout,
   type BillingPackage,
+  type Recharge,
   type WalletInfo,
 } from '@/lib/app/billing';
 import Icon from './Icon';
@@ -27,9 +36,9 @@ import type {
 import {
   buildChannelUsageRows,
   DEFAULT_TOGGLES,
-  estCost,
-  EST_RATE_BASIS,
   USAGE_VOLUME_BASIS,
+  channelMeta,
+  wholePercentShares,
   fmt,
   fmtUsd,
   isDomain,
@@ -45,7 +54,6 @@ import {
   ROSTER,
   roleTone,
   swatchColor,
-  totalEstCost,
   totalSent,
 } from './AppSettings.logic';
 import styles from './AppSettings.module.css';
@@ -189,6 +197,11 @@ export default function AppSettings({
   const [sectionLoading, setSectionLoading] = useState(false);
   /** Prepaid wallet (null until the billing service answers). */
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
+  /** Credit top-ups and what each has paid for. Null = not fetched yet. */
+  const [recharges, setRecharges] = useState<Recharge[] | null>(null);
+  /* One expanded row at a time: the breakdown is a comparison against the
+     top-up above it, not something read side by side with another top-up's. */
+  const [openRecharge, setOpenRecharge] = useState<string | null>(null);
   /** Per-domain timestamp of the last DNS re-check, for the cooldown below. */
   const [lastCheckedAt, setLastCheckedAt] = useState<Record<string, number>>({});
   /** One in-app dialog serves every destructive action (no window.confirm). */
@@ -233,6 +246,12 @@ export default function AppSettings({
       void fetchWallet()
         .then(setWallet)
         .catch(() => undefined);
+      // Fetched with the wallet, not lazily on expand: the history is what
+      // explains the balance shown beside it, and a top-up that just landed
+      // should appear in both at once rather than one refresh apart.
+      void fetchRecharges()
+        .then(setRecharges)
+        .catch(() => setRecharges([]));
     };
     refetch();
     const params = new URLSearchParams(window.location.search);
@@ -259,7 +278,7 @@ export default function AppSettings({
   /*
    * Section data is fetched every time a section is opened — deliberately no
    * client-side cache. Domain state lives at the provider and changes outside
-   * this app (DNS propagating, Infobip review), so a remembered list would
+   * this app (DNS propagating, Maildrill review), so a remembered list would
    * show verification results that are no longer true.
    */
   useEffect(() => {
@@ -345,6 +364,22 @@ export default function AppSettings({
 
   const usageRows = buildChannelUsageRows(byChannel);
   const workspaceSent = totalSent(usageRows);
+  /* Apportioned once per render and indexed by row, so the table and the
+     stacked meter above it quote the same numbers. */
+  const usageShares = wholePercentShares(usageRows.map((u) => u.sent));
+  /* Balance and its warning must agree. The hero falls back to
+     PREPAID_BALANCE_USD until the wallet answers, so the warning has to use
+     the same fallback — otherwise the placeholder balance renders with no
+     warning attached to it, and the two disagree for the first second of
+     every page load. */
+  const balanceUsd = wallet?.balanceUsd ?? PREPAID_BALANCE_USD;
+  const lowBalance = wallet ? wallet.lowBalance : balanceUsd < LOW_BALANCE_USD;
+  /* Null until at least one recharge rollup exists — "not calculated" and
+     "nothing spent" must not render as the same thing. */
+  const ledgerSpendUsd =
+    recharges === null || !recharges.some((r) => r.rebuiltAt !== null)
+      ? null
+      : recharges.reduce((sum, r) => sum + r.consumedUsd, 0);
 
   const effRole = (m: Member): Role => roleOverrides[m.email] ?? m.role;
 
@@ -354,6 +389,7 @@ export default function AppSettings({
   const liveRows =
     section === 'domains'
       ? domains.map((d) => ({
+          id: d.domainName,
           title: d.domainName,
           sub: d.active
             ? 'Verified · sending enabled'
@@ -365,6 +401,7 @@ export default function AppSettings({
         ? keys
             .filter((k) => !k.revokedAt)
             .map((k) => ({
+              id: k.id,
               title: k.name,
               sub: `${k.keyId} · ${k.scope}`,
               badge: 'Active',
@@ -583,7 +620,13 @@ export default function AppSettings({
                       rather than the query because this product has no billing
                       period: prepaid wallet, no cycle on `usage_records`, no
                       boundary anywhere in the schema to window to. */}
-                  <span className={styles.ledgerKicker}>All time</span>
+                  {/* The kicker qualifies the hero, and the hero is now the
+                      balance — an amount with no window at all. It read "All
+                      time" while sitting directly above a prepaid balance,
+                      which is a window claim about a figure that has none. The
+                      all-time framing moved to the two figures it does
+                      describe: the spend figure and the table below. */}
+                  <span className={styles.ledgerKicker}>Prepaid balance</span>
                   <button
                     type="button"
                     className={styles.ledgerLink}
@@ -593,55 +636,83 @@ export default function AppSettings({
                   </button>
                 </div>
 
+                {/* Money leads. This panel's job is "what am I spending and how
+                    much is left", and the previous layout gave 48px to the
+                    message count while the balance sat in 15px grey at the
+                    far right — the one number a reader comes here to check. */}
                 <div className={styles.ledgerHero}>
                   <div className={styles.heroMain}>
-                    <span className={styles.ledgerTotal} aria-describedby="usage-volume-basis">
-                      {fmt(workspaceSent)}
-                    </span>
-                    <span className={styles.ledgerUnit}>messages · pay as you go</span>
-                  </div>
-                  <div className={styles.heroStats}>
-                    {/* Labelled "Est. cost", never "Cost". The figure is
-                        `sent x list rate` (AppSettings.logic `estCost`), not a
-                        ledger read — the workspace has no `consumption` wallet
-                        entries to read. `aria-describedby` ties it to the basis
-                        note under the table so the assumption reaches a screen
-                        reader on the value itself, not only sighted readers who
-                        scroll. */}
-                    <div className={styles.heroStat}>
-                      <span className={styles.heroStatLbl}>Est. cost</span>
-                      <span
-                        className={styles.heroStatVal}
-                        aria-describedby="usage-est-basis"
-                      >
-                        ~{fmtUsd(totalEstCost(usageRows))}
-                      </span>
-                    </div>
-                    <div
-                      className={`${styles.heroStat}${
-                        (wallet ? wallet.lowBalance : PREPAID_BALANCE_USD < LOW_BALANCE_USD)
-                          ? ` ${styles.heroStatAlert}`
-                          : ''
+                    <span
+                      className={`${styles.ledgerTotal}${
+                        lowBalance ? ` ${styles.ledgerTotalAlert}` : ''
                       }`}
                     >
-                      <span className={styles.heroStatLbl}>Balance left</span>
+                      {fmtUsd(balanceUsd)}
+                    </span>
+                    <span className={styles.ledgerUnit}>
+                      balance left · {fmt(workspaceSent)} messages sent
+                    </span>
+                  </div>
+                  <div className={styles.heroStats}>
+{/* Removed, not relabelled. The figure here was
+                        `sent x list rate` — a projection, and calling it
+                        "Cost" would have made the product state a charge it
+                        never made. */}
+                    {/* Real spend, not a projection: the sum of what the
+                        ledger actually charged, taken from the recharge
+                        rollups (estimate debits plus the corrections the
+                        provider's own billing produced).
+
+                        When no rollup has been built there is no real figure
+                        to show, and the rate-card estimate that used to sit
+                        here is exactly what a reader would mistake for one —
+                        so it shows an em dash instead of a number. A blank is
+                        recoverable; a fabricated charge is not. */}
+                    <div className={styles.heroStat}>
+                      <span className={styles.heroStatLbl}>Spend, all time</span>
                       <span className={styles.heroStatVal}>
-                        {fmtUsd(wallet?.balanceUsd ?? PREPAID_BALANCE_USD)}
+                        {ledgerSpendUsd === null ? '—' : fmtUsd(ledgerSpendUsd)}
                       </span>
                     </div>
+                    {/* Reserved is shown only when it is non-zero. A permanent
+                        "$0.00 reserved" row teaches the reader to ignore the
+                        slot, which is exactly when it matters that they don't:
+                        held credit is the difference between the balance and
+                        what they can actually spend. */}
+                    {wallet && wallet.reservedUsd > 0 && (
+                      <div className={styles.heroStat}>
+                        <span className={styles.heroStatLbl}>Reserved</span>
+                        <span className={styles.heroStatVal}>{fmtUsd(wallet.reservedUsd)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                {lowBalance && (
+                  <p className={styles.ledgerAlert} role="status">
+                    <Icon name="alert-triangle" size={14} stroke={2.2} />
+                    Balance is low — sends stop when credit runs out.
+                    <button
+                      type="button"
+                      className={styles.ledgerAlertCta}
+                      onClick={() => setSection('billing')}
+                    >
+                      Add balance
+                    </button>
+                  </p>
+                )}
 
                 {workspaceSent > 0 ? (
                   <div
                     className={styles.meter}
                     role="img"
+                    /* Same apportioned figures as the table — a screen reader
+                       hearing this and a sighted reader adding up the Share
+                       column must not be told different numbers. */
                     aria-label={`Channel share of sends: ${usageRows
-                      .filter((u) => u.sent > 0)
-                      .map(
-                        (u) =>
-                          `${CHANNEL[u.channel].label} ${Math.round((u.sent / workspaceSent) * 100)}%`,
-                      )
+                      .map((u, i) => ({ u, share: usageShares[i] ?? 0 }))
+                      .filter(({ u }) => u.sent > 0)
+                      .map(({ u, share }) => `${CHANNEL[u.channel].label} ${share}%`)
                       .join(', ')}`}
                   >
                     {usageRows
@@ -672,23 +743,20 @@ export default function AppSettings({
                         Sent
                       </th>
                       <th scope="col" className={styles.thNum}>
-                        Est. cost
-                      </th>
-                      <th scope="col" className={styles.thNum}>
                         Share
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {usageRows.map((u) => {
+                    {usageRows.map((u, i) => {
                       const meta = CHANNEL[u.channel];
-                      /* Share of all-time volume. KNOWN DEFECT — independently rounded per
-                         row, so the column need not total 100 — live it reads
-                         24+24+24+29 = 101% against true shares of 23.57 /
-                         23.53 / 23.51 / 29.39 (audit #36). Same shape as the
-                         dashboard's channel mix. */
-                      const share =
-                        workspaceSent > 0 ? Math.round((u.sent / workspaceSent) * 100) : 0;
+                      /* Share of all-time volume, apportioned by largest
+                         remainder so the column totals exactly 100. Rounding
+                         each row on its own read 24+24+24+29 = 101% against
+                         true shares of 23.57 / 23.53 / 23.51 / 29.39 — every
+                         row correct to the point, the column still wrong
+                         (audit #36). */
+                      const share = usageShares[i] ?? 0;
                       return (
                         <tr key={u.channel}>
                           <td className={styles.cellName}>
@@ -703,7 +771,12 @@ export default function AppSettings({
                             </span>
                           </td>
                           <td className={`${styles.cellNum} ${styles.cellSent}`}>{fmt(u.sent)}</td>
-                          <td className={styles.cellNum}>{fmtUsd(estCost(u))}</td>
+                          {/* No cost column: per-channel spend has no ledger
+                              source — consumption entries carry a channel but
+                              this workspace has none, and the rate-card figure
+                              that stood here was a projection wearing a money
+                              column's clothes. Volume and share are measured;
+                              they stay. */}
                           <td className={styles.cellNum}>{share}%</td>
                         </tr>
                       );
@@ -722,17 +795,265 @@ export default function AppSettings({
                     `EST_RATE_BASIS` is the rate the money column assumes,
                     generated from the same constants `estCost` multiplies by so
                     the sentence cannot drift from the arithmetic. */}
-                <p className={styles.ledgerNote} id="usage-volume-basis">
+                {/* The two caveats are kept in the DOM but not shown.
+                    `aria-describedby` on the hero total points at this id — dropping the elements would leave
+                    both references dangling, which reads to a screen reader as
+                    a described element with no description. Visually hidden is
+                    the only removal that doesn't break that. */}
+                <p className={styles.srOnly} id="usage-volume-basis">
                   {USAGE_VOLUME_BASIS}
-                </p>
-                <p className={styles.ledgerNote} id="usage-est-basis">
-                  {EST_RATE_BASIS}
                 </p>
 
                 {workspaceSent === 0 && (
                   <p className={styles.ledgerEmpty}>
                     Nothing metered yet — your first send starts the ledger.
                   </p>
+                )}
+
+                {/* ---- RECHARGE HISTORY ----
+                    One row per credit top-up, newest first, each expandable to
+                    what it paid for. This is the only place in the product
+                    showing per-campaign provider cost: the
+                    per-campaign figures come from Infobip's own billing, pulled
+                    after each campaign completes, and `Adjusted` is the signed
+                    difference between what we estimated at send time and what
+                    the provider actually charged. */}
+                {recharges !== null && recharges.length > 0 && (
+                  <div className={styles.recharges}>
+                    <h4 className={styles.rechargeTitle}>Credit history</h4>
+                    {/* A real table, sharing the channel table's column
+                        language above it: name-ish column on the left, money
+                        right-aligned and tabular so decimal points line up
+                        down the column.
+
+                        It was a list of <details> rows before. Every row put
+                        its date at the far left and its remaining balance at
+                        the far right of a 1400px panel with a `1fr` spacer
+                        between, so the eye had to cross ~900px of nothing to
+                        pair a top-up with what was left of it, and no two
+                        amounts were vertically aligned with each other. */}
+                    <div className={styles.rechargeScroll}>
+                    <table className={`${styles.ledgerTable} ${styles.rechargeTable}`}>
+                      <thead>
+                        <tr>
+                          <th scope="col" className={styles.thName}>
+                            Top-up
+                          </th>
+                          <th scope="col" className={styles.thNum}>
+                            Added
+                          </th>
+                          <th scope="col" className={styles.thNum}>
+                            Used
+                          </th>
+                          <th scope="col" className={styles.thNum}>
+                            Remaining
+                          </th>
+                          <th scope="col" className={styles.thBar}>
+                            <span className={styles.srOnly}>Proportion used</span>
+                          </th>
+                          <th scope="col" className={styles.thAct}>
+                            <span className={styles.srOnly}>Receipt</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recharges.map((r) => {
+                          const pct =
+                            r.amountUsd > 0
+                              ? Math.min(100, Math.round((r.consumedUsd / r.amountUsd) * 100))
+                              : 0;
+                          const open = openRecharge === r.id;
+                          const hasDetail = r.rebuiltAt !== null && r.campaigns.length > 0;
+                          return (
+                            <Fragment key={r.id}>
+                              <tr className={open ? styles.rowOpen : undefined}>
+                                <td className={styles.cellName}>
+                                  {/* Only expandable when there is something to
+                                      expand. A chevron that opens an empty
+                                      panel is worse than no chevron. */}
+                                  {hasDetail ? (
+                                    <button
+                                      type="button"
+                                      className={styles.rechargeToggle}
+                                      aria-expanded={open}
+                                      onClick={() => setOpenRecharge(open ? null : r.id)}
+                                    >
+                                      <span className={styles.rechargeWhen}>
+                                        {new Date(r.createdAt).toLocaleDateString(undefined, {
+                                          year: 'numeric',
+                                          month: 'short',
+                                          day: 'numeric',
+                                        })}
+                                      </span>
+                                      <span
+                                        className={`${styles.rechargeSource} ${
+                                          styles[`src_${r.source}`] ?? ''
+                                        }`}
+                                      >
+                                        {r.source}
+                                      </span>
+                                      {/* Chevron trails the label rather than
+                                          leading it: as the first element it
+                                          indented every date by its own width,
+                                          so no date lined up with the TOP-UP
+                                          header above it, and rows without a
+                                          chevron needed a matching fake indent
+                                          to stay level with the rest. */}
+                                      <Icon
+                                        name={open ? 'chevron-down' : 'chevron-right'}
+                                        size={14}
+                                        stroke={2.2}
+                                      />
+                                    </button>
+                                  ) : (
+                                    <span className={styles.rechargeStatic}>
+                                      <span className={styles.rechargeWhen}>
+                                        {new Date(r.createdAt).toLocaleDateString(undefined, {
+                                          year: 'numeric',
+                                          month: 'short',
+                                          day: 'numeric',
+                                        })}
+                                      </span>
+                                      <span
+                                        className={`${styles.rechargeSource} ${
+                                          styles[`src_${r.source}`] ?? ''
+                                        }`}
+                                      >
+                                        {r.source}
+                                      </span>
+                                    </span>
+                                  )}
+                                </td>
+                                <td className={`${styles.cellNum} ${styles.cellAdded}`}>
+                                  +{fmtUsd(r.amountUsd)}
+                                </td>
+                                {/* An unbuilt rollup shows an em dash, not
+                                    $0.00 — "not calculated" and "nothing spent"
+                                    are different claims. */}
+                                <td className={styles.cellNum}>
+                                  {r.rebuiltAt === null ? '—' : fmtUsd(r.consumedUsd)}
+                                </td>
+                                <td className={styles.cellNum}>{fmtUsd(r.remainingUsd)}</td>
+                                <td className={styles.cellBar}>
+                                  <span
+                                    className={styles.rechargeBar}
+                                    role="img"
+                                    aria-label={
+                                      r.rebuiltAt === null
+                                        ? 'Usage not calculated yet'
+                                        : `${pct}% used`
+                                    }
+                                  >
+                                    <span
+                                      className={styles.rechargeBarFill}
+                                      style={{ width: `${pct}%` }}
+                                    />
+                                  </span>
+                                </td>
+                                <td className={styles.cellAct}>
+                                  {/* An anchor, not a fetch+blob: the response
+                                      is a real attachment, so the browser's own
+                                      download handles it, and middle-click and
+                                      "save link as" keep working. */}
+                                  {/* No `title`: the native tooltip would fire
+                                      alongside this one, so the same control
+                                      would show two overlapping labels a beat
+                                      apart. */}
+                                  <a
+                                    className={styles.rechargeDl}
+                                    href={`/api/v1/billing/recharges/${r.id}/receipt.pdf`}
+                                  >
+                                    <Icon name="download" size={14} stroke={2.2} />
+                                    <span className={styles.srOnly}>
+                                      Download receipt, {fmtUsd(r.amountUsd)}{' '}
+                                      {new Date(r.createdAt).toLocaleDateString()}
+                                    </span>
+                                    {/* aria-hidden: the sr-only text above is
+                                        already this link's accessible name, and
+                                        a visible duplicate would have a screen
+                                        reader announce the receipt twice. */}
+                                    <span className={styles.dlTip} aria-hidden="true">
+                                      Download receipt (PDF)
+                                    </span>
+                                  </a>
+                                </td>
+                              </tr>
+
+                              {open && hasDetail && (
+                                <tr className={styles.detailRow}>
+                                  <td colSpan={6}>
+                                    <table className={styles.campaignTable}>
+                                      <thead>
+                                        <tr>
+                                          {/* All three are real ledger amounts,
+                                              so none is labelled an estimate:
+                                              "At send" is what was actually
+                                              debited when the campaign ran,
+                                              "Adjusted" the correction the
+                                              provider's own billing produced,
+                                              "Total" their sum. The three
+                                              still add up, which is what makes
+                                              the final figure checkable rather
+                                              than something to be taken on
+                                              trust. */}
+                                          <th scope="col">Campaign</th>
+                                          <th scope="col">At send</th>
+                                          <th scope="col">Adjusted</th>
+                                          <th scope="col">Total</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {r.campaigns.map((c) => (
+                                          <tr key={c.campaignId}>
+                                            <td>
+                                              {/* The API types `channel` as a
+                                                  plain string (it maps from
+                                                  Infobip's category, which can
+                                                  be one we don't model), so the
+                                                  swatch is only drawn when the
+                                                  value is actually a channel we
+                                                  know — never indexed blindly. */}
+                                              {channelMeta(c.channel) && (
+                                                <span
+                                                  className={styles.chSwatch}
+                                                  style={{ background: channelMeta(c.channel)!.color }}
+                                                  aria-hidden="true"
+                                                />
+                                              )}
+                                              {c.name ?? 'Deleted campaign'}
+                                            </td>
+                                            <td>{fmtUsd(c.estimatedUsd)}</td>
+                                            <td
+                                              className={
+                                                c.reconciledUsd > 0
+                                                  ? styles.adjUp
+                                                  : c.reconciledUsd < 0
+                                                    ? styles.adjDown
+                                                    : undefined
+                                              }
+                                            >
+                                              {c.reconciledUsd === 0
+                                                ? '—'
+                                                : `${c.reconciledUsd > 0 ? '+' : '−'}${fmtUsd(
+                                                    Math.abs(c.reconciledUsd),
+                                                  )}`}
+                                            </td>
+                                            <td>{fmtUsd(c.amountUsd)}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </td>
+                                </tr>
+                              )}
+                            </Fragment>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    </div>
+
+                  </div>
                 )}
               </div>
             )}
@@ -802,13 +1123,16 @@ export default function AppSettings({
                     : liveRows.map((r) => {
                         const domain =
                           section === 'domains'
-                            ? (domains.find((d) => d.domainName === r.title) ?? null)
+                            ? (domains.find((d) => d.domainName === r.id) ?? null)
                             : null;
+                        // By id, never by name: names repeat (a revoked key and
+                        // its replacement usually share one), and matching on
+                        // the title would hand the revoked row's id to DELETE.
                         const apiKey =
-                          section === 'api' ? (keys.find((k) => k.name === r.title) ?? null) : null;
+                          section === 'api' ? (keys.find((k) => k.id === r.id) ?? null) : null;
                         return (
                           <div
-                            key={r.title}
+                            key={r.id ?? r.title}
                             role="listitem"
                             className={`${styles.trow}${domain ? ` ${styles.trowClick}` : ''}`}
                             onClick={domain ? () => setOpenDomain(domain) : undefined}

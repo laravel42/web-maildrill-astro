@@ -9,6 +9,7 @@ import PinPickerModal, { type Pin, type PinKind } from './PinPickerModal';
 import NotificationsInbox from './shared/NotificationsInbox';
 import styles from './AppShell.module.css';
 import { signOut } from 'auth-astro/client';
+import { fetchWallet } from '@/lib/app/billing';
 
 const PINS_KEY = 'md:pins:v2';
 const PINS_KEY_LEGACY = 'md:pins:v1';
@@ -97,6 +98,29 @@ export default function AppShell({
   // starts null on purpose so SSR and hydration render the same initial.
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  /**
+   * Commitment tier for the badge beside the logo.
+   *
+   * `null` while the wallet is still answering, and again if it fails — the
+   * badge stays empty rather than guessing. A workspace with no committed tier
+   * is genuinely on pay-as-you-go (prepaid wallet, no cycle), so that is a
+   * real plan name here, not a placeholder.
+   */
+  const [plan, setPlan] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchWallet()
+      .then((w) => {
+        if (!cancelled) setPlan(w.tier?.name ?? 'Pay as you go');
+      })
+      // Silent: a failed billing call must not put a wrong plan in the chrome
+      // of every page. No badge is honest; a stale or default one is not.
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [mobileNav, setMobileNav] = useState(false);
@@ -286,7 +310,11 @@ export default function AppShell({
           <span className={styles.ashsbWord}>
             Mail<span className={styles.ashsbWordBrand}>drill</span>
           </span>
-          <span className={styles.ashsbPlan}>Beta</span>
+          {plan && (
+            <span className={styles.ashsbPlan} title={`Current plan: ${plan}`}>
+              {plan}
+            </span>
+          )}
         </a>
 
         <nav className={styles.ashsbNav} aria-label="Primary">

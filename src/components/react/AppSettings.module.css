@@ -512,6 +512,33 @@
   .leader {
     display: none;
   }
+  /* Below this width the date-plus-badge column is the one under pressure, and
+     the meter is the only column that says nothing the numbers don't already
+     say — so it yields its share rather than squeezing the figures. */
+  .rechargeTable .thBar,
+  .rechargeTable .cellBar {
+    display: none;
+  }
+  .rechargeTable .thName,
+  .rechargeTable .cellName {
+    width: 37%;
+  }
+  .rechargeTable .thNum,
+  .rechargeTable .cellNum {
+    width: 19%;
+  }
+  .rechargeTable .thAct,
+  .rechargeTable .cellAct {
+    width: 6%;
+  }
+  /* Meter hidden here, so the parent's money band is 37% + 3x19% = 94%. */
+  .campaignTable {
+    width: 94%;
+  }
+  .campaignTable th:not(:first-child),
+  .campaignTable td:not(:first-child) {
+    width: 20.21%;
+  }
   .heroStats {
     gap: 20px;
     text-align: left;
@@ -1094,4 +1121,408 @@
 .dnsCopy:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
+}
+
+/* ---- Credit history ------------------------------------------------------
+   Deliberately the same table shell as the channel usage table above: one
+   name-ish column on the left, money right-aligned and tabular. Two tables on
+   one panel that align differently read as two unrelated widgets. */
+.recharges {
+  margin-top: 26px;
+  border-top: 1px solid var(--divider);
+  padding-top: 18px;
+}
+.rechargeTitle {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+/* Column widths are declared, not inherited from content.
+ *
+ * The shared table shell sets `.cellName { width: 100% }`, which works for the
+ * channel table because dotted leaders carry the eye across the gap — the
+ * space there is a device. Reused here it just stranded four money columns in
+ * the last third of a 1400px row with no bridge, so the figures read as
+ * huddled against the right edge rather than as columns.
+ *
+ * The criterion: the three money columns are equal because they hold
+ * comparable magnitudes and are read against each other, both down each column
+ * and across the row (Added − Used = Remaining). The Top-up column takes what
+ * its content needs — a date plus a badge — instead of every leftover pixel.
+ * Meter and receipt are fixed-purpose and sized to their contents.
+ */
+/* Percentages alone are not enough: this panel sits beside a fixed-width nav,
+   so its own width does not track the viewport. Measured live, a 1400px window
+   gives the panel 777px but a 1000px window gives it 377px — at which point
+   30% of the row is 113px, too narrow for "Aug 12, 2026" plus its badge, while
+   the viewport-keyed rule below has not fired because the VIEWPORT is still
+   1000px wide. A floor plus scroll makes the squeeze impossible regardless of
+   which container is doing the squeezing. */
+.rechargeScroll {
+  overflow-x: auto;
+}
+.rechargeTable {
+  table-layout: fixed;
+  min-width: 560px;
+}
+.rechargeTable .thName,
+.rechargeTable .cellName {
+  width: 30%;
+}
+.rechargeTable .thNum,
+.rechargeTable .cellNum {
+  width: 17%;
+}
+.rechargeTable .thBar,
+.rechargeTable .cellBar {
+  width: 14%;
+}
+.rechargeTable .thAct,
+.rechargeTable .cellAct {
+  width: 5%;
+}
+/* Scoped for the same specificity reason, and the gap goes on the meter rather
+   than the cell so it survives the base table's own cell padding — without it
+   the bar butted straight against the Remaining figure. */
+.ledgerTable .cellBar {
+  padding-left: 22px;
+  vertical-align: middle;
+}
+.cellAct {
+  text-align: right;
+}
+/* Credit arriving gets weight, not another colour: the source badge is already
+   tinted, and a green amount beside a green BONUS badge beside a green/red
+   Adjusted column below is three colour signals in one row saying different
+   things. Scoped under .ledgerTable to outrank `.ledgerTable .cellNum`, which
+   is two classes and was silently winning. */
+.ledgerTable .cellAdded {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* The whole left cell is the hit target, so the date and the badge are part of
+   the affordance rather than decoration beside a lone chevron. */
+.rechargeToggle,
+.rechargeStatic {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+.rechargeToggle {
+  cursor: pointer;
+}
+.rechargeToggle:hover .rechargeWhen {
+  color: var(--ink);
+}
+.rechargeToggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+/* No indent needed any more: with the chevron trailing the badge, an
+   expandable row and a plain one both start at the column's left edge. */
+.rechargeWhen {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rechargeSource {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: var(--muted);
+  background: var(--surface2);
+}
+/* Paid credit reads differently from granted credit — the badge is the only
+   place that distinction is visible once the money is in the wallet. */
+.src_purchase {
+  color: var(--accent-text);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.src_bonus,
+.src_promotion {
+  color: var(--success-text);
+  background: var(--success-bg);
+}
+
+.rechargeBar {
+  display: block;
+  /* Intrinsic width, not just a width on the column header. The header's only
+     content is a screen-reader label, which is position:absolute and so
+     contributes nothing to max-content — auto table layout then collapsed the
+     column to 0 and the meter disappeared while its cell still rendered. */
+  min-width: 88px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--divider);
+  overflow: hidden;
+}
+.rechargeBarFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.rechargeDl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  color: var(--muted);
+  border: 1px solid transparent;
+}
+.rechargeDl:hover {
+  color: var(--accent-text);
+  border-color: var(--divider);
+  background: var(--surface2);
+}
+.rechargeDl:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Expanded breakdown. Tinted and inset so it reads as belonging to the row
+   above rather than as another top-level row in the same table. */
+.rowOpen > td {
+  border-bottom-color: transparent;
+}
+.detailRow > td {
+  padding: 0 0 14px;
+}
+.detailRow > td > .campaignTable {
+  margin-left: 0;
+  background: var(--surface3);
+  border-radius: 8px;
+}
+.campaignTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  /* Same criterion as the parent, plus one more: the breakdown's money columns
+     sit directly under the parent's.
+     
+     The detail row spans all six columns, so left to itself the sub-table
+     stretched under the meter and receipt columns too and its three amounts
+     landed between the parent's — close enough to look like a mistake rather
+     than a deliberate difference. Scaled to the parent's money band instead
+     (30% + 3x17% = 81% of the row), each column keeps the parent's proportion
+     within it: 30/81 for the name, 17/81 for each amount. */
+  table-layout: fixed;
+  width: 81%;
+}
+.campaignTable th:not(:first-child),
+.campaignTable td:not(:first-child) {
+  width: 20.99%;
+}
+.campaignTable th,
+.campaignTable td {
+  padding: 7px 12px;
+}
+.campaignTable th {
+  font-weight: 500;
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: right;
+  white-space: nowrap;
+}
+.campaignTable th:first-child,
+.campaignTable td:first-child {
+  text-align: left;
+  /* No `width: 100%` here. Under fixed layout it claimed the whole row and
+     crushed the three amounts to their minimum — the same defect as the
+     parent table had, reproduced inside the breakdown. The name column takes
+     whatever the declared money columns leave. */
+}
+.campaignTable td {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  border-top: 1px solid var(--divider);
+}
+.campaignTable tbody tr:first-child td {
+  border-top: 1px solid var(--divider);
+}
+.campaignTable td:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.campaignTable .chSwatch {
+  margin-right: 7px;
+}
+/* Direction is the point of the Adjusted column: over-billed and under-billed
+   must not look the same at a glance. */
+.adjUp {
+  color: var(--danger-text);
+}
+.adjDown {
+  color: var(--success-text);
+}
+
+/* ---- Usage panel: hero alert, derivation disclosure, receipt download ---- */
+
+/* Low balance is the one state on this panel that needs acting on, so it gets
+   a row of its own under the hero rather than a colour change on a number that
+   a reader has to already know the normal value of. */
+.ledgerAlert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--warning-strong);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning);
+}
+.ledgerTotalAlert {
+  color: var(--warning-strong);
+}
+.ledgerAlertCta {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Derivation notes: present, findable, not dominant. */
+.basis {
+  margin: 18px 0 0;
+}
+.basisSummary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--muted);
+  list-style: none;
+}
+.basisSummary::-webkit-details-marker {
+  display: none;
+}
+.basisSummary:hover {
+  color: var(--ink);
+}
+.basis[open] .basisSummary {
+  margin-bottom: 6px;
+}
+
+.rechargeDl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  color: var(--muted);
+  border: 1px solid transparent;
+}
+.rechargeDl:hover {
+  color: var(--accent-text);
+  border-color: var(--divider);
+  background: var(--surface2);
+}
+/* Keyboard focus must be visible: this is the only control inside a <summary>,
+   so without a ring there is no way to tell it apart from the row itself. */
+.rechargeDl:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Receipt download tooltip -------------------------------------------
+   Above the button, right-aligned to it.
+
+   Two constraints shape this. The button is in the last column, hard against
+   the panel's right edge, so the tooltip is anchored by its RIGHT edge and
+   grows leftwards — centring it would push half of it outside the panel. And
+   the table sits in an `overflow-x: auto` wrapper, which clips on both axes,
+   so the wrapper reserves headroom (padding-top pulled back by an equal
+   negative margin) for the first row's tooltip to occupy without moving the
+   table a pixel.
+
+   Colours ride --ink/--on-ink, which invert together. A hardcoded white here
+   is what previously left a tooltip in this codebase white-on-white in dark
+   mode. */
+.rechargeScroll {
+  padding-top: 38px;
+  margin-top: -38px;
+}
+.rechargeDl {
+  position: relative;
+}
+.dlTip {
+  position: absolute;
+  bottom: calc(100% + 7px);
+  right: 0;
+  transform: translateY(-3px);
+  width: max-content;
+  padding: 6px 9px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  box-shadow: 0 8px 20px rgba(28, 25, 23, 0.28);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.12s var(--ease-out),
+    transform 0.12s var(--ease-out);
+}
+/* Arrow under the tooltip, over the button it belongs to. */
+.dlTip::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  right: 9px;
+  border: 5px solid transparent;
+  border-bottom: none;
+  border-top-color: var(--ink);
+}
+/* Keyboard reaches it too: focus-visible, so a mouse click doesn't leave the
+   tooltip stuck open after the download starts. */
+.rechargeDl:hover .dlTip,
+.rechargeDl:focus-visible .dlTip {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dlTip {
+    transition: none;
+  }
 }

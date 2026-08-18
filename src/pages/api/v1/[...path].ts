@@ -53,15 +53,23 @@ export const ALL: APIRoute = async (ctx) => {
   }
 
   const res = await fetch(target, { method: request.method, headers, body });
-  return new Response(res.body, {
-    status: res.status,
-    headers: {
-      'content-type': res.headers.get('content-type') ?? 'application/json',
-      // Every route here is authenticated, tenant-scoped, and mutable — a
-      // browser or intermediary reusing a response would show one workspace's
-      // data as another's, or serve provider state (e.g. domain verification)
-      // that has since changed.
-      'cache-control': 'no-store, no-cache, must-revalidate',
-    },
+  const out = new Headers({
+    'content-type': res.headers.get('content-type') ?? 'application/json',
+    // Every route here is authenticated, tenant-scoped, and mutable — a
+    // browser or intermediary reusing a response would show one workspace's
+    // data as another's, or serve provider state (e.g. domain verification)
+    // that has since changed.
+    'cache-control': 'no-store, no-cache, must-revalidate',
   });
+
+  // File responses need their disposition to survive the proxy. Rebuilding the
+  // header map from scratch dropped it, so every receipt downloaded as
+  // `receipt.pdf` — the last path segment — instead of its own number, and a
+  // second download silently became `receipt (1).pdf`. Copied explicitly
+  // rather than forwarding everything: the upstream's own cache-control,
+  // set-cookie and CORS headers must NOT leak through this boundary.
+  const disposition = res.headers.get('content-disposition');
+  if (disposition) out.set('content-disposition', disposition);
+
+  return new Response(res.body, { status: res.status, headers: out });
 };

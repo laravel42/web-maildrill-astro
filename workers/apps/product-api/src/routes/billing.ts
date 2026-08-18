@@ -14,6 +14,8 @@ import {
   listActivePackages,
   listActiveTiers,
   listTenantInvoices,
+  buildRechargeReceipt,
+  listRecharges,
   listWalletTransactions,
   microToUsd,
   quotePrice,
@@ -251,6 +253,89 @@ export async function billingRoutes(appRaw: FastifyInstance): Promise<void> {
     async (req) => {
       const invoices = await listTenantInvoices(req.tenantId);
       return { data: invoices };
+    },
+  );
+
+  app.get(
+    '/v1/billing/recharges',
+    {
+      schema: {
+        tags: TAG,
+        summary: 'Credit recharge history with what each top-up paid for',
+        querystring: z.object({ limit: z.coerce.number().int().min(1).max(100).default(20) }),
+      },
+    },
+    async (req) => {
+      const rows = await listRecharges(req.tenantId, req.query.limit);
+      return {
+        data: rows.map((r) => {
+          // `spending` is a derived rollup rebuilt from the ledger; it is `{}`
+          // until the first rebuild. Defaulted here rather than in the client
+          // so a never-rebuilt row reads as "nothing allocated yet" instead of
+          // as undefined fields the UI has to guess at.
+          const spending = (r.spending ?? {}) as {
+            consumedMicro?: number;
+            remainingMicro?: number;
+            campaigns?: Array<{
+              campaignId: string;
+              name: string | null;
+              channel: string | null;
+              amountMicro: number;
+              estimatedMicro: number;
+              reconciledMicro: number;
+            }>;
+            rebuiltAt?: string;
+          };
+          const consumedMicro = spending.consumedMicro ?? r.consumedMicro;
+          return {
+            id: r.id,
+            source: r.source,
+            currency: r.currency,
+            createdAt: r.createdAt,
+            amountUsd: microToUsd(r.amountMicro),
+            consumedUsd: microToUsd(consumedMicro),
+            remainingUsd: microToUsd(spending.remainingMicro ?? r.amountMicro - consumedMicro),
+            // Null, not 0 — a rollup that has never been built is unknown, and
+            // rendering it as "$0.00 spent" would be a claim we can't support.
+            rebuiltAt: r.rebuiltAt,
+            campaigns: (spending.campaigns ?? []).map((c) => ({
+              campaignId: c.campaignId,
+              name: c.name,
+              channel: c.channel,
+              amountUsd: microToUsd(c.amountMicro),
+              estimatedUsd: microToUsd(c.estimatedMicro),
+              // Signed: positive means the provider billed MORE than estimated.
+              reconciledUsd: microToUsd(c.reconciledMicro),
+            })),
+          };
+        }),
+      };
+    },
+  );
+
+  app.get(
+    '/v1/billing/recharges/:id/receipt.pdf',
+    {
+      schema: {
+        tags: TAG,
+        summary: 'Download a receipt for one credit top-up (PDF)',
+        params: z.object({ id: z.string().uuid() }),
+      },
+    },
+    async (req, reply) => {
+      const user = req.userId ? await getUser(req.userId) : null;
+      const receipt = await buildRechargeReceipt(req.tenantId, req.params.id, user?.email ?? null);
+      // 404 rather than 403 for another tenant's id: whether a given uuid
+      // exists is not something a caller should be able to probe.
+      if (!receipt) return reply.code(404).send({ error: 'not_found' });
+
+      return reply
+        .header('content-type', 'application/pdf')
+        .header('content-disposition', `attachment; filename="${receipt.filename}"`)
+        // The notes move with the rollup, so this is not safely cacheable by a
+        // shared proxy — and it is a financial document for one workspace.
+        .header('cache-control', 'private, no-store')
+        .send(receipt.pdf);
     },
   );
 

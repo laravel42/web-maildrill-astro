@@ -35,7 +35,41 @@ export type WalletTransaction = {
   createdAt: string;
 };
 
+/**
+ * One credit top-up and what it has paid for so far.
+ *
+ * `campaigns` comes from the recharge's derived rollup — spend allocated to
+ * this top-up FIFO, split into what was estimated at send time and what the
+ * provider's own billing later corrected. `rebuiltAt` is null when the rollup
+ * has never been built, which is NOT the same as "nothing spent": the UI has
+ * to say "not calculated yet" rather than render a zero it can't support.
+ */
+export type RechargeCampaign = {
+  campaignId: string;
+  name: string | null;
+  channel: string | null;
+  amountUsd: number;
+  estimatedUsd: number;
+  /** Signed. Positive = the provider billed more than we estimated. */
+  reconciledUsd: number;
+};
+
+export type Recharge = {
+  id: string;
+  source: 'purchase' | 'promotion' | 'bonus' | 'adjustment' | 'trial';
+  currency: string;
+  createdAt: string;
+  amountUsd: number;
+  consumedUsd: number;
+  remainingUsd: number;
+  rebuiltAt: string | null;
+  campaigns: RechargeCampaign[];
+};
+
 export const fetchWallet = () => api.get<WalletInfo>('billing/wallet');
+
+export const fetchRecharges = async (): Promise<Recharge[]> =>
+  (await api.get<{ data: Recharge[] }>('billing/recharges?limit=20')).data;
 
 export const fetchBillingPackages = async (): Promise<BillingPackage[]> =>
   (await api.get<{ data: BillingPackage[] }>('billing/packages')).data;

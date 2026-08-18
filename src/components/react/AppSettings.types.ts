@@ -16,7 +16,18 @@ export type FieldDef = {
   /** Placeholder hinting the expected content while the field is empty. */
   ph?: string;
 };
-export type TableRow = { title: string; sub: string; badge: string; tone: Tone };
+/**
+ * `id` identifies the record a live row was built from. Titles are not unique
+ * (two API keys may share a name), so row actions must key off this, not the
+ * title. Static config rows have no backing record and leave it unset.
+ */
+export type TableRow = {
+  id?: string;
+  title: string;
+  sub: string;
+  badge: string;
+  tone: Tone;
+};
 export type ToggleDef = { key: ToggleKey; title: string; desc: string };
 
 export type FormPanel = { kind: 'form'; title: string; desc: string; fields: FieldDef[] };

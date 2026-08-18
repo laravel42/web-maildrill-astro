@@ -5,8 +5,10 @@ import {
   USAGE_VOLUME_BASIS,
   buildChannelUsageRows,
   estCost,
+  fmtUsd,
   totalEstCost,
   totalSent,
+  wholePercentShares,
 } from '@/components/react/AppSettings.logic';
 
 /**
@@ -51,5 +53,51 @@ describe('usage panel basis text', () => {
     expect(totalSent(rows)).toBe(1001068);
     expect(estCost(rows[0])).toBeCloseTo(118.0005, 4);
     expect(totalEstCost(rows)).toBeCloseTo(12246.064, 3);
+  });
+});
+
+
+describe('fmtUsd', () => {
+  it('groups thousands — the estimate is five digits on a money screen', () => {
+    // The live workspace read `$12246.06` before grouping, beside a correctly
+    // grouped `1,001,068` message count.
+    expect(fmtUsd(12246.06)).toBe('$12,246.06');
+    expect(fmtUsd(1860.49)).toBe('$1,860.49');
+    expect(fmtUsd(118)).toBe('$118.00');
+  });
+
+  it('never renders a non-zero amount as $0.00', () => {
+    expect(fmtUsd(0.004)).toBe('< $0.01');
+    expect(fmtUsd(0)).toBe('$0.00');
+  });
+});
+
+describe('wholePercentShares', () => {
+  it('totals exactly 100 where independent rounding did not', () => {
+    // The live channel mix: 23.57 / 23.53 / 23.51 / 29.39, which rounded
+    // per-row to 24+24+24+29 = 101%.
+    const shares = wholePercentShares([236001, 235505, 235358, 294204]);
+    expect(shares.reduce((a, b) => a + b, 0)).toBe(100);
+    // Floors are 23/23/23/29 = 98, leaving 2 points. They go to the two
+    // largest discarded fractions — email (.5749) and SMS (.5254) — not to
+    // WhatsApp (.5107).
+    expect(shares).toEqual([24, 24, 23, 29]);
+  });
+
+  it('keeps every row within a point of its true share', () => {
+    const values = [1, 1, 1];
+    const shares = wholePercentShares(values);
+    expect(shares.reduce((a, b) => a + b, 0)).toBe(100);
+    // 33.33 each: two rows get 33, one gets 34 — none is off by more than 1.
+    expect(shares.every((s) => Math.abs(s - 100 / 3) < 1)).toBe(true);
+  });
+
+  it('is stable when fractions tie', () => {
+    expect(wholePercentShares([1, 1, 1])).toEqual(wholePercentShares([1, 1, 1]));
+  });
+
+  it('returns zeros rather than NaN for an empty workspace', () => {
+    expect(wholePercentShares([0, 0, 0])).toEqual([0, 0, 0]);
+    expect(wholePercentShares([])).toEqual([]);
   });
 });

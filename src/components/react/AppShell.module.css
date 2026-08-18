@@ -57,6 +57,13 @@
 /* Rollout badge on the brand row's right edge. */
 .ashsbPlan {
   margin-left: auto;
+  /* Plan names are longer and more varied than the fixed "Beta" this replaced
+     ("Pay as you go", "Growth", "Scale"), so the badge has to survive a long
+     one without pushing the wordmark or wrapping inside the logo row. */
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.3px;

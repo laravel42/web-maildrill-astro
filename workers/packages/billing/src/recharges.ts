@@ -4,10 +4,13 @@ import {
   campaigns,
   creditRecharges,
   db,
+  tenants,
   walletTransactions,
   type CreditRechargeRow,
   type Tx,
 } from '@maildrill/database';
+import { receiptNumber, renderReceiptPdf } from './invoice-pdf';
+import { microToUsd } from './money';
 import { getOrCreateWallet } from './wallet';
 
 const log = createLogger({ component: 'billing-recharges' });
@@ -325,4 +328,93 @@ export function rechargeSourceFor(
     default:
       return 'adjustment';
   }
+}
+
+/** One recharge by id, scoped to its tenant. Null when it isn't theirs. */
+export async function getRecharge(
+  tenantId: string,
+  id: string,
+): Promise<CreditRechargeRow | null> {
+  const [row] = await db
+    .select()
+    .from(creditRecharges)
+    .where(and(eq(creditRecharges.tenantId, tenantId), eq(creditRecharges.id, id)));
+  return row ?? null;
+}
+
+/**
+ * Assemble the receipt for one top-up.
+ *
+ * Lives here rather than in the route because it reads three tables — the
+ * recharge, its tenant for the workspace name, and the rollup it carries — and
+ * a route that reaches into the database directly is how the billing figures
+ * on one screen end up derived differently from the same figures on another.
+ *
+ * Returns null when the recharge isn't this tenant's, which the caller turns
+ * into a 404: whether a given uuid exists is not something to leak.
+ */
+export async function buildRechargeReceipt(
+  tenantId: string,
+  rechargeId: string,
+  buyerEmail: string | null,
+): Promise<{ pdf: Buffer; filename: string } | null> {
+  const [row] = await db
+    .select({
+      recharge: creditRecharges,
+      workspaceName: tenants.name,
+    })
+    .from(creditRecharges)
+    .leftJoin(tenants, eq(tenants.id, creditRecharges.tenantId))
+    .where(and(eq(creditRecharges.tenantId, tenantId), eq(creditRecharges.id, rechargeId)));
+  if (!row) return null;
+
+  const { recharge } = row;
+  const spending = (recharge.spending ?? {}) as { consumedMicro?: number };
+  const consumedMicro = spending.consumedMicro ?? recharge.consumedMicro;
+  const number = receiptNumber(recharge.id, recharge.createdAt);
+
+  const pdf = renderReceiptPdf({
+    number,
+    issuedAt: recharge.createdAt,
+    workspaceName: row.workspaceName ?? 'Workspace',
+    // Placeholder: workspaces carry no billing address yet, and inventing one
+    // on a financial document is worse than saying it is missing.
+    //
+    // The email is dropped when it IS the workspace name — workspaces created
+    // from a signup are named after the address, so the receipt printed
+    // `hello@example.com` as the heading and again as the contact line
+    // directly beneath it.
+    billTo: [
+      'Billing address not set',
+      buyerEmail && buyerEmail !== row.workspaceName ? buyerEmail : '',
+    ].filter(Boolean),
+    currency: recharge.currency,
+    lines: [
+      {
+        description: `Prepaid credit — ${recharge.source}`,
+        amount: microToUsd(recharge.amountMicro),
+      },
+    ],
+    total: microToUsd(recharge.amountMicro),
+    // Stated only once the rollup exists. Before that "spent" is unknown, and
+    // printing $0.00 on a receipt would be a claim we cannot support.
+    notes: recharge.rebuiltAt
+      ? [
+          `Spent so far: ${fmtMoney(microToUsd(consumedMicro), recharge.currency)}`,
+          `Remaining: ${fmtMoney(
+            microToUsd(recharge.amountMicro - consumedMicro),
+            recharge.currency,
+          )}`,
+        ]
+      : undefined,
+  });
+
+  return { pdf, filename: `${number}.pdf` };
+}
+
+function fmtMoney(amount: number, currency: string): string {
+  return `${currency} ${amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }

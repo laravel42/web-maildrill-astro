@@ -2,7 +2,7 @@ import type { ChannelType } from '@/types/app';
 import type { IconName } from '@/lib/icons';
 import { EMAIL_RATE, REGION_TIERS } from '@/config/pricing';
 import type { ChannelBreakdown } from './AppAnalytics.logic';
-import { CHANNEL_ORDER } from './shared/channels';
+import { CHANNEL, CHANNEL_ORDER, type ChannelMeta } from './shared/channels';
 import type { Tone } from './shared/tones';
 import type { Member, Panel, Role, SectionKey, ToggleKey } from './AppSettings.types';
 
@@ -223,6 +223,24 @@ export const USAGE_VOLUME_BASIS =
   `billing period — and counts sends that failed, expired or are still queued ` +
   `alongside the ones that arrived.`;
 
+/**
+ * Basis note for the credit history: its figures come from a DIFFERENT source
+ * than everything above it — the provider's own billing rather than the local
+ * rate card.
+ *
+ * NOT CURRENTLY RENDERED. The visible "How credit is allocated" disclosure was
+ * removed by request. Kept because it is the only written statement of why the
+ * Charged column can disagree with the Est. cost above it, and whoever next
+ * wonders why two money figures on one screen differ should find this rather
+ * than re-derive it from the ledger.
+ */
+export const RECHARGE_BASIS =
+  `Charged is what actually left this top-up, allocated oldest-credit-first. ` +
+  `Estimated is what the local rate card predicted at send time; Adjusted is ` +
+  `the difference the provider's own billing later reported, which is why these ` +
+  `figures can differ from the estimate above. Provider billing is provisional ` +
+  `for a few days after a send and is re-checked once finalised.`;
+
 export const EST_RATE_BASIS =
   `Estimate, not a charge — no ledger entry exists for these sends. ` +
   `Priced at ${NA_TIER.name} list rates ` +
@@ -261,7 +279,49 @@ export const LOW_BALANCE_USD = 10;
  * money figure on the product renders "$12246.06" while the pricing modal's
  * `usd()` on the same page groups its digits.
  */
-export const fmtUsd = (n: number) => (n > 0 && n < 0.005 ? '< $0.01' : `$${n.toFixed(2)}`);
+/**
+ * Money, grouped. `toFixed(2)` alone rendered the workspace's estimated spend
+ * as `$12246.06` — five significant digits with no thousands separator, on the
+ * one screen whose job is money, while the message count beside it was
+ * correctly grouped as `1,001,068`. Below a cent shows `< $0.01` rather than
+ * `$0.00`, which would read as free.
+ */
+export const fmtUsd = (n: number) =>
+  n > 0 && n < 0.005
+    ? '< $0.01'
+    : `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+/**
+ * Whole-percent shares that sum to exactly 100 (largest-remainder / Hamilton).
+ *
+ * Rounding each share independently is what made the table read
+ * 24 + 24 + 24 + 29 = 101% against true shares of 23.57 / 23.53 / 23.51 /
+ * 29.39. Every row was individually correct to the nearest point and the
+ * column was still wrong, which is the failure mode a reader notices first
+ * because it is the only one they can check by adding up.
+ *
+ * Floors every share, then hands the leftover points to the rows with the
+ * largest discarded fractions — so the total is exact and each row stays
+ * within one point of its true value.
+ */
+export function wholePercentShares(values: number[]): number[] {
+  const total = values.reduce((sum, v) => sum + v, 0);
+  if (total <= 0) return values.map(() => 0);
+  const exact = values.map((v) => (v / total) * 100);
+  const floors = exact.map(Math.floor);
+  let remainder = 100 - floors.reduce((sum, f) => sum + f, 0);
+  // Ties broken by original order, so the result is stable across renders.
+  const order = exact
+    .map((e, i) => ({ i, frac: e - Math.floor(e) }))
+    .sort((a, b) => b.frac - a.frac || a.i - b.i);
+  const out = [...floors];
+  for (const { i } of order) {
+    if (remainder <= 0) break;
+    out[i] = (out[i] ?? 0) + 1;
+    remainder -= 1;
+  }
+  return out;
+}
 
 /* ----------------------------- action modals ---------------------------- */
 /** Quick-pick amounts for the Add balance modal (USD). */
@@ -339,3 +399,17 @@ export const swatchColor = (v: string) => {
   const m = v.match(/#[0-9a-fA-F]{6}/);
   return m ? m[0] : 'var(--accent)';
 };
+
+
+/**
+ * Channel metadata for a value that may not be one of ours.
+ *
+ * Billing line items carry Infobip's category mapped to a channel, and that
+ * mapping can legitimately produce null (an AI or lookup charge is not a
+ * messaging channel). Indexing CHANNEL directly with such a value returns
+ * undefined and throws on `.color`.
+ */
+export function channelMeta(channel: string | null): ChannelMeta | null {
+  if (!channel) return null;
+  return (CHANNEL as Record<string, ChannelMeta | undefined>)[channel] ?? null;
+}
