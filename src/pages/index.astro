@@ -950,7 +950,12 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
      disagree about where the carousel is. */
   .tour {
     --tour-gap: 34px;
-    padding-block: 88px;
+    /* Generous above, modest below. The section runs into the footer's
+       "Get started" banner, which supplies its own top spacing, so a full
+       matching pad here produced a dead band twice the page's rhythm — but
+       zero left the dot pager sitting right on the banner's edge. 52px is the
+       pager's own breathing room, not section spacing. */
+    padding-block: 128px 52px;
   }
   .tour__title {
     margin: 14px 0 40px;
@@ -1215,7 +1220,7 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   }
   @media (max-width: 720px) {
     .tour {
-      padding-block: 64px;
+      padding-block: 84px 40px;
     }
     .tour__track {
       grid-auto-columns: 88%;
