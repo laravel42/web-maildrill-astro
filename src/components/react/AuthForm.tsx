@@ -18,7 +18,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const [pendingProfile, setPendingProfile] = useState<{ name: string; phone: string } | null>(
     null,
   );
-  const [stage, setStage] = useState<'form' | 'code' | 'twofa' | 'done'>('form');
+  const [stage, setStage] = useState<'form' | 'code' | 'twofa' | 'done' | 'waitlist'>('form');
   // Six positional slots so a digit typed into any box stays in place.
   const [code, setCode] = useState<string[]>(['', '', '', '', '', '']);
   // Two-factor challenge (accounts with an authenticator app enabled).
@@ -137,13 +137,12 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           throw new Error('Enter a valid phone number.');
         }
         if (!terms) throw new Error('Please accept the Terms and Privacy Policy.');
-        // Same gate as the login branch. Without it the server still refused —
-        // /api/login-code only calls the backend for allowlisted addresses —
-        // but this form read the deliberate no-enumeration 202 as success and
-        // advanced to "enter your code", so a private rollout looked wide open
-        // and the visitor waited for a code that was never sent.
+        // Same gate as the login branch, but a different destination: an
+        // uninvited sign-up is a waitlist join, not an error. It lands on the
+        // terminal "You're on the list" state rather than an inline notice
+        // under a form the visitor has already completed.
         if (!isAllowedLoginEmail(email)) {
-          setNotInvited(true);
+          setStage('waitlist');
           setStatus('idle');
           return;
         }
@@ -344,6 +343,50 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       </div>
       <p className={styles.sub} style={{ margin: 0 }}>
         Code verified — taking you to your workspace.
+      </p>
+    </div>
+  );
+
+  /**
+   * Terminal state for a sign-up from an address that is not on the allowlist.
+   *
+   * Deliberately a confirmation, not a rejection: during a private rollout the
+   * honest thing to tell someone who just filled in a whole form is that they
+   * are queued and will hear from us, rather than showing an error beside a
+   * button that appears to have failed. Restored from the copy this form used
+   * before registration was opened up (1c0e979).
+   */
+  const waitlistMiddle = (
+    <div role="status" style={{ animation: 'pop .5s var(--ease-out) both' }}>
+      <div className={styles.stepHead}>
+        <div className={`${styles.successicon} ${styles.iconTile} ${styles.iconTileMail}`}>
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <path d="m22 7-10 6L2 7" />
+          </svg>
+        </div>
+        <h2 className={styles.substep}>You&rsquo;re on the list</h2>
+      </div>
+      <p className={styles.sub} style={{ margin: '0 0 16px' }}>
+        We&rsquo;re thrilled to have you. Because demand has been far higher than we expected,
+        we&rsquo;re rolling out new accounts in controlled waves to keep deliverability and support
+        quality high for everyone.
+      </p>
+      <p className={styles.sub} style={{ margin: 0 }}>
+        <strong style={{ color: 'var(--text)', fontWeight: 600 }}>
+          Your workspace will be ready within the next 7 days — and most likely sooner.
+        </strong>{' '}
+        You don&rsquo;t need to do anything: we&rsquo;ll email you the moment it&rsquo;s live.
       </p>
     </div>
   );
@@ -632,6 +675,8 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         twofaMiddle
       ) : stage === 'done' ? (
         doneMiddle
+      ) : stage === 'waitlist' ? (
+        waitlistMiddle
       ) : (
         <form onSubmit={onSubmit} noValidate method="post" action="#">
           {mode === 'signup' && (
@@ -697,28 +742,15 @@ export default function AuthForm({ mode }: { mode: Mode }) {
             </p>
           )}
 
-          {/* Rendered in BOTH modes. Gated on `login` alone, the signup form
-              set this state and displayed nothing — so a blocked signup just
-              silently did nothing when submitted, which is worse than the
-              unguarded form it replaced. The copy differs because the login
-              notice points at /signup, and on the signup page that is a link
-              back to itself. */}
-          {notInvited && (
+          {/* Login only. An uninvited SIGN-UP is not an error under the form —
+              it gets the terminal waitlist state instead (see `waitlistMiddle`),
+              which is also why this copy can keep pointing at /signup. */}
+          {mode === 'login' && notInvited && (
             <div className={styles.gate} role="status">
-              {mode === 'login' ? (
-                <>
-                  We couldn&rsquo;t find an active account for that email. If you already signed
-                  up, your confirmation email is on its way — expect it within a few days.
-                  Otherwise <a href="/signup">join the waitlist</a> and you&rsquo;ll be part of the
-                  crew in 3&ndash;7 days.
-                </>
-              ) : (
-                <>
-                  Maildrill is in a private rollout, so sign-ups are limited to invited accounts
-                  right now. We&rsquo;ve noted your interest — if you were expecting access, check
-                  the address you entered or <a href="/contact">get in touch</a>.
-                </>
-              )}
+              We couldn&rsquo;t find an active account for that email. If you already signed up,
+              your confirmation email is on its way — expect it within a few days. Otherwise{' '}
+              <a href="/signup">join the waitlist</a> and you&rsquo;ll be part of the crew in
+              3&ndash;7 days.
             </div>
           )}
 
