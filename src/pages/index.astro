@@ -104,31 +104,38 @@ const stats = [
   { to: 40, decimals: 0, suffix: '%', prefix: '', label: 'Faster campaign setup' },
 ];
 
-const quotes = [
-  {
-    text: 'We replaced three tools with Maildrill. One audience across email and SMS changed how fast we can move.',
-    name: 'Ava Chen',
-    role: 'Head of Growth, Lumen',
-    initials: 'AC',
-    color: 'var(--ch-email)',
-    tint: 'var(--ch-email-tint)',
-  },
-  {
-    text: 'Deliverability jumped the week we switched. The analytics tell us what to do next, not just what happened.',
-    name: 'Marcus Reed',
-    role: 'CRM Lead, Orbit',
-    initials: 'MR',
-    color: 'var(--ch-whatsapp)',
-    tint: 'var(--ch-whatsapp-tint)',
-  },
-  {
-    text: 'The campaign wizard is so fast our team stopped dreading launches. It feels like Linear for messaging.',
-    name: 'Sofia Alvarez',
-    role: 'Lifecycle Manager, Fjord',
-    initials: 'SA',
-    color: 'var(--ch-sms)',
-    tint: 'var(--ch-sms-tint)',
-  },
+/**
+ * Product screenshots for the tour carousel.
+ *
+ * These replace three invented testimonials with quotes attributed to people
+ * who do not exist — the screenshots are the same product a visitor gets, so
+ * they make a claim we can actually stand behind.
+ *
+ * `w`/`h` are the intrinsic pixel dimensions (3200x2000, captured at 2x).
+ * Declared so the browser reserves the box before the image arrives and the
+ * section does not jump as each one loads.
+ */
+const shots = [
+  { src: '/product/01-dashboard.png', title: 'One workspace, four channels',
+    caption: 'Email, SMS, WhatsApp and voice reporting side by side — not four dashboards.' },
+  { src: '/product/09-email-builder.png', title: 'Drag-and-drop email builder',
+    caption: 'Blocks, live preview and mobile view, on templates your team can reuse.' },
+  { src: '/product/10-whatsapp-builder.png', title: 'WhatsApp templates done properly',
+    caption: 'Real components, placeholders and Meta approval states — not a text box.' },
+  { src: '/product/02-campaigns.png', title: 'Every campaign, every channel',
+    caption: 'Outcomes per send, with failures surfaced instead of buried.' },
+  { src: '/product/03-analytics-dark.png', title: 'Analytics that state their basis',
+    caption: 'Delivery, opens and clicks per channel, each with its window named.' },
+  { src: '/product/06-templates.png', title: 'A template library per channel',
+    caption: 'Performance on the card, so you reuse what works.' },
+  { src: '/product/04-subscribers.png', title: 'Audiences that stay fast',
+    caption: 'Search and filter across a million contacts without waiting.' },
+  { src: '/product/05-lists.png', title: 'Lists with channel consent built in',
+    caption: 'Which channels a list may use, and who is reachable on each.' },
+  { src: '/product/07-media.png', title: 'Shared media library',
+    caption: 'Assets once, reused across every template and channel.' },
+  { src: '/product/08-dashboard-dark.png', title: 'Light and dark, everywhere',
+    caption: 'Every screen ships in both — including the ones you print.' },
 ];
 
 const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd()];
@@ -342,29 +349,61 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   </section>
 
   {/* -------------------------------------------------------------- VOICES */}
-  <section class="voices container--wide">
-    <p class="eyebrow" data-reveal>Voices</p>
-    <h2 class="h-section voices__title" data-reveal style="--reveal-delay:60ms">
-      Teams ship faster on Maildrill.
+  {/* -------------------------------------------------------------- TOUR */}
+  <section class="tour container--wide" aria-labelledby="tour-title">
+    <p class="eyebrow" data-reveal>Product tour</p>
+    <h2 class="h-section tour__title" id="tour-title" data-reveal style="--reveal-delay:60ms">
+      See it before you sign up.
     </h2>
-    <div class="grid-3">
+
+    {/* Scroll-snap does the carousel; JS only adds the arrows, dots and
+        autoplay on top. With JS unavailable or still parsing, this is a
+        horizontally scrollable strip of screenshots that already works. */}
+    <div class="tour__frame" data-reveal style="--reveal-delay:120ms">
+      <ul class="tour__track" id="tour-track" tabindex="0" role="group" aria-label="Product screenshots, scrollable">
+        {
+          shots.map((shot, i) => (
+            <li class="tour__slide" id={`tour-slide-${i}`} aria-label={`${i + 1} of ${shots.length}: ${shot.title}`}>
+              <figure class="tour__fig">
+                <img
+                  src={shot.src}
+                  alt={shot.title}
+                  width="3200"
+                  height="2000"
+                  decoding="async"
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                  fetchpriority={i === 0 ? 'high' : 'auto'}
+                />
+                <figcaption>
+                  <strong>{shot.title}</strong>
+                  <span>{shot.caption}</span>
+                </figcaption>
+              </figure>
+            </li>
+          ))
+        }
+      </ul>
+
+      <button class="tour__arrow tour__arrow--prev" type="button" data-tour-prev aria-controls="tour-track" aria-label="Previous screenshot" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="tour__arrow tour__arrow--next" type="button" data-tour-next aria-controls="tour-track" aria-label="Next screenshot" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <div class="tour__dots" data-tour-dots role="tablist" aria-label="Choose a screenshot" hidden>
       {
-        quotes.map((q, i) => (
-          <figure class="quote" data-card data-reveal style={`--reveal-delay:${i * 90}ms`}>
-            <div class="quote__stars" aria-label="Rated 5 out of 5">
-              ★★★★★
-            </div>
-            <blockquote>"{q.text}"</blockquote>
-            <figcaption>
-              <span class="quote__avatar" style={`background:${q.tint};color:${q.color}`}>
-                {q.initials}
-              </span>
-              <span>
-                <span class="quote__name">{q.name}</span>
-                <span class="quote__role">{q.role}</span>
-              </span>
-            </figcaption>
-          </figure>
+        shots.map((shot, i) => (
+          <button
+            type="button"
+            class="tour__dot"
+            role="tab"
+            aria-controls={`tour-slide-${i}`}
+            aria-label={shot.title}
+            aria-selected={i === 0 ? 'true' : 'false'}
+            data-tour-dot={i}
+          />
         ))
       }
     </div>
@@ -873,70 +912,278 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   }
 
   /* ---- VOICES ---- */
-  .voices {
+  /* ---- PRODUCT TOUR ----
+     A scroll-snap carousel. The scroller is the source of truth for "which
+     slide is showing" — arrows and dots scroll it rather than tracking their
+     own index, so a trackpad swipe, a dot click and an arrow key can never
+     disagree about where the carousel is. */
+  .tour {
     padding-block: 88px;
   }
-
-  .voices__title {
-    margin: 14px 0 44px;
+  .tour__title {
+    margin: 14px 0 40px;
+  }
+  .tour__frame {
+    position: relative;
+  }
+  .tour__track {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 100%;
+    gap: 24px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    /* The screenshots carry their own shadow, which the scroller would clip. */
+    padding-bottom: 10px;
+    scrollbar-width: none;
+  }
+  .tour__track::-webkit-scrollbar {
+    display: none;
+  }
+  .tour__track:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 6px;
+    border-radius: 22px;
+  }
+  .tour__slide {
+    scroll-snap-align: center;
+    min-width: 0;
+  }
+  .tour__fig {
+    margin: 0;
+  }
+  .tour__fig img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface);
+    box-shadow: 0 24px 60px rgba(28, 25, 23, 0.14);
+  }
+  .tour__fig figcaption {
+    display: block;
+    margin-top: 18px;
+    max-width: 62ch;
+  }
+  .tour__fig figcaption strong {
+    display: block;
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .tour__fig figcaption span {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.55;
   }
 
-  .quote {
-    margin: 0;
+  .tour__arrow {
+    position: absolute;
+    top: 0;
+    /* Centred on the IMAGE, not the figure: the caption below would drag the
+       arrows off-centre and they would drift as caption lengths differ. */
+    height: 62.5%;
+    display: grid;
+    place-items: center;
+    width: 52px;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+  }
+  .tour__arrow svg {
+    width: 22px;
+    height: 22px;
+    padding: 9px;
+    box-sizing: content-box;
+    border-radius: 999px;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 30px;
+    box-shadow: 0 6px 18px rgba(28, 25, 23, 0.16);
+  }
+  .tour__arrow--prev {
+    left: -14px;
+  }
+  .tour__arrow--next {
+    right: -14px;
+  }
+  .tour__frame:hover .tour__arrow,
+  .tour__arrow:focus-visible {
+    opacity: 1;
+  }
+  .tour__arrow[disabled] {
+    opacity: 0 !important;
+    pointer-events: none;
+  }
+
+  .tour__dots {
     display: flex;
-    flex-direction: column;
-    height: 100%;
+    justify-content: center;
+    gap: 9px;
+    margin-top: 26px;
   }
-
-  .quote__stars {
-    color: var(--brand);
-    font-size: 15px;
-    letter-spacing: 2px;
-    margin-bottom: 16px;
-  }
-
-  .quote blockquote {
-    margin: 0 0 24px;
+  .tour__dot {
+    width: 8px;
+    height: 8px;
     padding: 0;
     border: 0;
-    font-size: 19px;
-    line-height: 1.5;
-    letter-spacing: -0.01em;
-    color: var(--text);
-    flex: 1;
+    border-radius: 999px;
+    background: var(--border);
+    cursor: pointer;
+    transition:
+      background 0.18s ease,
+      width 0.18s ease;
+  }
+  .tour__dot[aria-selected='true'] {
+    width: 26px;
+    background: var(--brand);
+  }
+  .tour__dot:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 3px;
   }
 
-  .quote figcaption {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  @media (prefers-reduced-motion: reduce) {
+    .tour__track {
+      scroll-behavior: auto;
+    }
   }
-
-  .quote__avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 14px;
-    flex-shrink: 0;
-  }
-
-  .quote__name {
-    display: block;
-    font-size: var(--fs-sm2);
-    font-weight: 600;
-  }
-
-  .quote__role {
-    display: block;
-    font-size: var(--fs-sm);
-    color: var(--text4);
+  @media (max-width: 720px) {
+    .tour {
+      padding-block: 64px;
+    }
+    /* Arrows assume a pointer that can hover; touch gets the swipe it already
+       has, and the dots stay for position. */
+    .tour__arrow {
+      display: none;
+    }
   }
 </style>
+
+<script>
+  /**
+   * Product tour carousel.
+   *
+   * The scroller is the single source of truth for the current slide — the
+   * dots and arrows read it rather than keeping their own index, so a
+   * trackpad swipe, a dot click and an arrow key can never disagree about
+   * where the carousel is. Both controls are hidden in the markup and
+   * revealed here, so no-JS visitors get a plain scrollable strip rather than
+   * buttons that do nothing.
+   */
+  const track = document.getElementById('tour-track');
+  const dotsBar = document.querySelector<HTMLElement>('[data-tour-dots]');
+  const prev = document.querySelector<HTMLButtonElement>('[data-tour-prev]');
+  const next = document.querySelector<HTMLButtonElement>('[data-tour-next]');
+
+  if (track && dotsBar && prev && next) {
+    const slides = Array.from(track.children) as HTMLElement[];
+    const dots = Array.from(dotsBar.querySelectorAll<HTMLButtonElement>('[data-tour-dot]'));
+    for (const el of [dotsBar, prev, next]) el.hidden = false;
+
+    /** Index whose centre is nearest the scroller's centre. */
+    const current = (): number => {
+      const mid = track.scrollLeft + track.clientWidth / 2;
+      let best = 0;
+      let bestGap = Infinity;
+      slides.forEach((slide, i) => {
+        const gap = Math.abs(slide.offsetLeft + slide.clientWidth / 2 - mid);
+        if (gap < bestGap) {
+          bestGap = gap;
+          best = i;
+        }
+      });
+      return best;
+    };
+
+    const goTo = (i: number): void => {
+      const slide = slides[Math.max(0, Math.min(slides.length - 1, i))];
+      if (slide) track.scrollTo({ left: slide.offsetLeft, behavior: 'smooth' });
+    };
+
+    const sync = (): void => {
+      const i = current();
+      dots.forEach((dot, n) => dot.setAttribute('aria-selected', n === i ? 'true' : 'false'));
+      // Disabled rather than wrapped: an arrow that silently jumps from the
+      // last slide back to the first reads as a bug at the edge of a strip
+      // the visitor can also see is at its end.
+      prev.disabled = i === 0;
+      next.disabled = i === slides.length - 1;
+    };
+
+    prev.addEventListener('click', () => goTo(current() - 1));
+    next.addEventListener('click', () => goTo(current() + 1));
+    dots.forEach((dot, i) => dot.addEventListener('click', () => goTo(i)));
+
+    track.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      goTo(current() + (e.key === 'ArrowRight' ? 1 : -1));
+    });
+
+    // Throttled to animation frames: scroll fires far more often than the
+    // dots can usefully change.
+    let queued = false;
+    track.addEventListener(
+      'scroll',
+      () => {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(() => {
+          queued = false;
+          sync();
+        });
+      },
+      { passive: true },
+    );
+    sync();
+
+    /**
+     * Autoplay, but only when it cannot annoy: paused on hover, on keyboard
+     * focus, when the section is off-screen, and skipped entirely for anyone
+     * who asked for reduced motion. It also stops for good on the first
+     * manual interaction — once a visitor is driving, moving the carousel
+     * under them is hostile.
+     */
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let timer = 0;
+    let stopped = false;
+    const stop = (): void => {
+      window.clearInterval(timer);
+      timer = 0;
+    };
+    const start = (): void => {
+      if (stopped || timer || reduced.matches) return;
+      timer = window.setInterval(() => {
+        const i = current();
+        goTo(i >= slides.length - 1 ? 0 : i + 1);
+      }, 5200);
+    };
+    const stopForever = (): void => {
+      stopped = true;
+      stop();
+    };
+    for (const evt of ['pointerdown', 'keydown'] as const) {
+      track.addEventListener(evt, stopForever, { once: true });
+    }
+    [prev, next, ...dots].forEach((el) => el.addEventListener('click', stopForever, { once: true }));
+
+    const frame = track.closest('.tour__frame');
+    frame?.addEventListener('pointerenter', stop);
+    frame?.addEventListener('pointerleave', start);
+    track.addEventListener('focusin', stop);
+    track.addEventListener('focusout', start);
+
+    new IntersectionObserver(
+      ([entry]) => (entry?.isIntersecting ? start() : stop()),
+      { threshold: 0.4 },
+    ).observe(track);
+  }
+</script>
