@@ -137,6 +137,16 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           throw new Error('Enter a valid phone number.');
         }
         if (!terms) throw new Error('Please accept the Terms and Privacy Policy.');
+        // Same gate as the login branch. Without it the server still refused —
+        // /api/login-code only calls the backend for allowlisted addresses —
+        // but this form read the deliberate no-enumeration 202 as success and
+        // advanced to "enter your code", so a private rollout looked wide open
+        // and the visitor waited for a code that was never sent.
+        if (!isAllowedLoginEmail(email)) {
+          setNotInvited(true);
+          setStatus('idle');
+          return;
+        }
         window.posthog?.capture('signup_form_submitted', { channel: 'email' });
         // Registration is self-service: the same code flow as login, and
         // verifying it creates the user, their workspace and its Infobip
@@ -687,12 +697,28 @@ export default function AuthForm({ mode }: { mode: Mode }) {
             </p>
           )}
 
-          {mode === 'login' && notInvited && (
+          {/* Rendered in BOTH modes. Gated on `login` alone, the signup form
+              set this state and displayed nothing — so a blocked signup just
+              silently did nothing when submitted, which is worse than the
+              unguarded form it replaced. The copy differs because the login
+              notice points at /signup, and on the signup page that is a link
+              back to itself. */}
+          {notInvited && (
             <div className={styles.gate} role="status">
-              We couldn&rsquo;t find an active account for that email. If you already signed up,
-              your confirmation email is on its way — expect it within a few days. Otherwise{' '}
-              <a href="/signup">join the waitlist</a> and you&rsquo;ll be part of the crew in
-              3&ndash;7 days.
+              {mode === 'login' ? (
+                <>
+                  We couldn&rsquo;t find an active account for that email. If you already signed
+                  up, your confirmation email is on its way — expect it within a few days.
+                  Otherwise <a href="/signup">join the waitlist</a> and you&rsquo;ll be part of the
+                  crew in 3&ndash;7 days.
+                </>
+              ) : (
+                <>
+                  Maildrill is in a private rollout, so sign-ups are limited to invited accounts
+                  right now. We&rsquo;ve noted your interest — if you were expecting access, check
+                  the address you entered or <a href="/contact">get in touch</a>.
+                </>
+              )}
             </div>
           )}
 
