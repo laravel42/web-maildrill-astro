@@ -963,6 +963,36 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   .tour__frame {
     position: relative;
   }
+  /* A deliberate backdrop behind the strip.
+   *
+   * There was already grey back here, but not on purpose: it was the pooled
+   * box-shadow of the raised centre card, clipped flat by the scroller's
+   * padding edge. That read as a band that stopped partway down the carousel.
+   * This spans the full track height instead, so the shading is a panel the
+   * cards sit on rather than an artefact of one card's shadow.
+   *
+   * Inset horizontally beyond the container so it reads as a band the strip
+   * rides through, and faded at both ends so it has no hard vertical edge. */
+  .tour__frame::before {
+    content: '';
+    position: absolute;
+    inset: 0 -6vw;
+    border-radius: 28px;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(128, 122, 112, 0.07) 14%,
+      rgba(128, 122, 112, 0.07) 86%,
+      transparent 100%
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+  /* Above the backdrop; the track creates no stacking context of its own. */
+  .tour__frame > * {
+    position: relative;
+    z-index: 1;
+  }
   .tour__track {
     list-style: none;
     margin: 0;
