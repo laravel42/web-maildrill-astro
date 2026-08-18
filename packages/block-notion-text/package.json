@@ -22,6 +22,8 @@
   "dependencies": {
     "@eb/document-core": "workspace:*",
     "@emoji-mart/data": "^1.2.1",
+    "@md/emoji-picker": "workspace:*",
+    "@md/merge-tag-menu": "workspace:*",
     "@floating-ui/dom": "^1.8.0",
     "@floating-ui/react": "^0.27.20",
     "@mui/icons-material": "^9.2.0",

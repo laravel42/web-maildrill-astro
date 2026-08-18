@@ -121,7 +121,7 @@ export const bodyPlugin: BlockPlugin<Data> = {
           severity: 'warning',
           slot: 'body',
           code: 'body/variable-example-missing',
-          message: `Add an example value for {{${n}}} (required by Meta review)`,
+          message: `Add a field value for {{${n}}} (required by Meta review)`,
         });
       }
     }

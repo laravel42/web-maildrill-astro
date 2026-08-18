@@ -42,10 +42,4 @@
   border-radius: 12px;
   overflow: hidden;
 }
-.loading {
-  width: 320px;
-  padding: 24px;
-  font-size: 12.5px;
-  color: var(--muted);
-  text-align: center;
-}
+/* Picker size, layout and loading placeholder all live in @md/emoji-picker. */

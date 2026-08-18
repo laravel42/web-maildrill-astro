@@ -13,6 +13,7 @@
     "@maildrill/identity": "workspace:*",
     "@maildrill/observability": "workspace:*",
     "@maildrill/product": "workspace:*",
+    "@maildrill/providers": "workspace:*",
     "@maildrill/services": "workspace:*",
     "fastify": "^5.11.0",
     "zod": "^3.25.76"

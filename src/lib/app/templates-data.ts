@@ -87,6 +87,17 @@ export function templateCategoriesForChannel(channel: ChannelType): readonly str
   return TEMPLATE_CATEGORIES;
 }
 
+/** Categories still shown in the editor but not yet selectable. */
+const UNAVAILABLE_TEMPLATE_CATEGORIES: Partial<Record<ChannelType, readonly string[]>> = {
+  voice: ['IVR'],
+};
+
+export function unavailableTemplateCategoriesForChannel(
+  channel: ChannelType
+): readonly string[] | undefined {
+  return UNAVAILABLE_TEMPLATE_CATEGORIES[channel];
+}
+
 export function defaultTemplateCategory(channel: ChannelType, initial?: string | null): string {
   const categories = templateCategoriesForChannel(channel);
   if (initial === 'Announcement') return 'Newsletter';

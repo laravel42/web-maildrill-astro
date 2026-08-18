@@ -17,17 +17,22 @@ const appSrc = path.resolve(rootDir, 'src');
 const waStudioSrc = path.resolve(rootDir, 'packages/wa-template-studio/src');
 
 /**
- * `astro build` prerenders routes through its own Vite pass, whose dep
- * optimizer rewrites the cacheDir with a production dep set (observed
- * 320 → 163 files). On the shared default `node_modules/.vite` that lands
- * UNDER a running `astro dev` daemon: the daemon's in-memory metadata then
- * points at chunk files that no longer exist, every lazy island 504s with
- * "Outdated Optimize Dep", and only a server restart recovers — page reloads
- * can't. Builds (including the Playwright e2e webServer's `npm run build`)
- * therefore get their own cache directory. NODE_ENV can't drive this split:
- * the root `.env` pins NODE_ENV=development.
+ * Every Astro CLI pass runs its own Vite dep optimizer, and that optimizer
+ * REWRITES the cacheDir it is handed — deleting the chunk files a running
+ * `astro dev` daemon is still serving from. The daemon's in-memory metadata
+ * then points at files that no longer exist, the lazily-discovered deps
+ * (WhatsApp studio, email builder) 504 with "Outdated Optimize Dep", and only
+ * a server restart recovers — page reloads can't. `astro build` was the first
+ * offender found (320 -> 163 files); `astro sync` does the same (337 -> 190
+ * files, verified 2026-08-17) and it runs on every `astro check`, i.e. on
+ * every `pnpm check` / `pnpm typecheck`. So the shared `node_modules/.vite`
+ * belongs to the dev server alone and every other command gets its own
+ * directory. NODE_ENV can't drive this split: the root `.env` pins
+ * NODE_ENV=development.
  */
-const isAstroBuild = process.argv.includes('build');
+const astroCommand = process.argv.slice(2).find((arg) => !arg.startsWith('-'));
+const isDevServer = astroCommand === 'dev';
+const cacheDirSuffix = astroCommand && /^[a-z][a-z-]*$/.test(astroCommand) ? astroCommand : 'cli';
 
 const RESOLVE_EXTS = ['.tsx', '.ts', '.jsx', '.js'];
 
@@ -112,9 +117,9 @@ export default defineConfig({
     }),
   ],
   vite: {
-    // Keep build-time dep optimization out of the dev daemon's cache (see
-    // isAstroBuild above).
-    cacheDir: isAstroBuild ? 'node_modules/.vite-build' : 'node_modules/.vite',
+    // The dev server owns the shared dep cache; build/sync/check each get
+    // their own so they can't clobber it (see isDevServer above).
+    cacheDir: isDevServer ? 'node_modules/.vite' : `node_modules/.vite-${cacheDirSuffix}`,
     // `@/` is resolved by waTemplateStudioAlias (resolveId + enforce: 'pre').
     // Do not use resolve.alias.customResolver — deprecated, removed in Vite 9.
     plugins: [waTemplateStudioAlias(), tailwindcss()],
@@ -142,16 +147,16 @@ export default defineConfig({
         'src/components/react/**/*.{ts,tsx}',
         'packages/email-builder-standalone/src/index.tsx',
         'packages/wa-template-studio/src/index.ts',
+        'packages/emoji-picker/src/index.ts',
       ],
       include: [
         'infobip-rtc',
         // Subscriber file import: SheetJS is lazy-loaded on first spreadsheet.
         'xlsx',
-        // Emoji picker (SMS composer): lazy-loaded on first open.
-        '@emoji-mart/react',
-        'emoji-mart',
-        'wa-template-studio > @emoji-mart/react',
-        'wa-template-studio > emoji-mart',
+        // Emoji picker (every composer, via @md/emoji-picker): lazy-loaded on
+        // first open.
+        '@md/emoji-picker > @emoji-mart/react',
+        '@md/emoji-picker > emoji-mart',
         // Profile security: QR render is lazy-imported; the WebAuthn client
         // rides the statically-imported auth islands.
         'qrcode',

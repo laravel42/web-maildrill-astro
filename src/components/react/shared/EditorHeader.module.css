@@ -309,6 +309,28 @@
 .pillLabel:hover {
   color: var(--text2);
 }
+/* Not-yet-shipped category: kept visible so the roadmap reads from the UI,
+   but inert — the radio is disabled and the pill carries a caption. */
+.pillUnavailable .pillLabel,
+.pillUnavailable .pillLabel:hover {
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.pillNote {
+  font-size: 7.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted2, var(--muted));
+  opacity: 0.6;
+}
+
 .pillInput:checked + .pillLabel {
   background: var(--surface);
   color: var(--text2);

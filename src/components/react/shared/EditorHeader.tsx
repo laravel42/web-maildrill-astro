@@ -18,6 +18,8 @@ type Props = {
   /** Optional category picker — omit `categories` to hide it (e.g. campaigns). */
   category?: string;
   categories?: readonly string[];
+  /** Categories rendered but not selectable, flagged as coming soon. */
+  unavailableCategories?: readonly string[];
   onCategoryChange?: (value: string) => void;
   /** Optional language picker — suffix on the title field (templates). */
   language?: string;
@@ -148,6 +150,7 @@ export default function EditorHeader({
   status = 'idle',
   category,
   categories,
+  unavailableCategories,
   onCategoryChange,
   language,
   languageOptions,
@@ -196,19 +199,29 @@ export default function EditorHeader({
              worth showing, and native radios give arrow-key navigation and
              screen-reader semantics for free — the pills are the labels. */
           <div className={styles.categories} role="radiogroup" aria-label="Category">
-            {categories.map((c) => (
-              <label key={c} className={styles.pill}>
-                <input
-                  type="radio"
-                  name="editor-category"
-                  className={styles.pillInput}
-                  value={c}
-                  checked={(category ?? categories[0]) === c}
-                  onChange={() => onCategoryChange(c)}
-                />
-                <span className={styles.pillLabel}>{c}</span>
-              </label>
-            ))}
+            {categories.map((c) => {
+              const unavailable = unavailableCategories?.includes(c) ?? false;
+              return (
+                <label
+                  key={c}
+                  className={`${styles.pill}${unavailable ? ` ${styles.pillUnavailable}` : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="editor-category"
+                    className={styles.pillInput}
+                    value={c}
+                    disabled={unavailable}
+                    checked={(category ?? categories[0]) === c}
+                    onChange={() => onCategoryChange(c)}
+                  />
+                  <span className={styles.pillLabel}>
+                    {c}
+                    {unavailable && <span className={styles.pillNote}>Coming soon</span>}
+                  </span>
+                </label>
+              );
+            })}
           </div>
         )}
       </div>

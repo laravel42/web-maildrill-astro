@@ -1,5 +1,6 @@
 .an {
-  max-width: 1600px;
+  width: 100%;
+  max-width: none;
 }
 .head {
   align-items: flex-start;

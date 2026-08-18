@@ -30,6 +30,9 @@ const TIPS = [
 const PREVIEW_FALLBACK =
   'Hello {{name}}, this is a courtesy call from Maildrill about your recent order.';
 
+/** Shortest script worth placing a preview call for. */
+const MIN_PREVIEW_CHARS = 10;
+
 export default function VoiceBuilder({
   initialBuilderDoc,
   ...props
@@ -97,12 +100,15 @@ export default function VoiceBuilder({
   // Voice review playback — the real Infobip TTS voice over a silent WebRTC
   // call (see useVoicePreview). {{tokens}} are spoken as sample values.
   const preview = useVoicePreview();
+  /* A one-word script places a real call to hear nothing useful, so playback
+     waits until there is a sentence worth listening to. */
+  const scriptTooShort = draft.message.trim().length < MIN_PREVIEW_CHARS;
   const togglePreviewPlayback = () => {
     if (preview.state !== 'idle') {
       preview.stop();
       return;
     }
-    if (!selectedVoice) return;
+    if (scriptTooShort || !selectedVoice) return;
     const text = msgPreview.replace(
       /\{\{\s*([\w.]+)\s*\}\}/g,
       (_, key: string) => TOKEN_SAMPLES[key] ?? key.replace(/[_.]+/g, ' '),
@@ -114,6 +120,15 @@ export default function VoiceBuilder({
       speechRate: PREVIEW_RATES[speed] ?? 1,
     });
   };
+
+  /* The caption is the only place the transport reports itself, now that the
+     button is icon-only — including why it is unavailable. */
+  const previewHint = (() => {
+    if (preview.state === 'connecting') return 'Connecting…';
+    if (preview.state === 'playing') return `Playing the real caller voice (${voice}).`;
+    if (scriptTooShort) return `Write at least ${MIN_PREVIEW_CHARS} characters to hear a preview.`;
+    return `Plays the real caller voice (${voice}).`;
+  })();
 
   return (
     <ComposerShell channel="voice" draft={draft} onClose={props.onClose}>
@@ -195,50 +210,34 @@ export default function VoiceBuilder({
         <button
           type="button"
           onClick={togglePreviewPlayback}
+          /* Stays clickable once playing, so editing the script mid-call can
+             never trap the user without a way to stop it. */
+          disabled={preview.state === 'idle' && scriptTooShort}
           aria-pressed={preview.state === 'playing'}
-          style={{
-            marginTop: 14,
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            padding: '9px 12px',
-            borderRadius: 10,
-            border: `1.5px solid ${meta.color}`,
-            background: preview.state === 'idle' ? meta.tint : meta.color,
-            color: preview.state === 'idle' ? meta.color : '#fff',
-            fontSize: 12.5,
-            fontWeight: 600,
-            cursor: 'pointer',
-            opacity: preview.state === 'connecting' ? 0.75 : 1,
-            transition: 'background-color 150ms ease, color 150ms ease',
-          }}
+          aria-label={preview.state === 'idle' ? 'Play preview' : 'Stop preview'}
+          className={styles.play}
+          style={{ opacity: preview.state === 'connecting' ? 0.75 : 1 }}
         >
           {preview.state === 'idle' ? (
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-              <path d="M2.5 1.2v9.6L11 6z" />
+            <svg width="22" height="22" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+              {/* Nudged right so the triangle looks centred in the circle. */}
+              <path d="M3.2 1.2v9.6L11 6z" />
             </svg>
           ) : (
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+            <svg width="19" height="19" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
               <rect x="1" y="1" width="10" height="10" rx="2" />
             </svg>
           )}
-          {preview.state === 'idle'
-            ? 'Play preview'
-            : preview.state === 'connecting'
-              ? 'Connecting…'
-              : 'Stop preview'}
         </button>
         <p
           style={{
-            margin: '7px 0 0',
+            margin: '9px 0 0',
             fontSize: 11,
             color: preview.error ? 'var(--danger)' : 'var(--muted)',
             textAlign: 'center',
           }}
         >
-          {preview.error ?? `Plays the real Infobip voice (${voice}) over a silent WebRTC call.`}
+          {preview.error ?? previewHint}
         </p>
       </ComposerCard>
 

@@ -12,6 +12,7 @@ type Props = {
   status?: SaveStatus;
   category?: string;
   categories?: readonly string[];
+  unavailableCategories?: readonly string[];
   onCategoryChange?: (value: string) => void;
   language?: string;
   languageOptions?: readonly LanguageOption[];

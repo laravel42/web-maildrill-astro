@@ -175,8 +175,8 @@ function CampaignReport({
             opened == null
               ? 'No deliveries yet'
               : campaign.channel === 'whatsapp'
-                ? 'Infobip seen receipts'
-                : 'Infobip open tracking',
+                ? 'Maildrill seen receipts'
+                : 'Maildrill open tracking',
         };
       case 'clicked':
         return {
@@ -184,7 +184,7 @@ function CampaignReport({
           value: clicked != null ? clicked.toLocaleString('en-US') : '—',
           pct: clicked != null ? ofDelivered(clicked) : null,
           cls: styles.kClicked,
-          hint: clicked == null ? 'No deliveries yet' : 'Infobip tracked link clicks',
+          hint: clicked == null ? 'No deliveries yet' : 'Maildrill tracked link clicks',
         };
       case 'bounced':
       case 'failed':
@@ -469,7 +469,7 @@ function CampaignReport({
       color: 'var(--accent)',
       series: pickSpark(eventSeries.open, historySeries.open, openPct, nowLabel),
       delta: asDelta(deltaOf(historySeries.open)),
-      hint: campaign.openRate == null ? 'No deliveries yet' : 'Infobip WhatsApp seen receipts',
+      hint: campaign.openRate == null ? 'No deliveries yet' : 'Maildrill WhatsApp seen receipts',
     },
     click: {
       label: 'Click rate',

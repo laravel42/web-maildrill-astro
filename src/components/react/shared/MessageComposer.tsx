@@ -2,7 +2,10 @@ import type { ChangeEvent, CSSProperties, ReactNode } from 'react';
 import type { ChannelType } from '@/types/app';
 import Icon from '../Icon';
 import { CHANNEL } from './channels';
-import { templateCategoriesForChannel } from '@/lib/app/templates-data';
+import {
+  templateCategoriesForChannel,
+  unavailableTemplateCategoriesForChannel,
+} from '@/lib/app/templates-data';
 import {
   normalizeTemplateLanguageCode,
   TEMPLATE_LANGUAGE_OPTIONS,
@@ -60,6 +63,7 @@ export function ComposerShell({
       status={draft.status}
       category={draft.category}
       categories={templateCategoriesForChannel(channel)}
+      unavailableCategories={unavailableTemplateCategoriesForChannel(channel)}
       onCategoryChange={draft.setCategory}
       language={draft.language}
       languageOptions={TEMPLATE_LANGUAGE_OPTIONS}

@@ -276,30 +276,8 @@
   color: #1f1e1b;
 }
 
-.wts-select-menu [data-slot='combobox-item'] {
-  border-radius: 6px;
-  font-size: 0.9375rem; /* --fs-base */
-}
-
-.wts-select-menu [data-slot='combobox-item']:hover,
-.wts-select-menu [data-slot='combobox-item']:focus-visible,
-.wts-select-menu [data-slot='combobox-item'][data-selected] {
-  background: #eef0ff; /* --accent-tint */
-  color: #1f1e1b;
-}
-
-.wts-combobox-list {
-  max-height: 14rem;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-}
-
-.wts-select-menu .wts-combobox-token {
-  color: #77756c; /* --text4 */
-  word-break: break-word;
-}
+/* The subscriber-field list inside .wts-select-menu is @md/merge-tag-menu,
+   which carries its own (equally self-contained) rows and scroller. */
 
 /* Toolbar — aligned with email-builder-standalone TemplatePanel / MainTabsGroup. */
 .wa-studio .wts-mode-tabs {
@@ -489,6 +467,18 @@
 .wa-studio .wts-side-panel--inspector > aside {
   flex: 1;
   min-width: 0;
+}
+
+/* Radix wraps ScrollArea children in an inline-styled `display: table;
+   min-width: 100%` box. A table box sizes to its widest content, so any child
+   that refuses to shrink widens the whole column past the viewport: the form
+   fields then run under the panel edge and their right padding is pushed out
+   of view. Nothing in the studio scrolls horizontally, so pin the wrapper to
+   the viewport instead. */
+.wa-studio [data-radix-scroll-area-viewport] > div {
+  display: block !important;
+  width: 100%;
+  min-width: 0 !important;
 }
 
 /* Collapsed inspector: fully hidden (width 0) — drop the edge borders so no
@@ -712,6 +702,16 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
   white-space: nowrap;
   width: fit-content;
+  /* The row of round buttons can't shrink, and in the narrow inspector it is
+     within a few pixels of the available width. Scroll it rather than let it
+     set the width of the whole form. */
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.wa-studio .wts-fmtbar::-webkit-scrollbar {
+  display: none;
 }
 
 .wa-studio .wts-fmtbtn {
@@ -862,14 +862,6 @@
   background: #ffffff;
   border-radius: 10px;
   overflow: hidden;
-}
-
-.wa-studio .wts-emoji-loading {
-  width: 320px;
-  padding: 24px;
-  font-size: 12px;
-  color: var(--wts-text-secondary);
-  text-align: center;
 }
 
 .wa-studio.dark .wts-emoji-popup {
