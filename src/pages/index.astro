@@ -117,22 +117,22 @@ const stats = [
  * section does not jump as each one loads.
  */
 const shots = [
-  { src: '/product/01-dashboard.png', url: 'app.maildrill.net/dashboard', title: 'One workspace, four channels',
-    caption: 'Email, SMS, WhatsApp and voice reporting side by side — not four dashboards.' },
-  { src: '/product/09-email-builder.png', url: 'app.maildrill.net/templates/email', title: 'Drag-and-drop email builder',
-    caption: 'Blocks, live preview and mobile view, on templates your team can reuse.' },
-  { src: '/product/10-whatsapp-builder.png', url: 'app.maildrill.net/templates/whatsapp', title: 'WhatsApp templates done properly',
-    caption: 'Real components, placeholders and Meta approval states — not a text box.' },
-  { src: '/product/02-campaigns.png', url: 'app.maildrill.net/campaigns', title: 'Every campaign, every channel',
-    caption: 'Outcomes per send, with failures surfaced instead of buried.' },
-  { src: '/product/06-templates.png', url: 'app.maildrill.net/templates', title: 'A template library per channel',
-    caption: 'Performance on the card, so you reuse what works.' },
-  { src: '/product/04-subscribers.png', url: 'app.maildrill.net/subscribers', title: 'Audiences that stay fast',
-    caption: 'Search and filter across a million contacts without waiting.' },
-  { src: '/product/05-lists.png', url: 'app.maildrill.net/lists', title: 'Lists with channel consent built in',
-    caption: 'Which channels a list may use, and who is reachable on each.' },
-  { src: '/product/07-media.png', url: 'app.maildrill.net/media', title: 'Shared media library',
-    caption: 'Assets once, reused across every template and channel.' },
+  { src: '/product/01-dashboard.png', url: 'maildrill.net/dashboard', title: 'One workspace, four channels',
+    caption: 'Track email, SMS, WhatsApp and voice campaign performance from one multichannel dashboard, instead of four disconnected tools.' },
+  { src: '/product/02-campaigns.png', url: 'maildrill.net/campaigns', title: 'Every campaign, every channel',
+    caption: 'Measure delivery, opens, clicks and bounces on every email, SMS, WhatsApp and voice campaign, with failures surfaced early.' },
+  { src: '/product/03-subscribers.png', url: 'maildrill.net/subscribers', title: 'Audiences that stay fast',
+    caption: 'Search, filter and segment millions of contacts in seconds, with custom fields and engagement history on each subscriber.' },
+  { src: '/product/04-lists.png', url: 'maildrill.net/lists', title: 'Lists with channel consent built in',
+    caption: 'Manage subscriber lists with per-channel opt-in and consent tracking, so you know who is reachable on email, SMS or WhatsApp.' },
+  { src: '/product/05-templates.png', url: 'maildrill.net/templates', title: 'A template library per channel',
+    caption: 'Reuse proven message templates across email, SMS, WhatsApp and voice, with open and click rates shown on every single card.' },
+  { src: '/product/06-media.png', url: 'maildrill.net/media', title: 'Shared media library',
+    caption: 'Upload images and files once, then reuse them across every email, SMS, WhatsApp and voice template, with no duplicate uploads.' },
+  { src: '/product/07-email-builder.png', url: 'maildrill.net/templates/email', title: 'Drag-and-drop email builder',
+    caption: 'Design responsive email templates with drag-and-drop blocks, live preview and mobile testing. No HTML or developer required.' },
+  { src: '/product/08-whatsapp-builder.png', url: 'maildrill.net/templates/whatsapp', title: 'WhatsApp templates done properly',
+    caption: 'Build WhatsApp Business templates with real components, variables and Meta approval tracking, submitted without leaving the app.' },
 ];
 
 const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd()];
@@ -353,9 +353,9 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
       See it before you sign up.
     </h2>
 
-    {/* Scroll-snap does the carousel; JS only adds the arrows, dots and
-        autoplay on top. With JS unavailable or still parsing, this is a
-        horizontally scrollable strip of screenshots that already works. */}
+    {/* Scroll-snap does the carousel; JS only adds the arrows and the looping
+        on top. With JS unavailable or still parsing, this is a horizontally
+        scrollable strip of screenshots that already works. */}
     <div class="tour__frame" data-reveal style="--reveal-delay:120ms">
       <ul class="tour__track" id="tour-track" tabindex="0" role="group" aria-label="Product screenshots, scrollable">
         {
@@ -372,20 +372,22 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
                     <i></i><i></i><i></i>
                   </span>
                   <span class="tour__tab" aria-hidden="true">
-                    {/* The real favicon, not a stand-in envelope — this frame
-                        is meant to look like the product in a browser, and the
-                        mark is the one recognisable thing in the chrome. */}
-                    {/* Sized inline: favicon.svg carries its own 32x32
-                        viewBox and a dark rounded tile, and the scoped class
-                        alone was leaving it at intrinsic size — a 42px block
-                        inside a 32px tab. */}
+                    {/* The real brand mark, not a stand-in envelope — this
+                        frame is meant to look like the product in a browser,
+                        and the mark is the one recognisable thing in the
+                        chrome. The transparent variant, not favicon.svg: that
+                        one's dark tile reads as a heavy block against the pale
+                        tab. */}
+                    {/* Sized inline: the mark carries its own 32x32 viewBox and
+                        the scoped class alone was leaving it at intrinsic size
+                        — a 42px block inside a 32px tab. */}
                     <img
                       class="tour__favicon"
-                      src="/favicon.svg"
+                      src="/brand-mark.svg"
                       alt=""
                       width="12"
                       height="12"
-                      style="width:12px;height:12px;border-radius:3px;flex:none"
+                      style="width:9.6px;height:9.6px;flex:none"
                       loading="lazy"
                       decoding="async"
                     />
@@ -940,6 +942,13 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
      disagree about where the carousel is. */
   .tour {
     --tour-gap: 34px;
+    /* Sized against the FRAME (container query unit), never the track's own
+       content box: the track's edge padding is derived from this width, so a
+       percentage here would feed back into itself and collapse the cards. */
+    --tour-card-w: calc((100cqi - 2 * var(--tour-gap)) / 3);
+    /* Room either side so the first and last card can reach dead centre —
+       without it they pin to the edges and can never become the active one. */
+    --tour-edge-pad: calc((100cqi - var(--tour-card-w)) / 2);
     /* Room the raised centre card overflows into. The track reserves it as
        padding and pulls it back out with a negative margin (see .tour__track),
        and that negative margin collapses through the frame — so whatever
@@ -948,7 +957,7 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     --tour-overflow: 88px;
     /* Generous above, nothing below: the section runs into the footer's
        "Get started" banner, which supplies its own top spacing. */
-    padding-block: 128px 0;
+    padding-block: 88px 0;
   }
   .tour__title {
     /* Owns the gap down to the strip: a top margin on .tour__frame would just
@@ -957,6 +966,8 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   }
   .tour__frame {
     position: relative;
+    /* Query container for --tour-card-w / --tour-edge-pad above. */
+    container-type: inline-size;
   }
   /* The strip sits under the arrows; the track creates no stacking context of
      its own. Scoping stamps an attribute on both compound selectors here, so
@@ -975,16 +986,20 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     /* Three across, so the strip reads as a gallery you can scan rather than
        one screenshot at a time. The gap is subtracted before dividing, or the
        third card is pushed past the right edge. */
-    grid-auto-columns: calc((100% - 2 * var(--tour-gap)) / 3);
+    grid-auto-columns: var(--tour-card-w);
     gap: var(--tour-gap);
+    /* Lets first/last slides be truly centerable instead of pinning left/right. */
+    padding-inline: var(--tour-edge-pad);
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
     /* A scroll container clips on BOTH axes, so the centre card — scaled to
-       1.1 — was being cut off top and bottom, and the cards' shadows with it.
+       1.3 — was being cut off top and bottom, and the cards' shadows with it.
        The padding reserves that room and the negative margin takes it back
-       out of the layout, so the strip sits exactly where it did. */
-    padding-block: var(--tour-overflow);
+       out of the layout, so the strip sits exactly where it did. The extra
+       60px below is the one part that is NOT pulled back, so it reads as real
+       space under the strip. */
+    padding-block: var(--tour-overflow) calc(var(--tour-overflow) + 60px);
     margin-block: calc(var(--tour-overflow) * -1);
     scrollbar-width: none;
   }
@@ -1036,6 +1051,12 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     overflow: hidden;
     background: var(--surface);
     box-shadow: 0 24px 60px rgba(28, 25, 23, 0.14);
+    /* Fill the (already equal-height) grid item, so a caption that wraps to a
+       third line at some widths lengthens its own card instead of leaving the
+       row of cards ragged. The caption takes up the slack. */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
   }
   .tour__chrome {
     display: flex;
@@ -1071,25 +1092,24 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   .tour__tab {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     flex: none;
-    max-width: 96px;
-    padding: 3px 8px;
-    font-size: 10px;
-    border-radius: 8px 8px 0 0;
+    max-width: 77px;
+    padding: 2.4px 6.4px;
+    border-radius: 6.4px 6.4px 0 0;
     background: var(--surface);
     border: 1px solid var(--border);
     border-bottom: 0;
     margin-bottom: -1px;
-    font-size: 8.75px;
+    font-size: 7px;
     font-weight: 500;
     color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
   }
   .tour__favicon {
-    width: 11px;
-    height: 11px;
+    width: 8.8px;
+    height: 8.8px;
     flex: none;
   }
   .tour__url {
@@ -1122,21 +1142,26 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   }
   .tour__fig figcaption {
     display: block;
+    flex: 1;
     padding: 14px 15px 16px;
     border-top: 1px solid var(--border);
-    max-width: 62ch;
   }
   .tour__fig figcaption strong {
     display: block;
+    /* Matches .feat__title: 14.5px against the centre card's 1.3 scale lands on
+       the same ~19px, and the tracking is em-based so it holds at every scale. */
     font-size: 14.5px;
     font-weight: 600;
+    letter-spacing: -0.01em;
     margin-bottom: 4px;
   }
   .tour__fig figcaption span {
     display: block;
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.5;
+    /* Matches .feat__desc: 11.5px against the centre card's 1.3 scale lands on
+       the same ~15px, with its 1.6 leading and --text3 rather than --muted. */
+    color: var(--text3);
+    font-size: 11.5px;
+    line-height: 1.6;
     /* Two lines for every card, so a short caption and a long one leave the
        row of cards the same height instead of ragged. */
     min-height: 2lh;
@@ -1190,16 +1215,14 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     }
   }
   @media (max-width: 1080px) {
-    .tour__track {
-      grid-auto-columns: calc((100% - var(--tour-gap)) / 2);
+    .tour {
+      --tour-card-w: calc((100cqi - var(--tour-gap)) / 2);
     }
   }
   @media (max-width: 720px) {
     .tour {
       padding-block: 84px 0;
-    }
-    .tour__track {
-      grid-auto-columns: 88%;
+      --tour-card-w: 88cqi;
     }
     /* Arrows assume a pointer that can hover; touch gets the swipe it already
        has, and the dots stay for position. Matched through .tour__frame to
@@ -1219,118 +1242,180 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
 </style>
 
 <script>
+  type TourTrackEl = HTMLElement & {
+    __tourCleanup?: () => void;
+  };
+
   /**
    * Product tour carousel.
    *
-   * The scroller is the single source of truth for the current slide — the
-   * dots and arrows read it rather than keeping their own index, so a
-   * trackpad swipe, a dot click and an arrow key can never disagree about
-   * where the carousel is. Both controls are hidden in the markup and
+   * One `index` owns the current slide and every scroll target is that card's
+   * centre, so an arrow click and an arrow key can never disagree about where
+   * the carousel is; a trackpad swipe hands control back by adopting whatever
+   * card the scroller settled on. It advances only when the visitor asks it
+   * to — there is no autoplay. The arrows are hidden in the markup and
    * revealed here, so no-JS visitors get a plain scrollable strip rather than
    * buttons that do nothing.
    */
-  const track = document.getElementById('tour-track');
+  const track = document.getElementById('tour-track') as TourTrackEl | null;
   const prev = document.querySelector<HTMLButtonElement>('[data-tour-prev]');
   const next = document.querySelector<HTMLButtonElement>('[data-tour-next]');
 
   if (track && prev && next) {
-    const slides = Array.from(track.children) as HTMLElement[];
-    for (const el of [prev, next]) el.hidden = false;
+    // One authoritative `index`; every scroll target is that card's centre.
+    // No in-flight/queued transition state — a click just moves the index and
+    // scrolls, and a manual swipe adopts whatever card the scroller settled on.
+    // Full teardown before re-init (HMR/view transitions).
+    track.__tourCleanup?.();
 
-    /** Index whose centre is nearest the scroller's centre. */
-    const current = (): number => {
-      const mid = track.scrollLeft + track.clientWidth / 2;
-      let best = 0;
-      let bestGap = Infinity;
-      slides.forEach((slide, i) => {
-        const gap = Math.abs(slide.offsetLeft + slide.clientWidth / 2 - mid);
-        if (gap < bestGap) {
-          bestGap = gap;
-          best = i;
-        }
-      });
-      return best;
-    };
+    const events = new AbortController();
+    const { signal } = events;
 
-    const goTo = (i: number): void => {
-      const slide = slides[Math.max(0, Math.min(slides.length - 1, i))];
-      if (slide) track.scrollTo({ left: slide.offsetLeft, behavior: 'smooth' });
-    };
+    const real = Array.from(track.children) as HTMLElement[];
+    if (real.length > 0) {
+      for (const el of [prev, next]) el.hidden = false;
 
-    const sync = (): void => {
-      const i = current();
-      slides.forEach((slide, n) => slide.classList.toggle('is-active', n === i));
-      // Disabled rather than wrapped: an arrow that silently jumps from the
-      // last slide back to the first reads as a bug at the edge of a strip
-      // the visitor can also see is at its end.
-      prev.disabled = i === 0;
-      next.disabled = i === slides.length - 1;
-    };
+      // A looping reel. Without copies of the tail before the head (and the
+      // head after the tail) the first and last cards sit beside an empty slot,
+      // because there is no neighbour to show there. Clones fill those slots;
+      // when the strip settles on one it jumps to the identical real card,
+      // which is invisible precisely because both positions render the same
+      // three cards.
+      const REAL = real.length;
+      const CLONES = REAL > 1 ? 2 : 0;
+      const cloned: HTMLElement[] = [];
+      const addClone = (source: HTMLElement, edge: 'start' | 'end'): void => {
+        const clone = source.cloneNode(true) as HTMLElement;
+        // Duplicate ids would break the aria-label wiring, and a screen reader
+        // reading the reel twice over is noise — the real cards carry it.
+        clone.removeAttribute('id');
+        clone.setAttribute('aria-hidden', 'true');
+        cloned.push(clone);
+        track[edge === 'start' ? 'prepend' : 'append'](clone);
+      };
+      for (let i = 0; i < CLONES; i++) {
+        addClone(real[REAL - 1 - i]!, 'start');
+        addClone(real[i]!, 'end');
+      }
 
-    prev.addEventListener('click', () => goTo(current() - 1));
-    next.addEventListener('click', () => goTo(current() + 1));
-    track.addEventListener('keydown', (e) => {
-      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-      e.preventDefault();
-      goTo(current() + (e.key === 'ArrowRight' ? 1 : -1));
-    });
+      const slides = Array.from(track.children) as HTMLElement[];
+      // Real card n sits at DOM position n + CLONES once the head copies are in.
+      const FIRST_REAL = CLONES;
+      let index = FIRST_REAL;
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+      let scrollSyncTimer = 0;
 
-    // Throttled to animation frames: scroll fires far more often than the
-    // dots can usefully change.
-    let queued = false;
-    track.addEventListener(
-      'scroll',
-      () => {
-        if (queued) return;
-        queued = true;
-        requestAnimationFrame(() => {
-          queued = false;
-          sync();
+      const nearestIndex = (): number => {
+        const mid = track.scrollLeft + track.clientWidth / 2;
+        let best = 0;
+        let bestGap = Infinity;
+        slides.forEach((slide, i) => {
+          const gap = Math.abs(slide.offsetLeft + slide.clientWidth / 2 - mid);
+          if (gap < bestGap) {
+            bestGap = gap;
+            best = i;
+          }
         });
-      },
-      { passive: true },
-    );
-    sync();
+        return best;
+      };
 
-    /**
-     * Autoplay, but only when it cannot annoy: paused on hover, on keyboard
-     * focus, when the section is off-screen, and skipped entirely for anyone
-     * who asked for reduced motion. It also stops for good on the first
-     * manual interaction — once a visitor is driving, moving the carousel
-     * under them is hostile.
-     */
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let timer = 0;
-    let stopped = false;
-    const stop = (): void => {
-      window.clearInterval(timer);
-      timer = 0;
-    };
-    const start = (): void => {
-      if (stopped || timer || reduced.matches) return;
-      timer = window.setInterval(() => {
-        const i = current();
-        goTo(i >= slides.length - 1 ? 0 : i + 1);
-      }, 5200);
-    };
-    const stopForever = (): void => {
-      stopped = true;
-      stop();
-    };
-    for (const evt of ['pointerdown', 'keydown'] as const) {
-      track.addEventListener(evt, stopForever, { once: true });
+      // Step off the clones and back onto the real card showing the same three
+      // images, so the strip can keep travelling in either direction forever.
+      const normalize = (): void => {
+        const settled =
+          index < FIRST_REAL ? index + REAL : index >= FIRST_REAL + REAL ? index - REAL : index;
+        if (settled === index) return;
+        index = settled;
+        render();
+        track.scrollTo({ left: leftFor(index), behavior: 'instant' });
+      };
+
+      // Scroll offset that puts slide `i` dead centre. Anchoring on offsetLeft
+      // instead would park the slide at the LEFT edge while nearestIndex() reads
+      // the CENTRED one — the two disagree by a card, which is what made every
+      // arrow click advance the strip by two.
+      const leftFor = (i: number): number => {
+        const slide = slides[i];
+        if (!slide) return 0;
+        return slide.offsetLeft - (track.clientWidth - slide.offsetWidth) / 2;
+      };
+
+      const render = (): void => {
+        slides.forEach((slide, n) => slide.classList.toggle('is-active', n === index));
+        prev.disabled = false;
+        next.disabled = false;
+      };
+
+      // `instant`, not `auto`: `auto` defers to the CSS `scroll-behavior:
+      // smooth` on the track, so it animates — and overlapping animations are
+      // what made the strip skip cards.
+      const goToIndex = (next: number, behavior: ScrollBehavior): void => {
+        index = next;
+        render();
+        track.scrollTo({ left: leftFor(index), behavior });
+      };
+
+      const navigate = (delta: number): void => {
+        // Always leave from a real card: one step from a clone would walk off
+        // the end of the strip.
+        normalize();
+        goToIndex(index + delta, reduced.matches ? 'instant' : 'smooth');
+      };
+
+      prev.addEventListener('click', () => navigate(-1), { signal });
+      next.addEventListener('click', () => navigate(1), { signal });
+      track.addEventListener(
+        'keydown',
+        (e) => {
+          if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+          e.preventDefault();
+          navigate(e.key === 'ArrowRight' ? 1 : -1);
+        },
+        { signal },
+      );
+
+      // Manual swipe/trackpad: adopt whatever the scroller settled on. Never
+      // scroll back here — the browser's mandatory snap has already landed on a
+      // card centre, and re-scrolling would fight it mid-gesture.
+      const syncToScroller = (): void => {
+        const nearest = nearestIndex();
+        if (nearest !== index) {
+          index = nearest;
+          render();
+        }
+        normalize();
+      };
+
+      track.addEventListener(
+        'scroll',
+        () => {
+          window.clearTimeout(scrollSyncTimer);
+          scrollSyncTimer = window.setTimeout(syncToScroller, 120);
+        },
+        { passive: true, signal },
+      );
+      track.addEventListener('scrollend', syncToScroller, { signal });
+
+      // Card width is viewport-derived, so every centre moves on resize.
+      const ro = new ResizeObserver(() => {
+        track.scrollTo({ left: leftFor(index), behavior: 'instant' });
+      });
+      ro.observe(track);
+
+      // Open on the first real card, not on a head clone.
+      goToIndex(FIRST_REAL, 'instant');
+
+      track.__tourCleanup = () => {
+        events.abort();
+        ro.disconnect();
+        for (const clone of cloned) clone.remove();
+        window.clearTimeout(scrollSyncTimer);
+        track.__tourCleanup = undefined;
+      };
+    } else {
+      // No slides: tear down listeners that may have existed from a prior mount.
+      events.abort();
+      track.__tourCleanup = undefined;
     }
-    [prev, next].forEach((el) => el.addEventListener('click', stopForever, { once: true }));
-
-    const frame = track.closest('.tour__frame');
-    frame?.addEventListener('pointerenter', stop);
-    frame?.addEventListener('pointerleave', start);
-    track.addEventListener('focusin', stop);
-    track.addEventListener('focusout', start);
-
-    new IntersectionObserver(
-      ([entry]) => (entry?.isIntersecting ? start() : stop()),
-      { threshold: 0.4 },
-    ).observe(track);
   }
 </script>
