@@ -111,30 +111,31 @@ const stats = [
  * who do not exist — the screenshots are the same product a visitor gets, so
  * they make a claim we can actually stand behind.
  *
- * `w`/`h` are the intrinsic pixel dimensions (3200x2000, captured at 2x).
- * Declared so the browser reserves the box before the image arrives and the
+ * Intrinsic dimensions are 1600x1000 — captured at 3200 (2x) and halved,
+ * which is still above the ~1340px the widest slot renders at. Declared on
+ * every <img> so the browser reserves the box before the image arrives and the
  * section does not jump as each one loads.
  */
 const shots = [
-  { src: '/product/01-dashboard.png', title: 'One workspace, four channels',
+  { src: '/product/01-dashboard.png', url: 'app.maildrill.net/dashboard', title: 'One workspace, four channels',
     caption: 'Email, SMS, WhatsApp and voice reporting side by side — not four dashboards.' },
-  { src: '/product/09-email-builder.png', title: 'Drag-and-drop email builder',
+  { src: '/product/09-email-builder.png', url: 'app.maildrill.net/templates/email', title: 'Drag-and-drop email builder',
     caption: 'Blocks, live preview and mobile view, on templates your team can reuse.' },
-  { src: '/product/10-whatsapp-builder.png', title: 'WhatsApp templates done properly',
+  { src: '/product/10-whatsapp-builder.png', url: 'app.maildrill.net/templates/whatsapp', title: 'WhatsApp templates done properly',
     caption: 'Real components, placeholders and Meta approval states — not a text box.' },
-  { src: '/product/02-campaigns.png', title: 'Every campaign, every channel',
+  { src: '/product/02-campaigns.png', url: 'app.maildrill.net/campaigns', title: 'Every campaign, every channel',
     caption: 'Outcomes per send, with failures surfaced instead of buried.' },
-  { src: '/product/03-analytics-dark.png', title: 'Analytics that state their basis',
+  { src: '/product/03-analytics-dark.png', url: 'app.maildrill.net/analytics', title: 'Analytics that state their basis',
     caption: 'Delivery, opens and clicks per channel, each with its window named.' },
-  { src: '/product/06-templates.png', title: 'A template library per channel',
+  { src: '/product/06-templates.png', url: 'app.maildrill.net/templates', title: 'A template library per channel',
     caption: 'Performance on the card, so you reuse what works.' },
-  { src: '/product/04-subscribers.png', title: 'Audiences that stay fast',
+  { src: '/product/04-subscribers.png', url: 'app.maildrill.net/subscribers', title: 'Audiences that stay fast',
     caption: 'Search and filter across a million contacts without waiting.' },
-  { src: '/product/05-lists.png', title: 'Lists with channel consent built in',
+  { src: '/product/05-lists.png', url: 'app.maildrill.net/lists', title: 'Lists with channel consent built in',
     caption: 'Which channels a list may use, and who is reachable on each.' },
-  { src: '/product/07-media.png', title: 'Shared media library',
+  { src: '/product/07-media.png', url: 'app.maildrill.net/media', title: 'Shared media library',
     caption: 'Assets once, reused across every template and channel.' },
-  { src: '/product/08-dashboard-dark.png', title: 'Light and dark, everywhere',
+  { src: '/product/08-dashboard-dark.png', url: 'app.maildrill.net/dashboard', title: 'Light and dark, everywhere',
     caption: 'Every screen ships in both — including the ones you print.' },
 ];
 
@@ -365,11 +366,29 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
           shots.map((shot, i) => (
             <li class="tour__slide" id={`tour-slide-${i}`} aria-label={`${i + 1} of ${shots.length}: ${shot.title}`}>
               <figure class="tour__fig">
+                {/* Browser chrome. Purely decorative and aria-hidden: it
+                    frames the screenshot as a real app rather than a floating
+                    rectangle, but a screen reader announcing three dots and a
+                    fake URL bar before every slide would be noise. The alt
+                    text on the image carries the meaning. */}
+                <div class="tour__chrome">
+                  <span class="tour__lights" aria-hidden="true">
+                    <i></i><i></i><i></i>
+                  </span>
+                  <span class="tour__tab" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" class="tour__favicon"><path d="M4 6h16v12H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 7l8 6 8-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Maildrill
+                  </span>
+                  <span class="tour__url" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" class="tour__lock"><path d="M7 11V8a5 5 0 0110 0v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                    {shot.url}
+                  </span>
+                </div>
                 <img
                   src={shot.src}
                   alt={shot.title}
-                  width="3200"
-                  height="2000"
+                  width="1600"
+                  height="1000"
                   decoding="async"
                   loading={i === 0 ? 'eager' : 'lazy'}
                   fetchpriority={i === 0 ? 'high' : 'auto'}
@@ -918,6 +937,7 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
      own index, so a trackpad swipe, a dot click and an arrow key can never
      disagree about where the carousel is. */
   .tour {
+    --tour-gap: 30px;
     padding-block: 88px;
   }
   .tour__title {
@@ -932,8 +952,11 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     padding: 0;
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: 100%;
-    gap: 24px;
+    /* Three across, so the strip reads as a gallery you can scan rather than
+       one screenshot at a time. The gap is subtracted before dividing, or the
+       third card is pushed past the right edge. */
+    grid-auto-columns: calc((100% - 2 * var(--tour-gap)) / 3);
+    gap: var(--tour-gap);
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
@@ -949,37 +972,149 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     outline-offset: 6px;
     border-radius: 22px;
   }
+  /* Centre card foregrounded: the one being read is full size and opaque, its
+     neighbours sit back. Done with transform and opacity rather than by giving
+     the centre track a wider column — a width change would reflow the whole
+     strip on every scroll tick and fight the snap. Scaling leaves layout
+     untouched, so the snap positions stay exactly where they were. */
   .tour__slide {
     scroll-snap-align: center;
     min-width: 0;
+    transform: scale(0.9);
+    opacity: 0.5;
+    transition:
+      transform 0.32s var(--ease-out, cubic-bezier(0.2, 0.7, 0.3, 1)),
+      opacity 0.32s ease;
+  }
+  .tour__slide.is-active {
+    transform: scale(1);
+    opacity: 1;
+    /* Above its neighbours so the raised card's shadow reads correctly. */
+    position: relative;
+    z-index: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tour__slide {
+      transition: none;
+    }
   }
   .tour__fig {
     margin: 0;
+  }
+  /* Chrome + screenshot form one window: the border, radius and shadow live on
+     the figure so the two pieces share an outline, rather than each carrying
+     its own and meeting at a visible seam. */
+  .tour__fig {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: 0 24px 60px rgba(28, 25, 23, 0.14);
+  }
+  .tour__chrome {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 10px;
+    height: 32px;
+    background: var(--surface-2, rgba(128, 122, 112, 0.09));
+    border-bottom: 1px solid var(--border);
+  }
+  .tour__lights {
+    display: flex;
+    gap: 5px;
+    flex: none;
+  }
+  .tour__lights i {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--border);
+  }
+  /* Tinted, not literal macOS red/amber/green: the frame should read as "an
+     app in a browser", not as a screenshot of one specific operating system. */
+  .tour__lights i:nth-child(1) {
+    background: #ec6a5e;
+  }
+  .tour__lights i:nth-child(2) {
+    background: #f4bf4f;
+  }
+  .tour__lights i:nth-child(3) {
+    background: #61c454;
+  }
+  .tour__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex: none;
+    max-width: 120px;
+    padding: 4px 9px;
+    font-size: 11px;
+    border-radius: 8px 8px 0 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    margin-bottom: -1px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .tour__favicon {
+    width: 13px;
+    height: 13px;
+    flex: none;
+    color: var(--brand);
+  }
+  .tour__url {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 20px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 10.5px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tour__lock {
+    width: 11px;
+    height: 11px;
+    flex: none;
   }
   .tour__fig img {
     display: block;
     width: 100%;
     height: auto;
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    background: var(--surface);
-    box-shadow: 0 24px 60px rgba(28, 25, 23, 0.14);
   }
   .tour__fig figcaption {
     display: block;
-    margin-top: 18px;
+    padding: 14px 15px 16px;
+    border-top: 1px solid var(--border);
     max-width: 62ch;
   }
   .tour__fig figcaption strong {
     display: block;
-    font-size: 17px;
+    font-size: 14.5px;
     font-weight: 600;
     margin-bottom: 4px;
   }
   .tour__fig figcaption span {
+    display: block;
     color: var(--muted);
-    font-size: 15px;
-    line-height: 1.55;
+    font-size: 13px;
+    line-height: 1.5;
+    /* Two lines for every card, so a short caption and a long one leave the
+       row of cards the same height instead of ragged. */
+    min-height: 2lh;
   }
 
   .tour__arrow {
@@ -987,7 +1122,7 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     top: 0;
     /* Centred on the IMAGE, not the figure: the caption below would drag the
        arrows off-centre and they would drift as caption lengths differ. */
-    height: 62.5%;
+    height: 68%;
     display: grid;
     place-items: center;
     width: 52px;
@@ -1055,14 +1190,30 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
       scroll-behavior: auto;
     }
   }
+  @media (max-width: 1080px) {
+    .tour__track {
+      grid-auto-columns: calc((100% - var(--tour-gap)) / 2);
+    }
+  }
   @media (max-width: 720px) {
     .tour {
       padding-block: 64px;
+    }
+    .tour__track {
+      grid-auto-columns: 88%;
     }
     /* Arrows assume a pointer that can hover; touch gets the swipe it already
        has, and the dots stay for position. */
     .tour__arrow {
       display: none;
+    }
+    /* The tab label is the least load-bearing part of the chrome, and the URL
+       is what actually says which screen this is. */
+    .tour__tab {
+      display: none;
+    }
+    .tour__chrome {
+      height: 36px;
     }
   }
 </style>
@@ -1110,6 +1261,7 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
 
     const sync = (): void => {
       const i = current();
+      slides.forEach((slide, n) => slide.classList.toggle('is-active', n === i));
       dots.forEach((dot, n) => dot.setAttribute('aria-selected', n === i ? 'true' : 'false'));
       // Disabled rather than wrapped: an arrow that silently jumps from the
       // last slide back to the first reads as a bug at the edge of a strip
