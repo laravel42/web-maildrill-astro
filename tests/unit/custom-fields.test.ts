@@ -44,10 +44,23 @@ describe('buildPersonalizationTokens', () => {
 });
 
 describe('buildMergeTagMenu', () => {
-  it('adds a divider only when custom fields exist', () => {
-    expect(buildMergeTagMenu([]).children.some((c) => c.type === 'divider')).toBe(false);
-    const menu = buildMergeTagMenu([field('plan')]);
-    expect(menu.children.some((c) => c.type === 'divider')).toBe(true);
-    expect(menu.children.at(-1)).toMatchObject({ value: '{{attributes.plan}}' });
+  it('separates the link group, and custom fields again when present', () => {
+    // Two divider groups now, not one. `{{unsubscribe}}` / `{{webview}}` are
+    // email-only and always present, so they carry their own divider whether
+    // or not the workspace has custom fields — the assertion this replaces
+    // ("no divider when the list is empty") described the menu before that
+    // group existed.
+    const dividers = (fields: Parameters<typeof buildMergeTagMenu>[0]) =>
+      buildMergeTagMenu(fields).children.filter((c) => c.type === 'divider').length;
+
+    expect(dividers([])).toBe(1);
+    expect(dividers([field('plan')])).toBe(2);
+
+    // And the custom field lands after the second divider, not before it.
+    const children = buildMergeTagMenu([field('plan')]).children;
+    const lastDivider = children.map((c) => c.type).lastIndexOf('divider');
+    expect(children.findIndex((c) => c.value === '{{attributes.plan}}')).toBeGreaterThan(
+      lastDivider,
+    );
   });
 });
