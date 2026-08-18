@@ -111,27 +111,33 @@ const stats = [
  * who do not exist — the screenshots are the same product a visitor gets, so
  * they make a claim we can actually stand behind.
  *
+ * Served from /product-tour/, NOT /product/. `public/product/` shadowed the
+ * /product marketing page: the build emits both `product.html` and a
+ * `product/` directory, and a static host resolving `/product` hits the
+ * directory first, finds no index.html and returns 404 — which is exactly what
+ * maildrill.net/product did.
+ *
  * Intrinsic dimensions are 1600x1000 — captured at 3200 (2x) and halved,
  * which is still above the ~1340px the widest slot renders at. Declared on
  * every <img> so the browser reserves the box before the image arrives and the
  * section does not jump as each one loads.
  */
 const shots = [
-  { src: '/product/01-dashboard.png', url: 'maildrill.net/dashboard', title: 'One workspace, four channels',
+  { src: '/product-tour/01-dashboard.png', url: 'maildrill.net/dashboard', title: 'One workspace, four channels',
     caption: 'Track email, SMS, WhatsApp and voice campaign performance from one multichannel dashboard, instead of four disconnected tools.' },
-  { src: '/product/02-campaigns.png', url: 'maildrill.net/campaigns', title: 'Every campaign, every channel',
+  { src: '/product-tour/02-campaigns.png', url: 'maildrill.net/campaigns', title: 'Every campaign, every channel',
     caption: 'Measure delivery, opens, clicks and bounces on every email, SMS, WhatsApp and voice campaign, with failures surfaced early.' },
-  { src: '/product/03-subscribers.png', url: 'maildrill.net/subscribers', title: 'Audiences that stay fast',
+  { src: '/product-tour/03-subscribers.png', url: 'maildrill.net/subscribers', title: 'Audiences that stay fast',
     caption: 'Search, filter and segment millions of contacts in seconds, with custom fields and engagement history on each subscriber.' },
-  { src: '/product/04-lists.png', url: 'maildrill.net/lists', title: 'Lists with channel consent built in',
+  { src: '/product-tour/04-lists.png', url: 'maildrill.net/lists', title: 'Lists with channel consent built in',
     caption: 'Manage subscriber lists with per-channel opt-in and consent tracking, so you know who is reachable on email, SMS or WhatsApp.' },
-  { src: '/product/05-templates.png', url: 'maildrill.net/templates', title: 'A template library per channel',
+  { src: '/product-tour/05-templates.png', url: 'maildrill.net/templates', title: 'A template library per channel',
     caption: 'Reuse proven message templates across email, SMS, WhatsApp and voice, with open and click rates shown on every single card.' },
-  { src: '/product/06-media.png', url: 'maildrill.net/media', title: 'Shared media library',
+  { src: '/product-tour/06-media.png', url: 'maildrill.net/media', title: 'Shared media library',
     caption: 'Upload images and files once, then reuse them across every email, SMS, WhatsApp and voice template, with no duplicate uploads.' },
-  { src: '/product/07-email-builder.png', url: 'maildrill.net/templates/email', title: 'Drag-and-drop email builder',
+  { src: '/product-tour/07-email-builder.png', url: 'maildrill.net/templates/email', title: 'Drag-and-drop email builder',
     caption: 'Design responsive email templates with drag-and-drop blocks, live preview and mobile testing. No HTML or developer required.' },
-  { src: '/product/08-whatsapp-builder.png', url: 'maildrill.net/templates/whatsapp', title: 'WhatsApp templates done properly',
+  { src: '/product-tour/08-whatsapp-builder.png', url: 'maildrill.net/templates/whatsapp', title: 'WhatsApp templates done properly',
     caption: 'Build WhatsApp Business templates with real components, variables and Meta approval tracking, submitted without leaving the app.' },
 ];
 
