@@ -125,8 +125,6 @@ const shots = [
     caption: 'Real components, placeholders and Meta approval states — not a text box.' },
   { src: '/product/02-campaigns.png', url: 'app.maildrill.net/campaigns', title: 'Every campaign, every channel',
     caption: 'Outcomes per send, with failures surfaced instead of buried.' },
-  { src: '/product/03-analytics-dark.png', url: 'app.maildrill.net/analytics', title: 'Analytics that state their basis',
-    caption: 'Delivery, opens and clicks per channel, each with its window named.' },
   { src: '/product/06-templates.png', url: 'app.maildrill.net/templates', title: 'A template library per channel',
     caption: 'Performance on the card, so you reuse what works.' },
   { src: '/product/04-subscribers.png', url: 'app.maildrill.net/subscribers', title: 'Audiences that stay fast',
@@ -135,8 +133,6 @@ const shots = [
     caption: 'Which channels a list may use, and who is reachable on each.' },
   { src: '/product/07-media.png', url: 'app.maildrill.net/media', title: 'Shared media library',
     caption: 'Assets once, reused across every template and channel.' },
-  { src: '/product/08-dashboard-dark.png', url: 'app.maildrill.net/dashboard', title: 'Light and dark, everywhere',
-    caption: 'Every screen ships in both — including the ones you print.' },
 ];
 
 const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd()];
@@ -376,7 +372,23 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
                     <i></i><i></i><i></i>
                   </span>
                   <span class="tour__tab" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" class="tour__favicon"><path d="M4 6h16v12H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 7l8 6 8-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    {/* The real favicon, not a stand-in envelope — this frame
+                        is meant to look like the product in a browser, and the
+                        mark is the one recognisable thing in the chrome. */}
+                    {/* Sized inline: favicon.svg carries its own 32x32
+                        viewBox and a dark rounded tile, and the scoped class
+                        alone was leaving it at intrinsic size — a 42px block
+                        inside a 32px tab. */}
+                    <img
+                      class="tour__favicon"
+                      src="/favicon.svg"
+                      alt=""
+                      width="12"
+                      height="12"
+                      style="width:12px;height:12px;border-radius:3px;flex:none"
+                      loading="lazy"
+                      decoding="async"
+                    />
                     Maildrill
                   </span>
                   <span class="tour__url" aria-hidden="true">
@@ -937,7 +949,7 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
      own index, so a trackpad swipe, a dot click and an arrow key can never
      disagree about where the carousel is. */
   .tour {
-    --tour-gap: 30px;
+    --tour-gap: 34px;
     padding-block: 88px;
   }
   .tour__title {
@@ -960,8 +972,13 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
-    /* The screenshots carry their own shadow, which the scroller would clip. */
-    padding-bottom: 10px;
+    /* A scroll container clips on BOTH axes, so the centre card — scaled to
+       1.1 — was being cut off top and bottom, and the cards' shadows with it.
+       The padding reserves that room and the negative margin takes it back
+       out of the layout, so the strip sits exactly where it did. 44px covers
+       half the 10% overflow on the tallest card plus the shadow. */
+    padding-block: 44px;
+    margin-block: -44px;
     scrollbar-width: none;
   }
   .tour__track::-webkit-scrollbar {
@@ -980,14 +997,16 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   .tour__slide {
     scroll-snap-align: center;
     min-width: 0;
-    transform: scale(0.9);
-    opacity: 0.5;
+    /* The centre card grows past its track while its neighbours shrink well
+       back — the 34px gap absorbs the overflow, so nothing overlaps. */
+    transform: scale(0.84);
+    opacity: 0.42;
     transition:
       transform 0.32s var(--ease-out, cubic-bezier(0.2, 0.7, 0.3, 1)),
       opacity 0.32s ease;
   }
   .tour__slide.is-active {
-    transform: scale(1);
+    transform: scale(1.1);
     opacity: 1;
     /* Above its neighbours so the raised card's shadow reads correctly. */
     position: relative;
@@ -1045,11 +1064,11 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   .tour__tab {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    gap: 5px;
     flex: none;
-    max-width: 120px;
-    padding: 4px 9px;
-    font-size: 11px;
+    max-width: 96px;
+    padding: 3px 8px;
+    font-size: 10px;
     border-radius: 8px 8px 0 0;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -1062,10 +1081,9 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     overflow: hidden;
   }
   .tour__favicon {
-    width: 13px;
-    height: 13px;
+    width: 11px;
+    height: 11px;
     flex: none;
-    color: var(--brand);
   }
   .tour__url {
     display: inline-flex;
