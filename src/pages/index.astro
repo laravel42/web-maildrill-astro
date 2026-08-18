@@ -441,6 +441,12 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   .hero {
     position: relative;
     padding-block: 64px 48px;
+    /* Contain the hero glow blob (positioned 40px past the container edge).
+       Narrow viewports leave no gutter for it to bleed into, so it was pushing
+       the whole page 40px wider than the screen. `clip` rather than `hidden`:
+       it doesn't make a scroll container, so the vertical reveal animations
+       still paint outside the box. */
+    overflow-x: clip;
   }
 
   .hero__glow {
@@ -1221,6 +1227,15 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   .tour__arrow:focus-visible {
     opacity: 1;
   }
+  /* Reveal-on-hover needs a pointer that hovers. On touch these would be
+     tappable but permanently invisible, and since the dots came out the arrows
+     are the only control the reel has besides the swipe itself. */
+  @media (hover: none) {
+    /* Matched through .tour__frame to outrank the base rule's `opacity: 0`. */
+    .tour__frame > .tour__arrow {
+      opacity: 1;
+    }
+  }
   .tour__arrow[disabled] {
     opacity: 0 !important;
     pointer-events: none;
@@ -1243,18 +1258,17 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
          would force it narrower than the desktop card to avoid the scroller's
          clipping edges, which leaves the fixed-size caption dwarfing the
          screenshot. Opacity alone marks the active card instead, and the width
-         goes to the screenshot. A sliver of the neighbours still shows as the
-         cue that the strip scrolls. */
-      --tour-card-w: 84cqi;
-      --tour-gap: 16px;
+         goes to the screenshot.
+
+         The three values are tuned together to keep the neighbours visible.
+         What shows of a neighbour is (100cqi - card) / 2 - gap, less the width
+         the shrink pulls back from its inner edge — so a deep --tour-scale-off
+         can swallow the peek entirely and leave the reel looking like a single
+         static card. A shallow shrink buys most of it back. */
+      --tour-card-w: 76cqi;
+      --tour-gap: 10px;
       --tour-scale-on: 1;
-      --tour-scale-off: 0.9;
-    }
-    /* Arrows assume a pointer that can hover; touch gets the swipe it already
-       has, and the dots stay for position. Matched through .tour__frame to
-       outrank the base rule's `display: grid`. */
-    .tour__frame > .tour__arrow {
-      display: none;
+      --tour-scale-off: 0.94;
     }
     /* The tab label is the least load-bearing part of the chrome, and the URL
        is what actually says which screen this is. */
