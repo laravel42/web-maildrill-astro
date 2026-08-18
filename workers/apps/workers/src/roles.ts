@@ -1,5 +1,5 @@
 import { config } from '@maildrill/config';
-import { sweepBillingUsage } from '@maildrill/billing';
+import { pullBillingUsageResults, sweepBillingUsage } from '@maildrill/billing';
 import { createLogger, emitAppCommand, metrics } from '@maildrill/observability';
 import { createWorker, getQueue, QUEUE_NAMES } from '@maildrill/queues';
 import {
@@ -30,12 +30,15 @@ const MAINTENANCE_INTERVAL_MS = 60_000;
  */
 const ENGAGEMENT_SWEEP_INTERVAL_MS = 5 * 60_000;
 /**
- * Billing-usage housekeeping. Half-hourly is plenty: it only times out lost
- * callbacks (6h deadline) and opens finalization passes (2-day delay), neither
- * of which is latency-sensitive. Running it often enough to matter would just
- * burn Infobip quota re-asking questions whose answers haven't changed.
+ * Billing-usage tick. The housekeeping half (expiring lost callbacks after 6h,
+ * opening finalization passes after 2 days) is in no hurry, but the PostHog
+ * transport rides the same tick: with results delivered to PostHog rather than
+ * to us, this interval IS the latency between Infobip answering and a campaign
+ * showing its real cost. Two minutes keeps that tolerable and costs nothing
+ * when idle — the pull returns before issuing any query unless a request is
+ * actually outstanding.
  */
-const BILLING_USAGE_SWEEP_INTERVAL_MS = 30 * 60_000;
+const BILLING_USAGE_SWEEP_INTERVAL_MS = 2 * 60_000;
 const ENGAGEMENT_SWEEP_SLICE = 25_000;
 const STALLED_AFTER_MS = 5 * 60_000;
 const WEBHOOK_RETENTION_DAYS = 30;
@@ -219,9 +222,12 @@ export function startBillingUsageSweep(): StopFn {
     'billing-usage-sweep',
     BILLING_USAGE_SWEEP_INTERVAL_MS,
     async () => {
+      // Pull first, then sweep: a result sitting in PostHog must be ingested
+      // before the sweeper can judge its request stale and expire it.
+      const pulled = await pullBillingUsageResults();
       const result = await sweepBillingUsage();
-      if (result.expired === 0 && result.refired === 0) return undefined;
-      return `expired=${result.expired} refired=${result.refired}`;
+      if (pulled.ingested === 0 && result.expired === 0 && result.refired === 0) return undefined;
+      return `pulled=${pulled.ingested} expired=${result.expired} refired=${result.refired}`;
     },
     log,
   );

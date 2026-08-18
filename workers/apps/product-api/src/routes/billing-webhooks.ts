@@ -73,7 +73,7 @@ export async function billingWebhookRoutes(app: FastifyInstance): Promise<void> 
   app.post('/v1/billing/webhooks/infobip-usage', {
     schema: {
       tags: ['Billing'],
-      summary: 'Infobip billing usage result intake (token-authenticated, idempotent)',
+      summary: 'Maildrill billing usage result intake (token-authenticated, idempotent)',
     },
     config: { rateLimit: false },
     handler: async (req, reply) => {

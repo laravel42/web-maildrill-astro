@@ -131,8 +131,20 @@ export const tenants = pgTable('tenants', {
    * a data boundary — see docs/infobip-api-scheme.md. Assigned at workspace
    * creation; null on rows that predate the column (they fall back to the
    * account-wide INFOBIP_ENTITY_ID).
+   *
+   * Assignment is local and unconditional, so this column says nothing about
+   * whether Infobip knows the entity — read `infobipEntityProvisionedAt` for
+   * that.
    */
   infobipEntityId: text('infobip_entity_id').unique(),
+  /**
+   * When Infobip acknowledged the entity (created it, or reported it already
+   * existed). Null means the id was assigned locally but never confirmed by
+   * the provider — typically an API key without the provisioning scope, which
+   * leaves per-workspace usage attribution inert while every local row still
+   * looks correctly provisioned.
+   */
+  infobipEntityProvisionedAt: ts('infobip_entity_provisioned_at'),
   /**
    * Workspace settings bag (not first-class columns), mirroring
    * users.preferences: branding {brandName, logoUrl, accentColor,

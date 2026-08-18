@@ -24,6 +24,7 @@ import {
   applyTrackingOutcome,
   type TrackingNotificationType,
 } from './events';
+import { knownTenantInfobipEntityId } from '@maildrill/identity';
 import { getProvider } from '@maildrill/providers';
 
 const log = createLogger({ component: 'campaign-delivery' });
@@ -32,6 +33,12 @@ const HOGQL_CHUNK = 200;
 const OPEN_MESSAGE_LIMIT = 1000;
 /** Cap Infobip log lookups per poll so a large backlog can't stall the loop. */
 const INFOBIP_STATUS_LIMIT = 50;
+/**
+ * Workspace/channel report drains per sweep. Reports are only returned once,
+ * so this bounds the fan-out without losing anything: what is not drained now
+ * is still waiting on the next pass.
+ */
+const INFOBIP_DRAIN_LIMIT = 20;
 /**
  * Messages in these states can still advance to `read` from a seen report.
  * Delivered is intentionally outside OPEN_DELIVERY_STATES (campaign completion
@@ -455,11 +462,48 @@ async function syncOpenMessagesFromInfobip(open: MessageRow[]): Promise<number> 
   let updated = 0;
   const resolved = new Set<string>();
 
+  // Entity per workspace, resolved once: the reports API filters on it, and a
+  // read here must not provision, so workspaces without one drain account-wide
+  // exactly as before.
+  const entityByTenant = new Map<string, string | undefined>();
+  for (const tenantId of new Set(open.map((m) => m.tenantId))) {
+    entityByTenant.set(tenantId, (await knownTenantInfobipEntityId(tenantId)) ?? undefined);
+  }
+
   // 1) Drain recent report batches (each Infobip DLR is returned only once).
+  //    Scoped per workspace: an unscoped drain consumes reports for every
+  //    workspace on the account and silently discards the ones this batch
+  //    cannot match, so those messages would never resolve here again.
   if (provider.pullDeliveryReports) {
-    const channels = [...new Set(open.map((m) => m.channel))];
-    for (const channel of channels) {
-      const reports = await provider.pullDeliveryReports(channel, 200);
+    // One drain per workspace-channel pair, busiest first. Scoping multiplies
+    // the call count (it used to be one per channel for the whole account), and
+    // `open` holds up to OPEN_MESSAGE_LIMIT rows, so the fan-out is capped:
+    // undrained pairs keep their reports — Infobip holds them until read — and
+    // are picked up by the next sweep or by the per-id lookups below.
+    const pairs = new Map<
+      string,
+      { tenantId: string; channel: MessageRow['channel']; open: number }
+    >();
+    for (const m of open) {
+      const key = `${m.tenantId}|${m.channel}`;
+      const hit = pairs.get(key);
+      if (hit) hit.open += 1;
+      else pairs.set(key, { tenantId: m.tenantId, channel: m.channel, open: 1 });
+    }
+    const ranked = [...pairs.values()].sort((a, b) => b.open - a.open);
+    const draining = ranked.slice(0, INFOBIP_DRAIN_LIMIT);
+    if (ranked.length > draining.length) {
+      log.info(
+        { pairs: ranked.length, draining: draining.length },
+        'infobip report drain capped — remaining workspace/channel pairs wait for the next sweep',
+      );
+    }
+    for (const { tenantId, channel } of draining) {
+      const reports = await provider.pullDeliveryReports(
+        channel,
+        200,
+        entityByTenant.get(tenantId),
+      );
       for (const report of reports) {
         const msg = byProviderId.get(report.providerMessageId);
         if (!msg) continue;
@@ -496,7 +540,11 @@ async function syncOpenMessagesFromInfobip(open: MessageRow[]): Promise<number> 
     if (msg.status !== 'submitted' && msg.status !== 'sent') continue;
     checked += 1;
 
-    const statusGroup = await provider.getDeliveryStatusGroup(msg.channel, msg.providerMessageId);
+    const statusGroup = await provider.getDeliveryStatusGroup(
+      msg.channel,
+      msg.providerMessageId,
+      entityByTenant.get(msg.tenantId),
+    );
     if (!statusGroup) continue;
 
     const outcome = outcomeFromInfobipStatusGroup(statusGroup);

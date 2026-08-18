@@ -123,7 +123,23 @@ function mapInfobipGroup(groupName: string | undefined): ProviderOutcome {
 // `notifyFields()` spread in.
 // ---------------------------------------------------------------------------
 
-/** CPaaS X identity spread onto traffic-API messages (`platformFields`). */
+/**
+ * CPaaS X identity (`platformFields`). The FIELDS are the same everywhere; the
+ * PLACEMENT is per-endpoint and not interchangeable — verified against
+ * Infobip's OpenAPI spec on 2026-08-17:
+ *
+ *   `/sms/2/text/advanced`            → `messages[].entityId`      (flat)
+ *   `/whatsapp/1/message/template`    → `messages[].entityId`      (flat)
+ *   `/whatsapp/1/message/text`        → `entityId`                 (top level)
+ *   `/email/4/messages`               → `messages[].options.platform.entityId`
+ *   `/calls/1/calls`                  → `platform.entityId`
+ *   `/whatsapp/2/senders/…/templates` → `platform.entityId`
+ *   `/email/1/domains` (POST)         → `entityId`                 (top level)
+ *
+ * `/tts/3/advanced` publishes NO entity field at all, so voice traffic cannot
+ * be attributed to a workspace through this API; the spread below is inert
+ * there and kept only so voice picks it up if Infobip ever adds support.
+ */
 type InfobipPlatformFields = {
   applicationId?: string;
   entityId?: string;
@@ -239,8 +255,15 @@ type InfobipEmailBody = {
     content: InfobipEmailContent;
     callbackData: string;
     webhooks: InfobipEmailWebhooks;
-    /** Per-message options. `/email/4/messages` nests campaignReferenceId here. */
-    options?: { campaignReferenceId?: string };
+    /**
+     * Per-message options. `/email/4/messages` nests BOTH the campaign tag and
+     * the CPaaS X identity here — `messages[].options.platform.entityId`, not
+     * the message-level `entityId` that SMS and WhatsApp take.
+     */
+    options?: {
+      campaignReferenceId?: string;
+      platform?: InfobipPlatformFields;
+    };
   }>;
   options?: {
     tracking?: InfobipEmailTracking;
@@ -404,6 +427,16 @@ export class InfobipProvider implements MessagingProvider {
   }
 
   /**
+   * The entity to filter a reports query by: the message's own workspace, or
+   * the account-wide `INFOBIP_ENTITY_ID` when the caller has none. Placeholder
+   * values are dropped exactly as on the send path — filtering by a string
+   * Infobip never saw would return an empty report set rather than an error.
+   */
+  private reportEntityFilter(entityId?: string): string | undefined {
+    return this.platformFields(entityId).entityId;
+  }
+
+  /**
    * Compact callback echoed on Infobip DLRs → PostHog Hog extracts tenant/channel.
    * Format: `{tenantId}|{channel}|{maildrillMessageId}` (no pipes in those fields).
    */
@@ -532,6 +565,13 @@ export class InfobipProvider implements MessagingProvider {
     const notifyUrl = config.infobip.notifyUrl.trim();
     if (notifyUrl) webhooks.delivery = { url: notifyUrl, notify: true };
     const tracking = this.emailTrackingOptions(c);
+    const platform = this.platformFields(input.entityId);
+    const messageOptions: NonNullable<InfobipEmailBody['messages'][number]['options']> = {
+      ...(this.campaignFields(input).campaignReferenceId
+        ? { campaignReferenceId: input.campaignReferenceId }
+        : {}),
+      ...(Object.keys(platform).length > 0 ? { platform } : {}),
+    };
     return {
       messages: [
         {
@@ -540,11 +580,11 @@ export class InfobipProvider implements MessagingProvider {
           content,
           callbackData: this.callbackData(input),
           webhooks,
-          // Email v4 nests the campaign tag under the MESSAGE's options —
-          // distinct from the request-level `options.tracking` below.
-          ...(this.campaignFields(input).campaignReferenceId
-            ? { options: { campaignReferenceId: input.campaignReferenceId } }
-            : {}),
+          // Email v4 nests the campaign tag AND the CPaaS X identity under the
+          // MESSAGE's options — distinct from the request-level
+          // `options.tracking` below, and a different placement from the
+          // message-level fields SMS/WhatsApp use, hence the separate build.
+          ...(Object.keys(messageOptions).length > 0 ? { options: messageOptions } : {}),
         },
       ],
       ...(tracking ? { options: { tracking } } : {}),
@@ -788,15 +828,6 @@ export class InfobipProvider implements MessagingProvider {
   }
 
   /**
-   * Create the CPaaS X entity a workspace's traffic is tagged with.
-   *
-   * Idempotent: 409 means it already exists, which is success. A 403 means the
-   * account's API key has no provisioning scope — non-fatal by design, because
-   * Infobip auto-creates an entity from the `entityId` carried on the first
-   * message. Explicit creation only buys a friendly `entityName` in the portal,
-   * so the caller logs and continues rather than failing the signup.
-   */
-  /**
    * Mailbox validation via Infobip `/email/2/validation`, one address per call
    * with bounded concurrency.
    *
@@ -848,6 +879,19 @@ export class InfobipProvider implements MessagingProvider {
     return out;
   }
 
+  /**
+   * Create the CPaaS X entity a workspace's traffic is tagged with.
+   *
+   * Idempotent: 409 means it already exists, which is success (`existed`).
+   *
+   * A 403 means the account's API key has no provisioning scope. The caller
+   * logs and continues rather than failing the signup, but the entity then
+   * does NOT exist — nothing else creates it. Infobip does not materialise an
+   * entity from an unknown `entityId` carried on a traffic API call; that was
+   * verified against the live account on 2026-08-17, where a workspace with
+   * 153 accepted entity-tagged sends still read back 404. Traffic tagged with
+   * an id no entity backs is accepted and billed, just unattributable.
+   */
   async createEntity(input: {
     entityId: string;
     entityName: string;
@@ -1107,10 +1151,16 @@ export class InfobipProvider implements MessagingProvider {
   async getDeliveryStatusGroup(
     channel: Channel,
     providerMessageId: string,
+    entityId?: string,
   ): Promise<string | null> {
     const channelParam = messagesApiChannel(channel);
     const q = new URLSearchParams({ messageId: providerMessageId, limit: '10' });
     if (channelParam) q.set('channel', channelParam);
+    // `/messages-api/1/reports` and `/sms/1/reports` take entityId as a query
+    // filter; `/whatsapp/2/logs` and `/tts/3/reports` publish no such parameter,
+    // so those two stay account-wide and are matched on messageId alone.
+    const entity = this.reportEntityFilter(entityId);
+    if (entity) q.set('entityId', entity);
 
     // Unified reports API covers standalone WhatsApp/SMS/email sends too.
     // Voice reports are NOT in the unified API — they live at /tts/3/reports.
@@ -1123,7 +1173,10 @@ export class InfobipProvider implements MessagingProvider {
         ? [`/whatsapp/2/logs?messageId=${encodeURIComponent(providerMessageId)}`]
         : []),
       ...(channel === 'sms'
-        ? [`/sms/1/reports?messageId=${encodeURIComponent(providerMessageId)}`]
+        ? [
+            `/sms/1/reports?messageId=${encodeURIComponent(providerMessageId)}` +
+              (entity ? `&entityId=${encodeURIComponent(entity)}` : ''),
+          ]
         : []),
       ...(channel === 'voice'
         ? [`/tts/3/reports?messageId=${encodeURIComponent(providerMessageId)}`]
@@ -1158,12 +1211,18 @@ export class InfobipProvider implements MessagingProvider {
   async pullDeliveryReports(
     channel?: Channel,
     limit = 100,
+    entityId?: string,
   ): Promise<Array<{ providerMessageId: string; statusGroup: string }>> {
     const q = new URLSearchParams({
       limit: String(Math.min(Math.max(limit, 1), 1000)),
     });
     const channelParam = channel ? messagesApiChannel(channel) : null;
     if (channelParam) q.set('channel', channelParam);
+    // Scope the drain to one workspace so this call cannot consume — and throw
+    // away — reports belonging to another. `/tts/3/reports` has no entityId
+    // parameter, so voice drains stay account-wide.
+    const entity = this.reportEntityFilter(entityId);
+    if (entity) q.set('entityId', entity);
 
     // Voice reports are not in the unified Messages API — drain /tts/3/reports.
     const path =

@@ -1,6 +1,6 @@
 export * from './core';
 export { MockProvider } from './mock';
-export { InfobipProvider } from './infobip';
+export { InfobipProvider, resolvePlatformFields } from './infobip';
 export { CloudflareProvider, type CloudflareEmailSettings } from './cloudflare';
 export { getProvider } from './registry';
 export {

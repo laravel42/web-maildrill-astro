@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { authenticate } from '@maildrill/authz';
 import type { ZodTypeProvider } from '@maildrill/httpkit';
 import { config } from '@maildrill/config';
+import { knownTenantInfobipEntityId } from '@maildrill/identity';
+import { resolvePlatformFields } from '@maildrill/providers';
 
 const TAG = ['Voice preview'];
 
@@ -139,6 +141,15 @@ export async function voicePreviewRoutes(appRaw: FastifyInstance): Promise<void>
       }
       const { identity, text, language, voiceName, speechRate } = req.body;
 
+      // A preview is a real, billable outbound call, so it is attributed to the
+      // workspace that asked for it. The Calls API takes the CPaaS X identity
+      // as a nested `platform` block; `customData` below is only echoed back to
+      // us and does not attribute anything on Infobip's side.
+      const platform = resolvePlatformFields(
+        config.infobip.applicationId,
+        config.infobip.entityId,
+        (await knownTenantInfobipEntityId(req.tenantId)) ?? undefined,
+      );
       const created = await infobip('POST', 'calls/1/calls', {
         endpoint: { type: 'WEBRTC', identity },
         from: 'Maildrill',
@@ -147,6 +158,7 @@ export async function voicePreviewRoutes(appRaw: FastifyInstance): Promise<void>
         connectTimeout: 15,
         maxDuration: 120,
         customData: { purpose: 'voice-template-preview', tenantId: req.tenantId },
+        ...(Object.keys(platform).length > 0 ? { platform } : {}),
       });
       if (!created.ok) {
         req.log.error(

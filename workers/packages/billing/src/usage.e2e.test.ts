@@ -301,10 +301,14 @@ describe.skipIf(!run)('provider billing usage (e2e — needs Postgres)', () => {
     const summary = await rebuildRechargeSpending(tenantId);
     expect(summary.recharges).toBeGreaterThan(0);
 
+    // Selected by amount, not `limit 1`: the heal test above leaves a second
+    // recharge behind, and an unordered single-row select would pick either.
     const [recharge] = await db
       .select()
       .from(creditRecharges)
-      .where(eq(creditRecharges.tenantId, tenantId));
+      .where(
+        and(eq(creditRecharges.tenantId, tenantId), eq(creditRecharges.amountMicro, 50_000_000)),
+      );
     const spending = recharge!.spending as {
       consumedMicro: number;
       remainingMicro: number;

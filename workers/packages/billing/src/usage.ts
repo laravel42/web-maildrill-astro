@@ -1,7 +1,14 @@
 import { and, eq, isNull, lt, sql } from 'drizzle-orm';
 import { config } from '@maildrill/config';
 import type { Channel } from '@maildrill/domain';
-import { capturePostHogEvent, createLogger, metrics } from '@maildrill/observability';
+import { knownTenantInfobipEntityId } from '@maildrill/identity';
+import {
+  capturePostHogEvent,
+  createLogger,
+  hogqlLiteralList,
+  metrics,
+  runHogQL,
+} from '@maildrill/observability';
 import {
   billingUsageLines,
   billingUsageRequests,
@@ -221,12 +228,18 @@ export async function requestCampaignUsage(
   // opening a NEW pass, never by re-firing an existing one.
   if (!row) return { submitted: false, reason: 'pass_already_submitted' };
 
+  // Scope the query to the workspace that owns the campaign, so the answer is
+  // this workspace's spend rather than whatever else shared the account and the
+  // window. Null entity (a workspace predating entity assignment) falls back to
+  // the campaign-tag filter alone — the previous behaviour.
+  const entityId = (await knownTenantInfobipEntityId(tenantId)) ?? undefined;
   const result = await submitBillingUsageQuery({
     sentSince,
     sentUntil,
     campaignReferenceIds: [campaignId],
     includeUnfinalizedData: pass === 1,
     aggregateBy: CAMPAIGN_AGGREGATES,
+    ...(entityId ? { entityId } : {}),
   });
 
   if (!result.ok) {
@@ -638,4 +651,96 @@ export async function sweepBillingUsage(now = new Date()): Promise<{
     log.info({ expired: expired.length, refired }, 'billing usage sweep');
   }
   return { expired: expired.length, refired };
+}
+
+// ---------------------------------------------------------------------------
+// PostHog transport
+// ---------------------------------------------------------------------------
+
+/**
+ * Event the PostHog webhook emits for a billing-usage result.
+ *
+ * The Hog function behind `…/webhooks/…?kind=billing` needs one branch:
+ *
+ *   if (inputs.kind == 'billing') {
+ *     postHogCapture({
+ *       event: 'infobip_billing_usage_result',
+ *       distinct_id: request.body.requestId,
+ *       properties: {
+ *         requestId: request.body.requestId,
+ *         payload: jsonStringify(request.body),
+ *       },
+ *     })
+ *   }
+ *
+ * `payload` is stringified deliberately. Property values survive the round
+ * trip as opaque text, whereas a nested object comes back through HogQL with
+ * its arrays reshaped — and `response.rows` is an array of arrays whose ORDER
+ * carries the meaning, since the columns are positional.
+ */
+const USAGE_RESULT_EVENT = 'infobip_billing_usage_result';
+
+/**
+ * Pull billing-usage results that Infobip delivered to PostHog.
+ *
+ * Only used when the callback transport is `posthog`: the result lands in
+ * PostHog rather than in this process, so nothing is ingested until something
+ * goes and fetches it. Queried by the requestIds WE are waiting on rather than
+ * "all recent events", which bounds the query, and means a forged event for a
+ * requestId we never issued is never even looked at.
+ *
+ * Ingestion itself stays idempotent, so re-reading the same PostHog event on
+ * the next tick (before the request flips to `succeeded`) cannot double-charge.
+ */
+export async function pullBillingUsageResults(limit = 100): Promise<{
+  pending: number;
+  ingested: number;
+}> {
+  const callback = config.infobip.billingCallback;
+  if (!callback || callback.transport !== 'posthog') return { pending: 0, ingested: 0 };
+
+  const pending = await db
+    .select({ providerRequestId: billingUsageRequests.providerRequestId })
+    .from(billingUsageRequests)
+    .where(eq(billingUsageRequests.status, 'pending'))
+    .limit(limit);
+  if (pending.length === 0) return { pending: 0, ingested: 0 };
+
+  // A request whose submission failed keeps its placeholder id; there is no
+  // PostHog event to find for it.
+  const ids = pending
+    .map((p) => p.providerRequestId)
+    .filter((id) => !id.startsWith('pending:'));
+  const literals = hogqlLiteralList(ids);
+  if (!literals || literals.length === 0) return { pending: pending.length, ingested: 0 };
+
+  const result = await runHogQL(
+    `SELECT properties.requestId, properties.payload
+     FROM events
+     WHERE event = '${USAGE_RESULT_EVENT}'
+       AND properties.requestId IN (${literals.join(', ')})
+       AND timestamp > now() - INTERVAL 7 DAY
+     ORDER BY timestamp DESC
+     LIMIT ${Math.max(1, limit)}`,
+    'maildrill-billing-usage-pull',
+  );
+  if (!result) return { pending: pending.length, ingested: 0 };
+
+  let ingested = 0;
+  for (const row of result.results ?? []) {
+    const raw = row?.[1];
+    if (typeof raw !== 'string' || !raw) continue;
+    let payload: UsageCallbackPayload;
+    try {
+      payload = JSON.parse(raw) as UsageCallbackPayload;
+    } catch {
+      log.warn({ requestId: row?.[0] }, 'billing usage event carried unparseable payload');
+      continue;
+    }
+    const outcome = await ingestUsageCallback(payload);
+    if (outcome.handled && !outcome.duplicate) ingested += 1;
+  }
+
+  if (ingested > 0) log.info({ pending: pending.length, ingested }, 'pulled billing usage results');
+  return { pending: pending.length, ingested };
 }

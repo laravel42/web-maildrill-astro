@@ -408,7 +408,7 @@ export async function campaignRoutes(appRaw: FastifyInstance): Promise<void> {
     {
       schema: {
         tags: TAG,
-        summary: 'Device and top-link breakdown from Infobip tracking events',
+        summary: 'Device and top-link breakdown from Maildrill tracking events',
         params: idParam,
       },
     },

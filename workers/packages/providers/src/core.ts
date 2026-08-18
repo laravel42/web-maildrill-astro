@@ -157,15 +157,28 @@ export interface MessagingProvider {
   /**
    * Pull latest Infobip status groupName for an outbound message (Messages API
    * reports). Used by campaign-delivery when PostHog has no DLR yet.
+   *
+   * `entityId` scopes the lookup to one workspace. It matches only traffic that
+   * carried the entity when it was SENT, so passing it for a message sent
+   * before the workspace had an entity yields nothing.
    */
-  getDeliveryStatusGroup?(channel: Channel, providerMessageId: string): Promise<string | null>;
+  getDeliveryStatusGroup?(
+    channel: Channel,
+    providerMessageId: string,
+    entityId?: string,
+  ): Promise<string | null>;
   /**
    * Drain a batch of recent delivery reports (each Infobip report is returned
    * only once). Prefer over per-id polls when catching up many open messages.
+   *
+   * Pass `entityId` to drain one workspace's reports: without it a single call
+   * consumes reports belonging to every workspace on the account, and whatever
+   * the caller cannot match is discarded. Same send-time caveat as above.
    */
   pullDeliveryReports?(
     channel?: Channel,
     limit?: number,
+    entityId?: string,
   ): Promise<Array<{ providerMessageId: string; statusGroup: string }>>;
   /**
    * Provision a CPaaS X entity for a workspace. Infobip only — providers that

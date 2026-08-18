@@ -40,6 +40,14 @@ export interface BillingUsageQueryInput {
   /** Campaign tags to scope to. Empty → account-wide for the window. */
   campaignReferenceIds?: string[];
   /**
+   * CPaaS X entity to scope to — the workspace that owns the traffic. Omitted
+   * → the window covers every entity on the account. Only traffic that carried
+   * the entity at send time is matched; Infobip does not backfill it, so a
+   * campaign sent before the workspace had an entity answers empty under this
+   * filter rather than falling back to account-wide numbers.
+   */
+  entityId?: string;
+  /**
    * False only on a finalization pass. Usage for a just-finished campaign is
    * always unfinalized, so pass 1 must ask for it or the answer is empty.
    */
@@ -88,6 +96,7 @@ export async function submitBillingUsageQuery(
         ...(input.campaignReferenceIds?.length
           ? { campaignReferenceIds: input.campaignReferenceIds }
           : {}),
+        ...(input.entityId ? { platforms: [{ entityId: input.entityId }] } : {}),
       },
       aggregateBy: [...(input.aggregateBy ?? CAMPAIGN_AGGREGATES)],
       options: { includeUnfinalizedData: input.includeUnfinalizedData },
@@ -136,14 +145,10 @@ export async function submitBillingUsageQuery(
 }
 
 /**
- * The callback URL carries its own bearer: Infobip signs nothing here, so an
- * unguessable `?token=` is the authentication, exactly as the unsubscribe and
- * webview links work. Kept out of logs by never being interpolated into one.
+ * Where the result should be POSTed. Resolved by config, which picks between
+ * our own token-guarded endpoint and the PostHog webhook that already receives
+ * Infobip DLRs. Never logged: the direct form embeds the callback token.
  */
 export function callbackUrlWithToken(): string {
-  const url = config.infobip.billingCallbackUrl.trim();
-  const token = config.infobip.billingCallbackToken.trim();
-  if (!url || !token) return '';
-  const sep = url.includes('?') ? '&' : '?';
-  return `${url}${sep}token=${encodeURIComponent(token)}`;
+  return config.infobip.billingCallback?.url ?? '';
 }

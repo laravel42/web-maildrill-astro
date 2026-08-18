@@ -211,6 +211,13 @@
       "when": 1786740280000,
       "tag": "0029_billing_usage",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1786740320000,
+      "tag": "0030_tenant_entity_provisioned",
+      "breakpoints": true
     }
   ]
 }

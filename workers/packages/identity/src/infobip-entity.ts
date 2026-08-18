@@ -7,19 +7,25 @@
  * was tested against the live account and rejected (see
  * `workers/docs/infobip-api-scheme.md`). Postgres remains the system of record.
  *
- * Two things create the entity on Infobip's side:
+ * `POST /provisioning/1/entities` at workspace creation is the ONLY thing that
+ * creates the entity. It is best-effort — a signup must not fail because a
+ * provider call did — but "best-effort" is not "optional": until it succeeds,
+ * the entity does not exist and every send tagged with the id is unattributable.
  *
- *  1. `POST /provisioning/1/entities` at workspace creation, which also gives
- *     it a readable `entityName` in the portal. The live account's key
- *     currently answers 403 UNAUTHORIZED on `/provisioning`, so this is
- *     best-effort and never blocks a signup.
- *  2. Infobip auto-creating it the first time a message carries an unknown
- *     `entityId` (entityName then equals the id). This is the path that
- *     actually works today, which is why (1) failing is not fatal.
+ * There is no second path. Infobip does not auto-create an entity from an
+ * unknown `entityId` carried on a traffic API call: verified 2026-08-17 against
+ * the live account, where a workspace with 153 accepted, entity-tagged sends
+ * still returned 404 from `GET /provisioning/1/entities/{id}`. An earlier
+ * version of this comment claimed that fallback worked and used it to justify
+ * swallowing a 403, which kept the feature silently inert for a week.
+ *
+ * The failure mode to watch for is an API key without the provisioning scope:
+ * every local row still gets an id and looks provisioned, so
+ * `infobipEntityProvisionedAt` is what separates "assigned" from "confirmed".
  */
 import { eq } from 'drizzle-orm';
 import { db, tenants } from '@maildrill/database';
-import { logger } from '@maildrill/observability';
+import { logger, metrics } from '@maildrill/observability';
 import { getProvider } from '@maildrill/providers';
 
 const log = logger.child({ mod: 'infobip-entity' });
@@ -36,8 +42,11 @@ export function entityIdForTenant(tenantId: string): string {
 /**
  * Assign the workspace its entity id and register it with Infobip.
  *
- * The column write is the source of truth and happens regardless; the remote
- * call is best-effort. Returns the entity id so callers can use it right away.
+ * The id assignment is local and happens regardless, so sends can be tagged
+ * immediately; the remote call cannot block a signup. Only an acknowledged
+ * call stamps `infobipEntityProvisionedAt` — a row with an id but no stamp is
+ * the "looks fine locally, absent at the provider" state. Returns the entity
+ * id so callers can use it right away.
  */
 export async function provisionTenantEntity(tenant: {
   id: string;
@@ -48,19 +57,39 @@ export async function provisionTenantEntity(tenant: {
   entityCache.set(tenant.id, { entityId, expires: Date.now() + CACHE_TTL_MS });
 
   const provider = getProvider();
-  if (!provider.createEntity) return entityId;
+  if (!provider.createEntity) {
+    metrics.inc('infobip_entity_provision_total', { outcome: 'unsupported' });
+    return entityId;
+  }
   try {
     const result = await provider.createEntity({ entityId, entityName: tenant.name });
     if (result.ok) {
+      await db
+        .update(tenants)
+        .set({ infobipEntityProvisionedAt: new Date() })
+        .where(eq(tenants.id, tenant.id));
+      metrics.inc('infobip_entity_provision_total', {
+        outcome: result.existed === true ? 'existed' : 'created',
+      });
       log.info({ entityId, existed: result.existed === true }, 'infobip entity provisioned');
     } else if (result.forbidden) {
-      // Expected on accounts whose key has no provisioning scope. The entity
-      // still materialises on the first tagged send.
-      log.warn({ entityId }, 'infobip provisioning forbidden — entity will auto-create on send');
+      // Not benign, despite being the common misconfiguration: nothing else
+      // ever creates this entity, so the workspace's traffic stays
+      // unattributable until the key gets the provisioning scope and this runs
+      // again. Logged at error precisely because it used to be a warning
+      // nobody read.
+      metrics.inc('infobip_entity_provision_total', { outcome: 'forbidden' });
+      log.error(
+        { entityId, error: result.error },
+        'infobip provisioning forbidden — API key lacks the provisioning scope; ' +
+          'this workspace has no entity and its usage cannot be attributed',
+      );
     } else {
+      metrics.inc('infobip_entity_provision_total', { outcome: 'failed' });
       log.error({ entityId, error: result.error }, 'infobip entity provisioning failed');
     }
   } catch (err) {
+    metrics.inc('infobip_entity_provision_total', { outcome: 'threw' });
     log.error({ entityId, err }, 'infobip entity provisioning threw');
   }
   return entityId;
@@ -78,6 +107,33 @@ const entityCache = new Map<string, { entityId: string | null; expires: number }
 /** Test seam — drop memoised ids between cases. */
 export function clearEntityCache(): void {
   entityCache.clear();
+}
+
+/**
+ * The workspace's entity id if one is ALREADY assigned — never provisions.
+ *
+ * For callers that only want to stamp an outbound request with the workspace
+ * it belongs to (domain registration, voice preview). A read of that kind must
+ * not create a resource at the provider as a side effect: the cost of a null
+ * here is one unattributed call, whereas provisioning-on-read turns any such
+ * request — including one from a test with a stubbed `fetch`, which does not
+ * intercept the provider's `https.request` — into a live entity write.
+ *
+ * Only positive hits are memoised, so this can never mask the backfill that
+ * `tenantInfobipEntityId` performs for rows predating the column.
+ */
+export async function knownTenantInfobipEntityId(tenantId: string): Promise<string | null> {
+  const hit = entityCache.get(tenantId);
+  if (hit && hit.expires > Date.now()) return hit.entityId;
+
+  const rows = await db
+    .select({ entityId: tenants.infobipEntityId })
+    .from(tenants)
+    .where(eq(tenants.id, tenantId))
+    .limit(1);
+  const entityId = rows[0]?.entityId ?? null;
+  if (entityId) entityCache.set(tenantId, { entityId, expires: Date.now() + CACHE_TTL_MS });
+  return entityId;
 }
 
 /**

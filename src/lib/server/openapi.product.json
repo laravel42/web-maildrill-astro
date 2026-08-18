@@ -4070,7 +4070,7 @@
         },
         "/v1/campaigns/{id}/engagement": {
             "get": {
-                "summary": "Device and top-link breakdown from Infobip tracking events",
+                "summary": "Device and top-link breakdown from Maildrill tracking events",
                 "tags": [
                     "Campaigns"
                 ],

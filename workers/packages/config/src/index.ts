@@ -135,6 +135,14 @@ const EnvSchema = z.object({
    */
   INFOBIP_BILLING_CALLBACK_URL: z.string().default(''),
   /**
+   * Transport for the billing-usage result. `auto` prefers a direct URL when
+   * one is set and otherwise reuses the PostHog webhook that already receives
+   * Infobip DLRs (derived from INFOBIP_NOTIFY_URL with `kind=billing`), which
+   * means the reconciliation works without exposing product-api publicly.
+   * `direct` refuses to fall back; `posthog` forces the derived webhook.
+   */
+  INFOBIP_BILLING_CALLBACK_TRANSPORT: z.enum(['auto', 'direct', 'posthog']).default('auto'),
+  /**
    * Channels whose sends carry `campaignReferenceId`. Defaults to the two
    * whose field placement the Infobip OpenAPI spec actually documents; adding
    * `whatsapp,voice` is a one-line change once verified against a live
@@ -345,14 +353,56 @@ export const config = {
       .filter(Boolean),
     billingCallbackUrl: env.INFOBIP_BILLING_CALLBACK_URL,
     billingCallbackToken: env.INFOBIP_BILLING_CALLBACK_TOKEN,
-    /** Provider-usage reconciliation needs both a key and a reachable callback. */
+    billingCallbackTransport: env.INFOBIP_BILLING_CALLBACK_TRANSPORT,
+    /**
+     * Where Infobip should POST the billing-usage result, and how we get it
+     * back.
+     *
+     *   direct   → our own product-api endpoint; the `?token=` is the auth and
+     *              the result is ingested the moment it lands.
+     *   posthog  → the same webhook that already receives Infobip DLRs, with
+     *              `kind=billing`. Nothing of ours needs to be public, but the
+     *              result arrives in PostHog rather than in our process, so a
+     *              poller pulls it back out (see `pullBillingUsageResults`).
+     *
+     * The PostHog form carries no secret because it cannot: that endpoint
+     * accepts any POST from anyone. The guard is downstream instead — a result
+     * is only ever ingested if its `requestId` matches a request row WE
+     * created, which is unforgeable without having seen our submission.
+     */
+    get billingCallback(): { url: string; transport: 'direct' | 'posthog' } | null {
+      const explicit = env.INFOBIP_BILLING_CALLBACK_URL.trim();
+      const mode = env.INFOBIP_BILLING_CALLBACK_TRANSPORT;
+      if (mode !== 'posthog' && explicit) {
+        // A direct endpoint without its token is not usable: the route refuses
+        // every delivery, so submitting would burn the one-shot result.
+        if (!env.INFOBIP_BILLING_CALLBACK_TOKEN.trim()) return null;
+        const sep = explicit.includes('?') ? '&' : '?';
+        return {
+          url: `${explicit}${sep}token=${encodeURIComponent(env.INFOBIP_BILLING_CALLBACK_TOKEN.trim())}`,
+          transport: 'direct',
+        };
+      }
+      if (mode === 'direct') return null;
+      const notify = env.INFOBIP_NOTIFY_URL.trim();
+      if (!notify) return null;
+      // Same swap the tracking URL uses: one webhook, discriminated by `kind`.
+      const url = notify.includes('kind=')
+        ? notify.replace(/kind=[^&]*/, 'kind=billing')
+        : `${notify}${notify.includes('?') ? '&' : '?'}kind=billing`;
+      return { url, transport: 'posthog' };
+    },
+    /**
+     * Reconciliation needs a key, a base URL, and a callback route. The PostHog
+     * transport additionally needs read access to pull the result back, which
+     * is the same personal key the stats queries use.
+     */
     get billingUsageEnabled(): boolean {
-      return Boolean(
-        env.INFOBIP_API_KEY &&
-          env.INFOBIP_BASE_URL &&
-          env.INFOBIP_BILLING_CALLBACK_URL &&
-          env.INFOBIP_BILLING_CALLBACK_TOKEN,
-      );
+      if (!env.INFOBIP_API_KEY || !env.INFOBIP_BASE_URL) return false;
+      const callback = this.billingCallback;
+      if (!callback) return false;
+      if (callback.transport === 'posthog' && !env.POSTHOG_PERSONAL_API_KEY) return false;
+      return true;
     },
     /**
      * Engagement tracking callback. Prefer explicit INFOBIP_TRACKING_URL; else

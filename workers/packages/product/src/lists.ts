@@ -683,8 +683,8 @@ export async function listListsPage(
 
   return rows.map((r) => ({
     ...r.list,
-    memberCount: Number(r.memberCount),
-    activeMemberCount: Number(r.activeMemberCount),
+      memberCount: Number(r.memberCount),
+      activeMemberCount: Number(r.activeMemberCount),
     addedLast7: Number(r.addedLast7),
     addedPrev7: Number(r.addedPrev7),
     trend: r.trend.map(Number),

@@ -69,8 +69,20 @@ export async function revokeApiKey(tenantId: string, id: string): Promise<Worksp
     .set({ revokedAt: new Date() })
     .where(and(eq(apiKeys.id, id), eq(apiKeys.tenantId, tenantId), isNull(apiKeys.revokedAt)))
     .returning();
-  if (!updated[0]) throw new NotFoundError('api key not found (or already revoked)');
-  return toPublic(updated[0]);
+  if (updated[0]) return toPublic(updated[0]);
+
+  // Nothing updated means one of two very different things. Re-revoking a dead
+  // key already has the caller's end state, so it succeeds idempotently (and
+  // keeps the original revocation instant); only a key this tenant doesn't
+  // hold is a genuine 404. Reporting both as "not found" is what made a
+  // mis-addressed revoke look like the key had vanished from the database.
+  const existing = await db
+    .select()
+    .from(apiKeys)
+    .where(and(eq(apiKeys.id, id), eq(apiKeys.tenantId, tenantId)))
+    .limit(1);
+  if (!existing[0]) throw new NotFoundError('api key not found');
+  return toPublic(existing[0]);
 }
 
 /**

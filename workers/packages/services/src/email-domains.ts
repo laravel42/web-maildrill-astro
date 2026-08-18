@@ -2,6 +2,8 @@ import { and, eq } from 'drizzle-orm';
 import { config } from '@maildrill/config';
 import { db, emailDomains } from '@maildrill/database';
 import { ConflictError, NotFoundError, ValidationError } from '@maildrill/domain';
+import { knownTenantInfobipEntityId } from '@maildrill/identity';
+import { resolvePlatformFields } from '@maildrill/providers';
 
 /**
  * Sending-domain management (Settings → Domains). Infobip's domain API is
@@ -175,9 +177,18 @@ export async function registerEmailDomain(
     throw new ConflictError(`${name} is already registered`);
   }
 
+  // `POST /email/1/domains` takes the CPaaS X identity as top-level fields
+  // (not the nested `platform` block the send APIs use), so the domain is
+  // filed under the workspace that registered it rather than the bare account.
+  const platform = resolvePlatformFields(
+    config.infobip.applicationId,
+    config.infobip.entityId,
+    (await knownTenantInfobipEntityId(tenantId)) ?? undefined,
+  );
   const { status, json } = await infobip('POST', '/email/1/domains', {
     domainName: name,
     targetedDailyTraffic,
+    ...platform,
   });
   if (status === 200 || status === 201) {
     await claimDomain(tenantId, name);
