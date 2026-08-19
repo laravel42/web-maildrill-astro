@@ -113,7 +113,15 @@ export default defineConfig({
         !page.includes('/signup') &&
         !page.includes('/forgot-password') &&
         // API docs are hidden for now — keep them out of the sitemap too.
-        !page.includes('/developers'),
+        !page.includes('/developers') &&
+        // Per-recipient, token-addressed pages. They are `prerender = false`
+        // and meaningless without a token, so a crawler reaching them sees an
+        // error state — and inviting crawlers to /unsubscribe is worse than
+        // useless: that flow exists precisely because scanners prefetch links
+        // in mail, which is why its GET only confirms and never acts.
+        !page.includes('/unsubscribe') &&
+        !page.includes('/view') &&
+        !page.includes('/auth/'),
     }),
   ],
   vite: {
