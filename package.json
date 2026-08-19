@@ -17,7 +17,7 @@
     "db:seed:images": "pnpm --filter workers db:seed:images",
     "db:backfill:thumbs": "pnpm --filter workers db:backfill:thumbs",
     "db:backfill:engagement": "pnpm --filter workers db:backfill:engagement",
-    "build": "astro build",
+    "build": "astro build && node scripts/sitemap-canonical.mjs",
     "preview": "astro preview",
     "check": "astro check",
     "lint": "eslint .",

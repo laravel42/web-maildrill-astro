@@ -29,7 +29,7 @@ Disallow: /unsubscribe
 Disallow: /view
 Disallow: /auth/
 
-Sitemap: ${siteConfig.url}/sitemap-index.xml
+Sitemap: ${siteConfig.url}/sitemap.xml
 `;
   return new Response(body, {
     headers: { 'Content-Type': 'text/plain; charset=utf-8' },
