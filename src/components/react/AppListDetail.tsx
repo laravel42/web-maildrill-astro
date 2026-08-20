@@ -118,8 +118,23 @@ export default function AppListDetail({
   const [rosterPage, setRosterPage] = useState(1);
   const [rosterLoading, setRosterLoading] = useState(true);
   const [rosterFailed, setRosterFailed] = useState(false);
+  /** What is typed, and what has actually been sent — debounced apart. */
+  const [rosterQuery, setRosterQuery] = useState('');
+  const [rosterNeedle, setRosterNeedle] = useState('');
+  /** Matching members. Falls back to the list total until the first response. */
+  const [rosterTotalMatched, setRosterTotalMatched] = useState<number | null>(null);
 
-  const rosterTotal = list.memberCount ?? 0;
+  // 300ms after typing stops. Firing per keystroke would issue a request and a
+  // count per character against a 636-row membership for no better answer.
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      setRosterNeedle(rosterQuery.trim());
+      setRosterPage(1);
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [rosterQuery]);
+
+  const rosterTotal = rosterTotalMatched ?? list.memberCount ?? 0;
   const rosterPageCount = Math.max(1, Math.ceil(rosterTotal / PAGE_SIZE));
   const rosterSafePage = Math.min(rosterPage, rosterPageCount);
 
@@ -127,13 +142,19 @@ export default function AppListDetail({
     let cancelled = false;
     setRosterLoading(true);
     setRosterFailed(false);
+    const qs = new URLSearchParams({
+      limit: String(PAGE_SIZE),
+      offset: String((rosterSafePage - 1) * PAGE_SIZE),
+    });
+    if (rosterNeedle) qs.set('q', rosterNeedle);
     api
-      .get<{ data: RosterMember[] }>(
-        `lists/${list.id}/members?limit=${PAGE_SIZE}&offset=${(rosterSafePage - 1) * PAGE_SIZE}`,
-      )
+      .get<{ data: RosterMember[]; total?: number }>(`lists/${list.id}/members?${qs}`)
       .then((res) => {
         if (cancelled) return;
         setRoster(res.data ?? []);
+        // The server counts the same predicate it paged, so the pager follows
+        // the filter instead of the whole membership.
+        setRosterTotalMatched(res.total ?? null);
       })
       .catch(() => {
         // An empty table with no explanation reads as "this list has nobody",
@@ -147,7 +168,7 @@ export default function AppListDetail({
     return () => {
       cancelled = true;
     };
-  }, [list.id, rosterSafePage]);
+  }, [list.id, rosterSafePage, rosterNeedle]);
   const [exporting, setExporting] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -540,11 +561,29 @@ export default function AppListDetail({
                 <h2 className={styles.cardTitle}>Subscribers</h2>
                 <span className={styles.rosterCount}>
                   {rosterTotal.toLocaleString('en-US')}{' '}
-                  {rosterTotal === 1 ? 'member' : 'members'}
+                  {rosterNeedle
+                    ? rosterTotal === 1
+                      ? 'match'
+                      : 'matches'
+                    : rosterTotal === 1
+                      ? 'member'
+                      : 'members'}
                 </span>
-                <a className={styles.rosterLink} href={`${routes.app.subscribers}?list=${list.id}`}>
-                  Filter on Subscribers
-                </a>
+                {/* Searches the whole membership server-side, not the ten rows
+                    on screen — the count beside the heading and the pager both
+                    follow it, which is the difference between a filter and a
+                    decoration. */}
+                <div className={styles.rosterSearch}>
+                  <Icon name="search" size={14} className={styles.rosterSearchIcon} />
+                  <input
+                    type="search"
+                    className={styles.rosterInput}
+                    placeholder="Search name or email…"
+                    value={rosterQuery}
+                    onChange={(e) => setRosterQuery(e.target.value)}
+                    aria-label="Search this list's subscribers"
+                  />
+                </div>
               </div>
 
               {rosterFailed ? (
@@ -552,7 +591,11 @@ export default function AppListDetail({
               ) : rosterLoading && roster.length === 0 ? (
                 <p className={styles.empty}>Loading members…</p>
               ) : roster.length === 0 ? (
-                <p className={styles.empty}>No subscribers on this list yet.</p>
+                <p className={styles.empty}>
+                  {rosterNeedle
+                    ? `No subscriber on this list matches “${rosterNeedle}”.`
+                    : 'No subscribers on this list yet.'}
+                </p>
               ) : (
                 <table className={styles.table}>
                   <thead>

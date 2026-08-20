@@ -662,7 +662,7 @@ export async function subscriberChannelCounts(
  * scan. Escaped, it searches for a literal per-cent sign, which is what someone
  * typing one means.
  */
-function searchCondition(q: string) {
+export function searchCondition(q: string) {
   const like = `%${q
     .trim()
     .toLowerCase()

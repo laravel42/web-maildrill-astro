@@ -25,6 +25,7 @@ import {
 } from '@maildrill/database';
 import { ValidationError, type Channel } from '@maildrill/domain';
 import { FAILED_STATUSES } from './message-status';
+import { searchCondition } from './subscribers';
 import { clamp } from './rules';
 
 export interface CreateListInput {
@@ -1250,16 +1251,40 @@ export type ListMember = Subscriber & { joinedAt: Date; lastCampaignAt: Date | n
 
 const lastMessageAt = sql`coalesce(${messages.readAt}, ${messages.deliveredAt}, ${messages.sentAt}, ${messages.submittedAt}, ${messages.createdAt})`;
 
+/**
+ * Membership predicate, shared by the page query and its count so the two can
+ * never disagree about what "matching" means — a pager whose total counts a
+ * different set than the rows it pages is worse than no pager.
+ */
+function memberWhere(tenantId: string, listId: string, q?: string) {
+  const base = and(eq(listMembers.listId, listId), eq(subscribers.tenantId, tenantId));
+  return q?.trim() ? and(base, searchCondition(q)) : base;
+}
+
+/** Matching members, for the roster pager. */
+export async function countMembersOf(
+  tenantId: string,
+  listId: string,
+  opts: { q?: string } = {},
+): Promise<number> {
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(listMembers)
+    .innerJoin(subscribers, eq(listMembers.subscriberId, subscribers.id))
+    .where(memberWhere(tenantId, listId, opts.q));
+  return Number(row?.n ?? 0);
+}
+
 export async function listMembersOf(
   tenantId: string,
   listId: string,
-  opts: { limit?: number; offset?: number } = {},
+  opts: { limit?: number; offset?: number; q?: string } = {},
 ): Promise<ListMember[]> {
   const rows = await db
     .select({ ...getTableColumns(subscribers), joinedAt: listMembers.addedAt })
     .from(listMembers)
     .innerJoin(subscribers, eq(listMembers.subscriberId, subscribers.id))
-    .where(and(eq(listMembers.listId, listId), eq(subscribers.tenantId, tenantId)))
+    .where(memberWhere(tenantId, listId, opts.q))
     .orderBy(desc(subscribers.createdAt))
     .limit(clamp(opts.limit ?? 100, 1, 1000))
     .offset(Math.max(opts.offset ?? 0, 0));

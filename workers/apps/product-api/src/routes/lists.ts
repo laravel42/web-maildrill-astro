@@ -26,6 +26,7 @@ import {
   listBoardFacets,
   listListOptions,
   listListsPage,
+  countMembersOf,
   listMembersOf,
   removeFromList,
   updateList,
@@ -54,6 +55,13 @@ const createSchema = z.object({
 const idParam = z.object({ id: z.string().uuid() });
 const memberParams = z.object({ id: z.string().uuid(), subscriberId: z.string().uuid() });
 const memberBody = z.object({ subscriberId: z.string().uuid() });
+/** Members: paging plus an optional name/email needle. */
+const memberQuery = z.object({
+  limit: z.coerce.number().int().positive().max(1000).optional(),
+  offset: z.coerce.number().int().nonnegative().optional(),
+  q: z.string().trim().min(1).max(200).optional(),
+});
+
 const listQuery = z.object({
   limit: z.coerce.number().int().positive().max(1000).optional(),
   offset: z.coerce.number().int().nonnegative().optional(),
@@ -322,13 +330,26 @@ export async function listRoutes(appRaw: FastifyInstance): Promise<void> {
   app.get(
     '/v1/lists/:id/members',
     {
-      schema: { tags: TAG, summary: 'List list members', params: idParam, querystring: listQuery },
+      schema: {
+        tags: TAG,
+        summary: 'List list members, optionally filtered by name/email',
+        params: idParam,
+        querystring: memberQuery,
+      },
     },
-    async (req) => ({
-      data: await listMembersOf(req.tenantId, req.params.id, {
-        limit: req.query.limit,
-        offset: req.query.offset,
-      }),
-    }),
+    async (req) => {
+      // `total` counts the SAME predicate the page uses, so the roster's pager
+      // reflects the filter rather than the whole membership. Both come from
+      // `memberWhere`, so they cannot drift apart.
+      const [data, total] = await Promise.all([
+        listMembersOf(req.tenantId, req.params.id, {
+          limit: req.query.limit,
+          offset: req.query.offset,
+          q: req.query.q,
+        }),
+        countMembersOf(req.tenantId, req.params.id, { q: req.query.q }),
+      ]);
+      return { data, total };
+    },
   );
 }

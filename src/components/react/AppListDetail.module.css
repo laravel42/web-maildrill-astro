@@ -1022,14 +1022,58 @@
   font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
-.rosterLink {
+/* Search sits at the right of the roster header, sized to its longest
+   realistic needle rather than stretched — a full-width field here would
+   outweigh the heading it belongs to. */
+.rosterSearch {
+  position: relative;
   margin-left: auto;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--accent-text);
+  display: flex;
+  align-items: center;
 }
-.rosterLink:hover {
-  text-decoration: underline;
+.rosterSearchIcon {
+  position: absolute;
+  left: 9px;
+  color: var(--text4);
+  pointer-events: none;
+}
+.rosterInput {
+  width: 230px;
+  max-width: 100%;
+  height: 32px;
+  padding: 0 10px 0 30px;
+  border: 1px solid var(--border2);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+.rosterInput::placeholder {
+  color: var(--text4);
+}
+.rosterInput:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+/* Safari draws its own clear affordance on type=search; the field is short
+   enough that two of them collide. */
+.rosterInput::-webkit-search-decoration,
+.rosterInput::-webkit-search-results-button {
+  appearance: none;
+}
+@media (max-width: 720px) {
+  .rosterHead {
+    flex-wrap: wrap;
+  }
+  .rosterSearch {
+    margin-left: 0;
+    width: 100%;
+  }
+  .rosterInput {
+    width: 100%;
+  }
 }
 /* Same inset as the header and the cells, so the three left edges line up. */
 .rosterFoot {
