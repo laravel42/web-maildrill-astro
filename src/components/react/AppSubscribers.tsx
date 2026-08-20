@@ -358,6 +358,22 @@ export default function AppSubscribers({
     window.history.replaceState(null, '', `${url.pathname}${url.search}`);
   }, []);
 
+  // Deep link: /dashboard/subscribers?list=<id> arrives pre-filtered to that
+  // list. The list detail page links here for the filtering its own roster
+  // deliberately does not duplicate, and without this the param was ignored —
+  // a link that promises a filtered view and delivers everything.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const listId = url.searchParams.get('list');
+    if (!listId) return;
+    setListFilter(new Set([listId]));
+    // Load the options too, so the filter chip can name the list rather than
+    // showing a bare id.
+    loadLists();
+    url.searchParams.delete('list');
+    window.history.replaceState(null, '', `${url.pathname}${url.search}`);
+  }, []);
+
   // Legacy pin / bookmark: /dashboard/subscribers?open=<id> used to sit on
   // this table. Pins now go to the subscriber profile.
   useEffect(() => {

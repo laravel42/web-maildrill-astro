@@ -1003,3 +1003,34 @@
   }
 }
 
+
+/* ---- Member roster header ------------------------------------------------
+   The roster is a page of the list, not the list — so the header states the
+   real total beside the heading, and points at the Subscribers screen for the
+   filtering this section deliberately does not duplicate. */
+.rosterHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.rosterTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.rosterCount {
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.rosterLink {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent-text);
+}
+.rosterLink:hover {
+  text-decoration: underline;
+}

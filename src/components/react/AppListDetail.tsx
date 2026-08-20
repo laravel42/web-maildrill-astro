@@ -20,6 +20,8 @@ import {
   type ListDetailView,
 } from '@/lib/app/list-detail';
 import { ChannelPill } from './shared/CampaignPills';
+import { PAGE_SIZE, visiblePageNumbers } from './shared/pagination';
+import { agoNow } from './shared/time';
 import { CHANNEL_ORDER } from './shared/channels';
 import styles from './AppListDetail.module.css';
 
@@ -47,6 +49,52 @@ type Props = {
   lists?: { id: string; name: string }[];
 };
 
+/** One row of the member roster, as `/v1/lists/:id/members` returns it. */
+type RosterMember = {
+  id: string;
+  email: string;
+  name: string | null;
+  status: string;
+  joinedAt: string | null;
+  lastCampaignAt: string | null;
+};
+
+/* Avatar palette and status labels, restored with the roster. Deterministic
+   from the id so a subscriber keeps the same colour between pages. */
+const AV: Array<[string, string]> = [
+  ['#eef0ff', '#4f46e5'],
+  ['#e8f6ee', '#127a45'],
+  ['#fdf3e3', '#c2740a'],
+  ['#f3f0ff', '#6d28d9'],
+  ['#e6f6fa', '#0e7490'],
+];
+
+function pickAv(id: string): [string, string] {
+  let h = 0;
+  for (let i = 0; i < id.length; i += 1) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return AV[h % AV.length] ?? AV[0]!;
+}
+
+function initialsOf(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0] ?? '')
+      .join('')
+      .toUpperCase() || '?'
+  );
+}
+
+const ROSTER_STATUS: Record<string, string> = {
+  active: 'Active',
+  unsubscribed: 'Unsubscribed',
+  bounced: 'Bounced',
+  complained: 'Complained',
+  invalid: 'Invalid',
+};
+
 export default function AppListDetail({
   initial,
   campaigns = [],
@@ -55,6 +103,51 @@ export default function AppListDetail({
   lists,
 }: Props) {
   const [list, setList] = useState(initial);
+
+  /**
+   * The member roster, one page at a time.
+   *
+   * This used to load the whole list — `members?limit=1000` on every page
+   * view, ~86KB rendered — which is why it was removed. It is back because
+   * "who is actually on this list" is a fair question to ask from the list,
+   * but it reads a page rather than the membership: `offset` moves, the
+   * request size does not, and nothing is fetched until the section is
+   * reached.
+   */
+  const [roster, setRoster] = useState<RosterMember[]>([]);
+  const [rosterPage, setRosterPage] = useState(1);
+  const [rosterLoading, setRosterLoading] = useState(true);
+  const [rosterFailed, setRosterFailed] = useState(false);
+
+  const rosterTotal = list.memberCount ?? 0;
+  const rosterPageCount = Math.max(1, Math.ceil(rosterTotal / PAGE_SIZE));
+  const rosterSafePage = Math.min(rosterPage, rosterPageCount);
+
+  useEffect(() => {
+    let cancelled = false;
+    setRosterLoading(true);
+    setRosterFailed(false);
+    api
+      .get<{ data: RosterMember[] }>(
+        `lists/${list.id}/members?limit=${PAGE_SIZE}&offset=${(rosterSafePage - 1) * PAGE_SIZE}`,
+      )
+      .then((res) => {
+        if (cancelled) return;
+        setRoster(res.data ?? []);
+      })
+      .catch(() => {
+        // An empty table with no explanation reads as "this list has nobody",
+        // which is a different and much worse claim than "we could not load
+        // it" — so the failure is stated rather than rendered as emptiness.
+        if (!cancelled) setRosterFailed(true);
+      })
+      .finally(() => {
+        if (!cancelled) setRosterLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [list.id, rosterSafePage]);
   const [exporting, setExporting] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -436,11 +529,131 @@ export default function AppListDetail({
               </ul>
             </section>
 
-            {/* The member roster used to live here: a 1,000-row table of every
-                subscriber on the list, fetched in full on page load. It
-                duplicated the Subscribers screen, which does the same job with
-                server-side keyset pagination and real filters, and cost ~86KB
-                per view to render something nobody drilled into from here. */}
+            {/* ---- MEMBER ROSTER ----
+                Restored, but a page at a time. The version removed here loaded
+                `members?limit=1000` on every view and rendered ~86KB; this asks
+                for PAGE_SIZE rows at an offset, so the cost of the section does
+                not grow with the size of the list. Deep filtering still belongs
+                on the Subscribers screen, which has the server-side filters. */}
+            <section className={`${styles.card} ${styles.tabsCard}`}>
+              <div className={styles.rosterHead}>
+                <h2 className={styles.rosterTitle}>Subscribers</h2>
+                <span className={styles.rosterCount}>
+                  {rosterTotal.toLocaleString('en-US')}{' '}
+                  {rosterTotal === 1 ? 'member' : 'members'}
+                </span>
+                <a className={styles.rosterLink} href={`${routes.app.subscribers}?list=${list.id}`}>
+                  Filter on Subscribers
+                </a>
+              </div>
+
+              {rosterFailed ? (
+                <p className={styles.empty}>Could not load the members of this list.</p>
+              ) : rosterLoading && roster.length === 0 ? (
+                <p className={styles.empty}>Loading members…</p>
+              ) : roster.length === 0 ? (
+                <p className={styles.empty}>No subscribers on this list yet.</p>
+              ) : (
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Subscriber</th>
+                      <th>Status</th>
+                      <th>Joined</th>
+                      <th>Last campaign</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {roster.map((m) => {
+                      const name = m.name || m.email;
+                      const [avBg, avInk] = pickAv(m.id);
+                      const go = () => {
+                        window.location.href = routes.app.subscriber(m.id);
+                      };
+                      return (
+                        <tr
+                          key={m.id}
+                          className={styles.person}
+                          role="link"
+                          tabIndex={0}
+                          onClick={go}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              go();
+                            }
+                          }}
+                        >
+                          <td>
+                            <div className={styles.personCell}>
+                              <span
+                                className={styles.personAvatar}
+                                style={{ background: avBg, color: avInk }}
+                              >
+                                {initialsOf(name)}
+                              </span>
+                              <div className={styles.personId}>
+                                <span className={styles.personName}>{name}</span>
+                                <span className={styles.personEmail}>{m.email}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <span className={`astatus astatus--${m.status}`}>
+                              <span
+                                className={styles.dot}
+                                style={{
+                                  background: m.status === 'active' ? '#16a34a' : 'currentColor',
+                                }}
+                              />
+                              {ROSTER_STATUS[m.status] ?? m.status}
+                            </span>
+                          </td>
+                          <td className={styles.tnum}>{m.joinedAt ? agoNow(m.joinedAt) : '—'}</td>
+                          <td className={styles.tnum}>
+                            {m.lastCampaignAt ? agoNow(m.lastCampaignAt) : '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+
+              {rosterPageCount > 1 && (
+                <div className={styles.pager}>
+                  <button
+                    type="button"
+                    className={styles.pg}
+                    disabled={rosterSafePage === 1}
+                    onClick={() => setRosterPage((n) => Math.max(1, n - 1))}
+                    aria-label="Previous page"
+                  >
+                    <Icon name="chevron-right" size={15} className={styles.pgflip} />
+                  </button>
+                  {visiblePageNumbers(rosterSafePage, rosterPageCount).map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      className={`${styles.pgn} tnum${n === rosterSafePage ? ' is-on' : ''}`}
+                      aria-current={n === rosterSafePage ? 'page' : undefined}
+                      onClick={() => setRosterPage(n)}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className={styles.pg}
+                    disabled={rosterSafePage === rosterPageCount}
+                    onClick={() => setRosterPage((n) => Math.min(rosterPageCount, n + 1))}
+                    aria-label="Next page"
+                  >
+                    <Icon name="chevron-right" size={15} />
+                  </button>
+                </div>
+              )}
+            </section>
           </div>
 
           <aside className={styles.colRail}>
