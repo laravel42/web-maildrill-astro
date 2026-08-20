@@ -1008,17 +1008,14 @@
    The roster is a page of the list, not the list — so the header states the
    real total beside the heading, and points at the Subscribers screen for the
    filtering this section deliberately does not duplicate. */
+/* Inset to match the table's own 22px cell padding — the table bleeds to the
+   card edges (that is where its padding lives), so a header with none sat a
+   full 22px left of the column it labels. */
 .rosterHead {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  margin-bottom: 14px;
-}
-.rosterTitle {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--ink);
+  padding: 18px 22px 14px;
 }
 .rosterCount {
   color: var(--muted);
@@ -1033,4 +1030,22 @@
 }
 .rosterLink:hover {
   text-decoration: underline;
+}
+/* Same inset as the header and the cells, so the three left edges line up. */
+.rosterFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 22px 14px;
+}
+.rosterRange {
+  color: var(--text4);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+/* The last row's rule would otherwise draw a line directly above the pager,
+   duplicating the separation the padding already gives it. */
+.tabsCard .table tbody tr:last-child td {
+  border-bottom: 0;
 }

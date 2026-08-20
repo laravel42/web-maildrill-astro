@@ -537,7 +537,7 @@ export default function AppListDetail({
                 on the Subscribers screen, which has the server-side filters. */}
             <section className={`${styles.card} ${styles.tabsCard}`}>
               <div className={styles.rosterHead}>
-                <h2 className={styles.rosterTitle}>Subscribers</h2>
+                <h2 className={styles.cardTitle}>Subscribers</h2>
                 <span className={styles.rosterCount}>
                   {rosterTotal.toLocaleString('en-US')}{' '}
                   {rosterTotal === 1 ? 'member' : 'members'}
@@ -621,7 +621,13 @@ export default function AppListDetail({
               )}
 
               {rosterPageCount > 1 && (
-                <div className={styles.pager}>
+                <div className={styles.rosterFoot}>
+                  <span className={styles.rosterRange}>
+                    {((rosterSafePage - 1) * PAGE_SIZE + 1).toLocaleString('en-US')}–
+                    {Math.min(rosterSafePage * PAGE_SIZE, rosterTotal).toLocaleString('en-US')} of{' '}
+                    {rosterTotal.toLocaleString('en-US')}
+                  </span>
+                  <div className={styles.pager}>
                   <button
                     type="button"
                     className={styles.pg}
@@ -648,9 +654,10 @@ export default function AppListDetail({
                     disabled={rosterSafePage === rosterPageCount}
                     onClick={() => setRosterPage((n) => Math.min(rosterPageCount, n + 1))}
                     aria-label="Next page"
-                  >
-                    <Icon name="chevron-right" size={15} />
-                  </button>
+                    >
+                      <Icon name="chevron-right" size={15} />
+                    </button>
+                  </div>
                 </div>
               )}
             </section>
