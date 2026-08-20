@@ -2,6 +2,12 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import { config } from '@maildrill/config';
 import { db, subscribers } from '@maildrill/database';
+import {
+  emitMaildrillEvent,
+  eventDedupeKey,
+  maildrillEventWanted,
+  projectSubscriber,
+} from '@maildrill/domain';
 import { suppressAddress } from './suppression';
 
 /**
@@ -66,10 +72,22 @@ export async function applyUnsubscribe(claims: UnsubscribeClaims): Promise<boole
     .limit(1);
   if (!sub) return false;
   if (sub.status !== 'unsubscribed') {
-    await db
+    const updated = await db
       .update(subscribers)
       .set({ status: 'unsubscribed', updatedAt: new Date() })
-      .where(eq(subscribers.id, sub.id));
+      .where(eq(subscribers.id, sub.id))
+      .returning();
+    // Only on the transition. A second click (or a mail client prefetching the one-click
+    // POST) must not re-fire a win-back workflow.
+    const row = updated[0];
+    if (row && maildrillEventWanted('subscriber.unsubscribed', claims.tenantId)) {
+      await emitMaildrillEvent({
+        type: 'subscriber.unsubscribed',
+        tenantId: claims.tenantId,
+        dedupeKey: eventDedupeKey('subscriber.unsubscribed', claims.tenantId, row.id),
+        data: { subscriber: projectSubscriber(row), subscriberId: row.id },
+      });
+    }
   }
   await suppressAddress({
     tenantId: claims.tenantId,

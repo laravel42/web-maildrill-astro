@@ -16,6 +16,7 @@ import {
 import { getProvider, type NormalizedProviderEvent } from '@maildrill/providers';
 import { billingEnforced, chargeMessageDelivered } from '@maildrill/billing';
 import { suppressAddress } from './suppression';
+import { emitCampaignRecipientEvent } from './automation-bridge';
 import {
   applyEngagementDelta,
   engagementClickDelta,
@@ -277,7 +278,46 @@ export async function applyProviderOutcome(input: {
   if (applied && (next === 'delivered' || next === 'sent')) {
     await chargeDeliveredMessage(input.tenantId, input.messageId, input.channel);
   }
+
+  // Automation triggers. Also post-commit, and for the same reason: the delivery
+  // transaction is on the hot path of every campaign and must not grow to carry work
+  // that is allowed to be a moment late.
+  if (applied) {
+    const automationEvent = automationEventForStatus(next, input.errorPermanent);
+    if (automationEvent) {
+      await emitCampaignRecipientEvent({
+        type: automationEvent,
+        tenantId: input.tenantId,
+        messageId: input.messageId,
+        channel: input.channel,
+        errorCode: input.errorCode,
+        errorMessage: input.errorMessage,
+      });
+    }
+  }
   return applied;
+}
+
+/**
+ * Which automation trigger a status transition corresponds to.
+ *
+ * A permanent failure is a bounce (the mailbox is dead); a temporary one is a failure (the
+ * provider refused, this time). Users act on those differently, so the triggers are
+ * separate rather than one "didn't work" event.
+ */
+function automationEventForStatus(
+  next: MessageState,
+  permanent: boolean | undefined,
+):
+  | 'campaign.sent'
+  | 'campaign.delivered'
+  | 'campaign.bounced'
+  | 'campaign.failed'
+  | null {
+  if (next === 'delivered') return 'campaign.delivered';
+  if (next === 'sent') return 'campaign.sent';
+  if (next === 'failed') return permanent === true ? 'campaign.bounced' : 'campaign.failed';
+  return null;
 }
 
 /** Billing commit for a delivered/sent message (no-op unless enforcement on). */
@@ -364,6 +404,16 @@ export async function applyTrackingOutcome(input: {
         target: [messageEvents.provider, messageEvents.eventFingerprint],
       })
       .returning({ id: messageEvents.id });
+    // Only on a NEW open row: the provider replays these, and a workflow that reacts to
+    // "opened" must not fire twice for one open.
+    if (openInserted.length > 0) {
+      await emitCampaignRecipientEvent({
+        type: 'campaign.opened',
+        tenantId: input.tenantId,
+        messageId: input.messageId,
+        channel: input.channel,
+      });
+    }
     return statusChanged || openInserted.length > 0;
   }
 
@@ -445,6 +495,20 @@ export async function applyTrackingOutcome(input: {
 
     return result.length > 0;
   });
+
+  // Automation trigger for a click. Fired only on a newly recorded event, and keyed on
+  // the provider fingerprint rather than the message: a subscriber clicking twice is two
+  // real occurrences, while the poller re-reporting one click is not.
+  if (inserted && type === 'CLICKED') {
+    await emitCampaignRecipientEvent({
+      type: 'campaign.clicked',
+      tenantId: input.tenantId,
+      messageId: input.messageId,
+      channel: input.channel,
+      occurrenceKey: input.fingerprint,
+      url: input.url,
+    });
+  }
 
   // A spam complaint takes the address out of circulation just like a hard
   // bounce — continuing to mail a complainer is what wrecks a sending domain.

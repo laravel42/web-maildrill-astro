@@ -23,7 +23,15 @@ import {
   type ListRow,
   type Subscriber,
 } from '@maildrill/database';
-import { ValidationError, type Channel } from '@maildrill/domain';
+import {
+  emitMaildrillEvent,
+  eventDedupeKey,
+  maildrillEventWanted,
+  projectSubscriber,
+  ValidationError,
+  type Channel,
+  type MaildrillEventType,
+} from '@maildrill/domain';
 import { FAILED_STATUSES } from './message-status';
 import { searchCondition } from './subscribers';
 import { clamp } from './rules';
@@ -1237,13 +1245,68 @@ export async function addToList(
   listId: string,
   subscriberId: string,
 ): Promise<void> {
-  await db.insert(listMembers).values({ listId, subscriberId, tenantId }).onConflictDoNothing();
+  const inserted = await db
+    .insert(listMembers)
+    .values({ listId, subscriberId, tenantId })
+    .onConflictDoNothing()
+    .returning({ listId: listMembers.listId });
+  // Only a NEW membership is an event. Re-adding somebody who is already on the list is
+  // not "joined", and a welcome workflow that treats it as one mails them again.
+  if (inserted.length > 0) {
+    await emitMembershipEvent('subscriber.list.added', tenantId, listId, subscriberId);
+  }
 }
 
 export async function removeFromList(listId: string, subscriberId: string): Promise<void> {
-  await db
+  const removed = await db
     .delete(listMembers)
-    .where(and(eq(listMembers.listId, listId), eq(listMembers.subscriberId, subscriberId)));
+    .where(and(eq(listMembers.listId, listId), eq(listMembers.subscriberId, subscriberId)))
+    .returning({ tenantId: listMembers.tenantId });
+  const tenantId = removed[0]?.tenantId;
+  if (tenantId) {
+    await emitMembershipEvent('subscriber.list.removed', tenantId, listId, subscriberId);
+  }
+}
+
+/**
+ * List-membership change → automation trigger.
+ *
+ * The subscriber and list rows are only loaded once something is actually listening —
+ * membership changes happen in bulk (a CSV import can produce tens of thousands), and two
+ * lookups apiece would be a visible cost for a workspace with no automations at all.
+ */
+async function emitMembershipEvent(
+  type: Extract<MaildrillEventType, 'subscriber.list.added' | 'subscriber.list.removed'>,
+  tenantId: string,
+  listId: string,
+  subscriberId: string,
+): Promise<void> {
+  if (!maildrillEventWanted(type, tenantId)) return;
+  const [subscriber] = await db
+    .select()
+    .from(subscribers)
+    .where(and(eq(subscribers.id, subscriberId), eq(subscribers.tenantId, tenantId)))
+    .limit(1);
+  if (!subscriber) return;
+  const [list] = await db
+    .select({ name: lists.name })
+    .from(lists)
+    .where(and(eq(lists.id, listId), eq(lists.tenantId, tenantId)))
+    .limit(1);
+
+  await emitMaildrillEvent({
+    type,
+    tenantId,
+    // Timestamped: leaving and rejoining a list is two occurrences, and a re-engagement
+    // workflow has to see the second one.
+    dedupeKey: eventDedupeKey(type, tenantId, listId, subscriberId, Date.now()),
+    data: {
+      subscriber: projectSubscriber(subscriber),
+      subscriberId,
+      listId,
+      listName: list?.name,
+    },
+  });
 }
 
 /** A list member: the subscriber plus when they joined this list. */

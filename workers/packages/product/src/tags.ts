@@ -7,6 +7,13 @@ import {
   type Subscriber,
   type TagRow,
 } from '@maildrill/database';
+import {
+  emitMaildrillEvent,
+  eventDedupeKey,
+  maildrillEventWanted,
+  projectSubscriber,
+  type MaildrillEventType,
+} from '@maildrill/domain';
 
 export async function createTag(
   tenantId: string,
@@ -44,13 +51,58 @@ export async function assignTag(
   tagId: string,
   subscriberId: string,
 ): Promise<void> {
-  await db.insert(subscriberTags).values({ tagId, subscriberId, tenantId }).onConflictDoNothing();
+  const inserted = await db
+    .insert(subscriberTags)
+    .values({ tagId, subscriberId, tenantId })
+    .onConflictDoNothing()
+    .returning({ tagId: subscriberTags.tagId });
+  // Re-applying a tag somebody already has is not "tag added"; a workflow keyed on it
+  // would fire every time an importer re-tags its whole audience.
+  if (inserted.length > 0) {
+    await emitTagEvent('subscriber.tag.added', tenantId, tagId, subscriberId);
+  }
 }
 
 export async function unassignTag(tagId: string, subscriberId: string): Promise<void> {
-  await db
+  const removed = await db
     .delete(subscriberTags)
-    .where(and(eq(subscriberTags.tagId, tagId), eq(subscriberTags.subscriberId, subscriberId)));
+    .where(and(eq(subscriberTags.tagId, tagId), eq(subscriberTags.subscriberId, subscriberId)))
+    .returning({ tenantId: subscriberTags.tenantId });
+  const tenantId = removed[0]?.tenantId;
+  if (tenantId) await emitTagEvent('subscriber.tag.removed', tenantId, tagId, subscriberId);
+}
+
+/** Tag change → automation trigger. Loads nothing unless something is listening. */
+async function emitTagEvent(
+  type: Extract<MaildrillEventType, 'subscriber.tag.added' | 'subscriber.tag.removed'>,
+  tenantId: string,
+  tagId: string,
+  subscriberId: string,
+): Promise<void> {
+  if (!maildrillEventWanted(type, tenantId)) return;
+  const [subscriber] = await db
+    .select()
+    .from(subscribers)
+    .where(and(eq(subscribers.id, subscriberId), eq(subscribers.tenantId, tenantId)))
+    .limit(1);
+  if (!subscriber) return;
+  const [tag] = await db
+    .select({ name: tags.name })
+    .from(tags)
+    .where(and(eq(tags.id, tagId), eq(tags.tenantId, tenantId)))
+    .limit(1);
+
+  await emitMaildrillEvent({
+    type,
+    tenantId,
+    dedupeKey: eventDedupeKey(type, tenantId, tagId, subscriberId, Date.now()),
+    data: {
+      subscriber: projectSubscriber(subscriber),
+      subscriberId,
+      tagId,
+      tagName: tag?.name,
+    },
+  });
 }
 
 export async function subscribersWithTag(tenantId: string, tagId: string): Promise<Subscriber[]> {
