@@ -180,6 +180,24 @@ export default function AppSubscribers({
     if (!live || allLists.length > 0) return;
     fetchLists('');
   };
+
+  /**
+   * Open the subscriber editor, making sure the list options exist first.
+   *
+   * `allLists` is lazy — it used to be fetched on mount and now loads when the
+   * Lists FILTER is opened. The editor reads the same state for its "Add to
+   * lists" picker but nothing made it load, so opening Add/Edit subscriber
+   * without having touched that filter showed "No lists yet — create one
+   * first" in a workspace with eight lists, and there was no way to change a
+   * subscriber's membership.
+   *
+   * Not awaited: the modal renders immediately and the chips appear when the
+   * request lands, which is the same behaviour the filter menu has.
+   */
+  const openSubEditor = (next: { mode: 'create' } | { mode: 'edit'; sub: RichSubscriber }) => {
+    loadLists();
+    setSubEditor(next);
+  };
   const [opensSel, setOpensSel] = useState<Set<string>>(new Set());
   const [clicksSel, setClicksSel] = useState<Set<string>>(new Set());
   const [rateFilterOpen, setRateFilterOpen] = useState<'opens' | 'clicks' | null>(null);
@@ -335,7 +353,7 @@ export default function AppSubscribers({
   useEffect(() => {
     const url = new URL(window.location.href);
     if (url.searchParams.get('new') == null) return;
-    setSubEditor({ mode: 'create' });
+    openSubEditor({ mode: 'create' });
     url.searchParams.delete('new');
     window.history.replaceState(null, '', `${url.pathname}${url.search}`);
   }, []);
@@ -1073,7 +1091,7 @@ export default function AppSubscribers({
             <Icon name="download" size={15} />
             {exporting ? 'Exporting…' : 'Export'}
           </button>
-          <button type="button" className="pbtn" onClick={() => setSubEditor({ mode: 'create' })}>
+          <button type="button" className="pbtn" onClick={() => openSubEditor({ mode: 'create' })}>
             <Icon name="plus" size={15} stroke={2.2} />
             Add subscriber
           </button>
@@ -1807,7 +1825,7 @@ export default function AppSubscribers({
           onEdit={() => {
             const sub = openSub;
             setOpenId(null);
-            setSubEditor({ mode: 'edit', sub });
+            openSubEditor({ mode: 'edit', sub });
           }}
           onDelete={() => setConfirmDelete([openSub.id])}
         />

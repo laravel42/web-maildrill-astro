@@ -9,6 +9,7 @@ import { channelKpis, EMPTY_TOTALS } from '@/lib/app/channel-kpis';
 import { channelReportConfig } from '@/lib/app/campaign-report';
 import type { ChannelType } from '@/types/app';
 import { tagStyle } from '@/lib/app/tag-style';
+import { applyListMembership } from '@/lib/app/subscriber-write';
 import {
   buildSubscriberDetailView,
   engagementScore,
@@ -1153,14 +1154,34 @@ export default function AppSubscriberDetail({
                 name: values.name || null,
                 status: values.status,
               });
+              // List membership is NOT part of the subscriber row — it lives in
+              // `subscriber_lists` and moves through the list-members endpoints.
+              // The PATCH above has never carried it, yet this handler used to
+              // write `values.listIds` straight into local state, so a changed
+              // selection looked saved until the next load discarded it.
+              await applyListMembership(sub.id, sub.listIds, values.listIds);
+
+              // Read back what actually persisted rather than echoing the form.
+              // Optimism is what hid this: state assembled from `values` is a
+              // claim about the server, and it was wrong.
+              const fresh = await api.get<{
+                email: string;
+                phone: string | null;
+                name: string | null;
+                status: string;
+                listIds?: string[];
+                lists?: string[];
+                tags?: string[];
+              }>(`subscribers/${sub.id}`);
               setSub((s) => ({
                 ...s,
-                email: values.email,
-                phone: values.phone,
-                name: values.name || values.email,
-                status: values.status,
-                listIds: values.listIds,
-                tags: values.tags,
+                email: fresh.email,
+                phone: fresh.phone ?? '',
+                name: fresh.name || fresh.email,
+                status: (fresh.status as typeof s.status) ?? s.status,
+                listIds: fresh.listIds ?? s.listIds,
+                lists: fresh.lists ?? s.lists,
+                tags: fresh.tags ?? s.tags,
               }));
               setEditorOpen(false);
               show('Subscriber updated');
