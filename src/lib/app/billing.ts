@@ -12,7 +12,32 @@ export type WalletInfo = {
   lowBalance: boolean;
   currency: string;
   tier: { code: string; name: string; discountBps: number } | null;
+  /** True until the workspace buys credit or is placed on a tier. */
+  onTrial: boolean;
 };
+
+/**
+ * What the badge beside the wordmark should read.
+ *
+ * Three states, in the order they can occur, and the order matters: a
+ * workspace on a commitment tier has necessarily bought something, so testing
+ * the tier first is what keeps an annual plan from being labelled "Pay as you
+ * go" the moment its first invoice clears.
+ *
+ *   trial          → nothing bought, no tier          → "Trial"
+ *   tier           → annual / commitment plan          → the tier's name
+ *   otherwise      → bought credit, no commitment      → "Pay as you go"
+ *
+ * Returns null while the wallet is unknown. The caller renders nothing rather
+ * than guessing: this sits in the chrome of every page, so a wrong plan name
+ * is a wrong claim shown everywhere.
+ */
+export function planBadgeLabel(wallet: WalletInfo | null): string | null {
+  if (!wallet) return null;
+  if (wallet.tier) return wallet.tier.name;
+  if (wallet.onTrial) return 'Trial';
+  return 'Pay as you go';
+}
 
 export type BillingPackage = {
   code: string;

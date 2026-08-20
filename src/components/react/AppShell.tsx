@@ -9,7 +9,7 @@ import PinPickerModal, { type Pin, type PinKind } from './PinPickerModal';
 import NotificationsInbox from './shared/NotificationsInbox';
 import styles from './AppShell.module.css';
 import { signOut } from 'auth-astro/client';
-import { fetchWallet } from '@/lib/app/billing';
+import { fetchWallet, planBadgeLabel } from '@/lib/app/billing';
 
 const PINS_KEY = 'md:pins:v2';
 const PINS_KEY_LEGACY = 'md:pins:v1';
@@ -102,9 +102,9 @@ export default function AppShell({
    * Commitment tier for the badge beside the logo.
    *
    * `null` while the wallet is still answering, and again if it fails — the
-   * badge stays empty rather than guessing. A workspace with no committed tier
-   * is genuinely on pay-as-you-go (prepaid wallet, no cycle), so that is a
-   * real plan name here, not a placeholder.
+   * badge stays empty rather than guessing. The three states it can show are
+   * resolved by `planBadgeLabel`: a new workspace reads "Trial" until it buys
+   * credit or is put on a plan, then "Pay as you go" or the plan's own name.
    */
   const [plan, setPlan] = useState<string | null>(null);
 
@@ -112,7 +112,7 @@ export default function AppShell({
     let cancelled = false;
     void fetchWallet()
       .then((w) => {
-        if (!cancelled) setPlan(w.tier?.name ?? 'Pay as you go');
+        if (!cancelled) setPlan(planBadgeLabel(w));
       })
       // Silent: a failed billing call must not put a wrong plan in the chrome
       // of every page. No badge is honest; a stale or default one is not.
