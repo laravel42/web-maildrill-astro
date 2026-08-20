@@ -359,77 +359,79 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
       See it before you sign up.
     </h2>
 
-    {/* Scroll-snap does the carousel; JS only adds the arrows and the looping
-        on top. With JS unavailable or still parsing, this is a horizontally
-        scrollable strip of screenshots that already works. */}
+    {/* Embla drives the carousel (loop, drag, snap); this is its required
+        viewport/container/slide structure. With JS unavailable or still
+        parsing, .tour__container is a flex row inside an overflow:hidden
+        viewport, so the first slide still renders as a static screenshot. */}
     <div class="tour__frame" data-reveal style="--reveal-delay:120ms">
-      <ul class="tour__track" id="tour-track" tabindex="0" role="group" aria-label="Product screenshots, scrollable">
-        {
-          shots.map((shot, i) => (
-            <li class="tour__slide" id={`tour-slide-${i}`} aria-label={`${i + 1} of ${shots.length}: ${shot.title}`}>
-              <figure class="tour__fig">
-                {/* Browser chrome. Purely decorative and aria-hidden: it
-                    frames the screenshot as a real app rather than a floating
-                    rectangle, but a screen reader announcing three dots and a
-                    fake URL bar before every slide would be noise. The alt
-                    text on the image carries the meaning. */}
-                <div class="tour__chrome">
-                  <span class="tour__lights" aria-hidden="true">
-                    <i></i><i></i><i></i>
-                  </span>
-                  <span class="tour__tab" aria-hidden="true">
-                    {/* The real brand mark, not a stand-in envelope — this
-                        frame is meant to look like the product in a browser,
-                        and the mark is the one recognisable thing in the
-                        chrome. The transparent variant, not favicon.svg: that
-                        one's dark tile reads as a heavy block against the pale
-                        tab. */}
-                    {/* Sized inline: the mark carries its own 32x32 viewBox and
-                        the scoped class alone was leaving it at intrinsic size
-                        — a 42px block inside a 32px tab. */}
-                    <img
-                      class="tour__favicon"
-                      src="/brand-mark.svg"
-                      alt=""
-                      width="12"
-                      height="12"
-                      style="width:9.6px;height:9.6px;flex:none"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    {/* One flex item, not two text runs: the tab's 4px gap is
-                        meant to sit between the mark and the label, and a bare
-                        `drill` span would take a gap of its own mid-word. */}
-                    <span class="tour__tabname">Mail<span class="tour__brand">drill</span></span>
-                  </span>
-                  <span class="tour__url" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" class="tour__lock"><path d="M7 11V8a5 5 0 0110 0v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                    {shot.url}
-                  </span>
-                </div>
-                <img
-                  src={shot.src}
-                  alt={shot.title}
-                  width="1600"
-                  height="1000"
-                  decoding="async"
-                  loading={i === 0 ? 'eager' : 'lazy'}
-                  fetchpriority={i === 0 ? 'high' : 'auto'}
-                />
-                <figcaption>
-                  <strong>{shot.title}</strong>
-                  <span>{shot.caption}</span>
-                </figcaption>
-              </figure>
-            </li>
-          ))
-        }
-      </ul>
+      <div class="tour__viewport" id="tour-viewport" tabindex="0" role="group" aria-label="Product screenshots, scrollable">
+        <ul class="tour__container" id="tour-container">
+          {
+            shots.map((shot, i) => (
+              <li class="tour__slide" id={`tour-slide-${i}`} aria-label={`${i + 1} of ${shots.length}: ${shot.title}`}>
+                <figure class="tour__fig">
+                  {/* Browser chrome. Purely decorative and aria-hidden: it
+                      frames the screenshot as a real app rather than a floating
+                      rectangle, but a screen reader announcing three dots and a
+                      fake URL bar before every slide would be noise. The alt
+                      text on the image carries the meaning. */}
+                  <div class="tour__chrome">
+                    <span class="tour__lights" aria-hidden="true">
+                    </span>
+                    <span class="tour__tab" aria-hidden="true">
+                      {/* The real brand mark, not a stand-in envelope — this
+                          frame is meant to look like the product in a browser,
+                          and the mark is the one recognisable thing in the
+                          chrome. The transparent variant, not favicon.svg: that
+                          one's dark tile reads as a heavy block against the pale
+                          tab. */}
+                      {/* Sized inline: the mark carries its own 32x32 viewBox and
+                          the scoped class alone was leaving it at intrinsic size
+                          — a 42px block inside a 32px tab. */}
+                      <img
+                        class="tour__favicon"
+                        src="/brand-mark.svg"
+                        alt=""
+                        width="12"
+                        height="12"
+                        style="width:9.6px;height:9.6px;flex:none"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      {/* One flex item, not two text runs: the tab's 4px gap is
+                          meant to sit between the mark and the label, and a bare
+                          `drill` span would take a gap of its own mid-word. */}
+                      <span class="tour__tabname">Mail<span class="tour__brand">drill</span></span>
+                    </span>
+                    <span class="tour__url" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" class="tour__lock"><path d="M7 11V8a5 5 0 0110 0v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                      {shot.url}
+                    </span>
+                  </div>
+                  <img
+                    src={shot.src}
+                    alt={shot.title}
+                    width="1600"
+                    height="1000"
+                    decoding="async"
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                    fetchpriority={i === 0 ? 'high' : 'auto'}
+                  />
+                  <figcaption>
+                    <strong>{shot.title}</strong>
+                    <span>{shot.caption}</span>
+                  </figcaption>
+                </figure>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
 
-      <button class="tour__arrow tour__arrow--prev" type="button" data-tour-prev aria-controls="tour-track" aria-label="Previous screenshot" hidden>
+      <button class="tour__arrow tour__arrow--prev" type="button" data-tour-prev aria-controls="tour-viewport" aria-label="Previous screenshot" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <button class="tour__arrow tour__arrow--next" type="button" data-tour-next aria-controls="tour-track" aria-label="Next screenshot" hidden>
+      <button class="tour__arrow tour__arrow--next" type="button" data-tour-next aria-controls="tour-viewport" aria-label="Next screenshot" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
@@ -951,32 +953,56 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
 
   /* ---- VOICES ---- */
   /* ---- PRODUCT TOUR ----
-     A scroll-snap carousel. The scroller is the source of truth for "which
-     slide is showing" — arrows and dots scroll it rather than tracking their
-     own index, so a trackpad swipe, a dot click and an arrow key can never
-     disagree about where the carousel is. */
+     An Embla carousel (loop + align:'center'). Embla measures each slide's
+     real layout box and, with loop enabled, applies its own translate3d to
+     individual .tour__slide elements to wrap them around. So two rules matter
+     and are easy to break:
+       1. Never put a transform on .tour__slide — it fights the translate3d
+          Embla uses for looping, which is what made the raised card drift off
+          the centred one (the first card never grew, the third did).
+          The scale effect belongs on .tour__fig, inside the slide.
+       2. Nothing may reposition slides along the scroll axis except Embla —
+          no edge padding on the container, no justify-content. */
   .tour {
-    --tour-gap: 34px;
-    /* Sized against the FRAME (container query unit), never the track's own
-       content box: the track's edge padding is derived from this width, so a
-       percentage here would feed back into itself and collapse the cards. */
-    --tour-card-w: calc((100cqi - 2 * var(--tour-gap)) / 3);
-    /* Room either side so the first and last card can reach dead centre —
-       without it they pin to the edges and can never become the active one. */
-    --tour-edge-pad: calc((100cqi - var(--tour-card-w)) / 2);
-    /* The raised centre card. Card width x scale must stay under 100cqi or the
-       scroller — which clips on both axes — cuts the card off left and right,
-       so every breakpoint that changes --tour-card-w has to check this. */
-    --tour-scale-on: 1.3;
-    --tour-scale-off: 0.84;
-    /* Room the raised centre card overflows into. The track reserves it as
-       padding and pulls it back out with a negative margin (see .tour__track),
-       and that negative margin collapses through the frame — so whatever
-       follows the strip has to add it back to look spaced. Covers half the
-       30% overflow on the tallest card plus its shadow. */
-    --tour-overflow: 88px;
+    --tour-gap: 2rem;
+    /* Gaps are slide padding + a negative container margin (Embla's
+       recommended approach) rather than `gap`: with loop enabled, CSS `gap`
+       leaves NO space across the last→first seam, because gap only applies
+       between siblings. Half the gap sits on each side of every slide, so
+       neighbours are --tour-gap apart everywhere, seam included. */
+    --tour-gap-half: calc(var(--tour-gap) / 2);
+    /* Three across, measured against the FRAME (container query unit) and not
+       the container — the container is --tour-gap wider than the frame because
+       of its negative margin, so a plain % here would resolve against that
+       inflated width and drift. box-sizing:border-box keeps each slide's own
+       gap padding inside this third, so three of them span the frame exactly. */
+    --tour-slide-w: calc(100cqi / 3);
+    /* The side cards are 35% smaller than the centre one: (on - off) / on
+       = (40/33 - 26/33) / (40/33) = 0.35. Equivalently the centre is ~1.54x
+       the sides.
+       The pair is chosen so the two scales SUM TO 2, which is what makes the
+       visual gap land on exactly --tour-gap: the drawn gap works out to
+       S - C*(on + off)/2, and since C = S - gap, that collapses to the gap
+       itself only when (on + off)/2 is 1. Any other pair with the same ratio
+       leaves the gap a few px off and width-dependent — so if this difference
+       is ever retuned, keep on + off = 2 (off = on * 0.65 here). */
+    --tour-scale-on: calc(40 / 33);
+    --tour-scale-off: calc(26 / 33);
+    /* The viewport's overflow:hidden clips at its PADDING box, so without this
+       the raised centre card and its drop shadow get cut off by a hard
+       horizontal line. Reserved as viewport padding and pulled back out with a
+       negative margin, so the strip still sits where it did in the page. Must
+       clear half the centre card's growth (--tour-scale-on) plus the shadow's
+       24px offset and 60px blur. */
+    --tour-shadow-room: 88px;
+    /* Horizontal counterpart: the viewport's overflow also cuts the side cards'
+       shadows dead at the left and right edges, which reads as a hard grey
+       stub against the pale --bg. This fades the last stretch out instead, and
+       is sized to cover the shadow's reach without eating into the side card
+       itself (which starts ~58px in once --tour-scale-off has shrunk it). */
+    --tour-fade: 56px;
     /* The only real space below the strip — the section's own bottom padding is
-       0 and --tour-overflow is pulled back out of the layout. */
+       0 and --tour-shadow-room is pulled back out of the layout. */
     --tour-tail: calc(60px * var(--sec-y));
     /* Generous above, nothing below: the section runs into the footer's
        "Get started" banner, which supplies its own top spacing. */
@@ -984,81 +1010,101 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   }
   .tour__title {
     /* Owns the gap down to the strip: a top margin on .tour__frame would just
-       collapse into this one. */
-    margin: 14px 0 112px;
+       collapse into this one. The viewport's top shadow room is real space in
+       the page, so it is subtracted here — the two together are the 112px the
+       strip has always sat below the heading. */
+    margin: 14px 0 calc(112px - var(--tour-shadow-room));
   }
   .tour__frame {
     position: relative;
-    /* Query container for --tour-card-w / --tour-edge-pad above. */
+    /* Query container for --tour-slide-w above. */
     container-type: inline-size;
   }
-  /* The strip sits under the arrows; the track creates no stacking context of
-     its own. Scoping stamps an attribute on both compound selectors here, so
+  /* The strip sits under the arrows; the viewport creates no stacking context
+     of its own. Scoping stamps an attribute on both compound selectors here, so
      this outweighs a bare `.tour__arrow` — anything that needs different
      positioning has to say so through the same child selector. */
   .tour__frame > * {
     position: relative;
     z-index: 1;
   }
-  .tour__track {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    grid-auto-flow: column;
-    /* Three across, so the strip reads as a gallery you can scan rather than
-       one screenshot at a time. The gap is subtracted before dividing, or the
-       third card is pushed past the right edge. */
-    grid-auto-columns: var(--tour-card-w);
-    gap: var(--tour-gap);
-    /* Lets first/last slides be truly centerable instead of pinning left/right. */
-    padding-inline: var(--tour-edge-pad);
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scroll-behavior: smooth;
-    /* A scroll container clips on BOTH axes, so the centre card — scaled to
-       1.3 — was being cut off top and bottom, and the cards' shadows with it.
-       The padding reserves that room and the negative margin takes it back
-       out of the layout, so the strip sits exactly where it did. The extra
-       --tour-tail below is the one part that is NOT pulled back, so it reads as
-       real space under the strip. */
-    padding-block: var(--tour-overflow) calc(var(--tour-overflow) + var(--tour-tail));
-    margin-block: calc(var(--tour-overflow) * -1);
-    scrollbar-width: none;
+  .tour__viewport {
+    /* Embla's required overflow wrapper. The clip happens at the PADDING box,
+       so the reserved room below lets the raised card and its shadow render in
+       full; the negative margin takes that room back out of the page layout so
+       the strip sits exactly where it did. --tour-tail is the one part NOT
+       pulled back, so it reads as real space under the strip. NO padding-inline
+       here — it would narrow the window Embla measures. */
+    overflow: hidden;
+    outline: none;
+    padding-block: var(--tour-shadow-room) calc(var(--tour-shadow-room) + var(--tour-tail));
+    margin-block: 0 calc(var(--tour-shadow-room) * -1);
+    /* Fades the strip out sideways so the side cards' shadows taper off instead
+       of being sliced by the overflow — the hard stub was very visible against
+       the pale warm-cream background. Horizontal only: the vertical edges are
+       handled by reserving --tour-shadow-room, so nothing needs fading there.
+       The mask covers the padding box, which is exactly the clip box. */
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--tour-fade),
+      #000 calc(100% - var(--tour-fade)),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--tour-fade),
+      #000 calc(100% - var(--tour-fade)),
+      transparent 100%
+    );
   }
-  .tour__track::-webkit-scrollbar {
-    display: none;
-  }
-  .tour__track:focus-visible {
+  .tour__viewport:focus-visible {
     outline: 2px solid var(--brand);
     outline-offset: 6px;
     border-radius: 22px;
   }
-  /* Centre card foregrounded: the one being read is full size and opaque, its
-     neighbours sit back. Done with transform and opacity rather than by giving
-     the centre track a wider column — a width change would reflow the whole
-     strip on every scroll tick and fight the snap. Scaling leaves layout
-     untouched, so the snap positions stay exactly where they were. */
+  .tour__container {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    /* Cancels the outer half-gap on the edge slides so the row still spans the
+       frame edge to edge. This is the negative margin half of Embla's gap
+       recipe — NOT an alignment tweak; Embla owns where slides land. */
+    margin-inline: calc(var(--tour-gap-half) * -1);
+    touch-action: pan-y pinch-zoom;
+  }
   .tour__slide {
-    scroll-snap-align: center;
+    flex: 0 0 var(--tour-slide-w);
     min-width: 0;
-    /* The centre card grows past its track while its neighbours shrink well
-       back — the 34px gap absorbs the overflow, so nothing overlaps. */
+    /* Half the gap each side — see --tour-gap-half. Inside the slide's width
+       thanks to border-box, and part of its computed size, so Embla's
+       ResizeObserver picks up the mobile gap change without a manual reInit. */
+    padding-inline: var(--tour-gap-half);
+  }
+  .tour__slide.is-active {
+    /* Above its neighbours so the raised card's shadow reads correctly. */
+    position: relative;
+    z-index: 1;
+  }
+  /* Centre card foregrounded: the one being read is raised and opaque, its
+     neighbours sit back. The transform lives HERE, on the figure inside the
+     slide — putting it on .tour__slide would change the box Embla measures and
+     desynchronise the centred card from the scaled one. */
+  .tour__fig {
     transform: scale(var(--tour-scale-off));
     opacity: 0.42;
     transition:
       transform 0.32s var(--ease-out, cubic-bezier(0.2, 0.7, 0.3, 1)),
       opacity 0.32s ease;
   }
-  .tour__slide.is-active {
+  .tour__slide.is-active .tour__fig {
     transform: scale(var(--tour-scale-on));
     opacity: 1;
-    /* Above its neighbours so the raised card's shadow reads correctly. */
-    position: relative;
-    z-index: 1;
   }
   @media (prefers-reduced-motion: reduce) {
-    .tour__slide {
+    .tour__fig {
       transition: none;
     }
   }
@@ -1201,11 +1247,14 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
 
   .tour__frame > .tour__arrow {
     position: absolute;
-    top: 0;
+    /* Offset past the viewport's top shadow room, then 68% of what is left —
+       which is the card plus --tour-tail, the same span the arrows were sized
+       against before the shadow room moved onto the viewport. Centred on the
+       IMAGE, not the figure: the caption below would drag the arrows
+       off-centre and they would drift as caption lengths differ. */
+    top: var(--tour-shadow-room);
+    height: calc((100% - var(--tour-shadow-room)) * 0.68);
     z-index: 2;
-    /* Centred on the IMAGE, not the figure: the caption below would drag the
-       arrows off-centre and they would drift as caption lengths differ. */
-    height: 68%;
     display: grid;
     place-items: center;
     width: 52px;
@@ -1250,33 +1299,30 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
     pointer-events: none;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .tour__track {
-      scroll-behavior: auto;
-    }
-  }
   @media (max-width: 1080px) {
     .tour {
-      --tour-card-w: calc((100cqi - var(--tour-gap)) / 2);
+      /* Two across. border-box keeps each slide's gap padding inside its half,
+         so no calc against the gap is needed the way `gap` would have required. */
+      --tour-slide-w: calc(100cqi / 2);
     }
   }
   @media (max-width: 720px) {
     .tour {
-      /* One card at a time, and no raise: scaling the centre card up here
-         would force it narrower than the desktop card to avoid the scroller's
-         clipping edges, which leaves the fixed-size caption dwarfing the
-         screenshot. Opacity alone marks the active card instead, and the width
-         goes to the screenshot.
-
-         The three values are tuned together to keep the neighbours visible.
-         What shows of a neighbour is (100cqi - card) / 2 - gap, less the width
-         the shrink pulls back from its inner edge — so a deep --tour-scale-off
-         can swallow the peek entirely and leave the reel looking like a single
-         static card. A shallow shrink buys most of it back. */
-      --tour-card-w: 76cqi;
-      --tour-gap: 10px;
-      --tour-scale-on: 1;
-      --tour-scale-off: 0.94;
+      /* One card at a time with a deliberate peek of its neighbours either
+         side. The scales are NOT overridden here: they are what hold both the
+         1.25 ratio and the exact --tour-gap, and the raised card still fits
+         (82cqi x 10/9 is ~91cqi, inside the viewport). */
+      --tour-slide-w: 82cqi;
+      --tour-gap: 0.75rem;
+      /* Back to a 20% difference here — the desktop 35% shrinks the neighbours
+         so far that at this slide width they fall outside the viewport
+         entirely, and the strip stops reading as a carousel. Still summing
+         to 2, so the gap stays exact. */
+      --tour-scale-on: calc(10 / 9);
+      --tour-scale-off: calc(8 / 9);
+      /* A 56px fade would be ~15% of a 360px frame and would visibly wash out
+         the peeking neighbours; the shadow is the only thing that needs it. */
+      --tour-fade: 28px;
     }
     /* The tab label is the least load-bearing part of the chrome, and the URL
        is what actually says which screen this is. */
@@ -1290,180 +1336,75 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
 </style>
 
 <script>
-  type TourTrackEl = HTMLElement & {
+  import EmblaCarousel, { type EmblaCarouselType } from 'embla-carousel';
+
+  type ViewportEl = HTMLElement & {
     __tourCleanup?: () => void;
   };
 
   /**
-   * Product tour carousel.
+   * Product tour carousel, built on Embla.
    *
-   * One `index` owns the current slide and every scroll target is that card's
-   * centre, so an arrow click and an arrow key can never disagree about where
-   * the carousel is; a trackpad swipe hands control back by adopting whatever
-   * card the scroller settled on. It advances only when the visitor asks it
-   * to — there is no autoplay. The arrows are hidden in the markup and
-   * revealed here, so no-JS visitors get a plain scrollable strip rather than
-   * buttons that do nothing.
+   * Embla owns the looping, drag/swipe, and snap-to-centre math; this script
+   * only wires the two arrows, the keyboard, and the "which card is active"
+   * scale/opacity class on top of it. The arrows are hidden in the markup and
+   * revealed here, so a no-JS visitor gets a plain static first slide inside
+   * the overflow:hidden viewport rather than buttons that do nothing.
    */
-  const track = document.getElementById('tour-track') as TourTrackEl | null;
+  const viewport = document.getElementById('tour-viewport') as ViewportEl | null;
   const prev = document.querySelector<HTMLButtonElement>('[data-tour-prev]');
   const next = document.querySelector<HTMLButtonElement>('[data-tour-next]');
 
-  if (track && prev && next) {
-    // One authoritative `index`; every scroll target is that card's centre.
-    // No in-flight/queued transition state — a click just moves the index and
-    // scrolls, and a manual swipe adopts whatever card the scroller settled on.
+  if (viewport && prev && next) {
     // Full teardown before re-init (HMR/view transitions).
-    track.__tourCleanup?.();
+    viewport.__tourCleanup?.();
 
-    const events = new AbortController();
-    const { signal } = events;
-
-    const real = Array.from(track.children) as HTMLElement[];
-    if (real.length > 0) {
+    const slides = Array.from(viewport.querySelectorAll<HTMLElement>('.tour__slide'));
+    if (slides.length > 0) {
       for (const el of [prev, next]) el.hidden = false;
 
-      // A looping reel. Without copies of the tail before the head (and the
-      // head after the tail) the first and last cards sit beside an empty slot,
-      // because there is no neighbour to show there. Clones fill those slots;
-      // when the strip settles on one it jumps to the identical real card,
-      // which is invisible precisely because both positions render the same
-      // three cards.
-      const REAL = real.length;
-      const CLONES = REAL > 1 ? 2 : 0;
-      const cloned: HTMLElement[] = [];
-      const addClone = (source: HTMLElement, edge: 'start' | 'end'): void => {
-        const clone = source.cloneNode(true) as HTMLElement;
-        // Duplicate ids would break the aria-label wiring, and a screen reader
-        // reading the reel twice over is noise — the real cards carry it.
-        clone.removeAttribute('id');
-        clone.setAttribute('aria-hidden', 'true');
-        cloned.push(clone);
-        track[edge === 'start' ? 'prepend' : 'append'](clone);
-      };
-      for (let i = 0; i < CLONES; i++) {
-        addClone(real[REAL - 1 - i]!, 'start');
-        addClone(real[i]!, 'end');
-      }
-
-      const slides = Array.from(track.children) as HTMLElement[];
-      // Real card n sits at DOM position n + CLONES once the head copies are in.
-      const FIRST_REAL = CLONES;
-      let index = FIRST_REAL;
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-      let scrollSyncTimer = 0;
 
-      const nearestIndex = (): number => {
-        const mid = track.scrollLeft + track.clientWidth / 2;
-        let best = 0;
-        let bestGap = Infinity;
-        slides.forEach((slide, i) => {
-          const gap = Math.abs(slide.offsetLeft + slide.clientWidth / 2 - mid);
-          if (gap < bestGap) {
-            bestGap = gap;
-            best = i;
-          }
-        });
-        return best;
-      };
+      const embla: EmblaCarouselType = EmblaCarousel(viewport, {
+        loop: slides.length > 1,
+        align: 'center',
+        duration: reduced.matches ? 0 : 24,
+      });
 
-      // Step off the clones and back onto the real card showing the same three
-      // images, so the strip can keep travelling in either direction forever.
-      const normalize = (): void => {
-        const settled =
-          index < FIRST_REAL ? index + REAL : index >= FIRST_REAL + REAL ? index - REAL : index;
-        if (settled === index) return;
-        index = settled;
-        render();
-        track.scrollTo({ left: leftFor(index), behavior: 'instant' });
-      };
-
-      // Scroll offset that puts slide `i` dead centre. Anchoring on offsetLeft
-      // instead would park the slide at the LEFT edge while nearestIndex() reads
-      // the CENTRED one — the two disagree by a card, which is what made every
-      // arrow click advance the strip by two.
-      const leftFor = (i: number): number => {
-        const slide = slides[i];
-        if (!slide) return 0;
-        return slide.offsetLeft - (track.clientWidth - slide.offsetWidth) / 2;
-      };
+      const events = new AbortController();
+      const { signal } = events;
 
       const render = (): void => {
-        slides.forEach((slide, n) => slide.classList.toggle('is-active', n === index));
-        prev.disabled = false;
-        next.disabled = false;
+        const activeIndex = embla.selectedScrollSnap();
+        slides.forEach((slide, i) => slide.classList.toggle('is-active', i === activeIndex));
+        prev.disabled = !embla.canScrollPrev();
+        next.disabled = !embla.canScrollNext();
       };
 
-      // `instant`, not `auto`: `auto` defers to the CSS `scroll-behavior:
-      // smooth` on the track, so it animates — and overlapping animations are
-      // what made the strip skip cards.
-      const goToIndex = (next: number, behavior: ScrollBehavior): void => {
-        index = next;
-        render();
-        track.scrollTo({ left: leftFor(index), behavior });
-      };
-
-      const navigate = (delta: number): void => {
-        // Always leave from a real card: one step from a clone would walk off
-        // the end of the strip.
-        normalize();
-        goToIndex(index + delta, reduced.matches ? 'instant' : 'smooth');
-      };
-
-      prev.addEventListener('click', () => navigate(-1), { signal });
-      next.addEventListener('click', () => navigate(1), { signal });
-      track.addEventListener(
+      prev.addEventListener('click', () => embla.scrollPrev(), { signal });
+      next.addEventListener('click', () => embla.scrollNext(), { signal });
+      viewport.addEventListener(
         'keydown',
         (e) => {
           if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
           e.preventDefault();
-          navigate(e.key === 'ArrowRight' ? 1 : -1);
+          if (e.key === 'ArrowRight') embla.scrollNext();
+          else embla.scrollPrev();
         },
         { signal },
       );
 
-      // Manual swipe/trackpad: adopt whatever the scroller settled on. Never
-      // scroll back here — the browser's mandatory snap has already landed on a
-      // card centre, and re-scrolling would fight it mid-gesture.
-      const syncToScroller = (): void => {
-        const nearest = nearestIndex();
-        if (nearest !== index) {
-          index = nearest;
-          render();
-        }
-        normalize();
-      };
+      embla.on('select', render);
+      embla.on('reInit', render);
+      render();
 
-      track.addEventListener(
-        'scroll',
-        () => {
-          window.clearTimeout(scrollSyncTimer);
-          scrollSyncTimer = window.setTimeout(syncToScroller, 120);
-        },
-        { passive: true, signal },
-      );
-      track.addEventListener('scrollend', syncToScroller, { signal });
-
-      // Card width is viewport-derived, so every centre moves on resize.
-      const ro = new ResizeObserver(() => {
-        track.scrollTo({ left: leftFor(index), behavior: 'instant' });
-      });
-      ro.observe(track);
-
-      // Open on the first real card, not on a head clone.
-      goToIndex(FIRST_REAL, 'instant');
-
-      track.__tourCleanup = () => {
+      viewport.__tourCleanup = () => {
         events.abort();
-        ro.disconnect();
-        for (const clone of cloned) clone.remove();
-        window.clearTimeout(scrollSyncTimer);
-        track.__tourCleanup = undefined;
+        embla.destroy();
+        viewport.__tourCleanup = undefined;
       };
     } else {
-      // No slides: tear down listeners that may have existed from a prior mount.
-      events.abort();
-      track.__tourCleanup = undefined;
+      viewport.__tourCleanup = undefined;
     }
   }
 </script>
