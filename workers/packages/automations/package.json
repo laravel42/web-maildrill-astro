@@ -1,0 +1,22 @@
+{
+  "name": "@maildrill/automations",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@maildrill/activepieces-core": "workspace:*",
+    "@maildrill/config": "workspace:*",
+    "@maildrill/database": "workspace:*",
+    "@maildrill/domain": "workspace:*",
+    "@maildrill/identity": "workspace:*",
+    "@maildrill/observability": "workspace:*",
+    "@maildrill/product": "workspace:*",
+    "@maildrill/queues": "workspace:*",
+    "@maildrill/services": "workspace:*",
+    "drizzle-orm": "^0.38.4",
+    "zod": "^3.25.76"
+  }
+}

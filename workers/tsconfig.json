@@ -14,7 +14,9 @@
       "@maildrill/product": ["./packages/product/src/index.ts"],
       "@maildrill/identity": ["./packages/identity/src/index.ts"],
       "@maildrill/httpkit": ["./packages/httpkit/src/index.ts"],
-      "@maildrill/billing": ["./packages/billing/src/index.ts"]
+      "@maildrill/billing": ["./packages/billing/src/index.ts"],
+      "@maildrill/activepieces-core": ["./packages/activepieces-core/src/index.ts"],
+      "@maildrill/automations": ["./packages/automations/src/index.ts"]
     }
   },
   "include": ["packages/*/src", "apps/*/src", "*.ts"],
