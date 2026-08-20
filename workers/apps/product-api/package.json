@@ -5,6 +5,7 @@
   "type": "module",
   "dependencies": {
     "@maildrill/authz": "workspace:*",
+    "@maildrill/automations": "workspace:*",
     "@maildrill/billing": "workspace:*",
     "@maildrill/config": "workspace:*",
     "@maildrill/database": "workspace:*",

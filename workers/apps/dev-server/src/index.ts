@@ -10,6 +10,10 @@ import { asClientError, isValidationError, setupOpenApi } from '@maildrill/httpk
 import { messagingRoutes } from '../../api/src/server';
 import { productRoutes } from '../../product-api/src/server';
 import {
+  startAutomationDispatcher,
+  startAutomationMaintenance,
+  startAutomationRunWorker,
+  startAutomationSegmentSweep,
   startCampaignDeliveryPoller,
   startCloudflareEmailEventsPoller,
   startDispatchWorker,
@@ -159,6 +163,12 @@ if (process.env.DEV_WORKERS !== '0') {
     startTemplateApprovalPoller(),
     startCampaignDeliveryPoller(),
     startCloudflareEmailEventsPoller(),
+    // Automations: without these, a published workflow is inert locally — events pile up
+    // in `automation_events` and nothing ever runs.
+    startAutomationRunWorker(),
+    startAutomationDispatcher(),
+    startAutomationMaintenance(),
+    startAutomationSegmentSweep(),
   );
   logger.info({ provider: config.provider.driver }, 'dev-server workers started');
 }

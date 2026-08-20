@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { DomainError } from '@maildrill/domain';
 import { logger } from '@maildrill/observability';
 import { asClientError, isValidationError, setupOpenApi } from '@maildrill/httpkit';
+import { installAutomationEventSink, installSubscriptionFilter } from '@maildrill/automations';
 import { authRoutes } from './routes/auth';
 import { statsRoutes } from './routes/stats';
 import { mediaRoutes } from './routes/media';
@@ -22,12 +23,23 @@ import { voicePreviewRoutes } from './routes/voice-preview';
 import { workspaceRoutes } from './routes/workspace';
 import { billingRoutes } from './routes/billing';
 import { billingWebhookRoutes } from './routes/billing-webhooks';
+import { automationRoutes } from './routes/automations';
+import { automationWebhookRoutes } from './routes/automation-webhooks';
 
 /**
  * The product app's business routes, without health. Exported so the unified
  * dev server can mount them on a shared instance.
  */
 export async function productRoutes(app: FastifyInstance): Promise<void> {
+  /*
+   * The API emits domain events too — a subscriber created through the UI must be able to
+   * start a workflow — so the sink is installed here as well as in the worker. Installing
+   * it is idempotent, and without a sink `emitMaildrillEvent` is a no-op, so this is the
+   * switch that turns the bridge on for this process.
+   */
+  installAutomationEventSink();
+  installSubscriptionFilter();
+
   await app.register(authRoutes);
   await app.register(meRoutes);
   await app.register(securityRoutes);
@@ -47,6 +59,8 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
   await app.register(workspaceRoutes);
   await app.register(billingRoutes);
   await app.register(billingWebhookRoutes);
+  await app.register(automationRoutes);
+  await app.register(automationWebhookRoutes);
 }
 
 export function buildProductServer(): FastifyInstance {
