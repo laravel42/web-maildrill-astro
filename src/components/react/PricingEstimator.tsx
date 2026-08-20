@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
 import {
   CHANNEL_META,
+  COMPARISON,
+  COMPARISON_TOOLS,
   CURRENCIES,
   PROMO,
   SETUP_FEE,
@@ -9,6 +11,7 @@ import {
   tierDisc,
   tierHasPromo,
   type ChannelKey,
+  type CompareTool,
 } from '@/config/pricing';
 import { channelRates, estimate, makeFormatters } from '@/lib/pricing-math';
 import {
@@ -62,6 +65,27 @@ export default function PricingEstimator({ promoActive = false }: { promoActive?
   const { money, rate, whole, fmt } = makeFormatters(cur);
   const commitLabel = (v: number) => (v > 0 ? `${whole(v)} / yr prepaid` : 'No commitment');
   const pct = (d: number) => `${Math.round(d * 100)}%`;
+
+  // Parses a comparison price string ("~$0.012*", "$0.0007", "—", "Variable")
+  // and returns the numeric rate, or null when the tool doesn't publish one.
+  const parseCompareRate = (raw: string) => {
+    const match = raw.match(/[\d.]+/);
+    return match ? Number(match[0]) : null;
+  };
+  // % more expensive than Maildrill for a given competitor on this channel.
+  const comparePct = (compareRow: (typeof COMPARISON)[number], tool: CompareTool) => {
+    const base = parseCompareRate(compareRow.prices.Maildrill);
+    const other = parseCompareRate(compareRow.prices[tool]);
+    if (base === null || other === null || base === 0) return null;
+    return Math.round(((other - base) / base) * 100);
+  };
+  // Shorten the long "per X · {country}" unit strings for the compact card back.
+  const shortUnit = (unit: string) =>
+    unit
+      .replace('per marketing conversation', 'per convo')
+      .replace('per marketing message', 'per msg')
+      .replace(', one flat rate worldwide', '')
+      .replace('{country}', countryName);
 
   const est = estimate(usage, R, tier, promoActive);
   const { usage: usageDisc, setup, annualSave, hasDiscount, discountPct } = est;
@@ -132,19 +156,46 @@ export default function PricingEstimator({ promoActive = false }: { promoActive?
 
   const rateCard = (m: (typeof CHANNEL_META)[number]) => {
     const isEmail = m.key === 'email';
+    const compareRow = COMPARISON.find((row) => row.channel.toLowerCase() === m.label.toLowerCase());
+    const compareTools = COMPARISON_TOOLS.filter((tool) => tool !== 'Maildrill');
     return (
-      <div className={styles.card} data-card key={m.key}>
-        <div className={styles.cardHead}>
-          <span className={styles.chip} style={{ background: m.tint, color: m.color }}>
-            <ChannelIcon k={m.key} size={20} />
-          </span>
-          <span className={styles.cardLabel}>{m.label}</span>
-        </div>
-        <div className={`${styles.cardPrice} mono`}>{rate(R[m.key])}</div>
-        <div className={styles.cardUnit}>{m.unit.replace('{country}', countryName)}</div>
-        <div className={styles.cardFoot}>
-          <span>{isEmail ? 'One-time setup' : 'Setup · shared number'}</span>
-          <span className={`mono ${styles.cardSetup}`}>{isEmail ? 'Free' : whole(SETUP_FEE)}</span>
+      <div className={styles.card} data-card key={m.key} tabIndex={0}>
+        <div className={styles.cardFlip}>
+          <div className={styles.cardFront}>
+            <div className={styles.cardHead}>
+              <span className={styles.chip} style={{ background: m.tint, color: m.color }}>
+                <ChannelIcon k={m.key} size={20} />
+              </span>
+              <span className={styles.cardLabel}>{m.label}</span>
+            </div>
+            <div className={`${styles.cardPrice} mono`}>{rate(R[m.key])}</div>
+            <div className={styles.cardUnit}>{m.unit.replace('{country}', countryName)}</div>
+            <div className={styles.cardFoot}>
+              <span>{isEmail ? 'One-time setup' : 'Setup · shared number'}</span>
+              <span className={`mono ${styles.cardSetup}`}>
+                {isEmail ? 'Free' : whole(SETUP_FEE)}
+              </span>
+            </div>
+          </div>
+          <div className={styles.cardBack}>
+            <div className={styles.cardBackTitle}>Cheaper than the market by</div>
+            {compareRow ? (
+              <div className={styles.cardBackRows}>
+                {compareTools.map((tool) => {
+                  const diff = comparePct(compareRow, tool);
+                  return (
+                    <div className={styles.cardBackRow} key={tool}>
+                      <span className={styles.cardBackTool}>{tool}</span>
+                      <span className={`mono ${styles.cardBackPrice}`}>
+                        {diff === null ? '—' : `${diff > 0 ? '+' : ''}${diff}%`}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
+            <p className={styles.cardBackNote}>{shortUnit(compareRow?.unit ?? m.unit)}</p>
+          </div>
         </div>
       </div>
     );
@@ -282,7 +333,7 @@ export default function PricingEstimator({ promoActive = false }: { promoActive?
 
       {/* ---------------- estimator ---------------- */}
       <section className={styles.estimator} aria-label="Monthly bill estimator">
-        <div className={`container ${styles.estimatorInner}`}>
+        <div className={styles.estimatorInner}>
           <p className="eyebrow">Estimator</p>
           <h2 className={`h-section ${styles.h2}`}>Estimate your monthly bill.</h2>
 
