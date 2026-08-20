@@ -15,7 +15,8 @@ Three Fastify apps (or one unified `dev-server`) + BullMQ workers on Postgres
   templates, campaigns, media, stats, identity.
 - **Workers** — dispatch, outbox publisher, scheduler, maintenance,
   **campaign-delivery** (PostHog HogQL → message/campaign completion),
-  **template-approval** (Infobip poll for WA templates).
+  **template-approval** (Infobip poll for WA templates), **automations**
+  (event dispatch → run execution → resume/stall recovery → segment diffing).
 
 Visual editors stay in the parent Astro app. Longer design notes:
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (webhook-centric sections are
@@ -38,6 +39,8 @@ apps/
 packages/
   config              zod env — loads monorepo **root** `../.env`
   database domain queues providers services product
+  activepieces-core   vendored MIT Activepieces subset (flow model, conditions, resolver)
+  automations         Automations: engine adapter, Maildrill pieces, runs, event bridge
   observability       pino, metrics, HogQL client
   authz identity httpkit
 migrations/
@@ -83,11 +86,14 @@ pnpm worker scheduler
 pnpm worker maintenance
 pnpm worker template-approval
 pnpm worker campaign-delivery
+pnpm worker automations          # run + dispatch + maintenance + segments
 ```
 
 > **Dev-server:** unified `pnpm dev` starts dispatch, events, publisher, scheduler,
-> maintenance, **template-approval**, and **campaign-delivery**. Set `DEV_WORKERS=0`
-> for HTTP-only.
+> maintenance, **template-approval**, **campaign-delivery**, and the four
+> **automation** roles. Set `DEV_WORKERS=0` for HTTP-only — note that with it off a
+> published automation is inert locally: events pile up in `automation_events` and
+> nothing runs.
 
 ## Delivery & analytics (locked)
 
