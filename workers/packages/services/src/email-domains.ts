@@ -180,11 +180,26 @@ export async function registerEmailDomain(
   // `POST /email/1/domains` takes the CPaaS X identity as top-level fields
   // (not the nested `platform` block the send APIs use), so the domain is
   // filed under the workspace that registered it rather than the bare account.
-  const platform = resolvePlatformFields(
+  //
+  // Both halves or neither. Infobip resolves each field into an {id,
+  // externalId} pair, and an entity with no application resolves to
+  // `application {id: null, externalId: null}` — which it rejects outright:
+  //
+  //   could not register made.com: illegal combination of arguments:
+  //   id: null, externalId: null, id: null, externalId: ws-<tenant>
+  //
+  // That is reachable with no misconfiguration at all: workspaces now get an
+  // entity automatically (`ws-<tenantId>`) while INFOBIP_APPLICATION_ID is
+  // unset, so every domain registration failed. Filing under the workspace is
+  // worth having, but not at the price of not registering the domain — so
+  // without an application the identity is dropped and the domain is filed on
+  // the account, which is where it lived before entities existed.
+  const resolved = resolvePlatformFields(
     config.infobip.applicationId,
     config.infobip.entityId,
     (await knownTenantInfobipEntityId(tenantId)) ?? undefined,
   );
+  const platform = resolved.applicationId ? resolved : {};
   const { status, json } = await infobip('POST', '/email/1/domains', {
     domainName: name,
     targetedDailyTraffic,
