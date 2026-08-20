@@ -1,0 +1,251 @@
+/* Composer shell: topbar + (library ⋅ canvas ⋅ inspector).
+   Fills the workspace content area; the page itself does not scroll — the canvas pans and
+   the two side panels scroll independently. */
+
+/* Fills the shell's main area exactly. `<main>` is `flex:1; overflow-y:auto` inside a
+   fixed-height column, so `height:100%` here means the page never scrolls — the canvas
+   pans and the two side panels scroll on their own, which is what a builder needs. */
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 520px;
+  background: var(--bg);
+}
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 320px;
+  color: var(--text4);
+  font-size: 13px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex: none;
+  flex-wrap: wrap;
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text4);
+  white-space: nowrap;
+}
+.back:hover {
+  color: var(--text2);
+}
+.backIcon {
+  transform: rotate(180deg);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.nameButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 8px;
+  margin-left: -8px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: var(--text);
+}
+.nameButton svg {
+  opacity: 0;
+  color: var(--muted2);
+}
+.nameButton:hover {
+  background: var(--surface2);
+}
+.nameButton:hover svg,
+.nameButton:focus-visible svg {
+  opacity: 1;
+}
+.nameInput {
+  padding: 4px 8px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 220px;
+}
+.unpublished {
+  font-size: 11.5px;
+  color: var(--warning-strong, var(--warning));
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.saveState {
+  font-size: 11.5px;
+  color: var(--text4);
+  min-width: 92px;
+  text-align: right;
+}
+
+.flowIssues {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: var(--warning-bg);
+  color: var(--warning-strong);
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+/* ---------------- step library ---------------- */
+
+.library {
+  width: 232px;
+  flex: none;
+  padding: 16px 14px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.libraryTitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text4);
+}
+.libraryHint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text4);
+}
+.libraryBtn {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 11px;
+  border: 1px solid var(--border2);
+  border-radius: 11px;
+  background: var(--surface);
+  text-align: left;
+  color: var(--text2);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
+}
+.libraryBtn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+.libraryBtn:disabled {
+  opacity: 0.5;
+}
+.libraryBtn span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.libraryBtn strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+.libraryBtn em {
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--text4);
+  line-height: 1.4;
+}
+.libraryGroup {
+  margin: 12px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text4);
+}
+.shortcuts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11.5px;
+}
+.shortcuts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.shortcuts dt {
+  color: var(--text4);
+}
+.shortcuts dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  color: var(--text3);
+}
+
+.notice {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  z-index: var(--z-toast, 90);
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  max-width: 90vw;
+}
+.noticeErr {
+  background: var(--danger-strong);
+}
+
+@media (max-width: 1080px) {
+  .library {
+    display: none;
+  }
+}
+@media (max-width: 860px) {
+  .saveState {
+    display: none;
+  }
+}

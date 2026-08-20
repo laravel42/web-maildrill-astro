@@ -21,6 +21,7 @@ import type { ChannelBreakdown } from './AppAnalytics.logic';
 import { CHANNEL } from './shared/channels';
 import { TONE, type Tone } from './shared/tones';
 import { useEscapeClose } from './shared/useEscapeClose';
+import WorkspaceConnections from './settings/WorkspaceConnections';
 import { useToast } from './shared/useToast';
 import type {
   ApiDomain,
@@ -562,6 +563,9 @@ export default function AppSettings({
               </h2>
               <p className={styles.desc}>{panel.desc}</p>
             </header>
+
+            {/* ---- CUSTOM (Integrations) ---- */}
+            {panel.kind === 'custom' && <WorkspaceConnections live={live} />}
 
             {/* ---- FORM ---- */}
             {panel.kind === 'form' && (

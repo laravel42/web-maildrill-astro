@@ -1,0 +1,73 @@
+---
+export const prerender = false;
+import AppLayout from '@/layouts/AppLayout.astro';
+import AutomationBuilderIsland from '@/components/react/AutomationBuilderIsland';
+import { mintServiceToken, serviceBaseUrl } from '@/lib/server/service';
+import type { AutomationDetail, PieceMeta } from '@/lib/app/automations';
+
+/*
+ * The composer needs two things before it can render anything useful: the automation with
+ * its draft, and the step catalog. Both are fetched here so the builder is interactive on
+ * first paint rather than after two round trips.
+ *
+ * The catalog is server-fetched rather than bundled on purpose — piece definitions,
+ * property tables and sample payloads never enter the client bundle.
+ */
+const { id } = Astro.params;
+const session = Astro.locals.session;
+
+let automation: AutomationDetail | null = null;
+let pieces: PieceMeta[] = [];
+let error: string | null = null;
+
+if (session?.user?.id && session.activeTenantId && id) {
+  const token = mintServiceToken({
+    userId: session.user.id,
+    activeTenantId: session.activeTenantId,
+    role: session.role,
+  });
+  const headers = { Authorization: `Bearer ${token}` };
+  try {
+    const [detailRes, piecesRes] = await Promise.all([
+      fetch(`${serviceBaseUrl()}/v1/automations/${id}`, { headers }),
+      fetch(`${serviceBaseUrl()}/v1/automation-pieces`, { headers }),
+    ]);
+    if (detailRes.status === 404) {
+      return Astro.redirect('/dashboard/automations');
+    }
+    if (!detailRes.ok) {
+      error = 'Could not load this automation.';
+    } else {
+      automation = (await detailRes.json()) as AutomationDetail;
+    }
+    if (piecesRes.ok) {
+      pieces = ((await piecesRes.json()) as { data: PieceMeta[] }).data;
+    }
+  } catch (err) {
+    error = err instanceof Error ? err.message : 'Service unreachable.';
+  }
+}
+
+const title = automation?.name ?? 'Automation';
+---
+
+<AppLayout
+  title={title}
+  crumbs={[{ label: 'Automations', href: '/dashboard/automations' }, { label: title }]}
+>
+  {
+    automation ? (
+      <AutomationBuilderIsland client:load automation={automation} pieces={pieces} />
+    ) : (
+      <div class="screen">
+        <h1 class="screen__h1">Automation unavailable</h1>
+        <p class="screen__sub">{error ?? 'Sign in again to continue.'}</p>
+        <p>
+          <a class="sbtn" href="/dashboard/automations">
+            Back to automations
+          </a>
+        </p>
+      </div>
+    )
+  }
+</AppLayout>

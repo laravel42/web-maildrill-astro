@@ -1,0 +1,61 @@
+---
+export const prerender = false;
+import AppLayout from '@/layouts/AppLayout.astro';
+import AppAutomations from '@/components/react/AppAutomations';
+import { productClient } from '@/lib/server/service';
+import type { AutomationSummary } from '@/lib/app/automations';
+
+/*
+ * SSR the first page so the table is painted before hydration — same pattern as
+ * Campaigns and Lists. `undefined` means the backend was unreachable, which the
+ * island renders as a retryable banner rather than as "no automations".
+ */
+const session = Astro.locals.session;
+let initial: AutomationSummary[] | undefined = undefined;
+let initialTotal = 0;
+let banner: string | null = null;
+
+if (session?.user?.id && session.activeTenantId) {
+  try {
+    const client = productClient({
+      userId: session.user.id,
+      activeTenantId: session.activeTenantId,
+      role: session.role,
+    });
+    const { data, error } = await client.GET(
+      '/v1/automations' as never,
+      {
+        params: { query: { limit: 25 } },
+      } as never,
+    );
+    if (error) {
+      banner = 'The automations service returned an error.';
+    } else {
+      const page = data as unknown as { items?: AutomationSummary[]; total?: number };
+      initial = page.items ?? [];
+      initialTotal = page.total ?? 0;
+    }
+  } catch (err) {
+    banner = err instanceof Error ? err.message : 'Service unreachable.';
+  }
+}
+---
+
+<AppLayout title="Automations">
+  {banner && <div class="svc-banner err">{banner}</div>}
+  <AppAutomations client:visible initial={initial} initialTotal={initialTotal} />
+</AppLayout>
+
+<style>
+  .svc-banner {
+    margin: 0 0 14px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+  }
+  .svc-banner.err {
+    border: 1px solid var(--danger);
+    background: var(--danger-bg);
+    color: var(--danger-strong);
+  }
+</style>

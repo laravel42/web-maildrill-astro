@@ -43,7 +43,13 @@ export type TablePanel = {
   roster?: boolean;
 };
 export type TogglePanel = { kind: 'toggles'; title: string; desc: string; toggles: ToggleDef[] };
-export type Panel = FormPanel | UsagePanel | TablePanel | TogglePanel;
+/**
+ * A panel whose body is its own component rather than one of the four generic shapes.
+ * Integrations is the first: its rows are credentials with a write-only secret, which the
+ * generic table (title/sub/badge) cannot express honestly.
+ */
+export type CustomPanel = { kind: 'custom'; title: string; desc: string };
+export type Panel = FormPanel | UsagePanel | TablePanel | TogglePanel | CustomPanel;
 
 /* ----------------------------- team roster ------------------------------ */
 export type Role = 'Owner' | 'Admin' | 'Editor' | 'Viewer';

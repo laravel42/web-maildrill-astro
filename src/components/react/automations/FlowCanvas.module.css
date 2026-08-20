@@ -1,0 +1,255 @@
+/* Canvas surface. Everything here is a design token — the composer must read as the same
+   product as the rest of the workspace, not as an embedded tool. */
+
+.wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  background:
+    radial-gradient(circle at 1px 1px, var(--border2) 1px, transparent 0) 0 0 / 22px 22px,
+    var(--surface2);
+  overflow: hidden;
+}
+:global([data-theme='dark']) .wrap {
+  background:
+    radial-gradient(circle at 1px 1px, var(--border) 1px, transparent 0) 0 0 / 22px 22px,
+    var(--surface2);
+}
+
+.viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+}
+.viewport:active {
+  cursor: grabbing;
+}
+
+.stage {
+  position: absolute;
+  transform-origin: 0 0;
+}
+
+.edges {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.edge {
+  fill: none;
+  stroke: var(--border2);
+  stroke-width: 1.5;
+}
+
+/* ---------------- nodes ---------------- */
+
+.node {
+  position: absolute;
+  display: flex;
+  align-items: stretch;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+.node:hover {
+  box-shadow: var(--shadow-md);
+}
+.nodeSelected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+.nodeInvalid {
+  border-color: var(--warning);
+}
+.nodeTrigger {
+  /* The entry point reads differently from the steps that follow it. */
+  border-style: dashed;
+  border-color: var(--brand);
+  background: var(--surface3, var(--surface));
+}
+
+.nodeBody {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  flex: 1;
+  min-width: 0;
+  padding: 0 12px;
+  background: none;
+  border: none;
+  text-align: left;
+  border-radius: 12px;
+}
+.nodeIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--surface2);
+  flex: none;
+}
+.nodeText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.nodeTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nodeSub {
+  font-size: 11px;
+  color: var(--text4);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nodeWarn {
+  color: var(--warning-strong, var(--warning));
+  flex: none;
+}
+
+/* Per-node tools. Hidden until hover or keyboard focus so the canvas stays calm, but
+   never display:none — that would take them out of the tab order entirely. */
+.nodeTools {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding-right: 5px;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+.node:hover .nodeTools,
+.nodeTools:focus-within {
+  opacity: 1;
+}
+.tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 13px;
+  border: none;
+  background: none;
+  color: var(--muted2);
+  border-radius: 4px;
+}
+.tool:hover {
+  color: var(--text2);
+  background: var(--surface2);
+}
+.toolDanger:hover {
+  color: var(--danger-text);
+}
+.flip {
+  transform: rotate(180deg);
+}
+
+/* Live test-run state, drawn on the node itself so progress is visible on the canvas. */
+.status_running {
+  border-color: var(--warning);
+  box-shadow: 0 0 0 3px var(--warning-bg);
+}
+.status_succeeded {
+  border-color: var(--success);
+}
+.status_failed {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-bg);
+}
+.status_paused {
+  border-color: var(--accent);
+  border-style: dashed;
+}
+.status_skipped {
+  opacity: 0.6;
+}
+
+/* ---------------- add button ---------------- */
+
+.plus {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  color: var(--text4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+.plus:hover,
+.plus:focus-visible {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ---------------- branch labels ---------------- */
+
+.branchLabel {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.branchLabel span {
+  display: inline-block;
+  max-width: 100%;
+  padding: 3px 11px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.branchFallback span {
+  color: var(--text4);
+  font-style: italic;
+}
+
+/* ---------------- zoom controls ---------------- */
+
+.zoom {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  box-shadow: var(--shadow-md);
+  font-size: 11.5px;
+  color: var(--text4);
+}
+.zoom span {
+  min-width: 40px;
+  text-align: center;
+}
