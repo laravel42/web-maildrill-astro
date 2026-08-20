@@ -1609,3 +1609,305 @@ export const creditRecharges = pgTable(
     index('credit_recharges_wallet_fifo_idx').on(t.walletId, t.createdAt),
   ],
 );
+
+// ---------------------------------------------------------------------------
+// Automations (visual workflows)
+//
+// Execution model and Activepieces provenance:
+// docs/architecture/automations-activepieces.md
+// ---------------------------------------------------------------------------
+
+export const automationStatusEnum = pgEnum('automation_status', [
+  'draft',
+  'active',
+  'paused',
+  'archived',
+]);
+
+/**
+ * A version is `draft` until published; publishing freezes it. Editing a published
+ * automation opens a NEW draft rather than mutating the running definition, so a run
+ * started yesterday keeps executing what was published yesterday.
+ */
+export const automationVersionStateEnum = pgEnum('automation_version_state', [
+  'draft',
+  'published',
+  'archived',
+]);
+
+export const automationRunStatusEnum = pgEnum('automation_run_status', [
+  'queued',
+  'running',
+  /** Parked on a delay: nothing is held in memory, `resume_at` says when to continue. */
+  'waiting',
+  'succeeded',
+  'failed',
+  'cancelled',
+]);
+
+export const automationStepStatusEnum = pgEnum('automation_step_status', [
+  'running',
+  'succeeded',
+  'failed',
+  'paused',
+  'skipped',
+]);
+
+export const automationEventStatusEnum = pgEnum('automation_event_status', [
+  'pending',
+  'processing',
+  'processed',
+  'failed',
+]);
+
+export const automations = pgTable(
+  'automations',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    description: text('description'),
+    status: automationStatusEnum('status').notNull().default('draft'),
+    /**
+     * Definition new runs use, and `null` until first publish. Deliberately NOT a foreign
+     * key: `automation_versions.automation_id` already points the other way, and a pair of
+     * mutual FKs would need a deferred constraint for no gain — the version rows cascade
+     * with the automation, so a dangling pointer cannot outlive its row.
+     */
+    publishedVersionId: uuid('published_version_id'),
+    /** Version the composer edits. Always present after creation. */
+    draftVersionId: uuid('draft_version_id'),
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+    publishedAt: ts('published_at'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    // The list page: one workspace, newest first.
+    index('automations_tenant_updated_idx').on(t.tenantId, t.updatedAt),
+    index('automations_tenant_status_idx').on(t.tenantId, t.status),
+  ],
+);
+
+export const automationVersions = pgTable(
+  'automation_versions',
+  {
+    id: id(),
+    automationId: uuid('automation_id')
+      .notNull()
+      .references(() => automations.id, { onDelete: 'cascade' }),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    version: integer('version').notNull(),
+    state: automationVersionStateEnum('state').notNull().default('draft'),
+    /** Activepieces-shaped trigger step, including its `nextAction` chain. */
+    trigger: jsonb('trigger').$type<Record<string, unknown>>().notNull(),
+    /** Publish gate result, recomputed on every save so the composer can show it. */
+    valid: boolean('valid').notNull().default(false),
+    validationErrors: jsonb('validation_errors')
+      .$type<{ stepName: string | null; message: string }[]>()
+      .notNull()
+      .default([]),
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+    publishedAt: ts('published_at'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('automation_versions_automation_version_uq').on(t.automationId, t.version),
+    index('automation_versions_tenant_state_idx').on(t.tenantId, t.state),
+  ],
+);
+
+export const automationRuns = pgTable(
+  'automation_runs',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    automationId: uuid('automation_id')
+      .notNull()
+      .references(() => automations.id, { onDelete: 'cascade' }),
+    automationVersionId: uuid('automation_version_id')
+      .notNull()
+      .references(() => automationVersions.id, { onDelete: 'cascade' }),
+    status: automationRunStatusEnum('status').notNull().default('queued'),
+    /** `event` | `webhook` | `manual` | `test`. */
+    source: text('source').notNull().default('event'),
+    triggerPayload: jsonb('trigger_payload').$type<Record<string, unknown>>().notNull().default({}),
+    /**
+     * The step journal, serialized. This is what makes a run resumable: a worker that picks
+     * up a waiting run needs nothing that was in the previous worker's memory.
+     */
+    executionState: jsonb('execution_state').$type<Record<string, unknown>>().notNull().default({}),
+    /** Step to continue after, when `status = 'waiting'`. */
+    resumeStepName: text('resume_step_name'),
+    resumeAt: ts('resume_at'),
+    /** Wall-clock budget guard: a run older than this is terminated by the sweeper. */
+    deadlineAt: ts('deadline_at'),
+    stepsExecuted: integer('steps_executed').notNull().default(0),
+    error: jsonb('error').$type<Record<string, unknown> | null>(),
+    /**
+     * Exactly-once key for event-driven runs (`{versionId}:{eventDedupeKey}`). A
+     * redelivered provider report cannot start the same automation twice.
+     */
+    dedupeKey: text('dedupe_key'),
+    /** Set while a worker holds the run, so the stall sweeper can tell hung from queued. */
+    claimedAt: ts('claimed_at'),
+    startedAt: ts('started_at'),
+    completedAt: ts('completed_at'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('automation_runs_dedupe_uq')
+      .on(t.tenantId, t.dedupeKey)
+      .where(sql`${t.dedupeKey} is not null`),
+    // Run history for one automation, newest first.
+    index('automation_runs_automation_created_idx').on(t.tenantId, t.automationId, t.createdAt),
+    // Resume sweeper + stall recovery: both scan by status then time.
+    index('automation_runs_status_resume_idx').on(t.status, t.resumeAt),
+    index('automation_runs_status_claimed_idx').on(t.status, t.claimedAt),
+  ],
+);
+
+export const automationStepRuns = pgTable(
+  'automation_step_runs',
+  {
+    id: id(),
+    runId: uuid('run_id')
+      .notNull()
+      .references(() => automationRuns.id, { onDelete: 'cascade' }),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    /** Ordinal within the run, so the inspector can render execution order. */
+    seq: integer('seq').notNull(),
+    stepName: text('step_name').notNull(),
+    displayName: text('display_name').notNull(),
+    stepType: text('step_type').notNull(),
+    /** Piece + action/trigger this step ran, for the inspector's icon and label. */
+    pieceName: text('piece_name'),
+    status: automationStepStatusEnum('status').notNull(),
+    /** Already masked — secrets never reach this table. */
+    input: jsonb('input').$type<unknown>(),
+    output: jsonb('output').$type<unknown>(),
+    errorMessage: text('error_message'),
+    errorCategory: text('error_category'),
+    attempt: integer('attempt').notNull().default(1),
+    startedAt: ts('started_at').defaultNow().notNull(),
+    completedAt: ts('completed_at'),
+    durationMs: integer('duration_ms'),
+  },
+  (t) => [index('automation_step_runs_run_seq_idx').on(t.runId, t.seq)],
+);
+
+/**
+ * Durable domain-event log the trigger dispatcher polls. Same shape and the same
+ * `FOR UPDATE SKIP LOCKED` claiming as `outbox_events`, deliberately: it is the pattern
+ * this codebase already operates.
+ */
+export const automationEvents = pgTable(
+  'automation_events',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    type: text('type').notNull(),
+    /** Identity of the occurrence; a redelivery collides here instead of fanning out. */
+    dedupeKey: text('dedupe_key').notNull(),
+    payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+    status: automationEventStatusEnum('status').notNull().default('pending'),
+    availableAt: ts('available_at').defaultNow().notNull(),
+    processedAt: ts('processed_at'),
+    attemptCount: integer('attempt_count').notNull().default(0),
+    lastError: text('last_error'),
+    occurredAt: ts('occurred_at').defaultNow().notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('automation_events_dedupe_uq').on(t.dedupeKey),
+    index('automation_events_status_available_idx').on(t.status, t.availableAt),
+  ],
+);
+
+export const automationWebhooks = pgTable(
+  'automation_webhooks',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    automationId: uuid('automation_id')
+      .notNull()
+      .references(() => automations.id, { onDelete: 'cascade' }),
+    /**
+     * SHA-256 of the token. The URL IS the credential (same reasoning as the unsubscribe
+     * link), so the plaintext is shown once at mint time and never stored.
+     */
+    tokenHash: text('token_hash').notNull(),
+    /** First 8 chars, so the UI can identify a token it can no longer display. */
+    tokenPrefix: text('token_prefix').notNull(),
+    /** Last body received, for the composer's "capture a test payload" flow. */
+    lastPayload: jsonb('last_payload').$type<Record<string, unknown> | null>(),
+    lastSeenAt: ts('last_seen_at'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('automation_webhooks_token_uq').on(t.tokenHash),
+    uniqueIndex('automation_webhooks_automation_uq').on(t.automationId),
+  ],
+);
+
+export const automationConnections = pgTable(
+  'automation_connections',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    /** Piece this credential belongs to, e.g. `@maildrill/http`. */
+    pieceName: text('piece_name').notNull(),
+    /** AES-256-GCM ciphertext (`v1.<iv>.<ct>.<tag>`); never leaves the backend. */
+    encryptedSecret: text('encrypted_secret').notNull(),
+    /** Non-secret display metadata (account label, scopes). Safe to return. */
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex('automation_connections_tenant_name_uq').on(t.tenantId, t.name)],
+);
+
+/**
+ * Materialised segment membership.
+ *
+ * Segments are rule-derived and have no membership table, so "entered"/"exited" cannot be
+ * observed from a write — they have to be diffed. Only segments referenced by an active
+ * automation are tracked, so this stays proportional to what is actually automated.
+ */
+export const automationSegmentState = pgTable(
+  'automation_segment_state',
+  {
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    segmentId: uuid('segment_id')
+      .notNull()
+      .references(() => segments.id, { onDelete: 'cascade' }),
+    subscriberId: uuid('subscriber_id')
+      .notNull()
+      .references(() => subscribers.id, { onDelete: 'cascade' }),
+    enteredAt: ts('entered_at').defaultNow().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.segmentId, t.subscriberId] }),
+    index('automation_segment_state_tenant_idx').on(t.tenantId, t.segmentId),
+  ],
+);

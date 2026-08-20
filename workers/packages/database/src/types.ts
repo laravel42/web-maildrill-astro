@@ -42,6 +42,14 @@ import type {
   stripeEvents,
   paymentAttempts,
   paymentCustomers,
+  automations,
+  automationVersions,
+  automationRuns,
+  automationStepRuns,
+  automationEvents,
+  automationWebhooks,
+  automationConnections,
+  automationSegmentState,
 } from './schema';
 
 export type { SegmentRule } from './schema';
@@ -180,3 +188,28 @@ export type NewBillingUsageLine = typeof billingUsageLines.$inferInsert;
 
 export type CreditRechargeRow = typeof creditRecharges.$inferSelect;
 export type NewCreditRecharge = typeof creditRecharges.$inferInsert;
+
+// --- automations ---
+
+export type AutomationRow = typeof automations.$inferSelect;
+export type NewAutomation = typeof automations.$inferInsert;
+
+export type AutomationVersionRow = typeof automationVersions.$inferSelect;
+export type NewAutomationVersion = typeof automationVersions.$inferInsert;
+
+export type AutomationRunRow = typeof automationRuns.$inferSelect;
+export type NewAutomationRun = typeof automationRuns.$inferInsert;
+
+export type AutomationStepRunRow = typeof automationStepRuns.$inferSelect;
+export type NewAutomationStepRun = typeof automationStepRuns.$inferInsert;
+
+export type AutomationEventRow = typeof automationEvents.$inferSelect;
+export type NewAutomationEvent = typeof automationEvents.$inferInsert;
+
+export type AutomationWebhookRow = typeof automationWebhooks.$inferSelect;
+export type NewAutomationWebhook = typeof automationWebhooks.$inferInsert;
+
+export type AutomationConnectionRow = typeof automationConnections.$inferSelect;
+export type NewAutomationConnection = typeof automationConnections.$inferInsert;
+
+export type AutomationSegmentStateRow = typeof automationSegmentState.$inferSelect;
