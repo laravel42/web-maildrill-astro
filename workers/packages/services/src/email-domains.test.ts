@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { eq, like } from 'drizzle-orm';
 import { closeDb, db, emailDomains, tenants } from '@maildrill/database';
 import { ConflictError, NotFoundError } from '@maildrill/domain';
 import { ensureTenantByName } from './tenants';
@@ -32,10 +32,13 @@ describe.skipIf(!run)('email domains tenant isolation (e2e)', () => {
   const providerDomains = new Map<string, ReturnType<typeof domainPayload>>();
   /** Bodies POSTed to /email/1/domains, so the CPaaS X identity can be checked. */
   const registerBodies: Record<string, unknown>[] = [];
+  /** Bodies POSTed to /provisioning/1/associations. */
+  const associations: Record<string, unknown>[] = [];
 
   beforeEach(() => {
     providerDomains.clear();
     registerBodies.length = 0;
+    associations.length = 0;
     providerDomains.set('alpha.example.com', domainPayload('alpha.example.com', true));
     providerDomains.set('beta.example.com', domainPayload('beta.example.com'));
 
@@ -60,6 +63,13 @@ describe.skipIf(!run)('email domains tenant isolation (e2e)', () => {
             status: 200,
             headers: { 'content-type': 'application/json' },
           });
+        }
+        if (method === 'POST' && path === '/provisioning/1/applications') {
+          return new Response('', { status: 201 });
+        }
+        if (method === 'POST' && path === '/provisioning/1/associations') {
+          associations.push(JSON.parse(String(init?.body ?? '{}')));
+          return new Response('', { status: 201 });
         }
         if (method === 'POST' && path === '/email/1/domains') {
           try {
@@ -91,7 +101,15 @@ describe.skipIf(!run)('email domains tenant isolation (e2e)', () => {
 
   afterEach(async () => {
     vi.unstubAllGlobals();
-    await db.delete(emailDomains);
+    // Scoped to the fixtures. This was `db.delete(emailDomains)` with no
+    // WHERE clause: run with RUN_E2E=1 it truncated the real `email_domains`
+    // table of whatever DATABASE_URL pointed at, after EVERY test. It deleted
+    // a domain someone had just registered on the development database.
+    //
+    // Every fixture here is `*.example.com` (RFC 2606 reserved, so it can
+    // never collide with a domain anyone actually registers), which makes the
+    // predicate both safe and complete.
+    await db.delete(emailDomains).where(like(emailDomains.domainName, '%.example.com'));
   });
 
   afterAll(async () => {
@@ -169,10 +187,25 @@ describe.skipIf(!run)('email domains tenant isolation (e2e)', () => {
 
     const body = registerBodies.at(-1) ?? {};
     expect(body).toHaveProperty('domainName', 'platform.example.com');
-    // Stated unconditionally: an `if ('entityId' in body)` guard passes
-    // vacuously once the entity is correctly dropped, which is exactly the
-    // case this is meant to hold down.
+
+    // The point of the pairing is attribution, so assert the pair is actually
+    // SENT — not merely that a lone entity was avoided. Asserting only the
+    // absence passes when nothing is sent at all, which is the failure mode
+    // that filed a domain on the bare account.
+    expect(body).toHaveProperty('entityId', `ws-${t.id}`);
+    expect(body.applicationId).toBeTruthy();
+
+    // And never the half-pair Infobip rejects.
     const lonelyEntity = 'entityId' in body && !body.applicationId;
     expect(lonelyEntity).toBe(false);
+
+    // Filed under the workspace, not merely created with the ids attached —
+    // this is the step that was missing for a domain Infobip already had.
+    expect(associations.at(-1)).toMatchObject({
+      resourceType: 'DOMAIN',
+      channel: 'EMAIL',
+      entityId: `ws-${t.id}`,
+      resourceId: 'platform.example.com',
+    });
   });
 });
