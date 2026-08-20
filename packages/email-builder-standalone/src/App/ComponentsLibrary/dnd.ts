@@ -27,7 +27,8 @@ export const LIBRARY_COMPONENT_DND_TYPE = 'library-component' as const;
  *   - `template`: must be dropped on the document-root drop zone; replaces
  *     the current document with a confirmation modal (see L42-309 Phase 9).
  */
-export type LibraryComponentCategory = 'block' | 'block-preset' | 'primitive' | 'layout' | 'section' | 'template';
+export type LibraryComponentCategory =
+  'block' | 'block-preset' | 'primitive' | 'layout' | 'section' | 'template';
 
 /**
  * The subset of `LibraryComponentCategory` that identifies a saved item

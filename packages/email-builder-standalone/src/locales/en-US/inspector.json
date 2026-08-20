@@ -34,7 +34,32 @@
       "suggestionsLabel": "Need inspiration?",
       "improvePrompt": "✨ Improve prompt",
       "improvingPrompt": "Improving...",
-      "suggestions": [],
+      "suggestions": [
+        {
+          "label": "Welcome email",
+          "prompt": "A warm welcome email for new users of a modern SaaS product. Open with a short, friendly greeting, explain the one thing to do first, and finish with a single prominent CTA button to get started. Keep it under 150 words with generous spacing."
+        },
+        {
+          "label": "Product launch",
+          "prompt": "A product launch announcement email. Start with a bold hero section (headline + supporting line + hero image placeholder), then three short feature highlights with icons or small images, and end with a strong CTA button to try the product. Confident, energetic tone."
+        },
+        {
+          "label": "Monthly newsletter",
+          "prompt": "A clean monthly newsletter with a short intro from the team, three article teasers (title, one-sentence summary, Read more link each), and a footer with social links and an unsubscribe line. Editorial, calm tone with clear separation between stories."
+        },
+        {
+          "label": "Abandoned cart",
+          "prompt": "An abandoned-cart reminder email. Gently remind the reader they left items behind, show a product image placeholder with name and price, add one line of reassurance (free returns or support), and a single CTA button to complete the purchase. Helpful, no-pressure tone."
+        },
+        {
+          "label": "Event invite",
+          "prompt": "An event invitation email for a live online webinar. Lead with the event name and a one-line value promise, list date, time, and duration in a scannable block, introduce the speaker in one sentence, and close with an RSVP CTA button plus an add-to-calendar link."
+        },
+        {
+          "label": "Verification code",
+          "prompt": "A minimal one-time verification code email. A short line explaining the code was requested, the 6-digit code displayed large and centered, a note that it expires in 10 minutes, and a quiet line telling the reader to ignore the email if they didn't request it. No images, no marketing."
+        }
+      ],
       "suggestionsRefine": [
         {
           "label": "Change CTA color",
@@ -87,6 +112,51 @@
         "message": "Your prompt and wizard answers will be cleared.",
         "stay": "Keep working",
         "leave": "Yes, leave"
+      },
+      "undoImprove": "Undo",
+      "improveFailed": "Couldn't improve the prompt — your text is unchanged. Try again."
+    },
+    "quality": {
+      "title": "Template quality",
+      "recheck": "Recheck",
+      "deepCritique": "Design critique",
+      "auditScore": "Tech {{n}}%",
+      "designScore": "Design {{n}}%",
+      "sendReady": "Send-ready",
+      "needsWork": "Needs work",
+      "strengths": "Strengths",
+      "designWeaknesses": "Design weaknesses",
+      "clientWeaknesses": "HTML client compatibility",
+      "findings": "Findings",
+      "fix": "Fix",
+      "clients": "Clients",
+      "showLess": "Show less",
+      "showAll": "Show all {{n}} findings",
+      "applyCorrections": "Apply corrections",
+      "applyingCorrections": "Applying…",
+      "applyCorrectionsHint": "Re-generates this template in refine mode, fixing the P0/P1 findings above while keeping block IDs and brand."
+    },
+    "refine": {
+      "changesLabel": "What should change?",
+      "scopeLabel": "Scope",
+      "compile": "Shape refine prompt",
+      "compiling": "Shaping refine prompt…",
+      "scope": {
+        "block": "Block",
+        "section": "Section",
+        "email": "Whole email"
+      },
+      "changes": {
+        "colour": "Colour",
+        "typography": "Typography",
+        "spacing": "Spacing",
+        "imagery": "Imagery",
+        "copy": "Copy",
+        "cta": "CTA",
+        "layout": "Layout",
+        "mobile": "Mobile",
+        "accessibility": "Accessibility",
+        "polish": "Polish"
       }
     },
     "preview": {
@@ -97,6 +167,11 @@
       "renderError": "Could not render this block — it will retry as more frames arrive.",
       "blocksCount": "{{count}} blocks",
       "bytesCount": "{{bytes}} bytes"
+    },
+    "score": {
+      "button": "Template score",
+      "tooltip": "Score this template — technical audit plus AI design critique",
+      "title": "Template score"
     }
   },
   "actions": {
@@ -134,7 +209,7 @@
   },
   "inputs": {
     "tabs": {
-      "gallery": "Gallery",
+      "gallery": "Stock image",
       "yourGallery": "Your Gallery",
       "upload": "Upload",
       "generate": "Generate"
@@ -323,6 +398,8 @@
       "columns": {
         "title": "Columns block",
         "countLabel": "Number of columns",
+        "layoutLabel": "Layout",
+        "gapLabel": "Space between columns",
         "stackColumnsOnMobile": "Stack columns on mobile",
         "stackColumnsOnMobileWarning": "Some email clients (Outlook.com, Yahoo Mail) have limited support for responsive column stacking. In those clients, columns will remain side-by-side.",
         "stackToggleSideBySide": "Side by side",
@@ -550,15 +627,33 @@
       "badge": "Selected"
     },
     "blocks": {
-      "root": { "title": "Root" },
-      "notionText": { "title": "Text" },
-      "button": { "title": "Button" },
-      "image": { "title": "Image" },
-      "divider": { "title": "Divider" },
-      "spacer": { "title": "Spacer" },
-      "socialMedia": { "title": "Social media" },
-      "container": { "title": "Container" },
-      "columnsContainer": { "title": "Columns" }
+      "root": {
+        "title": "Root"
+      },
+      "notionText": {
+        "title": "Text"
+      },
+      "button": {
+        "title": "Button"
+      },
+      "image": {
+        "title": "Image"
+      },
+      "divider": {
+        "title": "Divider"
+      },
+      "spacer": {
+        "title": "Spacer"
+      },
+      "socialMedia": {
+        "title": "Social media"
+      },
+      "container": {
+        "title": "Container"
+      },
+      "columnsContainer": {
+        "title": "Columns"
+      }
     },
     "fields": {
       "color": "Text color",

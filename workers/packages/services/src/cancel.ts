@@ -1,7 +1,7 @@
-import { and, eq } from "drizzle-orm";
-import { db, messages, type MessageRow } from "@maildrill/database";
-import { canTransition } from "@maildrill/domain";
-import { bumpVersion } from "./shared";
+import { and, eq } from 'drizzle-orm';
+import { db, messages, type MessageRow } from '@maildrill/database';
+import { canTransition } from '@maildrill/domain';
+import { bumpVersion } from './shared';
 
 export interface CancelResult {
   message: MessageRow | null;
@@ -14,10 +14,7 @@ export interface CancelResult {
  * the provider call, so an in-flight job will not send. Cancellation after
  * submission is not possible here (state machine rejects it).
  */
-export async function cancelMessage(
-  tenantId: string,
-  messageId: string,
-): Promise<CancelResult> {
+export async function cancelMessage(tenantId: string, messageId: string): Promise<CancelResult> {
   const rows = await db
     .select()
     .from(messages)
@@ -25,12 +22,12 @@ export async function cancelMessage(
     .limit(1);
   const m = rows[0];
   if (!m) return { message: null, cancelled: false };
-  if (!canTransition(m.status, "cancelled")) return { message: m, cancelled: false };
+  if (!canTransition(m.status, 'cancelled')) return { message: m, cancelled: false };
 
   const upd = await db
     .update(messages)
     .set({
-      status: "cancelled",
+      status: 'cancelled',
       cancelledAt: new Date(),
       version: bumpVersion,
       updatedAt: new Date(),

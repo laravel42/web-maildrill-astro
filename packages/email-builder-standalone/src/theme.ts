@@ -1,4 +1,11 @@
-import { alpha, createTheme, darken, getContrastRatio, hexToRgb, lighten } from '@mui/material/styles';
+import {
+  alpha,
+  createTheme,
+  darken,
+  getContrastRatio,
+  hexToRgb,
+  lighten,
+} from '@mui/material/styles';
 
 declare module '@mui/material/styles' {
   interface TypeBackground {
@@ -88,7 +95,7 @@ const getTheme = (
   mainColor: string = BRAND_BLUE,
   secondaryColor: string = BRAND_BLUE,
   darkMode: boolean = false,
-  portalContainer?: HTMLElement
+  portalContainer?: HTMLElement,
 ) => {
   // Validate color inputs with fallback
   const isValidColor = (c: any) => typeof c === 'string' && c.startsWith('#');
@@ -201,7 +208,8 @@ const getTheme = (
         light: lighten(getDarkModeColor(BRAND_GREEN, darkMode), 0.15),
         dark: darken(getDarkModeColor(BRAND_GREEN, darkMode), 0.15),
         contrastText:
-          getContrastRatio(getDarkModeColor(BRAND_GREEN, darkMode), darkMode ? '#000' : '#fff') > 4.5
+          getContrastRatio(getDarkModeColor(BRAND_GREEN, darkMode), darkMode ? '#000' : '#fff') >
+          4.5
             ? darkMode
               ? '#000'
               : '#fff'
@@ -227,7 +235,8 @@ const getTheme = (
         light: lighten(getDarkModeColor(BRAND_YELLOW, darkMode), 0.15),
         dark: darken(getDarkModeColor(BRAND_YELLOW, darkMode), 0.15),
         contrastText:
-          getContrastRatio(getDarkModeColor(BRAND_YELLOW, darkMode), darkMode ? '#000' : '#fff') > 4.5
+          getContrastRatio(getDarkModeColor(BRAND_YELLOW, darkMode), darkMode ? '#000' : '#fff') >
+          4.5
             ? darkMode
               ? '#000'
               : '#fff'
@@ -402,12 +411,16 @@ const getTheme = (
               backgroundColor: darkMode
                 ? alpha(getDarkModeColor(BRAND_YELLOW, darkMode), 0.15)
                 : alpha(getDarkModeColor(BRAND_YELLOW, darkMode), 0.1),
-              color: darkMode ? textColors.primary : darken(getDarkModeColor(BRAND_YELLOW, darkMode), 0.6),
+              color: darkMode
+                ? textColors.primary
+                : darken(getDarkModeColor(BRAND_YELLOW, darkMode), 0.6),
               border: `1px solid ${alpha(getDarkModeColor(BRAND_YELLOW, darkMode), darkMode ? 0.3 : 0.2)}`,
             },
 
             '&.MuiSnackbarContent-info': {
-              backgroundColor: darkMode ? alpha(adjustedMainColor, 0.15) : alpha(adjustedMainColor, 0.1),
+              backgroundColor: darkMode
+                ? alpha(adjustedMainColor, 0.15)
+                : alpha(adjustedMainColor, 0.1),
               color: darkMode ? textColors.primary : adjustedMainColor,
               border: `1px solid ${alpha(adjustedMainColor, darkMode ? 0.3 : 0.2)}`,
             },
@@ -484,7 +497,9 @@ const getTheme = (
         styleOverrides: {
           root: {
             '&.MuiChip-filledWarning': {
-              backgroundColor: darkMode ? getDarkModeColor('#d18829', darkMode) : getDarkModeColor('#bead4a', darkMode),
+              backgroundColor: darkMode
+                ? getDarkModeColor('#d18829', darkMode)
+                : getDarkModeColor('#bead4a', darkMode),
               color: '#ffffff',
               '& .MuiChip-icon': {
                 color: '#ffffff',
@@ -540,14 +555,20 @@ const getTheme = (
               ? alpha(greyColors[500], 0.95) // Más oscuro en dark mode
               : alpha('#2c2c2c', 0.9), // Fondo oscuro en light mode
             color: '#ffffff', // Texto blanco para contraste
-            border: darkMode ? `1px solid ${alpha(greyColors[400], 0.2)}` : `1px solid ${alpha('#000000', 0.1)}`,
-            boxShadow: darkMode ? `0px 4px 12px ${alpha('#000000', 0.6)}` : `0px 4px 12px ${alpha('#000000', 0.25)}`,
+            border: darkMode
+              ? `1px solid ${alpha(greyColors[400], 0.2)}`
+              : `1px solid ${alpha('#000000', 0.1)}`,
+            boxShadow: darkMode
+              ? `0px 4px 12px ${alpha('#000000', 0.6)}`
+              : `0px 4px 12px ${alpha('#000000', 0.25)}`,
             borderRadius: '6px',
           },
           arrow: {
             color: darkMode ? alpha(greyColors[500], 0.95) : alpha('#2c2c2c', 0.9),
             '&::before': {
-              border: darkMode ? `1px solid ${alpha(greyColors[400], 0.2)}` : `1px solid ${alpha('#000000', 0.1)}`,
+              border: darkMode
+                ? `1px solid ${alpha(greyColors[400], 0.2)}`
+                : `1px solid ${alpha('#000000', 0.1)}`,
             },
           },
         },
@@ -690,7 +711,9 @@ const getTheme = (
                 boxShadow: 'none',
               },
               '&:active': {
-                backgroundColor: darkMode ? darken(adjustedMainColor, 0.1) : darken(adjustedMainColor, 0.2),
+                backgroundColor: darkMode
+                  ? darken(adjustedMainColor, 0.1)
+                  : darken(adjustedMainColor, 0.2),
               },
               '&.Mui-disabled': {
                 backgroundColor: greyColors[200],
@@ -1301,7 +1324,9 @@ const getTheme = (
             PaperProps: {
               sx: {
                 borderRadius: '4px',
-                boxShadow: darkMode ? '0 4px 10px rgba(0, 0, 0, 0.6)' : '0 4px 10px rgba(0, 0, 0, 0.3)',
+                boxShadow: darkMode
+                  ? '0 4px 10px rgba(0, 0, 0, 0.6)'
+                  : '0 4px 10px rgba(0, 0, 0, 0.3)',
                 backgroundColor: backgroundColors.paper,
               },
             },

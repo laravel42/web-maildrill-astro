@@ -81,7 +81,11 @@ export {
   extractThemeBundlePayload,
   applyThemeBundle,
 } from './builders/themeBundleSchema';
-export type { ThemeBundle, ThemeBundlePayload, ThemeBundleGlobals } from './builders/themeBundleSchema';
+export type {
+  ThemeBundle,
+  ThemeBundlePayload,
+  ThemeBundleGlobals,
+} from './builders/themeBundleSchema';
 
 export { resolveBlockProp, pickResponsive } from './builders/resolveBlockProp';
 export type { Viewport, BlockSection, ResolvableBlock } from './builders/resolveBlockProp';

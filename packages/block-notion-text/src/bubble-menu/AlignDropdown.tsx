@@ -1,10 +1,22 @@
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { FormatAlignCenter, FormatAlignJustify, FormatAlignLeft, FormatAlignRight } from '@mui/icons-material';
+import {
+  FormatAlignCenter,
+  FormatAlignJustify,
+  FormatAlignLeft,
+  FormatAlignRight,
+} from '@mui/icons-material';
 import { List, ListItemButton, ListItemIcon, ListItemText, useTheme } from '@mui/material';
 import type { Editor } from '@tiptap/react';
 
+import {
+  MENU_ICON_SX,
+  MENU_ITEM_SX,
+  MENU_ITEM_TEXT_SX,
+  MENU_LABEL_SX,
+  MENU_LIST_SX,
+} from './menu-skin';
 import ToolbarIconButton from './ToolbarIconButton';
 import ToolbarPopover from './ToolbarPopover';
 
@@ -47,7 +59,7 @@ export default function AlignDropdown({ editor }: Props) {
       });
       handleClose();
     },
-    [editor, handleClose]
+    [editor, handleClose],
   );
 
   const isActive = ALIGNMENTS.some((a) => a !== 'left' && editor.isActive({ textAlign: a }));
@@ -56,7 +68,8 @@ export default function AlignDropdown({ editor }: Props) {
     const iconColor = theme.palette.text.secondary;
     if (editor.isActive({ textAlign: 'center' }))
       return <FormatAlignCenter fontSize="small" sx={{ color: iconColor }} />;
-    if (editor.isActive({ textAlign: 'right' })) return <FormatAlignRight fontSize="small" sx={{ color: iconColor }} />;
+    if (editor.isActive({ textAlign: 'right' }))
+      return <FormatAlignRight fontSize="small" sx={{ color: iconColor }} />;
     if (editor.isActive({ textAlign: 'justify' }))
       return <FormatAlignJustify fontSize="small" sx={{ color: iconColor }} />;
     return <FormatAlignLeft fontSize="small" sx={{ color: iconColor }} />;
@@ -64,34 +77,33 @@ export default function AlignDropdown({ editor }: Props) {
 
   return (
     <>
-      <ToolbarIconButton tooltip={t('bubbleMenu.textAlign')} active={isActive} onClick={handleClick} showArrow>
+      <ToolbarIconButton
+        tooltip={t('bubbleMenu.textAlign')}
+        active={isActive}
+        onClick={handleClick}
+        showArrow
+      >
         {getCurrentIcon()}
       </ToolbarIconButton>
 
       <ToolbarPopover anchorEl={anchor} onClose={handleClose}>
-        <List sx={{ p: '8px 4px' }}>
+        <List sx={MENU_LIST_SX}>
           {ALIGNMENTS.map((alignment) => {
             const Icon = ALIGN_ICONS[alignment];
-            const active = editor.isActive({ textAlign: alignment });
             return (
               <ListItemButton
                 key={alignment}
                 onClick={() => setAlignment(alignment)}
-                selected={active}
-                sx={{
-                  p: '8px 10px',
-                  borderRadius: '6px',
-                  backgroundColor: active ? theme.palette.action.selected : 'transparent',
-                  '&:hover': { backgroundColor: theme.palette.action.hover },
-                  transition: 'all 150ms ease',
-                }}
+                selected={editor.isActive({ textAlign: alignment })}
+                sx={MENU_ITEM_SX}
               >
-                <ListItemIcon sx={{ minWidth: 'auto', mr: 1, color: theme.palette.text.secondary }}>
+                <ListItemIcon sx={MENU_ICON_SX}>
                   <Icon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText
                   primary={t(ALIGN_KEYS[alignment])}
-                  slotProps={{ primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } } }}
+                  sx={MENU_ITEM_TEXT_SX}
+                  slotProps={{ primary: { sx: MENU_LABEL_SX } }}
                 />
               </ListItemButton>
             );

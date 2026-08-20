@@ -5,6 +5,7 @@
   "type": "module",
   "dependencies": {
     "@maildrill/authz": "workspace:*",
+    "@maildrill/billing": "workspace:*",
     "@maildrill/config": "workspace:*",
     "@maildrill/database": "workspace:*",
     "@maildrill/domain": "workspace:*",
@@ -12,8 +13,9 @@
     "@maildrill/identity": "workspace:*",
     "@maildrill/observability": "workspace:*",
     "@maildrill/product": "workspace:*",
+    "@maildrill/providers": "workspace:*",
     "@maildrill/services": "workspace:*",
-    "fastify": "^5.2.0",
-    "zod": "^3.24.1"
+    "fastify": "^5.11.0",
+    "zod": "^3.25.76"
   }
 }

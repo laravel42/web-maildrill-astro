@@ -1,0 +1,72 @@
+.opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 9px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+/* Preview transport — an icon-only circle so it reads as a player control
+   rather than a third form button. Filled in the voice channel colour; the
+   caption underneath carries the state wording. --on-ink flips with the
+   theme, so the glyph stays legible on the amber in both. */
+.play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin: 18px auto 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--ch-voice);
+  color: var(--on-ink);
+  cursor: pointer;
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--ch-voice) 32%, transparent);
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.play:hover {
+  background: color-mix(in srgb, var(--ch-voice) 88%, var(--ink, #1f1e1b));
+  transform: scale(1.05);
+}
+.play:active {
+  transform: scale(0.96);
+}
+.play:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ch-voice) 38%, transparent);
+}
+.play:disabled {
+  background: var(--surface2);
+  color: var(--muted);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.play:disabled:hover {
+  background: var(--surface2);
+  transform: none;
+}
+
+.callbtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+.tnum {
+  font-variant-numeric: tabular-nums;
+}

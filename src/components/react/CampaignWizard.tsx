@@ -22,7 +22,9 @@ import {
   templateKey,
   fixtureTemplateMessage,
   TEMPLATES,
+  trackingCapabilities,
   type ReviewRow,
+  type TrackingCapability,
 } from './CampaignWizard.logic';
 import { prepareAudiencesForChannel } from '@/lib/app/audience-map';
 import type { AudienceChoice, Props, Schedule, Step, Template } from './CampaignWizard.types';
@@ -42,10 +44,10 @@ import {
 export type { Props };
 
 /* ---------------------------------------------------------------------------
- * CampaignWizard — faithful React port of the 5-step campaign wizard modal.
+ * CampaignWizard — faithful React port of the 6-step campaign wizard modal.
  * The parent gates mounting (renders this only when open), so the modal shows
- * immediately. Logical step order is 1..5: Basics, Audience, Content, Schedule,
- * Review (matching `stepDefs` in the design).
+ * immediately. Logical step order is 1..6: Basics, Audience, Content, Tracking,
+ * Schedule, Review (matching `stepDefs` in the design).
  * ------------------------------------------------------------------------- */
 
 const INDIGO = '#4f46e5';
@@ -206,7 +208,54 @@ function ReviewRowValue({ row, live }: { row: ReviewRow; live: boolean }) {
   return <span className={styles.reviewValue}>{row.value}</span>;
 }
 
-/* Selectable radio card used for Schedule (step 4). */
+/* One engagement-tracking option for step 4: mechanism, per-channel note, switch. */
+function TrackCard({
+  icon,
+  title,
+  cap,
+  on,
+  onToggle,
+}: {
+  icon: 'eye' | 'target';
+  title: string;
+  cap: TrackingCapability;
+  on: boolean;
+  onToggle: () => void;
+}) {
+  const active = cap.enabled && on;
+  return (
+    <div
+      className={[
+        styles.trackCard,
+        active ? styles.trackCardOn : '',
+        cap.enabled ? '' : styles.trackCardDisabled,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <span className={styles.trackCardIcon} aria-hidden="true">
+        <Icon name={icon} size={16} stroke={2.1} />
+      </span>
+      <span className={styles.trackCardBody}>
+        <span className={styles.trackCardTitle}>{title}</span>
+        <span className={styles.trackCardNote}>{cap.note}</span>
+      </span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={active}
+        aria-label={title}
+        disabled={!cap.enabled}
+        className={`${styles.switch} ${active ? styles.isOn : ''}`}
+        onClick={onToggle}
+      >
+        <span className={styles.switchKnob} />
+      </button>
+    </div>
+  );
+}
+
+/* Selectable radio card used for Schedule (step 5). */
 function RadioCard({
   selected,
   onSelect,
@@ -282,6 +331,8 @@ export default function CampaignWizard({
   initialChannel = 'email',
   initialName = '',
   initialSubject = '',
+  initialTrackOpens = false,
+  initialTrackClicks = false,
   initialAudienceIds = [],
   initialTemplateId = null,
   initialMessage = '',
@@ -297,6 +348,8 @@ export default function CampaignWizard({
   const [channel, setChannel] = useState<ChannelType>(initialChannel);
   const [name, setName] = useState<string>(initialName);
   const [subject, setSubject] = useState<string>(initialSubject);
+  const [trackOpens, setTrackOpens] = useState<boolean>(initialTrackOpens);
+  const [trackClicks, setTrackClicks] = useState<boolean>(initialTrackClicks);
   const [audienceIds, setAudienceIds] = useState<Set<string>>(() =>
     initialAudienceSet(initialAudienceIds),
   );
@@ -341,10 +394,25 @@ export default function CampaignWizard({
 
   useEffect(() => {
     window.posthog?.capture('campaign_wizard_opened', { channel, mode });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isEmail = channel === 'email';
+
+  /* Step 4 — what this channel can measure, and the effective (capability-
+     gated) choice. A switch left on from another channel never leaks into a
+     channel that can't honor it. */
+  const trackingCaps = trackingCapabilities(channel);
+  const trackingAvailable = trackingCaps.opens.enabled || trackingCaps.clicks.enabled;
+  const effTrackOpens = trackingCaps.opens.enabled && trackOpens;
+  const effTrackClicks = trackingCaps.clicks.enabled && trackClicks;
+  const trackingStatusLine =
+    effTrackOpens && effTrackClicks
+      ? 'Opens and clicks will be recorded for this campaign.'
+      : effTrackOpens
+        ? 'Only opens will be recorded — links stay untouched.'
+        : effTrackClicks
+          ? 'Only clicks will be recorded — links route through the tracking domain.'
+          : 'This campaign sends clean — no pixel, no rewritten links.';
   const channelMeta = CHANNEL[channel];
 
   /* Live workspace data when the caller supplied it, else the preview fixtures —
@@ -422,13 +490,13 @@ export default function CampaignWizard({
 
   const title = mode === 'edit' ? 'Edit campaign' : 'New campaign';
   const nextLabel =
-    step === 5
+    step === 6
       ? mode === 'edit'
         ? 'Save changes'
         : schedule === 'now'
           ? 'Send campaign'
           : 'Schedule campaign'
-      : step === 4
+      : step === 5
         ? 'Continue to review →'
         : 'Continue →';
 
@@ -442,14 +510,23 @@ export default function CampaignWizard({
         : 'Campaign scheduled';
 
   /* Email: template supplies html; subject is campaign metadata (step 1). Other
-     channels send the typed message. Both persist under the campaign's `content`. */
+     channels send the typed message. Both persist under the campaign's `content`.
+     Tracking flags are stored only where the channel can honor them, as
+     explicit booleans — `false` is the meaningful opt-out the provider acts
+     on (voice stores none). */
+  const trackingContent: Record<string, boolean> = {
+    ...(trackingCaps.opens.enabled ? { trackOpens } : {}),
+    ...(trackingCaps.clicks.enabled ? { trackClicks } : {}),
+  };
   const draftContent = isEmail
-    ? subject.trim()
-      ? { subject: subject.trim() }
-      : undefined
-    : message.trim()
-      ? { text: message }
-      : undefined;
+    ? {
+        ...(subject.trim() ? { subject: subject.trim() } : {}),
+        ...trackingContent,
+      }
+    : {
+        ...(message.trim() ? { text: message } : {}),
+        ...trackingContent,
+      };
 
   const selectSchedule = (next: Schedule) => {
     setSchedule(next);
@@ -504,7 +581,7 @@ export default function CampaignWizard({
 
   const handlePrimary = () => {
     if (primaryDisabled) return;
-    if (step < 5) {
+    if (step < 6) {
       const nextStep = (step + 1) as Step;
       window.posthog?.capture('campaign_wizard_step_advanced', {
         from_step: step,
@@ -585,6 +662,7 @@ export default function CampaignWizard({
     scheduledDate,
     scheduledTime,
     resolvedSenders,
+    { trackOpens, trackClicks },
   );
 
   const labelStyle: CSSProperties = {
@@ -811,7 +889,7 @@ export default function CampaignWizard({
                     <input
                       value={replyTo}
                       onChange={(e) => setReplyTo(e.target.value)}
-                      placeholder="hello@maildrill.app"
+                      placeholder="hello@maildrill.net"
                       style={{
                         width: '100%',
                         border: '1px solid var(--border2)',
@@ -849,14 +927,14 @@ export default function CampaignWizard({
                     <AudienceSection
                       heading="Lists"
                       items={listAudiences}
-                      emptyMessage="No lists yet. Create one under Audience → Lists."
+                      emptyMessage={`No lists for ${channelLabel(channel)} yet. Enable the channel on a list under Audience → Lists.`}
                       selectedIds={audienceIds}
                       onToggle={toggleAudience}
                     />
                     <AudienceSection
                       heading="Segments"
                       items={segmentAudiences}
-                      emptyMessage="No segments yet. Create one under Audience → Segments."
+                      emptyMessage={`No segments for ${channelLabel(channel)} yet. Enable the channel on a segment under Audience → Subscribers.`}
                       selectedIds={audienceIds}
                       onToggle={toggleAudience}
                     />
@@ -962,6 +1040,70 @@ export default function CampaignWizard({
             )}
 
             {step === 4 && (
+              <>
+                <h3 style={h3Style}>Measure engagement</h3>
+                <p style={{ ...pStyle, margin: '0 0 18px' }}>
+                  Choose what this {channelLabel(channel)} campaign records after it sends.
+                </p>
+                <div className={styles.trackList} role="group" aria-label="Engagement tracking">
+                  <TrackCard
+                    icon="eye"
+                    title="Track opens"
+                    cap={trackingCaps.opens}
+                    on={trackOpens}
+                    onToggle={() => setTrackOpens((v) => !v)}
+                  />
+                  <TrackCard
+                    icon="target"
+                    title="Track clicks"
+                    cap={trackingCaps.clicks}
+                    on={trackClicks}
+                    onToggle={() => setTrackClicks((v) => !v)}
+                  />
+                </div>
+                {trackingAvailable ? (
+                  <>
+                    <div className={styles.trackCallout}>
+                      <span className={styles.trackCalloutIcon} aria-hidden="true">
+                        <Icon name="shield" size={16} stroke={2.1} />
+                      </span>
+                      <span>
+                        <strong className={styles.trackCalloutTitle}>
+                          Tracking can affect deliverability.
+                        </strong>{' '}
+                        {isEmail
+                          ? 'The open pixel and rewritten links point at a tracking domain, and mailbox providers weigh those signals — on a new sending domain they can tip a campaign into spam. Keep tracking off while a domain warms up.'
+                          : 'Rewritten links route through a tracking domain with no history of its own, and carrier spam filters weigh link reputation. Keep tracking off until the domain has warmed up.'}
+                      </span>
+                    </div>
+                    <p
+                      className={`${styles.trackStatus} ${
+                        effTrackOpens || effTrackClicks
+                          ? styles.trackStatusOn
+                          : styles.trackStatusClean
+                      }`}
+                      role="status"
+                    >
+                      <span className={styles.trackStatusIcon} aria-hidden="true">
+                        <Icon
+                          name={effTrackOpens || effTrackClicks ? 'analytics' : 'check'}
+                          size={15}
+                          stroke={2.4}
+                        />
+                      </span>
+                      {trackingStatusLine}
+                    </p>
+                  </>
+                ) : (
+                  <div className={styles.trackEmpty}>
+                    Voice campaigns have nothing to instrument — engagement comes from call outcomes
+                    in the campaign report. Continue to scheduling.
+                  </div>
+                )}
+              </>
+            )}
+
+            {step === 5 && (
               <div className={styles.scheduleStep}>
                 <h3 style={h3Style}>When should this send?</h3>
                 <p className={styles.scheduleIntro} style={pStyle}>
@@ -1003,7 +1145,7 @@ export default function CampaignWizard({
               </div>
             )}
 
-            {step === 5 && (
+            {step === 6 && (
               <>
                 <h3 style={h3Style}>Review your campaign</h3>
                 <p style={pStyle}>Double-check everything before you send.</p>
@@ -1057,7 +1199,7 @@ export default function CampaignWizard({
               borderLeft: `1px solid color-mix(in srgb, ${channelMeta.color} 28%, var(--divider))`,
             }}
           >
-            <div className={styles.previewFit}>
+            <div className={styles.previewFit} data-preview-fit>
               {isEmail ? (
                 selTpl ? (
                   <div className={styles.previewEmailLive}>

@@ -179,7 +179,12 @@ type ThemesListProps = {
   onCounts?: (filtered: number, total: number) => void;
 };
 
-export default function ThemesList({ refreshKey, onChange, search = '', onCounts }: ThemesListProps) {
+export default function ThemesList({
+  refreshKey,
+  onChange,
+  search = '',
+  onCounts,
+}: ThemesListProps) {
   const { t } = useTranslation('inspector');
   const theme = useTheme();
   const appliedThemeId = useAppliedThemeId();
@@ -220,9 +225,13 @@ export default function ThemesList({ refreshKey, onChange, search = '', onCounts
   const handleDelete = useCallback(
     async (item: ThemeListing) => {
       const confirmed = window.confirm(
-        t('componentsLibrary.drawer.themes.deleteConfirm', 'Delete theme "{{name}}"? This cannot be undone.', {
-          name: item.name,
-        })
+        t(
+          'componentsLibrary.drawer.themes.deleteConfirm',
+          'Delete theme "{{name}}"? This cannot be undone.',
+          {
+            name: item.name,
+          },
+        ),
       );
       if (!confirmed) return;
       try {
@@ -232,7 +241,7 @@ export default function ThemesList({ refreshKey, onChange, search = '', onCounts
         setError(err instanceof Error ? err.message : String(err));
       }
     },
-    [t, onChange]
+    [t, onChange],
   );
 
   if (error) {

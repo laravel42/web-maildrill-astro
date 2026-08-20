@@ -92,7 +92,7 @@ const features: Feature[] = [
   },
   {
     icon: 'sparkle',
-    title: 'AI copilot',
+    title: 'AI assistant',
     desc: 'Draft subject lines, rewrite copy, and generate variants without leaving the editor.',
   },
 ];
@@ -104,31 +104,41 @@ const stats = [
   { to: 40, decimals: 0, suffix: '%', prefix: '', label: 'Faster campaign setup' },
 ];
 
-const quotes = [
-  {
-    text: 'We replaced three tools with Maildrill. One audience across email and SMS changed how fast we can move.',
-    name: 'Ava Chen',
-    role: 'Head of Growth, Lumen',
-    initials: 'AC',
-    color: 'var(--ch-email)',
-    tint: 'var(--ch-email-tint)',
-  },
-  {
-    text: 'Deliverability jumped the week we switched. The analytics tell us what to do next, not just what happened.',
-    name: 'Marcus Reed',
-    role: 'CRM Lead, Orbit',
-    initials: 'MR',
-    color: 'var(--ch-whatsapp)',
-    tint: 'var(--ch-whatsapp-tint)',
-  },
-  {
-    text: 'The campaign wizard is so fast our team stopped dreading launches. It feels like Linear for messaging.',
-    name: 'Sofia Alvarez',
-    role: 'Lifecycle Manager, Fjord',
-    initials: 'SA',
-    color: 'var(--ch-sms)',
-    tint: 'var(--ch-sms-tint)',
-  },
+/**
+ * Product screenshots for the tour carousel.
+ *
+ * These replace three invented testimonials with quotes attributed to people
+ * who do not exist — the screenshots are the same product a visitor gets, so
+ * they make a claim we can actually stand behind.
+ *
+ * Served from /product-tour/, NOT /product/. `public/product/` shadowed the
+ * /product marketing page: the build emits both `product.html` and a
+ * `product/` directory, and a static host resolving `/product` hits the
+ * directory first, finds no index.html and returns 404 — which is exactly what
+ * maildrill.net/product did.
+ *
+ * Intrinsic dimensions are 1600x1000 — captured at 3200 (2x) and halved,
+ * which is still above the ~1340px the widest slot renders at. Declared on
+ * every <img> so the browser reserves the box before the image arrives and the
+ * section does not jump as each one loads.
+ */
+const shots = [
+  { src: '/product-tour/01-dashboard.png', url: 'maildrill.net/dashboard', title: 'One workspace, four channels',
+    caption: 'Track email, SMS, WhatsApp and voice campaign performance from one multichannel dashboard, instead of four disconnected tools.' },
+  { src: '/product-tour/02-campaigns.png', url: 'maildrill.net/campaigns', title: 'Every campaign, every channel',
+    caption: 'Measure delivery, opens, clicks and bounces on every email, SMS, WhatsApp and voice campaign, with failures surfaced early.' },
+  { src: '/product-tour/03-subscribers.png', url: 'maildrill.net/subscribers', title: 'Audiences that stay fast',
+    caption: 'Search, filter and segment millions of contacts in seconds, with custom fields and engagement history on each subscriber.' },
+  { src: '/product-tour/04-lists.png', url: 'maildrill.net/lists', title: 'Lists with channel consent built in',
+    caption: 'Manage subscriber lists with per-channel opt-in and consent tracking, so you know who is reachable on email, SMS or WhatsApp.' },
+  { src: '/product-tour/05-templates.png', url: 'maildrill.net/templates', title: 'A template library per channel',
+    caption: 'Reuse proven message templates across email, SMS, WhatsApp and voice, with open and click rates shown on every single card.' },
+  { src: '/product-tour/06-media.png', url: 'maildrill.net/media', title: 'Shared media library',
+    caption: 'Upload images and files once, then reuse them across every email, SMS, WhatsApp and voice template, with no duplicate uploads.' },
+  { src: '/product-tour/07-email-builder.png', url: 'maildrill.net/templates/email', title: 'Drag-and-drop email builder',
+    caption: 'Design responsive email templates with drag-and-drop blocks, live preview and mobile testing. No HTML or developer required.' },
+  { src: '/product-tour/08-whatsapp-builder.png', url: 'maildrill.net/templates/whatsapp', title: 'WhatsApp templates done properly',
+    caption: 'Build WhatsApp Business templates with real components, variables and Meta approval tracking, submitted without leaving the app.' },
 ];
 
 const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd()];
@@ -342,40 +352,109 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   </section>
 
   {/* -------------------------------------------------------------- VOICES */}
-  <section class="voices container--wide">
-    <p class="eyebrow" data-reveal>Voices</p>
-    <h2 class="h-section voices__title" data-reveal style="--reveal-delay:60ms">
-      Teams ship faster on Maildrill.
+  {/* -------------------------------------------------------------- TOUR */}
+  <section class="tour container--wide" aria-labelledby="tour-title">
+    <p class="eyebrow" data-reveal>Product tour</p>
+    <h2 class="h-section tour__title" id="tour-title" data-reveal style="--reveal-delay:60ms">
+      See it before you sign up.
     </h2>
-    <div class="grid-3">
-      {
-        quotes.map((q, i) => (
-          <figure class="quote" data-card data-reveal style={`--reveal-delay:${i * 90}ms`}>
-            <div class="quote__stars" aria-label="Rated 5 out of 5">
-              ★★★★★
-            </div>
-            <blockquote>"{q.text}"</blockquote>
-            <figcaption>
-              <span class="quote__avatar" style={`background:${q.tint};color:${q.color}`}>
-                {q.initials}
-              </span>
-              <span>
-                <span class="quote__name">{q.name}</span>
-                <span class="quote__role">{q.role}</span>
-              </span>
-            </figcaption>
-          </figure>
-        ))
-      }
+
+    {/* Embla drives the carousel (loop, drag, snap); this is its required
+        viewport/container/slide structure. With JS unavailable or still
+        parsing, .tour__container is a flex row inside an overflow:hidden
+        viewport, so the first slide still renders as a static screenshot. */}
+    <div class="tour__frame" data-reveal style="--reveal-delay:120ms">
+      <div class="tour__viewport" id="tour-viewport" tabindex="0" role="group" aria-label="Product screenshots, scrollable">
+        <ul class="tour__container" id="tour-container">
+          {
+            shots.map((shot, i) => (
+              <li class="tour__slide" id={`tour-slide-${i}`} aria-label={`${i + 1} of ${shots.length}: ${shot.title}`}>
+                <figure class="tour__fig">
+                  {/* Browser chrome. Purely decorative and aria-hidden: it
+                      frames the screenshot as a real app rather than a floating
+                      rectangle, but a screen reader announcing three dots and a
+                      fake URL bar before every slide would be noise. The alt
+                      text on the image carries the meaning. */}
+                  <div class="tour__chrome">
+                    <span class="tour__lights" aria-hidden="true">
+                    </span>
+                    <span class="tour__tab" aria-hidden="true">
+                      {/* The real brand mark, not a stand-in envelope — this
+                          frame is meant to look like the product in a browser,
+                          and the mark is the one recognisable thing in the
+                          chrome. The transparent variant, not favicon.svg: that
+                          one's dark tile reads as a heavy block against the pale
+                          tab. */}
+                      {/* Sized inline: the mark carries its own 32x32 viewBox and
+                          the scoped class alone was leaving it at intrinsic size
+                          — a 42px block inside a 32px tab. */}
+                      <img
+                        class="tour__favicon"
+                        src="/brand-mark.svg"
+                        alt=""
+                        width="12"
+                        height="12"
+                        style="width:9.6px;height:9.6px;flex:none"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      {/* One flex item, not two text runs: the tab's 4px gap is
+                          meant to sit between the mark and the label, and a bare
+                          `drill` span would take a gap of its own mid-word. */}
+                      <span class="tour__tabname">Mail<span class="tour__brand">drill</span></span>
+                    </span>
+                    <span class="tour__url" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" class="tour__lock"><path d="M7 11V8a5 5 0 0110 0v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                      {shot.url}
+                    </span>
+                  </div>
+                  <img
+                    src={shot.src}
+                    alt={shot.title}
+                    width="1600"
+                    height="1000"
+                    decoding="async"
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                    fetchpriority={i === 0 ? 'high' : 'auto'}
+                  />
+                  <figcaption>
+                    <strong>{shot.title}</strong>
+                    <span>{shot.caption}</span>
+                  </figcaption>
+                </figure>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <button class="tour__arrow tour__arrow--prev" type="button" data-tour-prev aria-controls="tour-viewport" aria-label="Previous screenshot" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="tour__arrow tour__arrow--next" type="button" data-tour-next aria-controls="tour-viewport" aria-label="Next screenshot" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
+
   </section>
 </MarketingLayout>
 
 <style>
+  /* Homepage-only separation before the shared footer. */
+  :global(footer.foot) {
+    margin-top: calc(90px * var(--sec-y));
+  }
+
   /* ---- HERO ---- */
   .hero {
     position: relative;
-    padding-block: 64px 48px;
+    padding-block: calc(64px * var(--sec-y)) calc(48px * var(--sec-y));
+    /* Contain the hero glow blob (positioned 40px past the container edge).
+       Narrow viewports leave no gutter for it to bleed into, so it was pushing
+       the whole page 40px wider than the screen. `clip` rather than `hidden`:
+       it doesn't make a scroll container, so the vertical reveal animations
+       still paint outside the box. */
+    overflow-x: clip;
   }
 
   .hero__glow {
@@ -670,7 +749,7 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
 
   /* ---- CHANNELS ---- */
   .channels {
-    padding-block: 88px 40px;
+    padding-block: calc(88px * var(--sec-y)) calc(40px * var(--sec-y));
   }
 
   .channels__head {
@@ -774,7 +853,7 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   .workspace {
     background: var(--surface);
     border-block: 1px solid var(--border);
-    padding-block: 88px;
+    padding-block: calc(88px * var(--sec-y));
   }
 
   .workspace__title {
@@ -841,7 +920,7 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
 
   .results__inner {
     position: relative;
-    padding-block: 96px;
+    padding-block: calc(96px * var(--sec-y));
   }
 
   .results__eyebrow {
@@ -873,70 +952,459 @@ const jsonLd = [organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd
   }
 
   /* ---- VOICES ---- */
-  .voices {
-    padding-block: 88px;
+  /* ---- PRODUCT TOUR ----
+     An Embla carousel (loop + align:'center'). Embla measures each slide's
+     real layout box and, with loop enabled, applies its own translate3d to
+     individual .tour__slide elements to wrap them around. So two rules matter
+     and are easy to break:
+       1. Never put a transform on .tour__slide — it fights the translate3d
+          Embla uses for looping, which is what made the raised card drift off
+          the centred one (the first card never grew, the third did).
+          The scale effect belongs on .tour__fig, inside the slide.
+       2. Nothing may reposition slides along the scroll axis except Embla —
+          no edge padding on the container, no justify-content. */
+  .tour {
+    --tour-gap: 2rem;
+    /* Gaps are slide padding + a negative container margin (Embla's
+       recommended approach) rather than `gap`: with loop enabled, CSS `gap`
+       leaves NO space across the last→first seam, because gap only applies
+       between siblings. Half the gap sits on each side of every slide, so
+       neighbours are --tour-gap apart everywhere, seam included. */
+    --tour-gap-half: calc(var(--tour-gap) / 2);
+    /* Three across, measured against the FRAME (container query unit) and not
+       the container — the container is --tour-gap wider than the frame because
+       of its negative margin, so a plain % here would resolve against that
+       inflated width and drift. box-sizing:border-box keeps each slide's own
+       gap padding inside this third, so three of them span the frame exactly. */
+    --tour-slide-w: calc(100cqi / 3);
+    /* The side cards are 35% smaller than the centre one: (on - off) / on
+       = (40/33 - 26/33) / (40/33) = 0.35. Equivalently the centre is ~1.54x
+       the sides.
+       The pair is chosen so the two scales SUM TO 2, which is what makes the
+       visual gap land on exactly --tour-gap: the drawn gap works out to
+       S - C*(on + off)/2, and since C = S - gap, that collapses to the gap
+       itself only when (on + off)/2 is 1. Any other pair with the same ratio
+       leaves the gap a few px off and width-dependent — so if this difference
+       is ever retuned, keep on + off = 2 (off = on * 0.65 here). */
+    --tour-scale-on: calc(40 / 33);
+    --tour-scale-off: calc(26 / 33);
+    /* The viewport's overflow:hidden clips at its PADDING box, so without this
+       the raised centre card and its drop shadow get cut off by a hard
+       horizontal line. Reserved as viewport padding and pulled back out with a
+       negative margin, so the strip still sits where it did in the page. Must
+       clear half the centre card's growth (--tour-scale-on) plus the shadow's
+       24px offset and 60px blur. */
+    --tour-shadow-room: 88px;
+    /* Horizontal counterpart: the viewport's overflow also cuts the side cards'
+       shadows dead at the left and right edges, which reads as a hard grey
+       stub against the pale --bg. This fades the last stretch out instead, and
+       is sized to cover the shadow's reach without eating into the side card
+       itself (which starts ~58px in once --tour-scale-off has shrunk it). */
+    --tour-fade: 56px;
+    /* The only real space below the strip — the section's own bottom padding is
+       0 and --tour-shadow-room is pulled back out of the layout. */
+    --tour-tail: calc(60px * var(--sec-y));
+    /* Generous above, nothing below: the section runs into the footer's
+       "Get started" banner, which supplies its own top spacing. */
+    padding-block: calc(88px * var(--sec-y)) 0;
   }
-
-  .voices__title {
-    margin: 14px 0 44px;
+  .tour__title {
+    /* Owns the gap down to the strip: a top margin on .tour__frame would just
+       collapse into this one. The viewport's top shadow room is real space in
+       the page, so it is subtracted here — the two together are the 112px the
+       strip has always sat below the heading. */
+    margin: 14px 0 calc(112px - var(--tour-shadow-room));
   }
-
-  .quote {
+  .tour__frame {
+    position: relative;
+    /* Query container for --tour-slide-w above. */
+    container-type: inline-size;
+  }
+  /* The strip sits under the arrows; the viewport creates no stacking context
+     of its own. Scoping stamps an attribute on both compound selectors here, so
+     this outweighs a bare `.tour__arrow` — anything that needs different
+     positioning has to say so through the same child selector. */
+  .tour__frame > * {
+    position: relative;
+    z-index: 1;
+  }
+  .tour__viewport {
+    /* Embla's required overflow wrapper. The clip happens at the PADDING box,
+       so the reserved room below lets the raised card and its shadow render in
+       full; the negative margin takes that room back out of the page layout so
+       the strip sits exactly where it did. --tour-tail is the one part NOT
+       pulled back, so it reads as real space under the strip. NO padding-inline
+       here — it would narrow the window Embla measures. */
+    overflow: hidden;
+    outline: none;
+    padding-block: var(--tour-shadow-room) calc(var(--tour-shadow-room) + var(--tour-tail));
+    margin-block: 0 calc(var(--tour-shadow-room) * -1);
+    /* Fades the strip out sideways so the side cards' shadows taper off instead
+       of being sliced by the overflow — the hard stub was very visible against
+       the pale warm-cream background. Horizontal only: the vertical edges are
+       handled by reserving --tour-shadow-room, so nothing needs fading there.
+       The mask covers the padding box, which is exactly the clip box. */
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--tour-fade),
+      #000 calc(100% - var(--tour-fade)),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--tour-fade),
+      #000 calc(100% - var(--tour-fade)),
+      transparent 100%
+    );
+  }
+  .tour__viewport:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 6px;
+    border-radius: 22px;
+  }
+  .tour__container {
+    list-style: none;
     margin: 0;
-    background: var(--surface);
+    padding: 0;
+    display: flex;
+    /* Cancels the outer half-gap on the edge slides so the row still spans the
+       frame edge to edge. This is the negative margin half of Embla's gap
+       recipe — NOT an alignment tweak; Embla owns where slides land. */
+    margin-inline: calc(var(--tour-gap-half) * -1);
+    touch-action: pan-y pinch-zoom;
+  }
+  .tour__slide {
+    flex: 0 0 var(--tour-slide-w);
+    min-width: 0;
+    /* Half the gap each side — see --tour-gap-half. Inside the slide's width
+       thanks to border-box, and part of its computed size, so Embla's
+       ResizeObserver picks up the mobile gap change without a manual reInit. */
+    padding-inline: var(--tour-gap-half);
+  }
+  .tour__slide.is-active {
+    /* Above its neighbours so the raised card's shadow reads correctly. */
+    position: relative;
+    z-index: 1;
+  }
+  /* Centre card foregrounded: the one being read is raised and opaque, its
+     neighbours sit back. The transform lives HERE, on the figure inside the
+     slide — putting it on .tour__slide would change the box Embla measures and
+     desynchronise the centred card from the scaled one. */
+  .tour__fig {
+    transform: scale(var(--tour-scale-off));
+    opacity: 0.42;
+    transition:
+      transform 0.32s var(--ease-out, cubic-bezier(0.2, 0.7, 0.3, 1)),
+      opacity 0.32s ease;
+  }
+  .tour__slide.is-active .tour__fig {
+    transform: scale(var(--tour-scale-on));
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tour__fig {
+      transition: none;
+    }
+  }
+  .tour__fig {
+    margin: 0;
+  }
+  /* Chrome + screenshot form one window: the border, radius and shadow live on
+     the figure so the two pieces share an outline, rather than each carrying
+     its own and meeting at a visible seam. */
+  .tour__fig {
     border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 30px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: 0 24px 60px rgba(28, 25, 23, 0.14);
+    /* Fill the (already equal-height) grid item, so a caption that wraps to a
+       third line at some widths lengthens its own card instead of leaving the
+       row of cards ragged. The caption takes up the slack. */
     display: flex;
     flex-direction: column;
     height: 100%;
   }
-
-  .quote__stars {
-    color: var(--brand);
-    font-size: 15px;
-    letter-spacing: 2px;
-    margin-bottom: 16px;
-  }
-
-  .quote blockquote {
-    margin: 0 0 24px;
-    padding: 0;
-    border: 0;
-    font-size: 19px;
-    line-height: 1.5;
-    letter-spacing: -0.01em;
-    color: var(--text);
-    flex: 1;
-  }
-
-  .quote figcaption {
+  .tour__chrome {
     display: flex;
     align-items: center;
     gap: 12px;
+    padding: 0 10px;
+    height: 32px;
+    background: var(--surface-2, rgba(128, 122, 112, 0.09));
+    border-bottom: 1px solid var(--border);
   }
-
-  .quote__avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+  .tour__lights {
     display: flex;
+    gap: 5px;
+    flex: none;
+  }
+  .tour__lights i {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--border);
+  }
+  /* Tinted, not literal macOS red/amber/green: the frame should read as "an
+     app in a browser", not as a screenshot of one specific operating system. */
+  .tour__lights i:nth-child(1) {
+    background: #ec6a5e;
+  }
+  .tour__lights i:nth-child(2) {
+    background: #f4bf4f;
+  }
+  .tour__lights i:nth-child(3) {
+    background: #61c454;
+  }
+  .tour__tab {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
+    gap: 4px;
+    flex: none;
+    max-width: 77px;
+    padding: 2.4px 6.4px;
+    border-radius: 6.4px 6.4px 0 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    margin-bottom: -1px;
+    font-size: 7px;
+    font-weight: 500;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .tour__tabname {
+    min-width: 0;
+    overflow: hidden;
+  }
+  /* Same split as the real wordmark in Logo.astro, so the chrome shows the
+     brand as it's actually written rather than as flat text. */
+  .tour__brand {
+    color: var(--brand);
+  }
+  .tour__favicon {
+    width: 8.8px;
+    height: 8.8px;
+    flex: none;
+  }
+  .tour__url {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 20px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 10.5px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tour__lock {
+    width: 11px;
+    height: 11px;
+    flex: none;
+  }
+  .tour__fig img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .tour__fig figcaption {
+    display: block;
+    flex: 1;
+    padding: 14px 15px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .tour__fig figcaption strong {
+    display: block;
+    /* Matches .feat__title: 14.5px against the centre card's 1.3 scale lands on
+       the same ~19px, and the tracking is em-based so it holds at every scale. */
+    font-size: 14.5px;
     font-weight: 600;
-    font-size: 14px;
-    flex-shrink: 0;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+  .tour__fig figcaption span {
+    display: block;
+    /* Matches .feat__desc: 11.5px against the centre card's 1.3 scale lands on
+       the same ~15px, with its 1.6 leading and --text3 rather than --muted. */
+    color: var(--text3);
+    font-size: 11.5px;
+    line-height: 1.6;
+    /* Two lines for every card, so a short caption and a long one leave the
+       row of cards the same height instead of ragged. */
+    min-height: 2lh;
   }
 
-  .quote__name {
-    display: block;
-    font-size: var(--fs-sm2);
-    font-weight: 600;
+  .tour__frame > .tour__arrow {
+    position: absolute;
+    /* Offset past the viewport's top shadow room, then 68% of what is left —
+       which is the card plus --tour-tail, the same span the arrows were sized
+       against before the shadow room moved onto the viewport. Centred on the
+       IMAGE, not the figure: the caption below would drag the arrows
+       off-centre and they would drift as caption lengths differ. */
+    top: var(--tour-shadow-room);
+    height: calc((100% - var(--tour-shadow-room)) * 0.68);
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 52px;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+  }
+  .tour__arrow svg {
+    width: 22px;
+    height: 22px;
+    padding: 9px;
+    box-sizing: content-box;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: 0 6px 18px rgba(28, 25, 23, 0.16);
+  }
+  .tour__arrow--prev {
+    left: -14px;
+  }
+  .tour__arrow--next {
+    right: -14px;
+  }
+  .tour__frame:hover .tour__arrow,
+  .tour__arrow:focus-visible {
+    opacity: 1;
+  }
+  /* Reveal-on-hover needs a pointer that hovers. On touch these would be
+     tappable but permanently invisible, and since the dots came out the arrows
+     are the only control the reel has besides the swipe itself. */
+  @media (hover: none) {
+    /* Matched through .tour__frame to outrank the base rule's `opacity: 0`. */
+    .tour__frame > .tour__arrow {
+      opacity: 1;
+    }
+  }
+  .tour__arrow[disabled] {
+    opacity: 0 !important;
+    pointer-events: none;
   }
 
-  .quote__role {
-    display: block;
-    font-size: var(--fs-sm);
-    color: var(--text4);
+  @media (max-width: 1080px) {
+    .tour {
+      /* Two across. border-box keeps each slide's gap padding inside its half,
+         so no calc against the gap is needed the way `gap` would have required. */
+      --tour-slide-w: calc(100cqi / 2);
+    }
+  }
+  @media (max-width: 720px) {
+    .tour {
+      /* One card at a time with a deliberate peek of its neighbours either
+         side. The scales are NOT overridden here: they are what hold both the
+         1.25 ratio and the exact --tour-gap, and the raised card still fits
+         (82cqi x 10/9 is ~91cqi, inside the viewport). */
+      --tour-slide-w: 82cqi;
+      --tour-gap: 0.75rem;
+      /* Back to a 20% difference here — the desktop 35% shrinks the neighbours
+         so far that at this slide width they fall outside the viewport
+         entirely, and the strip stops reading as a carousel. Still summing
+         to 2, so the gap stays exact. */
+      --tour-scale-on: calc(10 / 9);
+      --tour-scale-off: calc(8 / 9);
+      /* A 56px fade would be ~15% of a 360px frame and would visibly wash out
+         the peeking neighbours; the shadow is the only thing that needs it. */
+      --tour-fade: 28px;
+    }
+    /* The tab label is the least load-bearing part of the chrome, and the URL
+       is what actually says which screen this is. */
+    .tour__tab {
+      display: none;
+    }
+    .tour__chrome {
+      height: 36px;
+    }
   }
 </style>
+
+<script>
+  import EmblaCarousel, { type EmblaCarouselType } from 'embla-carousel';
+
+  type ViewportEl = HTMLElement & {
+    __tourCleanup?: () => void;
+  };
+
+  /**
+   * Product tour carousel, built on Embla.
+   *
+   * Embla owns the looping, drag/swipe, and snap-to-centre math; this script
+   * only wires the two arrows, the keyboard, and the "which card is active"
+   * scale/opacity class on top of it. The arrows are hidden in the markup and
+   * revealed here, so a no-JS visitor gets a plain static first slide inside
+   * the overflow:hidden viewport rather than buttons that do nothing.
+   */
+  const viewport = document.getElementById('tour-viewport') as ViewportEl | null;
+  const prev = document.querySelector<HTMLButtonElement>('[data-tour-prev]');
+  const next = document.querySelector<HTMLButtonElement>('[data-tour-next]');
+
+  if (viewport && prev && next) {
+    // Full teardown before re-init (HMR/view transitions).
+    viewport.__tourCleanup?.();
+
+    const slides = Array.from(viewport.querySelectorAll<HTMLElement>('.tour__slide'));
+    if (slides.length > 0) {
+      for (const el of [prev, next]) el.hidden = false;
+
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+      const embla: EmblaCarouselType = EmblaCarousel(viewport, {
+        loop: slides.length > 1,
+        align: 'center',
+        duration: reduced.matches ? 0 : 24,
+      });
+
+      const events = new AbortController();
+      const { signal } = events;
+
+      const render = (): void => {
+        const activeIndex = embla.selectedScrollSnap();
+        slides.forEach((slide, i) => slide.classList.toggle('is-active', i === activeIndex));
+        prev.disabled = !embla.canScrollPrev();
+        next.disabled = !embla.canScrollNext();
+      };
+
+      prev.addEventListener('click', () => embla.scrollPrev(), { signal });
+      next.addEventListener('click', () => embla.scrollNext(), { signal });
+      viewport.addEventListener(
+        'keydown',
+        (e) => {
+          if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+          e.preventDefault();
+          if (e.key === 'ArrowRight') embla.scrollNext();
+          else embla.scrollPrev();
+        },
+        { signal },
+      );
+
+      embla.on('select', render);
+      embla.on('reInit', render);
+      render();
+
+      viewport.__tourCleanup = () => {
+        events.abort();
+        embla.destroy();
+        viewport.__tourCleanup = undefined;
+      };
+    } else {
+      viewport.__tourCleanup = undefined;
+    }
+  }
+</script>

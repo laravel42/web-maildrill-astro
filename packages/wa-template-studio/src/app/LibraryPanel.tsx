@@ -76,11 +76,15 @@ function LibraryTile({ entry, compact = false }: { entry: LibraryEntry; compact?
         <Icon className={compact ? 'size-5' : 'size-4'} />
       </span>
       {compact ? (
-        <span className="w-full truncate text-center text-xs font-medium leading-tight">{entry.meta.label}</span>
+        <span className="w-full truncate text-center text-xs font-medium leading-tight">
+          {entry.meta.label}
+        </span>
       ) : (
         <span className="min-w-0">
           <span className="block text-[13px] font-medium leading-tight">{entry.meta.label}</span>
-          <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">{entry.meta.description}</span>
+          <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">
+            {entry.meta.description}
+          </span>
         </span>
       )}
     </button>
@@ -166,7 +170,9 @@ export function LibraryPanel() {
                 </section>
               ))}
               {groups.length === 0 && (
-                <p className="px-1 text-xs text-muted-foreground">No components match “{search}”.</p>
+                <p className="px-1 text-xs text-muted-foreground">
+                  No components match “{search}”.
+                </p>
               )}
             </div>
           </ScrollArea>

@@ -57,7 +57,7 @@ A daemon can report `RUNNING` while the app inside it is broken, so also check
 the sockets and the logs:
 
 ```bash
-ss -tlnp | grep -E ':(3000|3001|3100)'
+ss -tlnp | grep -E ':(3002|3001|3003)'
 sudo supervisorctl tail -10000 <daemon-id> stderr
 ```
 
@@ -91,12 +91,12 @@ unreadable; the deploy still ships code but leaves the old processes running.
 Create these under **Ploi → Server → Daemons**, all with **directory** set to
 the site root and **user** set to the site's system user:
 
-| Command | Port | Notes |
-|---|---|---|
-| `bash -lc 'exec pnpm start:api'` | 3000 | messaging API |
-| `bash -lc 'exec pnpm start:product-api'` | 3001 | product API |
-| `bash -lc 'exec pnpm start:email-builder-api'` | 3100 | AI backend; only if the frontend uses `/api/*` |
-| `bash -lc 'exec pnpm worker all'` | — | BullMQ workers; or one daemon per role |
+| Command                                        | Port | Notes                                          |
+| ---------------------------------------------- | ---- | ---------------------------------------------- |
+| `bash -lc 'exec pnpm start:api'`               | 3002 | messaging API                                  |
+| `bash -lc 'exec pnpm start:product-api'`       | 3001 | product API                                    |
+| `bash -lc 'exec pnpm start:email-builder-api'` | 3003 | AI backend; only if the frontend uses `/api/*` |
+| `bash -lc 'exec pnpm worker all'`              | —    | BullMQ workers; or one daemon per role         |
 
 Three things that will bite you, all of which have already happened once:
 
@@ -106,7 +106,7 @@ Three things that will bite you, all of which have already happened once:
   supervisor signals the Node process, not a wrapper shell.
 - **Leave the environment field empty.** Supervisor's `environment=` takes
   `KEY=value` pairs; pointing it at an `.env` file writes a malformed line that
-  makes *supervisord itself* exit 2 and crash-loop, taking every daemon on the
+  makes _supervisord itself_ exit 2 and crash-loop, taking every daemon on the
   server down with it. `@maildrill/config` loads `.env` via dotenv from the
   working directory, so nothing is needed here.
 - **Directory must be exactly the site root** — dotenv, pnpm workspace

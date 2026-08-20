@@ -1,7 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Alert, Box, Button, Chip, CircularProgress, Divider, Stack, TextField, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Divider,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 
 import { INPUT_TEXTFIELD_SX } from '../../InspectorDrawer/ConfigurationPanel/input-panels/helpers/inputs/components/inputStyles';
 
@@ -57,7 +67,10 @@ function parsePromptSections(prompt: string): Array<{ tag: string; content: stri
   return sections;
 }
 
-const TAG_COLORS: Record<string, 'primary' | 'secondary' | 'success' | 'warning' | 'info' | 'error'> = {
+const TAG_COLORS: Record<
+  string,
+  'primary' | 'secondary' | 'success' | 'warning' | 'info' | 'error'
+> = {
   PURPOSE: 'primary',
   GOAL: 'primary',
   TONE: 'secondary',
@@ -101,9 +114,16 @@ export default function SummaryStep({ brief, backendUrl, onGenerate, onBack, gen
 
   return (
     <Stack spacing={2}>
-      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-        {t('summary.title')}
-      </Typography>
+      <Box>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          {t('summary.title')}
+        </Typography>
+        {/* The explainer belongs with the title, before the artifact it
+            explains — not orphaned under a divider at the bottom. */}
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+          {t('summary.finalPromptHelp')}
+        </Typography>
+      </Box>
 
       {/* Structured prompt display */}
       {loading ? (
@@ -168,10 +188,6 @@ export default function SummaryStep({ brief, backendUrl, onGenerate, onBack, gen
       )}
 
       <Divider />
-
-      <Typography variant="caption" color="text.secondary">
-        {t('summary.finalPromptHelp')}
-      </Typography>
 
       <Stack direction="row" sx={{ justifyContent: 'space-between', mt: 1 }}>
         <Button onClick={onBack} disabled={generating}>

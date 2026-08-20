@@ -20,7 +20,9 @@ type BlockComponentRootProps<T extends BaseZodDictionary> = BlockConfiguration<T
  */
 const warnedUnknownTypes = new Set<string>();
 
-export default function buildBlockComponent<T extends BaseZodDictionary>(blocks: DocumentBlocksDictionary<T>) {
+export default function buildBlockComponent<T extends BaseZodDictionary>(
+  blocks: DocumentBlocksDictionary<T>,
+) {
   return function BlockComponent(props: BlockComponentRootProps<T>) {
     const { type, data, blockId } = props;
     const entry = blocks[type];
@@ -29,7 +31,7 @@ export default function buildBlockComponent<T extends BaseZodDictionary>(blocks:
         warnedUnknownTypes.add(type);
 
         console.warn(
-          `[email-builder] Unknown block type "${type}" (blockId="${blockId ?? '<unknown>'}") — rendering as empty. Register the block in the dictionary to render it.`
+          `[email-builder] Unknown block type "${type}" (blockId="${blockId ?? '<unknown>'}") — rendering as empty. Register the block in the dictionary to render it.`,
         );
       }
       return null;

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { FileText, Film, Image as ImageIcon, Play, UploadCloud } from 'lucide-react';
 
 import { Field } from '@/ui/field';
+import { ImagePicker } from '@/ui/image-picker';
 import { Input } from '@/ui/input';
 import type { BlockPlugin, ValidationIssue } from '@/core/types';
 
@@ -18,6 +19,14 @@ const schema = z.object({
   url: z.string(),
   /** Original file name (uploads); shown in the document chip. */
   fileName: z.string().optional(),
+  /** Unsplash attribution when the image came from the stock picker. */
+  credit: z
+    .object({
+      name: z.string(),
+      profileUrl: z.string(),
+      unsplashUrl: z.string(),
+    })
+    .optional(),
 });
 
 type Data = z.infer<typeof schema>;
@@ -64,7 +73,9 @@ function MediaEditor({
           acceptFile(e.dataTransfer.files[0]);
         }}
         className={`flex h-24 flex-col items-center justify-center gap-1.5 rounded-md border border-dashed text-xs text-muted-foreground transition-colors ${
-          dragOver ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'
+          dragOver
+            ? 'border-primary bg-primary/5 text-primary'
+            : 'border-border hover:border-primary/50'
         }`}
       >
         <UploadCloud className="size-5" />
@@ -84,7 +95,9 @@ function MediaEditor({
           placeholder="https://cdn.example.com/hero.jpg"
         />
       </Field>
-      {value.fileName && <div className="text-xs text-muted-foreground">Uploaded: {value.fileName}</div>}
+      {value.fileName && (
+        <div className="text-xs text-muted-foreground">Uploaded: {value.fileName}</div>
+      )}
     </div>
   );
 }
@@ -126,6 +139,9 @@ function makeMediaHeaderPlugin(config: {
       return issues;
     },
     Editor: function HeaderMediaEditor({ value, onChange }) {
+      // Images get the full stock-search + media-library picker (same UX as
+      // the email editor's image inspector); video/document keep the URL flow.
+      if (config.format === 'IMAGE') return <ImagePicker value={value} onChange={onChange} />;
       return <MediaEditor value={value} onChange={onChange} format={config.format} />;
     },
     Preview: function HeaderMediaPreview({ data, ctx }) {
@@ -135,7 +151,11 @@ function makeMediaHeaderPlugin(config: {
 
       if (config.format === 'IMAGE') {
         return data.url ? (
-          <img src={data.url} alt="" className="block max-h-[180px] w-full rounded-[6px] object-cover" />
+          <img
+            src={data.url}
+            alt=""
+            className="block max-h-[180px] w-full rounded-[6px] object-cover"
+          />
         ) : (
           <div className={placeholderClasses}>
             <ImageIcon className="size-7" />
@@ -165,8 +185,12 @@ function makeMediaHeaderPlugin(config: {
         >
           <FileText className={ctx.dark ? 'size-6 text-[#8696a0]' : 'size-6 text-[#667781]'} />
           <div className="min-w-0">
-            <div className="truncate text-[13px] font-medium">{data.fileName || data.url.split('/').pop() || 'Document.pdf'}</div>
-            <div className={`text-[11px] ${ctx.dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}>PDF</div>
+            <div className="truncate text-[13px] font-medium">
+              {data.fileName || data.url.split('/').pop() || 'Document.pdf'}
+            </div>
+            <div className={`text-[11px] ${ctx.dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}>
+              PDF
+            </div>
           </div>
         </div>
       );
@@ -179,7 +203,8 @@ function makeMediaHeaderPlugin(config: {
     fromMeta: (component) => {
       if (String(component.type).toUpperCase() !== 'HEADER') return null;
       if (String(component.format ?? '').toUpperCase() !== config.format) return null;
-      const handle = (component.example as { header_handle?: string[] } | undefined)?.header_handle?.[0];
+      const handle = (component.example as { header_handle?: string[] } | undefined)
+        ?.header_handle?.[0];
       return { url: handle ?? '' };
     },
   };

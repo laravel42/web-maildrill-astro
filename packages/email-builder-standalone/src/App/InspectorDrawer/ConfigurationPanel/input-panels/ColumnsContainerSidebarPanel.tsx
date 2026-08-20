@@ -6,6 +6,7 @@ import type { ImageProps } from '@eb/block-image';
 import {
   AlignVerticalCenterOutlined,
   PhoneIphoneOutlined,
+  SpaceBarOutlined,
   SplitscreenOutlined,
   type SvgIconComponent,
   TableChartOutlined,
@@ -37,11 +38,18 @@ import InspectorPillToggleGroup from './helpers/inputs/InspectorPillToggleGroup'
 import LabelProperty from './helpers/inputs/LabelProperty';
 import LayoutSelectorInput from './helpers/inputs/LayoutSelectorInput';
 import PropertyLabelWithWarning from './helpers/inputs/PropertyLabelWithWarning';
+import SliderInput from './helpers/inputs/SliderInput';
 import MultiStylePropertyPanel from './helpers/style-inputs/MultiStylePropertyPanel';
 
 const ColumnsCountIcon: SvgIconComponent = ((props: SvgIconProps) => (
   <SvgIcon {...props} viewBox="0 0 24 24">
-    <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2">
+    <g
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+    >
       <path d="M10.5 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5.5m-6.7 9.1l1-.4M15 3v7.5m.2 6.4l-.9-.3m2.3 5.1l.3-.9m-.1-5.5l-.4-1m2.7.9l.3-.9m.2 7.4l-.4-1m1.5-3.9l1-.4m0 3l-.9-.3M9 3v18" />
       <circle cx="18" cy="18" r="3" />
     </g>
@@ -76,7 +84,7 @@ export default function ColumnsContainerPanel({ data, setData }: ColumnsContaine
             return { ...b, data: newData } as TEditorBlock;
           });
         },
-        imageData
+        imageData,
       );
     });
   };
@@ -108,7 +116,9 @@ export default function ColumnsContainerPanel({ data, setData }: ColumnsContaine
 
   const getDefaultColumns = (v) => {
     const columnsTemp =
-      data.props.columns.length === 2 ? [...data.props.columns, { childrenIds: [] }] : [...data.props.columns];
+      data.props.columns.length === 2
+        ? [...data.props.columns, { childrenIds: [] }]
+        : [...data.props.columns];
     const defaultColumns =
       v === '2'
         ? {
@@ -166,16 +176,48 @@ export default function ColumnsContainerPanel({ data, setData }: ColumnsContaine
               </Box>
             </FieldContainer>
           </CompactableInput>
-          <CompactableInput icon={TableChartOutlined} label={t('inputs.panels.columns.layoutLabel', 'Layout')}>
+          <CompactableInput
+            icon={TableChartOutlined}
+            label={t('inputs.panels.columns.layoutLabel', 'Layout')}
+          >
             <LayoutSelectorInput
               columns={data.props?.columnsCount ?? 3}
               defaultValue={data.props?.layout}
               fixedWidths={(data.props?.fixedWidths ?? undefined) as (number | null)[] | undefined}
-              onChange={({ layout, fixedWidths }: { layout: string; fixedWidths: (number | null)[] }) => {
+              onChange={({
+                layout,
+                fixedWidths,
+              }: {
+                layout: string;
+                fixedWidths: (number | null)[];
+              }) => {
                 const columnsArray =
-                  data.props.columns.length === 2 ? [...data.props.columns, { childrenIds: [] }] : data.props.columns;
+                  data.props.columns.length === 2
+                    ? [...data.props.columns, { childrenIds: [] }]
+                    : data.props.columns;
 
-                updateData({ ...data, props: { ...data.props, layout, fixedWidths, columns: columnsArray } });
+                updateData({
+                  ...data,
+                  props: { ...data.props, layout, fixedWidths, columns: columnsArray },
+                });
+              }}
+            />
+          </CompactableInput>
+          <CompactableInput
+            icon={SpaceBarOutlined}
+            label={t('inputs.panels.columns.gapLabel', 'Space between columns')}
+          >
+            <SliderInput
+              iconLabel={<SpaceBarOutlined />}
+              units="px"
+              step={2}
+              marks
+              min={0}
+              max={48}
+              label={t('inputs.panels.columns.gapLabel', 'Space between columns')}
+              defaultValue={data.props?.columnsGap ?? 0}
+              onChange={(columnsGap) => {
+                updateData({ ...data, props: { ...data.props, columnsGap } });
               }}
             />
           </CompactableInput>
@@ -184,7 +226,10 @@ export default function ColumnsContainerPanel({ data, setData }: ColumnsContaine
       {(selectedTab == 'css' || compact) && (
         <>
           <CompactDivider />
-          <CompactableInput icon={PhoneIphoneOutlined} label={t('inputs.panels.columns.stackColumnsOnMobile')}>
+          <CompactableInput
+            icon={PhoneIphoneOutlined}
+            label={t('inputs.panels.columns.stackColumnsOnMobile')}
+          >
             <FieldContainer>
               <PropertyLabelWithWarning
                 label={t('inputs.panels.columns.stackColumnsOnMobile')}

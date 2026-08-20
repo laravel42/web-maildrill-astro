@@ -1,8 +1,9 @@
-import { config } from "@maildrill/config";
-import type { MessagingProvider } from "./core";
-import { MockProvider } from "./mock";
-import { InfobipProvider } from "./infobip";
-import { buildProviderSendEvent, emitProviderSend } from "./send-observer";
+import { config } from '@maildrill/config';
+import type { MessagingProvider } from './core';
+import { MockProvider } from './mock';
+import { InfobipProvider } from './infobip';
+import { CloudflareProvider } from './cloudflare';
+import { buildProviderSendEvent, emitProviderSend } from './send-observer';
 
 const instances = new Map<string, MessagingProvider>();
 
@@ -16,12 +17,7 @@ function observeSend(provider: MessagingProvider): MessagingProvider {
     const started = performance.now();
     const result = await original(input);
     emitProviderSend(
-      buildProviderSendEvent(
-        provider.name,
-        input,
-        result,
-        Math.round(performance.now() - started),
-      ),
+      buildProviderSendEvent(provider.name, input, result, Math.round(performance.now() - started)),
     );
     return result;
   };
@@ -31,7 +27,12 @@ function observeSend(provider: MessagingProvider): MessagingProvider {
 export function getProvider(driver: string = config.provider.driver): MessagingProvider {
   let provider = instances.get(driver);
   if (!provider) {
-    const raw = driver === "infobip" ? new InfobipProvider() : new MockProvider();
+    const raw =
+      driver === 'infobip'
+        ? new InfobipProvider()
+        : driver === 'cloudflare'
+          ? new CloudflareProvider()
+          : new MockProvider();
     provider = observeSend(raw);
     instances.set(driver, provider);
   }

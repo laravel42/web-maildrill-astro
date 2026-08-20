@@ -24,13 +24,25 @@ interface Props {
  * old single-select `Chip` usage with the same `ToggleButton` pill language used
  * across the inspector (`ContentAlignment`, `Shape`, `TextAlignInput`, …).
  */
-export default function PillSelect({ label, hint, value, options, onChange, layout = 'wrap' }: Props) {
+export default function PillSelect({
+  label,
+  hint,
+  value,
+  options,
+  onChange,
+  layout = 'wrap',
+}: Props) {
   return (
     <FieldShell label={label} hint={hint}>
       {layout === 'segmented' ? (
         <InspectorPillToggleGroup value={value ?? ''} onChange={onChange} options={options} />
       ) : (
-        <WrapPills options={options} isSelected={(v) => v === value} onToggle={onChange} ariaLabel={label} />
+        <WrapPills
+          options={options}
+          isSelected={(v) => v === value}
+          onToggle={onChange}
+          ariaLabel={label}
+        />
       )}
     </FieldShell>
   );

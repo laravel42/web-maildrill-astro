@@ -6,4 +6,4 @@ export {
   cellNumber,
   cellString,
   type HogQLResult,
-} from "@maildrill/observability";
+} from '@maildrill/observability';

@@ -1,25 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { ChannelType } from '@/types/app';
 import { api } from '@/lib/app/api';
+import {
+  readDashboardCache,
+  writeDashboardCache,
+  type DashboardCache,
+} from '@/lib/app/dashboard-cache';
 import Icon from './Icon';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
-import type { SeriesKey } from './AppAnalytics.types';
+import type { ChartKey, EngagementKey, SeriesKey } from './AppAnalytics.types';
 import {
+  CHANNEL_ANALYTICS,
   RANGES,
-  SERIES,
+  pointValue,
+  talkTimeOf,
   buildKpis,
-  channelColor,
-  channelLabelOf,
   fmtCompact,
   fmtDate,
   niceMax,
-  pctOf,
-  sparkPoints,
   toCsv,
   totalsOf,
   type ActivityPoint,
   type ChannelBreakdown,
 } from './AppAnalytics.logic';
+import Sparkline, { ensureSpark } from './shared/Sparkline';
 import styles from './AppAnalytics.module.css';
 
 /* ------------------------------------------------------------------ *
@@ -28,52 +32,199 @@ import styles from './AppAnalytics.module.css';
  * ------------------------------------------------------------------ */
 
 export default function AppAnalytics({
-  initialDaily = [],
-  byChannel = [],
   live = false,
+  tenantId = null,
 }: {
-  initialDaily?: ActivityPoint[];
-  byChannel?: ChannelBreakdown[];
   live?: boolean;
+  /** Active workspace — scopes the aggregate cache to it. */
+  tenantId?: string | null;
 } = {}) {
   const [range, setRange] = useState('30d');
-  const [channel, setChannel] = useState<ChannelType | 'all'>('all');
-  const [daily, setDaily] = useState<ActivityPoint[]>(initialDaily);
-  const [loading, setLoading] = useState(false);
+  /* Analytics is always scoped to one channel. An "all channels" roll-up
+     aggregated series whose events are not comparable — SMS and voice can
+     produce no opens or clicks at all — so the combined open/click rates it
+     showed were arithmetic over mismatched denominators. Email is the default
+     because it is the only channel with the full event set. */
+  const [channel, setChannel] = useState<ChannelType>('email');
+  const [daily, setDaily] = useState<ActivityPoint[]>([]);
+  /* No per-channel breakdown is rendered here any more, but the fetch stays:
+     it writes `channelsByDays` into the shared dashboard cache, so opening
+     Analytics still warms the Dashboard (and vice versa). Nothing on this
+     screen reads the result. */
+  const [bootLoading, setBootLoading] = useState(live);
+  const [rangeLoading, setRangeLoading] = useState(false);
+  const bootedRef = useRef(false);
   const [visible, setVisible] = useState<Set<SeriesKey>>(
-    new Set<SeriesKey>(['sent', 'delivered', 'failed']),
+    new Set<SeriesKey>(['sent', 'delivered', 'bounced', 'complained']),
   );
+  const [engVisible, setEngVisible] = useState<Set<EngagementKey>>(
+    new Set<EngagementKey>(['opened', 'clicked']),
+  );
+
+  /* Channels plot different series, so a legend selection cannot survive a
+     channel switch — a key that no longer exists would leave the chart blank. */
+  useEffect(() => {
+    const c = CHANNEL_ANALYTICS[channel] ?? CHANNEL_ANALYTICS.email;
+    setVisible(new Set(c.delivery.map((d) => d.key)));
+    setEngVisible(new Set((c.engagement?.series ?? []).map((e) => e.key)));
+  }, [channel]);
   const [toast, setToast] = useState<string | null>(null);
 
-  /* Range and channel really refilter: both are query params on the endpoint,
-     so the chart reflects the selection rather than restyling the same data. */
+  const showToast = (msg: string) => {
+    setToast(msg);
+    window.setTimeout(() => setToast(null), 2600);
+  };
+
+  const days = RANGES.find((r) => r.key === range)?.days ?? 30;
+  /* Channel-filtered activity gets its own cache slot, keyed per channel. */
+  const actKey = `${days}:${channel}`;
+
+  /* Boot: honor ?channel= / ?range= deep links (dashboard performance rows),
+     then serve a fresh 30-min cache immediately, otherwise fetch. */
   useEffect(() => {
     if (!live) return;
-    const days = RANGES.find((r) => r.key === range)?.days ?? 30;
-    const qs = new URLSearchParams({ days: String(days) });
-    if (channel !== 'all') qs.set('channel', channel);
+    const params = new URLSearchParams(window.location.search);
+    const urlChannel = params.get('channel');
+    const urlRange = params.get('range');
+    const bootChannel: ChannelType =
+      urlChannel && (CHANNEL_ORDER as readonly string[]).includes(urlChannel)
+        ? (urlChannel as ChannelType)
+        : 'email';
+    const bootRange = RANGES.some((r) => r.key === urlRange) ? urlRange! : '30d';
+    if (bootChannel !== 'email') setChannel(bootChannel);
+    if (bootRange !== '30d') setRange(bootRange);
+    const bootDays = RANGES.find((r) => r.key === bootRange)?.days ?? 30;
+    const bootKey = `${bootDays}:${bootChannel}`;
+
     let cancelled = false;
-    setLoading(true);
-    api
-      .get<{ data: ActivityPoint[] }>(`stats/activity?${qs.toString()}`)
-      .then((res) => {
-        if (!cancelled) setDaily(res.data ?? []);
-      })
-      .catch(() => {
-        if (!cancelled) showToast('Could not load analytics');
+    const cached = readDashboardCache(tenantId);
+    const hitDaily = cached?.activityByDays[bootKey];
+    const hitChannels = cached?.channelsByDays[String(bootDays)];
+    if (hitDaily) setDaily(hitDaily);
+    if (hitDaily && hitChannels) {
+      bootedRef.current = true;
+      setBootLoading(false);
+      return;
+    }
+
+    setBootLoading(true);
+    const qs = new URLSearchParams({ days: String(bootDays) });
+    qs.set('channel', bootChannel);
+    // Only a window that actually loaded gets cached — caching a failed fetch
+    // as an empty window would hide it behind the TTL on every later visit.
+    const fetched: Partial<DashboardCache> = {};
+    let bootFailed = false;
+    void Promise.all([
+      hitDaily
+        ? Promise.resolve()
+        : api
+            .get<{ data: ActivityPoint[] }>(`stats/activity?${qs.toString()}`)
+            .then((res) => {
+              fetched.activityByDays = { [bootKey]: res.data ?? [] };
+              if (!cancelled) setDaily(res.data ?? []);
+            })
+            .catch(() => {
+              bootFailed = true;
+            }),
+      hitChannels
+        ? Promise.resolve()
+        : api
+            .get<{ data: ChannelBreakdown[] }>(`stats/channels?days=${bootDays}`)
+            .then((res) => {
+              fetched.channelsByDays = { [String(bootDays)]: res.data ?? [] };
+            })
+            .catch(() => {
+              bootFailed = true;
+            }),
+    ]).finally(() => {
+      if (cancelled) return;
+      if (Object.keys(fetched).length > 0) writeDashboardCache(tenantId, fetched);
+      bootedRef.current = true;
+      setBootLoading(false);
+      if (bootFailed) showToast('Could not load analytics');
+    });
+    return () => {
+      cancelled = true;
+    };
+    // Boot resolves its filter from the URL itself, not from range/channel state.
+  }, [live]);
+
+  /* Keep the address bar in sync so filters are shareable / refresh-safe. */
+  useEffect(() => {
+    if (!live || !bootedRef.current) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('channel', channel);
+    if (range === '30d') url.searchParams.delete('range');
+    else url.searchParams.set('range', range);
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  }, [channel, range, live]);
+
+  /* Range/channel changes: cache per window+filter, otherwise refetch. Both
+     really refilter server-side — the chart reflects the selection rather
+     than restyling the same data. */
+  useEffect(() => {
+    if (!live || !bootedRef.current) return;
+    const cached = readDashboardCache(tenantId);
+    const hitDaily = cached?.activityByDays[actKey];
+    const hitChannels = cached?.channelsByDays[String(days)];
+    if (hitDaily && hitChannels) {
+      setDaily(hitDaily);
+      return;
+    }
+
+    let cancelled = false;
+    setRangeLoading(true);
+    const qs = new URLSearchParams({ days: String(days) });
+    qs.set('channel', channel);
+    const fetched: Partial<DashboardCache> = {};
+    void Promise.all([
+      hitDaily
+        ? Promise.resolve(hitDaily)
+        : api
+            .get<{ data: ActivityPoint[] }>(`stats/activity?${qs.toString()}`)
+            .then((res) => {
+              const points = res.data ?? [];
+              fetched.activityByDays = { [actKey]: points };
+              return points;
+            })
+            .catch(() => {
+              showToast('Could not load analytics');
+              return [] as ActivityPoint[];
+            }),
+      hitChannels
+        ? Promise.resolve(hitChannels)
+        : api
+            .get<{ data: ChannelBreakdown[] }>(`stats/channels?days=${days}`)
+            .then((res) => {
+              fetched.channelsByDays = { [String(days)]: res.data ?? [] };
+              return res.data ?? [];
+            })
+            .catch(() => [] as ChannelBreakdown[]),
+    ])
+      .then(([act]) => {
+        if (cancelled) return;
+        setDaily(act);
+        if (Object.keys(fetched).length > 0) writeDashboardCache(tenantId, fetched);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setRangeLoading(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [range, channel, live]);
+  }, [range, channel, days, live]);
 
-  const kpis = buildKpis(daily);
+  /* One flag drives every skeleton: boot AND any filter change that misses
+     the cache repaint as shimmer rather than restyling stale numbers. */
+  const loading = bootLoading || rangeLoading;
+
+  /* Everything the screen renders is decided by what this channel's provider
+     actually reports — see CHANNEL_ANALYTICS. */
+  const cfg = CHANNEL_ANALYTICS[channel] ?? CHANNEL_ANALYTICS.email;
+  const kpis = buildKpis(daily, channel);
+  const talk = cfg.showTalkTime ? talkTimeOf(daily) : null;
   const totals = totalsOf(daily);
-  const channelRows = channel === 'all' ? byChannel : byChannel.filter((c) => c.channel === channel);
-  const totalChannelSends = byChannel.reduce((t, c) => t + c.sent, 0);
+  const engagement = cfg.engagement;
 
   /* Download exactly the series on screen, rather than claiming an export. */
   const exportCsv = () => {
@@ -81,7 +232,7 @@ export default function AppAnalytics({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `maildrill-activity-${range}${channel === 'all' ? '' : `-${channel}`}.csv`;
+    a.download = `maildrill-activity-${range}-${channel}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -89,10 +240,13 @@ export default function AppAnalytics({
     showToast(`Exported ${daily.length} days`);
   };
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    window.setTimeout(() => setToast(null), 2600);
-  };
+  const toggleEngagement = (key: EngagementKey) =>
+    setEngVisible((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next.size === 0 ? new Set<EngagementKey>(['opened']) : next;
+    });
 
   const toggleSeries = (key: SeriesKey) =>
     setVisible((prev) => {
@@ -106,24 +260,17 @@ export default function AppAnalytics({
       return next;
     });
 
-  // The charts below assume a non-empty series.
-  if (daily.length === 0) {
-    return (
-      <div className={`screen ${styles.an}`} style={{ animation: 'fade .3s ease' }}>
-        <div className="screen__head">
-          <div>
-            <h1 className="screen__h1">Analytics</h1>
-            <p className="screen__sub">Delivery across all channels.</p>
-          </div>
-        </div>
-        <div className="acrd" style={{ padding: '48px 24px', textAlign: 'center' }}>
-          <p className="screen__sub" style={{ margin: 0 }}>
-            No analytics yet — charts appear here once your campaigns start sending.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  /* The charts below assume a non-empty series (skeletons cover fetches, and
+     the empty branch renders inside the layout so the filters stay usable).
+
+     KNOWN DEFECT (audit #17): this gate cannot mean what the empty card says.
+     `dailyActivity` ALWAYS zero-fills `span` points, so a genuinely quiet
+     window arrives as N zero-valued days, never as a zero-length array. The
+     only way `daily.length === 0` is a failed request — at which point the card
+     asserts "No delivery yet · Nothing sent on Email in this range" over a
+     window that in fact contains 21,416 sends. An endpoint failure is being
+     rendered as a fact about the data. */
+  const empty = !loading && daily.length === 0;
 
   return (
     <div className={`screen ${styles.an}`} style={{ animation: 'fade .3s ease' }}>
@@ -131,18 +278,10 @@ export default function AppAnalytics({
       <div className={`screen__head ${styles.head}`}>
         <div>
           <h1 className="screen__h1">Analytics</h1>
-          <p className="screen__sub">Delivery across all channels.</p>
+          <p className={`screen__sub ${styles.headSub}`}>{`${CHANNEL[channel].label} delivery.`}</p>
         </div>
         <div className={styles.controls}>
           <div className={`aseg ${styles.seg}`} role="group" aria-label="Filter by channel">
-            <button
-              type="button"
-              className={`aseg__opt${channel === 'all' ? ' is-active' : ''}`}
-              aria-pressed={channel === 'all'}
-              onClick={() => setChannel('all')}
-            >
-              All channels
-            </button>
             {CHANNEL_ORDER.map((ch) => (
               <button
                 type="button"
@@ -169,179 +308,228 @@ export default function AppAnalytics({
               </button>
             ))}
           </div>
-          <button type="button" className="sbtn" onClick={exportCsv}>
+          <button type="button" className="sbtn" onClick={exportCsv} disabled={loading || empty}>
             <Icon name="download" size={15} />
             Export
           </button>
         </div>
       </div>
 
-      {/* KPI trend strip */}
-      <div className={styles.kpis}>
-        {kpis.map((k, i) => (
-          <div key={k.label} className={`acrd ${styles.kpi}`}>
-            <div className={styles.kpiTop}>
-              <span className={styles.kpiLbl}>{k.label}</span>
-              <span className={`${styles.kpiDelta} tnum`}>{k.sub}</span>
-            </div>
-            <div className={`${styles.kpiVal} tnum`}>{k.value}</div>
-            <svg
-              className={styles.kpiSpark}
-              width="100%"
-              height="30"
-              viewBox="0 0 120 30"
-              preserveAspectRatio="none"
-              aria-hidden="true"
-            >
-              <polyline
-                points={sparkPoints(k.spark, 120, 30)}
-                fill="none"
-                stroke={SERIES[i]?.color ?? '#4f46e5'}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-        ))}
-      </div>
-
-      {/* hero trend chart */}
-      <section className={`acrd ${styles.hero}`} aria-label="Delivery over time">
-        <div className={styles.cardHead}>
-          <div>
-            <h2 className="acrd__title">Delivery over time</h2>
-            <p className={`${styles.cardSub} tnum`}>
-              Daily volume · {fmtDate(daily[0].date)} – {fmtDate(daily[daily.length - 1].date)}
-              {loading ? ' · updating…' : ''}
-            </p>
-          </div>
-          <div className={styles.heroTotal}>
-            <span className={`${styles.heroNum} tnum`}>{totals.sent.toLocaleString('en-US')}</span>
-            <span className={styles.heroLbl}>messages sent</span>
-          </div>
+      {empty ? (
+        <div className={`acrd ${styles.empty}`}>
+          <p className={styles.emptyTitle}>No delivery yet</p>
+          <p className={styles.emptyBody}>
+            {`Nothing sent on ${CHANNEL[channel].label} in this range. Try another channel or wider range.`}
+          </p>
         </div>
-
-        <div className={styles.legend}>
-          {SERIES.map((s) => {
-            const on = visible.has(s.key);
-            return (
-              <button
-                key={s.key}
-                type="button"
-                className={styles.leg}
-                aria-pressed={on}
-                onClick={() => toggleSeries(s.key)}
-              >
-                <span
-                  className={styles.legSw}
-                  style={{ background: on ? s.color : 'var(--muted2)' }}
-                />
-                {s.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <TrendChart visible={visible} series={daily} />
-      </section>
-
-      {/* by channel — real send/delivery counts per channel */}
-      <div className={`${styles.row} ${styles.row2}`}>
-        <section className={`acrd ${styles.panel}`}>
-          <h2 className={styles.panelTitle}>By channel</h2>
-          {channelRows.length === 0 ? (
-            <p className="screen__sub" style={{ margin: 0 }}>
-              Nothing sent on this channel yet.
-            </p>
-          ) : (
-            channelRows.map((c) => {
-              const share = totalChannelSends > 0 ? (c.sent / totalChannelSends) * 100 : 0;
-              return (
-                <div key={c.channel} className={styles.barRow}>
-                  <div className={styles.barTop}>
-                    <span className={styles.barLbl}>{channelLabelOf(c.channel)}</span>
-                    <span className={`${styles.barMeta} tnum`}>
-                      {c.sent.toLocaleString('en-US')} · {share.toFixed(1)}%
-                    </span>
+      ) : (
+        <>
+          {/* KPI trend strip */}
+          <div
+            className={styles.kpis}
+            aria-busy={loading}
+            style={{ '--kpi-cols': kpis.length + (talk ? 1 : 0) <= 4 ? 2 : 3 } as CSSProperties}
+          >
+            {loading &&
+              [0, 1, 2].map((i) => (
+                <div key={i} className={`acrd ${styles.kpi}`} aria-hidden="true">
+                  <div className={styles.kpiTop}>
+                    <div className={`skeleton ${styles.skelLine}`} />
+                    <div className={`skeleton ${styles.skelLineSm}`} />
                   </div>
-                  <div className={styles.track}>
-                    <div
-                      className={styles.fill}
-                      style={{
-                        width: `${Math.max(share, 1.5)}%`,
-                        background: channelColor(c.channel),
-                        animation: 'grow .5s ease',
-                      }}
+                  <div className={`skeleton ${styles.skelValue}`} />
+                  <div className={`skeleton ${styles.skelSpark}`} />
+                </div>
+              ))}
+            {!loading &&
+              kpis.map((k) => {
+                const color = k.color;
+                const last = k.series[k.series.length - 1]?.value ?? 0;
+                const series = ensureSpark(k.series, last, 'Now');
+                return (
+                  <div key={k.label} className={`acrd ${styles.kpi}`}>
+                    <div className={styles.kpiTop}>
+                      <span className={styles.kpiLbl}>{k.label}</span>
+                      <span
+                        className={`${styles.kpiDelta} ${
+                          k.tone === 'success'
+                            ? styles.kpiDeltaUp
+                            : k.tone === 'danger'
+                              ? styles.kpiDeltaDown
+                              : styles.kpiDeltaFlat
+                        } tnum`}
+                      >
+                        {k.sub}
+                      </span>
+                    </div>
+                    <div className={`${styles.kpiVal} tnum`}>{k.value}</div>
+                    <Sparkline
+                      className={styles.kpiSpark}
+                      series={series}
+                      color={color}
+                      format="number"
                     />
                   </div>
+                );
+              })}
+            {/* Voice only: the one depth metric no other channel has. */}
+            {!loading && talk && (
+              <div className={`acrd ${styles.kpi}`}>
+                <div className={styles.kpiTop}>
+                  <span className={styles.kpiLbl}>Talk time</span>
+                  <span className={`${styles.kpiDelta} ${styles.kpiDeltaFlat} tnum`}>
+                    avg {talk.avg}
+                  </span>
                 </div>
-              );
-            })
-          )}
-        </section>
-
-        <section className={`acrd ${styles.panel}`}>
-          <h2 className={styles.panelTitle}>Engagement</h2>
-          <p className="screen__sub" style={{ margin: 0 }}>
-            Opens and clicks aren't tracked yet. They need a tracking pixel and link
-            rewriting on outbound email, plus provider engagement webhooks — until then
-            this product has no way to measure them, so nothing is shown here.
-          </p>
-        </section>
-      </div>
-
-      {/* channel performance table */}
-      <section className={`acrd ${styles.table}`}>
-        <div className="acrd__head">
-          <h2 className="acrd__title">Channel performance</h2>
-          <span className={styles.tableSub}>
-            {channel === 'all' ? 'Delivery per channel' : `Focused on ${CHANNEL[channel].label}`}
-          </span>
-        </div>
-        <div className={styles.ct}>
-          <div className={styles.ctInner}>
-            <div className={styles.ctHead}>
-              <div>Channel</div>
-              <div className={styles.ctR}>Sent</div>
-              <div className={styles.ctR}>Delivered</div>
-              <div className={styles.ctR}>Failed</div>
-              <div>Delivery rate</div>
-            </div>
-            {channelRows.map((row) => {
-              const ch = (row.channel as ChannelType) ?? 'email';
-              const m = CHANNEL[ch] ?? CHANNEL.email;
-              const rate = row.sent > 0 ? (row.delivered / row.sent) * 100 : 0;
-              return (
-                <div key={row.channel} className={styles.ctRow}>
-                  <div className={styles.ctCh}>
-                    <span className={styles.ctChip} style={{ background: m.tint, color: m.color }}>
-                      <Icon name={m.icon} size={14} />
-                    </span>
-                    <span className={styles.ctChname}>{m.label}</span>
-                  </div>
-                  <div className={`${styles.ctNum} tnum`}>{row.sent.toLocaleString('en-US')}</div>
-                  <div className={`${styles.ctDel} tnum`}>
-                    {row.delivered.toLocaleString('en-US')}
-                  </div>
-                  <div className={`${styles.ctNum} tnum`}>{row.failed.toLocaleString('en-US')}</div>
-                  <div className={styles.ctRate}>
-                    <div className={styles.ctMini}>
-                      <div
-                        className={styles.ctMiniFill}
-                        style={{ width: `${rate}%`, background: m.color, animation: 'grow .5s ease' }}
-                      />
-                    </div>
-                    <span className={`${styles.ctRateVal} tnum`}>
-                      {pctOf(row.delivered, row.sent)}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+                <div className={`${styles.kpiVal} tnum`}>{talk.total}</div>
+              </div>
+            )}
           </div>
-        </div>
-      </section>
+
+          {/* hero trend chart */}
+          <section
+            className={`acrd ${styles.hero}`}
+            aria-label="Delivery over time"
+            aria-busy={loading}
+          >
+            <div className={styles.cardHead}>
+              <div>
+                <h2 className="acrd__title">Delivery over time</h2>
+                {loading ? (
+                  <div
+                    className={`skeleton ${styles.skelLine}`}
+                    style={{ width: 180, marginTop: 6 }}
+                  />
+                ) : (
+                  <p className={`${styles.cardSub} tnum`}>
+                    Daily volume · {fmtDate(daily[0].date)} –{' '}
+                    {fmtDate(daily[daily.length - 1].date)}
+                  </p>
+                )}
+              </div>
+              <div className={styles.heroTotal}>
+                {loading ? (
+                  <div className={`skeleton ${styles.skelValue}`} />
+                ) : (
+                  <>
+                    <span className={`${styles.heroNum} tnum`}>
+                      {totals.sent.toLocaleString('en-US')}
+                    </span>
+                    {/* KNOWN DEFECT (audit #30): caption is hardcoded while the
+                        rest of the screen speaks each channel's own language.
+                        On the Voice tab this reads "25,885 messages sent" under
+                        KPI cards labelled "Calls placed" / "Answered". */}
+                    <span className={styles.heroLbl}>messages sent</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {loading ? (
+              <div className={`skeleton ${styles.skelHero}`} aria-hidden="true" />
+            ) : (
+              <>
+                <div className={styles.legend}>
+                  {cfg.delivery.map((s) => {
+                    const on = visible.has(s.key);
+                    return (
+                      <button
+                        key={s.key}
+                        type="button"
+                        className={styles.leg}
+                        aria-pressed={on}
+                        onClick={() => toggleSeries(s.key)}
+                      >
+                        <span
+                          className={styles.legSw}
+                          style={{ background: on ? s.color : 'var(--muted2)' }}
+                        />
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <TrendChart visible={visible} series={daily} config={cfg.delivery} />
+              </>
+            )}
+          </section>
+
+          {/* Engagement chart only where the provider reports something to
+             plot. SMS and voice emit no receipts at all, so the panel is
+             absent rather than present-and-empty. */}
+          {engagement && (
+            <section
+              className={`acrd ${styles.hero}`}
+              aria-label={engagement.title}
+              aria-busy={loading}
+            >
+              <div className={styles.cardHead}>
+                <div>
+                  <h2 className="acrd__title">{cfg.engagement?.title ?? 'Engagement'}</h2>
+                  {loading ? (
+                    <div
+                      className={`skeleton ${styles.skelLine}`}
+                      style={{ width: 180, marginTop: 6 }}
+                    />
+                  ) : (
+                    <p className={`${styles.cardSub} tnum`}>
+                      Daily receipts · {fmtDate(daily[0].date)} –{' '}
+                      {fmtDate(daily[daily.length - 1].date)}
+                    </p>
+                  )}
+                </div>
+                {!loading && (
+                  <div className={styles.heroTotal}>
+                    <span className={`${styles.heroNum} tnum`}>
+                      {totals.opened.toLocaleString('en-US')}
+                    </span>
+                    {/* KNOWN DEFECT (audit #30): same hardcoding — on WhatsApp
+                        this reads "8,252 opens" on a chart whose legend, KPI
+                        card and title all say "Read". */}
+                    <span className={styles.heroLbl}>opens</span>
+                  </div>
+                )}
+              </div>
+
+              {loading ? (
+                <div className={`skeleton ${styles.skelHero}`} aria-hidden="true" />
+              ) : (
+                <>
+                  <div className={styles.legend}>
+                    {engagement.series.map((s) => {
+                      const on = engVisible.has(s.key);
+                      return (
+                        <button
+                          key={s.key}
+                          type="button"
+                          className={styles.leg}
+                          aria-pressed={on}
+                          onClick={() => toggleEngagement(s.key)}
+                        >
+                          <span
+                            className={styles.legSw}
+                            style={{ background: on ? s.color : 'var(--muted2)' }}
+                          />
+                          {s.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <TrendChart
+                    visible={engVisible}
+                    series={daily}
+                    config={engagement.series}
+                    areaKey="opened"
+                    label="engagement"
+                  />
+                </>
+              )}
+            </section>
+          )}
+        </>
+      )}
 
       {toast && (
         <div
@@ -365,7 +553,24 @@ export default function AppAnalytics({
  * Fixed 900×280 viewBox scales uniformly, so tooltip positions can be
  * expressed as simple percentages of the viewBox.
  * ------------------------------------------------------------------ */
-function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: ActivityPoint[] }) {
+/**
+ * Shared line chart for both the delivery and engagement series. `config`
+ * decides which keys are plotted, `areaKey` which one gets the filled area
+ * beneath it (the headline metric of that chart).
+ */
+function TrendChart({
+  visible,
+  series,
+  config,
+  areaKey = 'sent',
+  label = 'delivery',
+}: {
+  visible: Set<ChartKey>;
+  series: ActivityPoint[];
+  config: { key: ChartKey; label: string; color: string }[];
+  areaKey?: ChartKey;
+  label?: string;
+}) {
   const [hover, setHover] = useState<number | null>(null);
 
   const W = 900;
@@ -379,9 +584,10 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
   const baseY = MT + plotH;
 
   const n = series.length;
-  const active = SERIES.filter((s) => visible.has(s.key));
+  const active = config.filter((s) => visible.has(s.key));
 
-  const maxVal = Math.max(1, ...active.flatMap((s) => series.map((p) => p[s.key])));
+  const at = pointValue;
+  const maxVal = Math.max(1, ...active.flatMap((s) => series.map((p) => at(p, s.key))));
   const yMax = niceMax(maxVal);
 
   const x = (i: number) => ML + (i / (n - 1)) * plotW;
@@ -390,10 +596,16 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
   const grid = [0, 1, 2, 3, 4];
   const step = plotW / (n - 1);
 
-  const sentVisible = visible.has('sent');
-  const areaPath = sentVisible
-    ? `M ${x(0)},${y(series[0].sent)} ` +
-      series.map((p, i) => `L ${x(i)},${y(p.sent)}`).join(' ') +
+  /* Thin the day labels so they never collide: at most ~8 across the axis,
+     with the final day always labeled (and the stepped label nearest to it
+     dropped so the two can't touch). */
+  const labelEvery = Math.max(1, Math.ceil(n / 8));
+  const showLabel = (i: number) =>
+    i === n - 1 || (i % labelEvery === 0 && n - 1 - i >= labelEvery / 2);
+
+  const areaPath = visible.has(areaKey)
+    ? `M ${x(0)},${y(at(series[0], areaKey))} ` +
+      series.map((p, i) => `L ${x(i)},${y(at(p, areaKey))}`).join(' ') +
       ` L ${x(n - 1)},${baseY} L ${x(0)},${baseY} Z`
     : '';
 
@@ -403,7 +615,7 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
         className={styles.chart}
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label={`Daily delivery from ${fmtDate(series[0].date)} to ${fmtDate(series[n - 1].date)}`}
+        aria-label={`Daily ${label} from ${fmtDate(series[0].date)} to ${fmtDate(series[n - 1].date)}`}
       >
         <defs>
           <linearGradient id="an-area" x1="0" y1="0" x2="0" y2="1">
@@ -429,7 +641,7 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
                 x={ML - 8}
                 y={gy + 3.5}
                 textAnchor="end"
-                style={{ fill: 'var(--muted2)', fontSize: '11px' }}
+                style={{ fill: 'var(--text4)', fontSize: '10px', fontFamily: 'var(--font-mono)' }}
                 className="tnum"
               >
                 {fmtCompact((yMax * g) / 4)}
@@ -438,19 +650,21 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
           );
         })}
 
-        {/* x labels */}
-        {series.map((p, i) => (
-          <text
-            key={p.date}
-            x={x(i)}
-            y={H - 10}
-            textAnchor="middle"
-            style={{ fill: 'var(--muted)', fontSize: '11px' }}
-            className="tnum"
-          >
-            {fmtDate(p.date)}
-          </text>
-        ))}
+        {/* x labels — thinned; the last is end-anchored so it can't clip */}
+        {series.map((p, i) =>
+          showLabel(i) ? (
+            <text
+              key={p.date}
+              x={x(i)}
+              y={H - 10}
+              textAnchor={i === n - 1 ? 'end' : 'middle'}
+              style={{ fill: 'var(--text4)', fontSize: '10px', fontFamily: 'var(--font-mono)' }}
+              className="tnum"
+            >
+              {fmtDate(p.date)}
+            </text>
+          ) : null,
+        )}
 
         {/* hover guide */}
         {hover != null && (
@@ -465,14 +679,14 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
           />
         )}
 
-        {/* area under sent */}
-        {sentVisible && <path d={areaPath} fill="url(#an-area)" stroke="none" />}
+        {/* area under the headline series */}
+        {areaPath && <path d={areaPath} fill="url(#an-area)" stroke="none" />}
 
         {/* series lines */}
         {active.map((s) => (
           <polyline
             key={s.key}
-            points={series.map((p, i) => `${x(i)},${y(p[s.key])}`).join(' ')}
+            points={series.map((p, i) => `${x(i)},${y(at(p, s.key))}`).join(' ')}
             fill="none"
             stroke={s.color}
             strokeWidth="2.5"
@@ -487,7 +701,7 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
             <circle
               key={`${s.key}-${i}`}
               cx={x(i)}
-              cy={y(p[s.key])}
+              cy={y(at(p, s.key))}
               r={hover === i ? 4 : 2.5}
               fill={s.color}
               stroke={hover === i ? 'var(--surface)' : 'none'}
@@ -533,7 +747,7 @@ function TrendChart({ visible, series }: { visible: Set<SeriesKey>; series: Acti
               <span className={styles.tipSw} style={{ background: s.color }} />
               <span className={styles.tipLbl}>{s.label}</span>
               <span className={`${styles.tipVal} tnum`}>
-                {series[hover][s.key].toLocaleString('en-US')}
+                {at(series[hover], s.key).toLocaleString('en-US')}
               </span>
             </div>
           ))}

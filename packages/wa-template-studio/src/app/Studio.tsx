@@ -10,7 +10,16 @@ import {
   LIBRARY_FULL_WIDTH,
   PANEL_TRANSITION,
 } from '@/core/panel-layout';
-import { addButton, loadDraft, placeBlock, redo, replaceDoc, setInspectorMode, undo, useStudio } from '@/core/store';
+import {
+  addButton,
+  loadDraft,
+  placeBlock,
+  redo,
+  replaceDoc,
+  setInspectorMode,
+  undo,
+  useStudio,
+} from '@/core/store';
 import { CanvasPanel } from './CanvasPanel';
 import { InspectorPanel } from './InspectorPanel';
 import { InspectorPanelHandle } from './InspectorPanelHandle';
@@ -33,7 +42,11 @@ export interface StudioProps {
  * The WhatsApp Template Studio — four-panel layout:
  * top bar / library / live preview / properties.
  */
-export function Studio({ restoreDraft = true, dark = false, accentColor }: StudioProps) {
+export function Studio({
+  restoreDraft = true,
+  dark = false,
+  accentColor,
+}: StudioProps) {
   const libraryOpen = useStudio((s) => s.libraryOpen);
   const inspectorMode = useStudio((s) => s.inspectorMode);
 
@@ -81,7 +94,8 @@ export function Studio({ restoreDraft = true, dark = false, accentColor }: Studi
   const onDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || over.id !== 'canvas-drop') return;
-    const payload = active.data.current as { kind: 'block' | 'button'; type: string; slot?: 'header' | 'body' | 'footer' } | undefined;
+    const payload = active.data.current as
+      { kind: 'block' | 'button'; type: string; slot?: 'header' | 'body' | 'footer' } | undefined;
     if (!payload) return;
     if (payload.kind === 'button') addButton(payload.type);
     else if (payload.slot) placeBlock(payload.slot, payload.type);
@@ -126,7 +140,10 @@ export function Studio({ restoreDraft = true, dark = false, accentColor }: Studi
               <div
                 aria-hidden
                 className="pointer-events-none shrink-0"
-                style={{ width: inspectorCollapsed ? 0 : INSPECTOR_COMPACT_WIDTH, transition: PANEL_TRANSITION }}
+                style={{
+                  width: inspectorCollapsed ? 0 : INSPECTOR_COMPACT_WIDTH,
+                  transition: PANEL_TRANSITION,
+                }}
               />
 
               {/* Right floating panel */}

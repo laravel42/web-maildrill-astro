@@ -29,13 +29,18 @@ import { buildSubtreeHtml } from './thumbnail/buildThumbnailHtml';
 import { captureSubtreeThumbnail } from './thumbnail/captureThumbnail';
 
 type Listing = { id: string; name: string; hasThumbnail: boolean };
-export type RecaptureTemplateSummary = { total: number; captured: number; skipped: number; failed: number };
+export type RecaptureTemplateSummary = {
+  total: number;
+  captured: number;
+  skipped: number;
+  failed: number;
+};
 
 export async function recaptureTemplateThumbnails(
   options: {
     onlyMissing?: boolean;
     onProgress?: (done: number, total: number) => void;
-  } = {}
+  } = {},
 ): Promise<RecaptureTemplateSummary> {
   const base = resolveBackendUrl();
   const summary: RecaptureTemplateSummary = { total: 0, captured: 0, skipped: 0, failed: 0 };
@@ -60,7 +65,10 @@ export async function recaptureTemplateThumbnails(
     try {
       const r = await fetch(url);
       if (!r.ok) throw new Error(`GET HTTP ${r.status}`);
-      const { name, blocks } = (await r.json()) as { name: string; blocks: Array<{ id: string; block: unknown }> };
+      const { name, blocks } = (await r.json()) as {
+        name: string;
+        blocks: Array<{ id: string; block: unknown }>;
+      };
       if (!blocks?.length) {
         summary.skipped++;
         continue;
@@ -88,7 +96,10 @@ export async function recaptureTemplateThumbnails(
       summary.captured++;
     } catch (err) {
       summary.failed++;
-      console.warn(`[recaptureTemplateThumbnails] "${tpl.name}" failed:`, err instanceof Error ? err.message : err);
+      console.warn(
+        `[recaptureTemplateThumbnails] "${tpl.name}" failed:`,
+        err instanceof Error ? err.message : err,
+      );
     } finally {
       done++;
       options.onProgress?.(done, summary.total);

@@ -1,0 +1,195 @@
+.wrap {
+  position: relative;
+}
+.block {
+  width: 100%;
+  margin-bottom: 14px;
+}
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  padding: 8px 11px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+}
+.btnBlock {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13.5px;
+}
+.btnLabel {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.btnBlock .btnLabel {
+  flex: 1;
+  text-align: left;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.isOn {
+  background: var(--accent-tint);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.count {
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+.caret {
+  opacity: 0.55;
+  flex: none;
+}
+.scrim {
+  position: fixed;
+  inset: 0;
+  /* Above upload modal so the menu is usable inside dialogs. */
+  z-index: calc(var(--z-modal, 90) + 1);
+  border: 0;
+  background: none;
+}
+.pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: calc(var(--z-modal, 90) + 2);
+  min-width: 220px;
+  max-height: 360px;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+}
+.popBlock {
+  width: 100%;
+  min-width: 0;
+}
+.title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 6px 9px 4px;
+  flex: none;
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 2px 3px 6px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  flex: none;
+}
+.searchIc {
+  flex: none;
+  color: var(--muted);
+  opacity: 0.85;
+}
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+}
+.search input::placeholder {
+  color: var(--muted);
+}
+.list {
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+}
+.empty {
+  padding: 10px 9px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 8px;
+  text-align: left;
+}
+.opt:hover {
+  background: var(--surface2);
+}
+.radio {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border-radius: 50%;
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.radioOn {
+  border-color: var(--accent);
+}
+.radioDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.n {
+  flex: none;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.clear {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 9px;
+  margin-top: 2px;
+  border-top: 1px solid var(--divider);
+  font-size: 12.5px;
+  color: var(--muted);
+  flex: none;
+}
+.clear:hover {
+  color: var(--text2);
+}

@@ -34,7 +34,11 @@ function inferDensity(sectionsLen: number): 'concise' | 'standard' | 'rich' {
 /**
  * Format brand colors as an explicit string for injection into prompts.
  */
-function formatBrandColors(brandColors?: { primary?: string; secondary?: string; accent?: string }): string {
+function formatBrandColors(brandColors?: {
+  primary?: string;
+  secondary?: string;
+  accent?: string;
+}): string {
   if (!brandColors) return '';
   const parts: string[] = [];
   if (brandColors.primary) parts.push(`primary: ${brandColors.primary}`);
@@ -90,14 +94,16 @@ function buildScaffold(brief: VisualBrief): string {
 // ---------------------------------------------------------------------------
 
 const CREATIVE_SYSTEM_PROMPT = [
-  'You are an expert email creative director.',
+  'You are an award-winning email creative director (Impeccable craft bar).',
   'Given a structured email brief (purpose, tone, colors, layout, imagery),',
   'return a JSON object with exactly two keys:',
   '',
   '  "creative" — 2–3 sentences of creative direction that add style specifics:',
   '    describe visual atmosphere, spacing rhythm, button style, typography feel,',
-  '    and any special layout treatment. Do NOT repeat the constraints already in',
-  '    the brief (colors, sections, density). Focus on *how* to express them.',
+  '    and any special layout treatment. Push for brand-specific composition —',
+  '    refuse generic purple SaaS gradients, card spam, and flat hierarchy.',
+  '    Do NOT repeat the constraints already in the brief (colors, sections,',
+  '    density). Focus on *how* to express them.',
   '',
   '  "queries" — array of 3–7 Unsplash search queries (1–4 lowercase English words)',
   '    describing concrete photographic scenes matching the brief.',
@@ -208,7 +214,10 @@ export interface CompileBriefOptions {
  * Compile a `VisualBrief` into a structured prompt + Unsplash queries.
  * Never throws — falls back deterministically.
  */
-export async function compileBrief(brief: VisualBrief, options: CompileBriefOptions = {}): Promise<CompileResult> {
+export async function compileBrief(
+  brief: VisualBrief,
+  options: CompileBriefOptions = {},
+): Promise<CompileResult> {
   const hints = {
     palette: brief.visual_strategy.palette,
     density: inferDensity(brief.layout_strategy.sections.length),
@@ -232,7 +241,8 @@ export async function compileBrief(brief: VisualBrief, options: CompileBriefOpti
     if (options.llmText) {
       raw = await options.llmText();
     } else {
-      const getProvider = options.getProvider ?? (await import('../providers/index.js')).getProvider;
+      const getProvider =
+        options.getProvider ?? (await import('../providers/index.js')).getProvider;
       const providerName: ProviderName =
         options.provider ?? (process.env.DEFAULT_PROVIDER as ProviderName | undefined) ?? 'openai';
       const provider = getProvider(providerName);

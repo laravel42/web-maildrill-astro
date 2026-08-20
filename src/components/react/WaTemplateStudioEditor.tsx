@@ -11,6 +11,7 @@ import {
   TEMPLATE_LANGUAGE_OPTIONS,
   templateLanguageFlagSrc,
 } from '@/lib/app/template-language';
+import { retryDynamicImport } from '@/lib/app/retry-dynamic-import';
 import {
   docToApiFields,
   hydrateTemplateDoc,
@@ -23,7 +24,11 @@ import {
 
 export type WaTemplateStudioSave = ReturnType<typeof docToApiFields>;
 
-type StudioComponent = React.ComponentType<{ restoreDraft?: boolean; dark?: boolean; accentColor?: string }>;
+type StudioComponent = React.ComponentType<{
+  restoreDraft?: boolean;
+  dark?: boolean;
+  accentColor?: string;
+}>;
 
 type Props = {
   name: string | null;
@@ -42,6 +47,13 @@ function normalizeWaCategoryLabel(value: string | null | undefined): WaTemplateC
   }
   return waCategoryLabel(maildrillCategoryToMeta(value ?? undefined));
 }
+
+const LOADING_STEPS = [
+  'Loading WhatsApp template studio…',
+  'Preparing the studio — loading components…',
+  'Still working on it — first load can take a minute…',
+  'Almost there — setting up the canvas…',
+];
 
 /**
  * Full-screen wrapper around wa-template-studio for WhatsApp template authoring.
@@ -64,6 +76,7 @@ export default function WaTemplateStudioEditor({
     normalizeWaCategoryLabel(category),
   );
   const [waLanguage, setWaLanguage] = useState(() => normalizeTemplateLanguageCode(language));
+  const [loadingStep, setLoadingStep] = useState(0);
   const studioReady = useRef(false);
   const { toast, show } = useToast();
 
@@ -71,10 +84,10 @@ export default function WaTemplateStudioEditor({
     let alive = true;
     void (async () => {
       try {
-        await import('wa-template-studio/style.css');
-        const mod = await import('wa-template-studio');
+        await retryDynamicImport(() => import('wa-template-studio/style.css'));
+        const mod = await retryDynamicImport(() => import('wa-template-studio'));
         if (!alive) return;
-        const { replaceDoc, setGalleryCatalog, setTemplateField } = mod;
+        const { replaceDoc, setGalleryCatalog } = mod;
         // Ready-made template gallery shown in the inspector's default state.
         setGalleryCatalog(waTemplateCatalog);
         if (!studioReady.current) {
@@ -86,18 +99,17 @@ export default function WaTemplateStudioEditor({
             components,
             category,
           });
-          replaceDoc(doc, { resetHistory: true });
-          const canonicalLanguage = normalizeTemplateLanguageCode(doc.language);
-          if (canonicalLanguage !== doc.language) {
-            setTemplateField('language', canonicalLanguage);
-          }
-          setWaCategory(waCategoryLabel(doc.category));
-          setWaLanguage(canonicalLanguage);
+          const hydrated = {
+            ...doc,
+            language: normalizeTemplateLanguageCode(doc.language),
+            name: title.trim() || name || doc.name || '',
+          };
+          replaceDoc(hydrated, { resetHistory: true });
+          setWaCategory(waCategoryLabel(hydrated.category));
+          setWaLanguage(hydrated.language);
           studioReady.current = true;
         }
         setStudio(() => mod.Studio);
-        // Keep header name in sync with the studio doc field used on export.
-        setTemplateField('name', title.trim() || name || '');
       } catch (err) {
         if (alive) {
           setLoadError(err instanceof Error ? err.message : 'Failed to load the WhatsApp editor.');
@@ -107,8 +119,18 @@ export default function WaTemplateStudioEditor({
     return () => {
       alive = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate once on mount
+    // Hydrate once on mount.
   }, []);
+
+  useEffect(() => {
+    if (Studio || loadError) return;
+    const timers = [
+      setTimeout(() => setLoadingStep(1), 4_000),
+      setTimeout(() => setLoadingStep(2), 20_000),
+      setTimeout(() => setLoadingStep(3), 60_000),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [Studio, loadError]);
 
   const persist = async () => {
     const mod = await import('wa-template-studio');
@@ -185,7 +207,6 @@ export default function WaTemplateStudioEditor({
         void import('wa-template-studio').then((mod) => mod.setTemplateField('language', next));
       }}
       onBack={onClose}
-      onSendTest={() => show('Test message sent')}
       onSaveDraft={() => void handleSave()}
       toast={
         toast ? (
@@ -206,6 +227,12 @@ export default function WaTemplateStudioEditor({
         <div className={shellStyles.state}>
           <p>Couldn’t load the WhatsApp template editor.</p>
           <p className={shellStyles.muted}>{loadError}</p>
+          <p className={shellStyles.muted}>
+            This usually means the page outlived a server restart or an update — reloading fixes it.
+          </p>
+          <button type="button" className="sbtn" onClick={() => window.location.reload()}>
+            Reload page
+          </button>
         </div>
       ) : Studio ? (
         <Studio restoreDraft={false} accentColor={CHANNEL.whatsapp.hex} />
@@ -216,7 +243,7 @@ export default function WaTemplateStudioEditor({
             style={{ borderTopColor: '#00a884' }}
             aria-hidden="true"
           />
-          <p className={shellStyles.muted}>Loading WhatsApp template studio…</p>
+          <p className={shellStyles.muted}>{LOADING_STEPS[loadingStep]}</p>
         </div>
       )}
     </ChannelEditorShell>

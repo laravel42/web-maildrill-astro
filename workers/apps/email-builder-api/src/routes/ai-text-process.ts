@@ -1,7 +1,11 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
-import { getProvider as defaultGetProvider, PROVIDER_NAMES, type ProviderName } from '../providers/index.js';
+import {
+  getProvider as defaultGetProvider,
+  PROVIDER_NAMES,
+  type ProviderName,
+} from '../providers/index.js';
 
 const AI_ACTIONS = [
   'rewrite',
@@ -19,6 +23,9 @@ type AIAction = (typeof AI_ACTIONS)[number];
 const BodySchema = z.object({
   text: z.string().min(1, 'text is required'),
   action: z.enum(AI_ACTIONS),
+  // 'html' = email builder rich text (default); 'plain' = WhatsApp-style
+  // plain text that must keep {{n}} placeholders and inline markers intact.
+  format: z.enum(['html', 'plain']).default('html'),
   provider: z.enum(PROVIDER_NAMES as unknown as [ProviderName, ...ProviderName[]]).optional(),
 });
 
@@ -39,6 +46,24 @@ const SYSTEM_PROMPTS: Record<AIAction, string> = {
     'Rewrite the following text in a warm, friendly, and approachable tone. Return only the rewritten HTML content, no explanations.',
   professional:
     'Rewrite the following text in a formal, professional business tone. Return only the rewritten HTML content, no explanations.',
+};
+
+const PLAIN_RULES =
+  ' Return only the resulting message text — plain text, no explanations, no HTML tags, no markdown code fences. Preserve {{1}}-style numbered placeholders exactly as written, and keep any WhatsApp markers (*bold*, _italic_, ~strikethrough~, ```monospace```) the text already uses.';
+
+const SYSTEM_PROMPTS_PLAIN: Record<AIAction, string> = {
+  rewrite:
+    'Rewrite the following message to improve clarity and flow while preserving the original meaning.' +
+    PLAIN_RULES,
+  grammar_check: 'Fix all grammar, spelling, and punctuation errors in the following message.' + PLAIN_RULES,
+  continue_writing:
+    'Continue writing from where the message ends, maintaining the same style and tone. Return the original message followed by your continuation.' +
+    PLAIN_RULES,
+  shorter: 'Make the following message significantly shorter while keeping the key message.' + PLAIN_RULES,
+  descriptive: 'Make the following message more descriptive and vivid with sensory details.' + PLAIN_RULES,
+  detailed: 'Expand the following message with more details, examples, and depth.' + PLAIN_RULES,
+  friendly: 'Rewrite the following message in a warm, friendly, and approachable tone.' + PLAIN_RULES,
+  professional: 'Rewrite the following message in a formal, professional business tone.' + PLAIN_RULES,
 };
 
 function resolveProvider(explicit: ProviderName | undefined): ProviderName {
@@ -68,7 +93,7 @@ export function createAiTextProcessRoute() {
         const provider = defaultGetProvider(providerName);
 
         const stream = provider.stream({
-          system: SYSTEM_PROMPTS[body.action],
+          system: (body.format === 'plain' ? SYSTEM_PROMPTS_PLAIN : SYSTEM_PROMPTS)[body.action],
           prompt: body.text,
           maxTokens: 2000,
         });
@@ -88,7 +113,9 @@ export function createAiTextProcessRoute() {
         return reply.send({ processedContent: result.trim(), action: body.action });
       } catch (err: any) {
         console.error('❌ AI text-process error:', err?.message ?? err);
-        return reply.status(500).send({ error: 'processing_failed', message: err?.message ?? 'Unknown error' });
+        return reply
+          .status(500)
+          .send({ error: 'processing_failed', message: err?.message ?? 'Unknown error' });
       }
     });
   };

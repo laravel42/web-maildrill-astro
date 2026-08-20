@@ -30,7 +30,12 @@ export const footerPlugin: BlockPlugin<Data> = {
   validate: (data) => {
     const issues: ValidationIssue[] = [];
     if (!data.text.trim()) {
-      issues.push({ severity: 'warning', slot: 'footer', code: 'footer/empty', message: 'Footer is empty — remove it or add text' });
+      issues.push({
+        severity: 'warning',
+        slot: 'footer',
+        code: 'footer/empty',
+        message: 'Footer is empty — remove it or add text',
+      });
     }
     if (data.text.length > LIMITS.FOOTER_TEXT_MAX) {
       issues.push({
@@ -41,13 +46,22 @@ export const footerPlugin: BlockPlugin<Data> = {
       });
     }
     if (extractVariables(data.text).length > 0) {
-      issues.push({ severity: 'error', slot: 'footer', code: 'footer/no-variables', message: 'Footers cannot contain variables' });
+      issues.push({
+        severity: 'error',
+        slot: 'footer',
+        code: 'footer/no-variables',
+        message: 'Footers cannot contain variables',
+      });
     }
     return issues;
   },
   Editor: function FooterEditor({ value, onChange }) {
     return (
-      <Field label="Footer text" counter={`${value.text.length}/${LIMITS.FOOTER_TEXT_MAX}`} hint="Plain text — no formatting or variables">
+      <Field
+        label="Footer text"
+        counter={`${value.text.length}/${LIMITS.FOOTER_TEXT_MAX}`}
+        hint="Plain text — no formatting or variables"
+      >
         <Input
           value={value.text}
           onChange={(e) => onChange({ text: e.target.value })}
@@ -59,7 +73,9 @@ export const footerPlugin: BlockPlugin<Data> = {
   },
   Preview: function FooterPreview({ data, ctx }) {
     return (
-      <div className={`px-[9px] pt-[2px] text-[12.5px] leading-[17px] ${ctx.dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}>
+      <div
+        className={`px-[9px] pt-[2px] text-[12.5px] leading-[17px] ${ctx.dark ? 'text-[#8696a0]' : 'text-[#667781]'}`}
+      >
         {data.text || <span className="opacity-60">Footer</span>}
       </div>
     );

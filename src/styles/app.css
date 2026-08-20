@@ -4,6 +4,12 @@
  * (not the marketing ink-pill), a 238px sidebar and a 57px topbar.
  */
 
+/* Workspace numerals: data figures render in the mono ledger voice. */
+.app-body .tnum {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
 .app-body {
   overflow: hidden;
 }
@@ -59,8 +65,13 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.16);
   transition: background var(--duration-fast) var(--ease-out);
 }
-.pbtn:hover {
+.pbtn:hover:not(:disabled) {
   background: var(--accent-hover);
+}
+.pbtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .sbtn {
@@ -80,9 +91,13 @@
     border-color var(--duration-fast) var(--ease-out),
     color var(--duration-fast) var(--ease-out);
 }
-.sbtn:hover {
+.sbtn:hover:not(:disabled) {
   background: var(--surface2);
   border-color: var(--border2);
+}
+.sbtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .kbtn {
@@ -106,7 +121,7 @@
 
 .abtn-danger {
   background: var(--surface);
-  color: var(--danger);
+  color: var(--danger-text);
   border: 1px solid #f3c9c9;
 }
 .abtn-danger:hover {
@@ -139,56 +154,115 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 9px;
-  border-radius: 20px;
-  font-size: 10.5px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.astatus {
-  display: inline-block;
-  padding: 2px 9px;
+  padding: 3px 12px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
 }
+
+.astatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 7px;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--border2) 30%, transparent);
+  color: var(--text3);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.2;
+}
 .astatus--draft {
-  background: var(--surface2);
+  border-color: color-mix(in srgb, var(--border2) 30%, transparent);
   color: var(--text3);
 }
 .astatus--scheduled {
-  background: var(--accent-tint);
-  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  /* Text role: --accent is a fill token and dark mode never flips it, which
+     left this badge at 2.7:1 on the dark surface. */
+  color: var(--accent-text);
 }
 .astatus--sending {
-  background: var(--warning-bg);
+  border-color: color-mix(in srgb, var(--warning) 30%, transparent);
   color: var(--warning);
 }
-.astatus--sent {
-  background: var(--success-bg);
-  color: var(--success-strong);
+.astatus--sent,
+.astatus--active {
+  border-color: color-mix(in srgb, var(--success-strong, var(--success)) 30%, transparent);
+  color: var(--success-strong, var(--success));
 }
 .astatus--paused {
-  background: var(--surface2);
+  border-color: color-mix(in srgb, var(--border2) 30%, transparent);
   color: var(--muted);
 }
-.astatus--active {
+.astatus--unsubscribed {
+  border-color: color-mix(in srgb, var(--warning-strong, var(--warning)) 30%, transparent);
+  color: var(--warning-strong, var(--warning));
+}
+.astatus--bounced {
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+  color: var(--danger);
+}
+/* A spam complaint is the worst signal a sender can collect, so in the table it
+   is the only badge with a solid, full-strength border rather than the 30%
+   tint the others use — it reads as outlined-in-black on white without
+   shouting the way a filled row badge would. (The filter chip stays filled;
+   there is only ever one of those on screen.) `--surface` and `--ink` both
+   invert, so the pairing holds on the dark theme. */
+.astatus--complained {
+  background: var(--surface);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+/* Invalid is inert rather than alarming — nobody did anything wrong, the
+   address simply cannot receive mail — so it sits in neutral dark gray
+   instead of taking a warning colour. */
+.astatus--invalid {
+  border-color: color-mix(in srgb, var(--text3) 35%, transparent);
+  color: var(--text3);
+}
+/* Solid campaign-status badges, used in the Status filter menu. An outline
+   badge on a menu row reads as a control rather than a label, so the filled
+   variant is clearer there. Scoped to its own `cstat--*` classes for the same
+   reason `tstat--*` is: it must never recolor the shared `.astatus--*` labels
+   in the table, which carry the same status names. */
+.cstat {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.cstat--draft {
+  background: var(--surface2);
+  color: var(--text3);
+}
+.cstat--scheduled {
+  background: var(--accent-tint);
+  color: var(--accent-text);
+}
+.cstat--sending {
+  background: var(--warning-bg);
+  color: var(--warning-strong);
+}
+.cstat--sent {
   background: var(--success-bg);
   color: var(--success-strong);
 }
-.astatus--unsubscribed {
-  background: var(--surface2);
-  color: var(--muted);
+.cstat--paused {
+  background: var(--ink-tint);
+  color: var(--muted2);
 }
-.astatus--bounced {
-  background: var(--danger-bg);
-  color: var(--danger);
-}
+
 /* WhatsApp template approval — a distinct background per status. Scoped to its
    own `tstat--*` classes so it never recolors the shared campaign `.astatus--*`
-   badges (which also have draft/paused). Pairs with the `.astatus` pill shape. */
+   labels (which also have draft/paused). */
 .tstat--draft {
   background: var(--info-bg);
   color: var(--info);
@@ -203,15 +277,15 @@
 }
 .tstat--rejected {
   background: var(--danger-bg);
-  color: var(--danger);
+  color: var(--danger-strong);
 }
 .tstat--paused {
-  background: rgba(139, 92, 246, 0.16);
-  color: #7c3aed;
+  background: var(--violet-bg);
+  color: var(--violet-strong);
 }
 .tstat--disabled {
   background: var(--surface2);
-  color: var(--muted);
+  color: var(--text4);
 }
 
 /* Outlined for visibility — a solid currentColor border (matching each
@@ -223,6 +297,10 @@
 .tstat--rejected,
 .tstat--paused,
 .tstat--disabled {
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
   border: 1.5px solid currentColor;
 }
 
@@ -252,13 +330,15 @@
   border-bottom: 1px solid var(--divider);
 }
 .acrd__title {
+  margin: 0;
   font-size: 14px;
   font-weight: 600;
+  line-height: 1.3;
 }
 .acrd__link {
   font-size: 12.5px;
   font-weight: 500;
-  color: var(--accent);
+  color: var(--accent-text);
   cursor: pointer;
 }
 
@@ -276,21 +356,26 @@
   font-weight: 500;
 }
 .akpi__value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 25px;
   font-weight: 600;
   letter-spacing: -0.6px;
-  margin-top: 10px;
+  margin-top: 6px;
 }
 .akpi__delta {
   font-size: 11.5px;
   font-weight: 500;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 .akpi__delta--up {
-  color: var(--success);
+  color: var(--success-text);
+}
+.akpi__delta--down {
+  color: var(--danger-text);
 }
 .akpi__delta--flat {
-  color: var(--muted);
+  color: var(--text4);
 }
 
 /* ---------------- tables ---------------- */
@@ -307,14 +392,14 @@
   align-items: center;
 }
 .athead {
-  border-bottom: 1px solid var(--surface2);
+  border-bottom: 1px solid var(--border2);
 }
 .athead > div {
   padding: 12px 19px;
-  font-size: 11px;
-  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--text4);
   font-weight: 600;
-  letter-spacing: 0.3px;
   text-transform: uppercase;
 }
 .athead button {
@@ -326,7 +411,8 @@
   letter-spacing: inherit;
   text-transform: inherit;
 }
-.athead button:hover {
+.athead button:hover,
+.athead button.is-active {
   color: var(--text);
 }
 .atrow {
@@ -352,12 +438,12 @@
   padding: 12px 19px;
   border-top: 1px solid var(--divider);
   font-size: 12px;
-  color: var(--muted);
+  color: var(--text4);
 }
 .atable__empty {
   padding: 46px 19px;
   text-align: center;
-  color: var(--muted);
+  color: var(--text4);
   font-size: 13px;
 }
 
@@ -379,7 +465,7 @@
   transition: color var(--duration-fast) var(--ease-out);
 }
 .atab.is-active {
-  color: var(--accent);
+  color: var(--accent-text);
   border-bottom-color: var(--accent);
 }
 .atab__count {
@@ -388,11 +474,11 @@
   padding: 1px 7px;
   border-radius: 20px;
   background: var(--surface2);
-  color: var(--muted);
+  color: var(--text4);
 }
 .atab.is-active .atab__count {
   background: var(--accent-tint);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .aseg {
@@ -407,7 +493,7 @@
   border-radius: 7px;
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--text4);
   background: transparent;
   transition:
     background var(--duration-fast) var(--ease-out),
@@ -505,11 +591,39 @@
   gap: 10px;
 }
 .adrawer__eyebrow {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
+  font-size: 11.5px;
+  font-weight: 500;
   color: var(--muted);
+}
+
+/* Drawer KPI cards — one look across every record drawer (lists, subscribers,
+   templates, campaigns, team members). Modules add only columns + margins. */
+.adrawer__kpis {
+  display: grid;
+  gap: 10px;
+}
+.adrawer__kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.adrawer__kpi-k {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.adrawer__kpi-v {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+.adrawer__kpi-v--sm {
+  font-size: 14px;
 }
 
 /* Detail row */
@@ -521,7 +635,7 @@
   font-size: 13px;
 }
 .adetail__k {
-  color: var(--muted);
+  color: var(--text4);
 }
 .adetail__v {
   font-weight: 500;
@@ -533,6 +647,6 @@
   border-radius: 11px;
   padding: 18px;
   font-size: 12.5px;
-  color: var(--muted);
+  color: var(--text4);
   text-align: center;
 }

@@ -12,6 +12,8 @@ export interface ApiMediaAsset {
   height?: number | null;
   /** Public CloudFront URL. */
   url: string;
+  /** 250×250 cover twin for Grid/List; omit/null falls back to `url`. */
+  thumbUrl?: string | null;
   createdAt?: string | null;
 }
 
@@ -61,32 +63,45 @@ const THUMBS = [
 ];
 
 /**
- * Map a stored asset onto the grid's row shape. `preview` carries the real
- * CloudFront URL so image tiles show the actual file; the gradient is only a
- * fallback for formats that can't be rendered inline.
+ * Map a stored asset onto the grid's row shape. `preview` prefers the 250×250
+ * twin for tiles; `url` stays the full original for download/insert/drawer.
+ * Gradient `thumb` is only a fallback for non-image formats.
  */
-export function toMediaFile(a: ApiMediaAsset, index = 0): MediaFile & {
+export function toMediaFile(
+  a: ApiMediaAsset,
+  index = 0,
+): MediaFile & {
   preview: string;
   url: string;
   tags: string[];
+  folder: string | null;
+  width: number | null;
+  height: number | null;
 } {
   const type = typeOf(a.contentType, a.name);
   const isImage = Boolean(a.contentType?.startsWith('image/'));
+  const width = a.width && a.width > 0 ? a.width : null;
+  const height = a.height && a.height > 0 ? a.height : null;
+  const tileUrl = (a.thumbUrl?.trim() || a.url) ?? '';
   return {
     id: a.id,
     name: a.name,
-    dim: a.width && a.height ? `${a.width} × ${a.height}` : '—',
+    dim: width && height ? `${width} × ${height}` : '—',
     label: isImage ? '' : type,
     thumb: THUMBS[index % THUMBS.length]!,
     fg: '#fff',
     size: fmtSize(a.sizeBytes),
     type,
+    /* LATENT DEFECT: `media_assets.created_at` is NOT NULL, so the fallback is
+       unreachable — but it fabricates rather than admitting absence, and would
+       stamp every affected row "just now" if the column ever went nullable. */
     uploaded: a.createdAt ?? new Date().toISOString(),
-    // `preview` backs image tiles only; `url` is the real CloudFront URL for
-    // every asset (download, copy, and the audio player).
-    preview: isImage ? a.url : '',
+    preview: isImage ? tileUrl : '',
     url: a.url ?? '',
     tags: a.tags ?? [],
+    folder: a.folder?.trim() || null,
+    width,
+    height,
   };
 }
 

@@ -23,7 +23,7 @@ Two surfaces served from one Astro app:
 
 - **Marketing site** — home, product, channels, pricing, deliverability, blog,
   guides, legal, support, contact. Static-first, SEO-driven.
-- **Authenticated workspace** (`/app/*`, `/dashboard`) — the campaign product.
+- **Authenticated workspace** (`/dashboard/*`) — the campaign product (SSR, session-gated).
 
 ### 1.2 Channels
 
@@ -39,17 +39,18 @@ across channels; a subscriber is addressed by `email` and/or `phone`.
 
 ### 1.3 Workspace screens
 
-| Screen          | Capabilities                                                                    |
-| --------------- | ------------------------------------------------------------------------------- |
-| **Dashboard**   | Workspace summary + per-channel breakdown, 30-day activity, recent campaigns    |
-| **Campaigns**   | Create/edit, draft→send lifecycle, status-guarded dispatch (no double-send)     |
-| **Templates**   | Email (visual EmailBuilder.js) + SMS/WA/Voice (composer), preview, clone        |
-| **Subscribers** | CRM view, add/edit (email, phone, name, status, tags), bulk actions, segments   |
-| **Lists**       | List CRUD, membership, workspace-wide custom fields, member counts              |
-| **Segments**    | Rule-based (field + op + value) compiled to SQL `EXISTS`; membership counts     |
-| **Media**       | S3-backed asset library (presigned upload, CloudFront delivery)                 |
-| **Analytics**   | Daily activity + channel breakdown (PostHog HogQL when configured; else PG)     |
-| **Settings**    | Workspace/account settings                                                      |
+| Screen          | Capabilities                                                                                                                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dashboard**   | Workspace summary + per-channel breakdown, 30-day activity, recent campaigns                                                                                                                |
+| **Campaigns**   | Create/edit, draft→send lifecycle, status-guarded dispatch (no double-send), dedicated report page (`/campaigns/[id]/report`)                                                               |
+| **Templates**   | Per-channel builder pages — email (visual EmailBuilder.js + AI generation), SMS/Voice (composer), WhatsApp (wa-template-studio with Meta approval: submit, status polling, approval badges) |
+| **Subscribers** | CRM view, add/edit (email, phone, name, status, tags), bulk actions, segments, detail page with pins + GDPR/consent badges                                                                  |
+| **Lists**       | List CRUD, membership, consent + lifecycle fields, workspace-wide custom fields, member counts, detail page (`/lists/[id]`)                                                                 |
+| **Segments**    | Rule-based (field + op + value) compiled to SQL `EXISTS`; membership counts                                                                                                                 |
+| **Media**       | S3-backed asset library (presigned upload, CloudFront delivery)                                                                                                                             |
+| **Analytics**   | Daily activity + channel-aware breakdown (PostHog HogQL when configured; else PG)                                                                                                           |
+| **Profile**     | Account profile + workspace membership                                                                                                                                                      |
+| **Settings**    | Workspace/account settings                                                                                                                                                                  |
 
 ### 1.4 Personalization (merge tags)
 
@@ -58,15 +59,18 @@ Templates use `{{…}}` merge tags substituted per-subscriber at send time:
 custom fields. The editor's merge-tag menu is populated from the real custom-field
 schema, not placeholders.
 
-### 1.5 Auth & access (current: private rollout)
+### 1.5 Auth & access (open registration)
 
 - **Passwordless** — email a **magic link + 6-digit code**; no passwords.
-- **Login is allowlisted** during the private rollout (`hello@laravel42.com`).
-  Any other address is shown a waitlist notice pointing to sign-up. The gate is
-  enforced both client-side and in the `/api/login-code` proxy.
-- **Sign-up** is a passwordless trial flow (name + email + terms → "Start free
-  trial"). It sends a **welcome email** and lands on a terminal "You're on the
-  list" state (accounts are provisioned in waves).
+- **Login is open** — any address can request a code; verifying it signs in.
+- **Sign-up** is the same code exchange plus profile capture (name + email +
+  phone + terms → "Start free trial" → enter the 6-digit code). The first
+  verified code **creates the account + personal workspace** and lands in the
+  dashboard; name and phone travel through the credentials → verify path onto
+  the new user row (shown read-only on the Profile page).
+- **Welcome email** is sent by the backend when an account is created (any
+  entry path), over the Cloudflare relay. Sign-up also fires an internal
+  notification to `SIGNUP_NOTIFY_TO` via `/api/signup-welcome`.
 
 ### 1.6 Pricing
 
@@ -75,26 +79,34 @@ under Twilio/SendGrid, generated into `pricing-rates.json`. Infobip's internal
 negotiated rate card is **not** exposed by any API — it is scraped offline
 (`scripts/sync-infobip-rates.mjs`) and kept out of the repo.
 
+**Billing** is prepaid credits: each workspace owns a wallet (micro-USD,
+immutable ledger in Postgres), tops up via **Stripe Checkout** (packages +
+commitment tiers are DB-configured), and consumption draws the balance per
+delivered message at the channel rate card. Stripe handles payments, portal,
+taxes, and invoices only — never balances. Enforcement (reserve → commit →
+release around sends) is off by default (`BILLING_ENFORCEMENT`). See
+[`../workers/docs/billing-architecture.md`](../workers/docs/billing-architecture.md).
+
 ---
 
 ## 2. Tech stack
 
 ### 2.1 Frontend (`web-maildrill-astro`)
 
-| Layer          | Choice                                                              |
-| -------------- | ------------------------------------------------------------------ |
-| Framework      | **Astro 7** — static-first marketing + islands; SSR via node adapter (`mode: standalone`); pages opt into SSR with `export const prerender = false` |
-| Interactive UI | **React 19** islands (`@astrojs/react`)                            |
-| Language       | **TypeScript 6** (pinned < 7 — TS 7 breaks `astro check` + typescript-eslint) |
-| Styling        | Hand-authored **CSS + design tokens** (`src/styles/tokens.css`) and CSS Modules; no utility framework |
-| Fonts          | **Geist** / **Geist Mono** (variable woff2)                        |
-| Content        | Astro **Content Collections** + **Zod 4** schemas (blog/guides/legal) |
-| Auth           | **auth-astro** (`@auth/core`) — session + credentials              |
-| Backend client | **openapi-fetch** + **openapi-typescript** (typed client generated from the backend OpenAPI) |
-| Email (in-repo)| **Nodemailer** (SMTP) — temporary embedded welcome-email sender    |
-| SEO            | `@astrojs/sitemap`, `@astrojs/rss`, JSON-LD structured data        |
-| Tests          | **Vitest** (unit/integration) + **Playwright** (e2e)              |
-| Quality gates  | ESLint 10 (+ jsx-a11y) · Prettier · `astro check` · `tsc`         |
+| Layer           | Choice                                                                                                                                              |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework       | **Astro 7** — static-first marketing + islands; SSR via node adapter (`mode: standalone`); pages opt into SSR with `export const prerender = false` |
+| Interactive UI  | **React 19** islands (`@astrojs/react`)                                                                                                             |
+| Language        | **TypeScript 6** (pinned < 7 — TS 7 breaks `astro check` + typescript-eslint)                                                                       |
+| Styling         | Hand-authored **CSS + design tokens** (`src/styles/tokens.css`) and CSS Modules; no utility framework                                               |
+| Fonts           | **Geist** / **Geist Mono** (variable woff2)                                                                                                         |
+| Content         | Astro **Content Collections** + **Zod 4** schemas (blog/guides/legal)                                                                               |
+| Auth            | **auth-astro** (`@auth/core`) — session + credentials                                                                                               |
+| Backend client  | **openapi-fetch** + **openapi-typescript** (typed client generated from the backend OpenAPI)                                                        |
+| Email (in-repo) | **Nodemailer** → Cloudflare Email Service SMTP relay — transactional sender (welcome, sign-up notify)                                               |
+| SEO             | `@astrojs/sitemap`, `@astrojs/rss`, JSON-LD structured data                                                                                         |
+| Tests           | **Vitest** (unit/integration) + **Playwright** (e2e)                                                                                                |
+| Quality gates   | ESLint 10 (+ jsx-a11y) · Prettier · `astro check` · `tsc`                                                                                           |
 
 ### 2.2 Email editor (vendored)
 
@@ -106,16 +118,16 @@ See [`../packages/VENDOR.md`](../packages/VENDOR.md) for the (few, documented) p
 
 ### 2.3 Backend (`workers/` — package name `workers`)
 
-| Layer         | Choice                                                        |
-| ------------- | ------------------------------------------------------------ |
-| Runtime       | Node 22, **pnpm workspace** monorepo, `tsx`                   |
-| HTTP          | **Fastify 5** (+ `@fastify/swagger` OpenAPI, `@fastify/cors`, `@fastify/multipart`) |
-| Validation    | **Zod 3** (via a Fastify zod type-provider)                  |
-| Database      | **PostgreSQL** via **Drizzle ORM** (+ `drizzle-kit` migrations) |
-| Queue         | **BullMQ 5** on **Redis** (`ioredis`)                         |
-| Storage       | **AWS S3** (`@aws-sdk/client-s3` + presigned PUT)            |
-| Logging       | **pino**                                                     |
-| Providers     | **Infobip** (delivery) + a network-free **mock** provider    |
+| Layer      | Choice                                                                              |
+| ---------- | ----------------------------------------------------------------------------------- |
+| Runtime    | Node 22, **pnpm workspace** monorepo, `tsx`                                         |
+| HTTP       | **Fastify 5** (+ `@fastify/swagger` OpenAPI, `@fastify/cors`, `@fastify/multipart`) |
+| Validation | **Zod 3** (via a Fastify zod type-provider)                                         |
+| Database   | **PostgreSQL** via **Drizzle ORM** (+ `drizzle-kit` migrations)                     |
+| Queue      | **BullMQ 5** on **Redis** (`ioredis`)                                               |
+| Storage    | **AWS S3** (`@aws-sdk/client-s3` + presigned PUT)                                   |
+| Logging    | **pino**                                                                            |
+| Providers  | **Infobip** (delivery) + a network-free **mock** provider                           |
 
 Workspace layout:
 
@@ -188,8 +200,10 @@ server-side and never expose provider keys to the client.
    campaign in **`sending`** until the poller completes it (empty audience →
    immediate `sent`).
 
-Transactional emails (login code, welcome) go **straight through the provider**,
-bypassing the campaign pipeline. Full ops checklist: [`../workers/HANDOFF.md`](../workers/HANDOFF.md).
+Transactional emails (login code, welcome) are routed through the **Cloudflare
+Email Service SMTP relay** (`smtp.mx.cloudflare.net`, shared `SMTP_*`/`MAIL_FROM`
+env, domain `maildrill.net`) — never through Infobip or the campaign pipeline.
+**Infobip carries campaign email only.** Full ops checklist: [`../workers/HANDOFF.md`](../workers/HANDOFF.md).
 
 ### 3.5 Media
 
@@ -199,33 +213,47 @@ delivered via **CloudFront**. Requires `AWS_REGION`, `MEDIA_S3_BUCKET`,
 
 ### 3.6 Configuration (env)
 
-| Where | Key vars |
-| --- | --- |
-| Shared root `.env` | One file for Astro + workers (see `.env.example`) |
-| Frontend | `PUBLIC_SITE_URL`, `AUTH_SECRET`, `JWT_SECRET`, `API_BASE_URL`, `EB_BACKEND_URL`, `PUBLIC_POSTHOG_*` |
-| Frontend SMTP | `SMTP_HOST/PORT/USER/PASS/SECURE`, `MAIL_FROM` |
-| Backend | `DATABASE_URL`, `REDIS_URL`, `PROVIDER_DRIVER`, `INFOBIP_*`, `API_KEYS`, AWS/media |
-| PostHog query | `POSTHOG_PERSONAL_API_KEY` (`query:read`), `POSTHOG_PROJECT_ID=526344`, `POSTHOG_APP_HOST` |
+| Where              | Key vars                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------ |
+| Shared root `.env` | One file for Astro + workers (see `.env.example`)                                          |
+| Frontend           | `PUBLIC_SITE_URL`, `AUTH_SECRET`, `JWT_SECRET`, `API_BASE_URL`, `PUBLIC_POSTHOG_*`         |
+| Frontend SMTP      | `SMTP_HOST/PORT/USER/PASS/SECURE`, `MAIL_FROM`                                             |
+| Backend            | `DATABASE_URL`, `REDIS_URL`, `PROVIDER_DRIVER`, `INFOBIP_*`, `API_KEYS`, AWS/media         |
+| PostHog query      | `POSTHOG_PERSONAL_API_KEY` (`query:read`), `POSTHOG_PROJECT_ID=526344`, `POSTHOG_APP_HOST` |
 
 Secrets live only in gitignored `.env` — never committed. `/design` is local-only
 and gitignored.
 
+### 3.7 Deployment
+
+- **Ploi VPS (current)** — Astro SSR (`node dist/server/entry.mjs`) and the workers
+  processes run as Ploi daemons behind nginx. Site script:
+  [`../deploy/ploi-deploy.sh`](../deploy/ploi-deploy.sh); backend daemon layout and
+  restart mechanics: [`../workers/deploy/README.md`](../workers/deploy/README.md).
+- **Docker** — [`../docker-compose.yml`](../docker-compose.yml) runs web + split
+  backends (product-api :3001, messaging :3002, email-builder :3003, BullMQ
+  workers) + Postgres + Redis from one image (`../Dockerfile`); migrate runs
+  once before APIs start. Production mode requires strong `JWT_SECRET` and
+  `WEBHOOK_INFOBIP_SECRET` values in the root `.env`.
+
 ---
 
-## 4. Current state & caveats (private rollout)
+## 4. Current state & caveats
 
 These reflect how the system behaves **today**, not the end goal:
 
-- **Login** is gated to a single allowlisted account; everyone else is waitlisted.
-- **Sign-up** is a passwordless, front-end flow — the welcome email is real
-  (SMTP), but a full account/workspace is not provisioned on the frontend yet.
-- **Welcome email** is sent **in-repo over SMTP** (Nodemailer), temporarily
-  decoupled from `workers/`. Falls back to a logged no-op when SMTP is
-  unconfigured. The backend's `/v1/auth/welcome` remains but is unused.
-- **Login code** still requires `workers/` (code storage + verify +
-  session live in Postgres).
-- **Infobip** delivery is wired but the current key returns **403** — real sends
-  fail until the key/base-URL is fixed; use `PROVIDER_DRIVER=mock` in dev.
+- **Login and registration are open** — any address can request a code; the
+  first verified code self-provisions the account + personal workspace (§1.5).
+- **Welcome email** is sent by `workers/` on account creation, over the
+  Cloudflare relay. The frontend's `/api/signup-welcome` now only sends the
+  internal team notification (in-repo SMTP; logged no-op when unconfigured).
+- **Auth requires `workers/`** (code storage + verify + session live in
+  Postgres); the login-code email goes out via the Cloudflare relay, not
+  Infobip.
+- **Infobip** delivery is wired against the live account (WhatsApp template
+  approval and voice preview run through it); `PROVIDER_DRIVER=mock` stays the
+  dev default so local campaign work sends nothing real. Transactional email
+  ignores the provider driver — it sends whenever `SMTP_*` is configured.
 - The **API docs** page (`/developers`) is hidden for now (redirects home,
   excluded from nav/sitemap).
 
@@ -233,8 +261,8 @@ These reflect how the system behaves **today**, not the end goal:
 
 ## 5. Repositories / paths
 
-| Path | Role |
-| --- | --- |
-| `web-maildrill-astro` (this repo) | Marketing + workspace UI + BFF + vendored editor + `workers/` |
-| `workers/` | Fastify + BullMQ + Drizzle backend (was `workers`) — see [`../workers/HANDOFF.md`](../workers/HANDOFF.md) |
-| `web-email-builder-js` | Upstream EmailBuilder.js (vendored into `packages/`) |
+| Path                              | Role                                                                                                      |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `web-maildrill-astro` (this repo) | Marketing + workspace UI + BFF + vendored editor + `workers/`                                             |
+| `workers/`                        | Fastify + BullMQ + Drizzle backend (was `workers`) — see [`../workers/HANDOFF.md`](../workers/HANDOFF.md) |
+| `web-email-builder-js`            | Upstream EmailBuilder.js (vendored into `packages/`)                                                      |

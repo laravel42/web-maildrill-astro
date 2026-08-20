@@ -13,7 +13,14 @@ type HeightInputProps = {
   max?: number;
   step?: number;
 };
-const HeightInput: FC<HeightInputProps> = ({ label, defaultValue, onChange, min = 1, max = 100, step = 1 }) => {
+const HeightInput: FC<HeightInputProps> = ({
+  label,
+  defaultValue,
+  onChange,
+  min = 1,
+  max = 100,
+  step = 1,
+}) => {
   const { t } = useTranslation('inspector');
   const resolvedLabel = label ?? t('inputs.common.height');
 

@@ -27,6 +27,9 @@ export type IconName =
   | 'chevron-right'
   | 'check'
   | 'check-circle'
+  | 'alert-triangle'
+  | 'minus'
+  | 'pause'
   | 'x'
   | 'search'
   | 'menu'
@@ -49,6 +52,9 @@ export type IconName =
   | 'lists'
   | 'subscribers'
   | 'media'
+  | 'folder'
+  | 'orientation'
+  | 'ratio'
   | 'analytics'
   | 'settings'
   | 'command'
@@ -61,7 +67,14 @@ export type IconName =
   | 'upload'
   | 'save'
   | 'eye'
-  | 'zap';
+  | 'zap'
+  | 'user'
+  | 'logout'
+  | 'key'
+  | 'fingerprint'
+  | 'smartphone'
+  | 'monitor'
+  | 'smile';
 
 export const filledIcons: ReadonlySet<IconName> = new Set<IconName>([
   'whatsapp',
@@ -98,6 +111,10 @@ export const iconPaths: Record<IconName, string> = {
   'chevron-right': '<path d="m9 6 6 6-6 6"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
   'check-circle': '<circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/>',
+  'alert-triangle':
+    '<path d="m21.7 18-8.1-14a1.7 1.7 0 0 0-3.1 0L2.3 18a1.7 1.7 0 0 0 1.5 2.5h16.4a1.7 1.7 0 0 0 1.5-2.5Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  minus: '<path d="M5 12h14"/>',
+  pause: '<path d="M8 4v16M16 4v16"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
   menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
@@ -121,18 +138,23 @@ export const iconPaths: Record<IconName, string> = {
   github:
     '<path d="M12 0C5.4 0 0 5.4 0 12c0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7 0-.7 0-.7 1.2 0 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2 0-.3-.5-1.5.2-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.6 18.3 5 18.3 5c.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 24 12c0-6.6-5.4-12-12-12Z"/>',
   dashboard:
-    '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
-  campaigns:
-    '<path d="M3 11v2a1 1 0 0 0 1 1h3l4 4V6L7 10H4a1 1 0 0 0-1 1Z"/><path d="M15.5 8.5a4 4 0 0 1 0 7"/>',
-  templates: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>',
-  lists: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+    '<rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/>',
+  campaigns: '<path d="M21.5 2.5 2.5 9.8l7 2.7 2.7 7Z"/><path d="M21.5 2.5 9.5 12.5"/>',
+  templates: '<rect x="3" y="3" width="18" height="18" rx="2.4"/><path d="M3 9h18M9 21V9"/>',
+  lists:
+    '<path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.8" cy="6" r="1.3"/><circle cx="3.8" cy="12" r="1.3"/><circle cx="3.8" cy="18" r="1.3"/>',
   subscribers:
-    '<circle cx="9" cy="8" r="4"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 3.1a4 4 0 0 1 0 7.8M22 20a6 6 0 0 0-4-5.7"/>',
+    '<path d="M16 20v-1.6A3.4 3.4 0 0 0 12.6 15H6.4A3.4 3.4 0 0 0 3 18.4V20"/><circle cx="9.5" cy="8" r="3.5"/><path d="M21 20v-1.6a3.4 3.4 0 0 0-2.6-3.3M15.5 4.6a3.5 3.5 0 0 1 0 6.8"/>',
   media:
-    '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.8"/><path d="m21 15-5-5L5 21"/>',
-  analytics: '<path d="M3 3v18h18"/><path d="m7 14 3-4 3 3 5-7"/>',
+    '<rect x="3" y="3.5" width="18" height="17" rx="2.4"/><circle cx="8.6" cy="9.2" r="1.8"/><path d="m3.4 17.5 4.8-4.6 4 3.6 3.2-3 4.6 4.4"/>',
+  folder:
+    '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  orientation: '<rect x="2" y="6" width="20" height="12" rx="2"/>',
+  ratio:
+    '<rect x="6" y="2" width="12" height="20" rx="2"/><rect x="2" y="6" width="20" height="12" rx="2"/>',
+  analytics: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
   settings:
-    '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 2.6 7a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H7a1.6 1.6 0 0 0 1-1.5V1a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V7a1.6 1.6 0 0 0 1.5 1H23a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/>',
+    '<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="13" x2="20" y2="13"/><line x1="4" y1="19" x2="20" y2="19"/><circle cx="9" cy="7" r="2.2"/><circle cx="15" cy="13" r="2.2"/><circle cx="8" cy="19" r="2.2"/>',
   command:
     '<path d="M15 6a3 3 0 1 1 3 3h-3V6ZM9 6a3 3 0 1 0-3 3h3V6ZM9 18a3 3 0 1 1-3-3h3v3ZM15 18a3 3 0 1 0 3-3h-3v3ZM9 9h6v6H9z"/>',
   filter: '<path d="M22 3H2l8 9.5V19l4 2v-8.5L22 3Z"/>',
@@ -143,8 +165,18 @@ export const iconPaths: Record<IconName, string> = {
   copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
   download: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>',
   upload: '<path d="M12 21V9M7 14l5-5 5 5M5 3h14"/>',
-  save:
-    '<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>',
+  save: '<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>',
   eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
   zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/>',
+  smile:
+    '<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>',
+  user: '<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5v-1.2A4.3 4.3 0 0 1 8.8 15h6.4a4.3 4.3 0 0 1 4.3 4.3v1.2"/>',
+  logout:
+    '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+  key: '<circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.8-9.8"/><path d="m15 7 3 3"/><path d="m18 4 2 2"/>',
+  fingerprint:
+    '<path d="M12 11a3 3 0 0 0-3 3c0 1.8-.3 3.5-.9 5"/><path d="M15 14c0 2.4-.3 4.6-.9 6.7"/><path d="M17.8 18.4c.1-.9.2-2 .2-3.4a6 6 0 0 0-9-5.2"/><path d="M5.4 12.9A6 6 0 0 0 6 14c0 1.4-.2 2.7-.5 4"/><path d="M3.7 9.4A9 9 0 0 1 12 5a9 9 0 0 1 8.3 4.4"/><path d="M6.2 3.9A11 11 0 0 1 12 2c2.1 0 4.1.6 5.8 1.7"/>',
+  smartphone: '<rect x="6.5" y="2.5" width="11" height="19" rx="2.4"/><path d="M11 18.4h2"/>',
+  monitor:
+    '<rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>',
 };

@@ -50,6 +50,174 @@
       "when": 1784490489581,
       "tag": "0006_whatsapp_template_approval",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784490489582,
+      "tag": "0007_media_thumb",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784490489583,
+      "tag": "0008_list_consent_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1785537563269,
+      "tag": "0009_user_phone",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1785724027960,
+      "tag": "0010_user_profile_prefs",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1785730734859,
+      "tag": "0011_vengeful_korath",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1785739216623,
+      "tag": "0012_sad_shooting_star",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1785743811793,
+      "tag": "0013_worried_wallop",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1785924678601,
+      "tag": "0014_billing_wallet",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1786000000000,
+      "tag": "0015_tenant_infobip_entity",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1786480000000,
+      "tag": "0016_user_tier",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1786560000000,
+      "tag": "0017_message_voice_seconds",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1786600000000,
+      "tag": "0018_message_error_permanent",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1786620000000,
+      "tag": "0019_subscriber_status_invalid",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1786660000000,
+      "tag": "0020_list_suspension",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1786700000000,
+      "tag": "0021_list_channels",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1786740000000,
+      "tag": "0022_segment_channels",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1786740040000,
+      "tag": "0023_subscriber_keyset_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1786740080000,
+      "tag": "0024_subscriber_search_trgm",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1786740120000,
+      "tag": "0025_subscriber_engagement",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1786740160000,
+      "tag": "0026_campaign_rollup",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1786740200000,
+      "tag": "0027_engagement_index_narrow",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1786740240000,
+      "tag": "0028_list_board_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1786740280000,
+      "tag": "0029_billing_usage",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1786740320000,
+      "tag": "0030_tenant_entity_provisioned",
+      "breakpoints": true
     }
   ]
 }

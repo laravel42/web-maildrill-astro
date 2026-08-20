@@ -8,9 +8,15 @@
  */
 
 export { Studio, type StudioProps } from './app/Studio';
+export type { ApprovalStatus } from './app/TopBar';
 
 // Plugin system
-export { registerBlock, registerButton, listBlockPlugins, listButtonPlugins } from './core/registry';
+export {
+  registerBlock,
+  registerButton,
+  listBlockPlugins,
+  listButtonPlugins,
+} from './core/registry';
 export { registerBuiltInPlugins } from './blocks';
 // Not registered by default; re-enable with registerButton(quickReplyPlugin).
 export { quickReplyPlugin } from './blocks/buttons/basic';
@@ -55,7 +61,14 @@ export {
 } from './core/store';
 
 // Validation + serialization
-export { hasErrors, issuesForBlock, issuesForSlot, validateTemplate } from './core/validation';
+export {
+  canRequestApproval,
+  docHasContent,
+  hasErrors,
+  issuesForBlock,
+  issuesForSlot,
+  validateTemplate,
+} from './core/validation';
 export {
   fromMetaJson,
   InvalidTemplateError,

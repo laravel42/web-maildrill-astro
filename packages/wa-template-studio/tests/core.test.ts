@@ -4,7 +4,9 @@ import { registerBuiltInPlugins } from '../src/blocks';
 import { newId, type MetaTemplate, type TemplateDoc } from '../src/core/types';
 import { fromMetaJson, toMetaJson } from '../src/core/serialize';
 import { hasErrors, validateTemplate } from '../src/core/validation';
+import { clearWaFormatting } from '../src/core/text-format';
 import { analyzeVariables, insertVariableAt, renumberVariables } from '../src/core/variables';
+import { buildSubscriberFieldOptions, matchSubscriberField } from '../src/core/subscriber-fields';
 
 beforeAll(() => {
   registerBuiltInPlugins();
@@ -31,7 +33,15 @@ function marketingDoc(): TemplateDoc {
       },
       footer: { id: newId('footer'), type: 'footer', data: { text: 'Reply STOP to opt out' } },
       buttons: [
-        { id: newId('btn'), type: 'url', data: { text: 'Shop now', url: 'https://shop.example.com/sale/{{1}}', example: 'https://shop.example.com/sale/spring' } },
+        {
+          id: newId('btn'),
+          type: 'url',
+          data: {
+            text: 'Shop now',
+            url: 'https://shop.example.com/sale/{{1}}',
+            example: 'https://shop.example.com/sale/spring',
+          },
+        },
         { id: newId('btn'), type: 'copy-code', data: { example: 'SPRING20' } },
       ],
     },
@@ -44,7 +54,9 @@ function marketingDoc(): TemplateDoc {
 
 describe('variable engine', () => {
   it('analyzes usage, duplicates, gaps and malformed syntax', () => {
-    const analysis = analyzeVariables('Hi {{1}} and {{3}} and {{1}} and {{name}}', { '2': { example: 'x' } });
+    const analysis = analyzeVariables('Hi {{1}} and {{3}} and {{1}} and {{name}}', {
+      '2': { example: 'x' },
+    });
     expect(analysis.used).toEqual([1, 3]);
     expect(analysis.duplicated).toEqual([1]);
     expect(analysis.sequential).toBe(false);
@@ -53,7 +65,10 @@ describe('variable engine', () => {
   });
 
   it('renumbers to a sequential series and remaps metadata', () => {
-    const result = renumberVariables('A {{4}} B {{2}} C {{4}}', { '4': { example: 'four' }, '2': { example: 'two' } });
+    const result = renumberVariables('A {{4}} B {{2}} C {{4}}', {
+      '4': { example: 'four' },
+      '2': { example: 'two' },
+    });
     expect(result.text).toBe('A {{1}} B {{2}} C {{1}}');
     expect(result.map).toEqual({ '1': { example: 'four' }, '2': { example: 'two' } });
     expect(result.mapping).toEqual({ 4: 1, 2: 2 });
@@ -68,7 +83,11 @@ describe('variable engine', () => {
   it('inserts by position and pushes later variables up, following metadata', () => {
     const text = 'Hi {{1}}, order {{2}} shipped';
     const caretAt = 'Hi {{1}}, '.length; // right before {{2}}'s text, mid-message
-    const result = insertVariableAt(text, { '1': { name: 'Name' }, '2': { example: 'A123' } }, caretAt);
+    const result = insertVariableAt(
+      text,
+      { '1': { name: 'Name' }, '2': { example: 'A123' } },
+      caretAt,
+    );
     // The inserted placeholder takes position 2; the old {{2}} becomes {{3}}.
     expect(result.text).toBe('Hi {{1}}, {{2}}order {{3}} shipped');
     // Metadata follows its variable: old {{2}} → {{3}}, {{1}} unchanged, new {{2}} empty.
@@ -80,6 +99,52 @@ describe('variable engine', () => {
     const result = insertVariableAt('', {}, 0);
     expect(result.text).toBe('{{1}}');
     expect(result.caret).toBe('{{1}}'.length);
+  });
+});
+
+describe('clear formatting', () => {
+  it('strips every WhatsApp marker the preview would render', () => {
+    expect(clearWaFormatting('*bold* _italic_ ~strike~ ```mono```')).toBe(
+      'bold italic strike mono',
+    );
+  });
+
+  it('unwraps nested markers', () => {
+    expect(clearWaFormatting('*_both_*')).toBe('both');
+    expect(clearWaFormatting('~*_all three_*~')).toBe('all three');
+  });
+
+  it('keeps variables, unpaired and empty markers', () => {
+    expect(clearWaFormatting('Hi *{{1}}*, your code is {{2}}')).toBe(
+      'Hi {{1}}, your code is {{2}}',
+    );
+    expect(clearWaFormatting('5 * 3 = 15 and a lone _underscore')).toBe(
+      '5 * 3 = 15 and a lone _underscore',
+    );
+    expect(clearWaFormatting('**')).toBe('**');
+  });
+
+  it('does not pair markers across lines', () => {
+    expect(clearWaFormatting('*line\nbreak*')).toBe('*line\nbreak*');
+  });
+});
+
+describe('subscriber fields', () => {
+  it('includes core fields and workspace custom fields', () => {
+    const options = buildSubscriberFieldOptions([
+      { id: '1', key: 'company', label: 'Company', type: 'text' },
+    ]);
+    expect(options.map((o) => o.label)).toEqual(['Name', 'Email', 'Phone', 'Company']);
+    expect(options[3]?.token).toBe('{{attributes.company}}');
+  });
+
+  it('matches stored variable metadata by merge token', () => {
+    const options = buildSubscriberFieldOptions();
+    const matched = matchSubscriberField(
+      { name: 'Name', example: 'Alex Morgan', source: '{{name}}' },
+      options,
+    );
+    expect(matched?.id).toBe('name');
   });
 });
 
@@ -147,13 +212,19 @@ describe('validation engine', () => {
     };
     expect(validateTemplate(doc).some((i) => i.code === 'auth/otp-required')).toBe(true);
 
-    doc.blocks.buttons.push({ id: newId('btn'), type: 'otp', data: { otpType: 'COPY_CODE', text: 'Copy code' } });
+    doc.blocks.buttons.push({
+      id: newId('btn'),
+      type: 'otp',
+      data: { otpType: 'COPY_CODE', text: 'Copy code' },
+    });
     expect(hasErrors(validateTemplate(doc))).toBe(false);
   });
 
   it('flags dynamic URLs that are not a trailing {{1}}', () => {
     const doc = marketingDoc();
-    doc.blocks.buttons = [{ id: newId('btn'), type: 'url', data: { text: 'Go', url: 'https://a.com/{{2}}/x' } }];
+    doc.blocks.buttons = [
+      { id: newId('btn'), type: 'url', data: { text: 'Go', url: 'https://a.com/{{2}}/x' } },
+    ];
     expect(validateTemplate(doc).some((i) => i.code === 'url/dynamic-suffix')).toBe(true);
   });
 });
@@ -199,7 +270,14 @@ describe('meta serialization', () => {
         {
           type: 'BUTTONS',
           buttons: [
-            { type: 'OTP', otp_type: 'ONE_TAP', text: 'Copy code', autofill_text: 'Autofill', package_name: 'com.x', signature_hash: 'hash' },
+            {
+              type: 'OTP',
+              otp_type: 'ONE_TAP',
+              text: 'Copy code',
+              autofill_text: 'Autofill',
+              package_name: 'com.x',
+              signature_hash: 'hash',
+            },
           ],
         },
       ],
@@ -241,7 +319,13 @@ describe('meta serialization', () => {
             { type: 'URL', text: 'Web', url: 'https://x.com' },
             { type: 'PHONE_NUMBER', text: 'Call', phone_number: '+1555' },
             { type: 'COPY_CODE', example: 'SAVE' },
-            { type: 'FLOW', text: 'Book', flow_id: '123', flow_action: 'navigate', navigate_screen: 'HOME' },
+            {
+              type: 'FLOW',
+              text: 'Book',
+              flow_id: '123',
+              flow_action: 'navigate',
+              navigate_screen: 'HOME',
+            },
             { type: 'CATALOG', text: 'View catalog' },
             { type: 'MPM', text: 'View items' },
           ],

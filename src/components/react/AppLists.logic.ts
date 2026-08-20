@@ -1,14 +1,15 @@
 import { lists as baseLists } from '@/lib/app/mock-data';
 import type { ListMeta, ListRow } from './AppLists.types';
 
-/** Rows shown per page in the lists table/cards. */
-export const PAGE_SIZE = 10;
+export { PAGE_SIZE } from './shared/pagination';
 
 const META: Record<string, ListMeta> = {
   list_1: {
     color: '#4f46e5',
     trend: [16800, 17150, 17480, 17720, 17980, 18220, 18420],
-    recentCampaign: 'Spring Launch',
+    mailable: 18244,
+    channels: ['email'],
+    gdprConsent: true,
     tags: ['Marketing', 'VIP', 'Opt-in'],
     notes: 'Used for the weekly product newsletter. Keep double opt-in on for GDPR.',
     more: '+240',
@@ -18,7 +19,9 @@ const META: Record<string, ListMeta> = {
   list_2: {
     color: '#f59e0b',
     trend: [58200, 58720, 59180, 59520, 59810, 60050, 60211],
-    recentCampaign: 'Welcome Series',
+    mailable: 59702,
+    channels: ['email'],
+    gdprConsent: true,
     tags: ['Weekly', 'Opt-in'],
     notes: '',
     more: '+18',
@@ -28,7 +31,9 @@ const META: Record<string, ListMeta> = {
   list_3: {
     color: '#22c55e',
     trend: [2510, 2680, 2840, 2980, 3080, 3160, 3200],
-    recentCampaign: 'Order shipped SMS',
+    mailable: 3187,
+    channels: ['email'],
+    gdprConsent: false,
     tags: ['Automation', 'Transactional'],
     notes: '',
     more: '+12',
@@ -42,7 +47,9 @@ export const rows: ListRow[] = baseLists.map((l) => ({
   ...(META[l.id] ?? {
     color: '#4f46e5',
     trend: [l.subscribers],
-    recentCampaign: '—',
+    mailable: l.subscribers,
+    channels: ['email'],
+    gdprConsent: false,
     tags: [],
     notes: '',
     more: '+0',
@@ -50,12 +57,6 @@ export const rows: ListRow[] = baseLists.map((l) => ({
     clickRate: '—',
   }),
 }));
-
-export const AVATAR_GRADS = [
-  'linear-gradient(135deg,#fbbf24,#f59e0b)',
-  'linear-gradient(135deg,#818cf8,#4f46e5)',
-  'linear-gradient(135deg,#34d399,#059669)',
-];
 
 export function fmtPct(pct: number): string {
   const arrow = pct >= 0 ? '↑' : '↓';

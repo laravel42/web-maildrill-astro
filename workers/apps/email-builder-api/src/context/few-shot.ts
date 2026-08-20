@@ -237,7 +237,9 @@ class FewShotSelector {
 
     // Ensure at least one example with backgroundImage for visual variety
     const selected: FewShotExample[] = [];
-    const backgroundImageExamples = scored.filter((item) => item.example.output.includes('backgroundImage'));
+    const backgroundImageExamples = scored.filter((item) =>
+      item.example.output.includes('backgroundImage'),
+    );
 
     // Always include at least one background image example if available.
     // Rotate by seed so successive generations see different hero shapes
@@ -250,7 +252,9 @@ class FewShotSelector {
 
     // Fill remaining slots with best scoring examples
     const remaining = maxExamples - selected.length;
-    const otherExamples = scored.filter((item) => !selected.includes(item.example)).slice(0, remaining);
+    const otherExamples = scored
+      .filter((item) => !selected.includes(item.example))
+      .slice(0, remaining);
 
     selected.push(...otherExamples.map((item) => item.example));
 
@@ -261,7 +265,7 @@ class FewShotSelector {
     userPrompt: string,
     example: FewShotExample,
     userCategory: string,
-    userComplexity: string
+    userComplexity: string,
   ): number {
     let score = 0;
 
@@ -379,7 +383,7 @@ export function generateFewShotPrompt(
   userPrompt: string,
   maxExamples: number = 2,
   hasPool: boolean = false,
-  seed?: number
+  seed?: number,
 ): string {
   const selector = getFewShotSelector();
   const examples = selector.selectExamples(userPrompt, maxExamples, seed);

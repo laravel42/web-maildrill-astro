@@ -35,7 +35,10 @@ import {
 } from '@mui/material';
 
 import { resolveBackendUrl } from '../../components/UnsplashImagePicker/unsplash-api';
-import { classifyBlockSubtree, type SubtreeCategory } from '../../documents/editor/classifyBlockSubtree';
+import {
+  classifyBlockSubtree,
+  type SubtreeCategory,
+} from '../../documents/editor/classifyBlockSubtree';
 import { editorStateStore, getComponentsStorageMode } from '../../documents/editor/EditorContext';
 import { INPUT_TEXTFIELD_SX } from '../InspectorDrawer/ConfigurationPanel/input-panels/helpers/inputs/components/inputStyles';
 import CustomSelect from '../InspectorDrawer/ConfigurationPanel/input-panels/helpers/inputs/components/Select';
@@ -206,7 +209,7 @@ export default function SaveSubtreeDialog({ open, rootBlockId, onClose }: SaveSu
           t('componentsLibrary.save.successDetailed', 'Saved → {{path}} ({{count}} blocks)', {
             path: result.saved,
             count: result.blockCount,
-          })
+          }),
         );
         setName('');
         setTags([]);
@@ -250,14 +253,14 @@ export default function SaveSubtreeDialog({ open, rootBlockId, onClose }: SaveSu
             {
               backdropColor: rootData.backdropColor,
               canvasColor: rootData.canvasColor,
-            }
+            },
           );
           thumbnailBlob = await captureSubtreeThumbnail(html, { variant: 'subtree' });
           if (thumbnailBlob) {
             console.info(
               '[SaveSubtreeDialog] captured thumbnail',
               `${(thumbnailBlob.size / 1024).toFixed(1)} KB`,
-              thumbnailBlob.type || '(unknown type)'
+              thumbnailBlob.type || '(unknown type)',
             );
           }
         } catch (captureErr) {
@@ -302,7 +305,7 @@ export default function SaveSubtreeDialog({ open, rootBlockId, onClose }: SaveSu
         if (response.status === 413) {
           console.warn(
             '[SaveSubtreeDialog] thumbnail rejected as too large; retrying save without it',
-            `${(thumbnailBlob.size / 1024).toFixed(1)} KB`
+            `${(thumbnailBlob.size / 1024).toFixed(1)} KB`,
           );
           response = await postJson();
         }
@@ -312,7 +315,10 @@ export default function SaveSubtreeDialog({ open, rootBlockId, onClose }: SaveSu
       }
 
       if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as { error?: string; issues?: unknown } | null;
+        const body = (await response.json().catch(() => null)) as {
+          error?: string;
+          issues?: unknown;
+        } | null;
         throw new Error(body?.error ?? `HTTP ${response.status}`);
       }
       const result = (await response.json()) as { id: string; saved: string; blockCount: number };
@@ -320,7 +326,7 @@ export default function SaveSubtreeDialog({ open, rootBlockId, onClose }: SaveSu
         t('componentsLibrary.save.successDetailed', 'Saved → {{path}} ({{count}} blocks)', {
           path: result.saved,
           count: result.blockCount,
-        })
+        }),
       );
       setName('');
       setTags([]);
@@ -379,7 +385,7 @@ export default function SaveSubtreeDialog({ open, rootBlockId, onClose }: SaveSu
               <FormHelperText>
                 {t(
                   'componentsLibrary.save.roleHelp',
-                  'hero / features / social_proof / cta participate in the AI rotation pool.'
+                  'hero / features / social_proof / cta participate in the AI rotation pool.',
                 )}
               </FormHelperText>
             </div>
@@ -391,7 +397,7 @@ export default function SaveSubtreeDialog({ open, rootBlockId, onClose }: SaveSu
             <Alert severity="info">
               {t(
                 'componentsLibrary.save.unsupportedCategory',
-                'Only sections (a container or columns block with content) can be saved to the library.'
+                'Only sections (a container or columns block with content) can be saved to the library.',
               )}
             </Alert>
           )}

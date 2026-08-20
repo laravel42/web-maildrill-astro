@@ -1,6 +1,14 @@
 import React from 'react';
 
-import { AutoAwesome, CheckCircle, Description, Edit, Refresh, ShortText, Subject } from '@mui/icons-material';
+import {
+  AutoAwesome,
+  CheckCircle,
+  Description,
+  Edit,
+  Refresh,
+  ShortText,
+  Subject,
+} from '@mui/icons-material';
 
 export type AIAction =
   | 'rewrite'

@@ -1,0 +1,28 @@
+/*
+ * Shared emoji-picker sizing. The web component hard-codes `height: 435px` on
+ * its :host and sizes its width to the grid, which is taller than the panels
+ * it drops out of; page styles win over :host, and the grid scrolls happily at
+ * any height.
+ */
+.md-emoji-panel {
+  display: flex;
+}
+
+.md-emoji-panel em-emoji-picker {
+  height: var(--md-emoji-height, 380px);
+}
+
+/* Placeholder while the picker chunk and its data load. Sized to the real
+   panel (9 columns x 30px, plus padding and the scrollbar gutter) so nothing
+   jumps when the picker takes over. */
+.md-emoji-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 310px;
+  height: var(--md-emoji-height, 380px);
+  padding: 24px;
+  font-size: 12.5px;
+  text-align: center;
+  opacity: 0.65;
+}

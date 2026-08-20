@@ -32,7 +32,14 @@ import type { ThemeSection } from '../../../documents/editor/EditorContext';
 import { TextColorIcon } from '../../InspectorDrawer/ConfigurationPanel/input-panels/helpers/style-inputs/SingleStylePropertyPanel';
 
 export type ThemeFieldKind =
-  'color' | 'padding' | 'fontSize' | 'fontFamily' | 'fontWeight' | 'textAlign' | 'number' | 'border';
+  | 'color'
+  | 'padding'
+  | 'fontSize'
+  | 'fontFamily'
+  | 'fontWeight'
+  | 'textAlign'
+  | 'number'
+  | 'border';
 
 export type ThemeField = {
   /** `style` or `props` — matches the runtime resolution chain. */
@@ -160,7 +167,13 @@ export const THEME_BLOCK_REGISTRY: Record<ThemeBlockType, ThemeBlockSpec> = {
     titleKey: 'theme.blocks.divider.title',
     icon: HorizontalRuleOutlined,
     fields: [
-      { section: 'style', key: 'color', kind: 'color', labelKey: 'theme.fields.color', icon: PaletteOutlined },
+      {
+        section: 'style',
+        key: 'color',
+        kind: 'color',
+        labelKey: 'theme.fields.color',
+        icon: PaletteOutlined,
+      },
       BACKGROUND_COLOR_FIELD,
       { section: 'style', key: 'width', kind: 'number', labelKey: 'theme.fields.width' },
       { section: 'style', key: 'height', kind: 'number', labelKey: 'theme.fields.height' },

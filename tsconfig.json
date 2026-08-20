@@ -16,6 +16,8 @@
     "design",
     "test-results",
     "playwright-report",
-    "packages"
+    "packages",
+    "workers",
+    "coverage"
   ]
 }

@@ -6,7 +6,7 @@ import { BaseZodDictionary, DocumentBlocksDictionary } from '../utils';
  * @returns typed DocumentBlocksDictionary
  */
 export default function buildBlockConfigurationDictionary<T extends BaseZodDictionary>(
-  blocks: DocumentBlocksDictionary<T>
+  blocks: DocumentBlocksDictionary<T>,
 ) {
   return blocks;
 }

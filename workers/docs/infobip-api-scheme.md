@@ -12,7 +12,7 @@
 ## Decision
 
 > **Postgres is the system of record for all Maildrill data. Infobip is a stateless
-> delivery gateway** — used only to *send* (email / SMS / WhatsApp / voice), verify
+> delivery gateway** — used only to _send_ (email / SMS / WhatsApp / voice), verify
 > sending domains, and emit delivery notify payloads (to PostHog). **No domain data
 > is stored in the Infobip portal.**
 
@@ -27,11 +27,11 @@ Cloudflare Workers both dropped). The schema below is implemented in
   `/people/2/persons` exists (`403`), `/people/default/persons` → **`404` not found**. The
   path segment is an **API version**, not an app/entity slot. An entity rides on the
   **token**, never the URL.
-- **Per-entity contact isolation ("People with X") is Early Access** and *cannot* insert
+- **Per-entity contact isolation ("People with X") is Early Access** and _cannot_ insert
   profiles via the public People API (account-manager + Embeddable iFrame only).
 - **Sub-account creation is not a public API** (only list/update), so "workspace = Infobip
   sub-account" can't be self-serve.
-- **Campaigns can't be authored via API** — Moments only adds *participants* to a
+- **Campaigns can't be authored via API** — Moments only adds _participants_ to a
   portal-created flow.
 - On top of all that, the account's key returns `403 Unauthorized` on `/account`,
   `/provisioning`, and `/people` regardless — so even the emulated approach was blocked.
@@ -44,7 +44,7 @@ that isn't public API. Postgres removes every one of those problems.
 ## Architecture
 
 ```
-Fastify apps on a VPS (messaging :3000 · product :3001 · workers)
+Fastify apps on a VPS (messaging :3002 · product :3001 · workers)
         │
         ├──────────────► Postgres  ── SYSTEM OF RECORD (shared schema, tenant_id)
         │                            tenants, users, memberships, subscribers, lists,
@@ -57,14 +57,22 @@ Fastify apps on a VPS (messaging :3000 · product :3001 · workers)
 Infobip ── delivery/open/click webhook ──► Worker ──► writes message_events to Postgres
 ```
 
-- **Tenancy** is a Postgres concern: every row carries `tenant_id` (== a *workspace*;
+- **Tenancy** is a Postgres concern: every row carries `tenant_id` (== a _workspace_;
   implemented as the `tenants` table), isolated at the query/API layer. **Postgres RLS is
   optional** defense-in-depth; **schema-per-tenant was considered and rejected.** No Infobip
   sub-accounts or entities are required for isolation.
-- **Infobip stays a single account.** A per-workspace **Entity** (`entityId`) is *optional*
-  and only worth it for per-workspace **billing-usage / metrics** tagging on sends — never
-  for data. If used, pass `platform:{applicationId:"default", entityId:"<workspace>"}` on
-  send calls; it does not change where data lives.
+- **Infobip stays a single account.** A per-workspace **Entity** (`entityId`) is used for
+  per-workspace **billing-usage / metrics** tagging on sends — never for data. **Implemented
+  (2026-08):** every workspace is assigned `ws-<tenant-uuid>` at creation, stored on
+  `tenants.infobip_entity_id`, and stamped on every Infobip request (sends via
+  `SendInput.entityId`, WhatsApp template registration via `RegisterTemplateInput.entityId`).
+  `INFOBIP_ENTITY_ID` remains the account-wide fallback. It does not change where data lives.
+  - Explicit `POST /provisioning/1/entities` at signup is **best-effort**: the live account's
+    key still answers **403 UNAUTHORIZED** on `/provisioning` (re-verified 2026-08-10, same as
+    the 2026-07 probe). This is not a blocker — per the API spec, *"an entity attached to a
+    submitted message will get auto created if it doesn't exist yet"*, with `entityName`
+    defaulting to the id. Explicit creation only buys a readable name in the portal, so grant
+    the API key the provisioning scope if that matters; nothing else changes.
 - **Postgres host:** a **dedicated VPS** (self-managed), co-located with the Fastify apps
   and Redis/Valkey.
 
@@ -77,25 +85,25 @@ This sketch is the design rationale — minor deltas in the build: the workspace
 `tenants`, `campaign_recipients` is derived from `message_events`, and `infobip_binding` /
 `usage` are minimal. Sketch:
 
-| Table | Key columns | Notes |
-|---|---|---|
-| `workspaces` | id, name, slug, timezone, plan, quota_json, branding_json, feature_flags_json | the tenant |
-| `users` | id, email, name | platform identity |
-| `memberships` | tenant_id, user_id, role (`owner\|editor\|viewer`) | RBAC + `role_perms` |
-| `subscribers` | id, tenant_id, email, name, status (`active\|unsubscribed\|bounced`), custom_json, created_at, updated_at | the CDP — **in Postgres** |
-| `custom_field_defs` | tenant_id, name, type | drives `subscribers.custom_json` |
-| `lists` | id, tenant_id, name, description, color | first-class here (Infobip has no "list") |
-| `list_members` | list_id, subscriber_id | membership |
-| `segments` | id, tenant_id, name, match_type (`all\|any`), rules_json | evaluated in SQL |
-| `templates` | id, tenant_id, name, channel, subject, preheader, html, builder_doc_json, category, favorite | builder doc lives here; `html` compiled on save |
-| `campaigns` | id, tenant_id, name, channel, status, audience_json, scheduled_at, content_json, infobip_bulk_id, metrics_json | full lifecycle in Postgres |
-| `campaign_recipients` | campaign_id, subscriber_id, status, delivered_at, opened_at, clicked_at | or derive from `message_events` |
-| `message_events` | id, tenant_id, campaign_id, subscriber_id, type, ts, meta_json | **written from Infobip webhooks** |
-| `media_assets` | id, tenant_id, r2_key, name, folder, tags, size_kb, type | blob in R2, row here |
-| `suppressions` | tenant_id, address, channel, reason | unsubscribe/GDPR/bounce |
-| `sending_domains` | tenant_id, domain, dkim_status, infobip_domain_ref | mirrors Infobip domain state |
-| `infobip_binding` | tenant_id, application_id, entity_id (nullable), api_key_ref | only if using Entity tagging |
-| `usage` / `billing` | tenant_id, period, channel, used, stripe_* | plan quotas, Stripe/Cashier-free |
+| Table                 | Key columns                                                                                                    | Notes                                           |
+| --------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `workspaces`          | id, name, slug, timezone, plan, quota_json, branding_json, feature_flags_json                                  | the tenant                                      |
+| `users`               | id, email, name                                                                                                | platform identity                               |
+| `memberships`         | tenant_id, user_id, role (`owner\|editor\|viewer`)                                                             | RBAC + `role_perms`                             |
+| `subscribers`         | id, tenant_id, email, name, status (`active\|unsubscribed\|bounced`), custom_json, created_at, updated_at      | the CDP — **in Postgres**                       |
+| `custom_field_defs`   | tenant_id, name, type                                                                                          | drives `subscribers.custom_json`                |
+| `lists`               | id, tenant_id, name, description, color                                                                        | first-class here (Infobip has no "list")        |
+| `list_members`        | list_id, subscriber_id                                                                                         | membership                                      |
+| `segments`            | id, tenant_id, name, match_type (`all\|any`), rules_json                                                       | evaluated in SQL                                |
+| `templates`           | id, tenant_id, name, channel, subject, preheader, html, builder_doc_json, category, favorite                   | builder doc lives here; `html` compiled on save |
+| `campaigns`           | id, tenant_id, name, channel, status, audience_json, scheduled_at, content_json, infobip_bulk_id, metrics_json | full lifecycle in Postgres                      |
+| `campaign_recipients` | campaign_id, subscriber_id, status, delivered_at, opened_at, clicked_at                                        | or derive from `message_events`                 |
+| `message_events`      | id, tenant_id, campaign_id, subscriber_id, type, ts, meta_json                                                 | **written from Infobip webhooks**               |
+| `media_assets`        | id, tenant_id, r2_key, name, folder, tags, size_kb, type                                                       | blob in R2, row here                            |
+| `suppressions`        | tenant_id, address, channel, reason                                                                            | unsubscribe/GDPR/bounce                         |
+| `sending_domains`     | tenant_id, domain, dkim_status, infobip_domain_ref                                                             | mirrors Infobip domain state                    |
+| `infobip_binding`     | tenant_id, application_id, entity_id (nullable), api_key_ref                                                   | only if using Entity tagging                    |
+| `usage` / `billing`   | tenant_id, period, channel, used, stripe_*                                                                     | plan quotas, Stripe/Cashier-free                |
 
 ---
 
@@ -104,14 +112,14 @@ This sketch is the design rationale — minor deltas in the build: the workspace
 The **only** Infobip calls Maildrill makes. All are stateless w.r.t. our data — recipients
 and content are passed in per request; the source of truth is Postgres.
 
-| Maildrill action | Infobip endpoint (as built) | Correlation |
-|---|---|---|
-| Send email | `POST /email/4/messages` (see `packages/providers`) | `callbackData = {tenantId}\|{channel}\|{maildrillMessageId}` |
-| Send SMS / WhatsApp / Voice | channel Messages APIs | same `callbackData` |
-| Verify sending domain / DKIM | Email Domain / Resource Management API | write status → `sending_domains` |
-| Delivery / seen / voice (prod) | Infobip notify → **PostHog Hog** (`?kind=…`) | HogQL poller → Postgres messages + campaign `sent` |
-| Template status (analytics) | Infobip notify → PostHog `?kind=template` | — |
-| WA template approval (product) | Worker polls Infobip template list | updates Postgres template rows |
+| Maildrill action               | Infobip endpoint (as built)                         | Correlation                                                  |
+| ------------------------------ | --------------------------------------------------- | ------------------------------------------------------------ |
+| Send email                     | `POST /email/4/messages` (see `packages/providers`) | `callbackData = {tenantId}\|{channel}\|{maildrillMessageId}` |
+| Send SMS / WhatsApp / Voice    | channel Messages APIs                               | same `callbackData`                                          |
+| Verify sending domain / DKIM   | Email Domain / Resource Management API              | write status → `sending_domains`                             |
+| Delivery / seen / voice (prod) | Infobip notify → **PostHog Hog** (`?kind=…`)        | HogQL poller → Postgres messages + campaign `sent`           |
+| Template status (analytics)    | Infobip notify → PostHog `?kind=template`           | —                                                            |
+| WA template approval (product) | Worker polls Infobip template list                  | updates Postgres template rows                               |
 
 Recipients for a send come straight from a Postgres query (`list_members` / `segments`);
 Infobip never persists them. Suppression is enforced **in Postgres** before the send call.
@@ -120,6 +128,7 @@ Infobip never persists them. Suppression is enforced **in Postgres** before the 
 > state / retry / idempotency), not a single bulk `to[]` call — see ARCHITECTURE.md /
 > [`../HANDOFF.md`](../HANDOFF.md). A batched multi-destination path is deferred.
 > Legacy Maildrill `/webhooks/infobip/*` routes remain for mock/tests only.
+
 ---
 
 ## End-to-end — send an email campaign
@@ -143,9 +152,9 @@ Infobip never persists them. Suppression is enforced **in Postgres** before the 
 2. ~~**Tenant isolation**~~ — **Resolved: shared schema + `tenant_id`** (RLS optional;
    schema-per-tenant rejected).
 3. **Entity tagging** — per-workspace `entityId` on sends for billing/metrics attribution,
-   or skip it and attribute cost in Postgres from send logs? *(Open.)*
+   or skip it and attribute cost in Postgres from send logs? _(Open.)_
 4. **Infobip Journeys/Moments?** Only if we need automated multi-step flows — the one case
-   that would pull contacts into Infobip People. Revisit if required. *(Open.)*
+   that would pull contacts into Infobip People. Revisit if required. _(Open.)_
 
 ---
 

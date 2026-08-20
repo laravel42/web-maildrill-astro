@@ -10,7 +10,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material';
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  TextField,
+} from '@mui/material';
 
 import { type ThemeListing, updateTheme } from '../../ComponentsLibrary/fetchTheme';
 
@@ -41,8 +50,12 @@ export default function RenameThemeDialog({ target, onClose, onRenamed }: Rename
   }, [target]);
 
   const trimmedName = name.trim();
-  const isValid = trimmedName.length > 0 && trimmedName.length <= MAX_NAME && description.length <= MAX_DESCRIPTION;
-  const isDirty = target !== null && (trimmedName !== target.name || description !== (target.description ?? ''));
+  const isValid =
+    trimmedName.length > 0 &&
+    trimmedName.length <= MAX_NAME &&
+    description.length <= MAX_DESCRIPTION;
+  const isDirty =
+    target !== null && (trimmedName !== target.name || description !== (target.description ?? ''));
 
   const handleClose = useCallback(() => {
     if (submitting) return;
@@ -100,8 +113,14 @@ export default function RenameThemeDialog({ target, onClose, onRenamed }: Rename
         <Button onClick={handleClose} disabled={submitting}>
           {t('theme.save.cancel', 'Cancel')}
         </Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={!isValid || !isDirty || submitting}>
-          {submitting ? t('theme.save.submitting', 'Saving…') : t('theme.rename.submit', 'Save changes')}
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          disabled={!isValid || !isDirty || submitting}
+        >
+          {submitting
+            ? t('theme.save.submitting', 'Saving…')
+            : t('theme.rename.submit', 'Save changes')}
         </Button>
       </DialogActions>
     </Dialog>

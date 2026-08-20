@@ -70,7 +70,7 @@ const sdks: Sdk[] = [
   { name: 'Node', install: 'npm i @maildrill/node', delay: 0 },
   { name: 'Python', install: 'pip install maildrill', delay: 80 },
   { name: 'PHP', install: 'composer require maildrill/sdk', delay: 160 },
-  { name: 'Go', install: 'go get maildrill.com/go', delay: 240 },
+  { name: 'Go', install: 'go get maildrill.net/go', delay: 240 },
 ];
 ---
 
@@ -109,7 +109,7 @@ const sdks: Sdk[] = [
         </div>
         <pre
           class="codecard__code mono"><span class="c-cmt"># Send an email in one call</span>
-curl https://api.maildrill.com/v1/messages \
+curl https://api.maildrill.net/v1/messages \
   -H <span class="c-str">"Authorization: Bearer $MD_KEY"</span> \
   -d channel=<span class="c-val">email</span> \
   -d to=<span class="c-val">maya@acme.com</span> \
@@ -220,7 +220,7 @@ curl https://api.maildrill.com/v1/messages \
   /* ---------------------------------------------------------------- HERO */
   .dev-hero {
     position: relative;
-    padding-block: 64px 40px;
+    padding-block: calc(64px * var(--sec-y)) calc(40px * var(--sec-y));
   }
 
   .dev-hero__glow {
@@ -333,7 +333,7 @@ curl https://api.maildrill.com/v1/messages \
   .band {
     background: var(--surface);
     border-block: 1px solid var(--border);
-    padding-block: 88px;
+    padding-block: calc(88px * var(--sec-y));
     scroll-margin-top: 88px;
   }
 
@@ -426,7 +426,7 @@ curl https://api.maildrill.com/v1/messages \
 
   /* ---------------------------------------------------------- Endpoints */
   .endpoints-section {
-    padding-block: 88px 48px;
+    padding-block: calc(88px * var(--sec-y)) calc(48px * var(--sec-y));
   }
 
   .endpoints-section__title {
@@ -536,7 +536,7 @@ curl https://api.maildrill.com/v1/messages \
 
   /* ---------------------------------------------------------------- CTA */
   .dev-cta-section {
-    padding-block: 48px 88px;
+    padding-block: calc(48px * var(--sec-y)) calc(88px * var(--sec-y));
   }
 
   .dev-cta {

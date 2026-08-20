@@ -128,7 +128,8 @@ export const initDummyAIEvents = () => {
   // Listener para solicitudes de IA
   const handleAIRequest = async (event: Event) => {
     const customEvent = event as CustomEvent<AIFeatureRequest>;
-    const { text, content, action, replaceSelection, selectionFrom, selectionTo } = customEvent.detail;
+    const { text, content, action, replaceSelection, selectionFrom, selectionTo } =
+      customEvent.detail;
     // Simular delay de API
     const delay = Math.random() * 1000 + 500;
 

@@ -25,5 +25,8 @@ export { FONT_FAMILY_SCHEMA, FONT_FAMILY_NAMES, FONT_FAMILIES, DEFAULT_FONT };
  */
 export function getFontFamily(fontFamily: z.infer<typeof FONT_FAMILY_SCHEMA>) {
   const root = getRootSnapshot() as EmailLayoutProps | undefined;
-  return getFontFamilyPure(fontFamily as string | null | undefined, (root?.fontFamily as any) ?? null);
+  return getFontFamilyPure(
+    fontFamily as string | null | undefined,
+    (root?.fontFamily as any) ?? null,
+  );
 }

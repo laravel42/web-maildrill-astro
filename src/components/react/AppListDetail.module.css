@@ -1,0 +1,1095 @@
+/* List detail — pixel port of design/list-detail.html.
+   Comp tokens map 1:1 onto app tokens (--brand→--accent, --surface-2→--surface2,
+   --border-strong→--border2, --text-N→--textN, --muted-2→--muted2); values the
+   app doesn't define (--success-ink/tint, --brand-tint-border, --danger-border,
+   --shadow-menu) stay local below. */
+
+/* ---------- Base ---------- */
+
+.wrap {
+  --success-ink: #127a45;
+  --success-tint: #e8f6ee;
+  --brand-tint-border: #c7cbfa;
+  --danger-border: #f0c8c2;
+  --radius-btn: 10px;
+  --radius-card: 16px;
+  --shadow-menu: 0 14px 36px rgba(30, 27, 22, 0.16);
+  --motion: 180ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+}
+:global([data-theme='dark']) .wrap {
+  --success-ink: #58c98b;
+  --success-tint: rgba(22, 163, 74, 0.16);
+  --brand-tint-border: rgba(99, 91, 245, 0.45);
+  --shadow-menu: 0 14px 36px rgba(0, 0, 0, 0.5);
+}
+
+/* :where() keeps the reset at zero specificity so single-class rules like
+   .chartSub's margins aren't silently flattened by it. */
+.wrap :where(h1, h2, p, dl, dd, dt, ul) {
+  margin: 0;
+}
+.wrap :where(ul) {
+  padding: 0;
+  list-style: none;
+}
+.wrap a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.wrap a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+.wrap :where(button) {
+  font: inherit;
+}
+.wrap [hidden] {
+  display: none !important;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+.mono {
+  font-family: var(--font-mono);
+}
+.overline {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* Scoped: a bare :focus-visible here would leak a global focus style into
+   every screen that loads this module.
+   `:where()` keeps this a page-level default at .wrap's specificity, so a
+   component that styles its own focus still wins — otherwise this reached into
+   the list editor modal and drew a second ring over its own, making the same
+   modal look different on this page than on the lists index. */
+.wrap :where(:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ---------- Buttons / menu (aligned with subscriber detail) ---------- */
+.moreBtn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  box-sizing: border-box;
+}
+.btnDanger {
+  border-color: var(--danger-border);
+  color: var(--danger-text);
+}
+.btnDanger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  border-color: var(--danger-border);
+}
+
+.menuWrap {
+  position: relative;
+}
+.menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 31;
+  min-width: 232px;
+  padding: 6px;
+  display: grid;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  box-shadow: var(--shadow-menu);
+  animation: pop 130ms ease;
+}
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--motion);
+  color: var(--text2);
+}
+.menuItem:hover:not(:disabled) {
+  background: var(--surface2);
+}
+.menuWarn {
+  color: #c2740a;
+}
+.menuDanger {
+  color: #dc2626;
+}
+
+/* ---------- Page ---------- */
+.page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 26px 40px 64px;
+  animation: fade 300ms ease;
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text4);
+  cursor: pointer;
+}
+.back:hover {
+  color: var(--text2);
+}
+.identity {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.identityMain {
+  min-width: 0;
+  flex: 1;
+}
+.identityName {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+  color: var(--text);
+}
+.identityChans {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.identityDesc {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text4);
+}
+.identityAside {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  flex: none;
+  margin-left: auto;
+}
+.identityActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.dotLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  align-items: start;
+}
+.colMain {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+.colRail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+}
+.cardPad {
+  padding: 18px 20px;
+}
+.cardTitle {
+  font-size: 13px;
+  font-weight: 600;
+}
+.copyBtn {
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  gap: 5px;
+}
+
+/* ---------- Health ---------- */
+.health {
+  padding: 22px 24px;
+}
+.healthTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.healthCount {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 6px;
+}
+.healthTotal {
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -1px;
+}
+.healthGrowth {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--success-ink);
+}
+.healthRight {
+  text-align: right;
+}
+.healthDeliverable {
+  margin-top: 6px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+.healthBar {
+  display: flex;
+  height: 10px;
+  margin-bottom: 16px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface2);
+}
+.healthSeg {
+  animation: sweep 600ms ease;
+}
+.healthLegend {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.healthLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--text3);
+  white-space: nowrap;
+}
+.swatch {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 3px;
+}
+.healthValue {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+}
+.healthPct {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+/* ---------- Chart ---------- */
+.chart {
+  padding: 20px 24px 18px;
+}
+.chartHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.chartSub {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text3);
+}
+.legend .swatch {
+  width: 9px;
+  height: 9px;
+}
+.barChart {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 132px;
+}
+.barGroup {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: default;
+}
+.barGroupHover .barJoin {
+  filter: brightness(1.08);
+}
+.barGroupHover .barLeft {
+  filter: brightness(0.96);
+}
+.bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  height: 104px;
+}
+.bar {
+  display: block;
+  width: 44%;
+  max-width: 15px;
+  border-radius: 4px 4px 0 0;
+  transform-origin: bottom;
+  animation: grow 500ms ease;
+  transition: filter var(--motion);
+}
+.barJoin {
+  background: var(--accent);
+}
+.barLeft {
+  background: #f0c8c2;
+}
+.barLabel {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+.barTip {
+  position: absolute;
+  bottom: calc(100% - 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  min-width: 96px;
+  max-width: 180px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-md, 0 8px 24px rgba(30, 27, 22, 0.12));
+  pointer-events: none;
+  text-align: center;
+  white-space: nowrap;
+}
+.barTipVal {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+}
+.barTipLbl {
+  margin-top: 2px;
+  font-size: 10.5px;
+  color: var(--text3);
+  line-height: 1.25;
+}
+
+/* ---------- Tabs ---------- */
+.tabsCard {
+  overflow: hidden;
+}
+.tabs {
+  display: flex;
+  gap: 22px;
+  padding: 0 22px;
+  border-bottom: 1px solid var(--divider);
+  overflow-x: auto;
+}
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 15px 0 13px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--motion),
+    border-color var(--motion);
+}
+.tab.isActive {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.tabCount {
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: var(--surface2);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+.tab.isActive .tabCount {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+/* ---------- Tables ---------- */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th {
+  padding: 12px 22px;
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text4);
+  border-bottom: 1px solid var(--divider);
+}
+.table td {
+  padding: 12px 22px;
+  border-bottom: 1px solid var(--divider);
+  font-size: 12.5px;
+  color: var(--text3);
+  vertical-align: middle;
+}
+.table tbody tr {
+  transition: background var(--motion);
+}
+.table tbody tr:hover {
+  background: var(--surface2);
+}
+.cellTitle {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.cellSub {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.cellMuted {
+  color: var(--muted);
+}
+
+.person td {
+  padding-block: 11px;
+}
+.person {
+  cursor: pointer;
+}
+.person :global(.astatus) {
+  gap: 5px;
+}
+.personCell {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+.personAvatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 50%;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.personId {
+  min-width: 0;
+}
+.personName {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.personEmail {
+  display: block;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.fieldList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fieldRow {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--divider);
+}
+.fieldRow:first-child {
+  padding-top: 2px;
+}
+.fieldRow:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.fieldMeta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+.fieldLabel {
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fieldKey {
+  flex: none;
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+}
+.fill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fillTrack {
+  flex: 1;
+  height: 5px;
+  border-radius: 4px;
+  background: var(--surface2);
+  overflow: hidden;
+}
+.fillBar {
+  height: 100%;
+  border-radius: 4px;
+}
+.fieldFillPct {
+  flex: none;
+  min-width: 2.5em;
+  font-size: 11.5px;
+  color: var(--muted);
+  text-align: right;
+}
+
+.empty {
+  padding: 52px 22px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.pg {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text3);
+  border: 1px solid var(--border2);
+  background: var(--surface);
+}
+.pg:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.pgflip {
+  transform: rotate(180deg);
+}
+.pgn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text3);
+  border: 1px solid var(--border2);
+  background: var(--surface);
+}
+.pgn:global(.is-on) {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  font-weight: 700;
+}
+/* ---------- Settings (rail card) ---------- */
+.settings {
+  padding: 0;
+}
+.settingRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--divider);
+}
+.settingRow:first-child {
+  padding-top: 10px;
+}
+.stackBody {
+  flex: 1;
+  min-width: 0;
+}
+.stackTitle {
+  font-size: 13px;
+  font-weight: 600;
+}
+.stackDesc {
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.switch {
+  width: 38px;
+  height: 22px;
+  flex: none;
+  padding: 2px;
+  border: 0;
+  border-radius: 99px;
+  background: var(--muted2);
+  cursor: pointer;
+  transition: background var(--motion);
+}
+.switch.isOn {
+  background: var(--accent);
+}
+.switchKnob {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(30, 27, 22, 0.28);
+  transition: transform var(--motion);
+}
+.switch.isOn .switchKnob {
+  transform: translateX(16px);
+}
+.settingDanger {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 0 0;
+}
+.settingDanger .stackTitle {
+  color: var(--danger-text);
+}
+.settingDanger .btnDanger,
+.settingDanger :global(.sbtn) {
+  align-self: flex-start;
+}
+
+/* ---------- Rail ---------- */
+/* The whole a rail percentage is a share of, printed beside it. Two of the
+   three divide by messages attempted and the third by the roster, and without
+   this they read as one series — see AppListDetail.tsx. Muted and lighter so
+   the figure still leads. */
+.railBasis {
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--text4);
+  white-space: nowrap;
+}
+.railEyebrow {
+  display: block;
+  margin: 0 0 4px;
+}
+.railHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.railHead .railEyebrow {
+  margin-bottom: 0;
+}
+.railValue {
+  max-width: 58%;
+  text-align: right;
+  word-break: break-word;
+}
+.cardPad :global(.adetail:last-of-type) {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* Kept from the comp for when signup-source data exists; the island currently
+   renders .railEmpty inside the same card shell instead. */
+.meters {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.meterHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+.meterLabel {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text3);
+}
+.meterValue {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text2);
+}
+.meterTrack {
+  height: 5px;
+  border-radius: 4px;
+  background: var(--surface2);
+  overflow: hidden;
+}
+.meterFill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.embed {
+  display: block;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface2);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text3);
+  word-break: break-all;
+}
+/* Kept from the comp for when import history exists; the island currently
+   renders .railEmpty instead. */
+.imports {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.importItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.importIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 8px;
+}
+.importTitle {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text2);
+}
+.importMeta {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+/* Honest empty line for rail data the backend doesn't record yet. */
+.railEmpty {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+/* ---------- Toast (app standard — not in the comp, shown transiently) ---------- */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-toast);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: var(--text);
+  color: var(--bg);
+  padding: 12px 16px 12px 13px;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(28, 25, 23, 0.3);
+  font-size: 13px;
+  font-weight: 500;
+}
+.toastIc {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+/* ---------- Motion ---------- */
+@keyframes fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes sweep {
+  from {
+    width: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wrap,
+  .wrap :global(*),
+  .wrap :global(*::before),
+  .wrap :global(*::after) {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1180px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .healthLegend {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  .page {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .healthLegend {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .identityAside {
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+  .identityName {
+    font-size: 22px;
+  }
+}
+
+@media print {
+  .identityActions,
+  .pager,
+  .switch,
+  .toast {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .card {
+    break-inside: avoid;
+  }
+}
+
+
+/* ---- Member roster header ------------------------------------------------
+   The roster is a page of the list, not the list — so the header states the
+   real total beside the heading, and points at the Subscribers screen for the
+   filtering this section deliberately does not duplicate. */
+/* Inset to match the table's own 22px cell padding — the table bleeds to the
+   card edges (that is where its padding lives), so a header with none sat a
+   full 22px left of the column it labels. */
+.rosterHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 18px 22px 14px;
+}
+.rosterCount {
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+/* Search sits at the right of the roster header, sized to its longest
+   realistic needle rather than stretched — a full-width field here would
+   outweigh the heading it belongs to. */
+.rosterSearch {
+  position: relative;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+.rosterSearchIcon {
+  position: absolute;
+  left: 9px;
+  color: var(--text4);
+  pointer-events: none;
+}
+.rosterInput {
+  width: 230px;
+  max-width: 100%;
+  height: 32px;
+  padding: 0 10px 0 30px;
+  border: 1px solid var(--border2);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+.rosterInput::placeholder {
+  color: var(--text4);
+}
+.rosterInput:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+/* Safari draws its own clear affordance on type=search; the field is short
+   enough that two of them collide. */
+.rosterInput::-webkit-search-decoration,
+.rosterInput::-webkit-search-results-button {
+  appearance: none;
+}
+@media (max-width: 720px) {
+  .rosterHead {
+    flex-wrap: wrap;
+  }
+  .rosterSearch {
+    margin-left: 0;
+    width: 100%;
+  }
+  .rosterInput {
+    width: 100%;
+  }
+}
+/* Same inset as the header and the cells, so the three left edges line up. */
+.rosterFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 22px 14px;
+}
+.rosterRange {
+  color: var(--text4);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+/* The last row's rule would otherwise draw a line directly above the pager,
+   duplicating the separation the padding already gives it. */
+.tabsCard .table tbody tr:last-child td {
+  border-bottom: 0;
+}

@@ -59,7 +59,11 @@ import ApplyTemplateConfirmDialog from './ApplyTemplateConfirmDialog';
 import BlocksCategoryContent from './BlocksCategoryContent';
 import { SubcategoryAccordion } from './CategoryAccordion';
 import CompactBlocksList from './CompactBlocksList';
-import { type FetchableLibraryCategory, LIBRARY_COMPONENT_DND_TYPE, type LibraryComponentDragItem } from './dnd';
+import {
+  type FetchableLibraryCategory,
+  LIBRARY_COMPONENT_DND_TYPE,
+  type LibraryComponentDragItem,
+} from './dnd';
 import { requestHoverEnter, requestHoverLeave, resetHoverPreview } from './hoverPreviewStore';
 import LibraryHoverPreviewPortal, { clearHoverPreviewCache } from './LibraryHoverPreviewPortal';
 import { filterLibraryItems, type LibrarySortKey, sortLibraryItems } from './librarySearch';
@@ -165,7 +169,7 @@ function LibraryCard({
       canDrag: () => isDraggable,
       collect: (monitor) => ({ isDragging: monitor.isDragging() }),
     }),
-    [category, item.axis, item.id, isDraggable]
+    [category, item.axis, item.id, isDraggable],
   );
 
   // While dragging, dismiss any open/pending hover preview — on narrow
@@ -201,7 +205,8 @@ function LibraryCard({
         : null;
   // Only sections/layouts/templates get generated previews; while queued and
   // not yet captured, the card shows a skeleton instead of "No preview".
-  const thumbnailPending = showThumbnail && isLocalStorage && thumbnailUrl === null && isThumbnailPending(item.id);
+  const thumbnailPending =
+    showThumbnail && isLocalStorage && thumbnailUrl === null && isThumbnailPending(item.id);
 
   // Hover preview is rendered by a singleton at the drawer level — the
   // card just dispatches `(category, axis, id, name)` to the central
@@ -246,7 +251,9 @@ function LibraryCard({
         '&:active': { cursor: 'grabbing' },
       }}
     >
-      {showPrimitiveRender && <LibraryCardPrimitiveRender id={item.id} block={item.block} alt={item.name} />}
+      {showPrimitiveRender && (
+        <LibraryCardPrimitiveRender id={item.id} block={item.block} alt={item.name} />
+      )}
       {showThumbnail && (
         <LibraryCardThumbnail
           src={thumbnailUrl}
@@ -329,7 +336,7 @@ function VirtualizedGrid({
           setCount((c) => (c < items.length ? Math.min(items.length, c + VIRTUAL_PAGE_SIZE) : c));
         }
       },
-      { rootMargin: '300px' }
+      { rootMargin: '300px' },
     );
     observer.observe(node);
     return () => observer.disconnect();
@@ -337,7 +344,13 @@ function VirtualizedGrid({
 
   return (
     <Box sx={{ mt: 1.5 }}>
-      <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: 0.5 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+          gap: 0.5,
+        }}
+      >
         {items.slice(0, count).map((it) => renderItem(it))}
       </Box>
       {count < items.length && <Box ref={sentinelRef} sx={{ height: 1 }} />}
@@ -390,7 +403,10 @@ function CategoryListingBody({
   const [expandedAxes, setExpandedAxes] = useState<Record<string, boolean>>({});
 
   const query = useMemo(() => ({ search, axes: [], tags, sort }), [search, tags, sort]);
-  const visible = useMemo(() => sortLibraryItems(filterLibraryItems(items, query), sort), [items, query, sort]);
+  const visible = useMemo(
+    () => sortLibraryItems(filterLibraryItems(items, query), sort),
+    [items, query, sort],
+  );
 
   // Group the visible items by axis. Axes are sorted alphabetically so
   // the order is stable regardless of item sort; the "Other" sentinel
@@ -512,7 +528,10 @@ function CategoryListingBody({
 async function fetchListing<TItem>(url: string, collectionKey: string): Promise<TItem[]> {
   const response = await fetch(url);
   if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { error?: string; hint?: string } | null;
+    const body = (await response.json().catch(() => null)) as {
+      error?: string;
+      hint?: string;
+    } | null;
     if (response.status === 403) {
       throw new Error(body?.hint ?? 'Endpoint disabled in this environment.');
     }
@@ -536,7 +555,13 @@ type CategoryContentProps = {
 };
 
 /** Sections — axis = role, supports rename + delete. */
-function SectionsCategoryContent({ refreshKey, search, sort, onRename, onChange }: CategoryContentProps) {
+function SectionsCategoryContent({
+  refreshKey,
+  search,
+  sort,
+  onRename,
+  onChange,
+}: CategoryContentProps) {
   const { t } = useTranslation('inspector');
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -578,9 +603,13 @@ function SectionsCategoryContent({ refreshKey, search, sort, onRename, onChange 
   const handleDelete = useCallback(
     async (item: LibraryItem) => {
       const confirmed = window.confirm(
-        t('componentsLibrary.drawer.deleteConfirm', 'Delete component "{{name}}"? This cannot be undone.', {
-          name: item.name,
-        })
+        t(
+          'componentsLibrary.drawer.deleteConfirm',
+          'Delete component "{{name}}"? This cannot be undone.',
+          {
+            name: item.name,
+          },
+        ),
       );
       if (!confirmed) return;
       try {
@@ -589,7 +618,7 @@ function SectionsCategoryContent({ refreshKey, search, sort, onRename, onChange 
         } else {
           const response = await fetch(
             `${resolveBackendUrl()}/dev/sections/${encodeURIComponent(item.axis)}/${encodeURIComponent(item.id)}`,
-            { method: 'DELETE' }
+            { method: 'DELETE' },
           );
           if (!response.ok) {
             const body = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -602,7 +631,7 @@ function SectionsCategoryContent({ refreshKey, search, sort, onRename, onChange 
         setError(err instanceof Error ? err.message : String(err));
       }
     },
-    [t, onChange]
+    [t, onChange],
   );
 
   return (
@@ -631,7 +660,13 @@ function SectionsCategoryContent({ refreshKey, search, sort, onRename, onChange 
 }
 
 /** Templates — no axis (flat). Click-to-apply replaces the document. Rename + delete. */
-function TemplatesCategoryContent({ refreshKey, search, sort, onRename, onChange }: CategoryContentProps) {
+function TemplatesCategoryContent({
+  refreshKey,
+  search,
+  sort,
+  onRename,
+  onChange,
+}: CategoryContentProps) {
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -678,16 +713,21 @@ function TemplatesCategoryContent({ refreshKey, search, sort, onRename, onChange
 
   const handleDelete = useCallback(
     async (item: LibraryItem) => {
-      if (!window.confirm(t('componentsLibrary.drawer.deleteConfirm', 'Delete?', { name: item.name }))) {
+      if (
+        !window.confirm(t('componentsLibrary.drawer.deleteConfirm', 'Delete?', { name: item.name }))
+      ) {
         return;
       }
       try {
         if (getComponentsStorageMode() === 'local') {
           localDeleteTemplate(item.id);
         } else {
-          const response = await fetch(`${resolveBackendUrl()}/dev/templates/${encodeURIComponent(item.id)}`, {
-            method: 'DELETE',
-          });
+          const response = await fetch(
+            `${resolveBackendUrl()}/dev/templates/${encodeURIComponent(item.id)}`,
+            {
+              method: 'DELETE',
+            },
+          );
           if (!response.ok) {
             const body = (await response.json().catch(() => null)) as { error?: string } | null;
             throw new Error(body?.error ?? `HTTP ${response.status}`);
@@ -699,7 +739,7 @@ function TemplatesCategoryContent({ refreshKey, search, sort, onRename, onChange
         setError(err instanceof Error ? err.message : String(err));
       }
     },
-    [t, onChange]
+    [t, onChange],
   );
 
   return (
@@ -764,7 +804,7 @@ export default function ComponentsLibraryDrawer() {
         if (!templateLibrary && c.key === 'templates') return false;
         return true;
       }),
-    [templateLibrary]
+    [templateLibrary],
   );
   const [sectionsRefreshKey, setSectionsRefreshKey] = useState(0);
   const [templatesRefreshKey, setTemplatesRefreshKey] = useState(0);
@@ -916,7 +956,13 @@ export default function ComponentsLibraryDrawer() {
                     key={c.key}
                     value={c.key}
                     label={t(c.labelKey)}
-                    sx={{ minHeight: 40, minWidth: 0, px: 1, fontSize: '0.72rem', textTransform: 'none' }}
+                    sx={{
+                      minHeight: 40,
+                      minWidth: 0,
+                      px: 1,
+                      fontSize: '0.72rem',
+                      textTransform: 'none',
+                    }}
                   />
                 ))}
               </Tabs>
@@ -930,7 +976,13 @@ export default function ComponentsLibraryDrawer() {
                       "Sections" tab now lives at the bottom of the Blocks
                       tab instead of its own Tab entry. No title/search/sort
                       toolbar — just the listing, grouped by role. */}
-                  <Box sx={{ mt: 2, pt: 1.5, borderTop: (theme) => `1px solid ${theme.palette.divider}` }}>
+                  <Box
+                    sx={{
+                      mt: 2,
+                      pt: 1.5,
+                      borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+                    }}
+                  >
                     <SectionsCategoryContent
                       search={SEARCH_UNFILTERED}
                       sort={SORT_DEFAULT}

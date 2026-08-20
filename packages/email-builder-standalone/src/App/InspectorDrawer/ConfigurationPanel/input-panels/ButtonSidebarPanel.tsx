@@ -47,9 +47,12 @@ export default function ButtonSidebarPanel({ data, setData }: ButtonSidebarPanel
   const fullWidth = data.props?.fullWidth ?? ButtonPropsDefaults.fullWidth;
   const size = data.props?.size ?? ButtonPropsDefaults.size;
   const rootLayout = root as EmailLayoutProps | undefined;
-  const resolvedButtonTextColor = data.style?.buttonTextColor ?? data.props?.buttonTextColor ?? rootLayout?.textColor;
+  const resolvedButtonTextColor =
+    data.style?.buttonTextColor ?? data.props?.buttonTextColor ?? rootLayout?.textColor;
   const resolvedButtonBackgroundColor =
-    data.style?.buttonBackgroundColor ?? data.props?.buttonBackgroundColor ?? ButtonPropsDefaults.buttonBackgroundColor;
+    data.style?.buttonBackgroundColor ??
+    data.props?.buttonBackgroundColor ??
+    ButtonPropsDefaults.buttonBackgroundColor;
   const fullWidthMobile = data.props?.fullWidthMobile;
   const sizeMobile = data.props?.sizeMobile;
 
@@ -62,7 +65,7 @@ export default function ButtonSidebarPanel({ data, setData }: ButtonSidebarPanel
         <>
           <MultiStylePropertyPanel
             disabledCSSValidation
-            names={['fontFamily', 'fontSize', 'fontSizeMobile', 'fontWeight']}
+            names={['fontFamily', 'fontSize', 'fontSizeMobile', 'fontWeight', 'lineHeight']}
             value={data.style}
             onChange={(style) => updateData({ ...data, style })}
           />
@@ -97,7 +100,9 @@ export default function ButtonSidebarPanel({ data, setData }: ButtonSidebarPanel
               sizeMobile={sizeMobile}
               sizePaddingSidesLinked={data.props?.sizePaddingSidesLinked}
               sizeMobilePaddingSidesLinked={data.props?.sizeMobilePaddingSidesLinked}
-              onChange={(sizeUpdates) => updateData({ ...data, props: { ...data.props, ...sizeUpdates } })}
+              onChange={(sizeUpdates) =>
+                updateData({ ...data, props: { ...data.props, ...sizeUpdates } })
+              }
             />
           </CompactableInput>
         </>
@@ -124,7 +129,9 @@ export default function ButtonSidebarPanel({ data, setData }: ButtonSidebarPanel
             <ColorInput
               label={t('inputs.panels.button.textColor')}
               defaultValue={resolvedButtonTextColor}
-              onChange={(buttonTextColor) => updateData({ ...data, style: { ...data.style, buttonTextColor } })}
+              onChange={(buttonTextColor) =>
+                updateData({ ...data, style: { ...data.style, buttonTextColor } })
+              }
             />
           </CompactableInput>
           <CompactableInput icon={PaletteOutlined} label={t('inputs.panels.button.buttonColor')}>

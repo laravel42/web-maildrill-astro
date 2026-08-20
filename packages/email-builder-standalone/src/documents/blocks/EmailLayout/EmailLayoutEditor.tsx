@@ -3,7 +3,11 @@ import React from 'react';
 import { MAX_WIDTH_DESKTOP, MAX_WIDTH_MOBILE } from '../../../constants';
 import ClientOnly from '../../editor/ClientOnly';
 import { useCurrentBlockId } from '../../editor/EditorBlock';
-import { insertChildAndUpdateParent, setSelectedBlockId, useSelectedScreenSize } from '../../editor/EditorContext';
+import {
+  insertChildAndUpdateParent,
+  setSelectedBlockId,
+  useSelectedScreenSize,
+} from '../../editor/EditorContext';
 import EditorChildrenIds from '../helpers/EditorChildrenIds';
 import { getFontFamily } from '../helpers/fontFamily';
 

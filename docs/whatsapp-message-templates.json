@@ -61,7 +61,12 @@
         {
           "id": "flash_sale_notification",
           "name": "Flash Sale Notification",
-          "variables": ["{{1}} customer name", "{{2}} sale name", "{{3}} discount", "{{4}} end date/time"],
+          "variables": [
+            "{{1}} customer name",
+            "{{2}} sale name",
+            "{{3}} discount",
+            "{{4}} end date/time"
+          ],
           "text": {
             "en": "Hi {{1}}, our {{2}} sale is live! Get up to {{3}} off everything in store — but hurry, it ends {{4}}.",
             "zh": "您好{{1}}，我们的{{2}}促销现已开始！全场商品最高可享{{3}}折扣——欲购从速，活动{{4}}结束。",
@@ -115,7 +120,13 @@
         {
           "id": "seasonal_promotion",
           "name": "Seasonal Promotion",
-          "variables": ["{{1}} customer name", "{{2}} occasion/season", "{{3}} promo code", "{{4}} discount", "{{5}} expiry date"],
+          "variables": [
+            "{{1}} customer name",
+            "{{2}} occasion/season",
+            "{{3}} promo code",
+            "{{4}} discount",
+            "{{5}} expiry date"
+          ],
           "text": {
             "en": "Hi {{1}}, celebrate {{2}} with us! Use code {{3}} for {{4}} off your next order. Valid until {{5}}",
             "zh": "您好{{1}}，和我们一起庆祝{{2}}吧！使用优惠码{{3}}，下次订单可享{{4}}折扣。有效期至{{5}}",
@@ -169,7 +180,12 @@
         {
           "id": "event_invitation",
           "name": "Event Invitation",
-          "variables": ["{{1}} customer name", "{{2}} event name", "{{3}} date", "{{4}} event highlight"],
+          "variables": [
+            "{{1}} customer name",
+            "{{2}} event name",
+            "{{3}} date",
+            "{{4}} event highlight"
+          ],
           "text": {
             "en": "Hi {{1}}, you are invited to {{2}} on {{3}}. Join us for {{4}}. Spots are limited — register now",
             "zh": "您好{{1}}，诚邀您参加{{3}}举办的{{2}}。与我们一起体验{{4}}。名额有限——立即报名",
@@ -277,7 +293,12 @@
         {
           "id": "webinar_demo_invitation",
           "name": "Webinar or Demo Invitation",
-          "variables": ["{{1}} customer name", "{{2}} webinar/demo name", "{{3}} date", "{{4}} topic/skill"],
+          "variables": [
+            "{{1}} customer name",
+            "{{2}} webinar/demo name",
+            "{{3}} date",
+            "{{4}} topic/skill"
+          ],
           "text": {
             "en": "Hi {{1}}, join our free {{2}} on {{3}}. Learn {{4}} from industry experts. Reserve your spot",
             "zh": "您好{{1}}，欢迎参加我们于{{3}}举办的免费{{2}}。向行业专家学习{{4}}。立即预订席位",
@@ -337,7 +358,13 @@
         {
           "id": "shipping_update",
           "name": "Shipping Update",
-          "variables": ["{{1}} customer name", "{{2}} order number", "{{3}} carrier", "{{4}} tracking number", "{{5}} estimated delivery"],
+          "variables": [
+            "{{1}} customer name",
+            "{{2}} order number",
+            "{{3}} carrier",
+            "{{4}} tracking number",
+            "{{5}} estimated delivery"
+          ],
           "text": {
             "en": "Hi {{1}}, your order #{{2}} has been shipped! Carrier: {{3}} Tracking number: {{4}} Estimated delivery: {{5}}",
             "zh": "您好{{1}}，您的订单 #{{2}} 已发货！承运商：{{3}} 快递单号：{{4}} 预计送达时间：{{5}}",
@@ -364,7 +391,12 @@
         {
           "id": "delivery_confirmation",
           "name": "Delivery Confirmation",
-          "variables": ["{{1}} customer name", "{{2}} order number", "{{3}} delivery address", "{{4}} delivery time"],
+          "variables": [
+            "{{1}} customer name",
+            "{{2}} order number",
+            "{{3}} delivery address",
+            "{{4}} delivery time"
+          ],
           "text": {
             "en": "Hi {{1}}, your order #{{2}} has been delivered! Delivered to: {{3}} Time: {{4}}",
             "zh": "您好{{1}}，您的订单 #{{2}} 已送达！送达地址：{{3}} 送达时间：{{4}}",
@@ -391,7 +423,13 @@
         {
           "id": "appointment_reminder",
           "name": "Appointment Reminder",
-          "variables": ["{{1}} customer name", "{{2}} provider/staff name", "{{3}} date", "{{4}} time", "{{5}} location"],
+          "variables": [
+            "{{1}} customer name",
+            "{{2}} provider/staff name",
+            "{{3}} date",
+            "{{4}} time",
+            "{{5}} location"
+          ],
           "text": {
             "en": "Hi {{1}}, this is a reminder for your appointment with {{2}} on {{3}} at {{4}}. Location: {{5}}",
             "zh": "您好{{1}}，提醒您：您与{{2}}的预约时间为{{3}} {{4}}。地点：{{5}}",
@@ -418,7 +456,13 @@
         {
           "id": "payment_confirmation",
           "name": "Payment Confirmation",
-          "variables": ["{{1}} customer name", "{{2}} amount", "{{3}} invoice number", "{{4}} payment method", "{{5}} date"],
+          "variables": [
+            "{{1}} customer name",
+            "{{2}} amount",
+            "{{3}} invoice number",
+            "{{4}} payment method",
+            "{{5}} date"
+          ],
           "text": {
             "en": "Hi {{1}}, we have received your payment of {{2}} for invoice #{{3}}. Payment method: {{4}} Date: {{5}}",
             "zh": "您好{{1}}，我们已收到您为发票 #{{3}} 支付的{{2}}。支付方式：{{4}} 日期：{{5}}",
@@ -472,7 +516,13 @@
         {
           "id": "subscription_renewal_reminder",
           "name": "Subscription Renewal Reminder",
-          "variables": ["{{1}} customer name", "{{2}} subscription/plan name", "{{3}} renewal date", "{{4}} amount", "{{5}} payment method"],
+          "variables": [
+            "{{1}} customer name",
+            "{{2}} subscription/plan name",
+            "{{3}} renewal date",
+            "{{4}} amount",
+            "{{5}} payment method"
+          ],
           "text": {
             "en": "Hi {{1}}, your {{2}} subscription renews on {{3}}. Amount: {{4}} Payment method: {{5}}",
             "zh": "您好{{1}}，您的{{2}}订阅将于{{3}}续订。金额：{{4}} 支付方式：{{5}}",
@@ -499,7 +549,14 @@
         {
           "id": "booking_confirmation",
           "name": "Booking Confirmation",
-          "variables": ["{{1}} customer name", "{{2}} service", "{{3}} date", "{{4}} time", "{{5}} location", "{{6}} booking reference"],
+          "variables": [
+            "{{1}} customer name",
+            "{{2}} service",
+            "{{3}} date",
+            "{{4}} time",
+            "{{5}} location",
+            "{{6}} booking reference"
+          ],
           "text": {
             "en": "Hi {{1}}, your booking is confirmed! Service: {{2}} Date: {{3}} Time: {{4}} Location: {{5}} Booking reference: {{6}}",
             "zh": "您好{{1}}，您的预订已确认！服务：{{2}} 日期：{{3}} 时间：{{4}} 地点：{{5}} 预订编号：{{6}}",
@@ -553,7 +610,12 @@
         {
           "id": "return_refund_status",
           "name": "Return/Refund Status",
-          "variables": ["{{1}} customer name", "{{2}} return request number", "{{3}} status", "{{4}} refund amount"],
+          "variables": [
+            "{{1}} customer name",
+            "{{2}} return request number",
+            "{{3}} status",
+            "{{4}} refund amount"
+          ],
           "text": {
             "en": "Hi {{1}}, update on your return request #{{2}}: Status: {{3}} Refund amount: {{4}}",
             "zh": "您好{{1}}，您的退货申请 #{{2}} 有新进展：状态：{{3}} 退款金额：{{4}}",
@@ -694,7 +756,12 @@
         {
           "id": "transaction_verification",
           "name": "Transaction Verification",
-          "variables": ["{{1}} app/business name", "{{2}} transaction amount", "{{3}} code", "{{4}} expiry in minutes"],
+          "variables": [
+            "{{1}} app/business name",
+            "{{2}} transaction amount",
+            "{{3}} code",
+            "{{4}} expiry in minutes"
+          ],
           "text": {
             "en": "Verify your {{1}} transaction of {{2}}. Your confirmation code is: {{3}} This code expires in {{4}} minutes.",
             "zh": "请验证您在{{1}}的{{2}}交易。您的确认码为：{{3}} 该确认码将在{{4}}分钟后失效。",

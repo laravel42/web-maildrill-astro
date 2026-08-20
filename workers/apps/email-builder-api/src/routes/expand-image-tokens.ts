@@ -130,7 +130,8 @@ function bestPoolMatch(pool: PoolItem[], seed: string | null, state: ExpandState
   if (pool.length === 0) return null;
   const seedTokens = seed ? tokenise(seed) : new Set<string>();
 
-  const scoreItem = (item: PoolItem): number => scoreSeedAgainstQuery(seedTokens, tokenise(item.query));
+  const scoreItem = (item: PoolItem): number =>
+    scoreSeedAgainstQuery(seedTokens, tokenise(item.query));
 
   // First pass — prefer unused items with the highest semantic score.
   let best: { item: PoolItem; score: number } | null = null;
@@ -196,7 +197,11 @@ function buildUnsplashMeta(item: PoolItem) {
  * URLs in place (mutating the object). Returns a summary the caller can
  * surface as a `warning` event for visibility.
  */
-export function expandImageTokens(parsed: Record<string, unknown>, pool: PoolItem[], state: ExpandState): ExpandResult {
+export function expandImageTokens(
+  parsed: Record<string, unknown>,
+  pool: PoolItem[],
+  state: ExpandState,
+): ExpandResult {
   const result: ExpandResult = { changed: false, changes: [] };
 
   const block = parsed.block;
@@ -255,7 +260,11 @@ export function expandImageTokens(parsed: Record<string, unknown>, pool: PoolIte
   // -------------------------------------------------------------------------
   // Container / Layout / Columns: rewrite style.backgroundImage tokens / picsum
   // -------------------------------------------------------------------------
-  if (blockType === 'Container' || blockType === 'EmailLayout' || blockType === 'ColumnsContainer') {
+  if (
+    blockType === 'Container' ||
+    blockType === 'EmailLayout' ||
+    blockType === 'ColumnsContainer'
+  ) {
     const style = (dataObj.style ?? {}) as Record<string, unknown>;
     const bgRaw = style.backgroundImage;
     const bgUrl = extractBackgroundUrl(bgRaw);

@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 
-import { FormatAlignCenterOutlined, FormatAlignLeftOutlined, FormatAlignRightOutlined } from '@mui/icons-material';
+import {
+  FormatAlignCenterOutlined,
+  FormatAlignLeftOutlined,
+  FormatAlignRightOutlined,
+} from '@mui/icons-material';
 import { ToggleButton } from '@mui/material';
 
 import FieldContainer from './components/FieldContainer';

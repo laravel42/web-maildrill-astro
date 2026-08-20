@@ -3,22 +3,54 @@
 .card {
   overflow: visible;
 }
+/* Channel tab bar — same treatment as the Templates gallery, so the two
+   channel-cut tables read as the same control. */
 .tabs {
+  display: flex;
   gap: 20px;
   padding: 0 19px;
+  border-bottom: 1px solid var(--divider);
   overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-.tabs :global(.atab) {
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
   padding: 14px 0 13px;
+  font-size: 13px;
+  font-weight: 600;
   white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+.tabcount {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 20px;
 }
 .toolbar {
   display: flex;
-  align-items: center;
-  gap: 8px 10px;
+  flex-direction: column;
+  gap: 10px;
   padding: 14px 19px;
   border-bottom: 1px solid var(--divider);
+}
+.toolbarRow {
+  display: flex;
+  align-items: center;
+  gap: 8px 10px;
   flex-wrap: wrap;
+  row-gap: 10px;
+  width: 100%;
 }
 .search {
   display: flex;
@@ -60,7 +92,7 @@
 }
 .filter:global(.is-on) {
   background: var(--accent-tint);
-  color: var(--accent);
+  color: var(--accent-text);
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 .filtercount {
@@ -139,7 +171,7 @@
 .bulkcount {
   font-size: 13px;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .bulkdiv {
   width: 1px;
@@ -159,7 +191,7 @@
   background: var(--surface2);
 }
 .bulkbtnDanger {
-  color: var(--danger);
+  color: var(--danger-text);
   border-color: #f3c9c9;
 }
 .bulkclear {
@@ -168,9 +200,16 @@
   color: var(--muted);
 }
 
+/* Two column sets: channels that report open/click rates get those columns,
+   the rest do not. Kept as explicit variants rather than one grid with hidden
+   cells, because the responsive rules below hide columns by position — an
+   omitted cell would shift every index after it. */
 .grid {
-  grid-template-columns: 36px 2fr 0.9fr 1fr 1.1fr 0.8fr 0.7fr 0.8fr;
+  grid-template-columns: 36px 1.9fr 0.9fr 0.95fr 0.8fr 0.72fr 0.7fr 0.7fr 0.8fr;
   column-gap: 14px;
+}
+.gridPlain {
+  grid-template-columns: 36px 2.3fr 1fr 1.05fr 0.9fr 0.8fr 0.9fr;
 }
 .grid:global(.athead) {
   padding: 0 19px;
@@ -210,20 +249,24 @@
 .sendProgress {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 4px;
   min-width: 0;
 }
 .sendProgressTrack {
+  align-self: stretch;
   height: 4px;
   border-radius: 999px;
   background: var(--surface2);
   overflow: hidden;
 }
 .sendProgressFill {
+  width: 100%;
   height: 100%;
   border-radius: inherit;
   background: var(--accent);
-  transition: width 0.35s ease;
+  transform-origin: left;
+  transition: transform 0.35s ease;
 }
 .sendProgressPct {
   font-size: 11px;
@@ -235,6 +278,22 @@
 }
 .muted3 {
   color: var(--text3);
+}
+/* A non-zero failure count is the one number in the row worth catching the
+   eye — on voice and SMS it is the only outcome the channel reports. */
+.fail {
+  color: var(--danger);
+  font-weight: 600;
+}
+.colCenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.grid:global(.athead) > .colCenter button {
+  width: 100%;
+  justify-content: center;
 }
 
 /* footer / pagination — matches the Templates & Subscribers list UX */
@@ -312,22 +371,39 @@
   justify-content: center;
 }
 
+/* Columns are: 1 check · 2 campaign · 3 status · 4 channel · 5 recipients ·
+   6 failed · 7 open · 8 click · 9 updated. .gridPlain rows stop at 7, so the
+   .grid rules below must never hide an index those rows still need. */
 @media (max-width: 1100px) {
   .grid {
-    grid-template-columns: 36px 1.6fr 0.9fr 1fr 0.8fr 0.8fr;
+    grid-template-columns: 36px 1.6fr 0.9fr 1fr 0.75fr 0.8fr 0.8fr;
   }
+  /* Recipients and click go first; the failure count stays. */
   .grid > :nth-child(5),
-  .grid > :nth-child(7) {
+  .grid > :nth-child(8) {
     display: none;
+  }
+  .gridPlain {
+    grid-template-columns: 36px 1.9fr 1fr 1.05fr 0.8fr 0.9fr;
   }
 }
 @media (max-width: 720px) {
   .grid {
-    grid-template-columns: 30px 1.4fr 0.9fr 0.8fr;
+    grid-template-columns: 30px 1.4fr 0.9fr 0.7fr 0.8fr;
   }
   .grid > :nth-child(4),
-  .grid > :nth-child(6) {
+  .grid > :nth-child(5),
+  .grid > :nth-child(7),
+  .grid > :nth-child(8) {
     display: none;
+  }
+  .gridPlain {
+    grid-template-columns: 30px 1.5fr 0.9fr 0.7fr 0.85fr;
+  }
+  /* Index 7 is "click" on wide rows but "updated" on plain ones — the .grid
+     rule above hides it, so plain rows have to take it back. */
+  .gridPlain > :nth-child(7) {
+    display: revert;
   }
 }
 
@@ -345,192 +421,14 @@
   letter-spacing: -0.3px;
   margin: 0;
 }
+/* Column count is set inline from the channel's KPI count — see CampaignsBoard. */
 .drawerKpis {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
   margin-top: 18px;
-}
-.drawerKpi {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 13px;
-}
-.drawerKpiLbl {
-  font-size: 11px;
-  color: var(--muted);
-}
-.drawerKpiVal {
-  font-size: 19px;
-  font-weight: 600;
-  margin-top: 4px;
 }
 .drawerEyebrow {
   margin: 24px 0 10px;
 }
 .drawerDetails {
-}
-
-/* ---- Campaign report (full screen, App.dc.html § campaignDetail) ---- */
-.reportBack {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 14px;
-  padding: 0;
-  border: none;
-  background: none;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--text4);
-  cursor: pointer;
-}
-.reportBack:hover {
-  color: var(--text2);
-}
-.reportHead {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 22px;
-}
-.reportHeadMain {
-  min-width: 0;
-}
-.reportTitleRow {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-}
-.reportName {
-  margin: 0;
-  font-size: 23px;
-  font-weight: 600;
-  letter-spacing: -0.6px;
-  color: var(--text);
-}
-.reportSub {
-  margin: 7px 0 0;
-  font-size: 13.5px;
-  color: var(--text4);
-}
-.reportHeadActions {
-  display: flex;
-  gap: 10px;
-  flex: none;
-}
-
-.reportKpis {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 18px;
-}
-.reportKpi {
-  padding: 16px 18px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 1px 2px rgba(30, 27, 22, 0.04);
-}
-.reportKpiLbl {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--muted);
-}
-.reportKpiVal {
-  margin-top: 8px;
-  font-size: 26px;
-  font-weight: 600;
-  letter-spacing: -0.6px;
-  color: var(--text);
-}
-
-.reportRow {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 18px;
-}
-.reportCard {
-  padding: 18px 20px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 1px 2px rgba(30, 27, 22, 0.04);
-}
-.reportCardTitle {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 18px;
-}
-
-.funnelRow {
-  margin-bottom: 15px;
-}
-.funnelRow:last-child {
-  margin-bottom: 0;
-}
-.funnelTop {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-.funnelLbl {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--text3);
-}
-.funnelVal {
-  font-size: 12.5px;
-  color: var(--muted);
-}
-.funnelTrack {
-  height: 10px;
-  border-radius: 6px;
-  background: var(--surface2);
-  overflow: hidden;
-}
-.funnelBar {
-  height: 100%;
-  border-radius: 6px;
-  transform-origin: left;
-  animation: grow 0.5s ease;
-}
-
-.reportDetail {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--divider);
-}
-.reportDetail:last-child {
-  border-bottom: none;
-}
-.reportDetailK {
-  font-size: 12.5px;
-  color: var(--muted);
-}
-.reportDetailV {
-  font-size: 13px;
-  font-weight: 500;
-  text-align: right;
-  color: var(--text);
-}
-
-@media (max-width: 860px) {
-  .reportKpis {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .reportRow {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* Template preview inside the campaign detail drawer */

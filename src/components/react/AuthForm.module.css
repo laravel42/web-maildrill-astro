@@ -76,7 +76,8 @@
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
-.af label.field {
+.af label.field,
+.af .field {
   display: block;
   margin-bottom: 14px;
 }
@@ -267,6 +268,21 @@
   color: var(--success);
 }
 
+/* Icon + step title on one row. */
+.stepHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 12px;
+}
+.stepHead .iconTile {
+  margin: 0;
+  flex: none;
+}
+.stepHead .substep {
+  margin: 0;
+}
+
 /* Step heading, a notch smaller than the primary title. */
 .substep {
   font-size: 24px;
@@ -350,4 +366,45 @@
 }
 .linkbtn:hover {
   text-decoration: underline;
+}
+
+/* ── Passkey sign-in ── */
+.orRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0;
+  color: var(--text4);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.orRow::before,
+.orRow::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border2);
+}
+.pkbtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+.pkbtn:hover {
+  background: var(--surface3);
+}
+.pkbtn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }

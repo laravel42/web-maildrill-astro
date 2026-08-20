@@ -34,7 +34,7 @@ type AIPreviewPanelProps = {
       duplicateIds: string[];
       streamErrors: string[];
       streamWarnings: string[];
-    }
+    },
   ) => void;
   /** Called exactly once for catastrophic failures (parser threw, stream aborted, no document assembled). */
   onError: (message: string) => void;
@@ -52,7 +52,13 @@ type AIPreviewPanelProps = {
 function formatPayloadMessage(payload: unknown): string {
   if (typeof payload === 'string') return payload;
   if (payload !== null && typeof payload === 'object') {
-    const p = payload as { type?: unknown; id?: unknown; action?: unknown; line?: unknown; message?: unknown };
+    const p = payload as {
+      type?: unknown;
+      id?: unknown;
+      action?: unknown;
+      line?: unknown;
+      message?: unknown;
+    };
     if (p.type === 'malformed_line') {
       const preview = typeof p.line === 'string' ? p.line.slice(0, 160) : '';
       return preview
@@ -84,7 +90,7 @@ function formatPayloadMessage(payload: unknown): string {
  * `TEditorConfiguration` that was produced synchronously by the consumer.
  */
 function isStreamingResponse(
-  response: AIGenerateTemplateResponse
+  response: AIGenerateTemplateResponse,
 ): response is ReadableStream<string> | AsyncIterable<string> {
   if (response == null || typeof response !== 'object') return false;
   if (typeof ReadableStream !== 'undefined' && response instanceof ReadableStream) return true;
@@ -97,11 +103,13 @@ function isStreamingResponse(
  * under `data.props.childrenIds`. Either shape is accepted.
  */
 function extractChildrenIds(block: TEditorBlock): string[] {
-  const data = block.data as { childrenIds?: unknown; props?: { childrenIds?: unknown } } | undefined;
+  const data = block.data as
+    { childrenIds?: unknown; props?: { childrenIds?: unknown } } | undefined;
   const rootLevel = data?.childrenIds;
   if (Array.isArray(rootLevel)) return rootLevel.filter((v): v is string => typeof v === 'string');
   const propsLevel = data?.props?.childrenIds;
-  if (Array.isArray(propsLevel)) return propsLevel.filter((v): v is string => typeof v === 'string');
+  if (Array.isArray(propsLevel))
+    return propsLevel.filter((v): v is string => typeof v === 'string');
   return [];
 }
 
@@ -250,8 +258,13 @@ export default function AIPreviewPanel({ response, onComplete, onError }: AIPrev
               // All three are common LLM failure modes. We surface each as
               // a yellow warning so the user knows auto-repair fired.
               const rawDoc = accRef.current as unknown as TEditorConfiguration;
-              const { repaired, appendedRootChildren, droppedReferences, normalizedBlocks, duplicateChildRefs } =
-                repairDocument(rawDoc);
+              const {
+                repaired,
+                appendedRootChildren,
+                droppedReferences,
+                normalizedBlocks,
+                duplicateChildRefs,
+              } = repairDocument(rawDoc);
               const touched =
                 appendedRootChildren.length > 0 ||
                 droppedReferences.length > 0 ||
@@ -263,22 +276,22 @@ export default function AIPreviewPanel({ response, onComplete, onError }: AIPrev
               }
               for (const id of normalizedBlocks) {
                 streamWarningsRef.current.push(
-                  `Normalized block "${id}" shape: moved misplaced \`props\` into \`data.props\``
+                  `Normalized block "${id}" shape: moved misplaced \`props\` into \`data.props\``,
                 );
               }
               for (const { childId, keptBy, droppedFrom } of duplicateChildRefs) {
                 streamWarningsRef.current.push(
-                  `Removed duplicate child reference: "${childId}" appeared in both "${keptBy}" and "${droppedFrom}"; kept under "${keptBy}" to avoid double-rendering`
+                  `Removed duplicate child reference: "${childId}" appeared in both "${keptBy}" and "${droppedFrom}"; kept under "${keptBy}" to avoid double-rendering`,
                 );
               }
               for (const { parent, missingId } of droppedReferences) {
                 streamWarningsRef.current.push(
-                  `Dropped dangling child reference: "${parent}" → "${missingId}" (block never emitted; removed from childrenIds)`
+                  `Dropped dangling child reference: "${parent}" → "${missingId}" (block never emitted; removed from childrenIds)`,
                 );
               }
               if (appendedRootChildren.length > 0) {
                 streamWarningsRef.current.push(
-                  `Auto-attached ${appendedRootChildren.length} orphaned block(s) to the root layout: ${appendedRootChildren.join(', ')}`
+                  `Auto-attached ${appendedRootChildren.length} orphaned block(s) to the root layout: ${appendedRootChildren.join(', ')}`,
                 );
               }
               onComplete(repaired, {
@@ -319,8 +332,13 @@ export default function AIPreviewPanel({ response, onComplete, onError }: AIPrev
           setStreamFinished(true);
           if (accRef.current.root) {
             const rawDoc = accRef.current as unknown as TEditorConfiguration;
-            const { repaired, appendedRootChildren, droppedReferences, normalizedBlocks, duplicateChildRefs } =
-              repairDocument(rawDoc);
+            const {
+              repaired,
+              appendedRootChildren,
+              droppedReferences,
+              normalizedBlocks,
+              duplicateChildRefs,
+            } = repairDocument(rawDoc);
             const touched =
               appendedRootChildren.length > 0 ||
               droppedReferences.length > 0 ||
@@ -332,22 +350,22 @@ export default function AIPreviewPanel({ response, onComplete, onError }: AIPrev
             }
             for (const id of normalizedBlocks) {
               streamWarningsRef.current.push(
-                `Normalized block "${id}" shape: moved misplaced \`props\` into \`data.props\``
+                `Normalized block "${id}" shape: moved misplaced \`props\` into \`data.props\``,
               );
             }
             for (const { childId, keptBy, droppedFrom } of duplicateChildRefs) {
               streamWarningsRef.current.push(
-                `Removed duplicate child reference: "${childId}" appeared in both "${keptBy}" and "${droppedFrom}"; kept under "${keptBy}" to avoid double-rendering`
+                `Removed duplicate child reference: "${childId}" appeared in both "${keptBy}" and "${droppedFrom}"; kept under "${keptBy}" to avoid double-rendering`,
               );
             }
             for (const { parent, missingId } of droppedReferences) {
               streamWarningsRef.current.push(
-                `Dropped dangling child reference: "${parent}" → "${missingId}" (block never emitted; removed from childrenIds)`
+                `Dropped dangling child reference: "${parent}" → "${missingId}" (block never emitted; removed from childrenIds)`,
               );
             }
             if (appendedRootChildren.length > 0) {
               streamWarningsRef.current.push(
-                `Auto-attached ${appendedRootChildren.length} orphaned block(s) to the root layout: ${appendedRootChildren.join(', ')}`
+                `Auto-attached ${appendedRootChildren.length} orphaned block(s) to the root layout: ${appendedRootChildren.join(', ')}`,
               );
             }
             onComplete(repaired, {
@@ -388,7 +406,11 @@ export default function AIPreviewPanel({ response, onComplete, onError }: AIPrev
     <Stack sx={{ gap: 1.5 }}>
       {/* Stream stats — hidden (unhide by removing display:'none') */}
       <Box sx={{ display: 'none' }}>
-        <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}
+        >
           <Typography variant="caption" color="text.secondary">
             {t('aiGeneration.preview.blocksCount', { count: blockCount })}
           </Typography>
@@ -439,7 +461,11 @@ export default function AIPreviewPanel({ response, onComplete, onError }: AIPrev
                   <Box
                     key={i}
                     sx={{
-                      color: isError ? theme.palette.error.main : isWarning ? theme.palette.warning.main : 'inherit',
+                      color: isError
+                        ? theme.palette.error.main
+                        : isWarning
+                          ? theme.palette.warning.main
+                          : 'inherit',
                       mb: 0.5,
                     }}
                   >
@@ -470,9 +496,25 @@ export default function AIPreviewPanel({ response, onComplete, onError }: AIPrev
 
         {/* Live preview */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          <Typography sx={{ fontSize: '14px', fontWeight: 700, mb: 0.5 }}>
-            {t('aiGeneration.preview.previewTitle')}
-          </Typography>
+          <Stack
+            direction="row"
+            sx={{ alignItems: 'baseline', justifyContent: 'space-between', gap: 1, mb: 0.5 }}
+          >
+            <Typography sx={{ fontSize: '14px', fontWeight: 700 }}>
+              {t('aiGeneration.preview.previewTitle')}
+            </Typography>
+            {!streamFinished && (
+              <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+                {t('aiGeneration.dialog.status.streaming')}
+                {blockCount > 0
+                  ? ` · ${t('aiGeneration.preview.blocksCount', { count: blockCount })}`
+                  : ''}
+              </Typography>
+            )}
+          </Stack>
+          {/* Streaming is otherwise only visible as blocks appearing; the bar
+              says "still working" during quiet gaps between frames. */}
+          {!streamFinished && <LinearProgress sx={{ borderRadius: '2px', height: 3, mb: 0.5 }} />}
           <Box
             sx={{
               flex: 1,
@@ -499,7 +541,15 @@ export default function AIPreviewPanel({ response, onComplete, onError }: AIPrev
                 </EditorRenderContextBridge>
               </ReaderErrorBoundary>
             ) : (
-              <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+              <Box
+                sx={{
+                  p: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                }}
+              >
                 <Typography variant="body2" color="text.secondary">
                   {t('aiGeneration.preview.emptyPreview')}
                 </Typography>

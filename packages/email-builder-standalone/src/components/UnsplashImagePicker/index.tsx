@@ -163,7 +163,7 @@ const UnsplashImagePicker: React.FC<UnsplashImagePickerProps> = ({
         }
       }
     },
-    [resolvedBackendUrl]
+    [resolvedBackendUrl],
   );
 
   useEffect(() => {
@@ -232,10 +232,18 @@ const UnsplashImagePicker: React.FC<UnsplashImagePickerProps> = ({
           slotProps={{
             input: {
               startAdornment: (
-                <InputAdornment position="start">
+                <InputAdornment position="start" sx={{ mr: 0.5, ml: 0 }}>
                   <Search fontSize="small" sx={{ color: 'text.secondary' }} />
                 </InputAdornment>
               ),
+            },
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              pl: 0.75,
+            },
+            '& .MuiOutlinedInput-input': {
+              pl: 0,
             },
           }}
         />
@@ -252,24 +260,22 @@ const UnsplashImagePicker: React.FC<UnsplashImagePickerProps> = ({
       <Tabs
         value={orientation}
         onChange={(_, v: Orientation) => setOrientation(v)}
-        variant="scrollable"
-        scrollButtons={false}
+        variant="fullWidth"
         sx={{
           minHeight: 30,
           mb: 1.5,
           '& .MuiTabs-flexContainer': { gap: 0 },
-          '& .MuiTabs-scroller': { pl: 0 },
           '& .MuiTab-root': {
             minHeight: 30,
             minWidth: 0,
-            px: 1,
+            flex: 1,
+            px: 0.5,
             py: 0.25,
             fontSize: '0.7rem',
             textTransform: 'none',
             color: 'text.secondary',
             '&.Mui-selected': { color: 'primary.main' },
           },
-          '& .MuiTab-root:first-of-type': { pl: 0 },
         }}
       >
         {ORIENTATIONS.map((o) => (
@@ -278,7 +284,10 @@ const UnsplashImagePicker: React.FC<UnsplashImagePickerProps> = ({
       </Tabs>
 
       {errorKind && (
-        <Alert severity={errorKind === 'not_configured' ? 'warning' : 'error'} sx={{ mb: 1.5, fontSize: '0.75rem' }}>
+        <Alert
+          severity={errorKind === 'not_configured' ? 'warning' : 'error'}
+          sx={{ mb: 1.5, fontSize: '0.75rem' }}
+        >
           {t(`inputs.unsplash.error.${errorKind}`)}
         </Alert>
       )}
@@ -317,14 +326,26 @@ const UnsplashImagePicker: React.FC<UnsplashImagePickerProps> = ({
         >
           {photos.map((photo) => {
             const selected = currentImageUrl?.includes(photo.id) ?? false;
-            return <UnsplashTile key={photo.id} photo={photo} selected={selected} onPick={() => handlePick(photo)} />;
+            return (
+              <UnsplashTile
+                key={photo.id}
+                photo={photo}
+                selected={selected}
+                onPick={() => handlePick(photo)}
+              />
+            );
           })}
         </Box>
       )}
 
       {canLoadMore && (
         <Box sx={{ textAlign: 'center', mt: 2 }}>
-          <Link component="button" variant="caption" onClick={handleLoadMore} sx={{ cursor: 'pointer' }}>
+          <Link
+            component="button"
+            variant="caption"
+            onClick={handleLoadMore}
+            sx={{ cursor: 'pointer' }}
+          >
             {t('inputs.unsplash.loadMore')}
           </Link>
         </Box>

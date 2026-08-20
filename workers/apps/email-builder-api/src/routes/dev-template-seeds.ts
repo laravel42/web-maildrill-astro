@@ -26,7 +26,11 @@ import { MAX_TAGS, TAG_MAX_LENGTH } from './dev-library-ndjson.js';
 import { SKILLS_REFERENCES_DIR } from './dev-library-paths.js';
 import { DISABLED_RESPONSE_BODY, isLibraryEndpointEnabled } from './dev-library-shared.js';
 
-const ROOT_TEMPLATES_FILE = resolve(SKILLS_REFERENCES_DIR, '../../..', 'email-builder-templates.json');
+const ROOT_TEMPLATES_FILE = resolve(
+  SKILLS_REFERENCES_DIR,
+  '../../..',
+  'email-builder-templates.json',
+);
 
 /** Max length of the `usage` axis, mirrors USAGE_MAX_LENGTH in dev-save-template. */
 const USAGE_MAX_LENGTH = 48;
@@ -63,7 +67,9 @@ function buildUsage(entry: Record<string, unknown>): string | undefined {
   return v.length > 0 ? v : undefined;
 }
 
-export const devTemplateSeedsPlugin = async function devTemplateSeedsPlugin(fastify: FastifyInstance) {
+export const devTemplateSeedsPlugin = async function devTemplateSeedsPlugin(
+  fastify: FastifyInstance,
+) {
   fastify.get('/dev/template-seeds', async (_request: FastifyRequest, reply: FastifyReply) => {
     if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
     if (!existsSync(ROOT_TEMPLATES_FILE)) {
@@ -83,7 +89,12 @@ export const devTemplateSeedsPlugin = async function devTemplateSeedsPlugin(fast
     for (const item of arr as Array<Record<string, unknown>>) {
       if (!item || item.type !== 'enhanced') continue;
       if (typeof item.design !== 'string' || typeof item.name !== 'string') continue;
-      seeds.push({ name: item.name, tags: buildTags(item), usage: buildUsage(item), design: item.design });
+      seeds.push({
+        name: item.name,
+        tags: buildTags(item),
+        usage: buildUsage(item),
+        design: item.design,
+      });
     }
 
     return reply.send({ count: seeds.length, seeds });

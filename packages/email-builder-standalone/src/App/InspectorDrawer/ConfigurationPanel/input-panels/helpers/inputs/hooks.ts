@@ -5,14 +5,16 @@ type Handler = (event: MouseEvent | TouchEvent) => void;
 export function useClickOutside<T extends HTMLElement = HTMLElement>(
   ref: RefObject<T>,
   handler: Handler,
-  excludeRefs: RefObject<HTMLElement>[] = []
+  excludeRefs: RefObject<HTMLElement>[] = [],
 ): void {
   useEffect(() => {
     const listener = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node;
 
       if (!ref.current?.contains(target)) {
-        const clickedInsideExcluded = excludeRefs.some((excludeRef) => excludeRef.current?.contains(target));
+        const clickedInsideExcluded = excludeRefs.some((excludeRef) =>
+          excludeRef.current?.contains(target),
+        );
 
         if (!clickedInsideExcluded) {
           handler(event);

@@ -8,7 +8,10 @@ import { ShareOutlined, SpaceBar } from '@mui/icons-material';
 import { Box } from '@mui/material';
 
 import { TStyle } from '../../../../documents/blocks/helpers/TStyle';
-import { useSelectedScreenSize, useSelectedSidebarTab } from '../../../../documents/editor/EditorContext';
+import {
+  useSelectedScreenSize,
+  useSelectedSidebarTab,
+} from '../../../../documents/editor/EditorContext';
 import { useCompactMode } from '../../CompactModeContext';
 
 import BaseSidebarPanel, { CompactDivider } from './helpers/BaseSidebarPanel';
@@ -62,7 +65,10 @@ export const SocialMediaSidebarPanel = ({ data, setData }: SocialMediaSidebarPan
       {(selectedTab == 'block-configuration' || compact) && (
         <CompactableInput icon={ShareOutlined} label={t('inputs.panels.social.title')}>
           <Box sx={{ minWidth: 120, margin: 1 }}>
-            <SocialMediaInput items={(data?.items ?? []) as IconOptions[]} onChange={updateContent} />
+            <SocialMediaInput
+              items={(data?.items ?? []) as IconOptions[]}
+              onChange={updateContent}
+            />
           </Box>
         </CompactableInput>
       )}

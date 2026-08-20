@@ -27,8 +27,8 @@ const channels: Channel[] = [
     icon: 'bolt',
     title: 'Sales',
     desc: 'Volume pricing, custom plans, and demos for teams.',
-    link: 'sales@maildrill.com',
-    href: 'mailto:sales@maildrill.com',
+    link: 'sales@maildrill.net',
+    href: 'mailto:sales@maildrill.net',
     color: 'var(--ch-email)',
     tint: 'var(--ch-email-tint)',
   },
@@ -36,8 +36,8 @@ const channels: Channel[] = [
     icon: 'shield',
     title: 'Support',
     desc: 'Already a customer? Reach our support team.',
-    link: 'support@maildrill.com',
-    href: 'mailto:support@maildrill.com',
+    link: 'support@maildrill.net',
+    href: 'mailto:support@maildrill.net',
     color: 'var(--ch-whatsapp)',
     tint: 'var(--ch-whatsapp-tint)',
   },
@@ -45,8 +45,8 @@ const channels: Channel[] = [
     icon: 'globe',
     title: 'General',
     desc: 'Partnerships, press, and everything else.',
-    link: 'hello@maildrill.com',
-    href: 'mailto:hello@maildrill.com',
+    link: 'hello@maildrill.net',
+    href: 'mailto:hello@maildrill.net',
     color: 'var(--ch-sms)',
     tint: 'var(--ch-sms-tint)',
   },
@@ -105,7 +105,7 @@ const jsonLd = [
 
 <style>
   .contact {
-    padding-block: 72px 40px;
+    padding-block: calc(72px * var(--sec-y)) calc(40px * var(--sec-y));
   }
 
   .contact__grid {

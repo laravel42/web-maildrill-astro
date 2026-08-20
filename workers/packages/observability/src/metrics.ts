@@ -5,7 +5,7 @@ function keyOf(name: string, labels?: LabelValues): string {
   const parts = Object.keys(labels)
     .sort()
     .map((k) => `${k}="${String(labels[k])}"`);
-  return parts.length ? `${name}{${parts.join(",")}}` : name;
+  return parts.length ? `${name}{${parts.join(',')}}` : name;
 }
 
 /**
@@ -43,7 +43,7 @@ class Registry {
         if (k === name || k.startsWith(`${name}{`)) lines.push(`${k} ${v}`);
       }
     }
-    return `${lines.join("\n")}\n`;
+    return `${lines.join('\n')}\n`;
   }
 }
 

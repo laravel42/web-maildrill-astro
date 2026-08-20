@@ -1,9 +1,10 @@
-import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
-import { config } from "@maildrill/config";
-import { db, messages, type MessageRow } from "@maildrill/database";
-import type { Channel } from "@maildrill/domain";
-import { insertDispatchOutbox, isUniqueViolation } from "./shared";
+import { randomUUID } from 'node:crypto';
+import { and, eq } from 'drizzle-orm';
+import { config } from '@maildrill/config';
+import { db, messages, type MessageRow } from '@maildrill/database';
+import { estimateVoiceSeconds, type Channel } from '@maildrill/domain';
+import { assertTrialAllowance } from '@maildrill/billing';
+import { insertDispatchOutbox, isUniqueViolation } from './shared';
 
 export interface SubmitMessageInput {
   tenantId: string;
@@ -40,10 +41,12 @@ async function findByIdempotencyKey(
  * written in a single transaction (transactional outbox). Returns after the
  * commit — never after provider delivery. Idempotent on (tenant, key).
  */
-export async function submitMessage(
-  input: SubmitMessageInput,
-): Promise<SubmitResult> {
-  const provider = input.provider ?? config.provider.driver;
+export async function submitMessage(input: SubmitMessageInput): Promise<SubmitResult> {
+  // Email may ride a different driver (PROVIDER_EMAIL_DRIVER, e.g. Cloudflare
+  // Email Service) than the phone channels; the driver is stamped per message.
+  const provider =
+    input.provider ??
+    (input.channel === 'email' ? config.provider.emailDriver : config.provider.driver);
   const correlationId = input.correlationId ?? randomUUID();
 
   if (input.idempotencyKey) {
@@ -51,9 +54,19 @@ export async function submitMessage(
     if (existing) return { message: existing, deduplicated: true };
   }
 
-  const scheduled =
-    input.scheduledAt != null && input.scheduledAt.getTime() > Date.now();
-  const status = scheduled ? "scheduled" : "queued";
+  // Trial gate for un-batched sends (test sends, transactional, API one-offs).
+  // Campaign fan-out comes through here too, but `sendCampaign` already gated
+  // the whole audience up front — re-checking per message would both waste two
+  // queries per recipient and risk rejecting a campaign halfway through.
+  if (!input.campaignId) {
+    // Voice spends estimated seconds; every other channel spends one message.
+    const requested =
+      input.channel === 'voice' ? estimateVoiceSeconds(input.content) : 1;
+    await assertTrialAllowance(input.tenantId, input.channel, requested);
+  }
+
+  const scheduled = input.scheduledAt != null && input.scheduledAt.getTime() > Date.now();
+  const status = scheduled ? 'scheduled' : 'queued';
   const now = new Date();
 
   try {

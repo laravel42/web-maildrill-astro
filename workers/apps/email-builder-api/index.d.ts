@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance } from 'fastify';
 
 /**
  * Public surface of the vendored EmailBuilder backend.

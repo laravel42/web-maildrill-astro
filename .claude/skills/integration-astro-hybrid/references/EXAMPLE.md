@@ -98,13 +98,13 @@ src/
 In Astro 5, `output: 'static'` is the default and supports per-page SSR opt-in. You need an adapter for the SSR pages to work:
 
 ```javascript
-import { defineConfig } from "astro/config";
-import node from "@astrojs/node";
+import { defineConfig } from 'astro/config';
+import node from '@astrojs/node';
 
 export default defineConfig({
   // 'static' is the default - pages are prerendered unless they opt out
-  output: "static",
-  adapter: node({ mode: "standalone" }),
+  output: 'static',
+  adapter: node({ mode: 'standalone' }),
 });
 ```
 
@@ -123,7 +123,7 @@ export const prerender = false;
 A singleton pattern ensures only one PostHog client is created:
 
 ```typescript
-import { PostHog } from "posthog-node";
+import { PostHog } from 'posthog-node';
 
 let posthogClient: PostHog | null = null;
 
@@ -142,19 +142,19 @@ export function getPostHogServer(): PostHog {
 ### API route with server-side tracking (`src/pages/api/events/burrito.ts`)
 
 ```typescript
-import { getPostHogServer } from "../../../lib/posthog-server";
+import { getPostHogServer } from '../../../lib/posthog-server';
 
 export const POST: APIRoute = async ({ request }) => {
   const body = await request.json();
-  const sessionId = request.headers.get("X-PostHog-Session-Id");
+  const sessionId = request.headers.get('X-PostHog-Session-Id');
 
   const posthog = getPostHogServer();
   posthog.capture({
     distinctId: body.username,
-    event: "burrito_considered",
+    event: 'burrito_considered',
     properties: {
       $session_id: sessionId || undefined,
-      source: "api",
+      source: 'api',
     },
   });
 
@@ -205,21 +205,20 @@ PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ## astro.config.mjs
 
 ```mjs
-import { defineConfig } from "astro/config";
-import node from "@astrojs/node";
+import { defineConfig } from 'astro/config';
+import node from '@astrojs/node';
 
 export default defineConfig({
   // In Astro 5, 'static' is the default and supports per-page SSR opt-in
   // Use `export const prerender = false` in pages that need server rendering
-  output: "static",
+  output: 'static',
   adapter: node({
-    mode: "standalone",
+    mode: 'standalone',
   }),
   image: {
-    service: { entrypoint: "astro/assets/services/noop" },
+    service: { entrypoint: 'astro/assets/services/noop' },
   },
 });
-
 ```
 
 ---
@@ -230,6 +229,7 @@ export default defineConfig({
 ---
 // Header component with navigation and logout functionality
 ---
+
 <header class="header">
   <div class="header-container">
     <nav>
@@ -238,7 +238,9 @@ export default defineConfig({
       <a href="/profile" class="auth-link" style="display: none;">Profile</a>
     </nav>
     <div class="user-section">
-      <span class="welcome-text" style="display: none;">Welcome, <span class="username"></span>!</span>
+      <span class="welcome-text" style="display: none;"
+        >Welcome, <span class="username"></span>!</span
+      >
       <span class="not-logged-in">Not logged in</span>
       <button class="btn-logout" style="display: none;">Logout</button>
     </div>
@@ -255,13 +257,13 @@ export default defineConfig({
     const usernameSpan = document.querySelector('.username');
 
     if (currentUser) {
-      authLinks.forEach(link => link.style.display = 'inline');
+      authLinks.forEach((link) => (link.style.display = 'inline'));
       welcomeText.style.display = 'inline';
       notLoggedIn.style.display = 'none';
       logoutBtn.style.display = 'inline';
       usernameSpan.textContent = currentUser;
     } else {
-      authLinks.forEach(link => link.style.display = 'none');
+      authLinks.forEach((link) => (link.style.display = 'none'));
       welcomeText.style.display = 'none';
       notLoggedIn.style.display = 'inline';
       logoutBtn.style.display = 'none';
@@ -342,7 +344,6 @@ export default defineConfig({
     background-color: #c82333;
   }
 </style>
-
 ```
 
 ---
@@ -354,17 +355,64 @@ export default defineConfig({
 // PostHog analytics snippet for client-side tracking
 // Uses is:inline to prevent Astro from processing the script
 ---
-<script is:inline define:vars={{ apiKey: import.meta.env.PUBLIC_POSTHOG_PROJECT_TOKEN, apiHost: import.meta.env.PUBLIC_POSTHOG_HOST }}>
-  !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys getNextSurveyStep onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+
+<script
+  is:inline
+  define:vars={{
+    apiKey: import.meta.env.PUBLIC_POSTHOG_PROJECT_TOKEN,
+    apiHost: import.meta.env.PUBLIC_POSTHOG_HOST,
+  }}
+>
+  !(function (t, e) {
+    var o, n, p, r;
+    e.__SV ||
+      ((window.posthog = e),
+      (e._i = []),
+      (e.init = function (i, s, a) {
+        function g(t, e) {
+          var o = e.split('.');
+          (2 == o.length && ((t = t[o[0]]), (e = o[1])),
+            (t[e] = function () {
+              t.push([e].concat(Array.prototype.slice.call(arguments, 0)));
+            }));
+        }
+        (((p = t.createElement('script')).type = 'text/javascript'),
+          (p.crossOrigin = 'anonymous'),
+          (p.async = !0),
+          (p.src = s.api_host + '/static/array.js'),
+          (r = t.getElementsByTagName('script')[0]).parentNode.insertBefore(p, r));
+        var u = e;
+        for (
+          void 0 !== a ? (u = e[a] = []) : (a = 'posthog'),
+            u.people = u.people || [],
+            u.toString = function (t) {
+              var e = 'posthog';
+              return ('posthog' !== a && (e += '.' + a), t || (e += ' (stub)'), e);
+            },
+            u.people.toString = function () {
+              return u.toString(1) + '.people (stub)';
+            },
+            o =
+              'capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys getNextSurveyStep onSessionId'.split(
+                ' ',
+              ),
+            n = 0;
+          n < o.length;
+          n++
+        )
+          g(u, o[n]);
+        e._i.push([i, s, a]);
+      }),
+      (e.__SV = 1));
+  })(document, window.posthog || []);
   posthog.init(apiKey || '', {
     api_host: apiHost || 'https://us.i.posthog.com',
     defaults: '2026-01-30',
     // Automatically add X-POSTHOG-SESSION-ID and X-POSTHOG-DISTINCT-ID headers
     // to same-origin requests so server-side events join the same session.
-    tracing_headers: [window.location.hostname]
-  })
+    tracing_headers: [window.location.hostname],
+  });
 </script>
-
 ```
 
 ---
@@ -383,6 +431,7 @@ interface Props {
 
 const { title } = Astro.props;
 ---
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -400,7 +449,6 @@ const { title } = Astro.props;
     </main>
   </body>
 </html>
-
 ```
 
 ---
@@ -416,15 +464,12 @@ export interface User {
 }
 
 export function getCurrentUser(): User | null {
-  if (typeof window === "undefined") return null;
+  if (typeof window === 'undefined') return null;
 
-  const username = localStorage.getItem("currentUser");
+  const username = localStorage.getItem('currentUser');
   if (!username) return null;
 
-  const considerations = parseInt(
-    localStorage.getItem("burritoConsiderations") || "0",
-    10,
-  );
+  const considerations = parseInt(localStorage.getItem('burritoConsiderations') || '0', 10);
 
   return {
     username,
@@ -435,30 +480,26 @@ export function getCurrentUser(): User | null {
 export function login(username: string, password: string): boolean {
   if (!username || !password) return false;
 
-  localStorage.setItem("currentUser", username);
+  localStorage.setItem('currentUser', username);
   // Initialize burrito considerations if not set
-  if (!localStorage.getItem("burritoConsiderations")) {
-    localStorage.setItem("burritoConsiderations", "0");
+  if (!localStorage.getItem('burritoConsiderations')) {
+    localStorage.setItem('burritoConsiderations', '0');
   }
 
   return true;
 }
 
 export function logout(): void {
-  localStorage.removeItem("currentUser");
-  localStorage.removeItem("burritoConsiderations");
+  localStorage.removeItem('currentUser');
+  localStorage.removeItem('burritoConsiderations');
 }
 
 export function incrementBurritoConsiderations(): number {
-  const current = parseInt(
-    localStorage.getItem("burritoConsiderations") || "0",
-    10,
-  );
+  const current = parseInt(localStorage.getItem('burritoConsiderations') || '0', 10);
   const newCount = current + 1;
-  localStorage.setItem("burritoConsiderations", newCount.toString());
+  localStorage.setItem('burritoConsiderations', newCount.toString());
   return newCount;
 }
-
 ```
 
 ---
@@ -466,7 +507,7 @@ export function incrementBurritoConsiderations(): number {
 ## src/lib/posthog-server.ts
 
 ```ts
-import { PostHog } from "posthog-node";
+import { PostHog } from 'posthog-node';
 
 let posthogClient: PostHog | null = null;
 
@@ -476,8 +517,8 @@ let posthogClient: PostHog | null = null;
  */
 export function getPostHogServer(): PostHog {
   if (!posthogClient) {
-    posthogClient = new PostHog(import.meta.env.PUBLIC_POSTHOG_PROJECT_TOKEN || "", {
-      host: import.meta.env.PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
+    posthogClient = new PostHog(import.meta.env.PUBLIC_POSTHOG_PROJECT_TOKEN || '', {
+      host: import.meta.env.PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
       // Flush immediately for demo purposes
       // In production, you might want to batch events
       flushAt: 1,
@@ -497,7 +538,6 @@ export async function shutdownPostHog(): Promise<void> {
     posthogClient = null;
   }
 }
-
 ```
 
 ---
@@ -505,8 +545,8 @@ export async function shutdownPostHog(): Promise<void> {
 ## src/pages/api/auth/login.ts
 
 ```ts
-import type { APIRoute } from "astro";
-import { getPostHogServer } from "../../../lib/posthog-server";
+import type { APIRoute } from 'astro';
+import { getPostHogServer } from '../../../lib/posthog-server';
 
 export const prerender = false;
 
@@ -519,10 +559,10 @@ export const POST: APIRoute = async ({ request }) => {
     const { username, password } = body;
 
     if (!username || !password) {
-      return new Response(
-        JSON.stringify({ error: "Username and password are required" }),
-        { status: 400, headers: { "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: 'Username and password are required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // Check if this is a new user
@@ -539,16 +579,16 @@ export const POST: APIRoute = async ({ request }) => {
     const posthog = getPostHogServer();
 
     // Get session ID from client if available (passed via header)
-    const sessionId = request.headers.get("X-PostHog-Session-Id");
+    const sessionId = request.headers.get('X-PostHog-Session-Id');
 
     // Capture server-side login event
     posthog.capture({
       distinctId: username,
-      event: "server_login",
+      event: 'server_login',
       properties: {
         $session_id: sessionId || undefined,
         isNewUser,
-        source: "api",
+        source: 'api',
         timestamp: new Date().toISOString(),
       },
     });
@@ -571,17 +611,16 @@ export const POST: APIRoute = async ({ request }) => {
         username,
         isNewUser,
       }),
-      { status: 200, headers: { "Content-Type": "application/json" } },
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
     );
   } catch (error) {
-    console.error("Login error:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
+    console.error('Login error:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 };
-
 ```
 
 ---
@@ -589,8 +628,8 @@ export const POST: APIRoute = async ({ request }) => {
 ## src/pages/api/events/burrito.ts
 
 ```ts
-import type { APIRoute } from "astro";
-import { getPostHogServer } from "../../../lib/posthog-server";
+import type { APIRoute } from 'astro';
+import { getPostHogServer } from '../../../lib/posthog-server';
 
 export const prerender = false;
 
@@ -600,9 +639,9 @@ export const POST: APIRoute = async ({ request }) => {
     const { username, totalConsiderations } = body;
 
     if (!username) {
-      return new Response(JSON.stringify({ error: "Username is required" }), {
+      return new Response(JSON.stringify({ error: 'Username is required' }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -610,16 +649,16 @@ export const POST: APIRoute = async ({ request }) => {
     const posthog = getPostHogServer();
 
     // Get session ID from client if available (passed via header)
-    const sessionId = request.headers.get("X-PostHog-Session-Id");
+    const sessionId = request.headers.get('X-PostHog-Session-Id');
 
     // Capture server-side burrito consideration event
     posthog.capture({
       distinctId: username,
-      event: "burrito_considered",
+      event: 'burrito_considered',
       properties: {
         $session_id: sessionId || undefined,
         total_considerations: totalConsiderations,
-        source: "api",
+        source: 'api',
         timestamp: new Date().toISOString(),
       },
     });
@@ -632,17 +671,16 @@ export const POST: APIRoute = async ({ request }) => {
         success: true,
         totalConsiderations,
       }),
-      { status: 200, headers: { "Content-Type": "application/json" } },
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
     );
   } catch (error) {
-    console.error("Burrito event error:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
+    console.error('Burrito event error:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 };
-
 ```
 
 ---
@@ -657,6 +695,7 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
 // In hybrid mode, pages are static by default
 export const prerender = false;
 ---
+
 <PostHogLayout title="Burrito Consideration - Astro PostHog Hybrid Example">
   <div class="container">
     <h1>Burrito consideration zone</h1>
@@ -724,7 +763,7 @@ export const prerender = false;
     window.posthog?.capture('burrito_considered', {
       total_considerations: newCount,
       username: currentUser,
-      source: 'client'
+      source: 'client',
     });
 
     // Also send to server-side API for server tracking. The session and distinct
@@ -733,12 +772,12 @@ export const prerender = false;
       await fetch('/api/events/burrito', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           username: currentUser,
-          totalConsiderations: newCount
-        })
+          totalConsiderations: newCount,
+        }),
       });
     } catch (error) {
       console.error('Failed to send server-side event:', error);
@@ -752,7 +791,6 @@ export const prerender = false;
     document.getElementById('consider-btn')?.addEventListener('click', handleConsideration);
   });
 </script>
-
 ```
 
 ---
@@ -766,6 +804,7 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
 // This page is prerendered (static) by default in hybrid mode
 // No need to set prerender = true explicitly
 ---
+
 <PostHogLayout title="Home - Astro PostHog Hybrid Example">
   <div class="container">
     <div id="logged-in-view" style="display: none;">
@@ -784,22 +823,12 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
       <form id="login-form" class="form">
         <div class="form-group">
           <label for="username">Username:</label>
-          <input
-            type="text"
-            id="username"
-            placeholder="Enter any username"
-            required
-          />
+          <input type="text" id="username" placeholder="Enter any username" required />
         </div>
 
         <div class="form-group">
           <label for="password">Password:</label>
-          <input
-            type="password"
-            id="password"
-            placeholder="Enter any password"
-            required
-          />
+          <input type="password" id="password" placeholder="Enter any password" required />
         </div>
 
         <p id="error-message" class="error" style="display: none;"></p>
@@ -808,7 +837,8 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
       </form>
 
       <p class="note">
-        Note: This is a demo app with server-side tracking. Use any username and password to sign in.
+        Note: This is a demo app with server-side tracking. Use any username and password to sign
+        in.
       </p>
     </div>
   </div>
@@ -850,9 +880,9 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
@@ -895,7 +925,6 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
   // Listen for storage changes
   window.addEventListener('storage', updateView);
 </script>
-
 ```
 
 ---
@@ -908,6 +937,7 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
 
 // This page is prerendered (static) by default in hybrid mode
 ---
+
 <PostHogLayout title="Profile - Astro PostHog Hybrid Example">
   <div class="container">
     <h1>User Profile</h1>
@@ -926,9 +956,7 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
     <div style="margin-top: 2rem;">
       <h3>Error Tracking Demo</h3>
       <p>Click the button below to trigger a test error and send it to PostHog:</p>
-      <button id="error-btn" class="btn-error">
-        Trigger Test Error
-      </button>
+      <button id="error-btn" class="btn-error"> Trigger Test Error </button>
       <p id="error-feedback" class="success" style="display: none;">
         Error captured and sent to PostHog!
       </p>
@@ -956,7 +984,8 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
     // Update journey message based on consideration count
     const journeyMessage = document.getElementById('journey-message');
     if (considerations === 0) {
-      journeyMessage.textContent = "You haven't considered any burritos yet. Visit the Burrito Consideration page to start!";
+      journeyMessage.textContent =
+        "You haven't considered any burritos yet. Visit the Burrito Consideration page to start!";
     } else if (considerations === 1) {
       journeyMessage.textContent = "You've considered the burrito potential once. Keep going!";
     } else if (considerations < 5) {
@@ -964,7 +993,7 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
     } else if (considerations < 10) {
       journeyMessage.textContent = "You're becoming a burrito consideration expert!";
     } else {
-      journeyMessage.textContent = "You are a true burrito consideration master!";
+      journeyMessage.textContent = 'You are a true burrito consideration master!';
     }
   }
 
@@ -992,8 +1021,6 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
     document.getElementById('error-btn')?.addEventListener('click', triggerTestError);
   });
 </script>
-
 ```
 
 ---
-

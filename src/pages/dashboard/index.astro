@@ -1,0 +1,19 @@
+---
+export const prerender = false;
+import AppLayout from '@/layouts/AppLayout.astro';
+import AppDashboard from '@/components/react/AppDashboard';
+
+/* Aggregates load client-side so navigating here isn't blocked on PostHog/PG. */
+const session = Astro.locals.session;
+const live = Boolean(session?.user?.id && session.activeTenantId);
+
+/* No time-of-day greeting is computed here, and that is the point: the server
+   knows no zone but its own. This page used to render the hour in UTC to keep
+   SSR and hydration agreeing, so a reader at 14:52 was told "Good evening".
+   The island greets from the viewer's clock once mounted; the SSR heading is a
+   greeting that is true at every hour rather than a guess at the reader's. */
+---
+
+<AppLayout title="Dashboard">
+  <AppDashboard client:load live={live} tenantId={session?.activeTenantId ?? null} />
+</AppLayout>

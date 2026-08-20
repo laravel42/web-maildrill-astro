@@ -52,7 +52,11 @@ export function emptyDoc(): TemplateDoc {
     category: 'MARKETING',
     blocks: {
       header: null,
-      body: { id: newId('body'), type: 'body', data: bodyPlugin ? bodyPlugin.defaults() : { text: '', variables: {} } },
+      body: {
+        id: newId('body'),
+        type: 'body',
+        data: bodyPlugin ? bodyPlugin.defaults() : { text: '', variables: {} },
+      },
       footer: null,
       buttons: [],
     },
@@ -145,8 +149,13 @@ export function clearDraft(): void {
 // Document mutations (all undoable)
 // ---------------------------------------------------------------------------
 
+function docEqual(a: TemplateDoc, b: TemplateDoc): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 function commit(next: TemplateDoc) {
   const { doc, past } = useStudio.getState();
+  if (docEqual(doc, next)) return;
   useStudio.setState({
     doc: next,
     past: [...past.slice(-(MAX_HISTORY - 1)), doc],
@@ -215,6 +224,7 @@ function relocalizeForLanguage(
 
 export function setTemplateField(field: 'name' | 'language', value: string) {
   const { doc, activeTemplateId } = useStudio.getState();
+  if (doc[field] === value) return;
   if (field === 'language' && value !== doc.language) {
     commit(relocalizeForLanguage(doc, value, activeTemplateId));
     return;

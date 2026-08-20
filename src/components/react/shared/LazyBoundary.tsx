@@ -33,7 +33,12 @@ export default class LazyBoundary extends Component<LazyBoundaryProps, LazyBound
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     // Keep a breadcrumb; this is a genuine load failure, not benign noise.
-    console.error('[LazyBoundary] failed to load', this.props.label ?? 'component', error, info.componentStack);
+    console.error(
+      '[LazyBoundary] failed to load',
+      this.props.label ?? 'component',
+      error,
+      info.componentStack,
+    );
   }
 
   render() {
@@ -54,7 +59,9 @@ export default class LazyBoundary extends Component<LazyBoundaryProps, LazyBound
           minHeight: '240px',
         }}
       >
-        <p style={{ margin: 0, fontWeight: 600, color: 'var(--ink, #1f1e1b)' }}>Couldn&rsquo;t load {label}.</p>
+        <p style={{ margin: 0, fontWeight: 600, color: 'var(--ink, #1f1e1b)' }}>
+          Couldn&rsquo;t load {label}.
+        </p>
         <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--muted, #6b6a66)' }}>
           The app may have updated. Reloading fetches the latest version.
         </p>

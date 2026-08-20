@@ -111,7 +111,12 @@ const COLOR_STYLE_FIELDS = ['backgroundColor', 'color', 'borderColor'] as const;
  * Color fields that live at the top level of `data` for `EmailLayout`
  * blocks (the document root). They follow the same hex-or-null schema.
  */
-const COLOR_EMAIL_LAYOUT_FIELDS = ['backdropColor', 'canvasColor', 'textColor', 'borderColor'] as const;
+const COLOR_EMAIL_LAYOUT_FIELDS = [
+  'backdropColor',
+  'canvasColor',
+  'textColor',
+  'borderColor',
+] as const;
 
 /**
  * Strict regex matching the editor schemas (`COLOR_SCHEMA` in every block).
@@ -134,7 +139,14 @@ const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
  * context-dependent in real CSS, but here the editor has no inheritance
  * model, so dropping them is the safe choice.
  */
-const TRANSPARENT_KEYWORDS = new Set(['transparent', 'none', 'inherit', 'initial', 'unset', 'currentcolor']);
+const TRANSPARENT_KEYWORDS = new Set([
+  'transparent',
+  'none',
+  'inherit',
+  'initial',
+  'unset',
+  'currentcolor',
+]);
 
 /**
  * Lookup of common CSS named colors → 6-digit hex. Kept intentionally small:
@@ -227,7 +239,7 @@ function coerceColor(value: unknown): string | null | undefined {
   // rgb(...) / rgba(...) — manual parse to avoid pulling in a CSS color
   // library. `Number()` returns NaN for non-numeric components.
   const rgbMatch = lower.match(
-    /^rgba?\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*(?:,\s*(-?\d+(?:\.\d+)?)\s*)?\)$/
+    /^rgba?\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*(?:,\s*(-?\d+(?:\.\d+)?)\s*)?\)$/,
   );
   if (rgbMatch) {
     const r = Number(rgbMatch[1]);
@@ -349,7 +361,7 @@ function parseBorderShorthand(v: unknown): BorderShorthand | null {
   // via its tolerant `parseFloat` fallback (which would return 2 and lose
   // the color).
   const shorthand = trimmed.match(
-    /^(-?\d+(?:\.\d+)?)(?:px)?\s+(?:solid|dashed|dotted|double|groove|ridge|inset|outset|none|hidden)\s+(.+)$/i
+    /^(-?\d+(?:\.\d+)?)(?:px)?\s+(?:solid|dashed|dotted|double|groove|ridge|inset|outset|none|hidden)\s+(.+)$/i,
   );
   if (shorthand) {
     const width = parseFloat(shorthand[1]);
@@ -377,7 +389,7 @@ function parseBorderShorthand(v: unknown): BorderShorthand | null {
 function normalizeStyle(
   style: Record<string, unknown>,
   pathPrefix: string,
-  changes: NormalizationChange[]
+  changes: NormalizationChange[],
 ): Record<string, unknown> {
   let next: Record<string, unknown> | null = null;
   const ensureClone = () => {
@@ -441,7 +453,12 @@ function normalizeStyle(
   // Padding objects — coerce each side individually.
   for (const field of PADDING_FIELDS) {
     const padding = style[field];
-    if (padding === null || padding === undefined || typeof padding !== 'object' || Array.isArray(padding)) {
+    if (
+      padding === null ||
+      padding === undefined ||
+      typeof padding !== 'object' ||
+      Array.isArray(padding)
+    ) {
       continue;
     }
     const padObj = padding as Record<string, unknown>;
@@ -502,7 +519,7 @@ function normalizeStyle(
 function normalizeProps(
   props: Record<string, unknown>,
   pathPrefix: string,
-  changes: NormalizationChange[]
+  changes: NormalizationChange[],
 ): Record<string, unknown> {
   let next: Record<string, unknown> | null = null;
   const ensureClone = () => {
@@ -596,7 +613,7 @@ function normalizeProps(
 function normalizeImageProps(
   props: Record<string, unknown>,
   pathPrefix: string,
-  changes: NormalizationChange[]
+  changes: NormalizationChange[],
 ): Record<string, unknown> {
   let next: Record<string, unknown> | null = null;
   const ensureClone = () => {
@@ -671,14 +688,19 @@ function normalizeImageProps(
     const sizeValue = (next ?? props)[sizeField];
     if (sizeValue !== 'scale') continue;
     const scaleValue = (next ?? props)[scaleField];
-    if (typeof scaleValue !== 'number' || !Number.isFinite(scaleValue) || scaleValue >= IMAGE_SCALE_UPGRADE_THRESHOLD) {
+    if (
+      typeof scaleValue !== 'number' ||
+      !Number.isFinite(scaleValue) ||
+      scaleValue >= IMAGE_SCALE_UPGRADE_THRESHOLD
+    ) {
       continue;
     }
     // Mobile uses `widthMobile` first, with a fall-through to `width` so a
     // block that only declared the desktop width still benefits from the
     // upgrade signal. Desktop intentionally never reads `widthMobile`.
     const widthValue =
-      (next ?? props)[widthField] ?? (widthField === 'widthMobile' ? (next ?? props).width : undefined);
+      (next ?? props)[widthField] ??
+      (widthField === 'widthMobile' ? (next ?? props).width : undefined);
     if (typeof widthValue !== 'number' || !Number.isFinite(widthValue)) continue;
     if (widthValue < IMAGE_WIDTH_HERO_THRESHOLD) continue;
 
@@ -704,7 +726,7 @@ function normalizeImageProps(
 function normalizeColumnsContainer(
   props: Record<string, unknown>,
   pathPrefix: string,
-  changes: NormalizationChange[]
+  changes: NormalizationChange[],
 ): Record<string, unknown> {
   let next: Record<string, unknown> | null = null;
   const ensureClone = () => {
@@ -739,7 +761,9 @@ function normalizeColumnsContainer(
     const col1 = before[1] ?? { childrenIds: [] };
     const col2 = before[2] ?? { childrenIds: [] };
     // Merge childrenIds from columns 3+ into column 2 (third column)
-    const overflowIds = before.slice(3).flatMap((c) => (c && Array.isArray(c.childrenIds) ? c.childrenIds : []));
+    const overflowIds = before
+      .slice(3)
+      .flatMap((c) => (c && Array.isArray(c.childrenIds) ? c.childrenIds : []));
     const mergedCol2 = {
       childrenIds: [...(Array.isArray(col2.childrenIds) ? col2.childrenIds : []), ...overflowIds],
     };

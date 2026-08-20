@@ -67,11 +67,7 @@ export default function TimePicker({
 
   const timeGrid = inline ? (
     <div className={styles.panelInline} id={id}>
-      <div
-        className={styles.gridInline}
-        role="radiogroup"
-        aria-labelledby={labelId}
-      >
+      <div className={styles.gridInline} role="radiogroup" aria-labelledby={labelId}>
         {slots}
       </div>
     </div>
@@ -109,16 +105,19 @@ export default function TimePicker({
           <Icon name="clock" size={15} />
         </button>
       )}
-      {inline ? (
-        timeGrid
-      ) : (
-        open && (
-          <>
-            <button type="button" className={styles.scrim} aria-label="Close time picker" onClick={() => setOpen(false)} />
-            {timeGrid}
-          </>
-        )
-      )}
+      {inline
+        ? timeGrid
+        : open && (
+            <>
+              <button
+                type="button"
+                className={styles.scrim}
+                aria-label="Close time picker"
+                onClick={() => setOpen(false)}
+              />
+              {timeGrid}
+            </>
+          )}
     </div>
   );
 }

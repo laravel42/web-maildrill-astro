@@ -52,7 +52,8 @@ export type ThemeListing = {
 };
 
 async function readJson<T>(response: Response): Promise<T> {
-  const body = (await response.json().catch(() => null)) as (T & { error?: string; hint?: string }) | null;
+  const body = (await response.json().catch(() => null)) as
+    (T & { error?: string; hint?: string }) | null;
   if (!response.ok) {
     if (response.status === 403 && body?.hint) throw new Error(body.hint);
     throw new Error(body?.error ?? `HTTP ${response.status}`);
@@ -77,7 +78,11 @@ export async function fetchTheme(id: string): Promise<ThemeBundle> {
  * Save the current theme bundle. The server mints the UUID and the
  * ISO timestamps; the client only provides metadata + payload.
  */
-export async function saveTheme(input: { name: string; description?: string; bundle: ThemeBundlePayload }): Promise<{
+export async function saveTheme(input: {
+  name: string;
+  description?: string;
+  bundle: ThemeBundlePayload;
+}): Promise<{
   id: string;
   name: string;
   description?: string;
@@ -105,7 +110,7 @@ export async function updateTheme(
     name?: string;
     description?: string;
     bundle?: ThemeBundlePayload;
-  }
+  },
 ): Promise<{
   id: string;
   name: string;

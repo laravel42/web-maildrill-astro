@@ -19,9 +19,11 @@ export default function ColumnsContainerReader({
         <React.Fragment key={childId}>
           <ReaderBlock id={childId} />
         </React.Fragment>
-      ))
+      )),
     );
   }
 
-  return <BaseColumnsContainer blockId={blockId} props={restProps as any} columns={cols} style={style} />;
+  return (
+    <BaseColumnsContainer blockId={blockId} props={restProps as any} columns={cols} style={style} />
+  );
 }

@@ -13,7 +13,13 @@ type Props = {
   defaultValue: string;
   onChange: (v: string) => void;
 };
-export default function RadioGroupInput({ label, labelAction, children, defaultValue, onChange }: Props) {
+export default function RadioGroupInput({
+  label,
+  labelAction,
+  children,
+  defaultValue,
+  onChange,
+}: Props) {
   const [value, setValue] = useState(defaultValue);
   useEffect(() => {
     if (defaultValue !== value) {

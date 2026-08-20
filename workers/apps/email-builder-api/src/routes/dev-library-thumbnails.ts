@@ -18,7 +18,15 @@
  * layer so it stays trivially testable from a Node script.
  */
 
-import { existsSync, mkdirSync, readFileSync, type Stats, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  type Stats,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 import { SKILLS_REFERENCES_DIR } from './dev-library-paths.js';
@@ -69,7 +77,7 @@ export const MAX_THUMBNAIL_BYTES = 512 * 1024;
 export class ThumbnailTooLargeError extends Error {
   constructor(
     public readonly bytes: number,
-    public readonly limit: number = MAX_THUMBNAIL_BYTES
+    public readonly limit: number = MAX_THUMBNAIL_BYTES,
   ) {
     super(`thumbnail payload exceeds ${limit} bytes (got ${bytes})`);
     this.name = 'ThumbnailTooLargeError';
@@ -93,7 +101,7 @@ export function getThumbnailPath(
   category: ThumbnailCategory,
   axis: string | null,
   id: string,
-  format: ThumbnailFormat = 'png'
+  format: ThumbnailFormat = 'png',
 ): string {
   const segments: string[] = [SKILLS_REFERENCES_DIR, category];
   if (axis !== null) segments.push(axis);
@@ -337,7 +345,7 @@ export function extractWebpDimensions(buffer: Buffer): { width: number; height: 
  */
 export function extractImageDimensions(
   buffer: Buffer,
-  format: ThumbnailFormat
+  format: ThumbnailFormat,
 ): { width: number; height: number } | null {
   if (format === 'png') return extractPngDimensions(buffer);
   if (format === 'webp') return extractWebpDimensions(buffer);

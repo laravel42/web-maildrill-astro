@@ -1,5 +1,11 @@
-import type { MetaButton, MetaComponent, MetaTemplate, TemplateCategory, TemplateDoc } from 'wa-template-studio';
-import { emptyDoc, fromMetaJson, toMetaJson } from 'wa-template-studio';
+import type {
+  MetaButton,
+  MetaComponent,
+  MetaTemplate,
+  TemplateCategory,
+  TemplateDoc,
+} from 'wa-template-studio';
+import { emptyDoc, extractVariables, fromMetaJson, toMetaJson } from 'wa-template-studio';
 
 import type { TplCategory } from '@/lib/app/templates-data';
 import {
@@ -76,6 +82,26 @@ function bodyText(doc: TemplateDoc): string {
   return typeof data.text === 'string' ? data.text : '';
 }
 
+/**
+ * Ordered send-time subscriber tokens for the body's {{1}}..{{n}} placeholders,
+ * from the studio's variable→field mapping (`variables[n].source`, a merge tag
+ * like `{{attributes.company}}`). Unmapped positions become "" — the sender then
+ * falls back to the variable's Meta-review example value.
+ */
+function bodyPlaceholderTokens(doc: TemplateDoc): string[] {
+  const data = doc.blocks.body.data as {
+    variables?: Record<string, { source?: string }>;
+  };
+  const count = Math.max(0, ...extractVariables(bodyText(doc)));
+  if (count === 0) return [];
+  const vars = data.variables ?? {};
+  return Array.from({ length: count }, (_, i) => {
+    const source = vars[String(i + 1)]?.source;
+    const m = typeof source === 'string' ? /^\{\{\s*([\w.]+)\s*\}\}$/.exec(source.trim()) : null;
+    return m ? m[1] : '';
+  });
+}
+
 function normalizeButton(btn: MetaButton): Record<string, unknown> {
   const type = String(btn.type ?? '').toUpperCase();
   if (type === 'PHONE_NUMBER') {
@@ -88,10 +114,33 @@ function normalizeButton(btn: MetaButton): Record<string, unknown> {
     return { type: 'PHONE_NUMBER', text: btn.text, ...(phone ? { phoneNumber: phone } : {}) };
   }
   if (type === 'URL') {
+    const example =
+      typeof btn.example === 'string'
+        ? btn.example
+        : Array.isArray(btn.example)
+          ? String(btn.example[0] ?? '')
+          : undefined;
     return {
       type: 'URL',
       text: btn.text,
       ...(typeof btn.url === 'string' ? { url: btn.url } : {}),
+      ...(example ? { example } : {}),
+    };
+  }
+  if (type === 'COPY_CODE') {
+    return {
+      type: 'COPY_CODE',
+      ...(typeof btn.example === 'string' ? { example: btn.example } : {}),
+    };
+  }
+  if (type === 'OTP') {
+    return {
+      type: 'OTP',
+      otp_type: btn.otp_type ?? btn.otpType ?? 'COPY_CODE',
+      ...(btn.text ? { text: btn.text } : {}),
+      ...(btn.autofill_text ? { autofill_text: btn.autofill_text } : {}),
+      ...(btn.package_name ? { package_name: btn.package_name } : {}),
+      ...(btn.signature_hash ? { signature_hash: btn.signature_hash } : {}),
     };
   }
   return { type, text: btn.text };
@@ -117,9 +166,9 @@ export function metaToStoredComponents(meta: MetaTemplate): Record<string, unkno
       if (comp.example) header.example = comp.example;
       out.header = header;
     } else if (type === 'BODY') {
-      const body: Record<string, unknown> = {
-        text: typeof comp.text === 'string' ? comp.text : '',
-      };
+      const body: Record<string, unknown> = {};
+      if (typeof comp.text === 'string') body.text = comp.text;
+      if (comp.add_security_recommendation) body.add_security_recommendation = true;
       const rows = (comp.example as { body_text?: string[][] } | undefined)?.body_text?.[0];
       if (rows?.length) body.examples = rows;
       out.body = body;
@@ -151,7 +200,7 @@ export function storedComponentsToMeta(
   const metaComponents: MetaComponent[] = [];
 
   if (components.header && typeof components.header === 'object') {
-    metaComponents.push({ type: 'HEADER', ...(components.header as MetaComponent) });
+    metaComponents.push({ ...(components.header as MetaComponent), type: 'HEADER' });
   }
 
   if (components.body && typeof components.body === 'object') {
@@ -166,7 +215,7 @@ export function storedComponentsToMeta(
   }
 
   if (components.footer && typeof components.footer === 'object') {
-    metaComponents.push({ type: 'FOOTER', ...(components.footer as MetaComponent) });
+    metaComponents.push({ ...(components.footer as MetaComponent), type: 'FOOTER' });
   }
 
   if (Array.isArray(components.buttons) && components.buttons.length) {
@@ -187,6 +236,9 @@ export function storedComponentsToMeta(
 /** Build the API PATCH/POST body fields for a WhatsApp template save. */
 export function docToApiFields(doc: TemplateDoc) {
   const meta = toMetaJson(doc);
+  const components = metaToStoredComponents(meta);
+  const placeholders = bodyPlaceholderTokens(doc);
+  if (placeholders.length > 0) components.placeholders = placeholders;
   return {
     name: doc.name.trim() || 'Untitled template',
     channel: 'whatsapp' as const,
@@ -194,7 +246,7 @@ export function docToApiFields(doc: TemplateDoc) {
     category: metaCategoryToMaildrill(doc.category),
     language: doc.language,
     builderDoc: doc as unknown as Record<string, unknown>,
-    components: metaToStoredComponents(meta),
+    components,
   };
 }
 

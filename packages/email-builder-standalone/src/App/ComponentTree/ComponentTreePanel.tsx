@@ -75,7 +75,11 @@ function subtreeContainsSelectedBlock(node: TreeNode, selectedId: string | null)
 }
 
 function columnTreeIconColor(theme: any, active: boolean, darkMode: boolean) {
-  return active ? theme.palette.primary.main : darkMode ? theme.palette.text.primary : theme.palette.text.secondary;
+  return active
+    ? theme.palette.primary.main
+    : darkMode
+      ? theme.palette.text.primary
+      : theme.palette.text.secondary;
 }
 
 function ComponentTreeColumnIconFrame({
@@ -126,9 +130,13 @@ function ComponentTreeColumnsContainerIcon({
   darkMode: boolean;
 }) {
   if (columnsCount === 3) {
-    return <ComponentTreeColumnIconFrame Icon={ColumnsTreeIcon} active={active} darkMode={darkMode} />;
+    return (
+      <ComponentTreeColumnIconFrame Icon={ColumnsTreeIcon} active={active} darkMode={darkMode} />
+    );
   }
-  return <ComponentTreeColumnIconFrame Icon={Columns2TreeIcon} active={active} darkMode={darkMode} />;
+  return (
+    <ComponentTreeColumnIconFrame Icon={Columns2TreeIcon} active={active} darkMode={darkMode} />
+  );
 }
 
 function scrollToBlock(blockId: string) {
@@ -157,10 +165,15 @@ function TreeRow({
     React.useMemo(
       () => (s: { document: any; selectedBlockId: string | null }) =>
         columnSlotParentId !== undefined && columnSlotIndex !== undefined
-          ? isSelectedBlockInColumnsSlot(s.document, columnSlotParentId, columnSlotIndex, s.selectedBlockId)
+          ? isSelectedBlockInColumnsSlot(
+              s.document,
+              columnSlotParentId,
+              columnSlotIndex,
+              s.selectedBlockId,
+            )
           : false,
-      [columnSlotParentId, columnSlotIndex]
-    )
+      [columnSlotParentId, columnSlotIndex],
+    ),
   );
   const darkMode = editorStateStore((s) => s.darkMode);
   const [dropPosition, setDropPosition] = React.useState<'up' | 'down' | null>(null);
@@ -258,7 +271,9 @@ function TreeRow({
       return;
     }
     if (node.type === 'NotionText') {
-      window.dispatchEvent(new CustomEvent<boolean>('email-builder-highlight-editor', { detail: true }));
+      window.dispatchEvent(
+        new CustomEvent<boolean>('email-builder-highlight-editor', { detail: true }),
+      );
     }
     onSelect(node.blockId);
     scrollToBlock(node.blockId);
@@ -282,7 +297,10 @@ function TreeRow({
           backgroundColor: isSelected ? 'action.selected' : isOver ? 'action.hover' : 'transparent',
           borderLeftWidth: 3,
           borderLeftStyle: 'solid',
-          borderLeftColor: isSelected || (node.columnSlot && columnContainsSelection) ? 'primary.main' : 'transparent',
+          borderLeftColor:
+            isSelected || (node.columnSlot && columnContainsSelection)
+              ? 'primary.main'
+              : 'transparent',
           borderTop: dropPosition === 'up' ? 2 : 0,
           borderTopColor: 'primary.main',
           borderBottom: dropPosition === 'down' ? 2 : 0,
@@ -328,15 +346,24 @@ function TreeRow({
             fontWeight: isSelected || (node.columnSlot && columnContainsSelection) ? 600 : 400,
             ...(node.columnSlot &&
               !isSelected && {
-                color: columnContainsSelection ? theme.palette.primary.main : theme.palette.text.secondary,
+                color: columnContainsSelection
+                  ? theme.palette.primary.main
+                  : theme.palette.text.secondary,
               }),
           })}
         >
-          {node.columnSlot ? t('header.componentTreeColumn', { n: node.columnSlot.columnIndex + 1 }) : node.label}
+          {node.columnSlot
+            ? t('header.componentTreeColumn', { n: node.columnSlot.columnIndex + 1 })
+            : node.label}
         </Typography>
       </Box>
       {node.children.map((child) => (
-        <TreeRow key={child.blockId} node={child} selectedBlockId={selectedBlockId} onSelect={onSelect} />
+        <TreeRow
+          key={child.blockId}
+          node={child}
+          selectedBlockId={selectedBlockId}
+          onSelect={onSelect}
+        />
       ))}
     </Box>
   );

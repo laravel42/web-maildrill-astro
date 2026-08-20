@@ -31,7 +31,7 @@ const footerCols = Object.entries(footerNav).filter(([heading]) => heading !== '
           <Icon name="arrow-up-right" size={18} stroke={2.2} />
         </span>
       </a>
-      <a href="mailto:hello@maildrill.com" class="foot__mail">hello@maildrill.com</a>
+      <a href="mailto:hello@maildrill.net" class="foot__mail">hello@maildrill.net</a>
     </div>
   </div>
 
@@ -42,15 +42,17 @@ const footerCols = Object.entries(footerNav).filter(([heading]) => heading !== '
         One workspace for email, SMS, WhatsApp, and voice campaigns — built for speed, clarity, and
         deliverability.
       </p>
-      {!HIDE_SOCIALS && (
-        <div class="foot__socials">
-          {socials.map((s) => (
-            <a href={s.href} class="foot__social" aria-label={s.name} rel="noopener noreferrer">
-              <Icon name={s.icon} size={16} />
-            </a>
-          ))}
-        </div>
-      )}
+      {
+        !HIDE_SOCIALS && (
+          <div class="foot__socials">
+            {socials.map((s) => (
+              <a href={s.href} class="foot__social" aria-label={s.name} rel="noopener noreferrer">
+                <Icon name={s.icon} size={16} />
+              </a>
+            ))}
+          </div>
+        )
+      }
     </div>
 
     {
@@ -81,9 +83,7 @@ const footerCols = Object.entries(footerNav).filter(([heading]) => heading !== '
     {/* Fourth column — crafted-by credit */}
     <p class="foot__credit">
       Crafted by{' '}
-      <a href="https://laravel42.com" target="_blank" rel="noopener noreferrer">
-        Laravel42
-      </a>
+      <a href="https://laravel42.com" target="_blank" rel="noopener noreferrer"> Laravel42 </a>
     </p>
   </div>
 

@@ -12,7 +12,16 @@
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  Typography,
+} from '@mui/material';
 
 import { applyTemplateDocument } from '../../documents/editor/EditorContext';
 
@@ -55,8 +64,8 @@ export default function ApplyTemplateConfirmDialog({
         throw new Error(
           t(
             'componentsLibrary.applyTemplate.errorMalformed',
-            'Template payload was empty or did not start with an EmailLayout root.'
-          )
+            'Template payload was empty or did not start with an EmailLayout root.',
+          ),
         );
       }
       onApplied?.(templateId);
@@ -86,7 +95,7 @@ export default function ApplyTemplateConfirmDialog({
           <Typography variant="body2" color="text.secondary">
             {t(
               'componentsLibrary.applyTemplate.body',
-              'This will REPLACE your current document with the saved template. You can undo this action.'
+              'This will REPLACE your current document with the saved template. You can undo this action.',
             )}
           </Typography>
           {error && <Alert severity="error">{error}</Alert>}

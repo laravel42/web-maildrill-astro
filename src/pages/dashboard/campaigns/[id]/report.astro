@@ -1,0 +1,91 @@
+---
+export const prerender = false;
+import AppLayout from '@/layouts/AppLayout.astro';
+import AppCampaignReport from '@/components/react/AppCampaignReport';
+import { productClient } from '@/lib/server/service';
+import { toCampaign, toCampaigns, type ApiCampaign } from '@/lib/app/campaign-map';
+import type { ApiList } from '@/lib/app/list-map';
+import type { Campaign } from '@/types/app';
+import { routes } from '@/config/routes';
+
+const id = Astro.params.id;
+if (!id) {
+  return Astro.redirect(routes.app.campaigns);
+}
+
+// Live workspace: fetch the campaign (redirecting home if it's gone), the
+// same-channel sends that preceded it for the history sparks, and the target
+// list's colour. No connected workspace = demo mode; the island falls back to
+// the fixture campaigns.
+const session = Astro.locals.session;
+let initial: Campaign | null = null;
+let campaigns: Campaign[] | null = null;
+let listColor: string | null = null;
+
+if (session?.user?.id && session.activeTenantId) {
+  const client = productClient({
+    userId: session.user.id,
+    activeTenantId: session.activeTenantId,
+    role: session.role,
+  });
+  try {
+    const campaignRes = await client.GET('/v1/campaigns/{id}', { params: { path: { id } } });
+    if (campaignRes.error || !campaignRes.data) {
+      return Astro.redirect(routes.app.campaigns);
+    }
+    const apiCampaign = campaignRes.data as unknown as ApiCampaign;
+    initial = toCampaign(apiCampaign);
+    /* The history spark plots this campaign against the sends that preceded it
+       on the SAME channel, so channel, status and the window's end are all
+       server-side filters. `updatedBefore` is what makes the window end at
+       this campaign: without it the newest 50 of the workspace come back, and
+       for any campaign older than those the browser's `updatedAt <= anchor`
+       filter throws every one of them away and the sparks go flat.
+
+       Sequenced after the campaign because its channel and updatedAt are what
+       we are filtering on. The list colour is a single-row read alongside it. */
+    const [historyRes, listRes] = await Promise.all([
+      client.GET('/v1/campaigns', {
+        params: {
+          query: {
+            channel: (apiCampaign.channel as 'email' | 'sms' | 'whatsapp' | 'voice') ?? 'email',
+            status: 'sent' as const,
+            // Omitted when the row somehow carries no updatedAt, which would
+            // otherwise widen the window back to the newest 50 of the workspace.
+            ...(apiCampaign.updatedAt ? { updatedBefore: apiCampaign.updatedAt } : {}),
+            limit: 50,
+            sort: 'updatedAt' as const,
+            dir: 'desc' as const,
+          },
+        },
+      }),
+      apiCampaign.listId
+        ? client.GET('/v1/lists/{id}', { params: { path: { id: apiCampaign.listId } } })
+        : Promise.resolve(null),
+    ]);
+    campaigns = toCampaigns(
+      (historyRes.data as unknown as { items?: ApiCampaign[] } | undefined)?.items ?? [],
+    );
+    listColor = (listRes?.data as unknown as ApiList | undefined)?.color ?? null;
+  } catch {
+    return Astro.redirect(routes.app.campaigns);
+  }
+}
+---
+
+<AppLayout
+  title={initial ? `${initial.name} · Report` : 'Campaign report'}
+  crumbs={[
+    { label: 'Campaigns', href: routes.app.campaigns },
+    { label: initial ? `${initial.name} · Report` : 'Campaign report' },
+  ]}
+>
+  <AppCampaignReport
+    client:visible
+    id={id}
+    initial={initial}
+    campaigns={campaigns}
+    listColor={listColor}
+    live={initial !== null}
+  />
+</AppLayout>

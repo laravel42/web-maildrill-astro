@@ -60,7 +60,9 @@ const round = (r: number) => ({ topLeft: r, topRight: r, bottomLeft: r, bottomRi
 // --- Button builder --------------------------------------------------------
 
 type ButtonShape =
-  'rectangle' | 'pill' | { topLeft?: number; topRight?: number; bottomLeft?: number; bottomRight?: number };
+  | 'rectangle'
+  | 'pill'
+  | { topLeft?: number; topRight?: number; bottomLeft?: number; bottomRight?: number };
 
 const button = (
   text: string,
@@ -71,9 +73,16 @@ const button = (
     bg?: string;
     color?: string;
     border?: { color: string; width: number };
-  } = {}
+  } = {},
 ): unknown => {
-  const { shape = 'rectangle', size = 'medium', full = false, bg = ACCENT, color = WHITE, border } = opts;
+  const {
+    shape = 'rectangle',
+    size = 'medium',
+    full = false,
+    bg = ACCENT,
+    color = WHITE,
+    border,
+  } = opts;
   const style: Record<string, unknown> = {
     buttonBackgroundColor: bg,
     buttonTextColor: color,
@@ -108,13 +117,17 @@ const h = (lvl: 1 | 2 | 3, s: string, align: Align = 'left'): string =>
 const badge = (s: string, bg: string, color: string): string =>
   `<span style="background-color:${bg};"><span style="color:${color};">&nbsp;${s}&nbsp;</span></span>`;
 const span = (s: string, color: string): string => `<span style="color:${color};">${s}</span>`;
-const link = (s: string, color = ACCENT): string => `<a href="#"><span style="color:${color};">${s}</span></a>`;
+const link = (s: string, color = ACCENT): string =>
+  `<a href="#"><span style="color:${color};">${s}</span></a>`;
 const checks = (items: string[], align: Align = 'left'): string =>
   items.map((i) => p(`${span('✓', SUCCESS)} ${i}`, align)).join('');
 
 // --- SocialMedia builder ---------------------------------------------------
 
-const social = (keys: string[], opts: { theme?: ThemeType; size?: SizeType; align?: Align } = {}): unknown => {
+const social = (
+  keys: string[],
+  opts: { theme?: ThemeType; size?: SizeType; align?: Align } = {},
+): unknown => {
   const { theme = 'original', size = 'medium', align = 'center' } = opts;
   const sizePx = size === 'small' ? '24px' : size === 'large' ? '48px' : '36px';
   const items = keys.map((key, i) => {
@@ -137,7 +150,12 @@ const social = (keys: string[], opts: { theme?: ThemeType; size?: SizeType; alig
 
 // --- Catalog ---------------------------------------------------------------
 
-export type PrimitiveDef = { type: PrimitiveType; name: string; description?: string; block: unknown };
+export type PrimitiveDef = {
+  type: PrimitiveType;
+  name: string;
+  description?: string;
+  block: unknown;
+};
 
 export const PRIMITIVES: PrimitiveDef[] = [
   // ===== Buttons — 6 distinct real CTA patterns, no gradients =====
@@ -174,7 +192,12 @@ export const PRIMITIVES: PrimitiveDef[] = [
     type: 'button',
     name: 'Text link style',
     description: 'Button-sized tap target that reads as a plain text link.',
-    block: button('No thanks, maybe later', { shape: round(6), size: 'small', bg: WHITE, color: ACCENT_DK }),
+    block: button('No thanks, maybe later', {
+      shape: round(6),
+      size: 'small',
+      bg: WHITE,
+      color: ACCENT_DK,
+    }),
   },
   {
     type: 'button',
@@ -192,7 +215,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
       `${h(2, 'Everything you need to get started')}${p(span('One line of supporting context goes here.', MUTED))}`,
       {
         color: INK,
-      }
+      },
     ),
   },
   {
@@ -201,7 +224,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     description: 'Badge + heading + body + link — a "what\'s new" opener.',
     block: notion(
       `${p(badge('NEW', '#EEF2FF', '#3730A3'))}${h(2, 'Introducing instant publishing')}${p(`Ship campaigns in seconds. ${span('No code, no waiting on engineering.', MUTED)}`)}${p(link('See what’s new →'))}`,
-      { color: INK }
+      { color: INK },
     ),
   },
   {
@@ -210,7 +233,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     description: 'Heading + green checkmark list — the classic benefits block.',
     block: notion(
       `${h(3, 'Everything included')}${checks(['Unlimited templates', 'Custom themes &amp; fonts', 'HTML &amp; JSON export', 'Team sharing'])}`,
-      { color: INK }
+      { color: INK },
     ),
   },
   {
@@ -219,7 +242,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     description: 'Large italic quote + attribution — a distinct visual register.',
     block: notion(
       `${h(2, `<em>“The most intuitive email tool we’ve ever used.”</em>`, 'center')}${p(`<strong>Jordan Pike</strong> — Director of Design, Acme`, 'center')}`,
-      { color: INK }
+      { color: INK },
     ),
   },
   {
@@ -228,7 +251,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     description: 'Big price figure + short perk list — number-forward and action-adjacent.',
     block: notion(
       `${h(1, `$29 ${span('<strong>/ month</strong>', MUTED)}`, 'center')}${checks(['5 team members', 'Unlimited sends', 'Priority support'], 'center')}`,
-      { color: INK }
+      { color: INK },
     ),
   },
   {
@@ -237,7 +260,7 @@ export const PRIMITIVES: PrimitiveDef[] = [
     description: 'Bold question + muted answer, repeated — support/FAQ pattern.',
     block: notion(
       `${p(`<strong>How do I cancel my subscription?</strong>`)}${p(span('Go to Settings → Billing → Cancel plan. Your access continues until the end of the billing period.', MUTED))}${p(`<strong>Can I change plans later?</strong>`)}${p(span('Yes, upgrade or downgrade anytime from the Billing page — changes apply on your next invoice.', MUTED))}`,
-      { color: INK }
+      { color: INK },
     ),
   },
 
@@ -264,7 +287,10 @@ export const PRIMITIVES: PrimitiveDef[] = [
     type: 'social-media',
     name: 'Large icon row',
     description: 'Social as a primary visual element — header or hero placement.',
-    block: social(['facebook', 'x', 'instagram', 'youtube', 'tiktok'], { theme: 'positive', size: 'large' }),
+    block: social(['facebook', 'x', 'instagram', 'youtube', 'tiktok'], {
+      theme: 'positive',
+      size: 'large',
+    }),
   },
   {
     type: 'social-media',

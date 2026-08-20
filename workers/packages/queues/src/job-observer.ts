@@ -3,7 +3,7 @@
  * installed (e.g. Node Telescope), so production consumers are unaffected.
  */
 
-export type QueueJobStatus = "queued" | "processing" | "completed" | "failed";
+export type QueueJobStatus = 'queued' | 'processing' | 'completed' | 'failed';
 
 export interface QueueJobEvent {
   status: QueueJobStatus;
@@ -33,18 +33,18 @@ export function emitQueueJob(event: QueueJobEvent): void {
 
 /** Keep job payloads small and free of message body content. */
 export function summarizeJobData(data: unknown): Record<string, unknown> | undefined {
-  if (data == null || typeof data !== "object") return undefined;
+  if (data == null || typeof data !== 'object') return undefined;
   const src = data as Record<string, unknown>;
   const out: Record<string, unknown> = {};
   for (const key of [
-    "version",
-    "tenantId",
-    "messageId",
-    "channel",
-    "provider",
-    "generation",
-    "correlationId",
-    "webhookEventId",
+    'version',
+    'tenantId',
+    'messageId',
+    'channel',
+    'provider',
+    'generation',
+    'correlationId',
+    'webhookEventId',
   ]) {
     if (key in src) out[key] = src[key];
   }

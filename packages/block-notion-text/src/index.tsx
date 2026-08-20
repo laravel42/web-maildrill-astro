@@ -25,7 +25,11 @@ import {
 
 import BubbleMenuToolbar from './BubbleMenuToolbar';
 import { getFormattedHtmlCached, normalizeNotionTextHtml } from './helper-notion-text';
-import { NotionTextProps, NotionTextPropsDefaults, NotionTextPropsSchema } from './NotionTextPropsSchema';
+import {
+  NotionTextProps,
+  NotionTextPropsDefaults,
+  NotionTextPropsSchema,
+} from './NotionTextPropsSchema';
 import { getTiptapExtensions } from './tiptap-config';
 
 /** Devuelve true si el HTML es vacío o solo contiene párrafos vacíos */
@@ -92,7 +96,9 @@ export function NotionText({ blockId, style, props, isNotClient = false }: Notio
     };
   }, [blockId, isNotClient]);
 
-  const editorContentRef = useRef(normalizeNotionTextHtml(props?.html ?? NotionTextPropsDefaults.html));
+  const editorContentRef = useRef(
+    normalizeNotionTextHtml(props?.html ?? NotionTextPropsDefaults.html),
+  );
   const linkGlobal = root?.linkGlobal ?? null;
 
   const justFinishedEditingRef = useRef(false);
@@ -157,7 +163,7 @@ export function NotionText({ blockId, style, props, isNotClient = false }: Notio
         }
       },
     },
-    [placeholderText]
+    [placeholderText],
   );
 
   // Listener para eventos AI (solo cuando está editando)
@@ -176,7 +182,11 @@ export function NotionText({ blockId, style, props, isNotClient = false }: Notio
 
       if (processedContent) {
         if (replaceSelection && selectionFrom !== undefined && selectionTo !== undefined) {
-          editor.chain().focus().insertContentAt({ from: selectionFrom, to: selectionTo }, processedContent).run();
+          editor
+            .chain()
+            .focus()
+            .insertContentAt({ from: selectionFrom, to: selectionTo }, processedContent)
+            .run();
         } else {
           editor.chain().focus().setContent(processedContent).run();
         }
@@ -246,7 +256,8 @@ export function NotionText({ blockId, style, props, isNotClient = false }: Notio
       // Cuando hay dos instancias, la segunda puede tener el editor ya en modo
       // no-editable (o sin contenido actualizado), devolviendo <p></p>.
       // editorContentRef.current siempre refleja el último onUpdate del usuario.
-      const currentContent = (editor?.isEditable ? editor?.getHTML() : null) ?? editorContentRef.current;
+      const currentContent =
+        (editor?.isEditable ? editor?.getHTML() : null) ?? editorContentRef.current;
 
       editorContentRef.current = currentContent;
 
@@ -302,7 +313,7 @@ export function NotionText({ blockId, style, props, isNotClient = false }: Notio
         setNotionTextInlineEditingBlockId(blockId);
       }
     },
-    [blockId]
+    [blockId],
   );
 
   const finishEditing = useCallback(() => {
@@ -312,7 +323,8 @@ export function NotionText({ blockId, style, props, isNotClient = false }: Notio
     }
 
     // Misma lógica que force-save: preferir ref cuando el editor ya no es editable
-    const currentContent = (editor?.isEditable ? editor?.getHTML() : null) ?? editorContentRef.current;
+    const currentContent =
+      (editor?.isEditable ? editor?.getHTML() : null) ?? editorContentRef.current;
 
     editorContentRef.current = currentContent;
 
@@ -339,7 +351,9 @@ export function NotionText({ blockId, style, props, isNotClient = false }: Notio
       if (target?.closest?.('[data-notion-text-toolbar]')) return;
 
       if (
-        target?.closest?.('.MuiPopover-root, .MuiModal-root, .MuiBackdrop-root, .MuiMenu-root, .MuiDialog-root') ||
+        target?.closest?.(
+          '.MuiPopover-root, .MuiModal-root, .MuiBackdrop-root, .MuiMenu-root, .MuiDialog-root',
+        ) ||
         target?.closest?.('[data-slash-menu]') ||
         target?.closest?.('em-emoji-picker') ||
         target?.shadowRoot ||
@@ -354,7 +368,7 @@ export function NotionText({ blockId, style, props, isNotClient = false }: Notio
 
       finishEditing();
     },
-    [blockId, finishEditing]
+    [blockId, finishEditing],
   );
 
   useEffect(() => {
@@ -378,7 +392,7 @@ export function NotionText({ blockId, style, props, isNotClient = false }: Notio
   }, [isEditing, finishEditing, handleClickOutside]);
 
   const padding = getPadding(
-    selectedScreenSize === 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding)
+    selectedScreenSize === 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding),
   );
   const textAlign = style?.textAlign ?? undefined;
   const border = {
@@ -496,7 +510,10 @@ export function NotionText({ blockId, style, props, isNotClient = false }: Notio
   }
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', ...(containerStyle as React.CSSProperties) }}>
+    <div
+      ref={containerRef}
+      style={{ position: 'relative', ...(containerStyle as React.CSSProperties) }}
+    >
       <Wrapper
         className={shortCssId(blockId as any)}
         padding={padding}

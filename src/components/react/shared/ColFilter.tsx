@@ -1,3 +1,4 @@
+import type { IconName } from '@/lib/icons';
 import Icon from '../Icon';
 import styles from './ColFilter.module.css';
 
@@ -14,6 +15,8 @@ export default function ColFilter({
   onClear,
   open,
   onOpenToggle,
+  icon,
+  optionLabel,
 }: {
   label: string;
   options: readonly string[];
@@ -22,6 +25,14 @@ export default function ColFilter({
   onClear: () => void;
   open: boolean;
   onOpenToggle: () => void;
+  /** Optional leading icon (e.g. Media Orientation / Ratio). */
+  icon?: IconName;
+  /**
+   * Display name for an option when the value is a wire token rather than
+   * something readable — the rate filters select `high`/`mid`, which is what
+   * goes on the query string, but nobody wants to read that in a menu.
+   */
+  optionLabel?: (value: string) => string;
 }) {
   const count = selected.size;
   return (
@@ -33,6 +44,7 @@ export default function ColFilter({
         aria-haspopup="menu"
         onClick={onOpenToggle}
       >
+        {icon && <Icon name={icon} size={14} />}
         {label}
         {count > 0 && <span className={`${styles.count} tnum`}>{count}</span>}
         <Icon
@@ -69,7 +81,7 @@ export default function ColFilter({
                   <span className={`${styles.box}${on ? ` ${styles.boxOn}` : ''}`}>
                     {on && <Icon name="check" size={15} stroke={3.5} />}
                   </span>
-                  {o}
+                  {optionLabel ? optionLabel(o) : o}
                 </button>
               );
             })}

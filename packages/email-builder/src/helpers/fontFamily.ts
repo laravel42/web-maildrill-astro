@@ -54,7 +54,10 @@ function getValueFont(fontFamily: FontFamilyName | undefined | null): string | u
  * No global store is read here, so it is safe to call from Node
  * (`react-dom/server`).
  */
-export function getFontFamily(fontFamily: FontFamilyName | undefined | null, rootFont?: FontFamilyName | null): string {
+export function getFontFamily(
+  fontFamily: FontFamilyName | undefined | null,
+  rootFont?: FontFamilyName | null,
+): string {
   return (
     getValueFont(fontFamily) ??
     getValueFont(rootFont) ??

@@ -1,9 +1,9 @@
-import { and, eq, inArray } from "drizzle-orm";
-import { db, subscribers, suppressions, type Subscriber } from "@maildrill/database";
-import type { Channel } from "@maildrill/domain";
-import { clamp } from "./rules";
-import { listMembersOf } from "./lists";
-import { evaluateSegment } from "./segments";
+import { and, eq, inArray } from 'drizzle-orm';
+import { db, subscribers, suppressions, type Subscriber } from '@maildrill/database';
+import type { Channel } from '@maildrill/domain';
+import { clamp } from './rules';
+import { listMembersOf } from './lists';
+import { evaluateSegment } from './segments';
 
 export interface AudienceSelector {
   listId?: string;
@@ -13,7 +13,7 @@ export interface AudienceSelector {
 
 /** The address a channel sends to: email → email, everything else → phone. */
 export function addressForChannel(sub: Subscriber, channel: Channel): string | null {
-  return channel === "email" ? sub.email : sub.phone;
+  return channel === 'email' ? sub.email : sub.phone;
 }
 
 /**
@@ -35,10 +35,7 @@ export async function resolveAudience(
       .select()
       .from(subscribers)
       .where(
-        and(
-          eq(subscribers.tenantId, tenantId),
-          inArray(subscribers.id, selector.subscriberIds),
-        ),
+        and(eq(subscribers.tenantId, tenantId), inArray(subscribers.id, selector.subscriberIds)),
       )
       .limit(limit);
   } else if (selector.listId) {
@@ -48,7 +45,7 @@ export async function resolveAudience(
   }
 
   const withAddress = candidates.filter(
-    (s) => s.status === "active" && addressForChannel(s, channel),
+    (s) => s.status === 'active' && addressForChannel(s, channel),
   );
   if (withAddress.length === 0) return [];
 
@@ -57,13 +54,11 @@ export async function resolveAudience(
       await db
         .select({ address: suppressions.address })
         .from(suppressions)
-        .where(
-          and(eq(suppressions.tenantId, tenantId), eq(suppressions.channel, channel)),
-        )
+        .where(and(eq(suppressions.tenantId, tenantId), eq(suppressions.channel, channel)))
     ).map((r) => r.address.toLowerCase()),
   );
 
   return withAddress.filter(
-    (s) => !suppressed.has((addressForChannel(s, channel) ?? "").toLowerCase()),
+    (s) => !suppressed.has((addressForChannel(s, channel) ?? '').toLowerCase()),
   );
 }

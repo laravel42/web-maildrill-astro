@@ -23,9 +23,33 @@ allowBuilds:
 # eslint-plugin-jsx-a11y@6.10.2 (its latest) hasn't widened its `eslint` peer
 # range to include v10, but eslint-plugin-astro@3 requires exactly this pairing
 # and it lints cleanly against ESLint 10. Declare the combination allowed.
+#
+# auth-astro@4.2.0 (its latest) still peers `@auth/core: ^0.37.3`, but 0.37.x
+# carries a critical advisory: the email normalizer validates before Unicode
+# normalization, so a homoglyph `@` can impersonate another address — which is
+# exactly the sign-in path this app ships (passwordless email codes). auth-astro
+# only consumes `Auth()` plus types, and that surface is unchanged in 0.41.x, so
+# the pairing is safe; the login flow is verified end to end against it.
 peerDependencyRules:
   allowedVersions:
     eslint-plugin-jsx-a11y>eslint: '10'
+    auth-astro>@auth/core: '0.41.x'
+
+# Transitive advisories no direct-dependency bump can reach: build tooling
+# pulls old copies of these, so force the patched release inside the same
+# major (drop-in — both are pure parsing/expansion helpers).
+#   brace-expansion — unbounded expansion → OOM crash (GHSA, high)
+#   js-yaml         — merge-key chains → quadratic CPU (GHSA, high)
+# Deliberately NOT overridden: esbuild 0.18.20, pulled in by drizzle-kit's
+# deprecated @esbuild-kit/esm-loader. Its advisory only affects `esbuild
+# --serve` (a dev server we never start), drizzle-kit is a devDependency used
+# for `db:generate`, and forcing 0.25+ across that 0.18-era API risks breaking
+# migration generation for no real gain.
+overrides:
+  'brace-expansion@<1.1.17': '1.1.18'
+  'brace-expansion@>=2.0.0 <2.1.3': '2.1.4'
+  'brace-expansion@>=4.0.0 <5.0.8': '5.0.9'
+  'js-yaml@<4.3.0': '4.3.1'
 
 # Dependencies allowed to run their (native) install/build scripts. pnpm 10
 # blocks build scripts by default; these two are approved because the toolchain

@@ -26,6 +26,8 @@ import { editorStateStore, resetDocument } from '../../documents/editor/EditorCo
 
 import AIPreviewPanel from './AIPreviewPanel';
 import AiSparkleIcon from './AiSparkleIcon';
+import QualityPanel from './QualityPanel';
+import RefineComposer from './RefineComposer';
 import { trackUnsplashFromDocument } from './trackUnsplashFromDocument';
 import { isValidationFailure, validateGeneratedTemplate } from './validateGeneratedTemplate';
 import AIVisualWizard from './Wizard/AIVisualWizard';
@@ -36,7 +38,7 @@ import WizardHeader from './Wizard/WizardHeader';
 
 type OnAIGenerateTemplate = (
   request: AIGenerateTemplateRequest,
-  options: { signal: AbortSignal }
+  options: { signal: AbortSignal },
 ) => Promise<AIGenerateTemplateResponse>;
 
 /**
@@ -164,6 +166,14 @@ export default function AIGenerationDialog({
   const [status, setStatus] = useState<Status>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isImprovingPrompt, setIsImprovingPrompt] = useState(false);
+  // Improve-prompt outcome surface: the failure is announced inline (never
+  // silent), and a successful rewrite keeps the original text one click away.
+  const [improveError, setImproveError] = useState(false);
+  const [improveUndo, setImproveUndo] = useState<string | null>(null);
+  // Per-mode prompt drafts. Switching Generate-new ↔ Refine swaps the texts
+  // instead of destroying them — the two prompts read differently (full
+  // description vs. change instructions), but neither is ever lost.
+  const promptDraftsRef = useRef<Record<GenerationMode, string>>({ new: '', refine: '' });
   // Zod / structural validation issues surfaced when the AI response is
   // schema-invalid. Mutually exclusive with runtime errors: when this is
   // non-null the error Alert renders the validation UI instead of the
@@ -182,6 +192,13 @@ export default function AIGenerationDialog({
   const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  // When starting a new generate/refine, ignore late onError callbacks from
+  // the previous preview stream (aborting its fetch can reject after we've
+  // already moved on — otherwise status flips back to `error` and kills the
+  // new refine before tokens arrive).
+  const suppressPreviewErrorsRef = useRef(false);
+  // Monotonic id so stale preview completion/error handlers are ignored.
+  const generateEpochRef = useRef(0);
 
   // When the dialog opens, restore the last entry mode from localStorage.
   // We do NOT reset the prompt, wizard answers, or entry mode — they stay
@@ -190,6 +207,8 @@ export default function AIGenerationDialog({
   // starts a fresh attempt on every open.
   useEffect(() => {
     if (!open) return;
+    suppressPreviewErrorsRef.current = false;
+    generateEpochRef.current += 1;
     setMode(pickDefaultMode(editorStateStore.getState().document));
     setStatus('idle');
     setErrorMessage(null);
@@ -218,20 +237,28 @@ export default function AIGenerationDialog({
     };
   }, []);
 
-  const handleGenerate = useCallback(async () => {
-    const trimmed = prompt.trim();
-    if (!trimmed) return;
-
-    // Abort any stale in-flight controller before starting a new attempt.
+  const beginGeneration = useCallback(() => {
+    // Tear down any prior preview first so its abort/onError can't race the
+    // new attempt, then abort the old fetch.
+    suppressPreviewErrorsRef.current = true;
+    generateEpochRef.current += 1;
+    const epoch = generateEpochRef.current;
+    setResponse(null);
     abortControllerRef.current?.abort();
     const controller = new AbortController();
     abortControllerRef.current = controller;
-
     setStatus('thinking');
     setErrorMessage(null);
     setValidationIssues(null);
     setStreamWarnings(null);
-    setResponse(null);
+    return { controller, epoch };
+  }, []);
+
+  const handleGenerate = useCallback(async () => {
+    const trimmed = prompt.trim();
+    if (!trimmed) return;
+
+    const { controller, epoch } = beginGeneration();
     setCompletedDocument(null);
 
     try {
@@ -242,19 +269,23 @@ export default function AIGenerationDialog({
       const currentDocument = mode === 'refine' ? editorStateStore.getState().document : undefined;
       const result = await onAIGenerateTemplate(
         { prompt: trimmed, currentDocument, locale },
-        { signal: controller.signal }
+        { signal: controller.signal },
       );
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted || epoch !== generateEpochRef.current) return;
+      suppressPreviewErrorsRef.current = false;
       setResponse(result);
       setStatus('streaming');
     } catch (err) {
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted || epoch !== generateEpochRef.current) return;
+      suppressPreviewErrorsRef.current = false;
       setStatus('error');
       setErrorMessage(err instanceof Error ? err.message : String(err));
     }
-  }, [prompt, locale, mode, onAIGenerateTemplate]);
+  }, [prompt, locale, mode, onAIGenerateTemplate, beginGeneration]);
 
   const handleCancel = useCallback(() => {
+    suppressPreviewErrorsRef.current = true;
+    generateEpochRef.current += 1;
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
     setStatus('idle');
@@ -263,6 +294,7 @@ export default function AIGenerationDialog({
     setStreamWarnings(null);
     setResponse(null);
     setCompletedDocument(null);
+    suppressPreviewErrorsRef.current = false;
   }, []);
 
   const handleDialogClose = useCallback(() => {
@@ -281,8 +313,11 @@ export default function AIGenerationDialog({
     setConfirmCloseOpen(false);
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
-    // Reset prompt so reopening starts fresh.
+    // Reset prompt (and both mode drafts) so reopening starts fresh.
     setPrompt('');
+    promptDraftsRef.current = { new: '', refine: '' };
+    setImproveUndo(null);
+    setImproveError(false);
     setEntryMode('picker');
     try {
       localStorage.removeItem(ENTRY_MODE_KEY);
@@ -312,8 +347,9 @@ export default function AIGenerationDialog({
   const handlePreviewComplete = useCallback(
     (
       document: TEditorConfiguration,
-      meta: { duplicateIds: string[]; streamErrors: string[]; streamWarnings: string[] }
+      meta: { duplicateIds: string[]; streamErrors: string[]; streamWarnings: string[] },
     ) => {
+      if (suppressPreviewErrorsRef.current) return;
       // Two severities of issue coming out of the stream:
       //
       //   - Blocking  → the document is structurally invalid or content was
@@ -332,7 +368,7 @@ export default function AIGenerationDialog({
       const validation = validateGeneratedTemplate(document);
       const zodIssues = isValidationFailure(validation) ? validation.issues : [];
       const duplicateIssues = meta.duplicateIds.map(
-        (id) => `Block id "${id}" was emitted more than once and got overwritten`
+        (id) => `Block id "${id}" was emitted more than once and got overwritten`,
       );
       const blockingIssues = [...zodIssues, ...duplicateIssues];
       const warnings = [...meta.streamWarnings, ...meta.streamErrors];
@@ -350,10 +386,11 @@ export default function AIGenerationDialog({
       setCompletedDocument(isValidationFailure(validation) ? null : validation.data);
       setStatus('complete');
     },
-    []
+    [],
   );
 
   const handlePreviewError = useCallback((message: string) => {
+    if (suppressPreviewErrorsRef.current) return;
     setErrorMessage(message);
     setValidationIssues(null);
     setStatus('error');
@@ -366,7 +403,8 @@ export default function AIGenerationDialog({
   // NDJSON frames log and copy the full response for debugging — otherwise
   // the panel gets unmounted on the first error event and the frames are
   // lost.
-  const showPreview = (status === 'streaming' || status === 'complete' || status === 'error') && response !== null;
+  const showPreview =
+    (status === 'streaming' || status === 'complete' || status === 'error') && response !== null;
 
   // Example prompts shown as clickable chips under the textarea. Hidden while
   // a generation is in flight, after completion, and cleared from noise by
@@ -392,7 +430,7 @@ export default function AIGenerationDialog({
           typeof s === 'object' &&
           s !== null &&
           typeof (s as { label?: unknown }).label === 'string' &&
-          typeof (s as { prompt?: unknown }).prompt === 'string'
+          typeof (s as { prompt?: unknown }).prompt === 'string',
       ) as Array<{ label: string; prompt: string }>)
     : [];
 
@@ -401,12 +439,16 @@ export default function AIGenerationDialog({
     // afterwards; preserving half-typed text would leave confusing mixed
     // prompts that harm the generation quality.
     setPrompt(nextPrompt);
+    setImproveUndo(null);
+    setImproveError(false);
   }, []);
 
   const handleImprovePrompt = useCallback(async () => {
     if (!prompt.trim() || isImprovingPrompt) return;
 
     setIsImprovingPrompt(true);
+    setImproveError(false);
+    const original = prompt;
     try {
       const response = await fetch(`${backendUrl}/improve-prompt`, {
         method: 'POST',
@@ -419,14 +461,26 @@ export default function AIGenerationDialog({
       }
 
       const result = await response.json();
-      setPrompt(result.improved);
+      if (typeof result.improved === 'string' && result.improved.trim()) {
+        setPrompt(result.improved);
+        setImproveUndo(original);
+      } else {
+        setImproveError(true);
+      }
     } catch (error) {
       console.error('Failed to improve prompt:', error);
-      // Silently fail - user can still use original prompt
+      // The prompt is untouched; tell the user instead of failing silently.
+      setImproveError(true);
     } finally {
       setIsImprovingPrompt(false);
     }
   }, [prompt, isImprovingPrompt, backendUrl]);
+
+  const handleUndoImprove = useCallback(() => {
+    if (improveUndo === null) return;
+    setPrompt(improveUndo);
+    setImproveUndo(null);
+  }, [improveUndo]);
 
   // ---------------------------------------------------------------------------
   // Entry mode (picker / direct / wizard) handlers
@@ -459,48 +513,104 @@ export default function AIGenerationDialog({
   const handleWizardGenerate = useCallback(
     async (compiledPrompt: string, _brief: DraftBrief) => {
       setPrompt(compiledPrompt);
-      abortControllerRef.current?.abort();
-      const controller = new AbortController();
-      abortControllerRef.current = controller;
-      setStatus('thinking');
-      setErrorMessage(null);
-      setValidationIssues(null);
-      setStreamWarnings(null);
-      setResponse(null);
+      const { controller, epoch } = beginGeneration();
       setCompletedDocument(null);
       try {
-        const currentDocument = mode === 'refine' ? editorStateStore.getState().document : undefined;
+        const currentDocument =
+          mode === 'refine' ? editorStateStore.getState().document : undefined;
         const result = await onAIGenerateTemplate(
           { prompt: compiledPrompt, currentDocument, locale },
-          { signal: controller.signal }
+          { signal: controller.signal },
         );
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted || epoch !== generateEpochRef.current) return;
+        suppressPreviewErrorsRef.current = false;
         setResponse(result);
         setStatus('streaming');
       } catch (err) {
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted || epoch !== generateEpochRef.current) return;
+        suppressPreviewErrorsRef.current = false;
         setStatus('error');
         setErrorMessage(err instanceof Error ? err.message : String(err));
       }
     },
-    [mode, locale, onAIGenerateTemplate]
+    [mode, locale, onAIGenerateTemplate, beginGeneration],
   );
 
-  const handleModeChange = useCallback((_event: React.MouseEvent<HTMLElement>, nextMode: GenerationMode | null) => {
-    // MUI ToggleButtonGroup emits `null` when the user clicks the currently
-    // selected button (deselect). Ignore that — one of the modes must
-    // always be active.
-    if (nextMode === null) return;
-    setMode(nextMode);
-    // Switching modes resets the prompt and any error state. A prompt for
-    // "Generate new" reads like a full description of an email; a prompt
-    // for "Refine" reads like an instruction delta. Keeping text across
-    // modes produces nonsensical requests to the LLM.
-    setPrompt('');
-    setErrorMessage(null);
-    setValidationIssues(null);
-    setStreamWarnings(null);
-  }, []);
+  /**
+   * Quality panel → re-generate against the preview document using a prompt
+   * built from P0/P1 findings. Keeps `completedDocument` until the new stream
+   * finishes so the panel can show an applying state.
+   */
+  const handleApplyCorrections = useCallback(
+    async (correctionsPrompt: string, document: TEditorConfiguration) => {
+      setPrompt(correctionsPrompt);
+      setMode('refine');
+      // Keep completedDocument so the quality panel stays mounted and the
+      // wizard does not remount over the refine attempt.
+      const { controller, epoch } = beginGeneration();
+      try {
+        const result = await onAIGenerateTemplate(
+          { prompt: correctionsPrompt, currentDocument: document, locale },
+          { signal: controller.signal },
+        );
+        if (controller.signal.aborted || epoch !== generateEpochRef.current) return;
+        suppressPreviewErrorsRef.current = false;
+        setResponse(result);
+        setStatus('streaming');
+      } catch (err) {
+        if (controller.signal.aborted || epoch !== generateEpochRef.current) return;
+        suppressPreviewErrorsRef.current = false;
+        setStatus('error');
+        setErrorMessage(err instanceof Error ? err.message : String(err));
+      }
+    },
+    [locale, onAIGenerateTemplate, beginGeneration],
+  );
+
+  const qualityPanel =
+    completedDocument &&
+    (status === 'complete' ||
+      status === 'thinking' ||
+      status === 'streaming' ||
+      status === 'error') ? (
+      <QualityPanel
+        document={completedDocument}
+        backendUrl={backendUrl}
+        brief={prompt}
+        locale={locale}
+        applying={status === 'thinking' || status === 'streaming'}
+        onApplyCorrections={handleApplyCorrections}
+      />
+    ) : null;
+
+  // Once a preview document exists (or a refine is in flight), keep the
+  // wizard form unmounted — otherwise Apply corrections flips status to
+  // `thinking`, showPreview goes false, and the wizard remounts at step 0
+  // on top of the refine request.
+  const showWizardForm =
+    entryMode === 'wizard' && !showPreview && !completedDocument && status !== 'thinking';
+
+  const handleModeChange = useCallback(
+    (_event: React.MouseEvent<HTMLElement>, nextMode: GenerationMode | null) => {
+      // MUI ToggleButtonGroup emits `null` when the user clicks the currently
+      // selected button (deselect). Ignore that — one of the modes must
+      // always be active.
+      if (nextMode === null || nextMode === mode) return;
+      // Park the current text under its mode and restore the other draft.
+      // The two prompts read differently (full description vs. change
+      // instructions) so they never mix — but switching must not destroy
+      // what the user typed.
+      promptDraftsRef.current[mode] = prompt;
+      setMode(nextMode);
+      setPrompt(promptDraftsRef.current[nextMode] ?? '');
+      setImproveUndo(null);
+      setImproveError(false);
+      setErrorMessage(null);
+      setValidationIssues(null);
+      setStreamWarnings(null);
+    },
+    [mode, prompt],
+  );
 
   const renderWarningsAlert = () => {
     if (!streamWarnings || streamWarnings.length === 0) return null;
@@ -620,13 +730,18 @@ export default function AIGenerationDialog({
     <Dialog
       open={open}
       onClose={(_e, reason) => {
-        // Block backdrop click and ESC — only the Close button can dismiss.
-        if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
+        // Backdrop clicks are ignored (too easy to fire accidentally over a
+        // large dialog), but ESC follows the platform expectation: it routes
+        // through the same guarded close as the Close button, so in-progress
+        // work still gets the confirm step rather than being lost.
+        if (reason === 'backdropClick') return;
         handleDialogClose();
       }}
       maxWidth={showPreview ? 'lg' : 'sm'}
       fullWidth
-      slotProps={{ paper: { sx: { bgcolor: 'background.paper', color: 'text.primary', borderRadius: '10px' } } }}
+      slotProps={{
+        paper: { sx: { bgcolor: 'background.paper', color: 'text.primary', borderRadius: '10px' } },
+      }}
     >
       <DialogTitle sx={{ fontWeight: 700, fontSize: '24px' }}>
         {entryMode === 'picker' ? (
@@ -635,7 +750,11 @@ export default function AIGenerationDialog({
             <Box component="span">{t('aiGeneration.dialog.title')}</Box>
           </Stack>
         ) : (
-          <WizardHeader mode={entryMode as 'direct' | 'wizard'} onSwitch={handleModeSwitch} disabled={isBusy} />
+          <WizardHeader
+            mode={entryMode as 'direct' | 'wizard'}
+            onSwitch={handleModeSwitch}
+            disabled={isBusy}
+          />
         )}
       </DialogTitle>
       <DialogContent>
@@ -647,12 +766,14 @@ export default function AIGenerationDialog({
         {/* ---------------------------------------------------------------- */}
         {/* WIZARD MODE                                                       */}
         {/* ---------------------------------------------------------------- */}
-        {entryMode === 'wizard' && !showPreview && (
+        {showWizardForm && (
           <AIVisualWizard
             initialRawIntent={prompt}
             backendUrl={backendUrl}
             brandColors={
-              primaryColor || secondaryColor ? { primary: primaryColor, secondary: secondaryColor } : undefined
+              primaryColor || secondaryColor
+                ? { primary: primaryColor, secondary: secondaryColor }
+                : undefined
             }
             locale={locale}
             onGenerate={handleWizardGenerate}
@@ -672,14 +793,18 @@ export default function AIGenerationDialog({
             {t('aiGeneration.dialog.status.complete')}
           </Alert>
         )}
-        {/* Stream error reports hidden — unhide by removing display:'none' */}
-        {entryMode === 'wizard' && showPreview && response && <Box sx={{ display: 'none' }}>{renderStatusRow()}</Box>}
+        {entryMode === 'wizard' && status === 'error' && renderStatusRow()}
         {entryMode === 'wizard' && showPreview && response && (
-          <AIPreviewPanel response={response} onComplete={handlePreviewComplete} onError={handlePreviewError} />
+          <AIPreviewPanel
+            response={response}
+            onComplete={handlePreviewComplete}
+            onError={handlePreviewError}
+          />
         )}
+        {entryMode === 'wizard' && qualityPanel}
 
         {/* ---------------------------------------------------------------- */}
-        {/* DIRECT MODE (unchanged)                                           */}
+        {/* DIRECT MODE                                                       */}
         {/* ---------------------------------------------------------------- */}
         {entryMode === 'direct' && (
           <Stack sx={{ gap: 1.5 }}>
@@ -694,15 +819,23 @@ export default function AIGenerationDialog({
                 sx={{ mb: 1.5 }}
                 fullWidth
               >
-                <ToggleButton value="new" sx={{ textTransform: 'none', fontWeight: mode === 'new' ? 700 : 500 }}>
+                <ToggleButton
+                  value="new"
+                  sx={{ textTransform: 'none', fontWeight: mode === 'new' ? 700 : 500 }}
+                >
                   {t('aiGeneration.dialog.mode.new')}
                 </ToggleButton>
-                <ToggleButton value="refine" sx={{ textTransform: 'none', fontWeight: mode === 'refine' ? 700 : 500 }}>
+                <ToggleButton
+                  value="refine"
+                  sx={{ textTransform: 'none', fontWeight: mode === 'refine' ? 700 : 500 }}
+                >
                   {t('aiGeneration.dialog.mode.refine')}
                 </ToggleButton>
               </ToggleButtonGroup>
               <Typography sx={{ fontSize: '14px', fontWeight: 700 }}>
-                {mode === 'refine' ? t('aiGeneration.dialog.promptLabelRefine') : t('aiGeneration.dialog.promptLabel')}
+                {mode === 'refine'
+                  ? t('aiGeneration.dialog.promptLabelRefine')
+                  : t('aiGeneration.dialog.promptLabel')}
               </Typography>
               <TextField
                 autoFocus
@@ -721,15 +854,39 @@ export default function AIGenerationDialog({
                     : t('aiGeneration.dialog.promptPlaceholder')
                 }
                 value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
+                onChange={(e) => {
+                  setPrompt(e.target.value);
+                  // Manual edits invalidate the improve-undo snapshot —
+                  // restoring it now would clobber what the user just typed.
+                  setImproveUndo(null);
+                  setImproveError(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && canGenerate) {
+                    e.preventDefault();
+                    void handleGenerate();
+                  }
+                }}
                 sx={{ mt: 0.5, '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
               />
+              {mode === 'refine' && !isBusy && (
+                <RefineComposer
+                  backendUrl={backendUrl}
+                  description={prompt}
+                  onCompiled={(compiled) => setPrompt(compiled)}
+                />
+              )}
               {showSuggestions && prompt.trim().length > 0 && (
-                <Box sx={{ mt: 1 }}>
+                <Stack
+                  direction="row"
+                  sx={{ mt: 1, gap: 1, alignItems: 'center', flexWrap: 'wrap' }}
+                >
                   <Button
                     size="small"
                     variant="outlined"
-                    startIcon={isImprovingPrompt ? <CircularProgress size={16} /> : <AiSparkleIcon />}
+                    startIcon={
+                      isImprovingPrompt ? <CircularProgress size={16} /> : <AiSparkleIcon />
+                    }
                     onClick={handleImprovePrompt}
                     disabled={isImprovingPrompt || !prompt.trim()}
                     sx={{ textTransform: 'none' }}
@@ -738,7 +895,17 @@ export default function AIGenerationDialog({
                       ? t('aiGeneration.dialog.improvingPrompt')
                       : t('aiGeneration.dialog.improvePrompt')}
                   </Button>
-                </Box>
+                  {improveUndo !== null && (
+                    <Button size="small" onClick={handleUndoImprove} sx={{ textTransform: 'none' }}>
+                      {t('aiGeneration.dialog.undoImprove')}
+                    </Button>
+                  )}
+                  {improveError && (
+                    <Typography variant="caption" color="error">
+                      {t('aiGeneration.dialog.improveFailed')}
+                    </Typography>
+                  )}
+                </Stack>
               )}
             </Box>
             {showSuggestions && suggestions.length > 0 && (
@@ -748,7 +915,11 @@ export default function AIGenerationDialog({
                 </Typography>
                 <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75, mt: 0.5 }}>
                   {suggestions.map((s) => (
-                    <PillButton key={s.label} label={s.label} onClick={() => handleSuggestionClick(s.prompt)} />
+                    <PillButton
+                      key={s.label}
+                      label={s.label}
+                      onClick={() => handleSuggestionClick(s.prompt)}
+                    />
                   ))}
                 </Stack>
               </Box>
@@ -766,11 +937,15 @@ export default function AIGenerationDialog({
                 {t('aiGeneration.dialog.status.complete')}
               </Alert>
             )}
-            {/* Stream error reports hidden — unhide by removing display:'none' */}
-            <Box sx={{ display: 'none' }}>{renderStatusRow()}</Box>
+            {status === 'error' && renderStatusRow()}
             {showPreview && response && (
-              <AIPreviewPanel response={response} onComplete={handlePreviewComplete} onError={handlePreviewError} />
+              <AIPreviewPanel
+                response={response}
+                onComplete={handlePreviewComplete}
+                onError={handlePreviewError}
+              />
             )}
+            {entryMode === 'direct' && qualityPanel}
           </Stack>
         )}
       </DialogContent>
@@ -833,7 +1008,12 @@ export default function AIGenerationDialog({
               </Button>
             )}
             {status === 'error' ? (
-              <Button onClick={handleGenerate} variant="contained" disabled={!canGenerate} startIcon={undefined}>
+              <Button
+                onClick={handleGenerate}
+                variant="contained"
+                disabled={!canGenerate}
+                startIcon={undefined}
+              >
                 {t('aiGeneration.dialog.retry')}
               </Button>
             ) : status === 'complete' ? (
@@ -865,7 +1045,11 @@ export default function AIGenerationDialog({
         onClose={() => setConfirmCloseOpen(false)}
         maxWidth="xs"
         fullWidth
-        slotProps={{ paper: { sx: { bgcolor: 'background.paper', color: 'text.primary', borderRadius: '10px' } } }}
+        slotProps={{
+          paper: {
+            sx: { bgcolor: 'background.paper', color: 'text.primary', borderRadius: '10px' },
+          },
+        }}
       >
         <DialogTitle>{t('aiGeneration.dialog.confirmClose.title')}</DialogTitle>
         <DialogContent>
@@ -874,7 +1058,9 @@ export default function AIGenerationDialog({
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmCloseOpen(false)}>{t('aiGeneration.dialog.confirmClose.stay')}</Button>
+          <Button onClick={() => setConfirmCloseOpen(false)}>
+            {t('aiGeneration.dialog.confirmClose.stay')}
+          </Button>
           <Button color="error" variant="contained" onClick={handleConfirmedClose}>
             {t('aiGeneration.dialog.confirmClose.leave')}
           </Button>

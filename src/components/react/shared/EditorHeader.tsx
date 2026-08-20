@@ -18,6 +18,8 @@ type Props = {
   /** Optional category picker — omit `categories` to hide it (e.g. campaigns). */
   category?: string;
   categories?: readonly string[];
+  /** Categories rendered but not selectable, flagged as coming soon. */
+  unavailableCategories?: readonly string[];
   onCategoryChange?: (value: string) => void;
   /** Optional language picker — suffix on the title field (templates). */
   language?: string;
@@ -26,7 +28,8 @@ type Props = {
   /** Square flag image URL for a language code. */
   getLanguageFlagSrc?: (code: string) => string;
   onBack: () => void;
-  onSendTest: () => void;
+  /** Sends a real test message to the signed-in user; button hidden when omitted. */
+  onSendTest?: () => void;
   onSaveDraft: () => void;
 };
 
@@ -137,7 +140,7 @@ function LanguagePicker({
 /**
  * Shared editor header used by both the visual email editor and the SMS/
  * WhatsApp/Voice composer so they read as one product: back, a centered
- * editable name (with channel icon + save), autosave status, and Send test.
+ * editable name (with channel icon + save), and autosave status.
  */
 export default function EditorHeader({
   channel,
@@ -147,6 +150,7 @@ export default function EditorHeader({
   status = 'idle',
   category,
   categories,
+  unavailableCategories,
   onCategoryChange,
   language,
   languageOptions,
@@ -195,28 +199,36 @@ export default function EditorHeader({
              worth showing, and native radios give arrow-key navigation and
              screen-reader semantics for free — the pills are the labels. */
           <div className={styles.categories} role="radiogroup" aria-label="Category">
-            {categories.map((c) => (
-              <label key={c} className={styles.pill}>
-                <input
-                  type="radio"
-                  name="editor-category"
-                  className={styles.pillInput}
-                  value={c}
-                  checked={(category ?? categories[0]) === c}
-                  onChange={() => onCategoryChange(c)}
-                />
-                <span className={styles.pillLabel}>{c}</span>
-              </label>
-            ))}
+            {categories.map((c) => {
+              const unavailable = unavailableCategories?.includes(c) ?? false;
+              return (
+                <label
+                  key={c}
+                  className={`${styles.pill}${unavailable ? ` ${styles.pillUnavailable}` : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="editor-category"
+                    className={styles.pillInput}
+                    value={c}
+                    disabled={unavailable}
+                    checked={(category ?? categories[0]) === c}
+                    onChange={() => onCategoryChange(c)}
+                  />
+                  <span className={styles.pillLabel}>
+                    {c}
+                    {unavailable && <span className={styles.pillNote}>Coming soon</span>}
+                  </span>
+                </label>
+              );
+            })}
           </div>
         )}
       </div>
 
       <div className={styles.center}>
         <div className={styles.nameRow}>
-          <div
-            className={`${styles.nameField}${nameError ? ` ${styles.nameFieldInvalid}` : ''}`}
-          >
+          <div className={`${styles.nameField}${nameError ? ` ${styles.nameFieldInvalid}` : ''}`}>
             <span
               className={styles.nameIcon}
               style={{ background: meta.tint, color: meta.color }}
@@ -266,16 +278,22 @@ export default function EditorHeader({
           <span className={`${styles.dot} ${status === 'saving' ? styles.dotSaving : ''}`} />
           {STATUS_LABEL[status]}
         </span>
-        <button type="button" className={styles.sbtn} onClick={onSendTest}>
-          <Icon name="send" size={14} />
-          Send test
-        </button>
+        {onSendTest && (
+          <button type="button" className={styles.sbtn} onClick={onSendTest}>
+            <Icon name="send" size={14} />
+            Send test
+          </button>
+        )}
       </div>
       {nameError && (
         /* Bottom badge in the app's toast position, in its alert tone. Sits
            outside the header so it can never affect the bar's height, and
            auto-dismisses like every other notification. */
-        <div className={styles.alertBadge} role="alert" style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}>
+        <div
+          className={styles.alertBadge}
+          role="alert"
+          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
+        >
           <span className={styles.alertBadgeIcon}>
             <Icon name="x" size={13} stroke={3} />
           </span>

@@ -3,10 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts",
+    "./seed": "./src/seed.ts"
+  },
   "dependencies": {
     "@maildrill/config": "workspace:*",
-    "drizzle-orm": "^0.38.0",
-    "pg": "^8.13.1"
+    "drizzle-orm": "^0.38.4",
+    "pg": "^8.22.0"
   }
 }

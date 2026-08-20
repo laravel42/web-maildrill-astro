@@ -124,7 +124,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
         setDropPosition(null);
       },
     }),
-    [element.id, index, moveItem]
+    [element.id, index, moveItem],
   );
 
   // Configurar useDrag - sin funciones memoizadas
@@ -141,7 +141,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
         setDropPosition(null);
       },
     }),
-    [element.id, index]
+    [element.id, index],
   );
 
   // Efecto para limpiar el dropPosition cuando no estamos sobre el elemento
@@ -269,7 +269,13 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
           <div>
             <Tooltip title="Duplicate" placement="left">
               <IconButton color="primary" size="small" onClick={handleDuplicate}>
-                <svg width="20" height="20" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 25"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
                   <path
                     d="M18 2.5H9C7.9 2.5 7 3.4 7 4.5V16.5C7 17.6 7.9 18.5 9 18.5H18C19.1 18.5 20 17.6 20 16.5V4.5C20 3.4 19.1 2.5 18 2.5ZM18 16.5H9V4.5H18V16.5ZM3 15.5V13.5H5V15.5H3ZM3 10H5V12H3V10ZM10 20.5H12V22.5H10V20.5ZM3 19V17H5V19H3ZM5 22.5C3.9 22.5 3 21.6 3 20.5H5V22.5ZM8.5 22.5H6.5V20.5H8.5V22.5ZM13.5 22.5V20.5H15.5C15.5 21.6 14.6 22.5 13.5 22.5ZM5 6.5V8.5H3C3 7.4 3.9 6.5 5 6.5Z"
                     fill="currentColor"
@@ -294,7 +300,14 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
             gap: '0.5rem',
           }}
         >
-          <div style={{ display: 'grid', gridTemplateColumns: '40px auto', gap: '4px', alignItems: 'center' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '40px auto',
+              gap: '4px',
+              alignItems: 'center',
+            }}
+          >
             <LabelProperty label={t('inputs.social.icon')} />
             <Select
               fullWidth
@@ -311,7 +324,14 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
               ))}
             </Select>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '40px auto', gap: '4px', alignItems: 'center' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '40px auto',
+              gap: '4px',
+              alignItems: 'center',
+            }}
+          >
             <LabelProperty label={t('inputs.social.url')} />
             <TextField
               size="small"
@@ -336,9 +356,11 @@ export function SocialMediaInput({ items = [], onChange }: SocialMediaInputProps
 
   // Add a unique identifier to each element for stable keys
   const [elements, setElements] = useState<IconOptions[]>(() =>
-    items.map((item) => ({ ...item, id: item.id || generateUUID() }))
+    items.map((item) => ({ ...item, id: item.id || generateUUID() })),
   );
-  const [iconTheme, setIconTheme] = useState<ThemeType>((items[0]?.theme as ThemeType) || 'positive');
+  const [iconTheme, setIconTheme] = useState<ThemeType>(
+    (items[0]?.theme as ThemeType) || 'positive',
+  );
   const [size, setSize] = useState<SizeType>((items[0]?.size as SizeType) || 'medium');
 
   useEffect(() => {
@@ -392,7 +414,11 @@ export function SocialMediaInput({ items = [], onChange }: SocialMediaInputProps
     });
   };
 
-  const handleSelectChange = (index: number | null, selectedKey: string, element: IconOptions | null) => {
+  const handleSelectChange = (
+    index: number | null,
+    selectedKey: string,
+    element: IconOptions | null,
+  ) => {
     let updatedElements = [...elements];
     if (selectedKey in ValidTheme) {
       setIconTheme(selectedKey as ThemeType);
@@ -418,7 +444,11 @@ export function SocialMediaInput({ items = [], onChange }: SocialMediaInputProps
             iconName: selectedOption.iconName,
             href: selectedOption.href,
           };
-          const newUrl = getIconUrl(newSocial.iconName, element.theme as ThemeType, element.size as SizeType);
+          const newUrl = getIconUrl(
+            newSocial.iconName,
+            element.theme as ThemeType,
+            element.size as SizeType,
+          );
           return idx === index ? { ...el, ...newSocial, url: newUrl, id: element.id } : el;
         });
       }
@@ -430,7 +460,9 @@ export function SocialMediaInput({ items = [], onChange }: SocialMediaInputProps
   };
 
   const handleUrlChange = (index: number, newUrl: string, element: IconOptions) => {
-    const updatedElements = elements.map((el, idx) => (idx === index ? { ...element, href: newUrl } : el));
+    const updatedElements = elements.map((el, idx) =>
+      idx === index ? { ...element, href: newUrl } : el,
+    );
     setElements(updatedElements);
     if (onChange) {
       setTimeout(() => onChange(updatedElements), 0);
@@ -443,7 +475,11 @@ export function SocialMediaInput({ items = [], onChange }: SocialMediaInputProps
         ...JSON.parse(JSON.stringify(prevState[index])),
         id: generateUUID(),
       };
-      const updatedItems = [...prevState.slice(0, index + 1), newElement, ...prevState.slice(index + 1)];
+      const updatedItems = [
+        ...prevState.slice(0, index + 1),
+        newElement,
+        ...prevState.slice(index + 1),
+      ];
       if (onChange) {
         setTimeout(() => onChange(updatedItems), 0);
       }

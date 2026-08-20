@@ -16,10 +16,70 @@ import type { Editor } from '@tiptap/react';
 
 import { type AIAction, aiFeatures, requestAIFeature } from '../ai-features-config';
 
+import {
+  MENU_ICON_SX,
+  MENU_ITEM_SX,
+  MENU_ITEM_TEXT_SX,
+  MENU_LABEL_SX,
+  MENU_LIST_SX,
+  MENU_MUTED,
+  MENU_SECTION_SX,
+} from './menu-skin';
 import ToolbarIconButton from './ToolbarIconButton';
 import ToolbarPopover from './ToolbarPopover';
 
 type Props = { editor: Editor };
+
+/** Tallest the list may get; ToolbarPopover trims further when the room is tighter. */
+const MAX_LIST_HEIGHT = 400;
+
+/*
+ * Metrics mirror the WhatsApp studio's AI menu (`.wts-ai-menu` in studio.css)
+ * so both editors offer the same dropdown: roomier rows, a fixed glyph column
+ * and tighter section captions. Colours stay on the shared bubble-menu skin,
+ * which the sibling panels in this toolbar also use.
+ */
+const AI_PAPER_SX = { minWidth: 200 } as const;
+
+const AI_ITEM_SX = { ...MENU_ITEM_SX, px: '10px', py: '8px', gap: '8px' } as const;
+
+/** Icon and emoji share one column so labels line up across both row kinds. */
+const AI_GLYPH_SX = {
+  width: 18,
+  flex: 'none',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '14px',
+} as const;
+
+const AI_ICON_SX = {
+  ...MENU_ICON_SX,
+  ...AI_GLYPH_SX,
+  mr: 0,
+  // `fontSize="small"` renders at 20px, which would outgrow the glyph column.
+  '& .MuiSvgIcon-root': { fontSize: 16 },
+} as const;
+
+/* The WhatsApp rows are plain buttons inheriting 400 at the host line-height,
+ * where the shared menu label token is a heavier 500/1.3. */
+const AI_LABEL_SX = {
+  ...MENU_LABEL_SX,
+  fontSize: '13px',
+  fontWeight: 400,
+  lineHeight: 1.5,
+} as const;
+
+const AI_SECTION_SX = {
+  px: '10px',
+  pt: '8px',
+  pb: '4px',
+  fontSize: '11px',
+  fontWeight: 600,
+  letterSpacing: '0.5px',
+  lineHeight: 1.2,
+  color: MENU_MUTED,
+} as const;
 
 export default function AiFeaturesDropdown({ editor }: Props) {
   const theme = useTheme();
@@ -65,8 +125,10 @@ export default function AiFeaturesDropdown({ editor }: Props) {
 
       setFeaturesList((prev) =>
         prev.map((feature) =>
-          feature.value === action ? { ...feature, loading: true, disabled: true } : { ...feature, disabled: true }
-        )
+          feature.value === action
+            ? { ...feature, loading: true, disabled: true }
+            : { ...feature, disabled: true },
+        ),
       );
 
       requestAIFeature({
@@ -78,7 +140,7 @@ export default function AiFeaturesDropdown({ editor }: Props) {
         selectionTo: to,
       });
     },
-    [editor]
+    [editor],
   );
 
   useEffect(() => {
@@ -88,7 +150,7 @@ export default function AiFeaturesDropdown({ editor }: Props) {
           ...feature,
           loading: false,
           disabled: false,
-        }))
+        })),
       );
       handleClose();
     };
@@ -107,32 +169,19 @@ export default function AiFeaturesDropdown({ editor }: Props) {
         <AIIcon fontSize="small" />
       </ToolbarIconButton>
 
-      <Divider orientation="vertical" flexItem sx={{ backgroundColor: theme.palette.divider, mx: 0.5 }} />
+      <Divider
+        orientation="vertical"
+        flexItem
+        sx={{ backgroundColor: theme.palette.divider, mx: 0.5 }}
+      />
 
-      <ToolbarPopover anchorEl={anchor} onClose={handleClose}>
-        <List sx={{ maxHeight: 400, overflow: 'auto', p: '8px 4px' }}>
+      <ToolbarPopover anchorEl={anchor} onClose={handleClose} paperSx={AI_PAPER_SX}>
+        <List sx={{ ...MENU_LIST_SX, maxHeight: MAX_LIST_HEIGHT, overflow: 'auto' }}>
           {featuresList.map((feature, idx) => {
             if (feature.type === 'section-header') {
               return (
-                <Box
-                  key={idx}
-                  sx={{
-                    px: '10px',
-                    py: '8px',
-                    mt: idx > 0 ? 1 : 0,
-                  }}
-                >
-                  <Box
-                    component="span"
-                    sx={{
-                      fontSize: '11px',
-                      color: theme.palette.text.disabled,
-                      fontWeight: 600,
-                      letterSpacing: '0.5px',
-                    }}
-                  >
-                    {feature.label}
-                  </Box>
+                <Box key={idx} sx={AI_SECTION_SX}>
+                  {feature.label}
                 </Box>
               );
             }
@@ -142,20 +191,14 @@ export default function AiFeaturesDropdown({ editor }: Props) {
                 key={idx}
                 onClick={() => !feature.disabled && processFeature(feature.value)}
                 disabled={feature.disabled}
-                sx={{
-                  p: '8px 10px',
-                  borderRadius: '6px',
-                  '&:hover': { backgroundColor: theme.palette.action.hover },
-                  transition: 'all 150ms ease',
-                  opacity: feature.disabled ? 0.5 : 1,
-                }}
+                sx={{ ...AI_ITEM_SX, opacity: feature.disabled ? 0.5 : 1 }}
               >
                 {feature.emoji ? (
-                  <Box sx={{ mr: 1, fontSize: '18px', display: 'flex', alignItems: 'center' }}>{feature.emoji}</Box>
+                  <Box sx={AI_GLYPH_SX}>{feature.emoji}</Box>
                 ) : (
-                  <ListItemIcon sx={{ minWidth: 'auto', mr: 1, color: theme.palette.text.secondary }}>
+                  <ListItemIcon sx={AI_ICON_SX}>
                     {feature.loading ? (
-                      <CircularProgress size={20} sx={{ color: theme.palette.text.secondary }} />
+                      <CircularProgress size={14} sx={{ color: MENU_MUTED }} />
                     ) : (
                       feature.icon
                     )}
@@ -163,7 +206,8 @@ export default function AiFeaturesDropdown({ editor }: Props) {
                 )}
                 <ListItemText
                   primary={feature.label}
-                  slotProps={{ primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } } }}
+                  sx={MENU_ITEM_TEXT_SX}
+                  slotProps={{ primary: { sx: AI_LABEL_SX } }}
                 />
               </ListItemButton>
             );

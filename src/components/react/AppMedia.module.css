@@ -1,12 +1,18 @@
 /* toolbar */
 .toolbar {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   padding: 14px 19px;
   border-bottom: 1px solid var(--divider);
+}
+.toolbarRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
   row-gap: 10px;
+  width: 100%;
 }
 .search {
   display: flex;
@@ -36,57 +42,12 @@
   min-width: 0;
 }
 
-.chips {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  flex-wrap: wrap;
-}
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--accent-tint);
-  color: var(--accent);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 3px 4px 3px 10px;
-  border-radius: 20px;
-}
-.chipX {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  color: var(--accent);
-}
-.chipX:hover {
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
-}
-.chipsClear {
-  font-size: 12px;
-  color: var(--muted);
-  font-weight: 500;
-}
-
 /* card */
 /* The whole screen lives in one card; overflow stays visible so the toolbar's
    filter/type popovers can escape the card bounds. */
 .card {
   overflow: visible;
 }
-.folders {
-  gap: 20px;
-  padding: 0 19px;
-  overflow-x: auto;
-}
-.folders :global(.atab) {
-  padding: 14px 0 13px;
-  white-space: nowrap;
-}
-
 /* bulk bar */
 .bulk {
   display: flex;
@@ -100,7 +61,7 @@
 .bulkCount {
   font-size: 13px;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .bulkDiv {
   width: 1px;
@@ -123,7 +84,7 @@
   background: var(--surface2);
 }
 .bulkBtnDanger {
-  color: var(--danger);
+  color: var(--danger-text);
   border-color: #f3c9c9;
 }
 .bulkBtnDanger:hover {
@@ -148,10 +109,6 @@
   letter-spacing: 0.3px;
   padding: 0 12px;
   line-height: 1.2;
-}
-.thumbLabelSm {
-  font-size: 9px;
-  padding: 0 6px;
 }
 .fname {
   font-size: 12px;
@@ -223,37 +180,6 @@
   margin-top: 3px;
 }
 
-/* COMPACT view */
-.compact {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-  gap: 10px;
-  padding: 18px 19px;
-}
-.ccell {
-  cursor: pointer;
-}
-.thumbCompact {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  border-radius: 10px;
-  border: 1.5px solid var(--border);
-  overflow: hidden;
-}
-.ccheck {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-}
-.cname {
-  font-size: 11px;
-  color: var(--text3);
-  margin-top: 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* LIST view */
 .list {
   display: block;
@@ -266,13 +192,13 @@
 }
 .lhead {
   padding: 12px 19px;
-  border-bottom: 1px solid var(--surface2);
+  border-bottom: 1px solid var(--border2);
 }
 .lhead > div {
-  font-size: 11px;
-  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--text4);
   font-weight: 600;
-  letter-spacing: 0.3px;
   text-transform: uppercase;
 }
 .lhead button {
@@ -284,12 +210,16 @@
   letter-spacing: inherit;
   text-transform: inherit;
 }
-.lhead button:hover {
+.lhead button:hover,
+.lhead button.isActive {
   color: var(--text);
 }
 .r {
   text-align: right;
   justify-content: flex-end;
+}
+.lgrid > :last-child {
+  padding-right: 10px;
 }
 .lhead .r button {
   justify-content: flex-end;
@@ -485,7 +415,7 @@
   align-items: center;
   gap: 3px;
   padding: 3px 5px 3px 10px;
-  border-radius: 20px;
+  border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
 }
@@ -508,7 +438,7 @@
   width: 92px;
   flex: none;
   border: 1px dashed var(--border2);
-  border-radius: 20px;
+  border-radius: 4px;
   padding: 4px 11px;
   font-size: 11px;
   background: none;
@@ -537,7 +467,8 @@
   background: var(--surface);
   border-radius: 20px;
   box-shadow: 0 24px 60px rgba(28, 25, 23, 0.28);
-  overflow: hidden;
+  /* Visible so the folder combobox popover can escape the dialog. */
+  overflow: visible;
   display: flex;
   flex-direction: column;
   max-height: 100%;
@@ -548,6 +479,8 @@
   justify-content: space-between;
   padding: 18px 22px;
   border-bottom: 1px solid var(--divider);
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
 }
 .modalTitle {
   font-size: 15px;
@@ -555,7 +488,74 @@
 }
 .modalBody {
   padding: 22px;
-  overflow-y: auto;
+  overflow: visible;
+  background: var(--surface);
+  border-radius: 0;
+}
+.fieldLabel {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text2);
+}
+.fieldInput {
+  width: 100%;
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  color: var(--text);
+  background: transparent;
+  margin-bottom: 14px;
+  font-family: inherit;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+.fieldInput:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+.fieldInput:disabled {
+  opacity: 0.6;
+}
+.fieldInvalid {
+  border-color: var(--danger, #dc2626);
+}
+.fieldInvalid:focus {
+  border-color: var(--danger, #dc2626);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger, #dc2626) 18%, transparent);
+}
+.fieldError {
+  margin: -8px 0 12px;
+  font-size: 12px;
+  color: var(--danger, #dc2626);
+}
+.req {
+  color: var(--danger, #dc2626);
+  font-weight: 700;
+}
+.uploadTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 16px;
+  min-height: 34px;
+}
+.queue {
+  margin: -6px 0 16px;
+}
+.suggesting {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -4px 0 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--accent-text);
 }
 .drop {
   width: 100%;
@@ -565,12 +565,14 @@
   text-align: center;
   background: var(--surface2);
   cursor: pointer;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  transition: border-color 0.14s, background 0.14s;
+  transition:
+    border-color 0.14s,
+    background 0.14s;
 }
 .drop:hover {
   border-color: var(--accent);
@@ -581,7 +583,7 @@
   height: 44px;
   border-radius: 12px;
   background: var(--accent-tint);
-  color: var(--accent);
+  color: var(--accent-text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -597,7 +599,7 @@
   color: var(--muted);
 }
 .dropBrowse {
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
 }
 .queueEyebrow {
@@ -620,6 +622,7 @@
   height: 38px;
   flex: none;
   border-radius: 8px;
+  background-color: var(--surface2);
 }
 .qmain {
   flex: 1;
@@ -639,6 +642,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.qmeta {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 2px;
 }
 .qpct {
   font-size: 12px;
@@ -664,6 +672,7 @@
   padding: 16px 22px;
   border-top: 1px solid var(--divider);
   background: var(--surface2);
+  border-radius: 0 0 20px 20px;
 }
 
 /* toast */

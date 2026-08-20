@@ -13,7 +13,15 @@
  */
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { resolve } from 'node:path';
 import { z } from 'zod';
 
@@ -88,8 +96,12 @@ const UpdateLayoutSchema = z
       .optional(),
   })
   .refine(
-    (v) => v.name !== undefined || v.description !== undefined || v.tags !== undefined || v.blocks !== undefined,
-    { message: 'at least one of name, description, tags, blocks is required' }
+    (v) =>
+      v.name !== undefined ||
+      v.description !== undefined ||
+      v.tags !== undefined ||
+      v.blocks !== undefined,
+    { message: 'at least one of name, description, tags, blocks is required' },
   );
 
 type BlockEntry = LibraryBlockEntry;
@@ -110,7 +122,8 @@ function serialiseLayout(meta: LayoutMetadata, entries: BlockEntry[]): string {
 
 function parseLayoutFile(raw: string): { metadata: LayoutMetadata; entries: BlockEntry[] } {
   const { metadata, entries } = parseLibraryFile<LayoutMetadata>(raw);
-  if (typeof metadata.shape !== 'string') throw new Error('malformed metadata header: missing shape');
+  if (typeof metadata.shape !== 'string')
+    throw new Error('malformed metadata header: missing shape');
   return { metadata, entries };
 }
 
@@ -212,7 +225,9 @@ export const devSaveLayoutPlugin = async function devSaveLayoutPlugin(fastify: F
       return reply.status(400).send({
         error: 'invalid_root_type',
         rootType:
-          typeof (rootBlock as { type?: unknown })?.type === 'string' ? (rootBlock as { type: string }).type : null,
+          typeof (rootBlock as { type?: unknown })?.type === 'string'
+            ? (rootBlock as { type: string }).type
+            : null,
         allowed: Array.from(LAYOUT_ALLOWED_BLOCK_TYPES),
         hint: 'A layout root must be a Container or a ColumnsContainer with columnsCount 2 or 3.',
       });
@@ -257,15 +272,20 @@ export const devSaveLayoutPlugin = async function devSaveLayoutPlugin(fastify: F
       ndjson = serialiseLayout(metadata, entries);
     } catch (err) {
       if (err instanceof PayloadTooLargeError)
-        return reply
-          .status(413)
-          .send({ error: 'payload_too_large', limitBytes: MAX_NDJSON_BYTES, actualBytes: err.bytes });
+        return reply.status(413).send({
+          error: 'payload_too_large',
+          limitBytes: MAX_NDJSON_BYTES,
+          actualBytes: err.bytes,
+        });
       throw err;
     }
 
     if (thumbnail) {
       try {
-        writeThumbnailFile(getThumbnailPath('layouts', shape, id, thumbnail.format), thumbnail.bytes);
+        writeThumbnailFile(
+          getThumbnailPath('layouts', shape, id, thumbnail.format),
+          thumbnail.bytes,
+        );
       } catch (err) {
         if (err instanceof ThumbnailTooLargeError)
           return reply
@@ -284,9 +304,10 @@ export const devSaveLayoutPlugin = async function devSaveLayoutPlugin(fastify: F
       writeFileSync(layoutFilePath(shape, id), ndjson, 'utf8');
     } catch (err) {
       if (thumbnail) deleteThumbnailFile(getThumbnailPath('layouts', shape, id, thumbnail.format));
-      return reply
-        .status(500)
-        .send({ error: 'write_failed', message: err instanceof Error ? err.message : 'unknown write error' });
+      return reply.status(500).send({
+        error: 'write_failed',
+        message: err instanceof Error ? err.message : 'unknown write error',
+      });
     }
 
     return reply.send({
@@ -309,178 +330,198 @@ export const devSaveLayoutPlugin = async function devSaveLayoutPlugin(fastify: F
     return reply.send({ layouts: listLayouts() });
   });
 
-  fastify.get<{ Params: { shape: string; id: string } }>('/dev/layouts/:shape/:id', async (request, reply) => {
-    if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
-    const { shape, id } = request.params;
-    if (!LAYOUT_SHAPE_VALUES.includes(shape as LayoutShape))
-      return reply.status(400).send({ error: 'invalid_shape', shape });
-    if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
-    const path = layoutFilePath(shape as LayoutShape, id);
-    if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', shape, id });
-    let raw: string;
-    try {
-      raw = readFileSync(path, 'utf8');
-    } catch (err) {
-      return reply
-        .status(500)
-        .send({ error: 'read_failed', message: err instanceof Error ? err.message : 'unknown read error' });
-    }
-    let parsed: { metadata: LayoutMetadata; entries: BlockEntry[] };
-    try {
-      parsed = parseLayoutFile(raw);
-    } catch (err) {
-      return reply
-        .status(500)
-        .send({ error: 'malformed_file', message: err instanceof Error ? err.message : 'malformed file' });
-    }
-    return reply.send({
-      id: parsed.metadata.id,
-      shape: parsed.metadata.shape,
-      name: parsed.metadata.name,
-      description: parsed.metadata.description,
-      tags: parsed.metadata.tags ?? [],
-      createdAt: parsed.metadata.createdAt,
-      updatedAt: parsed.metadata.updatedAt,
-      blocks: parsed.entries,
-      hasThumbnail: parsed.metadata.thumbnail !== undefined,
-    });
-  });
-
-  fastify.put<{ Params: { shape: string; id: string } }>('/dev/layouts/:shape/:id', async (request, reply) => {
-    if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
-    const { shape, id } = request.params;
-    if (!LAYOUT_SHAPE_VALUES.includes(shape as LayoutShape))
-      return reply.status(400).send({ error: 'invalid_shape', shape });
-    if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
-
-    let body: z.infer<typeof UpdateLayoutSchema>;
-    try {
-      body = UpdateLayoutSchema.parse(request.body);
-    } catch (err) {
-      if (err instanceof z.ZodError) return reply.status(400).send({ error: 'invalid_request', issues: err.issues });
-      return reply.status(400).send({ error: 'invalid_json' });
-    }
-
-    const path = layoutFilePath(shape as LayoutShape, id);
-    if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', shape, id });
-    let raw: string;
-    try {
-      raw = readFileSync(path, 'utf8');
-    } catch (err) {
-      return reply
-        .status(500)
-        .send({ error: 'read_failed', message: err instanceof Error ? err.message : 'unknown read error' });
-    }
-    let parsed: { metadata: LayoutMetadata; entries: BlockEntry[] };
-    try {
-      parsed = parseLayoutFile(raw);
-    } catch (err) {
-      return reply
-        .status(500)
-        .send({ error: 'malformed_file', message: err instanceof Error ? err.message : 'malformed file' });
-    }
-
-    if (body.blocks !== undefined) {
-      const newRoot = body.blocks[0]?.block;
-      const newShape = deriveLayoutShape(newRoot);
-      if (newShape === null) {
-        return reply.status(400).send({
-          error: 'invalid_root_type',
-          rootType:
-            typeof (newRoot as { type?: unknown })?.type === 'string' ? (newRoot as { type: string }).type : null,
-          allowed: Array.from(LAYOUT_ALLOWED_BLOCK_TYPES),
+  fastify.get<{ Params: { shape: string; id: string } }>(
+    '/dev/layouts/:shape/:id',
+    async (request, reply) => {
+      if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
+      const { shape, id } = request.params;
+      if (!LAYOUT_SHAPE_VALUES.includes(shape as LayoutShape))
+        return reply.status(400).send({ error: 'invalid_shape', shape });
+      if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
+      const path = layoutFilePath(shape as LayoutShape, id);
+      if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', shape, id });
+      let raw: string;
+      try {
+        raw = readFileSync(path, 'utf8');
+      } catch (err) {
+        return reply.status(500).send({
+          error: 'read_failed',
+          message: err instanceof Error ? err.message : 'unknown read error',
         });
       }
-      if (newShape !== shape) {
-        return reply.status(400).send({
-          error: 'shape_change_not_allowed',
-          currentShape: shape,
-          newShape,
-          hint: 'Delete the layout and create a new one to change its shape.',
+      let parsed: { metadata: LayoutMetadata; entries: BlockEntry[] };
+      try {
+        parsed = parseLayoutFile(raw);
+      } catch (err) {
+        return reply.status(500).send({
+          error: 'malformed_file',
+          message: err instanceof Error ? err.message : 'malformed file',
         });
       }
-      const offending = findFirstNonStructuralType(body.blocks as BlockEntry[]);
-      if (offending !== null) {
-        return reply.status(400).send({
-          error: 'non_structural_descendant',
-          blockType: offending,
-          allowed: Array.from(LAYOUT_ALLOWED_BLOCK_TYPES),
-          hint: 'Layouts may only contain Container and ColumnsContainer blocks.',
+      return reply.send({
+        id: parsed.metadata.id,
+        shape: parsed.metadata.shape,
+        name: parsed.metadata.name,
+        description: parsed.metadata.description,
+        tags: parsed.metadata.tags ?? [],
+        createdAt: parsed.metadata.createdAt,
+        updatedAt: parsed.metadata.updatedAt,
+        blocks: parsed.entries,
+        hasThumbnail: parsed.metadata.thumbnail !== undefined,
+      });
+    },
+  );
+
+  fastify.put<{ Params: { shape: string; id: string } }>(
+    '/dev/layouts/:shape/:id',
+    async (request, reply) => {
+      if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
+      const { shape, id } = request.params;
+      if (!LAYOUT_SHAPE_VALUES.includes(shape as LayoutShape))
+        return reply.status(400).send({ error: 'invalid_shape', shape });
+      if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
+
+      let body: z.infer<typeof UpdateLayoutSchema>;
+      try {
+        body = UpdateLayoutSchema.parse(request.body);
+      } catch (err) {
+        if (err instanceof z.ZodError)
+          return reply.status(400).send({ error: 'invalid_request', issues: err.issues });
+        return reply.status(400).send({ error: 'invalid_json' });
+      }
+
+      const path = layoutFilePath(shape as LayoutShape, id);
+      if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', shape, id });
+      let raw: string;
+      try {
+        raw = readFileSync(path, 'utf8');
+      } catch (err) {
+        return reply.status(500).send({
+          error: 'read_failed',
+          message: err instanceof Error ? err.message : 'unknown read error',
         });
       }
-    }
+      let parsed: { metadata: LayoutMetadata; entries: BlockEntry[] };
+      try {
+        parsed = parseLayoutFile(raw);
+      } catch (err) {
+        return reply.status(500).send({
+          error: 'malformed_file',
+          message: err instanceof Error ? err.message : 'malformed file',
+        });
+      }
 
-    const nextMetadata: LayoutMetadata = { ...parsed.metadata, updatedAt: nowIso() };
-    if (body.name !== undefined) nextMetadata.name = body.name.trim();
-    if (body.description !== undefined) {
-      if (body.description === '') delete nextMetadata.description;
-      else nextMetadata.description = body.description;
-    }
-    if (body.tags !== undefined) {
-      const normalized = normalizeTags(body.tags);
-      if (normalized) nextMetadata.tags = normalized;
-      else delete nextMetadata.tags;
-    }
+      if (body.blocks !== undefined) {
+        const newRoot = body.blocks[0]?.block;
+        const newShape = deriveLayoutShape(newRoot);
+        if (newShape === null) {
+          return reply.status(400).send({
+            error: 'invalid_root_type',
+            rootType:
+              typeof (newRoot as { type?: unknown })?.type === 'string'
+                ? (newRoot as { type: string }).type
+                : null,
+            allowed: Array.from(LAYOUT_ALLOWED_BLOCK_TYPES),
+          });
+        }
+        if (newShape !== shape) {
+          return reply.status(400).send({
+            error: 'shape_change_not_allowed',
+            currentShape: shape,
+            newShape,
+            hint: 'Delete the layout and create a new one to change its shape.',
+          });
+        }
+        const offending = findFirstNonStructuralType(body.blocks as BlockEntry[]);
+        if (offending !== null) {
+          return reply.status(400).send({
+            error: 'non_structural_descendant',
+            blockType: offending,
+            allowed: Array.from(LAYOUT_ALLOWED_BLOCK_TYPES),
+            hint: 'Layouts may only contain Container and ColumnsContainer blocks.',
+          });
+        }
+      }
 
-    let nextEntries = parsed.entries;
-    let droppedRefs: string[] = [];
-    if (body.blocks !== undefined) {
-      const renumbered = renumberBlocks(body.blocks as BlockEntry[], id);
-      nextEntries = renumbered.entries;
-      droppedRefs = renumbered.droppedRefs;
-    }
+      const nextMetadata: LayoutMetadata = { ...parsed.metadata, updatedAt: nowIso() };
+      if (body.name !== undefined) nextMetadata.name = body.name.trim();
+      if (body.description !== undefined) {
+        if (body.description === '') delete nextMetadata.description;
+        else nextMetadata.description = body.description;
+      }
+      if (body.tags !== undefined) {
+        const normalized = normalizeTags(body.tags);
+        if (normalized) nextMetadata.tags = normalized;
+        else delete nextMetadata.tags;
+      }
 
-    let ndjson: string;
-    try {
-      ndjson = serialiseLayout(nextMetadata, nextEntries);
-    } catch (err) {
-      if (err instanceof PayloadTooLargeError)
-        return reply
-          .status(413)
-          .send({ error: 'payload_too_large', limitBytes: MAX_NDJSON_BYTES, actualBytes: err.bytes });
-      throw err;
-    }
+      let nextEntries = parsed.entries;
+      let droppedRefs: string[] = [];
+      if (body.blocks !== undefined) {
+        const renumbered = renumberBlocks(body.blocks as BlockEntry[], id);
+        nextEntries = renumbered.entries;
+        droppedRefs = renumbered.droppedRefs;
+      }
 
-    try {
-      writeFileSync(path, ndjson, 'utf8');
-    } catch (err) {
-      return reply
-        .status(500)
-        .send({ error: 'write_failed', message: err instanceof Error ? err.message : 'unknown write error' });
-    }
+      let ndjson: string;
+      try {
+        ndjson = serialiseLayout(nextMetadata, nextEntries);
+      } catch (err) {
+        if (err instanceof PayloadTooLargeError)
+          return reply.status(413).send({
+            error: 'payload_too_large',
+            limitBytes: MAX_NDJSON_BYTES,
+            actualBytes: err.bytes,
+          });
+        throw err;
+      }
 
-    return reply.send({
-      id: nextMetadata.id,
-      shape: nextMetadata.shape,
-      name: nextMetadata.name,
-      description: nextMetadata.description,
-      tags: nextMetadata.tags ?? [],
-      createdAt: nextMetadata.createdAt,
-      updatedAt: nextMetadata.updatedAt,
-      blockCount: nextEntries.length,
-      droppedRefs,
-    });
-  });
+      try {
+        writeFileSync(path, ndjson, 'utf8');
+      } catch (err) {
+        return reply.status(500).send({
+          error: 'write_failed',
+          message: err instanceof Error ? err.message : 'unknown write error',
+        });
+      }
 
-  fastify.delete<{ Params: { shape: string; id: string } }>('/dev/layouts/:shape/:id', async (request, reply) => {
-    if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
-    const { shape, id } = request.params;
-    if (!LAYOUT_SHAPE_VALUES.includes(shape as LayoutShape))
-      return reply.status(400).send({ error: 'invalid_shape', shape });
-    if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
-    const path = layoutFilePath(shape as LayoutShape, id);
-    if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', shape, id });
-    try {
-      unlinkSync(path);
-    } catch (err) {
-      return reply
-        .status(500)
-        .send({ error: 'delete_failed', message: err instanceof Error ? err.message : 'unknown unlink error' });
-    }
-    deleteThumbnailFile(getThumbnailPath('layouts', shape as LayoutShape, id, 'webp'));
-    deleteThumbnailFile(getThumbnailPath('layouts', shape as LayoutShape, id, 'png'));
-    return reply.send({ deleted: `layouts/${shape}/${id}.ndjson`, shape, id });
-  });
+      return reply.send({
+        id: nextMetadata.id,
+        shape: nextMetadata.shape,
+        name: nextMetadata.name,
+        description: nextMetadata.description,
+        tags: nextMetadata.tags ?? [],
+        createdAt: nextMetadata.createdAt,
+        updatedAt: nextMetadata.updatedAt,
+        blockCount: nextEntries.length,
+        droppedRefs,
+      });
+    },
+  );
+
+  fastify.delete<{ Params: { shape: string; id: string } }>(
+    '/dev/layouts/:shape/:id',
+    async (request, reply) => {
+      if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
+      const { shape, id } = request.params;
+      if (!LAYOUT_SHAPE_VALUES.includes(shape as LayoutShape))
+        return reply.status(400).send({ error: 'invalid_shape', shape });
+      if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
+      const path = layoutFilePath(shape as LayoutShape, id);
+      if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', shape, id });
+      try {
+        unlinkSync(path);
+      } catch (err) {
+        return reply.status(500).send({
+          error: 'delete_failed',
+          message: err instanceof Error ? err.message : 'unknown unlink error',
+        });
+      }
+      deleteThumbnailFile(getThumbnailPath('layouts', shape as LayoutShape, id, 'webp'));
+      deleteThumbnailFile(getThumbnailPath('layouts', shape as LayoutShape, id, 'png'));
+      return reply.send({ deleted: `layouts/${shape}/${id}.ndjson`, shape, id });
+    },
+  );
 
   fastify.get<{ Params: { shape: string; id: string } }>(
     '/dev/layouts/:shape/:id/thumbnail',
@@ -491,10 +532,20 @@ export const devSaveLayoutPlugin = async function devSaveLayoutPlugin(fastify: F
         return reply.status(400).send({ error: 'invalid_shape', shape });
       if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
       const candidates: Array<{ filePath: string; contentType: string }> = [
-        { filePath: getThumbnailPath('layouts', shape as LayoutShape, id, 'webp'), contentType: 'image/webp' },
-        { filePath: getThumbnailPath('layouts', shape as LayoutShape, id, 'png'), contentType: 'image/png' },
+        {
+          filePath: getThumbnailPath('layouts', shape as LayoutShape, id, 'webp'),
+          contentType: 'image/webp',
+        },
+        {
+          filePath: getThumbnailPath('layouts', shape as LayoutShape, id, 'png'),
+          contentType: 'image/png',
+        },
       ];
-      let chosen: { filePath: string; contentType: string; stats: { size: number; mtimeMs: number } } | null = null;
+      let chosen: {
+        filePath: string;
+        contentType: string;
+        stats: { size: number; mtimeMs: number };
+      } | null = null;
       for (const c of candidates) {
         const stats = statThumbnailFile(c.filePath);
         if (stats !== null) {
@@ -502,12 +553,17 @@ export const devSaveLayoutPlugin = async function devSaveLayoutPlugin(fastify: F
           break;
         }
       }
-      if (chosen === null) return reply.status(404).send({ error: 'thumbnail_not_found', shape, id });
+      if (chosen === null)
+        return reply.status(404).send({ error: 'thumbnail_not_found', shape, id });
       const etag = `W/"${chosen.stats.size}-${Math.floor(chosen.stats.mtimeMs)}"`;
       if (request.headers['if-none-match'] === etag)
-        return reply.status(304).headers({ ETag: etag, 'Cache-Control': 'public, max-age=300' }).send();
+        return reply
+          .status(304)
+          .headers({ ETag: etag, 'Cache-Control': 'public, max-age=300' })
+          .send();
       const buffer = readThumbnailFile(chosen.filePath);
-      if (buffer === null) return reply.status(404).send({ error: 'thumbnail_not_found', shape, id });
+      if (buffer === null)
+        return reply.status(404).send({ error: 'thumbnail_not_found', shape, id });
       return reply
         .status(200)
         .headers({
@@ -517,6 +573,6 @@ export const devSaveLayoutPlugin = async function devSaveLayoutPlugin(fastify: F
           ETag: etag,
         })
         .send(buffer);
-    }
+    },
   );
 };

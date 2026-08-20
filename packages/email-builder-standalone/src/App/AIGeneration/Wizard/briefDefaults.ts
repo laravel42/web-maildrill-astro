@@ -45,11 +45,25 @@ export const VERTICAL_CHIPS = [
 
 export const PALETTE_CHIPS = ['warm', 'cool', 'mono', 'pastel', 'dark', 'neutral'] as const;
 
-export const PHOTO_STYLE_CHIPS = ['photographic', 'illustrated', 'abstract', 'mixed', 'none'] as const;
+export const PHOTO_STYLE_CHIPS = [
+  'photographic',
+  'illustrated',
+  'abstract',
+  'mixed',
+  'none',
+] as const;
 
 export const SUBJECT_CHIPS = ['people', 'product', 'place', 'food', 'abstract'] as const;
 
-export const SECTION_CHIPS = ['hero', 'features', 'testimonial', 'stats', 'cta', 'faq', 'footer'] as const;
+export const SECTION_CHIPS = [
+  'hero',
+  'features',
+  'testimonial',
+  'stats',
+  'cta',
+  'faq',
+  'footer',
+] as const;
 
 /**
  * Font-family keys available for the Theme wizard selects (body + headings).

@@ -70,7 +70,7 @@ export function isWCAGCompliant(
   textColor: string,
   backgroundColor: string,
   fontSize: number = 16,
-  fontWeight: string = 'normal'
+  fontWeight: string = 'normal',
 ): { compliant: boolean; ratio: number; required: number; level: string } {
   const ratio = getContrastRatio(textColor, backgroundColor);
 
@@ -122,7 +122,12 @@ export function validateArchetypePalette(palette: {
 
   // Check button contrast if provided
   if (palette.buttonBackgroundColor && palette.buttonTextColor) {
-    const buttonCheck = isWCAGCompliant(palette.buttonTextColor, palette.buttonBackgroundColor, 16, 'bold');
+    const buttonCheck = isWCAGCompliant(
+      palette.buttonTextColor,
+      palette.buttonBackgroundColor,
+      16,
+      'bold',
+    );
     if (!buttonCheck.compliant) {
       issues.push({
         issue: `Button text contrast too low (${buttonCheck.ratio}:1, needs ${buttonCheck.required}:1)`,

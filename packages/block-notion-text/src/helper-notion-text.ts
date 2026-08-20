@@ -61,7 +61,7 @@ export function getFormattedHtmlCached(
     color?: string;
     fontWeight?: string;
     lineHeight?: string;
-  }
+  },
 ): string {
   // Proteger contra html null/undefined — evita TypeError en .replace()
   if (!html) return html ?? '';
@@ -117,10 +117,15 @@ export function getFormattedHtmlCached(
 
         if (styleMatch) {
           // Agregar a los estilos existentes
-          return match.replace(/style\s*=\s*["']([^"']*)["']/i, (_styleMatch, existingStylesInner) => {
-            const newStyles = existingStylesInner ? `${existingStylesInner}; ${styles.join('; ')}` : styles.join('; ');
-            return `style="${newStyles}"`;
-          });
+          return match.replace(
+            /style\s*=\s*["']([^"']*)["']/i,
+            (_styleMatch, existingStylesInner) => {
+              const newStyles = existingStylesInner
+                ? `${existingStylesInner}; ${styles.join('; ')}`
+                : styles.join('; ');
+              return `style="${newStyles}"`;
+            },
+          );
         } else {
           // Agregar nuevo atributo style
           return `<a ${attributes} style="${styles.join('; ')}">`;
@@ -154,7 +159,7 @@ export function getFormattedHtmlCached(
         } else {
           newAAttrs = aAttrs.replace(
             /style\s*=\s*["']([^"']*)["']/i,
-            (_: string, s: string) => `style="${s}; color: ${spanColor}"`
+            (_: string, s: string) => `style="${s}; color: ${spanColor}"`,
           );
         }
       } else {
@@ -162,7 +167,7 @@ export function getFormattedHtmlCached(
       }
 
       return `${aOpen}${newAAttrs}${gt}${content}${aEnd}`;
-    }
+    },
   );
 
   // Limitar el tamaño del cache

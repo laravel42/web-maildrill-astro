@@ -8,8 +8,11 @@ interface ImportMetaEnv {
   readonly PUBLIC_POSTHOG_PROJECT_TOKEN?: string;
   readonly AUTH_SECRET?: string;
   readonly API_BASE_URL?: string;
+  /** Messaging API when split from product (default: same as API_BASE_URL). */
+  readonly MESSAGING_API_BASE_URL?: string;
+  /** Email-builder AI API when split (default: same as API_BASE_URL). */
+  readonly EB_API_BASE_URL?: string;
   readonly JWT_SECRET?: string;
-  readonly EB_BACKEND_URL?: string;
 }
 
 interface Window {
@@ -23,9 +26,19 @@ interface ImportMeta {
 declare namespace App {
   interface Locals {
     session: {
-      user?: { id?: string; email?: string | null; name?: string | null };
+      user?: {
+        id?: string;
+        email?: string | null;
+        name?: string | null;
+        phone?: string | null;
+      };
       activeTenantId?: string | null;
       role?: string | null;
+      authTime?: number | null;
+      /** Server-side session row id (auth_sessions) carried in the JWT. */
+      sid?: string | null;
+      /** Auth methods used at login (code, totp, recovery, webauthn…). */
+      amr?: string[] | null;
       workspaces?: Array<{ tenantId: string; role: string; workspaceName: string }>;
     } | null;
   }

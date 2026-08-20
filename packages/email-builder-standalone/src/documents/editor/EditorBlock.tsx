@@ -25,13 +25,22 @@ const EditorBlockComponent = memo(
     // Phase 2b — theme override source. Subscribed via a granular selector
     // so blocks only re-render when the theme actually changes (not on
     // unrelated root edits like backdropColor).
-    const theme = editorStateStore((state) => (state.document?.root?.data as { theme?: ThemeJson } | undefined)?.theme);
+    const theme = editorStateStore(
+      (state) => (state.document?.root?.data as { theme?: ThemeJson } | undefined)?.theme,
+    );
     const viewport = useSelectedScreenSize();
 
     const resolved = useMemo(
       () =>
-        block ? resolveBlockData(block as any, theme, viewport, EDITOR_SCHEMA_DEFAULTS_BY_TYPE[block.type]) : undefined,
-      [block, theme, viewport]
+        block
+          ? resolveBlockData(
+              block as any,
+              theme,
+              viewport,
+              EDITOR_SCHEMA_DEFAULTS_BY_TYPE[block.type],
+            )
+          : undefined,
+      [block, theme, viewport],
     );
 
     if (!resolved) {
@@ -48,7 +57,7 @@ const EditorBlockComponent = memo(
   (prevProps, nextProps) => {
     // Comparación personalizada: solo re-renderizar si el ID o isNotClient cambió
     return prevProps.id === nextProps.id && prevProps.isNotClient === nextProps.isNotClient;
-  }
+  },
 );
 
 export default EditorBlockComponent;

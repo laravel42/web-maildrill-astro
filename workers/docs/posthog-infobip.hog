@@ -1,6 +1,6 @@
 // Infobip → PostHog incoming webhook (source_webhook).
-// Point Infobip notify URLs here with ?kind=delivery|engagement|voice|template
-// (kind is optional; template payloads are auto-detected via messageTemplateId).
+// Point Infobip notify URLs here with ?kind=delivery|engagement|voice|tracking|template
+// (kind is optional; template / tracking payloads are auto-detected).
 
 if (inputs.debug) {
     print('Infobip webhook:', request.method, request.query, request.body)
@@ -34,6 +34,9 @@ let kind := request.query.kind
 if (empty(kind)) {
     if (not empty(body.messageTemplateId)) {
         kind := 'template'
+    } else if (not empty(body.notificationType)) {
+        // Email / SMS / WA click-open webhooks (OPENED, CLICKED, …).
+        kind := 'tracking'
     } else {
         kind := 'delivery'
     }
@@ -44,8 +47,96 @@ if (kind == 'engagement') {
     eventName := 'message_seen_report'
 } else if (kind == 'voice') {
     eventName := 'message_voice_report'
+} else if (kind == 'tracking') {
+    eventName := 'message_tracking_report'
 } else if (kind == 'template') {
     eventName := 'whatsapp_template_status'
+}
+
+// --- Email / SMS / WA tracking (single object with notificationType) ---
+if (kind == 'tracking') {
+    let notificationType := upper(toString(body.notificationType))
+    if (empty(notificationType)) {
+        return {
+            'httpResponse': {
+                'status': 400,
+                'body': {'error': 'missing notificationType'}
+            }
+        }
+    }
+
+    let messageId := toString(body.messageId)
+    let recipientInfo := body.recipientInfo
+    if (empty(recipientInfo)) {
+        recipientInfo := {}
+    }
+    let geo := body.geoLocation
+    if (empty(geo)) {
+        geo := body.geoLocationInfo
+    }
+    if (empty(geo)) {
+        geo := {}
+    }
+
+    let tenantId := ''
+    let channel := ''
+    let maildrillMessageId := ''
+    let cb := toString(body.callbackData)
+    if (not empty(cb)) {
+        let parts := splitByString('|', cb)
+        if (length(parts) >= 3) {
+            tenantId := parts[1]
+            channel := parts[2]
+            maildrillMessageId := parts[3]
+        }
+    }
+
+    let distinctId := toString(body.recipient)
+    if (empty(distinctId)) {
+        distinctId := messageId
+    }
+    if (empty(distinctId)) {
+        distinctId := 'anonymous'
+    }
+
+    let sendDateTime := toString(body.sendDateTime)
+    let eventId := toString(body.eventId)
+    let insertId := f'infobip:track:{messageId}:{notificationType}:{eventId}:{sendDateTime}'
+
+    postHogCapture({
+        'event': eventName,
+        'distinct_id': distinctId,
+        'properties': {
+            '$insert_id': insertId,
+            '$ip': request.ip,
+            '$lib': 'posthog-webhook',
+            'provider': 'infobip',
+            'kind': 'tracking',
+            'notification_type': notificationType,
+            'message_id': messageId,
+            'bulk_id': body.bulkId,
+            'url': body.url,
+            'recipient': body.recipient,
+            'tenant_id': tenantId,
+            'channel': channel,
+            'maildrill_message_id': maildrillMessageId,
+            'device_type': recipientInfo.deviceType,
+            'device_name': recipientInfo.deviceName,
+            'os': recipientInfo.os,
+            'geo_country': geo.countryName,
+            'geo_city': geo.city,
+            'application_id': body.applicationId,
+            'entity_id': body.entityId,
+            'raw': body
+        }
+    })
+
+    return {
+        'httpResponse': {
+            'status': 200,
+            'body': {'ok': true, 'captured': 1}
+        }
+    }
 }
 
 // --- Template status (single object, not results[]) ---
@@ -164,6 +255,23 @@ for (let raw in results) {
         doneAt := raw.sentAt
     }
 
+    // WhatsApp/Viber seen payloads have seenAt but no status object. They are
+    // pushed to the SAME per-send notifyUrl as DLRs (Infobip has no separate
+    // seen URL on the send APIs), so they arrive on the ?kind=delivery URL —
+    // the kind param alone cannot route them. Classify per result by payload
+    // shape and stamp SEEN so insert_id / HogQL diagnostics aren't blank and
+    // the delivery poller can treat message_seen_report as an open.
+    let resultEvent := eventName
+    if (kind == 'engagement' or (kind == 'delivery' and empty(statusObj.groupName) and not empty(raw.seenAt))) {
+        resultEvent := 'message_seen_report'
+        if (empty(statusGroup)) {
+            statusGroup := 'SEEN'
+        }
+        if (empty(statusName)) {
+            statusName := 'SEEN'
+        }
+    }
+
     let to := raw.to
     if (empty(to)) {
         to := contactObj.phoneNumber
@@ -208,7 +316,7 @@ for (let raw in results) {
     }
 
     let ev := {
-        'event': eventName,
+        'event': resultEvent,
         'distinct_id': distinctId,
         'properties': {
             '$insert_id': insertId,

@@ -1,8 +1,12 @@
 .an {
-  max-width: 1600px;
+  width: 100%;
+  max-width: none;
 }
 .head {
   align-items: flex-start;
+}
+.headSub {
+  margin-top: 2px;
 }
 .controls {
   display: flex;
@@ -25,40 +29,87 @@
   flex: none;
 }
 
+.empty {
+  padding: 40px 24px;
+  text-align: center;
+}
+.emptyTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text2);
+}
+.emptyBody {
+  margin: 6px auto 0;
+  max-width: 42ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
 /* KPI strip */
 .kpis {
+  /* Six KPIs: a fixed three-column grid so they land 3 + 3 with equal widths.
+     The old flex row stretched whatever wrapped last across its whole row,
+     which left the sixth card full-width and twice the height of the rest. */
+  /* Column count comes from the component (--kpi-cols): channels render
+     different numbers of cards, and a fixed grid left four cards as 3 + 1. */
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(var(--kpi-cols, 3), minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 18px;
 }
+@media (max-width: 1100px) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .kpis {
+    grid-template-columns: 1fr;
+  }
+}
 .kpi {
+  min-width: 0;
   padding: 16px 18px;
 }
 .kpiTop {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: 8px;
 }
 .kpiLbl {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.kpiDelta {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
+  font-weight: 600;
+}
+.kpiDeltaUp {
+  color: var(--success-text);
+}
+.kpiDeltaDown {
+  color: var(--danger-text);
+}
+.kpiDeltaFlat {
   color: var(--muted);
   font-weight: 500;
 }
-.kpiDelta {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #16a34a;
-}
 .kpiVal {
-  font-size: 26px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 25px;
   font-weight: 600;
   letter-spacing: -0.6px;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 .kpiSpark {
-  display: block;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 /* hero */
@@ -75,7 +126,7 @@
 .cardSub {
   font-size: 12.5px;
   color: var(--muted);
-  margin: 5px 0 0;
+  margin: 3px 0 0;
 }
 .heroTotal {
   text-align: right;
@@ -83,12 +134,15 @@
 }
 .heroNum {
   display: block;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 20px;
   font-weight: 600;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.6px;
 }
 .heroLbl {
   font-size: 11.5px;
+  font-weight: 500;
   color: var(--muted);
 }
 .legend {
@@ -115,8 +169,16 @@
 .leg:hover {
   border-color: var(--border2);
 }
+.leg:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .leg[aria-pressed='false'] {
   opacity: 0.5;
+}
+.leg[aria-pressed='true'] {
+  border-color: var(--border2);
+  background: var(--surface2);
 }
 .legSw {
   width: 10px;
@@ -184,24 +246,32 @@
 .row2 {
   grid-template-columns: 1.4fr 1fr;
 }
-.row3 {
-  grid-template-columns: repeat(3, 1fr);
-  margin-bottom: 0;
-}
 .panel {
   padding: 18px 20px;
 }
 .panelTitle {
   font-size: 14px;
   font-weight: 600;
-  margin: 0 0 16px;
+  margin: 0 0 14px;
 }
-
+.panelEmpty {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 36ch;
+}
+.channelStack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 .barRow {
-  margin-bottom: 16px;
-}
-.barRow:last-child {
-  margin-bottom: 0;
+  display: block;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  font: inherit;
 }
 .barTop {
   display: flex;
@@ -215,11 +285,13 @@
   color: var(--text3);
 }
 .barMeta {
-  font-size: 12.5px;
-  color: var(--muted);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--text4);
 }
 .track {
-  height: 10px;
+  height: 8px;
   background: var(--surface2);
   border-radius: 6px;
   overflow: hidden;
@@ -239,26 +311,37 @@
   font-size: 12px;
   color: var(--muted);
 }
+.tableEmpty {
+  margin: 0;
+  padding: 28px 20px;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
 .ct {
   overflow-x: auto;
 }
 .ctInner {
-  min-width: 640px;
+  min-width: 700px;
 }
 .ctHead,
 .ctRow {
   display: grid;
-  grid-template-columns: 1.6fr 0.9fr 1fr 1.4fr 1.4fr;
+  /* Sent/Delivered/Failed share one rhythm; the rate column absorbs the rest */
+  grid-template-columns: 1.6fr 0.9fr 1fr 1fr 1.8fr;
+  column-gap: 24px;
   align-items: center;
 }
 .ctHead {
   padding: 11px 20px;
-  font-size: 11px;
-  color: var(--muted);
+  font-size: 11.5px;
+  color: var(--text4);
   font-weight: 600;
-  letter-spacing: 0.3px;
   text-transform: uppercase;
-  border-bottom: 1px solid var(--surface2);
+  border-bottom: 1px solid var(--border2);
+}
+.ctHead > * {
+  text-transform: uppercase;
 }
 .ctR {
   text-align: right;
@@ -289,11 +372,15 @@
   font-size: 13px;
 }
 .ctNum {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 13px;
   color: var(--text3);
   text-align: right;
 }
 .ctDel {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 13px;
   font-weight: 600;
   color: var(--success-strong);
@@ -317,97 +404,13 @@
   transform-origin: left;
 }
 .ctRateVal {
-  width: 40px;
+  width: 50px;
   text-align: right;
-  font-size: 12.5px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text2);
-}
-
-/* top devices */
-.devRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 15px;
-}
-.devRow:last-child {
-  margin-bottom: 0;
-}
-.devLbl {
-  width: 66px;
-  font-size: 12.5px;
-  color: var(--text3);
-  font-weight: 500;
-  flex: none;
-}
-.devPct {
-  width: 42px;
-  text-align: right;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text2);
-  flex: none;
-}
-
-/* top campaigns */
-.tcRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-.tcRow:last-child {
-  margin-bottom: 0;
-}
-.tcName {
-  width: 120px;
-  flex: none;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--text2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.tcTrack {
-  flex: 1;
-  height: 8px;
-}
-.tcOpen {
-  width: 40px;
-  text-align: right;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--success-strong);
-  flex: none;
-}
-
-/* top links */
-.linkRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--divider);
-}
-.linkRow:last-child {
-  border-bottom: none;
-}
-.linkUrl {
-  flex: 1;
-  min-width: 0;
-  font-size: 12.5px;
-  color: var(--accent);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.linkClicks {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text3);
-  flex: none;
 }
 
 /* toast */
@@ -441,21 +444,55 @@
 }
 
 @media (max-width: 1040px) {
-  .row2,
-  .row3 {
+  .row2 {
     grid-template-columns: 1fr;
   }
 }
 @media (max-width: 860px) {
-  .kpis {
-    grid-template-columns: repeat(2, 1fr);
-  }
   .controls {
     width: 100%;
   }
 }
-@media (max-width: 520px) {
-  .kpis {
-    grid-template-columns: 1fr;
-  }
+
+/* Boot skeletons — same shimmer grammar as the dashboard. */
+.skelLine {
+  height: 13px;
+  width: 72px;
+  border-radius: 4px;
+}
+.skelLineSm {
+  height: 11px;
+  width: 48px;
+  border-radius: 4px;
+}
+.skelValue {
+  height: 26px;
+  width: 56%;
+  max-width: 96px;
+  margin-top: 6px;
+  border-radius: 6px;
+}
+.skelSpark {
+  height: 36px;
+  width: 100%;
+  margin-top: 8px;
+  border-radius: 8px;
+}
+.skelHero {
+  height: 300px;
+  width: 100%;
+  margin-top: 14px;
+  border-radius: 10px;
+}
+.skelBar {
+  height: 10px;
+  width: 100%;
+  margin-top: 6px;
+  border-radius: 5px;
+}
+.skelIc {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 8px;
 }

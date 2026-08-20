@@ -133,7 +133,7 @@ const ThemeBlocksSchema = z.record(
   z.object({
     style: z.record(z.string(), z.unknown()).optional(),
     props: z.record(z.string(), z.unknown()).optional(),
-  })
+  }),
 );
 
 export type ThemeBlocks = z.infer<typeof ThemeBlocksSchema>;

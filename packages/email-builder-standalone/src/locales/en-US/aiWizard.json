@@ -18,12 +18,15 @@
     "title": "How do you want to build your email?",
     "directCard": {
       "title": "Direct",
-      "description": "Write your own prompt. Best when you know exactly what you want."
+      "description": "Write your own prompt. Best when you know exactly what you want.",
+      "hint": "Fastest — one prompt"
     },
     "wizardCard": {
-      "title": "Wizard",
-      "description": "Answer a few quick questions. Best when you want help shaping the brief."
-    }
+      "title": "Wizard composer",
+      "description": "Step through brand, audience, tone, visuals, and sections — then generate a polished template.",
+      "hint": "Guided — about a minute"
+    },
+    "switchNote": "You can switch between the two at any time from the dialog header."
   },
   "header": {
     "directTitle": "Generate with AI",

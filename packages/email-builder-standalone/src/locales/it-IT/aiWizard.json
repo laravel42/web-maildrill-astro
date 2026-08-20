@@ -18,12 +18,15 @@
     "title": "Come vuoi creare la tua email?",
     "directCard": {
       "title": "Diretto",
-      "description": "Scrivi il tuo prompt. Ideale quando sai già cosa vuoi."
+      "description": "Scrivi il tuo prompt. Ideale quando sai già cosa vuoi.",
+      "hint": "Il più veloce: un solo prompt"
     },
     "wizardCard": {
       "title": "Wizard",
-      "description": "Rispondi ad alcune domande rapide. Ideale per definire il brief."
-    }
+      "description": "Rispondi ad alcune domande rapide. Ideale per definire il brief.",
+      "hint": "Guidato: circa un minuto"
+    },
+    "switchNote": "Puoi passare da una modalità all'altra in qualsiasi momento dall'intestazione della finestra."
   },
   "header": {
     "directTitle": "Genera con IA",

@@ -31,6 +31,10 @@ export function listToAudienceChoice(
     count: memberCount,
     phoneCount: zeroPhoneWhenEmptyMembers(memberCount, counts?.phoneCount ?? l.phoneMemberCount),
     color: l.color ?? null,
+    channels:
+      l.channels && l.channels.length > 0
+        ? (l.channels as ChannelType[])
+        : (['email'] as ChannelType[]),
   };
 }
 
@@ -48,6 +52,10 @@ export function segmentToAudienceChoice(
       counts?.count ?? s.memberCount,
       counts?.phoneCount ?? s.phoneMemberCount,
     ),
+    channels:
+      s.channels && s.channels.length > 0
+        ? (s.channels as ChannelType[])
+        : (['email'] as ChannelType[]),
   };
 }
 
@@ -61,8 +69,13 @@ export function audienceRecipientCount(a: AudienceChoice, channel: ChannelType):
   return a.count;
 }
 
-/** Hide audiences whose effective reach is explicitly zero; keep unknown (null) counts. */
+/** Hide audiences whose effective reach is explicitly zero; keep unknown (null) counts.
+ *  Lists and segments are also gated on declaring the campaign channel. */
 export function isAudienceSelectable(a: AudienceChoice, channel: ChannelType): boolean {
+  if (a.kind === 'list' || a.kind === 'segment') {
+    const chans = a.channels && a.channels.length > 0 ? a.channels : (['email'] as ChannelType[]);
+    if (!chans.includes(channel)) return false;
+  }
   const n = audienceRecipientCount(a, channel);
   return n === null || n > 0;
 }
@@ -109,42 +122,6 @@ function previewCount(data: unknown): number | null {
   return typeof count === 'number' ? count : null;
 }
 
-/** Resolve list phone reach via preview when /v1/lists omits phoneMemberCount. */
-export async function enrichListAudienceCounts(
-  client: SegmentPreviewClient,
-  lists: ApiList[],
-): Promise<Map<string, { phoneCount: number | null }>> {
-  const out = new Map<string, { phoneCount: number | null }>();
-
-  await Promise.all(
-    lists.map(async (list) => {
-      let phoneCount = list.phoneMemberCount ?? null;
-
-      if (phoneCount == null) {
-        if (list.memberCount === 0) {
-          phoneCount = 0;
-        } else {
-          const res = await client.POST('/v1/segments/preview', {
-            body: {
-              matchType: 'all',
-              rules: [
-                { field: 'list', op: 'eq', value: list.id },
-                { field: 'phone', op: 'exists' },
-              ],
-              limit: 1,
-            },
-          });
-          if (!res.error) phoneCount = previewCount(res.data);
-        }
-      }
-
-      out.set(list.id, { phoneCount });
-    }),
-  );
-
-  return out;
-}
-
 /** Resolve segment member + phone counts via preview when the list payload omits them. */
 export async function enrichSegmentAudienceCounts(
   client: SegmentPreviewClient,
@@ -161,7 +138,9 @@ export async function enrichSegmentAudienceCounts(
       let phoneCount = seg.phoneMemberCount ?? null;
 
       if (count == null) {
-        const res = await client.POST('/v1/segments/preview', { body: { matchType, rules, limit: 1 } });
+        const res = await client.POST('/v1/segments/preview', {
+          body: { matchType, rules, limit: 1 },
+        });
         if (!res.error) count = previewCount(res.data);
       }
 

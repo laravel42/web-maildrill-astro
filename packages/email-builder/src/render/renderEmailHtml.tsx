@@ -29,7 +29,10 @@ export type RenderEmailHtmlOptions = {
  * still render correctly while clients honouring media queries pick up
  * the mobile overrides.
  */
-export function renderEmailHtml(document: TReaderDocument, { rootBlockId }: RenderEmailHtmlOptions): string {
+export function renderEmailHtml(
+  document: TReaderDocument,
+  { rootBlockId }: RenderEmailHtmlOptions,
+): string {
   const { cleanedDocument, css } = cleanDocument(document, { viewport: 'desktop' });
 
   // Subset Google Fonts to only the faces this document actually uses, so
@@ -61,7 +64,8 @@ export function renderEmailHtml(document: TReaderDocument, { rootBlockId }: Rend
             width: '100%',
             margin: '0',
             padding: '0',
-            backgroundColor: (document?.root?.data as EmailLayoutProps | undefined)?.backdropColor ?? '#f4f4f4',
+            backgroundColor:
+              (document?.root?.data as EmailLayoutProps | undefined)?.backdropColor ?? '#f4f4f4',
           }}
         >
           <table
@@ -85,7 +89,11 @@ export function renderEmailHtml(document: TReaderDocument, { rootBlockId }: Rend
                   >
                     <tr>
                       <td>
-                        <Reader document={cleanedDocument} rootBlockId={rootBlockId} viewport="desktop" />
+                        <Reader
+                          document={cleanedDocument}
+                          rootBlockId={rootBlockId}
+                          viewport="desktop"
+                        />
                       </td>
                     </tr>
                   </table>
@@ -94,10 +102,10 @@ export function renderEmailHtml(document: TReaderDocument, { rootBlockId }: Rend
             </tbody>
           </table>
         </body>
-      </html>
+      </html>,
     ).replace(
       /<div style="position:relative">\s*<button\s+class="MuiButtonBase-root\b.*?>.*?<\/button>.*?<\/div>/gs,
-      ''
+      '',
     )
   );
 }

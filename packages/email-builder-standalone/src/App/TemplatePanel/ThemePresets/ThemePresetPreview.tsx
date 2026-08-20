@@ -33,7 +33,8 @@ const FALLBACK = {
 
 /** Safely read `bundle.blocks[type].style[key]` without widening types. */
 function blockStyle(preset: ThemePreset, type: string, key: string): string | undefined {
-  const blocks = preset.bundle.blocks as Record<string, { style?: Record<string, unknown> }> | undefined;
+  const blocks = preset.bundle.blocks as
+    Record<string, { style?: Record<string, unknown> }> | undefined;
   const value = blocks?.[type]?.style?.[key];
   return typeof value === 'string' ? value : undefined;
 }
@@ -86,8 +87,12 @@ export default function ThemePresetPreview({ preset }: ThemePresetPreviewProps) 
             flex: 1,
           }}
         >
-          <Box sx={{ height: 4, width: '70%', borderRadius: 2, backgroundColor: text, opacity: 0.85 }} />
-          <Box sx={{ height: 4, width: '45%', borderRadius: 2, backgroundColor: text, opacity: 0.45 }} />
+          <Box
+            sx={{ height: 4, width: '70%', borderRadius: 2, backgroundColor: text, opacity: 0.85 }}
+          />
+          <Box
+            sx={{ height: 4, width: '45%', borderRadius: 2, backgroundColor: text, opacity: 0.45 }}
+          />
 
           {/* Divider */}
           <Box sx={{ height: '2px', width: '100%', backgroundColor: divider }} />

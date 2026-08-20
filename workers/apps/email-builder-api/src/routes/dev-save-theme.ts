@@ -28,7 +28,15 @@
  */
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { resolve } from 'node:path';
 import { z } from 'zod';
 
@@ -255,9 +263,11 @@ export const devSaveThemePlugin = async function devSaveThemePlugin(fastify: Fas
       });
     } catch (err) {
       if (err instanceof PayloadTooLargeError) {
-        return reply
-          .status(413)
-          .send({ error: 'payload_too_large', limitBytes: MAX_THEME_JSON_BYTES, actualBytes: err.bytes });
+        return reply.status(413).send({
+          error: 'payload_too_large',
+          limitBytes: MAX_THEME_JSON_BYTES,
+          actualBytes: err.bytes,
+        });
       }
       const message = err instanceof Error ? err.message : 'unknown write error';
       return reply.status(500).send({ error: 'write_failed', message });
@@ -351,9 +361,11 @@ export const devSaveThemePlugin = async function devSaveThemePlugin(fastify: Fas
       });
     } catch (err) {
       if (err instanceof PayloadTooLargeError) {
-        return reply
-          .status(413)
-          .send({ error: 'payload_too_large', limitBytes: MAX_THEME_JSON_BYTES, actualBytes: err.bytes });
+        return reply.status(413).send({
+          error: 'payload_too_large',
+          limitBytes: MAX_THEME_JSON_BYTES,
+          actualBytes: err.bytes,
+        });
       }
       const message = err instanceof Error ? err.message : 'unknown write error';
       return reply.status(500).send({ error: 'write_failed', message });

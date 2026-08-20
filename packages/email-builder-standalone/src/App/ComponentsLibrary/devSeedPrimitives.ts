@@ -27,7 +27,7 @@ import { PRIMITIVES, type PrimitiveType } from './primitivesCatalog';
 type SeedSummary = { total: number; saved: number; skipped: number; failed: number };
 
 export async function seedPrimitives(
-  options: { type?: PrimitiveType; limit?: number; force?: boolean } = {}
+  options: { type?: PrimitiveType; limit?: number; force?: boolean } = {},
 ): Promise<SeedSummary> {
   const base = resolveBackendUrl();
   let list = options.type ? PRIMITIVES.filter((p2) => p2.type === options.type) : PRIMITIVES;
@@ -40,15 +40,20 @@ export async function seedPrimitives(
   try {
     const r = await fetch(`${base}/dev/primitives`);
     if (r.ok) {
-      const { primitives } = (await r.json()) as { primitives: Array<{ type: string; name: string; id: string }> };
-      for (const item of primitives) existing.set(`${item.type}/${item.name.trim()}`, { type: item.type, id: item.id });
+      const { primitives } = (await r.json()) as {
+        primitives: Array<{ type: string; name: string; id: string }>;
+      };
+      for (const item of primitives)
+        existing.set(`${item.type}/${item.name.trim()}`, { type: item.type, id: item.id });
     }
   } catch {
     /* best-effort dedup */
   }
 
   const summary: SeedSummary = { total: list.length, saved: 0, skipped: 0, failed: 0 };
-  console.info(`[seedPrimitives] seeding ${list.length} primitives${options.force ? ' (force)' : ''}…`);
+  console.info(
+    `[seedPrimitives] seeding ${list.length} primitives${options.force ? ' (force)' : ''}…`,
+  );
 
   for (const def of list) {
     const prev = existing.get(`${def.type}/${def.name}`);
@@ -58,9 +63,12 @@ export async function seedPrimitives(
     }
     try {
       if (prev && options.force) {
-        await fetch(`${base}/dev/primitives/${encodeURIComponent(prev.type)}/${encodeURIComponent(prev.id)}`, {
-          method: 'DELETE',
-        });
+        await fetch(
+          `${base}/dev/primitives/${encodeURIComponent(prev.type)}/${encodeURIComponent(prev.id)}`,
+          {
+            method: 'DELETE',
+          },
+        );
       }
       const res = await fetch(`${base}/dev/save-primitive`, {
         method: 'POST',
@@ -79,7 +87,10 @@ export async function seedPrimitives(
       summary.saved++;
     } catch (err) {
       summary.failed++;
-      console.warn(`[seedPrimitives] "${def.type}/${def.name}" failed:`, err instanceof Error ? err.message : err);
+      console.warn(
+        `[seedPrimitives] "${def.type}/${def.name}" failed:`,
+        err instanceof Error ? err.message : err,
+      );
     }
   }
 

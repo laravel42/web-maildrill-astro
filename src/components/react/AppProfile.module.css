@@ -1,0 +1,1000 @@
+/* Profile — pixel port of design/profile.html.
+   Comp tokens map 1:1 onto app tokens (--brand→--accent, --surface-2→--surface2,
+   --border-strong→--border2, --text-N→--textN, --green/--amber/--red→
+   --success-strong/--warning-strong/--danger-strong); values the app doesn't
+   define (tints, --surface-3, the comp's bg-colored divider, danger-card inks)
+   stay local below. The comp is light-only — the dark values are this port's
+   extension, chosen from the app's dark ramp. */
+
+/* ---------- Base ---------- */
+
+.wrap {
+  --green: var(--success-strong);
+  --green-tint: #e7f6ec;
+  --amber: var(--warning-strong);
+  --amber-tint: #fdf3e3;
+  --red: var(--danger-strong);
+  --red-tint: #fdeeee;
+  --red-border: #f0c8c2;
+  --surface-3: #faf9f7;
+  /* Comp --divider (#f6f5f2, the page bg) ≠ app --divider (#efeee9). */
+  --row-divider: #f6f5f2;
+  --head-divider: #efeee9;
+  --chip-bg: #f0efeb;
+  --switch-off: #dedcd4;
+  --hover-bg: var(--bg);
+  --note-bg: var(--bg);
+  --danger-hover-bg: #fdf4f3;
+  --danger-card-border: #f0dbd7;
+  --danger-head-border: #f7e9e6;
+  --danger-head-ink: #9f1239;
+  --danger-row-border: #faf3f2;
+  --savebar-shadow: 0 -6px 18px rgba(30, 27, 22, 0.06);
+  --radius-btn: 10px;
+  --radius-card: 16px;
+  --motion: 160ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  --savebar-pad-x: 40px;
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  min-height: calc(100dvh - 56px);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+.wrapSavebar {
+  /* Screen default bottom padding becomes the bar; keep content clear above it. */
+  padding-bottom: 0;
+}
+.body {
+  flex: 1 0 auto;
+}
+:global([data-theme='dark']) .wrap {
+  --green-tint: rgba(34, 197, 94, 0.16);
+  --amber-tint: rgba(217, 119, 6, 0.16);
+  --red-tint: rgba(220, 38, 38, 0.16);
+  --red-border: rgba(220, 38, 38, 0.4);
+  --surface-3: #26221b;
+  --row-divider: #29251d;
+  --head-divider: #29251d;
+  --chip-bg: #2a261e;
+  --switch-off: #3c372c;
+  --hover-bg: #2a261e;
+  --note-bg: var(--surface);
+  --danger-hover-bg: rgba(220, 38, 38, 0.1);
+  --danger-card-border: rgba(248, 113, 113, 0.28);
+  --danger-head-border: rgba(248, 113, 113, 0.18);
+  --danger-head-ink: #fca5a5;
+  --danger-row-border: rgba(248, 113, 113, 0.1);
+  --savebar-shadow: 0 -6px 18px rgba(0, 0, 0, 0.45);
+}
+
+/* :where() keeps the reset at zero specificity so single-class rules like
+   .avatarMeta's margins aren't silently flattened by it. */
+.wrap :where(h1, h2, p, ul, hgroup) {
+  margin: 0;
+}
+.wrap :where(ul) {
+  padding: 0;
+  list-style: none;
+}
+.wrap :where(button) {
+  font: inherit;
+}
+.wrap [hidden] {
+  display: none !important;
+}
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+.wrap a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.wrap a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+/* Scoped: a bare :focus-visible here would leak a global focus style into
+   every screen that loads this module. */
+.wrap :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-btn);
+  background: var(--surface);
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--motion),
+    border-color var(--motion),
+    color var(--motion);
+}
+.btn:hover {
+  background: var(--hover-bg);
+}
+.btnSm {
+  height: 31px;
+  padding: 0 12px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  flex: none;
+}
+.btnPrimary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow:
+    0 1px 2px rgba(79, 70, 229, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+.btnPrimary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.btnPrimary:disabled {
+  background: var(--surface2);
+  border-color: var(--border2);
+  color: var(--muted);
+  box-shadow: none;
+  cursor: default;
+}
+.btnDanger {
+  border-color: var(--red-border);
+  color: var(--red);
+}
+.btnDanger:hover {
+  background: var(--danger-hover-bg);
+}
+.btnQuiet {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  padding: 0 8px;
+}
+.btnQuiet:hover {
+  background: none;
+  color: var(--text3);
+}
+.linkBtn {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.linkBtn:hover {
+  text-decoration: underline;
+}
+.revoke {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--motion);
+}
+.revoke:hover {
+  color: var(--red);
+}
+
+/* ---------- Chips ---------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--text4);
+  background: var(--chip-bg);
+  vertical-align: 1px;
+}
+.chipOn {
+  color: var(--green);
+  background: var(--green-tint);
+}
+.chipPending {
+  color: var(--amber);
+  background: var(--amber-tint);
+}
+.chipOff {
+  color: var(--red);
+  background: var(--red-tint);
+}
+
+/* ---------- Layout (matches AppSettings) ---------- */
+.h1 {
+  margin: 0 0 22px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  position: sticky;
+  top: 20px;
+}
+.navitem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text3);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.navitem svg {
+  color: var(--muted2);
+  flex: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+.navitem:hover {
+  background: var(--surface2);
+  color: var(--text2);
+}
+.navitem:hover svg {
+  color: var(--text4);
+}
+.navitem:global(.is-active) {
+  font-weight: 600;
+  color: var(--accent-text);
+  background: var(--accent-tint);
+}
+.navitem:global(.is-active) svg {
+  color: var(--accent-text);
+}
+.navNote {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--note-bg);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text4);
+}
+.navNote strong {
+  color: var(--text2);
+  font-weight: 600;
+}
+
+.panelwrap {
+  min-width: 0;
+}
+.panel {
+  padding: 24px 26px;
+}
+.panelhead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.panelheadText {
+  min-width: 0;
+}
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  margin: 0;
+}
+.desc {
+  font-size: 13px;
+  color: var(--text4);
+  margin: 5px 0 0;
+}
+.savedChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 5px 11px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+  background: var(--green-tint);
+}
+.panelBody {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* In-panel sections — stacked inside the single Settings-style acrd. */
+.section + .section {
+  border-top: 1px solid var(--divider);
+  padding-top: 22px;
+}
+.sectionDanger {
+  margin: 0 -6px;
+  padding: 16px 18px;
+  border: 1px solid var(--danger-card-border);
+  border-radius: 12px;
+  background: var(--danger-hover-bg);
+}
+.section + .sectionDanger {
+  border-top: 1px solid var(--danger-card-border);
+  margin-top: 4px;
+}
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.sectionHead .note {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.sectionHeadSplit {
+  align-items: center;
+  justify-content: space-between;
+}
+.sectionNote {
+  margin-top: 14px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+/* ---------- Avatar block ---------- */
+.avatarCard {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.avatar {
+  width: 70px;
+  height: 70px;
+  flex: none;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #818cf8, #4f46e5);
+  color: #fff;
+  font-size: 25px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.avatarName {
+  font-size: 15px;
+  font-weight: 600;
+}
+.avatarMeta {
+  font-size: 12.5px;
+  color: var(--text4);
+  margin-top: 4px;
+}
+.avatarHint {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+.avatarActions {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+
+/* ---------- Fields ---------- */
+.fieldGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.fieldLabel {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+.input {
+  width: 100%;
+  height: 37px;
+  padding: 0 11px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-btn);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  transition:
+    border-color var(--motion),
+    box-shadow var(--motion);
+}
+select.input {
+  cursor: pointer;
+  padding-inline: 8px;
+}
+.inputLocked {
+  background: var(--bg);
+  color: var(--text3);
+}
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+.fieldHint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ---------- Stacked rows ---------- */
+.stack {
+  padding: 0;
+}
+.stackRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--row-divider);
+}
+.stackRow:last-child {
+  border-bottom: 0;
+}
+.stackIcon {
+  display: flex;
+  color: var(--text4);
+  flex: none;
+}
+.stackBody {
+  flex: 1;
+  min-width: 0;
+}
+.stackTitle {
+  font-size: 13px;
+  font-weight: 600;
+}
+.stackDesc {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+/* ---------- Password ---------- */
+.passwordForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 430px;
+}
+.strength {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.strengthBars {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+.strengthBars span {
+  flex: 1;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--border2);
+  transition: background var(--motion);
+}
+.strengthLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  min-width: 40px;
+  text-align: right;
+}
+
+/* ---------- Notifications ---------- */
+.notifHead {
+  display: grid;
+  grid-template-columns: 1fr 78px 78px;
+  gap: 12px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+.notifHead span + span {
+  text-align: center;
+}
+.notifGroupLabel {
+  padding: 14px 0 9px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--muted2);
+  border-bottom: 1px solid var(--row-divider);
+}
+.notifRow {
+  display: grid;
+  grid-template-columns: 1fr 78px 78px;
+  gap: 12px;
+  align-items: center;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--row-divider);
+}
+.notifCell {
+  display: flex;
+  justify-content: center;
+}
+.switch {
+  width: 38px;
+  height: 22px;
+  flex: none;
+  padding: 2px;
+  border: 0;
+  border-radius: 99px;
+  background: var(--switch-off);
+  cursor: pointer;
+  transition: background var(--motion);
+}
+.switch.isOn {
+  background: var(--accent);
+}
+.switchKnob {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(30, 27, 22, 0.28);
+  transition: transform var(--motion);
+}
+.switch.isOn .switchKnob {
+  transform: translateX(16px);
+}
+
+/* ---------- Sessions ---------- */
+.sessionRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--row-divider);
+  transition: background var(--motion);
+}
+.sessionRow:last-child {
+  border-bottom: 0;
+}
+.sessionRow:hover {
+  background: var(--surface-3);
+}
+.sessionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 10px;
+  color: var(--text4);
+  background: var(--surface2);
+}
+.sessionIconCurrent {
+  color: var(--green);
+  background: var(--green-tint);
+}
+.sessionDevice {
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table td {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--row-divider);
+  font-size: 12.5px;
+  color: var(--text3);
+}
+.table tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ---------- Danger zone ---------- */
+.sectionDanger .sectionHead {
+  border-bottom-color: var(--danger-head-border);
+  color: var(--danger-head-ink);
+}
+.sectionDanger .stackRow {
+  border-bottom-color: var(--danger-row-border);
+}
+
+/* ---------- Save bar ---------- */
+.savebar {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* Bleed to the edges of the capped screen wrapper (cancel .screen padding). */
+  margin-top: auto;
+  margin-left: calc(-1 * var(--savebar-pad-x));
+  margin-right: calc(-1 * var(--savebar-pad-x));
+  margin-bottom: calc(-1 * 56px);
+  width: calc(100% + 2 * var(--savebar-pad-x));
+  box-sizing: border-box;
+  padding: 12px var(--savebar-pad-x);
+  border-top: 1px solid var(--border2);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--savebar-shadow);
+  animation: rise 180ms ease;
+}
+.savebarDot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--amber);
+}
+.savebarNote {
+  font-size: 12.5px;
+  color: var(--text3);
+}
+.savebarActions {
+  margin-left: auto;
+  display: flex;
+  gap: 9px;
+}
+
+/* ---------- Toast (app standard — not in the comp, shown transiently) ---------- */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-toast);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: var(--text);
+  color: var(--bg);
+  padding: 12px 16px 12px 13px;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(28, 25, 23, 0.3);
+  font-size: 13px;
+  font-weight: 500;
+}
+.wrapSavebar .toast {
+  bottom: 76px;
+}
+.toastIc {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+/* ---------- Motion ---------- */
+@keyframes fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes rise {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wrap,
+  .wrap :global(*),
+  .wrap :global(*::before),
+  .wrap :global(*::after) {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .nav {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .navNote {
+    display: none;
+  }
+  .navitem {
+    width: auto;
+  }
+}
+@media (max-width: 660px) {
+  .panel {
+    padding: 20px 18px;
+  }
+  .wrap {
+    --savebar-pad-x: 16px;
+  }
+  .savebar {
+    margin-bottom: calc(-1 * 40px);
+  }
+  .fieldGrid {
+    grid-template-columns: 1fr;
+  }
+  .avatarCard {
+    flex-wrap: wrap;
+  }
+  .notifHead,
+  .notifRow {
+    grid-template-columns: 1fr 56px 56px;
+  }
+  .stackRow {
+    flex-wrap: wrap;
+  }
+}
+
+@media print {
+  .savebar,
+  .btn,
+  .revoke,
+  .toast {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .section {
+    break-inside: avoid;
+  }
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+/* ── Security: modals, reauth, recovery codes ─────────────────────────────
+   Modal shell mirrors the Settings modal (head + body + footer on surface2)
+   so the two screens read as one system. */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background: rgba(28, 25, 23, 0.4);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+.modal {
+  width: 440px;
+  max-width: 100%;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(28, 25, 23, 0.28);
+}
+.modalHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--divider);
+}
+.modalTitle {
+  font-weight: 600;
+  font-size: 15px;
+}
+.modalX {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: var(--surface2);
+  border-radius: 9px;
+  cursor: pointer;
+  color: var(--text4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modalX:hover {
+  color: var(--text2);
+  background: var(--border2);
+}
+.modalBody {
+  padding: 20px 22px;
+}
+.modalFoot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--divider);
+  background: var(--surface2);
+}
+.modalSub {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text4);
+}
+
+/* Reauth method switcher (radiogroup of chips). */
+.methodRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+.methodChip {
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  color: var(--text3);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.methodChip:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+.methodChipOn {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+}
+
+/* One-time recovery-code display. */
+.codeGrid {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 18px;
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  background: var(--surface2);
+}
+.codeGrid code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+.codeActions {
+  display: flex;
+  gap: 8px;
+}
+
+/* TOTP enrolment. */
+.qrBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 196px;
+  min-height: 196px;
+  margin: 0 auto 14px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+}
+.secretBox {
+  display: block;
+  margin: 4px 0 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  background: var(--surface2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.inlineErr {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--danger, #dc2626);
+}
+
+.loadingRow {
+  margin: 0;
+  padding: 18px 2px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Alert-tinted icons: failed 2FA / rejected WebAuthn in the activity feed. */
+.sessionIconAlert {
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  color: var(--warning);
+}
+
+.toastAlert .toastIc {
+  background: var(--warning);
+}
+.toastAlert {
+  box-shadow: 0 12px 32px rgba(217, 119, 6, 0.32);
+}

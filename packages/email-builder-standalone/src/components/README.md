@@ -39,7 +39,7 @@ const handleImageClick = (imageUrl: string) => {
   window.dispatchEvent(
     new CustomEvent('email-builder-set-image', {
       detail: imageUrl,
-    })
+    }),
   );
 
   setCurrentImageUrl(imageUrl);

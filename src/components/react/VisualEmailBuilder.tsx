@@ -5,8 +5,9 @@ import type {
   MergeTagGroup,
   TEditorConfiguration,
 } from 'email-builder-standalone';
-import { api } from '@/lib/app/api';
+import { api, ApiError } from '@/lib/app/api';
 import { buildMergeTagMenu, type CustomField } from '@/lib/app/custom-fields';
+import { dataUrlToFile, uploadMediaFile } from '@/lib/app/media-upload';
 import { builderGenerateTemplate, builderTextAction } from '@/lib/app/services';
 import { TEMPLATE_CATEGORIES, defaultTemplateCategory } from '@/lib/app/templates-data';
 import {
@@ -15,9 +16,12 @@ import {
   templateLanguageFlagSrc,
 } from '@/lib/app/template-language';
 import Icon from './Icon';
+import MediaPickerModal, { type MediaPickerImage } from './shared/MediaPickerModal';
+import SendTestModal from './shared/SendTestModal';
 import { useToast } from './shared/useToast';
 import ChannelEditorShell, { shellStyles } from './shared/ChannelEditorShell';
 import { CHANNEL } from './shared/channels';
+import { retryDynamicImport } from '@/lib/app/retry-dynamic-import';
 import { useAutosave } from './shared/useAutosave';
 
 /**
@@ -51,6 +55,8 @@ type Props = {
   kind?: 'template' | 'campaign';
   onClose: () => void;
   onSave: (value: VisualEmailBuilderSave) => void | Promise<void>;
+  /** Sends the saved template to the given recipients; host owns the API call. */
+  onSendTest?: (to: string[]) => Promise<{ to: string[] }>;
 };
 
 export default function VisualEmailBuilder({
@@ -61,6 +67,7 @@ export default function VisualEmailBuilder({
   kind = 'template',
   onClose,
   onSave,
+  onSendTest,
 }: Props) {
   const builderRef = useRef<EmailBuilderRef>(null);
   const [Builder, setBuilder] = useState<BuilderComponent | null>(null);
@@ -74,11 +81,66 @@ export default function VisualEmailBuilder({
   // the always-present subscriber fields; workspace custom fields are appended
   // once fetched. Never the vendor's placeholder tags from another ESP.
   const [mergeTags, setMergeTags] = useState<MergeTagGroup>(() => buildMergeTagMenu([]));
+  // Media-library picker behind the image panel's "Browse gallery" button.
+  const [mediaOpen, setMediaOpen] = useState(false);
+  const [testOpen, setTestOpen] = useState(false);
   const { toast, show } = useToast();
 
+  // The builder's image/background inputs dispatch `toggle-media-library` when
+  // the user clicks "Browse gallery" (shown because we pass `galleryImages`).
+  useEffect(() => {
+    const onToggle = () => setMediaOpen(true);
+    window.addEventListener('toggle-media-library', onToggle);
+    return () => window.removeEventListener('toggle-media-library', onToggle);
+  }, []);
+
+  // Image/background Upload tab → workspace media library (S3 + register).
+  // ImageInput reads the file as a data URL and fires this event; we PUT to
+  // storage and answer with the public URL so the block can commit it.
+  useEffect(() => {
+    const onUpload = (event: Event) => {
+      const { images, id } = (event as CustomEvent<{ images: string[]; id: string }>).detail ?? {
+        images: [],
+        id: '',
+      };
+      void (async () => {
+        try {
+          const dataUrl = images[0];
+          if (!dataUrl) throw new Error('No image to upload');
+          const file = dataUrlToFile(dataUrl, `email-${Date.now()}`);
+          const asset = await uploadMediaFile(file);
+          window.dispatchEvent(
+            new CustomEvent('email-builder-upload-image-receive', {
+              detail: { id, url: asset.url, data: null },
+            }),
+          );
+        } catch (err) {
+          window.dispatchEvent(
+            new CustomEvent('email-builder-toggle-upload-file', {
+              detail: { uploading: false, id },
+            }),
+          );
+          show(err instanceof ApiError ? err.message : 'Could not upload image');
+        }
+      })();
+    };
+    window.addEventListener('email-builder-upload-image', onUpload);
+    return () => window.removeEventListener('email-builder-upload-image', onUpload);
+  }, [show]);
+
+  // The image (or background-image) panel that opened the picker listens for
+  // this event and applies the URL to the block it's editing on the canvas.
+  const pickMediaImage = (img: MediaPickerImage) => {
+    window.dispatchEvent(new CustomEvent('email-builder-set-image', { detail: { url: img.url } }));
+    setMediaOpen(false);
+  };
+
+  // Refetched on focus, not just on mount: custom fields are defined elsewhere
+  // (list drawer, subscriber import), so an editor left open would otherwise
+  // offer a merge-tag menu missing every field added since it was opened.
   useEffect(() => {
     let alive = true;
-    void (async () => {
+    const load = async () => {
       try {
         const res = await api.get<{ data: CustomField[] }>('custom-fields');
         if (alive) setMergeTags(buildMergeTagMenu(res.data));
@@ -86,9 +148,18 @@ export default function VisualEmailBuilder({
         // No workspace/custom fields reachable — keep the default subscriber
         // fields; the menu is still real, just without custom ones.
       }
-    })();
+    };
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') void load();
+    };
+
+    void load();
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
     return () => {
       alive = false;
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
     };
   }, []);
 
@@ -97,11 +168,13 @@ export default function VisualEmailBuilder({
     let alive = true;
     void (async () => {
       try {
-        await import('email-builder-standalone/style.css');
-        const mod = await import('email-builder-standalone');
+        await retryDynamicImport(() => import('email-builder-standalone/style.css'));
+        const mod = await retryDynamicImport(() => import('email-builder-standalone'));
         if (alive) setBuilder(() => mod.EmailBuilder as unknown as BuilderComponent);
       } catch (err) {
-        if (alive) setLoadError(err instanceof Error ? err.message : 'Failed to load the editor.');
+        if (alive) {
+          setLoadError(err instanceof Error ? err.message : 'Failed to load the editor.');
+        }
       }
     })();
     return () => {
@@ -132,14 +205,17 @@ export default function VisualEmailBuilder({
     return () => timers.forEach(clearTimeout);
   }, [Builder, loadError]);
 
-  // Esc closes the editor.
+  // Esc closes the media picker or test dialog when open, else the editor.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key !== 'Escape') return;
+      if (mediaOpen) setMediaOpen(false);
+      else if (testOpen) setTestOpen(false);
+      else onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, mediaOpen, testOpen]);
 
   // Persist current content (throws on failure so autosave/flush can react).
   const persist = async () => {
@@ -163,7 +239,20 @@ export default function VisualEmailBuilder({
     show(ok ? `“${title.trim() || 'Untitled template'}” saved` : 'Could not save.');
   };
 
-  const handleSendTest = () => show('Test message sent');
+  // Save first so the test carries exactly what's on the canvas. Errors throw
+  // so the recipient dialog can show them inline.
+  const handleSendTest = async (to: string[]) => {
+    if (!onSendTest) return;
+    const ok = await flush();
+    if (!ok) throw new Error('Could not save before sending');
+    const res = await onSendTest(to);
+    setTestOpen(false);
+    show(
+      res.to.length > 1
+        ? `Test email queued to ${res.to.length} recipients`
+        : `Test email queued to ${res.to[0]}`,
+    );
+  };
 
   return (
     <ChannelEditorShell
@@ -197,7 +286,7 @@ export default function VisualEmailBuilder({
           : undefined
       }
       onBack={onClose}
-      onSendTest={handleSendTest}
+      onSendTest={onSendTest ? () => setTestOpen(true) : undefined}
       onSaveDraft={() => void handleSaveDraft()}
       toast={
         toast ? (
@@ -218,6 +307,12 @@ export default function VisualEmailBuilder({
         <div className={shellStyles.state}>
           <p>Couldn’t load the email editor.</p>
           <p className={shellStyles.muted}>{loadError}</p>
+          <p className={shellStyles.muted}>
+            This usually means the page outlived a server restart or an update — reloading fixes it.
+          </p>
+          <button type="button" className="sbtn" onClick={() => window.location.reload()}>
+            Reload page
+          </button>
         </div>
       ) : Builder ? (
         <Builder
@@ -257,6 +352,12 @@ export default function VisualEmailBuilder({
           <span className={shellStyles.spinner} aria-hidden="true" />
           <p className={shellStyles.muted}>{LOADING_STEPS[loadingStep]}</p>
         </div>
+      )}
+      {mediaOpen && (
+        <MediaPickerModal onPick={pickMediaImage} onClose={() => setMediaOpen(false)} />
+      )}
+      {testOpen && onSendTest && (
+        <SendTestModal onClose={() => setTestOpen(false)} onSend={handleSendTest} />
       )}
     </ChannelEditorShell>
   );

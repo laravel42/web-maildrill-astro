@@ -12,7 +12,12 @@ function migrateHtmlBlock(block: any): any {
   const props = data.props ?? {};
   const rawContents = typeof props.contents === 'string' ? props.contents : '';
   const trimmed = rawContents.trim();
-  const html = trimmed.length === 0 ? '<p></p>' : /^<[a-zA-Z]/.test(trimmed) ? rawContents : `<p>${rawContents}</p>`;
+  const html =
+    trimmed.length === 0
+      ? '<p></p>'
+      : /^<[a-zA-Z]/.test(trimmed)
+        ? rawContents
+        : `<p>${rawContents}</p>`;
   return {
     ...block,
     type: 'NotionText',
@@ -25,7 +30,11 @@ function migrateHtmlBlock(block: any): any {
 }
 
 function escapeHeadingText(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 /**

@@ -80,7 +80,7 @@ export default function EditorChildrenIds({
           };
           if (libItem.category === 'template') {
             console.warn(
-              '[ComponentsLibrary] templates cannot be dropped inline; click the card in the drawer to apply.'
+              '[ComponentsLibrary] templates cannot be dropped inline; click the card in the drawer to apply.',
             );
             return;
           }
@@ -124,7 +124,7 @@ export default function EditorChildrenIds({
         isOver: monitor.canDrop() ? Boolean(monitor.isOver()) : false,
       }),
     }),
-    [parentId, position]
+    [parentId, position],
   );
 
   /** Sin UI: mantiene react-dnd al final de la lista cuando ya hay hijos (raíz y anidadas). */

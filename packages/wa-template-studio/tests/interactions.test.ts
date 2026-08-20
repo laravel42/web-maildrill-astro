@@ -39,7 +39,7 @@ describe('button onTap behaviors (Test mode)', () => {
     const { api, calls } = apiSpy();
     getButtonPlugin('url')!.onTap!(
       { text: 'View order', url: 'https://shop.com/o/{{1}}', example: 'https://shop.com/o/1042' },
-      api
+      api,
     );
     expect(calls.openSheet).toEqual([[{ kind: 'link', url: 'https://shop.com/o/1042' }]]);
   });
@@ -69,12 +69,19 @@ describe('button onTap behaviors (Test mode)', () => {
 
   it('flow, catalog and MPM open their sheets', () => {
     const flow = apiSpy();
-    getButtonPlugin('flow')!.onTap!({ text: 'Book', flowId: '42', flowAction: 'navigate', navigateScreen: 'HOME' }, flow.api);
-    expect(flow.calls.openSheet).toEqual([[{ kind: 'flow', label: 'Book', flowId: '42', screen: 'HOME' }]]);
+    getButtonPlugin('flow')!.onTap!(
+      { text: 'Book', flowId: '42', flowAction: 'navigate', navigateScreen: 'HOME' },
+      flow.api,
+    );
+    expect(flow.calls.openSheet).toEqual([
+      [{ kind: 'flow', label: 'Book', flowId: '42', screen: 'HOME' }],
+    ]);
 
     const catalog = apiSpy();
     getButtonPlugin('catalog')!.onTap!({ text: 'View catalog' }, catalog.api);
-    expect(catalog.calls.openSheet).toEqual([[{ kind: 'catalog', label: 'View catalog', multi: false }]]);
+    expect(catalog.calls.openSheet).toEqual([
+      [{ kind: 'catalog', label: 'View catalog', multi: false }],
+    ]);
 
     const mpm = apiSpy();
     getButtonPlugin('mpm')!.onTap!({ text: 'View items' }, mpm.api);

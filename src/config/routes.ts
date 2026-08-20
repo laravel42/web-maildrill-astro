@@ -1,3 +1,5 @@
+import type { ChannelType } from '@/types/app';
+
 export const routes = {
   home: '/',
   product: '/product',
@@ -24,16 +26,24 @@ export const routes = {
     signup: '/signup',
     forgotPassword: '/forgot-password',
   },
+  // The workspace lives entirely under /dashboard/*; legacy /app/* URLs
+  // 301 there via astro.config redirects.
   app: {
-    root: '/app',
+    root: '/dashboard',
     dashboard: '/dashboard',
-    campaigns: '/app/campaigns',
-    templates: '/app/templates',
-    lists: '/app/lists',
-    subscribers: '/app/subscribers',
-    media: '/app/media',
-    analytics: '/app/analytics',
-    settings: '/app/settings',
+    campaigns: '/dashboard/campaigns',
+    campaignReport: (id: string) => `/dashboard/campaigns/${id}/report`,
+    templates: '/dashboard/templates',
+    // Each channel's template builder is its own page; `?id=<templateId>`
+    // reopens a saved template for editing.
+    templateBuilder: (channel: ChannelType) => `/dashboard/templates/${channel}`,
+    lists: '/dashboard/lists',
+    list: (id: string) => `/dashboard/lists/${id}`,
+    subscribers: '/dashboard/subscribers',
+    subscriber: (id: string) => `/dashboard/subscribers/${id}`,
+    media: '/dashboard/media',
+    analytics: '/dashboard/analytics',
+    settings: '/dashboard/settings',
   },
 } as const;
 

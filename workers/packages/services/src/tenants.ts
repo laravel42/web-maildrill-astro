@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
-import { db, tenants, type Tenant } from "@maildrill/database";
+import { eq } from 'drizzle-orm';
+import { db, tenants, type Tenant } from '@maildrill/database';
 
 /** Dev/bootstrap helper: find-or-create a tenant by name. */
 export async function ensureTenantByName(name: string): Promise<Tenant> {

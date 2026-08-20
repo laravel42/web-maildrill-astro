@@ -144,7 +144,7 @@ function toPoolItem(photo: UnsplashPhotoDTO, query: string): PoolItem {
 
 export async function buildImagePool(
   userPrompt: string,
-  options: BuildImagePoolOptions = {}
+  options: BuildImagePoolOptions = {},
 ): Promise<PoolBuildResult> {
   const queryCount = clamp(options.queryCount ?? DEFAULT_QUERY_COUNT, 1, 10);
   const photosPerQuery = clamp(options.photosPerQuery ?? DEFAULT_PHOTOS_PER_QUERY, 1, 10);
@@ -190,8 +190,8 @@ export async function buildImagePool(
         query,
         perPage: photosPerQuery,
         orientation: options.orientation,
-      })
-    )
+      }),
+    ),
   );
 
   const errors: PoolBuildResult['errors'] = [];
@@ -264,12 +264,13 @@ export function formatPoolForPrompt(pool: PoolItem[]): string {
 
   const lines: string[] = [];
   lines.push(
-    'IMAGE_POOL — use the SHORT TOKEN @unsplash:N as the URL value. The backend expands it to the real Unsplash URL and injects `_unsplash` metadata server-side. Do NOT paste the long Unsplash URL directly — use the token only.'
+    'IMAGE_POOL — use the SHORT TOKEN @unsplash:N as the URL value. The backend expands it to the real Unsplash URL and injects `_unsplash` metadata server-side. Do NOT paste the long Unsplash URL directly — use the token only.',
   );
   lines.push('');
   pool.forEach((item, idx) => {
     lines.push(
-      `[@unsplash:${idx}] ${item.query} — ${item.width}×${item.height}` + (item.color ? ` — color ${item.color}` : '')
+      `[@unsplash:${idx}] ${item.query} — ${item.width}×${item.height}` +
+        (item.color ? ` — color ${item.color}` : ''),
     );
   });
   return lines.join('\n');

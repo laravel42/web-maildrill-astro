@@ -1,0 +1,464 @@
+/**
+ * Subscriber detail page — types + helpers that turn API payloads into the
+ * shape the AppSubscriberDetail island renders.
+ */
+import type { RichSubscriber } from '@/lib/app/subscribers-data';
+import { EMPTY_TOTALS, type ChannelTotals } from '@/lib/app/channel-kpis';
+import type { ChannelType } from '@/types/app';
+
+export type ActivityFilter = 'all' | 'open' | 'click' | 'send' | 'life';
+export type DetailTab = 'activity' | 'campaigns' | 'links';
+
+export type ApiSubscriberWeeklyPoint = {
+  label: string;
+  weekStart: string;
+  opens: number;
+  clicks: number;
+};
+
+export type ApiSubscriberActivity = {
+  lastActiveAt?: string | null;
+  channels?: Array<{
+    channel: string;
+    sent: number;
+    delivered: number;
+    read: number;
+    clicked: number;
+    failed?: number;
+    failedPermanent?: number;
+    complaints?: number;
+  }>;
+  recent?: Array<{
+    id: string;
+    channel: string;
+    status: string;
+    campaignName: string | null;
+    at: string;
+  }>;
+  /** Trailing 12 ISO weeks of opens/clicks when provided by the activity API. */
+  weekly?: ApiSubscriberWeeklyPoint[];
+  weeklyByChannel?: Record<string, ApiSubscriberWeeklyPoint[]>;
+};
+
+export type DetailEvent = {
+  id: string;
+  /** Raw channel key, so the detail page's channel filter can scope the feed. */
+  channel: string;
+  type: Exclude<ActivityFilter, 'all'>;
+  title: string;
+  meta: string;
+  link?: string | null;
+  when: string;
+  stamp: string;
+};
+
+export type DetailCampaignRow = {
+  id: string;
+  name: string;
+  channel: string;
+  sentLabel: string;
+  opens: number;
+  clicks: number;
+  result: string;
+  resultColor: string;
+};
+
+export type DetailLinkRow = {
+  id: string;
+  label: string;
+  href: string;
+  campaign: string;
+  clicks: number;
+  lastClicked: string;
+};
+
+export type DetailField = { key: string; value: string };
+
+export type WeeklyEngagement = { label: string; opens: number; clicks: number };
+
+export type SubscriberDetailView = {
+  subscriber: RichSubscriber;
+  attributes: Record<string, unknown>;
+  initials: string;
+  subscribedLabel: string;
+  score: number;
+  scoreTier: string;
+  openRate: number | null;
+  clickRate: number | null;
+  emailsSent: number;
+  bounces: number;
+  lastActiveLabel: string;
+  events: DetailEvent[];
+  campaigns: DetailCampaignRow[];
+  links: DetailLinkRow[];
+  fields: DetailField[];
+  weeks: WeeklyEngagement[];
+  /** "+6 vs. last month" from the weekly series; null when there is no activity. */
+  scoreDeltaLabel: string | null;
+  /** How recently they engaged, as a 0–100 meter width. */
+  recencyPct: number;
+  /** Sends per month over the subscription, e.g. "4.2 / mo". */
+  frequencyLabel: string;
+  frequencyPct: number;
+  /** Messages sent in the trailing 30 days (from the recent feed). */
+  sentLast30: number;
+  deliveryRate: number | null;
+  lastCampaignLabel: string;
+  /** Weekly opens/clicks per channel; absent for channels that track neither. */
+  weeksByChannel: Record<string, WeeklyEngagement[]>;
+  /** Send outcomes split by channel, for the detail view's channel selector. */
+  channelTotals: Record<ChannelType, ChannelTotals>;
+};
+
+function fmtAgo(iso?: string | null): string {
+  if (!iso) return '—';
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return '—';
+  const min = Math.max(0, Math.round((Date.now() - t) / 60000));
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min}m ago`;
+  if (min < 1440) return `${Math.round(min / 60)}h ago`;
+  if (min < 10080) return `${Math.round(min / 1440)}d ago`;
+  return new Date(t).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function fmtStamp(iso?: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+}
+
+function tenureLabel(createdAt?: string | null): string {
+  if (!createdAt) return '—';
+  const d = new Date(createdAt);
+  if (Number.isNaN(d.getTime())) return '—';
+  const joined = d.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+  const time = d.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  return `Subscribed ${joined} · ${time}`;
+}
+
+function initialsOf(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0] ?? '')
+    .join('')
+    .toUpperCase();
+}
+
+function eventFromMessage(m: NonNullable<ApiSubscriberActivity['recent']>[number]): DetailEvent {
+  const status = (m.status ?? '').toLowerCase();
+  let type: DetailEvent['type'];
+  let title: string;
+  if (status === 'read') {
+    type = 'open';
+    title = `Opened ${m.campaignName ?? 'message'}`;
+  } else if (status === 'failed' || status === 'rejected') {
+    type = 'life';
+    title = `Delivery issue on ${m.campaignName ?? 'message'}`;
+  } else {
+    type = 'send';
+    title = `Received ${m.campaignName ?? 'message'}`;
+  }
+  const channel = m.channel ? m.channel[0]!.toUpperCase() + m.channel.slice(1) : 'Email';
+  return {
+    id: m.id,
+    channel: (m.channel ?? 'email').toLowerCase(),
+    type,
+    title,
+    meta: `${channel} · ${status || 'sent'}`,
+    when: fmtAgo(m.at),
+    stamp: fmtStamp(m.at),
+  };
+}
+
+/**
+ * Engagement score from open and click rates.
+ *
+ * A COMPOSITE INDEX, not a measurement: 0.7 x open% + 1.2 x click%, capped at
+ * 100. The weights are a product judgement — a click is worth more than an open
+ * — and nothing in the database corresponds to this number. It exists to rank
+ * subscribers against each other, and should never be read as a percentage of
+ * anything. Its inputs are real: both rates divide tracked-channel reads/clicks
+ * by tracked-channel deliveries.
+ *
+ * Exported so the detail page can score a single channel with the same
+ * weighting the all-channel figure uses — a channel-filtered view must not show
+ * a score earned on another channel.
+ */
+export function engagementScore(openRate: number | null, clickRate: number | null): number {
+  if (openRate == null && clickRate == null) return 0;
+  return Math.min(100, Math.round((openRate ?? 0) * 0.7 + (clickRate ?? 0) * 1.2));
+}
+
+export function engagementTier(score: number): string {
+  if (score >= 75) return 'Highly engaged';
+  if (score >= 45) return 'Moderately engaged';
+  return score > 0 ? 'Low engagement' : 'No engagement yet';
+}
+
+/** Sends per month over tenure, plus a meter fill capped at ~8 / mo. */
+export function subscriberFrequency(
+  sent: number,
+  createdAt: string | null | undefined,
+): { label: string; pct: number } {
+  const tenureMonths = createdAt
+    ? Math.max(1, (Date.now() - new Date(createdAt).getTime()) / (30.44 * 86400000))
+    : 1;
+  const perMonth = Math.max(0, sent) / tenureMonths;
+  return {
+    label: `${perMonth >= 10 ? Math.round(perMonth) : perMonth.toFixed(1)} / mo`,
+    pct: Math.min(100, Math.round((perMonth / 8) * 100)),
+  };
+}
+
+function resultFor(status: string): { result: string; resultColor: string } {
+  const s = status.toLowerCase();
+  if (s === 'read') return { result: 'Opened', resultColor: '#16a34a' };
+  if (s === 'delivered' || s === 'sent' || s === 'submitted')
+    return { result: 'Delivered', resultColor: 'var(--text3)' };
+  if (s === 'failed' || s === 'rejected') return { result: 'Failed', resultColor: '#dc2626' };
+  return { result: s || '—', resultColor: 'var(--text3)' };
+}
+
+/** Build the detail view model from a rich subscriber + activity payload. */
+export function buildSubscriberDetailView(
+  subscriber: RichSubscriber,
+  activity: ApiSubscriberActivity | null | undefined,
+  attributes: Record<string, unknown> = {},
+): SubscriberDetailView {
+  const channels = activity?.channels ?? [];
+  // A subscriber's `sent` excludes failures, so attempted has to add them back
+  // — the campaign-side totals count the other way round.
+  const channelTotals: Record<ChannelType, ChannelTotals> = {
+    email: { ...EMPTY_TOTALS },
+    sms: { ...EMPTY_TOTALS },
+    whatsapp: { ...EMPTY_TOTALS },
+    voice: { ...EMPTY_TOTALS },
+  };
+  /* Per-channel totals for the KPI tiles. Source: /v1/subscribers/{id}/activity
+     `channels`, which the API counts in SQL over this subscriber's ENTIRE
+     message history — no window, no cap.
+
+     `attempted` is `sent + failed` because the API's `sent` counts only the
+     states that left successfully; adding failures back gives the one
+     denominator delivery rate and failure rate can share. (A campaign's
+     `recipients` already includes its failures — hence the different arithmetic
+     for the two sources, and the note on `attempted` in channel-kpis.ts.)
+
+     The API's `failed` is `FAILED_DELIVERY_STATES` — failed + expired — so the
+     sum now covers every dispatched message. It used to omit `expired`, which
+     subtracted an expired send from the record entirely rather than counting it
+     as the non-delivery it is: a tile reading "SENT 8 / DELIVERED 7 of 8" beside
+     an activity feed listing 9 rows, one of them `Email · expired`.
+
+     `cancelled` is still outside both, and belongs outside both: it is only
+     reachable before dispatch, so the message was never attempted. */
+  for (const c of channels) {
+    const t = channelTotals[c.channel as ChannelType];
+    if (!t) continue;
+    t.attempted += (c.sent ?? 0) + (c.failed ?? 0);
+    t.delivered += c.delivered ?? 0;
+    t.opened += c.read ?? 0;
+    t.clicked += c.clicked ?? 0;
+    t.failed += c.failed ?? 0;
+    t.failedPermanent += c.failedPermanent ?? 0;
+    t.complaints += c.complaints ?? 0;
+  }
+  const emailCh = channels.find((c) => c.channel === 'email');
+  const sent = channels.reduce((n, c) => n + (c.sent ?? 0), 0);
+  const allDelivered = channels.reduce((n, c) => n + (c.delivered ?? 0), 0);
+  // Open/click rates only make sense on channels that report engagement —
+  // folding SMS/voice deliveries into the denominator dilutes the score.
+  // Numerator and denominator are both restricted to the same two channels
+  // here, which is what makes this pairing honest (unlike stats.ts, audit #5).
+  // Null rather than 0 when nothing tracked was delivered: the engagement ring
+  // then renders "—" instead of claiming the person ignored us.
+  const tracked = channels.filter((c) => c.channel === 'email' || c.channel === 'whatsapp');
+  const trackedDelivered = tracked.reduce((n, c) => n + (c.delivered ?? 0), 0);
+  const opened = tracked.reduce((n, c) => n + (c.read ?? 0), 0);
+  const clicked = tracked.reduce((n, c) => n + (c.clicked ?? 0), 0);
+  const openRate =
+    trackedDelivered > 0 ? Math.round((opened / trackedDelivered) * 100) : null;
+  const clickRate =
+    trackedDelivered > 0 ? Math.round((clicked / trackedDelivered) * 100) : null;
+
+  const score = engagementScore(openRate, clickRate);
+  const scoreTier = engagementTier(score);
+
+  const recent = activity?.recent ?? [];
+  const events = recent.map(eventFromMessage);
+
+  const campaigns: DetailCampaignRow[] = recent.map((m) => {
+    const { result, resultColor } = resultFor(m.status);
+    return {
+      id: m.id,
+      name: m.campaignName ?? 'Untitled campaign',
+      channel: m.channel || 'email',
+      sentLabel: fmtStamp(m.at).split(',')[0] ?? fmtStamp(m.at),
+      opens: m.status === 'read' ? 1 : 0,
+      /* KNOWN DEFECT (audit #16): a hardcoded literal, not a derivation. The
+         activity payload carries no per-message click flag, so this column can
+         never be non-zero — while the KPI tile directly above the table reads
+         "CLICKED 14% · 1 of 7 delivered" from `channelTotals`, which does count
+         clicks. Two contradictory statements about the same subscriber, on one
+         screen. `links: []` below is the same defect: the "Clicked links" tab
+         renders 0 for a subscriber with a real click. */
+      clicks: 0,
+      result,
+      resultColor,
+    };
+  });
+
+  const fields: DetailField[] = Object.entries(attributes)
+    .filter(([k]) => k !== 'tags' && k !== 'notes')
+    .map(([key, value]) => ({
+      key,
+      value:
+        value == null || value === ''
+          ? '—'
+          : Array.isArray(value)
+            ? value.join(', ')
+            : String(value),
+    }));
+
+  const weeks: WeeklyEngagement[] =
+    activity?.weekly && activity.weekly.length > 0
+      ? activity.weekly.map((w) => ({
+          label: w.label,
+          opens: w.opens ?? 0,
+          clicks: w.clicks ?? 0,
+        }))
+      : Array.from({ length: 12 }, (_, i) => ({
+          label: `W${i + 1}`,
+          opens: 0,
+          clicks: 0,
+        }));
+
+  const weeksByChannel: Record<string, WeeklyEngagement[]> = {};
+  for (const [ch, series] of Object.entries(activity?.weeklyByChannel ?? {})) {
+    weeksByChannel[ch] = series.map((w) => ({
+      label: w.label,
+      opens: w.opens ?? 0,
+      clicks: w.clicks ?? 0,
+    }));
+  }
+
+  // Month-over-month movement from the weekly series: last 4 weeks vs the 4 before.
+  const sumWindow = (from: number, to: number) =>
+    weeks.slice(from, to).reduce((n, w) => n + w.opens + w.clicks, 0);
+  const last4 = sumWindow(weeks.length - 4, weeks.length);
+  const prev4 = sumWindow(weeks.length - 8, weeks.length - 4);
+  const scoreDeltaLabel =
+    last4 === 0 && prev4 === 0
+      ? null
+      : `${last4 - prev4 >= 0 ? '+' : '−'}${Math.abs(last4 - prev4)} vs. last month`;
+
+  /* `lastActiveAt` is the API's `max(coalesce(read_at, delivered_at, sent_at,
+     submitted_at, created_at))` over this subscriber's messages — a real
+     activity timestamp. The roster column of the same name reads THE SAME
+     field from the same expression (`withRelations` in workers subscribers.ts,
+     rendered at AppSubscribers.tsx), so the two surfaces agree by construction.
+     They did not while the column rendered the row's `updated_at`, and this
+     comment went on describing that state after the column was fixed.
+
+     No `?? subscriber.updatedAt` fallback any more, and that was the last of
+     the same confusion: `updated_at` is when the ROW was written, so a
+     subscriber who has never been messaged read "Last activity 5d ago" here —
+     ines.nilsen18@acme.io, 0 messages, `updated_at` 2026-08-12 — while the
+     roster and the drawer said "Never" about the same person. Null now means
+     "never messaged" and prints as such; `undefined` (the activity payload has
+     not arrived) still prints "—", because "never" is a claim and "not loaded
+     yet" is not.
+
+     `recencyPct` is a PRESENTATION FILL, not a measurement: five hardcoded bar
+     heights for five recency bands. The band boundaries are real (days since
+     last activity); the 94/72/45/20/8 are chosen so the meter reads well.
+     Same for `frequencyPct` below, which caps its meter at ~8 sends/month. */
+  const lastActiveAt = activity ? activity.lastActiveAt : undefined;
+  const ageDays = lastActiveAt
+    ? Math.max(0, (Date.now() - new Date(lastActiveAt).getTime()) / 86400000)
+    : Infinity;
+  const recencyPct =
+    ageDays <= 1 ? 94 : ageDays <= 7 ? 72 : ageDays <= 30 ? 45 : ageDays <= 90 ? 20 : 8;
+
+  const emailsSent = emailCh?.sent ?? sent;
+  const { label: frequencyLabel, pct: frequencyPct } = subscriberFrequency(
+    emailsSent,
+    subscriber.createdAt,
+  );
+
+  const sentLast30 = recent.filter((m) => {
+    const t = new Date(m.at).getTime();
+    return !Number.isNaN(t) && Date.now() - t <= 30 * 86400000;
+  }).length;
+
+  /* All-channel delivery rate: delivered / sent across every channel, since
+     delivery is the one outcome every channel reports. Null (rendering "—")
+     rather than 0 when nothing was sent.
+
+     Denominator caveat (audit #9): `sent` here is the API's status list, which
+     omits `expired` and `cancelled`, so both sides of this fraction are missing
+     the same messages and the rate reads higher than the truth — 88% where the
+     honest figure over 9 attempts is 78%. */
+  const deliveryRate = sent > 0 ? Math.round((allDelivered / sent) * 1000) / 10 : null;
+
+  return {
+    subscriber,
+    attributes,
+    initials: initialsOf(subscriber.name || subscriber.email),
+    subscribedLabel: tenureLabel(subscriber.createdAt),
+    score,
+    scoreTier,
+    openRate,
+    clickRate,
+    emailsSent,
+    /* Not a count of bounces — the subscriber's current STATUS rendered as a
+       0-or-1 tally. A contact who bounced three times and a contact who bounced
+       once both read "1"; one who bounced and was later reactivated reads "0".
+       The real per-channel figure is `failedPermanent` in `channelTotals`. */
+    bounces: subscriber.status === 'bounced' ? 1 : 0,
+    lastActiveLabel: activity ? (lastActiveAt ? fmtAgo(lastActiveAt) : 'Never') : '—',
+    events,
+    campaigns,
+    links: [],
+    fields,
+    weeks,
+    scoreDeltaLabel,
+    recencyPct:
+      Number.isFinite(ageDays) && (last4 > 0 || prev4 > 0 || emailsSent > 0) ? recencyPct : 0,
+    frequencyLabel,
+    frequencyPct,
+    sentLast30,
+    deliveryRate,
+    lastCampaignLabel: recent.length > 0 ? fmtStamp(recent[0]!.at) : '—',
+    channelTotals,
+    weeksByChannel,
+  };
+}
+
+export function scoreArcLength(score: number, radius = 41): string {
+  const c = 2 * Math.PI * radius;
+  const filled = (Math.max(0, Math.min(100, score)) / 100) * c;
+  return `${filled.toFixed(1)} 999`;
+}

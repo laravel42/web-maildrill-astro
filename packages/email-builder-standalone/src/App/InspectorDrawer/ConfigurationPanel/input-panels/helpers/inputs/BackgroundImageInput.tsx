@@ -31,7 +31,6 @@ import {
 } from '../../../../../../documents/editor/EditorContext';
 import { clearUnsplashCredit } from '../../../../../../documents/editor/unsplashCreditsStore';
 
-import AiImageGeneration from './ai-image-generation';
 import FieldContainer from './components/FieldContainer';
 import { INPUT_TEXTFIELD_SX } from './components/inputStyles';
 import Select from './components/Select';
@@ -67,11 +66,9 @@ interface BackgroundParams {
   size: BackgroundSize;
 }
 
-const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, styles?: unknown) => void }> = ({
-  defaultValue,
-  onChange,
-  values,
-}) => {
+const ImageInput: React.FC<
+  ImageInputProps & { onChange: (value: string | null, styles?: unknown) => void }
+> = ({ defaultValue, onChange, values }) => {
   const blockId = useSelectedBlockId();
   const { t } = useTranslation('inspector');
   const _theme = useTheme();
@@ -104,7 +101,8 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
     let repeat: BackgroundRepeat = 'no-repeat';
     if (backgroundValue.includes('repeat-x')) repeat = 'repeat-x';
     else if (backgroundValue.includes('repeat-y')) repeat = 'repeat-y';
-    else if (backgroundValue.includes('repeat') && !backgroundValue.includes('no-repeat')) repeat = 'repeat';
+    else if (backgroundValue.includes('repeat') && !backgroundValue.includes('no-repeat'))
+      repeat = 'repeat';
 
     // Extraer position
     let position: BackgroundPosition = 'center center';
@@ -143,11 +141,10 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
 
   // Estados
   const [value, setValue] = useState<string | null>(defaultValue || null);
-  const [backgroundParams, setBackgroundParams] = useState<BackgroundParams>(parseBackgroundValue(defaultValue));
+  const [backgroundParams, setBackgroundParams] = useState<BackgroundParams>(
+    parseBackgroundValue(defaultValue),
+  );
   const [isDragging, setIsDragging] = useState(false);
-  const [aiEnabled, setAiEnabled] = useState<boolean>(() => {
-    return Boolean((window as any).__emailBuilderEnableAI);
-  });
   const [, _setErrors] = useState<ZodError | null>(null);
   const [urlValue, setUrlValue] = useState<string>(parseBackgroundValue(defaultValue).url || '');
   const [isValidatingUrl, setIsValidatingUrl] = useState<boolean>(false);
@@ -190,7 +187,7 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
                 alt: null,
                 source: 'background',
               },
-            })
+            }),
           );
         }
       }, 100);
@@ -222,7 +219,8 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
     if (!url) return false;
     const urlLower = url?.toLowerCase();
     const isSvgUrl = urlLower.includes('.svg') || urlLower.includes('svg');
-    const isSvgContentType = contentType && (contentType.includes('image/svg+xml') || contentType.includes('svg'));
+    const isSvgContentType =
+      contentType && (contentType.includes('image/svg+xml') || contentType.includes('svg'));
     return isSvgUrl || Boolean(isSvgContentType);
   };
 
@@ -261,7 +259,7 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
         const validImageTypes = ['image/', 'image/svg+xml', 'text/xml', 'application/xml'];
 
         const isValidImageType = validImageTypes.some(
-          (type) => contentType && contentType.toLowerCase().includes(type.toLowerCase())
+          (type) => contentType && contentType.toLowerCase().includes(type.toLowerCase()),
         );
 
         if (!isValidImageType) {
@@ -355,7 +353,9 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
 
     const filesArray = Array.isArray(files) ? files : Array.from(files);
 
-    const validFiles = filesArray.filter((file) => validTypes.includes(file.type) && file.size <= maxSize);
+    const validFiles = filesArray.filter(
+      (file) => validTypes.includes(file.type) && file.size <= maxSize,
+    );
 
     if (validFiles.length !== filesArray.length) {
       alert(t('inputs.common.invalidFiles'));
@@ -369,7 +369,7 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
           const reader = new FileReader();
           reader.onload = (e) => resolve(e.target?.result as string);
           reader.readAsDataURL(file);
-        })
+        }),
     );
 
     Promise.all(readerPromises).then((results) => {
@@ -424,24 +424,6 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
     setIsSvgImage(false);
   };
 
-  // AI generation listener - separate from data-dependent effects
-  useEffect(() => {
-    const currentAI = (window as any).__emailBuilderEnableAI;
-    if (currentAI !== undefined) {
-      setAiEnabled(Boolean(currentAI));
-    }
-
-    const allowAIGeneration = (event: Event) => {
-      const { detail } = event as CustomEvent<boolean>;
-      setAiEnabled(Boolean(detail));
-    };
-
-    window.addEventListener('email-builder-ai-generation', allowAIGeneration);
-    return () => {
-      window.removeEventListener('email-builder-ai-generation', allowAIGeneration);
-    };
-  }, []);
-
   useEffect(() => {
     const setImage = (event: Event) => {
       const { detail } = event as CustomEvent<{ id: string; url: string; data: any; styles: any }>;
@@ -461,8 +443,9 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
     };
 
     const selectImage = (event: Event) => {
-      const detail = (event as CustomEvent<string | { id: string; url: string; data?: unknown; styles?: unknown }>)
-        .detail;
+      const detail = (
+        event as CustomEvent<string | { id: string; url: string; data?: unknown; styles?: unknown }>
+      ).detail;
       if (typeof detail === 'string') {
         if (!detail.includes('url(')) {
           updateBackgroundParams({ url: detail });
@@ -540,7 +523,11 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
         )}
       </Box>
 
-      <SourceImagePreview imageUrl={backgroundParams.url || null} blockId={blockId} onRemove={resetBackground} />
+      <SourceImagePreview
+        imageUrl={backgroundParams.url || null}
+        blockId={blockId}
+        onRemove={resetBackground}
+      />
 
       <ImageSourceTabs
         tabs={[
@@ -586,7 +573,11 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
                             position: 'relative',
                           }}
                         >
-                          {isValidatingUrl ? <CircularProgress size={20} color="inherit" /> : t('inputs.common.add')}
+                          {isValidatingUrl ? (
+                            <CircularProgress size={20} color="inherit" />
+                          ) : (
+                            t('inputs.common.add')
+                          )}
                         </Button>
                       </Stack>
 
@@ -686,7 +677,10 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
                       >
                         {t('inputs.common.uploadFile')}
                       </Typography>
-                      <Typography component="span" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>
+                      <Typography
+                        component="span"
+                        sx={{ fontWeight: 'bold', color: 'text.secondary' }}
+                      >
                         {' '}
                         {t('inputs.common.dragAndDrop')}
                       </Typography>
@@ -698,12 +692,6 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
                 )}
               </Stack>
             ),
-          },
-          {
-            key: 'generate',
-            label: t('inputs.tabs.generate'),
-            visible: aiEnabled,
-            render: () => <AiImageGeneration src={backgroundParams.url} style={{ width: '100%', margin: 0 }} />,
           },
         ]}
         defaultTab="upload"
@@ -727,19 +715,40 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
               fullWidth
             >
               <ToggleButton value="cover">
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 0.75,
+                  }}
+                >
                   <Crop fontSize="small" />
                   <span>{t('inputs.backgroundImage.fillOptions.cover')}</span>
                 </Box>
               </ToggleButton>
               <ToggleButton value="contain">
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 0.75,
+                  }}
+                >
                   <FitScreen fontSize="small" />
                   <span>{t('inputs.backgroundImage.fillOptions.contain')}</span>
                 </Box>
               </ToggleButton>
               <ToggleButton value="auto">
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 0.75,
+                  }}
+                >
                   <AspectRatio fontSize="small" />
                   <span>{t('inputs.backgroundImage.fillOptions.auto')}</span>
                 </Box>
@@ -755,12 +764,22 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
                 style={{ width: '100%' }}
                 value={backgroundParams.repeat}
                 size="small"
-                onChange={(e) => updateBackgroundParams({ repeat: e.target.value as BackgroundRepeat })}
+                onChange={(e) =>
+                  updateBackgroundParams({ repeat: e.target.value as BackgroundRepeat })
+                }
               >
-                <MenuItem value="no-repeat">{t('inputs.backgroundImage.repeatOptions.none')}</MenuItem>
-                <MenuItem value="repeat">{t('inputs.backgroundImage.repeatOptions.repeat')}</MenuItem>
-                <MenuItem value="repeat-x">{t('inputs.backgroundImage.repeatOptions.repeatX')}</MenuItem>
-                <MenuItem value="repeat-y">{t('inputs.backgroundImage.repeatOptions.repeatY')}</MenuItem>
+                <MenuItem value="no-repeat">
+                  {t('inputs.backgroundImage.repeatOptions.none')}
+                </MenuItem>
+                <MenuItem value="repeat">
+                  {t('inputs.backgroundImage.repeatOptions.repeat')}
+                </MenuItem>
+                <MenuItem value="repeat-x">
+                  {t('inputs.backgroundImage.repeatOptions.repeatX')}
+                </MenuItem>
+                <MenuItem value="repeat-y">
+                  {t('inputs.backgroundImage.repeatOptions.repeatY')}
+                </MenuItem>
               </Select>
             </div>
 
@@ -770,11 +789,15 @@ const ImageInput: React.FC<ImageInputProps & { onChange: (value: string | null, 
                 style={{ width: '100%' }}
                 value={backgroundParams.position}
                 size="small"
-                onChange={(e) => updateBackgroundParams({ position: e.target.value as BackgroundPosition })}
+                onChange={(e) =>
+                  updateBackgroundParams({ position: e.target.value as BackgroundPosition })
+                }
                 renderValue={(v) => {
                   const value = String(v ?? '');
                   return (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, paddingRight: '1rem' }}>
+                    <Box
+                      sx={{ display: 'flex', alignItems: 'center', gap: 1, paddingRight: '1rem' }}
+                    >
                       {getPositionIcon(value)}
                       {t(`inputs.backgroundImage.positions.${getPositionI18nKey(value)}`)}
                     </Box>

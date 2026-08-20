@@ -23,7 +23,10 @@ export function toScheduleTime(d: Date): ScheduleTime {
 }
 
 /** Default when the user picks "Schedule for later": tomorrow at 9:00 AM local. */
-export function defaultScheduledParts(now = new Date()): { date: ScheduleDate; time: ScheduleTime } {
+export function defaultScheduledParts(now = new Date()): {
+  date: ScheduleDate;
+  time: ScheduleTime;
+} {
   const d = new Date(now);
   d.setDate(d.getDate() + 1);
   d.setHours(9, 0, 0, 0);
@@ -31,7 +34,9 @@ export function defaultScheduledParts(now = new Date()): { date: ScheduleDate; t
 }
 
 /** Parse an ISO timestamp into local date/time parts. */
-export function partsFromScheduledAt(iso: string | null | undefined): { date: ScheduleDate; time: ScheduleTime } | null {
+export function partsFromScheduledAt(
+  iso: string | null | undefined,
+): { date: ScheduleDate; time: ScheduleTime } | null {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
@@ -86,7 +91,10 @@ export function monthLabel(year: number, month: number): string {
   return new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
-export function calendarCells(year: number, month: number): Array<{ date: ScheduleDate; inMonth: boolean }> {
+export function calendarCells(
+  year: number,
+  month: number,
+): Array<{ date: ScheduleDate; inMonth: boolean }> {
   const first = new Date(year, month, 1);
   const startPad = first.getDay();
   const cells: Array<{ date: ScheduleDate; inMonth: boolean }> = [];
@@ -99,7 +107,11 @@ export function calendarCells(year: number, month: number): Array<{ date: Schedu
   return cells;
 }
 
-export function partsFromDateString(date: ScheduleDate): { year: number; month: number; day: number } {
+export function partsFromDateString(date: ScheduleDate): {
+  year: number;
+  month: number;
+  day: number;
+} {
   const [y, m, d] = date.split('-').map(Number);
   return { year: y, month: m - 1, day: d };
 }

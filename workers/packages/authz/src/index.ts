@@ -1,21 +1,20 @@
-import { timingSafeEqual } from "node:crypto";
-import type { FastifyReply, FastifyRequest } from "fastify";
-import { config } from "@maildrill/config";
-import { ensureTenantByName } from "@maildrill/services";
-import { verifyJwtHS256 } from "./jwt";
-import { emitAuthCache, emitAuthGate } from "./observers";
+import { timingSafeEqual } from 'node:crypto';
+import type { FastifyReply, FastifyRequest } from 'fastify';
+import { config } from '@maildrill/config';
+import { ensureTenantByName, matchWorkspaceApiKey } from '@maildrill/services';
+import { verifyJwtHS256 } from './jwt';
+import { emitAuthCache, emitAuthGate } from './observers';
 
-export { verifyJwtHS256 } from "./jwt";
-export type { JwtClaims } from "./jwt";
+export { verifyJwtHS256 } from './jwt';
+export type { JwtClaims } from './jwt';
 export {
   setAuthGateSink,
   setAuthCacheSink,
   type AuthGateEvent,
   type AuthCacheEvent,
-} from "./observers";
+} from './observers';
 
-
-declare module "fastify" {
+declare module 'fastify' {
   interface FastifyRequest {
     /** Tenant resolved by the auth preHandler; always set on protected routes. */
     tenantId: string;
@@ -23,6 +22,10 @@ declare module "fastify" {
     userId?: string;
     /** Membership role carried in the session JWT, when present. */
     role?: string;
+    /** Auth.js session row id (`auth_sessions.id`), when the JWT carries one. */
+    sessionId?: string;
+    /** Login instant (unix seconds) from the Auth.js JWT, when present. */
+    authTime?: number;
   }
 }
 
@@ -30,6 +33,8 @@ export interface AuthContext {
   tenantId: string;
   userId?: string;
   role?: string;
+  sessionId?: string;
+  authTime?: number;
 }
 
 const tenantCache = new Map<string, string>();
@@ -43,82 +48,83 @@ function safeEqual(a: string, b: string): boolean {
 async function tenantForApiKey(keyId: string): Promise<string> {
   const cached = tenantCache.get(keyId);
   if (cached) {
-    emitAuthCache({ type: "hit", key: `api-key:${keyId}`, value: cached });
+    emitAuthCache({ type: 'hit', key: `api-key:${keyId}`, value: cached });
     return cached;
   }
-  emitAuthCache({ type: "miss", key: `api-key:${keyId}` });
+  emitAuthCache({ type: 'miss', key: `api-key:${keyId}` });
   const tenant = await ensureTenantByName(keyId);
   tenantCache.set(keyId, tenant.id);
-  emitAuthCache({ type: "set", key: `api-key:${keyId}`, value: tenant.id });
+  emitAuthCache({ type: 'set', key: `api-key:${keyId}`, value: tenant.id });
   return tenant.id;
 }
 
-function matchApiKey(pair: string): Promise<string> | null {
-  const idx = pair.indexOf(":");
+async function matchApiKey(pair: string): Promise<string | null> {
+  const idx = pair.indexOf(':');
   if (idx === -1) return null;
   const id = pair.slice(0, idx);
   const secret = pair.slice(idx + 1);
   const match = config.auth.apiKeys.find((k) => k.id === id);
   if (match && safeEqual(secret, match.secret)) return tenantForApiKey(id);
-  return null;
+  // Env pairs are the ops fallback; workspace-created keys (Settings → API
+  // keys, `mk_…` ids) live in the database and are revocable per tenant.
+  return matchWorkspaceApiKey(pair);
 }
 
-type AuthMethod = "api-key" | "jwt" | "bearer-api-key" | "none";
+type AuthMethod = 'api-key' | 'jwt' | 'bearer-api-key' | 'none';
 
 async function resolveAuth(
   req: FastifyRequest,
 ): Promise<{ ctx: AuthContext; method: AuthMethod } | null> {
-  const apiKey = req.headers["x-api-key"];
-  if (typeof apiKey === "string") {
+  const apiKey = req.headers['x-api-key'];
+  if (typeof apiKey === 'string') {
     const tenantId = await matchApiKey(apiKey);
-    return tenantId ? { ctx: { tenantId }, method: "api-key" } : null;
+    return tenantId ? { ctx: { tenantId }, method: 'api-key' } : null;
   }
 
   const auth = req.headers.authorization;
-  if (typeof auth === "string" && auth.startsWith("Bearer ")) {
+  if (typeof auth === 'string' && auth.startsWith('Bearer ')) {
     const token = auth.slice(7).trim();
-    if (token.split(".").length === 3) {
+    if (token.split('.').length === 3) {
       try {
         const claims = verifyJwtHS256(token, config.auth.jwtSecret);
-        if (typeof claims.tenantId !== "string") return null;
+        if (typeof claims.tenantId !== 'string') return null;
         return {
           ctx: {
             tenantId: claims.tenantId,
-            userId: typeof claims.userId === "string" ? claims.userId : undefined,
-            role: typeof claims.role === "string" ? claims.role : undefined,
+            userId: typeof claims.userId === 'string' ? claims.userId : undefined,
+            role: typeof claims.role === 'string' ? claims.role : undefined,
+            sessionId: typeof claims.sessionId === 'string' ? claims.sessionId : undefined,
+            authTime: typeof claims.authTime === 'number' ? claims.authTime : undefined,
           },
-          method: "jwt",
+          method: 'jwt',
         };
       } catch {
         return null;
       }
     }
     const tenantId = await matchApiKey(token);
-    return tenantId ? { ctx: { tenantId }, method: "bearer-api-key" } : null;
+    return tenantId ? { ctx: { tenantId }, method: 'bearer-api-key' } : null;
   }
   return null;
 }
 
 /** Fastify preHandler: authenticate the caller and attach tenant/user context. */
-export async function authenticate(
-  req: FastifyRequest,
-  reply: FastifyReply,
-): Promise<void> {
+export async function authenticate(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   const resolved = await resolveAuth(req);
   if (!resolved) {
     emitAuthGate({
-      ability: "authenticate",
-      result: "denied",
-      method: "none",
+      ability: 'authenticate',
+      result: 'denied',
+      method: 'none',
       path: req.url,
     });
-    await reply.code(401).send({ error: "unauthorized" });
+    await reply.code(401).send({ error: 'unauthorized' });
     return;
   }
   const { ctx, method } = resolved;
   emitAuthGate({
-    ability: "authenticate",
-    result: "allowed",
+    ability: 'authenticate',
+    result: 'allowed',
     method,
     tenantId: ctx.tenantId,
     userId: ctx.userId,
@@ -127,4 +133,6 @@ export async function authenticate(
   req.tenantId = ctx.tenantId;
   req.userId = ctx.userId;
   req.role = ctx.role;
+  req.sessionId = ctx.sessionId;
+  req.authTime = ctx.authTime;
 }

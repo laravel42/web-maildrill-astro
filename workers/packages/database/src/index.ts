@@ -1,6 +1,6 @@
-export * from "./client";
-export * from "./types";
-export * as schema from "./schema";
+export * from './client';
+export * from './types';
+export * as schema from './schema';
 export {
   tenants,
   providerAccounts,
@@ -13,6 +13,8 @@ export {
   usageRecords,
   deadLetters,
   subscribers,
+  subscriberEngagement,
+  subscriberStatusEnum,
   customFieldDefs,
   lists,
   listMembers,
@@ -25,4 +27,26 @@ export {
   users,
   memberships,
   magicLinkTokens,
-} from "./schema";
+  apiKeys,
+  emailDomains,
+  authSessions,
+  passkeys,
+  webauthnChallenges,
+  userTotp,
+  recoveryCodes,
+  trustedDevices,
+  authTickets,
+  securityEvents,
+  wallets,
+  walletTransactions,
+  creditReservations,
+  creditPackages,
+  pricingTiers,
+  channelPricing,
+  stripeEvents,
+  paymentAttempts,
+  paymentCustomers,
+  billingUsageRequests,
+  billingUsageLines,
+  creditRecharges,
+} from './schema';

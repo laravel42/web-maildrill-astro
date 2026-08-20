@@ -1,0 +1,109 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { serviceBaseUrl } from '@/lib/server/service';
+
+export const prerender = false;
+
+/*
+ * Public "view in browser" page.
+ *
+ * The body is workspace-authored HTML, so it is never injected into this
+ * document: it goes into a sandboxed iframe with no allow-scripts and no
+ * allow-same-origin, which keeps a campaign's markup from reaching this origin,
+ * its cookies or its DOM.
+ */
+const token = Astro.url.searchParams.get('t') ?? '';
+let email: { subject: string; html: string } | null = null;
+
+if (token) {
+  try {
+    const res = await fetch(`${serviceBaseUrl()}/v1/public/webview`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    if (res.ok) email = (await res.json()) as { subject: string; html: string };
+  } catch {
+    // Treated the same as an unresolvable token — the page must not report
+    // whether the backend is reachable.
+  }
+}
+
+const seo = {
+  title: email?.subject || 'View email',
+  description: 'View this email in your browser.',
+  noindex: true,
+};
+---
+
+<BaseLayout seo={seo}>
+  {
+    email ? (
+      <main class="wv">
+        {email.subject && <h1 class="wv__subject">{email.subject}</h1>}
+        <iframe
+          class="wv__frame"
+          title={email.subject || 'Email'}
+          sandbox=""
+          srcdoc={email.html}
+          loading="lazy"
+        />
+      </main>
+    ) : (
+      <main class="wv wv--empty">
+        <div class="wv__card">
+          <h1 class="wv__h1">Email not available</h1>
+          <p class="wv__p">
+            This link is invalid or has expired. Check the original email for an up-to-date link.
+          </p>
+        </div>
+      </main>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .wv {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px 64px;
+  }
+  .wv__subject {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    color: var(--text2);
+    margin: 0 0 16px;
+  }
+  .wv__frame {
+    width: 100%;
+    min-height: 80vh;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #fff;
+  }
+  .wv--empty {
+    min-height: 70vh;
+    display: grid;
+    place-items: center;
+  }
+  .wv__card {
+    max-width: 460px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+  }
+  .wv__h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 10px;
+  }
+  .wv__p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text3);
+    margin: 0;
+  }
+</style>

@@ -33,7 +33,7 @@ function ConfigurationPanelInner() {
       if (!selectedBlockId) return;
       atomicUpdateBlock(selectedBlockId, () => conf);
     },
-    [selectedBlockId]
+    [selectedBlockId],
   );
 
   // When no block is selected the inspector falls back to the StylesPanel
@@ -46,32 +46,86 @@ function ConfigurationPanelInner() {
   }
 
   if (!block) {
-    return renderMessage(`Block with id ${selectedBlockId} was not found. Click on a block to reset.`);
+    return renderMessage(
+      `Block with id ${selectedBlockId} was not found. Click on a block to reset.`,
+    );
   }
 
   const { data, type } = block;
 
   switch (type) {
     case 'Button':
-      return <ButtonSidebarPanel key={selectedBlockId} data={data} setData={(data) => setBlock({ type, data })} />;
+      return (
+        <ButtonSidebarPanel
+          key={selectedBlockId}
+          data={data}
+          setData={(data) => setBlock({ type, data })}
+        />
+      );
     case 'ColumnsContainer':
       return (
-        <ColumnsContainerSidebarPanel key={selectedBlockId} data={data} setData={(data) => setBlock({ type, data })} />
+        <ColumnsContainerSidebarPanel
+          key={selectedBlockId}
+          data={data}
+          setData={(data) => setBlock({ type, data })}
+        />
       );
     case 'Container':
-      return <ContainerSidebarPanel key={selectedBlockId} data={data} setData={(data) => setBlock({ type, data })} />;
+      return (
+        <ContainerSidebarPanel
+          key={selectedBlockId}
+          data={data}
+          setData={(data) => setBlock({ type, data })}
+        />
+      );
     case 'Divider':
-      return <DividerSidebarPanel key={selectedBlockId} data={data} setData={(data) => setBlock({ type, data })} />;
+      return (
+        <DividerSidebarPanel
+          key={selectedBlockId}
+          data={data}
+          setData={(data) => setBlock({ type, data })}
+        />
+      );
     case 'Image':
-      return <ImageSidebarPanel key={selectedBlockId} data={data} setData={(data) => setBlock({ type, data })} />;
+      return (
+        <ImageSidebarPanel
+          key={selectedBlockId}
+          data={data}
+          setData={(data) => setBlock({ type, data })}
+        />
+      );
     case 'EmailLayout':
-      return <EmailLayoutSidebarPanel key={selectedBlockId} data={data} setData={(data) => setBlock({ type, data })} />;
+      return (
+        <EmailLayoutSidebarPanel
+          key={selectedBlockId}
+          data={data}
+          setData={(data) => setBlock({ type, data })}
+        />
+      );
     case 'Spacer':
-      return <SpacerSidebarPanel key={selectedBlockId} data={data} setData={(data) => setBlock({ type, data })} />;
+      return (
+        <SpacerSidebarPanel
+          key={selectedBlockId}
+          data={data}
+          setData={(data) => setBlock({ type, data })}
+        />
+      );
     case 'NotionText':
-      return <NotionTextSidebarPanel key={selectedBlockId} data={data} setData={(data) => setBlock({ type, data })} />;
+      return (
+        <NotionTextSidebarPanel
+          key={selectedBlockId}
+          data={data}
+          setData={(data) => setBlock({ type, data })}
+        />
+      );
     case 'SocialMedia':
-      return <SocialMediaSidebarPanel key={selectedBlockId} data={data} setData={(data) => setBlock({ type, data })} />;
+      return (
+        <SocialMediaSidebarPanel
+          key={selectedBlockId}
+          data={data}
+          setData={(data) => setBlock({ type, data })}
+        />
+      );
     default:
       return <pre>{JSON.stringify(block, null, '  ')}</pre>;
   }

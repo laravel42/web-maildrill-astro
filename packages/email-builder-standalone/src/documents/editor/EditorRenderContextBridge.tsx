@@ -57,6 +57,7 @@ export default function EditorRenderContextBridge({ children }: { children: Reac
  */
 function reportImageAutoWidth(blockId: string, width: number) {
   const block = editorStateStore.getState().document[blockId];
-  const currentProps = (block?.data as { props?: Record<string, unknown> } | undefined)?.props ?? {};
+  const currentProps =
+    (block?.data as { props?: Record<string, unknown> } | undefined)?.props ?? {};
   updateBlockProps(blockId, { ...currentProps, width });
 }

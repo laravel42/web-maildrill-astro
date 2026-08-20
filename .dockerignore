@@ -1,0 +1,33 @@
+# Dependencies and build output are produced inside the image.
+node_modules
+**/node_modules
+dist
+.astro
+**/.astro
+
+# Never bake secrets into layers; env_file/build args supply them.
+.env
+.env.*
+!.env.example
+
+.git
+.github
+.vscode
+.claude
+.cursor
+
+coverage
+playwright-report
+test-results
+presentation-out
+
+# Local design/dev artefacts — not needed at runtime.
+design/screenshots
+design/uploads
+**/*.mp4
+**/*.webm
+**/*.mp3
+
+Dockerfile
+docker-compose.yml
+deploy

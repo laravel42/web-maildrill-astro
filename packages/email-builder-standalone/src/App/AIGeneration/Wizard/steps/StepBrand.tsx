@@ -17,7 +17,10 @@ export default function StepBrand({ brief, patch }: Props) {
   const { t } = useTranslation('aiWizard');
   const es = brief.email_strategy;
 
-  const purposeOptions = PURPOSE_CHIPS.map((v) => ({ value: v, label: t(`steps.step01.purpose.${v}`) }));
+  const purposeOptions = PURPOSE_CHIPS.map((v) => ({
+    value: v,
+    label: t(`steps.step01.purpose.${v}`),
+  }));
 
   return (
     <WizardStep title={t('steps.stepBrand.title')}>

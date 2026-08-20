@@ -3,15 +3,43 @@ import BaseLayout from './BaseLayout.astro';
 import AppShell from '@/components/react/AppShell';
 import '@/styles/app.css';
 import type { PageSeo } from '@/config/seo';
+import { mintServiceToken, serviceBaseUrl } from '@/lib/server/service';
 
 interface Props {
   title: string;
+  /** Optional trail after the workspace name in the shell topbar. */
+  crumbs?: { label: string; href?: string }[];
   seo?: PageSeo;
 }
 
-const { title, seo } = Astro.props;
+const { title, crumbs, seo } = Astro.props;
 const userEmail = Astro.locals.session?.user?.email ?? null;
 const userName = Astro.locals.session?.user?.name ?? null;
+let userDisplayName: string | null = null;
+
+// Prefer profile display name from /v1/me over session full name for the shell.
+if (Astro.locals.session?.user?.id && Astro.locals.session.activeTenantId) {
+  try {
+    const token = mintServiceToken({
+      userId: Astro.locals.session.user.id,
+      activeTenantId: Astro.locals.session.activeTenantId,
+      role: Astro.locals.session.role,
+    });
+    const res = await fetch(`${serviceBaseUrl()}/v1/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      const me = (await res.json()) as {
+        user?: { preferences?: { displayName?: unknown } };
+      };
+      const dn = me.user?.preferences?.displayName;
+      if (typeof dn === 'string' && dn.trim()) userDisplayName = dn.trim();
+    }
+  } catch {
+    /* session name / email remain as fallback */
+  }
+}
+
 const pageSeo: PageSeo = seo ?? {
   title: `${title} · Workspace`,
   description: 'Maildrill campaign workspace.',
@@ -33,8 +61,10 @@ const pageSeo: PageSeo = seo ?? {
     client:idle
     currentPath={Astro.url.pathname}
     title={title}
+    crumbs={crumbs}
     userEmail={userEmail}
     userName={userName}
+    userDisplayName={userDisplayName}
   >
     <slot />
   </AppShell>

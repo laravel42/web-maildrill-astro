@@ -3,13 +3,26 @@
 .tablecard {
   overflow: visible;
 }
+.headActions {
+  display: flex;
+  gap: 10px;
+  flex: none;
+  flex-wrap: wrap;
+}
 .toolbar {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
   padding: 14px 19px;
   border-bottom: 1px solid var(--divider);
+}
+.toolbarRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
+  row-gap: 10px;
+  width: 100%;
 }
 .spacer {
   flex: 1;
@@ -39,7 +52,7 @@
 }
 
 .grid {
-  grid-template-columns: 2fr 0.9fr 1.1fr 1.2fr 0.8fr;
+  grid-template-columns: 1.8fr 1.2fr 0.85fr 0.9fr 0.8fr 0.95fr 0.75fr;
   column-gap: 16px;
 }
 .grid:global(.athead) {
@@ -68,6 +81,10 @@
 }
 .growth {
   font-weight: 500;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .muted {
   color: var(--muted);
@@ -75,6 +92,96 @@
 }
 .muted3 {
   color: var(--text3);
+}
+.gdprCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gdprCheck {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--success);
+}
+/* Same badge the subscriber drawer uses — kept for the list drawer. */
+.gdprBadge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 4px 7px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  background: transparent;
+  color: #6d28d9;
+  white-space: nowrap;
+}
+:global([data-theme='dark']) .gdprBadge {
+  color: #c4b5fd;
+}
+.gdprBadgeCheck {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #16a34a;
+  color: #fff;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.colCenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+/* Escape the header's uppercase transform for unit abbreviations like "1w". */
+.keepCase {
+  text-transform: none;
+}
+.grid:global(.athead) > .colCenter button {
+  width: 100%;
+  justify-content: center;
+}
+.numCell {
+  color: var(--text3);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dateCell {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tagcell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+.tag {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.dash {
+  color: var(--muted);
 }
 
 /* footer / pagination — matches the Templates & Subscribers list UX */
@@ -125,96 +232,172 @@
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(262px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 14px;
   padding: 16px 19px;
 }
 .card {
+  /* Overridden inline per card with the list's color; transparent keeps the
+     shared .card base (cardNew) glow-free. */
+  --list-color: transparent;
   text-align: left;
-  padding: 18px 19px;
+  padding: 14px 16px 12px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  gap: 0;
   background: var(--surface);
+  min-height: 0;
+}
+/* Inner wash in the list's own color; elevation stays neutral. Scoped under
+   .cards so it outranks the flat .acrd shadow and the .acrd--hover:hover lift
+   without !important. */
+.cards .card {
+  box-shadow:
+    0 1px 2px rgba(30, 27, 22, 0.04),
+    inset 0 0 28px -8px color-mix(in srgb, var(--list-color) 22%, transparent);
+}
+.cards .card:hover {
+  box-shadow:
+    var(--shadow-md),
+    inset 0 0 34px -8px color-mix(in srgb, var(--list-color) 30%, transparent);
+}
+.cards .card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-tint);
+  border-color: var(--accent);
 }
 .cardTop {
   display: flex;
   align-items: center;
-  gap: 9px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+/* List identity mark — a deliberate swatch, not a stray bullet. The inset
+   ring keeps pale list colors legible on the card surface. */
+.cardDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  flex: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 14%, transparent);
 }
 .cardName {
-  font-size: 14.5px;
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
   font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Period growth rate — soft chip so it doesn't fight the count. */
+.cardPct {
+  flex: none;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  padding: 3px 7px;
+  border-radius: 999px;
+  line-height: 1.2;
+}
+.cardStat {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
 .cardNum {
+  flex: none;
   font-size: 24px;
   font-weight: 600;
-  letter-spacing: -0.5px;
-  line-height: 1.1;
+  letter-spacing: -0.6px;
+  line-height: 1;
+  color: var(--text);
 }
-.cardSublabel {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 2px;
-}
-.cardGrowth {
-  font-size: 11.5px;
+.cardStatLabel {
+  font-size: 12.5px;
   font-weight: 500;
-  margin-top: 8px;
+  /* text4, not muted: 12.5px informational text must clear the contrast floor. */
+  color: var(--text4);
 }
-.cardMeta {
-  display: flex;
-  flex-direction: column;
+/* Channel marks close the count row. Icon-only tiles: four labelled pills would
+   crowd a 292px card, and the drawer already spells the channels out. */
+.cardChans {
+  margin-left: auto;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
   gap: 3px;
-  margin-top: 10px;
-  font-size: 12px;
-  color: var(--muted);
+}
+/* Table column runs the same tiles, so cards and rows read as one language. */
+.chanCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+.chanTile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
 }
 .cardFoot {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 14px;
-  padding-top: 13px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 2px;
+  padding-top: 10px;
   border-top: 1px solid var(--divider);
-}
-.avatars {
-  display: flex;
-}
-.avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2px solid var(--surface);
-  margin-left: -8px;
-}
-.avatar:first-child {
-  margin-left: 0;
-}
-.more {
   font-size: 11.5px;
-  color: var(--muted);
+  color: var(--text4);
+}
+.cardJoin {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--text3);
+}
+.cardUpdated {
+  flex: none;
 }
 .cardNew {
   align-items: center;
   justify-content: center;
   gap: 8px;
   flex-direction: row;
-  min-height: 170px;
+  min-height: 132px;
   border: 1.5px dashed var(--border2);
   border-radius: 16px;
   box-shadow: none;
   color: var(--text4);
   font-size: 13px;
   font-weight: 600;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
 }
 .cardNew:hover {
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-text);
+  background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+}
+/* Re-assert after the .cards .card glow rules, which otherwise outrank the
+   single-class .cardNew and would shadow the dashed create tile. */
+.cards .cardNew,
+.cards .cardNew:hover {
+  box-shadow: none;
 }
 .newplus {
   display: inline-flex;
@@ -251,17 +434,17 @@
 
 @media (max-width: 900px) {
   .grid {
-    grid-template-columns: 1.8fr 1fr 1fr 0.8fr;
+    grid-template-columns: 1.6fr 1.2fr 0.9fr 0.9fr 0.8fr;
   }
-  .grid > :nth-child(4) {
+  .grid > :nth-child(5) {
     display: none;
   }
 }
 @media (max-width: 620px) {
   .grid {
-    grid-template-columns: 1.6fr 1fr 0.9fr;
+    grid-template-columns: 1.5fr 1.1fr 0.9fr 0.85fr;
   }
-  .grid > :nth-child(5) {
+  .grid > :nth-child(6) {
     display: none;
   }
 }
@@ -291,24 +474,25 @@
 }
 
 .dIdentity {
-  display: flex;
-  align-items: center;
-  gap: 11px;
   margin-bottom: 18px;
-}
-.dDot {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  flex: none;
 }
 .dIdtext {
   min-width: 0;
 }
+.dNameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
 .dName {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
   font-size: 18px;
   font-weight: 600;
   letter-spacing: -0.3px;
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -321,11 +505,11 @@
 
 /* Tags editor — identical UX to the subscriber drawer. */
 .dTagsSection {
-  margin-bottom: 22px;
+  margin-bottom: 14px;
 }
 .dTagsEyebrow {
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .dTags {
   display: flex;
@@ -338,7 +522,7 @@
   align-items: center;
   gap: 2px;
   padding: 3px 4px 3px 10px;
-  border-radius: 20px;
+  border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
 }
@@ -362,7 +546,7 @@
 .dTagin {
   border: 1px dashed var(--border2);
   background: none;
-  border-radius: 20px;
+  border-radius: 4px;
   padding: 4px 10px;
   font-size: 11px;
   color: var(--text2);
@@ -374,27 +558,8 @@
 }
 
 .dStats {
-  display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 11px;
   margin-bottom: 20px;
-}
-.dStat {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 13px 15px;
-}
-.dStatLbl {
-  font-size: 11px;
-  color: var(--muted);
-  font-weight: 500;
-}
-.dStatVal {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
-  margin-top: 6px;
 }
 
 .dTrend {
@@ -428,83 +593,45 @@
   color: var(--muted);
 }
 
-.dEyebrow {
-  margin: 0 0 10px;
+.dColorSection {
+  margin-bottom: 14px;
 }
-.dEng {
+.dColorEyebrow {
+  display: block;
   margin-bottom: 8px;
 }
-
-.dCamps {
+.dSwatches {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
-.dCamp {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 11px;
-}
-.dCampDot {
-  width: 8px;
-  height: 8px;
+.dSwatch {
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  flex: none;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+  transition:
+    box-shadow 0.12s var(--ease-out),
+    transform 0.12s var(--ease-out);
 }
-.dCampText {
-  flex: 1;
-  min-width: 0;
+.dSwatch:hover {
+  transform: scale(1.08);
 }
-.dCampName {
-  font-size: 13px;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.dCampSub {
-  font-size: 11.5px;
-  color: var(--muted);
-  margin-top: 1px;
-}
-.dCampOpen {
-  text-align: right;
-  flex: none;
-}
-.dCampOpenval {
-  font-size: 13px;
-  font-weight: 600;
-  display: block;
-}
-.dCampOpenlbl {
-  font-size: 10.5px;
-  color: var(--muted);
+.dSwatchOn {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px currentColor;
 }
 
 .dNoteshead {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin: 24px 0 10px;
-}
-.dSavenote {
-  padding: 5px 11px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  background: var(--surface2);
-  color: var(--muted);
-  border: none;
-  transition:
-    background var(--duration-fast) var(--ease-out),
-    color var(--duration-fast) var(--ease-out);
-}
-.dSavenote.isDirty {
-  background: var(--accent);
-  color: #fff;
+  gap: 10px;
+  min-height: 24px;
+  margin: 0 0 8px;
 }
 .dNotes {
   width: 100%;
@@ -522,4 +649,68 @@
 }
 .dNotes:focus {
   border-color: var(--accent);
+}
+
+/* Secondary figure under a drawer stat — the mailable count sitting below the
+   total membership, so the gap between the two is visible before a send. */
+.dStatSub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: -2px;
+}
+
+/* Channel tab bar — same treatment as the campaigns and subscribers tables. */
+.tabs {
+  gap: 20px;
+  padding: 0 19px;
+  border-bottom: 1px solid var(--divider);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+.tabs :global(.atab) {
+  padding: 14px 0 13px;
+  white-space: nowrap;
+}
+
+/* Channels are read-only here: the editor owns them, because that is where the
+   "at least one channel" rule lives. */
+.dChanSection {
+  margin-bottom: 22px;
+}
+.dChans {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+/* Notes save explicitly. The actions live in the section header, inline with
+   the label, so they stay in view regardless of how long the note runs. */
+.dNoteActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.dNoteBtn {
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 5px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  color: var(--text3);
+}
+.dNoteBtn:hover {
+  background: var(--surface2);
+}
+.dNoteSave {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+.dNoteSave:hover {
+  background: var(--accent-hover);
 }

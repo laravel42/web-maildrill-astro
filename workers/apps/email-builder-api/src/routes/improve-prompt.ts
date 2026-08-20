@@ -1,7 +1,11 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
-import { getProvider as defaultGetProvider, PROVIDER_NAMES, type ProviderName } from '../providers/index.js';
+import {
+  getProvider as defaultGetProvider,
+  PROVIDER_NAMES,
+  type ProviderName,
+} from '../providers/index.js';
 
 const ImprovePromptBodySchema = z.object({
   prompt: z.string().min(1, 'prompt is required'),
@@ -86,7 +90,7 @@ export function createImprovePromptRoute() {
             console.warn(
               `[improve-prompt] Output may be truncated at maxTokens=${maxTokens}. ` +
                 `Length=${trimmed.length} chars, ends with "${lastChar}". ` +
-                `Consider raising the client-side maxTokens override.`
+                `Consider raising the client-side maxTokens override.`,
             );
           }
         }

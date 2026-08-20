@@ -103,49 +103,49 @@ export function useBlockUpdater(blockId: string) {
     (updater: (block: TEditorBlock) => TEditorBlock) => {
       atomicUpdateBlock(blockId, updater);
     },
-    [blockId]
+    [blockId],
   );
 
   const updateProps = useCallback(
     (propsUpdater: any) => {
       atomicUpdateBlockProps(blockId, propsUpdater);
     },
-    [blockId]
+    [blockId],
   );
 
   const updateProp = useCallback(
     (propName: string, value: any) => {
       atomicUpdateBlockProp(blockId, propName, value);
     },
-    [blockId]
+    [blockId],
   );
 
   const updateStyles = useCallback(
     (stylesUpdater: any) => {
       atomicUpdateBlockStyles(blockId, stylesUpdater);
     },
-    [blockId]
+    [blockId],
   );
 
   const updateStyle = useCallback(
     (styleName: string, value: any) => {
       atomicUpdateBlockStyle(blockId, styleName, value);
     },
-    [blockId]
+    [blockId],
   );
 
   const batchUpdateProps = useCallback(
     (updates: Record<string, any>) => {
       atomicBatchUpdateProps(blockId, updates);
     },
-    [blockId]
+    [blockId],
   );
 
   const batchUpdateStyles = useCallback(
     (updates: Record<string, any>) => {
       atomicBatchUpdateStyles(blockId, updates);
     },
-    [blockId]
+    [blockId],
   );
 
   return useMemo(
@@ -158,7 +158,15 @@ export function useBlockUpdater(blockId: string) {
       batchUpdateProps,
       batchUpdateStyles,
     }),
-    [updateBlock, updateProps, updateProp, updateStyles, updateStyle, batchUpdateProps, batchUpdateStyles]
+    [
+      updateBlock,
+      updateProps,
+      updateProp,
+      updateStyles,
+      updateStyle,
+      batchUpdateProps,
+      batchUpdateStyles,
+    ],
   );
 }
 
@@ -166,14 +174,17 @@ export function useBlockUpdater(blockId: string) {
  * Hook combinado: obtiene una prop Y su función de actualización
  * Patrón común optimizado
  */
-export function useBlockPropWithUpdater<T = any>(blockId: string, propName: string): [T, (value: T) => void] {
+export function useBlockPropWithUpdater<T = any>(
+  blockId: string,
+  propName: string,
+): [T, (value: T) => void] {
   const value = useBlockPropGranular<T>(blockId, propName);
 
   const setValue = useCallback(
     (newValue: T) => {
       atomicUpdateBlockProp(blockId, propName, newValue);
     },
-    [blockId, propName]
+    [blockId, propName],
   );
 
   return [value, setValue];
@@ -182,14 +193,17 @@ export function useBlockPropWithUpdater<T = any>(blockId: string, propName: stri
 /**
  * Hook combinado: obtiene un estilo Y su función de actualización
  */
-export function useBlockStyleWithUpdater<T = any>(blockId: string, styleName: string): [T, (value: T) => void] {
+export function useBlockStyleWithUpdater<T = any>(
+  blockId: string,
+  styleName: string,
+): [T, (value: T) => void] {
   const value = useBlockStyleGranular<T>(blockId, styleName);
 
   const setValue = useCallback(
     (newValue: T) => {
       atomicUpdateBlockStyle(blockId, styleName, newValue);
     },
-    [blockId, styleName]
+    [blockId, styleName],
   );
 
   return [value, setValue];
@@ -201,7 +215,7 @@ export function useBlockStyleWithUpdater<T = any>(blockId: string, styleName: st
  */
 export function useBlockPropsMultiple<T extends Record<string, any>>(
   blockId: string,
-  propNames: (keyof T)[]
+  propNames: (keyof T)[],
 ): Partial<T> {
   return editorStateStore(
     useCallback(
@@ -217,8 +231,8 @@ export function useBlockPropsMultiple<T extends Record<string, any>>(
         return result;
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps -- granular subscription key — propNames.join(",") is the intentional stable dep; the array members are derived from it
-      [blockId, propNames.join(',')]
-    )
+      [blockId, propNames.join(',')],
+    ),
   );
 }
 
@@ -227,13 +241,16 @@ export function useBlockPropsMultiple<T extends Record<string, any>>(
  */
 export function useBlockStylesMultiple<T extends Record<string, any>>(
   blockId: string,
-  styleNames: (keyof T)[]
+  styleNames: (keyof T)[],
 ): Partial<T> {
   return editorStateStore(
     useCallback(
       (state) => {
         const data = state.document[blockId]?.data;
-        const styles = ((data && 'style' in data ? data.style : undefined) || {}) as Record<string, unknown>;
+        const styles = ((data && 'style' in data ? data.style : undefined) || {}) as Record<
+          string,
+          unknown
+        >;
         const result: any = {};
 
         for (const styleName of styleNames) {
@@ -243,8 +260,8 @@ export function useBlockStylesMultiple<T extends Record<string, any>>(
         return result;
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps -- granular subscription key — styleNames.join(",") is the intentional stable dep; the array members are derived from it
-      [blockId, styleNames.join(',')]
-    )
+      [blockId, styleNames.join(',')],
+    ),
   );
 }
 
@@ -252,7 +269,11 @@ export function useBlockStylesMultiple<T extends Record<string, any>>(
  * Hook para observar cambios en un bloque sin causar re-renders
  * Útil para efectos secundarios
  */
-export function useBlockObserver(blockId: string, callback: (block: TEditorBlock) => void, deps: any[] = []) {
+export function useBlockObserver(
+  blockId: string,
+  callback: (block: TEditorBlock) => void,
+  deps: any[] = [],
+) {
   const block = useBlock(blockId);
 
   useMemo(() => {

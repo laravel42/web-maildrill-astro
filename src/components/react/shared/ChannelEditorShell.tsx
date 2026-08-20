@@ -12,13 +12,15 @@ type Props = {
   status?: SaveStatus;
   category?: string;
   categories?: readonly string[];
+  unavailableCategories?: readonly string[];
   onCategoryChange?: (value: string) => void;
   language?: string;
   languageOptions?: readonly LanguageOption[];
   onLanguageChange?: (value: string) => void;
   getLanguageFlagSrc?: (code: string) => string;
   onBack: () => void;
-  onSendTest: () => void;
+  /** Sends a real test message to the signed-in user; button hidden when omitted. */
+  onSendTest?: () => void;
   onSaveDraft: () => void;
   children: ReactNode;
   toast?: ReactNode;

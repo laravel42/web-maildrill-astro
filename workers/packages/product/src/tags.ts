@@ -1,4 +1,4 @@
-import { and, desc, eq, getTableColumns } from "drizzle-orm";
+import { and, desc, eq, getTableColumns } from 'drizzle-orm';
 import {
   db,
   subscriberTags,
@@ -6,7 +6,7 @@ import {
   tags,
   type Subscriber,
   type TagRow,
-} from "@maildrill/database";
+} from '@maildrill/database';
 
 export async function createTag(
   tenantId: string,
@@ -28,11 +28,7 @@ export async function createTag(
 }
 
 export async function listTags(tenantId: string): Promise<TagRow[]> {
-  return db
-    .select()
-    .from(tags)
-    .where(eq(tags.tenantId, tenantId))
-    .orderBy(desc(tags.createdAt));
+  return db.select().from(tags).where(eq(tags.tenantId, tenantId)).orderBy(desc(tags.createdAt));
 }
 
 export async function deleteTag(tenantId: string, id: string): Promise<boolean> {
@@ -48,27 +44,16 @@ export async function assignTag(
   tagId: string,
   subscriberId: string,
 ): Promise<void> {
-  await db
-    .insert(subscriberTags)
-    .values({ tagId, subscriberId, tenantId })
-    .onConflictDoNothing();
+  await db.insert(subscriberTags).values({ tagId, subscriberId, tenantId }).onConflictDoNothing();
 }
 
 export async function unassignTag(tagId: string, subscriberId: string): Promise<void> {
   await db
     .delete(subscriberTags)
-    .where(
-      and(
-        eq(subscriberTags.tagId, tagId),
-        eq(subscriberTags.subscriberId, subscriberId),
-      ),
-    );
+    .where(and(eq(subscriberTags.tagId, tagId), eq(subscriberTags.subscriberId, subscriberId)));
 }
 
-export async function subscribersWithTag(
-  tenantId: string,
-  tagId: string,
-): Promise<Subscriber[]> {
+export async function subscribersWithTag(tenantId: string, tagId: string): Promise<Subscriber[]> {
   return db
     .select(getTableColumns(subscribers))
     .from(subscriberTags)

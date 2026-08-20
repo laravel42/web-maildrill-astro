@@ -40,7 +40,11 @@ export default function ContentAlignment({ data, updateData }: Props) {
   };
 
   return (
-    <RadioGroupInput label={t('inputs.alignment.label')} defaultValue={currentValue} onChange={handleChange}>
+    <RadioGroupInput
+      label={t('inputs.alignment.label')}
+      defaultValue={currentValue}
+      onChange={handleChange}
+    >
       <ToggleButton value="top">
         <VerticalAlignTopOutlined fontSize="small" />
       </ToggleButton>

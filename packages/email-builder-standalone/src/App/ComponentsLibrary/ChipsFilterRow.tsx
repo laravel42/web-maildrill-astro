@@ -91,7 +91,11 @@ export default function ChipsFilterRow({
           >
             <Box sx={{ p: 1, maxWidth: 280 }}>
               {title && (
-                <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                <Typography
+                  variant="overline"
+                  color="text.secondary"
+                  sx={{ display: 'block', mb: 0.5 }}
+                >
                   {title}
                 </Typography>
               )}

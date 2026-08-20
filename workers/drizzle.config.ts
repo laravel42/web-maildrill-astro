@@ -1,11 +1,11 @@
-import { defineConfig } from "drizzle-kit";
+import { defineConfig } from 'drizzle-kit';
 
 export default defineConfig({
-  dialect: "postgresql",
-  schema: "./packages/database/src/schema.ts",
-  out: "./migrations",
+  dialect: 'postgresql',
+  schema: './packages/database/src/schema.ts',
+  out: './migrations',
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? "postgres://maildrill:maildrill@localhost:5432/maildrill",
+    url: process.env.DATABASE_URL ?? 'postgres://maildrill:maildrill@localhost:5432/maildrill',
   },
-  casing: "snake_case",
+  casing: 'snake_case',
 });

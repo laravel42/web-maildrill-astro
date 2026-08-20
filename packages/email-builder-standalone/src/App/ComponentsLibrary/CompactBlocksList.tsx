@@ -58,7 +58,7 @@ function CompactBlockTile({ index }: { index: number }) {
       }),
       collect: (monitor) => ({ isDragging: monitor.isDragging() }),
     }),
-    [index]
+    [index],
   );
 
   const handleClick = () => {

@@ -23,9 +23,18 @@ export default function SamplesDrawer() {
     >
       <Stack
         spacing={3}
-        sx={{ py: 1, px: 2, width: SAMPLES_DRAWER_WIDTH, justifyContent: 'space-between', height: '100%' }}
+        sx={{
+          py: 1,
+          px: 2,
+          width: SAMPLES_DRAWER_WIDTH,
+          justifyContent: 'space-between',
+          height: '100%',
+        }}
       >
-        <Stack spacing={2} sx={{ '& .MuiButtonBase-root': { width: '100%', justifyContent: 'flex-start' } }}>
+        <Stack
+          spacing={2}
+          sx={{ '& .MuiButtonBase-root': { width: '100%', justifyContent: 'flex-start' } }}
+        >
           <Typography variant="h6" component="h1" sx={{ p: 0.75 }}>
             EmailBuilder.js
           </Typography>
@@ -45,16 +54,28 @@ export default function SamplesDrawer() {
           <Divider />
 
           <Stack>
-            <Button size="small" href="https://www.usewaypoint.com/open-source/emailbuilderjs" target="_blank">
+            <Button
+              size="small"
+              href="https://www.usewaypoint.com/open-source/emailbuilderjs"
+              target="_blank"
+            >
               Learn more
             </Button>
-            <Button size="small" href="https://github.com/usewaypoint/email-builder-js" target="_blank">
+            <Button
+              size="small"
+              href="https://github.com/usewaypoint/email-builder-js"
+              target="_blank"
+            >
               View on GitHub
             </Button>
           </Stack>
         </Stack>
         <Stack spacing={2} sx={{ px: 0.75, py: 3 }}>
-          <Link href="https://usewaypoint.com?utm_source=emailbuilderjs" target="_blank" sx={{ lineHeight: 1 }}>
+          <Link
+            href="https://usewaypoint.com?utm_source=emailbuilderjs"
+            target="_blank"
+            sx={{ lineHeight: 1 }}
+          >
             <Box component="img" src={logo} width={32} />
           </Link>
           <Box>
@@ -62,8 +83,8 @@ export default function SamplesDrawer() {
               Looking to send emails?
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Waypoint is an end-to-end email API with a &apos;pro&apos; version of this template builder with dynamic
-              variables, loops, conditionals, drag and drop, layouts, and more.
+              Waypoint is an end-to-end email API with a &apos;pro&apos; version of this template
+              builder with dynamic variables, loops, conditionals, drag and drop, layouts, and more.
             </Typography>
           </Box>
           <Button

@@ -9,5 +9,5 @@ createRoot(document.getElementById('root')!).render(
     <div style={{ height: '100vh' }}>
       <Studio />
     </div>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

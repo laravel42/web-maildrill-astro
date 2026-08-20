@@ -47,19 +47,28 @@ const GRAD_INDIGO = 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)';
 const GRAD_SUNSET = 'linear-gradient(135deg, #F97316 0%, #DB2777 100%)';
 const GRAD_TEAL = 'linear-gradient(135deg, #0EA5E9 0%, #14B8A6 100%)';
 
-const pad = (top: number, right: number, bottom: number, left: number): Pad => ({ top, right, bottom, left });
+const pad = (top: number, right: number, bottom: number, left: number): Pad => ({
+  top,
+  right,
+  bottom,
+  left,
+});
 const round = (r: number) => ({ topLeft: r, topRight: r, bottomLeft: r, bottomRight: r });
 const bg = (url: string = IMG): string => `url("${url}") no-repeat center center / cover`;
 
 // --- Node builders ---------------------------------------------------------
 
-const container = (children: Node[] = [], style: object = {}): Node => ({ t: 'container', children, style });
+const container = (children: Node[] = [], style: object = {}): Node => ({
+  t: 'container',
+  children,
+  style,
+});
 const cols = (
   columnsCount: 2 | 3,
   fixedWidths: (number | null)[],
   columns: Node[][],
   style: object = {},
-  props: object = {}
+  props: object = {},
 ): Node => ({
   t: 'cols',
   style,
@@ -71,7 +80,7 @@ const colsStack = (
   fixedWidths: (number | null)[],
   columns: Node[][],
   style: object = {},
-  props: object = {}
+  props: object = {},
 ): Node =>
   cols(columnsCount, fixedWidths, columns, style, {
     stackColumnsOnMobile: true,
@@ -100,7 +109,7 @@ const corneredStyle = (
   corners: { topLeft?: number; topRight?: number; bottomLeft?: number; bottomRight?: number } = {
     topLeft: 24,
     bottomRight: 24,
-  }
+  },
 ): object => ({
   ...cardStyle(),
   shape: { topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0, ...corners },
@@ -137,8 +146,12 @@ const glass = (): Node => container([], glassStyle());
 const topCard = (color?: string): Node => container([], topAccentStyle(color));
 const gradCard = (grad?: string): Node => container([], gradientStyle(grad));
 const imgCard = (tint?: string): Node => container([], imageStyle(tint));
-const cornered = (corners?: { topLeft?: number; topRight?: number; bottomLeft?: number; bottomRight?: number }): Node =>
-  container([], corneredStyle(corners));
+const cornered = (corners?: {
+  topLeft?: number;
+  topRight?: number;
+  bottomLeft?: number;
+  bottomRight?: number;
+}): Node => container([], corneredStyle(corners));
 
 // --- Catalog (complex, 2–3 levels deep) ------------------------------------
 
@@ -171,26 +184,36 @@ const LAYOUTS: LayoutDef[] = [
     name: 'Feature grid 2×2',
     description: 'Section wrapping two 2-column card rows (deep nest).',
     node: container(
-      [colsStack(2, [50, 50, null], [[card()], [card()]]), colsStack(2, [50, 50, null], [[card()], [card()]])],
-      { backgroundColor: SLATE, padding: SECTION, mobilePadding: SECTION_M }
+      [
+        colsStack(2, [50, 50, null], [[card()], [card()]]),
+        colsStack(2, [50, 50, null], [[card()], [card()]]),
+      ],
+      { backgroundColor: SLATE, padding: SECTION, mobilePadding: SECTION_M },
     ),
   },
   {
     shape: 'container',
     name: 'Stacked sections',
     description: 'Three stacked cards inside a soft section.',
-    node: container([card(), card(), card()], { backgroundColor: SLATE, padding: SECTION, mobilePadding: SECTION_M }),
+    node: container([card(), card(), card()], {
+      backgroundColor: SLATE,
+      padding: SECTION,
+      mobilePadding: SECTION_M,
+    }),
   },
   {
     shape: 'container',
     name: 'Split callout',
     description: 'Accent-tinted band with a 2-column card split.',
-    node: container([colsStack(2, [60, 40, null], [[card()], [card()]], {}, { contentAlignment: 'middle' })], {
-      backgroundColor: '#EEF2FF',
-      shape: round(20),
-      padding: pad(36, 32, 36, 32),
-      mobilePadding: SECTION_M,
-    }),
+    node: container(
+      [colsStack(2, [60, 40, null], [[card()], [card()]], {}, { contentAlignment: 'middle' })],
+      {
+        backgroundColor: '#EEF2FF',
+        shape: round(20),
+        padding: pad(36, 32, 36, 32),
+        mobilePadding: SECTION_M,
+      },
+    ),
   },
 
   // ===== columns-2 — splits, shells, nested columns =====
@@ -203,14 +226,18 @@ const LAYOUTS: LayoutDef[] = [
       [60, 40, null],
       [[card()], [imgCard()]],
       { padding: pad(8, 0, 8, 0) },
-      { contentAlignment: 'middle' }
+      { contentAlignment: 'middle' },
     ),
   },
   {
     shape: 'columns-2',
     name: 'Sidebar shell',
     description: 'Narrow sidebar card + main column of two stacked cards.',
-    node: colsStack(2, [32, 68, null], [[glass()], [container([card(), card()], { padding: pad(0, 0, 0, 0) })]]),
+    node: colsStack(
+      2,
+      [32, 68, null],
+      [[glass()], [container([card(), card()], { padding: pad(0, 0, 0, 0) })]],
+    ),
   },
   {
     shape: 'columns-2',
@@ -225,7 +252,10 @@ const LAYOUTS: LayoutDef[] = [
     node: colsStack(
       2,
       [66, 34, null],
-      [[colsStack(2, [50, 50, null], [[card()], [card()]])], [cornered({ topRight: 24, bottomLeft: 24 })]]
+      [
+        [colsStack(2, [50, 50, null], [[card()], [card()]])],
+        [cornered({ topRight: 24, bottomLeft: 24 })],
+      ],
     ),
   },
 
@@ -245,7 +275,7 @@ const LAYOUTS: LayoutDef[] = [
       [33, 34, 33],
       [[topCard()], [gradCard(GRAD_SUNSET)], [topCard()]],
       {},
-      { contentAlignment: 'middle' }
+      { contentAlignment: 'middle' },
     ),
   },
   {
@@ -299,7 +329,7 @@ function flatten(root: Node): BlockEntry[] {
 }
 
 export async function seedLayouts(
-  options: { shape?: LayoutShape; limit?: number; force?: boolean } = {}
+  options: { shape?: LayoutShape; limit?: number; force?: boolean } = {},
 ): Promise<SeedSummary> {
   const base = resolveBackendUrl();
   let list = options.shape ? LAYOUTS.filter((l) => l.shape === options.shape) : LAYOUTS;
@@ -312,8 +342,11 @@ export async function seedLayouts(
   try {
     const r = await fetch(`${base}/dev/layouts`);
     if (r.ok) {
-      const { layouts } = (await r.json()) as { layouts: Array<{ shape: string; name: string; id: string }> };
-      for (const l of layouts) existing.set(`${l.shape}/${l.name.trim()}`, { shape: l.shape, id: l.id });
+      const { layouts } = (await r.json()) as {
+        layouts: Array<{ shape: string; name: string; id: string }>;
+      };
+      for (const l of layouts)
+        existing.set(`${l.shape}/${l.name.trim()}`, { shape: l.shape, id: l.id });
     }
   } catch {
     /* best-effort dedup */
@@ -330,9 +363,12 @@ export async function seedLayouts(
     }
     try {
       if (prev && options.force) {
-        await fetch(`${base}/dev/layouts/${encodeURIComponent(prev.shape)}/${encodeURIComponent(prev.id)}`, {
-          method: 'DELETE',
-        });
+        await fetch(
+          `${base}/dev/layouts/${encodeURIComponent(prev.shape)}/${encodeURIComponent(prev.id)}`,
+          {
+            method: 'DELETE',
+          },
+        );
       }
       const blocks = flatten(def.node);
       const res = await fetch(`${base}/dev/save-layout`, {
@@ -352,7 +388,10 @@ export async function seedLayouts(
       summary.saved++;
     } catch (err) {
       summary.failed++;
-      console.warn(`[seedLayouts] "${def.shape}/${def.name}" failed:`, err instanceof Error ? err.message : err);
+      console.warn(
+        `[seedLayouts] "${def.shape}/${def.name}" failed:`,
+        err instanceof Error ? err.message : err,
+      );
     }
   }
 

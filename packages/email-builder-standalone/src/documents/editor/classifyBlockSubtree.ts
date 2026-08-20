@@ -72,7 +72,10 @@ function collectDescendantIds(rootId: string, document: TEditorConfiguration): s
   return out;
 }
 
-export function classifyBlockSubtree(rootId: string, document: TEditorConfiguration): SubtreeCategory {
+export function classifyBlockSubtree(
+  rootId: string,
+  document: TEditorConfiguration,
+): SubtreeCategory {
   const root: TEditorBlock | undefined = document[rootId];
   if (!root) {
     throw new Error(`classifyBlockSubtree: root block "${rootId}" not found in document`);

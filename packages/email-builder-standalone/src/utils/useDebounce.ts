@@ -6,7 +6,7 @@ import { useCallback, useRef } from 'react';
  */
 export function useDebouncedCallback<T extends (...args: any[]) => any>(
   callback: T,
-  delay: number
+  delay: number,
 ): T & { flush: () => void } {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const callbackRef = useRef(callback);
@@ -28,7 +28,7 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
         timeoutRef.current = null;
       }, delay);
     },
-    [delay]
+    [delay],
   ) as T & { flush: () => void };
 
   // Función para forzar ejecución inmediata

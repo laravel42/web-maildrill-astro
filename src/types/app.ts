@@ -3,12 +3,7 @@ export type ChannelType = 'email' | 'sms' | 'whatsapp' | 'voice';
 
 /** WhatsApp template approval state (Meta review). Null/absent for other channels. */
 export type TemplateApprovalStatus =
-  | 'draft'
-  | 'pending'
-  | 'approved'
-  | 'rejected'
-  | 'paused'
-  | 'disabled';
+  'draft' | 'pending' | 'approved' | 'rejected' | 'paused' | 'disabled';
 
 export type Campaign = {
   id: string;
@@ -23,18 +18,31 @@ export type Campaign = {
   /** Template this campaign sends, when it uses one (null for ad-hoc bodies). */
   templateId: string | null;
   scheduledAt: string | null;
+  /** When the send job actually started (null until dispatch). */
+  startedAt: string | null;
+  /** When the send finished (null until status is sent / paused terminal). */
+  completedAt: string | null;
   openRate: number | null;
   clickRate: number | null;
   updatedAt: string;
   recipients: number;
   delivered: number;
   failed: number;
-  /** Messages accepted by the provider (or finished) — drives send progress %. */
+  /** Messages past the send queue (dispatched / finished) — drives send progress %. */
   accepted: number;
   unsubscribed: number;
+  /** Spam complaints (email Infobip COMPLAINED events). */
+  complaints: number;
+  /** Most recent provider error when any message failed (detail / report). */
+  lastErrorMessage?: string | null;
 };
 
-export type SubscriberStatus = 'active' | 'unsubscribed' | 'bounced';
+export type SubscriberStatus =
+  | 'active'
+  | 'unsubscribed'
+  | 'bounced'
+  | 'complained'
+  | 'invalid';
 
 export type Subscriber = {
   id: string;

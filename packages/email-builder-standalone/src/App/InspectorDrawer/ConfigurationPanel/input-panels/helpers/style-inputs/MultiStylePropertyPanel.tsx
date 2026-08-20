@@ -2,7 +2,10 @@ import React from 'react';
 
 import { BLOCKS_DEFAULT_CSS } from '../../../../../../documents/blocks/helpers/constants';
 import { TStyle } from '../../../../../../documents/blocks/helpers/TStyle';
-import { useBlockTypeSelected, useSelectedSidebarTab } from '../../../../../../documents/editor/EditorContext';
+import {
+  useBlockTypeSelected,
+  useSelectedSidebarTab,
+} from '../../../../../../documents/editor/EditorContext';
 import { useCompactMode } from '../../../../CompactModeContext';
 
 import SingleStylePropertyPanel from './SingleStylePropertyPanel';

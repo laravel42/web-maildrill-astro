@@ -1,10 +1,11 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { LocalOffer as TagsIcon } from '@mui/icons-material';
-import { Divider, List, ListItemButton, ListItemIcon, ListItemText, useTheme } from '@mui/material';
+import { MergeTagMenuPanel, type MergeTagGroup } from '@md/merge-tag-menu';
+import { DataObject as MergeTagIcon } from '@mui/icons-material';
 import type { Editor } from '@tiptap/react';
 
+import { groupMergeTagsForDisplay } from '../merge-tags-groups';
 import { getMergeTags } from '../merge-tags-config';
 
 import ToolbarIconButton from './ToolbarIconButton';
@@ -12,11 +13,25 @@ import ToolbarPopover from './ToolbarPopover';
 
 type Props = { editor: Editor };
 
+/** Panel skin comes from @md/merge-tag-menu; this file owns the popover only. */
+const PAPER_SX = { p: 0, overflow: 'hidden', minWidth: 268 } as const;
+
 export default function MergeTagsDropdown({ editor }: Props) {
-  const theme = useTheme();
   const { t } = useTranslation();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const mergeTags = getMergeTags();
+  const groups = useMemo<MergeTagGroup[]>(
+    () =>
+      groupMergeTagsForDisplay(mergeTags.children).map((group) => ({
+        title: group.title,
+        options: group.items.map((tag) => ({
+          id: tag.value ?? tag.label ?? '',
+          label: tag.label ?? '',
+          token: tag.value ?? '',
+        })),
+      })),
+    [mergeTags.children],
+  );
 
   const handleClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
     setAnchor(event.currentTarget);
@@ -27,52 +42,28 @@ export default function MergeTagsDropdown({ editor }: Props) {
   }, []);
 
   const insertTag = useCallback(
-    (tag: string) => {
+    (token: string) => {
+      if (!token) return;
       requestAnimationFrame(() => {
-        editor.chain().focus().insertContent(tag).run();
+        editor.chain().focus().insertContent(token).run();
       });
       handleClose();
     },
-    [editor, handleClose]
+    [editor, handleClose],
   );
 
   return (
     <>
       <ToolbarIconButton tooltip={t('bubbleMenu.insertMergeTag')} onClick={handleClick}>
-        <TagsIcon fontSize="small" />
+        <MergeTagIcon fontSize="small" />
       </ToolbarIconButton>
 
-      <ToolbarPopover anchorEl={anchor} onClose={handleClose}>
-        <List sx={{ maxHeight: 400, overflow: 'auto', p: '8px 4px' }}>
-          {mergeTags.children.map((tag, idx) => {
-            if (tag.type === 'divider') {
-              return <Divider key={idx} sx={{ my: 0.5, backgroundColor: theme.palette.divider }} />;
-            }
-
-            return (
-              <ListItemButton
-                key={idx}
-                onClick={() => tag.value && insertTag(tag.value)}
-                sx={{
-                  p: '8px 10px',
-                  borderRadius: '6px',
-                  '&:hover': { backgroundColor: theme.palette.action.hover },
-                  transition: 'all 150ms ease',
-                }}
-              >
-                {tag.icon && (
-                  <ListItemIcon sx={{ minWidth: 'auto', mr: 1, color: theme.palette.text.secondary }}>
-                    {tag.icon}
-                  </ListItemIcon>
-                )}
-                <ListItemText
-                  primary={tag.label}
-                  slotProps={{ primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } } }}
-                />
-              </ListItemButton>
-            );
-          })}
-        </List>
+      <ToolbarPopover anchorEl={anchor} onClose={handleClose} paperSx={PAPER_SX}>
+        <MergeTagMenuPanel
+          groups={groups}
+          onSelect={(option) => insertTag(option.token)}
+          maxHeight="13rem"
+        />
       </ToolbarPopover>
     </>
   );

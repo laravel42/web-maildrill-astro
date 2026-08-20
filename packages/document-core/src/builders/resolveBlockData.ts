@@ -1,4 +1,9 @@
-import { type BlockSection, type ResolvableBlock, resolveBlockProp, type Viewport } from './resolveBlockProp';
+import {
+  type BlockSection,
+  type ResolvableBlock,
+  resolveBlockProp,
+  type Viewport,
+} from './resolveBlockProp';
 import type { ThemeJson } from './themeJsonSchema';
 
 /**
@@ -48,7 +53,7 @@ export function resolveBlockData<TBlock extends ResolvableBlock>(
   block: TBlock,
   theme: ThemeJson | undefined | null,
   viewport: Viewport,
-  schemaDefaults?: BlockSchemaDefaults | null
+  schemaDefaults?: BlockSchemaDefaults | null,
 ): TBlock {
   if (!block || !block.data) return block;
 

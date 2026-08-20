@@ -33,19 +33,25 @@ try {
     const m = raw.match(/^\s*([A-Za-z0-9_]+)\s*=\s*(.*?)\s*$/);
     if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
   }
-} catch { /* no .env — rely on shell env */ }
+} catch {
+  /* no .env — rely on shell env */
+}
 
 const rawBase = process.env.INFOBIP_BASE_URL || process.env.API_BASE_URL; // INFOBIP_BASE_URL wins
 const ADMIN = process.env.INFOBIP_API_KEY;
 if (!rawBase || !ADMIN) {
-  console.error('✗ Need INFOBIP_BASE_URL (or API_BASE_URL) and INFOBIP_API_KEY in .env or shell. Aborting.');
+  console.error(
+    '✗ Need INFOBIP_BASE_URL (or API_BASE_URL) and INFOBIP_API_KEY in .env or shell. Aborting.',
+  );
   process.exit(2);
 }
 const BASE = 'https://' + rawBase.replace(/^https?:\/\//, '').replace(/\/+$/, '');
 // Safety: never send the Infobip key to a host that isn't Infobip.
 const host = new URL(BASE).host;
 if (!/\.infobip\.com$/i.test(host) && process.env.ALLOW_NONINFOBIP !== '1') {
-  console.error(`✗ Resolved base host "${host}" is not *.infobip.com — refusing to send the Infobip key there.`);
+  console.error(
+    `✗ Resolved base host "${host}" is not *.infobip.com — refusing to send the Infobip key there.`,
+  );
   console.error('  Set INFOBIP_BASE_URL to your personalized base (e.g. xxxxx.api.infobip.com),');
   console.error('  or pass ALLOW_NONINFOBIP=1 if you are certain this host is correct.');
   process.exit(3);
@@ -56,7 +62,8 @@ const KEEP = process.env.KEEP === '1';
 const RUN = String(Date.now()).slice(-9);
 
 const log = (...a) => console.log(...a);
-const brief = (r) => `${r.status}${r.ok ? '' : ' · ' + (r.text || '').replace(/\s+/g, ' ').slice(0, 180)}`;
+const brief = (r) =>
+  `${r.status}${r.ok ? '' : ' · ' + (r.text || '').replace(/\s+/g, ' ').slice(0, 180)}`;
 
 async function api(method, path, { token = ADMIN, body } = {}) {
   const res = await fetch(BASE + path, {
@@ -70,7 +77,11 @@ async function api(method, path, { token = ADMIN, body } = {}) {
   });
   const text = await res.text();
   let json;
-  try { json = text ? JSON.parse(text) : undefined; } catch { /* non-json */ }
+  try {
+    json = text ? JSON.parse(text) : undefined;
+  } catch {
+    /* non-json */
+  }
   return { status: res.status, ok: res.ok, json, text };
 }
 
@@ -108,7 +119,9 @@ async function main() {
   }
   if (!keys[0].secret || !keys[1].secret) {
     log('\n⚠️  Could not mint entity-scoped keys — cannot run the People test.');
-    log('    Check that INFOBIP_API_KEY is a MAIN-account key with account-management:manage scope.');
+    log(
+      '    Check that INFOBIP_API_KEY is a MAIN-account key with account-management:manage scope.',
+    );
     return cleanup(keys, E, []);
   }
 
@@ -123,17 +136,26 @@ async function main() {
     const p = persons[i];
     const rr = await api('POST', '/people/2/persons', {
       token: keys[i].secret,
-      body: { firstName: p.name, tags: [`xtest-${RUN}`], contactInformation: { email: [{ address: p.email }] } },
+      body: {
+        firstName: p.name,
+        tags: [`xtest-${RUN}`],
+        contactInformation: { email: [{ address: p.email }] },
+      },
     });
-    p.created = rr.ok; p.id = rr.json?.id;
-    log(`[ppl ] create ${p.name} <${p.email}> via "${p.entity}" key: ${rr.ok ? 'ok id=' + rr.json?.id : brief(rr)}`);
+    p.created = rr.ok;
+    p.id = rr.json?.id;
+    log(
+      `[ppl ] create ${p.name} <${p.email}> via "${p.entity}" key: ${rr.ok ? 'ok id=' + rr.json?.id : brief(rr)}`,
+    );
     if (!rr.ok) writable = false;
   }
 
   if (!writable) {
     log('\n🔎 RESULT: entity-scoped keys could NOT write People profiles.');
     log('   → Per-entity CDP writes are not available on the public People API with a scoped key.');
-    log('   → Consistent with "People with X = Early Access, not via People API". Sub-account needed for CDP isolation.');
+    log(
+      '   → Consistent with "People with X = Early Access, not via People API". Sub-account needed for CDP isolation.',
+    );
     return cleanup(keys, E, persons);
   }
 
@@ -141,17 +163,31 @@ async function main() {
   log('\n--- cross-visibility probe (identifier lookup) ---');
   const leaks = [];
   for (let i = 0; i < 2; i++) {
-    const self = persons[i], other = persons[1 - i], token = keys[i].secret;
-    const rSelf = await api('GET', `/people/2/persons?identifier=${encodeURIComponent(self.email)}&type=EMAIL`, { token });
-    const rOther = await api('GET', `/people/2/persons?identifier=${encodeURIComponent(other.email)}&type=EMAIL`, { token });
+    const self = persons[i],
+      other = persons[1 - i],
+      token = keys[i].secret;
+    const rSelf = await api(
+      'GET',
+      `/people/2/persons?identifier=${encodeURIComponent(self.email)}&type=EMAIL`,
+      { token },
+    );
+    const rOther = await api(
+      'GET',
+      `/people/2/persons?identifier=${encodeURIComponent(other.email)}&type=EMAIL`,
+      { token },
+    );
     const leak = rOther.ok; // 200 ⇒ can see the other tenant's person
     leaks.push(leak);
-    log(`[${self.entity}] own(${self.name})→${rSelf.status}   other(${other.name})→${rOther.status}  ${leak ? '❌ VISIBLE' : '✅ hidden'}`);
+    log(
+      `[${self.entity}] own(${self.name})→${rSelf.status}   other(${other.name})→${rOther.status}  ${leak ? '❌ VISIBLE' : '✅ hidden'}`,
+    );
   }
 
   // 5) list count per token (color only)
   for (let i = 0; i < 2; i++) {
-    const rr = await api('GET', '/people/2/persons?limit=1000&includeTotalCount=true', { token: keys[i].secret });
+    const rr = await api('GET', '/people/2/persons?limit=1000&includeTotalCount=true', {
+      token: keys[i].secret,
+    });
     const total = rr.json?.count ?? rr.json?.paging?.totalCount ?? rr.json?.persons?.length ?? '?';
     log(`[${E[i]}] list → ${rr.status}, total≈${total}`);
   }
@@ -162,7 +198,7 @@ async function main() {
     log('   On this account, entities DO isolate the People/CDP store via token scoping.');
     log('   → §1.3 fallback ("shared account + entity") becomes viable; sub-accounts optional.');
   } else {
-    log('❌ NOT ISOLATED — a scoped token could read the other entity\'s person.');
+    log("❌ NOT ISOLATED — a scoped token could read the other entity's person.");
     log('   Entities do NOT partition People/CDP on the public API — it is one shared pool.');
     log('   → Confirms §1.3: use sub-account for hard CDP isolation, or People-with-X (EA).');
   }
@@ -171,16 +207,24 @@ async function main() {
 }
 
 async function cleanup(keys, entities, persons) {
-  if (KEEP) { log('\n(KEEP=1 → leaving all test objects in place)'); return; }
+  if (KEEP) {
+    log('\n(KEEP=1 → leaving all test objects in place)');
+    return;
+  }
   log('\n--- cleanup (best effort) ---');
-  for (const p of persons || []) if (p.email) {
-    const rr = await api('DELETE', `/people/2/persons?identifier=${encodeURIComponent(p.email)}&type=EMAIL`);
-    log(`[ppl ] delete ${p.email}: ${rr.status}`);
-  }
-  for (const k of keys || []) if (k.id) {
-    const rr = await api('PUT', `/settings/2/api-keys/${k.id}`, { body: { enabled: false } });
-    log(`[key ] revoke ${k.id}: ${rr.status}`);
-  }
+  for (const p of persons || [])
+    if (p.email) {
+      const rr = await api(
+        'DELETE',
+        `/people/2/persons?identifier=${encodeURIComponent(p.email)}&type=EMAIL`,
+      );
+      log(`[ppl ] delete ${p.email}: ${rr.status}`);
+    }
+  for (const k of keys || [])
+    if (k.id) {
+      const rr = await api('PUT', `/settings/2/api-keys/${k.id}`, { body: { enabled: false } });
+      log(`[key ] revoke ${k.id}: ${rr.status}`);
+    }
   for (const id of entities || []) {
     const rr = await api('DELETE', `/provisioning/1/entities/${encodeURIComponent(id)}`);
     log(`[ent ] delete ${id}: ${rr.status}`);
@@ -188,4 +232,7 @@ async function cleanup(keys, entities, persons) {
   log('(application left in place — reusable)');
 }
 
-main().catch((e) => { console.error('FATAL', e); process.exit(1); });
+main().catch((e) => {
+  console.error('FATAL', e);
+  process.exit(1);
+});

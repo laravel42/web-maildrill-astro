@@ -1,11 +1,14 @@
-import React, { CSSProperties } from 'react';
+import React, { type CSSProperties } from 'react';
 import { z } from 'zod';
 
 import { ColumnsContainerPropsSchema, PADDING_SCHEMA } from '@eb/document-core';
 
 import Wrapper from '../../email-builder/src/blocks/helpers/Wrapper';
 import { getPadding } from '../../email-builder/src/helpers/getCssProperties';
-import { shortCssId, updateHexColorInBackgroundString } from '../../email-builder/src/helpers/utils';
+import {
+  shortCssId,
+  updateHexColorInBackgroundString,
+} from '../../email-builder/src/helpers/utils';
 import { useImageUploading } from '../../email-builder/src/Reader/renderContext';
 import { useViewport } from '../../email-builder/src/Reader/viewport';
 
@@ -30,6 +33,7 @@ export type ColumnsContainerProps = z.infer<typeof ColumnsContainerPropsSchema> 
 const ColumnsContainerPropsDefaults = {
   columnsCount: 2,
   contentAlignment: 'middle',
+  columnsGap: 0,
 } as const;
 
 export function ColumnsContainer({ style, columns, props, blockId }: ColumnsContainerProps) {
@@ -38,7 +42,7 @@ export function ColumnsContainer({ style, columns, props, blockId }: ColumnsCont
 
   const wStyle: CSSProperties = {
     padding: getPadding(
-      selectedScreenSize == 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding)
+      selectedScreenSize == 'desktop' ? style?.padding : (style?.mobilePadding ?? style?.padding),
     ) as any,
   };
   const blockProps = {
@@ -46,19 +50,27 @@ export function ColumnsContainer({ style, columns, props, blockId }: ColumnsCont
     contentAlignment:
       selectedScreenSize == 'desktop'
         ? (props?.contentAlignment ?? ColumnsContainerPropsDefaults.contentAlignment)
-        : (props?.contentAlignmentMobile ?? props?.contentAlignment ?? ColumnsContainerPropsDefaults.contentAlignment),
+        : (props?.contentAlignmentMobile ??
+          props?.contentAlignment ??
+          ColumnsContainerPropsDefaults.contentAlignment),
     fixedWidths: props?.fixedWidths,
+    columnsGap: props?.columnsGap ?? ColumnsContainerPropsDefaults.columnsGap,
     blockId,
   };
 
   const background = style?.background ?? '';
   const backgroundColor = style?.backgroundColor;
 
-  const backgroundString = backgroundColor ? updateHexColorInBackgroundString(background, backgroundColor) : background;
+  const backgroundString = backgroundColor
+    ? updateHexColorInBackgroundString(background, backgroundColor)
+    : background;
 
   const sid = shortCssId(blockId as any);
-  const stackMobilePreview = selectedScreenSize === 'mobile' && Boolean(props?.stackColumnsOnMobile);
-  const rowStackStyle: CSSProperties | undefined = stackMobilePreview ? { display: 'block', width: '100%' } : undefined;
+  const stackMobilePreview =
+    selectedScreenSize === 'mobile' && Boolean(props?.stackColumnsOnMobile);
+  const rowStackStyle: CSSProperties | undefined = stackMobilePreview
+    ? { display: 'block', width: '100%' }
+    : undefined;
 
   return (
     <Wrapper
@@ -95,8 +107,18 @@ export function ColumnsContainer({ style, columns, props, blockId }: ColumnsCont
       <table border={0} cellSpacing="0" cellPadding="0" style={{ width: '100%', ...rowStackStyle }}>
         <tbody style={{ width: '100%', ...rowStackStyle }}>
           <tr style={{ width: '100%', ...rowStackStyle }}>
-            <TableCell index={0} props={blockProps as any} columns={columns} stackMobilePreview={stackMobilePreview} />
-            <TableCell index={1} props={blockProps as any} columns={columns} stackMobilePreview={stackMobilePreview} />
+            <TableCell
+              index={0}
+              props={blockProps as any}
+              columns={columns}
+              stackMobilePreview={stackMobilePreview}
+            />
+            <TableCell
+              index={1}
+              props={blockProps as any}
+              columns={columns}
+              stackMobilePreview={stackMobilePreview}
+            />
             {blockProps.columnsCount === 3 && (
               <TableCell
                 index={2}
@@ -115,9 +137,13 @@ export function ColumnsContainer({ style, columns, props, blockId }: ColumnsCont
 type Props = {
   props: {
     padding: z.infer<typeof PADDING_SCHEMA>;
-    fixedWidths: [number | null | undefined, number | null | undefined, number | null | undefined] | null | undefined;
+    fixedWidths:
+      | [number | null | undefined, number | null | undefined, number | null | undefined]
+      | null
+      | undefined;
     columnsCount: 2 | 3;
     contentAlignment: 'top' | 'middle' | 'bottom';
+    columnsGap?: number | null;
     blockId?: string;
   };
   index: number;
@@ -125,7 +151,8 @@ type Props = {
   stackMobilePreview?: boolean;
 };
 function TableCell({ index, props, columns, stackMobilePreview }: Props) {
-  const contentAlignment = props?.contentAlignment ?? ColumnsContainerPropsDefaults.contentAlignment;
+  const contentAlignment =
+    props?.contentAlignment ?? ColumnsContainerPropsDefaults.contentAlignment;
   const columnsCount = props?.columnsCount ?? ColumnsContainerPropsDefaults.columnsCount;
 
   const fixedWidthPct = props.fixedWidths?.[index];
@@ -133,10 +160,25 @@ function TableCell({ index, props, columns, stackMobilePreview }: Props) {
   // Auto-distribute width when no fixed widths are set
   const autoWidth = fixedWidthPct == null ? `${100 / columnsCount}%` : undefined;
 
+  // The gap is carried as padding on the facing edges of adjacent cells, half
+  // on each, so the outer edges stay flush with the block and the column
+  // percentages still add up to the full width. Stacked cells are full width,
+  // so the horizontal inset would only shrink them — the export sheet drops it
+  // in the mobile media query for the same reason.
+  const gap = Math.max(0, props.columnsGap ?? ColumnsContainerPropsDefaults.columnsGap);
+  const gapStyle: CSSProperties =
+    gap > 0 && !stackMobilePreview
+      ? {
+          paddingLeft: index === 0 ? 0 : gap / 2,
+          paddingRight: index === columnsCount - 1 ? 0 : gap / 2,
+        }
+      : {};
+
   const style: CSSProperties = {
     boxSizing: 'border-box',
     verticalAlign: contentAlignment,
     width: fixedWidthPct != null ? `${fixedWidthPct}%` : autoWidth,
+    ...gapStyle,
     ...(stackMobilePreview ? { display: 'block', width: '100%' } : {}),
   };
   const children = (columns && columns[index]) ?? null;

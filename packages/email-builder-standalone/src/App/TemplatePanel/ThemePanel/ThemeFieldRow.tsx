@@ -69,7 +69,8 @@ export default function ThemeFieldRow({ blockType, field }: ThemeFieldRowProps) 
   // Schema default for this field, so the global theme inputs show the
   // effective applied value (and editing promotes it to an override).
   const schemaDefault = (
-    EDITOR_SCHEMA_DEFAULTS_BY_TYPE[blockType]?.[field.section] as Record<string, unknown> | undefined
+    EDITOR_SCHEMA_DEFAULTS_BY_TYPE[blockType]?.[field.section] as
+      Record<string, unknown> | undefined
   )?.[field.key];
 
   const label = t(field.labelKey);
@@ -83,7 +84,11 @@ export default function ThemeFieldRow({ blockType, field }: ThemeFieldRowProps) 
           <NullableColorInput
             label={label}
             labelAction={resetButton}
-            defaultValue={(value as string | null | undefined) ?? (schemaDefault as string | null | undefined) ?? null}
+            defaultValue={
+              (value as string | null | undefined) ??
+              (schemaDefault as string | null | undefined) ??
+              null
+            }
             onChange={(next) => (next === null ? reset() : set(next))}
           />
         </CompactableInput>
@@ -96,7 +101,12 @@ export default function ThemeFieldRow({ blockType, field }: ThemeFieldRowProps) 
             labelAction={resetButton}
             defaultValue={
               (value as { top: number; right: number; bottom: number; left: number } | null) ??
-              (schemaDefault as { top: number; right: number; bottom: number; left: number } | null) ??
+              (schemaDefault as {
+                top: number;
+                right: number;
+                bottom: number;
+                left: number;
+              } | null) ??
               ZERO_PADDING
             }
             inheritedFrom={isOverridden ? undefined : 'default'}
@@ -112,7 +122,9 @@ export default function ThemeFieldRow({ blockType, field }: ThemeFieldRowProps) 
           <FontSizeInput
             label={label}
             labelAction={resetButton}
-            defaultValue={(value as number | undefined) ?? (schemaDefault as number | undefined) ?? 16}
+            defaultValue={
+              (value as number | undefined) ?? (schemaDefault as number | undefined) ?? 16
+            }
             onChange={(next) => set(next)}
           />
         </CompactableInput>
@@ -123,7 +135,11 @@ export default function ThemeFieldRow({ blockType, field }: ThemeFieldRowProps) 
           <NullableFontFamily
             label={label}
             labelAction={resetButton}
-            defaultValue={(value as string | null | undefined) ?? (schemaDefault as string | null | undefined) ?? null}
+            defaultValue={
+              (value as string | null | undefined) ??
+              (schemaDefault as string | null | undefined) ??
+              null
+            }
             onChange={(next) => (next === null ? reset() : set(next))}
           />
         </CompactableInput>
@@ -134,7 +150,9 @@ export default function ThemeFieldRow({ blockType, field }: ThemeFieldRowProps) 
           <FontWeightInput
             label={label}
             labelAction={resetButton}
-            defaultValue={(value as string | undefined) ?? (schemaDefault as string | undefined) ?? 'normal'}
+            defaultValue={
+              (value as string | undefined) ?? (schemaDefault as string | undefined) ?? 'normal'
+            }
             onChange={(next) => set(next)}
           />
         </CompactableInput>
@@ -145,7 +163,11 @@ export default function ThemeFieldRow({ blockType, field }: ThemeFieldRowProps) 
           <TextAlignInput
             label={label}
             labelAction={resetButton}
-            defaultValue={(value as string | null | undefined) ?? (schemaDefault as string | null | undefined) ?? null}
+            defaultValue={
+              (value as string | null | undefined) ??
+              (schemaDefault as string | null | undefined) ??
+              null
+            }
             onChange={(next) => (next === null ? reset() : set(next))}
           />
         </CompactableInput>
@@ -156,7 +178,9 @@ export default function ThemeFieldRow({ blockType, field }: ThemeFieldRowProps) 
           <FontSizeInput
             label={label}
             labelAction={resetButton}
-            defaultValue={(value as number | undefined) ?? (schemaDefault as number | undefined) ?? 0}
+            defaultValue={
+              (value as number | undefined) ?? (schemaDefault as number | undefined) ?? 0
+            }
             onChange={(next) => set(next)}
           />
         </CompactableInput>
@@ -199,14 +223,30 @@ function ThemeBorderField({ blockType, field }: ThemeFieldRowProps) {
     <BorderInput
       label={t(field.labelKey)}
       borderColor={
-        (borderColor.value as string | undefined) ?? (styleDefaults?.borderColor as string | undefined) ?? null
+        (borderColor.value as string | undefined) ??
+        (styleDefaults?.borderColor as string | undefined) ??
+        null
       }
-      borderTop={(borderTop.value as number | undefined) ?? (styleDefaults?.borderTop as number | undefined) ?? 0}
+      borderTop={
+        (borderTop.value as number | undefined) ??
+        (styleDefaults?.borderTop as number | undefined) ??
+        0
+      }
       borderBottom={
-        (borderBottom.value as number | undefined) ?? (styleDefaults?.borderBottom as number | undefined) ?? 0
+        (borderBottom.value as number | undefined) ??
+        (styleDefaults?.borderBottom as number | undefined) ??
+        0
       }
-      borderLeft={(borderLeft.value as number | undefined) ?? (styleDefaults?.borderLeft as number | undefined) ?? 0}
-      borderRight={(borderRight.value as number | undefined) ?? (styleDefaults?.borderRight as number | undefined) ?? 0}
+      borderLeft={
+        (borderLeft.value as number | undefined) ??
+        (styleDefaults?.borderLeft as number | undefined) ??
+        0
+      }
+      borderRight={
+        (borderRight.value as number | undefined) ??
+        (styleDefaults?.borderRight as number | undefined) ??
+        0
+      }
       onChange={handleChange}
       sidesLinked={sidesLinked}
       onSidesLinkedChange={setSidesLinked}

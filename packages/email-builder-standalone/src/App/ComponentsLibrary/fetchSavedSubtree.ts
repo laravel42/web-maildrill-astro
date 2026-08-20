@@ -14,7 +14,10 @@
  */
 
 import { resolveBackendUrl } from '../../components/UnsplashImagePicker/unsplash-api';
-import { getComponentsStorageMode, type TSavedComponentBlock } from '../../documents/editor/EditorContext';
+import {
+  getComponentsStorageMode,
+  type TSavedComponentBlock,
+} from '../../documents/editor/EditorContext';
 
 import type { FetchableLibraryCategory } from './dnd';
 import { localGetSavedComponent, localGetTemplate } from './localLibraryStore';
@@ -47,13 +50,14 @@ function urlFor(category: FetchableLibraryCategory, axis: string, id: string): s
 export async function fetchSavedSubtree(
   category: FetchableLibraryCategory,
   axis: string,
-  id: string
+  id: string,
 ): Promise<FetchSavedSubtreeResult> {
   // Local storage mode: resolve the saved subtree from localStorage.
   // Templates persist under their own key; sections / primitives / layouts
   // share the generic saved-component store.
   if (getComponentsStorageMode() === 'local') {
-    const local = category === 'template' ? localGetTemplate(id) : localGetSavedComponent(category, id);
+    const local =
+      category === 'template' ? localGetTemplate(id) : localGetSavedComponent(category, id);
     return {
       id: local.id,
       name: local.name,
@@ -64,7 +68,10 @@ export async function fetchSavedSubtree(
   const url = urlFor(category, axis, id);
   const response = await fetch(url);
   if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { error?: string; hint?: string } | null;
+    const body = (await response.json().catch(() => null)) as {
+      error?: string;
+      hint?: string;
+    } | null;
     if (response.status === 403) {
       throw new Error(body?.hint ?? 'Endpoint disabled in this environment.');
     }

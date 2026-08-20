@@ -52,7 +52,11 @@ export function extractAllChildIds(block: TEditorBlock): string[] {
   const columns = data?.props?.columns;
   if (Array.isArray(columns)) {
     for (const col of columns) {
-      if (col && typeof col === 'object' && Array.isArray((col as { childrenIds?: unknown }).childrenIds)) {
+      if (
+        col &&
+        typeof col === 'object' &&
+        Array.isArray((col as { childrenIds?: unknown }).childrenIds)
+      ) {
         for (const id of (col as { childrenIds: unknown[] }).childrenIds) {
           if (typeof id === 'string') ids.push(id);
         }
@@ -249,7 +253,11 @@ export function cleanDanglingReferences(doc: TEditorConfiguration): CleanResult 
       const originalCols = data!.props!.columns as unknown[];
       let colsChanged = false;
       const nextCols = originalCols.map((col) => {
-        if (col && typeof col === 'object' && Array.isArray((col as { childrenIds?: unknown }).childrenIds)) {
+        if (
+          col &&
+          typeof col === 'object' &&
+          Array.isArray((col as { childrenIds?: unknown }).childrenIds)
+        ) {
           const { kept, changed } = filterIds(id, (col as { childrenIds: unknown[] }).childrenIds);
           if (changed) {
             colsChanged = true;
@@ -411,10 +419,16 @@ function listChildArrays(block: TEditorBlock): ChildArrayEntry[] {
 
   if (propsObj && Array.isArray(propsObj.columns)) {
     (propsObj.columns as unknown[]).forEach((col, index) => {
-      if (col && typeof col === 'object' && Array.isArray((col as { childrenIds?: unknown }).childrenIds)) {
+      if (
+        col &&
+        typeof col === 'object' &&
+        Array.isArray((col as { childrenIds?: unknown }).childrenIds)
+      ) {
         out.push({
           kind: { kind: 'column', index },
-          ids: (col as { childrenIds: unknown[] }).childrenIds.filter((v): v is string => typeof v === 'string'),
+          ids: (col as { childrenIds: unknown[] }).childrenIds.filter(
+            (v): v is string => typeof v === 'string',
+          ),
         });
       }
     });

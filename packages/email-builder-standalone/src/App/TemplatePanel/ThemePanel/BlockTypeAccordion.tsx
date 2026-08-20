@@ -2,7 +2,15 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ExpandMoreOutlined } from '@mui/icons-material';
-import { Accordion, AccordionDetails, AccordionSummary, Box, Stack, Tooltip, Typography } from '@mui/material';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 
 import { useCompactMode } from '../../InspectorDrawer/CompactModeContext';
 
@@ -69,7 +77,10 @@ export default function BlockTypeAccordion({
           px: 0,
           minHeight: compact ? 40 : 48,
           justifyContent: compact ? 'center' : undefined,
-          '& .MuiAccordionSummary-content': { my: compact ? 0.5 : 1, justifyContent: compact ? 'center' : undefined },
+          '& .MuiAccordionSummary-content': {
+            my: compact ? 0.5 : 1,
+            justifyContent: compact ? 'center' : undefined,
+          },
         }}
       >
         {compact ? (
@@ -88,7 +99,9 @@ export default function BlockTypeAccordion({
           </Tooltip>
         ) : (
           <Stack direction="row" spacing={1} sx={{ width: '100%', alignItems: 'center' }}>
-            <Typography sx={{ fontWeight: 600, color: 'text.primary' }}>{t(spec.titleKey)}</Typography>
+            <Typography sx={{ fontWeight: 600, color: 'text.primary' }}>
+              {t(spec.titleKey)}
+            </Typography>
           </Stack>
         )}
       </AccordionSummary>

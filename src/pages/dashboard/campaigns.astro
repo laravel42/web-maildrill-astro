@@ -1,0 +1,109 @@
+---
+export const prerender = false;
+import AppLayout from '@/layouts/AppLayout.astro';
+import CampaignsBoard from '@/components/react/CampaignsBoard';
+import { productClient, mintServiceToken, serviceBaseUrl } from '@/lib/server/service';
+import { toCampaigns, type ApiCampaign } from '@/lib/app/campaign-map';
+import type { Campaign } from '@/types/app';
+import type { ChannelSenders } from '@/lib/app/channel-senders';
+import type { AudienceChoice, TemplateChoice } from '@/components/react/CampaignWizard.types';
+import { PAGE_SIZE } from '@/components/react/shared/pagination';
+
+// Load real campaigns for the signed-in workspace; undefined = not connected
+// (island falls back to fixtures), an array = live data (even if empty).
+const session = Astro.locals.session;
+let initial: Campaign[] | undefined = undefined;
+let initialTotal = 0;
+let initialCounts: { byChannel: Record<string, number>; byStatus: Record<string, number> } | undefined =
+  undefined;
+// Lists/segments/templates feed the wizard, so a campaign targets real
+// recipients and real content instead of placeholder choices.
+let audiences: AudienceChoice[] | undefined = undefined;
+let templates: TemplateChoice[] | undefined = undefined;
+let senders: ChannelSenders | undefined = undefined;
+let banner: { ok: boolean; text: string } | null = null;
+
+
+if (session?.user?.id && session.activeTenantId) {
+  try {
+    const ctx = {
+      userId: session.user.id,
+      activeTenantId: session.activeTenantId,
+      role: session.role,
+    };
+    const client = productClient(ctx);
+    /* The board opens on the email tab, newest first — so SSR fetches exactly
+       that page and the counts behind the tabs, not every campaign in the
+       workspace with a message rollup attached to each. */
+    const boardQuery = {
+      limit: PAGE_SIZE,
+      channel: 'email' as const,
+      sort: 'updatedAt' as const,
+      dir: 'desc' as const,
+      withTotal: '1',
+    };
+    // Audiences and templates are NOT fetched here: they belong to the campaign
+    // wizard, cost ~876ms of blocking SSR between them (/v1/lists/audience 601ms,
+    // /v1/templates 275ms and 1.1MB), and most visits never open the dialog. The
+    // board fetches them on first open instead.
+    const [campaignsRes, countsRes, sendersRes] =
+      await Promise.all([
+        client.GET('/v1/campaigns', { params: { query: boardQuery } }),
+        client.GET('/v1/campaigns/counts', { params: { query: { channel: 'email' } } }),
+
+  
+        fetch(`${serviceBaseUrl()}/v1/channels/senders`, {
+          headers: { Authorization: `Bearer ${mintServiceToken(ctx)}` },
+        }),
+      ]);
+
+    if (campaignsRes.error) {
+      banner = { ok: false, text: 'workers returned an error.' };
+    } else {
+      const page = campaignsRes.data as unknown as {
+        items?: ApiCampaign[];
+        total?: number;
+      };
+      initial = toCampaigns(page.items ?? []);
+      initialTotal = page.total ?? 0;
+      initialCounts = countsRes.data as unknown as typeof initialCounts;
+    }
+
+    if (sendersRes.ok) senders = (await sendersRes.json()) as ChannelSenders;
+  } catch (err) {
+    banner = { ok: false, text: err instanceof Error ? err.message : 'Service unreachable.' };
+  }
+}
+---
+
+<AppLayout title="Campaigns">
+  {banner && <div class={`svc-banner ${banner.ok ? 'ok' : 'err'}`}>{banner.text}</div>}
+  <CampaignsBoard
+    client:visible
+    initial={initial}
+    initialTotal={initialTotal}
+    initialCounts={initialCounts}
+    audiences={audiences}
+    templates={templates}
+    senders={senders}
+  />
+</AppLayout>
+
+<style>
+  .svc-banner {
+    margin: 0 0 14px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+  }
+  .svc-banner.ok {
+    border: 1px solid #16a34a;
+    background: #f0fdf4;
+    color: #166534;
+  }
+  .svc-banner.err {
+    border: 1px solid #dc2626;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+</style>

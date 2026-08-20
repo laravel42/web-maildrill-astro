@@ -17,13 +17,7 @@ export type GalleryPreviewData = {
 const VOICE_WAVE = [38, 62, 48, 88, 56, 30, 72, 46, 82, 40, 64, 34, 70, 44];
 
 /** Recreated faux-email preview — pure CSS blocks, never a real image. */
-export function FauxEmail({
-  t,
-  variant,
-}: {
-  t: GalleryPreviewData;
-  variant: 'card' | 'drawer';
-}) {
+export function FauxEmail({ t, variant }: { t: GalleryPreviewData; variant: 'card' | 'drawer' }) {
   const lg = variant === 'drawer';
   const fg = t.fg ?? '#fff';
   const accent = t.accent ?? '#4f46e5';
@@ -85,7 +79,11 @@ function FauxVoice({ t, channel }: { t: GalleryPreviewData; channel: ChannelType
         <span className={styles.voiceName}>{t.title ?? t.name}</span>
         <div className={styles.voiceWave}>
           {VOICE_WAVE.map((h, i) => (
-            <span key={i} className={styles.voiceBar} style={{ height: `${h}%`, background: m.color }} />
+            <span
+              key={i}
+              className={styles.voiceBar}
+              style={{ height: `${h}%`, background: m.color }}
+            />
           ))}
         </div>
       </div>

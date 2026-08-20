@@ -22,6 +22,11 @@
   --surface3: #fbfaf8;
   --border: #ecebe6;
   --border2: #e4e2da;
+  /* Workspace sidebar panel (rgb 242 241 239). */
+  --sidebar-bg: #f2f1ef;
+  /* Workspace sidebar ink-based hover (the panel is sidebar-bg, so a matching
+     hover fill would vanish). */
+  --sidebar-hover: rgba(31, 30, 27, 0.055);
   --divider: #efeee9;
   --header-bg: rgba(246, 245, 242, 0.75);
 
@@ -45,7 +50,17 @@
   --accent: #4f46e5;
   --accent-hover: #4338ca;
   --accent-tint: #eef0ff;
+  /* Neutral chip tint for statuses that carry no warning colour — complained
+     (the heaviest signal, paired with --ink) and invalid (inert, --text3).
+     Warm-gray so it sits in the cream ramp rather than reading as blue. */
+  --ink-tint: #e6e4de;
   --accent-contrast: #ffffff;
+  /* Text-role variants: same hue families, guaranteed readable (APCA Lc 60+)
+     on the theme surfaces. Use these when the color is carried BY TEXT; keep
+     --accent/--danger/--success for fills, borders, and bars. */
+  --accent-text: #4f46e5;
+  --success-text: #15803d;
+  --danger-text: #b91c1c;
 
   /* Status */
   --success: #16a34a;
@@ -59,6 +74,10 @@
   --danger-bg: #fee2e2;
   --info: #4f46e5;
   --info-bg: #eef0ff;
+  /* Violet — only the WhatsApp "paused" approval badge uses it, but it needs a
+     theme pair like every other status hue or it cannot flip for dark. */
+  --violet-strong: #7c3aed;
+  --violet-bg: rgba(139, 92, 246, 0.16);
 
   /* Channels (color + tint pairs, used everywhere consistently) */
   --ch-email: #4f46e5;
@@ -115,6 +134,12 @@
   --sidebar-width: 280px;
   --nav-height: 72px; /* marketing header */
   --header-height: 64px; /* app header */
+  /* Section rhythm scale. Marketing sections multiply their block padding by
+     this — `padding-block: calc(72px * var(--sec-y))` — so the page's vertical
+     rhythm can be tightened everywhere from one place. The desktop figures
+     assume a section roughly fills the viewport on its own; on a phone they
+     turn the page into a column of gaps between short blocks. */
+  --sec-y: 1;
 
   /* Typography */
   --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -154,6 +179,8 @@
   --z-dropdown: 60;
   --z-drawer: 70;
   --z-modal: 80;
+  /* Confirmations interrupt whatever modal opened them, so they sit above it. */
+  --z-confirm: 85;
   --z-toast: 90;
 }
 
@@ -165,6 +192,8 @@
   --surface2: #2a261e;
   --surface3: #26221b;
   --border: #332f26;
+  --sidebar-bg: #15130d;
+  --sidebar-hover: rgba(245, 243, 236, 0.06);
   --border2: #3c372c;
   --divider: #29251d;
   --header-bg: rgba(21, 19, 13, 0.75);
@@ -172,22 +201,36 @@
   --ink: #f5f3ec;
   --text: #f5f3ec;
   --text2: #e6e2d8;
-  --text3: #cbc6b8;
-  --text4: #a8a394;
-  --muted: #8b8778;
-  --muted2: #6b6759;
+  --text3: #d6d1c3;
+  --text4: #bdb8a9;
+  --muted: #9a9585;
+  --muted2: #949080;
   --on-ink: #15130d;
 
   --brand-tint: rgba(255, 68, 31, 0.16);
   --accent-tint: rgba(99, 91, 245, 0.2);
+  --ink-tint: rgba(245, 243, 236, 0.16);
   --accent-contrast: #ffffff;
+  --accent-text: #b1bdfd;
+  --success-text: #4ade80;
+  --danger-text: #fca5a5;
 
+  --success-strong: #4ade80;
+  --danger: #f87171;
+  --danger-strong: #fca5a5;
+  --info: #b1bdfd;
   --warning-strong: #fbbf24;
   --success-bg: rgba(34, 197, 94, 0.16);
   --warning-bg: rgba(217, 119, 6, 0.16);
   --danger-bg: rgba(220, 38, 38, 0.16);
   --info-bg: rgba(99, 91, 245, 0.18);
+  --violet-strong: #c4b5fd;
+  --violet-bg: rgba(139, 92, 246, 0.22);
 
+  --ch-email: #a5b4fc;
+  --ch-sms: #22d3ee;
+  --ch-whatsapp: #4ade80;
+  --ch-voice: #fbbf24;
   --ch-email-tint: rgba(99, 91, 245, 0.18);
   --ch-sms-tint: rgba(8, 145, 178, 0.18);
   --ch-whatsapp-tint: rgba(22, 163, 74, 0.18);
@@ -198,4 +241,12 @@
   --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
   --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.5);
   --shadow-float: 0 40px 100px rgba(0, 0, 0, 0.6);
+}
+
+/* Half the section rhythm on phones. Set on :root so it reaches the scoped
+   styles of every page — the sections themselves stay in their own files. */
+@media (max-width: 720px) {
+  :root {
+    --sec-y: 0.5;
+  }
 }

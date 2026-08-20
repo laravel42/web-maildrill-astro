@@ -2,7 +2,10 @@ import React, { CSSProperties } from 'react';
 
 import { type SpacerProps, SpacerPropsSchema } from '@eb/document-core';
 
-import { shortCssId, updateHexColorInBackgroundString } from '../../email-builder/src/helpers/utils';
+import {
+  shortCssId,
+  updateHexColorInBackgroundString,
+} from '../../email-builder/src/helpers/utils';
 import { useViewport } from '../../email-builder/src/Reader/viewport';
 
 export { SpacerPropsSchema, type SpacerProps };
@@ -15,11 +18,14 @@ export const SpacerPropsDefaults = {
 export function Spacer({ style, blockId }: SpacerProps & { blockId?: string }) {
   const selectedScreenSize = useViewport();
   const height =
-    (selectedScreenSize === 'desktop' ? style?.height : (style?.heightMobile ?? style?.height)) ?? undefined;
+    (selectedScreenSize === 'desktop' ? style?.height : (style?.heightMobile ?? style?.height)) ??
+    undefined;
 
   const background = style?.background ?? '';
   const backgroundColor = style?.backgroundColor ?? '';
-  const backgroundString = backgroundColor ? updateHexColorInBackgroundString(background, backgroundColor) : background;
+  const backgroundString = backgroundColor
+    ? updateHexColorInBackgroundString(background, backgroundColor)
+    : background;
 
   const wStyle: CSSProperties = {
     width: '100%',

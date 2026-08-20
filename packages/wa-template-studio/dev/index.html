@@ -18,7 +18,9 @@
     <script>
       // Dev-only: surface uncaught render errors for debugging.
       window.__caught = [];
-      window.addEventListener('error', (e) => window.__caught.push(String((e.error && e.error.stack) || e.message)));
+      window.addEventListener('error', (e) =>
+        window.__caught.push(String((e.error && e.error.stack) || e.message)),
+      );
     </script>
     <script type="module" src="./main.tsx"></script>
   </body>

@@ -1,0 +1,56 @@
+---
+export const prerender = false;
+import AppLayout from '@/layouts/AppLayout.astro';
+import AppSettings from '@/components/react/AppSettings';
+import { productClient } from '@/lib/server/service';
+import type { ChannelBreakdown } from '@/components/react/AppAnalytics.logic';
+
+const session = Astro.locals.session;
+let byChannel: ChannelBreakdown[] = [];
+let live = false;
+let banner: { ok: boolean; text: string } | null = null;
+
+if (session?.user?.id && session.activeTenantId) {
+  try {
+    const client = productClient({
+      userId: session.user.id,
+      activeTenantId: session.activeTenantId,
+      role: session.role,
+    });
+    const summaryRes = await client.GET('/v1/stats/summary');
+    if (summaryRes.error) {
+      banner = { ok: false, text: 'workers returned an error.' };
+    } else {
+      byChannel =
+        (summaryRes.data as unknown as { byChannel?: ChannelBreakdown[] })?.byChannel ?? [];
+      live = true;
+    }
+  } catch (err) {
+    banner = { ok: false, text: err instanceof Error ? err.message : 'Service unreachable.' };
+  }
+}
+---
+
+<AppLayout title="Settings">
+  {banner && <div class={`svc-banner ${banner.ok ? 'ok' : 'err'}`}>{banner.text}</div>}
+  <AppSettings client:visible initialByChannel={byChannel} live={live} />
+</AppLayout>
+
+<style>
+  .svc-banner {
+    margin: 0 0 14px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+  }
+  .svc-banner.ok {
+    border: 1px solid #16a34a;
+    background: #f0fdf4;
+    color: #166534;
+  }
+  .svc-banner.err {
+    border: 1px solid #dc2626;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+</style>

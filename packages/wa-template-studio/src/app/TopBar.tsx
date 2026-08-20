@@ -1,13 +1,5 @@
-import * as React from 'react';
-
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip';
-import {
-  redo,
-  setPreviewDevice,
-  setPreviewMode,
-  undo,
-  useStudio,
-} from '@/core/store';
+import { redo, setPreviewDevice, setPreviewMode, undo, useStudio } from '@/core/store';
 import { ToolbarIconButton } from './ToolbarIconButton';
 import {
   IconDesktop,
@@ -18,6 +10,9 @@ import {
   IconUndo,
 } from './ToolbarIcons';
 
+/** Meta approval state when hosted by Maildrill (kept for host typing). */
+export type ApprovalStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'paused' | 'disabled';
+
 function PreviewModeToggle({
   mode,
   onChange,
@@ -26,7 +21,11 @@ function PreviewModeToggle({
   onChange: (mode: 'edit' | 'interact') => void;
 }) {
   return (
-    <div className="wts-mode-tabs absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" role="tablist" aria-label="Preview mode">
+    <div
+      className="wts-mode-tabs absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+      role="tablist"
+      aria-label="Preview mode"
+    >
       <Tooltip>
         <TooltipTrigger asChild>
           <ToolbarIconButton
@@ -114,7 +113,12 @@ export function TopBar() {
         <div className="wts-undo-redo">
           <Tooltip>
             <TooltipTrigger asChild>
-              <ToolbarIconButton variant="action" aria-label="Undo" disabled={past === 0} onClick={undo}>
+              <ToolbarIconButton
+                variant="action"
+                aria-label="Undo"
+                disabled={past === 0}
+                onClick={undo}
+              >
                 <IconUndo />
               </ToolbarIconButton>
             </TooltipTrigger>
@@ -122,7 +126,12 @@ export function TopBar() {
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <ToolbarIconButton variant="action" aria-label="Redo" disabled={future === 0} onClick={redo}>
+              <ToolbarIconButton
+                variant="action"
+                aria-label="Redo"
+                disabled={future === 0}
+                onClick={redo}
+              >
                 <IconRedo />
               </ToolbarIconButton>
             </TooltipTrigger>
@@ -130,10 +139,7 @@ export function TopBar() {
           </Tooltip>
         </div>
 
-        <DeviceToggle
-          device={previewDevice}
-          onChange={(next) => setPreviewDevice(next)}
-        />
+        <DeviceToggle device={previewDevice} onChange={(next) => setPreviewDevice(next)} />
       </div>
     </header>
   );

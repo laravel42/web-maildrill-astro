@@ -1,3 +1,4 @@
+import { DESIGN_CRAFT_GUIDANCE } from '../agent/design-craft.js';
 import { formatPoolForPrompt, type PoolItem } from '../unsplash/build-image-pool.js';
 
 import { generateFewShotPrompt } from './few-shot.js';
@@ -307,7 +308,7 @@ export function buildSystemPrompt(options: BuildSystemPromptOptions = {}): strin
 
   const hasPool = imagePool !== undefined && imagePool.length > 0;
 
-  const sections: string[] = [buildBaseInstructions(hasPool)];
+  const sections: string[] = [buildBaseInstructions(hasPool), DESIGN_CRAFT_GUIDANCE];
 
   // Add few-shot examples if user prompt is provided. The seed is
   // forwarded so the "ensure at least one backgroundImage example" branch
@@ -351,7 +352,7 @@ export function buildSystemPrompt(options: BuildSystemPromptOptions = {}): strin
     '# SKILL\n\n' + skill,
     '# PATTERNS\n\n' + patterns,
     buildTemplatesSection(selectedTemplates),
-    buildSectionsSection(selectedSections)
+    buildSectionsSection(selectedSections),
   );
 
   // Layouts / Primitives are user-saved-only and typically rare; they stay
@@ -396,7 +397,7 @@ export function buildSystemPrompt(options: BuildSystemPromptOptions = {}): strin
         '```json',
         JSON.stringify(currentDocument, null, 2),
         '```',
-      ].join('\n')
+      ].join('\n'),
     );
   }
 
@@ -462,27 +463,27 @@ function buildVariationDirective(seed: number, sections: SectionEntry[]): string
     lines.push(
       '',
       `- **hero_slot** → use section \`${hero.slug}\` for the hero section.`,
-      `  REPLACE the template's hero entirely. Apply the template's palette ({{ACCENT}}, {{TEXT}}, etc.) and font — only the layout changes.`
+      `  REPLACE the template's hero entirely. Apply the template's palette ({{ACCENT}}, {{TEXT}}, etc.) and font — only the layout changes.`,
     );
   }
   if (feature) {
     lines.push(
       '',
       `- **features_slot** → use section \`${feature.slug}\` for the features / benefits section.`,
-      `  REPLACE any default feature grid the template shipped — do not keep both.`
+      `  REPLACE any default feature grid the template shipped — do not keep both.`,
     );
   }
   if (cta) {
     lines.push(
       '',
       `- **cta_slot** → use section \`${cta.slug}\` for the secondary CTA section.`,
-      `  REPLACE the template's secondary CTA card.`
+      `  REPLACE the template's secondary CTA card.`,
     );
   }
 
   lines.push(
     '',
-    "These slot assignments are MANDATORY for this generation. The template's palette, typography, borderRadius, and footer remain in effect; only the listed sections are swapped."
+    "These slot assignments are MANDATORY for this generation. The template's palette, typography, borderRadius, and footer remain in effect; only the listed sections are swapped.",
   );
 
   return lines.join('\n');
@@ -512,7 +513,14 @@ function buildTemplatesSection(templates: TemplateEntry[]): string {
 
   for (const t of templates) {
     const tag = t.source === 'user' ? ' [user]' : '';
-    lines.push('', `## Template: ${t.slug}${tag} — ${t.description}`, '', '```ndjson', t.ndjson.trimEnd(), '```');
+    lines.push(
+      '',
+      `## Template: ${t.slug}${tag} — ${t.description}`,
+      '',
+      '```ndjson',
+      t.ndjson.trimEnd(),
+      '```',
+    );
   }
 
   return lines.join('\n');
@@ -542,7 +550,7 @@ function buildSectionsSection(sections: SectionEntry[]): string {
       '',
       '```ndjson',
       s.ndjson.trimEnd(),
-      '```'
+      '```',
     );
   }
 
@@ -566,7 +574,14 @@ function buildLayoutsSection(layouts: LayoutEntry[]): string {
   ];
 
   for (const l of layouts) {
-    lines.push('', `## Layout: ${l.slug} (${l.shape}) — ${l.description}`, '', '```ndjson', l.ndjson.trimEnd(), '```');
+    lines.push(
+      '',
+      `## Layout: ${l.slug} (${l.shape}) — ${l.description}`,
+      '',
+      '```ndjson',
+      l.ndjson.trimEnd(),
+      '```',
+    );
   }
 
   return lines.join('\n');
@@ -592,7 +607,7 @@ function buildPrimitivesSection(primitives: PrimitiveEntry[]): string {
       '',
       '```ndjson',
       p.ndjson.trimEnd(),
-      '```'
+      '```',
     );
   }
 
@@ -615,7 +630,14 @@ function buildThemesSection(themes: ThemeEntry[]): string {
   ];
 
   for (const th of themes) {
-    lines.push('', `## Theme: ${th.slug} — ${th.description}`, '', '```json', th.json.trimEnd(), '```');
+    lines.push(
+      '',
+      `## Theme: ${th.slug} — ${th.description}`,
+      '',
+      '```json',
+      th.json.trimEnd(),
+      '```',
+    );
   }
 
   return lines.join('\n');

@@ -13,7 +13,9 @@ import React from 'react';
 
 import { Box, Typography } from '@mui/material';
 
-type ShortcutKeysProps = ({ keys: string[]; shortcut?: never } | { shortcut: string; keys?: never }) & {
+type ShortcutKeysProps = (
+  { keys: string[]; shortcut?: never } | { shortcut: string; keys?: never }
+) & {
   /** sx forwarded to the wrapper Box */
   sx?: object;
 };
@@ -38,7 +40,12 @@ export default function ShortcutKeys({ keys, shortcut, sx }: ShortcutKeysProps) 
           {i > 0 && (
             <Typography
               component="span"
-              sx={{ fontSize: '0.65rem', color: 'text.disabled', lineHeight: 1, userSelect: 'none' }}
+              sx={{
+                fontSize: '0.65rem',
+                color: 'text.disabled',
+                lineHeight: 1,
+                userSelect: 'none',
+              }}
             >
               +
             </Typography>

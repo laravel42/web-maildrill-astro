@@ -1,0 +1,486 @@
+/* ---- Campaign report (full screen, App.dc.html § campaignDetail) ---- */
+.reportBack {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text4);
+  cursor: pointer;
+}
+.reportBack:hover {
+  color: var(--text2);
+}
+.reportHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.reportHeadMain {
+  min-width: 0;
+}
+.reportName {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+  color: var(--text);
+}
+.reportName :global(.astatus) {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+.reportSentBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: none;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  color: var(--text3);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.reportKpis {
+  /* fluid: the six counters share the row; wrapped cards fill their line */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 18px;
+}
+.reportKpi {
+  flex: 1 1 150px;
+  min-width: 0;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(30, 27, 22, 0.04);
+}
+.reportKpiLbl {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.reportKpiValRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 8px;
+  min-width: 0;
+}
+.reportKpiVal {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.1;
+}
+.reportKpiSep {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--muted2);
+  line-height: 1.1;
+}
+.reportKpiPct {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text2);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.kOpened {
+  color: var(--success-text);
+}
+.kClicked {
+  color: var(--accent-text);
+}
+.kBounced {
+  color: var(--warning-strong);
+}
+.kDanger {
+  color: var(--danger-text);
+}
+
+.reportRow {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 18px;
+}
+.reportRowSolo {
+  grid-template-columns: 1fr;
+}
+.reportRow2 {
+  margin-top: 18px;
+}
+.reportCard {
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(30, 27, 22, 0.04);
+}
+.reportCardTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 18px;
+}
+
+.funnelRow {
+  margin-bottom: 15px;
+}
+.funnelRow:last-child {
+  margin-bottom: 0;
+}
+.funnelTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.funnelLbl {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text3);
+}
+.funnelVal {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.funnelTrack {
+  height: 10px;
+  border-radius: 6px;
+  background: var(--surface2);
+  overflow: hidden;
+}
+.funnelBar {
+  height: 100%;
+  border-radius: 6px;
+  transform-origin: left;
+  animation: grow 0.5s ease;
+}
+
+.reportDetail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--divider);
+}
+.reportDetail:last-child {
+  border-bottom: none;
+}
+.reportDetailK {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.reportDetailV {
+  font-size: 13px;
+  font-weight: 500;
+  text-align: right;
+  color: var(--text);
+}
+
+.linksTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+.linksTable th,
+.linksTable td {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--divider);
+  text-align: left;
+  vertical-align: middle;
+}
+.linksTable th {
+  padding-top: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+.linksTable tbody tr:last-child td {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.linksTable td {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.linksNum {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+  padding-left: 20px !important;
+}
+.linksTable th.linksNum,
+.linksTable td.linksNum {
+  text-align: right;
+}
+.linkUrl {
+  display: block;
+  max-width: 42ch;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.linkUrl:hover {
+  color: var(--accent-text);
+  text-decoration: underline;
+}
+
+@media (max-width: 860px) {
+  .reportRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------- recipient events ---------------------------- */
+.revCard {
+  margin-top: 18px;
+}
+.revHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 17px 19px 14px;
+}
+.exportBtn {
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  gap: 5px;
+}
+.revSub {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--text4);
+}
+.revGrid {
+  grid-template-columns: 2.2fr 1fr 0.7fr 0.7fr 0.9fr;
+}
+.revRow {
+  cursor: default;
+}
+.revRow:hover {
+  background: none;
+}
+.revCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.revAv {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+.revWho {
+  min-width: 0;
+}
+.revName {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-decoration: none;
+}
+a.revName:hover {
+  color: var(--accent-text);
+}
+.revAddr {
+  font-size: 11.5px;
+  color: var(--text4);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.revFlagHead {
+  text-align: center;
+}
+.revFlag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.revFlagOn {
+  color: var(--success-text, #16a34a);
+}
+.revFlagOff {
+  color: var(--border2);
+}
+.revWhenHead {
+  text-align: right;
+}
+.revWhen {
+  text-align: right;
+  font-size: 12.5px;
+  color: var(--text4);
+}
+
+/* first-row rate cards with trend sparklines */
+.rateRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.rateRow .reportKpi {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-basis: 220px;
+}
+.rateTop {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.rateVal {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+/* rate-card deltas vs the previous same-channel campaign */
+.rateValWrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.rateDelta {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.deltaGood {
+  color: var(--success-text);
+}
+.deltaBad {
+  color: var(--danger-text);
+}
+
+/* Shared board furniture the report reuses (event tabs, pager, toast). */
+.tabs {
+  gap: 20px;
+  padding: 0 19px;
+  overflow-x: auto;
+}
+.tabs :global(.atab) {
+  padding: 14px 0 13px;
+  white-space: nowrap;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.pg {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text3);
+  border: 1px solid var(--border2);
+  background: var(--surface);
+}
+.pg:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.pgflip {
+  transform: rotate(180deg);
+}
+.pgn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text3);
+  border: 1px solid var(--border2);
+  background: var(--surface);
+}
+.pgn:global(.is-on) {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
+/* animation 'toastin' is applied inline (global keyframe cannot live in a CSS Module). */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-toast);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: var(--text);
+  color: #fff;
+  padding: 12px 16px 12px 13px;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(28, 25, 23, 0.3);
+  font-size: 13px;
+  font-weight: 500;
+}
+.toastIc {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

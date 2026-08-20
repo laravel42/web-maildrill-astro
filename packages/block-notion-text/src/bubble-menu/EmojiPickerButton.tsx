@@ -1,14 +1,13 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import data from '@emoji-mart/data';
+import { EmojiPickerPanel } from '@md/emoji-picker';
 import { EmojiEmotions as EmojiIcon } from '@mui/icons-material';
-import { Box, CircularProgress, Popover, useTheme } from '@mui/material';
+import { Box, CircularProgress, useTheme } from '@mui/material';
 import type { Editor } from '@tiptap/react';
 
-import SafeEmojiMartPicker from '../SafeEmojiMartPicker';
-
 import ToolbarIconButton from './ToolbarIconButton';
+import ToolbarPopover from './ToolbarPopover';
 
 type Props = {
   editor: Editor;
@@ -18,8 +17,7 @@ type Props = {
 export default function EmojiPickerButton({ editor, onOpenChange }: Props) {
   const theme = useTheme();
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 
   const insertionRef = useRef<{
     isFirstEmoji: boolean;
@@ -36,60 +34,38 @@ export default function EmojiPickerButton({ editor, onOpenChange }: Props) {
         originalSelection: { from, to },
       };
 
-      const PICKER_HEIGHT = 435;
-      const PICKER_WIDTH = 352;
-      const MARGIN = 8;
-      const GAP = 4;
-
-      const rect = event.currentTarget.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const vw = window.innerWidth;
-
-      let left = rect.left + rect.width / 2 - PICKER_WIDTH / 2;
-      left = Math.max(MARGIN, Math.min(left, vw - PICKER_WIDTH - MARGIN));
-
-      let top: number;
-      if (rect.bottom + PICKER_HEIGHT + GAP <= vh) {
-        top = rect.bottom + GAP;
-      } else if (rect.top - PICKER_HEIGHT - GAP >= 0) {
-        top = rect.top - PICKER_HEIGHT - GAP;
-      } else {
-        top = Math.max(MARGIN, vh - PICKER_HEIGHT - MARGIN);
-      }
-
-      setAnchorPosition({ top, left });
-      setOpen(true);
+      setAnchor(event.currentTarget);
       onOpenChange?.(true);
     },
-    [editor, onOpenChange]
+    [editor, onOpenChange],
   );
 
   const handleClose = useCallback(() => {
-    setOpen(false);
+    setAnchor(null);
     insertionRef.current = null;
     onOpenChange?.(false);
   }, [onOpenChange]);
 
   const handleSelect = useCallback(
-    (emoji: { native: string }) => {
+    (native: string) => {
       if (!insertionRef.current) return;
 
-      const emojiLength = emoji.native.length;
+      const emojiLength = native.length;
 
       if (insertionRef.current.isFirstEmoji) {
         const { from, to } = insertionRef.current.originalSelection;
-        editor.chain().deleteRange({ from, to }).insertContentAt(from, emoji.native).run();
+        editor.chain().deleteRange({ from, to }).insertContentAt(from, native).run();
 
         insertionRef.current.insertPosition = from + emojiLength;
         insertionRef.current.isFirstEmoji = false;
       } else {
         const insertPos = insertionRef.current.insertPosition;
-        editor.chain().insertContentAt(insertPos, emoji.native).run();
+        editor.chain().insertContentAt(insertPos, native).run();
 
         insertionRef.current.insertPosition = insertPos + emojiLength;
       }
     },
-    [editor]
+    [editor],
   );
 
   return (
@@ -98,21 +74,10 @@ export default function EmojiPickerButton({ editor, onOpenChange }: Props) {
         <EmojiIcon fontSize="small" />
       </ToolbarIconButton>
 
-      <Popover
-        open={open}
-        anchorReference="anchorPosition"
-        anchorPosition={anchorPosition}
-        disableEnforceFocus
-        disableAutoFocus
-        onClose={(_event, reason) => {
-          if (reason === 'escapeKeyDown' || reason === 'backdropClick') {
-            handleClose();
-          }
-        }}
-      >
-        <SafeEmojiMartPicker
-          data={data}
-          onEmojiSelect={handleSelect}
+      <ToolbarPopover anchorEl={anchor} onClose={handleClose} disableAutoFocus>
+        {/* Left open after a pick so several emoji can be inserted in a row. */}
+        <EmojiPickerPanel
+          onPick={handleSelect}
           theme={theme.palette.mode === 'dark' ? 'dark' : 'light'}
           fallback={
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 2 }}>
@@ -120,7 +85,7 @@ export default function EmojiPickerButton({ editor, onOpenChange }: Props) {
             </Box>
           }
         />
-      </Popover>
+      </ToolbarPopover>
     </>
   );
 }

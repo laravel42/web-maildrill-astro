@@ -5,15 +5,15 @@
 
 export interface AuthGateEvent {
   ability: string;
-  result: "allowed" | "denied";
-  method: "api-key" | "jwt" | "bearer-api-key" | "none";
+  result: 'allowed' | 'denied';
+  method: 'api-key' | 'jwt' | 'bearer-api-key' | 'none';
   tenantId?: string;
   userId?: string;
   path?: string;
 }
 
 export interface AuthCacheEvent {
-  type: "hit" | "miss" | "set";
+  type: 'hit' | 'miss' | 'set';
   key: string;
   value?: unknown;
 }

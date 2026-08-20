@@ -1,0 +1,101 @@
+-- Indexes for the Lists board, which now pages `lists` and rolls up only the
+-- rows on screen instead of aggregating every membership in the workspace.
+-- All numbers below are warm-cache medians from EXPLAIN (ANALYZE, BUFFERS) on
+-- the perf tenant (1,000,229 subscribers / 2,000,551 list_members /
+-- 1,001,068 messages / 1,006 lists), PG 18.1, shared_buffers 128MB.
+
+-- 1. `channel` joins the campaign rollup index as a fourth KEY column.
+--
+--    The board's engagement rollup reads status AND channel: `trackedDelivered`
+--    counts deliveries only on channels that can report an open (email,
+--    WhatsApp), because counting an SMS delivery would dilute the open rate.
+--    With channel absent from the index, that one column forced a heap visit
+--    per message and the plan degraded to a plain Index Scan.
+--
+--      page of 13 lists, 14,120 messages behind them:
+--        before  Index Scan  -> 14,220 buffers (7,901 read)   ~11.0ms
+--        after   Index Only Scan, Heap Fetches: 5
+--                            ->    110 buffers               ~2.7ms
+--
+--    A KEY column, deliberately, not INCLUDE. Every message of a campaign
+--    leaves on the same channel, so (tenant_id, campaign_id, status, channel)
+--    repeats exactly as often as the three-column tuple did and btree
+--    deduplication still collapses it — the index stays 7,632 kB, byte for
+--    byte what it was. INCLUDE (channel) reaches the same Index Only Scan but
+--    disables deduplication, and measured 57MB: +49MB for the same plan.
+--
+--      built side by side over the live 1,001,525-row `messages`:
+--        (tenant_id, campaign_id, status)                      7,632 kB
+--        (tenant_id, campaign_id, status, channel)             7,632 kB
+--        (tenant_id, campaign_id, status) INCLUDE (channel)      57 MB
+--
+--    Those are BUILD sizes. `pg_relation_size` on the live index reads 26MB,
+--    and that is btree bloat from `status` transitions (queued -> sent ->
+--    delivered -> read rewrites the entry four times), not the fourth column:
+--    the three-column index bloats identically, and a rebuild of either
+--    returns it to 7,632 kB. Compare like for like before concluding the
+--    column cost anything.
+--
+--    (Reading `campaigns.channel` instead would need no index change at all,
+--    since `campaigns` is already joined and every message agrees with its
+--    campaign today — 0 disagreements in 1,001,063 rows. It is not used
+--    because a campaign's channel is mutable after it sends, and historical
+--    counters must not move when someone edits the row.)
+DROP INDEX IF EXISTS "messages_tenant_campaign_status_idx";
+CREATE INDEX IF NOT EXISTS "messages_tenant_campaign_status_idx"
+  ON "messages" ("tenant_id", "campaign_id", "status", "channel");
+
+-- 2. A partial index over the subscribers a send cannot reach.
+--
+--    The membership rollup anti-joins this set to separate members a campaign
+--    would actually reach from ones that have since bounced, complained,
+--    unsubscribed or gone invalid. Scoping the rollup to a page bounded the
+--    `list_members` side, which left this build side as the whole cost: it
+--    read the tenant's entire 80,204-row unmailable set out of the 66MB
+--    (tenant_id, status, created_at, id) index, with 31,727 heap fetches.
+--
+--      page of 13 lists:  before 24.0ms   after 16.1ms
+--
+--    Partial, so it indexes 80,204 rows rather than 1,000,229: 3,920 kB, and
+--    only a non-active subscriber's writes ever touch it. It also gives the
+--    planner a second shape to choose from — a nested loop probing per member,
+--    which is O(page) — where the hash build is O(the tenant's unmailable
+--    subscribers). Which one wins depends on page size against roster size,
+--    and that is exactly the choice the planner should be making.
+CREATE INDEX IF NOT EXISTS "subscribers_unmailable_idx"
+  ON "subscribers" ("tenant_id", "id")
+  WHERE "status" IN ('unsubscribed', 'bounced', 'complained', 'invalid');
+
+-- NOT DONE, and measured, so the next reader does not repeat the experiment:
+--
+--  * `list_members (tenant_id, list_id, subscriber_id, created_at)`. Correct
+--    for the OLD whole-tenant aggregate, where a small tenant's share of the
+--    table had to be found inside a 323MB sequential scan. Under page scoping
+--    it is a regression: the existing `list_members_list_idx` already answers
+--    `list_id IN (13 ids)` as a Bitmap Index Scan of 37 buffers, and the heap
+--    it then visits is 3,777 buffers, where an Index Only Scan of this wider
+--    index reads 12,090 — the index is 148MB and its entries are 3.5x fatter
+--    than the heap rows are dense. Measured both ways in a rolled-back
+--    transaction.
+--
+--  * Dropping `list_members_list_idx` as "a strict prefix of the PK". It is a
+--    prefix, but it is not redundant here: it is the index that bounds the
+--    board's membership rollup to the page (37 buffers for 26,000 entries),
+--    and the PK's (list_id, subscriber_id) entries are twice as wide for the
+--    same range. 32MB well spent now that the page-scoped rollup is the hot
+--    path.
+--
+-- PRODUCTION NOTE. Same constraint as 0025 and 0027: migrations run in a
+-- transaction, so CREATE INDEX CONCURRENTLY is not available here. On a large
+-- live table build both out of band first and let the IF NOT EXISTS no-op:
+--
+--   CREATE INDEX CONCURRENTLY messages_tenant_campaign_status_idx_new
+--     ON messages (tenant_id, campaign_id, status, channel);
+--   -- then swap names, or create with the final name after dropping
+--   CREATE INDEX CONCURRENTLY subscribers_unmailable_idx
+--     ON subscribers (tenant_id, id)
+--     WHERE status IN ('unsubscribed', 'bounced', 'complained', 'invalid');
+--
+-- The DROP is metadata-only and safe to run online, but it must not land
+-- before its replacement exists — the campaigns board's page rollup depends on
+-- this index and falls back to a full scan of `messages` without it.

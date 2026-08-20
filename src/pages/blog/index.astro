@@ -190,7 +190,7 @@ const jsonLd = breadcrumbJsonLd([
 <style>
   /* ---- Layout shells ---- */
   .blog-hero {
-    padding-block: 72px 24px;
+    padding-block: calc(72px * var(--sec-y)) calc(24px * var(--sec-y));
   }
 
   .blog-hero__head {
@@ -249,13 +249,13 @@ const jsonLd = breadcrumbJsonLd([
   }
 
   .blog-inner--featured {
-    padding-block: 8px 20px;
+    padding-block: calc(8px * var(--sec-y)) calc(20px * var(--sec-y));
   }
   .blog-inner--grid {
-    padding-block: 24px 40px;
+    padding-block: calc(24px * var(--sec-y)) calc(40px * var(--sec-y));
   }
   .blog-inner--news {
-    padding-block: 32px 88px;
+    padding-block: calc(32px * var(--sec-y)) calc(88px * var(--sec-y));
   }
 
   /* ---- Featured card ---- */

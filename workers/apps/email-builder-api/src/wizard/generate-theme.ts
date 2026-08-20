@@ -243,7 +243,12 @@ function buildScaffoldTheme(input: GenerateThemeInput): Scaffold {
         style: {
           buttonBackgroundColor,
           buttonTextColor,
-          shape: { topLeft: borderRadius, topRight: borderRadius, bottomLeft: borderRadius, bottomRight: borderRadius },
+          shape: {
+            topLeft: borderRadius,
+            topRight: borderRadius,
+            bottomLeft: borderRadius,
+            bottomRight: borderRadius,
+          },
         },
       },
       Divider: { style: { color: dividerColor } },
@@ -259,7 +264,8 @@ function deriveName(input: GenerateThemeInput): string {
   if (brand) return `${brand} Theme`;
   const mood = input.moods?.[0];
   if (mood) return `${mood.charAt(0).toUpperCase()}${mood.slice(1)} Theme`;
-  if (input.palette) return `${input.palette.charAt(0).toUpperCase()}${input.palette.slice(1)} Theme`;
+  if (input.palette)
+    return `${input.palette.charAt(0).toUpperCase()}${input.palette.slice(1)} Theme`;
   return 'Custom Theme';
 }
 
@@ -298,7 +304,7 @@ function enforceContrast(scaffold: Scaffold): ContrastReport {
   // 2. Button text on button fill
   let buttonRatio = getContrastRatio(
     scaffold.blocks.Button.style.buttonTextColor,
-    scaffold.blocks.Button.style.buttonBackgroundColor
+    scaffold.blocks.Button.style.buttonBackgroundColor,
   );
   if (buttonRatio < WCAG_LEVELS.AA_NORMAL) {
     const corrected = getSuggestedTextColor(scaffold.blocks.Button.style.buttonBackgroundColor);
@@ -310,7 +316,10 @@ function enforceContrast(scaffold: Scaffold): ContrastReport {
 
   // 3. Link colour on canvas — only note, do not hard-correct (links are
   //    typically distinguished by more than colour). Still factor into min.
-  const linkRatio = getContrastRatio(scaffold.globals.linkGlobal.linkColor, scaffold.globals.canvasColor);
+  const linkRatio = getContrastRatio(
+    scaffold.globals.linkGlobal.linkColor,
+    scaffold.globals.canvasColor,
+  );
   ratios.push(linkRatio);
   if (linkRatio < WCAG_LEVELS.AA_LARGE) {
     notes.push('Link colour has low contrast; consider relying on the underline as well.');
@@ -431,7 +440,7 @@ export interface GenerateThemeOptions {
  */
 export async function generateTheme(
   input: GenerateThemeInput,
-  options: GenerateThemeOptions = {}
+  options: GenerateThemeOptions = {},
 ): Promise<GeneratedTheme> {
   const scaffold = buildScaffoldTheme(input);
   const accessibility = enforceContrast(scaffold);
@@ -444,9 +453,12 @@ export async function generateTheme(
       if (options.llmText) {
         raw = await options.llmText();
       } else {
-        const getProvider = options.getProvider ?? (await import('../providers/index.js')).getProvider;
+        const getProvider =
+          options.getProvider ?? (await import('../providers/index.js')).getProvider;
         const providerName: ProviderName =
-          options.provider ?? (process.env.DEFAULT_PROVIDER as ProviderName | undefined) ?? 'openai';
+          options.provider ??
+          (process.env.DEFAULT_PROVIDER as ProviderName | undefined) ??
+          'openai';
         const provider = getProvider(providerName);
         const userMessage = JSON.stringify({
           globals: scaffold.globals,
@@ -469,7 +481,10 @@ export async function generateTheme(
       if (json) {
         const parsed = JSON.parse(json) as {
           name?: unknown;
-          blocks?: Record<string, { style?: Record<string, unknown>; props?: Record<string, unknown> }>;
+          blocks?: Record<
+            string,
+            { style?: Record<string, unknown>; props?: Record<string, unknown> }
+          >;
         };
         // Merge name
         if (typeof parsed.name === 'string') {
@@ -480,7 +495,9 @@ export async function generateTheme(
         if (parsed.blocks && typeof parsed.blocks === 'object') {
           for (const [blockType, overrides] of Object.entries(parsed.blocks)) {
             if (!overrides || typeof overrides !== 'object') continue;
-            const existing = (scaffold.blocks as Record<string, Record<string, unknown>>)[blockType];
+            const existing = (scaffold.blocks as Record<string, Record<string, unknown>>)[
+              blockType
+            ];
             if (existing) {
               // Merge style
               if (overrides.style && typeof overrides.style === 'object') {

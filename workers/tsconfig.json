@@ -6,13 +6,15 @@
       "@maildrill/observability": ["./packages/observability/src/index.ts"],
       "@maildrill/domain": ["./packages/domain/src/index.ts"],
       "@maildrill/database": ["./packages/database/src/index.ts"],
+      "@maildrill/database/seed": ["./packages/database/src/seed.ts"],
       "@maildrill/queues": ["./packages/queues/src/index.ts"],
       "@maildrill/providers": ["./packages/providers/src/index.ts"],
       "@maildrill/services": ["./packages/services/src/index.ts"],
       "@maildrill/authz": ["./packages/authz/src/index.ts"],
       "@maildrill/product": ["./packages/product/src/index.ts"],
       "@maildrill/identity": ["./packages/identity/src/index.ts"],
-      "@maildrill/httpkit": ["./packages/httpkit/src/index.ts"]
+      "@maildrill/httpkit": ["./packages/httpkit/src/index.ts"],
+      "@maildrill/billing": ["./packages/billing/src/index.ts"]
     }
   },
   "include": ["packages/*/src", "apps/*/src", "*.ts"],

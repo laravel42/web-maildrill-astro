@@ -14,7 +14,16 @@ import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { themeBundleSchema } from '@eb/document-core';
-import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  Typography,
+} from '@mui/material';
 
 import { applyThemePreset } from '../../../documents/editor/EditorContext';
 import { fetchTheme } from '../../ComponentsLibrary/fetchTheme';
@@ -66,13 +75,15 @@ export default function ApplyThemeConfirmDialog({
 
   return (
     <Dialog open={themeId !== null} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{t('theme.apply.title', 'Apply theme "{{name}}"?', { name: themeName })}</DialogTitle>
+      <DialogTitle>
+        {t('theme.apply.title', 'Apply theme "{{name}}"?', { name: themeName })}
+      </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <Typography variant="body2" color="text.secondary">
             {t(
               'theme.apply.body',
-              'This will overwrite your current root globals and per-block-type theme overrides. You can undo this action.'
+              'This will overwrite your current root globals and per-block-type theme overrides. You can undo this action.',
             )}
           </Typography>
           {error && <Alert severity="error">{error}</Alert>}

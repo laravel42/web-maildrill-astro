@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import type { ChannelType, TemplateApprovalStatus } from '@/types/app';
 
 import {
@@ -13,30 +13,27 @@ import {
 import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
 import ColFilter from './shared/ColFilter';
-import EmailBuilder from './EmailBuilder';
-// Lazy: email-builder-standalone (MUI, tiptap, DnD, image tools…) is a large
-// bundle. A static import here pulled it into this route's module graph even
-// though the visual editor only renders once a user opens an email template
-// — everyone visiting /app/templates paid for it upfront. React.lazy defers
-// the fetch until <VisualEmailBuilder> actually mounts.
-const VisualEmailBuilder = lazy(() => import('./VisualEmailBuilder'));
-const WaTemplateStudioEditor = lazy(() => import('./WaTemplateStudioEditor'));
-import LazyBoundary from './shared/LazyBoundary';
+import FilterChipsRow from './shared/FilterChipsRow';
 import TemplatePreview from './shared/TemplatePreview';
 import GalleryPreview, { FauxEmail } from './shared/GalleryPreview';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { useToast } from './shared/useToast';
+import { visiblePageNumbers } from './shared/pagination';
 import { CHANNEL_TABS, VIEWS, ASC_FIRST, PAGE_SIZE } from './AppTemplates.logic';
 import type { ViewKey, SortKey } from './AppTemplates.types';
 import { api, ApiError } from '@/lib/app/api';
-import { toGalleryTemplate, type ApiTemplate } from '@/lib/app/template-map';
-import type { TEditorConfiguration } from 'email-builder-standalone';
+import {
+  toGalleryTemplate,
+  templateEngagement,
+  templateOpenMetric,
+  templateClickMetric,
+  type ApiTemplate,
+} from '@/lib/app/template-map';
+import { routes } from '@/config/routes';
 import styles from './AppTemplates.module.css';
 
 /* --------------------------------------------------------- small pieces ---- */
 
-/** Channel of a template, as a tinted pill. `compact` drops the label to an
- *  icon so it fits the compact card's single row. */
 const APPROVAL_LABEL: Record<TemplateApprovalStatus, string> = {
   draft: 'Needs approval',
   pending: 'In review',
@@ -56,32 +53,40 @@ const APPROVAL_HINT: Record<TemplateApprovalStatus, string> = {
   disabled: 'Disabled by Meta — this template can no longer be sent.',
 };
 
-/** Small approval-status pill for WhatsApp templates; renders nothing otherwise. */
-function ApprovalBadge({ t, compact = false }: { t: GalleryTemplate; compact?: boolean }) {
+/** Top-right approval icon for WhatsApp gallery cards; renders nothing otherwise. */
+function ApprovalBadge({ t }: { t: GalleryTemplate }) {
   if (t.channel !== 'whatsapp') return null;
   const status = t.approvalStatus ?? 'draft';
+  const meta =
+    status === 'approved'
+      ? { icon: 'check' as const, tone: 'ok' as const }
+      : status === 'pending'
+        ? { icon: 'clock' as const, tone: 'wait' as const }
+        : status === 'rejected' || status === 'paused' || status === 'disabled'
+          ? { icon: 'x' as const, tone: 'bad' as const }
+          : { icon: 'alert-triangle' as const, tone: 'warn' as const };
+  const hint = APPROVAL_HINT[status];
   return (
     <span
-      className={`astatus tstat--${status}`}
-      style={compact ? { fontSize: 10, padding: '1px 7px' } : undefined}
-      title={APPROVAL_HINT[status]}
+      className={`${styles.gApproval} ${styles[`gApproval_${meta.tone}`]}`}
+      tabIndex={0}
+      aria-label={`${APPROVAL_LABEL[status]}. ${hint}`}
     >
-      {APPROVAL_LABEL[status]}
+      <Icon name={meta.icon} size={13} stroke={2.6} />
+      <span className={styles.gApprovalTip} role="tooltip">
+        <strong>{APPROVAL_LABEL[status]}</strong>
+        {hint}
+      </span>
     </span>
   );
 }
 
-function ChannelBadge({ channel, compact = false }: { channel: ChannelType; compact?: boolean }) {
+function ChannelBadge({ channel }: { channel: ChannelType }) {
   const m = CHANNEL[channel];
   return (
-    <span
-      className={compact ? styles.cbadge : styles.tbadge}
-      style={{ background: m.tint, color: m.color }}
-      title={compact ? m.label : undefined}
-      aria-label={compact ? m.label : undefined}
-    >
+    <span className={styles.tbadge} style={{ background: m.tint, color: m.color }}>
       <Icon name={m.icon} size={11} />
-      {!compact && m.label}
+      {m.label}
     </span>
   );
 }
@@ -111,31 +116,6 @@ function Check({
   );
 }
 
-function StarBtn({
-  on,
-  onClick,
-  name,
-  size = 15,
-}: {
-  on: boolean;
-  onClick: () => void;
-  name: string;
-  size?: number;
-}) {
-  return (
-    <button
-      type="button"
-      className={styles.star}
-      onClick={onClick}
-      aria-pressed={on}
-      aria-label={on ? `Remove ${name} from favorites` : `Add ${name} to favorites`}
-      style={{ color: on ? '#f59e0b' : 'var(--border2)' }}
-    >
-      <Icon name="star" size={size} />
-    </button>
-  );
-}
-
 /* --------------------------------------------------------------- screen ---- */
 
 export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] } = {}) {
@@ -153,30 +133,12 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
   const [openFilter, setOpenFilter] = useState<'cat' | 'opens' | 'clicks' | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updated', dir: -1 });
-  const [favIds, setFavIds] = useState<Set<string>>(
-    () => new Set((initial ?? galleryTemplates).filter((t) => t.favorite).map((t) => t.id)),
-  );
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  // Set while a destructive action waits on confirmation.
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  // Ids waiting on the delete confirm dialog (bulk toolbar or drawer).
+  const [confirmDelete, setConfirmDelete] = useState<string[] | null>(null);
   const [page, setPage] = useState(1);
   const [openId, setOpenId] = useState<string | null>(null);
   const { toast, show } = useToast();
-  const [builder, setBuilder] = useState<{
-    channel: ChannelType;
-    name: string | null;
-    id?: string;
-    document?: TEditorConfiguration;
-    category?: string;
-    /** Saved body for the SMS/Voice composer when reopening. */
-    message?: string;
-    /** WhatsApp studio round-trip fields. */
-    language?: string | null;
-    waComponents?: Record<string, unknown> | null;
-    waDoc?: Record<string, unknown> | null;
-  } | null>(null);
-
-  const isFav = (id: string) => favIds.has(id);
 
   const resetPage = () => setPage(1);
 
@@ -198,7 +160,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
       return true;
     });
     const { key, dir } = sort;
-    const val = (t: GalleryTemplate): string | number => {
+    const val = (t: GalleryTemplate): string | number | null => {
       switch (key) {
         case 'name':
           return t.name.toLowerCase();
@@ -212,8 +174,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           return t.avgOpen;
         case 'avgClick':
           return t.avgClick;
-        case 'fav':
-          return isFav(t.id) ? 1 : 0;
         default:
           return 0;
       }
@@ -221,15 +181,23 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
     return [...list].sort((a, b) => {
       const av = val(a);
       const bv = val(b);
+      /* Unmeasured sorts last in BOTH directions, because it is not a value —
+         it is the absence of one. Treating it as 0 (which is what it was, as a
+         literal zero) put 148 templates at the head of "Opens ↑" as if they
+         were the worst performers, when nothing about them was ever measured. */
+      if (av == null && bv == null) return a.name.localeCompare(b.name);
+      if (av == null) return 1;
+      if (bv == null) return -1;
       if (av < bv) return -1 * dir;
       if (av > bv) return 1 * dir;
       return a.name.localeCompare(b.name);
     });
-  }, [channelTab, query, catSel, opensSel, clicksSel, sort, favIds, templates]);
+  }, [channelTab, query, catSel, opensSel, clicksSel, sort, templates]);
 
   const total = filtered.length;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
+  const pagerPages = visiblePageNumbers(safePage, pageCount);
   const start = (safePage - 1) * PAGE_SIZE;
   const pageItems = filtered.slice(start, start + PAGE_SIZE);
 
@@ -262,31 +230,22 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
   const allChecked = pageItems.length > 0 && pageItems.every((t) => selected.has(t.id));
   const toggleAll = () => setSelected(allChecked ? new Set() : new Set(pageItems.map((t) => t.id)));
 
-  const toggleFav = (id: string, name: string) => {
-    setFavIds((prev) => {
-      const next = new Set(prev);
-      const willFav = !next.has(id);
-      if (willFav) next.add(id);
-      else next.delete(id);
-      show(willFav ? `Added “${name}” to favorites` : `Removed “${name}” from favorites`);
-      if (live) void api.patch(`templates/${id}`, { favorite: willFav }).catch(() => undefined);
-      return next;
-    });
-  };
-
-  /* Delete selected — persists to the service in live mode, else local-only. */
-  const removeSelected = async () => {
-    const ids = [...selected];
+  /* Delete by id list — persists to the service in live mode, else local-only. */
+  const removeTemplates = async (ids: string[]) => {
     if (ids.length === 0) return;
+    const doomed = new Set(ids);
     if (!live) {
-      setTemplates((prev) => prev.filter((t) => !selected.has(t.id)));
+      setTemplates((prev) => prev.filter((t) => !doomed.has(t.id)));
       show(`Deleted ${ids.length} template${ids.length === 1 ? '' : 's'}`);
-      setSelected(new Set());
+      setSelected((prev) => new Set([...prev].filter((id) => !doomed.has(id))));
+      if (openId && doomed.has(openId)) setOpenId(null);
       return;
     }
     const results = await Promise.allSettled(ids.map((id) => api.del(`templates/${id}`)));
     const okIds = new Set(ids.filter((_, i) => results[i].status === 'fulfilled'));
     setTemplates((prev) => prev.filter((t) => !okIds.has(t.id)));
+    setSelected((prev) => new Set([...prev].filter((id) => !okIds.has(id))));
+    if (openId && okIds.has(openId)) setOpenId(null);
     const failed = ids.length - okIds.size;
     window.posthog?.capture('template_deleted', { count: okIds.size, failed });
     show(
@@ -294,7 +253,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
         ? `Deleted ${okIds.size}, ${failed} failed`
         : `Deleted ${okIds.size} template${okIds.size === 1 ? '' : 's'}`,
     );
-    setSelected(new Set());
   };
 
   /* Copy templates. The full row is fetched first because the gallery shape
@@ -333,25 +291,6 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
     setSelected(new Set());
   };
 
-  /* Favorite/unfavorite in bulk, persisted per template. */
-  const favoriteSelected = async () => {
-    const ids = [...selected];
-    if (ids.length === 0) return;
-    if (live) {
-      const results = await Promise.allSettled(
-        ids.map((id) => api.patch<ApiTemplate>(`templates/${id}`, { favorite: true })),
-      );
-      const okIds = ids.filter((_, i) => results[i].status === 'fulfilled');
-      setFavIds((prev) => new Set([...prev, ...okIds]));
-      const failed = ids.length - okIds.length;
-      show(failed ? `Favorited ${okIds.length}, ${failed} failed` : `Favorited ${okIds.length}`);
-    } else {
-      setFavIds((prev) => new Set([...prev, ...ids]));
-      show(`Favorited ${ids.length}`);
-    }
-    setSelected(new Set());
-  };
-
   /* Submit a WhatsApp template to Meta (via Infobip) for review. */
   const submitTemplate = async (id: string) => {
     if (!live) return;
@@ -378,37 +317,29 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
 
   const openTpl = openId ? (templates.find((t) => t.id === openId) ?? null) : null;
 
-  /* Open an editor on an existing template. The saved row is fetched for every
-     channel — carrying `id` is what makes the editor PATCH in place instead of
-     POSTing a copy, and the body has to come back with it or the first save
-     would overwrite the stored content with an empty editor. */
-  const openForEdit = async (tpl: GalleryTemplate) => {
-    setOpenId(null);
-    if (!live) {
-      setBuilder({ channel: tpl.channel, name: tpl.name, category: tpl.category });
-      return;
-    }
-    let full: ApiTemplate;
-    try {
-      full = await api.get<ApiTemplate>(`templates/${tpl.id}`);
-    } catch (e) {
-      // Opening without the saved content would let the next save destroy it,
-      // so refuse to open rather than risk the template.
-      show(e instanceof ApiError ? e.message : `Could not open “${tpl.name}”`);
-      return;
-    }
-    setBuilder({
-      channel: tpl.channel,
-      name: tpl.name,
-      id: tpl.id,
-      category: full.category ?? tpl.category,
-      document: (full.builderDoc as TEditorConfiguration | null) ?? undefined,
-      message: full.text ?? undefined,
-      language: full.language,
-      waComponents: full.components ?? undefined,
-      waDoc: full.builderDoc ?? undefined,
-    });
+  /* Each channel's builder lives on its own page (/dashboard/templates/<channel>);
+     editing hands the id over via ?id= and the page SSR-fetches the saved row.
+     Demo mode has no row to fetch, so it passes name/category prefills instead. */
+  const builderHref = (tpl: GalleryTemplate) => {
+    const params = new URLSearchParams(
+      live ? { id: tpl.id } : { name: tpl.name, category: tpl.category },
+    );
+    return `${routes.app.templateBuilder(tpl.channel)}?${params}`;
   };
+  const openForEdit = (tpl: GalleryTemplate) => window.location.assign(builderHref(tpl));
+
+  // Legacy pin / bookmark: /dashboard/templates?edit=<id> forwards to the
+  // channel builder. New pins link there directly.
+  const editDeepLinkDone = useRef(false);
+  useEffect(() => {
+    if (editDeepLinkDone.current) return;
+    const editId = new URLSearchParams(window.location.search).get('edit');
+    if (!editId) return;
+    const tpl = templates.find((t) => t.id === editId);
+    if (!tpl) return;
+    editDeepLinkDone.current = true;
+    window.location.replace(builderHref(tpl));
+  }, [templates]);
 
   const setTab = (t: ChannelType | 'all') => {
     setChannelTab(t);
@@ -463,7 +394,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                       className={styles.colopt}
                       onClick={() => {
                         setNewOpen(false);
-                        setBuilder({ channel: ch, name: null });
+                        window.location.assign(routes.app.templateBuilder(ch));
                       }}
                     >
                       <span
@@ -497,7 +428,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           {CHANNEL_TABS.map((t) => {
             const active = channelTab === t;
             const m = t === 'all' ? null : CHANNEL[t];
-            const color = t === 'all' ? 'var(--accent)' : m!.color;
+            const color = t === 'all' ? 'var(--accent-text)' : m!.color;
             return (
               <button
                 key={t}
@@ -531,75 +462,104 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
           })}
         </div>
 
-        {/* toolbar */}
+        {/* toolbar: controls on row 1; active filter chips always on their own row */}
         <div className={styles.toolbar}>
-          <label className={styles.search}>
-            <Icon name="search" size={15} className={styles.searchic} />
-            <input
-              type="search"
-              placeholder="Search templates…"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
+          <div className={styles.toolbarRow}>
+            <label className={styles.search}>
+              <Icon name="search" size={15} className={styles.searchic} />
+              <input
+                type="search"
+                placeholder="Search templates…"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  resetPage();
+                }}
+                aria-label="Search templates"
+              />
+            </label>
+
+            <ColFilter
+              label="Category"
+              icon="layers"
+              options={TEMPLATE_CATEGORIES}
+              selected={catSel}
+              onToggle={toggleSet(setCatSel)}
+              onClear={() => {
+                setCatSel(new Set());
                 resetPage();
               }}
-              aria-label="Search templates"
+              open={openFilter === 'cat'}
+              onOpenToggle={() => setOpenFilter((o) => (o === 'cat' ? null : 'cat'))}
             />
-          </label>
+            <ColFilter
+              label="Opens"
+              icon="eye"
+              options={RATE_BUCKETS}
+              selected={opensSel}
+              onToggle={toggleSet(setOpensSel)}
+              onClear={() => {
+                setOpensSel(new Set());
+                resetPage();
+              }}
+              open={openFilter === 'opens'}
+              onOpenToggle={() => setOpenFilter((o) => (o === 'opens' ? null : 'opens'))}
+            />
+            <ColFilter
+              label="Clicks"
+              icon="target"
+              options={RATE_BUCKETS}
+              selected={clicksSel}
+              onToggle={toggleSet(setClicksSel)}
+              onClear={() => {
+                setClicksSel(new Set());
+                resetPage();
+              }}
+              open={openFilter === 'clicks'}
+              onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
+            />
 
-          <ColFilter
-            label="Category"
-            options={TEMPLATE_CATEGORIES}
-            selected={catSel}
-            onToggle={toggleSet(setCatSel)}
-            onClear={() => {
+            <span className={styles.spacer} />
+
+            <div className={`aseg ${styles.seg}`} role="group" aria-label="View">
+              {VIEWS.map((v) => (
+                <button
+                  key={v.key}
+                  type="button"
+                  className={`aseg__opt${view === v.key ? ' is-active' : ''}`}
+                  aria-pressed={view === v.key}
+                  onClick={() => setView(v.key)}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <FilterChipsRow
+            chips={[
+              ...[...catSel].map((c) => ({
+                key: `cat:${c}`,
+                label: `Category: ${c}`,
+                onRemove: () => toggleSet(setCatSel)(c),
+              })),
+              ...[...opensSel].map((b) => ({
+                key: `opens:${b}`,
+                label: `Opens: ${b}`,
+                onRemove: () => toggleSet(setOpensSel)(b),
+              })),
+              ...[...clicksSel].map((b) => ({
+                key: `clicks:${b}`,
+                label: `Clicks: ${b}`,
+                onRemove: () => toggleSet(setClicksSel)(b),
+              })),
+            ]}
+            onClearAll={() => {
               setCatSel(new Set());
-              resetPage();
-            }}
-            open={openFilter === 'cat'}
-            onOpenToggle={() => setOpenFilter((o) => (o === 'cat' ? null : 'cat'))}
-          />
-          <ColFilter
-            label="Opens"
-            options={RATE_BUCKETS}
-            selected={opensSel}
-            onToggle={toggleSet(setOpensSel)}
-            onClear={() => {
               setOpensSel(new Set());
-              resetPage();
-            }}
-            open={openFilter === 'opens'}
-            onOpenToggle={() => setOpenFilter((o) => (o === 'opens' ? null : 'opens'))}
-          />
-          <ColFilter
-            label="Clicks"
-            options={RATE_BUCKETS}
-            selected={clicksSel}
-            onToggle={toggleSet(setClicksSel)}
-            onClear={() => {
               setClicksSel(new Set());
               resetPage();
             }}
-            open={openFilter === 'clicks'}
-            onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
           />
-
-          <span className={styles.spacer} />
-
-          <div className={`aseg ${styles.seg}`} role="group" aria-label="View">
-            {VIEWS.map((v) => (
-              <button
-                key={v.key}
-                type="button"
-                className={`aseg__opt${view === v.key ? ' is-active' : ''}`}
-                aria-pressed={view === v.key}
-                onClick={() => setView(v.key)}
-              >
-                <Icon name={v.icon} size={13} />
-                <span className={styles.segLbl}>{v.label}</span>
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* bulk-selection bar */}
@@ -616,15 +576,8 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
             </button>
             <button
               type="button"
-              className={styles.bulkbtn}
-              onClick={() => void favoriteSelected()}
-            >
-              <Icon name="star" size={13} /> Favorite
-            </button>
-            <button
-              type="button"
               className={`${styles.bulkbtn} ${styles.bulkbtnDanger}`}
-              onClick={() => setConfirmDelete(true)}
+              onClick={() => setConfirmDelete([...selected])}
             >
               <Icon name="trash" size={13} /> Delete
             </button>
@@ -671,15 +624,16 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                         size={19}
                       />
                     </span>
-                    <span className={styles.gbadge} style={{ background: m.tint, color: m.color }}>
-                      <Icon name={m.icon} size={11} />
-                      {m.label}
-                    </span>
-                    {t.channel === 'whatsapp' && (
-                      <span className={styles.gApproval}>
-                        <ApprovalBadge t={t} />
+                    <span className={styles.gTopRight}>
+                      <span
+                        className={styles.gbadge}
+                        style={{ background: m.tint, color: m.color }}
+                      >
+                        <Icon name={m.icon} size={11} />
+                        {m.label}
                       </span>
-                    )}
+                      <ApprovalBadge t={t} />
+                    </span>
                     <GalleryPreview channel={t.channel} t={t} />
                     <div className={styles.ov}>
                       <button
@@ -687,7 +641,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                         className={styles.ovUse}
                         onClick={(e) => {
                           e.stopPropagation();
-                          void openForEdit(t);
+                          openForEdit(t);
                         }}
                       >
                         Edit
@@ -704,87 +658,43 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                       </button>
                     </div>
                   </div>
+                  <div
+                    className={styles.gcatbar}
+                    style={{
+                      /* Text keeps the category hue but leans on the theme's
+                         foreground so it stays readable on the tint in both
+                         light and dark. */
+                      color: `color-mix(in srgb, ${CATEGORY_COLOR[t.category] ?? 'var(--accent)'} 55%, var(--text))`,
+                      background: `color-mix(in srgb, ${CATEGORY_COLOR[t.category] ?? 'var(--accent)'} 12%, transparent)`,
+                    }}
+                  >
+                    {t.category}
+                  </div>
                   <div className={styles.gmeta}>
-                    <div className={styles.gmetaMain}>
-                      <div className={styles.gname}>{t.name}</div>
-                      <div className={styles.gsub}>
-                        <span className={styles.catpill}>{t.category}</span>
-                        <span className={styles.updated}>Updated {t.updated}</span>
-                      </div>
-                      <div className={styles.metrics}>
-                        <span className={styles.metric}>
-                          <span className={styles.dot} style={{ background: '#4f46e5' }} />
-                          <span className="tnum">{t.avgOpen}%</span> opens
+                    <div className={styles.gname}>{t.name}</div>
+                    {/* Whatever this template's CHANNEL can actually report,
+                        from the same helper the drawer and the list columns
+                        read. Email and WhatsApp get opens/seen + clicks; SMS
+                        and voice get delivered + failed, because no provider on
+                        those channels has ever reported a read. This line used
+                        to be a fixed "{avgOpen}% opens · {avgClick}% clicks" on
+                        every card: 148 of 229 read "0% opens · 0% clicks", and
+                        "Perf template 113" — badged SMS — read "33% opens" off
+                        5,294 email deliveries. */}
+                    <div className={styles.gsub}>
+                      {templateEngagement(t).map((m, i) => (
+                        <span
+                          key={m.key}
+                          className={`${styles.metric}${m.measured ? '' : ` ${styles.metricNone}`}`}
+                          title={m.hint}
+                        >
+                          {i > 0 ? '· ' : ''}
+                          <span className="tnum">{m.value}</span> {m.label}
                         </span>
-                        <span className={styles.metric}>
-                          <span className={styles.dot} style={{ background: '#0891b2' }} />
-                          <span className="tnum">{t.avgClick}%</span> clicks
-                        </span>
-                      </div>
-                    </div>
-                    <span onClick={(e) => e.stopPropagation()}>
-                      <StarBtn
-                        on={isFav(t.id)}
-                        onClick={() => toggleFav(t.id, t.name)}
-                        name={t.name}
-                      />
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : view === 'compact' ? (
-          <div className={styles.compact}>
-            {pageItems.map((t) => {
-              const sel = selected.has(t.id);
-              return (
-                <div
-                  key={t.id}
-                  className={styles.ccard}
-                  style={{ borderColor: sel ? 'var(--accent)' : 'var(--border)' }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Open ${t.name}`}
-                  onClick={() => setOpenId(t.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setOpenId(t.id);
-                    }
-                  }}
-                >
-                  <div className={styles.cband} style={{ background: t.thumb, color: t.fg }}>
-                    <span className={styles.ccheck} onClick={(e) => e.stopPropagation()}>
-                      <Check
-                        on={sel}
-                        onClick={() => toggleSelect(t.id)}
-                        label={`Select ${t.name}`}
-                        size={18}
-                      />
-                    </span>
-                    {t.title}
-                    {t.channel === 'whatsapp' && (
-                      <span className={styles.cApproval}>
-                        <ApprovalBadge t={t} compact />
+                      ))}
+                      <span className={styles.updated} title={`Updated ${t.updated}`}>
+                        {t.updated}
                       </span>
-                    )}
-                  </div>
-                  <div className={styles.cfoot}>
-                    <div className={styles.crow}>
-                      <ChannelBadge channel={t.channel} compact />
-                      <span className={styles.cname}>{t.name}</span>
-                      <span onClick={(e) => e.stopPropagation()}>
-                        <StarBtn
-                          on={isFav(t.id)}
-                          onClick={() => toggleFav(t.id, t.name)}
-                          name={t.name}
-                          size={13}
-                        />
-                      </span>
-                    </div>
-                    <div className={`${styles.cmetrics} tnum`}>
-                      {t.avgOpen}% open · {t.avgClick}% click
                     </div>
                   </div>
                 </div>
@@ -801,6 +711,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               <div>
                 <button
                   type="button"
+                  className={sort.key === 'name' ? styles.isActive : undefined}
                   onClick={() => toggleSort('name')}
                   aria-label="Sort by template"
                 >
@@ -810,6 +721,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               <div>
                 <button
                   type="button"
+                  className={sort.key === 'channel' ? styles.isActive : undefined}
                   onClick={() => toggleSort('channel')}
                   aria-label="Sort by type"
                 >
@@ -819,46 +731,41 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               <div>
                 <button
                   type="button"
+                  className={sort.key === 'cat' ? styles.isActive : undefined}
                   onClick={() => toggleSort('cat')}
                   aria-label="Sort by category"
                 >
                   Category <span className="tnum">{sortArrow('cat')}</span>
                 </button>
               </div>
-              <div>
+              <div className={styles.lcenter}>
                 <button
                   type="button"
+                  className={sort.key === 'updated' ? styles.isActive : undefined}
                   onClick={() => toggleSort('updated')}
                   aria-label="Sort by updated"
                 >
                   Updated <span className="tnum">{sortArrow('updated')}</span>
                 </button>
               </div>
-              <div className={styles.lright}>
+              <div className={styles.lcenter}>
                 <button
                   type="button"
+                  className={sort.key === 'avgOpen' ? styles.isActive : undefined}
                   onClick={() => toggleSort('avgOpen')}
                   aria-label="Sort by opens"
                 >
                   Opens <span className="tnum">{sortArrow('avgOpen')}</span>
                 </button>
               </div>
-              <div className={styles.lright}>
+              <div className={styles.lcenter}>
                 <button
                   type="button"
+                  className={sort.key === 'avgClick' ? styles.isActive : undefined}
                   onClick={() => toggleSort('avgClick')}
                   aria-label="Sort by clicks"
                 >
                   Clicks <span className="tnum">{sortArrow('avgClick')}</span>
-                </button>
-              </div>
-              <div className={styles.lcenter}>
-                <button
-                  type="button"
-                  onClick={() => toggleSort('fav')}
-                  aria-label="Sort by favorite"
-                >
-                  Fav <span className="tnum">{sortArrow('fav')}</span>
                 </button>
               </div>
             </div>
@@ -891,20 +798,23 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
                   <div>
                     <ChannelBadge channel={t.channel} />
                   </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+                  <div>
                     <span className={styles.catpill}>{t.category}</span>
-                    <ApprovalBadge t={t} compact />
                   </div>
-                  <div className={styles.lmuted}>{t.updated}</div>
-                  <div className={`${styles.lright} tnum ${styles.lmuted3}`}>{t.avgOpen}%</div>
-                  <div className={`${styles.lright} tnum ${styles.lmuted3}`}>{t.avgClick}%</div>
-                  <div className={styles.lcenter} onClick={(e) => e.stopPropagation()}>
-                    <StarBtn
-                      on={isFav(t.id)}
-                      onClick={() => toggleFav(t.id, t.name)}
-                      name={t.name}
-                    />
-                  </div>
+                  <div className={`${styles.lcenter} ${styles.lmuted}`}>{t.updated}</div>
+                  {/* The columns are fixed ("Opens", "Clicks") but what a
+                      channel measures is not, so a template that reports
+                      neither renders "—" with the reason on hover rather than a
+                      confident 0%. Same helper as the card and the drawer. */}
+                  {[templateOpenMetric(t), templateClickMetric(t)].map((m) => (
+                    <div
+                      key={m.key}
+                      className={`${styles.lcenter} tnum ${m.measured ? styles.lmuted3 : styles.lNotMeasured}`}
+                      title={m.hint}
+                    >
+                      {m.value}
+                    </div>
+                  ))}
                 </div>
               );
             })}
@@ -929,7 +839,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
               >
                 <Icon name="chevron-right" size={15} className={styles.pgleft} />
               </button>
-              {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
+              {pagerPages.map((n) => (
                 <button
                   key={n}
                   type="button"
@@ -959,161 +869,31 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
         <TemplateDrawer
           t={openTpl}
           live={live}
-          fav={isFav(openTpl.id)}
-          onFav={() => toggleFav(openTpl.id, openTpl.name)}
           onSubmit={() => submitTemplate(openTpl.id)}
           onRefresh={() => refreshApproval(openTpl.id)}
           onClose={() => setOpenId(null)}
           onUse={() => {
-            if (openTpl) void openForEdit(openTpl);
+            if (openTpl) openForEdit(openTpl);
           }}
           onClone={() => {
             const id = openTpl.id;
             setOpenId(null);
             void duplicateTemplates([id]);
           }}
-        />
-      )}
-
-      {/* Email → EmailBuilder.js visual editor; WhatsApp → wa-template-studio;
-          SMS/Voice keep the lightweight text composer. */}
-      {builder && builder.channel === 'email' && (
-        <LazyBoundary label="the email editor" onClose={() => setBuilder(null)}>
-          <Suspense fallback={null}>
-            <VisualEmailBuilder
-              name={builder.name}
-              initialDocument={builder.document}
-              initialCategory={builder.category}
-              initialLanguage={builder.language}
-              onClose={() => setBuilder(null)}
-              onSave={async ({ name, html, document, category, language }) => {
-                const ed = builder;
-                if (!ed) return;
-                // Stay in the editor and let it show a saved badge; don't close.
-                // Errors propagate so the editor surfaces them. Local (no-service)
-                // mode just acknowledges.
-                if (!live) return;
-                const body = {
-                  name: name && name !== 'Untitled' ? name : 'Untitled template',
-                  channel: 'email' as const,
-                  html,
-                  builderDoc: document as Record<string, unknown>,
-                  category,
-                  language,
-                };
-                if (ed.id) {
-                  // Editing an existing template — update it in place.
-                  const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
-                  setTemplates((prev) =>
-                    prev.map((t) => (t.id === ed.id ? toGalleryTemplate(updated) : t)),
-                  );
-                } else {
-                  const created = await api.post<ApiTemplate>('templates', body);
-                  setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
-                  // Switch to update mode so subsequent saves patch this template
-                  // instead of creating duplicates.
-                  setBuilder((prev) =>
-                    prev ? { ...prev, id: created.id, language } : prev,
-                  );
-                }
-              }}
-            />
-          </Suspense>
-        </LazyBoundary>
-      )}
-
-      {builder && builder.channel === 'whatsapp' && (
-        <LazyBoundary label="the WhatsApp template editor" onClose={() => setBuilder(null)}>
-          <Suspense fallback={null}>
-            <WaTemplateStudioEditor
-              name={builder.name}
-              language={builder.language}
-              text={builder.message}
-              category={builder.category}
-              builderDoc={builder.waDoc}
-              components={builder.waComponents}
-              onClose={() => setBuilder(null)}
-              onSave={async (fields) => {
-                const ed = builder;
-                if (!ed || !live) return;
-                const body = {
-                  name: fields.name,
-                  channel: 'whatsapp' as const,
-                  text: fields.text,
-                  category: fields.category,
-                  language: fields.language,
-                  builderDoc: fields.builderDoc,
-                  components: fields.components,
-                };
-                if (ed.id) {
-                  const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
-                  setTemplates((prev) =>
-                    prev.map((t) => (t.id === ed.id ? toGalleryTemplate(updated) : t)),
-                  );
-                } else {
-                  const created = await api.post<ApiTemplate>('templates', body);
-                  setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
-                  setBuilder((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          id: created.id,
-                          waDoc: fields.builderDoc,
-                          waComponents: fields.components,
-                          message: fields.text ?? undefined,
-                          language: fields.language,
-                        }
-                      : prev,
-                  );
-                }
-              }}
-            />
-          </Suspense>
-        </LazyBoundary>
-      )}
-
-      {builder && builder.channel !== 'email' && builder.channel !== 'whatsapp' && (
-        <EmailBuilder
-          channel={builder.channel}
-          name={builder.name}
-          kind="template"
-          initialCategory={builder.category}
-          initialLanguage={builder.language}
-          initialMessage={builder.message}
-          onClose={() => setBuilder(null)}
-          onSave={async ({ channel, name, message, category, language }) => {
-            const ed = builder;
-            if (!ed || !live) return;
-            const body = {
-              name: name && name !== 'Untitled' ? name : 'Untitled template',
-              channel,
-              text: message || null,
-              category,
-              language,
-            };
-            if (ed.id) {
-              const updated = await api.patch<ApiTemplate>(`templates/${ed.id}`, body);
-              setTemplates((prev) =>
-                prev.map((t) => (t.id === ed.id ? toGalleryTemplate(updated) : t)),
-              );
-            } else {
-              const created = await api.post<ApiTemplate>('templates', body);
-              setTemplates((prev) => [toGalleryTemplate(created), ...prev]);
-              setBuilder((prev) => (prev ? { ...prev, id: created.id, language } : prev));
-            }
-          }}
+          onDelete={() => setConfirmDelete([openTpl.id])}
         />
       )}
 
       {confirmDelete && (
         <ConfirmDialog
-          title={`Delete ${selected.size} template${selected.size === 1 ? '' : 's'}?`}
+          title={`Delete ${confirmDelete.length} template${confirmDelete.length === 1 ? '' : 's'}?`}
           message="This can’t be undone."
           confirmLabel="Delete"
-          onCancel={() => setConfirmDelete(false)}
+          onCancel={() => setConfirmDelete(null)}
           onConfirm={() => {
-            setConfirmDelete(false);
-            void removeSelected();
+            const ids = confirmDelete;
+            setConfirmDelete(null);
+            void removeTemplates(ids);
           }}
         />
       )}
@@ -1136,26 +916,61 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
 
 /* --------------------------------------------------------------- drawer ---- */
 
+
+/**
+ * Drawer KPIs for a template — the same metrics the gallery card and the list
+ * columns show, wearing tile labels and colours.
+ *
+ * The drawer used to own this decision alone, which is how the three surfaces
+ * came to disagree about one template. `templateEngagement` (template-map.ts)
+ * is now the only place that decides what a template can report; everything
+ * here is presentation.
+ */
+const KPI_LABEL: Record<string, string> = {
+  opens: 'Avg. opens',
+  seen: 'Avg. seen',
+  clicks: 'Avg. clicks',
+  delivered: 'Avg. delivered',
+  failed: 'Failed',
+};
+function templateKpis(
+  t: GalleryTemplate,
+): Array<{ label: string; value: string; color: string; hint: string }> {
+  return templateEngagement(t).map((m) => ({
+    label: KPI_LABEL[m.label] ?? m.label,
+    value: m.value,
+    color:
+      m.key === 'open'
+        ? '#4f46e5'
+        : m.key === 'click'
+          ? '#0891b2'
+          : m.key === 'delivery'
+            ? 'var(--success-strong)'
+            : (t.failed ?? 0) > 0
+              ? 'var(--danger)'
+              : 'var(--text)',
+    hint: m.hint,
+  }));
+}
+
 function TemplateDrawer({
   t,
   live,
-  fav,
-  onFav,
   onSubmit,
   onRefresh,
   onClose,
   onUse,
   onClone,
+  onDelete,
 }: {
   t: GalleryTemplate;
   live: boolean;
-  fav: boolean;
-  onFav: () => void;
   onSubmit: () => void | Promise<void>;
   onRefresh: () => void | Promise<void>;
   onClose: () => void;
   onUse: () => void;
   onClone: () => void;
+  onDelete: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const catColor = CATEGORY_COLOR[t.category as TplCategory] ?? 'var(--accent)';
@@ -1163,8 +978,7 @@ function TemplateDrawer({
   const approval: TemplateApprovalStatus | null =
     t.channel === 'whatsapp' ? (t.approvalStatus ?? 'draft') : null;
   const details: [string, string][] = [
-    ['Category', t.category],
-    ['Channel', CHANNEL[t.channel].label],
+    ['Created on', t.createdOn ?? '—'],
     ['Last edited', t.updated],
   ];
   const runBusy = (fn: () => void | Promise<void>) => async () => {
@@ -1214,21 +1028,15 @@ function TemplateDrawer({
               {t.category}
             </span>
           </div>
-          <p className={styles.dUpdated}>Updated {t.updated}</p>
-
-          <div className={styles.dStats}>
-            <div className={styles.dStat}>
-              <div className={styles.dStatLbl}>Avg. opens</div>
-              <div className={`tnum ${styles.dStatVal}`} style={{ color: '#4f46e5' }}>
-                {t.avgOpen}%
+          <div className={`adrawer__kpis ${styles.dStats}`}>
+            {templateKpis(t).map((k) => (
+              <div key={k.label} className="adrawer__kpi" title={k.hint}>
+                <div className="adrawer__kpi-k">{k.label}</div>
+                <div className="tnum adrawer__kpi-v" style={{ color: k.color }}>
+                  {k.value}
+                </div>
               </div>
-            </div>
-            <div className={styles.dStat}>
-              <div className={styles.dStatLbl}>Avg. clicks</div>
-              <div className={`tnum ${styles.dStatVal}`} style={{ color: '#0891b2' }}>
-                {t.avgClick}%
-              </div>
-            </div>
+            ))}
           </div>
 
           {approval && (
@@ -1284,7 +1092,7 @@ function TemplateDrawer({
                   type="button"
                   className="pbtn"
                   style={{ width: '100%', marginTop: 12 }}
-                  disabled={busy || !live}
+                  disabled={busy || !live || (approval !== 'pending' && !t.hasContent)}
                   onClick={runBusy(approval === 'pending' ? onRefresh : onSubmit)}
                 >
                   {busy
@@ -1295,6 +1103,11 @@ function TemplateDrawer({
                         ? 'Resubmit for approval'
                         : 'Submit for approval'}
                 </button>
+              )}
+              {live && approval !== 'pending' && approval !== 'approved' && !t.hasContent && (
+                <p style={{ fontSize: 11, color: 'var(--muted)', margin: '8px 0 0' }}>
+                  Add template content before submitting for approval.
+                </p>
               )}
               {!live && (
                 <p style={{ fontSize: 11, color: 'var(--muted)', margin: '8px 0 0' }}>
@@ -1318,13 +1131,12 @@ function TemplateDrawer({
         <div className="adrawer__foot">
           <button
             type="button"
-            className={`sbtn ${styles.dFavbtn}`}
-            onClick={onFav}
-            aria-pressed={fav}
-            aria-label={fav ? 'Remove from favorites' : 'Add to favorites'}
-            style={{ color: fav ? '#f59e0b' : 'var(--text3)' }}
+            className="sbtn"
+            style={{ flex: 'none', color: 'var(--danger)' }}
+            aria-label={`Delete ${t.name}`}
+            onClick={onDelete}
           >
-            <Icon name="star" size={16} />
+            <Icon name="trash" size={15} />
           </button>
           <button type="button" className="sbtn" style={{ flex: 1 }} onClick={onClone}>
             <Icon name="copy" size={14} /> Clone

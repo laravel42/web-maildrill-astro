@@ -55,16 +55,21 @@ function collectBlocks(document: Record<string, unknown>): BlockEntry[] {
     visited.add(id);
     ordered.push({ id, block });
 
-    const data = ((block as { data?: Record<string, unknown> }).data ?? {}) as Record<string, unknown>;
+    const data = ((block as { data?: Record<string, unknown> }).data ?? {}) as Record<
+      string,
+      unknown
+    >;
     const enqueue = (ids: unknown) => {
-      if (Array.isArray(ids)) for (const cid of ids) if (typeof cid === 'string' && !visited.has(cid)) queue.push(cid);
+      if (Array.isArray(ids))
+        for (const cid of ids) if (typeof cid === 'string' && !visited.has(cid)) queue.push(cid);
     };
     enqueue((data as { childrenIds?: unknown }).childrenIds);
     const props = (data as { props?: Record<string, unknown> }).props;
     if (props) {
       enqueue((props as { childrenIds?: unknown }).childrenIds);
       const columns = (props as { columns?: unknown }).columns;
-      if (Array.isArray(columns)) for (const col of columns) enqueue((col as { childrenIds?: unknown })?.childrenIds);
+      if (Array.isArray(columns))
+        for (const col of columns) enqueue((col as { childrenIds?: unknown })?.childrenIds);
     }
   }
   return ordered;
@@ -75,7 +80,7 @@ async function saveOne(
   name: string,
   tags: string[],
   usage: string | undefined,
-  blocks: BlockEntry[]
+  blocks: BlockEntry[],
 ): Promise<boolean | 'thumb'> {
   const url = `${base}/dev/save-template`;
   const payload = { name, tags, ...(usage ? { usage } : {}), blocks };
@@ -84,19 +89,29 @@ async function saveOne(
   try {
     const docMap: Record<string, unknown> = {};
     for (const e of blocks) docMap[e.id] = e.block;
-    thumbnail = await captureSubtreeThumbnail(buildSubtreeHtml(docMap as never, 'root'), { variant: 'template' });
+    thumbnail = await captureSubtreeThumbnail(buildSubtreeHtml(docMap as never, 'root'), {
+      variant: 'template',
+    });
   } catch {
     /* capture is best-effort — save without a thumbnail */
   }
 
   const postJson = () =>
-    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
   let res: Response;
   if (thumbnail) {
     const form = new FormData();
     form.set('payload', JSON.stringify(payload));
-    form.set('thumbnail', thumbnail, `thumbnail.${thumbnail.type === 'image/webp' ? 'webp' : 'png'}`);
+    form.set(
+      'thumbnail',
+      thumbnail,
+      `thumbnail.${thumbnail.type === 'image/webp' ? 'webp' : 'png'}`,
+    );
     res = await fetch(url, { method: 'POST', body: form });
     if (res.status === 413) res = await postJson(); // thumbnail over cap → save without it
   } else {
@@ -110,7 +125,9 @@ async function saveOne(
   return thumbnail ? 'thumb' : true;
 }
 
-export async function seedTemplatesFromJson(options: { limit?: number; force?: boolean } = {}): Promise<SeedSummary> {
+export async function seedTemplatesFromJson(
+  options: { limit?: number; force?: boolean } = {},
+): Promise<SeedSummary> {
   const base = resolveBackendUrl();
   const res = await fetch(`${base}/dev/template-seeds`);
   if (!res.ok) throw new Error(`failed to load seeds: HTTP ${res.status}`);
@@ -131,15 +148,25 @@ export async function seedTemplatesFromJson(options: { limit?: number; force?: b
       const { templates } = (await r.json()) as {
         templates: Array<{ id: string; name: string; hasThumbnail: boolean }>;
       };
-      for (const t of templates) existing.set(t.name.trim(), { id: t.id, hasThumbnail: t.hasThumbnail });
+      for (const t of templates)
+        existing.set(t.name.trim(), { id: t.id, hasThumbnail: t.hasThumbnail });
     }
   } catch {
     /* listing is best-effort — fall back to no dedup */
   }
 
-  const summary: SeedSummary = { total: list.length, saved: 0, regenerated: 0, withThumb: 0, skipped: 0, failed: 0 };
+  const summary: SeedSummary = {
+    total: list.length,
+    saved: 0,
+    regenerated: 0,
+    withThumb: 0,
+    skipped: 0,
+    failed: 0,
+  };
 
-  console.info(`[seedTemplates] importing ${list.length} enhanced templates${force ? ' (force re-seed)' : ''}…`);
+  console.info(
+    `[seedTemplates] importing ${list.length} enhanced templates${force ? ' (force re-seed)' : ''}…`,
+  );
 
   for (let i = 0; i < list.length; i++) {
     const seed = list[i];
@@ -193,11 +220,14 @@ export async function seedTemplatesFromJson(options: { limit?: number; force?: b
     } catch (err) {
       summary.failed++;
 
-      console.warn(`[seedTemplates] #${i + 1} "${seed.name}" failed:`, err instanceof Error ? err.message : err);
+      console.warn(
+        `[seedTemplates] #${i + 1} "${seed.name}" failed:`,
+        err instanceof Error ? err.message : err,
+      );
     }
     if ((i + 1) % 25 === 0 || i + 1 === list.length) {
       console.info(
-        `[seedTemplates] ${i + 1}/${list.length} — saved=${summary.saved} regen=${summary.regenerated} thumb=${summary.withThumb} skipped=${summary.skipped} failed=${summary.failed}`
+        `[seedTemplates] ${i + 1}/${list.length} — saved=${summary.saved} regen=${summary.regenerated} thumb=${summary.withThumb} skipped=${summary.skipped} failed=${summary.failed}`,
       );
     }
   }

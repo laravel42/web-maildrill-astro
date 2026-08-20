@@ -19,7 +19,7 @@ export default function StylesPanel() {
         atomicUpdateBlock(selectedBlockId, () => conf);
       }
     },
-    [selectedBlockId]
+    [selectedBlockId],
   );
 
   if (!block) return null;
@@ -28,11 +28,29 @@ export default function StylesPanel() {
 
   switch (type) {
     case 'Container':
-      return <ContainerSidebarPanel key={selectedBlockId} data={data} setData={(data) => setBlock({ type, data })} />;
+      return (
+        <ContainerSidebarPanel
+          key={selectedBlockId}
+          data={data}
+          setData={(data) => setBlock({ type, data })}
+        />
+      );
     case 'Divider':
-      return <DividerSidebarPanel key={selectedBlockId} data={data} setData={(data) => setBlock({ type, data })} />;
+      return (
+        <DividerSidebarPanel
+          key={selectedBlockId}
+          data={data}
+          setData={(data) => setBlock({ type, data })}
+        />
+      );
     case 'Spacer':
-      return <SpacerSidebarPanel key={selectedBlockId} data={data} setData={(data) => setBlock({ type, data })} />;
+      return (
+        <SpacerSidebarPanel
+          key={selectedBlockId}
+          data={data}
+          setData={(data) => setBlock({ type, data })}
+        />
+      );
     case 'EmailLayout':
       // Root context view. `ThemePanel` owns everything: the panel
       // title, the Root accordion (global EmailLayout fields), the

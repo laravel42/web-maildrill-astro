@@ -9,7 +9,7 @@ const seo = {
   title: 'Product — Maildrill campaign workspace, builder & analytics',
   description:
     'Explore the Maildrill workspace: a guided campaign wizard, drag-and-drop email builder, one shared audience, live segments, deep analytics, and deliverability tooling.',
-  canonical: 'https://maildrill.com/product',
+  canonical: 'https://maildrill.net/product',
 };
 
 const jsonLd = [
@@ -135,7 +135,7 @@ const caps: Cap[] = [
   },
   {
     icon: 'sparkle',
-    title: 'AI copilot',
+    title: 'AI assistant',
     desc: 'Draft subject lines and rewrite copy in the editor.',
   },
   {
@@ -175,7 +175,7 @@ const deliverChecks = ['SPF', 'DKIM', 'DMARC'];
     </h1>
     <p class="pd-hero__lead" data-reveal style="--reveal-delay:160ms">
       Every screen in Maildrill is built to help you do the work — draft, target, send, and learn —
-      with the density of Linear and the calm of a tool that gets out of your way.
+      with the the calm of a tool that gets out of your way.
     </p>
   </section>
 
@@ -423,23 +423,23 @@ const deliverChecks = ['SPF', 'DKIM', 'DMARC'];
 
   .pd-sec-hero {
     position: relative;
-    padding-block: 72px 48px;
+    padding-block: calc(72px * var(--sec-y)) calc(48px * var(--sec-y));
   }
   .pd-sec-features {
-    padding-block: 24px 40px;
+    padding-block: calc(24px * var(--sec-y)) calc(40px * var(--sec-y));
   }
   .pd-sec-channels {
-    padding-block: 32px 8px;
+    padding-block: calc(32px * var(--sec-y)) calc(8px * var(--sec-y));
     scroll-margin-top: 88px;
   }
   .pd-sec-wizard {
-    padding-block: 64px 40px;
+    padding-block: calc(64px * var(--sec-y)) calc(40px * var(--sec-y));
   }
   .pd-sec-caps {
-    padding-block: 72px;
+    padding-block: calc(72px * var(--sec-y));
   }
   .pd-sec-cta {
-    padding-block: 40px 88px;
+    padding-block: calc(40px * var(--sec-y)) calc(88px * var(--sec-y));
   }
 
   @media (max-width: 640px) {

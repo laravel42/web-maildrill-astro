@@ -63,6 +63,31 @@ export async function builderTextAction(request: AIFeatureRequest): Promise<stri
     .trim();
 }
 
+/** Deterministic template quality audit (no LLM). */
+export async function builderAuditTemplate(document: unknown): Promise<unknown> {
+  const res = await fetch(`${EB_BASE}/audit`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ document }),
+  });
+  if (!res.ok) throw new Error(`Template audit failed (${res.status})`);
+  return res.json();
+}
+
+/** Full quality report: deterministic audit + optional LLM design critique. */
+export async function builderCritiqueTemplate(
+  document: unknown,
+  options: { brief?: string; locale?: string; skipLlm?: boolean } = {},
+): Promise<unknown> {
+  const res = await fetch(`${EB_BASE}/critique`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ document, ...options }),
+  });
+  if (!res.ok) throw new Error(`Template critique failed (${res.status})`);
+  return res.json();
+}
+
 export async function mockSignUp(_input: {
   firstName: string;
   lastName: string;

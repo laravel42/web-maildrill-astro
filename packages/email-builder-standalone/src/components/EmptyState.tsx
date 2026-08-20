@@ -62,7 +62,10 @@ export default function EmptyState({ icon, title, description, dense = false }: 
         {title}
       </Typography>
       {description && (
-        <Typography variant="caption" sx={{ color: 'text.secondary', maxWidth: 260, lineHeight: 1.5 }}>
+        <Typography
+          variant="caption"
+          sx={{ color: 'text.secondary', maxWidth: 260, lineHeight: 1.5 }}
+        >
           {description}
         </Typography>
       )}

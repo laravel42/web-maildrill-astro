@@ -6,7 +6,11 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { I18nextProvider } from 'react-i18next';
 
-import { ALL_GOOGLE_FONTS_HREF, type TEditorBlock, type TEditorConfiguration } from '@eb/document-core';
+import {
+  ALL_GOOGLE_FONTS_HREF,
+  type TEditorBlock,
+  type TEditorConfiguration,
+} from '@eb/document-core';
 import type { TReaderDocument } from '@eb/email-builder';
 import { CssBaseline, GlobalStyles, ThemeProvider } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -132,7 +136,8 @@ export interface AIGenerateTemplateRequest {
  * See `plan-ai-template-generation.md` (section *Contrato de streaming*) for
  * the full protocol.
  */
-export type AIGenerateTemplateResponse = ReadableStream<string> | AsyncIterable<string> | TEditorConfiguration;
+export type AIGenerateTemplateResponse =
+  ReadableStream<string> | AsyncIterable<string> | TEditorConfiguration;
 
 export interface EmailBuilderProps {
   primaryColor?: string;
@@ -202,7 +207,7 @@ export interface EmailBuilderProps {
    */
   onAIGenerateTemplate?: (
     request: AIGenerateTemplateRequest,
-    options: { signal: AbortSignal }
+    options: { signal: AbortSignal },
   ) => Promise<AIGenerateTemplateResponse>;
   showVersion?: boolean;
   componentTree?: boolean;
@@ -268,7 +273,7 @@ const EmailBuilder = forwardRef<EmailBuilderRef, EmailBuilderProps>(
       templateLibrary,
       themeSaving,
     },
-    ref
+    ref,
   ) => {
     // Derive values directly from props — no local state copy needed.
     // r2wc calls root.render() with fresh props on every attribute change,
@@ -307,7 +312,9 @@ const EmailBuilder = forwardRef<EmailBuilderRef, EmailBuilderProps>(
         },
         getHtml: () => {
           const currentDocument = editorStateStore.getState().document;
-          const html = renderToStaticMarkup(currentDocument as TReaderDocument, { rootBlockId: 'root' });
+          const html = renderToStaticMarkup(currentDocument as TReaderDocument, {
+            rootBlockId: 'root',
+          });
           return html.props.children as string;
         },
         setImageUrl: (blockId: string, url: string) => {
@@ -339,7 +346,7 @@ const EmailBuilder = forwardRef<EmailBuilderRef, EmailBuilderProps>(
           }
         },
       }),
-      [onSave]
+      [onSave],
     );
 
     // Inject the editor's Google Fonts stylesheet once on mount so the
@@ -385,7 +392,10 @@ const EmailBuilder = forwardRef<EmailBuilderRef, EmailBuilderProps>(
       window.addEventListener('email-builder:load-document', handleLoadDocument as EventListener);
 
       return () => {
-        window.removeEventListener('email-builder:load-document', handleLoadDocument as EventListener);
+        window.removeEventListener(
+          'email-builder:load-document',
+          handleLoadDocument as EventListener,
+        );
       };
     }, []);
 
@@ -439,7 +449,9 @@ const EmailBuilder = forwardRef<EmailBuilderRef, EmailBuilderProps>(
         // `email-builder-ai-generation` (boolean detail) to toggle their AI
         // affordances — nothing dispatched it before, so they only ever saw the
         // initial global read and could stay hidden depending on mount order.
-        window.dispatchEvent(new CustomEvent('email-builder-ai-generation', { detail: Boolean(enableAI) }));
+        window.dispatchEvent(
+          new CustomEvent('email-builder-ai-generation', { detail: Boolean(enableAI) }),
+        );
       }
       return () => {
         if (typeof window !== 'undefined') {
@@ -464,7 +476,11 @@ const EmailBuilder = forwardRef<EmailBuilderRef, EmailBuilderProps>(
       const handleAiRequest = (event: Event) => {
         const detail = (
           event as CustomEvent<
-            AIFeatureRequest & { replaceSelection?: boolean; selectionFrom?: number; selectionTo?: number }
+            AIFeatureRequest & {
+              replaceSelection?: boolean;
+              selectionFrom?: number;
+              selectionTo?: number;
+            }
           >
         ).detail;
         if (!detail) return;
@@ -561,8 +577,9 @@ const EmailBuilder = forwardRef<EmailBuilderRef, EmailBuilderProps>(
     }, [data]); // React to data prop changes
 
     const theme = useMemo(
-      () => getTheme(resolvedPrimaryColor, resolvedSecondaryColor, resolvedDarkMode, portalContainer),
-      [resolvedPrimaryColor, resolvedSecondaryColor, resolvedDarkMode, portalContainer]
+      () =>
+        getTheme(resolvedPrimaryColor, resolvedSecondaryColor, resolvedDarkMode, portalContainer),
+      [resolvedPrimaryColor, resolvedSecondaryColor, resolvedDarkMode, portalContainer],
     );
 
     return (
@@ -653,7 +670,7 @@ const EmailBuilder = forwardRef<EmailBuilderRef, EmailBuilderProps>(
         </DndProvider>
       </div>
     );
-  }
+  },
 );
 
 // Lazy singleton to avoid redefining the element
@@ -742,4 +759,9 @@ export {
   validateDocument,
 } from '@eb/document-core';
 
-export type { TEditorBlock, TEditorConfiguration, BlockType, ValidationResult } from '@eb/document-core';
+export type {
+  TEditorBlock,
+  TEditorConfiguration,
+  BlockType,
+  ValidationResult,
+} from '@eb/document-core';

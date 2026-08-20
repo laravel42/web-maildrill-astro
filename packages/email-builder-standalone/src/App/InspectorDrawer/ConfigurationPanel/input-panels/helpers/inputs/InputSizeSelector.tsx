@@ -90,21 +90,32 @@ const SizeSelector = ({ defaultValue = 'original', scale = 100, onChange }) => {
     <FieldContainer>
       <LabelProperty label={t('inputs.sizeSelector.label')} />
       <Box sx={styles.container}>
-        <ToggleButtonGroup value={selected} exclusive onChange={handleModeChange} sx={{ width: '100%' }}>
+        <ToggleButtonGroup
+          value={selected}
+          exclusive
+          onChange={handleModeChange}
+          sx={{ width: '100%' }}
+        >
           <ToggleButton value="original">
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}
+            >
               <FitScreen fontSize="small" />
               <span>{t('inputs.sizeSelector.contain')}</span>
             </Box>
           </ToggleButton>
           <ToggleButton value="fill">
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}
+            >
               <Crop fontSize="small" />
               <span>{t('inputs.sizeSelector.cover')}</span>
             </Box>
           </ToggleButton>
           <ToggleButton value="scale">
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}
+            >
               <Percent fontSize="small" />
               <span>{t('inputs.sizeSelector.scale')}</span>
             </Box>

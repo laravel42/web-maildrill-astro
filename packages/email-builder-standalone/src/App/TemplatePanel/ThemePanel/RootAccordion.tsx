@@ -2,7 +2,14 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ExpandMoreOutlined, TuneOutlined } from '@mui/icons-material';
-import { Accordion, AccordionDetails, AccordionSummary, Box, Tooltip, Typography } from '@mui/material';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 
 import { useBlock } from '../../../documents/editor/blockHooks';
 import { atomicUpdateBlock } from '../../../documents/editor/blockUpdaters';
@@ -25,7 +32,10 @@ type RootAccordionProps = {
  * accordion edits real document props on the `root` `EmailLayout` block,
  * not theme overrides.
  */
-export default function RootAccordion({ defaultExpanded = true, headless = false }: RootAccordionProps) {
+export default function RootAccordion({
+  defaultExpanded = true,
+  headless = false,
+}: RootAccordionProps) {
   const { t } = useTranslation('inspector');
   const block = useBlock('root');
   const compact = useCompactMode();
@@ -75,7 +85,10 @@ export default function RootAccordion({ defaultExpanded = true, headless = false
           px: 0,
           minHeight: compact ? 40 : 48,
           justifyContent: compact ? 'center' : undefined,
-          '& .MuiAccordionSummary-content': { my: compact ? 0.5 : 1, justifyContent: compact ? 'center' : undefined },
+          '& .MuiAccordionSummary-content': {
+            my: compact ? 0.5 : 1,
+            justifyContent: compact ? 'center' : undefined,
+          },
         }}
       >
         {compact ? (
@@ -85,12 +98,12 @@ export default function RootAccordion({ defaultExpanded = true, headless = false
             </Box>
           </Tooltip>
         ) : (
-          <Typography sx={{ fontWeight: 600, color: 'text.primary' }}>{t('theme.blocks.root.title')}</Typography>
+          <Typography sx={{ fontWeight: 600, color: 'text.primary' }}>
+            {t('theme.blocks.root.title')}
+          </Typography>
         )}
       </AccordionSummary>
-      <AccordionDetails sx={{ px: 0, pt: 0, pb: 3 }}>
-        {fields}
-      </AccordionDetails>
+      <AccordionDetails sx={{ px: 0, pt: 0, pb: 3 }}>{fields}</AccordionDetails>
     </Accordion>
   );
 }

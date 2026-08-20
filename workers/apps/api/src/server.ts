@@ -1,10 +1,10 @@
-import Fastify, { type FastifyInstance } from "fastify";
-import { logger } from "@maildrill/observability";
-import { isValidationError, setupOpenApi } from "@maildrill/httpkit";
-import { adminRoutes } from "./routes/admin";
-import { healthRoutes } from "./routes/health";
-import { messageRoutes } from "./routes/messages";
-import { webhookRoutes } from "./routes/webhooks";
+import Fastify, { type FastifyInstance } from 'fastify';
+import { logger } from '@maildrill/observability';
+import { isValidationError, setupOpenApi } from '@maildrill/httpkit';
+import { adminRoutes } from './routes/admin';
+import { healthRoutes } from './routes/health';
+import { messageRoutes } from './routes/messages';
+import { webhookRoutes } from './routes/webhooks';
 
 /**
  * The messaging app's business routes, without health. Exported so the unified
@@ -22,10 +22,10 @@ export function buildServer(): FastifyInstance {
   const app = Fastify({ logger: false, bodyLimit: 1_048_576 });
 
   setupOpenApi(app, {
-    title: "Maildrill Messaging API",
-    version: "0.1.0",
+    title: 'Maildrill Messaging API',
+    version: '0.1.0',
     description:
-      "The sending engine: submit messages, provider webhooks, and queue admin. Auth: x-api-key or Bearer JWT.",
+      'The sending engine: submit messages, provider webhooks, and queue admin. Auth: x-api-key or Bearer JWT.',
   });
 
   void app.register(healthRoutes);
@@ -33,14 +33,14 @@ export function buildServer(): FastifyInstance {
 
   app.setErrorHandler((err, req, reply) => {
     if (isValidationError(err)) {
-      return reply.code(400).send({ error: "validation", issues: err.validation });
+      return reply.code(400).send({ error: 'validation', issues: err.validation });
     }
     const statusCode = (err as { statusCode?: number }).statusCode ?? 500;
     logger.error(
       { err: err instanceof Error ? err.message : String(err), url: req.url },
-      "request error",
+      'request error',
     );
-    return reply.code(statusCode).send({ error: "internal_error" });
+    return reply.code(statusCode).send({ error: 'internal_error' });
   });
 
   return app;

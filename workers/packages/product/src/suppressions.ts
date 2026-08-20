@@ -1,10 +1,6 @@
-import { and, desc, eq } from "drizzle-orm";
-import {
-  db,
-  suppressions,
-  type SuppressionRow,
-} from "@maildrill/database";
-import type { Channel } from "@maildrill/domain";
+import { and, desc, eq } from 'drizzle-orm';
+import { db, suppressions, type SuppressionRow } from '@maildrill/database';
+import type { Channel } from '@maildrill/domain';
 
 export async function addSuppression(
   tenantId: string,

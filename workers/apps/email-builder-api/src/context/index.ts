@@ -19,9 +19,15 @@ const DEFAULT_SKILLS_DIR = resolve(__dirname, '../../skills/email-builder');
  *   they always go where they belong (top / bottom / nav / logo anchor)
  *   when the prompt warrants them.
  */
-export type RecipeRole = 'hero' | 'features' | 'social_proof' | 'cta' | 'header' | 'footer' | 'nav' | 'logo';
+export type RecipeRole =
+  'hero' | 'features' | 'social_proof' | 'cta' | 'header' | 'footer' | 'nav' | 'logo';
 
-export const ROTATION_ROLES: ReadonlyArray<RecipeRole> = ['hero', 'features', 'social_proof', 'cta'];
+export const ROTATION_ROLES: ReadonlyArray<RecipeRole> = [
+  'hero',
+  'features',
+  'social_proof',
+  'cta',
+];
 
 // ---------------------------------------------------------------------------
 // L42-311 Layer A — five-category taxonomy
@@ -248,7 +254,10 @@ const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]
  * never embedded in the prompt — it is scored against the user prompt at
  * selection time only, so it is cheap to over-include here.
  */
-function extractKeywords(metadata: Record<string, unknown>, ...extra: Array<string | undefined>): string {
+function extractKeywords(
+  metadata: Record<string, unknown>,
+  ...extra: Array<string | undefined>
+): string {
   const parts: string[] = [];
   const push = (v: unknown) => {
     if (typeof v === 'string' && v.trim().length > 0) parts.push(v.trim());
@@ -272,6 +281,55 @@ function extractKeywords(metadata: Record<string, unknown>, ...extra: Array<stri
  */
 const USER_SLOT_BASE = 1000;
 
+/**
+ * Convert a flat EmailBuilder document (Record<id, block>) into the NDJSON
+ * line format the retrieval / few-shot pipeline expects. Root first.
+ */
+function documentToNdjson(doc: Record<string, unknown>): string {
+  const lines: string[] = [];
+  if (doc.root) lines.push(JSON.stringify({ id: 'root', block: doc.root }));
+  for (const [id, block] of Object.entries(doc)) {
+    if (id === 'root') continue;
+    lines.push(JSON.stringify({ id, block }));
+  }
+  return lines.join('\n');
+}
+
+function readPresetNdjson(
+  skillsDir: string,
+  presetsDir: string,
+  entry: { slot: number; slug: string; sourceFile?: string },
+): string {
+  const ndjsonName = `${String(entry.slot).padStart(2, '0')}-${entry.slug}.ndjson`;
+  const ndjsonPath = resolve(presetsDir, ndjsonName);
+  if (existsSync(ndjsonPath)) return safeReadFile(ndjsonPath);
+
+  // Gallery truth lives in references/json/NN.json (full documents). Prefer
+  // the index's sourceFile, then the conventional NN.json slot name.
+  const candidates = [
+    entry.sourceFile
+      ? resolve(skillsDir, entry.sourceFile.replace(/^skills\/email-builder\//, ''))
+      : null,
+    entry.sourceFile ? resolve(skillsDir, '..', entry.sourceFile) : null,
+    resolve(skillsDir, 'references/json', `${String(entry.slot).padStart(2, '0')}.json`),
+  ].filter((p): p is string => Boolean(p));
+
+  for (const path of candidates) {
+    if (!existsSync(path)) continue;
+    const raw = safeReadFile(path);
+    try {
+      const doc = JSON.parse(raw) as Record<string, unknown>;
+      return documentToNdjson(doc);
+    } catch {
+      return raw;
+    }
+  }
+
+  throw new Error(
+    `Preset ${entry.slot}-${entry.slug}: neither ${ndjsonName} nor references/json/${String(entry.slot).padStart(2, '0')}.json found`,
+  );
+}
+
 export function loadPresets(options: LoadSkillContextOptions = {}): PresetEntry[] {
   if (shouldCache() && presetsCache) return presetsCache;
 
@@ -280,14 +338,19 @@ export function loadPresets(options: LoadSkillContextOptions = {}): PresetEntry[
   const indexPath = resolve(presetsDir, 'index.json');
 
   const indexRaw = safeReadFile(indexPath);
-  const entries: Array<{ slot: number; slug: string; description: string; fontFamily: string; blockCount: number }> =
-    JSON.parse(indexRaw);
+  const entries: Array<{
+    slot: number;
+    slug: string;
+    description: string;
+    fontFamily: string;
+    blockCount: number;
+    sourceFile?: string;
+  }> = JSON.parse(indexRaw);
 
   const presets: PresetEntry[] = entries
     .sort((a, b) => a.slot - b.slot)
     .map((e) => {
-      const filename = `${String(e.slot).padStart(2, '0')}-${e.slug}.ndjson`;
-      const ndjson = safeReadFile(resolve(presetsDir, filename));
+      const ndjson = readPresetNdjson(skillsDir, presetsDir, e);
       return {
         slot: e.slot,
         slug: e.slug,
@@ -360,7 +423,7 @@ export function loadRecipes(options: LoadSkillContextOptions = {}): RecipeEntry[
  */
 function parseLibraryNdjson(
   filePath: string,
-  basename: string
+  basename: string,
 ): {
   metadata: Record<string, unknown>;
   blockNdjson: string;
@@ -449,7 +512,9 @@ export function loadSections(options: LoadSkillContextOptions = {}): SectionEntr
 
       const id = typeof parsed.metadata.id === 'string' ? parsed.metadata.id : basename;
       const slug =
-        typeof parsed.metadata.name === 'string' && parsed.metadata.name.length > 0 ? parsed.metadata.name : id;
+        typeof parsed.metadata.name === 'string' && parsed.metadata.name.length > 0
+          ? parsed.metadata.name
+          : id;
       const description =
         typeof parsed.metadata.description === 'string' && parsed.metadata.description.length > 0
           ? parsed.metadata.description
@@ -504,7 +569,9 @@ export function loadUserTemplates(options: LoadSkillContextOptions = {}): Templa
 
     const id = typeof parsed.metadata.id === 'string' ? parsed.metadata.id : basename;
     const slug =
-      typeof parsed.metadata.name === 'string' && parsed.metadata.name.length > 0 ? parsed.metadata.name : id;
+      typeof parsed.metadata.name === 'string' && parsed.metadata.name.length > 0
+        ? parsed.metadata.name
+        : id;
     const description =
       typeof parsed.metadata.description === 'string' && parsed.metadata.description.length > 0
         ? parsed.metadata.description
@@ -557,7 +624,9 @@ export function loadLayouts(options: LoadSkillContextOptions = {}): LayoutEntry[
 
       const id = typeof parsed.metadata.id === 'string' ? parsed.metadata.id : basename;
       const slug =
-        typeof parsed.metadata.name === 'string' && parsed.metadata.name.length > 0 ? parsed.metadata.name : id;
+        typeof parsed.metadata.name === 'string' && parsed.metadata.name.length > 0
+          ? parsed.metadata.name
+          : id;
       const description =
         typeof parsed.metadata.description === 'string' && parsed.metadata.description.length > 0
           ? parsed.metadata.description
@@ -614,7 +683,9 @@ export function loadPrimitives(options: LoadSkillContextOptions = {}): Primitive
 
       const id = typeof parsed.metadata.id === 'string' ? parsed.metadata.id : basename;
       const slug =
-        typeof parsed.metadata.name === 'string' && parsed.metadata.name.length > 0 ? parsed.metadata.name : id;
+        typeof parsed.metadata.name === 'string' && parsed.metadata.name.length > 0
+          ? parsed.metadata.name
+          : id;
       const description =
         typeof parsed.metadata.description === 'string' && parsed.metadata.description.length > 0
           ? parsed.metadata.description

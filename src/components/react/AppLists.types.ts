@@ -1,15 +1,25 @@
+import type { ChannelType } from '@/types/app';
 import type { ListSummary } from '@/types/app';
 
 /**
  * Per-list presentation metadata that mock-data.ts does not carry (color dot,
- * a 7-point subscriber trend "6 weeks ago → Now", the most recent campaign,
- * tags and engagement rates). Kept local to this screen per the build rules —
- * the shared mock-data.ts is not edited.
+ * a 7-point subscriber trend "6 weeks ago → Now", GDPR consent, tags and
+ * engagement rates). Kept local to this screen per the build rules — the
+ * shared mock-data.ts is not edited.
  */
 export type ListMeta = {
   color: string;
+  /** Channels the list is meant for; never empty. */
+  channels: ChannelType[];
   trend: number[];
-  recentCampaign: string;
+  /**
+   * Members a send would actually reach — sending mails only subscribers whose
+   * status is 'active', so this is below `subscribers` on any list carrying
+   * bounced, complained, invalid or unsubscribed addresses.
+   */
+  mailable: number;
+  /** Whether the list requires / records GDPR consent. */
+  gdprConsent: boolean;
   tags: string[];
   /** Free-text note kept with the list. */
   notes: string;

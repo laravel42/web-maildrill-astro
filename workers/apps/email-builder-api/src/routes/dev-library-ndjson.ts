@@ -144,7 +144,10 @@ export const TAG_MAX_LENGTH = 32;
  * tags and arrays beyond `MAX_TAGS`; case-folding and de-duplication
  * happen in `normalizeTags` after parsing.
  */
-export const tagsSchema = z.array(z.string().trim().min(1).max(TAG_MAX_LENGTH)).max(MAX_TAGS).optional();
+export const tagsSchema = z
+  .array(z.string().trim().min(1).max(TAG_MAX_LENGTH))
+  .max(MAX_TAGS)
+  .optional();
 
 /**
  * Normalise a raw tag list: trim, lowercase, drop empties, de-duplicate,
@@ -194,7 +197,7 @@ export const MAX_NDJSON_BYTES = 200 * 1024;
 export class PayloadTooLargeError extends Error {
   constructor(
     public readonly bytes: number,
-    public readonly limit: number = MAX_NDJSON_BYTES
+    public readonly limit: number = MAX_NDJSON_BYTES,
   ) {
     super(`NDJSON payload exceeds ${limit} bytes (got ${bytes})`);
   }
@@ -219,7 +222,7 @@ export class PayloadTooLargeError extends Error {
  */
 export function renumberBlocks(
   blocks: LibraryBlockEntry[],
-  id: string
+  id: string,
 ): { entries: LibraryBlockEntry[]; droppedRefs: string[] } {
   const shortId = id.slice(0, 8);
   const idMap = new Map<string, string>();
@@ -285,7 +288,7 @@ export function renumberBlocks(
 export function serialiseLibraryFile<M extends LibraryMetadataBase>(
   metadata: M,
   entries: LibraryBlockEntry[],
-  byteLimit: number = MAX_NDJSON_BYTES
+  byteLimit: number = MAX_NDJSON_BYTES,
 ): string {
   const lines: string[] = [JSON.stringify(metadata)];
   for (const e of entries) lines.push(JSON.stringify(e));
@@ -309,7 +312,7 @@ export function serialiseLibraryFile<M extends LibraryMetadataBase>(
  * `ROLE_VALUES.includes(...)` style guard in `dev-save-section`.
  */
 export function parseLibraryFile<M extends LibraryMetadataBase = LibraryMetadataBase>(
-  raw: string
+  raw: string,
 ): { metadata: M & Record<string, unknown>; entries: LibraryBlockEntry[] } {
   const lines = raw
     .split('\n')

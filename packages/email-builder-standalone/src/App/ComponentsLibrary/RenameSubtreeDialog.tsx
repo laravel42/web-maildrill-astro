@@ -12,7 +12,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material';
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  TextField,
+} from '@mui/material';
 
 import { resolveBackendUrl } from '../../components/UnsplashImagePicker/unsplash-api';
 import { getComponentsStorageMode } from '../../documents/editor/EditorContext';
@@ -58,7 +67,11 @@ function buildPutUrl(target: RenameSubtreeTarget): string {
   }
 }
 
-export default function RenameSubtreeDialog({ target, onClose, onRenamed }: RenameSubtreeDialogProps) {
+export default function RenameSubtreeDialog({
+  target,
+  onClose,
+  onRenamed,
+}: RenameSubtreeDialogProps) {
   const { t } = useTranslation('inspector');
   const [name, setName] = useState('');
   const [tags, setTags] = useState<string[]>([]);
@@ -76,7 +89,8 @@ export default function RenameSubtreeDialog({ target, onClose, onRenamed }: Rena
   const trimmedName = name.trim();
   const isValid = trimmedName.length > 0 && trimmedName.length <= MAX_NAME;
   const isDirty =
-    target !== null && (trimmedName !== target.name || JSON.stringify(tags) !== JSON.stringify(target.tags ?? []));
+    target !== null &&
+    (trimmedName !== target.name || JSON.stringify(tags) !== JSON.stringify(target.tags ?? []));
 
   const handleClose = useCallback(() => {
     if (submitting) return;
@@ -152,7 +166,11 @@ export default function RenameSubtreeDialog({ target, onClose, onRenamed }: Rena
         <Button onClick={handleClose} disabled={submitting}>
           {t('componentsLibrary.save.close', 'Cancel')}
         </Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={!isValid || !isDirty || submitting}>
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          disabled={!isValid || !isDirty || submitting}
+        >
           {submitting
             ? t('componentsLibrary.save.submitting', 'Saving…')
             : t('componentsLibrary.rename.submit', 'Save changes')}

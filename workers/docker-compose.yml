@@ -1,33 +1,35 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18.1-alpine
     environment:
       POSTGRES_USER: maildrill
       POSTGRES_PASSWORD: maildrill
       POSTGRES_DB: maildrill
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      # Postgres 18+ : mount parent dir (not …/data). Fresh volume name avoids
+      # clashing with a leftover ≤16 cluster.
+      - pg18:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U maildrill"]
+      test: ['CMD-SHELL', 'pg_isready -U maildrill']
       interval: 5s
       timeout: 3s
       retries: 10
 
   redis:
     image: redis:7-alpine
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ['redis-server', '--appendonly', 'yes']
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redisdata:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 3s
       retries: 10
 
 volumes:
-  pgdata:
+  pg18:
   redisdata:

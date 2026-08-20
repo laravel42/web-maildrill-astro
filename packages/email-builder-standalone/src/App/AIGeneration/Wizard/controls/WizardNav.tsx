@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button, Stack, Typography } from '@mui/material';
+import { Box, Button, LinearProgress, Stack, Typography } from '@mui/material';
 
 interface Props {
   /** Zero-based index of the current step. */
@@ -32,16 +32,25 @@ export default function WizardNav({
 }: Props) {
   const { t } = useTranslation('aiWizard');
   return (
-    <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', pt: 1 }}>
-      <Button onClick={onBack} disabled={backDisabled} color="inherit" size="small">
-        {t('steps.common.back')}
-      </Button>
-      <Typography variant="caption" color="text.secondary">
-        {t('steps.common.stepOf', { current: stepIndex + 1, total: totalSteps })}
-      </Typography>
-      <Button onClick={onNext} disabled={nextDisabled} variant="contained" size="small">
-        {isLastStep ? t('steps.common.review') : t('steps.common.next')}
-      </Button>
-    </Stack>
+    <Box sx={{ pt: 1 }}>
+      {/* Position, not just count: the bar shows how far along the walk is. */}
+      <LinearProgress
+        variant="determinate"
+        value={((stepIndex + 1) / totalSteps) * 100}
+        sx={{ height: 3, borderRadius: '2px', mb: 1 }}
+        aria-hidden
+      />
+      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <Button onClick={onBack} disabled={backDisabled} color="inherit" size="small">
+          {t('steps.common.back')}
+        </Button>
+        <Typography variant="caption" color="text.secondary">
+          {t('steps.common.stepOf', { current: stepIndex + 1, total: totalSteps })}
+        </Typography>
+        <Button onClick={onNext} disabled={nextDisabled} variant="contained" size="small">
+          {isLastStep ? t('steps.common.review') : t('steps.common.next')}
+        </Button>
+      </Stack>
+    </Box>
   );
 }

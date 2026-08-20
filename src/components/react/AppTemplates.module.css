@@ -2,18 +2,25 @@
   overflow: visible;
 }
 
-/* channel tabs */
+/* channel tabs — scroll on narrow viewports, never show a scrollbar */
 .tabs {
   display: flex;
   gap: 20px;
   padding: 0 19px;
   border-bottom: 1px solid var(--divider);
   overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.tabs::-webkit-scrollbar {
+  display: none;
 }
 .tab {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  flex: none;
   padding: 14px 0 13px;
   font-size: 13px;
   font-weight: 600;
@@ -32,12 +39,18 @@
 /* toolbar */
 .toolbar {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   padding: 14px 19px;
   border-bottom: 1px solid var(--divider);
+}
+.toolbarRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
   row-gap: 10px;
+  width: 100%;
 }
 .search {
   display: flex;
@@ -94,7 +107,7 @@
 .colbtn:global(.is-on) {
   background: var(--accent-tint);
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .colcount {
   min-width: 16px;
@@ -205,7 +218,7 @@
 .bulkcount {
   font-size: 13px;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .bulkdiv {
   width: 1px;
@@ -228,7 +241,7 @@
   background: var(--surface2);
 }
 .bulkbtnDanger {
-  color: var(--danger);
+  color: var(--danger-text);
   border-color: #f3c9c9;
 }
 .bulkclear {
@@ -239,27 +252,15 @@
 
 /* shared bits */
 .catpill {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text4);
   background: var(--surface2);
   border: 1px solid var(--border);
-  padding: 1px 8px;
+  padding: 3px 8px;
   border-radius: 20px;
   white-space: nowrap;
 }
-.star {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px;
-  border-radius: 6px;
-  transition: transform var(--duration-fast) var(--ease-out);
-}
-.star:hover {
-  transform: scale(1.12);
-}
-
 /* faux email — moved to shared/GalleryPreview.module.css */
 
 /* gallery */
@@ -279,7 +280,7 @@
 }
 .preview {
   position: relative;
-  height: 172px;
+  height: 148px;
   background: var(--surface2);
   padding: 16px 18px 0;
   display: flex;
@@ -294,31 +295,101 @@
 .gcheck .box {
   box-shadow: 0 1px 2px rgba(30, 27, 22, 0.12);
 }
-.gbadge {
+.gTopRight {
   position: absolute;
   top: 12px;
   right: 12px;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.gbadge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 4px 8px;
+  padding: 3px 8px;
   border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(30, 27, 22, 0.12);
 }
-/* WhatsApp approval pill pinned inside the card header (gallery preview / compact band). */
+/* WhatsApp approval status — icon chip next to the channel badge. */
 .gApproval {
-  position: absolute;
-  bottom: 12px;
-  left: 12px;
-  z-index: 2;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(30, 27, 22, 0.14);
+  outline: none;
 }
-.cApproval {
+.gApproval:hover,
+.gApproval:focus-visible {
+  z-index: 4;
+}
+.gApproval_warn {
+  background: #fef3c7;
+  color: #b45309;
+}
+.gApproval_wait {
+  background: #e8e8e6;
+  color: #5c5a52;
+}
+.gApproval_bad {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.gApproval_ok {
+  background: #dcfce7;
+  color: #15803d;
+}
+/* Opens downward so it stays inside the overflow-hidden card. */
+.gApprovalTip {
   position: absolute;
-  bottom: 8px;
+  top: calc(100% + 7px);
+  right: 0;
+  width: max-content;
+  max-width: 200px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: var(--ink, #1f1e1b);
+  /* --ink inverts with the theme, so the text must ride its paired token —
+     a hardcoded white left this tooltip white-on-white in dark mode. */
+  color: var(--on-ink, #fff);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
+  box-shadow: 0 8px 20px rgba(28, 25, 23, 0.28);
+  opacity: 0;
+  transform: translateY(-2px);
+  pointer-events: none;
+  transition:
+    opacity 0.12s var(--ease-out),
+    transform 0.12s var(--ease-out);
+}
+.gApprovalTip strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.gApprovalTip::before {
+  content: '';
+  position: absolute;
+  top: -5px;
   right: 8px;
-  z-index: 2;
+  border: 5px solid transparent;
+  border-top: none;
+  border-bottom-color: var(--ink, #1f1e1b);
+}
+.gApproval:hover .gApprovalTip,
+.gApproval:focus-visible .gApprovalTip {
+  opacity: 1;
+  transform: translateY(0);
 }
 .ov {
   position: absolute;
@@ -352,135 +423,81 @@
   font-size: 12px;
   font-weight: 600;
 }
-.gmeta {
-  padding: 13px 15px;
-  border-top: 1px solid var(--divider);
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-}
-.gmetaMain {
-  min-width: 0;
-}
-.gname {
+/* Slim full-width category band between the preview and the card body,
+   tinted with the category's own hue (same recipe as the drawer pill). */
+.gcatbar {
+  padding: 4px 15px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   font-weight: 600;
-  font-size: 13.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Fills the card's remaining height so the last row pins to the bottom
+   even when a taller sibling stretches the grid row. */
+.gmeta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 15px 13px;
+  border-top: 1px solid var(--divider);
+  min-width: 0;
+}
+/* Name wraps in full across the card width. */
+.gname {
+  min-width: 0;
+  font-weight: 600;
+  font-size: 13.5px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+/* Last row: metrics left, freshness pinned bottom-right. The auto margin
+   sinks it to the card bottom; the padding keeps a minimum gap. */
 .gsub {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 6px;
-  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px;
+  margin-top: auto;
+  padding-top: 5px;
+  white-space: nowrap;
 }
 .updated {
+  flex: none;
+  margin-left: auto;
   font-size: 11.5px;
   color: var(--muted);
-}
-.metrics {
-  display: flex;
-  gap: 12px;
-  margin-top: 8px;
+  white-space: nowrap;
 }
 .metric {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+  flex: none;
   font-size: 11.5px;
   color: var(--text3);
 }
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex: none;
+/* "Not measured" — a dash, held back from the measured figures beside it so a
+   card that reports nothing does not read as a card reporting zero. */
+.metricNone {
+  color: var(--text4);
 }
-.star {
-  flex: none;
-}
-
-/* compact */
-.compact {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
-  padding: 18px 19px;
-}
-.ccard {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-  cursor: pointer;
-  background: var(--surface);
-  position: relative;
-  transition:
-    border-color var(--duration-fast) var(--ease-out),
-    box-shadow var(--duration-fast) var(--ease-out);
-}
-.ccard:hover {
-  box-shadow: var(--shadow-md);
-}
-.cband {
-  position: relative;
-  height: 92px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 12px;
-  text-align: center;
-  font-weight: 700;
-  font-size: 10px;
-  letter-spacing: 0.3px;
-}
-.ccheck {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-}
-.ccheck .box {
-  box-shadow: 0 1px 2px rgba(30, 27, 22, 0.14);
-}
-.cfoot {
-  padding: 9px 11px;
-}
-.crow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-.cname {
-  font-weight: 600;
-  font-size: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.cmetrics {
-  font-size: 10.5px;
-  color: var(--muted);
-  margin-top: 3px;
-}
-
 /* list */
 .lgrid {
   display: grid;
-  grid-template-columns: 36px 2fr 0.9fr 1fr 0.9fr 0.7fr 0.7fr 60px;
+  grid-template-columns: 36px 2fr 0.9fr 1fr 0.9fr 0.7fr 0.7fr;
   column-gap: 16px;
   align-items: center;
 }
 .lhead {
   padding: 12px 19px;
-  border-bottom: 1px solid var(--surface2);
+  border-bottom: 1px solid var(--border2);
 }
 .lhead > div {
-  font-size: 11px;
-  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--text4);
   font-weight: 600;
-  letter-spacing: 0.3px;
   text-transform: uppercase;
 }
 .lhead button {
@@ -492,7 +509,8 @@
   letter-spacing: inherit;
   text-transform: inherit;
 }
-.lhead button:hover {
+.lhead button:hover,
+.lhead button.isActive {
   color: var(--text);
 }
 .lright {
@@ -502,6 +520,11 @@
 .lcenter {
   display: flex;
   align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.lhead > .lcenter button {
+  width: 100%;
   justify-content: center;
 }
 .lrow {
@@ -555,6 +578,11 @@
 }
 .lmuted3 {
   color: var(--text3);
+  font-size: 12.5px;
+}
+/* Same job as .metricNone, in the list's fixed Opens/Clicks columns. */
+.lNotMeasured {
+  color: var(--text4);
   font-size: 12.5px;
 }
 
@@ -672,51 +700,23 @@
   margin: 0;
 }
 .dCatpill {
-  padding: 3px 10px;
+  padding: 3px 8px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
   flex: none;
 }
-.dUpdated {
-  font-size: 12.5px;
-  color: var(--muted);
-  margin: 6px 0 0;
-}
 .dStats {
-  display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 18px;
-}
-.dStat {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 13px;
-}
-.dStatLbl {
-  font-size: 11px;
-  color: var(--muted);
-}
-.dStatVal {
-  font-size: 21px;
-  font-weight: 600;
-  margin-top: 3px;
+  margin-top: 12px;
 }
 .dEyebrow {
   margin: 24px 0 8px;
 }
-.dFavbtn {
-  flex: none;
-  width: 40px;
-  padding: 0;
-}
-
 @media (max-width: 900px) {
   .lgrid {
-    grid-template-columns: 32px 2fr 1fr 0.8fr 44px 32px;
+    grid-template-columns: 32px 2fr 1fr 0.8fr 44px;
   }
   .lgrid > :nth-child(5),
   .lgrid > :nth-child(6) {
@@ -724,11 +724,8 @@
   }
 }
 @media (max-width: 640px) {
-  .segLbl {
-    display: none;
-  }
   .lgrid {
-    grid-template-columns: 30px 1.7fr 0.9fr 44px 30px;
+    grid-template-columns: 30px 1.7fr 0.9fr 44px;
   }
   .lgrid > :nth-child(4) {
     display: none;
@@ -738,8 +735,7 @@
   }
 }
 
-/* Channel badge shared by the list and compact views — same tinted treatment
-   as the gallery card's, so a template's type reads identically in all three. */
+/* Channel badge for the list view — same tinted treatment as the gallery card. */
 .tbadge {
   display: inline-flex;
   align-items: center;
@@ -749,13 +745,4 @@
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
-}
-.cbadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  flex: none;
 }

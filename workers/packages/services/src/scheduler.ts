@@ -1,8 +1,8 @@
-import { randomUUID } from "node:crypto";
-import { and, asc, eq, lte } from "drizzle-orm";
-import { config } from "@maildrill/config";
-import { db, messages } from "@maildrill/database";
-import { bumpVersion, insertDispatchOutbox } from "./shared";
+import { randomUUID } from 'node:crypto';
+import { and, asc, eq, lte } from 'drizzle-orm';
+import { config } from '@maildrill/config';
+import { db, messages } from '@maildrill/database';
+import { bumpVersion, insertDispatchOutbox } from './shared';
 
 /**
  * Activate scheduled messages whose time has arrived. Claims rows with
@@ -17,15 +17,15 @@ export async function activateDueMessages(
     const rows = await tx
       .select()
       .from(messages)
-      .where(and(eq(messages.status, "scheduled"), lte(messages.scheduledAt, now)))
+      .where(and(eq(messages.status, 'scheduled'), lte(messages.scheduledAt, now)))
       .orderBy(asc(messages.scheduledAt))
       .limit(batchSize)
-      .for("update", { skipLocked: true });
+      .for('update', { skipLocked: true });
 
     for (const m of rows) {
       await tx
         .update(messages)
-        .set({ status: "queued", queuedAt: now, version: bumpVersion, updatedAt: now })
+        .set({ status: 'queued', queuedAt: now, version: bumpVersion, updatedAt: now })
         .where(eq(messages.id, m.id));
       await insertDispatchOutbox(tx, m, randomUUID());
     }

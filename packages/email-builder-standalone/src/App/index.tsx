@@ -34,7 +34,11 @@ import {
 import { EmailBuilderWindow } from '../global';
 
 import CommandPalette from './CommandPalette';
-import { ComponentsLibraryDrawer, ComponentsLibraryHandle, COMPACT_LIBRARY_DRAWER_WIDTH } from './ComponentsLibrary';
+import {
+  ComponentsLibraryDrawer,
+  ComponentsLibraryHandle,
+  COMPACT_LIBRARY_DRAWER_WIDTH,
+} from './ComponentsLibrary';
 import InspectorDrawer from './InspectorDrawer';
 import StickyWrapper from './InspectorDrawer/ConfigurationPanel/input-panels/helpers/containers/StickyWrapper';
 import InspectorHandle from './InspectorDrawer/InspectorHandle';
@@ -178,7 +182,8 @@ export default function App({
         const { seedLocalLibrary } = await import('./ComponentsLibrary/seedLocalLibrary');
         await seedLocalLibrary();
         if (cancelled) return;
-        const { generateMissingThumbnails } = await import('./ComponentsLibrary/lazyThumbnailGenerator');
+        const { generateMissingThumbnails } =
+          await import('./ComponentsLibrary/lazyThumbnailGenerator');
         void generateMissingThumbnails();
       } catch (err) {
         console.warn('[EmailBuilder] local library seeding failed', err);
@@ -198,7 +203,8 @@ export default function App({
         m.seedTemplatesFromJson;
     });
     void import('./ComponentsLibrary/devSeedSections').then((m) => {
-      (window as unknown as { __seedSections?: typeof m.seedSections }).__seedSections = m.seedSections;
+      (window as unknown as { __seedSections?: typeof m.seedSections }).__seedSections =
+        m.seedSections;
     });
     void import('./ComponentsLibrary/devRecaptureSectionThumbnails').then((m) => {
       (
@@ -207,14 +213,17 @@ export default function App({
     });
     void import('./ComponentsLibrary/devRecaptureTemplateThumbnails').then((m) => {
       (
-        window as unknown as { __recaptureTemplateThumbnails?: typeof m.recaptureTemplateThumbnails }
+        window as unknown as {
+          __recaptureTemplateThumbnails?: typeof m.recaptureTemplateThumbnails;
+        }
       ).__recaptureTemplateThumbnails = m.recaptureTemplateThumbnails;
     });
     void import('./ComponentsLibrary/devSeedThemes').then((m) => {
       (window as unknown as { __seedThemes?: typeof m.seedThemes }).__seedThemes = m.seedThemes;
     });
     void import('./ComponentsLibrary/devSeedPrimitives').then((m) => {
-      (window as unknown as { __seedPrimitives?: typeof m.seedPrimitives }).__seedPrimitives = m.seedPrimitives;
+      (window as unknown as { __seedPrimitives?: typeof m.seedPrimitives }).__seedPrimitives =
+        m.seedPrimitives;
     });
     void import('./ComponentsLibrary/devSeedLayouts').then((m) => {
       (window as unknown as { __seedLayouts?: typeof m.seedLayouts }).__seedLayouts = m.seedLayouts;
@@ -285,7 +294,7 @@ export default function App({
     <Container
       className={`${darkMode ? 'dark-email-builder' : 'light-email-builder'}`}
       maxWidth={false}
-      sx={(t) => {
+      sx={() => {
         // Con altura fija: sin scroll en el contenedor raíz; canvas y side panel tienen scroll propio
         const noRootScroll = hasFixedHeight;
 
@@ -299,8 +308,9 @@ export default function App({
           overflowX: 'hidden',
           overflowY: noRootScroll ? 'hidden' : 'auto',
           padding: '0!important',
-          border: `1px solid ${t.palette.divider}`,
-          borderRadius: 2,
+          // Full-screen host already frames the editor; side panels supply
+          // their own vertical dividers (left: borderRight, right: borderLeft).
+          border: 'none',
         };
       }}
     >
@@ -371,7 +381,7 @@ export default function App({
           backgroundColor: `${t.palette.background.paper} !important`,
           display: 'flex',
           alignItems: 'stretch',
-          borderTopRightRadius: 12,
+          border: 'none',
           borderLeft: inspectorDrawerOpen ? `1px solid ${t.palette.divider}` : 'none',
           overflow: 'visible',
           pointerEvents: inspectorDrawerOpen ? 'auto' : 'none',
@@ -386,7 +396,8 @@ export default function App({
             width: `${inspectorWidth}px`,
             flexBasis: `${inspectorWidth}px`,
             minWidth: 0,
-            transition: 'width 220ms cubic-bezier(0.4, 0, 0.2, 1), flex-basis 220ms cubic-bezier(0.4, 0, 0.2, 1)',
+            transition:
+              'width 220ms cubic-bezier(0.4, 0, 0.2, 1), flex-basis 220ms cubic-bezier(0.4, 0, 0.2, 1)',
             overflow: 'hidden',
             padding: 0,
             flexShrink: 0,
@@ -399,7 +410,6 @@ export default function App({
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
-              borderBottomRightRadius: 12,
             }}
           >
             <InspectorDrawer sticky={sticky} heightContent={heightContent} />

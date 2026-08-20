@@ -79,7 +79,10 @@ function TemplateBubble({
       >
         {renderWaText(pickGalleryText(template, language), showVariableTokens)}
       </span>
-      <span className="block px-[9px] pb-[1px] pt-[3px] text-right text-[10.5px] leading-none" style={{ color: theme.time }}>
+      <span
+        className="block px-[9px] pb-[1px] pt-[3px] text-right text-[10.5px] leading-none"
+        style={{ color: theme.time }}
+      >
         10:24
       </span>
     </button>
@@ -169,7 +172,9 @@ export function TemplateGallery() {
                     {group.name}
                   </span>
                 </span>
-                <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground/70">{group.templates.length}</span>
+                <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground/70">
+                  {group.templates.length}
+                </span>
               </button>
               {open && (
                 <div
@@ -182,7 +187,12 @@ export function TemplateGallery() {
                   }}
                 >
                   {group.templates.map((template) => (
-                    <TemplateBubble key={template.id} template={template} language={language} theme={theme} />
+                    <TemplateBubble
+                      key={template.id}
+                      template={template}
+                      language={language}
+                      theme={theme}
+                    />
                   ))}
                 </div>
               )}

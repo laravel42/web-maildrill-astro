@@ -577,7 +577,11 @@ const RESERVATION_REMINDER: TEditorConfiguration = {
         },
       },
       props: {
-        childrenIds: ['block_MxedV7vMjjU4ZsikW1Fadv', 'block_8htLTdnN2CcAX67kwJFo2V', 'block_UR2m2tSekeEBy6s76D9Vju'],
+        childrenIds: [
+          'block_MxedV7vMjjU4ZsikW1Fadv',
+          'block_8htLTdnN2CcAX67kwJFo2V',
+          'block_UR2m2tSekeEBy6s76D9Vju',
+        ],
       },
     },
   },
@@ -764,7 +768,11 @@ const RESERVATION_REMINDER: TEditorConfiguration = {
         },
       },
       props: {
-        childrenIds: ['block_BouZQPSLfEfWvVp9qrHaW1', 'block_LHBuzMB27wJAjyi6bwLKeN', 'block_CWgMBgMBgpLMjqd1biz1mz'],
+        childrenIds: [
+          'block_BouZQPSLfEfWvVp9qrHaW1',
+          'block_LHBuzMB27wJAjyi6bwLKeN',
+          'block_CWgMBgMBgpLMjqd1biz1mz',
+        ],
       },
     },
   },
@@ -2159,7 +2167,11 @@ const RESERVATION_REMINDER: TEditorConfiguration = {
         },
       },
       props: {
-        childrenIds: ['block_3vaa8gDUB8D7gyYzTpKGzN', 'block_AqF4QDsGrVadYYB9yJywmL', 'block_F9xbhy5omsUCjE9MuDfxJ5'],
+        childrenIds: [
+          'block_3vaa8gDUB8D7gyYzTpKGzN',
+          'block_AqF4QDsGrVadYYB9yJywmL',
+          'block_F9xbhy5omsUCjE9MuDfxJ5',
+        ],
       },
     },
   },

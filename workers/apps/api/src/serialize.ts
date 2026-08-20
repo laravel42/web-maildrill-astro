@@ -1,4 +1,4 @@
-import type { MessageRow } from "@maildrill/database";
+import type { MessageRow } from '@maildrill/database';
 
 export function messageSummary(m: MessageRow) {
   return {
@@ -17,9 +17,7 @@ export function messageSummary(m: MessageRow) {
     deliveredAt: m.deliveredAt,
     readAt: m.readAt,
     failedAt: m.failedAt,
-    lastError: m.lastErrorMessage
-      ? { code: m.lastErrorCode, message: m.lastErrorMessage }
-      : null,
+    lastError: m.lastErrorMessage ? { code: m.lastErrorCode, message: m.lastErrorMessage } : null,
     createdAt: m.createdAt,
     updatedAt: m.updatedAt,
   };

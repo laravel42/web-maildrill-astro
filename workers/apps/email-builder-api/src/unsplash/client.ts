@@ -51,7 +51,7 @@ export class UnsplashUpstreamError extends Error {
   constructor(
     message: string,
     public readonly status: number,
-    public readonly body?: unknown
+    public readonly body?: unknown,
   ) {
     super(message);
     this.name = 'UnsplashUpstreamError';
@@ -190,7 +190,11 @@ export function createUnsplashClient(options: UnsplashClientOptions = {}): Unspl
 
     if (!response.ok) {
       const body = await response.text().catch(() => undefined);
-      throw new UnsplashUpstreamError(`Unsplash search failed with status ${response.status}`, response.status, body);
+      throw new UnsplashUpstreamError(
+        `Unsplash search failed with status ${response.status}`,
+        response.status,
+        body,
+      );
     }
 
     const rateLimitHeader = response.headers.get('x-ratelimit-remaining');

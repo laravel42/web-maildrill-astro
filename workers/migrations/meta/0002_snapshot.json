@@ -89,12 +89,8 @@
           "name": "campaigns_tenant_id_tenants_id_fk",
           "tableFrom": "campaigns",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -178,12 +174,8 @@
           "name": "custom_field_defs_tenant_id_tenants_id_fk",
           "tableFrom": "custom_field_defs",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -332,12 +324,8 @@
           "name": "list_members_list_id_lists_id_fk",
           "tableFrom": "list_members",
           "tableTo": "lists",
-          "columnsFrom": [
-            "list_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["list_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -345,12 +333,8 @@
           "name": "list_members_subscriber_id_subscribers_id_fk",
           "tableFrom": "list_members",
           "tableTo": "subscribers",
-          "columnsFrom": [
-            "subscriber_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["subscriber_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -358,10 +342,7 @@
       "compositePrimaryKeys": {
         "list_members_list_id_subscriber_id_pk": {
           "name": "list_members_list_id_subscriber_id_pk",
-          "columns": [
-            "list_id",
-            "subscriber_id"
-          ]
+          "columns": ["list_id", "subscriber_id"]
         }
       },
       "uniqueConstraints": {},
@@ -441,12 +422,8 @@
           "name": "lists_tenant_id_tenants_id_fk",
           "tableFrom": "lists",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -623,12 +600,8 @@
           "name": "media_assets_tenant_id_tenants_id_fk",
           "tableFrom": "media_assets",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -693,12 +666,8 @@
           "name": "memberships_user_id_users_id_fk",
           "tableFrom": "memberships",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -706,12 +675,8 @@
           "name": "memberships_tenant_id_tenants_id_fk",
           "tableFrom": "memberships",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -719,10 +684,7 @@
       "compositePrimaryKeys": {
         "memberships_user_id_tenant_id_pk": {
           "name": "memberships_user_id_tenant_id_pk",
-          "columns": [
-            "user_id",
-            "tenant_id"
-          ]
+          "columns": ["user_id", "tenant_id"]
         }
       },
       "uniqueConstraints": {},
@@ -860,12 +822,8 @@
           "name": "message_attempts_message_id_messages_id_fk",
           "tableFrom": "message_attempts",
           "tableTo": "messages",
-          "columnsFrom": [
-            "message_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["message_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1006,12 +964,8 @@
           "name": "message_events_message_id_messages_id_fk",
           "tableFrom": "message_events",
           "tableTo": "messages",
-          "columnsFrom": [
-            "message_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["message_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1300,12 +1254,8 @@
           "name": "messages_tenant_id_tenants_id_fk",
           "tableFrom": "messages",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1313,12 +1263,8 @@
           "name": "messages_campaign_id_campaigns_id_fk",
           "tableFrom": "messages",
           "tableTo": "campaigns",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["campaign_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1529,12 +1475,8 @@
           "name": "provider_accounts_tenant_id_tenants_id_fk",
           "tableFrom": "provider_accounts",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1626,12 +1568,8 @@
           "name": "segments_tenant_id_tenants_id_fk",
           "tableFrom": "segments",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1694,12 +1632,8 @@
           "name": "subscriber_tags_tag_id_tags_id_fk",
           "tableFrom": "subscriber_tags",
           "tableTo": "tags",
-          "columnsFrom": [
-            "tag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tag_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1707,12 +1641,8 @@
           "name": "subscriber_tags_subscriber_id_subscribers_id_fk",
           "tableFrom": "subscriber_tags",
           "tableTo": "subscribers",
-          "columnsFrom": [
-            "subscriber_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["subscriber_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1720,10 +1650,7 @@
       "compositePrimaryKeys": {
         "subscriber_tags_tag_id_subscriber_id_pk": {
           "name": "subscriber_tags_tag_id_subscriber_id_pk",
-          "columns": [
-            "tag_id",
-            "subscriber_id"
-          ]
+          "columns": ["tag_id", "subscriber_id"]
         }
       },
       "uniqueConstraints": {},
@@ -1845,12 +1772,8 @@
           "name": "subscribers_tenant_id_tenants_id_fk",
           "tableFrom": "subscribers",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1939,12 +1862,8 @@
           "name": "suppressions_tenant_id_tenants_id_fk",
           "tableFrom": "suppressions",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2020,12 +1939,8 @@
           "name": "tags_tenant_id_tenants_id_fk",
           "tableFrom": "tags",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2147,12 +2062,8 @@
           "name": "templates_tenant_id_tenants_id_fk",
           "tableFrom": "templates",
           "tableTo": "tenants",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2325,12 +2236,8 @@
           "name": "usage_records_message_id_messages_id_fk",
           "tableFrom": "usage_records",
           "tableTo": "messages",
-          "columnsFrom": [
-            "message_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["message_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2543,41 +2450,22 @@
     "public.attempt_status": {
       "name": "attempt_status",
       "schema": "public",
-      "values": [
-        "started",
-        "succeeded",
-        "failed"
-      ]
+      "values": ["started", "succeeded", "failed"]
     },
     "public.channel": {
       "name": "channel",
       "schema": "public",
-      "values": [
-        "email",
-        "sms",
-        "whatsapp",
-        "voice"
-      ]
+      "values": ["email", "sms", "whatsapp", "voice"]
     },
     "public.custom_field_type": {
       "name": "custom_field_type",
       "schema": "public",
-      "values": [
-        "text",
-        "number",
-        "date",
-        "boolean"
-      ]
+      "values": ["text", "number", "date", "boolean"]
     },
     "public.membership_role": {
       "name": "membership_role",
       "schema": "public",
-      "values": [
-        "owner",
-        "admin",
-        "editor",
-        "viewer"
-      ]
+      "values": ["owner", "admin", "editor", "viewer"]
     },
     "public.message_status": {
       "name": "message_status",
@@ -2599,48 +2487,27 @@
     "public.outbox_status": {
       "name": "outbox_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "publishing",
-        "published",
-        "failed"
-      ]
+      "values": ["pending", "publishing", "published", "failed"]
     },
     "public.segment_match": {
       "name": "segment_match",
       "schema": "public",
-      "values": [
-        "all",
-        "any"
-      ]
+      "values": ["all", "any"]
     },
     "public.subscriber_status": {
       "name": "subscriber_status",
       "schema": "public",
-      "values": [
-        "active",
-        "unsubscribed",
-        "bounced",
-        "complained"
-      ]
+      "values": ["active", "unsubscribed", "bounced", "complained"]
     },
     "public.tenant_status": {
       "name": "tenant_status",
       "schema": "public",
-      "values": [
-        "active",
-        "suspended"
-      ]
+      "values": ["active", "suspended"]
     },
     "public.webhook_status": {
       "name": "webhook_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "processing",
-        "processed",
-        "failed"
-      ]
+      "values": ["pending", "processing", "processed", "failed"]
     }
   },
   "schemas": {},

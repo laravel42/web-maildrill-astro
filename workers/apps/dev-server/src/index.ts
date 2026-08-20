@@ -1,31 +1,29 @@
-import "dotenv/config";
+import 'dotenv/config';
 
-import Fastify from "fastify";
-import cors from "@fastify/cors";
-import { config } from "@maildrill/config";
-import { logger, metrics } from "@maildrill/observability";
-import { closeDb, pool } from "@maildrill/database";
-import { sharedConnection, shutdownQueues } from "@maildrill/queues";
-import { isValidationError, setupOpenApi } from "@maildrill/httpkit";
-import { messagingRoutes } from "../../api/src/server";
-import { productRoutes } from "../../product-api/src/server";
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import { config } from '@maildrill/config';
+import { logger, metrics } from '@maildrill/observability';
+import { closeDb, pool } from '@maildrill/database';
+import { sharedConnection, shutdownQueues } from '@maildrill/queues';
+import { asClientError, isValidationError, setupOpenApi } from '@maildrill/httpkit';
+import { messagingRoutes } from '../../api/src/server';
+import { productRoutes } from '../../product-api/src/server';
 import {
   startCampaignDeliveryPoller,
+  startCloudflareEmailEventsPoller,
   startDispatchWorker,
   startEventsWorker,
   startMaintenance,
   startPublisher,
   startScheduler,
   startTemplateApprovalPoller,
-} from "../../workers/src/roles";
-import type { StopFn } from "../../workers/src/poller";
-import { emailBuilderHealth, emailBuilderRoutes } from "@maildrill/email-builder-api";
-import telescopePlugin from "@node-telescope/fastify";
-import { PostgresStorage } from "@node-telescope/storage-postgres";
-import {
-  instrumentAllTelescope,
-  recordTelescopeException,
-} from "./telescope";
+} from '../../workers/src/roles';
+import type { StopFn } from '../../workers/src/poller';
+import { emailBuilderHealth, emailBuilderRoutes } from '@maildrill/email-builder-api';
+import telescopePlugin from '@node-telescope/fastify';
+import { PostgresStorage } from '@node-telescope/storage-postgres';
+import { instrumentAllTelescope, recordTelescopeException } from './telescope';
 
 /**
  * Single-process dev server.
@@ -51,18 +49,20 @@ const app = Fastify({
 });
 
 setupOpenApi(app, {
-  title: "Maildrill (unified dev)",
-  version: "0.1.0",
+  title: 'Maildrill (unified dev)',
+  version: '0.1.0',
   description:
-    "Messaging, product and EmailBuilder routes on one port for local development. Auth: x-api-key or Bearer JWT.",
+    'Messaging, product and EmailBuilder routes on one port for local development. Auth: x-api-key or Bearer JWT.',
 });
 
 await app.register(cors, {
   origin: process.env.CORS_ORIGINS?.trim()
-    ? process.env.CORS_ORIGINS.split(",").map((s) => s.trim()).filter(Boolean)
-    : "*",
-  methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "x-api-key"],
+    ? process.env.CORS_ORIGINS.split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : '*',
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
   maxAge: 600,
 });
 
@@ -75,44 +75,42 @@ await app.register(cors, {
  * request/response bodies, so keep it off in production.
  */
 const telescopeEnabled =
-  process.env.TELESCOPE_ENABLED != null
-    ? process.env.TELESCOPE_ENABLED !== "0"
-    : !config.isProd;
+  process.env.TELESCOPE_ENABLED != null ? process.env.TELESCOPE_ENABLED !== '0' : !config.isProd;
 let telescopeStorage: PostgresStorage | null = null;
 if (telescopeEnabled) {
   telescopeStorage = new PostgresStorage(config.db.url);
   await app.register(telescopePlugin, {
     storage: telescopeStorage,
-    path: "/__telescope",
-    ignorePaths: ["/health", "/health/live", "/health/ready", "/metrics", "/__telescope"],
-    hiddenRequestHeaders: ["authorization", "cookie", "set-cookie", "x-api-key"],
-    hiddenRequestParameters: ["password", "token", "secret", "code"],
+    path: '/__telescope',
+    ignorePaths: ['/health', '/health/live', '/health/ready', '/metrics', '/__telescope'],
+    hiddenRequestHeaders: ['authorization', 'cookie', 'set-cookie', 'x-api-key'],
+    hiddenRequestParameters: ['password', 'token', 'secret', 'code'],
   });
-  logger.info({ path: "/__telescope" }, "telescope dashboard enabled");
+  logger.info({ path: '/__telescope' }, 'telescope dashboard enabled');
 }
 
-app.get("/health/live", async () => ({ status: "ok" }));
+app.get('/health/live', async () => ({ status: 'ok' }));
 
-app.get("/health/ready", async (_req, reply) => {
+app.get('/health/ready', async (_req, reply) => {
   try {
-    await pool.query("select 1");
+    await pool.query('select 1');
     await sharedConnection().ping();
-    return { status: "ready" };
+    return { status: 'ready' };
   } catch (err) {
     return reply.code(503).send({
-      status: "unready",
+      status: 'unready',
       error: err instanceof Error ? err.message : String(err),
     });
   }
 });
 
-app.get("/metrics", async (_req, reply) => {
-  void reply.header("content-type", "text/plain; version=0.0.4");
+app.get('/metrics', async (_req, reply) => {
+  void reply.header('content-type', 'text/plain; version=0.0.4');
   return metrics.render();
 });
 
 // The editor probes this before enabling AI features.
-app.get("/health", async () => emailBuilderHealth());
+app.get('/health', async () => emailBuilderHealth());
 
 await app.register(productRoutes);
 await app.register(messagingRoutes);
@@ -120,17 +118,21 @@ await app.register(emailBuilderRoutes);
 
 app.setErrorHandler((err, req, reply) => {
   if (isValidationError(err)) {
-    return reply.code(400).send({ error: "validation", issues: err.validation });
+    return reply.code(400).send({ error: 'validation', issues: err.validation });
   }
+  // Same as the product server: a caller-caused 400 (invalid cursor) names
+  // itself rather than reading as a server fault.
+  const client = asClientError(err);
+  if (client) return reply.code(client.statusCode).send({ error: client.error });
   // Route plugins don't set their own error handler, so real errors walk up to
   // here — record them in Telescope's Exceptions tab (validation 400s excluded).
   if (telescopeEnabled) recordTelescopeException(app, err);
   const statusCode = (err as { statusCode?: number }).statusCode ?? 500;
   logger.error(
     { err: err instanceof Error ? err.message : String(err), url: req.url },
-    "dev-server request error",
+    'dev-server request error',
   );
-  return reply.code(statusCode).send({ error: "internal_error" });
+  return reply.code(statusCode).send({ error: 'internal_error' });
 });
 
 // Wire every Telescope watcher sink before workers start and before listen, so
@@ -147,7 +149,7 @@ if (telescopeEnabled) {
  * dispatching anything at all.
  */
 const workerStops: StopFn[] = [];
-if (process.env.DEV_WORKERS !== "0") {
+if (process.env.DEV_WORKERS !== '0') {
   workerStops.push(
     startDispatchWorker(),
     startEventsWorker(),
@@ -156,15 +158,16 @@ if (process.env.DEV_WORKERS !== "0") {
     startMaintenance(),
     startTemplateApprovalPoller(),
     startCampaignDeliveryPoller(),
+    startCloudflareEmailEventsPoller(),
   );
-  logger.info({ provider: config.provider.driver }, "dev-server workers started");
+  logger.info({ provider: config.provider.driver }, 'dev-server workers started');
 }
 
 let shuttingDown = false;
 async function shutdown(signal: string): Promise<void> {
   if (shuttingDown) return;
   shuttingDown = true;
-  logger.info({ signal }, "dev-server shutting down");
+  logger.info({ signal }, 'dev-server shutting down');
   try {
     await app.close();
     await Promise.allSettled(workerStops.map((stop) => stop()));
@@ -172,14 +175,14 @@ async function shutdown(signal: string): Promise<void> {
     await shutdownQueues();
     await closeDb();
   } catch (err) {
-    logger.error({ err }, "error during shutdown");
+    logger.error({ err }, 'error during shutdown');
   } finally {
     process.exit(0);
   }
 }
-process.on("SIGTERM", () => void shutdown("SIGTERM"));
-process.on("SIGINT", () => void shutdown("SIGINT"));
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
+process.on('SIGINT', () => void shutdown('SIGINT'));
 
 const port = Number(process.env.DEV_SERVER_PORT ?? config.productApi.port);
 await app.listen({ host: config.api.host, port });
-logger.info({ port, apps: ["product", "messaging", "email-builder"] }, "dev-server listening");
+logger.info({ port, apps: ['product', 'messaging', 'email-builder'] }, 'dev-server listening');

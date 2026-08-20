@@ -82,7 +82,8 @@ const BorderInput: FC<BorderInputProps> = ({
     [borderKeys.left]: Number(border[borderKeys.left]),
     [borderKeys.right]: Number(border[borderKeys.right]),
   };
-  const linked = sidesLinked !== undefined ? sidesLinked : areAllBordersEqual(numericBorderFromState);
+  const linked =
+    sidesLinked !== undefined ? sidesLinked : areAllBordersEqual(numericBorderFromState);
 
   useEffect(() => {
     if (borderColor !== bColor) {
@@ -96,7 +97,9 @@ const BorderInput: FC<BorderInputProps> = ({
       [borderKeys.right]: borderRight ?? 0,
     };
 
-    const hasChanged = Object.keys(currentBorders).some((key) => border[key] !== currentBorders[key]);
+    const hasChanged = Object.keys(currentBorders).some(
+      (key) => border[key] !== currentBorders[key],
+    );
 
     if (hasChanged) {
       setBorder(currentBorders);
@@ -150,7 +153,10 @@ const BorderInput: FC<BorderInputProps> = ({
 
   return (
     <div>
-      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+      <Stack
+        direction="row"
+        sx={{ justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
+      >
         <LabelProperty label={label} />
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <ColorInput defaultValue={bColor} onChange={handleBorderColorChange} compact />

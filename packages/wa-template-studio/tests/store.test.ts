@@ -10,6 +10,7 @@ import {
   removeButton,
   reorderButtons,
   replaceDoc,
+  setTemplateField,
   undo,
   updateBlockData,
   useStudio,
@@ -51,7 +52,10 @@ describe('studio store', () => {
 
     const removedId = buttons[0]!.id;
     removeButton(removedId);
-    expect(useStudio.getState().doc.blocks.buttons.map((b) => b.type)).toEqual(['copy-code', 'url']);
+    expect(useStudio.getState().doc.blocks.buttons.map((b) => b.type)).toEqual([
+      'copy-code',
+      'url',
+    ]);
   });
 
   it('undo/redo restore document states across mutation kinds', () => {
@@ -78,5 +82,14 @@ describe('studio store', () => {
     expect(useStudio.getState().future).toEqual([]);
     redo();
     expect((useStudio.getState().doc.blocks.body.data as { text: string }).text).toBe('Two');
+  });
+
+  it('does not push history for no-op template field updates or identical commits', () => {
+    setTemplateField('name', '');
+    expect(useStudio.getState().past).toEqual([]);
+
+    updateBlockData('body', { text: 'Hello', variables: {} });
+    updateBlockData('body', { text: 'Hello', variables: {} });
+    expect(useStudio.getState().past).toHaveLength(1);
   });
 });

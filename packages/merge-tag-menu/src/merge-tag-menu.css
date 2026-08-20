@@ -1,0 +1,145 @@
+/*
+ * Merge-tag menu skin, shared by every template editor that offers one.
+ *
+ * The panel drops into popovers owned by three different UI stacks (MUI
+ * Popover, Radix Popover, plain CSS modules) and is portalled outside any of
+ * their scopes, so these rules are fully self-contained: explicit colours, no
+ * var() that only exists on one host, and `font-family: inherit` so the panel
+ * picks up whatever the surrounding chrome runs (Geist, in this product).
+ *
+ * Metrics mirror the WhatsApp studio's AI menu (`.wts-ai-menu`): 8px/10px
+ * rows, an 18px glyph column, 13px labels and tight uppercase section
+ * captions. Light-only, like the surfaces it opens over.
+ */
+
+.md-tag-menu {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  font-family: inherit;
+  color: #1f1e1b; /* --text */
+}
+
+.md-tag-menu-search {
+  padding: 8px;
+  border-bottom: 1px solid #e4e2da; /* --border2 */
+}
+
+.md-tag-menu-search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.md-tag-menu-search-icon {
+  position: absolute;
+  left: 9px;
+  width: 14px;
+  height: 14px;
+  color: #a5a297; /* --muted */
+  pointer-events: none;
+}
+
+.md-tag-menu-input {
+  width: 100%;
+  padding: 6px 8px 6px 29px;
+  border: 1px solid #e4e2da;
+  border-radius: 8px;
+  background: #ffffff;
+  color: inherit;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.md-tag-menu-input::placeholder {
+  color: #a5a297;
+}
+
+.md-tag-menu-input:focus-visible {
+  outline: none;
+  border-color: #4f46e5; /* --accent */
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.35); /* --focus-ring */
+}
+
+.md-tag-menu-list {
+  padding: 4px;
+  max-height: var(--md-tag-menu-max-height, 14rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.md-tag-menu-header {
+  padding: 8px 10px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #a5a297;
+}
+
+.md-tag-menu-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  /* Two-line rows (label + token) carry their own height, so they sit tighter
+     vertically than the single-line AI menu they otherwise match. */
+  padding: 4px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+  color: #1f1e1b;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.md-tag-menu-item:hover,
+.md-tag-menu-item:focus-visible {
+  outline: none;
+  background: #eef0ff; /* --accent-tint */
+}
+
+.md-tag-menu-item[data-selected] {
+  background: #e4e7ff;
+}
+
+.md-tag-menu-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  flex: none;
+  margin-top: 2px;
+  color: #4f46e5;
+}
+
+.md-tag-menu-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.md-tag-menu-label {
+  display: block;
+}
+
+.md-tag-menu-token {
+  display: block;
+  margin-top: 1px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #77756c; /* --text4 */
+  word-break: break-word;
+}
+
+.md-tag-menu-empty {
+  padding: 16px 10px;
+  font-size: 13px;
+  text-align: center;
+  color: #a5a297;
+}

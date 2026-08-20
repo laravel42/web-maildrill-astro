@@ -67,7 +67,11 @@ export default function RawSliderInput({
         />
 
         {/* Read-only value display — editing happens only via the slider now. */}
-        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '12px', flexShrink: 0 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ fontSize: '12px', flexShrink: 0 }}
+        >
           <NumberDisplay>{safeValue}</NumberDisplay>
           {units}
         </Typography>

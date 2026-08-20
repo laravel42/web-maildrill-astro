@@ -78,7 +78,8 @@ export default function ResponsiveSizeInput({
 
   // Estado para el padding personalizado
   const [padding, setPadding] = useState<CustomPadding>(() => {
-    const currentValue = selectedScreenSize === 'desktop' ? size : sizeMobile !== undefined ? sizeMobile : size;
+    const currentValue =
+      selectedScreenSize === 'desktop' ? size : sizeMobile !== undefined ? sizeMobile : size;
 
     if (typeof currentValue === 'object' && currentValue !== null) {
       return normalizePadding(currentValue);
@@ -93,10 +94,13 @@ export default function ResponsiveSizeInput({
   });
 
   const isLocked =
-    selectedScreenSize === 'desktop' ? sizePaddingSidesLinked === true : sizeMobilePaddingSidesLinked === true;
+    selectedScreenSize === 'desktop'
+      ? sizePaddingSidesLinked === true
+      : sizeMobilePaddingSidesLinked === true;
 
   useEffect(() => {
-    const currentValue = selectedScreenSize === 'desktop' ? size : sizeMobile !== undefined ? sizeMobile : size;
+    const currentValue =
+      selectedScreenSize === 'desktop' ? size : sizeMobile !== undefined ? sizeMobile : size;
 
     // Si el valor actual es un objeto (custom padding), actualizarlo
     if (typeof currentValue === 'object' && currentValue !== null) {
@@ -106,7 +110,8 @@ export default function ResponsiveSizeInput({
 
   // Función para obtener el valor con fallback
   const getCurrentValue = (): string => {
-    const currentValue = selectedScreenSize === 'desktop' ? size : sizeMobile !== undefined ? sizeMobile : size;
+    const currentValue =
+      selectedScreenSize === 'desktop' ? size : sizeMobile !== undefined ? sizeMobile : size;
 
     // Si es un objeto (custom padding), retornar 'custom'
     if (typeof currentValue === 'object' && currentValue !== null) {
@@ -234,7 +239,10 @@ export default function ResponsiveSizeInput({
 
       {currentValue === 'custom' && (
         <Stack spacing={2} sx={{ alignItems: 'flex-start', pb: 1 }}>
-          <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <Stack
+            direction="row"
+            sx={{ justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
+          >
             <LabelProperty label={t('inputs.responsiveSize.customPadding')} />
             <Tooltip title={isLocked ? t('lockValues.unlockTooltip') : t('lockValues.lockTooltip')}>
               <IconButton

@@ -4,7 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { MonitorOutlined, PhoneIphoneOutlined } from '@mui/icons-material';
 import { ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
 
-import { setSelectedScreenSize, useSelectedScreenSize } from '../../../../../../documents/editor/EditorContext';
+import {
+  setSelectedScreenSize,
+  useSelectedScreenSize,
+} from '../../../../../../documents/editor/EditorContext';
 
 const ScreenSizeSelector = () => {
   const selectedScreenSize = useSelectedScreenSize();

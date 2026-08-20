@@ -69,5 +69,9 @@ export function isThumbnailPending(id: string): boolean {
  * and `isThumbnailPending`).
  */
 export function useThumbnailStatusVersion(): number {
-  return useSyncExternalStore(subscribeThumbnailStatus, getThumbnailStatusVersion, getThumbnailStatusVersion);
+  return useSyncExternalStore(
+    subscribeThumbnailStatus,
+    getThumbnailStatusVersion,
+    getThumbnailStatusVersion,
+  );
 }

@@ -76,7 +76,7 @@ function nextPoolItem(pool: PoolItem[], state: RewriteState): PoolItem {
 export function rewritePicsumToPool(
   parsed: Record<string, unknown>,
   pool: PoolItem[],
-  state: RewriteState
+  state: RewriteState,
 ): RewriteResult {
   const result: RewriteResult = { rewritten: false, affected: [] };
   if (pool.length === 0) return result;
@@ -119,7 +119,11 @@ export function rewritePicsumToPool(
   // -------------------------------------------------------------------------
   // Container blocks: rewrite style.backgroundImage when it points to picsum
   // -------------------------------------------------------------------------
-  if (blockType === 'Container' || blockType === 'EmailLayout' || blockType === 'ColumnsContainer') {
+  if (
+    blockType === 'Container' ||
+    blockType === 'EmailLayout' ||
+    blockType === 'ColumnsContainer'
+  ) {
     const style = (dataObj.style ?? {}) as Record<string, unknown>;
     const bgRaw = style.backgroundImage;
     const bgUrl = extractBackgroundUrl(bgRaw);

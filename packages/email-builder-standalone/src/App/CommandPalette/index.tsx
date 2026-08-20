@@ -58,7 +58,12 @@ const IS_MAC = typeof navigator !== 'undefined' && /mac/i.test(navigator.platfor
 const MOD = IS_MAC ? '⌘' : 'Ctrl';
 
 const VIEW_ACTIONS: ActionDef[] = [
-  { value: 'tab:editor', icon: <EditOutlined />, labelKey: 'commandPalette.action.tabEditor', shortcut: `${MOD}+E` },
+  {
+    value: 'tab:editor',
+    icon: <EditOutlined />,
+    labelKey: 'commandPalette.action.tabEditor',
+    shortcut: `${MOD}+E`,
+  },
   {
     value: 'tab:preview',
     icon: <VisibilityOutlined />,
@@ -67,7 +72,11 @@ const VIEW_ACTIONS: ActionDef[] = [
   },
   { value: 'tab:html', icon: <CodeOutlined />, labelKey: 'commandPalette.action.tabHtml' },
   { value: 'tab:json', icon: <DataObjectOutlined />, labelKey: 'commandPalette.action.tabJson' },
-  { value: 'screen:desktop', icon: <MonitorOutlined />, labelKey: 'commandPalette.action.screenDesktop' },
+  {
+    value: 'screen:desktop',
+    icon: <MonitorOutlined />,
+    labelKey: 'commandPalette.action.screenDesktop',
+  },
   {
     value: 'screen:mobile',
     icon: <PhoneIphoneOutlined />,
@@ -92,8 +101,18 @@ const LIBRARY_ACTIONS: ActionDef[] = [
 ];
 
 const EDIT_ACTIONS: ActionDef[] = [
-  { value: 'undo', icon: <UndoOutlined />, labelKey: 'commandPalette.action.undo', shortcut: `${MOD}+Z` },
-  { value: 'redo', icon: <RedoOutlined />, labelKey: 'commandPalette.action.redo', shortcut: `${MOD}+Y` },
+  {
+    value: 'undo',
+    icon: <UndoOutlined />,
+    labelKey: 'commandPalette.action.undo',
+    shortcut: `${MOD}+Z`,
+  },
+  {
+    value: 'redo',
+    icon: <RedoOutlined />,
+    labelKey: 'commandPalette.action.redo',
+    shortcut: `${MOD}+Y`,
+  },
 ];
 
 /** Parse and dispatch a selected command's `data-value`. */
@@ -173,7 +192,10 @@ export default function CommandPalette() {
           backgroundColor: theme.palette.background.paper,
           border: `1px solid ${theme.palette.divider}`,
           borderRadius: `${RADIUS_DIALOG}px`,
-          boxShadow: theme.palette.mode === 'dark' ? '0 8px 28px rgba(0,0,0,0.5)' : '0 8px 28px rgba(0,0,0,0.12)',
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? '0 8px 28px rgba(0,0,0,0.5)'
+              : '0 8px 28px rgba(0,0,0,0.12)',
           overflow: 'hidden',
         },
         '& [data-c42-command-input]': {
@@ -242,9 +264,15 @@ export default function CommandPalette() {
       <C42CommandPalette hotkey="k" onSelect={handleSelect}>
         <div data-c42-command-overlay />
         <div data-c42-command-dialog>
-          <input data-c42-command-input placeholder={t('commandPalette.placeholder', 'Type a command or search…')} />
+          <input
+            data-c42-command-input
+            placeholder={t('commandPalette.placeholder', 'Type a command or search…')}
+          />
           <div data-c42-command-list>
-            <div data-c42-command-group data-label={t('commandPalette.group.insert', 'Insert block')}>
+            <div
+              data-c42-command-group
+              data-label={t('commandPalette.group.insert', 'Insert block')}
+            >
               {BUTTONS.map((entry, index) => (
                 <button
                   key={index}

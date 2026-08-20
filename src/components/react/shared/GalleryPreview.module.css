@@ -14,7 +14,7 @@
   box-shadow: 0 8px 26px rgba(30, 27, 22, 0.14);
 }
 .mailBand {
-  height: 60px;
+  height: 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -50,10 +50,10 @@
   margin-top: 6px;
 }
 .mailBody {
-  padding: 11px 13px 13px;
+  padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   align-items: flex-start;
 }
 .mailLg .mailBody {
@@ -119,7 +119,9 @@
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.4px;
-  color: var(--text3);
+  /* The chat sheet behind this is a fixed light colour in both themes, so a
+     theme token would invert to near-white on white. */
+  color: #6b675c;
 }
 .chatBubbleIn {
   align-self: flex-start;
@@ -184,7 +186,7 @@
   display: block;
   font-size: 8.5px;
   font-weight: 700;
-  color: var(--text2);
+  color: #3f3b33;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -205,6 +207,6 @@
 .voiceTime {
   font-size: 8px;
   font-weight: 600;
-  color: var(--muted);
+  color: #6b675c;
   flex: none;
 }

@@ -139,7 +139,8 @@ export default function PaddingInput({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- syncs the incoming prop into local state one-way; adding the local value to deps would re-fire and loop
   }, [defaultValue]);
-  const allSidesEqual = value.top === value.bottom && value.top === value.left && value.top === value.right;
+  const allSidesEqual =
+    value.top === value.bottom && value.top === value.left && value.top === value.right;
   const isLocked = sidesLinked === true && allSidesEqual;
 
   function handleChange(internalName: keyof TPaddingValue, nValue: number) {
@@ -180,7 +181,10 @@ export default function PaddingInput({
 
   return (
     <FieldContainer>
-      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+      <Stack
+        direction="row"
+        sx={{ justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
+      >
         <LabelProperty label={label} action={labelAction} />
         <Tooltip title={isLocked ? t('lockValues.unlockTooltip') : t('lockValues.lockTooltip')}>
           <IconButton
@@ -197,7 +201,10 @@ export default function PaddingInput({
         </Tooltip>
       </Stack>
 
-      <Stack spacing={1} sx={{ opacity: inheritedFrom ? 0.55 : 1, transition: 'opacity 120ms ease-out' }}>
+      <Stack
+        spacing={1}
+        sx={{ opacity: inheritedFrom ? 0.55 : 1, transition: 'opacity 120ms ease-out' }}
+      >
         {isLocked ? (
           <RawSliderInput
             iconLabel={<span>{t('inputs.responsiveSize.allSides')}</span>}

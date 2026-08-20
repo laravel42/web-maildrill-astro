@@ -54,7 +54,13 @@ export default function ThemePresetsButton() {
               key={preset.id}
               onClick={() => handleApply(preset)}
               selected={selected}
-              sx={{ flexDirection: 'column', alignItems: 'stretch', gap: 0.75, py: 1, minWidth: 200 }}
+              sx={{
+                flexDirection: 'column',
+                alignItems: 'stretch',
+                gap: 0.75,
+                py: 1,
+                minWidth: 200,
+              }}
             >
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                 <Stack direction="row" spacing={0.5}>
@@ -74,7 +80,11 @@ export default function ThemePresetsButton() {
                 </Stack>
                 <ListItemText primary={preset.name} sx={{ my: 0 }} />
                 {selected && (
-                  <CheckOutlined fontSize="small" color="primary" aria-label={t('theme.applied.badge', 'Selected')} />
+                  <CheckOutlined
+                    fontSize="small"
+                    color="primary"
+                    aria-label={t('theme.applied.badge', 'Selected')}
+                  />
                 )}
               </Stack>
               <ThemePresetPreview preset={preset} />

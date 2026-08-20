@@ -1,12 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type Dispatch,
-  type ReactNode,
-  type SetStateAction,
-} from 'react';
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { campaigns as mockCampaigns } from '@/lib/app/mock-data';
 import { api, ApiError } from '@/lib/app/api';
 import {
@@ -21,78 +13,165 @@ import {
   type ApiCampaign,
   type CampaignSendResult,
 } from '@/lib/app/campaign-map';
+import { channelReportConfig, type DrawerKpiKey } from '@/lib/app/campaign-report';
 import { RATE_BUCKETS, rateBucket } from '@/lib/app/templates-data';
+import type { ApiTemplate } from '@/lib/app/template-map';
 import type { ChannelSenders } from '@/lib/app/channel-senders';
 import type { AudienceChoice, CampaignDraft, TemplateChoice } from './CampaignWizard.types';
 import type { Campaign, CampaignStatus, ChannelType } from '@/types/app';
 import Icon from './Icon';
 import ColFilter from './shared/ColFilter';
+import FilterChipsRow from './shared/FilterChipsRow';
 import ConfirmDialog from './shared/ConfirmDialog';
 import CampaignWizard from './CampaignWizard';
 import TemplatePreview, { MessagePreview } from './shared/TemplatePreview';
-import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
-import { ago } from './shared/time';
+import { CHANNEL } from './shared/channels';
+import { ChannelPill, ListPill } from './shared/CampaignPills';
+import StatusBadge from './shared/StatusBadge';
+import TimeAgo from './shared/TimeAgo';
 import { useToast } from './shared/useToast';
-import { STATUS_LABEL, TABS, PAGE_SIZE, pct } from './CampaignsBoard.logic';
+import {
+  CHANNEL_TABS,
+  PAGE_SIZE,
+  STATUS_FILTERS,
+  STATUS_LABEL,
+  pct,
+} from './CampaignsBoard.logic';
 import type { SortKey } from './CampaignsBoard.types';
+import { visiblePageNumbers } from './shared/pagination';
+import { routes } from '@/config/routes';
 import styles from './CampaignsBoard.module.css';
 
-function ChannelPill({ channel }: { channel: ChannelType }) {
-  const m = CHANNEL[channel];
-  return (
-    <span className="apill" style={{ background: m.tint, color: m.color }}>
-      <Icon name={m.icon} size={12} />
-      {m.label}
-    </span>
-  );
+/** Workspace-wide counts behind the channel tabs and the status menu. */
+interface BoardCounts {
+  byChannel: Record<string, number>;
+  byStatus: Record<string, number>;
 }
 
-const DEFAULT_LIST_COLOR = '#4f46e5';
+/**
+ * The rate bands, as the API names them.
+ *
+ * The labels are display strings ("20 – 40%", with an en dash); the wire wants
+ * stable slugs, and the server re-derives the band from the counters rather
+ * than trusting a parsed percentage.
+ */
+const RATE_SLUG: Record<string, string> = {
+  None: 'none',
+  'Under 20%': 'low',
+  '20 – 40%': 'mid',
+  '40%+': 'high',
+};
 
-/** A list identifier badge tinted with the list's own colour. */
-function ListPill({ name, color }: { name: string; color?: string | null }) {
-  const c = color || DEFAULT_LIST_COLOR;
+function DispatchProgress({ progress, status }: { progress: number; status: 'sending' | 'sent' }) {
   return (
-    <span
-      className="apill"
-      style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c }}
-    >
-      <span
-        style={{ width: 7, height: 7, borderRadius: '50%', background: c, flex: 'none' }}
-      />
-      {name}
-    </span>
+    <div className={styles.sendProgress} title={`${progress}% dispatched`}>
+      <StatusBadge status={status} />
+      <div
+        className={styles.sendProgressTrack}
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={progress}
+        aria-label={`Dispatch progress ${progress} percent`}
+      >
+        <div
+          className={styles.sendProgressFill}
+          style={{ transform: `scaleX(${progress / 100})` }}
+        />
+      </div>
+      <span className={`tnum ${styles.sendProgressPct}`}>{progress}%</span>
+    </div>
   );
 }
 
 export default function CampaignsBoard({
   initial,
-  audiences,
-  templates,
+  initialTotal,
+  initialCounts,
+  audiences: initialAudiences,
+  templates: initialTemplates,
   senders,
 }: {
   initial?: Campaign[];
+  /** Campaigns matching the first page's filters, for the pager. */
+  initialTotal?: number;
+  /** Workspace tab/status counts, so the tabs render before the first fetch. */
+  initialCounts?: BoardCounts;
   audiences?: AudienceChoice[];
   templates?: TemplateChoice[];
   senders?: ChannelSenders;
 } = {}) {
   // Live workspace campaigns from SSR when provided; else the fixture preview.
   const live = initial !== undefined;
+  /*
+   * In live mode this holds ONE page, not the workspace. Everything that used
+   * to be derived by filtering it in the browser — the rows, the tab counts,
+   * the status counts, the footer total — now comes from the server, because
+   * ten rows cannot answer questions about a thousand campaigns.
+   */
   const [campaigns, setCampaigns] = useState<Campaign[]>(initial ?? mockCampaigns);
-  const [tab, setTab] = useState<CampaignStatus | 'all'>('all');
+  const [serverTotal, setServerTotal] = useState<number>(initialTotal ?? 0);
+  const [serverCounts, setServerCounts] = useState<BoardCounts | null>(initialCounts ?? null);
+  const [loadingPage, setLoadingPage] = useState(false);
+  /*
+   * Keyset paging state. A cursor names the row a page resumes from, so pages
+   * are walked rather than jumped to; a page the user has never reached has no
+   * cursor and falls back to the server's `page` param for that one request.
+   */
+  const [cursors, setCursors] = useState<{ key: string; byPage: Record<number, string> }>({
+    key: '',
+    byPage: {},
+  });
+  /* Bumped after any mutation, to re-read the page and the counts together —
+     a create or a delete changes the total and the tab counts, not just a row. */
+  const [refreshTick, setRefreshTick] = useState(0);
+  const refresh = () => setRefreshTick((n) => n + 1);
+  const [tab, setTab] = useState<ChannelType>('email');
   const [query, setQuery] = useState('');
-  const [channelFilter, setChannelFilter] = useState<Set<ChannelType>>(new Set());
+  const [statusFilter, setStatusFilter] = useState<Set<CampaignStatus>>(new Set());
   const [opensSel, setOpensSel] = useState<Set<string>>(new Set());
   const [clicksSel, setClicksSel] = useState<Set<string>>(new Set());
-  const [openFilter, setOpenFilter] = useState<'channel' | 'opens' | 'clicks' | null>(null);
+  const [openFilter, setOpenFilter] = useState<'status' | 'opens' | 'clicks' | null>(null);
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'updatedAt', dir: -1 });
-  const [page, setPage] = useState(1);
+  const [pageState, setPageState] = useState<{ key: string; page: number }>({ key: '', page: 1 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  // Set while a destructive action waits on confirmation.
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  // Ids waiting on the delete confirm dialog (bulk toolbar or drawer).
+  const [confirmDelete, setConfirmDelete] = useState<string[] | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [reportId, setReportId] = useState<string | null>(null);
+
+  // Deep link: ?open=<id> opens the drawer (dashboard, etc.).
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('open');
+    if (id) setOpenId(id);
+  }, []);
+
+  const editDeepLinkDone = useRef(false);
   const { toast, show } = useToast(2600);
+  /**
+   * Audience and template choices are lazy: they belong to the wizard, not the
+   * board, and fetching them cost ~876ms of blocking SSR (/v1/lists/audience
+   * 601ms, /v1/templates 275ms / 1.1MB) on every board view — for a dialog most
+   * visits never open. Fetched on first open and kept for the session.
+   */
+  const [audiences, setAudiences] = useState(initialAudiences);
+  const [templates, setTemplates] = useState(initialTemplates);
+  const [choicesFetched, setChoicesFetched] = useState(
+    initialAudiences !== undefined && initialTemplates !== undefined,
+  );
+  const loadWizardChoices = () => {
+    if (choicesFetched || !live) return;
+    setChoicesFetched(true);
+    void fetch('/api/wizard-choices')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { audiences?: AudienceChoice[]; templates?: TemplateChoice[] } | null) => {
+        if (!d) return;
+        setAudiences(d.audiences ?? []);
+        setTemplates(d.templates ?? []);
+      })
+      // Let a reopen retry rather than leaving the wizard permanently empty.
+      .catch(() => setChoicesFetched(false));
+  };
+
   const [wizard, setWizard] = useState<
     | { mode: 'create' }
     | {
@@ -101,6 +180,8 @@ export default function CampaignsBoard({
         channel: ChannelType;
         name: string;
         subject: string;
+        trackOpens: boolean;
+        trackClicks: boolean;
         audienceIds: string[];
         templateId: string | null;
         message: string;
@@ -110,11 +191,111 @@ export default function CampaignsBoard({
     | null
   >(null);
 
-  const counts = useMemo(() => {
-    const c: Record<string, number> = { all: campaigns.length };
-    for (const t of TABS) if (t !== 'all') c[t] = campaigns.filter((x) => x.status === t).length;
+  // Quick action: /dashboard/campaigns?new opens a blank wizard.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('new') == null) return;
+    loadWizardChoices();
+    setWizard({ mode: 'create' });
+    url.searchParams.delete('new');
+    window.history.replaceState(null, '', `${url.pathname}${url.search}`);
+  }, []);
+
+  /* What the selected channel can report — drives which filters exist, the
+     same source the table columns and drawer KPIs read. */
+  const tabCfg = channelReportConfig(tab);
+  /* Rate columns exist only where the channel reports them; otherwise the
+     table carried an Open and a Click column of dashes on every row. */
+  const showOpenCol = tabCfg.rateCards.some((r) => r === 'open' || r === 'seen');
+  const showClickCol = tabCfg.rateCards.includes('click');
+  /* Every channel reports a failure outcome — a bounce on email, a failed send
+     everywhere else — so the column is always present, only relabelled.
+
+     Either label names the same server figure, `campaign.failed`, and that
+     figure is now exactly `FAILED_DELIVERY_STATES`: a message the provider
+     tried and never delivered (`failed`), or one it accepted and then abandoned
+     at TTL (`expired`). Both descriptions fit the words in this header.
+
+     `cancelled` used to be in that count and is not any more. A cancelled
+     message never reached the provider — the send was withdrawn, or the
+     in-flight breaker stopped the queue draining into a bad list — so putting
+     it under "Bounced" reported the sender's own decision as the recipient's
+     address failing. It now has its own tab on the campaign report and is in
+     neither the delivered nor the failed count here. */
+  const failLabel = tabCfg.kpis.includes('bounced') ? 'Bounced' : 'Failed';
+  const gridClass = `${styles.grid}${showOpenCol || showClickCol ? '' : ` ${styles.gridPlain}`}`;
+
+  /* A rate filter that disappears must stop filtering with it: leaving an
+     Opens selection active while switching to SMS would silently empty the
+     table with no visible control to undo it. */
+  useEffect(() => {
+    if (!tabCfg.rateCards.some((r) => r === 'open' || r === 'seen')) setOpensSel(new Set());
+    if (!tabCfg.rateCards.includes('click')) setClicksSel(new Set());
+    setOpenFilter(null);
+  }, [tab, tabCfg]);
+
+  /* Only statuses that exist in this channel, with counts. Offering "Paused"
+     on a channel with no paused campaign gives a control whose every use
+     empties the table. */
+  const statusCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    // Live: from the server's single grouped read of `campaigns`. Counting the
+    // fetched rows would report at most a page — "10 sent" on a workspace of
+    // nine hundred.
+    const inChannel = live
+      ? null
+      : campaigns.filter((x) => x.channel === tab);
+    for (const st of STATUS_FILTERS) {
+      const n = inChannel ? inChannel.filter((x) => x.status === st).length : (serverCounts?.byStatus[st] ?? 0);
+      if (n > 0) c[st] = n;
+    }
     return c;
-  }, [campaigns]);
+  }, [live, campaigns, tab, serverCounts]);
+
+useEffect(() => {
+    setStatusFilter((prev) => {
+      const next = new Set([...prev].filter((st) => st in statusCounts));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [statusCounts]);
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const t of CHANNEL_TABS) {
+      c[t] = live ? (serverCounts?.byChannel[t] ?? 0) : campaigns.filter((x) => x.channel === t).length;
+    }
+    return c;
+  }, [live, campaigns, serverCounts]);
+
+  /*
+   * One string naming the filter set and ordering that a page number and a
+   * cursor belong to.
+   *
+   * Derived during render rather than reset from an effect, and that is the
+   * point: an effect that calls setPage(1) has not run by the time the fetch
+   * effect fires in the same commit, so switching channel used to issue one
+   * request carrying the previous channel's cursor. The server refused it
+   * (cursor_shape_mismatch — the guard working as intended) and the right
+   * request followed, but it was a wasted round trip and a console error on
+   * every filter change. Keying the state makes the reset simultaneous.
+   */
+  const queryKey = useMemo(
+    () =>
+      JSON.stringify([
+        tab,
+        query.trim(),
+        [...statusFilter].sort(),
+        [...opensSel].sort(),
+        [...clicksSel].sort(),
+        sort.key,
+        sort.dir,
+      ]),
+    [tab, query, statusFilter, opensSel, clicksSel, sort],
+  );
+  const page = pageState.key === queryKey ? pageState.page : 1;
+  const setPage = (next: number | ((p: number) => number)) =>
+    setPageState({ key: queryKey, page: typeof next === 'function' ? next(page) : next });
+  const cursorFor = cursors.key === queryKey ? cursors.byPage : {};
 
   const resetPage = () => setPage(1);
 
@@ -128,10 +309,20 @@ export default function CampaignsBoard({
     resetPage();
   };
 
-  const rows = useMemo(() => {
+  /*
+   * The fixture pipeline: filter and sort the whole set in the browser.
+   *
+   * Unreachable in live mode — there the server applies every one of these
+   * filters and the sort in SQL and hands back exactly one page, so the rows
+   * in hand are already the answer. Filtering them again here is what made the
+   * old board need all 1,029 campaigns (and their message rollups) before it
+   * could draw ten.
+   */
+  const fixtureRows = useMemo(() => {
+    if (live) return [];
     let list = campaigns.filter((c) => {
-      if (tab !== 'all' && c.status !== tab) return false;
-      if (channelFilter.size > 0 && !channelFilter.has(c.channel)) return false;
+      if (c.channel !== tab) return false;
+      if (statusFilter.size > 0 && !statusFilter.has(c.status)) return false;
       if (opensSel.size && !opensSel.has(rateBucket((c.openRate ?? 0) * 100))) return false;
       if (clicksSel.size && !clicksSel.has(rateBucket((c.clickRate ?? 0) * 100))) return false;
       if (query) {
@@ -153,39 +344,154 @@ export default function CampaignsBoard({
       return 0;
     });
     return list;
-  }, [tab, query, channelFilter, opensSel, clicksSel, sort, campaigns]);
+  }, [live, tab, query, statusFilter, opensSel, clicksSel, sort, campaigns]);
 
-  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  // Live: `campaigns` is the page the server returned, and `serverTotal` counts
+  // the whole filtered set — so the rows on screen and the footer count always
+  // describe the same set.
+  const totalRows = live ? serverTotal : fixtureRows.length;
+  const pageCount = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
-  const startIdx = rows.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
-  const endIdx = Math.min(safePage * PAGE_SIZE, rows.length);
-  const pageRows = rows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const pagerPages = visiblePageNumbers(safePage, pageCount);
+  const startIdx = totalRows === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const endIdx = Math.min(safePage * PAGE_SIZE, totalRows);
+  const pageRows = live
+    ? campaigns
+    : fixtureRows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-  // Snap back to the first page whenever the filtered set changes underneath.
+  /*
+   * The server owns every filter the board offers — channel, status, search,
+   * open/click band — plus the sort and the page window. Nothing below narrows
+   * a live page any more.
+   */
   useEffect(() => {
-    setPage(1);
-  }, [tab, query, channelFilter, opensSel, clicksSel, sort]);
-
-  // While any campaign is sending, refresh list so the progress bar advances.
-  const hasSending = campaigns.some((c) => c.status === 'sending');
-  useEffect(() => {
-    if (!live || !hasSending) return;
+    if (!live) return;
     let cancelled = false;
-    const tick = async () => {
-      try {
-        const res = await api.get<{ data: ApiCampaign[] }>('campaigns');
-        if (!cancelled) setCampaigns(toCampaigns(res.data ?? []));
-      } catch {
-        /* keep last snapshot */
-      }
-    };
-    const id = window.setInterval(() => void tick(), 3000);
-    void tick();
+    const qs = new URLSearchParams({
+      limit: String(PAGE_SIZE),
+      channel: tab,
+      sort: sort.key,
+      dir: sort.dir === 1 ? 'asc' : 'desc',
+    });
+    // Only `updatedAt` is a timestamp, so only it can carry a keyset cursor;
+    // the other columns page by number over the small `campaigns` table.
+    const cursor = sort.key === 'updatedAt' ? cursorFor[page] : undefined;
+    if (cursor) qs.set('cursor', cursor);
+    else if (page > 1) qs.set('page', String(page));
+    if (query.trim()) qs.set('q', query.trim());
+    for (const st of statusFilter) qs.append('status', st);
+    // Bands are only sent on channels that report them — the same rule that
+    // decides whether the column exists at all.
+    if (showOpenCol) for (const b of opensSel) qs.append('opens', RATE_SLUG[b]);
+    if (showClickCol) for (const b of clicksSel) qs.append('clicks', RATE_SLUG[b]);
+    // Count once per filter set: the pager needs a page count, but counting on
+    // every Next would be a scan per click.
+    if (page === 1) qs.set('withTotal', '1');
+
+    setLoadingPage(true);
+    api
+      .get<{
+        items: ApiCampaign[];
+        next_cursor: string | null;
+        total?: number;
+      }>(`campaigns?${qs}`)
+      .then((res) => {
+        if (cancelled) return;
+        setCampaigns(toCampaigns(res.items ?? []));
+        // Remember the doorway to the following page so Next stays keyset.
+        if (res.next_cursor) {
+          const token = res.next_cursor;
+          setCursors((c) => ({
+            key: queryKey,
+            byPage: { ...(c.key === queryKey ? c.byPage : {}), [page + 1]: token },
+          }));
+        }
+        if (res.total !== undefined) setServerTotal(res.total);
+      })
+      .catch(() => {
+        /* keep the page on screen rather than blanking the table */
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPage(false);
+      });
     return () => {
       cancelled = true;
-      window.clearInterval(id);
     };
+    // `cursorFor` is read but deliberately not depended on: this effect fills
+    // it, so listing it would re-run the fetch on its own result. `queryKey`
+    // is a function of the filters already listed.
+  }, [live, queryKey, tab, sort, page, refreshTick, showOpenCol, showClickCol]);
+
+  /* Tab and status counts describe the workspace, so they are fetched once per
+     channel — never per page. One grouped read of `campaigns`, no message data.
+
+     KNOWN DEFECT (audit #33): "the workspace" is the wrong scope once a search
+     or a rate band is active, because only `channel` is passed — `q`, `opens`
+     and `clicks` are not. The status menu then offers counts for a set the
+     table is not showing: with `?q=Back-in-stock&status=draft` the table reads
+     "1–1 of 1" while the menu beside it offers "Draft 50 / Sent 213", and every
+     option a reader picks empties the table. The counts are right about the
+     channel and wrong about the query. */
+  useEffect(() => {
+    if (!live) return;
+    let cancelled = false;
+    api
+      .get<BoardCounts>(`campaigns/counts?channel=${tab}`)
+      .then((c) => {
+        if (!cancelled) setServerCounts(c);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [live, tab, refreshTick]);
+
+  // While a campaign on this channel is sending, re-read so the progress bar
+  // advances. This used to refetch every campaign in the workspace — and with
+  // it a full rollup of every message — every three seconds, per open tab.
+  const hasSending = live
+    ? (serverCounts?.byStatus.sending ?? 0) > 0
+    : campaigns.some((c) => c.status === 'sending');
+  useEffect(() => {
+    if (!live || !hasSending) return;
+    const id = window.setInterval(refresh, 3000);
+    return () => window.clearInterval(id);
   }, [live, hasSending]);
+
+  // Keep the dispatch bar at 100% for 1s after status flips to `sent`, then drop it.
+  const [progressHoldIds, setProgressHoldIds] = useState<Set<string>>(() => new Set());
+  const prevStatusById = useRef<Map<string, CampaignStatus>>(new Map());
+  const progressHoldTimers = useRef<Map<string, number>>(new Map());
+  useEffect(() => {
+    const prev = prevStatusById.current;
+    const next = new Map(prev);
+    for (const c of campaigns) {
+      if (prev.get(c.id) === 'sending' && c.status === 'sent') {
+        const id = c.id;
+        setProgressHoldIds((hold) => new Set(hold).add(id));
+        const existing = progressHoldTimers.current.get(id);
+        if (existing != null) window.clearTimeout(existing);
+        const timer = window.setTimeout(() => {
+          progressHoldTimers.current.delete(id);
+          setProgressHoldIds((hold) => {
+            const h = new Set(hold);
+            h.delete(id);
+            return h;
+          });
+        }, 1000);
+        progressHoldTimers.current.set(id, timer);
+      }
+      next.set(c.id, c.status);
+    }
+    prevStatusById.current = next;
+  }, [campaigns]);
+  useEffect(
+    () => () => {
+      for (const t of progressHoldTimers.current.values()) window.clearTimeout(t);
+      progressHoldTimers.current.clear();
+    },
+    [],
+  );
 
   const toggleSort = (key: SortKey) =>
     setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: 1 }));
@@ -199,8 +505,7 @@ export default function CampaignsBoard({
     });
 
   const allChecked = pageRows.length > 0 && pageRows.every((r) => selected.has(r.id));
-  const toggleAll = () =>
-    setSelected(allChecked ? new Set() : new Set(pageRows.map((r) => r.id)));
+  const toggleAll = () => setSelected(allChecked ? new Set() : new Set(pageRows.map((r) => r.id)));
 
   const bulk = (verb: string) => {
     show(`${verb} ${selected.size} campaign${selected.size === 1 ? '' : 's'}`);
@@ -211,6 +516,7 @@ export default function CampaignsBoard({
     show(`“${name}” is sending…`);
     const outcome = await waitForCampaignDelivery(id);
     setCampaigns((prev) => prev.map((c) => (c.id === id ? toCampaign(outcome) : c)));
+    refresh();
     show(campaignDeliveryToast(name, outcome));
   };
 
@@ -239,6 +545,7 @@ export default function CampaignsBoard({
         });
         const created = await api.get<ApiCampaign>(`campaigns/${res.campaignId}`);
         setCampaigns((prev) => [toCampaign(created), ...prev]);
+        refresh();
         void reportSendOutcome(res.campaignId, name);
       } catch (e) {
         show(e instanceof ApiError ? e.message : `Could not send “${name}”`);
@@ -259,6 +566,7 @@ export default function CampaignsBoard({
         scheduledAt: draft.scheduledAt ?? null,
       });
       setCampaigns((prev) => [toCampaign(created), ...prev]);
+      refresh();
       show(`“${created.name}” scheduled`);
     } catch (e) {
       show(e instanceof ApiError ? e.message : 'Could not create campaign');
@@ -270,12 +578,15 @@ export default function CampaignsBoard({
      wizard would open blank and "save" would wipe the campaign's targeting. */
   const openForEdit = async (c: Campaign) => {
     if (!live) {
+      loadWizardChoices();
       setWizard({
         mode: 'edit',
         id: c.id,
         channel: c.channel,
         name: c.name,
         subject: '',
+        trackOpens: false,
+        trackClicks: false,
         audienceIds: [],
         templateId: null,
         message: '',
@@ -286,13 +597,22 @@ export default function CampaignsBoard({
     }
     try {
       const full = await api.get<ApiCampaign>(`campaigns/${c.id}`);
-      const content = (full.content ?? {}) as { text?: string; subject?: string };
+      const content = (full.content ?? {}) as {
+        text?: string;
+        subject?: string;
+        trackOpens?: unknown;
+        trackClicks?: unknown;
+      };
+      loadWizardChoices();
       setWizard({
         mode: 'edit',
         id: c.id,
         channel: (full.channel as ChannelType) ?? c.channel,
         name: full.name,
         subject: typeof content.subject === 'string' ? content.subject : '',
+        // Absent on pre-flag campaigns → treated as on, matching the provider.
+        trackOpens: content.trackOpens !== false,
+        trackClicks: content.trackClicks !== false,
         audienceIds: audienceIdsFromApiCampaign(full),
         templateId: full.templateId ?? null,
         message: typeof content.text === 'string' ? content.text : '',
@@ -304,6 +624,43 @@ export default function CampaignsBoard({
     }
   };
 
+  // Legacy links: ?report=<id> forwards to the campaign's report page
+  // (old pins/bookmarks — new ones link there directly). ?edit=<id> still
+  // opens the wizard.
+  useEffect(() => {
+    const reportDeepLinkId = new URLSearchParams(window.location.search).get('report');
+    if (reportDeepLinkId) window.location.replace(routes.app.campaignReport(reportDeepLinkId));
+  }, []);
+
+  /* A deep link names a campaign that need not be on the page in hand — the
+     dashboard links straight to one that may sit anywhere in the workspace —
+     so fall back to fetching it by id rather than silently doing nothing. */
+  const findCampaign = async (id: string): Promise<Campaign | null> => {
+    const local = campaigns.find((x) => x.id === id);
+    if (local || !live) return local ?? null;
+    try {
+      return toCampaign(await api.get<ApiCampaign>(`campaigns/${id}`));
+    } catch {
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    if (editDeepLinkDone.current) return;
+    const editId = new URLSearchParams(window.location.search).get('edit');
+    if (!editId) return;
+    editDeepLinkDone.current = true;
+    void findCampaign(editId).then((c) => {
+      if (!c) return;
+      void openForEdit(c);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('edit');
+      window.history.replaceState(null, '', `${url.pathname}${url.search}`);
+    });
+    // Runs once, on the id in the URL; `campaigns` is read through
+    // findCampaign, which falls back to the API when the row is off-page.
+  }, [live]);
+
   /* Persist edits to an existing campaign; dispatch when the user chose send now. */
   const saveEdit = async (id: string, draft: CampaignDraft) => {
     if (!live) {
@@ -312,7 +669,8 @@ export default function CampaignsBoard({
     }
     const prior = campaigns.find((c) => c.id === id);
     const sendable =
-      prior != null && (prior.status === 'draft' || prior.status === 'scheduled' || prior.status === 'paused');
+      prior != null &&
+      (prior.status === 'draft' || prior.status === 'scheduled' || prior.status === 'paused');
 
     try {
       const audience = campaignAudiencePayload(draft);
@@ -327,6 +685,7 @@ export default function CampaignsBoard({
         status: draft.schedule === 'later' ? 'scheduled' : undefined,
       });
       setCampaigns((prev) => prev.map((c) => (c.id === id ? toCampaign(updated) : c)));
+      refresh();
 
       if (draft.schedule === 'now' && sendable) {
         await sendCampaign(id, updated.name);
@@ -363,6 +722,7 @@ export default function CampaignsBoard({
     );
     const made = results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
     setCampaigns((prev) => [...made.map(toCampaign), ...prev]);
+    refresh();
     const failed = ids.length - made.length;
     show(
       failed
@@ -383,40 +743,59 @@ export default function CampaignsBoard({
     }
   };
 
-  /* Delete selected — persists in live mode, else local-only. */
-  const removeSelected = async () => {
-    const ids = [...selected];
+  /* Delete by id list — persists in live mode, else local-only. */
+  const removeCampaigns = async (ids: string[]) => {
     if (ids.length === 0) return;
+    const doomed = new Set(ids);
     if (!live) {
-      setCampaigns((prev) => prev.filter((c) => !selected.has(c.id)));
+      setCampaigns((prev) => prev.filter((c) => !doomed.has(c.id)));
       show(`Deleted ${ids.length} campaign${ids.length === 1 ? '' : 's'}`);
-      setSelected(new Set());
+      setSelected((prev) => new Set([...prev].filter((id) => !doomed.has(id))));
+      if (openId && doomed.has(openId)) setOpenId(null);
       return;
     }
     const results = await Promise.allSettled(ids.map((id) => api.del(`campaigns/${id}`)));
     const okIds = new Set(ids.filter((_, i) => results[i].status === 'fulfilled'));
     setCampaigns((prev) => prev.filter((c) => !okIds.has(c.id)));
+    refresh();
+    setSelected((prev) => new Set([...prev].filter((id) => !okIds.has(id))));
+    if (openId && okIds.has(openId)) setOpenId(null);
     const failed = ids.length - okIds.size;
     show(
       failed
         ? `Deleted ${okIds.size}, ${failed} failed`
         : `Deleted ${okIds.size} campaign${okIds.size === 1 ? '' : 's'}`,
     );
-    setSelected(new Set());
   };
 
-  const toggleChannel = (ch: ChannelType) => {
-    setChannelFilter((prev) => {
+  const toggleStatus = (st: CampaignStatus) => {
+    setStatusFilter((prev) => {
       const next = new Set(prev);
-      if (next.has(ch)) next.delete(ch);
-      else next.add(ch);
+      if (next.has(st)) next.delete(st);
+      else next.add(st);
       return next;
     });
     setSelected(new Set()); // changing filters clears selection (spec §12)
   };
 
-  const open = openId ? (campaigns.find((c) => c.id === openId) ?? null) : null;
-  const report = reportId ? (campaigns.find((c) => c.id === reportId) ?? null) : null;
+  /* The drawer's row, which ?open=<id> can name from off-page. */
+  const [openFallback, setOpenFallback] = useState<Campaign | null>(null);
+  useEffect(() => {
+    if (!openId || campaigns.some((c) => c.id === openId)) {
+      setOpenFallback(null);
+      return;
+    }
+    let cancelled = false;
+    void findCampaign(openId).then((c) => {
+      if (!cancelled) setOpenFallback(c);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [openId, campaigns]);
+  const open = openId
+    ? (campaigns.find((c) => c.id === openId) ?? (openFallback?.id === openId ? openFallback : null))
+    : null;
   const sortArrow = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? '↑' : '↓') : '');
 
   // Resolve a campaign's target-list colour from the audience picker data so the
@@ -427,27 +806,6 @@ export default function CampaignsBoard({
       ? (audiences?.find((a) => a.kind === 'list' && a.id === c.listId)?.color ?? undefined)
       : undefined;
 
-  // The report replaces the board (a screen, matching the design), not an overlay.
-  if (report) {
-    return (
-      <CampaignReport
-        campaign={report}
-        listColor={listColorFor(report)}
-        onBack={() => setReportId(null)}
-        onEdit={() => {
-          const c = report;
-          setReportId(null);
-          void openForEdit(c);
-        }}
-        onDuplicate={() => {
-          const c = report;
-          setReportId(null);
-          void duplicateCampaigns([c.id]);
-        }}
-      />
-    );
-  }
-
   return (
     <div className="screen cb">
       <div className="screen__head">
@@ -455,120 +813,183 @@ export default function CampaignsBoard({
           <h1 className="screen__h1">Campaigns</h1>
           <p className="screen__sub">Create, schedule, and measure every send in one place.</p>
         </div>
-        <button type="button" className="pbtn" onClick={() => setWizard({ mode: 'create' })}>
+        <button
+          type="button"
+          className="pbtn"
+          onClick={() => {
+            loadWizardChoices();
+            setWizard({ mode: 'create' });
+          }}
+        >
           <Icon name="plus" size={15} stroke={2.2} />
           Create campaign
         </button>
       </div>
 
       <div className={`atable ${styles.card}`}>
-        {/* status tabs */}
-        <div className={`${styles.tabs} atabs`} role="tablist" aria-label="Campaign status">
-          {TABS.map((t) => (
-            <button
-              key={t}
-              type="button"
-              role="tab"
-              aria-selected={tab === t}
-              className={`atab${tab === t ? ' is-active' : ''}`}
-              onClick={() => {
-                setTab(t);
-                setSelected(new Set());
-              }}
-            >
-              {t === 'all' ? 'All' : STATUS_LABEL[t]}
-              <span className="atab__count tnum">{counts[t] ?? 0}</span>
-            </button>
-          ))}
+        {/* channel tabs — status is the toolbar filter */}
+        <div className={styles.tabs} role="tablist" aria-label="Campaign channel">
+          {CHANNEL_TABS.map((t) => {
+            const active = tab === t;
+            const m = CHANNEL[t];
+            return (
+              <button
+                key={t}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                className={`${styles.tab}${active ? ' is-active' : ''}`}
+                style={{
+                  color: active ? 'var(--text)' : 'var(--muted)',
+                  borderBottomColor: active ? m.color : 'transparent',
+                }}
+                onClick={() => {
+                  setTab(t);
+                  setSelected(new Set());
+                }}
+              >
+                <Icon name={m.icon} size={12} />
+                {m.label}
+                <span
+                  className={`${styles.tabcount} tnum`}
+                  style={{
+                    background: active ? m.tint : 'var(--surface2)',
+                    color: active ? m.color : 'var(--muted)',
+                  }}
+                >
+                  {counts[t] ?? 0}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* toolbar */}
+        {/* toolbar: controls on row 1; active filter chips always on their own row */}
         <div className={styles.toolbar}>
-          <label className={styles.search}>
-            <Icon name="search" size={15} className={styles.searchic} />
-            <input
-              type="search"
-              placeholder="Search campaigns…"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setSelected(new Set());
-              }}
-              aria-label="Search campaigns"
-            />
-          </label>
-          <div className={styles.filterwrap}>
-            <button
-              type="button"
-              className={`${styles.filter}${channelFilter.size ? ' is-on' : ''}`}
-              aria-expanded={openFilter === 'channel'}
-              onClick={() => setOpenFilter((o) => (o === 'channel' ? null : 'channel'))}
-            >
-              <Icon name="filter" size={14} />
-              Channel
-              {channelFilter.size > 0 && (
-                <span className={styles.filtercount}>{channelFilter.size}</span>
+          <div className={styles.toolbarRow}>
+            <label className={styles.search}>
+              <Icon name="search" size={15} className={styles.searchic} />
+              <input
+                type="search"
+                placeholder="Search campaigns…"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setSelected(new Set());
+                }}
+                aria-label="Search campaigns"
+              />
+            </label>
+            <div className={styles.filterwrap}>
+              <button
+                type="button"
+                className={`${styles.filter}${statusFilter.size ? ' is-on' : ''}`}
+                aria-expanded={openFilter === 'status'}
+                onClick={() => setOpenFilter((o) => (o === 'status' ? null : 'status'))}
+              >
+                <Icon name="filter" size={14} />
+                Status
+                {statusFilter.size > 0 && (
+                  <span className={styles.filtercount}>{statusFilter.size}</span>
+                )}
+                <Icon name="chevron-down" size={12} className={styles.filtercaret} />
+              </button>
+              {openFilter === 'status' && (
+                <>
+                  <button
+                    type="button"
+                    className={styles.filterscrim}
+                    aria-label="Close"
+                    onClick={() => setOpenFilter(null)}
+                  />
+                  <div className={styles.filterpop} style={{ animation: 'pop .14s ease' }}>
+                    {STATUS_FILTERS.filter((st) => st in statusCounts).map((st) => (
+                      <label key={st} className={styles.filteropt}>
+                        <input
+                          type="checkbox"
+                          checked={statusFilter.has(st)}
+                          onChange={() => toggleStatus(st)}
+                        />
+                        <span className={`cstat cstat--${st}`}>{STATUS_LABEL[st]}</span>
+                        <span className={`${styles.filtercount} tnum`}>{statusCounts[st]}</span>
+                      </label>
+                    ))}
+                    {statusFilter.size > 0 && (
+                      <button
+                        type="button"
+                        className={styles.filterclear}
+                        onClick={() => {
+                          setStatusFilter(new Set());
+                          setSelected(new Set());
+                        }}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </>
               )}
-              <Icon name="chevron-down" size={12} className={styles.filtercaret} />
-            </button>
-            {openFilter === 'channel' && (
-              <>
-                <button
-                  type="button"
-                  className={styles.filterscrim}
-                  aria-label="Close"
-                  onClick={() => setOpenFilter(null)}
-                />
-                <div className={styles.filterpop} style={{ animation: 'pop .14s ease' }}>
-                  {CHANNEL_ORDER.map((ch) => (
-                    <label key={ch} className={styles.filteropt}>
-                      <input
-                        type="checkbox"
-                        checked={channelFilter.has(ch)}
-                        onChange={() => toggleChannel(ch)}
-                      />
-                      <ChannelPill channel={ch} />
-                    </label>
-                  ))}
-                  {channelFilter.size > 0 && (
-                    <button
-                      type="button"
-                      className={styles.filterclear}
-                      onClick={() => {
-                        setChannelFilter(new Set());
-                        setSelected(new Set());
-                      }}
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-              </>
+            </div>
+            {/* Rate filters exist only where the channel reports the rate.
+                Offering "Opens" on SMS would filter every row to nothing. */}
+            {tabCfg.rateCards.some((r) => r === 'open' || r === 'seen') && (
+              <ColFilter
+                label={tabCfg.openLabel === 'Seen' ? 'Seen' : 'Opens'}
+                icon="eye"
+                options={RATE_BUCKETS}
+                selected={opensSel}
+                onToggle={toggleSet(setOpensSel)}
+                onClear={() => {
+                  setOpensSel(new Set());
+                  resetPage();
+                }}
+                open={openFilter === 'opens'}
+                onOpenToggle={() => setOpenFilter((o) => (o === 'opens' ? null : 'opens'))}
+              />
+            )}
+            {tabCfg.rateCards.includes('click') && (
+              <ColFilter
+                label="Clicks"
+                icon="target"
+                options={RATE_BUCKETS}
+                selected={clicksSel}
+                onToggle={toggleSet(setClicksSel)}
+                onClear={() => {
+                  setClicksSel(new Set());
+                  resetPage();
+                }}
+                open={openFilter === 'clicks'}
+                onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
+              />
             )}
           </div>
-          <ColFilter
-            label="Opens"
-            options={RATE_BUCKETS}
-            selected={opensSel}
-            onToggle={toggleSet(setOpensSel)}
-            onClear={() => {
+          <FilterChipsRow
+            chips={[
+              ...[...statusFilter].map((st) => ({
+                key: `status:${st}`,
+                label: STATUS_LABEL[st],
+                onRemove: () => toggleStatus(st),
+                // Same fill as the menu badge that selected it.
+                className: `cstat cstat--${st}`,
+              })),
+              ...[...opensSel].map((b) => ({
+                key: `opens:${b}`,
+                label: `${tabCfg.openLabel === 'Seen' ? 'Seen' : 'Opens'}: ${b}`,
+                onRemove: () => toggleSet(setOpensSel)(b),
+              })),
+              ...[...clicksSel].map((b) => ({
+                key: `clicks:${b}`,
+                label: `Clicks: ${b}`,
+                onRemove: () => toggleSet(setClicksSel)(b),
+              })),
+            ]}
+            onClearAll={() => {
+              setStatusFilter(new Set());
               setOpensSel(new Set());
-              resetPage();
-            }}
-            open={openFilter === 'opens'}
-            onOpenToggle={() => setOpenFilter((o) => (o === 'opens' ? null : 'opens'))}
-          />
-          <ColFilter
-            label="Clicks"
-            options={RATE_BUCKETS}
-            selected={clicksSel}
-            onToggle={toggleSet(setClicksSel)}
-            onClear={() => {
               setClicksSel(new Set());
+              setSelected(new Set());
               resetPage();
             }}
-            open={openFilter === 'clicks'}
-            onOpenToggle={() => setOpenFilter((o) => (o === 'clicks' ? null : 'clicks'))}
           />
         </div>
 
@@ -590,7 +1011,7 @@ export default function CampaignsBoard({
             <button
               type="button"
               className={`${styles.bulkbtn} ${styles.bulkbtnDanger}`}
-              onClick={() => setConfirmDelete(true)}
+              onClick={() => setConfirmDelete([...selected])}
             >
               Delete
             </button>
@@ -605,7 +1026,7 @@ export default function CampaignsBoard({
         )}
 
         {/* table head */}
-        <div className={`athead ${styles.grid}`}>
+        <div className={`athead ${gridClass}`}>
           <div className={styles.check}>
             <button
               type="button"
@@ -618,37 +1039,75 @@ export default function CampaignsBoard({
             </button>
           </div>
           <div>
-            <button type="button" onClick={() => toggleSort('name')}>
+            <button
+              type="button"
+              className={sort.key === 'name' ? 'is-active' : undefined}
+              onClick={() => toggleSort('name')}
+            >
               Campaign <span className="tnum">{sortArrow('name')}</span>
             </button>
           </div>
           <div>Status</div>
           <div>Channel</div>
-          <div>Audience</div>
-          <div>
-            <button type="button" onClick={() => toggleSort('recipients')}>
+          <div className={styles.colCenter}>
+            <button
+              type="button"
+              className={sort.key === 'recipients' ? 'is-active' : undefined}
+              onClick={() => toggleSort('recipients')}
+            >
               Recipients <span className="tnum">{sortArrow('recipients')}</span>
             </button>
           </div>
-          <div>
-            <button type="button" onClick={() => toggleSort('openRate')}>
-              Open <span className="tnum">{sortArrow('openRate')}</span>
+          <div className={styles.colCenter}>
+            <button
+              type="button"
+              className={sort.key === 'failed' ? 'is-active' : undefined}
+              onClick={() => toggleSort('failed')}
+            >
+              {failLabel} <span className="tnum">{sortArrow('failed')}</span>
             </button>
           </div>
-          <div>
-            <button type="button" onClick={() => toggleSort('updatedAt')}>
+          {showOpenCol && (
+            <div className={styles.colCenter}>
+              <button
+                type="button"
+                className={sort.key === 'openRate' ? 'is-active' : undefined}
+                onClick={() => toggleSort('openRate')}
+              >
+                {tabCfg.openLabel === 'Seen' ? 'Seen' : 'Open'}{' '}
+                <span className="tnum">{sortArrow('openRate')}</span>
+              </button>
+            </div>
+          )}
+          {showClickCol && (
+            <div className={styles.colCenter}>
+              <button
+                type="button"
+                className={sort.key === 'clickRate' ? 'is-active' : undefined}
+                onClick={() => toggleSort('clickRate')}
+              >
+                Click <span className="tnum">{sortArrow('clickRate')}</span>
+              </button>
+            </div>
+          )}
+          <div className={styles.colCenter}>
+            <button
+              type="button"
+              className={sort.key === 'updatedAt' ? 'is-active' : undefined}
+              onClick={() => toggleSort('updatedAt')}
+            >
               Updated <span className="tnum">{sortArrow('updatedAt')}</span>
             </button>
           </div>
         </div>
 
-        {rows.length === 0 ? (
+        {pageRows.length === 0 ? (
           <div className="atable__empty">No campaigns match your filters.</div>
         ) : (
           pageRows.map((c) => (
             <div
               key={c.id}
-              className={`atrow ${styles.grid}${selected.has(c.id) ? ' is-selected' : ''}`}
+              className={`atrow ${gridClass}${selected.has(c.id) ? ' is-selected' : ''}`}
               onClick={() => setOpenId(c.id)}
               role="button"
               tabIndex={0}
@@ -675,51 +1134,47 @@ export default function CampaignsBoard({
               <div className={styles.name}>{c.name}</div>
               <div>
                 {c.status === 'sending' ? (
-                  <div
-                    className={styles.sendProgress}
-                    title={`${campaignSendProgress(c)}% complete`}
-                  >
-                    <span className={`astatus astatus--sending`}>{STATUS_LABEL.sending}</span>
-                    <div
-                      className={styles.sendProgressTrack}
-                      role="progressbar"
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-valuenow={campaignSendProgress(c)}
-                      aria-label={`Send progress ${campaignSendProgress(c)} percent`}
-                    >
-                      <div
-                        className={styles.sendProgressFill}
-                        style={{ width: `${campaignSendProgress(c)}%` }}
-                      />
-                    </div>
-                    <span className={`tnum ${styles.sendProgressPct}`}>
-                      {campaignSendProgress(c)}%
-                    </span>
-                  </div>
+                  <DispatchProgress progress={campaignSendProgress(c)} status="sending" />
+                ) : progressHoldIds.has(c.id) ? (
+                  <DispatchProgress progress={100} status="sent" />
                 ) : (
-                  <span className={`astatus astatus--${c.status}`}>{STATUS_LABEL[c.status]}</span>
+                  <StatusBadge status={c.status} />
                 )}
               </div>
               <div>
                 <ChannelPill channel={c.channel} />
               </div>
-              <div className={styles.muted}>{c.audience}</div>
-              <div className={`tnum ${styles.muted3}`}>{c.recipients.toLocaleString('en-US')}</div>
-              <div className={`tnum ${styles.muted3}`}>
-                {c.openRate != null ? `${Math.round(c.openRate * 100)}%` : '—'}
+              <div className={`tnum ${styles.muted3} ${styles.colCenter}`}>
+                {c.recipients.toLocaleString('en-US')}
               </div>
-              <div className={styles.muted}>{ago(c.updatedAt)}</div>
+              <div
+                className={`tnum ${styles.colCenter} ${c.failed > 0 ? styles.fail : styles.muted3}`}
+              >
+                {c.failed.toLocaleString('en-US')}
+              </div>
+              {/* Every row in the table is the selected channel, so the column
+                  itself is present or absent — no per-row dashes needed. */}
+              {showOpenCol && (
+                <div className={`tnum ${styles.muted3} ${styles.colCenter}`}>
+                  {c.openRate != null ? `${Math.round(c.openRate * 100)}%` : '—'}
+                </div>
+              )}
+              {showClickCol && (
+                <div className={`tnum ${styles.muted3} ${styles.colCenter}`}>
+                  {c.clickRate != null ? `${Math.round(c.clickRate * 100)}%` : '—'}
+                </div>
+              )}
+              <TimeAgo className={`${styles.muted} ${styles.colCenter}`} at={c.updatedAt} />
             </div>
           ))
         )}
 
         {/* footer / pagination */}
         <div className={`atable__foot ${styles.foot}`}>
-          <span className="tnum">
-            {rows.length === 0
+          <span className={totalRows === 0 ? undefined : 'tnum'}>
+            {totalRows === 0
               ? 'No campaigns match your filters'
-              : `${startIdx}–${endIdx} of ${rows.length} campaign${rows.length === 1 ? '' : 's'}`}
+              : `${startIdx}–${endIdx} of ${totalRows.toLocaleString('en-US')} campaign${totalRows === 1 ? '' : 's'}${loadingPage ? ' · loading…' : ''}`}
           </span>
           {pageCount > 1 && (
             <div className={styles.pager}>
@@ -735,7 +1190,7 @@ export default function CampaignsBoard({
               >
                 <Icon name="chevron-right" size={15} className={styles.pgflip} />
               </button>
-              {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
+              {pagerPages.map((n) => (
                 <button
                   key={n}
                   type="button"
@@ -784,10 +1239,10 @@ export default function CampaignsBoard({
             void duplicateCampaigns([c.id]);
           }}
           onViewReport={() => {
-            const c = open;
-            setOpenId(null);
-            setReportId(c.id);
+            // The report lives on its own page — all report logic is there.
+            window.location.assign(routes.app.campaignReport(open.id));
           }}
+          onDelete={() => setConfirmDelete([open.id])}
         />
       )}
 
@@ -797,6 +1252,8 @@ export default function CampaignsBoard({
           initialChannel={wizard.mode === 'edit' ? wizard.channel : 'email'}
           initialName={wizard.mode === 'edit' ? wizard.name : ''}
           initialSubject={wizard.mode === 'edit' ? wizard.subject : ''}
+          initialTrackOpens={wizard.mode === 'edit' ? wizard.trackOpens : undefined}
+          initialTrackClicks={wizard.mode === 'edit' ? wizard.trackClicks : undefined}
           initialAudienceIds={wizard.mode === 'edit' ? wizard.audienceIds : []}
           initialTemplateId={wizard.mode === 'edit' ? wizard.templateId : null}
           initialMessage={wizard.mode === 'edit' ? wizard.message : ''}
@@ -817,13 +1274,14 @@ export default function CampaignsBoard({
 
       {confirmDelete && (
         <ConfirmDialog
-          title={`Delete ${selected.size} campaign${selected.size === 1 ? '' : 's'}?`}
+          title={`Delete ${confirmDelete.length} campaign${confirmDelete.length === 1 ? '' : 's'}?`}
           message="This can’t be undone."
           confirmLabel="Delete"
-          onCancel={() => setConfirmDelete(false)}
+          onCancel={() => setConfirmDelete(null)}
           onConfirm={() => {
-            setConfirmDelete(false);
-            void removeSelected();
+            const ids = confirmDelete;
+            setConfirmDelete(null);
+            void removeCampaigns(ids);
           }}
         />
       )}
@@ -852,6 +1310,7 @@ export default function CampaignsBoard({
  */
 function CampaignPreview({ campaign, live }: { campaign: Campaign; live: boolean }) {
   const [body, setBody] = useState<{ html: string; text: string } | null>(null);
+  const [components, setComponents] = useState<Record<string, unknown> | null>(null);
   const [state, setState] = useState<'loading' | 'body' | 'template' | 'empty' | 'error'>(
     live ? 'loading' : 'empty',
   );
@@ -867,6 +1326,18 @@ function CampaignPreview({ campaign, live }: { campaign: Campaign; live: boolean
         const html = typeof content.html === 'string' ? content.html : '';
         const text = typeof content.text === 'string' ? content.text : '';
         if (html.trim() || text.trim()) {
+          // WhatsApp campaigns save only the body text; header/footer/buttons
+          // live on the template, so fetch its structure for the full bubble.
+          if (campaign.channel === 'whatsapp' && full.templateId) {
+            try {
+              const tpl = await api.get<ApiTemplate>(`templates/${full.templateId}`);
+              if (!alive) return;
+              setComponents(tpl.components ?? null);
+            } catch {
+              // Body-only bubble is still a valid preview.
+            }
+          }
+          if (!alive) return;
           setBody({ html, text });
           setState('body');
         } else if (full.templateId) {
@@ -881,7 +1352,7 @@ function CampaignPreview({ campaign, live }: { campaign: Campaign; live: boolean
     return () => {
       alive = false;
     };
-  }, [campaign.id, live]);
+  }, [campaign.id, campaign.channel, live]);
 
   if (!live) return <div className="aempty">No preview in local mode</div>;
   if (state === 'loading') return <div className="aempty">Loading preview…</div>;
@@ -890,7 +1361,14 @@ function CampaignPreview({ campaign, live }: { campaign: Campaign; live: boolean
   if (state === 'template' && campaign.templateId) {
     return <TemplatePreview id={campaign.templateId} channel={campaign.channel} live={live} />;
   }
-  return <MessagePreview html={body?.html} text={body?.text} channel={campaign.channel} />;
+  return (
+    <MessagePreview
+      html={body?.html}
+      text={body?.text}
+      channel={campaign.channel}
+      components={components}
+    />
+  );
 }
 
 function CampaignDrawer({
@@ -901,6 +1379,7 @@ function CampaignDrawer({
   onEdit,
   onDuplicate,
   onViewReport,
+  onDelete,
 }: {
   campaign: Campaign;
   listColor?: string;
@@ -909,32 +1388,74 @@ function CampaignDrawer({
   onEdit: () => void;
   onDuplicate: () => void;
   onViewReport: () => void;
+  onDelete: () => void;
 }) {
-  const isSent = campaign.status === 'sent';
+  // Sent and in-flight sends expose a report (partial while sending); drafts etc. stay editable.
+  const showReport = campaign.status === 'sent' || campaign.status === 'sending';
+  const reportCfg = channelReportConfig(campaign.channel);
   const deliveredPct = campaign.recipients ? (campaign.delivered / campaign.recipients) * 100 : 0;
   const cto =
     campaign.openRate && campaign.clickRate ? (campaign.clickRate / campaign.openRate) * 100 : null;
 
-  const kpis = [
-    {
-      label: 'Recipients',
-      value: campaign.recipients.toLocaleString('en-US'),
-      color: 'var(--text)',
-    },
-    { label: 'Delivered', value: `${deliveredPct.toFixed(1)}%`, color: 'var(--text)' },
-    { label: 'Open rate', value: pct(campaign.openRate), color: 'var(--success-strong)' },
-    { label: 'Click rate', value: pct(campaign.clickRate), color: 'var(--accent)' },
-    {
-      label: 'Click-to-open',
-      value: cto == null ? '—' : `${cto.toFixed(1)}%`,
-      color: 'var(--warning-strong)',
-    },
-    {
-      label: 'Unsubscribed',
-      value: campaign.unsubscribed.toLocaleString('en-US'),
-      color: 'var(--danger)',
-    },
-  ];
+
+  const drawerKpi = (key: DrawerKpiKey): { label: string; value: string; color: string } => {
+    switch (key) {
+      case 'recipients':
+        return {
+          label: 'Recipients',
+          value: campaign.recipients.toLocaleString('en-US'),
+          color: 'var(--text)',
+        };
+      case 'delivered':
+        return {
+          label: 'Delivered',
+          value: `${deliveredPct.toFixed(1)}%`,
+          color: 'var(--text)',
+        };
+      case 'open':
+        return {
+          label: 'Open rate',
+          value: pct(campaign.openRate),
+          color: 'var(--success-strong)',
+        };
+      case 'seen':
+        return {
+          label: 'Seen rate',
+          value: pct(campaign.openRate),
+          color: 'var(--success-strong)',
+        };
+      case 'click':
+        return {
+          label: 'Click rate',
+          value: pct(campaign.clickRate),
+          color: 'var(--accent-text)',
+        };
+      case 'cto':
+        return {
+          label: campaign.channel === 'whatsapp' ? 'Click-to-seen' : 'Click-to-open',
+          value: cto == null ? '—' : `${cto.toFixed(1)}%`,
+          color: 'var(--warning-strong)',
+        };
+      case 'unsubscribed':
+        return {
+          label: 'Unsubscribed',
+          value: campaign.unsubscribed.toLocaleString('en-US'),
+          color: 'var(--danger)',
+        };
+      case 'failed':
+        return {
+          label: campaign.channel === 'email' ? 'Bounced' : 'Failed',
+          value: campaign.failed.toLocaleString('en-US'),
+          color: 'var(--danger)',
+        };
+    }
+  };
+  const kpis = reportCfg.drawerKpis.map(drawerKpi);
+  // Six KPIs read best as two rows of three. SMS has four delivery-only
+  // tiles — a 2×2 grid keeps them readable; a single row of four squeezes
+  // the labels. Voice's three stay on one row.
+  const kpiCols =
+    campaign.channel === 'sms' ? 2 : kpis.length % 3 === 0 ? 3 : Math.min(kpis.length, 4);
 
   // Focus management: focus into the panel on open, trap Tab, Esc closes, restore focus.
   const panelRef = useRef<HTMLDivElement>(null);
@@ -999,17 +1520,18 @@ function CampaignDrawer({
 
           <div className={styles.drawerTitleRow}>
             <h3 className={styles.drawerName}>{campaign.name}</h3>
-            <span className={`astatus astatus--${campaign.status}`}>
-              {STATUS_LABEL[campaign.status]}
-            </span>
+            <StatusBadge status={campaign.status} />
           </div>
 
-          {isSent ? (
-            <div className={styles.drawerKpis}>
+          {showReport ? (
+            <div
+              className={`adrawer__kpis ${styles.drawerKpis}`}
+              style={{ gridTemplateColumns: `repeat(${kpiCols}, minmax(0, 1fr))` }}
+            >
               {kpis.map((k) => (
-                <div key={k.label} className={styles.drawerKpi}>
-                  <div className={styles.drawerKpiLbl}>{k.label}</div>
-                  <div className={`tnum ${styles.drawerKpiVal}`} style={{ color: k.color }}>
+                <div key={k.label} className="adrawer__kpi">
+                  <div className="adrawer__kpi-k">{k.label}</div>
+                  <div className="tnum adrawer__kpi-v" style={{ color: k.color }}>
                     {k.value}
                   </div>
                 </div>
@@ -1068,191 +1590,23 @@ function CampaignDrawer({
           <button
             type="button"
             className="sbtn"
-            style={{ flex: 1 }}
-            onClick={onDuplicate}
+            style={{ flex: 'none', color: 'var(--danger)' }}
+            aria-label={`Delete ${campaign.name}`}
+            onClick={onDelete}
           >
+            <Icon name="trash" size={15} />
+          </button>
+          <button type="button" className="sbtn" style={{ flex: 1 }} onClick={onDuplicate}>
             Duplicate
           </button>
           <button
             type="button"
             className="pbtn"
             style={{ flex: 1 }}
-            onClick={() => (isSent ? onViewReport() : onEdit())}
+            onClick={() => (showReport ? onViewReport() : onEdit())}
           >
-            {isSent ? 'View report' : 'Edit'}
+            {showReport ? 'View report' : 'Edit'}
           </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Campaign report — the "View report" destination, rendered as a full screen
- * (see App.dc.html § campaignDetail): breadcrumb, header with actions, KPI
- * cards, then an engagement-funnel card beside a campaign-details card. Built
- * from the campaign's real metrics; open/click stages the backend doesn't track
- * yet read "Not tracked yet" rather than faking numbers.
- */
-function CampaignReport({
-  campaign,
-  listColor,
-  onBack,
-  onEdit,
-  onDuplicate,
-}: {
-  campaign: Campaign;
-  listColor?: string;
-  onBack: () => void;
-  onEdit: () => void;
-  onDuplicate: () => void;
-}) {
-  const base = campaign.recipients || 1;
-  const deliveredPct = (campaign.delivered / base) * 100;
-  const cto =
-    campaign.openRate && campaign.clickRate ? (campaign.clickRate / campaign.openRate) * 100 : null;
-  // openRate/clickRate are fractions (0–1) — pct() multiplies by 100.
-  const opened =
-    campaign.openRate != null ? Math.round(campaign.openRate * campaign.delivered) : null;
-  const clicked =
-    campaign.clickRate != null ? Math.round(campaign.clickRate * campaign.delivered) : null;
-  const sentAt = campaign.scheduledAt ?? campaign.updatedAt;
-  const sentLabel = sentAt
-    ? new Date(sentAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
-    : '—';
-
-  const kpis = [
-    { label: 'Recipients', value: campaign.recipients.toLocaleString('en-US') },
-    { label: 'Delivered', value: `${deliveredPct.toFixed(1)}%` },
-    { label: 'Open rate', value: pct(campaign.openRate) },
-    { label: 'Click rate', value: pct(campaign.clickRate) },
-  ];
-
-  const funnel: { label: string; count: number | null; barPct: number | null; color: string }[] = [
-    { label: 'Recipients', count: campaign.recipients, barPct: 100, color: 'var(--text3)' },
-    { label: 'Delivered', count: campaign.delivered, barPct: deliveredPct, color: 'var(--accent)' },
-    {
-      label: 'Opened',
-      count: opened,
-      barPct: opened != null ? (opened / base) * 100 : null,
-      color: 'var(--success-strong)',
-    },
-    {
-      label: 'Clicked',
-      count: clicked,
-      barPct: clicked != null ? (clicked / base) * 100 : null,
-      color: 'var(--warning-strong)',
-    },
-  ];
-
-  const audienceDetail: [string, ReactNode] = campaign.listId
-    ? ['List', <ListPill name={campaign.audience} color={listColor} />]
-    : campaign.segmentId
-      ? ['Segment', campaign.audience]
-      : ['Audience', campaign.audience];
-  const details: [string, ReactNode][] = [
-    ['Channel', <ChannelPill channel={campaign.channel} />],
-    audienceDetail,
-    ['Recipients', campaign.recipients.toLocaleString('en-US')],
-    ['Unsubscribed', campaign.unsubscribed.toLocaleString('en-US')],
-    ['Click-to-open', cto == null ? '—' : `${cto.toFixed(1)}%`],
-    ['Sent', sentLabel],
-  ];
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onBack();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onBack]);
-
-  return (
-    <div className="screen" style={{ animation: 'fade .3s ease' }}>
-      <button type="button" className={styles.reportBack} onClick={onBack}>
-        <svg
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M19 12H5M12 19l-7-7 7-7" />
-        </svg>
-        Campaigns
-      </button>
-
-      <div className={styles.reportHead}>
-        <div className={styles.reportHeadMain}>
-          <div className={styles.reportTitleRow}>
-            <h1 className={styles.reportName}>{campaign.name}</h1>
-            <span className={`astatus astatus--${campaign.status}`}>
-              {STATUS_LABEL[campaign.status]}
-            </span>
-          </div>
-          <p className={styles.reportSub}>
-            To {campaign.audience}
-            {sentAt ? ` · Sent ${sentLabel}` : ''}
-          </p>
-        </div>
-        <div className={styles.reportHeadActions}>
-          <button type="button" className="sbtn" onClick={onDuplicate}>
-            <Icon name="copy" size={14} /> Duplicate
-          </button>
-          <button type="button" className="pbtn" onClick={onEdit}>
-            <Icon name="edit" size={14} /> Edit campaign
-          </button>
-        </div>
-      </div>
-
-      <div className={styles.reportKpis}>
-        {kpis.map((k) => (
-          <div key={k.label} className={styles.reportKpi}>
-            <div className={styles.reportKpiLbl}>{k.label}</div>
-            <div className={`tnum ${styles.reportKpiVal}`}>{k.value}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className={styles.reportRow}>
-        <div className={styles.reportCard}>
-          <div className={styles.reportCardTitle}>Engagement funnel</div>
-          {funnel.map((f) => (
-            <div key={f.label} className={styles.funnelRow}>
-              <div className={styles.funnelTop}>
-                <span className={styles.funnelLbl}>{f.label}</span>
-                <span className={`tnum ${styles.funnelVal}`}>
-                  {f.count == null
-                    ? 'Not tracked yet'
-                    : `${f.count.toLocaleString('en-US')}${
-                        f.barPct != null ? ` · ${f.barPct.toFixed(1)}%` : ''
-                      }`}
-                </span>
-              </div>
-              <div className={styles.funnelTrack}>
-                {f.barPct != null && (
-                  <div
-                    className={styles.funnelBar}
-                    style={{ width: `${Math.max(f.barPct, 1.5)}%`, background: f.color }}
-                  />
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className={styles.reportCard}>
-          <div className={styles.reportCardTitle}>Campaign details</div>
-          {details.map(([k, v]) => (
-            <div key={k} className={styles.reportDetail}>
-              <span className={styles.reportDetailK}>{k}</span>
-              <span className={styles.reportDetailV}>{v}</span>
-            </div>
-          ))}
         </div>
       </div>
     </div>

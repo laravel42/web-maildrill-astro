@@ -3,7 +3,7 @@ import { RefObject } from 'react';
 export const setStickyMenu = (
   element: RefObject<HTMLDivElement>,
   reference: RefObject<HTMLDivElement>,
-  height?: number
+  height?: number,
 ) => {
   if (element.current && reference.current) {
     const anchorRect = reference.current.getBoundingClientRect();

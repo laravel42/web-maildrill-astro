@@ -11,7 +11,16 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import SearchOutlined from '@mui/icons-material/SearchOutlined';
-import { Autocomplete, Box, Button, InputAdornment, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import {
+  Autocomplete,
+  Box,
+  Button,
+  InputAdornment,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 
 import { INPUT_TEXTFIELD_SX } from '../InspectorDrawer/ConfigurationPanel/input-panels/helpers/inputs/components/inputStyles';
 import CustomSelect from '../InspectorDrawer/ConfigurationPanel/input-panels/helpers/inputs/components/Select';
@@ -81,7 +90,10 @@ export default function LibrarySearchToolbar({
               onChange={(e) =>
                 onChange({
                   ...query,
-                  axes: typeof e.target.value === 'string' ? [e.target.value] : (e.target.value as string[]),
+                  axes:
+                    typeof e.target.value === 'string'
+                      ? [e.target.value]
+                      : (e.target.value as string[]),
                 })
               }
               renderValue={(selected) => (selected as string[]).join(', ')}

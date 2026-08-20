@@ -1,4 +1,4 @@
-import type { Channel, ErrorCategory, ProviderOutcome } from "@maildrill/domain";
+import type { Channel, ErrorCategory, ProviderOutcome } from '@maildrill/domain';
 
 export interface SendInput {
   messageId: string;
@@ -7,6 +7,20 @@ export interface SendInput {
   to: string;
   content: Record<string, unknown>;
   correlationId: string;
+  /**
+   * CPaaS X entity this workspace's traffic is tagged with. Resolved by the
+   * caller (providers has no database access) and falls back to the
+   * account-wide INFOBIP_ENTITY_ID when absent.
+   */
+  entityId?: string;
+  /**
+   * Infobip `campaignReferenceId` — the tag that makes provider-side billing
+   * attributable to one campaign. Without it Infobip's Billing Usage API can
+   * only answer account-wide totals, so the campaign cost we report would be
+   * an estimate forever. Set to the Maildrill campaign id; omitted for
+   * one-off/transactional sends, which belong to no campaign.
+   */
+  campaignReferenceId?: string;
 }
 
 export interface ProviderSendError {
@@ -18,7 +32,7 @@ export interface ProviderSendError {
 
 export interface ProviderSendResult {
   accepted: boolean;
-  status: "submitted" | "rejected";
+  status: 'submitted' | 'rejected';
   providerMessageId?: string;
   providerRequestId?: string;
   error?: ProviderSendError;
@@ -37,7 +51,7 @@ export interface NormalizedProviderEvent {
   raw: Record<string, unknown>;
 }
 
-export type WebhookKind = "delivery" | "engagement" | "voice" | "template";
+export type WebhookKind = 'delivery' | 'engagement' | 'voice' | 'template';
 
 export interface ProviderWebhookInput {
   headers: Record<string, string | string[] | undefined>;
@@ -51,25 +65,40 @@ export interface ProviderWebhookInput {
 // ---------------------------------------------------------------------------
 
 export type TemplateApprovalStatus =
-  | "draft"
-  | "pending"
-  | "approved"
-  | "rejected"
-  | "paused"
-  | "disabled";
+  'draft' | 'pending' | 'approved' | 'rejected' | 'paused' | 'disabled';
 
 export interface WhatsAppTemplateButton {
-  type: "QUICK_REPLY" | "PHONE_NUMBER" | "URL";
+  type: 'QUICK_REPLY' | 'PHONE_NUMBER' | 'URL';
   text: string;
   url?: string;
   phoneNumber?: string;
 }
 
 export interface WhatsAppTemplateStructure {
-  header?: { format: "TEXT" | "IMAGE" | "VIDEO" | "DOCUMENT"; text?: string };
+  header?: { format: 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT'; text?: string };
   body: { text: string; examples?: string[] };
   footer?: { text: string };
   buttons?: WhatsAppTemplateButton[];
+}
+
+export interface EntityProvisionResult {
+  ok: boolean;
+  /** The entity already existed (409) — treated as success, it is idempotent. */
+  existed?: boolean;
+  /** The API key lacks the provisioning scope (403). Non-fatal: traffic tagged
+   *  with an unknown entityId auto-creates it on the first send. */
+  forbidden?: boolean;
+  error?: string;
+}
+
+/** One address's verdict from a provider-side validation service. */
+export interface AddressValidation {
+  /** False only when the provider positively says the mailbox is bad. */
+  valid: boolean;
+  /** Provider's own explanation, e.g. `known_hardbounce`, `invalid_syntax`. */
+  reason?: string;
+  /** True when the provider could not decide — treated as "not proven bad". */
+  unknown?: boolean;
 }
 
 export interface RegisterTemplateInput {
@@ -77,8 +106,12 @@ export interface RegisterTemplateInput {
   sender: string;
   name: string;
   language: string;
-  category: "MARKETING" | "UTILITY" | "AUTHENTICATION";
+  category: 'MARKETING' | 'UTILITY' | 'AUTHENTICATION';
   structure: WhatsAppTemplateStructure;
+  /** Infobip `structure.type` — TEXT for body-only, MEDIA when header/footer/buttons exist. */
+  structureType?: 'TEXT' | 'MEDIA';
+  /** CPaaS X entity to attribute the template to. */
+  entityId?: string;
 }
 
 export interface RegisterTemplateResult {
@@ -124,19 +157,40 @@ export interface MessagingProvider {
   /**
    * Pull latest Infobip status groupName for an outbound message (Messages API
    * reports). Used by campaign-delivery when PostHog has no DLR yet.
+   *
+   * `entityId` scopes the lookup to one workspace. It matches only traffic that
+   * carried the entity when it was SENT, so passing it for a message sent
+   * before the workspace had an entity yields nothing.
    */
   getDeliveryStatusGroup?(
     channel: Channel,
     providerMessageId: string,
+    entityId?: string,
   ): Promise<string | null>;
   /**
    * Drain a batch of recent delivery reports (each Infobip report is returned
    * only once). Prefer over per-id polls when catching up many open messages.
+   *
+   * Pass `entityId` to drain one workspace's reports: without it a single call
+   * consumes reports belonging to every workspace on the account, and whatever
+   * the caller cannot match is discarded. Same send-time caveat as above.
    */
   pullDeliveryReports?(
     channel?: Channel,
     limit?: number,
+    entityId?: string,
   ): Promise<Array<{ providerMessageId: string; statusGroup: string }>>;
+  /**
+   * Provision a CPaaS X entity for a workspace. Infobip only — providers that
+   * have no such concept leave it undefined and callers skip provisioning.
+   */
+  createEntity?(input: { entityId: string; entityName: string }): Promise<EntityProvisionResult>;
+  /**
+   * Provider-side mailbox validation (Infobip `/email/2/validation`). Paid per
+   * address, so callers must bound how many they send. Undefined on providers
+   * without the capability, and callers skip validation entirely.
+   */
+  validateEmailAddresses?(addresses: string[]): Promise<Map<string, AddressValidation>>;
   /** Register a WhatsApp template with the provider for Meta review. */
   registerWhatsAppTemplate?(input: RegisterTemplateInput): Promise<RegisterTemplateResult>;
   /** List a sender's WhatsApp templates and their current approval statuses. */
@@ -146,11 +200,9 @@ export interface MessagingProvider {
 }
 
 export function asRecord(value: unknown): Record<string, unknown> {
-  return typeof value === "object" && value !== null
-    ? (value as Record<string, unknown>)
-    : {};
+  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
 }
 
 export function str(value: unknown): string | undefined {
-  return typeof value === "string" ? value : undefined;
+  return typeof value === 'string' ? value : undefined;
 }

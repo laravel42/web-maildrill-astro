@@ -1,0 +1,124 @@
+---
+export const prerender = false;
+import AppLayout from '@/layouts/AppLayout.astro';
+import AppSubscribers from '@/components/react/AppSubscribers';
+import { productClient } from '@/lib/server/service';
+import { toRichSubscribers, type ApiSubscriber } from '@/lib/app/subscriber-map';
+import {
+  toSavedSegment,
+  type ApiSegment,
+  type RichSubscriber,
+  type SavedSegment,
+} from '@/lib/app/subscribers-data';
+
+// Load real subscribers for the signed-in workspace from workers and
+// hand them to the island. Falls back to local fixtures if the service is
+// unreachable or the workspace has none yet.
+const session = Astro.locals.session;
+// undefined = not connected (island uses fixtures); an array = live data (even if empty).
+let initial: RichSubscriber[] | undefined = undefined;
+let initialTotal = 0;
+/** Per-channel roster sizes + byStatus, unfiltered, for the first paint. */
+type SubscriberCounts = {
+  email?: number;
+  sms?: number;
+  whatsapp?: number;
+  voice?: number;
+  byStatus?: Record<string, number>;
+};
+let initialCounts: SubscriberCounts | null = null;
+/** Server page size — must match the island's, which pages from the API. */
+const PAGE_SIZE = 10;
+// Segments, lists and tags are workspace resources the segment builder and the
+// list-membership editor both need.
+let initialSegments: SavedSegment[] = [];
+let allLists: {
+  id: string;
+  name: string;
+  color?: string | null;
+  channels?: string[] | null;
+}[] = [];
+let allTagRows: { id: string; name: string }[] = [];
+let banner: { ok: boolean; text: string } | null = null;
+
+const unwrap = <T,>(d: unknown): T[] => (d as { data?: T[] } | undefined)?.data ?? [];
+
+if (session?.user?.id && session.activeTenantId) {
+  try {
+    const client = productClient({
+      userId: session.user.id,
+      activeTenantId: session.activeTenantId,
+      role: session.role,
+    });
+    // Lists are deliberately absent: /v1/lists aggregates every membership row
+    // (3.4s / 710KB at a million subscribers) and this page needs it only when
+    // the Lists filter or the segment builder is opened. The island fetches it
+    // on demand.
+    const [subsRes, countsRes, segsRes, tagsRes] = await Promise.all([
+      // First page only. The island pages from the API — a workspace can hold
+      // millions of subscribers, and none of it belongs in the browser.
+      client.GET('/v1/subscribers', {
+        params: { query: { limit: PAGE_SIZE, sort: 'created', dir: 'desc' } },
+      }),
+      // The unfiltered roster, per channel, from one scan — this replaces the
+      // page query's ?withTotal=1, which cost the same scan and answered only
+      // one of the three questions the first paint has to answer (the footer's
+      // total, the four tab counts, and the Status menu).
+      client.GET('/v1/subscribers/counts', { params: { query: { channel: 'email' } } }),
+      client.GET('/v1/segments'),
+      client.GET('/v1/tags'),
+    ]);
+    if (subsRes.error) {
+      banner = { ok: false, text: 'workers returned an error.' };
+    } else {
+      // Cursor contract: { items, next_cursor, has_more }. `unwrap` reads
+      // `data` for the older endpoints, so items are taken directly.
+      const payload = subsRes.data as { items?: ApiSubscriber[] } | undefined;
+      initial = toRichSubscribers(payload?.items ?? []);
+      initialCounts = (countsRes.data as SubscriberCounts | undefined) ?? null;
+      // The island opens on the email tab, so that is the total the footer
+      // needs before the first client fetch lands.
+      initialTotal = initialCounts?.email ?? initial.length;
+      initialSegments = unwrap<ApiSegment>(segsRes.data).map(toSavedSegment);
+      allTagRows = unwrap<{ id: string; name: string }>(tagsRes.data).map((t) => ({
+        id: t.id,
+        name: t.name,
+      }));
+    }
+  } catch (err) {
+    banner = { ok: false, text: err instanceof Error ? err.message : 'Service unreachable.' };
+  }
+}
+---
+
+<AppLayout title="Subscribers">
+  {banner && <div class={`svc-banner ${banner.ok ? 'ok' : 'err'}`}>{banner.text}</div>}
+  <AppSubscribers
+    initialTotal={initialTotal}
+    initialCounts={initialCounts}
+    client:visible
+    initial={initial}
+    initialSegments={initialSegments}
+    allLists={allLists}
+    allTagRows={allTagRows}
+  />
+</AppLayout>
+
+<style>
+  .svc-banner {
+    margin: 0 0 14px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+  }
+  .svc-banner.ok {
+    border: 1px solid #16a34a;
+    background: #f0fdf4;
+    color: #166534;
+  }
+  .svc-banner.err {
+    border: 1px solid #dc2626;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+</style>

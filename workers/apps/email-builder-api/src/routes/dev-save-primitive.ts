@@ -26,7 +26,15 @@
  */
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { resolve } from 'node:path';
 import { z } from 'zod';
 
@@ -52,7 +60,14 @@ import {
   nowIso,
 } from './dev-library-shared.js';
 
-const PRIMITIVE_TYPE_VALUES = ['button', 'divider', 'image', 'notion-text', 'social-media', 'spacer'] as const;
+const PRIMITIVE_TYPE_VALUES = [
+  'button',
+  'divider',
+  'image',
+  'notion-text',
+  'social-media',
+  'spacer',
+] as const;
 
 type PrimitiveType = (typeof PRIMITIVE_TYPE_VALUES)[number];
 
@@ -92,10 +107,14 @@ const UpdatePrimitiveSchema = z
       .optional(),
   })
   .refine(
-    (v) => v.name !== undefined || v.description !== undefined || v.tags !== undefined || v.blocks !== undefined,
+    (v) =>
+      v.name !== undefined ||
+      v.description !== undefined ||
+      v.tags !== undefined ||
+      v.blocks !== undefined,
     {
       message: 'at least one of name, description, tags, blocks is required',
-    }
+    },
   );
 
 type BlockEntry = LibraryBlockEntry;
@@ -198,7 +217,9 @@ function listPrimitives(): PrimitiveListing[] {
   return out;
 }
 
-export const devSavePrimitivePlugin = async function devSavePrimitivePlugin(fastify: FastifyInstance) {
+export const devSavePrimitivePlugin = async function devSavePrimitivePlugin(
+  fastify: FastifyInstance,
+) {
   fastify.post('/dev/save-primitive', async (request: FastifyRequest, reply: FastifyReply) => {
     if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
 
@@ -242,9 +263,11 @@ export const devSavePrimitivePlugin = async function devSavePrimitivePlugin(fast
       ndjson = serialisePrimitive(metadata, entries);
     } catch (err) {
       if (err instanceof PayloadTooLargeError) {
-        return reply
-          .status(413)
-          .send({ error: 'payload_too_large', limitBytes: MAX_NDJSON_BYTES, actualBytes: err.bytes });
+        return reply.status(413).send({
+          error: 'payload_too_large',
+          limitBytes: MAX_NDJSON_BYTES,
+          actualBytes: err.bytes,
+        });
       }
       throw err;
     }
@@ -277,184 +300,195 @@ export const devSavePrimitivePlugin = async function devSavePrimitivePlugin(fast
     return reply.send({ primitives: listPrimitives() });
   });
 
-  fastify.get<{ Params: { type: string; id: string } }>('/dev/primitives/:type/:id', async (request, reply) => {
-    if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
-    const type = request.params.type;
-    const id = request.params.id;
+  fastify.get<{ Params: { type: string; id: string } }>(
+    '/dev/primitives/:type/:id',
+    async (request, reply) => {
+      if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
+      const type = request.params.type;
+      const id = request.params.id;
 
-    if (!PRIMITIVE_TYPE_VALUES.includes(type as PrimitiveType)) {
-      return reply.status(400).send({ error: 'invalid_type', type });
-    }
-    if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
-
-    const path = primitiveFilePath(type as PrimitiveType, id);
-    if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', type, id });
-
-    let raw: string;
-    try {
-      raw = readFileSync(path, 'utf8');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'unknown read error';
-      return reply.status(500).send({ error: 'read_failed', message });
-    }
-
-    let parsed: { metadata: PrimitiveMetadata; entries: BlockEntry[] };
-    try {
-      parsed = parsePrimitiveFile(raw);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'malformed file';
-      return reply.status(500).send({ error: 'malformed_file', message });
-    }
-
-    return reply.send({
-      id: parsed.metadata.id,
-      type: parsed.metadata.type,
-      name: parsed.metadata.name,
-      description: parsed.metadata.description,
-      tags: parsed.metadata.tags ?? [],
-      createdAt: parsed.metadata.createdAt,
-      updatedAt: parsed.metadata.updatedAt,
-      blocks: parsed.entries,
-    });
-  });
-
-  fastify.put<{ Params: { type: string; id: string } }>('/dev/primitives/:type/:id', async (request, reply) => {
-    if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
-    const type = request.params.type;
-    const id = request.params.id;
-
-    if (!PRIMITIVE_TYPE_VALUES.includes(type as PrimitiveType)) {
-      return reply.status(400).send({ error: 'invalid_type', type });
-    }
-    if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
-
-    let body: z.infer<typeof UpdatePrimitiveSchema>;
-    try {
-      body = UpdatePrimitiveSchema.parse(request.body);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        return reply.status(400).send({ error: 'invalid_request', issues: err.issues });
+      if (!PRIMITIVE_TYPE_VALUES.includes(type as PrimitiveType)) {
+        return reply.status(400).send({ error: 'invalid_type', type });
       }
-      return reply.status(400).send({ error: 'invalid_json' });
-    }
+      if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
 
-    const path = primitiveFilePath(type as PrimitiveType, id);
-    if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', type, id });
+      const path = primitiveFilePath(type as PrimitiveType, id);
+      if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', type, id });
 
-    let raw: string;
-    try {
-      raw = readFileSync(path, 'utf8');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'unknown read error';
-      return reply.status(500).send({ error: 'read_failed', message });
-    }
-
-    let parsed: { metadata: PrimitiveMetadata; entries: BlockEntry[] };
-    try {
-      parsed = parsePrimitiveFile(raw);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'malformed file';
-      return reply.status(500).send({ error: 'malformed_file', message });
-    }
-
-    if (body.blocks !== undefined) {
-      const newRoot = body.blocks[0]?.block as { type?: unknown } | undefined;
-      const newType = resolvePrimitiveType(newRoot?.type);
-      if (newType === null) {
-        return reply.status(400).send({
-          error: 'invalid_root_type',
-          rootType: typeof newRoot?.type === 'string' ? newRoot.type : null,
-          allowed: Object.keys(BLOCK_TYPE_TO_PRIMITIVE_TYPE),
-        });
+      let raw: string;
+      try {
+        raw = readFileSync(path, 'utf8');
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'unknown read error';
+        return reply.status(500).send({ error: 'read_failed', message });
       }
-      if (newType !== type) {
-        return reply.status(400).send({
-          error: 'type_change_not_allowed',
-          currentType: type,
-          newType,
-          hint: 'Delete the primitive and create a new one to change its type.',
-        });
+
+      let parsed: { metadata: PrimitiveMetadata; entries: BlockEntry[] };
+      try {
+        parsed = parsePrimitiveFile(raw);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'malformed file';
+        return reply.status(500).send({ error: 'malformed_file', message });
       }
-    }
 
-    const nextMetadata: PrimitiveMetadata = {
-      ...parsed.metadata,
-      updatedAt: nowIso(),
-    };
-    if (body.name !== undefined) nextMetadata.name = body.name.trim();
-    if (body.description !== undefined) {
-      if (body.description === '') {
-        delete nextMetadata.description;
-      } else {
-        nextMetadata.description = body.description;
+      return reply.send({
+        id: parsed.metadata.id,
+        type: parsed.metadata.type,
+        name: parsed.metadata.name,
+        description: parsed.metadata.description,
+        tags: parsed.metadata.tags ?? [],
+        createdAt: parsed.metadata.createdAt,
+        updatedAt: parsed.metadata.updatedAt,
+        blocks: parsed.entries,
+      });
+    },
+  );
+
+  fastify.put<{ Params: { type: string; id: string } }>(
+    '/dev/primitives/:type/:id',
+    async (request, reply) => {
+      if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
+      const type = request.params.type;
+      const id = request.params.id;
+
+      if (!PRIMITIVE_TYPE_VALUES.includes(type as PrimitiveType)) {
+        return reply.status(400).send({ error: 'invalid_type', type });
       }
-    }
-    if (body.tags !== undefined) {
-      const normalized = normalizeTags(body.tags);
-      if (normalized) nextMetadata.tags = normalized;
-      else delete nextMetadata.tags;
-    }
+      if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
 
-    let nextEntries = parsed.entries;
-    let droppedRefs: string[] = [];
-    if (body.blocks !== undefined) {
-      const renumbered = renumberBlocks(body.blocks as BlockEntry[], id);
-      nextEntries = renumbered.entries;
-      droppedRefs = renumbered.droppedRefs;
-    }
-
-    let ndjson: string;
-    try {
-      ndjson = serialisePrimitive(nextMetadata, nextEntries);
-    } catch (err) {
-      if (err instanceof PayloadTooLargeError) {
-        return reply
-          .status(413)
-          .send({ error: 'payload_too_large', limitBytes: MAX_NDJSON_BYTES, actualBytes: err.bytes });
+      let body: z.infer<typeof UpdatePrimitiveSchema>;
+      try {
+        body = UpdatePrimitiveSchema.parse(request.body);
+      } catch (err) {
+        if (err instanceof z.ZodError) {
+          return reply.status(400).send({ error: 'invalid_request', issues: err.issues });
+        }
+        return reply.status(400).send({ error: 'invalid_json' });
       }
-      throw err;
-    }
 
-    try {
-      writeFileSync(path, ndjson, 'utf8');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'unknown write error';
-      return reply.status(500).send({ error: 'write_failed', message });
-    }
+      const path = primitiveFilePath(type as PrimitiveType, id);
+      if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', type, id });
 
-    return reply.send({
-      id: nextMetadata.id,
-      type: nextMetadata.type,
-      name: nextMetadata.name,
-      description: nextMetadata.description,
-      tags: nextMetadata.tags ?? [],
-      createdAt: nextMetadata.createdAt,
-      updatedAt: nextMetadata.updatedAt,
-      blockCount: nextEntries.length,
-      droppedRefs,
-    });
-  });
+      let raw: string;
+      try {
+        raw = readFileSync(path, 'utf8');
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'unknown read error';
+        return reply.status(500).send({ error: 'read_failed', message });
+      }
 
-  fastify.delete<{ Params: { type: string; id: string } }>('/dev/primitives/:type/:id', async (request, reply) => {
-    if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
-    const type = request.params.type;
-    const id = request.params.id;
+      let parsed: { metadata: PrimitiveMetadata; entries: BlockEntry[] };
+      try {
+        parsed = parsePrimitiveFile(raw);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'malformed file';
+        return reply.status(500).send({ error: 'malformed_file', message });
+      }
 
-    if (!PRIMITIVE_TYPE_VALUES.includes(type as PrimitiveType)) {
-      return reply.status(400).send({ error: 'invalid_type', type });
-    }
-    if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
+      if (body.blocks !== undefined) {
+        const newRoot = body.blocks[0]?.block as { type?: unknown } | undefined;
+        const newType = resolvePrimitiveType(newRoot?.type);
+        if (newType === null) {
+          return reply.status(400).send({
+            error: 'invalid_root_type',
+            rootType: typeof newRoot?.type === 'string' ? newRoot.type : null,
+            allowed: Object.keys(BLOCK_TYPE_TO_PRIMITIVE_TYPE),
+          });
+        }
+        if (newType !== type) {
+          return reply.status(400).send({
+            error: 'type_change_not_allowed',
+            currentType: type,
+            newType,
+            hint: 'Delete the primitive and create a new one to change its type.',
+          });
+        }
+      }
 
-    const path = primitiveFilePath(type as PrimitiveType, id);
-    if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', type, id });
+      const nextMetadata: PrimitiveMetadata = {
+        ...parsed.metadata,
+        updatedAt: nowIso(),
+      };
+      if (body.name !== undefined) nextMetadata.name = body.name.trim();
+      if (body.description !== undefined) {
+        if (body.description === '') {
+          delete nextMetadata.description;
+        } else {
+          nextMetadata.description = body.description;
+        }
+      }
+      if (body.tags !== undefined) {
+        const normalized = normalizeTags(body.tags);
+        if (normalized) nextMetadata.tags = normalized;
+        else delete nextMetadata.tags;
+      }
 
-    try {
-      unlinkSync(path);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'unknown unlink error';
-      return reply.status(500).send({ error: 'delete_failed', message });
-    }
+      let nextEntries = parsed.entries;
+      let droppedRefs: string[] = [];
+      if (body.blocks !== undefined) {
+        const renumbered = renumberBlocks(body.blocks as BlockEntry[], id);
+        nextEntries = renumbered.entries;
+        droppedRefs = renumbered.droppedRefs;
+      }
 
-    return reply.send({ deleted: `primitives/${type}/${id}.ndjson`, type, id });
-  });
+      let ndjson: string;
+      try {
+        ndjson = serialisePrimitive(nextMetadata, nextEntries);
+      } catch (err) {
+        if (err instanceof PayloadTooLargeError) {
+          return reply.status(413).send({
+            error: 'payload_too_large',
+            limitBytes: MAX_NDJSON_BYTES,
+            actualBytes: err.bytes,
+          });
+        }
+        throw err;
+      }
+
+      try {
+        writeFileSync(path, ndjson, 'utf8');
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'unknown write error';
+        return reply.status(500).send({ error: 'write_failed', message });
+      }
+
+      return reply.send({
+        id: nextMetadata.id,
+        type: nextMetadata.type,
+        name: nextMetadata.name,
+        description: nextMetadata.description,
+        tags: nextMetadata.tags ?? [],
+        createdAt: nextMetadata.createdAt,
+        updatedAt: nextMetadata.updatedAt,
+        blockCount: nextEntries.length,
+        droppedRefs,
+      });
+    },
+  );
+
+  fastify.delete<{ Params: { type: string; id: string } }>(
+    '/dev/primitives/:type/:id',
+    async (request, reply) => {
+      if (!isLibraryEndpointEnabled()) return reply.status(403).send(DISABLED_RESPONSE_BODY);
+      const type = request.params.type;
+      const id = request.params.id;
+
+      if (!PRIMITIVE_TYPE_VALUES.includes(type as PrimitiveType)) {
+        return reply.status(400).send({ error: 'invalid_type', type });
+      }
+      if (!isValidUuid(id)) return reply.status(400).send({ error: 'invalid_id', id });
+
+      const path = primitiveFilePath(type as PrimitiveType, id);
+      if (!existsSync(path)) return reply.status(404).send({ error: 'not_found', type, id });
+
+      try {
+        unlinkSync(path);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'unknown unlink error';
+        return reply.status(500).send({ error: 'delete_failed', message });
+      }
+
+      return reply.send({ deleted: `primitives/${type}/${id}.ndjson`, type, id });
+    },
+  );
 };

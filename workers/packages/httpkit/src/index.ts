@@ -1,13 +1,13 @@
-import type { FastifyInstance } from "fastify";
-import fastifySwagger from "@fastify/swagger";
-import scalar from "@scalar/fastify-api-reference";
+import type { FastifyInstance } from 'fastify';
+import fastifySwagger from '@fastify/swagger';
+import scalar from '@scalar/fastify-api-reference';
 import {
   jsonSchemaTransform,
   serializerCompiler,
   validatorCompiler,
-} from "fastify-type-provider-zod";
+} from 'fastify-type-provider-zod';
 
-export type { ZodTypeProvider } from "fastify-type-provider-zod";
+export type { ZodTypeProvider } from 'fastify-type-provider-zod';
 
 export interface OpenApiOptions {
   title: string;
@@ -33,8 +33,8 @@ export function setupOpenApi(app: FastifyInstance, opts: OpenApiOptions): void {
       },
       components: {
         securitySchemes: {
-          apiKey: { type: "apiKey", in: "header", name: "x-api-key" },
-          bearer: { type: "http", scheme: "bearer", bearerFormat: "JWT" },
+          apiKey: { type: 'apiKey', in: 'header', name: 'x-api-key' },
+          bearer: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
         },
       },
     },
@@ -42,21 +42,20 @@ export function setupOpenApi(app: FastifyInstance, opts: OpenApiOptions): void {
   });
 
   void app.register(scalar, {
-    routePrefix: "/docs",
-    configuration: { title: opts.title, url: "/openapi.json" },
+    routePrefix: '/docs',
+    configuration: { title: opts.title, url: '/openapi.json' },
   });
 
-  app.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());
+  app.get('/openapi.json', { schema: { hide: true } }, async () => app.swagger());
 }
 
 /** True when a Fastify error is a request schema-validation failure. */
-export function isValidationError(
-  err: unknown,
-): err is { validation: unknown[]; message: string } {
+export function isValidationError(err: unknown): err is { validation: unknown[]; message: string } {
   return (
-    typeof err === "object" &&
+    typeof err === 'object' &&
     err !== null &&
-    "validation" in err &&
+    'validation' in err &&
     Array.isArray((err as { validation?: unknown }).validation)
   );
 }
+export * from './cursor';

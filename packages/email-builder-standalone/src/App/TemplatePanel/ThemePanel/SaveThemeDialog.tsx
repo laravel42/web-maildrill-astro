@@ -44,7 +44,10 @@ export default function SaveThemeDialog({ open, onClose, onSaved }: SaveThemeDia
   const [error, setError] = useState<string | null>(null);
 
   const trimmedName = name.trim();
-  const isValid = trimmedName.length > 0 && trimmedName.length <= MAX_NAME && description.length <= MAX_DESCRIPTION;
+  const isValid =
+    trimmedName.length > 0 &&
+    trimmedName.length <= MAX_NAME &&
+    description.length <= MAX_DESCRIPTION;
 
   const handleClose = useCallback(() => {
     if (submitting) return;
@@ -84,7 +87,7 @@ export default function SaveThemeDialog({ open, onClose, onSaved }: SaveThemeDia
           <Typography variant="body2" color="text.secondary">
             {t(
               'theme.save.description',
-              'Snapshots the current root globals and per-block-type theme overrides. Saved themes can be reapplied later from the Components Library.'
+              'Snapshots the current root globals and per-block-type theme overrides. Saved themes can be reapplied later from the Components Library.',
             )}
           </Typography>
 

@@ -68,7 +68,9 @@
   background: transparent;
   margin-bottom: 18px;
   font-family: inherit;
-  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
 }
 .input:focus {
   outline: none;
@@ -79,18 +81,18 @@
 .listpick {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 5px;
   margin-bottom: 18px;
 }
 .listchip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 12px;
-  border-radius: 20px;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 14px;
   border: 1px solid var(--border2);
   background: transparent;
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 500;
   color: var(--text2);
   cursor: pointer;
@@ -105,7 +107,7 @@
 .listchipOn {
   background: var(--accent-tint);
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .listempty {
   font-size: 12.5px;
@@ -123,7 +125,7 @@
   align-items: center;
   gap: 4px;
   padding: 3px 6px 3px 10px;
-  border-radius: 20px;
+  border-radius: 4px;
   font-size: 11.5px;
   font-weight: 600;
 }
@@ -141,28 +143,21 @@
 .tagx:hover {
   opacity: 1;
 }
-.addtag {
-  padding: 5px 10px;
-  border: 1px dashed var(--muted2);
-  border-radius: 20px;
-  font-size: 11.5px;
-  color: var(--muted);
+.taginput {
+  width: 92px;
+  border: 1px dashed var(--border2);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
   background: none;
-  cursor: pointer;
+  color: var(--text2);
+  outline: none;
 }
-.addtag:hover {
-  color: var(--accent);
+.taginput:focus {
   border-color: var(--accent);
 }
-.taginput {
-  border: 1px solid var(--accent);
-  border-radius: 20px;
-  padding: 4px 10px;
-  font-size: 11.5px;
-  width: 110px;
-  background: transparent;
-  color: var(--text);
-  outline: none;
+.taginput::placeholder {
+  color: var(--muted);
 }
 .foot {
   display: flex;
@@ -193,9 +188,275 @@
   color: #fff;
   border: none;
   padding: 9px 18px;
-  box-shadow: 0 1px 2px rgba(79, 70, 229, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 1px 2px rgba(79, 70, 229, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 .save:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+/* PhoneField carries no outer margin of its own — match .input's rhythm. */
+.phoneField {
+  margin-bottom: 18px;
+}
+
+/* ---------------- create wizard ---------------- */
+.semWide {
+  width: 640px;
+}
+.headLead {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+.back {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: var(--surface2);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.back:hover {
+  color: var(--text);
+  background: var(--border2);
+}
+.flip {
+  transform: rotate(180deg);
+}
+
+/* Step 1: method cards */
+.method {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  text-align: left;
+  padding: 15px 16px;
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+.method + .method {
+  margin-top: 10px;
+}
+.method:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: var(--surface2);
+  box-shadow: var(--shadow-sm);
+}
+.methodIc {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text2);
+}
+.methodText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.methodTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.methodDesc {
+  font-size: 12px;
+  color: var(--muted);
+}
+.methodGo {
+  margin-left: auto;
+  color: var(--muted2);
+  flex: none;
+}
+
+/* Step 2b: dropzone */
+.drop {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 34px 20px 30px;
+  border: 1.5px dashed var(--border2);
+  border-radius: 14px;
+  background: var(--surface2);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
+}
+.drop:hover,
+.dropOver {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+.drop:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.dropIc {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+.dropTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.dropDesc {
+  font-size: 12px;
+  color: var(--muted);
+}
+.fileError {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--danger-text);
+}
+.fileHint {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* Step 3b: column mapping */
+.mapIntro {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text3);
+}
+.mapTable {
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  overflow: hidden;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.mapRow {
+  display: grid;
+  grid-template-columns: 1.1fr 1.2fr 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 13px;
+  border-top: 1px solid var(--divider);
+  font-size: 12.5px;
+}
+.mapRow:first-child {
+  border-top: none;
+}
+.mapHead {
+  position: sticky;
+  top: 0;
+  background: var(--surface2);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--muted);
+}
+.mapCol {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mapSample {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mapSelect {
+  width: 100%;
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+}
+.mapSelect:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.mapWarn {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--warning-strong);
+}
+
+/* Step 4b: review + result */
+.sumGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.sumCell {
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 14px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.sumVal {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+}
+.sumLbl {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 18px 0 10px;
+  text-align: center;
+}
+.resultIc {
+  color: var(--success-strong);
+  margin-bottom: 2px;
+}
+.resultTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.resultNote {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
 }

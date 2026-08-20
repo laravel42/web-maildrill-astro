@@ -74,7 +74,7 @@ const updated = doc.data.updatedDate.toLocaleDateString('en', {
 
 <style>
   .legal-hero {
-    padding-block: 64px 8px;
+    padding-block: calc(64px * var(--sec-y)) calc(8px * var(--sec-y));
   }
 
   .legal-hero__title {
@@ -90,7 +90,7 @@ const updated = doc.data.updatedDate.toLocaleDateString('en', {
   }
 
   .legal-body {
-    padding-block: 24px 80px;
+    padding-block: calc(24px * var(--sec-y)) calc(80px * var(--sec-y));
     display: grid;
     grid-template-columns: 240px 1fr;
     gap: 56px;

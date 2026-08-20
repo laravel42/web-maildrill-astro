@@ -42,7 +42,9 @@ export default function DividerSidebarPanel({ data, setData }: DividerSidebarPan
           'mobilePadding',
         ]}
         value={data.style as unknown as TStyle | undefined}
-        onChange={(style) => updateData({ ...data, style: style as unknown as DividerProps['style'] })}
+        onChange={(style) =>
+          updateData({ ...data, style: style as unknown as DividerProps['style'] })
+        }
       />
     </BaseSidebarPanel>
   );

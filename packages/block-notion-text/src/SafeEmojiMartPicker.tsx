@@ -31,17 +31,19 @@ const SafeEmojiMartPicker: React.FC<SafeEmojiMartPickerProps> = (props) => {
     const currentProps = latestPropsRef.current;
 
     // Aplicar todas las props al elemento
-    (Object.entries as (obj: Record<string, unknown>) => [string, unknown][])(currentProps).forEach(([key, value]) => {
-      if (key === 'ref' || key === 'fallback') return;
+    (Object.entries as (obj: Record<string, unknown>) => [string, unknown][])(currentProps).forEach(
+      ([key, value]) => {
+        if (key === 'ref' || key === 'fallback') return;
 
-      // Las funciones se asignan directamente como propiedades
-      const pickerRecord = picker as unknown as Record<string, unknown>;
-      if (typeof value === 'function') {
-        pickerRecord[key] = value;
-      } else {
-        pickerRecord[key] = value;
-      }
-    });
+        // Las funciones se asignan directamente como propiedades
+        const pickerRecord = picker as unknown as Record<string, unknown>;
+        if (typeof value === 'function') {
+          pickerRecord[key] = value;
+        } else {
+          pickerRecord[key] = value;
+        }
+      },
+    );
 
     // Si el picker tiene método update, usarlo también
     if (picker.update) {

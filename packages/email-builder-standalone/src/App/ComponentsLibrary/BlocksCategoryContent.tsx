@@ -29,7 +29,10 @@ import { useTranslation } from 'react-i18next';
 
 import { Box, Typography, useTheme } from '@mui/material';
 
-import { appendBuiltInBlockToParent, setSelectedBlockId } from '../../documents/editor/EditorContext';
+import {
+  appendBuiltInBlockToParent,
+  setSelectedBlockId,
+} from '../../documents/editor/EditorContext';
 
 import { BUTTONS } from './builtInBlocks';
 import { type BuiltInBlockDragItem, LIBRARY_COMPONENT_DND_TYPE } from './dnd';
@@ -50,7 +53,7 @@ function BlockTile({ index }: { index: number }) {
       }),
       collect: (monitor) => ({ isDragging: monitor.isDragging() }),
     }),
-    [index]
+    [index],
   );
 
   const handleClick = () => {
@@ -98,7 +101,9 @@ function BlockTile({ index }: { index: number }) {
 
 export default function BlocksCategoryContent() {
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.5, pt: 0.5 }}>
+    <Box
+      sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.5, pt: 0.5 }}
+    >
       {BUTTONS.map((_entry, index) => (
         <BlockTile key={index} index={index} />
       ))}

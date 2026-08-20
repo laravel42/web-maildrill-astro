@@ -1,9 +1,16 @@
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { List, ListItemButton, ListItemIcon, ListItemText, useTheme } from '@mui/material';
+import { List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import type { Editor } from '@tiptap/react';
 
+import {
+  MENU_ICON_SX,
+  MENU_ITEM_SX,
+  MENU_ITEM_TEXT_SX,
+  MENU_LABEL_SX,
+  MENU_LIST_SX,
+} from './menu-skin';
 import ToolbarIconButton from './ToolbarIconButton';
 import ToolbarPopover from './ToolbarPopover';
 
@@ -98,7 +105,6 @@ const POPOVER_ICONS = {
 };
 
 export default function HeadingDropdown({ editor }: Props) {
-  const theme = useTheme();
   const { t } = useTranslation();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 
@@ -121,7 +127,7 @@ export default function HeadingDropdown({ editor }: Props) {
       });
       handleClose();
     },
-    [editor, handleClose]
+    [editor, handleClose],
   );
 
   const getCurrentIcon = () => {
@@ -170,26 +176,19 @@ export default function HeadingDropdown({ editor }: Props) {
       </ToolbarIconButton>
 
       <ToolbarPopover anchorEl={anchor} onClose={handleClose}>
-        <List sx={{ p: '8px 4px' }}>
+        <List sx={MENU_LIST_SX}>
           {items.map((item) => (
             <ListItemButton
               key={item.label}
               onClick={() => setLevel(item.level)}
               selected={item.active}
-              sx={{
-                p: '8px 10px',
-                borderRadius: '6px',
-                backgroundColor: item.active ? theme.palette.action.selected : 'transparent',
-                '&:hover': { backgroundColor: theme.palette.action.hover },
-                transition: 'all 150ms ease',
-              }}
+              sx={MENU_ITEM_SX}
             >
-              <ListItemIcon sx={{ minWidth: 'auto', mr: 1, color: theme.palette.text.secondary }}>
-                {item.icon}
-              </ListItemIcon>
+              <ListItemIcon sx={MENU_ICON_SX}>{item.icon}</ListItemIcon>
               <ListItemText
                 primary={item.label}
-                slotProps={{ primary: { sx: { fontSize: '14px', color: theme.palette.text.primary } } }}
+                sx={MENU_ITEM_TEXT_SX}
+                slotProps={{ primary: { sx: MENU_LABEL_SX } }}
               />
             </ListItemButton>
           ))}

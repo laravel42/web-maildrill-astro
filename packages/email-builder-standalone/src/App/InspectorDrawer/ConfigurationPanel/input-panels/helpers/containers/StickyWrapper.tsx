@@ -112,7 +112,7 @@ const StickyWrapper = ({
       {
         threshold: 0,
         rootMargin: `-${topOffset}px 0px 0px 0px`,
-      }
+      },
     );
 
     // ResizeObserver: mantener dimensiones actualizadas SIEMPRE
@@ -208,7 +208,10 @@ const StickyWrapper = ({
           // Reducir opacidad cuando está muy empujado para efecto de desvanecimiento
           ...(isBeingPushed &&
             pushOffset < -stickyDimensions.height * 0.3 && {
-              opacity: Math.max(0, 1 + (pushOffset + stickyDimensions.height * 0.3) / (stickyDimensions.height * 0.7)),
+              opacity: Math.max(
+                0,
+                1 + (pushOffset + stickyDimensions.height * 0.3) / (stickyDimensions.height * 0.7),
+              ),
             }),
           ...style,
         }}

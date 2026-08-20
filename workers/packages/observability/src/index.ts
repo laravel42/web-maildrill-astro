@@ -1,10 +1,10 @@
-import { pino, type Logger } from "pino";
-import { config } from "@maildrill/config";
-import { emitAppLog } from "./observers";
+import { pino, type Logger } from 'pino';
+import { config } from '@maildrill/config';
+import { emitAppLog } from './observers';
 
 export type { Logger };
-export { metrics } from "./metrics";
-export type { LabelValues } from "./metrics";
+export { metrics } from './metrics';
+export type { LabelValues } from './metrics';
 export {
   setAppLogSink,
   setAppEventSink,
@@ -17,7 +17,7 @@ export {
   type AppEventEvent,
   type AppBatchEvent,
   type AppCommandEvent,
-} from "./observers";
+} from './observers';
 export {
   runHogQL,
   hogqlLiteral,
@@ -26,15 +26,16 @@ export {
   cellNumber,
   cellString,
   type HogQLResult,
-} from "./posthog-query";
+} from './posthog-query';
+export { capturePostHogEvent, capturePostHogEvents } from './posthog-capture';
 
 const LEVEL_LABEL: Record<number, string> = {
-  10: "debug",
-  20: "debug",
-  30: "info",
-  40: "warn",
-  50: "error",
-  60: "error",
+  10: 'debug',
+  20: 'debug',
+  30: 'info',
+  40: 'warn',
+  50: 'error',
+  60: 'error',
 };
 
 export const logger: Logger = pino({
@@ -42,24 +43,24 @@ export const logger: Logger = pino({
   hooks: {
     logMethod(args, method, level) {
       try {
-        const label = LEVEL_LABEL[level] ?? "info";
-        let message = "";
+        const label = LEVEL_LABEL[level] ?? 'info';
+        let message = '';
         let context: Record<string, unknown> | undefined;
-        if (typeof args[0] === "string") {
+        if (typeof args[0] === 'string') {
           message = args[0];
-          if (args.length > 1 && args[1] != null && typeof args[1] === "object") {
+          if (args.length > 1 && args[1] != null && typeof args[1] === 'object') {
             context = args[1] as Record<string, unknown>;
           }
-        } else if (args[0] != null && typeof args[0] === "object") {
+        } else if (args[0] != null && typeof args[0] === 'object') {
           context = { ...(args[0] as Record<string, unknown>) };
-          if (typeof args[1] === "string") {
+          if (typeof args[1] === 'string') {
             message = args[1];
           } else {
-            message = typeof context.msg === "string" ? context.msg : "";
+            message = typeof context.msg === 'string' ? context.msg : '';
             delete context.msg;
           }
         } else {
-          message = String(args[0] ?? "");
+          message = String(args[0] ?? '');
         }
         emitAppLog({ level: label, message, context });
       } catch {
@@ -72,8 +73,8 @@ export const logger: Logger = pino({
     ? {}
     : {
         transport: {
-          target: "pino-pretty",
-          options: { colorize: true, translateTime: "SYS:HH:MM:ss.l", ignore: "pid,hostname" },
+          target: 'pino-pretty',
+          options: { colorize: true, translateTime: 'SYS:HH:MM:ss.l', ignore: 'pid,hostname' },
         },
       }),
 });

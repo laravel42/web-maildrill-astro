@@ -15,6 +15,7 @@ const list: AudienceChoice = {
   desc: 'List',
   count: 100,
   phoneCount: 40,
+  channels: ['email', 'sms', 'whatsapp', 'voice'],
 };
 
 const emptyPhoneList: AudienceChoice = {
@@ -24,6 +25,7 @@ const emptyPhoneList: AudienceChoice = {
   desc: 'List',
   count: 50,
   phoneCount: 0,
+  channels: ['email'],
 };
 
 const unknownPhoneSegment: AudienceChoice = {
@@ -33,6 +35,7 @@ const unknownPhoneSegment: AudienceChoice = {
   desc: 'Segment',
   count: 12,
   phoneCount: null,
+  channels: ['email', 'sms', 'whatsapp', 'voice'],
 };
 
 describe('audienceRecipientCount', () => {
@@ -79,6 +82,54 @@ describe('prepareAudiencesForChannel', () => {
     const prepared = prepareAudiencesForChannel([zeroEmail, list], 'email');
     expect(prepared.map((a) => a.id)).toEqual(['list-1']);
   });
+
+  it('hides lists that do not declare the selected channel', () => {
+    const emailOnly = listToAudienceChoice({
+      id: 'email-only',
+      name: 'Email only',
+      memberCount: 20,
+      phoneMemberCount: 10,
+      channels: ['email'],
+    });
+    const smsReady = listToAudienceChoice({
+      id: 'sms-ready',
+      name: 'SMS ready',
+      memberCount: 30,
+      phoneMemberCount: 25,
+      channels: ['email', 'sms'],
+    });
+    expect(prepareAudiencesForChannel([emailOnly, smsReady], 'sms').map((a) => a.id)).toEqual([
+      'sms-ready',
+    ]);
+    expect(prepareAudiencesForChannel([emailOnly, smsReady], 'email').map((a) => a.id)).toEqual([
+      'email-only',
+      'sms-ready',
+    ]);
+  });
+
+  it('hides segments that do not declare the selected channel', () => {
+    const emailSeg: AudienceChoice = {
+      id: 'seg-email',
+      kind: 'segment',
+      name: 'Email VIPs',
+      desc: 'Segment',
+      count: 10,
+      phoneCount: 8,
+      channels: ['email'],
+    };
+    const smsSeg: AudienceChoice = {
+      id: 'seg-sms',
+      kind: 'segment',
+      name: 'SMS VIPs',
+      desc: 'Segment',
+      count: 10,
+      phoneCount: 8,
+      channels: ['sms'],
+    };
+    expect(prepareAudiencesForChannel([emailSeg, smsSeg], 'sms').map((a) => a.id)).toEqual([
+      'seg-sms',
+    ]);
+  });
 });
 
 describe('isAudienceSelectable', () => {
@@ -87,7 +138,17 @@ describe('isAudienceSelectable', () => {
   });
 
   it('hides explicit zero phone reach', () => {
-    expect(isAudienceSelectable(emptyPhoneList, 'voice')).toBe(false);
+    expect(
+      isAudienceSelectable(
+        { ...emptyPhoneList, channels: ['email', 'sms', 'whatsapp', 'voice'] },
+        'voice',
+      ),
+    ).toBe(false);
+  });
+
+  it('hides lists whose channels omit the campaign channel', () => {
+    expect(isAudienceSelectable({ ...list, channels: ['email'] }, 'sms')).toBe(false);
+    expect(isAudienceSelectable({ ...list, channels: ['email', 'sms'] }, 'sms')).toBe(true);
   });
 });
 

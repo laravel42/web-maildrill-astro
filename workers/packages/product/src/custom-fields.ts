@@ -1,11 +1,7 @@
-import { and, asc, eq } from "drizzle-orm";
-import {
-  customFieldDefs,
-  db,
-  type CustomFieldDefRow,
-} from "@maildrill/database";
+import { and, asc, eq } from 'drizzle-orm';
+import { customFieldDefs, db, type CustomFieldDefRow } from '@maildrill/database';
 
-type FieldType = CustomFieldDefRow["type"];
+type FieldType = CustomFieldDefRow['type'];
 
 /**
  * Result of an upsert. `created` distinguishes a new definition from one that
@@ -21,7 +17,7 @@ export async function createCustomField(
   tenantId: string,
   key: string,
   label: string,
-  type: FieldType = "text",
+  type: FieldType = 'text',
 ): Promise<CreateCustomFieldResult> {
   const rows = await db
     .insert(customFieldDefs)

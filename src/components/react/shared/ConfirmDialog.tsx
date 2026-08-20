@@ -48,11 +48,7 @@ export default function ConfirmDialog({
   }, [onCancel]);
 
   return (
-    <div
-      className={styles.overlay}
-      onClick={onCancel}
-      style={{ animation: 'ovfade .18s ease' }}
-    >
+    <div className={styles.overlay} onClick={onCancel} style={{ animation: 'ovfade .18s ease' }}>
       <div
         className={styles.dialog}
         role="alertdialog"

@@ -1,18 +1,21 @@
-import { randomInt } from "node:crypto";
-import { and, eq, gt, isNull } from "drizzle-orm";
-import { config } from "@maildrill/config";
-import { db, magicLinkTokens, type User } from "@maildrill/database";
-import { sha256Hex } from "@maildrill/domain";
-import { getProvider } from "@maildrill/providers";
-import { createLogger } from "@maildrill/observability";
-import { findOrCreateUser, getUser } from "./users";
+import { randomInt } from 'node:crypto';
+import { and, eq, gt, isNull } from 'drizzle-orm';
+import { config } from '@maildrill/config';
+import { db, magicLinkTokens, type User } from '@maildrill/database';
+import { sha256Hex } from '@maildrill/domain';
+import { sendTransactionalEmail } from '@maildrill/providers';
+import { createLogger } from '@maildrill/observability';
+import { findOrCreateUser, getUser } from './users';
+import type { RequestContext } from './security/sessions';
+import { deviceLabel } from './security/ua';
+import { escapeHtml, sendWelcomeEmail } from './welcome';
 import {
   ensurePersonalWorkspace,
   listMembershipsForUser,
   type WorkspaceMembership,
-} from "./memberships";
+} from './memberships';
 
-const log = createLogger({ component: "login-code" });
+const log = createLogger({ component: 'login-code' });
 
 export interface VerifyResult {
   user: User;
@@ -26,12 +29,14 @@ function codeHash(email: string, code: string): string {
 
 /**
  * Issue a 6-digit login code plus a matching auto-login link. Stores only a
- * hash; prior unconsumed codes for the email are invalidated. Email is sent
- * directly via the provider (not the campaign pipeline), so sign-in never
- * depends on the workers.
+ * hash; prior unconsumed codes for the email are invalidated. The email rides
+ * the Cloudflare transactional relay (never Infobip / the campaign pipeline),
+ * so sign-in never depends on the workers. The optional client context (IP,
+ * user agent) is shown in the email's security note.
  */
 export async function requestLoginCode(
   email: string,
+  ctx?: RequestContext,
 ): Promise<{ code: string; url: string }> {
   const normalized = email.trim().toLowerCase();
   const code = String(randomInt(100_000, 1_000_000)); // 6 digits, CSPRNG
@@ -47,44 +52,51 @@ export async function requestLoginCode(
   });
 
   const url = `${config.app.url}/auth/verify?email=${encodeURIComponent(normalized)}&code=${code}`;
-  await sendLoginEmail(normalized, code, url);
+  await sendLoginEmail(normalized, code, url, ctx);
   return { code, url };
 }
 
-async function sendLoginEmail(email: string, code: string, url: string): Promise<void> {
-  if (!config.isProd) log.info({ email, code, url }, "login code (dev)");
-  const result = await getProvider().send({
-    messageId: `code-${codeHash(email, code).slice(0, 12)}`,
-    tenantId: "system",
-    channel: "email",
+async function sendLoginEmail(
+  email: string,
+  code: string,
+  url: string,
+  ctx?: RequestContext,
+): Promise<void> {
+  if (!config.isProd) log.info({ email, code, url }, 'login code (dev)');
+  const ttl = config.auth.magicLinkTtlMinutes;
+  const result = await sendTransactionalEmail({
     to: email,
-    correlationId: "auth-login-code",
-    content: {
-      subject: `${code} is your Maildrill sign-in code`,
-      html: loginEmailHtml(code, url),
-      text:
-        `Your Maildrill sign-in code is ${code}. ` +
-        `It expires in ${config.auth.magicLinkTtlMinutes} minutes.\n\n` +
-        `Or sign in directly: ${url}`,
-    },
+    subject: `Sign in to Maildrill — code ${code}`,
+    html: loginEmailHtml(email, code, url, ctx),
+    text:
+      `Sign in to Maildrill — your one-time code is ${code}, requested for ${email}.\n\n` +
+      `Enter it on the sign-in screen, or sign in with one tap: ${url}\n\n` +
+      `The link and the code are single-use and expire in ${ttl} minutes. ` +
+      `If that wasn't you, ignore this email — nobody can sign in without it.`,
   });
   if (result.accepted) {
-    log.info(
-      { email, provider: getProvider().name, providerMessageId: result.providerMessageId },
-      "login-code email sent",
-    );
+    log.info({ email }, 'login-code email sent (cloudflare relay)');
+  } else if (result.skipped) {
+    log.warn({ email }, 'SMTP not configured — login-code email skipped');
   } else {
-    log.error({ email, error: result.error }, "login-code email send FAILED");
+    log.error({ email, error: result.error }, 'login-code email send FAILED');
   }
 }
 
-/** Verify + single-use consume a code for an email. Self-serve signup on first use. */
+/**
+ * Verify + single-use consume a code for an email. Self-serve signup on first
+ * use: a fresh email gets a user + personal workspace, the optional `name` and
+ * `phone` (captured by the sign-up form), and the welcome email
+ * (fire-and-forget).
+ */
 export async function verifyLoginCode(
   email: string,
   code: string,
+  name?: string | null,
+  phone?: string | null,
 ): Promise<VerifyResult | null> {
   const normalized = email.trim().toLowerCase();
-  const clean = code.replace(/\D/g, "");
+  const clean = code.replace(/\D/g, '');
   if (clean.length !== 6) return null;
 
   const now = new Date();
@@ -102,8 +114,9 @@ export async function verifyLoginCode(
     .returning();
   if (!consumed[0]) return null;
 
-  const user = await findOrCreateUser(normalized);
+  const { user, created } = await findOrCreateUser(normalized, name, phone);
   await ensurePersonalWorkspace(user);
+  if (created) void sendWelcomeEmail(normalized, name?.trim().split(/\s+/)[0]);
   const workspaces = await listMembershipsForUser(user.id);
   return { user, workspaces };
 }
@@ -115,54 +128,147 @@ export async function getMe(userId: string): Promise<VerifyResult | null> {
   return { user, workspaces };
 }
 
-/** Brand-styled sign-in email (Maildrill marketing accent #ff441f). */
-function loginEmailHtml(code: string, url: string): string {
-  const ttl = config.auth.magicLinkTtlMinutes;
-  return `<!doctype html>
-<html>
-  <body style="margin:0;background:#f5f5f7;">
-    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Your Maildrill code is ${code}</div>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7;padding:32px 12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-      <tr>
-        <td align="center">
-          <table role="presentation" width="440" cellpadding="0" cellspacing="0" style="max-width:440px;width:100%;background:#ffffff;border:1px solid #ececf0;border-radius:16px;">
-            <tr>
-              <td style="padding:28px 32px 0;">
-                <span style="font-size:19px;font-weight:800;letter-spacing:-0.02em;color:#0b0b0f;">Mail<span style="color:#ff441f;">drill</span></span>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:18px 32px 4px;">
-                <h1 style="margin:0 0 6px;font-size:20px;font-weight:700;letter-spacing:-0.01em;color:#0b0b0f;">Your sign-in code</h1>
-                <p style="margin:0;font-size:14px;line-height:1.55;color:#6b7280;">Enter this code to sign in to your workspace. It expires in ${ttl} minutes.</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:20px 32px 8px;">
-                <div style="text-align:center;padding:18px;background:#fff6f4;border:1px solid #ffd9cf;border-radius:12px;">
-                  <span style="font-family:'SFMono-Regular',ui-monospace,Menlo,Consolas,monospace;font-size:34px;font-weight:700;letter-spacing:10px;color:#0b0b0f;padding-left:10px;">${code}</span>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:12px 32px 6px;">
-                <a href="${url}" style="display:block;text-align:center;background:#ff441f;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:13px 18px;border-radius:10px;">Sign in to Maildrill</a>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:10px 32px 26px;">
-                <p style="margin:0;font-size:12px;line-height:1.55;color:#9ca3af;">Didn't request this? You can safely ignore this email — never share this code.</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:16px 32px;border-top:1px solid #f1f1f4;background:#fbfbfc;border-radius:0 0 16px 16px;">
-                <p style="margin:0;font-size:11px;color:#9ca3af;">Maildrill — one inbox for every channel.</p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
+/**
+ * The sign-in email (design/MagicLinkEmail.html). The "Requested from" line
+ * shows the classified device + IP when the caller passes the browser context;
+ * without it (e.g. step-up re-auth without headers) it degrades to plain
+ * "didn't request this" copy.
+ */
+function loginEmailHtml(email: string, code: string, url: string, ctx?: RequestContext): string {
+  const expiry = `${config.auth.magicLinkTtlMinutes} minutes`;
+  const href = escapeHtml(url);
+  const requestedFrom = [ctx?.userAgent ? deviceLabel(ctx.userAgent) : null, ctx?.ip ?? null]
+    .filter((part): part is string => Boolean(part))
+    .map(escapeHtml)
+    .join(' &middot; ');
+  const securityLine = requestedFrom
+    ? `Requested from ${requestedFrom}. If that wasn't you, ignore this email &mdash; nobody can sign in without it.`
+    : `Didn't request this? Ignore this email &mdash; nobody can sign in without it.`;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>Sign in to Maildrill &mdash; code ${code}</title>
+<style>
+  body{margin:0;padding:0;width:100%!important;background:#eceae3;}
+  table{border-collapse:collapse;}
+  a{color:#4f46e5;}
+  @media (max-width:620px){
+    .container{width:100%!important;}
+    .px{padding-left:24px!important;padding-right:24px!important;}
+    .code{font-size:32px!important;letter-spacing:.22em!important;}
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#eceae3;">
+  <span style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;overflow:hidden;mso-hide:all;">Code ${code}. One tap or one code &mdash; both expire in ${expiry}.</span>
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#eceae3;">
+    <tr>
+      <td align="center" style="padding:32px 12px;">
+
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="width:600px;max-width:600px;">
+
+          <!-- Logo -->
+          <tr>
+            <td class="px" style="padding:4px 40px 20px;font-family:Arial,Helvetica,sans-serif;">
+              <span style="font-size:20px;font-weight:bold;letter-spacing:-.02em;color:#1f1e1b;">Mail<span style="color:#ff441f;">drill</span></span>
+            </td>
+          </tr>
+
+          <!-- Hero -->
+          <tr>
+            <td width="600" style="background:#131211;border-radius:20px 20px 0 0;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td class="px" style="padding:44px 40px 38px;font-family:Arial,Helvetica,sans-serif;">
+                    <div style="font-family:'Courier New',Courier,monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#a5a39a;">/ One-time sign-in</div>
+                    <h1 style="margin:14px 0 0;font-size:32px;line-height:1.1;mso-line-height-rule:exactly;letter-spacing:-.02em;color:#ffffff;font-weight:bold;">Sign in to Maildrill</h1>
+                    <p style="margin:16px 0 0;font-size:15px;line-height:1.6;mso-line-height-rule:exactly;color:rgba(255,255,255,.68);">Requested for <strong style="color:rgba(255,255,255,.9);font-weight:bold;">${escapeHtml(email)}</strong> &middot; expires in ${expiry}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td width="600" style="background:#ffffff;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+
+                <!-- Code -->
+                <tr>
+                  <td class="px" style="padding:34px 40px 0;font-family:Arial,Helvetica,sans-serif;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f6f5f2;border:1px solid #e4e2da;border-radius:14px;">
+                      <tr>
+                        <td style="padding:22px 24px;font-family:Arial,Helvetica,sans-serif;">
+                          <div style="font-family:'Courier New',Courier,monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8a887f;">Your one-time code</div>
+                          <div class="code" style="margin-top:8px;font-family:'Courier New',Courier,monospace;font-size:34px;font-weight:bold;letter-spacing:.28em;line-height:1;mso-line-height-rule:exactly;color:#1f1e1b;">${code}</div>
+                          <div style="margin-top:10px;font-size:14px;line-height:1.55;mso-line-height-rule:exactly;color:#57554e;">Enter it on the sign-in screen, or use the one-tap link below. Either way, no password needed.</div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- CTA -->
+                <tr>
+                  <td class="px" align="center" style="padding:28px 40px 8px;font-family:Arial,Helvetica,sans-serif;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0;">
+                      <tr>
+                        <td bgcolor="#4f46e5" style="border-radius:10px;">
+                          <a href="${href}" style="display:block;padding:13px 26px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:10px;">Sign in with one tap</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px" align="center" style="padding:0 40px 0;font-family:Arial,Helvetica,sans-serif;">
+                    <p style="margin:14px 0 0;font-size:14px;line-height:1.6;mso-line-height-rule:exactly;color:#77756c;">The link and the code are single-use and expire in ${expiry}.</p>
+                  </td>
+                </tr>
+
+                <!-- Security note -->
+                <tr>
+                  <td class="px" style="padding:26px 40px 0;font-family:Arial,Helvetica,sans-serif;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                      <tr><td height="1" style="height:1px;background:#eceae3;font-size:0;line-height:1px;">&nbsp;</td></tr>
+                    </table>
+                    <p style="margin:18px 0 0;font-size:14px;line-height:1.6;mso-line-height-rule:exactly;color:#77756c;">${securityLine}</p>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td class="px" style="padding:16px 40px 34px;font-family:Arial,Helvetica,sans-serif;">
+                    <p style="margin:0;font-size:14px;line-height:1.65;mso-line-height-rule:exactly;color:#77756c;">Trouble signing in? Reply to this email or reach <a href="mailto:support@maildrill.net" style="color:#4f46e5;text-decoration:none;font-weight:bold;">support@maildrill.net</a>.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td width="600" style="background:#ffffff;border-radius:0 0 20px 20px;border-top:1px solid #eceae3;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td class="px" style="padding:24px 40px 30px;font-family:Arial,Helvetica,sans-serif;">
+                    <p style="margin:0 0 6px;font-size:12px;line-height:1.6;mso-line-height-rule:exactly;color:#a5a39a;">This is a security email for your Maildrill account and can't be unsubscribed from.</p>
+                    <p style="margin:0;font-size:12px;line-height:1.6;mso-line-height-rule:exactly;color:#a5a39a;">Maildrill, Inc. &middot; 2261 Market St, San Francisco, CA 94114</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
 </html>`;
 }

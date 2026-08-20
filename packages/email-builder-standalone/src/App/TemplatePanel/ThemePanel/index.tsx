@@ -50,7 +50,7 @@ export default function ThemePanel() {
       { id: 'root' as const, label: t('theme.blocks.root.title') },
       ...THEME_BLOCK_ORDER.map((b) => ({ id: b, label: t(THEME_BLOCK_REGISTRY[b].titleKey) })),
     ],
-    [t]
+    [t],
   );
   const [saveThemeOpen, setSaveThemeOpen] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
@@ -72,7 +72,13 @@ export default function ThemePanel() {
       {!compact && libraryEnabled && (themeSaving || templateSaving) && (
         <Stack
           direction="row"
-          sx={{ mb: 2, flexWrap: 'wrap', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}
+          sx={{
+            mb: 2,
+            flexWrap: 'wrap',
+            gap: 1,
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
         >
           {libraryEnabled && (
             <Stack direction="row" spacing={0.5} sx={{ width: '100%', ml: '0!important' }}>
@@ -92,7 +98,7 @@ export default function ThemePanel() {
                 <Tooltip
                   title={t(
                     'componentsLibrary.saveTemplate.tooltip',
-                    'Save the current document as a reusable template'
+                    'Save the current document as a reusable template',
                   )}
                 >
                   <Button
@@ -130,7 +136,12 @@ export default function ThemePanel() {
         <Box>
           <Stack
             direction="row"
-            sx={{ flexWrap: 'wrap', gap: 0.75, pb: 1.5, borderBottom: (th) => `1px solid ${th.palette.divider}` }}
+            sx={{
+              flexWrap: 'wrap',
+              gap: 0.75,
+              pb: 1.5,
+              borderBottom: (th) => `1px solid ${th.palette.divider}`,
+            }}
           >
             {THEME_SECTIONS.map(({ id, label }) => {
               const active = section === id;
@@ -154,7 +165,9 @@ export default function ThemePanel() {
                     color: active ? 'primary.contrastText' : 'text.secondary',
                     backgroundColor: active ? 'primary.main' : 'transparent',
                     transition: 'background-color .15s, color .15s, border-color .15s',
-                    '&:hover': { borderColor: (th) => (active ? 'transparent' : th.palette.grey[400]) },
+                    '&:hover': {
+                      borderColor: (th) => (active ? 'transparent' : th.palette.grey[400]),
+                    },
                   }}
                 >
                   {label}
@@ -166,17 +179,16 @@ export default function ThemePanel() {
           {section === 'root' ? (
             <RootAccordion headless />
           ) : (
-            <BlockTypeAccordion
-              blockType={section}
-              spec={THEME_BLOCK_REGISTRY[section]}
-              headless
-            />
+            <BlockTypeAccordion blockType={section} spec={THEME_BLOCK_REGISTRY[section]} headless />
           )}
         </Box>
       )}
 
       {showVersion && (
-        <Box color="text.secondary" sx={{ display: 'flex', justifyContent: 'flex-end', mt: 'auto', pt: 3, pb: 3 }}>
+        <Box
+          color="text.secondary"
+          sx={{ display: 'flex', justifyContent: 'flex-end', mt: 'auto', pt: 3, pb: 3 }}
+        >
           {compact ? (
             <Link
               href={`https://www.npmjs.com/package/${packageJson.name}`}

@@ -75,7 +75,10 @@ export function getPositionIcon(position: string): React.ReactElement {
     case 'top center':
       return (
         <svg {...SVG_PROPS}>
-          <path d="M4.7998 7.33333L7.9998 4M7.9998 4L11.1998 7.33333M7.9998 4V12" {...STROKE_PROPS} />
+          <path
+            d="M4.7998 7.33333L7.9998 4M7.9998 4L11.1998 7.33333M7.9998 4V12"
+            {...STROKE_PROPS}
+          />
         </svg>
       );
     case 'top right':
@@ -90,7 +93,10 @@ export function getPositionIcon(position: string): React.ReactElement {
     case 'center left':
       return (
         <svg {...SVG_PROPS}>
-          <path d="M7.33333 11.2002L4 8.00019M4 8.00019L7.33333 4.8002M4 8.00019L12 8.0002" {...STROKE_PROPS} />
+          <path
+            d="M7.33333 11.2002L4 8.00019M4 8.00019L7.33333 4.8002M4 8.00019L12 8.0002"
+            {...STROKE_PROPS}
+          />
         </svg>
       );
     case 'center':
@@ -99,7 +105,10 @@ export function getPositionIcon(position: string): React.ReactElement {
     case 'center right':
       return (
         <svg {...SVG_PROPS}>
-          <path d="M8.66667 4.7998L12 7.9998M12 7.9998L8.66667 11.1998M12 7.9998L4 7.9998" {...STROKE_PROPS} />
+          <path
+            d="M8.66667 4.7998L12 7.9998M12 7.9998L8.66667 11.1998M12 7.9998L4 7.9998"
+            {...STROKE_PROPS}
+          />
         </svg>
       );
     case 'bottom left':
@@ -114,7 +123,10 @@ export function getPositionIcon(position: string): React.ReactElement {
     case 'bottom center':
       return (
         <svg {...SVG_PROPS}>
-          <path d="M11.1998 8.66667L7.9998 12M7.9998 12L4.7998 8.66667M7.9998 12L7.99981 4" {...STROKE_PROPS} />
+          <path
+            d="M11.1998 8.66667L7.9998 12M7.9998 12L4.7998 8.66667M7.9998 12L7.99981 4"
+            {...STROKE_PROPS}
+          />
         </svg>
       );
     case 'bottom right':
