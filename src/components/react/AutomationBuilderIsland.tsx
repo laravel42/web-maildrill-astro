@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import LazyBoundary from './shared/LazyBoundary';
 import { lazyWithRetry } from '@/lib/app/lazy-with-retry';
 import type { AutomationDetail, PieceMeta } from '@/lib/app/automations';
-import styles from './automations/AutomationBuilder.module.css';
+import styles from './AutomationBuilderIsland.module.css';
 
 /**
  * Lazy entry point for the composer.

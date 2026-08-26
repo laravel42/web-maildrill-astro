@@ -45,12 +45,6 @@ const createSchema = z.object({
   channels: channelsSchema.optional(),
   notes: z.string().nullable().optional(),
   gdprConsent: z.boolean().optional(),
-  doubleOptIn: z.boolean().optional(),
-  doubleOptOut: z.boolean().optional(),
-  doubleOptInTemplateId: z.string().uuid().nullable().optional(),
-  doubleOptOutTemplateId: z.string().uuid().nullable().optional(),
-  welcomeEmailTemplateId: z.string().uuid().nullable().optional(),
-  goodbyeEmailTemplateId: z.string().uuid().nullable().optional(),
 });
 const idParam = z.object({ id: z.string().uuid() });
 const memberParams = z.object({ id: z.string().uuid(), subscriberId: z.string().uuid() });

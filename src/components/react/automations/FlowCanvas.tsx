@@ -26,11 +26,13 @@ export interface CanvasProps {
   invalid: Set<string>;
   /** Per-step status from the live test run, if one is in flight. */
   runStatus?: Record<string, 'succeeded' | 'failed' | 'running' | 'paused' | 'skipped'>;
+  /**
+   * Ask the canvas to bring a step into view. The `nonce` is what makes it repeatable:
+   * clicking the same outline row twice must re-centre, and a plain name would not change.
+   */
+  focus?: { stepName: string; nonce: number };
   onSelect: (name: string | null) => void;
   onAddAt: (slot: SlotRef) => void;
-  onDelete: (name: string) => void;
-  onDuplicate: (name: string) => void;
-  onMove: (name: string, direction: 'up' | 'down') => void;
 }
 
 interface NodeVisual {
@@ -102,17 +104,17 @@ export default function FlowCanvas({
   selected,
   invalid,
   runStatus,
+  focus,
   onSelect,
   onAddAt,
-  onDelete,
-  onDuplicate,
-  onMove,
 }: CanvasProps) {
   const layout = useMemo(() => layoutFlow(flow), [flow]);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const dragging = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
+  const scaleRef = useRef(scale);
+  scaleRef.current = scale;
 
   const fit = useCallback(() => {
     const viewport = viewportRef.current;
@@ -126,6 +128,25 @@ export default function FlowCanvas({
     setScale(next);
     setPan({ x: (clientWidth - layout.width * next) / 2, y: 24 });
   }, [layout.width, layout.height]);
+
+  /**
+   * Centre a step on request. Only ever driven by an explicit ask (the outline), never by
+   * selection itself — the canvas must not yank itself around when someone clicks a node
+   * they can already see.
+   */
+  useEffect(() => {
+    if (!focus) return;
+    const viewport = viewportRef.current;
+    const node = layout.nodes.find((n) => n.id === focus.stepName);
+    if (!viewport || !node) return;
+    // Read the current zoom rather than depending on it: re-centring on every zoom step
+    // would fight the user's own zooming.
+    const z = scaleRef.current;
+    setPan({
+      x: viewport.clientWidth / 2 - (node.x + NODE_W / 2) * z,
+      y: viewport.clientHeight / 2 - (node.y + NODE_H / 2) * z,
+    });
+  }, [focus, layout.nodes]);
 
   // Fit once the first layout is measured; afterwards the user owns the viewport.
   const fitted = useRef(false);
@@ -232,9 +253,6 @@ export default function FlowCanvas({
               invalid={invalid.has(node.id)}
               status={runStatus?.[node.id]}
               onSelect={onSelect}
-              onDelete={onDelete}
-              onDuplicate={onDuplicate}
-              onMove={onMove}
             />
           ))}
         </div>
@@ -275,9 +293,6 @@ function Node({
   invalid,
   status,
   onSelect,
-  onDelete,
-  onDuplicate,
-  onMove,
 }: {
   node: LayoutNode;
   pieces: PieceMeta[];
@@ -285,9 +300,6 @@ function Node({
   invalid: boolean;
   status?: 'succeeded' | 'failed' | 'running' | 'paused' | 'skipped';
   onSelect: (name: string) => void;
-  onDelete: (name: string) => void;
-  onDuplicate: (name: string) => void;
-  onMove: (name: string, direction: 'up' | 'down') => void;
 }) {
   const isTrigger = node.kind === 'trigger';
   const visual = visualFor(node.step, pieces, isTrigger);
@@ -331,55 +343,6 @@ function Node({
           </span>
         ) : null}
       </button>
-
-      {!isTrigger ? (
-        <div className={styles.nodeTools}>
-          <button
-            type="button"
-            className={styles.tool}
-            aria-label={`Move ${node.step.displayName} up`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onMove(node.id, 'up');
-            }}
-          >
-            <Icon name="chevron-down" size={13} className={styles.flip} />
-          </button>
-          <button
-            type="button"
-            className={styles.tool}
-            aria-label={`Move ${node.step.displayName} down`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onMove(node.id, 'down');
-            }}
-          >
-            <Icon name="chevron-down" size={13} />
-          </button>
-          <button
-            type="button"
-            className={styles.tool}
-            aria-label={`Duplicate ${node.step.displayName}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDuplicate(node.id);
-            }}
-          >
-            <Icon name="copy" size={13} />
-          </button>
-          <button
-            type="button"
-            className={`${styles.tool} ${styles.toolDanger}`}
-            aria-label={`Delete ${node.step.displayName}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(node.id);
-            }}
-          >
-            <Icon name="trash" size={13} />
-          </button>
-        </div>
-      ) : null}
     </div>
   );
 }

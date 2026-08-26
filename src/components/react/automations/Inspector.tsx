@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Icon from '../Icon';
+import type { IconName } from '@/lib/icons';
 import ConditionEditor from './ConditionEditor';
 import DataPicker from './DataPicker';
 import {
@@ -12,6 +13,7 @@ import {
   type FlowStep,
 } from '@/lib/app/automation-flow';
 import { automationsApi, type PieceMeta, type PropMeta } from '@/lib/app/automations';
+import SelectMenu from './SelectMenu';
 import styles from './Inspector.module.css';
 
 /**
@@ -24,6 +26,19 @@ import styles from './Inspector.module.css';
  * Fields are rendered from the piece's `props` metadata (fetched from the server), so a new
  * piece becomes configurable without a line of UI code.
  */
+/** Same mapping the canvas and the outline use, so one step wears one icon everywhere. */
+const PIECE_ICON: Record<string, IconName> = {
+  '@maildrill/email': 'mail',
+  '@maildrill/sms': 'sms',
+  '@maildrill/whatsapp': 'whatsapp',
+  '@maildrill/voice': 'voice',
+  '@maildrill/subscribers': 'subscribers',
+  '@maildrill/campaigns': 'campaigns',
+  '@maildrill/logic': 'clock',
+  '@maildrill/data': 'code',
+  '@maildrill/webhook': 'globe',
+};
+
 export default function Inspector({
   flow,
   pieces,
@@ -31,6 +46,8 @@ export default function Inspector({
   errors,
   onChange,
   onClose,
+  onDuplicate,
+  onDelete,
 }: {
   flow: FlowDefinition;
   pieces: PieceMeta[];
@@ -39,6 +56,9 @@ export default function Inspector({
   errors: string[];
   onChange: (next: FlowDefinition) => void;
   onClose: () => void;
+  /** Step actions live here too — this is where the cursor already is. */
+  onDuplicate?: (stepName: string) => void;
+  onDelete?: (stepName: string) => void;
 }) {
   const isTrigger = flow.trigger.name === selected;
   const step = isTrigger
@@ -106,31 +126,94 @@ export default function Inspector({
     );
   };
 
+  /*
+   * Route each message to the field it is about.
+   *
+   * The validator phrases them as `"Subject" is required.`, so the quoted display name
+   * identifies the prop. One amber block at the top listed three problems without saying
+   * which control fixed which; anchored to the field, the message is the instruction.
+   * Anything that names no field (branch and flow-level problems) still shows at the top.
+   */
+  const fieldErrors = new Map<string, string>();
+  const panelErrors: string[] = [];
+  for (const message of errors) {
+    const quoted = /^"([^"]+)"/.exec(message)?.[1];
+    const key = quoted
+      ? Object.entries(definition?.props ?? {}).find(([, prop]) => prop.displayName === quoted)?.[0]
+      : undefined;
+    if (key) fieldErrors.set(key, message);
+    else panelErrors.push(message);
+  }
+
+  const kindLabel = isTrigger ? 'Trigger' : (piece?.displayName ?? 'Step');
+  const accent = `var(${definition?.accent ?? piece?.accent ?? '--text3'})`;
+  const headIcon: IconName = isTrigger
+    ? 'zap'
+    : step.type === 'ROUTER'
+      ? 'branch'
+      : step.type === 'LOOP_ON_ITEMS'
+        ? 'loop'
+        : (PIECE_ICON[pieceName ?? ''] ?? 'zap');
+
   return (
     <aside className={styles.panel} aria-label="Step settings">
+      {/*
+        The header IS the step: icon, its name edited in place, and what kind of step it
+        is. Previously this row said only "STEP" and the identity sat below it in a field
+        called "Name on the canvas" — renaming is a rare action that was occupying the
+        panel's most valuable row, above the configuration people actually came for.
+      */}
       <div className={styles.head}>
-        <span className={styles.headTitle}>{isTrigger ? 'Trigger' : 'Step'}</span>
-        <button type="button" className="kbtn" aria-label="Close settings" onClick={onClose}>
+        <span className={styles.headIcon} style={{ color: accent }}>
+          <Icon name={headIcon} size={16} />
+        </span>
+        <span className={styles.headText}>
+          <input
+            className={styles.headName}
+            value={step.displayName}
+            aria-label={`${kindLabel} name`}
+            onChange={(e) => rename(e.target.value)}
+          />
+          <span className={styles.headKind}>{kindLabel}</span>
+        </span>
+        {!isTrigger && onDuplicate ? (
+          <button
+            type="button"
+            className={styles.headBtn}
+            aria-label="Duplicate this step"
+            title="Duplicate"
+            onClick={() => onDuplicate(selected)}
+          >
+            <Icon name="copy" size={14} />
+          </button>
+        ) : null}
+        {!isTrigger && onDelete ? (
+          <button
+            type="button"
+            className={`${styles.headBtn} ${styles.headBtnDanger}`}
+            aria-label="Delete this step"
+            title="Delete"
+            onClick={() => onDelete(selected)}
+          >
+            <Icon name="trash" size={14} />
+          </button>
+        ) : null}
+        <button
+          type="button"
+          className={styles.headBtn}
+          aria-label="Close settings"
+          onClick={onClose}
+        >
           <Icon name="x" size={15} />
         </button>
       </div>
 
       <div className={styles.body}>
-        <label className={styles.field}>
-          <span className={styles.label}>Name on the canvas</span>
-          <input
-            type="text"
-            className={styles.input}
-            value={step.displayName}
-            onChange={(e) => rename(e.target.value)}
-          />
-        </label>
-
         {definition ? <p className={styles.about}>{definition.description}</p> : null}
 
-        {errors.length > 0 ? (
+        {panelErrors.length > 0 ? (
           <ul className={styles.errors}>
-            {errors.map((message) => (
+            {panelErrors.map((message) => (
               <li key={message}>
                 <Icon name="alert-triangle" size={13} /> {message}
               </li>
@@ -178,6 +261,7 @@ export default function Inspector({
                 propKey={key}
                 prop={prop}
                 value={values[key]}
+                error={fieldErrors.get(key)}
                 onChange={(next) => setInput(key, next)}
                 onInsertData={(apply) => setPicker({ apply })}
               />
@@ -185,59 +269,70 @@ export default function Inspector({
           : null}
 
         {pieceStep ? (
-          <details className={styles.advanced}>
-            <summary>Advanced</summary>
-            <label className={styles.checkbox}>
-              <input
-                type="checkbox"
-                checked={pieceStep.settings.errorHandling?.continueOnFailure ?? false}
-                onChange={(e) =>
-                  onChange(
-                    updateStep(flow, selected, (current) => {
-                      if (current.type !== 'PIECE') return current;
-                      current.settings = {
-                        ...current.settings,
-                        errorHandling: {
-                          ...current.settings.errorHandling,
-                          continueOnFailure: e.target.checked,
-                        },
-                      };
-                      return current;
-                    }),
-                  )
-                }
-              />
-              <span>
+          <div className={styles.advanced}>
+            <div className={styles.checkbox}>
+              <div className={styles.checkboxBody}>
                 Carry on if this step fails
                 <em>The run continues and the failure is recorded in the log.</em>
-              </span>
-            </label>
-            <label className={styles.checkbox}>
-              <input
-                type="checkbox"
-                checked={pieceStep.settings.errorHandling?.retryOnFailure !== false}
-                onChange={(e) =>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={pieceStep.settings.errorHandling?.continueOnFailure ?? false}
+                aria-label="Carry on if this step fails"
+                className={`${styles.switch} ${pieceStep.settings.errorHandling?.continueOnFailure ? styles.isOn : ''}`}
+                onClick={() =>
                   onChange(
                     updateStep(flow, selected, (current) => {
                       if (current.type !== 'PIECE') return current;
+                      const next = !(current.settings.errorHandling?.continueOnFailure ?? false);
                       current.settings = {
                         ...current.settings,
                         errorHandling: {
                           ...current.settings.errorHandling,
-                          retryOnFailure: e.target.checked,
+                          continueOnFailure: next,
                         },
                       };
                       return current;
                     }),
                   )
                 }
-              />
-              <span>
+              >
+                <span className={styles.switchKnob} />
+              </button>
+            </div>
+            <div className={styles.checkbox}>
+              <div className={styles.checkboxBody}>
                 Retry after a temporary failure
                 <em>Timeouts and rate limits only; a rejected input is never retried.</em>
-              </span>
-            </label>
-          </details>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={pieceStep.settings.errorHandling?.retryOnFailure !== false}
+                aria-label="Retry after a temporary failure"
+                className={`${styles.switch} ${pieceStep.settings.errorHandling?.retryOnFailure !== false ? styles.isOn : ''}`}
+                onClick={() =>
+                  onChange(
+                    updateStep(flow, selected, (current) => {
+                      if (current.type !== 'PIECE') return current;
+                      const next = current.settings.errorHandling?.retryOnFailure === false;
+                      current.settings = {
+                        ...current.settings,
+                        errorHandling: {
+                          ...current.settings.errorHandling,
+                          retryOnFailure: next,
+                        },
+                      };
+                      return current;
+                    }),
+                  )
+                }
+              >
+                <span className={styles.switchKnob} />
+              </button>
+            </div>
+          </div>
         ) : null}
       </div>
 
@@ -353,6 +448,7 @@ function ExpressionInput({
   id,
   label,
   describedBy,
+  invalid,
   value,
   placeholder,
   multiline,
@@ -362,6 +458,7 @@ function ExpressionInput({
   id: string;
   label: string;
   describedBy?: string;
+  invalid?: boolean;
   value: string;
   placeholder?: string;
   multiline?: boolean;
@@ -382,8 +479,17 @@ function ExpressionInput({
     onChange(`${value.slice(0, start)}${expression}${value.slice(end)}`);
   };
 
+  /*
+   * "Insert data" sits INSIDE the control, not as a text link under it.
+   *
+   * It is the panel's most-used affordance — it is how you avoid typing expression syntax
+   * by hand — and three of them stacked under three fields was the noisiest thing in the
+   * panel while also separating each hint from the field it described. Inside the field it
+   * reads as part of the control, and it matches the condition builder two sections down,
+   * which already put it there.
+   */
   return (
-    <div className={styles.expression}>
+    <div className={`${styles.expression} ${multiline ? styles.expressionMultiline : ''}`}>
       {multiline ? (
         <textarea
           id={id}
@@ -393,6 +499,7 @@ function ExpressionInput({
           value={value}
           placeholder={placeholder}
           aria-describedby={describedBy}
+          aria-invalid={invalid}
           onChange={(e) => onChange(e.target.value)}
         />
       ) : (
@@ -404,6 +511,7 @@ function ExpressionInput({
           value={value}
           placeholder={placeholder}
           aria-describedby={describedBy}
+          aria-invalid={invalid}
           onChange={(e) => onChange(e.target.value)}
         />
       )}
@@ -411,9 +519,10 @@ function ExpressionInput({
         type="button"
         className={styles.insertBtn}
         aria-label={`Insert data into ${label}`}
+        title="Insert data from an earlier step"
         onClick={() => onInsertData(insert)}
       >
-        <Icon name="variable" size={13} /> Insert data
+        <Icon name="variable" size={14} />
       </button>
     </div>
   );
@@ -423,12 +532,15 @@ function PropField({
   propKey,
   prop,
   value,
+  error,
   onChange,
   onInsertData,
 }: {
   propKey: string;
   prop: PropMeta;
   value: unknown;
+  /** Validation message for THIS field, rendered under its control. */
+  error?: string;
   onChange: (next: unknown) => void;
   onInsertData: (apply: (expression: string) => void) => void;
 }) {
@@ -463,74 +575,88 @@ function PropField({
   const label = (
     <span className={styles.label}>
       {prop.displayName}
-      {prop.required ? <em className={styles.required}> required</em> : null}
+      {/* A marker, not a word: "Subscriber required" read as the label's own text. */}
+      {prop.required ? (
+        <abbr className={styles.required} title="Required">
+          *
+        </abbr>
+      ) : null}
     </span>
   );
 
-  const describedBy = prop.description ? `${propKey}-desc` : undefined;
-  const description = prop.description ? (
-    <span id={describedBy} className={styles.help}>
+  const errorId = error ? `${propKey}-err` : undefined;
+  const describedBy =
+    [errorId, prop.description ? `${propKey}-desc` : null].filter(Boolean).join(' ') || undefined;
+  /* The message replaces the hint rather than stacking on it: when a field is wrong, what
+     to do about it is the only thing worth reading. */
+  const description = error ? (
+    <span id={errorId} className={styles.fieldError} role="alert">
+      <Icon name="alert-triangle" size={12} />
+      {error}
+    </span>
+  ) : prop.description ? (
+    <span id={`${propKey}-desc`} className={styles.help}>
       {prop.description}
     </span>
   ) : null;
+  const invalid = error ? true : undefined;
 
   switch (prop.type) {
     case 'CHECKBOX':
       return (
-        <label className={styles.checkbox}>
-          <input
-            type="checkbox"
-            checked={Boolean(value)}
-            onChange={(e) => onChange(e.target.checked)}
-          />
-          <span>
+        <div className={styles.checkbox}>
+          <div className={styles.checkboxBody}>
             {prop.displayName}
             {prop.description ? <em>{prop.description}</em> : null}
-          </span>
-        </label>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={Boolean(value)}
+            aria-label={prop.displayName}
+            className={`${styles.switch} ${value ? styles.isOn : ''}`}
+            onClick={() => onChange(!value)}
+          >
+            <span className={styles.switchKnob} />
+          </button>
+        </div>
       );
 
     case 'STATIC_DROPDOWN':
       return (
-        <label className={styles.field}>
-          {label}
-          <select
-            className={styles.input}
+        <div className={styles.field}>
+          <div className={styles.labelWrap}>{label}</div>
+          <SelectMenu
+            label={prop.displayName}
             value={text}
-            aria-describedby={describedBy}
-            onChange={(e) => onChange(e.target.value)}
-          >
-            <option value="">Choose…</option>
-            {(prop.options ?? []).map((option) => (
-              <option key={String(option.value)} value={String(option.value)}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            options={(prop.options ?? []).map((option) => ({
+              value: String(option.value),
+              label: option.label,
+            }))}
+            describedBy={describedBy}
+            invalid={invalid}
+            onChange={(next) => onChange(next)}
+          />
           {description}
-        </label>
+        </div>
       );
 
     case 'DYNAMIC_DROPDOWN':
       return (
-        <label className={styles.field}>
-          {label}
-          <select
-            className={styles.input}
+        <div className={styles.field}>
+          <div className={styles.labelWrap}>{label}</div>
+          <SelectMenu
+            label={prop.displayName}
             value={text}
+            options={options}
+            placeholder={loading ? 'Loading…' : 'Choose…'}
             disabled={loading}
-            aria-describedby={describedBy}
-            onChange={(e) => onChange(e.target.value)}
-          >
-            <option value="">{loading ? 'Loading…' : 'Choose…'}</option>
-            {options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            describedBy={describedBy}
+            invalid={invalid}
+            onChange={(next) => onChange(next)}
+          />
           {description}
-        </label>
+        </div>
       );
 
     case 'NUMBER':
@@ -542,6 +668,7 @@ function PropField({
             className={styles.input}
             value={text}
             aria-describedby={describedBy}
+            aria-invalid={invalid}
             onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
           />
           {description}
@@ -561,6 +688,7 @@ function PropField({
             label={prop.displayName}
             describedBy={describedBy}
             multiline
+            invalid={invalid}
             value={text}
             placeholder={prop.placeholder}
             onChange={onChange}
@@ -580,6 +708,7 @@ function PropField({
             id={fieldId}
             label={prop.displayName}
             describedBy={describedBy}
+            invalid={invalid}
             value={text}
             placeholder={prop.placeholder}
             onChange={onChange}

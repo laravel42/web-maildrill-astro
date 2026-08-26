@@ -475,3 +475,92 @@ export function removeBranch(
     return step;
   });
 }
+
+// --- outline ------------------------------------------------------------------------
+
+/**
+ * A flat, indented view of the flow for the editor's sidebar.
+ *
+ * The canvas is the workspace; this is the map. A journey with a dozen steps and two
+ * branches does not fit on screen, so the outline is what answers "what is in this
+ * automation", "where am I", and "which step is the broken one" without panning.
+ */
+export interface OutlineRow {
+  /** Stable key, and the step the row selects (branch rows select their router). */
+  id: string;
+  kind: 'trigger' | 'step' | 'branch';
+  stepName: string;
+  label: string;
+  /** Nesting level; branch children sit one level under their path label. */
+  depth: number;
+  type: FlowActionType | 'TRIGGER';
+  pieceName: string | null;
+  /** Branch rows only — an unconditional "everything else" path reads differently. */
+  isFallback?: boolean;
+}
+
+export function outlineRows(flow: FlowDefinition): OutlineRow[] {
+  const rows: OutlineRow[] = [];
+  const triggerSettings = flow.trigger.settings as { pieceName?: string };
+
+  rows.push({
+    id: `trigger:${flow.trigger.name}`,
+    kind: 'trigger',
+    stepName: flow.trigger.name,
+    label: flow.trigger.displayName,
+    depth: 0,
+    type: 'TRIGGER',
+    pieceName: triggerSettings.pieceName ?? null,
+  });
+
+  const walk = (step: FlowStep | null | undefined, depth: number): void => {
+    let current = step;
+    while (current) {
+      rows.push({
+        id: `step:${current.name}`,
+        kind: 'step',
+        stepName: current.name,
+        label: current.displayName,
+        depth,
+        type: current.type,
+        pieceName: current.type === 'PIECE' ? current.settings.pieceName : null,
+      });
+
+      if (current.type === 'ROUTER') {
+        const router = current;
+        router.settings.branches.forEach((branch, index) => {
+          rows.push({
+            id: `branch:${router.name}:${index}`,
+            kind: 'branch',
+            stepName: router.name,
+            label: branch.branchName,
+            depth: depth + 1,
+            type: 'ROUTER',
+            pieceName: null,
+            isFallback: branch.branchType === 'FALLBACK',
+          });
+          walk(router.children[index] ?? null, depth + 2);
+        });
+      }
+
+      if (current.type === 'LOOP_ON_ITEMS') {
+        const loop = current;
+        rows.push({
+          id: `branch:${loop.name}:body`,
+          kind: 'branch',
+          stepName: loop.name,
+          label: 'For each item',
+          depth: depth + 1,
+          type: 'LOOP_ON_ITEMS',
+          pieceName: null,
+        });
+        walk(loop.firstLoopAction ?? null, depth + 2);
+      }
+
+      current = current.nextAction ?? null;
+    }
+  };
+
+  walk(flow.trigger.nextAction, 0);
+  return rows;
+}

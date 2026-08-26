@@ -162,7 +162,7 @@ export default function AppAutomations({
         </div>
       ) : null}
 
-      <div className="atable">
+      <div className={`atable ${styles.table}`}>
         <div className={styles.toolbar}>
           <div className={styles.search}>
             <Icon name="search" size={15} className={styles.searchic} />
@@ -199,9 +199,9 @@ export default function AppAutomations({
         <div className={`athead ${styles.grid}`}>
           <div>Name</div>
           <div>Trigger</div>
-          <div>Status</div>
+          <div className={styles.colCenter}>Status</div>
           <div className={styles.numeric}>Runs</div>
-          <div>Last run</div>
+          <div className={styles.colCenter}>Last run</div>
           <div />
         </div>
 
@@ -228,7 +228,7 @@ export default function AppAutomations({
           filtered.map((row) => (
             <div
               key={row.id}
-              className={`atrow ${styles.grid}`}
+              className={`atrow ${styles.grid}${menuFor === row.id ? ` ${styles.rowOpen}` : ''}`}
               role="link"
               tabIndex={0}
               onClick={() => {
@@ -247,23 +247,16 @@ export default function AppAutomations({
                 ) : null}
               </div>
               <div className={styles.muted}>{row.triggerLabel ?? '—'}</div>
-              <div>
+              <div className={styles.colCenter}>
                 <span className={`astatus ${statusChipClass(row.status)}`}>
                   {STATUS_LABEL[row.status]}
                 </span>
               </div>
               <div className={`${styles.numeric} tnum`}>{row.runCount.toLocaleString()}</div>
-              <div className={styles.muted}>
+              <div className={`${styles.muted} ${styles.colCenter}`}>
                 {row.lastRunAt ? <TimeAgo at={row.lastRunAt} /> : 'Never'}
               </div>
               <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
-                <a
-                  className="sbtn"
-                  href={routes.app.automationRuns(row.id)}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Runs
-                </a>
                 <button
                   type="button"
                   className="kbtn"
@@ -278,6 +271,9 @@ export default function AppAutomations({
                   <div className={styles.menu} role="menu" ref={menuRef}>
                     <a role="menuitem" href={routes.app.automation(row.id)}>
                       <Icon name="edit" size={14} /> Edit
+                    </a>
+                    <a role="menuitem" href={routes.app.automationRuns(row.id)}>
+                      <Icon name="lists" size={14} /> Show runs
                     </a>
                     {row.status === 'active' ? (
                       <button type="button" role="menuitem" onClick={() => void act(row, 'pause')}>

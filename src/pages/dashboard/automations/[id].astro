@@ -51,10 +51,12 @@ if (session?.user?.id && session.activeTenantId && id) {
 const title = automation?.name ?? 'Automation';
 ---
 
-<AppLayout
-  title={title}
-  crumbs={[{ label: 'Automations', href: '/dashboard/automations' }, { label: title }]}
->
+{
+  /* No crumbs: the composer is a full-screen editor that covers the app chrome, exactly
+    like the channel template builders, so a breadcrumb behind it would never be seen. The
+    way back out is the "← Automations" control in the editor's own bar. */
+}
+<AppLayout title={title}>
   {
     automation ? (
       <AutomationBuilderIsland client:load automation={automation} pieces={pieces} />

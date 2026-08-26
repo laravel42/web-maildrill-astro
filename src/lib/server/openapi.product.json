@@ -1855,32 +1855,6 @@
                                     },
                                     "gdprConsent": {
                                         "type": "boolean"
-                                    },
-                                    "doubleOptIn": {
-                                        "type": "boolean"
-                                    },
-                                    "doubleOptOut": {
-                                        "type": "boolean"
-                                    },
-                                    "doubleOptInTemplateId": {
-                                        "type": "string",
-                                        "format": "uuid",
-                                        "nullable": true
-                                    },
-                                    "doubleOptOutTemplateId": {
-                                        "type": "string",
-                                        "format": "uuid",
-                                        "nullable": true
-                                    },
-                                    "welcomeEmailTemplateId": {
-                                        "type": "string",
-                                        "format": "uuid",
-                                        "nullable": true
-                                    },
-                                    "goodbyeEmailTemplateId": {
-                                        "type": "string",
-                                        "format": "uuid",
-                                        "nullable": true
                                     }
                                 },
                                 "required": [
@@ -2216,32 +2190,6 @@
                                     },
                                     "gdprConsent": {
                                         "type": "boolean"
-                                    },
-                                    "doubleOptIn": {
-                                        "type": "boolean"
-                                    },
-                                    "doubleOptOut": {
-                                        "type": "boolean"
-                                    },
-                                    "doubleOptInTemplateId": {
-                                        "type": "string",
-                                        "format": "uuid",
-                                        "nullable": true
-                                    },
-                                    "doubleOptOutTemplateId": {
-                                        "type": "string",
-                                        "format": "uuid",
-                                        "nullable": true
-                                    },
-                                    "welcomeEmailTemplateId": {
-                                        "type": "string",
-                                        "format": "uuid",
-                                        "nullable": true
-                                    },
-                                    "goodbyeEmailTemplateId": {
-                                        "type": "string",
-                                        "format": "uuid",
-                                        "nullable": true
                                     }
                                 },
                                 "additionalProperties": false

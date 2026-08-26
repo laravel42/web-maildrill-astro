@@ -7,6 +7,7 @@ import {
   insertStep,
   moveStep,
   nextStepName,
+  outlineRows,
   removeBranch,
   removeStep,
   stepsBefore,
@@ -233,5 +234,45 @@ describe('updateStep / updateTrigger', () => {
     }));
     expect(next.trigger.displayName).toBe('Campaign delivered');
     expect(names(next)).toEqual(['a']);
+  });
+});
+
+describe('outlineRows', () => {
+  it('lists the trigger then the chain in execution order', () => {
+    const rows = outlineRows(flowWith(piece('a', piece('b'))));
+    expect(rows.map((r) => [r.kind, r.label, r.depth])).toEqual([
+      ['trigger', 'Subscriber created', 0],
+      ['step', 'a', 0],
+      ['step', 'b', 0],
+    ]);
+  });
+
+  it('nests each branch path and its steps under the router', () => {
+    const rows = outlineRows(flowWith(router('branch', [piece('yes'), piece('other')])));
+    expect(rows.map((r) => `${'  '.repeat(r.depth)}${r.kind}:${r.label}`)).toEqual([
+      'trigger:Subscriber created',
+      'step:Branch',
+      '  branch:Yes',
+      '    step:yes',
+      '  branch:Otherwise',
+      '    step:other',
+    ]);
+    // A fallback path is flagged so it can read differently from a condition.
+    expect(rows.find((r) => r.label === 'Otherwise')?.isFallback).toBe(true);
+    expect(rows.find((r) => r.label === 'Yes')?.isFallback).toBe(false);
+  });
+
+  it('points a branch row at its router, so selecting it opens the branch settings', () => {
+    const rows = outlineRows(flowWith(router('branch', [piece('yes'), null])));
+    expect(rows.find((r) => r.kind === 'branch')?.stepName).toBe('branch');
+  });
+
+  it('gives every row a unique key', () => {
+    const rows = outlineRows(flowWith(router('branch', [piece('yes'), piece('no')])));
+    expect(new Set(rows.map((r) => r.id)).size).toBe(rows.length);
+  });
+
+  it('is just the trigger when nothing has been added', () => {
+    expect(outlineRows(flowWith(null)).map((r) => r.kind)).toEqual(['trigger']);
   });
 });

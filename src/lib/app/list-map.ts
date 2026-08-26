@@ -6,14 +6,8 @@ export interface ApiList {
   id: string;
   name: string;
   color?: string | null;
-  /** Consent & lifecycle configuration stored on the list. */
+  /** Whether the list requires or records GDPR consent. */
   gdprConsent?: boolean | null;
-  doubleOptIn?: boolean | null;
-  doubleOptOut?: boolean | null;
-  doubleOptInTemplateId?: string | null;
-  doubleOptOutTemplateId?: string | null;
-  welcomeEmailTemplateId?: string | null;
-  goodbyeEmailTemplateId?: string | null;
   /** Free-form labels stored on the list (jsonb array). */
   tags?: string[] | null;
   /** Channels the list is for; at least one, defaulting to email. */

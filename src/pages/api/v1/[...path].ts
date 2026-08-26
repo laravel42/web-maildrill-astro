@@ -52,7 +52,35 @@ export const ALL: APIRoute = async (ctx) => {
     }
   }
 
-  const res = await fetch(target, { method: request.method, headers, body });
+  let res: Response;
+  try {
+    res = await fetch(target, { method: request.method, headers, body });
+  } catch (err) {
+    // Backend cold-start / restart (tsx watch) surfaces as undici "fetch failed"
+    // + ECONNREFUSED. Map that to a clean 502 so the island can recover instead
+    // of an unhandled TypeError in the Astro endpoint.
+    const cause = err instanceof Error ? err.cause : undefined;
+    const detail =
+      cause instanceof Error
+        ? cause.message
+        : err instanceof Error
+          ? err.message
+          : 'upstream unreachable';
+    console.error(`[bff] upstream fetch failed → ${target}: ${detail}`);
+    return new Response(
+      JSON.stringify({
+        error: 'bad_gateway',
+        message: 'Product API is unreachable. If you just restarted, wait a second and retry.',
+      }),
+      {
+        status: 502,
+        headers: {
+          'content-type': 'application/json',
+          'cache-control': 'no-store, no-cache, must-revalidate',
+        },
+      },
+    );
+  }
   const out = new Headers({
     'content-type': res.headers.get('content-type') ?? 'application/json',
     // Every route here is authenticated, tenant-scoped, and mutable — a

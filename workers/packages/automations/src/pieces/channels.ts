@@ -147,31 +147,11 @@ export const smsPiece = definePiece<MaildrillPieceContext>({
 export const whatsappPiece = definePiece<MaildrillPieceContext>({
   name: '@maildrill/whatsapp',
   displayName: 'WhatsApp',
-  description: 'Send WhatsApp messages and approved templates.',
+  description: 'Send Meta-approved WhatsApp templates.',
   version: '1.0.0',
   accent: '--ch-whatsapp',
   triggers: [],
   actions: [
-    defineAction<MaildrillPieceContext>({
-      name: 'send_whatsapp',
-      displayName: 'Send WhatsApp message',
-      description:
-        'Send free-form WhatsApp text. Outside a 24-hour customer service window Meta only delivers approved templates — use "Send WhatsApp template" for marketing.',
-      category: 'WhatsApp',
-      accent: '--ch-whatsapp',
-      props: {
-        subscriberId: subscriberProp,
-        text: Property.LongText({ displayName: 'Message', required: true }),
-      },
-      sampleOutput: { ...SAMPLE_SEND, channel: 'whatsapp' },
-      run: ({ propsValue, ctx }) =>
-        sendThroughMaildrill({
-          ctx,
-          channel: 'whatsapp',
-          subscriberId: propsValue.subscriberId,
-          content: { text: propsValue.text },
-        }),
-    }),
     defineAction<MaildrillPieceContext>({
       name: 'send_whatsapp_template',
       displayName: 'Send WhatsApp template',

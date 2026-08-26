@@ -610,24 +610,8 @@ export const lists = pgTable(
       .$type<(typeof channelEnum.enumValues)[number][]>()
       .notNull()
       .default(['email']),
-    // Consent & lifecycle configuration. Template references are SET NULL so
-    // deleting a template downgrades the list to its default behavior rather
-    // than blocking the delete.
+    // Whether the list requires or records GDPR consent.
     gdprConsent: boolean('gdpr_consent').notNull().default(false),
-    doubleOptIn: boolean('double_opt_in').notNull().default(false),
-    doubleOptOut: boolean('double_opt_out').notNull().default(false),
-    doubleOptInTemplateId: uuid('double_opt_in_template_id').references(() => templates.id, {
-      onDelete: 'set null',
-    }),
-    doubleOptOutTemplateId: uuid('double_opt_out_template_id').references(() => templates.id, {
-      onDelete: 'set null',
-    }),
-    welcomeEmailTemplateId: uuid('welcome_email_template_id').references(() => templates.id, {
-      onDelete: 'set null',
-    }),
-    goodbyeEmailTemplateId: uuid('goodbye_email_template_id').references(() => templates.id, {
-      onDelete: 'set null',
-    }),
     /**
      * Set when too much of the list turned out to be undeliverable. A
      * suspended list cannot be sent to until someone cleans it — see

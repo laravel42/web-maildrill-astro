@@ -25,32 +25,11 @@ function asObject(value: unknown, what: string): Record<string, unknown> {
 export const dataPiece = definePiece<MaildrillPieceContext>({
   name: '@maildrill/data',
   displayName: 'Data',
-  description: 'Set variables, reshape values and call external APIs.',
+  description: 'Call external APIs.',
   version: '1.0.0',
   accent: '--text3',
   triggers: [],
   actions: [
-    defineAction<MaildrillPieceContext>({
-      name: 'set_variables',
-      displayName: 'Set variables',
-      description:
-        'Compute named values from earlier steps. Later steps read them as {{steps.<this step>.output.<name>}}.',
-      category: 'Data',
-      accent: '--text3',
-      props: {
-        values: Property.Json({
-          displayName: 'Values',
-          description: 'A JSON object. Every string value may contain expressions.',
-          required: true,
-        }),
-      },
-      sampleOutput: { firstName: 'Ada', isTrial: true },
-      // Expressions inside `values` are already resolved by the engine before `run` is
-      // called, so this only has to hand the object back as the step's output.
-      async run({ propsValue }) {
-        return asObject(propsValue.values, 'values');
-      },
-    }),
     defineAction<MaildrillPieceContext>({
       name: 'http_request',
       displayName: 'HTTP request',

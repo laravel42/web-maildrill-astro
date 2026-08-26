@@ -14,15 +14,12 @@ describe('piece registry', () => {
     for (const required of [
       '@maildrill/email.send_email',
       '@maildrill/sms.send_sms',
-      '@maildrill/whatsapp.send_whatsapp',
-      '@maildrill/subscribers.find_subscriber',
-      '@maildrill/subscribers.update_subscriber',
+      '@maildrill/whatsapp.send_whatsapp_template',
       '@maildrill/subscribers.add_to_list',
       '@maildrill/subscribers.remove_from_list',
       '@maildrill/subscribers.add_tag',
       '@maildrill/subscribers.remove_tag',
       '@maildrill/data.http_request',
-      '@maildrill/data.set_variables',
       '@maildrill/logic.delay',
       '@maildrill/logic.filter',
     ]) {

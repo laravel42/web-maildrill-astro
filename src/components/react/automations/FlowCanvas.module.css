@@ -122,43 +122,6 @@
   flex: none;
 }
 
-/* Per-node tools. Hidden until hover or keyboard focus so the canvas stays calm, but
-   never display:none — that would take them out of the tab order entirely. */
-.nodeTools {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 1px;
-  padding-right: 5px;
-  opacity: 0;
-  transition: opacity var(--duration-fast) var(--ease-out);
-}
-.node:hover .nodeTools,
-.nodeTools:focus-within {
-  opacity: 1;
-}
-.tool {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 13px;
-  border: none;
-  background: none;
-  color: var(--muted2);
-  border-radius: 4px;
-}
-.tool:hover {
-  color: var(--text2);
-  background: var(--surface2);
-}
-.toolDanger:hover {
-  color: var(--danger-text);
-}
-.flip {
-  transform: rotate(180deg);
-}
-
 /* Live test-run state, drawn on the node itself so progress is visible on the canvas. */
 .status_running {
   border-color: var(--warning);

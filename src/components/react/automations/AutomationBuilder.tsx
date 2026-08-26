@@ -2,16 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../Icon';
 import ConfirmDialog from '../shared/ConfirmDialog';
 import FlowCanvas from './FlowCanvas';
+import FlowOutline from './FlowOutline';
 import Inspector from './Inspector';
 import StepPicker, { type PickerChoice } from './StepPicker';
 import TestPanel from './TestPanel';
-import { routes } from '@/config/routes';
 import { ApiError } from '@/lib/app/api';
 import {
   duplicateStep,
   EMPTY_FLOW,
   insertStep,
-  moveStep,
   nextStepName,
   removeStep,
   updateTrigger,
@@ -21,8 +20,6 @@ import {
 } from '@/lib/app/automation-flow';
 import {
   automationsApi,
-  statusChipClass,
-  STATUS_LABEL,
   type AutomationDetail,
   type PieceMeta,
   type ValidationIssue,
@@ -50,6 +47,14 @@ const HISTORY_LIMIT = 50;
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
+/** Same labels as `EditorHeader` — idle reads as Draft, autosave cycles through Saving… / Autosaved. */
+const SAVE_STATUS_LABEL: Record<SaveState, string> = {
+  idle: 'Draft',
+  saving: 'Saving…',
+  saved: 'Autosaved',
+  error: 'Not saved',
+};
+
 export interface BuilderProps {
   automation: AutomationDetail;
   /** Server-rendered catalog, so the composer is usable on first paint. */
@@ -74,13 +79,14 @@ export default function AutomationBuilder({ automation: initial, pieces }: Build
   const [dirty, setDirty] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
+  /** Bumped whenever the outline asks the canvas to bring a step into view. */
+  const [focus, setFocus] = useState<{ stepName: string; nonce: number } | undefined>();
   /** Per-step status from the run the test panel is watching; drawn on the canvas. */
   const [runStatus, setRunStatus] = useState<
     Record<string, 'succeeded' | 'failed' | 'running' | 'paused' | 'skipped'>
   >({});
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ text: string; tone: 'ok' | 'err' } | null>(null);
-  const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(initial.name);
 
   const saveTimer = useRef<number | null>(null);
@@ -377,7 +383,6 @@ export default function AutomationBuilder({ automation: initial, pieces }: Build
   };
 
   const commitName = async () => {
-    setRenaming(false);
     const trimmed = name.trim();
     if (!trimmed || trimmed === automation.name) {
       setName(automation.name);
@@ -394,37 +399,7 @@ export default function AutomationBuilder({ automation: initial, pieces }: Build
   return (
     <div className={styles.shell}>
       <header className={styles.topbar}>
-        <a className={styles.back} href={routes.app.automations}>
-          <Icon name="arrow-right" size={15} className={styles.backIcon} />
-          Automations
-        </a>
-
-        <div className={styles.title}>
-          {renaming ? (
-            <input
-              className={styles.nameInput}
-              value={name}
-              autoFocus
-              aria-label="Automation name"
-              onChange={(e) => setName(e.target.value)}
-              onBlur={() => void commitName()}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void commitName();
-                if (e.key === 'Escape') {
-                  setName(automation.name);
-                  setRenaming(false);
-                }
-              }}
-            />
-          ) : (
-            <button type="button" className={styles.nameButton} onClick={() => setRenaming(true)}>
-              {automation.name}
-              <Icon name="edit" size={13} />
-            </button>
-          )}
-          <span className={`astatus ${statusChipClass(automation.status)}`}>
-            {STATUS_LABEL[automation.status]}
-          </span>
+        <div className={styles.left}>
           {automation.hasUnpublishedChanges ? (
             <span className={styles.unpublished}>
               Draft v{automation.version} · published v{automation.publishedVersion}
@@ -432,62 +407,63 @@ export default function AutomationBuilder({ automation: initial, pieces }: Build
           ) : null}
         </div>
 
+        <div className={styles.center}>
+          <div className={styles.nameRow}>
+            <div className={styles.nameField}>
+              <span className={styles.nameIcon} aria-hidden="true">
+                <Icon name="automations" size={14} stroke={2} />
+              </span>
+              <input
+                className={styles.name}
+                value={name}
+                aria-label="Automation name"
+                placeholder="Untitled automation"
+                spellCheck={false}
+                onChange={(e) => setName(e.target.value)}
+                onBlur={() => void commitName()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') e.currentTarget.blur();
+                  if (e.key === 'Escape') {
+                    setName(automation.name);
+                    e.currentTarget.blur();
+                  }
+                }}
+              />
+            </div>
+            <button
+              type="button"
+              className={styles.publishBtn}
+              onClick={() => void publish()}
+              disabled={!canPublish || publishing}
+            >
+              <Icon name="check-circle" size={14} stroke={2} />
+              {publishing ? 'Publishing…' : 'Publish'}
+            </button>
+          </div>
+        </div>
+
         <div className={styles.actions}>
-          <span className={styles.saveState} aria-live="polite">
-            {saveState === 'saving'
-              ? 'Saving…'
-              : saveState === 'error'
-                ? 'Not saved'
-                : dirty
-                  ? 'Unsaved changes'
-                  : saveState === 'saved'
-                    ? 'Saved'
-                    : ''}
+          <span className={styles.status} role="status" aria-live="polite">
+            <span
+              className={`${styles.dot} ${saveState === 'saving' || saveState === 'error' ? styles.dotSaving : ''}`}
+            />
+            {SAVE_STATUS_LABEL[saveState]}
           </span>
           <button
             type="button"
-            className="kbtn"
-            aria-label="Undo"
-            disabled={past.length === 0}
-            onClick={undo}
-          >
-            <Icon name="undo" size={16} />
-          </button>
-          <button
-            type="button"
-            className="kbtn"
-            aria-label="Redo"
-            disabled={future.length === 0}
-            onClick={redo}
-          >
-            <Icon name="redo" size={16} />
-          </button>
-          <a className="sbtn" href={routes.app.automationRuns(automation.id)}>
-            Runs
-          </a>
-          <button
-            type="button"
-            className="sbtn"
+            className={styles.sbtn}
             onClick={() => setTestOpen(true)}
             disabled={!canPublish}
             title={canPublish ? 'Run this draft once' : 'Finish the highlighted steps first'}
           >
-            <Icon name="play" size={14} /> Test
+            <Icon name="play" size={14} /> Test flow
           </button>
           {automation.publishedVersion ? (
-            <button type="button" className="sbtn" onClick={() => void toggleActive()}>
+            <button type="button" className={styles.sbtn} onClick={() => void toggleActive()}>
               <Icon name={automation.status === 'active' ? 'pause' : 'play'} size={14} />
               {automation.status === 'active' ? 'Pause' : 'Resume'}
             </button>
           ) : null}
-          <button
-            type="button"
-            className="pbtn"
-            onClick={() => void publish()}
-            disabled={!canPublish || publishing}
-          >
-            {publishing ? 'Publishing…' : 'Publish'}
-          </button>
         </div>
       </header>
 
@@ -499,61 +475,26 @@ export default function AutomationBuilder({ automation: initial, pieces }: Build
       ) : null}
 
       <div className={styles.body}>
-        <aside className={styles.library} aria-label="Steps">
-          <h2 className={styles.libraryTitle}>Build</h2>
-          <p className={styles.libraryHint}>
-            {flow.trigger.type === 'EMPTY'
-              ? 'Start by choosing what sets this automation off.'
-              : 'Click a + on the canvas to add the next step.'}
-          </p>
-          <button
-            type="button"
-            className={styles.libraryBtn}
-            onClick={() => setPicker({ kind: 'trigger', slot: null })}
-          >
-            <Icon name="zap" size={15} />
-            <span>
-              <strong>
-                {flow.trigger.type === 'EMPTY' ? 'Choose a trigger' : 'Change trigger'}
-              </strong>
-              <em>What starts this automation</em>
-            </span>
-          </button>
-          <button
-            type="button"
-            className={styles.libraryBtn}
-            disabled={flow.trigger.type === 'EMPTY'}
-            onClick={() =>
-              setPicker({ kind: 'action', slot: { kind: 'after', stepName: lastStepName(flow) } })
+        <FlowOutline
+          flow={flow}
+          pieces={pieces}
+          selected={selected}
+          invalid={invalidSteps}
+          runStatus={testOpen ? runStatus : undefined}
+          checking={dirty || saveState === 'saving'}
+          onSelect={(stepName) => {
+            if (stepName === flow.trigger.name && flow.trigger.type === 'EMPTY') {
+              setPicker({ kind: 'trigger', slot: null });
+              return;
             }
-          >
-            <Icon name="plus" size={15} />
-            <span>
-              <strong>Add a step</strong>
-              <em>Appends to the end of the flow</em>
-            </span>
-          </button>
-
-          <h3 className={styles.libraryGroup}>Shortcuts</h3>
-          <dl className={styles.shortcuts}>
-            <div>
-              <dt>Undo / redo</dt>
-              <dd>⌘Z · ⇧⌘Z</dd>
-            </div>
-            <div>
-              <dt>Save now</dt>
-              <dd>⌘S</dd>
-            </div>
-            <div>
-              <dt>Delete step</dt>
-              <dd>⌫</dd>
-            </div>
-            <div>
-              <dt>Zoom</dt>
-              <dd>⌘scroll</dd>
-            </div>
-          </dl>
-        </aside>
+            setSelected(stepName);
+            setFocus({ stepName, nonce: Date.now() });
+          }}
+          onChangeTrigger={() => setPicker({ kind: 'trigger', slot: null })}
+          onAddStep={() =>
+            setPicker({ kind: 'action', slot: { kind: 'after', stepName: lastStepName(flow) } })
+          }
+        />
 
         <FlowCanvas
           flow={flow}
@@ -561,6 +502,7 @@ export default function AutomationBuilder({ automation: initial, pieces }: Build
           selected={selected}
           invalid={invalidSteps}
           runStatus={testOpen ? runStatus : undefined}
+          focus={focus}
           onSelect={(nameOrNull) => {
             if (nameOrNull === flow.trigger.name && flow.trigger.type === 'EMPTY') {
               setPicker({ kind: 'trigger', slot: null });
@@ -569,9 +511,6 @@ export default function AutomationBuilder({ automation: initial, pieces }: Build
             setSelected(nameOrNull);
           }}
           onAddAt={(slot) => setPicker({ kind: 'action', slot })}
-          onDelete={requestDelete}
-          onDuplicate={(stepName) => setFlow(duplicateStep(flow, stepName))}
-          onMove={(stepName, direction) => setFlow(moveStep(flow, stepName, direction))}
         />
 
         {selected ? (
@@ -582,6 +521,8 @@ export default function AutomationBuilder({ automation: initial, pieces }: Build
             errors={issuesByStep.get(selected) ?? []}
             onChange={setFlow}
             onClose={() => setSelected(null)}
+            onDuplicate={(stepName) => setFlow(duplicateStep(flow, stepName))}
+            onDelete={requestDelete}
           />
         ) : null}
       </div>

@@ -9,11 +9,7 @@ import {
   listTags,
   removeFromList,
   unassignTag,
-  updateSubscriber,
-  upsertSubscriber,
 } from '@maildrill/product';
-import { db, subscribers } from '@maildrill/database';
-import { and, eq } from 'drizzle-orm';
 import type { MaildrillPieceContext } from './context';
 
 const SAMPLE_SUBSCRIBER = {
@@ -199,101 +195,6 @@ export const subscribersPiece = definePiece<MaildrillPieceContext>({
   ],
   actions: [
     defineAction<MaildrillPieceContext>({
-      name: 'find_subscriber',
-      displayName: 'Find subscriber',
-      description: 'Look a subscriber up by email address.',
-      category: 'Subscribers',
-      accent: '--accent',
-      props: {
-        email: Property.ShortText({
-          displayName: 'Email',
-          required: true,
-          placeholder: '{{trigger.subscriber.email}}',
-        }),
-      },
-      sampleOutput: { found: true, subscriber: SAMPLE_SUBSCRIBER },
-      async run({ propsValue, ctx }) {
-        const email = String(propsValue.email ?? '')
-          .trim()
-          .toLowerCase();
-        if (!email) throw new ValidationError('email is required');
-        const [row] = await db
-          .select()
-          .from(subscribers)
-          .where(and(eq(subscribers.tenantId, ctx.tenantId), eq(subscribers.email, email)))
-          .limit(1);
-        // A miss is a legitimate result, not a failure: the branch after this step is how
-        // a workflow says "create them if they are new".
-        return { found: Boolean(row), subscriber: row ?? null };
-      },
-    }),
-    defineAction<MaildrillPieceContext>({
-      name: 'create_subscriber',
-      displayName: 'Create or update subscriber',
-      description: 'Upsert a subscriber by email.',
-      category: 'Subscribers',
-      accent: '--accent',
-      props: {
-        email: Property.ShortText({ displayName: 'Email', required: true }),
-        name: Property.ShortText({ displayName: 'Name' }),
-        phone: Property.ShortText({ displayName: 'Phone' }),
-        attributes: Property.Json({
-          displayName: 'Custom fields',
-          description: 'JSON object merged into the subscriber attributes.',
-        }),
-      },
-      sampleOutput: SAMPLE_SUBSCRIBER,
-      async run({ propsValue, ctx }) {
-        const email = String(propsValue.email ?? '').trim();
-        if (!email) throw new ValidationError('email is required');
-        if (ctx.dryRun) return { dryRun: true, wouldCreate: { email } };
-        return upsertSubscriber({
-          tenantId: ctx.tenantId,
-          email,
-          name: optionalString(propsValue.name),
-          phone: optionalString(propsValue.phone),
-          attributes: asRecord(propsValue.attributes),
-        });
-      },
-    }),
-    defineAction<MaildrillPieceContext>({
-      name: 'update_subscriber',
-      displayName: 'Update subscriber',
-      description: 'Change a subscriber’s name, phone, status or custom fields.',
-      category: 'Subscribers',
-      accent: '--accent',
-      props: {
-        subscriberId: Property.ShortText({
-          displayName: 'Subscriber ID',
-          required: true,
-          placeholder: '{{trigger.subscriber.id}}',
-        }),
-        name: Property.ShortText({ displayName: 'Name' }),
-        phone: Property.ShortText({ displayName: 'Phone' }),
-        status: Property.StaticDropdown({
-          displayName: 'Status',
-          options: [
-            { label: 'Active', value: 'active' },
-            { label: 'Unsubscribed', value: 'unsubscribed' },
-            { label: 'Bounced', value: 'bounced' },
-          ],
-        }),
-        attributes: Property.Json({ displayName: 'Custom fields' }),
-      },
-      sampleOutput: SAMPLE_SUBSCRIBER,
-      async run({ propsValue, ctx }) {
-        const sub = await requireSubscriber(ctx.tenantId, propsValue.subscriberId);
-        if (ctx.dryRun) return { dryRun: true, wouldUpdate: sub.id };
-        const updated = await updateSubscriber(ctx.tenantId, sub.id, {
-          name: optionalString(propsValue.name),
-          phone: optionalString(propsValue.phone),
-          status: optionalStatus(propsValue.status),
-          attributes: asRecord(propsValue.attributes),
-        });
-        return updated ?? sub;
-      },
-    }),
-    defineAction<MaildrillPieceContext>({
       name: 'add_tag',
       displayName: 'Add tag',
       description: 'Tag a subscriber, creating the tag if it does not exist.',
@@ -396,29 +297,3 @@ export const subscribersPiece = definePiece<MaildrillPieceContext>({
     }),
   ],
 });
-
-function optionalString(value: unknown): string | undefined {
-  if (typeof value !== 'string') return undefined;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
-function optionalStatus(value: unknown): 'active' | 'unsubscribed' | 'bounced' | undefined {
-  return value === 'active' || value === 'unsubscribed' || value === 'bounced' ? value : undefined;
-}
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  if (value === null || value === undefined || value === '') return undefined;
-  if (typeof value === 'object' && !Array.isArray(value)) return value as Record<string, unknown>;
-  if (typeof value === 'string') {
-    try {
-      const parsed: unknown = JSON.parse(value);
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        return parsed as Record<string, unknown>;
-      }
-    } catch {
-      throw new ValidationError('custom fields must be a JSON object');
-    }
-  }
-  throw new ValidationError('custom fields must be a JSON object');
-}

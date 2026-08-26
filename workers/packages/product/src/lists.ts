@@ -45,12 +45,6 @@ export interface CreateListInput {
   channels?: Channel[];
   notes?: string | null;
   gdprConsent?: boolean;
-  doubleOptIn?: boolean;
-  doubleOptOut?: boolean;
-  doubleOptInTemplateId?: string | null;
-  doubleOptOutTemplateId?: string | null;
-  welcomeEmailTemplateId?: string | null;
-  goodbyeEmailTemplateId?: string | null;
 }
 
 /**
@@ -79,12 +73,6 @@ export async function createList(input: CreateListInput): Promise<ListRow> {
       channels: assertChannels(input.channels) ?? ['email'],
       notes: input.notes ?? null,
       gdprConsent: input.gdprConsent ?? false,
-      doubleOptIn: input.doubleOptIn ?? false,
-      doubleOptOut: input.doubleOptOut ?? false,
-      doubleOptInTemplateId: input.doubleOptInTemplateId ?? null,
-      doubleOptOutTemplateId: input.doubleOptOutTemplateId ?? null,
-      welcomeEmailTemplateId: input.welcomeEmailTemplateId ?? null,
-      goodbyeEmailTemplateId: input.goodbyeEmailTemplateId ?? null,
     })
     .returning();
   return rows[0]!;
@@ -1215,12 +1203,6 @@ export async function updateList(
     channels?: Channel[];
     notes?: string | null;
     gdprConsent?: boolean;
-    doubleOptIn?: boolean;
-    doubleOptOut?: boolean;
-    doubleOptInTemplateId?: string | null;
-    doubleOptOutTemplateId?: string | null;
-    welcomeEmailTemplateId?: string | null;
-    goodbyeEmailTemplateId?: string | null;
   },
 ): Promise<ListRow | null> {
   const channels = assertChannels(patch.channels);
