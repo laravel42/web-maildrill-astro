@@ -49,14 +49,17 @@ import {
   NAV,
   PANELS,
   PREPAID_BALANCE_USD,
+  replaceSettingsSectionUrl,
   ROLE_DESC,
   ROLE_LIST,
   ROLE_PERMS,
   ROSTER,
   roleTone,
+  sectionFromSearch,
   swatchColor,
   totalSent,
 } from './AppSettings.logic';
+import { verifiedDomainNames, writeVerifiedDomainsCache } from '@/lib/app/verified-domains';
 import styles from './AppSettings.module.css';
 
 /*
@@ -180,7 +183,11 @@ export default function AppSettings({
   initialByChannel?: ChannelBreakdown[];
   live?: boolean;
 } = {}) {
-  const [section, setSection] = useState<SectionKey>('usage');
+  const [section, setSection] = useState<SectionKey>(() => sectionFromSearch());
+  const selectSection = useCallback((next: SectionKey) => {
+    setSection(next);
+    replaceSettingsSectionUrl(next);
+  }, []);
   const [byChannel, setByChannel] = useState<ChannelBreakdown[]>(initialByChannel);
   const [form, setForm] = useState<Record<string, string>>({});
   const [toggles, setToggles] = useState<Record<ToggleKey, boolean>>(DEFAULT_TOGGLES);
@@ -219,6 +226,8 @@ export default function AppSettings({
     const res = await api.get<{ data: ApiDomain[]; configured: boolean }>('workspace/domains');
     setDomains(res.data);
     setDomainsConfigured(res.configured);
+    // Keep the campaigns-board From cache in sync (verify / remove / add).
+    writeVerifiedDomainsCache(verifiedDomainNames(res.data));
   }, []);
   const refreshKeys = useCallback(async () => {
     const res = await api.get<{ data: ApiWorkspaceKey[] }>('workspace/api-keys');
@@ -545,7 +554,7 @@ export default function AppSettings({
                 type="button"
                 className={`${styles.navitem}${active ? ' is-active' : ''}`}
                 aria-current={active ? 'page' : undefined}
-                onClick={() => setSection(n.key)}
+                onClick={() => selectSection(n.key)}
               >
                 <Icon name={n.icon} size={15} />
                 {n.label}
@@ -634,7 +643,7 @@ export default function AppSettings({
                   <button
                     type="button"
                     className={styles.ledgerLink}
-                    onClick={() => setSection('billing')}
+                    onClick={() => selectSection('billing')}
                   >
                     Add balance
                   </button>
@@ -699,7 +708,7 @@ export default function AppSettings({
                     <button
                       type="button"
                       className={styles.ledgerAlertCta}
-                      onClick={() => setSection('billing')}
+                      onClick={() => selectSection('billing')}
                     >
                       Add balance
                     </button>

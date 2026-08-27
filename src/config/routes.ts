@@ -47,6 +47,9 @@ export const routes = {
     media: '/dashboard/media',
     analytics: '/dashboard/analytics',
     settings: '/dashboard/settings',
+    /** Deep-link into a Settings subnav section (e.g. `domains`). */
+    settingsSection: (section: string) =>
+      `/dashboard/settings?section=${encodeURIComponent(section)}`,
   },
 } as const;
 

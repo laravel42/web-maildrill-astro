@@ -79,6 +79,8 @@ export type Props = {
   initialName?: string; // default '' (create) or the campaign name (edit)
   /** Saved email subject of the campaign being edited (email channel only). */
   initialSubject?: string;
+  /** Saved From address of the campaign being edited (email channel only). */
+  initialFrom?: string;
   /** Saved email open/click tracking flags (email channel only; default on). */
   initialTrackOpens?: boolean;
   initialTrackClicks?: boolean;
@@ -97,6 +99,12 @@ export type Props = {
   templates?: TemplateChoice[];
   /** Live outbound sender labels from the service (Infobip config). */
   senders?: ChannelSenders;
+  /**
+   * Verified workspace domain names for the email From select.
+   * `undefined` = still loading (board prefetches); a list (possibly empty) =
+   * ready — the wizard does not fetch domains itself.
+   */
+  verifiedDomains?: string[];
   onClose: () => void; // X / overlay click / Escape
   onDone: (msg: string, draft: CampaignDraft) => void; // final "Schedule campaign" / "Save changes"
 };

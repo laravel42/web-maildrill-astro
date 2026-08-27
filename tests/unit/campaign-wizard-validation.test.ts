@@ -5,6 +5,9 @@ import type { WizardValidationInput } from '@/components/react/CampaignWizard.lo
 const base: Omit<WizardValidationInput, 'step'> = {
   name: 'Summer Sale',
   subject: 'Summer Sale — 50% off',
+  fromEmail: 'No Reply <no-reply@example.com>',
+  verifiedDomains: ['example.com'],
+  domainsReady: true,
   channel: 'email',
   audienceIds: new Set(['list-1']),
   audienceList: [
@@ -23,6 +26,16 @@ describe('getStepBlockedReason', () => {
   it('requires a campaign name on step 1', () => {
     expect(getStepBlockedReason({ ...base, step: 1, name: '  ' })).toMatch(/campaign name/i);
     expect(getStepBlockedReason({ ...base, step: 1 })).toBeNull();
+  });
+
+  it('requires a verified sending domain and From on step 1 for live email', () => {
+    expect(
+      getStepBlockedReason({ ...base, step: 1, domainsReady: false }),
+    ).toMatch(/loading sending domains/i);
+    expect(
+      getStepBlockedReason({ ...base, step: 1, verifiedDomains: [], fromEmail: '' }),
+    ).toMatch(/sending domain/i);
+    expect(getStepBlockedReason({ ...base, step: 1, fromEmail: '' })).toMatch(/sender/i);
   });
 
   it('requires at least one audience on step 2', () => {

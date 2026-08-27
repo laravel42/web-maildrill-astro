@@ -193,12 +193,46 @@ export const TEMPLATES: Record<ChannelType, Template[]> = {
   ],
 };
 
+/** Canonical From label for a verified sending domain. */
+export function emailSenderForDomain(domainName: string): string {
+  return `No Reply <no-reply@${domainName}>`;
+}
+
+/** Domain part of a From string (`Name <a@b.com>` or bare `a@b.com`), or null. */
+export function domainFromSender(from: string): string | null {
+  const m = from.trim().match(/@([^>\s]+)/);
+  return m ? m[1].toLowerCase() : null;
+}
+
+export { verifiedDomainNames } from '@/lib/app/verified-domains';
+
+/**
+ * Pick a From label for the wizard: keep a valid current/initial value, else the
+ * first verified domain, else empty.
+ */
+export function resolveEmailFrom(
+  preferred: string | undefined,
+  domains: readonly string[],
+): string {
+  const options = domains.map(emailSenderForDomain);
+  if (preferred && options.includes(preferred)) return preferred;
+  const domain = preferred ? domainFromSender(preferred) : null;
+  if (domain && domains.includes(domain)) return emailSenderForDomain(domain);
+  return options[0] ?? '';
+}
+
 /** Inputs shared by per-step Continue gating and final send checks. */
 export type WizardValidationInput = {
   step: Step;
   name: string;
   /** Email subject line — required for the email channel, ignored otherwise. */
   subject: string;
+  /** Selected From for email (`No Reply <no-reply@domain>`). Ignored for other channels. */
+  fromEmail: string;
+  /** Verified (active) workspace domains available as From options. */
+  verifiedDomains: string[];
+  /** False until workspace domains have been fetched (or fetch skipped in preview). */
+  domainsReady: boolean;
   channel: ChannelType;
   audienceIds: Set<string>;
   audienceList: AudienceChoice[];
@@ -222,13 +256,33 @@ export function isWizardStepBlocked(input: WizardValidationInput): boolean {
 
 /** Why the current step cannot advance, or null when Continue / Send is allowed. */
 export function getStepBlockedReason(input: WizardValidationInput): string | null {
-  const { step, name, subject, channel, audienceIds, audienceList, message, selTpl, live } = input;
+  const {
+    step,
+    name,
+    subject,
+    fromEmail,
+    verifiedDomains,
+    domainsReady,
+    channel,
+    audienceIds,
+    audienceList,
+    message,
+    selTpl,
+    live,
+  } = input;
   const isEmail = channel === 'email';
 
   switch (step) {
     case 1:
       if (!name.trim()) return 'Enter a campaign name to continue.';
       if (isEmail && !subject.trim()) return 'Enter an email subject to continue.';
+      if (isEmail && live) {
+        if (!domainsReady) return 'Loading sending domains…';
+        if (verifiedDomains.length === 0) {
+          return 'Verify a sending domain in Settings before continuing.';
+        }
+        if (!fromEmail.trim()) return 'Choose a sender to continue.';
+      }
       return null;
     case 2:
       if (audienceList.length === 0) {
@@ -262,7 +316,19 @@ export function getStepBlockedReason(input: WizardValidationInput): string | nul
 export function getCampaignSendBlockedReason(
   input: Omit<WizardValidationInput, 'step'>,
 ): string | null {
-  const { channel, subject, audienceIds, audienceList, message, selTpl, live, mode } = input;
+  const {
+    channel,
+    subject,
+    fromEmail,
+    verifiedDomains,
+    domainsReady,
+    audienceIds,
+    audienceList,
+    message,
+    selTpl,
+    live,
+    mode,
+  } = input;
   if (!live || mode === 'edit') return null;
 
   const selectedCount = audienceList.filter((a) => audienceIds.has(a.id)).length;
@@ -270,6 +336,13 @@ export function getCampaignSendBlockedReason(
 
   const isEmail = channel === 'email';
   if (isEmail && !subject.trim()) return 'Enter an email subject before sending.';
+  if (isEmail) {
+    if (!domainsReady) return 'Loading sending domains…';
+    if (verifiedDomains.length === 0) {
+      return 'Verify a sending domain in Settings before sending.';
+    }
+    if (!fromEmail.trim()) return 'Choose a sender before sending.';
+  }
   const draftContent = isEmail ? undefined : message.trim() ? { text: message } : undefined;
   if (!selTpl?.id && !draftContent) {
     return isEmail
@@ -388,13 +461,16 @@ export function buildReviewRows(
   scheduledTime: ScheduleTime,
   senders?: ChannelSenders,
   tracking?: { trackOpens: boolean; trackClicks: boolean },
+  /** When set (email + verified domain), overrides the global channel sender display. */
+  fromEmail?: string,
 ): ReviewRow[] {
   const isEmail = channel === 'email';
   const sender = channelSender(channel, senders);
+  const senderValue = isEmail && fromEmail?.trim() ? fromEmail.trim() : sender.value;
   const rows: ReviewRow[] = [
     { label: 'Campaign', kind: 'text', value: name || 'Untitled' },
     { label: 'Channel', kind: 'channel', channel },
-    { label: 'Sender', kind: 'text', value: sender.value },
+    { label: 'Sender', kind: 'text', value: senderValue },
     { label: 'Audience', kind: 'audience', audiences: selectedAudiences },
     { label: 'Template', kind: 'text', value: selectedTemplateName ?? '—' },
     {

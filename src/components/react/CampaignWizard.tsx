@@ -15,9 +15,11 @@ import {
   buildReviewRows,
   buildStepDefs,
   CONTENT_SUB,
+  emailSenderForDomain,
   getStepBlockedReason,
   isWizardStepBlocked,
   partitionAudienceIds,
+  resolveEmailFrom,
   templateCard,
   templateKey,
   fixtureTemplateMessage,
@@ -27,6 +29,7 @@ import {
   type TrackingCapability,
 } from './CampaignWizard.logic';
 import { prepareAudiencesForChannel } from '@/lib/app/audience-map';
+import { routes } from '@/config/routes';
 import type { AudienceChoice, Props, Schedule, Step, Template } from './CampaignWizard.types';
 import styles from './CampaignWizard.module.css';
 import DatePicker from './shared/DatePicker';
@@ -331,6 +334,7 @@ export default function CampaignWizard({
   initialChannel = 'email',
   initialName = '',
   initialSubject = '',
+  initialFrom = '',
   initialTrackOpens = false,
   initialTrackClicks = false,
   initialAudienceIds = [],
@@ -341,6 +345,7 @@ export default function CampaignWizard({
   audiences,
   templates: templateChoices,
   senders,
+  verifiedDomains: verifiedDomainsProp,
   onClose,
   onDone,
 }: Props) {
@@ -348,6 +353,9 @@ export default function CampaignWizard({
   const [channel, setChannel] = useState<ChannelType>(initialChannel);
   const [name, setName] = useState<string>(initialName);
   const [subject, setSubject] = useState<string>(initialSubject);
+  const [fromEmail, setFromEmail] = useState<string>(() =>
+    resolveEmailFrom(initialFrom, verifiedDomainsProp ?? []),
+  );
   const [trackOpens, setTrackOpens] = useState<boolean>(initialTrackOpens);
   const [trackClicks, setTrackClicks] = useState<boolean>(initialTrackClicks);
   const [audienceIds, setAudienceIds] = useState<Set<string>>(() =>
@@ -387,7 +395,16 @@ export default function CampaignWizard({
     };
   }, [senders, audiences]);
 
+  /* Domains are prefetched by the board — sync From when they arrive or change. */
+  useEffect(() => {
+    if (verifiedDomainsProp === undefined) return;
+    setFromEmail((prev) => resolveEmailFrom(prev || initialFrom, verifiedDomainsProp));
+  }, [verifiedDomainsProp, initialFrom]);
+
+  const verifiedDomains = verifiedDomainsProp ?? [];
+  const domainsLoaded = verifiedDomainsProp !== undefined;
   const activeSender = channelSender(channel, resolvedSenders);
+  const emailSenderOptions = verifiedDomains.map(emailSenderForDomain);
 
   // Escape closes the modal.
   useEscapeClose(onClose);
@@ -521,6 +538,7 @@ export default function CampaignWizard({
   const draftContent = isEmail
     ? {
         ...(subject.trim() ? { subject: subject.trim() } : {}),
+        ...(fromEmail.trim() ? { from: fromEmail.trim() } : {}),
         ...trackingContent,
       }
     : {
@@ -552,6 +570,9 @@ export default function CampaignWizard({
     step,
     name,
     subject,
+    fromEmail,
+    verifiedDomains,
+    domainsReady: !live || domainsLoaded,
     channel,
     audienceIds,
     audienceList,
@@ -567,6 +588,9 @@ export default function CampaignWizard({
     step,
     name,
     subject,
+    fromEmail,
+    verifiedDomains,
+    domainsReady: !live || domainsLoaded,
     channel,
     audienceIds,
     audienceList,
@@ -663,6 +687,7 @@ export default function CampaignWizard({
     scheduledTime,
     resolvedSenders,
     { trackOpens, trackClicks },
+    isEmail ? fromEmail : undefined,
   );
 
   const labelStyle: CSSProperties = {
@@ -864,22 +889,78 @@ export default function CampaignWizard({
                   </>
                 )}
                 <label style={labelStyle}>{activeSender.label}</label>
-                <div
-                  style={{
-                    border: '1px solid var(--border2)',
-                    borderRadius: 10,
-                    padding: '10px 12px',
-                    fontSize: 13.5,
-                    marginBottom: 18,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    color: 'var(--text2)',
-                  }}
-                >
-                  {activeSender.value}
-                  <span style={{ color: 'var(--muted)' }}>▾</span>
-                </div>
+                {isEmail && live ? (
+                  <>
+                    <select
+                      value={fromEmail}
+                      onChange={(e) => setFromEmail(e.target.value)}
+                      disabled={!domainsLoaded || emailSenderOptions.length === 0}
+                      aria-label="Sender"
+                      style={{
+                        width: '100%',
+                        border: '1px solid var(--border2)',
+                        borderRadius: 10,
+                        padding: '10px 12px',
+                        fontSize: 13.5,
+                        marginBottom: emailSenderOptions.length === 0 && domainsLoaded ? 8 : 18,
+                        background: 'var(--surface)',
+                        color: 'var(--text)',
+                        appearance: 'none',
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23999' d='M1.4 0L6 4.6 10.6 0 12 1.4 6 7.4 0 1.4z'/%3E%3C/svg%3E")`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 12px center',
+                        paddingRight: 32,
+                      }}
+                    >
+                      {emailSenderOptions.length === 0 ? (
+                        <option value="">No verified domains</option>
+                      ) : (
+                        emailSenderOptions.map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                    {domainsLoaded && emailSenderOptions.length === 0 && (
+                      <p
+                        style={{
+                          margin: '0 0 18px',
+                          fontSize: 12.5,
+                          color: 'var(--muted)',
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        Verify a{' '}
+                        <a
+                          href={routes.app.settingsSection('domains')}
+                          className="acrd__link"
+                          style={{ fontSize: 'inherit' }}
+                        >
+                          sending domain
+                        </a>{' '}
+                        in Settings before you can send email.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <div
+                    style={{
+                      border: '1px solid var(--border2)',
+                      borderRadius: 10,
+                      padding: '10px 12px',
+                      fontSize: 13.5,
+                      marginBottom: 18,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      color: 'var(--text2)',
+                    }}
+                  >
+                    {activeSender.value}
+                    <span style={{ color: 'var(--muted)' }}>▾</span>
+                  </div>
+                )}
                 {isEmail && (
                   <>
                     <label style={labelStyle}>

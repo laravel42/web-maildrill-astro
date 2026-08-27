@@ -18,6 +18,13 @@ import { RATE_BUCKETS, rateBucket } from '@/lib/app/templates-data';
 import type { ApiTemplate } from '@/lib/app/template-map';
 import type { ChannelSenders } from '@/lib/app/channel-senders';
 import type { AudienceChoice, CampaignDraft, TemplateChoice } from './CampaignWizard.types';
+import type { ApiDomain } from './AppSettings.types';
+import {
+  readVerifiedDomainsCache,
+  subscribeVerifiedDomainsCache,
+  verifiedDomainNames,
+  writeVerifiedDomainsCache,
+} from '@/lib/app/verified-domains';
 import type { Campaign, CampaignStatus, ChannelType } from '@/types/app';
 import Icon from './Icon';
 import ColFilter from './shared/ColFilter';
@@ -152,13 +159,49 @@ export default function CampaignsBoard({
    * board, and fetching them cost ~876ms of blocking SSR (/v1/lists/audience
    * 601ms, /v1/templates 275ms / 1.1MB) on every board view — for a dialog most
    * visits never open. Fetched on first open and kept for the session.
+   *
+   * Verified sending domains are prefetched on mount instead: the From select
+   * is on step 1, and listing domains hits Infobip — waiting until the modal
+   * opens made the first paint feel stuck on “Loading sending domains…”.
    */
   const [audiences, setAudiences] = useState(initialAudiences);
   const [templates, setTemplates] = useState(initialTemplates);
+  const [verifiedDomains, setVerifiedDomains] = useState<string[] | undefined>(() =>
+    readVerifiedDomainsCache(),
+  );
+  const domainsFetchStarted = useRef(false);
   const [choicesFetched, setChoicesFetched] = useState(
     initialAudiences !== undefined && initialTemplates !== undefined,
   );
+
+  const loadVerifiedDomains = () => {
+    if (!live || domainsFetchStarted.current) return;
+    domainsFetchStarted.current = true;
+    void api
+      .get<{ data: ApiDomain[] }>('workspace/domains')
+      .then((res) => {
+        const names = verifiedDomainNames(res.data);
+        writeVerifiedDomainsCache(names);
+        setVerifiedDomains(names);
+      })
+      .catch(() => {
+        domainsFetchStarted.current = false;
+        setVerifiedDomains([]);
+      });
+  };
+
+  useEffect(() => {
+    loadVerifiedDomains();
+    // Prefetch once per live board mount — intentionally omits loadVerifiedDomains
+    // from deps (stable via domainsFetchStarted ref).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount/live only
+  }, [live]);
+
+  /* Settings (and other tabs) publish when a domain is verified/removed. */
+  useEffect(() => subscribeVerifiedDomainsCache(setVerifiedDomains), []);
+
   const loadWizardChoices = () => {
+    loadVerifiedDomains();
     if (choicesFetched || !live) return;
     setChoicesFetched(true);
     void fetch('/api/wizard-choices')
@@ -180,6 +223,7 @@ export default function CampaignsBoard({
         channel: ChannelType;
         name: string;
         subject: string;
+        from: string;
         trackOpens: boolean;
         trackClicks: boolean;
         audienceIds: string[];
@@ -585,6 +629,7 @@ useEffect(() => {
         channel: c.channel,
         name: c.name,
         subject: '',
+        from: '',
         trackOpens: false,
         trackClicks: false,
         audienceIds: [],
@@ -600,6 +645,7 @@ useEffect(() => {
       const content = (full.content ?? {}) as {
         text?: string;
         subject?: string;
+        from?: string;
         trackOpens?: unknown;
         trackClicks?: unknown;
       };
@@ -610,6 +656,7 @@ useEffect(() => {
         channel: (full.channel as ChannelType) ?? c.channel,
         name: full.name,
         subject: typeof content.subject === 'string' ? content.subject : '',
+        from: typeof content.from === 'string' ? content.from : '',
         // Absent on pre-flag campaigns → treated as on, matching the provider.
         trackOpens: content.trackOpens !== false,
         trackClicks: content.trackClicks !== false,
@@ -1252,6 +1299,7 @@ useEffect(() => {
           initialChannel={wizard.mode === 'edit' ? wizard.channel : 'email'}
           initialName={wizard.mode === 'edit' ? wizard.name : ''}
           initialSubject={wizard.mode === 'edit' ? wizard.subject : ''}
+          initialFrom={wizard.mode === 'edit' ? wizard.from : ''}
           initialTrackOpens={wizard.mode === 'edit' ? wizard.trackOpens : undefined}
           initialTrackClicks={wizard.mode === 'edit' ? wizard.trackClicks : undefined}
           initialAudienceIds={wizard.mode === 'edit' ? wizard.audienceIds : []}
@@ -1262,6 +1310,7 @@ useEffect(() => {
           audiences={audiences}
           templates={templates}
           senders={senders}
+          verifiedDomains={verifiedDomains}
           onClose={() => setWizard(null)}
           onDone={(_msg, draft) => {
             const w = wizard;

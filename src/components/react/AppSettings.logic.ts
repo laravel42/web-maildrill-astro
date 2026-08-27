@@ -22,6 +22,28 @@ export const NAV: { key: SectionKey; label: string; icon: IconName }[] = [
   { key: 'users', label: 'Users', icon: 'users' },
 ];
 
+/** True when `value` is a known Settings section key (including hidden panels). */
+export function isSectionKey(value: string | null | undefined): value is SectionKey {
+  return typeof value === 'string' && value in PANELS;
+}
+
+/** Initial Settings section from `?section=` (defaults to Usage). */
+export function sectionFromSearch(search: string = typeof window !== 'undefined' ? window.location.search : ''): SectionKey {
+  const raw = new URLSearchParams(search).get('section');
+  return isSectionKey(raw) ? raw : 'usage';
+}
+
+/** Keep the address bar in sync when the Settings subnav changes. */
+export function replaceSettingsSectionUrl(section: SectionKey): void {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  if (section === 'usage') url.searchParams.delete('section');
+  else url.searchParams.set('section', section);
+  const next = `${url.pathname}${url.search}${url.hash}`;
+  if (next === `${url.pathname}${window.location.search}${window.location.hash}`) return;
+  window.history.replaceState(null, '', next);
+}
+
 /* ------------------------------- panels --------------------------------- */
 export const PANELS: Record<SectionKey, Panel> = {
   usage: {
