@@ -7,6 +7,7 @@ import Inspector from './Inspector';
 import StepPicker, { type PickerChoice } from './StepPicker';
 import TestPanel from './TestPanel';
 import { ApiError } from '@/lib/app/api';
+import { routes } from '@/config/routes';
 import {
   duplicateStep,
   EMPTY_FLOW,
@@ -25,6 +26,25 @@ import {
   type ValidationIssue,
 } from '@/lib/app/automations';
 import styles from './AutomationBuilder.module.css';
+
+/** Same chevron as `EditorHeader` — keep the full-screen editors visually aligned. */
+function BackArrow() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M19 12H5M12 19l-7-7 7-7" />
+    </svg>
+  );
+}
 
 /**
  * The composer.
@@ -400,6 +420,13 @@ export default function AutomationBuilder({ automation: initial, pieces }: Build
     <div className={styles.shell}>
       <header className={styles.topbar}>
         <div className={styles.left}>
+          <a
+            className={styles.back}
+            href={routes.app.automations}
+            aria-label="Back to automations"
+          >
+            <BackArrow />
+          </a>
           {automation.hasUnpublishedChanges ? (
             <span className={styles.unpublished}>
               Draft v{automation.version} · published v{automation.publishedVersion}

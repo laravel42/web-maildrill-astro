@@ -43,6 +43,26 @@
   z-index: 1;
 }
 
+/* Same control as `EditorHeader` — returns to the automations list. */
+.back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  padding: 6px;
+  border-radius: 8px;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+.back:hover {
+  color: var(--text);
+  background: var(--surface2);
+}
+
 /* Same absolute centre slot as `EditorHeader`, so the name field lands on the
    same axis as every channel template editor. */
 .center {
