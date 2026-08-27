@@ -57,3 +57,14 @@ overrides:
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - esbuild
+
+# pnpm 11 holds back npm releases that are newer than its default cooling-off
+# window, a supply-chain guard. These PostHog packages were published inside
+# that window, so pnpm records the exact versions here to let them install.
+# Each entry pins one version: it turns into a no-op once that release ages
+# past the window, and any later fresh release is gated again.
+minimumReleaseAgeExclude:
+  - '@posthog/core@1.48.8'
+  - '@posthog/types@1.405.1'
+  - posthog-js@1.418.10
+  - posthog-node@5.50.0
