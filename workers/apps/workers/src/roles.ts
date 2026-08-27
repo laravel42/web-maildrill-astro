@@ -1,4 +1,14 @@
 import { config } from '@maildrill/config';
+import {
+  dispatchAutomationEvents,
+  executeAutomationRun,
+  installAutomationEventSink,
+  installSubscriptionFilter,
+  pruneUnwatchedSegments,
+  runAutomationMaintenance,
+  sweepSegmentMembership,
+  warmSubscriptions,
+} from '@maildrill/automations';
 import { pullBillingUsageResults, sweepBillingUsage } from '@maildrill/billing';
 import { createLogger, emitAppCommand, metrics } from '@maildrill/observability';
 import { createWorker, getQueue, QUEUE_NAMES } from '@maildrill/queues';
@@ -299,6 +309,127 @@ export function startCampaignDeliveryPoller(): StopFn {
         return `open=${result.openMessages} updated=0`;
       }
       return undefined;
+    },
+    log,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Automations
+//
+// Four roles, deliberately separate: a slow segment sweep must not delay a run,
+// and a hot run queue must not delay event dispatch. See
+// docs/architecture/automations-activepieces.md §5.
+// ---------------------------------------------------------------------------
+
+/**
+ * BullMQ worker: execute one segment of an automation run.
+ *
+ * `tenantId` in the job is a hint; `executeAutomationRun` re-reads the run row and takes
+ * the tenant from there, so a stale or forged job cannot make the engine act on another
+ * workspace.
+ */
+export function startAutomationRunWorker(): StopFn {
+  const log = createLogger({ worker: 'automation-run' });
+  recordWorkerStart('worker:automation-run');
+  // Runs emit domain events of their own (a tag added by a workflow), so the sink belongs
+  // in this process too — not only in the API.
+  installAutomationEventSink();
+  installSubscriptionFilter();
+  const worker = createWorker(
+    QUEUE_NAMES.automationRun,
+    async (job) => {
+      const data = job.data as { tenantId?: string; runId?: string };
+      if (!data?.tenantId || !data.runId) return;
+      const result = await executeAutomationRun(data.tenantId, data.runId);
+      if (result.runId) {
+        log.debug({ runId: result.runId, status: result.status }, 'automation run segment done');
+      }
+    },
+    { concurrency: config.automations.runConcurrency },
+  );
+  worker.on('failed', (job, err) =>
+    log.error({ jobId: job?.id, err: err.message }, 'automation run job failed'),
+  );
+  worker.on('ready', () => log.info('automation run worker ready'));
+  return async () => {
+    await worker.close();
+  };
+}
+
+/** Poller: drain `automation_events` into runs, and keep the subscription index warm. */
+export function startAutomationDispatcher(): StopFn {
+  const log = createLogger({ worker: 'automation-dispatch' });
+  recordWorkerStart('worker:automation-dispatch');
+  installAutomationEventSink();
+  installSubscriptionFilter();
+
+  // The index gates whether the product layer bothers to build event payloads at all, so
+  // it is refreshed on its own slower cadence rather than on every dispatch tick.
+  let sinceRefresh = Number.MAX_SAFE_INTEGER;
+  const REFRESH_EVERY_MS = 15_000;
+
+  return startPoller(
+    'automation-dispatch',
+    config.automations.dispatchIntervalMs,
+    async () => {
+      sinceRefresh += config.automations.dispatchIntervalMs;
+      if (sinceRefresh >= REFRESH_EVERY_MS) {
+        sinceRefresh = 0;
+        await warmSubscriptions();
+      }
+      const result = await dispatchAutomationEvents();
+      if (result.claimed === 0) return undefined;
+      log.info(result, 'dispatched automation events');
+      return `events=${result.claimed} runs=${result.runsCreated} failed=${result.failed}`;
+    },
+    log,
+  );
+}
+
+/**
+ * Poller: wake parked runs and rescue abandoned ones.
+ *
+ * This is the durable half of the delay mechanism — long waits are NOT held as BullMQ
+ * delayed jobs, so without this a month-long wait would never resume.
+ */
+export function startAutomationMaintenance(): StopFn {
+  const log = createLogger({ worker: 'automation-maintenance' });
+  recordWorkerStart('worker:automation-maintenance');
+  return startPoller(
+    'automation-maintenance',
+    config.automations.resumeIntervalMs,
+    async () => {
+      const result = await runAutomationMaintenance();
+      if (result.resumed === 0 && result.reclaimed === 0) return undefined;
+      return `resumed=${result.resumed} reclaimed=${result.reclaimed}`;
+    },
+    log,
+  );
+}
+
+/**
+ * Poller: diff segment membership for enter/exit triggers.
+ *
+ * Segments are rule-derived, so membership changes cannot be observed from a write — see
+ * `sweepSegmentMembership` for why the first pass over a segment is silent.
+ */
+export function startAutomationSegmentSweep(): StopFn {
+  const log = createLogger({ worker: 'automation-segments' });
+  recordWorkerStart('worker:automation-segments');
+  installAutomationEventSink();
+  installSubscriptionFilter();
+  return startPoller(
+    'automation-segments',
+    config.automations.segmentPollIntervalMs,
+    async () => {
+      const result = await sweepSegmentMembership();
+      // Membership for a segment nothing watches any more is dead weight; drop it on the
+      // same tick rather than adding another poller for it.
+      await pruneUnwatchedSegments();
+      if (result.entered === 0 && result.exited === 0) return undefined;
+      log.info(result, 'segment membership changed');
+      return `entered=${result.entered} exited=${result.exited}`;
     },
     log,
   );

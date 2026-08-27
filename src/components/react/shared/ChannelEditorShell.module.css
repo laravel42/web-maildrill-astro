@@ -19,6 +19,27 @@
   flex-direction: column;
 }
 
+/* Same 22px dot grid as the Automations composer (`FlowCanvas`). Scoped under
+   the shell so every channel template editor matches; `!important` beats the
+   MUI canvas bgcolor on the preview Box. */
+.stage :global(.eb-canvas) {
+  background-color: var(--surface2) !important;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    var(--border2) 1px,
+    transparent 0
+  ) !important;
+  background-size: 22px 22px !important;
+  background-position: 0 0 !important;
+}
+:global([data-theme='dark']) .stage :global(.eb-canvas) {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    var(--border) 1px,
+    transparent 0
+  ) !important;
+}
+
 .stage > * {
   flex: 1;
   min-height: 0;

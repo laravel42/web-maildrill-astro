@@ -186,6 +186,16 @@ export interface MessagingProvider {
    */
   createEntity?(input: { entityId: string; entityName: string }): Promise<EntityProvisionResult>;
   /**
+   * CPaaS X application. Account-wide rather than per workspace: an
+   * application models a use case or environment, an entity models the brand
+   * the traffic belongs to. Infobip rejects an entity that arrives without
+   * one, so this is what makes per-workspace attribution possible at all.
+   */
+  createApplication?(input: {
+    applicationId: string;
+    applicationName: string;
+  }): Promise<EntityProvisionResult>;
+  /**
    * Provider-side mailbox validation (Infobip `/email/2/validation`). Paid per
    * address, so callers must bound how many they send. Undefined on providers
    * without the capability, and callers skip validation entirely.

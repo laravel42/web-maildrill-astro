@@ -849,6 +849,12 @@ export default function AppSubscriberDetail({
                 </span>
               </div>
               <div className="adetail">
+                <span className="adetail__k">Phone</span>
+                <span className={`adetail__v ${styles.railValue}`}>
+                  {sub.phone ? <a href={`tel:${sub.phone}`}>{sub.phone}</a> : '—'}
+                </span>
+              </div>
+              <div className="adetail">
                 <span className="adetail__k">Subscribed</span>
                 <span className="adetail__v">
                   {view.subscribedLabel.replace(/^Subscribed\s+/i, '') || '—'}

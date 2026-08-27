@@ -219,11 +219,7 @@ export default function AppListDetail({
 
   const desc = (list.notes ?? '').trim();
 
-  const patchSetting = async (
-    key: 'doubleOptIn' | 'doubleOptOut' | 'gdprConsent',
-    next: boolean,
-    label: string,
-  ) => {
+  const patchSetting = async (key: 'gdprConsent', next: boolean, label: string) => {
     const prev = list[key] ?? false;
     setList((l) => ({ ...l, [key]: next }));
     try {
@@ -231,26 +227,6 @@ export default function AppListDetail({
       show(`${label} ${next ? 'enabled' : 'disabled'}`);
     } catch (e) {
       setList((l) => ({ ...l, [key]: prev }));
-      show(e instanceof ApiError ? e.message : 'Could not save changes');
-    }
-  };
-
-  const toggleTemplateSetting = async (
-    key: 'welcomeEmailTemplateId' | 'goodbyeEmailTemplateId',
-    label: string,
-  ) => {
-    const current = list[key] ?? null;
-    if (current == null) {
-      // No template picker yet — turning the switch on has nothing to point at.
-      show(`Pick a ${label} template first`);
-      return;
-    }
-    setList((l) => ({ ...l, [key]: null }));
-    try {
-      await api.patch(`lists/${list.id}`, { [key]: null });
-      show(`${label[0]!.toUpperCase()}${label.slice(1)} email disabled`);
-    } catch (e) {
-      setList((l) => ({ ...l, [key]: current }));
       show(e instanceof ApiError ? e.message : 'Could not save changes');
     }
   };
@@ -786,82 +762,6 @@ export default function AppListDetail({
             <section className={`${styles.card} ${styles.cardPad}`}>
               <p className={`adrawer__eyebrow ${styles.railEyebrow}`}>Settings</p>
               <ul className={styles.settings}>
-                <li className={styles.settingRow}>
-                  <div className={styles.stackBody}>
-                    <p className={styles.stackTitle}>Double opt-in</p>
-                    <p className={styles.stackDesc}>
-                      New subscribers must confirm by email before they receive campaigns.
-                    </p>
-                  </div>
-                  <button
-                    className={`${styles.switch} ${list.doubleOptIn ? styles.isOn : ''}`}
-                    type="button"
-                    role="switch"
-                    aria-checked={Boolean(list.doubleOptIn)}
-                    aria-label="Double opt-in"
-                    onClick={() =>
-                      void patchSetting('doubleOptIn', !list.doubleOptIn, 'Double opt-in')
-                    }
-                  >
-                    <span className={styles.switchKnob} />
-                  </button>
-                </li>
-                <li className={styles.settingRow}>
-                  <div className={styles.stackBody}>
-                    <p className={styles.stackTitle}>Send welcome email</p>
-                    <p className={styles.stackDesc}>
-                      A confirmation message goes out the moment someone joins.
-                    </p>
-                  </div>
-                  <button
-                    className={`${styles.switch} ${list.welcomeEmailTemplateId != null ? styles.isOn : ''}`}
-                    type="button"
-                    role="switch"
-                    aria-checked={list.welcomeEmailTemplateId != null}
-                    aria-label="Send welcome email"
-                    onClick={() => void toggleTemplateSetting('welcomeEmailTemplateId', 'welcome')}
-                  >
-                    <span className={styles.switchKnob} />
-                  </button>
-                </li>
-                <li className={styles.settingRow}>
-                  <div className={styles.stackBody}>
-                    <p className={styles.stackTitle}>Send goodbye email</p>
-                    <p className={styles.stackDesc}>
-                      Confirm the unsubscribe so people know it worked.
-                    </p>
-                  </div>
-                  <button
-                    className={`${styles.switch} ${list.goodbyeEmailTemplateId != null ? styles.isOn : ''}`}
-                    type="button"
-                    role="switch"
-                    aria-checked={list.goodbyeEmailTemplateId != null}
-                    aria-label="Send goodbye email"
-                    onClick={() => void toggleTemplateSetting('goodbyeEmailTemplateId', 'goodbye')}
-                  >
-                    <span className={styles.switchKnob} />
-                  </button>
-                </li>
-                <li className={styles.settingRow}>
-                  <div className={styles.stackBody}>
-                    <p className={styles.stackTitle}>Double opt-out</p>
-                    <p className={styles.stackDesc}>
-                      Ask for confirmation before removing someone from the list.
-                    </p>
-                  </div>
-                  <button
-                    className={`${styles.switch} ${list.doubleOptOut ? styles.isOn : ''}`}
-                    type="button"
-                    role="switch"
-                    aria-checked={Boolean(list.doubleOptOut)}
-                    aria-label="Double opt-out"
-                    onClick={() =>
-                      void patchSetting('doubleOptOut', !list.doubleOptOut, 'Double opt-out')
-                    }
-                  >
-                    <span className={styles.switchKnob} />
-                  </button>
-                </li>
                 <li className={styles.settingRow}>
                   <div className={styles.stackBody}>
                     <p className={styles.stackTitle}>GDPR consent</p>

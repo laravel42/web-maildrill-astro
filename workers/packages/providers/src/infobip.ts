@@ -892,6 +892,33 @@ export class InfobipProvider implements MessagingProvider {
    * 153 accepted entity-tagged sends still read back 404. Traffic tagged with
    * an id no entity backs is accepted and billed, just unattributable.
    */
+
+  /** `POST provisioning/1/applications` — 409 means it already exists. */
+  async createApplication(input: {
+    applicationId: string;
+    applicationName: string;
+  }): Promise<EntityProvisionResult> {
+    try {
+      const { res, text } = await this.fetchInfobip(
+        'POST',
+        'provisioning/1/applications',
+        JSON.stringify({
+          applicationId: input.applicationId,
+          applicationName: input.applicationName,
+        }),
+      );
+      if (res.ok) return { ok: true };
+      if (res.status === 409) return { ok: true, existed: true };
+      const message = this.extractError(text ? safeJson(text) : {}) ?? `infobip ${res.status}`;
+      if (res.status === 403 || res.status === 401) {
+        return { ok: false, forbidden: true, error: message };
+      }
+      return { ok: false, error: message };
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : 'network error' };
+    }
+  }
+
   async createEntity(input: {
     entityId: string;
     entityName: string;

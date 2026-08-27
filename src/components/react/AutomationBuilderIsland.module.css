@@ -1,0 +1,20 @@
+/*
+ * The island's own styles, deliberately NOT shared with AutomationBuilder.module.css.
+ *
+ * Importing that module from here as well as from the lazily-loaded builder gave it two
+ * entry points, so Rollup hoisted it into a shared chunk and its CSS was dropped from the
+ * output entirely — the composer rendered completely unstyled while every sibling module
+ * (canvas, inspector, picker) survived. One importer per CSS module keeps that from
+ * recurring.
+ */
+.loading {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  color: var(--text4);
+  font-size: 13px;
+}

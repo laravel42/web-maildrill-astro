@@ -1,0 +1,223 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-drawer, 70);
+  display: flex;
+  justify-content: flex-end;
+}
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(28, 25, 23, 0.3);
+  border: none;
+}
+.panel {
+  position: relative;
+  width: 460px;
+  max-width: 94vw;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-left: 1px solid var(--border2);
+  box-shadow: -8px 0 40px rgba(28, 25, 23, 0.18);
+}
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 12px 14px 20px;
+  border-bottom: 1px solid var(--divider);
+}
+.head h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text3);
+}
+.textarea {
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  background: var(--surface2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text);
+  resize: vertical;
+}
+.help {
+  font-size: 11.5px;
+  color: var(--text4);
+  line-height: 1.45;
+}
+.help code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--text2);
+}
+.toggle input {
+  margin-top: 2px;
+}
+.toggle span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.toggle em {
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--text4);
+  line-height: 1.4;
+}
+.error {
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: var(--danger-bg);
+  color: var(--danger-strong);
+  font-size: 12.5px;
+}
+.result {
+  border-top: 1px solid var(--divider);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.resultHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.waitingNote {
+  font-size: 11.5px;
+  color: var(--text4);
+}
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stepRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 8px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  text-align: left;
+}
+.stepRow:hover {
+  background: var(--surface2);
+}
+.mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex: none;
+  color: #fff;
+  background: var(--muted2);
+}
+.mark_succeeded {
+  background: var(--success);
+}
+.mark_failed {
+  background: var(--danger);
+}
+.mark_paused {
+  background: var(--accent);
+}
+.mark_skipped {
+  background: var(--muted2);
+}
+.mark_running {
+  background: var(--warning);
+}
+.stepName {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stepTime {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text4);
+}
+.detail {
+  padding: 6px 8px 12px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.detailBlock h4 {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text4);
+}
+.detail pre {
+  margin: 0;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text2);
+  overflow-x: auto;
+  max-height: 220px;
+}
+.errorPre {
+  background: var(--danger-bg) !important;
+  border-color: var(--danger) !important;
+  color: var(--danger-strong) !important;
+}
+.runError {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--danger-text);
+  line-height: 1.45;
+}

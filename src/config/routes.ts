@@ -41,9 +41,15 @@ export const routes = {
     list: (id: string) => `/dashboard/lists/${id}`,
     subscribers: '/dashboard/subscribers',
     subscriber: (id: string) => `/dashboard/subscribers/${id}`,
+    automations: '/dashboard/automations',
+    automation: (id: string) => `/dashboard/automations/${id}`,
+    automationRuns: (id: string) => `/dashboard/automations/${id}/runs`,
     media: '/dashboard/media',
     analytics: '/dashboard/analytics',
     settings: '/dashboard/settings',
+    /** Deep-link into a Settings subnav section (e.g. `domains`). */
+    settingsSection: (section: string) =>
+      `/dashboard/settings?section=${encodeURIComponent(section)}`,
   },
 } as const;
 

@@ -9,6 +9,7 @@ import {
   type ReportFunnelKey,
   type ReportKpiKey,
 } from '@/lib/app/campaign-report';
+import { trackingCapabilities } from './CampaignWizard.logic';
 import { routes } from '@/config/routes';
 import Icon from './Icon';
 import StatusBadge from './shared/StatusBadge';
@@ -436,6 +437,9 @@ function CampaignReport({
   const openPct = campaign.openRate != null ? campaign.openRate * 100 : 0;
   const clickPct = campaign.clickRate != null ? campaign.clickRate * 100 : 0;
   const nowLabel = sentLabel !== '—' ? sentLabel : 'Now';
+  const trackingCaps = trackingCapabilities(campaign.channel);
+  const openOff = trackingCaps.opens.enabled && !campaign.trackOpens;
+  const clickOff = trackingCaps.clicks.enabled && !campaign.trackClicks;
 
   const rateCardDefs: Record<
     'delivery' | 'open' | 'seen' | 'click' | 'unsub',
@@ -457,11 +461,15 @@ function CampaignReport({
     },
     open: {
       label: 'Open rate',
-      value: pct(campaign.openRate),
-      color: 'var(--accent)',
+      value: openOff ? 'Tracking Off' : pct(campaign.openRate),
+      color: openOff ? 'var(--muted)' : 'var(--accent)',
       series: pickSpark(eventSeries.open, historySeries.open, openPct, nowLabel),
-      delta: asDelta(deltaOf(historySeries.open)),
-      hint: campaign.openRate == null ? 'No deliveries yet' : undefined,
+      delta: openOff ? undefined : asDelta(deltaOf(historySeries.open)),
+      hint: openOff
+        ? 'Open tracking was turned off for this campaign'
+        : campaign.openRate == null
+          ? 'No deliveries yet'
+          : undefined,
     },
     seen: {
       label: 'Seen rate',
@@ -473,11 +481,15 @@ function CampaignReport({
     },
     click: {
       label: 'Click rate',
-      value: pct(campaign.clickRate),
-      color: '#8b5cf6',
+      value: clickOff ? 'Tracking Off' : pct(campaign.clickRate),
+      color: clickOff ? 'var(--muted)' : '#8b5cf6',
       series: pickSpark(eventSeries.click, historySeries.click, clickPct, nowLabel),
-      delta: asDelta(deltaOf(historySeries.click)),
-      hint: campaign.clickRate == null ? 'No deliveries yet' : undefined,
+      delta: clickOff ? undefined : asDelta(deltaOf(historySeries.click)),
+      hint: clickOff
+        ? 'Click tracking was turned off for this campaign'
+        : campaign.clickRate == null
+          ? 'No deliveries yet'
+          : undefined,
     },
     unsub: {
       label: 'Unsub rate',
@@ -578,7 +590,12 @@ function CampaignReport({
             <div className={styles.rateTop}>
               <span className={styles.reportKpiLbl}>{r.label}</span>
               <span className={styles.rateValWrap}>
-                <span className={`tnum ${styles.rateVal}`}>{r.value}</span>
+                <span
+                  className={`tnum ${styles.rateVal}`}
+                  style={r.value === 'Tracking Off' ? { color: 'var(--muted)' } : undefined}
+                >
+                  {r.value}
+                </span>
                 {r.delta && (
                   <span
                     className={`tnum ${styles.rateDelta} ${

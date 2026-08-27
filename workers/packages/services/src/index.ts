@@ -2,6 +2,7 @@ export * from './submit';
 export * from './outbox';
 export * from './dispatch';
 export * from './events';
+export * from './automation-bridge';
 export * from './engagement';
 export * from './webhook-intake';
 export * from './scheduler';

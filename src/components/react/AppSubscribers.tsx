@@ -106,7 +106,6 @@ export default function AppSubscribers({
   /** Real workspace tags (id + name), for segment rules and tagging. */
   allTagRows?: { id: string; name: string }[];
 } = {}) {
-  const allTags = allTagRows.map((t) => t.name);
   // Live data from the SSR page when provided (even if empty); otherwise fixtures.
   // `live` gates persistence: connected workspaces write through the BFF proxy;
   // the fixture demo stays local-only so the marketing preview still works.
@@ -179,6 +178,30 @@ export default function AppSubscribers({
   const loadLists = () => {
     if (!live || allLists.length > 0) return;
     fetchLists('');
+  };
+
+  /** Workspace tag catalogue — kept in sync for filters and the segment builder. */
+  const fetchTags = () => {
+    if (!live) return;
+    void api
+      .get<{ data: Array<{ id: string; name: string }> }>('tags')
+      .then((res) => {
+        setTagIndex((res.data ?? []).map((t) => ({ id: t.id, name: t.name })));
+      })
+      .catch(() => undefined);
+  };
+
+  /**
+   * Open the segment builder with fresh list/tag catalogues.
+   *
+   * Lists are lazy (loaded on filter open); tags came from SSR only and the
+   * modal was wired to that frozen prop — so a Tag rule showed "(none yet)"
+   * even when `/v1/tags` had rows. Refresh both when opening.
+   */
+  const openSegmentModal = (edit: SavedSegment | null) => {
+    fetchLists('');
+    fetchTags();
+    setSegModal({ open: true, edit });
   };
 
   /**
@@ -939,10 +962,57 @@ export default function AppSubscribers({
     resetPageAndSel();
   };
 
-  const bulk = (verb: string) => {
-    const n = selected.size;
-    showToast(`${verb} ${n} subscriber${n === 1 ? '' : 's'}`);
-    setSelected(new Set());
+  /* CSV for the current selection — not the filtered roster. Selected ids can
+     span pages, so live mode re-fetches each row rather than trusting the
+     ten-row table buffer. */
+  const exportSelected = async () => {
+    if (exporting || selected.size === 0) return;
+    setExporting(true);
+    const ids = [...selected];
+    try {
+      if (!live) {
+        const rows = richSubscribers.filter((s) => selected.has(s.id));
+        const csv = buildCsv(
+          ['email', 'name', 'phone', 'status', 'tags', 'lists'],
+          rows.map((s) => [
+            s.email,
+            s.name,
+            s.phone,
+            s.status,
+            s.tags.join('; '),
+            s.lists.join('; '),
+          ]),
+        );
+        downloadCsv(exportFilename('subscribers'), csv);
+        showToast(`Exported ${rows.length} subscriber${rows.length === 1 ? '' : 's'}`);
+        setSelected(new Set());
+        return;
+      }
+      const results = await Promise.all(
+        ids.map((id) => api.get<ApiSubscriber>(`subscribers/${id}`).catch(() => null)),
+      );
+      const all = results.filter((r): r is ApiSubscriber => r != null);
+      if (all.length === 0) {
+        showToast('Could not export the selected subscribers');
+        return;
+      }
+      const fields = await api
+        .get<{ data: CustomField[] }>('custom-fields')
+        .then((r) => r.data)
+        .catch(() => [] as CustomField[]);
+      downloadCsv(exportFilename('subscribers'), subscribersCsv(all, fields));
+      const failed = ids.length - all.length;
+      showToast(
+        failed
+          ? `Exported ${all.length}, ${failed} failed`
+          : `Exported ${all.length} subscriber${all.length === 1 ? '' : 's'}`,
+      );
+      setSelected(new Set());
+    } catch (e) {
+      showToast(e instanceof ApiError ? e.message : 'Could not export subscribers');
+    } finally {
+      setExporting(false);
+    }
   };
 
   /* Delete by id list — persists to the service in live mode, else local-only. */
@@ -1175,7 +1245,7 @@ export default function AppSubscribers({
                   className={styles.segedit}
                   title={`Edit ${seg.name}`}
                   aria-label={`Edit ${seg.name}`}
-                  onClick={() => setSegModal({ open: true, edit: seg })}
+                  onClick={() => openSegmentModal(seg)}
                 >
                   <Icon name="edit" size={12} />
                 </button>
@@ -1186,7 +1256,7 @@ export default function AppSubscribers({
         <button
           type="button"
           className={styles.segnew}
-          onClick={() => setSegModal({ open: true, edit: null })}
+          onClick={() => openSegmentModal(null)}
         >
           <Icon name="plus" size={13} stroke={2.2} />
           New segment
@@ -1527,17 +1597,14 @@ export default function AppSubscribers({
           <div className={styles.bulk} style={{ animation: 'fade .18s ease' }}>
             <span className={`${styles.bulkcount} tnum`}>{selected.size} selected</span>
             <span className={styles.bulkdiv} />
-            <button type="button" className={styles.bulkbtn} onClick={() => bulk('Tagged')}>
-              <Icon name="star" size={13} />
-              Tag
-            </button>
-            <button type="button" className={styles.bulkbtn} onClick={() => bulk('Added')}>
-              <Icon name="filter" size={13} />
-              Add to segment
-            </button>
-            <button type="button" className={styles.bulkbtn} onClick={() => bulk('Exporting')}>
+            <button
+              type="button"
+              className={styles.bulkbtn}
+              disabled={exporting}
+              onClick={() => void exportSelected()}
+            >
               <Icon name="download" size={13} />
-              Export
+              {exporting ? 'Exporting…' : 'Export'}
             </button>
             <button
               type="button"
@@ -1946,7 +2013,7 @@ export default function AppSubscribers({
           onSave={saveSegment}
           onDelete={(id) => setConfirmSegment({ id, name: segById.get(id)?.name ?? 'Segment' })}
           lists={allLists}
-          tags={allTags}
+          tags={tagIndex.map((t) => t.name)}
           customFields={customFields}
           live={live}
         />
@@ -2456,6 +2523,28 @@ function SegmentModal({
     edit?.rows ?? [{ field: 'Status', op: 'eq', val: 'active' }],
   );
   const [count, setCount] = useState<number | null>(null);
+
+  /* When tags/lists load after open, fill empty Tag/List values so the select
+     isn't stuck on a blank option beside a populated menu. */
+  useEffect(() => {
+    if (tags.length === 0 && lists.length === 0) return;
+    setRows((prev) => {
+      let changed = false;
+      const next = prev.map((row) => {
+        if (row.op === 'exists' || row.op === 'not_exists') return row;
+        if (row.field === 'Tag' && !row.val && tags[0]) {
+          changed = true;
+          return { ...row, val: tags[0] };
+        }
+        if (row.field === 'List' && !row.val && lists[0]) {
+          changed = true;
+          return { ...row, val: lists[0].id };
+        }
+        return row;
+      });
+      return changed ? next : prev;
+    });
+  }, [tags, lists]);
 
   const fieldLabel = (field: SegField): string => {
     if (isCoreSegField(field)) return field;

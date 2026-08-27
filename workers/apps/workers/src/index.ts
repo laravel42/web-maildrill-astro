@@ -2,6 +2,10 @@ import { logger } from '@maildrill/observability';
 import { closeDb } from '@maildrill/database';
 import { shutdownQueues } from '@maildrill/queues';
 import {
+  startAutomationDispatcher,
+  startAutomationMaintenance,
+  startAutomationRunWorker,
+  startAutomationSegmentSweep,
   startCampaignDeliveryPoller,
   startCloudflareEmailEventsPoller,
   startDispatchWorker,
@@ -26,6 +30,11 @@ type Role =
   | 'template-approval'
   | 'campaign-delivery'
   | 'cloudflare-email-events'
+  | 'automation-run'
+  | 'automation-dispatch'
+  | 'automation-maintenance'
+  | 'automation-segments'
+  | 'automations'
   | 'all';
 
 const stops: StopFn[] = [];
@@ -62,6 +71,25 @@ function start(role: Role): void {
     case 'cloudflare-email-events':
       stops.push(startCloudflareEmailEventsPoller());
       break;
+    case 'automation-run':
+      stops.push(startAutomationRunWorker());
+      break;
+    case 'automation-dispatch':
+      stops.push(startAutomationDispatcher());
+      break;
+    case 'automation-maintenance':
+      stops.push(startAutomationMaintenance());
+      break;
+    case 'automation-segments':
+      stops.push(startAutomationSegmentSweep());
+      break;
+    // Convenience alias: every automation role in one process.
+    case 'automations':
+      start('automation-run');
+      start('automation-dispatch');
+      start('automation-maintenance');
+      start('automation-segments');
+      break;
     case 'all':
       start('dispatch');
       start('events');
@@ -73,6 +101,7 @@ function start(role: Role): void {
       start('template-approval');
       start('campaign-delivery');
       start('cloudflare-email-events');
+      start('automations');
       break;
     default:
       throw new Error(`unknown worker role: ${String(role)}`);

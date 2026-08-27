@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@maildrill/automations": "workspace:*",
     "@maildrill/config": "workspace:*",
     "@maildrill/database": "workspace:*",
     "@maildrill/domain": "workspace:*",

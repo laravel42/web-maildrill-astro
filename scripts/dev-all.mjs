@@ -9,24 +9,62 @@
  *   workers           → BullMQ roles (no port)
  *   astro             → :4321
  *
- * Ctrl-C stops every child. For a single unified process use `pnpm dev:workers`.
+ * Reads the repo-root `.env` (shell env wins) so PRODUCT_API_PORT / API_PORT /
+ * EB_PORT are honoured the same way workers/ loads them. Ctrl-C stops every
+ * child. For a single unified process use `pnpm dev:workers`.
  */
 import { spawn } from 'node:child_process';
+import fs from 'node:fs';
 import net from 'node:net';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+
+/**
+ * Merge root `.env` into process.env without overriding real shell variables.
+ * Same idea as start-all.mjs — this script used to read PRODUCT_API_PORT before
+ * any dotenv load, so a .env of 4001 was ignored and the port check still
+ * failed on the default :3001.
+ */
+function loadDotenv(file) {
+  let text;
+  try {
+    text = fs.readFileSync(file, 'utf8');
+  } catch {
+    return;
+  }
+  for (const line of text.split('\n')) {
+    const m = /^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line);
+    if (!m) continue;
+    if (Object.prototype.hasOwnProperty.call(process.env, m[1])) continue;
+    let value = m[2].trim();
+    const quoted =
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"));
+    if (quoted) {
+      value = value.slice(1, -1);
+    } else {
+      const hash = value.indexOf(' #');
+      if (hash !== -1) value = value.slice(0, hash).trimEnd();
+    }
+    process.env[m[1]] = value;
+  }
+}
+
+loadDotenv(resolve(root, '.env'));
+
 const host = process.env.DEV_WAIT_HOST ?? '127.0.0.1';
 
 const productPort = Number(process.env.PRODUCT_API_PORT ?? 3001);
 const messagingPort = Number(process.env.API_PORT ?? 3002);
 const ebPort = Number(process.env.EB_PORT ?? process.env.PORT_EB ?? 3003);
 
-const productUrl = process.env.API_BASE_URL ?? `http://${host}:${productPort}`;
-const messagingUrl =
-  process.env.MESSAGING_API_BASE_URL ?? `http://${host}:${messagingPort}`;
-const ebUrl = process.env.EB_API_BASE_URL ?? `http://${host}:${ebPort}`;
+// Pin BFF URLs to the ports this script actually starts. A stale
+// API_BASE_URL=http://localhost:3001 in .env must not override PRODUCT_API_PORT.
+const productUrl = `http://${host}:${productPort}`;
+const messagingUrl = `http://${host}:${messagingPort}`;
+const ebUrl = `http://${host}:${ebPort}`;
 
 const httpServices = [
   { label: 'product-api', port: productPort },

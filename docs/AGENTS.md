@@ -77,7 +77,18 @@ packages/
 workers/                                 # messaging + product backend (was workers)
   apps/{api,product-api,email-builder-api,workers,dev-server}
   packages/{config,database,domain,services,product,…}
+  packages/activepieces-core/            # vendored MIT Activepieces subset (see its VENDOR.md)
+  packages/automations/                  # Automations: engine, pieces, runtime, event bridge
 ```
+
+**Automations** (visual workflows) span both trees — read
+[`architecture/automations-activepieces.md`](architecture/automations-activepieces.md) before
+touching `workers/packages/{activepieces-core,automations}`,
+`src/components/react/automations/`, or the domain event bus in
+`workers/packages/domain/src/events.ts`. Two rules that are easy to break: published
+automation versions are **immutable** (editing opens a new draft), and the engine
+(`@maildrill/automations/engine`) may not import a Maildrill service — it talks to the
+product only through injected ports.
 
 **Backend lives in [`../workers/`](../workers/)** and is part of the **root**
 `pnpm-workspace.yaml` (`workers`, `workers/packages/*`, `workers/apps/*`). One

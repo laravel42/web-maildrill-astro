@@ -230,6 +230,44 @@ const EnvSchema = z.object({
   POSTHOG_INGEST_HOST: z.string().default('https://us.i.posthog.com'),
   /** Empty = auto-on when personal key set. Set 0/false to force Postgres. */
   POSTHOG_STATS_ENABLED: z.string().default(''),
+
+  // --- Automations (visual workflows) ---
+  /**
+   * Execution budgets. These are the blast radius of a badly-built workflow, so they are
+   * enforced by the engine rather than trusted to the composer: a step budget stops a
+   * router loop, a wall-clock budget stops a run that waits on a slow provider forever,
+   * and the payload cap stops a webhook from parking megabytes in `trigger_payload`.
+   */
+  AUTOMATION_MAX_STEPS_PER_RUN: int(100),
+  AUTOMATION_MAX_LOOP_ITERATIONS: int(200),
+  /** Wall clock for one *segment* of a run (between pauses), not the whole workflow. */
+  AUTOMATION_RUN_TIMEOUT_MS: int(120_000),
+  AUTOMATION_MAX_PAYLOAD_BYTES: int(128 * 1024),
+  /** HTTP-request action: response cap and timeout. */
+  AUTOMATION_HTTP_MAX_RESPONSE_BYTES: int(1024 * 1024),
+  AUTOMATION_HTTP_TIMEOUT_MS: int(15_000),
+  AUTOMATION_HTTP_MAX_REDIRECTS: int(3),
+  /**
+   * `1` lets the HTTP action reach private/loopback addresses. Off by default — with it
+   * off, a workflow cannot be used to probe the internal network (SSRF). Only ever turn it
+   * on for a local development stack.
+   */
+  AUTOMATION_HTTP_ALLOW_PRIVATE: z.string().default('0'),
+  /** BullMQ concurrency for the automation-run worker. */
+  AUTOMATION_RUN_CONCURRENCY: int(5),
+  /** How often the dispatcher drains `automation_events`. */
+  AUTOMATION_DISPATCH_INTERVAL_MS: int(1_000),
+  AUTOMATION_DISPATCH_BATCH_SIZE: int(50),
+  /** How often waiting runs whose `resume_at` passed are re-queued. */
+  AUTOMATION_RESUME_INTERVAL_MS: int(15_000),
+  /** A run held by a worker for longer than this is presumed dead and re-queued. */
+  AUTOMATION_STALL_MS: int(5 * 60_000),
+  /** How often segment membership is diffed for `entered`/`exited` triggers. */
+  AUTOMATION_SEGMENT_POLL_INTERVAL_MS: int(60_000),
+  /** Ceiling on subscribers examined per segment per poll. */
+  AUTOMATION_SEGMENT_MAX_SUBSCRIBERS: int(5_000),
+  /** Max automation runs one workspace may have in flight. 0 disables the cap. */
+  AUTOMATION_MAX_CONCURRENT_RUNS_PER_TENANT: int(50),
 });
 
 export interface ApiKey {
@@ -311,6 +349,25 @@ export const config = {
         ? true
         : Boolean(env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET);
     },
+  },
+  automations: {
+    maxStepsPerRun: env.AUTOMATION_MAX_STEPS_PER_RUN,
+    maxLoopIterations: env.AUTOMATION_MAX_LOOP_ITERATIONS,
+    runTimeoutMs: env.AUTOMATION_RUN_TIMEOUT_MS,
+    maxPayloadBytes: env.AUTOMATION_MAX_PAYLOAD_BYTES,
+    httpMaxResponseBytes: env.AUTOMATION_HTTP_MAX_RESPONSE_BYTES,
+    httpTimeoutMs: env.AUTOMATION_HTTP_TIMEOUT_MS,
+    httpMaxRedirects: env.AUTOMATION_HTTP_MAX_REDIRECTS,
+    httpAllowPrivate:
+      env.AUTOMATION_HTTP_ALLOW_PRIVATE === '1' || env.AUTOMATION_HTTP_ALLOW_PRIVATE === 'true',
+    runConcurrency: env.AUTOMATION_RUN_CONCURRENCY,
+    dispatchIntervalMs: env.AUTOMATION_DISPATCH_INTERVAL_MS,
+    dispatchBatchSize: env.AUTOMATION_DISPATCH_BATCH_SIZE,
+    resumeIntervalMs: env.AUTOMATION_RESUME_INTERVAL_MS,
+    stallMs: env.AUTOMATION_STALL_MS,
+    segmentPollIntervalMs: env.AUTOMATION_SEGMENT_POLL_INTERVAL_MS,
+    segmentMaxSubscribers: env.AUTOMATION_SEGMENT_MAX_SUBSCRIBERS,
+    maxConcurrentRunsPerTenant: env.AUTOMATION_MAX_CONCURRENT_RUNS_PER_TENANT,
   },
   auth: {
     apiKeys: parseApiKeys(env.API_KEYS),

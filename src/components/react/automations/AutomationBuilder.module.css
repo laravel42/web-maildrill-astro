@@ -1,0 +1,278 @@
+/* Composer shell: topbar + (library ⋅ canvas ⋅ inspector).
+   Fills the workspace content area; the page itself does not scroll — the canvas pans and
+   the two side panels scroll independently. */
+
+/* Full-screen editor, the same mechanism the channel template builders use
+   (`ChannelEditorShell`): the page still renders inside AppLayout — so session, theme and
+   auth are unchanged — and this covers the sidebar and topbar rather than living inside
+   them. A builder needs the width, and the app chrome it would sit in is not navigation
+   anyone wants mid-edit.
+
+   It also owns the whole viewport height, so the page never scrolls: the canvas pans and
+   the two side panels scroll on their own. */
+.shell {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+/* 57px and the same surface/border as `EditorHeader`, so the composer's bar lines up with
+   every other full-screen editor in the product. */
+.topbar {
+  --editor-control-h: 38px;
+  position: relative;
+  height: 57px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+/* Same control as `EditorHeader` — returns to the automations list. */
+.back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  padding: 6px;
+  border-radius: 8px;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+.back:hover {
+  color: var(--text);
+  background: var(--surface2);
+}
+
+/* Same absolute centre slot as `EditorHeader`, so the name field lands on the
+   same axis as every channel template editor. */
+.center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  max-width: min(560px, calc(100% - 420px));
+  pointer-events: none;
+}
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(480px, 100%);
+  height: var(--editor-control-h);
+  pointer-events: auto;
+}
+.nameField {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  min-width: 0;
+  height: var(--editor-control-h);
+  box-sizing: border-box;
+  border: 1px solid var(--border2);
+  border-radius: 9px;
+  background: transparent;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.nameField:hover {
+  border-color: var(--border2);
+}
+.nameField:focus-within {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+.nameIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--editor-control-h);
+  border-radius: 8px 0 0 8px;
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+.name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  font-family: inherit;
+  border: none;
+  padding: 0 10px;
+  background: transparent;
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+  align-self: center;
+}
+.name::placeholder {
+  color: var(--muted);
+  font-weight: 500;
+}
+.name:focus {
+  outline: none;
+}
+
+/* Same control as `EditorHeader`'s save button — sits beside the name field. */
+.publishBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: none;
+  height: var(--editor-control-h);
+  padding: 0 13px;
+  border: none;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--accent-contrast, #fff);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
+}
+.publishBtn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+.publishBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.unpublished {
+  font-size: 11.5px;
+  color: var(--warning-strong, var(--warning));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: none;
+  z-index: 1;
+}
+/* Same autosave label as `EditorHeader` — muted text + status dot. */
+.status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success-strong, #22c55e);
+}
+.dotSaving {
+  background: var(--warning-strong, #d97706);
+}
+/* Same secondary control as `EditorHeader`'s Send test button. */
+.sbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--editor-control-h);
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  padding: 0 13px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.sbtn:hover:not(:disabled) {
+  border-color: var(--muted2);
+  background: var(--surface2);
+}
+.sbtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.flowIssues {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: var(--warning-bg);
+  color: var(--warning-strong);
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.notice {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  z-index: var(--z-toast, 90);
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  max-width: 90vw;
+}
+.noticeErr {
+  background: var(--danger-strong);
+}
+
+@media (max-width: 1180px) {
+  /* Version detail is the first thing to go on narrow bars. */
+  .unpublished {
+    display: none;
+  }
+}
+@media (max-width: 1080px) {
+  /* The outline is the first thing to go: the canvas is the workspace, and below this
+     width the rail costs more than it orients. FlowOutline hides its own rail. */
+  .body > aside:first-child {
+    display: none;
+  }
+}

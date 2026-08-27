@@ -770,6 +770,9 @@ importers:
       '@maildrill/authz':
         specifier: workspace:*
         version: link:../../packages/authz
+      '@maildrill/automations':
+        specifier: workspace:*
+        version: link:../../packages/automations
       '@maildrill/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -842,6 +845,9 @@ importers:
       '@maildrill/authz':
         specifier: workspace:*
         version: link:../../packages/authz
+      '@maildrill/automations':
+        specifier: workspace:*
+        version: link:../../packages/automations
       '@maildrill/billing':
         specifier: workspace:*
         version: link:../../packages/billing
@@ -881,6 +887,9 @@ importers:
 
   workers/apps/workers:
     dependencies:
+      '@maildrill/automations':
+        specifier: workspace:*
+        version: link:../../packages/automations
       '@maildrill/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -903,6 +912,12 @@ importers:
         specifier: ^5.81.3
         version: 5.81.3(supports-color@10.2.2)
 
+  workers/packages/activepieces-core:
+    dependencies:
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+
   workers/packages/authz:
     dependencies:
       '@maildrill/config':
@@ -914,6 +929,42 @@ importers:
       fastify:
         specifier: ^5.11.0
         version: 5.11.0
+
+  workers/packages/automations:
+    dependencies:
+      '@maildrill/activepieces-core':
+        specifier: workspace:*
+        version: link:../activepieces-core
+      '@maildrill/config':
+        specifier: workspace:*
+        version: link:../config
+      '@maildrill/database':
+        specifier: workspace:*
+        version: link:../database
+      '@maildrill/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@maildrill/identity':
+        specifier: workspace:*
+        version: link:../identity
+      '@maildrill/observability':
+        specifier: workspace:*
+        version: link:../observability
+      '@maildrill/product':
+        specifier: workspace:*
+        version: link:../product
+      '@maildrill/queues':
+        specifier: workspace:*
+        version: link:../queues
+      '@maildrill/services':
+        specifier: workspace:*
+        version: link:../services
+      drizzle-orm:
+        specifier: ^0.38.4
+        version: 0.38.4(@types/pg@8.20.3)(@types/react@19.2.18)(pg@8.22.0)(react@19.2.8)
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
 
   workers/packages/billing:
     dependencies:

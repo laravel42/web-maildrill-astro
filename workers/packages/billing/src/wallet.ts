@@ -10,6 +10,7 @@ import {
   type WalletRow,
   type WalletTransactionRow,
 } from '@maildrill/database';
+import { isTenantOnTrial } from './trial';
 
 const log = createLogger({ component: 'billing-wallet' });
 
@@ -42,11 +43,20 @@ export interface WalletSummary {
   lowBalanceMicro: number;
   lowBalance: boolean;
   tier: Pick<PricingTierRow, 'code' | 'name' | 'discountBps' | 'commitmentMonths'> | null;
+  /**
+   * True until the workspace has bought anything or been put on a tier.
+   *
+   * Derived, never stored: `isTenantOnTrial` reads the wallet and its purchase
+   * history, so the flag flips the moment a purchase lands rather than needing
+   * a separate field somebody has to remember to clear.
+   */
+  onTrial: boolean;
   updatedAt: string;
 }
 
 export async function getWalletSummary(tenantId: string): Promise<WalletSummary> {
   const wallet = await getOrCreateWallet(tenantId);
+  const onTrial = await isTenantOnTrial(tenantId);
   let tier: PricingTierRow | null = null;
   if (wallet.pricingTierId) {
     const [row] = await db
@@ -70,6 +80,7 @@ export async function getWalletSummary(tenantId: string): Promise<WalletSummary>
           commitmentMonths: tier.commitmentMonths,
         }
       : null,
+    onTrial,
     updatedAt: wallet.updatedAt.toISOString(),
   };
 }

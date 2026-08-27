@@ -11,6 +11,7 @@
   "dependencies": {
     "@fastify/cors": "^11.3.0",
     "@maildrill/authz": "workspace:*",
+    "@maildrill/automations": "workspace:*",
     "@maildrill/config": "workspace:*",
     "@maildrill/database": "workspace:*",
     "@maildrill/email-builder-api": "workspace:*",

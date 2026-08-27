@@ -1,0 +1,147 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.group {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--surface2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.or {
+  align-self: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text4);
+  padding: 6px 0;
+}
+.and {
+  font-size: 11px;
+  color: var(--text4);
+  padding-left: 2px;
+}
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+/*
+ * One condition, stacked: value, then operator, then the comparison beside its remove
+ * button.
+ *
+ * This was a four-column row with a `@media (max-width: 1100px)` fallback — but the query
+ * asked about the VIEWPORT while the constraint is the 360px panel, so on any normal
+ * screen it stayed in four columns and rendered "{{trigger." / "is ex" / "Compar". The
+ * panel is never wide enough for that row, so stacking is the layout, not the fallback.
+ */
+.fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px;
+  gap: 6px;
+  align-items: center;
+}
+.fields > .fieldWithButton,
+.fields > .select {
+  grid-column: 1 / -1;
+}
+.fieldWithButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+/* Same control geometry as the inspector's fields, which take it from the email template
+   editor: 36px tall, 6px radius, 8px/12px padding, hairline divider border. */
+.input,
+.select {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  background-color: transparent;
+  font-size: 13.5px;
+  line-height: 20px;
+  color: var(--text);
+  font-family: inherit;
+  transition:
+    border-color var(--duration-fast, 0.15s) var(--ease-out, ease),
+    box-shadow var(--duration-fast, 0.15s) var(--ease-out, ease);
+}
+.input:hover:not(:disabled),
+.select:hover:not(:disabled) {
+  border-color: var(--muted2);
+  background-color: color-mix(in srgb, var(--ink) 4%, transparent);
+}
+.input:focus,
+.select:focus,
+.input:focus-visible,
+.select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+.select {
+  appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 24 12' fill='none'%3E%3Cpath stroke='%2371717A' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 3l6 6l6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 8px;
+  cursor: pointer;
+}
+.fieldWithButton .input {
+  padding-right: 30px;
+}
+.insert {
+  position: absolute;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: none;
+  color: var(--muted2);
+  border-radius: 5px;
+}
+.insert:hover {
+  color: var(--accent-text);
+  background: var(--accent-tint);
+}
+.noValue {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-style: italic;
+}
+.addRow,
+.addGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  padding: 5px 9px;
+  border: none;
+  background: none;
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 7px;
+}
+.addRow:hover,
+.addGroup:hover {
+  background: var(--accent-tint);
+}
+.hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--warning-strong, var(--warning));
+}

@@ -1,0 +1,61 @@
+---
+export const prerender = false;
+import AppLayout from '@/layouts/AppLayout.astro';
+import AppAutomationRuns from '@/components/react/AppAutomationRuns';
+import { mintServiceToken, serviceBaseUrl } from '@/lib/server/service';
+import type { AutomationDetail, RunRow } from '@/lib/app/automations';
+
+const { id } = Astro.params;
+const session = Astro.locals.session;
+
+let automation: AutomationDetail | null = null;
+let initial: RunRow[] | undefined = undefined;
+let initialTotal = 0;
+
+if (session?.user?.id && session.activeTenantId && id) {
+  const token = mintServiceToken({
+    userId: session.user.id,
+    activeTenantId: session.activeTenantId,
+    role: session.role,
+  });
+  const headers = { Authorization: `Bearer ${token}` };
+  try {
+    const [detailRes, runsRes] = await Promise.all([
+      fetch(`${serviceBaseUrl()}/v1/automations/${id}`, { headers }),
+      fetch(`${serviceBaseUrl()}/v1/automations/${id}/runs?limit=25`, { headers }),
+    ]);
+    if (detailRes.status === 404) return Astro.redirect('/dashboard/automations');
+    if (detailRes.ok) automation = (await detailRes.json()) as AutomationDetail;
+    if (runsRes.ok) {
+      const page = (await runsRes.json()) as { items?: RunRow[]; total?: number };
+      initial = page.items ?? [];
+      initialTotal = page.total ?? 0;
+    }
+  } catch {
+    /* the island renders its own error banner and retries */
+  }
+}
+
+const name = automation?.name ?? 'Automation';
+---
+
+<AppLayout
+  title={`${name} · Runs`}
+  crumbs={[
+    { label: 'Automations', href: '/dashboard/automations' },
+    { label: name, href: id ? `/dashboard/automations/${id}` : undefined },
+    { label: 'Runs' },
+  ]}
+>
+  {
+    id ? (
+      <AppAutomationRuns
+        client:visible
+        automationId={id}
+        automationName={name}
+        initial={initial}
+        initialTotal={initialTotal}
+      />
+    ) : null
+  }
+</AppLayout>

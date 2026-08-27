@@ -1,0 +1,210 @@
+/* Automations list. Sits on the shared `.atable` / `.astatus` / `.aseg` primitives from
+   app.css; only the grid template and this screen's own affordances live here. */
+
+/* Row action menus drop below the card edge; the shared `.atable` clips on both
+   axes for its radius, so this screen opts out. */
+.table {
+  overflow: visible;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 14px 19px;
+  border-bottom: 1px solid var(--divider);
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 0 11px;
+  width: 260px;
+  max-width: 100%;
+}
+.searchic {
+  color: var(--muted);
+}
+.search input {
+  border: none;
+  background: none;
+  padding: 9px 0;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  width: 100%;
+}
+
+/* name · trigger · status · runs · last run · actions */
+.grid {
+  grid-template-columns: minmax(180px, 2.2fr) minmax(140px, 1.4fr) 110px 90px 130px 130px;
+  gap: 12px;
+}
+/* Shared `.athead > div` pads every cell 19px; rows pad the row once. Same
+   track for both: move the horizontal inset onto the header row. */
+.grid:global(.athead) {
+  padding: 0 19px;
+}
+.grid:global(.athead) > div {
+  padding: 12px 0;
+}
+
+.nameCell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* A quiet marker, not a badge: unpublished changes are normal while editing and
+   should not compete with the status chip. */
+.draftDot {
+  font-size: 11px;
+  color: var(--warning-strong, var(--warning));
+}
+.muted {
+  color: var(--text4);
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.colCenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* Later rows paint over earlier ones in DOM order; lift the open row so its
+   menu clears the ones below it. */
+.rowOpen {
+  position: relative;
+  z-index: var(--z-dropdown);
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% - 4px);
+  right: 0;
+  z-index: var(--z-dropdown);
+  min-width: 170px;
+  padding: 5px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 11px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+}
+.menu > * {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text2);
+  text-align: left;
+  background: none;
+  border: none;
+  width: 100%;
+}
+.menu > *:hover {
+  background: var(--surface2);
+}
+.danger {
+  color: var(--danger-text);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 34px 16px;
+  color: var(--text4);
+}
+.emptyTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.emptyBody {
+  margin: 0;
+  max-width: 46ch;
+  line-height: 1.5;
+}
+
+.pager {
+  display: flex;
+  gap: 8px;
+}
+
+.banner {
+  margin-bottom: 14px;
+  padding: 9px 13px;
+  border-radius: 9px;
+  border: 1px solid var(--danger);
+  background: var(--danger-bg);
+  color: var(--danger-strong);
+  font-size: 12.5px;
+}
+.banner button {
+  margin-left: 8px;
+  font-weight: 600;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  color: inherit;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  z-index: var(--z-toast, 90);
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+}
+.toastAlert {
+  background: var(--danger-strong);
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: minmax(140px, 2fr) 100px 90px 120px;
+  }
+  .grid > *:nth-child(2),
+  .grid > *:nth-child(5) {
+    display: none;
+  }
+}

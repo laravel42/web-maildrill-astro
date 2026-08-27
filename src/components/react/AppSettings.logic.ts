@@ -18,8 +18,31 @@ export const NAV: { key: SectionKey; label: string; icon: IconName }[] = [
   { key: 'domains', label: 'Domains', icon: 'globe' },
   { key: 'billing', label: 'Billing', icon: 'target' },
   { key: 'api', label: 'API keys', icon: 'code' },
+  { key: 'integrations', label: 'Integrations', icon: 'key' },
   { key: 'users', label: 'Users', icon: 'users' },
 ];
+
+/** True when `value` is a known Settings section key (including hidden panels). */
+export function isSectionKey(value: string | null | undefined): value is SectionKey {
+  return typeof value === 'string' && value in PANELS;
+}
+
+/** Initial Settings section from `?section=` (defaults to Usage). */
+export function sectionFromSearch(search: string = typeof window !== 'undefined' ? window.location.search : ''): SectionKey {
+  const raw = new URLSearchParams(search).get('section');
+  return isSectionKey(raw) ? raw : 'usage';
+}
+
+/** Keep the address bar in sync when the Settings subnav changes. */
+export function replaceSettingsSectionUrl(section: SectionKey): void {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  if (section === 'usage') url.searchParams.delete('section');
+  else url.searchParams.set('section', section);
+  const next = `${url.pathname}${url.search}${url.hash}`;
+  if (next === `${url.pathname}${window.location.search}${window.location.hash}`) return;
+  window.history.replaceState(null, '', next);
+}
 
 /* ------------------------------- panels --------------------------------- */
 export const PANELS: Record<SectionKey, Panel> = {
@@ -80,13 +103,13 @@ export const PANELS: Record<SectionKey, Panel> = {
     empty: 'Just you here so far. Invite a teammate to plan, build, and send together.',
     roster: true,
   },
+  /* Rendered by `WorkspaceConnections`, not by the generic table: a connection's
+     defining property is that its secret is write-only, and a title/sub/badge row has
+     nowhere to say that. */
   integrations: {
-    kind: 'table',
+    kind: 'custom',
     title: 'Integrations',
-    desc: 'Connect Maildrill to your other tools.',
-    cta: 'Browse all',
-    empty: 'Nothing connected yet. Browse the gallery to plug Maildrill into your stack.',
-    rows: [],
+    desc: 'Credentials your automations use to reach systems outside Maildrill.',
   },
   ai: {
     kind: 'toggles',
@@ -399,7 +422,6 @@ export const swatchColor = (v: string) => {
   const m = v.match(/#[0-9a-fA-F]{6}/);
   return m ? m[0] : 'var(--accent)';
 };
-
 
 /**
  * Channel metadata for a value that may not be one of ours.

@@ -713,6 +713,10 @@
 .settingRow:first-child {
   padding-top: 10px;
 }
+.settingRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
 .stackBody {
   flex: 1;
   min-width: 0;

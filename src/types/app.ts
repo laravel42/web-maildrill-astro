@@ -24,6 +24,13 @@ export type Campaign = {
   completedAt: string | null;
   openRate: number | null;
   clickRate: number | null;
+  /**
+   * Engagement tracking choices stored on `content` (absent = on, matching the
+   * send path). Drawer KPIs use these to show "Tracking Off" instead of a
+   * blank rate when the campaign opted out.
+   */
+  trackOpens: boolean;
+  trackClicks: boolean;
   updatedAt: string;
   recipients: number;
   delivered: number;

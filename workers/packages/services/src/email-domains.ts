@@ -2,8 +2,11 @@ import { and, eq } from 'drizzle-orm';
 import { config } from '@maildrill/config';
 import { db, emailDomains } from '@maildrill/database';
 import { ConflictError, NotFoundError, ValidationError } from '@maildrill/domain';
-import { knownTenantInfobipEntityId } from '@maildrill/identity';
+import { ensureInfobipApplication, knownTenantInfobipEntityId } from '@maildrill/identity';
 import { resolvePlatformFields } from '@maildrill/providers';
+import { createLogger } from '@maildrill/observability';
+
+const log = createLogger({ component: 'email-domains' });
 
 /**
  * Sending-domain management (Settings → Domains). Infobip's domain API is
@@ -180,11 +183,69 @@ export async function registerEmailDomain(
   // `POST /email/1/domains` takes the CPaaS X identity as top-level fields
   // (not the nested `platform` block the send APIs use), so the domain is
   // filed under the workspace that registered it rather than the bare account.
-  const platform = resolvePlatformFields(
-    config.infobip.applicationId,
+  //
+  // Both halves or neither. Infobip resolves each field into an {id,
+  // externalId} pair, and an entity with no application resolves to
+  // `application {id: null, externalId: null}` — which it rejects outright:
+  //
+  //   could not register made.com: illegal combination of arguments:
+  //   id: null, externalId: null, id: null, externalId: ws-<tenant>
+  //
+  // So the application is provisioned rather than required from config.
+  // Dropping the entity instead did register the domain, but filed it on the
+  // bare account — which answers the error and not the point: the entity is
+  // how a workspace's domain is told apart from another's.
+  //
+  // `ensureInfobipApplication` is one call per process (409 = already there)
+  // and returns null when the API key lacks the provisioning scope. In that
+  // case the identity is dropped: an unattributed domain beats a failed
+  // registration, and the reason is logged at error rather than swallowed.
+  const applicationId = await ensureInfobipApplication();
+  const resolved = resolvePlatformFields(
+    applicationId ?? config.infobip.applicationId,
     config.infobip.entityId,
     (await knownTenantInfobipEntityId(tenantId)) ?? undefined,
   );
+  const platform = resolved.applicationId ? resolved : {};
+  /**
+   * File the domain under this workspace's entity.
+   *
+   * Called after BOTH paths — a fresh registration and the branch that claims
+   * a domain Infobip already had. The second is what left made.com attached to
+   * nothing: it existed on the account (created before the identity was sent,
+   * or by an earlier failed attempt), so the POST 409'd, the domain was
+   * claimed locally, and no entity was ever attached.
+   *
+   * Non-fatal by design. The domain is registered and usable either way; an
+   * association that fails is an attribution gap, not a broken domain, and
+   * failing the request here would undo work that already succeeded.
+   */
+  const associate = async (domainName: string): Promise<void> => {
+    const entityId = resolved.entityId;
+    const appId = resolved.applicationId;
+    if (!entityId || !appId) return;
+    // Through `infobip()` like every other call in this file, not through the
+    // provider registry: the domain APIs are called directly here, and routing
+    // one step through the abstraction meant a driver without the method
+    // skipped it silently — which is how this was written the first time and
+    // why the association never fired.
+    const { status, json } = await infobip('POST', '/provisioning/1/associations', {
+      resourceType: 'DOMAIN',
+      channel: 'EMAIL',
+      applicationId: appId,
+      entityId,
+      resourceId: domainName,
+    });
+    // 409 = already associated, which is the desired end state.
+    if (status >= 200 && status < 300) return;
+    if (status === 409) return;
+    log.error(
+      { domainName, entityId, status, error: infobipErrorText(json) },
+      'domain registered but not associated with the workspace entity — ' +
+        'its usage will report against the account, not this workspace',
+    );
+  };
+
   const { status, json } = await infobip('POST', '/email/1/domains', {
     domainName: name,
     targetedDailyTraffic,
@@ -192,6 +253,7 @@ export async function registerEmailDomain(
   });
   if (status === 200 || status === 201) {
     await claimDomain(tenantId, name);
+    await associate(name);
     return toDomain(json);
   }
 
@@ -202,6 +264,9 @@ export async function registerEmailDomain(
     const onProvider = (await listProviderDomains().catch(() => [])).find((d) => d.domainName === name);
     if (onProvider) {
       await claimDomain(tenantId, name);
+      // The domain predates this workspace's claim on it, so the identity was
+      // never sent at creation — attach it now.
+      await associate(name);
       return onProvider;
     }
   }

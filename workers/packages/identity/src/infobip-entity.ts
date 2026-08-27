@@ -24,6 +24,7 @@
  * `infobipEntityProvisionedAt` is what separates "assigned" from "confirmed".
  */
 import { eq } from 'drizzle-orm';
+import { config } from '@maildrill/config';
 import { db, tenants } from '@maildrill/database';
 import { logger, metrics } from '@maildrill/observability';
 import { getProvider } from '@maildrill/providers';
@@ -160,4 +161,76 @@ export async function tenantInfobipEntityId(tenantId: string): Promise<string | 
     return row.entityId;
   }
   return provisionTenantEntity({ id: tenantId, name: row.name });
+}
+
+// ---------------------------------------------------------------------------
+// Application (account-wide)
+// ---------------------------------------------------------------------------
+
+/**
+ * The CPaaS X application every workspace's traffic is filed under.
+ *
+ * Entities are per workspace; an application is not — it models the use case
+ * or environment, so one serves the whole account. It exists because Infobip
+ * refuses an entity that arrives without an application:
+ *
+ *   illegal combination of arguments: id: null, externalId: null,
+ *   id: null, externalId: ws-<tenant>
+ *
+ * Which is why domains registered with no application attached to no entity
+ * at all. Provisioned lazily and remembered for the life of the process: it
+ * is one call per deploy, and a 409 (already there) is success.
+ */
+const APPLICATION_NAME = 'Maildrill';
+
+let applicationReady: Promise<string | null> | null = null;
+
+export function infobipApplicationId(): string {
+  return config.infobip.applicationId.trim() || 'maildrill';
+}
+
+export async function ensureInfobipApplication(): Promise<string | null> {
+  applicationReady ??= (async () => {
+    const applicationId = infobipApplicationId();
+    const provider = getProvider();
+    if (!provider.createApplication) {
+      metrics.inc('infobip_application_provision_total', { outcome: 'unsupported' });
+      return null;
+    }
+    try {
+      const result = await provider.createApplication({
+        applicationId,
+        applicationName: APPLICATION_NAME,
+      });
+      if (result.ok) {
+        metrics.inc('infobip_application_provision_total', {
+          outcome: result.existed === true ? 'existed' : 'created',
+        });
+        log.info({ applicationId, existed: result.existed === true }, 'infobip application ready');
+        return applicationId;
+      }
+      // Same reasoning as the entity path: without this, every entity we send
+      // is rejected, so a quiet warning would hide the cause of a hard failure.
+      metrics.inc('infobip_application_provision_total', {
+        outcome: result.forbidden ? 'forbidden' : 'failed',
+      });
+      log.error(
+        { applicationId, error: result.error },
+        result.forbidden
+          ? 'infobip provisioning forbidden — API key lacks the provisioning scope; ' +
+              'workspace entities cannot be attached without an application'
+          : 'infobip application provisioning failed',
+      );
+      // Retry on the next call rather than caching the failure for the life of
+      // the process — a scope granted after boot should not need a restart.
+      applicationReady = null;
+      return null;
+    } catch (err) {
+      metrics.inc('infobip_application_provision_total', { outcome: 'threw' });
+      log.error({ applicationId, err }, 'infobip application provisioning threw');
+      applicationReady = null;
+      return null;
+    }
+  })();
+  return applicationReady;
 }

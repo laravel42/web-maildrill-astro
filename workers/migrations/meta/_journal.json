@@ -218,6 +218,13 @@
       "when": 1786740320000,
       "tag": "0030_tenant_entity_provisioned",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1786740360000,
+      "tag": "0031_automations",
+      "breakpoints": true
     }
   ]
 }

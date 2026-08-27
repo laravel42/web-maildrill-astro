@@ -1880,16 +1880,6 @@ export interface paths {
                         channels?: ("email" | "sms" | "whatsapp" | "voice")[];
                         notes?: string | null;
                         gdprConsent?: boolean;
-                        doubleOptIn?: boolean;
-                        doubleOptOut?: boolean;
-                        /** Format: uuid */
-                        doubleOptInTemplateId?: string | null;
-                        /** Format: uuid */
-                        doubleOptOutTemplateId?: string | null;
-                        /** Format: uuid */
-                        welcomeEmailTemplateId?: string | null;
-                        /** Format: uuid */
-                        goodbyeEmailTemplateId?: string | null;
                     };
                 };
             };
@@ -2094,16 +2084,6 @@ export interface paths {
                         channels?: ("email" | "sms" | "whatsapp" | "voice")[];
                         notes?: string | null;
                         gdprConsent?: boolean;
-                        doubleOptIn?: boolean;
-                        doubleOptOut?: boolean;
-                        /** Format: uuid */
-                        doubleOptInTemplateId?: string | null;
-                        /** Format: uuid */
-                        doubleOptOutTemplateId?: string | null;
-                        /** Format: uuid */
-                        welcomeEmailTemplateId?: string | null;
-                        /** Format: uuid */
-                        goodbyeEmailTemplateId?: string | null;
                     };
                 };
             };
@@ -3551,7 +3531,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Device and top-link breakdown from Infobip tracking events */
+        /** Device and top-link breakdown from Maildrill tracking events */
         get: {
             parameters: {
                 query?: never;

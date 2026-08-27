@@ -27,6 +27,13 @@ import {
   type SegmentRule,
   type Subscriber,
 } from '@maildrill/database';
+import {
+  emitMaildrillEvent,
+  eventDedupeKey,
+  maildrillEventWanted,
+  projectSubscriber,
+  type MaildrillEventType,
+} from '@maildrill/domain';
 import { seedSubscriberEngagement } from '@maildrill/services';
 import { addToList } from './lists';
 import { bucketOrdinals, type EngagementBucket } from './engagement';
@@ -149,8 +156,12 @@ export async function upsertSubscriber(input: UpsertSubscriberInput): Promise<Su
         updatedAt: new Date(),
       },
     })
-    .returning();
-  const row = rows[0]!;
+    // `xmax = 0` is true only for a row this statement INSERTed; on the conflict path the
+    // tuple carries the updating transaction's id. It is the only way to tell "created"
+    // from "updated" out of an upsert, and the automation trigger set draws exactly that
+    // distinction ("Subscriber created" must not fire on every CSV re-import).
+    .returning({ ...getTableColumns(subscribers), wasInserted: sql<boolean>`xmax = 0` });
+  const { wasInserted, ...row } = rows[0]!;
   // Give every subscriber a rollup row the moment it exists, so the `never`
   // bucket — no send yet on a channel that reports opens, which is exactly the
   // people nobody has reached — can actually find them. Idempotent, so the
@@ -158,7 +169,38 @@ export async function upsertSubscriber(input: UpsertSubscriberInput): Promise<Su
   // can materialise a missing row too, but only once someone is mailed, which
   // is too late for the bucket that means the opposite.
   await seedSubscriberEngagement(db, input.tenantId, row.id);
+  await emitSubscriberEvent(
+    wasInserted ? 'subscriber.created' : 'subscriber.updated',
+    input.tenantId,
+    row,
+  );
   return row;
+}
+
+/**
+ * Announce a subscriber change to the automation bridge.
+ *
+ * Awaited but never allowed to throw (see `emitMaildrillEvent`): a workspace's CRM writes
+ * must not fail because the automation pipeline is unhappy. The `wanted` check is what
+ * keeps a 50,000-row import from paying for 50,000 event inserts nobody consumes.
+ */
+async function emitSubscriberEvent(
+  type: Extract<
+    MaildrillEventType,
+    'subscriber.created' | 'subscriber.updated' | 'subscriber.unsubscribed'
+  >,
+  tenantId: string,
+  row: Subscriber,
+): Promise<void> {
+  if (!maildrillEventWanted(type, tenantId)) return;
+  await emitMaildrillEvent({
+    type,
+    tenantId,
+    // `updatedAt` is part of the key so a second edit is a second event, while a retried
+    // write of the same edit is not.
+    dedupeKey: eventDedupeKey(type, tenantId, row.id, row.updatedAt.toISOString()),
+    data: { subscriber: projectSubscriber(row), subscriberId: row.id },
+  });
 }
 
 export type ImportSubscriberRow = Omit<UpsertSubscriberInput, 'tenantId'>;
@@ -914,7 +956,16 @@ export async function updateSubscriber(
     .set(set)
     .where(and(eq(subscribers.id, id), eq(subscribers.tenantId, tenantId)))
     .returning();
-  return rows[0] ?? null;
+  const row = rows[0];
+  if (!row) return null;
+  // An opt-out is its own trigger, not a generic "updated" — a win-back workflow keys on
+  // it, and a workflow that mails on "updated" must never mail somebody who just left.
+  await emitSubscriberEvent(
+    patch.status === 'unsubscribed' ? 'subscriber.unsubscribed' : 'subscriber.updated',
+    tenantId,
+    row,
+  );
+  return row;
 }
 
 export async function setSubscriberStatus(
