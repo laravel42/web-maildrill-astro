@@ -14,6 +14,7 @@ import {
   type CampaignSendResult,
 } from '@/lib/app/campaign-map';
 import { channelReportConfig, type DrawerKpiKey } from '@/lib/app/campaign-report';
+import { trackingCapabilities } from './CampaignWizard.logic';
 import { RATE_BUCKETS, rateBucket } from '@/lib/app/templates-data';
 import type { ApiTemplate } from '@/lib/app/template-map';
 import type { ChannelSenders } from '@/lib/app/channel-senders';
@@ -252,6 +253,9 @@ export default function CampaignsBoard({
      table carried an Open and a Click column of dashes on every row. */
   const showOpenCol = tabCfg.rateCards.some((r) => r === 'open' || r === 'seen');
   const showClickCol = tabCfg.rateCards.includes('click');
+  const tabTracking = trackingCapabilities(tab);
+  const openTrackingToggle = tabCfg.rateCards.includes('open') && tabTracking.opens.enabled;
+  const clickTrackingToggle = showClickCol && tabTracking.clicks.enabled;
   /* Every channel reports a failure outcome — a bounce on email, a failed send
      everywhere else — so the column is always present, only relabelled.
 
@@ -1203,12 +1207,20 @@ useEffect(() => {
                   itself is present or absent — no per-row dashes needed. */}
               {showOpenCol && (
                 <div className={`tnum ${styles.muted3} ${styles.colCenter}`}>
-                  {c.openRate != null ? `${Math.round(c.openRate * 100)}%` : '—'}
+                  {openTrackingToggle && !c.trackOpens
+                    ? 'Off'
+                    : c.openRate != null
+                      ? `${Math.round(c.openRate * 100)}%`
+                      : '—'}
                 </div>
               )}
               {showClickCol && (
                 <div className={`tnum ${styles.muted3} ${styles.colCenter}`}>
-                  {c.clickRate != null ? `${Math.round(c.clickRate * 100)}%` : '—'}
+                  {clickTrackingToggle && !c.trackClicks
+                    ? 'Off'
+                    : c.clickRate != null
+                      ? `${Math.round(c.clickRate * 100)}%`
+                      : '—'}
                 </div>
               )}
               <TimeAgo className={`${styles.muted} ${styles.colCenter}`} at={c.updatedAt} />
@@ -1445,9 +1457,12 @@ function CampaignDrawer({
   const deliveredPct = campaign.recipients ? (campaign.delivered / campaign.recipients) * 100 : 0;
   const cto =
     campaign.openRate && campaign.clickRate ? (campaign.clickRate / campaign.openRate) * 100 : null;
-
+  const trackingCaps = trackingCapabilities(campaign.channel);
+  const TRACKING_OFF = 'Tracking Off';
 
   const drawerKpi = (key: DrawerKpiKey): { label: string; value: string; color: string } => {
+    const openOff = trackingCaps.opens.enabled && !campaign.trackOpens;
+    const clickOff = trackingCaps.clicks.enabled && !campaign.trackClicks;
     switch (key) {
       case 'recipients':
         return {
@@ -1464,10 +1479,11 @@ function CampaignDrawer({
       case 'open':
         return {
           label: 'Open rate',
-          value: pct(campaign.openRate),
-          color: 'var(--success-strong)',
+          value: openOff ? TRACKING_OFF : pct(campaign.openRate),
+          color: openOff ? 'var(--muted)' : 'var(--success-strong)',
         };
       case 'seen':
+        // WhatsApp read receipts are channel-native — not a campaign toggle.
         return {
           label: 'Seen rate',
           value: pct(campaign.openRate),
@@ -1476,15 +1492,17 @@ function CampaignDrawer({
       case 'click':
         return {
           label: 'Click rate',
-          value: pct(campaign.clickRate),
-          color: 'var(--accent-text)',
+          value: clickOff ? TRACKING_OFF : pct(campaign.clickRate),
+          color: clickOff ? 'var(--muted)' : 'var(--accent-text)',
         };
-      case 'cto':
+      case 'cto': {
+        const ctoOff = openOff || clickOff;
         return {
           label: campaign.channel === 'whatsapp' ? 'Click-to-seen' : 'Click-to-open',
-          value: cto == null ? '—' : `${cto.toFixed(1)}%`,
-          color: 'var(--warning-strong)',
+          value: ctoOff ? TRACKING_OFF : cto == null ? '—' : `${cto.toFixed(1)}%`,
+          color: ctoOff ? 'var(--muted)' : 'var(--warning-strong)',
         };
+      }
       case 'unsubscribed':
         return {
           label: 'Unsubscribed',
@@ -1580,7 +1598,10 @@ function CampaignDrawer({
               {kpis.map((k) => (
                 <div key={k.label} className="adrawer__kpi">
                   <div className="adrawer__kpi-k">{k.label}</div>
-                  <div className="tnum adrawer__kpi-v" style={{ color: k.color }}>
+                  <div
+                    className={`tnum adrawer__kpi-v${k.value === TRACKING_OFF ? ' adrawer__kpi-v--sm' : ''}`}
+                    style={{ color: k.color }}
+                  >
                     {k.value}
                   </div>
                 </div>
@@ -1618,17 +1639,6 @@ function CampaignDrawer({
                 <span className="adetail__v">{campaign.audience}</span>
               </div>
             )}
-            <div className="adetail">
-              <span className="adetail__k">Scheduled</span>
-              <span className="adetail__v">
-                {campaign.scheduledAt
-                  ? new Date(campaign.scheduledAt).toLocaleString('en-US', {
-                      dateStyle: 'medium',
-                      timeStyle: 'short',
-                    })
-                  : '—'}
-              </span>
-            </div>
             <div className="adetail">
               <span className="adetail__k">Recipients</span>
               <span className="adetail__v tnum">{campaign.recipients.toLocaleString('en-US')}</span>

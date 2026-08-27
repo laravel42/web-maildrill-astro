@@ -52,6 +52,7 @@ function toChannel(c?: string | null): ChannelType {
  * unsubscribe events. No invented numbers.
  */
 export function toCampaign(c: ApiCampaign): Campaign {
+  const content = (c.content ?? {}) as { trackOpens?: unknown; trackClicks?: unknown };
   return {
     id: c.id,
     name: c.name,
@@ -66,6 +67,9 @@ export function toCampaign(c: ApiCampaign): Campaign {
     completedAt: c.completedAt ?? null,
     openRate: c.delivered ? (c.opened ?? 0) / c.delivered : null,
     clickRate: c.delivered ? (c.clicked ?? 0) / c.delivered : null,
+    // Absent on older campaigns → treated as on, matching Infobip defaults.
+    trackOpens: content.trackOpens !== false,
+    trackClicks: content.trackClicks !== false,
     updatedAt: c.updatedAt ?? c.createdAt ?? new Date().toISOString(),
     recipients: c.recipients ?? 0,
     delivered: c.delivered ?? 0,
