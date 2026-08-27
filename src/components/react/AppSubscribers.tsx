@@ -962,10 +962,57 @@ export default function AppSubscribers({
     resetPageAndSel();
   };
 
-  const bulk = (verb: string) => {
-    const n = selected.size;
-    showToast(`${verb} ${n} subscriber${n === 1 ? '' : 's'}`);
-    setSelected(new Set());
+  /* CSV for the current selection — not the filtered roster. Selected ids can
+     span pages, so live mode re-fetches each row rather than trusting the
+     ten-row table buffer. */
+  const exportSelected = async () => {
+    if (exporting || selected.size === 0) return;
+    setExporting(true);
+    const ids = [...selected];
+    try {
+      if (!live) {
+        const rows = richSubscribers.filter((s) => selected.has(s.id));
+        const csv = buildCsv(
+          ['email', 'name', 'phone', 'status', 'tags', 'lists'],
+          rows.map((s) => [
+            s.email,
+            s.name,
+            s.phone,
+            s.status,
+            s.tags.join('; '),
+            s.lists.join('; '),
+          ]),
+        );
+        downloadCsv(exportFilename('subscribers'), csv);
+        showToast(`Exported ${rows.length} subscriber${rows.length === 1 ? '' : 's'}`);
+        setSelected(new Set());
+        return;
+      }
+      const results = await Promise.all(
+        ids.map((id) => api.get<ApiSubscriber>(`subscribers/${id}`).catch(() => null)),
+      );
+      const all = results.filter((r): r is ApiSubscriber => r != null);
+      if (all.length === 0) {
+        showToast('Could not export the selected subscribers');
+        return;
+      }
+      const fields = await api
+        .get<{ data: CustomField[] }>('custom-fields')
+        .then((r) => r.data)
+        .catch(() => [] as CustomField[]);
+      downloadCsv(exportFilename('subscribers'), subscribersCsv(all, fields));
+      const failed = ids.length - all.length;
+      showToast(
+        failed
+          ? `Exported ${all.length}, ${failed} failed`
+          : `Exported ${all.length} subscriber${all.length === 1 ? '' : 's'}`,
+      );
+      setSelected(new Set());
+    } catch (e) {
+      showToast(e instanceof ApiError ? e.message : 'Could not export subscribers');
+    } finally {
+      setExporting(false);
+    }
   };
 
   /* Delete by id list — persists to the service in live mode, else local-only. */
@@ -1550,17 +1597,14 @@ export default function AppSubscribers({
           <div className={styles.bulk} style={{ animation: 'fade .18s ease' }}>
             <span className={`${styles.bulkcount} tnum`}>{selected.size} selected</span>
             <span className={styles.bulkdiv} />
-            <button type="button" className={styles.bulkbtn} onClick={() => bulk('Tagged')}>
-              <Icon name="star" size={13} />
-              Tag
-            </button>
-            <button type="button" className={styles.bulkbtn} onClick={() => bulk('Added')}>
-              <Icon name="filter" size={13} />
-              Add to segment
-            </button>
-            <button type="button" className={styles.bulkbtn} onClick={() => bulk('Exporting')}>
+            <button
+              type="button"
+              className={styles.bulkbtn}
+              disabled={exporting}
+              onClick={() => void exportSelected()}
+            >
               <Icon name="download" size={13} />
-              Export
+              {exporting ? 'Exporting…' : 'Export'}
             </button>
             <button
               type="button"
