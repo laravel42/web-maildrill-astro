@@ -61,11 +61,36 @@ function clearAuthCookies(headers: Headers): void {
   }
 }
 
+// TEMP DEV-ONLY BYPASS — do not commit / do not use in any deployed environment.
+// Auth is being reworked in parallel; this lets /app/* render without a real
+// session so the email builder can be developed in isolation. Set
+// SKIP_AUTH_FOR_BUILDER_WORK=true in your local .env to enable.
+const SKIP_AUTH_FOR_BUILDER_WORK = import.meta.env.SKIP_AUTH_FOR_BUILDER_WORK === 'true';
+
 export const onRequest = defineMiddleware(async (context, next) => {
   // Prerendered (static) routes have no real request — skip session work so we
   // don't touch request headers at build time.
   if (context.isPrerendered) {
     context.locals.session = null;
+    return next();
+  }
+
+  if (SKIP_AUTH_FOR_BUILDER_WORK) {
+    // The BFF proxies (/api/eb/* and /api/v1/*) require a session with a
+    // user id (and, for /api/v1, an activeTenantId) — with `null` here they
+    // short-circuit to 401 and NEVER forward to the backend, so all AI /
+    // workspace calls silently fail even when the backend is up. Populate a
+    // dev session so those proxies authorize and forward. Values are
+    // overridable via env so they can match the backend's seeded dev IDs.
+    context.locals.session = {
+      user: {
+        id: import.meta.env.DEV_USER_ID ?? 'dev-user',
+        email: import.meta.env.DEV_USER_EMAIL ?? 'dev@local.test',
+        name: 'Dev User',
+      },
+      activeTenantId: import.meta.env.DEV_TENANT_ID ?? 'dev-tenant',
+      role: import.meta.env.DEV_ROLE ?? 'owner',
+    };
     return next();
   }
 
