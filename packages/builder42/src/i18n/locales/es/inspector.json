@@ -1,0 +1,643 @@
+{
+  "title": "Inspector",
+  "empty": "Selecciona un nodo en el canvas.",
+  "typeNotRegistered": "Tipo no registrado.",
+  "deleteNode": "Eliminar nodo",
+  "compat": {
+    "label": "Compatibilidad limitada entre navegadores"
+  },
+  "compositeSlots": {
+    "tabs": { "heading": "Pestañas", "add": "Añadir pestaña" },
+    "accordion": { "heading": "Secciones", "add": "Añadir sección" },
+    "delete": "Eliminar",
+    "untitled": "(sin título)",
+    "moveUp": "Mover arriba",
+    "moveDown": "Mover abajo",
+    "dragHandle": "Arrastra para reordenar"
+  },
+  "triggers": {
+    "title": "Disparadores",
+    "hint": "Elige qué elementos abren este modal al hacer click.",
+    "create": "Crear disparador",
+    "searchPlaceholder": "Buscar por nombre…",
+    "empty": "No hay elementos que puedan disparar el modal.",
+    "link": "Vincular",
+    "linked": "Vinculado",
+    "showMore": "Mostrar más ({{count}})"
+  },
+  "clickAction": {
+    "title": "Acción de click",
+    "hint": "Elige qué pasa cuando se hace click en este elemento.",
+    "none": "Ninguna",
+    "targetModal": "Modal a abrir",
+    "chooseModal": "Elige un modal…",
+    "untitledModal": "(modal sin título)",
+    "noModals": "No hay modales en el sitio todavía. Añade uno para poder vincularlo aquí.",
+    "targetNode": "Elemento destino",
+    "chooseNode": "Elige un elemento…",
+    "searchNodePlaceholder": "Buscar por nombre o tipo…",
+    "noNodesMatch": "Ningún elemento coincide con la búsqueda.",
+    "noActions": "Este elemento no admite ninguna acción de click.",
+    "linkWillBeCleared": "Este elemento tiene un enlace de navegación configurado; al elegir una acción se eliminará.",
+    "scrollToTopPreset": "Inicio de la página",
+    "actions": {
+      "open-modal": "Abrir modal",
+      "close-modal": "Cerrar modal",
+      "dismiss": "Descartar",
+      "scroll-to": "Desplazar a",
+      "open-url": "Abrir URL",
+      "submit-form": "Enviar formulario",
+      "reset-form": "Limpiar formulario"
+    },
+    "fields": {
+      "dismiss": {
+        "rememberHelp": "Si se activa, el sitio publicado recuerda que este visitante ya lo descartó (localStorage) y no vuelve a mostrarlo en visitas futuras. Útil para avisos de cookies o promociones."
+      },
+      "open-url": {
+        "url": "URL",
+        "newTab": "Abrir en pestaña nueva"
+      }
+    }
+  },
+  "tabs": {
+    "props": "Props",
+    "style": "Estilo",
+    "behaviors": "Acciones",
+    "ariaLabel": "Secciones del inspector",
+    "noProps": "Este componente no tiene propiedades editables."
+  },
+  "overflow": {
+    "overflowsPrefix": "Este contenedor desborda en ",
+    "overflowsSuffix": ".",
+    "convertToSlider": "Convertir en slider"
+  },
+  "form": {
+    "properties": "Propiedades",
+    "propsGeneral": "General",
+    "styleEditing": "Estilo · editando",
+    "stateEditing": "Estado",
+    "stateNormal": "Normal",
+    "statePressed": "Activo",
+    "iconPressed": {
+      "help": "Se muestra cuando el nodo está en estado activo (behavior `toggle`). Vacío = no cambia."
+    },
+    "breadcrumbAriaLabel": "Ruta del nodo seleccionado",
+    "breadcrumbMore": "Ver nodos intermedios",
+    "styleGroups": {
+      "layout": "Layout",
+      "spacing": "Espaciado",
+      "size": "Tamaño",
+      "appearance": "Apariencia",
+      "typography": "Tipografía"
+    }
+  },
+  "visibility": {
+    "label": "Visibilidad",
+    "toggleAria": "Alternar visibilidad en {{breakpoint}}"
+  },
+  "pageVisibilityList": {
+    "empty": "El sitio no tiene páginas todavía.",
+    "toggleAria": "Mostrar {{title}} en el menú"
+  },
+  "linkField": {
+    "kind": "Tipo de enlace",
+    "internal": "Página del sitio",
+    "external": "URL externa",
+    "anchor": "Ancla en esta página",
+    "page": "Página destino",
+    "anchorOptional": "Ancla (opcional): id de nodo",
+    "nodeId": "id del nodo destino"
+  },
+  "behaviors": {
+    "title": "Animaciones y efectos",
+    "empty": "Sin animaciones ni efectos. Añade uno para habilitar interactividad (requiere JS en el sitio publicado).",
+    "hint": "Agrega animaciones y efectos interactivos a este elemento.",
+    "notAvailable": "Este elemento no admite animaciones ni efectos.",
+    "remove": "Quitar comportamiento",
+    "add": "Añadir",
+    "categories": {
+      "content": "Contenido",
+      "motion": "Animación al hacer scroll",
+      "navigation": "Navegación y posición",
+      "structure": "Componentes estructurados",
+      "interactive": "Interactividad",
+      "appearance": "Apariencia"
+    },
+    "desc": {
+      "carousel": "Convierte los hijos en un carrusel deslizable (requiere JS).",
+      "reveal-on-scroll": "Anima la aparición del elemento al entrar en pantalla.",
+      "theme-toggle": "Botón para alternar entre tema claro y oscuro.",
+      "form-validation": "Valida los campos en tiempo real con mensajes de error (requiere JS).",
+      "sticky": "Fija el elemento al hacer scroll; añade una marca visual cuando ya se scrolleó.",
+      "count-up": "Anima el número de 0 al valor final al entrar en pantalla.",
+      "marquee": "Desplaza los logos en un bucle continuo (requiere JS para pausar al pasar el mouse).",
+      "expandable": "Colapsa el bloque a una altura y agrega un botón para ver más (sin JS se ve completo).",
+      "parallax": "Desplaza el fondo a distinta velocidad que el resto de la página al hacer scroll.",
+      "scroll-progress": "Muestra una barra que avanza según el progreso de lectura de la página.",
+      "scroll-spy": "Resalta el enlace de la sección visible en un menú de anclas dentro de la misma página.",
+      "lightbox": "Click en la imagen la abre en pantalla completa, con navegación entre varias (requiere JS)."
+    },
+    "name": {
+      "carousel": "Carrusel (Embla)",
+      "reveal-on-scroll": "Aparecer al entrar en pantalla",
+      "theme-toggle": "Interruptor de tema",
+      "accordion": "Acordeón (animado)",
+      "modal": "Modal (ventana emergente)",
+      "navbar": "Barra de navegación (hamburguesa móvil)",
+      "tabs": "Pestañas (animadas)",
+      "form-validation": "Validación en tiempo real (Alpine)",
+      "sticky": "Fijo al hacer scroll (sticky)",
+      "count-up": "Contador animado",
+      "marquee": "Desplazamiento continuo (marquee)",
+      "expandable": "Ver más (expandible)",
+      "parallax": "Parallax",
+      "scroll-progress": "Barra de progreso de lectura",
+      "scroll-spy": "Resaltar sección activa (scroll-spy)",
+      "lightbox": "Lightbox (pantalla completa)"
+    },
+    "fields": {
+      "theme-toggle": {
+        "light": "Tema claro",
+        "dark": "Tema oscuro",
+        "storageKey": "Recordar preferencia"
+      },
+      "sticky": {
+        "position": "Posición",
+        "scrolledThreshold": "Umbral para marcar \"ya scrolleó\" (px)",
+        "scrolledThresholdHelp": "Cantidad de píxeles de scroll a partir de la cual el elemento cambia de aspecto (por ejemplo, gana una sombra o se compacta) para indicar que la página se desplazó."
+      },
+      "count-up": {
+        "duration": "Duración (ms)",
+        "threshold": "Umbral de visibilidad",
+        "once": "Solo una vez"
+      },
+      "marquee": {
+        "duration": "Duración del ciclo (s)",
+        "direction": "Dirección",
+        "pauseOnHover": "Pausar al pasar el mouse"
+      },
+      "reveal-on-scroll": {
+        "threshold": "Umbral de visibilidad",
+        "once": "Solo una vez",
+        "mode": "Modo de entrada"
+      },
+      "expandable": {
+        "collapsedHeight": "Altura colapsada",
+        "expandLabel": "Texto del botón \"Ver más\"",
+        "collapseLabel": "Texto del botón \"Ver menos\"",
+        "fade": "Degradado al final"
+      },
+      "parallax": {
+        "speed": "Velocidad",
+        "fallback": "Alternativa con JS en navegadores antiguos",
+        "fallbackHelp": "Este efecto no se ve en algunos navegadores antiguos. Con esta opción activada, en esos navegadores se muestra igual mediante un método alternativo; si la desactivas, en esos casos simplemente no se ve el efecto — pero el contenido de la página siempre se ve y funciona con normalidad."
+      },
+      "scroll-progress": {
+        "fallback": "Alternativa con JS en navegadores antiguos",
+        "fallbackHelp": "Esta barra no avanza en algunos navegadores antiguos. Con esta opción activada, en esos navegadores avanza igual mediante un método alternativo; si la desactivas, en esos casos la barra simplemente no avanza — pero el contenido de la página siempre se ve y funciona con normalidad."
+      },
+      "scroll-spy": {
+        "rootMargin": "Margen de activación",
+        "rootMarginHelp": "Define qué franja de la pantalla decide qué sección se considera \"activa\". Con el valor por defecto, se ignora el 20% superior y el 60% inferior de la pantalla, dejando una banda angosta cerca de la parte alta: la sección que pasa por ahí es la que se resalta en el menú."
+      },
+      "lightbox": {
+        "duration": "Duración de la transición (ms)",
+        "durationHelp": "Duración en milisegundos de la animación de apertura/cierre del overlay de pantalla completa. Se ignora si el visitante tiene activada la preferencia de movimiento reducido del sistema."
+      }
+    },
+    "themeToggle": {
+      "selectPlaceholder": "(elegir tema)",
+      "noThemes": "El sitio aún no tiene temas para alternar.",
+      "configureThemes": "Configurar temas",
+      "storageKeyHelp": "Nombre con el que el sitio publicado recuerda el tema que eligió cada visitante y lo reaplica en su próxima visita (tiene prioridad sobre el tema del sistema, y se guarda en el navegador vía localStorage). Cámbialo solo si necesitas que este interruptor recuerde su preferencia por separado de otro del mismo dominio. Por defecto: «pb-theme»."
+    }
+  },
+  "fieldHelp": {
+    "label": "Más información"
+  },
+  "styleField": {
+    "useToken": "Vincular a token de diseño",
+    "unlinkToken": "Desvincular token",
+    "resetToInherited": "Restablecer a heredado",
+    "freeValue": "(valor libre)",
+    "inherit": "(heredar)",
+    "pickColor": "Elegir color",
+    "opacity": "Opacidad",
+    "brokenToken": "clave inexistente",
+    "badge": {
+      "token": "token",
+      "tokenBroken": "token ✗",
+      "base": "base",
+      "override": "override",
+      "inherited": "heredado"
+    }
+  },
+  "imageSource": {
+    "urlPlaceholder": "https://… (URL de la imagen)",
+    "uploadImage": "Subir imagen",
+    "useUrl": "Usar URL",
+    "unsplash": {
+      "tabLabel": "Buscar en Unsplash",
+      "searchPlaceholder": "Buscar fotos (ej. \"montañas\", \"café\")…",
+      "searchAriaLabel": "Buscar imágenes en Unsplash",
+      "loading": "Buscando…",
+      "loadingMore": "Cargando más resultados…",
+      "empty": "Sin resultados. Prueba con otra búsqueda.",
+      "emptyInitial": "Escribe algo para buscar fotos en Unsplash.",
+      "error": "No se pudo buscar en Unsplash. Intenta de nuevo.",
+      "selecting": "Descargando…",
+      "photoBy": "Foto de {{name}}",
+      "resultsGridAriaLabel": "Resultados de la búsqueda en Unsplash",
+      "selectPhotoAriaLabel": "Usar la foto de {{name}}",
+      "close": "Cerrar",
+      "attribution": "Foto de {{photographer}} en Unsplash",
+      "poweredBy": "Búsqueda de imágenes por Unsplash"
+    }
+  },
+  "richtextField": {
+    "editInline": "Se edita directamente en el bloque del canvas (haz click dos veces sobre el texto)."
+  },
+  "translation": {
+    "untranslated": "Sin traducir · muestra el valor por defecto",
+    "badge": "sin traducir",
+    "quickLocale": "Cambiar idioma de contenido (actual: {{locale}})",
+    "quickLocaleSelect": "Seleccionar idioma de contenido",
+    "defaultTag": "por defecto"
+  },
+  "translationTable": {
+    "open": "Tabla de traducción",
+    "title": "Tabla de traducción",
+    "subtitle": "Traduce los textos de la página por idioma. Los cambios se guardan al salir de cada campo.",
+    "close": "Cerrar",
+    "field": "Campo",
+    "empty": "No hay textos traducibles en esta página o falta agregar idiomas.",
+    "localeSelectLabel": "Idioma a traducir",
+    "pageSelectLabel": "Página",
+    "statusColumn": "Estado",
+    "segmentIndex": "Párrafo {{index}}",
+    "editWholeField": "Se edita como campo completo, abajo",
+    "richTextProgress": "{{translated}} de {{total}} párrafos traducidos",
+    "autoButton": "Autocompletar {{locale}}",
+    "autoCheckingAvailability": "Comprobando disponibilidad del traductor…",
+    "autoDisabledServer": "La traducción automática no está habilitada en el servidor",
+    "autoDisabledLocale": "DeepL no admite {{locale}} como idioma destino",
+    "autoInProgress": "Traduciendo a {{locale}}…",
+    "autoDoneMessage": "{{count}} campos traducidos a {{locale}}",
+    "autoPartialError": "{{count}} segmentos no se pudieron traducir",
+    "autoErrorUnknown": "No se pudo completar la traducción automática",
+    "privacyNote": "El texto del sitio se envía a los servidores de DeepL para traducirlo.",
+    "usage": "{{used}} de {{limit}} caracteres usados hoy",
+    "undoHint": "Ctrl+Z no deshace las traducciones automáticas — usa \"Deshacer autocompletado\" en el aviso.",
+    "undoAction": "Deshacer autocompletado",
+    "confirmTitle": "Confirmar traducción automática",
+    "confirmBody": "Traducir {{segments}} segmentos · {{chars}} caracteres · {{locale}}",
+    "confirmCancel": "Cancelar",
+    "confirmAction": "Traducir",
+    "confirmPending": "Traduciendo…",
+    "statusTranslating": "Traduciendo…",
+    "statusDone": "Traducido",
+    "statusError": "Error",
+    "structureSyncButton": "Sincronizar estructura ({{field}})",
+    "structureSyncDone": "Estructura de \"{{field}}\" sincronizada"
+  },
+  "siteSettings": {
+    "hint": "Configuración del sitio: páginas, idiomas y archivo. Selecciona un nodo en el canvas para editar sus propiedades.",
+    "fileTitle": "Archivo",
+    "tabsAriaLabel": "Configuración del sitio",
+    "infoLabel": "Qué se hace en esta sección",
+    "advancedHint": {
+      "text": "¿Buscas idiomas o SEO?",
+      "action": "Activa el modo avanzado"
+    },
+    "tabs": {
+      "pages": "Páginas",
+      "languages": "Idiomas",
+      "themes": "Temas",
+      "seo": "SEO",
+      "settings": "Ajustes",
+      "publish": "Publicar"
+    },
+    "tabsHelp": {
+      "pages": "Crea, duplica, reordena y elimina páginas del sitio. Marca la página de inicio y edita el título y el slug de cada una.",
+      "languages": "Activa el sitio multilingüe, gestiona los idiomas de contenido y define el idioma por defecto.",
+      "themes": "Crea y edita temas de color del sitio remapeando los tokens semánticos, y marca el tema por defecto.",
+      "seo": "Edita la metadata SEO de la página activa: título, descripción, canonical, robots y Open Graph/Twitter.",
+      "settings": "Configura el nombre del archivo de salida y guarda o carga el sitio completo (.json).",
+      "publish": "Publica el sitio completo y gestiona tus sitios ya publicados: abrir, republicar o despublicar."
+    },
+    "output": {
+      "title": "Nombre de archivo de salida",
+      "prefixLabel": "Prefijo",
+      "prefixPlaceholder": "page",
+      "timestamp": "Añadir marca de tiempo",
+      "preview": "Ejemplo"
+    },
+    "download": {
+      "title": "Descargar proyecto",
+      "hint": "Genera el sitio estático (HTML + CSS + assets) comprimido en un .zip.",
+      "button": "Descargar .zip",
+      "exporting": "Exportando sitio…"
+    }
+  },
+  "export": {
+    "warningsTitle": "Advertencias de exportación",
+    "warningsCount": "{{count}} problema(s) detectado(s)",
+    "unknownType": "Nodo {{nodeId}}: tipo desconocido «{{type}}»",
+    "missingNode": "Nodo {{nodeId}}: no encontrado en el documento",
+    "andMore": "…y {{count}} más."
+  },
+  "pageManager": {
+    "title": "Páginas",
+    "selectPage": "Seleccionar página",
+    "untitled": "(sin título)",
+    "moveUp": "Subir",
+    "moveDown": "Bajar",
+    "setHome": "Marcar como inicio",
+    "duplicate": "Duplicar página",
+    "delete": "Eliminar página",
+    "newPage": "Nueva página",
+    "titlePlaceholder": "Título de la página",
+    "slugPlaceholder": "slug-de-la-pagina",
+    "namePlaceholder": "Nombre de la página",
+    "slugLabel": "Slug",
+    "create": "Crear",
+    "cancel": "Cancelar",
+    "errorNameEmpty": "El nombre no puede estar vacío",
+    "errorSlugInvalid": "El slug generado no es válido",
+    "errorSlugDuplicate": "Ya existe una página con ese slug",
+    "theme": "Tema",
+    "themeDefault": "(tema por defecto)"
+  },
+  "themes": {
+    "title": "Temas",
+    "gallery": "Galería",
+    "templateGallery": "Temas de plantillas",
+    "templateGalleryHint": "Los colores y tipografías de cada plantilla de sector, listos para aplicar a cualquier página sin traer su contenido.",
+    "applyPreset": "Aplicar el tema \"{{name}}\"",
+    "empty": "Sin temas. Crea uno para remapear tokens (colores, tipografía) y cambiar el aspecto del sitio o de páginas concretas.",
+    "preview": "Previsualizar",
+    "noTheme": "(sin tema)",
+    "add": "Nuevo tema",
+    "setDefault": "Marcar como tema por defecto",
+    "delete": "Eliminar tema",
+    "editing": "Editando: {{name}}",
+    "name": "Nombre",
+    "extends": "Hereda de",
+    "extendsNone": "(ninguno)",
+    "colorScheme": "Esquema de color",
+    "schemeAuto": "(automático)",
+    "schemeLight": "Claro",
+    "schemeDark": "Oscuro",
+    "colors": "Colores",
+    "resetToken": "Restablecer al valor heredado",
+    "contrastWarn": "Contraste texto/superficie bajo ({{ratio}}:1) — no cumple WCAG AA (4.5:1)",
+    "contrastOk": "Contraste texto/superficie {{ratio}}:1 (WCAG AA)",
+    "scrollbar": {
+      "title": "Barra de desplazamiento",
+      "thumb": "Color del thumb",
+      "track": "Color del riel",
+      "size": "Grosor",
+      "compat": "La personalización avanzada (grosor exacto, esquinas redondeadas, hover) solo se aplica en navegadores basados en Chromium/WebKit. Firefox solo respeta el color y un grosor «fino»."
+    }
+  },
+  "i18nSettings": {
+    "title": "Idiomas",
+    "enable": "Activar sitio multilenguaje",
+    "hint": "El idioma por defecto usa el valor de cada campo tal cual. Los demás idiomas guardan una traducción por campo.",
+    "default": "por defecto",
+    "makeDefault": "Hacer por defecto",
+    "remove": "Quitar idioma",
+    "addPlaceholder": "Buscar idioma…",
+    "invalidCode": "Idioma no reconocido",
+    "comboboxNoResults": "Sin resultados",
+    "editingLabel": "Editando en"
+  },
+  "seoSettings": {
+    "title": "SEO",
+    "hint": "Metadata de la página activa. Si el sitio es multilenguaje, cada campo se traduce por idioma (usa el selector 🌐 o el idioma de edición activo).",
+    "pageTitle": "Título de la página",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Resumen de la página para buscadores y redes sociales",
+    "canonical": "URL canónica",
+    "robots": "Robots",
+    "openGraphTitle": "Open Graph",
+    "ogTitle": "Título",
+    "ogDescription": "Descripción",
+    "ogImage": "Imagen",
+    "ogType": "Tipo",
+    "twitterTitle": "Twitter Card",
+    "twitterCard": "Tipo de card",
+    "twitterTitleField": "Título",
+    "twitterDescription": "Descripción",
+    "twitterImage": "Imagen",
+    "autoButton": "Autocompletar faltantes ({{locale}})",
+    "autoDoneMessage": "{{count}} campos SEO traducidos a {{locale}}",
+    "confirmTitle": "Confirmar traducción automática de SEO",
+    "confirmBody": "Traducir {{fields}} campos · {{chars}} caracteres · {{locale}}"
+  },
+  "optionsList": {
+    "title": "Opciones",
+    "countSingular": "opción",
+    "countPlural": "opciones",
+    "labelPlaceholder": "Opción {{n}}",
+    "valuePlaceholder": "option{{n}}",
+    "remove": "Eliminar opción",
+    "add": "Agregar opción",
+    "emptyState": "No hay opciones todavía",
+    "duplicateValue": "Este valor ya existe",
+    "requiredField": "Este campo es requerido",
+    "dragHandle": "Arrastrar para reordenar"
+  },
+  "searchableSelect": {
+    "noResults": "Sin resultados para \"{{query}}\"",
+    "moreResults": "y {{count}} más… sigue escribiendo para acotar",
+    "listLabel": "Opciones filtradas"
+  },
+  "publish": {
+    "title": "Publicar sitio",
+    "disabledTitle": "Publicación no disponible",
+    "disabledHint": "El operador de este servidor no tiene la publicación habilitada. Pide que active la variable de entorno PUBLISH_ENABLED.",
+    "providerLabel": "Proveedor de publicación",
+    "subdomainLabel": "Subdominio",
+    "subdomainPlaceholder": "mi-sitio",
+    "subdomainPreview": "URL: {{url}}",
+    "subdomainInvalid": "El subdominio no es válido (usa minúsculas, números y guiones).",
+    "subdomainHint": "Se usará como parte de la URL pública del sitio.",
+    "idle": {
+      "hint": "Publica el sitio completo (todas sus páginas) en el proveedor configurado por el operador."
+    },
+    "publishing": "Publicando…",
+    "publishButton": "Publicar",
+    "republishButton": "Republicar",
+    "done": {
+      "title": "¡Sitio publicado!",
+      "urlLabel": "URL pública",
+      "open": "Abrir",
+      "openDisabled": "No se puede abrir esta URL desde el editor",
+      "publishAgain": "Publicar de nuevo"
+    },
+    "sizeWarning": "El sitio pesa {{size}} — puede exceder el límite del servidor. Considera reducir imágenes embebidas antes de publicar.",
+    "errors": {
+      "publish_disabled": "La publicación no está habilitada en este servidor.",
+      "rate_limited": "Demasiadas publicaciones seguidas. Intenta de nuevo en {{seconds}}s.",
+      "invalid_request": "La solicitud no es válida — revisa el subdominio o el tamaño del sitio.",
+      "invalid_fragment": "El sitio tiene un problema de formato y no se pudo validar.",
+      "not_implemented": "El proveedor de publicación configurado todavía no está disponible.",
+      "unknown": "Ocurrió un error al publicar. Intenta de nuevo."
+    },
+    "managedSites": {
+      "title": "Sitios publicados",
+      "empty": "Todavía no has publicado ningún sitio.",
+      "unavailable": "El proveedor activo no permite listar sitios publicados.",
+      "open": "Abrir",
+      "openDisabled": "No se puede abrir esta URL desde el editor",
+      "unpublish": "Despublicar",
+      "unpublishing": "Despublicando…",
+      "unpublishConfirmTitle": "¿Despublicar este sitio?",
+      "unpublishConfirmBody": "Esta acción es irreversible: el sitio dejará de estar accesible en su URL pública.",
+      "unpublishConfirmAction": "Despublicar",
+      "unpublishCancel": "Cancelar",
+      "unpublishModalClose": "Cerrar sin despublicar",
+      "publishedAt": "Publicado el {{date}}",
+      "providerLabel": "Proveedor: {{provider}}",
+      "loadError": "No se pudo cargar la lista de sitios publicados."
+    }
+  },
+  "panel": {
+    "sections": {
+      "layout": "Layout",
+      "spacing": "Espaciado",
+      "size": "Tamaño",
+      "typography": "Tipografía",
+      "appearance": "Apariencia",
+      "effects": "Efectos"
+    },
+    "rows": {
+      "display": "Display",
+      "direction": "Dirección",
+      "justify": "Distribuir",
+      "align": "Alinear",
+      "gap": "Gap",
+      "wrap": "Envolver",
+      "overflow": "Overflow",
+      "gridColumns": "Columnas",
+      "cell": "Celda",
+      "padding": "Padding",
+      "margin": "Margin",
+      "width": "Ancho",
+      "height": "Alto",
+      "minHeight": "Alto mínimo",
+      "maxWidth": "Ancho máximo",
+      "fontSize": "Tamaño",
+      "color": "Color",
+      "textAlign": "Alineación",
+      "fontWeight": "Peso",
+      "fontFamily": "Fuente",
+      "lineHeight": "Interlineado",
+      "textDecoration": "Decoración",
+      "background": "Fondo",
+      "borderRadius": "Radio",
+      "border": "Borde",
+      "boxShadow": "Sombra",
+      "cursor": "Cursor",
+      "outline": "Outline"
+    },
+    "custom": "Personalizado",
+    "origin": {
+      "inheritedFrom": "Heredado de {{bp}}",
+      "componentDefault": "Valor por defecto del componente"
+    },
+    "reset": "Restablecer",
+    "lockSides": "Vincular lados",
+    "unlockSides": "Desvincular lados",
+    "sides": {
+      "top": "Superior",
+      "right": "Derecho",
+      "bottom": "Inferior",
+      "left": "Izquierdo"
+    },
+    "visibility": {
+      "visible": "Visible",
+      "hiddenAt": "Oculto en {{bp}}",
+      "hiddenInherited": "Oculto (heredado de {{bp}})",
+      "overrideHere": "Anular aquí",
+      "dotTooltipVisible": "Visible en {{bp}}",
+      "dotTooltipHidden": "Oculto en {{bp}}"
+    },
+    "width": {
+      "full": "Completo",
+      "auto": "Auto",
+      "fixed": "Fijo"
+    },
+    "gridColumnsSimple": {
+      "placeholder": "N.º",
+      "ariaLabel": "Número de columnas"
+    },
+    "fontSize": {
+      "s": "S",
+      "m": "M",
+      "l": "L",
+      "xl": "XL"
+    },
+    "boxShadow": {
+      "none": "Ninguna",
+      "s": "S",
+      "m": "M",
+      "l": "L"
+    },
+    "border": {
+      "width": "Grosor del borde",
+      "widthNone": "Sin borde",
+      "style": "Tipo de borde",
+      "styleOptions": {
+        "solid": "Sólido",
+        "dashed": "Discontinuo",
+        "dotted": "Punteado"
+      },
+      "color": "Color del borde"
+    },
+    "closePanel": "Cerrar panel",
+    "deleteNode": "Eliminar nodo",
+    "deleteConfirm": {
+      "title": "¿Eliminar este elemento?",
+      "body": "Este elemento tiene contenido dentro (elementos hijos) que se eliminará junto con él.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar"
+    },
+    "deleteToast": {
+      "message": "Elemento eliminado",
+      "undo": "Deshacer"
+    },
+    "options": {
+      "flexStart": "Al inicio",
+      "flexEnd": "Al final",
+      "center": "Centro",
+      "spaceBetween": "Espacio entre",
+      "spaceAround": "Espacio alrededor",
+      "spaceEvenly": "Espacio uniforme",
+      "stretch": "Estirar",
+      "baseline": "Línea base",
+      "row": "Fila",
+      "column": "Columna",
+      "rowReverse": "Fila invertida",
+      "columnReverse": "Columna invertida",
+      "displayFlex": "Flexible",
+      "displayGrid": "Cuadrícula",
+      "displayBlock": "Bloque",
+      "nowrap": "Sin ajuste",
+      "wrap": "Ajustar",
+      "wrapReverse": "Ajustar invertido",
+      "alignLeft": "Izquierda",
+      "alignCenter": "Centro",
+      "alignRight": "Derecha",
+      "alignJustify": "Justificado",
+      "underline": "Subrayado",
+      "lineThrough": "Tachado",
+      "decorationNone": "Sin decoración",
+      "overflowX": "Overflow horizontal",
+      "overflowY": "Overflow vertical",
+      "gridColumnCell": "Celda: columna",
+      "gridRowCell": "Celda: fila"
+    }
+  }
+}

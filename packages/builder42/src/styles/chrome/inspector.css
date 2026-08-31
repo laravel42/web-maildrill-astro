@@ -1,0 +1,768 @@
+/**
+ * chrome/chrome/inspector.css — Inspector chrome + titlebar + pages manager + route form (Fase 11.f, Fase 19.f, docs/06 §7, T1)
+ *
+ * Extraído del monolito chrome.css (docs/28). Se carga en el orden
+ * definido por el barrel según docs/28 §2.2.
+ *
+ * Namespace: solo `pbx-*`. Cualquier referencia a `pb-*` debe
+ * justificarse en línea (criterio docs/22 §4).
+ */
+/* ---- Inspector ---------------------------------------------------------- */
+.pbx-inspector__empty {
+  font-size: 13px;
+  color: var(--pb-chrome-text-faint);
+  padding: 16px 14px;
+}
+
+/* Breadcrumb / parent selector (docs/02 Â§11.5). */
+.pbx-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 0;
+  font-size: 12px;
+}
+
+.pbx-breadcrumb__sep {
+  color: var(--pb-chrome-text-faint);
+  margin: 0 2px;
+}
+
+.pbx-breadcrumb__btn {
+  border: 0;
+  background: transparent;
+  color: var(--pb-chrome-accent-on-surface);
+  cursor: pointer;
+  padding: 1px 4px;
+  border-radius: var(--pb-chrome-radius-xs);
+  font-size: 12px;
+  transition: background var(--pb-chrome-transition);
+}
+
+.pbx-breadcrumb__btn:hover {
+  background: var(--pb-chrome-accent-subtle);
+}
+
+/* Foco por teclado (WCAG 2.4.7) — superficie clara del Inspector: anillo de
+ * 3px estilo Maildrill (docs/52 F5, antes outline sólido de 2px). */
+.pbx-breadcrumb__btn:focus-visible {
+  outline: none;
+  box-shadow: var(--pb-chrome-focus-ring);
+}
+
+.pbx-breadcrumb__btn--current {
+  color: var(--pb-chrome-text);
+  font-weight: 600;
+  cursor: default;
+}
+
+/* Affordance "desborda â†’ convertir en slider" (detecciÃ³n editor-only). */
+.pbx-overflow-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  margin: 0 0 12px;
+  background: var(--pb-chrome-warning-subtle);
+  border: 1px solid var(--pb-chrome-warning-border);
+  border-radius: var(--pb-chrome-radius-md);
+  font-size: 12px;
+  color: var(--pb-chrome-warning);
+}
+
+.pbx-overflow-hint code {
+  font-family: var(--pb-chrome-font-mono);
+  background: var(--pb-chrome-warning-subtle);
+  padding: 0 4px;
+  border-radius: var(--pb-chrome-radius-xs);
+}
+
+.pbx-overflow-hint__btn {
+  align-self: flex-start;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: var(--pb-chrome-radius-sm);
+  background: var(--pb-chrome-warning-solid-bg);
+  color: var(--pb-chrome-text-on-accent);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background var(--pb-chrome-transition);
+}
+
+.pbx-overflow-hint__btn:hover {
+  background: var(--pb-chrome-warning-solid-bg-hover);
+}
+
+/* Foco por teclado (WCAG 2.4.7) — fondo ámbar sólido (--pb-chrome-warning-
+ * solid-bg, amber-800): blanco (`--pb-chrome-text-on-accent`, ya usado como
+ * color de texto de este botón) da 7.09:1 — cumple AA con margen amplio
+ * (antes `#d97706` amber-600 daba 3.19:1, bajo AA; docs/46 contrast guard,
+ * Fase 4). Offset negativo para quedar dentro del propio botón. */
+.pbx-overflow-hint__btn:focus-visible {
+  outline: 2px solid var(--pb-chrome-text-on-accent);
+  outline-offset: -2px;
+}
+
+/* Meta (id/type) del nodo seleccionado */
+.pbx-inspector__meta {
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--pb-chrome-border);
+  padding-bottom: 10px;
+}
+
+.pbx-inspector__heading {
+  font-size: var(--pb-chrome-font-size-sm);
+  font-weight: var(--pb-chrome-font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--pb-chrome-text-muted);
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: var(--pb-chrome-line-height-tight);
+}
+
+.pbx-inspector__heading::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, var(--pb-chrome-accent-light), var(--pb-chrome-border));
+}
+
+.pbx-inspector__subheading {
+  font-size: var(--pb-chrome-font-size-sm);
+  font-weight: var(--pb-chrome-font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pb-chrome-text-faint);
+  margin: 14px 0 4px;
+}
+
+.pbx-fields {
+  margin: 0;
+}
+
+.pbx-field {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--pb-chrome-surface-alt);
+  font-size: 13px;
+}
+
+.pbx-field__label {
+  color: var(--pb-chrome-text);
+  font-weight: 500;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.pbx-field__control {
+  font-size: 10px;
+  /* --pb-chrome-text-faint es SOLO para uso decorativo/no-texto (piso 3:1,
+     ver su comentario en tokens.css) — este badge muestra el TIPO de campo
+     (texto informativo real). --pb-chrome-text-muted daba 3.47:1 y aún así
+     no alcanza (--pb-chrome-text-muted sobre --pb-chrome-surface-alt es el
+     propio H4 de docs/46: 4.34:1, bajo 4.5:1) — mismo piso que
+     .pbx-inspector-tab__count / .pbx-page-manager__route-preview.
+     --pb-chrome-text sí cumple en los dos temas (docs/46 contrast guard,
+     Fase 4). */
+  color: var(--pb-chrome-text);
+  background: var(--pb-chrome-surface-alt);
+  padding: 1px 5px;
+  border-radius: var(--pb-chrome-radius-pill);
+  border: 1px solid var(--pb-chrome-border);
+}
+
+.pbx-field__value {
+  margin: 0;
+  color: var(--pb-chrome-text);
+  font-family: var(--pb-chrome-font-mono);
+  font-size: 12px;
+  text-align: right;
+  word-break: break-word;
+}
+
+.pbx-style-group__title {
+  font-size: var(--pb-chrome-font-size-sm);
+  font-weight: var(--pb-chrome-font-weight-bold);
+  color: var(--pb-chrome-text-muted);
+  margin: 12px 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: var(--pb-chrome-line-height-tight);
+}
+
+
+/* ---- Titlebar del Inspector + icono de info (Fase 19.f) ------------------ */
+/* Cuerpo scrolleable del Inspector (Fase 19.n: sin barra de título). */
+.pbx-inspector__body {
+  flex: 1;
+  overflow: auto;
+  padding: 0 0 12px 10px;
+  contain: layout style;
+}
+
+/* Fila de tabs de configuración de sitio + icono de info a la derecha. */
+.pbx-site-settings__tabrow {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 8px;
+  gap: 6px;
+}
+.pbx-site-settings__tabrow .pbx-inspector-tabs {
+  flex: 1;
+  min-width: 0;
+}
+.pbx-site-settings__tabrow .pbx-info-tip {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Tooltip de ayuda contextual (c42 Tooltip). Chrome-only. */
+.pbx-info-tip {
+  position: relative;
+  display: inline-flex;
+}
+.pbx-info-tip__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 24×24 = mínimo de target táctil de WCAG 2.5.8 (antes 22×22). */
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: var(--pb-chrome-radius-sm);
+  color: var(--pb-chrome-text-faint);
+  cursor: help;
+  transition: var(--pb-chrome-transition);
+}
+.pbx-info-tip__trigger:hover,
+.pbx-info-tip__trigger[data-state="open"] {
+  background: var(--pb-chrome-accent-subtle);
+  color: var(--pb-chrome-accent-on-surface);
+}
+.pbx-info-tip__content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 40;
+  width: max-content;
+  max-width: 240px;
+  padding: 8px 10px;
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-md);
+  background: var(--pb-chrome-surface-raised);
+  color: var(--pb-chrome-text);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: normal;
+  text-transform: none;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+}
+.pbx-info-tip__content[hidden] {
+  display: none;
+}
+
+/* Tooltip de compatibilidad entre navegadores (T6) — icono de alerta ámbar
+   junto al título de una propiedad. Chrome-only. */
+.pbx-compat-tip {
+  position: relative;
+  display: inline-flex;
+}
+.pbx-compat-tip__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: var(--pb-chrome-radius-sm);
+  color: var(--pb-chrome-warning);
+  cursor: help;
+  transition: var(--pb-chrome-transition);
+}
+.pbx-compat-tip__trigger:hover,
+.pbx-compat-tip__trigger[data-state="open"] {
+  background: var(--pb-chrome-warning-subtle);
+}
+.pbx-compat-tip__content {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 40;
+  width: max-content;
+  max-width: 240px;
+  padding: 8px 10px;
+  border: 1px solid var(--pb-chrome-warning-border);
+  border-radius: var(--pb-chrome-radius-md);
+  background: var(--pb-chrome-surface-raised);
+  color: var(--pb-chrome-text);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: normal;
+  text-transform: none;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+}
+.pbx-compat-tip__content[hidden] {
+  display: none;
+}
+
+/* FieldHelp — icono de información + tooltip explicativo junto al label de un
+   control (hermano de compat-tip, pero con semántica de ayuda: color acento en
+   vez de advertencia). El contenido se teletransporta a <body> y lo posiciona
+   floating-ui (position:fixed), así que NO se recorta por el overflow del
+   Inspector. Chrome-only. */
+.pbx-field-help {
+  display: inline-flex;
+}
+.pbx-field-help__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: var(--pb-chrome-radius-sm);
+  color: var(--pb-chrome-text-faint);
+  cursor: help;
+  transition: var(--pb-chrome-transition);
+}
+.pbx-field-help__trigger:hover,
+.pbx-field-help__trigger[data-state="open"] {
+  color: var(--pb-chrome-accent-on-surface);
+  background: var(--pb-chrome-accent-subtle);
+}
+/* Portaleado a <body>: posición la fija floating-ui (left/top inline). */
+.pbx-field-help__content {
+  z-index: 100;
+  width: max-content;
+  max-width: 260px;
+  padding: 8px 10px;
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-md);
+  background: var(--pb-chrome-surface-raised);
+  color: var(--pb-chrome-text);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: normal;
+  text-transform: none;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+  pointer-events: auto;
+}
+.pbx-theme-token__key--wide {
+  flex: 1;
+}
+
+/* Gestión de slots de un composite (tabs/accordion) en el Inspector (docs/23
+   Fase 5). Chrome-only. */
+.pbx-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-md);
+  background: var(--pb-chrome-surface-alt);
+  margin-bottom: 12px;
+}
+.pbx-slots__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pbx-slots__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pb-chrome-text);
+}
+.pbx-slots__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 600;
+  /* --pb-chrome-text-muted sobre --pb-chrome-surface-hover da 3.86:1 en
+     claro / 4.04:1 en oscuro — bajo AA en ambos (docs/46 contrast guard,
+     Fase 4). No interactivo (WCAG 2.5.8 no aplica, verificado: es un
+     <span>, docs/46 hallazgo condicional c) pero SÍ es texto informativo
+     real (el conteo de slots), así que 1.4.3 sí aplica. */
+  color: var(--pb-chrome-text);
+  background: var(--pb-chrome-surface-hover);
+  border-radius: var(--pb-chrome-radius-pill);
+}
+.pbx-slots__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pbx-slots__item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-sm);
+  background: var(--pb-chrome-surface-raised);
+}
+.pbx-slots__item--active {
+  border-color: var(--pb-chrome-accent);
+  box-shadow: 0 0 0 1px var(--pb-chrome-accent);
+}
+.pbx-slots__item[draggable="true"] {
+  cursor: grab;
+}
+.pbx-slots__item[draggable="true"]:active {
+  cursor: grabbing;
+}
+.pbx-slots__handle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  color: var(--pb-chrome-text-muted);
+}
+.pbx-slots__select {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  border-radius: var(--pb-chrome-radius-sm);
+}
+.pbx-slots__select:hover {
+  background: var(--pb-chrome-surface-hover);
+}
+.pbx-slots__index {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  font-weight: 700;
+  /* Mismo hallazgo que .pbx-slots__count (docs/46 contrast guard, Fase 4):
+     text-muted sobre surface-hover no cumple AA en ningún tema. */
+  color: var(--pb-chrome-text);
+  background: var(--pb-chrome-surface-hover);
+  border-radius: var(--pb-chrome-radius-sm);
+}
+.pbx-slots__label {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pbx-slots__add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--pb-chrome-accent-text);
+  border: none;
+  border-radius: var(--pb-chrome-radius-sm);
+  background: var(--pb-chrome-accent);
+}
+.pbx-slots__add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Afordancia "+ añadir slot" en el CANVAS (docs/23 Fase 5). Chrome de edición
+   que los composites (tabs/accordion) colocan vía `ctx.slotAffordance`; nunca
+   sale al export. Botón punteado con el acento del editor. */
+.pbx-slot-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  margin: 4px;
+  font: 600 12px/1.2 system-ui, -apple-system, sans-serif;
+  color: var(--pb-chrome-accent-on-surface);
+  background: transparent;
+  border: 1px dashed var(--pb-chrome-accent);
+  border-radius: var(--pb-chrome-radius-sm);
+  cursor: pointer;
+  transition: var(--pb-chrome-transition);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.pbx-slot-add:hover {
+  background: var(--pb-chrome-accent-subtle);
+}
+.pbx-slot-add > span[aria-hidden="true"] {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Tab bar en formato envolvente (pills) para las 5 configs del sitio. */
+.pbx-inspector-tabs--wrap {
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 0;
+}
+.pbx-inspector-tabs--wrap .pbx-inspector-tab {
+  padding: 6px 8px;
+  margin-bottom: 0;
+  border-bottom: 0;
+  border-radius: var(--pb-chrome-radius-sm);
+}
+.pbx-inspector-tabs--wrap .pbx-inspector-tab:hover {
+  background: var(--pb-chrome-surface-hover);
+}
+.pbx-inspector-tabs--wrap .pbx-inspector-tab--active {
+  background: var(--pb-chrome-accent-subtle);
+  color: var(--pb-chrome-accent-on-surface);
+}
+
+.pbx-site-settings__section {
+  border-top: 1px solid var(--pb-chrome-border);
+  padding-top: 12px;
+}
+
+.pbx-site-settings__section:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+/* Campos de SEO: separación consistente entre controles y subtítulos. */
+.pbx-seo-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pbx-seo-settings .pbx-inspector__subheading {
+  margin: 4px 0 0;
+}
+/* Bloque de autocompletado por DeepL (docs/51 §4 F6b): separado visualmente
+   de los campos con un borde inferior sutil, reusando las clases de
+   `.pbx-translation-table__*` que ya define `inspector-i18n.css`. */
+.pbx-seo-settings__auto-translate {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--pb-chrome-border);
+}
+
+
+/* ---- Gestor de pÃ¡ginas (docs/06 Â§7) -------------------------------------- */
+.pbx-page-manager__list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pbx-page-manager__item {
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-sm);
+  padding: 6px 8px;
+  background: var(--pb-chrome-surface-raised);
+}
+
+.pbx-page-manager__item--active {
+  border-color: var(--pb-chrome-accent);
+  box-shadow: 0 0 0 1px #2563eb inset;
+}
+
+.pbx-page-manager__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pbx-page-manager__select {
+  flex: 1;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--pb-chrome-text);
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.pbx-page-manager__actions {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.pbx-page-manager__meta {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pbx-page-manager__theme {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-page-manager__theme > span {
+  flex-shrink: 0;
+}
+
+
+/* ---- Preview de ruta + formulario de creación de página (T1) ------------- */
+.pbx-page-manager__route {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pbx-page-manager__route-preview {
+  font-size: 11px;
+  /* Regla superada en cascada por inspector-themes.css (cargado después en
+     el barrel, docs/28 §2.2), que además fija el fondo real (surface-alt).
+     Mismo token aquí por consistencia — ver esa regla para el razonamiento
+     de contraste (docs/46 H4). */
+  color: var(--pb-chrome-text);
+  font-family: var(--pb-chrome-font-mono);
+  word-break: break-all;
+}
+
+.pbx-page-manager__new {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px dashed var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-sm);
+  background: transparent;
+  color: var(--pb-chrome-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+
+.pbx-page-manager__new:hover {
+  border-color: var(--pb-chrome-accent);
+  color: var(--pb-chrome-accent-on-surface);
+  background: var(--pb-chrome-surface-raised);
+}
+
+.pbx-page-manager__create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-md);
+  background: var(--pb-chrome-surface-raised);
+}
+
+.pbx-page-manager__slug-preview {
+  font-size: 12px;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-page-manager__slug-label {
+  font-weight: 600;
+}
+
+.pbx-page-manager__slug-preview code {
+  font-family: var(--pb-chrome-font-mono);
+  font-size: 12px;
+  color: var(--pb-chrome-text);
+  background: var(--pb-chrome-surface, #f3f4f6);
+  padding: 1px 6px;
+  border-radius: var(--pb-chrome-radius-xs);
+}
+
+.pbx-page-manager__error {
+  margin: 0;
+  font-size: 12px;
+  color: #dc2626;
+}
+
+.pbx-page-manager__create-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pbx-page-manager__confirm,
+.pbx-page-manager__cancel {
+  height: 30px;
+  padding: 0 14px;
+  border-radius: var(--pb-chrome-radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: filter 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.pbx-page-manager__confirm {
+  flex: 1;
+  border: 1px solid var(--pb-chrome-accent);
+  background: var(--pb-chrome-accent);
+  color: var(--pb-chrome-text-on-accent);
+}
+
+.pbx-page-manager__confirm:hover {
+  filter: brightness(1.06);
+}
+
+.pbx-page-manager__cancel {
+  border: 1px solid var(--pb-chrome-border-strong);
+  background: transparent;
+  color: var(--pb-chrome-text);
+}
+
+.pbx-page-manager__cancel:hover {
+  background: var(--pb-chrome-surface);
+  border-color: var(--pb-chrome-accent);
+}
+
+.pbx-site-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

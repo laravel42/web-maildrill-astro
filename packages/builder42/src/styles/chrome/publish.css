@@ -1,0 +1,204 @@
+/* PublishPanel + PublishedSitesList (docs/36 F4/F5) — chrome del editor.
+ * Mismo lenguaje visual que `.pbx-file*`/`.pbx-output-name*` (header.css):
+ * botones/inputs con los tokens semánticos `--pb-chrome-*`, nunca colores
+ * fijos salvo los estados de advertencia/error (mismo patrón que
+ * `.pbx-export-warnings`). */
+
+.pbx-publish-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pbx-publish-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pbx-publish-panel__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-publish-panel__preview {
+  margin: 0;
+  font-size: 12px;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-publish-panel__error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--pb-chrome-danger);
+}
+
+.pbx-publish-panel__warning {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--pb-chrome-danger-strong-border);
+  border-radius: var(--pb-chrome-radius-md);
+  background: var(--pb-chrome-danger-strong-bg);
+  color: var(--pb-chrome-danger-on-dark);
+  font-size: 12px;
+}
+
+.pbx-publish-panel__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--pb-chrome-bg-hover);
+  background: var(--pb-chrome-bg-alt);
+  color: var(--pb-chrome-text-on-dark);
+  height: 32px;
+  padding: 0 14px;
+  border-radius: var(--pb-chrome-radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  text-decoration: none;
+  transition: background var(--pb-chrome-transition);
+}
+
+.pbx-publish-panel__btn:hover {
+  background: var(--pb-chrome-bg-hover);
+}
+
+.pbx-publish-panel__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pbx-publish-panel__btn--primary {
+  background: var(--pb-chrome-accent);
+  border-color: transparent;
+  color: var(--pb-chrome-text-on-accent);
+  font-weight: var(--pb-chrome-font-weight-medium);
+}
+
+.pbx-publish-panel__btn--primary:hover {
+  filter: brightness(1.08);
+}
+
+.pbx-publish-panel__btn:focus-visible {
+  outline: 2px solid var(--pb-chrome-accent-light);
+  outline-offset: 2px;
+}
+
+.pbx-publish-panel__done {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--pb-chrome-bg-hover);
+  border-radius: var(--pb-chrome-radius-md);
+  background: var(--pb-chrome-surface-alt);
+}
+
+.pbx-publish-panel__done-title {
+  margin: 0;
+  font-weight: var(--pb-chrome-font-weight-medium);
+  color: var(--pb-chrome-text);
+}
+
+.pbx-publish-panel__done-url {
+  margin: 0;
+  font-size: 12px;
+  color: var(--pb-chrome-text-muted);
+  word-break: break-all;
+}
+
+.pbx-publish-panel__done-url code {
+  font-family: var(--pb-chrome-font-mono);
+  font-size: 11px;
+  color: var(--pb-chrome-text);
+}
+
+.pbx-publish-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* PublishedSitesList (docs/36 F5) */
+
+.pbx-published-sites {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pbx-published-sites__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pbx-published-sites__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--pb-chrome-bg-hover);
+  border-radius: var(--pb-chrome-radius-md);
+  background: var(--pb-chrome-surface-alt);
+}
+
+.pbx-published-sites__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pbx-published-sites__url {
+  font-size: 12px;
+  color: var(--pb-chrome-text);
+  word-break: break-all;
+}
+
+.pbx-published-sites__meta {
+  font-size: 11px;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-published-sites__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pbx-published-sites__btn--danger {
+  color: var(--pb-chrome-danger);
+  border-color: var(--pb-chrome-danger);
+}
+
+/* Modal de confirmación de despublicar (evita romper el flujo del sidebar
+   con un bloque inline en la fila del item, ver PublishedSitesList.tsx). */
+.pbx-unpublish-modal .pbx-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pbx-unpublish-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* Botón "Publicar" del header (docs/36 F6) — mismo tratamiento visual que
+ * `.pbx-publish-panel__btn--primary`, pero dimensionado para la barra oscura
+ * del header (altura 32px como el resto de controles de `.pbx-header`). */
+.pbx-header__publish-btn {
+  height: 32px;
+  white-space: nowrap;
+}

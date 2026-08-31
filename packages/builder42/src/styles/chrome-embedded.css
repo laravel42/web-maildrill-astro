@@ -1,0 +1,39 @@
+/* Chrome del builder — barrel EMBEBIDO de @imports (docs/52 F6, CSS embed-safe).
+   Mismo orden y mismos módulos que `chrome.css` (barrel standalone), EXCEPTO
+   `chrome/standalone.css` — omitido a propósito: esas reglas (`html`/`body`/
+   `#root` de página completa, `@font-face` de Geist, I3/I4) asumen que el
+   editor es dueño de toda la página, falso cuando se embebe dentro de
+   Maildrill (el host ya tiene su propio `<body>`/tipografía/`@font-face`).
+
+   Consumido por la entrada de librería (`src/index.ts`, F7) — nunca por
+   `main.tsx` (ese importa el barrel standalone `chrome.css`). No agregar
+   reglas directamente acá; cada concern vive en su módulo bajo `chrome/`.
+   Cualquier módulo nuevo que se agregue al barrel standalone debe agregarse
+   AQUÍ también, en la misma posición relativa, salvo que sea `standalone.css`
+   mismo o un módulo declarado explícitamente standalone-only. */
+
+@import "./chrome/tokens.css";
+@import "./chrome/reset.css";
+@import "./chrome/motion.css";
+@import "./chrome/shell.css";
+@import "./chrome/header.css";
+@import "./chrome/sidebar.css";
+@import "./chrome/templates.css";
+@import "./chrome/inspector.css";
+@import "./chrome/inspector-controls.css";
+@import "./chrome/image-source.css";
+@import "./chrome/inspector-sections.css";
+@import "./chrome/inspector-themes.css";
+@import "./chrome/inspector-i18n.css";
+@import "./chrome/inspector-panel.css";
+@import "./chrome/color-picker.css";
+@import "./chrome/output-base.css";
+@import "./chrome/canvas.css";
+@import "./chrome/canvas-nodes.css";
+@import "./chrome/canvas-code-json.css";
+@import "./chrome/modals.css";
+@import "./chrome/ai-generator.css";
+@import "./chrome/publish.css";
+@import "./chrome/toast.css";
+@import "./chrome/dark.css";
+@import "./chrome/narrow.css";

@@ -1,0 +1,79 @@
+{
+  "modalEditor": {
+    "title": "Modifica modale",
+    "close": "Chiudi editor"
+  },
+  "invisibles": {
+    "open": "Elementi non visibili",
+    "title": "Elementi non visibili"
+  },
+  "preview": {
+    "frameTitle": "Anteprima del sito",
+    "loading": "Caricamento anteprima…",
+    "dimensions": "Dimensioni del viewport (larghezza × altezza in px)"
+  },
+  "code": {
+    "pageTitle": "index.html (pagina attiva)",
+    "downloadZip": "Scarica sito (.zip · {{count}} pag.)",
+    "exporting": "Esportazione sito in corso…",
+    "pageCss": "CSS della pagina",
+    "zipContents": "Contenuto del .zip ({{count}} file)",
+    "binary": "[binario · {{bytes}} byte]"
+  },
+  "export": {
+    "warningsTitle": "Avvisi di esportazione",
+    "warningsCount": "{{count}} problema/i rilevato/i",
+    "unknownType": "Nodo {{nodeId}}: tipo sconosciuto \"{{type}}\"",
+    "missingNode": "Nodo {{nodeId}}: non trovato nel documento",
+    "andMore": "…e altri {{count}}."
+  },
+  "json": {
+    "title": "Sito (JSON) — modificabile",
+    "ariaLabel": "JSON del sito",
+    "reset": "Ripristina",
+    "apply": "Applica",
+    "applied": "✓ Applicato",
+    "validationErrors": "{{count}} errore/i di validazione:",
+    "andMore": "…e altri {{count}}."
+  },
+  "dnd": {
+    "moveUp": "su",
+    "moveDown": "giù",
+    "moveOut": "verso l'esterno",
+    "moveIn": "verso l'interno",
+    "moved": "Spostato {{direction}}",
+    "cannotMove": "Impossibile spostare {{direction}}",
+    "dragHandle": "Sposta {{label}}",
+    "dragHandleTitle": "Trascina per spostare {{label}}",
+    "reorderUp": "Sposta in alto",
+    "reorderDown": "Sposta in basso",
+    "outdent": "Sposta fuori dal contenitore",
+    "indent": "Sposta nel contenitore precedente",
+    "pickInsertMove": "Sposta toccando",
+    "duplicate": "Duplica"
+  },
+  "container": {
+    "emptyDrop": "Rilascia qui"
+  },
+  "pickInsert": {
+    "prompt": "Tocca dove posizionare «{{label}}»",
+    "previewLabel": "Posiziona «{{label}}» qui",
+    "moveUp": "Un passo su",
+    "moveDown": "Un passo giù",
+    "confirm": "Confirma",
+    "cancel": "Annulla"
+  },
+  "textToolbar": {
+    "ariaLabel": "Formattazione testo",
+    "bold": "Grassetto",
+    "italic": "Corsivo",
+    "strike": "Barrato",
+    "link": "Collegamento",
+    "linkPrompt": "URL del collegamento (vuoto per rimuoverlo)",
+    "heading1": "Titolo 1",
+    "heading2": "Titolo 2",
+    "heading3": "Titolo 3",
+    "bulletList": "Elenco puntato",
+    "orderedList": "Elenco numerato"
+  }
+}

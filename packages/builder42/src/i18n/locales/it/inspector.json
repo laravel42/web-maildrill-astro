@@ -1,0 +1,643 @@
+{
+  "title": "Inspector",
+  "empty": "Seleziona un nodo sul canvas.",
+  "typeNotRegistered": "Tipo non registrato.",
+  "deleteNode": "Elimina nodo",
+  "compat": {
+    "label": "Compatibilità tra browser limitata"
+  },
+  "compositeSlots": {
+    "tabs": { "heading": "Schede", "add": "Aggiungi scheda" },
+    "accordion": { "heading": "Sezioni", "add": "Aggiungi sezione" },
+    "delete": "Elimina",
+    "untitled": "(senza titolo)",
+    "moveUp": "Sposta su",
+    "moveDown": "Sposta giù",
+    "dragHandle": "Trascina per riordinare"
+  },
+  "triggers": {
+    "title": "Attivatori",
+    "hint": "Scegli quali elementi aprono questo modale al clic.",
+    "create": "Crea attivatore",
+    "searchPlaceholder": "Cerca per nome…",
+    "empty": "Nessun elemento può attivare il modale.",
+    "link": "Collega",
+    "linked": "Collegato",
+    "showMore": "Mostra altri ({{count}})"
+  },
+  "clickAction": {
+    "title": "Azione al clic",
+    "hint": "Scegli cosa succede quando si clicca su questo elemento.",
+    "none": "Nessuna",
+    "targetModal": "Modale da aprire",
+    "chooseModal": "Scegli un modale…",
+    "untitledModal": "(modale senza titolo)",
+    "noModals": "Non ci sono ancora modali nel sito. Aggiungine uno per collegarlo qui.",
+    "targetNode": "Elemento di destinazione",
+    "chooseNode": "Scegli un elemento…",
+    "searchNodePlaceholder": "Cerca per nome o tipo…",
+    "noNodesMatch": "Nessun elemento corrisponde alla ricerca.",
+    "noActions": "Questo elemento non supporta alcuna azione al clic.",
+    "linkWillBeCleared": "Questo elemento ha un link di navigazione impostato; scegliendo un'azione verrà rimosso.",
+    "scrollToTopPreset": "Inizio della pagina",
+    "actions": {
+      "open-modal": "Apri modale",
+      "close-modal": "Chiudi modale",
+      "dismiss": "Ignora",
+      "scroll-to": "Scorri a",
+      "open-url": "Apri URL",
+      "submit-form": "Invia modulo",
+      "reset-form": "Svuota modulo"
+    },
+    "fields": {
+      "dismiss": {
+        "rememberHelp": "Se attivato, il sito pubblicato ricorda che questo visitatore l'ha già ignorato (localStorage) e non lo mostra più nelle visite future. Utile per avvisi sui cookie o banner promozionali."
+      },
+      "open-url": {
+        "url": "URL",
+        "newTab": "Apri in una nuova scheda"
+      }
+    }
+  },
+  "tabs": {
+    "props": "Props",
+    "style": "Stile",
+    "behaviors": "Azioni",
+    "ariaLabel": "Sezioni dell'inspector",
+    "noProps": "Questo componente non ha proprietà modificabili."
+  },
+  "overflow": {
+    "overflowsPrefix": "Questo contenitore supera lo spazio a ",
+    "overflowsSuffix": ".",
+    "convertToSlider": "Converti in slider"
+  },
+  "form": {
+    "properties": "Proprietà",
+    "propsGeneral": "Generale",
+    "styleEditing": "Stile · modifica",
+    "stateEditing": "Stato",
+    "stateNormal": "Normale",
+    "statePressed": "Attivo",
+    "iconPressed": {
+      "help": "Mostrato quando il nodo è nello stato attivo (behavior `toggle`). Vuoto = nessun cambio."
+    },
+    "breadcrumbAriaLabel": "Percorso del nodo selezionato",
+    "breadcrumbMore": "Mostra nodi intermedi",
+    "styleGroups": {
+      "layout": "Layout",
+      "spacing": "Spaziatura",
+      "size": "Dimensione",
+      "appearance": "Aspetto",
+      "typography": "Tipografia"
+    }
+  },
+  "visibility": {
+    "label": "Visibilità",
+    "toggleAria": "Attiva/disattiva visibilità a {{breakpoint}}"
+  },
+  "pageVisibilityList": {
+    "empty": "Il sito non ha ancora pagine.",
+    "toggleAria": "Mostra {{title}} nel menu"
+  },
+  "linkField": {
+    "kind": "Tipo di link",
+    "internal": "Pagina del sito",
+    "external": "URL esterno",
+    "anchor": "Àncora in questa pagina",
+    "page": "Pagina di destinazione",
+    "anchorOptional": "Àncora (opzionale): id nodo",
+    "nodeId": "id del nodo di destinazione"
+  },
+  "behaviors": {
+    "title": "Animazioni ed effetti",
+    "empty": "Nessuna animazione né effetto. Aggiungine uno per abilitare l'interattività (richiede JS nel sito pubblicato).",
+    "hint": "Aggiungi animazioni ed effetti interattivi a questo elemento.",
+    "notAvailable": "Questo elemento non supporta animazioni o effetti.",
+    "remove": "Rimuovi comportamento",
+    "add": "Aggiungi",
+    "categories": {
+      "content": "Contenuto",
+      "motion": "Animazione allo scroll",
+      "navigation": "Navigazione e posizione",
+      "structure": "Componenti strutturati",
+      "interactive": "Interattività",
+      "appearance": "Aspetto"
+    },
+    "desc": {
+      "carousel": "Trasforma i figli in un carosello scorrevole (richiede JS).",
+      "reveal-on-scroll": "Anima la comparsa dell'elemento quando entra nello schermo.",
+      "theme-toggle": "Pulsante per alternare tema chiaro e scuro.",
+      "form-validation": "Valida i campi in tempo reale con messaggi di errore (richiede JS).",
+      "sticky": "Fissa l'elemento durante lo scroll; aggiunge un indicatore visivo dopo lo scroll.",
+      "count-up": "Anima il numero da 0 al valore finale quando entra nello schermo.",
+      "marquee": "Scorre i loghi in un ciclo continuo (richiede JS per la pausa al passaggio del mouse).",
+      "expandable": "Comprime il blocco a un'altezza data e aggiunge un pulsante \"Vedi altro\" (senza JS è visibile per intero).",
+      "parallax": "Sposta lo sfondo a una velocità diversa dal resto della pagina durante lo scroll.",
+      "scroll-progress": "Mostra una barra che avanza in base al progresso di lettura della pagina.",
+      "scroll-spy": "Evidenzia il link della sezione visibile in un menu di ancore all'interno della stessa pagina.",
+      "lightbox": "Cliccando sull'immagine si apre a schermo intero, con navigazione tra più immagini (richiede JS)."
+    },
+    "name": {
+      "carousel": "Carosello (Embla)",
+      "reveal-on-scroll": "Comparire quando entra nello schermo",
+      "theme-toggle": "Interruttore tema",
+      "accordion": "Fisarmonica (animata)",
+      "modal": "Modale (finestra popup)",
+      "navbar": "Barra di navigazione (hamburger mobile)",
+      "tabs": "Schede (animate)",
+      "form-validation": "Validazione in tempo reale (Alpine)",
+      "sticky": "Fisso allo scroll (sticky)",
+      "count-up": "Contatore animato",
+      "marquee": "Scorrimento continuo (marquee)",
+      "expandable": "Vedi altro (espandibile)",
+      "parallax": "Parallax",
+      "scroll-progress": "Barra di progresso di lettura",
+      "scroll-spy": "Evidenzia sezione attiva (scroll-spy)",
+      "lightbox": "Lightbox (schermo intero)"
+    },
+    "fields": {
+      "theme-toggle": {
+        "light": "Tema chiaro",
+        "dark": "Tema scuro",
+        "storageKey": "Ricorda preferenza"
+      },
+      "sticky": {
+        "position": "Posizione",
+        "scrolledThreshold": "Soglia per \"già scrollato\" (px)",
+        "scrolledThresholdHelp": "Quantità di scroll in pixel dopo la quale l'elemento cambia aspetto (per esempio acquisendo un'ombra o diventando più compatto) per indicare che la pagina si è spostata."
+      },
+      "count-up": {
+        "duration": "Durata (ms)",
+        "threshold": "Soglia di visibilità",
+        "once": "Solo una volta"
+      },
+      "marquee": {
+        "duration": "Durata del ciclo (s)",
+        "direction": "Direzione",
+        "pauseOnHover": "Pausa al passaggio del mouse"
+      },
+      "reveal-on-scroll": {
+        "threshold": "Soglia di visibilità",
+        "once": "Solo una volta",
+        "mode": "Modalità di ingresso"
+      },
+      "expandable": {
+        "collapsedHeight": "Altezza compressa",
+        "expandLabel": "Testo del pulsante \"Vedi altro\"",
+        "collapseLabel": "Testo del pulsante \"Vedi meno\"",
+        "fade": "Sfumatura finale"
+      },
+      "parallax": {
+        "speed": "Velocità",
+        "fallback": "Alternativa JS sui browser meno recenti",
+        "fallbackHelp": "Questo effetto non si vede in alcuni browser meno recenti. Con questa opzione attiva, si vede comunque grazie a un metodo alternativo; se la disattivi, in quei casi l'effetto semplicemente non si vede — ma il contenuto della pagina si vede e funziona sempre normalmente."
+      },
+      "scroll-progress": {
+        "fallback": "Alternativa JS sui browser meno recenti",
+        "fallbackHelp": "Questa barra non avanza in alcuni browser meno recenti. Con questa opzione attiva, avanza comunque grazie a un metodo alternativo; se la disattivi, in quei casi la barra semplicemente non avanza — ma il contenuto della pagina si vede e funziona sempre normalmente."
+      },
+      "scroll-spy": {
+        "rootMargin": "Margine di attivazione",
+        "rootMarginHelp": "Definisce quale fascia dello schermo decide quale sezione è considerata \"attiva\". Per impostazione predefinita, il 20% superiore e il 60% inferiore dello schermo vengono ignorati, lasciando una fascia stretta vicino alla parte alta: la sezione che la attraversa viene evidenziata nel menu."
+      },
+      "lightbox": {
+        "duration": "Durata della transizione (ms)",
+        "durationHelp": "Durata in millisecondi dell'animazione di apertura/chiusura dell'overlay a schermo intero. Viene ignorata se il visitatore ha attivato la preferenza di sistema per il movimento ridotto."
+      }
+    },
+    "themeToggle": {
+      "selectPlaceholder": "(scegli tema)",
+      "noThemes": "Il sito non ha ancora temi da alternare.",
+      "configureThemes": "Configura temi",
+      "storageKeyHelp": "Nome con cui il sito pubblicato ricorda il tema scelto da ogni visitatore e lo riapplica alla visita successiva (ha priorità sul tema di sistema ed è salvato nel browser tramite localStorage). Cambialo solo se vuoi che questo interruttore ricordi la preferenza separatamente da un altro sullo stesso dominio. Predefinita: «pb-theme»."
+    }
+  },
+  "fieldHelp": {
+    "label": "Maggiori informazioni"
+  },
+  "styleField": {
+    "useToken": "Collega a un token di design",
+    "unlinkToken": "Scollega token",
+    "resetToInherited": "Ripristina ereditato",
+    "freeValue": "(valore libero)",
+    "inherit": "(ereditare)",
+    "pickColor": "Scegli colore",
+    "opacity": "Opacità",
+    "brokenToken": "chiave inesistente",
+    "badge": {
+      "token": "token",
+      "tokenBroken": "token ✗",
+      "base": "base",
+      "override": "override",
+      "inherited": "ereditato"
+    }
+  },
+  "imageSource": {
+    "urlPlaceholder": "https://… (URL dell'immagine)",
+    "uploadImage": "Carica immagine",
+    "useUrl": "Usa URL",
+    "unsplash": {
+      "tabLabel": "Cerca su Unsplash",
+      "searchPlaceholder": "Cerca foto (es. \"montagne\", \"caffè\")…",
+      "searchAriaLabel": "Cerca immagini su Unsplash",
+      "loading": "Ricerca in corso…",
+      "loadingMore": "Caricamento altri risultati…",
+      "empty": "Nessun risultato. Prova un'altra ricerca.",
+      "emptyInitial": "Digita qualcosa per cercare foto su Unsplash.",
+      "error": "Impossibile cercare su Unsplash. Riprova.",
+      "selecting": "Scaricamento…",
+      "photoBy": "Foto di {{name}}",
+      "resultsGridAriaLabel": "Risultati della ricerca su Unsplash",
+      "selectPhotoAriaLabel": "Usa la foto di {{name}}",
+      "close": "Chiudi",
+      "attribution": "Foto di {{photographer}} su Unsplash",
+      "poweredBy": "Ricerca immagini fornita da Unsplash"
+    }
+  },
+  "richtextField": {
+    "editInline": "Si modifica direttamente nel blocco del canvas (clicca due volte sul testo)."
+  },
+  "translation": {
+    "untranslated": "Non tradotto · mostra il valore predefinito",
+    "badge": "non tradotto",
+    "quickLocale": "Cambia la lingua del contenuto (attuale: {{locale}})",
+    "quickLocaleSelect": "Seleziona la lingua del contenuto",
+    "defaultTag": "predefinita"
+  },
+  "translationTable": {
+    "open": "Tabella di traduzione",
+    "title": "Tabella di traduzione",
+    "subtitle": "Traduci i testi della pagina per lingua. Le modifiche si salvano uscendo da ogni campo.",
+    "close": "Chiudi",
+    "field": "Campo",
+    "empty": "Non ci sono testi traducibili in questa pagina o mancano lingue aggiuntive.",
+    "localeSelectLabel": "Lingua da tradurre",
+    "pageSelectLabel": "Pagina",
+    "statusColumn": "Stato",
+    "segmentIndex": "Paragrafo {{index}}",
+    "editWholeField": "Si modifica come campo completo, sotto",
+    "richTextProgress": "{{translated}} di {{total}} paragrafi tradotti",
+    "autoButton": "Traduzione automatica {{locale}}",
+    "autoCheckingAvailability": "Verifica disponibilità del traduttore…",
+    "autoDisabledServer": "La traduzione automatica non è abilitata sul server",
+    "autoDisabledLocale": "DeepL non supporta {{locale}} come lingua di destinazione",
+    "autoInProgress": "Traduzione in corso verso {{locale}}…",
+    "autoDoneMessage": "{{count}} campi tradotti in {{locale}}",
+    "autoPartialError": "{{count}} segmenti non tradotti",
+    "autoErrorUnknown": "Non è stato possibile completare la traduzione automatica",
+    "privacyNote": "Il testo del sito viene inviato ai server di DeepL per la traduzione.",
+    "usage": "{{used}} di {{limit}} caratteri usati oggi",
+    "undoHint": "Ctrl+Z non annulla le traduzioni automatiche — usa \"Annulla traduzione automatica\" nell'avviso.",
+    "undoAction": "Annulla traduzione automatica",
+    "confirmTitle": "Confermare la traduzione automatica",
+    "confirmBody": "Tradurre {{segments}} segmenti · {{chars}} caratteri · {{locale}}",
+    "confirmCancel": "Annulla",
+    "confirmAction": "Traduci",
+    "confirmPending": "Traduzione in corso…",
+    "statusTranslating": "Traduzione in corso…",
+    "statusDone": "Tradotto",
+    "statusError": "Errore",
+    "structureSyncButton": "Sincronizza struttura ({{field}})",
+    "structureSyncDone": "Struttura di \"{{field}}\" sincronizzata"
+  },
+  "siteSettings": {
+    "hint": "Impostazioni del sito: pagine, lingue e file. Seleziona un nodo sul canvas per modificarne le proprietà.",
+    "fileTitle": "File",
+    "tabsAriaLabel": "Impostazioni del sito",
+    "infoLabel": "Cosa si fa in questa sezione",
+    "advancedHint": {
+      "text": "Cerchi lingue o SEO?",
+      "action": "Attiva la modalità avanzata"
+    },
+    "tabs": {
+      "pages": "Pagine",
+      "languages": "Lingue",
+      "themes": "Temi",
+      "seo": "SEO",
+      "settings": "Impostazioni",
+      "publish": "Pubblica"
+    },
+    "tabsHelp": {
+      "pages": "Crea, duplica, riordina ed elimina le pagine del sito. Imposta la home page e modifica titolo e slug di ognuna.",
+      "languages": "Attiva il sito multilingua, gestisci le lingue dei contenuti e imposta la lingua predefinita.",
+      "themes": "Crea e modifica i temi di colore del sito rimappando i token semantici, e imposta il tema predefinito.",
+      "seo": "Modifica i metadati SEO della pagina attiva: titolo, descrizione, canonical, robots e Open Graph/Twitter.",
+      "settings": "Configura il nome del file di output e salva o carica l'intero sito (.json).",
+      "publish": "Pubblica il sito completo e gestisci i tuoi siti già pubblicati: apri, ripubblica o rimuovi la pubblicazione."
+    },
+    "output": {
+      "title": "Nome del file di output",
+      "prefixLabel": "Prefisso",
+      "prefixPlaceholder": "page",
+      "timestamp": "Aggiungi timestamp",
+      "preview": "Esempio"
+    },
+    "download": {
+      "title": "Scarica progetto",
+      "hint": "Genera il sito statico (HTML + CSS + asset) compresso in un .zip.",
+      "button": "Scarica .zip",
+      "exporting": "Esportazione sito in corso…"
+    }
+  },
+  "export": {
+    "warningsTitle": "Avvisi di esportazione",
+    "warningsCount": "{{count}} problema/i rilevato/i",
+    "unknownType": "Nodo {{nodeId}}: tipo sconosciuto \"{{type}}\"",
+    "missingNode": "Nodo {{nodeId}}: non trovato nel documento",
+    "andMore": "…e altri {{count}}."
+  },
+  "pageManager": {
+    "title": "Pagine",
+    "selectPage": "Seleziona pagina",
+    "untitled": "(senza titolo)",
+    "moveUp": "Sposta su",
+    "moveDown": "Sposta giù",
+    "setHome": "Imposta come home",
+    "duplicate": "Duplica pagina",
+    "delete": "Elimina pagina",
+    "newPage": "Nuova pagina",
+    "titlePlaceholder": "Titolo della pagina",
+    "slugPlaceholder": "slug-pagina",
+    "namePlaceholder": "Nome della pagina",
+    "slugLabel": "Slug",
+    "create": "Crea",
+    "cancel": "Annulla",
+    "errorNameEmpty": "Il nome non può essere vuoto",
+    "errorSlugInvalid": "Lo slug generato non è valido",
+    "errorSlugDuplicate": "Esiste già una pagina con quello slug",
+    "theme": "Tema",
+    "themeDefault": "(tema predefinito)"
+  },
+  "themes": {
+    "title": "Temi",
+    "gallery": "Galleria",
+    "templateGallery": "Temi dei modelli",
+    "templateGalleryHint": "I colori e la tipografia di ogni modello di settore, pronti da applicare a qualsiasi pagina senza portarne il contenuto.",
+    "applyPreset": "Applica il tema \"{{name}}\"",
+    "empty": "Nessun tema. Creane uno per rimappare i token (colori, tipografia) e cambiare l'aspetto del sito o di pagine specifiche.",
+    "preview": "Anteprima",
+    "noTheme": "(nessun tema)",
+    "add": "Nuovo tema",
+    "setDefault": "Imposta come tema predefinito",
+    "delete": "Elimina tema",
+    "editing": "Modifica: {{name}}",
+    "name": "Nome",
+    "extends": "Eredita da",
+    "extendsNone": "(nessuno)",
+    "colorScheme": "Schema di colori",
+    "schemeAuto": "(automatico)",
+    "schemeLight": "Chiaro",
+    "schemeDark": "Scuro",
+    "colors": "Colori",
+    "resetToken": "Ripristina al valore ereditato",
+    "contrastWarn": "Contrasto testo/superficie basso ({{ratio}}:1) — non rispetta WCAG AA (4.5:1)",
+    "contrastOk": "Contrasto testo/superficie {{ratio}}:1 (WCAG AA)",
+    "scrollbar": {
+      "title": "Barra di scorrimento",
+      "thumb": "Colore del thumb",
+      "track": "Colore della guida",
+      "size": "Spessore",
+      "compat": "La personalizzazione avanzata (spessore esatto, angoli arrotondati, hover) si applica solo nei browser basati su Chromium/WebKit. Firefox rispetta solo il colore e uno spessore «sottile»."
+    }
+  },
+  "i18nSettings": {
+    "title": "Lingue",
+    "enable": "Attiva sito multilingua",
+    "hint": "La lingua predefinita usa il valore di ogni campo così com'è. Le altre lingue salvano una traduzione per campo.",
+    "default": "predefinita",
+    "makeDefault": "Rendi predefinita",
+    "remove": "Rimuovi lingua",
+    "addPlaceholder": "Cerca lingua…",
+    "invalidCode": "Lingua non riconosciuta",
+    "comboboxNoResults": "Nessun risultato",
+    "editingLabel": "Modifica in"
+  },
+  "seoSettings": {
+    "title": "SEO",
+    "hint": "Metadati della pagina attiva. Se il sito è multilingua, ogni campo si traduce per lingua (usa il selettore 🌐 o la lingua di modifica attiva).",
+    "pageTitle": "Titolo della pagina",
+    "description": "Descrizione",
+    "descriptionPlaceholder": "Riepilogo della pagina per i motori di ricerca e i social",
+    "canonical": "URL canonico",
+    "robots": "Robots",
+    "openGraphTitle": "Open Graph",
+    "ogTitle": "Titolo",
+    "ogDescription": "Descrizione",
+    "ogImage": "Immagine",
+    "ogType": "Tipo",
+    "twitterTitle": "Twitter Card",
+    "twitterCard": "Tipo di card",
+    "twitterTitleField": "Titolo",
+    "twitterDescription": "Descrizione",
+    "twitterImage": "Immagine",
+    "autoButton": "Completa automaticamente ({{locale}})",
+    "autoDoneMessage": "{{count}} campi SEO tradotti in {{locale}}",
+    "confirmTitle": "Confermare la traduzione automatica SEO",
+    "confirmBody": "Tradurre {{fields}} campi · {{chars}} caratteri · {{locale}}"
+  },
+  "optionsList": {
+    "title": "Opzioni",
+    "countSingular": "opzione",
+    "countPlural": "opzioni",
+    "labelPlaceholder": "Opzione {{n}}",
+    "valuePlaceholder": "opzione{{n}}",
+    "remove": "Rimuovi opzione",
+    "add": "Aggiungi opzione",
+    "emptyState": "Nessuna opzione ancora",
+    "duplicateValue": "Questo valore esiste già",
+    "requiredField": "Questo campo è obbligatorio",
+    "dragHandle": "Trascina per riordinare"
+  },
+  "searchableSelect": {
+    "noResults": "Nessun risultato per \"{{query}}\"",
+    "moreResults": "e altri {{count}}… continua a digitare per restringere",
+    "listLabel": "Opzioni filtrate"
+  },
+  "publish": {
+    "title": "Pubblica sito",
+    "disabledTitle": "Pubblicazione non disponibile",
+    "disabledHint": "L'operatore di questo server non ha abilitato la pubblicazione. Chiedi di attivare la variabile d'ambiente PUBLISH_ENABLED.",
+    "providerLabel": "Provider di pubblicazione",
+    "subdomainLabel": "Sottodominio",
+    "subdomainPlaceholder": "mio-sito",
+    "subdomainPreview": "URL: {{url}}",
+    "subdomainInvalid": "Il sottodominio non è valido (usa lettere minuscole, numeri e trattini).",
+    "subdomainHint": "Sarà usato come parte dell'URL pubblico del sito.",
+    "idle": {
+      "hint": "Pubblica il sito completo (tutte le sue pagine) sul provider configurato dall'operatore."
+    },
+    "publishing": "Pubblicazione in corso…",
+    "publishButton": "Pubblica",
+    "republishButton": "Ripubblica",
+    "done": {
+      "title": "Sito pubblicato!",
+      "urlLabel": "URL pubblico",
+      "open": "Apri",
+      "openDisabled": "Questo URL non può essere aperto dall'editor",
+      "publishAgain": "Pubblica di nuovo"
+    },
+    "sizeWarning": "Il sito pesa {{size}} — potrebbe superare il limite del server. Considera di ridurre le immagini incorporate prima di pubblicare.",
+    "errors": {
+      "publish_disabled": "La pubblicazione non è abilitata su questo server.",
+      "rate_limited": "Troppi tentativi di pubblicazione consecutivi. Riprova in {{seconds}}s.",
+      "invalid_request": "La richiesta non è valida — controlla il sottodominio o la dimensione del sito.",
+      "invalid_fragment": "Il sito ha un problema di formato e non è stato possibile validarlo.",
+      "not_implemented": "Il provider di pubblicazione configurato non è ancora disponibile.",
+      "unknown": "Si è verificato un errore durante la pubblicazione. Riprova."
+    },
+    "managedSites": {
+      "title": "Siti pubblicati",
+      "empty": "Non hai ancora pubblicato nessun sito.",
+      "unavailable": "Il provider attivo non permette di elencare i siti pubblicati.",
+      "open": "Apri",
+      "openDisabled": "Questo URL non può essere aperto dall'editor",
+      "unpublish": "Rimuovi pubblicazione",
+      "unpublishing": "Rimozione in corso…",
+      "unpublishConfirmTitle": "Rimuovere la pubblicazione di questo sito?",
+      "unpublishConfirmBody": "Questa azione è irreversibile: il sito non sarà più raggiungibile al suo URL pubblico.",
+      "unpublishConfirmAction": "Rimuovi pubblicazione",
+      "unpublishCancel": "Annulla",
+      "unpublishModalClose": "Chiudi senza rimuovere la pubblicazione",
+      "publishedAt": "Pubblicato il {{date}}",
+      "providerLabel": "Provider: {{provider}}",
+      "loadError": "Impossibile caricare l'elenco dei siti pubblicati."
+    }
+  },
+  "panel": {
+    "sections": {
+      "layout": "Layout",
+      "spacing": "Spaziatura",
+      "size": "Dimensione",
+      "typography": "Tipografia",
+      "appearance": "Aspetto",
+      "effects": "Effetti"
+    },
+    "rows": {
+      "display": "Display",
+      "direction": "Direzione",
+      "justify": "Distribuire",
+      "align": "Allineare",
+      "gap": "Gap",
+      "wrap": "A capo",
+      "overflow": "Overflow",
+      "gridColumns": "Colonne",
+      "cell": "Cella",
+      "padding": "Padding",
+      "margin": "Margin",
+      "width": "Larghezza",
+      "height": "Altezza",
+      "minHeight": "Altezza minima",
+      "maxWidth": "Larghezza massima",
+      "fontSize": "Dimensione",
+      "color": "Colore",
+      "textAlign": "Allineamento",
+      "fontWeight": "Peso",
+      "fontFamily": "Carattere",
+      "lineHeight": "Interlinea",
+      "textDecoration": "Decorazione",
+      "background": "Sfondo",
+      "borderRadius": "Raggio",
+      "border": "Bordo",
+      "boxShadow": "Ombra",
+      "cursor": "Cursore",
+      "outline": "Outline"
+    },
+    "custom": "Personalizzato",
+    "origin": {
+      "inheritedFrom": "Ereditato da {{bp}}",
+      "componentDefault": "Valore predefinito del componente"
+    },
+    "reset": "Ripristina",
+    "lockSides": "Collega i lati",
+    "unlockSides": "Scollega i lati",
+    "sides": {
+      "top": "Superiore",
+      "right": "Destro",
+      "bottom": "Inferiore",
+      "left": "Sinistro"
+    },
+    "visibility": {
+      "visible": "Visibile",
+      "hiddenAt": "Nascosto a {{bp}}",
+      "hiddenInherited": "Nascosto (ereditato da {{bp}})",
+      "overrideHere": "Sovrascrivi qui",
+      "dotTooltipVisible": "Visibile a {{bp}}",
+      "dotTooltipHidden": "Nascosto a {{bp}}"
+    },
+    "width": {
+      "full": "Pieno",
+      "auto": "Auto",
+      "fixed": "Fisso"
+    },
+    "gridColumnsSimple": {
+      "placeholder": "N.",
+      "ariaLabel": "Numero di colonne"
+    },
+    "fontSize": {
+      "s": "S",
+      "m": "M",
+      "l": "L",
+      "xl": "XL"
+    },
+    "boxShadow": {
+      "none": "Nessuna",
+      "s": "S",
+      "m": "M",
+      "l": "L"
+    },
+    "border": {
+      "width": "Spessore del bordo",
+      "widthNone": "Nessun bordo",
+      "style": "Tipo di bordo",
+      "styleOptions": {
+        "solid": "Continuo",
+        "dashed": "Tratteggiato",
+        "dotted": "Punteggiato"
+      },
+      "color": "Colore del bordo"
+    },
+    "closePanel": "Chiudi pannello",
+    "deleteNode": "Elimina nodo",
+    "deleteConfirm": {
+      "title": "Eliminare questo elemento?",
+      "body": "Questo elemento contiene altri elementi al suo interno, che verranno eliminati insieme a esso.",
+      "cancel": "Annulla",
+      "confirm": "Elimina"
+    },
+    "deleteToast": {
+      "message": "Elemento eliminato",
+      "undo": "Annulla"
+    },
+    "options": {
+      "flexStart": "Inizio",
+      "flexEnd": "Fine",
+      "center": "Centro",
+      "spaceBetween": "Spazio tra",
+      "spaceAround": "Spazio attorno",
+      "spaceEvenly": "Spazio uniforme",
+      "stretch": "Estendi",
+      "baseline": "Linea di base",
+      "row": "Riga",
+      "column": "Colonna",
+      "rowReverse": "Riga invertita",
+      "columnReverse": "Colonna invertita",
+      "displayFlex": "Flessibile",
+      "displayGrid": "Griglia",
+      "displayBlock": "Blocco",
+      "nowrap": "Senza avvolgimento",
+      "wrap": "Avvolgi",
+      "wrapReverse": "Avvolgi invertito",
+      "alignLeft": "Sinistra",
+      "alignCenter": "Centro",
+      "alignRight": "Destra",
+      "alignJustify": "Giustificato",
+      "underline": "Sottolineato",
+      "lineThrough": "Barrato",
+      "decorationNone": "Nessuna decorazione",
+      "overflowX": "Overflow orizzontale",
+      "overflowY": "Overflow verticale",
+      "gridColumnCell": "Cella: colonna",
+      "gridRowCell": "Cella: riga"
+    }
+  }
+}

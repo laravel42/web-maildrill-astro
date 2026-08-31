@@ -1,0 +1,102 @@
+/**
+ * chrome/narrow.css — Fase 11.10 — narrow viewport overrides. En pantallas <1024px los paneles laterales se vuelven overlays fijos.
+ *
+ * Extraído del monolito chrome.css (docs/28). Se carga al final del orden
+ * definido por el barrel según docs/28 §2.2, después de `dark.css` y todos
+ * los módulos que definen los selectores base que acá se sobreescriben.
+ *
+ * Namespace: solo `pbx-*`. Cualquier referencia a `pb-*` debe
+ * justificarse en línea (criterio docs/22 §4).
+ */
+@media (max-width: 1023px) {
+  .pbx-body,
+  .pbx-body--sidebar-collapsed,
+  .pbx-body--inspector-collapsed,
+  .pbx-body--sidebar-collapsed.pbx-body--inspector-collapsed,
+  .pbx-body--preview {
+    grid-template-columns: 1fr;
+  }
+
+  .pbx-sidebar {
+    position: fixed;
+    z-index: 40;
+    top: var(--pb-chrome-header-height, 57px);
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 200ms ease;
+    box-shadow: var(--pb-chrome-frame-shadow);
+  }
+
+  .pbx-sidebar--open {
+    transform: translateX(0);
+  }
+
+  .pbx-inspector {
+    position: fixed;
+    z-index: 40;
+    top: var(--pb-chrome-header-height, 57px);
+    right: 0;
+    bottom: 0;
+    width: 300px;
+    transform: translateX(100%);
+    transition: transform 200ms ease;
+    box-shadow: var(--pb-chrome-frame-shadow);
+  }
+
+  .pbx-inspector--open {
+    transform: translateX(0);
+  }
+
+  /* Collapsed overflow: not needed on narrow (panels are position:fixed) */
+  .pbx-body--sidebar-collapsed .pbx-sidebar,
+  .pbx-body--inspector-collapsed .pbx-inspector {
+    overflow: auto;
+  }
+}
+
+/**
+ * Consolidación del header (vistas Edit/Preview/Code/JSON + viewport) a
+ * dropdowns. Breakpoint propio en 1200px (independiente del de los paneles
+ * laterales, arriba): la sección derecha del header (viewport + historial +
+ * paneles + layers + publicar + perfil, `header.css`) es la que más pesa y
+ * empieza a apretarse contra el breadcrumb central antes de que haga falta
+ * colapsar sidebar/inspector — colapsar vistas/viewport en dropdown libera
+ * ese espacio sin tocar el layout de paneles.
+ */
+@media (max-width: 1200px) {
+  .pbx-viewtabs { display: none; }
+  .pbx-header__view-dropdown { display: inline-flex; }
+
+  .pbx-header__brand-text { display: none; }
+
+  .pbx-header { gap: 8px; padding: 0 10px; }
+  .pbx-header__section { gap: 6px; }
+
+  .pbx-header__divider--hide-narrow { display: none; }
+
+  /* ---- Header layout: breadcrumb floats between left and right ---- */
+  .pbx-header__section--left {
+    flex: 0 1 auto;
+  }
+
+  .pbx-header__section--center {
+    flex: 1;
+    min-width: 0;
+    justify-content: flex-start;
+  }
+
+  .pbx-header__section--right {
+    flex: 0 0 auto;
+  }
+
+  /* Breadcrumb: show locale + page, let it float, don't truncate */
+  .pbx-breadcrumb {
+    flex-shrink: 0;
+  }
+
+  .pbx-breadcrumb__link {
+    max-width: none;  /* Reset the 80px truncation */
+  }
+}

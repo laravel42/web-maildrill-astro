@@ -1,0 +1,49 @@
+/**
+ * chrome/chrome/shell.css — layout 4 paneles + modificadores de estado (--sidebar-collapsed, --inspector-collapsed, --preview)
+ *
+ * Extraído del monolito chrome.css (docs/28). Se carga en el orden
+ * definido por el barrel según docs/28 §2.2.
+ *
+ * Namespace: solo `pbx-*`. Cualquier referencia a `pb-*` debe
+ * justificarse en línea (criterio docs/22 §4).
+ */
+/* ---- Layout de 4 paneles ------------------------------------------------ */
+/* docs/52 F6 (I5): `height: 100%` en vez de `100vh` fijo — standalone sigue
+   viéndose igual (su `<html>`/`body`/`#root` fuerzan `height:100%` desde
+   `chrome/standalone.css`, así que `100%` resuelve al viewport completo
+   igual que antes `100vh`). Embebido, el editor vive dentro del `stage` de
+   `ChannelEditorShell` (host Maildrill) con SU propia altura — un `100vh`
+   fijo desbordaría ese contenedor. `min-height: 0` evita que el flex-item
+   fuerce una altura mínima mayor que la de su padre (bug clásico de flex +
+   `height: 100%` en cadena). */
+.pbx-app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.pbx-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 312px 1fr 326px;
+  min-height: 0;
+  transition: grid-template-columns var(--pb-chrome-transition);
+}
+
+/* Panel collapse modifiers (Fase 11.10) — wide screens. */
+.pbx-body--sidebar-collapsed {
+  grid-template-columns: 0 1fr 326px;
+}
+.pbx-body--inspector-collapsed {
+  grid-template-columns: 312px 1fr 0;
+}
+.pbx-body--sidebar-collapsed.pbx-body--inspector-collapsed {
+  grid-template-columns: 0 1fr 0;
+}
+
+/* Preview (docs/21 §3.5): sin Sidebar/Inspector → una sola columna full-width. */
+.pbx-body--preview {
+  grid-template-columns: 1fr;
+}
+

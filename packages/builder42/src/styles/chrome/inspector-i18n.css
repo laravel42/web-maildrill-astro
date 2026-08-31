@@ -1,0 +1,480 @@
+/**
+ * chrome/chrome/inspector-i18n.css — Inspector i18n config panel (docs/12 §B.4)
+ *
+ * Extraído del monolito chrome.css (docs/28). Se carga en el orden
+ * definido por el barrel según docs/28 §2.2.
+ *
+ * Namespace: solo `pbx-*`. Cualquier referencia a `pb-*` debe
+ * justificarse en línea (criterio docs/22 §4).
+ */
+.pbx-options-list__add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px dashed var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-sm);
+  background: transparent;
+  color: var(--pb-chrome-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color var(--pb-chrome-transition), color var(--pb-chrome-transition), background var(--pb-chrome-transition);
+}
+
+.pbx-options-list__add:hover {
+  border-color: var(--pb-chrome-accent);
+  color: var(--pb-chrome-accent-on-surface);
+  background: var(--pb-chrome-accent-subtle);
+}
+
+.pbx-options-list__add--prominent {
+  border-style: solid;
+  border-color: var(--pb-chrome-accent);
+  color: var(--pb-chrome-accent-on-surface);
+  background: var(--pb-chrome-accent-subtle);
+  font-weight: 500;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * Select component â€” fallback <details>/<summary> + combobox ARIA (docs/14 Â§1)
+ * Igual que LanguageNav: CSS puro abre/cierra sin JS; con ui.js el enhancer
+ * activa el combobox ARIA completo. Las clases .pb-select* se emiten en export
+ * (P3/P8 safe, viven en baseCss).
+ * --------------------------------------------------------------------------- */
+
+.pb-select {
+  position: relative;
+  transition: border-color var(--pb-chrome-transition), box-shadow var(--pb-chrome-transition);
+  /* <details> necesita display:block para que su width/height apliquen */
+  display: block;
+}
+
+/* Estado open del <details> */
+.pb-select[open] .pb-select__arrow svg {
+  transform: rotate(180deg);
+}
+
+.pb-select:focus-within {
+  border-color: var(--colors-primary-default);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--colors-primary-default) 12%, transparent);
+}
+
+/* --- Summary (trigger) --- */
+.pb-select__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  width: 100%;
+  height: 100%;
+  min-height: 44px;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  /* Quitar el marcador nativo del <summary> */
+}
+.pb-select__summary::-webkit-details-marker { display: none; }
+
+.pb-select__summary:hover {
+  background: color-mix(in srgb, var(--colors-primary-default) 6%, transparent);
+}
+
+/* Label del trigger */
+.pb-select__trigger-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pb-select__trigger-label--placeholder {
+  color: var(--colors-muted);
+}
+
+/* Arrow (chevron) */
+.pb-select__arrow {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+  color: var(--colors-muted);
+  flex-shrink: 0;
+  transition: color var(--pb-chrome-transition);
+}
+
+.pb-select__arrow svg {
+  transition: transform var(--pb-chrome-transition);
+}
+
+.pb-select__summary:hover .pb-select__arrow,
+.pb-select[open] .pb-select__summary .pb-select__arrow {
+  color: var(--colors-primary-default);
+}
+
+/* ---- ConfiguraciÃ³n de idiomas del sitio (docs/12 Â§B.4) ------------------- */
+.pbx-i18n-settings__toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--pb-chrome-text);
+  cursor: pointer;
+}
+
+.pbx-i18n-settings__hint {
+  font-size: 11px;
+  color: var(--pb-chrome-text-muted);
+  margin: 6px 0;
+}
+
+.pbx-i18n-settings__list {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pbx-i18n-settings__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-sm);
+  background: var(--pb-chrome-surface-raised);
+}
+
+.pbx-i18n-settings__code {
+  font-family: var(--pb-chrome-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pb-chrome-text);
+  text-transform: uppercase;
+  flex: 1;
+}
+
+.pbx-i18n-settings__btn {
+  border: 1px solid var(--pb-chrome-border-strong);
+  background: var(--pb-chrome-surface);
+  color: var(--pb-chrome-text);
+  border-radius: var(--pb-chrome-radius-xs);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 6px;
+}
+
+.pbx-i18n-settings__btn:hover:not(:disabled) {
+  background: var(--pb-chrome-surface-hover);
+}
+
+.pbx-i18n-settings__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pbx-i18n-settings__btn--danger:hover:not(:disabled) {
+  background: var(--pb-chrome-danger-subtle);
+  color: var(--pb-chrome-danger);
+  border-color: var(--pb-chrome-danger);
+}
+
+.pbx-i18n-settings__add {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.pbx-i18n-settings__add .pbx-control__input {
+  width: 80px;
+  text-transform: lowercase;
+}
+
+.pbx-i18n-settings__error {
+  display: block;
+  font-size: 11px;
+  color: var(--pb-chrome-danger);
+  margin-top: 4px;
+}
+
+.pbx-i18n-settings__editing {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Variante cuando el selector de idioma de edición va al inicio (Fase 19.h):
+   sin margen superior y con separación inferior respecto al CRUD de locales. */
+.pbx-i18n-settings__editing--lead {
+  margin-top: 0;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--pb-chrome-border);
+}
+
+/* --- Listbox (menÃº de opciones) --- */
+.pb-select__listbox {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--colors-surface-default);
+  border: 1px solid var(--colors-border);
+  border-radius: var(--radii-md, 8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+/* Sin JS: visible cuando <details> estÃ¡ abierto */
+.pb-select:not([open]) .pb-select__listbox {
+  display: none;
+}
+
+/* Con JS (--enhanced): el enhancer controla la visibilidad via hidden */
+.pb-select--enhanced .pb-select__listbox[hidden] {
+  display: none;
+}
+
+.pb-select--enhanced .pb-select__listbox:not([hidden]) {
+  display: block;
+}
+
+/* Opciones del listbox */
+.pb-select__option {
+  padding: 8px 12px;
+  border-radius: var(--radii-sm, 4px);
+  color: var(--colors-text);
+  cursor: pointer;
+  transition: background var(--pb-chrome-transition);
+  user-select: none;
+}
+
+.pb-select__option:hover,
+.pb-select__option--highlighted {
+  background: color-mix(in srgb, var(--colors-primary-default) 8%, var(--colors-surface-default));
+}
+
+.pb-select__option[aria-selected="true"] {
+  background: color-mix(in srgb, var(--colors-primary-default) 12%, var(--colors-surface-default));
+  color: var(--colors-primary-default);
+  font-weight: 500;
+}
+
+/* El <select> nativo siempre oculto (solo para form submit) */
+.pb-select__native {
+  display: none !important;
+}
+
+/* Tabla de traducción */
+.pbx-translation-modal {
+  width: 720px;
+}
+.pbx-translation-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.pbx-translation-table th,
+.pbx-translation-table td {
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--pb-chrome-border);
+}
+.pbx-translation-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--pb-chrome-surface-raised);
+  font-size: var(--pb-chrome-font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  /* --pb-chrome-text-faint es SOLO para uso decorativo/no-texto (piso 3:1,
+     ver su comentario en tokens.css) -- un <th> es texto informativo real,
+     necesita 4.5:1. Daba 3.80:1 en claro (docs/46 contrast guard, Fase 4).
+     --pb-chrome-text-muted cumple en los dos temas (4.76 / 6.96). */
+  color: var(--pb-chrome-text-muted);
+}
+.pbx-translation-table__field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 96px;
+}
+.pbx-translation-table__type {
+  font-weight: 600;
+  color: var(--pb-chrome-text);
+}
+.pbx-translation-table__key {
+  font-size: 11px;
+  color: var(--pb-chrome-text-muted);
+}
+.pbx-translation-table__default {
+  max-width: 200px;
+  color: var(--pb-chrome-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Barra de herramientas del modal de traducción (docs/51 F5/F7): selector de
+   idioma + botón de autocompletar. */
+.pbx-translation-table__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.pbx-translation-table__locale-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--pb-chrome-text-muted);
+}
+.pbx-translation-table__locale-select {
+  min-height: 28px;
+}
+
+/* Botón "Autocompletar" (docs/51 F5/F6/F6b, reusado en SeoSettings.tsx):
+   min-height 28px asegura el tap-target mínimo de 24×24px (WCAG 2.5.8) —
+   hallazgo real de F7, la altura previa (line-height del botón nativo sin
+   padding vertical) daba 21px medido con getBoundingClientRect(). */
+.pbx-translation-table__auto-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 12px;
+  border: 1px solid var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-sm);
+  background: var(--pb-chrome-surface);
+  color: var(--pb-chrome-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--pb-chrome-transition);
+}
+.pbx-translation-table__auto-btn:hover:not(:disabled) {
+  background: var(--pb-chrome-accent-subtle);
+  border-color: var(--pb-chrome-accent);
+  color: var(--pb-chrome-accent-on-surface);
+}
+.pbx-translation-table__auto-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* docs/52 F5: anillo de 3px estilo Maildrill (antes outline sólido de 2px). */
+.pbx-translation-table__auto-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--pb-chrome-focus-ring);
+}
+
+.pbx-translation-table__privacy-note,
+.pbx-translation-table__undo-note {
+  font-size: 11px;
+  color: var(--pb-chrome-text-muted);
+  margin: 2px 0;
+}
+.pbx-translation-table__usage {
+  font-size: 11px;
+  color: var(--pb-chrome-text-muted);
+  margin: 2px 0;
+}
+.pbx-translation-table__live-region {
+  font-size: 12px;
+  color: var(--pb-chrome-text);
+  min-height: 1em;
+}
+.pbx-translation-table__error {
+  font-size: 12px;
+  color: var(--pb-chrome-danger);
+  margin: 4px 0;
+}
+
+/* Fila de subencabezado por campo/nodo agrupado (docs/51 F5 punto 1). */
+.pbx-translation-table__group-header th {
+  background: var(--pb-chrome-surface-raised);
+  padding-top: 10px;
+}
+.pbx-translation-table__group-header .pbx-translation-table__field {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pbx-translation-table__progress {
+  font-size: 11px;
+  color: var(--pb-chrome-text-muted);
+}
+.pbx-translation-table__index {
+  font-size: 11px;
+  color: var(--pb-chrome-text-muted);
+  white-space: nowrap;
+}
+.pbx-translation-table__segment-note {
+  font-size: 11px;
+  color: var(--pb-chrome-text-faint);
+  font-style: italic;
+}
+
+/* Estado por segmento (docs/51 F5 punto 5): color + texto, nunca solo color. */
+.pbx-translation-table__status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--pb-chrome-radius-xs);
+  white-space: nowrap;
+}
+.pbx-translation-table__status--translating {
+  color: var(--pb-chrome-text-muted);
+  background: var(--pb-chrome-surface-raised);
+}
+.pbx-translation-table__status--done {
+  color: var(--pb-chrome-success);
+  background: var(--pb-chrome-success-subtle);
+}
+.pbx-translation-table__status--error {
+  color: var(--pb-chrome-danger);
+  background: var(--pb-chrome-danger-subtle);
+}
+
+/* Modal de confirmación de coste (docs/51 F5 punto 4, reusado en SeoSettings). */
+.pbx-translation-confirm-modal {
+  width: 420px;
+}
+.pbx-translation-confirm-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* Botón para abrir la tabla de traducción (Languages) */
+.pbx-i18n-settings__table-btn {
+  margin-top: 12px;
+  align-self: flex-start;
+  padding: 6px 12px;
+  border: 1px solid var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-sm);
+  background: var(--pb-chrome-surface);
+  color: var(--pb-chrome-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--pb-chrome-transition);
+}
+.pbx-i18n-settings__table-btn:hover {
+  background: var(--pb-chrome-accent-subtle);
+  border-color: var(--pb-chrome-accent);
+  color: var(--pb-chrome-accent-on-surface);
+}

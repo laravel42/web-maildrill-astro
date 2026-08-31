@@ -1,0 +1,111 @@
+{
+  "tabs": {
+    "components": "Componentes",
+    "tokens": "Tokens",
+    "templates": "Plantillas",
+    "ariaLabel": "Panel lateral"
+  },
+  "palette": {
+    "hint": "Arrastra un componente al canvas.",
+    "dragTooltip": "Arrastrar para agregar",
+    "containerBadge": "contenedor",
+    "categories": {
+      "basics": "Básicos",
+      "basicsGroups": {
+        "essentials": "Esenciales",
+        "content": "Contenido",
+        "utility": "Utilidad"
+      },
+      "layout": "Estructura",
+      "content": "Contenido",
+      "form": "Formulario",
+      "navigation": "Navegación"
+    }
+  },
+  "templates": {
+    "hint": "Aplica una plantilla de página o toca una sección para colocarla en el canvas.",
+    "sectionTooltip": "Toca para tomar y colocar en el canvas",
+    "descInfoLabel": "Ver descripción",
+    "categories": {
+      "page": "Plantillas de página",
+      "section": "Plantillas de sección"
+    },
+    "confirm": {
+      "title": "¿Reemplazar el contenido de la página?",
+      "body": "La página actual se reemplazará por \"{{name}}\". Puedes deshacer esta acción.",
+      "apply": "Aplicar plantilla",
+      "applying": "Aplicando…",
+      "cancel": "Cancelar"
+    },
+    "layouts": {
+      "heroSection": "Hero",
+      "heroSectionDesc": "Título, subtítulo y botón principal",
+      "features3Col": "Features (3 columnas)",
+      "features3ColDesc": "Grid responsive con imagen y tarjetas",
+      "pricingSection": "Pricing",
+      "pricingSectionDesc": "Dos tarjetas de precios en fila",
+      "ctaBanner": "Banda de llamada a la acción",
+      "ctaBannerDesc": "Título, subtítulo y botón sobre fondo destacado",
+      "statsStrip": "Franja de estadísticas",
+      "statsStripDesc": "Tres KPIs con icono en fila",
+      "faqAccordion": "Preguntas frecuentes",
+      "faqAccordionDesc": "Acordeón de preguntas y respuestas",
+      "breadcrumbHeader": "Encabezado con miga de pan",
+      "breadcrumbHeaderDesc": "Miga de pan y título de página interior",
+      "videoShowcase": "Vitrina de video",
+      "videoShowcaseDesc": "Video embebido junto a texto y llamada a la acción",
+      "teamGrid": "Grid de equipo",
+      "teamGridDesc": "Tarjetas con foto, nombre y rol de cada persona",
+      "tabsFeatures": "Features en pestañas",
+      "tabsFeaturesDesc": "Organiza contenido denso en pestañas",
+      "newsletterModalTrigger": "Botón con modal de newsletter",
+      "newsletterModalTriggerDesc": "Botón que abre un formulario de suscripción en modal",
+      "signupPage": "Academia online",
+      "signupPageDesc": "Propuesta de valor, testimonios y formulario de inscripción con validación",
+      "teamPage": "Coworking",
+      "teamPageDesc": "Planes de membresía en pestañas, instalaciones y comunidad",
+      "blogList": "Editorial / podcast",
+      "blogListDesc": "Grid de anchos desiguales, quotes destacados y newsletter",
+      "portfolio": "Fotógrafo",
+      "portfolioDesc": "Galería con lightbox, bio, testimonios y paquetes de sesión",
+      "landingProduct": "SaaS",
+      "landingProductDesc": "Tabs de features, pricing, logo-cloud y stats",
+      "restaurantPage": "Restaurante",
+      "restaurantPageDesc": "Reservas, carta del día y FAQ en 3 idiomas",
+      "clothingStorePage": "Tienda de ropa",
+      "clothingStorePageDesc": "Catálogo, beneficios y newsletter multilingüe",
+      "fitnessStudioPage": "Gimnasio",
+      "fitnessStudioPageDesc": "Horario de clases, planes y alta de socios",
+      "dentalClinicPage": "Clínica dental",
+      "dentalClinicPageDesc": "Tratamientos, equipo y formulario de cita",
+      "realEstatePage": "Inmobiliaria",
+      "realEstatePageDesc": "Buscador, propiedades destacadas y contacto",
+      "hotelBoutiquePage": "Hotel boutique",
+      "hotelBoutiquePageDesc": "Habitaciones, amenidades y reservas",
+      "lawFirmPage": "Bufete de abogados",
+      "lawFirmPageDesc": "Áreas de práctica con nav lateral, socios y caso de éxito",
+      "creativeAgencyPage": "Agencia creativa",
+      "creativeAgencyPageDesc": "Hero inmersivo oscuro, marquee de clientes y portafolio",
+      "spaWellnessPage": "Spa y bienestar",
+      "spaWellnessPageDesc": "Tratamientos en zig-zag, horarios en acordeón y reseñas",
+      "barbershopPage": "Barbería",
+      "barbershopPageDesc": "Servicios, estadísticas animadas y modal de cita",
+      "architectureStudioPage": "Estudio de arquitectura",
+      "architectureStudioPageDesc": "Nav lateral por servicios, proyectos en grid asimétrico y hero con parallax",
+      "autoRepairPage": "Taller mecánico",
+      "autoRepairPageDesc": "Estadísticas animadas, formulario de cita y alert de recepción"
+    }
+  },
+  "ai": {
+    "title": "Generar con IA",
+    "hint": "Describe la sección que quieres generar y la IA la creará automáticamente.",
+    "promptPlaceholder": "Ej: una sección de precios con 3 planes, o un hero con título y botón de llamada a la acción...",
+    "generate": "Generar",
+    "generating": "Generando…",
+    "previewReady": "Sección lista para insertar",
+    "model": "Modelo",
+    "insert": "Insertar en el canvas",
+    "cancel": "Cancelar",
+    "errorUnknown": "Error desconocido al generar"
+  }
+}

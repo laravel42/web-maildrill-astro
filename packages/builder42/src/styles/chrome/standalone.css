@@ -1,0 +1,58 @@
+/**
+ * chrome/standalone.css — reglas SOLO para el editor standalone (docs/52 F6, I3/I4).
+ *
+ * Estas reglas asumen que el editor es dueño de TODA la página (`<html>`,
+ * `<body>`, `#root`) — cierto en `pnpm dev`/`index.html`, falso cuando el
+ * editor se embebe dentro de Maildrill (`web-maildrill-astro`, F7/F8): ahí el
+ * host ya tiene su propio `<body>` con su propia tipografía (Geist cargada
+ * por el host) y su propio layout de página, y estas reglas globales las
+ * pisarían sin querer.
+ *
+ * Namespace: solo `pbx-*`/selectores globales de documento (`html`, `body`,
+ * `#root`). Se importa ÚNICAMENTE desde el barrel standalone (`chrome.css`),
+ * NUNCA desde el barrel embebido (`chrome-embedded.css`) — ver
+ * `src/styles/chrome/README.md`.
+ */
+
+/**
+ * Tipografía Geist (docs/52 F3, movida aquí verbatim en F6 tal como
+ * declaraba la nota de deuda en `reset.css`): mismo `@font-face` que
+ * `web-maildrill-astro/src/styles/global.css` (variable woff2 vía jsDelivr,
+ * eje de peso completo 100–900, `font-display: swap`). El chrome standalone
+ * necesita cargarla él mismo; el chrome EMBEBIDO no debe declarar esto (I4)
+ * — el host ya la cargó antes de montar el editor.
+ */
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/Geist-Variable.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-mono/GeistMono-Variable.woff2")
+    format("woff2");
+}
+
+/* I3: el editor es dueño de toda la página solo en standalone — embebido,
+   el host ya controla el layout de `html`/`body`/`#root` (o el elemento
+   equivalente que monte al editor). */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+/* I4: tipografía/color de TODO el `<body>` — embebido pisaría la Geist que
+   el host ya cargó y aplicó a su propia página. */
+body {
+  font-family: var(--pb-chrome-font);
+  color: var(--pb-chrome-text);
+}

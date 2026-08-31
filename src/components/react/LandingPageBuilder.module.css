@@ -1,0 +1,63 @@
+.shell {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface, #fff);
+  color: var(--text);
+  font-family: 'Geist', system-ui, sans-serif;
+}
+
+.bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 48px;
+  padding: 0 12px;
+  background: var(--surface, #fff);
+  border-bottom: 1px solid var(--border, #ecebe6);
+}
+
+.stage {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px;
+  text-align: center;
+}
+
+.muted {
+  color: var(--text2, #6b7280);
+  font-size: 14px;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border, #ecebe6);
+  border-top-color: var(--accent, #4f46e5);
+  animation: builder42-spin 0.8s linear infinite;
+}
+
+@keyframes builder42-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

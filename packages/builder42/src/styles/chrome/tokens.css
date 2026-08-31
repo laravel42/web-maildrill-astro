@@ -1,0 +1,299 @@
+/* Chrome del builder (no es el CSS del output exportado — docs/05 §4). */
+/* ==========================================================================
+   Capa puente de tokens (docs/52 F1, decisión D2) — Maildrill visual identity.
+
+   Cada `--pb-chrome-*` CONSUME el token equivalente del HOST (Maildrill,
+   `web-maildrill-astro/src/styles/tokens.css`) vía `var(--host-token,
+   <fallback-Maildrill>)`. El fallback es el valor LITERAL de Maildrill, no un
+   valor propio de pb-static: si el editor corre standalone (sin host), el
+   chrome se ve exactamente como Maildrill de todos modos — el fallback no es
+   un "por si falla", es la fuente de verdad cuando no hay host.
+
+   Por qué "puente por valor" y no renombrado directo (D2): los 18 módulos de
+   `chrome/*.css` siguen consumiendo `--pb-chrome-*` sin ningún cambio (cero
+   churn), y el aislamiento de namespace de docs/22 (`pb-` output / `pbx-`
+   chrome) se mantiene intacto — nunca se declara `--surface`/`--bg`/`--accent`
+   como PROPIO del chrome (ver namespace.test.ts, guarda docs/52 F0), solo se
+   LEEN si el host los define.
+
+   Retirado en esta fase (D5): el gradiente de acento índigo→azul. Maildrill
+   no usa gradientes en su workspace — sus CTAs primarios son índigo sólido.
+   El favicon del standalone puede conservar el gradiente aparte (no vive en
+   esta capa de tokens).
+   ========================================================================== */
+
+:root {
+  /* ------------------------------------------------------------------ *
+   * Fondos oscuros (header, popovers) — Maildrill NO tiene una barra
+   * oscura en su workspace (D3): el header pasa a `--surface` + borde en
+   * F2. Estos tokens se mantienen por ahora (aún los consume header.css
+   * hasta F2) pero ya no son un slate fijo: siguen el `--ink-band*` del
+   * host, que es su propio par de "banda oscura dentro del tema claro"
+   * (footer/hero del marketing) — el fallback es el slate anterior para
+   * no regresar visualmente antes de que F2 haga el flip real.
+   * ------------------------------------------------------------------ */
+  --pb-chrome-bg:           var(--ink-band, #0f172a);
+  --pb-chrome-bg-alt:       var(--ink-band2, #1e293b);
+  --pb-chrome-bg-hover:     #334155;   /* sin equivalente directo de host; se resuelve en F2 */
+
+  /* Fondo del canvas en vista Código (`.pbx-canvas--code`) — siempre oscuro
+     por diseño (look de editor de código), no reasignado en `dark.css`
+     (mismo criterio que `--pb-chrome-bg`). Maildrill no tiene un tono
+     dedicado a esto; se conserva el literal propio. */
+  --pb-chrome-code-canvas-bg: #0b1021;
+
+  /* ------------------------------------------------------------------ *
+   * Rampa neutra — crema cálido de Maildrill en vez de slate frío.
+   * ------------------------------------------------------------------ */
+  --pb-chrome-surface:      var(--surface,  #ffffff);
+  --pb-chrome-surface-alt:  var(--surface2, #f3f2ee);
+  --pb-chrome-surface-hover: var(--sidebar-hover, rgba(31, 30, 27, 0.055));
+  --pb-chrome-surface-raised: var(--surface3, #fbfaf8);  /* inputs, cards, dropdowns, menús */
+
+  /* Texto sobre superficies oscuras (header, popovers) — banda de host. */
+  --pb-chrome-text-on-dark:  var(--ink-band-text, #f5f3ec);
+  --pb-chrome-muted-on-dark: var(--ink-band-muted, #8b8a80);
+
+  /* Texto sobre superficies claras (sidebar, inspector) — tinta cálida. */
+  --pb-chrome-text:          var(--text,  #1f1e1b);
+  --pb-chrome-text-muted:    var(--text3, #57554e);
+  /* Nivel decorativo (separadores, badges, bordes discontinuos) — piso 3:1,
+     NUNCA texto informativo real (ese usa --pb-chrome-text-muted, 4.5:1+). */
+  --pb-chrome-text-faint:    var(--muted, #a5a39a);
+
+  /* Bordes */
+  --pb-chrome-border-dark:   var(--ink-band-border, #332f26);
+  --pb-chrome-border:        var(--border,  #ecebe6);
+  --pb-chrome-border-strong: var(--border2, #e4e2da);
+
+  /* ------------------------------------------------------------------ *
+   * Acento — índigo interactivo de Maildrill (`--accent`). Ya coincidía
+   * en valor (#4f46e5 en ambos proyectos) antes de este puente; ahora
+   * además SIGUE al host si éste lo remapea (tema/whitelabel futuro).
+   * ------------------------------------------------------------------ */
+  --pb-chrome-accent:        var(--accent, #4f46e5);
+  --pb-chrome-accent-light:  var(--accent-hover, #4338ca);
+  --pb-chrome-accent-text:   var(--accent-contrast, #ffffff);
+  --pb-chrome-text-on-accent: var(--accent-contrast, #ffffff);
+  --pb-chrome-accent-subtle: var(--accent-tint, #eef0ff);  /* hover sutil en sidebar */
+  /* Texto/borde de acento sobre superficies (tabs/chips activos). En claro
+     es igual al sólido; en dark.css se aclara para mantener AA — ver ahí. */
+  --pb-chrome-accent-on-surface: var(--accent-text, var(--pb-chrome-accent));
+
+  /* Gradiente de acento RETIRADO (D5) — Maildrill no usa gradientes en su
+     workspace. docs/52 F2/F5: los 8 usos residuales que referenciaban
+     `--pb-chrome-accent-gradient` como fondo de superficie grande (botones
+     primarios, tab activo, brand, pill de token) ya se migraron todos a
+     `--pb-chrome-accent` sólido directo (F2: header.css; F5: inspector.css,
+     canvas-nodes.css, ai-generator.css, publish.css, canvas-code-json.css).
+     El token queda DECLARADO por retrocompat (cualquier consumo futuro fuera
+     de `chrome/*.css`, ej. el host embebido en F7/F8) pero ya no tiene
+     ningún consumidor interno — no es un gradiente desde F1, es el mismo
+     sólido. `--pb-chrome-accent-from`/`-to` quedan por la misma razón. */
+  --pb-chrome-accent-from:     var(--accent, #4f46e5);
+  --pb-chrome-accent-to:       var(--accent, #4f46e5);
+  --pb-chrome-accent-gradient: var(--pb-chrome-accent);
+  --pb-chrome-focus-ring:      var(--focus-ring, 0 0 0 3px rgba(79, 70, 229, 0.35));
+
+  /* ------------------------------------------------------------------ *
+   * Canvas — el área de trabajo sigue al host (D6): fondo = superficie
+   * secundaria del host, retícula en la forma real confirmada en
+   * `FlowCanvas.module.css` (rama `feat/automations`, `web-maildrill-astro`):
+   * `radial-gradient(circle at 1px 1px, var(--border[2]) 1px, transparent 0)
+   * 0 0 / 22px 22px` (docs/52 F4, aplicada en `canvas.css`) — círculo de 1px
+   * sin offset, en vez del dot de 1.5px con offset -9px que tenía el chrome
+   * antes de este plan. El frame de la página
+   * (`--pb-chrome-canvas-frame-bg`) NO se toca aquí — el tema del SITIO
+   * del usuario lo gobierna `TokensStyle`, nunca esta capa (§4.1 punto 5
+   * del plan). El dark override real de `--pb-chrome-canvas-bg`/`-dot`
+   * vive en F4 (dark.css); aquí solo se resuelve el valor CLARO con
+   * fallback. Confirmado: el host usa `--border2` como dot color en CLARO
+   * y `--border` (sin el 2) en OSCURO — asimetría real del host, no un
+   * error de este puente.
+   * ------------------------------------------------------------------ */
+  --pb-chrome-canvas-bg:     var(--surface2, #f3f2ee);
+  --pb-chrome-canvas-dot:    var(--border2, rgba(31, 30, 27, 0.12));
+  --pb-chrome-canvas-frame-bg: #ffffff;
+  --pb-chrome-frame-shadow:  var(--shadow-md, 0 6px 18px rgba(30, 27, 22, 0.07)),
+                              var(--shadow-lg, 0 16px 40px rgba(30, 27, 22, 0.1));
+  /* Outline sutil que separa el frame del canvas alrededor (docs/52 F4,
+     §4.1 punto 2 del plan: "todo lo que se dibuja ENCIMA del canvas cambia
+     de fondo base"). En claro, un oscuro translúcido sobre un canvas claro
+     funciona. Con D6 (canvas oscuro en dark), ese MISMO oscuro-sobre-oscuro
+     se volvía invisible (medido: rgba(15,23,42,0.08) contra `--surface2`
+     dark #2a261e, luminancias casi idénticas) — de ahí el token dedicado,
+     reasignado a un claro translúcido en dark.css. Chrome puro: separa el
+     frame del área de trabajo, no toca `--pb-chrome-canvas-frame-bg` (eso
+     sigue siendo del tema del SITIO, §4.1 punto 5). */
+  --pb-chrome-canvas-frame-outline: rgba(15, 23, 42, 0.08);
+
+  /* Selección y drop */
+  --pb-chrome-select:        var(--accent, #4f46e5);  /* acento mismo */
+  --pb-chrome-drop:          #16a34a;  /* verde — zona de drop válida (coincide con --success de host) */
+  /* CTA sólido de "confirmar inserción" con texto blanco encima —
+     --pb-chrome-drop (green-600) da solo 3.30:1 con texto blanco, bajo AA
+     (docs/46 contrast guard, Fase 4). Se mantiene --pb-chrome-drop intacto
+     (borde/outline/tinte de zona de drop) y se agrega este tono dedicado
+     solo a texto — coincide con --success-strong del host. Sin override en
+     dark.css (constante). */
+  --pb-chrome-drop-solid:    var(--success-strong, #15803d);
+
+  /* Danger — texto sobre surface/surface-alt necesita 4.5:1 AA (no solo
+     3:1 de borde/fondo). Coincide con --danger-strong del host. */
+  --pb-chrome-danger:        var(--danger-strong, #b91c1c);
+  --pb-chrome-danger-subtle: var(--danger-bg, #fee2e2);
+
+  /* Relleno sólido de danger con texto blanco encima (botones primarios de
+     confirmación destructiva) — mismo criterio que --pb-chrome-accent:
+     --pb-chrome-danger SÍ cambia entre temas y usarlo como fondo sólido con
+     --pb-chrome-text-on-accent daba solo 2.77:1 en oscuro (docs/46 contrast
+     guard, Fase 4). Este token NO se reasigna en dark.css (constante). */
+  --pb-chrome-danger-solid:  var(--danger-strong, #b91c1c);
+
+  /* Notice de error sobre superficie SIEMPRE oscura (docs/46 H7) — usado por
+     el visor de código/JSON (`.pbx-code*`) y el panel de publicación, que ya
+     son oscuros por diseño en ambos temas del chrome (mismo criterio que
+     --pb-chrome-bg/--pb-chrome-text-on-dark, no reasignados en dark.css).
+     Sin equivalente 1:1 en el host para estos tonos "siempre oscuro"; se
+     conservan los literales propios verificados por contraste. */
+  --pb-chrome-danger-on-dark:        #f87171;  /* red-400 — 6.35:1 sobre danger-strong-bg */
+  --pb-chrome-danger-strong-bg:      #2a1215;
+  --pb-chrome-danger-strong-border:  #7f1d1d;
+
+  /* Estados semánticos (badges/notices) — pares texto + fondo sutil (+ borde) */
+  --pb-chrome-warning:         var(--warning-strong, #b45309);
+  --pb-chrome-warning-subtle:  var(--warning-bg, #fef3c7);
+  --pb-chrome-warning-border:  #fde68a;  /* sin equivalente directo de host; literal previo conservado */
+  --pb-chrome-info:            var(--info, #4f46e5);
+  --pb-chrome-info-subtle:     var(--info-bg, #eef0ff);
+  --pb-chrome-success:         var(--success-strong, #15803d);
+  --pb-chrome-success-subtle:  #f0fdf4;  /* sin equivalente directo de host; literal previo conservado */
+
+  /* Botón sólido ámbar (CTA de "ver overflow") — mismo tono que
+     --pb-chrome-warning, verificado 7.09:1 con texto blanco. Sin override
+     en dark.css (no cambia entre temas). */
+  --pb-chrome-warning-solid-bg: var(--warning-strong, #b45309);
+  --pb-chrome-warning-solid-bg-hover: #78350f;  /* amber-900, sin equivalente de host */
+
+  /* ------------------------------------------------------------------ *
+   * Radios — Maildrill: 8/10/12/16/20/999. El botón pasa de 8px a 10px
+   * (`--radius-btn` del host); se agrega un nivel `xl` (20px, `--radius-
+   * dialog`) para diálogos/modales, ausente en la escala anterior.
+   * ------------------------------------------------------------------ */
+  --pb-chrome-radius-xs:  var(--radius-xs,   8px);
+  --pb-chrome-radius-sm:  var(--radius-btn, 10px);
+  --pb-chrome-radius-md:  var(--radius-img, 12px);
+  --pb-chrome-radius-lg:  var(--radius-card, 16px);
+  --pb-chrome-radius-xl:  var(--radius-dialog, 20px);
+  --pb-chrome-radius-pill: var(--radius-pill, 999px);
+
+  /* Tipografía del chrome (docs/52 F3): familia sans real (Geist, mismo
+     `@font-face` que el host — declarado en `reset.css`, standalone-only) +
+     escala mapeada a `--fs-*` de Maildrill. `--pb-chrome-font` (sin sufijo)
+     es la familia general del chrome — antes consumida por `canvas.css`
+     (`.pbx-device__dims`) sin haberse declarado nunca aquí (deuda
+     preexistente, cerrada en esta fase). `--pb-chrome-font-mono` ya venía
+     mapeado desde F1. */
+  --pb-chrome-font: var(--font-sans, "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif);
+  --pb-chrome-font-mono: var(--font-mono, ui-monospace, "SF Mono", Menlo, Consolas, monospace);
+
+  /* Escala tipográfica del chrome (typeset audit), remapeada a `--fs-*` de
+     Maildrill con fallback a los valores propios anteriores (standalone
+     sigue exactamente igual que antes; embebido en el host cada nivel sube
+     ligeramente a la escala real de Maildrill — 10→12, 11→13, 12→14,
+     13→15, 15→17 — para leerse nativo dentro de su workspace). El chrome
+     tiene 5 niveles fijos (micro/sm/label/body/title) mientras que
+     Maildrill tiene una escala más fina (`--fs-xs..4xl`); se elige el nivel
+     de Maildrill más cercano a cada rol, no una conversión 1:1. */
+  --pb-chrome-font-size-micro:   var(--fs-xs,    10px);   /* Badges, counts, subheadings — 12px en host */
+  --pb-chrome-font-size-sm:      var(--fs-sm,    11px);   /* Uppercase section headings — 13px en host */
+  --pb-chrome-font-size-label:   var(--fs-sm2,   12px);   /* Control labels, breadcrumb, tabs — 14px en host */
+  --pb-chrome-font-size-body:    var(--fs-base,  13px);   /* Main UI: palette, fields, buttons — 15px en host, su tamaño de body por defecto */
+  --pb-chrome-font-size-title:   var(--fs-md,    15px);   /* Modal titles — 17px en host */
+
+  --pb-chrome-font-weight-normal:    400;
+  --pb-chrome-font-weight-medium:    500;
+  --pb-chrome-font-weight-semibold:  600;
+  --pb-chrome-font-weight-bold:      700;
+
+  --pb-chrome-line-height-tight:   1.25;
+  --pb-chrome-line-height-normal:  1.4;
+  --pb-chrome-line-height-relaxed: 1.5;
+
+  /* Transición base del chrome — Maildrill usa la misma curva de ease-out. */
+  --pb-chrome-transition: var(--duration, 200ms) var(--ease-out, ease);
+
+  /* Scrollbars finas del chrome (T6) — barra delgada y discreta en todo el
+     editor. En Firefox solo se controla ancho (thin) y color; los pseudo
+     ::-webkit-scrollbar afinan más en Chromium/WebKit. */
+  --pb-chrome-scrollbar-size:        10px;
+  --pb-chrome-scrollbar-thumb:       var(--border2,  #e4e2da);
+  --pb-chrome-scrollbar-thumb-hover: var(--muted2,   #c0beb4);
+  --pb-chrome-scrollbar-track:       transparent;
+
+  /* Panel de propiedades unificado (docs/41 §4.3, §10.9) — tokens propios,
+     separados de `--pb-chrome-accent*` (marca) para que el azul de
+     "modificado" no se confunda con el resto del chrome (D4: el azul de
+     este panel SOLO significa "modificado", el subrayado de tab activa y
+     el badge de conteo, nunca decorativo). */
+  --pb-chrome-panel-modified:      #2563eb;  /* blue-600 — sin equivalente directo de host, literal previo */
+  --pb-chrome-panel-hidden:        var(--warning-strong, #b45309);
+  --pb-chrome-panel-hidden-subtle: var(--warning-bg, #fef3c7);
+  --pb-chrome-panel-row-height:    32px;     /* altura de fila constante (docs/41 §10.3) */
+  --pb-chrome-panel-label-width:   70px;     /* ancho de la etiqueta (docs/41 §4.3) */
+  --pb-chrome-panel-row-gap:       12px;     /* gap etiqueta↔control (docs/41 §4.3) */
+  --pb-chrome-panel-field-radius:  var(--pb-chrome-radius-sm);  /* 10px, antes 8px fijo */
+  --pb-chrome-panel-field-bg:      var(--pb-chrome-surface-alt); /* fondo apenas más claro que el panel */
+
+  /* Etiqueta de guía de tamaño en el canvas (`.pbx-size-guide__label`) —
+     sin equivalente de host; se conserva el literal verificado por
+     contraste contra ambos frames (claro/oscuro, ver dark.css). */
+  --pb-chrome-size-guide-label: #6d28d9;  /* violet-700 — 7.10:1 sobre frame claro */
+  /* Borde/tinte de `.pbx-size-guide` (docs/52 F5, hallazgo real): mismo
+     violeta que el label de arriba pero declarado aparte porque es un
+     borde/fondo NO-TEXTO (piso 3:1, no 4.5:1) — el literal fijo `#7c3aed`
+     que tenía antes de este token nunca se había migrado junto con el
+     label en F4, y quedaba en 2.99:1 sobre el nuevo `--pb-chrome-canvas-
+     frame-bg` oscuro (medido, no estimado) — el mismo defecto que F4 ya
+     había corregido para `--pb-chrome-size-guide-label`, sin propagarlo al
+     borde. Ver override en dark.css. */
+  --pb-chrome-size-guide-border: #7c3aed;  /* violet-700 — 5.70:1 sobre frame claro (no-texto, piso 3:1) */
+
+  /* ------------------------------------------------------------------ *
+   * Header — flip a claro (docs/52 F2, decisión D3). Tokens PROPIOS del
+   * header, deliberadamente separados de --pb-chrome-bg/-bg-alt/-bg-hover/
+   * -text-on-dark/-muted-on-dark (arriba): esos siguen siendo la "banda
+   * SIEMPRE oscura" que consumen el visor de código/JSON
+   * (`canvas-code-json.css`) y el panel de publicación (`publish.css`) por
+   * diseño (docs/46 H7) — reasignarlos habría oscurecido esas superficies
+   * también, que NO es lo que pide D3. Maildrill no tiene una barra oscura
+   * en su workspace: `EditorHeader.module.css` usa `.head { background:
+   * var(--surface); border-bottom: 1px solid var(--border); height: 57px }`
+   * directo, sin banda — este es el mismo patrón, con su propio namespace.
+   * ------------------------------------------------------------------ */
+  --pb-chrome-header-height:      57px;
+  --pb-chrome-header-control-h:   38px;   /* --editor-control-h del host */
+  --pb-chrome-header-bg:          var(--surface, #ffffff);
+  --pb-chrome-header-border:      var(--border, #ecebe6);
+  --pb-chrome-header-text:        var(--text,  #1f1e1b);
+  --pb-chrome-header-text-muted:  var(--text3, #57554e);
+  --pb-chrome-header-surface-alt: var(--surface2, #f3f2ee);
+  --pb-chrome-header-surface-hover: var(--surface2, #f3f2ee);
+  --pb-chrome-header-border-strong: var(--border2, #e4e2da);
+  /* Identidad de marca: naranja de Maildrill, SOLO en el ícono/texto del
+     brand y en hovers de navegación — nunca como relleno de botón (D3/D5:
+     los CTAs primarios siguen siendo `--pb-chrome-accent` índigo sólido,
+     igual que `.saveIcon` del host usa `var(--accent)`, no `var(--brand)`). */
+  --pb-chrome-header-brand:       var(--brand, #ff441f);
+  --pb-chrome-header-brand-hover: var(--brand-hover, #e63a17);
+  /* Variante de TEXTO del naranja (no decorativa): `--brand`/`--brand-hover`
+     dan solo 3.07:1/3.76:1 sobre las superficies claras del header — por
+     debajo de 4.5:1 AA para texto (aunque sí cumplen el piso 3:1 de
+     componentes no-texto, uso legítimo del ícono de marca). Mismo patrón que
+     `--pb-chrome-danger` vs. `--pb-chrome-danger-solid`: un tono más oscuro,
+     MISMO matiz, dedicado a texto/hover de link. Sin equivalente en el host
+     (Maildrill no necesita esta variante — su naranja no se usa como color
+     de texto interactivo en su propio workspace); valor calculado y
+     verificado (4.74:1 vs. superficie crema, 5.31:1 vs. blanco). */
+  --pb-chrome-header-brand-text:  #d12300;
+}

@@ -48,6 +48,7 @@
     "@simplewebauthn/browser": "^13.3.0",
     "astro": "^7.2.2",
     "auth-astro": "^4.2.0",
+    "builder42": "workspace:*",
     "email-builder-standalone": "workspace:*",
     "embla-carousel": "8.6.0",
     "infobip-rtc": "^2.7.37",

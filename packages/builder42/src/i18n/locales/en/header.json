@@ -1,0 +1,102 @@
+{
+  "brand": "Builder42",
+  "views": {
+    "edit": "Edit",
+    "preview": "Preview",
+    "code": "Code",
+    "json": "JSON"
+  },
+  "viewports": {
+    "base": "Mobile (base)",
+    "sm": "Large mobile (sm)",
+    "md": "Tablet (md)",
+    "lg": "Laptop (lg)",
+    "xl": "Desktop (xl)"
+  },
+  "viewportGroup": "Screen size",
+  "viewMode": {
+    "label": "View mode"
+  },
+  "viewport": {
+    "label": "Screen size"
+  },
+  "history": {
+    "label": "History",
+    "undo": "Undo (Ctrl/⌘+Z)",
+    "redo": "Redo (Ctrl/⌘+Shift+Z)"
+  },
+  "canvasControls": {
+    "label": "Canvas view controls"
+  },
+  "file": {
+    "label": "File",
+    "save": "Save",
+    "saveTitle": "Save site (.json)",
+    "load": "Load",
+    "loadTitle": "Load site (.json)",
+    "invalidFile": "Invalid file",
+    "readError": "Could not read the file"
+  },
+  "language": {
+    "label": "Editor language"
+  },
+  "theme": {
+    "label": "Color system",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "profile": {
+    "label": "Preferences"
+  },
+  "reorderControls": {
+    "label": "Reorder controls",
+    "auto": "Auto",
+    "on": "On",
+    "off": "Off"
+  },
+  "experienceLevel": {
+    "label": "Experience level",
+    "simple": "Simple",
+    "advanced": "Advanced"
+  },
+  "onboarding": {
+    "title": "How would you like to start?",
+    "subtitle": "Choose the editor's experience level. You can change it anytime from Preferences.",
+    "simpleTitle": "Simple",
+    "simpleDesc": "A more guided interface, with fewer options visible.",
+    "advancedTitle": "Advanced",
+    "advancedDesc": "Full access to every option in the editor.",
+    "changeHint": "You can change this later from the Preferences menu."
+  },
+  "contentLocale": {
+    "label": "Content language",
+    "ariaLabel": "Content language being edited"
+  },
+  "breadcrumb": {
+    "label": "Active page route",
+    "pageLabel": "Switch page"
+  },
+  "panels": {
+    "toggleSidebar": "Toggle sidebar",
+    "toggleInspector": "Toggle inspector"
+  },
+  "layers": {
+    "button": "Layers",
+    "open": "Open layers panel",
+    "title": "Page layers",
+    "treeLabel": "Layer tree of the active page",
+    "empty": "No nodes.",
+    "toggleExpand": "Expand/collapse",
+    "hiddenBadge": "hidden",
+    "hiddenAt": "Hidden at {{breakpoint}}",
+    "show": "Show at this size",
+    "hide": "Hide at this size"
+  },
+  "publish": {
+    "button": "Publish",
+    "modalTitle": "Publish site",
+    "close": "Close",
+    "managedSites": "Published sites"
+  }
+}

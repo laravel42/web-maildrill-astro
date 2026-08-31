@@ -1,0 +1,79 @@
+{
+  "modalEditor": {
+    "title": "Editando modal",
+    "close": "Cerrar editor"
+  },
+  "invisibles": {
+    "open": "Elementos no visibles",
+    "title": "Elementos no visibles"
+  },
+  "preview": {
+    "frameTitle": "Vista previa del sitio",
+    "loading": "Cargando vista previa…",
+    "dimensions": "Dimensiones del viewport (ancho × alto en px)"
+  },
+  "code": {
+    "pageTitle": "index.html (página activa)",
+    "downloadZip": "Descargar sitio (.zip · {{count}} pág.)",
+    "exporting": "Exportando sitio…",
+    "pageCss": "CSS de la página",
+    "zipContents": "Contenido del .zip ({{count}} archivos)",
+    "binary": "[binario · {{bytes}} bytes]"
+  },
+  "export": {
+    "warningsTitle": "Advertencias de exportación",
+    "warningsCount": "{{count}} problema(s) detectado(s)",
+    "unknownType": "Nodo {{nodeId}}: tipo desconocido «{{type}}»",
+    "missingNode": "Nodo {{nodeId}}: no encontrado en el documento",
+    "andMore": "…y {{count}} más."
+  },
+  "json": {
+    "title": "Sitio (JSON) — editable",
+    "ariaLabel": "JSON del sitio",
+    "reset": "Restablecer",
+    "apply": "Aplicar",
+    "applied": "✓ Aplicado",
+    "validationErrors": "{{count}} error(es) de validación:",
+    "andMore": "…y {{count}} más."
+  },
+  "dnd": {
+    "moveUp": "arriba",
+    "moveDown": "abajo",
+    "moveOut": "hacia afuera",
+    "moveIn": "hacia adentro",
+    "moved": "Movido {{direction}}",
+    "cannotMove": "No se puede mover {{direction}}",
+    "dragHandle": "Mover {{label}}",
+    "dragHandleTitle": "Arrastra para mover {{label}}",
+    "reorderUp": "Subir",
+    "reorderDown": "Bajar",
+    "outdent": "Sacar del contenedor",
+    "indent": "Meter en el contenedor anterior",
+    "pickInsertMove": "Mover con toques",
+    "duplicate": "Duplicar"
+  },
+  "container": {
+    "emptyDrop": "Suelta aquí"
+  },
+  "pickInsert": {
+    "prompt": "Toca dónde colocar «{{label}}»",
+    "previewLabel": "Colocar «{{label}}» aquí",
+    "moveUp": "Un paso arriba",
+    "moveDown": "Un paso abajo",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
+  },
+  "textToolbar": {
+    "ariaLabel": "Formato de texto",
+    "bold": "Negrita",
+    "italic": "Cursiva",
+    "strike": "Tachado",
+    "link": "Enlace",
+    "linkPrompt": "URL del enlace (vacío para quitarlo)",
+    "heading1": "Título 1",
+    "heading2": "Título 2",
+    "heading3": "Título 3",
+    "bulletList": "Lista con viñetas",
+    "orderedList": "Lista numerada"
+  }
+}

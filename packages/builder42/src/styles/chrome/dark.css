@@ -1,0 +1,165 @@
+/**
+ * chrome/dark.css — Fase 11.d — dark theme overrides. Reasignación de tokens semánticos (:root > :root[data-theme]).
+ *
+ * Extraído del monolito chrome.css (docs/28). Se carga al final del orden
+ * definido por el barrel según docs/28 §2.2, después de `tokens.css`
+ * (necesario para reasignar los valores declarados en `:root`).
+ *
+ * Namespace: solo `pbx-*`. Cualquier referencia a `pb-*` debe
+ * justificarse en línea (criterio docs/22 §4).
+ *
+ * docs/52 F4 (D6): rampa slate fría → ink cálido de Maildrill. Valores
+ * tomados DIRECTO de `web-maildrill-astro/src/styles/tokens.css`
+ * `[data-theme='dark']` (confirmado en disco, no derivado por analogía):
+ * --bg #15130d, --surface #201d16, --surface2 #2a261e, --surface3 #26221b,
+ * --border #332f26, --border2 #3c372c, --text #f5f3ec, --text3 #d6d1c3,
+ * --muted #9a9585, --accent-text #b1bdfd, --danger-strong #fca5a5,
+ * --success-strong #4ade80, --warning-strong #fbbf24, --info #b1bdfd. Cada
+ * par de contraste se **verificó** con la fórmula WCAG (no estimado) contra
+ * las 3 superficies reales del host — ver comentario de cada bloque.
+ */
+:root[data-theme="dark"] {
+  /* Superficies (sidebar / inspector / popovers claros -> oscuros).
+     Valores reales de Maildrill dark (`--surface`/`--surface2`/`--surface3`),
+     no un slate genérico ni una analogía. */
+  --pb-chrome-surface:       #201d16;  /* host --surface (antes slate-800 #1e293b) */
+  --pb-chrome-surface-alt:   #15130d;  /* host --bg (antes slate-900 #0f172a) */
+  --pb-chrome-surface-hover: #2a261e;  /* host --surface2 (antes slate-700 #334155) */
+  --pb-chrome-surface-raised: #26221b; /* host --surface3: inputs/cards/dropdowns */
+
+  /* Texto sobre superficies (ahora oscuras) — host --text/--muted, no slate.
+     Verificado: 15.15:1 (surface) / 16.73:1 (bg) / 13.56:1 (surface2). */
+  --pb-chrome-text:          #f5f3ec;  /* host --text */
+  /* Verificado: 5.61:1 (surface) / 6.20:1 (bg) / 5.03:1 (surface2) —
+     los 3 ≥4.5:1 AA texto normal, igual que el slate-400 anterior. */
+  --pb-chrome-text-muted:    #9a9585;  /* host --muted */
+  /* Nivel decorativo (separadores, badges) — piso 3:1, NUNCA texto
+     informativo (ese usa --pb-chrome-text-muted, 4.5:1+). Host no define un
+     4to nivel de texto para este rol; se conserva un tono propio verificado
+     ≥3:1 contra las 3 superficies. */
+  --pb-chrome-text-faint:    #8a8371;  /* ~3.5–4.9:1 */
+
+  /* Bordes — host --border/--border2. */
+  --pb-chrome-border:        #332f26;  /* host --border (antes slate-700 #334155) */
+  --pb-chrome-border-strong: #3c372c;  /* host --border2 (antes slate-600 #475569) */
+
+  /* Acento sólido: se mantiene igual que en claro (#4f46e5) porque se usa
+     también como FONDO sólido con texto blanco encima (`--pb-chrome-text-
+     on-accent`) en botones/badges/toggles — aclararlo rompería ese
+     contraste. Para texto/borde de acento SOBRE superficies oscuras (donde
+     el indigo-600 cae a 1.82–2.84:1, bug real: `.pbx-side-tabs__trigger--
+     active`, `.pbx-inspector-tab--active` incl. variante `--wrap`) se usa
+     el token dedicado de abajo, que sí se aclara para AA. */
+  /* Host define exactamente este rol: --accent-text: #b1bdfd (indigo claro,
+     dark theme). Verificado: 9.26:1 (surface) / 10.23:1 (bg) / 8.29:1
+     (surface2) — todos ≥7:1. */
+  --pb-chrome-accent-on-surface: #b1bdfd;  /* host --accent-text (dark) */
+
+  /* Acentos sutiles / danger sutil sobre fondo oscuro — sin equivalente 1:1
+     de tinte en el host para estos roles (usa --accent-tint/--danger-bg
+     translúcidos, ver abajo los que sí mapean 1:1); se conservan los
+     literales previos, ya verificados por contraste. */
+  --pb-chrome-accent-subtle: #312e81;  /* indigo-900 */
+  --pb-chrome-danger-subtle: #3f1d1d;  /* red-950-ish */
+  /* Host: --danger-strong (dark) = #fca5a5. Verificado: 8.86:1 (surface) /
+     9.78:1 (bg) / 7.93:1 (surface2) — todos ≥7:1, con más margen que el
+     red-400 anterior (6.08–6.71:1). */
+  --pb-chrome-danger:        #fca5a5;  /* host --danger-strong (dark) */
+  --pb-chrome-text-on-accent: #ffffff;
+  /* Frame de la página (§4.1 punto 5 del plan, docs/52): NO se toca por D6.
+     El tema del SITIO del usuario lo gobierna `TokensStyle`, nunca esta
+     capa — este valor es el fallback histórico para cuando el sitio no
+     define su propio fondo, no cambia con el rebrand de Maildrill. */
+  --pb-chrome-canvas-frame-bg: #1a1a2e;
+
+  /* Área de trabajo del canvas (docs/52 F4, D6 — deroga AGENTS.md §5.2): el
+     canvas SÍ se oscurece en dark, coherente con el resto de editores del
+     host (todos oscurecen su lienzo). Se usa el `--surface2` real del host
+     como fondo del área de trabajo — mismo rol que en claro (`--surface2`
+     ahí también), coherente con D2. Retícula en la FORMA exacta del host,
+     confirmada en `FlowCanvas.module.css` (rama `feat/automations`,
+     `web-maildrill-astro`): `radial-gradient(circle at 1px 1px, var(--border)
+     1px, transparent 0) 0 0 / 22px 22px` — el dot color en dark es
+     `--border` (NO `--border2`, que sí es el que usa el tema claro), lo
+     confirma el propio código del host con su override
+     `:global([data-theme='dark'])`. */
+  --pb-chrome-canvas-bg:  #2a261e;  /* host --surface2 (dark) */
+  --pb-chrome-canvas-dot: #332f26;  /* host --border (dark) — confirmado en FlowCanvas.module.css */
+  /* Outline del frame (§4.1 punto 2, hallazgo real de esta fase, medido no
+     estimado): rgba(15,23,42,0.08) es un oscuro translúcido — sobre el
+     nuevo `--pb-chrome-canvas-bg` oscuro (#2a261e) queda prácticamente
+     invisible (misma franja de luminancia). Se invierte a un claro
+     translúcido, mismo alpha, para que siga leyéndose como un borde sutil
+     alrededor del frame. */
+  --pb-chrome-canvas-frame-outline: rgba(245, 243, 236, 0.10);
+
+  /* Etiqueta de guía de tamaño (docs/46 contrast guard, Fase 4): violet-700
+     (#6d28d9, valor claro) da solo 2.40:1 sobre el frame oscuro. violet-400
+     aclara lo suficiente sin perder la identidad de color. Re-verificado
+     contra el nuevo `--pb-chrome-canvas-frame-bg` (sin cambios, §4.1 punto 5,
+     9.24:1) y contra el nuevo `--pb-chrome-canvas-bg` real del host (8.16:1)
+     — el label se posiciona con fondo `--pb-chrome-canvas-frame-bg` (ver
+     canvas-nodes.css), así que el número que rige sigue siendo el del
+     frame; ambos superan AA con margen amplio. */
+  --pb-chrome-size-guide-label: #a78bfa;  /* violet-400 — 9.24:1 sobre frame oscuro */
+  /* Borde/tinte de `.pbx-size-guide` (docs/52 F5, mismo hallazgo que el
+     label de arriba, nunca migrado en F4): `#7c3aed` (valor claro) caía a
+     2.99:1 sobre el frame oscuro, bajo el piso 3:1 de no-texto. Mismo
+     violet-400 que el label — funciona igual de bien contra el frame
+     (6.27:1) y contra el área de trabajo oscura (5.53:1), por si el nodo en
+     edición no tiene fondo propio. */
+  --pb-chrome-size-guide-border: #a78bfa;  /* violet-400 — 6.27:1 sobre frame oscuro (no-texto) */
+
+  /* Sombra del frame del canvas más marcada sobre fondo oscuro */
+  --pb-chrome-frame-shadow:  0 2px 4px rgba(0,0,0,0.2),
+                              0 12px 36px rgba(0,0,0,0.55);
+
+  /* Estados semánticos en oscuro: fondo translúcido + texto claro — host
+     define estos 3 roles 1:1 (`--warning-strong`/`--info`/`--success-strong`
+     dark), reemplazando los tonos slate genéricos previos. Verificado
+     ≥8:1 contra bg/surface/surface2 en los 3 casos (10–11:1). */
+  --pb-chrome-warning:         #fbbf24;  /* host --warning-strong (dark) */
+  --pb-chrome-warning-subtle:  rgba(217, 119, 6, 0.16);  /* host --warning-bg (dark) */
+  --pb-chrome-warning-border:  rgba(245, 158, 11, 0.30);
+  --pb-chrome-info:            #b1bdfd;  /* host --info (dark) */
+  --pb-chrome-info-subtle:     rgba(99, 91, 245, 0.18);  /* host --info-bg (dark) */
+  --pb-chrome-success:         #4ade80;  /* host --success-strong (dark) */
+  --pb-chrome-success-subtle:  rgba(34, 197, 94, 0.16);  /* host --success-bg (dark) */
+
+  /* Scrollbars finas en oscuro (T6) — sin equivalente directo de host para
+     este rol; se conservan tonos coherentes en luminosidad con la rampa
+     ink. Verificado: thumb 1.72:1 vs. surface2 (colores de control, no
+     texto — sin exigencia AA), hover aclarado a 3.16:1 para distinguirse
+     con margen del fondo y del thumb base. */
+  --pb-chrome-scrollbar-thumb:       #3c372c;  /* host --border2 (dark) */
+  --pb-chrome-scrollbar-thumb-hover: #7a7260;
+
+  /* Panel de propiedades unificado (docs/41 §4.3, §10.9) — mismo criterio que
+     el resto de esta capa: colores aclarados para mantener contraste AA
+     sobre superficies oscuras. Sin equivalente de host para "modificado"
+     (rol propio del builder, D4 en docs/52 no lo cubre); se conserva el
+     blue-400 previo, ya verificado. `hidden` sí mapea a --warning-strong. */
+  --pb-chrome-panel-modified:      #60a5fa;  /* blue-400 — sin equivalente de host */
+  --pb-chrome-panel-hidden:        #fbbf24;  /* host --warning-strong (dark) */
+  --pb-chrome-panel-hidden-subtle: rgba(217, 119, 6, 0.18);  /* host --warning-bg (dark) */
+
+  /* Header (docs/52 F2/D3): tokens propios, independientes de la banda
+     SIEMPRE oscura (`--pb-chrome-bg`/`-bg-alt`, código/publish, no tocados
+     aquí). En dark, el header adopta la MISMA rampa ink que el resto del
+     chrome (Maildrill no tiene un header "aparte" en su tema oscuro: su
+     workspace entero oscurece a esta rampa única). */
+  --pb-chrome-header-bg:            #201d16;  /* host --surface (dark) */
+  --pb-chrome-header-border:        #332f26;  /* host --border (dark) */
+  --pb-chrome-header-text:          #f5f3ec;  /* host --text (dark) */
+  --pb-chrome-header-text-muted:    #9a9585;  /* host --muted (dark) */
+  --pb-chrome-header-surface-alt:   #15130d;  /* host --bg (dark) */
+  --pb-chrome-header-surface-hover: #2a261e;  /* host --surface2 (dark) */
+  --pb-chrome-header-border-strong: #3c372c;  /* host --border2 (dark) */
+  /* --pb-chrome-header-brand-text (claro: #d12300, 4.74–5.31:1) — en dark el
+     naranja de marca (`--brand` #ff441f) se usa tal cual como ÍCONO
+     decorativo (piso 3:1: 4.88:1 vs. surface, 5.39:1 vs. bg, ambos ≥3:1 con
+     margen); como TEXTO/hover necesita 4.5:1, insuficiente sin aclarar —
+     mismo criterio que en claro, aclarado manteniendo el matiz (5.00:1 vs.
+     surface-hover ink, 7.07:1 vs. bg ink). */
+  --pb-chrome-header-brand-text:    #ff9985;
+}

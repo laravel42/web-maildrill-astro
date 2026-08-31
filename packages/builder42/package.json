@@ -1,0 +1,51 @@
+{
+  "name": "builder42",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    },
+    "./style.css": "./src/styles/chrome-embedded.css"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "peerDependencies": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "dependencies": {
+    "@atlaskit/pragmatic-drag-and-drop": "2.0.1",
+    "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "3.0.0",
+    "@atlaskit/pragmatic-drag-and-drop-hitbox": "2.0.0",
+    "@atlaskit/pragmatic-drag-and-drop-live-region": "2.0.0",
+    "@floating-ui/dom": "1.7.6",
+    "@josecortez1/c42-core": "0.1.0",
+    "@josecortez1/c42-react": "0.1.0",
+    "@tiptap/core": "3.27.2",
+    "@tiptap/extension-link": "3.27.2",
+    "@tiptap/html": "3.27.2",
+    "@tiptap/pm": "3.27.2",
+    "@tiptap/react": "3.27.2",
+    "@tiptap/starter-kit": "3.27.2",
+    "alpinejs": "3.14.9",
+    "embla-carousel": "8.6.0",
+    "fflate": "0.8.2",
+    "framer-motion": "12.42.2",
+    "i18next": "23.16.8",
+    "immer": "^11.1.9",
+    "lucide": "^1.26.0",
+    "lucide-react": "1.24.0",
+    "react-colorful": "5.6.1",
+    "react-i18next": "15.4.1",
+    "simple-icons": "^16.27.0",
+    "zod": "3.25.76",
+    "zundo": "^2.3.0",
+    "zustand": "^5.0.14"
+  }
+}

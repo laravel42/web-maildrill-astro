@@ -1,0 +1,182 @@
+/**
+ * chrome/canvas-code-json.css — Code / JSON viewports (chrome-only)
+ *
+ * Extraído del monolito chrome.css (docs/28). Se carga en el orden
+ * definido por el barrel según docs/28 §2.2.
+ *
+ * Namespace: solo `pbx-*`. Cualquier referencia a `pb-*` debe
+ * justificarse en línea (criterio docs/22 §4).
+ */
+/* ---- Code / JSON -------------------------------------------------------- */
+.pbx-code {
+  color: var(--pb-chrome-text-on-dark);
+}
+
+.pbx-code h3 {
+  color: #93c5fd;
+  font-size: 13px;
+  margin: 16px 0 4px;
+}
+
+.pbx-code__block {
+  margin: 0;
+  padding: 12px;
+  background: var(--pb-chrome-bg);
+  color: var(--pb-chrome-text-on-dark);
+  border-radius: var(--pb-chrome-radius-md);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* --- Vista CÃ³digo / export de sitio (docs/07) -------------------------- */
+.pbx-code__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.pbx-code__btn {
+  border: 1px solid var(--pb-chrome-accent);
+  background: var(--pb-chrome-accent);
+  color: var(--pb-chrome-text-on-accent);
+  border-radius: var(--pb-chrome-radius-sm);
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pbx-code__btn:hover {
+  background: #4338ca;
+}
+
+.pbx-code__btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.pbx-code__btn--sm {
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+.pbx-export {
+  margin-top: 16px;
+}
+
+.pbx-export__file {
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-md);
+  margin-bottom: 6px;
+  padding: 4px 8px;
+}
+
+.pbx-export__file > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.pbx-code__block--sm {
+  max-height: 220px;
+  overflow: auto;
+  font-size: 11px;
+}
+
+/* --- Vista JSON editable (Fase 4) --- */
+.pbx-json {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.pbx-json__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pbx-json__toolbar h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.pbx-json__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pbx-json__ok {
+  color: #34d399;
+  font-size: 13px;
+}
+
+.pbx-json__btn {
+  border: 1px solid var(--pb-chrome-bg-hover);
+  background: var(--pb-chrome-bg-alt);
+  color: var(--pb-chrome-text-on-dark);
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--pb-chrome-radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.pbx-json__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pbx-json__btn--primary:not(:disabled) {
+  background: var(--pb-chrome-accent);
+  border-color: var(--pb-chrome-accent);
+  color: var(--pb-chrome-text-on-accent);
+}
+
+.pbx-json__area {
+  flex: 1 1 auto;
+  min-height: 320px;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  font-family: var(--pb-chrome-font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--pb-chrome-text-on-dark);
+  background: var(--pb-chrome-bg);
+  border: 1px solid var(--pb-chrome-bg-hover);
+  border-radius: var(--pb-chrome-radius-md);
+  padding: 12px;
+  tab-size: 2;
+}
+
+.pbx-json__errors {
+  background: var(--pb-chrome-danger-strong-bg);
+  border: 1px solid var(--pb-chrome-danger-strong-border);
+  border-radius: var(--pb-chrome-radius-md);
+  padding: 10px 12px;
+  color: var(--pb-chrome-danger-on-dark);
+  font-size: 13px;
+  max-height: 200px;
+  overflow: auto;
+}
+
+.pbx-json__errors ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.pbx-json__errors code {
+  color: #fecaca;
+}

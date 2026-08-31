@@ -1,0 +1,111 @@
+{
+  "tabs": {
+    "components": "Components",
+    "tokens": "Tokens",
+    "templates": "Templates",
+    "ariaLabel": "Side panel"
+  },
+  "palette": {
+    "hint": "Drag a component to the canvas.",
+    "dragTooltip": "Drag to add",
+    "containerBadge": "container",
+    "categories": {
+      "basics": "Basics",
+      "basicsGroups": {
+        "essentials": "Essentials",
+        "content": "Content",
+        "utility": "Utility"
+      },
+      "layout": "Layout",
+      "content": "Content",
+      "form": "Form",
+      "navigation": "Navigation"
+    }
+  },
+  "templates": {
+    "hint": "Apply a page template or tap a section to place it on the canvas.",
+    "sectionTooltip": "Tap to pick and place on the canvas",
+    "descInfoLabel": "View description",
+    "categories": {
+      "page": "Page templates",
+      "section": "Section templates"
+    },
+    "confirm": {
+      "title": "Replace page content?",
+      "body": "The current page will be replaced with \"{{name}}\". You can undo this action.",
+      "apply": "Apply template",
+      "applying": "Applying…",
+      "cancel": "Cancel"
+    },
+    "layouts": {
+      "heroSection": "Hero",
+      "heroSectionDesc": "Title, subtitle and primary button",
+      "features3Col": "Features (3 columns)",
+      "features3ColDesc": "Responsive grid with image and feature cards",
+      "pricingSection": "Pricing",
+      "pricingSectionDesc": "Two pricing cards side by side",
+      "ctaBanner": "Call-to-action banner",
+      "ctaBannerDesc": "Title, subtitle and button on a highlighted background",
+      "statsStrip": "Stats strip",
+      "statsStripDesc": "Three KPIs with icon in a row",
+      "faqAccordion": "FAQ",
+      "faqAccordionDesc": "Accordion of questions and answers",
+      "breadcrumbHeader": "Header with breadcrumb",
+      "breadcrumbHeaderDesc": "Breadcrumb and title for an inner page",
+      "videoShowcase": "Video showcase",
+      "videoShowcaseDesc": "Embedded video alongside text and call to action",
+      "teamGrid": "Team grid",
+      "teamGridDesc": "Cards with photo, name and role for each person",
+      "tabsFeatures": "Features in tabs",
+      "tabsFeaturesDesc": "Organize dense content into tabs",
+      "newsletterModalTrigger": "Button with newsletter modal",
+      "newsletterModalTriggerDesc": "Button that opens a subscription form in a modal",
+      "signupPage": "Online academy",
+      "signupPageDesc": "Value proposition, testimonials and enrollment form with validation",
+      "teamPage": "Coworking",
+      "teamPageDesc": "Membership tiers in tabs, facilities and community",
+      "blogList": "Magazine / podcast",
+      "blogListDesc": "Unequal-width grid, featured quotes and newsletter",
+      "portfolio": "Photographer",
+      "portfolioDesc": "Lightbox gallery, bio, testimonials and session packages",
+      "landingProduct": "SaaS",
+      "landingProductDesc": "Feature tabs, pricing, logo-cloud and stats",
+      "restaurantPage": "Restaurant",
+      "restaurantPageDesc": "Bookings, daily menu and FAQ in 3 languages",
+      "clothingStorePage": "Clothing store",
+      "clothingStorePageDesc": "Catalog, perks and multilingual newsletter",
+      "fitnessStudioPage": "Gym",
+      "fitnessStudioPageDesc": "Class schedule, plans and sign-up form",
+      "dentalClinicPage": "Dental clinic",
+      "dentalClinicPageDesc": "Treatments, team and appointment form",
+      "realEstatePage": "Real estate",
+      "realEstatePageDesc": "Search, featured listings and contact form",
+      "hotelBoutiquePage": "Boutique hotel",
+      "hotelBoutiquePageDesc": "Rooms, amenities and booking form",
+      "lawFirmPage": "Law firm",
+      "lawFirmPageDesc": "Practice areas with side nav, partners and success story",
+      "creativeAgencyPage": "Creative agency",
+      "creativeAgencyPageDesc": "Immersive dark hero, client marquee and portfolio",
+      "spaWellnessPage": "Spa & wellness",
+      "spaWellnessPageDesc": "Zig-zag treatments, schedule accordion and reviews",
+      "barbershopPage": "Barbershop",
+      "barbershopPageDesc": "Services, animated stats and appointment modal",
+      "architectureStudioPage": "Architecture studio",
+      "architectureStudioPageDesc": "Sticky side nav for services, asymmetric project grid and parallax hero",
+      "autoRepairPage": "Auto repair shop",
+      "autoRepairPageDesc": "Animated stats, appointment form and reception alert"
+    }
+  },
+  "ai": {
+    "title": "Generate with AI",
+    "hint": "Describe the section you want to generate and AI will create it automatically.",
+    "promptPlaceholder": "E.g.: a pricing section with 3 plans, or a hero with title and CTA button...",
+    "generate": "Generate",
+    "generating": "Generating…",
+    "previewReady": "Section ready to insert",
+    "model": "Model",
+    "insert": "Insert into canvas",
+    "cancel": "Cancel",
+    "errorUnknown": "Unknown error while generating"
+  }
+}

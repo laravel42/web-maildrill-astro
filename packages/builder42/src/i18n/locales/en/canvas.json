@@ -1,0 +1,79 @@
+{
+  "modalEditor": {
+    "title": "Editing modal",
+    "close": "Close editor"
+  },
+  "invisibles": {
+    "open": "Non-visible elements",
+    "title": "Non-visible elements"
+  },
+  "preview": {
+    "frameTitle": "Site preview",
+    "loading": "Loading preview…",
+    "dimensions": "Viewport dimensions (width × height in px)"
+  },
+  "code": {
+    "pageTitle": "index.html (active page)",
+    "downloadZip": "Download site (.zip · {{count}} pages)",
+    "exporting": "Exporting site…",
+    "pageCss": "Page CSS",
+    "zipContents": ".zip contents ({{count}} files)",
+    "binary": "[binary · {{bytes}} bytes]"
+  },
+  "export": {
+    "warningsTitle": "Export warnings",
+    "warningsCount": "{{count}} issue(s) detected",
+    "unknownType": "Node {{nodeId}}: unknown type \"{{type}}\"",
+    "missingNode": "Node {{nodeId}}: not found in document",
+    "andMore": "…and {{count}} more."
+  },
+  "json": {
+    "title": "Site (JSON) — editable",
+    "ariaLabel": "Site JSON",
+    "reset": "Reset",
+    "apply": "Apply",
+    "applied": "✓ Applied",
+    "validationErrors": "{{count}} validation error(s):",
+    "andMore": "…and {{count}} more."
+  },
+  "dnd": {
+    "moveUp": "up",
+    "moveDown": "down",
+    "moveOut": "outward",
+    "moveIn": "inward",
+    "moved": "Moved {{direction}}",
+    "cannotMove": "Cannot move {{direction}}",
+    "dragHandle": "Move {{label}}",
+    "dragHandleTitle": "Drag to move {{label}}",
+    "reorderUp": "Move up",
+    "reorderDown": "Move down",
+    "outdent": "Move out of container",
+    "indent": "Move into previous container",
+    "pickInsertMove": "Move by tapping",
+    "duplicate": "Duplicate"
+  },
+  "container": {
+    "emptyDrop": "Drop here"
+  },
+  "pickInsert": {
+    "prompt": "Tap where to place \"{{label}}\"",
+    "previewLabel": "Place \"{{label}}\" here",
+    "moveUp": "One step up",
+    "moveDown": "One step down",
+    "confirm": "Confirm",
+    "cancel": "Cancel"
+  },
+  "textToolbar": {
+    "ariaLabel": "Text formatting",
+    "bold": "Bold",
+    "italic": "Italic",
+    "strike": "Strikethrough",
+    "link": "Link",
+    "linkPrompt": "Link URL (empty to remove it)",
+    "heading1": "Heading 1",
+    "heading2": "Heading 2",
+    "heading3": "Heading 3",
+    "bulletList": "Bullet list",
+    "orderedList": "Numbered list"
+  }
+}

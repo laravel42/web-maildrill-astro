@@ -1,0 +1,147 @@
+/* Panel "Buscar en Unsplash" (docs/35 §2 Fase B). Chrome del editor — pbx-,
+   panel INLINE dentro de ImageSourceField (no modal, el canvas sigue visible). */
+
+.pbx-unsplash {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-sm);
+  background: var(--pb-chrome-surface-alt);
+}
+
+.pbx-unsplash__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pbx-unsplash__search {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+}
+
+.pbx-unsplash__search-icon {
+  position: absolute;
+  left: 8px;
+  color: var(--pb-chrome-text-muted);
+  pointer-events: none;
+}
+
+.pbx-unsplash__search-input {
+  width: 100%;
+  padding-left: 28px;
+}
+
+.pbx-unsplash__hint {
+  margin: 4px 0;
+  font-size: 12px;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-unsplash__error {
+  margin: 4px 0;
+  font-size: 12px;
+  color: var(--pb-chrome-danger);
+}
+
+.pbx-unsplash__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.pbx-unsplash__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pbx-unsplash__photo-btn {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-xs);
+  background: var(--pb-chrome-surface);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color var(--pb-chrome-transition), box-shadow var(--pb-chrome-transition);
+}
+
+.pbx-unsplash__photo-btn:hover,
+.pbx-unsplash__photo-btn:focus-visible {
+  border-color: var(--pb-chrome-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--pb-chrome-accent) 25%, transparent);
+}
+
+.pbx-unsplash__photo-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.pbx-unsplash__thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pbx-unsplash__selecting {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--pb-chrome-text-on-dark);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.pbx-unsplash__author {
+  font-size: 10px;
+  color: var(--pb-chrome-text-faint);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pbx-unsplash__author:hover {
+  color: var(--pb-chrome-text-muted);
+  text-decoration: underline;
+}
+
+.pbx-unsplash__sentinel {
+  height: 1px;
+}
+
+.pbx-unsplash__credit {
+  margin: 0;
+  font-size: 10px;
+  color: var(--pb-chrome-text-faint);
+  text-align: right;
+}
+
+/* Atribución del asset seleccionado (docs/35 §2 Fase D), dentro de .pbx-imgsrc. */
+.pbx-imgsrc__attribution {
+  margin: 0;
+  font-size: 11px;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-imgsrc__attribution a {
+  color: var(--pb-chrome-accent-on-surface);
+  text-decoration: none;
+}
+
+.pbx-imgsrc__attribution a:hover {
+  text-decoration: underline;
+}

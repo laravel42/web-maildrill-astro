@@ -1,0 +1,643 @@
+{
+  "title": "Inspector",
+  "empty": "Select a node on the canvas.",
+  "typeNotRegistered": "Type not registered.",
+  "deleteNode": "Delete node",
+  "compat": {
+    "label": "Limited cross-browser compatibility"
+  },
+  "compositeSlots": {
+    "tabs": { "heading": "Tabs", "add": "Add tab" },
+    "accordion": { "heading": "Sections", "add": "Add section" },
+    "delete": "Delete",
+    "untitled": "(untitled)",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "dragHandle": "Drag to reorder"
+  },
+  "triggers": {
+    "title": "Triggers",
+    "hint": "Choose which elements open this modal on click.",
+    "create": "Create trigger",
+    "searchPlaceholder": "Search by name…",
+    "empty": "No elements can trigger the modal.",
+    "link": "Link",
+    "linked": "Linked",
+    "showMore": "Show more ({{count}})"
+  },
+  "clickAction": {
+    "title": "Click action",
+    "hint": "Choose what happens when this element is clicked.",
+    "none": "None",
+    "targetModal": "Modal to open",
+    "chooseModal": "Choose a modal…",
+    "untitledModal": "(untitled modal)",
+    "noModals": "There are no modals on the site yet. Add one to link it here.",
+    "targetNode": "Target element",
+    "chooseNode": "Choose an element…",
+    "searchNodePlaceholder": "Search by name or type…",
+    "noNodesMatch": "No elements match the search.",
+    "noActions": "This element does not support any click action.",
+    "linkWillBeCleared": "This element has a navigation link set; choosing an action will remove it.",
+    "scrollToTopPreset": "Top of the page",
+    "actions": {
+      "open-modal": "Open modal",
+      "close-modal": "Close modal",
+      "dismiss": "Dismiss",
+      "scroll-to": "Scroll to",
+      "open-url": "Open URL",
+      "submit-form": "Submit form",
+      "reset-form": "Reset form"
+    },
+    "fields": {
+      "dismiss": {
+        "rememberHelp": "If enabled, the published site remembers this visitor already dismissed it (localStorage) and won't show it again on future visits. Useful for cookie notices or promo banners."
+      },
+      "open-url": {
+        "url": "URL",
+        "newTab": "Open in a new tab"
+      }
+    }
+  },
+  "tabs": {
+    "props": "Props",
+    "style": "Style",
+    "behaviors": "Actions",
+    "ariaLabel": "Inspector sections",
+    "noProps": "This component has no editable properties."
+  },
+  "overflow": {
+    "overflowsPrefix": "This container overflows at ",
+    "overflowsSuffix": ".",
+    "convertToSlider": "Convert to slider"
+  },
+  "form": {
+    "properties": "Properties",
+    "propsGeneral": "General",
+    "styleEditing": "Style · editing",
+    "stateEditing": "State",
+    "stateNormal": "Normal",
+    "statePressed": "Active",
+    "iconPressed": {
+      "help": "Shown when the node is in its active state (`toggle` behavior). Empty = no change."
+    },
+    "breadcrumbAriaLabel": "Path of selected node",
+    "breadcrumbMore": "Show intermediate nodes",
+    "styleGroups": {
+      "layout": "Layout",
+      "spacing": "Spacing",
+      "size": "Size",
+      "appearance": "Appearance",
+      "typography": "Typography"
+    }
+  },
+  "visibility": {
+    "label": "Visibility",
+    "toggleAria": "Toggle visibility at {{breakpoint}}"
+  },
+  "pageVisibilityList": {
+    "empty": "The site has no pages yet.",
+    "toggleAria": "Show {{title}} in the menu"
+  },
+  "linkField": {
+    "kind": "Link type",
+    "internal": "Site page",
+    "external": "External URL",
+    "anchor": "Anchor on this page",
+    "page": "Target page",
+    "anchorOptional": "Anchor (optional): node id",
+    "nodeId": "Target node id"
+  },
+  "behaviors": {
+    "title": "Animations & effects",
+    "empty": "No animations or effects. Add one to enable interactivity (requires JS on the published site).",
+    "hint": "Add animations and interactive effects to this element.",
+    "notAvailable": "This element does not support animations or effects.",
+    "remove": "Remove behavior",
+    "add": "Add",
+    "categories": {
+      "content": "Content",
+      "motion": "Scroll animation",
+      "navigation": "Navigation & position",
+      "structure": "Structured components",
+      "interactive": "Interactivity",
+      "appearance": "Appearance"
+    },
+    "desc": {
+      "carousel": "Turns children into a swipeable carousel (requires JS).",
+      "reveal-on-scroll": "Animates the element into view as it enters the screen.",
+      "theme-toggle": "Button to switch between light and dark theme.",
+      "form-validation": "Validates fields in real time with error messages (requires JS).",
+      "sticky": "Sticks the element while scrolling; adds a visual marker once the page has scrolled.",
+      "count-up": "Animates the number from 0 to its final value as it enters the screen.",
+      "marquee": "Scrolls the logos in a continuous loop (requires JS to pause on hover).",
+      "expandable": "Collapses the block to a set height and adds a \"Show more\" button (fully visible without JS).",
+      "parallax": "Moves the background at a different speed than the rest of the page while scrolling.",
+      "scroll-progress": "Shows a bar that advances with the page's reading progress.",
+      "scroll-spy": "Highlights the visible section's link in an anchor menu within the same page.",
+      "lightbox": "Clicking the image opens it full-screen, with navigation between several (requires JS)."
+    },
+    "name": {
+      "carousel": "Carousel (Embla)",
+      "reveal-on-scroll": "Appear when scrolled into view",
+      "theme-toggle": "Theme switch",
+      "accordion": "Accordion (animated)",
+      "modal": "Modal (popup)",
+      "navbar": "Navbar (mobile hamburger)",
+      "tabs": "Tabs (animated)",
+      "form-validation": "Real-time validation (Alpine)",
+      "sticky": "Sticky on scroll",
+      "count-up": "Animated counter",
+      "marquee": "Continuous scroll (marquee)",
+      "expandable": "Show more (expandable)",
+      "parallax": "Parallax",
+      "scroll-progress": "Reading progress bar",
+      "scroll-spy": "Highlight active section (scroll-spy)",
+      "lightbox": "Lightbox (full-screen)"
+    },
+    "fields": {
+      "theme-toggle": {
+        "light": "Light theme",
+        "dark": "Dark theme",
+        "storageKey": "Remember preference"
+      },
+      "sticky": {
+        "position": "Position",
+        "scrolledThreshold": "Threshold for \"already scrolled\" (px)",
+        "scrolledThresholdHelp": "Amount of scroll in pixels after which the element changes appearance (for example, gaining a shadow or becoming more compact) to signal that the page has scrolled."
+      },
+      "count-up": {
+        "duration": "Duration (ms)",
+        "threshold": "Visibility threshold",
+        "once": "Only once"
+      },
+      "marquee": {
+        "duration": "Loop duration (s)",
+        "direction": "Direction",
+        "pauseOnHover": "Pause on hover"
+      },
+      "reveal-on-scroll": {
+        "threshold": "Visibility threshold",
+        "once": "Only once",
+        "mode": "Entry mode"
+      },
+      "expandable": {
+        "collapsedHeight": "Collapsed height",
+        "expandLabel": "\"Show more\" button text",
+        "collapseLabel": "\"Show less\" button text",
+        "fade": "Fade gradient at the end"
+      },
+      "parallax": {
+        "speed": "Speed",
+        "fallback": "JS fallback on older browsers",
+        "fallbackHelp": "This effect doesn't show in some older browsers. With this option on, it still shows there using an alternative method; if you turn it off, the effect simply won't show in those cases — but the page content always displays and works normally."
+      },
+      "scroll-progress": {
+        "fallback": "JS fallback on older browsers",
+        "fallbackHelp": "This bar doesn't advance in some older browsers. With this option on, it still advances there using an alternative method; if you turn it off, the bar simply won't advance in those cases — but the page content always displays and works normally."
+      },
+      "scroll-spy": {
+        "rootMargin": "Activation margin",
+        "rootMarginHelp": "Defines which band of the screen decides which section counts as \"active\". By default, the top 20% and bottom 60% of the screen are ignored, leaving a narrow band near the top: whichever section passes through it gets highlighted in the menu."
+      },
+      "lightbox": {
+        "duration": "Transition duration (ms)",
+        "durationHelp": "Duration in milliseconds of the full-screen overlay's open/close animation. Ignored if the visitor has the system's reduced-motion preference turned on."
+      }
+    },
+    "themeToggle": {
+      "selectPlaceholder": "(choose theme)",
+      "noThemes": "The site has no themes to switch between yet.",
+      "configureThemes": "Configure themes",
+      "storageKeyHelp": "Name the published site uses to remember the theme each visitor chose and reapply it on their next visit (it takes priority over the system theme, and is stored in the browser via localStorage). Change it only if you need this toggle to remember its preference separately from another one on the same domain. Default: “pb-theme”."
+    }
+  },
+  "fieldHelp": {
+    "label": "More information"
+  },
+  "styleField": {
+    "useToken": "Link to design token",
+    "unlinkToken": "Unlink token",
+    "resetToInherited": "Reset to inherited",
+    "freeValue": "(free value)",
+    "inherit": "(inherit)",
+    "pickColor": "Pick color",
+    "opacity": "Opacity",
+    "brokenToken": "key not found",
+    "badge": {
+      "token": "token",
+      "tokenBroken": "token ✗",
+      "base": "base",
+      "override": "override",
+      "inherited": "inherited"
+    }
+  },
+  "imageSource": {
+    "urlPlaceholder": "https://… (image URL)",
+    "uploadImage": "Upload image",
+    "useUrl": "Use URL",
+    "unsplash": {
+      "tabLabel": "Search Unsplash",
+      "searchPlaceholder": "Search photos (e.g. \"mountains\", \"coffee\")…",
+      "searchAriaLabel": "Search images on Unsplash",
+      "loading": "Searching…",
+      "loadingMore": "Loading more results…",
+      "empty": "No results. Try a different search.",
+      "emptyInitial": "Type something to search photos on Unsplash.",
+      "error": "Could not search Unsplash. Please try again.",
+      "selecting": "Downloading…",
+      "photoBy": "Photo by {{name}}",
+      "resultsGridAriaLabel": "Unsplash search results",
+      "selectPhotoAriaLabel": "Use the photo by {{name}}",
+      "close": "Close",
+      "attribution": "Photo by {{photographer}} on Unsplash",
+      "poweredBy": "Image search by Unsplash"
+    }
+  },
+  "richtextField": {
+    "editInline": "Edited directly on the canvas block (click the text twice)."
+  },
+  "translation": {
+    "untranslated": "Not translated · showing the default value",
+    "badge": "not translated",
+    "quickLocale": "Change content language (current: {{locale}})",
+    "quickLocaleSelect": "Select content language",
+    "defaultTag": "default"
+  },
+  "translationTable": {
+    "open": "Translation table",
+    "title": "Translation table",
+    "subtitle": "Translate the page texts per language. Changes are saved when you leave each field.",
+    "close": "Close",
+    "field": "Field",
+    "empty": "There are no translatable texts on this page, or no extra languages have been added.",
+    "localeSelectLabel": "Language to translate",
+    "pageSelectLabel": "Page",
+    "statusColumn": "Status",
+    "segmentIndex": "Paragraph {{index}}",
+    "editWholeField": "Edited as a whole field, below",
+    "richTextProgress": "{{translated}} of {{total}} paragraphs translated",
+    "autoButton": "Auto-translate {{locale}}",
+    "autoCheckingAvailability": "Checking translator availability…",
+    "autoDisabledServer": "Automatic translation is not enabled on the server",
+    "autoDisabledLocale": "DeepL does not support {{locale}} as a target language",
+    "autoInProgress": "Translating to {{locale}}…",
+    "autoDoneMessage": "{{count}} fields translated to {{locale}}",
+    "autoPartialError": "{{count}} segments could not be translated",
+    "autoErrorUnknown": "Could not complete automatic translation",
+    "privacyNote": "The site's text is sent to DeepL's servers to be translated.",
+    "usage": "{{used}} of {{limit}} characters used today",
+    "undoHint": "Ctrl+Z does not undo automatic translations — use \"Undo auto-translate\" in the notice.",
+    "undoAction": "Undo auto-translate",
+    "confirmTitle": "Confirm automatic translation",
+    "confirmBody": "Translate {{segments}} segments · {{chars}} characters · {{locale}}",
+    "confirmCancel": "Cancel",
+    "confirmAction": "Translate",
+    "confirmPending": "Translating…",
+    "statusTranslating": "Translating…",
+    "statusDone": "Translated",
+    "statusError": "Error",
+    "structureSyncButton": "Sync structure ({{field}})",
+    "structureSyncDone": "Structure of \"{{field}}\" synced"
+  },
+  "siteSettings": {
+    "hint": "Site settings: pages, languages and file. Select a node on the canvas to edit its properties.",
+    "fileTitle": "File",
+    "tabsAriaLabel": "Site settings",
+    "infoLabel": "What this section does",
+    "advancedHint": {
+      "text": "Looking for languages or SEO?",
+      "action": "Switch to advanced mode"
+    },
+    "tabs": {
+      "pages": "Pages",
+      "languages": "Languages",
+      "themes": "Themes",
+      "seo": "SEO",
+      "settings": "Settings",
+      "publish": "Publish"
+    },
+    "tabsHelp": {
+      "pages": "Create, duplicate, reorder and delete site pages. Set the home page and edit each page's title and slug.",
+      "languages": "Enable the multilingual site, manage content languages and set the default language.",
+      "themes": "Create and edit site color themes by remapping semantic tokens, and set the default theme.",
+      "seo": "Edit the active page's SEO metadata: title, description, canonical, robots and Open Graph/Twitter.",
+      "settings": "Configure the output file name and save or load the whole site (.json).",
+      "publish": "Publish the whole site and manage your published sites: open, republish or unpublish."
+    },
+    "output": {
+      "title": "Output file name",
+      "prefixLabel": "Prefix",
+      "prefixPlaceholder": "page",
+      "timestamp": "Append timestamp",
+      "preview": "Example"
+    },
+    "download": {
+      "title": "Download project",
+      "hint": "Builds the static site (HTML + CSS + assets) bundled into a .zip.",
+      "button": "Download .zip",
+      "exporting": "Exporting site…"
+    }
+  },
+  "export": {
+    "warningsTitle": "Export warnings",
+    "warningsCount": "{{count}} issue(s) detected",
+    "unknownType": "Node {{nodeId}}: unknown type \"{{type}}\"",
+    "missingNode": "Node {{nodeId}}: not found in document",
+    "andMore": "…and {{count}} more."
+  },
+  "pageManager": {
+    "title": "Pages",
+    "selectPage": "Select page",
+    "untitled": "(untitled)",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "setHome": "Set as home",
+    "duplicate": "Duplicate page",
+    "delete": "Delete page",
+    "newPage": "New page",
+    "titlePlaceholder": "Page title",
+    "slugPlaceholder": "page-slug",
+    "namePlaceholder": "Page name",
+    "slugLabel": "Slug",
+    "create": "Create",
+    "cancel": "Cancel",
+    "errorNameEmpty": "Name cannot be empty",
+    "errorSlugInvalid": "The generated slug is not valid",
+    "errorSlugDuplicate": "A page with that slug already exists",
+    "theme": "Theme",
+    "themeDefault": "(default theme)"
+  },
+  "themes": {
+    "title": "Themes",
+    "gallery": "Gallery",
+    "templateGallery": "Template themes",
+    "templateGalleryHint": "The colors and typography of each sector template, ready to apply to any page without bringing its content.",
+    "applyPreset": "Apply the \"{{name}}\" theme",
+    "empty": "No themes. Create one to remap tokens (colors, typography) and restyle the site or specific pages.",
+    "preview": "Preview",
+    "noTheme": "(no theme)",
+    "add": "New theme",
+    "setDefault": "Set as default theme",
+    "delete": "Delete theme",
+    "editing": "Editing: {{name}}",
+    "name": "Name",
+    "extends": "Extends",
+    "extendsNone": "(none)",
+    "colorScheme": "Color scheme",
+    "schemeAuto": "(auto)",
+    "schemeLight": "Light",
+    "schemeDark": "Dark",
+    "colors": "Colors",
+    "resetToken": "Reset to inherited value",
+    "contrastWarn": "Low text/surface contrast ({{ratio}}:1) — fails WCAG AA (4.5:1)",
+    "contrastOk": "Text/surface contrast {{ratio}}:1 (WCAG AA)",
+    "scrollbar": {
+      "title": "Scrollbar",
+      "thumb": "Thumb color",
+      "track": "Track color",
+      "size": "Thickness",
+      "compat": "Advanced customization (exact thickness, rounded corners, hover) only applies in Chromium/WebKit-based browsers. Firefox only honors the color and a \"thin\" width."
+    }
+  },
+  "i18nSettings": {
+    "title": "Languages",
+    "enable": "Enable multilingual site",
+    "hint": "The default language uses each field's value as-is. Other languages store a translation per field.",
+    "default": "default",
+    "makeDefault": "Make default",
+    "remove": "Remove language",
+    "addPlaceholder": "Search language…",
+    "invalidCode": "Unrecognized language",
+    "comboboxNoResults": "No results",
+    "editingLabel": "Editing in"
+  },
+  "seoSettings": {
+    "title": "SEO",
+    "hint": "Metadata for the active page. If the site is multilingual, each field is translated per language (use the 🌐 picker or the active editing language).",
+    "pageTitle": "Page title",
+    "description": "Description",
+    "descriptionPlaceholder": "Page summary for search engines and social media",
+    "canonical": "Canonical URL",
+    "robots": "Robots",
+    "openGraphTitle": "Open Graph",
+    "ogTitle": "Title",
+    "ogDescription": "Description",
+    "ogImage": "Image",
+    "ogType": "Type",
+    "twitterTitle": "Twitter Card",
+    "twitterCard": "Card type",
+    "twitterTitleField": "Title",
+    "twitterDescription": "Description",
+    "twitterImage": "Image",
+    "autoButton": "Auto-fill missing ({{locale}})",
+    "autoDoneMessage": "{{count}} SEO fields translated to {{locale}}",
+    "confirmTitle": "Confirm automatic SEO translation",
+    "confirmBody": "Translate {{fields}} fields · {{chars}} characters · {{locale}}"
+  },
+  "optionsList": {
+    "title": "Options",
+    "countSingular": "option",
+    "countPlural": "options",
+    "labelPlaceholder": "Option {{n}}",
+    "valuePlaceholder": "option{{n}}",
+    "remove": "Remove option",
+    "add": "Add option",
+    "emptyState": "No options yet",
+    "duplicateValue": "This value already exists",
+    "requiredField": "This field is required",
+    "dragHandle": "Drag to reorder"
+  },
+  "searchableSelect": {
+    "noResults": "No results for \"{{query}}\"",
+    "moreResults": "and {{count}} more… keep typing to narrow it down",
+    "listLabel": "Filtered options"
+  },
+  "publish": {
+    "title": "Publish site",
+    "disabledTitle": "Publishing unavailable",
+    "disabledHint": "This server's operator has not enabled publishing. Ask them to set the PUBLISH_ENABLED environment variable.",
+    "providerLabel": "Publish provider",
+    "subdomainLabel": "Subdomain",
+    "subdomainPlaceholder": "my-site",
+    "subdomainPreview": "URL: {{url}}",
+    "subdomainInvalid": "The subdomain is not valid (use lowercase letters, numbers and hyphens).",
+    "subdomainHint": "Used as part of the site's public URL.",
+    "idle": {
+      "hint": "Publishes the whole site (all its pages) to the provider configured by the operator."
+    },
+    "publishing": "Publishing…",
+    "publishButton": "Publish",
+    "republishButton": "Republish",
+    "done": {
+      "title": "Site published!",
+      "urlLabel": "Public URL",
+      "open": "Open",
+      "openDisabled": "This URL cannot be opened from the editor",
+      "publishAgain": "Publish again"
+    },
+    "sizeWarning": "The site is {{size}} — it may exceed the server's limit. Consider reducing embedded images before publishing.",
+    "errors": {
+      "publish_disabled": "Publishing is not enabled on this server.",
+      "rate_limited": "Too many publish attempts in a row. Try again in {{seconds}}s.",
+      "invalid_request": "The request is invalid — check the subdomain or the site's size.",
+      "invalid_fragment": "The site has a formatting issue and could not be validated.",
+      "not_implemented": "The configured publish provider is not available yet.",
+      "unknown": "Something went wrong while publishing. Please try again."
+    },
+    "managedSites": {
+      "title": "Published sites",
+      "empty": "You haven't published any site yet.",
+      "unavailable": "The active provider does not support listing published sites.",
+      "open": "Open",
+      "openDisabled": "This URL cannot be opened from the editor",
+      "unpublish": "Unpublish",
+      "unpublishing": "Unpublishing…",
+      "unpublishConfirmTitle": "Unpublish this site?",
+      "unpublishConfirmBody": "This action is irreversible: the site will no longer be reachable at its public URL.",
+      "unpublishConfirmAction": "Unpublish",
+      "unpublishCancel": "Cancel",
+      "unpublishModalClose": "Close without unpublishing",
+      "publishedAt": "Published on {{date}}",
+      "providerLabel": "Provider: {{provider}}",
+      "loadError": "Could not load the list of published sites."
+    }
+  },
+  "panel": {
+    "sections": {
+      "layout": "Layout",
+      "spacing": "Spacing",
+      "size": "Size",
+      "typography": "Typography",
+      "appearance": "Appearance",
+      "effects": "Effects"
+    },
+    "rows": {
+      "display": "Display",
+      "direction": "Direction",
+      "justify": "Distribute",
+      "align": "Align",
+      "gap": "Gap",
+      "wrap": "Wrap",
+      "overflow": "Overflow",
+      "gridColumns": "Columns",
+      "cell": "Cell",
+      "padding": "Padding",
+      "margin": "Margin",
+      "width": "Width",
+      "height": "Height",
+      "minHeight": "Min height",
+      "maxWidth": "Max width",
+      "fontSize": "Size",
+      "color": "Color",
+      "textAlign": "Alignment",
+      "fontWeight": "Weight",
+      "fontFamily": "Font",
+      "lineHeight": "Line height",
+      "textDecoration": "Decoration",
+      "background": "Background",
+      "borderRadius": "Radius",
+      "border": "Border",
+      "boxShadow": "Shadow",
+      "cursor": "Cursor",
+      "outline": "Outline"
+    },
+    "custom": "Custom",
+    "origin": {
+      "inheritedFrom": "Inherited from {{bp}}",
+      "componentDefault": "Component's default value"
+    },
+    "reset": "Reset",
+    "lockSides": "Lock sides",
+    "unlockSides": "Unlock sides",
+    "sides": {
+      "top": "Top",
+      "right": "Right",
+      "bottom": "Bottom",
+      "left": "Left"
+    },
+    "visibility": {
+      "visible": "Visible",
+      "hiddenAt": "Hidden at {{bp}}",
+      "hiddenInherited": "Hidden (inherited from {{bp}})",
+      "overrideHere": "Override here",
+      "dotTooltipVisible": "Visible at {{bp}}",
+      "dotTooltipHidden": "Hidden at {{bp}}"
+    },
+    "width": {
+      "full": "Full",
+      "auto": "Auto",
+      "fixed": "Fixed"
+    },
+    "gridColumnsSimple": {
+      "placeholder": "No.",
+      "ariaLabel": "Number of columns"
+    },
+    "fontSize": {
+      "s": "S",
+      "m": "M",
+      "l": "L",
+      "xl": "XL"
+    },
+    "boxShadow": {
+      "none": "None",
+      "s": "S",
+      "m": "M",
+      "l": "L"
+    },
+    "border": {
+      "width": "Border width",
+      "widthNone": "No border",
+      "style": "Border style",
+      "styleOptions": {
+        "solid": "Solid",
+        "dashed": "Dashed",
+        "dotted": "Dotted"
+      },
+      "color": "Border color"
+    },
+    "closePanel": "Close panel",
+    "deleteNode": "Delete node",
+    "deleteConfirm": {
+      "title": "Delete this element?",
+      "body": "This element has content inside (child elements) that will be deleted along with it.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "deleteToast": {
+      "message": "Element deleted",
+      "undo": "Undo"
+    },
+    "options": {
+      "flexStart": "Start",
+      "flexEnd": "End",
+      "center": "Center",
+      "spaceBetween": "Space between",
+      "spaceAround": "Space around",
+      "spaceEvenly": "Space evenly",
+      "stretch": "Stretch",
+      "baseline": "Baseline",
+      "row": "Row",
+      "column": "Column",
+      "rowReverse": "Row reverse",
+      "columnReverse": "Column reverse",
+      "displayFlex": "Flexible",
+      "displayGrid": "Grid",
+      "displayBlock": "Block",
+      "nowrap": "No wrap",
+      "wrap": "Wrap",
+      "wrapReverse": "Wrap reverse",
+      "alignLeft": "Left",
+      "alignCenter": "Center",
+      "alignRight": "Right",
+      "alignJustify": "Justify",
+      "underline": "Underline",
+      "lineThrough": "Strikethrough",
+      "decorationNone": "No decoration",
+      "overflowX": "Horizontal overflow",
+      "overflowY": "Vertical overflow",
+      "gridColumnCell": "Cell: column",
+      "gridRowCell": "Cell: row"
+    }
+  }
+}

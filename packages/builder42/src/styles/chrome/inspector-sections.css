@@ -1,0 +1,863 @@
+/**
+ * chrome/chrome/inspector-sections.css — Inspector sections (headings + behaviors grid + cards + retrocompat badges + layers panel)
+ *
+ * Extraído del monolito chrome.css (docs/28). Se carga en el orden
+ * definido por el barrel según docs/28 §2.2.
+ *
+ * Namespace: solo `pbx-*`. Cualquier referencia a `pb-*` debe
+ * justificarse en línea (criterio docs/22 §4).
+ */
+/* ---- Panel de Capas (layers tree, docs/01 Â§8.3) ------------------------- */
+.pbx-layers {
+  position: relative;
+  display: inline-flex;
+}
+.pbx-layers__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 13px;
+  border: 1px solid var(--pb-chrome-bg-hover);
+  border-radius: var(--pb-chrome-radius-sm);
+  background: transparent;
+  color: var(--pb-chrome-muted-on-dark);
+  cursor: pointer;
+  transition: background var(--pb-chrome-transition), color var(--pb-chrome-transition);
+}
+.pbx-layers__trigger:hover {
+  background: var(--pb-chrome-bg-hover);
+  color: var(--pb-chrome-text-on-dark);
+}
+/* Foco por teclado (WCAG 2.4.7) — sobre el header oscuro, el sólido
+ * `--pb-chrome-accent` cae a ~2.8:1 (bajo el piso 3:1 de WCAG 1.4.11);
+ * `--pb-chrome-accent-light` da ~4:1 aquí. */
+.pbx-layers__trigger:focus-visible {
+  outline: 2px solid var(--pb-chrome-accent-light);
+  outline-offset: 2px;
+}
+.pbx-layers__menu {
+  z-index: 50;
+  min-width: 240px;
+  max-width: 340px;
+  max-height: 50dvh;
+  overflow: auto;
+  padding: 6px;
+  background: var(--pb-chrome-surface-raised);
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-md);
+  box-shadow: 0 8px 32px rgba(15,23,42,0.18);
+}
+
+/* ---- Extraído a chrome/inspector-controls.css (docs/28) ---- */
+
+/* ---- Behaviors — cards ricas -------------------------------------------- */
+
+.pbx-behavior-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.pbx-behavior-card {
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-md);
+  background: var(--pb-chrome-surface-raised);
+  overflow: hidden;
+}
+
+.pbx-behavior-card__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  background: var(--pb-chrome-surface-alt);
+  border-bottom: 1px solid var(--pb-chrome-border);
+}
+
+.pbx-behavior-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: var(--pb-chrome-accent-subtle);
+  color: var(--pb-chrome-accent-on-surface);
+  border-radius: var(--pb-chrome-radius-sm);
+  flex-shrink: 0;
+}
+
+.pbx-behavior-card__name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pb-chrome-text);
+}
+
+.pbx-behavior-card__options {
+  padding: 6px 10px 8px;
+}
+
+/* Vacío de behaviors */
+.pbx-behaviors-empty {
+  font-size: 12px;
+  color: var(--pb-chrome-text-faint);
+  font-style: italic;
+  margin: 0 0 10px;
+}
+
+/* theme-select del behavior theme-toggle sin temas en el sitio: mensaje +
+   acceso directo a la sección de Temas (control `theme-select`). */
+.pbx-behavior-theme-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+.pbx-behavior-theme-empty__msg {
+  font-size: 11px;
+  color: var(--pb-chrome-text-faint);
+  line-height: 1.35;
+}
+.pbx-behavior-theme-empty__btn {
+  align-self: flex-start;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--pb-chrome-accent-on-surface);
+  background: transparent;
+  border: 1px solid var(--pb-chrome-accent);
+  border-radius: var(--pb-chrome-radius-sm);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.pbx-behavior-theme-empty__btn:hover {
+  background: var(--pb-chrome-accent);
+  color: #fff;
+}
+
+/* Contador de behaviors en el heading */
+.pbx-behavior-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--pb-chrome-radius-pill);
+  background: var(--pb-chrome-accent);
+  color: var(--pb-chrome-text-on-accent);
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+/* Sección de añadir behaviors disponibles */
+.pbx-behavior-add {
+  margin-top: 4px;
+}
+
+.pbx-behavior-add__label {
+  display: block;
+  font-size: var(--pb-chrome-font-size-sm);
+  font-weight: var(--pb-chrome-font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--pb-chrome-text-faint);
+  margin-bottom: 6px;
+  line-height: var(--pb-chrome-line-height-tight);
+}
+
+.pbx-behavior-add__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Tag para añadir un behavior */
+.pbx-behavior-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px dashed var(--pb-chrome-accent);
+  border-radius: var(--pb-chrome-radius-sm);
+  background: var(--pb-chrome-accent-subtle);
+  color: var(--pb-chrome-accent-on-surface);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--pb-chrome-transition), border-style var(--pb-chrome-transition);
+}
+
+.pbx-behavior-tag:hover {
+  background: color-mix(in srgb, var(--pb-chrome-accent) 12%, transparent);
+  border-style: solid;
+}
+
+
+/* ---- Headings de sección del inspector ---------------------------------- */
+
+/* Heading de props */
+.pbx-inspector__heading--props {
+  color: var(--pb-chrome-text-muted);
+}
+
+/* Heading de estilo: con chip de breakpoint alineado */
+.pbx-inspector__heading--style {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--pb-chrome-text-muted);
+}
+
+/* Heading de behaviors */
+.pbx-inspector__heading--behaviors {
+  display: flex;
+  align-items: center;
+  color: var(--pb-chrome-text-muted);
+}
+
+/* Lista de props con padding */
+.pbx-props-list {
+  padding: 0;
+}
+
+/* Inspector section: separador visual entre secciones */
+.pbx-inspector__section {
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--pb-chrome-border);
+}
+
+.pbx-inspector__section:last-child {
+  border-bottom: 0;
+}
+
+/* ======================================================================== */
+/* Fase 11.c — Inspector en tabs + header compacto (docs/17)                */
+/* ======================================================================== */
+
+/* Header compacto del nodo seleccionado.
+ * Sticky POSPUESTO: se deja preparado pero comentado (docs/17 §3). Habilitar
+ * cuando se valide la UX descomentando el bloque de abajo. */
+.pbx-inspector-sticky-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--pb-chrome-surface);
+  padding-top: 0;
+}
+
+.pbx-inspector-header {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0px ;
+  padding-top: 8px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--pb-chrome-border);
+}
+
+/* Fila 1 del header (docs/41 §5.1, Paso 6): el `Breadcrumb` ocupa todo el
+ * ancho disponible a la izquierda del `×` de cerrar panel. */
+.pbx-inspector-header > .pbx-node-path {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Tab bar del inspector — fila 2 del header (docs/41 §5.1, Paso 6): tabs a
+ * la izquierda, spacer flexible, segmented de breakpoints + papelera (D2) a
+ * la derecha. */
+.pbx-inspector-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-bottom: 1px solid var(--pb-chrome-border);
+}
+
+.pbx-inspector-tabs__spacer {
+  flex: 1 1 auto;
+}
+
+.pbx-inspector-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  padding: 8px 10px;
+  margin-bottom: -1px;
+  font-size: var(--pb-chrome-font-size-label);
+  font-weight: var(--pb-chrome-font-weight-semibold);
+  color: var(--pb-chrome-text-muted);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: color var(--pb-chrome-transition), border-color var(--pb-chrome-transition), transform var(--pb-chrome-transition);
+}
+
+.pbx-inspector-tab:hover {
+  color: var(--pb-chrome-text);
+  transform: scale(1.03);
+}
+
+.pbx-inspector-tab:active {
+  transform: scale(0.97);
+}
+
+.pbx-inspector-tab--active {
+  color: var(--pb-chrome-accent-on-surface);
+  border-bottom: 3px solid var(--pb-chrome-accent-on-surface);
+}
+
+/* Foco por teclado (WCAG 2.4.7) — superficie clara del Inspector: anillo de
+ * 3px estilo Maildrill (docs/52 F5, antes outline sólido de 2px con offset
+ * negativo — el box-shadow no desborda el layout, así que no necesita ese
+ * offset para no recortarse contra el borde inferior activo). */
+.pbx-inspector-tab:focus-visible {
+  outline: none;
+  box-shadow: var(--pb-chrome-focus-ring);
+}
+
+.pbx-inspector-tab__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--pb-chrome-radius-pill);
+  background: var(--pb-chrome-surface-alt);
+  /* --pb-chrome-text-muted sobre --pb-chrome-surface-alt mide 4.34:1 en
+     claro — bajo el piso 4.5:1 AA a este font-size (10px, no califica como
+     texto grande). --pb-chrome-text sí cumple sobre este fondo (docs/46 H4). */
+  color: var(--pb-chrome-text);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.pbx-inspector-tab--active .pbx-inspector-tab__count {
+  background: var(--pb-chrome-accent-subtle);
+  color: var(--pb-chrome-accent-on-surface);
+}
+
+/* Badge (punto) de behaviors activos sobre la tab Interactividad */
+.pbx-inspector-tab__badge {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--pb-chrome-radius-pill);
+  background: var(--pb-chrome-accent);
+  flex-shrink: 0;
+}
+
+.pbx-inspector-tabpanel {
+  min-height: 40px;
+}
+
+/* Selector "Estado: Normal / Seleccionado…" (T9, AGENTS.md) — tab Estilo,
+   solo visible si el componente declara `styleSchema.states`. */
+.pbx-state-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-sm);
+  background: var(--pb-chrome-surface-raised);
+}
+.pbx-state-selector__label {
+  font-size: var(--pb-chrome-font-size-sm);
+  font-weight: var(--pb-chrome-font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--pb-chrome-text-muted);
+  flex-shrink: 0;
+  line-height: var(--pb-chrome-line-height-tight);
+}
+.pbx-state-selector .pbx-control__input {
+  flex: 1;
+}
+
+
+/* ---- Grid de cards de behaviors (tab Interactividad) -------------------- */
+.pbx-behaviors__hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-behaviors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+/* Card disponible: es un <button> que añade el behavior. Reset del botón. */
+.pbx-behavior-card--available {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 10px;
+  text-align: left;
+  cursor: pointer;
+  background: var(--pb-chrome-surface-raised);
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-md);
+  color: var(--pb-chrome-text);
+  transition: border-color var(--pb-chrome-transition), background var(--pb-chrome-transition), transform var(--pb-chrome-transition);
+  overflow: visible;
+}
+
+.pbx-behavior-card--available .pbx-behavior-card__head {
+  background: transparent;
+  border-bottom: 0;
+  padding: 0;
+}
+
+.pbx-behavior-card--available:hover {
+  border-color: var(--pb-chrome-accent);
+  background: var(--pb-chrome-accent-subtle);
+  transform: translateY(-1px);
+}
+
+.pbx-behavior-card__plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--pb-chrome-radius-sm);
+  color: var(--pb-chrome-accent-on-surface);
+  flex-shrink: 0;
+}
+
+.pbx-behavior-card__desc {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--pb-chrome-text-faint);
+  font-weight: 400;
+}
+
+/* Card activa: resaltada, ocupa toda la fila para dar espacio a las opciones. */
+.pbx-behavior-card--active {
+  grid-column: 1 / -1;
+  border-color: var(--pb-chrome-accent);
+}
+
+.pbx-behavior-card--active .pbx-behavior-card__head {
+  background: var(--pb-chrome-accent-subtle);
+}
+
+
+/* ---- Mantener el pbx-badge--token/broken del sistema anterior (retrocompat tests) */
+
+.pbx-badge--token {
+  background: var(--pb-chrome-accent-subtle);
+  color: var(--pb-chrome-accent-on-surface);
+  border: 1px solid color-mix(in srgb, var(--pb-chrome-accent) 25%, transparent);
+}
+
+.pbx-badge--broken {
+  background: var(--pb-chrome-danger-subtle);
+  color: var(--pb-chrome-danger);
+  border: 1px solid color-mix(in srgb, var(--pb-chrome-danger) 25%, transparent);
+}
+
+/* --- Editor CRUD de tokens (Fase 7, docs/08 Â§5) --- */
+.pbx-tokens__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.pbx-tokens__search-icon {
+  position: absolute;
+  left: 8px;
+  color: var(--pb-chrome-text-muted);
+  pointer-events: none;
+}
+
+.pbx-tokens__search-input {
+  width: 100%;
+  padding-left: 28px;
+}
+
+.pbx-tokens__search .pbx-info-tip {
+  flex-shrink: 0;
+}
+
+.pbx-tokens__section-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pb-chrome-text-faint);
+  margin: 6px 0 4px;
+}
+
+.pbx-tokens__section-label-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pbx-tokens__section-label:first-child {
+  margin-top: 0;
+}
+
+.pbx-tokens__group-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pb-chrome-text-faint);
+  margin: 8px 0 4px;
+}
+
+.pbx-token-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.pbx-token-row__key {
+  flex: 1 1 auto;
+  font-size: 12px;
+  color: var(--pb-chrome-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Preview visual para radii/shadows (docs/40 §2.3) --- */
+.pbx-scalar-preview {
+  display: block;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  background: var(--pb-chrome-surface-raised);
+}
+
+.pbx-scalar-preview--radius {
+  border: 1px solid var(--pb-chrome-border-strong);
+}
+
+.pbx-scalar-preview--shadow {
+  border-radius: var(--pb-chrome-radius-xs);
+}
+
+/* --- Dots de breakpoint para tokens responsive (docs/49) — mismo patrón
+   visual/aria que `.pbx-visibility-strip__dots`/`__dot` (`inspector-panel.css`),
+   pero "set"/"heredado" en vez de "oculto"/"visible". --- */
+.pbx-responsive-scalar__dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.pbx-responsive-scalar__dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--pb-chrome-border-strong);
+  cursor: pointer;
+}
+
+.pbx-responsive-scalar__dot--set {
+  background: var(--pb-chrome-accent);
+}
+
+.pbx-responsive-scalar__dot--active {
+  outline: 2px solid var(--pb-chrome-text-muted);
+  outline-offset: 1px;
+}
+
+.pbx-token-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 0 10px;
+}
+
+.pbx-token-add .pbx-token__input {
+  flex: 1 1 80px;
+  min-width: 0;
+}
+
+.pbx-token-add__btn {
+  border: 1px solid var(--pb-chrome-bg-hover);
+  background: var(--pb-chrome-bg-alt);
+  color: #93c5fd;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--pb-chrome-radius-xs);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.pbx-token-add__btn:hover {
+  background: var(--pb-chrome-bg-hover);
+}
+
+.pbx-token-add__error {
+  flex: 1 1 100%;
+  color: var(--pb-chrome-danger);
+  font-size: 11px;
+}
+
+/* --- Paleta de colores como grid de swatches (docs/40 §2.1) --- */
+.pbx-color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.pbx-color-grid__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.pbx-color-grid__swatch-wrap {
+  position: relative;
+}
+
+.pbx-color-grid__swatch-picker .pbx-color-picker__swatch {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--pb-chrome-radius-sm);
+}
+
+.pbx-color-grid__remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--pb-chrome-surface-raised);
+  border: 1px solid var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-pill);
+  opacity: 0;
+  transition: opacity var(--pb-chrome-transition);
+}
+
+.pbx-color-grid__cell:hover .pbx-color-grid__remove,
+.pbx-color-grid__remove:focus-visible {
+  opacity: 1;
+}
+
+.pbx-color-grid__cell--base .pbx-color-grid__remove {
+  display: none;
+}
+
+.pbx-color-grid__name {
+  font-size: 11px;
+  color: var(--pb-chrome-text);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pbx-color-grid__hex {
+  font-family: var(--pb-chrome-font-mono);
+  font-size: 10px;
+  color: var(--pb-chrome-text-faint);
+}
+
+/* --- Tabs del panel lateral (Componentes / Tokens) --- */
+.pbx-side-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--pb-chrome-surface-alt);
+  border-bottom: 1px solid var(--pb-chrome-border);
+  padding: 8px 8px 0;
+}
+
+.pbx-side-tabs__trigger {
+  flex: 1 1 0;
+  border: none;
+  background: transparent;
+  color: var(--pb-chrome-text-muted);
+  height: 34px;
+  border-radius: var(--pb-chrome-radius-xs) var(--pb-chrome-radius-xs) 0 0;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  border-bottom: 3px solid transparent;
+  transition: color var(--pb-chrome-transition), transform var(--pb-chrome-transition);
+  margin-bottom: -1px;
+}
+
+.pbx-side-tabs__trigger:hover {
+  transform: scale(1.03);
+}
+
+.pbx-side-tabs__trigger--active {
+  color: var(--pb-chrome-accent-on-surface);
+  border-bottom-color: var(--pb-chrome-accent-on-surface);
+  background: var(--pb-chrome-surface);
+}
+
+.pbx-side-tabs__trigger:not(.pbx-side-tabs__trigger--active):hover {
+  color: var(--pb-chrome-text);
+}
+
+/* Foco por teclado (WCAG 2.4.7) — superficie clara (surface-alt): anillo de
+ * 3px estilo Maildrill (docs/52 F5), mismo criterio que la tab anterior. */
+.pbx-side-tabs__trigger:focus-visible {
+  outline: none;
+  box-shadow: var(--pb-chrome-focus-ring);
+}
+
+/* --- Familia tipogrÃ¡fica en el editor de tokens --- */
+.pbx-family {
+  border-bottom: 1px solid var(--pb-chrome-border);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.pbx-family__preview {
+  margin: 1rem 0 ;
+  padding: 8px 10px;
+  font-size: 18px;
+  line-height: 1.3;
+  color: var(--pb-chrome-text);
+  background: var(--pb-chrome-surface-alt);
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pbx-family__web {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--pb-chrome-text-faint);
+  margin-top: 4px;
+}
+
+.pbx-family__web-fields {
+  display: grid;
+  grid-template-columns: auto 40%;
+  gap: 0.5rem;
+  margin-top: 4px;
+}
+
+/* --- Combobox de búsqueda de fuentes (Google Fonts, docs/40 §2.2) --- */
+.pbx-font-combobox {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pbx-font-combobox__field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pbx-font-combobox__input {
+  width: 100%;
+  padding-right: 24px;
+}
+
+.pbx-font-combobox__caret {
+  position: absolute;
+  right: 8px;
+  color: var(--pb-chrome-text-faint);
+  pointer-events: none;
+}
+
+.pbx-font-combobox__list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 4px 0 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--pb-chrome-surface-raised);
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-md);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+}
+
+.pbx-font-combobox__list[hidden] {
+  display: none;
+}
+
+.pbx-font-combobox__option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--pb-chrome-radius-xs);
+  font-size: 13px;
+  color: var(--pb-chrome-text);
+  cursor: pointer;
+}
+
+.pbx-font-combobox__option[hidden] {
+  display: none;
+}
+
+.pbx-font-combobox__option:hover,
+.pbx-font-combobox__option[data-active] {
+  background: var(--pb-chrome-surface-alt);
+}
+
+.pbx-font-combobox__option[aria-selected="true"] {
+  background: var(--pb-chrome-accent);
+  color: var(--pb-chrome-text-on-accent);
+}
+
+.pbx-font-combobox__option[aria-selected="true"] .pbx-font-combobox__option-category {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.pbx-font-combobox__option-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pbx-font-combobox__option-category {
+  flex-shrink: 0;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pb-chrome-text-faint);
+}
+
+.pbx-font-combobox__empty {
+  padding: 8px;
+  font-size: 12px;
+  color: var(--pb-chrome-text-faint);
+}
+

@@ -15,6 +15,8 @@ import { siteConfig } from './src/config/site';
 const rootDir = fileURLToPath(new URL('.', import.meta.url));
 const appSrc = path.resolve(rootDir, 'src');
 const waStudioSrc = path.resolve(rootDir, 'packages/wa-template-studio/src');
+const builder42Src = path.resolve(rootDir, 'packages/builder42/src');
+const builder42Root = path.resolve(rootDir, 'packages/builder42');
 
 /**
  * Every Astro CLI pass runs its own Vite dep optimizer, and that optimizer
@@ -49,21 +51,41 @@ function resolveWithExtensions(base: string): string | undefined {
   return undefined;
 }
 
-/** `@/` means app `src/` here, but wa-template-studio's own `src/` inside the package. */
+/**
+ * `@/` means app `src/` here, but wa-template-studio's/builder42's own `src/`
+ * inside their respective packages (docs/52 F8, pb-static — vendored copy,
+ * same alias-resolution shape as wa-template-studio right above).
+ */
 function resolveAtImport(source: string, importer?: string): string | undefined {
   if (!source.startsWith('@/')) return undefined;
   const subpath = source.slice(2);
-  const root = importer?.includes('wa-template-studio') ? waStudioSrc : appSrc;
+  const root = importer?.includes('wa-template-studio')
+    ? waStudioSrc
+    : importer?.includes('builder42')
+      ? builder42Src
+      : appSrc;
   return resolveWithExtensions(path.join(root, subpath));
 }
 
-/** Resolve wa-template-studio's internal `@/` imports when bundled by Astro/Vite. */
+/**
+ * Resolve builder42's internal `../../shared/*` imports (its `src/services/`
+ * reaches a sibling `shared/` folder, outside `src/` — same layout as the
+ * pb-static upstream, copied verbatim into `packages/builder42/shared/`).
+ */
+function resolveBuilder42Shared(source: string, importer?: string): string | undefined {
+  if (!importer?.includes('builder42') || !source.includes('/shared/')) return undefined;
+  const idx = source.lastIndexOf('/shared/');
+  const subpath = source.slice(idx + '/shared/'.length);
+  return resolveWithExtensions(path.join(builder42Root, 'shared', subpath));
+}
+
+/** Resolve wa-template-studio's/builder42's internal `@/` (and builder42's `shared/`) imports when bundled by Astro/Vite. */
 function waTemplateStudioAlias() {
   return {
     name: 'wa-template-studio-alias',
     enforce: 'pre' as const,
     resolveId(source: string, importer?: string) {
-      return resolveAtImport(source, importer) ?? null;
+      return resolveAtImport(source, importer) ?? resolveBuilder42Shared(source, importer) ?? null;
     },
   };
 }
@@ -156,6 +178,7 @@ export default defineConfig({
         'packages/email-builder-standalone/src/index.tsx',
         'packages/wa-template-studio/src/index.ts',
         'packages/emoji-picker/src/index.ts',
+        'packages/builder42/src/index.ts',
       ],
       include: [
         'infobip-rtc',
@@ -214,6 +237,22 @@ export default defineConfig({
         'email-builder-standalone > zustand',
         'email-builder-standalone > i18next',
         'email-builder-standalone > react-i18next',
+        // builder42 (docs/52 F8): drag-and-drop + rich text (lazy-loaded island).
+        'builder42 > @atlaskit/pragmatic-drag-and-drop',
+        'builder42 > @atlaskit/pragmatic-drag-and-drop-auto-scroll',
+        'builder42 > @atlaskit/pragmatic-drag-and-drop-hitbox',
+        'builder42 > @atlaskit/pragmatic-drag-and-drop-live-region',
+        'builder42 > @tiptap/core',
+        'builder42 > @tiptap/react',
+        'builder42 > @tiptap/starter-kit',
+        'builder42 > @tiptap/extension-link',
+        'builder42 > framer-motion',
+        'builder42 > lucide-react',
+        'builder42 > i18next',
+        'builder42 > react-i18next',
+        'builder42 > zustand',
+        'builder42 > zundo',
+        'builder42 > immer',
       ],
     },
   },

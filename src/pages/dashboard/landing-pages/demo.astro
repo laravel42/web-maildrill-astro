@@ -1,0 +1,23 @@
+---
+export const prerender = false;
+import AppLayout from '@/layouts/AppLayout.astro';
+import LandingPageBuilderPage from '@/components/react/LandingPageBuilderPage';
+
+if (!Astro.locals.session) {
+  return Astro.redirect('/login');
+}
+---
+
+<!--
+  docs/52 F8 — demonstration route for the vendored Builder42 landing-page
+  editor (`packages/builder42/`). There is no landing-page persistence layer
+  in this host yet (no table, no API) — `LandingPageBuilderPage` persists to
+  `localStorage` as an explicit placeholder so the embedded editor can be
+  exercised end to end (load → edit → save → reload) without inventing a
+  product feature nobody asked for. Wiring this to a real backend (a `sites`
+  table + API, mirroring how `email.astro` uses `loadTemplateBuilder`) is a
+  follow-up, not part of F8.
+-->
+<AppLayout title="Landing page (demo)">
+  <LandingPageBuilderPage client:only="react" />
+</AppLayout>

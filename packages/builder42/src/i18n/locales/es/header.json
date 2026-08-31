@@ -1,0 +1,102 @@
+{
+  "brand": "Builder42",
+  "views": {
+    "edit": "Editar",
+    "preview": "Vista previa",
+    "code": "Código",
+    "json": "JSON"
+  },
+  "viewports": {
+    "base": "Móvil (base)",
+    "sm": "Móvil grande (sm)",
+    "md": "Tablet (md)",
+    "lg": "Portátil (lg)",
+    "xl": "Escritorio (xl)"
+  },
+  "viewportGroup": "Tamaño de pantalla",
+  "viewMode": {
+    "label": "Modo de vista"
+  },
+  "viewport": {
+    "label": "Tamaño de pantalla"
+  },
+  "history": {
+    "label": "Historial",
+    "undo": "Deshacer (Ctrl/⌘+Z)",
+    "redo": "Rehacer (Ctrl/⌘+Shift+Z)"
+  },
+  "canvasControls": {
+    "label": "Controles de vista del canvas"
+  },
+  "file": {
+    "label": "Archivo",
+    "save": "Guardar",
+    "saveTitle": "Guardar sitio (.json)",
+    "load": "Cargar",
+    "loadTitle": "Cargar sitio (.json)",
+    "invalidFile": "Archivo inválido",
+    "readError": "No se pudo leer el archivo"
+  },
+  "language": {
+    "label": "Idioma del editor"
+  },
+  "theme": {
+    "label": "Sistema de color",
+    "system": "Sistema",
+    "light": "Claro",
+    "dark": "Oscuro"
+  },
+  "profile": {
+    "label": "Preferencias"
+  },
+  "reorderControls": {
+    "label": "Controles de reordenamiento",
+    "auto": "Auto",
+    "on": "Activados",
+    "off": "Desactivados"
+  },
+  "experienceLevel": {
+    "label": "Nivel de experiencia",
+    "simple": "Simple",
+    "advanced": "Avanzado"
+  },
+  "onboarding": {
+    "title": "¿Cómo querés empezar?",
+    "subtitle": "Elegí el nivel de experiencia del editor. Podés cambiarlo cuando quieras desde Preferencias.",
+    "simpleTitle": "Simple",
+    "simpleDesc": "Una interfaz más guiada, con menos opciones a la vista.",
+    "advancedTitle": "Avanzado",
+    "advancedDesc": "Acceso completo a todas las opciones del editor.",
+    "changeHint": "Podés cambiarlo después desde el menú de Preferencias."
+  },
+  "contentLocale": {
+    "label": "Idioma de contenido",
+    "ariaLabel": "Idioma de contenido en edición"
+  },
+  "breadcrumb": {
+    "label": "Ruta de la página activa",
+    "pageLabel": "Cambiar de página"
+  },
+  "panels": {
+    "toggleSidebar": "Alternar barra lateral",
+    "toggleInspector": "Alternar inspector"
+  },
+  "layers": {
+    "button": "Capas",
+    "open": "Abrir panel de capas",
+    "title": "Capas de la página",
+    "treeLabel": "Árbol de capas de la página activa",
+    "empty": "Sin nodos.",
+    "toggleExpand": "Expandir/colapsar",
+    "hiddenBadge": "oculto",
+    "hiddenAt": "Oculto en {{breakpoint}}",
+    "show": "Mostrar en este tamaño",
+    "hide": "Ocultar en este tamaño"
+  },
+  "publish": {
+    "button": "Publicar",
+    "modalTitle": "Publicar sitio",
+    "close": "Cerrar",
+    "managedSites": "Sitios publicados"
+  }
+}

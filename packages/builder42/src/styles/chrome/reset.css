@@ -1,0 +1,85 @@
+/**
+ * chrome/chrome/reset.css — reset global + scrollbars + focus ring (Fase 11 base, T6 scrollbars)
+ *
+ * Extraído del monolito chrome.css (docs/28). Se carga en el orden
+ * definido por el barrel según docs/28 §2.2.
+ *
+ * Namespace: solo `pbx-*`. Cualquier referencia a `pb-*` debe
+ * justificarse en línea (criterio docs/22 §4).
+ *
+ * docs/52 F6 (CSS embed-safe): este archivo ya NO declara los `@font-face`
+ * de Geist ni las reglas de página completa (`html`/`body`/`#root`,
+ * tipografía/color de `body`) — eso vive ahora en `chrome/standalone.css`
+ * (I3/I4), que solo importa el barrel standalone. Lo que queda aquí (I1
+ * box-sizing, I2 scrollbars rescopeadas, focus ring genérico, `.pbx-sr-only`)
+ * es seguro para AMBOS barrels (standalone y embebido) — se importa desde
+ * los dos.
+ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Scrollbars finas del chrome (T6). docs/52 F6 (I2): RESCOPEADAS — antes era
+   `*` global, así que repintaba TODOS los scrollbars del host al embeberse
+   (cualquier lista/panel de Maildrill fuera del editor heredaba el
+   thumb/track del chrome). Selector por ATRIBUTO (`[class*="pbx-"]`), no por
+   `.pbx-app *` (descendencia DOM): varios componentes del chrome se montan
+   con `createPortal(..., document.body)` — `Toast`, `SimpleModal`,
+   `FieldHelp`, `AiSectionGenerator` — y quedan como HERMANOS de `.pbx-app`
+   en el árbol real, no como descendientes; un selector de descendencia los
+   habría dejado sin la barra fina (regresión real, detectada al escribir
+   esta fase). El atributo cubre cualquier elemento del chrome sin importar
+   dónde lo monte React, incluidos los portales presentes y futuros — sin
+   depender de enumerar cada uno. Firefox: `scrollbar-width`/`scrollbar-
+   color`. Chromium/WebKit: pseudo-elementos con thumb redondeado y track
+   transparente. Los contenedores que ocultan su barra a propósito
+   (`.pbx-scroll-x` del carousel) ganan por especificidad de clase. */
+:where([class*="pbx-"]) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--pb-chrome-scrollbar-thumb) var(--pb-chrome-scrollbar-track);
+}
+:where([class*="pbx-"])::-webkit-scrollbar {
+  width: var(--pb-chrome-scrollbar-size);
+  height: var(--pb-chrome-scrollbar-size);
+}
+:where([class*="pbx-"])::-webkit-scrollbar-track {
+  background: var(--pb-chrome-scrollbar-track);
+}
+:where([class*="pbx-"])::-webkit-scrollbar-thumb {
+  background: var(--pb-chrome-scrollbar-thumb);
+  border-radius: var(--pb-chrome-radius-pill);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+:where([class*="pbx-"])::-webkit-scrollbar-thumb:hover {
+  background: var(--pb-chrome-scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+
+/* chrome focus ring — scoped to editor app only (never in exported output, P8).
+   docs/52 F5: se DEJA como outline sólido a propósito (no se migra a
+   `--pb-chrome-focus-ring`/box-shadow como el resto de esta fase) — es el
+   fallback GENÉRICO para cualquier elemento del chrome sin regla propia de
+   foco. Un `box-shadow` aquí pisaría el `box-shadow` propio de cualquier
+   elemento que ya tenga uno (tarjetas, botones con sombra) al recibir foco,
+   perdiendo esa sombra — el `outline` es una capa aparte que nunca compite
+   con `box-shadow`, así que es la opción segura para un selector tan amplio. */
+.pbx-app :focus-visible {
+  outline: 2px solid var(--pb-chrome-accent);
+  outline-offset: 2px;
+}
+
+/* Contenido solo para lectores de pantalla (a11y, Fase 4). */
+.pbx-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

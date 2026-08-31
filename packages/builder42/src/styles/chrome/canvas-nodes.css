@@ -1,0 +1,1100 @@
+/**
+ * chrome/chrome/canvas-nodes.css — Canvas node edit states (hover/selected/dragging/drop indicator/invisible elements bubble) + drag-ghost img fallback
+ *
+ * Extraído del monolito chrome.css (docs/28). Se carga en el orden
+ * definido por el barrel según docs/28 §2.2.
+ *
+ * Namespace: solo `pbx-*`. Cualquier referencia a `pb-*` debe
+ * justificarse en línea (criterio docs/22 §4).
+ */
+.pbx-drag-handle:active,
+.pbx-drag-handle--dragging {
+  cursor: grabbing;
+}
+
+/* Fusión visual con el grupo de flechas/mover ▲▼◀▶ (feedback de usuario,
+ * docs/24 §2, iterado): en touch (`reorderControlsVisible`) el drag nativo
+ * está desactivado (`SelectionHandle.tsx`, Pragmatic no funciona ahí) — la
+ * pestaña ya no es arrastrable, pierde el cursor "grab", y en vez de montar
+ * una segunda pieza aparte, los botones se agregan DENTRO de esta misma fila
+ * (grip + label + botones), así que se permite reducir el `gap` general y
+ * anular el `max-width`/`white-space:nowrap` del label (`.pbx-drag-handle`
+ * base): con los botones al lado, el label puede truncar con ellipsis en un
+ * ancho más chico sin que la fila se desborde. Mismo `border-radius` solo
+ * arriba, mismo gradiente y `box-shadow` (una sola pieza, un solo contorno,
+ * ninguna pieza fantasma debajo). */
+.pbx-drag-handle--merged {
+  cursor: default;
+  gap: 7px;
+  max-width: none;
+}
+
+.pbx-drag-handle__grip {
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0.75;
+}
+
+.pbx-drag-handle__label {
+  overflow: hidden;
+  max-width: 200px;
+  text-overflow: ellipsis;
+}
+
+/* Grupo de flechas ▲▼◀▶ + botón "mover" (docs/24 §2/§3): vive DENTRO de
+ * `.pbx-drag-handle--merged`, en la MISMA fila que el grip+label — no es una
+ * pieza posicionada aparte (feedback de usuario: debía verse como un único
+ * bloque, no dos apiladas). Separador sutil a la izquierda para distinguir
+ * "identidad del nodo" (grip+label) de "acciones" (botones), sin romper la
+ * continuidad del bloque (mismo fondo, sin borde propio). */
+.pbx-reorder-arrows {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding-left: 6px;
+  margin-left: 2px;
+  /* JUSTIFICACIÓN (docs/52 F5): blanco translúcido sobre el fondo SÓLIDO de
+     `.pbx-drag-handle--merged` (`--pb-chrome-accent`, ver arriba) — decora
+     un separador/hover dentro de una superficie de un solo color, no un par
+     texto/fondo con rol semántico propio. Blanco sobre accent siempre da
+     contraste adecuado (5.00:1 a 0.85 alpha, verificado) sin depender del
+     tema del chrome. Sin equivalente de host para "overlay blanco sobre
+     botón sólido". */
+  border-left: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.pbx-reorder-arrows__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: calc(var(--pb-chrome-radius-sm) - 2px);
+  background: transparent;
+  /* JUSTIFICACIÓN (docs/52 F5): mismo criterio que `.pbx-reorder-arrows`
+     arriba — blanco translúcido sobre el accent sólido del handle, no un
+     rol semántico propio. */
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition: var(--pb-chrome-transition);
+}
+
+.pbx-reorder-arrows__btn:hover:not(:disabled) {
+  color: var(--pb-chrome-text-on-accent);
+  /* JUSTIFICACIÓN (docs/52 F5): tinte de hover blanco sobre el mismo fondo
+     sólido — mismo criterio que arriba. */
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.pbx-reorder-arrows__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Foco por teclado (WCAG 2.4.7) — mismo criterio que `.pbx-drag-handle`:
+ * fondo de acento propio, outline blanco (`--pb-chrome-text-on-accent`)
+ * inset para no perderse contra el canvas claro alrededor. */
+.pbx-reorder-arrows__btn:focus-visible {
+  outline: 2px solid var(--pb-chrome-text-on-accent);
+  outline-offset: -2px;
+}
+
+@media (pointer: coarse) {
+  .pbx-reorder-arrows__btn {
+    /* Targets táctiles ≥44px (docs/24 §6 Fase 5): en touch los botones
+     * crecen más allá de la fila compacta de desktop — el handle combinado
+     * se deja crecer de alto libremente (sin `max-height`) para acomodarlos. */
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Toolbar flotante de formato de texto (docs/12 Â§B.11). Chrome de ediciÃ³n:
+ * la monta el Canvas (TextToolbar) sÃ³lo en modo edit mientras un `text` estÃ¡
+ * en ediciÃ³n inline; nunca sale al HTML exportado (P8). `top`/`left` se fijan
+ * inline en coordenadas del frame; por defecto flota ARRIBA del bloque
+ * (--above, elevada sobre el borde superior) y cae a DEBAJO (--below,
+ * desplazada bajo el borde inferior) si no hay espacio arriba dentro del
+ * frame â€” nunca empuja el layout de los demÃ¡s componentes. */
+.pbx-text-toolbar {
+  position: absolute;
+  /* Por encima del overlay de edición del modal (`.pbx-modal-editor`, z-index
+     40): al editar un `text` DENTRO del modal, su bubble menu debe quedar
+     visible sobre el overlay, no detrás (feedback de usuario). */
+  z-index: 41;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--pb-chrome-bg);
+  border: 1px solid var(--pb-chrome-bg-hover);
+  border-radius: var(--pb-chrome-radius-md);
+  /* JUSTIFICACIÓN (docs/52 F5): sombra de elevación decorativa — no par
+     texto/fondo, WCAG 1.4.11 no aplica a box-shadow. Sin equivalente de
+     host; mismo criterio en todos los box-shadow de este archivo. */
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  user-select: none;
+}
+
+.pbx-text-toolbar--above {
+  transform: translateY(calc(-100% - 6px));
+}
+
+.pbx-text-toolbar--below {
+  transform: translateY(6px);
+}
+
+.pbx-text-toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  font: 600 12px/1 var(--pb-chrome-font);
+  color: var(--pb-chrome-muted-on-dark);
+  background: transparent;
+  border: none;
+  border-radius: var(--pb-chrome-radius-xs);
+  cursor: pointer;
+  transition: background var(--pb-chrome-transition), color var(--pb-chrome-transition), transform var(--pb-chrome-transition);
+}
+
+.pbx-text-toolbar__btn:hover {
+  background: var(--pb-chrome-bg-hover);
+  color: var(--pb-chrome-text-on-dark);
+  transform: scale(1.08);
+}
+
+.pbx-text-toolbar__btn:active {
+  transform: scale(0.92);
+}
+
+.pbx-text-toolbar__btn--active {
+  background: var(--pb-chrome-accent);
+  color: var(--pb-chrome-text-on-accent);
+}
+
+.pbx-text-toolbar__sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 2px;
+  /* JUSTIFICACIÓN (docs/52 F5): separador blanco translúcido sobre la
+     toolbar SIEMPRE oscura (`--pb-chrome-bg`, ver arriba en este archivo) —
+     mismo criterio que `.pbx-reorder-arrows` (blanco sobre superficie
+     sólida de un solo color, no un rol semántico propio). */
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Botón de idioma flotante (docs/12 §B, Fase 19.g/19.j): envoltorio del
+ * `LocaleQuickAccess` reutilizado dentro de la toolbar oscura. El componente
+ * en sí no cambia (mismo JSX que en el panel Inspector) — solo se
+ * sobreescriben sus tokens de color, pensados para el panel claro, por los
+ * equivalentes "on-dark" de esta toolbar. `margin-left:auto` lo empuja al
+ * extremo derecho ("fuera del contenedor" visualmente, sin salir del
+ * elemento con `data-text-toolbar` — evita tocar el listener global de
+ * "click fuera cierra edición", ver comentario del módulo). */
+.pbx-text-toolbar__locale {
+  display: inline-flex;
+  margin-left: auto;
+}
+.pbx-text-toolbar__locale .pbx-locale-quick {
+  color: var(--pb-chrome-muted-on-dark);
+}
+.pbx-text-toolbar__locale .pbx-locale-quick:hover {
+  color: var(--pb-chrome-text-on-dark);
+  background: var(--pb-chrome-bg-hover);
+}
+.pbx-text-toolbar__locale .pbx-locale-quick--active {
+  color: var(--pb-chrome-text-on-accent);
+  background: var(--pb-chrome-accent);
+}
+
+/* Slider horizontal en canvas: los hijos no se encogen y encajan (scroll-snap),
+ * y se oculta la barra (equivale a las reglas del CSS exportado). El scroll lo
+ * dan overflow-x + estilos inline. */
+.pbx-scroll-x {
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.pbx-scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+.pbx-scroll-x > * {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+/* Indicador de drop como overlay absoluto (docs/02 Â§5, Â§10.4). No ocupa celda
+ * ni participa en el flujo; se posiciona sobre la frontera/celda destino. */
+.pbx-drop-overlay {
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Línea de frontera (flex/auto): reordenar entre hermanos. */
+.pbx-drop-overlay--line {
+  background: var(--pb-chrome-drop);
+  border-radius: var(--pb-chrome-radius-xs);
+  /* docs/52 F5: antes `rgba(22,163,74,0.35)` — el rgb literal es exactamente
+     `--pb-chrome-drop` (#16a34a) en formato rgb; `color-mix` lo sigue si el
+     token cambia (no tiene override en dark.css hoy, pero es el patrón
+     consistente con el resto de tintes de esta fase). */
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--pb-chrome-drop) 35%, transparent);
+}
+
+/* Recuadro de la celda destino (grid explícito). */
+.pbx-drop-overlay--cell {
+  background: color-mix(in srgb, var(--pb-chrome-drop) 10%, transparent);
+  border: 2px solid var(--pb-chrome-drop);
+  border-radius: var(--pb-chrome-radius-xs);
+}
+
+/*
+ * Fantasma en flujo ("hueco que se abre", docs/09 Â§2.3). Ocupa el sitio real
+ * que tomarÃ¡ el elemento (empuja a los hermanos con el layout del contenedor) y
+ * muestra su forma atenuada. Es chrome: pointer-events:none y no interfiere con
+ * el hit-testing (se calcula contra el snapshot de rects, no contra el layout ya
+ * desplazado). La transiciÃ³n suaviza la apertura del hueco.
+ */
+.pbx-drop-ghost {
+  position: relative;
+  opacity: 0.5;
+  outline: 2px dashed var(--pb-chrome-drop);
+  outline-offset: -2px;
+  border-radius: var(--pb-chrome-radius-xs);
+  pointer-events: none;
+  overflow: hidden;
+  max-height: 320px;
+  transition: opacity 0.12s ease;
+}
+
+/* Grid explÃ­cito: el fantasma va absoluto DENTRO de la celda destino (docs/09
+ * Â§2.3), sobre el recuadro `cell`. No participa en el auto-placement. */
+.pbx-drop-ghost--cell {
+  z-index: 9;
+}
+
+.pbx-empty-hint {
+  display: block;
+  padding: 12px;
+  color: var(--pb-chrome-text-muted);
+  font-size: 12px;
+  text-align: center;
+  border: 1px dashed var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-sm);
+}
+
+/* Drop zone del contenedor vacío resaltada al arrastrar encima. */
+.pbx-node--drop-over .pbx-empty-hint {
+  border-color: var(--pb-chrome-drop);
+  color: var(--pb-chrome-drop);
+  /* docs/52 F5: antes `rgba(22,163,74,0.05)` — mismo criterio color-mix que
+     `.pbx-drop-overlay--cell` arriba (rgb literal exacto de --pb-chrome-drop). */
+  background: color-mix(in srgb, var(--pb-chrome-drop) 5%, transparent);
+}
+
+/* Hint compacto del slot de logo del navbar (docs/16 §12.4 rework): la barra
+   es horizontal y delgada, el hint genérico (bloque con padding grande) no
+   cabe bien ahí — variante inline de una sola línea. */
+.pbx-navbar__brand-hint {
+  display: inline-block;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+
+/*
+ * GuÃ­a de tamaÃ±o real (docs/10 Â§5, feedback de usuario): cuando un behavior
+ * que recorta contenido (carousel) suprime su `overflow`/`height` en Edit
+ * (`suppressClip`, Container.tsx), este overlay marca con un borde punteado
+ * DÃ“NDE caerÃ­a ese lÃ­mite en Preview/export, sin ocultar ni recortar los
+ * hijos que quedan debajo/despuÃ©s. Puramente informativo: `pointer-events:
+ * none` para no interceptar clicks/drag; nunca sale al HTML exportado (P8,
+ * solo se renderiza cuando `!exportMode`).
+ */
+.pbx-size-guide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  display: block;
+  box-sizing: border-box;
+  /* docs/52 F5, hallazgo real: antes `#7c3aed` fijo (2.99:1 sobre el nuevo
+     frame oscuro, bajo el piso 3:1 de no-texto — el mismo defecto que F4 ya
+     había corregido para `--pb-chrome-size-guide-label` sin propagarlo
+     aquí). `--pb-chrome-size-guide-border` es el token dedicado, con
+     override dark ya verificado (ver tokens.css/dark.css). El tinte de
+     fondo usa `color-mix` sobre el mismo token en vez de un rgba fijo, para
+     seguir el color si cambia entre temas (era `rgba(124,58,237,0.05)`,
+     el mismo violeta en rgb). */
+  border-bottom: 2px dashed var(--pb-chrome-size-guide-border);
+  background: color-mix(in srgb, var(--pb-chrome-size-guide-border) 5%, transparent);
+  pointer-events: none;
+}
+.pbx-size-guide__label {
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  font: 600 10px/1.4 var(--pb-chrome-font);
+  color: var(--pb-chrome-size-guide-label);
+  background: var(--pb-chrome-canvas-frame-bg);
+  padding: 0 4px;
+  border-radius: var(--pb-chrome-radius-xs);
+  white-space: nowrap;
+}
+
+/* Drag preview propio (docs/02 Â§11.2). */
+.pbx-drag-preview {
+  padding: 6px 12px;
+  background: var(--pb-chrome-accent);
+  color: var(--pb-chrome-text-on-accent);
+  border-radius: var(--pb-chrome-radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  /* docs/52 F5: antes `rgba(79,70,229,0.35)` (indigo fijo) — `color-mix`
+     sigue al acento si el host lo remapea (D2), mismo criterio que el resto
+     de glows de acento migrados en esta fase. */
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--pb-chrome-accent) 35%, transparent);
+  font-family: var(--pb-chrome-font);
+  white-space: nowrap;
+}
+
+/* Drag preview WYSIWYG: el elemento real, acotado y atenuado (docs/09 Â§2.2). */
+.pbx-drag-ghost {
+  min-width: 64px;
+  min-height: 40px;
+  max-width: 320px;
+  max-height: 240px;
+  overflow: hidden;
+  opacity: 0.85;
+  background: var(--pb-chrome-canvas-frame-bg);
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-sm);
+  /* JUSTIFICACIÓN (docs/52 F5): sombra de elevación decorativa, mismo
+     criterio que `.pbx-text-toolbar` arriba en este archivo. */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+}
+
+/*
+ * El preview nativo es un raster tomado al iniciar el arrastre: una <img>
+ * remota/URL o el placeholder aÃºn no ha cargado y saldrÃ­a en blanco (alto 0).
+ * Le damos un fondo y un tamaÃ±o mÃ­nimo SOLO dentro del ghost (no afecta al
+ * canvas ni al export) para que la imagen arrastrada siempre se vea como una
+ * caja; si la fuente es un data URL (asset) ya cargado, se ve la imagen real.
+ */
+/* ---- drag-ghost img: fondo si la imagen no carga ----------------------- */
+.pbx-drag-ghost img {
+  min-width: 80px;
+  min-height: 60px;
+  background: var(--pb-chrome-surface-alt);
+}
+
+/* ---- Code/JSON: extraído a chrome/canvas-code-json.css (docs/28) ---- */
+/* ---- Extraído a chrome/inspector.css (docs/28) ---- */
+/* ---- Extraído a chrome/inspector-controls.css (docs/28) ---- */
+/* ---- Extraído a chrome/inspector-controls.css (docs/28) ---- */
+/* ---- Extraído a chrome/inspector-sections.css (docs/28) ---- */
+/* ---- Sección de behaviors (estilos de Fase 11.b están en la sección de token/inspector) */
+
+/* Badge "interactivo" en el canvas Edit para nodos con behaviors (docs/10 §5).
+ * Chrome: pointer-events none, nunca en export. El nodo se hace relative para
+ * anclar el badge sin romper su layout. */
+.pbx-node--has-behaviors {
+  position: relative;
+}
+.pbx-behavior-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 15;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  font: 600 10px/1.5 system-ui, -apple-system, sans-serif;
+  color: var(--pb-chrome-text-on-accent);
+  /* JUSTIFICACIÓN (docs/52 F5): violeta fijo, DISTINTO a propósito del
+     `--pb-chrome-accent` (índigo) — distingue de un vistazo el badge
+     "tiene behaviors" del acento de selección/marca. Es un fondo SÓLIDO
+     (no depende de qué haya detrás) con texto blanco encima: 5.70:1 en
+     ambos temas del chrome (no cambia con dark.css, a diferencia del borde
+     de `.pbx-size-guide` que sí necesitó override — ver
+     `--pb-chrome-size-guide-border`). Sin rol semántico reutilizable de
+     host para "badge de comportamiento interactivo"; se conserva el
+     literal, verificado por contraste. */
+  background: #7c3aed;
+  border-radius: 0 0 var(--pb-chrome-radius-xs) 0;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* Placeholder de elemento no-visible (modal) en el canvas: chip discreto y
+   seleccionable, no ocupa el flujo como el diálogo real (solo en export). */
+.pb-modal__placeholder {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  font: 500 12px/1.4 system-ui, -apple-system, sans-serif;
+  color: var(--pb-chrome-text-muted, #6b7280);
+  background: var(--pb-chrome-surface-raised, #f3f4f6);
+  border: 1px dashed var(--pb-chrome-border-strong, #d1d5db);
+  border-radius: var(--pb-chrome-radius-sm, 6px);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.pbx-control__color {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* Panel "Disparadores" del Inspector del modal (docs/20 §4.1) */
+.pbx-triggers { display: flex; flex-direction: column; gap: 8px; }
+.pbx-triggers__title { margin: 0; font-size: 13px; font-weight: 600; }
+.pbx-triggers__hint { margin: 0; font-size: 11px; color: var(--pb-chrome-text-muted); }
+.pbx-triggers__create {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 7px 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+  color: var(--pb-chrome-text-on-accent); border: none; border-radius: var(--pb-chrome-radius-sm);
+  background: var(--pb-chrome-accent, #4f46e5);
+}
+.pbx-triggers__search {
+  width: 100%; padding: 6px 10px; font-size: 12px;
+  border: 1px solid var(--pb-chrome-border-strong); border-radius: var(--pb-chrome-radius-sm);
+  background: var(--pb-chrome-surface-raised); color: inherit;
+}
+.pbx-triggers__empty { margin: 4px 0; font-size: 12px; color: var(--pb-chrome-text-muted); }
+.pbx-triggers__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.pbx-triggers__row {
+  display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+  border: 1px solid var(--pb-chrome-border); border-radius: var(--pb-chrome-radius-sm);
+}
+.pbx-triggers__row--linked { border-color: var(--pb-chrome-accent, #4f46e5); }
+.pbx-triggers__icon { flex-shrink: 0; width: 15px; height: 15px; color: var(--pb-chrome-text-muted); }
+.pbx-triggers__label {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 12px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pbx-triggers__type { font-size: 10px; color: var(--pb-chrome-text-muted); }
+.pbx-triggers__toggle {
+  display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;
+  padding: 4px 8px; font-size: 11px; cursor: pointer;
+  border: 1px solid var(--pb-chrome-border-strong); border-radius: var(--pb-chrome-radius-pill);
+  background: var(--pb-chrome-surface-raised); color: inherit;
+}
+.pbx-triggers__toggle--on {
+  background: var(--pb-chrome-accent, #4f46e5); border-color: transparent; color: var(--pb-chrome-text-on-accent);
+}
+.pbx-triggers__more {
+  align-self: flex-start; padding: 4px 0; font-size: 12px; cursor: pointer;
+  background: none; border: none; color: var(--pb-chrome-accent, #4f46e5);
+}
+
+/* Panel "Acción de click" del Inspector (nodo trigger, docs/20 §3) — simétrico
+   a .pbx-triggers, visto desde el lado del elemento en vez del modal. */
+.pbx-click-action { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.pbx-click-action__title { margin: 0; font-size: 13px; font-weight: 600; }
+.pbx-click-action__hint { margin: 0; font-size: 11px; color: var(--pb-chrome-text-muted); }
+.pbx-click-action__empty { margin: 0; font-size: 12px; color: var(--pb-chrome-text-muted); }
+
+.pbx-click-action__warning {
+  margin: 0; padding: 6px 8px; font-size: 11px; border-radius: var(--pb-chrome-radius-sm);
+  color: var(--pb-chrome-warning); background: var(--pb-chrome-warning-subtle);
+  border: 1px solid var(--pb-chrome-warning-border);
+}
+
+/* Picker de nodo (targetKind: "node", docs/44 Fase 2 — ej. `scroll-to`):
+   buscador + select, mismo patrón visual que `.pbx-triggers__search`. */
+.pbx-node-target-picker { display: flex; flex-direction: column; gap: 6px; }
+.pbx-node-target-picker__search {
+  width: 100%; padding: 6px 10px; font-size: 12px;
+  border: 1px solid var(--pb-chrome-border-strong); border-radius: var(--pb-chrome-radius-sm);
+  background: var(--pb-chrome-surface-raised); color: inherit;
+}
+.pbx-node-target-picker__empty { margin: 0; font-size: 11px; color: var(--pb-chrome-text-muted); }
+
+/* ---- Estados de edición sobre los nodos (chrome, no output) ------------- */
+.pbx-node {
+  outline: 1px dashed transparent;
+  outline-offset: -1px;
+  cursor: pointer;
+  /* Cubre también `background-color` (bug real, feedback de usuario): sin
+   * esto, el estado `--drop-over` (outline verde + fondo tenue durante el
+   * drag) aparecía/desaparecía de golpe al entrar/salir del elemento con el
+   * puntero, en vez de suavizarse como el resto del chrome de edición. */
+  transition: outline-color var(--pb-chrome-transition), background-color var(--pb-chrome-transition);
+}
+
+.pbx-node:hover {
+  /* docs/52 F5: antes `rgba(99,102,241,0.45)` (indigo-500 fijo, distinto de
+     `--pb-chrome-select`/`--pb-chrome-accent` #4f46e5) — `color-mix` sobre
+     el token de selección sigue al host si remapea el acento (D2), y
+     unifica el matiz con `.pbx-node--selected` de abajo. */
+  outline-color: color-mix(in srgb, var(--pb-chrome-select) 45%, transparent);
+}
+
+.pbx-node--selected {
+  outline: 2px dashed var(--pb-chrome-select) !important;
+  outline-offset: -2px;
+  /* docs/52 F5: antes `rgba(79,70,229,0.06)` (el hex fijo del acento
+     pre-D2) — mismo criterio de color-mix que el resto de tintes de acento
+     de esta fase. */
+  background-color: color-mix(in srgb, var(--pb-chrome-select) 6%, transparent);
+}
+
+/* Nodo `text` en ediciÃ³n inline (docs/12 Â§B.11): outline sÃ³lido (vs. el
+ * punteado por defecto) + cursor de texto, para distinguir "editando" de
+ * sÃ³lo "seleccionado". El `contentEditable` real de Tiptap vive dentro. */
+.pbx-node--editing-text {
+  outline: 2px solid var(--pb-chrome-select) !important;
+  outline-offset: -2px;
+  cursor: text;
+}
+
+/* Editor inline de texto (Tiptap/ProseMirror) -- chrome, NUNCA exportado (P8).
+ *
+ * `@tiptap/react` mete DOS niveles de `<div>` extra entre `.pbx-node` (el
+ * elemento raiz del componente `text`) y el contenido real (`<p>`, `<h1>`...):
+ * el wrapper propio de `EditorContent` + `.ProseMirror`. En estatico
+ * (`dangerouslySetInnerHTML`) esos dos niveles no existen -- el `<p>` es hijo
+ * DIRECTO de `.pbx-node`. Antes, ese anidamiento rompia el colapso de
+ * margenes verticales del navegador (`p { margin: 1em 0 }` por defecto) y se
+ * necesitaba un fix ad-hoc para el primer/ultimo bloque en edicion.
+ *
+ * Ya no hace falta (AGENTS.md S5, P6): `baseCss()` (`export/base.ts`, la
+ * comparten export/canvas/edicion) resetea el margin/padding de
+ * p/h1-h6/blockquote/ul/ol/li a 0 -- nunca hay un margin implicito del
+ * navegador que colapsar ni que anular. El usuario separa parrafos con
+ * lineas vacias o, para ajuste fino, con el grupo `spacing` del Inspector. */
+.pbx-node--editing-text .ProseMirror {
+  outline: none;
+}
+
+/* PÃ¡rrafos (y demÃ¡s bloques) VACÃOS: en ediciÃ³n ProseMirror les inyecta un
+ * `<br class="ProseMirror-trailingBreak">` (solo en la vista de ediciÃ³n, no en
+ * `getHTML()`) para que tengan una lÃ­nea donde poner el cursor. El render
+ * estÃ¡tico pinta `<p></p>` que colapsa a 0px de alto â†’ discrepancia al salir de
+ * ediciÃ³n. Reservamos aquÃ­ esa misma lÃ­nea en el render estÃ¡tico del canvas con
+ * un ZWSP en `::before`, replicando la altura del trailing break.
+ *
+ * Solo aplica en el canvas (`.pbx-canvas__frame`) y solo a bloques REALMENTE
+ * vacÃ­os (`:empty` NO matchea `<p><br></p>` de la vista de ediciÃ³n, que tiene
+ * hijo). El export no incluye `chrome.css`, asÃ­ que el HTML publicado sigue
+ * colapsando los pÃ¡rrafos vacÃ­os (P8 intacto). */
+.pbx-canvas__frame .pbx-node :is(p, h1, h2, h3, h4, h5, h6, li, blockquote):empty::before {
+  content: "\200b"; /* zero-width space: fuerza una caja en lÃ­nea â†’ altura de 1 lÃ­nea */
+}
+
+.pbx-node--drop-over {
+  outline: 2px solid var(--pb-chrome-drop) !important;
+  /* docs/52 F5: antes `rgba(22,163,74,0.05)` — mismo criterio color-mix que
+     `.pbx-drop-overlay--cell`/`.pbx-empty-hint` de arriba en este archivo. */
+  background-color: color-mix(in srgb, var(--pb-chrome-drop) 5%, transparent);
+}
+
+.pbx-node--dragging {
+  opacity: 0.5;
+}
+
+/* Pestaña de arrastre del nodo seleccionado (docs/02 §11.1). Chrome de edición:
+ * la monta el Canvas (SelectionHandle) sólo en modo edit, nunca en export.
+ * `top`/`left` se fijan inline en coordenadas del frame (centro-superior del
+ * nodo); aquí sólo el aspecto y el centrado/elevación sobre el borde superior. */
+.pbx-drag-handle {
+  position: absolute;
+  /* Sin `transform` para el POSICIONAMIENTO (bug real, feedback de usuario):
+   * este componente usaba `motion.div` de framer-motion para animar la
+   * entrada (`opacity`/`scale`), que controla la propiedad `transform` vía
+   * `style` inline — cualquier `transform` de posicionamiento declarado aquí
+   * quedaba pisado sin importar especificidad. Se quitó `motion.div` en
+   * favor de un `div` + animación de entrada 100% CSS (`--enter` más abajo),
+   * así ninguna librería compite por `transform`: el centrado horizontal y
+   * la elevación por FUERA del borde superior del nodo se calculan en JS
+   * (`top`/`left` puros, restando el ancho/alto real de la pestaña ya
+   * medida, `SelectionHandle.tsx`). El borde inferior de la pestaña queda
+   * pegado al borde superior del nodo — por eso no lleva radio abajo (ver
+   * `border-radius`), para leerse como "soldada" a ese borde, sin invadir el
+   * contenido interno del contenedor. */
+  /* Por encima del overlay de edición del modal (`.pbx-modal-editor`, z-index
+     40): al seleccionar un nodo insertado DENTRO del modal, su pestaña de
+     arrastre debe quedar visible sobre el overlay, no detrás (mismo criterio
+     que `.pbx-text-toolbar`, bug real: quedaba invisible aunque montado). */
+  z-index: 41;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 240px;
+  padding: 3px 9px;
+  font: 600 11px/1.5 var(--pb-chrome-font);
+  color: var(--pb-chrome-text-on-accent);
+  background: var(--pb-chrome-accent);
+  /* Solo esquinas superiores redondeadas: el borde inferior queda recto y
+   * pegado al borde superior del nodo (look "soldado", feedback de usuario). */
+  border-radius: var(--pb-chrome-radius-sm) var(--pb-chrome-radius-sm) 0 0;
+  /* docs/52 F5: antes `rgba(79,70,229,0.4)` (indigo fijo) — mismo criterio
+     de color-mix que `.pbx-drag-preview`/`.pbx-node:hover` en esta fase. */
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--pb-chrome-accent) 40%, transparent);
+  cursor: grab;
+  user-select: none;
+  white-space: nowrap;
+  /* Animación de entrada: fade + leve escala, reemplaza el `initial`/
+   * `animate` que antes daba framer-motion. `transform-origin: bottom` para
+   * que el "crecimiento" se perciba desde el borde soldado, no desde el
+   * centro (coherente con el nuevo anclaje). */
+  transform-origin: center bottom;
+  animation: pbx-drag-handle-enter 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Foco por teclado (WCAG 2.4.7) — la pestaña vive sobre su propio fondo de
+ * acento sólido (`--pb-chrome-accent`, ya no degradado desde docs/52 D5/F5),
+ * no sobre el fondo del canvas: un outline índigo se fundiría con ese fondo.
+ * Se usa el mismo blanco que ya pinta su texto (`--pb-chrome-text-on-accent`,
+ * ~5–6:1 contra el sólido) con offset NEGATIVO para que el anillo quede
+ * DENTRO del bloque de color, no recortado contra el canvas claro que lo
+ * rodea. */
+.pbx-drag-handle:focus-visible {
+  outline: 2px solid var(--pb-chrome-text-on-accent);
+  outline-offset: -2px;
+}
+
+/* Pestaña de agarre para nodos con superficie que captura el puntero
+ * (`blocksPointerCapture`, hoy solo `video`; docs/dnd/HoverHandle.tsx).
+ * Mismo lenguaje visual que `.pbx-drag-handle` (posición, radio, tipografía)
+ * pero deliberadamente MÁS TENUE — superficie clara/neutra en vez del
+ * degradado de acento sólido — para que se distinga de un vistazo de "ya
+ * seleccionado" (esa sigue siendo `.pbx-drag-handle`). Solo aparece tras un
+ * hover sostenido (`HoverHandle.tsx`, `HOVER_DELAY_MS`), nunca reemplaza a la
+ * pestaña de selección sobre el mismo nodo. */
+.pbx-hover-handle {
+  position: absolute;
+  z-index: 41;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 240px;
+  padding: 3px 9px;
+  font: 600 11px/1.5 var(--pb-chrome-font);
+  color: var(--pb-chrome-text-muted);
+  background: var(--pb-chrome-surface-raised);
+  border: 1px solid var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-sm) var(--pb-chrome-radius-sm) 0 0;
+  /* JUSTIFICACIÓN (docs/52 F5): sombra de elevación decorativa, mismo
+     criterio que el resto de box-shadow de este archivo (ver `focus-visible`
+     abajo para por qué esta sombra en particular no se toca con foco). */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  cursor: grab;
+  user-select: none;
+  white-space: nowrap;
+  opacity: 0.85;
+  transform-origin: center bottom;
+  animation: pbx-drag-handle-enter 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity var(--pb-chrome-transition), background-color var(--pb-chrome-transition);
+}
+
+.pbx-hover-handle:hover {
+  opacity: 1;
+  background: var(--pb-chrome-surface-hover);
+  color: var(--pb-chrome-text);
+}
+
+.pbx-hover-handle:active,
+.pbx-hover-handle--dragging {
+  cursor: grabbing;
+}
+
+.pbx-hover-handle__grip {
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0.6;
+}
+
+.pbx-hover-handle__label {
+  overflow: hidden;
+  max-width: 200px;
+  text-overflow: ellipsis;
+}
+
+/* docs/52 F5: se DEJA como outline sólido a propósito (no se migra a
+ * `--pb-chrome-focus-ring`) — este elemento ya tiene un `box-shadow` propio
+ * (0 2px 6px rgba(0,0,0,0.18), ver arriba) que un box-shadow de foco
+ * pisaría y perdería al enfocar. Mismo criterio que `.pbx-app :focus-visible`
+ * en `reset.css`. */
+.pbx-hover-handle:focus-visible {
+  outline: 2px solid var(--pb-chrome-accent);
+  outline-offset: -2px;
+}
+
+/* @keyframes extraído a chrome/motion.css (docs/28) — ver módulo */
+
+/* Animación de SALIDA (bug real, feedback de usuario: sin `motion.div`/
+ * `AnimatePresence`, deseleccionar desmontaba la pestaña de golpe — sin
+ * ninguna transición, un salto abrupto). `SelectionHandle.tsx` mantiene el
+ * nodo montado con esta clase (en vez del estado normal) durante
+ * `EXIT_DURATION_MS`, congelando su última posición/label, y lo desmonta al
+ * terminar. Sin interactividad mientras sale (`pointer-events: none`, sin
+ * `role`/handlers) — es puro chrome de salida. Duración/curva simétricas a
+ * la de entrada, invertidas. */
+.pbx-drag-handle--exiting {
+  pointer-events: none;
+  animation: pbx-drag-handle-exit 0.14s cubic-bezier(0.4, 0, 1, 0.6) forwards;
+}
+
+/* @keyframes extraído a chrome/motion.css (docs/28) — ver módulo */
+
+/* ---- Extraído a chrome/canvas-nodes.css (docs/28) ---- */
+/* ---- Extraído a chrome/canvas-nodes.css (docs/28) ---- */
+
+/* Overlay de edición del modal — acotado al área del canvas (docs/20 §4.2).
+   La posición/tamaño (fixed sobre el rect del canvas) la fija el componente
+   inline. El modal se muestra TAL CUAL será (su propio fondo/radio/sombra); el
+   chrome de edición es una barra flotante SEPARADA (WYSIWYG). */
+.pbx-modal-editor {
+  z-index: 40;
+  display: flex; align-items: center; justify-content: center;
+}
+.pbx-modal-editor__backdrop {
+  position: absolute;
+  inset: 0;
+  /* JUSTIFICACIÓN (docs/52 F5): scrim de dimming SIEMPRE negro semi-
+     transparente — es el patrón universal de overlay/backdrop de modal
+     (oscurece lo que está detrás independientemente del tema del chrome o
+     del sitio del usuario), sin equivalente de host ni rol tokenizable:
+     un fallback claro perdería su función. */
+  background: rgba(0, 0, 0, 0.5);
+}
+/* Barra de chrome flotante: pill translúcido arriba, no envuelve el modal.
+ * JUSTIFICACIÓN (docs/52 F5): `rgba(17,24,39,0.82)` es un scrim SIEMPRE
+ * oscuro (mismo criterio que `.pbx-pick-insert-bar` más abajo) — pill
+ * flotante con blur sobre el modal en edición, legible en ambos temas del
+ * chrome porque es opaco por diseño (10.09:1 con el texto blanco encima,
+ * verificado), no depende de qué haya detrás. */
+.pbx-modal-editor__toolbar {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 2;
+  display: inline-flex; align-items: center; gap: 8px; padding: 4px 6px 4px 12px;
+  background: rgba(17, 24, 39, 0.82); color: var(--pb-chrome-text-on-accent); border-radius: var(--pb-chrome-radius-pill);
+  font: 600 12px/1.4 system-ui, -apple-system, sans-serif; backdrop-filter: blur(4px);
+}
+.pbx-modal-editor__title { white-space: nowrap; }
+/* Escenario: centra el modal, SIN fondo propio (el fondo real es el del modal).
+   `safe center` + padding-top: cuando el modal es MÁS ALTO que el área del
+   canvas, el centrado normal (`align-items:center`) empujaría su parte superior
+   por encima del área scrolleable, dejándola inalcanzable (no se puede scrollear
+   "hacia arriba" del inicio) — el modal quedaba cortado y no se podía editar
+   (feedback de usuario). Con `safe center` el navegador cae a `start` al
+   desbordar, y el padding-top deja el contenido por debajo de la barra flotante. */
+.pbx-modal-editor__stage {
+  position: relative; z-index: 1; max-height: 100%; max-width: 100%;
+  overflow: auto; display: flex; align-items: safe center; justify-content: safe center;
+  padding: 52px 16px 16px; box-sizing: border-box;
+}
+/* El modal en edición se ve como el <dialog> real: su sombra incluida.
+ * JUSTIFICACIÓN (docs/52 F5): sombra de elevación decorativa, mismo
+ * criterio que el resto de box-shadow de este archivo. */
+.pbx-modal-editor__stage .pb-modal__editor {
+  position: relative;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+/* Área de contenido del modal en edición: zona de inserción claramente visible
+   (feedback de usuario). Garantiza un alto mínimo droppable y, cuando está
+   vacía, muestra el hint punteado ocupando el espacio. Solo chrome — se apunta
+   por la clase `pbx-modal-dropzone` (el elemento también lleva la clase de
+   contenido del output, pero no se referencia aquí para no cruzar
+   namespaces, docs/22). */
+.pbx-modal-editor__stage .pbx-modal-dropzone {
+  min-height: 72px;
+}
+.pbx-modal-editor__stage .pbx-modal-dropzone--empty {
+  display: flex;
+  flex-direction: column;
+}
+.pbx-modal-editor__stage .pbx-modal-dropzone--empty .pbx-empty-hint {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Banner de modo colocación del "pick & insert" (Vía B, docs/24 §3.2 paso 1).
+ * Pill flotante centrado arriba del canvas — mismo criterio visual que
+ * `.pbx-modal-editor__toolbar` (translúcido oscuro, texto claro), pero fijo a
+ * la ventana (no hay `.pbx-canvas` con `position:relative` que lo acote).
+ * Chrome puro (P8): nunca sale al HTML exportado.
+ *
+ * `z-index: 60` (bug real, feedback de usuario): el header (`.pbx-header`)
+ * tiene `z-index: 50` con su propio contexto de apilamiento — con 42 el
+ * banner quedaba DETRÁS del header, invisible. `top: 73px` lo baja por
+ * debajo de la barra del header (57px de alto, docs/52 F2 — antes 52px)
+ * en vez de superponerse. */
+.pbx-pick-insert-bar {
+  position: fixed;
+  top: 73px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 16px;
+  /* JUSTIFICACIÓN (docs/52 F5): scrim SIEMPRE oscuro con blur — mismo
+     criterio que `.pbx-modal-editor__toolbar` (12.47:1 con el texto blanco
+     encima, verificado, opaco por diseño en ambos temas del chrome). */
+  background: rgba(17, 24, 39, 0.88);
+  color: var(--pb-chrome-text-on-accent);
+  border-radius: var(--pb-chrome-radius-pill);
+  font: 600 13px/1.4 "Inter", system-ui, -apple-system, sans-serif;
+  /* JUSTIFICACIÓN (docs/52 F5): sombra de elevación decorativa, mismo
+     criterio que el resto de box-shadow de este archivo. */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(4px);
+}
+
+.pbx-pick-insert-bar__label {
+  white-space: nowrap;
+}
+
+.pbx-pick-insert-bar__cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--pb-chrome-radius-pill);
+  /* JUSTIFICACIÓN (docs/52 F5): blanco translúcido sobre el pill SIEMPRE
+     oscuro `.pbx-pick-insert-bar` (`rgba(17,24,39,X)`, ver arriba) — mismo
+     criterio que `.pbx-reorder-arrows`/`.pbx-text-toolbar__sep`: decora un
+     botón dentro de una superficie sólida oscura, no un rol semántico
+     reutilizable ni dependiente del tema del chrome (la barra es oscura en
+     claro Y oscuro, un scrim flotante sobre el canvas). */
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--pb-chrome-text-on-accent);
+  font: inherit;
+  cursor: pointer;
+  transition: var(--pb-chrome-transition);
+  white-space: nowrap;
+}
+
+.pbx-pick-insert-bar__cancel:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+/* Mini-dropdown de confirmación (Fase 4, docs/24 §3.2 paso 3; outdent/indent
+ * Fase 4b, docs/24 §4): grupo ▲▼ (mover un paso) + ◄► (salir/entrar del
+ * contenedor) + "Confirmar", visible en la MISMA barra cuando hay un
+ * `candidate` (preview activo). */
+.pbx-pick-insert-bar__confirm-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.pbx-pick-insert-bar__step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--pb-chrome-radius-pill);
+  /* JUSTIFICACIÓN (docs/52 F5): mismo criterio que `.pbx-pick-insert-bar__cancel`
+     arriba — blanco translúcido sobre el mismo pill siempre oscuro. */
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--pb-chrome-text-on-accent);
+  cursor: pointer;
+  transition: var(--pb-chrome-transition);
+}
+
+.pbx-pick-insert-bar__step:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.pbx-pick-insert-bar__step:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pbx-pick-insert-bar__confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--pb-chrome-radius-pill);
+  background: var(--pb-chrome-drop-solid);
+  color: var(--pb-chrome-text-on-accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--pb-chrome-transition);
+  white-space: nowrap;
+}
+
+.pbx-pick-insert-bar__confirm:hover {
+  filter: brightness(1.08);
+}
+
+/* Burbuja flotante de elementos no-visibles (docs/20 §5) */
+.pbx-invisibles { position: fixed; left: 96px; bottom: 24px; z-index: 35; }
+.pbx-invisibles[data-positioned] { bottom: auto; }
+.pbx-invisibles__fab {
+  position: relative; width: 52px; height: 52px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; cursor: grab; touch-action: none;
+  color: var(--pb-chrome-text-on-accent); background: var(--pb-chrome-accent, #4f46e5);
+  /* JUSTIFICACIÓN (docs/52 F5): sombra de elevación decorativa, mismo
+     criterio que el resto de box-shadow de este archivo. */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  transition: transform var(--pb-chrome-transition);
+}
+.pbx-invisibles__fab:active { cursor: grabbing; }
+.pbx-invisibles__fab--alert { animation: pbx-invisibles-nudge 0.5s ease; }
+/* @keyframes extraído a chrome/motion.css (docs/28) — ver módulo */
+.pbx-invisibles__dot {
+  position: absolute; top: 2px; right: 2px; width: 12px; height: 12px;
+  border-radius: 50%; background: var(--pb-chrome-danger); border: 2px solid var(--pb-chrome-accent, #4f46e5);
+}
+.pbx-invisibles__menu {
+  min-width: 240px; max-height: 50dvh; overflow: auto; padding: 8px;
+  background: var(--pb-chrome-surface, #fff); color: var(--pb-chrome-text, #111);
+  border: 1px solid var(--pb-chrome-border);   border-radius: var(--pb-chrome-radius-md);
+  /* JUSTIFICACIÓN (docs/52 F5): sombra de elevación decorativa, mismo
+     criterio que el resto de box-shadow de este archivo. */
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+.pbx-invisibles__title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--pb-chrome-text-muted); padding: 4px 6px 8px; }
+.pbx-invisibles__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.pbx-invisibles__item {
+  width: 100%; display: flex; align-items: center; gap: 8px; padding: 7px 8px;
+  border: none; background: none; cursor: pointer; text-align: left; color: inherit;
+  border-radius: var(--pb-chrome-radius-sm);
+}
+.pbx-invisibles__item:hover { background: var(--pb-chrome-surface-raised); }
+.pbx-invisibles__item-icon { flex-shrink: 0; width: 15px; height: 15px; color: var(--pb-chrome-text-muted); }
+.pbx-invisibles__item-label { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pbx-invisibles__item-type { font-size: 10px; color: var(--pb-chrome-text-muted); }
+
+.pbx-node-path {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1px;
+  padding: 2px 0 6px;
+  font-size: 12px;
+}
+
+.pbx-node-path__seg {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.pbx-node-path__sep {
+  color: var(--pb-chrome-text-faint);
+  flex-shrink: 0;
+}
+
+.pbx-node-path__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 130px;
+  padding: 3px 7px;
+  border: 0;
+  background: transparent;
+  color: var(--pb-chrome-text-muted);
+  border-radius: var(--pb-chrome-radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  transition: var(--pb-chrome-transition);
+}
+
+.pbx-node-path__btn:hover {
+  background: var(--pb-chrome-surface-hover);
+  color: var(--pb-chrome-text);
+}
+
+.pbx-node-path__btn--current {
+  color: var(--pb-chrome-text);
+  font-weight: 600;
+  background: var(--pb-chrome-surface-alt);
+}
+
+.pbx-node-path__icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  color: var(--pb-chrome-accent-on-surface);
+}
+
+.pbx-node-path__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Ojo tachado de solo lectura (docs/41 §5.2/§10.8, Paso 7): el nodo actual
+ * está oculto en el breakpoint activo. Ámbar — mismo token que
+ * `VisibilityStrip` (`--pb-chrome-panel-hidden`), no el acento de marca. */
+.pbx-node-path__hidden-icon {
+  flex-shrink: 0;
+  color: var(--pb-chrome-panel-hidden);
+}
+
+.pbx-node-path__ellipsis {
+  padding: 3px 5px;
+}
+
+.pbx-node-path__collapse {
+  position: relative;
+  display: inline-flex;
+}
+
+.pbx-node-path__menu {
+  min-width: 168px;
+  max-height: 50dvh;
+  overflow: auto;
+  padding: 4px;
+  background: var(--pb-chrome-surface-raised);
+  border: 1px solid var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-md);
+  /* JUSTIFICACIÓN (docs/52 F5): sombra de elevación decorativa, mismo
+     criterio que el resto de box-shadow de este archivo. */
+  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.45);
+  z-index: 60;
+}
+
+.pbx-node-path__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--pb-chrome-text);
+  border-radius: var(--pb-chrome-radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  text-align: start;
+  transition: var(--pb-chrome-transition);
+}
+.pbx-node-path__menu-item--current {
+  color: var(--pb-chrome-accent-on-surface);
+  background: var(--pb-chrome-accent-subtle);
+}
+
+.pbx-node-path__menu-item:hover {
+  background: var(--pb-chrome-surface-hover);
+}

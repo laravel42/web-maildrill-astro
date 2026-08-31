@@ -66,3 +66,62 @@ Upstream manifests are written for publishing, not source consumption:
 `packages/**` is excluded from this repo's `tsconfig` and eslint: it is upstream
 code, checked upstream, and this repo's rules (`noUncheckedIndexedAccess`, etc.)
 are stricter than the ones it was written against.
+
+---
+
+# Vendored Builder42 (landing-page editor)
+
+`packages/builder42/` is copied from `pb-static` (`~/projects-container/projects/_laravel42/pb-static`),
+the visual landing-page/site editor — **upstream**, unlike EmailBuilder.js. This
+is docs/52 (F8) of that repo's plan: same vendoring shape as the EmailBuilder.js
+packages above (consumed from `src/` by this app's Vite, never from `dist/`),
+but a from-scratch copy rather than a third-party import — there is no
+`web-*-js` counterpart to track.
+
+## Re-importing after an upstream change
+
+Copy `src/` and `shared/` from `pb-static`, then re-apply the manifest
+adaptations below. Per pb-static's `docs/52 §4.2b`, the goal is **zero code
+patches**: any change needed to make the editor work embedded is meant to land
+in `pb-static` itself, never as a patch here. If a future sync needs one
+anyway, list it in a "Code patches" section here, same as EmailBuilder.js above.
+
+### Manifest adaptations
+
+- `main`/`types`/`exports` point at `src/index.ts`, never `dist/` — this app
+  never builds the package, its own Vite compiles the copy. `./style.css` maps
+  to `src/styles/chrome-embedded.css` (the embed-safe barrel from pb-static's
+  `docs/52 F6` — omits the standalone-only `@font-face`/`html,body,#root` rules,
+  which don't belong inside this host's page).
+- `react`/`react-dom` are `peerDependencies`, not `dependencies` — same reason
+  as EmailBuilder.js: two React instances break hooks.
+- `scripts` and build tooling (vite, vitest, typescript, `@types/*`) are
+  dropped — this app compiles the source directly.
+
+### Known cross-package conflict: `@tiptap/*` version split
+
+Both `packages/email-builder-standalone` (`@tiptap/*@^3.29.2`) and
+`packages/builder42` (`@tiptap/*@3.27.2`) depend on Tiptap, and both live in
+the same pnpm workspace — there is no isolation between the two vendored
+copies. `prosemirror-state` itself dedupes to one version (confirmed with
+`pnpm why prosemirror-state`), so the two editors don't fight over a shared
+singleton at runtime. `@tiptap/core` does **not** dedupe on its own — two
+copies coexist — which by itself is inert (`builder42` and
+`email-builder-standalone` are never mounted on the same page), but the split
+has a sharper failure mode worth documenting: `@tiptap/starter-kit@3.27.2`'s
+*own* manifest declares its internal sub-extensions (`@tiptap/extension-bold`,
+`@tiptap/extension-list`, etc.) with open `^3.x` ranges. The npm registry
+serves those against whatever is newest today (`3.30.5` at the time of
+writing), which expects a newer `@tiptap/core` than 3.27.2 actually exports
+(e.g. `getPreviousBlockSibling`) — a **`SyntaxError` at import time** inside
+`pb-static`'s own `richtext.ts`, not something `email-builder-standalone`
+triggers. This was latent in `pb-static`'s committed lockfile already; it only
+surfaced after a clean `pnpm install` re-resolved the tree from scratch.
+`pb-static`'s `pnpm-workspace.yaml` now pins every `@tiptap/starter-kit`
+sub-extension to `3.27.2` via `overrides` to keep `@tiptap/core` deduped to one
+version there. **This app's own lockfile is unaffected** (its
+`email-builder-standalone` copy pins `^3.29.2` directly, with no `starter-kit`
+in its dependency tree), but if a future sync bumps `builder42`'s Tiptap set,
+re-run `pnpm why @tiptap/core` here afterward — a real fix means bumping both
+vendored copies to the same Tiptap release, not just re-pinning.
+

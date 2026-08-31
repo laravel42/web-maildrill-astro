@@ -1,0 +1,261 @@
+/**
+ * chrome/chrome/inspector-themes.css — Inspector themes editor + presets gallery (docs/11, Fase 9.3, 9.5)
+ *
+ * Extraído del monolito chrome.css (docs/28). Se carga en el orden
+ * definido por el barrel según docs/28 §2.2.
+ *
+ * Namespace: solo `pbx-*`. Cualquier referencia a `pb-*` debe
+ * justificarse en línea (criterio docs/22 §4).
+ */
+/* ---- Themes editor (docs/11 Â§6, Fase 9.3) ------------------------------- */
+.pbx-themes__hint {
+  font-size: 12px;
+  color: var(--pb-chrome-text-muted);
+  margin: 4px 0 8px;
+}
+
+
+/* ---- GalerÃ­a de presets (docs/11 Â§9.5) ---------------------------------- */
+.pbx-theme-gallery {
+  margin: 4px 0 12px;
+}
+
+.pbx-theme-gallery__label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pb-chrome-text-muted);
+  margin-bottom: 6px;
+}
+
+.pbx-theme-gallery__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 6px;
+}
+
+.pbx-theme-gallery__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-md);
+  background: var(--pb-chrome-surface-raised);
+  cursor: pointer;
+  text-align: center;
+}
+
+.pbx-theme-gallery__card:hover {
+  border-color: var(--pb-chrome-accent);
+}
+
+.pbx-theme-gallery__card--applied {
+  border-color: var(--pb-chrome-accent);
+  box-shadow: 0 0 0 1px var(--pb-chrome-accent);
+}
+
+.pbx-theme-gallery__check {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--pb-chrome-accent);
+  color: var(--pb-chrome-text-on-accent);
+  box-shadow: 0 0 0 2px var(--pb-chrome-surface-raised);
+}
+
+.pbx-theme-gallery__swatches {
+  display: flex;
+  height: 24px;
+  border-radius: var(--pb-chrome-radius-xs);
+  overflow: hidden;
+  border: 1px solid var(--pb-chrome-border);
+}
+
+.pbx-theme-gallery__swatch {
+  flex: 1;
+}
+
+.pbx-theme-gallery__name {
+  font-size: 11px;
+  color: var(--pb-chrome-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pbx-themes__preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.pbx-themes__preview-label {
+  font-size: 12px;
+  color: var(--pb-chrome-text-muted);
+  flex-shrink: 0;
+}
+
+.pbx-themes__list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pbx-themes__item {
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-sm);
+}
+
+.pbx-themes__item--active {
+  border-color: var(--pb-chrome-accent);
+}
+
+.pbx-themes__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+}
+
+.pbx-themes__select {
+  flex: 1;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--pb-chrome-text);
+  padding: 4px 6px;
+}
+
+.pbx-themes__new {
+  border: 1px dashed var(--pb-chrome-text-faint);
+  background: transparent;
+  border-radius: var(--pb-chrome-radius-sm);
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--pb-chrome-text);
+  width: 100%;
+}
+
+.pbx-themes__editing {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--pb-chrome-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pbx-themes__editing-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pb-chrome-text);
+}
+
+.pbx-themes__field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-themes__field > span {
+  flex: 0 0 90px;
+}
+
+.pbx-themes__tokens {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pbx-themes__tokens-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-theme-token {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pbx-theme-token__key {
+  flex: 0 0 72px;
+  font-size: 12px;
+  color: var(--pb-chrome-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pbx-theme-token--overridden .pbx-theme-token__key {
+  font-weight: 600;
+  color: var(--pb-chrome-accent-on-surface);
+}
+
+.pbx-themes__contrast {
+  font-size: 12px;
+  margin: 4px 0 0;
+  padding: 6px 8px;
+  border-radius: var(--pb-chrome-radius-xs);
+  background: var(--pb-chrome-danger-subtle);
+  color: var(--pb-chrome-danger);
+}
+
+.pbx-themes__contrast--ok {
+  background: var(--pb-chrome-success-subtle);
+  color: var(--pb-chrome-success);
+}
+
+.pbx-page-manager__route {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pbx-page-manager__route-preview {
+  font-family: var(--pb-chrome-font-mono);
+  font-size: 11px;
+  /* --pb-chrome-text-muted sobre --pb-chrome-surface-alt mide 4.34:1 en
+     claro — bajo el piso 4.5:1 AA a este font-size (11px, no califica como
+     texto grande). --pb-chrome-text sí cumple sobre este fondo (docs/46 H4). */
+  color: var(--pb-chrome-text);
+  background: var(--pb-chrome-surface-alt);
+  padding: 2px 6px;
+  border-radius: var(--pb-chrome-radius-xs);
+  white-space: nowrap;
+}
+
+.pbx-page-manager__new {
+  width: 100%;
+  border: 1px dashed var(--pb-chrome-text-faint);
+  background: transparent;
+  color: var(--pb-chrome-text);
+  border-radius: var(--pb-chrome-radius-sm);
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.pbx-page-manager__new:hover {
+  background: var(--pb-chrome-surface-alt);
+}
+

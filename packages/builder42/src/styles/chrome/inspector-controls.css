@@ -1,0 +1,1380 @@
+/**
+ * chrome/chrome/inspector-controls.css — Inspector controls (base + row/stacked + searchable + token picker + pill + switch + locale quick + header dropdowns)
+ *
+ * Extraído del monolito chrome.css (docs/28). Se carga en el orden
+ * definido por el barrel según docs/28 §2.2.
+ *
+ * Namespace: solo `pbx-*`. Cualquier referencia a `pb-*` debe
+ * justificarse en línea (criterio docs/22 §4).
+ */
+/* ---- Controles editables del Inspector (Fase 2) ------------------------- */
+.pbx-bp-chip {
+  font-family: var(--pb-chrome-font-mono);
+  font-size: 11px;
+  background: var(--pb-chrome-accent);
+  color: var(--pb-chrome-text-on-accent);
+  padding: 1px 6px;
+  border-radius: var(--pb-chrome-radius-pill);
+}
+
+.pbx-control__kind {
+  font-size: var(--pb-chrome-font-size-micro);
+  /* --pb-chrome-text-muted sobre --pb-chrome-surface-alt es el H4 de
+     docs/46 (4.34:1, bajo 4.5:1) — mismo piso que .pbx-inspector-tab__count
+     / .pbx-page-manager__route-preview. --pb-chrome-text sí cumple
+     (docs/46 contrast guard, Fase 4). */
+  color: var(--pb-chrome-text);
+  background: var(--pb-chrome-surface-alt);
+  padding: 1px 5px;
+  border-radius: var(--pb-chrome-radius-pill);
+  border: 1px solid var(--pb-chrome-border);
+}
+
+.pbx-badge {
+  font-size: var(--pb-chrome-font-size-micro);
+  padding: 1px 6px;
+  border-radius: var(--pb-chrome-radius-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pbx-badge--override {
+  background: var(--pb-chrome-info-subtle);
+  color: var(--pb-chrome-info);
+}
+
+.pbx-badge--inherited {
+  background: var(--pb-chrome-surface-alt);
+  /* --pb-chrome-text-muted sobre --pb-chrome-surface-alt es el H4 de
+     docs/46 (4.34:1, bajo 4.5:1). --pb-chrome-text sí cumple (docs/46
+     contrast guard, Fase 4). */
+  color: var(--pb-chrome-text);
+  border: 1px solid var(--pb-chrome-border);
+}
+
+.pbx-badge--untranslated {
+  background: var(--pb-chrome-warning-subtle);
+  color: var(--pb-chrome-warning);
+}
+
+
+/* ---- Content Locale Select (c42) â€” docs/12 Â§B.6 -------------------------- */
+.pbx-content-locale {
+  position: relative;
+  margin-left: 8px;
+}
+
+.pbx-content-locale__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--pb-chrome-bg-hover);
+  background: var(--pb-chrome-bg-alt);
+  color: var(--pb-chrome-text-on-dark);
+  padding: 4px 10px;
+  border-radius: var(--pb-chrome-radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  height: 30px;
+  min-width: 80px;
+  font-family: inherit;
+}
+
+.pbx-content-locale__trigger:hover {
+  background: var(--pb-chrome-bg-hover);
+}
+
+.pbx-content-locale__caret {
+  font-size: var(--pb-chrome-font-size-micro);
+  opacity: 0.6;
+}
+
+.pbx-content-locale__listbox {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--pb-chrome-bg-alt);
+  border: 1px solid var(--pb-chrome-bg-hover);
+  border-radius: var(--pb-chrome-radius-md);
+  min-width: 110px;
+  z-index: 100;
+  /* JUSTIFICACIÓN (docs/52 F5): sombra de elevación de dropdown/popover —
+     decorativa, sin rol semántico ni par texto/fondo sujeto a AA (WCAG
+     1.4.11 no aplica a box-shadow). Sin equivalente de host para "sombra de
+     popover sobre banda oscura"; mismo criterio que el resto de shadows de
+     este archivo (líneas de abajo) y de `header.css`/`canvas-nodes.css`. */
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+
+.pbx-content-locale__listbox[hidden] {
+  display: none;
+}
+
+.pbx-content-locale__option {
+  padding: 7px 12px;
+  color: var(--pb-chrome-text-on-dark);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pbx-content-locale__option:hover,
+.pbx-content-locale__option[data-active] {
+  background: var(--pb-chrome-bg-hover);
+}
+
+.pbx-content-locale__option[aria-selected="true"] {
+  background: var(--pb-chrome-accent);
+  color: var(--pb-chrome-text-on-accent);
+}
+
+.pbx-control__reset {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: var(--pb-chrome-text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 2px;
+  transition: color var(--pb-chrome-transition);
+}
+
+.pbx-control__reset:hover {
+  color: var(--pb-chrome-danger);
+}
+
+.pbx-control__input {
+  width: 100%;
+  padding: 6px 9px;
+  border: 1px solid var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--pb-chrome-surface-raised);
+  color: var(--pb-chrome-text);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.pbx-control__input:focus {
+  outline: none;
+  border-color: var(--pb-chrome-accent);
+  /* docs/52 F5: antes `rgba(79,70,229,0.12)` (el hex fijo del indigo pre-D2)
+     — con la capa puente de tokens (D2), el acento puede cambiar si el host
+     remapea `--accent`; un rgb literal no lo seguiría. `color-mix` con el
+     token sí, mismo patrón ya establecido en este archivo (`.pbx-token-pill`,
+     `.pbx-icon-btn--active`, ver más abajo). */
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pb-chrome-accent) 12%, transparent);
+}
+
+.pbx-control__input:focus-visible {
+  outline: none;
+}
+
+/* Nota informativa dentro de un pbx-control (docs/12 Â§B.11): usada por el
+ * campo richtext para indicar que la ediciÃ³n ahora ocurre en el canvas (ya
+ * no hay <textarea> aquÃ­). */
+.pbx-control__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--pb-chrome-text-muted);
+  font-style: italic;
+}
+
+
+/* ---- Header dropdown menus (view mode / viewport) ----------------------- */
+.pbx-header__view-menu,
+.pbx-header__viewport-menu {
+  min-width: 150px;
+  padding: 4px;
+  background: var(--pb-chrome-bg-alt);
+  border: 1px solid var(--pb-chrome-bg-hover);
+  border-radius: var(--pb-chrome-radius-md);
+  /* JUSTIFICACIÓN (docs/52 F5): sombra de elevación decorativa, ver nota en
+     `.pbx-content-locale__listbox` arriba — mismo criterio para todos los
+     box-shadow de este archivo. */
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.pbx-header__view-item,
+.pbx-header__viewport-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--pb-chrome-text-on-dark);
+  font-size: 13px;
+  font-family: inherit;
+  border-radius: var(--pb-chrome-radius-sm);
+  cursor: pointer;
+}
+
+.pbx-header__view-item:hover,
+.pbx-header__viewport-item:hover {
+  background: var(--pb-chrome-bg-hover);
+}
+
+/* Foco por teclado (WCAG 2.4.7) — menú sobre superficie oscura del header
+ * (`--pb-chrome-bg-alt`), ver nota en `.pbx-history__btn` (header.css). */
+.pbx-header__view-item:focus-visible,
+.pbx-header__viewport-item:focus-visible {
+  outline: 2px solid var(--pb-chrome-accent-light);
+  outline-offset: -2px;
+}
+
+.pbx-header__view-item--active,
+.pbx-header__viewport-item--active {
+  color: var(--pb-chrome-accent-light);
+}
+.pbx-layers__title {
+  padding: 2px 6px 6px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--pb-chrome-border);
+  font: 700 10px/1.4 var(--pb-chrome-font);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--pb-chrome-text-muted);
+}
+.pbx-layers__tree,
+.pbx-layers__group {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pbx-layers__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 26px;
+  padding: 2px 6px 2px 4px;
+  border-radius: var(--pb-chrome-radius-xs);
+  border-inline-start: 2px solid transparent;
+  transition: background var(--pb-chrome-transition);
+}
+.pbx-layers__row:hover {
+  background: var(--pb-chrome-surface-alt);
+}
+.pbx-layers__row--selected {
+  background: var(--pb-chrome-accent-subtle);
+  border-inline-start-color: var(--pb-chrome-accent);
+}
+.pbx-layers__row--hidden .pbx-layers__label {
+  color: var(--pb-chrome-text-faint);
+  font-style: italic;
+}
+.pbx-layers__row--hidden .pbx-layers__icon {
+  opacity: 0.4;
+}
+.pbx-layers__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--pb-chrome-text-faint);
+  flex: 0 0 auto;
+}
+.pbx-layers__toggle:hover {
+  color: var(--pb-chrome-text-muted);
+}
+.pbx-layers__toggle--leaf {
+  cursor: default;
+}
+.pbx-layers__chevron {
+  font-size: var(--pb-chrome-font-size-micro);
+  line-height: 1;
+  transition: transform 0.12s ease;
+}
+[data-c42-tree-item][aria-expanded="true"] > .pbx-layers__row .pbx-layers__chevron {
+  transform: rotate(90deg);
+}
+.pbx-layers__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--pb-chrome-text-muted);
+}
+.pbx-layers__label {
+  flex: 1 1 auto;
+  text-align: start;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--pb-chrome-text);
+  padding: 2px 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pbx-layers__badge {
+  flex: 0 0 auto;
+  font-size: var(--pb-chrome-font-size-micro);
+  font-weight: var(--pb-chrome-font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  border-radius: var(--pb-chrome-radius-pill);
+  background: var(--pb-chrome-warning-subtle);
+  color: var(--pb-chrome-warning);
+}
+/* El botón usa el primitivo .pbx-icon-btn (ghost); aquí solo la visibilidad
+   por hover de la fila (aparece al pasar el ratón / seleccionada / oculta). */
+.pbx-layers__eye {
+  opacity: 0;
+}
+.pbx-layers__row:hover .pbx-layers__eye,
+.pbx-layers__row--selected .pbx-layers__eye,
+.pbx-layers__row--hidden .pbx-layers__eye {
+  opacity: 1;
+}
+.pbx-layers__empty {
+  padding: 8px;
+  color: var(--pb-chrome-text-muted);
+  font-size: 13px;
+}
+
+/* ---- Layout del control: row (label + control en una fila) vs stacked ---- */
+
+.pbx-control--row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--pb-chrome-surface-alt);
+}
+
+.pbx-control--row .pbx-control__header {
+  flex: 0 0 auto;
+  width: 44%;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.pbx-control--row .pbx-control__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pbx-control--row .pbx-control__input {
+  width: 100%;
+  max-width: 140px;
+}
+
+.pbx-control--row .pbx-control__input--select {
+  max-width: 130px;
+}
+
+/* El wrapper de searchable-select envuelve su <input>, por lo que las reglas
+   de tamaño de arriba (que apuntan a .pbx-control__input directo) no lo
+   alcanzan como flex item — se repiten aquí sobre el wrapper mismo. */
+.pbx-control--row .pbx-searchable-select {
+  width: 100%;
+  max-width: 140px;
+}
+
+.pbx-control--stacked {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--pb-chrome-surface-alt);
+}
+
+.pbx-control--stacked .pbx-control__header {
+  margin-bottom: 5px;
+}
+
+.pbx-control--stacked .pbx-control__body {
+  width: 100%;
+}
+
+.pbx-control--stacked .pbx-control__input {
+  width: 100%;
+}
+
+.pbx-control--stacked .pbx-searchable-select {
+  width: 100%;
+}
+
+/* Último control sin borde inferior */
+.pbx-control--row:last-child,
+.pbx-control--stacked:last-child {
+  border-bottom: 0;
+}
+
+
+/* ---- Searchable select (combobox con filtro en vivo) ---------------------
+   Usado hoy por el campo "Icono" (1994+ iconos lucide); pensado para
+   catálogos grandes donde un <select> nativo es inutilizable. */
+
+.pbx-searchable-select {
+  position: relative;
+  min-width: 0;
+}
+
+.pbx-searchable-select__control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pbx-searchable-select__input {
+  padding-right: 24px;
+}
+
+.pbx-searchable-select__preview {
+  position: absolute;
+  left: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-searchable-select__preview-empty {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--pb-chrome-radius-xs);
+  border: 1px dashed var(--pb-chrome-border-strong);
+}
+
+/* Cuando hay preview, el input deja espacio a la izquierda para el glifo. */
+.pbx-searchable-select__control--with-preview .pbx-searchable-select__input {
+  padding-left: 27px;
+}
+
+.pbx-searchable-select__caret {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--pb-chrome-text-muted);
+  pointer-events: none;
+}
+
+.pbx-searchable-select__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--pb-chrome-surface-raised);
+  border: 1px solid var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-md);
+  /* JUSTIFICACIÓN (docs/52 F5): sombra de elevación decorativa, mismo
+     criterio que `.pbx-content-locale__listbox` arriba. */
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+}
+
+.pbx-searchable-select__option {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 8px;
+  border-radius: var(--pb-chrome-radius-xs);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--pb-chrome-text);
+  cursor: pointer;
+}
+
+.pbx-searchable-select__option:hover {
+  background: var(--pb-chrome-surface-hover);
+}
+
+.pbx-searchable-select__option--active {
+  background: var(--pb-chrome-accent);
+  color: var(--pb-chrome-text-on-accent);
+}
+
+.pbx-searchable-select__option-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.pbx-searchable-select__option-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pbx-searchable-select__empty,
+.pbx-searchable-select__more {
+  padding: 8px;
+  font-size: 12px;
+  color: var(--pb-chrome-text-muted);
+  font-style: italic;
+  cursor: default;
+}
+
+
+/* ---- Header del control: label + badges + botones iconos ----------------- */
+
+.pbx-control__header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.pbx-control__label {
+  font-size: var(--pb-chrome-font-size-label);
+  font-weight: var(--pb-chrome-font-weight-semibold);
+  color: var(--pb-chrome-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Dot de estado del campo de estilo */
+.pbx-field-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--pb-chrome-radius-pill);
+  flex-shrink: 0;
+}
+
+.pbx-field-dot--override {
+  background: var(--pb-chrome-accent);
+}
+
+.pbx-field-dot--inherited {
+  background: var(--pb-chrome-border-strong);
+}
+
+/* ==========================================================================
+   IconButton — primitivo compartido de botón-icono (Fase 19.a, docs/19)
+   Unifica tamaño/radio/transición e intents (ghost/danger/accent) + estado
+   activo. Toda la lógica de color de hover vive aquí una sola vez.
+   ========================================================================== */
+.pbx-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: var(--pb-chrome-radius-sm);
+  color: var(--pb-chrome-text-muted);
+  cursor: pointer;
+  line-height: 1;
+  transition: var(--pb-chrome-transition), transform var(--pb-chrome-transition);
+}
+.pbx-icon-btn:hover:not(:disabled) {
+  transform: scale(1.12);
+}
+.pbx-icon-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+.pbx-icon-btn--sm {
+  /* 24px es el piso de WCAG 2.5.8 (Target Size Minimum, AA); 22px quedaba
+     2px por debajo. */
+  width: 24px;
+  height: 24px;
+}
+.pbx-icon-btn--md {
+  width: 26px;
+  height: 26px;
+}
+.pbx-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Foco por teclado (WCAG 2.4.7) — primitivo compartido en superficies claras
+ * (Inspector, sidebar, formularios): anillo de 3px estilo Maildrill (docs/52
+ * F5, antes outline sólido de 2px — mismo criterio de migración que F2 en
+ * header.css). */
+.pbx-icon-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--pb-chrome-focus-ring);
+}
+
+/* intent: ghost (neutro) */
+.pbx-icon-btn--ghost:hover:not(:disabled) {
+  background: var(--pb-chrome-surface-hover);
+  color: var(--pb-chrome-text);
+}
+/* intent: danger */
+.pbx-icon-btn--danger:hover:not(:disabled) {
+  background: var(--pb-chrome-danger-subtle);
+  color: var(--pb-chrome-danger);
+}
+/* intent: accent */
+.pbx-icon-btn--accent:hover:not(:disabled) {
+  background: var(--pb-chrome-accent-subtle);
+  color: var(--pb-chrome-accent-on-surface);
+}
+/* estado activo (toggle encendido) */
+.pbx-icon-btn--active {
+  background: var(--pb-chrome-accent-subtle);
+  color: var(--pb-chrome-accent-on-surface);
+}
+
+/* Badges de indicador (no interactivos) — home de página / tema por defecto */
+.pbx-page-manager__home-badge,
+.pbx-themes__default-badge {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  color: var(--pb-chrome-accent-on-surface);
+}
+.pbx-page-manager__home-badge {
+  margin-right: 4px;
+}
+.pbx-themes__default-badge {
+  margin-left: 4px;
+}
+
+
+/* ---- Token picker inline (abierto) --------------------------------------- */
+
+.pbx-control__token-picker {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+}
+
+.pbx-control__token-picker .pbx-control__input--token-pick {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Swatch de color en el picker (preview del color del token) */
+.pbx-token-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--pb-chrome-radius-xs);
+  border: 1px solid var(--pb-chrome-border-strong);
+  flex-shrink: 0;
+  display: block;
+}
+
+
+/* ---- Token pill: muestra el token vinculado activo ----------------------- */
+
+.pbx-token-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--pb-chrome-accent-subtle);
+  border: 1px solid color-mix(in srgb, var(--pb-chrome-accent) 25%, transparent);
+  border-radius: var(--pb-chrome-radius-sm);
+  padding: 3px 7px 3px 5px;
+  font-size: 11px;
+  color: var(--pb-chrome-accent-on-surface);
+  max-width: 100%;
+  min-width: 0;
+}
+
+.pbx-token-pill--broken {
+  background: var(--pb-chrome-danger-subtle);
+  border-color: color-mix(in srgb, var(--pb-chrome-danger) 30%, transparent);
+  color: var(--pb-chrome-danger);
+}
+
+.pbx-token-pill__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--pb-chrome-radius-xs);
+  border: 1px solid color-mix(in srgb, var(--pb-chrome-accent) 30%, transparent);
+  flex-shrink: 0;
+  display: block;
+}
+
+.pbx-token-pill__broken-icon {
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.pbx-token-pill__path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--pb-chrome-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+.pbx-token-pill__unlink {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+  border-radius: var(--pb-chrome-radius-xs);
+  transition: opacity var(--pb-chrome-transition);
+}
+.pbx-token-pill__unlink:hover {
+  opacity: 1;
+}
+
+/* Color de campo en modo picker (swatch read-only, retrocompat) */
+.pbx-control__swatch--ro {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--pb-chrome-radius-xs);
+  border: 1px solid var(--pb-chrome-border-strong);
+  flex: 0 0 auto;
+}
+
+/* Color row (swatch nativo + input texto libre) */
+.pbx-control__color-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.pbx-control__color-row .pbx-control__input {
+  flex: 1;
+}
+
+
+/* ---- Acordeón de grupos de estilo --------------------------------------- */
+
+.pbx-style-groups {
+  margin-top: 4px;
+}
+
+.pbx-style-group {
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-md);
+  margin-bottom: 6px;
+}
+
+.pbx-style-group__trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  background: var(--pb-chrome-surface-alt);
+  color: var(--pb-chrome-text);
+  font-size: var(--pb-chrome-font-size-label);
+  font-weight: var(--pb-chrome-font-weight-semibold);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--pb-chrome-transition);
+  /* Cuando está colapsado, el trigger ocupa todo el acordeón — redondear todas las esquinas */
+  border-radius: var(--pb-chrome-radius-md);
+}
+
+.pbx-style-group--open .pbx-style-group__trigger {
+  background: var(--pb-chrome-surface-alt);
+  border-bottom: 1px solid var(--pb-chrome-border);
+  /* Abierto: solo redondear las esquinas superiores */
+  border-radius: var(--pb-chrome-radius-sm) var(--pb-chrome-radius-sm) 0 0;
+}
+
+.pbx-style-group__trigger:hover {
+  background: var(--pb-chrome-surface-hover);
+}
+
+.pbx-style-group__icon {
+  color: var(--pb-chrome-text-muted);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.pbx-style-group__name {
+  flex: 1;
+  text-transform: capitalize;
+  letter-spacing: 0.01em;
+}
+
+.pbx-style-group__count {
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--pb-chrome-accent-subtle);
+  color: var(--pb-chrome-accent-on-surface);
+  border: 1px solid color-mix(in srgb, var(--pb-chrome-accent) 25%, transparent);
+  padding: 1px 6px;
+  border-radius: var(--pb-chrome-radius-pill);
+  flex-shrink: 0;
+}
+
+.pbx-style-group__chevron {
+  font-size: 10px;
+  color: var(--pb-chrome-text-faint);
+  flex-shrink: 0;
+  transition: transform var(--pb-chrome-transition);
+}
+
+.pbx-style-group--open .pbx-style-group__chevron {
+  transform: rotate(180deg);
+}
+
+.pbx-style-group__body {
+  padding: 4px 10px 8px;
+  background: var(--pb-chrome-surface-raised);
+  /* overflow visible para que los dropdowns absolutos no se corten */
+  overflow: visible;
+  border-radius: 0 0 var(--pb-chrome-radius-sm) var(--pb-chrome-radius-sm);
+}
+
+
+/* ---- Switch visual (toggle) --------------------------------------------- */
+
+.pbx-switch {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 7px;
+  user-select: none;
+  padding-bottom: 0.5rem;
+}
+
+.pbx-switch__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.pbx-switch__track {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  background: var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-pill);
+  transition: background var(--pb-chrome-transition);
+  flex-shrink: 0;
+}
+
+.pbx-switch__input:checked + .pbx-switch__track {
+  background: var(--pb-chrome-accent);
+}
+
+.pbx-switch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: var(--pb-chrome-surface-raised);
+  border-radius: var(--pb-chrome-radius-pill);
+  /* JUSTIFICACIÓN (docs/52 F5): sombra de elevación decorativa del thumb del
+     switch, mismo criterio que `.pbx-content-locale__listbox` arriba. */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: transform var(--pb-chrome-transition);
+}
+
+.pbx-switch__input:checked + .pbx-switch__track .pbx-switch__thumb {
+  transform: translateX(14px);
+}
+
+.pbx-switch__input:focus-visible {
+  outline: none;
+}
+
+.pbx-switch__input:focus-visible + .pbx-switch__track {
+  outline: none;
+  box-shadow: var(--pb-chrome-focus-ring);
+}
+
+.pbx-switch__label {
+  font-size: 13px;
+  color: var(--pb-chrome-text);
+}
+
+
+/* ---- Acceso rápido de idioma (unificado, Fase 19.d) ---------------------- */
+/* Representación única en PropField y SeoSettings: Globe + código de locale,
+   tokenizado, sin borde monospace. El estado activo usa la capa de acento. */
+.pbx-locale-quick-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.pbx-locale-quick {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border: 0;
+  background: transparent;
+  border-radius: var(--pb-chrome-radius-sm);
+  color: var(--pb-chrome-text-muted);
+  cursor: pointer;
+  transition: var(--pb-chrome-transition);
+}
+.pbx-locale-quick:hover {
+  background: var(--pb-chrome-surface-hover);
+  color: var(--pb-chrome-text);
+}
+.pbx-locale-quick--active {
+  background: var(--pb-chrome-accent-subtle);
+  color: var(--pb-chrome-accent-on-surface);
+}
+.pbx-locale-quick__code {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+/* Selector inline que abre el botón: pequeño popover bajo el control. */
+/* Menú desplegable (c42 Dropdown) del acceso rápido de idioma (19.g). */
+.pbx-locale-quick__menu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 40;
+  min-width: 128px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  background: var(--pb-chrome-surface-raised);
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-md);
+  /* JUSTIFICACIÓN (docs/52 F5): sombra de elevación decorativa, mismo
+     criterio que `.pbx-content-locale__listbox` arriba. */
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+}
+.pbx-locale-quick__menu[hidden] {
+  display: none;
+}
+.pbx-locale-quick__opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  background: transparent;
+  border-radius: var(--pb-chrome-radius-sm);
+  color: var(--pb-chrome-text);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: var(--pb-chrome-transition);
+}
+.pbx-locale-quick__opt:hover {
+  background: var(--pb-chrome-surface-hover);
+}
+.pbx-locale-quick__opt--active {
+  color: var(--pb-chrome-accent-on-surface);
+}
+.pbx-locale-quick__opt-code {
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.pbx-locale-quick__opt-tag {
+  font-size: 10px;
+  color: var(--pb-chrome-text-faint);
+  text-transform: lowercase;
+}
+.pbx-locale-quick__opt-check {
+  margin-left: auto;
+  color: var(--pb-chrome-accent-on-surface);
+}
+
+.pbx-control__swatch {
+  width: 34px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-sm);
+  background: var(--pb-chrome-surface-raised);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+/* --- Control de fuente de imagen (Inspector, docs/07 Â§4) --------------- */
+.pbx-imgsrc {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pbx-imgsrc__asset {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pbx-imgsrc__preview {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border: 1px solid var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-xs);
+  background: var(--pb-chrome-surface-alt);
+}
+
+.pbx-imgsrc__name {
+  font-size: 12px;
+  font-family: var(--pb-chrome-font-mono);
+  color: var(--pb-chrome-text);
+  word-break: break-all;
+}
+
+.pbx-imgsrc__actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* ---------------------------------------------------------------------------
+ * OptionsListControl â€” editor de opciones label/value (docs/14 Â§1.4)
+ * --------------------------------------------------------------------------- */
+
+.pbx-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pbx-options-list--empty {
+  align-items: center;
+  padding: 16px 0;
+}
+
+.pbx-options-list__empty-msg {
+  color: var(--pb-chrome-text-muted);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.pbx-options-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 4px;
+}
+
+.pbx-options-list__title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--pb-chrome-text-muted);
+  letter-spacing: 0.03em;
+}
+
+.pbx-options-list__count {
+  font-size: 11px;
+  color: var(--pb-chrome-text-faint);
+}
+
+.pbx-options-list__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pbx-options-list__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--pb-chrome-surface);
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-sm);
+  transition: box-shadow var(--pb-chrome-transition), border-color var(--pb-chrome-transition);
+}
+
+.pbx-options-list__row:hover {
+  border-color: var(--pb-chrome-border-strong);
+}
+
+.pbx-options-list__row--error {
+  border-color: var(--pb-chrome-danger);
+  background: var(--pb-chrome-danger-subtle);
+}
+
+.pbx-options-list__handle {
+  cursor: grab;
+  user-select: none;
+  font-size: 14px;
+  line-height: 30px;
+  color: var(--pb-chrome-text-faint);
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+}
+
+.pbx-options-list__handle:active {
+  cursor: grabbing;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-options-list__fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pbx-options-list__field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pbx-options-list__label-input {
+  font-size: 13px;
+}
+
+.pbx-options-list__value-input {
+  font-size: 12px;
+  font-family: var(--pb-chrome-font-mono);
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-control__input--error {
+  border-color: var(--pb-chrome-danger) !important;
+}
+
+.pbx-control__input--error:focus {
+  /* docs/52 F5: antes `rgba(239,68,68,0.15)` (red-500, un tono DISTINTO del
+     `--pb-chrome-danger` que ya pinta el borde de este mismo estado, `#b91c1c`
+     red-700 — inconsistencia preexistente). `color-mix` unifica el matiz con
+     el borde y sigue al token si el host remapea `--danger-strong`. */
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--pb-chrome-danger) 15%, transparent);
+}
+
+.pbx-options-list__error-text {
+  font-size: 11px;
+  color: var(--pb-chrome-danger);
+  padding-left: 2px;
+}
+
+/* ==========================================================================
+   NumericUnitInput — pill numérico con stepper y selector de unidad
+   (Inspector, Fase 11.b)
+   ========================================================================== */
+
+/* Contenedor principal: mismo radio que el resto de controles del inspector */
+.pbx-numeric-input {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  border: 1px solid var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-sm);
+  background: var(--pb-chrome-surface-raised);
+  overflow: visible;
+  min-width: 80px;
+  width: 100%;
+  max-width: 80px;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.pbx-numeric-input:focus-within {
+  border-color: var(--pb-chrome-accent);
+  /* docs/52 F5: mismo fix que `.pbx-control__input:focus` — color-mix en vez
+     de rgb literal, para seguir al acento si el host lo remapea (D2). */
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pb-chrome-accent) 12%, transparent);
+}
+
+.pbx-numeric-input :focus-visible {
+  outline: none;
+}
+
+/* Variante texto libre (fallback para "auto", "none", shorthands) */
+.pbx-numeric-input--text {
+  border-radius: var(--pb-chrome-radius-sm);
+}
+
+/* T4: sin unidad ni stepper a la derecha (variante texto), el valor va alineado
+   a `end` y quedaría pegado al borde — se reserva padding-right para separarlo. */
+.pbx-numeric-input--text .pbx-numeric-input__num {
+  padding-right: 12px;
+}
+
+/* Número editable */
+.pbx-numeric-input__num {
+  flex: 1;
+  min-width: 0;
+  width: 36px;
+  padding: 0 0 0 12px;
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--pb-chrome-text);
+  line-height: 1;
+  outline: none;
+  font-family: inherit;
+  -moz-appearance: textfield;
+  text-align: end;
+  /* Quitar flechas nativas de input[type=number] */
+}
+.pbx-numeric-input__num::-webkit-inner-spin-button,
+.pbx-numeric-input__num::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+
+/* Unidad: botón-trigger del dropdown */
+.pbx-numeric-input__unit {
+  display: inline-flex;
+  align-items: end;
+  padding: 0px;
+  padding-bottom: 7px;
+  border: 0;
+  background: transparent;
+  font-size: 10px;
+  color: var(--pb-chrome-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  height: 100%;
+  border-radius: 0;
+  transition: color var(--pb-chrome-transition);
+  font-family: inherit;
+}
+
+.pbx-numeric-input__unit:hover,
+.pbx-numeric-input__unit--open {
+  color: var(--pb-chrome-accent-on-surface);
+}
+
+/* Stepper: columna de flechas ▲▼ */
+.pbx-numeric-input__stepper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0;
+  gap: 0;
+}
+
+.pbx-numeric-input__step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 14px;
+  border: 0;
+  background: transparent;
+  /* docs/52 F5 — bug real de dark mode: `#6366f1` (indigo-500) era un
+     literal fijo sin override en dark.css, distinto además de
+     `--pb-chrome-accent` (#4f46e5/indigo-600). `--pb-chrome-accent-on-surface`
+     es el token existente para exactamente este rol ("icono/texto de acento
+     sobre una superficie", no un fondo sólido) — 6.03:1 en claro, 8.72:1 en
+     oscuro tras aclararse a `--accent-text` del host (F1/F4); el literal
+     fijo se quedaba en 2.52:1 en oscuro si se le hubiera dado el mismo
+     tratamiento (verificado, no estimado). */
+  color: var(--pb-chrome-accent-on-surface);
+  cursor: pointer;
+  padding: 0;
+  border-radius: var(--pb-chrome-radius-xs);
+  transition: background var(--pb-chrome-transition), color var(--pb-chrome-transition);
+  line-height: 1;
+}
+
+.pbx-numeric-input__step:hover {
+  /* --pb-chrome-accent-subtle: mismo rol "tinte de fondo del acento en
+     hover" ya usado en sidebar/badges (docs/52 F5, antes rgba(99,102,241,0.1)
+     fijo, sin dark override). */
+  background: var(--pb-chrome-accent-subtle);
+  color: var(--pb-chrome-accent-on-surface);
+}
+
+.pbx-numeric-input__step:active {
+  background: color-mix(in srgb, var(--pb-chrome-accent) 20%, var(--pb-chrome-accent-subtle));
+}
+
+/* Dropdown de unidades */
+.pbx-numeric-input__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: auto;
+  z-index: 200;
+  background: var(--pb-chrome-surface-raised);
+  border: 1px solid var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-md);
+  /* JUSTIFICACIÓN (docs/52 F5): sombra de elevación decorativa, mismo
+     criterio que `.pbx-content-locale__listbox` (arriba en este archivo). */
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+  min-width: 72px;
+  overflow: hidden;
+  padding: 0;
+}
+
+/* Cada opción de unidad */
+.pbx-numeric-input__option {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--pb-chrome-text);
+  cursor: pointer;
+  text-align: left;
+  border-radius: 0;
+  transition: background 0.08s ease;
+  white-space: nowrap;
+}
+
+.pbx-numeric-input__option:hover,
+.pbx-numeric-input__option--highlighted {
+  /* docs/52 F5: antes `#f3f4f6` (slate-100) fijo, sin dark override — mismo
+     rol "hover de fila de opción" que `--pb-chrome-surface-hover` ya cubre
+     en el resto del archivo (`.pbx-searchable-select__option:hover`,
+     `.pbx-locale-quick:hover`, etc.). */
+  background: var(--pb-chrome-surface-hover);
+}
+
+.pbx-numeric-input__option--active {
+  color: var(--pb-chrome-accent-on-surface);
+  font-weight: 600;
+  background: var(--pb-chrome-accent-subtle);
+}
+
+.pbx-numeric-input__option--active.pbx-numeric-input__option--highlighted {
+  background: color-mix(in srgb, var(--pb-chrome-accent) 20%, var(--pb-chrome-accent-subtle));
+}
+
+/* Error state — shake animation on invalid commit */
+/* @keyframes extraído a chrome/motion.css (docs/28) — ver módulo */
+
+.pbx-numeric-input--invalid {
+  border-color: var(--pb-chrome-danger);
+  animation: pbx-numeric-input-shake 0.4s ease;
+}

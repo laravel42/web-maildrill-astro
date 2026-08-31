@@ -1,0 +1,72 @@
+/**
+ * chrome/toast.css — Toast/snackbar del chrome del editor (docs/46 Fase 1).
+ *
+ * Extraído como módulo propio (nunca se agregan reglas al barrel
+ * `chrome.css`, docs/28). Namespace: solo `pbx-*` (AGENTS.md §5.2 — `pb-`
+ * está reservado al output exportado).
+ *
+ * La animación de entrada/salida vive en `Toast.tsx` (framer-motion); este
+ * archivo solo define posición/superficie/tipografía. `chrome/motion.css`
+ * ya aplica un override global de `prefers-reduced-motion: reduce` sobre
+ * `animation-duration`/`transition-duration`, y `<MotionConfig
+ * reducedMotion="user">` (App.tsx) cubre las animaciones de framer-motion —
+ * no hace falta duplicar la media query aquí.
+ */
+
+.pbx-toast-viewport {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  justify-content: center;
+  /* El viewport no captura clicks fuera del toast en sí. */
+  pointer-events: none;
+}
+
+.pbx-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 12px 16px;
+  background: var(--pb-chrome-bg-alt);
+  color: var(--pb-chrome-text-on-dark);
+  border-radius: var(--pb-chrome-radius-md);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.32);
+}
+
+.pbx-toast__message {
+  font-size: var(--pb-chrome-font-size-body);
+  line-height: var(--pb-chrome-line-height-normal);
+}
+
+.pbx-toast__action {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border: none;
+  border-radius: var(--pb-chrome-radius-sm);
+  background: transparent;
+  /* El toast siempre usa fondo oscuro fijo (`--pb-chrome-bg-alt`, no se
+     reasigna por tema), a diferencia de superficies claras del chrome que sí
+     cambian con `data-theme`. `--pb-chrome-accent-on-surface` en modo claro
+     resuelve al acento sólido (#4f46e5, ~2.3:1 aquí — insuficiente); se fija
+     el mismo indigo-300 que `dark.css` usa para texto de acento sobre fondo
+     oscuro (7.3:1 AA), independiente del tema del chrome. */
+  color: #a5b4fc;
+  font-size: var(--pb-chrome-font-size-body);
+  font-weight: var(--pb-chrome-font-weight-semibold);
+  cursor: pointer;
+  transition: background var(--pb-chrome-transition), color var(--pb-chrome-transition);
+}
+
+.pbx-toast__action:hover {
+  background: var(--pb-chrome-bg-hover);
+}
+
+.pbx-toast__action:focus-visible {
+  outline: 2px solid #a5b4fc;
+  outline-offset: 2px;
+}

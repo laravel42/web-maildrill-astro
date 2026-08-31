@@ -1,0 +1,178 @@
+/**
+ * chrome/chrome/canvas.css — Canvas root + frame + dot grid + device frames (Preview, docs/21)
+ *
+ * Extraído del monolito chrome.css (docs/28). Se carga en el orden
+ * definido por el barrel según docs/28 §2.2.
+ *
+ * Namespace: solo `pbx-*`. Cualquier referencia a `pb-*` debe
+ * justificarse en línea (criterio docs/22 §4).
+ */
+/* ---- Canvas ------------------------------------------------------------- */
+.pbx-canvas {
+  overflow: auto;
+  background-color: var(--pb-chrome-canvas-bg);
+  /* Patrón de puntos (dot grid) — chrome del editor, nunca en export (P8).
+     docs/52 F1/F4 (D6): forma confirmada en `FlowCanvas.module.css` (rama
+     `feat/automations`, `web-maildrill-astro`): `radial-gradient(circle at
+     1px 1px, var(--border[2]) 1px, transparent 0) 0 0 / 22px 22px` —
+     círculo de 1px en vez del dot de 1.5px con offset -9px que tenía el
+     chrome antes de este plan. Sin `background-position` (el host tampoco
+     lo usa: el patrón arranca en `0 0`). */
+  background-image: radial-gradient(circle at 1px 1px, var(--pb-chrome-canvas-dot) 1px, transparent 0);
+  background-size: 22px 22px;
+  padding: 32px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.pbx-canvas--code {
+  display: block;
+  background: var(--pb-chrome-code-canvas-bg);
+}
+
+/* Marco del documento â€” sombra profunda, radio sutil, fondo blanco */
+.pbx-canvas__frame {
+  background: var(--pb-chrome-canvas-frame-bg);
+  min-height: 150px;
+  position: relative;
+  border-radius: var(--pb-chrome-radius-xs);
+  box-shadow: var(--pb-chrome-frame-shadow);
+  transition: width var(--pb-chrome-transition);
+  outline: 1px solid var(--pb-chrome-canvas-frame-outline);
+  contain: layout style;
+}
+
+
+/* ---- Preview de alta fidelidad: marco de dispositivo (docs/21) ----------- */
+/* Chrome del editor, NUNCA en export (P8). El iframe interno lleva el sitio
+ * publicado real; el bisel/skeleton viven fuera del iframe. */
+.pbx-canvas--preview {
+  padding: 32px 24px;
+}
+
+.pbx-device {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* El marco no se estira: toma el tamaño del dispositivo emulado. */
+  flex: 0 0 auto;
+}
+
+/* Barra superior del marco: badge de dimensiones del viewport (docs/21 §3.4). */
+.pbx-device__bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+/* RESUELTO (docs/52 F5, hallazgo real medido — el NOTA de F4 quedaba
+ * pendiente explícitamente para esta fase): los bordes de `.pbx-device__dims`/
+ * `__screen`/bisel desktop usaban `rgba(15,23,42,0.12/0.18)`, un oscuro
+ * translúcido pensado para superficies CLARAS — mismo defecto que el outline
+ * de `.pbx-canvas__frame` que F4 ya corrigió. Medido (no estimado): contra
+ * `--pb-chrome-surface`/`--pb-chrome-canvas-frame-bg`/`--pb-chrome-canvas-bg`
+ * en dark, caían a 1.00–1.45:1 (prácticamente invisibles). Se migran a
+ * `--pb-chrome-border`/`--pb-chrome-border-strong` (dims/screen — mismo rol
+ * "borde sutil sobre superficie clara" que ya usan `.pbx-invisibles__menu`/
+ * `.pbx-node-path__menu` en este mismo archivo/canvas-nodes.css, sin exigir
+ * 3:1 por diseño: son separadores decorativos, la separación REAL la da el
+ * `box-shadow` — `--pb-chrome-frame-shadow` en `__screen`, ninguno en `__dims`
+ * pero es un pill sobre el área de trabajo, mismo criterio que el resto de
+ * bordes del chrome) y `--pb-chrome-canvas-frame-outline` para el bisel
+ * desktop (ya dark-aware desde F4, mismo rol "línea sobre el área de
+ * trabajo" que `.pbx-canvas__frame`). El bisel de phone/tablet (`#1e293b`)
+ * NO se tocó — ver justificación en su propia regla, abajo. */
+.pbx-device__dims {
+  font: 500 12px/1 var(--pb-chrome-font, system-ui, sans-serif);
+  color: var(--pb-chrome-text-muted, #64748b);
+  background: var(--pb-chrome-surface, #fff);
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-pill);
+  padding: 4px 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* "Pantalla": contenedor de tamaño fijo del dispositivo (docs/21 §3.4). El
+ * ancho dispara las media queries reales del sitio dentro del iframe. */
+.pbx-device__screen {
+  position: relative;
+  max-width: 100%;
+  background: var(--pb-chrome-canvas-frame-bg);
+  overflow: hidden;
+  box-shadow: var(--pb-chrome-frame-shadow);
+  border: 1px solid var(--pb-chrome-border-strong);
+}
+
+/* Bisel por familia de dispositivo. Phone/tablet: `#1e293b` (slate-800)
+ * FIJO en ambos temas del chrome — JUSTIFICACIÓN (docs/52 F5): es la
+ * metáfora de un bisel físico de dispositivo (el borde grueso alrededor de
+ * la pantalla emulada), no una superficie del chrome — un bisel de telefono
+ * real es oscuro independientemente del tema del editor, igual que
+ * `--pb-chrome-code-canvas-bg` (visor de código) es oscuro por diseño.
+ * Ningún token de host tiene un rol equivalente ("borde de hardware"). */
+.pbx-device[data-frame="phone"] .pbx-device__screen {
+  border-radius: 28px;
+  border-width: 10px;
+  border-color: #1e293b;
+}
+.pbx-device[data-frame="tablet"] .pbx-device__screen {
+  border-radius: 20px;
+  border-width: 12px;
+  border-color: #1e293b;
+}
+.pbx-device[data-frame="desktop"] .pbx-device__screen {
+  border-radius: 10px;
+  border-width: 2px;
+  border-color: var(--pb-chrome-canvas-frame-outline);
+}
+
+.pbx-device__iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: var(--pb-chrome-canvas-frame-bg);
+  transition: opacity var(--pb-chrome-transition);
+}
+
+/* Skeleton de carga (docs/21 §3.2): cubre la pantalla hasta que el iframe
+ * dispara `load`. */
+.pbx-device__skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  background: var(--pb-chrome-surface, #fff);
+}
+
+.pbx-device__skeleton-bar {
+  display: block;
+  height: 16px;
+  border-radius: var(--pb-chrome-radius-xs);
+  /* JUSTIFICACIÓN (docs/52 F5): gradiente de shimmer del skeleton de carga —
+     efecto decorativo transitorio (desaparece al `load` del iframe, docs/21
+     §3.2), no un color con rol semántico ni un par texto/fondo sujeto a AA.
+     Sin equivalente de host para "shimmer"; tokenizarlo con `color-mix`
+     encarecería la regla para un efecto que dura <1s y no se lee en dark
+     mode como una regresión (mismo criterio que el resto de box-shadows de
+     elevación de este archivo). */
+  background: linear-gradient(
+    90deg,
+    rgba(15,23,42,0.06) 25%,
+    rgba(15,23,42,0.12) 37%,
+    rgba(15,23,42,0.06) 63%
+  );
+  background-size: 400% 100%;
+  animation: pbx-skeleton-shimmer 1.4s ease infinite;
+}
+.pbx-device__skeleton-bar:nth-child(2) { width: 80%; }
+.pbx-device__skeleton-bar:nth-child(3) { width: 60%; }
+
+/* @keyframes extraído a chrome/motion.css (docs/28) — ver módulo */
+

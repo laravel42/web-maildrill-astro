@@ -1,0 +1,37 @@
+/* Chrome del builder — barrel de @imports (docs/28).
+   El monolito original se partió en `chrome/*.css` siguiendo
+   el orden de carga definido en docs/28 §2.2. No agregar reglas
+   directamente acá; cada concern vive en su módulo.
+
+   docs/52 F6 (CSS embed-safe): este es el barrel STANDALONE — importa
+   `chrome/standalone.css` (reglas de página completa: `html`/`body`/`#root`,
+   `@font-face` de Geist, I3/I4). El barrel EMBEBIDO (`chrome-embedded.css`,
+   consumido por la futura entrada de librería F7) importa TODO lo demás en
+   el mismo orden pero OMITE `standalone.css` a propósito. */
+
+@import "./chrome/tokens.css";
+@import "./chrome/reset.css";
+@import "./chrome/standalone.css";
+@import "./chrome/motion.css";
+@import "./chrome/shell.css";
+@import "./chrome/header.css";
+@import "./chrome/sidebar.css";
+@import "./chrome/templates.css";
+@import "./chrome/inspector.css";
+@import "./chrome/inspector-controls.css";
+@import "./chrome/image-source.css";
+@import "./chrome/inspector-sections.css";
+@import "./chrome/inspector-themes.css";
+@import "./chrome/inspector-i18n.css";
+@import "./chrome/inspector-panel.css";
+@import "./chrome/color-picker.css";
+@import "./chrome/output-base.css";
+@import "./chrome/canvas.css";
+@import "./chrome/canvas-nodes.css";
+@import "./chrome/canvas-code-json.css";
+@import "./chrome/modals.css";
+@import "./chrome/ai-generator.css";
+@import "./chrome/publish.css";
+@import "./chrome/toast.css";
+@import "./chrome/dark.css";
+@import "./chrome/narrow.css";

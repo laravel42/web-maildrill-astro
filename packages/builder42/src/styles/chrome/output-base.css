@@ -1,0 +1,265 @@
+/**
+ * chrome/output-base.css — Form/output base styles (pb-input, pb-textarea, pb-form, pb-language-nav)
+ *
+ * Extraído del monolito chrome.css (docs/28). Se carga en el orden
+ * definido por el barrel según docs/28 §2.2.
+ *
+ * Namespace: `pbx-*` + `pb-*` (output components en canvas/export, docs/22 §4).
+ */
+/* ---------------------------------------------------------------------------
+ * Reset de margin de bloques tipográficos (P6/AGENTS.md §5) — DUPLICADO
+ * intencional de la regla equivalente en `export/base.ts` (`baseCss()`).
+ * `baseCss()` solo se materializa en el HTML real (export publicado y el
+ * iframe de Preview, que renderiza el export real — docs/12). El canvas de
+ * Edit (nodos React reales, sin iframe) usa este CSS estático en su lugar.
+ * Sin este duplicado, un `text` con varios párrafos se ve distinto en Edit
+ * (margin de user-agent del navegador) que en Preview/export (sin margin) —
+ * exactamente el bug reportado por el usuario. Si se toca la regla de
+ * `base.ts`, tocar esta también.
+ * --------------------------------------------------------------------------- */
+.pbx-canvas__frame p,
+.pbx-canvas__frame h1,
+.pbx-canvas__frame h2,
+.pbx-canvas__frame h3,
+.pbx-canvas__frame h4,
+.pbx-canvas__frame h5,
+.pbx-canvas__frame h6,
+.pbx-canvas__frame blockquote,
+.pbx-canvas__frame ul,
+.pbx-canvas__frame ol,
+.pbx-canvas__frame li {
+  margin: 0;
+  padding: 0;
+}
+/* ---------------------------------------------------------------------------
+ * LanguageNav component â€” dropdown de idioma (docs/14 Â§2)
+ * <details>/<summary> nativo (cero-JS). Estructura del componente (se emite en
+ * export vÃ­a baseCss).
+ * --------------------------------------------------------------------------- */
+
+.pb-language-nav {
+  position: relative;
+}
+
+/* Trigger: quita el marcador nativo del <summary> */
+.pb-language-nav__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  list-style: none;
+  padding: 6px 10px;
+  border-radius: var(--pb-chrome-radius-sm);
+  user-select: none;
+  color: inherit;
+}
+.pb-language-nav__trigger::-webkit-details-marker {
+  display: none;
+}
+.pb-language-nav__trigger:hover {
+  background: color-mix(in srgb, var(--colors-text) 8%, transparent);
+}
+
+.pb-language-nav__globe {
+  display: block;
+}
+
+.pb-language-nav__current {
+  font-weight: 500;
+}
+
+.pb-language-nav__chevron {
+  display: inline-flex;
+  color: currentColor;
+  opacity: 0.6;
+  transition: transform var(--pb-chrome-transition);
+}
+.pb-language-nav[open] .pb-language-nav__chevron {
+  transform: rotate(180deg);
+}
+
+/* MenÃº desplegable */
+.pb-language-nav__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  min-width: 140px;
+  background: var(--colors-surface-default);
+  border: 1px solid var(--colors-border);
+  border-radius: var(--pb-chrome-radius-md);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.pb-language-nav__item {
+  display: block;
+}
+
+.pb-language-nav__link {
+  display: block;
+  padding: 8px 12px;
+  border-radius: var(--pb-chrome-radius-xs);
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+.pb-language-nav__link:hover {
+  background: color-mix(in srgb, var(--colors-text) 8%, transparent);
+}
+.pb-language-nav__link--current {
+  font-weight: 600;
+  background: color-mix(in srgb, var(--colors-primary-default) 8%, transparent);
+  color: var(--colors-primary-default);
+}
+
+.pb-language-nav__empty {
+  font-size: 12px;
+  color: var(--colors-muted);
+  font-style: italic;
+}
+
+/* ==========================================================================
+   Fase 10 â€” Componentes de formulario (input, textarea, form, button-submit)
+   Todos los colores usan var(--colors-*) referenciando tokens BASE_TOKENS.
+   Los estilos de posicionamiento/tamaÃ±o base van en defaultStyle de cada
+   componente; aquÃ­ solo los ESTADOS interactivos (focus, error, disabled)
+   y el reset necesario para los elementos nativos.
+   ========================================================================== */
+
+/* --- Input y Textarea: reset base + estados interactivos ------------------ */
+
+.pbx-canvas__frame .pb-input,
+.pbx-canvas__frame .pb-textarea {
+  /* Reset de estilos del navegador que interfieren con los tokens */
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  resize: vertical; /* Solo textarea; para input es no-op */
+  transition: border-color var(--pb-chrome-transition), box-shadow var(--pb-chrome-transition), background var(--pb-chrome-transition);
+}
+
+/* Focus: borde de acento + ring sutil de accesibilidad */
+.pbx-canvas__frame .pb-input:focus,
+.pbx-canvas__frame .pb-textarea:focus {
+  border-color: var(--colors-primary-default);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--colors-primary-default) 20%, transparent);
+}
+
+.pbx-canvas__frame .pb-input:focus-visible,
+.pbx-canvas__frame .pb-textarea:focus-visible {
+  outline: none;
+}
+
+/* Estado invÃ¡lido (HTML5 :invalid + validaciÃ³n nativa) */
+.pbx-canvas__frame .pb-input:invalid,
+.pbx-canvas__frame .pb-textarea:invalid {
+  border-color: var(--colors-error-default);
+  background: var(--colors-error-surface);
+}
+
+/* Estado invÃ¡lido + focused: mantiene el ring de error */
+.pbx-canvas__frame .pb-input:invalid:focus,
+.pbx-canvas__frame .pb-textarea:invalid:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--colors-error-default) 20%, transparent);
+}
+
+/* Deshabilitado: reducir opacidad, cursor not-allowed */
+.pbx-canvas__frame .pb-input:disabled,
+.pbx-canvas__frame .pb-textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: color-mix(in srgb, var(--colors-border) 30%, var(--colors-surface-default));
+}
+
+/* Placeholder */
+.pbx-canvas__frame .pb-input::placeholder,
+.pbx-canvas__frame .pb-textarea::placeholder {
+  color: var(--colors-muted);
+  opacity: 1; /* Firefox pone 0.54 por defecto */
+}
+
+/* --- En el HTML exportado (fuera del frame del editor) -------------------- */
+
+.pb-input,
+.pb-textarea {
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  resize: vertical;
+  transition: border-color var(--pb-chrome-transition), box-shadow var(--pb-chrome-transition), background var(--pb-chrome-transition);
+}
+
+.pb-input:focus,
+.pb-textarea:focus {
+  border-color: var(--colors-primary-default);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--colors-primary-default) 20%, transparent);
+}
+
+.pb-input:focus-visible,
+.pb-textarea:focus-visible {
+  outline: none;
+}
+
+.pb-input:invalid,
+.pb-textarea:invalid {
+  border-color: var(--colors-error-default);
+  background: var(--colors-error-surface);
+}
+
+.pb-input:invalid:focus,
+.pb-textarea:invalid:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--colors-error-default) 20%, transparent);
+}
+
+.pb-input:disabled,
+.pb-textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: color-mix(in srgb, var(--colors-border) 30%, var(--colors-surface-default));
+}
+
+.pb-input::placeholder,
+.pb-textarea::placeholder {
+  color: var(--colors-muted);
+  opacity: 1;
+}
+
+/* --- Form: reset base ----------------------------------------------------- */
+
+.pbx-canvas__frame .pb-form,
+.pb-form {
+  box-sizing: border-box;
+}
+
+/* --- button-submit: reset de estilos del navegador para <button> ---------- */
+/* Los estilos visuales (color, fondo, radio) los pone defaultStyle/tokens;
+   aquÃ­ solo el reset que normalize el <button> a la misma base que el <a>. */
+
+.pbx-canvas__frame [type="submit"],
+[type="submit"].pbx-button-submit {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  line-height: inherit;
+  transition: opacity var(--pb-chrome-transition), box-shadow var(--pb-chrome-transition);
+}
+
+.pbx-canvas__frame [type="submit"]:focus-visible,
+[type="submit"].pbx-button-submit:focus-visible {
+  outline: 2px solid var(--colors-primary-default);
+  outline-offset: 2px;
+}
+
+.pbx-canvas__frame [type="submit"]:disabled,
+[type="submit"].pbx-button-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

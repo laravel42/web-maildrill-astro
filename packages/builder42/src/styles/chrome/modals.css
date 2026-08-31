@@ -1,0 +1,232 @@
+/**
+ * chrome/modals.css — Modal overlay + error boundary (chrome del editor)
+ *
+ * Extraído del monolito chrome.css (docs/28). Se carga en el orden
+ * definido por el barrel según docs/28 §2.2.
+ *
+ * Namespace: `pbx-*` + `pb-*` (output components en canvas/export, docs/22 §4).
+ */
+/* ==========================================================================
+   Modal (c42 Modal) + tabla de traducción (Fase 19.j) — chrome del editor
+   ========================================================================== */
+.pbx-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.pbx-modal[hidden] {
+  display: none;
+}
+.pbx-modal__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+}
+.pbx-modal__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: min(720px, 100%);
+  max-height: 100%;
+  background: var(--pb-chrome-surface-raised);
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-lg);
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.28);
+  overflow: hidden;
+}
+.pbx-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--pb-chrome-border);
+}
+.pbx-modal__title {
+  margin: 0;
+  font-size: var(--pb-chrome-font-size-title);
+  font-weight: var(--pb-chrome-font-weight-bold);
+  color: var(--pb-chrome-text);
+}
+.pbx-modal__subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--pb-chrome-text-muted);
+}
+.pbx-modal__body {
+  padding: 12px 18px 18px;
+  overflow: auto;
+}
+
+/* ==========================================================================
+   OnboardingExperienceModal — pregunta simple/avanzado al primer inicio.
+   Chrome puro (P8), nunca sale al output exportado.
+   ========================================================================== */
+
+.pbx-onboarding-modal {
+  max-width: 480px;
+}
+
+.pbx-onboarding-modal__subtitle {
+  margin: 0 0 16px;
+  font-size: var(--pb-chrome-font-size-body);
+  color: var(--pb-chrome-text-muted);
+  line-height: var(--pb-chrome-line-height-relaxed);
+}
+
+.pbx-onboarding-modal__options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.pbx-onboarding-modal__option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-md);
+  background: var(--pb-chrome-surface);
+  color: var(--pb-chrome-text);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--pb-chrome-transition), background var(--pb-chrome-transition), transform var(--pb-chrome-transition);
+}
+
+/* Variante compacta para el paso de idioma (solo icono + nombre, sin
+   descripción) — evita el hueco vacío que dejaría el padding pensado para
+   3 líneas de contenido de la variante con descripción. */
+.pbx-onboarding-modal__option--compact {
+  align-items: center;
+  text-align: center;
+}
+
+.pbx-onboarding-modal__option:hover {
+  border-color: var(--pb-chrome-accent);
+  background: var(--pb-chrome-accent-subtle);
+  transform: translateY(-1px);
+}
+
+/* docs/52 F5: anillo de 3px estilo Maildrill (antes outline sólido de 2px). */
+.pbx-onboarding-modal__option:focus-visible {
+  outline: none;
+  box-shadow: var(--pb-chrome-focus-ring);
+}
+
+.pbx-onboarding-modal__option-title {
+  font-size: var(--pb-chrome-font-size-body);
+  font-weight: var(--pb-chrome-font-weight-semibold);
+}
+
+.pbx-onboarding-modal__option-desc {
+  font-size: var(--pb-chrome-font-size-sm);
+  color: var(--pb-chrome-text-muted);
+  line-height: var(--pb-chrome-line-height-tight);
+}
+
+.pbx-onboarding-modal__hint {
+  margin: 14px 0 0;
+  font-size: var(--pb-chrome-font-size-sm);
+  color: var(--pb-chrome-text-faint);
+  text-align: center;
+}
+
+/* ==========================================================================
+   ErrorBoundary — fallback de error del canvas (chrome puro, P8).
+   Tokenizado con variables semánticas → correcto en claro y oscuro.
+   ========================================================================== */
+
+.pbx-error-boundary {
+  padding: 12px;
+  margin: 4px;
+  border: 1px solid var(--pb-chrome-border);
+  border-left: 3px solid var(--pb-chrome-danger);
+  border-radius: var(--pb-chrome-radius-sm);
+  background: var(--pb-chrome-surface);
+  color: var(--pb-chrome-text);
+  font-size: var(--pb-chrome-font-size-label);
+  line-height: var(--pb-chrome-line-height-relaxed);
+}
+
+.pbx-error-boundary__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--pb-chrome-danger);
+  font-weight: var(--pb-chrome-font-weight-semibold);
+  margin-bottom: 6px;
+}
+
+.pbx-error-boundary__title {
+  font-size: var(--pb-chrome-font-size-body);
+}
+
+.pbx-error-boundary__type {
+  margin: 0 0 2px 0;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-error-boundary__id {
+  margin: 0 0 6px 0;
+  font-family: var(--pb-chrome-font-mono);
+  font-size: var(--pb-chrome-font-size-sm);
+  color: var(--pb-chrome-text-muted);
+  word-break: break-all;
+}
+
+.pbx-error-boundary__message {
+  margin: 0 0 10px 0;
+  padding: 6px 8px;
+  /* --pb-chrome-danger sobre --pb-chrome-surface-hover daba 4.04:1 en claro
+     / 3.74:1 en oscuro — bajo AA en ambos (docs/46 contrast guard, Fase 4).
+     --pb-chrome-danger-subtle es el fondo pensado para acompañar el texto
+     danger (4.55:1 claro / 5.40:1 oscuro) y además refuerza visualmente que
+     es un mensaje de error. */
+  background: var(--pb-chrome-danger-subtle);
+  border-radius: var(--pb-chrome-radius-xs);
+  font-family: var(--pb-chrome-font-mono);
+  font-size: var(--pb-chrome-font-size-sm);
+  color: var(--pb-chrome-danger);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 80px;
+  overflow-y: auto;
+}
+
+.pbx-error-boundary__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.pbx-error-boundary__btn {
+  padding: 4px 10px;
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-xs);
+  background: var(--pb-chrome-surface);
+  color: var(--pb-chrome-text);
+  font-size: var(--pb-chrome-font-size-label);
+  cursor: pointer;
+  transition: background var(--pb-chrome-transition);
+}
+
+.pbx-error-boundary__btn:hover {
+  background: var(--pb-chrome-surface-hover);
+}
+
+.pbx-error-boundary__btn--primary {
+  background: var(--pb-chrome-danger-solid);
+  color: var(--pb-chrome-text-on-accent);
+  border-color: var(--pb-chrome-danger-solid);
+}
+
+.pbx-error-boundary__btn--primary:hover {
+  filter: brightness(0.9);
+}

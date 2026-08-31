@@ -1,0 +1,989 @@
+/**
+ * chrome/inspector-panel.css — panel de propiedades unificado (docs/41 §4.3,
+ * §5, Paso 2 de la tabla §7). Estilos de `PropertyRow` y `PanelSection`.
+ *
+ * Namespace: solo `pbx-*` (AGENTS §5.2). La altura de fila (32px) vive en
+ * UNA sola regla (`.pbx-row`), para que el criterio docs/41 §10.3 sea
+ * verificable: ninguna otra regla de este módulo fija `height`/`min-height`
+ * en una fila salvo la excepción `.pbx-row--tall`.
+ *
+ * Regla del azul (D4, docs/41 §3, §10.9): en TODO este archivo el token
+ * `--pb-chrome-panel-modified` (azul) solo se usa para (a) el fondo/borde de
+ * "modificado" — aquí, el badge de conteo de `PanelSection` — y NUNCA para
+ * algo decorativo. El acento de marca (`--pb-chrome-accent*`, gradiente
+ * índigo→azul) queda fuera de este panel a propósito.
+ */
+
+/* ---- PropertyRow (docs/41 §4.3) ----------------------------------------- */
+
+.pbx-row {
+  display: flex;
+  align-items: center;
+  gap: 0px; /* var(--pb-chrome-panel-row-gap); */
+  /* Única fuente de la altura de fila (docs/41 §10.3): 32px constantes. */
+  height: var(--pb-chrome-panel-row-height);
+  min-height: var(--pb-chrome-panel-row-height);
+}
+
+/*
+ * Excepciones de altura, cerradas y contadas en 3 (docs/41 §4.3): rejilla de
+ * padding/margin (`sides`), fila con slider + valor, picker de color
+ * expandido. `auto` deja que el contenido decida su propio alto — la regla
+ * de 32px de `.pbx-row` NUNCA se toca para estos casos.
+ *
+ * Layout vertical (fix, este commit): estas filas dejan de ser `flex` en
+ * fila (label + control lado a lado) y pasan a `block` — el label queda
+ * arriba, en su propia línea, y el control abajo ocupa el 100% del ancho
+ * disponible en vez de compartirlo con la columna fija de
+ * `--pb-chrome-panel-label-width`. Motivo: estos 3 casos son justo los que
+ * más necesitan ancho horizontal para el control (grid 2x2 de `sides`,
+ * slider + valor numérico, picker de color expandido) y la columna de
+ * label de 70px les restaba espacio sin necesidad — el label no compite
+ * por ancho con nada más si está en su propia fila.
+ */
+.pbx-row--tall {
+  display: block;
+  height: auto;
+  min-height: var(--pb-chrome-panel-row-height);
+}
+
+/*
+ * Anula el ancho fijo de la columna del label SOLO dentro de `--tall`: en
+ * el layout vertical el label ya no es una columna al lado del control,
+ * así que no necesita reservar `--pb-chrome-panel-label-width` — ocupa el
+ * ancho completo de la fila en su propia línea, con un margen inferior
+ * pequeño para separarlo visualmente del control que viene debajo.
+ */
+.pbx-row--tall > .pbx-row__label-col {
+  min-width: 0;
+  max-width: none;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.pbx-row--tall > .pbx-row__control {
+  width: 100%;
+  /* `padding-left: 24px` se conserva (regla base de `.pbx-row__control`):
+     sigue siendo la ancla del slot flotante `.pbx-row__actions` (reset/
+     token), que no cambia de posición con este layout vertical. */
+}
+
+/*
+ * Columna del label — ancho fijo, blindado contra compresión (fix, este
+ * commit): SOLO pinta el texto del label, sin compartir territorio con
+ * ningún ícono flotante (ver nota de cabecera de `PropertyRow.tsx`,
+ * "versión definitiva 2" — el ancla del slot de acciones se movió al
+ * CONTROL, no a esta columna).
+ */
+.pbx-row__label-col {
+  flex: 0 0 var(--pb-chrome-panel-label-width);
+  /*
+   * `min-width` explícito: el valor inicial de `min-width` en un flex item
+   * es `auto` (= ancho de contenido mínimo del hijo), NO `0`, así que
+   * `flex-shrink: 0` por sí solo no siempre alcanza a fijar 70px si el
+   * hermano (`.pbx-row__control`) fuerza más ancho del disponible en
+   * cascada. Fijar `min-width` = `max-width` = `width` cierra la caja por
+   * completo: esta columna NUNCA se comprime, sin importar cuánto ancho
+   * reclame el control vecino (que en cambio SÍ puede desbordar/scrollear
+   * horizontalmente si le falta espacio — nunca a costa del label).
+   */
+  min-width: var(--pb-chrome-panel-label-width);
+  max-width: var(--pb-chrome-panel-label-width);
+  width: var(--pb-chrome-panel-label-width);
+  display: flex;
+  align-items: center;
+}
+
+.pbx-row__label {
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  color: var(--pb-chrome-text-muted);
+  cursor: default;
+}
+
+/*
+ * `position: relative` (fix, este commit): ancla del slot de acciones
+ * flotante (`.pbx-row__actions`, más abajo), anclado a SU borde IZQUIERDO
+ * — territorio exclusivo del control, nunca del label (bug real
+ * reportado: anclarlo sobre la columna del label competía por espacio con
+ * el propio texto del label —labels largos como "Interlineado"/
+ * "Decoración"— y con el punto azul de "modificado" —`::after` del label,
+ * `right:-6px`—, dando la sensación de que "tapaba" el label en varias
+ * filas: `lineHeight`, `textDecoration`, `background`, `borderRadius`,
+ * entre otras). Al ser `position:absolute`, NO participa del flujo flex:
+ * el control conserva su ancho exacto con o sin el reset visible.
+ *
+ * `padding-left` CONSTANTE (no condicional a si el reset está visible):
+ * reserva el hueco exacto de 1 ícono (24px) al inicio del control para que
+ * el propio contenido (primer botón de un `IconSegmented`, swatch de un
+ * `ColorField`, icono de un `NumericField`…) nunca empiece exactamente en
+ * `left:0`, que es donde flota el ícono de acciones. Al ser un padding fijo
+ * (no depende de `:hover`/`:empty`), el control NUNCA salta de tamaño al
+ * aparecer/desaparecer el reset — es un margen constante, no una reserva
+ * condicional (eso fue lo que falló en el intento "en flujo").
+ */
+.pbx-row__control {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-left: 24px;
+}
+
+/*
+ * Wrapper local del modo `bare` de `PropertyField` (docs/41 Paso 5, control
+ * `pair`): cada mitad de un `pair`/`sides` ya vive dentro de su propia
+ * `.pbx-pair-grid__cell` (celda del grid 2 columnas del `PropertyRow`
+ * padre). Sin label propio aquí (lo pintó el `PropertyRow` padre a
+ * `columns={2}`) — mismo criterio unificado: el slot de acciones (más
+ * abajo) flota sobre el borde IZQUIERDO de `.pbx-row__control`, que ya es
+ * su propia ancla `relative` (regla de arriba) — este wrapper no necesita
+ * declarar `position: relative` propio.
+ */
+.pbx-row__bare {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.pbx-row__bare > .pbx-row__control {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+/* Hasta 2 columnas con gap 8px (docs/41 §4.3, control `pair`/`sides`). */
+.pbx-row__control--pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+/*
+ * Slot de acciones SIEMPRE presente en el DOM (docs/41 §10.10): nunca se
+ * monta/desmonta al hover, solo cambia de opacidad. `pointer-events: none`
+ * en reposo evita robar clics/foco mientras es invisible.
+ *
+ * FLOTANTE, fuera del flujo flex, anclado al CONTROL (versión definitiva 2,
+ * este commit — corrige el bug real reportado con `lineHeight`/
+ * `textDecoration`/`background`/`borderRadius` y potencialmente cualquier
+ * label que no sea corto): un intento anterior anclaba este slot sobre la
+ * columna del LABEL (`right:0` relativo a `.pbx-row__label-col`) — competía
+ * por el mismo territorio de 70px con el propio texto del label (labels más
+ * largos que "Padding"/"Ancho" llenan la columna sin dejar hueco) y con el
+ * punto azul de "modificado" (`::after` del label, `right:-6px`),
+ * solapándose entre sí. Ahora el ancla es `.pbx-row__control` (ver su regla
+ * arriba, `position:relative`) — territorio EXCLUSIVO del control, nunca
+ * comparte espacio con nada del label. Sigue fuera del flujo flex
+ * (`position:absolute`): el control conserva su ancho exacto con o sin el
+ * reset visible.
+ */
+.pbx-row__actions {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--pb-chrome-transition);
+}
+
+/*
+ * Sin fondo, ni en reposo ni en hover (fix: los botones flotan sobre/junto
+ * al label — `IconButton` intent `ghost` pinta `background:
+ * var(--pb-chrome-surface-hover)` en `:hover`, que aquí tapaba visualmente
+ * el texto detrás/al lado del icono). Solo el color del glifo cambia en
+ * hover (heredado de `.pbx-icon-btn--ghost:hover`); el fondo se anula
+ * puntualmente para este slot, sin tocar `IconButton` en el resto del
+ * chrome.
+ */
+.pbx-row__actions .pbx-icon-btn,
+.pbx-row__actions .pbx-icon-btn:hover:not(:disabled) {
+  background: transparent;
+}
+
+.pbx-row:hover .pbx-row__actions,
+.pbx-row:focus-within .pbx-row__actions,
+.pbx-row__bare:hover .pbx-row__actions,
+.pbx-row__bare:focus-within .pbx-row__actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/*
+ * Sin ninguna acción que mostrar (p. ej. token heredado sin modificar: ni
+ * reset —no está en la capa activa— ni botón de vincular —ya es token—), el
+ * slot queda vacío pero SIGUE en el DOM (docs/41 §10.10, arriba). Al ser
+ * flotante (fix 4) no reserva espacio de flujo con o sin contenido, pero
+ * `:empty` se conserva para que nunca reciba `pointer-events`/opacidad
+ * fantasma sin nada que mostrar.
+ */
+.pbx-row__actions:empty {
+  display: none;
+}
+
+/* ---- Tri-estado del origen del valor (docs/41 §4.5, §10.9, Paso 4) ------- *
+ * `data-origin` lo calcula `PropertyField` a partir de `resolveValueOrigin`
+ * (PURO): "active" = declarado en la capa activa del nodo (modificado — el
+ * ÚNICO uso de `--pb-chrome-panel-modified` fuera del badge de conteo, D4);
+ * "inherited"/"none" no reciben tratamiento visual especial en `.pbx-row`
+ * (el valor heredado real ya se pinta atenuado por el propio control, p. ej.
+ * `NumericField`/`ColorField` sin declarar `data-modified`) — el punto azul
+ * vive en el label, es el target visual del reset.
+ */
+.pbx-row[data-origin="active"] > .pbx-row__label {
+  position: relative;
+  color: var(--pb-chrome-text);
+}
+
+.pbx-row[data-origin="active"] > .pbx-row__label::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: -6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--pb-chrome-panel-modified);
+}
+
+/* ---- Chip de token inline (docs/41 §4.5): mismo slot de 32px que el control */
+.pbx-panel-token-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: var(--pb-chrome-panel-field-radius);
+  background: var(--pb-chrome-panel-field-bg);
+  font-size: 12px;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-panel-token-chip__path {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pbx-panel-token-chip__unlink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--pb-chrome-radius-pill);
+  background: transparent;
+  color: var(--pb-chrome-text-faint);
+  cursor: pointer;
+}
+
+.pbx-panel-token-chip__unlink:hover {
+  color: var(--pb-chrome-text);
+  background: var(--pb-chrome-surface-hover);
+}
+
+.pbx-panel-token-chip--broken {
+  color: var(--pb-chrome-danger);
+}
+
+.pbx-panel-token-chip__warn {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--pb-chrome-danger);
+}
+
+.pbx-panel-token-picker {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.pbx-panel-token-picker .pbx-control__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 28px;
+}
+
+/* ---- VisibilityStrip (docs/41 §5.2, checklist §8 #6/#7, Paso 7) ---------- *
+ * Strip de ancho completo, sin tarjeta, 36px de alto, divisoria de 1px
+ * debajo. El ámbar (`--pb-chrome-panel-hidden`) es la ÚNICA señal de color en
+ * este strip fuera del switch — nunca el acento de marca (D4).
+ */
+.pbx-visibility-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 4px 0 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--pb-chrome-border) 8%, transparent);
+  border-left: 2px solid transparent;
+}
+
+.pbx-visibility-strip--hidden,
+.pbx-visibility-strip--hidden-inherited {
+  background: color-mix(in srgb, var(--pb-chrome-panel-hidden) 10%, transparent);
+  border-left-color: var(--pb-chrome-panel-hidden);
+}
+
+.pbx-visibility-strip__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-visibility-strip--hidden .pbx-visibility-strip__icon,
+.pbx-visibility-strip--hidden-inherited .pbx-visibility-strip__icon {
+  color: var(--pb-chrome-panel-hidden);
+}
+
+.pbx-visibility-strip__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--pb-chrome-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pbx-visibility-strip__override {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border: 1px solid var(--pb-chrome-panel-hidden);
+  border-radius: var(--pb-chrome-radius-pill);
+  background: transparent;
+  color: var(--pb-chrome-panel-hidden);
+  font-size: 11px;
+  font-weight: var(--pb-chrome-font-weight-medium);
+  cursor: pointer;
+}
+
+.pbx-visibility-strip__override:hover {
+  background: color-mix(in srgb, var(--pb-chrome-panel-hidden) 12%, transparent);
+}
+
+.pbx-visibility-strip__dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.pbx-visibility-strip__dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--pb-chrome-border-strong);
+  cursor: pointer;
+}
+
+.pbx-visibility-strip__dot--hidden {
+  background: var(--pb-chrome-panel-hidden);
+}
+
+.pbx-visibility-strip__dot--active {
+  outline: 2px solid var(--pb-chrome-text-muted);
+  outline-offset: 1px;
+}
+
+/* Switch neutro (nunca azul, D4) — reutiliza `.pbx-switch__track`/`__thumb`
+ * ya definidos en `inspector-controls.css`, solo se envuelve en un `<label>`
+ * propio para no depender del componente `Toggle` (que no soporta el estado
+ * "fantasma" de solo lectura). */
+/* Switch neutro (nunca azul, D4) — reutiliza `.pbx-switch__track`/`__thumb`
+ * ya definidos en `inspector-controls.css`, solo se envuelve en un `<label>`
+ * propio para no depender del componente `Toggle` (que no soporta el estado
+ * "fantasma" de solo lectura). El `Toggle`/`.pbx-switch` compartido pinta el
+ * estado activo con `--pb-chrome-accent` (azul de marca) — aquí se
+ * sobreescribe a neutro porque, DENTRO del panel de propiedades, el azul
+ * significa exclusivamente "modificado" (D4, docs/41 §3/§6.3/§10.9), nunca
+ * "visible"/"activo" de un control genérico. */
+.pbx-visibility-strip__switch {
+  display: inline-flex;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.pbx-visibility-strip__switch .pbx-switch__input:checked + .pbx-switch__track {
+  background: var(--pb-chrome-text-muted);
+}
+
+.pbx-visibility-strip__switch--ghost {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.pbx-visibility-strip__switch--ghost .pbx-switch__track {
+  border: 1px dashed var(--pb-chrome-border-strong);
+  background: transparent;
+}
+
+/* ---- Atenuación D3 (docs/41 §3 D3, §8 criterio 8) ------------------------ *
+ * `pbx-inspector--dimmed` se aplica en `.pbx-inspector-form` cuando el nodo
+ * seleccionado está oculto en el breakpoint activo. Atenuación SELECTIVA:
+ * encabezados de sección, iconos y labels al 80% de opacidad — pero VALORES
+ * y CONTROLES (inputs, selects, swatches…) a contraste PLENO, porque siguen
+ * siendo editables e interactivos mientras se edita un nodo oculto. Un
+ * `opacity` global sobre todo el panel rompería AA (label gris ~55% ya
+ * queda en ~30% efectivo, docs/41 §3 D3). El strip de visibilidad NUNCA se
+ * atenúa (es la señal principal de "por qué").
+ *
+ * 80%, no 70% (auditoría Paso 9, docs/41 §9): `opacity:0.7` sobre
+ * `--pb-chrome-text-muted` (#64748b, 4.55:1 sin atenuar) mezclado con el
+ * fondo del panel (#f8fafc) cae a 2.66:1 — por debajo incluso del criterio
+ * relajado de 3:1 para texto no esencial/decorativo (WCAG 1.4.11, ya
+ * redundante con el strip ámbar). 80% sube a 3.14:1, el mínimo que lo
+ * cumple; ver `inspector-panel.audit.test.ts`. */
+.pbx-inspector--dimmed .pbx-panel-section__name,
+.pbx-inspector--dimmed .pbx-panel-section__icon,
+.pbx-inspector--dimmed .pbx-panel-section__chevron,
+.pbx-inspector--dimmed .pbx-row__label,
+.pbx-inspector--dimmed .pbx-inspector-tab__label {
+  opacity: 0.8;
+}
+
+/* ---- Campos del panel (docs/41 §4.3: radio 8px, sin borde) --------------- */
+
+.pbx-panel-field {
+  border-radius: var(--pb-chrome-panel-field-radius);
+  background: var(--pb-chrome-panel-field-bg);
+  border: none;
+}
+
+/* ---- PanelSection (docs/41 §4.1, §5.3, §5.4) ----------------------------- */
+
+.pbx-panel-section {
+  /* Separación entre secciones: línea de 1px a ~8% de opacidad, sin tarjetas
+     con borde (docs/41 §5.3). */
+  border-bottom: 1px solid color-mix(in srgb, var(--pb-chrome-border) 8%, transparent);
+}
+
+.pbx-panel-section:last-child {
+  border-bottom: 0;
+}
+
+.pbx-panel-section__trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 40px;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: var(--pb-chrome-text);
+}
+
+.pbx-panel-section__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-panel-section__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: var(--pb-chrome-font-weight-semibold);
+  color: var(--pb-chrome-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Badge de conteo: gris/oculto en 0, azul en >0 (docs/41 §4.1 — "el azul solo
+   significa modificado", D4/§10.9). */
+.pbx-panel-section__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--pb-chrome-radius-pill);
+  font-size: 10px;
+  font-weight: var(--pb-chrome-font-weight-bold);
+  flex-shrink: 0;
+}
+
+/* Con 0 modificados el badge reserva su espacio pero no se ve (docs/41 §2.3:
+   "gris cuando es 0 (o se oculta)"). `visibility` en vez de `display:none`
+   para que el ancho del encabezado no cambie al cruzar de breakpoint
+   (docs/41 §10.7: los badges se actualizan sin desplazar nada). */
+.pbx-panel-section__badge--zero {
+  background: transparent;
+  color: var(--pb-chrome-text-faint);
+  visibility: hidden;
+}
+
+.pbx-panel-section__badge--active {
+  background: color-mix(in srgb, var(--pb-chrome-panel-modified) 15%, transparent);
+  color: var(--pb-chrome-panel-modified);
+}
+
+.pbx-panel-section__chevron {
+  display: inline-flex;
+  align-items: center;
+  color: var(--pb-chrome-text-faint);
+  flex-shrink: 0;
+}
+
+.pbx-panel-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 2px 12px;
+}
+
+/*
+ * Bloque "Avanzado ⌄" local (docs/41 §5.4): enlace de texto, SIN borde, SIN
+ * fondo, SIN ancho completo — debe pesar visualmente menos que cualquier
+ * control. `align-self` no aplica en flex-column normal (ya es block-level
+ * por `width: fit-content` implícito de un botón inline), así que se fuerza
+ * `width: fit-content` para que nunca ocupe el ancho del panel.
+ */
+.pbx-panel-section__advanced-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  padding: 0;
+  margin-top: 2px;
+  border: 0;
+  background: transparent;
+  color: var(--pb-chrome-text-faint);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.pbx-panel-section__advanced-trigger:hover {
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-panel-section__advanced-chevron {
+  display: inline-flex;
+  align-items: center;
+}
+
+.pbx-panel-section__advanced-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* ---- Controles del catálogo (docs/41 §4.4, Paso 3) ----------------------- */
+
+/*
+ * NumericField: pill de `NumericUnitInput` + icono interno opcional a la
+ * izquierda (docs/41 §4.3). El icono sustituye la etiqueta de fila cuando
+ * corresponde (lado de padding/margin, eje X/Y) y es también el "handle"
+ * de scrubbing (arrastre horizontal incrementa/decrementa).
+ */
+/*
+ * `justify-content: flex-end` (fix, este commit — petición del usuario):
+ * dentro del panel unificado, filas de un solo `NumericField` sin icono de
+ * lado (`width`/`height`/`lineHeight`…) ocupaban el ancho completo de la
+ * columna del control aunque el campo interno (`.pbx-numeric-input`, más
+ * abajo) esté limitado a 100px — sin esto, el hueco libre quedaba a la
+ * DERECHA del campo (dentro de `pbx-numeric-field`, que sigue siendo
+ * `width:100%`), en vez de reservarse a la izquierda junto al slot de
+ * reset flotante (`.pbx-row__control`, `padding-left:24px`). Alinear al
+ * final hace que el campo quede pegado al borde derecho del panel, con
+ * todo el espacio libre entre el reset y el campo — igual que el resto de
+ * controles angostos del catálogo.
+ */
+.pbx-numeric-field {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0px;
+  width: 100%;
+  min-width: 0;
+}
+
+.pbx-numeric-field__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--pb-chrome-panel-field-radius);
+  background: transparent;
+  color: var(--pb-chrome-text-faint);
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.pbx-numeric-field__icon:hover {
+  /* --pb-chrome-text-muted sobre --pb-chrome-surface-hover da 3.86:1 en
+     claro / 4.04:1 en oscuro — bajo AA en ambos (docs/46 contrast guard,
+     Fase 4). --pb-chrome-text cumple en los dos temas. */
+  color: var(--pb-chrome-text);
+  background: var(--pb-chrome-surface-hover);
+}
+
+/*
+ * `max-width: 100px` + `flex: 0 1 auto` (fix, este commit — petición del
+ * usuario): dentro del panel unificado, el campo numérico no necesita
+ * ocupar todo el ancho de su columna — un valor con unidad ("100%", "24px")
+ * nunca necesita más que esto. `flex-grow: 0` (ya no `1 1 auto`) deja de
+ * forzarlo a expandirse; combinado con `justify-content: flex-end` del
+ * padre (`.pbx-numeric-field`, arriba), el campo queda compacto y pegado al
+ * borde derecho, con el hueco libre a la izquierda — nunca compite por
+ * espacio con el slot de reset flotante que vive al inicio de la columna
+ * del control (`.pbx-row__control`, `padding-left: 24px`). Alcance
+ * intencionalmente LOCAL a este selector (no se toca `.pbx-numeric-input`
+ * en `inspector-controls.css`, que es compartido por `TokensEditor`/
+ * `ThemesEditor`/`StyleField` fuera de este panel).
+ */
+.pbx-numeric-field .pbx-numeric-input {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100px;
+}
+
+/* ---- IconSegmented / segmented de presets (docs/41 §4.4) ----------------- *
+ * Clases PROPIAS del panel: no se reutiliza `.pbx-alignment-buttons`, que vive
+ * en `inspector-simple.css` y desaparece con el modo simple en el Paso 8.
+ * El estado activo es NEUTRO (nunca el acento de marca): dentro de este panel
+ * el azul solo significa "modificado" (docs/41 §3 D4, §6.3, §10.9). Botones de
+ * 26×26px, por encima del mínimo de 24×24px de WCAG 2.5.8.
+ */
+.pbx-segmented {
+  display: inline-flex;
+  gap: 0;
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-panel-field-radius);
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.pbx-segmented__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: var(--pb-chrome-panel-field-bg);
+  color: var(--pb-chrome-text-muted);
+  cursor: pointer;
+  transition: background var(--pb-chrome-transition), color var(--pb-chrome-transition);
+}
+
+.pbx-segmented__btn:not(:last-child) {
+  border-right: 1px solid var(--pb-chrome-border);
+}
+
+.pbx-segmented__btn:hover {
+  background: var(--pb-chrome-surface-hover);
+  color: var(--pb-chrome-text);
+}
+
+.pbx-segmented__btn--active {
+  background: var(--pb-chrome-surface-hover);
+  color: var(--pb-chrome-text);
+  box-shadow: inset 0 -2px 0 var(--pb-chrome-border-strong);
+}
+
+/*
+ * Fila `effects.boxShadow` en modo simple (fix, este commit): el botón
+ * "Ninguna" vive FUERA de `.pbx-segmented` (ver nota en `sections.ts` D9 y
+ * `StylePanel.tsx`) como su propio `IconButton`. Este wrapper solo alinea
+ * ambos controles en fila con un gap pequeño — sin él quedarían pegados.
+ */
+.pbx-boxshadow-simple {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/*
+ * PresetNumeric: segmented de presets de TEXTO (`.pbx-segmented`, arriba) +
+ * `NumericField` en la misma fila de 32px (docs/41 §4.4).
+ */
+/*
+ * PresetNumeric — rediseño de alternancia switch/Custom (petición del
+ * usuario, este commit): ya NO envuelve segmented + `NumericField` juntos —
+ * o se muestra el segmented (`.pbx-preset-numeric`, solo eso) o el
+ * `NumericField` completo, como hijo directo de `.pbx-row__control` (mismo
+ * criterio/CSS que cualquier fila `control: "numeric"` simple, hereda su
+ * `justify-content: flex-end`/`padding-left: 24px`).
+ */
+.pbx-preset-numeric {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.pbx-preset-numeric__segmented {
+  margin-left: auto;
+}
+
+.pbx-preset-numeric__preset {
+  width: auto;
+  min-width: 28px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: var(--pb-chrome-font-weight-medium);
+}
+
+/* Botón "Custom": mismo estilo que un preset, nunca se marca `--active`
+   (no representa un valor, es una acción de UI que cambia de modo). */
+.pbx-preset-numeric__custom-btn {
+  color: var(--pb-chrome-text-faint);
+}
+
+.pbx-preset-numeric__custom-btn:hover {
+  color: var(--pb-chrome-text);
+}
+
+/* PairGrid: cada sub-campo ocupa su celda del `.pbx-row__control--pair` (Paso 2). */
+.pbx-pair-grid__cell {
+  min-width: 0;
+}
+
+/*
+ * SidesGrid: acciones apiladas a la izquierda (token arriba, candado abajo)
+ * + rejilla 2×2 de `NumericField` con icono de lado (docs/41 §4.4 D8, fix
+ * candado/token: antes el botón de "vincular a token" vivía en
+ * `.pbx-row__actions` al extremo derecho de la fila y el candado de
+ * "vincular lados" al centro — 2 glifos de cadena visualmente idénticos en
+ * posiciones distintas de la misma fila. Ahora comparten un solo slot
+ * central, `.pbx-sides-grid__actions`, con iconos propios). Es una de las 3
+ * excepciones de altura (`pbx-row--tall`, Paso 2) — el bloque completo
+ * puede superar 32px.
+ */
+.pbx-sides-grid {
+  display: flex;
+  align-items: flex-start;
+  gap: 0px;
+  width: 100%;
+}
+
+.pbx-sides-grid__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.pbx-sides-grid__lock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-panel-field-radius);
+  background: var(--pb-chrome-panel-field-bg);
+  color: var(--pb-chrome-text-faint);
+  cursor: pointer;
+}
+
+.pbx-sides-grid__lock:hover {
+  color: var(--pb-chrome-text-muted);
+}
+
+/* El candado activo se enfatiza con NEUTRO, no con el acento de marca: dentro
+   de este panel el azul solo significa "modificado en este breakpoint"
+   (docs/41 §3 D4, §6.3, §10.9). */
+.pbx-sides-grid__lock--active {
+  border-color: var(--pb-chrome-border-strong);
+  color: var(--pb-chrome-text);
+  background: var(--pb-chrome-surface-hover);
+}
+
+.pbx-sides-grid__cells {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 0;
+}
+
+/*
+ * ColorField: swatch (`ColorPicker`) + input hex + opacidad adyacente en la
+ * misma fila de 32px (docs/41 §4.2). El picker expandido es chrome de
+ * `ColorPicker` (popover absoluto), no afecta la altura de esta fila.
+ */
+/*
+ * `max-width` (fix, este commit — petición del usuario): el swatch (28px) +
+ * hex input + opacidad no necesitan ocupar todo el ancho de la columna del
+ * control — reportado real: el swatch (primer hijo, empieza en `left:0` de
+ * este contenedor) quedaba debajo del slot de reset flotante en la fila
+ * `background`. Limitar el ancho total del campo y alinear el conjunto al
+ * final (mismo criterio que `.pbx-numeric-field`) deja el hueco libre del
+ * `padding-left: 24px` del `.pbx-row__control` completamente despejado, sin
+ * que el swatch dependa de calcular su posición exacta contra el ícono.
+ */
+.pbx-color-field {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  width: auto;
+  max-width: 220px;
+  min-width: 0;
+  margin-left: auto;
+}
+
+.pbx-color-field .pbx-control__input {
+  flex: 0 1 100px;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+}
+
+.pbx-color-field__opacity {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  width: 44px;
+}
+
+.pbx-color-field__opacity .pbx-control__input {
+  width: 32px;
+  flex: 0 0 auto;
+  text-align: end;
+}
+
+.pbx-color-field__opacity-suffix {
+  font-size: 11px;
+  color: var(--pb-chrome-text-faint);
+}
+
+/*
+ * ChipsTextField: texto libre + chips de preset en una capa flotante al
+ * enfocar (docs/41 §4.4, §10.10 — nunca desplazan la fila).
+ */
+.pbx-chips-text {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.pbx-chips-text__popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 200;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px;
+  background: var(--pb-chrome-surface-raised);
+  border: 1px solid var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-md);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+}
+
+.pbx-chips-text__chip {
+  padding: 4px 8px;
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-pill);
+  background: var(--pb-chrome-surface);
+  color: var(--pb-chrome-text);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background var(--pb-chrome-transition), border-color var(--pb-chrome-transition);
+}
+
+/* Chips de preset: hover/activo en NEUTRO. El acento de marca (azul) no entra
+   en este panel — el azul está reservado a "modificado" (docs/41 §3 D4, §6.3). */
+.pbx-chips-text__chip:hover {
+  border-color: var(--pb-chrome-border-strong);
+  background: var(--pb-chrome-surface-hover);
+}
+
+.pbx-chips-text__chip--active {
+  border-color: var(--pb-chrome-border-strong);
+  color: var(--pb-chrome-text);
+  background: var(--pb-chrome-surface-hover);
+  font-weight: var(--pb-chrome-font-weight-medium);
+}
+
+
+/*
+ * BorderSimple (Fase 6 de simplificación del panel): 3 sub-controles
+ * combinados en la MISMA fila (grosor/tipo por `<select>` + color por
+ * `ColorField`) que arman/parsean un solo shorthand `appearance.border`
+ * (docs/41, ver `BorderSimple.tsx` para la decisión de layout). Grid de 3
+ * columnas: grosor y tipo se reparten el ancho disponible en partes
+ * iguales, el color ocupa solo lo que su swatch+hex necesitan.
+ */
+.pbx-border-simple {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.pbx-border-simple__width,
+.pbx-border-simple__style {
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  padding: 0 6px;
+}
+
+/*
+ * `ColorField` trae su propio `max-width: 220px` pensado para ocupar toda
+ * la columna de control cuando vive solo en su fila (`appearance.background`,
+ * `typography.color`). Aquí comparte fila con 2 selects más — se limita a
+ * un ancho más chico (swatch + hex corto) para que los 3 sub-controles
+ * quepan sin desbordar la fila.
+ */
+.pbx-border-simple__color {
+  min-width: 0;
+  max-width: 96px;
+  margin-left: auto;
+}
+
+.pbx-border-simple__color .pbx-color-field {
+  max-width: 96px;
+}
+
+.pbx-border-simple__color .pbx-color-field .pbx-control__input {
+  display: none;
+}
