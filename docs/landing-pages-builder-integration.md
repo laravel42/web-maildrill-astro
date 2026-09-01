@@ -1,12 +1,13 @@
 # Landing Pages Builder (Builder42) — estado de la integración
 
-> Estado actual: **integrado en el workspace con persistencia real.** El editor
-> (`packages/builder42/`, vendored desde `pb-static`) está montado en
-> `/dashboard/landings/editor` (`?id=` reabre una landing guardada), y la
-> pestaña **Landings** lista, crea, renombra, duplica y borra sitios contra la
-> tabla `landings` de `workers/`. **Pendiente:** publicación, galería de media,
-> IA, Unsplash — los cuatro adapters siguen apagados y `fetchHealth` lo reporta
-> para que la UI oculte lo que no está conectado.
+> Estado actual: **integrado en el workspace con persistencia real y galería de
+> media propia.** El editor (`packages/builder42/`, vendored desde `pb-static`)
+> está montado en `/dashboard/landings/editor` (`?id=` reabre una landing
+> guardada), la pestaña **Landings** lista, crea, renombra, duplica y borra
+> sitios contra la tabla `landings` de `workers/`, y el picker de imágenes
+> ofrece la media library del tenant como segunda fuente. **Pendiente:**
+> publicación, IA, Unsplash — los tres adapters siguen apagados y
+> `fetchHealth` lo reporta para que la UI oculte lo que no está conectado.
 
 Una landing = **un `BuilderSite` completo** (multipágina), no una página. Una
 fila = un sitio.
@@ -323,11 +324,14 @@ Hecho:
       no está conectado en vez de mostrar botones rotos.
 - [x] Idioma del editor fijado a inglés (`locale="en"`); auto-traducción oculta,
       no eliminada.
+- [x] Segunda galería: media library del tenant en el picker de imágenes (§4b).
+      `listMedia` cablea `ImageSourceField`/`MediaPicker.tsx` a `/v1/media` vía
+      `src/lib/app/builder42-adapters.ts`; `health.media.enabled = true`.
+      Seleccionar un asset usa `{ kind: "url", url }`, no `addAsset` — no se
+      incrusta como data URL. Registrado en `packages/VENDOR.md`.
 
 Pendiente:
 
-- [ ] Segunda galería: media library del tenant en el picker de imágenes
-      (§4b — toca `packages/builder42/`, registrar en `packages/VENDOR.md`).
 - [ ] Adapter `publish`: pipeline de publicación propio de Maildrill (dominios
       del tenant), no los providers de `pb-static`. Al llegar, rellena
       `site_id`/`published_url`/`published_at` y cambia el `501` por la

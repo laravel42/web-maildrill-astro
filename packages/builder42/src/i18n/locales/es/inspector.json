@@ -236,6 +236,19 @@
     "urlPlaceholder": "https://… (URL de la imagen)",
     "uploadImage": "Subir imagen",
     "useUrl": "Usar URL",
+    "mediaLibrary": {
+      "tabLabel": "Biblioteca de medios",
+      "searchPlaceholder": "Buscar en tu biblioteca de medios…",
+      "searchAriaLabel": "Buscar en la biblioteca de medios",
+      "loading": "Cargando…",
+      "loadingMore": "Cargando más resultados…",
+      "empty": "Aún no hay imágenes en tu biblioteca de medios. Sube algunas en la página de Media y elígelas aquí.",
+      "emptySearch": "Ninguna imagen coincide con tu búsqueda.",
+      "error": "No se pudo cargar la biblioteca de medios. Intenta de nuevo.",
+      "resultsGridAriaLabel": "Resultados de la biblioteca de medios",
+      "selectAssetAriaLabel": "Usar la imagen «{{name}}»",
+      "close": "Cerrar"
+    },
     "unsplash": {
       "tabLabel": "Buscar en Unsplash",
       "searchPlaceholder": "Buscar fotos (ej. \"montañas\", \"café\")…",

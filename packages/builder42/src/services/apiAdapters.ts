@@ -23,6 +23,7 @@ import type {
   AiGenerateSectionResponse,
   HealthResponse,
   ImageSearchResponse,
+  MediaListResponse,
   PublishRequest,
   PublishResponse,
 } from "../../shared/api";
@@ -40,6 +41,17 @@ export type SearchImagesFn = (
 /** Descarga el binario de una foto ya elegida (registra el trigger de descarga por ToS). */
 export type DownloadImageFn = (photoId: string) => Promise<Blob>;
 
+/**
+ * Lista/busca en la media library del tenant (docs/AGENTS.md §4b) — segunda
+ * fuente de imágenes en `ImageSourceField`, junto a Unsplash. `query` vacío
+ * lista todo (paginado); el host decide si filtra en servidor o en memoria.
+ */
+export type ListMediaFn = (
+  query: string,
+  page: number,
+  perPage: number,
+) => Promise<MediaListResponse>;
+
 export type PublishFn = (req: PublishRequest) => Promise<PublishResponse>;
 
 /**
@@ -54,6 +66,7 @@ export interface ApiAdapters {
   generateFragment?: GenerateFragmentFn;
   searchImages?: SearchImagesFn;
   downloadImage?: DownloadImageFn;
+  listMedia?: ListMediaFn;
   publish?: PublishFn;
   fetchHealth?: FetchHealthFn;
 }

@@ -66,6 +66,34 @@ export interface ImageSearchResponse {
   totalPages: number;
 }
 
+// ─── Media library del host (docs/AGENTS.md §4b) ────────────────────────────
+
+/**
+ * Un asset de la media library del tenant, tal como la ofrece el host
+ * (segunda fuente de imágenes, complementaria a Unsplash — no sustitutiva).
+ * A diferencia de Unsplash, elegir uno apunta el nodo a `{ kind: "url", url }`
+ * en vez de incrustarlo como asset con `addAsset` (ver `ImageSourceField`):
+ * la media library ya sirve el binario desde su propio storage, así que
+ * inlinarlo de nuevo como data URL solo infla el documento.
+ */
+export interface MediaAsset {
+  id: string;
+  url: string;
+  /** Miniatura más ligera para el grid del picker; si falta, se usa `url`. */
+  thumbUrl?: string;
+  fileName: string;
+  mimeType: string;
+  width?: number;
+  height?: number;
+  bytes?: number;
+}
+
+export interface MediaListResponse {
+  results: MediaAsset[];
+  total: number;
+  totalPages: number;
+}
+
 // ─── Publicación (docs/33 §7, docs/36) ───────────────────────────────────────
 
 /** Advertencia de export, ya usada por el ZIP local (`src/builder/export/warnings.ts`). */
@@ -194,6 +222,10 @@ export interface HealthResponse {
     };
   };
   unsplash: {
+    enabled: boolean;
+  };
+  /** Media library del tenant (complementaria a Unsplash, no sustitutiva). */
+  media: {
     enabled: boolean;
   };
   translate: {

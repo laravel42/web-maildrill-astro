@@ -236,6 +236,19 @@
     "urlPlaceholder": "https://… (image URL)",
     "uploadImage": "Upload image",
     "useUrl": "Use URL",
+    "mediaLibrary": {
+      "tabLabel": "Media library",
+      "searchPlaceholder": "Search your media library…",
+      "searchAriaLabel": "Search the media library",
+      "loading": "Loading…",
+      "loadingMore": "Loading more results…",
+      "empty": "No images in your media library yet. Upload some on the Media page, then pick them here.",
+      "emptySearch": "No images match your search.",
+      "error": "Could not load the media library. Please try again.",
+      "resultsGridAriaLabel": "Media library results",
+      "selectAssetAriaLabel": "Use the image \"{{name}}\"",
+      "close": "Close"
+    },
     "unsplash": {
       "tabLabel": "Search Unsplash",
       "searchPlaceholder": "Search photos (e.g. \"mountains\", \"coffee\")…",

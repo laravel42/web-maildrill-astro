@@ -236,6 +236,19 @@
     "urlPlaceholder": "https://… (URL dell'immagine)",
     "uploadImage": "Carica immagine",
     "useUrl": "Usa URL",
+    "mediaLibrary": {
+      "tabLabel": "Libreria multimediale",
+      "searchPlaceholder": "Cerca nella tua libreria multimediale…",
+      "searchAriaLabel": "Cerca nella libreria multimediale",
+      "loading": "Caricamento…",
+      "loadingMore": "Caricamento altri risultati…",
+      "empty": "Non ci sono ancora immagini nella tua libreria multimediale. Caricane alcune nella pagina Media, poi selezionale qui.",
+      "emptySearch": "Nessuna immagine corrisponde alla tua ricerca.",
+      "error": "Impossibile caricare la libreria multimediale. Riprova.",
+      "resultsGridAriaLabel": "Risultati della libreria multimediale",
+      "selectAssetAriaLabel": "Usa l'immagine «{{name}}»",
+      "close": "Chiudi"
+    },
     "unsplash": {
       "tabLabel": "Cerca su Unsplash",
       "searchPlaceholder": "Cerca foto (es. \"montagne\", \"caffè\")…",

@@ -98,6 +98,36 @@ anyway, list it in a "Code patches" section here, same as EmailBuilder.js above.
 - `scripts` and build tooling (vite, vitest, typescript, `@types/*`) are
   dropped — this app compiles the source directly.
 
+### Code patches
+
+- `shared/api.ts` — added `MediaAsset`/`MediaListResponse` and `media.enabled`
+  on `HealthResponse` (docs/landing-pages-builder-integration.md §4b). This is
+  the host's own media library as a second image source, complementary to
+  Unsplash — there is no upstream `pb-static` counterpart to conflict with, so
+  a future sync should just keep these alongside whatever upstream adds here.
+- `src/services/apiAdapters.ts` / `apiClient.ts` — added `ListMediaFn` /
+  `listMedia()` following the exact same adapter-first pattern as
+  `searchImages`/`downloadImage` (check `getApiAdapters().listMedia` first,
+  fall back to a relative `/api/media` fetch that no standalone server
+  implements yet).
+- `src/builder/inspector/controls/MediaPicker.tsx` — new file, a sibling of
+  `UnsplashPicker.tsx` reusing its exact CSS classes (`pbx-unsplash*`) and
+  infinite-scroll/debounce structure. Key behavioral difference: selecting an
+  asset must resolve to `{ kind: "url", url }` via `setProp`, never
+  `addAsset` — the host already serves the binary from its own storage, so
+  inlining it again as a data URL is what makes landings balloon in size.
+- `src/builder/inspector/controls/ImageSourceField.tsx` — added a third
+  source button ("Media library") gated on `health.media.enabled`, alongside
+  the existing Unsplash gate. `pickerOpen` changed from a boolean to
+  `"unsplash" | "media" | null` so only one panel is open at a time.
+- `src/i18n/locales/{en,es,it}/inspector.json` — added
+  `imageSource.mediaLibrary.*` keys, mirroring the shape of
+  `imageSource.unsplash.*`.
+
+Per pb-static's `docs/52 §4.2b`, the ideal is zero patches — but this one has
+no upstream equivalent to land in (`pb-static` doesn't have a "host media
+library" concept), so it stays listed here instead.
+
 ### Known cross-package conflict: `@tiptap/*` version split
 
 Both `packages/email-builder-standalone` (`@tiptap/*@^3.29.2`) and

@@ -21,6 +21,7 @@ import type {
   ApiErrorResponse,
   HealthResponse,
   ImageSearchResponse,
+  MediaListResponse,
   PublishRequest,
   PublishResponse,
   PublishedSitesResponse,
@@ -122,6 +123,27 @@ export async function downloadImage(photoId: string): Promise<Blob> {
     throw new ApiError(res.status, errorBody.error.code, errorBody.error.message, errorBody.error.retryAfter);
   }
   return res.blob();
+}
+
+/**
+ * Lista/busca en la media library del tenant (docs/AGENTS.md §4b). Sin
+ * adapter (modo standalone) no hay equivalente en `pb-static/server` — cae a
+ * `/api/media` por consistencia con el resto de endpoints, aunque hoy ningún
+ * servidor standalone lo implementa; en modo embebido siempre hay un adapter.
+ */
+export async function listMedia(
+  query: string,
+  page = 1,
+  perPage = 20,
+): Promise<MediaListResponse> {
+  const adapter = getApiAdapters().listMedia;
+  if (adapter) return adapter(query, page, perPage);
+  const params = new URLSearchParams({
+    q: query,
+    page: String(page),
+    per_page: String(perPage),
+  });
+  return apiFetch<MediaListResponse>(`/api/media?${params.toString()}`);
 }
 
 // ─── Publicación (docs/33 §7, docs/36) ───────────────────────────────────────

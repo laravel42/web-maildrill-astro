@@ -14,8 +14,9 @@ import { useDocumentStore } from "@/builder/store/documentStore";
 import { readImageSource } from "@/builder/model/assets";
 import { fetchHealth } from "@/services/apiClient";
 import { UnsplashPicker } from "./UnsplashPicker";
+import { MediaPicker } from "./MediaPicker";
 import type { BuilderNode } from "@/builder/model/types";
-import type { ImageSearchResult } from "../../../../shared/api";
+import type { ImageSearchResult, MediaAsset } from "../../../../shared/api";
 
 export function ImageSourceField({ node, fieldKey }: { node: BuilderNode; fieldKey: string }) {
   const { t } = useTranslation("inspector");
@@ -24,12 +25,19 @@ export function ImageSourceField({ node, fieldKey }: { node: BuilderNode; fieldK
   const assets = useDocumentStore((s) => s.site.assets);
   const fileRef = useRef<HTMLInputElement>(null);
   const [unsplashAvailable, setUnsplashAvailable] = useState(false);
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const [mediaAvailable, setMediaAvailable] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState<"unsplash" | "media" | null>(null);
 
   useEffect(() => {
     fetchHealth()
-      .then((h) => setUnsplashAvailable(h.unsplash.enabled))
-      .catch(() => setUnsplashAvailable(false));
+      .then((h) => {
+        setUnsplashAvailable(h.unsplash.enabled);
+        setMediaAvailable(h.media.enabled);
+      })
+      .catch(() => {
+        setUnsplashAvailable(false);
+        setMediaAvailable(false);
+      });
   }, []);
 
   const source = readImageSource(node.props);
@@ -56,7 +64,18 @@ export function ImageSourceField({ node, fieldKey }: { node: BuilderNode; fieldK
       photoUrl: result.unsplashUrl,
     });
     setProp(node.id, fieldKey, { kind: "asset", assetId: id });
-    setPickerOpen(false);
+    setPickerOpen(null);
+  };
+
+  /**
+   * A diferencia de subir un archivo o elegir de Unsplash, la media library
+   * NO se incrusta como asset: el host ya sirve el binario desde su propio
+   * storage, así que apuntar el nodo a la URL evita inflar el documento con
+   * un data URL redundante (docs/AGENTS.md §4b).
+   */
+  const onMediaSelect = (asset: MediaAsset) => {
+    setUrl(asset.url);
+    setPickerOpen(null);
   };
 
   return (
@@ -97,12 +116,22 @@ export function ImageSourceField({ node, fieldKey }: { node: BuilderNode; fieldK
         >
           {t("imageSource.uploadImage")}
         </button>
+        {mediaAvailable && (
+          <button
+            type="button"
+            className="pbx-code__btn pbx-code__btn--sm"
+            onClick={() => setPickerOpen((open) => (open === "media" ? null : "media"))}
+            aria-expanded={pickerOpen === "media"}
+          >
+            {t("imageSource.mediaLibrary.tabLabel")}
+          </button>
+        )}
         {unsplashAvailable && (
           <button
             type="button"
             className="pbx-code__btn pbx-code__btn--sm"
-            onClick={() => setPickerOpen((open) => !open)}
-            aria-expanded={pickerOpen}
+            onClick={() => setPickerOpen((open) => (open === "unsplash" ? null : "unsplash"))}
+            aria-expanded={pickerOpen === "unsplash"}
           >
             {t("imageSource.unsplash.tabLabel")}
           </button>
@@ -129,8 +158,11 @@ export function ImageSourceField({ node, fieldKey }: { node: BuilderNode; fieldK
         />
       </div>
 
-      {pickerOpen && (
-        <UnsplashPicker onSelect={onUnsplashSelect} onClose={() => setPickerOpen(false)} />
+      {pickerOpen === "media" && (
+        <MediaPicker onSelect={onMediaSelect} onClose={() => setPickerOpen(null)} />
+      )}
+      {pickerOpen === "unsplash" && (
+        <UnsplashPicker onSelect={onUnsplashSelect} onClose={() => setPickerOpen(null)} />
       )}
     </div>
   );
