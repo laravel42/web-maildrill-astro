@@ -2,19 +2,24 @@
 
 > Estado actual: **integrado en el workspace con persistencia real, galería de
 > media propia y los ajustes de UX del primer roll-out.** El editor
-> (`packages/builder42/`, vendored desde `pb-static`) está montado en
+> (`packages/builder42/`, código propio de este repo desde 2026-09-01 — ver §7
+> del plan) está montado en
 > `/dashboard/landings/editor` (`?id=` reabre una landing guardada), la pestaña
 > **Landings** lista, crea, renombra, duplica y borra sitios contra la tabla
 > `landings` de `workers/`, el picker de imágenes ofrece la media library del
 > tenant como segunda fuente, el nombre de la landing es editable desde la
 > barra del host, Publish está oculto en sus 3 puntos de entrada hasta que
 > Maildrill tenga su propio pipeline, y la edición JSON cruda se quitó del
-> todo. **Pendiente:** publicación, IA, Unsplash — los tres adapters siguen
+> todo, y el picker ofrece además Unsplash vía el proxy que ya usa el email
+> builder. **Pendiente:** publicación, IA y traducción — esos adapters siguen
 > apagados y `fetchHealth` lo reporta para que la UI oculte lo que no está
 > conectado.
 
 Una landing = **un `BuilderSite` completo** (multipágina), no una página. Una
 fila = un sitio.
+
+> El trabajo pendiente (publicación, IA y el bloque de **español hardcodeado en
+> el builder**) está desglosado en `docs/landing-pages-builder-plan.md`.
 
 ---
 
@@ -22,17 +27,17 @@ fila = un sitio.
 
 | Pieza                                                                 | Estado                | Dónde                                                                                                                                 |
 | --------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Editor visual (UI, canvas, inspector, drag&drop)                      | ✅ Vendored y montado | `packages/builder42/`                                                                                                                 |
+| Editor visual (UI, canvas, inspector, drag&drop)                      | ✅ Montado            | `packages/builder42/`                                                                                                                 |
 | Wrapper de host (carga client-only, shell, Save/Close, `locale="en"`) | ✅                    | `src/components/react/LandingPageBuilder.tsx`                                                                                         |
 | Pestaña Landings (listado, filtros, paginación, verbos)               | ✅                    | `src/components/react/AppLandings.tsx`, `src/pages/dashboard/landings/index.astro`                                                    |
 | Ruta del editor protegida por sesión + loader SSR                     | ✅                    | `src/pages/dashboard/landings/editor.astro`, `src/lib/server/landing-builder.ts`                                                      |
 | Persistencia real (tabla `landings` + CRUD)                           | ✅                    | `workers/migrations/0032_landings.sql`, `workers/packages/product/src/landings.ts`, `workers/apps/product-api/src/routes/landings.ts` |
 | Cliente de navegador                                                  | ✅                    | `src/lib/app/landings.ts`                                                                                                             |
 | Adapter de salud (`fetchHealth`, todo apagado)                        | ✅                    | `src/lib/app/builder42-adapters.ts`                                                                                                   |
-| Galería de media del tenant como 2ª fuente de imágenes                | ❌                    | requiere `listMedia` en el editor (ver §4b)                                                                                           |
+| Galería de media del tenant como 2ª fuente de imágenes                | ✅                    | `listMedia` en `src/lib/app/builder42-adapters.ts` + `MediaPicker.tsx` (ver §4b)                                                      |
+| Adapter de imágenes Unsplash (`searchImages`/`downloadImage`)         | ✅                    | `src/lib/app/builder42-adapters.ts` → proxy `/api/images/*` de `email-builder-api`                                                    |
 | Adapter de publicación (`publish`)                                    | ❌                    | endpoints reservados: `501 not_implemented`                                                                                           |
 | Adapter de IA (`generateFragment`)                                    | ❌                    | —                                                                                                                                     |
-| Adapter de imágenes Unsplash (`searchImages`/`downloadImage`)         | ❌                    | —                                                                                                                                     |
 
 El contrato de props del editor (`Builder42EditorProps`, en
 `packages/builder42/src/Builder42Editor.tsx`) define esos huecos vía
@@ -125,10 +130,11 @@ ApiErrorCode = "invalid_request" | "unauthorized" | "forbidden" | "not_found"
 ApiErrorResponse { error: { code: ApiErrorCode; message: string; retryAfter?; issues? } }
 ```
 
-Estos tipos ya viven en el árbol vendored (`packages/builder42/shared/api.ts`)
-y no forman parte del `tsconfig`/eslint de este repo (ver `packages/VENDOR.md`
-§Scope) — se pueden importar directo desde ahí para tipar los futuros
-endpoints del BFF/`workers/`, sin duplicarlos.
+Estos tipos viven en `packages/builder42/shared/api.ts` — se pueden importar
+directo desde ahí para tipar los futuros endpoints del BFF/`workers/`, sin
+duplicarlos. Hoy el paquete queda fuera del `tsconfig`/eslint de este repo
+(`packages/VENDOR.md` §Scope), lo que es una deuda a cerrar ahora que el código
+es propio (tarea `B1` del plan).
 
 ---
 
@@ -184,10 +190,8 @@ encender su flag en el health.
 Decidido: Unsplash y la media library de Maildrill son **complementarias**, no
 alternativas — el picker debe ofrecer las dos. Eso **no** se puede hacer solo
 con adapters: `ApiAdapters` no tiene `listMedia`, y el picker
-(`ImageSourceField.tsx`, tres modos: URL / subir archivo / Unsplash) vive en el
-paquete vendorizado. El trabajo va en `packages/builder42/` y, por
-`packages/VENDOR.md`, **debe quedar registrado ahí como "Code patches"** para
-que un re-sync desde `pb-static` no lo borre en silencio.
+(`ImageSourceField.tsx`, tres modos: URL / subir archivo / Unsplash) vive dentro
+del paquete. El trabajo va en `packages/builder42/`, directamente.
 
 Especificación:
 
@@ -226,9 +230,8 @@ siempre ganaba el stacking order: el modal se renderizaba pero cualquier click
 sobre él caía en el canvas de fondo (bug real, reportado como "no aparece el
 modal de confirmación").
 
-Fix en `src/components/react/LandingPageBuilder.module.css`, **no** en el
-paquete vendorizado (mantiene el objetivo de cero parches de `VENDOR.md` para
-Builder42): `:global(.pbx-modal.pbx-modal) { z-index: 1400; }` — mismo número
+Fix en `src/components/react/LandingPageBuilder.module.css`, no dentro del
+paquete: `:global(.pbx-modal.pbx-modal) { z-index: 1400; }` — mismo número
 que ya usan `MediaPickerModal`/`SendTestModal` sobre `ChannelEditorShell` (su
 propio `1000`). El selector duplicado importa: `builder42/style.css` se carga
 vía `import()` dinámico *después* de que este CSS module ya esté en el
@@ -246,9 +249,10 @@ para ella.
 
 ## 5. Qué NO traer de `pb-static`
 
-Decisión ya tomada y documentada (`pb-static/docs/52-maildrill-visual-integration.md`,
-decisión D8, cerrada 2026-08-27): **no portar el servidor Express de
-`pb-static/server/`.** Ese servidor (rutas `/api/ai`, `/api/images`,
+Builder42 ya no se sincroniza con `pb-static` (ver §0.1 de
+`docs/landing-pages-builder-plan.md` y `packages/VENDOR.md`), pero esta decisión
+sigue vigente porque describe qué NO se importó y por qué: **no se porta el
+servidor Express de `pb-static/server/`.** Ese servidor (rutas `/api/ai`, `/api/images`,
 `/api/translate`, `/api/publish`, `/api/sites`) es un backend standalone
 completo con su propia auth, rate limiting y providers de deploy
 (`local`/`self-hosted`/`cloudflare`/`vercel`) — pensado para cuando
@@ -370,26 +374,20 @@ Hecho:
       perfil, botón del header) hasta que Maildrill tenga su propio pipeline.
 - [x] Edición JSON cruda eliminada del todo (no solo oculta): sin vista JSON
       en el canvas, sin guardar/cargar `.json` — el export a ZIP sigue.
+- [x] Adapter `searchImages`/`downloadImage` (Unsplash), complementario a la
+      media library — no sustitutivo. Reusa el proxy `/api/images/*` que ya
+      sirve al email builder (la `UNSPLASH_API_KEY` no sale al navegador).
 - [x] Fix de stacking: modales de Builder42 (`.pbx-modal`) suben a
       `z-index: 1400` desde el host (§4c) — antes quedaban bloqueados por el
       `.shell` de pantalla completa del propio host (`z-index: 1000`),
       renderizándose pero sin poder recibir clicks.
 
-Pendiente:
-
-- [ ] Adapter `publish`: pipeline de publicación propio de Maildrill (dominios
-      del tenant), no los providers de `pb-static`. Al llegar, rellena
-      `site_id`/`published_url`/`published_at` y cambia el `501` por la
-      implementación real; la UI ya tiene el botón (deshabilitado) y las
-      columnas.
-- [ ] Adapter `searchImages`/`downloadImage` (Unsplash), complementario a la
-      media library — no sustitutivo.
-- [ ] Adapter `generateFragment`: conectar al pipeline de IA de Maildrill si
-      existe uno reusable; si no, queda apagado.
-- [ ] Regenerar los tipos OpenAPI (`pnpm gen:api`) para quitar los `as never` de
-      `landings/index.astro` y `landing-builder.ts` (mismo atajo que usa
-      `automations.astro` hoy).
-- [ ] Aplicar la migración en el entorno local (ver nota de entorno en §6).
+Pendiente: **el tablero de tareas vive en
+`docs/landing-pages-builder-plan.md` §1**, no aquí — una sola lista para no
+desincronizarse. Resumen de lo que queda: tooling del paquete (typecheck, lint,
+tests), el bloque de español hardcodeado, la reescritura de plantillas a base
+inglesa, los adapters `publish` e IA, y la deuda menor (tipos OpenAPI,
+migración local, gate del 404 de `translate`).
 
 ---
 
@@ -402,5 +400,7 @@ Pendiente:
 - Wrapper de host: `src/components/react/LandingPageBuilder.tsx`
 - Adapters del host: `src/lib/app/builder42-adapters.ts`
 - Cliente de navegador: `src/lib/app/landings.ts`
-- Decisión de no portar el backend de `pb-static`: `pb-static/docs/52-maildrill-visual-integration.md` (D8, D9)
+- Trabajo pendiente (publicación, IA, español hardcodeado, tooling del paquete): `docs/landing-pages-builder-plan.md`
+- Estado del paquete (código propio, sin upstream): `packages/VENDOR.md` §Builder42
+- Procedencia histórica, ya no vinculante: `pb-static/docs/52-maildrill-visual-integration.md` (D8, D9)
 - Patrón de persistencia de referencia: `src/lib/server/template-builder.ts`

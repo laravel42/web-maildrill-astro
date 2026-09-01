@@ -67,44 +67,55 @@ Upstream manifests are written for publishing, not source consumption:
 code, checked upstream, and this repo's rules (`noUncheckedIndexedAccess`, etc.)
 are stricter than the ones it was written against.
 
+That rationale holds for the EmailBuilder.js tree above. It does **not** hold
+for `packages/builder42`, which is first-party code with no upstream — see its
+own section below.
+
 ---
 
-# Vendored Builder42 (landing-page editor)
+# Builder42 (landing-page editor) — first-party, no longer vendored
 
-`packages/builder42/` is copied from `pb-static` (`~/projects-container/projects/_laravel42/pb-static`),
-the visual landing-page/site editor — **upstream**, unlike EmailBuilder.js. This
-is docs/52 (F8) of that repo's plan: same vendoring shape as the EmailBuilder.js
-packages above (consumed from `src/` by this app's Vite, never from `dist/`),
-but a from-scratch copy rather than a third-party import — there is no
-`web-*-js` counterpart to track.
+`packages/builder42/` is the visual landing-page/site editor. It **originated**
+as a copy of `pb-static` (`~/projects-container/projects/_laravel42/pb-static`,
+docs/52 F8 of that repo's plan), but that relationship is **closed**: Builder42
+continues as part of Maildrill, not as an independent project.
 
-## Re-importing after an upstream change
+**Every change goes directly in this repo.** There is no re-sync, no upstream to
+report bugs to, and no "zero code patches" goal — edit `packages/builder42/`
+like any other first-party source. `pb-static` is provenance and historical
+context only; do not copy files from it again, and do not treat its `docs/` as
+binding decisions for this codebase.
 
-Copy `src/` and `shared/` from `pb-static`, then re-apply the manifest
-adaptations below. Per pb-static's `docs/52 §4.2b`, the goal is **zero code
-patches**: any change needed to make the editor work embedded is meant to land
-in `pb-static` itself, never as a patch here. If a future sync needs one
-anyway, list it in a "Code patches" section here, same as EmailBuilder.js above.
+The parts of the vendoring shape that survive are just facts about how the
+package is wired, not a re-apply checklist:
 
-### Manifest adaptations
+### Manifest shape
 
 - `main`/`types`/`exports` point at `src/index.ts`, never `dist/` — this app
-  never builds the package, its own Vite compiles the copy. `./style.css` maps
-  to `src/styles/chrome-embedded.css` (the embed-safe barrel from pb-static's
-  `docs/52 F6` — omits the standalone-only `@font-face`/`html,body,#root` rules,
-  which don't belong inside this host's page).
+  never builds the package, its own Vite compiles the source. `./style.css` maps
+  to `src/styles/chrome-embedded.css`, the embed-safe barrel that omits the
+  standalone-only `@font-face`/`html,body,#root` rules, which don't belong
+  inside this host's page.
 - `react`/`react-dom` are `peerDependencies`, not `dependencies` — same reason
   as EmailBuilder.js: two React instances break hooks.
-- `scripts` and build tooling (vite, vitest, typescript, `@types/*`) are
-  dropped — this app compiles the source directly.
+- `scripts` and build tooling (vite, vitest, typescript, `@types/*`) were
+  dropped at import time, because this app compiles the source directly. **That
+  now leaves a real gap**: the package has no `tsconfig.json`, no test runner,
+  and `packages/**` is excluded from this repo's tsconfig, eslint and
+  `scripts/typecheck.mjs`. Code we now own gets neither type-checked nor linted
+  here. `packages/wa-template-studio` is the precedent to follow (own
+  `tsconfig.json` + `vitest.config.ts`, wired into the root `typecheck`
+  script). Tracked in `docs/landing-pages-builder-plan.md`.
 
-### Code patches
+### Divergence from the original import (historical)
+
+Kept as a record of *why* these files look the way they do. It is no longer a
+list of patches to re-apply — there is nothing to re-apply them onto.
 
 - `shared/api.ts` — added `MediaAsset`/`MediaListResponse` and `media.enabled`
   on `HealthResponse` (docs/landing-pages-builder-integration.md §4b). This is
   the host's own media library as a second image source, complementary to
-  Unsplash — there is no upstream `pb-static` counterpart to conflict with, so
-  a future sync should just keep these alongside whatever upstream adds here.
+  Unsplash.
 - `src/services/apiAdapters.ts` / `apiClient.ts` — added `ListMediaFn` /
   `listMedia()` following the exact same adapter-first pattern as
   `searchImages`/`downloadImage` (check `getApiAdapters().listMedia` first,
@@ -154,10 +165,6 @@ anyway, list it in a "Code patches" section here, same as EmailBuilder.js above.
   row felt cramped. Buttons stretch to `width: 100%` of their cell; with only
   3 present the last cell is simply empty.
 
-Per pb-static's `docs/52 §4.2b`, the ideal is zero patches — but this one has
-no upstream equivalent to land in (`pb-static` doesn't have a "host media
-library" concept), so it stays listed here instead.
-
 ### Known cross-package conflict: `@tiptap/*` version split
 
 Both `packages/email-builder-standalone` (`@tiptap/*@^3.29.2`) and
@@ -181,7 +188,7 @@ surfaced after a clean `pnpm install` re-resolved the tree from scratch.
 sub-extension to `3.27.2` via `overrides` to keep `@tiptap/core` deduped to one
 version there. **This app's own lockfile is unaffected** (its
 `email-builder-standalone` copy pins `^3.29.2` directly, with no `starter-kit`
-in its dependency tree), but if a future sync bumps `builder42`'s Tiptap set,
-re-run `pnpm why @tiptap/core` here afterward — a real fix means bumping both
-vendored copies to the same Tiptap release, not just re-pinning.
+in its dependency tree), but the trap is now ours to avoid: if you bump
+`builder42`'s Tiptap set, re-run `pnpm why @tiptap/core` here afterward — a real
+fix means bringing both copies to the same Tiptap release, not just re-pinning.
 
