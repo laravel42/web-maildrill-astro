@@ -123,6 +123,36 @@ anyway, list it in a "Code patches" section here, same as EmailBuilder.js above.
 - `src/i18n/locales/{en,es,it}/inspector.json` — added
   `imageSource.mediaLibrary.*` keys, mirroring the shape of
   `imageSource.unsplash.*`.
+- `src/builder/inspector/controls/UnsplashPicker.tsx` /
+  `src/styles/chrome/image-source.css` — two bugs reported by the host after
+  enabling the `searchImages`/`downloadImage` adapters:
+  1. **Horizontal overflow in the results grid**: `.pbx-unsplash__grid` used a
+     bare `1fr 1fr` column template. A grid track's implicit minimum size is
+     `auto` (its content's intrinsic size), so a very wide photo — the photo
+     button sets `aspect-ratio: ${width} / ${height}` inline — could force a
+     column past the panel's available width. Fixed with
+     `grid-template-columns: repeat(2, minmax(0, 1fr))` plus `min-width: 0` on
+     `.pbx-unsplash__cell` (same pattern already used by
+     `.pbx-templates__grid` in `templates.css`), and `overflow-x: hidden` on
+     the grid as a hard backstop.
+  2. **Infinite scroll fired on mount instead of waiting for the user to
+     scroll**: the `IntersectionObserver` watching the sentinel div had no
+     `root` option, so it defaulted to the document viewport instead of the
+     grid's own scroll container (`.pbx-unsplash__grid` has
+     `overflow-y: auto` and a fixed `max-height`). Inside the host, the
+     editor's surrounding layout doesn't necessarily scroll the page itself,
+     so the sentinel could register as "intersecting" against the viewport
+     right after the first page rendered — triggering page 2, 3, … back to
+     back with no user scroll at all. Fixed by adding a `gridRef` on the grid
+     div and passing it as `root` to the observer, so intersection is only
+     computed against the panel's own internal scroll.
+- `src/styles/chrome/inspector-controls.css` — `.pbx-imgsrc__actions` (Upload
+  / Media library / Unsplash / Use URL buttons above the image picker)
+  changed from a single-row `flex` to a `2×2` grid
+  (`repeat(2, minmax(0, 1fr))`): with up to 4 buttons now available (adding
+  the media-library and Unsplash buttons on top of the original 2), a single
+  row felt cramped. Buttons stretch to `width: 100%` of their cell; with only
+  3 present the last cell is simply empty.
 
 Per pb-static's `docs/52 §4.2b`, the ideal is zero patches — but this one has
 no upstream equivalent to land in (`pb-static` doesn't have a "host media
