@@ -21,6 +21,106 @@ import type { ApiMediaAsset } from '@/lib/app/media-map';
 
 type FetchHealth = NonNullable<ApiAdapters['fetchHealth']>;
 type ListMedia = NonNullable<ApiAdapters['listMedia']>;
+type SearchImages = NonNullable<ApiAdapters['searchImages']>;
+type DownloadImage = NonNullable<ApiAdapters['downloadImage']>;
+
+/**
+ * Slim DTO returned by `email-builder-api`'s `/api/images/search`
+ * (`workers/apps/email-builder-api/src/unsplash/dto.ts`). Only the fields
+ * Builder42's `ImageSearchResult` (packages/builder42/shared/api.ts) needs
+ * are picked out below — the full DTO also carries `blurHash`,
+ * `attribution`, `links.downloadLocation`, etc. that this contract doesn't
+ * surface.
+ */
+interface UnsplashPhotoDto {
+  id: string;
+  description: string | null;
+  urls: { thumb: string; small: string; regular: string };
+  user: { name: string; profileUrl: string };
+  unsplashUrl: string;
+  width: number;
+  height: number;
+  links: { downloadLocation: string };
+}
+
+interface UnsplashSearchResponseDto {
+  results: UnsplashPhotoDto[];
+  total: number;
+  totalPages: number;
+}
+
+/**
+ * Same-origin, auth-gated proxy already mounted for the email builder's
+ * Unsplash picker (`src/pages/api/images/[...path].ts` → `proxyToEbBackend`
+ * → `email-builder-api`'s `/api/images/*`, which holds `UNSPLASH_API_KEY`).
+ * Reused as-is for the landing editor: no new BFF route, no key exposed to
+ * the browser.
+ */
+const IMAGES_PROXY_BASE = '/api/images';
+
+/**
+ * `downloadLocation` (tracking ping URL) and a hotlinkable image URL per
+ * photo id, stashed from the search response. `DownloadImageFn`'s contract
+ * only passes `photoId` back, so both must be cached here rather than
+ * re-derived — Unsplash has no public "fetch by id" URL scheme, only the
+ * `urls.*` already returned by search.
+ */
+const downloadLocationByPhotoId = new Map<string, string>();
+const imageUrlByPhotoId = new Map<string, string>();
+
+const searchImages: SearchImages = async (query, page, perPage) => {
+  const url = new URL(`${IMAGES_PROXY_BASE}/search`, window.location.origin);
+  url.searchParams.set('query', query);
+  url.searchParams.set('page', String(page));
+  url.searchParams.set('per_page', String(perPage));
+
+  const res = await fetch(url, { method: 'GET' });
+  if (!res.ok) throw new Error(`Unsplash search failed with status ${res.status}`);
+  const dto = (await res.json()) as UnsplashSearchResponseDto;
+
+  const results = dto.results.map((photo) => {
+    downloadLocationByPhotoId.set(photo.id, photo.links.downloadLocation);
+    imageUrlByPhotoId.set(photo.id, photo.urls.regular);
+    return {
+      id: photo.id,
+      description: photo.description,
+      urls: photo.urls,
+      author: { name: photo.user.name, url: photo.user.profileUrl },
+      unsplashUrl: photo.unsplashUrl,
+      width: photo.width,
+      height: photo.height,
+    };
+  });
+
+  return { results, total: dto.total, totalPages: dto.totalPages };
+};
+
+/**
+ * Fires the download-tracking ping (fire-and-forget from the caller's point
+ * of view — errors here must not block insertion, per API Terms §6) then
+ * fetches the actual image bytes from the URL cached during search, so the
+ * editor can inline it as a data URL, same as the email builder's
+ * `UnsplashPicker` does.
+ */
+const downloadImage: DownloadImage = async (photoId) => {
+  const downloadLocation = downloadLocationByPhotoId.get(photoId);
+  if (downloadLocation) {
+    void fetch(`${IMAGES_PROXY_BASE}/track`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ downloadLocation }),
+      keepalive: true,
+    }).catch(() => undefined);
+  }
+
+  const imageUrl = imageUrlByPhotoId.get(photoId);
+  if (!imageUrl) {
+    throw new Error(`No cached URL for Unsplash photo ${photoId} — search again before selecting`);
+  }
+  const res = await fetch(imageUrl);
+  if (!res.ok) throw new Error(`Failed to download Unsplash photo ${photoId}`);
+  return res.blob();
+};
 
 function isImage(a: ApiMediaAsset): boolean {
   if (a.contentType) return a.contentType.startsWith('image/');
@@ -64,10 +164,9 @@ const listMedia: ListMedia = async (query, page, perPage) => {
 };
 
 /**
- * Everything off for now except the media library. Roadmap, in order (see
- * `docs/landing-pages-builder-integration.md`):
+ * Everything off except the media library and Unsplash. Roadmap, in order
+ * (see `docs/landing-pages-builder-integration.md`):
  *  - `publish` — needs tenant domains and a hosting target.
- *  - `unsplash` — complementary to the media library, not required by it.
  *  - `ai` — only if a reusable Maildrill AI pipeline exists.
  *  - `translate` — Maildrill has no translation feature; the editor's chrome is
  *    pinned to English (`locale="en"`) and the auto-translate UI stays hidden
@@ -87,7 +186,7 @@ const health: FetchHealth = () =>
         remove: false,
       },
     },
-    unsplash: { enabled: false },
+    unsplash: { enabled: true },
     media: { enabled: true },
     translate: { enabled: false },
   });
@@ -96,4 +195,6 @@ const health: FetchHealth = () =>
 export const landingBuilderAdapters: ApiAdapters = {
   fetchHealth: health,
   listMedia,
+  searchImages,
+  downloadImage,
 };
