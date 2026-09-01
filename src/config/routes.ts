@@ -37,6 +37,11 @@ export const routes = {
     // Each channel's template builder is its own page; `?id=<templateId>`
     // reopens a saved template for editing.
     templateBuilder: (channel: ChannelType) => `/dashboard/templates/${channel}`,
+    landings: '/dashboard/landings',
+    // Landing pages are whole Builder42 sites, so there is a single editor
+    // route rather than one per channel; `?id=<landingId>` reopens a saved one.
+    landingBuilder: (id?: string) =>
+      id ? `/dashboard/landings/editor?id=${encodeURIComponent(id)}` : '/dashboard/landings/editor',
     lists: '/dashboard/lists',
     list: (id: string) => `/dashboard/lists/${id}`,
     subscribers: '/dashboard/subscribers',

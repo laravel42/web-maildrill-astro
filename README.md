@@ -68,7 +68,7 @@ src/
     seo/ pricing-math.ts env.ts …
   middleware.ts         auth gate for /app + /dashboard
   pages/api/            BFF: JWT to workers, Auth.js helpers, EB proxy
-packages/               vendored EmailBuilder.js (compiled from source)
+packages/               vendored EmailBuilder.js + Builder42 (compiled from source)
 workers/                Fastify + BullMQ + Drizzle (root workspace member)
   apps/{api,product-api,email-builder-api,workers,dev-server}
   packages/{config,database,domain,services,product,…}
@@ -121,11 +121,13 @@ No marketing route ships page-wide React hydration.
 ### App (noindex, SSR, session-gated)
 
 - `/dashboard` — Overview
-- `/dashboard/{campaigns,templates,lists,subscribers,media,analytics,settings,profile}`
+- `/dashboard/{campaigns,automations,templates,landings,lists,subscribers,media,analytics,settings,profile}`
 - `/dashboard/campaigns/[id]/report` — campaign report
 - `/dashboard/lists/[id]` · `/dashboard/subscribers/[id]` — detail pages
 - `/dashboard/templates/{email,sms,whatsapp,voice}` — per-channel template builders
   (email: vendored EmailBuilder.js; WhatsApp: wa-template-studio with Meta approval)
+- `/dashboard/landings/editor` — visual landing-page editor (vendored Builder42);
+  `?id=<landingId>` reopens a saved landing
 
 ### System
 
@@ -153,19 +155,19 @@ scheduler, maintenance, **campaign-delivery**, and **template-approval**. Set
 
 ### Environment variables
 
-| Variable                       | Client? | Purpose                                               |
-| ------------------------------ | ------- | ----------------------------------------------------- |
-| `PUBLIC_SITE_URL`              | yes     | Canonical base, sitemap, OG                           |
-| `PUBLIC_POSTHOG_PROJECT_TOKEN` | yes     | Browser PostHog project token (`phc_…`)               |
-| `PUBLIC_POSTHOG_HOST`          | yes     | PostHog ingest host                                   |
-| `AUTH_SECRET`                  | **no**  | Auth.js session                                       |
-| `API_BASE_URL`                 | **no**  | workers product-api (default `http://localhost:3001`) |
-| `MESSAGING_API_BASE_URL`       | **no**  | messaging API when split (default: same as `API_BASE_URL`) |
+| Variable                       | Client? | Purpose                                                        |
+| ------------------------------ | ------- | -------------------------------------------------------------- |
+| `PUBLIC_SITE_URL`              | yes     | Canonical base, sitemap, OG                                    |
+| `PUBLIC_POSTHOG_PROJECT_TOKEN` | yes     | Browser PostHog project token (`phc_…`)                        |
+| `PUBLIC_POSTHOG_HOST`          | yes     | PostHog ingest host                                            |
+| `AUTH_SECRET`                  | **no**  | Auth.js session                                                |
+| `API_BASE_URL`                 | **no**  | workers product-api (default `http://localhost:3001`)          |
+| `MESSAGING_API_BASE_URL`       | **no**  | messaging API when split (default: same as `API_BASE_URL`)     |
 | `EB_API_BASE_URL`              | **no**  | email-builder API when split (default: same as `API_BASE_URL`) |
-| `JWT_SECRET`                   | **no**  | Shared with workers — BFF mints tenant JWTs           |
-| `DATABASE_URL` / `REDIS_URL`   | **no**  | workers (same root `.env`)                            |
-| `POSTHOG_PERSONAL_API_KEY`     | **no**  | HogQL for stats + campaign-delivery (`query:read`)    |
-| `POSTHOG_PROJECT_ID`           | **no**  | Maildrill messaging project (`526344`)                |
+| `JWT_SECRET`                   | **no**  | Shared with workers — BFF mints tenant JWTs                    |
+| `DATABASE_URL` / `REDIS_URL`   | **no**  | workers (same root `.env`)                                     |
+| `POSTHOG_PERSONAL_API_KEY`     | **no**  | HogQL for stats + campaign-delivery (`query:read`)             |
+| `POSTHOG_PROJECT_ID`           | **no**  | Maildrill messaging project (`526344`)                         |
 
 Only `PUBLIC_*` reach the browser. Full list: [`.env.example`](.env.example). Server
 helpers: [`src/lib/env.ts`](src/lib/env.ts). Backend config: `workers/packages/config`.

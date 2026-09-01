@@ -10,6 +10,8 @@ type Props = {
   cancelLabel?: string;
   /** `danger` paints the confirm button red; use it for destructive actions. */
   tone?: 'danger' | 'default';
+  /** Optional fields for dialogs that also collect input (e.g. a rename). */
+  children?: React.ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -27,6 +29,7 @@ export default function ConfirmDialog({
   confirmLabel = 'Delete',
   cancelLabel = 'Cancel',
   tone = 'danger',
+  children,
   onConfirm,
   onCancel,
 }: Props) {
@@ -66,6 +69,7 @@ export default function ConfirmDialog({
             {message}
           </p>
         )}
+        {children}
         <div className={styles.actions}>
           <button ref={cancelRef} type="button" className={styles.cancel} onClick={onCancel}>
             {cancelLabel}

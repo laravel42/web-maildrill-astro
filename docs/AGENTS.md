@@ -74,6 +74,7 @@ src/
 packages/
   email-builder-standalone/              # vendored visual email editor (compiled from source)
   email-builder/ document-core/ block-*/ # editor sub-packages
+  builder42/                             # vendored visual landing-page editor (see VENDOR.md)
 workers/                                 # messaging + product backend (was workers)
   apps/{api,product-api,email-builder-api,workers,dev-server}
   packages/{config,database,domain,services,product,…}
@@ -89,6 +90,17 @@ touching `workers/packages/{activepieces-core,automations}`,
 automation versions are **immutable** (editing opens a new draft), and the engine
 (`@maildrill/automations/engine`) may not import a Maildrill service — it talks to the
 product only through injected ports.
+
+**Landing pages** (Builder42, `/dashboard/landings`) — read
+[`landing-pages-builder-integration.md`](landing-pages-builder-integration.md) before
+touching `packages/builder42/`, `src/components/react/{AppLandings,LandingPageBuilder*}.tsx`,
+`src/lib/app/{landings,builder42-adapters}.ts`, or the `landings` table/routes in
+`workers/`. Three rules that are easy to break: a landing is one whole **site**
+(`BuilderSite`: multi-page), the list queries must **never** select `document` (it
+inlines images as data URLs, so a row can be megabytes — `page_count`/`document_bytes`
+exist for that), and every editor capability (AI, Unsplash, publish, translate) is
+gated by the `fetchHealth` adapter — an unset adapter is a 404 against this host, not
+"feature off".
 
 **Backend lives in [`../workers/`](../workers/)** and is part of the **root**
 `pnpm-workspace.yaml` (`workers`, `workers/packages/*`, `workers/apps/*`). One

@@ -738,6 +738,51 @@ export const templates = pgTable(
   ],
 );
 
+/**
+ * Landing pages: one row per Builder42 *site* (the editor's document is a whole
+ * site — `pages`, `pageOrder`, `homePageId` — not a single page).
+ *
+ * `pageCount`/`documentBytes` are denormalised on write so listing landings
+ * never has to read `document`: it holds images inline as data URLs, which puts
+ * a single row in the megabytes.
+ *
+ * `siteId` is the PUBLISH identity (`document.meta.siteId`, a slug the editor
+ * generates on first publish), deliberately not the row id: it becomes part of a
+ * public URL, so it must be human-readable and unique across tenants, and it
+ * cannot change once links exist. Nullable until publishing lands.
+ */
+export const landings = pgTable(
+  'landings',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    /** The `BuilderSite` JSON — opaque here; the editor owns its shape. */
+    document: jsonb('document').$type<Record<string, unknown>>(),
+    /** `BuilderSite.meta.version`, for future document migrations. */
+    schemaVersion: integer('schema_version'),
+    siteId: text('site_id'),
+    publishedUrl: text('published_url'),
+    publishedAt: ts('published_at'),
+    pageCount: integer('page_count').notNull().default(1),
+    documentBytes: integer('document_bytes').notNull().default(0),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index('landings_tenant_idx').on(t.tenantId),
+    // The list's default order (most recently edited first) within a tenant.
+    index('landings_tenant_updated_idx').on(t.tenantId, t.updatedAt),
+    // A publish slug is a hostname label: unique across the whole install.
+    // Partial so unpublished rows (site_id null) are simply out of scope.
+    uniqueIndex('landings_site_id_idx')
+      .on(t.siteId)
+      .where(sql`${t.siteId} is not null`),
+  ],
+);
+
 export const mediaAssets = pgTable(
   'media_assets',
   {

@@ -82,7 +82,8 @@ export type IconName =
   | 'undo'
   | 'redo'
   | 'variable'
-  | 'maximize';
+  | 'maximize'
+  | 'landing';
 
 export const filledIcons: ReadonlySet<IconName> = new Set<IconName>([
   'whatsapp',
@@ -190,11 +191,18 @@ export const iconPaths: Record<IconName, string> = {
   // Automations: a trigger node feeding two branch nodes — the shape of the canvas itself.
   automations:
     '<rect x="8.5" y="2.5" width="7" height="5" rx="1.6"/><rect x="2.5" y="16.5" width="7" height="5" rx="1.6"/><rect x="14.5" y="16.5" width="7" height="5" rx="1.6"/><path d="M12 7.5v3.5M6 16.5V13a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3.5"/>',
-  branch: '<path d="M6 3v6a3 3 0 0 0 3 3h6a3 3 0 0 1 3 3v6"/><circle cx="6" cy="3" r="1.8"/><circle cx="18" cy="21" r="1.8"/><path d="M6 21v-6"/><circle cx="6" cy="21" r="1.8"/>',
+  branch:
+    '<path d="M6 3v6a3 3 0 0 0 3 3h6a3 3 0 0 1 3 3v6"/><circle cx="6" cy="3" r="1.8"/><circle cx="18" cy="21" r="1.8"/><path d="M6 21v-6"/><circle cx="6" cy="21" r="1.8"/>',
   loop: '<path d="M17 2.5 20.5 6 17 9.5"/><path d="M3.5 11V9a3 3 0 0 1 3-3h14"/><path d="M7 21.5 3.5 18 7 14.5"/><path d="M20.5 13v2a3 3 0 0 1-3 3h-14"/>',
   play: '<path d="M6 3.5 20 12 6 20.5V3.5Z"/>',
   undo: '<path d="M3 8h11a5 5 0 0 1 0 10H8"/><path d="m7 4-4 4 4 4"/>',
   redo: '<path d="M21 8H10a5 5 0 0 0 0 10h6"/><path d="m17 4 4 4-4 4"/>',
-  variable: '<path d="M7 4a12 12 0 0 0 0 16"/><path d="M17 4a12 12 0 0 1 0 16"/><path d="m9.5 9.5 5 5"/><path d="m14.5 9.5-5 5"/>',
-  maximize: '<path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/>',
+  variable:
+    '<path d="M7 4a12 12 0 0 0 0 16"/><path d="M17 4a12 12 0 0 1 0 16"/><path d="m9.5 9.5 5 5"/><path d="m14.5 9.5-5 5"/>',
+  maximize:
+    '<path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/>',
+  // Inner markup only: `Icon` supplies the wrapping <svg> with the viewBox,
+  // sizing and stroke attributes. A nested <svg> here would ignore both.
+  landing:
+    '<rect x="2.5" y="4" width="19" height="16" rx="2.2"/><path d="M2.5 9h19"/><path d="M6 14.5h5"/>',
 };

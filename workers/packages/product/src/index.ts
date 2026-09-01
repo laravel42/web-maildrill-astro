@@ -4,6 +4,7 @@ export * from './lists';
 export * from './tags';
 export * from './segments';
 export * from './templates';
+export * from './landings';
 export * from './suppressions';
 export * from './custom-fields';
 export * from './audience';

@@ -39,18 +39,19 @@ across channels; a subscriber is addressed by `email` and/or `phone`.
 
 ### 1.3 Workspace screens
 
-| Screen          | Capabilities                                                                                                                                                                                |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Dashboard**   | Workspace summary + per-channel breakdown, 30-day activity, recent campaigns                                                                                                                |
-| **Campaigns**   | Create/edit, draft→send lifecycle, status-guarded dispatch (no double-send), dedicated report page (`/campaigns/[id]/report`)                                                               |
-| **Templates**   | Per-channel builder pages — email (visual EmailBuilder.js + AI generation), SMS/Voice (composer), WhatsApp (wa-template-studio with Meta approval: submit, status polling, approval badges) |
-| **Subscribers** | CRM view, add/edit (email, phone, name, status, tags), bulk actions, segments, detail page with pins + GDPR/consent badges                                                                  |
-| **Lists**       | List CRUD, membership, consent + lifecycle fields, workspace-wide custom fields, member counts, detail page (`/lists/[id]`)                                                                 |
-| **Segments**    | Rule-based (field + op + value) compiled to SQL `EXISTS`; membership counts                                                                                                                 |
-| **Media**       | S3-backed asset library (presigned upload, CloudFront delivery)                                                                                                                             |
-| **Analytics**   | Daily activity + channel-aware breakdown (PostHog HogQL when configured; else PG)                                                                                                           |
-| **Profile**     | Account profile + workspace membership                                                                                                                                                      |
-| **Settings**    | Workspace/account settings                                                                                                                                                                  |
+| Screen          | Capabilities                                                                                                                                                                                                        |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dashboard**   | Workspace summary + per-channel breakdown, 30-day activity, recent campaigns                                                                                                                                        |
+| **Campaigns**   | Create/edit, draft→send lifecycle, status-guarded dispatch (no double-send), dedicated report page (`/campaigns/[id]/report`)                                                                                       |
+| **Templates**   | Per-channel builder pages — email (visual EmailBuilder.js + AI generation), SMS/Voice (composer), WhatsApp (wa-template-studio with Meta approval: submit, status polling, approval badges)                         |
+| **Landings**    | Standalone multi-page sites built visually (vendored Builder42). List with status, page count, document size; create/rename/duplicate/delete. Publishing not wired yet — see `landing-pages-builder-integration.md` |
+| **Subscribers** | CRM view, add/edit (email, phone, name, status, tags), bulk actions, segments, detail page with pins + GDPR/consent badges                                                                                          |
+| **Lists**       | List CRUD, membership, consent + lifecycle fields, workspace-wide custom fields, member counts, detail page (`/lists/[id]`)                                                                                         |
+| **Segments**    | Rule-based (field + op + value) compiled to SQL `EXISTS`; membership counts                                                                                                                                         |
+| **Media**       | S3-backed asset library (presigned upload, CloudFront delivery)                                                                                                                                                     |
+| **Analytics**   | Daily activity + channel-aware breakdown (PostHog HogQL when configured; else PG)                                                                                                                                   |
+| **Profile**     | Account profile + workspace membership                                                                                                                                                                              |
+| **Settings**    | Workspace/account settings                                                                                                                                                                                          |
 
 ### 1.4 Personalization (merge tags)
 

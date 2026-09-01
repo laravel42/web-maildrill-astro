@@ -22,6 +22,7 @@ export {
   tags,
   subscriberTags,
   templates,
+  landings,
   mediaAssets,
   suppressions,
   users,

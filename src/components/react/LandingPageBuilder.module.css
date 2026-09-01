@@ -21,6 +21,19 @@
   border-bottom: 1px solid var(--border, #ecebe6);
 }
 
+/* Centred between Back and Save; truncates rather than pushing them around. */
+.title {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text2, #6b7280);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .stage {
   position: relative;
   z-index: 1;

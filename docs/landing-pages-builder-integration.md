@@ -1,34 +1,54 @@
-# Landing Pages Builder (Builder42) — contrato de datos e integración pendiente
+# Landing Pages Builder (Builder42) — estado de la integración
 
-> Estado actual: **demo funcional sin backend.** El editor (`packages/builder42/`,
-> vendored desde `pb-static`) está montado y operativo en
-> `/dashboard/landing-pages/demo`, pero persiste en `localStorage` del navegador
-> y no tiene conectados IA / Unsplash / publicación. Este documento fija el
-> contrato de datos tal como el editor ya lo espera, para que conectar un
-> backend real en el futuro sea *cablear*, no *diseñar*.
+> Estado actual: **integrado en el workspace con persistencia real.** El editor
+> (`packages/builder42/`, vendored desde `pb-static`) está montado en
+> `/dashboard/landings/editor` (`?id=` reabre una landing guardada), y la
+> pestaña **Landings** lista, crea, renombra, duplica y borra sitios contra la
+> tabla `landings` de `workers/`. **Pendiente:** publicación, galería de media,
+> IA, Unsplash — los cuatro adapters siguen apagados y `fetchHealth` lo reporta
+> para que la UI oculte lo que no está conectado.
 
-No implementamos backend en esta fase. Este documento existe para que ese
-trabajo, cuando se aborde, no tenga que releer `pb-static` desde cero.
+Una landing = **un `BuilderSite` completo** (multipágina), no una página. Una
+fila = un sitio.
 
 ---
 
 ## 1. Qué ya existe y qué falta
 
-| Pieza | Estado | Dónde |
-|---|---|---|
-| Editor visual (UI, canvas, inspector, drag&drop) | ✅ Vendored y montado | `packages/builder42/` |
-| Wrapper de host (carga client-only, shell, Save/Close) | ✅ | `src/components/react/LandingPageBuilder.tsx` |
-| Ruta protegida por sesión | ✅ | `src/pages/dashboard/landing-pages/demo.astro` |
-| Persistencia real (tabla `sites` + API) | ❌ | — (hoy: `localStorage`, `LandingPageBuilderPage.tsx`) |
-| Adapter de IA (`generateFragment`) | ❌ | `adapters={{}}` vacío en `LandingPageBuilder.tsx` |
-| Adapter de imágenes (`searchImages`/`downloadImage`) | ❌ | idem |
-| Adapter de publicación (`publish`) | ❌ | idem |
-| Adapter de salud (`fetchHealth`) | ❌ | idem |
+| Pieza                                                                 | Estado                | Dónde                                                                                                                                 |
+| --------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Editor visual (UI, canvas, inspector, drag&drop)                      | ✅ Vendored y montado | `packages/builder42/`                                                                                                                 |
+| Wrapper de host (carga client-only, shell, Save/Close, `locale="en"`) | ✅                    | `src/components/react/LandingPageBuilder.tsx`                                                                                         |
+| Pestaña Landings (listado, filtros, paginación, verbos)               | ✅                    | `src/components/react/AppLandings.tsx`, `src/pages/dashboard/landings/index.astro`                                                    |
+| Ruta del editor protegida por sesión + loader SSR                     | ✅                    | `src/pages/dashboard/landings/editor.astro`, `src/lib/server/landing-builder.ts`                                                      |
+| Persistencia real (tabla `landings` + CRUD)                           | ✅                    | `workers/migrations/0032_landings.sql`, `workers/packages/product/src/landings.ts`, `workers/apps/product-api/src/routes/landings.ts` |
+| Cliente de navegador                                                  | ✅                    | `src/lib/app/landings.ts`                                                                                                             |
+| Adapter de salud (`fetchHealth`, todo apagado)                        | ✅                    | `src/lib/app/builder42-adapters.ts`                                                                                                   |
+| Galería de media del tenant como 2ª fuente de imágenes                | ❌                    | requiere `listMedia` en el editor (ver §4b)                                                                                           |
+| Adapter de publicación (`publish`)                                    | ❌                    | endpoints reservados: `501 not_implemented`                                                                                           |
+| Adapter de IA (`generateFragment`)                                    | ❌                    | —                                                                                                                                     |
+| Adapter de imágenes Unsplash (`searchImages`/`downloadImage`)         | ❌                    | —                                                                                                                                     |
 
 El contrato de props del editor (`Builder42EditorProps`, en
-`packages/builder42/src/Builder42Editor.tsx`) ya define exactamente estos 4
-huecos vía `adapters?: ApiAdapters`. **No hay que tocar el editor vendored**
-para conectar un backend — solo implementar las funciones y pasarlas por prop.
+`packages/builder42/src/Builder42Editor.tsx`) define esos huecos vía
+`adapters?: ApiAdapters`, y el único punto de cableado es
+`src/lib/app/builder42-adapters.ts`.
+
+### Por qué `fetchHealth` no es opcional
+
+`packages/builder42/src/services/apiClient.ts` cae a rutas relativas `/api/*`
+cuando no hay adapter, y este host no tiene ese backend: un adapter ausente no
+es "función apagada", es un 404 por cada montaje. Peor, `listPublishedSites`,
+`unpublishSite`, `translateTexts` y `fetchTranslateUsage` **no tienen hook de
+adapter** — siempre pegan a `/api/*`. Lo que realmente apaga esas superficies es
+reportar capacidades: `ImageSourceField`, `AiSectionGenerator`,
+`TranslationModal`, `SeoSettings`, `PublishPanel` y `PublishedSitesList` (que
+mira `publish.capabilities.list` antes de llamar al endpoint sin adapter) se
+esconden solos.
+
+Excepción conocida, sin arreglar: `SeoSettings` llama `fetchTranslateUsage()`
+sin gate, así que deja un 404 capturado por montaje. Silenciarlo pide un adapter
+más en el editor; es ruido inocuo, no un fallo.
 
 ---
 
@@ -40,23 +60,27 @@ serializable, sin referencias circulares — apto para columna `jsonb`.
 
 ```ts
 interface BuilderSite {
-  meta: SiteMeta;                    // nombre, breakpoints, tokens, temas, i18n, siteId de publicación
+  meta: SiteMeta; // nombre, breakpoints, tokens, temas, i18n, siteId de publicación
   pages: Record<PageId, BuilderPage>;
   pageOrder: PageId[];
   homePageId: PageId;
-  assets?: Record<AssetId, Asset>;   // imágenes referenciadas, normalizadas por id
+  assets?: Record<AssetId, Asset>; // imágenes referenciadas, normalizadas por id
 }
 ```
 
-- `meta.siteId` es el identificador estable de publicación (se genera la
-  primera vez que se publica, vía `slugifySiteId(meta.name)`) — **no** es el id
-  de fila en una futura tabla `sites`; hay que decidir si son el mismo valor o
-  se mapean 1:1.
+- `meta.siteId` es el identificador estable de **publicación** (se genera la
+  primera vez que se publica, vía `slugifySiteId(meta.name)`) — deliberadamente
+  **no** es el `id` de la fila: acaba siendo una etiqueta de hostname pública, así
+  que debe ser legible, única entre tenants y estable una vez existen enlaces,
+  mientras que el `id` es un uuid opaco e interno. La tabla lo espeja en la
+  columna `site_id` (nullable, índice único parcial), y `updateLanding` la
+  sincroniza desde `document.meta.siteId` en cada guardado, porque el editor lo
+  escribe dentro del JSON.
 - `meta.version` existe para migraciones de schema — cualquier tabla que
   guarde este JSON debe versionarlo también (columna `schema_version`, o leer
   este campo del propio JSON).
 - El estilo es mobile-first y responsive desde el modelo (`NodeStyle = { base,
-  overrides }`), no en el HTML exportado — esto no afecta al backend salvo que
+overrides }`), no en el HTML exportado — esto no afecta al backend salvo que
   se quiera renderizar el sitio del lado servidor (fuera de alcance aquí).
 
 **No hay necesidad de definir un schema propio para el contenido**: es el
@@ -107,10 +131,14 @@ endpoints del BFF/`workers/`, sin duplicarlos.
 
 ```ts
 type GenerateFragmentFn = (req: AiGenerateSectionRequest) => Promise<AiGenerateSectionResponse>;
-type SearchImagesFn     = (query: string, page: number, perPage: number) => Promise<ImageSearchResponse>;
-type DownloadImageFn    = (photoId: string) => Promise<Blob>;
-type PublishFn          = (req: PublishRequest) => Promise<PublishResponse>;
-type FetchHealthFn      = () => Promise<HealthResponse>;
+type SearchImagesFn = (
+  query: string,
+  page: number,
+  perPage: number,
+) => Promise<ImageSearchResponse>;
+type DownloadImageFn = (photoId: string) => Promise<Blob>;
+type PublishFn = (req: PublishRequest) => Promise<PublishResponse>;
+type FetchHealthFn = () => Promise<HealthResponse>;
 
 interface ApiAdapters {
   generateFragment?: GenerateFragmentFn;
@@ -125,7 +153,7 @@ Todos son opcionales de forma independiente: se puede conectar solo
 `publish` y dejar IA/Unsplash apagados (`fetchHealth` ya se encarga de
 reportarlo para que la UI oculte esas funciones, ver docs/52 F7 en `pb-static`).
 
-**Dónde se conectan hoy (placeholder):**
+**Dónde se conectan hoy:**
 
 ```tsx
 // src/components/react/LandingPageBuilder.tsx
@@ -135,12 +163,48 @@ reportarlo para que la UI oculte esas funciones, ver docs/52 F7 en `pb-static`).
   onSave={onSave}
   onClose={onClose}
   themeMode="host"
-  adapters={{}}                 // ← aquí van los 4 adapters cuando existan
+  locale="en" // Maildrill es monolingüe
+  adapters={landingBuilderAdapters} // src/lib/app/builder42-adapters.ts
 />
 ```
 
-Cuando se implementen, este es el único punto de cableado — el editor
-vendored no cambia.
+`landingBuilderAdapters` es el único punto de cableado; hoy solo lleva
+`fetchHealth` (todo apagado). Añadir un adapter = añadir un campo ahí y
+encender su flag en el health.
+
+---
+
+## 4b. La segunda galería: la media library del tenant (Plan A)
+
+Decidido: Unsplash y la media library de Maildrill son **complementarias**, no
+alternativas — el picker debe ofrecer las dos. Eso **no** se puede hacer solo
+con adapters: `ApiAdapters` no tiene `listMedia`, y el picker
+(`ImageSourceField.tsx`, tres modos: URL / subir archivo / Unsplash) vive en el
+paquete vendorizado. El trabajo va en `packages/builder42/` y, por
+`packages/VENDOR.md`, **debe quedar registrado ahí como "Code patches"** para
+que un re-sync desde `pb-static` no lo borre en silencio.
+
+Especificación:
+
+1. `shared/api.ts`: tipo `MediaAsset { id, url, thumbUrl, fileName, mimeType, width?, height?, bytes? }`,
+   su respuesta paginada, y `media: { enabled: boolean }` en `HealthResponse`.
+2. `services/apiAdapters.ts`: `listMedia?: (query, page, perPage) => Promise<MediaListResponse>`.
+3. `services/apiClient.ts`: `listMedia()` consultando el adapter, con fallback
+   relativo para el modo standalone.
+4. `inspector/controls/ImageSourceField.tsx`: tercer botón "Media library"
+   gated por `health.media.enabled`, abriendo un `MediaPicker` hermano de
+   `UnsplashPicker`.
+5. i18n `en`/`es`/`it`.
+
+Detalle que importa: al elegir de la media library hay que hacer
+`setProp(node.id, fieldKey, { kind: 'url', url })`, **no** `addAsset`. El modelo
+ya soporta `kind: "url"`, y `addAsset` incrustaría la imagen como data URL
+dentro del documento — que es exactamente lo que hace que una landing pese
+megabytes y falle al publicar (ver la columna "Size" del listado). Subir un
+archivo y Unsplash sí inlinan; esta fuente no debe.
+
+En el host: el adapter apunta a `/api/v1/media`, que ya existe (`media-map.ts`,
+`/dashboard/media`, proxy BFF).
 
 ---
 
@@ -155,6 +219,7 @@ completo con su propia auth, rate limiting y providers de deploy
 Builder42 corre solo, sin un host.
 
 Dentro de Maildrill, la implementación real de estos 4 adapters debe:
+
 - Vivir en el BFF (`src/pages/api/`) + `workers/`, **no** como un segundo
   Express paralelo.
 - Reusar lo que `workers/` ya resuelve para el resto de la app: IA (si existe
@@ -168,14 +233,53 @@ Dentro de Maildrill, la implementación real de estos 4 adapters debe:
 
 ---
 
-## 6. Persistencia: patrón a seguir (mirroring `email.astro`)
+## 6. Persistencia (implementada)
 
-Hoy `LandingPageBuilderPage.tsx` persiste el `BuilderSite` completo en
-`localStorage` bajo la clave fija `builder42:demo-site` — explícitamente
-marcado como placeholder de demo, sin tabla ni API.
+Sigue el patrón de los builders de templates: loader SSR → props → guardado por
+el BFF.
 
-El patrón ya establecido en este repo para otros builders (templates de
-email/SMS/WhatsApp/voice) es:
+- **Tabla** `landings` (`workers/migrations/0032_landings.sql`,
+  `packages/database/src/schema.ts`): `id`, `tenant_id`, `name`,
+  `document jsonb`, `schema_version`, `site_id` (único parcial),
+  `published_url`, `published_at`, `page_count`, `document_bytes`, timestamps.
+- **Data layer** `workers/packages/product/src/landings.ts`. Dos invariantes:
+  1. `document` **nunca** aparece en una consulta de listado — lleva imágenes
+     inline, así que una fila puede pesar megabytes. `page_count` y
+     `document_bytes` se recalculan en cada escritura precisamente para que el
+     listado pueda contestar "¿cuánto pesa y va a publicar?" sin leerlo.
+  2. El estado es **derivado**: `draft` (sin publicar), `published`
+     (`updated_at <= published_at`), `stale` (editada después de publicar). Una
+     columna almacenada habría que reescribirla en cada guardado y se
+     desincronizaría la primera vez que no se hiciera.
+- **Rutas** `workers/apps/product-api/src/routes/landings.ts`:
+  `GET /v1/landings` (con `q`, `status`, `sort`, `dir`, `limit`, `offset` →
+  `{ items, total }`), `GET/PATCH/DELETE /v1/landings/:id`, `POST /v1/landings`,
+  `POST /v1/landings/:id/duplicate`, y `POST`/`DELETE /v1/landings/:id/publish`
+  reservados con `501 not_implemented`.
+  `bodyLimit` propio de 12 MB en create/patch: el límite global de la app es 2 MB
+  y un documento con imágenes lo pasa enseguida; 12 MB deja que el aviso de
+  tamaño del propio editor (9 MB) sea lo que avise, no un 413.
+- **Loader SSR** `src/lib/server/landing-builder.ts` (`loadLandingBuilder`) +
+  `src/pages/dashboard/landings/editor.astro`.
+- **Guardado**: `LandingPageBuilderPage.tsx` → `PATCH` si hay id, `POST` en el
+  primer guardado (y `history.replaceState` a `?id=` para que un reload reabra la
+  fila). Duplicar nunca clona `site_id`/`published_url`/`published_at`: esa
+  identidad pertenece a la URL viva del original.
+
+### Nota de entorno
+
+`pnpm --dir workers db:migrate` falló en el entorno local con
+`permission denied for schema drizzle` (el rol `maildrill` no tiene privilegios
+sobre el esquema de bookkeeping de drizzle en el Postgres que escucha en :5432).
+El SQL de la migración sí aplica: verificado ejecutándolo en una transacción con
+`ROLLBACK`. Para aplicarla: correr las migraciones con el rol dueño del esquema,
+o `GRANT USAGE, CREATE ON SCHEMA drizzle TO maildrill`.
+
+---
+
+## 6b. Patrón de referencia (templates)
+
+Para futuras piezas, el patrón que se siguió:
 
 - **SSR loader** (`src/lib/server/template-builder.ts` → `loadTemplateBuilder`):
   lee `?id=` de la URL, resuelve sesión + tenant, pide la fila al backend vía
@@ -202,25 +306,41 @@ alcance de este documento):
 
 ---
 
-## 7. Checklist para la futura conexión de backend
+## 7. Checklist
 
-- [ ] Tabla `sites`/`landing_pages` en `workers/` (jsonb del `BuilderSite`).
-- [ ] Endpoints CRUD en `workers/`, tipados con `packages/builder42/shared/api.ts`
-      donde aplique (publish) y con el propio `BuilderSite` para el resto.
-- [ ] `loadLandingPageBuilder` (SSR loader, mirror de `loadTemplateBuilder`).
-- [ ] Página real reemplazando `demo.astro` (con `?id=`, sin `localStorage`).
+Hecho:
+
+- [x] Tabla `landings` en `workers/` (jsonb del `BuilderSite`) + migración `0032`.
+- [x] CRUD en `workers/` con filtros, orden, paginación y duplicado; verbos de
+      publicación reservados (`501`).
+- [x] `loadLandingBuilder` (SSR loader, mirror de `loadTemplateBuilder`).
+- [x] Ruta real `/dashboard/landings/editor?id=` (el demo de `localStorage` ya
+      no existe).
+- [x] Pestaña **Landings** con listado orientado a publicación: estado, URL
+      pública, nº de páginas, peso del documento, última edición; renombrar,
+      duplicar, borrar.
+- [x] Adapter `fetchHealth` reportando todo apagado, para que la UI oculte lo que
+      no está conectado en vez de mostrar botones rotos.
+- [x] Idioma del editor fijado a inglés (`locale="en"`); auto-traducción oculta,
+      no eliminada.
+
+Pendiente:
+
+- [ ] Segunda galería: media library del tenant en el picker de imágenes
+      (§4b — toca `packages/builder42/`, registrar en `packages/VENDOR.md`).
 - [ ] Adapter `publish`: pipeline de publicación propio de Maildrill (dominios
-      del tenant), no los providers de `pb-static`.
+      del tenant), no los providers de `pb-static`. Al llegar, rellena
+      `site_id`/`published_url`/`published_at` y cambia el `501` por la
+      implementación real; la UI ya tiene el botón (deshabilitado) y las
+      columnas.
+- [ ] Adapter `searchImages`/`downloadImage` (Unsplash), complementario a la
+      media library — no sustitutivo.
 - [ ] Adapter `generateFragment`: conectar al pipeline de IA de Maildrill si
-      existe uno reusable; si no, queda apagado (`fetchHealth` lo reporta y la
-      UI oculta el botón — no bloquea el resto).
-- [ ] Adapter `searchImages`/`downloadImage`: decidir si se usa Unsplash
-      directo (como `pb-static`) o el gestor de medios propio de Maildrill
-      (`/dashboard/media`) — son conceptualmente el mismo problema, evaluar
-      unificar en vez de tener dos flujos de imágenes distintos en la app.
-- [ ] Adapter `fetchHealth`: reportar qué adapters están realmente activos,
-      para que la UI oculte lo que no esté conectado (no mostrar botones
-      rotos).
+      existe uno reusable; si no, queda apagado.
+- [ ] Regenerar los tipos OpenAPI (`pnpm gen:api`) para quitar los `as never` de
+      `landings/index.astro` y `landing-builder.ts` (mismo atajo que usa
+      `automations.astro` hoy).
+- [ ] Aplicar la migración en el entorno local (ver nota de entorno en §6).
 
 ---
 
@@ -231,6 +351,7 @@ alcance de este documento):
 - Tipos de API compartidos: `packages/builder42/shared/api.ts`
 - Modelo del documento: `packages/builder42/src/builder/model/types.ts`
 - Wrapper de host: `src/components/react/LandingPageBuilder.tsx`
-- Página demo actual: `src/pages/dashboard/landing-pages/demo.astro`
+- Adapters del host: `src/lib/app/builder42-adapters.ts`
+- Cliente de navegador: `src/lib/app/landings.ts`
 - Decisión de no portar el backend de `pb-static`: `pb-static/docs/52-maildrill-visual-integration.md` (D8, D9)
 - Patrón de persistencia de referencia: `src/lib/server/template-builder.ts`

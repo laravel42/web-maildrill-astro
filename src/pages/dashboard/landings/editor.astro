@@ -1,0 +1,31 @@
+---
+export const prerender = false;
+import AppLayout from '@/layouts/AppLayout.astro';
+import LandingPageBuilderPage from '@/components/react/LandingPageBuilderPage';
+import { loadLandingBuilder } from '@/lib/server/landing-builder';
+
+/*
+ * The Builder42 editor, full screen. A landing is one whole site, so there is a
+ * single editor route rather than one per channel (contrast
+ * `templates/{email,sms,…}.astro`): `?id=<landingId>` reopens a saved site, and
+ * without an id the first save creates the row.
+ */
+if (!Astro.locals.session) {
+  return Astro.redirect('/login');
+}
+
+const load = await loadLandingBuilder(Astro.locals.session, Astro.url);
+if ('redirect' in load) {
+  return Astro.redirect(load.redirect);
+}
+---
+
+<AppLayout title={load.name ?? 'New landing'}>
+  <LandingPageBuilderPage
+    client:only="react"
+    id={load.id}
+    name={load.name}
+    document={load.document}
+    live={load.live}
+  />
+</AppLayout>

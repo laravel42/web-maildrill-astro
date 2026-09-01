@@ -7,6 +7,7 @@ import type {
   campaigns,
   customFieldDefs,
   deadLetters,
+  landings,
   lists,
   magicLinkTokens,
   mediaAssets,
@@ -96,6 +97,9 @@ export type NewTag = typeof tags.$inferInsert;
 
 export type TemplateRow = typeof templates.$inferSelect;
 export type NewTemplate = typeof templates.$inferInsert;
+
+export type LandingRow = typeof landings.$inferSelect;
+export type NewLanding = typeof landings.$inferInsert;
 
 export type SuppressionRow = typeof suppressions.$inferSelect;
 export type NewSuppression = typeof suppressions.$inferInsert;

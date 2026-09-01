@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Builder42EditorHandle, Builder42EditorProps, BuilderSite } from 'builder42';
 import { retryDynamicImport } from '@/lib/app/retry-dynamic-import';
+import { landingBuilderAdapters } from '@/lib/app/builder42-adapters';
 import styles from './LandingPageBuilder.module.css';
 
 /**
@@ -28,11 +29,13 @@ type BuilderComponent = React.ComponentType<
 type Props = {
   /** Existing site to reopen for editing (BuilderSite JSON), if any. */
   initialSite?: BuilderSite | string;
+  /** Row name, shown in the host bar so it's clear which landing is open. */
+  siteName?: string | null;
   onClose: () => void;
   onSave: (site: BuilderSite) => Promise<void> | void;
 };
 
-export default function LandingPageBuilder({ initialSite, onClose, onSave }: Props) {
+export default function LandingPageBuilder({ initialSite, siteName, onClose, onSave }: Props) {
   const editorRef = useRef<Builder42EditorHandle>(null);
   const [Builder, setBuilder] = useState<BuilderComponent | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -83,7 +86,13 @@ export default function LandingPageBuilder({ initialSite, onClose, onSave }: Pro
         <button type="button" className="sbtn" onClick={onClose}>
           Back
         </button>
-        <button type="button" className="sbtn sbtn-primary" onClick={() => void handleSave()} disabled={saving || !Builder}>
+        <span className={styles.title}>{siteName ?? 'New landing'}</span>
+        <button
+          type="button"
+          className="sbtn sbtn-primary"
+          onClick={() => void handleSave()}
+          disabled={saving || !Builder}
+        >
           {saving ? 'Saving…' : 'Save'}
         </button>
       </div>
@@ -103,7 +112,11 @@ export default function LandingPageBuilder({ initialSite, onClose, onSave }: Pro
             onSave={onSave}
             onClose={onClose}
             themeMode="host"
-            adapters={{}}
+            // Maildrill's workspace is English-only, and the editor's own
+            // auto-translate feature is reported off by `landingBuilderAdapters`
+            // — pinning the chrome locale keeps the two consistent.
+            locale="en"
+            adapters={landingBuilderAdapters}
           />
         ) : (
           <div className={styles.state}>

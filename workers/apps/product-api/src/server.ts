@@ -18,6 +18,7 @@ import { subscriberRoutes } from './routes/subscribers';
 import { suppressionRoutes } from './routes/suppressions';
 import { tagRoutes } from './routes/tags';
 import { templateRoutes } from './routes/templates';
+import { landingRoutes } from './routes/landings';
 import { channelRoutes } from './routes/channels';
 import { voicePreviewRoutes } from './routes/voice-preview';
 import { workspaceRoutes } from './routes/workspace';
@@ -50,6 +51,7 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
   await app.register(tagRoutes);
   await app.register(customFieldRoutes);
   await app.register(templateRoutes);
+  await app.register(landingRoutes);
   await app.register(suppressionRoutes);
   await app.register(campaignRoutes);
   await app.register(channelRoutes);

@@ -145,6 +145,7 @@ export const appNavGroups: AppNavGroup[] = [
       { label: 'Campaigns', href: routes.app.campaigns, icon: 'campaigns' },
       { label: 'Automations', href: routes.app.automations, icon: 'automations' },
       { label: 'Templates', href: routes.app.templates, icon: 'templates' },
+      { label: 'Landings', href: routes.app.landings, icon: 'landing' },
     ],
   },
   {
