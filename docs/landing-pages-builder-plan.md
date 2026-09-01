@@ -176,39 +176,21 @@ falta bajarlos a `false`. La primera pasada dio 19 errores, todos baratos:
   `tsconfig.json` `types`.
 - `alpinejs` sin tipos → `@types/alpinejs@3.13.11` como devDependency.
 - `ErrorBoundary.tsx` (2) → falta `override` en `componentDidCatch`/`render`.
-- `richtext.ts` (1) + `TextToolbar.tsx` (8) → **mismo origen**: el conflicto de
-  versiones de Tiptap que ya documenta `packages/VENDOR.md` §"Known
-  cross-package conflict: `@tiptap/*` version split". `@tiptap/starter-kit@3.27.2`
-  declara sus sub-extensions con rango abierto `^3.x`, pnpm las resuelve contra
-  el `@tiptap/core@3.29.2` que trae `email-builder-standalone`, y
-  `StarterKit.configure(...)` sale tipado contra esa 3.29.2 — nominalmente
-  distinta del `AnyExtension`/`Editor` que `richtext.ts` y `TextToolbar.tsx`
-  importan de la 3.27.2 propia del paquete. En runtime no hay bug (`pnpm why
-  @tiptap/core` confirma que `builder42/node_modules/@tiptap/*` resuelve todo a
-  3.27.2): es puramente un choque de identidad nominal de tipos. Se cerró con
-  un único cast documentado (`as unknown as AnyExtension`) en el punto donde
-  se construye `RICHTEXT_EXTENSIONS` (`richtext.ts`) — eso también resolvió los
-  8 errores de `TextToolbar.tsx`, que eran downstream del mismo `Editor`
-  degradado a `AnyExtension`.
-  - **Se intentó primero** un `overrides` en `pnpm-workspace.yaml` pinneando
-    `@tiptap/starter-kit>@tiptap/core` (y sub-extensiones) a `3.27.2` — es la
-    solución "real" que sugiere VENDOR.md. Se revirtió: el override de pnpm
-    matchea por nombre de paquete dependiente sin importar de qué copia de
-    `starter-kit` viene, así que también pineó el `@tiptap/starter-kit@3.29.2`
-    que usa `email-builder-standalone` — rompiéndolo a él en vez de arreglar
-    builder42. Un fix real necesitaría un override con contexto de versión que
-    pnpm no expone así, o separar los dos `starter-kit` en paquetes que no
-    compartan resolución. Queda igual de "latente pero inerte" que antes.
 - `vite/client` no resolvía (`tsconfig.json` original pedía `types: ["vite/client"]`)
   → el paquete no depende de `vite` directamente. Se añadió `vite@8.0.13`
   (misma versión que fija `astro@7.2.2`) como devDependency solo para los
   tipos; no se usa en runtime.
+- `richtext.ts` (1) + `TextToolbar.tsx` (8) → el conflicto de versiones de
+  Tiptap que ya documentaba `packages/VENDOR.md` §"Known cross-package
+  conflict: `@tiptap/*` version split", resuelto de raíz — ver la nota de
+  bloqueador más abajo, que cubre este punto también (era el mismo problema).
 
-**⚠️ Bloqueador pre-existente encontrado, fuera de alcance de `B1`.** Al
-correr `pnpm install` durante esta tarea (necesario para las nuevas
-devDependencies) se re-resolvió `pnpm-lock.yaml` desde cero y **`astro check`
-ya no arranca**, con o sin los cambios de `B1` (confirmado con `git stash` —
-pasa igual en `792bce6`, el commit anterior a `B1`):
+**⚠️ Bloqueador pre-existente encontrado y resuelto (fuera del alcance
+original de `B1`, pero bloqueaba su "hecho cuando").** Al correr
+`pnpm install` para las nuevas devDependencies, pnpm re-resolvió
+`pnpm-lock.yaml` desde cero y **`astro check` dejó de arrancar** — confirmado
+con `git stash` que ya pasaba igual en `792bce6` (el commit *anterior* a
+`B1`), o sea preexistente, no introducido por esta tarea:
 
 ```
 [MISSING_EXPORT] "getPreviousBlockSibling" is not exported by
@@ -216,19 +198,57 @@ pasa igual en `792bce6`, el commit anterior a `B1`):
   at .../@tiptap+extension-list@3.30.6_@tiptap+core@3.29.2.../extension-list/dist/index.js
 ```
 
-Es el mismo tipo de trampa que ya describe `VENDOR.md` para `pb-static`
-("`SyntaxError` at import time... latente en el lockfile ya committeado; solo
-surge tras un `pnpm install` limpio que re-resuelve desde cero") pero del lado
-de `email-builder-standalone`: `@tiptap/extension-list` se resolvió a
-`3.30.6`, más nueva que el `@tiptap/core@3.29.2` que trae consigo, y esa
-versión de `extension-list` importa una función que `3.29.2` no exporta. No es
-`packages/builder42` — es el `@tiptap/*@^3.29.2` de `email-builder-standalone`
-— así que queda fuera de los archivos de esta ficha. `pnpm typecheck` en el
-`package.json` de raíz **encadena `astro check &&` primero**, así que hoy el
-script completo falla ahí, aunque `tsc -p packages/builder42 --noEmit` (lo que
-`B1` pide) pasa limpio en aislado y así se verificó. Alguien tiene que abrir
-una tarea aparte para pinnear el árbol de Tiptap de `email-builder-standalone`
-contra sí mismo (no es competencia de esta cola de landing pages).
+Exactamente la trampa que `VENDOR.md` ya advertía para el split de Tiptap
+("latente en el lockfile ya committeado; solo surge tras un `pnpm install`
+limpio que re-resuelve desde cero"), esta vez del lado de
+`email-builder-standalone`/`@eb/block-notion-text`: ambos pineaban su set de
+Tiptap a `^3.29.2` con rango abierto, y `@tiptap/starter-kit`'s propias
+sub-extensions (`extension-list`, `extension-bullet-list`, …) flotaron a
+`3.30.6` — más nuevas que el `@tiptap/core@3.29.2` con el que conviven —
+porque esa versión de `extension-list` importa `getPreviousBlockSibling`, que
+`3.29.2` no exporta.
+
+**Fix real aplicado** (no un parche): se pineó el set completo de Tiptap de
+`email-builder-standalone` y `@eb/block-notion-text` a la versión exacta
+`3.30.6` (la que sus propias sub-extensions ya habían resuelto) en vez de
+`^3.29.2` — ambos paquetes documentan-por-código que su Tiptap debe moverse
+junto, así que alinear todo a un release sin rangos abiertos es la solución
+que el propio `VENDOR.md` señala como "la real" (bump both copies to the same
+release). Esto reabrió el problema equivalente dentro de `packages/builder42`
+mismo: su `@tiptap/starter-kit@3.27.2` también declara sus sub-extensions con
+`^3.27.2` abierto, y con el árbol re-resuelto pnpm empezó a deduplicar su
+`@tiptap/core`/`@tiptap/pm` internos contra la instancia `3.30.6` de
+`email-builder-standalone` en vez de la `3.27.2` propia — mismo síntoma
+(`richtext.ts`/`TextToolbar.tsx` con tipos "nominally unrelated"). Se probó
+primero un cast (`as unknown as AnyExtension`) para no tocar nada de
+resolución; se revirtió porque erosiona el tipo de `Editor` a `AnyExtension` y
+elimina en serio los métodos de comando (`toggleBold`, etc.), rompiendo
+`TextToolbar.tsx` en cuanto la resolución cambia. El fix real: dos entradas en
+`pnpm-workspace.yaml` `overrides`, con el selector de un solo nivel que sí
+soporta pnpm (`paquete@versión>dependencia`, no cadenas de varios niveles):
+
+```yaml
+'@tiptap/starter-kit@3.27.2>@tiptap/core': '3.27.2'
+'@tiptap/starter-kit@3.27.2>@tiptap/pm': '3.27.2'
+```
+
+Como `@tiptap/starter-kit@3.27.2` solo existe en el árbol de `builder42` (el
+de `email-builder-standalone` es la instancia `3.30.6`, ya sin rango abierto),
+el selector queda inambiguamente scopeado — no puede filtrarse al otro árbol.
+Verificado con `pnpm why @tiptap/core`/`@tiptap/pm`: cada paquete dedupe ahora
+a una sola instancia propia (`3.27.2` para builder42, `3.30.6` para
+email-builder-standalone), sin cruces.
+
+**Archivos tocados por este fix** (fuera de la lista original de `B1`, pero
+documentados aquí porque desbloqueaban su "hecho cuando"):
+`pnpm-workspace.yaml` (`overrides`), `packages/email-builder-standalone/package.json`,
+`packages/block-notion-text/package.json` (Tiptap `^3.29.2` → `3.30.6` exacto).
+
+**Verificado end-to-end**: `npm run check` (0 errores, 0 warnings, 2 hints
+preexistentes sin relación), `npm run typecheck` completo (`astro check &&
+scripts/typecheck.mjs && tsc wa-template-studio && tsc builder42`, los 4 en
+verde), `npx vitest run` (42 archivos, 294 tests, todos ✅), `npm run build`
+(compila el vendored email-builder desde fuente, exit 0).
 
 ---
 

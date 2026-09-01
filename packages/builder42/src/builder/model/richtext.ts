@@ -67,18 +67,7 @@ export type RichTextContent = string | TiptapDoc;
  * alguna opción que sí afecte el output (p. ej. `HTMLAttributes`).
  */
 export const RICHTEXT_EXTENSIONS: AnyExtension[] = [
-  // `as unknown as AnyExtension`: `@tiptap/starter-kit@3.27.2`'s own manifest
-  // declares its sub-extensions with open `^3.x` ranges, which pnpm resolves
-  // against `email-builder-standalone`'s newer `@tiptap/*@3.29.2` tree (see
-  // `packages/VENDOR.md` "Known cross-package conflict: @tiptap/* version
-  // split"). `StarterKit.configure(...)` therefore returns an `Extension`
-  // built from the 3.29.2 `@tiptap/core` types, which tsc treats as
-  // nominally unrelated to the `AnyExtension` imported here from 3.27.2 —
-  // even though at runtime this package's own `node_modules` resolves every
-  // `@tiptap/*` import to 3.27.2 (`pnpm why @tiptap/core`), so there is no
-  // actual dual-instance bug. Re-check this cast if `builder42`'s Tiptap set
-  // is ever bumped.
-  StarterKit.configure({ link: false }) as unknown as AnyExtension,
+  StarterKit.configure({ link: false }),
   Link.configure({ openOnClick: false }),
 ];
 

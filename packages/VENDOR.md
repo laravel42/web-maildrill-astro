@@ -165,30 +165,75 @@ list of patches to re-apply — there is nothing to re-apply them onto.
   row felt cramped. Buttons stretch to `width: 100%` of their cell; with only
   3 present the last cell is simply empty.
 
-### Known cross-package conflict: `@tiptap/*` version split
+### Known cross-package conflict: `@tiptap/*` version split (fixed 2026-09-01)
 
-Both `packages/email-builder-standalone` (`@tiptap/*@^3.29.2`) and
-`packages/builder42` (`@tiptap/*@3.27.2`) depend on Tiptap, and both live in
-the same pnpm workspace — there is no isolation between the two vendored
-copies. `prosemirror-state` itself dedupes to one version (confirmed with
-`pnpm why prosemirror-state`), so the two editors don't fight over a shared
-singleton at runtime. `@tiptap/core` does **not** dedupe on its own — two
-copies coexist — which by itself is inert (`builder42` and
+Both `packages/email-builder-standalone` (`@tiptap/*@3.30.6`, exact — see
+below) and `packages/builder42` (`@tiptap/*@3.27.2`) depend on Tiptap, and
+both live in the same pnpm workspace — there is no isolation between the two
+vendored copies. `prosemirror-state` itself dedupes to one version (confirmed
+with `pnpm why prosemirror-state`), so the two editors don't fight over a
+shared singleton at runtime. `@tiptap/core` does **not** dedupe on its own —
+two copies coexist — which by itself is inert (`builder42` and
 `email-builder-standalone` are never mounted on the same page), but the split
-has a sharper failure mode worth documenting: `@tiptap/starter-kit@3.27.2`'s
-*own* manifest declares its internal sub-extensions (`@tiptap/extension-bold`,
-`@tiptap/extension-list`, etc.) with open `^3.x` ranges. The npm registry
-serves those against whatever is newest today (`3.30.5` at the time of
-writing), which expects a newer `@tiptap/core` than 3.27.2 actually exports
-(e.g. `getPreviousBlockSibling`) — a **`SyntaxError` at import time** inside
-`pb-static`'s own `richtext.ts`, not something `email-builder-standalone`
-triggers. This was latent in `pb-static`'s committed lockfile already; it only
-surfaced after a clean `pnpm install` re-resolved the tree from scratch.
-`pb-static`'s `pnpm-workspace.yaml` now pins every `@tiptap/starter-kit`
-sub-extension to `3.27.2` via `overrides` to keep `@tiptap/core` deduped to one
-version there. **This app's own lockfile is unaffected** (its
-`email-builder-standalone` copy pins `^3.29.2` directly, with no `starter-kit`
-in its dependency tree), but the trap is now ours to avoid: if you bump
-`builder42`'s Tiptap set, re-run `pnpm why @tiptap/core` here afterward — a real
-fix means bringing both copies to the same Tiptap release, not just re-pinning.
+had a sharper failure mode: **`@tiptap/starter-kit`'s own manifest declares
+its internal sub-extensions (`@tiptap/extension-bold`, `@tiptap/extension-list`,
+etc.) with open `^3.x` ranges**, and pnpm resolves those against whatever
+compatible release already exists elsewhere in the workspace to reduce
+duplicate installs — not necessarily the release the dependent package
+itself pins.
+
+This bit twice, on both sides of the split:
+
+1. **`email-builder-standalone`/`@eb/block-notion-text` pinned `@tiptap/*@^3.29.2`**
+   (open range). `@tiptap/starter-kit@^3.29.2`'s sub-extensions floated to
+   `3.30.6` — newer than the `3.29.2` `@tiptap/core` these packages pinned
+   directly — and `3.30.6`'s `@tiptap/extension-list` imports
+   `getPreviousBlockSibling`, which `@tiptap/core@3.29.2` doesn't export: a
+   **`MISSING_EXPORT` error at Vite's dependency-optimization step**
+   (`astro check`/`astro dev`), not a type error. This was latent in the
+   committed lockfile; it only surfaced after a clean `pnpm install`
+   re-resolved the tree from scratch — the exact trap this section already
+   warned about for `pb-static`.
+2. Fixing (1) by pinning `email-builder-standalone`/`block-notion-text`'s
+   whole Tiptap set to the exact version already in use downstream
+   (`3.30.6`, no `^`) closed that gap, but shifted where pnpm's resolver goes
+   looking for a "close enough" compatible release next: `builder42`'s own
+   `@tiptap/starter-kit@3.27.2` has the *same* open-range sub-extensions
+   problem, and once the tree was re-resolved, pnpm started deduping its
+   internal `@tiptap/core`/`@tiptap/pm` against the new `3.30.6` instance
+   instead of `builder42`'s own pinned `3.27.2` — a **type error**
+   (`tsc -p packages/builder42`: "Two different types with this name exist,
+   but they are unrelated") in `richtext.ts`/`TextToolbar.tsx`, since
+   `StarterKit.configure(...)` came back typed against the wrong `@tiptap/core`
+   instance. No runtime bug (both `@tiptap/core` instances were `3.27.2`-ish
+   API-compatible), purely a nominal-type collision from having two
+   generated `.d.ts` trees for what should be one package.
+
+**Fix, both sides**: exact-pin every `@tiptap/*` dependency `email-builder-standalone`
+and `@eb/block-notion-text` declare directly to `3.30.6` (was `^3.29.2`), and
+add two single-level `pnpm-workspace.yaml` `overrides` so `builder42`'s own
+`@tiptap/starter-kit@3.27.2` resolves its internal `@tiptap/core`/`@tiptap/pm`
+against its own pinned version instead of whatever else is in the workspace:
+
+```yaml
+overrides:
+  '@tiptap/starter-kit@3.27.2>@tiptap/core': '3.27.2'
+  '@tiptap/starter-kit@3.27.2>@tiptap/pm': '3.27.2'
+```
+
+pnpm's override selector only supports **one** `parent>child` hop (no
+`a>b>c` chains), so this pins the *direct* dependency of `@tiptap/starter-kit`
+at that exact version — matched by `@tiptap/starter-kit@3.27.2` specifically
+(a version string, not a package name), which only exists in `builder42`'s
+tree (`email-builder-standalone` uses the separate `3.30.6` instance), so the
+override cannot leak across the split. Verified with `pnpm why @tiptap/core`
+/`pnpm why @tiptap/pm`: each package's `@tiptap/*` tree dedupes to exactly one
+instance, matching what it declares.
+
+**If you bump either package's Tiptap set again**: re-run
+`pnpm why @tiptap/core` and `pnpm why @tiptap/pm` afterward and confirm each
+package still resolves to a single instance of each. If `builder42` moves off
+`3.27.2`, update the override's version-pinned selector to match, or drop it
+if the sub-extension floating no longer reaches past what `builder42` itself
+pins.
 
