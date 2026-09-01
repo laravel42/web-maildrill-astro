@@ -1,4 +1,23 @@
-import 'dotenv/config';
+import { existsSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { config as loadDotenv } from 'dotenv';
+
+/**
+ * Load the monorepo root `.env` regardless of cwd. This process is commonly
+ * spawned with cwd=workers/ (`pnpm --filter workers dev` / `pnpm --dir
+ * workers dev`), where a bare `dotenv/config` finds `workers/.env` (which is
+ * intentionally near-empty, see its header comment) instead of the root
+ * `.env` that actually holds secrets like `UNSPLASH_API_KEY` — they then
+ * silently vanish and every adapter gated on them reports "not configured".
+ * Mirrors `@maildrill/config`'s and `email-builder-api/src/env.ts`'s
+ * resolution (root `.env` first, `workers/.env` as fallback).
+ */
+const appDir = dirname(fileURLToPath(import.meta.url));
+const workersRoot = resolve(appDir, '../../..');
+const rootEnv = resolve(workersRoot, '..', '.env');
+const workersEnv = resolve(workersRoot, '.env');
+loadDotenv({ path: existsSync(rootEnv) ? rootEnv : workersEnv });
 
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
