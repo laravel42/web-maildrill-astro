@@ -32,11 +32,13 @@ import { ReorderControlsToggle } from "./ReorderControlsToggle";
 import { ExperienceLevelToggle } from "./ExperienceLevelToggle";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { useLocalConfig } from "@/hooks/useLocalConfig";
+import { useThemeMode } from "@/hooks/useThemeMode";
 import { fetchHealth } from "@/services/apiClient";
 
 export function ProfileMenu() {
   const { t } = useTranslation("header");
   const openSiteSettings = useDocumentStore((s) => s.openSiteSettings);
+  const [, , , themeHostControlled] = useThemeMode();
   const [inspectorCollapsed, setInspectorCollapsed] = useLocalConfig("inspectorCollapsed");
   // Same gate as `SiteSettingsPanel`'s "publish" tab: this menu item is the
   // OTHER entry point into that tab, so it must agree on whether publishing
@@ -79,11 +81,15 @@ export function ProfileMenu() {
           <div className="pbx-profile__section-label">{t("language.label")}</div>
           <LanguageSelect />
         </div>
-        <div className="pbx-profile__divider" aria-hidden="true" />
-        <div className="pbx-profile__section">
-          <div className="pbx-profile__section-label">{t("theme.label")}</div>
-          <ThemeToggle />
-        </div>
+        {!themeHostControlled && (
+          <>
+            <div className="pbx-profile__divider" aria-hidden="true" />
+            <div className="pbx-profile__section">
+              <div className="pbx-profile__section-label">{t("theme.label")}</div>
+              <ThemeToggle />
+            </div>
+          </>
+        )}
         <div className="pbx-profile__divider" aria-hidden="true" />
         <div className="pbx-profile__section">
           <div className="pbx-profile__section-label">{t("reorderControls.label")}</div>
