@@ -74,3 +74,33 @@
     transform: rotate(360deg);
   }
 }
+
+/*
+ * Builder42's own modals (`.pbx-modal`, e.g. the page-template "replace
+ * content?" confirm dialog) are portalled straight to `document.body`
+ * (`SimpleModal.tsx`), landing in the ROOT stacking context — not inside
+ * `.shell` above. Builder42's vendored CSS gives them `z-index: 100`
+ * (`chrome/modals.css`), which was fine as a standalone app, but here
+ * `.shell` itself is `position: fixed; z-index: 1000` (same root stacking
+ * context, needed to sit above the dashboard's own sidebar/topbar). Because
+ * both are `position: fixed` siblings under `body`, `.shell` (1000) wins
+ * over the modal (100): the confirm dialog renders, but `.shell`'s own
+ * canvas intercepts every pointer event over it — clicking "Apply template"
+ * silently hits the canvas underneath instead (reported as "the modal
+ * doesn't appear" / "no puedo confirmar el reemplazo").
+ *
+ * Fix lives here, not in the vendored package (`packages/VENDOR.md`'s "zero
+ * code patches" goal for Builder42): raise the modal's own z-index above
+ * `.shell`, matching this host's existing convention for modals nested
+ * inside a full-screen editor shell (`MediaPickerModal`/`SendTestModal` use
+ * 1400 over `ChannelEditorShell`'s own 1000, same pattern).
+ *
+ * `.pbx-modal.pbx-modal` (repeated) doubles this selector's specificity
+ * (0,2,0) over Builder42's own `.pbx-modal` (0,1,0): `builder42/style.css`
+ * loads via a dynamic `import()` in `LandingPageBuilder.tsx`'s effect, so it
+ * lands in `<head>` AFTER this CSS module's own stylesheet — equal
+ * specificity would let source order flip the winner.
+ */
+:global(.pbx-modal.pbx-modal) {
+  z-index: 1400;
+}
