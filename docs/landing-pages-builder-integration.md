@@ -1,13 +1,17 @@
 # Landing Pages Builder (Builder42) — estado de la integración
 
-> Estado actual: **integrado en el workspace con persistencia real y galería de
-> media propia.** El editor (`packages/builder42/`, vendored desde `pb-static`)
-> está montado en `/dashboard/landings/editor` (`?id=` reabre una landing
-> guardada), la pestaña **Landings** lista, crea, renombra, duplica y borra
-> sitios contra la tabla `landings` de `workers/`, y el picker de imágenes
-> ofrece la media library del tenant como segunda fuente. **Pendiente:**
-> publicación, IA, Unsplash — los tres adapters siguen apagados y
-> `fetchHealth` lo reporta para que la UI oculte lo que no está conectado.
+> Estado actual: **integrado en el workspace con persistencia real, galería de
+> media propia y los ajustes de UX del primer roll-out.** El editor
+> (`packages/builder42/`, vendored desde `pb-static`) está montado en
+> `/dashboard/landings/editor` (`?id=` reabre una landing guardada), la pestaña
+> **Landings** lista, crea, renombra, duplica y borra sitios contra la tabla
+> `landings` de `workers/`, el picker de imágenes ofrece la media library del
+> tenant como segunda fuente, el nombre de la landing es editable desde la
+> barra del host, Publish está oculto en sus 3 puntos de entrada hasta que
+> Maildrill tenga su propio pipeline, y la edición JSON cruda se quitó del
+> todo. **Pendiente:** publicación, IA, Unsplash — los tres adapters siguen
+> apagados y `fetchHealth` lo reporta para que la UI oculte lo que no está
+> conectado.
 
 Una landing = **un `BuilderSite` completo** (multipágina), no una página. Una
 fila = un sitio.
@@ -209,6 +213,37 @@ En el host: el adapter apunta a `/api/v1/media`, que ya existe (`media-map.ts`,
 
 ---
 
+## 4c. Stacking del host: los modales de Builder42 necesitan z-index > 1000
+
+`LandingPageBuilder.tsx` monta Builder42 dentro de su propio `.shell` de
+pantalla completa (`position: fixed; z-index: 1000` — necesario para tapar el
+sidebar/topbar del dashboard). Los modales propios de Builder42
+(`SimpleModal.tsx`, ej. `PageLayoutConfirmModal`) se portan a `document.body`
+con `z-index: 100` (`packages/builder42/src/styles/chrome/modals.css`) —
+pensado para cuando el editor corre standalone, sin ningún shell alrededor.
+Como ambos son `position: fixed` hermanos bajo `<body>`, el `.shell` del host
+siempre ganaba el stacking order: el modal se renderizaba pero cualquier click
+sobre él caía en el canvas de fondo (bug real, reportado como "no aparece el
+modal de confirmación").
+
+Fix en `src/components/react/LandingPageBuilder.module.css`, **no** en el
+paquete vendorizado (mantiene el objetivo de cero parches de `VENDOR.md` para
+Builder42): `:global(.pbx-modal.pbx-modal) { z-index: 1400; }` — mismo número
+que ya usan `MediaPickerModal`/`SendTestModal` sobre `ChannelEditorShell` (su
+propio `1000`). El selector duplicado importa: `builder42/style.css` se carga
+vía `import()` dinámico *después* de que este CSS module ya esté en el
+`<head>`, así que con la misma especificidad el orden de carga decidiría el
+ganador (y perdería).
+
+**Si Builder42 añade un nuevo modal/overlay que también se porte a
+`document.body`** (otro `SimpleModal`, o el `Modal` de c42-react en algún flujo
+no parcheado todavía), esta regla ya lo cubre — apunta a la clase compartida
+`.pbx-modal`, no a un modal en particular. Pero si algún día un overlay de
+Builder42 usa OTRA clase raíz para su portal, hay que repetir el mismo patrón
+para ella.
+
+---
+
 ## 5. Qué NO traer de `pb-static`
 
 Decisión ya tomada y documentada (`pb-static/docs/52-maildrill-visual-integration.md`,
@@ -329,6 +364,16 @@ Hecho:
       `src/lib/app/builder42-adapters.ts`; `health.media.enabled = true`.
       Seleccionar un asset usa `{ kind: "url", url }`, no `addAsset` — no se
       incrusta como data URL. Registrado en `packages/VENDOR.md`.
+- [x] Nombre de landing editable desde la barra del host (`setSiteName` en
+      `PersistenceSlice`, expuesto vía `Builder42EditorHandle`).
+- [x] Publish oculto en sus 3 puntos de entrada (tab de settings, menú de
+      perfil, botón del header) hasta que Maildrill tenga su propio pipeline.
+- [x] Edición JSON cruda eliminada del todo (no solo oculta): sin vista JSON
+      en el canvas, sin guardar/cargar `.json` — el export a ZIP sigue.
+- [x] Fix de stacking: modales de Builder42 (`.pbx-modal`) suben a
+      `z-index: 1400` desde el host (§4c) — antes quedaban bloqueados por el
+      `.shell` de pantalla completa del propio host (`z-index: 1000`),
+      renderizándose pero sin poder recibir clicks.
 
 Pendiente:
 
