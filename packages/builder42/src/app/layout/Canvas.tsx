@@ -5,7 +5,9 @@
  *  - edit    → NodeRenderer interactivo (selección + DnD).
  *  - preview → NodeRenderer sin chrome (estilos en vivo).
  *  - code    → salida de exportToHtml (HTML + CSS, solo lectura).
- *  - json    → BuilderDocument crudo (solo lectura).
+ *
+ * La vista "json" (edición cruda del `BuilderSite`) existe en el tipo
+ * `ViewMode` pero fue eliminada de este host — ver el guard más abajo.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -17,9 +19,7 @@ import { exportPage, exportSite, type ExportedFile } from "@/builder/export/site
 import { zipSite } from "@/builder/export/zip";
 import { downloadBlob, buildOutputFileName } from "@/builder/export/download";
 import { writeDocIntoSite } from "@/builder/model/site";
-import { parseSiteJson } from "@/builder/model/persist";
 import { useLocalConfig } from "@/hooks/useLocalConfig";
-import { useExperienceLevel } from "@/hooks/useExperienceLevel";
 import { useAutoScroll } from "@/builder/dnd/useAutoScroll";
 import { SelectionHandle } from "@/builder/dnd/SelectionHandle";
 import { HoverHandle } from "@/builder/dnd/HoverHandle";
@@ -40,31 +40,29 @@ export function Canvas() {
   const activeBreakpoint = useDocumentStore((s) => s.activeBreakpoint);
   const activeThemeId = useDocumentStore((s) => s.activeThemeId);
   const select = useDocumentStore((s) => s.select);
-  const { isSimple } = useExperienceLevel();
   const canvasRef = useRef<HTMLElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   useAutoScroll(canvasRef);
 
-  // D1 (docs/46 §2): la vista JSON es el techo de tecnicidad del editor —
-  // oculta en modo simple. Borde crítico (docs/46 §6): si el usuario estaba
-  // en JSON y cambia a modo simple, la vista activa queda oculta y el canvas
-  // no debe quedar en blanco — cae a "edit", igual que `SiteSettingsPanel`
-  // cae a "pages" cuando su tab activa se oculta.
+  // La vista JSON queda eliminada en este host (Maildrill no expone el
+  // documento crudo a sus usuarios, ver
+  // docs/landing-pages-builder-integration.md) — incondicional, no solo en
+  // modo simple: ambos botones que la seleccionaban (`Header`,
+  // `ViewModeDropdown`) ya la excluyen de su lista, pero `view` puede seguir
+  // siendo "json" desde una sesión anterior (persistido) o modo avanzado
+  // previo a este cambio. Cae a "edit", igual que `SiteSettingsPanel` cae a
+  // "pages" cuando su tab activa se oculta.
   useEffect(() => {
-    if (isSimple && view === "json") {
+    if (view === "json") {
       setView("edit");
     }
-  }, [isSimple, view, setView]);
+  }, [view, setView]);
 
   if (view === "code") {
     return <CodeView />;
   }
 
   const interactive = view === "edit";
-
-  if (view === "json" && !isSimple) {
-    return <JsonView />;
-  }
 
   // Preview de alta fidelidad (docs/21): iframe con el export real dentro de un
   // marco de dispositivo. Sustituye al antiguo Preview de "NodeRenderer sin
@@ -185,102 +183,11 @@ function CodeView() {
 }
 
 /**
- * Vista JSON EDITABLE con validación (Fase 4, docs/04 §Fase 4). Muestra el
- * `BuilderSite` completo (copia de trabajo volcada) en un textarea. "Aplicar"
- * parsea + migra v1→v2 + valida vía `parseSiteJson`; si es válido reemplaza el
- * sitio (`loadSite`), si no lista los errores sin tocar el estado. La edición
- * reemplaza el sitio ENTERO (P1: el JSON es la fuente de verdad).
+ * Vista JSON EDITABLE (Fase 4, docs/04 §Fase 4) — eliminada en este host
+ * (Maildrill no expone el documento crudo a sus usuarios ni permite
+ * reemplazar el sitio entero pegando JSON; ver
+ * docs/landing-pages-builder-integration.md). Los botones que la
+ * seleccionaban (`Header`, `ViewModeDropdown`) ya no la ofrecen, y el guard
+ * de arriba redirige a "edit" si `view` llegara a ser "json" por cualquier
+ * otra vía (sesión persistida de antes de este cambio).
  */
-function JsonView() {
-  const { t } = useTranslation("canvas");
-  const site = useDocumentStore((s) => s.site);
-  const activePageId = useDocumentStore((s) => s.activePageId);
-  const activeDoc = useDocumentStore((s) => s.document);
-  const loadSite = useDocumentStore((s) => s.loadSite);
-
-  const currentJson = useMemo(
-    () => JSON.stringify(writeDocIntoSite(site, activePageId, activeDoc), null, 2),
-    [site, activePageId, activeDoc],
-  );
-
-  const [draft, setDraft] = useState(currentJson);
-  const [errors, setErrors] = useState<string[]>([]);
-  const [applied, setApplied] = useState(false);
-  const dirty = draft !== currentJson;
-
-  const apply = () => {
-    const res = parseSiteJson(draft);
-    if (res.ok) {
-      loadSite(res.value);
-      setErrors([]);
-      setApplied(true);
-    } else {
-      setErrors(res.errors);
-      setApplied(false);
-    }
-  };
-
-  const reset = () => {
-    setDraft(currentJson);
-    setErrors([]);
-    setApplied(false);
-  };
-
-  return (
-    <main className="pbx-canvas pbx-canvas--code">
-      <section className="pbx-json">
-        <div className="pbx-json__toolbar">
-          <h3>{t("json.title")}</h3>
-          <div className="pbx-json__actions">
-            {applied && !dirty ? (
-              <span className="pbx-json__ok" role="status">
-                {t("json.applied")}
-              </span>
-            ) : null}
-            <button
-              type="button"
-              className="pbx-json__btn"
-              onClick={reset}
-              disabled={!dirty}
-            >
-              {t("json.reset")}
-            </button>
-            <button
-              type="button"
-              className="pbx-json__btn pbx-json__btn--primary"
-              onClick={apply}
-              disabled={!dirty}
-            >
-              {t("json.apply")}
-            </button>
-          </div>
-        </div>
-
-        <textarea
-          className="pbx-json__area"
-          aria-label={t("json.ariaLabel")}
-          spellCheck={false}
-          value={draft}
-          onChange={(e) => {
-            setDraft(e.target.value);
-            setApplied(false);
-          }}
-        />
-
-        {errors.length > 0 ? (
-          <div className="pbx-json__errors" role="alert">
-            <strong>{t("json.validationErrors", { count: errors.length })}</strong>
-            <ul>
-              {errors.slice(0, 20).map((err, i) => (
-                <li key={i}>
-                  <code>{err}</code>
-                </li>
-              ))}
-            </ul>
-            {errors.length > 20 ? <p>{t("json.andMore", { count: errors.length - 20 })}</p> : null}
-          </div>
-        ) : null}
-      </section>
-    </main>
-  );
-}

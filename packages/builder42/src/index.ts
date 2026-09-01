@@ -20,6 +20,7 @@ export type {
   GenerateFragmentFn,
   SearchImagesFn,
   DownloadImageFn,
+  ListMediaFn,
   PublishFn,
   FetchHealthFn,
 } from "./services/apiAdapters";

@@ -19,6 +19,7 @@ import { FileText, Languages, Palette, Search, SlidersHorizontal, Rocket, Toolti
 import { useDocumentStore } from "@/builder/store/documentStore";
 import type { SiteTab } from "@/builder/store/documentStore";
 import { useExperienceLevel } from "@/hooks/useExperienceLevel";
+import { fetchHealth } from "@/services/apiClient";
 import { PageManager } from "./PageManager";
 import { I18nSettings } from "./I18nSettings";
 import { SeoSettings } from "./SeoSettings";
@@ -56,6 +57,18 @@ export function SiteSettingsPanel() {
   // publish/republish exitoso en el hermano `PublishPanel` (ver doc de
   // cabecera de `PublishedSitesList.tsx`).
   const [publishRefreshSignal, setPublishRefreshSignal] = useState(0);
+  // `PublishPanel` ya se auto-explica cuando `publish.enabled` es `false`
+  // (mensaje "disabled" en vez del formulario), pero eso no evita que la tab
+  // en sí aparezca en la lista para un host que aún no habilitó publicación
+  // — `undefined` (aún no resuelto) mantiene la tab visible para no hacerla
+  // parpadear on/off en el primer render.
+  const [publishEnabled, setPublishEnabled] = useState<boolean | undefined>(undefined);
+
+  useEffect(() => {
+    fetchHealth()
+      .then((h) => setPublishEnabled(h.publish.enabled))
+      .catch(() => setPublishEnabled(false));
+  }, []);
 
   // Petición externa de abrir una tab concreta (p. ej. desde el control
   // `theme-select` del panel de Interactividad cuando no hay temas): se aplica
@@ -81,8 +94,16 @@ export function SiteSettingsPanel() {
 
   // D1/D2 (docs/46 §2): en modo simple se ocultan las tabs técnicas
   // ("languages", "seo"); en avanzado las 6 tabs quedan siempre visibles,
-  // igual que hoy (cero regresión, docs/41 D1 sigue derogado).
-  const visibleTabs = isSimple ? SITE_TABS.filter((t) => !SIMPLE_HIDDEN_TABS.has(t.id)) : SITE_TABS;
+  // igual que hoy (cero regresión, docs/41 D1 sigue derogado). Además, la tab
+  // "publish" se oculta por completo (en ambos modos) mientras el host no
+  // reporte `publish.enabled` — sin esto, el mensaje "disabled" de
+  // `PublishPanel` seguiría siendo alcanzable, solo que detrás de un botón
+  // que no debería estar ahí.
+  const visibleTabs = SITE_TABS.filter((t) => {
+    if (t.id === "publish" && publishEnabled === false) return false;
+    if (isSimple && SIMPLE_HIDDEN_TABS.has(t.id)) return false;
+    return true;
+  });
 
   // Si la tab activa deja de estar visible (p. ej. el usuario cambia a modo
   // simple estando en "seo") cae a "pages" — mismo fallback que el Inspector

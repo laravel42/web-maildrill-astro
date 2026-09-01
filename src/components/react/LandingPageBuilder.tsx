@@ -40,6 +40,15 @@ export default function LandingPageBuilder({ initialSite, siteName, onClose, onS
   const [Builder, setBuilder] = useState<BuilderComponent | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // Editable copy of the site's display name, shown in the host's own bar —
+  // the vendored editor has no UI of its own for this (`meta.name` is only
+  // ever read internally, for the publish slug/export title). Seeded from the
+  // row's name; falls back to the initial site's own `meta.name` for a
+  // reopened landing whose row name and document had drifted apart, then to
+  // the empty placeholder for a brand-new one.
+  const [name, setName] = useState(
+    () => siteName ?? (typeof initialSite === 'object' ? initialSite?.meta.name : null) ?? '',
+  );
 
   // Client-only load of the editor + its stylesheet (kept out of SSR) — same
   // reasoning as VisualEmailBuilder's own effect.
@@ -70,6 +79,22 @@ export default function LandingPageBuilder({ initialSite, siteName, onClose, onS
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  // The editor loads its initial site asynchronously (dynamic import, then
+  // its own mount effect) — if the user edited the name field before that
+  // finished, push the current value in now so it isn't silently dropped.
+  useEffect(() => {
+    if (Builder) editorRef.current?.setSiteName(name);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [Builder]);
+
+  // Pushes the host's name field into the editor's own document as it's
+  // typed, so `site.meta.name` is never stale by the time Save reads it
+  // (`getFlushedSite()` inside the handle's `save()`/`onSave`).
+  const handleNameChange = (value: string) => {
+    setName(value);
+    editorRef.current?.setSiteName(value);
+  };
+
   const handleSave = async () => {
     if (!editorRef.current) return;
     setSaving(true);
@@ -86,7 +111,15 @@ export default function LandingPageBuilder({ initialSite, siteName, onClose, onS
         <button type="button" className="sbtn" onClick={onClose}>
           Back
         </button>
-        <span className={styles.title}>{siteName ?? 'New landing'}</span>
+        <input
+          className={styles.title}
+          type="text"
+          value={name}
+          onChange={(e) => handleNameChange(e.target.value)}
+          placeholder="Untitled landing"
+          aria-label="Landing name"
+          spellCheck={false}
+        />
         <button
           type="button"
           className="sbtn sbtn-primary"

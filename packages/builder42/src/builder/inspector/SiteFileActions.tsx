@@ -4,17 +4,21 @@
  *   1. Configuración del nombre de archivo de salida: prefijo editable
  *      (default "page") + checkbox de marca de tiempo (por defecto activo) →
  *      `page-<timestamp>.json`. Persistido en `useLocalConfig` (docs §5.3).
- *   2. Guardar/Cargar el sitio completo (.json) — persistencia del proyecto
- *      (docs/06 §8): `getFlushedSite`/`loadSite` + `serializeSite`/`parseSiteJson`.
- *   3. Descargar proyecto: exporta el sitio estático (HTML + CSS + assets)
+ *   2. Descargar proyecto: exporta el sitio estático (HTML + CSS + assets)
  *      comprimido en `.zip` — misma funcionalidad que el botón de la vista
  *      Código (`exportSite` + `zipSite`), reutilizando el nombre de salida.
+ *
+ * Eliminado en este host: guardar/cargar el `BuilderSite` completo como
+ * `.json` crudo (existía aquí en `pb-static`) — Maildrill no expone el
+ * documento crudo a sus usuarios, igual que la vista JSON del canvas
+ * (`Canvas.tsx`); ver docs/landing-pages-builder-integration.md. Cargar un
+ * JSON arbitrario reemplazaba el sitio ENTERO sin ninguna validación visible
+ * para un usuario no técnico.
  */
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useDocumentStore } from "@/builder/store/documentStore";
-import { serializeSite, parseSiteJson } from "@/builder/model/persist";
 import { exportSite } from "@/builder/export/site";
 import { zipSite } from "@/builder/export/zip";
 import { downloadBlob, buildOutputFileName } from "@/builder/export/download";
@@ -24,32 +28,19 @@ import { ExportWarningsBanner } from "@/components/ExportWarningsBanner";
 import type { ExportWarning } from "@/builder/export/warnings";
 
 export function SiteFileActions() {
-  const { t } = useTranslation("header");
   const { t: ti } = useTranslation("inspector");
   const getFlushedSite = useDocumentStore((s) => s.getFlushedSite);
-  const loadSite = useDocumentStore((s) => s.loadSite);
 
   const [prefix, setPrefix] = useLocalConfig("outputFilePrefix");
   const [useTimestamp, setUseTimestamp] = useLocalConfig("outputFileTimestamp");
   const [zipPrefix, setZipPrefix] = useLocalConfig("outputZipPrefix");
   const [zipTimestamp, setZipTimestamp] = useLocalConfig("outputZipTimestamp");
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportWarnings, setExportWarnings] = useState<ExportWarning[]>([]);
 
   const previewName = buildOutputFileName(prefix, useTimestamp);
   const zipPreviewName = buildOutputFileName(zipPrefix, zipTimestamp, new Date(), "zip");
-
-  const handleSave = () => {
-    const site = getFlushedSite();
-    downloadBlob(
-      buildOutputFileName(prefix, useTimestamp),
-      serializeSite(site),
-      "application/json",
-    );
-  };
 
   const handleDownloadZip = () => {
     setExporting(true);
@@ -65,24 +56,6 @@ export function SiteFileActions() {
       );
       setExporting(false);
     }, 0);
-  };
-
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = ""; // permite recargar el mismo archivo
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const res = parseSiteJson(String(reader.result ?? ""));
-      if (res.ok) {
-        loadSite(res.value);
-        setLoadError(null);
-      } else {
-        setLoadError(res.errors.slice(0, 3).join(" · "));
-      }
-    };
-    reader.onerror = () => setLoadError(t("file.readError"));
-    reader.readAsText(file);
   };
 
   return (
@@ -107,36 +80,6 @@ export function SiteFileActions() {
         <p className="pbx-output-name__preview">
           {ti("siteSettings.output.preview")}: <code>{previewName}</code>
         </p>
-      </div>
-
-      {/* Guardar / Cargar (proyecto .json) */}
-      <div className="pbx-file-group">
-        <h4 className="pbx-inspector__heading">{ti("siteSettings.fileTitle")}</h4>
-        <div className="pbx-file" role="group" aria-label={t("file.label")}>
-          <button type="button" className="pbx-file__btn" title={t("file.saveTitle")} onClick={handleSave}>
-            ⤓ {t("file.save")}
-          </button>
-          <button
-            type="button"
-            className="pbx-file__btn"
-            title={t("file.loadTitle")}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            ⤒ {t("file.load")}
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/json,.json"
-            hidden
-            onChange={handleFile}
-          />
-          {loadError ? (
-            <span className="pbx-file__error" role="alert" title={loadError}>
-              ⚠ {t("file.invalidFile")}
-            </span>
-          ) : null}
-        </div>
       </div>
 
       {/* Descargar proyecto estático (.zip) */}

@@ -28,6 +28,14 @@ export interface PersistenceSlice {
    * Republicar reutiliza el valor existente sin volver a llamar esto.
    */
   setSiteId: (siteId: string) => void;
+  /**
+   * Fija `site.meta.name` — el nombre visible del sitio. Sin UI propia dentro
+   * del editor (el chrome compartido con standalone no tiene un campo para
+   * esto, docs/AGENTS.md landing pages §2): el host embebido (D9/F8) lo
+   * expone en SU propia barra, igual que hace con Save/Close vía
+   * `Builder42EditorHandle`.
+   */
+  setSiteName: (name: string) => void;
 }
 
 export const createPersistenceSlice: SliceCreator<PersistenceSlice> = (set, get) => ({
@@ -69,5 +77,10 @@ export const createPersistenceSlice: SliceCreator<PersistenceSlice> = (set, get)
   setSiteId: (siteId) =>
     set((s) => {
       s.site.meta.siteId = siteId;
+    }),
+
+  setSiteName: (name) =>
+    set((s) => {
+      s.site.meta.name = name;
     }),
 });

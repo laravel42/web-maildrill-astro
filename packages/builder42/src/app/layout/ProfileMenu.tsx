@@ -23,6 +23,7 @@
  * panel se cierre entre acciones.
  */
 
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Dropdown, LanguageSelect, CircleUserRound, Rocket } from "@/components";
@@ -31,11 +32,23 @@ import { ReorderControlsToggle } from "./ReorderControlsToggle";
 import { ExperienceLevelToggle } from "./ExperienceLevelToggle";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { useLocalConfig } from "@/hooks/useLocalConfig";
+import { fetchHealth } from "@/services/apiClient";
 
 export function ProfileMenu() {
   const { t } = useTranslation("header");
   const openSiteSettings = useDocumentStore((s) => s.openSiteSettings);
   const [inspectorCollapsed, setInspectorCollapsed] = useLocalConfig("inspectorCollapsed");
+  // Same gate as `SiteSettingsPanel`'s "publish" tab: this menu item is the
+  // OTHER entry point into that tab, so it must agree on whether publishing
+  // is on — otherwise clicking it would request a tab the settings panel has
+  // already hidden from its own list, falling back to "pages" instead.
+  const [publishEnabled, setPublishEnabled] = useState(false);
+
+  useEffect(() => {
+    fetchHealth()
+      .then((h) => setPublishEnabled(h.publish.enabled))
+      .catch(() => setPublishEnabled(false));
+  }, []);
 
   const handleManagedSitesClick = () => {
     // Si el Inspector está colapsado, el click no produce ningún efecto
@@ -81,18 +94,22 @@ export function ProfileMenu() {
           <div className="pbx-profile__section-label">{t("experienceLevel.label")}</div>
           <ExperienceLevelToggle />
         </div>
-        <div className="pbx-profile__divider" aria-hidden="true" />
-        <div className="pbx-profile__section">
-          <button
-            type="button"
-            className="pbx-profile__action"
-            data-c42-dropdown-item
-            onClick={handleManagedSitesClick}
-          >
-            <Rocket size={15} aria-hidden="true" />
-            {t("publish.managedSites")}
-          </button>
-        </div>
+        {publishEnabled && (
+          <>
+            <div className="pbx-profile__divider" aria-hidden="true" />
+            <div className="pbx-profile__section">
+              <button
+                type="button"
+                className="pbx-profile__action"
+                data-c42-dropdown-item
+                onClick={handleManagedSitesClick}
+              >
+                <Rocket size={15} aria-hidden="true" />
+                {t("publish.managedSites")}
+              </button>
+            </div>
+          </>
+        )}
       </motion.div>
     </Dropdown>
   );

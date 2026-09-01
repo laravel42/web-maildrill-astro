@@ -11,7 +11,7 @@
  * la UI del editor.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Tabs } from "@josecortez1/c42-react";
 import { useDocumentStore, type ViewMode } from "@/builder/store/documentStore";
@@ -21,8 +21,8 @@ import {
   undo,
   redo,
 } from "@/builder/store/useTemporalStore";
-import { useExperienceLevel } from "@/hooks/useExperienceLevel";
 import { UndoIcon, RedoIcon, Rocket } from "@/components";
+import { fetchHealth } from "@/services/apiClient";
 import { LayersPanel } from "./LayersPanel";
 import { PageBreadcrumb } from "./PageBreadcrumb";
 import { ProfileMenu } from "./ProfileMenu";
@@ -39,12 +39,22 @@ export function Header() {
   const setView = useDocumentStore((s) => s.setView);
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
-  const { isSimple } = useExperienceLevel();
   const [publishModalOpen, setPublishModalOpen] = useState(false);
+  // Third entry point into the publish flow, gated the same as the
+  // "publish" tab (`SiteSettingsPanel`) and the profile menu's "Published
+  // sites" item — all three must agree on whether the host has it on.
+  const [publishEnabled, setPublishEnabled] = useState(false);
 
-  // D1 (docs/46 §2): la vista JSON es el techo de tecnicidad del editor,
-  // oculta en modo simple (mismo criterio que `ViewModeDropdown`).
-  const viewKeys = isSimple ? VIEW_KEYS.filter((v) => v !== "json") : VIEW_KEYS;
+  useEffect(() => {
+    fetchHealth()
+      .then((h) => setPublishEnabled(h.publish.enabled))
+      .catch(() => setPublishEnabled(false));
+  }, []);
+
+  // D1 (docs/46 §2): la vista JSON es el techo de tecnicidad del editor —
+  // oculta siempre (Maildrill no expone el documento crudo a sus usuarios,
+  // ver docs/landing-pages-builder-integration.md), no solo en modo simple.
+  const viewKeys = VIEW_KEYS.filter((v) => v !== "json");
 
   return (
     <header className="pbx-header">
@@ -137,14 +147,16 @@ export function Header() {
 
         <span className="pbx-header__divider" aria-hidden="true" />
 
-        <button
-          type="button"
-          className="pbx-publish-panel__btn pbx-publish-panel__btn--primary pbx-header__publish-btn"
-          onClick={() => setPublishModalOpen(true)}
-        >
-          <Rocket size={16} aria-hidden="true" />
-          {t("publish.button")}
-        </button>
+        {publishEnabled && (
+          <button
+            type="button"
+            className="pbx-publish-panel__btn pbx-publish-panel__btn--primary pbx-header__publish-btn"
+            onClick={() => setPublishModalOpen(true)}
+          >
+            <Rocket size={16} aria-hidden="true" />
+            {t("publish.button")}
+          </button>
+        )}
 
         {publishModalOpen ? (
           <PublishModal onClose={() => setPublishModalOpen(false)} />

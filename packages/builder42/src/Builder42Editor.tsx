@@ -81,6 +81,11 @@ export interface Builder42EditorHandle {
   save: () => Promise<void>;
   /** Snapshot síncrono del sitio completo, sin pasar por `onSave`. */
   getSite: () => BuilderSite;
+  /**
+   * Renombra el sitio (`site.meta.name`) desde el chrome del HOST — el editor
+   * no tiene un campo propio para esto (ver `PersistenceSlice.setSiteName`).
+   */
+  setSiteName: (name: string) => void;
 }
 
 function resolveInitialSite(input: Builder42EditorProps["site"]): BuilderSite {
@@ -102,6 +107,7 @@ export const Builder42Editor = forwardRef<Builder42EditorHandle, Builder42Editor
     const i18nInstance = useMemo(() => createEditorI18n(locale), [locale]);
     const loadSite = useDocumentStore((s) => s.loadSite);
     const getFlushedSite = useDocumentStore((s) => s.getFlushedSite);
+    const setSiteName = useDocumentStore((s) => s.setSiteName);
     const didInit = useRef(false);
 
     // Fija el flag ANTES de que se monte cualquier hijo: `ThemeToggle` vive
@@ -148,8 +154,9 @@ export const Builder42Editor = forwardRef<Builder42EditorHandle, Builder42Editor
           await onSave(getFlushedSite());
         },
         getSite: () => getFlushedSite(),
+        setSiteName: (name) => setSiteName(name),
       }),
-      [onSave, getFlushedSite],
+      [onSave, getFlushedSite, setSiteName],
     );
 
     return <Builder42EditorInner i18nInstance={i18nInstance} onClose={onClose} />;

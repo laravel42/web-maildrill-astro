@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Dropdown, SquarePen, Eye, Code, Braces } from "@/components";
 import { useDocumentStore, type ViewMode } from "@/builder/store/documentStore";
-import { useExperienceLevel } from "@/hooks/useExperienceLevel";
 import type { ComponentType } from "react";
 import type { LucideProps } from "lucide-react";
 
@@ -16,11 +15,11 @@ export function ViewModeDropdown() {
   const { t } = useTranslation("header");
   const view = useDocumentStore((s) => s.view);
   const setView = useDocumentStore((s) => s.setView);
-  const { isSimple } = useExperienceLevel();
 
-  // D1 (docs/46 §2): la vista JSON es el techo de tecnicidad del editor,
-  // oculta en modo simple (mismo criterio que las tabs de vista del Header).
-  const items = isSimple ? VIEW_ITEMS.filter((item) => item.value !== "json") : VIEW_ITEMS;
+  // D1 (docs/46 §2): la vista JSON es el techo de tecnicidad del editor —
+  // oculta siempre (Maildrill no expone el documento crudo, ver
+  // docs/landing-pages-builder-integration.md), no solo en modo simple.
+  const items = VIEW_ITEMS.filter((item) => item.value !== "json");
 
   const activeItem = items.find((item) => item.value === view) ?? items[0]!;
   const ActiveIcon = activeItem.Icon;
