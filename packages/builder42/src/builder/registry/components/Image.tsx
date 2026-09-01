@@ -8,7 +8,7 @@
  * en export (model/assets.ts). Sin fuente muestra un placeholder en el canvas.
  */
 
-import type { CSSProperties, Ref } from "react";
+import type { CSSProperties, ReactElement, Ref } from "react";
 import { DEFAULT_BREAKPOINTS } from "../../model/types";
 import { resolveStyle } from "../../model/style";
 import { readImageSource } from "../../model/assets";
@@ -16,6 +16,48 @@ import { stylePropertiesToCSSObject } from "../styleToCss";
 import type { ComponentDefinition, RenderContext } from "../types";
 
 const OBJECT_FITS = ["cover", "contain", "fill", "none", "scale-down"] as const;
+
+/**
+ * Coordenadas (0/1/2 por eje) de cada valor de `object-position` dentro de
+ * una grilla 3×3 — usado para dibujar el punto marcador en
+ * `renderPositionOptionPreview`.
+ */
+const POSITION_COORDS: Record<string, [x: 0 | 1 | 2, y: 0 | 1 | 2]> = {
+  "left top": [0, 0],
+  top: [1, 0],
+  "right top": [2, 0],
+  left: [0, 1],
+  center: [1, 1],
+  right: [2, 1],
+  "left bottom": [0, 2],
+  bottom: [1, 2],
+  "right bottom": [2, 2],
+};
+
+/** Mini-diagrama 3×3: marco + un punto en la posición seleccionada. */
+function renderPositionOptionPreview(value: string): ReactElement | null {
+  const coords = POSITION_COORDS[value];
+  if (!coords) return null;
+  const [gx, gy] = coords;
+  const cx = 3 + gx * 4;
+  const cy = 3 + gy * 4;
+  return (
+    <svg viewBox="0 0 14 14" width={14} height={14} aria-hidden="true">
+      <rect
+        x={0.75}
+        y={0.75}
+        width={12.5}
+        height={12.5}
+        rx={2}
+        fill="none"
+        stroke="currentColor"
+        strokeOpacity={0.35}
+        strokeWidth={1}
+      />
+      <circle cx={cx} cy={cy} r={1.6} fill="currentColor" />
+    </svg>
+  );
+}
 
 function ImageRender(ctx: RenderContext) {
   const { node, exportMode, className, breakpoint, rootRef, rootProps, resolveImageSrc } = ctx;
@@ -89,9 +131,21 @@ export const imageDefinition: ComponentDefinition = {
       {
         key: "objectPosition",
         label: "Posición",
-        control: "text",
+        control: "searchable-select",
         group: "Contenido",
-        placeholder: "center · top left · 50% 20%",
+        placeholder: "Centro",
+        options: [
+          { label: "Centro", value: "center" },
+          { label: "Arriba izquierda", value: "left top" },
+          { label: "Arriba centro", value: "top" },
+          { label: "Arriba derecha", value: "right top" },
+          { label: "Centro izquierda", value: "left" },
+          { label: "Centro derecha", value: "right" },
+          { label: "Abajo izquierda", value: "left bottom" },
+          { label: "Abajo centro", value: "bottom" },
+          { label: "Abajo derecha", value: "right bottom" },
+        ],
+        renderOptionPreview: renderPositionOptionPreview,
       },
       {
         key: "loading",

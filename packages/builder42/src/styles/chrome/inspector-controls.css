@@ -374,16 +374,28 @@
   max-width: 140px;
 }
 
-.pbx-control--row .pbx-control__input--select {
-  max-width: 130px;
+/* Los selects (nativo y searchable) no comparten el límite de 140px de
+   arriba: sus opciones suelen ser etiquetas de texto (ej. "Arriba
+   izquierda") que se ven apretadas en ese ancho, a diferencia de un
+   NumericUnitInput corto. `.pbx-control__input--select` cubre el <select>
+   nativo; `.pbx-searchable-select__input` tiene la MISMA clase base
+   `.pbx-control__input` (ver arriba) así que necesita su propio override,
+   no solo el `flex: 1` del wrapper. */
+.pbx-control--row .pbx-control__input--select,
+.pbx-control--row .pbx-searchable-select__input {
+  max-width: none;
 }
 
 /* El wrapper de searchable-select envuelve su <input>, por lo que las reglas
    de tamaño de arriba (que apuntan a .pbx-control__input directo) no lo
-   alcanzan como flex item — se repiten aquí sobre el wrapper mismo. */
+   alcanzan como flex item — se repiten aquí sobre el wrapper mismo. Sin
+   max-width (a diferencia de numeric/toggle): las opciones de un select
+   suelen ser etiquetas de texto (ej. "Arriba izquierda") que se ven
+   apretadas en 130-140px — ocupa todo el ancho que el header (44%) deja
+   libre en .pbx-control__body para que las opciones queden alineadas y
+   legibles entre sí. */
 .pbx-control--row .pbx-searchable-select {
   width: 100%;
-  max-width: 140px;
 }
 
 .pbx-control--stacked {
@@ -427,9 +439,12 @@
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .pbx-searchable-select__input {
+  flex: 1;
+  min-width: 0;
   padding-right: 24px;
 }
 
