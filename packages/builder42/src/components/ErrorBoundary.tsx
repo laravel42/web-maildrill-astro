@@ -41,7 +41,7 @@ class ErrorBoundaryInner extends Component<ErrorBoundaryInnerProps, ErrorBoundar
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
+  override componentDidCatch(error: Error, info: ErrorInfo) {
     console.error(
       `[ErrorBoundary] node ${this.props.nodeId} (${this.props.nodeType ?? "unknown"}):`,
       error,
@@ -53,7 +53,7 @@ class ErrorBoundaryInner extends Component<ErrorBoundaryInnerProps, ErrorBoundar
     this.setState({ hasError: false, error: null });
   };
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       const { nodeId, nodeType, t, select } = this.props;
       return (

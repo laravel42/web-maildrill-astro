@@ -24,7 +24,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "astro check && node scripts/typecheck.mjs && tsc -p packages/wa-template-studio --noEmit",
+    "typecheck": "astro check && node scripts/typecheck.mjs && tsc -p packages/wa-template-studio --noEmit && tsc -p packages/builder42 --noEmit",
     "audit:apca": "node scripts/apca-audit.mjs",
     "test": "vitest run",
     "test:watch": "vitest",

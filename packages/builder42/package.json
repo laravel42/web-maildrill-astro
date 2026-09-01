@@ -19,6 +19,12 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vite": "8.0.13",
+    "@types/node": "^26.2.0",
+    "@types/alpinejs": "3.13.11"
+  },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "2.0.1",
     "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "3.0.0",
