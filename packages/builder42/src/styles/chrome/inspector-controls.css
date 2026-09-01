@@ -1052,8 +1052,13 @@
 }
 
 .pbx-imgsrc__actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
+}
+
+.pbx-imgsrc__actions .pbx-code__btn {
+  width: 100%;
 }
 
 /* ---------------------------------------------------------------------------
