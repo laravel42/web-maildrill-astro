@@ -53,6 +53,7 @@ export function UnsplashPicker({ onSelect, onClose }: UnsplashPickerProps) {
   const [selectingId, setSelectingId] = useState<string | null>(null);
 
   const activeQueryRef = useRef("");
+  const gridRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   // Evita disparos duplicados del IntersectionObserver mientras un fetch de
   // paginación está en curso: `state` se actualiza de forma asíncrona (tras
@@ -104,10 +105,18 @@ export function UnsplashPicker({ onSelect, onClose }: UnsplashPickerProps) {
     return () => clearTimeout(handle);
   }, [query, runSearch]);
 
-  // Scroll infinito: observa un centinela al final del grid.
+  // Scroll infinito: observa un centinela al final del grid. `root` se fija
+  // al propio grid (que tiene su scroll interno, `overflow-y: auto`) — sin
+  // esto, IntersectionObserver usa el viewport del documento como referencia
+  // por defecto, y como el editor completo puede no tener scroll de página,
+  // el sentinel podía quedar "visible" (y disparar fetch) apenas se
+  // renderizaba la primera página de resultados, sin que el usuario hubiera
+  // scrolleado el panel — bug real reportado: la paginación se disparaba en
+  // cascada en vez de esperar a que el usuario llegara al final del grid.
   useEffect(() => {
     const sentinel = sentinelRef.current;
-    if (!sentinel) return;
+    const root = gridRef.current;
+    if (!sentinel || !root) return;
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
@@ -120,7 +129,7 @@ export function UnsplashPicker({ onSelect, onClose }: UnsplashPickerProps) {
           void runSearch(query, page + 1, true);
         }
       },
-      { rootMargin: "200px" },
+      { root, rootMargin: "200px" },
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
@@ -182,7 +191,12 @@ export function UnsplashPicker({ onSelect, onClose }: UnsplashPickerProps) {
       )}
 
       {results.length > 0 && (
-        <div className="pbx-unsplash__grid" role="list" aria-label={t("imageSource.unsplash.resultsGridAriaLabel")}>
+        <div
+          ref={gridRef}
+          className="pbx-unsplash__grid"
+          role="list"
+          aria-label={t("imageSource.unsplash.resultsGridAriaLabel")}
+        >
           {results.map((result) => (
             <div key={result.id} className="pbx-unsplash__cell" role="listitem">
               <button

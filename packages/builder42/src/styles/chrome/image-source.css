@@ -51,16 +51,25 @@
 
 .pbx-unsplash__grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   max-height: 320px;
   overflow-y: auto;
+  /* Evita que un scrollbar vertical angosto la ventana horizontal disponible
+     y desborde la última columna (mismo fix que .pbx-templates__grid). */
+  overflow-x: hidden;
 }
 
 .pbx-unsplash__cell {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  /* Sin esto, el tamaño mínimo implícito de una celda de grid es "auto" (el
+     de su contenido intrínseco). Una foto muy panorámica (aspect-ratio ancho
+     vía `style` en .pbx-unsplash__photo-btn) podía entonces forzar la celda
+     más allá del ancho de columna disponible y desbordar el panel en X —
+     minmax(0, 1fr) en el grid resuelve la columna, esto resuelve la celda. */
+  min-width: 0;
 }
 
 .pbx-unsplash__photo-btn {
