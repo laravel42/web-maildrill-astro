@@ -6,12 +6,20 @@
  *   product-api       → PRODUCT_API_PORT (default 3001)
  *   messaging-api     → API_PORT         (default 3002)
  *   email-builder-api → EB_PORT          (default 3003)
- *   workers           → BullMQ roles (no port)
- *   astro             → :4321
+ *   workers            → BullMQ roles (no port)
+ *   astro              → :4321 (Astro auto-increments this itself if busy)
  *
  * Reads the repo-root `.env` (shell env wins) so PRODUCT_API_PORT / API_PORT /
- * EB_PORT are honoured the same way workers/ loads them. Ctrl-C stops every
- * child. For a single unified process use `pnpm dev:workers`.
+ * EB_PORT are honoured the same way workers/ loads them.
+ *
+ * Port collisions with OTHER projects are common when several repos share
+ * default ports (3001/3002/3003), so by default this script probes each
+ * default port and, if busy, walks forward to the next free one — the
+ * chosen ports are then passed into the workers children and baked into
+ * API_BASE_URL / MESSAGING_API_BASE_URL / EB_API_BASE_URL for Astro. Set
+ * DEV_PORT_STRICT=1 to restore the old fail-fast behaviour instead (useful
+ * to catch a stale instance of THIS repo still holding a port). Ctrl-C stops
+ * every child. For a single unified process use `pnpm dev:workers`.
  */
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -56,9 +64,74 @@ loadDotenv(resolve(root, '.env'));
 
 const host = process.env.DEV_WAIT_HOST ?? '127.0.0.1';
 
-const productPort = Number(process.env.PRODUCT_API_PORT ?? 3001);
-const messagingPort = Number(process.env.API_PORT ?? 3002);
-const ebPort = Number(process.env.EB_PORT ?? process.env.PORT_EB ?? 3003);
+// Dev-only convenience: when another project already owns one of our default
+// ports, don't fail — hop to the next free one instead. Opt out with
+// DEV_PORT_STRICT=1 to get the old fail-fast behaviour (e.g. CI, or when you
+// want a hard signal that a stale instance of THIS repo is still running).
+const strictPorts = process.env.DEV_PORT_STRICT === '1';
+
+const requestedProductPort = Number(process.env.PRODUCT_API_PORT ?? 3001);
+const requestedMessagingPort = Number(process.env.API_PORT ?? 3002);
+const requestedEbPort = Number(process.env.EB_PORT ?? process.env.PORT_EB ?? 3003);
+
+function portInUse(p) {
+  return new Promise((resolvePort) => {
+    const socket = net.connect({ port: p, host }, () => {
+      socket.end();
+      resolvePort(true);
+    });
+    socket.on('error', () => {
+      socket.destroy();
+      resolvePort(false);
+    });
+  });
+}
+
+/**
+ * Find the first free port at or after `start`, skipping any port already
+ * claimed by a sibling service in this same run (`taken`).
+ */
+async function findFreePort(start, taken, { maxTries = 50 } = {}) {
+  for (let p = start; p < start + maxTries; p += 1) {
+    if (taken.has(p)) continue;
+    if (!(await portInUse(p))) return p;
+  }
+  throw new Error(`No free port found in range ${start}-${start + maxTries - 1}`);
+}
+
+const taken = new Set();
+
+async function resolvePortFor(label, requested) {
+  if (!(await portInUse(requested)) && !taken.has(requested)) {
+    taken.add(requested);
+    return requested;
+  }
+  if (strictPorts) {
+    console.error(
+      `[dev:all] ${host}:${requested} is already in use (${label}).\n` +
+        `  Find it with: netstat -ano | findstr :${requested}   (or lsof -i :${requested} on macOS/Linux)\n` +
+        `  Stop the stale process, or unset DEV_PORT_STRICT to auto-pick a free port instead.`,
+    );
+    process.exit(1);
+  }
+  const free = await findFreePort(requested + 1, taken);
+  taken.add(free);
+  console.warn(`[dev:all] :${requested} busy (${label}) — using :${free} instead.`);
+  return free;
+}
+
+const productPort = await resolvePortFor('product-api', requestedProductPort);
+const messagingPort = await resolvePortFor('messaging-api', requestedMessagingPort);
+const ebPort = await resolvePortFor('email-builder-api', requestedEbPort);
+
+// Astro dev has its own PID-lockfile guard (`.astro/`) and refuses to start a
+// second instance on the same port even if the port is free — it does NOT
+// auto-increment like plain Vite. So probe :4321 the same way as the backend
+// ports and pass the resolved port explicitly via --port. --ignore-lock also
+// skips the lockfile check entirely, so a stale lock from a previous session
+// that didn't shut down cleanly can't block this run either.
+const requestedAstroPort = Number(process.env.PORT ?? 4321);
+const astroPort = await resolvePortFor('astro', requestedAstroPort);
 
 // Pin BFF URLs to the ports this script actually starts. A stale
 // API_BASE_URL=http://localhost:3001 in .env must not override PRODUCT_API_PORT.
@@ -90,19 +163,6 @@ function waitForPort(p, label, { timeoutMs = 90_000, intervalMs = 400 } = {}) {
       });
     };
     attempt();
-  });
-}
-
-function portInUse(p) {
-  return new Promise((resolvePort) => {
-    const socket = net.connect({ port: p, host }, () => {
-      socket.end();
-      resolvePort(true);
-    });
-    socket.on('error', () => {
-      socket.destroy();
-      resolvePort(false);
-    });
   });
 }
 
@@ -157,17 +217,6 @@ function run(label, command, args, env = process.env) {
 process.on('SIGINT', () => shutdown(0));
 process.on('SIGTERM', () => shutdown(0));
 
-for (const svc of httpServices) {
-  if (await portInUse(svc.port)) {
-    console.error(
-      `[dev:all] ${host}:${svc.port} is already in use (${svc.label}).\n` +
-        `  Find it with: lsof -i :${svc.port}\n` +
-        `  Stop the stale process (or use \`pnpm dev:workers\` only if you want the unified :${productPort} server).`,
-    );
-    process.exit(1);
-  }
-}
-
 const ports = httpServices.map((s) => `:${s.port}`).join(' · ');
 console.log(`[dev:all] starting split backends — waiting for ${ports}…`);
 
@@ -198,7 +247,7 @@ try {
 if (shuttingDown) process.exit(1);
 
 console.log(
-  `[dev:all] backends ready — starting Astro…\n` +
+  `[dev:all] backends ready — starting Astro on http://localhost:${astroPort}…\n` +
     `  API_BASE_URL=${productUrl}\n` +
     `  MESSAGING_API_BASE_URL=${messagingUrl}\n` +
     `  EB_API_BASE_URL=${ebUrl}`,
@@ -206,7 +255,7 @@ console.log(
 run(
   'astro',
   'pnpm',
-  ['exec', 'astro', 'dev'],
+  ['exec', 'astro', 'dev', '--port', String(astroPort), '--ignore-lock'],
   {
     ...process.env,
     API_BASE_URL: productUrl,
