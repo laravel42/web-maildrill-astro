@@ -7,11 +7,21 @@
  * verificable: ninguna otra regla de este módulo fija `height`/`min-height`
  * en una fila salvo la excepción `.pbx-row--tall`.
  *
- * Regla del azul (D4, docs/41 §3, §10.9): en TODO este archivo el token
- * `--pb-chrome-panel-modified` (azul) solo se usa para (a) el fondo/borde de
- * "modificado" — aquí, el badge de conteo de `PanelSection` — y NUNCA para
- * algo decorativo. El acento de marca (`--pb-chrome-accent*`, gradiente
- * índigo→azul) queda fuera de este panel a propósito.
+ * Acento de selección (D4 revisado, petición explícita del usuario —
+ * 2026-09-03): el token `--pb-chrome-panel-modified` (azul) se reserva
+ * EXCLUSIVAMENTE para la señal de "modificado" (badge de conteo de
+ * `PanelSection`, punto del label en `data-origin="active"`). El estado
+ * ACTIVO/SELECCIONADO de cualquier control de tipo selección (segmentado de
+ * presets, chips, candado de ejes vinculados…) usa `--pb-chrome-accent` — el
+ * índigo interactivo de Maildrill (`tokens.css`: `var(--accent, #4f46e5)`),
+ * NO un valor propio de este panel. Al seguir la variable de marca del host,
+ * si Maildrill cambia su paleta de acento este estado cambia con ella sin
+ * tocar este archivo. Motivo del cambio de criterio: con el acento neutro
+ * anterior, "seleccionado" y "modificado" quedaban visualmente indistintos
+ * en varias filas (mismo gris `--pb-chrome-surface-hover`) — el usuario
+ * pidió que el número de "modificado" (azul) y el valor SELECCIONADO en un
+ * switcher de presets (S/M/L/XL, alineación…) se puedan distinguir a simple
+ * vista, así que ahora son dos colores distintos a propósito.
  */
 
 /* ---- PropertyRow (docs/41 §4.3) ----------------------------------------- */
@@ -345,9 +355,6 @@
 }
 
 .pbx-visibility-strip__label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   flex: 1 1 auto;
   min-width: 0;
   font-size: 12px;
@@ -356,23 +363,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.pbx-visibility-strip__label-state {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: var(--pb-chrome-font-weight-regular);
-  color: var(--pb-chrome-text-muted);
-}
-
-.pbx-visibility-strip--hidden .pbx-visibility-strip__label-state,
-.pbx-visibility-strip--hidden-inherited .pbx-visibility-strip__label-state {
-  color: var(--pb-chrome-panel-hidden);
 }
 
 .pbx-visibility-strip__override {
@@ -730,9 +720,9 @@
 }
 
 .pbx-segmented__btn--active {
-  background: var(--pb-chrome-surface-hover);
-  color: var(--pb-chrome-text);
-  box-shadow: inset 0 -2px 0 var(--pb-chrome-border-strong);
+  background: var(--pb-chrome-accent-subtle);
+  color: var(--pb-chrome-accent-on-surface);
+  box-shadow: inset 0 -2px 0 var(--pb-chrome-accent);
 }
 
 /*
@@ -838,13 +828,14 @@
   color: var(--pb-chrome-text-muted);
 }
 
-/* El candado activo se enfatiza con NEUTRO, no con el acento de marca: dentro
-   de este panel el azul solo significa "modificado en este breakpoint"
-   (docs/41 §3 D4, §6.3, §10.9). */
+/* El candado activo se enfatiza con el acento de marca (D4 revisado, ver nota
+   de cabecera): mismo criterio que `.pbx-segmented__btn--active` — el azul de
+   "modificado" queda reservado a esa única señal, el acento de Maildrill
+   marca cualquier estado de selección activa. */
 .pbx-sides-grid__lock--active {
-  border-color: var(--pb-chrome-border-strong);
-  color: var(--pb-chrome-text);
-  background: var(--pb-chrome-surface-hover);
+  border-color: var(--pb-chrome-accent);
+  color: var(--pb-chrome-accent-on-surface);
+  background: var(--pb-chrome-accent-subtle);
 }
 
 .pbx-sides-grid__cells {
@@ -984,17 +975,17 @@
   transition: background var(--pb-chrome-transition), border-color var(--pb-chrome-transition);
 }
 
-/* Chips de preset: hover/activo en NEUTRO. El acento de marca (azul) no entra
-   en este panel — el azul está reservado a "modificado" (docs/41 §3 D4, §6.3). */
+/* Chips de preset: hover neutro, activo con el acento de marca (D4 revisado,
+   ver nota de cabecera) — mismo criterio que `.pbx-segmented__btn--active`. */
 .pbx-chips-text__chip:hover {
   border-color: var(--pb-chrome-border-strong);
   background: var(--pb-chrome-surface-hover);
 }
 
 .pbx-chips-text__chip--active {
-  border-color: var(--pb-chrome-border-strong);
-  color: var(--pb-chrome-text);
-  background: var(--pb-chrome-surface-hover);
+  border-color: var(--pb-chrome-accent);
+  color: var(--pb-chrome-accent-on-surface);
+  background: var(--pb-chrome-accent-subtle);
   font-weight: var(--pb-chrome-font-weight-medium);
 }
 

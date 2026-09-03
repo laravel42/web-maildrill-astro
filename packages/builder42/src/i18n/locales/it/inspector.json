@@ -580,9 +580,6 @@
     },
     "visibility": {
       "fieldLabel": "Visibilità",
-      "visible": "Visibile",
-      "hiddenAt": "Nascosto a {{bp}}",
-      "hiddenInherited": "Nascosto (ereditato da {{bp}})",
       "overrideHere": "Sovrascrivi qui",
       "toggleShow": "Mostra a {{bp}}",
       "toggleHide": "Nascondi a {{bp}}",

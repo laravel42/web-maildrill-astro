@@ -29,7 +29,7 @@ import { useTranslation } from "react-i18next";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { getDefinition } from "@/builder/registry/componentRegistry";
 import { isHiddenAt, computeShowAction } from "@/builder/model/visibility";
-import type { BuilderNode, Breakpoint, BreakpointConfig } from "@/builder/model/types";
+import type { BuilderNode, Breakpoint } from "@/builder/model/types";
 import { Eye, EyeOff } from "@/components";
 
 /** `true` si `layout.display: "none"` está declarado EN la capa del breakpoint activo (no heredado). */
@@ -85,22 +85,9 @@ export function VisibilityStrip({ node }: { node: BuilderNode }) {
     .filter(Boolean)
     .join(" ");
 
-  const stateLabel =
-    kind === "visible"
-      ? t("panel.visibility.visible")
-      : kind === "hiddenHere"
-        ? t("panel.visibility.hiddenAt", { bp: breakpoint })
-        : t("panel.visibility.hiddenInherited", { bp: findInheritedFrom(node, breakpoint, cfg) });
-
   return (
     <div className={stripClassName}>
-      <span className="pbx-visibility-strip__label">
-        {t("panel.visibility.fieldLabel")}
-        <span className="pbx-visibility-strip__label-state" aria-hidden="true">
-          {hidden ? <EyeOff size={12} /> : <Eye size={12} />}
-          {stateLabel}
-        </span>
-      </span>
+      <span className="pbx-visibility-strip__label">{t("panel.visibility.fieldLabel")}</span>
 
       {kind === "hiddenInherited" ? (
         <button type="button" className="pbx-visibility-strip__override" onClick={overrideHere}>
@@ -153,18 +140,6 @@ export function VisibilityStrip({ node }: { node: BuilderNode }) {
       )}
     </div>
   );
-}
-
-/** Breakpoint desde el que se hereda el `none` activo (para el texto "heredado de {{bp}}"). */
-function findInheritedFrom(node: BuilderNode, bp: Breakpoint, cfg: BreakpointConfig): Breakpoint {
-  const idx = cfg.order.indexOf(bp);
-  for (let i = idx - 1; i >= 0; i--) {
-    const candidate = cfg.order[i];
-    if (candidate === undefined) continue;
-    const layer = candidate === "base" ? node.style.base.layout : node.style.overrides?.[candidate]?.layout;
-    if (layer?.display !== undefined) return candidate;
-  }
-  return cfg.order[0] ?? "base";
 }
 
 /** `true` si el nodo está oculto en el breakpoint activo (docs/41 §5.2, D3 — para atenuar el panel). */
