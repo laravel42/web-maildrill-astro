@@ -101,19 +101,20 @@ import { resolveValueOrigin } from "./origin";
 
 const SEGMENTED_ICONS: Record<string, Record<string, { icon: IconSegmentedOption["icon"]; labelKey: string }>> = {
   flexDirection: {
-    // Iconos descriptivos (fase 1 simplificación del panel): barras
-    // horizontales apiladas para "fila", barras verticales para "columna" —
-    // sustituyen la flecha genérica `DirectionIcon` (ArrowRight rotado) que
-    // no distinguía visualmente el eje. `row-reverse`/`column-reverse`
-    // reutilizan el mismo icono que su contraparte no invertida: no se
-    // ofrecen como opción elegible del control simple (ver
-    // `SIMPLE_DIRECTION_VALUES` más abajo), pero si un nodo ya tiene ese
-    // valor guardado, conservan un icono coherente por si se necesitara en
-    // el futuro (p. ej. tooltip o un modo avanzado que sí los liste).
-    row: { icon: Rows3, labelKey: "panel.options.row" },
-    column: { icon: Columns3, labelKey: "panel.options.column" },
-    "row-reverse": { icon: Rows3, labelKey: "panel.options.rowReverse" },
-    "column-reverse": { icon: Columns3, labelKey: "panel.options.columnReverse" },
+    // Iconos descriptivos (fix, petición del usuario): el icono representa
+    // cómo QUEDAN DISPUESTOS los hijos, no el nombre CSS. `row` coloca los
+    // hijos lado a lado en horizontal → se ven como barras VERTICALES
+    // (`Columns3`); `column` los apila en vertical → barras HORIZONTALES
+    // (`Rows3`). Antes estaban al revés (row=Rows3), que confundía porque
+    // mostraba el icono del eje contrario al resultado visual real.
+    // `row-reverse`/`column-reverse` reutilizan el mismo icono que su
+    // contraparte no invertida: no se ofrecen como opción elegible del
+    // control simple (ver `SIMPLE_DIRECTION_VALUES` más abajo), pero si un
+    // nodo ya tiene ese valor guardado, conservan un icono coherente.
+    row: { icon: Columns3, labelKey: "panel.options.row" },
+    column: { icon: Rows3, labelKey: "panel.options.column" },
+    "row-reverse": { icon: Columns3, labelKey: "panel.options.rowReverse" },
+    "column-reverse": { icon: Rows3, labelKey: "panel.options.columnReverse" },
   },
   display: {
     // Solo 3 opciones ofrecidas por el control simple (flex/grid/block, ver
