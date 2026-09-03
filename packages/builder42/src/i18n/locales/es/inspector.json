@@ -539,6 +539,7 @@
       "margin": "Margin",
       "width": "Ancho",
       "height": "Alto",
+      "size": "Tamaño",
       "minHeight": "Alto mínimo",
       "maxWidth": "Ancho máximo",
       "fontSize": "Tamaño",

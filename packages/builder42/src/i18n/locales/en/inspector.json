@@ -539,6 +539,7 @@
       "margin": "Margin",
       "width": "Width",
       "height": "Height",
+      "size": "Size",
       "minHeight": "Min height",
       "maxWidth": "Max width",
       "fontSize": "Size",

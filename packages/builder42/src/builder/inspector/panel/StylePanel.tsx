@@ -523,6 +523,71 @@ function StylePanelRow({
   const controlId = `pbx-field-${row.id}`;
 
   // ---------------------------------------------------------------------
+  // Caso especial componente `icon` en modo simple (petición del usuario):
+  // los iconos son cuadrados por naturaleza, así que en vez de 2 filas
+  // separadas (`size.width` + `size.height`) se muestra UNA sola fila
+  // "Tamaño" que escribe AMBAS medidas con el mismo valor de una vez. La
+  // fila de `width` se transforma (label "Tamaño" + `commit` espejo a
+  // `height`); la de `height` se omite del DOM (`return null`) para no
+  // duplicar. En modo avanzado (o cualquier otro tipo de nodo) las dos
+  // filas se comportan como siempre, independientes. Se resuelve por
+  // `node.type` + `isSimple` + `row.id` — mismo criterio de caso especial
+  // que `layout.gridColumns` más abajo.
+  // ---------------------------------------------------------------------
+  const isSimpleIcon = isSimple && node.type === "icon";
+  if (isSimpleIcon && row.id === "size.height") {
+    return null;
+  }
+  if (isSimpleIcon && row.id === "size.width") {
+    const path = row.fields[0];
+    if (!path) return null;
+    const field = findFieldDef(path);
+    const tokenGroupPrefix = field ? tokenGroupForField(field) : null;
+    const presets = (row.presets ?? []).map((p) => ({ label: t(p.labelKey), value: p.value }));
+    return (
+      <PropertyField
+        node={node}
+        breakpoint={breakpoint}
+        breakpointConfig={breakpointConfig}
+        defaultStyle={defaultStyle}
+        label={t("panel.rows.size")}
+        path={path}
+        tokenGroupPrefix={tokenGroupPrefix}
+        tokens={tokens}
+        controlId={controlId}
+      >
+        {({ freeValue, commit }) => {
+          // Commit espejo: además de `width` (que lo escribe el propio
+          // `PropertyField` vía `commit`), replica el MISMO valor en
+          // `size.height` directamente en el store. `""` (reset) borra ambas.
+          const commitSquare = (v: string) => {
+            commit(v);
+            const heightPath: StylePath = ["size", "height"];
+            if (v === "") {
+              useDocumentStore.getState().resetStyleProp(node.id, breakpoint, heightPath);
+            } else {
+              useDocumentStore.getState().setStyleProp(node.id, breakpoint, heightPath, v);
+            }
+          };
+          return (
+            <PresetNumeric
+              value={freeValue}
+              presets={presets}
+              numericProps={{
+                units: field?.units ?? ["px"],
+                defaultUnit: field?.defaultUnit,
+                placeholder: field?.placeholder,
+              }}
+              presetsAriaLabel={t("panel.rows.size")}
+              onCommit={commitSquare}
+            />
+          );
+        }}
+      </PropertyField>
+    );
+  }
+
+  // ---------------------------------------------------------------------
   // Caso especial `layout.gridColumns` (fase 4 de simplificación del panel,
   // este commit): en modo simple, esta fila SOLO se muestra si el valor
   // RESUELTO de `layout.display` del nodo es `"grid"` — si no, no se
