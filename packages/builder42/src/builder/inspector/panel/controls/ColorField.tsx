@@ -58,7 +58,7 @@ export function ColorField({
   const safeValue = HEX6.test(value) ? value : value;
 
   return (
-    <div className="pbx-color-field">
+    <div className={"pbx-color-field" + (hideHexInput ? " pbx-color-field--swatch-only" : "")}>
       <ColorPicker
         value={safeValue}
         onChange={onCommit}

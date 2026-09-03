@@ -919,6 +919,19 @@
   padding: 0 8px;
 }
 
+/*
+ * Modo simple (`hideHexInput`, petición del usuario): sin el input hex el
+ * swatch quedaba solo a 28px, demasiado pequeño para ser el único control de
+ * la fila. Se ensancha a 130px SOLO en este contexto (`--swatch-only`) — el
+ * swatch de 28px global (ThemesEditor/TokensEditor/BorderSimple/modo
+ * avanzado) no se toca. `!important` no hace falta: este selector es más
+ * específico que la regla base `.pbx-color-picker__swatch` (2 clases + hijo
+ * vs 1 clase). Conserva `height: 28px` — solo cambia el ancho.
+ */
+.pbx-color-field--swatch-only .pbx-color-picker__swatch {
+  width: 130px;
+}
+
 .pbx-color-field__opacity {
   display: inline-flex;
   align-items: center;
