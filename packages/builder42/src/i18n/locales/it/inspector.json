@@ -579,10 +579,13 @@
       }
     },
     "visibility": {
+      "fieldLabel": "Visibilità",
       "visible": "Visibile",
       "hiddenAt": "Nascosto a {{bp}}",
       "hiddenInherited": "Nascosto (ereditato da {{bp}})",
       "overrideHere": "Sovrascrivi qui",
+      "toggleShow": "Mostra a {{bp}}",
+      "toggleHide": "Nascondi a {{bp}}",
       "dotTooltipVisible": "Visibile a {{bp}}",
       "dotTooltipHidden": "Nascosto a {{bp}}"
     },
@@ -596,6 +599,30 @@
       "ariaLabel": "Numero di colonne"
     },
     "fontSize": {
+      "s": "S",
+      "m": "M",
+      "l": "L",
+      "xl": "XL"
+    },
+    "fontWeight": {
+      "s": "S",
+      "m": "M",
+      "l": "L",
+      "xl": "XL"
+    },
+    "borderRadius": {
+      "s": "S",
+      "m": "M",
+      "l": "L",
+      "xl": "XL"
+    },
+    "gap": {
+      "s": "S",
+      "m": "M",
+      "l": "L",
+      "xl": "XL"
+    },
+    "height": {
       "s": "S",
       "m": "M",
       "l": "L",

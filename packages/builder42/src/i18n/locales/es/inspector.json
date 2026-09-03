@@ -579,10 +579,13 @@
       }
     },
     "visibility": {
+      "fieldLabel": "Visibilidad",
       "visible": "Visible",
       "hiddenAt": "Oculto en {{bp}}",
       "hiddenInherited": "Oculto (heredado de {{bp}})",
       "overrideHere": "Anular aquí",
+      "toggleShow": "Mostrar en {{bp}}",
+      "toggleHide": "Ocultar en {{bp}}",
       "dotTooltipVisible": "Visible en {{bp}}",
       "dotTooltipHidden": "Oculto en {{bp}}"
     },
@@ -596,6 +599,30 @@
       "ariaLabel": "Número de columnas"
     },
     "fontSize": {
+      "s": "S",
+      "m": "M",
+      "l": "L",
+      "xl": "XL"
+    },
+    "fontWeight": {
+      "s": "S",
+      "m": "M",
+      "l": "L",
+      "xl": "XL"
+    },
+    "borderRadius": {
+      "s": "S",
+      "m": "M",
+      "l": "L",
+      "xl": "XL"
+    },
+    "gap": {
+      "s": "S",
+      "m": "M",
+      "l": "L",
+      "xl": "XL"
+    },
+    "height": {
       "s": "S",
       "m": "M",
       "l": "L",

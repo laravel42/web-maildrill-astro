@@ -333,7 +333,7 @@
   align-items: center;
   gap: 8px;
   height: 36px;
-  padding: 0 4px 0 10px;
+  padding: 0;
   border-bottom: 1px solid color-mix(in srgb, var(--pb-chrome-border) 8%, transparent);
   border-left: 2px solid transparent;
 }
@@ -344,25 +344,35 @@
   border-left-color: var(--pb-chrome-panel-hidden);
 }
 
-.pbx-visibility-strip__icon {
-  display: inline-flex;
-  flex-shrink: 0;
-  color: var(--pb-chrome-text-muted);
-}
-
-.pbx-visibility-strip--hidden .pbx-visibility-strip__icon,
-.pbx-visibility-strip--hidden-inherited .pbx-visibility-strip__icon {
-  color: var(--pb-chrome-panel-hidden);
-}
-
 .pbx-visibility-strip__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   flex: 1 1 auto;
   min-width: 0;
   font-size: 12px;
-  color: var(--pb-chrome-text-muted);
+  font-weight: var(--pb-chrome-font-weight-medium);
+  color: var(--pb-chrome-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.pbx-visibility-strip__label-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--pb-chrome-font-weight-regular);
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-visibility-strip--hidden .pbx-visibility-strip__label-state,
+.pbx-visibility-strip--hidden-inherited .pbx-visibility-strip__label-state {
+  color: var(--pb-chrome-panel-hidden);
 }
 
 .pbx-visibility-strip__override {
@@ -407,36 +417,43 @@
   outline-offset: 1px;
 }
 
-/* Switch neutro (nunca azul, D4) — reutiliza `.pbx-switch__track`/`__thumb`
- * ya definidos en `inspector-controls.css`, solo se envuelve en un `<label>`
- * propio para no depender del componente `Toggle` (que no soporta el estado
- * "fantasma" de solo lectura). */
-/* Switch neutro (nunca azul, D4) — reutiliza `.pbx-switch__track`/`__thumb`
- * ya definidos en `inspector-controls.css`, solo se envuelve en un `<label>`
- * propio para no depender del componente `Toggle` (que no soporta el estado
- * "fantasma" de solo lectura). El `Toggle`/`.pbx-switch` compartido pinta el
- * estado activo con `--pb-chrome-accent` (azul de marca) — aquí se
- * sobreescribe a neutro porque, DENTRO del panel de propiedades, el azul
- * significa exclusivamente "modificado" (D4, docs/41 §3/§6.3/§10.9), nunca
- * "visible"/"activo" de un control genérico. */
-.pbx-visibility-strip__switch {
+/* Botón-ojo (reemplaza el switch): control principal del strip. Visible =
+ * ojo abierto neutro; oculto = ojo tachado, color ámbar (`--pb-chrome-panel-hidden`)
+ * — mismo tono que el resto de señales de "oculto" en el strip (D4: el azul
+ * de marca queda reservado a "modificado"). */
+.pbx-visibility-strip__eye {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--pb-chrome-radius-sm);
+  background: transparent;
+  color: var(--pb-chrome-text-muted);
   cursor: pointer;
 }
 
-.pbx-visibility-strip__switch .pbx-switch__input:checked + .pbx-switch__track {
-  background: var(--pb-chrome-text-muted);
+.pbx-visibility-strip__eye:hover {
+  background: color-mix(in srgb, var(--pb-chrome-text-muted) 12%, transparent);
+  color: var(--pb-chrome-text);
 }
 
-.pbx-visibility-strip__switch--ghost {
+.pbx-visibility-strip__eye--hidden {
+  color: var(--pb-chrome-panel-hidden);
+}
+
+.pbx-visibility-strip__eye--hidden:hover {
+  background: color-mix(in srgb, var(--pb-chrome-panel-hidden) 12%, transparent);
+  color: var(--pb-chrome-panel-hidden);
+}
+
+.pbx-visibility-strip__eye--ghost {
   cursor: default;
-  opacity: 0.6;
-}
-
-.pbx-visibility-strip__switch--ghost .pbx-switch__track {
-  border: 1px dashed var(--pb-chrome-border-strong);
-  background: transparent;
+  opacity: 0.5;
+  color: var(--pb-chrome-panel-hidden);
 }
 
 /* ---- Atenuación D3 (docs/41 §3 D3, §8 criterio 8) ------------------------ *

@@ -4,19 +4,20 @@
  * sin tarjeta, 36px de alto, con divisoria de 1px debajo. Tres estados
  * (docs/41 §5.2):
  *
- * - **Visible**: fondo transparente, ojo abierto, switch NEUTRO (nunca azul
- *   — el azul del panel está reservado a "modificado", D4).
+ * - **Visible**: fondo transparente, sin icono a la izquierda, ojo abierto
+ *   como botón de alternancia (nunca azul — el azul del panel está
+ *   reservado a "modificado", D4).
  * - **Oculto en el bp activo**: `display:none` DECLARADO en la capa activa
  *   (`declaredInActiveLayer`) — fondo ámbar 10%, barra de acento 2px ámbar a
  *   la izquierda, ojo tachado, panel atenuado (D3, vía `pbx-inspector--dimmed`
  *   en el contenedor que lo monta).
  * - **Oculto heredado**: oculto (`isHiddenAt`) pero NO declarado en la capa
- *   activa — viene de una capa inferior. Switch "fantasma" (contorno
- *   punteado, de solo lectura) + botón de texto "Anular aquí" que declara el
- *   display visible EN la capa activa (mismo criterio que `computeShowAction`,
- *   pero fijando el resultado en la capa activa en vez de resetearla — "anular
- *   aquí" es más fuerte que "mostrar": el usuario quiere que ESTE breakpoint
- *   sea visible sin importar qué diga la cascada).
+ *   activa — viene de una capa inferior. Ojo "fantasma" (atenuado, de solo
+ *   lectura) + botón de texto "Anular aquí" que declara el display visible
+ *   EN la capa activa (mismo criterio que `computeShowAction`, pero fijando
+ *   el resultado en la capa activa en vez de resetearla — "anular aquí" es
+ *   más fuerte que "mostrar": el usuario quiere que ESTE breakpoint sea
+ *   visible sin importar qué diga la cascada).
  *
  * Micro-indicador: un punto por breakpoint configurado (`cfg.order`, nunca 4
  * hardcodeados — docs/41 §2.1 punto 3), clic = `setActiveBreakpoint`, hover =
@@ -84,7 +85,7 @@ export function VisibilityStrip({ node }: { node: BuilderNode }) {
     .filter(Boolean)
     .join(" ");
 
-  const label =
+  const stateLabel =
     kind === "visible"
       ? t("panel.visibility.visible")
       : kind === "hiddenHere"
@@ -93,10 +94,13 @@ export function VisibilityStrip({ node }: { node: BuilderNode }) {
 
   return (
     <div className={stripClassName}>
-      <span className="pbx-visibility-strip__icon" aria-hidden="true">
-        {hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+      <span className="pbx-visibility-strip__label">
+        {t("panel.visibility.fieldLabel")}
+        <span className="pbx-visibility-strip__label-state" aria-hidden="true">
+          {hidden ? <EyeOff size={12} /> : <Eye size={12} />}
+          {stateLabel}
+        </span>
       </span>
-      <span className="pbx-visibility-strip__label">{label}</span>
 
       {kind === "hiddenInherited" ? (
         <button type="button" className="pbx-visibility-strip__override" onClick={overrideHere}>
@@ -128,30 +132,23 @@ export function VisibilityStrip({ node }: { node: BuilderNode }) {
       </div>
 
       {kind !== "hiddenInherited" ? (
-        <label className={"pbx-visibility-strip__switch" + (hidden ? " pbx-visibility-strip__switch--hidden" : "")}>
-          <input
-            type="checkbox"
-            className="pbx-switch__input"
-            checked={!hidden}
-            onChange={toggle}
-            aria-label={t("visibility.toggleAria", { breakpoint })}
-          />
-          <span className="pbx-switch__track" aria-hidden="true">
-            <span className="pbx-switch__thumb" />
-          </span>
-        </label>
-      ) : (
-        // Switch "fantasma" de solo lectura (docs/41 §5.2): contorno
-        // punteado, no interactivo — el único camino desde aquí es
-        // "Anular aquí", nunca togglear directo (togglear un heredado
-        // ambiguo sobre qué capa tocar).
-        <span
-          className="pbx-visibility-strip__switch pbx-visibility-strip__switch--ghost"
-          aria-hidden="true"
+        <button
+          type="button"
+          className={"pbx-visibility-strip__eye" + (hidden ? " pbx-visibility-strip__eye--hidden" : "")}
+          onClick={toggle}
+          aria-pressed={hidden}
+          aria-label={hidden ? t("panel.visibility.toggleShow", { bp: breakpoint }) : t("panel.visibility.toggleHide", { bp: breakpoint })}
+          title={hidden ? t("panel.visibility.toggleShow", { bp: breakpoint }) : t("panel.visibility.toggleHide", { bp: breakpoint })}
         >
-          <span className="pbx-switch__track" aria-hidden="true">
-            <span className="pbx-switch__thumb" />
-          </span>
+          {hidden ? <EyeOff size={16} /> : <Eye size={16} />}
+        </button>
+      ) : (
+        // Ojo "fantasma" de solo lectura (docs/41 §5.2): atenuado, no
+        // interactivo — el único camino desde aquí es "Anular aquí", nunca
+        // togglear directo (togglear un heredado ambiguo sobre qué capa
+        // tocar).
+        <span className="pbx-visibility-strip__eye pbx-visibility-strip__eye--ghost" aria-hidden="true">
+          <EyeOff size={16} />
         </span>
       )}
     </div>
