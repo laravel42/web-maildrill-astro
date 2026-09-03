@@ -472,6 +472,17 @@
   width: 100%; padding: 6px 10px; font-size: 12px;
   border: 1px solid var(--pb-chrome-border-strong); border-radius: var(--pb-chrome-radius-sm);
   background: var(--pb-chrome-surface-raised); color: inherit;
+  /* input[type=search] trae su propio "chrome" nativo (contorno/borde del SO,
+     visible en Chrome/Safari como un borde sólido oscuro) que pisa el border
+     tokenizado de arriba — sin este reset, el estilo del navegador ganaba. */
+  appearance: none;
+  -webkit-appearance: none;
+}
+.pbx-triggers__search::-webkit-search-decoration,
+.pbx-triggers__search::-webkit-search-cancel-button,
+.pbx-triggers__search::-webkit-search-results-button,
+.pbx-triggers__search::-webkit-search-results-decoration {
+  -webkit-appearance: none;
 }
 .pbx-triggers__empty { margin: 4px 0; font-size: 12px; color: var(--pb-chrome-text-muted); }
 .pbx-triggers__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -520,6 +531,16 @@
   width: 100%; padding: 6px 10px; font-size: 12px;
   border: 1px solid var(--pb-chrome-border-strong); border-radius: var(--pb-chrome-radius-sm);
   background: var(--pb-chrome-surface-raised); color: inherit;
+  /* Mismo reset que .pbx-triggers__search: sin appearance:none, Chrome/Safari
+     dibujan su propio borde nativo de input[type=search] encima del token. */
+  appearance: none;
+  -webkit-appearance: none;
+}
+.pbx-node-target-picker__search::-webkit-search-decoration,
+.pbx-node-target-picker__search::-webkit-search-cancel-button,
+.pbx-node-target-picker__search::-webkit-search-results-button,
+.pbx-node-target-picker__search::-webkit-search-results-decoration {
+  -webkit-appearance: none;
 }
 .pbx-node-target-picker__empty { margin: 0; font-size: 11px; color: var(--pb-chrome-text-muted); }
 
@@ -791,9 +812,19 @@
    por encima del área scrolleable, dejándola inalcanzable (no se puede scrollear
    "hacia arriba" del inicio) — el modal quedaba cortado y no se podía editar
    (feedback de usuario). Con `safe center` el navegador cae a `start` al
-   desbordar, y el padding-top deja el contenido por debajo de la barra flotante. */
+   desbordar, y el padding-top deja el contenido por debajo de la barra flotante.
+
+   `width:100%; height:100%` (fix, feedback de usuario "torcido/descentrado a
+   la derecha"): antes el stage solo tenía `max-width/max-height:100%` (sin
+   tamaño propio), así que como flex-item del `.pbx-modal-editor` se encogía al
+   contenido (shrink-to-fit) y el centrado horizontal dependía del
+   `justify-content` del padre. Al encogerse, el `justify-content: safe center`
+   INTERNO no tenía ancho sobrante que repartir y, combinado con `overflow:auto`,
+   el modal quedaba pegado a un lado con scroll a la derecha. Ocupando el área
+   completa del overlay, es este contenedor quien centra de forma determinista
+   en ambos ejes, con todo el ancho del canvas disponible para el centrado. */
 .pbx-modal-editor__stage {
-  position: relative; z-index: 1; max-height: 100%; max-width: 100%;
+  position: relative; z-index: 1; width: 100%; height: 100%; max-height: 100%; max-width: 100%;
   overflow: auto; display: flex; align-items: safe center; justify-content: safe center;
   padding: 52px 16px 16px; box-sizing: border-box;
 }
