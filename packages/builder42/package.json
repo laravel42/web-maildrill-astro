@@ -13,7 +13,8 @@
     "./style.css": "./src/styles/chrome-embedded.css"
   },
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:runtime": "node scripts/build-runtime.mjs"
   },
   "sideEffects": [
     "*.css"

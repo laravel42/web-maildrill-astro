@@ -5,6 +5,7 @@
   "private": true,
   "description": "Maildrill marketing website and campaign workspace (Astro + React islands)",
   "scripts": {
+    "postinstall": "pnpm --filter builder42 build:runtime",
     "dev": "astro dev",
     "dev:workers": "pnpm --filter workers dev",
     "dev:all": "node scripts/dev-all.mjs",
@@ -17,7 +18,7 @@
     "db:seed:images": "pnpm --filter workers db:seed:images",
     "db:backfill:thumbs": "pnpm --filter workers db:backfill:thumbs",
     "db:backfill:engagement": "pnpm --filter workers db:backfill:engagement",
-    "build": "astro build && node scripts/sitemap-canonical.mjs",
+    "build": "pnpm --filter builder42 build:runtime && astro build && node scripts/sitemap-canonical.mjs",
     "preview": "astro preview",
     "check": "astro check",
     "lint": "eslint .",
