@@ -119,6 +119,72 @@ export function serializeSides(sides: FourSides): string {
 }
 
 // ---------------------------------------------------------------------------
+// Presets por eje (docs/spacing-simple-presets-plan.md) — funciones puras,
+// análogas a `parseSides`/`serializeSides`, para el control simplificado
+// `SidesAxisPresets` (2 selects X/Y en vez de la rejilla 2×2 numérica).
+// ---------------------------------------------------------------------------
+
+/** Eje de espaciado: X = left+right, Y = top+bottom. */
+export type SpacingAxis = "x" | "y";
+
+/**
+ * Tamaño de preset ofrecido por eje. Reusa la escala de espaciado ya
+ * tokenizada del sitio (`BASE_TOKENS.spacing`, `model/tokens.ts`:
+ * `sm: "8px"`, `md: "16px"`, `lg: "24px"`) en vez de inventar una escala
+ * nueva — mismo criterio documentado en el plan §5/§6.1.
+ */
+export const AXIS_PRESET_SIZES = ["sm", "md", "lg"] as const;
+export type AxisPresetSize = (typeof AXIS_PRESET_SIZES)[number];
+
+/** Valor CSS (px) de cada preset — MISMOS valores que `BASE_TOKENS.spacing.{sm,md,lg}`. */
+export const AXIS_PRESET_PX: Record<AxisPresetSize, string> = {
+  sm: "8px",
+  md: "16px",
+  lg: "24px",
+};
+
+const AXIS_SIDES: Record<SpacingAxis, [SideKey, SideKey]> = {
+  x: ["left", "right"],
+  y: ["top", "bottom"],
+};
+
+/**
+ * ¿Los dos lados de `axis` están en un estado "uniforme" (mismo `SideValue`
+ * en ambos)? Si no lo están (p. ej. editados a mano en modo avanzado con
+ * valores distintos por lado), el select de ese eje no debe fingir que hay
+ * un preset activo — lo resuelve `axisPresetValue` devolviendo `undefined`.
+ */
+function axisIsUniform(sides: FourSides, axis: SpacingAxis): boolean {
+  const [a, b] = AXIS_SIDES[axis];
+  return sidesEqual(sides[a], sides[b]);
+}
+
+/**
+ * Preset activo de `axis` dado el estado actual de los 4 lados, o
+ * `undefined` si el eje no coincide con ningún preset sm/md/lg (valor
+ * distinto por lado, "auto", vacío/0, o un número no cubierto por la
+ * escala) — el select lo debe mostrar entonces sin selección.
+ */
+export function axisPresetValue(sides: FourSides, axis: SpacingAxis): AxisPresetSize | undefined {
+  if (!axisIsUniform(sides, axis)) return undefined;
+  const [a] = AXIS_SIDES[axis];
+  const css = sideToCss(sides[a]);
+  return AXIS_PRESET_SIZES.find((size) => AXIS_PRESET_PX[size] === css);
+}
+
+/**
+ * Aplica un preset sm/md/lg a los 2 lados de `axis`, devolviendo el nuevo
+ * `FourSides` con el otro eje sin modificar — pura, análoga a
+ * `parseSides`/`serializeSides`. El caller decide cuándo serializar
+ * (`serializeSides`) y hacer `onCommit`.
+ */
+export function applyAxisPreset(sides: FourSides, axis: SpacingAxis, size: AxisPresetSize): FourSides {
+  const value = parseSideToken(AXIS_PRESET_PX[size]);
+  const [a, b] = AXIS_SIDES[axis];
+  return { ...sides, [a]: value, [b]: value };
+}
+
+// ---------------------------------------------------------------------------
 // Componente
 // ---------------------------------------------------------------------------
 

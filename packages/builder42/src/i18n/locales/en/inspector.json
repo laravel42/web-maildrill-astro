@@ -569,6 +569,15 @@
       "bottom": "Bottom",
       "left": "Left"
     },
+    "sidesAxisPresets": {
+      "x": "Horizontal",
+      "y": "Vertical",
+      "sizes": {
+        "sm": "S",
+        "md": "M",
+        "lg": "L"
+      }
+    },
     "visibility": {
       "visible": "Visible",
       "hiddenAt": "Hidden at {{bp}}",
@@ -600,7 +609,7 @@
     },
     "border": {
       "width": "Border width",
-      "widthNone": "No border",
+      "widthNone": "0",
       "style": "Border style",
       "styleOptions": {
         "solid": "Solid",

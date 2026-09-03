@@ -34,6 +34,7 @@ import { useTranslation } from "react-i18next";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { useExperienceLevel } from "@/hooks/useExperienceLevel";
 import { getDefinition } from "@/builder/registry/componentRegistry";
+import { PbxSelect } from "@/components";
 import type { BuilderNode, StyleGroup, StyleState, StyleValue } from "@/builder/model/types";
 import {
   ArrowDown,
@@ -80,6 +81,7 @@ import { NumericField } from "./controls/NumericField";
 import { PresetNumeric } from "./controls/PresetNumeric";
 import { PairGrid } from "./controls/PairGrid";
 import { SidesGrid, type SideKey } from "./controls/SidesGrid";
+import { SidesAxisPresets } from "./controls/SidesAxisPresets";
 import { ColorField } from "./controls/ColorField";
 import { ChipsTextField } from "./controls/ChipsTextField";
 import { GridColumnsSimple } from "./controls/GridColumnsSimple";
@@ -726,6 +728,18 @@ function StylePanelRow({
   const field = findFieldDef(path);
   const tokenGroupPrefix = field ? tokenGroupForField(field) : null;
 
+  // ---------------------------------------------------------------------
+  // `spacing.padding`/`spacing.margin` (control `"sides"`,
+  // docs/spacing-simple-presets-plan.md): en modo simple se sustituye la
+  // rejilla numérica 2×2 de `SidesGrid` por `SidesAxisPresets` (2 selects,
+  // eje X/Y, presets sm/md/lg de `BASE_TOKENS.spacing`) — mismo criterio que
+  // `layout.gridColumns`/`effects.boxShadow`/`appearance.border` arriba: el
+  // descriptor (`row.control`) no cambia, solo el componente que pinta la
+  // fila. En modo simple se pierde el candado/`tokenAction` de `SidesGrid`
+  // (no aplican: cada select ya controla 2 lados a la vez, y no hay acción
+  // de vincular a token para un preset compuesto) — el modo avanzado
+  // conserva ambos sin cambios.
+  // ---------------------------------------------------------------------
   if (row.control === "sides") {
     const sideKey = path[1] === "margin" ? "margin" : "padding";
     return (
@@ -741,18 +755,22 @@ function StylePanelRow({
         tall
         inlineTokenAction
       >
-        {({ freeValue, commit, tokenAction }) => (
-          <SidesGrid
-            value={freeValue}
-            units={field?.units ?? ["px", "%", "em", "rem"]}
-            defaultUnit={field?.defaultUnit}
-            icons={SIDE_ICON}
-            locked={sidesLocked[sideKey]}
-            onToggleLock={() => onToggleSidesLock(sideKey)}
-            onCommit={commit}
-            tokenAction={tokenAction}
-          />
-        )}
+        {({ freeValue, commit, tokenAction }) =>
+          isSimple ? (
+            <SidesAxisPresets value={freeValue} onCommit={commit} />
+          ) : (
+            <SidesGrid
+              value={freeValue}
+              units={field?.units ?? ["px", "%", "em", "rem"]}
+              defaultUnit={field?.defaultUnit}
+              icons={SIDE_ICON}
+              locked={sidesLocked[sideKey]}
+              onToggleLock={() => onToggleSidesLock(sideKey)}
+              onCommit={commit}
+              tokenAction={tokenAction}
+            />
+          )
+        }
       </PropertyField>
     );
   }
@@ -792,28 +810,12 @@ function renderRowControl(
     case "select": {
       const options = field?.options ?? [];
       return (
-        <select
+        <PbxSelect
           id={controlId}
-          className="pbx-panel-field pbx-control__input"
           value={freeValue}
-          onChange={(e) => commit(e.target.value)}
-        >
-          {/*
-           * Opción vacía inicial (docs/41 Paso 5 punto 6): NUNCA repite la
-           * cadena "(heredar)" (checklist §8 #9). Se deja SIN label visible
-           * relevante — un separador vacío deshabilitado — porque elegir
-           * cualquier opción real ya resetea el valor libremente vía
-           * `commit`, y elegir esta opción vacía hace `commit("")`
-           * (equivalente a "sin valor / resetear"), pero no se etiqueta como
-           * "heredar" para no reintroducir esa semántica confusa.
-           */}
-          <option value="" disabled hidden />
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+          onChange={commit}
+          options={options}
+        />
       );
     }
 
@@ -891,18 +893,11 @@ function renderLeafControl(field: StyleFieldDef | undefined, args: PropertyField
   const { freeValue, commit } = args;
   if (field?.control === "select") {
     return (
-      <select
-        className="pbx-panel-field pbx-control__input"
+      <PbxSelect
         value={freeValue}
-        onChange={(e) => commit(e.target.value)}
-      >
-        <option value="" disabled hidden />
-        {field.options?.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+        onChange={commit}
+        options={field.options ?? []}
+      />
     );
   }
   return (

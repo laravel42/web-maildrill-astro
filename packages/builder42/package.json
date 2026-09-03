@@ -12,6 +12,9 @@
     },
     "./style.css": "./src/styles/chrome-embedded.css"
   },
+  "scripts": {
+    "test": "vitest run"
+  },
   "sideEffects": [
     "*.css"
   ],
@@ -22,6 +25,7 @@
   "devDependencies": {
     "typescript": "^6.0.3",
     "vite": "8.0.13",
+    "vitest": "^4.1.10",
     "@types/node": "^26.2.0",
     "@types/alpinejs": "3.13.11"
   },

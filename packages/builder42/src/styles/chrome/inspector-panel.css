@@ -839,6 +839,46 @@
 }
 
 /*
+ * SidesAxisPresets (docs/spacing-simple-presets-plan.md): reemplazo en modo
+ * simple de `SidesGrid` para `spacing.padding`/`.margin` — 2 `PbxSelect`
+ * (eje X/Y) con presets sm/md/lg, MISMO criterio de grid de 2 columnas
+ * iguales que `.pbx-border-simple` (grosor/tipo). Cada campo apila su label
+ * corto (X/Y) ARRIBA del select (`flex-direction: column`, sin
+ * `align-items` — stretch por defecto para que el select ocupe todo el
+ * ancho de su columna) — en fila (label a la izquierda del select) quedaban
+ * demasiado apretados dentro de una columna de `1fr` de esta grilla. Sin
+ * candado/token propios (ver nota en `StylePanel.tsx`) — esta fila NO es
+ * una excepción de altura (no usa `pbx-row--tall`), cabe en los 32px de una
+ * fila normal, igual que `.pbx-border-simple`.
+ */
+.pbx-sides-axis-presets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.pbx-sides-axis-presets__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pbx-sides-axis-presets__label {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--pb-chrome-text-faint);
+}
+
+.pbx-sides-axis-presets__field .pbx-nselect {
+  width: 100%;
+  min-width: 0;
+}
+
+/*
  * ColorField: swatch (`ColorPicker`) + input hex + opacidad adyacente en la
  * misma fila de 32px (docs/41 §4.2). El picker expandido es chrome de
  * `ColorPicker` (popover absoluto), no afecta la altura de esta fila.
@@ -963,6 +1003,14 @@
 .pbx-border-simple__style {
   width: 100%;
   min-width: 0;
+}
+
+/* Estas clases decoran el wrapper `.pbx-nselect` (PbxSelect, migrado del
+   <select> nativo), no un elemento de control directo — el padding/alto
+   compacto de esta fila compartida (3 sub-controles) vive en el trigger
+   interno. */
+.pbx-border-simple__width .pbx-nselect__trigger,
+.pbx-border-simple__style .pbx-nselect__trigger {
   height: 28px;
   padding: 0 6px;
 }

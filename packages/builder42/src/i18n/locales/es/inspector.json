@@ -569,6 +569,15 @@
       "bottom": "Inferior",
       "left": "Izquierdo"
     },
+    "sidesAxisPresets": {
+      "x": "Horizontal",
+      "y": "Vertical",
+      "sizes": {
+        "sm": "S",
+        "md": "M",
+        "lg": "L"
+      }
+    },
     "visibility": {
       "visible": "Visible",
       "hiddenAt": "Oculto en {{bp}}",
@@ -600,7 +609,7 @@
     },
     "border": {
       "width": "Grosor del borde",
-      "widthNone": "Sin borde",
+      "widthNone": "0",
       "style": "Tipo de borde",
       "styleOptions": {
         "solid": "Sólido",
