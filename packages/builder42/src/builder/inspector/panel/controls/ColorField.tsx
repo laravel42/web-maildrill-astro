@@ -14,6 +14,14 @@
  * en reposo SIEMPRE mide 32px; no hace falta que este componente pida
  * `tall` a `PropertyRow` — el llamador solo pasa `tall` si de verdad ancla
  * la fila a la excepción documentada (docs/41 §4.3).
+ *
+ * `hideHexInput` (modo simple, petición explícita del usuario): oculta el
+ * `CommittableInput` de valor hex, dejando SOLO el swatch/botón de
+ * `ColorPicker` — el popover de ese swatch ya expone saturación/hue + su
+ * propio input hex interno, así que el campo hex duplicado de esta fila es
+ * redundante para el usuario de modo simple. En modo avanzado (prop
+ * ausente/`false`) el comportamiento no cambia: swatch + hex + opacidad
+ * lado a lado, como siempre.
  */
 
 import { useTranslation } from "react-i18next";
@@ -33,6 +41,8 @@ export interface ColorFieldProps {
   themeSwatches?: Record<string, string>;
   /** Etiqueta accesible del swatch (p. ej. "Color de fondo"). */
   label: string;
+  /** Modo simple (docs de cabecera): oculta el input de texto hex, solo el swatch. */
+  hideHexInput?: boolean;
 }
 
 export function ColorField({
@@ -42,6 +52,7 @@ export function ColorField({
   onCommitOpacity,
   themeSwatches,
   label,
+  hideHexInput,
 }: ColorFieldProps) {
   const { t } = useTranslation("inspector");
   const safeValue = HEX6.test(value) ? value : value;
@@ -55,11 +66,13 @@ export function ColorField({
         themeSwatches={themeSwatches}
         label={label}
       />
-      <CommittableInput
-        value={value}
-        placeholder={t("styleField.freeValue")}
-        onCommit={onCommit}
-      />
+      {!hideHexInput && (
+        <CommittableInput
+          value={value}
+          placeholder={t("styleField.freeValue")}
+          onCommit={onCommit}
+        />
+      )}
       {opacity !== undefined && onCommitOpacity != null && (
         <div
           className="pbx-color-field__opacity"

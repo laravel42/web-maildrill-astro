@@ -787,7 +787,7 @@ function StylePanelRow({
       tokens={tokens}
       controlId={controlId}
     >
-      {(args) => renderRowControl(row, field, args, t, controlId)}
+      {(args) => renderRowControl(row, field, args, t, controlId, isSimple)}
     </PropertyField>
   );
 }
@@ -803,6 +803,7 @@ function renderRowControl(
   args: PropertyFieldRenderArgs,
   t: (key: string, opts?: Record<string, unknown>) => string,
   controlId: string,
+  isSimple: boolean,
 ): React.ReactNode {
   const { freeValue, commit } = args;
 
@@ -872,6 +873,7 @@ function renderRowControl(
           value={/^#[0-9a-f]{6}$/i.test(freeValue) ? freeValue : freeValue || "#000000"}
           onCommit={commit}
           label={t(row.labelKey)}
+          hideHexInput={isSimple}
         />
       );
 
