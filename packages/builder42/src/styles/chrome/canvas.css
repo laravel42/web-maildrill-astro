@@ -40,7 +40,13 @@
   box-shadow: var(--pb-chrome-frame-shadow);
   transition: width var(--pb-chrome-transition);
   outline: 1px solid var(--pb-chrome-canvas-frame-outline);
-  contain: layout style;
+  /* Solo `style` (scoping de custom properties / tokens de tema), NUNCA
+     `layout`: `contain: layout` crea un containing block nuevo para
+     descendientes `position: fixed` (incluido el `<dialog>` del componente
+     Modal en el top-layer al hacer `showModal()`). Con `layout` puesto, el
+     modal insertado en el canvas quedaba centrado/recortado respecto a este
+     frame en vez de cubrir el viewport completo — bug reportado. */
+  contain: style;
 }
 
 
