@@ -822,10 +822,18 @@
    INTERNO no tenía ancho sobrante que repartir y, combinado con `overflow:auto`,
    el modal quedaba pegado a un lado con scroll a la derecha. Ocupando el área
    completa del overlay, es este contenedor quien centra de forma determinista
-   en ambos ejes, con todo el ancho del canvas disponible para el centrado. */
+   en ambos ejes, con todo el ancho del canvas disponible para el centrado.
+
+   Ejes separados (fix 2, mismo feedback): el HORIZONTAL usa `center` normal
+   (no `safe`) — un desborde sub-pixel del modal hacía que `safe` cayera a
+   `flex-start`, empujándolo a la izquierda con scroll a la derecha (el
+   "descentrado"). Con `center` normal el modal SIEMPRE queda centrado en X
+   aunque desborde un poco (el scroll reparte a ambos lados). Solo el VERTICAL
+   conserva `safe center`, que es donde importa no dejar la parte superior
+   inalcanzable cuando el modal es más alto que el canvas. */
 .pbx-modal-editor__stage {
   position: relative; z-index: 1; width: 100%; height: 100%; max-height: 100%; max-width: 100%;
-  overflow: auto; display: flex; align-items: safe center; justify-content: safe center;
+  overflow: auto; display: flex; align-items: safe center; justify-content: center;
   padding: 52px 16px 16px; box-sizing: border-box;
 }
 /* El modal en edición se ve como el <dialog> real: su sombra incluida.
@@ -834,6 +842,13 @@
 .pbx-modal-editor__stage .pb-modal__editor {
   position: relative;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  /* Cinturón de seguridad de centrado/forma (feedback "torcido/descentrado"):
+     `margin-inline:auto` centra en X de forma robusta aunque el flex del stage
+     fallara; `flex-shrink:0` evita que el flex-item comprima el modal por
+     debajo de su `width` declarado (lo que lo hacía verse "torcido"/deformado).
+     El `max-width:90vw` del propio nodo sigue acotando el ancho máximo. */
+  margin-inline: auto;
+  flex-shrink: 0;
 }
 
 /* Área de contenido del modal en edición: zona de inserción claramente visible
