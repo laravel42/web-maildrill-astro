@@ -7,9 +7,12 @@
  * NO las de `AlignmentButtons` (`pbx-alignment-buttons`, en
  * `chrome/inspector-simple.css`): ese módulo CSS se borra en el Paso 8 junto
  * con el modo simple, así que el panel unificado no puede depender de él. El
- * estado activo se pinta en NEUTRO, no con el acento de marca — dentro de este
- * panel el azul solo significa "modificado en este breakpoint" (docs/41 §3 D4,
- * §6.3, §10.9). Cada botón mide ≥24×24px (WCAG 2.5.8).
+ * estado activo se pinta con el acento de marca de Maildrill
+ * (`--pb-chrome-accent`, D4 revisado — petición explícita del usuario,
+ * 2026-09-03): distinto del azul de "modificado" (`--pb-chrome-panel-modified`)
+ * a propósito, para que el usuario distinga "esta opción está seleccionada"
+ * de "este valor fue modificado" (ver nota de cabecera de
+ * `chrome/inspector-panel.css`). Cada botón mide ≥24×24px (WCAG 2.5.8).
  *
  * Primitiva de PRESENTACIÓN + commit (Paso 3, docs/41 §7): recibe el valor
  * actual como string CSS y un callback `onCommit`. No lee el store, no
