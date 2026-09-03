@@ -20,10 +20,22 @@
  * Cada archivo de `behaviors/`/`actions/` se auto-registra en
  * `window.__pbBehaviors` al cargar (ver el bloque final de cada módulo,
  * p. ej. `runtime/behaviors/modal.ts`) — así que basta bundlear cada uno por
- * separado con Vite en modo librería (formato IIFE, sin imports externos: son
- * TS puro sin dependencias npm) y escribir la salida con el nombre de
+ * separado con Vite en modo librería y escribir la salida con el nombre de
  * `moduleId` esperado por el registry (`BehaviorDefinition.runtime.moduleId` /
  * `ActionDefinition.runtime.moduleId`).
+ *
+ * Formato de salida **`es`** (ESM), NO `iife`: tanto el export a disco
+ * (`<script type="module" src="…/enhance.js" defer>`, ver cabecera de
+ * `enhance.ts`) como el preview inline (`inlineRuntimeScripts` →
+ * `<script type="module">…</script>`) cargan estos bundles como MÓDULO. El
+ * wrapper que genera el formato `iife` referencia `this` en el scope superior
+ * para exponer su global (`(function(t){...})(this.__pbRuntime_x=...)`) — en
+ * un módulo ES ese `this` de nivel superior es `undefined` (modo estricto
+ * implícito), así que el bundle rompía con "Cannot read properties of
+ * undefined" apenas se evaluaba, ANTES de registrar nada en
+ * `window.__pbBehaviors` (bug real, reportado en Preview). El formato `es` no
+ * usa ese wrapper — el auto-registro en `window.__pbBehaviors` (side-effect al
+ * evaluar el módulo) corre igual, y sigue sin exportar nada consumible.
  */
 
 import { build } from "vite";
@@ -86,18 +98,8 @@ async function buildOne(moduleId, relativeEntry) {
       sourcemap: false,
       lib: {
         entry,
-        formats: ["iife"],
-        name: `__pbRuntime_${moduleId}`,
+        formats: ["es"],
         fileName: () => `${moduleId}.js`,
-      },
-      rollupOptions: {
-        output: {
-          // Los módulos se auto-registran en `window.__pbBehaviors` como
-          // side-effect (no exportan nada consumible) — sin esto Rollup se
-          // queja de "entry module … is using named and default exports
-          // together" o similar para builds sin exports públicos reales.
-          extend: true,
-        },
       },
     },
   });
