@@ -275,7 +275,7 @@
   gap: 4px;
   width: 100%;
   min-width: 0;
-  height: 28px;
+  height: var(--pb-chrome-panel-row-height);
   padding: 0 8px;
   border-radius: var(--pb-chrome-panel-field-radius);
   background: var(--pb-chrome-panel-field-bg);
@@ -332,7 +332,6 @@
 .pbx-panel-token-picker .pbx-control__input {
   flex: 1 1 auto;
   min-width: 0;
-  height: 28px;
 }
 
 /* ---- VisibilityStrip (docs/41 §5.2, checklist §8 #6/#7, Paso 7) ---------- *
@@ -642,8 +641,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: var(--pb-chrome-panel-row-height);
+  height: var(--pb-chrome-panel-row-height);
   flex-shrink: 0;
   padding: 0;
   border: 0;
@@ -702,13 +701,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: var(--pb-chrome-panel-row-height);
+  height: var(--pb-chrome-panel-row-height);
   padding: 0;
   border: 0;
   background: var(--pb-chrome-panel-field-bg);
   color: var(--pb-chrome-text-muted);
   cursor: pointer;
+  /* docs/53 seguimiento (letras S/M/L más grandes que en otros switchers,
+     reportado por el usuario): esta clase la comparten `IconSegmented`
+     (solo icono, tamaño fijado por `size={16}` en el propio `<svg>`, no le
+     afecta `font-size`) y `PresetSegmented` (texto corto — "Ninguna"/S/M/L
+     en `effects.boxShadow`). Sin `font-size` propio heredaba 13px del
+     ancestro, mientras que el OTRO switcher de presets de letra corta del
+     panel, `.pbx-preset-numeric__preset` (usado por `PresetNumeric` en
+     filas como spacing/font-size), fija 11px + peso medio explícitos — de
+     ahí la diferencia visual entre "switchers" que el usuario señaló.
+     Se igualan ambos al mismo criterio; no afecta a `IconSegmented`
+     (el icono no usa unidades de fuente). */
+  font-size: 11px;
+  font-weight: var(--pb-chrome-font-weight-medium);
   transition: background var(--pb-chrome-transition), color var(--pb-chrome-transition);
 }
 
@@ -737,6 +749,22 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+/*
+ * docs/53 (homologación de altura, seguimiento): `IconButton size="md"` es
+ * el primitivo genérico `.pbx-icon-btn--md` (26px, fuera de alcance de
+ * docs/53 — se usa como botón de ACCIÓN en todo el chrome, no como control
+ * primario de una fila del Inspector). Pero AQUÍ, dentro de
+ * `.pbx-boxshadow-simple`, el botón "Ninguna" no es una acción secundaria:
+ * es una opción de valor más del mismo control que `.pbx-segmented__btn`
+ * (ya en 32px tras docs/53) — deben verse del mismo alto porque están uno
+ * junto al otro representando el mismo tipo de elección (Ninguna/S/M/L).
+ * Override LOCAL, no se toca `.pbx-icon-btn--md` global.
+ */
+.pbx-boxshadow-simple > .pbx-icon-btn--md {
+  width: var(--pb-chrome-panel-row-height);
+  height: var(--pb-chrome-panel-row-height);
 }
 
 /*
@@ -815,8 +843,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: var(--pb-chrome-panel-row-height);
+  height: var(--pb-chrome-panel-row-height);
   flex-shrink: 0;
   padding: 0;
   border: 1px solid var(--pb-chrome-border-strong);
@@ -917,7 +945,6 @@
 .pbx-color-field .pbx-control__input {
   flex: 0 1 100px;
   min-width: 0;
-  height: 28px;
   padding: 0 8px;
 }
 
@@ -1034,7 +1061,6 @@
    interno. */
 .pbx-border-simple__width .pbx-nselect__trigger,
 .pbx-border-simple__style .pbx-nselect__trigger {
-  height: 28px;
   padding: 0 6px;
 }
 

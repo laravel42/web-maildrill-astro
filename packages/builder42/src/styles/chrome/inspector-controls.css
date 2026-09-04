@@ -147,6 +147,7 @@
 
 .pbx-control__input {
   width: 100%;
+  height: var(--pb-chrome-panel-row-height);
   padding: 6px 9px;
   border: 1px solid var(--pb-chrome-border-strong);
   border-radius: var(--pb-chrome-radius-sm);
@@ -215,6 +216,7 @@
   justify-content: space-between;
   gap: 6px;
   width: 100%;
+  height: var(--pb-chrome-panel-row-height);
   min-width: 0;
   padding: 6px 9px;
   border: 1px solid var(--pb-chrome-border-strong);

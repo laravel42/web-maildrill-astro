@@ -17,8 +17,8 @@
 }
 
 .pbx-color-picker__swatch {
-  width: 28px;
-  height: 28px;
+  width: var(--pb-chrome-panel-row-height);
+  height: var(--pb-chrome-panel-row-height);
   padding: 0;
   border: 1px solid var(--pb-chrome-border-strong);
   border-radius: var(--pb-chrome-radius-sm);

@@ -590,6 +590,7 @@
     "width": {
       "full": "Full",
       "auto": "Auto",
+      "fitContent": "Fit",
       "fixed": "Fixed"
     },
     "gridColumnsSimple": {

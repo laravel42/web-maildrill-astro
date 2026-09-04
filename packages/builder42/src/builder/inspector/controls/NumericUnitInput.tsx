@@ -30,12 +30,34 @@ import { ChevronUp, ChevronDown } from "@/components";
 // ---------------------------------------------------------------------------
 
 /**
+ * Palabras clave CSS reconocidas como valor NO numérico válido (fuera del
+ * par número+unidad) — mismo criterio que ya existía para "auto"/"none".
+ * Se amplía aquí (seguimiento, reporte del usuario) porque el campo
+ * `size.width` ahora ofrece un preset `fit-content` (`sections.ts`,
+ * `panel.width.fitContent`): sin esto, escribir "fit-content" a mano en
+ * modo Custom mientras el campo ya estaba en modo numérico (valor previo
+ * como "300px") nunca llegaba a activar el fallback de texto libre — el
+ * INPUT numérico (`NumericPill`) sigue montado (decide su modo por el
+ * `value` EXTERNO, no por lo que el usuario teclea), así que cada letra
+ * escrita se pierde en `commitNum` (`parseFloat("fit-content")` → `NaN`,
+ * revierte el draft). Con la palabra clave reconocida aquí, el valor
+ * EXTERNO cambia a "fit-content" tan pronto se comitea desde el preset o
+ * desde cualquier punto que llame `onCommit` con ese string, y el
+ * componente remonta como `SimpleTextPill` (texto libre) — mismo mecanismo
+ * ya usado por "auto"/"none". `max-content`/`min-content` se añaden por
+ * completitud (mismo trío de keywords de layout que expone la spec CSS de
+ * `width`/`height`, evita reabrir este bug si se ofrecen como preset en el
+ * futuro).
+ */
+const NON_NUMERIC_KEYWORDS = new Set(["auto", "none", "fit-content", "max-content", "min-content"]);
+
+/**
  * Extrae { num, unit } de un string CSS de UN valor (ej. "16px" → { num: 16, unit: "px" }).
  * Devuelve null si el valor tiene múltiples tokens (padding shorthand) o no es numérico.
  */
 function parse(raw: string): { num: number; unit: string } | null {
   const trimmed = raw.trim();
-  if (!trimmed || trimmed === "auto" || trimmed === "none" || trimmed.includes(" ")) return null;
+  if (!trimmed || NON_NUMERIC_KEYWORDS.has(trimmed) || trimmed.includes(" ")) return null;
   const m = trimmed.match(/^(-?[\d.]+)([a-z%]*)$/i);
   if (!m) return null;
   return { num: parseFloat(m[1]!), unit: m[2] ?? "px" };
@@ -124,7 +146,12 @@ export function NumericUnitInput({
       units={units}
       step={step}
       onCommit={(n, u) => {
-        const s = serialize(n, u);
+        // Seguimiento (reporte del usuario): `n` puede ser una palabra clave
+        // no numérica reconocida (`fit-content`…) cuando el usuario la
+        // escribe a mano mientras el campo ya estaba en modo numérico — ver
+        // `commitNum` en `NumericPill`. En ese caso se commitea el string
+        // TAL CUAL, sin pasar por `serialize` (que asume número + unidad).
+        const s = typeof n === "string" ? n : serialize(n, u);
         lastExternal.current = s;
         onCommit(s);
       }}
@@ -182,7 +209,15 @@ function NumericPill({
   unit: string;
   units: string[];
   step: number;
-  onCommit: (num: number, unit: string) => void;
+  /**
+   * `num` normalmente es el número editado. Puede ser un STRING cuando el
+   * usuario escribe a mano una palabra clave no numérica reconocida
+   * (`fit-content`…, ver `NON_NUMERIC_KEYWORDS`) mientras el campo está en
+   * modo numérico — el padre (`NumericUnitInput`) la pasa tal cual, sin
+   * `serialize`, para permitir la transición a modo texto libre sin exigir
+   * que el usuario borre el campo primero.
+   */
+  onCommit: (num: number | string, unit: string) => void;
 }) {
   // Asegurar que la unidad externa está en la lista; si no, añadirla
   const validUnits = units.includes(externalUnit) ? units : [externalUnit, ...units];
@@ -223,6 +258,26 @@ function NumericPill({
 
   const commitNum = useCallback(
     (draftStr: string, currentUnit: string) => {
+      const trimmed = draftStr.trim();
+      // Seguimiento (reporte del usuario): el usuario puede escribir una
+      // palabra clave no numérica ("fit-content"…) directamente en el
+      // input mientras el campo YA está en modo numérico (valor previo
+      // como "300px") — antes esto SIEMPRE caía en la rama de abajo
+      // (`parseFloat` de una palabra da `NaN`) y revertía el draft, sin
+      // posibilidad real de escribir la palabra clave a mano. Si el texto
+      // tecleado coincide con una keyword reconocida (mismo set que
+      // `parse()`, arriba), se commitea tal cual (sin número/unidad) — el
+      // `value` externo pasa a ser esa keyword y el componente remonta
+      // como `SimpleTextPill` en el siguiente render (mismo mecanismo que
+      // ya funcionaba para "auto"/"none" al llegar por otra vía, p. ej. un
+      // preset). No afecta el resto de la validación: cualquier otro texto
+      // no numérico y no reconocido sigue revirtiendo con el shake de
+      // "inválido", como antes.
+      if (NON_NUMERIC_KEYWORDS.has(trimmed)) {
+        setInvalid(false);
+        onCommit(trimmed, currentUnit);
+        return;
+      }
       const n = parseFloat(draftStr);
       if (!isNaN(n)) {
         lastNum.current = n;

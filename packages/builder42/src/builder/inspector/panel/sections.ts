@@ -213,6 +213,7 @@ export const PANEL_SECTIONS: SectionDescriptor[] = [
         presets: [
           { labelKey: "panel.width.full", value: "100%" },
           { labelKey: "panel.width.auto", value: "auto" },
+          { labelKey: "panel.width.fitContent", value: "fit-content" },
         ],
       },
       {
