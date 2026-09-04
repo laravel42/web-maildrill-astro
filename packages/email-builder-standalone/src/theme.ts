@@ -1269,6 +1269,19 @@ const getTheme = (
             // the root's radius — setting it here is what actually rounds the
             // control to match the app's 10px.
             borderRadius: '10px',
+            // borderColor set explicitly on the slot MUI actually documents for
+            // this (`MuiOutlinedInput.styleOverrides.notchedOutline`), not only
+            // via the `& fieldset` selector on `MuiInputBase.styleOverrides.root`
+            // (further up in this file). Both target the same DOM node, but
+            // relying solely on the generic tag selector left a real gap: any
+            // TextField that resolves this class before the `MuiInputBase`
+            // override (Emotion doesn't guarantee injection order across
+            // component slots of equal specificity) fell back to MUI's
+            // built-in default, `rgba(0, 0, 0, 0.23)` — a hard, near-black
+            // border that reads as broken against the app's warm-neutral
+            // tokens (reported: "Name" field in Save/Rename template dialogs).
+            // Declaring it here too removes the ambiguity.
+            borderColor: greyColors[300],
             '& legend': {
               fontSize: '0.85em',
               maxWidth: '100%',

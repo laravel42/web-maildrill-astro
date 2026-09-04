@@ -32,6 +32,33 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* This is a plain <input type="text"> with no border/background rules of
+     its own — without this reset, the browser's user-agent stylesheet paints
+     its default inset border (a hard, near-black line in Chrome/Firefox),
+     which read as visually broken against the rest of this bar (reported:
+     "Untitled landing" title field). Transparent + no border keeps it looking
+     like a label until focused. */
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm, 6px);
+  transition: background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.title:hover {
+  background: var(--surface2, #f3f2ee);
+}
+
+.title:focus-visible {
+  background: var(--surface2, #f3f2ee);
+  box-shadow: 0 0 0 2px var(--accent, #4f46e5);
+}
+
+.title::placeholder {
+  color: var(--text3, #a5a39a);
+  font-weight: 500;
 }
 
 .stage {
