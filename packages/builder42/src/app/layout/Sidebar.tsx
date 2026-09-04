@@ -176,7 +176,7 @@ function SidebarItem({ def }: { def: ComponentDefinition }) {
       type="button"
       className={"pbx-palette__item" + (dragging ? " pbx-palette__item--dragging" : "")}
       onClick={handleClick}
-      title={t("palette.dragTooltip")}
+      title={`${translatedLabel} — ${t("palette.dragTooltip")}`}
     >
       <GripVertical className="pbx-palette__grip" aria-hidden="true" />
       <ComponentTypeIcon type={def.type} className="pbx-palette__icon" />

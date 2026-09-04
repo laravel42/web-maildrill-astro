@@ -176,12 +176,14 @@
 }
 
 .pbx-palette__label {
+  display: block;
   font-weight: 500;
   font-size: 11px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 100%;
+  width: 100%;
+  min-width: 0;
 }
 
 /* Grip de arrastre — overlay visible solo al hover/focus (Fase 11.g: ya no
