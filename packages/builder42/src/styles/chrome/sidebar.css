@@ -221,6 +221,19 @@
   overflow: hidden;
 }
 
+/* `.pbx-style-group__body` es compartido con el Inspector/Tokens
+   (`overflow: visible` allí para no cortar dropdowns absolutos, ver
+   inspector-controls.css) — pero en la paleta de componentes ese
+   `overflow: visible` deja que el grid `.pbx-palette` (cards cuadradas por
+   `aspect-ratio: 1`, con posible redondeo a subpíxel) se filtre por encima
+   de la altura animada del wrapper (`height: 0 → auto` de framer-motion),
+   generando un scroll en Y espurio en `.pbx-side-tabs__panel` (bug real,
+   feedback de usuario). Aquí SÍ se puede recortar: la paleta no tiene
+   dropdowns/overlays que necesiten desbordar la card. */
+.pbx-palette__accordion-body-wrap .pbx-style-group__body {
+  overflow: hidden;
+}
+
 /* --- Panel de tokens (sidebar, demo docs/08) --------------------------- */
 .pbx-tokens {
   margin-top: 0;
