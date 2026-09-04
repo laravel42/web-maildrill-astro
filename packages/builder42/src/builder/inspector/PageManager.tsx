@@ -12,7 +12,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { IconButton, ArrowUp, ArrowDown, House, Copy, CloseIcon } from "@/components";
+import { IconButton, ArrowUp, ArrowDown, House, Copy, CloseIcon, PbxSelect } from "@/components";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { pageRoute } from "@/builder/export/links";
 import { normalizeSlug, uniqueSlug } from "@/builder/model/site";
@@ -183,18 +183,17 @@ export function PageManager() {
                 {themes && Object.keys(themes).length > 0 ? (
                   <label className="pbx-page-manager__theme">
                     <span>{t("pageManager.theme")}</span>
-                    <select
-                      className="pbx-control__input"
+                    <PbxSelect
                       value={page.meta.themeId ?? ""}
-                      onChange={(e) => setPageTheme(id, e.target.value || undefined)}
-                    >
-                      <option value="">{t("pageManager.themeDefault")}</option>
-                      {Object.keys(themes).map((themeId) => (
-                        <option key={themeId} value={themeId}>
-                          {themes[themeId]!.name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(v) => setPageTheme(id, v || undefined)}
+                      options={[
+                        { value: "", label: t("pageManager.themeDefault") },
+                        ...Object.keys(themes).map((themeId) => ({
+                          value: themeId,
+                          label: themes[themeId]!.name,
+                        })),
+                      ]}
+                    />
                   </label>
                 ) : null}
               </div>

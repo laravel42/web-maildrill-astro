@@ -34,7 +34,7 @@ import type {
 } from "@/builder/model/types";
 import { flattenTokens, resolveToken } from "@/builder/model/tokens";
 import { useDocumentStore } from "@/builder/store/documentStore";
-import { IconButton, LinkIcon, CloseIcon, ResetIcon, WarnIcon } from "@/components";
+import { IconButton, LinkIcon, CloseIcon, ResetIcon, WarnIcon, PbxSelect } from "@/components";
 import { resolveValueOrigin } from "./origin";
 import type { StylePath } from "./sections";
 import { PropertyRow, type PropertyRowColumns } from "./PropertyRow";
@@ -232,20 +232,16 @@ export function PropertyField({
   if (picking) {
     control = (
       <div className="pbx-panel-token-picker">
-        <select
-          className="pbx-panel-field pbx-control__input"
+        <PbxSelect
+          className="pbx-panel-field"
           value={isToken ? tokenPath : ""}
-          onChange={(e) => chooseToken(e.target.value)}
-          autoFocus
-          aria-label={`${label}: token`}
-        >
-          <option value="">— {t("styleField.freeValue")} —</option>
-          {tokenPaths.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
+          onChange={chooseToken}
+          ariaLabel={`${label}: token`}
+          options={[
+            { value: "", label: `— ${t("styleField.freeValue")} —` },
+            ...tokenPaths.map((p) => ({ value: p, label: p })),
+          ]}
+        />
         <IconButton
           icon={CloseIcon}
           label={t("styleField.freeValue")}

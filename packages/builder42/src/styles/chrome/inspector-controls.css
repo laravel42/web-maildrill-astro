@@ -172,6 +172,151 @@
   outline: none;
 }
 
+/* <select> nativo (docs/17.c seguimiento — auditoría de chrome nativo del
+   navegador, native-input-chrome-audit.md): sin `appearance: none`, Chrome/
+   Windows dibuja su propia flecha + recuadro de foco del sistema encima del
+   `border`/`background` tokenizados de `.pbx-control__input` — visualmente
+   se ve como un control "roto" respecto al resto del inspector (mismo
+   síntoma que el borde negro de `input[type=search]`, ya corregido en
+   `canvas-nodes.css`). Flecha propia vía `background-image` (SVG inline,
+   `currentColor` no soportado en data-URI así que se fija el hex del token
+   `--pb-chrome-text-muted` en claro; el token es el mismo en ambos temas
+   salvo remap del host). */
+.pbx-control__input--select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 26px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+}
+
+/* ==========================================================================
+   PbxSelect — reemplazo de <select> nativo con el controlador Select de
+   c42-react (docs/12 §A, native-select-migration-plan.md). Mismo esquema de
+   tokens que `.pbx-control__input` (border-strong / surface-raised / accent)
+   para que el trigger quede visualmente igual a un input de texto del
+   Inspector — a diferencia de `.pbx-lang`/`.pbx-content-locale` (header.css),
+   que usan los tokens OSCUROS del header (`--pb-chrome-header-*`), este
+   namespace vive en superficies CLARAS del Inspector/paneles.
+   ========================================================================== */
+
+.pbx-nselect {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+  min-width: 0;
+}
+
+.pbx-nselect__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 6px 9px;
+  border: 1px solid var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-sm);
+  background: var(--pb-chrome-surface-raised);
+  color: var(--pb-chrome-text);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.pbx-nselect__trigger:hover {
+  border-color: var(--pb-chrome-border-strong);
+  background: var(--pb-chrome-surface-hover);
+}
+
+.pbx-nselect__trigger:focus-visible {
+  outline: none;
+  border-color: var(--pb-chrome-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pb-chrome-accent) 12%, transparent);
+}
+
+.pbx-nselect--disabled .pbx-nselect__trigger,
+.pbx-nselect__trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--pb-chrome-surface-alt);
+}
+
+.pbx-nselect__value {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.pbx-nselect__caret {
+  flex-shrink: 0;
+  color: var(--pb-chrome-text-muted);
+  transition: transform var(--pb-chrome-transition);
+}
+
+.pbx-nselect[data-state="open"] .pbx-nselect__caret,
+.pbx-nselect__trigger[aria-expanded="true"] .pbx-nselect__caret {
+  transform: rotate(180deg);
+}
+
+.pbx-nselect__listbox {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px;
+  background: var(--pb-chrome-surface-raised);
+  border: 1px solid var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-md);
+  /* JUSTIFICACIÓN (docs/52 F5): sombra de elevación decorativa de dropdown,
+     mismo criterio que `.pbx-content-locale__listbox`/`.pbx-lang__listbox`
+     (header.css) y `.pbx-searchable-select__dropdown` (arriba en este
+     archivo). */
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+}
+
+.pbx-nselect__listbox[hidden] {
+  display: none;
+}
+
+.pbx-nselect__option {
+  padding: 7px 10px;
+  border-radius: var(--pb-chrome-radius-xs);
+  color: var(--pb-chrome-text);
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pbx-nselect__option:hover,
+.pbx-nselect__option[data-active] {
+  background: var(--pb-chrome-surface-hover);
+}
+
+.pbx-nselect__option[aria-selected="true"] {
+  background: var(--pb-chrome-accent);
+  color: var(--pb-chrome-text-on-accent);
+}
+
+.pbx-nselect__option--disabled,
+.pbx-nselect__option[aria-disabled="true"] {
+  color: var(--pb-chrome-text-faint);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* Nota informativa dentro de un pbx-control (docs/12 Â§B.11): usada por el
  * campo richtext para indicar que la ediciÃ³n ahora ocurre en el canvas (ya
  * no hay <textarea> aquÃ­). */

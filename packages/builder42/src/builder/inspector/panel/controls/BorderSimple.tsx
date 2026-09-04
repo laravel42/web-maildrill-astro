@@ -35,6 +35,7 @@
  */
 
 import { useTranslation } from "react-i18next";
+import { PbxSelect } from "@/components";
 import { ColorField } from "./ColorField";
 
 // ---------------------------------------------------------------------------
@@ -136,30 +137,26 @@ export function BorderSimple({ value, onCommit }: BorderSimpleProps) {
 
   return (
     <div className="pbx-border-simple">
-      <select
-        className="pbx-control__input pbx-border-simple__width"
+      <PbxSelect
+        className="pbx-border-simple__width"
         value={parsed.width}
-        aria-label={t("panel.border.width")}
-        onChange={(e) => commitPart({ width: e.target.value })}
-      >
-        {BORDER_SIMPLE_WIDTHS.map((w) => (
-          <option key={w} value={w}>
-            {w === "0px" ? t("panel.border.widthNone") : w}
-          </option>
-        ))}
-      </select>
-      <select
-        className="pbx-control__input pbx-border-simple__style"
+        ariaLabel={t("panel.border.width")}
+        onChange={(v) => commitPart({ width: v })}
+        options={BORDER_SIMPLE_WIDTHS.map((w) => ({
+          value: w,
+          label: w === "0px" ? t("panel.border.widthNone") : w,
+        }))}
+      />
+      <PbxSelect
+        className="pbx-border-simple__style"
         value={parsed.style}
-        aria-label={t("panel.border.style")}
-        onChange={(e) => commitPart({ style: e.target.value })}
-      >
-        {BORDER_SIMPLE_STYLES.map((s) => (
-          <option key={s} value={s}>
-            {t(`panel.border.styleOptions.${s}`)}
-          </option>
-        ))}
-      </select>
+        ariaLabel={t("panel.border.style")}
+        onChange={(v) => commitPart({ style: v })}
+        options={BORDER_SIMPLE_STYLES.map((s) => ({
+          value: s,
+          label: t(`panel.border.styleOptions.${s}`),
+        }))}
+      />
       <div className="pbx-border-simple__color">
         <ColorField
           value={parsed.color}

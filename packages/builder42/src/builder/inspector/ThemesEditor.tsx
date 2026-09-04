@@ -9,7 +9,7 @@
  */
 
 import { useTranslation } from "react-i18next";
-import { IconButton, ResetIcon, CloseIcon, WarnIcon, Check, Star, ColorPicker } from "@/components";
+import { IconButton, ResetIcon, CloseIcon, WarnIcon, Check, Star, ColorPicker, PbxSelect } from "@/components";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { effectiveResolvedTokens } from "@/builder/model/theme";
 import { flattenTree } from "@/builder/model/tokens";
@@ -289,20 +289,18 @@ export function ThemesEditor() {
           <label className="pbx-themes__preview-label" htmlFor="pbx-active-theme">
             {t("themes.preview")}
           </label>
-          <select
+          <PbxSelect
             id="pbx-active-theme"
-            className="pbx-control__input"
             value={activeThemeId ?? ""}
-            onChange={(e) => setActiveTheme(e.target.value || null)}
-          >
-            <option value="">{t("themes.noTheme")}</option>
-            {themeIds.map((id) => (
-              <option key={id} value={id}>
-                {themes![id]!.name}
-                {id === defaultThemeId ? " ★" : ""}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setActiveTheme(v || null)}
+            options={[
+              { value: "", label: t("themes.noTheme") },
+              ...themeIds.map((id) => ({
+                value: id,
+                label: `${themes![id]!.name}${id === defaultThemeId ? " ★" : ""}`,
+              })),
+            ]}
+          />
         </div>
       )}
 
@@ -370,37 +368,33 @@ export function ThemesEditor() {
 
           <label className="pbx-themes__field">
             <span>{t("themes.extends")}</span>
-            <select
-              className="pbx-control__input"
+            <PbxSelect
               value={editingTheme.extends ?? ""}
-              onChange={(e) => updateThemeMeta(editingId!, { extends: e.target.value || null })}
-            >
-              <option value="">{t("themes.extendsNone")}</option>
-              {themeIds
-                .filter((id) => id !== editingId)
-                .map((id) => (
-                  <option key={id} value={id}>
-                    {themes![id]!.name}
-                  </option>
-                ))}
-            </select>
+              onChange={(v) => updateThemeMeta(editingId!, { extends: v || null })}
+              options={[
+                { value: "", label: t("themes.extendsNone") },
+                ...themeIds
+                  .filter((id) => id !== editingId)
+                  .map((id) => ({ value: id, label: themes![id]!.name })),
+              ]}
+            />
           </label>
 
           <label className="pbx-themes__field">
             <span>{t("themes.colorScheme")}</span>
-            <select
-              className="pbx-control__input"
+            <PbxSelect
               value={editingTheme.colorScheme ?? ""}
-              onChange={(e) =>
+              onChange={(v) =>
                 updateThemeMeta(editingId!, {
-                  colorScheme: (e.target.value || null) as "light" | "dark" | null,
+                  colorScheme: (v || null) as "light" | "dark" | null,
                 })
               }
-            >
-              <option value="">{t("themes.schemeAuto")}</option>
-              <option value="light">{t("themes.schemeLight")}</option>
-              <option value="dark">{t("themes.schemeDark")}</option>
-            </select>
+              options={[
+                { value: "", label: t("themes.schemeAuto") },
+                { value: "light", label: t("themes.schemeLight") },
+                { value: "dark", label: t("themes.schemeDark") },
+              ]}
+            />
           </label>
 
           {colorKeys.length > 0 ? (

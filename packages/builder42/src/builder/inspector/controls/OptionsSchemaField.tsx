@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import type { FieldSchema } from "@/builder/registry/types";
 import { resolveOptions } from "@/builder/registry/types";
-import { Toggle } from "@/components";
+import { Toggle, PbxSelect } from "@/components";
 import { FieldHelp } from "./FieldHelp";
 import { NumericUnitInput } from "./NumericUnitInput";
 
@@ -71,33 +71,21 @@ export function OptionsSchemaField({
               </button>
             </div>
           ) : (
-            <select
-              className="pbx-control__input pbx-control__input--select"
+            <PbxSelect
               value={typeof value === "string" ? value : ""}
-              onChange={(e) => onChange(e.target.value)}
-            >
-              <option value="">{t("behaviors.themeToggle.selectPlaceholder")}</option>
-              {themeIds.map((id) => (
-                <option key={id} value={id}>
-                  {themes![id]!.name}
-                </option>
-              ))}
-            </select>
+              onChange={onChange}
+              placeholder={t("behaviors.themeToggle.selectPlaceholder")}
+              options={themeIds.map((id) => ({ value: id, label: themes![id]!.name }))}
+            />
           )
         ) : field.control === "toggle" ? (
           <Toggle checked={value === true} onChange={(c) => onChange(c)} label={label} />
         ) : field.control === "select" ? (
-          <select
-            className="pbx-control__input pbx-control__input--select"
+          <PbxSelect
             value={typeof value === "string" ? value : ""}
-            onChange={(e) => onChange(e.target.value)}
-          >
-            {resolveOptions(field.options).map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+            onChange={onChange}
+            options={resolveOptions(field.options)}
+          />
         ) : field.control === "numeric" ? (
           <NumericUnitInput
             value={value === undefined || value === null ? "" : String(value)}

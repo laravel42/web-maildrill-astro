@@ -29,6 +29,7 @@ import { actionsForNode, getActionDefinition } from "@/builder/registry/actionRe
 import { linkFieldKeys, linkTargetHasValue } from "@/builder/model/nodeAction";
 import { OptionsSchemaField } from "./controls/OptionsSchemaField";
 import { NodeTargetPicker, TOP_PRESET_VALUE } from "./controls/NodeTargetPicker";
+import { PbxSelect } from "@/components";
 import type { BuilderNode } from "@/builder/model/types";
 
 const NONE = "__none__";
@@ -168,36 +169,28 @@ export function NodeClickActionSection({ node }: { node: BuilderNode }) {
       <h4 className="pbx-click-action__title">{t("clickAction.title")}</h4>
       <p className="pbx-click-action__hint">{t("clickAction.hint")}</p>
 
-      <select
-        className="pbx-control__input pbx-control__input--select"
+      <PbxSelect
         value={currentType}
-        aria-label={t("clickAction.title")}
-        onChange={(e) => handleTypeChange(e.target.value)}
-      >
-        <option value={NONE}>{t("clickAction.none")}</option>
-        {selectableActions.map((def) => (
-          <option key={def.type} value={def.type}>
-            {actionLabel(def.type)}
-          </option>
-        ))}
-      </select>
+        ariaLabel={t("clickAction.title")}
+        onChange={handleTypeChange}
+        options={[
+          { value: NONE, label: t("clickAction.none") },
+          ...selectableActions.map((def) => ({ value: def.type, label: actionLabel(def.type) })),
+        ]}
+      />
 
       {currentDef?.targetKind === "modal" ? (
-        <select
-          className="pbx-control__input pbx-control__input--select"
+        <PbxSelect
           value={node.onClick?.target ?? NONE}
-          aria-label={t("clickAction.targetModal")}
-          onChange={(e) => {
-            if (e.target.value !== NONE) handleTargetChange(e.target.value);
+          ariaLabel={t("clickAction.targetModal")}
+          onChange={(v) => {
+            if (v !== NONE) handleTargetChange(v);
           }}
-        >
-          <option value={NONE}>{t("clickAction.chooseModal")}</option>
-          {modals.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.label}
-            </option>
-          ))}
-        </select>
+          options={[
+            { value: NONE, label: t("clickAction.chooseModal") },
+            ...modals.map((m) => ({ value: m.id, label: m.label })),
+          ]}
+        />
       ) : null}
 
       {currentDef?.targetKind === "node" ? (

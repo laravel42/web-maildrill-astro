@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { Toggle } from "@/components";
+import { Toggle, PbxSelect } from "@/components";
 import type { ControlType } from "@/builder/registry/types";
 import { resolveOptions } from "@/builder/registry/types";
 import { CommittableInput } from "../CommittableInput";
@@ -53,19 +53,7 @@ function ToggleRenderer({ node, field, raw, setProp }: PropControlContext) {
 
 function SelectRenderer({ field, value, commit }: PropControlContext) {
   const options = resolveOptions(field.options);
-  return (
-    <select
-      className="pbx-control__input pbx-control__input--select"
-      value={value}
-      onChange={(e) => commit(e.target.value)}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
-  );
+  return <PbxSelect value={value} onChange={commit} options={options} />;
 }
 
 function SearchableSelectRenderer({ field, value, commit }: PropControlContext) {

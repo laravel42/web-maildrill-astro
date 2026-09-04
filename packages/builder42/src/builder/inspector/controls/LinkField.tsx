@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import type { BuilderNode, LinkTarget } from "@/builder/model/types";
 import { CommittableInput } from "./CommittableInput";
+import { PbxSelect } from "@/components";
 
 function readLink(value: unknown): LinkTarget | null {
   if (typeof value !== "object" || value === null) return null;
@@ -56,37 +57,34 @@ export function LinkField({ node, fieldKey }: { node: BuilderNode; fieldKey: str
 
   return (
     <div className="pbx-linkfield">
-      <select
-        className="pbx-control__input"
+      <PbxSelect
         value={kind}
-        onChange={(e) => changeKind(e.target.value as LinkKind)}
-        aria-label={t("linkField.kind")}
-      >
-        <option value="internal">{t("linkField.internal")}</option>
-        <option value="external">{t("linkField.external")}</option>
-        <option value="anchor">{t("linkField.anchor")}</option>
-      </select>
+        onChange={(v) => changeKind(v as LinkKind)}
+        ariaLabel={t("linkField.kind")}
+        options={[
+          { value: "internal", label: t("linkField.internal") },
+          { value: "external", label: t("linkField.external") },
+          { value: "anchor", label: t("linkField.anchor") },
+        ]}
+      />
 
       {kind === "internal" ? (
         <>
-          <select
-            className="pbx-control__input"
+          <PbxSelect
             value={link?.kind === "internal" ? link.pageId : (pageOrder[0] ?? "")}
-            onChange={(e) =>
+            onChange={(v) =>
               write({
                 kind: "internal",
-                pageId: e.target.value,
+                pageId: v,
                 ...(link?.kind === "internal" && link.anchor ? { anchor: link.anchor } : {}),
               })
             }
-            aria-label={t("linkField.page")}
-          >
-            {pageOrder.map((id) => (
-              <option key={id} value={id}>
-                {pages[id]?.meta.title || pages[id]?.meta.slug || id}
-              </option>
-            ))}
-          </select>
+            ariaLabel={t("linkField.page")}
+            options={pageOrder.map((id) => ({
+              value: id,
+              label: pages[id]?.meta.title || pages[id]?.meta.slug || id,
+            }))}
+          />
           <CommittableInput
             value={link?.kind === "internal" ? (link.anchor ?? "") : ""}
             placeholder={t("linkField.anchorOptional")}

@@ -32,7 +32,7 @@ import { tokenGroupForField, type StyleFieldDef } from "../styleFields";
 import { CommittableInput } from "./CommittableInput";
 import { NumericUnitInput } from "./NumericUnitInput";
 import { CompatWarning } from "./CompatWarning";
-import { IconButton, LinkIcon, CloseIcon, ResetIcon, WarnIcon, ColorPicker } from "@/components";
+import { IconButton, LinkIcon, CloseIcon, ResetIcon, WarnIcon, ColorPicker, PbxSelect } from "@/components";
 
 const HEX6 = /^#[0-9a-f]{6}$/i;
 
@@ -150,20 +150,16 @@ export function StyleField({
           aria-hidden="true"
         />
       )}
-      <select
-        className="pbx-control__input pbx-control__input--token-pick"
+      <PbxSelect
+        className="pbx-control__input--token-pick"
         value={isToken ? tokenPath : ""}
-        onChange={(e) => chooseToken(e.target.value)}
-        autoFocus
-        aria-label={`${field.label}: token`}
-      >
-        <option value="">— {t("styleField.freeValue")} —</option>
-        {tokenPaths.map((p) => (
-          <option key={p} value={p}>
-            {p}
-          </option>
-        ))}
-      </select>
+        onChange={chooseToken}
+        ariaLabel={`${field.label}: token`}
+        options={[
+          { value: "", label: `— ${t("styleField.freeValue")} —` },
+          ...tokenPaths.map((p) => ({ value: p, label: p })),
+        ]}
+      />
       <IconButton
         icon={CloseIcon}
         label={t("styleField.freeValue")}
@@ -197,18 +193,14 @@ export function StyleField({
       </button>
     </div>
   ) : field.control === "select" ? (
-    <select
-      className="pbx-control__input"
+    <PbxSelect
       value={freeValue}
-      onChange={(e) => commit(e.target.value)}
-    >
-      <option value="">{t("styleField.inherit")}</option>
-      {field.options?.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
+      onChange={commit}
+      options={[
+        { value: "", label: t("styleField.inherit") },
+        ...(field.options ?? []),
+      ]}
+    />
   ) : field.control === "color" ? (
     <div className="pbx-control__color-row">
       <ColorPicker

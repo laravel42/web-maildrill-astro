@@ -34,7 +34,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { SimpleModal, IconButton, CloseIcon, ToastHost, useToast } from "@/components";
+import { SimpleModal, IconButton, CloseIcon, ToastHost, useToast, PbxSelect } from "@/components";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { getDefinition } from "@/builder/registry/componentRegistry";
 import {
@@ -408,33 +408,29 @@ export function TranslationModal({ onClose }: { onClose: () => void }) {
                 {pageOrder.length > 1 ? (
                   <label className="pbx-translation-table__locale-label">
                     {t("translationTable.pageSelectLabel")}
-                    <select
-                      className="pbx-control__input pbx-translation-table__locale-select"
+                    <PbxSelect
+                      className="pbx-translation-table__locale-select"
                       value={translationPageId}
-                      onChange={(e) => setTranslationPageId(e.target.value)}
-                    >
-                      {pageOrder.map((pid) => (
-                        <option key={pid} value={pid}>
-                          {pages[pid]?.meta.title ?? pid}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setTranslationPageId}
+                      options={pageOrder.map((pid) => ({
+                        value: pid,
+                        label: pages[pid]?.meta.title ?? pid,
+                      }))}
+                    />
                   </label>
                 ) : null}
 
                 <label className="pbx-translation-table__locale-label">
                   {t("translationTable.localeSelectLabel")}
-                  <select
-                    className="pbx-control__input pbx-translation-table__locale-select"
+                  <PbxSelect
+                    className="pbx-translation-table__locale-select"
                     value={activeLocale ?? ""}
-                    onChange={(e) => setActiveLocale(e.target.value)}
-                  >
-                    {otherLocales.map((loc) => (
-                      <option key={loc} value={loc}>
-                        {loc.toUpperCase()}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setActiveLocale}
+                    options={otherLocales.map((loc) => ({
+                      value: loc,
+                      label: loc.toUpperCase(),
+                    }))}
+                  />
                 </label>
 
                 <button

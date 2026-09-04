@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { PbxSelect } from "@/components";
 import type { StyleState } from "@/builder/model/types";
 
 /**
@@ -23,20 +24,16 @@ export function StateSelector({
       <label className="pbx-state-selector__label" htmlFor="pbx-state-selector__input">
         {t("form.stateEditing")}
       </label>
-      <select
+      <PbxSelect
         id="pbx-state-selector__input"
-        className="pbx-control__input pbx-control__input--select"
         value={active ?? "__normal__"}
-        onChange={(e) => onChange(e.target.value === "__normal__" ? null : (e.target.value as StyleState))}
-        aria-label={t("form.stateEditing")}
-      >
-        <option value="__normal__">{t("form.stateNormal")}</option>
-        {states.map((s) => (
-          <option key={s.state} value={s.state}>
-            {s.label}
-          </option>
-        ))}
-      </select>
+        onChange={(v) => onChange(v === "__normal__" ? null : (v as StyleState))}
+        ariaLabel={t("form.stateEditing")}
+        options={[
+          { value: "__normal__", label: t("form.stateNormal") },
+          ...states.map((s) => ({ value: s.state, label: s.label })),
+        ]}
+      />
     </div>
   );
 }

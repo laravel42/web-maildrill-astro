@@ -73,6 +73,7 @@
 
 .pbx-row--tall > .pbx-row__control {
   width: 100%;
+
   /* `padding-left: 24px` se conserva (regla base de `.pbx-row__control`):
      sigue siendo la ancla del slot flotante `.pbx-row__actions` (reset/
      token), que no cambia de posición con este layout vertical. */
@@ -138,6 +139,7 @@
 .pbx-row__control {
   flex: 1 1 auto;
   min-width: 0;
+  justify-content: end;
   display: flex;
   align-items: center;
   position: relative;

@@ -19,12 +19,11 @@
  * (`params: { preset: "top" }` en vez de `target`), este picker solo lo
  * transporta sin conocer "scroll-to" (P4 aplicado también al Inspector).
  */
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { getDefinition } from "@/builder/registry/componentRegistry";
 import type { BuilderDocument, BuilderNode, NodeId } from "@/builder/model/types";
-
-const NONE = "__none__";
+import { SearchableSelectControl } from "./SearchableSelectControl";
 
 /** Sentinel de UI para la opción "inicio de página" — no es un `NodeId` real. */
 export const TOP_PRESET_VALUE = "__top__";
@@ -54,7 +53,6 @@ export function NodeTargetPicker({
 }) {
   const { t } = useTranslation("inspector");
   const { t: tc } = useTranslation("common");
-  const [query, setQuery] = useState("");
 
   const candidates = useMemo(() => {
     return Object.values(document.nodes)
@@ -66,41 +64,26 @@ export function NodeTargetPicker({
       });
   }, [document, excludeNodeId, tc]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (q === "") return candidates;
-    return candidates.filter(
-      (c) => c.label.toLowerCase().includes(q) || c.typeLabel.toLowerCase().includes(q),
-    );
-  }, [candidates, query]);
+  const options = useMemo(() => {
+    const opts: { value: string; label: string }[] = [];
+    if (topPresetLabel) opts.push({ value: TOP_PRESET_VALUE, label: topPresetLabel });
+    for (const c of candidates) {
+      opts.push({ value: c.id, label: `${c.label} · ${c.typeLabel}` });
+    }
+    return opts;
+  }, [candidates, topPresetLabel]);
 
   return (
     <div className="pbx-node-target-picker">
-      <input
-        type="search"
-        className="pbx-node-target-picker__search"
-        placeholder={t("clickAction.searchNodePlaceholder")}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        aria-label={t("clickAction.searchNodePlaceholder")}
-      />
-      <select
-        className="pbx-control__input pbx-control__input--select"
-        value={value ?? NONE}
-        aria-label={t("clickAction.targetNode")}
-        onChange={(e) => {
-          if (e.target.value !== NONE) onChange(e.target.value);
+      <SearchableSelectControl
+        value={value ?? ""}
+        options={options}
+        placeholder={t("clickAction.chooseNode")}
+        onCommit={(v) => {
+          if (v !== "") onChange(v);
         }}
-      >
-        <option value={NONE}>{t("clickAction.chooseNode")}</option>
-        {topPresetLabel ? <option value={TOP_PRESET_VALUE}>{topPresetLabel}</option> : null}
-        {filtered.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.label} · {c.typeLabel}
-          </option>
-        ))}
-      </select>
-      {candidates.length > 0 && filtered.length === 0 ? (
+      />
+      {candidates.length === 0 ? (
         <p className="pbx-node-target-picker__empty">{t("clickAction.noNodesMatch")}</p>
       ) : null}
     </div>

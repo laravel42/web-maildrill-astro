@@ -22,6 +22,8 @@ export { Tooltip } from "@josecortez1/c42-react";
 // --- Componentes de proyecto ------------------------------------------------
 export { LanguageSelect } from "./LanguageSelect";
 export { ContentLocaleSelect } from "./ContentLocaleSelect";
+export { PbxSelect } from "./PbxSelect";
+export type { PbxSelectProps, PbxSelectOption } from "./PbxSelect";
 export { FontFamilyCombobox } from "./FontFamilyCombobox";
 export type { FontFamilyComboboxProps } from "./FontFamilyCombobox";
 export { LocaleCombobox } from "./LocaleCombobox";
