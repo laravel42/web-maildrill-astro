@@ -43,6 +43,7 @@ export type StylePath = [StyleGroup, string];
 export type PanelControlKind =
   | "segmented"
   | "select"
+  | "searchableSelect"
   | "numeric"
   | "presetNumeric"
   | "presetSegmented"
@@ -266,7 +267,23 @@ export const PANEL_SECTIONS: SectionDescriptor[] = [
           { labelKey: "panel.fontWeight.xl", value: "700" },
         ],
       },
-      { id: "typography.family", labelKey: "panel.rows.fontFamily", control: "select", fields: [["typography", "fontFamily"]], tier: "advanced" },
+      {
+        id: "typography.family",
+        labelKey: "panel.rows.fontFamily",
+        // H2 (docs/54 §2): antes era `control: "select"` con `field.options`
+        // vacío (`fontFamily` en `styleFields.ts` es `control: "text"`, sin
+        // catálogo) — un `<select>` sin opciones, inútil. Ahora es un
+        // `searchableSelect`: `StylePanel.tsx` lo alimenta con las familias
+        // del sitio (`tokens.typography.families`) + el catálogo generado de
+        // Google Fonts (`registry/catalogs/generated/googleFonts.names.ts`),
+        // y el usuario también puede escribir un stack CSS libre (el control
+        // no restringe a las opciones listadas). Promovida a `tier: "common"`
+        // (antes `"advanced"`): elegir tipografía es una decisión de diseño
+        // básica, no avanzada — visible también en modo simple.
+        control: "searchableSelect",
+        fields: [["typography", "fontFamily"]],
+        tier: "common",
+      },
       { id: "typography.lineHeight", labelKey: "panel.rows.lineHeight", control: "numeric", fields: [["typography", "lineHeight"]], tier: "advanced" },
       { id: "typography.decoration", labelKey: "panel.rows.textDecoration", control: "segmented", fields: [["typography", "textDecoration"]], tier: "advanced" },
     ],
@@ -426,17 +443,51 @@ function layerAt(node: BuilderNode, breakpoint: Breakpoint): Partial<StyleProper
 }
 
 /**
- * Cuenta cuántos campos de `section` (cualquier tier) están declarados EN LA
- * CAPA del breakpoint activo (no en cualquier capa del nodo, a diferencia de
+ * Filas `tier: "advanced"` que en modo simple tienen su PROPIA lógica de
+ * visibilidad/control (resuelta en `StylePanel.tsx`, `StylePanelRow`) en vez
+ * de gatearse por el switch global `tier` — ver el docblock de cada caso
+ * especial en `StylePanel.tsx`. Se declara aquí (no solo en `StylePanel.tsx`)
+ * porque `modifiedCountAt` (H1, docs/54 §2) también necesita saber qué filas
+ * `advanced` siguen siendo alcanzables en modo simple para no contarlas como
+ * "modificadas" si están ocultas del DOM.
+ */
+export const ALWAYS_VISIBLE_ADVANCED_ROW_IDS: readonly string[] = [
+  "layout.gridColumns",
+  "effects.boxShadow",
+  "appearance.border",
+];
+
+/**
+ * Cuenta cuántos campos de `section` están declarados EN LA CAPA del
+ * breakpoint activo (no en cualquier capa del nodo, a diferencia de
  * `countActiveFields`). Ejemplo del bug que corrige: un valor declarado solo
  * en `base` con breakpoint activo `md` cuenta 0 en `md` y 1 en `base`.
+ *
+ * **H1 (docs/54 §2, fix este commit):** `isSimple` filtra qué filas se
+ * cuentan. Antes se recorrían TODAS las filas de la sección sin mirar el
+ * tier, así que un valor declarado en una fila `advanced` OCULTA en modo
+ * simple (p. ej. `layout.overflow`, `typography.lineHeight`) igual sumaba al
+ * badge de "N modificados" — el usuario veía un contador que no coincidía
+ * con ninguna fila visible/editable en pantalla. Con `isSimple === true`
+ * solo cuentan las filas `common` y las de `ALWAYS_VISIBLE_ADVANCED_ROW_IDS`
+ * (que sí siguen alcanzables, con su propio control simple); con
+ * `isSimple === false` (modo avanzado) se cuentan todas, sin cambios de
+ * comportamiento frente a antes.
  */
-export function modifiedCountAt(node: BuilderNode, section: SectionDescriptor, breakpoint: Breakpoint): number {
+export function modifiedCountAt(
+  node: BuilderNode,
+  section: SectionDescriptor,
+  breakpoint: Breakpoint,
+  isSimple = false,
+): number {
   const layer = layerAt(node, breakpoint);
   if (!layer) return 0;
   let count = 0;
   for (const row of section.rows) {
     if (!rowIsRenderable(row)) continue;
+    if (isSimple && row.tier === "advanced" && !ALWAYS_VISIBLE_ADVANCED_ROW_IDS.includes(row.id)) {
+      continue;
+    }
     for (const path of row.fields) {
       if (readField(layer, path) !== undefined) count++;
     }

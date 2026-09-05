@@ -69,6 +69,7 @@ import {
   sectionsForNode,
   rowsFor,
   modifiedCountAt,
+  ALWAYS_VISIBLE_ADVANCED_ROW_IDS,
   type RowDescriptor,
   type SectionDescriptor,
   type SectionId,
@@ -89,6 +90,8 @@ import { PresetSegmented } from "./controls/PresetSegmented";
 import { BorderSimple } from "./controls/BorderSimple";
 import { IconSegmented, type IconSegmentedOption } from "./controls/IconSegmented";
 import { CommittableInput } from "../controls/CommittableInput";
+import { SearchableSelectControl } from "../controls/SearchableSelectControl";
+import { GOOGLE_FONT_ENTRIES } from "@/builder/registry/catalogs/generated/googleFonts.names";
 import { resolveValueOrigin } from "./origin";
 
 // ---------------------------------------------------------------------------
@@ -206,7 +209,12 @@ const SIMPLE_SEGMENTED_VALUES: Record<string, string[]> = {
  *   `boxShadow` (no depende de otro campo), con `BorderSimple` (3
  *   sub-controles: grosor/color/tipo) en vez de `CommittableInput`.
  */
-const ALWAYS_VISIBLE_ADVANCED_ROW_IDS = ["layout.gridColumns", "effects.boxShadow", "appearance.border"];
+/**
+ * `ALWAYS_VISIBLE_ADVANCED_ROW_IDS` ahora vive en `sections.ts` (H1, docs/54
+ * §2): `modifiedCountAt` necesita la misma lista para no contar como
+ * "modificada" una fila `advanced` oculta en modo simple, así que se movió
+ * al módulo puro compartido en vez de duplicarla aquí.
+ */
 
 
 const SIDE_ICON: Record<SideKey, React.ReactNode> = {
@@ -459,7 +467,7 @@ function StylePanelSection({
     ? rowsFor(section, "advanced").filter((r) => ALWAYS_VISIBLE_ADVANCED_ROW_IDS.includes(r.id))
     : [];
   const advancedRows = showAdvanced ? rowsFor(section, "advanced") : specialRowsInSimple;
-  const modifiedCount = modifiedCountAt(node, section, breakpoint);
+  const modifiedCount = modifiedCountAt(node, section, breakpoint, !showAdvanced);
   const Icon = STYLE_GROUP_ICONS[section.groups[0] as StyleGroup];
 
   const renderRow = (row: RowDescriptor) => (
@@ -743,12 +751,23 @@ function StylePanelRow({
     if (!pathA || !pathB) return null;
     const fieldA = findFieldDef(pathA);
     const fieldB = findFieldDef(pathB);
+    // H3 (docs/54 §2): antes `${label} A`/`${label} B` — un lector de
+    // pantalla anunciaba "Overflow A" en vez de "Overflow X"/"Overflow
+    // horizontal", y no había ninguna distinción VISUAL entre las dos
+    // mitades. `StyleFieldDef.label` ya tiene el texto correcto por campo
+    // ("Overflow X", "Overflow Y", "Celda: columna", "Celda: fila") — se usa
+    // tal cual como `aria-label`, y su último segmento (tras ": " si lo
+    // tiene) como mini-label visible corto.
+    const labelA = fieldA?.label ?? `${label} A`;
+    const labelB = fieldB?.label ?? `${label} B`;
+    const shortLabel = (full: string) => full.includes(": ") ? full.split(": ")[1]! : full;
     return (
       <PropertyRow label={label} columns={2}>
         <PairGrid
           fields={[
             {
-              ariaLabel: `${label} A`,
+              ariaLabel: labelA,
+              visibleLabel: shortLabel(labelA),
               control: (
                 <PropertyField
                   node={node}
@@ -766,7 +785,8 @@ function StylePanelRow({
               ),
             },
             {
-              ariaLabel: `${label} B`,
+              ariaLabel: labelB,
+              visibleLabel: shortLabel(labelB),
               control: (
                 <PropertyField
                   node={node}
@@ -853,7 +873,7 @@ function StylePanelRow({
       tokens={tokens}
       controlId={controlId}
     >
-      {(args) => renderRowControl(row, field, args, t, controlId, isSimple)}
+      {(args) => renderRowControl(row, field, args, t, controlId, isSimple, tokens)}
     </PropertyField>
   );
 }
@@ -863,6 +883,40 @@ function StylePanelRow({
  * que se resuelven aparte arriba). Recibe `{freeValue, commit}` del
  * render-prop de `PropertyField`.
  */
+/**
+ * Opciones del `searchableSelect` de `typography.family` (H2, docs/54 §2):
+ * primero las familias declaradas como TOKEN del sitio
+ * (`tokens.typography.families`, valores ya en uso/coherentes con el tema),
+ * luego el catálogo generado de Google Fonts (`registry/catalogs/generated`)
+ * como fuente de familias libres para elegir. El `value` de cada opción es
+ * el stack CSS completo que se escribe en `typography.fontFamily` — para un
+ * token de sitio, `fam.stack` (p. ej. "Inter, system-ui, sans-serif"); para
+ * una entrada de Google Fonts, `"<family>, sans-serif"` (con fallback
+ * genérico según su `category`, mismo criterio de fallback que usa
+ * `TokenFontFamily.stack` en los tokens base). Pura: sin React, testeable.
+ */
+function fontFamilyOptions(
+  tokens: ReturnType<typeof useDocumentStore.getState>["site"]["meta"]["tokens"] | undefined,
+): { label: string; value: string }[] {
+  const siteFamilies = tokens?.typography?.families ?? {};
+  const siteOptions = Object.entries(siteFamilies).map(([key, fam]) => ({
+    label: `${key} (${fam.stack.split(",")[0]?.trim() ?? fam.stack})`,
+    value: fam.stack,
+  }));
+  const googleFallback: Record<string, string> = {
+    serif: "serif",
+    "sans-serif": "sans-serif",
+    display: "sans-serif",
+    handwriting: "cursive",
+    monospace: "monospace",
+  };
+  const googleOptions = GOOGLE_FONT_ENTRIES.map((entry) => ({
+    label: entry.family,
+    value: `${entry.family}, ${googleFallback[entry.category] ?? "sans-serif"}`,
+  }));
+  return [...siteOptions, ...googleOptions];
+}
+
 function renderRowControl(
   row: RowDescriptor,
   field: StyleFieldDef | undefined,
@@ -870,10 +924,21 @@ function renderRowControl(
   t: (key: string, opts?: Record<string, unknown>) => string,
   controlId: string,
   isSimple: boolean,
+  tokens?: ReturnType<typeof useDocumentStore.getState>["site"]["meta"]["tokens"],
 ): React.ReactNode {
   const { freeValue, commit } = args;
 
   switch (row.control) {
+    case "searchableSelect":
+      return (
+        <SearchableSelectControl
+          value={freeValue}
+          options={fontFamilyOptions(tokens)}
+          placeholder={field?.placeholder}
+          onCommit={commit}
+        />
+      );
+
     case "select": {
       const options = field?.options ?? [];
       return (

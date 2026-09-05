@@ -40,6 +40,7 @@ export type ControlType =
   | "link"
   | "image-src"
   | "options-list"
+  | "string-list"
   | "page-visibility-list"
   | "searchable-select"
   | "theme-select";

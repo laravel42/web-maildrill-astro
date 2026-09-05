@@ -7,6 +7,7 @@ import { ImageSourceField } from "../ImageSourceField";
 import { LinkField } from "../LinkField";
 import { NumericUnitInput } from "../NumericUnitInput";
 import { OptionsListControl, type SelectOption } from "../OptionsListControl";
+import { StringListControl } from "../StringListControl";
 import { PageVisibilityListControl } from "../PageVisibilityListControl";
 import { SearchableSelectControl } from "../SearchableSelectControl";
 import type { PropControlContext } from "./types";
@@ -19,6 +20,17 @@ function OptionsListRenderer({ node, field, raw }: PropControlContext) {
       options={Array.isArray(raw) ? (raw as SelectOption[]) : []}
       labelOptions={resolveOptions(field.labelOptions)}
       renderLabelPreview={field.renderLabelPreview}
+    />
+  );
+}
+
+function StringListRenderer({ node, field, value }: PropControlContext) {
+  return (
+    <StringListControl
+      nodeId={node.id}
+      fieldKey={field.key}
+      value={value}
+      itemPlaceholder={field.placeholder}
     />
   );
 }
@@ -104,6 +116,7 @@ export const PROP_CONTROL_RENDERERS: Partial<
   Record<ControlType, (ctx: PropControlContext) => ReactElement>
 > = {
   "options-list": OptionsListRenderer,
+  "string-list": StringListRenderer,
   "page-visibility-list": PageVisibilityListRenderer,
   "image-src": ImageSourceRenderer,
   link: LinkRenderer,

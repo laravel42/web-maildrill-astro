@@ -20,6 +20,14 @@ import type { ReactNode } from "react";
 export interface PairGridField {
   /** `aria-label` traducido de este sub-campo (p. ej. "Overflow horizontal"). */
   ariaLabel: string;
+  /**
+   * Mini-label VISIBLE por celda (H3, docs/54 §2: "los controles `pair` no
+   * dicen qué es cada mitad" — antes solo había `aria-label`, sin ninguna
+   * distinción visual entre las dos mitades). Texto corto, p. ej. "X"/"Y" o
+   * "Columna"/"Fila". Opcional para no romper otros usos futuros de
+   * `PairGrid` que no lo necesiten.
+   */
+  visibleLabel?: string;
   control: ReactNode;
 }
 
@@ -34,6 +42,11 @@ export function PairGrid({ fields }: PairGridProps) {
       {fields.map((field, i) => (
         // eslint-disable-next-line react/no-array-index-key -- posición fija (0=X/columna, 1=Y/fila), no hay id propio.
         <div key={i} className="pbx-pair-grid__cell" role="group" aria-label={field.ariaLabel}>
+          {field.visibleLabel ? (
+            <span className="pbx-pair-grid__cell-label" aria-hidden="true">
+              {field.visibleLabel}
+            </span>
+          ) : null}
           {field.control}
         </div>
       ))}

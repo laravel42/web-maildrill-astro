@@ -181,7 +181,7 @@ export const pricingCardDefinition: ComponentDefinition = {
       { key: "planName", label: "Nombre del plan", control: "text", group: "Contenido", translatable: true },
       { key: "price", label: "Precio", control: "text", group: "Contenido", translatable: true },
       { key: "period", label: "Periodo", control: "text", group: "Contenido", translatable: true },
-      { key: "features", label: "Features (una por línea)", control: "text", group: "Contenido", translatable: true },
+      { key: "features", label: "Features (una por línea)", control: "string-list", group: "Contenido", translatable: true },
       { key: "ctaLabel", label: "Texto del CTA", control: "text", group: "Acción", translatable: true },
       { key: "ctaLink", label: "Enlace del CTA", control: "link", group: "Acción" },
       { key: "popular", label: "Destacar como popular", control: "toggle", group: "Estado" },
