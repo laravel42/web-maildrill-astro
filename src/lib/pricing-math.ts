@@ -31,10 +31,10 @@ export function makeFormatters(cur: Currency) {
       if (v < 1000) return `${sym}${v.toFixed(2)}`;
       return `${sym}${Math.round(v).toLocaleString('en-US')}`;
     },
-    // Sub-cent rates need extra decimals: the flat email rate ($0.00075) would
-    // otherwise round to $0.0008 at 4 places. Threshold is on the USD base so
-    // precision is consistent across currencies.
-    rate: (n: number) => `${sym}${(n * fx).toFixed(n < 0.001 ? 5 : n < 0.01 ? 4 : 3)}`,
+    // Up to 4 decimals (USD base), trailing zeros trimmed — email $0.0005,
+    // voice $0.0125 — so nothing rounds to $0.013 or pads to $0.00050.
+    rate: (n: number) =>
+      `${sym}${(n * fx).toFixed(4).replace(/0+$/, '').replace(/\.$/, '')}`,
     whole: (n: number) => `${sym}${Math.round(n * fx).toLocaleString('en-US')}`,
     fmt: (n: number) => Math.round(n).toLocaleString('en-US'),
   };
