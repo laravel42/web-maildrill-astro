@@ -221,6 +221,9 @@ curl https://api.maildrill.net/v1/messages \
   .dev-hero {
     position: relative;
     padding-block: calc(64px * var(--sec-y)) calc(40px * var(--sec-y));
+    /* Contain the hero glow blob (positioned 30px past the container edge) —
+       see .hero in index.astro for the narrow-viewport overflow this fixes. */
+    overflow-x: clip;
   }
 
   .dev-hero__glow {

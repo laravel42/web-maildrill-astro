@@ -5,6 +5,13 @@ import { siteConfig, externalUrls } from '@/config/site';
 import Logo from './Logo.astro';
 import Icon from '@/components/ui/Icon.astro';
 
+interface Props {
+  /** Closing CTA headline; varies per page so the site's last word isn't identical everywhere. */
+  ctaTitle?: string;
+}
+
+const { ctaTitle = 'Start sending in minutes.' } = Astro.props;
+
 const year = new Date().getFullYear();
 const socials = [
   { name: 'Twitter', href: externalUrls.twitter, icon: 'twitter' as const },
@@ -23,7 +30,7 @@ const footerCols = Object.entries(footerNav).filter(([heading]) => heading !== '
   <div class="foot__cta container--wide">
     <div class="foot__glow" aria-hidden="true"></div>
     <p class="eyebrow foot__eyebrow">Get started</p>
-    <h2 class="foot__title mono" data-scramble>Start sending in minutes.</h2>
+    <h2 class="foot__title mono" data-scramble>{ctaTitle}</h2>
     <div class="foot__actions">
       <a href={routes.auth.signup} class="foot__button">
         Start free trial

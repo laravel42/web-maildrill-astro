@@ -103,7 +103,7 @@ const jsonLd = [
 ];
 ---
 
-<MarketingLayout seo={seo} jsonLd={jsonLd}>
+<MarketingLayout seo={seo} jsonLd={jsonLd} ctaTitle="Come start sending with us.">
   {/* --------------------------------------------------------------- HERO */}
   <section class="about-hero container--wide">
     <div class="about-hero__glow" aria-hidden="true"></div>
@@ -216,6 +216,9 @@ const jsonLd = [
   .about-hero {
     position: relative;
     padding-block: calc(64px * var(--sec-y)) calc(40px * var(--sec-y));
+    /* Contain the hero glow blob (positioned 30px past the container edge) —
+       see .hero in index.astro for the narrow-viewport overflow this fixes. */
+    overflow-x: clip;
   }
 
   .about-hero__glow {

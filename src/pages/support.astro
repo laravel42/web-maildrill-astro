@@ -21,7 +21,6 @@ type Category = {
   icon: IconName;
   title: string;
   desc: string;
-  count: string;
   color: string;
   tint: string;
   href: string;
@@ -33,7 +32,6 @@ const categories: Category[] = [
     icon: 'bolt',
     title: 'Getting started',
     desc: 'Create your workspace, invite your team, and send your first campaign.',
-    count: '14',
     color: 'var(--accent)',
     tint: 'var(--accent-tint)',
     href: routes.guides,
@@ -43,7 +41,6 @@ const categories: Category[] = [
     icon: 'shield',
     title: 'Deliverability',
     desc: 'Domain authentication, warmup, and keeping messages out of spam.',
-    count: '22',
     color: 'var(--success)',
     tint: 'var(--success-bg)',
     href: routes.deliverability,
@@ -53,7 +50,6 @@ const categories: Category[] = [
     icon: 'layers',
     title: 'Channels',
     desc: 'Set up and send across email, SMS, WhatsApp, and voice.',
-    count: '31',
     color: 'var(--ch-sms)',
     tint: 'var(--ch-sms-tint)',
     href: `${routes.product}#channels`,
@@ -63,7 +59,6 @@ const categories: Category[] = [
     icon: 'chart',
     title: 'Analytics',
     desc: 'Read reports, build funnels, and compare campaign performance.',
-    count: '12',
     color: 'var(--warning)',
     tint: 'var(--warning-bg)',
     href: routes.product,
@@ -73,7 +68,6 @@ const categories: Category[] = [
     icon: 'filter',
     title: 'Billing & account',
     desc: 'Pay-per-use billing, prepay tiers, invoices, and account settings.',
-    count: '9',
     color: 'var(--success)',
     tint: 'var(--success-bg)',
     href: routes.pricing,
@@ -162,7 +156,7 @@ const contacts: Contact[] = [
 ];
 ---
 
-<MarketingLayout seo={seo} jsonLd={jsonLd} active="resources">
+<MarketingLayout seo={seo} jsonLd={jsonLd} active="resources" ctaTitle="Answered. Now start sending.">
   {/* ---------------------------------------------------------------- HERO */}
   <section class="sup-hero">
     <div class="sup-hero__glow sup-hero__glow--indigo" aria-hidden="true"></div>
@@ -224,7 +218,6 @@ const contacts: Contact[] = [
             </div>
             <h3 class="cat__title">{c.title}</h3>
             <p class="cat__desc">{c.desc}</p>
-            <span class="mono cat__count">{c.count} articles</span>
           </a>
         ))
       }
@@ -476,13 +469,8 @@ const contacts: Contact[] = [
     font-size: 14px;
     line-height: 1.55;
     color: var(--text3);
-    margin: 0 0 12px;
+    margin: 0;
     flex: 1;
-  }
-
-  .cat__count {
-    font-size: 12px;
-    color: var(--muted);
   }
 
   /* -------------------------------------------------- POPULAR + CONTACT */

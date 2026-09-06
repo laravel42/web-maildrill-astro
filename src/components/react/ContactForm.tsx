@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { mockContactSubmit } from '@/lib/app/services';
 import type { Status } from './ContactForm.types';
 import { TOPICS } from './ContactForm.logic';
 import styles from './ContactForm.module.css';
@@ -34,9 +33,12 @@ export default function ContactForm() {
     setStatus('loading');
     setError(null);
     try {
-      // Placeholder submit — no backend wired yet (see services.ts).
-      await mockContactSubmit({ firstName, lastName, email, topic, message });
-      window.posthog?.capture('contact_form_submitted', { topic });
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ firstName, lastName, email, topic, message }),
+      });
+      if (!res.ok) throw new Error('request failed');
       setStatus('success');
       form.reset();
     } catch {
