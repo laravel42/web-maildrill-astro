@@ -33,21 +33,23 @@ import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
 
 const SHADOW_CARD = "0 12px 32px rgba(59,33,17,0.10)";
 const SHADOW_HOVER = "0 20px 44px rgba(59,33,17,0.18)";
-const BAND_PADDING = "clamp(56px, 9vw, 112px) 20px";
+const BAND_PADDING = "56px 20px";
+const BAND_PADDING_MD = "112px 20px";
 const INNER_MAX = "1140px";
 const REVEAL: BuilderNode["behaviors"] = [{ type: "reveal-on-scroll", options: { threshold: 0.15, once: true } }];
 
-function band(background: StyleValue, padding: string = BAND_PADDING): NodeStyle {
-  return { base: { spacing: { padding }, appearance: { background } } };
+function band(background: StyleValue, padding: string = BAND_PADDING, paddingMd: string = BAND_PADDING_MD): NodeStyle {
+  return { base: { spacing: { padding }, appearance: { background } }, overrides: { md: { spacing: { padding: paddingMd } } } };
 }
 
-function inner(maxWidth: string = INNER_MAX, gap = "clamp(24px, 4vw, 40px)"): NodeStyle {
+function inner(maxWidth: string = INNER_MAX, gap = "24px", gapMd = "40px"): NodeStyle {
   return {
     base: {
       layout: { display: "flex", flexDirection: "column", gap },
       spacing: { margin: "0 auto" },
       size: { width: "100%", maxWidth },
     },
+    overrides: { md: { layout: { gap: gapMd } } },
   };
 }
 
@@ -126,7 +128,7 @@ function articleCard(n: number, kicker: string, title: string, excerpt: string, 
       id: `editorial-article-${n}-body`,
       type: "container",
       props: {},
-      style: { base: { layout: { display: "flex", flexDirection: "column", gap: "8px" }, spacing: { padding: "clamp(16px, 2.5vw, 22px)" } } },
+      style: { base: { layout: { display: "flex", flexDirection: "column", gap: "8px" }, spacing: { padding: "16px" } }, overrides: { md: { spacing: { padding: "22px" } } } },
       // Showcase `expandable` (docs/48 §2): solo el destacado (n=1, arquetipo
       // A3 le da 2 columnas de ancho) colapsa su cuerpo con "Ver más" — el
       // resto de tarjetas del grid son más cortas y no lo necesitan.
@@ -289,14 +291,14 @@ export function buildBlogListFragment(): NodeFragment {
         id: "editorial-hero",
         type: "hero",
         props: {},
-        style: band("linear-gradient(160deg, var(--colors-surface-alt) 0%, var(--colors-surface-default) 70%)", "clamp(64px, 10vw, 128px) 20px"),
+        style: band("linear-gradient(160deg, var(--colors-surface-alt) 0%, var(--colors-surface-default) 70%)", "64px 20px", "128px 20px"),
         children: ["editorial-hero-inner"],
       },
       "editorial-hero-inner": {
         id: "editorial-hero-inner",
         type: "container",
         props: {},
-        style: inner("820px", "clamp(16px, 3vw, 24px)"),
+        style: inner("820px", "16px", "24px"),
         children: ["editorial-hero-kicker", "editorial-hero-title", "editorial-hero-sub"],
       },
       "editorial-hero-kicker": {
@@ -342,10 +344,11 @@ export function buildBlogListFragment(): NodeFragment {
         style: {
           base: {
             ...defaultStyleFor("logo-cloud").base,
-            layout: { display: "flex", flexWrap: "nowrap", alignItems: "center", gap: "clamp(24px, 5vw, 48px)" },
-            spacing: { padding: "clamp(20px, 3vw, 28px) 0" },
+            layout: { display: "flex", flexWrap: "nowrap", alignItems: "center", gap: "24px" },
+            spacing: { padding: "20px 0" },
             appearance: { background: { token: "colors.band.dark" }, color: { token: "colors.band.on" } },
           },
+          overrides: { md: { layout: { gap: "48px" }, spacing: { padding: "28px 0" } } },
         },
         behaviors: [{ type: "marquee", options: { duration: 24, direction: "left", pauseOnHover: true } }],
         children: [
@@ -394,12 +397,13 @@ export function buildBlogListFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(20px, 3vw, 32px)" } },
+          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "20px" } },
           overrides: {
             md: {
               layout: {
                 gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
                 gridAutoFlow: "dense",
+                gap: "32px",
               },
             },
           },
@@ -488,9 +492,10 @@ export function buildBlogListFragment(): NodeFragment {
               fontSize: "clamp(1.375rem, 3vw, 2rem)",
               lineHeight: "1.3",
             },
-            spacing: { padding: "clamp(28px, 5vw, 44px)" },
+            spacing: { padding: "28px" },
             appearance: { ...defaultStyleFor("quote").base.appearance, borderRadius: "20px", boxShadow: SHADOW_CARD },
           },
+          overrides: { md: { spacing: { padding: "44px" } } },
         },
       },
 
@@ -527,8 +532,8 @@ export function buildBlogListFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "flex", flexDirection: "column", gap: "clamp(24px, 4vw, 40px)", alignItems: "center" } },
-          overrides: { sm: { layout: { flexDirection: "row", justifyContent: "center" } } },
+          base: { layout: { display: "flex", flexDirection: "column", gap: "24px", alignItems: "center" } },
+          overrides: { sm: { layout: { flexDirection: "row", justifyContent: "center" } }, md: { layout: { gap: "40px" } } },
         },
         children: ["editorial-host-1", "editorial-host-2"],
       },
@@ -581,10 +586,10 @@ export function buildBlogListFragment(): NodeFragment {
             ...defaultStyleFor("form").base,
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.sm" } },
             size: { width: "100%" },
-            spacing: { padding: "clamp(20px, 3vw, 28px)" },
+            spacing: { padding: "20px" },
             appearance: { ...defaultStyleFor("form").base.appearance, background: { token: "colors.surface.default" }, borderRadius: "18px", boxShadow: SHADOW_CARD },
           },
-          overrides: { md: { layout: { flexDirection: "row" } } },
+          overrides: { md: { layout: { flexDirection: "row" }, spacing: { padding: "28px" } } },
         },
         behaviors: [{ type: "form-validation", options: {} }],
         children: ["editorial-newsletter-input", "editorial-newsletter-submit"],
@@ -617,9 +622,10 @@ export function buildBlogListFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: { token: "spacing.sm" } },
-            spacing: { padding: "clamp(32px, 6vw, 56px) 20px" },
+            spacing: { padding: "32px 20px" },
             appearance: { background: { token: "colors.band.dark" }, color: { token: "colors.band.on" } },
           },
+          overrides: { md: { spacing: { padding: "56px 20px" } } },
         },
         children: ["editorial-footer-social"],
       },

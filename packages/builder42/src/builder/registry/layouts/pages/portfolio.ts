@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
+import { darkBandStyleFor, testimonialFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Portfolio" — REESCRITA (docs/48 §2 fila 7, F3) como plantilla de
@@ -38,21 +38,25 @@ import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
 
 const SHADOW_CARD = "0 12px 32px rgba(15,23,42,0.10)";
 const SHADOW_HOVER = "0 20px 44px rgba(15,23,42,0.18)";
-const BAND_PADDING = "clamp(56px, 9vw, 112px) 20px";
+const BAND_PADDING = "56px 20px";
 const INNER_MAX = "1160px";
 const REVEAL: BuilderNode["behaviors"] = [{ type: "reveal-on-scroll", options: { threshold: 0.15, once: true } }];
 
-function band(background: StyleValue, padding: string = BAND_PADDING): NodeStyle {
-  return { base: { spacing: { padding }, appearance: { background } } };
+function band(background: StyleValue, padding: string = BAND_PADDING, paddingMd: string = "112px 20px"): NodeStyle {
+  return {
+    base: { spacing: { padding }, appearance: { background } },
+    overrides: { md: { spacing: { padding: paddingMd } } },
+  };
 }
 
-function inner(maxWidth: string = INNER_MAX, gap = "clamp(24px, 4vw, 40px)"): NodeStyle {
+function inner(maxWidth: string = INNER_MAX, gap = "24px", gapMd = "40px"): NodeStyle {
   return {
     base: {
       layout: { display: "flex", flexDirection: "column", gap },
       spacing: { margin: "0 auto" },
       size: { width: "100%", maxWidth },
     },
+    overrides: { md: { layout: { gap: gapMd } } },
   };
 }
 
@@ -310,7 +314,7 @@ export function buildPortfolioFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "flex-start" },
-            spacing: { padding: "clamp(48px, 9vw, 96px) 20px" },
+            spacing: { padding: "48px 20px" },
             size: { width: "100%", minHeight: "520px" },
             appearance: {
               background:
@@ -318,7 +322,7 @@ export function buildPortfolioFragment(): NodeFragment {
               color: { token: "colors.surface.default" },
             },
           },
-          overrides: { md: { size: { minHeight: "640px" } } },
+          overrides: { md: { size: { minHeight: "640px" }, spacing: { padding: "96px 20px" } } },
         },
         children: ["photographer-hero-inner"],
       },
@@ -406,11 +410,11 @@ export function buildPortfolioFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(24px, 4vw, 48px)", alignItems: "center" },
+            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "24px", alignItems: "center" },
             spacing: { margin: "0 auto" },
             size: { width: "100%", maxWidth: INNER_MAX },
           },
-          overrides: { md: { layout: { gridTemplateColumns: "minmax(0,1fr) minmax(0,1.2fr)" } } },
+          overrides: { md: { layout: { gridTemplateColumns: "minmax(0,1fr) minmax(0,1.2fr)", gap: "48px" } } },
         },
         children: ["photographer-bio-img", "photographer-bio-copy"],
       },
@@ -491,10 +495,11 @@ export function buildPortfolioFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(16px, 2.5vw, 28px)" } },
+          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "16px" } },
           overrides: {
             sm: { layout: { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" } },
             lg: { layout: { gridTemplateColumns: "repeat(4, minmax(0, 1fr))" } },
+            md: { layout: { gap: "28px" } },
           },
         },
         children: [
@@ -544,33 +549,31 @@ export function buildPortfolioFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(16px, 2.5vw, 28px)" } },
-          overrides: { md: { layout: { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" } } },
+          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "16px" } },
+          overrides: { md: { layout: { gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "28px" } } },
         },
         children: ["photographer-testimonial-1", "photographer-testimonial-2"],
       },
-      "photographer-testimonial-1": {
-        id: "photographer-testimonial-1",
-        type: "testimonial",
-        props: {
+      ...testimonialFragment(
+        "photographer-testimonial-1",
+        {
           quote: "Elena consiguió que nos olvidáramos de la cámara. Las fotos de nuestra boda parecen sacadas de una revista, sin perder lo espontáneo.",
           name: "Marta y Diego",
           role: "Boda, junio 2025",
           initials: "MD",
         },
-        style: { base: { ...card().base, spacing: { padding: "clamp(20px, 3vw, 28px)" } } },
-      },
-      "photographer-testimonial-2": {
-        id: "photographer-testimonial-2",
-        type: "testimonial",
-        props: {
+        { base: { ...card().base, spacing: { padding: "20px" } }, overrides: { md: { spacing: { padding: "28px" } } } },
+      ),
+      ...testimonialFragment(
+        "photographer-testimonial-2",
+        {
           quote: "Necesitábamos fotos de producto para el catálogo nuevo y el resultado superó lo que pedimos. Entrega puntual y trato impecable.",
           name: "Carlos Reyes",
           role: "Dueño, Taller Reyes",
           initials: "CR",
         },
-        style: { base: { ...card().base, spacing: { padding: "clamp(20px, 3vw, 28px)" } } },
-      },
+        { base: { ...card().base, spacing: { padding: "20px" } }, overrides: { md: { spacing: { padding: "28px" } } } },
+      ),
 
       // --- Paquetes / precios de sesión -------------------------------------
       "photographer-pricing": {
@@ -599,8 +602,8 @@ export function buildPortfolioFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "flex", flexDirection: "column", gap: "clamp(16px, 2.5vw, 24px)", alignItems: "center" } },
-          overrides: { md: { layout: { flexDirection: "row", justifyContent: "center" } } },
+          base: { layout: { display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" } },
+          overrides: { md: { layout: { flexDirection: "row", justifyContent: "center", gap: "24px" } } },
         },
         children: ["photographer-package-1", "photographer-package-2", "photographer-package-3"],
       },
@@ -649,9 +652,10 @@ export function buildPortfolioFragment(): NodeFragment {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.sm" } },
             size: { width: "100%" },
-            spacing: { padding: "clamp(20px, 3vw, 28px)" },
+            spacing: { padding: "20px" },
             appearance: { ...card("16px").base.appearance },
           },
+          overrides: { md: { spacing: { padding: "28px" } } },
         },
         behaviors: [{ type: "form-validation", options: {} }],
         children: [
@@ -732,9 +736,10 @@ export function buildPortfolioFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: { token: "spacing.sm" } },
-            spacing: { padding: "clamp(32px, 6vw, 56px) 20px" },
+            spacing: { padding: "32px 20px" },
             appearance: { background: { token: "colors.band.dark" }, color: { token: "colors.band.on" } },
           },
+          overrides: { md: { spacing: { padding: "56px 20px" } } },
         },
         children: ["photographer-footer-social"],
       },
@@ -811,29 +816,29 @@ export function buildPortfolioFragment(): NodeFragment {
         en: { content: "<strong>What clients say after their session</strong>" },
         it: { content: "<strong>Cosa dicono i clienti dopo la loro sessione</strong>" },
       };
-      t["photographer-testimonial-1"] = {
-        en: {
-          quote: "Elena made us forget the camera was even there. Our wedding photos look like they're from a magazine, without losing the spontaneity.",
-          name: "Marta and Diego",
-          role: "Wedding, June 2025",
-        },
-        it: {
-          quote: "Elena ci ha fatto dimenticare la macchina fotografica. Le foto del nostro matrimonio sembrano di una rivista, senza perdere la spontaneità.",
-          name: "Marta e Diego",
-          role: "Matrimonio, giugno 2025",
-        },
+      t["photographer-testimonial-1-quote"] = {
+        en: { content: "<p>Elena made us forget the camera was even there. Our wedding photos look like they're from a magazine, without losing the spontaneity.</p>" },
+        it: { content: "<p>Elena ci ha fatto dimenticare la macchina fotografica. Le foto del nostro matrimonio sembrano di una rivista, senza perdere la spontaneità.</p>" },
       };
-      t["photographer-testimonial-2"] = {
-        en: {
-          quote: "We needed product photos for the new catalog and the result exceeded what we asked for. On-time delivery and flawless service.",
-          name: "Carlos Reyes",
-          role: "Owner, Taller Reyes",
-        },
-        it: {
-          quote: "Avevamo bisogno di foto prodotto per il nuovo catalogo e il risultato ha superato le aspettative. Consegna puntuale e servizio impeccabile.",
-          name: "Carlos Reyes",
-          role: "Proprietario, Taller Reyes",
-        },
+      t["photographer-testimonial-1-name"] = {
+        en: { content: "<strong>Marta and Diego</strong>" },
+        it: { content: "<strong>Marta e Diego</strong>" },
+      };
+      t["photographer-testimonial-1-role"] = {
+        en: { content: "Wedding, June 2025" },
+        it: { content: "Matrimonio, giugno 2025" },
+      };
+      t["photographer-testimonial-2-quote"] = {
+        en: { content: "<p>We needed product photos for the new catalog and the result exceeded what we asked for. On-time delivery and flawless service.</p>" },
+        it: { content: "<p>Avevamo bisogno di foto prodotto per il nuovo catalogo e il risultato ha superato le aspettative. Consegna puntuale e servizio impeccabile.</p>" },
+      };
+      t["photographer-testimonial-2-name"] = {
+        en: { content: "<strong>Carlos Reyes</strong>" },
+        it: { content: "<strong>Carlos Reyes</strong>" },
+      };
+      t["photographer-testimonial-2-role"] = {
+        en: { content: "Owner, Taller Reyes" },
+        it: { content: "Proprietario, Taller Reyes" },
       };
 
       t["photographer-pricing-title"] = { en: { content: "<strong>Session packages</strong>" }, it: { content: "<strong>Pacchetti sessione</strong>" } };

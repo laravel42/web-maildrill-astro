@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
+import { darkBandStyleFor, testimonialFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Equipo" — REESCRITA (docs/48 §2 fila 10, F4) como plantilla de
@@ -46,21 +46,26 @@ import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
 
 const SHADOW_CARD = "0 12px 32px rgba(15,42,40,0.10)";
 const SHADOW_HOVER = "0 20px 44px rgba(15,42,40,0.18)";
-const BAND_PADDING = "clamp(56px, 9vw, 112px) 20px";
+const BAND_PADDING_BASE = "56px 20px";
+const BAND_PADDING_MD = "112px 20px";
 const INNER_MAX = "1160px";
 const REVEAL: BuilderNode["behaviors"] = [{ type: "reveal-on-scroll", options: { threshold: 0.15, once: true } }];
 
-function band(background: StyleValue, padding: string = BAND_PADDING): NodeStyle {
-  return { base: { spacing: { padding }, appearance: { background } } };
+function band(background: StyleValue, paddingBase: string = BAND_PADDING_BASE, paddingMd: string = BAND_PADDING_MD): NodeStyle {
+  return {
+    base: { spacing: { padding: paddingBase }, appearance: { background } },
+    overrides: { md: { spacing: { padding: paddingMd } } },
+  };
 }
 
-function inner(maxWidth: string = INNER_MAX, gap = "clamp(24px, 4vw, 40px)"): NodeStyle {
+function inner(maxWidth: string = INNER_MAX, gapBase = "24px", gapMd = "40px"): NodeStyle {
   return {
     base: {
-      layout: { display: "flex", flexDirection: "column", gap },
+      layout: { display: "flex", flexDirection: "column", gap: gapBase },
       spacing: { margin: "0 auto" },
       size: { width: "100%", maxWidth },
     },
+    overrides: { md: { layout: { gap: gapMd } } },
   };
 }
 
@@ -175,14 +180,10 @@ function facilityCard(n: 1 | 2 | 3 | 4, title: string, text: string, imageUrl: s
 }
 
 function memberTestimonial(n: 1 | 2 | 3, quote: string, name: string, role: string, initials: string) {
-  return {
-    [`team-page-testimonial-${n}`]: {
-      id: `team-page-testimonial-${n}`,
-      type: "testimonial",
-      props: { quote, name, role, initials },
-      style: { base: { ...cardStyle().base, spacing: { padding: "clamp(20px, 3vw, 28px)" } } },
-    },
-  };
+  return testimonialFragment(`team-page-testimonial-${n}`, { quote, name, role, initials }, {
+    base: { ...cardStyle().base, spacing: { padding: "20px" } },
+    overrides: { md: { spacing: { padding: "28px" } } },
+  });
 }
 
 export function buildTeamPageFragment(): NodeFragment {
@@ -223,7 +224,7 @@ export function buildTeamPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "20px" },
-            spacing: { padding: "clamp(64px, 10vw, 128px) 20px" },
+            spacing: { padding: "64px 20px" },
             size: { width: "100%", minHeight: "460px" },
             typography: { fontFamily: { token: "typography.families.sans" }, textAlign: "center" },
             appearance: {
@@ -232,6 +233,7 @@ export function buildTeamPageFragment(): NodeFragment {
               color: { token: "colors.surface.default" },
             },
           },
+          overrides: { md: { spacing: { padding: "128px 20px" } } },
         },
         behaviors: [{ type: "scroll-spy", options: { rootMargin: "-20% 0px -60% 0px" } }],
         children: [
@@ -307,7 +309,7 @@ export function buildTeamPageFragment(): NodeFragment {
             layout: { display: "flex", flexDirection: "column", gap: "4px", alignItems: "center" },
             spacing: { margin: "12px 0 0" },
           },
-          overrides: { sm: { layout: { flexDirection: "row", gap: "clamp(16px, 3vw, 28px)" } } },
+          overrides: { sm: { layout: { flexDirection: "row", gap: "16px" } }, md: { layout: { gap: "28px" } } },
         },
         children: ["team-page-hero-nav-1", "team-page-hero-nav-2", "team-page-hero-nav-3", "team-page-hero-nav-4"],
       },
@@ -352,8 +354,8 @@ export function buildTeamPageFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(24px, 4vw, 40px)" } },
-          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 1fr) minmax(260px, 300px)" } } },
+          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "24px" } },
+          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 1fr) minmax(260px, 300px)", gap: "40px" } } },
         },
         children: ["team-page-plans-main", "team-page-plans-aside"],
       },
@@ -527,7 +529,8 @@ export function buildTeamPageFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "clamp(16px, 3vw, 24px)" } },
+          base: { layout: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px" } },
+          overrides: { md: { layout: { gap: "24px" } } },
         },
         children: ["team-page-facility-1", "team-page-facility-2", "team-page-facility-3", "team-page-facility-4"],
       },
@@ -596,8 +599,8 @@ export function buildTeamPageFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(16px, 3vw, 24px)" } },
-          overrides: { md: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" } } },
+          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "16px" } },
+          overrides: { md: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "24px" } } },
         },
         children: ["team-page-event-1", "team-page-event-2", "team-page-event-3"],
       },
@@ -719,8 +722,8 @@ export function buildTeamPageFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(16px, 2.5vw, 28px)" } },
-          overrides: { md: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" } } },
+          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "16px" } },
+          overrides: { md: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "28px" } } },
         },
         children: ["team-page-testimonial-1", "team-page-testimonial-2", "team-page-testimonial-3"],
       },
@@ -759,8 +762,8 @@ export function buildTeamPageFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(24px, 4vw, 40px)" }, spacing: { margin: "0 auto" }, size: { width: "100%", maxWidth: INNER_MAX } },
-          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 320px) 1fr" } } },
+          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "24px" }, spacing: { margin: "0 auto" }, size: { width: "100%", maxWidth: INNER_MAX } },
+          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 320px) 1fr", gap: "40px" } } },
         },
         children: ["team-page-location-info", "team-page-location-card"],
       },
@@ -1061,41 +1064,59 @@ export function buildTeamPageFragment(): NodeFragment {
       t["team-page-event-3-text"] = { en: { content: "Last Friday of every month, 6:30 PM" }, it: { content: "Ultimo venerdì del mese, ore 18:30" } };
 
       t["team-page-testimonials-title"] = { en: { content: "<strong>What our members say</strong>" }, it: { content: "<strong>Cosa dicono i nostri membri</strong>" } };
-      t["team-page-testimonial-1"] = {
+      t["team-page-testimonial-1-quote"] = {
         en: {
-          quote: "I traded my apartment for Muelle 12 a year ago and I wouldn't change it for anything: stable internet, good coffee and people to really collaborate with.",
-          name: "Renata Cortés",
-          role: "Freelance designer",
+          content:
+            "<p>I traded my apartment for Muelle 12 a year ago and I wouldn't change it for anything: stable internet, good coffee and people to really collaborate with.</p>",
         },
         it: {
-          quote: "Ho lasciato il mio appartamento per Muelle 12 un anno fa e non lo cambierei con nulla: internet stabile, buon caffè e persone con cui collaborare davvero.",
-          name: "Renata Cortés",
-          role: "Designer freelance",
+          content:
+            "<p>Ho lasciato il mio appartamento per Muelle 12 un anno fa e non lo cambierei con nulla: internet stabile, buon caffè e persone con cui collaborare davvero.</p>",
         },
       };
-      t["team-page-testimonial-2"] = {
+      t["team-page-testimonial-1-name"] = {
+        en: { content: "<strong>Renata Cortés</strong>" },
+        it: { content: "<strong>Renata Cortés</strong>" },
+      };
+      t["team-page-testimonial-1-role"] = {
+        en: { content: "Freelance designer" },
+        it: { content: "Designer freelance" },
+      };
+      t["team-page-testimonial-2-quote"] = {
         en: {
-          quote: "Our remote team needed a weekly meeting point. The private office gave us flexibility without signing a years-long lease.",
-          name: "Julián Torres",
-          role: "Founder, software studio",
+          content:
+            "<p>Our remote team needed a weekly meeting point. The private office gave us flexibility without signing a years-long lease.</p>",
         },
         it: {
-          quote: "Il nostro team remoto aveva bisogno di un punto di incontro settimanale. L'ufficio privato ci ha dato flessibilità senza firmare un contratto pluriennale.",
-          name: "Julián Torres",
-          role: "Fondatore, studio software",
+          content:
+            "<p>Il nostro team remoto aveva bisogno di un punto di incontro settimanale. L'ufficio privato ci ha dato flessibilità senza firmare un contratto pluriennale.</p>",
         },
       };
-      t["team-page-testimonial-3"] = {
+      t["team-page-testimonial-2-name"] = {
+        en: { content: "<strong>Julián Torres</strong>" },
+        it: { content: "<strong>Julián Torres</strong>" },
+      };
+      t["team-page-testimonial-2-role"] = {
+        en: { content: "Founder, software studio" },
+        it: { content: "Fondatore, studio software" },
+      };
+      t["team-page-testimonial-3-quote"] = {
         en: {
-          quote: "The community events connected me with two clients in my first month. The space pays for itself.",
-          name: "Mariana Vega",
-          role: "Marketing consultant",
+          content:
+            "<p>The community events connected me with two clients in my first month. The space pays for itself.</p>",
         },
         it: {
-          quote: "Gli eventi della community mi hanno fatto conoscere due clienti nel primo mese. Lo spazio si ripaga da solo.",
-          name: "Mariana Vega",
-          role: "Consulente marketing",
+          content:
+            "<p>Gli eventi della community mi hanno fatto conoscere due clienti nel primo mese. Lo spazio si ripaga da solo.</p>",
         },
+      };
+      t["team-page-testimonial-3-name"] = {
+        en: { content: "<strong>Mariana Vega</strong>" },
+        it: { content: "<strong>Mariana Vega</strong>" },
+      };
+      t["team-page-testimonial-3-role"] = {
+        en: { content: "Marketing consultant" },
+        it: { content: "Consulente marketing" },
       };
 
       t["team-page-location-title"] = { en: { content: "<strong>Come see the space</strong>" }, it: { content: "<strong>Vieni a vedere lo spazio</strong>" } };

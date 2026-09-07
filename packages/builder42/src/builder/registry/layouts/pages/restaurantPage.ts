@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
+import { darkBandStyleFor, testimonialFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Restaurante" — plantilla de página completa con contenido real
@@ -32,24 +32,26 @@ import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
 const SHADOW_CARD = "0 12px 32px rgba(15,23,42,0.08)";
 const SHADOW_HOVER = "0 20px 44px rgba(15,23,42,0.18)";
 const SHADOW_FLOAT = "0 28px 64px rgba(15,23,42,0.20)";
-const BAND_PADDING = "clamp(56px, 9vw, 112px) 20px";
+const BAND_PADDING = "56px 20px";
+const BAND_PADDING_MD = "112px 20px";
 const INNER_MAX = "1200px";
 const ACCENT_GRADIENT = "linear-gradient(135deg, var(--colors-primary-default), var(--colors-text))";
 const REVEAL: BuilderNode["behaviors"] = [{ type: "reveal-on-scroll", options: { threshold: 0.15, once: true } }];
 
 /** Banda full-bleed: fondo propio + ritmo vertical. */
-function band(background: StyleValue, padding: string = BAND_PADDING): NodeStyle {
-  return { base: { spacing: { padding }, appearance: { background } } };
+function band(background: StyleValue, padding: string = BAND_PADDING, paddingMd: string = BAND_PADDING_MD): NodeStyle {
+  return { base: { spacing: { padding }, appearance: { background } }, overrides: { md: { spacing: { padding: paddingMd } } } };
 }
 
 /** Contenedor interno de una banda: centra y limita el ancho. */
-function inner(maxWidth: string = INNER_MAX, gap = "clamp(24px, 4vw, 40px)"): NodeStyle {
+function inner(maxWidth: string = INNER_MAX, gap = "24px", gapMd = "40px"): NodeStyle {
   return {
     base: {
       layout: { display: "flex", flexDirection: "column", gap },
       spacing: { margin: "0 auto" },
       size: { width: "100%", maxWidth },
     },
+    overrides: { md: { layout: { gap: gapMd } } },
   };
 }
 
@@ -150,7 +152,7 @@ function dish(
       style: {
         base: {
           layout: { display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: { token: "spacing.md" } },
-          spacing: { padding: "clamp(14px, 2vw, 20px) clamp(12px, 2vw, 20px)" },
+          spacing: { padding: "14px 12px" },
           appearance: {
             borderWidth: opts.last ? "0" : "0 0 1px",
             borderStyle: "solid",
@@ -158,6 +160,7 @@ function dish(
             borderRadius: "12px",
           },
         },
+        overrides: { md: { spacing: { padding: "20px 20px" } } },
         states: { hover: { appearance: { background: { token: "colors.surface.alt" } } } },
       },
       children: [`${id}-copy`, `${id}-price`],
@@ -257,8 +260,9 @@ function menuCard(id: string, rows: string[]): BuilderNode {
       base: {
         ...card("20px").base,
         layout: { display: "flex", flexDirection: "column", gap: "0" },
-        spacing: { padding: "clamp(8px, 1.5vw, 14px)" },
+        spacing: { padding: "8px" },
       },
+      overrides: { md: { spacing: { padding: "14px" } } },
     },
     children: rows,
   };
@@ -338,25 +342,24 @@ function withHighlightCopy(
 }
 
 /** Testimonio como tarjeta clara sobre la banda de acento. */
-function testimonialCard(id: string, props: Record<string, unknown>): BuilderNode {
-  return {
-    id,
-    type: "testimonial",
-    props,
-    style: {
-      base: {
-        ...defaultStyleFor("testimonial").base,
-        spacing: { padding: "clamp(20px, 3vw, 28px)" },
-        appearance: {
-          ...defaultStyleFor("testimonial").base.appearance,
-          background: { token: "colors.surface.default" },
-          borderRadius: "20px",
-          boxShadow: SHADOW_FLOAT,
-        },
+function testimonialCard(
+  id: string,
+  content: { quote: string; name: string; role: string; initials: string },
+): Record<string, BuilderNode> {
+  return testimonialFragment(id, content, {
+    base: {
+      ...defaultStyleFor("testimonial").base,
+      spacing: { padding: "20px" },
+      appearance: {
+        ...defaultStyleFor("testimonial").base.appearance,
+        background: { token: "colors.surface.default" },
+        borderRadius: "20px",
+        boxShadow: SHADOW_FLOAT,
       },
-      states: { hover: { appearance: { boxShadow: SHADOW_HOVER } } },
     },
-  };
+    overrides: { md: { spacing: { padding: "28px" } } },
+    states: { hover: { appearance: { boxShadow: SHADOW_HOVER } } },
+  });
 }
 
 /** Ventaja de la reserva ("✓ …"). */
@@ -582,17 +585,41 @@ export function buildRestaurantPageFragment(): NodeFragment {
     "restaurant-stat-2": { en: { value: "120+", label: "dishes on the menu" }, it: { value: "120+", label: "piatti nel menù" } },
     "restaurant-stat-3": { en: { value: "2.4k", label: "reviews" }, it: { value: "2.4k", label: "recensioni" } },
     // --- Testimonios -------------------------------------------------------
-    "restaurant-testimonial": {
-      en: { quote: "The best tasting menu I've had in years — every course was a surprise.", name: "Laura Fernández", role: "Regular guest" },
-      it: { quote: "Il miglior menù degustazione da anni — ogni piatto era una sorpresa.", name: "Laura Fernández", role: "Ospite abituale" },
+    "restaurant-testimonial-quote": {
+      en: { content: "<p>The best tasting menu I've had in years — every course was a surprise.</p>" },
+      it: { content: "<p>Il miglior menù degustazione da anni — ogni piatto era una sorpresa.</p>" },
     },
-    "restaurant-testimonial-2": {
-      en: { quote: "We booked for a team dinner and they adapted every dish to our allergies.", name: "Andrés Molina", role: "Group booking" },
-      it: { quote: "Abbiamo prenotato per una cena di lavoro e hanno adattato ogni piatto alle nostre allergie.", name: "Andrés Molina", role: "Prenotazione di gruppo" },
+    "restaurant-testimonial-name": {
+      en: { content: "<strong>Laura Fernández</strong>" },
+      it: { content: "<strong>Laura Fernández</strong>" },
     },
-    "restaurant-testimonial-3": {
-      en: { quote: "The oxtail alone is worth the trip. Service is warm without being stiff.", name: "Chiara Rossi", role: "Food writer" },
-      it: { quote: "Vale il viaggio solo per la coda di bue. Servizio caloroso ma non rigido.", name: "Chiara Rossi", role: "Giornalista gastronomica" },
+    "restaurant-testimonial-role": {
+      en: { content: "Regular guest" },
+      it: { content: "Ospite abituale" },
+    },
+    "restaurant-testimonial-2-quote": {
+      en: { content: "<p>We booked for a team dinner and they adapted every dish to our allergies.</p>" },
+      it: { content: "<p>Abbiamo prenotato per una cena di lavoro e hanno adattato ogni piatto alle nostre allergie.</p>" },
+    },
+    "restaurant-testimonial-2-name": {
+      en: { content: "<strong>Andrés Molina</strong>" },
+      it: { content: "<strong>Andrés Molina</strong>" },
+    },
+    "restaurant-testimonial-2-role": {
+      en: { content: "Group booking" },
+      it: { content: "Prenotazione di gruppo" },
+    },
+    "restaurant-testimonial-3-quote": {
+      en: { content: "<p>The oxtail alone is worth the trip. Service is warm without being stiff.</p>" },
+      it: { content: "<p>Vale il viaggio solo per la coda di bue. Servizio caloroso ma non rigido.</p>" },
+    },
+    "restaurant-testimonial-3-name": {
+      en: { content: "<strong>Chiara Rossi</strong>" },
+      it: { content: "<strong>Chiara Rossi</strong>" },
+    },
+    "restaurant-testimonial-3-role": {
+      en: { content: "Food writer" },
+      it: { content: "Giornalista gastronomica" },
     },
     // --- FAQ ---------------------------------------------------------------
     "restaurant-faq-title": {
@@ -767,7 +794,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
         style: {
           base: {
             ...defaultStyleFor("navbar").base,
-            spacing: { padding: "clamp(14px, 2vw, 20px) 20px" },
+            spacing: { padding: "14px 20px" },
             appearance: {
               ...defaultStyleFor("navbar").base.appearance,
               background: { token: "colors.surface.default" },
@@ -776,6 +803,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
               borderColor: { token: "colors.border" },
             },
           },
+          overrides: { md: { spacing: { padding: "20px 20px" } } },
         },
         behaviors: [{ type: "navbar", options: { duration: 240 } }],
         children: ["restaurant-navbar-brand-text"],
@@ -806,7 +834,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
           base: {
             layout: { display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" },
             // Extra de padding inferior: la tarjeta de datos se solapa aquí.
-            spacing: { padding: "clamp(72px, 14vw, 140px) 20px clamp(104px, 16vw, 168px)" },
+            spacing: { padding: "72px 20px 104px" },
             size: { width: "100%", minHeight: "520px" },
             appearance: {
               background:
@@ -815,7 +843,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
             },
           },
           overrides: {
-            md: { size: { minHeight: "660px" } },
+            md: { size: { minHeight: "660px" }, spacing: { padding: "140px 20px 168px" } },
             lg: { size: { minHeight: "720px" } },
           },
         },
@@ -827,11 +855,12 @@ export function buildRestaurantPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: "clamp(14px, 2.5vw, 22px)" },
+            layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" },
             spacing: { margin: "0 auto" },
             size: { width: "100%", maxWidth: "900px" },
             typography: { textAlign: "center" },
           },
+          overrides: { md: { layout: { gap: "22px" } } },
         },
         children: [
           "restaurant-hero-eyebrow",
@@ -1006,9 +1035,10 @@ export function buildRestaurantPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            spacing: { padding: "0 20px clamp(32px, 5vw, 56px)" },
+            spacing: { padding: "0 20px 32px" },
             appearance: { background: { token: "colors.surface.default" } },
           },
+          overrides: { md: { spacing: { padding: "0 20px 56px" } } },
         },
         children: ["restaurant-highlights-card"],
       },
@@ -1019,13 +1049,13 @@ export function buildRestaurantPageFragment(): NodeFragment {
         style: {
           base: {
             ...card("22px", SHADOW_FLOAT).base,
-            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(18px, 3vw, 32px)" },
+            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "18px" },
             // Margen superior negativo: la tarjeta monta sobre el hero (docs/43 §3).
-            spacing: { margin: "clamp(-88px, -9vw, -56px) auto 0", padding: "clamp(20px, 3vw, 32px)" },
+            spacing: { margin: "-88px auto 0", padding: "20px" },
             size: { width: "100%", maxWidth: "1080px" },
           },
           overrides: {
-            md: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" } },
+            md: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "32px" }, spacing: { margin: "-56px auto 0", padding: "32px" } },
           },
         },
         children: ["restaurant-highlight-1", "restaurant-highlight-2", "restaurant-highlight-3"],
@@ -1054,7 +1084,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
         id: "restaurant-menu-section",
         type: "section",
         props: {},
-        style: band({ token: "colors.surface.default" }, "clamp(24px, 4vw, 48px) 20px clamp(56px, 9vw, 112px)"),
+        style: band({ token: "colors.surface.default" }, "24px 20px 56px", "48px 20px 112px"),
         behaviors: REVEAL,
         children: ["restaurant-menu-inner"],
       },
@@ -1100,9 +1130,10 @@ export function buildRestaurantPageFragment(): NodeFragment {
         style: {
           base: {
             ...defaultStyleFor("tabs").base,
-            layout: { display: "flex", flexDirection: "column", gap: "clamp(16px, 2.5vw, 24px)" },
+            layout: { display: "flex", flexDirection: "column", gap: "16px" },
             typography: { fontFamily: { token: "typography.families.sans" }, fontSize: { token: "typography.sizes.base" } },
           },
+          overrides: { md: { layout: { gap: "24px" } } },
           // Pestaña activa como pastilla de acento (`styleSchema.states` del
           // `tabs`, docs/25): el estado seleccionado ES editable por estilo.
           states: {
@@ -1254,10 +1285,10 @@ export function buildRestaurantPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(12px, 2vw, 20px)" },
+            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "12px" },
           },
           overrides: {
-            md: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" } },
+            md: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "20px" } },
           },
         },
         children: [
@@ -1333,7 +1364,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
         id: "restaurant-stats",
         type: "section",
         props: {},
-        style: band("linear-gradient(120deg, var(--colors-text), var(--colors-primary-default))", "clamp(40px, 7vw, 80px) 20px"),
+        style: band("linear-gradient(120deg, var(--colors-text), var(--colors-primary-default))", "40px 20px", "80px 20px"),
         behaviors: REVEAL,
         children: ["restaurant-stats-inner"],
       },
@@ -1343,11 +1374,11 @@ export function buildRestaurantPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(20px, 3vw, 32px)", alignItems: "center" },
+            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "20px", alignItems: "center" },
             spacing: { margin: "0 auto" },
             size: { width: "100%", maxWidth: "960px" },
           },
-          overrides: { md: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" } } },
+          overrides: { md: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "32px" } } },
         },
         children: ["restaurant-stat-1", "restaurant-stat-2", "restaurant-stat-3"],
       },
@@ -1405,30 +1436,30 @@ export function buildRestaurantPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(16px, 2.5vw, 24px)", alignItems: "stretch" },
+            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "16px", alignItems: "stretch" },
             spacing: { margin: "0 auto" },
             size: { width: "100%", maxWidth: INNER_MAX },
           },
           overrides: {
-            md: { layout: { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" } },
+            md: { layout: { gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "24px" } },
             lg: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" } },
           },
         },
         children: ["restaurant-testimonial", "restaurant-testimonial-2", "restaurant-testimonial-3"],
       },
-      "restaurant-testimonial": testimonialCard("restaurant-testimonial", {
+      ...testimonialCard("restaurant-testimonial", {
         quote: "El mejor menú degustación que he probado en años, cada plato fue una sorpresa.",
         name: "Laura Fernández",
         role: "Clienta habitual",
         initials: "LF",
       }),
-      "restaurant-testimonial-2": testimonialCard("restaurant-testimonial-2", {
+      ...testimonialCard("restaurant-testimonial-2", {
         quote: "Reservamos para una cena de equipo y adaptaron cada plato a nuestras alergias.",
         name: "Andrés Molina",
         role: "Reserva de grupo",
         initials: "AM",
       }),
-      "restaurant-testimonial-3": testimonialCard("restaurant-testimonial-3", {
+      ...testimonialCard("restaurant-testimonial-3", {
         quote: "Solo por el rabo de toro merece el viaje. El servicio es cercano sin ser rígido.",
         name: "Chiara Rossi",
         role: "Periodista gastronómica",
@@ -1447,7 +1478,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
         id: "restaurant-faq-inner",
         type: "container",
         props: {},
-        style: inner("820px", "clamp(20px, 3vw, 28px)"),
+        style: inner("820px", "20px", "28px"),
         children: ["restaurant-faq-title", "restaurant-faq"],
       },
       "restaurant-faq-title": {
@@ -1472,8 +1503,9 @@ export function buildRestaurantPageFragment(): NodeFragment {
               borderRadius: "18px",
               boxShadow: SHADOW_CARD,
             },
-            spacing: { padding: "clamp(8px, 1.5vw, 16px)" },
+            spacing: { padding: "8px" },
           },
+          overrides: { md: { spacing: { padding: "16px" } } },
         },
         behaviors: [{ type: "accordion", options: { single: true, duration: 280 } }],
         children: ["restaurant-faq-1", "restaurant-faq-2", "restaurant-faq-3"],
@@ -1533,11 +1565,11 @@ export function buildRestaurantPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(24px, 4vw, 48px)", alignItems: "center" },
+            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "24px", alignItems: "center" },
             spacing: { margin: "0 auto" },
             size: { width: "100%", maxWidth: INNER_MAX },
           },
-          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 1fr) minmax(0, 420px)" } } },
+          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 1fr) minmax(0, 420px)", gap: "48px" } } },
         },
         children: ["restaurant-reserve-copy", "restaurant-reserve-form"],
       },
@@ -1578,8 +1610,9 @@ export function buildRestaurantPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.xs" } },
-            spacing: { margin: "clamp(4px, 1vw, 8px) 0 0" },
+            spacing: { margin: "4px 0 0" },
           },
+          overrides: { md: { spacing: { margin: "8px 0 0" } } },
         },
         children: [
           "restaurant-reserve-perk-1",
@@ -1597,8 +1630,8 @@ export function buildRestaurantPageFragment(): NodeFragment {
         style: {
           base: {
             ...defaultStyleFor("form").base,
-            layout: { display: "flex", flexDirection: "column", gap: "clamp(10px, 1.6vw, 14px)" },
-            spacing: { padding: "clamp(20px, 3vw, 32px)" },
+            layout: { display: "flex", flexDirection: "column", gap: "10px" },
+            spacing: { padding: "20px" },
             size: { width: "100%" },
             appearance: {
               ...defaultStyleFor("form").base.appearance,
@@ -1696,7 +1729,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
         style: {
           base: {
             ...defaultStyleFor("button-submit").base,
-            spacing: { padding: "16px 24px", margin: "clamp(4px, 1vw, 8px) 0 0" },
+            spacing: { padding: "16px 24px", margin: "4px 0 0" },
             size: { width: "100%" },
             typography: {
               ...defaultStyleFor("button-submit").base.typography,
@@ -1712,6 +1745,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
               boxShadow: SHADOW_CARD,
             },
           },
+          overrides: { md: { spacing: { margin: "8px 0 0" } } },
           states: { hover: { appearance: { boxShadow: SHADOW_HOVER } } },
         },
       },
@@ -1735,13 +1769,14 @@ export function buildRestaurantPageFragment(): NodeFragment {
         style: {
           base: {
             ...defaultStyleFor("footer").base,
-            spacing: { padding: "clamp(48px, 7vw, 80px) 20px clamp(28px, 4vw, 40px)" },
+            spacing: { padding: "48px 20px 28px" },
             appearance: {
               ...defaultStyleFor("footer").base.appearance,
               background: { token: "colors.text" },
               color: { token: "colors.surface.default" },
             },
           },
+          overrides: { md: { spacing: { padding: "80px 20px 40px" } } },
         },
         children: ["restaurant-footer-inner"],
       },
@@ -1751,10 +1786,11 @@ export function buildRestaurantPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "flex", flexDirection: "column", gap: "clamp(24px, 4vw, 40px)" },
+            layout: { display: "flex", flexDirection: "column", gap: "24px" },
             spacing: { margin: "0 auto" },
             size: { width: "100%", maxWidth: INNER_MAX },
           },
+          overrides: { md: { layout: { gap: "40px" } } },
         },
         children: ["restaurant-footer-cols"],
       },
@@ -1764,12 +1800,12 @@ export function buildRestaurantPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(24px, 4vw, 40px)" },
-            spacing: { padding: "0 0 clamp(20px, 3vw, 28px)" },
+            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "24px" },
+            spacing: { padding: "0 0 20px" },
             appearance: { borderWidth: "0 0 1px", borderStyle: "solid", borderColor: { token: "colors.muted" } },
           },
           overrides: {
-            md: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" } },
+            md: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "40px" }, spacing: { padding: "0 0 28px" } },
           },
         },
         children: [

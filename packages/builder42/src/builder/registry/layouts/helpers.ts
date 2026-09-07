@@ -1,7 +1,15 @@
-import type { BuilderDocument, NodeId, NodeStyle, PageMeta } from "../../model/types";
+import type { BuilderDocument, BuilderNode, NodeId, NodeStyle, PageMeta } from "../../model/types";
 import type { NodeFragment } from "../../model/tree";
 import type { NodeTranslations } from "../../model/types";
 import { defaultStyleFor } from "../../store/exampleSite/styleFor";
+import {
+  TESTIMONIAL_AUTHOR_STYLE,
+  TESTIMONIAL_AVATAR_STYLE,
+  TESTIMONIAL_CAPTION_STYLE,
+  TESTIMONIAL_NAME_STYLE,
+  TESTIMONIAL_QUOTE_STYLE,
+  TESTIMONIAL_ROLE_STYLE,
+} from "../components/Testimonial";
 
 /**
  * Metadata SEO que una plantilla de página propone para la página donde se
@@ -48,5 +56,83 @@ export function documentToFragment(
     rootId: doc.rootId,
     nodes: structuredClone(doc.nodes),
     translations: translations ? structuredClone(translations) : undefined,
+  };
+}
+
+/**
+ * Subárbol de nodos de un `testimonial` (docs, recomposición de Testimonial en
+ * componentes base — corrige el margin no editable de la fila avatar+autor).
+ * Genera el mismo árbol que `TESTIMONIAL_DEFAULT_CHILDREN`/la migración de
+ * `migrateSlots.ts`, con ids deterministas `${id}-quote`/`${id}-caption`/
+ * `${id}-avatar`/`${id}-author`/`${id}-name`/`${id}-role` — así una plantilla
+ * de página puede referenciar estos ids en `translations` igual que cualquier
+ * otro nodo. `rootStyle` permite el mismo override que antes recibía el nodo
+ * `testimonial` plano (p. ej. padding de card + `overrides.md`).
+ */
+export interface TestimonialContent {
+  quote: string;
+  name: string;
+  role: string;
+  initials: string;
+}
+
+export function testimonialFragment(
+  id: NodeId,
+  content: TestimonialContent,
+  rootStyle?: NodeStyle,
+): Record<NodeId, BuilderNode> {
+  const quoteId = `${id}-quote`;
+  const captionId = `${id}-caption`;
+  const avatarId = `${id}-avatar`;
+  const authorId = `${id}-author`;
+  const nameId = `${id}-name`;
+  const roleId = `${id}-role`;
+
+  return {
+    [id]: {
+      id,
+      type: "testimonial",
+      props: {},
+      style: rootStyle ?? defaultStyleFor("testimonial"),
+      children: [quoteId, captionId],
+    },
+    [quoteId]: {
+      id: quoteId,
+      type: "text",
+      props: { content: `<p>${content.quote}</p>` },
+      style: structuredClone(TESTIMONIAL_QUOTE_STYLE),
+    },
+    [captionId]: {
+      id: captionId,
+      type: "container",
+      props: {},
+      style: structuredClone(TESTIMONIAL_CAPTION_STYLE),
+      children: [avatarId, authorId],
+    },
+    [avatarId]: {
+      id: avatarId,
+      type: "avatar",
+      props: { initials: content.initials },
+      style: structuredClone(TESTIMONIAL_AVATAR_STYLE),
+    },
+    [authorId]: {
+      id: authorId,
+      type: "container",
+      props: {},
+      style: structuredClone(TESTIMONIAL_AUTHOR_STYLE),
+      children: [nameId, roleId],
+    },
+    [nameId]: {
+      id: nameId,
+      type: "text",
+      props: { content: `<strong>${content.name}</strong>` },
+      style: structuredClone(TESTIMONIAL_NAME_STYLE),
+    },
+    [roleId]: {
+      id: roleId,
+      type: "text",
+      props: { content: content.role },
+      style: structuredClone(TESTIMONIAL_ROLE_STYLE),
+    },
   };
 }

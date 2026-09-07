@@ -96,8 +96,9 @@ export function buildRealEstatePageFragment(): NodeFragment {
       style: {
         base: {
           layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.sm" } },
-          spacing: { padding: "clamp(16px, 3vw, 24px)" },
+          spacing: { padding: "16px" },
         },
+        overrides: { md: { spacing: { padding: "24px" } } },
       },
       children: [
         `realestate-property-${n}-price`,
@@ -269,11 +270,11 @@ export function buildRealEstatePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.md" }, alignItems: "flex-start" },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px" },
+            spacing: { padding: "48px 20px" },
             size: { width: "100%", maxWidth: "1200px" },
           },
           overrides: {
-            md: { spacing: { margin: "0 auto" } },
+            md: { spacing: { padding: "96px 20px", margin: "0 auto" } },
           },
         },
         children: ["realestate-hero-title", "realestate-hero-sub", "realestate-hero-search"],
@@ -317,7 +318,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.sm" } },
-            spacing: { padding: "clamp(20px, 3vw, 28px)" },
+            spacing: { padding: "20px" },
             size: { width: "100%" },
             appearance: {
               background: { token: "colors.surface.default" },
@@ -325,7 +326,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
               boxShadow: "0 20px 48px rgba(15,23,42,0.24)",
             },
           },
-          overrides: { md: { layout: { flexDirection: "row", alignItems: "flex-end" } } },
+          overrides: { md: { layout: { flexDirection: "row", alignItems: "flex-end" }, spacing: { padding: "28px" } } },
         },
         children: ["realestate-hero-search-zone", "realestate-hero-search-budget", "realestate-hero-search-btn"],
       },
@@ -402,12 +403,12 @@ export function buildRealEstatePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "grid", gridTemplateColumns: "1fr", gap: { token: "spacing.md" } },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0 auto" },
+            spacing: { padding: "48px 20px", margin: "0 auto" },
             size: { width: "100%", maxWidth: "1200px" },
           },
           // Arquetipo A7 (docs/48 §2) — Aside + main: 2 columnas asimétricas
           // desde `md` (aside angosto + contenido largo), 1 columna en base.
-          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 280px) minmax(0, 1fr)", alignItems: "start" } } },
+          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 280px) minmax(0, 1fr)", alignItems: "start" }, spacing: { padding: "96px 20px" } } },
         },
         children: ["realestate-properties-aside", "realestate-properties-main"],
       },
@@ -421,7 +422,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.sm" } },
-            spacing: { padding: "clamp(20px, 3vw, 24px)" },
+            spacing: { padding: "20px" },
             size: { width: "100%" },
             appearance: {
               background: { token: "colors.surface.alt" },
@@ -431,7 +432,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
               borderColor: { token: "colors.border" },
             },
           },
-          overrides: { md: { spacing: { padding: "clamp(20px, 3vw, 28px) clamp(20px, 3vw, 24px)" } } },
+          overrides: { md: { spacing: { padding: "28px 24px" } } },
         },
         behaviors: [{ type: "sticky", options: { position: "top", scrolledThreshold: 8 } }],
         children: [
@@ -605,11 +606,11 @@ export function buildRealEstatePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "grid", gridTemplateColumns: "1fr", gap: { token: "spacing.md" } },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0 auto" },
+            spacing: { padding: "48px 20px", margin: "0 auto" },
             size: { width: "100%", maxWidth: "1200px" },
           },
           overrides: {
-            md: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" } },
+            md: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }, spacing: { padding: "96px 20px" } },
           },
         },
         children: ["realestate-stats-sold", "realestate-stats-years", "realestate-stats-cities"],
@@ -668,10 +669,10 @@ export function buildRealEstatePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.md" }, alignItems: "center" },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0 auto" },
+            spacing: { padding: "48px 20px", margin: "0 auto" },
             size: { width: "100%", maxWidth: "1200px" },
           },
-          overrides: { md: { layout: { flexDirection: "row", alignItems: "center" } } },
+          overrides: { md: { layout: { flexDirection: "row", alignItems: "center" }, spacing: { padding: "96px 20px" } } },
         },
         children: ["realestate-advisor-avatar", "realestate-advisor-quote"],
       },
@@ -725,9 +726,10 @@ export function buildRealEstatePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.sm" } },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0 auto" },
+            spacing: { padding: "48px 20px", margin: "0 auto" },
             size: { width: "100%", maxWidth: "1200px" },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["realestate-faq-title", "realestate-faq-list"],
       },
@@ -815,9 +817,10 @@ export function buildRealEstatePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.sm" } },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0 auto" },
+            spacing: { padding: "48px 20px", margin: "0 auto" },
             size: { width: "100%", maxWidth: "1200px" },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["realestate-contact-title", "realestate-contact-form"],
       },
@@ -844,13 +847,14 @@ export function buildRealEstatePageFragment(): NodeFragment {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.sm" } },
             size: { width: "100%", maxWidth: "560px" },
-            spacing: { padding: "clamp(20px, 3vw, 28px)" },
+            spacing: { padding: "20px" },
             appearance: {
               background: { token: "colors.surface.default" },
               borderRadius: { token: "radii.lg" },
               boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
             },
           },
+          overrides: { md: { spacing: { padding: "28px" } } },
         },
         behaviors: [{ type: "form-validation", options: {} }],
         children: [
@@ -935,12 +939,13 @@ export function buildRealEstatePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: { token: "spacing.sm" } },
-            spacing: { padding: "clamp(32px, 6vw, 56px) 20px" },
+            spacing: { padding: "32px 20px" },
             appearance: {
               background: { token: "colors.text" },
               color: { token: "colors.surface.default" },
             },
           },
+          overrides: { md: { spacing: { padding: "56px 20px" } } },
         },
         children: ["realestate-footer-social"],
       },

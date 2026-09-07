@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
+import { darkBandStyleFor, testimonialFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Taller mecánico" — plantilla NUEVA de sector (docs/48 §2 fila 17,
@@ -63,26 +63,27 @@ import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
  */
 
 const SHADOW_CARD = "0 12px 32px rgba(30,30,30,0.12)";
-const BAND_PADDING = "clamp(56px, 9vw, 96px) 20px";
+const BAND_PADDING = "56px 20px";
+const BAND_PADDING_MD = "96px 20px";
 const NARROW_MAX = "640px";
 const REVEAL: BuilderNode["behaviors"] = [{ type: "reveal-on-scroll", options: { threshold: 0.15, once: true } }];
 
-function band(background: StyleValue, padding: string = BAND_PADDING): NodeStyle {
+function band(background: StyleValue, padding: string = BAND_PADDING, paddingMd: string = BAND_PADDING_MD): NodeStyle {
   return {
     base: { spacing: { padding }, appearance: { background } },
-    overrides: { md: { spacing: { padding: "clamp(72px, 10vw, 128px) 20px" } } },
+    overrides: { md: { spacing: { padding: paddingMd } } },
   };
 }
 
 /** A5b: inner angosto y centrado — igual que A5, ninguna banda de LECTURA supera `NARROW_MAX`. */
-function inner(maxWidth: string = NARROW_MAX, gap = "clamp(20px, 3vw, 32px)"): NodeStyle {
+function inner(maxWidth: string = NARROW_MAX, gap = "20px"): NodeStyle {
   return {
     base: {
       layout: { display: "flex", flexDirection: "column", gap, alignItems: "center" },
       spacing: { margin: "0 auto" },
       size: { width: "100%", maxWidth },
     },
-    overrides: { sm: { spacing: { padding: "0 8px" } } },
+    overrides: { sm: { spacing: { padding: "0 8px" } }, md: { layout: { gap: "32px" } } },
   };
 }
 
@@ -173,27 +174,21 @@ function service(n: 1 | 2 | 3, iconName: string, title: string, text: string) {
 }
 
 function customerTestimonial(n: 1 | 2, quote: string, name: string, role: string, initials: string) {
-  return {
-    [`torque-testimonial-${n}`]: {
-      id: `torque-testimonial-${n}`,
-      type: "testimonial",
-      props: { quote, name, role, initials },
-      style: {
-        base: {
-          appearance: {
-            background: { token: "colors.surface.default" },
-            borderWidth: "1px",
-            borderStyle: "solid",
-            borderColor: { token: "colors.border" },
-            borderRadius: "16px",
-            boxShadow: SHADOW_CARD,
-          },
-          spacing: { padding: "clamp(20px, 3vw, 28px)" },
-        },
-        states: { hover: { appearance: { boxShadow: "0 18px 40px rgba(30,30,30,0.18)" } } },
+  return testimonialFragment(`torque-testimonial-${n}`, { quote, name, role, initials }, {
+    base: {
+      appearance: {
+        background: { token: "colors.surface.default" },
+        borderWidth: "1px",
+        borderStyle: "solid",
+        borderColor: { token: "colors.border" },
+        borderRadius: "16px",
+        boxShadow: SHADOW_CARD,
       },
+      spacing: { padding: "20px" },
     },
-  };
+    overrides: { md: { spacing: { padding: "28px" } } },
+    states: { hover: { appearance: { boxShadow: "0 18px 40px rgba(30,30,30,0.18)" } } },
+  });
 }
 
 export function buildAutoRepairPageFragment(): NodeFragment {
@@ -235,7 +230,7 @@ export function buildAutoRepairPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "16px" },
-            spacing: { padding: "clamp(56px, 9vw, 112px) 20px" },
+            spacing: { padding: "56px 20px" },
             size: { width: "100%", minHeight: "420px" },
             typography: { fontFamily: { token: "typography.families.sans" }, textAlign: "center" },
             appearance: {
@@ -244,6 +239,7 @@ export function buildAutoRepairPageFragment(): NodeFragment {
               color: { token: "colors.band.on" },
             },
           },
+          overrides: { md: { spacing: { padding: "112px 20px" } } },
         },
         children: ["torque-hero-badge", "torque-hero-title", "torque-hero-sub", "torque-hero-cta"],
       },
@@ -304,7 +300,7 @@ export function buildAutoRepairPageFragment(): NodeFragment {
         id: "torque-stats",
         type: "section",
         props: {},
-        style: band("linear-gradient(135deg, var(--colors-text), var(--colors-band-dark))", "clamp(40px, 6vw, 64px) 20px"),
+        style: band("linear-gradient(135deg, var(--colors-text), var(--colors-band-dark))", "40px 20px", "64px 20px"),
         behaviors: REVEAL,
         children: ["torque-stats-inner"],
       },
@@ -314,11 +310,11 @@ export function buildAutoRepairPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(20px, 3vw, 32px)" },
+            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "20px" },
             spacing: { margin: "0 auto" },
             size: { width: "100%", maxWidth: "760px" },
           },
-          overrides: { sm: { layout: { gridTemplateColumns: "1fr 1fr" } } },
+          overrides: { sm: { layout: { gridTemplateColumns: "1fr 1fr" } }, md: { layout: { gap: "32px" } } },
         },
         children: ["torque-stat-1", "torque-stat-2", "torque-stat-3"],
       },
@@ -353,7 +349,8 @@ export function buildAutoRepairPageFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "flex", flexDirection: "column", gap: "clamp(24px, 4vw, 36px)" }, size: { width: "100%" } },
+          base: { layout: { display: "flex", flexDirection: "column", gap: "24px" }, size: { width: "100%" } },
+          overrides: { md: { layout: { gap: "36px" } } },
         },
         children: ["torque-service-1", "torque-service-2", "torque-service-3"],
       },
@@ -387,7 +384,7 @@ export function buildAutoRepairPageFragment(): NodeFragment {
         id: "torque-testimonials-list",
         type: "container",
         props: {},
-        style: { base: { layout: { display: "flex", flexDirection: "column", gap: "clamp(16px, 2.5vw, 24px)" }, size: { width: "100%" } } },
+        style: { base: { layout: { display: "flex", flexDirection: "column", gap: "16px" }, size: { width: "100%" } }, overrides: { md: { layout: { gap: "24px" } } } },
         children: ["torque-testimonial-1", "torque-testimonial-2"],
       },
       ...customerTestimonial(
@@ -479,7 +476,7 @@ export function buildAutoRepairPageFragment(): NodeFragment {
         id: "torque-reception-alert",
         type: "section",
         props: {},
-        style: band("linear-gradient(135deg, var(--colors-primary-default), var(--colors-text))", "clamp(32px, 5vw, 48px) 20px"),
+        style: band("linear-gradient(135deg, var(--colors-primary-default), var(--colors-text))", "32px 20px", "48px 20px"),
         children: ["torque-reception-alert-inner"],
       },
       "torque-reception-alert-inner": {
@@ -548,7 +545,7 @@ export function buildAutoRepairPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: "12px" },
-            spacing: { padding: "clamp(20px, 3vw, 28px)" },
+            spacing: { padding: "20px" },
             size: { width: "100%" },
             appearance: {
               background: { token: "colors.surface.default" },
@@ -559,6 +556,7 @@ export function buildAutoRepairPageFragment(): NodeFragment {
               boxShadow: SHADOW_CARD,
             },
           },
+          overrides: { md: { spacing: { padding: "28px" } } },
         },
         children: ["torque-form"],
       },
@@ -664,9 +662,10 @@ export function buildAutoRepairPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: { token: "spacing.sm" } },
-            spacing: { padding: "clamp(32px, 6vw, 48px) 20px" },
+            spacing: { padding: "32px 20px" },
             appearance: { background: { token: "colors.band.dark" }, color: { token: "colors.band.on" } },
           },
+          overrides: { md: { spacing: { padding: "48px 20px" } } },
         },
         children: ["torque-footer-social"],
       },
@@ -722,29 +721,41 @@ export function buildAutoRepairPageFragment(): NodeFragment {
       };
 
       t["torque-testimonials-title"] = { en: { content: "<strong>What our customers say</strong>" }, it: { content: "<strong>Cosa dicono i nostri clienti</strong>" } };
-      t["torque-testimonial-1"] = {
+      t["torque-testimonial-1-quote"] = {
         en: {
-          quote: "I brought my car in thinking it was the transmission and it was just a sensor. Total honesty, they didn't overcharge me.",
-          name: "Rodrigo Elizalde",
-          role: "Customer since 2021",
+          content:
+            "<p>I brought my car in thinking it was the transmission and it was just a sensor. Total honesty, they didn't overcharge me.</p>",
         },
         it: {
-          quote: "Ho portato la macchina pensando fosse il cambio ed era solo un sensore. Onestà totale, non mi hanno sovraccaricato.",
-          name: "Rodrigo Elizalde",
-          role: "Cliente dal 2021",
+          content:
+            "<p>Ho portato la macchina pensando fosse il cambio ed era solo un sensore. Onestà totale, non mi hanno sovraccaricato.</p>",
         },
       };
-      t["torque-testimonial-2"] = {
+      t["torque-testimonial-1-name"] = {
+        en: { content: "<strong>Rodrigo Elizalde</strong>" },
+        it: { content: "<strong>Rodrigo Elizalde</strong>" },
+      };
+      t["torque-testimonial-1-role"] = {
+        en: { content: "Customer since 2021" },
+        it: { content: "Cliente dal 2021" },
+      };
+      t["torque-testimonial-2-quote"] = {
         en: {
-          quote: "The free diagnostic saved me from a very expensive quote at another shop. Now I bring both family cars here.",
-          name: "Fernanda Ibarra",
-          role: "Customer since 2023",
+          content:
+            "<p>The free diagnostic saved me from a very expensive quote at another shop. Now I bring both family cars here.</p>",
         },
         it: {
-          quote: "La diagnosi gratuita mi ha risparmiato un preventivo carissimo in un'altra officina. Ora porto qui entrambe le auto di famiglia.",
-          name: "Fernanda Ibarra",
-          role: "Cliente dal 2023",
+          content:
+            "<p>La diagnosi gratuita mi ha risparmiato un preventivo carissimo in un'altra officina. Ora porto qui entrambe le auto di famiglia.</p>",
         },
+      };
+      t["torque-testimonial-2-name"] = {
+        en: { content: "<strong>Fernanda Ibarra</strong>" },
+        it: { content: "<strong>Fernanda Ibarra</strong>" },
+      };
+      t["torque-testimonial-2-role"] = {
+        en: { content: "Customer since 2023" },
+        it: { content: "Cliente dal 2023" },
       };
 
       t["torque-faq-title"] = { en: { content: "<strong>Frequently asked questions</strong>" }, it: { content: "<strong>Domande frequenti</strong>" } };

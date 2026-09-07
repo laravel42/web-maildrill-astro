@@ -2,23 +2,38 @@
  * Testimonial — prueba social: cita + avatar (iniciales) + nombre/cargo
  * (docs/16 §12.1 #12).
  *
- * Componente `content` atómico. Raíz `<figure>` themeable por tokens; dentro un
- * `<blockquote>` con la cita y un `<figcaption>` con un mini-avatar de iniciales
- * (círculo con borde `currentColor`, sin color hardcodeado — hereda el tema),
- * el nombre y el cargo. Todos los textos son PROPS traducibles (P9).
+ * COMPOSITE de componentes base (docs/23, mismo espíritu que `accordion`):
+ * la raíz sigue siendo un `<figure>` atómico (mismo `defaultStyle`, retro-
+ * compatible visualmente), pero su contenido son NODOS HIJO reales en vez de
+ * sub-elementos con `CSSProperties` fijas:
  *
- * Los sub-elementos usan estilo fijo NO temático (layout, tamaño relativo,
- * opacidad, `border:"1px solid"` que resuelve a `currentColor`). Render puro
- * (P3): raíz con `rootRef`/`rootProps`; en `exportMode` sin estilo inline en la
- * raíz (AGENTS.md §5), HTML puro (P8). Para un avatar con imagen real, usar el
- * componente `avatar` dentro de un `card`.
+ *   testimonial (figure, acceptsChildren)
+ *   ├── <id>-quote   : text   (la cita, editable inline, itálica por su propio defaultStyle)
+ *   └── <id>-caption : container (fila avatar+autor; spacing.marginTop AQUÍ es
+ *       │             editable desde el Inspector — antes era CAPTION_STYLE fija)
+ *       ├── <id>-avatar : avatar (iniciales, 40×40)
+ *       └── <id>-author : container (columna)
+ *           ├── <id>-name : text (nombre, bold)
+ *           └── <id>-role : text (cargo, opacity 0.7)
+ *
+ * Motivo (bug real, feedback de usuario): el espaciado entre la cita y el
+ * bloque de autor vivía en un `marginTop` fijo no editable (`CAPTION_STYLE`),
+ * así que el Inspector mostraba correctamente `margin: 0` en la raíz mientras
+ * el usuario veía un espacio real que no podía tocar. Al convertir cada
+ * sub-elemento en un nodo real, su `spacing`/`appearance` quedan editables de
+ * fábrica (mismo `styleSchema` que cualquier `container`/`text`/`avatar`), sin
+ * tocar el Inspector ni el parser de spacing.
+ *
+ * Retrocompatibilidad: un documento guardado con el `testimonial` viejo
+ * (props `quote/name/role/initials`, sin `children`) se migra automáticamente
+ * al cargar — ver `model/migrateSlots.ts` (`migrateSiteTestimonials`).
  */
 
 import type { CSSProperties, Ref } from "react";
 import { DEFAULT_BREAKPOINTS, type NodeStyle } from "../../model/types";
 import { resolveStyle } from "../../model/style";
 import { stylePropertiesToCSSObject } from "../styleToCss";
-import type { ComponentDefinition, RenderContext } from "../types";
+import type { ComponentDefinition, DefaultChildSpec, RenderContext } from "../types";
 
 export const TESTIMONIAL_DEFAULT_STYLE: NodeStyle = {
   base: {
@@ -38,54 +53,101 @@ export const TESTIMONIAL_DEFAULT_STYLE: NodeStyle = {
   },
 };
 
-const QUOTE_STYLE: CSSProperties = {
-  margin: 0,
-  fontStyle: "italic",
-  fontSize: "var(--typography-sizes-base, 1.05em)",
-};
-const CAPTION_STYLE: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: "var(--spacing-sm, 12px)",
-  marginTop: "var(--spacing-sm, 16px)",
-};
-const AVATAR_STYLE: CSSProperties = {
-  width: "40px",
-  height: "40px",
-  flexShrink: 0,
-  borderRadius: "50%",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "var(--colors-border, currentColor)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontWeight: "var(--typography-weights-bold, 700)",
-  fontSize: "var(--typography-sizes-sm, 0.85em)",
-};
-const NAME_STYLE: CSSProperties = {
-  display: "block",
-  fontWeight: "var(--typography-weights-bold, 700)",
-};
-const ROLE_STYLE: CSSProperties = {
-  display: "block",
-  fontSize: "var(--typography-sizes-sm, 0.85em)",
-  opacity: 0.7,
+/**
+ * `text` de la cita: sin margin propio (antes `QUOTE_STYLE`). El modelo de
+ * estilo no tiene `fontStyle` (itálica) como campo editable — se mantiene sin
+ * ese énfasis tipográfico; es una pérdida visual menor y fuera del alcance del
+ * bug de margin que motivó esta recomposición (no se introduce un campo nuevo
+ * al modelo de estilo por esto).
+ */
+export const TESTIMONIAL_QUOTE_STYLE: NodeStyle = {
+  base: { spacing: { margin: "0" } },
 };
 
+/**
+ * `container` fila avatar+autor. `spacing.margin` (shorthand top-only vía "16px
+ * 0 0 0") reemplaza al `CAPTION_STYLE.marginTop` fijo — ahora editable como
+ * cualquier `spacing.margin` normal desde el Inspector (`SidesGrid`).
+ * `padding`/`background` se neutralizan porque `container` trae estilo visual
+ * propio por defecto (docs/03 §4) que aquí no queremos (este nodo es
+ * puramente de layout).
+ */
+export const TESTIMONIAL_CAPTION_STYLE: NodeStyle = {
+  base: {
+    layout: { display: "flex", alignItems: "center", gap: "12px" },
+    spacing: { padding: "0", margin: "16px 0 0 0" },
+    size: { minHeight: "0" },
+    appearance: { background: "transparent" },
+  },
+};
+
+/** `avatar` de iniciales, 40×40 (override del tamaño default 48×48). */
+export const TESTIMONIAL_AVATAR_STYLE: NodeStyle = {
+  base: { size: { width: "40px", height: "40px" }, typography: { fontSize: { token: "typography.sizes.sm" } } },
+};
+
+/** `container` columna nombre+cargo, sin estilo visual propio (solo layout). */
+export const TESTIMONIAL_AUTHOR_STYLE: NodeStyle = {
+  base: {
+    layout: { display: "flex", flexDirection: "column", gap: "0" },
+    spacing: { padding: "0", margin: "0" },
+    size: { minHeight: "0" },
+    appearance: { background: "transparent" },
+  },
+};
+
+/** `text` del nombre: bold (antes `NAME_STYLE`). */
+export const TESTIMONIAL_NAME_STYLE: NodeStyle = {
+  base: { typography: { fontWeight: { token: "typography.weights.bold" } }, spacing: { margin: "0" } },
+};
+
+/**
+ * `text` del cargo: tamaño sm + color atenuado (antes `ROLE_STYLE.opacity`).
+ * El modelo de estilo no tiene campo `opacity`; se usa el token `colors.muted`
+ * (mismo patrón de "texto secundario" ya usado en toda la app) para lograr el
+ * mismo efecto visual de jerarquía sin introducir un campo nuevo.
+ */
+export const TESTIMONIAL_ROLE_STYLE: NodeStyle = {
+  base: {
+    typography: { fontSize: { token: "typography.sizes.sm" } },
+    appearance: { color: { token: "colors.muted" } },
+    spacing: { margin: "0" },
+  },
+};
+
+/** `defaultChildren` sembrados al crear un `testimonial` nuevo desde la paleta. */
+export const TESTIMONIAL_DEFAULT_CHILDREN: DefaultChildSpec[] = [
+  {
+    type: "text",
+    props: { content: "<p>Este producto cambió por completo nuestra forma de trabajar.</p>" },
+    style: TESTIMONIAL_QUOTE_STYLE,
+  },
+  {
+    type: "container",
+    style: TESTIMONIAL_CAPTION_STYLE,
+    children: [
+      { type: "avatar", props: { initials: "AG" }, style: TESTIMONIAL_AVATAR_STYLE },
+      {
+        type: "container",
+        style: TESTIMONIAL_AUTHOR_STYLE,
+        children: [
+          { type: "text", props: { content: "<strong>Ana García</strong>" }, style: TESTIMONIAL_NAME_STYLE },
+          { type: "text", props: { content: "CEO, Acme Inc." }, style: TESTIMONIAL_ROLE_STYLE },
+        ],
+      },
+    ],
+  },
+];
+
 function TestimonialRender(ctx: RenderContext) {
-  const { node, exportMode, className, breakpoint, rootRef, rootProps } = ctx;
+  const { node, children, exportMode, className, breakpoint, rootRef, rootProps } = ctx;
   const style: CSSProperties | undefined = exportMode
     ? undefined
     : stylePropertiesToCSSObject(resolveStyle(node.style, breakpoint, DEFAULT_BREAKPOINTS));
 
-  const quote = typeof node.props.quote === "string" && node.props.quote !== "" ? node.props.quote : "Testimonio";
-  const name = typeof node.props.name === "string" ? node.props.name : "";
-  const role = typeof node.props.role === "string" ? node.props.role : "";
-  const initials = typeof node.props.initials === "string" && node.props.initials !== "" ? node.props.initials : "?";
-
   const { className: rootClassName, ...restRootProps } = rootProps ?? {};
   const mergedClassName = [className, rootClassName].filter(Boolean).join(" ") || undefined;
+  const isEmpty = !node.children || node.children.length === 0;
 
   return (
     <figure
@@ -94,14 +156,12 @@ function TestimonialRender(ctx: RenderContext) {
       style={style}
       {...restRootProps}
     >
-      <blockquote style={QUOTE_STYLE}>{quote}</blockquote>
-      <figcaption style={CAPTION_STYLE}>
-        <span style={AVATAR_STYLE} aria-hidden="true">{initials}</span>
-        <span>
-          {name !== "" ? <span style={NAME_STYLE}>{name}</span> : null}
-          {role !== "" ? <span style={ROLE_STYLE}>{role}</span> : null}
+      {children}
+      {!exportMode && isEmpty ? (
+        <span className="pbx-empty-hint" data-empty-hint>
+          Testimonio vacío — añade la cita y el autor
         </span>
-      </figcaption>
+      ) : null}
     </figure>
   );
 }
@@ -110,22 +170,11 @@ export const testimonialDefinition: ComponentDefinition = {
   type: "testimonial",
   label: "Testimonio",
   category: "content",
-  acceptsChildren: false,
-  defaultProps: {
-    quote: "Este producto cambió por completo nuestra forma de trabajar.",
-    name: "Ana García",
-    role: "CEO, Acme Inc.",
-    initials: "AG",
-  },
+  acceptsChildren: true,
+  defaultProps: {},
   defaultStyle: structuredClone(TESTIMONIAL_DEFAULT_STYLE),
-  propsSchema: {
-    fields: [
-      { key: "quote", label: "Cita", control: "text", group: "Contenido", translatable: true },
-      { key: "name", label: "Nombre", control: "text", group: "Contenido", translatable: true },
-      { key: "role", label: "Cargo", control: "text", group: "Contenido", translatable: true },
-      { key: "initials", label: "Iniciales", control: "text", group: "Contenido" },
-    ],
-  },
+  defaultChildren: TESTIMONIAL_DEFAULT_CHILDREN,
+  propsSchema: { fields: [] },
   styleSchema: { enabledGroups: ["typography", "spacing", "size", "appearance"] },
   render: TestimonialRender,
 };

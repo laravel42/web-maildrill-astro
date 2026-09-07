@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { NodeTranslations } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor } from "../helpers";
+import { darkBandStyleFor, testimonialFragment } from "../helpers";
 
 /**
  * Página "Hotel boutique" — plantilla de negocio real (una sola página,
@@ -90,8 +90,9 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       style: {
         base: {
           layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.sm" } },
-          spacing: { padding: "clamp(16px, 3vw, 24px)" },
+          spacing: { padding: "16px" },
         },
+        overrides: { md: { spacing: { padding: "24px" } } },
       },
       children: [`hotel-room-${n}-price`, `hotel-room-${n}-title`, `hotel-room-${n}-desc`, `hotel-room-${n}-cta`],
     },
@@ -175,13 +176,14 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       style: {
         base: {
           layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: { token: "spacing.xs" } },
-          spacing: { padding: "clamp(16px, 3vw, 24px)" },
+          spacing: { padding: "16px" },
           appearance: {
             background: { token: "colors.surface.default" },
             borderRadius: { token: "radii.lg" },
             boxShadow: "0 8px 20px rgba(15,23,42,0.06)",
           },
         },
+        overrides: { md: { spacing: { padding: "24px" } } },
         states: {
           hover: {
             appearance: { boxShadow: "0 16px 32px rgba(15,23,42,0.14)" },
@@ -338,11 +340,11 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.md" }, alignItems: "flex-start" },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px" },
+            spacing: { padding: "48px 20px" },
             size: { width: "100%", maxWidth: "1200px" },
           },
           overrides: {
-            md: { spacing: { margin: "0 auto" } },
+            md: { spacing: { padding: "96px 20px", margin: "0 auto" } },
           },
         },
         children: ["hotel-hero-title", "hotel-hero-sub", "hotel-hero-cta"],
@@ -430,9 +432,10 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.md" } },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0 auto" },
+            spacing: { padding: "48px 20px", margin: "0 auto" },
             size: { width: "100%", maxWidth: "1200px" },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["hotel-rooms-title", "hotel-rooms-grid"],
       },
@@ -515,12 +518,13 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "grid", gridTemplateColumns: "1fr", gap: { token: "spacing.md" } },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0 auto" },
+            spacing: { padding: "48px 20px", margin: "0 auto" },
             size: { width: "100%", maxWidth: "1200px" },
           },
           overrides: {
             sm: { layout: { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" } },
             lg: { layout: { gridTemplateColumns: "repeat(4, minmax(0, 1fr))" } },
+            md: { spacing: { padding: "96px 20px" } },
           },
         },
         children: ["hotel-amenity-1", "hotel-amenity-2", "hotel-amenity-3", "hotel-amenity-4"],
@@ -553,9 +557,10 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.md" } },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0 auto" },
+            spacing: { padding: "48px 20px", margin: "0 auto" },
             size: { width: "100%", maxWidth: "1200px" },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["hotel-gallery-title", "hotel-gallery-grid"],
       },
@@ -613,33 +618,34 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", justifyContent: "center" },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0 auto" },
+            spacing: { padding: "48px 20px", margin: "0 auto" },
             size: { width: "100%", maxWidth: "1200px" },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["hotel-testimonial-card"],
       },
-      "hotel-testimonial-card": {
-        id: "hotel-testimonial-card",
-        type: "testimonial",
-        props: {
+      ...testimonialFragment(
+        "hotel-testimonial-card",
+        {
           quote: "El mejor hotel boutique en el que nos hemos quedado. La atención fue impecable y la vista al mar desde la suite valió cada peso.",
           name: "Carolina Fuentes",
           role: "Huésped, viaje de aniversario",
           initials: "CF",
         },
-        style: {
+        {
           base: {
             size: { width: "100%", maxWidth: "640px" },
-            spacing: { padding: "clamp(20px, 3vw, 28px)" },
+            spacing: { padding: "20px" },
             appearance: {
               background: { token: "colors.surface.alt" },
               borderRadius: { token: "radii.lg" },
               boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
             },
           },
+          overrides: { md: { spacing: { padding: "28px" } } },
         },
-      },
+      ),
 
       // --- Banda: FAQ (fondo alt) ---------------------------------------------------
       "hotel-faq": {
@@ -662,9 +668,10 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.sm" } },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0 auto" },
+            spacing: { padding: "48px 20px", margin: "0 auto" },
             size: { width: "100%", maxWidth: "1200px" },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["hotel-faq-title", "hotel-faq-list"],
       },
@@ -765,9 +772,10 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.sm" } },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0 auto" },
+            spacing: { padding: "48px 20px", margin: "0 auto" },
             size: { width: "100%", maxWidth: "1200px" },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["hotel-reservation-title", "hotel-reservation-form"],
       },
@@ -794,13 +802,14 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.sm" } },
             size: { width: "100%", maxWidth: "560px" },
-            spacing: { padding: "clamp(20px, 3vw, 28px)" },
+            spacing: { padding: "20px" },
             appearance: {
               background: { token: "colors.surface.alt" },
               borderRadius: { token: "radii.lg" },
               boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
             },
           },
+          overrides: { md: { spacing: { padding: "28px" } } },
         },
         behaviors: [{ type: "form-validation", options: {} }],
         children: [
@@ -894,12 +903,13 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: { token: "spacing.sm" } },
-            spacing: { padding: "clamp(32px, 6vw, 56px) 20px" },
+            spacing: { padding: "32px 20px" },
             appearance: {
               background: { token: "colors.text" },
               color: { token: "colors.surface.default" },
             },
           },
+          overrides: { md: { spacing: { padding: "56px 20px" } } },
         },
         children: ["hotel-footer-social"],
       },
@@ -967,17 +977,17 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       t["hotel-gallery-3"] = { en: { alt: "Restaurant" }, it: { alt: "Ristorante" } };
       t["hotel-gallery-4"] = { en: { alt: "Spa" }, it: { alt: "Spa" } };
 
-      t["hotel-testimonial-card"] = {
-        en: {
-          quote: "The best boutique hotel we've ever stayed at. The service was flawless and the ocean view from the suite was worth every peso.",
-          name: "Carolina Fuentes",
-          role: "Guest, anniversary trip",
-        },
-        it: {
-          quote: "Il miglior hotel boutique in cui siamo stati. Il servizio è stato impeccabile e la vista sul mare dalla suite valeva ogni peso.",
-          name: "Carolina Fuentes",
-          role: "Ospite, viaggio di anniversario",
-        },
+      t["hotel-testimonial-card-quote"] = {
+        en: { content: "<p>The best boutique hotel we've ever stayed at. The service was flawless and the ocean view from the suite was worth every peso.</p>" },
+        it: { content: "<p>Il miglior hotel boutique in cui siamo stati. Il servizio è stato impeccabile e la vista sul mare dalla suite valeva ogni peso.</p>" },
+      };
+      t["hotel-testimonial-card-name"] = {
+        en: { content: "<strong>Carolina Fuentes</strong>" },
+        it: { content: "<strong>Carolina Fuentes</strong>" },
+      };
+      t["hotel-testimonial-card-role"] = {
+        en: { content: "Guest, anniversary trip" },
+        it: { content: "Ospite, viaggio di anniversario" },
       };
 
       t["hotel-faq-title"] = { en: { content: "<strong>Frequently asked questions</strong>" }, it: { content: "<strong>Domande frequenti</strong>" } };

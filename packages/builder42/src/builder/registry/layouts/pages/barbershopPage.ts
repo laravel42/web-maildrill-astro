@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
+import { darkBandStyleFor, testimonialFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Barbería" — plantilla NUEVA de sector (docs/48 §2 fila 15, F6):
@@ -78,20 +78,25 @@ import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
  */
 
 const INNER_MAX = "1180px";
-const BAND_PADDING = "clamp(56px, 9vw, 112px) 20px";
+const BAND_PADDING_BASE = "56px 20px";
+const BAND_PADDING_MD = "112px 20px";
 const REVEAL: BuilderNode["behaviors"] = [{ type: "reveal-on-scroll", options: { threshold: 0.15, once: true } }];
 
-function band(background: StyleValue, padding: string = BAND_PADDING): NodeStyle {
-  return { base: { layout: { display: "flex", flexDirection: "column" }, spacing: { padding }, appearance: { background } } };
+function band(background: StyleValue, paddingBase: string = BAND_PADDING_BASE, paddingMd: string = BAND_PADDING_MD): NodeStyle {
+  return {
+    base: { layout: { display: "flex", flexDirection: "column" }, spacing: { padding: paddingBase }, appearance: { background } },
+    overrides: { md: { spacing: { padding: paddingMd } } },
+  };
 }
 
-function inner(maxWidth: string = INNER_MAX, gap = "clamp(24px, 4vw, 40px)"): NodeStyle {
+function inner(maxWidth: string = INNER_MAX, gapBase = "24px", gapMd = "40px"): NodeStyle {
   return {
     base: {
-      layout: { display: "flex", flexDirection: "column", gap },
+      layout: { display: "flex", flexDirection: "column", gap: gapBase },
       spacing: { margin: "0 auto" },
       size: { width: "100%", maxWidth },
     },
+    overrides: { md: { layout: { gap: gapMd } } },
   };
 }
 
@@ -237,21 +242,15 @@ function barberMember(n: 1 | 2, name: string, role: string, imageUrl: string, in
 }
 
 function reviewCard(n: 1 | 2 | 3, quote: string, name: string, role: string, initials: string) {
-  return {
-    [`barber-review-${n}`]: {
-      id: `barber-review-${n}`,
-      type: "testimonial",
-      props: { quote, name, role, initials },
-      style: {
-        base: {
-          layout: { display: "flex", flexDirection: "column", gap: "12px" },
-          spacing: { padding: "clamp(20px, 3vw, 28px)" },
-          appearance: { background: { token: "colors.surface.alt" }, borderRadius: "8px", boxShadow: "0 12px 28px rgba(0,0,0,0.35)" },
-        },
-        states: { hover: { appearance: { boxShadow: "0 18px 40px rgba(0,0,0,0.5)" } } },
-      },
+  return testimonialFragment(`barber-review-${n}`, { quote, name, role, initials }, {
+    base: {
+      layout: { display: "flex", flexDirection: "column", gap: "12px" },
+      spacing: { padding: "20px" },
+      appearance: { background: { token: "colors.surface.alt" }, borderRadius: "8px", boxShadow: "0 12px 28px rgba(0,0,0,0.35)" },
     },
-  };
+    overrides: { md: { spacing: { padding: "28px" } } },
+    states: { hover: { appearance: { boxShadow: "0 18px 40px rgba(0,0,0,0.5)" } } },
+  });
 }
 
 export function buildBarbershopPageFragment(): NodeFragment {
@@ -297,7 +296,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "flex-start", gap: "20px" },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px" },
+            spacing: { padding: "48px 20px" },
             size: { width: "100%", minHeight: "520px" },
             typography: { fontFamily: { token: "typography.families.display" } },
             appearance: {
@@ -306,7 +305,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
               color: { token: "colors.band.on" },
             },
           },
-          overrides: { md: { size: { minHeight: "680px" } } },
+          overrides: { md: { size: { minHeight: "680px" }, spacing: { padding: "96px 20px" } } },
         },
         children: ["barber-hero-title", "barber-hero-sub", "barber-hero-cta"],
       },
@@ -359,7 +358,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
         id: "barber-stats",
         type: "section",
         props: {},
-        style: band({ token: "colors.band.dark" }, "clamp(40px, 6vw, 72px) 20px"),
+        style: band({ token: "colors.band.dark" }, "40px 20px", "72px 20px"),
         behaviors: REVEAL,
         children: ["barber-stats-inner"],
       },
@@ -375,8 +374,8 @@ export function buildBarbershopPageFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(16px, 3vw, 32px)" } },
-          overrides: { sm: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" } } },
+          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "16px" } },
+          overrides: { sm: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" } }, md: { layout: { gap: "32px" } } },
         },
         children: ["barber-stat-1", "barber-stat-2", "barber-stat-3"],
       },
@@ -473,8 +472,8 @@ export function buildBarbershopPageFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(24px, 4vw, 40px)", alignItems: "center" } },
-          overrides: { sm: { layout: { gridTemplateColumns: "1fr 1fr" } } },
+          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "24px", alignItems: "center" } },
+          overrides: { sm: { layout: { gridTemplateColumns: "1fr 1fr" } }, md: { layout: { gap: "40px" } } },
         },
         children: ["barber-about-media", "barber-about-copy"],
       },
@@ -874,41 +873,59 @@ export function buildBarbershopPageFragment(): NodeFragment {
       t["barber-team-2-role"] = { en: { content: "Beard specialist" }, it: { content: "Specialista della barba" } };
 
       t["barber-reviews-title"] = { en: { content: "<strong>What clients say</strong>" }, it: { content: "<strong>Cosa dicono i clienti</strong>" } };
-      t["barber-review-1"] = {
+      t["barber-review-1-quote"] = {
         en: {
-          quote: "I've been coming every three weeks for five years. The fade always comes out just as clean.",
-          name: "Rodolfo Bazán",
-          role: "Client since 2020",
+          content:
+            "<p>I've been coming every three weeks for five years. The fade always comes out just as clean.</p>",
         },
         it: {
-          quote: "Vengo ogni tre settimane da cinque anni. La sfumatura è sempre pulita allo stesso modo.",
-          name: "Rodolfo Bazán",
-          role: "Cliente dal 2020",
+          content:
+            "<p>Vengo ogni tre settimane da cinque anni. La sfumatura è sempre pulita allo stesso modo.</p>",
         },
       };
-      t["barber-review-2"] = {
+      t["barber-review-1-name"] = {
+        en: { content: "<strong>Rodolfo Bazán</strong>" },
+        it: { content: "<strong>Rodolfo Bazán</strong>" },
+      };
+      t["barber-review-1-role"] = {
+        en: { content: "Client since 2020" },
+        it: { content: "Cliente dal 2020" },
+      };
+      t["barber-review-2-quote"] = {
         en: {
-          quote: "The straight razor shave is on another level. Hot towel, brush lather, the whole ritual.",
-          name: "Ignacio Del Toro",
-          role: "Regular client",
+          content:
+            "<p>The straight razor shave is on another level. Hot towel, brush lather, the whole ritual.</p>",
         },
         it: {
-          quote: "La rasatura a rasoio è un altro livello. Panno caldo, schiuma a pennello, tutto il rituale.",
-          name: "Ignacio Del Toro",
-          role: "Cliente abituale",
+          content:
+            "<p>La rasatura a rasoio è un altro livello. Panno caldo, schiuma a pennello, tutto il rituale.</p>",
         },
       };
-      t["barber-review-3"] = {
+      t["barber-review-2-name"] = {
+        en: { content: "<strong>Ignacio Del Toro</strong>" },
+        it: { content: "<strong>Ignacio Del Toro</strong>" },
+      };
+      t["barber-review-2-role"] = {
+        en: { content: "Regular client" },
+        it: { content: "Cliente abituale" },
+      };
+      t["barber-review-3-quote"] = {
         en: {
-          quote: "I brought my son for his first haircut there and now we both go every month. A real place.",
-          name: "Tadeo Guzmán",
-          role: "Client since 2022",
+          content:
+            "<p>I brought my son for his first haircut there and now we both go every month. A real place.</p>",
         },
         it: {
-          quote: "Ho portato mio figlio per il suo primo taglio e ora andiamo insieme ogni mese. Un posto vero.",
-          name: "Tadeo Guzmán",
-          role: "Cliente dal 2022",
+          content:
+            "<p>Ho portato mio figlio per il suo primo taglio e ora andiamo insieme ogni mese. Un posto vero.</p>",
         },
+      };
+      t["barber-review-3-name"] = {
+        en: { content: "<strong>Tadeo Guzmán</strong>" },
+        it: { content: "<strong>Tadeo Guzmán</strong>" },
+      };
+      t["barber-review-3-role"] = {
+        en: { content: "Client since 2022" },
+        it: { content: "Cliente dal 2022" },
       };
 
       t["barber-booking-modal"] = { en: { title: "Book your appointment" }, it: { title: "Prenota il tuo appuntamento" } };

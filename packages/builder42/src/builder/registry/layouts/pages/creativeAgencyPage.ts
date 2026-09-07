@@ -42,20 +42,25 @@ import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
  */
 
 const INNER_MAX = "1200px";
-const BAND_PADDING = "clamp(64px, 10vw, 128px) 20px";
+const BAND_PADDING_BASE = "64px 20px";
+const BAND_PADDING_MD = "128px 20px";
 const REVEAL: BuilderNode["behaviors"] = [{ type: "reveal-on-scroll", options: { threshold: 0.15, once: true, mode: "sequence" } }];
 
-function band(background: StyleValue, padding: string = BAND_PADDING): NodeStyle {
-  return { base: { layout: { display: "flex", flexDirection: "column" }, spacing: { padding }, appearance: { background } } };
+function band(background: StyleValue, paddingBase: string = BAND_PADDING_BASE, paddingMd: string = BAND_PADDING_MD): NodeStyle {
+  return {
+    base: { layout: { display: "flex", flexDirection: "column" }, spacing: { padding: paddingBase }, appearance: { background } },
+    overrides: { md: { spacing: { padding: paddingMd } } },
+  };
 }
 
-function inner(maxWidth: string = INNER_MAX, gap = "clamp(24px, 4vw, 40px)"): NodeStyle {
+function inner(maxWidth: string = INNER_MAX, gapBase = "24px", gapMd = "40px"): NodeStyle {
   return {
     base: {
-      layout: { display: "flex", flexDirection: "column", gap },
+      layout: { display: "flex", flexDirection: "column", gap: gapBase },
       spacing: { margin: "0 auto" },
       size: { width: "100%", maxWidth },
     },
+    overrides: { md: { layout: { gap: gapMd } } },
   };
 }
 
@@ -167,10 +172,10 @@ function serviceItem(n: 1 | 2 | 3, title: string, text: string) {
       style: {
         base: {
           layout: { display: "flex", flexDirection: "column", gap: "8px" },
-          spacing: { padding: "clamp(20px, 3vw, 28px) 0" },
+          spacing: { padding: "20px 0" },
           appearance: { borderColor: { token: "colors.border" }, borderStyle: "solid", borderWidth: "0" },
         },
-        overrides: { md: { appearance: { borderWidth: "0" } } },
+        overrides: { md: { appearance: { borderWidth: "0" }, spacing: { padding: "28px 0" } } },
       },
       children: [`agency-service-${n}-title`, `agency-service-${n}-text`],
     },
@@ -269,7 +274,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "flex-start" },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px" },
+            spacing: { padding: "48px 20px" },
             size: { width: "100%", minHeight: "560px" },
             typography: { fontFamily: { token: "typography.families.display" } },
             appearance: {
@@ -278,7 +283,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
               color: { token: "colors.band.on" },
             },
           },
-          overrides: { md: { size: { minHeight: "720px" } } },
+          overrides: { md: { size: { minHeight: "720px" }, spacing: { padding: "96px 20px" } } },
         },
         children: ["agency-hero-title", "agency-hero-cta"],
       },
@@ -322,7 +327,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
         id: "agency-clients",
         type: "section",
         props: {},
-        style: band({ token: "colors.surface.default" }, "clamp(32px, 5vw, 56px) 0"),
+        style: band({ token: "colors.surface.default" }, "32px 0", "56px 0"),
         children: ["agency-clients-cloud"],
       },
       "agency-clients-cloud": {
@@ -331,10 +336,11 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "flex", flexWrap: "nowrap", alignItems: "center", gap: "clamp(32px, 6vw, 64px)" },
+            layout: { display: "flex", flexWrap: "nowrap", alignItems: "center", gap: "32px" },
             spacing: { padding: "0" },
             appearance: { color: { token: "colors.muted" } },
           },
+          overrides: { md: { layout: { gap: "64px" } } },
         },
         behaviors: [{ type: "marquee", options: { duration: 26, direction: "left", pauseOnHover: true } }],
         children: [
@@ -470,7 +476,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
         id: "agency-manifesto-inner",
         type: "container",
         props: {},
-        style: { ...inner("820px", "16px"), base: { ...inner("820px", "16px").base, layout: { display: "flex", flexDirection: "column", alignItems: "center" } } },
+        style: { ...inner("820px", "16px", "16px"), base: { ...inner("820px", "16px", "16px").base, layout: { display: "flex", flexDirection: "column", alignItems: "center" } } },
         children: ["agency-manifesto-text"],
       },
       "agency-manifesto-text": {
@@ -606,11 +612,11 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(24px, 4vw, 40px)" },
+            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "24px" },
             size: { width: "100%", maxWidth: INNER_MAX },
             spacing: { margin: "0 auto" },
           },
-          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 360px) 1fr" } } },
+          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 360px) 1fr", gap: "40px" } } },
         },
         children: ["agency-contact-info", "agency-contact-card"],
       },
@@ -640,10 +646,11 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: "12px" },
-            spacing: { padding: "clamp(20px, 3vw, 28px)" },
+            spacing: { padding: "20px" },
             size: { width: "100%" },
             appearance: { background: { token: "colors.surface.alt" }, borderRadius: "8px" },
           },
+          overrides: { md: { spacing: { padding: "28px" } } },
         },
         children: ["agency-form"],
       },

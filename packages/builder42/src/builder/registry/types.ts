@@ -395,6 +395,16 @@ export interface DefaultChildSpec {
   type: string;
   /** Overrides sobre los `defaultProps` del tipo (merge superficial). */
   props?: Record<string, unknown>;
+  /**
+   * Overrides sobre el `defaultStyle.base` del tipo (merge superficial por
+   * grupo, igual que `props`). Permite que un composite (p. ej. `testimonial`)
+   * ajuste el layout/spacing de SUS hijos sembrados (ej. el `marginTop` de la
+   * fila avatar+autor) sin necesitar un tipo de componente nuevo — el hijo
+   * sigue siendo un `container`/`avatar`/`text` normal, totalmente editable
+   * después desde el Inspector. Ausente = el hijo nace con el `defaultStyle`
+   * tal cual de su tipo.
+   */
+  style?: NodeStyle;
   children?: DefaultChildSpec[];
 }
 

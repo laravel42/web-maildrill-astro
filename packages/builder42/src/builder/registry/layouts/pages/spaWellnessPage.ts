@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
+import { darkBandStyleFor, testimonialFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Spa y bienestar" — plantilla NUEVA de sector (docs/48 §2 fila 14,
@@ -40,20 +40,25 @@ import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
  */
 
 const INNER_MAX = "1160px";
-const BAND_PADDING = "clamp(48px, 8vw, 96px) 20px";
+const BAND_PADDING_BASE = "48px 20px";
+const BAND_PADDING_MD = "96px 20px";
 const REVEAL: BuilderNode["behaviors"] = [{ type: "reveal-on-scroll", options: { threshold: 0.15, once: true } }];
 
-function band(background: StyleValue, padding: string = BAND_PADDING): NodeStyle {
-  return { base: { layout: { display: "flex", flexDirection: "column" }, spacing: { padding }, appearance: { background } } };
+function band(background: StyleValue, paddingBase: string = BAND_PADDING_BASE, paddingMd: string = BAND_PADDING_MD): NodeStyle {
+  return {
+    base: { layout: { display: "flex", flexDirection: "column" }, spacing: { padding: paddingBase }, appearance: { background } },
+    overrides: { md: { spacing: { padding: paddingMd } } },
+  };
 }
 
-function inner(maxWidth: string = INNER_MAX, gap = "clamp(24px, 4vw, 40px)"): NodeStyle {
+function inner(maxWidth: string = INNER_MAX, gapBase = "24px", gapMd = "40px"): NodeStyle {
   return {
     base: {
-      layout: { display: "flex", flexDirection: "column", gap },
+      layout: { display: "flex", flexDirection: "column", gap: gapBase },
       spacing: { margin: "0 auto" },
       size: { width: "100%", maxWidth },
     },
+    overrides: { md: { layout: { gap: gapMd } } },
   };
 }
 
@@ -111,9 +116,9 @@ function treatmentPair(
       props: {},
       style: {
         base: {
-          layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(20px, 3vw, 32px)", alignItems: "center" },
+          layout: { display: "grid", gridTemplateColumns: "1fr", gap: "20px", alignItems: "center" },
         },
-        overrides: { sm: { layout: { gridTemplateColumns: "1fr 1fr" } } },
+        overrides: { sm: { layout: { gridTemplateColumns: "1fr 1fr" } }, md: { layout: { gap: "32px" } } },
       },
       children: reverse ? [copyId, mediaId] : [mediaId, copyId],
     },
@@ -154,25 +159,19 @@ function treatmentPair(
 }
 
 function reviewCard(n: 1 | 2 | 3, quote: string, name: string, role: string, initials: string) {
-  return {
-    [`spa-review-${n}`]: {
-      id: `spa-review-${n}`,
-      type: "testimonial",
-      props: { quote, name, role, initials },
-      style: {
-        base: {
-          layout: { display: "flex", flexDirection: "column", gap: "12px" },
-          spacing: { padding: "clamp(20px, 3vw, 28px)" },
-          appearance: {
-            background: { token: "colors.surface.default" },
-            borderRadius: "20px",
-            boxShadow: "0 14px 32px rgba(74,66,54,0.1)",
-          },
-        },
-        states: { hover: { appearance: { boxShadow: "0 20px 44px rgba(74,66,54,0.18)" } } },
+  return testimonialFragment(`spa-review-${n}`, { quote, name, role, initials }, {
+    base: {
+      layout: { display: "flex", flexDirection: "column", gap: "12px" },
+      spacing: { padding: "20px" },
+      appearance: {
+        background: { token: "colors.surface.default" },
+        borderRadius: "20px",
+        boxShadow: "0 14px 32px rgba(74,66,54,0.1)",
       },
     },
-  };
+    overrides: { md: { spacing: { padding: "28px" } } },
+    states: { hover: { appearance: { boxShadow: "0 20px 44px rgba(74,66,54,0.18)" } } },
+  });
 }
 
 export function buildSpaWellnessPageFragment(): NodeFragment {
@@ -242,7 +241,7 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "16px" },
-            spacing: { padding: "clamp(56px, 9vw, 112px) 20px" },
+            spacing: { padding: "56px 20px" },
             size: { width: "100%", minHeight: "420px" },
             typography: { fontFamily: { token: "typography.families.display" }, textAlign: "center" },
             appearance: {
@@ -328,7 +327,7 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
         id: "spa-treatments-list",
         type: "container",
         props: {},
-        style: { base: { layout: { display: "flex", flexDirection: "column", gap: "clamp(32px, 5vw, 56px)" } } },
+        style: { base: { layout: { display: "flex", flexDirection: "column", gap: "32px" } }, overrides: { md: { layout: { gap: "56px" } } } },
         children: ["spa-treatment-1", "spa-treatment-2", "spa-treatment-3", "spa-treatment-4"],
       },
       ...treatmentPair(
@@ -505,11 +504,11 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(24px, 4vw, 40px)" },
+            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "24px" },
             size: { width: "100%", maxWidth: INNER_MAX },
             spacing: { margin: "0 auto" },
           },
-          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 320px) 1fr" } } },
+          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 320px) 1fr", gap: "40px" } } },
         },
         children: ["spa-booking-info", "spa-booking-card"],
       },
@@ -539,10 +538,11 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: "12px" },
-            spacing: { padding: "clamp(20px, 3vw, 28px)" },
+            spacing: { padding: "20px" },
             size: { width: "100%" },
             appearance: { background: { token: "colors.surface.default" }, borderRadius: "20px", boxShadow: "0 14px 32px rgba(74,66,54,0.1)" },
           },
+          overrides: { md: { spacing: { padding: "28px" } } },
         },
         children: ["spa-form"],
       },
@@ -671,7 +671,7 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
         id: "spa-location-inner",
         type: "container",
         props: {},
-        style: { ...inner("760px", "12px"), base: { ...inner("760px", "12px").base, typography: { textAlign: "center" }, layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" } } },
+        style: { ...inner("760px", "12px", "12px"), base: { ...inner("760px", "12px", "12px").base, typography: { textAlign: "center" }, layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" } } },
         children: ["spa-location-title", "spa-location-address"],
       },
       "spa-location-title": {
@@ -780,41 +780,41 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       };
 
       t["spa-reviews-title"] = { en: { content: "<strong>What our guests say</strong>" }, it: { content: "<strong>Cosa dicono le nostre ospiti</strong>" } };
-      t["spa-review-1"] = {
-        en: {
-          quote: "I left the hot stone massage feeling brand new. The place is so quiet I forgot my phone for two hours.",
-          name: "Renata Aguayo",
-          role: "Guest since 2024",
-        },
-        it: {
-          quote: "Sono uscita dal massaggio con pietre calde come nuova. Il posto è così tranquillo che ho dimenticato il telefono per due ore.",
-          name: "Renata Aguayo",
-          role: "Ospite dal 2024",
-        },
+      t["spa-review-1-quote"] = {
+        en: { content: "<p>I left the hot stone massage feeling brand new. The place is so quiet I forgot my phone for two hours.</p>" },
+        it: { content: "<p>Sono uscita dal massaggio con pietre calde come nuova. Il posto è così tranquillo che ho dimenticato il telefono per due ore.</p>" },
       };
-      t["spa-review-2"] = {
-        en: {
-          quote: "The hydrotherapy circuit is my monthly ritual. The staff always remembers my preferences.",
-          name: "Diego Farías",
-          role: "Regular guest",
-        },
-        it: {
-          quote: "Il percorso di idroterapia è il mio rituale mensile. Il personale ricorda sempre le mie preferenze.",
-          name: "Diego Farías",
-          role: "Ospite abituale",
-        },
+      t["spa-review-1-name"] = {
+        en: { content: "<strong>Renata Aguayo</strong>" },
+        it: { content: "<strong>Renata Aguayo</strong>" },
       };
-      t["spa-review-3"] = {
-        en: {
-          quote: "We booked the couples massage for our anniversary and it was exactly what we needed: real silence.",
-          name: "Camila & Adrián",
-          role: "Guests since 2023",
-        },
-        it: {
-          quote: "Abbiamo prenotato il massaggio di coppia per il nostro anniversario ed era esattamente ciò di cui avevamo bisogno: silenzio vero.",
-          name: "Camila & Adrián",
-          role: "Ospiti dal 2023",
-        },
+      t["spa-review-1-role"] = {
+        en: { content: "Guest since 2024" },
+        it: { content: "Ospite dal 2024" },
+      };
+      t["spa-review-2-quote"] = {
+        en: { content: "<p>The hydrotherapy circuit is my monthly ritual. The staff always remembers my preferences.</p>" },
+        it: { content: "<p>Il percorso di idroterapia è il mio rituale mensile. Il personale ricorda sempre le mie preferenze.</p>" },
+      };
+      t["spa-review-2-name"] = {
+        en: { content: "<strong>Diego Farías</strong>" },
+        it: { content: "<strong>Diego Farías</strong>" },
+      };
+      t["spa-review-2-role"] = {
+        en: { content: "Regular guest" },
+        it: { content: "Ospite abituale" },
+      };
+      t["spa-review-3-quote"] = {
+        en: { content: "<p>We booked the couples massage for our anniversary and it was exactly what we needed: real silence.</p>" },
+        it: { content: "<p>Abbiamo prenotato il massaggio di coppia per il nostro anniversario ed era esattamente ciò di cui avevamo bisogno: silenzio vero.</p>" },
+      };
+      t["spa-review-3-name"] = {
+        en: { content: "<strong>Camila &amp; Adrián</strong>" },
+        it: { content: "<strong>Camila &amp; Adrián</strong>" },
+      };
+      t["spa-review-3-role"] = {
+        en: { content: "Guests since 2023" },
+        it: { content: "Ospiti dal 2023" },
       };
 
       t["spa-booking-title"] = { en: { content: "<strong>Book your treatment</strong>" }, it: { content: "<strong>Prenota il tuo trattamento</strong>" } };

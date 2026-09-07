@@ -37,21 +37,25 @@ import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
 
 const SHADOW_CARD = "0 12px 32px rgba(15,23,42,0.08)";
 const SHADOW_HOVER = "0 18px 40px rgba(15,23,42,0.16)";
-const BAND_PADDING = "clamp(48px, 8vw, 96px) 20px";
+const BAND_PADDING = "48px 20px";
 const INNER_MAX = "1160px";
 const REVEAL: BuilderNode["behaviors"] = [{ type: "reveal-on-scroll", options: { threshold: 0.15, once: true } }];
 
-function band(background: StyleValue, padding: string = BAND_PADDING): NodeStyle {
-  return { base: { layout: { display: "flex", flexDirection: "column" }, spacing: { padding }, appearance: { background } } };
+function band(background: StyleValue, padding: string = BAND_PADDING, paddingMd: string = "96px 20px"): NodeStyle {
+  return {
+    base: { layout: { display: "flex", flexDirection: "column" }, spacing: { padding }, appearance: { background } },
+    overrides: { md: { spacing: { padding: paddingMd } } },
+  };
 }
 
-function inner(maxWidth: string = INNER_MAX, gap = "clamp(24px, 4vw, 40px)"): NodeStyle {
+function inner(maxWidth: string = INNER_MAX, gap = "24px", gapMd = "40px"): NodeStyle {
   return {
     base: {
       layout: { display: "flex", flexDirection: "column", gap },
       spacing: { margin: "0 auto" },
       size: { width: "100%", maxWidth },
     },
+    overrides: { md: { layout: { gap: gapMd } } },
   };
 }
 
@@ -95,7 +99,7 @@ function practiceArea(
       id: `lawfirm-practice-${n}`,
       type: "section",
       props: {},
-      style: band(bg, "clamp(40px, 6vw, 72px) 20px"),
+      style: band(bg, "40px 20px", "72px 20px"),
       behaviors: REVEAL,
       children: [`lawfirm-practice-${n}-inner`],
     },
@@ -103,7 +107,7 @@ function practiceArea(
       id: `lawfirm-practice-${n}-inner`,
       type: "container",
       props: {},
-      style: inner("760px", "12px"),
+      style: inner("760px", "12px", "12px"),
       children: [`lawfirm-practice-${n}-title`, `lawfirm-practice-${n}-text`],
     },
     [`lawfirm-practice-${n}-title`]: {
@@ -140,7 +144,7 @@ function partnerCard(n: 1 | 2 | 3, name: string, role: string, imageUrl: string,
       style: {
         base: {
           layout: { display: "flex", flexDirection: "column", gap: "12px", alignItems: "center" },
-          spacing: { padding: "clamp(20px, 3vw, 28px)" },
+          spacing: { padding: "20px" },
           size: { width: "100%" },
           typography: { textAlign: "center" },
           appearance: {
@@ -152,6 +156,7 @@ function partnerCard(n: 1 | 2 | 3, name: string, role: string, imageUrl: string,
             boxShadow: SHADOW_CARD,
           },
         },
+        overrides: { md: { spacing: { padding: "28px" } } },
         states: { hover: { appearance: { boxShadow: SHADOW_HOVER } } },
       },
       children: [`lawfirm-partner-${n}-avatar`, `lawfirm-partner-${n}-name`, `lawfirm-partner-${n}-role`],
@@ -261,12 +266,12 @@ export function buildLawFirmPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "16px" },
-            spacing: { padding: "clamp(64px, 10vw, 128px) 20px" },
+            spacing: { padding: "64px 20px" },
             size: { width: "100%", minHeight: "420px" },
             typography: { fontFamily: { token: "typography.families.display" }, textAlign: "center" },
             appearance: { background: { token: "colors.band.dark" }, color: { token: "colors.band.on" } },
           },
-          overrides: { md: { size: { minHeight: "480px" } } },
+          overrides: { md: { size: { minHeight: "480px" }, spacing: { padding: "128px 20px" } } },
         },
         children: ["lawfirm-hero-badge", "lawfirm-hero-title", "lawfirm-hero-sub", "lawfirm-hero-cta"],
       },
@@ -358,8 +363,9 @@ export function buildLawFirmPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: "4px" },
-            spacing: { padding: "clamp(32px, 5vw, 56px) 20px" },
+            spacing: { padding: "32px 20px" },
           },
+          overrides: { md: { spacing: { padding: "56px 20px" } } },
         },
         behaviors: [
           { type: "sticky", options: { position: "top", scrolledThreshold: 8 } },
@@ -544,7 +550,7 @@ export function buildLawFirmPageFragment(): NodeFragment {
         props: {},
         style: {
           ...band("linear-gradient(135deg, var(--colors-surface-alt), var(--colors-surface-default))"),
-          overrides: { md: { spacing: { padding: "clamp(64px, 9vw, 112px) 20px" } } },
+          overrides: { md: { spacing: { padding: "112px 20px" } } },
         },
         behaviors: REVEAL,
         children: ["lawfirm-process-inner"],
@@ -595,11 +601,11 @@ export function buildLawFirmPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(24px, 4vw, 40px)" },
+            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "24px" },
             size: { width: "100%", maxWidth: INNER_MAX },
             spacing: { margin: "0 auto" },
           },
-          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 320px) 1fr" } } },
+          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 320px) 1fr", gap: "40px" } } },
         },
         children: ["lawfirm-contact-info", "lawfirm-contact-card"],
       },
@@ -629,10 +635,11 @@ export function buildLawFirmPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: "12px" },
-            spacing: { padding: "clamp(20px, 3vw, 28px)" },
+            spacing: { padding: "20px" },
             size: { width: "100%" },
             appearance: { background: { token: "colors.surface.default" }, borderRadius: "12px", boxShadow: SHADOW_CARD },
           },
+          overrides: { md: { spacing: { padding: "28px" } } },
         },
         children: ["lawfirm-form"],
       },

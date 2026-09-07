@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { NodeTranslations } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor } from "../helpers";
+import { darkBandStyleFor, testimonialFragment } from "../helpers";
 
 /**
  * Página "Gimnasio / estudio fitness" — plantilla de negocio real
@@ -109,8 +109,8 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "clamp(16px, 3vw, 24px)" },
-            spacing: { padding: "clamp(56px, 10vw, 112px) 20px" },
+            layout: { display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "16px" },
+            spacing: { padding: "56px 20px" },
             size: { width: "100%", minHeight: "420px" },
             typography: { fontFamily: { token: "typography.families.sans" }, textAlign: "center" },
             appearance: {
@@ -119,6 +119,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
               color: { token: "colors.surface.default" },
             },
           },
+          overrides: { md: { layout: { gap: "24px" }, spacing: { padding: "112px 20px" } } },
         },
         children: ["fitness-hero-title", "fitness-hero-sub", "fitness-hero-cta"],
       },
@@ -190,9 +191,10 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "stretch" },
             size: { width: "100%" },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0" },
+            spacing: { padding: "48px 20px", margin: "0" },
             appearance: { background: { token: "colors.surface.default" } },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["fitness-schedule-inner"],
       },
@@ -202,10 +204,11 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "flex", flexDirection: "column", gap: "clamp(24px, 4vw, 40px)" },
+            layout: { display: "flex", flexDirection: "column", gap: "24px" },
             size: { width: "100%", maxWidth: { token: "sizes.container" } },
             spacing: { margin: "0 auto" },
           },
+          overrides: { md: { layout: { gap: "40px" } } },
         },
         children: ["fitness-schedule-title", "fitness-schedule-sub", "fitness-timeline"],
       },
@@ -255,12 +258,12 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "grid", gridTemplateColumns: "1fr", gap: { token: "spacing.sm" }, alignItems: "start" },
-            spacing: { padding: "clamp(16px, 2.5vw, 24px) 0 clamp(16px, 2.5vw, 24px) clamp(12px, 2vw, 20px)" },
+            spacing: { padding: "16px 0 16px 12px" },
             appearance: { borderWidth: "0 0 0 3px", borderStyle: "solid", borderColor: { token: "colors.primary.default" } },
           },
           overrides: {
             sm: { layout: { gridTemplateColumns: "56px 1fr", gap: { token: "spacing.md" } } },
-            md: { layout: { gridTemplateColumns: "72px 1fr" } },
+            md: { layout: { gridTemplateColumns: "72px 1fr" }, spacing: { padding: "24px 0 24px 20px" } },
           },
         },
         children: ["fitness-timeline-step-1-number", "fitness-timeline-step-1-body"],
@@ -272,7 +275,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", justifyContent: "center" },
-            spacing: { padding: "0 0 0 clamp(12px, 2vw, 20px)" },
+            spacing: { padding: "0 0 0 12px" },
             typography: {
               fontFamily: { token: "typography.families.sans" },
               fontSize: "clamp(1.5rem, 2.5vw, 2rem)",
@@ -280,6 +283,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
             },
             appearance: { color: { token: "colors.primary.default" } },
           },
+          overrides: { md: { spacing: { padding: "0 0 0 20px" } } },
         },
       },
       "fitness-timeline-step-1-body": {
@@ -316,12 +320,12 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "grid", gridTemplateColumns: "1fr", gap: { token: "spacing.sm" }, alignItems: "start" },
-            spacing: { padding: "clamp(16px, 2.5vw, 24px) 0 clamp(16px, 2.5vw, 24px) clamp(12px, 2vw, 20px)" },
+            spacing: { padding: "16px 0 16px 12px" },
             appearance: { borderWidth: "0 0 0 3px", borderStyle: "solid", borderColor: { token: "colors.primary.default" } },
           },
           overrides: {
             sm: { layout: { gridTemplateColumns: "56px 1fr", gap: { token: "spacing.md" } } },
-            md: { layout: { gridTemplateColumns: "72px 1fr" } },
+            md: { layout: { gridTemplateColumns: "72px 1fr" }, spacing: { padding: "24px 0 24px 20px" } },
           },
         },
         children: ["fitness-timeline-step-2-number", "fitness-timeline-step-2-body"],
@@ -333,7 +337,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", justifyContent: "center" },
-            spacing: { padding: "0 0 0 clamp(12px, 2vw, 20px)" },
+            spacing: { padding: "0 0 0 12px" },
             typography: {
               fontFamily: { token: "typography.families.sans" },
               fontSize: "clamp(1.5rem, 2.5vw, 2rem)",
@@ -341,6 +345,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
             },
             appearance: { color: { token: "colors.primary.default" } },
           },
+          overrides: { md: { spacing: { padding: "0 0 0 20px" } } },
         },
       },
       "fitness-timeline-step-2-body": {
@@ -377,11 +382,11 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "grid", gridTemplateColumns: "1fr", gap: { token: "spacing.sm" }, alignItems: "start" },
-            spacing: { padding: "clamp(16px, 2.5vw, 24px) 0 clamp(16px, 2.5vw, 24px) clamp(12px, 2vw, 20px)" },
+            spacing: { padding: "16px 0 16px 12px" },
           },
           overrides: {
             sm: { layout: { gridTemplateColumns: "56px 1fr", gap: { token: "spacing.md" } } },
-            md: { layout: { gridTemplateColumns: "72px 1fr" } },
+            md: { layout: { gridTemplateColumns: "72px 1fr" }, spacing: { padding: "24px 0 24px 20px" } },
           },
         },
         children: ["fitness-timeline-step-3-number", "fitness-timeline-step-3-body"],
@@ -393,7 +398,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", justifyContent: "center" },
-            spacing: { padding: "0 0 0 clamp(12px, 2vw, 20px)" },
+            spacing: { padding: "0 0 0 12px" },
             typography: {
               fontFamily: { token: "typography.families.sans" },
               fontSize: "clamp(1.5rem, 2.5vw, 2rem)",
@@ -401,6 +406,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
             },
             appearance: { color: { token: "colors.primary.default" } },
           },
+          overrides: { md: { spacing: { padding: "0 0 0 20px" } } },
         },
       },
       "fitness-timeline-step-3-body": {
@@ -440,9 +446,10 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "stretch" },
             size: { width: "100%" },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0" },
+            spacing: { padding: "48px 20px", margin: "0" },
             appearance: { background: { token: "colors.surface.alt" } },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["fitness-stats-inner"],
       },
@@ -527,11 +534,12 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "stretch" },
             size: { width: "100%" },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0" },
+            spacing: { padding: "48px 20px", margin: "0" },
             appearance: {
               background: "linear-gradient(135deg, var(--colors-primary-default), var(--colors-text))",
             },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["fitness-plans-inner"],
       },
@@ -541,10 +549,11 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "flex", flexDirection: "column", gap: "clamp(24px, 4vw, 40px)" },
+            layout: { display: "flex", flexDirection: "column", gap: "24px" },
             size: { width: "100%", maxWidth: { token: "sizes.container" } },
             spacing: { margin: "0 auto" },
           },
+          overrides: { md: { layout: { gap: "40px" } } },
         },
         children: ["fitness-plans-title", "fitness-plans-grid"],
       },
@@ -590,7 +599,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: "12px", alignItems: "stretch" },
-            spacing: { padding: "clamp(20px, 3vw, 28px)" },
+            spacing: { padding: "20px" },
             size: { minHeight: "64px", width: "100%", maxWidth: "none" },
             typography: { fontFamily: { token: "typography.families.sans" } },
             appearance: {
@@ -603,6 +612,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
               boxShadow: "0 12px 32px rgba(15,23,42,0.16)",
             },
           },
+          overrides: { md: { spacing: { padding: "28px" } } },
           states: {
             hover: {
               appearance: { boxShadow: "0 18px 44px rgba(15,23,42,0.24)", borderColor: { token: "colors.primary.default" } },
@@ -626,7 +636,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: "12px", alignItems: "stretch" },
-            spacing: { padding: "clamp(24px, 3.5vw, 32px)" },
+            spacing: { padding: "24px" },
             size: { minHeight: "64px", width: "100%", maxWidth: "none" },
             typography: { fontFamily: { token: "typography.families.sans" } },
             appearance: {
@@ -639,6 +649,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
               boxShadow: "0 20px 48px rgba(15,23,42,0.32)",
             },
           },
+          overrides: { md: { spacing: { padding: "32px" } } },
           states: {
             hover: {
               appearance: { boxShadow: "0 24px 56px rgba(15,23,42,0.4)" },
@@ -662,7 +673,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: "12px", alignItems: "stretch" },
-            spacing: { padding: "clamp(20px, 3vw, 28px)" },
+            spacing: { padding: "20px" },
             size: { minHeight: "64px", width: "100%", maxWidth: "none" },
             typography: { fontFamily: { token: "typography.families.sans" } },
             appearance: {
@@ -675,6 +686,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
               boxShadow: "0 12px 32px rgba(15,23,42,0.16)",
             },
           },
+          overrides: { md: { spacing: { padding: "28px" } } },
           states: {
             hover: {
               appearance: { boxShadow: "0 18px 44px rgba(15,23,42,0.24)", borderColor: { token: "colors.primary.default" } },
@@ -692,9 +704,10 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "stretch" },
             size: { width: "100%" },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0" },
+            spacing: { padding: "48px 20px", margin: "0" },
             appearance: { background: { token: "colors.surface.default" } },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["fitness-testimonial-inner"],
       },
@@ -711,18 +724,17 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         },
         children: ["fitness-testimonial"],
       },
-      "fitness-testimonial": {
-        id: "fitness-testimonial",
-        type: "testimonial",
-        props: {
+      ...testimonialFragment(
+        "fitness-testimonial",
+        {
           quote:
             "Llevo ocho meses entrenando en Vértice y es la primera vez que sostengo una rutina sin perder la motivación. Los entrenadores realmente te acompañan.",
           name: "Paola Jiménez",
           role: "Socia desde 2025",
           initials: "PJ",
         },
-        style: defaultStyleFor("testimonial"),
-      },
+        defaultStyleFor("testimonial"),
+      ),
 
       // --- FAQ (accordion) — banda alt -------------------------------------------
       "fitness-faq": {
@@ -733,9 +745,10 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "stretch" },
             size: { width: "100%" },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0" },
+            spacing: { padding: "48px 20px", margin: "0" },
             appearance: { background: { token: "colors.surface.alt" } },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["fitness-faq-inner"],
       },
@@ -745,10 +758,11 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "flex", flexDirection: "column", gap: "clamp(24px, 4vw, 40px)" },
+            layout: { display: "flex", flexDirection: "column", gap: "24px" },
             size: { width: "100%", maxWidth: { token: "sizes.container" } },
             spacing: { margin: "0 auto" },
           },
+          overrides: { md: { layout: { gap: "40px" } } },
         },
         children: ["fitness-faq-title", "fitness-accordion"],
       },
@@ -820,9 +834,10 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "stretch" },
             size: { width: "100%" },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px", margin: "0" },
+            spacing: { padding: "48px 20px", margin: "0" },
             appearance: { background: { token: "colors.surface.default" } },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["fitness-signup-inner"],
       },
@@ -832,11 +847,11 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(24px, 4vw, 40px)" },
+            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "24px" },
             size: { width: "100%", maxWidth: { token: "sizes.container" } },
             spacing: { margin: "0 auto" },
           },
-          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 320px) 1fr" } } },
+          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 320px) 1fr", gap: "40px" } } },
         },
         children: ["fitness-signup-info", "fitness-signup-card"],
       },
@@ -1169,19 +1184,23 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         popularLabel: "Popolare",
       },
     },
-    "fitness-testimonial": {
+    "fitness-testimonial-quote": {
       en: {
-        quote:
-          "I've been training at Vértice for eight months and it's the first time I've kept up a routine without losing motivation. The coaches really support you.",
-        name: "Paola Jiménez",
-        role: "Member since 2025",
+        content:
+          "<p>I've been training at Vértice for eight months and it's the first time I've kept up a routine without losing motivation. The coaches really support you.</p>",
       },
       it: {
-        quote:
-          "Mi alleno da Vértice da otto mesi ed è la prima volta che riesco a mantenere una routine senza perdere la motivazione. Gli allenatori ti seguono davvero.",
-        name: "Paola Jiménez",
-        role: "Iscritta dal 2025",
+        content:
+          "<p>Mi alleno da Vértice da otto mesi ed è la prima volta che riesco a mantenere una routine senza perdere la motivazione. Gli allenatori ti seguono davvero.</p>",
       },
+    },
+    "fitness-testimonial-name": {
+      en: { content: "<strong>Paola Jiménez</strong>" },
+      it: { content: "<strong>Paola Jiménez</strong>" },
+    },
+    "fitness-testimonial-role": {
+      en: { content: "Member since 2025" },
+      it: { content: "Iscritta dal 2025" },
     },
     "fitness-faq-title": {
       en: { content: "<strong>Frequently asked questions</strong>" },

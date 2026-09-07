@@ -75,21 +75,26 @@ import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
 
 const SHADOW_CARD = "0 12px 32px rgba(30,30,28,0.1)";
 const SHADOW_HOVER = "0 18px 40px rgba(30,30,28,0.18)";
-const BAND_PADDING = "clamp(48px, 8vw, 96px) 20px";
+const BAND_PADDING = "48px 20px";
+const BAND_PADDING_MD = "96px 20px";
 const INNER_MAX = "1160px";
 const REVEAL: BuilderNode["behaviors"] = [{ type: "reveal-on-scroll", options: { threshold: 0.15, once: true } }];
 
-function band(background: StyleValue, padding: string = BAND_PADDING): NodeStyle {
-  return { base: { layout: { display: "flex", flexDirection: "column" }, spacing: { padding }, appearance: { background } } };
+function band(background: StyleValue, padding: string = BAND_PADDING, paddingMd: string = BAND_PADDING_MD): NodeStyle {
+  return {
+    base: { layout: { display: "flex", flexDirection: "column" }, spacing: { padding }, appearance: { background } },
+    overrides: { md: { spacing: { padding: paddingMd } } },
+  };
 }
 
-function inner(maxWidth: string = INNER_MAX, gap = "clamp(24px, 4vw, 40px)"): NodeStyle {
+function inner(maxWidth: string = INNER_MAX, gap = "24px", gapMd = "40px"): NodeStyle {
   return {
     base: {
       layout: { display: "flex", flexDirection: "column", gap },
       spacing: { margin: "0 auto" },
       size: { width: "100%", maxWidth },
     },
+    overrides: { md: { layout: { gap: gapMd } } },
   };
 }
 
@@ -133,7 +138,7 @@ function serviceArea(
       id: `archstudio-service-${n}`,
       type: "section",
       props: {},
-      style: band(bg, "clamp(40px, 6vw, 72px) 20px"),
+      style: band(bg, "40px 20px", "72px 20px"),
       behaviors: REVEAL,
       children: [`archstudio-service-${n}-inner`],
     },
@@ -250,7 +255,7 @@ function teamCard(n: 1 | 2 | 3, name: string, role: string, imageUrl: string, in
       style: {
         base: {
           layout: { display: "flex", flexDirection: "column", gap: "12px", alignItems: "center" },
-          spacing: { padding: "clamp(20px, 3vw, 28px)" },
+          spacing: { padding: "20px" },
           size: { width: "100%" },
           typography: { textAlign: "center" },
           appearance: {
@@ -262,6 +267,7 @@ function teamCard(n: 1 | 2 | 3, name: string, role: string, imageUrl: string, in
             boxShadow: SHADOW_CARD,
           },
         },
+        overrides: { md: { spacing: { padding: "28px" } } },
         states: { hover: { appearance: { boxShadow: SHADOW_HOVER } } },
       },
       children: [`archstudio-team-${n}-avatar`, `archstudio-team-${n}-name`, `archstudio-team-${n}-role`],
@@ -392,9 +398,9 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "flex-start", gap: "16px" },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px" },
+            spacing: { padding: "48px 20px" },
           },
-          overrides: { md: { spacing: { padding: "clamp(48px, 8vw, 96px) 48px" } } },
+          overrides: { md: { spacing: { padding: "96px 48px" } } },
         },
         children: ["archstudio-hero-badge", "archstudio-hero-title", "archstudio-hero-sub", "archstudio-hero-cta"],
       },
@@ -524,8 +530,9 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: "4px" },
-            spacing: { padding: "clamp(32px, 5vw, 56px) 20px" },
+            spacing: { padding: "32px 20px" },
           },
+          overrides: { md: { spacing: { padding: "56px 20px" } } },
         },
         behaviors: [
           { type: "sticky", options: { position: "top", scrolledThreshold: 8 } },
@@ -590,9 +597,10 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.sm" } },
-            spacing: { padding: "clamp(32px, 5vw, 56px) 20px" },
+            spacing: { padding: "32px 20px" },
             appearance: { background: { token: "colors.surface.alt" } },
           },
+          overrides: { md: { spacing: { padding: "56px 20px" } } },
         },
         children: ["archstudio-services-side-title", "archstudio-services-side-text"],
       },
@@ -781,7 +789,7 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
         props: {},
         style: {
           ...band("linear-gradient(135deg, var(--colors-surface-alt), var(--colors-surface-default))"),
-          overrides: { md: { spacing: { padding: "clamp(64px, 9vw, 112px) 20px" } } },
+          overrides: { md: { spacing: { padding: "112px 20px" } } },
         },
         behaviors: REVEAL,
         children: ["archstudio-process-inner"],
@@ -832,11 +840,11 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(24px, 4vw, 40px)" },
+            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "24px" },
             size: { width: "100%", maxWidth: INNER_MAX },
             spacing: { margin: "0 auto" },
           },
-          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 320px) 1fr" } } },
+          overrides: { md: { layout: { gridTemplateColumns: "minmax(0, 320px) 1fr", gap: "40px" } } },
         },
         children: ["archstudio-contact-info", "archstudio-contact-card"],
       },
@@ -866,10 +874,11 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: "12px" },
-            spacing: { padding: "clamp(20px, 3vw, 28px)" },
+            spacing: { padding: "20px" },
             size: { width: "100%" },
             appearance: { background: { token: "colors.surface.default" }, borderRadius: "4px", boxShadow: SHADOW_CARD },
           },
+          overrides: { md: { spacing: { padding: "28px" } } },
         },
         children: ["archstudio-form"],
       },

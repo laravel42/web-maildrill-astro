@@ -236,7 +236,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
       style: {
         base: {
           layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: { token: "spacing.xs" } },
-          spacing: { padding: "clamp(20px, 3vw, 28px)" },
+          spacing: { padding: "20px" },
           typography: { textAlign: "center" },
           appearance: {
             background: { token: "colors.surface.default" },
@@ -247,6 +247,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
             boxShadow: CARD_SHADOW,
           },
         },
+        overrides: { md: { spacing: { padding: "28px" } } },
         states: {
           hover: { appearance: { boxShadow: CARD_SHADOW_HOVER, borderColor: { token: "colors.primary.default" } } },
         },
@@ -391,7 +392,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: { token: "spacing.md" } },
-            spacing: { padding: "clamp(64px, 14vw, 128px) 20px" },
+            spacing: { padding: "64px 20px" },
             size: { width: "100%", minHeight: "420px" },
             typography: { fontFamily: { token: "typography.families.sans" }, textAlign: "center" },
             appearance: {
@@ -401,7 +402,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
             },
           },
           overrides: {
-            md: { size: { minHeight: "520px" } },
+            md: { size: { minHeight: "520px" }, spacing: { padding: "128px 20px" } },
           },
         },
         children: ["clothing-hero-title", "clothing-hero-sub", "clothing-hero-cta"],
@@ -468,9 +469,10 @@ export function buildClothingStorePageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px" },
+            spacing: { padding: "48px 20px" },
             appearance: { background: { token: "colors.surface.default" } },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["clothing-products-inner"],
       },
@@ -480,10 +482,11 @@ export function buildClothingStorePageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "flex", flexDirection: "column", gap: "clamp(24px, 4vw, 40px)" },
+            layout: { display: "flex", flexDirection: "column", gap: "24px" },
             spacing: { margin: "0 auto" },
             size: { width: "100%", maxWidth: "1200px" },
           },
+          overrides: { md: { layout: { gap: "40px" } } },
         },
         children: ["clothing-products-title", "clothing-products-tabs"],
       },
@@ -515,9 +518,10 @@ export function buildClothingStorePageFragment(): NodeFragment {
         style: {
           base: {
             ...defaultStyleFor("tabs").base,
-            layout: { display: "flex", flexDirection: "column", gap: "clamp(16px, 2.5vw, 24px)" },
+            layout: { display: "flex", flexDirection: "column", gap: "16px" },
             typography: { fontFamily: { token: "typography.families.sans" } },
           },
+          overrides: { md: { layout: { gap: "24px" } } },
           states: {
             selected: {
               spacing: { padding: "10px 20px" },
@@ -545,8 +549,9 @@ export function buildClothingStorePageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "clamp(20px, 3vw, 32px)" },
+            layout: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "20px" },
           },
+          overrides: { md: { layout: { gap: "32px" } } },
         },
         children: ["clothing-product-1"],
       },
@@ -563,8 +568,9 @@ export function buildClothingStorePageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "clamp(20px, 3vw, 32px)" },
+            layout: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "20px" },
           },
+          overrides: { md: { layout: { gap: "32px" } } },
         },
         children: ["clothing-product-2"],
       },
@@ -581,8 +587,9 @@ export function buildClothingStorePageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "clamp(20px, 3vw, 32px)" },
+            layout: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "20px" },
           },
+          overrides: { md: { layout: { gap: "32px" } } },
         },
         children: ["clothing-product-3", "clothing-product-4"],
       },
@@ -622,9 +629,10 @@ export function buildClothingStorePageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px" },
+            spacing: { padding: "48px 20px" },
             appearance: { background: { token: "colors.surface.alt" } },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["clothing-benefits-inner"],
       },
@@ -634,11 +642,11 @@ export function buildClothingStorePageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(20px, 3vw, 32px)" },
+            layout: { display: "grid", gridTemplateColumns: "1fr", gap: "20px" },
             spacing: { margin: "0 auto" },
             size: { width: "100%", maxWidth: "1200px" },
           },
-          overrides: { md: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" } } },
+          overrides: { md: { layout: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "32px" } } },
         },
         children: ["clothing-benefit-1", "clothing-benefit-2", "clothing-benefit-3"],
       },
@@ -653,9 +661,10 @@ export function buildClothingStorePageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px" },
+            spacing: { padding: "48px 20px" },
             appearance: { background: { token: "colors.surface.default" } },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["clothing-logos-inner"],
       },
@@ -665,11 +674,12 @@ export function buildClothingStorePageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            layout: { display: "flex", flexDirection: "column", gap: "clamp(24px, 4vw, 40px)", alignItems: "center" },
+            layout: { display: "flex", flexDirection: "column", gap: "24px", alignItems: "center" },
             spacing: { margin: "0 auto" },
             size: { width: "100%", maxWidth: "1200px" },
             typography: { textAlign: "center" },
           },
+          overrides: { md: { layout: { gap: "40px" } } },
         },
         children: ["clothing-logos-title", "clothing-logos"],
       },
@@ -692,7 +702,8 @@ export function buildClothingStorePageFragment(): NodeFragment {
         // se sobreescribe con un valor fluido sin tocar el resto del estilo.
         style: {
           ...defaultStyleFor("logo-cloud"),
-          base: { ...defaultStyleFor("logo-cloud").base, layout: { ...defaultStyleFor("logo-cloud").base.layout, gap: "clamp(20px, 4vw, 40px)" } },
+          base: { ...defaultStyleFor("logo-cloud").base, layout: { ...defaultStyleFor("logo-cloud").base.layout, gap: "20px" } },
+          overrides: { md: { layout: { gap: "40px" } } },
         },
         children: ["clothing-logo-1", "clothing-logo-2", "clothing-logo-3", "clothing-logo-4"],
       },
@@ -709,12 +720,13 @@ export function buildClothingStorePageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "center" },
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px" },
+            spacing: { padding: "48px 20px" },
             typography: { textAlign: "center" },
             appearance: {
               background: "linear-gradient(135deg, var(--colors-primary-default), var(--colors-text))",
             },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["clothing-newsletter-inner"],
       },
@@ -763,7 +775,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
             ...defaultStyleFor("form").base,
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.sm" } },
             size: { width: "100%", maxWidth: "480px" },
-            spacing: { padding: "clamp(20px, 3vw, 28px)", margin: "0 auto" },
+            spacing: { padding: "20px", margin: "0 auto" },
             appearance: {
               ...defaultStyleFor("form").base.appearance,
               background: { token: "colors.surface.default" },
@@ -772,7 +784,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
             },
           },
           overrides: {
-            md: { layout: { flexDirection: "row" } },
+            md: { layout: { flexDirection: "row" }, spacing: { padding: "28px", margin: "0 auto" } },
           },
         },
         children: ["clothing-newsletter-input", "clothing-newsletter-submit"],
@@ -804,9 +816,10 @@ export function buildClothingStorePageFragment(): NodeFragment {
         props: {},
         style: {
           base: {
-            spacing: { padding: "clamp(48px, 8vw, 96px) 20px" },
+            spacing: { padding: "48px 20px" },
             appearance: { background: { token: "colors.surface.default" } },
           },
+          overrides: { md: { spacing: { padding: "96px 20px" } } },
         },
         children: ["clothing-faq-inner"],
       },
@@ -880,13 +893,14 @@ export function buildClothingStorePageFragment(): NodeFragment {
         style: {
           base: {
             ...defaultStyleFor("footer").base,
-            spacing: { padding: "clamp(40px, 6vw, 64px) 20px" },
+            spacing: { padding: "40px 20px" },
             appearance: {
               ...defaultStyleFor("footer").base.appearance,
               background: { token: "colors.text" },
               color: { token: "colors.surface.default" },
             },
           },
+          overrides: { md: { spacing: { padding: "64px 20px" } } },
         },
         children: ["clothing-footer-inner"],
       },

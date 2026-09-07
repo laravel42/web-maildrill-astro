@@ -185,15 +185,26 @@ export function createNodeTreeForType(type: string): {
   if (!def) throw new Error(`Tipo de componente no registrado: "${type}"`);
   const nodes: Record<NodeId, BuilderNode> = {};
 
-  const expand = (specType: string, propsOverride?: Record<string, unknown>, childSpecs?: import("./types").DefaultChildSpec[]): NodeId => {
+  const expand = (
+    specType: string,
+    propsOverride?: Record<string, unknown>,
+    childSpecs?: import("./types").DefaultChildSpec[],
+    styleOverride?: import("../model/types").NodeStyle,
+  ): NodeId => {
     const n = createNodeForType(specType);
     if (propsOverride) n.props = { ...n.props, ...structuredClone(propsOverride) };
+    if (styleOverride) {
+      n.style = {
+        ...n.style,
+        base: { ...n.style.base, ...structuredClone(styleOverride).base },
+      };
+    }
     nodes[n.id] = n;
     const specs = childSpecs ?? getDefinition(specType)?.defaultChildren;
     if (specs && specs.length > 0) {
       n.children = n.children ?? [];
       for (const spec of specs) {
-        n.children.push(expand(spec.type, spec.props, spec.children));
+        n.children.push(expand(spec.type, spec.props, spec.children, spec.style));
       }
     }
     return n.id;

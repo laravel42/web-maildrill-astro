@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
+import { darkBandStyleFor, testimonialFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Registro" — REESCRITA (docs/48 §2 fila 11, F4) como plantilla de
@@ -35,26 +35,26 @@ import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
  */
 
 const SHADOW_CARD = "0 12px 32px rgba(15,32,64,0.10)";
-const BAND_PADDING = "clamp(56px, 9vw, 96px) 20px";
+const BAND_PADDING = "56px 20px";
 const NARROW_MAX = "640px";
 const REVEAL: BuilderNode["behaviors"] = [{ type: "reveal-on-scroll", options: { threshold: 0.15, once: true } }];
 
 function band(background: StyleValue, padding: string = BAND_PADDING): NodeStyle {
   return {
     base: { spacing: { padding }, appearance: { background } },
-    overrides: { md: { spacing: { padding: "clamp(72px, 10vw, 128px) 20px" } } },
+    overrides: { md: { spacing: { padding: "96px 20px" } } },
   };
 }
 
 /** A5: inner SIEMPRE angosto y centrado — ninguna banda supera `NARROW_MAX`. */
-function inner(maxWidth: string = NARROW_MAX, gap = "clamp(20px, 3vw, 32px)"): NodeStyle {
+function inner(maxWidth: string = NARROW_MAX, gap = "20px"): NodeStyle {
   return {
     base: {
       layout: { display: "flex", flexDirection: "column", gap, alignItems: "center" },
       spacing: { margin: "0 auto" },
       size: { width: "100%", maxWidth },
     },
-    overrides: { sm: { spacing: { padding: "0 8px" } } },
+    overrides: { sm: { spacing: { padding: "0 8px" } }, md: { layout: { gap: "32px" } } },
   };
 }
 
@@ -132,27 +132,21 @@ function benefit(n: 1 | 2 | 3, iconName: string, title: string, text: string) {
 }
 
 function studentTestimonial(n: 1 | 2, quote: string, name: string, role: string, initials: string) {
-  return {
-    [`academy-testimonial-${n}`]: {
-      id: `academy-testimonial-${n}`,
-      type: "testimonial",
-      props: { quote, name, role, initials },
-      style: {
-        base: {
-          appearance: {
-            background: { token: "colors.surface.default" },
-            borderWidth: "1px",
-            borderStyle: "solid",
-            borderColor: { token: "colors.border" },
-            borderRadius: "16px",
-            boxShadow: SHADOW_CARD,
-          },
-          spacing: { padding: "clamp(20px, 3vw, 28px)" },
-        },
-        states: { hover: { appearance: { boxShadow: "0 18px 40px rgba(15,32,64,0.16)" } } },
+  return testimonialFragment(`academy-testimonial-${n}`, { quote, name, role, initials }, {
+    base: {
+      appearance: {
+        background: { token: "colors.surface.default" },
+        borderWidth: "1px",
+        borderStyle: "solid",
+        borderColor: { token: "colors.border" },
+        borderRadius: "16px",
+        boxShadow: SHADOW_CARD,
       },
+      spacing: { padding: "20px" },
     },
-  };
+    overrides: { md: { spacing: { padding: "28px" } } },
+    states: { hover: { appearance: { boxShadow: "0 18px 40px rgba(15,32,64,0.16)" } } },
+  });
 }
 
 export function buildSignupPageFragment(): NodeFragment {
@@ -193,10 +187,11 @@ export function buildSignupPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "16px" },
-            spacing: { padding: "clamp(56px, 9vw, 112px) 20px" },
+            spacing: { padding: "56px 20px" },
             typography: { fontFamily: { token: "typography.families.sans" }, textAlign: "center" },
             appearance: { background: { token: "colors.surface.alt" } },
           },
+          overrides: { md: { spacing: { padding: "112px 20px" } } },
         },
         children: ["academy-hero-inner"],
       },
@@ -280,7 +275,8 @@ export function buildSignupPageFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "flex", flexDirection: "column", gap: "clamp(24px, 4vw, 36px)" }, size: { width: "100%" } },
+          base: { layout: { display: "flex", flexDirection: "column", gap: "24px" }, size: { width: "100%" } },
+          overrides: { md: { layout: { gap: "36px" } } },
         },
         children: ["academy-benefit-1", "academy-benefit-2", "academy-benefit-3"],
       },
@@ -314,7 +310,10 @@ export function buildSignupPageFragment(): NodeFragment {
         id: "academy-testimonials-list",
         type: "container",
         props: {},
-        style: { base: { layout: { display: "flex", flexDirection: "column", gap: "clamp(16px, 2.5vw, 24px)" }, size: { width: "100%" } } },
+        style: {
+          base: { layout: { display: "flex", flexDirection: "column", gap: "16px" }, size: { width: "100%" } },
+          overrides: { md: { layout: { gap: "24px" } } },
+        },
         children: ["academy-testimonial-1", "academy-testimonial-2"],
       },
       ...studentTestimonial(
@@ -406,7 +405,7 @@ export function buildSignupPageFragment(): NodeFragment {
         id: "academy-cohort-alert",
         type: "section",
         props: {},
-        style: band("linear-gradient(135deg, var(--colors-primary-default), var(--colors-text))", "clamp(32px, 5vw, 48px) 20px"),
+        style: band("linear-gradient(135deg, var(--colors-primary-default), var(--colors-text))", "32px 20px"),
         children: ["academy-cohort-alert-inner"],
       },
       "academy-cohort-alert-inner": {
@@ -474,7 +473,7 @@ export function buildSignupPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: "12px" },
-            spacing: { padding: "clamp(20px, 3vw, 28px)" },
+            spacing: { padding: "20px" },
             size: { width: "100%" },
             appearance: {
               background: { token: "colors.surface.default" },
@@ -590,9 +589,10 @@ export function buildSignupPageFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: { token: "spacing.sm" } },
-            spacing: { padding: "clamp(32px, 6vw, 48px) 20px" },
+            spacing: { padding: "32px 20px" },
             appearance: { background: { token: "colors.band.dark" }, color: { token: "colors.band.on" } },
           },
+          overrides: { md: { spacing: { padding: "48px 20px" } } },
         },
         children: ["academy-footer-social"],
       },
@@ -642,29 +642,41 @@ export function buildSignupPageFragment(): NodeFragment {
       };
 
       t["academy-testimonials-title"] = { en: { content: "<strong>What our graduates say</strong>" }, it: { content: "<strong>Cosa dicono i nostri diplomati</strong>" } };
-      t["academy-testimonial-1"] = {
+      t["academy-testimonial-1-quote"] = {
         en: {
-          quote: "I started knowing nothing about code. Eight months later I have my first job as a junior developer. The live mentorship made all the difference.",
-          name: "Camila Duarte",
-          role: "Graduate, 2025-B cohort",
+          content:
+            "<p>I started knowing nothing about code. Eight months later I have my first job as a junior developer. The live mentorship made all the difference.</p>",
         },
         it: {
-          quote: "Ho iniziato senza sapere nulla di codice. Otto mesi dopo ho il mio primo lavoro come sviluppatrice junior. Il mentoring dal vivo ha fatto la differenza.",
-          name: "Camila Duarte",
-          role: "Diplomata, coorte 2025-B",
+          content:
+            "<p>Ho iniziato senza sapere nulla di codice. Otto mesi dopo ho il mio primo lavoro come sviluppatrice junior. Il mentoring dal vivo ha fatto la differenza.</p>",
         },
       };
-      t["academy-testimonial-2"] = {
+      t["academy-testimonial-1-name"] = {
+        en: { content: "<strong>Camila Duarte</strong>" },
+        it: { content: "<strong>Camila Duarte</strong>" },
+      };
+      t["academy-testimonial-1-role"] = {
+        en: { content: "Graduate, 2025-B cohort" },
+        it: { content: "Diplomata, coorte 2025-B" },
+      };
+      t["academy-testimonial-2-quote"] = {
         en: {
-          quote: "The real projects gave me a portfolio I could use to apply for data analyst roles without prior formal experience.",
-          name: "Bruno Sepúlveda",
-          role: "Graduate, 2025-A cohort",
+          content:
+            "<p>The real projects gave me a portfolio I could use to apply for data analyst roles without prior formal experience.</p>",
         },
         it: {
-          quote: "I progetti reali mi hanno dato un portfolio con cui candidarmi per ruoli di data analyst senza esperienza formale precedente.",
-          name: "Bruno Sepúlveda",
-          role: "Diplomato, coorte 2025-A",
+          content:
+            "<p>I progetti reali mi hanno dato un portfolio con cui candidarmi per ruoli di data analyst senza esperienza formale precedente.</p>",
         },
+      };
+      t["academy-testimonial-2-name"] = {
+        en: { content: "<strong>Bruno Sepúlveda</strong>" },
+        it: { content: "<strong>Bruno Sepúlveda</strong>" },
+      };
+      t["academy-testimonial-2-role"] = {
+        en: { content: "Graduate, 2025-A cohort" },
+        it: { content: "Diplomato, coorte 2025-A" },
       };
 
       t["academy-faq-title"] = { en: { content: "<strong>Frequently asked questions</strong>" }, it: { content: "<strong>Domande frequenti</strong>" } };

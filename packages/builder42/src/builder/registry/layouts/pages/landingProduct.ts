@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
+import { darkBandStyleFor, testimonialFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Landing de producto" — REESCRITA (docs/48 §2 fila 8, F3) como
@@ -45,21 +45,25 @@ import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
 
 const SHADOW_CARD = "0 12px 32px rgba(15,23,42,0.10)";
 const SHADOW_HOVER = "0 20px 44px rgba(15,23,42,0.18)";
-const BAND_PADDING = "clamp(56px, 9vw, 112px) 20px";
+const BAND_PADDING = "56px 20px";
 const INNER_MAX = "1180px";
 const REVEAL: BuilderNode["behaviors"] = [{ type: "reveal-on-scroll", options: { threshold: 0.15, once: true } }];
 
-function band(background: StyleValue, padding: string = BAND_PADDING): NodeStyle {
-  return { base: { spacing: { padding }, appearance: { background } } };
+function band(background: StyleValue, padding: string = BAND_PADDING, paddingMd: string = "112px 20px"): NodeStyle {
+  return {
+    base: { spacing: { padding }, appearance: { background } },
+    overrides: { md: { spacing: { padding: paddingMd } } },
+  };
 }
 
-function inner(maxWidth: string = INNER_MAX, gap = "clamp(24px, 4vw, 40px)"): NodeStyle {
+function inner(maxWidth: string = INNER_MAX, gap = "24px", gapMd = "40px"): NodeStyle {
   return {
     base: {
       layout: { display: "flex", flexDirection: "column", gap },
       spacing: { margin: "0 auto" },
       size: { width: "100%", maxWidth },
     },
+    overrides: { md: { layout: { gap: gapMd } } },
   };
 }
 
@@ -267,11 +271,12 @@ export function buildLandingProductFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" },
-            spacing: { padding: "clamp(64px, 10vw, 128px) 20px" },
+            spacing: { padding: "64px 20px" },
             appearance: {
               background: "linear-gradient(160deg, var(--colors-surface-alt) 0%, var(--colors-surface-default) 60%)",
             },
           },
+          overrides: { md: { spacing: { padding: "128px 20px" } } },
         },
         children: ["saas-hero-inner"],
       },
@@ -397,14 +402,14 @@ export function buildLandingProductFragment(): NodeFragment {
         id: "saas-logos",
         type: "section",
         props: {},
-        style: band({ token: "colors.surface.default" }, "clamp(32px, 5vw, 56px) 20px"),
+        style: band({ token: "colors.surface.default" }, "32px 20px", "56px 20px"),
         children: ["saas-logos-inner"],
       },
       "saas-logos-inner": {
         id: "saas-logos-inner",
         type: "container",
         props: {},
-        style: { ...inner(INNER_MAX, "clamp(16px, 3vw, 24px)"), overrides: { md: { spacing: { padding: "0" } } } },
+        style: { ...inner(INNER_MAX, "16px", "24px"), overrides: { md: { spacing: { padding: "0" } } } },
         children: ["saas-logos-label", "saas-logo-cloud"],
       },
       "saas-logos-label": {
@@ -426,8 +431,9 @@ export function buildLandingProductFragment(): NodeFragment {
           ...defaultStyleFor("logo-cloud"),
           base: {
             ...defaultStyleFor("logo-cloud").base,
-            layout: { ...defaultStyleFor("logo-cloud").base.layout, gap: "clamp(20px, 4vw, 40px)" },
+            layout: { ...defaultStyleFor("logo-cloud").base.layout, gap: "20px" },
           },
+          overrides: { md: { layout: { gap: "40px" } } },
         },
         children: ["saas-logo-1", "saas-logo-2", "saas-logo-3", "saas-logo-4", "saas-logo-5"],
       },
@@ -547,10 +553,10 @@ export function buildLandingProductFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(16px, 3vw, 32px)" } },
+          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "16px" } },
           overrides: {
             sm: { layout: { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" } },
-            md: { layout: { gridTemplateColumns: "repeat(4, minmax(0, 1fr))" } },
+            md: { layout: { gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "32px" } },
           },
         },
         children: ["saas-stat-1", "saas-stat-2", "saas-stat-3", "saas-stat-4"],
@@ -593,8 +599,8 @@ export function buildLandingProductFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "flex", flexDirection: "column", gap: "clamp(16px, 2.5vw, 24px)", alignItems: "center" } },
-          overrides: { md: { layout: { flexDirection: "row", justifyContent: "center", alignItems: "stretch" } } },
+          base: { layout: { display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" } },
+          overrides: { md: { layout: { flexDirection: "row", justifyContent: "center", alignItems: "stretch", gap: "24px" } } },
         },
         children: ["saas-pricing-plan-1", "saas-pricing-plan-2", "saas-pricing-plan-3"],
       },
@@ -636,33 +642,31 @@ export function buildLandingProductFragment(): NodeFragment {
         type: "container",
         props: {},
         style: {
-          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "clamp(16px, 2.5vw, 28px)" } },
-          overrides: { md: { layout: { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" } } },
+          base: { layout: { display: "grid", gridTemplateColumns: "1fr", gap: "16px" } },
+          overrides: { md: { layout: { gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "28px" } } },
         },
         children: ["saas-testimonial-1", "saas-testimonial-2"],
       },
-      "saas-testimonial-1": {
-        id: "saas-testimonial-1",
-        type: "testimonial",
-        props: {
+      ...testimonialFragment(
+        "saas-testimonial-1",
+        {
           quote: "Redujimos de 6 horas a 40 minutos el proceso de onboarding de clientes. Fluxo se paga solo con el tiempo que ahorra el equipo.",
           name: "Lucía Ferrer",
           role: "COO, Nimbus",
           initials: "LF",
         },
-        style: { base: { ...card().base, spacing: { padding: "clamp(20px, 3vw, 28px)" } } },
-      },
-      "saas-testimonial-2": {
-        id: "saas-testimonial-2",
-        type: "testimonial",
-        props: {
+        { base: { ...card().base, spacing: { padding: "20px" } }, overrides: { md: { spacing: { padding: "28px" } } } },
+      ),
+      ...testimonialFragment(
+        "saas-testimonial-2",
+        {
           quote: "La curva de aprendizaje es mínima. En una semana ya teníamos 8 flujos corriendo sin depender de ingeniería.",
           name: "Andrés Molina",
           role: "Head of Ops, Kairos",
           initials: "AM",
         },
-        style: { base: { ...card().base, spacing: { padding: "clamp(20px, 3vw, 28px)" } } },
-      },
+        { base: { ...card().base, spacing: { padding: "20px" } }, overrides: { md: { spacing: { padding: "28px" } } } },
+      ),
 
       // --- FAQ -------------------------------------------------------------------
       "saas-faq": {
@@ -754,9 +758,10 @@ export function buildLandingProductFragment(): NodeFragment {
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: { token: "spacing.sm" } },
-            spacing: { padding: "clamp(32px, 6vw, 56px) 20px" },
+            spacing: { padding: "32px 20px" },
             appearance: { background: { token: "colors.band.dark" }, color: { token: "colors.band.on" } },
           },
+          overrides: { md: { spacing: { padding: "56px 20px" } } },
         },
         children: ["saas-footer-social"],
       },
@@ -871,29 +876,29 @@ export function buildLandingProductFragment(): NodeFragment {
       };
 
       t["saas-testimonials-title"] = { en: { content: "<strong>Teams already moving faster with Fluxo</strong>" }, it: { content: "<strong>Team che lavorano già più velocemente con Fluxo</strong>" } };
-      t["saas-testimonial-1"] = {
-        en: {
-          quote: "We cut our customer onboarding process from 6 hours to 40 minutes. Fluxo pays for itself with the time the team saves.",
-          name: "Lucía Ferrer",
-          role: "COO, Nimbus",
-        },
-        it: {
-          quote: "Abbiamo ridotto il processo di onboarding clienti da 6 ore a 40 minuti. Fluxo si ripaga da solo con il tempo che fa risparmiare al team.",
-          name: "Lucía Ferrer",
-          role: "COO, Nimbus",
-        },
+      t["saas-testimonial-1-quote"] = {
+        en: { content: "<p>We cut our customer onboarding process from 6 hours to 40 minutes. Fluxo pays for itself with the time the team saves.</p>" },
+        it: { content: "<p>Abbiamo ridotto il processo di onboarding clienti da 6 ore a 40 minuti. Fluxo si ripaga da solo con il tempo che fa risparmiare al team.</p>" },
       };
-      t["saas-testimonial-2"] = {
-        en: {
-          quote: "The learning curve is minimal. Within a week we already had 8 flows running without relying on engineering.",
-          name: "Andrés Molina",
-          role: "Head of Ops, Kairos",
-        },
-        it: {
-          quote: "La curva di apprendimento è minima. In una settimana avevamo già 8 flussi attivi senza dipendere dall'ingegneria.",
-          name: "Andrés Molina",
-          role: "Head of Ops, Kairos",
-        },
+      t["saas-testimonial-1-name"] = {
+        en: { content: "<strong>Lucía Ferrer</strong>" },
+        it: { content: "<strong>Lucía Ferrer</strong>" },
+      };
+      t["saas-testimonial-1-role"] = {
+        en: { content: "COO, Nimbus" },
+        it: { content: "COO, Nimbus" },
+      };
+      t["saas-testimonial-2-quote"] = {
+        en: { content: "<p>The learning curve is minimal. Within a week we already had 8 flows running without relying on engineering.</p>" },
+        it: { content: "<p>La curva di apprendimento è minima. In una settimana avevamo già 8 flussi attivi senza dipendere dall'ingegneria.</p>" },
+      };
+      t["saas-testimonial-2-name"] = {
+        en: { content: "<strong>Andrés Molina</strong>" },
+        it: { content: "<strong>Andrés Molina</strong>" },
+      };
+      t["saas-testimonial-2-role"] = {
+        en: { content: "Head of Ops, Kairos" },
+        it: { content: "Head of Ops, Kairos" },
       };
 
       t["saas-faq-title"] = { en: { content: "<strong>Frequently asked questions</strong>" }, it: { content: "<strong>Domande frequenti</strong>" } };

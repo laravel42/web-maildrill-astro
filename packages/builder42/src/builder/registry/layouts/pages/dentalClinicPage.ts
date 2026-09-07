@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { NodeTranslations } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor } from "../helpers";
+import { darkBandStyleFor, testimonialFragment } from "../helpers";
 
 /**
  * Página "Clínica dental" — plantilla de negocio real (encargo del
@@ -693,18 +693,17 @@ export function buildDentalClinicPageFragment(): NodeFragment {
         },
         children: ["dental-testimonial"],
       },
-      "dental-testimonial": {
-        id: "dental-testimonial",
-        type: "testimonial",
-        props: {
+      ...testimonialFragment(
+        "dental-testimonial",
+        {
           quote:
             "Le tenía mucho miedo al dentista, pero en Sonrisa Plena me explicaron cada paso y nunca me sentí presionada. Ahora vengo a mis revisiones sin ansiedad.",
           name: "Lorena Castillo",
           role: "Paciente desde 2023",
           initials: "LC",
         },
-        style: defaultStyleFor("testimonial"),
-      },
+        defaultStyleFor("testimonial"),
+      ),
 
       // --- FAQ (accordion) — banda clara ------------------------------------------
       "dental-faq": {
