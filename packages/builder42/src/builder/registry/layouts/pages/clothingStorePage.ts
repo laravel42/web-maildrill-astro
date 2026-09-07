@@ -129,9 +129,9 @@ export function buildClothingStorePageFragment(): NodeFragment {
       en: { content: "hello@nordikastudio.com<br/>+34 933 456 789" },
       it: { content: "hello@nordikastudio.com<br/>+34 933 456 789" },
     },
-    "clothing-footer": {
-      en: { copyright: "© 2026 Nordika Studio. All rights reserved." },
-      it: { copyright: "© 2026 Nordika Studio. Tutti i diritti riservati." },
+    "clothing-footer-copyright": {
+      en: { content: "© 2026 Nordika Studio. All rights reserved." },
+      it: { content: "© 2026 Nordika Studio. Tutti i diritti riservati." },
     },
   };
 
@@ -897,7 +897,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-footer": {
         id: "clothing-footer",
         type: "footer",
-        props: { copyright: "© 2026 Nordika Studio. Todos los derechos reservados." },
+        props: {},
         style: {
           base: {
             ...defaultStyleFor("footer").base,
@@ -910,7 +910,25 @@ export function buildClothingStorePageFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "64px 20px" } } },
         },
-        children: ["clothing-footer-inner"],
+        children: ["clothing-footer-inner", "clothing-footer-copyright"],
+      },
+      "clothing-footer-copyright": {
+        id: "clothing-footer-copyright",
+        type: "text",
+        props: { content: "© 2026 Nordika Studio. Todos los derechos reservados." },
+        style: {
+          base: {
+            size: { width: "100%" },
+            spacing: { padding: "16px 0 0 0" },
+            typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+            appearance: {
+              color: "inherit",
+              borderColor: "rgba(255,255,255,0.16)",
+              borderWidth: "1px 0 0 0",
+              borderStyle: "solid",
+            },
+          },
+        },
       },
       "clothing-footer-inner": {
         id: "clothing-footer-inner",

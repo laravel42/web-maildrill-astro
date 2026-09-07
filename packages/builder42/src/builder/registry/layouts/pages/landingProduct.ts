@@ -754,7 +754,7 @@ export function buildLandingProductFragment(): NodeFragment {
       "saas-footer": {
         id: "saas-footer",
         type: "footer",
-        props: { copyright: "© 2026 Fluxo Technologies Inc. Todos los derechos reservados." },
+        props: {},
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: { token: "spacing.sm" } },
@@ -763,13 +763,31 @@ export function buildLandingProductFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "56px 20px" } } },
         },
-        children: ["saas-footer-social"],
+        children: ["saas-footer-social", "saas-footer-copyright"],
       },
       "saas-footer-social": {
         id: "saas-footer-social",
         type: "social-links",
         props: {},
         style: darkBandStyleFor("social-links"),
+      },
+      "saas-footer-copyright": {
+        id: "saas-footer-copyright",
+        type: "text",
+        props: { content: "© 2026 Fluxo Technologies Inc. Todos los derechos reservados." },
+        style: {
+          base: {
+            size: { width: "100%" },
+            spacing: { padding: "16px 0 0 0" },
+            typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+            appearance: {
+              color: "inherit",
+              borderColor: "rgba(255,255,255,0.16)",
+              borderWidth: "1px 0 0 0",
+              borderStyle: "solid",
+            },
+          },
+        },
       },
     },
 
@@ -926,9 +944,9 @@ export function buildLandingProductFragment(): NodeFragment {
         it: { content: "Sì, i piani Team ed Enterprise includono un onboarding assistito per migrare i tuoi flussi esistenti." },
       };
 
-      t["saas-footer"] = {
-        en: { copyright: "© 2026 Fluxo Technologies Inc. All rights reserved." },
-        it: { copyright: "© 2026 Fluxo Technologies Inc. Tutti i diritti riservati." },
+      t["saas-footer-copyright"] = {
+        en: { content: "© 2026 Fluxo Technologies Inc. All rights reserved." },
+        it: { content: "© 2026 Fluxo Technologies Inc. Tutti i diritti riservati." },
       };
 
       return t;

@@ -390,15 +390,33 @@ export function createAboutPage(): BuilderPage {
         "about-footer": {
           id: "about-footer",
           type: "footer",
-          props: { copyright: "© Builder42 — página de ejemplo." },
+          props: {},
           style: defaultStyleFor("footer"),
-          children: ["about-footer-social"],
+          children: ["about-footer-social", "about-footer-copyright"],
         },
         "about-footer-social": {
           id: "about-footer-social",
           type: "social-links",
           props: {},
           style: defaultStyleFor("social-links"),
+        },
+        "about-footer-copyright": {
+          id: "about-footer-copyright",
+          type: "text",
+          props: { content: "© Builder42 — página de ejemplo." },
+          style: {
+            base: {
+              size: { width: "100%" },
+              spacing: { padding: "16px 0 0 0" },
+              typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+              appearance: {
+                color: "inherit",
+                borderColor: "rgba(0,0,0,0.12)",
+                borderWidth: "1px 0 0 0",
+                borderStyle: "solid",
+              },
+            },
+          },
         },
       },
     },

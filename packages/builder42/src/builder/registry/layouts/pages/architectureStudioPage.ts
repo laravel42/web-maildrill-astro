@@ -991,7 +991,7 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-footer": {
         id: "archstudio-footer",
         type: "footer",
-        props: { copyright: "© 2026 Umbral Arquitectos. Todos los derechos reservados." },
+        props: {},
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.lg" } },
@@ -1001,7 +1001,7 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "64px 40px" } } },
         },
-        children: ["archstudio-footer-address", "archstudio-footer-hours", "archstudio-footer-social"],
+        children: ["archstudio-footer-address", "archstudio-footer-hours", "archstudio-footer-social", "archstudio-footer-copyright"],
       },
       "archstudio-footer-address": {
         id: "archstudio-footer-address",
@@ -1020,6 +1020,24 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
         type: "social-links",
         props: {},
         style: darkBandStyleFor("social-links"),
+      },
+      "archstudio-footer-copyright": {
+        id: "archstudio-footer-copyright",
+        type: "text",
+        props: { content: "© 2026 Umbral Arquitectos. Todos los derechos reservados." },
+        style: {
+          base: {
+            size: { width: "100%" },
+            spacing: { padding: "16px 0 0 0" },
+            typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+            appearance: {
+              color: "inherit",
+              borderColor: "rgba(255,255,255,0.16)",
+              borderWidth: "1px 0 0 0",
+              borderStyle: "solid",
+            },
+          },
+        },
       },
     },
 
@@ -1149,9 +1167,9 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       };
       t["archstudio-submit"] = { en: { label: "Send inquiry" }, it: { label: "Invia richiesta" } };
 
-      t["archstudio-footer"] = {
-        en: { copyright: "© 2026 Umbral Architects. All rights reserved." },
-        it: { copyright: "© 2026 Umbral Architetti. Tutti i diritti riservati." },
+      t["archstudio-footer-copyright"] = {
+        en: { content: "© 2026 Umbral Architects. All rights reserved." },
+        it: { content: "© 2026 Umbral Architetti. Tutti i diritti riservati." },
       };
       t["archstudio-footer-address"] = {
         en: { content: "4820 Del Libertador Ave, 3rd Floor, Buenos Aires" },

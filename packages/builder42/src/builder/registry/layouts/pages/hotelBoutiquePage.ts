@@ -899,7 +899,7 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       "hotel-footer": {
         id: "hotel-footer",
         type: "footer",
-        props: { copyright: "© 2026 Hotel Casa Coral · Calle 10 Norte 45, Playa del Carmen, Q. Roo. Todos los derechos reservados." },
+        props: {},
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: { token: "spacing.sm" } },
@@ -911,13 +911,31 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "56px 20px" } } },
         },
-        children: ["hotel-footer-social"],
+        children: ["hotel-footer-social", "hotel-footer-copyright"],
       },
       "hotel-footer-social": {
         id: "hotel-footer-social",
         type: "social-links",
         props: {},
         style: darkBandStyleFor("social-links"),
+      },
+      "hotel-footer-copyright": {
+        id: "hotel-footer-copyright",
+        type: "text",
+        props: { content: "© 2026 Hotel Casa Coral · Calle 10 Norte 45, Playa del Carmen, Q. Roo. Todos los derechos reservados." },
+        style: {
+          base: {
+            size: { width: "100%" },
+            spacing: { padding: "16px 0 0 0" },
+            typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+            appearance: {
+              color: "inherit",
+              borderColor: "rgba(255,255,255,0.16)",
+              borderWidth: "1px 0 0 0",
+              borderStyle: "solid",
+            },
+          },
+        },
       },
     },
 
@@ -1021,9 +1039,9 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       t["hotel-reservation-room"] = { en: { placeholder: "Select a room" }, it: { placeholder: "Seleziona una camera" } };
       t["hotel-reservation-submit"] = { en: { label: "Confirm booking" }, it: { label: "Confermare la prenotazione" } };
 
-      t["hotel-footer"] = {
-        en: { copyright: "© 2026 Hotel Casa Coral · Calle 10 Norte 45, Playa del Carmen, Q. Roo. All rights reserved." },
-        it: { copyright: "© 2026 Hotel Casa Coral · Calle 10 Norte 45, Playa del Carmen, Q. Roo. Tutti i diritti riservati." },
+      t["hotel-footer-copyright"] = {
+        en: { content: "© 2026 Hotel Casa Coral · Calle 10 Norte 45, Playa del Carmen, Q. Roo. All rights reserved." },
+        it: { content: "© 2026 Hotel Casa Coral · Calle 10 Norte 45, Playa del Carmen, Q. Roo. Tutti i diritti riservati." },
       };
 
       return t;

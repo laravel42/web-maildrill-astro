@@ -585,7 +585,7 @@ export function buildSignupPageFragment(): NodeFragment {
       "academy-footer": {
         id: "academy-footer",
         type: "footer",
-        props: { copyright: "© 2026 Núcleo Academia. Todos los derechos reservados." },
+        props: {},
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: { token: "spacing.sm" } },
@@ -594,13 +594,31 @@ export function buildSignupPageFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "48px 20px" } } },
         },
-        children: ["academy-footer-social"],
+        children: ["academy-footer-social", "academy-footer-copyright"],
       },
       "academy-footer-social": {
         id: "academy-footer-social",
         type: "social-links",
         props: {},
         style: darkBandStyleFor("social-links"),
+      },
+      "academy-footer-copyright": {
+        id: "academy-footer-copyright",
+        type: "text",
+        props: { content: "© 2026 Núcleo Academia. Todos los derechos reservados." },
+        style: {
+          base: {
+            size: { width: "100%" },
+            spacing: { padding: "16px 0 0 0" },
+            typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+            appearance: {
+              color: "inherit",
+              borderColor: "rgba(255,255,255,0.16)",
+              borderWidth: "1px 0 0 0",
+              borderStyle: "solid",
+            },
+          },
+        },
       },
     },
 
@@ -735,9 +753,9 @@ export function buildSignupPageFragment(): NodeFragment {
       };
       t["academy-submit"] = { en: { label: "Send application" }, it: { label: "Invia richiesta" } };
 
-      t["academy-footer"] = {
-        en: { copyright: "© 2026 Núcleo Academy. All rights reserved." },
-        it: { copyright: "© 2026 Núcleo Academy. Tutti i diritti riservati." },
+      t["academy-footer-copyright"] = {
+        en: { content: "© 2026 Núcleo Academy. All rights reserved." },
+        it: { content: "© 2026 Núcleo Academy. Tutti i diritti riservati." },
       };
 
       return t;

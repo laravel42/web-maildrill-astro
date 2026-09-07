@@ -752,7 +752,7 @@ export function buildLawFirmPageFragment(): NodeFragment {
       "lawfirm-footer": {
         id: "lawfirm-footer",
         type: "footer",
-        props: { copyright: "© 2026 Zaldívar & Ochoa Abogados. Todos los derechos reservados." },
+        props: {},
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.lg" } },
@@ -762,7 +762,7 @@ export function buildLawFirmPageFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "64px 40px" } } },
         },
-        children: ["lawfirm-footer-address", "lawfirm-footer-hours", "lawfirm-footer-social"],
+        children: ["lawfirm-footer-address", "lawfirm-footer-hours", "lawfirm-footer-social", "lawfirm-footer-copyright"],
       },
       "lawfirm-footer-address": {
         id: "lawfirm-footer-address",
@@ -781,6 +781,24 @@ export function buildLawFirmPageFragment(): NodeFragment {
         type: "social-links",
         props: {},
         style: darkBandStyleFor("social-links"),
+      },
+      "lawfirm-footer-copyright": {
+        id: "lawfirm-footer-copyright",
+        type: "text",
+        props: { content: "© 2026 Zaldívar & Ochoa Abogados. Todos los derechos reservados." },
+        style: {
+          base: {
+            size: { width: "100%" },
+            spacing: { padding: "16px 0 0 0" },
+            typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+            appearance: {
+              color: "inherit",
+              borderColor: "rgba(255,255,255,0.16)",
+              borderWidth: "1px 0 0 0",
+              borderStyle: "solid",
+            },
+          },
+        },
       },
     },
 
@@ -904,9 +922,9 @@ export function buildLawFirmPageFragment(): NodeFragment {
       };
       t["lawfirm-submit"] = { en: { label: "Send inquiry" }, it: { label: "Invia richiesta" } };
 
-      t["lawfirm-footer"] = {
-        en: { copyright: "© 2026 Zaldívar & Ochoa Attorneys. All rights reserved." },
-        it: { copyright: "© 2026 Zaldívar & Ochoa Avvocati. Tutti i diritti riservati." },
+      t["lawfirm-footer-copyright"] = {
+        en: { content: "© 2026 Zaldívar & Ochoa Attorneys. All rights reserved." },
+        it: { content: "© 2026 Zaldívar & Ochoa Avvocati. Tutti i diritti riservati." },
       };
       t["lawfirm-footer-address"] = {
         en: { content: "250 Reforma Ave, 12th Floor, Mexico City" },

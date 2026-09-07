@@ -993,7 +993,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-footer": {
         id: "fitness-footer",
         type: "footer",
-        props: { copyright: "© 2026 Vértice Fitness Studio. Todos los derechos reservados." },
+        props: {},
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.lg" } },
@@ -1007,7 +1007,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "64px 40px" } } },
         },
-        children: ["fitness-footer-address", "fitness-footer-social"],
+        children: ["fitness-footer-address", "fitness-footer-social", "fitness-footer-copyright"],
       },
       "fitness-footer-address": {
         id: "fitness-footer-address",
@@ -1020,6 +1020,24 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         type: "social-links",
         props: {},
         style: darkBandStyleFor("social-links"),
+      },
+      "fitness-footer-copyright": {
+        id: "fitness-footer-copyright",
+        type: "text",
+        props: { content: "© 2026 Vértice Fitness Studio. Todos los derechos reservados." },
+        style: {
+          base: {
+            size: { width: "100%" },
+            spacing: { padding: "16px 0 0 0" },
+            typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+            appearance: {
+              color: "inherit",
+              borderColor: "rgba(255,255,255,0.16)",
+              borderWidth: "1px 0 0 0",
+              borderStyle: "solid",
+            },
+          },
+        },
       },
     },
   };
@@ -1238,9 +1256,9 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       en: { label: "Book my free class" },
       it: { label: "Prenota la mia lezione gratuita" },
     },
-    "fitness-footer": {
-      en: { copyright: "© 2026 Vértice Fitness Studio. All rights reserved." },
-      it: { copyright: "© 2026 Vértice Fitness Studio. Tutti i diritti riservati." },
+    "fitness-footer-copyright": {
+      en: { content: "© 2026 Vértice Fitness Studio. All rights reserved." },
+      it: { content: "© 2026 Vértice Fitness Studio. Tutti i diritti riservati." },
     },
     "fitness-footer-address": {
       en: { content: "245 Athletes Ave, Las Águilas, Guadalajara, Jalisco" },

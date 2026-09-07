@@ -909,7 +909,7 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-footer": {
         id: "team-page-footer",
         type: "footer",
-        props: { copyright: "© 2026 Muelle 12 Coworking. Todos los derechos reservados." },
+        props: {},
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.lg" } },
@@ -920,7 +920,7 @@ export function buildTeamPageFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "64px 40px" } } },
         },
-        children: ["team-page-footer-address", "team-page-footer-social"],
+        children: ["team-page-footer-address", "team-page-footer-social", "team-page-footer-copyright"],
       },
       "team-page-footer-address": {
         id: "team-page-footer-address",
@@ -933,6 +933,24 @@ export function buildTeamPageFragment(): NodeFragment {
         type: "social-links",
         props: {},
         style: darkBandStyleFor("social-links"),
+      },
+      "team-page-footer-copyright": {
+        id: "team-page-footer-copyright",
+        type: "text",
+        props: { content: "© 2026 Muelle 12 Coworking. Todos los derechos reservados." },
+        style: {
+          base: {
+            size: { width: "100%" },
+            spacing: { padding: "16px 0 0 0" },
+            typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+            appearance: {
+              color: "inherit",
+              borderColor: "rgba(255,255,255,0.16)",
+              borderWidth: "1px 0 0 0",
+              borderStyle: "solid",
+            },
+          },
+        },
       },
     },
 
@@ -1127,9 +1145,9 @@ export function buildTeamPageFragment(): NodeFragment {
       };
       t["team-page-submit"] = { en: { label: "Book a tour" }, it: { label: "Prenota un tour" } };
 
-      t["team-page-footer"] = {
-        en: { copyright: "© 2026 Muelle 12 Coworking. All rights reserved." },
-        it: { copyright: "© 2026 Muelle 12 Coworking. Tutti i diritti riservati." },
+      t["team-page-footer-copyright"] = {
+        en: { content: "© 2026 Muelle 12 Coworking. All rights reserved." },
+        it: { content: "© 2026 Muelle 12 Coworking. Tutti i diritti riservati." },
       };
       t["team-page-footer-address"] = {
         en: { content: "480 Chapultepec Ave, Americana, Guadalajara, Jalisco" },

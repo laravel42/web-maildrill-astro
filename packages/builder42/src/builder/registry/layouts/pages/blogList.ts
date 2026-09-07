@@ -625,7 +625,7 @@ export function buildBlogListFragment(): NodeFragment {
       "editorial-footer": {
         id: "editorial-footer",
         type: "footer",
-        props: { copyright: "© 2026 Sobremesa · Revista y podcast de cultura gastronómica. Todos los derechos reservados." },
+        props: {},
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: { token: "spacing.sm" } },
@@ -634,13 +634,31 @@ export function buildBlogListFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "56px 20px" } } },
         },
-        children: ["editorial-footer-social"],
+        children: ["editorial-footer-social", "editorial-footer-copyright"],
       },
       "editorial-footer-social": {
         id: "editorial-footer-social",
         type: "social-links",
         props: {},
         style: darkBandStyleFor("social-links"),
+      },
+      "editorial-footer-copyright": {
+        id: "editorial-footer-copyright",
+        type: "text",
+        props: { content: "© 2026 Sobremesa · Revista y podcast de cultura gastronómica. Todos los derechos reservados." },
+        style: {
+          base: {
+            size: { width: "100%" },
+            spacing: { padding: "16px 0 0 0" },
+            typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+            appearance: {
+              color: "inherit",
+              borderColor: "rgba(255,255,255,0.16)",
+              borderWidth: "1px 0 0 0",
+              borderStyle: "solid",
+            },
+          },
+        },
       },
     },
 
@@ -755,9 +773,9 @@ export function buildBlogListFragment(): NodeFragment {
       t["editorial-newsletter-input"] = { en: { placeholder: "your@email.com" }, it: { placeholder: "tua@email.com" } };
       t["editorial-newsletter-submit"] = { en: { label: "Subscribe" }, it: { label: "Iscrivimi" } };
 
-      t["editorial-footer"] = {
-        en: { copyright: "© 2026 Sobremesa · Magazine and podcast about food culture. All rights reserved." },
-        it: { copyright: "© 2026 Sobremesa · Rivista e podcast sulla cultura gastronomica. Tutti i diritti riservati." },
+      t["editorial-footer-copyright"] = {
+        en: { content: "© 2026 Sobremesa · Magazine and podcast about food culture. All rights reserved." },
+        it: { content: "© 2026 Sobremesa · Rivista e podcast sulla cultura gastronomica. Tutti i diritti riservati." },
       };
 
       return t;

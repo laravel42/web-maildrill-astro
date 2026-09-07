@@ -738,7 +738,7 @@ export function buildPortfolioFragment(): NodeFragment {
       "photographer-footer": {
         id: "photographer-footer",
         type: "footer",
-        props: { copyright: "© 2026 Lúmina Estudio · Elena Vidal. Todos los derechos reservados." },
+        props: {},
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: { token: "spacing.sm" } },
@@ -747,13 +747,31 @@ export function buildPortfolioFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "56px 20px" } } },
         },
-        children: ["photographer-footer-social"],
+        children: ["photographer-footer-social", "photographer-footer-copyright"],
       },
       "photographer-footer-social": {
         id: "photographer-footer-social",
         type: "social-links",
         props: {},
         style: darkBandStyleFor("social-links"),
+      },
+      "photographer-footer-copyright": {
+        id: "photographer-footer-copyright",
+        type: "text",
+        props: { content: "© 2026 Lúmina Estudio · Elena Vidal. Todos los derechos reservados." },
+        style: {
+          base: {
+            size: { width: "100%" },
+            spacing: { padding: "16px 0 0 0" },
+            typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+            appearance: {
+              color: "inherit",
+              borderColor: "rgba(255,255,255,0.16)",
+              borderWidth: "1px 0 0 0",
+              borderStyle: "solid",
+            },
+          },
+        },
       },
     },
 
@@ -891,9 +909,9 @@ export function buildPortfolioFragment(): NodeFragment {
       t["photographer-contact-package"] = { en: { placeholder: "Select a package" }, it: { placeholder: "Seleziona un pacchetto" } };
       t["photographer-contact-submit"] = { en: { label: "Send request" }, it: { label: "Invia richiesta" } };
 
-      t["photographer-footer"] = {
-        en: { copyright: "© 2026 Lúmina Estudio · Elena Vidal. All rights reserved." },
-        it: { copyright: "© 2026 Lúmina Estudio · Elena Vidal. Tutti i diritti riservati." },
+      t["photographer-footer-copyright"] = {
+        en: { content: "© 2026 Lúmina Estudio · Elena Vidal. All rights reserved." },
+        it: { content: "© 2026 Lúmina Estudio · Elena Vidal. Tutti i diritti riservati." },
       };
 
       return t;

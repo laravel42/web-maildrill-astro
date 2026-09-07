@@ -298,8 +298,27 @@ export function createFeaturesPage(contactPageId: PageId, homePageId: PageId): B
         "feat-footer": {
           id: "feat-footer",
           type: "footer",
-          props: { copyright: "© Builder42 — escaparate de componentes." },
+          props: {},
           style: defaultStyleFor("footer"),
+          children: ["feat-footer-copyright"],
+        },
+        "feat-footer-copyright": {
+          id: "feat-footer-copyright",
+          type: "text",
+          props: { content: "© Builder42 — escaparate de componentes." },
+          style: {
+            base: {
+              size: { width: "100%" },
+              spacing: { padding: "16px 0 0 0" },
+              typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+              appearance: {
+                color: "inherit",
+                borderColor: "rgba(0,0,0,0.12)",
+                borderWidth: "1px 0 0 0",
+                borderStyle: "solid",
+              },
+            },
+          },
         },
       },
     },

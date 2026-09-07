@@ -770,7 +770,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-footer": {
         id: "barber-footer",
         type: "footer",
-        props: { copyright: "© 2026 Fierro & Navaja Barbería. Todos los derechos reservados." },
+        props: {},
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.lg" } },
@@ -780,7 +780,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "56px 40px" } } },
         },
-        children: ["barber-footer-address", "barber-footer-social"],
+        children: ["barber-footer-address", "barber-footer-social", "barber-footer-copyright"],
       },
       "barber-footer-address": {
         id: "barber-footer-address",
@@ -793,6 +793,24 @@ export function buildBarbershopPageFragment(): NodeFragment {
         type: "social-links",
         props: {},
         style: darkBandStyleFor("social-links"),
+      },
+      "barber-footer-copyright": {
+        id: "barber-footer-copyright",
+        type: "text",
+        props: { content: "© 2026 Fierro & Navaja Barbería. Todos los derechos reservados." },
+        style: {
+          base: {
+            size: { width: "100%" },
+            spacing: { padding: "16px 0 0 0" },
+            typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+            appearance: {
+              color: "inherit",
+              borderColor: "rgba(255,255,255,0.16)",
+              borderWidth: "1px 0 0 0",
+              borderStyle: "solid",
+            },
+          },
+        },
       },
     },
 
@@ -960,9 +978,9 @@ export function buildBarbershopPageFragment(): NodeFragment {
       t["barber-booking-bar-text"] = { en: { content: "Ready for your next cut?" }, it: { content: "Pronto per il tuo prossimo taglio?" } };
       t["barber-booking-bar-cta"] = { en: { label: "Book an appointment" }, it: { label: "Prenota un appuntamento" } };
 
-      t["barber-footer"] = {
-        en: { copyright: "© 2026 Fierro & Navaja Barbershop. All rights reserved." },
-        it: { copyright: "© 2026 Fierro & Navaja Barbieria. Tutti i diritti riservati." },
+      t["barber-footer-copyright"] = {
+        en: { content: "© 2026 Fierro & Navaja Barbershop. All rights reserved." },
+        it: { content: "© 2026 Fierro & Navaja Barbieria. Tutti i diritti riservati." },
       };
       t["barber-footer-address"] = {
         en: { content: "88 Herreros St, Barrio del Carmen, Guadalajara — Tuesday to Saturday, 10:00 AM–8:00 PM" },

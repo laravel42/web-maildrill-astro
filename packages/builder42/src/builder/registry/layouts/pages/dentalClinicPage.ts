@@ -1027,7 +1027,7 @@ export function buildDentalClinicPageFragment(): NodeFragment {
       "dental-footer": {
         id: "dental-footer",
         type: "footer",
-        props: { copyright: "© 2026 Clínica Dental Sonrisa Plena. Todos los derechos reservados." },
+        props: {},
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.lg" } },
@@ -1041,7 +1041,7 @@ export function buildDentalClinicPageFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "64px 40px" } } },
         },
-        children: ["dental-footer-address", "dental-footer-hours", "dental-footer-social"],
+        children: ["dental-footer-address", "dental-footer-hours", "dental-footer-social", "dental-footer-copyright"],
       },
       "dental-footer-address": {
         id: "dental-footer-address",
@@ -1060,6 +1060,24 @@ export function buildDentalClinicPageFragment(): NodeFragment {
         type: "social-links",
         props: {},
         style: darkBandStyleFor("social-links"),
+      },
+      "dental-footer-copyright": {
+        id: "dental-footer-copyright",
+        type: "text",
+        props: { content: "© 2026 Clínica Dental Sonrisa Plena. Todos los derechos reservados." },
+        style: {
+          base: {
+            size: { width: "100%" },
+            spacing: { padding: "16px 0 0 0" },
+            typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+            appearance: {
+              color: "inherit",
+              borderColor: "rgba(255,255,255,0.16)",
+              borderWidth: "1px 0 0 0",
+              borderStyle: "solid",
+            },
+          },
+        },
       },
     },
   };
@@ -1329,9 +1347,9 @@ export function buildDentalClinicPageFragment(): NodeFragment {
       en: { label: "Request appointment" },
       it: { label: "Richiedi appuntamento" },
     },
-    "dental-footer": {
-      en: { copyright: "© 2026 Sonrisa Plena Dental Clinic. All rights reserved." },
-      it: { copyright: "© 2026 Clinica Dentale Sonrisa Plena. Tutti i diritti riservati." },
+    "dental-footer-copyright": {
+      en: { content: "© 2026 Sonrisa Plena Dental Clinic. All rights reserved." },
+      it: { content: "© 2026 Clinica Dentale Sonrisa Plena. Tutti i diritti riservati." },
     },
     "dental-footer-address": {
       en: { content: "88 Real Street, Chapalita, Guadalajara, Jalisco" },

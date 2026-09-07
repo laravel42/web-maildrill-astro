@@ -897,7 +897,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
       "realestate-footer": {
         id: "realestate-footer",
         type: "footer",
-        props: { copyright: "© 2026 Vista Sur Inmobiliaria. Todos los derechos reservados." },
+        props: {},
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", alignItems: "center", gap: { token: "spacing.sm" } },
@@ -909,13 +909,31 @@ export function buildRealEstatePageFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "56px 20px" } } },
         },
-        children: ["realestate-footer-social"],
+        children: ["realestate-footer-social", "realestate-footer-copyright"],
       },
       "realestate-footer-social": {
         id: "realestate-footer-social",
         type: "social-links",
         props: {},
         style: darkBandStyleFor("social-links"),
+      },
+      "realestate-footer-copyright": {
+        id: "realestate-footer-copyright",
+        type: "text",
+        props: { content: "© 2026 Vista Sur Inmobiliaria. Todos los derechos reservados." },
+        style: {
+          base: {
+            size: { width: "100%" },
+            spacing: { padding: "16px 0 0 0" },
+            typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+            appearance: {
+              color: "inherit",
+              borderColor: "rgba(255,255,255,0.16)",
+              borderWidth: "1px 0 0 0",
+              borderStyle: "solid",
+            },
+          },
+        },
       },
     },
 
@@ -1037,9 +1055,9 @@ export function buildRealEstatePageFragment(): NodeFragment {
       };
       t["realestate-contact-submit"] = { en: { label: "Request information" }, it: { label: "Richiedi informazioni" } };
 
-      t["realestate-footer"] = {
-        en: { copyright: "© 2026 Vista Sur Real Estate. All rights reserved." },
-        it: { copyright: "© 2026 Vista Sur Immobiliare. Tutti i diritti riservati." },
+      t["realestate-footer-copyright"] = {
+        en: { content: "© 2026 Vista Sur Real Estate. All rights reserved." },
+        it: { content: "© 2026 Vista Sur Immobiliare. Tutti i diritti riservati." },
       };
 
       t["realestate-topbar-phone"] = {

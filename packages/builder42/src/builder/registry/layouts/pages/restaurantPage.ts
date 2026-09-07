@@ -693,9 +693,9 @@ export function buildRestaurantPageFragment(): NodeFragment {
       en: { content: "+34 912 345 678<br/>hola@casaalmendro.example" },
       it: { content: "+34 912 345 678<br/>hola@casaalmendro.example" },
     },
-    "restaurant-footer": {
-      en: { copyright: "© 2026 Casa Almendro. All rights reserved." },
-      it: { copyright: "© 2026 Casa Almendro. Tutti i diritti riservati." },
+    "restaurant-footer-copyright": {
+      en: { content: "© 2026 Casa Almendro. All rights reserved." },
+      it: { content: "© 2026 Casa Almendro. Tutti i diritti riservati." },
     },
   };
 
@@ -1773,7 +1773,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-footer": {
         id: "restaurant-footer",
         type: "footer",
-        props: { copyright: "© 2026 Casa Almendro. Todos los derechos reservados." },
+        props: {},
         style: {
           base: {
             ...defaultStyleFor("footer").base,
@@ -1786,7 +1786,25 @@ export function buildRestaurantPageFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "80px 20px 40px" } } },
         },
-        children: ["restaurant-footer-inner"],
+        children: ["restaurant-footer-inner", "restaurant-footer-copyright"],
+      },
+      "restaurant-footer-copyright": {
+        id: "restaurant-footer-copyright",
+        type: "text",
+        props: { content: "© 2026 Casa Almendro. Todos los derechos reservados." },
+        style: {
+          base: {
+            size: { width: "100%" },
+            spacing: { padding: "16px 0 0 0" },
+            typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+            appearance: {
+              color: "inherit",
+              borderColor: "rgba(255,255,255,0.16)",
+              borderWidth: "1px 0 0 0",
+              borderStyle: "solid",
+            },
+          },
+        },
       },
       "restaurant-footer-inner": {
         id: "restaurant-footer-inner",

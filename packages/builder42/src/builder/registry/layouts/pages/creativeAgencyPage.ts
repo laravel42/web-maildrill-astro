@@ -744,7 +744,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-footer": {
         id: "agency-footer",
         type: "footer",
-        props: { copyright: "© 2026 Cráter Studio. Todos los derechos reservados." },
+        props: {},
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.lg" } },
@@ -754,7 +754,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "56px 40px" } } },
         },
-        children: ["agency-footer-address", "agency-footer-social"],
+        children: ["agency-footer-address", "agency-footer-social", "agency-footer-copyright"],
       },
       "agency-footer-address": {
         id: "agency-footer-address",
@@ -767,6 +767,24 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
         type: "social-links",
         props: {},
         style: darkBandStyleFor("social-links"),
+      },
+      "agency-footer-copyright": {
+        id: "agency-footer-copyright",
+        type: "text",
+        props: { content: "© 2026 Cráter Studio. Todos los derechos reservados." },
+        style: {
+          base: {
+            size: { width: "100%" },
+            spacing: { padding: "16px 0 0 0" },
+            typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+            appearance: {
+              color: "inherit",
+              borderColor: "rgba(255,255,255,0.16)",
+              borderWidth: "1px 0 0 0",
+              borderStyle: "solid",
+            },
+          },
+        },
       },
     },
 
@@ -852,9 +870,9 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       };
       t["agency-submit"] = { en: { label: "Send message" }, it: { label: "Invia messaggio" } };
 
-      t["agency-footer"] = {
-        en: { copyright: "© 2026 Cráter Studio. All rights reserved." },
-        it: { copyright: "© 2026 Cráter Studio. Tutti i diritti riservati." },
+      t["agency-footer-copyright"] = {
+        en: { content: "© 2026 Cráter Studio. All rights reserved." },
+        it: { content: "© 2026 Cráter Studio. Tutti i diritti riservati." },
       };
       t["agency-footer-address"] = {
         en: { content: "142 Orizaba St, Roma Norte, Mexico City" },

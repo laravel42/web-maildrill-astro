@@ -691,7 +691,7 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-footer": {
         id: "spa-footer",
         type: "footer",
-        props: { copyright: "© 2026 Alma Spa & Wellness. Todos los derechos reservados." },
+        props: {},
         style: {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: { token: "spacing.lg" } },
@@ -701,7 +701,7 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "64px 40px" } } },
         },
-        children: ["spa-footer-hours", "spa-footer-social"],
+        children: ["spa-footer-hours", "spa-footer-social", "spa-footer-copyright"],
       },
       "spa-footer-hours": {
         id: "spa-footer-hours",
@@ -714,6 +714,24 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
         type: "social-links",
         props: {},
         style: darkBandStyleFor("social-links"),
+      },
+      "spa-footer-copyright": {
+        id: "spa-footer-copyright",
+        type: "text",
+        props: { content: "© 2026 Alma Spa & Wellness. Todos los derechos reservados." },
+        style: {
+          base: {
+            size: { width: "100%" },
+            spacing: { padding: "16px 0 0 0" },
+            typography: { textAlign: "center", fontSize: { token: "typography.sizes.sm" } },
+            appearance: {
+              color: "inherit",
+              borderColor: "rgba(255,255,255,0.16)",
+              borderWidth: "1px 0 0 0",
+              borderStyle: "solid",
+            },
+          },
+        },
       },
     },
 
@@ -862,9 +880,9 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
         it: { content: "Av. de las Fuentes 220, San Ángel, Città del Messico — parcheggio gratuito." },
       };
 
-      t["spa-footer"] = {
-        en: { copyright: "© 2026 Alma Spa & Wellness. All rights reserved." },
-        it: { copyright: "© 2026 Alma Spa & Wellness. Tutti i diritti riservati." },
+      t["spa-footer-copyright"] = {
+        en: { content: "© 2026 Alma Spa & Wellness. All rights reserved." },
+        it: { content: "© 2026 Alma Spa & Wellness. Tutti i diritti riservati." },
       };
       t["spa-footer-hours"] = { en: { content: "Open every day 9:00 AM–8:00 PM" }, it: { content: "Tutti i giorni 9:00–20:00" } };
 
