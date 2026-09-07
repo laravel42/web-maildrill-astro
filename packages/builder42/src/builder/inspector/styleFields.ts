@@ -127,7 +127,7 @@ export const STYLE_FIELDS: StyleFieldDef[] = [
   {
     group: "layout",
     key: "overflowX",
-    label: "Overflow X",
+    label: "Overflow: horizontal",
     control: "select",
     options: [
       { label: "visible", value: "visible" },
@@ -139,7 +139,7 @@ export const STYLE_FIELDS: StyleFieldDef[] = [
   {
     group: "layout",
     key: "overflowY",
-    label: "Overflow Y",
+    label: "Overflow: vertical",
     control: "select",
     options: [
       { label: "visible", value: "visible" },

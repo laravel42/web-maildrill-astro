@@ -64,6 +64,13 @@ export interface PropertyRowProps {
   /** Cuántas columnas tiene el área de control (docs/41 §4.4: `pair`/`sides` = 2). */
   columns?: PropertyRowColumns;
   /**
+   * Clase extra opcional para `.pbx-row__control` (caso puntual: `layout.overflow`
+   * en modo `pair` necesita apilar label+control en bloque en vez de la rejilla
+   * de 2 columnas por defecto — ver `.pbx-row__control--overflow-stack` en
+   * `inspector-panel.css`). No afecta ningún otro `pair`/`sides` existente.
+   */
+  controlClassName?: string;
+  /**
    * `id` del control, para asociar `<label htmlFor>` cuando el control es un
    * elemento nativo con un solo `id` (input/select). Ver nota de
    * accesibilidad abajo — si no se pasa, se usa el patrón `role="group"` +
@@ -113,15 +120,17 @@ export function PropertyRow({
   actions,
   columns = 1,
   controlId,
+  controlClassName,
   id,
   dataOrigin,
   title: rowTitle,
 }: PropertyRowProps) {
   const labelId = useId();
   const rowClassName = ["pbx-row", tall ? "pbx-row--tall" : ""].filter(Boolean).join(" ");
-  const controlClassName = [
+  const controlClassNameFull = [
     "pbx-row__control",
     columns === 2 ? "pbx-row__control--pair" : "",
+    controlClassName ?? "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -153,7 +162,7 @@ export function PropertyRow({
       {/* El control es la ancla `position: relative` del slot flotante
           (más abajo, `.pbx-row__actions` sobre su borde izquierdo) — mismo
           criterio que el modo `bare`, unificado en este commit. */}
-      <div className={controlClassName}>
+      <div className={controlClassNameFull}>
         <div className="pbx-row__actions">{actions}</div>
         {children}
       </div>

@@ -761,8 +761,20 @@ function StylePanelRow({
     const labelA = fieldA?.label ?? `${label} A`;
     const labelB = fieldB?.label ?? `${label} B`;
     const shortLabel = (full: string) => full.includes(": ") ? full.split(": ")[1]! : full;
+    // Caso especial `layout.overflow` / `layout.cell` (petición del
+    // usuario, este commit): en modo avanzado, ambas filas `pair` comparten
+    // la misma rejilla de 2 columnas angostas — sin espacio para label +
+    // control en la MISMA línea dentro de cada celda. Se apila cada mitad
+    // en bloque (mini-label arriba, control abajo — mismo criterio visual
+    // que `SidesAxisPresets` en modo simple de padding) para ambas filas.
+    const isStackedPairRow = row.id === "layout.overflow" || row.id === "layout.cell";
     return (
-      <PropertyRow label={label} columns={2}>
+      <PropertyRow
+        label={label}
+        columns={2}
+        tall={isStackedPairRow}
+        controlClassName={isStackedPairRow ? "pbx-row__control--overflow-stack" : undefined}
+      >
         <PairGrid
           fields={[
             {

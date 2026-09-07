@@ -829,6 +829,33 @@
 }
 
 /*
+ * `layout.overflow` y `layout.cell` en modo avanzado (petición del usuario,
+ * este commit): la rejilla `.pbx-row__control--pair` de 2 columnas es
+ * demasiado angosta para "label + control" en la MISMA línea dentro de cada
+ * celda — mismo problema visual que `spacing.padding`/`.margin` ya resolvió
+ * en modo simple con `SidesAxisPresets` (label arriba, control abajo, en
+ * bloque). Esta clase se aplica a AMBAS filas `pair` existentes hoy
+ * (`StylePanel.tsx`, `PropertyRow controlClassName` + `tall`) — si en el
+ * futuro se agrega un tercer `pair`, se suma a la misma condición ahí.
+ *
+ * Se combina con `tall` (mismo criterio que `SidesGrid` de padding/margin):
+ * el label principal ("Overflow"/"Celda") pasa a su propia línea arriba
+ * (vía `.pbx-row--tall`, ya existente) y el bloque de 2 columnas queda
+ * debajo con alto libre — necesario porque cada celda ahora apila su
+ * mini-label ("Horizontal"/"Vertical", "columna"/"fila") + su control en 2
+ * líneas, y ya no cabe en los 32px de una fila normal.
+ */
+.pbx-row__control--overflow-stack.pbx-row__control--pair {
+  align-items: start;
+}
+
+.pbx-row__control--overflow-stack .pbx-pair-grid__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/*
  * SidesGrid: acciones apiladas a la izquierda (token arriba, candado abajo)
  * + rejilla 2×2 de `NumericField` con icono de lado (docs/41 §4.4 D8, fix
  * candado/token: antes el botón de "vincular a token" vivía en
