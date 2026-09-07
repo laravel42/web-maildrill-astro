@@ -36,6 +36,7 @@ export function buildFaqAccordionFragment(): NodeFragment {
         type: "accordion",
         props: {},
         style: defaultStyleFor("accordion"),
+        behaviors: [{ type: "accordion", options: { single: true, duration: 280 } }],
         children: ["faq-accordion-item-1", "faq-accordion-item-2", "faq-accordion-item-3"],
       },
       "faq-accordion-item-1": {

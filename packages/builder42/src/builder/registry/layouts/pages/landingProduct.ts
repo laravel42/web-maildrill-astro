@@ -470,6 +470,7 @@ export function buildLandingProductFragment(): NodeFragment {
         type: "tabs",
         props: {},
         style: { ...defaultStyleFor("tabs"), overrides: { md: { spacing: { padding: "0" } } } },
+        behaviors: [{ type: "tabs", options: { duration: 220 } }],
         children: ["saas-tab-automation", "saas-tab-integrations", "saas-tab-analytics"],
       },
       "saas-tab-automation": {

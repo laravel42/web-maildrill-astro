@@ -34,6 +34,7 @@ export function buildNewsletterModalTriggerFragment(): NodeFragment {
         type: "modal",
         props: { title: "Suscríbete a nuestro newsletter" },
         style: defaultStyleFor("modal"),
+        behaviors: [{ type: "modal", options: { closeOnBackdrop: true, duration: 200 } }],
         children: ["newsletter-modal-form"],
       },
       "newsletter-modal-form": {

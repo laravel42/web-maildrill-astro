@@ -369,6 +369,7 @@ export function buildTeamPageFragment(): NodeFragment {
         type: "tabs",
         props: {},
         style: { ...defaultStyleFor("tabs"), overrides: { md: { spacing: { padding: "0" } } } },
+        behaviors: [{ type: "tabs", options: { duration: 220 } }],
         children: ["team-page-tab-flex", "team-page-tab-dedicated", "team-page-tab-private"],
       },
       "team-page-tab-flex": {

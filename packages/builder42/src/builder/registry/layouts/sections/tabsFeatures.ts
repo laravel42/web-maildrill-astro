@@ -34,6 +34,7 @@ export function buildTabsFeaturesFragment(): NodeFragment {
         type: "tabs",
         props: {},
         style: defaultStyleFor("tabs"),
+        behaviors: [{ type: "tabs", options: { duration: 220 } }],
         children: ["tabs-features-tab-1", "tabs-features-tab-2", "tabs-features-tab-3"],
       },
       "tabs-features-tab-1": {

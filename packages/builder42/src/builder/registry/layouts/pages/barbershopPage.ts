@@ -638,6 +638,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
             appearance: { ...defaultStyleFor("modal").base.appearance, background: { token: "colors.surface.alt" }, color: { token: "colors.text" } },
           },
         },
+        behaviors: [{ type: "modal", options: { closeOnBackdrop: true, duration: 200 } }],
         children: ["barber-booking-form"],
       },
       "barber-booking-form": {
