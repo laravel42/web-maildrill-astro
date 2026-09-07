@@ -1,22 +1,33 @@
 /**
  * Quote — cita destacada `<blockquote>` con atribución (docs/16 §12.1 #6).
  *
- * Componente `content` atómico, semánticamente distinto de `text`: el navegador
- * y los lectores lo tratan como cita. Texto y autor son PROPS traducibles (P9);
- * la presentación es STYLE por tokens (P6). Render puro (P3): raíz
- * `<blockquote>` con `rootRef`/`rootProps` sin wrapper; en `exportMode` sin
- * estilo inline en la raíz (CSS por clase, AGENTS.md §5) y HTML puro (P8).
+ * COMPOSITE de componentes base (docs/23, mismo espíritu que `testimonial`):
+ * la raíz sigue siendo un `<blockquote>` atómico (mismo `defaultStyle`, retro-
+ * compatible visualmente), pero su contenido son NODOS HIJO reales en vez de
+ * sub-elementos con `CSSProperties` fijas:
  *
- * La atribución se pinta en un `<cite>` con estilo de sub-elemento fijo pero
- * NO temático (solo layout/tamaño relativo/opacidad; el color se hereda por
- * `currentColor`) — es markup intrínseco del componente, no un nodo estilable.
+ *   quote (blockquote, acceptsChildren)
+ *   ├── <id>-content     : text (la cita, editable inline)
+ *   └── <id>-attribution : text (el `<cite>` del autor; spacing.margin AQUÍ es
+ *       editable desde el Inspector — antes era CITE_STYLE.marginTop fija)
+ *
+ * Motivo (bug real, mismo patrón que Testimonial): el espaciado entre la cita
+ * y la atribución vivía en un `marginTop` fijo no editable (`CITE_STYLE`), así
+ * que el Inspector no ofrecía ningún control para ese margin. Al convertir la
+ * atribución en un nodo `text` real, su `spacing`/`typography`/`appearance`
+ * quedan editables de fábrica (mismo `styleSchema` que cualquier `text`), sin
+ * tocar el Inspector ni el parser de spacing.
+ *
+ * Retrocompatibilidad: un documento guardado con el `quote` viejo (props
+ * `content/attribution`, sin `children`) se migra automáticamente al cargar —
+ * ver `model/migrateSlots.ts` (`migrateQuoteNode`).
  */
 
 import type { CSSProperties, Ref } from "react";
 import { DEFAULT_BREAKPOINTS, type NodeStyle } from "../../model/types";
 import { resolveStyle } from "../../model/style";
 import { stylePropertiesToCSSObject } from "../styleToCss";
-import type { ComponentDefinition, RenderContext } from "../types";
+import type { ComponentDefinition, DefaultChildSpec, RenderContext } from "../types";
 
 export const QUOTE_DEFAULT_STYLE: NodeStyle = {
   base: {
@@ -35,34 +46,61 @@ export const QUOTE_DEFAULT_STYLE: NodeStyle = {
   },
 };
 
-const CITE_STYLE: CSSProperties = {
-  display: "block",
-  marginTop: "var(--spacing-sm, 12px)",
-  fontStyle: "normal",
-  fontSize: "var(--typography-sizes-sm, 0.8em)",
-  fontWeight: "var(--typography-weights-bold, 600)",
-  opacity: 0.7,
+/**
+ * `text` de la cita: sin margin propio (antes `QUOTE_TEXT_STYLE`). El modelo
+ * de estilo no tiene `fontStyle` (itálica) como campo editable — se mantiene
+ * sin ese énfasis tipográfico; es una pérdida visual menor y fuera del
+ * alcance del bug de margin que motivó esta recomposición (no se introduce un
+ * campo nuevo al modelo de estilo por esto).
+ */
+export const QUOTE_CONTENT_STYLE: NodeStyle = {
+  base: { spacing: { margin: "0" } },
 };
 
-const QUOTE_TEXT_STYLE: CSSProperties = {
-  margin: 0,
-  fontStyle: "italic",
-  fontSize: "var(--typography-sizes-lg, 1em)",
+/**
+ * `text` de la atribución (antes `CITE_STYLE`). `spacing.margin` (shorthand
+ * top-only vía "12px 0 0 0") reemplaza al `marginTop` fijo — ahora editable
+ * como cualquier `spacing.margin` normal desde el Inspector (`SidesGrid`).
+ * El modelo de estilo no tiene campo `opacity`; se usa el token
+ * `colors.muted` (mismo criterio ya usado en `TESTIMONIAL_ROLE_STYLE`) para
+ * lograr el mismo efecto visual de atenuación sin introducir un campo nuevo.
+ */
+export const QUOTE_ATTRIBUTION_STYLE: NodeStyle = {
+  base: {
+    spacing: { margin: "12px 0 0 0" },
+    typography: {
+      fontSize: { token: "typography.sizes.sm" },
+      fontWeight: { token: "typography.weights.bold" },
+    },
+    appearance: { color: { token: "colors.muted" } },
+  },
 };
+
+/** `defaultChildren` sembrados al crear un `quote` nuevo desde la paleta. */
+export const QUOTE_DEFAULT_CHILDREN: DefaultChildSpec[] = [
+  {
+    type: "text",
+    props: { content: "<p>El diseño no es solo cómo se ve, sino cómo funciona.</p>" },
+    style: QUOTE_CONTENT_STYLE,
+  },
+  {
+    type: "text",
+    // `text` renderiza HTML crudo vía `dangerouslySetInnerHTML`, así se
+    // preserva la semántica `<cite>` sin necesitar un tipo de nodo especial.
+    props: { content: "<cite>— Steve Jobs</cite>" },
+    style: QUOTE_ATTRIBUTION_STYLE,
+  },
+];
 
 function QuoteRender(ctx: RenderContext) {
-  const { node, exportMode, className, breakpoint, rootRef, rootProps } = ctx;
+  const { node, children, exportMode, className, breakpoint, rootRef, rootProps } = ctx;
   const style: CSSProperties | undefined = exportMode
     ? undefined
     : stylePropertiesToCSSObject(resolveStyle(node.style, breakpoint, DEFAULT_BREAKPOINTS));
-  const content =
-    typeof node.props.content === "string" && node.props.content !== ""
-      ? node.props.content
-      : "Cita de ejemplo";
-  const attribution = typeof node.props.attribution === "string" ? node.props.attribution : "";
 
   const { className: rootClassName, ...restRootProps } = rootProps ?? {};
   const mergedClassName = [className, rootClassName].filter(Boolean).join(" ") || undefined;
+  const isEmpty = !node.children || node.children.length === 0;
 
   return (
     <blockquote
@@ -71,8 +109,12 @@ function QuoteRender(ctx: RenderContext) {
       style={style}
       {...restRootProps}
     >
-      <p style={QUOTE_TEXT_STYLE}>{content}</p>
-      {attribution !== "" ? <cite style={CITE_STYLE}>— {attribution}</cite> : null}
+      {children}
+      {!exportMode && isEmpty ? (
+        <span className="pbx-empty-hint" data-empty-hint>
+          Cita vacía — añade el texto y el autor
+        </span>
+      ) : null}
     </blockquote>
   );
 }
@@ -81,15 +123,11 @@ export const quoteDefinition: ComponentDefinition = {
   type: "quote",
   label: "Cita",
   category: "content",
-  acceptsChildren: false,
-  defaultProps: { content: "El diseño no es solo cómo se ve, sino cómo funciona.", attribution: "Steve Jobs" },
+  acceptsChildren: true,
+  defaultProps: {},
   defaultStyle: structuredClone(QUOTE_DEFAULT_STYLE),
-  propsSchema: {
-    fields: [
-      { key: "content", label: "Cita", control: "text", group: "Contenido", translatable: true },
-      { key: "attribution", label: "Autor", control: "text", group: "Contenido", translatable: true },
-    ],
-  },
+  defaultChildren: QUOTE_DEFAULT_CHILDREN,
+  propsSchema: { fields: [] },
   styleSchema: { enabledGroups: ["typography", "spacing", "size", "appearance"] },
   render: QuoteRender,
 };

@@ -25,12 +25,13 @@
 import type { CSSProperties, Ref } from "react";
 import { DEFAULT_BREAKPOINTS, type NodeStyle } from "../../model/types";
 import { resolveStyle } from "../../model/style";
+import { styleValueToCss } from "../../model/tokens";
 import { stylePropertiesToCSSObject } from "../styleToCss";
 import type { ComponentDefinition, RenderContext } from "../types";
 
 export const NAV_MENU_DEFAULT_STYLE: NodeStyle = {
   base: {
-    layout: { display: "block" },
+    layout: { display: "block", gap: "8px" },
     typography: {
       fontFamily: { token: "typography.families.sans" },
       fontSize: { token: "typography.sizes.base" },
@@ -57,6 +58,10 @@ function NavMenuRender(ctx: RenderContext) {
   );
   const links = (pagesInfo ?? []).filter((p) => !hiddenPageIds.has(p.pageId));
   const vertical = node.props.orientation === "vertical";
+  // El `gap` YA NO es un literal fijo: se resuelve desde `node.style`
+  // (`layout.gap`, editable en el Inspector) — el resto de `listStyle`
+  // (orientación `vertical`/`flexDirection`) sigue igual.
+  const resolvedGap = styleValueToCss(resolveStyle(node.style, breakpoint, DEFAULT_BREAKPOINTS).layout?.gap);
   const listStyle: CSSProperties = {
     listStyle: "none",
     margin: 0,
@@ -64,7 +69,7 @@ function NavMenuRender(ctx: RenderContext) {
     display: "flex",
     flexDirection: vertical ? "column" : "row",
     flexWrap: vertical ? "nowrap" : "wrap",
-    gap: "var(--spacing-xs, 8px)",
+    gap: resolvedGap ?? "8px",
   };
 
   const { className: rootClassName, ...restRootProps } = rootProps ?? {};
@@ -115,6 +120,6 @@ export const navMenuDefinition: ComponentDefinition = {
       },
     ],
   },
-  styleSchema: { enabledGroups: ["typography", "spacing", "size", "appearance"] },
+  styleSchema: { enabledGroups: ["layout", "typography", "spacing", "size", "appearance"] },
   render: NavMenuRender,
 };

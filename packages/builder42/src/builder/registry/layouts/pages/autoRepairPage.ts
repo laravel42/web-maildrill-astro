@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, testimonialFragment, type LayoutPageMeta } from "../helpers";
+import { darkBandStyleFor, statFragment, testimonialFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Taller mecánico" — plantilla NUEVA de sector (docs/48 §2 fila 17,
@@ -120,15 +120,11 @@ function bodyText(color: StyleValue = { token: "colors.muted" }, maxWidth = "56c
 
 /** `stat` + `count-up` en grid 2 col desde `sm` — el rasgo que distingue A5b de A5 (ver comentario superior). */
 function statCard(n: 1 | 2 | 3, value: string, label: string) {
-  return {
-    [`torque-stat-${n}`]: {
-      id: `torque-stat-${n}`,
-      type: "stat",
-      props: { value, label },
-      style: { base: { ...defaultStyleFor("stat").base, appearance: { color: { token: "colors.band.on" } } } },
-      behaviors: [{ type: "count-up", options: { duration: 1500, threshold: 0.3, once: true } }],
-    },
-  };
+  const nodes = statFragment(`torque-stat-${n}`, { value, label }, {
+    base: { ...defaultStyleFor("stat").base, appearance: { color: { token: "colors.band.on" } } },
+  });
+  nodes[`torque-stat-${n}`]!.behaviors = [{ type: "count-up", options: { duration: 1500, threshold: 0.3, once: true } }];
+  return nodes;
 }
 
 function service(n: 1 | 2 | 3, iconName: string, title: string, text: string) {
@@ -695,9 +691,12 @@ export function buildAutoRepairPageFragment(): NodeFragment {
       };
       t["torque-hero-cta"] = { en: { label: "Book my appointment" }, it: { label: "Prenota il mio appuntamento" } };
 
-      t["torque-stat-1"] = { en: { value: "18", label: "years in business" }, it: { value: "18", label: "anni di attività" } };
-      t["torque-stat-2"] = { en: { value: "42000", label: "vehicles serviced" }, it: { value: "42000", label: "veicoli riparati" } };
-      t["torque-stat-3"] = { en: { value: "9", label: "certified mechanics" }, it: { value: "9", label: "meccanici certificati" } };
+      t["torque-stat-1-value"] = { en: { value: "18" }, it: { value: "18" } };
+      t["torque-stat-1-label"] = { en: { content: "years in business" }, it: { content: "anni di attività" } };
+      t["torque-stat-2-value"] = { en: { value: "42000" }, it: { value: "42000" } };
+      t["torque-stat-2-label"] = { en: { content: "vehicles serviced" }, it: { content: "veicoli riparati" } };
+      t["torque-stat-3-value"] = { en: { value: "9" }, it: { value: "9" } };
+      t["torque-stat-3-label"] = { en: { content: "certified mechanics" }, it: { content: "meccanici certificati" } };
 
       t["torque-services-title"] = { en: { content: "<strong>What we do for your car</strong>" }, it: { content: "<strong>Cosa facciamo per la tua auto</strong>" } };
 

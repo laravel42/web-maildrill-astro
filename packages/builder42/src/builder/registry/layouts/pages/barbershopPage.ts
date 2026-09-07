@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, testimonialFragment, type LayoutPageMeta } from "../helpers";
+import { darkBandStyleFor, statFragment, testimonialFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Barbería" — plantilla NUEVA de sector (docs/48 §2 fila 15, F6):
@@ -195,15 +195,11 @@ function serviceCard(n: 1 | 2 | 3 | 4, title: string, text: string, price: strin
 }
 
 function statCard(n: 1 | 2 | 3, value: string, label: string) {
-  return {
-    [`barber-stat-${n}`]: {
-      id: `barber-stat-${n}`,
-      type: "stat",
-      props: { value, label },
-      style: { base: { ...defaultStyleFor("stat").base, appearance: { color: { token: "colors.band.on" } } } },
-      behaviors: [{ type: "count-up", options: { duration: 1500, threshold: 0.3, once: true } }],
-    },
-  };
+  const nodes = statFragment(`barber-stat-${n}`, { value, label }, {
+    base: { ...defaultStyleFor("stat").base, appearance: { color: { token: "colors.band.on" } } },
+  });
+  nodes[`barber-stat-${n}`]!.behaviors = [{ type: "count-up", options: { duration: 1500, threshold: 0.3, once: true } }];
+  return nodes;
 }
 
 function barberMember(n: 1 | 2, name: string, role: string, imageUrl: string, initials: string) {
@@ -813,9 +809,12 @@ export function buildBarbershopPageFragment(): NodeFragment {
       };
       t["barber-hero-cta"] = { en: { label: "Book an appointment" }, it: { label: "Prenota un appuntamento" } };
 
-      t["barber-stat-1"] = { en: { value: "18", label: "Years of craft" }, it: { value: "18", label: "Anni di mestiere" } };
-      t["barber-stat-2"] = { en: { value: "32,000+", label: "Haircuts done" }, it: { value: "32.000+", label: "Tagli realizzati" } };
-      t["barber-stat-3"] = { en: { value: "6,500+", label: "Loyal clients" }, it: { value: "6.500+", label: "Clienti fedeli" } };
+      t["barber-stat-1-value"] = { en: { value: "18" }, it: { value: "18" } };
+      t["barber-stat-1-label"] = { en: { content: "Years of craft" }, it: { content: "Anni di mestiere" } };
+      t["barber-stat-2-value"] = { en: { value: "32,000+" }, it: { value: "32.000+" } };
+      t["barber-stat-2-label"] = { en: { content: "Haircuts done" }, it: { content: "Tagli realizzati" } };
+      t["barber-stat-3-value"] = { en: { value: "6,500+" }, it: { value: "6.500+" } };
+      t["barber-stat-3-label"] = { en: { content: "Loyal clients" }, it: { content: "Clienti fedeli" } };
 
       t["barber-services-title"] = { en: { content: "<strong>Services</strong>" }, it: { content: "<strong>Servizi</strong>" } };
 

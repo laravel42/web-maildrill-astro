@@ -1,7 +1,8 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, testimonialFragment, type LayoutPageMeta } from "../helpers";
+import { NAVBAR_BRAND_STYLE } from "../../components/Navbar";
+import { darkBandStyleFor, pricingCardFragment, statFragment, testimonialFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Landing de producto" — REESCRITA (docs/48 §2 fila 8, F3) como
@@ -113,20 +114,14 @@ function card(radius = "16px", shadow = SHADOW_CARD): NodeStyle {
 }
 
 function statCard(n: 1 | 2 | 3 | 4, value: string, label: string) {
-  return {
-    [`saas-stat-${n}`]: {
-      id: `saas-stat-${n}`,
-      type: "stat",
-      props: { value, label },
-      style: {
-        base: {
-          ...defaultStyleFor("stat").base,
-          appearance: { color: { token: "colors.band.on" } },
-        },
-      },
-      behaviors: [{ type: "count-up", options: { duration: 1500, threshold: 0.3, once: true } }],
+  const nodes = statFragment(`saas-stat-${n}`, { value, label }, {
+    base: {
+      ...defaultStyleFor("stat").base,
+      appearance: { color: { token: "colors.band.on" } },
     },
-  };
+  });
+  nodes[`saas-stat-${n}`]!.behaviors = [{ type: "count-up", options: { duration: 1500, threshold: 0.3, once: true } }];
+  return nodes;
 }
 
 function pricingPlan(
@@ -137,36 +132,34 @@ function pricingPlan(
   features: string,
   popular: boolean,
 ) {
-  return {
-    [`saas-pricing-plan-${n}`]: {
-      id: `saas-pricing-plan-${n}`,
-      type: "pricing-card",
-      props: {
-        planName,
-        price,
-        period,
-        features,
-        ctaLabel: popular ? "Empezar prueba gratis" : "Elegir plan",
-        ctaLink: { kind: "anchor", nodeId: "saas-faq" },
-        popular,
-        popularLabel: "Más popular",
-      },
-      style: {
-        ...defaultStyleFor("pricing-card"),
-        base: {
-          ...defaultStyleFor("pricing-card").base,
-          size: { minHeight: "64px", maxWidth: "360px", width: "100%" },
-          appearance: {
-            ...defaultStyleFor("pricing-card").base.appearance,
-            borderColor: popular ? { token: "colors.primary.default" } : { token: "colors.border" },
-            borderWidth: popular ? "2px" : "1px",
-            boxShadow: popular ? SHADOW_HOVER : SHADOW_CARD,
-          },
-        },
-        states: { hover: { appearance: { boxShadow: SHADOW_HOVER } } },
+  const rootStyle = {
+    ...defaultStyleFor("pricing-card"),
+    base: {
+      ...defaultStyleFor("pricing-card").base,
+      size: { minHeight: "64px", maxWidth: "360px", width: "100%" },
+      appearance: {
+        ...defaultStyleFor("pricing-card").base.appearance,
+        borderColor: popular ? { token: "colors.primary.default" } : { token: "colors.border" },
+        borderWidth: popular ? "2px" : "1px",
+        boxShadow: popular ? SHADOW_HOVER : SHADOW_CARD,
       },
     },
+    states: { hover: { appearance: { boxShadow: SHADOW_HOVER } } },
   };
+  return pricingCardFragment(
+    `saas-pricing-plan-${n}`,
+    {
+      planName,
+      price,
+      period,
+      features: features.split("\n").map((f) => f.trim()).filter((f) => f !== ""),
+      ctaLabel: popular ? "Empezar prueba gratis" : "Elegir plan",
+      ctaLink: { kind: "anchor", nodeId: "saas-faq" },
+      popular,
+      popularLabel: "Más popular",
+    },
+    rootStyle,
+  );
 }
 
 function logoPlaceholder(n: 1 | 2 | 3 | 4 | 5, label: string) {
@@ -229,6 +222,13 @@ export function buildLandingProductFragment(): NodeFragment {
           },
         },
         behaviors: [{ type: "navbar", options: { duration: 240 } }],
+        children: ["saas-navbar-brand"],
+      },
+      "saas-navbar-brand": {
+        id: "saas-navbar-brand",
+        type: "container",
+        props: {},
+        style: NAVBAR_BRAND_STYLE,
         children: ["saas-navbar-lang", "saas-navbar-cta"],
       },
       "saas-navbar-lang": {
@@ -823,10 +823,14 @@ export function buildLandingProductFragment(): NodeFragment {
       t["saas-logo-5"] = { en: { content: "<strong>Aleph</strong>" }, it: { content: "<strong>Aleph</strong>" } };
 
       t["saas-stats-title"] = { en: { content: "<strong>Real impact, in numbers</strong>" }, it: { content: "<strong>L'impatto reale, in numeri</strong>" } };
-      t["saas-stat-1"] = { en: { value: "12,400+", label: "Active teams" }, it: { value: "12.400+", label: "Team attivi" } };
-      t["saas-stat-2"] = { en: { value: "3.2M", label: "Tasks automated per month" }, it: { value: "3,2M", label: "Attività automatizzate al mese" } };
-      t["saas-stat-3"] = { en: { value: "18h", label: "Saved per team/week" }, it: { value: "18h", label: "Risparmiate per team/settimana" } };
-      t["saas-stat-4"] = { en: { value: "99.95%", label: "Guaranteed uptime" }, it: { value: "99,95%", label: "Uptime garantito" } };
+      t["saas-stat-1-value"] = { en: { value: "12,400+" }, it: { value: "12.400+" } };
+      t["saas-stat-1-label"] = { en: { content: "Active teams" }, it: { content: "Team attivi" } };
+      t["saas-stat-2-value"] = { en: { value: "3.2M" }, it: { value: "3,2M" } };
+      t["saas-stat-2-label"] = { en: { content: "Tasks automated per month" }, it: { content: "Attività automatizzate al mese" } };
+      t["saas-stat-3-value"] = { en: { value: "18h" }, it: { value: "18h" } };
+      t["saas-stat-3-label"] = { en: { content: "Saved per team/week" }, it: { content: "Risparmiate per team/settimana" } };
+      t["saas-stat-4-value"] = { en: { value: "99.95%" }, it: { value: "99,95%" } };
+      t["saas-stat-4-label"] = { en: { content: "Guaranteed uptime" }, it: { content: "Uptime garantito" } };
 
       t["saas-pricing-title"] = { en: { content: "<strong>A plan for every team size</strong>" }, it: { content: "<strong>Un piano per ogni dimensione di team</strong>" } };
       t["saas-pricing-sub"] = {
@@ -834,46 +838,45 @@ export function buildLandingProductFragment(): NodeFragment {
         it: { content: "Annulla in qualsiasi momento. Tutti i piani includono 14 giorni di prova gratuita." },
       };
 
-      t["saas-pricing-plan-1"] = {
-        en: { planName: "Starter", price: "$0", period: "/mo", features: "Up to 3 active flows\n1 user\n5 integrations\nCommunity support", ctaLabel: "Choose plan", popularLabel: "Most popular" },
-        it: { planName: "Starter", price: "$0", period: "/mese", features: "Fino a 3 flussi attivi\n1 utente\n5 integrazioni\nSupporto community", ctaLabel: "Scegli piano", popularLabel: "Più popolare" },
+      t["saas-pricing-plan-1-badge"] = {
+        en: { content: "Most popular" },
+        it: { content: "Più popolare" },
       };
-      t["saas-pricing-plan-2"] = {
-        en: {
-          planName: "Team",
-          price: "$39",
-          period: "/mo",
-          features: "Unlimited flows\nUp to 10 users\nAll integrations\nPriority support\n90-day history",
-          ctaLabel: "Start free trial",
-          popularLabel: "Most popular",
-        },
-        it: {
-          planName: "Team",
-          price: "$39",
-          period: "/mese",
-          features: "Flussi illimitati\nFino a 10 utenti\nTutte le integrazioni\nSupporto prioritario\nCronologia di 90 giorni",
-          ctaLabel: "Inizia la prova gratuita",
-          popularLabel: "Più popolare",
-        },
+      t["saas-pricing-plan-1-plan"] = { en: { content: "Starter" }, it: { content: "Starter" } };
+      t["saas-pricing-plan-1-price"] = { en: { content: "$0" }, it: { content: "$0" } };
+      t["saas-pricing-plan-1-period"] = { en: { content: "/mo" }, it: { content: "/mese" } };
+      t["saas-pricing-plan-1-feature-0-text"] = { en: { content: "✓ Up to 3 active flows" }, it: { content: "✓ Fino a 3 flussi attivi" } };
+      t["saas-pricing-plan-1-feature-1-text"] = { en: { content: "✓ 1 user" }, it: { content: "✓ 1 utente" } };
+      t["saas-pricing-plan-1-feature-2-text"] = { en: { content: "✓ 5 integrations" }, it: { content: "✓ 5 integrazioni" } };
+      t["saas-pricing-plan-1-feature-3-text"] = { en: { content: "✓ Community support" }, it: { content: "✓ Supporto community" } };
+      t["saas-pricing-plan-1-cta"] = { en: { label: "Choose plan" }, it: { label: "Scegli piano" } };
+
+      t["saas-pricing-plan-2-badge"] = {
+        en: { content: "Most popular" },
+        it: { content: "Più popolare" },
       };
-      t["saas-pricing-plan-3"] = {
-        en: {
-          planName: "Enterprise",
-          price: "$129",
-          period: "/mo",
-          features: "Unlimited users\nSSO and access control\nDedicated SLA\nAssisted onboarding",
-          ctaLabel: "Choose plan",
-          popularLabel: "Most popular",
-        },
-        it: {
-          planName: "Enterprise",
-          price: "$129",
-          period: "/mese",
-          features: "Utenti illimitati\nSSO e controllo accessi\nSLA dedicato\nOnboarding assistito",
-          ctaLabel: "Scegli piano",
-          popularLabel: "Più popolare",
-        },
+      t["saas-pricing-plan-2-plan"] = { en: { content: "Team" }, it: { content: "Team" } };
+      t["saas-pricing-plan-2-price"] = { en: { content: "$39" }, it: { content: "$39" } };
+      t["saas-pricing-plan-2-period"] = { en: { content: "/mo" }, it: { content: "/mese" } };
+      t["saas-pricing-plan-2-feature-0-text"] = { en: { content: "✓ Unlimited flows" }, it: { content: "✓ Flussi illimitati" } };
+      t["saas-pricing-plan-2-feature-1-text"] = { en: { content: "✓ Up to 10 users" }, it: { content: "✓ Fino a 10 utenti" } };
+      t["saas-pricing-plan-2-feature-2-text"] = { en: { content: "✓ All integrations" }, it: { content: "✓ Tutte le integrazioni" } };
+      t["saas-pricing-plan-2-feature-3-text"] = { en: { content: "✓ Priority support" }, it: { content: "✓ Supporto prioritario" } };
+      t["saas-pricing-plan-2-feature-4-text"] = { en: { content: "✓ 90-day history" }, it: { content: "✓ Cronologia di 90 giorni" } };
+      t["saas-pricing-plan-2-cta"] = { en: { label: "Start free trial" }, it: { label: "Inizia la prova gratuita" } };
+
+      t["saas-pricing-plan-3-badge"] = {
+        en: { content: "Most popular" },
+        it: { content: "Più popolare" },
       };
+      t["saas-pricing-plan-3-plan"] = { en: { content: "Enterprise" }, it: { content: "Enterprise" } };
+      t["saas-pricing-plan-3-price"] = { en: { content: "$129" }, it: { content: "$129" } };
+      t["saas-pricing-plan-3-period"] = { en: { content: "/mo" }, it: { content: "/mese" } };
+      t["saas-pricing-plan-3-feature-0-text"] = { en: { content: "✓ Unlimited users" }, it: { content: "✓ Utenti illimitati" } };
+      t["saas-pricing-plan-3-feature-1-text"] = { en: { content: "✓ SSO and access control" }, it: { content: "✓ SSO e controllo accessi" } };
+      t["saas-pricing-plan-3-feature-2-text"] = { en: { content: "✓ Dedicated SLA" }, it: { content: "✓ SLA dedicato" } };
+      t["saas-pricing-plan-3-feature-3-text"] = { en: { content: "✓ Assisted onboarding" }, it: { content: "✓ Onboarding assistito" } };
+      t["saas-pricing-plan-3-cta"] = { en: { label: "Choose plan" }, it: { label: "Scegli piano" } };
 
       t["saas-testimonials-title"] = { en: { content: "<strong>Teams already moving faster with Fluxo</strong>" }, it: { content: "<strong>Team che lavorano già più velocemente con Fluxo</strong>" } };
       t["saas-testimonial-1-quote"] = {

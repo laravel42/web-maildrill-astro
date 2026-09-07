@@ -1,5 +1,6 @@
 import type { NodeFragment } from "../../../model/tree";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
+import { statFragment } from "../helpers";
 
 /**
  * Franja de KPIs con icono (docs/37 §3.1 #5): 3 `stat` + `icon`, distinta de
@@ -38,12 +39,7 @@ export function buildStatsStripFragment(): NodeFragment {
         props: { name: "Zap", title: "" },
         style: defaultStyleFor("icon"),
       },
-      "stats-strip-1-stat": {
-        id: "stats-strip-1-stat",
-        type: "stat",
-        props: { value: "3x", label: "más rápido de lanzar" },
-        style: defaultStyleFor("stat"),
-      },
+      ...statFragment("stats-strip-1-stat", { value: "3x", label: "más rápido de lanzar" }, defaultStyleFor("stat")),
       "stats-strip-2": {
         id: "stats-strip-2",
         type: "container",
@@ -59,12 +55,7 @@ export function buildStatsStripFragment(): NodeFragment {
         props: { name: "ShieldCheck", title: "" },
         style: defaultStyleFor("icon"),
       },
-      "stats-strip-2-stat": {
-        id: "stats-strip-2-stat",
-        type: "stat",
-        props: { value: "99.9%", label: "disponibilidad" },
-        style: defaultStyleFor("stat"),
-      },
+      ...statFragment("stats-strip-2-stat", { value: "99.9%", label: "disponibilidad" }, defaultStyleFor("stat")),
       "stats-strip-3": {
         id: "stats-strip-3",
         type: "container",
@@ -80,12 +71,7 @@ export function buildStatsStripFragment(): NodeFragment {
         props: { name: "Globe", title: "" },
         style: defaultStyleFor("icon"),
       },
-      "stats-strip-3-stat": {
-        id: "stats-strip-3-stat",
-        type: "stat",
-        props: { value: "80+", label: "países con usuarios activos" },
-        style: defaultStyleFor("stat"),
-      },
+      ...statFragment("stats-strip-3-stat", { value: "80+", label: "países con usuarios activos" }, defaultStyleFor("stat")),
     },
   };
 }

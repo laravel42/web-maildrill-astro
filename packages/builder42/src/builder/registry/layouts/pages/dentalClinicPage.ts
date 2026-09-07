@@ -1,6 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { NodeTranslations } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
+import { NAVBAR_BRAND_STYLE } from "../../components/Navbar";
 import { darkBandStyleFor, testimonialFragment } from "../helpers";
 
 /**
@@ -95,6 +96,13 @@ export function buildDentalClinicPageFragment(): NodeFragment {
         props: { hiddenPageIds: [] },
         style: defaultStyleFor("navbar"),
         behaviors: [{ type: "navbar", options: { duration: 240 } }],
+        children: ["dental-navbar-brand-container"],
+      },
+      "dental-navbar-brand-container": {
+        id: "dental-navbar-brand-container",
+        type: "container",
+        props: {},
+        style: NAVBAR_BRAND_STYLE,
         children: ["dental-navbar-brand"],
       },
       "dental-navbar-brand": {

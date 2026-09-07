@@ -2,38 +2,66 @@
  * PricingCard — tarjeta de precio: plan + precio + features + CTA + badge
  * "popular" (docs/16 §12.1 #13).
  *
- * Componente `content` atómico. Raíz `<article>` themeable por tokens; dentro,
- * nombre de plan, precio + periodo, lista de features (una por línea en la prop)
- * y un CTA `<a>`. `popular` (toggle) muestra un badge de acento.
+ * COMPOSITE de componentes base (docs/23, mismo espíritu que `testimonial`/
+ * `quote`/`stat`): la raíz sigue siendo un `<article>` atómico (mismo
+ * `defaultStyle`, retrocompatible visualmente), pero su contenido son NODOS
+ * HIJO reales en vez de sub-elementos con `CSSProperties` fijas:
  *
- * **Colores de sub-elementos por token sin romper el export:** el CTA y el badge
- * usan `var(--colors-primary-default)` / `var(--colors-primary-on)` inline. Esas
- * custom properties las define el sistema de tokens tanto en el canvas (scopeadas
- * al frame por `TokensStyle`) como en el export (`:root`), así que el color es
- * coherente con el tema en AMBOS modos — a diferencia de un color en el `style`
- * de la raíz, que no se emite en `exportMode` (AGENTS.md §5). Los tokens base
- * están garantizados (`BASE_TOKENS`), así que las vars siempre resuelven.
+ *   pricing-card (article, acceptsChildren)
+ *   ├── <id>-badge      : text      ("Popular" — nodo normal, el usuario lo
+ *   │                     borra si no quiere destacar el plan; no hay prop
+ *   │                     `popular`/`popularLabel`, "todo es nodos")
+ *   ├── <id>-plan        : text      (nombre del plan, bold)
+ *   ├── <id>-price-row   : container (fila precio+periodo, alignItems:baseline)
+ *   │   ├── <id>-price   : text      (precio, grande y bold)
+ *   │   └── <id>-period  : text      (periodo, color atenuado)
+ *   ├── <id>-features    : container (columna de filas de feature)
+ *   │   └── <id>-feature-N : container (fila check+texto)
+ *   │       └── <id>-feature-N-text : text ("✓ " + feature, un solo nodo)
+ *   └── <id>-cta         : button    (REUSA el componente `button` existente)
  *
- * Render puro (P3): raíz con `rootRef`/`rootProps`; HTML puro sin runtime (P8).
+ * Motivo (mismo bug real que Testimonial/Quote/Stat): el spacing/gap entre
+ * badge/plan/precio/features/CTA vivía en `CSSProperties` fijas
+ * (`BADGE_STYLE`, `PRICE_ROW_STYLE`, `FEATURES_STYLE`, `FEATURE_STYLE`,
+ * `CTA_STYLE`…) no editables desde el Inspector. Al convertir cada
+ * sub-elemento en un nodo real, su `spacing`/`appearance` quedan editables de
+ * fábrica (mismo `styleSchema` que cualquier `container`/`text`/`button`).
+ *
+ * Decisión de diseño — features individuales (confirmado por el usuario):
+ * cada feature es un nodo propio (no una prop de textarea multi-línea), así
+ * que se pueden añadir/quitar/reordenar/editar una por una como cualquier
+ * otro nodo del árbol. El check "✓" se mantiene DENTRO del mismo `text` que
+ * la feature (un solo nodo por feature, no dos) — más simple de editar (no
+ * hay que sincronizar dos nodos hermanos) y evita que el usuario borre el
+ * check por accidente al editar solo el texto; ver `featureRowStyle`/
+ * `PRICING_FEATURE_TEXT_STYLE`.
+ *
+ * Decisión de diseño — badge: se elimina la prop `popular`/`popularLabel`.
+ * El badge es un nodo `text` más en `defaultChildren`, con estilo de acento
+ * (`appearance.background`/`appearance.color` con tokens `colors.primary.*`,
+ * ya existentes en `BASE_TOKENS` — ver `model/tokens.ts`). Si el usuario no
+ * quiere destacar el plan, simplemente borra el nodo del árbol.
+ *
+ * Decisión de diseño — CTA: reusa el nodo `button` YA EXISTENTE (en vez de
+ * introducir un tipo nuevo) con un override de estilo que reproduce la
+ * apariencia visual del `CTA_STYLE` viejo (fondo primary, texto centrado) más
+ * `spacing.margin` (antes `marginTop` fijo, ahora editable) — ver
+ * `PRICING_CTA_STYLE`. El resto (`fondo`/`color`/`padding`/`radius`) ya lo
+ * trae el `defaultStyle` normal de `button`, así que solo se hace override de
+ * lo que cambia (`textAlign` centrado + el margin).
+ *
+ * Retrocompatibilidad: un documento guardado con el `pricing-card` viejo
+ * (props `planName/price/period/features/ctaLabel/ctaLink/popular/
+ * popularLabel`, sin `children`) se migra automáticamente al cargar — ver
+ * `model/migrateSlots.ts` (`migratePricingCardNode`).
  */
 
 import type { CSSProperties, Ref } from "react";
-import { DEFAULT_BREAKPOINTS, type LinkTarget, type NodeStyle } from "../../model/types";
+import { DEFAULT_BREAKPOINTS, type NodeStyle } from "../../model/types";
 import { resolveStyle } from "../../model/style";
 import { stylePropertiesToCSSObject } from "../styleToCss";
-import type { ComponentDefinition, RenderContext } from "../types";
-
-function readLink(value: unknown): LinkTarget | null {
-  if (typeof value !== "object" || value === null) return null;
-  const kind = (value as { kind?: unknown }).kind;
-  if (kind === "internal" || kind === "external" || kind === "anchor") return value as LinkTarget;
-  return null;
-}
-function localResolve(link: LinkTarget): string {
-  if (link.kind === "external") return link.href;
-  if (link.kind === "anchor") return `#${link.nodeId}`;
-  return "#";
-}
+import { BUTTON_DEFAULT_STYLE } from "./Button";
+import type { ComponentDefinition, DefaultChildSpec, RenderContext } from "../types";
 
 export const PRICING_DEFAULT_STYLE: NodeStyle = {
   base: {
@@ -53,80 +81,183 @@ export const PRICING_DEFAULT_STYLE: NodeStyle = {
   },
 };
 
-const BADGE_STYLE: CSSProperties = {
-  alignSelf: "flex-start",
-  padding: "var(--spacing-xs, 4px) var(--spacing-sm, 8px)",
-  borderRadius: "var(--radii-sm, 4px)",
-  background: "var(--colors-primary-default)",
-  color: "var(--colors-primary-on)",
-  fontSize: "var(--typography-sizes-sm, 0.75em)",
-  fontWeight: "var(--typography-weights-bold, 700)",
-  textTransform: "uppercase",
-  letterSpacing: "0.03em",
-};
-const PLAN_STYLE: CSSProperties = {
-  fontSize: "var(--typography-sizes-lg, 1.1em)",
-  fontWeight: "var(--typography-weights-bold, 700)",
-};
-const PRICE_ROW_STYLE: CSSProperties = {
-  display: "flex",
-  alignItems: "baseline",
-  gap: "var(--spacing-xs, 4px)",
-};
-const PRICE_STYLE: CSSProperties = {
-  fontSize: "2.25em",
-  fontWeight: "var(--typography-weights-bold, 700)",
-  lineHeight: 1,
-};
-const PERIOD_STYLE: CSSProperties = {
-  fontSize: "var(--typography-sizes-base, 0.9em)",
-  opacity: 0.6,
-};
-const FEATURES_STYLE: CSSProperties = {
-  listStyle: "none",
-  margin: 0,
-  padding: 0,
-  display: "flex",
-  flexDirection: "column",
-  gap: "var(--spacing-xs, 8px)",
-};
-const FEATURE_STYLE: CSSProperties = {
-  display: "flex",
-  gap: "var(--spacing-xs, 8px)",
-  alignItems: "flex-start",
-};
-const CTA_STYLE: CSSProperties = {
-  marginTop: "var(--spacing-xs, 8px)",
-  display: "inline-block",
-  padding: "var(--spacing-sm, 10px) var(--spacing-md, 16px)",
-  borderRadius: "var(--radii-md, 8px)",
-  background: "var(--colors-primary-default)",
-  color: "var(--colors-primary-on)",
-  textDecoration: "none",
-  textAlign: "center",
-  fontWeight: "var(--typography-weights-bold, 600)",
+/**
+ * `text` del badge "Popular" (antes `BADGE_STYLE`). Fondo/color de acento con
+ * tokens de paleta ya existentes (`colors.primary.default`/`.on`,
+ * `model/tokens.ts#BASE_TOKENS`) en vez de los `var(--colors-primary-…)`
+ * crudos del código viejo — mismo resultado visual, ahora vía el sistema de
+ * tokens estándar (coherente con cualquier tema, igual criterio que el resto
+ * de componentes). Sin `textTransform`/`letterSpacing`: el modelo de estilo
+ * no tiene esos campos editables (misma pérdida visual menor ya documentada
+ * en `Testimonial.tsx` para `fontStyle`), fuera de alcance de esta
+ * recomposición.
+ */
+export const PRICING_BADGE_STYLE: NodeStyle = {
+  base: {
+    layout: { display: "inline-block" },
+    spacing: { padding: "4px 8px", margin: "0" },
+    appearance: {
+      background: { token: "colors.primary.default" },
+      color: { token: "colors.primary.on" },
+      borderRadius: { token: "radii.sm" },
+    },
+    typography: {
+      fontSize: { token: "typography.sizes.sm" },
+      fontWeight: { token: "typography.weights.bold" },
+    },
+  },
 };
 
+/** `text` del nombre del plan: bold (antes `PLAN_STYLE`). */
+export const PRICING_PLAN_STYLE: NodeStyle = {
+  base: {
+    typography: { fontSize: { token: "typography.sizes.lg" }, fontWeight: { token: "typography.weights.bold" } },
+    spacing: { margin: "0" },
+  },
+};
+
+/**
+ * `container` fila precio+periodo (antes `PRICE_ROW_STYLE`). `padding`/
+ * `background` se neutralizan porque `container` trae estilo visual propio
+ * por defecto (docs/03 §4) que aquí no queremos (mismo criterio que
+ * `TESTIMONIAL_CAPTION_STYLE`) — este nodo es puramente de layout.
+ */
+export const PRICING_PRICE_ROW_STYLE: NodeStyle = {
+  base: {
+    layout: { display: "flex", alignItems: "baseline", gap: "4px" },
+    spacing: { padding: "0", margin: "0" },
+    size: { minHeight: "0" },
+    appearance: { background: "transparent" },
+  },
+};
+
+/** `text` del precio: grande y bold, lineHeight ajustado (antes `PRICE_STYLE`). */
+export const PRICING_PRICE_STYLE: NodeStyle = {
+  base: {
+    typography: {
+      fontSize: "2.25em",
+      fontWeight: { token: "typography.weights.bold" },
+      lineHeight: { token: "typography.lineHeights.tight" },
+    },
+    spacing: { margin: "0" },
+  },
+};
+
+/**
+ * `text` del periodo (antes `PERIOD_STYLE.opacity`). El modelo no tiene
+ * `opacity`; se usa `colors.muted` (mismo criterio ya usado en
+ * Testimonial/Stat/Quote) para el mismo efecto visual de texto secundario.
+ */
+export const PRICING_PERIOD_STYLE: NodeStyle = {
+  base: {
+    typography: { fontSize: { token: "typography.sizes.base" } },
+    appearance: { color: { token: "colors.muted" } },
+    spacing: { margin: "0" },
+  },
+};
+
+/**
+ * `container` columna de features (antes `FEATURES_STYLE`). Sin
+ * padding/background propio — mismo criterio de neutralizar el `container`
+ * que en `PRICING_PRICE_ROW_STYLE`.
+ */
+export const PRICING_FEATURES_STYLE: NodeStyle = {
+  base: {
+    layout: { display: "flex", flexDirection: "column", gap: "8px" },
+    spacing: { padding: "0", margin: "0" },
+    size: { minHeight: "0" },
+    appearance: { background: "transparent" },
+  },
+};
+
+/**
+ * `container` fila de UNA feature (antes `FEATURE_STYLE`). Solo layout (sin
+ * padding/background propio) — el check "✓" vive dentro del `text` hijo
+ * único (ver `PRICING_FEATURE_TEXT_STYLE`), no como un nodo hermano
+ * separado.
+ */
+export const PRICING_FEATURE_STYLE: NodeStyle = {
+  base: {
+    layout: { display: "flex", alignItems: "flex-start", gap: "0" },
+    spacing: { padding: "0", margin: "0" },
+    size: { minHeight: "0" },
+    appearance: { background: "transparent" },
+  },
+};
+
+/** `text` de una feature individual: "✓ " + el texto, un solo nodo editable. */
+export const PRICING_FEATURE_TEXT_STYLE: NodeStyle = {
+  base: { spacing: { margin: "0" } },
+};
+
+/**
+ * `button` del CTA (antes `CTA_STYLE`). Override sobre el `defaultStyle`
+ * normal de `button` (fondo/color/padding/radius ya vienen de
+ * `BUTTON_DEFAULT_STYLE`): solo se ajusta `spacing.margin` (antes
+ * `marginTop` fijo, ahora editable) y `textAlign` centrado + ancho completo
+ * para reproducir la apariencia visual idéntica del CTA viejo dentro de la
+ * card.
+ */
+export const PRICING_CTA_STYLE: NodeStyle = {
+  base: {
+    ...BUTTON_DEFAULT_STYLE.base,
+    layout: { ...BUTTON_DEFAULT_STYLE.base.layout, display: "block" },
+    spacing: { ...BUTTON_DEFAULT_STYLE.base.spacing, margin: "8px 0 0 0" },
+    typography: { ...BUTTON_DEFAULT_STYLE.base.typography, textAlign: "center" },
+  },
+};
+
+function featureChild(text: string): DefaultChildSpec {
+  return {
+    type: "container",
+    style: PRICING_FEATURE_STYLE,
+    children: [
+      {
+        type: "text",
+        props: { content: `✓ ${text}` },
+        style: PRICING_FEATURE_TEXT_STYLE,
+      },
+    ],
+  };
+}
+
+/** `defaultChildren` sembrados al crear un `pricing-card` nuevo desde la paleta. */
+export const PRICING_DEFAULT_CHILDREN: DefaultChildSpec[] = [
+  { type: "text", props: { content: "Popular" }, style: PRICING_BADGE_STYLE },
+  { type: "text", props: { content: "Pro" }, style: PRICING_PLAN_STYLE },
+  {
+    type: "container",
+    style: PRICING_PRICE_ROW_STYLE,
+    children: [
+      { type: "text", props: { content: "$29" }, style: PRICING_PRICE_STYLE },
+      { type: "text", props: { content: "/mes" }, style: PRICING_PERIOD_STYLE },
+    ],
+  },
+  {
+    type: "container",
+    style: PRICING_FEATURES_STYLE,
+    children: [
+      featureChild("Todo del plan Free"),
+      featureChild("Soporte prioritario"),
+      featureChild("Proyectos ilimitados"),
+    ],
+  },
+  {
+    type: "button",
+    props: { label: "Empezar", link: { kind: "external", href: "#" } },
+    style: PRICING_CTA_STYLE,
+  },
+];
+
 function PricingCardRender(ctx: RenderContext) {
-  const { node, exportMode, className, breakpoint, rootRef, rootProps, resolveLink } = ctx;
+  const { node, children, exportMode, className, breakpoint, rootRef, rootProps } = ctx;
   const style: CSSProperties | undefined = exportMode
     ? undefined
     : stylePropertiesToCSSObject(resolveStyle(node.style, breakpoint, DEFAULT_BREAKPOINTS));
 
-  const planName = typeof node.props.planName === "string" ? node.props.planName : "";
-  const price = typeof node.props.price === "string" ? node.props.price : "";
-  const period = typeof node.props.period === "string" ? node.props.period : "";
-  const featuresRaw = typeof node.props.features === "string" ? node.props.features : "";
-  const features = featuresRaw.split("\n").map((f) => f.trim()).filter((f) => f !== "");
-  const ctaLabel = typeof node.props.ctaLabel === "string" ? node.props.ctaLabel : "";
-  const popular = node.props.popular === true;
-  const popularLabel = typeof node.props.popularLabel === "string" && node.props.popularLabel !== "" ? node.props.popularLabel : "Popular";
-
-  const link = readLink(node.props.ctaLink);
-  const href = link ? (resolveLink?.(link) ?? localResolve(link)) : "#";
-
   const { className: rootClassName, ...restRootProps } = rootProps ?? {};
   const mergedClassName = [className, rootClassName].filter(Boolean).join(" ") || undefined;
+  const isEmpty = !node.children || node.children.length === 0;
 
   return (
     <article
@@ -135,26 +266,11 @@ function PricingCardRender(ctx: RenderContext) {
       style={style}
       {...restRootProps}
     >
-      {popular ? <span style={BADGE_STYLE}>{popularLabel}</span> : null}
-      {planName !== "" ? <span style={PLAN_STYLE}>{planName}</span> : null}
-      <span style={PRICE_ROW_STYLE}>
-        <span style={PRICE_STYLE}>{price !== "" ? price : "$0"}</span>
-        {period !== "" ? <span style={PERIOD_STYLE}>{period}</span> : null}
-      </span>
-      {features.length > 0 ? (
-        <ul style={FEATURES_STYLE}>
-          {features.map((f, i) => (
-            <li key={i} style={FEATURE_STYLE}>
-              <span aria-hidden="true">✓</span>
-              <span>{f}</span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      {ctaLabel !== "" ? (
-        <a href={href} style={CTA_STYLE}>
-          {ctaLabel}
-        </a>
+      {children}
+      {!exportMode && isEmpty ? (
+        <span className="pbx-empty-hint" data-empty-hint>
+          Tarjeta de precio vacía — añade el plan, precio y features
+        </span>
       ) : null}
     </article>
   );
@@ -164,30 +280,11 @@ export const pricingCardDefinition: ComponentDefinition = {
   type: "pricing-card",
   label: "Tarjeta de precio",
   category: "content",
-  acceptsChildren: false,
-  defaultProps: {
-    planName: "Pro",
-    price: "$29",
-    period: "/mes",
-    features: "Todo del plan Free\nSoporte prioritario\nProyectos ilimitados",
-    ctaLabel: "Empezar",
-    ctaLink: { kind: "external", href: "#" },
-    popular: false,
-    popularLabel: "Popular",
-  },
+  acceptsChildren: true,
+  defaultProps: {},
   defaultStyle: structuredClone(PRICING_DEFAULT_STYLE),
-  propsSchema: {
-    fields: [
-      { key: "planName", label: "Nombre del plan", control: "text", group: "Contenido", translatable: true },
-      { key: "price", label: "Precio", control: "text", group: "Contenido", translatable: true },
-      { key: "period", label: "Periodo", control: "text", group: "Contenido", translatable: true },
-      { key: "features", label: "Features (una por línea)", control: "string-list", group: "Contenido", translatable: true },
-      { key: "ctaLabel", label: "Texto del CTA", control: "text", group: "Acción", translatable: true },
-      { key: "ctaLink", label: "Enlace del CTA", control: "link", group: "Acción" },
-      { key: "popular", label: "Destacar como popular", control: "toggle", group: "Estado" },
-      { key: "popularLabel", label: "Texto del badge popular", control: "text", group: "Estado", translatable: true },
-    ],
-  },
+  defaultChildren: PRICING_DEFAULT_CHILDREN,
+  propsSchema: { fields: [] },
   styleSchema: { enabledGroups: ["typography", "spacing", "size", "appearance"] },
   render: PricingCardRender,
 };

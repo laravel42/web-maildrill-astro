@@ -1,5 +1,6 @@
 import type { NodeFragment } from "../../../model/tree";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
+import { pricingCardFragment } from "../helpers";
 
 /**
  * Sección de pricing reutilizable, con contenido propio (no un recorte de
@@ -23,36 +24,34 @@ export function buildPricingSectionFragment(): NodeFragment {
         },
         children: ["pricing-section-basic", "pricing-section-premium"],
       },
-      "pricing-section-basic": {
-        id: "pricing-section-basic",
-        type: "pricing-card",
-        props: {
+      ...pricingCardFragment(
+        "pricing-section-basic",
+        {
           planName: "Básico",
           price: "$9",
           period: "/mes",
-          features: "1 usuario\nExport ilimitado\nSoporte por email",
+          features: ["1 usuario", "Export ilimitado", "Soporte por email"],
           ctaLabel: "Elegir Básico",
           ctaLink: { kind: "external", href: "#" },
           popular: false,
           popularLabel: "Popular",
         },
-        style: defaultStyleFor("pricing-card"),
-      },
-      "pricing-section-premium": {
-        id: "pricing-section-premium",
-        type: "pricing-card",
-        props: {
+        defaultStyleFor("pricing-card"),
+      ),
+      ...pricingCardFragment(
+        "pricing-section-premium",
+        {
           planName: "Premium",
           price: "$39",
           period: "/mes",
-          features: "Usuarios ilimitados\nDominios propios\nSoporte prioritario 24/7",
+          features: ["Usuarios ilimitados", "Dominios propios", "Soporte prioritario 24/7"],
           ctaLabel: "Elegir Premium",
           ctaLink: { kind: "external", href: "#" },
           popular: true,
           popularLabel: "Popular",
         },
-        style: defaultStyleFor("pricing-card"),
-      },
+        defaultStyleFor("pricing-card"),
+      ),
     },
   };
 }

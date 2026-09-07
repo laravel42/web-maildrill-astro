@@ -21,6 +21,7 @@
 import type { CSSProperties, ReactElement, Ref } from "react";
 import { DEFAULT_BREAKPOINTS, type NodeStyle } from "../../model/types";
 import { resolveStyle } from "../../model/style";
+import { styleValueToCss } from "../../model/tokens";
 import { stylePropertiesToCSSObject } from "../styleToCss";
 import type { ComponentDefinition, RenderContext } from "../types";
 import { simpleIconsCatalog } from "../catalogs/simpleIcons.catalog";
@@ -118,19 +119,21 @@ function resolveIcon(label: string): IconSource | null {
  */
 export const SOCIAL_LINKS_DEFAULT_STYLE: NodeStyle = {
   base: {
-    layout: { display: "block" },
+    layout: { display: "block", gap: "16px" },
     appearance: { color: { token: "colors.text" } },
     typography: { fontSize: "24px" },
   },
 };
 
+// `gap` YA NO vive aquí como literal fijo: se resuelve desde `node.style`
+// (`layout.gap`, editable en el Inspector) y se inyecta en el `<ul>` real
+// (la raíz `<nav>` es `display:block`, el gap no tendría efecto ahí).
 const LIST_STYLE: CSSProperties = {
   listStyle: "none",
   margin: 0,
   padding: 0,
   display: "flex",
   flexWrap: "wrap",
-  gap: "16px",
 };
 const LINK_STYLE: CSSProperties = {
   display: "inline-flex",
@@ -145,6 +148,8 @@ function SocialLinksRender(ctx: RenderContext) {
   const style: CSSProperties | undefined = exportMode
     ? undefined
     : stylePropertiesToCSSObject(resolveStyle(node.style, breakpoint, DEFAULT_BREAKPOINTS));
+  const resolvedGap = styleValueToCss(resolveStyle(node.style, breakpoint, DEFAULT_BREAKPOINTS).layout?.gap);
+  const listStyle: CSSProperties = { ...LIST_STYLE, gap: resolvedGap ?? "16px" };
 
   const links: SocialLink[] = Array.isArray(node.props.links) ? (node.props.links as SocialLink[]) : [];
 
@@ -159,7 +164,7 @@ function SocialLinksRender(ctx: RenderContext) {
       aria-label="Redes sociales"
       {...restRootProps}
     >
-      <ul style={LIST_STYLE}>
+      <ul style={listStyle}>
         {links.map((l, i) => {
           const label = typeof l?.label === "string" ? l.label.trim() : "";
           const value = typeof l?.value === "string" ? l.value : "";
@@ -233,6 +238,6 @@ export const socialLinksDefinition: ComponentDefinition = {
       },
     ],
   },
-  styleSchema: { enabledGroups: ["size", "spacing", "appearance", "typography"] },
+  styleSchema: { enabledGroups: ["layout", "size", "spacing", "appearance", "typography"] },
   render: SocialLinksRender,
 };

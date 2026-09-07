@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, testimonialFragment, type LayoutPageMeta } from "../helpers";
+import { darkBandStyleFor, pricingCardFragment, testimonialFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Equipo" — REESCRITA (docs/48 §2 fila 10, F4) como plantilla de
@@ -381,25 +381,29 @@ export function buildTeamPageFragment(): NodeFragment {
         style: defaultStyleFor("tab"),
         children: ["team-page-plan-flex"],
       },
-      "team-page-plan-flex": {
-        id: "team-page-plan-flex",
-        type: "pricing-card",
-        props: {
+      ...pricingCardFragment(
+        "team-page-plan-flex",
+        {
           planName: "Flex desk",
           price: "$1,450",
           period: "/mes",
-          features: "Cualquier escritorio disponible\nAcceso 9:00–20:00\nWifi de alta velocidad\n2h de sala de juntas al mes",
+          features: [
+            "Cualquier escritorio disponible",
+            "Acceso 9:00–20:00",
+            "Wifi de alta velocidad",
+            "2h de sala de juntas al mes",
+          ],
           ctaLabel: "Reservar flex desk",
           ctaLink: { kind: "anchor", nodeId: "team-page-location" },
           popular: false,
           popularLabel: "Más elegido",
         },
-        style: {
+        {
           ...defaultStyleFor("pricing-card"),
           base: { ...defaultStyleFor("pricing-card").base, size: { minHeight: "64px", maxWidth: "420px", width: "100%" } },
           states: { hover: { appearance: { boxShadow: SHADOW_HOVER } } },
         },
-      },
+      ),
       "team-page-tab-dedicated": {
         id: "team-page-tab-dedicated",
         type: "tab",
@@ -407,20 +411,25 @@ export function buildTeamPageFragment(): NodeFragment {
         style: defaultStyleFor("tab"),
         children: ["team-page-plan-dedicated"],
       },
-      "team-page-plan-dedicated": {
-        id: "team-page-plan-dedicated",
-        type: "pricing-card",
-        props: {
+      ...pricingCardFragment(
+        "team-page-plan-dedicated",
+        {
           planName: "Dedicated desk",
           price: "$2,200",
           period: "/mes",
-          features: "Escritorio fijo asignado\nAcceso 24/7\nCasillero personal\n6h de sala de juntas al mes\nCorreo con dirección del espacio",
+          features: [
+            "Escritorio fijo asignado",
+            "Acceso 24/7",
+            "Casillero personal",
+            "6h de sala de juntas al mes",
+            "Correo con dirección del espacio",
+          ],
           ctaLabel: "Reservar dedicated desk",
           ctaLink: { kind: "anchor", nodeId: "team-page-location" },
           popular: true,
           popularLabel: "Más elegido",
         },
-        style: {
+        {
           ...defaultStyleFor("pricing-card"),
           base: {
             ...defaultStyleFor("pricing-card").base,
@@ -429,7 +438,7 @@ export function buildTeamPageFragment(): NodeFragment {
           },
           states: { hover: { appearance: { boxShadow: SHADOW_HOVER } } },
         },
-      },
+      ),
       "team-page-tab-private": {
         id: "team-page-tab-private",
         type: "tab",
@@ -437,25 +446,30 @@ export function buildTeamPageFragment(): NodeFragment {
         style: defaultStyleFor("tab"),
         children: ["team-page-plan-private"],
       },
-      "team-page-plan-private": {
-        id: "team-page-plan-private",
-        type: "pricing-card",
-        props: {
+      ...pricingCardFragment(
+        "team-page-plan-private",
+        {
           planName: "Oficina privada",
           price: "$5,900",
           period: "/mes",
-          features: "Oficina cerrada para hasta 4 personas\nAcceso 24/7\nSala de juntas ilimitada\nRotulación con tu marca\nFactura y contrato flexible",
+          features: [
+            "Oficina cerrada para hasta 4 personas",
+            "Acceso 24/7",
+            "Sala de juntas ilimitada",
+            "Rotulación con tu marca",
+            "Factura y contrato flexible",
+          ],
           ctaLabel: "Agendar visita",
           ctaLink: { kind: "anchor", nodeId: "team-page-location" },
           popular: false,
           popularLabel: "Más elegido",
         },
-        style: {
+        {
           ...defaultStyleFor("pricing-card"),
           base: { ...defaultStyleFor("pricing-card").base, size: { minHeight: "64px", maxWidth: "420px", width: "100%" } },
           states: { hover: { appearance: { boxShadow: SHADOW_HOVER } } },
         },
-      },
+      ),
       "team-page-plans-aside": {
         id: "team-page-plans-aside",
         type: "card",
@@ -954,62 +968,35 @@ export function buildTeamPageFragment(): NodeFragment {
       };
 
       t["team-page-tab-flex"] = { en: { label: "Flex desk" }, it: { label: "Flex desk" } };
-      t["team-page-plan-flex"] = {
-        en: {
-          planName: "Flex desk",
-          price: "$1,450",
-          period: "/mo",
-          features: "Any available desk\nAccess 9:00 AM–8:00 PM\nHigh-speed wifi\n2h of meeting room per month",
-          ctaLabel: "Book flex desk",
-          popularLabel: "Most chosen",
-        },
-        it: {
-          planName: "Flex desk",
-          price: "$1.450",
-          period: "/mese",
-          features: "Qualsiasi scrivania disponibile\nAccesso 9:00–20:00\nWifi ad alta velocità\n2h di sala riunioni al mese",
-          ctaLabel: "Prenota flex desk",
-          popularLabel: "Più scelto",
-        },
-      };
+      t["team-page-plan-flex-plan"] = { en: { content: "Flex desk" }, it: { content: "Flex desk" } };
+      t["team-page-plan-flex-price"] = { en: { content: "$1,450" }, it: { content: "$1.450" } };
+      t["team-page-plan-flex-period"] = { en: { content: "/mo" }, it: { content: "/mese" } };
+      t["team-page-plan-flex-feature-0-text"] = { en: { content: "✓ Any available desk" }, it: { content: "✓ Qualsiasi scrivania disponibile" } };
+      t["team-page-plan-flex-feature-1-text"] = { en: { content: "✓ Access 9:00 AM–8:00 PM" }, it: { content: "✓ Accesso 9:00–20:00" } };
+      t["team-page-plan-flex-feature-2-text"] = { en: { content: "✓ High-speed wifi" }, it: { content: "✓ Wifi ad alta velocità" } };
+      t["team-page-plan-flex-feature-3-text"] = { en: { content: "✓ 2h of meeting room per month" }, it: { content: "✓ 2h di sala riunioni al mese" } };
+      t["team-page-plan-flex-cta"] = { en: { label: "Book flex desk" }, it: { label: "Prenota flex desk" } };
       t["team-page-tab-dedicated"] = { en: { label: "Dedicated desk" }, it: { label: "Dedicated desk" } };
-      t["team-page-plan-dedicated"] = {
-        en: {
-          planName: "Dedicated desk",
-          price: "$2,200",
-          period: "/mo",
-          features: "Assigned fixed desk\n24/7 access\nPersonal locker\n6h of meeting room per month\nMail with the space's address",
-          ctaLabel: "Book dedicated desk",
-          popularLabel: "Most chosen",
-        },
-        it: {
-          planName: "Dedicated desk",
-          price: "$2.200",
-          period: "/mese",
-          features: "Scrivania fissa assegnata\nAccesso 24/7\nArmadietto personale\n6h di sala riunioni al mese\nPosta con indirizzo dello spazio",
-          ctaLabel: "Prenota dedicated desk",
-          popularLabel: "Più scelto",
-        },
-      };
+      t["team-page-plan-dedicated-badge"] = { en: { content: "Most chosen" }, it: { content: "Più scelto" } };
+      t["team-page-plan-dedicated-plan"] = { en: { content: "Dedicated desk" }, it: { content: "Dedicated desk" } };
+      t["team-page-plan-dedicated-price"] = { en: { content: "$2,200" }, it: { content: "$2.200" } };
+      t["team-page-plan-dedicated-period"] = { en: { content: "/mo" }, it: { content: "/mese" } };
+      t["team-page-plan-dedicated-feature-0-text"] = { en: { content: "✓ Assigned fixed desk" }, it: { content: "✓ Scrivania fissa assegnata" } };
+      t["team-page-plan-dedicated-feature-1-text"] = { en: { content: "✓ 24/7 access" }, it: { content: "✓ Accesso 24/7" } };
+      t["team-page-plan-dedicated-feature-2-text"] = { en: { content: "✓ Personal locker" }, it: { content: "✓ Armadietto personale" } };
+      t["team-page-plan-dedicated-feature-3-text"] = { en: { content: "✓ 6h of meeting room per month" }, it: { content: "✓ 6h di sala riunioni al mese" } };
+      t["team-page-plan-dedicated-feature-4-text"] = { en: { content: "✓ Mail with the space's address" }, it: { content: "✓ Posta con indirizzo dello spazio" } };
+      t["team-page-plan-dedicated-cta"] = { en: { label: "Book dedicated desk" }, it: { label: "Prenota dedicated desk" } };
       t["team-page-tab-private"] = { en: { label: "Private office" }, it: { label: "Ufficio privato" } };
-      t["team-page-plan-private"] = {
-        en: {
-          planName: "Private office",
-          price: "$5,900",
-          period: "/mo",
-          features: "Closed office for up to 4 people\n24/7 access\nUnlimited meeting room\nBranding with your logo\nFlexible invoicing and contract",
-          ctaLabel: "Schedule a visit",
-          popularLabel: "Most chosen",
-        },
-        it: {
-          planName: "Ufficio privato",
-          price: "$5.900",
-          period: "/mese",
-          features: "Ufficio chiuso per fino a 4 persone\nAccesso 24/7\nSala riunioni illimitata\nBranding con il tuo logo\nFatturazione e contratto flessibili",
-          ctaLabel: "Prenota una visita",
-          popularLabel: "Più scelto",
-        },
-      };
+      t["team-page-plan-private-plan"] = { en: { content: "Private office" }, it: { content: "Ufficio privato" } };
+      t["team-page-plan-private-price"] = { en: { content: "$5,900" }, it: { content: "$5.900" } };
+      t["team-page-plan-private-period"] = { en: { content: "/mo" }, it: { content: "/mese" } };
+      t["team-page-plan-private-feature-0-text"] = { en: { content: "✓ Closed office for up to 4 people" }, it: { content: "✓ Ufficio chiuso per fino a 4 persone" } };
+      t["team-page-plan-private-feature-1-text"] = { en: { content: "✓ 24/7 access" }, it: { content: "✓ Accesso 24/7" } };
+      t["team-page-plan-private-feature-2-text"] = { en: { content: "✓ Unlimited meeting room" }, it: { content: "✓ Sala riunioni illimitata" } };
+      t["team-page-plan-private-feature-3-text"] = { en: { content: "✓ Branding with your logo" }, it: { content: "✓ Branding con il tuo logo" } };
+      t["team-page-plan-private-feature-4-text"] = { en: { content: "✓ Flexible invoicing and contract" }, it: { content: "✓ Fatturazione e contratto flessibili" } };
+      t["team-page-plan-private-cta"] = { en: { label: "Schedule a visit" }, it: { label: "Prenota una visita" } };
 
       t["team-page-plans-aside-title"] = { en: { content: "<strong>Not sure which plan to pick?</strong>" }, it: { content: "<strong>Non sai quale piano scegliere?</strong>" } };
       t["team-page-plans-aside-text"] = {

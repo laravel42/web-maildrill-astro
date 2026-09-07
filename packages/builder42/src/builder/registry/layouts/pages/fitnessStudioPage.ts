@@ -1,7 +1,8 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { NodeTranslations } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, testimonialFragment } from "../helpers";
+import { NAVBAR_BRAND_STYLE } from "../../components/Navbar";
+import { darkBandStyleFor, pricingCardFragment, statFragment, testimonialFragment } from "../helpers";
 
 /**
  * Página "Gimnasio / estudio fitness" — plantilla de negocio real
@@ -88,6 +89,13 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         props: { hiddenPageIds: [] },
         style: defaultStyleFor("navbar"),
         behaviors: [{ type: "navbar", options: { duration: 240 } }],
+        children: ["fitness-navbar-brand-container"],
+      },
+      "fitness-navbar-brand-container": {
+        id: "fitness-navbar-brand-container",
+        type: "container",
+        props: {},
+        style: NAVBAR_BRAND_STYLE,
         children: ["fitness-navbar-brand"],
       },
       "fitness-navbar-brand": {
@@ -467,63 +475,48 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         },
         children: ["fitness-stat-members", "fitness-stat-coaches", "fitness-stat-classes"],
       },
-      "fitness-stat-members": {
-        id: "fitness-stat-members",
-        type: "stat",
-        props: { value: "+850", label: "socios activos" },
-        style: {
-          base: {
-            layout: { display: "block" },
-            spacing: { padding: "20px" },
-            typography: { fontFamily: { token: "typography.families.sans" }, textAlign: "center" },
-            appearance: {
-              color: { token: "colors.text" },
-              background: { token: "colors.surface.default" },
-              borderRadius: { token: "radii.md" },
-              boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
-            },
+      ...statFragment("fitness-stat-members", { value: "+850", label: "socios activos" }, {
+        base: {
+          layout: { display: "block" },
+          spacing: { padding: "20px" },
+          typography: { fontFamily: { token: "typography.families.sans" }, textAlign: "center" },
+          appearance: {
+            color: { token: "colors.text" },
+            background: { token: "colors.surface.default" },
+            borderRadius: { token: "radii.md" },
+            boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
           },
-          overrides: { md: { spacing: { padding: "28px" } } },
         },
-      },
-      "fitness-stat-coaches": {
-        id: "fitness-stat-coaches",
-        type: "stat",
-        props: { value: "12", label: "entrenadores certificados" },
-        style: {
-          base: {
-            layout: { display: "block" },
-            spacing: { padding: "20px" },
-            typography: { fontFamily: { token: "typography.families.sans" }, textAlign: "center" },
-            appearance: {
-              color: { token: "colors.text" },
-              background: { token: "colors.surface.default" },
-              borderRadius: { token: "radii.md" },
-              boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
-            },
+        overrides: { md: { spacing: { padding: "28px" } } },
+      }),
+      ...statFragment("fitness-stat-coaches", { value: "12", label: "entrenadores certificados" }, {
+        base: {
+          layout: { display: "block" },
+          spacing: { padding: "20px" },
+          typography: { fontFamily: { token: "typography.families.sans" }, textAlign: "center" },
+          appearance: {
+            color: { token: "colors.text" },
+            background: { token: "colors.surface.default" },
+            borderRadius: { token: "radii.md" },
+            boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
           },
-          overrides: { md: { spacing: { padding: "28px" } } },
         },
-      },
-      "fitness-stat-classes": {
-        id: "fitness-stat-classes",
-        type: "stat",
-        props: { value: "45", label: "clases por semana" },
-        style: {
-          base: {
-            layout: { display: "block" },
-            spacing: { padding: "20px" },
-            typography: { fontFamily: { token: "typography.families.sans" }, textAlign: "center" },
-            appearance: {
-              color: { token: "colors.text" },
-              background: { token: "colors.surface.default" },
-              borderRadius: { token: "radii.md" },
-              boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
-            },
+        overrides: { md: { spacing: { padding: "28px" } } },
+      }),
+      ...statFragment("fitness-stat-classes", { value: "45", label: "clases por semana" }, {
+        base: {
+          layout: { display: "block" },
+          spacing: { padding: "20px" },
+          typography: { fontFamily: { token: "typography.families.sans" }, textAlign: "center" },
+          appearance: {
+            color: { token: "colors.text" },
+            background: { token: "colors.surface.default" },
+            borderRadius: { token: "radii.md" },
+            boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
           },
-          overrides: { md: { spacing: { padding: "28px" } } },
         },
-      },
+        overrides: { md: { spacing: { padding: "28px" } } },
+      }),
 
       // --- Planes (pricing-card) — banda con degradado de acento ---------------
       "fitness-plans": {
@@ -583,20 +576,19 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         },
         children: ["fitness-plan-monthly", "fitness-plan-quarterly", "fitness-plan-annual"],
       },
-      "fitness-plan-monthly": {
-        id: "fitness-plan-monthly",
-        type: "pricing-card",
-        props: {
+      ...pricingCardFragment(
+        "fitness-plan-monthly",
+        {
           planName: "Mensual",
           price: "$650",
           period: "MXN/mes",
-          features: "Acceso a todas las clases\nEvaluación física inicial\nSin permanencia",
+          features: ["Acceso a todas las clases", "Evaluación física inicial", "Sin permanencia"],
           ctaLabel: "Quiero inscribirme",
           ctaLink: { kind: "anchor", nodeId: "fitness-signup" },
           popular: false,
           popularLabel: "Popular",
         },
-        style: {
+        {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: "12px", alignItems: "stretch" },
             spacing: { padding: "20px" },
@@ -619,21 +611,20 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
             },
           },
         },
-      },
-      "fitness-plan-quarterly": {
-        id: "fitness-plan-quarterly",
-        type: "pricing-card",
-        props: {
+      ),
+      ...pricingCardFragment(
+        "fitness-plan-quarterly",
+        {
           planName: "Trimestral",
           price: "$1,750",
           period: "MXN/3 meses",
-          features: "Acceso a todas las clases\nEvaluación física cada mes\n1 clase de nutrición incluida",
+          features: ["Acceso a todas las clases", "Evaluación física cada mes", "1 clase de nutrición incluida"],
           ctaLabel: "Quiero inscribirme",
           ctaLink: { kind: "anchor", nodeId: "fitness-signup" },
           popular: true,
           popularLabel: "Más elegido",
         },
-        style: {
+        {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: "12px", alignItems: "stretch" },
             spacing: { padding: "24px" },
@@ -656,21 +647,20 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
             },
           },
         },
-      },
-      "fitness-plan-annual": {
-        id: "fitness-plan-annual",
-        type: "pricing-card",
-        props: {
+      ),
+      ...pricingCardFragment(
+        "fitness-plan-annual",
+        {
           planName: "Anual",
           price: "$6,200",
           period: "MXN/año",
-          features: "Acceso a todas las clases\nEvaluación física mensual\nCongelamiento de hasta 30 días",
+          features: ["Acceso a todas las clases", "Evaluación física mensual", "Congelamiento de hasta 30 días"],
           ctaLabel: "Quiero inscribirme",
           ctaLink: { kind: "anchor", nodeId: "fitness-signup" },
           popular: false,
           popularLabel: "Popular",
         },
-        style: {
+        {
           base: {
             layout: { display: "flex", flexDirection: "column", gap: "12px", alignItems: "stretch" },
             spacing: { padding: "20px" },
@@ -693,7 +683,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
             },
           },
         },
-      },
+      ),
 
       // --- Testimonio — banda clara -----------------------------------------
       "fitness-testimonial-section": {
@@ -1114,76 +1104,40 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
           "<p>Sabato · 9:00 e 10:30. Stretching guidato, mobilità articolare e respirazione, ideale per completare la settimana.</p>",
       },
     },
-    "fitness-stat-members": {
-      en: { value: "+850", label: "active members" },
-      it: { value: "+850", label: "iscritti attivi" },
-    },
-    "fitness-stat-coaches": {
-      en: { value: "12", label: "certified coaches" },
-      it: { value: "12", label: "allenatori certificati" },
-    },
-    "fitness-stat-classes": {
-      en: { value: "45", label: "classes per week" },
-      it: { value: "45", label: "lezioni a settimana" },
-    },
+    "fitness-stat-members-value": { en: { value: "+850" }, it: { value: "+850" } },
+    "fitness-stat-members-label": { en: { content: "active members" }, it: { content: "iscritti attivi" } },
+    "fitness-stat-coaches-value": { en: { value: "12" }, it: { value: "12" } },
+    "fitness-stat-coaches-label": { en: { content: "certified coaches" }, it: { content: "allenatori certificati" } },
+    "fitness-stat-classes-value": { en: { value: "45" }, it: { value: "45" } },
+    "fitness-stat-classes-label": { en: { content: "classes per week" }, it: { content: "lezioni a settimana" } },
     "fitness-plans-title": {
       en: { content: "<strong>Choose your membership plan</strong>" },
       it: { content: "<strong>Scegli il tuo piano di abbonamento</strong>" },
     },
-    "fitness-plan-monthly": {
-      en: {
-        planName: "Monthly",
-        price: "$650",
-        period: "MXN/month",
-        features: "Access to all classes\nInitial fitness assessment\nNo commitment",
-        ctaLabel: "I want to sign up",
-        popularLabel: "Popular",
-      },
-      it: {
-        planName: "Mensile",
-        price: "$650",
-        period: "MXN/mese",
-        features: "Accesso a tutte le lezioni\nValutazione fisica iniziale\nNessun vincolo",
-        ctaLabel: "Voglio iscrivermi",
-        popularLabel: "Popolare",
-      },
-    },
-    "fitness-plan-quarterly": {
-      en: {
-        planName: "Quarterly",
-        price: "$1,750",
-        period: "MXN/3 months",
-        features: "Access to all classes\nMonthly fitness assessment\n1 nutrition class included",
-        ctaLabel: "I want to sign up",
-        popularLabel: "Most popular",
-      },
-      it: {
-        planName: "Trimestrale",
-        price: "$1.750",
-        period: "MXN/3 mesi",
-        features: "Accesso a tutte le lezioni\nValutazione fisica mensile\n1 lezione di nutrizione inclusa",
-        ctaLabel: "Voglio iscrivermi",
-        popularLabel: "Più scelto",
-      },
-    },
-    "fitness-plan-annual": {
-      en: {
-        planName: "Annual",
-        price: "$6,200",
-        period: "MXN/year",
-        features: "Access to all classes\nMonthly fitness assessment\nUp to 30 days freeze",
-        ctaLabel: "I want to sign up",
-        popularLabel: "Popular",
-      },
-      it: {
-        planName: "Annuale",
-        price: "$6.200",
-        period: "MXN/anno",
-        features: "Accesso a tutte le lezioni\nValutazione fisica mensile\nCongelamento fino a 30 giorni",
-        ctaLabel: "Voglio iscrivermi",
-        popularLabel: "Popolare",
-      },
-    },
+    "fitness-plan-monthly-plan": { en: { content: "Monthly" }, it: { content: "Mensile" } },
+    "fitness-plan-monthly-price": { en: { content: "$650" }, it: { content: "$650" } },
+    "fitness-plan-monthly-period": { en: { content: "MXN/month" }, it: { content: "MXN/mese" } },
+    "fitness-plan-monthly-feature-0-text": { en: { content: "✓ Access to all classes" }, it: { content: "✓ Accesso a tutte le lezioni" } },
+    "fitness-plan-monthly-feature-1-text": { en: { content: "✓ Initial fitness assessment" }, it: { content: "✓ Valutazione fisica iniziale" } },
+    "fitness-plan-monthly-feature-2-text": { en: { content: "✓ No commitment" }, it: { content: "✓ Nessun vincolo" } },
+    "fitness-plan-monthly-cta": { en: { label: "I want to sign up" }, it: { label: "Voglio iscrivermi" } },
+
+    "fitness-plan-quarterly-badge": { en: { content: "Most popular" }, it: { content: "Più scelto" } },
+    "fitness-plan-quarterly-plan": { en: { content: "Quarterly" }, it: { content: "Trimestrale" } },
+    "fitness-plan-quarterly-price": { en: { content: "$1,750" }, it: { content: "$1.750" } },
+    "fitness-plan-quarterly-period": { en: { content: "MXN/3 months" }, it: { content: "MXN/3 mesi" } },
+    "fitness-plan-quarterly-feature-0-text": { en: { content: "✓ Access to all classes" }, it: { content: "✓ Accesso a tutte le lezioni" } },
+    "fitness-plan-quarterly-feature-1-text": { en: { content: "✓ Monthly fitness assessment" }, it: { content: "✓ Valutazione fisica mensile" } },
+    "fitness-plan-quarterly-feature-2-text": { en: { content: "✓ 1 nutrition class included" }, it: { content: "✓ 1 lezione di nutrizione inclusa" } },
+    "fitness-plan-quarterly-cta": { en: { label: "I want to sign up" }, it: { label: "Voglio iscrivermi" } },
+
+    "fitness-plan-annual-plan": { en: { content: "Annual" }, it: { content: "Annuale" } },
+    "fitness-plan-annual-price": { en: { content: "$6,200" }, it: { content: "$6.200" } },
+    "fitness-plan-annual-period": { en: { content: "MXN/year" }, it: { content: "MXN/anno" } },
+    "fitness-plan-annual-feature-0-text": { en: { content: "✓ Access to all classes" }, it: { content: "✓ Accesso a tutte le lezioni" } },
+    "fitness-plan-annual-feature-1-text": { en: { content: "✓ Monthly fitness assessment" }, it: { content: "✓ Valutazione fisica mensile" } },
+    "fitness-plan-annual-feature-2-text": { en: { content: "✓ Up to 30 days freeze" }, it: { content: "✓ Congelamento fino a 30 giorni" } },
+    "fitness-plan-annual-cta": { en: { label: "I want to sign up" }, it: { label: "Voglio iscrivermi" } },
     "fitness-testimonial-quote": {
       en: {
         content:

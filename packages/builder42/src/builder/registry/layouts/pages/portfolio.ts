@@ -1,7 +1,8 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, testimonialFragment, type LayoutPageMeta } from "../helpers";
+import { NAVBAR_BRAND_STYLE } from "../../components/Navbar";
+import { darkBandStyleFor, pricingCardFragment, testimonialFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Portfolio" — REESCRITA (docs/48 §2 fila 7, F3) como plantilla de
@@ -168,38 +169,36 @@ function packageCard(
   features: string,
   popular: boolean,
 ) {
-  return {
-    [`photographer-package-${n}`]: {
-      id: `photographer-package-${n}`,
-      type: "pricing-card",
-      props: {
-        planName,
-        price,
-        period,
-        features,
-        ctaLabel: "Reservar sesión",
-        ctaLink: { kind: "anchor", nodeId: "photographer-contact" },
-        popular,
-        popularLabel: "Más elegido",
-      },
-      style: {
-        ...defaultStyleFor("pricing-card"),
-        base: {
-          ...defaultStyleFor("pricing-card").base,
-          size: { minHeight: "64px", maxWidth: "340px", width: "100%" },
-          appearance: {
-            ...defaultStyleFor("pricing-card").base.appearance,
-            borderColor: popular ? { token: "colors.primary.default" } : { token: "colors.border" },
-            borderWidth: popular ? "2px" : "1px",
-            boxShadow: SHADOW_CARD,
-          },
-        },
-        states: {
-          hover: { appearance: { boxShadow: SHADOW_HOVER } },
-        },
+  const rootStyle = {
+    ...defaultStyleFor("pricing-card"),
+    base: {
+      ...defaultStyleFor("pricing-card").base,
+      size: { minHeight: "64px", maxWidth: "340px", width: "100%" },
+      appearance: {
+        ...defaultStyleFor("pricing-card").base.appearance,
+        borderColor: popular ? { token: "colors.primary.default" } : { token: "colors.border" },
+        borderWidth: popular ? "2px" : "1px",
+        boxShadow: SHADOW_CARD,
       },
     },
+    states: {
+      hover: { appearance: { boxShadow: SHADOW_HOVER } },
+    },
   };
+  return pricingCardFragment(
+    `photographer-package-${n}`,
+    {
+      planName,
+      price,
+      period,
+      features: features.split("\n").map((f) => f.trim()).filter((f) => f !== ""),
+      ctaLabel: "Reservar sesión",
+      ctaLink: { kind: "anchor", nodeId: "photographer-contact" },
+      popular,
+      popularLabel: "Más elegido",
+    },
+    rootStyle,
+  );
 }
 
 export function buildPortfolioFragment(): NodeFragment {
@@ -288,6 +287,13 @@ export function buildPortfolioFragment(): NodeFragment {
           // el porfolio, acompaña el scroll de la galería.
           { type: "scroll-progress", options: { fallback: true } },
         ],
+        children: ["photographer-navbar-brand-container"],
+      },
+      "photographer-navbar-brand-container": {
+        id: "photographer-navbar-brand-container",
+        type: "container",
+        props: {},
+        style: NAVBAR_BRAND_STYLE,
         children: ["photographer-navbar-brand"],
       },
       "photographer-navbar-brand": {
@@ -843,46 +849,34 @@ export function buildPortfolioFragment(): NodeFragment {
 
       t["photographer-pricing-title"] = { en: { content: "<strong>Session packages</strong>" }, it: { content: "<strong>Pacchetti sessione</strong>" } };
 
-      t["photographer-package-1"] = {
-        en: { planName: "Individual portrait", price: "€120", period: "/session", features: "1-hour session\n1 location\n15 edited photos\nDelivery in 5 days", ctaLabel: "Book session", popularLabel: "Most chosen" },
-        it: { planName: "Ritratto individuale", price: "€120", period: "/sessione", features: "1 ora di sessione\n1 location\n15 foto ritoccate\nConsegna in 5 giorni", ctaLabel: "Prenota sessione", popularLabel: "Più scelto" },
-      };
-      t["photographer-package-2"] = {
-        en: {
-          planName: "Couple or family",
-          price: "€220",
-          period: "/session",
-          features: "2-hour session\n2 locations\n30 edited photos\nDelivery in 5 days\nPrivate online gallery",
-          ctaLabel: "Book session",
-          popularLabel: "Most chosen",
-        },
-        it: {
-          planName: "Coppia o famiglia",
-          price: "€220",
-          period: "/sessione",
-          features: "2 ore di sessione\n2 location\n30 foto ritoccate\nConsegna in 5 giorni\nGalleria online privata",
-          ctaLabel: "Prenota sessione",
-          popularLabel: "Più scelto",
-        },
-      };
-      t["photographer-package-3"] = {
-        en: {
-          planName: "Event (half day)",
-          price: "€480",
-          period: "/session",
-          features: "4-hour coverage\nFull reportage\n80 edited photos\nDelivery in 10 days",
-          ctaLabel: "Book session",
-          popularLabel: "Most chosen",
-        },
-        it: {
-          planName: "Evento (mezza giornata)",
-          price: "€480",
-          period: "/sessione",
-          features: "4 ore di copertura\nReportage completo\n80 foto ritoccate\nConsegna in 10 giorni",
-          ctaLabel: "Prenota sessione",
-          popularLabel: "Più scelto",
-        },
-      };
+      t["photographer-package-1-plan"] = { en: { content: "Individual portrait" }, it: { content: "Ritratto individuale" } };
+      t["photographer-package-1-price"] = { en: { content: "€120" }, it: { content: "€120" } };
+      t["photographer-package-1-period"] = { en: { content: "/session" }, it: { content: "/sessione" } };
+      t["photographer-package-1-feature-0-text"] = { en: { content: "✓ 1-hour session" }, it: { content: "✓ 1 ora di sessione" } };
+      t["photographer-package-1-feature-1-text"] = { en: { content: "✓ 1 location" }, it: { content: "✓ 1 location" } };
+      t["photographer-package-1-feature-2-text"] = { en: { content: "✓ 15 edited photos" }, it: { content: "✓ 15 foto ritoccate" } };
+      t["photographer-package-1-feature-3-text"] = { en: { content: "✓ Delivery in 5 days" }, it: { content: "✓ Consegna in 5 giorni" } };
+      t["photographer-package-1-cta"] = { en: { label: "Book session" }, it: { label: "Prenota sessione" } };
+
+      t["photographer-package-2-badge"] = { en: { content: "Most chosen" }, it: { content: "Più scelto" } };
+      t["photographer-package-2-plan"] = { en: { content: "Couple or family" }, it: { content: "Coppia o famiglia" } };
+      t["photographer-package-2-price"] = { en: { content: "€220" }, it: { content: "€220" } };
+      t["photographer-package-2-period"] = { en: { content: "/session" }, it: { content: "/sessione" } };
+      t["photographer-package-2-feature-0-text"] = { en: { content: "✓ 2-hour session" }, it: { content: "✓ 2 ore di sessione" } };
+      t["photographer-package-2-feature-1-text"] = { en: { content: "✓ 2 locations" }, it: { content: "✓ 2 location" } };
+      t["photographer-package-2-feature-2-text"] = { en: { content: "✓ 30 edited photos" }, it: { content: "✓ 30 foto ritoccate" } };
+      t["photographer-package-2-feature-3-text"] = { en: { content: "✓ Delivery in 5 days" }, it: { content: "✓ Consegna in 5 giorni" } };
+      t["photographer-package-2-feature-4-text"] = { en: { content: "✓ Private online gallery" }, it: { content: "✓ Galleria online privata" } };
+      t["photographer-package-2-cta"] = { en: { label: "Book session" }, it: { label: "Prenota sessione" } };
+
+      t["photographer-package-3-plan"] = { en: { content: "Event (half day)" }, it: { content: "Evento (mezza giornata)" } };
+      t["photographer-package-3-price"] = { en: { content: "€480" }, it: { content: "€480" } };
+      t["photographer-package-3-period"] = { en: { content: "/session" }, it: { content: "/sessione" } };
+      t["photographer-package-3-feature-0-text"] = { en: { content: "✓ 4-hour coverage" }, it: { content: "✓ 4 ore di copertura" } };
+      t["photographer-package-3-feature-1-text"] = { en: { content: "✓ Full reportage" }, it: { content: "✓ Reportage completo" } };
+      t["photographer-package-3-feature-2-text"] = { en: { content: "✓ 80 edited photos" }, it: { content: "✓ 80 foto ritoccate" } };
+      t["photographer-package-3-feature-3-text"] = { en: { content: "✓ Delivery in 10 days" }, it: { content: "✓ Consegna in 10 giorni" } };
+      t["photographer-package-3-cta"] = { en: { label: "Book session" }, it: { label: "Prenota sessione" } };
 
       t["photographer-contact-title"] = { en: { content: "<strong>Book your session</strong>" }, it: { content: "<strong>Prenota la tua sessione</strong>" } };
       t["photographer-contact-sub"] = {

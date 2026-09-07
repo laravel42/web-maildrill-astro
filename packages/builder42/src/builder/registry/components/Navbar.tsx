@@ -24,6 +24,22 @@
  * generados) con un slot libre (`children`, pintado en `.pb-navbar__brand`).
  * Sin contenido, el slot queda vacío (solo el hint de canvas, nunca en export).
  *
+ * **El wrapper del brand es un nodo real, no chrome fijo (fix, feedback de
+ * usuario):** antes `Navbar.tsx` envolvía sus `children` en un
+ * `<div className="pb-navbar__brand" style={{gap:"8px",...}}>` con estilo
+ * `CSSProperties` FIJO — ese `gap`/`alignItems` no era editable desde el
+ * Inspector. Ahora ese wrapper es un nodo `container` REAL (`defaultChildren`
+ * siembra `navbar` → `[container]`, y el `container` a su vez trae su propio
+ * logo de ejemplo): el usuario edita su `spacing`/`layout.gap` como cualquier
+ * container normal. `Navbar.tsx` ya NO pinta ningún wrapper propio — solo
+ * `{children}` tal cual dentro de `.pb-navbar__brand` (clase que hoy SOLO
+ * aporta `display:flex; align-items:center; min-width:0` sin gap fijo,
+ * porque el gap ahora vive en el `container` hijo). Retrocompatibilidad: un
+ * `navbar` legacy cuyos `children` NO sean exactamente `[un container]` (p.
+ * ej. `image`/`text` sueltos directos, formato viejo) se migra envolviéndolos
+ * automáticamente en un nuevo `container` — ver `model/migrateSlots.ts`
+ * (`migrateSiteNavbars`).
+ *
  * Render puro (P3): raíz `<nav>` con `rootRef`/`rootProps`; en `exportMode` sin
  * estilo inline en la raíz (AGENTS.md §5); el `data-pb-behavior` lo añade el
  * export desde `node.behaviors` (docs/10 §4).
@@ -33,7 +49,7 @@ import type { CSSProperties, Ref } from "react";
 import { DEFAULT_BREAKPOINTS, type NodeStyle } from "../../model/types";
 import { resolveStyle } from "../../model/style";
 import { stylePropertiesToCSSObject } from "../styleToCss";
-import type { ComponentDefinition, RenderContext } from "../types";
+import type { ComponentDefinition, DefaultChildSpec, RenderContext } from "../types";
 
 export const NAVBAR_DEFAULT_STYLE: NodeStyle = {
   base: {
@@ -71,6 +87,29 @@ const NAV_BASE_STYLE: CSSProperties = {
   gap: "16px",
   flexWrap: "wrap",
 };
+
+/**
+ * Estilo del nodo `container` que hace de brand (antes el `gap`/`alignItems`
+ * fijos del `<div className="pb-navbar__brand">`, ahora editables). `layout`
+ * habilitado en su `styleSchema` (es un `container` normal, sin override).
+ */
+export const NAVBAR_BRAND_STYLE: NodeStyle = {
+  base: {
+    layout: { display: "flex", alignItems: "center", gap: "8px" },
+    spacing: { padding: "0" },
+    size: { minHeight: "0" },
+    appearance: { background: "transparent" },
+  },
+};
+
+/** `defaultChildren` sembrados al crear un `navbar` nuevo: un container-brand con un logo de texto de ejemplo. */
+export const NAVBAR_DEFAULT_CHILDREN: DefaultChildSpec[] = [
+  {
+    type: "container",
+    style: NAVBAR_BRAND_STYLE,
+    children: [{ type: "text", props: { content: "<strong>Mi Marca</strong>" } }],
+  },
+];
 
 function NavbarRender(ctx: RenderContext) {
   const { node, children, exportMode, className, breakpoint, rootRef, rootProps, pagesInfo } = ctx;
@@ -120,12 +159,7 @@ function NavbarRender(ctx: RenderContext) {
       aria-label="Principal"
       {...restRootProps}
     >
-      <div
-        className="pb-navbar__brand"
-        {...(!exportMode
-          ? { style: { display: "flex", alignItems: "center", gap: "8px", minWidth: 0 } as CSSProperties }
-          : {})}
-      >
+      <div className="pb-navbar__brand">
         {children}
         {!exportMode && !hasLogoContent ? (
           <span className="pbx-empty-hint pbx-navbar__brand-hint" data-empty-hint>
@@ -207,10 +241,11 @@ const MOBILE_BREAKPOINT = 768;
 const NAVBAR_CSS = [
   ".pb-navbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }",
   // `.pb-navbar__brand` es un CONTENEDOR (slot de logo, docs/16 §12.4 rework):
-  // el usuario arrastra dentro `image`/`text`/`icon`; el `<a>` de fallback
-  // (sitios sin contenido arrastrado, retrocompat con `props.brand`) hereda
-  // el mismo estilo tipográfico que tenía la marca antes.
-  ".pb-navbar__brand { display: flex; align-items: center; gap: 8px; min-width: 0; }",
+  // el usuario arrastra dentro `image`/`text`/`icon`, hoy envuelto en un nodo
+  // `container` real (ver `NAVBAR_BRAND_STYLE`) que aporta su propio
+  // `gap`/`alignItems` editable — esta regla SOLO aporta la estructura mínima
+  // (flex + min-width para que el `<nav>` no lo empuje fuera), sin gap fijo.
+  ".pb-navbar__brand { display: flex; align-items: center; min-width: 0; }",
   ".pb-navbar__brand a { font-weight: 700; font-size: 1.125rem; text-decoration: none; color: inherit; }",
   ".pb-navbar__menu { display: flex; align-items: center; gap: 20px; list-style: none; margin: 0; padding: 0; overflow: hidden; }",
   ".pb-navbar__menu a { text-decoration: none; color: inherit; padding: 6px 0; display: inline-block; }",
@@ -244,6 +279,7 @@ export const navbarDefinition: ComponentDefinition = {
     hiddenPageIds: [],
   },
   defaultStyle: structuredClone(NAVBAR_DEFAULT_STYLE),
+  defaultChildren: NAVBAR_DEFAULT_CHILDREN,
   css: NAVBAR_CSS,
   defaultBehaviors: [{ type: "navbar", options: { duration: 240 } }],
   propsSchema: {

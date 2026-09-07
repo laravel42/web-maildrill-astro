@@ -1,7 +1,8 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
+import { NAVBAR_BRAND_STYLE } from "../../components/Navbar";
+import { darkBandStyleFor, quoteFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Blog" — REESCRITA (docs/48 §2 fila 9, F3) como plantilla de sector:
@@ -277,6 +278,13 @@ export function buildBlogListFragment(): NodeFragment {
           },
         },
         behaviors: [{ type: "navbar", options: { duration: 240 } }],
+        children: ["editorial-navbar-brand"],
+      },
+      "editorial-navbar-brand": {
+        id: "editorial-navbar-brand",
+        type: "container",
+        props: {},
+        style: NAVBAR_BRAND_STYLE,
         children: ["editorial-navbar-lang"],
       },
       "editorial-navbar-lang": {
@@ -477,14 +485,13 @@ export function buildBlogListFragment(): NodeFragment {
         style: { base: { layout: { display: "flex", justifyContent: "center" }, spacing: { margin: "0 auto" }, size: { width: "100%", maxWidth: "760px" } } },
         children: ["editorial-quote-block"],
       },
-      "editorial-quote-block": {
-        id: "editorial-quote-block",
-        type: "quote",
-        props: {
+      ...quoteFragment(
+        "editorial-quote-block",
+        {
           content: "La cocina de migración no es nostalgia: es una traducción constante. Cada plato es una decisión sobre qué se conserva y qué se deja ir.",
           attribution: "Episodio 34 · Cocina de migración: un recetario en movimiento",
         },
-        style: {
+        {
           base: {
             ...defaultStyleFor("quote").base,
             typography: {
@@ -497,7 +504,7 @@ export function buildBlogListFragment(): NodeFragment {
           },
           overrides: { md: { spacing: { padding: "44px" } } },
         },
-      },
+      ),
 
       // --- Sección de hosts/autores ------------------------------------------
       "editorial-hosts": {
@@ -715,15 +722,17 @@ export function buildBlogListFragment(): NodeFragment {
       t["editorial-article-5-date"] = { en: { content: "Jul 29 · 38 min" }, it: { content: "29 lug · 38 min" } };
       t["editorial-article-5-img"] = { en: { alt: "Assorted spices in small bowls" }, it: { alt: "Spezie assortite in piccole ciotole" } };
 
-      t["editorial-quote-block"] = {
+      t["editorial-quote-block-content"] = {
         en: {
           content: "Migration cuisine isn't nostalgia: it's a constant translation. Every dish is a decision about what's kept and what's let go.",
-          attribution: "Episode 34 · Migration cuisine: a recipe book in motion",
         },
         it: {
           content: "La cucina della migrazione non è nostalgia: è una traduzione costante. Ogni piatto è una decisione su cosa si conserva e cosa si lascia andare.",
-          attribution: "Episodio 34 · Cucina della migrazione: un ricettario in movimento",
         },
+      };
+      t["editorial-quote-block-attribution"] = {
+        en: { content: "<cite>— Episode 34 · Migration cuisine: a recipe book in motion</cite>" },
+        it: { content: "<cite>— Episodio 34 · Cucina della migrazione: un ricettario in movimento</cite>" },
       };
 
       t["editorial-hosts-title"] = { en: { content: "<strong>Who tells these stories</strong>" }, it: { content: "<strong>Chi racconta queste storie</strong>" } };

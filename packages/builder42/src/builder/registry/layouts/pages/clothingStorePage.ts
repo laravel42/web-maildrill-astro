@@ -1,6 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { NodeTranslations } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
+import { NAVBAR_BRAND_STYLE } from "../../components/Navbar";
 import { darkBandStyleFor } from "../helpers";
 
 /**
@@ -366,6 +367,13 @@ export function buildClothingStorePageFragment(): NodeFragment {
         props: { hiddenPageIds: [] },
         style: defaultStyleFor("navbar"),
         behaviors: [{ type: "navbar", options: { duration: 240 } }],
+        children: ["clothing-navbar-brand"],
+      },
+      "clothing-navbar-brand": {
+        id: "clothing-navbar-brand",
+        type: "container",
+        props: {},
+        style: NAVBAR_BRAND_STYLE,
         children: ["clothing-navbar-brand-text"],
       },
       "clothing-navbar-brand-text": {

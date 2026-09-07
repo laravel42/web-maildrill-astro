@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
+import { darkBandStyleFor, quoteFragment, statFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Bufete de abogados" — plantilla NUEVA de sector (docs/48 §2 fila
@@ -188,14 +188,7 @@ function partnerCard(n: 1 | 2 | 3, name: string, role: string, imageUrl: string,
 }
 
 function processStep(n: 1 | 2 | 3, value: string, label: string) {
-  return {
-    [`lawfirm-process-${n}`]: {
-      id: `lawfirm-process-${n}`,
-      type: "stat",
-      props: { value, label },
-      style: { base: { typography: { textAlign: "center" } } },
-    },
-  };
+  return statFragment(`lawfirm-process-${n}`, { value, label }, { base: { typography: { textAlign: "center" } } });
 }
 
 export function buildLawFirmPageFragment(): NodeFragment {
@@ -522,15 +515,14 @@ export function buildLawFirmPageFragment(): NodeFragment {
         style: { ...inner("820px", "16px"), base: { ...inner("820px", "16px").base, layout: { display: "flex", flexDirection: "column", alignItems: "center" } } },
         children: ["lawfirm-case-quote"],
       },
-      "lawfirm-case-quote": {
-        id: "lawfirm-case-quote",
-        type: "quote",
-        props: {
+      ...quoteFragment(
+        "lawfirm-case-quote",
+        {
           content:
             "Su equipo resolvió en ocho meses un litigio societario que llevaba tres años estancado con otro despacho. La claridad de su estrategia hizo toda la diferencia.",
           attribution: "Dirección General, grupo empresarial del sector logístico",
         },
-        style: {
+        {
           base: {
             typography: {
               fontFamily: { token: "typography.families.display" },
@@ -541,7 +533,7 @@ export function buildLawFirmPageFragment(): NodeFragment {
             appearance: { color: { token: "colors.band.on" } },
           },
         },
-      },
+      ),
 
       // --- Proceso de consulta — 3 pasos numerados, banda con degradado ---------
       "lawfirm-process": {
@@ -852,21 +844,26 @@ export function buildLawFirmPageFragment(): NodeFragment {
       t["lawfirm-partner-3-name"] = { en: { content: "<strong>Daniel Puente</strong>" }, it: { content: "<strong>Daniel Puente</strong>" } };
       t["lawfirm-partner-3-role"] = { en: { content: "Partner · Family & real estate law" }, it: { content: "Partner · Diritto di famiglia e immobiliare" } };
 
-      t["lawfirm-case-quote"] = {
+      t["lawfirm-case-quote-content"] = {
         en: {
           content: "Their team resolved in eight months a corporate dispute that had been stalled for three years with another firm. Their strategic clarity made all the difference.",
-          attribution: "General Management, logistics-sector business group",
         },
         it: {
           content: "Il loro team ha risolto in otto mesi una controversia societaria bloccata da tre anni con un altro studio. La chiarezza della loro strategia ha fatto la differenza.",
-          attribution: "Direzione Generale, gruppo aziendale del settore logistico",
         },
+      };
+      t["lawfirm-case-quote-attribution"] = {
+        en: { content: "<cite>— General Management, logistics-sector business group</cite>" },
+        it: { content: "<cite>— Direzione Generale, gruppo aziendale del settore logistico</cite>" },
       };
 
       t["lawfirm-process-title"] = { en: { content: "<strong>How we handle your consultation</strong>" }, it: { content: "<strong>Come gestiamo la tua consulenza</strong>" } };
-      t["lawfirm-process-1"] = { en: { value: "1", label: "Free initial consultation, to understand your case" }, it: { value: "1", label: "Prima consulenza gratuita, per capire il tuo caso" } };
-      t["lawfirm-process-2"] = { en: { value: "2", label: "Clear strategy and fee proposal in writing" }, it: { value: "2", label: "Proposta di strategia e onorari chiari per iscritto" } };
-      t["lawfirm-process-3"] = { en: { value: "3", label: "Direct follow-up with your assigned attorney" }, it: { value: "3", label: "Seguimento diretto con il tuo avvocato di riferimento" } };
+      t["lawfirm-process-1-value"] = { en: { value: "1" }, it: { value: "1" } };
+      t["lawfirm-process-1-label"] = { en: { content: "Free initial consultation, to understand your case" }, it: { content: "Prima consulenza gratuita, per capire il tuo caso" } };
+      t["lawfirm-process-2-value"] = { en: { value: "2" }, it: { value: "2" } };
+      t["lawfirm-process-2-label"] = { en: { content: "Clear strategy and fee proposal in writing" }, it: { content: "Proposta di strategia e onorari chiari per iscritto" } };
+      t["lawfirm-process-3-value"] = { en: { value: "3" }, it: { value: "3" } };
+      t["lawfirm-process-3-label"] = { en: { content: "Direct follow-up with your assigned attorney" }, it: { content: "Seguimento diretto con il tuo avvocato di riferimento" } };
 
       t["lawfirm-contact-title"] = { en: { content: "<strong>Schedule your consultation</strong>" }, it: { content: "<strong>Prenota la tua consulenza</strong>" } };
       t["lawfirm-contact-sub"] = {

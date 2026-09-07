@@ -24,7 +24,7 @@ import { sectionDefinition } from "./components/Section";
 import { badgeDefinition } from "./components/Badge";
 import { iconDefinition } from "./components/IconComponent";
 import { quoteDefinition } from "./components/Quote";
-import { statDefinition } from "./components/Stat";
+import { statDefinition, statValueDefinition } from "./components/Stat";
 import { avatarDefinition } from "./components/Avatar";
 import { videoDefinition } from "./components/Video";
 import { cardDefinition } from "./components/Card";
@@ -57,6 +57,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   iconDefinition,
   quoteDefinition,
   statDefinition,
+  statValueDefinition,
   avatarDefinition,
   videoDefinition,
   cardDefinition,

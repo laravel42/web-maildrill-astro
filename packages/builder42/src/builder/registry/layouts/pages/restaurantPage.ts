@@ -1,7 +1,8 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, testimonialFragment, type LayoutPageMeta } from "../helpers";
+import { NAVBAR_BRAND_STYLE } from "../../components/Navbar";
+import { darkBandStyleFor, statFragment, testimonialFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Restaurante" — plantilla de página completa con contenido real
@@ -581,9 +582,12 @@ export function buildRestaurantPageFragment(): NodeFragment {
     "restaurant-gallery-3": { en: { alt: "Wine cellar with selected bottles" }, it: { alt: "Cantina con bottiglie selezionate" } },
     "restaurant-gallery-4": { en: { alt: "Terrace tables on Calle del Olmo" }, it: { alt: "Tavoli in terrazza su Calle del Olmo" } },
     // --- KPIs --------------------------------------------------------------
-    "restaurant-stat-1": { en: { value: "18", label: "years open" }, it: { value: "18", label: "anni di attività" } },
-    "restaurant-stat-2": { en: { value: "120+", label: "dishes on the menu" }, it: { value: "120+", label: "piatti nel menù" } },
-    "restaurant-stat-3": { en: { value: "2.4k", label: "reviews" }, it: { value: "2.4k", label: "recensioni" } },
+    "restaurant-stat-1-value": { en: { value: "18" }, it: { value: "18" } },
+    "restaurant-stat-1-label": { en: { content: "years open" }, it: { content: "anni di attività" } },
+    "restaurant-stat-2-value": { en: { value: "120+" }, it: { value: "120+" } },
+    "restaurant-stat-2-label": { en: { content: "dishes on the menu" }, it: { content: "piatti nel menù" } },
+    "restaurant-stat-3-value": { en: { value: "2.4k" }, it: { value: "2.4k" } },
+    "restaurant-stat-3-label": { en: { content: "reviews" }, it: { content: "recensioni" } },
     // --- Testimonios -------------------------------------------------------
     "restaurant-testimonial-quote": {
       en: { content: "<p>The best tasting menu I've had in years — every course was a surprise.</p>" },
@@ -806,6 +810,13 @@ export function buildRestaurantPageFragment(): NodeFragment {
           overrides: { md: { spacing: { padding: "20px 20px" } } },
         },
         behaviors: [{ type: "navbar", options: { duration: 240 } }],
+        children: ["restaurant-navbar-brand"],
+      },
+      "restaurant-navbar-brand": {
+        id: "restaurant-navbar-brand",
+        type: "container",
+        props: {},
+        style: NAVBAR_BRAND_STYLE,
         children: ["restaurant-navbar-brand-text"],
       },
       "restaurant-navbar-brand-text": {
@@ -1382,11 +1393,10 @@ export function buildRestaurantPageFragment(): NodeFragment {
         },
         children: ["restaurant-stat-1", "restaurant-stat-2", "restaurant-stat-3"],
       },
-      "restaurant-stat-1": {
-        id: "restaurant-stat-1",
-        type: "stat",
-        props: { value: "18", label: "años abiertos" },
-        style: {
+      ...statFragment(
+        "restaurant-stat-1",
+        { value: "18", label: "años abiertos" },
+        {
           base: {
             ...defaultStyleFor("stat").base,
             // El valor del `stat` es `2.75em`: subir el `fontSize` del root
@@ -1395,31 +1405,29 @@ export function buildRestaurantPageFragment(): NodeFragment {
             appearance: { color: { token: "colors.surface.default" } },
           },
         },
-      },
-      "restaurant-stat-2": {
-        id: "restaurant-stat-2",
-        type: "stat",
-        props: { value: "120+", label: "platos en carta" },
-        style: {
+      ),
+      ...statFragment(
+        "restaurant-stat-2",
+        { value: "120+", label: "platos en carta" },
+        {
           base: {
             ...defaultStyleFor("stat").base,
             typography: { ...defaultStyleFor("stat").base.typography, fontSize: "clamp(1rem, 1.6vw, 1.25rem)" },
             appearance: { color: { token: "colors.surface.default" } },
           },
         },
-      },
-      "restaurant-stat-3": {
-        id: "restaurant-stat-3",
-        type: "stat",
-        props: { value: "2.4k", label: "reseñas" },
-        style: {
+      ),
+      ...statFragment(
+        "restaurant-stat-3",
+        { value: "2.4k", label: "reseñas" },
+        {
           base: {
             ...defaultStyleFor("stat").base,
             typography: { ...defaultStyleFor("stat").base.typography, fontSize: "clamp(1rem, 1.6vw, 1.25rem)" },
             appearance: { color: { token: "colors.surface.default" } },
           },
         },
-      },
+      ),
 
       // --- Testimonios sobre degradado de acento --------------------------
       "restaurant-testimonial-band": {

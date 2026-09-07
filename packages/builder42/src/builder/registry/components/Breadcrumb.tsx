@@ -19,6 +19,7 @@
 import type { CSSProperties, Ref } from "react";
 import { DEFAULT_BREAKPOINTS, type NodeStyle } from "../../model/types";
 import { resolveStyle } from "../../model/style";
+import { styleValueToCss } from "../../model/tokens";
 import { stylePropertiesToCSSObject } from "../styleToCss";
 import type { ComponentDefinition, RenderContext } from "../types";
 
@@ -29,7 +30,7 @@ interface Crumb {
 
 const BREADCRUMB_DEFAULT_STYLE: NodeStyle = {
   base: {
-    layout: { display: "block" },
+    layout: { display: "block", gap: "8px" },
     typography: {
       fontFamily: { token: "typography.families.sans" },
       fontSize: { token: "typography.sizes.sm" },
@@ -38,6 +39,10 @@ const BREADCRUMB_DEFAULT_STYLE: NodeStyle = {
   },
 };
 
+// `gap` YA NO vive aquí como literal fijo: se resuelve desde `node.style`
+// (`layout.gap`, editable en el Inspector) y se inyecta en el render. El
+// resto de `LIST_STYLE` sigue fijo (chrome estructural de la lista, no una
+// elección del usuario).
 const LIST_STYLE: CSSProperties = {
   listStyle: "none",
   margin: 0,
@@ -45,7 +50,6 @@ const LIST_STYLE: CSSProperties = {
   display: "flex",
   flexWrap: "wrap",
   alignItems: "center",
-  gap: "var(--spacing-xs, 8px)",
 };
 const ITEM_STYLE: CSSProperties = {
   display: "inline-flex",
@@ -68,6 +72,12 @@ function BreadcrumbRender(ctx: RenderContext) {
   const style: CSSProperties | undefined = exportMode
     ? undefined
     : stylePropertiesToCSSObject(resolveStyle(node.style, breakpoint, DEFAULT_BREAKPOINTS));
+  // El `<nav>` raíz es `display:block` (no flex): el `gap` de `layout` no
+  // tendría efecto ahí. El campo SÍ es estándar del modelo (`layout.gap`,
+  // editable en el Inspector) pero el valor resuelto se inyecta en el `<ol>`
+  // (el elemento flex real) en vez de en la raíz.
+  const resolvedGap = styleValueToCss(resolveStyle(node.style, breakpoint, DEFAULT_BREAKPOINTS).layout?.gap);
+  const listStyle: CSSProperties = { ...LIST_STYLE, gap: resolvedGap ?? "8px" };
 
   const items: Crumb[] = Array.isArray(node.props.items) ? (node.props.items as Crumb[]) : [];
   const separator = typeof node.props.separator === "string" && node.props.separator !== "" ? node.props.separator : "/";
@@ -83,7 +93,7 @@ function BreadcrumbRender(ctx: RenderContext) {
       aria-label="Breadcrumb"
       {...restRootProps}
     >
-      <ol style={LIST_STYLE}>
+      <ol style={listStyle}>
         {items.map((item, i) => {
           const isLast = i === items.length - 1;
           const label = typeof item?.label === "string" && item.label !== "" ? item.label : "Nivel";
@@ -124,6 +134,6 @@ export const breadcrumbDefinition: ComponentDefinition = {
       { key: "separator", label: "Separador", control: "text", group: "Contenido" },
     ],
   },
-  styleSchema: { enabledGroups: ["typography", "spacing", "size", "appearance"] },
+  styleSchema: { enabledGroups: ["layout", "typography", "spacing", "size", "appearance"] },
   render: BreadcrumbRender,
 };

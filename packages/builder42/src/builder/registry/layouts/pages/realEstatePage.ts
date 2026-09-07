@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
-import type { NodeTranslations } from "../../../model/types";
+import type { BuilderNode, NodeTranslations } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor } from "../helpers";
+import { darkBandStyleFor, quoteFragment, statFragment } from "../helpers";
 
 /**
  * Página "Inmobiliaria" — plantilla de negocio real (una sola página,
@@ -34,7 +34,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
     m2: string,
     beds: string,
     imageUrl: string,
-  ) => ({
+  ): Record<string, BuilderNode> => ({
     [`realestate-property-${n}`]: {
       id: `realestate-property-${n}`,
       type: "card",
@@ -158,18 +158,8 @@ export function buildRealEstatePageFragment(): NodeFragment {
       },
       children: [`realestate-property-${n}-m2`, `realestate-property-${n}-beds`],
     },
-    [`realestate-property-${n}-m2`]: {
-      id: `realestate-property-${n}-m2`,
-      type: "stat",
-      props: { value: m2, label: "m² de construcción" },
-      style: defaultStyleFor("stat"),
-    },
-    [`realestate-property-${n}-beds`]: {
-      id: `realestate-property-${n}-beds`,
-      type: "stat",
-      props: { value: beds, label: "recámaras" },
-      style: defaultStyleFor("stat"),
-    },
+    ...statFragment(`realestate-property-${n}-m2`, { value: m2, label: "m² de construcción" }, defaultStyleFor("stat")),
+    ...statFragment(`realestate-property-${n}-beds`, { value: beds, label: "recámaras" }, defaultStyleFor("stat")),
   });
 
   return {
@@ -615,36 +605,9 @@ export function buildRealEstatePageFragment(): NodeFragment {
         },
         children: ["realestate-stats-sold", "realestate-stats-years", "realestate-stats-cities"],
       },
-      "realestate-stats-sold": {
-        id: "realestate-stats-sold",
-        type: "stat",
-        props: { value: "+850", label: "propiedades vendidas" },
-        style: {
-          base: {
-            typography: { textAlign: "center" },
-          },
-        },
-      },
-      "realestate-stats-years": {
-        id: "realestate-stats-years",
-        type: "stat",
-        props: { value: "15", label: "años de experiencia" },
-        style: {
-          base: {
-            typography: { textAlign: "center" },
-          },
-        },
-      },
-      "realestate-stats-cities": {
-        id: "realestate-stats-cities",
-        type: "stat",
-        props: { value: "6", label: "ciudades con cobertura" },
-        style: {
-          base: {
-            typography: { textAlign: "center" },
-          },
-        },
-      },
+      ...statFragment("realestate-stats-sold", { value: "+850", label: "propiedades vendidas" }, { base: { typography: { textAlign: "center" } } }),
+      ...statFragment("realestate-stats-years", { value: "15", label: "años de experiencia" }, { base: { typography: { textAlign: "center" } } }),
+      ...statFragment("realestate-stats-cities", { value: "6", label: "ciudades con cobertura" }, { base: { typography: { textAlign: "center" } } }),
 
       // --- Banda: asesor, degradado de acento -----------------------------------
       "realestate-advisor": {
@@ -687,14 +650,13 @@ export function buildRealEstatePageFragment(): NodeFragment {
           },
         },
       },
-      "realestate-advisor-quote": {
-        id: "realestate-advisor-quote",
-        type: "quote",
-        props: {
+      ...quoteFragment(
+        "realestate-advisor-quote",
+        {
           content: "Cada familia tiene una historia distinta; mi trabajo es encontrar la casa que encaje con la suya, sin prisas y sin letras pequeñas.",
           attribution: "Ricardo Mendoza, Asesor senior",
         },
-        style: {
+        {
           base: {
             typography: {
               fontSize: "clamp(1.125rem, 2.2vw, 1.375rem)",
@@ -703,7 +665,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
             appearance: { color: { token: "colors.surface.default" } },
           },
         },
-      },
+      ),
 
       // --- Banda: FAQ (fondo claro) ----------------------------------------------
       "realestate-faq": {
@@ -999,40 +961,51 @@ export function buildRealEstatePageFragment(): NodeFragment {
       t["realestate-property-1-title"] = { en: { content: "<strong>House in Providencia</strong>" }, it: { content: "<strong>Casa a Providencia</strong>" } };
       t["realestate-property-1-zone"] = { en: { content: "Providencia, Guadalajara" }, it: { content: "Providencia, Guadalajara" } };
       t["realestate-property-1-img"] = { en: { alt: "Front of the house in Providencia" }, it: { alt: "Facciata della casa a Providencia" } };
-      t["realestate-property-1-m2"] = { en: { value: "210", label: "m² built" }, it: { value: "210", label: "m² costruiti" } };
-      t["realestate-property-1-beds"] = { en: { value: "3", label: "bedrooms" }, it: { value: "3", label: "camere" } };
+      t["realestate-property-1-m2-value"] = { en: { value: "210" }, it: { value: "210" } };
+      t["realestate-property-1-m2-label"] = { en: { content: "m² built" }, it: { content: "m² costruiti" } };
+      t["realestate-property-1-beds-value"] = { en: { value: "3" }, it: { value: "3" } };
+      t["realestate-property-1-beds-label"] = { en: { content: "bedrooms" }, it: { content: "camere" } };
 
       t["realestate-property-2-price"] = { en: { label: "$175,000 USD" }, it: { label: "€162.000" } };
       t["realestate-property-2-title"] = { en: { content: "<strong>Apartment in Puerta de Hierro</strong>" }, it: { content: "<strong>Appartamento a Puerta de Hierro</strong>" } };
       t["realestate-property-2-zone"] = { en: { content: "Puerta de Hierro, Zapopan" }, it: { content: "Puerta de Hierro, Zapopan" } };
       t["realestate-property-2-img"] = { en: { alt: "Front of the apartment in Puerta de Hierro" }, it: { alt: "Facciata dell'appartamento a Puerta de Hierro" } };
-      t["realestate-property-2-m2"] = { en: { value: "125", label: "m² built" }, it: { value: "125", label: "m² costruiti" } };
-      t["realestate-property-2-beds"] = { en: { value: "2", label: "bedrooms" }, it: { value: "2", label: "camere" } };
+      t["realestate-property-2-m2-value"] = { en: { value: "125" }, it: { value: "125" } };
+      t["realestate-property-2-m2-label"] = { en: { content: "m² built" }, it: { content: "m² costruiti" } };
+      t["realestate-property-2-beds-value"] = { en: { value: "2" }, it: { value: "2" } };
+      t["realestate-property-2-beds-label"] = { en: { content: "bedrooms" }, it: { content: "camere" } };
 
       t["realestate-property-3-price"] = { en: { label: "$306,000 USD" }, it: { label: "€283.000" } };
       t["realestate-property-3-title"] = { en: { content: "<strong>House in Chapalita</strong>" }, it: { content: "<strong>Casa a Chapalita</strong>" } };
       t["realestate-property-3-zone"] = { en: { content: "Chapalita, Guadalajara" }, it: { content: "Chapalita, Guadalajara" } };
       t["realestate-property-3-img"] = { en: { alt: "Front of the house in Chapalita" }, it: { alt: "Facciata della casa a Chapalita" } };
-      t["realestate-property-3-m2"] = { en: { value: "260", label: "m² built" }, it: { value: "260", label: "m² costruiti" } };
-      t["realestate-property-3-beds"] = { en: { value: "4", label: "bedrooms" }, it: { value: "4", label: "camere" } };
+      t["realestate-property-3-m2-value"] = { en: { value: "260" }, it: { value: "260" } };
+      t["realestate-property-3-m2-label"] = { en: { content: "m² built" }, it: { content: "m² costruiti" } };
+      t["realestate-property-3-beds-value"] = { en: { value: "4" }, it: { value: "4" } };
+      t["realestate-property-3-beds-label"] = { en: { content: "bedrooms" }, it: { content: "camere" } };
 
-      t["realestate-stats-sold"] = { en: { value: "+850", label: "properties sold" }, it: { value: "+850", label: "immobili venduti" } };
-      t["realestate-stats-years"] = { en: { value: "15", label: "years of experience" }, it: { value: "15", label: "anni di esperienza" } };
-      t["realestate-stats-cities"] = { en: { value: "6", label: "cities covered" }, it: { value: "6", label: "città coperte" } };
+      t["realestate-stats-sold-value"] = { en: { value: "+850" }, it: { value: "+850" } };
+      t["realestate-stats-sold-label"] = { en: { content: "properties sold" }, it: { content: "immobili venduti" } };
+      t["realestate-stats-years-value"] = { en: { value: "15" }, it: { value: "15" } };
+      t["realestate-stats-years-label"] = { en: { content: "years of experience" }, it: { content: "anni di esperienza" } };
+      t["realestate-stats-cities-value"] = { en: { value: "6" }, it: { value: "6" } };
+      t["realestate-stats-cities-label"] = { en: { content: "cities covered" }, it: { content: "città coperte" } };
 
       t["realestate-advisor-avatar"] = {
         en: { alt: "Portrait of Ricardo Mendoza, real estate advisor" },
         it: { alt: "Ritratto di Ricardo Mendoza, consulente immobiliare" },
       };
-      t["realestate-advisor-quote"] = {
+      t["realestate-advisor-quote-content"] = {
         en: {
           content: "Every family has a different story; my job is to find the home that fits theirs, with no rush and no fine print.",
-          attribution: "Ricardo Mendoza, Senior advisor",
         },
         it: {
           content: "Ogni famiglia ha una storia diversa; il mio lavoro è trovare la casa che si adatta alla loro, senza fretta e senza clausole nascoste.",
-          attribution: "Ricardo Mendoza, Consulente senior",
         },
+      };
+      t["realestate-advisor-quote-attribution"] = {
+        en: { content: "<cite>— Ricardo Mendoza, Senior advisor</cite>" },
+        it: { content: "<cite>— Ricardo Mendoza, Consulente senior</cite>" },
       };
 
       t["realestate-faq-title"] = { en: { content: "<strong>Frequently asked questions</strong>" }, it: { content: "<strong>Domande frequenti</strong>" } };

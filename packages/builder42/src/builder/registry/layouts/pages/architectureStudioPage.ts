@@ -1,7 +1,7 @@
 import type { NodeFragment } from "../../../model/tree";
 import type { BuilderNode, NodeStyle, NodeTranslations, StyleValue } from "../../../model/types";
 import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
-import { darkBandStyleFor, type LayoutPageMeta } from "../helpers";
+import { darkBandStyleFor, statFragment, type LayoutPageMeta } from "../helpers";
 
 /**
  * Página "Estudio de arquitectura" — plantilla NUEVA de sector (docs/48 §2
@@ -299,14 +299,7 @@ function teamCard(n: 1 | 2 | 3, name: string, role: string, imageUrl: string, in
 }
 
 function processStep(n: 1 | 2 | 3, value: string, label: string) {
-  return {
-    [`archstudio-process-${n}`]: {
-      id: `archstudio-process-${n}`,
-      type: "stat",
-      props: { value, label },
-      style: { base: { typography: { textAlign: "center" } } },
-    },
-  };
+  return statFragment(`archstudio-process-${n}`, { value, label }, { base: { typography: { textAlign: "center" } } });
 }
 
 export function buildArchitectureStudioPageFragment(): NodeFragment {
@@ -1112,9 +1105,12 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       t["archstudio-team-3-role"] = { en: { content: "Technical director · Construction management" }, it: { content: "Direttrice tecnica · Gestione dei lavori" } };
 
       t["archstudio-process-title"] = { en: { content: "<strong>How we handle your project</strong>" }, it: { content: "<strong>Come gestiamo il tuo progetto</strong>" } };
-      t["archstudio-process-1"] = { en: { value: "1", label: "Diagnostic meeting and site or space survey" }, it: { value: "1", label: "Incontro diagnostico e rilievo del terreno o del locale" } };
-      t["archstudio-process-2"] = { en: { value: "2", label: "Preliminary design and construction budget, up to 2 revision rounds" }, it: { value: "2", label: "Progetto preliminare e preventivo dei lavori, fino a 2 revisioni" } };
-      t["archstudio-process-3"] = { en: { value: "3", label: "Permit management and support throughout construction" }, it: { value: "3", label: "Gestione dei permessi e supporto durante tutti i lavori" } };
+      t["archstudio-process-1-value"] = { en: { value: "1" }, it: { value: "1" } };
+      t["archstudio-process-1-label"] = { en: { content: "Diagnostic meeting and site or space survey" }, it: { content: "Incontro diagnostico e rilievo del terreno o del locale" } };
+      t["archstudio-process-2-value"] = { en: { value: "2" }, it: { value: "2" } };
+      t["archstudio-process-2-label"] = { en: { content: "Preliminary design and construction budget, up to 2 revision rounds" }, it: { content: "Progetto preliminare e preventivo dei lavori, fino a 2 revisioni" } };
+      t["archstudio-process-3-value"] = { en: { value: "3" }, it: { value: "3" } };
+      t["archstudio-process-3-label"] = { en: { content: "Permit management and support throughout construction" }, it: { content: "Gestione dei permessi e supporto durante tutti i lavori" } };
 
       t["archstudio-contact-title"] = { en: { content: "<strong>Tell us about your project</strong>" }, it: { content: "<strong>Raccontaci il tuo progetto</strong>" } };
       t["archstudio-contact-sub"] = {
