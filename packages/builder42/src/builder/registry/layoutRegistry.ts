@@ -18,11 +18,13 @@ import { buildPricingSectionFragment } from "./layouts/sections/pricingSection";
 import { buildCtaBannerFragment } from "./layouts/sections/ctaBanner";
 import { buildStatsStripFragment } from "./layouts/sections/statsStrip";
 import { buildFaqAccordionFragment } from "./layouts/sections/faqAccordion";
-import { buildBreadcrumbHeaderFragment } from "./layouts/sections/breadcrumbHeader";
 import { buildVideoShowcaseFragment } from "./layouts/sections/videoShowcase";
 import { buildTeamGridFragment } from "./layouts/sections/teamGrid";
 import { buildTabsFeaturesFragment } from "./layouts/sections/tabsFeatures";
 import { buildNewsletterModalTriggerFragment } from "./layouts/sections/newsletterModalTrigger";
+import { buildLogoCloudStripFragment } from "./layouts/sections/logoCloudStrip";
+import { buildAboutSplitFragment } from "./layouts/sections/aboutSplit";
+import { buildQuoteStripFragment } from "./layouts/sections/quoteStrip";
 
 /** Locales que traen traducidos las plantillas de negocio real (docs/42). */
 const REAL_WORLD_LOCALES = ["es", "en", "it"];
@@ -424,13 +426,6 @@ const DEFINITIONS: LayoutDefinition[] = [
     build: buildFaqAccordionFragment,
   },
   {
-    id: "breadcrumb-header",
-    category: "section",
-    labelKey: "templates.layouts.breadcrumbHeader",
-    descriptionKey: "templates.layouts.breadcrumbHeaderDesc",
-    build: buildBreadcrumbHeaderFragment,
-  },
-  {
     id: "video-showcase",
     category: "section",
     labelKey: "templates.layouts.videoShowcase",
@@ -457,6 +452,27 @@ const DEFINITIONS: LayoutDefinition[] = [
     labelKey: "templates.layouts.newsletterModalTrigger",
     descriptionKey: "templates.layouts.newsletterModalTriggerDesc",
     build: buildNewsletterModalTriggerFragment,
+  },
+  {
+    id: "logo-cloud-strip",
+    category: "section",
+    labelKey: "templates.layouts.logoCloudStrip",
+    descriptionKey: "templates.layouts.logoCloudStripDesc",
+    build: buildLogoCloudStripFragment,
+  },
+  {
+    id: "about-split",
+    category: "section",
+    labelKey: "templates.layouts.aboutSplit",
+    descriptionKey: "templates.layouts.aboutSplitDesc",
+    build: buildAboutSplitFragment,
+  },
+  {
+    id: "quote-strip",
+    category: "section",
+    labelKey: "templates.layouts.quoteStrip",
+    descriptionKey: "templates.layouts.quoteStripDesc",
+    build: buildQuoteStripFragment,
   },
   {
     id: "signup-page",
