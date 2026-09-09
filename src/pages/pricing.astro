@@ -39,7 +39,7 @@ const jsonLd = [
 ];
 ---
 
-<MarketingLayout seo={seo} jsonLd={jsonLd} active="pricing">
+<MarketingLayout seo={seo} jsonLd={jsonLd} active="pricing" ctaTitle="Know your cost. Start today.">
   {/* ---------------- hero ---------------- */}
   <section class="phero container--wide">
     <p class="eyebrow" data-reveal>Pricing</p>
@@ -65,52 +65,58 @@ const jsonLd = [
       Representative US-market list prices. Every rate is all-in — no per-number rentals, no carrier
       surcharges — across one workspace instead of separate SMS, email, and WhatsApp products.
     </p>
-    <div class="pcmp__scroll" data-reveal>
-      <table class="pcmp__table">
-        <thead>
-          <tr>
-            <th scope="col">Rate · US</th>
+    <details class="pdisclose" data-reveal>
+      <summary class="pdisclose__summary">
+        See the full comparison table
+        <span class="pdisclose__marker" aria-hidden="true">+</span>
+      </summary>
+      <div class="pcmp__scroll">
+        <table class="pcmp__table">
+          <thead>
+            <tr>
+              <th scope="col">Rate · US</th>
+              {
+                COMPARISON_TOOLS.map((tool, i) => (
+                  <th scope="col" class:list={['pcmp__tool', i === 0 && 'pcmp__tool--us']}>
+                    {tool}
+                  </th>
+                ))
+              }
+            </tr>
+          </thead>
+          <tbody>
             {
-              COMPARISON_TOOLS.map((tool, i) => (
-                <th scope="col" class:list={['pcmp__tool', i === 0 && 'pcmp__tool--us']}>
-                  {tool}
-                </th>
+              COMPARISON.map((row) => (
+                <tr>
+                  <th scope="row" class="pcmp__ch">
+                    {row.channel}
+                    <span class="pcmp__unit">{row.unit}</span>
+                  </th>
+                  {COMPARISON_TOOLS.map((tool, i) => (
+                    <td class:list={['mono', i === 0 ? 'pcmp__us' : 'pcmp__rival']}>
+                      {row.prices[tool]}
+                    </td>
+                  ))}
+                </tr>
               ))
             }
-          </tr>
-        </thead>
-        <tbody>
-          {
-            COMPARISON.map((row) => (
-              <tr>
-                <th scope="row" class="pcmp__ch">
-                  {row.channel}
-                  <span class="pcmp__unit">{row.unit}</span>
-                </th>
-                {COMPARISON_TOOLS.map((tool, i) => (
-                  <td class:list={['mono', i === 0 ? 'pcmp__us' : 'pcmp__rival']}>
-                    {row.prices[tool]}
-                  </td>
-                ))}
-              </tr>
-            ))
-          }
-        </tbody>
-      </table>
-    </div>
-    <p class="pcmp__sources">
-      “—” means the tool doesn’t offer that channel natively. <span class="mono">*</span> All-in estimate:
-      Twilio and Telnyx advertise a lower base SMS rate but add per-carrier surcharges ($0.003–0.015/msg)
-      on top, so the figure shown folds in a typical surcharge — Maildrill’s rate is genuinely all-in.
-      Sources: <a href="https://www.twilio.com/en-us/sms/pricing/us">Twilio</a>,
-      <a href="https://sinch.com/pricing/sms/">Sinch</a>,
-      <a href="https://www.vonage.com/communications-apis/sms/pricing/">Vonage</a>,
-      <a href="https://www.brevo.com/pricing/">Brevo</a>,
-      <a href="https://telnyx.com/pricing/messaging">Telnyx</a>, and
-      <a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing"
-        >Meta WhatsApp rates</a
-      > (mid-2026). Indicative — check each provider for your volumes.
-    </p>
+          </tbody>
+        </table>
+      </div>
+      <p class="pcmp__sources">
+        “—” means the tool doesn’t offer that channel natively. <span class="mono">*</span> All-in estimate:
+        Twilio and Telnyx advertise a lower base SMS rate but add per-carrier surcharges ($0.003–0.015/msg)
+        on top, so the figure shown folds in a typical surcharge — Maildrill’s rate is genuinely all-in.
+        Sources: <a href="https://www.twilio.com/en-us/sms/pricing/us">Twilio</a>,
+        <a href="https://sinch.com/pricing/sms/">Sinch</a>,
+        <a href="https://www.vonage.com/communications-apis/sms/pricing/">Vonage</a>,
+        <a href="https://www.brevo.com/pricing/">Brevo</a>,
+        <a href="https://telnyx.com/pricing/messaging">Telnyx</a>, and
+        <a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing"
+          >Meta WhatsApp rates</a
+        > (mid-2026). Indicative — check each provider for your volumes.
+      </p>
+    </details>
   </section>
 
   {/* ---------------- regional tiers ---------------- */}
@@ -123,39 +129,45 @@ const jsonLd = [
       SMS, WhatsApp, and voice are priced by region — pick your destination in the estimator above
       for the exact rate. Email is a single flat rate worldwide.
     </p>
-    <div class="ptier__scroll" data-reveal>
-      <table class="ptier__table">
-        <thead>
-          <tr>
-            <th scope="col">Tier</th>
-            <th scope="col">Email</th>
-            <th scope="col">SMS</th>
-            <th scope="col">WhatsApp</th>
-            <th scope="col">Voice</th>
-          </tr>
-        </thead>
-        <tbody>
-          {
-            REGION_TIERS.map((t) => (
-              <tr>
-                <th scope="row" class="ptier__region">
-                  {t.name}
-                  <span class="ptier__blurb">{t.blurb}</span>
-                </th>
-                <td class="mono">${EMAIL_RATE.toFixed(4)}</td>
-                <td class="mono">${t.sms.toFixed(4)}</td>
-                <td class="mono">${t.whatsapp.toFixed(3)}</td>
-                <td class="mono">${t.voice.toFixed(4)}</td>
-              </tr>
-            ))
-          }
-        </tbody>
-      </table>
-    </div>
-    <p class="ptier__note">
-      Per-unit list prices in USD. WhatsApp is the Meta marketing-message rate plus a slim platform
-      fee. Rates are indicative; your invoice uses the exact destination rate at send time.
-    </p>
+    <details class="pdisclose" data-reveal>
+      <summary class="pdisclose__summary">
+        See the full regional pricing table
+        <span class="pdisclose__marker" aria-hidden="true">+</span>
+      </summary>
+      <div class="ptier__scroll">
+        <table class="ptier__table">
+          <thead>
+            <tr>
+              <th scope="col">Tier</th>
+              <th scope="col">Email</th>
+              <th scope="col">SMS</th>
+              <th scope="col">WhatsApp</th>
+              <th scope="col">Voice</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              REGION_TIERS.map((t) => (
+                <tr>
+                  <th scope="row" class="ptier__region">
+                    {t.name}
+                    <span class="ptier__blurb">{t.blurb}</span>
+                  </th>
+                  <td class="mono">${EMAIL_RATE.toFixed(4)}</td>
+                  <td class="mono">${t.sms.toFixed(4)}</td>
+                  <td class="mono">${t.whatsapp.toFixed(3)}</td>
+                  <td class="mono">${t.voice.toFixed(4)}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="ptier__note">
+        Per-unit list prices in USD. WhatsApp is the Meta marketing-message rate plus a slim platform
+        fee. Rates are indicative; your invoice uses the exact destination rate at send time.
+      </p>
+    </details>
   </section>
 
   {/* ---------------- always included ---------------- */}
@@ -235,6 +247,34 @@ const jsonLd = [
     color: var(--text3);
     max-width: 62ch;
     margin: 16px 0 32px;
+  }
+
+  /* progressive-disclosure wrapper shared by the comparison and regional tables */
+  .pdisclose__summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--fs-sm2);
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    list-style: none;
+    margin: 0 0 20px;
+  }
+
+  .pdisclose__summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .pdisclose__marker {
+    color: var(--muted);
+    font-size: 18px;
+    font-weight: 400;
+    transition: transform var(--duration) var(--ease-out);
+  }
+
+  .pdisclose[open] .pdisclose__marker {
+    transform: rotate(45deg);
   }
 
   .pcmp__scroll,

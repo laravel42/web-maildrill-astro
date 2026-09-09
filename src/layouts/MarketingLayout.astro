@@ -8,9 +8,10 @@ interface Props {
   seo: PageSeo;
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   active?: 'product' | 'channels' | 'pricing' | 'contact' | 'resources';
+  ctaTitle?: string;
 }
 
-const { seo, jsonLd, active } = Astro.props;
+const { seo, jsonLd, active, ctaTitle } = Astro.props;
 ---
 
 <BaseLayout seo={seo} jsonLd={jsonLd}>
@@ -18,7 +19,7 @@ const { seo, jsonLd, active } = Astro.props;
   <main id="main">
     <slot />
   </main>
-  <MarketingFooter />
+  <MarketingFooter ctaTitle={ctaTitle} />
 </BaseLayout>
 
 {/* Marketing motion: reveal, count-up, split headings, scramble, tilt, cards, progress. */}

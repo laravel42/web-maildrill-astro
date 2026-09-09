@@ -103,13 +103,3 @@ export async function mockResetPassword(_email: string): Promise<{ ok: true }> {
   return { ok: true };
 }
 
-export async function mockContactSubmit(_input: {
-  firstName: string;
-  lastName: string;
-  email: string;
-  topic: string;
-  message: string;
-}): Promise<{ ok: true }> {
-  await delay(500);
-  return { ok: true };
-}

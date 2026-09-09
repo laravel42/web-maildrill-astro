@@ -141,3 +141,65 @@ export async function sendSignupNotification(sub: SignupData): Promise<boolean> 
     return false;
   }
 }
+
+export interface ContactSubmission {
+  firstName: string;
+  lastName: string;
+  email: string;
+  topic: string;
+  message: string;
+}
+
+/**
+ * Notify the team of a `/contact` form submission, with reply-to set to the
+ * submitter so a reply reaches them directly. Never throws.
+ */
+export async function sendContactNotification(sub: ContactSubmission): Promise<boolean> {
+  const to = process.env.CONTACT_NOTIFY_TO ?? process.env.SIGNUP_NOTIFY_TO ?? 'hello@laravel42.com';
+  const transport = getTransport();
+  if (!transport) {
+    console.warn('[mail] SMTP not configured — skipping contact notification');
+    return false;
+  }
+  const email = sub.email.trim();
+  const name = [sub.firstName, sub.lastName].map((v) => v.trim()).join(' ');
+  const rows: [string, string][] = [
+    ['Name', name],
+    ['Email', email],
+    ['Topic', sub.topic],
+  ];
+  const html =
+    `<div style="font-family:Arial,Helvetica,sans-serif;color:#1f1e1b;">` +
+    `<h2 style="margin:0 0 12px;font-size:18px;">New contact form message</h2>` +
+    `<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px;">` +
+    rows
+      .map(
+        ([k, v]) =>
+          `<tr><td style="padding:4px 16px 4px 0;color:#57554e;">${k}</td>` +
+          `<td style="padding:4px 0;font-weight:600;">${esc(v)}</td></tr>`,
+      )
+      .join('') +
+    `</table>` +
+    `<p style="margin:16px 0 0;white-space:pre-wrap;font-size:14px;">${esc(sub.message)}</p>` +
+    `</div>`;
+  const text =
+    `New contact form message\n\nName: ${name}\nEmail: ${email}\nTopic: ${sub.topic}\n\n${sub.message}\n`;
+  try {
+    await transport.sendMail({
+      from: mailFrom(),
+      to,
+      replyTo: email,
+      subject: `Contact form: ${sub.topic} — ${email}`,
+      html,
+      text,
+      // Nodemailer's default `--_NmP` prefix yields `----_NmP-…` delimiters that
+      // Cloudflare's SMTP MIME ingress can drop, delivering an empty body.
+      ...({ boundaryPrefix: 'md' } as Record<string, string>),
+    });
+    console.info('[mail] contact notification sent for', email);
+    return true;
+  } catch (err) {
+    console.error('[mail] contact notification failed for', email, err);
+    return false;
+  }
+}

@@ -58,14 +58,15 @@ describe('pricing estimator math', () => {
     expect(usd.money(542)).toBe('$542.00');
     expect(usd.money(1300.8)).toBe('$1,301');
     expect(usd.money(0)).toBe('$0.00');
-    expect(usd.rate(0.0005)).toBe('$0.00050'); // < 0.001 → 5 decimals (flat email rate)
-    expect(usd.rate(0.0083)).toBe('$0.0083'); // < 0.01 → 4 decimals
-    expect(usd.rate(0.025)).toBe('$0.025'); // ≥ 0.01 → 3 decimals
+    expect(usd.rate(0.0005)).toBe('$0.0005'); // email — 4 decimals, no trailing zero
+    expect(usd.rate(0.0083)).toBe('$0.0083');
+    expect(usd.rate(0.025)).toBe('$0.025');
+    expect(usd.rate(0.0125)).toBe('$0.0125'); // voice NA — must not round to $0.013
     expect(usd.whole(49)).toBe('$49');
 
     const eur = makeFormatters(EUR); // fx 0.8737, symbol €
     expect(eur.money(542)).toBe('€473.55'); // 542 × 0.8737
-    expect(eur.rate(0.0005)).toBe('€0.00044'); // 0.0005 × 0.8737 → 5 decimals
+    expect(eur.rate(0.0005)).toBe('€0.0004'); // 0.0005 × 0.8737 → 4 decimals, trimmed
   });
 });
 
