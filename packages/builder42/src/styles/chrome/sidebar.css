@@ -127,6 +127,15 @@
 /* Scroll area del panel */
 .pbx-side-tabs__panel {
   flex: 1;
+  /* `min-height: 0` (Fase 11.c+): sin esto, un flex-item en columna no se
+   * comprime por debajo de la altura de su contenido (default `min-height:
+   * auto`) — el `overflow: auto` de este mismo selector nunca entraba a
+   * jugar y el desborde se lo comía el `<aside>` padre (`.pbx-sidebar`),
+   * que SÍ recortaba/scrolleaba antes por tener su propio `overflow: auto`.
+   * Ese padre pasó a `overflow: visible` para no recortar `.pbx-panel-handle`
+   * (`sidebar.css`, bloque de arriba) — sin `min-height: 0` aquí, el scroll
+   * "se perdía" (el panel entero crecía sin scrollbar visible). */
+  min-height: 0;
   overflow: auto;
   padding: 6px 8px 8px;
   contain: layout style;
