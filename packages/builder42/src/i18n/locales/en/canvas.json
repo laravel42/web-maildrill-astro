@@ -59,8 +59,7 @@
     "title": "This page is empty",
     "body": "Start from a landing template, or add a block from the left.",
     "useTemplate": "Use a starter template",
-    "applying": "Adding template…",
-    "blank": "Keep it blank"
+    "applying": "Adding template…"
   },
   "pickInsert": {
     "prompt": "Tap where to place \"{{label}}\"",

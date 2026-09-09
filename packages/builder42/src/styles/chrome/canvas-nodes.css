@@ -281,25 +281,25 @@
 }
 
 .pbx-empty-hint {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow-wrap: break-word;
   padding: 12px;
   color: var(--pb-chrome-text-muted);
   font-size: 12px;
   text-align: center;
+  overflow-wrap: anywhere;
   border: 1px dashed var(--pb-chrome-border-strong);
   border-radius: var(--pb-chrome-radius-sm);
 }
 
-/* Drop zone del contenedor vacío resaltada al arrastrar encima. */
+/* Keep layout (drop hit area) but don’t paint the hint over the indicator. */
 .pbx-node--drop-over .pbx-empty-hint {
-  border-color: var(--pb-chrome-drop);
-  color: var(--pb-chrome-drop);
-  /* docs/52 F5: antes `rgba(22,163,74,0.05)` — mismo criterio color-mix que
-     `.pbx-drop-overlay--cell` arriba (rgb literal exacto de --pb-chrome-drop). */
-  background: color-mix(in srgb, var(--pb-chrome-drop) 5%, transparent);
+  visibility: hidden;
 }
 
 /* Hint compacto del slot de logo del navbar (docs/16 §12.4 rework): la barra
@@ -567,6 +567,12 @@
   outline-color: color-mix(in srgb, var(--pb-chrome-select) 45%, transparent);
 }
 
+/* Page root is the document, not a block — hovering anything inside would
+   otherwise draw a dashed frame around the whole page. */
+.pbx-canvas__frame > .pbx-node:hover {
+  outline-color: transparent;
+}
+
 .pbx-node--selected {
   outline: 2px dashed var(--pb-chrome-select) !important;
   outline-offset: -2px;
@@ -622,7 +628,7 @@
 .pbx-node--drop-over {
   outline: 2px solid var(--pb-chrome-drop) !important;
   /* docs/52 F5: antes `rgba(22,163,74,0.05)` — mismo criterio color-mix que
-     `.pbx-drop-overlay--cell`/`.pbx-empty-hint` de arriba en este archivo. */
+     `.pbx-drop-overlay--cell` de arriba en este archivo. */
   background-color: color-mix(in srgb, var(--pb-chrome-drop) 5%, transparent);
 }
 

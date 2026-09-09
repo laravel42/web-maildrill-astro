@@ -59,8 +59,7 @@
     "title": "Esta página está vacía",
     "body": "Empieza con una plantilla, o añade un bloque desde la izquierda.",
     "useTemplate": "Usar plantilla de inicio",
-    "applying": "Añadiendo plantilla…",
-    "blank": "Dejar en blanco"
+    "applying": "Añadiendo plantilla…"
   },
   "pickInsert": {
     "prompt": "Toca dónde colocar «{{label}}»",

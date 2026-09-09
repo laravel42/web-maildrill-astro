@@ -78,14 +78,6 @@ export default function LandingPageBuilder({ initialSite, siteName, onClose, onS
   const { status, isDirty, markDirty, flush } = useAutosave(persist);
   const [leaveBlocked, setLeaveBlocked] = useState(false);
   const pendingClose = useRef(false);
-  const prevSaveStatus = useRef(status);
-
-  useEffect(() => {
-    if (status === 'saved' && prevSaveStatus.current !== 'saved') {
-      show('Autosaved');
-    }
-    prevSaveStatus.current = status;
-  }, [status, show]);
 
   // Client-only load of the editor + its stylesheet (kept out of SSR) — same
   // reasoning as VisualEmailBuilder's own effect.

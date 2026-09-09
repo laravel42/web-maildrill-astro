@@ -139,7 +139,7 @@ export default function AppAutomations({
   const filtered = useMemo(() => rows, [rows]);
 
   return (
-    <div className="screen screen--capped">
+    <div className="screen">
       <div className="screen__head">
         <div>
           <h1 className="screen__h1">Automations</h1>

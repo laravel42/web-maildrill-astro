@@ -183,7 +183,7 @@ export default function AppLandings({
   const visible = useMemo(() => rows, [rows]);
 
   return (
-    <div className="screen screen--capped">
+    <div className="screen">
       <div className="screen__head">
         <div>
           <h1 className="screen__h1">Landings</h1>

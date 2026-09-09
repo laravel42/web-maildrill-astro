@@ -59,8 +59,7 @@
     "title": "Questa pagina è vuota",
     "body": "Parti da un modello, oppure aggiungi un blocco da sinistra.",
     "useTemplate": "Usa un modello iniziale",
-    "applying": "Aggiunta del modello…",
-    "blank": "Lascia vuota"
+    "applying": "Aggiunta del modello…"
   },
   "pickInsert": {
     "prompt": "Tocca dove posizionare «{{label}}»",

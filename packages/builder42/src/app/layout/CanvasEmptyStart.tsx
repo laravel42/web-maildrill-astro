@@ -1,6 +1,6 @@
 /**
- * First-run empty canvas: one starter vs keep blank. Only in the Maildrill
- * embed — standalone still shows the bare container.
+ * First-run empty canvas: one starter template. Only in the Maildrill embed —
+ * standalone still shows the bare container. Drops away once a block is added.
  */
 
 import { useState } from "react";
@@ -16,10 +16,9 @@ export function CanvasEmptyStart() {
   const applyPageLayout = useDocumentStore((s) => s.applyPageLayout);
   const rootId = useDocumentStore((s) => s.document.rootId);
   const childCount = useDocumentStore((s) => s.document.nodes[s.document.rootId]?.children?.length ?? 0);
-  const [dismissed, setDismissed] = useState(false);
   const [applying, setApplying] = useState(false);
 
-  if (!embedded || dismissed || childCount > 0) return null;
+  if (!embedded || childCount > 0) return null;
 
   const handleStarter = () => {
     setApplying(true);
@@ -38,9 +37,6 @@ export function CanvasEmptyStart() {
           onClick={handleStarter}
         >
           {applying ? t("empty.applying") : t("empty.useTemplate")}
-        </button>
-        <button type="button" className="pbx-canvas-empty__ghost" onClick={() => setDismissed(true)}>
-          {t("empty.blank")}
         </button>
       </div>
     </div>
