@@ -7,8 +7,12 @@
  * colapsado), en vez de los botones fijos del header (`PanelToggleButtons`,
  * retirado) + el `×` interno del Inspector (`InspectorForm`, retirado).
  *
- * `side="left"` para el Sidebar (pestaña pegada a su borde derecho);
- * `side="right"` para el Inspector (pestaña pegada a su borde izquierdo).
+ * Icono + label vertical (`writing-mode: vertical-rl`, ver CSS) — mismo
+ * patrón que `.wts-panel-handle-label`/`Library` en wa-template-studio.
+ *
+ * `side="left"` para el Sidebar (pestaña pegada a su borde derecho, label
+ * "Componentes"); `side="right"` para el Inspector (pestaña pegada a su
+ * borde izquierdo, label "Inspector").
  */
 
 import { useTranslation } from "react-i18next";
@@ -23,8 +27,11 @@ export function PanelHandle({
   collapsed: boolean;
   onToggle: () => void;
 }) {
-  const { t } = useTranslation("header");
-  const label = side === "left" ? t("panels.toggleSidebar") : t("panels.toggleInspector");
+  const { t: tHeader } = useTranslation("header");
+  const { t: tSidebar } = useTranslation("sidebar");
+  const { t: tInspector } = useTranslation("inspector");
+  const label = side === "left" ? tHeader("panels.toggleSidebar") : tHeader("panels.toggleInspector");
+  const panelName = side === "left" ? tSidebar("tabs.components") : tInspector("title");
 
   // Cuando el panel está abierto, la flecha apunta hacia SU propio borde
   // (colapsar); cuando está colapsado, apunta hacia el canvas (expandir) —
@@ -50,7 +57,8 @@ export function PanelHandle({
       aria-pressed={!collapsed}
       onClick={onToggle}
     >
-      <ChevronIcon size={14} aria-hidden="true" />
+      <ChevronIcon size={13} aria-hidden="true" />
+      <span className="pbx-panel-handle__label">{panelName}</span>
     </button>
   );
 }

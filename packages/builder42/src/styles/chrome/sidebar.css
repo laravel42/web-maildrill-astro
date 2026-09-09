@@ -48,18 +48,33 @@
   top: 50%;
   transform: translateY(-50%);
   z-index: 10;
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 56px;
-  padding: 0;
+  gap: 6px;
+  width: 22px;
+  min-height: 88px;
+  padding: 8px 0;
   border: 1px solid var(--pb-chrome-border);
   background: var(--pb-chrome-surface);
   color: var(--pb-chrome-text-faint);
   cursor: pointer;
   box-shadow: var(--pb-chrome-frame-shadow);
   transition: background var(--pb-chrome-transition), color var(--pb-chrome-transition);
+}
+
+/* Label vertical junto al icono — mismo patrón que `.wts-panel-handle-label`
+ * (wa-template-studio) / `Library` (email-builder `ComponentsLibraryHandle`):
+ * texto rotado en vez de una sola letra por línea. */
+.pbx-panel-handle__label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 10.5px;
+  font-weight: var(--pb-chrome-font-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .pbx-panel-handle:hover {
@@ -74,14 +89,14 @@
 
 /* Sidebar: pestaña pegada a SU borde derecho, sobresaliendo hacia el canvas. */
 .pbx-panel-handle--left {
-  right: -16px;
+  right: -22px;
   border-left: 0;
   border-radius: 0 var(--pb-chrome-radius-md) var(--pb-chrome-radius-md) 0;
 }
 
 /* Inspector: pestaña pegada a SU borde izquierdo, sobresaliendo hacia el canvas. */
 .pbx-panel-handle--right {
-  left: -16px;
+  left: -22px;
   border-right: 0;
   border-radius: var(--pb-chrome-radius-md) 0 0 var(--pb-chrome-radius-md);
 }
