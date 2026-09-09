@@ -10,9 +10,11 @@
  * Icono + label vertical (`writing-mode: vertical-rl`, ver CSS) — mismo
  * patrón que `.wts-panel-handle-label`/`Library` en wa-template-studio.
  *
- * `side="left"` para el Sidebar (pestaña pegada a su borde derecho, label
- * "Biblioteca"); `side="right"` para el Inspector (pestaña pegada a su
- * borde izquierdo, label "Inspector").
+ * Debe renderizarse DENTRO de un `.pbx-panel-slot--left`/`--right`
+ * (`Sidebar`/`Inspector`, hermano del `<aside>` real) — el posicionamiento
+ * absoluto (`right: -22px`/`left: -22px`) lo aporta ese contenedor padre
+ * (`chrome/sidebar.css`), no este componente ni `side`. `side` solo decide
+ * el label ("Biblioteca" vs. "Inspector") y hacia dónde apunta la flecha.
  */
 
 import { useTranslation } from "react-i18next";
@@ -48,10 +50,7 @@ export function PanelHandle({
   return (
     <button
       type="button"
-      className={
-        `pbx-panel-handle pbx-panel-handle--${side}` +
-        (collapsed ? " pbx-panel-handle--collapsed" : "")
-      }
+      className={"pbx-panel-handle" + (collapsed ? " pbx-panel-handle--collapsed" : "")}
       title={label}
       aria-label={label}
       aria-pressed={!collapsed}

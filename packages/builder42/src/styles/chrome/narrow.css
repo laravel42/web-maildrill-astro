@@ -33,16 +33,6 @@
     transform: translateX(0);
   }
 
-  /* El handle vive DENTRO del `aside` que se traslada fuera de pantalla — sin
-   * esto quedaría inalcanzable mientras el panel está colapsado (no hay
-   * `width: 0` aquí como en wide, es un `translateX` completo). Se le aplica
-   * el `transform` INVERSO al del padre para que permanezca fijo, pegado al
-   * borde del viewport, mientras el panel colapsado permanece oculto detrás
-   * de él (mismo truco en `.pbx-inspector .pbx-panel-handle` abajo). */
-  .pbx-sidebar:not(.pbx-sidebar--open) .pbx-panel-handle {
-    transform: translateY(-50%) translateX(100%);
-  }
-
   .pbx-inspector {
     position: fixed;
     z-index: 40;
@@ -59,13 +49,41 @@
     transform: translateX(0);
   }
 
-  .pbx-inspector:not(.pbx-inspector--open) .pbx-panel-handle {
-    transform: translateY(-50%) translateX(-100%);
+  /* `.pbx-panel-slot` deja de participar en el flujo del grid como caja con
+   * contenido (su `<aside>` hijo es `position: fixed`, fuera del flujo) —
+   * pasa a ser solo el ancla de `position: relative` para el handle
+   * absoluto, que aquí se fija al VIEWPORT (no al slot) para poder seguir al
+   * `<aside>` fixed cuando se abre/cierra, en vez de quedar pegado a un slot
+   * colapsado a altura 0. `--collapsed` (clase de estado puesta por React,
+   * espejo de `--open` en el `<aside>`) decide el lado del viewport en el
+   * que el handle descansa — sin depender de `:has()`. */
+  .pbx-panel-slot {
+    position: static;
   }
 
-  /* Nota: ya no hace falta un override de overflow aquí — la base en
-   * `sidebar.css` es `overflow: visible` en ambos `aside` (para no recortar
-   * `.pbx-panel-handle`), válido en wide y narrow por igual. */
+  .pbx-panel-slot--left .pbx-panel-handle {
+    position: fixed;
+    top: 50%;
+    left: 280px;
+    transform: translateY(-50%) translateX(-100%);
+    transition: left 200ms ease;
+  }
+
+  .pbx-panel-slot--left.pbx-panel-slot--collapsed .pbx-panel-handle {
+    left: 0;
+  }
+
+  .pbx-panel-slot--right .pbx-panel-handle {
+    position: fixed;
+    top: 50%;
+    left: calc(100% - 310px);
+    transform: translateY(-50%) translateX(100%);
+    transition: left 200ms ease;
+  }
+
+  .pbx-panel-slot--right.pbx-panel-slot--collapsed .pbx-panel-handle {
+    left: 100%;
+  }
 }
 
 /**

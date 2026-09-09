@@ -200,14 +200,9 @@
 
 
 /* ---- Titlebar del Inspector + icono de info (Fase 19.f) ------------------ */
-/* Cuerpo scrolleable del Inspector (Fase 19.n: sin barra de título).
- * `min-height: 0` (Fase 11.c+, mismo motivo que `.pbx-side-tabs__panel` en
- * `sidebar.css`): sin esto el flex-item no se comprime y el scroll interno
- * nunca se activa ahora que `.pbx-inspector` (el `<aside>` padre) pasó a
- * `overflow: visible` para no recortar `.pbx-panel-handle`. */
+/* Cuerpo scrolleable del Inspector (Fase 19.n: sin barra de título). */
 .pbx-inspector__body {
   flex: 1;
-  min-height: 0;
   overflow: auto;
   padding: 0 10px 12px 10px;
   contain: layout style;

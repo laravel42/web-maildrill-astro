@@ -8,20 +8,17 @@
  * justificarse en línea (criterio docs/22 §4).
  */
 /* ---- Sidebar ------------------------------------------------------------ */
+.pbx-body--sidebar-collapsed .pbx-sidebar,
+.pbx-body--inspector-collapsed .pbx-inspector {
+  overflow: hidden;
+}
+
 .pbx-sidebar,
 .pbx-inspector {
-  position: relative;
   background: var(--pb-chrome-surface);
   border-right: 1px solid var(--pb-chrome-border);
   padding: 0;
-  /* `visible` (antes `auto`/`hidden` según estado colapsado): el scroll real
-   * lo maneja el hijo interno (`.pbx-side-tabs__panel`/`.pbx-inspector__body`,
-   * ambos con su propio `overflow: auto`) — este contenedor solo necesita NO
-   * recortar el `.pbx-panel-handle` absoluto que sobresale de su borde. Sin
-   * esto, `overflow: auto`/`hidden` aquí recortaría el handle en cuanto el
-   * panel colapsa a `width: 0` (grid, wide) o desaparece por `translateX`
-   * (narrow, `narrow.css`), dejándolo inalcanzable para reabrir el panel. */
-  overflow: visible;
+  overflow: auto;
   display: flex;
   flex-direction: column;
 }
@@ -31,18 +28,44 @@
   border-left: 1px solid var(--pb-chrome-border);
 }
 
-/* ---- Panel handle (Fase 11.c+) -----------------------------------------
- * Pestaña vertical anclada al borde del panel — homologa el patrón de
+/* ---- Panel slot (Fase 11.c+) --------------------------------------------
+ * Wrapper que vive en la columna del grid (`.pbx-body`) EN VEZ del
+ * `<aside>` directamente — mismo split que wa-template-studio
+ * (`.wts-side-panel` envolviendo `<aside>` + `InspectorPanelHandle` como
+ * hermanos) y email-builder (`InspectorHandle` como hermano del `Container`
+ * del drawer, no hijo). El `<aside>` (`.pbx-sidebar`/`.pbx-inspector`,
+ * arriba) CONSERVA su `overflow: auto` original sin tocar — es el único
+ * contenedor de scroll real. `.pbx-panel-handle` vive FUERA de él, así que
+ * nunca compite con su recorte: puede sobresalir del borde del slot sin que
+ * el `overflow: auto` del `<aside>` lo recorte.
+ *
+ * (Intento previo, revertido: mover `overflow` del propio `<aside>` a
+ * `visible` para "dejar pasar" el handle rompió el scroll interno — un grid
+ * item con `overflow: auto` acota la altura de sus hijos flex incluso sin
+ * `min-height: 0` explícito; `overflow: visible` no lo hace, así que el
+ * contenido desbordaba el panel entero en vez de generar una scrollbar.
+ * La causa real era la posición del handle, no el `overflow` del `<aside>`.) */
+.pbx-panel-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.pbx-panel-slot > .pbx-sidebar,
+.pbx-panel-slot > .pbx-inspector {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Pestaña vertical anclada al borde del slot — homologa el patrón de
  * email-builder (`InspectorHandle`/`ComponentsLibraryHandle`) y
  * wa-template-studio (`InspectorPanelHandle`/`LibraryPanelHandle`): un único
  * control siempre visible (abierto o colapsado) para colapsar/expandir,
  * en vez de los botones fijos que antes vivían en el header
  * (`PanelToggleButtons`, retirado) o el `×` interno del Inspector
- * (`InspectorForm`, retirado). Vive DENTRO de `.pbx-sidebar`/`.pbx-inspector`
- * (que ganan `position: relative` + `overflow: visible` arriba) para que su
- * borde de anclaje sea siempre el borde real del panel, sin importar si está
- * en modo grid (wide, ancho animado 312/326px → 0) o `position: fixed`
- * (narrow, `narrow.css`) — y para que NO se recorte cuando el panel colapsa. */
+ * (`InspectorForm`, retirado). */
 .pbx-panel-handle {
   position: absolute;
   top: 50%;
@@ -87,15 +110,15 @@
   box-shadow: var(--pb-chrome-focus-ring);
 }
 
-/* Sidebar: pestaña pegada a SU borde derecho, sobresaliendo hacia el canvas. */
-.pbx-panel-handle--left {
+/* Slot del sidebar: pestaña pegada a SU borde derecho, sobresaliendo hacia el canvas. */
+.pbx-panel-slot--left .pbx-panel-handle {
   right: -22px;
   border-left: 0;
   border-radius: 0 var(--pb-chrome-radius-md) var(--pb-chrome-radius-md) 0;
 }
 
-/* Inspector: pestaña pegada a SU borde izquierdo, sobresaliendo hacia el canvas. */
-.pbx-panel-handle--right {
+/* Slot del inspector: pestaña pegada a SU borde izquierdo, sobresaliendo hacia el canvas. */
+.pbx-panel-slot--right .pbx-panel-handle {
   left: -22px;
   border-right: 0;
   border-radius: var(--pb-chrome-radius-md) 0 0 var(--pb-chrome-radius-md);
@@ -127,15 +150,6 @@
 /* Scroll area del panel */
 .pbx-side-tabs__panel {
   flex: 1;
-  /* `min-height: 0` (Fase 11.c+): sin esto, un flex-item en columna no se
-   * comprime por debajo de la altura de su contenido (default `min-height:
-   * auto`) — el `overflow: auto` de este mismo selector nunca entraba a
-   * jugar y el desborde se lo comía el `<aside>` padre (`.pbx-sidebar`),
-   * que SÍ recortaba/scrolleaba antes por tener su propio `overflow: auto`.
-   * Ese padre pasó a `overflow: visible` para no recortar `.pbx-panel-handle`
-   * (`sidebar.css`, bloque de arriba) — sin `min-height: 0` aquí, el scroll
-   * "se perdía" (el panel entero crecía sin scrollbar visible). */
-  min-height: 0;
   overflow: auto;
   padding: 6px 8px 8px;
   contain: layout style;

@@ -43,50 +43,54 @@ export function Inspector() {
   };
 
   return (
-    <aside
-      className={
-        "pbx-inspector" +
-        (!inspectorCollapsed ? " pbx-inspector--open" : "")
-      }
-    >
+    <div className={"pbx-panel-slot pbx-panel-slot--right" + (inspectorCollapsed ? " pbx-panel-slot--collapsed" : "")}>
       {/* Pestaña de colapsar/expandir anclada al borde izquierdo del panel —
           homologa el patrón de email-builder/wa-template-studio. Sustituye
           al `×` interno que vivía en `InspectorForm` y a `PanelToggleButtons`
-          del header. */}
+          del header. Vive FUERA del `<aside>` (hermano, dentro de
+          `.pbx-panel-slot`) para no interferir con su `overflow: auto` —
+          ver comentario en `chrome/sidebar.css`. */}
       <PanelHandle
         side="right"
         collapsed={inspectorCollapsed}
         onToggle={() => setInspectorCollapsed(!inspectorCollapsed)}
       />
 
-      <div className="pbx-inspector__body">
-        <SiteSettingsPanel
-          element={
-            node ? (
-              <>
-                {showSliderHint ? (
-                  <div className="pbx-overflow-hint" role="status">
-                    <span>
-                      {t("overflow.overflowsPrefix")}
-                      <code>{activeBreakpoint}</code>
-                      {t("overflow.overflowsSuffix")}
-                    </span>
-                    <button
-                      type="button"
-                      className="pbx-overflow-hint__btn"
-                      onClick={convertToSlider}
-                    >
-                      {t("overflow.convertToSlider")}
-                    </button>
-                  </div>
-                ) : null}
+      <aside
+        className={
+          "pbx-inspector" +
+          (!inspectorCollapsed ? " pbx-inspector--open" : "")
+        }
+      >
+        <div className="pbx-inspector__body">
+          <SiteSettingsPanel
+            element={
+              node ? (
+                <>
+                  {showSliderHint ? (
+                    <div className="pbx-overflow-hint" role="status">
+                      <span>
+                        {t("overflow.overflowsPrefix")}
+                        <code>{activeBreakpoint}</code>
+                        {t("overflow.overflowsSuffix")}
+                      </span>
+                      <button
+                        type="button"
+                        className="pbx-overflow-hint__btn"
+                        onClick={convertToSlider}
+                      >
+                        {t("overflow.convertToSlider")}
+                      </button>
+                    </div>
+                  ) : null}
 
-                <InspectorForm node={node} />
-              </>
-            ) : null
-          }
-        />
-      </div>
-    </aside>
+                  <InspectorForm node={node} />
+                </>
+              ) : null
+            }
+          />
+        </div>
+      </aside>
+    </div>
   );
 }
