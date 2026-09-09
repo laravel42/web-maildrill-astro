@@ -28,6 +28,7 @@ import { useReorderControlsVisible } from "@/hooks/usePointerCoarse";
 import { useLocalConfig } from "@/hooks/useLocalConfig";
 import { useExperienceLevel } from "@/hooks/useExperienceLevel";
 import { useEmbeddedChrome } from "@/app/EmbeddedChrome";
+import { PanelHandle } from "./PanelHandle";
 import type { DragData } from "@/builder/dnd/contract";
 import type { ComponentCategory, ComponentDefinition } from "@/builder/registry/types";
 import {
@@ -291,7 +292,7 @@ const ALL_TAB_IDS: SideTab[] = ["components", "tokens", "templates"];
 export function Sidebar() {
   const { t } = useTranslation("sidebar");
   const [tab, setTab] = useState<SideTab>("components");
-  const [sidebarCollapsed] = useLocalConfig("sidebarCollapsed");
+  const [sidebarCollapsed, setSidebarCollapsed] = useLocalConfig("sidebarCollapsed");
   const embedded = useEmbeddedChrome();
   const { isSimple } = useExperienceLevel();
   // Embed: Tokens stay off the first screen (Simple). Advanced still gets them.
@@ -299,43 +300,57 @@ export function Sidebar() {
   const activeTab = tabIds.includes(tab) ? tab : "components";
 
   return (
-    <aside
-      className={
-        "pbx-sidebar" +
-        (!sidebarCollapsed ? " pbx-sidebar--open" : "")
-      }
-    >
-      <div className="pbx-side-tabs" role="tablist" aria-label={t("tabs.ariaLabel")}>
-        {tabIds.map((id) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            id={`pbx-side-tab-${id}`}
-            aria-selected={activeTab === id}
-            aria-controls={`pbx-side-panel-${id}`}
-            className={"pbx-side-tabs__trigger" + (activeTab === id ? " pbx-side-tabs__trigger--active" : "")}
-            onClick={() => setTab(id)}
-          >
-            {t(`tabs.${id}`)}
-          </button>
-        ))}
-      </div>
-
-      <div
-        className="pbx-side-tabs__panel"
-        role="tabpanel"
-        id={`pbx-side-panel-${activeTab}`}
-        aria-labelledby={`pbx-side-tab-${activeTab}`}
+    <div className={"pbx-panel-slot pbx-panel-slot--left" + (sidebarCollapsed ? " pbx-panel-slot--collapsed" : "")}>
+      <aside
+        className={
+          "pbx-sidebar" +
+          (!sidebarCollapsed ? " pbx-sidebar--open" : "")
+        }
       >
-        {activeTab === "components" ? (
-          <ComponentsPanel />
-        ) : activeTab === "tokens" ? (
-          <TokensEditor />
-        ) : (
-          <TemplatesPanel />
-        )}
-      </div>
-    </aside>
+        <div className="pbx-side-tabs" role="tablist" aria-label={t("tabs.ariaLabel")}>
+          {tabIds.map((id) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              id={`pbx-side-tab-${id}`}
+              aria-selected={activeTab === id}
+              aria-controls={`pbx-side-panel-${id}`}
+              className={"pbx-side-tabs__trigger" + (activeTab === id ? " pbx-side-tabs__trigger--active" : "")}
+              onClick={() => setTab(id)}
+            >
+              {t(`tabs.${id}`)}
+            </button>
+          ))}
+        </div>
+
+        <div
+          className="pbx-side-tabs__panel"
+          role="tabpanel"
+          id={`pbx-side-panel-${activeTab}`}
+          aria-labelledby={`pbx-side-tab-${activeTab}`}
+        >
+          {activeTab === "components" ? (
+            <ComponentsPanel />
+          ) : activeTab === "tokens" ? (
+            <TokensEditor />
+          ) : (
+            <TemplatesPanel />
+          )}
+        </div>
+      </aside>
+
+      {/* Pestaña de colapsar/expandir anclada al borde derecho del panel —
+          homologa el patrón de email-builder/wa-template-studio (siempre
+          visible, sin depender del header). Sustituye a `PanelToggleButtons`.
+          Vive FUERA del `<aside>` (hermano, dentro de `.pbx-panel-slot`) para
+          no interferir con su `overflow: auto` — ver comentario en
+          `chrome/sidebar.css`. */}
+      <PanelHandle
+        side="left"
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
+    </div>
   );
 }

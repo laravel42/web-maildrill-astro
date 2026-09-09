@@ -3,7 +3,8 @@
     "components": "Componenti",
     "tokens": "Token",
     "templates": "Modelli",
-    "ariaLabel": "Pannello laterale"
+    "ariaLabel": "Pannello laterale",
+    "panelHandleLabel": "Libreria"
   },
   "palette": {
     "hint": "Trascina o fai clic su un componente per aggiungerlo alla pagina.",

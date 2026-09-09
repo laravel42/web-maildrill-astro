@@ -77,8 +77,9 @@
    (`flex-grow: 0`) pero puede encogerse (`min-width: 0`, permite truncar
    hijos).
    Fase 6 (docs/46 §3, H6) agrupó los controles antes sueltos de la sección
-   derecha (paneles laterales + capas → `.pbx-header__canvas-controls`, un
-   solo grupo de "vista del canvas") para que la sección quepa en una fila en
+   derecha (paneles laterales + capas, histórico — los paneles laterales se
+   retiraron del header, ver `.pbx-panel-handle` en `chrome/sidebar.css`)
+   para que la sección quepa en una fila en
    los anchos objetivo del producto sin depender de envolver: `flex-wrap`
    sigue declarado en `.pbx-header` como red de seguridad ante viewports
    excepcionalmente angostos entre el breakpoint de 1200px (`narrow.css`, que
@@ -116,25 +117,16 @@
   flex: 0 1 480px;
 }
 
-/* Grupo "vista del canvas" (Fase 6, docs/46 §3 H6): paneles laterales +
-   capas, antes sueltos con un divider entre cada uno. Comparten el mismo
-   propósito (organizar qué se ve en el canvas mientras se edita), así que
-   se agrupan visualmente con un fondo sutil — la agrupación resuelve la
-   causa del desborde (demasiados grupos de control sueltos en la sección
-   derecha), no solo el síntoma que `flex-wrap` parchaba. */
-.pbx-header__canvas-controls {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px;
-  border-radius: var(--pb-chrome-radius-sm);
-  background: var(--pb-chrome-header-surface-alt);
-}
+/* Grupo "vista del canvas" (Fase 6, docs/46 §3 H6) — histórico: agrupaba
+   paneles laterales + capas con un fondo sutil compartido. Los toggles de
+   paneles se retiraron del header (ahora viven como `.pbx-panel-handle`,
+   `chrome/sidebar.css`); "Capas" quedó como control suelto (un solo ítem ya
+   no justifica el agrupamiento) — regla retirada. */
 
-/* ---- Breadcrumb (ruta de la pÃ¡gina activa) ------------------------------- */
+/* ---- Breadcrumb (ruta de la página activa) ------------------------------- */
 /* Jerarquía tipográfica (Fase 6, docs/46 §3 H6): el breadcrumb responde
    "¿dónde estoy?" — se distingue de los controles de acción ("¿qué puedo
-   hacer?", `.pbx-history__btn`/`.pbx-panel-toggle__btn`/`.pbx-layers__trigger`/
+   hacer?", `.pbx-history__btn`/`.pbx-layers__trigger`/
    `.pbx-viewtabs__trigger`, todos en `--pb-chrome-muted-on-dark` sin negrita)
    con más peso (600 vs. 400) y mayor contraste de color
    (`--pb-chrome-text-on-dark`, no `--pb-chrome-muted-on-dark`) en su link
@@ -310,43 +302,12 @@
   box-shadow: var(--pb-chrome-focus-ring);
 }
 
-/* Panel toggle buttons (Fase 11.10) — matching header button style */
-.pbx-panel-toggle {
-  display: inline-flex;
-  gap: 2px;
-}
+/* Panel toggle buttons (Fase 11.10) retirados del header (homologación de
+ * paneles laterales con email-builder/wa-template-studio): la función de
+ * colapsar/expandir Sidebar/Inspector ahora vive en `.pbx-panel-handle`
+ * (`chrome/sidebar.css`), una pestaña vertical anclada al borde del canvas
+ * — no un botón fijo aquí. */
 
-.pbx-panel-toggle__btn {
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--pb-chrome-header-text-muted);
-  width: 30px;
-  height: 30px;
-  border-radius: var(--pb-chrome-radius-sm);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background var(--pb-chrome-transition), color var(--pb-chrome-transition), transform var(--pb-chrome-transition);
-}
-
-.pbx-panel-toggle__btn:hover {
-  background: var(--pb-chrome-header-surface-hover);
-  color: var(--pb-chrome-header-text);
-  transform: scale(1.08);
-}
-
-.pbx-panel-toggle__btn:active {
-  transform: scale(0.92);
-}
-
-.pbx-panel-toggle__btn--active {
-  color: var(--pb-chrome-accent);
-}
-
-.pbx-panel-toggle__btn--active:hover {
-  color: var(--pb-chrome-accent);
-}
 
 /* Foco por teclado (WCAG 2.4.7) — header claro (docs/52 F2), ver nota en `.pbx-history__btn`. */
 .pbx-panel-toggle__btn:focus-visible {
@@ -784,21 +745,25 @@
   box-shadow: var(--pb-chrome-focus-ring);
 }
 
-/* 50px canvas tools bar (embed). Mirrors email `#ee-editor-header`. */
+/* 50px canvas tools bar (embed). Mirrors email `#ee-editor-header`.
+ * `justify-content: flex-end` (antes `space-between`): el toggle de paneles
+ * que ocupaba `__left` se retiró (ahora vive como `PanelHandle` anclado al
+ * canvas) — sin ese hijo, `space-between` pegaría `__right` contra el borde
+ * IZQUIERDO en vez de mantenerlo a la derecha. `__center` sigue posicionado
+ * absoluto, independiente de este eje. */
 .pbx-canvas-toolbar {
   position: relative;
   flex: none;
   height: 50px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 0 16px;
   background: var(--pb-chrome-surface);
   border-bottom: 1px solid var(--pb-chrome-border);
   z-index: 2;
 }
 
-.pbx-canvas-toolbar__left,
 .pbx-canvas-toolbar__right {
   display: flex;
   align-items: center;

@@ -26,7 +26,6 @@ import { fetchHealth } from "@/services/apiClient";
 import { LayersPanel } from "./LayersPanel";
 import { PageBreadcrumb } from "./PageBreadcrumb";
 import { ProfileMenu } from "./ProfileMenu";
-import { PanelToggleButtons } from "./PanelToggleButtons";
 import { ViewModeDropdown } from "./ViewModeDropdown";
 import { ViewportDropdown } from "./ViewportDropdown";
 import { PublishModal } from "./PublishModal";
@@ -137,15 +136,11 @@ export function Header() {
 
         <span className="pbx-header__divider" aria-hidden="true" />
 
-        {/* Grupo "vista del canvas" (docs/46 §3 Fase 6, H6): paneles laterales
-            y capas son ambos controles sobre cómo se organiza la vista de
-            edición, no acciones independientes — agruparlos resuelve la causa
-            del desborde (demasiados grupos sueltos) en vez de solo esconderlo
-            con flex-wrap. */}
-        <div className="pbx-header__canvas-controls" role="group" aria-label={t("canvasControls.label")}>
-          <PanelToggleButtons />
-          <LayersPanel />
-        </div>
+        {/* Capas (docs/46 §3 Fase 6, H6): los toggles de Sidebar/Inspector se
+            retiraron del header — ahora viven como pestañas (`PanelHandle`)
+            ancladas al borde del canvas, homologando el patrón de
+            email-builder/wa-template-studio. */}
+        <LayersPanel />
 
         <span className="pbx-header__divider" aria-hidden="true" />
 
