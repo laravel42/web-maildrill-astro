@@ -49,9 +49,9 @@ type PanelTab = SiteTab | "element";
 export const SITE_TABS: { id: SiteTab; icon: ComponentType<LucideProps> }[] = [
   { id: "layers", icon: Layers },
   { id: "pages", icon: FileText },
-  { id: "languages", icon: Languages },
   { id: "themes", icon: Palette },
   { id: "seo", icon: Search },
+  { id: "languages", icon: Languages },
   { id: "publish", icon: Rocket },
   { id: "settings", icon: SlidersHorizontal },
 ];

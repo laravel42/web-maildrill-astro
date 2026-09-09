@@ -208,20 +208,25 @@
   contain: layout style;
 }
 
-/* Fila de tabs de configuración de sitio + icono de info a la derecha. */
+/* Fila de tabs de configuración de sitio + icono de info a la derecha.
+ * `position: relative` la convierte en el contenedor del `.pbx-info-tip`
+ * absoluto — así el icono no reserva espacio en el flujo flex y no empuja
+ * los chips (`--wrap`) a envolver antes de tiempo (podían llegar a 3 filas). */
 .pbx-site-settings__tabrow {
+  position: relative;
   display: flex;
   align-items: flex-start;
   padding-top: 8px;
-  gap: 6px;
+  padding-right: 0;
 }
 .pbx-site-settings__tabrow .pbx-inspector-tabs {
   flex: 1;
   min-width: 0;
 }
 .pbx-site-settings__tabrow .pbx-info-tip {
-  flex-shrink: 0;
-  margin-top: 2px;
+  position: absolute;
+  top: 6px;
+  right: -10px;
 }
 
 /* Tooltip de ayuda contextual (c42 Tooltip). Chrome-only. */

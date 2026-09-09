@@ -39,7 +39,7 @@
     top: var(--pb-chrome-header-height, 57px);
     right: 0;
     bottom: 0;
-    width: 300px;
+    width: 310px;
     transform: translateX(100%);
     transition: transform 200ms ease;
     box-shadow: var(--pb-chrome-frame-shadow);
