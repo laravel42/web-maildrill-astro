@@ -15,6 +15,7 @@ import { getDefinition } from "@/builder/registry/componentRegistry";
 import { InspectorForm } from "@/builder/inspector/InspectorForm";
 import { SiteSettingsPanel } from "@/builder/inspector/SiteSettingsPanel";
 import { useLocalConfig } from "@/hooks/useLocalConfig";
+import { PanelHandle } from "./PanelHandle";
 
 export function Inspector() {
   const { t } = useTranslation("inspector");
@@ -23,7 +24,7 @@ export function Inspector() {
   const activeBreakpoint = useDocumentStore((s) => s.activeBreakpoint);
   const cfg = useDocumentStore((s) => s.site.meta.breakpoints);
   const overflowing = useOverflowStore((s) => (node ? !!s.overflowing[node.id] : false));
-  const [inspectorCollapsed] = useLocalConfig("inspectorCollapsed");
+  const [inspectorCollapsed, setInspectorCollapsed] = useLocalConfig("inspectorCollapsed");
 
   const def = node ? getDefinition(node.type) : undefined;
   // overflowX efectivo en el breakpoint activo (para saber si YA es slider).
@@ -48,6 +49,16 @@ export function Inspector() {
         (!inspectorCollapsed ? " pbx-inspector--open" : "")
       }
     >
+      {/* Pestaña de colapsar/expandir anclada al borde izquierdo del panel —
+          homologa el patrón de email-builder/wa-template-studio. Sustituye
+          al `×` interno que vivía en `InspectorForm` y a `PanelToggleButtons`
+          del header. */}
+      <PanelHandle
+        side="right"
+        collapsed={inspectorCollapsed}
+        onToggle={() => setInspectorCollapsed(!inspectorCollapsed)}
+      />
+
       <div className="pbx-inspector__body">
         <SiteSettingsPanel
           element={

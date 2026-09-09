@@ -33,6 +33,16 @@
     transform: translateX(0);
   }
 
+  /* El handle vive DENTRO del `aside` que se traslada fuera de pantalla — sin
+   * esto quedaría inalcanzable mientras el panel está colapsado (no hay
+   * `width: 0` aquí como en wide, es un `translateX` completo). Se le aplica
+   * el `transform` INVERSO al del padre para que permanezca fijo, pegado al
+   * borde del viewport, mientras el panel colapsado permanece oculto detrás
+   * de él (mismo truco en `.pbx-inspector .pbx-panel-handle` abajo). */
+  .pbx-sidebar:not(.pbx-sidebar--open) .pbx-panel-handle {
+    transform: translateY(-50%) translateX(100%);
+  }
+
   .pbx-inspector {
     position: fixed;
     z-index: 40;
@@ -49,11 +59,13 @@
     transform: translateX(0);
   }
 
-  /* Collapsed overflow: not needed on narrow (panels are position:fixed) */
-  .pbx-body--sidebar-collapsed .pbx-sidebar,
-  .pbx-body--inspector-collapsed .pbx-inspector {
-    overflow: auto;
+  .pbx-inspector:not(.pbx-inspector--open) .pbx-panel-handle {
+    transform: translateY(-50%) translateX(-100%);
   }
+
+  /* Nota: ya no hace falta un override de overflow aquí — la base en
+   * `sidebar.css` es `overflow: visible` en ambos `aside` (para no recortar
+   * `.pbx-panel-handle`), válido en wide y narrow por igual. */
 }
 
 /**

@@ -16,7 +16,6 @@ import {
 import { UndoIcon, RedoIcon } from "@/components";
 import { HOST_VIEWS_ID, HOST_HISTORY_ID } from "@/app/EmbeddedChrome";
 import { ViewportDropdown } from "./ViewportDropdown";
-import { PanelToggleButtons } from "./PanelToggleButtons";
 
 function HostViews() {
   const { t } = useTranslation("header");
@@ -85,9 +84,6 @@ export function HostCanvasToolbar() {
 
   return (
     <div className="pbx-canvas-toolbar" role="toolbar" aria-label={t("canvasControls.label")}>
-      <div className="pbx-canvas-toolbar__left">
-        <PanelToggleButtons />
-      </div>
       <div id={HOST_VIEWS_ID} className="pbx-canvas-toolbar__center">
         <HostViews />
         <ViewportDropdown />

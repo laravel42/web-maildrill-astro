@@ -28,6 +28,7 @@ import { useReorderControlsVisible } from "@/hooks/usePointerCoarse";
 import { useLocalConfig } from "@/hooks/useLocalConfig";
 import { useExperienceLevel } from "@/hooks/useExperienceLevel";
 import { useEmbeddedChrome } from "@/app/EmbeddedChrome";
+import { PanelHandle } from "./PanelHandle";
 import type { DragData } from "@/builder/dnd/contract";
 import type { ComponentCategory, ComponentDefinition } from "@/builder/registry/types";
 import {
@@ -291,7 +292,7 @@ const ALL_TAB_IDS: SideTab[] = ["components", "tokens", "templates"];
 export function Sidebar() {
   const { t } = useTranslation("sidebar");
   const [tab, setTab] = useState<SideTab>("components");
-  const [sidebarCollapsed] = useLocalConfig("sidebarCollapsed");
+  const [sidebarCollapsed, setSidebarCollapsed] = useLocalConfig("sidebarCollapsed");
   const embedded = useEmbeddedChrome();
   const { isSimple } = useExperienceLevel();
   // Embed: Tokens stay off the first screen (Simple). Advanced still gets them.
@@ -305,6 +306,15 @@ export function Sidebar() {
         (!sidebarCollapsed ? " pbx-sidebar--open" : "")
       }
     >
+      {/* Pestaña de colapsar/expandir anclada al borde derecho del panel —
+          homologa el patrón de email-builder/wa-template-studio (siempre
+          visible, sin depender del header). Sustituye a `PanelToggleButtons`. */}
+      <PanelHandle
+        side="left"
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
+
       <div className="pbx-side-tabs" role="tablist" aria-label={t("tabs.ariaLabel")}>
         {tabIds.map((id) => (
           <button

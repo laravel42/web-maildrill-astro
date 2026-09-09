@@ -8,17 +8,20 @@
  * justificarse en línea (criterio docs/22 §4).
  */
 /* ---- Sidebar ------------------------------------------------------------ */
-.pbx-body--sidebar-collapsed .pbx-sidebar,
-.pbx-body--inspector-collapsed .pbx-inspector {
-  overflow: hidden;
-}
-
 .pbx-sidebar,
 .pbx-inspector {
+  position: relative;
   background: var(--pb-chrome-surface);
   border-right: 1px solid var(--pb-chrome-border);
   padding: 0;
-  overflow: auto;
+  /* `visible` (antes `auto`/`hidden` según estado colapsado): el scroll real
+   * lo maneja el hijo interno (`.pbx-side-tabs__panel`/`.pbx-inspector__body`,
+   * ambos con su propio `overflow: auto`) — este contenedor solo necesita NO
+   * recortar el `.pbx-panel-handle` absoluto que sobresale de su borde. Sin
+   * esto, `overflow: auto`/`hidden` aquí recortaría el handle en cuanto el
+   * panel colapsa a `width: 0` (grid, wide) o desaparece por `translateX`
+   * (narrow, `narrow.css`), dejándolo inalcanzable para reabrir el panel. */
+  overflow: visible;
   display: flex;
   flex-direction: column;
 }
@@ -26,6 +29,61 @@
 .pbx-inspector {
   border-right: 0;
   border-left: 1px solid var(--pb-chrome-border);
+}
+
+/* ---- Panel handle (Fase 11.c+) -----------------------------------------
+ * Pestaña vertical anclada al borde del panel — homologa el patrón de
+ * email-builder (`InspectorHandle`/`ComponentsLibraryHandle`) y
+ * wa-template-studio (`InspectorPanelHandle`/`LibraryPanelHandle`): un único
+ * control siempre visible (abierto o colapsado) para colapsar/expandir,
+ * en vez de los botones fijos que antes vivían en el header
+ * (`PanelToggleButtons`, retirado) o el `×` interno del Inspector
+ * (`InspectorForm`, retirado). Vive DENTRO de `.pbx-sidebar`/`.pbx-inspector`
+ * (que ganan `position: relative` + `overflow: visible` arriba) para que su
+ * borde de anclaje sea siempre el borde real del panel, sin importar si está
+ * en modo grid (wide, ancho animado 312/326px → 0) o `position: fixed`
+ * (narrow, `narrow.css`) — y para que NO se recorte cuando el panel colapsa. */
+.pbx-panel-handle {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 56px;
+  padding: 0;
+  border: 1px solid var(--pb-chrome-border);
+  background: var(--pb-chrome-surface);
+  color: var(--pb-chrome-text-faint);
+  cursor: pointer;
+  box-shadow: var(--pb-chrome-frame-shadow);
+  transition: background var(--pb-chrome-transition), color var(--pb-chrome-transition);
+}
+
+.pbx-panel-handle:hover {
+  background: var(--pb-chrome-accent-subtle);
+  color: var(--pb-chrome-accent-on-surface);
+}
+
+.pbx-panel-handle:focus-visible {
+  outline: none;
+  box-shadow: var(--pb-chrome-focus-ring);
+}
+
+/* Sidebar: pestaña pegada a SU borde derecho, sobresaliendo hacia el canvas. */
+.pbx-panel-handle--left {
+  right: -16px;
+  border-left: 0;
+  border-radius: 0 var(--pb-chrome-radius-md) var(--pb-chrome-radius-md) 0;
+}
+
+/* Inspector: pestaña pegada a SU borde izquierdo, sobresaliendo hacia el canvas. */
+.pbx-panel-handle--right {
+  left: -16px;
+  border-right: 0;
+  border-radius: var(--pb-chrome-radius-md) 0 0 var(--pb-chrome-radius-md);
 }
 
 /* SecciÃ³n con tÃ­tulo â€” encabezado de panel */

@@ -1,11 +1,13 @@
 /**
  * InspectorForm — formulario generado desde los schemas del registry (docs/03
- * §3). docs/41 §5.1 (Paso 6): la cabecera es de **2 filas** —
- * fila 1: `Breadcrumb` (movido aquí desde `app/layout/Inspector.tsx`) + `×`
- * que **cierra el panel** (D2, `inspectorCollapsed`); fila 2: tabs
- * (Props/Estilo/Interactividad) + botón de **papelera** que borra el nodo
- * (D2 — separado del `×` para que cerrar el panel no sea una trampa de un
- * clic irreversible). Se eliminan el chip de tipo grande
+ * §3). Header de **2 filas** — fila 1: `Breadcrumb` (movido aquí desde
+ * `app/layout/Inspector.tsx`); fila 2: tabs (Props/Estilo/Interactividad) +
+ * botón de **papelera** que borra el nodo. El cierre del panel se retiró de
+ * aquí (antes un `×` en la fila 1, D2 de docs/41 §5.1) y ahora vive como
+ * `PanelHandle` anclado al borde del panel — mismo patrón que
+ * email-builder/wa-template-studio (una pestaña vertical siempre visible en
+ * vez de un botón dentro del propio contenido del panel), homologando el
+ * diseño entre los tres builders. Se eliminan el chip de tipo grande
  * (`pbx-node-type-chip`) y la barra `ESTILO · EDITANDO [bp]`
  * (`pbx-style-tab__bar`) — el breakpoint activo ya se controla desde el
  * selector de viewport del `Header` y desde los puntos de `VisibilityStrip`
@@ -39,7 +41,6 @@ import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { undo } from "@/builder/store/useTemporalStore";
-import { useLocalConfig } from "@/hooks/useLocalConfig";
 import { getDefinition } from "@/builder/registry/componentRegistry";
 import { hasNodeSpecificBehaviors } from "@/builder/registry/behaviorRegistry";
 import type { BuilderNode } from "@/builder/model/types";
@@ -110,7 +111,6 @@ export function InspectorForm({ node }: { node: BuilderNode }) {
   const { t } = useTranslation("inspector");
   const def = getDefinition(node.type);
   const removeSelected = useDocumentStore((s) => s.removeSelected);
-  const [, setInspectorCollapsed] = useLocalConfig("inspectorCollapsed");
   const [tab, setTab] = useState<InspectorTab>("props");
   // docs/46 Fase 1 (H1): confirmación solo si el nodo a borrar tiene hijos
   // (subárbol) — borrar una hoja es inmediato, sin interrumpir al usuario
@@ -185,16 +185,12 @@ export function InspectorForm({ node }: { node: BuilderNode }) {
     <div className={"pbx-inspector-form" + (isHidden ? " pbx-inspector--dimmed" : "")}>
       {/* Header + tab bar — sticky container (docs/26 §1.1) */}
       <div className="pbx-inspector-sticky-bar">
-        {/* Fila 1 (docs/41 §5.1): breadcrumb + cerrar panel (D2). */}
+        {/* Fila 1: breadcrumb. El cierre del panel (antes un `×` aquí, D2 de
+            docs/41 §5.1) se retiró — ahora vive como `PanelHandle` anclado al
+            borde del panel (mismo patrón que email-builder/wa-template-studio),
+            homologando el diseño entre los tres builders. */}
         <div className="pbx-inspector-header">
           <Breadcrumb />
-          <IconButton
-            icon={CloseIcon}
-            size="md"
-            intent="ghost"
-            onClick={() => setInspectorCollapsed(true)}
-            label={t("panel.closePanel")}
-          />
         </div>
 
         {/* Fila 2 (docs/41 §5.1): tabs + segmented de breakpoints + papelera (D2). */}

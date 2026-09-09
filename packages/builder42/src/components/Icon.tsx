@@ -57,6 +57,7 @@ export {
   SlidersHorizontal,
   Plus,
   ChevronRight,
+  ChevronLeft,
   // ---- Behaviors (interactividad) -------------------------------------
   GalleryHorizontal,
   Eye,

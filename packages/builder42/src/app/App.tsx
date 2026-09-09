@@ -39,7 +39,10 @@ export function App() {
         <Header />
         {/* En Preview (docs/21 §3.5) se ocultan Sidebar e Inspector: la vista
             previa ocupa todo el ancho para emular el navegador. El Header
-            permanece (cambio de vista/viewport). */}
+            permanece (cambio de vista/viewport). Las pestañas de
+            colapsar/expandir (`PanelHandle`) viven DENTRO de `Sidebar`/
+            `Inspector` (ancladas a su propio borde) — homologan el patrón de
+            email-builder/wa-template-studio y se ocultan junto con su panel. */}
         <div className={bodyClasses.join(" ")}>
           {isPreview ? null : <Sidebar />}
           <Canvas />
