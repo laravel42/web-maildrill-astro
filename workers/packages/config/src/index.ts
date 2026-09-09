@@ -156,14 +156,20 @@ const EnvSchema = z.object({
    * authentication — the same reasoning as the unsubscribe token.
    */
   INFOBIP_BILLING_CALLBACK_TOKEN: z.string().default(''),
-  PROVIDER_DRIVER: z.enum(['mock', 'infobip', 'cloudflare']).default('mock'),
+  PROVIDER_DRIVER: z.enum(['mock', 'infobip', 'cloudflare', 'ses']).default('mock'),
   /**
    * Optional per-channel override: route ONLY the email channel through a
-   * different driver (e.g. Cloudflare Email Service, which carries no other
-   * channel) while SMS/WhatsApp/Voice stay on PROVIDER_DRIVER. Empty → email
-   * follows PROVIDER_DRIVER.
+   * different driver (e.g. Cloudflare Email Service or AWS SES, neither of
+   * which carries any other channel) while SMS/WhatsApp/Voice stay on
+   * PROVIDER_DRIVER. Empty → email follows PROVIDER_DRIVER.
+   *
+   * This IS Maildrill's "EMAIL_PROVIDER" switch — the transport selector that
+   * decides which EmailTransport (MessagingProvider) instance `getProvider()`
+   * hands back for the email channel. It predates SES support and already did
+   * exactly this job for Cloudflare, so SES is added here rather than behind
+   * a second, competing env var.
    */
-  PROVIDER_EMAIL_DRIVER: z.enum(['', 'mock', 'infobip', 'cloudflare']).default(''),
+  PROVIDER_EMAIL_DRIVER: z.enum(['', 'mock', 'infobip', 'cloudflare', 'ses']).default(''),
   /**
    * Cloudflare Email Service — Email Sending REST API, used by the
    * `cloudflare` campaign email driver (distinct from the SMTP relay that
@@ -183,6 +189,23 @@ const EnvSchema = z.object({
   CLOUDFLARE_EVENTS_QUEUE_ID: z.string().default(''),
   CLOUDFLARE_EVENTS_API_TOKEN: z.string().default(''),
   CLOUDFLARE_EVENTS_POLL_INTERVAL_MS: int(10_000),
+  /**
+   * Amazon SES — the `ses` campaign email driver (SES v2 `SendEmail`).
+   * Credentials are never read from env here: the client uses the standard
+   * AWS SDK v3 credential provider chain (env vars — including the
+   * AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY already used for S3 media below —
+   * shared config/profile, or an ECS/EC2/EKS IAM role). Only the region and
+   * sending identity are Maildrill-specific config.
+   */
+  AWS_SES_REGION: z.string().default(''),
+  /** Default sender when a campaign doesn't carry its own From address. Must be an SES-verified identity. */
+  AWS_SES_FROM_EMAIL: z.string().default(''),
+  /**
+   * SES Configuration Set to attach to every send. Required for delivery
+   * events (bounce/complaint/delivery/open/click/…) to reach the SNS topic
+   * wired to /webhooks/ses/sns — sends without one are fire-and-forget.
+   */
+  AWS_SES_CONFIGURATION_SET: z.string().default(''),
   WEBHOOK_INFOBIP_SECRET: z.string().default('change-me'),
   DISPATCH_CONCURRENCY: int(10),
   DISPATCH_MAX_ATTEMPTS: int(5),
@@ -324,6 +347,24 @@ if (env.NODE_ENV === 'production') {
   if (env.STRIPE_SECRET_KEY.trim() && WEAK_SECRETS.has(env.STRIPE_WEBHOOK_SECRET.trim())) {
     throw new Error(
       'STRIPE_WEBHOOK_SECRET must be set when STRIPE_SECRET_KEY is configured in production',
+    );
+  }
+}
+
+// Only validate SES config when it's actually selected for a channel — every
+// other deployment stays exactly as it was before SES support existed.
+const sesSelected = env.PROVIDER_EMAIL_DRIVER
+  ? env.PROVIDER_EMAIL_DRIVER === 'ses'
+  : env.PROVIDER_DRIVER === 'ses';
+if (sesSelected) {
+  if (!env.AWS_SES_REGION.trim()) {
+    throw new Error(
+      'AWS_SES_REGION must be set when the SES email driver is selected (PROVIDER_EMAIL_DRIVER=ses or PROVIDER_DRIVER=ses)',
+    );
+  }
+  if (!env.AWS_SES_FROM_EMAIL.trim()) {
+    throw new Error(
+      'AWS_SES_FROM_EMAIL must be set when the SES email driver is selected — SES has no account-wide default sender',
     );
   }
 }
@@ -492,6 +533,11 @@ export const config = {
     eventsQueueId: env.CLOUDFLARE_EVENTS_QUEUE_ID,
     eventsApiToken: env.CLOUDFLARE_EVENTS_API_TOKEN || env.CLOUDFLARE_EMAIL_API_TOKEN,
     eventsPollIntervalMs: env.CLOUDFLARE_EVENTS_POLL_INTERVAL_MS,
+  },
+  ses: {
+    region: env.AWS_SES_REGION,
+    from: env.AWS_SES_FROM_EMAIL,
+    configurationSet: env.AWS_SES_CONFIGURATION_SET,
   },
   media: {
     region: env.AWS_REGION,

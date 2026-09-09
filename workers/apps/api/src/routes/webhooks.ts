@@ -9,7 +9,11 @@ import type { ZodTypeProvider } from '@maildrill/httpkit';
 // Cloudflare Email Sending events normally arrive via the queue pull poller
 // (cloudflare-email-events); this route additionally accepts them pushed —
 // e.g. a Worker queue consumer forwarding to /webhooks/cloudflare/delivery.
-const KNOWN_PROVIDERS = new Set(['infobip', 'mock', 'cloudflare']);
+// SES events normally arrive via the SNS envelope at /webhooks/ses/sns
+// (ses-webhook.ts), which unwraps them before calling the same intake this
+// route uses; 'ses' is listed here too so a raw SES event JSON body (e.g. an
+// EventBridge API destination, or a manual test) is also accepted directly.
+const KNOWN_PROVIDERS = new Set(['infobip', 'mock', 'cloudflare', 'ses']);
 const KNOWN_KINDS = new Set<WebhookKind>(['delivery', 'engagement', 'voice', 'template']);
 
 const params = z.object({ provider: z.string(), kind: z.string() });

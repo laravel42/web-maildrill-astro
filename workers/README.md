@@ -153,6 +153,10 @@ RUN_E2E=1 pnpm test             # + Postgres + Redis
 
 ## Provider drivers
 
-`PROVIDER_DRIVER=mock` (default) or `infobip` + Infobip credentials. Outbound
-sends stamp Infobip `callbackData` for PostHog tenancy. See
-`packages/providers/src/infobip.ts`.
+`PROVIDER_DRIVER=mock` (default), `infobip` (+ credentials; also carries
+SMS/WhatsApp/Voice), `cloudflare`, or `ses` — the last two are email-only.
+`PROVIDER_EMAIL_DRIVER` routes just the email channel to a different driver
+while other channels stay on `PROVIDER_DRIVER`. Outbound Infobip sends stamp
+`callbackData` for PostHog tenancy. See `packages/providers/src/infobip.ts`
+and, for the email-only drivers and SES/SNS setup,
+[`docs/email-providers.md`](docs/email-providers.md).
