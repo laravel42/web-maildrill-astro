@@ -15,7 +15,7 @@ export function LayersPanel() {
 
   return (
     <Dropdown closeOnSelect={false} placement="bottom-start" className="pbx-layers">
-      <button type="button" data-c42-dropdown-trigger className="pbx-layers__trigger" title={t("layers.open")}>
+      <button type="button" data-c42-dropdown-trigger className="pbx-layers__trigger" title={t("layers.open")} aria-label={t("layers.open")}>
         <Layers size={15} aria-hidden="true" /> {t("layers.button")}
       </button>
       <div data-c42-dropdown-menu className="pbx-layers__menu">

@@ -54,7 +54,7 @@ function FooterRender(ctx: RenderContext) {
       {children}
       {!exportMode && isEmpty ? (
         <span className="pbx-empty-hint" data-empty-hint>
-          Pie vacío — suelta columnas de enlaces
+          Empty footer — drop link columns
         </span>
       ) : null}
     </footer>

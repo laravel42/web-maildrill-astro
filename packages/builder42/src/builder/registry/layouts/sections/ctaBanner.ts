@@ -83,7 +83,7 @@ export function buildCtaBannerFragment(): NodeFragment {
       "cta-banner-title": {
         id: "cta-banner-title",
         type: "text",
-        props: { content: "<strong>Empieza tu primera campaña hoy</strong>" },
+        props: { content: "<strong>Start your first campaign today</strong>" },
         style: {
           base: {
             typography: {
@@ -98,7 +98,7 @@ export function buildCtaBannerFragment(): NodeFragment {
       "cta-banner-sub": {
         id: "cta-banner-sub",
         type: "text",
-        props: { content: "Sin tarjeta de crédito, cancela cuando quieras." },
+        props: { content: "No credit card required. Cancel anytime." },
         style: {
           base: {
             spacing: { margin: "12px 0 0 0" },
@@ -110,7 +110,7 @@ export function buildCtaBannerFragment(): NodeFragment {
       "cta-banner-btn": {
         id: "cta-banner-btn",
         type: "button",
-        props: { label: "Crear cuenta gratis", link: { kind: "external", href: "#" } },
+        props: { label: "Create a free account", link: { kind: "external", href: "#" } },
         style: {
           base: {
             spacing: { padding: "16px 32px", margin: "28px 0 0 0" },

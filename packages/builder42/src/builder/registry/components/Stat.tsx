@@ -96,7 +96,7 @@ function StatRender(ctx: RenderContext) {
       {children}
       {!exportMode && isEmpty ? (
         <span className="pbx-empty-hint" data-empty-hint>
-          Estadística vacía — añade el valor y la etiqueta
+          Empty stat — add the value and label
         </span>
       ) : null}
     </div>
@@ -135,7 +135,7 @@ function StatValueRender(ctx: RenderContext) {
 /** `defaultChildren` sembrados al crear un `stat` nuevo desde la paleta. */
 export const STAT_DEFAULT_CHILDREN: DefaultChildSpec[] = [
   { type: "stat-value", props: { value: "+10k" }, style: STAT_VALUE_STYLE },
-  { type: "text", props: { content: "clientes felices" }, style: STAT_LABEL_STYLE },
+  { type: "text", props: { content: "happy customers" }, style: STAT_LABEL_STYLE },
 ];
 
 export const statDefinition: ComponentDefinition = {

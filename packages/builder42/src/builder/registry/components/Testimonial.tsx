@@ -119,7 +119,7 @@ export const TESTIMONIAL_ROLE_STYLE: NodeStyle = {
 export const TESTIMONIAL_DEFAULT_CHILDREN: DefaultChildSpec[] = [
   {
     type: "text",
-    props: { content: "<p>Este producto cambió por completo nuestra forma de trabajar.</p>" },
+    props: { content: "<p>This product completely changed the way we work.</p>" },
     style: TESTIMONIAL_QUOTE_STYLE,
   },
   {
@@ -131,7 +131,7 @@ export const TESTIMONIAL_DEFAULT_CHILDREN: DefaultChildSpec[] = [
         type: "container",
         style: TESTIMONIAL_AUTHOR_STYLE,
         children: [
-          { type: "text", props: { content: "<strong>Ana García</strong>" }, style: TESTIMONIAL_NAME_STYLE },
+          { type: "text", props: { content: "<strong>Ana Garcia</strong>" }, style: TESTIMONIAL_NAME_STYLE },
           { type: "text", props: { content: "CEO, Acme Inc." }, style: TESTIMONIAL_ROLE_STYLE },
         ],
       },
@@ -159,7 +159,7 @@ function TestimonialRender(ctx: RenderContext) {
       {children}
       {!exportMode && isEmpty ? (
         <span className="pbx-empty-hint" data-empty-hint>
-          Testimonio vacío — añade la cita y el autor
+          Empty testimonial — add the quote and author
         </span>
       ) : null}
     </figure>

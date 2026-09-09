@@ -46,7 +46,7 @@ export function buildAboutSplitFragment(): NodeFragment {
         type: "image",
         props: {
           source: { kind: "url", url: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=80&auto=format&fit=crop" },
-          alt: "Equipo de Maildrill trabajando junto en la oficina",
+          alt: "Maildrill team working together in the office",
           objectFit: "cover",
           loading: "lazy",
         },
@@ -73,7 +73,7 @@ export function buildAboutSplitFragment(): NodeFragment {
       "about-split-title": {
         id: "about-split-title",
         type: "text",
-        props: { content: "<strong>Un solo workspace para cada conversación con tu audiencia</strong>" },
+        props: { content: "<strong>One workspace for every conversation with your audience</strong>" },
         style: {
           base: {
             size: { maxWidth: "26ch" },
@@ -96,7 +96,7 @@ export function buildAboutSplitFragment(): NodeFragment {
         type: "text",
         props: {
           content:
-            "Maildrill nació para acabar con la dispersión de herramientas: un equipo, un editor visual y una sola vista de entregabilidad para email, SMS, WhatsApp y voz. Diseñamos cada detalle para que crear, enviar y analizar una campaña se sienta tan simple como debería haber sido siempre.",
+            "Maildrill was built to end tool sprawl: one team, one visual editor, and one deliverability view for email, SMS, WhatsApp, and voice. Every detail is designed so creating, sending, and analyzing a campaign feels as simple as it always should have.",
         },
         style: {
           base: {

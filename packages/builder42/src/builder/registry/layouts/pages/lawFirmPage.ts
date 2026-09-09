@@ -232,7 +232,7 @@ export function buildLawFirmPageFragment(): NodeFragment {
       "lawfirm-topbar-phone": {
         id: "lawfirm-topbar-phone",
         type: "text",
-        props: { content: "Consulta inicial: +52 55 4321 0987" },
+        props: { content: "Initial consultation: +52 55 4321 0987" },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
       "lawfirm-topbar-lang": {
@@ -246,7 +246,7 @@ export function buildLawFirmPageFragment(): NodeFragment {
       "lawfirm-navbar": {
         id: "lawfirm-navbar",
         type: "navbar",
-        props: { brand: "Zaldívar & Ochoa Abogados", hiddenPageIds: [] },
+        props: { brand: "Zaldívar & Ochoa Attorneys", hiddenPageIds: [] },
         style: defaultStyleFor("navbar"),
         behaviors: [{ type: "navbar", options: { duration: 240 } }],
       },
@@ -271,13 +271,13 @@ export function buildLawFirmPageFragment(): NodeFragment {
       "lawfirm-hero-badge": {
         id: "lawfirm-hero-badge",
         type: "badge",
-        props: { label: "35 años de trayectoria" },
+        props: { label: "35 years of experience" },
         style: darkBandStyleFor("badge"),
       },
       "lawfirm-hero-title": {
         id: "lawfirm-hero-title",
         type: "text",
-        props: { content: "<strong>Asesoría legal con criterio y discreción</strong>" },
+        props: { content: "<strong>Legal counsel with judgment and discretion</strong>" },
         style: {
           base: {
             size: { maxWidth: "22ch" },
@@ -295,7 +295,7 @@ export function buildLawFirmPageFragment(): NodeFragment {
         id: "lawfirm-hero-sub",
         type: "text",
         props: {
-          content: "Acompañamos a empresas y familias en decisiones legales complejas, con un equipo que responde directamente, sin intermediarios.",
+          content: "We guide companies and families through complex legal decisions, with a team that answers directly, with no intermediaries.",
         },
         style: {
           base: {
@@ -308,7 +308,7 @@ export function buildLawFirmPageFragment(): NodeFragment {
       "lawfirm-hero-cta": {
         id: "lawfirm-hero-cta",
         type: "button",
-        props: { label: "Agendar consulta", link: { kind: "anchor", nodeId: "lawfirm-contact" } },
+        props: { label: "Schedule a consultation", link: { kind: "anchor", nodeId: "lawfirm-contact" } },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -375,7 +375,7 @@ export function buildLawFirmPageFragment(): NodeFragment {
       "lawfirm-practices-nav-title": {
         id: "lawfirm-practices-nav-title",
         type: "text",
-        props: { content: "<strong>Áreas de práctica</strong>" },
+        props: { content: "<strong>Practice areas</strong>" },
         style: {
           base: {
             typography: { fontFamily: { token: "typography.families.display" }, fontSize: "1.125rem", fontWeight: { token: "typography.weights.bold" } },
@@ -417,26 +417,26 @@ export function buildLawFirmPageFragment(): NodeFragment {
       },
       ...practiceArea(
         1,
-        "Derecho corporativo",
-        "Constitución de sociedades, contratos comerciales, gobierno corporativo y fusiones y adquisiciones para empresas de todos los tamaños.",
+        "Corporate law",
+        "Company formation, commercial contracts, corporate governance, and mergers and acquisitions for businesses of every size.",
         { token: "colors.surface.default" },
       ),
       ...practiceArea(
         2,
-        "Litigios civiles y mercantiles",
-        "Representación en juicios civiles, mercantiles y arbitrajes, con una estrategia clara desde la primera consulta.",
+        "Civil & commercial litigation",
+        "Representation in civil, commercial and arbitration proceedings, with a clear strategy from the very first consultation.",
         { token: "colors.surface.alt" },
       ),
       ...practiceArea(
         3,
-        "Derecho familiar",
-        "Divorcios, pensiones, custodia y sucesiones, con un acompañamiento cercano en momentos personales difíciles.",
+        "Family law",
+        "Divorce, alimony, custody and inheritance, with close support through difficult personal moments.",
         { token: "colors.surface.default" },
       ),
       ...practiceArea(
         4,
-        "Derecho inmobiliario",
-        "Compraventa, arrendamiento y regularización de propiedades, revisando cada documento antes de firmar.",
+        "Real estate law",
+        "Sale, lease and title regularization of properties, reviewing every document before you sign.",
         { token: "colors.surface.alt" },
       ),
 
@@ -459,7 +459,7 @@ export function buildLawFirmPageFragment(): NodeFragment {
       "lawfirm-partners-title": {
         id: "lawfirm-partners-title",
         type: "text",
-        props: { content: "<strong>Nuestros socios</strong>" },
+        props: { content: "<strong>Our partners</strong>" },
         style: sectionTitle(),
       },
       "lawfirm-partners-grid": {
@@ -479,22 +479,22 @@ export function buildLawFirmPageFragment(): NodeFragment {
       },
       ...partnerCard(
         1,
-        "Lic. Renato Zaldívar",
-        "Socio fundador · Derecho corporativo",
+        "Renato Zaldívar",
+        "Founding partner · Corporate law",
         "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&q=80&auto=format&fit=crop",
         "RZ",
       ),
       ...partnerCard(
         2,
-        "Lic. Ivonne Ochoa",
-        "Socia fundadora · Litigios",
+        "Ivonne Ochoa",
+        "Founding partner · Litigation",
         "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80&auto=format&fit=crop",
         "IO",
       ),
       ...partnerCard(
         3,
-        "Lic. Daniel Puente",
-        "Socio · Derecho familiar e inmobiliario",
+        "Daniel Puente",
+        "Partner · Family & real estate law",
         "https://images.unsplash.com/photo-1556157382-97eda2d62296?w=200&q=80&auto=format&fit=crop",
         "DP",
       ),
@@ -519,8 +519,8 @@ export function buildLawFirmPageFragment(): NodeFragment {
         "lawfirm-case-quote",
         {
           content:
-            "Su equipo resolvió en ocho meses un litigio societario que llevaba tres años estancado con otro despacho. La claridad de su estrategia hizo toda la diferencia.",
-          attribution: "Dirección General, grupo empresarial del sector logístico",
+            "Their team resolved in eight months a corporate dispute that had been stalled for three years with another firm. Their strategic clarity made all the difference.",
+          attribution: "General Management, logistics-sector business group",
         },
         {
           base: {
@@ -557,7 +557,7 @@ export function buildLawFirmPageFragment(): NodeFragment {
       "lawfirm-process-title": {
         id: "lawfirm-process-title",
         type: "text",
-        props: { content: "<strong>Cómo trabajamos tu consulta</strong>" },
+        props: { content: "<strong>How we handle your consultation</strong>" },
         style: sectionTitle(),
       },
       "lawfirm-process-grid": {
@@ -575,9 +575,9 @@ export function buildLawFirmPageFragment(): NodeFragment {
         },
         children: ["lawfirm-process-1", "lawfirm-process-2", "lawfirm-process-3"],
       },
-      ...processStep(1, "1", "Consulta inicial sin costo, para entender tu caso"),
-      ...processStep(2, "2", "Propuesta de estrategia y honorarios claros por escrito"),
-      ...processStep(3, "3", "Seguimiento directo con tu abogado responsable"),
+      ...processStep(1, "1", "Corporate"),
+      ...processStep(2, "2", "Clear strategy and fee proposal in writing"),
+      ...processStep(3, "3", "Direct follow-up with your assigned attorney"),
 
       // --- Contacto — banda alt ---------------------------------------------------
       "lawfirm-contact": {
@@ -611,13 +611,13 @@ export function buildLawFirmPageFragment(): NodeFragment {
       "lawfirm-contact-title": {
         id: "lawfirm-contact-title",
         type: "text",
-        props: { content: "<strong>Agenda tu consulta</strong>" },
+        props: { content: "<strong>Schedule your consultation</strong>" },
         style: sectionTitle(),
       },
       "lawfirm-contact-sub": {
         id: "lawfirm-contact-sub",
         type: "text",
-        props: { content: "Describe brevemente tu caso y un abogado del área correspondiente te contactará en menos de 24 horas." },
+        props: { content: "Briefly describe your case and an attorney from the relevant area will contact you within 24 hours." },
         style: bodyText(),
       },
       "lawfirm-contact-card": {
@@ -653,13 +653,13 @@ export function buildLawFirmPageFragment(): NodeFragment {
       "lawfirm-label-name": {
         id: "lawfirm-label-name",
         type: "label",
-        props: { text: "Nombre completo", for: "lawfirm-input-name" },
+        props: { text: "Full name", for: "lawfirm-input-name" },
         style: defaultStyleFor("label"),
       },
       "lawfirm-input-name": {
         id: "lawfirm-input-name",
         type: "input",
-        props: { name: "nombre", type: "text", placeholder: "Tu nombre completo", required: true, disabled: false },
+        props: { name: "nombre", type: "text", placeholder: "Your full name", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "lawfirm-field-email": {
@@ -672,13 +672,13 @@ export function buildLawFirmPageFragment(): NodeFragment {
       "lawfirm-label-email": {
         id: "lawfirm-label-email",
         type: "label",
-        props: { text: "Correo electrónico", for: "lawfirm-input-email" },
+        props: { text: "Email", for: "lawfirm-input-email" },
         style: defaultStyleFor("label"),
       },
       "lawfirm-input-email": {
         id: "lawfirm-input-email",
         type: "input",
-        props: { name: "email", type: "email", placeholder: "tu@correo.com", required: true, disabled: false },
+        props: { name: "email", type: "email", placeholder: "you@email.com", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "lawfirm-field-area": {
@@ -691,7 +691,7 @@ export function buildLawFirmPageFragment(): NodeFragment {
       "lawfirm-label-area": {
         id: "lawfirm-label-area",
         type: "label",
-        props: { text: "Área de interés", for: "lawfirm-select-area" },
+        props: { text: "Area of interest", for: "lawfirm-select-area" },
         style: defaultStyleFor("label"),
       },
       "lawfirm-select-area": {
@@ -699,10 +699,10 @@ export function buildLawFirmPageFragment(): NodeFragment {
         type: "select",
         props: {
           name: "area",
-          placeholder: "Elige una opción…",
-          ariaLabel: "Área de interés",
+          placeholder: "Choose an option…",
+          ariaLabel: "Area of interest",
           options: [
-            { label: "Corporativo", value: "corporativo" },
+            { label: "Real estate", value: "inmobiliario" },
             { label: "Litigios", value: "litigios" },
             { label: "Familia", value: "familia" },
             { label: "Inmobiliario", value: "inmobiliario" },
@@ -720,19 +720,19 @@ export function buildLawFirmPageFragment(): NodeFragment {
       "lawfirm-label-message": {
         id: "lawfirm-label-message",
         type: "label",
-        props: { text: "Cuéntanos brevemente tu caso", for: "lawfirm-textarea-message" },
+        props: { text: "Briefly tell us about your case", for: "lawfirm-textarea-message" },
         style: defaultStyleFor("label"),
       },
       "lawfirm-textarea-message": {
         id: "lawfirm-textarea-message",
         type: "textarea",
-        props: { name: "mensaje", placeholder: "Ej. Necesito revisar un contrato de arrendamiento…", rows: 4, required: false, disabled: false },
+        props: { name: "mensaje", placeholder: "E.g. I need to review a lease agreement…", rows: 4, required: false, disabled: false },
         style: defaultStyleFor("textarea"),
       },
       "lawfirm-submit": {
         id: "lawfirm-submit",
         type: "button-submit",
-        props: { label: "Enviar consulta", disabled: false },
+        props: { label: "Send inquiry", disabled: false },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -767,13 +767,13 @@ export function buildLawFirmPageFragment(): NodeFragment {
       "lawfirm-footer-address": {
         id: "lawfirm-footer-address",
         type: "text",
-        props: { content: "Paseo de la Reforma 250, Piso 12, Ciudad de México" },
+        props: { content: "250 Reforma Ave, 12th Floor, Mexico City" },
         style: { base: { appearance: { color: { token: "colors.band.on" } } } },
       },
       "lawfirm-footer-hours": {
         id: "lawfirm-footer-hours",
         type: "text",
-        props: { content: "Lunes a viernes 9:00–18:30" },
+        props: { content: "Monday to Friday 9:00 AM–6:30 PM" },
         style: { base: { appearance: { color: { token: "colors.band.on" } } } },
       },
       "lawfirm-footer-social": {
@@ -785,7 +785,7 @@ export function buildLawFirmPageFragment(): NodeFragment {
       "lawfirm-footer-copyright": {
         id: "lawfirm-footer-copyright",
         type: "text",
-        props: { content: "© 2026 Zaldívar & Ochoa Abogados. Todos los derechos reservados." },
+        props: { content: "© 2026 Zaldívar & Ochoa Attorneys. All rights reserved." },
         style: {
           base: {
             size: { width: "100%" },
@@ -805,132 +805,64 @@ export function buildLawFirmPageFragment(): NodeFragment {
     translations: (() => {
       const t: Record<string, NodeTranslations> = {};
 
-      t["lawfirm-topbar-phone"] = {
-        en: { content: "Initial consultation: +52 55 4321 0987" },
-        it: { content: "Prima consulenza: +52 55 4321 0987" },
-      };
-      t["lawfirm-hero-badge"] = { en: { label: "35 years of experience" }, it: { label: "35 anni di esperienza" } };
-      t["lawfirm-hero-title"] = {
-        en: { content: "<strong>Legal counsel with judgment and discretion</strong>" },
-        it: { content: "<strong>Consulenza legale con criterio e discrezione</strong>" },
-      };
-      t["lawfirm-hero-sub"] = {
-        en: {
-          content: "We guide companies and families through complex legal decisions, with a team that answers directly, with no intermediaries.",
-        },
-        it: {
-          content: "Accompagniamo aziende e famiglie in decisioni legali complesse, con un team che risponde direttamente, senza intermediari.",
-        },
-      };
-      t["lawfirm-hero-cta"] = { en: { label: "Schedule a consultation" }, it: { label: "Prenota una consulenza" } };
+      t["lawfirm-topbar-phone"] = { es: { content: "Consulta inicial: +52 55 4321 0987" }, it: { content: "Prima consulenza: +52 55 4321 0987" } };
+      t["lawfirm-hero-badge"] = { es: { label: "35 años de trayectoria" }, it: { label: "35 anni di esperienza" } };
+      t["lawfirm-hero-title"] = { es: { content: "<strong>Asesoría legal con criterio y discreción</strong>" }, it: { content: "<strong>Consulenza legale con criterio e discrezione</strong>" } };
+      t["lawfirm-hero-sub"] = { es: { content: "Acompañamos a empresas y familias en decisiones legales complejas, con un equipo que responde directamente, sin intermediarios." }, it: { content: "Accompagniamo aziende e famiglie in decisioni legali complesse, con un team che risponde direttamente, senza intermediari." } };
+      t["lawfirm-hero-cta"] = { es: { label: "Agendar consulta" }, it: { label: "Prenota una consulenza" } };
 
-      t["lawfirm-practices-nav-title"] = { en: { content: "<strong>Practice areas</strong>" }, it: { content: "<strong>Aree di pratica</strong>" } };
-      t["lawfirm-practices-nav-1"] = { en: { label: "Corporate" }, it: { label: "Societario" } };
-      t["lawfirm-practices-nav-2"] = { en: { label: "Litigation" }, it: { label: "Contenzioso" } };
-      t["lawfirm-practices-nav-3"] = { en: { label: "Family" }, it: { label: "Famiglia" } };
-      t["lawfirm-practices-nav-4"] = { en: { label: "Real estate" }, it: { label: "Immobiliare" } };
+      t["lawfirm-practices-nav-title"] = { es: { content: "<strong>Áreas de práctica</strong>" }, it: { content: "<strong>Aree di pratica</strong>" } };
+      t["lawfirm-practices-nav-1"] = { es: { label: "Consulta inicial sin costo, para entender tu caso" }, it: { label: "Societario" } };
+      t["lawfirm-practices-nav-2"] = { es: { label: "Propuesta de estrategia y honorarios claros por escrito" }, it: { label: "Contenzioso" } };
+      t["lawfirm-practices-nav-3"] = { es: { label: "Seguimiento directo con tu abogado responsable" }, it: { label: "Famiglia" } };
+      t["lawfirm-practices-nav-4"] = { es: { label: "Real estate" }, it: { label: "Immobiliare" } };
 
-      t["lawfirm-practice-1-title"] = { en: { content: "<strong>Corporate law</strong>" }, it: { content: "<strong>Diritto societario</strong>" } };
-      t["lawfirm-practice-1-text"] = {
-        en: { content: "Company formation, commercial contracts, corporate governance, and mergers and acquisitions for businesses of every size." },
-        it: { content: "Costituzione di società, contratti commerciali, corporate governance e fusioni e acquisizioni per aziende di ogni dimensione." },
-      };
-      t["lawfirm-practice-2-title"] = { en: { content: "<strong>Civil & commercial litigation</strong>" }, it: { content: "<strong>Contenzioso civile e commerciale</strong>" } };
-      t["lawfirm-practice-2-text"] = {
-        en: { content: "Representation in civil, commercial and arbitration proceedings, with a clear strategy from the very first consultation." },
-        it: { content: "Rappresentanza in procedimenti civili, commerciali e arbitrali, con una strategia chiara dalla prima consulenza." },
-      };
-      t["lawfirm-practice-3-title"] = { en: { content: "<strong>Family law</strong>" }, it: { content: "<strong>Diritto di famiglia</strong>" } };
-      t["lawfirm-practice-3-text"] = {
-        en: { content: "Divorce, alimony, custody and inheritance, with close support through difficult personal moments." },
-        it: { content: "Divorzi, alimenti, affidamento e successioni, con un accompagnamento vicino nei momenti personali difficili." },
-      };
-      t["lawfirm-practice-4-title"] = { en: { content: "<strong>Real estate law</strong>" }, it: { content: "<strong>Diritto immobiliare</strong>" } };
-      t["lawfirm-practice-4-text"] = {
-        en: { content: "Sale, lease and title regularization of properties, reviewing every document before you sign." },
-        it: { content: "Compravendita, locazione e regolarizzazione di immobili, verificando ogni documento prima della firma." },
-      };
+      t["lawfirm-practice-1-title"] = { es: { content: "<strong>Derecho corporativo</strong>" }, it: { content: "<strong>Diritto societario</strong>" } };
+      t["lawfirm-practice-1-text"] = { es: { content: "Constitución de sociedades, contratos comerciales, gobierno corporativo y fusiones y adquisiciones para empresas de todos los tamaños." }, it: { content: "Costituzione di società, contratti commerciali, corporate governance e fusioni e acquisizioni per aziende di ogni dimensione." } };
+      t["lawfirm-practice-2-title"] = { es: { content: "<strong>Litigios civiles y mercantiles</strong>" }, it: { content: "<strong>Contenzioso civile e commerciale</strong>" } };
+      t["lawfirm-practice-2-text"] = { es: { content: "Representación en juicios civiles, mercantiles y arbitrajes, con una estrategia clara desde la primera consulta." }, it: { content: "Rappresentanza in procedimenti civili, commerciali e arbitrali, con una strategia chiara dalla prima consulenza." } };
+      t["lawfirm-practice-3-title"] = { es: { content: "<strong>Derecho familiar</strong>" }, it: { content: "<strong>Diritto di famiglia</strong>" } };
+      t["lawfirm-practice-3-text"] = { es: { content: "Divorcios, pensiones, custodia y sucesiones, con un acompañamiento cercano en momentos personales difíciles." }, it: { content: "Divorzi, alimenti, affidamento e successioni, con un accompagnamento vicino nei momenti personali difficili." } };
+      t["lawfirm-practice-4-title"] = { es: { content: "<strong>Derecho inmobiliario</strong>" }, it: { content: "<strong>Diritto immobiliare</strong>" } };
+      t["lawfirm-practice-4-text"] = { es: { content: "Compraventa, arrendamiento y regularización de propiedades, revisando cada documento antes de firmar." }, it: { content: "Compravendita, locazione e regolarizzazione di immobili, verificando ogni documento prima della firma." } };
 
-      t["lawfirm-partners-title"] = { en: { content: "<strong>Our partners</strong>" }, it: { content: "<strong>I nostri partner</strong>" } };
-      t["lawfirm-partner-1-avatar"] = { en: { alt: "Portrait of Renato Zaldívar" }, it: { alt: "Ritratto di Renato Zaldívar" } };
-      t["lawfirm-partner-1-name"] = { en: { content: "<strong>Renato Zaldívar</strong>" }, it: { content: "<strong>Renato Zaldívar</strong>" } };
-      t["lawfirm-partner-1-role"] = { en: { content: "Founding partner · Corporate law" }, it: { content: "Partner fondatore · Diritto societario" } };
-      t["lawfirm-partner-2-avatar"] = { en: { alt: "Portrait of Ivonne Ochoa" }, it: { alt: "Ritratto di Ivonne Ochoa" } };
-      t["lawfirm-partner-2-name"] = { en: { content: "<strong>Ivonne Ochoa</strong>" }, it: { content: "<strong>Ivonne Ochoa</strong>" } };
-      t["lawfirm-partner-2-role"] = { en: { content: "Founding partner · Litigation" }, it: { content: "Partner fondatrice · Contenzioso" } };
-      t["lawfirm-partner-3-avatar"] = { en: { alt: "Portrait of Daniel Puente" }, it: { alt: "Ritratto di Daniel Puente" } };
-      t["lawfirm-partner-3-name"] = { en: { content: "<strong>Daniel Puente</strong>" }, it: { content: "<strong>Daniel Puente</strong>" } };
-      t["lawfirm-partner-3-role"] = { en: { content: "Partner · Family & real estate law" }, it: { content: "Partner · Diritto di famiglia e immobiliare" } };
+      t["lawfirm-partners-title"] = { es: { content: "<strong>Nuestros socios</strong>" }, it: { content: "<strong>I nostri partner</strong>" } };
+      t["lawfirm-partner-1-avatar"] = { es: { alt: "Portrait of Renato Zaldívar" }, it: { alt: "Ritratto di Renato Zaldívar" } };
+      t["lawfirm-partner-1-name"] = { es: { content: "<strong>Lic. Renato Zaldívar</strong>" }, it: { content: "<strong>Renato Zaldívar</strong>" } };
+      t["lawfirm-partner-1-role"] = { es: { content: "Socio fundador · Derecho corporativo" }, it: { content: "Partner fondatore · Diritto societario" } };
+      t["lawfirm-partner-2-avatar"] = { es: { alt: "Portrait of Ivonne Ochoa" }, it: { alt: "Ritratto di Ivonne Ochoa" } };
+      t["lawfirm-partner-2-name"] = { es: { content: "<strong>Lic. Ivonne Ochoa</strong>" }, it: { content: "<strong>Ivonne Ochoa</strong>" } };
+      t["lawfirm-partner-2-role"] = { es: { content: "Socia fundadora · Litigios" }, it: { content: "Partner fondatrice · Contenzioso" } };
+      t["lawfirm-partner-3-avatar"] = { es: { alt: "Portrait of Daniel Puente" }, it: { alt: "Ritratto di Daniel Puente" } };
+      t["lawfirm-partner-3-name"] = { es: { content: "<strong>Lic. Daniel Puente</strong>" }, it: { content: "<strong>Daniel Puente</strong>" } };
+      t["lawfirm-partner-3-role"] = { es: { content: "Socio · Derecho familiar e inmobiliario" }, it: { content: "Partner · Diritto di famiglia e immobiliare" } };
 
-      t["lawfirm-case-quote-content"] = {
-        en: {
-          content: "Their team resolved in eight months a corporate dispute that had been stalled for three years with another firm. Their strategic clarity made all the difference.",
-        },
-        it: {
-          content: "Il loro team ha risolto in otto mesi una controversia societaria bloccata da tre anni con un altro studio. La chiarezza della loro strategia ha fatto la differenza.",
-        },
-      };
-      t["lawfirm-case-quote-attribution"] = {
-        en: { content: "<cite>— General Management, logistics-sector business group</cite>" },
-        it: { content: "<cite>— Direzione Generale, gruppo aziendale del settore logistico</cite>" },
-      };
+      t["lawfirm-case-quote-content"] = { es: { content: "Su equipo resolvió en ocho meses un litigio societario que llevaba tres años estancado con otro despacho. La claridad de su estrategia hizo toda la diferencia." }, it: { content: "Il loro team ha risolto in otto mesi una controversia societaria bloccata da tre anni con un altro studio. La chiarezza della loro strategia ha fatto la differenza." } };
+      t["lawfirm-case-quote-attribution"] = { es: { content: "<cite>— Dirección General, grupo empresarial del sector logístico</cite>" }, it: { content: "<cite>— Direzione Generale, gruppo aziendale del settore logistico</cite>" } };
 
-      t["lawfirm-process-title"] = { en: { content: "<strong>How we handle your consultation</strong>" }, it: { content: "<strong>Come gestiamo la tua consulenza</strong>" } };
-      t["lawfirm-process-1-value"] = { en: { value: "1" }, it: { value: "1" } };
-      t["lawfirm-process-1-label"] = { en: { content: "Free initial consultation, to understand your case" }, it: { content: "Prima consulenza gratuita, per capire il tuo caso" } };
-      t["lawfirm-process-2-value"] = { en: { value: "2" }, it: { value: "2" } };
-      t["lawfirm-process-2-label"] = { en: { content: "Clear strategy and fee proposal in writing" }, it: { content: "Proposta di strategia e onorari chiari per iscritto" } };
-      t["lawfirm-process-3-value"] = { en: { value: "3" }, it: { value: "3" } };
-      t["lawfirm-process-3-label"] = { en: { content: "Direct follow-up with your assigned attorney" }, it: { content: "Seguimento diretto con il tuo avvocato di riferimento" } };
+      t["lawfirm-process-title"] = { es: { content: "<strong>Cómo trabajamos tu consulta</strong>" }, it: { content: "<strong>Come gestiamo la tua consulenza</strong>" } };
+      t["lawfirm-process-1-value"] = { es: { value: "1" }, it: { value: "1" } };
+      t["lawfirm-process-1-label"] = { es: { content: "Consulta inicial sin costo, para entender tu caso" }, it: { content: "Prima consulenza gratuita, per capire il tuo caso" } };
+      t["lawfirm-process-2-value"] = { es: { value: "2" }, it: { value: "2" } };
+      t["lawfirm-process-2-label"] = { es: { content: "Propuesta de estrategia y honorarios claros por escrito" }, it: { content: "Proposta di strategia e onorari chiari per iscritto" } };
+      t["lawfirm-process-3-value"] = { es: { value: "3" }, it: { value: "3" } };
+      t["lawfirm-process-3-label"] = { es: { content: "Seguimiento directo con tu abogado responsable" }, it: { content: "Seguimento diretto con il tuo avvocato di riferimento" } };
 
-      t["lawfirm-contact-title"] = { en: { content: "<strong>Schedule your consultation</strong>" }, it: { content: "<strong>Prenota la tua consulenza</strong>" } };
-      t["lawfirm-contact-sub"] = {
-        en: { content: "Briefly describe your case and an attorney from the relevant area will contact you within 24 hours." },
-        it: { content: "Descrivi brevemente il tuo caso e un avvocato dell'area competente ti contatterà entro 24 ore." },
-      };
-      t["lawfirm-label-name"] = { en: { text: "Full name" }, it: { text: "Nome completo" } };
-      t["lawfirm-input-name"] = { en: { placeholder: "Your full name" }, it: { placeholder: "Il tuo nome completo" } };
-      t["lawfirm-label-email"] = { en: { text: "Email" }, it: { text: "Email" } };
-      t["lawfirm-input-email"] = { en: { placeholder: "you@email.com" }, it: { placeholder: "tu@email.com" } };
-      t["lawfirm-label-area"] = { en: { text: "Area of interest" }, it: { text: "Area di interesse" } };
-      t["lawfirm-select-area"] = {
-        en: {
-          placeholder: "Choose an option…",
-          ariaLabel: "Area of interest",
-          options: [
-            { label: "Corporate", value: "corporativo" },
-            { label: "Litigation", value: "litigios" },
-            { label: "Family", value: "familia" },
-            { label: "Real estate", value: "inmobiliario" },
-          ],
-        },
-        it: {
-          placeholder: "Scegli un'opzione…",
-          ariaLabel: "Area di interesse",
-          options: [
-            { label: "Societario", value: "corporativo" },
-            { label: "Contenzioso", value: "litigios" },
-            { label: "Famiglia", value: "familia" },
-            { label: "Immobiliare", value: "inmobiliario" },
-          ],
-        },
-      };
-      t["lawfirm-label-message"] = { en: { text: "Briefly tell us about your case" }, it: { text: "Raccontaci brevemente il tuo caso" } };
-      t["lawfirm-textarea-message"] = {
-        en: { placeholder: "E.g. I need to review a lease agreement…" },
-        it: { placeholder: "Es. Devo revisionare un contratto di locazione…" },
-      };
-      t["lawfirm-submit"] = { en: { label: "Send inquiry" }, it: { label: "Invia richiesta" } };
+      t["lawfirm-contact-title"] = { es: { content: "<strong>Agenda tu consulta</strong>" }, it: { content: "<strong>Prenota la tua consulenza</strong>" } };
+      t["lawfirm-contact-sub"] = { es: { content: "Describe brevemente tu caso y un abogado del área correspondiente te contactará en menos de 24 horas." }, it: { content: "Descrivi brevemente il tuo caso e un avvocato dell'area competente ti contatterà entro 24 ore." } };
+      t["lawfirm-label-name"] = { es: { text: "Nombre completo" }, it: { text: "Nome completo" } };
+      t["lawfirm-input-name"] = { es: { placeholder: "Tu nombre completo" }, it: { placeholder: "Il tuo nome completo" } };
+      t["lawfirm-label-email"] = { es: { text: "Correo electrónico" }, it: { text: "Email" } };
+      t["lawfirm-input-email"] = { es: { placeholder: "tu@correo.com" }, it: { placeholder: "tu@email.com" } };
+      t["lawfirm-label-area"] = { es: { text: "Área de interés" }, it: { text: "Area di interesse" } };
+      t["lawfirm-select-area"] = { es: { placeholder: "Elige una opción…", ariaLabel: "Área de interés", label: "Inmobiliario", value: "inmobiliario" }, it: { placeholder: "Scegli un'opzione…", ariaLabel: "Area di interesse", label: "Immobiliare", value: "inmobiliario" } };
+      t["lawfirm-label-message"] = { es: { text: "Cuéntanos brevemente tu caso" }, it: { text: "Raccontaci brevemente il tuo caso" } };
+      t["lawfirm-textarea-message"] = { es: { placeholder: "Ej. Necesito revisar un contrato de arrendamiento…" }, it: { placeholder: "Es. Devo revisionare un contratto di locazione…" } };
+      t["lawfirm-submit"] = { es: { label: "Enviar consulta" }, it: { label: "Invia richiesta" } };
 
-      t["lawfirm-footer-copyright"] = {
-        en: { content: "© 2026 Zaldívar & Ochoa Attorneys. All rights reserved." },
-        it: { content: "© 2026 Zaldívar & Ochoa Avvocati. Tutti i diritti riservati." },
-      };
-      t["lawfirm-footer-address"] = {
-        en: { content: "250 Reforma Ave, 12th Floor, Mexico City" },
-        it: { content: "Paseo de la Reforma 250, 12° Piano, Città del Messico" },
-      };
-      t["lawfirm-footer-hours"] = { en: { content: "Monday to Friday 9:00 AM–6:30 PM" }, it: { content: "Lunedì-venerdì 9:00–18:30" } };
+      t["lawfirm-footer-copyright"] = { es: { content: "© 2026 Zaldívar & Ochoa Abogados. Todos los derechos reservados." }, it: { content: "© 2026 Zaldívar & Ochoa Avvocati. Tutti i diritti riservati." } };
+      t["lawfirm-footer-address"] = { es: { content: "Paseo de la Reforma 250, Piso 12, Ciudad de México" }, it: { content: "Paseo de la Reforma 250, 12° Piano, Città del Messico" } };
+      t["lawfirm-footer-hours"] = { es: { content: "Lunes a viernes 9:00–18:30" }, it: { content: "Lunedì-venerdì 9:00–18:30" } };
 
       return t;
     })(),
@@ -938,31 +870,31 @@ export function buildLawFirmPageFragment(): NodeFragment {
 }
 
 export const lawFirmPageMeta: LayoutPageMeta = {
-  title: "Zaldívar & Ochoa Abogados · Asesoría legal institucional",
+  title: "Zaldívar & Ochoa Attorneys · Institutional legal counsel",
   description:
-    "Bufete de abogados con 35 años de trayectoria en derecho corporativo, litigios, familia e inmobiliario.",
+    "Law firm with 35 years of experience in corporate, litigation, family and real estate law.",
   seo: {
     robots: "index,follow",
     openGraph: {
-      title: "Zaldívar & Ochoa Abogados",
-      description: "Asesoría legal con criterio y discreción. Agenda tu consulta.",
+      title: "Zaldívar & Ochoa Attorneys",
+      description: "Legal counsel with judgment and discretion. Schedule your consultation.",
       image: "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=1200&q=80&auto=format&fit=crop",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "Zaldívar & Ochoa Abogados",
-      description: "Asesoría legal con criterio y discreción. Agenda tu consulta.",
+      title: "Zaldívar & Ochoa Attorneys",
+      description: "Legal counsel with judgment and discretion. Schedule your consultation.",
       image: "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=1200&q=80&auto=format&fit=crop",
     },
   },
   metaTranslations: {
-    en: {
-      title: "Zaldívar & Ochoa Attorneys · Institutional legal counsel",
-      description: "Law firm with 35 years of experience in corporate, litigation, family and real estate law.",
+    es: {
+      title: "Zaldívar & Ochoa Abogados · Asesoría legal institucional",
+      description: "Bufete de abogados con 35 años de trayectoria en derecho corporativo, litigios, familia e inmobiliario.",
       seo: {
-        openGraph: { title: "Zaldívar & Ochoa Attorneys", description: "Legal counsel with judgment and discretion. Schedule your consultation." },
-        twitter: { title: "Zaldívar & Ochoa Attorneys", description: "Legal counsel with judgment and discretion. Schedule your consultation." },
+        openGraph: { title: "Zaldívar & Ochoa Abogados", description: "Asesoría legal con criterio y discreción. Agenda tu consulta." },
+        twitter: { title: "Zaldívar & Ochoa Abogados", description: "Asesoría legal con criterio y discreción. Agenda tu consulta." },
       },
     },
     it: {

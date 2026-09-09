@@ -18,6 +18,7 @@
     "icon": "Icon",
     "quote": "Quote",
     "stat": "Stat",
+    "stat-value": "Value",
     "avatar": "Avatar",
     "video": "Video",
     "card": "Card",
@@ -31,25 +32,201 @@
     "social-links": "Social links",
     "breadcrumb": "Breadcrumb",
     "accordion": "Accordion",
+    "accordion-item": "Section",
     "modal": "Modal",
     "tabs": "Tabs",
+    "tab": "Tab",
     "navbar": "Navbar"
   },
   "props": {
-    "gridPlacement": "Grid placement",
-    "gridPlacementAuto": "Automatic (order)",
-    "gridPlacementExplicit": "Explicit (cell)",
-    "imageSource": "Image",
-    "altText": "Alt text",
-    "objectFit": "Object fit",
-    "buttonLabel": "Label",
-    "buttonLink": "Link",
-    "textContent": "Content"
+    "accordion-item": {
+      "label": "Section title",
+      "openByDefault": "Open by default"
+    },
+    "alert": {
+      "message": "Message",
+      "variant": "Variant",
+      "variantOptions": {
+        "info": "Info",
+        "success": "Success",
+        "warning": "Warning",
+        "error": "Error"
+      },
+      "showIcon": "Show icon"
+    },
+    "avatar": {
+      "source": "Image",
+      "alt": "Alt text",
+      "initials": "Initials (fallback)"
+    },
+    "badge": {
+      "label": "Text"
+    },
+    "breadcrumb": {
+      "items": "Levels (text + href)",
+      "separator": "Separator"
+    },
+    "button": {
+      "label": "Label",
+      "link": "Link",
+      "newTab": "Open in a new tab"
+    },
+    "button-submit": {
+      "label": "Label",
+      "disabled": "Disabled"
+    },
+    "container": {
+      "gridPlacement": "Grid placement",
+      "gridPlacementOptions": {
+        "auto": "Automatic (order)",
+        "explicit": "Explicit (cell)"
+      }
+    },
+    "form": {
+      "action": "Action (URL)",
+      "method": "Method",
+      "methodOptions": {
+        "post": "POST",
+        "get": "GET"
+      },
+      "noValidate": "Disable HTML5 validation"
+    },
+    "icon": {
+      "name": "Icon",
+      "namePlaceholder": "Star, Heart, Mail, Check…",
+      "pressedName": "Icon (pressed)",
+      "pressedNamePlaceholder": "Heart, Star…",
+      "title": "Accessible label"
+    },
+    "image": {
+      "source": "Image",
+      "alt": "Alt text",
+      "objectFit": "Object fit",
+      "objectFitOptions": {
+        "cover": "Cover",
+        "contain": "Contain",
+        "fill": "Fill",
+        "none": "None",
+        "scale_down": "Scale down"
+      },
+      "objectPosition": "Position",
+      "objectPositionPlaceholder": "Center",
+      "objectPositionOptions": {
+        "center": "Center",
+        "left_top": "Top left",
+        "top": "Top center",
+        "right_top": "Top right",
+        "left": "Center left",
+        "right": "Center right",
+        "left_bottom": "Bottom left",
+        "bottom": "Bottom center",
+        "right_bottom": "Bottom right"
+      },
+      "loading": "Loading",
+      "loadingOptions": {
+        "lazy": "Lazy",
+        "eager": "Eager"
+      }
+    },
+    "input": {
+      "type": "Type",
+      "typeOptions": {
+        "text": "Text",
+        "email": "Email",
+        "tel": "Phone",
+        "number": "Number",
+        "password": "Password"
+      },
+      "name": "Name (attribute)",
+      "placeholder": "Placeholder",
+      "required": "Required",
+      "disabled": "Disabled"
+    },
+    "label": {
+      "text": "Text",
+      "for": "For (field id)"
+    },
+    "language-nav": {
+      "triggerMode": "Trigger",
+      "triggerModeOptions": {
+        "icon": "Icon (globe)",
+        "text": "Text (current language)"
+      },
+      "displayMode": "Format",
+      "displayModeOptions": {
+        "native": "Native name (Español)",
+        "codes": "Code (ES)",
+        "labels": "Translated name (Spanish)"
+      },
+      "showCurrent": "Include current language",
+      "ariaLabel": "Aria label"
+    },
+    "modal": {
+      "title": "Title"
+    },
+    "nav-menu": {
+      "hiddenPageIds": "Pages visible in the menu",
+      "orientation": "Orientation",
+      "orientationOptions": {
+        "horizontal": "Horizontal",
+        "vertical": "Vertical"
+      }
+    },
+    "navbar": {
+      "hiddenPageIds": "Pages visible in the menu"
+    },
+    "select": {
+      "options": "Options",
+      "placeholder": "Placeholder",
+      "name": "Name (attribute)",
+      "ariaLabel": "Aria label"
+    },
+    "social-links": {
+      "links": "Networks (name + URL)",
+      "linksPlaceholder": "github, linkedin, x, facebook, instagram…",
+      "linksLabelOptions": {
+        "twitter": "Twitter (classic)"
+      }
+    },
+    "stat-value": {
+      "value": "Value"
+    },
+    "tab": {
+      "label": "Tab title"
+    },
+    "text": {
+      "content": "Content"
+    },
+    "textarea": {
+      "name": "Name (attribute)",
+      "placeholder": "Placeholder",
+      "rows": "Rows",
+      "required": "Required",
+      "disabled": "Disabled"
+    },
+    "video": {
+      "url": "Video URL",
+      "urlPlaceholder": "YouTube / Vimeo / embed",
+      "aspectRatio": "Aspect ratio",
+      "aspectRatioOptions": {
+        "16_9": "16:9",
+        "4_3": "4:3",
+        "1_1": "1:1",
+        "21_9": "21:9"
+      },
+      "title": "Accessible title"
+    }
   },
   "propGroups": {
     "content": "Content",
     "action": "Action",
-    "grid": "Grid"
+    "state": "State",
+    "form": "Form",
+    "validation": "Validation",
+    "accessibility": "Accessibility",
+    "appearance": "Appearance",
+    "grid": "Grid",
+    "orientation": "Orientation"
   },
   "styleGroups": {
     "layout": "layout",
@@ -84,7 +261,11 @@
     "fontSize": "Size",
     "fontWeight": "Weight",
     "lineHeight": "Line height",
-    "textAlign": "Alignment"
+    "textAlign": "Alignment",
+    "textDecoration": "Decoration",
+    "boxShadow": "Shadow",
+    "cursor": "Cursor",
+    "outline": "Outline"
   },
   "errorBoundary": {
     "renderError": "Node render error",

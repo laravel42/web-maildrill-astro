@@ -343,7 +343,7 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-topbar-phone": {
         id: "archstudio-topbar-phone",
         type: "text",
-        props: { content: "Estudio: +54 11 4789 2233" },
+        props: { content: "Studio: +54 11 4789 2233" },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
       "archstudio-topbar-lang": {
@@ -424,7 +424,7 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
         type: "image",
         props: {
           source: { kind: "url", url: "https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=1200&q=80&auto=format&fit=crop" },
-          alt: "Fachada de un edificio contemporáneo diseñado por Umbral Arquitectos",
+          alt: "Façade of a contemporary building designed by Umbral Arquitectos",
           objectFit: "cover",
         },
         style: { base: { size: { width: "100%", height: "100%" } } },
@@ -432,13 +432,13 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-hero-badge": {
         id: "archstudio-hero-badge",
         type: "badge",
-        props: { label: "22 años proyectando espacios" },
+        props: { label: "22 years designing spaces" },
         style: darkBandStyleFor("badge"),
       },
       "archstudio-hero-title": {
         id: "archstudio-hero-title",
         type: "text",
-        props: { content: "<strong>Arquitectura con criterio, a escala humana</strong>" },
+        props: { content: "<strong>Architecture with judgment, at human scale</strong>" },
         style: {
           base: {
             size: { maxWidth: "22ch" },
@@ -456,7 +456,7 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
         id: "archstudio-hero-sub",
         type: "text",
         props: {
-          content: "Diseñamos proyectos residenciales, corporativos e institucionales que responden al lugar, al presupuesto y a cómo se va a vivir el espacio.",
+          content: "We design residential, corporate and institutional projects that respond to the site, the budget and how the space will actually be lived in.",
         },
         style: {
           base: {
@@ -469,7 +469,7 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-hero-cta": {
         id: "archstudio-hero-cta",
         type: "button",
-        props: { label: "Agendar una reunión", link: { kind: "anchor", nodeId: "archstudio-contact" } },
+        props: { label: "Schedule a meeting", link: { kind: "anchor", nodeId: "archstudio-contact" } },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -541,7 +541,7 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-services-nav-title": {
         id: "archstudio-services-nav-title",
         type: "text",
-        props: { content: "<strong>Servicios</strong>" },
+        props: { content: "<strong>Services</strong>" },
         style: {
           base: {
             typography: { fontFamily: { token: "typography.families.display" }, fontSize: "1.125rem", fontWeight: { token: "typography.weights.bold" } },
@@ -553,7 +553,7 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       ...(["archstudio-service-1", "archstudio-service-2", "archstudio-service-3"] as const).reduce(
         (acc, targetId, i) => {
           const n = i + 1;
-          const labels = ["Residencial", "Corporativo", "Institucional"];
+          const labels = ["Residential", "Corporate", "Institutional"];
           acc[`archstudio-services-nav-${n}`] = {
             id: `archstudio-services-nav-${n}`,
             type: "button",
@@ -600,7 +600,7 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-services-side-title": {
         id: "archstudio-services-side-title",
         type: "text",
-        props: { content: "<strong>¿No sabes por dónde empezar?</strong>" },
+        props: { content: "<strong>Not sure where to start?</strong>" },
         style: {
           base: {
             typography: { fontFamily: { token: "typography.families.display" }, fontSize: "1.125rem", fontWeight: { token: "typography.weights.bold" } },
@@ -611,25 +611,25 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-services-side-text": {
         id: "archstudio-services-side-text",
         type: "text",
-        props: { content: "Una primera reunión de diagnóstico, sin costo, para entender el alcance de tu proyecto." },
+        props: { content: "A free first diagnostic meeting, to understand the scope of your project." },
         style: bodyText(undefined, "32ch"),
       },
       ...serviceArea(
         1,
-        "Arquitectura residencial",
-        "Casas y ampliaciones que parten del terreno y del modo de vida de quien las habita, no de un catálogo de planos repetidos.",
+        "Residential architecture",
+        "Homes and extensions that start from the site and the way their future occupants actually live, not from a catalog of repeated floor plans.",
         { token: "colors.surface.default" },
       ),
       ...serviceArea(
         2,
-        "Arquitectura corporativa",
-        "Oficinas y locales comerciales que equilibran identidad de marca, eficiencia operativa y normativa vigente.",
+        "Corporate architecture",
+        "Offices and retail spaces that balance brand identity, operational efficiency and current regulations.",
         { token: "colors.surface.alt" },
       ),
       ...serviceArea(
         3,
-        "Arquitectura institucional",
-        "Equipamiento educativo, cultural y de salud, con procesos de gestión de permisos y licitación acompañados de punta a punta.",
+        "Institutional architecture",
+        "Educational, cultural and healthcare facilities, with permit management and bidding processes supported end to end.",
         { token: "colors.surface.default" },
       ),
 
@@ -652,7 +652,7 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-projects-title": {
         id: "archstudio-projects-title",
         type: "text",
-        props: { content: "<strong>Proyectos destacados</strong>" },
+        props: { content: "<strong>Featured projects</strong>" },
         style: sectionTitle(),
       },
       "archstudio-projects-grid": {
@@ -682,36 +682,36 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       },
       ...projectCard(
         1,
-        "Casa Tilo",
-        "Residencial · Buenos Aires",
+        "Tilo House",
+        "Residential · Buenos Aires",
         "https://images.unsplash.com/photo-1524230572899-a752b3835840?w=900&q=80&auto=format&fit=crop",
         2,
       ),
       ...projectCard(
         2,
-        "Oficinas Nortex",
-        "Corporativo · Rosario",
+        "Nortex Offices",
+        "Corporate · Rosario",
         "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&q=80&auto=format&fit=crop",
         1,
       ),
       ...projectCard(
         3,
-        "Biblioteca del Puerto",
-        "Institucional · Mar del Plata",
+        "Port Library",
+        "Institutional · Mar del Plata",
         "https://images.unsplash.com/photo-1460574283810-2aab119d8511?w=900&q=80&auto=format&fit=crop",
         1,
       ),
       ...projectCard(
         4,
-        "Torre Vidrio",
-        "Corporativo · Córdoba",
+        "Glass Tower",
+        "Corporate · Córdoba",
         "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=900&q=80&auto=format&fit=crop",
         1,
       ),
       ...projectCard(
         5,
-        "Centro Cultural Andén",
-        "Institucional · Buenos Aires",
+        "Pier Cultural Center",
+        "Institutional · Buenos Aires",
         "https://images.unsplash.com/photo-1481253127861-534498168948?w=900&q=80&auto=format&fit=crop",
         1,
       ),
@@ -735,7 +735,7 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-team-title": {
         id: "archstudio-team-title",
         type: "text",
-        props: { content: "<strong>El equipo</strong>" },
+        props: { content: "<strong>The team</strong>" },
         style: sectionTitle(),
       },
       "archstudio-team-grid": {
@@ -755,22 +755,22 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       },
       ...teamCard(
         1,
-        "Arq. Valentina Riesco",
-        "Socia fundadora · Directora de proyecto",
+        "Valentina Riesco",
+        "Founding partner · Design director",
         "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=200&q=80&auto=format&fit=crop",
         "VR",
       ),
       ...teamCard(
         2,
-        "Arq. Martín Aldao",
-        "Socio · Arquitectura corporativa",
+        "Martín Aldao",
+        "Partner · Corporate architecture",
         "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&q=80&auto=format&fit=crop",
         "MA",
       ),
       ...teamCard(
         3,
-        "Arq. Delia Nkomo",
-        "Directora técnica · Gestión de obra",
+        "Delia Nkomo",
+        "Technical director · Construction management",
         "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&q=80&auto=format&fit=crop",
         "DN",
       ),
@@ -797,7 +797,7 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-process-title": {
         id: "archstudio-process-title",
         type: "text",
-        props: { content: "<strong>Cómo trabajamos tu proyecto</strong>" },
+        props: { content: "<strong>How we handle your project</strong>" },
         style: sectionTitle(),
       },
       "archstudio-process-grid": {
@@ -815,9 +815,9 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
         },
         children: ["archstudio-process-1", "archstudio-process-2", "archstudio-process-3"],
       },
-      ...processStep(1, "1", "Reunión de diagnóstico y relevamiento del terreno o local"),
-      ...processStep(2, "2", "Anteproyecto y presupuesto de obra, con hasta 2 rondas de ajuste"),
-      ...processStep(3, "3", "Gestión de permisos y acompañamiento durante toda la obra"),
+      ...processStep(1, "1", "Diagnostic meeting and site or space survey"),
+      ...processStep(2, "2", "Preliminary design and construction budget, up to 2 revision rounds"),
+      ...processStep(3, "3", "Institutional"),
 
       // --- Contacto — banda alt ---------------------------------------------------
       "archstudio-contact": {
@@ -851,13 +851,13 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-contact-title": {
         id: "archstudio-contact-title",
         type: "text",
-        props: { content: "<strong>Contanos tu proyecto</strong>" },
+        props: { content: "<strong>Tell us about your project</strong>" },
         style: sectionTitle(),
       },
       "archstudio-contact-sub": {
         id: "archstudio-contact-sub",
         type: "text",
-        props: { content: "Describe brevemente el terreno o local, la superficie aproximada y el uso que buscas darle. Te respondemos en menos de 48 horas." },
+        props: { content: "Briefly describe the site or space, the approximate area and the intended use. We respond within 48 hours." },
         style: bodyText(),
       },
       "archstudio-contact-card": {
@@ -893,13 +893,13 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-label-name": {
         id: "archstudio-label-name",
         type: "label",
-        props: { text: "Nombre completo", for: "archstudio-input-name" },
+        props: { text: "Full name", for: "archstudio-input-name" },
         style: defaultStyleFor("label"),
       },
       "archstudio-input-name": {
         id: "archstudio-input-name",
         type: "input",
-        props: { name: "nombre", type: "text", placeholder: "Tu nombre completo", required: true, disabled: false },
+        props: { name: "nombre", type: "text", placeholder: "Your full name", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "archstudio-field-email": {
@@ -912,13 +912,13 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-label-email": {
         id: "archstudio-label-email",
         type: "label",
-        props: { text: "Correo electrónico", for: "archstudio-input-email" },
+        props: { text: "Email", for: "archstudio-input-email" },
         style: defaultStyleFor("label"),
       },
       "archstudio-input-email": {
         id: "archstudio-input-email",
         type: "input",
-        props: { name: "email", type: "email", placeholder: "tu@correo.com", required: true, disabled: false },
+        props: { name: "email", type: "email", placeholder: "you@email.com", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "archstudio-field-type": {
@@ -931,7 +931,7 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-label-type": {
         id: "archstudio-label-type",
         type: "label",
-        props: { text: "Tipo de proyecto", for: "archstudio-select-type" },
+        props: { text: "Project type", for: "archstudio-select-type" },
         style: defaultStyleFor("label"),
       },
       "archstudio-select-type": {
@@ -939,10 +939,10 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
         type: "select",
         props: {
           name: "tipo",
-          placeholder: "Elige una opción…",
-          ariaLabel: "Tipo de proyecto",
+          placeholder: "Choose an option…",
+          ariaLabel: "Project type",
           options: [
-            { label: "Residencial", value: "residencial" },
+            { label: "Institutional", value: "institucional" },
             { label: "Corporativo", value: "corporativo" },
             { label: "Institucional", value: "institucional" },
           ],
@@ -959,19 +959,19 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-label-message": {
         id: "archstudio-label-message",
         type: "label",
-        props: { text: "Contanos brevemente tu proyecto", for: "archstudio-textarea-message" },
+        props: { text: "Briefly tell us about your project", for: "archstudio-textarea-message" },
         style: defaultStyleFor("label"),
       },
       "archstudio-textarea-message": {
         id: "archstudio-textarea-message",
         type: "textarea",
-        props: { name: "mensaje", placeholder: "Ej. Terreno de 300m² en zona residencial, busco una vivienda de 2 plantas…", rows: 4, required: false, disabled: false },
+        props: { name: "mensaje", placeholder: "E.g. 300m² lot in a residential area, looking for a 2-story home…", rows: 4, required: false, disabled: false },
         style: defaultStyleFor("textarea"),
       },
       "archstudio-submit": {
         id: "archstudio-submit",
         type: "button-submit",
-        props: { label: "Enviar consulta", disabled: false },
+        props: { label: "Send inquiry", disabled: false },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -1006,13 +1006,13 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-footer-address": {
         id: "archstudio-footer-address",
         type: "text",
-        props: { content: "Av. Del Libertador 4820, Piso 3, Buenos Aires" },
+        props: { content: "4820 Del Libertador Ave, 3rd Floor, Buenos Aires" },
         style: { base: { appearance: { color: { token: "colors.band.on" } } } },
       },
       "archstudio-footer-hours": {
         id: "archstudio-footer-hours",
         type: "text",
-        props: { content: "Lunes a viernes 9:00–18:00" },
+        props: { content: "Monday to Friday 9:00 AM–6:00 PM" },
         style: { base: { appearance: { color: { token: "colors.band.on" } } } },
       },
       "archstudio-footer-social": {
@@ -1024,7 +1024,7 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
       "archstudio-footer-copyright": {
         id: "archstudio-footer-copyright",
         type: "text",
-        props: { content: "© 2026 Umbral Arquitectos. Todos los derechos reservados." },
+        props: { content: "© 2026 Umbral Architects. All rights reserved." },
         style: {
           base: {
             size: { width: "100%" },
@@ -1044,138 +1044,79 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
     translations: (() => {
       const t: Record<string, NodeTranslations> = {};
 
-      t["archstudio-topbar-phone"] = {
-        en: { content: "Studio: +54 11 4789 2233" },
-        it: { content: "Studio: +54 11 4789 2233" },
-      };
-      t["archstudio-hero-badge"] = { en: { label: "22 years designing spaces" }, it: { label: "22 anni a progettare spazi" } };
-      t["archstudio-hero-title"] = {
-        en: { content: "<strong>Architecture with judgment, at human scale</strong>" },
-        it: { content: "<strong>Architettura con criterio, a misura d'uomo</strong>" },
-      };
-      t["archstudio-hero-sub"] = {
-        en: {
-          content: "We design residential, corporate and institutional projects that respond to the site, the budget and how the space will actually be lived in.",
-        },
-        it: {
-          content: "Progettiamo interventi residenziali, aziendali e istituzionali che rispondono al luogo, al budget e a come lo spazio verrà davvero vissuto.",
-        },
-      };
-      t["archstudio-hero-cta"] = { en: { label: "Schedule a meeting" }, it: { label: "Prenota un incontro" } };
-      t["archstudio-hero-image"] = {
-        en: { alt: "Façade of a contemporary building designed by Umbral Arquitectos" },
-        it: { alt: "Facciata di un edificio contemporaneo progettato da Umbral Arquitectos" },
-      };
+      t["archstudio-topbar-phone"] = { es: { content: "Estudio: +54 11 4789 2233" }, it: { content: "Studio: +54 11 4789 2233" } };
+      t["archstudio-hero-badge"] = { es: { label: "22 años proyectando espacios" }, it: { label: "22 anni a progettare spazi" } };
+      t["archstudio-hero-title"] = { es: { content: "<strong>Arquitectura con criterio, a escala humana</strong>" }, it: { content: "<strong>Architettura con criterio, a misura d'uomo</strong>" } };
+      t["archstudio-hero-sub"] = { es: { content: "Diseñamos proyectos residenciales, corporativos e institucionales que responden al lugar, al presupuesto y a cómo se va a vivir el espacio." }, it: { content: "Progettiamo interventi residenziali, aziendali e istituzionali che rispondono al luogo, al budget e a come lo spazio verrà davvero vissuto." } };
+      t["archstudio-hero-cta"] = { es: { label: "Agendar una reunión" }, it: { label: "Prenota un incontro" } };
+      t["archstudio-hero-image"] = { es: { alt: "Fachada de un edificio contemporáneo diseñado por Umbral Arquitectos" }, it: { alt: "Facciata di un edificio contemporaneo progettato da Umbral Arquitectos" } };
 
-      t["archstudio-services-nav-title"] = { en: { content: "<strong>Services</strong>" }, it: { content: "<strong>Servizi</strong>" } };
-      t["archstudio-services-nav-1"] = { en: { label: "Residential" }, it: { label: "Residenziale" } };
-      t["archstudio-services-nav-2"] = { en: { label: "Corporate" }, it: { label: "Aziendale" } };
-      t["archstudio-services-nav-3"] = { en: { label: "Institutional" }, it: { label: "Istituzionale" } };
+      t["archstudio-services-nav-title"] = { es: { content: "<strong>Servicios</strong>" }, it: { content: "<strong>Servizi</strong>" } };
+      t["archstudio-services-nav-1"] = { es: { label: "Residencial" }, it: { label: "Residenziale" } };
+      t["archstudio-services-nav-2"] = { es: { label: "Corporativo" }, it: { label: "Aziendale" } };
+      t["archstudio-services-nav-3"] = { es: { label: "Institucional" }, it: { label: "Istituzionale" } };
 
-      t["archstudio-services-side-title"] = { en: { content: "<strong>Not sure where to start?</strong>" }, it: { content: "<strong>Non sai da dove iniziare?</strong>" } };
-      t["archstudio-services-side-text"] = {
-        en: { content: "A free first diagnostic meeting, to understand the scope of your project." },
-        it: { content: "Un primo incontro diagnostico gratuito, per capire la portata del tuo progetto." },
-      };
+      t["archstudio-services-side-title"] = { es: { content: "<strong>¿No sabes por dónde empezar?</strong>" }, it: { content: "<strong>Non sai da dove iniziare?</strong>" } };
+      t["archstudio-services-side-text"] = { es: { content: "Una primera reunión de diagnóstico, sin costo, para entender el alcance de tu proyecto." }, it: { content: "Un primo incontro diagnostico gratuito, per capire la portata del tuo progetto." } };
 
-      t["archstudio-service-1-title"] = { en: { content: "<strong>Residential architecture</strong>" }, it: { content: "<strong>Architettura residenziale</strong>" } };
-      t["archstudio-service-1-text"] = {
-        en: { content: "Homes and extensions that start from the site and the way their future occupants actually live, not from a catalog of repeated floor plans." },
-        it: { content: "Case e ampliamenti che partono dal terreno e dallo stile di vita di chi li abiterà, non da un catalogo di planimetrie ripetute." },
-      };
-      t["archstudio-service-2-title"] = { en: { content: "<strong>Corporate architecture</strong>" }, it: { content: "<strong>Architettura aziendale</strong>" } };
-      t["archstudio-service-2-text"] = {
-        en: { content: "Offices and retail spaces that balance brand identity, operational efficiency and current regulations." },
-        it: { content: "Uffici e spazi commerciali che bilanciano identità di marca, efficienza operativa e normative vigenti." },
-      };
-      t["archstudio-service-3-title"] = { en: { content: "<strong>Institutional architecture</strong>" }, it: { content: "<strong>Architettura istituzionale</strong>" } };
-      t["archstudio-service-3-text"] = {
-        en: { content: "Educational, cultural and healthcare facilities, with permit management and bidding processes supported end to end." },
-        it: { content: "Strutture educative, culturali e sanitarie, con gestione di permessi e gare d'appalto seguite dall'inizio alla fine." },
-      };
+      t["archstudio-service-1-title"] = { es: { content: "<strong>Arquitectura residencial</strong>" }, it: { content: "<strong>Architettura residenziale</strong>" } };
+      t["archstudio-service-1-text"] = { es: { content: "Casas y ampliaciones que parten del terreno y del modo de vida de quien las habita, no de un catálogo de planos repetidos." }, it: { content: "Case e ampliamenti che partono dal terreno e dallo stile di vita di chi li abiterà, non da un catalogo di planimetrie ripetute." } };
+      t["archstudio-service-2-title"] = { es: { content: "<strong>Arquitectura corporativa</strong>" }, it: { content: "<strong>Architettura aziendale</strong>" } };
+      t["archstudio-service-2-text"] = { es: { content: "Oficinas y locales comerciales que equilibran identidad de marca, eficiencia operativa y normativa vigente." }, it: { content: "Uffici e spazi commerciali che bilanciano identità di marca, efficienza operativa e normative vigenti." } };
+      t["archstudio-service-3-title"] = { es: { content: "<strong>Arquitectura institucional</strong>" }, it: { content: "<strong>Architettura istituzionale</strong>" } };
+      t["archstudio-service-3-text"] = { es: { content: "Equipamiento educativo, cultural y de salud, con procesos de gestión de permisos y licitación acompañados de punta a punta." }, it: { content: "Strutture educative, culturali e sanitarie, con gestione di permessi e gare d'appalto seguite dall'inizio alla fine." } };
 
-      t["archstudio-projects-title"] = { en: { content: "<strong>Featured projects</strong>" }, it: { content: "<strong>Progetti in evidenza</strong>" } };
-      t["archstudio-project-1-category"] = { en: { content: "Residential · Buenos Aires" }, it: { content: "Residenziale · Buenos Aires" } };
-      t["archstudio-project-1-title"] = { en: { content: "<strong>Tilo House</strong>" }, it: { content: "<strong>Casa Tilo</strong>" } };
-      t["archstudio-project-1-image"] = { en: { alt: "Project Tilo House" }, it: { alt: "Progetto Casa Tilo" } };
-      t["archstudio-project-2-category"] = { en: { content: "Corporate · Rosario" }, it: { content: "Aziendale · Rosario" } };
-      t["archstudio-project-2-title"] = { en: { content: "<strong>Nortex Offices</strong>" }, it: { content: "<strong>Uffici Nortex</strong>" } };
-      t["archstudio-project-2-image"] = { en: { alt: "Project Nortex Offices" }, it: { alt: "Progetto Uffici Nortex" } };
-      t["archstudio-project-3-category"] = { en: { content: "Institutional · Mar del Plata" }, it: { content: "Istituzionale · Mar del Plata" } };
-      t["archstudio-project-3-title"] = { en: { content: "<strong>Port Library</strong>" }, it: { content: "<strong>Biblioteca del Porto</strong>" } };
-      t["archstudio-project-3-image"] = { en: { alt: "Project Port Library" }, it: { alt: "Progetto Biblioteca del Porto" } };
-      t["archstudio-project-4-category"] = { en: { content: "Corporate · Córdoba" }, it: { content: "Aziendale · Córdoba" } };
-      t["archstudio-project-4-title"] = { en: { content: "<strong>Glass Tower</strong>" }, it: { content: "<strong>Torre di Vetro</strong>" } };
-      t["archstudio-project-4-image"] = { en: { alt: "Project Glass Tower" }, it: { alt: "Progetto Torre di Vetro" } };
-      t["archstudio-project-5-category"] = { en: { content: "Institutional · Buenos Aires" }, it: { content: "Istituzionale · Buenos Aires" } };
-      t["archstudio-project-5-title"] = { en: { content: "<strong>Pier Cultural Center</strong>" }, it: { content: "<strong>Centro Culturale Molo</strong>" } };
-      t["archstudio-project-5-image"] = { en: { alt: "Project Pier Cultural Center" }, it: { alt: "Progetto Centro Culturale Molo" } };
+      t["archstudio-projects-title"] = { es: { content: "<strong>Proyectos destacados</strong>" }, it: { content: "<strong>Progetti in evidenza</strong>" } };
+      t["archstudio-project-1-category"] = { es: { content: "Residencial · Buenos Aires" }, it: { content: "Residenziale · Buenos Aires" } };
+      t["archstudio-project-1-title"] = { es: { content: "<strong>Casa Tilo</strong>" }, it: { content: "<strong>Casa Tilo</strong>" } };
+      t["archstudio-project-1-image"] = { es: { alt: "Project Tilo House" }, it: { alt: "Progetto Casa Tilo" } };
+      t["archstudio-project-2-category"] = { es: { content: "Corporativo · Rosario" }, it: { content: "Aziendale · Rosario" } };
+      t["archstudio-project-2-title"] = { es: { content: "<strong>Oficinas Nortex</strong>" }, it: { content: "<strong>Uffici Nortex</strong>" } };
+      t["archstudio-project-2-image"] = { es: { alt: "Project Nortex Offices" }, it: { alt: "Progetto Uffici Nortex" } };
+      t["archstudio-project-3-category"] = { es: { content: "Institucional · Mar del Plata" }, it: { content: "Istituzionale · Mar del Plata" } };
+      t["archstudio-project-3-title"] = { es: { content: "<strong>Biblioteca del Puerto</strong>" }, it: { content: "<strong>Biblioteca del Porto</strong>" } };
+      t["archstudio-project-3-image"] = { es: { alt: "Project Port Library" }, it: { alt: "Progetto Biblioteca del Porto" } };
+      t["archstudio-project-4-category"] = { es: { content: "Corporativo · Córdoba" }, it: { content: "Aziendale · Córdoba" } };
+      t["archstudio-project-4-title"] = { es: { content: "<strong>Torre Vidrio</strong>" }, it: { content: "<strong>Torre di Vetro</strong>" } };
+      t["archstudio-project-4-image"] = { es: { alt: "Project Glass Tower" }, it: { alt: "Progetto Torre di Vetro" } };
+      t["archstudio-project-5-category"] = { es: { content: "Institucional · Buenos Aires" }, it: { content: "Istituzionale · Buenos Aires" } };
+      t["archstudio-project-5-title"] = { es: { content: "<strong>Centro Cultural Andén</strong>" }, it: { content: "<strong>Centro Culturale Molo</strong>" } };
+      t["archstudio-project-5-image"] = { es: { alt: "Project Pier Cultural Center" }, it: { alt: "Progetto Centro Culturale Molo" } };
 
-      t["archstudio-team-title"] = { en: { content: "<strong>The team</strong>" }, it: { content: "<strong>Il team</strong>" } };
-      t["archstudio-team-1-avatar"] = { en: { alt: "Portrait of Valentina Riesco" }, it: { alt: "Ritratto di Valentina Riesco" } };
-      t["archstudio-team-1-name"] = { en: { content: "<strong>Valentina Riesco</strong>" }, it: { content: "<strong>Valentina Riesco</strong>" } };
-      t["archstudio-team-1-role"] = { en: { content: "Founding partner · Design director" }, it: { content: "Partner fondatrice · Direttrice di progetto" } };
-      t["archstudio-team-2-avatar"] = { en: { alt: "Portrait of Martín Aldao" }, it: { alt: "Ritratto di Martín Aldao" } };
-      t["archstudio-team-2-name"] = { en: { content: "<strong>Martín Aldao</strong>" }, it: { content: "<strong>Martín Aldao</strong>" } };
-      t["archstudio-team-2-role"] = { en: { content: "Partner · Corporate architecture" }, it: { content: "Partner · Architettura aziendale" } };
-      t["archstudio-team-3-avatar"] = { en: { alt: "Portrait of Delia Nkomo" }, it: { alt: "Ritratto di Delia Nkomo" } };
-      t["archstudio-team-3-name"] = { en: { content: "<strong>Delia Nkomo</strong>" }, it: { content: "<strong>Delia Nkomo</strong>" } };
-      t["archstudio-team-3-role"] = { en: { content: "Technical director · Construction management" }, it: { content: "Direttrice tecnica · Gestione dei lavori" } };
+      t["archstudio-team-title"] = { es: { content: "<strong>El equipo</strong>" }, it: { content: "<strong>Il team</strong>" } };
+      t["archstudio-team-1-avatar"] = { es: { alt: "Portrait of Valentina Riesco" }, it: { alt: "Ritratto di Valentina Riesco" } };
+      t["archstudio-team-1-name"] = { es: { content: "<strong>Arq. Valentina Riesco</strong>" }, it: { content: "<strong>Valentina Riesco</strong>" } };
+      t["archstudio-team-1-role"] = { es: { content: "Socia fundadora · Directora de proyecto" }, it: { content: "Partner fondatrice · Direttrice di progetto" } };
+      t["archstudio-team-2-avatar"] = { es: { alt: "Portrait of Martín Aldao" }, it: { alt: "Ritratto di Martín Aldao" } };
+      t["archstudio-team-2-name"] = { es: { content: "<strong>Arq. Martín Aldao</strong>" }, it: { content: "<strong>Martín Aldao</strong>" } };
+      t["archstudio-team-2-role"] = { es: { content: "Socio · Arquitectura corporativa" }, it: { content: "Partner · Architettura aziendale" } };
+      t["archstudio-team-3-avatar"] = { es: { alt: "Portrait of Delia Nkomo" }, it: { alt: "Ritratto di Delia Nkomo" } };
+      t["archstudio-team-3-name"] = { es: { content: "<strong>Arq. Delia Nkomo</strong>" }, it: { content: "<strong>Delia Nkomo</strong>" } };
+      t["archstudio-team-3-role"] = { es: { content: "Directora técnica · Gestión de obra" }, it: { content: "Direttrice tecnica · Gestione dei lavori" } };
 
-      t["archstudio-process-title"] = { en: { content: "<strong>How we handle your project</strong>" }, it: { content: "<strong>Come gestiamo il tuo progetto</strong>" } };
-      t["archstudio-process-1-value"] = { en: { value: "1" }, it: { value: "1" } };
-      t["archstudio-process-1-label"] = { en: { content: "Diagnostic meeting and site or space survey" }, it: { content: "Incontro diagnostico e rilievo del terreno o del locale" } };
-      t["archstudio-process-2-value"] = { en: { value: "2" }, it: { value: "2" } };
-      t["archstudio-process-2-label"] = { en: { content: "Preliminary design and construction budget, up to 2 revision rounds" }, it: { content: "Progetto preliminare e preventivo dei lavori, fino a 2 revisioni" } };
-      t["archstudio-process-3-value"] = { en: { value: "3" }, it: { value: "3" } };
-      t["archstudio-process-3-label"] = { en: { content: "Permit management and support throughout construction" }, it: { content: "Gestione dei permessi e supporto durante tutti i lavori" } };
+      t["archstudio-process-title"] = { es: { content: "<strong>Cómo trabajamos tu proyecto</strong>" }, it: { content: "<strong>Come gestiamo il tuo progetto</strong>" } };
+      t["archstudio-process-1-value"] = { es: { value: "1" }, it: { value: "1" } };
+      t["archstudio-process-1-label"] = { es: { content: "Reunión de diagnóstico y relevamiento del terreno o local" }, it: { content: "Incontro diagnostico e rilievo del terreno o del locale" } };
+      t["archstudio-process-2-value"] = { es: { value: "2" }, it: { value: "2" } };
+      t["archstudio-process-2-label"] = { es: { content: "Anteproyecto y presupuesto de obra, con hasta 2 rondas de ajuste" }, it: { content: "Progetto preliminare e preventivo dei lavori, fino a 2 revisioni" } };
+      t["archstudio-process-3-value"] = { es: { value: "3" }, it: { value: "3" } };
+      t["archstudio-process-3-label"] = { es: { content: "Gestión de permisos y acompañamiento durante toda la obra" }, it: { content: "Gestione dei permessi e supporto durante tutti i lavori" } };
 
-      t["archstudio-contact-title"] = { en: { content: "<strong>Tell us about your project</strong>" }, it: { content: "<strong>Raccontaci il tuo progetto</strong>" } };
-      t["archstudio-contact-sub"] = {
-        en: { content: "Briefly describe the site or space, the approximate area and the intended use. We respond within 48 hours." },
-        it: { content: "Descrivi brevemente il terreno o il locale, la superficie approssimativa e l'uso previsto. Rispondiamo entro 48 ore." },
-      };
-      t["archstudio-label-name"] = { en: { text: "Full name" }, it: { text: "Nome completo" } };
-      t["archstudio-input-name"] = { en: { placeholder: "Your full name" }, it: { placeholder: "Il tuo nome completo" } };
-      t["archstudio-label-email"] = { en: { text: "Email" }, it: { text: "Email" } };
-      t["archstudio-input-email"] = { en: { placeholder: "you@email.com" }, it: { placeholder: "tu@email.com" } };
-      t["archstudio-label-type"] = { en: { text: "Project type" }, it: { text: "Tipo di progetto" } };
-      t["archstudio-select-type"] = {
-        en: {
-          placeholder: "Choose an option…",
-          ariaLabel: "Project type",
-          options: [
-            { label: "Residential", value: "residencial" },
-            { label: "Corporate", value: "corporativo" },
-            { label: "Institutional", value: "institucional" },
-          ],
-        },
-        it: {
-          placeholder: "Scegli un'opzione…",
-          ariaLabel: "Tipo di progetto",
-          options: [
-            { label: "Residenziale", value: "residencial" },
-            { label: "Aziendale", value: "corporativo" },
-            { label: "Istituzionale", value: "institucional" },
-          ],
-        },
-      };
-      t["archstudio-label-message"] = { en: { text: "Briefly tell us about your project" }, it: { text: "Raccontaci brevemente il tuo progetto" } };
-      t["archstudio-textarea-message"] = {
-        en: { placeholder: "E.g. 300m² lot in a residential area, looking for a 2-story home…" },
-        it: { placeholder: "Es. Terreno di 300m² in zona residenziale, cerco una casa a 2 piani…" },
-      };
-      t["archstudio-submit"] = { en: { label: "Send inquiry" }, it: { label: "Invia richiesta" } };
+      t["archstudio-contact-title"] = { es: { content: "<strong>Contanos tu proyecto</strong>" }, it: { content: "<strong>Raccontaci il tuo progetto</strong>" } };
+      t["archstudio-contact-sub"] = { es: { content: "Describe brevemente el terreno o local, la superficie aproximada y el uso que buscas darle. Te respondemos en menos de 48 horas." }, it: { content: "Descrivi brevemente il terreno o il locale, la superficie approssimativa e l'uso previsto. Rispondiamo entro 48 ore." } };
+      t["archstudio-label-name"] = { es: { text: "Nombre completo" }, it: { text: "Nome completo" } };
+      t["archstudio-input-name"] = { es: { placeholder: "Tu nombre completo" }, it: { placeholder: "Il tuo nome completo" } };
+      t["archstudio-label-email"] = { es: { text: "Correo electrónico" }, it: { text: "Email" } };
+      t["archstudio-input-email"] = { es: { placeholder: "tu@correo.com" }, it: { placeholder: "tu@email.com" } };
+      t["archstudio-label-type"] = { es: { text: "Tipo de proyecto" }, it: { text: "Tipo di progetto" } };
+      t["archstudio-select-type"] = { es: { placeholder: "Elige una opción…", ariaLabel: "Tipo de proyecto", label: "Institucional", value: "institucional" }, it: { placeholder: "Scegli un'opzione…", ariaLabel: "Tipo di progetto", label: "Istituzionale", value: "institucional" } };
+      t["archstudio-label-message"] = { es: { text: "Contanos brevemente tu proyecto" }, it: { text: "Raccontaci brevemente il tuo progetto" } };
+      t["archstudio-textarea-message"] = { es: { placeholder: "Ej. Terreno de 300m² en zona residencial, busco una vivienda de 2 plantas…" }, it: { placeholder: "Es. Terreno di 300m² in zona residenziale, cerco una casa a 2 piani…" } };
+      t["archstudio-submit"] = { es: { label: "Enviar consulta" }, it: { label: "Invia richiesta" } };
 
-      t["archstudio-footer-copyright"] = {
-        en: { content: "© 2026 Umbral Architects. All rights reserved." },
-        it: { content: "© 2026 Umbral Architetti. Tutti i diritti riservati." },
-      };
-      t["archstudio-footer-address"] = {
-        en: { content: "4820 Del Libertador Ave, 3rd Floor, Buenos Aires" },
-        it: { content: "Av. Del Libertador 4820, 3° Piano, Buenos Aires" },
-      };
-      t["archstudio-footer-hours"] = { en: { content: "Monday to Friday 9:00 AM–6:00 PM" }, it: { content: "Lunedì-venerdì 9:00–18:00" } };
+      t["archstudio-footer-copyright"] = { es: { content: "© 2026 Umbral Arquitectos. Todos los derechos reservados." }, it: { content: "© 2026 Umbral Architetti. Tutti i diritti riservati." } };
+      t["archstudio-footer-address"] = { es: { content: "Av. Del Libertador 4820, Piso 3, Buenos Aires" }, it: { content: "Av. Del Libertador 4820, 3° Piano, Buenos Aires" } };
+      t["archstudio-footer-hours"] = { es: { content: "Lunes a viernes 9:00–18:00" }, it: { content: "Lunedì-venerdì 9:00–18:00" } };
 
       return t;
     })(),
@@ -1183,31 +1124,31 @@ export function buildArchitectureStudioPageFragment(): NodeFragment {
 }
 
 export const architectureStudioPageMeta: LayoutPageMeta = {
-  title: "Umbral Arquitectos · Estudio de arquitectura y urbanismo",
+  title: "Umbral Architects · Architecture and urban design studio",
   description:
-    "Estudio de arquitectura con 22 años de trayectoria en proyectos residenciales, corporativos e institucionales.",
+    "Architecture studio with 22 years of experience in residential, corporate and institutional projects.",
   seo: {
     robots: "index,follow",
     openGraph: {
-      title: "Umbral Arquitectos",
-      description: "Arquitectura con criterio, a escala humana. Agenda una reunión.",
+      title: "Umbral Architects",
+      description: "Architecture with judgment, at human scale. Schedule a meeting.",
       image: "https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=1200&q=80&auto=format&fit=crop",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "Umbral Arquitectos",
-      description: "Arquitectura con criterio, a escala humana. Agenda una reunión.",
+      title: "Umbral Architects",
+      description: "Architecture with judgment, at human scale. Schedule a meeting.",
       image: "https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=1200&q=80&auto=format&fit=crop",
     },
   },
   metaTranslations: {
-    en: {
-      title: "Umbral Architects · Architecture and urban design studio",
-      description: "Architecture studio with 22 years of experience in residential, corporate and institutional projects.",
+    es: {
+      title: "Umbral Arquitectos · Estudio de arquitectura y urbanismo",
+      description: "Estudio de arquitectura con 22 años de trayectoria en proyectos residenciales, corporativos e institucionales.",
       seo: {
-        openGraph: { title: "Umbral Architects", description: "Architecture with judgment, at human scale. Schedule a meeting." },
-        twitter: { title: "Umbral Architects", description: "Architecture with judgment, at human scale. Schedule a meeting." },
+        openGraph: { title: "Umbral Arquitectos", description: "Arquitectura con criterio, a escala humana. Agenda una reunión." },
+        twitter: { title: "Umbral Arquitectos", description: "Arquitectura con criterio, a escala humana. Agenda una reunión." },
       },
     },
     it: {

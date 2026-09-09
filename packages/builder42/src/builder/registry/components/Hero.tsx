@@ -63,7 +63,7 @@ function HeroRender(ctx: RenderContext) {
       {children}
       {!exportMode && isEmpty ? (
         <span className="pbx-empty-hint" data-empty-hint>
-          Hero vacío — suelta título, subtítulo y CTA
+          Empty hero — drop a title, subtitle, and CTA
         </span>
       ) : null}
     </section>

@@ -18,7 +18,7 @@
   gap: 4px;
   padding: 4px 10px;
   font-size: 13px;
-  border: 1px solid var(--pb-chrome-bg-hover);
+  border: 0;
   border-radius: var(--pb-chrome-radius-sm);
   background: transparent;
   color: var(--pb-chrome-muted-on-dark);
@@ -685,29 +685,33 @@
 /* --- Tabs del panel lateral (Componentes / Tokens) --- */
 .pbx-side-tabs {
   display: flex;
+  align-items: flex-end;
+  box-sizing: border-box;
+  height: 50px;
   gap: 2px;
-  background: var(--pb-chrome-surface-alt);
+  background: var(--pb-chrome-border-strong);
   border-bottom: 1px solid var(--pb-chrome-border);
   padding: 8px 8px 0;
 }
 
 .pbx-side-tabs__trigger {
   flex: 1 1 0;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--pb-chrome-border);
+  background: var(--pb-chrome-surface-alt);
   color: var(--pb-chrome-text-muted);
-  height: 34px;
+  height: 41px;
   border-radius: var(--pb-chrome-radius-xs) var(--pb-chrome-radius-xs) 0 0;
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
   border-bottom: 3px solid transparent;
-  transition: color var(--pb-chrome-transition), transform var(--pb-chrome-transition);
+  transition: color var(--pb-chrome-transition), background var(--pb-chrome-transition);
   margin-bottom: -1px;
 }
 
 .pbx-side-tabs__trigger:hover {
-  transform: scale(1.03);
+  color: var(--pb-chrome-text);
+  background: var(--pb-chrome-surface);
 }
 
 .pbx-side-tabs__trigger--active {

@@ -247,13 +247,13 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-hero-badge": {
         id: "team-page-hero-badge",
         type: "badge",
-        props: { label: "Escritorios disponibles esta semana" },
+        props: { label: "Desks available this week" },
         style: defaultStyleFor("badge"),
       },
       "team-page-hero-title": {
         id: "team-page-hero-title",
         type: "text",
-        props: { content: "<strong>Tu próximo lugar de trabajo, sin ataduras</strong>" },
+        props: { content: "<strong>Your next workplace, with no strings attached</strong>" },
         style: {
           base: {
             size: { maxWidth: "22ch" },
@@ -272,7 +272,7 @@ export function buildTeamPageFragment(): NodeFragment {
         type: "text",
         props: {
           content:
-            "Escritorios flexibles, oficinas privadas y una comunidad activa de equipos remotos y freelancers en el corazón de Guadalajara.",
+            "Flexible desks, private offices and an active community of remote teams and freelancers in the heart of Guadalajara.",
         },
         style: {
           base: {
@@ -285,7 +285,7 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-hero-cta": {
         id: "team-page-hero-cta",
         type: "button",
-        props: { label: "Ver planes de membresía", link: { kind: "anchor", nodeId: "team-page-plans" } },
+        props: { label: "See membership plans", link: { kind: "anchor", nodeId: "team-page-plans" } },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -313,10 +313,10 @@ export function buildTeamPageFragment(): NodeFragment {
         },
         children: ["team-page-hero-nav-1", "team-page-hero-nav-2", "team-page-hero-nav-3", "team-page-hero-nav-4"],
       },
-      ...anchorLink(1, "Planes", "team-page-plans"),
-      ...anchorLink(2, "Instalaciones", "team-page-facilities"),
-      ...anchorLink(3, "Comunidad", "team-page-community"),
-      ...anchorLink(4, "Ubicación", "team-page-location"),
+      ...anchorLink(1, "Plans", "team-page-plans"),
+      ...anchorLink(2, "Facilities", "team-page-facilities"),
+      ...anchorLink(3, "Community", "team-page-community"),
+      ...anchorLink(4, "Location", "team-page-location"),
 
       // --- Planes de membresía — aside + main (A7b) -----------------------------
       "team-page-plans": {
@@ -337,13 +337,13 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-plans-title": {
         id: "team-page-plans-title",
         type: "text",
-        props: { content: "<strong>Planes de membresía</strong>" },
+        props: { content: "<strong>Membership plans</strong>" },
         style: sectionTitle(),
       },
       "team-page-plans-sub": {
         id: "team-page-plans-sub",
         type: "text",
-        props: { content: "Desde un escritorio para un día hasta tu propia oficina privada. Cambia de plan cuando lo necesites." },
+        props: { content: "From a single day desk to your own private office. Change plans whenever you need to." },
         style: bodyText(),
       },
       // A7b: 2 columnas asimétricas (main con tabs+pricing primero, aside de
@@ -386,17 +386,17 @@ export function buildTeamPageFragment(): NodeFragment {
         {
           planName: "Flex desk",
           price: "$1,450",
-          period: "/mes",
+          period: "/mo",
           features: [
-            "Cualquier escritorio disponible",
-            "Acceso 9:00–20:00",
-            "Wifi de alta velocidad",
-            "2h de sala de juntas al mes",
+            "Any available desk",
+            "Access 9:00 AM–8:00 PM",
+            "High-speed wifi",
+            "2h of meeting room per month",
           ],
-          ctaLabel: "Reservar flex desk",
+          ctaLabel: "Book flex desk",
           ctaLink: { kind: "anchor", nodeId: "team-page-location" },
           popular: false,
-          popularLabel: "Más elegido",
+          popularLabel: "Most chosen",
         },
         {
           ...defaultStyleFor("pricing-card"),
@@ -416,18 +416,18 @@ export function buildTeamPageFragment(): NodeFragment {
         {
           planName: "Dedicated desk",
           price: "$2,200",
-          period: "/mes",
+          period: "/mo",
           features: [
-            "Escritorio fijo asignado",
-            "Acceso 24/7",
-            "Casillero personal",
-            "6h de sala de juntas al mes",
-            "Correo con dirección del espacio",
+            "Assigned fixed desk",
+            "24/7 access",
+            "Personal locker",
+            "6h of meeting room per month",
+            "Mail with the space's address",
           ],
-          ctaLabel: "Reservar dedicated desk",
+          ctaLabel: "Book dedicated desk",
           ctaLink: { kind: "anchor", nodeId: "team-page-location" },
           popular: true,
-          popularLabel: "Más elegido",
+          popularLabel: "Most chosen",
         },
         {
           ...defaultStyleFor("pricing-card"),
@@ -442,27 +442,27 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-tab-private": {
         id: "team-page-tab-private",
         type: "tab",
-        props: { label: "Oficina privada" },
+        props: { label: "Private office" },
         style: defaultStyleFor("tab"),
         children: ["team-page-plan-private"],
       },
       ...pricingCardFragment(
         "team-page-plan-private",
         {
-          planName: "Oficina privada",
+          planName: "Private office",
           price: "$5,900",
-          period: "/mes",
+          period: "/mo",
           features: [
-            "Oficina cerrada para hasta 4 personas",
-            "Acceso 24/7",
-            "Sala de juntas ilimitada",
-            "Rotulación con tu marca",
-            "Factura y contrato flexible",
+            "Closed office for up to 4 people",
+            "24/7 access",
+            "Unlimited meeting room",
+            "Branding with your logo",
+            "Flexible invoicing and contract",
           ],
-          ctaLabel: "Agendar visita",
+          ctaLabel: "Schedule a visit",
           ctaLink: { kind: "anchor", nodeId: "team-page-location" },
           popular: false,
-          popularLabel: "Más elegido",
+          popularLabel: "Most chosen",
         },
         {
           ...defaultStyleFor("pricing-card"),
@@ -489,19 +489,19 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-plans-aside-title": {
         id: "team-page-plans-aside-title",
         type: "text",
-        props: { content: "<strong>¿No sabes qué plan elegir?</strong>" },
+        props: { content: "<strong>Not sure which plan to pick?</strong>" },
         style: { base: { typography: { fontSize: "1.125rem", fontWeight: { token: "typography.weights.bold" } }, appearance: { color: { token: "colors.text" } } } },
       },
       "team-page-plans-aside-text": {
         id: "team-page-plans-aside-text",
         type: "text",
-        props: { content: "Agenda un recorrido de 20 minutos y te ayudamos a encontrar el plan que se ajusta a tu equipo." },
+        props: { content: "Book a 20-minute tour and we'll help you find the plan that fits your team." },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
       "team-page-plans-aside-cta": {
         id: "team-page-plans-aside-cta",
         type: "button",
-        props: { label: "Agendar recorrido", link: { kind: "anchor", nodeId: "team-page-location" } },
+        props: { label: "Book a tour", link: { kind: "anchor", nodeId: "team-page-location" } },
         style: {
           base: {
             spacing: { padding: "14px 22px" },
@@ -535,7 +535,7 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-facilities-title": {
         id: "team-page-facilities-title",
         type: "text",
-        props: { content: "<strong>Instalaciones pensadas para trabajar bien</strong>" },
+        props: { content: "<strong>Facilities designed to work well</strong>" },
         style: sectionTitle(),
       },
       "team-page-facilities-grid": {
@@ -550,31 +550,31 @@ export function buildTeamPageFragment(): NodeFragment {
       },
       ...facilityCard(
         1,
-        "Sala de juntas",
-        "Dos salas equipadas con pantalla y videoconferencia, reservables por hora.",
+        "Meeting room",
+        "Two rooms equipped with screen and videoconferencing, bookable by the hour.",
         "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80&auto=format&fit=crop",
-        "Sala de juntas con pantalla y mesa larga",
+        "Meeting room with screen and long table",
       ),
       ...facilityCard(
         2,
-        "Área de café",
-        "Café de especialidad ilimitado y una cocina compartida para el almuerzo.",
+        "Coffee area",
+        "Unlimited specialty coffee and a shared kitchen for lunch.",
         "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&q=80&auto=format&fit=crop",
-        "Área de café con barra y taburetes",
+        "Coffee area with bar and stools",
       ),
       ...facilityCard(
         3,
-        "Cabinas telefónicas",
-        "Cabinas insonorizadas para llamadas y videollamadas sin interrumpir a nadie.",
+        "Phone booths",
+        "Soundproof booths for calls and video calls without disturbing anyone.",
         "https://images.unsplash.com/photo-1600508773949-d0fd9226ffd8?w=800&q=80&auto=format&fit=crop",
-        "Cabina telefónica insonorizada",
+        "Soundproof phone booth",
       ),
       ...facilityCard(
         4,
-        "Terraza",
-        "Espacio al aire libre con wifi para trabajar o hacer una pausa.",
+        "Terrace",
+        "Outdoor space with wifi to work or take a break.",
         "https://images.unsplash.com/photo-1522071901873-411886a10004?w=800&q=80&auto=format&fit=crop",
-        "Terraza con mesas y plantas",
+        "Terrace with tables and plants",
       ),
 
       // --- Comunidad y eventos — banda oscura -----------------------------------
@@ -596,7 +596,7 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-community-title": {
         id: "team-page-community-title",
         type: "text",
-        props: { content: "<strong>Una comunidad, no solo un escritorio</strong>" },
+        props: { content: "<strong>A community, not just a desk</strong>" },
         style: sectionTitle({ token: "colors.band.on" }),
       },
       "team-page-community-text": {
@@ -604,7 +604,7 @@ export function buildTeamPageFragment(): NodeFragment {
         type: "text",
         props: {
           content:
-            "Organizamos eventos mensuales de networking, talleres y desayunos de comunidad para que conozcas a otros equipos del espacio.",
+            "We host monthly networking events, workshops and community breakfasts so you can meet other teams in the space.",
         },
         style: { ...bodyText({ token: "colors.band.on" }), base: { ...bodyText({ token: "colors.band.on" }).base } },
       },
@@ -639,13 +639,13 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-event-1-title": {
         id: "team-page-event-1-title",
         type: "text",
-        props: { content: "<strong>Desayuno de comunidad</strong>" },
+        props: { content: "<strong>Community breakfast</strong>" },
         style: { base: { typography: { fontWeight: { token: "typography.weights.bold" } }, appearance: { color: { token: "colors.band.on" } } } },
       },
       "team-page-event-1-text": {
         id: "team-page-event-1-text",
         type: "text",
-        props: { content: "Primer jueves de cada mes, 9:00 AM" },
+        props: { content: "First Thursday of every month, 9:00 AM" },
         style: { base: { appearance: { color: { token: "colors.band.on" } } } },
       },
       "team-page-event-2": {
@@ -669,13 +669,13 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-event-2-title": {
         id: "team-page-event-2-title",
         type: "text",
-        props: { content: "<strong>Taller de productividad</strong>" },
+        props: { content: "<strong>Productivity workshop</strong>" },
         style: { base: { typography: { fontWeight: { token: "typography.weights.bold" } }, appearance: { color: { token: "colors.band.on" } } } },
       },
       "team-page-event-2-text": {
         id: "team-page-event-2-text",
         type: "text",
-        props: { content: "Tercer miércoles de cada mes, 5:00 PM" },
+        props: { content: "Third Wednesday of every month, 5:00 PM" },
         style: { base: { appearance: { color: { token: "colors.band.on" } } } },
       },
       "team-page-event-3": {
@@ -699,13 +699,13 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-event-3-title": {
         id: "team-page-event-3-title",
         type: "text",
-        props: { content: "<strong>Networking de fin de mes</strong>" },
+        props: { content: "<strong>End-of-month networking</strong>" },
         style: { base: { typography: { fontWeight: { token: "typography.weights.bold" } }, appearance: { color: { token: "colors.band.on" } } } },
       },
       "team-page-event-3-text": {
         id: "team-page-event-3-text",
         type: "text",
-        props: { content: "Último viernes de cada mes, 6:30 PM" },
+        props: { content: "Last Friday of every month, 6:30 PM" },
         style: { base: { appearance: { color: { token: "colors.band.on" } } } },
       },
 
@@ -728,7 +728,7 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-testimonials-title": {
         id: "team-page-testimonials-title",
         type: "text",
-        props: { content: "<strong>Lo que dicen nuestros miembros</strong>" },
+        props: { content: "<strong>What our members say</strong>" },
         style: sectionTitle(),
       },
       "team-page-testimonials-grid": {
@@ -743,23 +743,23 @@ export function buildTeamPageFragment(): NodeFragment {
       },
       ...memberTestimonial(
         1,
-        "Cambié mi departamento por Muelle 12 hace un año y no lo cambio por nada: internet estable, café bueno y gente con quien colaborar de verdad.",
+        "I traded my apartment for Muelle 12 a year ago and I wouldn't change it for anything: stable internet, good coffee and people to really collaborate with.",
         "Renata Cortés",
-        "Diseñadora freelance",
+        "Freelance designer",
         "RC",
       ),
       ...memberTestimonial(
         2,
-        "Nuestro equipo remoto necesitaba un punto de encuentro semanal. La oficina privada nos dio flexibilidad sin firmar un contrato de años.",
+        "Our remote team needed a weekly meeting point. The private office gave us flexibility without signing a years-long lease.",
         "Julián Torres",
-        "Fundador, estudio de software",
+        "Founder, software studio",
         "JT",
       ),
       ...memberTestimonial(
         3,
-        "Los eventos de comunidad me conectaron con dos clientes en mi primer mes. El espacio se paga solo.",
+        "The community events connected me with two clients in my first month. The space pays for itself.",
         "Mariana Vega",
-        "Consultora de marketing",
+        "Marketing consultant",
         "MV",
       ),
 
@@ -791,7 +791,7 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-location-title": {
         id: "team-page-location-title",
         type: "text",
-        props: { content: "<strong>Ven a conocer el espacio</strong>" },
+        props: { content: "<strong>Come see the space</strong>" },
         style: {
           base: {
             typography: { fontFamily: { token: "typography.families.sans" }, fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: { token: "typography.weights.bold" }, lineHeight: "1.15" },
@@ -802,13 +802,13 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-location-sub": {
         id: "team-page-location-sub",
         type: "text",
-        props: { content: "Agenda un recorrido gratuito o escríbenos si tienes dudas sobre planes y disponibilidad." },
+        props: { content: "Book a free tour or write to us if you have questions about plans and availability." },
         style: { base: { typography: { fontSize: "clamp(1rem, 1.6vw, 1.125rem)" }, appearance: { color: { token: "colors.muted" } } } },
       },
       "team-page-location-address": {
         id: "team-page-location-address",
         type: "text",
-        props: { content: "Av. Chapultepec 480, Col. Americana, Guadalajara, Jalisco" },
+        props: { content: "480 Chapultepec Ave, Americana, Guadalajara, Jalisco" },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
       "team-page-location-card": {
@@ -839,13 +839,13 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-label-name": {
         id: "team-page-label-name",
         type: "label",
-        props: { text: "Nombre completo", for: "team-page-input-name" },
+        props: { text: "Full name", for: "team-page-input-name" },
         style: defaultStyleFor("label"),
       },
       "team-page-input-name": {
         id: "team-page-input-name",
         type: "input",
-        props: { name: "nombre", type: "text", placeholder: "Tu nombre completo", required: true, disabled: false },
+        props: { name: "nombre", type: "text", placeholder: "Your full name", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "team-page-field-email": {
@@ -858,13 +858,13 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-label-email": {
         id: "team-page-label-email",
         type: "label",
-        props: { text: "Correo electrónico", for: "team-page-input-email" },
+        props: { text: "Email", for: "team-page-input-email" },
         style: defaultStyleFor("label"),
       },
       "team-page-input-email": {
         id: "team-page-input-email",
         type: "input",
-        props: { name: "email", type: "email", placeholder: "tu@correo.com", required: true, disabled: false },
+        props: { name: "email", type: "email", placeholder: "you@email.com", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "team-page-field-message": {
@@ -877,19 +877,19 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-label-message": {
         id: "team-page-label-message",
         type: "label",
-        props: { text: "¿En qué podemos ayudarte?", for: "team-page-textarea-message" },
+        props: { text: "How can we help?", for: "team-page-textarea-message" },
         style: defaultStyleFor("label"),
       },
       "team-page-textarea-message": {
         id: "team-page-textarea-message",
         type: "textarea",
-        props: { name: "mensaje", placeholder: "Ej. Quiero agendar un recorrido la próxima semana…", rows: 4, required: false, disabled: false },
+        props: { name: "mensaje", placeholder: "E.g. I'd like to book a tour next week…", rows: 4, required: false, disabled: false },
         style: defaultStyleFor("textarea"),
       },
       "team-page-submit": {
         id: "team-page-submit",
         type: "button-submit",
-        props: { label: "Agendar recorrido", disabled: false },
+        props: { label: "Book a tour", disabled: false },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -925,7 +925,7 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-footer-address": {
         id: "team-page-footer-address",
         type: "text",
-        props: { content: "Av. Chapultepec 480, Col. Americana, Guadalajara, Jalisco" },
+        props: { content: "480 Chapultepec Ave, Americana, Guadalajara, Jalisco" },
         style: { base: { appearance: { color: { token: "colors.band.on" } } } },
       },
       "team-page-footer-social": {
@@ -937,7 +937,7 @@ export function buildTeamPageFragment(): NodeFragment {
       "team-page-footer-copyright": {
         id: "team-page-footer-copyright",
         type: "text",
-        props: { content: "© 2026 Muelle 12 Coworking. Todos los derechos reservados." },
+        props: { content: "© 2026 Muelle 12 Coworking. All rights reserved." },
         style: {
           base: {
             size: { width: "100%" },
@@ -957,202 +957,103 @@ export function buildTeamPageFragment(): NodeFragment {
     translations: (() => {
       const t: Record<string, NodeTranslations> = {};
 
-      t["team-page-hero-nav-1"] = { en: { label: "Plans" }, it: { label: "Piani" } };
-      t["team-page-hero-nav-2"] = { en: { label: "Facilities" }, it: { label: "Servizi" } };
-      t["team-page-hero-nav-3"] = { en: { label: "Community" }, it: { label: "Community" } };
-      t["team-page-hero-nav-4"] = { en: { label: "Location" }, it: { label: "Posizione" } };
+      t["team-page-hero-nav-1"] = { es: { label: "Planes" }, it: { label: "Piani" } };
+      t["team-page-hero-nav-2"] = { es: { label: "Instalaciones" }, it: { label: "Servizi" } };
+      t["team-page-hero-nav-3"] = { es: { label: "Comunidad" }, it: { label: "Community" } };
+      t["team-page-hero-nav-4"] = { es: { label: "Ubicación" }, it: { label: "Posizione" } };
 
-      t["team-page-hero-badge"] = { en: { label: "Desks available this week" }, it: { label: "Scrivanie disponibili questa settimana" } };
-      t["team-page-hero-title"] = {
-        en: { content: "<strong>Your next workplace, with no strings attached</strong>" },
-        it: { content: "<strong>Il tuo prossimo posto di lavoro, senza vincoli</strong>" },
-      };
-      t["team-page-hero-sub"] = {
-        en: {
-          content:
-            "Flexible desks, private offices and an active community of remote teams and freelancers in the heart of Guadalajara.",
-        },
-        it: {
-          content:
-            "Scrivanie flessibili, uffici privati e una community attiva di team remoti e freelance nel cuore di Guadalajara.",
-        },
-      };
-      t["team-page-hero-cta"] = { en: { label: "See membership plans" }, it: { label: "Vedi i piani di abbonamento" } };
+      t["team-page-hero-badge"] = { es: { label: "Escritorios disponibles esta semana" }, it: { label: "Scrivanie disponibili questa settimana" } };
+      t["team-page-hero-title"] = { es: { content: "<strong>Tu próximo lugar de trabajo, sin ataduras</strong>" }, it: { content: "<strong>Il tuo prossimo posto di lavoro, senza vincoli</strong>" } };
+      t["team-page-hero-sub"] = { es: { content: "Escritorios flexibles, oficinas privadas y una comunidad activa de equipos remotos y freelancers en el corazón de Guadalajara." }, it: { content: "Scrivanie flessibili, uffici privati e una community attiva di team remoti e freelance nel cuore di Guadalajara." } };
+      t["team-page-hero-cta"] = { es: { label: "Ver planes de membresía" }, it: { label: "Vedi i piani di abbonamento" } };
 
-      t["team-page-plans-title"] = { en: { content: "<strong>Membership plans</strong>" }, it: { content: "<strong>Piani di abbonamento</strong>" } };
-      t["team-page-plans-sub"] = {
-        en: { content: "From a single day desk to your own private office. Change plans whenever you need to." },
-        it: { content: "Da una scrivania per un giorno al tuo ufficio privato. Cambia piano quando vuoi." },
-      };
+      t["team-page-plans-title"] = { es: { content: "<strong>Planes de membresía</strong>" }, it: { content: "<strong>Piani di abbonamento</strong>" } };
+      t["team-page-plans-sub"] = { es: { content: "Desde un escritorio para un día hasta tu propia oficina privada. Cambia de plan cuando lo necesites." }, it: { content: "Da una scrivania per un giorno al tuo ufficio privato. Cambia piano quando vuoi." } };
 
-      t["team-page-tab-flex"] = { en: { label: "Flex desk" }, it: { label: "Flex desk" } };
-      t["team-page-plan-flex-plan"] = { en: { content: "Flex desk" }, it: { content: "Flex desk" } };
-      t["team-page-plan-flex-price"] = { en: { content: "$1,450" }, it: { content: "$1.450" } };
-      t["team-page-plan-flex-period"] = { en: { content: "/mo" }, it: { content: "/mese" } };
-      t["team-page-plan-flex-feature-0-text"] = { en: { content: "✓ Any available desk" }, it: { content: "✓ Qualsiasi scrivania disponibile" } };
-      t["team-page-plan-flex-feature-1-text"] = { en: { content: "✓ Access 9:00 AM–8:00 PM" }, it: { content: "✓ Accesso 9:00–20:00" } };
-      t["team-page-plan-flex-feature-2-text"] = { en: { content: "✓ High-speed wifi" }, it: { content: "✓ Wifi ad alta velocità" } };
-      t["team-page-plan-flex-feature-3-text"] = { en: { content: "✓ 2h of meeting room per month" }, it: { content: "✓ 2h di sala riunioni al mese" } };
-      t["team-page-plan-flex-cta"] = { en: { label: "Book flex desk" }, it: { label: "Prenota flex desk" } };
-      t["team-page-tab-dedicated"] = { en: { label: "Dedicated desk" }, it: { label: "Dedicated desk" } };
-      t["team-page-plan-dedicated-badge"] = { en: { content: "Most chosen" }, it: { content: "Più scelto" } };
-      t["team-page-plan-dedicated-plan"] = { en: { content: "Dedicated desk" }, it: { content: "Dedicated desk" } };
-      t["team-page-plan-dedicated-price"] = { en: { content: "$2,200" }, it: { content: "$2.200" } };
-      t["team-page-plan-dedicated-period"] = { en: { content: "/mo" }, it: { content: "/mese" } };
-      t["team-page-plan-dedicated-feature-0-text"] = { en: { content: "✓ Assigned fixed desk" }, it: { content: "✓ Scrivania fissa assegnata" } };
-      t["team-page-plan-dedicated-feature-1-text"] = { en: { content: "✓ 24/7 access" }, it: { content: "✓ Accesso 24/7" } };
-      t["team-page-plan-dedicated-feature-2-text"] = { en: { content: "✓ Personal locker" }, it: { content: "✓ Armadietto personale" } };
-      t["team-page-plan-dedicated-feature-3-text"] = { en: { content: "✓ 6h of meeting room per month" }, it: { content: "✓ 6h di sala riunioni al mese" } };
-      t["team-page-plan-dedicated-feature-4-text"] = { en: { content: "✓ Mail with the space's address" }, it: { content: "✓ Posta con indirizzo dello spazio" } };
-      t["team-page-plan-dedicated-cta"] = { en: { label: "Book dedicated desk" }, it: { label: "Prenota dedicated desk" } };
-      t["team-page-tab-private"] = { en: { label: "Private office" }, it: { label: "Ufficio privato" } };
-      t["team-page-plan-private-plan"] = { en: { content: "Private office" }, it: { content: "Ufficio privato" } };
-      t["team-page-plan-private-price"] = { en: { content: "$5,900" }, it: { content: "$5.900" } };
-      t["team-page-plan-private-period"] = { en: { content: "/mo" }, it: { content: "/mese" } };
-      t["team-page-plan-private-feature-0-text"] = { en: { content: "✓ Closed office for up to 4 people" }, it: { content: "✓ Ufficio chiuso per fino a 4 persone" } };
-      t["team-page-plan-private-feature-1-text"] = { en: { content: "✓ 24/7 access" }, it: { content: "✓ Accesso 24/7" } };
-      t["team-page-plan-private-feature-2-text"] = { en: { content: "✓ Unlimited meeting room" }, it: { content: "✓ Sala riunioni illimitata" } };
-      t["team-page-plan-private-feature-3-text"] = { en: { content: "✓ Branding with your logo" }, it: { content: "✓ Branding con il tuo logo" } };
-      t["team-page-plan-private-feature-4-text"] = { en: { content: "✓ Flexible invoicing and contract" }, it: { content: "✓ Fatturazione e contratto flessibili" } };
-      t["team-page-plan-private-cta"] = { en: { label: "Schedule a visit" }, it: { label: "Prenota una visita" } };
+      t["team-page-tab-flex"] = { es: { label: "Flex desk" }, it: { label: "Flex desk" } };
+      t["team-page-plan-flex-plan"] = { es: { content: "Flex desk" }, it: { content: "Flex desk" } };
+      t["team-page-plan-flex-price"] = { es: { content: "$1,450" }, it: { content: "$1.450" } };
+      t["team-page-plan-flex-period"] = { es: { content: "/mes" }, it: { content: "/mese" } };
+      t["team-page-plan-flex-feature-0-text"] = { es: { content: "✓ Cualquier escritorio disponible" }, it: { content: "✓ Qualsiasi scrivania disponibile" } };
+      t["team-page-plan-flex-feature-1-text"] = { es: { content: "✓ Acceso 9:00–20:00" }, it: { content: "✓ Accesso 9:00–20:00" } };
+      t["team-page-plan-flex-feature-2-text"] = { es: { content: "✓ Wifi de alta velocidad" }, it: { content: "✓ Wifi ad alta velocità" } };
+      t["team-page-plan-flex-feature-3-text"] = { es: { content: "✓ 2h de sala de juntas al mes" }, it: { content: "✓ 2h di sala riunioni al mese" } };
+      t["team-page-plan-flex-cta"] = { es: { label: "Reservar flex desk" }, it: { label: "Prenota flex desk" } };
+      t["team-page-tab-dedicated"] = { es: { label: "Dedicated desk" }, it: { label: "Dedicated desk" } };
+      t["team-page-plan-dedicated-badge"] = { es: { content: "Más elegido" }, it: { content: "Più scelto" } };
+      t["team-page-plan-dedicated-plan"] = { es: { content: "Dedicated desk" }, it: { content: "Dedicated desk" } };
+      t["team-page-plan-dedicated-price"] = { es: { content: "$2,200" }, it: { content: "$2.200" } };
+      t["team-page-plan-dedicated-period"] = { es: { content: "/mes" }, it: { content: "/mese" } };
+      t["team-page-plan-dedicated-feature-0-text"] = { es: { content: "✓ Escritorio fijo asignado" }, it: { content: "✓ Scrivania fissa assegnata" } };
+      t["team-page-plan-dedicated-feature-1-text"] = { es: { content: "✓ Acceso 24/7" }, it: { content: "✓ Accesso 24/7" } };
+      t["team-page-plan-dedicated-feature-2-text"] = { es: { content: "✓ Casillero personal" }, it: { content: "✓ Armadietto personale" } };
+      t["team-page-plan-dedicated-feature-3-text"] = { es: { content: "✓ 6h de sala de juntas al mes" }, it: { content: "✓ 6h di sala riunioni al mese" } };
+      t["team-page-plan-dedicated-feature-4-text"] = { es: { content: "✓ Correo con dirección del espacio" }, it: { content: "✓ Posta con indirizzo dello spazio" } };
+      t["team-page-plan-dedicated-cta"] = { es: { label: "Reservar dedicated desk" }, it: { label: "Prenota dedicated desk" } };
+      t["team-page-tab-private"] = { es: { label: "Oficina privada" }, it: { label: "Ufficio privato" } };
+      t["team-page-plan-private-plan"] = { es: { content: "Oficina privada" }, it: { content: "Ufficio privato" } };
+      t["team-page-plan-private-price"] = { es: { content: "$5,900" }, it: { content: "$5.900" } };
+      t["team-page-plan-private-period"] = { es: { content: "/mes" }, it: { content: "/mese" } };
+      t["team-page-plan-private-feature-0-text"] = { es: { content: "✓ Oficina cerrada para hasta 4 personas" }, it: { content: "✓ Ufficio chiuso per fino a 4 persone" } };
+      t["team-page-plan-private-feature-1-text"] = { es: { content: "✓ Acceso 24/7" }, it: { content: "✓ Accesso 24/7" } };
+      t["team-page-plan-private-feature-2-text"] = { es: { content: "✓ Sala de juntas ilimitada" }, it: { content: "✓ Sala riunioni illimitata" } };
+      t["team-page-plan-private-feature-3-text"] = { es: { content: "✓ Rotulación con tu marca" }, it: { content: "✓ Branding con il tuo logo" } };
+      t["team-page-plan-private-feature-4-text"] = { es: { content: "✓ Factura y contrato flexible" }, it: { content: "✓ Fatturazione e contratto flessibili" } };
+      t["team-page-plan-private-cta"] = { es: { label: "Agendar visita" }, it: { label: "Prenota una visita" } };
 
-      t["team-page-plans-aside-title"] = { en: { content: "<strong>Not sure which plan to pick?</strong>" }, it: { content: "<strong>Non sai quale piano scegliere?</strong>" } };
-      t["team-page-plans-aside-text"] = {
-        en: { content: "Book a 20-minute tour and we'll help you find the plan that fits your team." },
-        it: { content: "Prenota un tour di 20 minuti e ti aiutiamo a trovare il piano giusto per il tuo team." },
-      };
-      t["team-page-plans-aside-cta"] = { en: { label: "Book a tour" }, it: { label: "Prenota un tour" } };
+      t["team-page-plans-aside-title"] = { es: { content: "<strong>¿No sabes qué plan elegir?</strong>" }, it: { content: "<strong>Non sai quale piano scegliere?</strong>" } };
+      t["team-page-plans-aside-text"] = { es: { content: "Agenda un recorrido de 20 minutos y te ayudamos a encontrar el plan que se ajusta a tu equipo." }, it: { content: "Prenota un tour di 20 minuti e ti aiutiamo a trovare il piano giusto per il tuo team." } };
+      t["team-page-plans-aside-cta"] = { es: { label: "Agendar recorrido" }, it: { label: "Prenota un tour" } };
 
-      t["team-page-facilities-title"] = { en: { content: "<strong>Facilities designed to work well</strong>" }, it: { content: "<strong>Spazi pensati per lavorare bene</strong>" } };
+      t["team-page-facilities-title"] = { es: { content: "<strong>Instalaciones pensadas para trabajar bien</strong>" }, it: { content: "<strong>Spazi pensati per lavorare bene</strong>" } };
 
-      t["team-page-facility-1-title"] = { en: { content: "<strong>Meeting room</strong>" }, it: { content: "<strong>Sala riunioni</strong>" } };
-      t["team-page-facility-1-text"] = {
-        en: { content: "Two rooms equipped with screen and videoconferencing, bookable by the hour." },
-        it: { content: "Due sale equipaggiate con schermo e videoconferenza, prenotabili a ore." },
-      };
-      t["team-page-facility-1-img"] = { en: { alt: "Meeting room with screen and long table" }, it: { alt: "Sala riunioni con schermo e tavolo lungo" } };
-      t["team-page-facility-2-title"] = { en: { content: "<strong>Coffee area</strong>" }, it: { content: "<strong>Area caffè</strong>" } };
-      t["team-page-facility-2-text"] = {
-        en: { content: "Unlimited specialty coffee and a shared kitchen for lunch." },
-        it: { content: "Caffè di specialità illimitato e una cucina condivisa per il pranzo." },
-      };
-      t["team-page-facility-2-img"] = { en: { alt: "Coffee area with bar and stools" }, it: { alt: "Area caffè con bancone e sgabelli" } };
-      t["team-page-facility-3-title"] = { en: { content: "<strong>Phone booths</strong>" }, it: { content: "<strong>Cabine telefoniche</strong>" } };
-      t["team-page-facility-3-text"] = {
-        en: { content: "Soundproof booths for calls and video calls without disturbing anyone." },
-        it: { content: "Cabine insonorizzate per chiamate e videochiamate senza disturbare nessuno." },
-      };
-      t["team-page-facility-3-img"] = { en: { alt: "Soundproof phone booth" }, it: { alt: "Cabina telefonica insonorizzata" } };
-      t["team-page-facility-4-title"] = { en: { content: "<strong>Terrace</strong>" }, it: { content: "<strong>Terrazza</strong>" } };
-      t["team-page-facility-4-text"] = {
-        en: { content: "Outdoor space with wifi to work or take a break." },
-        it: { content: "Spazio all'aperto con wifi per lavorare o fare una pausa." },
-      };
-      t["team-page-facility-4-img"] = { en: { alt: "Terrace with tables and plants" }, it: { alt: "Terrazza con tavoli e piante" } };
+      t["team-page-facility-1-title"] = { es: { content: "<strong>Sala de juntas</strong>" }, it: { content: "<strong>Sala riunioni</strong>" } };
+      t["team-page-facility-1-text"] = { es: { content: "Dos salas equipadas con pantalla y videoconferencia, reservables por hora." }, it: { content: "Due sale equipaggiate con schermo e videoconferenza, prenotabili a ore." } };
+      t["team-page-facility-1-img"] = { es: { alt: "Sala de juntas con pantalla y mesa larga" }, it: { alt: "Sala riunioni con schermo e tavolo lungo" } };
+      t["team-page-facility-2-title"] = { es: { content: "<strong>Área de café</strong>" }, it: { content: "<strong>Area caffè</strong>" } };
+      t["team-page-facility-2-text"] = { es: { content: "Café de especialidad ilimitado y una cocina compartida para el almuerzo." }, it: { content: "Caffè di specialità illimitato e una cucina condivisa per il pranzo." } };
+      t["team-page-facility-2-img"] = { es: { alt: "Área de café con barra y taburetes" }, it: { alt: "Area caffè con bancone e sgabelli" } };
+      t["team-page-facility-3-title"] = { es: { content: "<strong>Cabinas telefónicas</strong>" }, it: { content: "<strong>Cabine telefoniche</strong>" } };
+      t["team-page-facility-3-text"] = { es: { content: "Cabinas insonorizadas para llamadas y videollamadas sin interrumpir a nadie." }, it: { content: "Cabine insonorizzate per chiamate e videochiamate senza disturbare nessuno." } };
+      t["team-page-facility-3-img"] = { es: { alt: "Cabina telefónica insonorizada" }, it: { alt: "Cabina telefonica insonorizzata" } };
+      t["team-page-facility-4-title"] = { es: { content: "<strong>Terraza</strong>" }, it: { content: "<strong>Terrazza</strong>" } };
+      t["team-page-facility-4-text"] = { es: { content: "Espacio al aire libre con wifi para trabajar o hacer una pausa." }, it: { content: "Spazio all'aperto con wifi per lavorare o fare una pausa." } };
+      t["team-page-facility-4-img"] = { es: { alt: "Terraza con mesas y plantas" }, it: { alt: "Terrazza con tavoli e piante" } };
 
-      t["team-page-community-title"] = { en: { content: "<strong>A community, not just a desk</strong>" }, it: { content: "<strong>Una community, non solo una scrivania</strong>" } };
-      t["team-page-community-text"] = {
-        en: {
-          content:
-            "We host monthly networking events, workshops and community breakfasts so you can meet other teams in the space.",
-        },
-        it: {
-          content:
-            "Organizziamo eventi di networking mensili, workshop e colazioni di community per conoscere altri team dello spazio.",
-        },
-      };
-      t["team-page-event-1-title"] = { en: { content: "<strong>Community breakfast</strong>" }, it: { content: "<strong>Colazione di community</strong>" } };
-      t["team-page-event-1-text"] = { en: { content: "First Thursday of every month, 9:00 AM" }, it: { content: "Primo giovedì del mese, ore 9:00" } };
-      t["team-page-event-2-title"] = { en: { content: "<strong>Productivity workshop</strong>" }, it: { content: "<strong>Workshop di produttività</strong>" } };
-      t["team-page-event-2-text"] = { en: { content: "Third Wednesday of every month, 5:00 PM" }, it: { content: "Terzo mercoledì del mese, ore 17:00" } };
-      t["team-page-event-3-title"] = { en: { content: "<strong>End-of-month networking</strong>" }, it: { content: "<strong>Networking di fine mese</strong>" } };
-      t["team-page-event-3-text"] = { en: { content: "Last Friday of every month, 6:30 PM" }, it: { content: "Ultimo venerdì del mese, ore 18:30" } };
+      t["team-page-community-title"] = { es: { content: "<strong>Una comunidad, no solo un escritorio</strong>" }, it: { content: "<strong>Una community, non solo una scrivania</strong>" } };
+      t["team-page-community-text"] = { es: { content: "Organizamos eventos mensuales de networking, talleres y desayunos de comunidad para que conozcas a otros equipos del espacio." }, it: { content: "Organizziamo eventi di networking mensili, workshop e colazioni di community per conoscere altri team dello spazio." } };
+      t["team-page-event-1-title"] = { es: { content: "<strong>Desayuno de comunidad</strong>" }, it: { content: "<strong>Colazione di community</strong>" } };
+      t["team-page-event-1-text"] = { es: { content: "Primer jueves de cada mes, 9:00 AM" }, it: { content: "Primo giovedì del mese, ore 9:00" } };
+      t["team-page-event-2-title"] = { es: { content: "<strong>Taller de productividad</strong>" }, it: { content: "<strong>Workshop di produttività</strong>" } };
+      t["team-page-event-2-text"] = { es: { content: "Tercer miércoles de cada mes, 5:00 PM" }, it: { content: "Terzo mercoledì del mese, ore 17:00" } };
+      t["team-page-event-3-title"] = { es: { content: "<strong>Networking de fin de mes</strong>" }, it: { content: "<strong>Networking di fine mese</strong>" } };
+      t["team-page-event-3-text"] = { es: { content: "Último viernes de cada mes, 6:30 PM" }, it: { content: "Ultimo venerdì del mese, ore 18:30" } };
 
-      t["team-page-testimonials-title"] = { en: { content: "<strong>What our members say</strong>" }, it: { content: "<strong>Cosa dicono i nostri membri</strong>" } };
-      t["team-page-testimonial-1-quote"] = {
-        en: {
-          content:
-            "<p>I traded my apartment for Muelle 12 a year ago and I wouldn't change it for anything: stable internet, good coffee and people to really collaborate with.</p>",
-        },
-        it: {
-          content:
-            "<p>Ho lasciato il mio appartamento per Muelle 12 un anno fa e non lo cambierei con nulla: internet stabile, buon caffè e persone con cui collaborare davvero.</p>",
-        },
-      };
-      t["team-page-testimonial-1-name"] = {
-        en: { content: "<strong>Renata Cortés</strong>" },
-        it: { content: "<strong>Renata Cortés</strong>" },
-      };
-      t["team-page-testimonial-1-role"] = {
-        en: { content: "Freelance designer" },
-        it: { content: "Designer freelance" },
-      };
-      t["team-page-testimonial-2-quote"] = {
-        en: {
-          content:
-            "<p>Our remote team needed a weekly meeting point. The private office gave us flexibility without signing a years-long lease.</p>",
-        },
-        it: {
-          content:
-            "<p>Il nostro team remoto aveva bisogno di un punto di incontro settimanale. L'ufficio privato ci ha dato flessibilità senza firmare un contratto pluriennale.</p>",
-        },
-      };
-      t["team-page-testimonial-2-name"] = {
-        en: { content: "<strong>Julián Torres</strong>" },
-        it: { content: "<strong>Julián Torres</strong>" },
-      };
-      t["team-page-testimonial-2-role"] = {
-        en: { content: "Founder, software studio" },
-        it: { content: "Fondatore, studio software" },
-      };
-      t["team-page-testimonial-3-quote"] = {
-        en: {
-          content:
-            "<p>The community events connected me with two clients in my first month. The space pays for itself.</p>",
-        },
-        it: {
-          content:
-            "<p>Gli eventi della community mi hanno fatto conoscere due clienti nel primo mese. Lo spazio si ripaga da solo.</p>",
-        },
-      };
-      t["team-page-testimonial-3-name"] = {
-        en: { content: "<strong>Mariana Vega</strong>" },
-        it: { content: "<strong>Mariana Vega</strong>" },
-      };
-      t["team-page-testimonial-3-role"] = {
-        en: { content: "Marketing consultant" },
-        it: { content: "Consulente marketing" },
-      };
+      t["team-page-testimonials-title"] = { es: { content: "<strong>Lo que dicen nuestros miembros</strong>" }, it: { content: "<strong>Cosa dicono i nostri membri</strong>" } };
+      t["team-page-testimonial-1-quote"] = { es: { content: "<p>Cambié mi departamento por Muelle 12 hace un año y no lo cambio por nada: internet estable, café bueno y gente con quien colaborar de verdad.</p>" }, it: { content: "<p>Ho lasciato il mio appartamento per Muelle 12 un anno fa e non lo cambierei con nulla: internet stabile, buon caffè e persone con cui collaborare davvero.</p>" } };
+      t["team-page-testimonial-1-name"] = { es: { content: "<strong>Renata Cortés</strong>" }, it: { content: "<strong>Renata Cortés</strong>" } };
+      t["team-page-testimonial-1-role"] = { es: { content: "Diseñadora freelance" }, it: { content: "Designer freelance" } };
+      t["team-page-testimonial-2-quote"] = { es: { content: "<p>Nuestro equipo remoto necesitaba un punto de encuentro semanal. La oficina privada nos dio flexibilidad sin firmar un contrato de años.</p>" }, it: { content: "<p>Il nostro team remoto aveva bisogno di un punto di incontro settimanale. L'ufficio privato ci ha dato flessibilità senza firmare un contratto pluriennale.</p>" } };
+      t["team-page-testimonial-2-name"] = { es: { content: "<strong>Julián Torres</strong>" }, it: { content: "<strong>Julián Torres</strong>" } };
+      t["team-page-testimonial-2-role"] = { es: { content: "Fundador, estudio de software" }, it: { content: "Fondatore, studio software" } };
+      t["team-page-testimonial-3-quote"] = { es: { content: "<p>Los eventos de comunidad me conectaron con dos clientes en mi primer mes. El espacio se paga solo.</p>" }, it: { content: "<p>Gli eventi della community mi hanno fatto conoscere due clienti nel primo mese. Lo spazio si ripaga da solo.</p>" } };
+      t["team-page-testimonial-3-name"] = { es: { content: "<strong>Mariana Vega</strong>" }, it: { content: "<strong>Mariana Vega</strong>" } };
+      t["team-page-testimonial-3-role"] = { es: { content: "Consultora de marketing" }, it: { content: "Consulente marketing" } };
 
-      t["team-page-location-title"] = { en: { content: "<strong>Come see the space</strong>" }, it: { content: "<strong>Vieni a vedere lo spazio</strong>" } };
-      t["team-page-location-sub"] = {
-        en: { content: "Book a free tour or write to us if you have questions about plans and availability." },
-        it: { content: "Prenota un tour gratuito o scrivici se hai domande su piani e disponibilità." },
-      };
-      t["team-page-location-address"] = {
-        en: { content: "480 Chapultepec Ave, Americana, Guadalajara, Jalisco" },
-        it: { content: "Av. Chapultepec 480, Americana, Guadalajara, Jalisco" },
-      };
+      t["team-page-location-title"] = { es: { content: "<strong>Ven a conocer el espacio</strong>" }, it: { content: "<strong>Vieni a vedere lo spazio</strong>" } };
+      t["team-page-location-sub"] = { es: { content: "Agenda un recorrido gratuito o escríbenos si tienes dudas sobre planes y disponibilidad." }, it: { content: "Prenota un tour gratuito o scrivici se hai domande su piani e disponibilità." } };
+      t["team-page-location-address"] = { es: { content: "Av. Chapultepec 480, Col. Americana, Guadalajara, Jalisco" }, it: { content: "Av. Chapultepec 480, Americana, Guadalajara, Jalisco" } };
 
-      t["team-page-label-name"] = { en: { text: "Full name" }, it: { text: "Nome completo" } };
-      t["team-page-input-name"] = { en: { placeholder: "Your full name" }, it: { placeholder: "Il tuo nome completo" } };
-      t["team-page-label-email"] = { en: { text: "Email" }, it: { text: "Email" } };
-      t["team-page-input-email"] = { en: { placeholder: "you@email.com" }, it: { placeholder: "tu@email.com" } };
-      t["team-page-label-message"] = { en: { text: "How can we help?" }, it: { text: "Come possiamo aiutarti?" } };
-      t["team-page-textarea-message"] = {
-        en: { placeholder: "E.g. I'd like to book a tour next week…" },
-        it: { placeholder: "Es. Vorrei prenotare un tour la prossima settimana…" },
-      };
-      t["team-page-submit"] = { en: { label: "Book a tour" }, it: { label: "Prenota un tour" } };
+      t["team-page-label-name"] = { es: { text: "Nombre completo" }, it: { text: "Nome completo" } };
+      t["team-page-input-name"] = { es: { placeholder: "Tu nombre completo" }, it: { placeholder: "Il tuo nome completo" } };
+      t["team-page-label-email"] = { es: { text: "Correo electrónico" }, it: { text: "Email" } };
+      t["team-page-input-email"] = { es: { placeholder: "tu@correo.com" }, it: { placeholder: "tu@email.com" } };
+      t["team-page-label-message"] = { es: { text: "¿En qué podemos ayudarte?" }, it: { text: "Come possiamo aiutarti?" } };
+      t["team-page-textarea-message"] = { es: { placeholder: "Ej. Quiero agendar un recorrido la próxima semana…" }, it: { placeholder: "Es. Vorrei prenotare un tour la prossima settimana…" } };
+      t["team-page-submit"] = { es: { label: "Agendar recorrido" }, it: { label: "Prenota un tour" } };
 
-      t["team-page-footer-copyright"] = {
-        en: { content: "© 2026 Muelle 12 Coworking. All rights reserved." },
-        it: { content: "© 2026 Muelle 12 Coworking. Tutti i diritti riservati." },
-      };
-      t["team-page-footer-address"] = {
-        en: { content: "480 Chapultepec Ave, Americana, Guadalajara, Jalisco" },
-        it: { content: "Av. Chapultepec 480, Americana, Guadalajara, Jalisco" },
-      };
+      t["team-page-footer-copyright"] = { es: { content: "© 2026 Muelle 12 Coworking. Todos los derechos reservados." }, it: { content: "© 2026 Muelle 12 Coworking. Tutti i diritti riservati." } };
+      t["team-page-footer-address"] = { es: { content: "Av. Chapultepec 480, Col. Americana, Guadalajara, Jalisco" }, it: { content: "Av. Chapultepec 480, Americana, Guadalajara, Jalisco" } };
 
       return t;
     })(),
@@ -1160,31 +1061,31 @@ export function buildTeamPageFragment(): NodeFragment {
 }
 
 export const teamPagePageMeta: LayoutPageMeta = {
-  title: "Muelle 12 · Coworking en Guadalajara",
+  title: "Muelle 12 · Coworking in Guadalajara",
   description:
-    "Espacios flexibles, oficinas privadas y una comunidad activa de equipos remotos y freelancers en el corazón de Guadalajara.",
+    "Flexible desks, private offices and an active community of remote teams and freelancers in Guadalajara.",
   seo: {
     robots: "index,follow",
     openGraph: {
-      title: "Muelle 12 · Coworking en Guadalajara",
-      description: "Escritorios flexibles, oficinas privadas y comunidad activa. Agenda tu recorrido.",
+      title: "Muelle 12 · Coworking in Guadalajara",
+      description: "Flexible desks, private offices and an active community. Book your tour.",
       image: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=1200&q=80&auto=format&fit=crop",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "Muelle 12 · Coworking en Guadalajara",
-      description: "Escritorios flexibles, oficinas privadas y comunidad activa. Agenda tu recorrido.",
+      title: "Muelle 12 · Coworking in Guadalajara",
+      description: "Flexible desks, private offices and an active community. Book your tour.",
       image: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=1200&q=80&auto=format&fit=crop",
     },
   },
   metaTranslations: {
-    en: {
-      title: "Muelle 12 · Coworking in Guadalajara",
-      description: "Flexible desks, private offices and an active community of remote teams and freelancers in Guadalajara.",
+    es: {
+      title: "Muelle 12 · Coworking en Guadalajara",
+      description: "Espacios flexibles, oficinas privadas y una comunidad activa de equipos remotos y freelancers en el corazón de Guadalajara.",
       seo: {
-        openGraph: { title: "Muelle 12 · Coworking in Guadalajara", description: "Flexible desks, private offices and an active community. Book your tour." },
-        twitter: { title: "Muelle 12 · Coworking in Guadalajara", description: "Flexible desks, private offices and an active community. Book your tour." },
+        openGraph: { title: "Muelle 12 · Coworking en Guadalajara", description: "Escritorios flexibles, oficinas privadas y comunidad activa. Agenda tu recorrido." },
+        twitter: { title: "Muelle 12 · Coworking en Guadalajara", description: "Escritorios flexibles, oficinas privadas y comunidad activa. Agenda tu recorrido." },
       },
     },
     it: {

@@ -18,6 +18,7 @@
     "icon": "Icona",
     "quote": "Citazione",
     "stat": "Statistica",
+    "stat-value": "Valore",
     "avatar": "Avatar",
     "video": "Video",
     "card": "Scheda",
@@ -31,25 +32,201 @@
     "social-links": "Social",
     "breadcrumb": "Breadcrumb",
     "accordion": "Fisarmonica",
+    "accordion-item": "Sezione",
     "modal": "Modale",
     "tabs": "Schede",
+    "tab": "Scheda",
     "navbar": "Barra di navigazione"
   },
   "props": {
-    "gridPlacement": "Posizionamento griglia",
-    "gridPlacementAuto": "Automatico (ordine)",
-    "gridPlacementExplicit": "Esplicito (cella)",
-    "imageSource": "Immagine",
-    "altText": "Testo alternativo",
-    "objectFit": "Adattamento",
-    "buttonLabel": "Testo",
-    "buttonLink": "Link",
-    "textContent": "Contenuto"
+    "accordion-item": {
+      "label": "Titolo della sezione",
+      "openByDefault": "Aperta per impostazione predefinita"
+    },
+    "alert": {
+      "message": "Messaggio",
+      "variant": "Variante",
+      "variantOptions": {
+        "info": "Informazione",
+        "success": "Successo",
+        "warning": "Avviso",
+        "error": "Errore"
+      },
+      "showIcon": "Mostra icona"
+    },
+    "avatar": {
+      "source": "Immagine",
+      "alt": "Testo alternativo",
+      "initials": "Iniziali (fallback)"
+    },
+    "badge": {
+      "label": "Testo"
+    },
+    "breadcrumb": {
+      "items": "Livelli (testo + href)",
+      "separator": "Separatore"
+    },
+    "button": {
+      "label": "Testo",
+      "link": "Collegamento",
+      "newTab": "Apri in una nuova scheda"
+    },
+    "button-submit": {
+      "label": "Testo",
+      "disabled": "Disabilitato"
+    },
+    "container": {
+      "gridPlacement": "Posizionamento griglia",
+      "gridPlacementOptions": {
+        "auto": "Automatico (ordine)",
+        "explicit": "Esplicito (cella)"
+      }
+    },
+    "form": {
+      "action": "Action (URL)",
+      "method": "Metodo",
+      "methodOptions": {
+        "post": "POST",
+        "get": "GET"
+      },
+      "noValidate": "Disattiva validazione HTML5"
+    },
+    "icon": {
+      "name": "Icona",
+      "namePlaceholder": "Star, Heart, Mail, Check…",
+      "pressedName": "Icona (premuta)",
+      "pressedNamePlaceholder": "Heart, Star…",
+      "title": "Etichetta accessibile"
+    },
+    "image": {
+      "source": "Immagine",
+      "alt": "Testo alternativo",
+      "objectFit": "Adattamento",
+      "objectFitOptions": {
+        "cover": "Coprire",
+        "contain": "Contenere",
+        "fill": "Riempire",
+        "none": "Nessuno",
+        "scale_down": "Ridurre"
+      },
+      "objectPosition": "Posizione",
+      "objectPositionPlaceholder": "Centro",
+      "objectPositionOptions": {
+        "center": "Centro",
+        "left_top": "In alto a sinistra",
+        "top": "In alto al centro",
+        "right_top": "In alto a destra",
+        "left": "Al centro a sinistra",
+        "right": "Al centro a destra",
+        "left_bottom": "In basso a sinistra",
+        "bottom": "In basso al centro",
+        "right_bottom": "In basso a destra"
+      },
+      "loading": "Caricamento",
+      "loadingOptions": {
+        "lazy": "pigro (lazy)",
+        "eager": "immediato (eager)"
+      }
+    },
+    "input": {
+      "type": "Tipo",
+      "typeOptions": {
+        "text": "Testo",
+        "email": "Email",
+        "tel": "Telefono",
+        "number": "Numero",
+        "password": "Password"
+      },
+      "name": "Name (attributo)",
+      "placeholder": "Placeholder",
+      "required": "Obbligatorio",
+      "disabled": "Disabilitato"
+    },
+    "label": {
+      "text": "Testo",
+      "for": "Per (id del campo)"
+    },
+    "language-nav": {
+      "triggerMode": "Attivazione",
+      "triggerModeOptions": {
+        "icon": "Icona (globo)",
+        "text": "Testo (lingua corrente)"
+      },
+      "displayMode": "Formato",
+      "displayModeOptions": {
+        "native": "Nome nativo (Español)",
+        "codes": "Codice (ES)",
+        "labels": "Nome tradotto (Spanish)"
+      },
+      "showCurrent": "Includi la lingua corrente",
+      "ariaLabel": "Aria label"
+    },
+    "modal": {
+      "title": "Titolo"
+    },
+    "nav-menu": {
+      "hiddenPageIds": "Pagine visibili nel menu",
+      "orientation": "Orientamento",
+      "orientationOptions": {
+        "horizontal": "Orizzontale",
+        "vertical": "Verticale"
+      }
+    },
+    "navbar": {
+      "hiddenPageIds": "Pagine visibili nel menu"
+    },
+    "select": {
+      "options": "Opzioni",
+      "placeholder": "Placeholder",
+      "name": "Name (attributo)",
+      "ariaLabel": "Aria label"
+    },
+    "social-links": {
+      "links": "Reti (nome + URL)",
+      "linksPlaceholder": "github, linkedin, x, facebook, instagram…",
+      "linksLabelOptions": {
+        "twitter": "Twitter (classico)"
+      }
+    },
+    "stat-value": {
+      "value": "Valore"
+    },
+    "tab": {
+      "label": "Titolo della scheda"
+    },
+    "text": {
+      "content": "Contenuto"
+    },
+    "textarea": {
+      "name": "Name (attributo)",
+      "placeholder": "Placeholder",
+      "rows": "Righe",
+      "required": "Obbligatorio",
+      "disabled": "Disabilitato"
+    },
+    "video": {
+      "url": "URL del video",
+      "urlPlaceholder": "YouTube / Vimeo / embed",
+      "aspectRatio": "Proporzioni",
+      "aspectRatioOptions": {
+        "16_9": "16:9",
+        "4_3": "4:3",
+        "1_1": "1:1",
+        "21_9": "21:9"
+      },
+      "title": "Titolo accessibile"
+    }
   },
   "propGroups": {
     "content": "Contenuto",
     "action": "Azione",
-    "grid": "Griglia"
+    "state": "Stato",
+    "form": "Modulo",
+    "validation": "Validazione",
+    "accessibility": "Accessibilità",
+    "appearance": "Aspetto",
+    "grid": "Griglia",
+    "orientation": "Orientamento"
   },
   "styleGroups": {
     "layout": "layout",
@@ -84,7 +261,11 @@
     "fontSize": "Dimensione",
     "fontWeight": "Peso",
     "lineHeight": "Interlinea",
-    "textAlign": "Allineamento"
+    "textAlign": "Allineamento",
+    "textDecoration": "Decorazione",
+    "boxShadow": "Ombra",
+    "cursor": "Cursore",
+    "outline": "Contorno"
   },
   "errorBoundary": {
     "renderError": "Errore di rendering nodo",

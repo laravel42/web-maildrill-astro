@@ -32,6 +32,7 @@ import { viewportWidth } from "@/builder/canvas/devicePresets";
 import { ErrorBoundary } from "@/components";
 import { ExportWarningsBanner } from "@/components/ExportWarningsBanner";
 import type { ExportWarning } from "@/builder/export/warnings";
+import { CanvasEmptyStart } from "./CanvasEmptyStart";
 
 export function Canvas() {
   const view = useDocumentStore((s) => s.view);
@@ -96,6 +97,7 @@ export function Canvas() {
         <ErrorBoundary key={view} nodeId={rootId}>
           <NodeRenderer id={rootId} interactive={interactive} />
         </ErrorBoundary>
+        {interactive ? <CanvasEmptyStart /> : null}
         {interactive ? <SelectionHandle frameRef={frameRef} /> : null}
         {interactive ? <HoverHandle frameRef={frameRef} /> : null}
         {interactive ? <TextToolbar frameRef={frameRef} /> : null}

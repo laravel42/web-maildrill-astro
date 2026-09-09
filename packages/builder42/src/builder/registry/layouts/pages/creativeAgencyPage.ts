@@ -290,7 +290,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-hero-title": {
         id: "agency-hero-title",
         type: "text",
-        props: { content: "<strong>Hacemos marcas que se sienten inevitables</strong>" },
+        props: { content: "<strong>We build brands that feel inevitable</strong>" },
         style: {
           base: {
             size: { maxWidth: "18ch" },
@@ -307,7 +307,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-hero-cta": {
         id: "agency-hero-cta",
         type: "button",
-        props: { label: "Ver trabajo", link: { kind: "anchor", nodeId: "agency-work" } },
+        props: { label: "See our work", link: { kind: "anchor", nodeId: "agency-work" } },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -354,7 +354,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-client-1": {
         id: "agency-client-1",
         type: "image",
-        props: { source: { kind: "url", url: "https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=240&q=80&auto=format&fit=crop" }, alt: "Logo del cliente Nortek", objectFit: "contain" },
+        props: { source: { kind: "url", url: "https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=240&q=80&auto=format&fit=crop" }, alt: "Nortek client logo", objectFit: "contain" },
         style: {
           base: { size: { width: "auto", maxWidth: "120px", height: "40px" }, appearance: { color: { token: "colors.muted" } } },
           overrides: { md: { size: { height: "44px" } } },
@@ -363,7 +363,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-client-2": {
         id: "agency-client-2",
         type: "image",
-        props: { source: { kind: "url", url: "https://images.unsplash.com/photo-1611162457237-98a67b8be684?w=240&q=80&auto=format&fit=crop" }, alt: "Logo del cliente Fjord Goods", objectFit: "contain" },
+        props: { source: { kind: "url", url: "https://images.unsplash.com/photo-1611162457237-98a67b8be684?w=240&q=80&auto=format&fit=crop" }, alt: "Fjord Goods client logo", objectFit: "contain" },
         style: {
           base: { size: { width: "auto", maxWidth: "120px", height: "40px" }, appearance: { color: { token: "colors.muted" } } },
           overrides: { md: { size: { height: "44px" } } },
@@ -372,7 +372,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-client-3": {
         id: "agency-client-3",
         type: "image",
-        props: { source: { kind: "url", url: "https://images.unsplash.com/photo-1622547748225-3fc4abd2cca0?w=240&q=80&auto=format&fit=crop" }, alt: "Logo del cliente Vantia", objectFit: "contain" },
+        props: { source: { kind: "url", url: "https://images.unsplash.com/photo-1622547748225-3fc4abd2cca0?w=240&q=80&auto=format&fit=crop" }, alt: "Vantia client logo", objectFit: "contain" },
         style: {
           base: { size: { width: "auto", maxWidth: "120px", height: "40px" }, appearance: { color: { token: "colors.muted" } } },
           overrides: { md: { size: { height: "44px" } } },
@@ -381,7 +381,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-client-4": {
         id: "agency-client-4",
         type: "image",
-        props: { source: { kind: "url", url: "https://images.unsplash.com/photo-1611162458324-aae1eb4129a4?w=240&q=80&auto=format&fit=crop" }, alt: "Logo del cliente Bruma Labs", objectFit: "contain" },
+        props: { source: { kind: "url", url: "https://images.unsplash.com/photo-1611162458324-aae1eb4129a4?w=240&q=80&auto=format&fit=crop" }, alt: "Bruma Labs client logo", objectFit: "contain" },
         style: {
           base: { size: { width: "auto", maxWidth: "120px", height: "40px" }, appearance: { color: { token: "colors.muted" } } },
           overrides: { md: { size: { height: "44px" } } },
@@ -390,7 +390,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-client-5": {
         id: "agency-client-5",
         type: "image",
-        props: { source: { kind: "url", url: "https://images.unsplash.com/photo-1611162457253-813a17d0be08?w=240&q=80&auto=format&fit=crop" }, alt: "Logo del cliente Solano & Co", objectFit: "contain" },
+        props: { source: { kind: "url", url: "https://images.unsplash.com/photo-1611162457253-813a17d0be08?w=240&q=80&auto=format&fit=crop" }, alt: "Solano & Co client logo", objectFit: "contain" },
         style: {
           base: { size: { width: "auto", maxWidth: "120px", height: "40px" }, appearance: { color: { token: "colors.muted" } } },
           overrides: { md: { size: { height: "44px" } } },
@@ -415,7 +415,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-work-title": {
         id: "agency-work-title",
         type: "text",
-        props: { content: "<strong>Trabajo seleccionado</strong>" },
+        props: { content: "<strong>Selected work</strong>" },
         style: sectionTitle({ token: "colors.text" }),
       },
       "agency-work-grid": {
@@ -437,30 +437,30 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       ...projectCard(
         1,
         "Fjord Goods",
-        "Identidad de marca",
+        "Brand identity",
         "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=900&q=80&auto=format&fit=crop",
-        "Empaque minimalista de Fjord Goods sobre fondo neutro",
+        "Minimalist Fjord Goods packaging on a neutral background",
       ),
       ...projectCard(
         2,
         "Nortek",
-        "Producto digital",
+        "Digital product",
         "https://images.unsplash.com/photo-1551650975-87deedd944c3?w=900&q=80&auto=format&fit=crop",
-        "Pantallas de la app de Nortek en un teléfono",
+        "Nortek app screens on a phone",
       ),
       ...projectCard(
         3,
         "Vantia",
-        "Sitio web",
+        "Website",
         "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=900&q=80&auto=format&fit=crop",
-        "Laptop mostrando el sitio web rediseñado de Vantia",
+        "Laptop showing Vantia's redesigned website",
       ),
       ...projectCard(
         4,
         "Bruma Labs",
         "Branding + web",
         "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=900&q=80&auto=format&fit=crop",
-        "Mockups de branding de Bruma Labs sobre una mesa",
+        "Bruma Labs branding mockups on a table",
       ),
 
       // --- Manifiesto con parallax, banda MÁS oscura que la base ----------------
@@ -483,7 +483,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
         id: "agency-manifesto-text",
         type: "text",
         props: {
-          content: "No diseñamos para ganar premios. Diseñamos para que tu marca sea la que la gente reconoce sin leer el nombre.",
+          content: "We don't design to win awards. We design so your brand is the one people recognize without reading the name.",
         },
         style: {
           base: {
@@ -517,7 +517,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-services-title": {
         id: "agency-services-title",
         type: "text",
-        props: { content: "<strong>Lo que hacemos</strong>" },
+        props: { content: "<strong>What we do</strong>" },
         style: sectionTitle({ token: "colors.text" }),
       },
       "agency-services-list": {
@@ -535,9 +535,9 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
         },
         children: ["agency-service-1", "agency-service-2", "agency-service-3"],
       },
-      ...serviceItem(1, "Branding", "Identidad verbal y visual construida desde la estrategia, no desde el logo."),
-      ...serviceItem(2, "Producto digital", "Interfaces de producto que se sienten inevitables de usar, desde research hasta shipping."),
-      ...serviceItem(3, "Web", "Sitios rápidos y editables, pensados para que el equipo de marketing no dependa de nosotros para cambiar un texto."),
+      ...serviceItem(1, "Branding", "Verbal and visual identity built from strategy, not from the logo."),
+      ...serviceItem(2, "Digital product", "Product interfaces that feel inevitable to use, from research to shipping."),
+      ...serviceItem(3, "Web", "Fast, editable websites, built so your marketing team doesn't depend on us to change a text."),
 
       // --- Equipo — banda regular --------------------------------------------------
       "agency-team": {
@@ -558,7 +558,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-team-title": {
         id: "agency-team-title",
         type: "text",
-        props: { content: "<strong>El equipo</strong>" },
+        props: { content: "<strong>The team</strong>" },
         style: sectionTitle({ token: "colors.text" }),
       },
       "agency-team-grid": {
@@ -579,21 +579,21 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       ...teamMember(
         1,
         "Bruno Salcedo",
-        "Director creativo",
+        "Creative director",
         "https://images.unsplash.com/photo-1557862921-37829c790f19?w=200&q=80&auto=format&fit=crop",
         "BS",
       ),
       ...teamMember(
         2,
         "Kenia Farfán",
-        "Directora de producto",
+        "Head of product",
         "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&q=80&auto=format&fit=crop",
         "KF",
       ),
       ...teamMember(
         3,
         "Iker Beltrán",
-        "Lead de desarrollo",
+        "Lead developer",
         "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=200&q=80&auto=format&fit=crop",
         "IB",
       ),
@@ -630,13 +630,13 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-contact-title": {
         id: "agency-contact-title",
         type: "text",
-        props: { content: "<strong>¿Tienes un proyecto en mente?</strong>" },
+        props: { content: "<strong>Got a project in mind?</strong>" },
         style: sectionTitle(),
       },
       "agency-contact-sub": {
         id: "agency-contact-sub",
         type: "text",
-        props: { content: "Cuéntanos en dos líneas qué necesitas. Respondemos en menos de 48 horas." },
+        props: { content: "Tell us in two lines what you need. We reply within 48 hours." },
         style: bodyText({ token: "colors.muted" }),
       },
       "agency-contact-card": {
@@ -675,13 +675,13 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-label-name": {
         id: "agency-label-name",
         type: "label",
-        props: { text: "Nombre", for: "agency-input-name" },
+        props: { text: "Name", for: "agency-input-name" },
         style: darkBandStyleFor("label"),
       },
       "agency-input-name": {
         id: "agency-input-name",
         type: "input",
-        props: { name: "nombre", type: "text", placeholder: "Tu nombre", required: true, disabled: false },
+        props: { name: "nombre", type: "text", placeholder: "Your name", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "agency-field-email": {
@@ -694,13 +694,13 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-label-email": {
         id: "agency-label-email",
         type: "label",
-        props: { text: "Correo electrónico", for: "agency-input-email" },
+        props: { text: "Email", for: "agency-input-email" },
         style: darkBandStyleFor("label"),
       },
       "agency-input-email": {
         id: "agency-input-email",
         type: "input",
-        props: { name: "email", type: "email", placeholder: "tu@correo.com", required: true, disabled: false },
+        props: { name: "email", type: "email", placeholder: "you@email.com", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "agency-field-message": {
@@ -713,19 +713,19 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-label-message": {
         id: "agency-label-message",
         type: "label",
-        props: { text: "Cuéntanos sobre tu proyecto", for: "agency-textarea-message" },
+        props: { text: "Tell us about your project", for: "agency-textarea-message" },
         style: darkBandStyleFor("label"),
       },
       "agency-textarea-message": {
         id: "agency-textarea-message",
         type: "textarea",
-        props: { name: "mensaje", placeholder: "Ej. Necesitamos rediseñar nuestra marca antes de fin de año…", rows: 4, required: false, disabled: false },
+        props: { name: "mensaje", placeholder: "E.g. We need to rebrand before year end…", rows: 4, required: false, disabled: false },
         style: defaultStyleFor("textarea"),
       },
       "agency-submit": {
         id: "agency-submit",
         type: "button-submit",
-        props: { label: "Enviar mensaje", disabled: false },
+        props: { label: "Send message", disabled: false },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -759,7 +759,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-footer-address": {
         id: "agency-footer-address",
         type: "text",
-        props: { content: "Calle Orizaba 142, Roma Norte, Ciudad de México" },
+        props: { content: "142 Orizaba St, Roma Norte, Mexico City" },
         style: { base: { appearance: { color: { token: "colors.band.on" } } } },
       },
       "agency-footer-social": {
@@ -771,7 +771,7 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
       "agency-footer-copyright": {
         id: "agency-footer-copyright",
         type: "text",
-        props: { content: "© 2026 Cráter Studio. Todos los derechos reservados." },
+        props: { content: "© 2026 Cráter Studio. All rights reserved." },
         style: {
           base: {
             size: { width: "100%" },
@@ -791,93 +791,62 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
     translations: (() => {
       const t: Record<string, NodeTranslations> = {};
 
-      t["agency-hero-title"] = {
-        en: { content: "<strong>We build brands that feel inevitable</strong>" },
-        it: { content: "<strong>Costruiamo marchi che sembrano inevitabili</strong>" },
-      };
-      t["agency-hero-cta"] = { en: { label: "See our work" }, it: { label: "Guarda il lavoro" } };
+      t["agency-hero-title"] = { es: { content: "<strong>Hacemos marcas que se sienten inevitables</strong>" }, it: { content: "<strong>Costruiamo marchi che sembrano inevitabili</strong>" } };
+      t["agency-hero-cta"] = { es: { label: "Ver trabajo" }, it: { label: "Guarda il lavoro" } };
 
-      t["agency-client-1"] = { en: { alt: "Nortek client logo" }, it: { alt: "Logo del cliente Nortek" } };
-      t["agency-client-2"] = { en: { alt: "Fjord Goods client logo" }, it: { alt: "Logo del cliente Fjord Goods" } };
-      t["agency-client-3"] = { en: { alt: "Vantia client logo" }, it: { alt: "Logo del cliente Vantia" } };
-      t["agency-client-4"] = { en: { alt: "Bruma Labs client logo" }, it: { alt: "Logo del cliente Bruma Labs" } };
-      t["agency-client-5"] = { en: { alt: "Solano & Co client logo" }, it: { alt: "Logo del cliente Solano & Co" } };
+      t["agency-client-1"] = { es: { alt: "Logo del cliente Nortek" }, it: { alt: "Logo del cliente Nortek" } };
+      t["agency-client-2"] = { es: { alt: "Logo del cliente Fjord Goods" }, it: { alt: "Logo del cliente Fjord Goods" } };
+      t["agency-client-3"] = { es: { alt: "Logo del cliente Vantia" }, it: { alt: "Logo del cliente Vantia" } };
+      t["agency-client-4"] = { es: { alt: "Logo del cliente Bruma Labs" }, it: { alt: "Logo del cliente Bruma Labs" } };
+      t["agency-client-5"] = { es: { alt: "Logo del cliente Solano & Co" }, it: { alt: "Logo del cliente Solano & Co" } };
 
-      t["agency-work-title"] = { en: { content: "<strong>Selected work</strong>" }, it: { content: "<strong>Progetti selezionati</strong>" } };
-      t["agency-project-1-title"] = { en: { content: "<strong>Fjord Goods</strong>" }, it: { content: "<strong>Fjord Goods</strong>" } };
-      t["agency-project-1-tag"] = { en: { content: "Brand identity" }, it: { content: "Identità di marca" } };
-      t["agency-project-1-img"] = { en: { alt: "Minimalist Fjord Goods packaging on a neutral background" }, it: { alt: "Packaging minimalista di Fjord Goods su sfondo neutro" } };
-      t["agency-project-2-title"] = { en: { content: "<strong>Nortek</strong>" }, it: { content: "<strong>Nortek</strong>" } };
-      t["agency-project-2-tag"] = { en: { content: "Digital product" }, it: { content: "Prodotto digitale" } };
-      t["agency-project-2-img"] = { en: { alt: "Nortek app screens on a phone" }, it: { alt: "Schermate dell'app Nortek su un telefono" } };
-      t["agency-project-3-title"] = { en: { content: "<strong>Vantia</strong>" }, it: { content: "<strong>Vantia</strong>" } };
-      t["agency-project-3-tag"] = { en: { content: "Website" }, it: { content: "Sito web" } };
-      t["agency-project-3-img"] = { en: { alt: "Laptop showing Vantia's redesigned website" }, it: { alt: "Laptop con il sito web ridisegnato di Vantia" } };
-      t["agency-project-4-title"] = { en: { content: "<strong>Bruma Labs</strong>" }, it: { content: "<strong>Bruma Labs</strong>" } };
-      t["agency-project-4-tag"] = { en: { content: "Branding + web" }, it: { content: "Branding + web" } };
-      t["agency-project-4-img"] = { en: { alt: "Bruma Labs branding mockups on a table" }, it: { alt: "Mockup del branding di Bruma Labs su un tavolo" } };
+      t["agency-work-title"] = { es: { content: "<strong>Trabajo seleccionado</strong>" }, it: { content: "<strong>Progetti selezionati</strong>" } };
+      t["agency-project-1-title"] = { es: { content: "<strong>Fjord Goods</strong>" }, it: { content: "<strong>Fjord Goods</strong>" } };
+      t["agency-project-1-tag"] = { es: { content: "Identidad de marca" }, it: { content: "Identità di marca" } };
+      t["agency-project-1-img"] = { es: { alt: "Empaque minimalista de Fjord Goods sobre fondo neutro" }, it: { alt: "Packaging minimalista di Fjord Goods su sfondo neutro" } };
+      t["agency-project-2-title"] = { es: { content: "<strong>Nortek</strong>" }, it: { content: "<strong>Nortek</strong>" } };
+      t["agency-project-2-tag"] = { es: { content: "Producto digital" }, it: { content: "Prodotto digitale" } };
+      t["agency-project-2-img"] = { es: { alt: "Pantallas de la app de Nortek en un teléfono" }, it: { alt: "Schermate dell'app Nortek su un telefono" } };
+      t["agency-project-3-title"] = { es: { content: "<strong>Vantia</strong>" }, it: { content: "<strong>Vantia</strong>" } };
+      t["agency-project-3-tag"] = { es: { content: "Sitio web" }, it: { content: "Sito web" } };
+      t["agency-project-3-img"] = { es: { alt: "Laptop mostrando el sitio web rediseñado de Vantia" }, it: { alt: "Laptop con il sito web ridisegnato di Vantia" } };
+      t["agency-project-4-title"] = { es: { content: "<strong>Bruma Labs</strong>" }, it: { content: "<strong>Bruma Labs</strong>" } };
+      t["agency-project-4-tag"] = { es: { content: "Branding + web" }, it: { content: "Branding + web" } };
+      t["agency-project-4-img"] = { es: { alt: "Mockups de branding de Bruma Labs sobre una mesa" }, it: { alt: "Mockup del branding di Bruma Labs su un tavolo" } };
 
-      t["agency-manifesto-text"] = {
-        en: {
-          content: "We don't design to win awards. We design so your brand is the one people recognize without reading the name.",
-        },
-        it: {
-          content: "Non progettiamo per vincere premi. Progettiamo perché il tuo marchio sia quello che le persone riconoscono senza leggere il nome.",
-        },
-      };
+      t["agency-manifesto-text"] = { es: { content: "No diseñamos para ganar premios. Diseñamos para que tu marca sea la que la gente reconoce sin leer el nombre." }, it: { content: "Non progettiamo per vincere premi. Progettiamo perché il tuo marchio sia quello che le persone riconoscono senza leggere il nome." } };
 
-      t["agency-services-title"] = { en: { content: "<strong>What we do</strong>" }, it: { content: "<strong>Cosa facciamo</strong>" } };
-      t["agency-service-1-title"] = { en: { content: "<strong>Branding</strong>" }, it: { content: "<strong>Branding</strong>" } };
-      t["agency-service-1-text"] = {
-        en: { content: "Verbal and visual identity built from strategy, not from the logo." },
-        it: { content: "Identità verbale e visiva costruita partendo dalla strategia, non dal logo." },
-      };
-      t["agency-service-2-title"] = { en: { content: "<strong>Digital product</strong>" }, it: { content: "<strong>Prodotto digitale</strong>" } };
-      t["agency-service-2-text"] = {
-        en: { content: "Product interfaces that feel inevitable to use, from research to shipping." },
-        it: { content: "Interfacce di prodotto che sembrano inevitabili da usare, dalla ricerca al lancio." },
-      };
-      t["agency-service-3-title"] = { en: { content: "<strong>Web</strong>" }, it: { content: "<strong>Web</strong>" } };
-      t["agency-service-3-text"] = {
-        en: { content: "Fast, editable websites, built so your marketing team doesn't depend on us to change a text." },
-        it: { content: "Siti web rapidi e modificabili, pensati perché il team marketing non dipenda da noi per cambiare un testo." },
-      };
+      t["agency-services-title"] = { es: { content: "<strong>Lo que hacemos</strong>" }, it: { content: "<strong>Cosa facciamo</strong>" } };
+      t["agency-service-1-title"] = { es: { content: "<strong>Branding</strong>" }, it: { content: "<strong>Branding</strong>" } };
+      t["agency-service-1-text"] = { es: { content: "Identidad verbal y visual construida desde la estrategia, no desde el logo." }, it: { content: "Identità verbale e visiva costruita partendo dalla strategia, non dal logo." } };
+      t["agency-service-2-title"] = { es: { content: "<strong>Producto digital</strong>" }, it: { content: "<strong>Prodotto digitale</strong>" } };
+      t["agency-service-2-text"] = { es: { content: "Interfaces de producto que se sienten inevitables de usar, desde research hasta shipping." }, it: { content: "Interfacce di prodotto che sembrano inevitabili da usare, dalla ricerca al lancio." } };
+      t["agency-service-3-title"] = { es: { content: "<strong>Web</strong>" }, it: { content: "<strong>Web</strong>" } };
+      t["agency-service-3-text"] = { es: { content: "Sitios rápidos y editables, pensados para que el equipo de marketing no dependa de nosotros para cambiar un texto." }, it: { content: "Siti web rapidi e modificabili, pensati perché il team marketing non dipenda da noi per cambiare un testo." } };
 
-      t["agency-team-title"] = { en: { content: "<strong>The team</strong>" }, it: { content: "<strong>Il team</strong>" } };
-      t["agency-team-1-avatar"] = { en: { alt: "Portrait of Bruno Salcedo" }, it: { alt: "Ritratto di Bruno Salcedo" } };
-      t["agency-team-1-name"] = { en: { content: "<strong>Bruno Salcedo</strong>" }, it: { content: "<strong>Bruno Salcedo</strong>" } };
-      t["agency-team-1-role"] = { en: { content: "Creative director" }, it: { content: "Direttore creativo" } };
-      t["agency-team-2-avatar"] = { en: { alt: "Portrait of Kenia Farfán" }, it: { alt: "Ritratto di Kenia Farfán" } };
-      t["agency-team-2-name"] = { en: { content: "<strong>Kenia Farfán</strong>" }, it: { content: "<strong>Kenia Farfán</strong>" } };
-      t["agency-team-2-role"] = { en: { content: "Head of product" }, it: { content: "Responsabile prodotto" } };
-      t["agency-team-3-avatar"] = { en: { alt: "Portrait of Iker Beltrán" }, it: { alt: "Ritratto di Iker Beltrán" } };
-      t["agency-team-3-name"] = { en: { content: "<strong>Iker Beltrán</strong>" }, it: { content: "<strong>Iker Beltrán</strong>" } };
-      t["agency-team-3-role"] = { en: { content: "Lead developer" }, it: { content: "Lead sviluppo" } };
+      t["agency-team-title"] = { es: { content: "<strong>El equipo</strong>" }, it: { content: "<strong>Il team</strong>" } };
+      t["agency-team-1-avatar"] = { es: { alt: "Portrait of Bruno Salcedo" }, it: { alt: "Ritratto di Bruno Salcedo" } };
+      t["agency-team-1-name"] = { es: { content: "<strong>Bruno Salcedo</strong>" }, it: { content: "<strong>Bruno Salcedo</strong>" } };
+      t["agency-team-1-role"] = { es: { content: "Director creativo" }, it: { content: "Direttore creativo" } };
+      t["agency-team-2-avatar"] = { es: { alt: "Portrait of Kenia Farfán" }, it: { alt: "Ritratto di Kenia Farfán" } };
+      t["agency-team-2-name"] = { es: { content: "<strong>Kenia Farfán</strong>" }, it: { content: "<strong>Kenia Farfán</strong>" } };
+      t["agency-team-2-role"] = { es: { content: "Directora de producto" }, it: { content: "Responsabile prodotto" } };
+      t["agency-team-3-avatar"] = { es: { alt: "Portrait of Iker Beltrán" }, it: { alt: "Ritratto di Iker Beltrán" } };
+      t["agency-team-3-name"] = { es: { content: "<strong>Iker Beltrán</strong>" }, it: { content: "<strong>Iker Beltrán</strong>" } };
+      t["agency-team-3-role"] = { es: { content: "Lead de desarrollo" }, it: { content: "Lead sviluppo" } };
 
-      t["agency-contact-title"] = { en: { content: "<strong>Got a project in mind?</strong>" }, it: { content: "<strong>Hai un progetto in mente?</strong>" } };
-      t["agency-contact-sub"] = {
-        en: { content: "Tell us in two lines what you need. We reply within 48 hours." },
-        it: { content: "Raccontaci in due righe di cosa hai bisogno. Rispondiamo entro 48 ore." },
-      };
-      t["agency-label-name"] = { en: { text: "Name" }, it: { text: "Nome" } };
-      t["agency-input-name"] = { en: { placeholder: "Your name" }, it: { placeholder: "Il tuo nome" } };
-      t["agency-label-email"] = { en: { text: "Email" }, it: { text: "Email" } };
-      t["agency-input-email"] = { en: { placeholder: "you@email.com" }, it: { placeholder: "tu@email.com" } };
-      t["agency-label-message"] = { en: { text: "Tell us about your project" }, it: { text: "Raccontaci il tuo progetto" } };
-      t["agency-textarea-message"] = {
-        en: { placeholder: "E.g. We need to rebrand before year end…" },
-        it: { placeholder: "Es. Dobbiamo rifare il brand entro fine anno…" },
-      };
-      t["agency-submit"] = { en: { label: "Send message" }, it: { label: "Invia messaggio" } };
+      t["agency-contact-title"] = { es: { content: "<strong>¿Tienes un proyecto en mente?</strong>" }, it: { content: "<strong>Hai un progetto in mente?</strong>" } };
+      t["agency-contact-sub"] = { es: { content: "Cuéntanos en dos líneas qué necesitas. Respondemos en menos de 48 horas." }, it: { content: "Raccontaci in due righe di cosa hai bisogno. Rispondiamo entro 48 ore." } };
+      t["agency-label-name"] = { es: { text: "Nombre" }, it: { text: "Nome" } };
+      t["agency-input-name"] = { es: { placeholder: "Tu nombre" }, it: { placeholder: "Il tuo nome" } };
+      t["agency-label-email"] = { es: { text: "Correo electrónico" }, it: { text: "Email" } };
+      t["agency-input-email"] = { es: { placeholder: "tu@correo.com" }, it: { placeholder: "tu@email.com" } };
+      t["agency-label-message"] = { es: { text: "Cuéntanos sobre tu proyecto" }, it: { text: "Raccontaci il tuo progetto" } };
+      t["agency-textarea-message"] = { es: { placeholder: "Ej. Necesitamos rediseñar nuestra marca antes de fin de año…" }, it: { placeholder: "Es. Dobbiamo rifare il brand entro fine anno…" } };
+      t["agency-submit"] = { es: { label: "Enviar mensaje" }, it: { label: "Invia messaggio" } };
 
-      t["agency-footer-copyright"] = {
-        en: { content: "© 2026 Cráter Studio. All rights reserved." },
-        it: { content: "© 2026 Cráter Studio. Tutti i diritti riservati." },
-      };
-      t["agency-footer-address"] = {
-        en: { content: "142 Orizaba St, Roma Norte, Mexico City" },
-        it: { content: "Calle Orizaba 142, Roma Norte, Città del Messico" },
-      };
+      t["agency-footer-copyright"] = { es: { content: "© 2026 Cráter Studio. Todos los derechos reservados." }, it: { content: "© 2026 Cráter Studio. Tutti i diritti riservati." } };
+      t["agency-footer-address"] = { es: { content: "Calle Orizaba 142, Roma Norte, Ciudad de México" }, it: { content: "Calle Orizaba 142, Roma Norte, Città del Messico" } };
 
       return t;
     })(),
@@ -885,30 +854,30 @@ export function buildCreativeAgencyPageFragment(): NodeFragment {
 }
 
 export const creativeAgencyPageMeta: LayoutPageMeta = {
-  title: "Cráter Studio · Branding y producto digital",
-  description: "Agencia creativa especializada en branding, producto digital y sitios web para marcas ambiciosas.",
+  title: "Cráter Studio · Branding & digital product",
+  description: "Creative agency specialized in branding, digital product and websites for ambitious brands.",
   seo: {
     robots: "index,follow",
     openGraph: {
       title: "Cráter Studio",
-      description: "Hacemos marcas que se sienten inevitables. Ve nuestro trabajo.",
+      description: "We build brands that feel inevitable. See our work.",
       image: "https://images.unsplash.com/photo-1558655146-d09347e92766?w=1200&q=80&auto=format&fit=crop",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title: "Cráter Studio",
-      description: "Hacemos marcas que se sienten inevitables. Ve nuestro trabajo.",
+      description: "We build brands that feel inevitable. See our work.",
       image: "https://images.unsplash.com/photo-1558655146-d09347e92766?w=1200&q=80&auto=format&fit=crop",
     },
   },
   metaTranslations: {
-    en: {
-      title: "Cráter Studio · Branding & digital product",
-      description: "Creative agency specialized in branding, digital product and websites for ambitious brands.",
+    es: {
+      title: "Cráter Studio · Branding y producto digital",
+      description: "Agencia creativa especializada en branding, producto digital y sitios web para marcas ambiciosas.",
       seo: {
-        openGraph: { title: "Cráter Studio", description: "We build brands that feel inevitable. See our work." },
-        twitter: { title: "Cráter Studio", description: "We build brands that feel inevitable. See our work." },
+        openGraph: { title: "Cráter Studio", description: "Hacemos marcas que se sienten inevitables. Ve nuestro trabajo." },
+        twitter: { title: "Cráter Studio", description: "Hacemos marcas que se sienten inevitables. Ve nuestro trabajo." },
       },
     },
     it: {

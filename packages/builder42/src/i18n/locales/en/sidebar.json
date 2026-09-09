@@ -6,14 +6,14 @@
     "ariaLabel": "Side panel"
   },
   "palette": {
-    "hint": "Drag a component to the canvas.",
+    "hint": "Drag or click a component onto the page.",
     "dragTooltip": "Drag to add",
     "containerBadge": "container",
     "categories": {
       "basics": "Basics",
       "basicsGroups": {
         "essentials": "Essentials",
-        "content": "Content",
+        "content": "Blocks",
         "utility": "Utility"
       },
       "layout": "Layout",

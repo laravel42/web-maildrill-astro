@@ -133,7 +133,7 @@ function articleCard(n: number, kicker: string, title: string, excerpt: string, 
       // Showcase `expandable` (docs/48 §2): solo el destacado (n=1, arquetipo
       // A3 le da 2 columnas de ancho) colapsa su cuerpo con "Ver más" — el
       // resto de tarjetas del grid son más cortas y no lo necesitan.
-      behaviors: n === 1 ? [{ type: "expandable", options: { collapsedHeight: 140, expandLabel: "Ver más", collapseLabel: "Ver menos", fade: true } }] : undefined,
+      behaviors: n === 1 ? [{ type: "expandable", options: { collapsedHeight: 140, expandLabel: "Show more", collapseLabel: "Show less", fade: true } }] : undefined,
       children: [`editorial-article-${n}-kicker`, `editorial-article-${n}-title`, `editorial-article-${n}-excerpt`, `editorial-article-${n}-date`],
     },
     [`editorial-article-${n}-kicker`]: {
@@ -312,7 +312,7 @@ export function buildBlogListFragment(): NodeFragment {
       "editorial-hero-kicker": {
         id: "editorial-hero-kicker",
         type: "text",
-        props: { content: "REVISTA Y PODCAST DE CULTURA GASTRONÓMICA" },
+        props: { content: "MAGAZINE AND PODCAST ABOUT FOOD CULTURE" },
         style: {
           base: {
             typography: { fontFamily: { token: "typography.families.sans" }, fontSize: { token: "typography.sizes.sm" }, fontWeight: { token: "typography.weights.bold" } },
@@ -323,7 +323,7 @@ export function buildBlogListFragment(): NodeFragment {
       "editorial-hero-title": {
         id: "editorial-hero-title",
         type: "text",
-        props: { content: "<strong>Historias que se cuentan mejor con la mesa puesta</strong>" },
+        props: { content: "<strong>Stories best told with the table set</strong>" },
         style: {
           base: {
             size: { maxWidth: "22ch" },
@@ -340,7 +340,7 @@ export function buildBlogListFragment(): NodeFragment {
       "editorial-hero-sub": {
         id: "editorial-hero-sub",
         type: "text",
-        props: { content: "Cada semana, un plato, una conversación y la gente detrás de la mesa. Nueva temporada disponible." },
+        props: { content: "Every week, a dish, a conversation and the people behind the table. New season available now." },
         style: bodyText(),
       },
 
@@ -368,12 +368,12 @@ export function buildBlogListFragment(): NodeFragment {
           "editorial-topic-6",
         ],
       },
-      ...marqueeTopic(1, "Cocina de mercado"),
-      ...marqueeTopic(2, "Vino natural"),
-      ...marqueeTopic(3, "Fermentación"),
-      ...marqueeTopic(4, "Cocina de migración"),
-      ...marqueeTopic(5, "Sobremesa con chefs"),
-      ...marqueeTopic(6, "Recetas de la abuela"),
+      ...marqueeTopic(1, "Market cooking"),
+      ...marqueeTopic(2, "Natural wine"),
+      ...marqueeTopic(3, "Fermentation"),
+      ...marqueeTopic(4, "Migration cuisine"),
+      ...marqueeTopic(5, "Sobremesa with chefs"),
+      ...marqueeTopic(6, "Grandma's recipes"),
 
       // --- Grid editorial de anchos desiguales (arquetipo A3) --------------
       "editorial-articles": {
@@ -394,7 +394,7 @@ export function buildBlogListFragment(): NodeFragment {
       "editorial-articles-title": {
         id: "editorial-articles-title",
         type: "text",
-        props: { content: "<strong>Últimos episodios y artículos</strong>" },
+        props: { content: "<strong>Latest episodes and articles</strong>" },
         style: editorialTitle(),
       },
       // Grid de anchos DESIGUALES: el destacado ocupa 2 columnas y 2 filas
@@ -426,48 +426,48 @@ export function buildBlogListFragment(): NodeFragment {
       },
       ...articleCard(
         1,
-        "PODCAST · TEMPORADA 4",
-        "El regreso de la cocina de mercado: por qué comprar de temporada ya no es solo una moda",
-        "Hablamos con tres cocineras que dejaron el fine dining para volver al puesto del mercado — y por qué no se arrepienten.",
-        "18 ago · 42 min",
+        "PODCAST · SEASON 4",
+        "The comeback of market cooking: why buying seasonal is no longer just a trend",
+        "We talk to three cooks who left fine dining to go back to the market stall — and why they don't regret it.",
+        "Aug 18 · 42 min",
         "https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=900&q=80&auto=format&fit=crop",
-        "Puesto de verduras frescas en un mercado",
+        "Fresh vegetable stall at a market",
       ),
       ...articleCard(
         2,
-        "ARTÍCULO",
-        "Fermentar en casa sin miedo",
-        "Guía de arranque para quien nunca fermentó nada: kimchi, chucrut y un vinagre madre que dura años.",
-        "14 ago",
+        "ARTICLE",
+        "Fermenting at home without fear",
+        "A starter guide for anyone who's never fermented anything: kimchi, sauerkraut and a mother vinegar that lasts for years.",
+        "Aug 14",
         "https://images.unsplash.com/photo-1595855759920-86582396756c?w=700&q=80&auto=format&fit=crop",
-        "Frascos de vegetales fermentados",
+        "Jars of fermented vegetables",
       ),
       ...articleCard(
         3,
-        "PODCAST · TEMPORADA 4",
-        "Vino natural: la conversación que faltaba",
-        "Un sommelier y una enóloga discuten qué significa realmente 'natural' en una etiqueta de vino.",
-        "11 ago · 51 min",
+        "PODCAST · SEASON 4",
+        "Natural wine: the conversation we needed",
+        "A sommelier and a winemaker discuss what 'natural' really means on a wine label.",
+        "Aug 11 · 51 min",
         "https://images.unsplash.com/photo-1567696911980-2eed69a46042?w=700&q=80&auto=format&fit=crop",
-        "Copas de vino natural sobre una mesa de madera",
+        "Glasses of natural wine on a wooden table",
       ),
       ...articleCard(
         4,
-        "ARTÍCULO",
-        "La receta de la abuela que nadie anotó",
-        "Cómo un grupo de nietas está reconstruyendo recetas familiares a partir de la memoria y el olfato.",
-        "6 ago",
+        "ARTICLE",
+        "The grandma's recipe nobody wrote down",
+        "How a group of granddaughters is rebuilding family recipes from memory and smell alone.",
+        "Aug 6",
         "https://images.unsplash.com/photo-1591121213398-4b0a49f6b39a?w=700&q=80&auto=format&fit=crop",
-        "Manos amasando pan en una cocina casera",
+        "Hands kneading bread in a home kitchen",
       ),
       ...articleCard(
         5,
-        "PODCAST · TEMPORADA 3",
-        "Cocina de migración: un recetario en movimiento",
-        "Tres chefs migrantes cuentan cómo un plato de origen se transforma al cocinarse en otra tierra.",
-        "29 jul · 38 min",
+        "PODCAST · SEASON 3",
+        "Migration cuisine: a recipe book in motion",
+        "Three migrant chefs on how a dish's origin transforms when cooked in another land.",
+        "Jul 29 · 38 min",
         "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=700&q=80&auto=format&fit=crop",
-        "Especias variadas en cuencos pequeños",
+        "Assorted spices in small bowls",
       ),
 
       // --- Cita destacada (showcase `quote`) --------------------------------
@@ -488,8 +488,8 @@ export function buildBlogListFragment(): NodeFragment {
       ...quoteFragment(
         "editorial-quote-block",
         {
-          content: "La cocina de migración no es nostalgia: es una traducción constante. Cada plato es una decisión sobre qué se conserva y qué se deja ir.",
-          attribution: "Episodio 34 · Cocina de migración: un recetario en movimiento",
+          content: "Migration cuisine isn't nostalgia: it's a constant translation. Every dish is a decision about what's kept and what's let go.",
+          attribution: "Episode 34 · Migration cuisine: a recipe book in motion",
         },
         {
           base: {
@@ -525,13 +525,13 @@ export function buildBlogListFragment(): NodeFragment {
       "editorial-hosts-title": {
         id: "editorial-hosts-title",
         type: "text",
-        props: { content: "<strong>Quiénes cuentan estas historias</strong>" },
+        props: { content: "<strong>Who tells these stories</strong>" },
         style: { ...editorialTitle(), base: { ...editorialTitle().base, typography: { ...editorialTitle().base.typography, textAlign: "center" } } },
       },
       "editorial-hosts-sub": {
         id: "editorial-hosts-sub",
         type: "text",
-        props: { content: "Dos periodistas gastronómicas con veinte años combinados cubriendo cocina en Latinoamérica y España." },
+        props: { content: "Two food journalists with twenty combined years covering food culture across Latin America and Spain." },
         style: { ...bodyText(), base: { ...bodyText().base, typography: { ...bodyText().base.typography, textAlign: "center" } } },
       },
       "editorial-hosts-grid": {
@@ -547,13 +547,13 @@ export function buildBlogListFragment(): NodeFragment {
       ...hostCard(
         1,
         "Renata Iglesias",
-        "Editora y anfitriona",
+        "Editor and host",
         "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&q=80&auto=format&fit=crop",
       ),
       ...hostCard(
         2,
         "Tomás Ferreira",
-        "Coanfitrión y productor",
+        "Co-host and producer",
         "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=300&q=80&auto=format&fit=crop",
       ),
 
@@ -575,13 +575,13 @@ export function buildBlogListFragment(): NodeFragment {
       "editorial-newsletter-title": {
         id: "editorial-newsletter-title",
         type: "text",
-        props: { content: "<strong>La sobremesa, directo a tu correo</strong>" },
+        props: { content: "<strong>Sobremesa, straight to your inbox</strong>" },
         style: { ...editorialTitle(), base: { ...editorialTitle().base, typography: { ...editorialTitle().base.typography, textAlign: "center" } } },
       },
       "editorial-newsletter-sub": {
         id: "editorial-newsletter-sub",
         type: "text",
-        props: { content: "Un correo a la semana con el episodio nuevo y una receta que vale la pena guardar." },
+        props: { content: "One email a week with the new episode and a recipe worth keeping." },
         style: { ...bodyText(), base: { ...bodyText().base, typography: { ...bodyText().base.typography, textAlign: "center" } } },
       },
       "editorial-newsletter-form": {
@@ -604,13 +604,13 @@ export function buildBlogListFragment(): NodeFragment {
       "editorial-newsletter-input": {
         id: "editorial-newsletter-input",
         type: "input",
-        props: { name: "email", placeholder: "tucorreo@ejemplo.com", type: "email", required: true, disabled: false },
+        props: { name: "email", placeholder: "your@email.com", type: "email", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "editorial-newsletter-submit": {
         id: "editorial-newsletter-submit",
         type: "button-submit",
-        props: { label: "Suscribirme", disabled: false },
+        props: { label: "Subscribe", disabled: false },
         style: {
           base: {
             ...defaultStyleFor("button-submit").base,
@@ -645,7 +645,7 @@ export function buildBlogListFragment(): NodeFragment {
       "editorial-footer-copyright": {
         id: "editorial-footer-copyright",
         type: "text",
-        props: { content: "© 2026 Sobremesa · Revista y podcast de cultura gastronómica. Todos los derechos reservados." },
+        props: { content: "© 2026 Sobremesa · Magazine and podcast about food culture. All rights reserved." },
         style: {
           base: {
             size: { width: "100%" },
@@ -665,118 +665,72 @@ export function buildBlogListFragment(): NodeFragment {
     translations: (() => {
       const t: Record<string, NodeTranslations> = {};
 
-      t["editorial-hero-kicker"] = {
-        en: { content: "MAGAZINE AND PODCAST ABOUT FOOD CULTURE" },
-        it: { content: "RIVISTA E PODCAST SULLA CULTURA GASTRONOMICA" },
-      };
-      t["editorial-hero-title"] = {
-        en: { content: "<strong>Stories best told with the table set</strong>" },
-        it: { content: "<strong>Storie che si raccontano meglio a tavola</strong>" },
-      };
-      t["editorial-hero-sub"] = {
-        en: { content: "Every week, a dish, a conversation and the people behind the table. New season available now." },
-        it: { content: "Ogni settimana, un piatto, una conversazione e le persone dietro la tavola. Nuova stagione disponibile." },
-      };
+      t["editorial-hero-kicker"] = { es: { content: "REVISTA Y PODCAST DE CULTURA GASTRONÓMICA" }, it: { content: "RIVISTA E PODCAST SULLA CULTURA GASTRONOMICA" } };
+      t["editorial-hero-title"] = { es: { content: "<strong>Historias que se cuentan mejor con la mesa puesta</strong>" }, it: { content: "<strong>Storie che si raccontano meglio a tavola</strong>" } };
+      t["editorial-hero-sub"] = { es: { content: "Cada semana, un plato, una conversación y la gente detrás de la mesa. Nueva temporada disponible." }, it: { content: "Ogni settimana, un piatto, una conversazione e le persone dietro la tavola. Nuova stagione disponibile." } };
 
-      const topics: Record<number, { en: string; it: string }> = {
-        1: { en: "Market cooking", it: "Cucina di mercato" },
-        2: { en: "Natural wine", it: "Vino naturale" },
-        3: { en: "Fermentation", it: "Fermentazione" },
-        4: { en: "Migration cuisine", it: "Cucina della migrazione" },
-        5: { en: "Sobremesa with chefs", it: "Sobremesa con gli chef" },
-        6: { en: "Grandma's recipes", it: "Le ricette della nonna" },
+      const topics: Record<number, { es: string; it: string }> = {
+        1: { es: "Cocina de mercado", it: "Cucina di mercato" },
+        2: { es: "Vino natural", it: "Vino naturale" },
+        3: { es: "Fermentación", it: "Fermentazione" },
+        4: { es: "Cocina de migración", it: "Cucina della migrazione" },
+        5: { es: "Sobremesa con chefs", it: "Sobremesa con gli chef" },
+        6: { es: "Recetas de la abuela", it: "Le ricette della nonna" },
       };
       for (const [n, v] of Object.entries(topics)) {
-        t[`editorial-topic-${n}`] = { en: { content: v.en }, it: { content: v.it } };
+        t[`editorial-topic-${n}`] = { es: { content: v.es }, it: { content: v.it } };
       }
 
-      t["editorial-articles-title"] = { en: { content: "<strong>Latest episodes and articles</strong>" }, it: { content: "<strong>Ultimi episodi e articoli</strong>" } };
+      t["editorial-articles-title"] = { es: { content: "<strong>Últimos episodios y artículos</strong>" }, it: { content: "<strong>Ultimi episodi e articoli</strong>" } };
 
-      t["editorial-article-1-kicker"] = { en: { content: "PODCAST · SEASON 4" }, it: { content: "PODCAST · STAGIONE 4" } };
-      t["editorial-article-1-title"] = {
-        en: { content: "<strong>The comeback of market cooking: why buying seasonal is no longer just a trend</strong>" },
-        it: { content: "<strong>Il ritorno della cucina di mercato: perché comprare di stagione non è più solo una moda</strong>" },
-      };
-      t["editorial-article-1-excerpt"] = {
-        en: { content: "We talk to three cooks who left fine dining to go back to the market stall — and why they don't regret it." },
-        it: { content: "Parliamo con tre cuoche che hanno lasciato il fine dining per tornare al banco del mercato — e perché non se ne pentono." },
-      };
-      t["editorial-article-1-date"] = { en: { content: "Aug 18 · 42 min" }, it: { content: "18 ago · 42 min" } };
-      t["editorial-article-1-img"] = { en: { alt: "Fresh vegetable stall at a market" }, it: { alt: "Banco di verdure fresche al mercato" } };
+      t["editorial-article-1-kicker"] = { es: { content: "PODCAST · TEMPORADA 4" }, it: { content: "PODCAST · STAGIONE 4" } };
+      t["editorial-article-1-title"] = { es: { content: "<strong>El regreso de la cocina de mercado: por qué comprar de temporada ya no es solo una moda</strong>" }, it: { content: "<strong>Il ritorno della cucina di mercato: perché comprare di stagione non è più solo una moda</strong>" } };
+      t["editorial-article-1-excerpt"] = { es: { content: "Hablamos con tres cocineras que dejaron el fine dining para volver al puesto del mercado — y por qué no se arrepienten." }, it: { content: "Parliamo con tre cuoche che hanno lasciato il fine dining per tornare al banco del mercato — e perché non se ne pentono." } };
+      t["editorial-article-1-date"] = { es: { content: "18 ago · 42 min" }, it: { content: "18 ago · 42 min" } };
+      t["editorial-article-1-img"] = { es: { alt: "Puesto de verduras frescas en un mercado" }, it: { alt: "Banco di verdure fresche al mercato" } };
 
-      t["editorial-article-2-kicker"] = { en: { content: "ARTICLE" }, it: { content: "ARTICOLO" } };
-      t["editorial-article-2-title"] = { en: { content: "<strong>Fermenting at home without fear</strong>" }, it: { content: "<strong>Fermentare in casa senza paura</strong>" } };
-      t["editorial-article-2-excerpt"] = {
-        en: { content: "A starter guide for anyone who's never fermented anything: kimchi, sauerkraut and a mother vinegar that lasts for years." },
-        it: { content: "Guida per chi non ha mai fermentato nulla: kimchi, crauti e un aceto madre che dura anni." },
-      };
-      t["editorial-article-2-date"] = { en: { content: "Aug 14" }, it: { content: "14 ago" } };
-      t["editorial-article-2-img"] = { en: { alt: "Jars of fermented vegetables" }, it: { alt: "Barattoli di verdure fermentate" } };
+      t["editorial-article-2-kicker"] = { es: { content: "ARTÍCULO" }, it: { content: "ARTICOLO" } };
+      t["editorial-article-2-title"] = { es: { content: "<strong>Fermentar en casa sin miedo</strong>" }, it: { content: "<strong>Fermentare in casa senza paura</strong>" } };
+      t["editorial-article-2-excerpt"] = { es: { content: "Guía de arranque para quien nunca fermentó nada: kimchi, chucrut y un vinagre madre que dura años." }, it: { content: "Guida per chi non ha mai fermentato nulla: kimchi, crauti e un aceto madre che dura anni." } };
+      t["editorial-article-2-date"] = { es: { content: "14 ago" }, it: { content: "14 ago" } };
+      t["editorial-article-2-img"] = { es: { alt: "Frascos de vegetales fermentados" }, it: { alt: "Barattoli di verdure fermentate" } };
 
-      t["editorial-article-3-kicker"] = { en: { content: "PODCAST · SEASON 4" }, it: { content: "PODCAST · STAGIONE 4" } };
-      t["editorial-article-3-title"] = { en: { content: "<strong>Natural wine: the conversation we needed</strong>" }, it: { content: "<strong>Vino naturale: la conversazione che mancava</strong>" } };
-      t["editorial-article-3-excerpt"] = {
-        en: { content: "A sommelier and a winemaker discuss what 'natural' really means on a wine label." },
-        it: { content: "Un sommelier e un'enologa discutono cosa significhi davvero 'naturale' su un'etichetta di vino." },
-      };
-      t["editorial-article-3-date"] = { en: { content: "Aug 11 · 51 min" }, it: { content: "11 ago · 51 min" } };
-      t["editorial-article-3-img"] = { en: { alt: "Glasses of natural wine on a wooden table" }, it: { alt: "Bicchieri di vino naturale su un tavolo di legno" } };
+      t["editorial-article-3-kicker"] = { es: { content: "PODCAST · TEMPORADA 4" }, it: { content: "PODCAST · STAGIONE 4" } };
+      t["editorial-article-3-title"] = { es: { content: "<strong>Vino natural: la conversación que faltaba</strong>" }, it: { content: "<strong>Vino naturale: la conversazione che mancava</strong>" } };
+      t["editorial-article-3-excerpt"] = { es: { content: "Un sommelier y una enóloga discuten qué significa realmente 'natural' en una etiqueta de vino." }, it: { content: "Un sommelier e un'enologa discutono cosa significhi davvero 'naturale' su un'etichetta di vino." } };
+      t["editorial-article-3-date"] = { es: { content: "11 ago · 51 min" }, it: { content: "11 ago · 51 min" } };
+      t["editorial-article-3-img"] = { es: { alt: "Copas de vino natural sobre una mesa de madera" }, it: { alt: "Bicchieri di vino naturale su un tavolo di legno" } };
 
-      t["editorial-article-4-kicker"] = { en: { content: "ARTICLE" }, it: { content: "ARTICOLO" } };
-      t["editorial-article-4-title"] = { en: { content: "<strong>The grandma's recipe nobody wrote down</strong>" }, it: { content: "<strong>La ricetta della nonna che nessuno ha scritto</strong>" } };
-      t["editorial-article-4-excerpt"] = {
-        en: { content: "How a group of granddaughters is rebuilding family recipes from memory and smell alone." },
-        it: { content: "Come un gruppo di nipoti sta ricostruendo le ricette di famiglia solo dalla memoria e dall'olfatto." },
-      };
-      t["editorial-article-4-date"] = { en: { content: "Aug 6" }, it: { content: "6 ago" } };
-      t["editorial-article-4-img"] = { en: { alt: "Hands kneading bread in a home kitchen" }, it: { alt: "Mani che impastano il pane in una cucina domestica" } };
+      t["editorial-article-4-kicker"] = { es: { content: "ARTÍCULO" }, it: { content: "ARTICOLO" } };
+      t["editorial-article-4-title"] = { es: { content: "<strong>La receta de la abuela que nadie anotó</strong>" }, it: { content: "<strong>La ricetta della nonna che nessuno ha scritto</strong>" } };
+      t["editorial-article-4-excerpt"] = { es: { content: "Cómo un grupo de nietas está reconstruyendo recetas familiares a partir de la memoria y el olfato." }, it: { content: "Come un gruppo di nipoti sta ricostruendo le ricette di famiglia solo dalla memoria e dall'olfatto." } };
+      t["editorial-article-4-date"] = { es: { content: "6 ago" }, it: { content: "6 ago" } };
+      t["editorial-article-4-img"] = { es: { alt: "Manos amasando pan en una cocina casera" }, it: { alt: "Mani che impastano il pane in una cucina domestica" } };
 
-      t["editorial-article-5-kicker"] = { en: { content: "PODCAST · SEASON 3" }, it: { content: "PODCAST · STAGIONE 3" } };
-      t["editorial-article-5-title"] = { en: { content: "<strong>Migration cuisine: a recipe book in motion</strong>" }, it: { content: "<strong>Cucina della migrazione: un ricettario in movimento</strong>" } };
-      t["editorial-article-5-excerpt"] = {
-        en: { content: "Three migrant chefs on how a dish's origin transforms when cooked in another land." },
-        it: { content: "Tre chef migranti raccontano come l'origine di un piatto si trasformi cucinandolo in un'altra terra." },
-      };
-      t["editorial-article-5-date"] = { en: { content: "Jul 29 · 38 min" }, it: { content: "29 lug · 38 min" } };
-      t["editorial-article-5-img"] = { en: { alt: "Assorted spices in small bowls" }, it: { alt: "Spezie assortite in piccole ciotole" } };
+      t["editorial-article-5-kicker"] = { es: { content: "PODCAST · TEMPORADA 3" }, it: { content: "PODCAST · STAGIONE 3" } };
+      t["editorial-article-5-title"] = { es: { content: "<strong>Cocina de migración: un recetario en movimiento</strong>" }, it: { content: "<strong>Cucina della migrazione: un ricettario in movimento</strong>" } };
+      t["editorial-article-5-excerpt"] = { es: { content: "Tres chefs migrantes cuentan cómo un plato de origen se transforma al cocinarse en otra tierra." }, it: { content: "Tre chef migranti raccontano come l'origine di un piatto si trasformi cucinandolo in un'altra terra." } };
+      t["editorial-article-5-date"] = { es: { content: "29 jul · 38 min" }, it: { content: "29 lug · 38 min" } };
+      t["editorial-article-5-img"] = { es: { alt: "Especias variadas en cuencos pequeños" }, it: { alt: "Spezie assortite in piccole ciotole" } };
 
-      t["editorial-quote-block-content"] = {
-        en: {
-          content: "Migration cuisine isn't nostalgia: it's a constant translation. Every dish is a decision about what's kept and what's let go.",
-        },
-        it: {
-          content: "La cucina della migrazione non è nostalgia: è una traduzione costante. Ogni piatto è una decisione su cosa si conserva e cosa si lascia andare.",
-        },
-      };
-      t["editorial-quote-block-attribution"] = {
-        en: { content: "<cite>— Episode 34 · Migration cuisine: a recipe book in motion</cite>" },
-        it: { content: "<cite>— Episodio 34 · Cucina della migrazione: un ricettario in movimento</cite>" },
-      };
+      t["editorial-quote-block-content"] = { es: { content: "La cocina de migración no es nostalgia: es una traducción constante. Cada plato es una decisión sobre qué se conserva y qué se deja ir." }, it: { content: "La cucina della migrazione non è nostalgia: è una traduzione costante. Ogni piatto è una decisione su cosa si conserva e cosa si lascia andare." } };
+      t["editorial-quote-block-attribution"] = { es: { content: "<cite>— Episodio 34 · Cocina de migración: un recetario en movimiento</cite>" }, it: { content: "<cite>— Episodio 34 · Cucina della migrazione: un ricettario in movimento</cite>" } };
 
-      t["editorial-hosts-title"] = { en: { content: "<strong>Who tells these stories</strong>" }, it: { content: "<strong>Chi racconta queste storie</strong>" } };
-      t["editorial-hosts-sub"] = {
-        en: { content: "Two food journalists with twenty combined years covering food culture across Latin America and Spain." },
-        it: { content: "Due giornaliste gastronomiche con vent'anni di esperienza combinata nella cucina in America Latina e Spagna." },
-      };
-      t["editorial-host-1-name"] = { en: { content: "<strong>Renata Iglesias</strong>" }, it: { content: "<strong>Renata Iglesias</strong>" } };
-      t["editorial-host-1-role"] = { en: { content: "Editor and host" }, it: { content: "Editrice e conduttrice" } };
-      t["editorial-host-1-avatar"] = { en: { alt: "Renata Iglesias" }, it: { alt: "Renata Iglesias" } };
-      t["editorial-host-2-name"] = { en: { content: "<strong>Tomás Ferreira</strong>" }, it: { content: "<strong>Tomás Ferreira</strong>" } };
-      t["editorial-host-2-role"] = { en: { content: "Co-host and producer" }, it: { content: "Coconduttore e produttore" } };
-      t["editorial-host-2-avatar"] = { en: { alt: "Tomás Ferreira" }, it: { alt: "Tomás Ferreira" } };
+      t["editorial-hosts-title"] = { es: { content: "<strong>Quiénes cuentan estas historias</strong>" }, it: { content: "<strong>Chi racconta queste storie</strong>" } };
+      t["editorial-hosts-sub"] = { es: { content: "Dos periodistas gastronómicas con veinte años combinados cubriendo cocina en Latinoamérica y España." }, it: { content: "Due giornaliste gastronomiche con vent'anni di esperienza combinata nella cucina in America Latina e Spagna." } };
+      t["editorial-host-1-name"] = { es: { content: "<strong>Renata Iglesias</strong>" }, it: { content: "<strong>Renata Iglesias</strong>" } };
+      t["editorial-host-1-role"] = { es: { content: "Editora y anfitriona" }, it: { content: "Editrice e conduttrice" } };
+      t["editorial-host-1-avatar"] = { es: { alt: "Renata Iglesias" }, it: { alt: "Renata Iglesias" } };
+      t["editorial-host-2-name"] = { es: { content: "<strong>Tomás Ferreira</strong>" }, it: { content: "<strong>Tomás Ferreira</strong>" } };
+      t["editorial-host-2-role"] = { es: { content: "Coanfitrión y productor" }, it: { content: "Coconduttore e produttore" } };
+      t["editorial-host-2-avatar"] = { es: { alt: "Tomás Ferreira" }, it: { alt: "Tomás Ferreira" } };
 
-      t["editorial-newsletter-title"] = { en: { content: "<strong>Sobremesa, straight to your inbox</strong>" }, it: { content: "<strong>Sobremesa, direttamente nella tua email</strong>" } };
-      t["editorial-newsletter-sub"] = {
-        en: { content: "One email a week with the new episode and a recipe worth keeping." },
-        it: { content: "Un'email a settimana con il nuovo episodio e una ricetta da conservare." },
-      };
-      t["editorial-newsletter-input"] = { en: { placeholder: "your@email.com" }, it: { placeholder: "tua@email.com" } };
-      t["editorial-newsletter-submit"] = { en: { label: "Subscribe" }, it: { label: "Iscrivimi" } };
+      t["editorial-newsletter-title"] = { es: { content: "<strong>La sobremesa, directo a tu correo</strong>" }, it: { content: "<strong>Sobremesa, direttamente nella tua email</strong>" } };
+      t["editorial-newsletter-sub"] = { es: { content: "Un correo a la semana con el episodio nuevo y una receta que vale la pena guardar." }, it: { content: "Un'email a settimana con il nuovo episodio e una ricetta da conservare." } };
+      t["editorial-newsletter-input"] = { es: { placeholder: "tucorreo@ejemplo.com" }, it: { placeholder: "tua@email.com" } };
+      t["editorial-newsletter-submit"] = { es: { label: "Suscribirme" }, it: { label: "Iscrivimi" } };
 
-      t["editorial-footer-copyright"] = {
-        en: { content: "© 2026 Sobremesa · Magazine and podcast about food culture. All rights reserved." },
-        it: { content: "© 2026 Sobremesa · Rivista e podcast sulla cultura gastronomica. Tutti i diritti riservati." },
-      };
+      t["editorial-footer-copyright"] = { es: { content: "© 2026 Sobremesa · Revista y podcast de cultura gastronómica. Todos los derechos reservados." }, it: { content: "© 2026 Sobremesa · Rivista e podcast sulla cultura gastronomica. Tutti i diritti riservati." } };
 
       return t;
     })(),
@@ -784,31 +738,31 @@ export function buildBlogListFragment(): NodeFragment {
 }
 
 export const blogListPageMeta: LayoutPageMeta = {
-  title: "Sobremesa · Revista y podcast de cultura gastronómica",
+  title: "Sobremesa · Magazine and podcast about food culture",
   description:
-    "Sobremesa es una revista y podcast sobre cocina, vino natural, fermentación y las historias detrás de cada plato. Nueva temporada disponible.",
+    "Sobremesa is a magazine and podcast about cooking, natural wine, fermentation and the stories behind every dish. New season available now.",
   seo: {
     robots: "index,follow",
     openGraph: {
-      title: "Sobremesa · Revista y podcast de cultura gastronómica",
-      description: "Cada semana, un plato, una conversación y la gente detrás de la mesa.",
+      title: "Sobremesa · Magazine and podcast about food culture",
+      description: "Every week, a dish, a conversation and the people behind the table.",
       image: "https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=1200&q=80&auto=format&fit=crop",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "Sobremesa · Revista y podcast de cultura gastronómica",
-      description: "Cada semana, un plato, una conversación y la gente detrás de la mesa.",
+      title: "Sobremesa · Magazine and podcast about food culture",
+      description: "Every week, a dish, a conversation and the people behind the table.",
       image: "https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=1200&q=80&auto=format&fit=crop",
     },
   },
   metaTranslations: {
-    en: {
-      title: "Sobremesa · Magazine and podcast about food culture",
-      description: "Sobremesa is a magazine and podcast about cooking, natural wine, fermentation and the stories behind every dish. New season available now.",
+    es: {
+      title: "Sobremesa · Revista y podcast de cultura gastronómica",
+      description: "Sobremesa es una revista y podcast sobre cocina, vino natural, fermentación y las historias detrás de cada plato. Nueva temporada disponible.",
       seo: {
-        openGraph: { title: "Sobremesa · Magazine and podcast about food culture", description: "Every week, a dish, a conversation and the people behind the table." },
-        twitter: { title: "Sobremesa · Magazine and podcast about food culture", description: "Every week, a dish, a conversation and the people behind the table." },
+        openGraph: { title: "Sobremesa · Revista y podcast de cultura gastronómica", description: "Cada semana, un plato, una conversación y la gente detrás de la mesa." },
+        twitter: { title: "Sobremesa · Revista y podcast de cultura gastronómica", description: "Cada semana, un plato, una conversación y la gente detrás de la mesa." },
       },
     },
     it: {

@@ -74,6 +74,7 @@
   "form": {
     "properties": "Propiedades",
     "propsGeneral": "General",
+    "fieldCount": "{{count}} campo(s)",
     "styleEditing": "Estilo · editando",
     "stateEditing": "Estado",
     "stateNormal": "Normal",
@@ -163,6 +164,10 @@
       },
       "sticky": {
         "position": "Posición",
+        "positionOptions": {
+          "top": "Arriba",
+          "bottom": "Abajo"
+        },
         "scrolledThreshold": "Umbral para marcar \"ya scrolleó\" (px)",
         "scrolledThresholdHelp": "Cantidad de píxeles de scroll a partir de la cual el elemento cambia de aspecto (por ejemplo, gana una sombra o se compacta) para indicar que la página se desplazó."
       },
@@ -174,12 +179,20 @@
       "marquee": {
         "duration": "Duración del ciclo (s)",
         "direction": "Dirección",
+        "directionOptions": {
+          "left": "Izquierda",
+          "right": "Derecha"
+        },
         "pauseOnHover": "Pausar al pasar el mouse"
       },
       "reveal-on-scroll": {
         "threshold": "Umbral de visibilidad",
         "once": "Solo una vez",
-        "mode": "Modo de entrada"
+        "mode": "Modo de entrada",
+        "modeOptions": {
+          "together": "Juntos",
+          "sequence": "En secuencia"
+        }
       },
       "expandable": {
         "collapsedHeight": "Altura colapsada",
@@ -203,6 +216,45 @@
       "lightbox": {
         "duration": "Duración de la transición (ms)",
         "durationHelp": "Duración en milisegundos de la animación de apertura/cierre del overlay de pantalla completa. Se ignora si el visitante tiene activada la preferencia de movimiento reducido del sistema."
+      },
+      "carousel": {
+        "orientation": "Orientación",
+        "orientationOptions": {
+          "horizontal": "Horizontal",
+          "vertical": "Vertical"
+        },
+        "slideSize": "Tamaño de cada slide",
+        "gap": "Espacio entre slides",
+        "loop": "Loop",
+        "autoplay": "Autoplay",
+        "showArrows": "Mostrar flechas"
+      },
+      "form-validation": {
+        "validateOn": "Validar al",
+        "validateOnOptions": {
+          "blur": "Perder el foco (blur)",
+          "input": "Cada cambio (input)"
+        },
+        "requiredMessage": "Mensaje: campo requerido",
+        "emailMessage": "Mensaje: email inválido",
+        "patternMessage": "Mensaje: formato inválido"
+      },
+      "accordion": {
+        "single": "Solo una sección abierta",
+        "duration": "Duración (ms)"
+      },
+      "modal": {
+        "closeOnBackdrop": "Cerrar al hacer click fuera",
+        "duration": "Duración (ms)"
+      },
+      "navbar": {
+        "duration": "Duración (ms)"
+      },
+      "tabs": {
+        "duration": "Duración (ms)"
+      },
+      "toggle": {
+        "pressed": "Iniciar activo"
       }
     },
     "themeToggle": {
@@ -323,19 +375,22 @@
       "action": "Activa el modo avanzado"
     },
     "tabs": {
+      "layers": "Capas",
       "pages": "Páginas",
       "languages": "Idiomas",
       "themes": "Temas",
       "seo": "SEO",
-      "settings": "Ajustes",
-      "publish": "Publicar"
+      "publish": "Publicar",
+      "settings": "Ajustes"
     },
     "tabsHelp": {
+      "layers": "Recorre el árbol de la página, selecciona nodos ocultos y muestra u oculta elementos en el viewport actual.",
       "pages": "Crea, duplica, reordena y elimina páginas del sitio. Marca la página de inicio y edita el título y el slug de cada una.",
       "languages": "Activa el sitio multilingüe, gestiona los idiomas de contenido y define el idioma por defecto.",
       "themes": "Crea y edita temas de color del sitio remapeando los tokens semánticos, y marca el tema por defecto.",
       "seo": "Edita la metadata SEO de la página activa: título, descripción, canonical, robots y Open Graph/Twitter.",
       "settings": "Configura el nombre del archivo de salida y guarda o carga el sitio completo (.json).",
+      "settingsPrefs": "Idioma del editor, tema de color, controles de reordenamiento y nivel de experiencia.",
       "publish": "Publica el sitio completo y gestiona tus sitios ya publicados: abrir, republicar o despublicar."
     },
     "output": {

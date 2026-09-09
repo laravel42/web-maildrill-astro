@@ -88,13 +88,13 @@ export function buildFeatures3ColFragment(): NodeFragment {
       "features-3col-1-title": {
         id: "features-3col-1-title",
         type: "text",
-        props: { content: "<strong>Rápido de configurar</strong>" },
+        props: { content: "<strong>Quick to set up</strong>" },
         style: { base: { appearance: { color: { token: "colors.text" } } } },
       },
       "features-3col-1-body": {
         id: "features-3col-1-body",
         type: "text",
-        props: { content: "Elige un layout y personalízalo en lugar de partir de cero." },
+        props: { content: "Pick a layout and customize it instead of starting from scratch." },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
 
@@ -141,13 +141,13 @@ export function buildFeatures3ColFragment(): NodeFragment {
       "features-3col-2-title": {
         id: "features-3col-2-title",
         type: "text",
-        props: { content: "<strong>Se adapta a tu tema</strong>" },
+        props: { content: "<strong>Follows your theme</strong>" },
         style: { base: { appearance: { color: { token: "colors.text" } } } },
       },
       "features-3col-2-body": {
         id: "features-3col-2-body",
         type: "text",
-        props: { content: "Escrito solo con tokens: cambia de tema y la sección se actualiza sola." },
+        props: { content: "Written with tokens only: change the theme and the section updates itself." },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
 
@@ -191,13 +191,13 @@ export function buildFeatures3ColFragment(): NodeFragment {
       "features-3col-3-title": {
         id: "features-3col-3-title",
         type: "text",
-        props: { content: "<strong>Editable pieza a pieza</strong>" },
+        props: { content: "<strong>Editable piece by piece</strong>" },
         style: { base: { appearance: { color: { token: "colors.text" } } } },
       },
       "features-3col-3-body": {
         id: "features-3col-3-body",
         type: "text",
-        props: { content: "Cada tarjeta es un contenedor normal: agrega, quita o reordena libremente." },
+        props: { content: "Each card is a normal container: add, remove, or reorder freely." },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
     },

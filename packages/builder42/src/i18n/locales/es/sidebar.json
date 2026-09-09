@@ -6,14 +6,14 @@
     "ariaLabel": "Panel lateral"
   },
   "palette": {
-    "hint": "Arrastra un componente al canvas.",
+    "hint": "Arrastra o haz clic en un componente para añadirlo a la página.",
     "dragTooltip": "Arrastrar para agregar",
     "containerBadge": "contenedor",
     "categories": {
       "basics": "Básicos",
       "basicsGroups": {
         "essentials": "Esenciales",
-        "content": "Contenido",
+        "content": "Bloques",
         "utility": "Utilidad"
       },
       "layout": "Estructura",

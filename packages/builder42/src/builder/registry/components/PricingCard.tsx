@@ -230,7 +230,7 @@ export const PRICING_DEFAULT_CHILDREN: DefaultChildSpec[] = [
     style: PRICING_PRICE_ROW_STYLE,
     children: [
       { type: "text", props: { content: "$29" }, style: PRICING_PRICE_STYLE },
-      { type: "text", props: { content: "/mes" }, style: PRICING_PERIOD_STYLE },
+      { type: "text", props: { content: "/mo" }, style: PRICING_PERIOD_STYLE },
     ],
   },
   {
@@ -244,7 +244,7 @@ export const PRICING_DEFAULT_CHILDREN: DefaultChildSpec[] = [
   },
   {
     type: "button",
-    props: { label: "Empezar", link: { kind: "external", href: "#" } },
+    props: { label: "Get started", link: { kind: "external", href: "#" } },
     style: PRICING_CTA_STYLE,
   },
 ];
@@ -269,7 +269,7 @@ function PricingCardRender(ctx: RenderContext) {
       {children}
       {!exportMode && isEmpty ? (
         <span className="pbx-empty-hint" data-empty-hint>
-          Tarjeta de precio vacía — añade el plan, precio y features
+          Empty pricing card — add the plan, price, and features
         </span>
       ) : null}
     </article>

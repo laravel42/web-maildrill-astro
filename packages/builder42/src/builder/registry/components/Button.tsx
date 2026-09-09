@@ -67,7 +67,7 @@ function ButtonRender(ctx: RenderContext) {
   const style: CSSProperties | undefined = exportMode
     ? undefined
     : stylePropertiesToCSSObject(resolveStyle(node.style, breakpoint, DEFAULT_BREAKPOINTS));
-  const label = typeof node.props.label === "string" ? node.props.label : "Botón";
+  const label = typeof node.props.label === "string" ? node.props.label : "Button";
 
   // Preferimos props.link (LinkTarget); la pipeline lo resuelve a URL real, y
   // sin pipeline (canvas) usamos el fallback local. Si no hay link, el href
@@ -102,10 +102,10 @@ function ButtonRender(ctx: RenderContext) {
 
 export const buttonDefinition: ComponentDefinition = {
   type: "button",
-  label: "Botón",
+  label: "Button",
   category: "content",
   acceptsChildren: false,
-  defaultProps: { label: "Botón", link: { kind: "external", href: "#" }, newTab: false },
+  defaultProps: { label: "Button", link: { kind: "external", href: "#" }, newTab: false },
   defaultStyle: structuredClone(BUTTON_DEFAULT_STYLE),
   propsSchema: {
     fields: [
@@ -127,7 +127,7 @@ function ButtonSubmitRender(ctx: RenderContext) {
   const style: CSSProperties | undefined = exportMode
     ? undefined
     : stylePropertiesToCSSObject(resolveStyle(node.style, breakpoint, DEFAULT_BREAKPOINTS));
-  const label = typeof node.props.label === "string" ? node.props.label : "Enviar";
+  const label = typeof node.props.label === "string" ? node.props.label : "Submit";
   const disabled = node.props.disabled === true;
 
   const { className: rootClassName, ...restRootProps } = rootProps ?? {};
@@ -161,7 +161,7 @@ export const buttonSubmitDefinition: ComponentDefinition = {
   // adicional (misma razón que `text`/`input`/`textarea`/`select`).
   disallowsClickAction: true,
   defaultProps: {
-    label: "Enviar",
+    label: "Submit",
     disabled: false,
   },
   defaultStyle: structuredClone(BUTTON_DEFAULT_STYLE),

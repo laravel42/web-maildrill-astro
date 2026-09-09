@@ -62,8 +62,8 @@ export function buildQuoteStripFragment(): NodeFragment {
     "quote-strip-quote",
     {
       content:
-        "Cuando movimos nuestras campañas de reactivación a Maildrill, combinar email y WhatsApp en el mismo flujo triplicó la tasa de apertura en menos de un mes.",
-      attribution: "Diego Salcedo, Growth Lead en Cursor Fintech",
+        "When we moved our reactivation campaigns to Maildrill, combining email and WhatsApp in the same flow tripled our open rate in less than a month.",
+      attribution: "Diego Salcedo, Growth Lead at Cursor Fintech",
     },
     {
       ...quoteBandStyle,
@@ -155,7 +155,7 @@ export function buildQuoteStripFragment(): NodeFragment {
             kind: "url",
             url: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&q=80&auto=format&fit=crop&crop=faces",
           },
-          alt: "Retrato de Diego Salcedo",
+          alt: "Portrait of Diego Salcedo",
           initials: "DS",
         },
         style: {

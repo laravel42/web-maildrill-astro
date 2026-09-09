@@ -69,7 +69,7 @@ export const badgeDefinition: ComponentDefinition = {
   label: "Etiqueta",
   category: "content",
   acceptsChildren: false,
-  defaultProps: { label: "Nuevo" },
+  defaultProps: { label: "New" },
   defaultStyle: structuredClone(BADGE_DEFAULT_STYLE),
   propsSchema: {
     fields: [

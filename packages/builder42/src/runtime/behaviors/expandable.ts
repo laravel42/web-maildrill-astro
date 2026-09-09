@@ -41,8 +41,8 @@ export interface ExpandableOptions {
 export type Cleanup = () => void;
 
 const DEFAULT_COLLAPSED_HEIGHT = 200;
-const DEFAULT_EXPAND_LABEL = "Ver más";
-const DEFAULT_COLLAPSE_LABEL = "Ver menos";
+const DEFAULT_EXPAND_LABEL = "Show more";
+const DEFAULT_COLLAPSE_LABEL = "Show less";
 
 let autoId = 0;
 function ensureId(el: HTMLElement): string {

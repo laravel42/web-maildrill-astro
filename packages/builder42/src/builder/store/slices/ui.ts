@@ -20,12 +20,19 @@ import type { SliceCreator } from "./types";
 export type ViewMode = "edit" | "preview" | "code" | "json";
 
 /**
- * Tabs del panel de configuración del sitio (`SiteSettingsPanel`, visible en el
- * Inspector cuando no hay nodo seleccionado). Vive aquí porque el store guarda
- * el UI-state `requestedSiteTab` (una petición one-shot de "abrir la config del
- * sitio en esta tab", emitida desde otros paneles como el de Interactividad).
+ * Tabs del panel de configuración del sitio (`SiteSettingsPanel`). Vive aquí
+ * porque el store guarda el UI-state `requestedSiteTab` (una petición one-shot
+ * de "abrir la config del sitio en esta tab", emitida desde otros paneles
+ * como el de Interactividad).
  */
-export type SiteTab = "pages" | "languages" | "themes" | "seo" | "settings" | "publish";
+export type SiteTab =
+  | "layers"
+  | "pages"
+  | "languages"
+  | "themes"
+  | "seo"
+  | "publish"
+  | "settings";
 
 export interface UiSlice {
   selectedId: NodeId | null;
@@ -126,7 +133,9 @@ export const createUiSlice: SliceCreator<UiSlice> = (set) => ({
   activeTiptapEditor: null,
   editingModalId: null,
   previewStateBySelectedId: {},
-  activeBreakpoint: "base",
+  // Canvas frame starts at Desktop (xl / 1280). Style cascade stays mobile-first;
+  // this is only which viewport the editor opens on.
+  activeBreakpoint: "xl",
   view: "edit",
   editingLocale: initialSite.meta.defaultLang,
   requestedSiteTab: null,

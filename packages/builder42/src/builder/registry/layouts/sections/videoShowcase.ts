@@ -49,7 +49,7 @@ export function buildVideoShowcaseFragment(): NodeFragment {
       "video-showcase-title": {
         id: "video-showcase-title",
         type: "text",
-        props: { content: "<strong>Mira Maildrill en acción</strong>" },
+        props: { content: "<strong>See Maildrill in action</strong>" },
         style: {
           base: {
             typography: {
@@ -72,7 +72,7 @@ export function buildVideoShowcaseFragment(): NodeFragment {
         children: ["video-showcase-card-1", "video-showcase-card-2", "video-showcase-card-3"],
       },
 
-      // --- Tarjeta 1: Crear tu primera campaña ---------------------------------
+      // --- Tarjeta 1: Create your first campaign ---------------------------------
       "video-showcase-card-1": {
         id: "video-showcase-card-1",
         type: "card",
@@ -102,7 +102,7 @@ export function buildVideoShowcaseFragment(): NodeFragment {
             kind: "url",
             url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80&auto=format&fit=crop",
           },
-          alt: "Persona creando una campaña de email en un editor visual en pantalla",
+          alt: "Person creating an email campaign in a visual editor on screen",
           objectFit: "cover",
         },
         style: { base: { size: { width: "100%", height: "100%" } } },
@@ -125,11 +125,11 @@ export function buildVideoShowcaseFragment(): NodeFragment {
       "video-showcase-card-1-label": {
         id: "video-showcase-card-1-label",
         type: "text",
-        props: { content: "Crear tu primera campaña" },
+        props: { content: "Create your first campaign" },
         style: { base: { appearance: { color: { token: "colors.text" } } } },
       },
 
-      // --- Tarjeta 2: Panel de entregabilidad en vivo --------------------------
+      // --- Tarjeta 2: Live deliverability dashboard --------------------------
       "video-showcase-card-2": {
         id: "video-showcase-card-2",
         type: "card",
@@ -159,7 +159,7 @@ export function buildVideoShowcaseFragment(): NodeFragment {
             kind: "url",
             url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80&auto=format&fit=crop",
           },
-          alt: "Panel de entregabilidad con gráficas en tiempo real en una pantalla",
+          alt: "Deliverability dashboard with real-time charts on a screen",
           objectFit: "cover",
         },
         style: { base: { size: { width: "100%", height: "100%" } } },
@@ -182,11 +182,11 @@ export function buildVideoShowcaseFragment(): NodeFragment {
       "video-showcase-card-2-label": {
         id: "video-showcase-card-2-label",
         type: "text",
-        props: { content: "Panel de entregabilidad en vivo" },
+        props: { content: "Live deliverability dashboard" },
         style: { base: { appearance: { color: { token: "colors.text" } } } },
       },
 
-      // --- Tarjeta 3: Automatizaciones en 3 pasos ------------------------------
+      // --- Tarjeta 3: Automations in 3 steps ------------------------------
       "video-showcase-card-3": {
         id: "video-showcase-card-3",
         type: "card",
@@ -216,7 +216,7 @@ export function buildVideoShowcaseFragment(): NodeFragment {
             kind: "url",
             url: "https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=800&q=80&auto=format&fit=crop",
           },
-          alt: "Flujo de automatización de mensajería mostrado en un dashboard",
+          alt: "Messaging automation flow shown on a dashboard",
           objectFit: "cover",
         },
         style: { base: { size: { width: "100%", height: "100%" } } },
@@ -239,7 +239,7 @@ export function buildVideoShowcaseFragment(): NodeFragment {
       "video-showcase-card-3-label": {
         id: "video-showcase-card-3-label",
         type: "text",
-        props: { content: "Automatizaciones en 3 pasos" },
+        props: { content: "Automations in 3 steps" },
         style: { base: { appearance: { color: { token: "colors.text" } } } },
       },
 
@@ -247,7 +247,7 @@ export function buildVideoShowcaseFragment(): NodeFragment {
       "video-showcase-modal": {
         id: "video-showcase-modal",
         type: "modal",
-        props: { title: "Demo principal: Maildrill en acción" },
+        props: { title: "Main demo: Maildrill in action" },
         style: defaultStyleFor("modal"),
         behaviors: [{ type: "modal", options: { closeOnBackdrop: true, duration: 200 } }],
         children: ["video-showcase-modal-video"],
@@ -258,7 +258,7 @@ export function buildVideoShowcaseFragment(): NodeFragment {
         props: {
           url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
           aspectRatio: "16:9",
-          title: "Demo: crea y envía una campaña multicanal en Maildrill",
+          title: "Demo: create and send a multichannel campaign in Maildrill",
         },
         style: defaultStyleFor("video"),
       },

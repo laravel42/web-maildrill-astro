@@ -169,16 +169,19 @@ function SeoAutoTranslate({ pageId }: { pageId: PageId }) {
 
   useEffect(() => {
     fetchHealth()
-      .then((h) => setHealth(h.translate))
+      .then((h) => {
+        setHealth(h.translate);
+        if (h.translate?.enabled) {
+          fetchTranslateUsage().then(setUsage).catch(() => setUsage(undefined));
+        }
+      })
       .catch(() => setHealth({ enabled: false }));
-    fetchTranslateUsage()
-      .then(setUsage)
-      .catch(() => setUsage(undefined));
   }, []);
 
   const refreshUsage = useCallback(() => {
+    if (!health?.enabled) return;
     fetchTranslateUsage().then(setUsage).catch(() => undefined);
-  }, []);
+  }, [health?.enabled]);
 
   const [pendingPlan, setPendingPlan] = useState<MetaTranslationPlan | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);

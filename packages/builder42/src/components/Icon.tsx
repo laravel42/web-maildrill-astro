@@ -45,6 +45,7 @@ export {
   Moon,
   MonitorCog,
   CircleUserRound,
+  Settings,
   Globe,
   // ---- Categorías del sidebar -----------------------------------------
   LayoutGrid,

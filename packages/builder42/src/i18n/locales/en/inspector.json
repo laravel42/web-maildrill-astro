@@ -74,6 +74,7 @@
   "form": {
     "properties": "Properties",
     "propsGeneral": "General",
+    "fieldCount": "{{count}} field(s)",
     "styleEditing": "Style · editing",
     "stateEditing": "State",
     "stateNormal": "Normal",
@@ -163,6 +164,10 @@
       },
       "sticky": {
         "position": "Position",
+        "positionOptions": {
+          "top": "Top",
+          "bottom": "Bottom"
+        },
         "scrolledThreshold": "Threshold for \"already scrolled\" (px)",
         "scrolledThresholdHelp": "Amount of scroll in pixels after which the element changes appearance (for example, gaining a shadow or becoming more compact) to signal that the page has scrolled."
       },
@@ -174,12 +179,20 @@
       "marquee": {
         "duration": "Loop duration (s)",
         "direction": "Direction",
+        "directionOptions": {
+          "left": "Left",
+          "right": "Right"
+        },
         "pauseOnHover": "Pause on hover"
       },
       "reveal-on-scroll": {
         "threshold": "Visibility threshold",
         "once": "Only once",
-        "mode": "Entry mode"
+        "mode": "Entry mode",
+        "modeOptions": {
+          "together": "Together",
+          "sequence": "In sequence"
+        }
       },
       "expandable": {
         "collapsedHeight": "Collapsed height",
@@ -203,6 +216,45 @@
       "lightbox": {
         "duration": "Transition duration (ms)",
         "durationHelp": "Duration in milliseconds of the full-screen overlay's open/close animation. Ignored if the visitor has the system's reduced-motion preference turned on."
+      },
+      "carousel": {
+        "orientation": "Orientation",
+        "orientationOptions": {
+          "horizontal": "Horizontal",
+          "vertical": "Vertical"
+        },
+        "slideSize": "Slide size",
+        "gap": "Gap between slides",
+        "loop": "Loop",
+        "autoplay": "Autoplay",
+        "showArrows": "Show arrows"
+      },
+      "form-validation": {
+        "validateOn": "Validate on",
+        "validateOnOptions": {
+          "blur": "On blur",
+          "input": "On every change"
+        },
+        "requiredMessage": "Message: required field",
+        "emailMessage": "Message: invalid email",
+        "patternMessage": "Message: invalid format"
+      },
+      "accordion": {
+        "single": "Only one section open",
+        "duration": "Duration (ms)"
+      },
+      "modal": {
+        "closeOnBackdrop": "Close when clicking outside",
+        "duration": "Duration (ms)"
+      },
+      "navbar": {
+        "duration": "Duration (ms)"
+      },
+      "tabs": {
+        "duration": "Duration (ms)"
+      },
+      "toggle": {
+        "pressed": "Start pressed"
       }
     },
     "themeToggle": {
@@ -323,19 +375,22 @@
       "action": "Switch to advanced mode"
     },
     "tabs": {
+      "layers": "Layers",
       "pages": "Pages",
       "languages": "Languages",
       "themes": "Themes",
       "seo": "SEO",
-      "settings": "Settings",
-      "publish": "Publish"
+      "publish": "Publish",
+      "settings": "Settings"
     },
     "tabsHelp": {
+      "layers": "Browse the page tree, select hidden nodes, and show or hide elements at the current viewport.",
       "pages": "Create, duplicate, reorder and delete site pages. Set the home page and edit each page's title and slug.",
       "languages": "Enable the multilingual site, manage content languages and set the default language.",
       "themes": "Create and edit site color themes by remapping semantic tokens, and set the default theme.",
       "seo": "Edit the active page's SEO metadata: title, description, canonical, robots and Open Graph/Twitter.",
       "settings": "Configure the output file name and save or load the whole site (.json).",
+      "settingsPrefs": "Editor language, color theme, reorder controls, and experience level.",
       "publish": "Publish the whole site and manage your published sites: open, republish or unpublish."
     },
     "output": {

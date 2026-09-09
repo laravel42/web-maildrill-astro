@@ -22,6 +22,7 @@ export function PanelToggleButtons() {
           (sidebarCollapsed ? " pbx-panel-toggle__btn--active" : "")
         }
         title={t("panels.toggleSidebar")}
+        aria-label={t("panels.toggleSidebar")}
         aria-pressed={sidebarCollapsed}
         onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
       >
@@ -34,6 +35,7 @@ export function PanelToggleButtons() {
           (inspectorCollapsed ? " pbx-panel-toggle__btn--active" : "")
         }
         title={t("panels.toggleInspector")}
+        aria-label={t("panels.toggleInspector")}
         aria-pressed={inspectorCollapsed}
         onClick={() => setInspectorCollapsed(!inspectorCollapsed)}
       >

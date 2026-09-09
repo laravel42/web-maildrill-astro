@@ -284,7 +284,7 @@ const DEFINITIONS: LayoutDefinition[] = [
     archetype: "A2",
     theme: {
       slug: "cuidado",
-      name: "Cuidado",
+      name: "Care",
       colorScheme: "light",
       tokens: {
         "colors.text": "#0f2733",
@@ -996,7 +996,7 @@ export async function loadPageLayout(
     return result;
   } catch (err) {
     if (import.meta.env.DEV) {
-      console.warn(`[loadPageLayout] no se pudo cargar "${id}":`, err);
+      console.warn(`[loadPageLayout] could not load "${id}":`, err);
     }
     return null;
   }

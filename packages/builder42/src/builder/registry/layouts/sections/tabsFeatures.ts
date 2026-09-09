@@ -85,7 +85,7 @@ export function buildTabsFeaturesFragment(): NodeFragment {
       "tabs-features-title": {
         id: "tabs-features-title",
         type: "text",
-        props: { content: "<strong>Todo lo que incluye tu plan</strong>" },
+        props: { content: "<strong>Everything in your plan</strong>" },
         style: {
           base: {
             typography: {
@@ -111,7 +111,7 @@ export function buildTabsFeaturesFragment(): NodeFragment {
       "tabs-features-tab-1": {
         id: "tabs-features-tab-1",
         type: "tab",
-        props: { label: "Automatización" },
+        props: { label: "Automation" },
         style: defaultStyleFor("tab"),
         children: ["tabs-features-tab-1-img", "tabs-features-tab-1-text"],
       },
@@ -123,7 +123,7 @@ export function buildTabsFeaturesFragment(): NodeFragment {
             kind: "url",
             url: "https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=800&q=80&auto=format&fit=crop",
           },
-          alt: "Panel de automatización de flujos de mensajería en una pantalla",
+          alt: "Messaging automation panel on a screen",
           objectFit: "cover",
         },
         style: { base: { size: { width: "100%" }, appearance: { borderRadius: { token: "radii.md" } } } },
@@ -131,13 +131,13 @@ export function buildTabsFeaturesFragment(): NodeFragment {
       "tabs-features-tab-1-text": {
         id: "tabs-features-tab-1-text",
         type: "text",
-        props: { content: "Reglas que se ejecutan solas: menos trabajo repetitivo para tu equipo." },
+        props: { content: "Rules that run themselves: less repetitive work for your team." },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
       "tabs-features-tab-2": {
         id: "tabs-features-tab-2",
         type: "tab",
-        props: { label: "Reportes" },
+        props: { label: "Reports" },
         style: defaultStyleFor("tab"),
         children: ["tabs-features-tab-2-img", "tabs-features-tab-2-text"],
       },
@@ -149,7 +149,7 @@ export function buildTabsFeaturesFragment(): NodeFragment {
             kind: "url",
             url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80&auto=format&fit=crop",
           },
-          alt: "Gráficas de analítica de entregabilidad en un dashboard",
+          alt: "Deliverability analytics charts on a dashboard",
           objectFit: "cover",
         },
         style: { base: { size: { width: "100%" }, appearance: { borderRadius: { token: "radii.md" } } } },
@@ -157,13 +157,13 @@ export function buildTabsFeaturesFragment(): NodeFragment {
       "tabs-features-tab-2-text": {
         id: "tabs-features-tab-2-text",
         type: "text",
-        props: { content: "Métricas en tiempo real, exportables a CSV en un clic." },
+        props: { content: "Real-time metrics, exportable to CSV in one click." },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
       "tabs-features-tab-3": {
         id: "tabs-features-tab-3",
         type: "tab",
-        props: { label: "Integraciones" },
+        props: { label: "Integrations" },
         style: defaultStyleFor("tab"),
         children: ["tabs-features-tab-3-img", "tabs-features-tab-3-text"],
       },
@@ -175,7 +175,7 @@ export function buildTabsFeaturesFragment(): NodeFragment {
             kind: "url",
             url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&q=80&auto=format&fit=crop",
           },
-          alt: "Código de integración de API mostrado en un editor",
+          alt: "API integration code shown in an editor",
           objectFit: "cover",
         },
         style: { base: { size: { width: "100%" }, appearance: { borderRadius: { token: "radii.md" } } } },
@@ -183,7 +183,7 @@ export function buildTabsFeaturesFragment(): NodeFragment {
       "tabs-features-tab-3-text": {
         id: "tabs-features-tab-3-text",
         type: "text",
-        props: { content: "Conecta tus herramientas favoritas sin escribir código." },
+        props: { content: "Connect your favorite tools without writing code." },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
     },

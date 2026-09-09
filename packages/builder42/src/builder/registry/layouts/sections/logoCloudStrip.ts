@@ -16,7 +16,7 @@ import type { NodeFragment } from "../../../model/tree";
  *    patrón de kicker/eyebrow que el craft floor de este proyecto prohíbe
  *    sin excepción. Se sustituye por un **badge de verificación**
  *    (`logo-cloud-strip-badge`: icono `BadgeCheck` en un halo circular +
- *    texto corto "Empresas que confían en Maildrill" al lado, mismo patrón
+ *    texto corto "Companies that trust Maildrill" al lado, mismo patrón
  *    icono+texto ya usado en `features3Col`/`statsStrip` — la diferencia
  *    con un kicker es que aquí el icono es el protagonista visual y el
  *    texto lo acompaña en línea, no un rótulo suelto sobre un titular).
@@ -124,7 +124,7 @@ export function buildLogoCloudStripFragment(): NodeFragment {
       "logo-cloud-strip-badge-label": {
         id: "logo-cloud-strip-badge-label",
         type: "text",
-        props: { content: "Empresas que confían en Maildrill" },
+        props: { content: "Companies that trust Maildrill" },
         style: {
           base: {
             typography: { fontSize: { token: "typography.sizes.sm" }, fontWeight: { token: "typography.weights.bold" } },

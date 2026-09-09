@@ -144,7 +144,7 @@ function LogoCloudRender(ctx: RenderContext) {
       {content}
       {!exportMode && isEmpty ? (
         <span className="pbx-empty-hint" data-empty-hint>
-          Muro de logos vacío — suelta imágenes de logos
+          Empty logo cloud — drop logo images
         </span>
       ) : null}
     </div>

@@ -72,6 +72,7 @@ export function SimpleModal({ className, children, onClose }: SimpleModalProps) 
     function onKeydown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
+        e.stopPropagation();
         onClose();
         return;
       }

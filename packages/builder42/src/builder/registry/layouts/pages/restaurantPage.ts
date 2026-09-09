@@ -384,39 +384,39 @@ function perk(id: string, content: string): BuilderNode {
  * fallback campo a campo que el contenido (`metaTranslations`, docs/12 §B.9).
  */
 export const restaurantPageMeta: LayoutPageMeta = {
-  title: "Casa Almendro · Cocina de temporada en Madrid",
+  title: "Casa Almendro · Seasonal cooking in Madrid",
   description:
-    "Restaurante de cocina de temporada en el centro de Madrid. Carta de mercado, vinos seleccionados y reserva de mesa online. Calle del Olmo 14.",
+    "Seasonal restaurant in central Madrid. Market menu, hand-picked wines and online table booking. Calle del Olmo 14.",
   seo: {
     robots: "index,follow",
     openGraph: {
-      title: "Casa Almendro · Cocina de temporada en Madrid",
+      title: "Casa Almendro · Seasonal cooking in Madrid",
       description:
-        "Carta de mercado que cambia cada semana, vinos seleccionados por nuestro sommelier y reserva de mesa en dos clics.",
+        "A market menu that changes every week, wines picked by our sommelier and table booking in two clicks.",
       image: "https://images.unsplash.com/photo-1786609900261-2779385423ac?w=1200&q=80&auto=format&fit=crop",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "Casa Almendro · Cocina de temporada en Madrid",
-      description: "Carta de mercado, vinos seleccionados y reserva de mesa online en el centro de Madrid.",
+      title: "Casa Almendro · Seasonal cooking in Madrid",
+      description: "Market menu, hand-picked wines and online booking in central Madrid.",
       image: "https://images.unsplash.com/photo-1786609900261-2779385423ac?w=1200&q=80&auto=format&fit=crop",
     },
   },
   metaTranslations: {
-    en: {
-      title: "Casa Almendro · Seasonal cooking in Madrid",
+    es: {
+      title: "Casa Almendro · Cocina de temporada en Madrid",
       description:
-        "Seasonal restaurant in central Madrid. Market menu, hand-picked wines and online table booking. Calle del Olmo 14.",
+        "Restaurante de cocina de temporada en el centro de Madrid. Carta de mercado, vinos seleccionados y reserva de mesa online. Calle del Olmo 14.",
       seo: {
         openGraph: {
-          title: "Casa Almendro · Seasonal cooking in Madrid",
+          title: "Casa Almendro · Cocina de temporada en Madrid",
           description:
-            "A market menu that changes every week, wines picked by our sommelier and table booking in two clicks.",
+            "Carta de mercado que cambia cada semana, vinos seleccionados por nuestro sommelier y reserva de mesa en dos clics.",
         },
         twitter: {
-          title: "Casa Almendro · Seasonal cooking in Madrid",
-          description: "Market menu, hand-picked wines and online booking in central Madrid.",
+          title: "Casa Almendro · Cocina de temporada en Madrid",
+          description: "Carta de mercado, vinos seleccionados y reserva de mesa online en el centro de Madrid.",
         },
       },
     },
@@ -442,261 +442,108 @@ export const restaurantPageMeta: LayoutPageMeta = {
 export function buildRestaurantPageFragment(): NodeFragment {
   const translations: Record<string, NodeTranslations> = {
     // --- Topbar ------------------------------------------------------------
-    "restaurant-topbar-hours": {
-      en: { content: "Tue–Sun 12:30–16:00 / 20:00–23:30" },
-      it: { content: "Mar–Dom 12:30–16:00 / 20:00–23:30" },
-    },
-    "restaurant-topbar-phone": {
-      en: { content: "Bookings +34 912 345 678" },
-      it: { content: "Prenotazioni +34 912 345 678" },
-    },
-    "restaurant-navbar-brand-text": {
-      en: { content: "<strong>Casa Almendro</strong>" },
-      it: { content: "<strong>Casa Almendro</strong>" },
-    },
+    "restaurant-topbar-hours": { es: { content: "Mar–Dom 12:30–16:00 / 20:00–23:30" }, it: { content: "Mar–Dom 12:30–16:00 / 20:00–23:30" } },
+    "restaurant-topbar-phone": { es: { content: "Reservas +34 912 345 678" }, it: { content: "Prenotazioni +34 912 345 678" } },
+    "restaurant-navbar-brand-text": { es: { content: "<strong>Casa Almendro</strong>" }, it: { content: "<strong>Casa Almendro</strong>" } },
     // --- Hero --------------------------------------------------------------
-    "restaurant-hero-eyebrow": {
-      en: { content: "SEASONAL KITCHEN · MADRID" },
-      it: { content: "CUCINA DI STAGIONE · MADRID" },
-    },
-    "restaurant-hero-title": {
-      en: { content: "<strong>Market cooking in the heart of the city</strong>" },
-      it: { content: "<strong>Cucina di mercato nel cuore della città</strong>" },
-    },
-    "restaurant-hero-sub": {
-      en: { content: "Ingredients from local producers, a menu that changes every week and a wine list curated by our sommelier." },
-      it: { content: "Ingredienti da produttori locali, un menù che cambia ogni settimana e una carta dei vini curata dal nostro sommelier." },
-    },
-    "restaurant-hero-cta": { en: { label: "Book a table" }, it: { label: "Prenota un tavolo" } },
-    "restaurant-hero-cta-2": { en: { label: "See the menu" }, it: { label: "Vedi il menù" } },
-    "restaurant-hero-rating": { en: { label: "★ 4.8 / 5" }, it: { label: "★ 4,8 / 5" } },
-    "restaurant-hero-rating-text": {
-      en: { content: "2,400 reviews · Bib Gourmand 2025" },
-      it: { content: "2.400 recensioni · Bib Gourmand 2025" },
-    },
+    "restaurant-hero-eyebrow": { es: { content: "COCINA DE TEMPORADA · MADRID" }, it: { content: "CUCINA DI STAGIONE · MADRID" } },
+    "restaurant-hero-title": { es: { content: "<strong>Cocina de mercado en el corazón de la ciudad</strong>" }, it: { content: "<strong>Cucina di mercato nel cuore della città</strong>" } },
+    "restaurant-hero-sub": { es: { content: "Ingredientes de productores locales, una carta que cambia cada semana y una selección de vinos a cargo de nuestro sommelier." }, it: { content: "Ingredienti da produttori locali, un menù che cambia ogni settimana e una carta dei vini curata dal nostro sommelier." } },
+    "restaurant-hero-cta": { es: { label: "Reservar mesa" }, it: { label: "Prenota un tavolo" } },
+    "restaurant-hero-cta-2": { es: { label: "Ver la carta" }, it: { label: "Vedi il menù" } },
+    "restaurant-hero-rating": { es: { label: "★ 4,8 / 5" }, it: { label: "★ 4,8 / 5" } },
+    "restaurant-hero-rating-text": { es: { content: "2.400 reseñas · Bib Gourmand 2025" }, it: { content: "2.400 recensioni · Bib Gourmand 2025" } },
     // --- Tarjeta de datos flotante ----------------------------------------
-    "restaurant-highlight-1-title": { en: { content: "<strong>Opening hours</strong>" }, it: { content: "<strong>Orari</strong>" } },
-    "restaurant-highlight-1-body": {
-      en: { content: "Tue–Sun · lunch and dinner. Closed Mondays." },
-      it: { content: "Mar–Dom · pranzo e cena. Chiuso il lunedì." },
-    },
-    "restaurant-highlight-2-title": { en: { content: "<strong>Where we are</strong>" }, it: { content: "<strong>Dove siamo</strong>" } },
-    "restaurant-highlight-2-body": {
-      en: { content: "Calle del Olmo 14, Madrid · Metro Antón Martín" },
-      it: { content: "Calle del Olmo 14, Madrid · Metro Antón Martín" },
-    },
-    "restaurant-highlight-3-title": { en: { content: "<strong>Bookings</strong>" }, it: { content: "<strong>Prenotazioni</strong>" } },
-    "restaurant-highlight-3-body": {
-      en: { content: "+34 912 345 678 · groups up to 20 people" },
-      it: { content: "+34 912 345 678 · gruppi fino a 20 persone" },
-    },
+    "restaurant-highlight-1-title": { es: { content: "<strong>Horario</strong>" }, it: { content: "<strong>Orari</strong>" } },
+    "restaurant-highlight-1-body": { es: { content: "Mar–Dom · comidas y cenas. Lunes cerrado." }, it: { content: "Mar–Dom · pranzo e cena. Chiuso il lunedì." } },
+    "restaurant-highlight-2-title": { es: { content: "<strong>Dónde estamos</strong>" }, it: { content: "<strong>Dove siamo</strong>" } },
+    "restaurant-highlight-2-body": { es: { content: "Calle del Olmo 14, Madrid · Metro Antón Martín" }, it: { content: "Calle del Olmo 14, Madrid · Metro Antón Martín" } },
+    "restaurant-highlight-3-title": { es: { content: "<strong>Reservas</strong>" }, it: { content: "<strong>Prenotazioni</strong>" } },
+    "restaurant-highlight-3-body": { es: { content: "+34 912 345 678 · grupos hasta 20 personas" }, it: { content: "+34 912 345 678 · gruppi fino a 20 persone" } },
     // --- Carta -------------------------------------------------------------
-    "restaurant-menu-eyebrow": { en: { content: "THE MENU" }, it: { content: "IL MENÙ" } },
-    "restaurant-menu-title": {
-      en: { content: "<strong>Today's menu</strong>" },
-      it: { content: "<strong>Il menù di oggi</strong>" },
-    },
-    "restaurant-menu-sub": {
-      en: { content: "Three services, one market list. Our team rewrites it every Tuesday with what the market offers." },
-      it: { content: "Tre servizi, una lista di mercato. Il nostro team la riscrive ogni martedì con ciò che offre il mercato." },
-    },
-    "restaurant-menu-note": {
-      en: { content: "Allergens available on request. 10% service charge is never added." },
-      it: { content: "Allergeni disponibili su richiesta. Non aggiungiamo mai il 10% di servizio." },
-    },
-    "restaurant-tab-starters": { en: { label: "Starters" }, it: { label: "Antipasti" } },
-    "restaurant-tab-mains": { en: { label: "Main courses" }, it: { label: "Piatti principali" } },
-    "restaurant-tab-desserts": { en: { label: "Desserts" }, it: { label: "Dolci" } },
-    "restaurant-starter-1-name": {
-      en: { content: "Burrata with heirloom tomato" },
-      it: { content: "Burrata con pomodoro antico" },
-    },
-    "restaurant-starter-1-desc": {
-      en: { content: "Basil oil, sourdough toast and Maldon salt." },
-      it: { content: "Olio al basilico, pane a lievitazione naturale e sale Maldon." },
-    },
-    "restaurant-starter-1-price": { en: { label: "€9.50" }, it: { label: "9,50 €" } },
-    "restaurant-starter-2-name": {
-      en: { content: "Grilled octopus" },
-      it: { content: "Polpo grigliato" },
-    },
-    "restaurant-starter-2-desc": {
-      en: { content: "Paprika potatoes, pickled onion and lemon zest." },
-      it: { content: "Patate alla paprika, cipolla marinata e scorza di limone." },
-    },
-    "restaurant-starter-2-price": { en: { label: "€13.00" }, it: { label: "13,00 €" } },
-    "restaurant-main-1-name": {
-      en: { content: "Slow-braised oxtail" },
-      it: { content: "Coda di bue brasata" },
-    },
-    "restaurant-main-1-desc": {
-      en: { content: "Eight hours of cooking, root vegetables and red wine reduction." },
-      it: { content: "Otto ore di cottura, verdure di radice e riduzione al vino rosso." },
-    },
-    "restaurant-main-1-price": { en: { label: "€18.50" }, it: { label: "18,50 €" } },
-    "restaurant-main-1-tag": { en: { label: "Chef's pick" }, it: { label: "Scelta dello chef" } },
-    "restaurant-main-2-name": {
-      en: { content: "Grilled sea bream" },
-      it: { content: "Orata alla griglia" },
-    },
-    "restaurant-main-2-desc": {
-      en: { content: "Lemon, capers and roasted seasonal vegetables." },
-      it: { content: "Limone, capperi e verdure di stagione arrostite." },
-    },
-    "restaurant-main-2-price": { en: { label: "€19.00" }, it: { label: "19,00 €" } },
-    "restaurant-main-3-name": {
-      en: { content: "Wood-fired aubergine" },
-      it: { content: "Melanzana al forno a legna" },
-    },
-    "restaurant-main-3-desc": {
-      en: { content: "Smoked yoghurt, hazelnuts and herb oil. Vegetarian." },
-      it: { content: "Yogurt affumicato, nocciole e olio alle erbe. Vegetariano." },
-    },
-    "restaurant-main-3-price": { en: { label: "€16.00" }, it: { label: "16,00 €" } },
-    "restaurant-dessert-1-name": {
-      en: { content: "Basque burnt cheesecake" },
-      it: { content: "Cheesecake basca al forno" },
-    },
-    "restaurant-dessert-1-desc": {
-      en: { content: "Creamy centre, three-week matured cheese." },
-      it: { content: "Cuore cremoso, formaggio maturato tre settimane." },
-    },
-    "restaurant-dessert-1-price": { en: { label: "€6.50" }, it: { label: "6,50 €" } },
-    "restaurant-dessert-2-name": {
-      en: { content: "Chocolate fondant" },
-      it: { content: "Tortino al cioccolato" },
-    },
-    "restaurant-dessert-2-desc": {
-      en: { content: "72% cocoa with vanilla ice cream." },
-      it: { content: "Cacao 72% con gelato alla vaniglia." },
-    },
-    "restaurant-dessert-2-price": { en: { label: "€7.00" }, it: { label: "7,00 €" } },
+    "restaurant-menu-eyebrow": { es: { content: "LA CARTA" }, it: { content: "IL MENÙ" } },
+    "restaurant-menu-title": { es: { content: "<strong>La carta de hoy</strong>" }, it: { content: "<strong>Il menù di oggi</strong>" } },
+    "restaurant-menu-sub": { es: { content: "Tres servicios, una lista de mercado. Nuestro equipo la reescribe cada martes con lo que da el mercado." }, it: { content: "Tre servizi, una lista di mercato. Il nostro team la riscrive ogni martedì con ciò che offre il mercato." } },
+    "restaurant-menu-note": { es: { content: "Alérgenos disponibles bajo petición. Nunca añadimos 10% de servicio." }, it: { content: "Allergeni disponibili su richiesta. Non aggiungiamo mai il 10% di servizio." } },
+    "restaurant-tab-starters": { es: { label: "Entradas" }, it: { label: "Antipasti" } },
+    "restaurant-tab-mains": { es: { label: "Platos fuertes" }, it: { label: "Piatti principali" } },
+    "restaurant-tab-desserts": { es: { label: "Postres" }, it: { label: "Dolci" } },
+    "restaurant-starter-1-name": { es: { content: "Burrata con tomate antiguo" }, it: { content: "Burrata con pomodoro antico" } },
+    "restaurant-starter-1-desc": { es: { content: "Aceite de albahaca, tostada de masa madre y sal Maldon." }, it: { content: "Olio al basilico, pane a lievitazione naturale e sale Maldon." } },
+    "restaurant-starter-1-price": { es: { label: "€9.50" }, it: { label: "9,50 €" } },
+    "restaurant-starter-2-name": { es: { content: "Pulpo a la brasa" }, it: { content: "Polpo grigliato" } },
+    "restaurant-starter-2-desc": { es: { content: "Patatas a la paprika, cebolla encurtida y piel de limón." }, it: { content: "Patate alla paprika, cipolla marinata e scorza di limone." } },
+    "restaurant-starter-2-price": { es: { label: "€13.00" }, it: { label: "13,00 €" } },
+    "restaurant-main-1-name": { es: { content: "Rabo de toro estofado" }, it: { content: "Coda di bue brasata" } },
+    "restaurant-main-1-desc": { es: { content: "Ocho horas de cocción, verduras de raíz y reducción de vino rojo." }, it: { content: "Otto ore di cottura, verdure di radice e riduzione al vino rosso." } },
+    "restaurant-main-1-price": { es: { label: "€18.50" }, it: { label: "18,50 €" } },
+    "restaurant-main-1-tag": { es: { label: "Recomendación del chef" }, it: { label: "Scelta dello chef" } },
+    "restaurant-main-2-name": { es: { content: "Dorada a la brasa" }, it: { content: "Orata alla griglia" } },
+    "restaurant-main-2-desc": { es: { content: "Limón, alcaparras y verduras de temporada asadas." }, it: { content: "Limone, capperi e verdure di stagione arrostite." } },
+    "restaurant-main-2-price": { es: { label: "€19.00" }, it: { label: "19,00 €" } },
+    "restaurant-main-3-name": { es: { content: "Berenjena al horno de leña" }, it: { content: "Melanzana al forno a legna" } },
+    "restaurant-main-3-desc": { es: { content: "Yogur ahumado, avellanas y aceite de hierbas. Vegetariano." }, it: { content: "Yogurt affumicato, nocciole e olio alle erbe. Vegetariano." } },
+    "restaurant-main-3-price": { es: { label: "€16.00" }, it: { label: "16,00 €" } },
+    "restaurant-dessert-1-name": { es: { content: "Tarta de queso vasca" }, it: { content: "Cheesecake basca al forno" } },
+    "restaurant-dessert-1-desc": { es: { content: "Centro cremoso, queso madurado tres semanas." }, it: { content: "Cuore cremoso, formaggio maturato tre settimane." } },
+    "restaurant-dessert-1-price": { es: { label: "€6.50" }, it: { label: "6,50 €" } },
+    "restaurant-dessert-2-name": { es: { content: "Fondant de chocolate" }, it: { content: "Tortino al cioccolato" } },
+    "restaurant-dessert-2-desc": { es: { content: "Cacao 72% con helado de vainilla." }, it: { content: "Cacao 72% con gelato alla vaniglia." } },
+    "restaurant-dessert-2-price": { es: { label: "€7.00" }, it: { label: "7,00 €" } },
     // --- Collage del local -------------------------------------------------
-    "restaurant-gallery-eyebrow": { en: { content: "THE PLACE" }, it: { content: "IL LOCALE" } },
-    "restaurant-gallery-title": {
-      en: { content: "<strong>A dining room built for long dinners</strong>" },
-      it: { content: "<strong>Una sala pensata per cene lunghe</strong>" },
-    },
-    "restaurant-gallery-1": { en: { alt: "Main dining room with warm lighting" }, it: { alt: "Sala principale con luce calda" } },
-    "restaurant-gallery-2": { en: { alt: "Open kitchen counter" }, it: { alt: "Bancone della cucina aperta" } },
-    "restaurant-gallery-3": { en: { alt: "Wine cellar with selected bottles" }, it: { alt: "Cantina con bottiglie selezionate" } },
-    "restaurant-gallery-4": { en: { alt: "Terrace tables on Calle del Olmo" }, it: { alt: "Tavoli in terrazza su Calle del Olmo" } },
+    "restaurant-gallery-eyebrow": { es: { content: "EL LOCAL" }, it: { content: "IL LOCALE" } },
+    "restaurant-gallery-title": { es: { content: "<strong>Una sala pensada para cenas largas</strong>" }, it: { content: "<strong>Una sala pensata per cene lunghe</strong>" } },
+    "restaurant-gallery-1": { es: { alt: "Sala principal con luz cálida" }, it: { alt: "Sala principale con luce calda" } },
+    "restaurant-gallery-2": { es: { alt: "Barra de la cocina abierta" }, it: { alt: "Bancone della cucina aperta" } },
+    "restaurant-gallery-3": { es: { alt: "Bodega con botellas seleccionadas" }, it: { alt: "Cantina con bottiglie selezionate" } },
+    "restaurant-gallery-4": { es: { alt: "Mesas de la terraza en la calle del Olmo" }, it: { alt: "Tavoli in terrazza su Calle del Olmo" } },
     // --- KPIs --------------------------------------------------------------
-    "restaurant-stat-1-value": { en: { value: "18" }, it: { value: "18" } },
-    "restaurant-stat-1-label": { en: { content: "years open" }, it: { content: "anni di attività" } },
-    "restaurant-stat-2-value": { en: { value: "120+" }, it: { value: "120+" } },
-    "restaurant-stat-2-label": { en: { content: "dishes on the menu" }, it: { content: "piatti nel menù" } },
-    "restaurant-stat-3-value": { en: { value: "2.4k" }, it: { value: "2.4k" } },
-    "restaurant-stat-3-label": { en: { content: "reviews" }, it: { content: "recensioni" } },
+    "restaurant-stat-1-value": { es: { value: "18" }, it: { value: "18" } },
+    "restaurant-stat-1-label": { es: { content: "años abiertos" }, it: { content: "anni di attività" } },
+    "restaurant-stat-2-value": { es: { value: "120+" }, it: { value: "120+" } },
+    "restaurant-stat-2-label": { es: { content: "platos en carta" }, it: { content: "piatti nel menù" } },
+    "restaurant-stat-3-value": { es: { value: "2.4k" }, it: { value: "2.4k" } },
+    "restaurant-stat-3-label": { es: { content: "reseñas" }, it: { content: "recensioni" } },
     // --- Testimonios -------------------------------------------------------
-    "restaurant-testimonial-quote": {
-      en: { content: "<p>The best tasting menu I've had in years — every course was a surprise.</p>" },
-      it: { content: "<p>Il miglior menù degustazione da anni — ogni piatto era una sorpresa.</p>" },
-    },
-    "restaurant-testimonial-name": {
-      en: { content: "<strong>Laura Fernández</strong>" },
-      it: { content: "<strong>Laura Fernández</strong>" },
-    },
-    "restaurant-testimonial-role": {
-      en: { content: "Regular guest" },
-      it: { content: "Ospite abituale" },
-    },
-    "restaurant-testimonial-2-quote": {
-      en: { content: "<p>We booked for a team dinner and they adapted every dish to our allergies.</p>" },
-      it: { content: "<p>Abbiamo prenotato per una cena di lavoro e hanno adattato ogni piatto alle nostre allergie.</p>" },
-    },
-    "restaurant-testimonial-2-name": {
-      en: { content: "<strong>Andrés Molina</strong>" },
-      it: { content: "<strong>Andrés Molina</strong>" },
-    },
-    "restaurant-testimonial-2-role": {
-      en: { content: "Group booking" },
-      it: { content: "Prenotazione di gruppo" },
-    },
-    "restaurant-testimonial-3-quote": {
-      en: { content: "<p>The oxtail alone is worth the trip. Service is warm without being stiff.</p>" },
-      it: { content: "<p>Vale il viaggio solo per la coda di bue. Servizio caloroso ma non rigido.</p>" },
-    },
-    "restaurant-testimonial-3-name": {
-      en: { content: "<strong>Chiara Rossi</strong>" },
-      it: { content: "<strong>Chiara Rossi</strong>" },
-    },
-    "restaurant-testimonial-3-role": {
-      en: { content: "Food writer" },
-      it: { content: "Giornalista gastronomica" },
-    },
+    "restaurant-testimonial-quote": { es: { content: "<p>El mejor menú degustación que he probado en años, cada plato fue una sorpresa.</p>" }, it: { content: "<p>Il miglior menù degustazione da anni — ogni piatto era una sorpresa.</p>" } },
+    "restaurant-testimonial-name": { es: { content: "<strong>Laura Fernández</strong>" }, it: { content: "<strong>Laura Fernández</strong>" } },
+    "restaurant-testimonial-role": { es: { content: "Clienta habitual" }, it: { content: "Ospite abituale" } },
+    "restaurant-testimonial-2-quote": { es: { content: "<p>Reservamos para una cena de equipo y adaptaron cada plato a nuestras alergias.</p>" }, it: { content: "<p>Abbiamo prenotato per una cena di lavoro e hanno adattato ogni piatto alle nostre allergie.</p>" } },
+    "restaurant-testimonial-2-name": { es: { content: "<strong>Andrés Molina</strong>" }, it: { content: "<strong>Andrés Molina</strong>" } },
+    "restaurant-testimonial-2-role": { es: { content: "Reserva de grupo" }, it: { content: "Prenotazione di gruppo" } },
+    "restaurant-testimonial-3-quote": { es: { content: "<p>Solo por el rabo de toro merece el viaje. El servicio es cercano sin ser rígido.</p>" }, it: { content: "<p>Vale il viaggio solo per la coda di bue. Servizio caloroso ma non rigido.</p>" } },
+    "restaurant-testimonial-3-name": { es: { content: "<strong>Chiara Rossi</strong>" }, it: { content: "<strong>Chiara Rossi</strong>" } },
+    "restaurant-testimonial-3-role": { es: { content: "Periodista gastronómica" }, it: { content: "Giornalista gastronomica" } },
     // --- FAQ ---------------------------------------------------------------
-    "restaurant-faq-title": {
-      en: { content: "<strong>Before you come</strong>" },
-      it: { content: "<strong>Prima di venire</strong>" },
-    },
-    "restaurant-faq-1": { en: { label: "Do you need a reservation?" }, it: { label: "È necessaria la prenotazione?" } },
-    "restaurant-faq-1-text": {
-      en: { content: "<p>We recommend booking, especially for dinner and weekends. Walk-ins are welcome if there is availability.</p>" },
-      it: { content: "<p>Consigliamo la prenotazione, soprattutto per la cena e nel weekend. Accettiamo anche senza prenotazione se c'è disponibilità.</p>" },
-    },
-    "restaurant-faq-2": { en: { label: "Do you have options for allergies or intolerances?" }, it: { label: "Avete opzioni per allergie o intolleranze?" } },
-    "restaurant-faq-2-text": {
-      en: { content: "<p>Yes. Tell us about any allergy or intolerance when booking or when ordering and we'll adapt the dish.</p>" },
-      it: { content: "<p>Sì. Segnalate allergie o intolleranze al momento della prenotazione o dell'ordine e adatteremo il piatto.</p>" },
-    },
-    "restaurant-faq-3": { en: { label: "Is there parking nearby?" }, it: { label: "C'è un parcheggio nelle vicinanze?" } },
-    "restaurant-faq-3-text": {
-      en: { content: "<p>Yes, there is a public car park 50 metres from the restaurant on Calle del Olmo.</p>" },
-      it: { content: "<p>Sì, c'è un parcheggio pubblico a 50 metri dal ristorante in Calle del Olmo.</p>" },
-    },
+    "restaurant-faq-title": { es: { content: "<strong>Antes de venir</strong>" }, it: { content: "<strong>Prima di venire</strong>" } },
+    "restaurant-faq-1": { es: { label: "¿Hace falta reservar?" }, it: { label: "È necessaria la prenotazione?" } },
+    "restaurant-faq-1-text": { es: { content: "<p>Recomendamos reservar, sobre todo para cenas y fines de semana. Aceptamos clientes sin reserva si hay disponibilidad.</p>" }, it: { content: "<p>Consigliamo la prenotazione, soprattutto per la cena e nel weekend. Accettiamo anche senza prenotazione se c'è disponibilità.</p>" } },
+    "restaurant-faq-2": { es: { label: "¿Tienen opciones para alergias o intolerancias?" }, it: { label: "Avete opzioni per allergie o intolleranze?" } },
+    "restaurant-faq-2-text": { es: { content: "<p>Sí. Indícanos cualquier alergia o intolerancia al reservar o al pedir y adaptamos el plato.</p>" }, it: { content: "<p>Sì. Segnalate allergie o intolleranze al momento della prenotazione o dell'ordine e adatteremo il piatto.</p>" } },
+    "restaurant-faq-3": { es: { label: "¿Hay estacionamiento cerca?" }, it: { label: "C'è un parcheggio nelle vicinanze?" } },
+    "restaurant-faq-3-text": { es: { content: "<p>Sí, hay un estacionamiento público a 50 metros del restaurante, en la calle del Olmo.</p>" }, it: { content: "<p>Sì, c'è un parcheggio pubblico a 50 metri dal ristorante in Calle del Olmo.</p>" } },
     // --- Reserva -----------------------------------------------------------
-    "restaurant-reserve-eyebrow": { en: { content: "BOOKINGS" }, it: { content: "PRENOTAZIONI" } },
-    "restaurant-reserve-title": {
-      en: { content: "<strong>Book your table</strong>" },
-      it: { content: "<strong>Prenota il tuo tavolo</strong>" },
-    },
-    "restaurant-reserve-sub": {
-      en: { content: "Fill in the form and we'll confirm your reservation by phone." },
-      it: { content: "Compila il modulo e confermeremo la prenotazione telefonicamente." },
-    },
-    "restaurant-reserve-perk-1": { en: { content: "✓ Confirmed in under 2 hours" }, it: { content: "✓ Confermata in meno di 2 ore" } },
-    "restaurant-reserve-perk-2": { en: { content: "✓ Free cancellation up to 4 hours before" }, it: { content: "✓ Cancellazione gratuita fino a 4 ore prima" } },
-    "restaurant-reserve-perk-3": { en: { content: "✓ Tell us about allergies and we'll adapt the menu" }, it: { content: "✓ Segnala le allergie e adatteremo il menù" } },
-    "restaurant-reserve-label-name": { en: { text: "Full name" }, it: { text: "Nome completo" } },
-    "restaurant-reserve-input-name": { en: { placeholder: "Your name" }, it: { placeholder: "Il tuo nome" } },
-    "restaurant-reserve-label-phone": { en: { text: "Phone" }, it: { text: "Telefono" } },
-    "restaurant-reserve-input-phone": { en: { placeholder: "+34 600 000 000" }, it: { placeholder: "+34 600 000 000" } },
-    "restaurant-reserve-label-guests": { en: { text: "Guests" }, it: { text: "Numero di persone" } },
-    "restaurant-reserve-submit": { en: { label: "Confirm booking" }, it: { label: "Conferma la prenotazione" } },
-    "restaurant-reserve-note": {
-      en: { content: "We only use your details to manage this booking." },
-      it: { content: "Usiamo i tuoi dati solo per gestire questa prenotazione." },
-    },
+    "restaurant-reserve-eyebrow": { es: { content: "RESERVAS" }, it: { content: "PRENOTAZIONI" } },
+    "restaurant-reserve-title": { es: { content: "<strong>Reserva tu mesa</strong>" }, it: { content: "<strong>Prenota il tuo tavolo</strong>" } },
+    "restaurant-reserve-sub": { es: { content: "Completa el formulario y confirmaremos tu reserva por teléfono." }, it: { content: "Compila il modulo e confermeremo la prenotazione telefonicamente." } },
+    "restaurant-reserve-perk-1": { es: { content: "✓ Confirmación en menos de 2 horas" }, it: { content: "✓ Confermata in meno di 2 ore" } },
+    "restaurant-reserve-perk-2": { es: { content: "✓ Cancelación gratuita hasta 4 horas antes" }, it: { content: "✓ Cancellazione gratuita fino a 4 ore prima" } },
+    "restaurant-reserve-perk-3": { es: { content: "✓ Cuéntanos tus alergias y adaptamos la carta" }, it: { content: "✓ Segnala le allergie e adatteremo il menù" } },
+    "restaurant-reserve-label-name": { es: { text: "Nombre completo" }, it: { text: "Nome completo" } },
+    "restaurant-reserve-input-name": { es: { placeholder: "Tu nombre" }, it: { placeholder: "Il tuo nome" } },
+    "restaurant-reserve-label-phone": { es: { text: "Teléfono" }, it: { text: "Telefono" } },
+    "restaurant-reserve-input-phone": { es: { placeholder: "+34 600 000 000" }, it: { placeholder: "+34 600 000 000" } },
+    "restaurant-reserve-label-guests": { es: { text: "Número de personas" }, it: { text: "Numero di persone" } },
+    "restaurant-reserve-submit": { es: { label: "Confirmar reserva" }, it: { label: "Conferma la prenotazione" } },
+    "restaurant-reserve-note": { es: { content: "Solo usamos tus datos para gestionar esta reserva." }, it: { content: "Usiamo i tuoi dati solo per gestire questa prenotazione." } },
     // --- Footer ------------------------------------------------------------
-    "restaurant-footer-brand": {
-      en: { content: "<strong>Casa Almendro</strong>" },
-      it: { content: "<strong>Casa Almendro</strong>" },
-    },
-    "restaurant-footer-address": {
-      en: { content: "Calle del Olmo 14, 28004 Madrid" },
-      it: { content: "Calle del Olmo 14, 28004 Madrid" },
-    },
-    "restaurant-footer-hours-title": {
-      en: { content: "<strong>Opening hours</strong>" },
-      it: { content: "<strong>Orari di apertura</strong>" },
-    },
-    "restaurant-footer-hours-body": {
-      en: { content: "Tue–Sun: 12:30–16:00 and 20:00–23:30<br/>Closed Mondays" },
-      it: { content: "Mar–Dom: 12:30–16:00 e 20:00–23:30<br/>Chiuso il lunedì" },
-    },
-    "restaurant-footer-contact-title": {
-      en: { content: "<strong>Contact</strong>" },
-      it: { content: "<strong>Contatti</strong>" },
-    },
-    "restaurant-footer-contact-body": {
-      en: { content: "+34 912 345 678<br/>hola@casaalmendro.example" },
-      it: { content: "+34 912 345 678<br/>hola@casaalmendro.example" },
-    },
-    "restaurant-footer-copyright": {
-      en: { content: "© 2026 Casa Almendro. All rights reserved." },
-      it: { content: "© 2026 Casa Almendro. Tutti i diritti riservati." },
-    },
+    "restaurant-footer-brand": { es: { content: "<strong>Casa Almendro</strong>" }, it: { content: "<strong>Casa Almendro</strong>" } },
+    "restaurant-footer-address": { es: { content: "Calle del Olmo 14, 28004 Madrid" }, it: { content: "Calle del Olmo 14, 28004 Madrid" } },
+    "restaurant-footer-hours-title": { es: { content: "<strong>Horario</strong>" }, it: { content: "<strong>Orari di apertura</strong>" } },
+    "restaurant-footer-hours-body": { es: { content: "Mar–Dom: 12:30–16:00 y 20:00–23:30<br/>Lunes cerrado" }, it: { content: "Mar–Dom: 12:30–16:00 e 20:00–23:30<br/>Chiuso il lunedì" } },
+    "restaurant-footer-contact-title": { es: { content: "<strong>Contacto</strong>" }, it: { content: "<strong>Contatti</strong>" } },
+    "restaurant-footer-contact-body": { es: { content: "+34 912 345 678<br/>hola@casaalmendro.example" }, it: { content: "+34 912 345 678<br/>hola@casaalmendro.example" } },
+    "restaurant-footer-copyright": { es: { content: "© 2026 Casa Almendro. Todos los derechos reservados." }, it: { content: "© 2026 Casa Almendro. Tutti i diritti riservati." } },
   };
 
   return {
@@ -773,13 +620,13 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-topbar-hours": {
         id: "restaurant-topbar-hours",
         type: "text",
-        props: { content: "Mar–Dom 12:30–16:00 / 20:00–23:30" },
+        props: { content: "Tue–Sun 12:30–16:00 / 20:00–23:30" },
         style: { base: { appearance: { color: { token: "colors.surface.default" } } } },
       },
       "restaurant-topbar-phone": {
         id: "restaurant-topbar-phone",
         type: "text",
-        props: { content: "Reservas +34 912 345 678" },
+        props: { content: "Bookings +34 912 345 678" },
         style: { base: { appearance: { color: { token: "colors.surface.default" } } } },
       },
       "restaurant-topbar-lang": {
@@ -884,13 +731,13 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-hero-eyebrow": {
         id: "restaurant-hero-eyebrow",
         type: "text",
-        props: { content: "COCINA DE TEMPORADA · MADRID" },
+        props: { content: "SEASONAL KITCHEN · MADRID" },
         style: eyebrow({ token: "colors.surface.alt" }),
       },
       "restaurant-hero-title": {
         id: "restaurant-hero-title",
         type: "text",
-        props: { content: "<strong>Cocina de mercado en el corazón de la ciudad</strong>" },
+        props: { content: "<strong>Market cooking in the heart of the city</strong>" },
         style: {
           base: {
             size: { maxWidth: "20ch" },
@@ -911,7 +758,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
         type: "text",
         props: {
           content:
-            "Ingredientes de productores locales, una carta que cambia cada semana y una selección de vinos a cargo de nuestro sommelier.",
+            "Ingredients from local producers, a menu that changes every week and a wine list curated by our sommelier.",
         },
         style: {
           base: {
@@ -944,7 +791,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-hero-cta": {
         id: "restaurant-hero-cta",
         type: "button",
-        props: { label: "Reservar mesa", link: { kind: "anchor", nodeId: "restaurant-reserve-section" } },
+        props: { label: "Book a table", link: { kind: "anchor", nodeId: "restaurant-reserve-section" } },
         style: {
           base: {
             ...defaultStyleFor("button").base,
@@ -971,7 +818,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-hero-cta-2": {
         id: "restaurant-hero-cta-2",
         type: "button",
-        props: { label: "Ver la carta", link: { kind: "anchor", nodeId: "restaurant-menu-section" } },
+        props: { label: "See the menu", link: { kind: "anchor", nodeId: "restaurant-menu-section" } },
         style: {
           base: {
             ...defaultStyleFor("button").base,
@@ -1013,7 +860,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-hero-rating": {
         id: "restaurant-hero-rating",
         type: "badge",
-        props: { label: "★ 4,8 / 5" },
+        props: { label: "★ 4.8 / 5" },
         style: {
           base: {
             layout: { display: "inline-block" },
@@ -1030,7 +877,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-hero-rating-text": {
         id: "restaurant-hero-rating-text",
         type: "text",
-        props: { content: "2.400 reseñas · Bib Gourmand 2025" },
+        props: { content: "2,400 reviews · Bib Gourmand 2025" },
         style: {
           base: {
             typography: { fontSize: { token: "typography.sizes.sm" } },
@@ -1074,20 +921,20 @@ export function buildRestaurantPageFragment(): NodeFragment {
       ...withHighlightCopy(
         highlight("restaurant-highlight-1", "Clock"),
         "restaurant-highlight-1",
-        "<strong>Horario</strong>",
-        "Mar–Dom · comidas y cenas. Lunes cerrado.",
+        "<strong>Opening hours</strong>",
+        "Tue–Sun · lunch and dinner. Closed Mondays.",
       ),
       ...withHighlightCopy(
         highlight("restaurant-highlight-2", "MapPin"),
         "restaurant-highlight-2",
-        "<strong>Dónde estamos</strong>",
+        "<strong>Where we are</strong>",
         "Calle del Olmo 14, Madrid · Metro Antón Martín",
       ),
       ...withHighlightCopy(
         highlight("restaurant-highlight-3", "Phone"),
         "restaurant-highlight-3",
-        "<strong>Reservas</strong>",
-        "+34 912 345 678 · grupos hasta 20 personas",
+        "<strong>Bookings</strong>",
+        "+34 912 345 678 · groups up to 20 people",
       ),
 
       // --- Carta del día (tabs con pastilla activa) ------------------------
@@ -1116,13 +963,13 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-menu-eyebrow": {
         id: "restaurant-menu-eyebrow",
         type: "text",
-        props: { content: "LA CARTA" },
+        props: { content: "THE MENU" },
         style: eyebrow(),
       },
       "restaurant-menu-title": {
         id: "restaurant-menu-title",
         type: "text",
-        props: { content: "<strong>La carta de hoy</strong>" },
+        props: { content: "<strong>Today's menu</strong>" },
         style: sectionTitle(),
       },
       "restaurant-menu-sub": {
@@ -1130,7 +977,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
         type: "text",
         props: {
           content:
-            "Tres servicios, una lista de mercado. Nuestro equipo la reescribe cada martes con lo que da el mercado.",
+            "Three services, one market list. Our team rewrites it every Tuesday with what the market offers.",
         },
         style: bodyText(),
       },
@@ -1164,7 +1011,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-tab-starters": {
         id: "restaurant-tab-starters",
         type: "tab",
-        props: { label: "Entradas" },
+        props: { label: "Starters" },
         style: defaultStyleFor("tab"),
         children: ["restaurant-starters-card"],
       },
@@ -1173,23 +1020,23 @@ export function buildRestaurantPageFragment(): NodeFragment {
         "restaurant-starter-2",
       ]),
       ...dish("restaurant-starter-1", {
-        name: "Burrata con tomate antiguo",
-        desc: "Aceite de albahaca, tostada de masa madre y sal Maldon.",
-        price: "9,50 €",
+        name: "Burrata with heirloom tomato",
+        desc: "Basil oil, sourdough toast and Maldon salt.",
+        price: "€9.50",
       }),
       ...dish(
         "restaurant-starter-2",
         {
-          name: "Pulpo a la brasa",
-          desc: "Patatas a la paprika, cebolla encurtida y piel de limón.",
-          price: "13,00 €",
+          name: "Grilled octopus",
+          desc: "Paprika potatoes, pickled onion and lemon zest.",
+          price: "€13.00",
         },
         { last: true },
       ),
       "restaurant-tab-mains": {
         id: "restaurant-tab-mains",
         type: "tab",
-        props: { label: "Platos fuertes" },
+        props: { label: "Main courses" },
         style: defaultStyleFor("tab"),
         children: ["restaurant-mains-card"],
       },
@@ -1199,29 +1046,29 @@ export function buildRestaurantPageFragment(): NodeFragment {
         "restaurant-main-3",
       ]),
       ...dish("restaurant-main-1", {
-        name: "Rabo de toro estofado",
-        desc: "Ocho horas de cocción, verduras de raíz y reducción de vino rojo.",
-        price: "18,50 €",
-        tag: "Recomendación del chef",
+        name: "Slow-braised oxtail",
+        desc: "Eight hours of cooking, root vegetables and red wine reduction.",
+        price: "€18.50",
+        tag: "Chef's pick",
       }),
       ...dish("restaurant-main-2", {
-        name: "Dorada a la brasa",
-        desc: "Limón, alcaparras y verduras de temporada asadas.",
-        price: "19,00 €",
+        name: "Grilled sea bream",
+        desc: "Lemon, capers and roasted seasonal vegetables.",
+        price: "€19.00",
       }),
       ...dish(
         "restaurant-main-3",
         {
-          name: "Berenjena al horno de leña",
-          desc: "Yogur ahumado, avellanas y aceite de hierbas. Vegetariano.",
-          price: "16,00 €",
+          name: "Wood-fired aubergine",
+          desc: "Smoked yoghurt, hazelnuts and herb oil. Vegetarian.",
+          price: "€16.00",
         },
         { last: true },
       ),
       "restaurant-tab-desserts": {
         id: "restaurant-tab-desserts",
         type: "tab",
-        props: { label: "Postres" },
+        props: { label: "Desserts" },
         style: defaultStyleFor("tab"),
         children: ["restaurant-desserts-card"],
       },
@@ -1230,23 +1077,23 @@ export function buildRestaurantPageFragment(): NodeFragment {
         "restaurant-dessert-2",
       ]),
       ...dish("restaurant-dessert-1", {
-        name: "Tarta de queso vasca",
-        desc: "Centro cremoso, queso madurado tres semanas.",
-        price: "6,50 €",
+        name: "Basque burnt cheesecake",
+        desc: "Creamy centre, three-week matured cheese.",
+        price: "€6.50",
       }),
       ...dish(
         "restaurant-dessert-2",
         {
-          name: "Fondant de chocolate",
-          desc: "Cacao 72% con helado de vainilla.",
-          price: "7,00 €",
+          name: "Chocolate fondant",
+          desc: "72% cocoa with vanilla ice cream.",
+          price: "€7.00",
         },
         { last: true },
       ),
       "restaurant-menu-note": {
         id: "restaurant-menu-note",
         type: "text",
-        props: { content: "Alérgenos disponibles bajo petición. Nunca añadimos 10% de servicio." },
+        props: { content: "Allergens available on request. 10% service charge is never added." },
         style: {
           base: {
             typography: { fontSize: { token: "typography.sizes.sm" } },
@@ -1281,13 +1128,13 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-gallery-eyebrow": {
         id: "restaurant-gallery-eyebrow",
         type: "text",
-        props: { content: "EL LOCAL" },
+        props: { content: "THE PLACE" },
         style: eyebrow(),
       },
       "restaurant-gallery-title": {
         id: "restaurant-gallery-title",
         type: "text",
-        props: { content: "<strong>Una sala pensada para cenas largas</strong>" },
+        props: { content: "<strong>A dining room built for long dinners</strong>" },
         style: sectionTitle(),
       },
       "restaurant-gallery-grid": {
@@ -1314,7 +1161,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
         type: "image",
         props: {
           source: { kind: "url", url: "https://images.unsplash.com/photo-1613274554329-70f997f5789f?w=1200&q=80&auto=format&fit=crop" },
-          alt: "Sala principal con luz cálida",
+          alt: "Main dining room with warm lighting",
           objectFit: "cover",
           loading: "lazy",
         },
@@ -1335,7 +1182,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
         type: "image",
         props: {
           source: { kind: "url", url: "https://images.unsplash.com/photo-1622021142947-da7dedc7c39a?w=800&q=80&auto=format&fit=crop" },
-          alt: "Barra de la cocina abierta",
+          alt: "Open kitchen counter",
           objectFit: "cover",
           loading: "lazy",
         },
@@ -1346,7 +1193,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
         type: "image",
         props: {
           source: { kind: "url", url: "https://images.unsplash.com/photo-1578911373434-0cb395d2cbfb?w=800&q=80&auto=format&fit=crop" },
-          alt: "Bodega con botellas seleccionadas",
+          alt: "Wine cellar with selected bottles",
           objectFit: "cover",
           loading: "lazy",
         },
@@ -1357,7 +1204,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
         type: "image",
         props: {
           source: { kind: "url", url: "https://images.unsplash.com/photo-1782215923072-e9988432bf5e?w=1200&q=80&auto=format&fit=crop" },
-          alt: "Mesas de la terraza en la calle del Olmo",
+          alt: "Terrace tables on Calle del Olmo",
           objectFit: "cover",
           loading: "lazy",
         },
@@ -1395,7 +1242,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
       },
       ...statFragment(
         "restaurant-stat-1",
-        { value: "18", label: "años abiertos" },
+        { value: "18", label: "years open" },
         {
           base: {
             ...defaultStyleFor("stat").base,
@@ -1408,7 +1255,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
       ),
       ...statFragment(
         "restaurant-stat-2",
-        { value: "120+", label: "platos en carta" },
+        { value: "120+", label: "dishes on the menu" },
         {
           base: {
             ...defaultStyleFor("stat").base,
@@ -1419,7 +1266,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
       ),
       ...statFragment(
         "restaurant-stat-3",
-        { value: "2.4k", label: "reseñas" },
+        { value: "2.4k", label: "reviews" },
         {
           base: {
             ...defaultStyleFor("stat").base,
@@ -1456,21 +1303,21 @@ export function buildRestaurantPageFragment(): NodeFragment {
         children: ["restaurant-testimonial", "restaurant-testimonial-2", "restaurant-testimonial-3"],
       },
       ...testimonialCard("restaurant-testimonial", {
-        quote: "El mejor menú degustación que he probado en años, cada plato fue una sorpresa.",
+        quote: "The best tasting menu I've had in years — every course was a surprise.",
         name: "Laura Fernández",
-        role: "Clienta habitual",
+        role: "Regular guest",
         initials: "LF",
       }),
       ...testimonialCard("restaurant-testimonial-2", {
-        quote: "Reservamos para una cena de equipo y adaptaron cada plato a nuestras alergias.",
+        quote: "We booked for a team dinner and they adapted every dish to our allergies.",
         name: "Andrés Molina",
-        role: "Reserva de grupo",
+        role: "Group booking",
         initials: "AM",
       }),
       ...testimonialCard("restaurant-testimonial-3", {
-        quote: "Solo por el rabo de toro merece el viaje. El servicio es cercano sin ser rígido.",
+        quote: "The oxtail alone is worth the trip. Service is warm without being stiff.",
         name: "Chiara Rossi",
-        role: "Periodista gastronómica",
+        role: "Food writer",
         initials: "CR",
       }),
 
@@ -1492,7 +1339,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-faq-title": {
         id: "restaurant-faq-title",
         type: "text",
-        props: { content: "<strong>Antes de venir</strong>" },
+        props: { content: "<strong>Before you come</strong>" },
         style: sectionTitle(),
       },
       "restaurant-faq": {
@@ -1521,40 +1368,40 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-faq-1": {
         id: "restaurant-faq-1",
         type: "accordion-item",
-        props: { label: "¿Hace falta reservar?", openByDefault: true },
+        props: { label: "Do you need a reservation?", openByDefault: true },
         style: defaultStyleFor("accordion-item"),
         children: ["restaurant-faq-1-text"],
       },
       "restaurant-faq-1-text": {
         id: "restaurant-faq-1-text",
         type: "text",
-        props: { content: "<p>Recomendamos reservar, sobre todo para cenas y fines de semana. Aceptamos clientes sin reserva si hay disponibilidad.</p>" },
+        props: { content: "<p>We recommend booking, especially for dinner and weekends. Walk-ins are welcome if there is availability.</p>" },
         style: bodyText(),
       },
       "restaurant-faq-2": {
         id: "restaurant-faq-2",
         type: "accordion-item",
-        props: { label: "¿Tienen opciones para alergias o intolerancias?", openByDefault: false },
+        props: { label: "Do you have options for allergies or intolerances?", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["restaurant-faq-2-text"],
       },
       "restaurant-faq-2-text": {
         id: "restaurant-faq-2-text",
         type: "text",
-        props: { content: "<p>Sí. Indícanos cualquier alergia o intolerancia al reservar o al pedir y adaptamos el plato.</p>" },
+        props: { content: "<p>Yes. Tell us about any allergy or intolerance when booking or when ordering and we'll adapt the dish.</p>" },
         style: bodyText(),
       },
       "restaurant-faq-3": {
         id: "restaurant-faq-3",
         type: "accordion-item",
-        props: { label: "¿Hay estacionamiento cerca?", openByDefault: false },
+        props: { label: "Is there parking nearby?", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["restaurant-faq-3-text"],
       },
       "restaurant-faq-3-text": {
         id: "restaurant-faq-3-text",
         type: "text",
-        props: { content: "<p>Sí, hay un estacionamiento público a 50 metros del restaurante, en la calle del Olmo.</p>" },
+        props: { content: "<p>Yes, there is a public car park 50 metres from the restaurant on Calle del Olmo.</p>" },
         style: bodyText(),
       },
 
@@ -1596,19 +1443,19 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-reserve-eyebrow": {
         id: "restaurant-reserve-eyebrow",
         type: "text",
-        props: { content: "RESERVAS" },
+        props: { content: "BOOKINGS" },
         style: eyebrow(),
       },
       "restaurant-reserve-title": {
         id: "restaurant-reserve-title",
         type: "text",
-        props: { content: "<strong>Reserva tu mesa</strong>" },
+        props: { content: "<strong>Book your table</strong>" },
         style: sectionTitle(),
       },
       "restaurant-reserve-sub": {
         id: "restaurant-reserve-sub",
         type: "text",
-        props: { content: "Completa el formulario y confirmaremos tu reserva por teléfono." },
+        props: { content: "Fill in the form and we'll confirm your reservation by phone." },
         style: bodyText(),
       },
       "restaurant-reserve-perks": {
@@ -1628,9 +1475,9 @@ export function buildRestaurantPageFragment(): NodeFragment {
           "restaurant-reserve-perk-3",
         ],
       },
-      "restaurant-reserve-perk-1": perk("restaurant-reserve-perk-1", "✓ Confirmación en menos de 2 horas"),
-      "restaurant-reserve-perk-2": perk("restaurant-reserve-perk-2", "✓ Cancelación gratuita hasta 4 horas antes"),
-      "restaurant-reserve-perk-3": perk("restaurant-reserve-perk-3", "✓ Cuéntanos tus alergias y adaptamos la carta"),
+      "restaurant-reserve-perk-1": perk("restaurant-reserve-perk-1", "✓ Confirmed in under 2 hours"),
+      "restaurant-reserve-perk-2": perk("restaurant-reserve-perk-2", "✓ Free cancellation up to 4 hours before"),
+      "restaurant-reserve-perk-3": perk("restaurant-reserve-perk-3", "✓ Tell us about allergies and we'll adapt the menu"),
       "restaurant-reserve-form": {
         id: "restaurant-reserve-form",
         type: "form",
@@ -1667,13 +1514,13 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-reserve-label-name": {
         id: "restaurant-reserve-label-name",
         type: "label",
-        props: { text: "Nombre completo", for: "restaurant-reserve-input-name" },
+        props: { text: "Full name", for: "restaurant-reserve-input-name" },
         style: defaultStyleFor("label"),
       },
       "restaurant-reserve-input-name": {
         id: "restaurant-reserve-input-name",
         type: "input",
-        props: { name: "name", placeholder: "Tu nombre", type: "text", required: true, disabled: false },
+        props: { name: "name", placeholder: "Your name", type: "text", required: true, disabled: false },
         style: {
           base: {
             ...defaultStyleFor("input").base,
@@ -1686,7 +1533,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-reserve-label-phone": {
         id: "restaurant-reserve-label-phone",
         type: "label",
-        props: { text: "Teléfono", for: "restaurant-reserve-input-phone" },
+        props: { text: "Phone", for: "restaurant-reserve-input-phone" },
         style: defaultStyleFor("label"),
       },
       "restaurant-reserve-input-phone": {
@@ -1705,7 +1552,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-reserve-label-guests": {
         id: "restaurant-reserve-label-guests",
         type: "label",
-        props: { text: "Número de personas", for: "restaurant-reserve-select-guests" },
+        props: { text: "Guests", for: "restaurant-reserve-select-guests" },
         style: defaultStyleFor("label"),
       },
       "restaurant-reserve-select-guests": {
@@ -1713,14 +1560,14 @@ export function buildRestaurantPageFragment(): NodeFragment {
         type: "select",
         props: {
           options: [
-            { label: "2 personas", value: "2" },
-            { label: "4 personas", value: "4" },
-            { label: "6 personas", value: "6" },
-            { label: "8 o más", value: "8+" },
+            { label: "2 guests", value: "2" },
+            { label: "4 guests", value: "4" },
+            { label: "6 guests", value: "6" },
+            { label: "8 or more", value: "8+" },
           ],
           name: "guests",
-          placeholder: "Selecciona",
-          ariaLabel: "Número de personas",
+          placeholder: "Select",
+          ariaLabel: "Number of guests",
         },
         style: {
           base: {
@@ -1733,7 +1580,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-reserve-submit": {
         id: "restaurant-reserve-submit",
         type: "button-submit",
-        props: { label: "Confirmar reserva", disabled: false },
+        props: { label: "Confirm booking", disabled: false },
         style: {
           base: {
             ...defaultStyleFor("button-submit").base,
@@ -1760,7 +1607,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-reserve-note": {
         id: "restaurant-reserve-note",
         type: "text",
-        props: { content: "Solo usamos tus datos para gestionar esta reserva." },
+        props: { content: "We only use your details to manage this booking." },
         style: {
           base: {
             typography: { fontSize: { token: "typography.sizes.sm" }, textAlign: "center" },
@@ -1791,7 +1638,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-footer-copyright": {
         id: "restaurant-footer-copyright",
         type: "text",
-        props: { content: "© 2026 Casa Almendro. Todos los derechos reservados." },
+        props: { content: "© 2026 Casa Almendro. All rights reserved." },
         style: {
           base: {
             size: { width: "100%" },
@@ -1878,13 +1725,13 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-footer-hours-title": {
         id: "restaurant-footer-hours-title",
         type: "text",
-        props: { content: "<strong>Horario</strong>" },
+        props: { content: "<strong>Opening hours</strong>" },
         style: { base: { appearance: { color: { token: "colors.surface.default" } } } },
       },
       "restaurant-footer-hours-body": {
         id: "restaurant-footer-hours-body",
         type: "text",
-        props: { content: "Mar–Dom: 12:30–16:00 y 20:00–23:30<br/>Lunes cerrado" },
+        props: { content: "Tue–Sun: 12:30–16:00 and 20:00–23:30<br/>Closed Mondays" },
         style: { base: { appearance: { color: { token: "colors.surface.alt" } } } },
       },
       "restaurant-footer-contact-col": {
@@ -1901,7 +1748,7 @@ export function buildRestaurantPageFragment(): NodeFragment {
       "restaurant-footer-contact-title": {
         id: "restaurant-footer-contact-title",
         type: "text",
-        props: { content: "<strong>Contacto</strong>" },
+        props: { content: "<strong>Contact</strong>" },
         style: { base: { appearance: { color: { token: "colors.surface.default" } } } },
       },
       "restaurant-footer-contact-body": {

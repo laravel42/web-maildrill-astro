@@ -117,6 +117,7 @@ export function Header() {
             type="button"
             className="pbx-history__btn"
             title={t("history.undo")}
+            aria-label={t("history.undo")}
             disabled={!canUndo}
             onClick={() => undo()}
           >
@@ -126,6 +127,7 @@ export function Header() {
             type="button"
             className="pbx-history__btn"
             title={t("history.redo")}
+            aria-label={t("history.redo")}
             disabled={!canRedo}
             onClick={() => redo()}
           >

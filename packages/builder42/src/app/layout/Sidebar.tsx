@@ -16,15 +16,18 @@
  * paleta como cards con hover visual.
  */
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import { getDefinition, listDefinitionsByCategory } from "@/builder/registry/componentRegistry";
 import { listLayoutsByCategory, type SectionLayoutDefinition } from "@/builder/registry/layoutRegistry";
+import { canPlaceChild } from "@/builder/registry/placement";
 import { useDraggable } from "@/builder/dnd/useDraggable";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { useReorderControlsVisible } from "@/hooks/usePointerCoarse";
 import { useLocalConfig } from "@/hooks/useLocalConfig";
+import { useExperienceLevel } from "@/hooks/useExperienceLevel";
+import { useEmbeddedChrome } from "@/app/EmbeddedChrome";
 import type { DragData } from "@/builder/dnd/contract";
 import type { ComponentCategory, ComponentDefinition } from "@/builder/registry/types";
 import {
@@ -34,7 +37,6 @@ import {
   Type,
   ClipboardList,
   Navigation,
-  Star,
   ChevronDown,
 } from "@/components";
 import type { LucideProps } from "lucide-react";
@@ -152,25 +154,46 @@ function SidebarItem({ def }: { def: ComponentDefinition }) {
   );
   const getPreviewLabel = useCallback(() => translatedLabel, [translatedLabel]);
   const { dragging } = useDraggable(ref, getData, true, getPreviewLabel);
+  const skipClickAfterDrag = useRef(false);
+  useEffect(() => {
+    if (dragging) skipClickAfterDrag.current = true;
+  }, [dragging]);
   const startPickInsertNew = useDocumentStore((s) => s.startPickInsertNew);
+  const addComponent = useDocumentStore((s) => s.addComponent);
+  const selectedId = useDocumentStore((s) => s.selectedId);
+  const rootId = useDocumentStore((s) => s.document.rootId);
+  const nodes = useDocumentStore((s) => s.document.nodes);
   const reorderControlsVisible = useReorderControlsVisible();
-  // Tap-to-pick (Vía B, docs/24 §3.1b) solo cuando los controles touch están
-  // activos (`reorderControlsVisible`, misma preferencia `reorderControls`
-  // que rige el resto del sistema — SelectionHandle/PickInsertBar, docs/24
-  // §2/§4): en desktop el drag nativo (`useDraggable`, arriba) ya cubre
-  // colocar el componente, y el CLICK SINTÉTICO que el navegador dispara al
-  // soltar un elemento tras un mousedown+drag con desplazamiento mínimo
-  // colisionaba con este `onClick` — el mismo gesto de arrastrar y soltar
-  // terminaba disparando AMBOS sistemas (el DnD colocaba el nodo Y el click
-  // armaba un pick & insert nuevo), duplicando el componente al soltar de
-  // nuevo o dejando un pick & insert fantasma activo (bug real, feedback de
-  // usuario). "Todo esto es parte de un mismo sistema": si el usuario
-  // desactiva/deja en automático los controles touch, este flujo de
-  // click-para-tomar debe desactivarse igual que las flechas/mover.
+  const embedded = useEmbeddedChrome();
+  // Touch: tap starts pick & insert (docs/24 §3.1b). Desktop: a click after a
+  // native drag is ignored; a real click inserts at the selected container
+  // (or the page root) so the palette is not drag-only in the Maildrill embed.
   const handleClick = useCallback(() => {
-    if (!reorderControlsVisible) return;
-    startPickInsertNew(def.type);
-  }, [def.type, startPickInsertNew, reorderControlsVisible]);
+    if (skipClickAfterDrag.current) {
+      skipClickAfterDrag.current = false;
+      return;
+    }
+    if (reorderControlsVisible) {
+      startPickInsertNew(def.type);
+      return;
+    }
+    if (!embedded) return;
+    const selectedType = selectedId ? nodes[selectedId]?.type : undefined;
+    const parentId =
+      selectedId && selectedType && canPlaceChild(selectedType, def.type) ? selectedId : rootId;
+    const parent = nodes[parentId];
+    if (!parent || !canPlaceChild(parent.type, def.type)) return;
+    addComponent(def.type, { parentId, index: parent.children?.length ?? 0 });
+  }, [
+    addComponent,
+    def.type,
+    embedded,
+    nodes,
+    reorderControlsVisible,
+    rootId,
+    selectedId,
+    startPickInsertNew,
+  ]);
 
   return (
     <button
@@ -210,10 +233,6 @@ function ComponentsPanel() {
     <>
       {basicsGroups.length > 0 ? (
         <div className="pbx-palette__group">
-          <h3 className="pbx-palette__category">
-            <Star className="pbx-palette__cat-icon" aria-hidden="true" />
-            {t("palette.categories.basics")}
-          </h3>
           {basicsGroups.map((g, idx) => (
             <CategoryAccordion
               key={g.key}
@@ -273,9 +292,10 @@ export function Sidebar() {
   const { t } = useTranslation("sidebar");
   const [tab, setTab] = useState<SideTab>("components");
   const [sidebarCollapsed] = useLocalConfig("sidebarCollapsed");
-  // D1 (docs/41 §3): `uiComplexity` se elimina por completo — la tab
-  // "Tokens" queda SIEMPRE disponible (antes solo en modo avanzado).
-  const tabIds = ALL_TAB_IDS;
+  const embedded = useEmbeddedChrome();
+  const { isSimple } = useExperienceLevel();
+  // Embed: Tokens stay off the first screen (Simple). Advanced still gets them.
+  const tabIds = embedded && isSimple ? ALL_TAB_IDS.filter((id) => id !== "tokens") : ALL_TAB_IDS;
   const activeTab = tabIds.includes(tab) ? tab : "components";
 
   return (

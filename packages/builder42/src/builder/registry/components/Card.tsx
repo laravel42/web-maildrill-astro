@@ -87,7 +87,7 @@ function CardRender(ctx: RenderContext) {
       {children}
       {!exportMode && isEmpty ? (
         <span className="pbx-empty-hint" data-empty-hint>
-          Tarjeta vacía — suelta imagen, texto o botón
+          Empty card — drop an image, text, or button
         </span>
       ) : null}
     </article>

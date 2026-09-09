@@ -153,7 +153,7 @@ function newNodeId(): NodeId {
  */
 export function createNodeForType(type: string): BuilderNode {
   const def = getDefinition(type);
-  if (!def) throw new Error(`Tipo de componente no registrado: "${type}"`);
+  if (!def) throw new Error(`Unregistered component type: "${type}"`);
   const node: BuilderNode = {
     id: newNodeId(),
     type: def.type,
@@ -183,7 +183,7 @@ export function createNodeTreeForType(type: string): {
   nodes: Record<NodeId, BuilderNode>;
 } {
   const def = getDefinition(type);
-  if (!def) throw new Error(`Tipo de componente no registrado: "${type}"`);
+  if (!def) throw new Error(`Unregistered component type: "${type}"`);
   const nodes: Record<NodeId, BuilderNode> = {};
 
   const expand = (

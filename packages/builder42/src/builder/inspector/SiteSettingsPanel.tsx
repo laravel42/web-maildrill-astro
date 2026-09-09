@@ -1,25 +1,38 @@
 /**
  * SiteSettingsPanel — configuración de página/sitio centralizada (panel del
- * Inspector cuando NO hay nodo seleccionado). Fase 19.f: se organiza en tabs
- * para descargar el panel (antes todas las secciones se apilaban). Cada tab es
- * una configuración distinta: páginas, idiomas, temas, SEO y ajustes.
+ * Inspector). Fase 19.f: se organiza en tabs para descargar el panel. Cada tab
+ * es una configuración distinta: capas, páginas, idiomas, temas, SEO y
+ * ajustes. La fila de tabs permanece visible también al inspeccionar un nodo
+ * (`element`); Layers y Settings viven aquí (no en el toolbar embebido).
  *
  * El estado de la tab es UI-state local (`useState`). Junto a las tabs vive un
  * icono de info (Tooltip c42, P10) que al hover explica qué se hace en la
- * sección activa — antes estaba junto al título "Inspector", que se eliminó
- * (Fase 19.n) para dar más aire al panel.
+ * sección activa.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import type { ComponentType } from "react";
 import type { LucideProps } from "lucide-react";
-import { FileText, Languages, Palette, Search, SlidersHorizontal, Rocket, Tooltip, Info } from "@/components";
+import {
+  FileText,
+  Languages,
+  Palette,
+  Search,
+  SlidersHorizontal,
+  Rocket,
+  Layers,
+  Tooltip,
+  Info,
+} from "@/components";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import type { SiteTab } from "@/builder/store/documentStore";
 import { useExperienceLevel } from "@/hooks/useExperienceLevel";
 import { fetchHealth } from "@/services/apiClient";
+import { useEmbeddedChrome } from "@/app/EmbeddedChrome";
+import { LayersTree } from "@/builder/layers/LayersTree";
+import { EditorPreferences } from "@/app/layout/ProfileMenu";
 import { PageManager } from "./PageManager";
 import { I18nSettings } from "./I18nSettings";
 import { SeoSettings } from "./SeoSettings";
@@ -30,14 +43,17 @@ import { PublishedSitesList } from "./PublishedSitesList";
 
 export type { SiteTab };
 
-/** Orden e iconos de las tabs de configuración del sitio. */
+type PanelTab = SiteTab | "element";
+
+/** Orden e iconos de las tabs. Layers first, Settings last. */
 export const SITE_TABS: { id: SiteTab; icon: ComponentType<LucideProps> }[] = [
+  { id: "layers", icon: Layers },
   { id: "pages", icon: FileText },
   { id: "languages", icon: Languages },
   { id: "themes", icon: Palette },
   { id: "seo", icon: Search },
-  { id: "settings", icon: SlidersHorizontal },
   { id: "publish", icon: Rocket },
+  { id: "settings", icon: SlidersHorizontal },
 ];
 
 /**
@@ -49,9 +65,9 @@ export const SITE_TABS: { id: SiteTab; icon: ComponentType<LucideProps> }[] = [
  */
 const SIMPLE_HIDDEN_TABS = new Set<SiteTab>([]);
 
-export function SiteSettingsPanel() {
+export function SiteSettingsPanel({ element }: { element?: ReactNode }) {
   const { t } = useTranslation("inspector");
-  const [tab, setTab] = useState<SiteTab>("pages");
+  const [tab, setTab] = useState<PanelTab>("pages");
   const { isSimple, setLevel } = useExperienceLevel();
   // Contador que `PublishedSitesList` observa para re-hacer su fetch tras un
   // publish/republish exitoso en el hermano `PublishPanel` (ver doc de
@@ -64,17 +80,31 @@ export function SiteSettingsPanel() {
   // parpadear on/off en el primer render.
   const [publishEnabled, setPublishEnabled] = useState<boolean | undefined>(undefined);
 
+  const selectedId = useDocumentStore((s) => s.selectedId);
+  const select = useDocumentStore((s) => s.select);
+  const requestedSiteTab = useDocumentStore((s) => s.requestedSiteTab);
+  const clearRequestedSiteTab = useDocumentStore((s) => s.clearRequestedSiteTab);
+
   useEffect(() => {
     fetchHealth()
       .then((h) => setPublishEnabled(h.publish.enabled))
       .catch(() => setPublishEnabled(false));
   }, []);
 
+  // Selecting a node on the canvas (or from the layers tree) shows the
+  // element inspector. Non-layers tabs deselect so this does not steal the
+  // panel back to the form when the user opens Pages / Settings / …
+  useEffect(() => {
+    if (selectedId) setTab("element");
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (!selectedId && tab === "element" && !requestedSiteTab) setTab("pages");
+  }, [selectedId, tab, requestedSiteTab]);
+
   // Petición externa de abrir una tab concreta (p. ej. desde el control
   // `theme-select` del panel de Interactividad cuando no hay temas): se aplica
   // una vez y se limpia, para no volver a forzar la tab si el usuario navega.
-  const requestedSiteTab = useDocumentStore((s) => s.requestedSiteTab);
-  const clearRequestedSiteTab = useDocumentStore((s) => s.clearRequestedSiteTab);
   useEffect(() => {
     if (requestedSiteTab) {
       // Borde crítico (docs/46 §6): si la navegación programática apunta a
@@ -93,12 +123,13 @@ export function SiteSettingsPanel() {
   }, [requestedSiteTab, clearRequestedSiteTab, isSimple, setLevel]);
 
   // D1/D2 (docs/46 §2): en modo simple se ocultan las tabs técnicas
-  // ("languages", "seo"); en avanzado las 6 tabs quedan siempre visibles,
+  // ("languages", "seo"); en avanzado las tabs quedan siempre visibles,
   // igual que hoy (cero regresión, docs/41 D1 sigue derogado). Además, la tab
   // "publish" se oculta por completo (en ambos modos) mientras el host no
   // reporte `publish.enabled` — sin esto, el mensaje "disabled" de
   // `PublishPanel` seguiría siendo alcanzable, solo que detrás de un botón
   // que no debería estar ahí.
+  const embedded = useEmbeddedChrome();
   const visibleTabs = SITE_TABS.filter((t) => {
     if (t.id === "publish" && publishEnabled === false) return false;
     if (isSimple && SIMPLE_HIDDEN_TABS.has(t.id)) return false;
@@ -109,12 +140,14 @@ export function SiteSettingsPanel() {
   // simple estando en "seo") cae a "pages" — mismo fallback que el Inspector
   // usa para su tab de Interactividad condicional. Cubre el segundo borde de
   // docs/46 §6 (tab activa ocultada por un cambio de modo, no solo por una
-  // petición programática).
+  // petición programática). "element" no es una tab del strip.
   useEffect(() => {
-    if (!visibleTabs.some((t) => t.id === tab)) {
+    if (tab !== "element" && !visibleTabs.some((t) => t.id === tab)) {
       setTab("pages");
     }
   }, [visibleTabs, tab]);
+
+  const helpKey = tab === "element" ? null : tab === "settings" && embedded ? "settingsPrefs" : tab;
 
   return (
     <div className="pbx-site-settings">
@@ -131,9 +164,12 @@ export function SiteSettingsPanel() {
               role="tab"
               id={`pbx-site-tab-${id}`}
               aria-selected={tab === id}
-              aria-controls={`pbx-site-panel-${id}`}
+              aria-controls={tab === id ? `pbx-site-panel-${id}` : undefined}
               className={"pbx-inspector-tab" + (tab === id ? " pbx-inspector-tab--active" : "")}
-              onClick={() => setTab(id)}
+              onClick={() => {
+                setTab(id);
+                if (id !== "layers") select(null);
+              }}
             >
               <Icon size={13} aria-hidden="true" />
               <span className="pbx-inspector-tab__label">{t(`siteSettings.tabs.${id}`)}</span>
@@ -141,52 +177,63 @@ export function SiteSettingsPanel() {
           ))}
         </div>
 
-        <Tooltip className="pbx-info-tip" placement="bottom-end" openDelay={60} closeDelay={120}>
-          <button
-            type="button"
-            className="pbx-info-tip__trigger"
-            data-c42-tooltip-trigger
-            aria-label={t("siteSettings.infoLabel")}
-          >
-            <Info size={14} aria-hidden="true" />
-          </button>
-          <span className="pbx-info-tip__content" data-c42-tooltip-content>
-            {t(`siteSettings.tabsHelp.${tab}`)}
-          </span>
-        </Tooltip>
+        {helpKey ? (
+          <Tooltip className="pbx-info-tip" placement="bottom-end" openDelay={60} closeDelay={120}>
+            <button
+              type="button"
+              className="pbx-info-tip__trigger"
+              data-c42-tooltip-trigger
+              aria-label={t("siteSettings.infoLabel")}
+            >
+              <Info size={14} aria-hidden="true" />
+            </button>
+            <span className="pbx-info-tip__content" data-c42-tooltip-content>
+              {t(`siteSettings.tabsHelp.${helpKey}`)}
+            </span>
+          </Tooltip>
+        ) : null}
       </div>
 
-      <div
-        className="pbx-inspector-tabpanel"
-        role="tabpanel"
-        id={`pbx-site-panel-${tab}`}
-        aria-labelledby={`pbx-site-tab-${tab}`}
-      >
-        <AnimatePresence initial={false}>
-          <motion.div
-            key={tab}
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-          >
-            {tab === "pages" && <PageManager />}
-            {tab === "languages" && <I18nSettings />}
-            {tab === "themes" && <ThemesEditor />}
-            {tab === "seo" && <SeoSettings />}
-            {tab === "settings" && (
-              <section className="pbx-site-settings__section">
-                <SiteFileActions />
-              </section>
-            )}
-            {tab === "publish" && (
-              <section className="pbx-site-settings__section">
-                <PublishPanel onPublished={() => setPublishRefreshSignal((n) => n + 1)} />
-                <PublishedSitesList refreshSignal={publishRefreshSignal} />
-              </section>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+      {tab === "element" ? (
+        element
+      ) : (
+        <div
+          className="pbx-inspector-tabpanel"
+          role="tabpanel"
+          id={`pbx-site-panel-${tab}`}
+          aria-labelledby={`pbx-site-tab-${tab}`}
+        >
+          <AnimatePresence initial={false}>
+            <motion.div
+              key={tab}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+            >
+              {tab === "layers" && (
+                <section className="pbx-site-settings__section">
+                  <LayersTree />
+                </section>
+              )}
+              {tab === "pages" && <PageManager />}
+              {tab === "languages" && <I18nSettings />}
+              {tab === "themes" && <ThemesEditor />}
+              {tab === "seo" && <SeoSettings />}
+              {tab === "settings" && (
+                <section className="pbx-site-settings__section">
+                  {embedded ? <EditorPreferences panel /> : <SiteFileActions />}
+                </section>
+              )}
+              {tab === "publish" && (
+                <section className="pbx-site-settings__section">
+                  <PublishPanel onPublished={() => setPublishRefreshSignal((n) => n + 1)} />
+                  <PublishedSitesList refreshSignal={publishRefreshSignal} />
+                </section>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }

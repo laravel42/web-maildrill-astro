@@ -141,7 +141,7 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
     [`hotel-room-${n}-cta`]: {
       id: `hotel-room-${n}-cta`,
       type: "button",
-      props: { label: "Reservar", link: { kind: "anchor", nodeId: "hotel-reservation" }, newTab: false },
+      props: { label: "Book", link: { kind: "anchor", nodeId: "hotel-reservation" }, newTab: false },
       style: {
         base: {
           layout: { display: "inline-block" },
@@ -286,7 +286,7 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       "hotel-topbar-hours": {
         id: "hotel-topbar-hours",
         type: "text",
-        props: { content: "Check-in 15:00 · Check-out 12:00 · 📞 +52 998 456 7890" },
+        props: { content: "Check-in 3:00 PM · Check-out 12:00 PM · 📞 +52 998 456 7890" },
         style: {
           base: {
             typography: { fontFamily: { token: "typography.families.sans" }, fontSize: { token: "typography.sizes.sm" } },
@@ -352,7 +352,7 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       "hotel-hero-title": {
         id: "hotel-hero-title",
         type: "text",
-        props: { content: "<strong>Un refugio boutique frente al mar en Playa del Carmen</strong>" },
+        props: { content: "<strong>A boutique seaside retreat in Playa del Carmen</strong>" },
         style: {
           base: {
             size: { maxWidth: "22ch" },
@@ -369,7 +369,7 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       "hotel-hero-sub": {
         id: "hotel-hero-sub",
         type: "text",
-        props: { content: "12 habitaciones, alberca frente al mar y desayuno incluido. A 5 minutos caminando de la Quinta Avenida." },
+        props: { content: "12 rooms, an oceanfront pool and breakfast included. A 5-minute walk from Fifth Avenue." },
         style: {
           base: {
             size: { maxWidth: "48ch" },
@@ -384,7 +384,7 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       "hotel-hero-cta": {
         id: "hotel-hero-cta",
         type: "button",
-        props: { label: "Reservar ahora", link: { kind: "anchor", nodeId: "hotel-reservation" }, newTab: false },
+        props: { label: "Book now", link: { kind: "anchor", nodeId: "hotel-reservation" }, newTab: false },
         style: {
           base: {
             layout: { display: "inline-block" },
@@ -442,7 +442,7 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       "hotel-rooms-title": {
         id: "hotel-rooms-title",
         type: "text",
-        props: { content: "<strong>Nuestras habitaciones</strong>" },
+        props: { content: "<strong>Our rooms</strong>" },
         style: {
           base: {
             typography: {
@@ -477,23 +477,23 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       },
       ...room(
         1,
-        "Habitación Coral",
-        "Vista al jardín, cama queen y balcón privado.",
-        "$1,850 MXN/noche",
+        "Coral Room",
+        "Garden view, queen bed and private balcony.",
+        "$105 USD/night",
         "https://images.unsplash.com/photo-1711059985570-4c32ed12a12c?w=1600&q=80&auto=format&fit=crop",
       ),
       ...room(
         2,
-        "Habitación Arrecife",
-        "Vista parcial al mar, cama king y área de lectura.",
-        "$2,400 MXN/noche",
+        "Reef Room",
+        "Partial ocean view, king bed and reading nook.",
+        "$135 USD/night",
         "https://images.unsplash.com/photo-1578898887932-dce23a595ad4?w=800&q=80&auto=format&fit=crop",
       ),
       ...room(
         3,
-        "Suite Marina",
-        "Vista frontal al mar, terraza privada y tina de hidromasaje.",
-        "$3,900 MXN/noche",
+        "Marina Suite",
+        "Front ocean view, private terrace and whirlpool tub.",
+        "$220 USD/night",
         "https://images.unsplash.com/photo-1630660664869-c9d3cc676880?w=800&q=80&auto=format&fit=crop",
       ),
 
@@ -529,10 +529,10 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
         },
         children: ["hotel-amenity-1", "hotel-amenity-2", "hotel-amenity-3", "hotel-amenity-4"],
       },
-      ...amenity(1, "Wifi", "Wifi de alta velocidad"),
-      ...amenity(2, "Coffee", "Desayuno incluido"),
-      ...amenity(3, "Waves", "Alberca frente al mar"),
-      ...amenity(4, "PawPrint", "Se aceptan mascotas"),
+      ...amenity(1, "Wifi", "High-speed wifi"),
+      ...amenity(2, "Coffee", "Breakfast included"),
+      ...amenity(3, "Waves", "Oceanfront pool"),
+      ...amenity(4, "PawPrint", "Pets welcome"),
 
       // --- Banda: galería, degradado de acento ------------------------------------
       "hotel-gallery": {
@@ -567,7 +567,7 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       "hotel-gallery-title": {
         id: "hotel-gallery-title",
         type: "text",
-        props: { content: "<strong>Galería</strong>" },
+        props: { content: "<strong>Gallery</strong>" },
         style: {
           base: {
             typography: {
@@ -628,9 +628,9 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       ...testimonialFragment(
         "hotel-testimonial-card",
         {
-          quote: "El mejor hotel boutique en el que nos hemos quedado. La atención fue impecable y la vista al mar desde la suite valió cada peso.",
+          quote: "The best boutique hotel we've ever stayed at. The service was flawless and the ocean view from the suite was worth every peso.",
           name: "Carolina Fuentes",
-          role: "Huésped, viaje de aniversario",
+          role: "Guest, anniversary trip",
           initials: "CF",
         },
         {
@@ -678,7 +678,7 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       "hotel-faq-title": {
         id: "hotel-faq-title",
         type: "text",
-        props: { content: "<strong>Preguntas frecuentes</strong>" },
+        props: { content: "<strong>Frequently asked questions</strong>" },
         style: {
           base: {
             typography: {
@@ -701,53 +701,53 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       "hotel-faq-item-1": {
         id: "hotel-faq-item-1",
         type: "accordion-item",
-        props: { label: "¿A qué hora son el check-in y el check-out?", openByDefault: true },
+        props: { label: "What time are check-in and check-out?", openByDefault: true },
         style: defaultStyleFor("accordion-item"),
         children: ["hotel-faq-item-1-body"],
       },
       "hotel-faq-item-1-body": {
         id: "hotel-faq-item-1-body",
         type: "text",
-        props: { content: "El check-in es a partir de las 15:00 y el check-out hasta las 12:00. Llegadas anticipadas sujetas a disponibilidad." },
+        props: { content: "Check-in is from 3:00 PM and check-out until 12:00 PM. Early arrivals subject to availability." },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
       "hotel-faq-item-2": {
         id: "hotel-faq-item-2",
         type: "accordion-item",
-        props: { label: "¿Cuál es la política de cancelación?", openByDefault: false },
+        props: { label: "What is the cancellation policy?", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["hotel-faq-item-2-body"],
       },
       "hotel-faq-item-2-body": {
         id: "hotel-faq-item-2-body",
         type: "text",
-        props: { content: "Cancelación gratuita hasta 48 horas antes de la llegada; después se cobra la primera noche." },
+        props: { content: "Free cancellation up to 48 hours before arrival; after that, the first night is charged." },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
       "hotel-faq-item-3": {
         id: "hotel-faq-item-3",
         type: "accordion-item",
-        props: { label: "¿Aceptan mascotas?", openByDefault: false },
+        props: { label: "Are pets allowed?", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["hotel-faq-item-3-body"],
       },
       "hotel-faq-item-3-body": {
         id: "hotel-faq-item-3-body",
         type: "text",
-        props: { content: "Sí, aceptamos mascotas pequeñas y medianas con costo adicional de $350 MXN por noche." },
+        props: { content: "Yes, we welcome small and medium pets for an additional $18 USD per night." },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
       "hotel-faq-item-4": {
         id: "hotel-faq-item-4",
         type: "accordion-item",
-        props: { label: "¿Tienen estacionamiento?", openByDefault: false },
+        props: { label: "Do you have parking?", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["hotel-faq-item-4-body"],
       },
       "hotel-faq-item-4-body": {
         id: "hotel-faq-item-4-body",
         type: "text",
-        props: { content: "Contamos con estacionamiento privado sin costo para huéspedes, sujeto a disponibilidad." },
+        props: { content: "We offer free private parking for guests, subject to availability." },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
 
@@ -782,7 +782,7 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       "hotel-reservation-title": {
         id: "hotel-reservation-title",
         type: "text",
-        props: { content: "<strong>Reserva tu estancia</strong>" },
+        props: { content: "<strong>Book your stay</strong>" },
         style: {
           base: {
             typography: {
@@ -825,31 +825,31 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       "hotel-reservation-name-label": {
         id: "hotel-reservation-name-label",
         type: "label",
-        props: { text: "Nombre completo", for: "hotel-reservation-name" },
+        props: { text: "Full name", for: "hotel-reservation-name" },
         style: defaultStyleFor("label"),
       },
       "hotel-reservation-name": {
         id: "hotel-reservation-name",
         type: "input",
-        props: { name: "name", type: "text", placeholder: "Ej. Carolina Fuentes", required: true, disabled: false },
+        props: { name: "name", type: "text", placeholder: "E.g. Carolina Fuentes", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "hotel-reservation-email-label": {
         id: "hotel-reservation-email-label",
         type: "label",
-        props: { text: "Correo electrónico", for: "hotel-reservation-email" },
+        props: { text: "Email address", for: "hotel-reservation-email" },
         style: defaultStyleFor("label"),
       },
       "hotel-reservation-email": {
         id: "hotel-reservation-email",
         type: "input",
-        props: { name: "email", type: "email", placeholder: "carolina@correo.com", required: true, disabled: false },
+        props: { name: "email", type: "email", placeholder: "carolina@email.com", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "hotel-reservation-room-label": {
         id: "hotel-reservation-room-label",
         type: "label",
-        props: { text: "Tipo de habitación", for: "hotel-reservation-room" },
+        props: { text: "Room type", for: "hotel-reservation-room" },
         style: defaultStyleFor("label"),
       },
       "hotel-reservation-room": {
@@ -857,20 +857,20 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
         type: "select",
         props: {
           options: [
-            { label: "Habitación Coral", value: "coral" },
-            { label: "Habitación Arrecife", value: "arrecife" },
-            { label: "Suite Marina", value: "marina" },
+            { label: "Coral Room", value: "coral" },
+            { label: "Reef Room", value: "arrecife" },
+            { label: "Marina Suite", value: "marina" },
           ],
           name: "room",
-          placeholder: "Selecciona una habitación",
-          ariaLabel: "Tipo de habitación",
+          placeholder: "Select a room",
+          ariaLabel: "Room type",
         },
         style: defaultStyleFor("select"),
       },
       "hotel-reservation-submit": {
         id: "hotel-reservation-submit",
         type: "button-submit",
-        props: { label: "Confirmar reserva", disabled: false },
+        props: { label: "Confirm booking", disabled: false },
         style: {
           base: {
             layout: { display: "inline-block" },
@@ -922,7 +922,7 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
       "hotel-footer-copyright": {
         id: "hotel-footer-copyright",
         type: "text",
-        props: { content: "© 2026 Hotel Casa Coral · Calle 10 Norte 45, Playa del Carmen, Q. Roo. Todos los derechos reservados." },
+        props: { content: "© 2026 Hotel Casa Coral · Calle 10 Norte 45, Playa del Carmen, Q. Roo. All rights reserved." },
         style: {
           base: {
             size: { width: "100%" },
@@ -945,104 +945,71 @@ export function buildHotelBoutiquePageFragment(): NodeFragment {
     translations: (() => {
       const t: Record<string, NodeTranslations> = {};
 
-      t["hotel-topbar-hours"] = {
-        en: { content: "Check-in 3:00 PM · Check-out 12:00 PM · 📞 +52 998 456 7890" },
-        it: { content: "Check-in 15:00 · Check-out 12:00 · 📞 +52 998 456 7890" },
-      };
+      t["hotel-topbar-hours"] = { es: { content: "Check-in 15:00 · Check-out 12:00 · 📞 +52 998 456 7890" }, it: { content: "Check-in 15:00 · Check-out 12:00 · 📞 +52 998 456 7890" } };
 
-      t["hotel-hero-title"] = {
-        en: { content: "<strong>A boutique seaside retreat in Playa del Carmen</strong>" },
-        it: { content: "<strong>Un rifugio boutique sul mare a Playa del Carmen</strong>" },
-      };
-      t["hotel-hero-sub"] = {
-        en: { content: "12 rooms, an oceanfront pool and breakfast included. A 5-minute walk from Fifth Avenue." },
-        it: { content: "12 camere, piscina fronte mare e colazione incluta. A 5 minuti a piedi dalla Quinta Avenida." },
-      };
-      t["hotel-hero-cta"] = { en: { label: "Book now" }, it: { label: "Prenota ora" } };
+      t["hotel-hero-title"] = { es: { content: "<strong>Un refugio boutique frente al mar en Playa del Carmen</strong>" }, it: { content: "<strong>Un rifugio boutique sul mare a Playa del Carmen</strong>" } };
+      t["hotel-hero-sub"] = { es: { content: "12 habitaciones, alberca frente al mar y desayuno incluido. A 5 minutos caminando de la Quinta Avenida." }, it: { content: "12 camere, piscina fronte mare e colazione incluta. A 5 minuti a piedi dalla Quinta Avenida." } };
+      t["hotel-hero-cta"] = { es: { label: "Reservar ahora" }, it: { label: "Prenota ora" } };
 
-      t["hotel-rooms-title"] = { en: { content: "<strong>Our rooms</strong>" }, it: { content: "<strong>Le nostre camere</strong>" } };
+      t["hotel-rooms-title"] = { es: { content: "<strong>Nuestras habitaciones</strong>" }, it: { content: "<strong>Le nostre camere</strong>" } };
 
-      t["hotel-room-1-price"] = { en: { label: "$105 USD/night" }, it: { label: "€97/notte" } };
-      t["hotel-room-1-title"] = { en: { content: "<strong>Coral Room</strong>" }, it: { content: "<strong>Camera Corallo</strong>" } };
-      t["hotel-room-1-desc"] = { en: { content: "Garden view, queen bed and private balcony." }, it: { content: "Vista giardino, letto queen e balcone privato." } };
-      t["hotel-room-1-img"] = { en: { alt: "Interior of Coral Room" }, it: { alt: "Interno della Camera Corallo" } };
-      t["hotel-room-1-cta"] = { en: { label: "Book" }, it: { label: "Prenota" } };
+      t["hotel-room-1-price"] = { es: { label: "$1,850 MXN/noche" }, it: { label: "€97/notte" } };
+      t["hotel-room-1-title"] = { es: { content: "<strong>Habitación Coral</strong>" }, it: { content: "<strong>Camera Corallo</strong>" } };
+      t["hotel-room-1-desc"] = { es: { content: "Vista al jardín, cama queen y balcón privado." }, it: { content: "Vista giardino, letto queen e balcone privato." } };
+      t["hotel-room-1-img"] = { es: { alt: "Interior of Coral Room" }, it: { alt: "Interno della Camera Corallo" } };
+      t["hotel-room-1-cta"] = { es: { label: "Reservar" }, it: { label: "Prenota" } };
 
-      t["hotel-room-2-price"] = { en: { label: "$135 USD/night" }, it: { label: "€125/notte" } };
-      t["hotel-room-2-title"] = { en: { content: "<strong>Reef Room</strong>" }, it: { content: "<strong>Camera Barriera</strong>" } };
-      t["hotel-room-2-desc"] = { en: { content: "Partial ocean view, king bed and reading nook." }, it: { content: "Vista mare parziale, letto king e angolo lettura." } };
-      t["hotel-room-2-img"] = { en: { alt: "Interior of Reef Room" }, it: { alt: "Interno della Camera Barriera" } };
-      t["hotel-room-2-cta"] = { en: { label: "Book" }, it: { label: "Prenota" } };
+      t["hotel-room-2-price"] = { es: { label: "$2,400 MXN/noche" }, it: { label: "€125/notte" } };
+      t["hotel-room-2-title"] = { es: { content: "<strong>Habitación Arrecife</strong>" }, it: { content: "<strong>Camera Barriera</strong>" } };
+      t["hotel-room-2-desc"] = { es: { content: "Vista parcial al mar, cama king y área de lectura." }, it: { content: "Vista mare parziale, letto king e angolo lettura." } };
+      t["hotel-room-2-img"] = { es: { alt: "Interior of Reef Room" }, it: { alt: "Interno della Camera Barriera" } };
+      t["hotel-room-2-cta"] = { es: { label: "Reservar" }, it: { label: "Prenota" } };
 
-      t["hotel-room-3-price"] = { en: { label: "$220 USD/night" }, it: { label: "€203/notte" } };
-      t["hotel-room-3-title"] = { en: { content: "<strong>Marina Suite</strong>" }, it: { content: "<strong>Suite Marina</strong>" } };
-      t["hotel-room-3-desc"] = { en: { content: "Front ocean view, private terrace and whirlpool tub." }, it: { content: "Vista mare frontale, terrazza privata e vasca idromassaggio." } };
-      t["hotel-room-3-img"] = { en: { alt: "Interior of Marina Suite" }, it: { alt: "Interno della Suite Marina" } };
-      t["hotel-room-3-cta"] = { en: { label: "Book" }, it: { label: "Prenota" } };
+      t["hotel-room-3-price"] = { es: { label: "$3,900 MXN/noche" }, it: { label: "€203/notte" } };
+      t["hotel-room-3-title"] = { es: { content: "<strong>Suite Marina</strong>" }, it: { content: "<strong>Suite Marina</strong>" } };
+      t["hotel-room-3-desc"] = { es: { content: "Vista frontal al mar, terraza privada y tina de hidromasaje." }, it: { content: "Vista mare frontale, terrazza privata e vasca idromassaggio." } };
+      t["hotel-room-3-img"] = { es: { alt: "Interior of Marina Suite" }, it: { alt: "Interno della Suite Marina" } };
+      t["hotel-room-3-cta"] = { es: { label: "Reservar" }, it: { label: "Prenota" } };
 
-      t["hotel-amenity-1-icon"] = { en: { title: "High-speed wifi" }, it: { title: "Wifi ad alta velocità" } };
-      t["hotel-amenity-1-label"] = { en: { content: "High-speed wifi" }, it: { content: "Wifi ad alta velocità" } };
-      t["hotel-amenity-2-icon"] = { en: { title: "Breakfast included" }, it: { title: "Colazione incluta" } };
-      t["hotel-amenity-2-label"] = { en: { content: "Breakfast included" }, it: { content: "Colazione incluta" } };
-      t["hotel-amenity-3-icon"] = { en: { title: "Oceanfront pool" }, it: { title: "Piscina fronte mare" } };
-      t["hotel-amenity-3-label"] = { en: { content: "Oceanfront pool" }, it: { content: "Piscina fronte mare" } };
-      t["hotel-amenity-4-icon"] = { en: { title: "Pets welcome" }, it: { title: "Animali ammessi" } };
-      t["hotel-amenity-4-label"] = { en: { content: "Pets welcome" }, it: { content: "Animali ammessi" } };
+      t["hotel-amenity-1-icon"] = { es: { title: "Wifi de alta velocidad" }, it: { title: "Wifi ad alta velocità" } };
+      t["hotel-amenity-1-label"] = { es: { content: "Wifi de alta velocidad" }, it: { content: "Wifi ad alta velocità" } };
+      t["hotel-amenity-2-icon"] = { es: { title: "Desayuno incluido" }, it: { title: "Colazione incluta" } };
+      t["hotel-amenity-2-label"] = { es: { content: "Desayuno incluido" }, it: { content: "Colazione incluta" } };
+      t["hotel-amenity-3-icon"] = { es: { title: "Alberca frente al mar" }, it: { title: "Piscina fronte mare" } };
+      t["hotel-amenity-3-label"] = { es: { content: "Alberca frente al mar" }, it: { content: "Piscina fronte mare" } };
+      t["hotel-amenity-4-icon"] = { es: { title: "Se aceptan mascotas" }, it: { title: "Animali ammessi" } };
+      t["hotel-amenity-4-label"] = { es: { content: "Se aceptan mascotas" }, it: { content: "Animali ammessi" } };
 
-      t["hotel-gallery-title"] = { en: { content: "<strong>Gallery</strong>" }, it: { content: "<strong>Galleria</strong>" } };
-      t["hotel-gallery-1"] = { en: { alt: "Pool" }, it: { alt: "Piscina" } };
-      t["hotel-gallery-2"] = { en: { alt: "Terrace" }, it: { alt: "Terrazza" } };
-      t["hotel-gallery-3"] = { en: { alt: "Restaurant" }, it: { alt: "Ristorante" } };
-      t["hotel-gallery-4"] = { en: { alt: "Spa" }, it: { alt: "Spa" } };
+      t["hotel-gallery-title"] = { es: { content: "<strong>Galería</strong>" }, it: { content: "<strong>Galleria</strong>" } };
+      t["hotel-gallery-1"] = { es: { alt: "Pool" }, it: { alt: "Piscina" } };
+      t["hotel-gallery-2"] = { es: { alt: "Terrace" }, it: { alt: "Terrazza" } };
+      t["hotel-gallery-3"] = { es: { alt: "Restaurant" }, it: { alt: "Ristorante" } };
+      t["hotel-gallery-4"] = { es: { alt: "Spa" }, it: { alt: "Spa" } };
 
-      t["hotel-testimonial-card-quote"] = {
-        en: { content: "<p>The best boutique hotel we've ever stayed at. The service was flawless and the ocean view from the suite was worth every peso.</p>" },
-        it: { content: "<p>Il miglior hotel boutique in cui siamo stati. Il servizio è stato impeccabile e la vista sul mare dalla suite valeva ogni peso.</p>" },
-      };
-      t["hotel-testimonial-card-name"] = {
-        en: { content: "<strong>Carolina Fuentes</strong>" },
-        it: { content: "<strong>Carolina Fuentes</strong>" },
-      };
-      t["hotel-testimonial-card-role"] = {
-        en: { content: "Guest, anniversary trip" },
-        it: { content: "Ospite, viaggio di anniversario" },
-      };
+      t["hotel-testimonial-card-quote"] = { es: { content: "<p>El mejor hotel boutique en el que nos hemos quedado. La atención fue impecable y la vista al mar desde la suite valió cada peso.</p>" }, it: { content: "<p>Il miglior hotel boutique in cui siamo stati. Il servizio è stato impeccabile e la vista sul mare dalla suite valeva ogni peso.</p>" } };
+      t["hotel-testimonial-card-name"] = { es: { content: "<strong>Carolina Fuentes</strong>" }, it: { content: "<strong>Carolina Fuentes</strong>" } };
+      t["hotel-testimonial-card-role"] = { es: { content: "Huésped, viaje de aniversario" }, it: { content: "Ospite, viaggio di anniversario" } };
 
-      t["hotel-faq-title"] = { en: { content: "<strong>Frequently asked questions</strong>" }, it: { content: "<strong>Domande frequenti</strong>" } };
-      t["hotel-faq-item-1"] = { en: { label: "What time are check-in and check-out?" }, it: { label: "A che ora sono il check-in e il check-out?" } };
-      t["hotel-faq-item-1-body"] = {
-        en: { content: "Check-in is from 3:00 PM and check-out until 12:00 PM. Early arrivals subject to availability." },
-        it: { content: "Il check-in è dalle 15:00 e il check-out fino alle 12:00. Arrivi anticipati soggetti a disponibilità." },
-      };
-      t["hotel-faq-item-2"] = { en: { label: "What is the cancellation policy?" }, it: { label: "Qual è la politica di cancellazione?" } };
-      t["hotel-faq-item-2-body"] = {
-        en: { content: "Free cancellation up to 48 hours before arrival; after that, the first night is charged." },
-        it: { content: "Cancellazione gratuita fino a 48 ore prima dell'arrivo; dopo si applica il costo della prima notte." },
-      };
-      t["hotel-faq-item-3"] = { en: { label: "Are pets allowed?" }, it: { label: "Sono ammessi gli animali domestici?" } };
-      t["hotel-faq-item-3-body"] = {
-        en: { content: "Yes, we welcome small and medium pets for an additional $18 USD per night." },
-        it: { content: "Sì, accettiamo animali piccoli e medi con un costo aggiuntivo di €17 a notte." },
-      };
-      t["hotel-faq-item-4"] = { en: { label: "Do you have parking?" }, it: { label: "Avete un parcheggio?" } };
-      t["hotel-faq-item-4-body"] = {
-        en: { content: "We offer free private parking for guests, subject to availability." },
-        it: { content: "Offriamo un parcheggio privato gratuito per gli ospiti, soggetto a disponibilità." },
-      };
+      t["hotel-faq-title"] = { es: { content: "<strong>Preguntas frecuentes</strong>" }, it: { content: "<strong>Domande frequenti</strong>" } };
+      t["hotel-faq-item-1"] = { es: { label: "¿A qué hora son el check-in y el check-out?" }, it: { label: "A che ora sono il check-in e il check-out?" } };
+      t["hotel-faq-item-1-body"] = { es: { content: "El check-in es a partir de las 15:00 y el check-out hasta las 12:00. Llegadas anticipadas sujetas a disponibilidad." }, it: { content: "Il check-in è dalle 15:00 e il check-out fino alle 12:00. Arrivi anticipati soggetti a disponibilità." } };
+      t["hotel-faq-item-2"] = { es: { label: "¿Cuál es la política de cancelación?" }, it: { label: "Qual è la politica di cancellazione?" } };
+      t["hotel-faq-item-2-body"] = { es: { content: "Cancelación gratuita hasta 48 horas antes de la llegada; después se cobra la primera noche." }, it: { content: "Cancellazione gratuita fino a 48 ore prima dell'arrivo; dopo si applica il costo della prima notte." } };
+      t["hotel-faq-item-3"] = { es: { label: "¿Aceptan mascotas?" }, it: { label: "Sono ammessi gli animali domestici?" } };
+      t["hotel-faq-item-3-body"] = { es: { content: "Sí, aceptamos mascotas pequeñas y medianas con costo adicional de $350 MXN por noche." }, it: { content: "Sì, accettiamo animali piccoli e medi con un costo aggiuntivo di €17 a notte." } };
+      t["hotel-faq-item-4"] = { es: { label: "¿Tienen estacionamiento?" }, it: { label: "Avete un parcheggio?" } };
+      t["hotel-faq-item-4-body"] = { es: { content: "Contamos con estacionamiento privado sin costo para huéspedes, sujeto a disponibilidad." }, it: { content: "Offriamo un parcheggio privato gratuito per gli ospiti, soggetto a disponibilità." } };
 
-      t["hotel-reservation-title"] = { en: { content: "<strong>Book your stay</strong>" }, it: { content: "<strong>Prenota il tuo soggiorno</strong>" } };
-      t["hotel-reservation-name-label"] = { en: { text: "Full name" }, it: { text: "Nome completo" } };
-      t["hotel-reservation-name"] = { en: { placeholder: "E.g. Carolina Fuentes" }, it: { placeholder: "Es. Carolina Fuentes" } };
-      t["hotel-reservation-email-label"] = { en: { text: "Email address" }, it: { text: "Indirizzo email" } };
-      t["hotel-reservation-email"] = { en: { placeholder: "carolina@email.com" }, it: { placeholder: "carolina@email.com" } };
-      t["hotel-reservation-room-label"] = { en: { text: "Room type" }, it: { text: "Tipo di camera" } };
-      t["hotel-reservation-room"] = { en: { placeholder: "Select a room" }, it: { placeholder: "Seleziona una camera" } };
-      t["hotel-reservation-submit"] = { en: { label: "Confirm booking" }, it: { label: "Confermare la prenotazione" } };
+      t["hotel-reservation-title"] = { es: { content: "<strong>Reserva tu estancia</strong>" }, it: { content: "<strong>Prenota il tuo soggiorno</strong>" } };
+      t["hotel-reservation-name-label"] = { es: { text: "Nombre completo" }, it: { text: "Nome completo" } };
+      t["hotel-reservation-name"] = { es: { placeholder: "Ej. Carolina Fuentes" }, it: { placeholder: "Es. Carolina Fuentes" } };
+      t["hotel-reservation-email-label"] = { es: { text: "Correo electrónico" }, it: { text: "Indirizzo email" } };
+      t["hotel-reservation-email"] = { es: { placeholder: "carolina@correo.com" }, it: { placeholder: "carolina@email.com" } };
+      t["hotel-reservation-room-label"] = { es: { text: "Tipo de habitación" }, it: { text: "Tipo di camera" } };
+      t["hotel-reservation-room"] = { es: { placeholder: "Selecciona una habitación" }, it: { placeholder: "Seleziona una camera" } };
+      t["hotel-reservation-submit"] = { es: { label: "Confirmar reserva" }, it: { label: "Confermare la prenotazione" } };
 
-      t["hotel-footer-copyright"] = {
-        en: { content: "© 2026 Hotel Casa Coral · Calle 10 Norte 45, Playa del Carmen, Q. Roo. All rights reserved." },
-        it: { content: "© 2026 Hotel Casa Coral · Calle 10 Norte 45, Playa del Carmen, Q. Roo. Tutti i diritti riservati." },
-      };
+      t["hotel-footer-copyright"] = { es: { content: "© 2026 Hotel Casa Coral · Calle 10 Norte 45, Playa del Carmen, Q. Roo. Todos los derechos reservados." }, it: { content: "© 2026 Hotel Casa Coral · Calle 10 Norte 45, Playa del Carmen, Q. Roo. Tutti i diritti riservati." } };
 
       return t;
     })(),

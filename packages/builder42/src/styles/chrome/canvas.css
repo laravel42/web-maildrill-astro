@@ -22,7 +22,9 @@
   background-size: 22px 22px;
   padding: 32px 24px;
   display: flex;
-  justify-content: center;
+  /* `safe center`: a 1280px page in a narrower column falls back to start so
+     the overflow is scrollable from the left. Plain `center` clips that side. */
+  justify-content: safe center;
   align-items: flex-start;
 }
 
@@ -181,4 +183,71 @@
 .pbx-device__skeleton-bar:nth-child(3) { width: 60%; }
 
 /* @keyframes extraído a chrome/motion.css (docs/28) — ver módulo */
+
+.pbx-canvas-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 24px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.pbx-canvas-empty__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--pb-chrome-text);
+}
+
+.pbx-canvas-empty__body {
+  margin: 0;
+  max-width: 32ch;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--pb-chrome-text-muted);
+}
+
+.pbx-canvas-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  pointer-events: auto;
+}
+
+.pbx-canvas-empty__primary,
+.pbx-canvas-empty__ghost {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--pb-chrome-radius-md);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pbx-canvas-empty__primary {
+  border: 0;
+  background: var(--pb-chrome-accent);
+  color: var(--pb-chrome-text-on-accent);
+}
+
+.pbx-canvas-empty__ghost {
+  border: 1px solid var(--pb-chrome-border);
+  background: var(--pb-chrome-surface);
+  color: var(--pb-chrome-text);
+}
+
+.pbx-canvas-empty__primary:focus-visible,
+.pbx-canvas-empty__ghost:focus-visible {
+  outline: none;
+  box-shadow: var(--pb-chrome-focus-ring);
+}
 

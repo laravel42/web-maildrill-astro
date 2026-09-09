@@ -80,7 +80,7 @@ export const QUOTE_ATTRIBUTION_STYLE: NodeStyle = {
 export const QUOTE_DEFAULT_CHILDREN: DefaultChildSpec[] = [
   {
     type: "text",
-    props: { content: "<p>El diseño no es solo cómo se ve, sino cómo funciona.</p>" },
+    props: { content: "<p>Design is not just how it looks, but how it works.</p>" },
     style: QUOTE_CONTENT_STYLE,
   },
   {
@@ -112,7 +112,7 @@ function QuoteRender(ctx: RenderContext) {
       {children}
       {!exportMode && isEmpty ? (
         <span className="pbx-empty-hint" data-empty-hint>
-          Cita vacía — añade el texto y el autor
+          Empty quote — add the text and author
         </span>
       ) : null}
     </blockquote>

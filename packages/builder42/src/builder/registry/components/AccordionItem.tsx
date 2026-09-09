@@ -23,7 +23,7 @@ export const ACCORDION_ITEM_DEFAULT_STYLE: NodeStyle = { base: {} };
 function AccordionItemRender(ctx: RenderContext) {
   const { node, children, exportMode, className, breakpoint, rootRef, rootProps } = ctx;
   const rawLabel = node.props.label;
-  const label = typeof rawLabel === "string" && rawLabel !== "" ? rawLabel : "Sección";
+  const label = typeof rawLabel === "string" && rawLabel !== "" ? rawLabel : "Section";
   const openByDefault = node.props.openByDefault === true;
   // Edit: todo abierto (editable); export: `openByDefault` decide el estado sin JS.
   const isOpen = exportMode ? openByDefault : true;
@@ -70,7 +70,7 @@ function AccordionItemRender(ctx: RenderContext) {
           {children}
           {!exportMode && isEmpty ? (
             <span className="pbx-empty-hint" data-empty-hint>
-              Sección vacía — suelta componentes aquí
+              Empty section — drop components here
             </span>
           ) : null}
         </div>
@@ -81,14 +81,14 @@ function AccordionItemRender(ctx: RenderContext) {
 
 export const accordionItemDefinition: ComponentDefinition = {
   type: "accordion-item",
-  label: "Sección",
+  label: "Section",
   category: "content",
   acceptsChildren: true,
   isSlot: "accordion",
   hiddenInPalette: true,
-  defaultProps: { label: "Sección", openByDefault: false },
+  defaultProps: { label: "Section", openByDefault: false },
   defaultStyle: structuredClone(ACCORDION_ITEM_DEFAULT_STYLE),
-  defaultChildren: [{ type: "text", props: { content: "<p>Contenido de la sección.</p>" } }],
+  defaultChildren: [{ type: "text", props: { content: "<p>Section content.</p>" } }],
   propsSchema: {
     fields: [
       { key: "label", label: "Título de la sección", control: "text", group: "Contenido", translatable: true },

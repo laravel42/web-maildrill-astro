@@ -47,3 +47,18 @@
   grid-template-columns: 1fr;
 }
 
+/* Embed: 50px tools bar + canvas in the middle grid column (email `#ee-editor-header`). */
+.pbx-canvas-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.pbx-canvas-col > .pbx-canvas {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+}
+

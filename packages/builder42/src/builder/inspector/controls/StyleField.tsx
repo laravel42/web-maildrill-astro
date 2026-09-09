@@ -74,6 +74,8 @@ export function StyleField({
   tokens: DesignTokens | undefined;
 }) {
   const { t } = useTranslation("inspector");
+  const { t: tc } = useTranslation("common");
+  const label = tc(`styleLabels.${field.key}`, { defaultValue: field.label });
   const setStyleProp = useDocumentStore((s) => s.setStyleProp);
   const resetStyleProp = useDocumentStore((s) => s.resetStyleProp);
   const breakpointConfig = useDocumentStore((s) => s.site.meta.breakpoints);
@@ -154,7 +156,7 @@ export function StyleField({
         className="pbx-control__input--token-pick"
         value={isToken ? tokenPath : ""}
         onChange={chooseToken}
-        ariaLabel={`${field.label}: token`}
+        ariaLabel={`${label}: token`}
         options={[
           { value: "", label: `— ${t("styleField.freeValue")} —` },
           ...tokenPaths.map((p) => ({ value: p, label: p })),
@@ -228,7 +230,7 @@ export function StyleField({
       {/* Label con dot de estado + botón vincular + reset */}
       <div className="pbx-control__header">
         <StatusDot kind={statusDot} />
-        <span className="pbx-control__label">{field.label}</span>
+        <span className="pbx-control__label">{label}</span>
         {/* Alerta de compatibilidad entre navegadores (T6) — icono + tooltip. */}
         {field.compat ? <CompatWarning message={t(field.compat)} /> : null}
         {/* Botón de vincular a token (cadena) — solo cuando no hay token activo */}

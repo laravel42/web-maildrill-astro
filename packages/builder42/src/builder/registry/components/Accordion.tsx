@@ -80,7 +80,7 @@ function AccordionRender(ctx: RenderContext) {
       {children}
       {!exportMode && isEmpty ? (
         <span className="pbx-empty-hint" data-empty-hint>
-          Acordeón vacío — añade una sección
+          Empty accordion — add a section
         </span>
       ) : null}
       {slotAffordance}
@@ -93,7 +93,7 @@ export const accordionDefinition: ComponentDefinition = {
   label: "Acordeón",
   category: "content",
   acceptsChildren: true,
-  slots: { itemType: "accordion-item", min: 1, addLabel: "Añadir sección" },
+  slots: { itemType: "accordion-item", min: 1, addLabel: "Add section" },
   defaultProps: {},
   defaultStyle: structuredClone(ACCORDION_DEFAULT_STYLE),
   css: ACCORDION_CSS,
@@ -101,9 +101,9 @@ export const accordionDefinition: ComponentDefinition = {
   defaultBehaviors: [{ type: "accordion", options: { single: true, duration: 280 } }],
   // Un acordeón nuevo nace con 3 secciones (docs/23 §7); la 1.ª abierta.
   defaultChildren: [
-    { type: "accordion-item", props: { label: "¿Qué incluye el plan?", openByDefault: true }, children: [{ type: "text", props: { content: "<p>Acceso completo a todas las funciones, sin límites de uso.</p>" } }] },
-    { type: "accordion-item", props: { label: "¿Puedo cancelar cuando quiera?" }, children: [{ type: "text", props: { content: "<p>Sí, puedes cancelar tu suscripción en cualquier momento.</p>" } }] },
-    { type: "accordion-item", props: { label: "¿Ofrecen soporte?" }, children: [{ type: "text", props: { content: "<p>Soporte por correo y chat en horario laboral.</p>" } }] },
+    { type: "accordion-item", props: { label: "What does the plan include?", openByDefault: true }, children: [{ type: "text", props: { content: "<p>Full access to every feature, with no usage limits.</p>" } }] },
+    { type: "accordion-item", props: { label: "Can I cancel anytime?" }, children: [{ type: "text", props: { content: "<p>Yes, you can cancel your subscription at any time.</p>" } }] },
+    { type: "accordion-item", props: { label: "Do you offer support?" }, children: [{ type: "text", props: { content: "<p>Email and chat support during business hours.</p>" } }] },
   ],
   propsSchema: { fields: [] },
   styleSchema: { enabledGroups: ["typography", "spacing", "size", "appearance"] },

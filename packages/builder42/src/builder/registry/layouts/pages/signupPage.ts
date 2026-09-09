@@ -205,13 +205,13 @@ export function buildSignupPageFragment(): NodeFragment {
       "academy-hero-badge": {
         id: "academy-hero-badge",
         type: "badge",
-        props: { label: "Próxima cohorte: 100% online" },
+        props: { label: "Next cohort: 100% online" },
         style: defaultStyleFor("badge"),
       },
       "academy-hero-title": {
         id: "academy-hero-title",
         type: "text",
-        props: { content: "<strong>Aprende programación y datos, desde cero hasta tu primer trabajo</strong>" },
+        props: { content: "<strong>Learn programming and data, from zero to your first job</strong>" },
         style: {
           base: {
             size: { maxWidth: "20ch" },
@@ -231,14 +231,14 @@ export function buildSignupPageFragment(): NodeFragment {
         type: "text",
         props: {
           content:
-            "Cursos en vivo con mentoría personalizada, proyectos reales y una comunidad de estudiantes. Sin experiencia previa.",
+            "Live courses with personalized mentorship, real projects and a student community. No prior experience needed.",
         },
         style: bodyText(),
       },
       "academy-hero-cta": {
         id: "academy-hero-cta",
         type: "button",
-        props: { label: "Ver plan de inscripción", link: { kind: "anchor", nodeId: "academy-enroll" } },
+        props: { label: "See enrollment plan", link: { kind: "anchor", nodeId: "academy-enroll" } },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -280,9 +280,9 @@ export function buildSignupPageFragment(): NodeFragment {
         },
         children: ["academy-benefit-1", "academy-benefit-2", "academy-benefit-3"],
       },
-      ...benefit(1, "Users", "Mentoría en vivo", "Sesiones semanales con instructores activos en la industria, no solo videos grabados."),
-      ...benefit(2, "Briefcase", "Proyectos reales", "Construyes un portafolio real que puedes mostrar a empleadores desde el primer mes."),
-      ...benefit(3, "BadgeCheck", "Bolsa de trabajo", "Acceso a nuestra red de empresas aliadas al terminar el programa."),
+      ...benefit(1, "Users", "Live mentorship", "Weekly sessions with instructors active in the industry, not just recorded videos."),
+      ...benefit(2, "Briefcase", "Real projects", "You build a real portfolio you can show employers from the first month."),
+      ...benefit(3, "BadgeCheck", "Job placement network", "Access to our network of partner companies when you finish the program."),
 
       // --- Testimonios de alumnos — banda alt --------------------------------------
       "academy-testimonials": {
@@ -303,7 +303,7 @@ export function buildSignupPageFragment(): NodeFragment {
       "academy-testimonials-title": {
         id: "academy-testimonials-title",
         type: "text",
-        props: { content: "<strong>Lo que dicen nuestros egresados</strong>" },
+        props: { content: "<strong>What our graduates say</strong>" },
         style: sectionTitle(),
       },
       "academy-testimonials-list": {
@@ -318,16 +318,16 @@ export function buildSignupPageFragment(): NodeFragment {
       },
       ...studentTestimonial(
         1,
-        "Empecé sin saber nada de código. Ocho meses después tengo mi primer trabajo como desarrolladora junior. La mentoría en vivo hizo toda la diferencia.",
+        "I started knowing nothing about code. Eight months later I have my first job as a junior developer. The live mentorship made all the difference.",
         "Camila Duarte",
-        "Egresada, cohorte 2025-B",
+        "Graduate, 2025-B cohort",
         "CD",
       ),
       ...studentTestimonial(
         2,
-        "Los proyectos reales me dieron un portafolio con el que pude aplicar a puestos de analista de datos sin experiencia previa formal.",
+        "The real projects gave me a portfolio I could use to apply for data analyst roles without prior formal experience.",
         "Bruno Sepúlveda",
-        "Egresado, cohorte 2025-A",
+        "Graduate, 2025-A cohort",
         "BS",
       ),
 
@@ -349,7 +349,7 @@ export function buildSignupPageFragment(): NodeFragment {
       "academy-faq-title": {
         id: "academy-faq-title",
         type: "text",
-        props: { content: "<strong>Preguntas frecuentes</strong>" },
+        props: { content: "<strong>Frequently asked questions</strong>" },
         style: sectionTitle(),
       },
       "academy-accordion": {
@@ -363,40 +363,40 @@ export function buildSignupPageFragment(): NodeFragment {
       "academy-faq-item-1": {
         id: "academy-faq-item-1",
         type: "accordion-item",
-        props: { label: "¿Necesito experiencia previa en programación?", openByDefault: true },
+        props: { label: "Do I need prior programming experience?", openByDefault: true },
         style: defaultStyleFor("accordion-item"),
         children: ["academy-faq-item-1-body"],
       },
       "academy-faq-item-1-body": {
         id: "academy-faq-item-1-body",
         type: "text",
-        props: { content: "No. El programa está diseñado para empezar desde cero, con acompañamiento paso a paso en las primeras semanas." },
+        props: { content: "No. The program is designed to start from zero, with step-by-step support in the first weeks." },
         style: { base: { size: { maxWidth: "56ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
       "academy-faq-item-2": {
         id: "academy-faq-item-2",
         type: "accordion-item",
-        props: { label: "¿Cuánto dura el programa y cuántas horas a la semana requiere?", openByDefault: false },
+        props: { label: "How long is the program and how many hours per week does it require?", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["academy-faq-item-2-body"],
       },
       "academy-faq-item-2-body": {
         id: "academy-faq-item-2-body",
         type: "text",
-        props: { content: "8 meses, con sesiones en vivo dos veces por semana y aproximadamente 8 horas semanales de trabajo autónomo." },
+        props: { content: "8 months, with live sessions twice a week and about 8 hours per week of independent work." },
         style: { base: { size: { maxWidth: "56ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
       "academy-faq-item-3": {
         id: "academy-faq-item-3",
         type: "accordion-item",
-        props: { label: "¿Qué pasa si no puedo asistir a una sesión en vivo?", openByDefault: false },
+        props: { label: "What happens if I can't attend a live session?", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["academy-faq-item-3-body"],
       },
       "academy-faq-item-3-body": {
         id: "academy-faq-item-3-body",
         type: "text",
-        props: { content: "Todas las sesiones se graban y quedan disponibles para ver a tu ritmo, sin perder el acceso a la mentoría de la semana." },
+        props: { content: "All sessions are recorded and available to watch at your own pace, without losing access to that week's mentorship." },
         style: { base: { size: { maxWidth: "56ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
 
@@ -421,7 +421,7 @@ export function buildSignupPageFragment(): NodeFragment {
         props: {
           // Informativo, no manipulador (docs/48 F4 alcance: se comunica una
           // fecha y un cupo reales, sin cuenta atrás ni lenguaje de presión).
-          message: "La próxima cohorte comienza el 3 de marzo con 30 lugares disponibles. Las sesiones en vivo son dos veces por semana.",
+          message: "The next cohort starts on March 3rd with 30 seats available. Live sessions are held twice a week.",
           variant: "info",
           showIcon: true,
         },
@@ -457,13 +457,13 @@ export function buildSignupPageFragment(): NodeFragment {
       "academy-enroll-title": {
         id: "academy-enroll-title",
         type: "text",
-        props: { content: "<strong>Reserva tu lugar</strong>" },
+        props: { content: "<strong>Reserve your spot</strong>" },
         style: sectionTitle(),
       },
       "academy-enroll-sub": {
         id: "academy-enroll-sub",
         type: "text",
-        props: { content: "Completa el formulario y un asesor académico te contacta en menos de 24 horas." },
+        props: { content: "Fill out the form and an academic advisor will contact you within 24 hours." },
         style: bodyText(),
       },
       "academy-enroll-card": {
@@ -505,13 +505,13 @@ export function buildSignupPageFragment(): NodeFragment {
       "academy-label-name": {
         id: "academy-label-name",
         type: "label",
-        props: { text: "Nombre completo", for: "academy-input-name" },
+        props: { text: "Full name", for: "academy-input-name" },
         style: defaultStyleFor("label"),
       },
       "academy-input-name": {
         id: "academy-input-name",
         type: "input",
-        props: { name: "nombre", type: "text", placeholder: "Tu nombre completo", required: true, disabled: false },
+        props: { name: "nombre", type: "text", placeholder: "Your full name", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "academy-field-email": {
@@ -524,13 +524,13 @@ export function buildSignupPageFragment(): NodeFragment {
       "academy-label-email": {
         id: "academy-label-email",
         type: "label",
-        props: { text: "Correo electrónico", for: "academy-input-email" },
+        props: { text: "Email", for: "academy-input-email" },
         style: defaultStyleFor("label"),
       },
       "academy-input-email": {
         id: "academy-input-email",
         type: "input",
-        props: { name: "email", type: "email", placeholder: "tu@correo.com", required: true, disabled: false },
+        props: { name: "email", type: "email", placeholder: "you@email.com", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "academy-field-course": {
@@ -543,7 +543,7 @@ export function buildSignupPageFragment(): NodeFragment {
       "academy-label-course": {
         id: "academy-label-course",
         type: "label",
-        props: { text: "Curso de interés", for: "academy-select-course" },
+        props: { text: "Course of interest", for: "academy-select-course" },
         style: defaultStyleFor("label"),
       },
       "academy-select-course": {
@@ -551,13 +551,13 @@ export function buildSignupPageFragment(): NodeFragment {
         type: "select",
         props: {
           name: "curso",
-          placeholder: "Elige un curso…",
-          ariaLabel: "Curso de interés",
+          placeholder: "Choose a course…",
+          ariaLabel: "Course of interest",
           options: [
-            { label: "Desarrollo web full-stack", value: "web-fullstack" },
-            { label: "Análisis de datos", value: "data-analytics" },
-            { label: "Ciencia de datos e IA", value: "data-science" },
-            { label: "Aún no lo sé, quiero orientación", value: "orientacion" },
+            { label: "Full-stack web development", value: "web-fullstack" },
+            { label: "Data analytics", value: "data-analytics" },
+            { label: "Data science & AI", value: "data-science" },
+            { label: "Not sure yet, I want guidance", value: "orientacion" },
           ],
         },
         style: defaultStyleFor("select"),
@@ -565,7 +565,7 @@ export function buildSignupPageFragment(): NodeFragment {
       "academy-submit": {
         id: "academy-submit",
         type: "button-submit",
-        props: { label: "Enviar solicitud", disabled: false },
+        props: { label: "Send application", disabled: false },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -605,7 +605,7 @@ export function buildSignupPageFragment(): NodeFragment {
       "academy-footer-copyright": {
         id: "academy-footer-copyright",
         type: "text",
-        props: { content: "© 2026 Núcleo Academia. Todos los derechos reservados." },
+        props: { content: "© 2026 Núcleo Academy. All rights reserved." },
         style: {
           base: {
             size: { width: "100%" },
@@ -625,138 +625,50 @@ export function buildSignupPageFragment(): NodeFragment {
     translations: (() => {
       const t: Record<string, NodeTranslations> = {};
 
-      t["academy-hero-badge"] = { en: { label: "Next cohort: 100% online" }, it: { label: "Prossima coorte: 100% online" } };
-      t["academy-hero-title"] = {
-        en: { content: "<strong>Learn programming and data, from zero to your first job</strong>" },
-        it: { content: "<strong>Imparare programmazione e dati, da zero al primo lavoro</strong>" },
-      };
-      t["academy-hero-sub"] = {
-        en: {
-          content: "Live courses with personalized mentorship, real projects and a student community. No prior experience needed.",
-        },
-        it: {
-          content: "Corsi dal vivo con mentoring personalizzato, progetti reali e una community di studenti. Nessuna esperienza richiesta.",
-        },
-      };
-      t["academy-hero-cta"] = { en: { label: "See enrollment plan" }, it: { label: "Vedi il piano di iscrizione" } };
+      t["academy-hero-badge"] = { es: { label: "Próxima cohorte: 100% online" }, it: { label: "Prossima coorte: 100% online" } };
+      t["academy-hero-title"] = { es: { content: "<strong>Aprende programación y datos, desde cero hasta tu primer trabajo</strong>" }, it: { content: "<strong>Imparare programmazione e dati, da zero al primo lavoro</strong>" } };
+      t["academy-hero-sub"] = { es: { content: "Cursos en vivo con mentoría personalizada, proyectos reales y una comunidad de estudiantes. Sin experiencia previa." }, it: { content: "Corsi dal vivo con mentoring personalizzato, progetti reali e una community di studenti. Nessuna esperienza richiesta." } };
+      t["academy-hero-cta"] = { es: { label: "Ver plan de inscripción" }, it: { label: "Vedi il piano di iscrizione" } };
 
-      t["academy-benefit-1-icon"] = { en: { title: "Live mentorship" }, it: { title: "Mentoring dal vivo" } };
-      t["academy-benefit-1-title"] = { en: { content: "<strong>Live mentorship</strong>" }, it: { content: "<strong>Mentoring dal vivo</strong>" } };
-      t["academy-benefit-1-text"] = {
-        en: { content: "Weekly sessions with instructors active in the industry, not just recorded videos." },
-        it: { content: "Sessioni settimanali con istruttori attivi nel settore, non solo video registrati." },
-      };
-      t["academy-benefit-2-icon"] = { en: { title: "Real projects" }, it: { title: "Progetti reali" } };
-      t["academy-benefit-2-title"] = { en: { content: "<strong>Real projects</strong>" }, it: { content: "<strong>Progetti reali</strong>" } };
-      t["academy-benefit-2-text"] = {
-        en: { content: "You build a real portfolio you can show employers from the very first month." },
-        it: { content: "Costruisci un portfolio reale da mostrare ai datori di lavoro già dal primo mese." },
-      };
-      t["academy-benefit-3-icon"] = { en: { title: "Job placement network" }, it: { title: "Rete di collocamento" } };
-      t["academy-benefit-3-title"] = { en: { content: "<strong>Job placement network</strong>" }, it: { content: "<strong>Rete di collocamento</strong>" } };
-      t["academy-benefit-3-text"] = {
-        en: { content: "Access to our network of partner companies once you complete the program." },
-        it: { content: "Accesso alla nostra rete di aziende partner al termine del programma." },
-      };
+      t["academy-benefit-1-icon"] = { es: { title: "Mentoría en vivo" }, it: { title: "Mentoring dal vivo" } };
+      t["academy-benefit-1-title"] = { es: { content: "<strong>Mentoría en vivo</strong>" }, it: { content: "<strong>Mentoring dal vivo</strong>" } };
+      t["academy-benefit-1-text"] = { es: { content: "Sesiones semanales con instructores activos en la industria, no solo videos grabados." }, it: { content: "Sessioni settimanali con istruttori attivi nel settore, non solo video registrati." } };
+      t["academy-benefit-2-icon"] = { es: { title: "Proyectos reales" }, it: { title: "Progetti reali" } };
+      t["academy-benefit-2-title"] = { es: { content: "<strong>Proyectos reales</strong>" }, it: { content: "<strong>Progetti reali</strong>" } };
+      t["academy-benefit-2-text"] = { es: { content: "Construyes un portfolio real que puedes mostrar a empleadores desde el primer mes." }, it: { content: "Costruisci un portfolio reale da mostrare ai datori di lavoro già dal primo mese." } };
+      t["academy-benefit-3-icon"] = { es: { title: "Bolsa de trabajo" }, it: { title: "Rete di collocamento" } };
+      t["academy-benefit-3-title"] = { es: { content: "<strong>Bolsa de trabajo</strong>" }, it: { content: "<strong>Rete di collocamento</strong>" } };
+      t["academy-benefit-3-text"] = { es: { content: "Acceso a nuestra red de empresas partner al terminar el programa." }, it: { content: "Accesso alla nostra rete di aziende partner al termine del programma." } };
 
-      t["academy-testimonials-title"] = { en: { content: "<strong>What our graduates say</strong>" }, it: { content: "<strong>Cosa dicono i nostri diplomati</strong>" } };
-      t["academy-testimonial-1-quote"] = {
-        en: {
-          content:
-            "<p>I started knowing nothing about code. Eight months later I have my first job as a junior developer. The live mentorship made all the difference.</p>",
-        },
-        it: {
-          content:
-            "<p>Ho iniziato senza sapere nulla di codice. Otto mesi dopo ho il mio primo lavoro come sviluppatrice junior. Il mentoring dal vivo ha fatto la differenza.</p>",
-        },
-      };
-      t["academy-testimonial-1-name"] = {
-        en: { content: "<strong>Camila Duarte</strong>" },
-        it: { content: "<strong>Camila Duarte</strong>" },
-      };
-      t["academy-testimonial-1-role"] = {
-        en: { content: "Graduate, 2025-B cohort" },
-        it: { content: "Diplomata, coorte 2025-B" },
-      };
-      t["academy-testimonial-2-quote"] = {
-        en: {
-          content:
-            "<p>The real projects gave me a portfolio I could use to apply for data analyst roles without prior formal experience.</p>",
-        },
-        it: {
-          content:
-            "<p>I progetti reali mi hanno dato un portfolio con cui candidarmi per ruoli di data analyst senza esperienza formale precedente.</p>",
-        },
-      };
-      t["academy-testimonial-2-name"] = {
-        en: { content: "<strong>Bruno Sepúlveda</strong>" },
-        it: { content: "<strong>Bruno Sepúlveda</strong>" },
-      };
-      t["academy-testimonial-2-role"] = {
-        en: { content: "Graduate, 2025-A cohort" },
-        it: { content: "Diplomato, coorte 2025-A" },
-      };
+      t["academy-testimonials-title"] = { es: { content: "<strong>Lo que dicen nuestros egresados</strong>" }, it: { content: "<strong>Cosa dicono i nostri diplomati</strong>" } };
+      t["academy-testimonial-1-quote"] = { es: { content: "<p>Empecé sin saber nada de código. Ocho meses después tengo mi primer trabajo como desarrolladora junior. La mentoría en vivo hizo toda la diferencia.</p>" }, it: { content: "<p>Ho iniziato senza sapere nulla di codice. Otto mesi dopo ho il mio primo lavoro come sviluppatrice junior. Il mentoring dal vivo ha fatto la differenza.</p>" } };
+      t["academy-testimonial-1-name"] = { es: { content: "<strong>Camila Duarte</strong>" }, it: { content: "<strong>Camila Duarte</strong>" } };
+      t["academy-testimonial-1-role"] = { es: { content: "Egresada, cohorte 2025-B" }, it: { content: "Diplomata, coorte 2025-B" } };
+      t["academy-testimonial-2-quote"] = { es: { content: "<p>Los proyectos reales me dieron un portafolio con el que pude aplicar a puestos de analista de datos sin experiencia previa formal.</p>" }, it: { content: "<p>I progetti reali mi hanno dato un portfolio con cui candidarmi per ruoli di data analyst senza esperienza formale precedente.</p>" } };
+      t["academy-testimonial-2-name"] = { es: { content: "<strong>Bruno Sepúlveda</strong>" }, it: { content: "<strong>Bruno Sepúlveda</strong>" } };
+      t["academy-testimonial-2-role"] = { es: { content: "Egresado, cohorte 2025-A" }, it: { content: "Diplomato, coorte 2025-A" } };
 
-      t["academy-faq-title"] = { en: { content: "<strong>Frequently asked questions</strong>" }, it: { content: "<strong>Domande frequenti</strong>" } };
-      t["academy-faq-item-1"] = { en: { label: "Do I need prior programming experience?" }, it: { label: "Serve esperienza di programmazione precedente?" } };
-      t["academy-faq-item-1-body"] = {
-        en: { content: "No. The program is designed to start from zero, with step-by-step support in the first weeks." },
-        it: { content: "No. Il programma è pensato per iniziare da zero, con supporto passo dopo passo nelle prime settimane." },
-      };
-      t["academy-faq-item-2"] = { en: { label: "How long is the program and how many hours per week does it require?" }, it: { label: "Quanto dura il programma e quante ore a settimana richiede?" } };
-      t["academy-faq-item-2-body"] = {
-        en: { content: "8 months, with live sessions twice a week and about 8 hours per week of independent work." },
-        it: { content: "8 mesi, con sessioni dal vivo due volte a settimana e circa 8 ore a settimana di lavoro autonomo." },
-      };
-      t["academy-faq-item-3"] = { en: { label: "What happens if I can't attend a live session?" }, it: { label: "Cosa succede se non posso partecipare a una sessione dal vivo?" } };
-      t["academy-faq-item-3-body"] = {
-        en: { content: "All sessions are recorded and available to watch at your own pace, without losing access to that week's mentorship." },
-        it: { content: "Tutte le sessioni sono registrate e disponibili da guardare al proprio ritmo, senza perdere l'accesso al mentoring della settimana." },
-      };
+      t["academy-faq-title"] = { es: { content: "<strong>Preguntas frecuentes</strong>" }, it: { content: "<strong>Domande frequenti</strong>" } };
+      t["academy-faq-item-1"] = { es: { label: "¿Necesito experiencia previa en programación?" }, it: { label: "Serve esperienza di programmazione precedente?" } };
+      t["academy-faq-item-1-body"] = { es: { content: "No. El programa está diseñado para empezar desde cero, con acompañamiento paso a paso en las primeras semanas." }, it: { content: "No. Il programma è pensato per iniziare da zero, con supporto passo dopo passo nelle prime settimane." } };
+      t["academy-faq-item-2"] = { es: { label: "¿Cuánto dura el programa y cuántas horas a la semana requiere?" }, it: { label: "Quanto dura il programma e quante ore a settimana richiede?" } };
+      t["academy-faq-item-2-body"] = { es: { content: "8 meses, con sesiones en vivo dos veces por semana y aproximadamente 8 horas semanales de trabajo autónomo." }, it: { content: "8 mesi, con sessioni dal vivo due volte a settimana e circa 8 ore a settimana di lavoro autonomo." } };
+      t["academy-faq-item-3"] = { es: { label: "¿Qué pasa si no puedo asistir a una sesión en vivo?" }, it: { label: "Cosa succede se non posso partecipare a una sessione dal vivo?" } };
+      t["academy-faq-item-3-body"] = { es: { content: "Todas las sesiones se graban y quedan disponibles para ver a tu ritmo, sin perder el acceso a la mentoría de la semana." }, it: { content: "Tutte le sessioni sono registrate e disponibili da guardare al proprio ritmo, senza perdere l'accesso al mentoring della settimana." } };
 
-      t["academy-alert"] = {
-        en: { message: "The next cohort starts on March 3rd with 30 seats available. Live sessions are held twice a week." },
-        it: { message: "La prossima coorte inizia il 3 marzo con 30 posti disponibili. Le sessioni dal vivo si tengono due volte a settimana." },
-      };
+      t["academy-alert"] = { es: { message: "La próxima cohorte comienza el 3 de marzo con 30 lugares disponibles. Las sesiones en vivo son dos veces por semana." }, it: { message: "La prossima coorte inizia il 3 marzo con 30 posti disponibili. Le sessioni dal vivo si tengono due volte a settimana." } };
 
-      t["academy-enroll-title"] = { en: { content: "<strong>Reserve your spot</strong>" }, it: { content: "<strong>Prenota il tuo posto</strong>" } };
-      t["academy-enroll-sub"] = {
-        en: { content: "Fill out the form and an academic advisor will contact you within 24 hours." },
-        it: { content: "Compila il modulo e un consulente accademico ti contatterà entro 24 ore." },
-      };
-      t["academy-label-name"] = { en: { text: "Full name" }, it: { text: "Nome completo" } };
-      t["academy-input-name"] = { en: { placeholder: "Your full name" }, it: { placeholder: "Il tuo nome completo" } };
-      t["academy-label-email"] = { en: { text: "Email" }, it: { text: "Email" } };
-      t["academy-input-email"] = { en: { placeholder: "you@email.com" }, it: { placeholder: "tu@email.com" } };
-      t["academy-label-course"] = { en: { text: "Course of interest" }, it: { text: "Corso di interesse" } };
-      t["academy-select-course"] = {
-        en: {
-          placeholder: "Choose a course…",
-          ariaLabel: "Course of interest",
-          options: [
-            { label: "Full-stack web development", value: "web-fullstack" },
-            { label: "Data analytics", value: "data-analytics" },
-            { label: "Data science & AI", value: "data-science" },
-            { label: "Not sure yet, I want guidance", value: "orientacion" },
-          ],
-        },
-        it: {
-          placeholder: "Scegli un corso…",
-          ariaLabel: "Corso di interesse",
-          options: [
-            { label: "Sviluppo web full-stack", value: "web-fullstack" },
-            { label: "Analisi dei dati", value: "data-analytics" },
-            { label: "Data science e IA", value: "data-science" },
-            { label: "Non sono ancora sicuro, vorrei essere guidato", value: "orientacion" },
-          ],
-        },
-      };
-      t["academy-submit"] = { en: { label: "Send application" }, it: { label: "Invia richiesta" } };
+      t["academy-enroll-title"] = { es: { content: "<strong>Reserva tu lugar</strong>" }, it: { content: "<strong>Prenota il tuo posto</strong>" } };
+      t["academy-enroll-sub"] = { es: { content: "Completa el formulario y un asesor académico te contacta en menos de 24 horas." }, it: { content: "Compila il modulo e un consulente accademico ti contatterà entro 24 ore." } };
+      t["academy-label-name"] = { es: { text: "Nombre completo" }, it: { text: "Nome completo" } };
+      t["academy-input-name"] = { es: { placeholder: "Tu nombre completo" }, it: { placeholder: "Il tuo nome completo" } };
+      t["academy-label-email"] = { es: { text: "Correo electrónico" }, it: { text: "Email" } };
+      t["academy-input-email"] = { es: { placeholder: "tu@correo.com" }, it: { placeholder: "tu@email.com" } };
+      t["academy-label-course"] = { es: { text: "Curso de interés" }, it: { text: "Corso di interesse" } };
+      t["academy-select-course"] = { es: { placeholder: "Elige un curso…", ariaLabel: "Curso de interés", label: "Aún no lo sé, quiero orientación", value: "orientacion" }, it: { placeholder: "Scegli un corso…", ariaLabel: "Corso di interesse", label: "Non sono ancora sicuro, vorrei essere guidato", value: "orientacion" } };
+      t["academy-submit"] = { es: { label: "Enviar solicitud" }, it: { label: "Invia richiesta" } };
 
-      t["academy-footer-copyright"] = {
-        en: { content: "© 2026 Núcleo Academy. All rights reserved." },
-        it: { content: "© 2026 Núcleo Academy. Tutti i diritti riservati." },
-      };
+      t["academy-footer-copyright"] = { es: { content: "© 2026 Núcleo Academia. Todos los derechos reservados." }, it: { content: "© 2026 Núcleo Academy. Tutti i diritti riservati." } };
 
       return t;
     })(),
@@ -764,31 +676,31 @@ export function buildSignupPageFragment(): NodeFragment {
 }
 
 export const signupPagePageMeta: LayoutPageMeta = {
-  title: "Núcleo · Academia online de programación y datos",
+  title: "Núcleo · Online academy for programming and data",
   description:
-    "Aprende programación y datos desde cero con mentoría en vivo, proyectos reales y bolsa de trabajo. Próxima cohorte con cupo limitado.",
+    "Learn programming and data from zero with live mentorship, real projects and job placement. Next cohort has limited seats.",
   seo: {
     robots: "index,follow",
     openGraph: {
-      title: "Núcleo · Academia online de programación y datos",
-      description: "Mentoría en vivo, proyectos reales y bolsa de trabajo. Reserva tu lugar en la próxima cohorte.",
+      title: "Núcleo · Online academy for programming and data",
+      description: "Live mentorship, real projects and job placement. Reserve your spot in the next cohort.",
       image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=80&auto=format&fit=crop",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "Núcleo · Academia online de programación y datos",
-      description: "Mentoría en vivo, proyectos reales y bolsa de trabajo. Reserva tu lugar en la próxima cohorte.",
+      title: "Núcleo · Online academy for programming and data",
+      description: "Live mentorship, real projects and job placement. Reserve your spot in the next cohort.",
       image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=80&auto=format&fit=crop",
     },
   },
   metaTranslations: {
-    en: {
-      title: "Núcleo · Online academy for programming and data",
-      description: "Learn programming and data from zero with live mentorship, real projects and job placement. Next cohort has limited seats.",
+    es: {
+      title: "Núcleo · Academia online de programación y datos",
+      description: "Aprende programación y datos desde cero con mentoría en vivo, proyectos reales y bolsa de trabajo. Próxima cohorte con cupo limitado.",
       seo: {
-        openGraph: { title: "Núcleo · Online academy for programming and data", description: "Live mentorship, real projects and job placement. Reserve your spot in the next cohort." },
-        twitter: { title: "Núcleo · Online academy for programming and data", description: "Live mentorship, real projects and job placement. Reserve your spot in the next cohort." },
+        openGraph: { title: "Núcleo · Academia online de programación y datos", description: "Mentoría en vivo, proyectos reales y bolsa de trabajo. Reserva tu lugar en la próxima cohorte." },
+        twitter: { title: "Núcleo · Academia online de programación y datos", description: "Mentoría en vivo, proyectos reales y bolsa de trabajo. Reserva tu lugar en la próxima cohorte." },
       },
     },
     it: {

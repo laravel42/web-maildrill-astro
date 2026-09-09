@@ -56,7 +56,7 @@ export function parseSiteJson(
     parsed = JSON.parse(text);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return { ok: false, errors: [`JSON inválido: ${message}`] };
+    return { ok: false, errors: [`Invalid JSON: ${message}`] };
   }
   return loadSiteFromValue(parsed, breakpoints);
 }

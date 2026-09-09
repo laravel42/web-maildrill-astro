@@ -121,9 +121,9 @@ export const breadcrumbDefinition: ComponentDefinition = {
   acceptsChildren: false,
   defaultProps: {
     items: [
-      { label: "Inicio", value: "/" },
-      { label: "Categoría", value: "/category" },
-      { label: "Página actual", value: "" },
+      { label: "Home", value: "/" },
+      { label: "Category", value: "/category" },
+      { label: "Current page", value: "" },
     ],
     separator: "/",
   },

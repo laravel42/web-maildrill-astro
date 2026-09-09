@@ -89,7 +89,7 @@ export function buildFaqAccordionFragment(): NodeFragment {
       "faq-accordion-title": {
         id: "faq-accordion-title",
         type: "text",
-        props: { content: "<strong>Todo lo que necesitas saber sobre Maildrill</strong>" },
+        props: { content: "<strong>Everything you need to know about Maildrill</strong>" },
         style: {
           base: {
             typography: {
@@ -115,40 +115,40 @@ export function buildFaqAccordionFragment(): NodeFragment {
       "faq-accordion-item-1": {
         id: "faq-accordion-item-1",
         type: "accordion-item",
-        props: { label: "¿Qué canales soporta Maildrill?", openByDefault: true },
+        props: { label: "Which channels does Maildrill support?", openByDefault: true },
         style: itemStyle,
         children: ["faq-accordion-item-1-body"],
       },
       "faq-accordion-item-1-body": {
         id: "faq-accordion-item-1-body",
         type: "text",
-        props: { content: "Email, SMS, WhatsApp y voz, todo desde un solo workspace y con la misma lista de contactos." },
+        props: { content: "Email, SMS, WhatsApp, and voice — all from one workspace, with the same contact list." },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
       "faq-accordion-item-2": {
         id: "faq-accordion-item-2",
         type: "accordion-item",
-        props: { label: "¿Cuál es la tasa de entrega (deliverability)?", openByDefault: false },
+        props: { label: "What is the delivery rate (deliverability)?", openByDefault: false },
         style: itemStyle,
         children: ["faq-accordion-item-2-body"],
       },
       "faq-accordion-item-2-body": {
         id: "faq-accordion-item-2-body",
         type: "text",
-        props: { content: "Mantenemos un 99.9% de entrega gracias a IPs cuidadas, autenticación SPF/DKIM/DMARC y monitoreo en tiempo real." },
+        props: { content: "We keep a 99.9% delivery rate with warmed IPs, SPF/DKIM/DMARC authentication, and real-time monitoring." },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
       "faq-accordion-item-3": {
         id: "faq-accordion-item-3",
         type: "accordion-item",
-        props: { label: "¿Puedo migrar mis contactos desde otro proveedor?", openByDefault: false },
+        props: { label: "Can I migrate my contacts from another provider?", openByDefault: false },
         style: itemStyle,
         children: ["faq-accordion-item-3-body"],
       },
       "faq-accordion-item-3-body": {
         id: "faq-accordion-item-3-body",
         type: "text",
-        props: { content: "Sí, importa tus listas por CSV o API y empieza a enviar en minutos, sin perder tu historial de contactos." },
+        props: { content: "Yes — import your lists via CSV or API and start sending in minutes, without losing contact history." },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
     },

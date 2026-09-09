@@ -242,13 +242,13 @@ export function buildAutoRepairPageFragment(): NodeFragment {
       "torque-hero-badge": {
         id: "torque-hero-badge",
         type: "badge",
-        props: { label: "Diagnóstico sin costo" },
+        props: { label: "Free diagnostic check" },
         style: defaultStyleFor("badge"),
       },
       "torque-hero-title": {
         id: "torque-hero-title",
         type: "text",
-        props: { content: "<strong>Tu auto en manos de mecánicos certificados</strong>" },
+        props: { content: "<strong>Your car in the hands of certified mechanics</strong>" },
         style: {
           base: {
             size: { maxWidth: "20ch" },
@@ -268,14 +268,14 @@ export function buildAutoRepairPageFragment(): NodeFragment {
         type: "text",
         props: {
           content:
-            "Mantenimiento preventivo, diagnóstico computarizado y reparación general, con repuestos originales y garantía por escrito.",
+            "Preventive maintenance, computerized diagnostics and general repair, with original parts and a written warranty.",
         },
         style: bodyText({ token: "colors.band.on" }),
       },
       "torque-hero-cta": {
         id: "torque-hero-cta",
         type: "button",
-        props: { label: "Agendar mi cita", link: { kind: "anchor", nodeId: "torque-appointment" } },
+        props: { label: "Book my appointment", link: { kind: "anchor", nodeId: "torque-appointment" } },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -314,9 +314,9 @@ export function buildAutoRepairPageFragment(): NodeFragment {
         },
         children: ["torque-stat-1", "torque-stat-2", "torque-stat-3"],
       },
-      ...statCard(1, "18", "años de servicio"),
-      ...statCard(2, "42000", "vehículos atendidos"),
-      ...statCard(3, "9", "mecánicos certificados"),
+      ...statCard(1, "18", "years in business"),
+      ...statCard(2, "42000", "vehicles serviced"),
+      ...statCard(3, "9", "certified mechanics"),
 
       // --- Servicios breves — banda clara ------------------------------------------
       "torque-services": {
@@ -337,7 +337,7 @@ export function buildAutoRepairPageFragment(): NodeFragment {
       "torque-services-title": {
         id: "torque-services-title",
         type: "text",
-        props: { content: "<strong>Lo que hacemos por tu auto</strong>" },
+        props: { content: "<strong>What we do for your car</strong>" },
         style: sectionTitle(),
       },
       "torque-services-grid": {
@@ -350,9 +350,9 @@ export function buildAutoRepairPageFragment(): NodeFragment {
         },
         children: ["torque-service-1", "torque-service-2", "torque-service-3"],
       },
-      ...service(1, "Wrench", "Mantenimiento preventivo", "Cambio de aceite, filtros, frenos y revisión de 30 puntos para evitar fallas antes de que ocurran."),
-      ...service(2, "Gauge", "Diagnóstico computarizado", "Escaneo electrónico completo del motor y sistemas eléctricos con equipo de escáner profesional."),
-      ...service(3, "ShieldCheck", "Garantía por escrito", "Toda reparación mayor incluye garantía de 6 meses o 10,000 km, lo que ocurra primero."),
+      ...service(1, "Wrench", "Preventive maintenance", "Oil and filter changes, brakes and a 30-point inspection to catch failures before they happen."),
+      ...service(2, "Gauge", "Computerized diagnostics", "Full electronic scan of the engine and electrical systems with professional scanning equipment."),
+      ...service(3, "ShieldCheck", "Written warranty", "Every major repair includes a 6-month or 10,000 km warranty, whichever comes first."),
 
       // --- Testimonios de clientes — banda alt --------------------------------------
       "torque-testimonials": {
@@ -373,7 +373,7 @@ export function buildAutoRepairPageFragment(): NodeFragment {
       "torque-testimonials-title": {
         id: "torque-testimonials-title",
         type: "text",
-        props: { content: "<strong>Lo que dicen nuestros clientes</strong>" },
+        props: { content: "<strong>What our customers say</strong>" },
         style: sectionTitle(),
       },
       "torque-testimonials-list": {
@@ -385,16 +385,16 @@ export function buildAutoRepairPageFragment(): NodeFragment {
       },
       ...customerTestimonial(
         1,
-        "Llevé mi auto pensando que era la transmisión y solo era un sensor. Honestidad total, no me cobraron de más.",
+        "I brought my car in thinking it was the transmission and it was just a sensor. Total honesty, they didn't overcharge me.",
         "Rodrigo Elizalde",
-        "Cliente desde 2021",
+        "Customer since 2021",
         "RE",
       ),
       ...customerTestimonial(
         2,
-        "El diagnóstico sin costo me ahorró una cotización carísima en otro taller. Ahora llevo los dos autos de la familia aquí.",
+        "The free diagnostic saved me from a very expensive quote at another shop. Now I bring both family cars here.",
         "Fernanda Ibarra",
-        "Cliente desde 2023",
+        "Customer since 2023",
         "FI",
       ),
 
@@ -416,7 +416,7 @@ export function buildAutoRepairPageFragment(): NodeFragment {
       "torque-faq-title": {
         id: "torque-faq-title",
         type: "text",
-        props: { content: "<strong>Preguntas frecuentes</strong>" },
+        props: { content: "<strong>Frequently asked questions</strong>" },
         style: sectionTitle(),
       },
       "torque-accordion": {
@@ -430,40 +430,40 @@ export function buildAutoRepairPageFragment(): NodeFragment {
       "torque-faq-item-1": {
         id: "torque-faq-item-1",
         type: "accordion-item",
-        props: { label: "¿El diagnóstico realmente no tiene costo?", openByDefault: true },
+        props: { label: "Is the diagnostic really free?", openByDefault: true },
         style: defaultStyleFor("accordion-item"),
         children: ["torque-faq-item-1-body"],
       },
       "torque-faq-item-1-body": {
         id: "torque-faq-item-1-body",
         type: "text",
-        props: { content: "Correcto. El escaneo y la revisión de 30 puntos no tienen costo, aceptes o no la reparación que propongamos." },
+        props: { content: "Yes. The scan and 30-point inspection are free, whether or not you accept the repair we propose." },
         style: { base: { size: { maxWidth: "56ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
       "torque-faq-item-2": {
         id: "torque-faq-item-2",
         type: "accordion-item",
-        props: { label: "¿Usan repuestos originales o genéricos?", openByDefault: false },
+        props: { label: "Do you use original or generic parts?", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["torque-faq-item-2-body"],
       },
       "torque-faq-item-2-body": {
         id: "torque-faq-item-2-body",
         type: "text",
-        props: { content: "Trabajamos con repuestos originales por defecto; si existe una alternativa genérica de calidad certificada, te la ofrecemos como opción con el ahorro correspondiente." },
+        props: { content: "We work with original parts by default; if a certified quality generic alternative exists, we offer it as an option with the corresponding savings." },
         style: { base: { size: { maxWidth: "56ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
       "torque-faq-item-3": {
         id: "torque-faq-item-3",
         type: "accordion-item",
-        props: { label: "¿Cuánto tiempo tardan en devolverme el auto?", openByDefault: false },
+        props: { label: "How long until I get my car back?", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["torque-faq-item-3-body"],
       },
       "torque-faq-item-3-body": {
         id: "torque-faq-item-3-body",
         type: "text",
-        props: { content: "El mantenimiento preventivo se entrega el mismo día. Las reparaciones mayores te damos un tiempo estimado por escrito antes de autorizar el trabajo." },
+        props: { content: "Preventive maintenance is delivered the same day. For major repairs we give you a written time estimate before authorizing the work." },
         style: { base: { size: { maxWidth: "56ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
 
@@ -489,7 +489,7 @@ export function buildAutoRepairPageFragment(): NodeFragment {
           // Informativo, no manipulador (mismo criterio que academy-alert en
           // signup-page): horario real de recepción, sin cuenta atrás ni
           // lenguaje de presión.
-          message: "Recibimos vehículos de lunes a sábado de 8:00 a 18:00. El diagnóstico inicial no tiene costo y no compromete a reparar con nosotros.",
+          message: "We receive vehicles Monday to Saturday, 8:00 AM to 6:00 PM. The initial diagnostic is free and does not commit you to repairing with us.",
           variant: "info",
           showIcon: true,
         },
@@ -525,13 +525,13 @@ export function buildAutoRepairPageFragment(): NodeFragment {
       "torque-appointment-title": {
         id: "torque-appointment-title",
         type: "text",
-        props: { content: "<strong>Agenda tu cita</strong>" },
+        props: { content: "<strong>Book your appointment</strong>" },
         style: sectionTitle(),
       },
       "torque-appointment-sub": {
         id: "torque-appointment-sub",
         type: "text",
-        props: { content: "Completa el formulario y te confirmamos horario disponible en menos de 2 horas." },
+        props: { content: "Fill out the form and we'll confirm an available time slot within 2 hours." },
         style: bodyText(),
       },
       "torque-appointment-card": {
@@ -574,13 +574,13 @@ export function buildAutoRepairPageFragment(): NodeFragment {
       "torque-label-name": {
         id: "torque-label-name",
         type: "label",
-        props: { text: "Nombre completo", for: "torque-input-name" },
+        props: { text: "Full name", for: "torque-input-name" },
         style: defaultStyleFor("label"),
       },
       "torque-input-name": {
         id: "torque-input-name",
         type: "input",
-        props: { name: "nombre", type: "text", placeholder: "Tu nombre completo", required: true, disabled: false },
+        props: { name: "nombre", type: "text", placeholder: "Your full name", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "torque-field-email": {
@@ -593,13 +593,13 @@ export function buildAutoRepairPageFragment(): NodeFragment {
       "torque-label-email": {
         id: "torque-label-email",
         type: "label",
-        props: { text: "Correo electrónico", for: "torque-input-email" },
+        props: { text: "Email", for: "torque-input-email" },
         style: defaultStyleFor("label"),
       },
       "torque-input-email": {
         id: "torque-input-email",
         type: "input",
-        props: { name: "email", type: "email", placeholder: "tu@correo.com", required: true, disabled: false },
+        props: { name: "email", type: "email", placeholder: "you@email.com", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "torque-field-service": {
@@ -612,7 +612,7 @@ export function buildAutoRepairPageFragment(): NodeFragment {
       "torque-label-service": {
         id: "torque-label-service",
         type: "label",
-        props: { text: "Servicio requerido", for: "torque-select-service" },
+        props: { text: "Service needed", for: "torque-select-service" },
         style: defaultStyleFor("label"),
       },
       "torque-select-service": {
@@ -620,13 +620,13 @@ export function buildAutoRepairPageFragment(): NodeFragment {
         type: "select",
         props: {
           name: "servicio",
-          placeholder: "Elige un servicio…",
-          ariaLabel: "Servicio requerido",
+          placeholder: "Choose a service…",
+          ariaLabel: "Service needed",
           options: [
-            { label: "Mantenimiento preventivo", value: "preventivo" },
-            { label: "Diagnóstico computarizado", value: "diagnostico" },
-            { label: "Reparación general", value: "reparacion" },
-            { label: "Aún no lo sé, quiero una revisión", value: "revision" },
+            { label: "Preventive maintenance", value: "mantenimiento" },
+            { label: "Computerized diagnostics", value: "diagnostico" },
+            { label: "General repair", value: "reparacion" },
+            { label: "Not sure yet, I want an inspection", value: "revision" },
           ],
         },
         style: defaultStyleFor("select"),
@@ -634,7 +634,7 @@ export function buildAutoRepairPageFragment(): NodeFragment {
       "torque-submit": {
         id: "torque-submit",
         type: "button-submit",
-        props: { label: "Solicitar cita", disabled: false },
+        props: { label: "Request appointment", disabled: false },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -674,7 +674,7 @@ export function buildAutoRepairPageFragment(): NodeFragment {
       "torque-footer-copyright": {
         id: "torque-footer-copyright",
         type: "text",
-        props: { content: "© 2026 Torque & Fierro Servicio Automotriz. Todos los derechos reservados." },
+        props: { content: "© 2026 Torque & Fierro Auto Service. All rights reserved." },
         style: {
           base: {
             size: { width: "100%" },
@@ -694,147 +694,59 @@ export function buildAutoRepairPageFragment(): NodeFragment {
     translations: (() => {
       const t: Record<string, NodeTranslations> = {};
 
-      t["torque-hero-badge"] = { en: { label: "Free diagnostic check" }, it: { label: "Diagnosi gratuita" } };
-      t["torque-hero-title"] = {
-        en: { content: "<strong>Your car in the hands of certified mechanics</strong>" },
-        it: { content: "<strong>La tua auto nelle mani di meccanici certificati</strong>" },
-      };
-      t["torque-hero-sub"] = {
-        en: {
-          content: "Preventive maintenance, computerized diagnostics and general repair, with original parts and a written warranty.",
-        },
-        it: {
-          content: "Manutenzione preventiva, diagnosi computerizzata e riparazioni generali, con ricambi originali e garanzia scritta.",
-        },
-      };
-      t["torque-hero-cta"] = { en: { label: "Book my appointment" }, it: { label: "Prenota il mio appuntamento" } };
+      t["torque-hero-badge"] = { es: { label: "Diagnóstico sin costo" }, it: { label: "Diagnosi gratuita" } };
+      t["torque-hero-title"] = { es: { content: "<strong>Tu auto en manos de mecánicos certificados</strong>" }, it: { content: "<strong>La tua auto nelle mani di meccanici certificati</strong>" } };
+      t["torque-hero-sub"] = { es: { content: "Mantenimiento preventivo, diagnóstico computarizado y reparación general, con repuestos originales y garantía por escrito." }, it: { content: "Manutenzione preventiva, diagnosi computerizzata e riparazioni generali, con ricambi originali e garanzia scritta." } };
+      t["torque-hero-cta"] = { es: { label: "Agendar mi cita" }, it: { label: "Prenota il mio appuntamento" } };
 
-      t["torque-stat-1-value"] = { en: { value: "18" }, it: { value: "18" } };
-      t["torque-stat-1-label"] = { en: { content: "years in business" }, it: { content: "anni di attività" } };
-      t["torque-stat-2-value"] = { en: { value: "42000" }, it: { value: "42000" } };
-      t["torque-stat-2-label"] = { en: { content: "vehicles serviced" }, it: { content: "veicoli riparati" } };
-      t["torque-stat-3-value"] = { en: { value: "9" }, it: { value: "9" } };
-      t["torque-stat-3-label"] = { en: { content: "certified mechanics" }, it: { content: "meccanici certificati" } };
+      t["torque-stat-1-value"] = { es: { value: "18" }, it: { value: "18" } };
+      t["torque-stat-1-label"] = { es: { content: "años de servicio" }, it: { content: "anni di attività" } };
+      t["torque-stat-2-value"] = { es: { value: "42000" }, it: { value: "42000" } };
+      t["torque-stat-2-label"] = { es: { content: "vehículos atendidos" }, it: { content: "veicoli riparati" } };
+      t["torque-stat-3-value"] = { es: { value: "9" }, it: { value: "9" } };
+      t["torque-stat-3-label"] = { es: { content: "mecánicos certificados" }, it: { content: "meccanici certificati" } };
 
-      t["torque-services-title"] = { en: { content: "<strong>What we do for your car</strong>" }, it: { content: "<strong>Cosa facciamo per la tua auto</strong>" } };
+      t["torque-services-title"] = { es: { content: "<strong>Lo que hacemos por tu auto</strong>" }, it: { content: "<strong>Cosa facciamo per la tua auto</strong>" } };
 
-      t["torque-service-1-icon"] = { en: { title: "Preventive maintenance" }, it: { title: "Manutenzione preventiva" } };
-      t["torque-service-1-title"] = { en: { content: "<strong>Preventive maintenance</strong>" }, it: { content: "<strong>Manutenzione preventiva</strong>" } };
-      t["torque-service-1-text"] = {
-        en: { content: "Oil and filter changes, brakes and a 30-point inspection to catch failures before they happen." },
-        it: { content: "Cambio olio e filtri, freni e controllo di 30 punti per prevenire i guasti prima che accadano." },
-      };
-      t["torque-service-2-icon"] = { en: { title: "Computerized diagnostics" }, it: { title: "Diagnosi computerizzata" } };
-      t["torque-service-2-title"] = { en: { content: "<strong>Computerized diagnostics</strong>" }, it: { content: "<strong>Diagnosi computerizzata</strong>" } };
-      t["torque-service-2-text"] = {
-        en: { content: "Full electronic scan of the engine and electrical systems with professional scanning equipment." },
-        it: { content: "Scansione elettronica completa del motore e dei sistemi elettrici con apparecchiature professionali." },
-      };
-      t["torque-service-3-icon"] = { en: { title: "Written warranty" }, it: { title: "Garanzia scritta" } };
-      t["torque-service-3-title"] = { en: { content: "<strong>Written warranty</strong>" }, it: { content: "<strong>Garanzia scritta</strong>" } };
-      t["torque-service-3-text"] = {
-        en: { content: "Every major repair includes a 6-month or 10,000 km warranty, whichever comes first." },
-        it: { content: "Ogni riparazione importante include una garanzia di 6 mesi o 10.000 km, a seconda di cosa avviene prima." },
-      };
+      t["torque-service-1-icon"] = { es: { title: "Mantenimiento preventivo" }, it: { title: "Manutenzione preventiva" } };
+      t["torque-service-1-title"] = { es: { content: "<strong>Mantenimiento preventivo</strong>" }, it: { content: "<strong>Manutenzione preventiva</strong>" } };
+      t["torque-service-1-text"] = { es: { content: "Cambio de aceite, filtros, frenos y revisión de 30 puntos para evitar fallas antes de que ocurran." }, it: { content: "Cambio olio e filtri, freni e controllo di 30 punti per prevenire i guasti prima che accadano." } };
+      t["torque-service-2-icon"] = { es: { title: "Diagnóstico computarizado" }, it: { title: "Diagnosi computerizzata" } };
+      t["torque-service-2-title"] = { es: { content: "<strong>Diagnóstico computarizado</strong>" }, it: { content: "<strong>Diagnosi computerizzata</strong>" } };
+      t["torque-service-2-text"] = { es: { content: "Escaneo electrónico completo del motor y sistemas eléctricos con equipo de escáner profesional." }, it: { content: "Scansione elettronica completa del motore e dei sistemi elettrici con apparecchiature professionali." } };
+      t["torque-service-3-icon"] = { es: { title: "Garantía por escrito" }, it: { title: "Garanzia scritta" } };
+      t["torque-service-3-title"] = { es: { content: "<strong>Garantía por escrito</strong>" }, it: { content: "<strong>Garanzia scritta</strong>" } };
+      t["torque-service-3-text"] = { es: { content: "Toda reparación mayor incluye garantía de 6 meses o 10,000 km, lo que ocurra primero." }, it: { content: "Ogni riparazione importante include una garanzia di 6 mesi o 10.000 km, a seconda di cosa avviene prima." } };
 
-      t["torque-testimonials-title"] = { en: { content: "<strong>What our customers say</strong>" }, it: { content: "<strong>Cosa dicono i nostri clienti</strong>" } };
-      t["torque-testimonial-1-quote"] = {
-        en: {
-          content:
-            "<p>I brought my car in thinking it was the transmission and it was just a sensor. Total honesty, they didn't overcharge me.</p>",
-        },
-        it: {
-          content:
-            "<p>Ho portato la macchina pensando fosse il cambio ed era solo un sensore. Onestà totale, non mi hanno sovraccaricato.</p>",
-        },
-      };
-      t["torque-testimonial-1-name"] = {
-        en: { content: "<strong>Rodrigo Elizalde</strong>" },
-        it: { content: "<strong>Rodrigo Elizalde</strong>" },
-      };
-      t["torque-testimonial-1-role"] = {
-        en: { content: "Customer since 2021" },
-        it: { content: "Cliente dal 2021" },
-      };
-      t["torque-testimonial-2-quote"] = {
-        en: {
-          content:
-            "<p>The free diagnostic saved me from a very expensive quote at another shop. Now I bring both family cars here.</p>",
-        },
-        it: {
-          content:
-            "<p>La diagnosi gratuita mi ha risparmiato un preventivo carissimo in un'altra officina. Ora porto qui entrambe le auto di famiglia.</p>",
-        },
-      };
-      t["torque-testimonial-2-name"] = {
-        en: { content: "<strong>Fernanda Ibarra</strong>" },
-        it: { content: "<strong>Fernanda Ibarra</strong>" },
-      };
-      t["torque-testimonial-2-role"] = {
-        en: { content: "Customer since 2023" },
-        it: { content: "Cliente dal 2023" },
-      };
+      t["torque-testimonials-title"] = { es: { content: "<strong>Lo que dicen nuestros clientes</strong>" }, it: { content: "<strong>Cosa dicono i nostri clienti</strong>" } };
+      t["torque-testimonial-1-quote"] = { es: { content: "<p>Llevé mi auto pensando que era la transmisión y solo era un sensor. Honestidad total, no me cobraron de más.</p>" }, it: { content: "<p>Ho portato la macchina pensando fosse il cambio ed era solo un sensore. Onestà totale, non mi hanno sovraccaricato.</p>" } };
+      t["torque-testimonial-1-name"] = { es: { content: "<strong>Rodrigo Elizalde</strong>" }, it: { content: "<strong>Rodrigo Elizalde</strong>" } };
+      t["torque-testimonial-1-role"] = { es: { content: "Cliente desde 2021" }, it: { content: "Cliente dal 2021" } };
+      t["torque-testimonial-2-quote"] = { es: { content: "<p>El diagnóstico sin costo me ahorró una cotización carísima en otro taller. Ahora llevo los dos autos de la familia aquí.</p>" }, it: { content: "<p>La diagnosi gratuita mi ha risparmiato un preventivo carissimo in un'altra officina. Ora porto qui entrambe le auto di famiglia.</p>" } };
+      t["torque-testimonial-2-name"] = { es: { content: "<strong>Fernanda Ibarra</strong>" }, it: { content: "<strong>Fernanda Ibarra</strong>" } };
+      t["torque-testimonial-2-role"] = { es: { content: "Cliente desde 2023" }, it: { content: "Cliente dal 2023" } };
 
-      t["torque-faq-title"] = { en: { content: "<strong>Frequently asked questions</strong>" }, it: { content: "<strong>Domande frequenti</strong>" } };
-      t["torque-faq-item-1"] = { en: { label: "Is the diagnostic really free?" }, it: { label: "La diagnosi è davvero gratuita?" } };
-      t["torque-faq-item-1-body"] = {
-        en: { content: "Yes. The scan and 30-point inspection are free, whether or not you accept the repair we propose." },
-        it: { content: "Sì. La scansione e il controllo di 30 punti sono gratuiti, indipendentemente dal fatto che tu accetti la riparazione proposta." },
-      };
-      t["torque-faq-item-2"] = { en: { label: "Do you use original or generic parts?" }, it: { label: "Usate ricambi originali o generici?" } };
-      t["torque-faq-item-2-body"] = {
-        en: { content: "We work with original parts by default; if a certified quality generic alternative exists, we offer it as an option with the corresponding savings." },
-        it: { content: "Lavoriamo con ricambi originali per impostazione predefinita; se esiste un'alternativa generica di qualità certificata, te la offriamo come opzione con il relativo risparmio." },
-      };
-      t["torque-faq-item-3"] = { en: { label: "How long until I get my car back?" }, it: { label: "Quanto tempo impiegate per restituire l'auto?" } };
-      t["torque-faq-item-3-body"] = {
-        en: { content: "Preventive maintenance is delivered the same day. For major repairs we give you a written time estimate before authorizing the work." },
-        it: { content: "La manutenzione preventiva viene consegnata lo stesso giorno. Per le riparazioni importanti forniamo una stima scritta prima di autorizzare il lavoro." },
-      };
+      t["torque-faq-title"] = { es: { content: "<strong>Preguntas frecuentes</strong>" }, it: { content: "<strong>Domande frequenti</strong>" } };
+      t["torque-faq-item-1"] = { es: { label: "¿El diagnóstico realmente no tiene costo?" }, it: { label: "La diagnosi è davvero gratuita?" } };
+      t["torque-faq-item-1-body"] = { es: { content: "Correcto. El escaneo y la revisión de 30 puntos no tienen costo, aceptes o no la reparación que propongamos." }, it: { content: "Sì. La scansione e il controllo di 30 punti sono gratuiti, indipendentemente dal fatto che tu accetti la riparazione proposta." } };
+      t["torque-faq-item-2"] = { es: { label: "¿Usan repuestos originales o genéricos?" }, it: { label: "Usate ricambi originali o generici?" } };
+      t["torque-faq-item-2-body"] = { es: { content: "Trabajamos con repuestos originales por defecto; si existe una alternativa genérica de calidad certificada, te la ofrecemos como opción con el ahorro correspondiente." }, it: { content: "Lavoriamo con ricambi originali per impostazione predefinita; se esiste un'alternativa generica di qualità certificata, te la offriamo come opzione con il relativo risparmio." } };
+      t["torque-faq-item-3"] = { es: { label: "¿Cuánto tiempo tardan en devolverme el auto?" }, it: { label: "Quanto tempo impiegate per restituire l'auto?" } };
+      t["torque-faq-item-3-body"] = { es: { content: "El mantenimiento preventivo se entrega el mismo día. Las reparaciones mayores te damos un tiempo estimado por escrito antes de autorizar el trabajo." }, it: { content: "La manutenzione preventiva viene consegnata lo stesso giorno. Per le riparazioni importanti forniamo una stima scritta prima di autorizzare il lavoro." } };
 
-      t["torque-alert"] = {
-        en: { message: "We receive vehicles Monday to Saturday, 8:00 AM to 6:00 PM. The initial diagnostic is free and does not commit you to repairing with us." },
-        it: { message: "Riceviamo veicoli dal lunedì al sabato, dalle 8:00 alle 18:00. La diagnosi iniziale è gratuita e non ti impegna a riparare con noi." },
-      };
+      t["torque-alert"] = { es: { message: "Recibimos vehículos de lunes a sábado de 8:00 a 18:00. El diagnóstico inicial no tiene costo y no compromete a reparar con nosotros." }, it: { message: "Riceviamo veicoli dal lunedì al sabato, dalle 8:00 alle 18:00. La diagnosi iniziale è gratuita e non ti impegna a riparare con noi." } };
 
-      t["torque-appointment-title"] = { en: { content: "<strong>Book your appointment</strong>" }, it: { content: "<strong>Prenota il tuo appuntamento</strong>" } };
-      t["torque-appointment-sub"] = {
-        en: { content: "Fill out the form and we'll confirm an available time slot within 2 hours." },
-        it: { content: "Compila il modulo e ti confermeremo un orario disponibile entro 2 ore." },
-      };
-      t["torque-label-name"] = { en: { text: "Full name" }, it: { text: "Nome completo" } };
-      t["torque-input-name"] = { en: { placeholder: "Your full name" }, it: { placeholder: "Il tuo nome completo" } };
-      t["torque-label-email"] = { en: { text: "Email" }, it: { text: "Email" } };
-      t["torque-input-email"] = { en: { placeholder: "you@email.com" }, it: { placeholder: "tu@email.com" } };
-      t["torque-label-service"] = { en: { text: "Service needed" }, it: { text: "Servizio richiesto" } };
-      t["torque-select-service"] = {
-        en: {
-          placeholder: "Choose a service…",
-          ariaLabel: "Service needed",
-          options: [
-            { label: "Preventive maintenance", value: "preventivo" },
-            { label: "Computerized diagnostics", value: "diagnostico" },
-            { label: "General repair", value: "reparacion" },
-            { label: "Not sure yet, I want an inspection", value: "revision" },
-          ],
-        },
-        it: {
-          placeholder: "Scegli un servizio…",
-          ariaLabel: "Servizio richiesto",
-          options: [
-            { label: "Manutenzione preventiva", value: "preventivo" },
-            { label: "Diagnosi computerizzata", value: "diagnostico" },
-            { label: "Riparazione generale", value: "reparacion" },
-            { label: "Non sono ancora sicuro, vorrei un controllo", value: "revision" },
-          ],
-        },
-      };
-      t["torque-submit"] = { en: { label: "Request appointment" }, it: { label: "Richiedi appuntamento" } };
+      t["torque-appointment-title"] = { es: { content: "<strong>Agenda tu cita</strong>" }, it: { content: "<strong>Prenota il tuo appuntamento</strong>" } };
+      t["torque-appointment-sub"] = { es: { content: "Completa el formulario y te confirmamos horario disponible en menos de 2 horas." }, it: { content: "Compila il modulo e ti confermeremo un orario disponibile entro 2 ore." } };
+      t["torque-label-name"] = { es: { text: "Nombre completo" }, it: { text: "Nome completo" } };
+      t["torque-input-name"] = { es: { placeholder: "Tu nombre completo" }, it: { placeholder: "Il tuo nome completo" } };
+      t["torque-label-email"] = { es: { text: "Correo electrónico" }, it: { text: "Email" } };
+      t["torque-input-email"] = { es: { placeholder: "tu@correo.com" }, it: { placeholder: "tu@email.com" } };
+      t["torque-label-service"] = { es: { text: "Servicio requerido" }, it: { text: "Servizio richiesto" } };
+      t["torque-select-service"] = { es: { placeholder: "Elige un servicio…", ariaLabel: "Servicio requerido", label: "Aún no lo sé, quiero una revisión", value: "revision" }, it: { placeholder: "Scegli un servizio…", ariaLabel: "Servizio richiesto", label: "Non sono ancora sicuro, vorrei un controllo", value: "revision" } };
+      t["torque-submit"] = { es: { label: "Solicitar cita" }, it: { label: "Richiedi appuntamento" } };
 
-      t["torque-footer-copyright"] = {
-        en: { content: "© 2026 Torque & Fierro Auto Service. All rights reserved." },
-        it: { content: "© 2026 Torque & Fierro Servizio Automotivo. Tutti i diritti riservati." },
-      };
+      t["torque-footer-copyright"] = { es: { content: "© 2026 Torque & Fierro Servicio Automotriz. Todos los derechos reservados." }, it: { content: "© 2026 Torque & Fierro Servizio Automotivo. Tutti i diritti riservati." } };
 
       return t;
     })(),
@@ -842,31 +754,31 @@ export function buildAutoRepairPageFragment(): NodeFragment {
 }
 
 export const autoRepairPageMeta: LayoutPageMeta = {
-  title: "Torque & Fierro · Servicio automotriz y mecánica general",
+  title: "Torque & Fierro · Auto repair and general mechanics",
   description:
-    "Taller mecánico con diagnóstico sin costo, mantenimiento preventivo y reparación general con garantía por escrito. Agenda tu cita.",
+    "Auto repair shop with free diagnostics, preventive maintenance and general repair with a written warranty. Book your appointment.",
   seo: {
     robots: "index,follow",
     openGraph: {
-      title: "Torque & Fierro · Servicio automotriz y mecánica general",
-      description: "Diagnóstico sin costo, mantenimiento preventivo y garantía por escrito. Agenda tu cita hoy.",
+      title: "Torque & Fierro · Auto repair and general mechanics",
+      description: "Free diagnostics, preventive maintenance and a written warranty. Book your appointment today.",
       image: "https://images.unsplash.com/photo-1632823469850-1b7b1e8b7692?w=1200&q=80&auto=format&fit=crop",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "Torque & Fierro · Servicio automotriz y mecánica general",
-      description: "Diagnóstico sin costo, mantenimiento preventivo y garantía por escrito. Agenda tu cita hoy.",
+      title: "Torque & Fierro · Auto repair and general mechanics",
+      description: "Free diagnostics, preventive maintenance and a written warranty. Book your appointment today.",
       image: "https://images.unsplash.com/photo-1632823469850-1b7b1e8b7692?w=1200&q=80&auto=format&fit=crop",
     },
   },
   metaTranslations: {
-    en: {
-      title: "Torque & Fierro · Auto repair and general mechanics",
-      description: "Auto repair shop with free diagnostics, preventive maintenance and general repair with a written warranty. Book your appointment.",
+    es: {
+      title: "Torque & Fierro · Servicio automotriz y mecánica general",
+      description: "Taller mecánico con diagnóstico sin costo, mantenimiento preventivo y reparación general con garantía por escrito. Agenda tu cita.",
       seo: {
-        openGraph: { title: "Torque & Fierro · Auto repair and general mechanics", description: "Free diagnostics, preventive maintenance and a written warranty. Book your appointment today." },
-        twitter: { title: "Torque & Fierro · Auto repair and general mechanics", description: "Free diagnostics, preventive maintenance and a written warranty. Book your appointment today." },
+        openGraph: { title: "Torque & Fierro · Servicio automotriz y mecánica general", description: "Diagnóstico sin costo, mantenimiento preventivo y garantía por escrito. Agenda tu cita hoy." },
+        twitter: { title: "Torque & Fierro · Servicio automotriz y mecánica general", description: "Diagnóstico sin costo, mantenimiento preventivo y garantía por escrito. Agenda tu cita hoy." },
       },
     },
     it: {

@@ -55,6 +55,13 @@
   "container": {
     "emptyDrop": "Suelta aquí"
   },
+  "empty": {
+    "title": "Esta página está vacía",
+    "body": "Empieza con una plantilla, o añade un bloque desde la izquierda.",
+    "useTemplate": "Usar plantilla de inicio",
+    "applying": "Añadiendo plantilla…",
+    "blank": "Dejar en blanco"
+  },
   "pickInsert": {
     "prompt": "Toca dónde colocar «{{label}}»",
     "previewLabel": "Colocar «{{label}}» aquí",

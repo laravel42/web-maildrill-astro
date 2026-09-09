@@ -6,7 +6,7 @@ import { bootstrapDemoSite } from "./bootstrap";
 import "./styles/chrome.css";
 
 const rootEl = document.getElementById("root");
-if (!rootEl) throw new Error("No se encontró el elemento #root");
+if (!rootEl) throw new Error("Could not find #root element");
 
 // Carga el sitio de ejemplo ANTES de montar React (docs/27 §5 Fase 2): evita
 // que `StrictMode` la re-dispare como pasaría si viviera en un efecto.

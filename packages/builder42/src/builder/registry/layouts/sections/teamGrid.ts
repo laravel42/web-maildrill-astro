@@ -11,7 +11,7 @@ import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
  * iniciales). Se reemplazan por retratos reales de Unsplash
  * (`images.unsplash.com/photo-<id>?...&crop=faces`) y los nombres/roles se
  * alinean a un equipo de producto/soporte de una empresa de mensajería
- * multicanal (Customer Success, Producto, Ingeniería de Deliverability) en
+ * multicanal (Customer Success, Producto, Deliverability engineering) en
  * vez de roles genéricos.
  *
  * Pulido de diseño (feedback: sombra plana, radios inconsistentes): las 3
@@ -74,7 +74,7 @@ export function buildTeamGridFragment(): NodeFragment {
             kind: "url",
             url: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=200&q=80&auto=format&fit=crop&crop=faces",
           },
-          alt: "Retrato de Laura Gómez",
+          alt: "Portrait of Laura Gomez",
           initials: "LG",
         },
         style: avatarStyle,
@@ -88,7 +88,7 @@ export function buildTeamGridFragment(): NodeFragment {
       "team-grid-1-role": {
         id: "team-grid-1-role",
         type: "text",
-        props: { content: "Producto — Mensajería multicanal" },
+        props: { content: "Product — Multichannel messaging" },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
       "team-grid-2": {
@@ -106,7 +106,7 @@ export function buildTeamGridFragment(): NodeFragment {
             kind: "url",
             url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80&auto=format&fit=crop&crop=faces",
           },
-          alt: "Retrato de Diego Peralta",
+          alt: "Portrait of Diego Peralta",
           initials: "DP",
         },
         style: avatarStyle,
@@ -120,7 +120,7 @@ export function buildTeamGridFragment(): NodeFragment {
       "team-grid-2-role": {
         id: "team-grid-2-role",
         type: "text",
-        props: { content: "Ingeniería de Deliverability" },
+        props: { content: "Deliverability engineering" },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
       "team-grid-3": {
@@ -138,7 +138,7 @@ export function buildTeamGridFragment(): NodeFragment {
             kind: "url",
             url: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&q=80&auto=format&fit=crop&crop=faces",
           },
-          alt: "Retrato de Sara Núñez",
+          alt: "Portrait of Sara Nunez",
           initials: "SN",
         },
         style: avatarStyle,

@@ -70,7 +70,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-topbar-schedule": {
         id: "fitness-topbar-schedule",
         type: "text",
-        props: { content: "Lunes a viernes 6:00–22:00 · Sábados 8:00–14:00" },
+        props: { content: "Monday to Friday 6:00–22:00 · Saturdays 8:00–14:00" },
         style: { base: { appearance: { color: { token: "colors.surface.default" } } } },
       },
       "fitness-topbar-lang": {
@@ -134,7 +134,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-hero-title": {
         id: "fitness-hero-title",
         type: "text",
-        props: { content: "<strong>Entrena fuerte, entrena en comunidad</strong>" },
+        props: { content: "<strong>Train hard, train together</strong>" },
         style: {
           base: {
             size: { maxWidth: "22ch" },
@@ -153,7 +153,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         type: "text",
         props: {
           content:
-            "Clases de fuerza, cardio y movilidad para todos los niveles, con entrenadores certificados y horarios flexibles.",
+            "Strength, cardio and mobility classes for every level, with certified coaches and flexible schedules.",
         },
         style: {
           base: {
@@ -170,7 +170,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-hero-cta": {
         id: "fitness-hero-cta",
         type: "button",
-        props: { label: "Primera clase gratis", link: { kind: "anchor", nodeId: "fitness-signup" } },
+        props: { label: "First class free", link: { kind: "anchor", nodeId: "fitness-signup" } },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -223,7 +223,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-schedule-title": {
         id: "fitness-schedule-title",
         type: "text",
-        props: { content: "<strong>Horario semanal de clases</strong>" },
+        props: { content: "<strong>Weekly class schedule</strong>" },
         style: {
           base: {
             typography: { fontSize: "clamp(1.75rem, 4vw, 2.5rem)", fontWeight: { token: "typography.weights.bold" }, lineHeight: "1.15" },
@@ -234,7 +234,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-schedule-sub": {
         id: "fitness-schedule-sub",
         type: "text",
-        props: { content: "Elige el tipo de entrenamiento que mejor se adapta a tu objetivo." },
+        props: { content: "Pick the type of training that best fits your goal." },
         style: {
           base: {
             size: { maxWidth: "62ch" },
@@ -304,7 +304,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-tab-strength": {
         id: "fitness-tab-strength",
         type: "text",
-        props: { content: "<strong>Fuerza</strong>" },
+        props: { content: "<strong>Strength</strong>" },
         style: {
           base: {
             typography: { fontFamily: { token: "typography.families.sans" }, fontSize: "1.25rem", fontWeight: { token: "typography.weights.bold" } },
@@ -317,7 +317,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         type: "text",
         props: {
           content:
-            "<p>Lunes, miércoles y viernes · 7:00, 13:00 y 19:00. Trabajo con barra, mancuernas y peso corporal, en grupos reducidos.</p>",
+            "<p>Monday, Wednesday and Friday · 7:00, 13:00 and 19:00. Barbell, dumbbell and bodyweight work, in small groups.</p>",
         },
         style: { base: { size: { maxWidth: "70ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
@@ -379,7 +379,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         type: "text",
         props: {
           content:
-            "<p>Martes y jueves · 6:30, 12:00 y 18:30. Sesiones de intervalos (HIIT) y resistencia cardiovascular de 45 minutos.</p>",
+            "<p>Tuesday and Thursday · 6:30, 12:00 and 18:30. 45-minute HIIT intervals and cardiovascular endurance sessions.</p>",
         },
         style: { base: { size: { maxWidth: "70ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
@@ -427,7 +427,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-tab-mobility": {
         id: "fitness-tab-mobility",
         type: "text",
-        props: { content: "<strong>Movilidad</strong>" },
+        props: { content: "<strong>Mobility</strong>" },
         style: {
           base: {
             typography: { fontFamily: { token: "typography.families.sans" }, fontSize: "1.25rem", fontWeight: { token: "typography.weights.bold" } },
@@ -440,7 +440,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         type: "text",
         props: {
           content:
-            "<p>Sábados · 9:00 y 10:30. Estiramiento guiado, movilidad articular y respiración, ideal para complementar tu semana.</p>",
+            "<p>Saturdays · 9:00 and 10:30. Guided stretching, joint mobility and breathing, great to complement your week.</p>",
         },
         style: { base: { size: { maxWidth: "70ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
@@ -475,7 +475,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         },
         children: ["fitness-stat-members", "fitness-stat-coaches", "fitness-stat-classes"],
       },
-      ...statFragment("fitness-stat-members", { value: "+850", label: "socios activos" }, {
+      ...statFragment("fitness-stat-members", { value: "+850", label: "active members" }, {
         base: {
           layout: { display: "block" },
           spacing: { padding: "20px" },
@@ -489,7 +489,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         },
         overrides: { md: { spacing: { padding: "28px" } } },
       }),
-      ...statFragment("fitness-stat-coaches", { value: "12", label: "entrenadores certificados" }, {
+      ...statFragment("fitness-stat-coaches", { value: "12", label: "certified coaches" }, {
         base: {
           layout: { display: "block" },
           spacing: { padding: "20px" },
@@ -503,7 +503,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         },
         overrides: { md: { spacing: { padding: "28px" } } },
       }),
-      ...statFragment("fitness-stat-classes", { value: "45", label: "clases por semana" }, {
+      ...statFragment("fitness-stat-classes", { value: "45", label: "classes per week" }, {
         base: {
           layout: { display: "block" },
           spacing: { padding: "20px" },
@@ -553,7 +553,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-plans-title": {
         id: "fitness-plans-title",
         type: "text",
-        props: { content: "<strong>Elige tu plan de membresía</strong>" },
+        props: { content: "<strong>Choose your membership plan</strong>" },
         style: {
           base: {
             typography: { fontSize: "clamp(1.75rem, 4vw, 2.5rem)", fontWeight: { token: "typography.weights.bold" }, lineHeight: "1.15", textAlign: "center" },
@@ -579,11 +579,11 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       ...pricingCardFragment(
         "fitness-plan-monthly",
         {
-          planName: "Mensual",
+          planName: "Monthly",
           price: "$650",
-          period: "MXN/mes",
-          features: ["Acceso a todas las clases", "Evaluación física inicial", "Sin permanencia"],
-          ctaLabel: "Quiero inscribirme",
+          period: "MXN/month",
+          features: ["Access to all classes", "Initial fitness assessment", "No commitment"],
+          ctaLabel: "I want to sign up",
           ctaLink: { kind: "anchor", nodeId: "fitness-signup" },
           popular: false,
           popularLabel: "Popular",
@@ -615,14 +615,14 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       ...pricingCardFragment(
         "fitness-plan-quarterly",
         {
-          planName: "Trimestral",
+          planName: "Quarterly",
           price: "$1,750",
-          period: "MXN/3 meses",
-          features: ["Acceso a todas las clases", "Evaluación física cada mes", "1 clase de nutrición incluida"],
-          ctaLabel: "Quiero inscribirme",
+          period: "MXN/3 months",
+          features: ["Access to all classes", "Monthly fitness assessment", "1 nutrition class included"],
+          ctaLabel: "I want to sign up",
           ctaLink: { kind: "anchor", nodeId: "fitness-signup" },
           popular: true,
-          popularLabel: "Más elegido",
+          popularLabel: "Most popular",
         },
         {
           base: {
@@ -651,11 +651,11 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       ...pricingCardFragment(
         "fitness-plan-annual",
         {
-          planName: "Anual",
+          planName: "Annual",
           price: "$6,200",
-          period: "MXN/año",
-          features: ["Acceso a todas las clases", "Evaluación física mensual", "Congelamiento de hasta 30 días"],
-          ctaLabel: "Quiero inscribirme",
+          period: "MXN/year",
+          features: ["Access to all classes", "Monthly fitness assessment", "Up to 30 days freeze"],
+          ctaLabel: "I want to sign up",
           ctaLink: { kind: "anchor", nodeId: "fitness-signup" },
           popular: false,
           popularLabel: "Popular",
@@ -718,9 +718,9 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
         "fitness-testimonial",
         {
           quote:
-            "Llevo ocho meses entrenando en Vértice y es la primera vez que sostengo una rutina sin perder la motivación. Los entrenadores realmente te acompañan.",
+            "I've been training at Vértice for eight months and it's the first time I've kept up a routine without losing motivation. The coaches really support you.",
           name: "Paola Jiménez",
-          role: "Socia desde 2025",
+          role: "Member since 2025",
           initials: "PJ",
         },
         defaultStyleFor("testimonial"),
@@ -759,7 +759,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-faq-title": {
         id: "fitness-faq-title",
         type: "text",
-        props: { content: "<strong>Preguntas frecuentes</strong>" },
+        props: { content: "<strong>Frequently asked questions</strong>" },
         style: {
           base: {
             typography: { fontSize: "clamp(1.75rem, 4vw, 2.5rem)", fontWeight: { token: "typography.weights.bold" }, lineHeight: "1.15" },
@@ -778,40 +778,40 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-faq-item-1": {
         id: "fitness-faq-item-1",
         type: "accordion-item",
-        props: { label: "¿Puedo congelar mi membresía?", openByDefault: true },
+        props: { label: "Can I freeze my membership?", openByDefault: true },
         style: defaultStyleFor("accordion-item"),
         children: ["fitness-faq-item-1-body"],
       },
       "fitness-faq-item-1-body": {
         id: "fitness-faq-item-1-body",
         type: "text",
-        props: { content: "Sí, el plan trimestral y anual permiten congelar la membresía hasta por 30 días al año, avisando con una semana de anticipación en recepción." },
+        props: { content: "Yes, the quarterly and annual plans allow you to freeze your membership for up to 30 days a year, with one week's notice at the front desk." },
         style: { base: { size: { maxWidth: "70ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
       "fitness-faq-item-2": {
         id: "fitness-faq-item-2",
         type: "accordion-item",
-        props: { label: "¿El estudio tiene duchas y casilleros?", openByDefault: false },
+        props: { label: "Does the studio have showers and lockers?", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["fitness-faq-item-2-body"],
       },
       "fitness-faq-item-2-body": {
         id: "fitness-faq-item-2-body",
         type: "text",
-        props: { content: "Sí, contamos con vestidores con regaderas y casilleros diarios sin costo adicional; solo debes traer tu candado." },
+        props: { content: "Yes, we have changing rooms with showers and daily lockers at no extra cost; just bring your own lock." },
         style: { base: { size: { maxWidth: "70ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
       "fitness-faq-item-3": {
         id: "fitness-faq-item-3",
         type: "accordion-item",
-        props: { label: "¿Puedo probar una clase antes de inscribirme?", openByDefault: false },
+        props: { label: "Can I try a class before signing up?", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["fitness-faq-item-3-body"],
       },
       "fitness-faq-item-3-body": {
         id: "fitness-faq-item-3-body",
         type: "text",
-        props: { content: "Claro, tu primera clase es completamente gratis. Solo agenda tu horario preferido desde el formulario de inscripción." },
+        props: { content: "Of course, your first class is completely free. Just book your preferred time through the sign-up form." },
         style: { base: { size: { maxWidth: "70ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
 
@@ -855,7 +855,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-signup-title": {
         id: "fitness-signup-title",
         type: "text",
-        props: { content: "<strong>Agenda tu primera clase gratis</strong>" },
+        props: { content: "<strong>Book your free first class</strong>" },
         style: {
           base: {
             typography: {
@@ -871,7 +871,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-signup-sub": {
         id: "fitness-signup-sub",
         type: "text",
-        props: { content: "Déjanos tus datos y un asesor te contactará para confirmar tu horario." },
+        props: { content: "Leave us your details and an advisor will contact you to confirm your schedule." },
         style: {
           base: {
             typography: { fontSize: "clamp(1rem, 1.6vw, 1.125rem)" },
@@ -919,13 +919,13 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-label-name": {
         id: "fitness-label-name",
         type: "label",
-        props: { text: "Nombre completo", for: "fitness-input-name" },
+        props: { text: "Full name", for: "fitness-input-name" },
         style: defaultStyleFor("label"),
       },
       "fitness-input-name": {
         id: "fitness-input-name",
         type: "input",
-        props: { name: "nombre", type: "text", placeholder: "Tu nombre completo", required: true, disabled: false },
+        props: { name: "nombre", type: "text", placeholder: "Your full name", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "fitness-field-email": {
@@ -938,13 +938,13 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-label-email": {
         id: "fitness-label-email",
         type: "label",
-        props: { text: "Correo electrónico", for: "fitness-input-email" },
+        props: { text: "Email", for: "fitness-input-email" },
         style: defaultStyleFor("label"),
       },
       "fitness-input-email": {
         id: "fitness-input-email",
         type: "input",
-        props: { name: "email", type: "email", placeholder: "tu@correo.com", required: true, disabled: false },
+        props: { name: "email", type: "email", placeholder: "you@email.com", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "fitness-field-phone": {
@@ -957,7 +957,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-label-phone": {
         id: "fitness-label-phone",
         type: "label",
-        props: { text: "Teléfono", for: "fitness-input-phone" },
+        props: { text: "Phone", for: "fitness-input-phone" },
         style: defaultStyleFor("label"),
       },
       "fitness-input-phone": {
@@ -969,7 +969,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-submit": {
         id: "fitness-submit",
         type: "button-submit",
-        props: { label: "Reservar mi clase gratis", disabled: false },
+        props: { label: "Book my free class", disabled: false },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -1012,7 +1012,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-footer-address": {
         id: "fitness-footer-address",
         type: "text",
-        props: { content: "Av. de los Deportistas 245, Col. Las Águilas, Guadalajara, Jalisco" },
+        props: { content: "245 Athletes Ave, Las Águilas, Guadalajara, Jalisco" },
         style: { base: { appearance: { color: { token: "colors.surface.default" } } } },
       },
       "fitness-footer-social": {
@@ -1024,7 +1024,7 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
       "fitness-footer-copyright": {
         id: "fitness-footer-copyright",
         type: "text",
-        props: { content: "© 2026 Vértice Fitness Studio. Todos los derechos reservados." },
+        props: { content: "© 2026 Vértice Fitness Studio. All rights reserved." },
         style: {
           base: {
             size: { width: "100%" },
@@ -1043,227 +1043,74 @@ export function buildFitnessStudioPageFragment(): NodeFragment {
   };
 
   const translations: Record<string, NodeTranslations> = {
-    "fitness-topbar-schedule": {
-      en: { content: "Monday to Friday 6:00–22:00 · Saturdays 8:00–14:00" },
-      it: { content: "Lunedì-venerdì 6:00–22:00 · Sabato 8:00–14:00" },
-    },
-    "fitness-navbar-brand": {
-      en: { content: "<strong>Vértice Fitness Studio</strong>" },
-      it: { content: "<strong>Vértice Fitness Studio</strong>" },
-    },
-    "fitness-hero-title": {
-      en: { content: "<strong>Train hard, train together</strong>" },
-      it: { content: "<strong>Allenati forte, allenati in comunità</strong>" },
-    },
-    "fitness-hero-sub": {
-      en: {
-        content:
-          "Strength, cardio and mobility classes for every level, with certified coaches and flexible schedules.",
-      },
-      it: {
-        content:
-          "Corsi di forza, cardio e mobilità per tutti i livelli, con allenatori certificati e orari flessibili.",
-      },
-    },
-    "fitness-hero-cta": {
-      en: { label: "First class free" },
-      it: { label: "Prima lezione gratis" },
-    },
-    "fitness-schedule-title": {
-      en: { content: "<strong>Weekly class schedule</strong>" },
-      it: { content: "<strong>Orario settimanale delle lezioni</strong>" },
-    },
-    "fitness-schedule-sub": {
-      en: { content: "Pick the type of training that best fits your goal." },
-      it: { content: "Scegli il tipo di allenamento più adatto al tuo obiettivo." },
-    },
-    "fitness-timeline-step-1-number": { en: { content: "01" }, it: { content: "01" } },
-    "fitness-timeline-step-2-number": { en: { content: "02" }, it: { content: "02" } },
-    "fitness-timeline-step-3-number": { en: { content: "03" }, it: { content: "03" } },
-    "fitness-tab-strength": {
-      en: { content: "<strong>Strength</strong>" },
-      it: { content: "<strong>Forza</strong>" },
-    },
-    "fitness-tab-strength-text": {
-      en: {
-        content:
-          "<p>Monday, Wednesday and Friday · 7:00, 13:00 and 19:00. Barbell, dumbbell and bodyweight work, in small groups.</p>",
-      },
-      it: {
-        content:
-          "<p>Lunedì, mercoledì e venerdì · 7:00, 13:00 e 19:00. Lavoro con bilanciere, manubri e corpo libero, in piccoli gruppi.</p>",
-      },
-    },
-    "fitness-tab-cardio": {
-      en: { content: "<strong>Cardio</strong>" },
-      it: { content: "<strong>Cardio</strong>" },
-    },
-    "fitness-tab-cardio-text": {
-      en: {
-        content:
-          "<p>Tuesday and Thursday · 6:30, 12:00 and 18:30. 45-minute HIIT intervals and cardiovascular endurance sessions.</p>",
-      },
-      it: {
-        content:
-          "<p>Martedì e giovedì · 6:30, 12:00 e 18:30. Sessioni HIIT e di resistenza cardiovascolare di 45 minuti.</p>",
-      },
-    },
-    "fitness-tab-mobility": {
-      en: { content: "<strong>Mobility</strong>" },
-      it: { content: "<strong>Mobilità</strong>" },
-    },
-    "fitness-tab-mobility-text": {
-      en: {
-        content:
-          "<p>Saturdays · 9:00 and 10:30. Guided stretching, joint mobility and breathing, great to complement your week.</p>",
-      },
-      it: {
-        content:
-          "<p>Sabato · 9:00 e 10:30. Stretching guidato, mobilità articolare e respirazione, ideale per completare la settimana.</p>",
-      },
-    },
-    "fitness-stat-members-value": { en: { value: "+850" }, it: { value: "+850" } },
-    "fitness-stat-members-label": { en: { content: "active members" }, it: { content: "iscritti attivi" } },
-    "fitness-stat-coaches-value": { en: { value: "12" }, it: { value: "12" } },
-    "fitness-stat-coaches-label": { en: { content: "certified coaches" }, it: { content: "allenatori certificati" } },
-    "fitness-stat-classes-value": { en: { value: "45" }, it: { value: "45" } },
-    "fitness-stat-classes-label": { en: { content: "classes per week" }, it: { content: "lezioni a settimana" } },
-    "fitness-plans-title": {
-      en: { content: "<strong>Choose your membership plan</strong>" },
-      it: { content: "<strong>Scegli il tuo piano di abbonamento</strong>" },
-    },
-    "fitness-plan-monthly-plan": { en: { content: "Monthly" }, it: { content: "Mensile" } },
-    "fitness-plan-monthly-price": { en: { content: "$650" }, it: { content: "$650" } },
-    "fitness-plan-monthly-period": { en: { content: "MXN/month" }, it: { content: "MXN/mese" } },
-    "fitness-plan-monthly-feature-0-text": { en: { content: "✓ Access to all classes" }, it: { content: "✓ Accesso a tutte le lezioni" } },
-    "fitness-plan-monthly-feature-1-text": { en: { content: "✓ Initial fitness assessment" }, it: { content: "✓ Valutazione fisica iniziale" } },
-    "fitness-plan-monthly-feature-2-text": { en: { content: "✓ No commitment" }, it: { content: "✓ Nessun vincolo" } },
-    "fitness-plan-monthly-cta": { en: { label: "I want to sign up" }, it: { label: "Voglio iscrivermi" } },
+    "fitness-topbar-schedule": { es: { content: "Lunes a viernes 6:00–22:00 · Sábados 8:00–14:00" }, it: { content: "Lunedì-venerdì 6:00–22:00 · Sabato 8:00–14:00" } },
+    "fitness-navbar-brand": { es: { content: "<strong>Vértice Fitness Studio</strong>" }, it: { content: "<strong>Vértice Fitness Studio</strong>" } },
+    "fitness-hero-title": { es: { content: "<strong>Entrena fuerte, entrena en comunidad</strong>" }, it: { content: "<strong>Allenati forte, allenati in comunità</strong>" } },
+    "fitness-hero-sub": { es: { content: "Clases de fuerza, cardio y movilidad para todos los niveles, con entrenadores certificados y horarios flexibles." }, it: { content: "Corsi di forza, cardio e mobilità per tutti i livelli, con allenatori certificati e orari flessibili." } },
+    "fitness-hero-cta": { es: { label: "Primera clase gratis" }, it: { label: "Prima lezione gratis" } },
+    "fitness-schedule-title": { es: { content: "<strong>Horario semanal de clases</strong>" }, it: { content: "<strong>Orario settimanale delle lezioni</strong>" } },
+    "fitness-schedule-sub": { es: { content: "Elige el tipo de entrenamiento que mejor se adapta a tu objetivo." }, it: { content: "Scegli il tipo di allenamento più adatto al tuo obiettivo." } },
+    "fitness-timeline-step-1-number": { es: { content: "01" }, it: { content: "01" } },
+    "fitness-timeline-step-2-number": { es: { content: "02" }, it: { content: "02" } },
+    "fitness-timeline-step-3-number": { es: { content: "03" }, it: { content: "03" } },
+    "fitness-tab-strength": { es: { content: "<strong>Fuerza</strong>" }, it: { content: "<strong>Forza</strong>" } },
+    "fitness-tab-strength-text": { es: { content: "<p>Lunes, miércoles y viernes · 7:00, 13:00 y 19:00. Trabajo con barra, mancuernas y peso corporal, en grupos reducidos.</p>" }, it: { content: "<p>Lunedì, mercoledì e venerdì · 7:00, 13:00 e 19:00. Lavoro con bilanciere, manubri e corpo libero, in piccoli gruppi.</p>" } },
+    "fitness-tab-cardio": { es: { content: "<strong>Cardio</strong>" }, it: { content: "<strong>Cardio</strong>" } },
+    "fitness-tab-cardio-text": { es: { content: "<p>Martes y jueves · 6:30, 12:00 y 18:30. Sesiones de intervalos (HIIT) y resistencia cardiovascular de 45 minutos.</p>" }, it: { content: "<p>Martedì e giovedì · 6:30, 12:00 e 18:30. Sessioni HIIT e di resistenza cardiovascolare di 45 minuti.</p>" } },
+    "fitness-tab-mobility": { es: { content: "<strong>Movilidad</strong>" }, it: { content: "<strong>Mobilità</strong>" } },
+    "fitness-tab-mobility-text": { es: { content: "<p>Sábados · 9:00 y 10:30. Estiramiento guiado, movilidad articular y respiración, ideal para complementar tu semana.</p>" }, it: { content: "<p>Sabato · 9:00 e 10:30. Stretching guidato, mobilità articolare e respirazione, ideale per completare la settimana.</p>" } },
+    "fitness-stat-members-value": { es: { value: "+850" }, it: { value: "+850" } },
+    "fitness-stat-members-label": { es: { content: "socios activos" }, it: { content: "iscritti attivi" } },
+    "fitness-stat-coaches-value": { es: { value: "12" }, it: { value: "12" } },
+    "fitness-stat-coaches-label": { es: { content: "entrenadores certificados" }, it: { content: "allenatori certificati" } },
+    "fitness-stat-classes-value": { es: { value: "45" }, it: { value: "45" } },
+    "fitness-stat-classes-label": { es: { content: "clases por semana" }, it: { content: "lezioni a settimana" } },
+    "fitness-plans-title": { es: { content: "<strong>Elige tu plan de membresía</strong>" }, it: { content: "<strong>Scegli il tuo piano di abbonamento</strong>" } },
+    "fitness-plan-monthly-plan": { es: { content: "Mensual" }, it: { content: "Mensile" } },
+    "fitness-plan-monthly-price": { es: { content: "$650" }, it: { content: "$650" } },
+    "fitness-plan-monthly-period": { es: { content: "MXN/mes" }, it: { content: "MXN/mese" } },
+    "fitness-plan-monthly-feature-0-text": { es: { content: "✓ Acceso a todas las clases" }, it: { content: "✓ Accesso a tutte le lezioni" } },
+    "fitness-plan-monthly-feature-1-text": { es: { content: "✓ Evaluación física inicial" }, it: { content: "✓ Valutazione fisica iniziale" } },
+    "fitness-plan-monthly-feature-2-text": { es: { content: "✓ Sin permanencia" }, it: { content: "✓ Nessun vincolo" } },
+    "fitness-plan-monthly-cta": { es: { label: "Quiero inscribirme" }, it: { label: "Voglio iscrivermi" } },
 
-    "fitness-plan-quarterly-badge": { en: { content: "Most popular" }, it: { content: "Più scelto" } },
-    "fitness-plan-quarterly-plan": { en: { content: "Quarterly" }, it: { content: "Trimestrale" } },
-    "fitness-plan-quarterly-price": { en: { content: "$1,750" }, it: { content: "$1.750" } },
-    "fitness-plan-quarterly-period": { en: { content: "MXN/3 months" }, it: { content: "MXN/3 mesi" } },
-    "fitness-plan-quarterly-feature-0-text": { en: { content: "✓ Access to all classes" }, it: { content: "✓ Accesso a tutte le lezioni" } },
-    "fitness-plan-quarterly-feature-1-text": { en: { content: "✓ Monthly fitness assessment" }, it: { content: "✓ Valutazione fisica mensile" } },
-    "fitness-plan-quarterly-feature-2-text": { en: { content: "✓ 1 nutrition class included" }, it: { content: "✓ 1 lezione di nutrizione inclusa" } },
-    "fitness-plan-quarterly-cta": { en: { label: "I want to sign up" }, it: { label: "Voglio iscrivermi" } },
+    "fitness-plan-quarterly-badge": { es: { content: "Más elegido" }, it: { content: "Più scelto" } },
+    "fitness-plan-quarterly-plan": { es: { content: "Trimestral" }, it: { content: "Trimestrale" } },
+    "fitness-plan-quarterly-price": { es: { content: "$1,750" }, it: { content: "$1.750" } },
+    "fitness-plan-quarterly-period": { es: { content: "MXN/3 meses" }, it: { content: "MXN/3 mesi" } },
+    "fitness-plan-quarterly-feature-0-text": { es: { content: "✓ Acceso a todas las clases" }, it: { content: "✓ Accesso a tutte le lezioni" } },
+    "fitness-plan-quarterly-feature-1-text": { es: { content: "✓ Evaluación física cada mes" }, it: { content: "✓ Valutazione fisica mensile" } },
+    "fitness-plan-quarterly-feature-2-text": { es: { content: "✓ 1 clase de nutrición incluida" }, it: { content: "✓ 1 lezione di nutrizione inclusa" } },
+    "fitness-plan-quarterly-cta": { es: { label: "Quiero inscribirme" }, it: { label: "Voglio iscrivermi" } },
 
-    "fitness-plan-annual-plan": { en: { content: "Annual" }, it: { content: "Annuale" } },
-    "fitness-plan-annual-price": { en: { content: "$6,200" }, it: { content: "$6.200" } },
-    "fitness-plan-annual-period": { en: { content: "MXN/year" }, it: { content: "MXN/anno" } },
-    "fitness-plan-annual-feature-0-text": { en: { content: "✓ Access to all classes" }, it: { content: "✓ Accesso a tutte le lezioni" } },
-    "fitness-plan-annual-feature-1-text": { en: { content: "✓ Monthly fitness assessment" }, it: { content: "✓ Valutazione fisica mensile" } },
-    "fitness-plan-annual-feature-2-text": { en: { content: "✓ Up to 30 days freeze" }, it: { content: "✓ Congelamento fino a 30 giorni" } },
-    "fitness-plan-annual-cta": { en: { label: "I want to sign up" }, it: { label: "Voglio iscrivermi" } },
-    "fitness-testimonial-quote": {
-      en: {
-        content:
-          "<p>I've been training at Vértice for eight months and it's the first time I've kept up a routine without losing motivation. The coaches really support you.</p>",
-      },
-      it: {
-        content:
-          "<p>Mi alleno da Vértice da otto mesi ed è la prima volta che riesco a mantenere una routine senza perdere la motivazione. Gli allenatori ti seguono davvero.</p>",
-      },
-    },
-    "fitness-testimonial-name": {
-      en: { content: "<strong>Paola Jiménez</strong>" },
-      it: { content: "<strong>Paola Jiménez</strong>" },
-    },
-    "fitness-testimonial-role": {
-      en: { content: "Member since 2025" },
-      it: { content: "Iscritta dal 2025" },
-    },
-    "fitness-faq-title": {
-      en: { content: "<strong>Frequently asked questions</strong>" },
-      it: { content: "<strong>Domande frequenti</strong>" },
-    },
-    "fitness-faq-item-1": {
-      en: { label: "Can I freeze my membership?" },
-      it: { label: "Posso congelare il mio abbonamento?" },
-    },
-    "fitness-faq-item-1-body": {
-      en: {
-        content:
-          "Yes, the quarterly and annual plans allow you to freeze your membership for up to 30 days a year, with one week's notice at the front desk.",
-      },
-      it: {
-        content:
-          "Sì, i piani trimestrale e annuale permettono di congelare l'abbonamento fino a 30 giorni all'anno, avvisando una settimana prima in reception.",
-      },
-    },
-    "fitness-faq-item-2": {
-      en: { label: "Does the studio have showers and lockers?" },
-      it: { label: "Lo studio ha docce e armadietti?" },
-    },
-    "fitness-faq-item-2-body": {
-      en: {
-        content:
-          "Yes, we have changing rooms with showers and daily lockers at no extra cost; just bring your own lock.",
-      },
-      it: {
-        content:
-          "Sì, disponiamo di spogliatoi con docce e armadietti giornalieri senza costo aggiuntivo; porta solo il tuo lucchetto.",
-      },
-    },
-    "fitness-faq-item-3": {
-      en: { label: "Can I try a class before signing up?" },
-      it: { label: "Posso provare una lezione prima di iscrivermi?" },
-    },
-    "fitness-faq-item-3-body": {
-      en: {
-        content:
-          "Of course, your first class is completely free. Just book your preferred time through the sign-up form.",
-      },
-      it: {
-        content:
-          "Certo, la tua prima lezione è completamente gratuita. Prenota l'orario che preferisci dal modulo di iscrizione.",
-      },
-    },
-    "fitness-signup-title": {
-      en: { content: "<strong>Book your free first class</strong>" },
-      it: { content: "<strong>Prenota la tua prima lezione gratuita</strong>" },
-    },
-    "fitness-signup-sub": {
-      en: { content: "Leave us your details and an advisor will contact you to confirm your schedule." },
-      it: { content: "Lasciaci i tuoi dati e un consulente ti contatterà per confermare l'orario." },
-    },
-    "fitness-label-name": {
-      en: { text: "Full name" },
-      it: { text: "Nome completo" },
-    },
-    "fitness-input-name": {
-      en: { placeholder: "Your full name" },
-      it: { placeholder: "Il tuo nome completo" },
-    },
-    "fitness-label-email": {
-      en: { text: "Email" },
-      it: { text: "Email" },
-    },
-    "fitness-input-email": {
-      en: { placeholder: "you@email.com" },
-      it: { placeholder: "tu@email.com" },
-    },
-    "fitness-label-phone": {
-      en: { text: "Phone" },
-      it: { text: "Telefono" },
-    },
-    "fitness-input-phone": {
-      en: { placeholder: "5512345678" },
-      it: { placeholder: "5512345678" },
-    },
-    "fitness-submit": {
-      en: { label: "Book my free class" },
-      it: { label: "Prenota la mia lezione gratuita" },
-    },
-    "fitness-footer-copyright": {
-      en: { content: "© 2026 Vértice Fitness Studio. All rights reserved." },
-      it: { content: "© 2026 Vértice Fitness Studio. Tutti i diritti riservati." },
-    },
-    "fitness-footer-address": {
-      en: { content: "245 Athletes Ave, Las Águilas, Guadalajara, Jalisco" },
-      it: { content: "Av. de los Deportistas 245, Las Águilas, Guadalajara, Jalisco" },
-    },
+    "fitness-plan-annual-plan": { es: { content: "Anual" }, it: { content: "Annuale" } },
+    "fitness-plan-annual-price": { es: { content: "$6,200" }, it: { content: "$6.200" } },
+    "fitness-plan-annual-period": { es: { content: "MXN/año" }, it: { content: "MXN/anno" } },
+    "fitness-plan-annual-feature-0-text": { es: { content: "✓ Acceso a todas las clases" }, it: { content: "✓ Accesso a tutte le lezioni" } },
+    "fitness-plan-annual-feature-1-text": { es: { content: "✓ Evaluación física mensual" }, it: { content: "✓ Valutazione fisica mensile" } },
+    "fitness-plan-annual-feature-2-text": { es: { content: "✓ Congelamiento de hasta 30 días" }, it: { content: "✓ Congelamento fino a 30 giorni" } },
+    "fitness-plan-annual-cta": { es: { label: "Quiero inscribirme" }, it: { label: "Voglio iscrivermi" } },
+    "fitness-testimonial-quote": { es: { content: "<p>Llevo ocho meses entrenando en Vértice y es la primera vez que sostengo una rutina sin perder la motivación. Los entrenadores realmente te acompañan.</p>" }, it: { content: "<p>Mi alleno da Vértice da otto mesi ed è la prima volta che riesco a mantenere una routine senza perdere la motivazione. Gli allenatori ti seguono davvero.</p>" } },
+    "fitness-testimonial-name": { es: { content: "<strong>Paola Jiménez</strong>" }, it: { content: "<strong>Paola Jiménez</strong>" } },
+    "fitness-testimonial-role": { es: { content: "Socia desde 2025" }, it: { content: "Iscritta dal 2025" } },
+    "fitness-faq-title": { es: { content: "<strong>Preguntas frecuentes</strong>" }, it: { content: "<strong>Domande frequenti</strong>" } },
+    "fitness-faq-item-1": { es: { label: "¿Puedo congelar mi membresía?" }, it: { label: "Posso congelare il mio abbonamento?" } },
+    "fitness-faq-item-1-body": { es: { content: "Sí, el plan trimestral y anual permiten congelar la membresía hasta por 30 días al año, avisando con una semana de anticipación en recepción." }, it: { content: "Sì, i piani trimestrale e annuale permettono di congelare l'abbonamento fino a 30 giorni all'anno, avvisando una settimana prima in reception." } },
+    "fitness-faq-item-2": { es: { label: "¿El estudio tiene duchas y casilleros?" }, it: { label: "Lo studio ha docce e armadietti?" } },
+    "fitness-faq-item-2-body": { es: { content: "Sí, contamos con vestidores con regaderas y casilleros diarios sin costo adicional; solo debes traer tu candado." }, it: { content: "Sì, disponiamo di spogliatoi con docce e armadietti giornalieri senza costo aggiuntivo; porta solo il tuo lucchetto." } },
+    "fitness-faq-item-3": { es: { label: "¿Puedo probar una clase antes de inscribirme?" }, it: { label: "Posso provare una lezione prima di iscrivermi?" } },
+    "fitness-faq-item-3-body": { es: { content: "Claro, tu primera clase es completamente gratis. Solo agenda tu horario preferido desde el formulario de inscripción." }, it: { content: "Certo, la tua prima lezione è completamente gratuita. Prenota l'orario che preferisci dal modulo di iscrizione." } },
+    "fitness-signup-title": { es: { content: "<strong>Agenda tu primera clase gratis</strong>" }, it: { content: "<strong>Prenota la tua prima lezione gratuita</strong>" } },
+    "fitness-signup-sub": { es: { content: "Déjanos tus datos y un asesor te contactará para confirmar tu horario." }, it: { content: "Lasciaci i tuoi dati e un consulente ti contatterà per confermare l'orario." } },
+    "fitness-label-name": { es: { text: "Nombre completo" }, it: { text: "Nome completo" } },
+    "fitness-input-name": { es: { placeholder: "Tu nombre completo" }, it: { placeholder: "Il tuo nome completo" } },
+    "fitness-label-email": { es: { text: "Correo electrónico" }, it: { text: "Email" } },
+    "fitness-input-email": { es: { placeholder: "tu@correo.com" }, it: { placeholder: "tu@email.com" } },
+    "fitness-label-phone": { es: { text: "Teléfono" }, it: { text: "Telefono" } },
+    "fitness-input-phone": { es: { placeholder: "5512345678" }, it: { placeholder: "5512345678" } },
+    "fitness-submit": { es: { label: "Reservar mi clase gratis" }, it: { label: "Prenota la mia lezione gratuita" } },
+    "fitness-footer-copyright": { es: { content: "© 2026 Vértice Fitness Studio. Todos los derechos reservados." }, it: { content: "© 2026 Vértice Fitness Studio. Tutti i diritti riservati." } },
+    "fitness-footer-address": { es: { content: "Av. de los Deportistas 245, Col. Las Águilas, Guadalajara, Jalisco" }, it: { content: "Av. de los Deportistas 245, Las Águilas, Guadalajara, Jalisco" } },
   };
 
   fragment.translations = translations;

@@ -52,7 +52,7 @@ function TabRender(ctx: RenderContext) {
       {children}
       {!exportMode && isEmpty ? (
         <span className="pbx-empty-hint" data-empty-hint>
-          Panel vacío — suelta componentes aquí
+          Empty panel — drop components here
         </span>
       ) : null}
     </div>
@@ -61,16 +61,16 @@ function TabRender(ctx: RenderContext) {
 
 export const tabDefinition: ComponentDefinition = {
   type: "tab",
-  label: "Pestaña",
+  label: "Tab",
   category: "content",
   acceptsChildren: true,
   isSlot: "tabs",
   hiddenInPalette: true,
-  defaultProps: { label: "Pestaña" },
+  defaultProps: { label: "Tab" },
   defaultStyle: structuredClone(TAB_DEFAULT_STYLE),
   // Una pestaña nueva nace con un `text` de contenido (docs/23 §7); el `tabs`
   // sobreescribe el contenido de sus 3 pestañas iniciales con su propio texto.
-  defaultChildren: [{ type: "text", props: { content: "<p>Contenido de la pestaña.</p>" } }],
+  defaultChildren: [{ type: "text", props: { content: "<p>Tab content.</p>" } }],
   propsSchema: {
     fields: [
       { key: "label", label: "Título de la pestaña", control: "text", group: "Contenido", translatable: true },

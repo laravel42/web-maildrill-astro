@@ -23,18 +23,22 @@ import { resolveOptions } from "@/builder/registry/types";
 import { Toggle, PbxSelect } from "@/components";
 import { FieldHelp } from "./FieldHelp";
 import { NumericUnitInput } from "./NumericUnitInput";
+import { optionKey } from "./translateField";
 
 export function OptionsSchemaField({
   field,
   value,
   onChange,
   label,
+  optionKeyPrefix,
 }: {
   field: FieldSchema;
   value: unknown;
   onChange: (value: unknown) => void;
   /** Label ya traducido (el llamador decide la clave i18n de su propio namespace/prefijo). */
   label: string;
+  /** Prefijo `behaviors.fields.<type>.<key>` para traducir `options[].label`. */
+  optionKeyPrefix?: string;
 }) {
   const { t } = useTranslation("inspector");
   const themes = useDocumentStore((s) => s.site.meta.themes);
@@ -47,6 +51,12 @@ export function OptionsSchemaField({
     field.control === "numeric";
 
   const themeIds = themes ? Object.keys(themes) : [];
+  const selectOptions = resolveOptions(field.options).map((o) => ({
+    ...o,
+    label: optionKeyPrefix
+      ? t(`${optionKeyPrefix}Options.${optionKey(o.value)}`, { defaultValue: o.label })
+      : o.label,
+  }));
 
   return (
     <div className={`pbx-control${isRowLayout ? " pbx-control--row" : " pbx-control--stacked"}`}>
@@ -84,7 +94,7 @@ export function OptionsSchemaField({
           <PbxSelect
             value={typeof value === "string" ? value : ""}
             onChange={onChange}
-            options={resolveOptions(field.options)}
+            options={selectOptions}
           />
         ) : field.control === "numeric" ? (
           <NumericUnitInput

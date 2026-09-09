@@ -20,9 +20,9 @@ export const formValidationBehavior: BehaviorDefinition = {
   appliesTo: (node) => node.type === "form",
   defaultOptions: {
     validateOn: "blur",
-    requiredMessage: "Este campo es obligatorio",
-    emailMessage: "Ingresa un correo válido",
-    patternMessage: "El formato no es válido",
+    requiredMessage: "This field is required",
+    emailMessage: "Enter a valid email",
+    patternMessage: "This format is not valid",
   },
   optionsSchema: {
     fields: [

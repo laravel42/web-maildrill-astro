@@ -308,7 +308,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-hero-title": {
         id: "barber-hero-title",
         type: "text",
-        props: { content: "<strong>Cortes clásicos, oficio de navaja</strong>" },
+        props: { content: "<strong>Classic cuts, straight razor craft</strong>" },
         style: {
           base: {
             size: { maxWidth: "20ch" },
@@ -325,7 +325,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-hero-sub": {
         id: "barber-hero-sub",
         type: "text",
-        props: { content: "Cortes, afeitado a navaja y arreglo de barba en un ambiente que respeta el oficio de siempre." },
+        props: { content: "Haircuts, straight razor shaves and beard grooming in a place that respects the old craft." },
         style: {
           base: {
             size: { maxWidth: "44ch" },
@@ -337,7 +337,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-hero-cta": {
         id: "barber-hero-cta",
         type: "button",
-        props: { label: "Reservar cita", link: { kind: "external", href: "" } },
+        props: { label: "Book an appointment", link: { kind: "external", href: "" } },
         style: {
           base: {
             spacing: { padding: "14px 28px" },
@@ -375,9 +375,9 @@ export function buildBarbershopPageFragment(): NodeFragment {
         },
         children: ["barber-stat-1", "barber-stat-2", "barber-stat-3"],
       },
-      ...statCard(1, "18", "Años de oficio"),
-      ...statCard(2, "32.000+", "Cortes realizados"),
-      ...statCard(3, "6.500+", "Clientes fieles"),
+      ...statCard(1, "18", "Years of craft"),
+      ...statCard(2, "32,000+", "Haircuts done"),
+      ...statCard(3, "6,500+", "Loyal clients"),
 
       // --- Servicios: galería FLUIDA (A8b, ausente en A8) --------------------------
       "barber-services": {
@@ -398,7 +398,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-services-title": {
         id: "barber-services-title",
         type: "text",
-        props: { content: "<strong>Servicios</strong>" },
+        props: { content: "<strong>Services</strong>" },
         style: sectionTitle(),
       },
       "barber-services-grid": {
@@ -417,35 +417,35 @@ export function buildBarbershopPageFragment(): NodeFragment {
       },
       ...serviceCard(
         1,
-        "Corte clásico",
-        "Corte a tijera y máquina, con acabado a navaja en el contorno.",
+        "Classic haircut",
+        "Scissor and clipper cut, with a straight razor finish around the edges.",
         "$180",
         "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=800&q=80&auto=format&fit=crop",
-        "Barbero perfilando una línea de corte con navaja",
+        "Barber lining up a haircut with a straight razor",
       ),
       ...serviceCard(
         2,
-        "Afeitado a navaja",
-        "Toalla caliente, espuma de brocha y navaja tradicional para un afeitado apurado.",
+        "Straight razor shave",
+        "Hot towel, brush lather and traditional straight razor for a close shave.",
         "$220",
         "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800&q=80&auto=format&fit=crop",
-        "Cliente recibiendo un afeitado clásico a navaja",
+        "Client getting a classic straight razor shave",
       ),
       ...serviceCard(
         3,
-        "Degradado (fade)",
-        "Transición limpia de máquina en los costados, el sello de la casa.",
+        "Fade",
+        "A clean clipper transition on the sides, the house signature.",
         "$200",
         "https://images.unsplash.com/photo-1493256338651-d82f7acb2b38?w=800&q=80&auto=format&fit=crop",
-        "Barbero haciendo un degradado con máquina en la nuca",
+        "Barber fading the neckline with clippers",
       ),
       ...serviceCard(
         4,
-        "Arreglo de barba",
-        "Perfilado, recorte parejo y toalla caliente para cerrar el servicio.",
+        "Beard grooming",
+        "Line-up, even trim and a hot towel to close the service.",
         "$150",
         "https://images.unsplash.com/photo-1596728325488-58c87691e9af?w=800&q=80&auto=format&fit=crop",
-        "Arreglo de barba con toalla caliente",
+        "Beard grooming with a hot towel",
       ),
 
       // --- Sobre nosotros: par media/copy, GRID 2 col desde sm (A8b) --------------
@@ -478,7 +478,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
         type: "image",
         props: {
           source: { kind: "url", url: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=800&q=80&auto=format&fit=crop" },
-          alt: "Interior de la barbería con sillones vintage y espejos",
+          alt: "Barbershop interior with vintage chairs and mirrors",
           objectFit: "cover",
           loading: "lazy",
         },
@@ -497,7 +497,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-about-title": {
         id: "barber-about-title",
         type: "text",
-        props: { content: "<strong>Desde 2007, oficio que no pasa de moda</strong>" },
+        props: { content: "<strong>Since 2007, a craft that never goes out of style</strong>" },
         style: sectionTitle(),
       },
       "barber-about-text": {
@@ -505,7 +505,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
         type: "text",
         props: {
           content:
-            "Fierro & Navaja nació como una barbería de barrio y sigue siéndolo: sillones de cuero, música baja y la misma navaja de siempre. Formamos a cada barbero durante meses antes de que toque un cliente.",
+            "Fierro & Navaja started as a neighborhood barbershop and it still is one: leather chairs, low music and the same razor as always. We train every barber for months before they touch a client.",
         },
         style: bodyText(),
       },
@@ -529,7 +529,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-team-title": {
         id: "barber-team-title",
         type: "text",
-        props: { content: "<strong>Los barberos</strong>" },
+        props: { content: "<strong>The barbers</strong>" },
         style: sectionTitle(),
       },
       "barber-team-grid": {
@@ -581,7 +581,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-reviews-title": {
         id: "barber-reviews-title",
         type: "text",
-        props: { content: "<strong>Lo que dicen los clientes</strong>" },
+        props: { content: "<strong>What clients say</strong>" },
         style: sectionTitle(),
       },
       "barber-reviews-grid": {
@@ -600,23 +600,23 @@ export function buildBarbershopPageFragment(): NodeFragment {
       },
       ...reviewCard(
         1,
-        "Vengo cada tres semanas desde hace cinco años. El degradado siempre queda igual de limpio.",
+        "I've been coming every three weeks for five years. The fade always comes out just as clean.",
         "Rodolfo Bazán",
-        "Cliente desde 2020",
+        "Client since 2020",
         "RB",
       ),
       ...reviewCard(
         2,
-        "El afeitado a navaja es otro nivel. Toalla caliente, espuma de brocha, todo el ritual.",
+        "The straight razor shave is on another level. Hot towel, brush lather, the whole ritual.",
         "Ignacio Del Toro",
-        "Cliente frecuente",
+        "Regular client",
         "ID",
       ),
       ...reviewCard(
         3,
-        "Llevé a mi hijo a su primer corte ahí y ahora vamos los dos cada mes. Un lugar de verdad.",
+        "I brought my son for his first haircut there and now we both go every month. A real place.",
         "Tadeo Guzmán",
-        "Cliente desde 2022",
+        "Client since 2022",
         "TG",
       ),
 
@@ -624,7 +624,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-booking-modal": {
         id: "barber-booking-modal",
         type: "modal",
-        props: { title: "Reserva tu cita" },
+        props: { title: "Book your appointment" },
         style: {
           ...defaultStyleFor("modal"),
           base: {
@@ -654,13 +654,13 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-booking-label-name": {
         id: "barber-booking-label-name",
         type: "label",
-        props: { text: "Nombre completo", for: "barber-booking-input-name" },
+        props: { text: "Full name", for: "barber-booking-input-name" },
         style: defaultStyleFor("label"),
       },
       "barber-booking-input-name": {
         id: "barber-booking-input-name",
         type: "input",
-        props: { name: "nombre", type: "text", placeholder: "Tu nombre completo", required: true, disabled: false },
+        props: { name: "nombre", type: "text", placeholder: "Your full name", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "barber-booking-field-phone": {
@@ -673,13 +673,13 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-booking-label-phone": {
         id: "barber-booking-label-phone",
         type: "label",
-        props: { text: "Teléfono", for: "barber-booking-input-phone" },
+        props: { text: "Phone", for: "barber-booking-input-phone" },
         style: defaultStyleFor("label"),
       },
       "barber-booking-input-phone": {
         id: "barber-booking-input-phone",
         type: "input",
-        props: { name: "telefono", type: "tel", placeholder: "Tu número de contacto", required: true, disabled: false },
+        props: { name: "telefono", type: "tel", placeholder: "Your contact number", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "barber-booking-field-service": {
@@ -692,7 +692,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-booking-label-service": {
         id: "barber-booking-label-service",
         type: "label",
-        props: { text: "Servicio", for: "barber-booking-select-service" },
+        props: { text: "Service", for: "barber-booking-select-service" },
         style: defaultStyleFor("label"),
       },
       "barber-booking-select-service": {
@@ -700,10 +700,10 @@ export function buildBarbershopPageFragment(): NodeFragment {
         type: "select",
         props: {
           name: "servicio",
-          placeholder: "Elige una opción…",
-          ariaLabel: "Servicio",
+          placeholder: "Choose an option…",
+          ariaLabel: "Service",
           options: [
-            { label: "Corte clásico", value: "corte" },
+            { label: "Beard grooming", value: "barba" },
             { label: "Afeitado a navaja", value: "afeitado" },
             { label: "Degradado (fade)", value: "fade" },
             { label: "Arreglo de barba", value: "barba" },
@@ -714,7 +714,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-booking-submit": {
         id: "barber-booking-submit",
         type: "button-submit",
-        props: { label: "Confirmar cita", disabled: false },
+        props: { label: "Confirm appointment", disabled: false },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -743,7 +743,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-booking-bar-text": {
         id: "barber-booking-bar-text",
         type: "text",
-        props: { content: "¿Listo para tu próximo corte?" },
+        props: { content: "Ready for your next cut?" },
         style: {
           base: {
             typography: { fontFamily: { token: "typography.families.display" }, fontWeight: { token: "typography.weights.bold" } },
@@ -754,7 +754,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-booking-bar-cta": {
         id: "barber-booking-bar-cta",
         type: "button",
-        props: { label: "Reservar cita", link: { kind: "external", href: "" } },
+        props: { label: "Book an appointment", link: { kind: "external", href: "" } },
         style: {
           base: {
             spacing: { padding: "14px 22px" },
@@ -785,7 +785,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-footer-address": {
         id: "barber-footer-address",
         type: "text",
-        props: { content: "Calle Herreros 88, Barrio del Carmen, Guadalajara — martes a sábado, 10:00–20:00" },
+        props: { content: "88 Herreros St, Barrio del Carmen, Guadalajara — Tuesday to Saturday, 10:00 AM–8:00 PM" },
         style: { base: { appearance: { color: { token: "colors.band.on" } } } },
       },
       "barber-footer-social": {
@@ -797,7 +797,7 @@ export function buildBarbershopPageFragment(): NodeFragment {
       "barber-footer-copyright": {
         id: "barber-footer-copyright",
         type: "text",
-        props: { content: "© 2026 Fierro & Navaja Barbería. Todos los derechos reservados." },
+        props: { content: "© 2026 Fierro & Navaja Barbershop. All rights reserved." },
         style: {
           base: {
             size: { width: "100%" },
@@ -817,175 +817,76 @@ export function buildBarbershopPageFragment(): NodeFragment {
     translations: (() => {
       const t: Record<string, NodeTranslations> = {};
 
-      t["barber-hero-title"] = {
-        en: { content: "<strong>Classic cuts, straight razor craft</strong>" },
-        it: { content: "<strong>Tagli classici, mestiere del rasoio</strong>" },
-      };
-      t["barber-hero-sub"] = {
-        en: { content: "Haircuts, straight razor shaves and beard grooming in a place that respects the old craft." },
-        it: { content: "Tagli, rasatura a mano libera e cura della barba in un ambiente che rispetta il mestiere di sempre." },
-      };
-      t["barber-hero-cta"] = { en: { label: "Book an appointment" }, it: { label: "Prenota un appuntamento" } };
+      t["barber-hero-title"] = { es: { content: "<strong>Cortes clásicos, oficio de navaja</strong>" }, it: { content: "<strong>Tagli classici, mestiere del rasoio</strong>" } };
+      t["barber-hero-sub"] = { es: { content: "Cortes, afeitado a navaja y arreglo de barba en un ambiente que respeta el oficio de siempre." }, it: { content: "Tagli, rasatura a mano libera e cura della barba in un ambiente che rispetta il mestiere di sempre." } };
+      t["barber-hero-cta"] = { es: { label: "Reservar cita" }, it: { label: "Prenota un appuntamento" } };
 
-      t["barber-stat-1-value"] = { en: { value: "18" }, it: { value: "18" } };
-      t["barber-stat-1-label"] = { en: { content: "Years of craft" }, it: { content: "Anni di mestiere" } };
-      t["barber-stat-2-value"] = { en: { value: "32,000+" }, it: { value: "32.000+" } };
-      t["barber-stat-2-label"] = { en: { content: "Haircuts done" }, it: { content: "Tagli realizzati" } };
-      t["barber-stat-3-value"] = { en: { value: "6,500+" }, it: { value: "6.500+" } };
-      t["barber-stat-3-label"] = { en: { content: "Loyal clients" }, it: { content: "Clienti fedeli" } };
+      t["barber-stat-1-value"] = { es: { value: "18" }, it: { value: "18" } };
+      t["barber-stat-1-label"] = { es: { content: "Años de oficio" }, it: { content: "Anni di mestiere" } };
+      t["barber-stat-2-value"] = { es: { value: "32.000+" }, it: { value: "32.000+" } };
+      t["barber-stat-2-label"] = { es: { content: "Cortes realizados" }, it: { content: "Tagli realizzati" } };
+      t["barber-stat-3-value"] = { es: { value: "6.500+" }, it: { value: "6.500+" } };
+      t["barber-stat-3-label"] = { es: { content: "Clientes fieles" }, it: { content: "Clienti fedeli" } };
 
-      t["barber-services-title"] = { en: { content: "<strong>Services</strong>" }, it: { content: "<strong>Servizi</strong>" } };
+      t["barber-services-title"] = { es: { content: "<strong>Servicios</strong>" }, it: { content: "<strong>Servizi</strong>" } };
 
-      t["barber-service-1-title"] = { en: { content: "<strong>Classic haircut</strong>" }, it: { content: "<strong>Taglio classico</strong>" } };
-      t["barber-service-1-text"] = {
-        en: { content: "Scissor and clipper cut, with a straight razor finish around the edges." },
-        it: { content: "Taglio a forbici e macchinetta, con rifinitura a rasoio sui contorni." },
-      };
-      t["barber-service-1-img"] = { en: { alt: "Barber lining up a haircut with a straight razor" }, it: { alt: "Barbiere che rifinisce una linea di taglio con il rasoio" } };
-      t["barber-service-1-price"] = { en: { content: "<strong>$180</strong>" }, it: { content: "<strong>$180</strong>" } };
+      t["barber-service-1-title"] = { es: { content: "<strong>Corte clásico</strong>" }, it: { content: "<strong>Taglio classico</strong>" } };
+      t["barber-service-1-text"] = { es: { content: "Corte a tijera y máquina, con acabado a navaja en el contorno." }, it: { content: "Taglio a forbici e macchinetta, con rifinitura a rasoio sui contorni." } };
+      t["barber-service-1-img"] = { es: { alt: "Barbero perfilando una línea de corte con navaja" }, it: { alt: "Barbiere che rifinisce una linea di taglio con il rasoio" } };
+      t["barber-service-1-price"] = { es: { content: "<strong>$180</strong>" }, it: { content: "<strong>$180</strong>" } };
 
-      t["barber-service-2-title"] = { en: { content: "<strong>Straight razor shave</strong>" }, it: { content: "<strong>Rasatura a rasoio</strong>" } };
-      t["barber-service-2-text"] = {
-        en: { content: "Hot towel, brush lather and traditional straight razor for a close shave." },
-        it: { content: "Panno caldo, schiuma a pennello e rasoio tradizionale per una rasatura a fondo." },
-      };
-      t["barber-service-2-img"] = { en: { alt: "Client getting a classic straight razor shave" }, it: { alt: "Cliente durante una rasatura classica a rasoio" } };
-      t["barber-service-2-price"] = { en: { content: "<strong>$220</strong>" }, it: { content: "<strong>$220</strong>" } };
+      t["barber-service-2-title"] = { es: { content: "<strong>Afeitado a navaja</strong>" }, it: { content: "<strong>Rasatura a rasoio</strong>" } };
+      t["barber-service-2-text"] = { es: { content: "Toalla caliente, espuma de brocha y navaja tradicional para un afeitado apurado." }, it: { content: "Panno caldo, schiuma a pennello e rasoio tradizionale per una rasatura a fondo." } };
+      t["barber-service-2-img"] = { es: { alt: "Cliente recibiendo un afeitado clásico a navaja" }, it: { alt: "Cliente durante una rasatura classica a rasoio" } };
+      t["barber-service-2-price"] = { es: { content: "<strong>$220</strong>" }, it: { content: "<strong>$220</strong>" } };
 
-      t["barber-service-3-title"] = { en: { content: "<strong>Fade</strong>" }, it: { content: "<strong>Sfumatura</strong>" } };
-      t["barber-service-3-text"] = {
-        en: { content: "A clean clipper transition on the sides, the house signature." },
-        it: { content: "Transizione netta con la macchinetta sui lati, il segno distintivo della casa." },
-      };
-      t["barber-service-3-img"] = { en: { alt: "Barber fading the neckline with clippers" }, it: { alt: "Barbiere che sfuma la nuca con la macchinetta" } };
-      t["barber-service-3-price"] = { en: { content: "<strong>$200</strong>" }, it: { content: "<strong>$200</strong>" } };
+      t["barber-service-3-title"] = { es: { content: "<strong>Degradado (fade)</strong>" }, it: { content: "<strong>Sfumatura</strong>" } };
+      t["barber-service-3-text"] = { es: { content: "Transición limpia de máquina en los costados, el sello de la casa." }, it: { content: "Transizione netta con la macchinetta sui lati, il segno distintivo della casa." } };
+      t["barber-service-3-img"] = { es: { alt: "Barbero haciendo un degradado con máquina en la nuca" }, it: { alt: "Barbiere che sfuma la nuca con la macchinetta" } };
+      t["barber-service-3-price"] = { es: { content: "<strong>$200</strong>" }, it: { content: "<strong>$200</strong>" } };
 
-      t["barber-service-4-title"] = { en: { content: "<strong>Beard grooming</strong>" }, it: { content: "<strong>Cura della barba</strong>" } };
-      t["barber-service-4-text"] = {
-        en: { content: "Line-up, even trim and a hot towel to close the service." },
-        it: { content: "Delineatura, rifinitura uniforme e panno caldo per chiudere il servizio." },
-      };
-      t["barber-service-4-img"] = { en: { alt: "Beard grooming with a hot towel" }, it: { alt: "Cura della barba con panno caldo" } };
-      t["barber-service-4-price"] = { en: { content: "<strong>$150</strong>" }, it: { content: "<strong>$150</strong>" } };
+      t["barber-service-4-title"] = { es: { content: "<strong>Arreglo de barba</strong>" }, it: { content: "<strong>Cura della barba</strong>" } };
+      t["barber-service-4-text"] = { es: { content: "Perfilado, recorte parejo y toalla caliente para cerrar el servicio." }, it: { content: "Delineatura, rifinitura uniforme e panno caldo per chiudere il servizio." } };
+      t["barber-service-4-img"] = { es: { alt: "Arreglo de barba con toalla caliente" }, it: { alt: "Cura della barba con panno caldo" } };
+      t["barber-service-4-price"] = { es: { content: "<strong>$150</strong>" }, it: { content: "<strong>$150</strong>" } };
 
-      t["barber-about-title"] = { en: { content: "<strong>Since 2007, a craft that never goes out of style</strong>" }, it: { content: "<strong>Dal 2007, un mestiere che non passa mai di moda</strong>" } };
-      t["barber-about-text"] = {
-        en: {
-          content:
-            "Fierro & Navaja started as a neighborhood barbershop and it still is one: leather chairs, low music and the same razor as always. We train every barber for months before they touch a client.",
-        },
-        it: {
-          content:
-            "Fierro & Navaja è nata come barbieria di quartiere e lo è ancora: poltrone in pelle, musica bassa e lo stesso rasoio di sempre. Formiamo ogni barbiere per mesi prima che tocchi un cliente.",
-        },
-      };
-      t["barber-about-media"] = { en: { alt: "Barbershop interior with vintage chairs and mirrors" }, it: { alt: "Interno della barbieria con poltrone vintage e specchi" } };
+      t["barber-about-title"] = { es: { content: "<strong>Desde 2007, oficio que no pasa de moda</strong>" }, it: { content: "<strong>Dal 2007, un mestiere che non passa mai di moda</strong>" } };
+      t["barber-about-text"] = { es: { content: "Fierro & Navaja nació como una barbería de barrio y sigue siéndolo: sillones de cuero, música baja y la misma navaja de siempre. Formamos a cada barbero durante meses antes de que toque un cliente." }, it: { content: "Fierro & Navaja è nata come barbieria di quartiere e lo è ancora: poltrone in pelle, musica bassa e lo stesso rasoio di sempre. Formiamo ogni barbiere per mesi prima che tocchi un cliente." } };
+      t["barber-about-media"] = { es: { alt: "Interior de la barbería con sillones vintage y espejos" }, it: { alt: "Interno della barbieria con poltrone vintage e specchi" } };
 
-      t["barber-team-title"] = { en: { content: "<strong>The barbers</strong>" }, it: { content: "<strong>I barbieri</strong>" } };
-      t["barber-team-1-avatar"] = { en: { alt: "Portrait of Ezequiel Prado" }, it: { alt: "Ritratto di Ezequiel Prado" } };
-      t["barber-team-1-name"] = { en: { content: "<strong>Ezequiel Prado</strong>" }, it: { content: "<strong>Ezequiel Prado</strong>" } };
-      t["barber-team-1-role"] = { en: { content: "Founding barber" }, it: { content: "Barbiere fondatore" } };
-      t["barber-team-2-avatar"] = { en: { alt: "Portrait of Nazario Cepeda" }, it: { alt: "Ritratto di Nazario Cepeda" } };
-      t["barber-team-2-name"] = { en: { content: "<strong>Nazario Cepeda</strong>" }, it: { content: "<strong>Nazario Cepeda</strong>" } };
-      t["barber-team-2-role"] = { en: { content: "Beard specialist" }, it: { content: "Specialista della barba" } };
+      t["barber-team-title"] = { es: { content: "<strong>Los barberos</strong>" }, it: { content: "<strong>I barbieri</strong>" } };
+      t["barber-team-1-avatar"] = { es: { alt: "Portrait of Ezequiel Prado" }, it: { alt: "Ritratto di Ezequiel Prado" } };
+      t["barber-team-1-name"] = { es: { content: "<strong>Ezequiel Prado</strong>" }, it: { content: "<strong>Ezequiel Prado</strong>" } };
+      t["barber-team-1-role"] = { es: { content: "Founding barber" }, it: { content: "Barbiere fondatore" } };
+      t["barber-team-2-avatar"] = { es: { alt: "Portrait of Nazario Cepeda" }, it: { alt: "Ritratto di Nazario Cepeda" } };
+      t["barber-team-2-name"] = { es: { content: "<strong>Nazario Cepeda</strong>" }, it: { content: "<strong>Nazario Cepeda</strong>" } };
+      t["barber-team-2-role"] = { es: { content: "Beard specialist" }, it: { content: "Specialista della barba" } };
 
-      t["barber-reviews-title"] = { en: { content: "<strong>What clients say</strong>" }, it: { content: "<strong>Cosa dicono i clienti</strong>" } };
-      t["barber-review-1-quote"] = {
-        en: {
-          content:
-            "<p>I've been coming every three weeks for five years. The fade always comes out just as clean.</p>",
-        },
-        it: {
-          content:
-            "<p>Vengo ogni tre settimane da cinque anni. La sfumatura è sempre pulita allo stesso modo.</p>",
-        },
-      };
-      t["barber-review-1-name"] = {
-        en: { content: "<strong>Rodolfo Bazán</strong>" },
-        it: { content: "<strong>Rodolfo Bazán</strong>" },
-      };
-      t["barber-review-1-role"] = {
-        en: { content: "Client since 2020" },
-        it: { content: "Cliente dal 2020" },
-      };
-      t["barber-review-2-quote"] = {
-        en: {
-          content:
-            "<p>The straight razor shave is on another level. Hot towel, brush lather, the whole ritual.</p>",
-        },
-        it: {
-          content:
-            "<p>La rasatura a rasoio è un altro livello. Panno caldo, schiuma a pennello, tutto il rituale.</p>",
-        },
-      };
-      t["barber-review-2-name"] = {
-        en: { content: "<strong>Ignacio Del Toro</strong>" },
-        it: { content: "<strong>Ignacio Del Toro</strong>" },
-      };
-      t["barber-review-2-role"] = {
-        en: { content: "Regular client" },
-        it: { content: "Cliente abituale" },
-      };
-      t["barber-review-3-quote"] = {
-        en: {
-          content:
-            "<p>I brought my son for his first haircut there and now we both go every month. A real place.</p>",
-        },
-        it: {
-          content:
-            "<p>Ho portato mio figlio per il suo primo taglio e ora andiamo insieme ogni mese. Un posto vero.</p>",
-        },
-      };
-      t["barber-review-3-name"] = {
-        en: { content: "<strong>Tadeo Guzmán</strong>" },
-        it: { content: "<strong>Tadeo Guzmán</strong>" },
-      };
-      t["barber-review-3-role"] = {
-        en: { content: "Client since 2022" },
-        it: { content: "Cliente dal 2022" },
-      };
+      t["barber-reviews-title"] = { es: { content: "<strong>Lo que dicen los clientes</strong>" }, it: { content: "<strong>Cosa dicono i clienti</strong>" } };
+      t["barber-review-1-quote"] = { es: { content: "<p>Vengo cada tres semanas desde hace cinco años. El degradado siempre queda igual de limpio.</p>" }, it: { content: "<p>Vengo ogni tre settimane da cinque anni. La sfumatura è sempre pulita allo stesso modo.</p>" } };
+      t["barber-review-1-name"] = { es: { content: "<strong>Rodolfo Bazán</strong>" }, it: { content: "<strong>Rodolfo Bazán</strong>" } };
+      t["barber-review-1-role"] = { es: { content: "Cliente desde 2020" }, it: { content: "Cliente dal 2020" } };
+      t["barber-review-2-quote"] = { es: { content: "<p>El afeitado a navaja es otro nivel. Toalla caliente, espuma de brocha, todo el ritual.</p>" }, it: { content: "<p>La rasatura a rasoio è un altro livello. Panno caldo, schiuma a pennello, tutto il rituale.</p>" } };
+      t["barber-review-2-name"] = { es: { content: "<strong>Ignacio Del Toro</strong>" }, it: { content: "<strong>Ignacio Del Toro</strong>" } };
+      t["barber-review-2-role"] = { es: { content: "Cliente frecuente" }, it: { content: "Cliente abituale" } };
+      t["barber-review-3-quote"] = { es: { content: "<p>Llevé a mi hijo a su primer corte ahí y ahora vamos los dos cada mes. Un lugar de verdad.</p>" }, it: { content: "<p>Ho portato mio figlio per il suo primo taglio e ora andiamo insieme ogni mese. Un posto vero.</p>" } };
+      t["barber-review-3-name"] = { es: { content: "<strong>Tadeo Guzmán</strong>" }, it: { content: "<strong>Tadeo Guzmán</strong>" } };
+      t["barber-review-3-role"] = { es: { content: "Cliente desde 2022" }, it: { content: "Cliente dal 2022" } };
 
-      t["barber-booking-modal"] = { en: { title: "Book your appointment" }, it: { title: "Prenota il tuo appuntamento" } };
-      t["barber-booking-label-name"] = { en: { text: "Full name" }, it: { text: "Nome completo" } };
-      t["barber-booking-input-name"] = { en: { placeholder: "Your full name" }, it: { placeholder: "Il tuo nome completo" } };
-      t["barber-booking-label-phone"] = { en: { text: "Phone" }, it: { text: "Telefono" } };
-      t["barber-booking-input-phone"] = { en: { placeholder: "Your contact number" }, it: { placeholder: "Il tuo numero di contatto" } };
-      t["barber-booking-label-service"] = { en: { text: "Service" }, it: { text: "Servizio" } };
-      t["barber-booking-select-service"] = {
-        en: {
-          placeholder: "Choose an option…",
-          ariaLabel: "Service",
-          options: [
-            { label: "Classic haircut", value: "corte" },
-            { label: "Straight razor shave", value: "afeitado" },
-            { label: "Fade", value: "fade" },
-            { label: "Beard grooming", value: "barba" },
-          ],
-        },
-        it: {
-          placeholder: "Scegli un'opzione…",
-          ariaLabel: "Servizio",
-          options: [
-            { label: "Taglio classico", value: "corte" },
-            { label: "Rasatura a rasoio", value: "afeitado" },
-            { label: "Sfumatura", value: "fade" },
-            { label: "Cura della barba", value: "barba" },
-          ],
-        },
-      };
-      t["barber-booking-submit"] = { en: { label: "Confirm appointment" }, it: { label: "Confermare appuntamento" } };
+      t["barber-booking-modal"] = { es: { title: "Reserva tu cita" }, it: { title: "Prenota il tuo appuntamento" } };
+      t["barber-booking-label-name"] = { es: { text: "Nombre completo" }, it: { text: "Nome completo" } };
+      t["barber-booking-input-name"] = { es: { placeholder: "Tu nombre completo" }, it: { placeholder: "Il tuo nome completo" } };
+      t["barber-booking-label-phone"] = { es: { text: "Teléfono" }, it: { text: "Telefono" } };
+      t["barber-booking-input-phone"] = { es: { placeholder: "Tu número de contacto" }, it: { placeholder: "Il tuo numero di contatto" } };
+      t["barber-booking-label-service"] = { es: { text: "Servicio" }, it: { text: "Servizio" } };
+      t["barber-booking-select-service"] = { es: { placeholder: "Elige una opción…", ariaLabel: "Servicio", label: "Arreglo de barba", value: "barba" }, it: { placeholder: "Scegli un'opzione…", ariaLabel: "Servizio", label: "Cura della barba", value: "barba" } };
+      t["barber-booking-submit"] = { es: { label: "Confirmar cita" }, it: { label: "Confermare appuntamento" } };
 
-      t["barber-booking-bar-text"] = { en: { content: "Ready for your next cut?" }, it: { content: "Pronto per il tuo prossimo taglio?" } };
-      t["barber-booking-bar-cta"] = { en: { label: "Book an appointment" }, it: { label: "Prenota un appuntamento" } };
+      t["barber-booking-bar-text"] = { es: { content: "¿Listo para tu próximo corte?" }, it: { content: "Pronto per il tuo prossimo taglio?" } };
+      t["barber-booking-bar-cta"] = { es: { label: "Reservar cita" }, it: { label: "Prenota un appuntamento" } };
 
-      t["barber-footer-copyright"] = {
-        en: { content: "© 2026 Fierro & Navaja Barbershop. All rights reserved." },
-        it: { content: "© 2026 Fierro & Navaja Barbieria. Tutti i diritti riservati." },
-      };
-      t["barber-footer-address"] = {
-        en: { content: "88 Herreros St, Barrio del Carmen, Guadalajara — Tuesday to Saturday, 10:00 AM–8:00 PM" },
-        it: { content: "Calle Herreros 88, Barrio del Carmen, Guadalajara — martedì a sabato, 10:00–20:00" },
-      };
+      t["barber-footer-copyright"] = { es: { content: "© 2026 Fierro & Navaja Barbería. Todos los derechos reservados." }, it: { content: "© 2026 Fierro & Navaja Barbieria. Tutti i diritti riservati." } };
+      t["barber-footer-address"] = { es: { content: "Calle Herreros 88, Barrio del Carmen, Guadalajara — martes a sábado, 10:00–20:00" }, it: { content: "Calle Herreros 88, Barrio del Carmen, Guadalajara — martedì a sabato, 10:00–20:00" } };
 
       return t;
     })(),
@@ -993,30 +894,30 @@ export function buildBarbershopPageFragment(): NodeFragment {
 }
 
 export const barbershopPageMeta: LayoutPageMeta = {
-  title: "Fierro & Navaja Barbería · Cortes clásicos y afeitado a navaja",
-  description: "Barbería de barrio con cortes clásicos, degradado y afeitado a navaja. Reserva tu cita en línea.",
+  title: "Fierro & Navaja Barbershop · Classic cuts and straight razor shaves",
+  description: "Neighborhood barbershop with classic cuts, fades and straight razor shaves. Book your appointment online.",
   seo: {
     robots: "index,follow",
     openGraph: {
-      title: "Fierro & Navaja Barbería",
-      description: "Cortes clásicos, oficio de navaja. Reserva tu cita.",
+      title: "Fierro & Navaja Barbershop",
+      description: "Classic cuts, straight razor craft. Book your appointment.",
       image: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=1200&q=80&auto=format&fit=crop",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "Fierro & Navaja Barbería",
-      description: "Cortes clásicos, oficio de navaja. Reserva tu cita.",
+      title: "Fierro & Navaja Barbershop",
+      description: "Classic cuts, straight razor craft. Book your appointment.",
       image: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=1200&q=80&auto=format&fit=crop",
     },
   },
   metaTranslations: {
-    en: {
-      title: "Fierro & Navaja Barbershop · Classic cuts and straight razor shaves",
-      description: "Neighborhood barbershop with classic cuts, fades and straight razor shaves. Book your appointment online.",
+    es: {
+      title: "Fierro & Navaja Barbería · Cortes clásicos y afeitado a navaja",
+      description: "Barbería de barrio con cortes clásicos, degradado y afeitado a navaja. Reserva tu cita en línea.",
       seo: {
-        openGraph: { title: "Fierro & Navaja Barbershop", description: "Classic cuts, straight razor craft. Book your appointment." },
-        twitter: { title: "Fierro & Navaja Barbershop", description: "Classic cuts, straight razor craft. Book your appointment." },
+        openGraph: { title: "Fierro & Navaja Barbería", description: "Cortes clásicos, oficio de navaja. Reserva tu cita." },
+        twitter: { title: "Fierro & Navaja Barbería", description: "Cortes clásicos, oficio de navaja. Reserva tu cita." },
       },
     },
     it: {

@@ -26,7 +26,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { Dropdown, LanguageSelect, CircleUserRound, Rocket } from "@/components";
+import { Dropdown, LanguageSelect, Settings, Rocket } from "@/components";
 import { ThemeToggle } from "./ThemeToggle";
 import { ReorderControlsToggle } from "./ReorderControlsToggle";
 import { ExperienceLevelToggle } from "./ExperienceLevelToggle";
@@ -35,29 +35,94 @@ import { useLocalConfig } from "@/hooks/useLocalConfig";
 import { useThemeMode } from "@/hooks/useThemeMode";
 import { fetchHealth } from "@/services/apiClient";
 
-export function ProfileMenu() {
+function PrefHeading({
+  panel,
+  children,
+}: {
+  panel: boolean;
+  children: string;
+}) {
+  if (panel) {
+    return <h4 className="pbx-inspector__heading">{children}</h4>;
+  }
+  return <div className="pbx-profile__section-label">{children}</div>;
+}
+
+/** Preferencias del editor — dropdown del header y tab Settings del Inspector. */
+export function EditorPreferences({
+  showPublishLink = false,
+  panel = false,
+}: {
+  showPublishLink?: boolean;
+  panel?: boolean;
+}) {
   const { t } = useTranslation("header");
   const openSiteSettings = useDocumentStore((s) => s.openSiteSettings);
   const [, , , themeHostControlled] = useThemeMode();
   const [inspectorCollapsed, setInspectorCollapsed] = useLocalConfig("inspectorCollapsed");
-  // Same gate as `SiteSettingsPanel`'s "publish" tab: this menu item is the
-  // OTHER entry point into that tab, so it must agree on whether publishing
-  // is on — otherwise clicking it would request a tab the settings panel has
-  // already hidden from its own list, falling back to "pages" instead.
   const [publishEnabled, setPublishEnabled] = useState(false);
 
   useEffect(() => {
+    if (!showPublishLink) return;
     fetchHealth()
       .then((h) => setPublishEnabled(h.publish.enabled))
       .catch(() => setPublishEnabled(false));
-  }, []);
+  }, [showPublishLink]);
 
   const handleManagedSitesClick = () => {
-    // Si el Inspector está colapsado, el click no produce ningún efecto
-    // visible sin esto — debe expandirlo además de pedir la tab (docs/36 §3).
     if (inspectorCollapsed) setInspectorCollapsed(false);
     openSiteSettings("publish");
   };
+
+  const divider = panel ? null : <div className="pbx-profile__divider" aria-hidden="true" />;
+
+  return (
+    <>
+      <div className="pbx-profile__section">
+        <PrefHeading panel={panel}>{t("language.label")}</PrefHeading>
+        <LanguageSelect />
+      </div>
+      {!themeHostControlled && (
+        <>
+          {divider}
+          <div className="pbx-profile__section">
+            <PrefHeading panel={panel}>{t("theme.label")}</PrefHeading>
+            <ThemeToggle />
+          </div>
+        </>
+      )}
+      {divider}
+      <div className="pbx-profile__section">
+        <PrefHeading panel={panel}>{t("reorderControls.label")}</PrefHeading>
+        <ReorderControlsToggle />
+      </div>
+      {divider}
+      <div className="pbx-profile__section">
+        <PrefHeading panel={panel}>{t("experienceLevel.label")}</PrefHeading>
+        <ExperienceLevelToggle />
+      </div>
+      {showPublishLink && publishEnabled && (
+        <>
+          {divider}
+          <div className="pbx-profile__section">
+            <button
+              type="button"
+              className="pbx-profile__action"
+              data-c42-dropdown-item
+              onClick={handleManagedSitesClick}
+            >
+              <Rocket size={15} aria-hidden="true" />
+              {t("publish.managedSites")}
+            </button>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+export function ProfileMenu() {
+  const { t } = useTranslation("header");
 
   return (
     <Dropdown closeOnSelect={false} placement="bottom-end" className="pbx-profile">
@@ -68,7 +133,7 @@ export function ProfileMenu() {
         title={t("profile.label")}
         aria-label={t("profile.label")}
       >
-        <CircleUserRound size={20} aria-hidden="true" />
+        <Settings size={18} aria-hidden="true" />
       </button>
       <motion.div
         data-c42-dropdown-menu
@@ -77,45 +142,7 @@ export function ProfileMenu() {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.14, ease: "easeOut" }}
       >
-        <div className="pbx-profile__section">
-          <div className="pbx-profile__section-label">{t("language.label")}</div>
-          <LanguageSelect />
-        </div>
-        {!themeHostControlled && (
-          <>
-            <div className="pbx-profile__divider" aria-hidden="true" />
-            <div className="pbx-profile__section">
-              <div className="pbx-profile__section-label">{t("theme.label")}</div>
-              <ThemeToggle />
-            </div>
-          </>
-        )}
-        <div className="pbx-profile__divider" aria-hidden="true" />
-        <div className="pbx-profile__section">
-          <div className="pbx-profile__section-label">{t("reorderControls.label")}</div>
-          <ReorderControlsToggle />
-        </div>
-        <div className="pbx-profile__divider" aria-hidden="true" />
-        <div className="pbx-profile__section">
-          <div className="pbx-profile__section-label">{t("experienceLevel.label")}</div>
-          <ExperienceLevelToggle />
-        </div>
-        {publishEnabled && (
-          <>
-            <div className="pbx-profile__divider" aria-hidden="true" />
-            <div className="pbx-profile__section">
-              <button
-                type="button"
-                className="pbx-profile__action"
-                data-c42-dropdown-item
-                onClick={handleManagedSitesClick}
-              >
-                <Rocket size={15} aria-hidden="true" />
-                {t("publish.managedSites")}
-              </button>
-            </div>
-          </>
-        )}
+        <EditorPreferences showPublishLink />
       </motion.div>
     </Dropdown>
   );

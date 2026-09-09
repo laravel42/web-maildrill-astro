@@ -192,10 +192,10 @@ function packageCard(
       price,
       period,
       features: features.split("\n").map((f) => f.trim()).filter((f) => f !== ""),
-      ctaLabel: "Reservar sesión",
+      ctaLabel: "Book session",
       ctaLink: { kind: "anchor", nodeId: "photographer-contact" },
       popular,
-      popularLabel: "Más elegido",
+      popularLabel: "Most chosen",
     },
     rootStyle,
   );
@@ -254,7 +254,7 @@ export function buildPortfolioFragment(): NodeFragment {
       "photographer-topbar-phone": {
         id: "photographer-topbar-phone",
         type: "text",
-        props: { content: "📞 +34 611 223 344 · Madrid y alrededores" },
+        props: { content: "📞 +34 611 223 344 · Madrid and surroundings" },
         style: { base: { appearance: { color: { token: "colors.surface.default" } } } },
       },
       "photographer-topbar-lang": {
@@ -348,7 +348,7 @@ export function buildPortfolioFragment(): NodeFragment {
       "photographer-hero-title": {
         id: "photographer-hero-title",
         type: "text",
-        props: { content: "<strong>Fotografía que recuerda cómo se sintió el momento</strong>" },
+        props: { content: "<strong>Photography that remembers how the moment felt</strong>" },
         style: {
           base: {
             size: { maxWidth: "22ch" },
@@ -365,7 +365,7 @@ export function buildPortfolioFragment(): NodeFragment {
       "photographer-hero-sub": {
         id: "photographer-hero-sub",
         type: "text",
-        props: { content: "Retrato, paisaje, producto y evento. Con base en Madrid, disponible para viajar." },
+        props: { content: "Portrait, landscape, product and event. Based in Madrid, available to travel." },
         style: {
           base: {
             size: { maxWidth: "46ch" },
@@ -377,7 +377,7 @@ export function buildPortfolioFragment(): NodeFragment {
       "photographer-hero-cta": {
         id: "photographer-hero-cta",
         type: "button",
-        props: { label: "Ver disponibilidad", link: { kind: "anchor", nodeId: "photographer-contact" }, newTab: false },
+        props: { label: "Check availability", link: { kind: "anchor", nodeId: "photographer-contact" }, newTab: false },
         style: {
           base: {
             layout: { display: "inline-block" },
@@ -429,7 +429,7 @@ export function buildPortfolioFragment(): NodeFragment {
         type: "image",
         props: {
           source: { kind: "url", url: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&q=80&auto=format&fit=crop" },
-          alt: "Retrato de la fotógrafa Elena Vidal en su estudio",
+          alt: "Portrait of photographer Elena Vidal in her studio",
           objectFit: "cover",
         },
         style: {
@@ -447,7 +447,7 @@ export function buildPortfolioFragment(): NodeFragment {
       "photographer-bio-title": {
         id: "photographer-bio-title",
         type: "text",
-        props: { content: "<strong>Elena Vidal, fotógrafa</strong>" },
+        props: { content: "<strong>Elena Vidal, photographer</strong>" },
         style: sectionTitle(),
       },
       "photographer-bio-text": {
@@ -455,7 +455,7 @@ export function buildPortfolioFragment(): NodeFragment {
         type: "text",
         props: {
           content:
-            "Lleva doce años detrás de la cámara, entre reportajes editoriales y sesiones de retrato. Su trabajo combina luz natural y composición minimalista: cada encargo se piensa como una pequeña serie, no como una foto suelta.",
+            "Twelve years behind the camera, between editorial features and portrait sessions. Her work blends natural light and minimalist composition: every commission is treated as a small series, never a single loose photo.",
         },
         style: bodyText(),
       },
@@ -463,7 +463,7 @@ export function buildPortfolioFragment(): NodeFragment {
         id: "photographer-bio-text-2",
         type: "text",
         props: {
-          content: "Formada en el ISF de Madrid, ha expuesto en Barcelona, Lisboa y Milán. Trabaja en digital y en película de 35mm según el proyecto.",
+          content: "Trained at ISF Madrid, she has exhibited in Barcelona, Lisbon and Milan. She works in digital and 35mm film depending on the project.",
         },
         style: bodyText(),
       },
@@ -487,13 +487,13 @@ export function buildPortfolioFragment(): NodeFragment {
       "photographer-gallery-title": {
         id: "photographer-gallery-title",
         type: "text",
-        props: { content: "<strong>Trabajo seleccionado</strong>" },
+        props: { content: "<strong>Selected work</strong>" },
         style: sectionTitle(),
       },
       "photographer-gallery-sub": {
         id: "photographer-gallery-sub",
         type: "text",
-        props: { content: "Retrato, paisaje, producto y evento — cada foto abre en pantalla completa." },
+        props: { content: "Portrait, landscape, product and event — every photo opens full screen." },
         style: bodyText(),
       },
       "photographer-gallery-grid": {
@@ -519,14 +519,14 @@ export function buildPortfolioFragment(): NodeFragment {
           "photographer-gallery-8",
         ],
       },
-      ...galleryPhoto(1, "Retrato", "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=700&q=80&auto=format&fit=crop", "Retrato en blanco y negro de una mujer joven"),
-      ...galleryPhoto(2, "Paisaje", "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=700&q=80&auto=format&fit=crop", "Paisaje montañoso al amanecer"),
-      ...galleryPhoto(3, "Producto", "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=700&q=80&auto=format&fit=crop", "Fotografía de producto: reloj sobre fondo neutro"),
-      ...galleryPhoto(4, "Evento", "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=700&q=80&auto=format&fit=crop", "Pareja bailando en una boda"),
-      ...galleryPhoto(5, "Retrato", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=700&q=80&auto=format&fit=crop", "Retrato de un hombre mirando a cámara"),
-      ...galleryPhoto(6, "Paisaje", "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=700&q=80&auto=format&fit=crop", "Costa rocosa con niebla"),
-      ...galleryPhoto(7, "Producto", "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=700&q=80&auto=format&fit=crop&sat=-20", "Fotografía de producto: perfume sobre fondo oscuro"),
-      ...galleryPhoto(8, "Evento", "https://images.unsplash.com/photo-1519741497674-611481863552?w=700&q=80&auto=format&fit=crop", "Invitados brindando en una recepción"),
+      ...galleryPhoto(1, "Portrait", "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=700&q=80&auto=format&fit=crop", "Black and white portrait of a young woman"),
+      ...galleryPhoto(2, "Landscape", "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=700&q=80&auto=format&fit=crop", "Mountain landscape at sunrise"),
+      ...galleryPhoto(3, "Product", "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=700&q=80&auto=format&fit=crop", "Product photography: watch on neutral background"),
+      ...galleryPhoto(4, "Event", "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=700&q=80&auto=format&fit=crop", "Couple dancing at a wedding"),
+      ...galleryPhoto(5, "Portrait", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=700&q=80&auto=format&fit=crop", "Portrait of a man looking at the camera"),
+      ...galleryPhoto(6, "Landscape", "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=700&q=80&auto=format&fit=crop", "Rocky coastline with fog"),
+      ...galleryPhoto(7, "Product", "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=700&q=80&auto=format&fit=crop&sat=-20", "Product photography: perfume on dark background"),
+      ...galleryPhoto(8, "Event", "https://images.unsplash.com/photo-1519741497674-611481863552?w=700&q=80&auto=format&fit=crop", "Guests toasting at a reception"),
 
       // --- Testimonios de clientes -----------------------------------------
       "photographer-testimonials": {
@@ -547,7 +547,7 @@ export function buildPortfolioFragment(): NodeFragment {
       "photographer-testimonials-title": {
         id: "photographer-testimonials-title",
         type: "text",
-        props: { content: "<strong>Lo que dicen quienes ya tuvieron su sesión</strong>" },
+        props: { content: "<strong>What clients say after their session</strong>" },
         style: sectionTitle(),
       },
       "photographer-testimonials-grid": {
@@ -563,9 +563,9 @@ export function buildPortfolioFragment(): NodeFragment {
       ...testimonialFragment(
         "photographer-testimonial-1",
         {
-          quote: "Elena consiguió que nos olvidáramos de la cámara. Las fotos de nuestra boda parecen sacadas de una revista, sin perder lo espontáneo.",
-          name: "Marta y Diego",
-          role: "Boda, junio 2025",
+          quote: "Elena made us forget the camera was even there. Our wedding photos look like they're from a magazine, without losing the spontaneity.",
+          name: "Marta and Diego",
+          role: "Wedding, June 2025",
           initials: "MD",
         },
         { base: { ...card().base, spacing: { padding: "20px" } }, overrides: { md: { spacing: { padding: "28px" } } } },
@@ -573,9 +573,9 @@ export function buildPortfolioFragment(): NodeFragment {
       ...testimonialFragment(
         "photographer-testimonial-2",
         {
-          quote: "Necesitábamos fotos de producto para el catálogo nuevo y el resultado superó lo que pedimos. Entrega puntual y trato impecable.",
+          quote: "We needed product photos for the new catalog and the result exceeded what we asked for. On-time delivery and flawless service.",
           name: "Carlos Reyes",
-          role: "Dueño, Taller Reyes",
+          role: "Owner, Taller Reyes",
           initials: "CR",
         },
         { base: { ...card().base, spacing: { padding: "20px" } }, overrides: { md: { spacing: { padding: "28px" } } } },
@@ -600,7 +600,7 @@ export function buildPortfolioFragment(): NodeFragment {
       "photographer-pricing-title": {
         id: "photographer-pricing-title",
         type: "text",
-        props: { content: "<strong>Paquetes de sesión</strong>" },
+        props: { content: "<strong>Session packages</strong>" },
         style: sectionTitle(),
       },
       "photographer-pricing-grid": {
@@ -613,9 +613,9 @@ export function buildPortfolioFragment(): NodeFragment {
         },
         children: ["photographer-package-1", "photographer-package-2", "photographer-package-3"],
       },
-      ...packageCard(1, "Retrato individual", "€120", "/sesión", "1 hora de sesión\n1 localización\n15 fotos editadas\nEntrega en 5 días", false),
-      ...packageCard(2, "Pareja o familia", "€220", "/sesión", "2 horas de sesión\n2 localizaciones\n30 fotos editadas\nEntrega en 5 días\nGalería online privada", true),
-      ...packageCard(3, "Evento (medio día)", "€480", "/sesión", "4 horas de cobertura\nReportaje completo\n80 fotos editadas\nEntrega en 10 días", false),
+      ...packageCard(1, "Individual portrait", "€120", "/session", "1-hour session\n1 location\n15 edited photos\nDelivery in 5 days", false),
+      ...packageCard(2, "Couple or family", "€220", "/session", "2-hour session\n2 locations\n30 edited photos\nDelivery in 5 days\nPrivate online gallery", true),
+      ...packageCard(3, "Event (half day)", "€480", "/session", "4-hour coverage\nFull reportage\n80 edited photos\nDelivery in 10 days", false),
 
       // --- Contacto / booking -------------------------------------------------
       "photographer-contact": {
@@ -641,13 +641,13 @@ export function buildPortfolioFragment(): NodeFragment {
       "photographer-contact-title": {
         id: "photographer-contact-title",
         type: "text",
-        props: { content: "<strong>Reserva tu sesión</strong>" },
+        props: { content: "<strong>Book your session</strong>" },
         style: { ...sectionTitle(), base: { ...sectionTitle().base, typography: { ...sectionTitle().base.typography, textAlign: "center" } } },
       },
       "photographer-contact-sub": {
         id: "photographer-contact-sub",
         type: "text",
-        props: { content: "Cuéntame qué tienes en mente y te respondo en menos de 48 horas con disponibilidad." },
+        props: { content: "Tell me what you have in mind and I'll reply within 48 hours with availability." },
         style: { ...bodyText(), base: { ...bodyText().base, typography: { ...bodyText().base.typography, textAlign: "center" } } },
       },
       "photographer-contact-form": {
@@ -677,31 +677,31 @@ export function buildPortfolioFragment(): NodeFragment {
       "photographer-contact-name-label": {
         id: "photographer-contact-name-label",
         type: "label",
-        props: { text: "Nombre completo", for: "photographer-contact-name" },
+        props: { text: "Full name", for: "photographer-contact-name" },
         style: defaultStyleFor("label"),
       },
       "photographer-contact-name": {
         id: "photographer-contact-name",
         type: "input",
-        props: { name: "name", type: "text", placeholder: "Ej. Marta González", required: true, disabled: false },
+        props: { name: "name", type: "text", placeholder: "E.g. Marta González", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "photographer-contact-email-label": {
         id: "photographer-contact-email-label",
         type: "label",
-        props: { text: "Correo electrónico", for: "photographer-contact-email" },
+        props: { text: "Email address", for: "photographer-contact-email" },
         style: defaultStyleFor("label"),
       },
       "photographer-contact-email": {
         id: "photographer-contact-email",
         type: "input",
-        props: { name: "email", type: "email", placeholder: "marta@correo.com", required: true, disabled: false },
+        props: { name: "email", type: "email", placeholder: "marta@email.com", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "photographer-contact-package-label": {
         id: "photographer-contact-package-label",
         type: "label",
-        props: { text: "Tipo de sesión", for: "photographer-contact-package" },
+        props: { text: "Session type", for: "photographer-contact-package" },
         style: defaultStyleFor("label"),
       },
       "photographer-contact-package": {
@@ -709,20 +709,20 @@ export function buildPortfolioFragment(): NodeFragment {
         type: "select",
         props: {
           options: [
-            { label: "Retrato individual", value: "individual" },
-            { label: "Pareja o familia", value: "family" },
-            { label: "Evento (medio día)", value: "event" },
+            { label: "Individual portrait", value: "individual" },
+            { label: "Couple or family", value: "family" },
+            { label: "Event (half day)", value: "event" },
           ],
           name: "package",
-          placeholder: "Selecciona un paquete",
-          ariaLabel: "Tipo de sesión",
+          placeholder: "Select a package",
+          ariaLabel: "Session type",
         },
         style: defaultStyleFor("select"),
       },
       "photographer-contact-submit": {
         id: "photographer-contact-submit",
         type: "button-submit",
-        props: { label: "Enviar solicitud", disabled: false },
+        props: { label: "Send request", disabled: false },
         style: {
           base: {
             layout: { display: "inline-block" },
@@ -758,7 +758,7 @@ export function buildPortfolioFragment(): NodeFragment {
       "photographer-footer-copyright": {
         id: "photographer-footer-copyright",
         type: "text",
-        props: { content: "© 2026 Lúmina Estudio · Elena Vidal. Todos los derechos reservados." },
+        props: { content: "© 2026 Lúmina Estudio · Elena Vidal. All rights reserved." },
         style: {
           base: {
             size: { width: "100%" },
@@ -778,141 +778,87 @@ export function buildPortfolioFragment(): NodeFragment {
     translations: (() => {
       const t: Record<string, NodeTranslations> = {};
 
-      t["photographer-navbar-brand"] = {
-        en: { content: "<strong>LÚMINA ESTUDIO</strong>" },
-        it: { content: "<strong>LÚMINA ESTUDIO</strong>" },
-      };
+      t["photographer-navbar-brand"] = { es: { content: "<strong>LÚMINA ESTUDIO</strong>" }, it: { content: "<strong>LÚMINA ESTUDIO</strong>" } };
 
-      t["photographer-topbar-phone"] = {
-        en: { content: "📞 +34 611 223 344 · Madrid and surroundings" },
-        it: { content: "📞 +34 611 223 344 · Madrid e dintorni" },
-      };
+      t["photographer-topbar-phone"] = { es: { content: "📞 +34 611 223 344 · Madrid y alrededores" }, it: { content: "📞 +34 611 223 344 · Madrid e dintorni" } };
 
-      t["photographer-hero-title"] = {
-        en: { content: "<strong>Photography that remembers how the moment felt</strong>" },
-        it: { content: "<strong>Fotografia che ricorda come si è sentito il momento</strong>" },
-      };
-      t["photographer-hero-sub"] = {
-        en: { content: "Portrait, landscape, product and event. Based in Madrid, available to travel." },
-        it: { content: "Ritratto, paesaggio, prodotto ed evento. Con base a Madrid, disponibile per viaggiare." },
-      };
-      t["photographer-hero-cta"] = { en: { label: "Check availability" }, it: { label: "Verifica disponibilità" } };
+      t["photographer-hero-title"] = { es: { content: "<strong>Fotografía que recuerda cómo se sintió el momento</strong>" }, it: { content: "<strong>Fotografia che ricorda come si è sentito il momento</strong>" } };
+      t["photographer-hero-sub"] = { es: { content: "Retrato, paisaje, producto y evento. Con base en Madrid, disponible para viajar." }, it: { content: "Ritratto, paesaggio, prodotto ed evento. Con base a Madrid, disponibile per viaggiare." } };
+      t["photographer-hero-cta"] = { es: { label: "Ver disponibilidad" }, it: { label: "Verifica disponibilità" } };
 
-      t["photographer-bio-title"] = { en: { content: "<strong>Elena Vidal, photographer</strong>" }, it: { content: "<strong>Elena Vidal, fotografa</strong>" } };
-      t["photographer-bio-text"] = {
-        en: {
-          content:
-            "Twelve years behind the camera, between editorial features and portrait sessions. Her work blends natural light and minimalist composition: every commission is treated as a small series, never a single loose photo.",
-        },
-        it: {
-          content:
-            "Dodici anni dietro la macchina fotografica, tra reportage editoriali e sessioni di ritratto. Il suo lavoro unisce luce naturale e composizione minimalista: ogni commissione è pensata come una piccola serie, non come una foto isolata.",
-        },
-      };
-      t["photographer-bio-text-2"] = {
-        en: { content: "Trained at ISF Madrid, she has exhibited in Barcelona, Lisbon and Milan. She works in digital and 35mm film depending on the project." },
-        it: { content: "Formata all'ISF di Madrid, ha esposto a Barcellona, Lisbona e Milano. Lavora in digitale e in pellicola 35mm secondo il progetto." },
-      };
-      t["photographer-bio-img"] = { en: { alt: "Portrait of photographer Elena Vidal in her studio" }, it: { alt: "Ritratto della fotografa Elena Vidal nel suo studio" } };
+      t["photographer-bio-title"] = { es: { content: "<strong>Elena Vidal, fotógrafa</strong>" }, it: { content: "<strong>Elena Vidal, fotografa</strong>" } };
+      t["photographer-bio-text"] = { es: { content: "Lleva doce años detrás de la cámara, entre reportajes editoriales y sesiones de retrato. Su trabajo combina luz natural y composición minimalista: cada encargo se piensa como una pequeña serie, no como una foto suelta." }, it: { content: "Dodici anni dietro la macchina fotografica, tra reportage editoriali e sessioni di ritratto. Il suo lavoro unisce luce naturale e composizione minimalista: ogni commissione è pensata come una piccola serie, non come una foto isolata." } };
+      t["photographer-bio-text-2"] = { es: { content: "Formada en el ISF de Madrid, ha expuesto en Barcelona, Lisboa y Milán. Trabaja en digital y en película de 35mm según el proyecto." }, it: { content: "Formata all'ISF di Madrid, ha esposto a Barcellona, Lisbona e Milano. Lavora in digitale e in pellicola 35mm secondo il progetto." } };
+      t["photographer-bio-img"] = { es: { alt: "Retrato de la fotógrafa Elena Vidal en su estudio" }, it: { alt: "Ritratto della fotografa Elena Vidal nel suo studio" } };
 
-      t["photographer-gallery-title"] = { en: { content: "<strong>Selected work</strong>" }, it: { content: "<strong>Lavori selezionati</strong>" } };
-      t["photographer-gallery-sub"] = {
-        en: { content: "Portrait, landscape, product and event — every photo opens full screen." },
-        it: { content: "Ritratto, paesaggio, prodotto ed evento — ogni foto si apre a schermo intero." },
-      };
+      t["photographer-gallery-title"] = { es: { content: "<strong>Trabajo seleccionado</strong>" }, it: { content: "<strong>Lavori selezionati</strong>" } };
+      t["photographer-gallery-sub"] = { es: { content: "Retrato, paisaje, producto y evento — cada foto abre en pantalla completa." }, it: { content: "Ritratto, paesaggio, prodotto ed evento — ogni foto si apre a schermo intero." } };
 
-      const galleryAlts: Record<number, { en: string; it: string; enCat: string; itCat: string }> = {
-        1: { en: "Black and white portrait of a young woman", it: "Ritratto in bianco e nero di una giovane donna", enCat: "Portrait", itCat: "Ritratto" },
-        2: { en: "Mountain landscape at sunrise", it: "Paesaggio montano all'alba", enCat: "Landscape", itCat: "Paesaggio" },
-        3: { en: "Product photography: watch on neutral background", it: "Fotografia di prodotto: orologio su sfondo neutro", enCat: "Product", itCat: "Prodotto" },
-        4: { en: "Couple dancing at a wedding", it: "Coppia che danza a un matrimonio", enCat: "Event", itCat: "Evento" },
-        5: { en: "Portrait of a man looking at the camera", it: "Ritratto di un uomo che guarda in camera", enCat: "Portrait", itCat: "Ritratto" },
-        6: { en: "Rocky coastline with fog", it: "Costa rocciosa con nebbia", enCat: "Landscape", itCat: "Paesaggio" },
-        7: { en: "Product photography: perfume on dark background", it: "Fotografia di prodotto: profumo su sfondo scuro", enCat: "Product", itCat: "Prodotto" },
-        8: { en: "Guests toasting at a reception", it: "Ospiti che festeggiano a un ricevimento", enCat: "Event", itCat: "Evento" },
+      const galleryAlts: Record<number, { es: string; it: string; esCat: string; itCat: string }> = {
+        1: { es: "Retrato en blanco y negro de una mujer joven", it: "Ritratto in bianco e nero di una giovane donna", esCat: "Retrato", itCat: "Ritratto" },
+        2: { es: "Paisaje montañoso al amanecer", it: "Paesaggio montano all'alba", esCat: "Paisaje", itCat: "Paesaggio" },
+        3: { es: "Fotografía de producto: reloj sobre fondo neutro", it: "Fotografia di prodotto: orologio su sfondo neutro", esCat: "Producto", itCat: "Prodotto" },
+        4: { es: "Pareja bailando en una boda", it: "Coppia che danza a un matrimonio", esCat: "Evento", itCat: "Evento" },
+        5: { es: "Retrato de un hombre mirando a cámara", it: "Ritratto di un uomo che guarda in camera", esCat: "Retrato", itCat: "Ritratto" },
+        6: { es: "Costa rocosa con niebla", it: "Costa rocciosa con nebbia", esCat: "Paisaje", itCat: "Paesaggio" },
+        7: { es: "Fotografía de producto: perfume sobre fondo oscuro", it: "Fotografia di prodotto: profumo su sfondo scuro", esCat: "Producto", itCat: "Prodotto" },
+        8: { es: "Invitados brindando en una recepción", it: "Ospiti che festeggiano a un ricevimento", esCat: "Evento", itCat: "Evento" },
       };
       for (const [n, alt] of Object.entries(galleryAlts)) {
-        t[`photographer-gallery-${n}-img`] = { en: { alt: alt.en }, it: { alt: alt.it } };
-        t[`photographer-gallery-${n}-cat`] = { en: { label: alt.enCat }, it: { label: alt.itCat } };
+        t[`photographer-gallery-${n}-img`] = { es: { alt: alt.es }, it: { alt: alt.it } };
+        t[`photographer-gallery-${n}-cat`] = { es: { label: alt.esCat }, it: { label: alt.itCat } };
       }
 
-      t["photographer-testimonials-title"] = {
-        en: { content: "<strong>What clients say after their session</strong>" },
-        it: { content: "<strong>Cosa dicono i clienti dopo la loro sessione</strong>" },
-      };
-      t["photographer-testimonial-1-quote"] = {
-        en: { content: "<p>Elena made us forget the camera was even there. Our wedding photos look like they're from a magazine, without losing the spontaneity.</p>" },
-        it: { content: "<p>Elena ci ha fatto dimenticare la macchina fotografica. Le foto del nostro matrimonio sembrano di una rivista, senza perdere la spontaneità.</p>" },
-      };
-      t["photographer-testimonial-1-name"] = {
-        en: { content: "<strong>Marta and Diego</strong>" },
-        it: { content: "<strong>Marta e Diego</strong>" },
-      };
-      t["photographer-testimonial-1-role"] = {
-        en: { content: "Wedding, June 2025" },
-        it: { content: "Matrimonio, giugno 2025" },
-      };
-      t["photographer-testimonial-2-quote"] = {
-        en: { content: "<p>We needed product photos for the new catalog and the result exceeded what we asked for. On-time delivery and flawless service.</p>" },
-        it: { content: "<p>Avevamo bisogno di foto prodotto per il nuovo catalogo e il risultato ha superato le aspettative. Consegna puntuale e servizio impeccabile.</p>" },
-      };
-      t["photographer-testimonial-2-name"] = {
-        en: { content: "<strong>Carlos Reyes</strong>" },
-        it: { content: "<strong>Carlos Reyes</strong>" },
-      };
-      t["photographer-testimonial-2-role"] = {
-        en: { content: "Owner, Taller Reyes" },
-        it: { content: "Proprietario, Taller Reyes" },
-      };
+      t["photographer-testimonials-title"] = { es: { content: "<strong>Lo que dicen quienes ya tuvieron su sesión</strong>" }, it: { content: "<strong>Cosa dicono i clienti dopo la loro sessione</strong>" } };
+      t["photographer-testimonial-1-quote"] = { es: { content: "<p>Elena consiguió que nos olvidáramos de la cámara. Las fotos de nuestra boda parecen sacadas de una revista, sin perder lo espontáneo.</p>" }, it: { content: "<p>Elena ci ha fatto dimenticare la macchina fotografica. Le foto del nostro matrimonio sembrano di una rivista, senza perdere la spontaneità.</p>" } };
+      t["photographer-testimonial-1-name"] = { es: { content: "<strong>Marta y Diego</strong>" }, it: { content: "<strong>Marta e Diego</strong>" } };
+      t["photographer-testimonial-1-role"] = { es: { content: "Boda, junio 2025" }, it: { content: "Matrimonio, giugno 2025" } };
+      t["photographer-testimonial-2-quote"] = { es: { content: "<p>Necesitábamos fotos de producto para el catálogo nuevo y el resultado superó lo que pedimos. Entrega puntual y trato impecable.</p>" }, it: { content: "<p>Avevamo bisogno di foto prodotto per il nuovo catalogo e il risultato ha superato le aspettative. Consegna puntuale e servizio impeccabile.</p>" } };
+      t["photographer-testimonial-2-name"] = { es: { content: "<strong>Carlos Reyes</strong>" }, it: { content: "<strong>Carlos Reyes</strong>" } };
+      t["photographer-testimonial-2-role"] = { es: { content: "Dueño, Taller Reyes" }, it: { content: "Proprietario, Taller Reyes" } };
 
-      t["photographer-pricing-title"] = { en: { content: "<strong>Session packages</strong>" }, it: { content: "<strong>Pacchetti sessione</strong>" } };
+      t["photographer-pricing-title"] = { es: { content: "<strong>Paquetes de sesión</strong>" }, it: { content: "<strong>Pacchetti sessione</strong>" } };
 
-      t["photographer-package-1-plan"] = { en: { content: "Individual portrait" }, it: { content: "Ritratto individuale" } };
-      t["photographer-package-1-price"] = { en: { content: "€120" }, it: { content: "€120" } };
-      t["photographer-package-1-period"] = { en: { content: "/session" }, it: { content: "/sessione" } };
-      t["photographer-package-1-feature-0-text"] = { en: { content: "✓ 1-hour session" }, it: { content: "✓ 1 ora di sessione" } };
-      t["photographer-package-1-feature-1-text"] = { en: { content: "✓ 1 location" }, it: { content: "✓ 1 location" } };
-      t["photographer-package-1-feature-2-text"] = { en: { content: "✓ 15 edited photos" }, it: { content: "✓ 15 foto ritoccate" } };
-      t["photographer-package-1-feature-3-text"] = { en: { content: "✓ Delivery in 5 days" }, it: { content: "✓ Consegna in 5 giorni" } };
-      t["photographer-package-1-cta"] = { en: { label: "Book session" }, it: { label: "Prenota sessione" } };
+      t["photographer-package-1-plan"] = { es: { content: "Retrato individual" }, it: { content: "Ritratto individuale" } };
+      t["photographer-package-1-price"] = { es: { content: "€120" }, it: { content: "€120" } };
+      t["photographer-package-1-period"] = { es: { content: "/sesión" }, it: { content: "/sessione" } };
+      t["photographer-package-1-feature-0-text"] = { es: { content: "✓ 1 hora de sesión" }, it: { content: "✓ 1 ora di sessione" } };
+      t["photographer-package-1-feature-1-text"] = { es: { content: "✓ 1 localización" }, it: { content: "✓ 1 location" } };
+      t["photographer-package-1-feature-2-text"] = { es: { content: "✓ 15 fotos editadas" }, it: { content: "✓ 15 foto ritoccate" } };
+      t["photographer-package-1-feature-3-text"] = { es: { content: "✓ Entrega en 5 días" }, it: { content: "✓ Consegna in 5 giorni" } };
+      t["photographer-package-1-cta"] = { es: { label: "Reservar sesión" }, it: { label: "Prenota sessione" } };
 
-      t["photographer-package-2-badge"] = { en: { content: "Most chosen" }, it: { content: "Più scelto" } };
-      t["photographer-package-2-plan"] = { en: { content: "Couple or family" }, it: { content: "Coppia o famiglia" } };
-      t["photographer-package-2-price"] = { en: { content: "€220" }, it: { content: "€220" } };
-      t["photographer-package-2-period"] = { en: { content: "/session" }, it: { content: "/sessione" } };
-      t["photographer-package-2-feature-0-text"] = { en: { content: "✓ 2-hour session" }, it: { content: "✓ 2 ore di sessione" } };
-      t["photographer-package-2-feature-1-text"] = { en: { content: "✓ 2 locations" }, it: { content: "✓ 2 location" } };
-      t["photographer-package-2-feature-2-text"] = { en: { content: "✓ 30 edited photos" }, it: { content: "✓ 30 foto ritoccate" } };
-      t["photographer-package-2-feature-3-text"] = { en: { content: "✓ Delivery in 5 days" }, it: { content: "✓ Consegna in 5 giorni" } };
-      t["photographer-package-2-feature-4-text"] = { en: { content: "✓ Private online gallery" }, it: { content: "✓ Galleria online privata" } };
-      t["photographer-package-2-cta"] = { en: { label: "Book session" }, it: { label: "Prenota sessione" } };
+      t["photographer-package-2-badge"] = { es: { content: "Más elegido" }, it: { content: "Più scelto" } };
+      t["photographer-package-2-plan"] = { es: { content: "Pareja o familia" }, it: { content: "Coppia o famiglia" } };
+      t["photographer-package-2-price"] = { es: { content: "€220" }, it: { content: "€220" } };
+      t["photographer-package-2-period"] = { es: { content: "/sesión" }, it: { content: "/sessione" } };
+      t["photographer-package-2-feature-0-text"] = { es: { content: "✓ 2 horas de sesión" }, it: { content: "✓ 2 ore di sessione" } };
+      t["photographer-package-2-feature-1-text"] = { es: { content: "✓ 2 localizaciones" }, it: { content: "✓ 2 location" } };
+      t["photographer-package-2-feature-2-text"] = { es: { content: "✓ 30 fotos editadas" }, it: { content: "✓ 30 foto ritoccate" } };
+      t["photographer-package-2-feature-3-text"] = { es: { content: "✓ Entrega en 5 días" }, it: { content: "✓ Consegna in 5 giorni" } };
+      t["photographer-package-2-feature-4-text"] = { es: { content: "✓ Galería online privada" }, it: { content: "✓ Galleria online privata" } };
+      t["photographer-package-2-cta"] = { es: { label: "Reservar sesión" }, it: { label: "Prenota sessione" } };
 
-      t["photographer-package-3-plan"] = { en: { content: "Event (half day)" }, it: { content: "Evento (mezza giornata)" } };
-      t["photographer-package-3-price"] = { en: { content: "€480" }, it: { content: "€480" } };
-      t["photographer-package-3-period"] = { en: { content: "/session" }, it: { content: "/sessione" } };
-      t["photographer-package-3-feature-0-text"] = { en: { content: "✓ 4-hour coverage" }, it: { content: "✓ 4 ore di copertura" } };
-      t["photographer-package-3-feature-1-text"] = { en: { content: "✓ Full reportage" }, it: { content: "✓ Reportage completo" } };
-      t["photographer-package-3-feature-2-text"] = { en: { content: "✓ 80 edited photos" }, it: { content: "✓ 80 foto ritoccate" } };
-      t["photographer-package-3-feature-3-text"] = { en: { content: "✓ Delivery in 10 days" }, it: { content: "✓ Consegna in 10 giorni" } };
-      t["photographer-package-3-cta"] = { en: { label: "Book session" }, it: { label: "Prenota sessione" } };
+      t["photographer-package-3-plan"] = { es: { content: "Evento (medio día)" }, it: { content: "Evento (mezza giornata)" } };
+      t["photographer-package-3-price"] = { es: { content: "€480" }, it: { content: "€480" } };
+      t["photographer-package-3-period"] = { es: { content: "/sesión" }, it: { content: "/sessione" } };
+      t["photographer-package-3-feature-0-text"] = { es: { content: "✓ 4 horas de cobertura" }, it: { content: "✓ 4 ore di copertura" } };
+      t["photographer-package-3-feature-1-text"] = { es: { content: "✓ Reportaje completo" }, it: { content: "✓ Reportage completo" } };
+      t["photographer-package-3-feature-2-text"] = { es: { content: "✓ 80 fotos editadas" }, it: { content: "✓ 80 foto ritoccate" } };
+      t["photographer-package-3-feature-3-text"] = { es: { content: "✓ Entrega en 10 días" }, it: { content: "✓ Consegna in 10 giorni" } };
+      t["photographer-package-3-cta"] = { es: { label: "Reservar sesión" }, it: { label: "Prenota sessione" } };
 
-      t["photographer-contact-title"] = { en: { content: "<strong>Book your session</strong>" }, it: { content: "<strong>Prenota la tua sessione</strong>" } };
-      t["photographer-contact-sub"] = {
-        en: { content: "Tell me what you have in mind and I'll reply within 48 hours with availability." },
-        it: { content: "Raccontami cosa hai in mente e ti risponderò entro 48 ore con la disponibilità." },
-      };
-      t["photographer-contact-name-label"] = { en: { text: "Full name" }, it: { text: "Nome completo" } };
-      t["photographer-contact-name"] = { en: { placeholder: "E.g. Marta González" }, it: { placeholder: "Es. Marta González" } };
-      t["photographer-contact-email-label"] = { en: { text: "Email address" }, it: { text: "Indirizzo email" } };
-      t["photographer-contact-email"] = { en: { placeholder: "marta@email.com" }, it: { placeholder: "marta@email.com" } };
-      t["photographer-contact-package-label"] = { en: { text: "Session type" }, it: { text: "Tipo di sessione" } };
-      t["photographer-contact-package"] = { en: { placeholder: "Select a package" }, it: { placeholder: "Seleziona un pacchetto" } };
-      t["photographer-contact-submit"] = { en: { label: "Send request" }, it: { label: "Invia richiesta" } };
+      t["photographer-contact-title"] = { es: { content: "<strong>Reserva tu sesión</strong>" }, it: { content: "<strong>Prenota la tua sessione</strong>" } };
+      t["photographer-contact-sub"] = { es: { content: "Cuéntame qué tienes en mente y te respondo en menos de 48 horas con disponibilidad." }, it: { content: "Raccontami cosa hai in mente e ti risponderò entro 48 ore con la disponibilità." } };
+      t["photographer-contact-name-label"] = { es: { text: "Nombre completo" }, it: { text: "Nome completo" } };
+      t["photographer-contact-name"] = { es: { placeholder: "Ej. Marta González" }, it: { placeholder: "Es. Marta González" } };
+      t["photographer-contact-email-label"] = { es: { text: "Correo electrónico" }, it: { text: "Indirizzo email" } };
+      t["photographer-contact-email"] = { es: { placeholder: "marta@correo.com" }, it: { placeholder: "marta@email.com" } };
+      t["photographer-contact-package-label"] = { es: { text: "Tipo de sesión" }, it: { text: "Tipo di sessione" } };
+      t["photographer-contact-package"] = { es: { placeholder: "Selecciona un paquete" }, it: { placeholder: "Seleziona un pacchetto" } };
+      t["photographer-contact-submit"] = { es: { label: "Enviar solicitud" }, it: { label: "Invia richiesta" } };
 
-      t["photographer-footer-copyright"] = {
-        en: { content: "© 2026 Lúmina Estudio · Elena Vidal. All rights reserved." },
-        it: { content: "© 2026 Lúmina Estudio · Elena Vidal. Tutti i diritti riservati." },
-      };
+      t["photographer-footer-copyright"] = { es: { content: "© 2026 Lúmina Estudio · Elena Vidal. Todos los derechos reservados." }, it: { content: "© 2026 Lúmina Estudio · Elena Vidal. Tutti i diritti riservati." } };
 
       return t;
     })(),
@@ -924,31 +870,31 @@ export function buildPortfolioFragment(): NodeFragment {
  * conservando el `slug` del usuario.
  */
 export const portfolioPageMeta: LayoutPageMeta = {
-  title: "Lúmina Estudio · Fotografía de retrato, evento y producto en Madrid",
+  title: "Lúmina Estudio · Portrait, event and product photography in Madrid",
   description:
-    "Elena Vidal, fotógrafa en Madrid. Retrato, paisaje, producto y evento. Paquetes de sesión y reserva de disponibilidad online.",
+    "Elena Vidal, photographer in Madrid. Portrait, landscape, product and event. Session packages and online booking.",
   seo: {
     robots: "index,follow",
     openGraph: {
-      title: "Lúmina Estudio · Fotografía en Madrid",
-      description: "Retrato, paisaje, producto y evento. Reserva tu sesión con Elena Vidal.",
+      title: "Lúmina Estudio · Photography in Madrid",
+      description: "Portrait, landscape, product and event. Book your session with Elena Vidal.",
       image: "https://images.unsplash.com/photo-1554080353-a576cf803bda?w=1200&q=80&auto=format&fit=crop",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "Lúmina Estudio · Fotografía en Madrid",
-      description: "Retrato, paisaje, producto y evento. Reserva tu sesión con Elena Vidal.",
+      title: "Lúmina Estudio · Photography in Madrid",
+      description: "Portrait, landscape, product and event. Book your session with Elena Vidal.",
       image: "https://images.unsplash.com/photo-1554080353-a576cf803bda?w=1200&q=80&auto=format&fit=crop",
     },
   },
   metaTranslations: {
-    en: {
-      title: "Lúmina Estudio · Portrait, event and product photography in Madrid",
-      description: "Elena Vidal, photographer in Madrid. Portrait, landscape, product and event. Session packages and online booking.",
+    es: {
+      title: "Lúmina Estudio · Fotografía de retrato, evento y producto en Madrid",
+      description: "Elena Vidal, fotógrafa en Madrid. Retrato, paisaje, producto y evento. Paquetes de sesión y reserva de disponibilidad online.",
       seo: {
-        openGraph: { title: "Lúmina Estudio · Photography in Madrid", description: "Portrait, landscape, product and event. Book your session with Elena Vidal." },
-        twitter: { title: "Lúmina Estudio · Photography in Madrid", description: "Portrait, landscape, product and event. Book your session with Elena Vidal." },
+        openGraph: { title: "Lúmina Estudio · Fotografía en Madrid", description: "Retrato, paisaje, producto y evento. Reserva tu sesión con Elena Vidal." },
+        twitter: { title: "Lúmina Estudio · Fotografía en Madrid", description: "Retrato, paisaje, producto y evento. Reserva tu sesión con Elena Vidal." },
       },
     },
     it: {

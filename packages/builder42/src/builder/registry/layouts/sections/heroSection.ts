@@ -72,7 +72,7 @@ export function buildHeroSectionFragment(): NodeFragment {
       "hero-section-title": {
         id: "hero-section-title",
         type: "text",
-        props: { content: "<strong>Cada mensaje, en el canal correcto, en el momento correcto</strong>" },
+        props: { content: "<strong>Every message, on the right channel, at the right time</strong>" },
         style: {
           base: {
             size: { maxWidth: "22ch" },
@@ -95,7 +95,7 @@ export function buildHeroSectionFragment(): NodeFragment {
         type: "text",
         props: {
           content:
-            "Email, SMS, WhatsApp y voz desde un solo workspace: crea la campaña una vez, entrégala en el canal donde tu audiencia realmente responde.",
+            "Email, SMS, WhatsApp, and voice from one workspace: create the campaign once, deliver it on the channel your audience actually answers.",
         },
         style: {
           base: {
@@ -109,7 +109,7 @@ export function buildHeroSectionFragment(): NodeFragment {
       "hero-section-cta": {
         id: "hero-section-cta",
         type: "button",
-        props: { label: "Probar ahora", link: { kind: "external", href: "#" } },
+        props: { label: "Try it now", link: { kind: "external", href: "#" } },
         style: {
           base: {
             spacing: { padding: "14px 26px", margin: "24px 0 0 0" },

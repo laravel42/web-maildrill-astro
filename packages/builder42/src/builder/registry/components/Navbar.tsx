@@ -156,14 +156,14 @@ function NavbarRender(ctx: RenderContext) {
       ref={rootRef as Ref<HTMLElement> | undefined}
       className={mergedClassName}
       style={style}
-      aria-label="Principal"
+      aria-label="Main"
       {...restRootProps}
     >
       <div className="pb-navbar__brand">
         {children}
         {!exportMode && !hasLogoContent ? (
           <span className="pbx-empty-hint pbx-navbar__brand-hint" data-empty-hint>
-            Suelta una imagen, texto o icono para el logo
+            Drop an image, text, or icon for the logo
           </span>
         ) : null}
       </div>
@@ -172,7 +172,7 @@ function NavbarRender(ctx: RenderContext) {
         type="button"
         aria-controls={menuId}
         aria-expanded="false"
-        aria-label="Abrir menú"
+        aria-label="Open menu"
         {...(previewMobile
           ? {
               style: {

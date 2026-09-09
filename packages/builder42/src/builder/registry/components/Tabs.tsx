@@ -104,7 +104,7 @@ function TabsRender(ctx: RenderContext) {
       <div className="pb-tabs__list" role="tablist">
         {items.map((slot, i) => {
           const raw = slot.node.props.label;
-          const label = typeof raw === "string" && raw !== "" ? raw : "Pestaña";
+          const label = typeof raw === "string" && raw !== "" ? raw : "Tab";
           // Pestaña seleccionada: la activa en edición (docs/23 §5, T11) si el
           // canvas la fijó (`activeSlotId`, solo en Edit); si no (export/
           // preview, o ninguna activa aún), la primera — comportamiento previo.
@@ -156,7 +156,7 @@ function TabsRender(ctx: RenderContext) {
       </div>
       {!exportMode && items.length === 0 ? (
         <span className="pbx-empty-hint" data-empty-hint>
-          Pestañas vacías — añade una pestaña
+          Empty tabs — add a tab
         </span>
       ) : null}
     </div>
@@ -168,7 +168,7 @@ export const tabsDefinition: ComponentDefinition = {
   label: "Pestañas",
   category: "content",
   acceptsChildren: true,
-  slots: { itemType: "tab", min: 1, addLabel: "Añadir pestaña", splitRender: true },
+  slots: { itemType: "tab", min: 1, addLabel: "Add tab", splitRender: true },
   defaultProps: {},
   defaultStyle: structuredClone(TABS_DEFAULT_STYLE),
   defaultBehaviors: [{ type: "tabs", options: { duration: 220 } }],
@@ -176,9 +176,9 @@ export const tabsDefinition: ComponentDefinition = {
   // Un `tabs` nuevo nace con 3 pestañas, cada una con un `text` de contenido
   // (docs/23 §7). El usuario añade/quita/reordena pestañas y edita su contenido.
   defaultChildren: [
-    { type: "tab", props: { label: "Descripción" }, children: [{ type: "text", props: { content: "<p>Detalles generales del producto o servicio.</p>" } }] },
-    { type: "tab", props: { label: "Especificaciones" }, children: [{ type: "text", props: { content: "<p>Ficha técnica y características principales.</p>" } }] },
-    { type: "tab", props: { label: "Opiniones" }, children: [{ type: "text", props: { content: "<p>Lo que dicen nuestros clientes.</p>" } }] },
+    { type: "tab", props: { label: "Overview" }, children: [{ type: "text", props: { content: "<p>General details about the product or service.</p>" } }] },
+    { type: "tab", props: { label: "Specs" }, children: [{ type: "text", props: { content: "<p>Technical sheet and key features.</p>" } }] },
+    { type: "tab", props: { label: "Reviews" }, children: [{ type: "text", props: { content: "<p>What our customers say.</p>" } }] },
   ],
   propsSchema: { fields: [] },
   styleSchema: {
@@ -187,7 +187,7 @@ export const tabsDefinition: ComponentDefinition = {
     // seleccionado (hoy fijo en `TABS_CSS`; con esto el usuario lo edita desde
     // el Inspector). `classSuffix: "tab"` → clase derivada `n-{id}--tab`,
     // aplicada a cada botón en `TabsRender` (`classNameForNode`).
-    states: [{ state: "selected", classSuffix: "tab", label: "Seleccionado" }],
+    states: [{ state: "selected", classSuffix: "tab", label: "Selected" }],
   },
   render: TabsRender,
 };

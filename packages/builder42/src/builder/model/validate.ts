@@ -62,18 +62,18 @@ function isNumber(v: unknown): v is number {
 
 function validateBreakpoints(v: unknown, path: string, e: Errors): void {
   if (!isObject(v)) {
-    e.push(path, "debe ser un objeto BreakpointConfig");
+    e.push(path, "must be a BreakpointConfig object");
     return;
   }
   if (!Array.isArray(v.order) || !v.order.every((b) => isString(b) && (BREAKPOINTS as string[]).includes(b))) {
-    e.push(`${path}.order`, "debe ser un array de breakpoints válidos");
+    e.push(`${path}.order`, "must be an array of valid breakpoints");
   }
   if (!isObject(v.minWidth)) {
-    e.push(`${path}.minWidth`, "debe ser un objeto { sm, md, lg, xl }");
+    e.push(`${path}.minWidth`, "must be an object { sm, md, lg, xl }");
   } else {
     for (const bp of OVERRIDE_BREAKPOINTS) {
       if (!isNumber(v.minWidth[bp])) {
-        e.push(`${path}.minWidth.${bp}`, "debe ser un número (px)");
+        e.push(`${path}.minWidth.${bp}`, "must be a number (px)");
       }
     }
   }
@@ -81,15 +81,15 @@ function validateBreakpoints(v: unknown, path: string, e: Errors): void {
 
 function validateSiteMeta(v: unknown, path: string, e: Errors): void {
   if (!isObject(v)) {
-    e.push(path, "debe ser un objeto SiteMeta");
+    e.push(path, "must be a SiteMeta object");
     return;
   }
-  if (!isString(v.name)) e.push(`${path}.name`, "debe ser string");
-  if (!isString(v.defaultLang)) e.push(`${path}.defaultLang`, "debe ser string");
-  if (!isNumber(v.version)) e.push(`${path}.version`, "debe ser número");
+  if (!isString(v.name)) e.push(`${path}.name`, "must be a string");
+  if (!isString(v.defaultLang)) e.push(`${path}.defaultLang`, "must be a string");
+  if (!isNumber(v.version)) e.push(`${path}.version`, "must be a number");
   // `siteId` (docs/36 B1/F2): opcional, ausente = nunca publicado (retrocompat).
   if (v.siteId !== undefined && !isString(v.siteId)) {
-    e.push(`${path}.siteId`, "debe ser string si está presente");
+    e.push(`${path}.siteId`, "must be a string if present");
   }
   validateBreakpoints(v.breakpoints, `${path}.breakpoints`, e);
   if (v.i18n !== undefined) validateI18nConfig(v.i18n, `${path}.i18n`, e);
@@ -115,7 +115,7 @@ function validateThemes(
     return;
   }
   if (!isObject(themes)) {
-    e.push(`${path}.themes`, "debe ser un Record<ThemeId, Theme>");
+    e.push(`${path}.themes`, "must be a Record<ThemeId, Theme>");
     return;
   }
   const ids = Object.keys(themes);
@@ -123,17 +123,17 @@ function validateThemes(
     const tp = `${path}.themes.${id}`;
     const theme: unknown = themes[id];
     if (!isObject(theme)) {
-      e.push(tp, "debe ser un objeto Theme");
+      e.push(tp, "must be a Theme object");
       continue;
     }
-    if (!isString(theme.id)) e.push(`${tp}.id`, "debe ser string");
-    if (!isString(theme.name)) e.push(`${tp}.name`, "debe ser string");
+    if (!isString(theme.id)) e.push(`${tp}.id`, "must be a string");
+    if (!isString(theme.name)) e.push(`${tp}.name`, "must be a string");
     if (theme.tokens !== undefined && !isObject(theme.tokens)) {
-      e.push(`${tp}.tokens`, "debe ser un objeto Partial<Record<token, StyleValue>>");
+      e.push(`${tp}.tokens`, "must be a Partial<Record<token, StyleValue>> object");
     }
     if (theme.extends !== undefined) {
       if (!isString(theme.extends)) {
-        e.push(`${tp}.extends`, "debe ser un ThemeId (string)");
+        e.push(`${tp}.extends`, "must be a ThemeId (string)");
       } else if (!(theme.extends in themes)) {
         e.push(`${tp}.extends`, `"${theme.extends}" no existe en themes`);
       }
@@ -143,12 +143,12 @@ function validateThemes(
       theme.colorScheme !== "light" &&
       theme.colorScheme !== "dark"
     ) {
-      e.push(`${tp}.colorScheme`, 'debe ser "light" o "dark"');
+      e.push(`${tp}.colorScheme`, 'must be "light" or "dark"');
     }
   }
   if (defaultThemeId !== undefined) {
     if (!isString(defaultThemeId)) {
-      e.push(`${path}.defaultThemeId`, "debe ser string");
+      e.push(`${path}.defaultThemeId`, "must be a string");
     } else if (!(defaultThemeId in themes)) {
       e.push(`${path}.defaultThemeId`, `"${defaultThemeId}" no existe en themes`);
     }
@@ -161,22 +161,22 @@ function validateThemes(
  */
 function validateI18nConfig(v: unknown, path: string, e: Errors): void {
   if (!isObject(v)) {
-    e.push(path, "debe ser un objeto I18nConfig");
+    e.push(path, "must be an I18nConfig object");
     return;
   }
   let locales: string[] = [];
   if (!Array.isArray(v.locales) || !v.locales.every(isString) || v.locales.length === 0) {
-    e.push(`${path}.locales`, "debe ser un array de idiomas (string) no vacío");
+    e.push(`${path}.locales`, "must be a non-empty array of language strings");
   } else {
     locales = v.locales;
   }
   if (!isString(v.defaultLocale)) {
-    e.push(`${path}.defaultLocale`, "debe ser string");
+    e.push(`${path}.defaultLocale`, "must be a string");
   } else if (locales.length > 0 && !locales.includes(v.defaultLocale)) {
-    e.push(`${path}.defaultLocale`, `"${v.defaultLocale}" debe estar en locales`);
+    e.push(`${path}.defaultLocale`, `"${v.defaultLocale}" must be in locales`);
   }
   if (v.routeStrategy !== "prefix-except-default" && v.routeStrategy !== "prefix-all") {
-    e.push(`${path}.routeStrategy`, 'debe ser "prefix-except-default" o "prefix-all"');
+    e.push(`${path}.routeStrategy`, 'must be "prefix-except-default" or "prefix-all"');
   }
 }
 
@@ -195,7 +195,7 @@ function validateTranslations(
 ): void {
   if (v === undefined) return;
   if (!isObject(v)) {
-    e.push(path, "debe ser un Record<NodeId, NodeTranslations>");
+    e.push(path, "must be a Record<NodeId, NodeTranslations>");
     return;
   }
   for (const nodeId of Object.keys(v)) {
@@ -206,7 +206,7 @@ function validateTranslations(
     }
     const nodeT = v[nodeId];
     if (!isObject(nodeT)) {
-      e.push(np, "debe ser un objeto NodeTranslations (Record<locale, props>)");
+      e.push(np, "must be a NodeTranslations object (Record<locale, props>)");
       continue;
     }
     for (const locale of Object.keys(nodeT)) {
@@ -214,7 +214,7 @@ function validateTranslations(
         e.push(`${np}.${locale}`, `idioma "${locale}" no está en site.meta.i18n.locales`);
       }
       if (!isObject(nodeT[locale])) {
-        e.push(`${np}.${locale}`, "debe ser un objeto de props traducidas");
+        e.push(`${np}.${locale}`, "must be a translated props object");
       }
     }
   }
@@ -222,44 +222,44 @@ function validateTranslations(
 
 function validateNode(v: unknown, path: string, e: Errors): void {
   if (!isObject(v)) {
-    e.push(path, "debe ser un objeto BuilderNode");
+    e.push(path, "must be a BuilderNode object");
     return;
   }
-  if (!isString(v.id)) e.push(`${path}.id`, "debe ser string");
-  if (!isString(v.type)) e.push(`${path}.type`, "debe ser string");
-  if (!isObject(v.props)) e.push(`${path}.props`, "debe ser un objeto");
+  if (!isString(v.id)) e.push(`${path}.id`, "must be a string");
+  if (!isString(v.type)) e.push(`${path}.type`, "must be a string");
+  if (!isObject(v.props)) e.push(`${path}.props`, "must be an object");
   if (!isObject(v.style)) {
-    e.push(`${path}.style`, "debe ser un objeto NodeStyle");
+    e.push(`${path}.style`, "must be a NodeStyle object");
   } else if (!isObject(v.style.base)) {
-    e.push(`${path}.style.base`, "debe ser un objeto StyleProperties");
+    e.push(`${path}.style.base`, "must be a StyleProperties object");
   }
   if (v.children !== undefined) {
     if (!Array.isArray(v.children) || !v.children.every(isString)) {
-      e.push(`${path}.children`, "debe ser un array de NodeId (string)");
+      e.push(`${path}.children`, "must be an array of NodeId strings");
     }
   }
   if (v.behaviors !== undefined) {
     if (!Array.isArray(v.behaviors)) {
-      e.push(`${path}.behaviors`, "debe ser un array de BehaviorInstance");
+      e.push(`${path}.behaviors`, "must be an array of BehaviorInstance");
     } else {
       v.behaviors.forEach((b: unknown, i: number) => {
         if (!isObject(b) || !isString(b.type)) {
-          e.push(`${path}.behaviors[${i}]`, "debe tener un `type` string");
+          e.push(`${path}.behaviors[${i}]`, "must have a string `type`");
         } else if (b.options !== undefined && !isObject(b.options)) {
-          e.push(`${path}.behaviors[${i}].options`, "debe ser un objeto JSON");
+          e.push(`${path}.behaviors[${i}].options`, "must be a JSON object");
         }
       });
     }
   }
   if (v.onClick !== undefined) {
     if (!isObject(v.onClick) || !isString(v.onClick.type)) {
-      e.push(`${path}.onClick`, "debe ser un NodeAction { type: string, target?, params? }");
+      e.push(`${path}.onClick`, "must be a NodeAction { type: string, target?, params? }");
     } else {
       if (v.onClick.target !== undefined && !isString(v.onClick.target)) {
-        e.push(`${path}.onClick.target`, "debe ser string si está presente");
+        e.push(`${path}.onClick.target`, "must be a string if present");
       }
       if (v.onClick.params !== undefined && !isObject(v.onClick.params)) {
-        e.push(`${path}.onClick.params`, "debe ser un objeto JSON si está presente");
+        e.push(`${path}.onClick.params`, "must be a JSON object if present");
       }
     }
   }
@@ -267,14 +267,14 @@ function validateNode(v: unknown, path: string, e: Errors): void {
 
 function validateDocument(v: unknown, path: string, e: Errors): void {
   if (!isObject(v)) {
-    e.push(path, "debe ser un objeto BuilderDocument");
+    e.push(path, "must be a BuilderDocument object");
     return;
   }
   if (!isString(v.rootId)) {
-    e.push(`${path}.rootId`, "debe ser string");
+    e.push(`${path}.rootId`, "must be a string");
   }
   if (!isObject(v.nodes)) {
-    e.push(`${path}.nodes`, "debe ser un Record<NodeId, BuilderNode>");
+    e.push(`${path}.nodes`, "must be a Record<NodeId, BuilderNode>");
     return;
   }
   const nodes = v.nodes;
@@ -302,7 +302,7 @@ function validateDocument(v: unknown, path: string, e: Errors): void {
  * Traducciones de metadata SEO de una página, por idioma (docs/12 §B.9).
  * `undefined` = sin traducciones SEO (usa el meta default en todos los
  * locales, retrocompat). Solo valida forma estructural básica: cada entrada
- * debe ser un objeto y, si están presentes, `title`/`description` strings y
+ * must be an object y, si están presentes, `title`/`description` strings y
  * `seo` un objeto (sin validar sus subcampos en detalle — son todos opcionales
  * y de forma libre, igual que `PageMeta.seo`).
  */
@@ -314,7 +314,7 @@ function validateMetaTranslations(
 ): void {
   if (v === undefined) return;
   if (!isObject(v)) {
-    e.push(path, "debe ser un Record<locale, PageMetaTranslation>");
+    e.push(path, "must be a Record<locale, PageMetaTranslation>");
     return;
   }
   for (const locale of Object.keys(v)) {
@@ -324,26 +324,26 @@ function validateMetaTranslations(
     }
     const t = v[locale];
     if (!isObject(t)) {
-      e.push(lp, "debe ser un objeto PageMetaTranslation");
+      e.push(lp, "must be a PageMetaTranslation object");
       continue;
     }
-    if (t.title !== undefined && !isString(t.title)) e.push(`${lp}.title`, "debe ser string");
+    if (t.title !== undefined && !isString(t.title)) e.push(`${lp}.title`, "must be a string");
     if (t.description !== undefined && !isString(t.description)) {
-      e.push(`${lp}.description`, "debe ser string");
+      e.push(`${lp}.description`, "must be a string");
     }
-    if (t.seo !== undefined && !isObject(t.seo)) e.push(`${lp}.seo`, "debe ser un objeto");
+    if (t.seo !== undefined && !isObject(t.seo)) e.push(`${lp}.seo`, "must be an object");
   }
 }
 
 function validatePageMeta(v: unknown, path: string, e: Errors, locales: readonly string[] = []): void {
   if (!isObject(v)) {
-    e.push(path, "debe ser un objeto PageMeta");
+    e.push(path, "must be a PageMeta object");
     return;
   }
-  if (!isString(v.title)) e.push(`${path}.title`, "debe ser string");
-  if (!isString(v.slug)) e.push(`${path}.slug`, "debe ser string");
+  if (!isString(v.title)) e.push(`${path}.title`, "must be a string");
+  if (!isString(v.slug)) e.push(`${path}.slug`, "must be a string");
   if (v.themeId !== undefined && !isString(v.themeId)) {
-    e.push(`${path}.themeId`, "debe ser un ThemeId (string)");
+    e.push(`${path}.themeId`, "must be a ThemeId (string)");
   }
   if (v.metaTranslations !== undefined) {
     validateMetaTranslations(v.metaTranslations, `${path}.metaTranslations`, e, locales);
@@ -352,10 +352,10 @@ function validatePageMeta(v: unknown, path: string, e: Errors, locales: readonly
 
 function validatePage(v: unknown, path: string, e: Errors, locales: readonly string[]): void {
   if (!isObject(v)) {
-    e.push(path, "debe ser un objeto BuilderPage");
+    e.push(path, "must be a BuilderPage object");
     return;
   }
-  if (!isString(v.id)) e.push(`${path}.id`, "debe ser string");
+  if (!isString(v.id)) e.push(`${path}.id`, "must be a string");
   validatePageMeta(v.meta, `${path}.meta`, e, locales);
   validateDocument(v.document, `${path}.document`, e);
   if (v.translations !== undefined) {
@@ -369,20 +369,20 @@ function validatePage(v: unknown, path: string, e: Errors, locales: readonly str
 function validateAssets(v: unknown, path: string, e: Errors): void {
   if (v === undefined) return;
   if (!isObject(v)) {
-    e.push(path, "debe ser un Record<AssetId, Asset>");
+    e.push(path, "must be a Record<AssetId, Asset>");
     return;
   }
   for (const id of Object.keys(v)) {
     const asset = v[id];
     const ap = `${path}.${id}`;
     if (!isObject(asset)) {
-      e.push(ap, "debe ser un objeto Asset");
+      e.push(ap, "must be an Asset object");
       continue;
     }
-    if (!isString(asset.id)) e.push(`${ap}.id`, "debe ser string");
-    if (!isString(asset.fileName)) e.push(`${ap}.fileName`, "debe ser string");
-    if (!isString(asset.mimeType)) e.push(`${ap}.mimeType`, "debe ser string");
-    if (!isString(asset.dataUrl)) e.push(`${ap}.dataUrl`, "debe ser string");
+    if (!isString(asset.id)) e.push(`${ap}.id`, "must be a string");
+    if (!isString(asset.fileName)) e.push(`${ap}.fileName`, "must be a string");
+    if (!isString(asset.mimeType)) e.push(`${ap}.mimeType`, "must be a string");
+    if (!isString(asset.dataUrl)) e.push(`${ap}.dataUrl`, "must be a string");
   }
 }
 
@@ -411,7 +411,7 @@ export function validateSite(input: unknown): ValidationResult<BuilderSite> {
   const e = new Errors();
 
   if (!isObject(input)) {
-    return { ok: false, errors: ["$: el sitio debe ser un objeto"] };
+    return { ok: false, errors: ["$: site must be an object"] };
   }
 
   validateSiteMeta(input.meta, "$.meta", e);
@@ -423,7 +423,7 @@ export function validateSite(input: unknown): ValidationResult<BuilderSite> {
   // pages
   const pages = input.pages;
   if (!isObject(pages)) {
-    e.push("$.pages", "debe ser un Record<PageId, BuilderPage>");
+    e.push("$.pages", "must be a Record<PageId, BuilderPage>");
   } else {
     for (const id of Object.keys(pages)) {
       validatePage(pages[id], `$.pages.${id}`, e, i18nLocales);
@@ -433,7 +433,7 @@ export function validateSite(input: unknown): ValidationResult<BuilderSite> {
   // pageOrder
   const pageOrder = input.pageOrder;
   if (!Array.isArray(pageOrder) || !pageOrder.every(isString)) {
-    e.push("$.pageOrder", "debe ser un array de PageId (string)");
+    e.push("$.pageOrder", "must be an array of PageId strings");
   } else if (isObject(pages)) {
     for (const id of pageOrder) {
       if (!(id in pages)) e.push("$.pageOrder", `"${id}" no existe en pages`);
@@ -446,7 +446,7 @@ export function validateSite(input: unknown): ValidationResult<BuilderSite> {
   // homePageId
   const homePageId = input.homePageId;
   if (!isString(homePageId)) {
-    e.push("$.homePageId", "debe ser string");
+    e.push("$.homePageId", "must be a string");
   } else if (isObject(pages) && !(homePageId in pages)) {
     e.push("$.homePageId", `"${homePageId}" no existe en pages`);
   }
@@ -574,10 +574,10 @@ export function validateFragment(
 
         // Validar tipo básico según control
         if (field.control === "toggle" && value !== undefined && typeof value !== "boolean") {
-          e.push(`${nodePath}.${field.key}`, `debe ser boolean, se recibió ${typeof value}`);
+          e.push(`${nodePath}.${field.key}`, `must be boolean, received ${typeof value}`);
         }
         if (field.control === "number" && value !== undefined && typeof value !== "number") {
-          e.push(`${nodePath}.${field.key}`, `debe ser número, se recibió ${typeof value}`);
+          e.push(`${nodePath}.${field.key}`, `must be a number, se recibió ${typeof value}`);
         }
 
         // Validar que el valor esté en las opciones si el field tiene lista fija
@@ -603,7 +603,7 @@ export function validateFragment(
           const svObj = sv as Record<string, unknown>;
           if (isString(svObj["token"])) {
             if (!availableTokens.has(svObj["token"])) {
-              e.push(path, `token "${svObj["token"]}" no existe en el sitio`);
+              e.push(path, `token "${svObj["token"]}" does not exist on the site`);
             }
           } else {
             for (const [k, v] of Object.entries(svObj)) {

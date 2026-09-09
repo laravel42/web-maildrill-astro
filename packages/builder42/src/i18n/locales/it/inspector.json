@@ -74,6 +74,7 @@
   "form": {
     "properties": "Proprietà",
     "propsGeneral": "Generale",
+    "fieldCount": "{{count}} campo/i",
     "styleEditing": "Stile · modifica",
     "stateEditing": "Stato",
     "stateNormal": "Normale",
@@ -163,6 +164,10 @@
       },
       "sticky": {
         "position": "Posizione",
+        "positionOptions": {
+          "top": "Alto",
+          "bottom": "Basso"
+        },
         "scrolledThreshold": "Soglia per \"già scrollato\" (px)",
         "scrolledThresholdHelp": "Quantità di scroll in pixel dopo la quale l'elemento cambia aspetto (per esempio acquisendo un'ombra o diventando più compatto) per indicare che la pagina si è spostata."
       },
@@ -174,12 +179,20 @@
       "marquee": {
         "duration": "Durata del ciclo (s)",
         "direction": "Direzione",
+        "directionOptions": {
+          "left": "Sinistra",
+          "right": "Destra"
+        },
         "pauseOnHover": "Pausa al passaggio del mouse"
       },
       "reveal-on-scroll": {
         "threshold": "Soglia di visibilità",
         "once": "Solo una volta",
-        "mode": "Modalità di ingresso"
+        "mode": "Modalità di ingresso",
+        "modeOptions": {
+          "together": "Insieme",
+          "sequence": "In sequenza"
+        }
       },
       "expandable": {
         "collapsedHeight": "Altezza compressa",
@@ -203,6 +216,45 @@
       "lightbox": {
         "duration": "Durata della transizione (ms)",
         "durationHelp": "Durata in millisecondi dell'animazione di apertura/chiusura dell'overlay a schermo intero. Viene ignorata se il visitatore ha attivato la preferenza di sistema per il movimento ridotto."
+      },
+      "carousel": {
+        "orientation": "Orientamento",
+        "orientationOptions": {
+          "horizontal": "Orizzontale",
+          "vertical": "Verticale"
+        },
+        "slideSize": "Dimensione di ogni slide",
+        "gap": "Spazio tra le slide",
+        "loop": "Loop",
+        "autoplay": "Autoplay",
+        "showArrows": "Mostra frecce"
+      },
+      "form-validation": {
+        "validateOn": "Valida al",
+        "validateOnOptions": {
+          "blur": "Alla perdita del focus (blur)",
+          "input": "A ogni modifica (input)"
+        },
+        "requiredMessage": "Messaggio: campo obbligatorio",
+        "emailMessage": "Messaggio: email non valida",
+        "patternMessage": "Messaggio: formato non valido"
+      },
+      "accordion": {
+        "single": "Una sola sezione aperta",
+        "duration": "Durata (ms)"
+      },
+      "modal": {
+        "closeOnBackdrop": "Chiudi cliccando fuori",
+        "duration": "Durata (ms)"
+      },
+      "navbar": {
+        "duration": "Durata (ms)"
+      },
+      "tabs": {
+        "duration": "Durata (ms)"
+      },
+      "toggle": {
+        "pressed": "Avvia attivo"
       }
     },
     "themeToggle": {
@@ -323,19 +375,22 @@
       "action": "Attiva la modalità avanzata"
     },
     "tabs": {
+      "layers": "Livelli",
       "pages": "Pagine",
       "languages": "Lingue",
       "themes": "Temi",
       "seo": "SEO",
-      "settings": "Impostazioni",
-      "publish": "Pubblica"
+      "publish": "Pubblica",
+      "settings": "Impostazioni"
     },
     "tabsHelp": {
+      "layers": "Scorri l'albero della pagina, seleziona nodi nascosti e mostra o nascondi elementi nel viewport corrente.",
       "pages": "Crea, duplica, riordina ed elimina le pagine del sito. Imposta la home page e modifica titolo e slug di ognuna.",
       "languages": "Attiva il sito multilingua, gestisci le lingue dei contenuti e imposta la lingua predefinita.",
       "themes": "Crea e modifica i temi di colore del sito rimappando i token semantici, e imposta il tema predefinito.",
       "seo": "Modifica i metadati SEO della pagina attiva: titolo, descrizione, canonical, robots e Open Graph/Twitter.",
       "settings": "Configura il nome del file di output e salva o carica l'intero sito (.json).",
+      "settingsPrefs": "Lingua dell'editor, tema colore, controlli di riordino e livello di esperienza.",
       "publish": "Pubblica il sito completo e gestisci i tuoi siti già pubblicati: apri, ripubblica o rimuovi la pubblicazione."
     },
     "output": {

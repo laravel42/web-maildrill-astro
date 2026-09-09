@@ -214,7 +214,7 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-topbar-hours": {
         id: "spa-topbar-hours",
         type: "text",
-        props: { content: "Todos los días 9:00–20:00" },
+        props: { content: "Open every day 9:00 AM–8:00 PM" },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
       "spa-topbar-lang": {
@@ -256,7 +256,7 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-hero-title": {
         id: "spa-hero-title",
         type: "text",
-        props: { content: "<strong>Un espacio para pausar de verdad</strong>" },
+        props: { content: "<strong>A space to truly pause</strong>" },
         style: {
           base: {
             size: { maxWidth: "20ch" },
@@ -273,7 +273,7 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-hero-sub": {
         id: "spa-hero-sub",
         type: "text",
-        props: { content: "Masajes, rituales de bienestar y terapias corporales en un ambiente pensado para desconectar." },
+        props: { content: "Massages, wellness rituals and body therapies in an environment designed to help you disconnect." },
         style: {
           base: {
             size: { maxWidth: "48ch" },
@@ -285,7 +285,7 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-hero-cta": {
         id: "spa-hero-cta",
         type: "button",
-        props: { label: "Reservar tratamiento", link: { kind: "anchor", nodeId: "spa-booking" } },
+        props: { label: "Book a treatment", link: { kind: "anchor", nodeId: "spa-booking" } },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -320,7 +320,7 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-treatments-title": {
         id: "spa-treatments-title",
         type: "text",
-        props: { content: "<strong>Nuestros tratamientos</strong>" },
+        props: { content: "<strong>Our treatments</strong>" },
         style: sectionTitle(),
       },
       "spa-treatments-list": {
@@ -332,34 +332,34 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       },
       ...treatmentPair(
         1,
-        "Masaje de piedras calientes",
-        "Piedras volcánicas templadas que liberan tensión profunda en espalda, cuello y hombros.",
+        "Hot stone massage",
+        "Warm volcanic stones that release deep tension in the back, neck and shoulders.",
         "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=800&q=80&auto=format&fit=crop",
-        "Piedras calientes sobre la espalda durante un masaje",
+        "Hot stones on the back during a massage",
         false,
       ),
       ...treatmentPair(
         2,
-        "Ritual facial de argán",
-        "Limpieza profunda, exfoliación suave y masaje facial con aceite de argán para piel luminosa.",
+        "Argan facial ritual",
+        "Deep cleansing, gentle exfoliation and facial massage with argan oil for radiant skin.",
         "https://images.unsplash.com/photo-1616394158624-0cb6490dc1c8?w=800&q=80&auto=format&fit=crop",
-        "Aplicación de ritual facial con aceite de argán",
+        "Applying an argan oil facial ritual",
         true,
       ),
       ...treatmentPair(
         3,
-        "Circuito de hidroterapia",
-        "Piscina de contraste, sauna seco y baño de vapor para reactivar la circulación.",
+        "Hydrotherapy circuit",
+        "Contrast pool, dry sauna and steam bath to boost circulation.",
         "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=800&q=80&auto=format&fit=crop",
-        "Piscina de hidroterapia con luz cálida",
+        "Hydrotherapy pool with warm lighting",
         false,
       ),
       ...treatmentPair(
         4,
-        "Masaje de pareja",
-        "Una hora de masaje relajante en sala privada, pensado para compartir el silencio.",
+        "Couples massage",
+        "An hour of relaxing massage in a private room, designed to share the silence.",
         "https://images.unsplash.com/photo-1596178060810-72660fb6c637?w=800&q=80&auto=format&fit=crop",
-        "Sala privada preparada para un masaje de pareja",
+        "Private room set up for a couples massage",
         true,
       ),
 
@@ -381,7 +381,7 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-schedule-title": {
         id: "spa-schedule-title",
         type: "text",
-        props: { content: "<strong>Horarios por servicio</strong>" },
+        props: { content: "<strong>Hours by service</strong>" },
         style: sectionTitle(),
       },
       "spa-schedule-accordion": {
@@ -395,40 +395,40 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-schedule-item-1": {
         id: "spa-schedule-item-1",
         type: "accordion-item",
-        props: { label: "Masajes y terapias corporales", openByDefault: true },
+        props: { label: "Massages & body therapies", openByDefault: true },
         style: defaultStyleFor("accordion-item"),
         children: ["spa-schedule-item-1-body"],
       },
       "spa-schedule-item-1-body": {
         id: "spa-schedule-item-1-body",
         type: "text",
-        props: { content: "Todos los días de 9:00 a 20:00, con última reserva a las 18:30. Recomendamos llegar 15 minutos antes." },
+        props: { content: "Every day from 9:00 AM to 8:00 PM, last booking at 6:30 PM. We recommend arriving 15 minutes early." },
         style: { base: { size: { maxWidth: "70ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
       "spa-schedule-item-2": {
         id: "spa-schedule-item-2",
         type: "accordion-item",
-        props: { label: "Rituales faciales", openByDefault: false },
+        props: { label: "Facial rituals", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["spa-schedule-item-2-body"],
       },
       "spa-schedule-item-2-body": {
         id: "spa-schedule-item-2-body",
         type: "text",
-        props: { content: "Martes a domingo de 10:00 a 19:00. Cerrado los lunes para mantenimiento de sala." },
+        props: { content: "Tuesday to Sunday from 10:00 AM to 7:00 PM. Closed on Mondays for room maintenance." },
         style: { base: { size: { maxWidth: "70ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
       "spa-schedule-item-3": {
         id: "spa-schedule-item-3",
         type: "accordion-item",
-        props: { label: "Circuito de hidroterapia", openByDefault: false },
+        props: { label: "Hydrotherapy circuit", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["spa-schedule-item-3-body"],
       },
       "spa-schedule-item-3-body": {
         id: "spa-schedule-item-3-body",
         type: "text",
-        props: { content: "Viernes a domingo, sesiones de 90 minutos a las 10:00, 13:00 y 16:00. Cupo limitado a 6 personas." },
+        props: { content: "Friday to Sunday, 90-minute sessions at 10:00 AM, 1:00 PM and 4:00 PM. Limited to 6 people." },
         style: { base: { size: { maxWidth: "70ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
 
@@ -451,7 +451,7 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-reviews-title": {
         id: "spa-reviews-title",
         type: "text",
-        props: { content: "<strong>Lo que dicen nuestras huéspedes</strong>" },
+        props: { content: "<strong>What our guests say</strong>" },
         style: sectionTitle(),
       },
       "spa-reviews-grid": {
@@ -470,23 +470,23 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       },
       ...reviewCard(
         1,
-        "Salí del masaje de piedras calientes como nueva. El lugar es tan tranquilo que se me olvidó el teléfono durante dos horas.",
+        "I left the hot stone massage feeling brand new. The place is so quiet I forgot my phone for two hours.",
         "Renata Aguayo",
-        "Huésped desde 2024",
+        "Guest since 2024",
         "RA",
       ),
       ...reviewCard(
         2,
-        "El circuito de hidroterapia es mi ritual de cada mes. El personal siempre recuerda mis preferencias.",
+        "The hydrotherapy circuit is my monthly ritual. The staff always remembers my preferences.",
         "Diego Farías",
-        "Huésped frecuente",
+        "Regular guest",
         "DF",
       ),
       ...reviewCard(
         3,
-        "Reservamos el masaje de pareja para nuestro aniversario y fue justo lo que necesitábamos: silencio de verdad.",
-        "Camila y Adrián",
-        "Huéspedes desde 2023",
+        "We booked the couples massage for our anniversary and it was exactly what we needed: real silence.",
+        "Camila &amp; Adrián",
+        "Guests since 2023",
         "CA",
       ),
 
@@ -522,13 +522,13 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-booking-title": {
         id: "spa-booking-title",
         type: "text",
-        props: { content: "<strong>Reserva tu tratamiento</strong>" },
+        props: { content: "<strong>Book your treatment</strong>" },
         style: sectionTitle(),
       },
       "spa-booking-sub": {
         id: "spa-booking-sub",
         type: "text",
-        props: { content: "Cuéntanos qué tratamiento te interesa y te confirmamos disponibilidad por correo o teléfono." },
+        props: { content: "Tell us which treatment you're interested in and we'll confirm availability by email or phone." },
         style: bodyText(),
       },
       "spa-booking-card": {
@@ -564,13 +564,13 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-label-name": {
         id: "spa-label-name",
         type: "label",
-        props: { text: "Nombre completo", for: "spa-input-name" },
+        props: { text: "Full name", for: "spa-input-name" },
         style: defaultStyleFor("label"),
       },
       "spa-input-name": {
         id: "spa-input-name",
         type: "input",
-        props: { name: "nombre", type: "text", placeholder: "Tu nombre completo", required: true, disabled: false },
+        props: { name: "nombre", type: "text", placeholder: "Your full name", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "spa-field-email": {
@@ -583,13 +583,13 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-label-email": {
         id: "spa-label-email",
         type: "label",
-        props: { text: "Correo electrónico", for: "spa-input-email" },
+        props: { text: "Email", for: "spa-input-email" },
         style: defaultStyleFor("label"),
       },
       "spa-input-email": {
         id: "spa-input-email",
         type: "input",
-        props: { name: "email", type: "email", placeholder: "tu@correo.com", required: true, disabled: false },
+        props: { name: "email", type: "email", placeholder: "you@email.com", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "spa-field-treatment": {
@@ -602,7 +602,7 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-label-treatment": {
         id: "spa-label-treatment",
         type: "label",
-        props: { text: "Tratamiento de interés", for: "spa-select-treatment" },
+        props: { text: "Treatment of interest", for: "spa-select-treatment" },
         style: defaultStyleFor("label"),
       },
       "spa-select-treatment": {
@@ -610,13 +610,13 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
         type: "select",
         props: {
           name: "tratamiento",
-          placeholder: "Elige una opción…",
-          ariaLabel: "Tratamiento de interés",
+          placeholder: "Choose an option…",
+          ariaLabel: "Treatment of interest",
           options: [
-            { label: "Masaje de piedras calientes", value: "piedras" },
-            { label: "Ritual facial de argán", value: "facial" },
-            { label: "Circuito de hidroterapia", value: "hidroterapia" },
-            { label: "Masaje de pareja", value: "pareja" },
+            { label: "Couples massage", value: "pareja" },
+            { label: "Argan facial ritual", value: "facial" },
+            { label: "Hydrotherapy circuit", value: "hidroterapia" },
+            { label: "Couples massage", value: "pareja" },
           ],
         },
         style: defaultStyleFor("select"),
@@ -631,19 +631,19 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-label-message": {
         id: "spa-label-message",
         type: "label",
-        props: { text: "¿Algo que debamos saber?", for: "spa-textarea-message" },
+        props: { text: "Anything we should know?", for: "spa-textarea-message" },
         style: defaultStyleFor("label"),
       },
       "spa-textarea-message": {
         id: "spa-textarea-message",
         type: "textarea",
-        props: { name: "mensaje", placeholder: "Ej. Prefiero presión suave, tengo una lesión en el hombro…", rows: 4, required: false, disabled: false },
+        props: { name: "mensaje", placeholder: "E.g. I prefer light pressure, I have a shoulder injury…", rows: 4, required: false, disabled: false },
         style: defaultStyleFor("textarea"),
       },
       "spa-submit": {
         id: "spa-submit",
         type: "button-submit",
-        props: { label: "Solicitar reserva", disabled: false },
+        props: { label: "Request booking", disabled: false },
         style: {
           base: {
             spacing: { padding: "14px 26px" },
@@ -677,13 +677,13 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-location-title": {
         id: "spa-location-title",
         type: "text",
-        props: { content: "<strong>Cómo llegar</strong>" },
+        props: { content: "<strong>How to get here</strong>" },
         style: sectionTitle(),
       },
       "spa-location-address": {
         id: "spa-location-address",
         type: "text",
-        props: { content: "Av. de las Fuentes 220, San Ángel, Ciudad de México — estacionamiento propio sin costo." },
+        props: { content: "220 Fuentes Ave, San Ángel, Mexico City — free parking on site." },
         style: bodyText(),
       },
 
@@ -706,7 +706,7 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-footer-hours": {
         id: "spa-footer-hours",
         type: "text",
-        props: { content: "Todos los días 9:00–20:00" },
+        props: { content: "Open every day 9:00 AM–8:00 PM" },
         style: { base: { appearance: { color: { token: "colors.band.on" } } } },
       },
       "spa-footer-social": {
@@ -718,7 +718,7 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
       "spa-footer-copyright": {
         id: "spa-footer-copyright",
         type: "text",
-        props: { content: "© 2026 Alma Spa & Wellness. Todos los derechos reservados." },
+        props: { content: "© 2026 Alma Spa & Wellness. All rights reserved." },
         style: {
           base: {
             size: { width: "100%" },
@@ -738,153 +738,66 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
     translations: (() => {
       const t: Record<string, NodeTranslations> = {};
 
-      t["spa-topbar-hours"] = { en: { content: "Open every day 9:00 AM–8:00 PM" }, it: { content: "Tutti i giorni 9:00–20:00" } };
+      t["spa-topbar-hours"] = { es: { content: "Todos los días 9:00–20:00" }, it: { content: "Tutti i giorni 9:00–20:00" } };
 
-      t["spa-hero-title"] = {
-        en: { content: "<strong>A space to truly pause</strong>" },
-        it: { content: "<strong>Uno spazio per fermarsi davvero</strong>" },
-      };
-      t["spa-hero-sub"] = {
-        en: { content: "Massages, wellness rituals and body therapies in an environment designed to help you disconnect." },
-        it: { content: "Massaggi, rituali di benessere e terapie corporee in un ambiente pensato per disconnettersi." },
-      };
-      t["spa-hero-cta"] = { en: { label: "Book a treatment" }, it: { label: "Prenota un trattamento" } };
+      t["spa-hero-title"] = { es: { content: "<strong>Un espacio para pausar de verdad</strong>" }, it: { content: "<strong>Uno spazio per fermarsi davvero</strong>" } };
+      t["spa-hero-sub"] = { es: { content: "Masajes, rituales de bienestar y terapias corporales en un ambiente pensado para desconectar." }, it: { content: "Massaggi, rituali di benessere e terapie corporee in un ambiente pensato per disconnettersi." } };
+      t["spa-hero-cta"] = { es: { label: "Reservar tratamiento" }, it: { label: "Prenota un trattamento" } };
 
-      t["spa-treatments-title"] = { en: { content: "<strong>Our treatments</strong>" }, it: { content: "<strong>I nostri trattamenti</strong>" } };
+      t["spa-treatments-title"] = { es: { content: "<strong>Nuestros tratamientos</strong>" }, it: { content: "<strong>I nostri trattamenti</strong>" } };
 
-      t["spa-treatment-1-title"] = { en: { content: "<strong>Hot stone massage</strong>" }, it: { content: "<strong>Massaggio con pietre calde</strong>" } };
-      t["spa-treatment-1-text"] = {
-        en: { content: "Warm volcanic stones that release deep tension in the back, neck and shoulders." },
-        it: { content: "Pietre vulcaniche calde che sciolgono la tensione profonda su schiena, collo e spalle." },
-      };
-      t["spa-treatment-1-media"] = { en: { alt: "Hot stones on the back during a massage" }, it: { alt: "Pietre calde sulla schiena durante un massaggio" } };
+      t["spa-treatment-1-title"] = { es: { content: "<strong>Masaje de piedras calientes</strong>" }, it: { content: "<strong>Massaggio con pietre calde</strong>" } };
+      t["spa-treatment-1-text"] = { es: { content: "Piedras volcánicas templadas que liberan tensión profunda en espalda, cuello y hombros." }, it: { content: "Pietre vulcaniche calde che sciolgono la tensione profonda su schiena, collo e spalle." } };
+      t["spa-treatment-1-media"] = { es: { alt: "Piedras calientes sobre la espalda durante un masaje" }, it: { alt: "Pietre calde sulla schiena durante un massaggio" } };
 
-      t["spa-treatment-2-title"] = { en: { content: "<strong>Argan facial ritual</strong>" }, it: { content: "<strong>Rituale viso all'argan</strong>" } };
-      t["spa-treatment-2-text"] = {
-        en: { content: "Deep cleansing, gentle exfoliation and facial massage with argan oil for radiant skin." },
-        it: { content: "Pulizia profonda, esfoliazione delicata e massaggio viso con olio di argan per una pelle luminosa." },
-      };
-      t["spa-treatment-2-media"] = { en: { alt: "Applying an argan oil facial ritual" }, it: { alt: "Applicazione di un rituale viso all'olio di argan" } };
+      t["spa-treatment-2-title"] = { es: { content: "<strong>Ritual facial de argán</strong>" }, it: { content: "<strong>Rituale viso all'argan</strong>" } };
+      t["spa-treatment-2-text"] = { es: { content: "Limpieza profunda, exfoliación suave y masaje facial con aceite de argán para piel luminosa." }, it: { content: "Pulizia profonda, esfoliazione delicata e massaggio viso con olio di argan per una pelle luminosa." } };
+      t["spa-treatment-2-media"] = { es: { alt: "Aplicación de ritual facial con aceite de argán" }, it: { alt: "Applicazione di un rituale viso all'olio di argan" } };
 
-      t["spa-treatment-3-title"] = { en: { content: "<strong>Hydrotherapy circuit</strong>" }, it: { content: "<strong>Percorso di idroterapia</strong>" } };
-      t["spa-treatment-3-text"] = {
-        en: { content: "Contrast pool, dry sauna and steam bath to boost circulation." },
-        it: { content: "Piscina a contrasto, sauna secca e bagno turco per stimolare la circolazione." },
-      };
-      t["spa-treatment-3-media"] = { en: { alt: "Hydrotherapy pool with warm lighting" }, it: { alt: "Piscina di idroterapia con luce calda" } };
+      t["spa-treatment-3-title"] = { es: { content: "<strong>Circuito de hidroterapia</strong>" }, it: { content: "<strong>Percorso di idroterapia</strong>" } };
+      t["spa-treatment-3-text"] = { es: { content: "Piscina de contraste, sauna seco y baño de vapor para reactivar la circulación." }, it: { content: "Piscina a contrasto, sauna secca e bagno turco per stimolare la circolazione." } };
+      t["spa-treatment-3-media"] = { es: { alt: "Piscina de hidroterapia con luz cálida" }, it: { alt: "Piscina di idroterapia con luce calda" } };
 
-      t["spa-treatment-4-title"] = { en: { content: "<strong>Couples massage</strong>" }, it: { content: "<strong>Massaggio di coppia</strong>" } };
-      t["spa-treatment-4-text"] = {
-        en: { content: "An hour of relaxing massage in a private room, designed to share the silence." },
-        it: { content: "Un'ora di massaggio relax in una sala privata, pensata per condividere il silenzio." },
-      };
-      t["spa-treatment-4-media"] = { en: { alt: "Private room set up for a couples massage" }, it: { alt: "Sala privata allestita per un massaggio di coppia" } };
+      t["spa-treatment-4-title"] = { es: { content: "<strong>Masaje de pareja</strong>" }, it: { content: "<strong>Massaggio di coppia</strong>" } };
+      t["spa-treatment-4-text"] = { es: { content: "Una hora de masaje relajante en sala privada, pensado para compartir el silencio." }, it: { content: "Un'ora di massaggio relax in una sala privata, pensata per condividere il silenzio." } };
+      t["spa-treatment-4-media"] = { es: { alt: "Sala privada preparada para un masaje de pareja" }, it: { alt: "Sala privata allestita per un massaggio di coppia" } };
 
-      t["spa-schedule-title"] = { en: { content: "<strong>Hours by service</strong>" }, it: { content: "<strong>Orari per servizio</strong>" } };
-      t["spa-schedule-item-1"] = { en: { label: "Massages & body therapies" }, it: { label: "Massaggi e terapie corporee" } };
-      t["spa-schedule-item-1-body"] = {
-        en: { content: "Every day from 9:00 AM to 8:00 PM, last booking at 6:30 PM. We recommend arriving 15 minutes early." },
-        it: { content: "Tutti i giorni dalle 9:00 alle 20:00, ultima prenotazione alle 18:30. Consigliamo di arrivare 15 minuti prima." },
-      };
-      t["spa-schedule-item-2"] = { en: { label: "Facial rituals" }, it: { label: "Rituali viso" } };
-      t["spa-schedule-item-2-body"] = {
-        en: { content: "Tuesday to Sunday from 10:00 AM to 7:00 PM. Closed on Mondays for room maintenance." },
-        it: { content: "Da martedì a domenica dalle 10:00 alle 19:00. Chiuso il lunedì per manutenzione." },
-      };
-      t["spa-schedule-item-3"] = { en: { label: "Hydrotherapy circuit" }, it: { label: "Percorso di idroterapia" } };
-      t["spa-schedule-item-3-body"] = {
-        en: { content: "Friday to Sunday, 90-minute sessions at 10:00 AM, 1:00 PM and 4:00 PM. Limited to 6 people." },
-        it: { content: "Da venerdì a domenica, sessioni di 90 minuti alle 10:00, 13:00 e 16:00. Massimo 6 persone." },
-      };
+      t["spa-schedule-title"] = { es: { content: "<strong>Horarios por servicio</strong>" }, it: { content: "<strong>Orari per servizio</strong>" } };
+      t["spa-schedule-item-1"] = { es: { label: "Masajes y terapias corporales" }, it: { label: "Massaggi e terapie corporee" } };
+      t["spa-schedule-item-1-body"] = { es: { content: "Todos los días de 9:00 a 20:00, con última reserva a las 18:30. Recomendamos llegar 15 minutos antes." }, it: { content: "Tutti i giorni dalle 9:00 alle 20:00, ultima prenotazione alle 18:30. Consigliamo di arrivare 15 minuti prima." } };
+      t["spa-schedule-item-2"] = { es: { label: "Rituales faciales" }, it: { label: "Rituali viso" } };
+      t["spa-schedule-item-2-body"] = { es: { content: "Martes a domingo de 10:00 a 19:00. Cerrado los lunes para mantenimiento de sala." }, it: { content: "Da martedì a domenica dalle 10:00 alle 19:00. Chiuso il lunedì per manutenzione." } };
+      t["spa-schedule-item-3"] = { es: { label: "Circuito de hidroterapia" }, it: { label: "Percorso di idroterapia" } };
+      t["spa-schedule-item-3-body"] = { es: { content: "Viernes a domingo, sesiones de 90 minutos a las 10:00, 13:00 y 16:00. Cupo limitado a 6 personas." }, it: { content: "Da venerdì a domenica, sessioni di 90 minuti alle 10:00, 13:00 e 16:00. Massimo 6 persone." } };
 
-      t["spa-reviews-title"] = { en: { content: "<strong>What our guests say</strong>" }, it: { content: "<strong>Cosa dicono le nostre ospiti</strong>" } };
-      t["spa-review-1-quote"] = {
-        en: { content: "<p>I left the hot stone massage feeling brand new. The place is so quiet I forgot my phone for two hours.</p>" },
-        it: { content: "<p>Sono uscita dal massaggio con pietre calde come nuova. Il posto è così tranquillo che ho dimenticato il telefono per due ore.</p>" },
-      };
-      t["spa-review-1-name"] = {
-        en: { content: "<strong>Renata Aguayo</strong>" },
-        it: { content: "<strong>Renata Aguayo</strong>" },
-      };
-      t["spa-review-1-role"] = {
-        en: { content: "Guest since 2024" },
-        it: { content: "Ospite dal 2024" },
-      };
-      t["spa-review-2-quote"] = {
-        en: { content: "<p>The hydrotherapy circuit is my monthly ritual. The staff always remembers my preferences.</p>" },
-        it: { content: "<p>Il percorso di idroterapia è il mio rituale mensile. Il personale ricorda sempre le mie preferenze.</p>" },
-      };
-      t["spa-review-2-name"] = {
-        en: { content: "<strong>Diego Farías</strong>" },
-        it: { content: "<strong>Diego Farías</strong>" },
-      };
-      t["spa-review-2-role"] = {
-        en: { content: "Regular guest" },
-        it: { content: "Ospite abituale" },
-      };
-      t["spa-review-3-quote"] = {
-        en: { content: "<p>We booked the couples massage for our anniversary and it was exactly what we needed: real silence.</p>" },
-        it: { content: "<p>Abbiamo prenotato il massaggio di coppia per il nostro anniversario ed era esattamente ciò di cui avevamo bisogno: silenzio vero.</p>" },
-      };
-      t["spa-review-3-name"] = {
-        en: { content: "<strong>Camila &amp; Adrián</strong>" },
-        it: { content: "<strong>Camila &amp; Adrián</strong>" },
-      };
-      t["spa-review-3-role"] = {
-        en: { content: "Guests since 2023" },
-        it: { content: "Ospiti dal 2023" },
-      };
+      t["spa-reviews-title"] = { es: { content: "<strong>Lo que dicen nuestras huéspedes</strong>" }, it: { content: "<strong>Cosa dicono le nostre ospiti</strong>" } };
+      t["spa-review-1-quote"] = { es: { content: "<p>Salí del masaje de piedras calientes como nueva. El lugar es tan tranquilo que se me olvidó el teléfono durante dos horas.</p>" }, it: { content: "<p>Sono uscita dal massaggio con pietre calde come nuova. Il posto è così tranquillo che ho dimenticato il telefono per due ore.</p>" } };
+      t["spa-review-1-name"] = { es: { content: "<strong>Renata Aguayo</strong>" }, it: { content: "<strong>Renata Aguayo</strong>" } };
+      t["spa-review-1-role"] = { es: { content: "Huésped desde 2024" }, it: { content: "Ospite dal 2024" } };
+      t["spa-review-2-quote"] = { es: { content: "<p>El circuito de hidroterapia es mi ritual de cada mes. El personal siempre recuerda mis preferencias.</p>" }, it: { content: "<p>Il percorso di idroterapia è il mio rituale mensile. Il personale ricorda sempre le mie preferenze.</p>" } };
+      t["spa-review-2-name"] = { es: { content: "<strong>Diego Farías</strong>" }, it: { content: "<strong>Diego Farías</strong>" } };
+      t["spa-review-2-role"] = { es: { content: "Huésped frecuente" }, it: { content: "Ospite abituale" } };
+      t["spa-review-3-quote"] = { es: { content: "<p>Reservamos el masaje de pareja para nuestro aniversario y fue justo lo que necesitábamos: silencio de verdad.</p>" }, it: { content: "<p>Abbiamo prenotato il massaggio di coppia per il nostro anniversario ed era esattamente ciò di cui avevamo bisogno: silenzio vero.</p>" } };
+      t["spa-review-3-name"] = { es: { content: "<strong>Camila y Adrián</strong>" }, it: { content: "<strong>Camila &amp; Adrián</strong>" } };
+      t["spa-review-3-role"] = { es: { content: "Huéspedes desde 2023" }, it: { content: "Ospiti dal 2023" } };
 
-      t["spa-booking-title"] = { en: { content: "<strong>Book your treatment</strong>" }, it: { content: "<strong>Prenota il tuo trattamento</strong>" } };
-      t["spa-booking-sub"] = {
-        en: { content: "Tell us which treatment you're interested in and we'll confirm availability by email or phone." },
-        it: { content: "Dicci quale trattamento ti interessa e ti confermeremo la disponibilità per email o telefono." },
-      };
-      t["spa-label-name"] = { en: { text: "Full name" }, it: { text: "Nome completo" } };
-      t["spa-input-name"] = { en: { placeholder: "Your full name" }, it: { placeholder: "Il tuo nome completo" } };
-      t["spa-label-email"] = { en: { text: "Email" }, it: { text: "Email" } };
-      t["spa-input-email"] = { en: { placeholder: "you@email.com" }, it: { placeholder: "tu@email.com" } };
-      t["spa-label-treatment"] = { en: { text: "Treatment of interest" }, it: { text: "Trattamento di interesse" } };
-      t["spa-select-treatment"] = {
-        en: {
-          placeholder: "Choose an option…",
-          ariaLabel: "Treatment of interest",
-          options: [
-            { label: "Hot stone massage", value: "piedras" },
-            { label: "Argan facial ritual", value: "facial" },
-            { label: "Hydrotherapy circuit", value: "hidroterapia" },
-            { label: "Couples massage", value: "pareja" },
-          ],
-        },
-        it: {
-          placeholder: "Scegli un'opzione…",
-          ariaLabel: "Trattamento di interesse",
-          options: [
-            { label: "Massaggio con pietre calde", value: "piedras" },
-            { label: "Rituale viso all'argan", value: "facial" },
-            { label: "Percorso di idroterapia", value: "hidroterapia" },
-            { label: "Massaggio di coppia", value: "pareja" },
-          ],
-        },
-      };
-      t["spa-label-message"] = { en: { text: "Anything we should know?" }, it: { text: "C'è qualcosa che dovremmo sapere?" } };
-      t["spa-textarea-message"] = {
-        en: { placeholder: "E.g. I prefer light pressure, I have a shoulder injury…" },
-        it: { placeholder: "Es. Preferisco una pressione leggera, ho un infortunio alla spalla…" },
-      };
-      t["spa-submit"] = { en: { label: "Request booking" }, it: { label: "Richiedi prenotazione" } };
+      t["spa-booking-title"] = { es: { content: "<strong>Reserva tu tratamiento</strong>" }, it: { content: "<strong>Prenota il tuo trattamento</strong>" } };
+      t["spa-booking-sub"] = { es: { content: "Cuéntanos qué tratamiento te interesa y te confirmamos disponibilidad por correo o teléfono." }, it: { content: "Dicci quale trattamento ti interessa e ti confermeremo la disponibilità per email o telefono." } };
+      t["spa-label-name"] = { es: { text: "Nombre completo" }, it: { text: "Nome completo" } };
+      t["spa-input-name"] = { es: { placeholder: "Tu nombre completo" }, it: { placeholder: "Il tuo nome completo" } };
+      t["spa-label-email"] = { es: { text: "Correo electrónico" }, it: { text: "Email" } };
+      t["spa-input-email"] = { es: { placeholder: "tu@correo.com" }, it: { placeholder: "tu@email.com" } };
+      t["spa-label-treatment"] = { es: { text: "Tratamiento de interés" }, it: { text: "Trattamento di interesse" } };
+      t["spa-select-treatment"] = { es: { placeholder: "Elige una opción…", ariaLabel: "Tratamiento de interés", label: "Masaje de pareja", value: "pareja" }, it: { placeholder: "Scegli un'opzione…", ariaLabel: "Trattamento di interesse", label: "Massaggio di coppia", value: "pareja" } };
+      t["spa-label-message"] = { es: { text: "¿Algo que debamos saber?" }, it: { text: "C'è qualcosa che dovremmo sapere?" } };
+      t["spa-textarea-message"] = { es: { placeholder: "Ej. Prefiero presión suave, tengo una lesión en el hombro…" }, it: { placeholder: "Es. Preferisco una pressione leggera, ho un infortunio alla spalla…" } };
+      t["spa-submit"] = { es: { label: "Solicitar reserva" }, it: { label: "Richiedi prenotazione" } };
 
-      t["spa-location-title"] = { en: { content: "<strong>How to get here</strong>" }, it: { content: "<strong>Come arrivare</strong>" } };
-      t["spa-location-address"] = {
-        en: { content: "220 Fuentes Ave, San Ángel, Mexico City — free parking on site." },
-        it: { content: "Av. de las Fuentes 220, San Ángel, Città del Messico — parcheggio gratuito." },
-      };
+      t["spa-location-title"] = { es: { content: "<strong>Cómo llegar</strong>" }, it: { content: "<strong>Come arrivare</strong>" } };
+      t["spa-location-address"] = { es: { content: "Av. de las Fuentes 220, San Ángel, Ciudad de México — estacionamiento propio sin costo." }, it: { content: "Av. de las Fuentes 220, San Ángel, Città del Messico — parcheggio gratuito." } };
 
-      t["spa-footer-copyright"] = {
-        en: { content: "© 2026 Alma Spa & Wellness. All rights reserved." },
-        it: { content: "© 2026 Alma Spa & Wellness. Tutti i diritti riservati." },
-      };
-      t["spa-footer-hours"] = { en: { content: "Open every day 9:00 AM–8:00 PM" }, it: { content: "Tutti i giorni 9:00–20:00" } };
+      t["spa-footer-copyright"] = { es: { content: "© 2026 Alma Spa & Wellness. Todos los derechos reservados." }, it: { content: "© 2026 Alma Spa & Wellness. Tutti i diritti riservati." } };
+      t["spa-footer-hours"] = { es: { content: "Todos los días 9:00–20:00" }, it: { content: "Tutti i giorni 9:00–20:00" } };
 
       return t;
     })(),
@@ -892,30 +805,30 @@ export function buildSpaWellnessPageFragment(): NodeFragment {
 }
 
 export const spaWellnessPageMeta: LayoutPageMeta = {
-  title: "Alma Spa & Wellness · Masajes y rituales de bienestar",
-  description: "Spa de bienestar con masajes, rituales faciales e hidroterapia en un ambiente pensado para desconectar.",
+  title: "Alma Spa & Wellness · Massages and wellness rituals",
+  description: "Wellness spa with massages, facial rituals and hydrotherapy in an environment designed to help you disconnect.",
   seo: {
     robots: "index,follow",
     openGraph: {
       title: "Alma Spa & Wellness",
-      description: "Un espacio para pausar de verdad. Reserva tu tratamiento.",
+      description: "A space to truly pause. Book your treatment.",
       image: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1200&q=80&auto=format&fit=crop",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title: "Alma Spa & Wellness",
-      description: "Un espacio para pausar de verdad. Reserva tu tratamiento.",
+      description: "A space to truly pause. Book your treatment.",
       image: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1200&q=80&auto=format&fit=crop",
     },
   },
   metaTranslations: {
-    en: {
-      title: "Alma Spa & Wellness · Massages and wellness rituals",
-      description: "Wellness spa with massages, facial rituals and hydrotherapy in an environment designed to help you disconnect.",
+    es: {
+      title: "Alma Spa & Wellness · Masajes y rituales de bienestar",
+      description: "Spa de bienestar con masajes, rituales faciales e hidroterapia en un ambiente pensado para desconectar.",
       seo: {
-        openGraph: { title: "Alma Spa & Wellness", description: "A space to truly pause. Book your treatment." },
-        twitter: { title: "Alma Spa & Wellness", description: "A space to truly pause. Book your treatment." },
+        openGraph: { title: "Alma Spa & Wellness", description: "Un espacio para pausar de verdad. Reserva tu tratamiento." },
+        twitter: { title: "Alma Spa & Wellness", description: "Un espacio para pausar de verdad. Reserva tu tratamiento." },
       },
     },
     it: {

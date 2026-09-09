@@ -15,7 +15,7 @@ import { defaultStyleFor } from "../../../store/exampleSite/styleFor";
  * sin sombra) suelto a mitad del canvas — se sentía como un botón perdido, no
  * como una sección con intención propia. Ahora:
  *   - un texto de apoyo (`newsletter-modal-eyebrow`) arriba del botón
- *     ("Nuevas funciones cada mes") le da contexto a la sección antes de
+ *     ("New features every month") le da contexto a la sección antes de
  *     pedir el clic — mismo rol que un eyebrow/kicker sobre un CTA.
  *   - el botón gana `appearance.boxShadow` con blur real (mismo patrón
  *     `cardShadow` de `features3Col.ts`/`teamGrid.ts` — offset+blur+spread
@@ -57,7 +57,7 @@ export function buildNewsletterModalTriggerFragment(): NodeFragment {
       "newsletter-modal-eyebrow": {
         id: "newsletter-modal-eyebrow",
         type: "text",
-        props: { content: "Nuevas funciones cada mes" },
+        props: { content: "New features every month" },
         style: {
           base: {
             typography: { fontSize: { token: "typography.sizes.sm" }, textAlign: "center" },
@@ -68,7 +68,7 @@ export function buildNewsletterModalTriggerFragment(): NodeFragment {
       "newsletter-modal-trigger-btn": {
         id: "newsletter-modal-trigger-btn",
         type: "button",
-        props: { label: "Entérate de nuevas funciones", link: { kind: "external", href: "" } },
+        props: { label: "Hear about new features", link: { kind: "external", href: "" } },
         style: {
           base: {
             ...defaultButtonStyle.base,
@@ -91,7 +91,7 @@ export function buildNewsletterModalTriggerFragment(): NodeFragment {
       "newsletter-modal-dialog": {
         id: "newsletter-modal-dialog",
         type: "modal",
-        props: { title: "Entérate de las novedades de Maildrill" },
+        props: { title: "Hear about what's new at Maildrill" },
         style: defaultStyleFor("modal"),
         behaviors: [{ type: "modal", options: { closeOnBackdrop: true, duration: 200 } }],
         children: ["newsletter-modal-form"],
@@ -106,13 +106,13 @@ export function buildNewsletterModalTriggerFragment(): NodeFragment {
       "newsletter-modal-input": {
         id: "newsletter-modal-input",
         type: "input",
-        props: { name: "email", placeholder: "tucorreo@ejemplo.com", type: "email", required: true, disabled: false },
+        props: { name: "email", placeholder: "you@example.com", type: "email", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "newsletter-modal-submit": {
         id: "newsletter-modal-submit",
         type: "button-submit",
-        props: { label: "Avísame de novedades", disabled: false },
+        props: { label: "Notify me about updates", disabled: false },
         style: defaultStyleFor("button-submit"),
       },
     },

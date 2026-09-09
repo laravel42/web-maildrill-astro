@@ -1,14 +1,12 @@
 /**
- * LanguageSelect — selector de idioma del editor usando c42 Select (docs/12 §A).
+ * LanguageSelect — selector de idioma del editor (docs/12 §A).
  *
- * Usa el controlador `Select` de c42-react con markup estilizado que hace match
- * con el chrome del proyecto. Persiste la elección en localStorage y dispara
- * `i18n.changeLanguage`. Es chrome del editor (P8).
+ * Control segmentado (mismo patrón que `ThemeToggle` / `ExperienceLevelToggle`).
+ * Persiste la elección en localStorage y dispara `i18n.changeLanguage`.
+ * Chrome del editor (P8).
  */
 
 import { useTranslation } from "react-i18next";
-import { Select } from "@josecortez1/c42-react";
-import { ChevronDown } from "./Icon";
 import { writeConfig } from "@/hooks/useLocalConfig";
 import { SUPPORTED_LANGS, type EditorLang } from "@/i18n";
 
@@ -18,42 +16,37 @@ const LANG_LABELS: Record<EditorLang, string> = {
   it: "Italiano",
 };
 
+function resolvedLang(lng: string | undefined): EditorLang {
+  const base = (lng ?? "en").slice(0, 2) as EditorLang;
+  return SUPPORTED_LANGS.includes(base) ? base : "en";
+}
+
 export function LanguageSelect() {
   const { t, i18n } = useTranslation("header");
-  const current = i18n.language as EditorLang;
+  const current = resolvedLang(i18n.resolvedLanguage ?? i18n.language);
 
-  const handleChange = (detail: { value: string }) => {
-    const lang = detail.value as EditorLang;
+  const handleChange = (lang: EditorLang) => {
     void i18n.changeLanguage(lang);
     writeConfig("editorLang", lang);
   };
 
   return (
-    <Select
-      defaultValue={current}
-      onChange={handleChange}
-      className="pbx-lang"
-    >
-      <button
-        data-c42-select-trigger
-        className="pbx-lang__trigger"
-        aria-label={t("language.label")}
-      >
-        <span data-c42-select-value>{LANG_LABELS[current]}</span>
-        <ChevronDown size={13} className="pbx-lang__caret" aria-hidden="true" />
-      </button>
-      <div data-c42-select-listbox className="pbx-lang__listbox">
-        {SUPPORTED_LANGS.map((lang) => (
-          <div
-            key={lang}
-            data-c42-select-option
-            data-value={lang}
-            className="pbx-lang__option"
-          >
-            {LANG_LABELS[lang]}
-          </div>
-        ))}
-      </div>
-    </Select>
+    <div className="pbx-theme-toggle" role="group" aria-label={t("language.label")}>
+      {SUPPORTED_LANGS.map((lang) => (
+        <button
+          key={lang}
+          type="button"
+          className={
+            "pbx-theme-toggle__btn" +
+            (current === lang ? " pbx-theme-toggle__btn--active" : "")
+          }
+          aria-pressed={current === lang}
+          title={LANG_LABELS[lang]}
+          onClick={() => handleChange(lang)}
+        >
+          <span className="pbx-theme-toggle__label">{LANG_LABELS[lang]}</span>
+        </button>
+      ))}
+    </div>
   );
 }

@@ -529,8 +529,10 @@
   line-height: 1;
 }
 
-/* Tab bar en formato envolvente (pills) para las 5 configs del sitio. */
-.pbx-inspector-tabs--wrap {
+/* Tab bar en formato envolvente (pills) para las configs del sitio.
+ * Two classes so this beats `.pbx-inspector-tabs { border-bottom }` in
+ * inspector-sections.css (imported after this file). */
+.pbx-inspector-tabs.pbx-inspector-tabs--wrap {
   flex-wrap: wrap;
   gap: 4px;
   border-bottom: 0;
@@ -538,7 +540,7 @@
 .pbx-inspector-tabs--wrap .pbx-inspector-tab {
   padding: 6px 8px;
   margin-bottom: 0;
-  border-bottom: 0;
+  border: 1px solid var(--pb-chrome-border);
   border-radius: var(--pb-chrome-radius-sm);
 }
 .pbx-inspector-tabs--wrap .pbx-inspector-tab:hover {
@@ -547,6 +549,7 @@
 .pbx-inspector-tabs--wrap .pbx-inspector-tab--active {
   background: var(--pb-chrome-accent-subtle);
   color: var(--pb-chrome-accent-on-surface);
+  border-color: var(--pb-chrome-border);
 }
 
 .pbx-site-settings__section {
@@ -557,6 +560,19 @@
 .pbx-site-settings__section:first-of-type {
   border-top: 0;
   padding-top: 0;
+}
+
+.pbx-site-settings .pbx-layers__tree {
+  margin: 0;
+}
+
+/* Settings prefs: same section headings as Themes / Pages / SEO. */
+.pbx-site-settings .pbx-profile__section {
+  padding: 0;
+  margin-bottom: 14px;
+}
+.pbx-site-settings .pbx-profile__section:last-child {
+  margin-bottom: 0;
 }
 
 /* Campos de SEO: separación consistente entre controles y subtítulos. */

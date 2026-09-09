@@ -87,12 +87,12 @@ function ContainerRender(ctx: RenderContext) {
       {children}
       {!exportMode && isEmpty ? (
         <span className="pbx-empty-hint" data-empty-hint>
-          Contenedor vacío — suelta componentes aquí
+          Empty container — drop components here
         </span>
       ) : null}
       {sizeGuideHeight ? (
         <span className="pbx-size-guide" data-size-guide aria-hidden="true" style={{ height: sizeGuideHeight }}>
-          <span className="pbx-size-guide__label">Alto real al publicar</span>
+          <span className="pbx-size-guide__label">Published height</span>
         </span>
       ) : null}
       {/* Chrome fantasma de behaviors en Edit (docs/10 §5, feedback de

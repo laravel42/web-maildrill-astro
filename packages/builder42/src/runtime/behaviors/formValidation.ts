@@ -32,9 +32,9 @@ export type Cleanup = () => void;
 
 type ValidatableField = HTMLInputElement | HTMLTextAreaElement;
 
-const DEFAULT_REQUIRED_MESSAGE = "Este campo es obligatorio";
-const DEFAULT_EMAIL_MESSAGE = "Ingresa un correo válido";
-const DEFAULT_PATTERN_MESSAGE = "El formato no es válido";
+const DEFAULT_REQUIRED_MESSAGE = "This field is required";
+const DEFAULT_EMAIL_MESSAGE = "Enter a valid email";
+const DEFAULT_PATTERN_MESSAGE = "This format is not valid";
 
 let alpineStarted = false;
 

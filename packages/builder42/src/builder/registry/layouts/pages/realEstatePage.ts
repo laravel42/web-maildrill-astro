@@ -76,7 +76,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
       type: "image",
       props: {
         source: { kind: "url", url: imageUrl },
-        alt: `Fachada de ${title}`,
+        alt: `Front of the ${title}`,
         objectFit: "cover",
       },
       style: {
@@ -158,8 +158,8 @@ export function buildRealEstatePageFragment(): NodeFragment {
       },
       children: [`realestate-property-${n}-m2`, `realestate-property-${n}-beds`],
     },
-    ...statFragment(`realestate-property-${n}-m2`, { value: m2, label: "m² de construcción" }, defaultStyleFor("stat")),
-    ...statFragment(`realestate-property-${n}-beds`, { value: beds, label: "recámaras" }, defaultStyleFor("stat")),
+    ...statFragment(`realestate-property-${n}-m2`, { value: m2, label: "m² built" }, defaultStyleFor("stat")),
+    ...statFragment(`realestate-property-${n}-beds`, { value: beds, label: "bedrooms" }, defaultStyleFor("stat")),
   });
 
   return {
@@ -206,7 +206,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
       "realestate-topbar-phone": {
         id: "realestate-topbar-phone",
         type: "text",
-        props: { content: "📞 Llámanos: +52 33 1234 5678" },
+        props: { content: "📞 Call us: +52 33 1234 5678" },
         style: {
           base: {
             typography: { fontFamily: { token: "typography.families.sans" }, fontSize: { token: "typography.sizes.sm" } },
@@ -272,7 +272,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
       "realestate-hero-title": {
         id: "realestate-hero-title",
         type: "text",
-        props: { content: "<strong>Encuentra tu próximo hogar en Guadalajara</strong>" },
+        props: { content: "<strong>Find your next home in Guadalajara</strong>" },
         style: {
           base: {
             size: { maxWidth: "22ch" },
@@ -289,7 +289,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
       "realestate-hero-sub": {
         id: "realestate-hero-sub",
         type: "text",
-        props: { content: "15 años conectando familias con la casa o departamento correcto, en las mejores zonas de la ciudad." },
+        props: { content: "15 years connecting families with the right house or apartment, in the best neighborhoods of the city." },
         style: {
           base: {
             size: { maxWidth: "48ch" },
@@ -325,7 +325,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
         type: "select",
         props: {
           options: [
-            { label: "Todas las zonas", value: "all" },
+            { label: "All zones", value: "all" },
             { label: "Providencia", value: "providencia" },
             { label: "Chapalita", value: "chapalita" },
             { label: "Zapopan Centro", value: "zapopan-centro" },
@@ -333,20 +333,20 @@ export function buildRealEstatePageFragment(): NodeFragment {
           ],
           name: "zone",
           placeholder: "Zona",
-          ariaLabel: "Zona de búsqueda",
+          ariaLabel: "Search area",
         },
         style: defaultStyleFor("select"),
       },
       "realestate-hero-search-budget": {
         id: "realestate-hero-search-budget",
         type: "input",
-        props: { name: "budget", type: "number", placeholder: "Presupuesto máx. (MXN)", required: false, disabled: false },
+        props: { name: "budget", type: "number", placeholder: "Max budget (USD)", required: false, disabled: false },
         style: defaultStyleFor("input"),
       },
       "realestate-hero-search-btn": {
         id: "realestate-hero-search-btn",
         type: "button",
-        props: { label: "Buscar", link: { kind: "anchor", nodeId: "realestate-properties" }, newTab: false },
+        props: { label: "Search", link: { kind: "anchor", nodeId: "realestate-properties" }, newTab: false },
         style: {
           base: {
             layout: { display: "inline-block" },
@@ -436,7 +436,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
       "realestate-properties-aside-title": {
         id: "realestate-properties-aside-title",
         type: "text",
-        props: { content: "<strong>Filtrar propiedades</strong>" },
+        props: { content: "<strong>Filter properties</strong>" },
         style: {
           base: {
             typography: {
@@ -453,7 +453,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
         type: "select",
         props: {
           options: [
-            { label: "Todas las zonas", value: "all" },
+            { label: "All zones", value: "all" },
             { label: "Providencia", value: "providencia" },
             { label: "Chapalita", value: "chapalita" },
             { label: "Puerta de Hierro", value: "puerta-de-hierro" },
@@ -482,13 +482,13 @@ export function buildRealEstatePageFragment(): NodeFragment {
       "realestate-properties-aside-budget": {
         id: "realestate-properties-aside-budget",
         type: "input",
-        props: { name: "aside-budget", type: "number", placeholder: "Presupuesto máx. (MXN)", required: false, disabled: false },
+        props: { name: "aside-budget", type: "number", placeholder: "Max budget (USD)", required: false, disabled: false },
         style: defaultStyleFor("input"),
       },
       "realestate-properties-aside-btn": {
         id: "realestate-properties-aside-btn",
         type: "button",
-        props: { label: "Aplicar filtro", link: { kind: "anchor", nodeId: "realestate-properties-main" }, newTab: false },
+        props: { label: "Apply filter", link: { kind: "anchor", nodeId: "realestate-properties-main" }, newTab: false },
         style: {
           base: {
             layout: { display: "inline-block" },
@@ -523,7 +523,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
       "realestate-properties-title": {
         id: "realestate-properties-title",
         type: "text",
-        props: { content: "<strong>Propiedades destacadas</strong>" },
+        props: { content: "<strong>Featured properties</strong>" },
         style: {
           base: {
             typography: {
@@ -549,27 +549,27 @@ export function buildRealEstatePageFragment(): NodeFragment {
       },
       ...property(
         1,
-        "Casa en Providencia",
+        "House in Providencia",
         "Providencia, Guadalajara",
-        "$4,850,000 MXN",
+        "$265,000 USD",
         "210",
         "3",
         "https://images.unsplash.com/photo-1721815693498-cc28507c0ba2?w=800&q=80&auto=format&fit=crop",
       ),
       ...property(
         2,
-        "Depto en Puerta de Hierro",
+        "Apartment in Puerta de Hierro",
         "Puerta de Hierro, Zapopan",
-        "$3,200,000 MXN",
+        "$175,000 USD",
         "125",
         "2",
         "https://images.unsplash.com/photo-1628012209120-d9db7abf7eab?w=800&q=80&auto=format&fit=crop",
       ),
       ...property(
         3,
-        "Casa en Chapalita",
+        "House in Chapalita",
         "Chapalita, Guadalajara",
-        "$5,600,000 MXN",
+        "$306,000 USD",
         "260",
         "4",
         "https://images.unsplash.com/photo-1698994705178-d244d73ea573?w=800&q=80&auto=format&fit=crop",
@@ -605,9 +605,9 @@ export function buildRealEstatePageFragment(): NodeFragment {
         },
         children: ["realestate-stats-sold", "realestate-stats-years", "realestate-stats-cities"],
       },
-      ...statFragment("realestate-stats-sold", { value: "+850", label: "propiedades vendidas" }, { base: { typography: { textAlign: "center" } } }),
-      ...statFragment("realestate-stats-years", { value: "15", label: "años de experiencia" }, { base: { typography: { textAlign: "center" } } }),
-      ...statFragment("realestate-stats-cities", { value: "6", label: "ciudades con cobertura" }, { base: { typography: { textAlign: "center" } } }),
+      ...statFragment("realestate-stats-sold", { value: "+850", label: "properties sold" }, { base: { typography: { textAlign: "center" } } }),
+      ...statFragment("realestate-stats-years", { value: "15", label: "years of experience" }, { base: { typography: { textAlign: "center" } } }),
+      ...statFragment("realestate-stats-cities", { value: "6", label: "cities covered" }, { base: { typography: { textAlign: "center" } } }),
 
       // --- Banda: asesor, degradado de acento -----------------------------------
       "realestate-advisor": {
@@ -642,7 +642,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
       "realestate-advisor-avatar": {
         id: "realestate-advisor-avatar",
         type: "avatar",
-        props: { source: { kind: "url", url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=160&q=80&auto=format&fit=crop" }, alt: "Retrato de Ricardo Mendoza, asesor inmobiliario", initials: "RM" },
+        props: { source: { kind: "url", url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=160&q=80&auto=format&fit=crop" }, alt: "Portrait of Ricardo Mendoza, real estate advisor", initials: "RM" },
         style: {
           base: {
             size: { width: "96px", height: "96px" },
@@ -653,8 +653,8 @@ export function buildRealEstatePageFragment(): NodeFragment {
       ...quoteFragment(
         "realestate-advisor-quote",
         {
-          content: "Cada familia tiene una historia distinta; mi trabajo es encontrar la casa que encaje con la suya, sin prisas y sin letras pequeñas.",
-          attribution: "Ricardo Mendoza, Asesor senior",
+          content: "Every family has a different story; my job is to find the home that fits theirs, with no rush and no fine print.",
+          attribution: "Ricardo Mendoza, Senior advisor",
         },
         {
           base: {
@@ -698,7 +698,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
       "realestate-faq-title": {
         id: "realestate-faq-title",
         type: "text",
-        props: { content: "<strong>Preguntas frecuentes</strong>" },
+        props: { content: "<strong>Frequently asked questions</strong>" },
         style: {
           base: {
             typography: {
@@ -721,40 +721,40 @@ export function buildRealEstatePageFragment(): NodeFragment {
       "realestate-faq-item-1": {
         id: "realestate-faq-item-1",
         type: "accordion-item",
-        props: { label: "¿Qué opciones de financiamiento tienen?", openByDefault: true },
+        props: { label: "What financing options do you offer?", openByDefault: true },
         style: defaultStyleFor("accordion-item"),
         children: ["realestate-faq-item-1-body"],
       },
       "realestate-faq-item-1-body": {
         id: "realestate-faq-item-1-body",
         type: "text",
-        props: { content: "Trabajamos con Infonavit, Fovissste y crédito bancario de los principales bancos del país; te asesoramos sin costo para elegir la mejor opción." },
+        props: { content: "We work with Infonavit, Fovissste and bank credit from major national banks; we advise you at no cost to choose the best option." },
         style: { base: { size: { maxWidth: "70ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
       "realestate-faq-item-2": {
         id: "realestate-faq-item-2",
         type: "accordion-item",
-        props: { label: "¿Cuál es la comisión por vender mi propiedad?", openByDefault: false },
+        props: { label: "What is the commission for selling my property?", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["realestate-faq-item-2-body"],
       },
       "realestate-faq-item-2-body": {
         id: "realestate-faq-item-2-body",
         type: "text",
-        props: { content: "La comisión estándar es del 5% sobre el valor de venta, sin costos ocultos ni anticipos previos a la firma." },
+        props: { content: "The standard commission is 5% of the sale value, with no hidden fees or upfront payments before signing." },
         style: { base: { size: { maxWidth: "70ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
       "realestate-faq-item-3": {
         id: "realestate-faq-item-3",
         type: "accordion-item",
-        props: { label: "¿Ustedes gestionan la escrituración?", openByDefault: false },
+        props: { label: "Do you handle the deed transfer process?", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["realestate-faq-item-3-body"],
       },
       "realestate-faq-item-3-body": {
         id: "realestate-faq-item-3-body",
         type: "text",
-        props: { content: "Sí, coordinamos con el notario público, revisamos la documentación y te acompañamos hasta la firma final." },
+        props: { content: "Yes, we coordinate with the notary public, review the paperwork and support you through the final signing." },
         style: { base: { size: { maxWidth: "70ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
 
@@ -789,7 +789,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
       "realestate-contact-title": {
         id: "realestate-contact-title",
         type: "text",
-        props: { content: "<strong>Agenda una visita</strong>" },
+        props: { content: "<strong>Schedule a visit</strong>" },
         style: {
           base: {
             typography: {
@@ -832,43 +832,43 @@ export function buildRealEstatePageFragment(): NodeFragment {
       "realestate-contact-name-label": {
         id: "realestate-contact-name-label",
         type: "label",
-        props: { text: "Nombre completo", for: "realestate-contact-name" },
+        props: { text: "Full name", for: "realestate-contact-name" },
         style: defaultStyleFor("label"),
       },
       "realestate-contact-name": {
         id: "realestate-contact-name",
         type: "input",
-        props: { name: "name", type: "text", placeholder: "Ej. María Torres", required: true, disabled: false },
+        props: { name: "name", type: "text", placeholder: "E.g. Maria Torres", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "realestate-contact-email-label": {
         id: "realestate-contact-email-label",
         type: "label",
-        props: { text: "Correo electrónico", for: "realestate-contact-email" },
+        props: { text: "Email address", for: "realestate-contact-email" },
         style: defaultStyleFor("label"),
       },
       "realestate-contact-email": {
         id: "realestate-contact-email",
         type: "input",
-        props: { name: "email", type: "email", placeholder: "maria@correo.com", required: true, disabled: false },
+        props: { name: "email", type: "email", placeholder: "maria@email.com", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "realestate-contact-message-label": {
         id: "realestate-contact-message-label",
         type: "label",
-        props: { text: "¿Qué propiedad te interesa?", for: "realestate-contact-message" },
+        props: { text: "Which property interests you?", for: "realestate-contact-message" },
         style: defaultStyleFor("label"),
       },
       "realestate-contact-message": {
         id: "realestate-contact-message",
         type: "textarea",
-        props: { name: "message", placeholder: "Cuéntanos qué zona, presupuesto y tipo de propiedad buscas…", rows: 4, required: false, disabled: false },
+        props: { name: "message", placeholder: "Tell us the area, budget and type of property you're looking for…", rows: 4, required: false, disabled: false },
         style: defaultStyleFor("textarea"),
       },
       "realestate-contact-submit": {
         id: "realestate-contact-submit",
         type: "button-submit",
-        props: { label: "Solicitar información", disabled: false },
+        props: { label: "Request information", disabled: false },
         style: {
           base: {
             layout: { display: "inline-block" },
@@ -920,7 +920,7 @@ export function buildRealEstatePageFragment(): NodeFragment {
       "realestate-footer-copyright": {
         id: "realestate-footer-copyright",
         type: "text",
-        props: { content: "© 2026 Vista Sur Inmobiliaria. Todos los derechos reservados." },
+        props: { content: "© 2026 Vista Sur Real Estate. All rights reserved." },
         style: {
           base: {
             size: { width: "100%" },
@@ -943,127 +943,75 @@ export function buildRealEstatePageFragment(): NodeFragment {
     translations: (() => {
       const t: Record<string, NodeTranslations> = {};
 
-      t["realestate-hero-title"] = {
-        en: { content: "<strong>Find your next home in Guadalajara</strong>" },
-        it: { content: "<strong>Trova la tua prossima casa a Guadalajara</strong>" },
-      };
-      t["realestate-hero-sub"] = {
-        en: { content: "15 years connecting families with the right house or apartment, in the best neighborhoods of the city." },
-        it: { content: "15 anni a connettere famiglie con la casa o l'appartamento giusto, nei quartieri migliori della città." },
-      };
-      t["realestate-hero-search-btn"] = {
-        en: { label: "Search" },
-        it: { label: "Cerca" },
-      };
-      t["realestate-hero-search-budget"] = {
-        en: { placeholder: "Max budget (USD)" },
-        it: { placeholder: "Budget massimo (EUR)" },
-      };
+      t["realestate-hero-title"] = { es: { content: "<strong>Encuentra tu próximo hogar en Guadalajara</strong>" }, it: { content: "<strong>Trova la tua prossima casa a Guadalajara</strong>" } };
+      t["realestate-hero-sub"] = { es: { content: "15 años conectando familias con la casa o departamento correcto, en las mejores zonas de la ciudad." }, it: { content: "15 anni a connettere famiglie con la casa o l'appartamento giusto, nei quartieri migliori della città." } };
+      t["realestate-hero-search-btn"] = { es: { label: "Buscar" }, it: { label: "Cerca" } };
+      t["realestate-hero-search-budget"] = { es: { placeholder: "Presupuesto máx. (MXN)" }, it: { placeholder: "Budget massimo (EUR)" } };
 
-      t["realestate-properties-title"] = {
-        en: { content: "<strong>Featured properties</strong>" },
-        it: { content: "<strong>Immobili in evidenza</strong>" },
-      };
+      t["realestate-properties-title"] = { es: { content: "<strong>Propiedades destacadas</strong>" }, it: { content: "<strong>Immobili in evidenza</strong>" } };
 
-      t["realestate-properties-aside-title"] = {
-        en: { content: "<strong>Filter properties</strong>" },
-        it: { content: "<strong>Filtra gli immobili</strong>" },
-      };
-      t["realestate-properties-aside-btn"] = { en: { label: "Apply filter" }, it: { label: "Applica filtro" } };
-      t["realestate-properties-aside-budget"] = {
-        en: { placeholder: "Max budget (USD)" },
-        it: { placeholder: "Budget massimo (EUR)" },
-      };
+      t["realestate-properties-aside-title"] = { es: { content: "<strong>Filtrar propiedades</strong>" }, it: { content: "<strong>Filtra gli immobili</strong>" } };
+      t["realestate-properties-aside-btn"] = { es: { label: "Aplicar filtro" }, it: { label: "Applica filtro" } };
+      t["realestate-properties-aside-budget"] = { es: { placeholder: "Presupuesto máx. (MXN)" }, it: { placeholder: "Budget massimo (EUR)" } };
 
-      t["realestate-property-1-price"] = { en: { label: "$265,000 USD" }, it: { label: "€245.000" } };
-      t["realestate-property-1-title"] = { en: { content: "<strong>House in Providencia</strong>" }, it: { content: "<strong>Casa a Providencia</strong>" } };
-      t["realestate-property-1-zone"] = { en: { content: "Providencia, Guadalajara" }, it: { content: "Providencia, Guadalajara" } };
-      t["realestate-property-1-img"] = { en: { alt: "Front of the house in Providencia" }, it: { alt: "Facciata della casa a Providencia" } };
-      t["realestate-property-1-m2-value"] = { en: { value: "210" }, it: { value: "210" } };
-      t["realestate-property-1-m2-label"] = { en: { content: "m² built" }, it: { content: "m² costruiti" } };
-      t["realestate-property-1-beds-value"] = { en: { value: "3" }, it: { value: "3" } };
-      t["realestate-property-1-beds-label"] = { en: { content: "bedrooms" }, it: { content: "camere" } };
+      t["realestate-property-1-price"] = { es: { label: "$4,850,000 MXN" }, it: { label: "€245.000" } };
+      t["realestate-property-1-title"] = { es: { content: "<strong>Casa en Providencia</strong>" }, it: { content: "<strong>Casa a Providencia</strong>" } };
+      t["realestate-property-1-zone"] = { es: { content: "Providencia, Guadalajara" }, it: { content: "Providencia, Guadalajara" } };
+      t["realestate-property-1-img"] = { es: { alt: "Fachada de la casa en Providencia" }, it: { alt: "Facciata della casa a Providencia" } };
+      t["realestate-property-1-m2-value"] = { es: { value: "210" }, it: { value: "210" } };
+      t["realestate-property-1-m2-label"] = { es: { content: "m² de construcción" }, it: { content: "m² costruiti" } };
+      t["realestate-property-1-beds-value"] = { es: { value: "3" }, it: { value: "3" } };
+      t["realestate-property-1-beds-label"] = { es: { content: "recámaras" }, it: { content: "camere" } };
 
-      t["realestate-property-2-price"] = { en: { label: "$175,000 USD" }, it: { label: "€162.000" } };
-      t["realestate-property-2-title"] = { en: { content: "<strong>Apartment in Puerta de Hierro</strong>" }, it: { content: "<strong>Appartamento a Puerta de Hierro</strong>" } };
-      t["realestate-property-2-zone"] = { en: { content: "Puerta de Hierro, Zapopan" }, it: { content: "Puerta de Hierro, Zapopan" } };
-      t["realestate-property-2-img"] = { en: { alt: "Front of the apartment in Puerta de Hierro" }, it: { alt: "Facciata dell'appartamento a Puerta de Hierro" } };
-      t["realestate-property-2-m2-value"] = { en: { value: "125" }, it: { value: "125" } };
-      t["realestate-property-2-m2-label"] = { en: { content: "m² built" }, it: { content: "m² costruiti" } };
-      t["realestate-property-2-beds-value"] = { en: { value: "2" }, it: { value: "2" } };
-      t["realestate-property-2-beds-label"] = { en: { content: "bedrooms" }, it: { content: "camere" } };
+      t["realestate-property-2-price"] = { es: { label: "$3,200,000 MXN" }, it: { label: "€162.000" } };
+      t["realestate-property-2-title"] = { es: { content: "<strong>Depto en Puerta de Hierro</strong>" }, it: { content: "<strong>Appartamento a Puerta de Hierro</strong>" } };
+      t["realestate-property-2-zone"] = { es: { content: "Puerta de Hierro, Zapopan" }, it: { content: "Puerta de Hierro, Zapopan" } };
+      t["realestate-property-2-img"] = { es: { alt: "Fachada del departamento en Puerta de Hierro" }, it: { alt: "Facciata dell'appartamento a Puerta de Hierro" } };
+      t["realestate-property-2-m2-value"] = { es: { value: "125" }, it: { value: "125" } };
+      t["realestate-property-2-m2-label"] = { es: { content: "m² de construcción" }, it: { content: "m² costruiti" } };
+      t["realestate-property-2-beds-value"] = { es: { value: "2" }, it: { value: "2" } };
+      t["realestate-property-2-beds-label"] = { es: { content: "recámaras" }, it: { content: "camere" } };
 
-      t["realestate-property-3-price"] = { en: { label: "$306,000 USD" }, it: { label: "€283.000" } };
-      t["realestate-property-3-title"] = { en: { content: "<strong>House in Chapalita</strong>" }, it: { content: "<strong>Casa a Chapalita</strong>" } };
-      t["realestate-property-3-zone"] = { en: { content: "Chapalita, Guadalajara" }, it: { content: "Chapalita, Guadalajara" } };
-      t["realestate-property-3-img"] = { en: { alt: "Front of the house in Chapalita" }, it: { alt: "Facciata della casa a Chapalita" } };
-      t["realestate-property-3-m2-value"] = { en: { value: "260" }, it: { value: "260" } };
-      t["realestate-property-3-m2-label"] = { en: { content: "m² built" }, it: { content: "m² costruiti" } };
-      t["realestate-property-3-beds-value"] = { en: { value: "4" }, it: { value: "4" } };
-      t["realestate-property-3-beds-label"] = { en: { content: "bedrooms" }, it: { content: "camere" } };
+      t["realestate-property-3-price"] = { es: { label: "$5,600,000 MXN" }, it: { label: "€283.000" } };
+      t["realestate-property-3-title"] = { es: { content: "<strong>Casa en Chapalita</strong>" }, it: { content: "<strong>Casa a Chapalita</strong>" } };
+      t["realestate-property-3-zone"] = { es: { content: "Chapalita, Guadalajara" }, it: { content: "Chapalita, Guadalajara" } };
+      t["realestate-property-3-img"] = { es: { alt: "Fachada de la casa en Chapalita" }, it: { alt: "Facciata della casa a Chapalita" } };
+      t["realestate-property-3-m2-value"] = { es: { value: "260" }, it: { value: "260" } };
+      t["realestate-property-3-m2-label"] = { es: { content: "m² de construcción" }, it: { content: "m² costruiti" } };
+      t["realestate-property-3-beds-value"] = { es: { value: "4" }, it: { value: "4" } };
+      t["realestate-property-3-beds-label"] = { es: { content: "recámaras" }, it: { content: "camere" } };
 
-      t["realestate-stats-sold-value"] = { en: { value: "+850" }, it: { value: "+850" } };
-      t["realestate-stats-sold-label"] = { en: { content: "properties sold" }, it: { content: "immobili venduti" } };
-      t["realestate-stats-years-value"] = { en: { value: "15" }, it: { value: "15" } };
-      t["realestate-stats-years-label"] = { en: { content: "years of experience" }, it: { content: "anni di esperienza" } };
-      t["realestate-stats-cities-value"] = { en: { value: "6" }, it: { value: "6" } };
-      t["realestate-stats-cities-label"] = { en: { content: "cities covered" }, it: { content: "città coperte" } };
+      t["realestate-stats-sold-value"] = { es: { value: "+850" }, it: { value: "+850" } };
+      t["realestate-stats-sold-label"] = { es: { content: "propiedades vendidas" }, it: { content: "immobili venduti" } };
+      t["realestate-stats-years-value"] = { es: { value: "15" }, it: { value: "15" } };
+      t["realestate-stats-years-label"] = { es: { content: "años de experiencia" }, it: { content: "anni di esperienza" } };
+      t["realestate-stats-cities-value"] = { es: { value: "6" }, it: { value: "6" } };
+      t["realestate-stats-cities-label"] = { es: { content: "ciudades con cobertura" }, it: { content: "città coperte" } };
 
-      t["realestate-advisor-avatar"] = {
-        en: { alt: "Portrait of Ricardo Mendoza, real estate advisor" },
-        it: { alt: "Ritratto di Ricardo Mendoza, consulente immobiliare" },
-      };
-      t["realestate-advisor-quote-content"] = {
-        en: {
-          content: "Every family has a different story; my job is to find the home that fits theirs, with no rush and no fine print.",
-        },
-        it: {
-          content: "Ogni famiglia ha una storia diversa; il mio lavoro è trovare la casa che si adatta alla loro, senza fretta e senza clausole nascoste.",
-        },
-      };
-      t["realestate-advisor-quote-attribution"] = {
-        en: { content: "<cite>— Ricardo Mendoza, Senior advisor</cite>" },
-        it: { content: "<cite>— Ricardo Mendoza, Consulente senior</cite>" },
-      };
+      t["realestate-advisor-avatar"] = { es: { alt: "Retrato de Ricardo Mendoza, asesor inmobiliario" }, it: { alt: "Ritratto di Ricardo Mendoza, consulente immobiliare" } };
+      t["realestate-advisor-quote-content"] = { es: { content: "Cada familia tiene una historia distinta; mi trabajo es encontrar la casa que encaje con la suya, sin prisas y sin letras pequeñas." }, it: { content: "Ogni famiglia ha una storia diversa; il mio lavoro è trovare la casa che si adatta alla loro, senza fretta e senza clausole nascoste." } };
+      t["realestate-advisor-quote-attribution"] = { es: { content: "<cite>— Ricardo Mendoza, Asesor senior</cite>" }, it: { content: "<cite>— Ricardo Mendoza, Consulente senior</cite>" } };
 
-      t["realestate-faq-title"] = { en: { content: "<strong>Frequently asked questions</strong>" }, it: { content: "<strong>Domande frequenti</strong>" } };
-      t["realestate-faq-item-1"] = { en: { label: "What financing options do you offer?" }, it: { label: "Quali opzioni di finanziamento offrite?" } };
-      t["realestate-faq-item-1-body"] = {
-        en: { content: "We work with Infonavit, Fovissste and bank credit from major national banks; we advise you at no cost to choose the best option." },
-        it: { content: "Collaboriamo con Infonavit, Fovissste e credito bancario delle principali banche nazionali; ti consigliamo gratuitamente la scelta migliore." },
-      };
-      t["realestate-faq-item-2"] = { en: { label: "What is the commission for selling my property?" }, it: { label: "Qual è la commissione per vendere il mio immobile?" } };
-      t["realestate-faq-item-2-body"] = {
-        en: { content: "The standard commission is 5% of the sale value, with no hidden fees or upfront payments before signing." },
-        it: { content: "La commissione standard è del 5% sul valore di vendita, senza costi nascosti né anticipi prima della firma." },
-      };
-      t["realestate-faq-item-3"] = { en: { label: "Do you handle the deed transfer process?" }, it: { label: "Gestite voi il processo di rogito?" } };
-      t["realestate-faq-item-3-body"] = {
-        en: { content: "Yes, we coordinate with the notary public, review the paperwork and support you through the final signing." },
-        it: { content: "Sì, coordiniamo con il notaio, verifichiamo la documentazione e ti accompagniamo fino alla firma finale." },
-      };
+      t["realestate-faq-title"] = { es: { content: "<strong>Preguntas frecuentes</strong>" }, it: { content: "<strong>Domande frequenti</strong>" } };
+      t["realestate-faq-item-1"] = { es: { label: "¿Qué opciones de financiamiento tienen?" }, it: { label: "Quali opzioni di finanziamento offrite?" } };
+      t["realestate-faq-item-1-body"] = { es: { content: "Trabajamos con Infonavit, Fovissste y crédito bancario de los principales bancos del país; te asesoramos sin costo para elegir la mejor opción." }, it: { content: "Collaboriamo con Infonavit, Fovissste e credito bancario delle principali banche nazionali; ti consigliamo gratuitamente la scelta migliore." } };
+      t["realestate-faq-item-2"] = { es: { label: "¿Cuál es la comisión por vender mi propiedad?" }, it: { label: "Qual è la commissione per vendere il mio immobile?" } };
+      t["realestate-faq-item-2-body"] = { es: { content: "La comisión estándar es del 5% sobre el valor de venta, sin costos ocultos ni anticipos previos a la firma." }, it: { content: "La commissione standard è del 5% sul valore di vendita, senza costi nascosti né anticipi prima della firma." } };
+      t["realestate-faq-item-3"] = { es: { label: "¿Ustedes gestionan la escrituración?" }, it: { label: "Gestite voi il processo di rogito?" } };
+      t["realestate-faq-item-3-body"] = { es: { content: "Sí, coordinamos con el notario público, revisamos la documentación y te acompañamos hasta la firma final." }, it: { content: "Sì, coordiniamo con il notaio, verifichiamo la documentazione e ti accompagniamo fino alla firma finale." } };
 
-      t["realestate-contact-title"] = { en: { content: "<strong>Schedule a visit</strong>" }, it: { content: "<strong>Prenota una visita</strong>" } };
-      t["realestate-contact-name-label"] = { en: { text: "Full name" }, it: { text: "Nome completo" } };
-      t["realestate-contact-name"] = { en: { placeholder: "E.g. Maria Torres" }, it: { placeholder: "Es. Maria Torres" } };
-      t["realestate-contact-email-label"] = { en: { text: "Email address" }, it: { text: "Indirizzo email" } };
-      t["realestate-contact-email"] = { en: { placeholder: "maria@email.com" }, it: { placeholder: "maria@email.com" } };
-      t["realestate-contact-message-label"] = { en: { text: "Which property interests you?" }, it: { text: "Quale immobile ti interessa?" } };
-      t["realestate-contact-message"] = {
-        en: { placeholder: "Tell us the area, budget and type of property you're looking for…" },
-        it: { placeholder: "Raccontaci la zona, il budget e il tipo di immobile che cerchi…" },
-      };
-      t["realestate-contact-submit"] = { en: { label: "Request information" }, it: { label: "Richiedi informazioni" } };
+      t["realestate-contact-title"] = { es: { content: "<strong>Agenda una visita</strong>" }, it: { content: "<strong>Prenota una visita</strong>" } };
+      t["realestate-contact-name-label"] = { es: { text: "Nombre completo" }, it: { text: "Nome completo" } };
+      t["realestate-contact-name"] = { es: { placeholder: "Ej. María Torres" }, it: { placeholder: "Es. Maria Torres" } };
+      t["realestate-contact-email-label"] = { es: { text: "Correo electrónico" }, it: { text: "Indirizzo email" } };
+      t["realestate-contact-email"] = { es: { placeholder: "maria@correo.com" }, it: { placeholder: "maria@email.com" } };
+      t["realestate-contact-message-label"] = { es: { text: "¿Qué propiedad te interesa?" }, it: { text: "Quale immobile ti interessa?" } };
+      t["realestate-contact-message"] = { es: { placeholder: "Cuéntanos qué zona, presupuesto y tipo de propiedad buscas…" }, it: { placeholder: "Raccontaci la zona, il budget e il tipo di immobile che cerchi…" } };
+      t["realestate-contact-submit"] = { es: { label: "Solicitar información" }, it: { label: "Richiedi informazioni" } };
 
-      t["realestate-footer-copyright"] = {
-        en: { content: "© 2026 Vista Sur Real Estate. All rights reserved." },
-        it: { content: "© 2026 Vista Sur Immobiliare. Tutti i diritti riservati." },
-      };
+      t["realestate-footer-copyright"] = { es: { content: "© 2026 Vista Sur Inmobiliaria. Todos los derechos reservados." }, it: { content: "© 2026 Vista Sur Immobiliare. Tutti i diritti riservati." } };
 
-      t["realestate-topbar-phone"] = {
-        en: { content: "📞 Call us: +52 33 1234 5678" },
-        it: { content: "📞 Chiamaci: +52 33 1234 5678" },
-      };
+      t["realestate-topbar-phone"] = { es: { content: "📞 Llámanos: +52 33 1234 5678" }, it: { content: "📞 Chiamaci: +52 33 1234 5678" } };
 
       return t;
     })(),

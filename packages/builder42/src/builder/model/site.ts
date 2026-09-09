@@ -175,8 +175,8 @@ export function migrateDocToSite(
   const pageId = "page-1";
   return {
     meta: {
-      name: "Sitio",
-      defaultLang: "es",
+      name: "Site",
+      defaultLang: "en",
       breakpoints,
       version: 2,
       tokens: structuredClone(BASE_TOKENS),
@@ -184,7 +184,7 @@ export function migrateDocToSite(
     pages: {
       [pageId]: {
         id: pageId,
-        meta: { title: "Inicio", slug: "" },
+        meta: { title: "Home", slug: "" },
         document: { rootId: doc.rootId, nodes: doc.nodes, meta: { version: 1 } },
       },
     },
@@ -196,19 +196,19 @@ export function migrateDocToSite(
 /** Crea un sitio de una sola página a partir de un documento (home, slug ""). */
 export function createSiteFromDocument(
   document: BuilderDocument,
-  siteName = "Sitio",
+  siteName = "Site",
 ): BuilderSite {
   const pageId = newPageId();
   return {
     meta: {
       name: siteName,
-      defaultLang: "es",
+      defaultLang: "en",
       breakpoints: DEFAULT_BREAKPOINTS,
       version: 2,
       tokens: structuredClone(BASE_TOKENS),
     },
     pages: {
-      [pageId]: { id: pageId, meta: { title: "Inicio", slug: "" }, document },
+      [pageId]: { id: pageId, meta: { title: "Home", slug: "" }, document },
     },
     pageOrder: [pageId],
     homePageId: pageId,

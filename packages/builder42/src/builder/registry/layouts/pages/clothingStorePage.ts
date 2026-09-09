@@ -32,107 +32,68 @@ import { darkBandStyleFor } from "../helpers";
 export function buildClothingStorePageFragment(): NodeFragment {
   const translations: Record<string, NodeTranslations> = {
     // --- Topbar ----------------------------------------------------------
-    "clothing-topbar-text": {
-      en: { content: "Free shipping on orders over €50 · 30-day returns" },
-      it: { content: "Spedizione gratuita per ordini oltre 50 € · Resi entro 30 giorni" },
-    },
+    "clothing-topbar-text": { es: { content: "Envío gratis en pedidos superiores a 50 € · Devoluciones en 30 días" }, it: { content: "Spedizione gratuita per ordini oltre 50 € · Resi entro 30 giorni" } },
     // --- Navbar brand ------------------------------------------------------
-    "clothing-navbar-brand-text": {
-      en: { content: "<strong>Nordika Studio</strong>" },
-      it: { content: "<strong>Nordika Studio</strong>" },
-    },
+    "clothing-navbar-brand-text": { es: { content: "<strong>Nordika Studio</strong>" }, it: { content: "<strong>Nordika Studio</strong>" } },
     // --- Hero ------------------------------------------------------------
-    "clothing-hero-title": {
-      en: { content: "<strong>The Autumn/Winter 2026 collection</strong>" },
-      it: { content: "<strong>La collezione Autunno/Inverno 2026</strong>" },
-    },
-    "clothing-hero-sub": {
-      en: { content: "Timeless pieces, sustainable fabrics and a fit made for everyday wear." },
-      it: { content: "Capi intramontabili, tessuti sostenibili e una vestibilità pensata per ogni giorno." },
-    },
-    "clothing-hero-cta": { en: { label: "Shop the collection" }, it: { label: "Scopri la collezione" } },
+    "clothing-hero-title": { es: { content: "<strong>La colección Otoño/Invierno 2026</strong>" }, it: { content: "<strong>La collezione Autunno/Inverno 2026</strong>" } },
+    "clothing-hero-sub": { es: { content: "Prendas atemporales, tejidos sostenibles y un calce pensado para el uso diario." }, it: { content: "Capi intramontabili, tessuti sostenibili e una vestibilità pensata per ogni giorno." } },
+    "clothing-hero-cta": { es: { label: "Ver la colección" }, it: { label: "Scopri la collezione" } },
     // --- Productos ---------------------------------------------------------
-    "clothing-products-title": {
-      en: { content: "<strong>Best sellers</strong>" },
-      it: { content: "<strong>I più venduti</strong>" },
-    },
-    "clothing-tab-outerwear": { en: { label: "Outerwear" }, it: { label: "Capispalla" } },
-    "clothing-tab-bottoms": { en: { label: "Bottoms" }, it: { label: "Pantaloni" } },
-    "clothing-tab-knitwear": { en: { label: "Knitwear & shoes" }, it: { label: "Maglieria e scarpe" } },
-    "clothing-product-1-name": { en: { content: "Wool blend oversized coat" }, it: { content: "Cappotto oversize in misto lana" } },
-    "clothing-product-1-img": { en: { alt: "Beige oversized wool coat on a model" }, it: { alt: "Cappotto oversize beige in lana su una modella" } },
-    "clothing-product-1-price": { en: { label: "€129.00" }, it: { label: "129,00 €" } },
-    "clothing-product-1-cta": { en: { label: "Add to cart" }, it: { label: "Aggiungi al carrello" } },
-    "clothing-product-2-name": { en: { content: "High-waist straight jeans" }, it: { content: "Jeans dritti a vita alta" } },
-    "clothing-product-2-img": { en: { alt: "Model wearing high-waist straight jeans" }, it: { alt: "Modella con jeans dritti a vita alta" } },
-    "clothing-product-2-price": { en: { label: "€69.00" }, it: { label: "69,00 €" } },
-    "clothing-product-2-cta": { en: { label: "Add to cart" }, it: { label: "Aggiungi al carrello" } },
-    "clothing-product-3-name": { en: { content: "Merino wool turtleneck sweater" }, it: { content: "Maglione a collo alto in lana merino" } },
-    "clothing-product-3-img": { en: { alt: "Cream merino wool turtleneck sweater" }, it: { alt: "Maglione a collo alto in lana merino color crema" } },
-    "clothing-product-3-price": { en: { label: "€79.00" }, it: { label: "79,00 €" } },
-    "clothing-product-3-cta": { en: { label: "Add to cart" }, it: { label: "Aggiungi al carrello" } },
-    "clothing-product-4-name": { en: { content: "Leather ankle boots" }, it: { content: "Stivaletti in pelle" } },
-    "clothing-product-4-img": { en: { alt: "Brown leather ankle boots" }, it: { alt: "Stivaletti in pelle marrone" } },
-    "clothing-product-4-price": { en: { label: "€149.00" }, it: { label: "149,00 €" } },
-    "clothing-product-4-cta": { en: { label: "Add to cart" }, it: { label: "Aggiungi al carrello" } },
+    "clothing-products-title": { es: { content: "<strong>Los más vendidos</strong>" }, it: { content: "<strong>I più venduti</strong>" } },
+    "clothing-tab-outerwear": { es: { label: "Abrigos" }, it: { label: "Capispalla" } },
+    "clothing-tab-bottoms": { es: { label: "Pantalones" }, it: { label: "Pantaloni" } },
+    "clothing-tab-knitwear": { es: { label: "Punto y calzado" }, it: { label: "Maglieria e scarpe" } },
+    "clothing-product-1-name": { es: { content: "Abrigo oversize de mezcla de lana" }, it: { content: "Cappotto oversize in misto lana" } },
+    "clothing-product-1-img": { es: { alt: "Abrigo oversize beige de lana sobre una modelo" }, it: { alt: "Cappotto oversize beige in lana su una modella" } },
+    "clothing-product-1-price": { es: { label: "129,00 €" }, it: { label: "€129.00" } },
+    "clothing-product-1-cta": { es: { label: "Añadir al carrito" }, it: { label: "Aggiungi al carrello" } },
+    "clothing-product-2-name": { es: { content: "Jeans rectos de tiro alto" }, it: { content: "Jeans dritti a vita alta" } },
+    "clothing-product-2-img": { es: { alt: "Modelo con jeans rectos de tiro alto" }, it: { alt: "Modella con jeans dritti a vita alta" } },
+    "clothing-product-2-price": { es: { label: "69,00 €" }, it: { label: "€69.00" } },
+    "clothing-product-2-cta": { es: { label: "Añadir al carrito" }, it: { label: "Aggiungi al carrello" } },
+    "clothing-product-3-name": { es: { content: "Suéter de cuello alto en lana merino" }, it: { content: "Maglione a collo alto in lana merino" } },
+    "clothing-product-3-img": { es: { alt: "Suéter de cuello alto en lana merino color crudo" }, it: { alt: "Maglione a collo alto in lana merino color crema" } },
+    "clothing-product-3-price": { es: { label: "79,00 €" }, it: { label: "€79.00" } },
+    "clothing-product-3-cta": { es: { label: "Añadir al carrito" }, it: { label: "Aggiungi al carrello" } },
+    "clothing-product-4-name": { es: { content: "Botines de cuero" }, it: { content: "Stivaletti in pelle" } },
+    "clothing-product-4-img": { es: { alt: "Botines de cuero color marrón" }, it: { alt: "Stivaletti in pelle marrone" } },
+    "clothing-product-4-price": { es: { label: "149,00 €" }, it: { label: "€149.00" } },
+    "clothing-product-4-cta": { es: { label: "Añadir al carrito" }, it: { label: "Aggiungi al carrello" } },
     // --- Beneficios --------------------------------------------------------
-    "clothing-benefit-1-title": { en: { content: "<strong>Free shipping</strong>" }, it: { content: "<strong>Spedizione gratuita</strong>" } },
-    "clothing-benefit-1-body": { en: { content: "On all orders over €50, delivered in 24–48h." }, it: { content: "Su tutti gli ordini oltre 50 €, consegna in 24–48h." } },
-    "clothing-benefit-1-icon": { en: { title: "Shipping" }, it: { title: "Spedizione" } },
-    "clothing-benefit-2-title": { en: { content: "<strong>30-day returns</strong>" }, it: { content: "<strong>Resi entro 30 giorni</strong>" } },
-    "clothing-benefit-2-body": { en: { content: "Changed your mind? Free returns within 30 days of purchase." }, it: { content: "Cambio idea? Resi gratuiti entro 30 giorni dall'acquisto." } },
-    "clothing-benefit-2-icon": { en: { title: "Returns" }, it: { title: "Resi" } },
-    "clothing-benefit-3-title": { en: { content: "<strong>Secure payment</strong>" }, it: { content: "<strong>Pagamento sicuro</strong>" } },
-    "clothing-benefit-3-body": { en: { content: "Card, PayPal or bank transfer, always encrypted." }, it: { content: "Carta, PayPal o bonifico, sempre criptato." } },
-    "clothing-benefit-3-icon": { en: { title: "Secure payment" }, it: { title: "Pagamento sicuro" } },
+    "clothing-benefit-1-title": { es: { content: "<strong>Envío gratis</strong>" }, it: { content: "<strong>Spedizione gratuita</strong>" } },
+    "clothing-benefit-1-body": { es: { content: "En todos los pedidos superiores a 50 €, entrega en 24–48h." }, it: { content: "Su tutti gli ordini oltre 50 €, consegna in 24–48h." } },
+    "clothing-benefit-1-icon": { es: { title: "Envíos" }, it: { title: "Spedizione" } },
+    "clothing-benefit-2-title": { es: { content: "<strong>Devoluciones en 30 días</strong>" }, it: { content: "<strong>Resi entro 30 giorni</strong>" } },
+    "clothing-benefit-2-body": { es: { content: "¿Cambiaste de opinión? Devoluciones gratuitas hasta 30 días después de la compra." }, it: { content: "Cambio idea? Resi gratuiti entro 30 giorni dall'acquisto." } },
+    "clothing-benefit-2-icon": { es: { title: "Devoluciones" }, it: { title: "Resi" } },
+    "clothing-benefit-3-title": { es: { content: "<strong>Pago seguro</strong>" }, it: { content: "<strong>Pagamento sicuro</strong>" } },
+    "clothing-benefit-3-body": { es: { content: "Tarjeta, PayPal o transferencia, siempre cifrado." }, it: { content: "Carta, PayPal o bonifico, sempre criptato." } },
+    "clothing-benefit-3-icon": { es: { title: "Pago seguro" }, it: { title: "Pagamento sicuro" } },
     // --- Logo cloud --------------------------------------------------------
-    "clothing-logos-title": { en: { content: "<strong>Fabrics we work with</strong>" }, it: { content: "<strong>Tessuti con cui lavoriamo</strong>" } },
-    "clothing-logo-1": { en: { alt: "Woolmark certified fabric logo" }, it: { alt: "Logo tessuto certificato Woolmark" } },
-    "clothing-logo-2": { en: { alt: "GOTS organic cotton certification logo" }, it: { alt: "Logo certificazione cotone biologico GOTS" } },
-    "clothing-logo-3": { en: { alt: "OEKO-TEX certification logo" }, it: { alt: "Logo certificazione OEKO-TEX" } },
-    "clothing-logo-4": { en: { alt: "Fair Wear Foundation logo" }, it: { alt: "Logo Fair Wear Foundation" } },
+    "clothing-logos-title": { es: { content: "<strong>Tejidos con los que trabajamos</strong>" }, it: { content: "<strong>Tessuti con cui lavoriamo</strong>" } },
+    "clothing-logo-1": { es: { alt: "Woolmark certified fabric logo" }, it: { alt: "Logo tessuto certificato Woolmark" } },
+    "clothing-logo-2": { es: { alt: "GOTS organic cotton certification logo" }, it: { alt: "Logo certificazione cotone biologico GOTS" } },
+    "clothing-logo-3": { es: { alt: "OEKO-TEX certification logo" }, it: { alt: "Logo certificazione OEKO-TEX" } },
+    "clothing-logo-4": { es: { alt: "Fair Wear Foundation logo" }, it: { alt: "Logo Fair Wear Foundation" } },
     // --- Newsletter ----------------------------------------------------
-    "clothing-newsletter-title": {
-      en: { content: "<strong>Get 10% off your first order</strong>" },
-      it: { content: "<strong>Ottieni il 10% di sconto sul primo ordine</strong>" },
-    },
-    "clothing-newsletter-sub": {
-      en: { content: "Subscribe to our newsletter and be the first to know about new arrivals and sales." },
-      it: { content: "Iscriviti alla newsletter e scopri in anteprima le novità e le offerte." },
-    },
-    "clothing-newsletter-input": { en: { placeholder: "your@email.com" }, it: { placeholder: "tua@email.com" } },
-    "clothing-newsletter-submit": { en: { label: "Get my discount" }, it: { label: "Ottieni lo sconto" } },
+    "clothing-newsletter-title": { es: { content: "<strong>Obtén 10% de descuento en tu primer pedido</strong>" }, it: { content: "<strong>Ottieni il 10% di sconto sul primo ordine</strong>" } },
+    "clothing-newsletter-sub": { es: { content: "Suscríbete a nuestra newsletter y sé el primero en enterarte de novedades y rebajas." }, it: { content: "Iscriviti alla newsletter e scopri in anteprima le novità e le offerte." } },
+    "clothing-newsletter-input": { es: { placeholder: "tucorreo@ejemplo.com" }, it: { placeholder: "tua@email.com" } },
+    "clothing-newsletter-submit": { es: { label: "Obtener mi descuento" }, it: { label: "Ottieni lo sconto" } },
     // --- FAQ (accordion) -----------------------------------------------
-    "clothing-faq-1": { en: { label: "How do I find my size?" }, it: { label: "Come trovo la mia taglia?" } },
-    "clothing-faq-1-text": {
-      en: { content: "<p>Check our size guide on each product page — it includes chest, waist and hip measurements for every size.</p>" },
-      it: { content: "<p>Consulta la guida alle taglie in ogni pagina prodotto: include le misure di petto, vita e fianchi per ogni taglia.</p>" },
-    },
-    "clothing-faq-2": { en: { label: "Can I exchange an item for a different size?" }, it: { label: "Posso cambiare un articolo con un'altra taglia?" } },
-    "clothing-faq-2-text": {
-      en: { content: "<p>Yes, free exchanges within 30 days of delivery, as long as the item is unworn and has its original tags.</p>" },
-      it: { content: "<p>Sì, cambi gratuiti entro 30 giorni dalla consegna, purché l'articolo non sia stato indossato e conservi le etichette originali.</p>" },
-    },
-    "clothing-faq-3": { en: { label: "How long does shipping take?" }, it: { label: "Quanto tempo richiede la spedizione?" } },
-    "clothing-faq-3-text": {
-      en: { content: "<p>Orders within the country arrive in 24–48h. International shipping takes 3–7 business days.</p>" },
-      it: { content: "<p>Gli ordini nazionali arrivano in 24–48h. Le spedizioni internazionali richiedono 3–7 giorni lavorativi.</p>" },
-    },
+    "clothing-faq-1": { es: { label: "¿Cómo encuentro mi talla?" }, it: { label: "Come trovo la mia taglia?" } },
+    "clothing-faq-1-text": { es: { content: "<p>Consulta la guía de tallas en cada página de producto: incluye medidas de pecho, cintura y cadera para cada talla.</p>" }, it: { content: "<p>Consulta la guida alle taglie in ogni pagina prodotto: include le misure di petto, vita e fianchi per ogni taglia.</p>" } },
+    "clothing-faq-2": { es: { label: "¿Puedo cambiar una prenda por otra talla?" }, it: { label: "Posso cambiare un articolo con un'altra taglia?" } },
+    "clothing-faq-2-text": { es: { content: "<p>Sí, cambios gratuitos hasta 30 días después de la entrega, siempre que la prenda no esté usada y conserve sus etiquetas originales.</p>" }, it: { content: "<p>Sì, cambi gratuiti entro 30 giorni dalla consegna, purché l'articolo non sia stato indossato e conservi le etichette originali.</p>" } },
+    "clothing-faq-3": { es: { label: "¿Cuánto tarda el envío?" }, it: { label: "Quanto tempo richiede la spedizione?" } },
+    "clothing-faq-3-text": { es: { content: "<p>Los pedidos nacionales llegan en 24–48h. Los envíos internacionales tardan entre 3 y 7 días hábiles.</p>" }, it: { content: "<p>Gli ordini nazionali arrivano in 24–48h. Le spedizioni internazionali richiedono 3–7 giorni lavorativi.</p>" } },
     // --- Footer ------------------------------------------------------------
-    "clothing-footer-about-title": { en: { content: "<strong>Nordika Studio</strong>" }, it: { content: "<strong>Nordika Studio</strong>" } },
-    "clothing-footer-about-body": {
-      en: { content: "Sustainable everyday clothing, designed in Barcelona since 2015." },
-      it: { content: "Abbigliamento sostenibile per tutti i giorni, disegnato a Barcellona dal 2015." },
-    },
-    "clothing-footer-contact-title": { en: { content: "<strong>Customer service</strong>" }, it: { content: "<strong>Servizio clienti</strong>" } },
-    "clothing-footer-contact-body": {
-      en: { content: "hello@nordikastudio.com<br/>+34 933 456 789" },
-      it: { content: "hello@nordikastudio.com<br/>+34 933 456 789" },
-    },
-    "clothing-footer-copyright": {
-      en: { content: "© 2026 Nordika Studio. All rights reserved." },
-      it: { content: "© 2026 Nordika Studio. Tutti i diritti riservati." },
-    },
+    "clothing-footer-about-title": { es: { content: "<strong>Nordika Studio</strong>" }, it: { content: "<strong>Nordika Studio</strong>" } },
+    "clothing-footer-about-body": { es: { content: "Ropa sostenible para el día a día, diseñada en Barcelona desde 2015." }, it: { content: "Abbigliamento sostenibile per tutti i giorni, disegnato a Barcellona dal 2015." } },
+    "clothing-footer-contact-title": { es: { content: "<strong>Atención al cliente</strong>" }, it: { content: "<strong>Servizio clienti</strong>" } },
+    "clothing-footer-contact-body": { es: { content: "hello@nordikastudio.com<br/>+34 933 456 789" }, it: { content: "hello@nordikastudio.com<br/>+34 933 456 789" } },
+    "clothing-footer-copyright": { es: { content: "© 2026 Nordika Studio. Todos los derechos reservados." }, it: { content: "© 2026 Nordika Studio. Tutti i diritti riservati." } },
   };
 
   const CARD_SHADOW = "0 12px 32px rgba(15,23,42,0.08)";
@@ -212,7 +173,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
     [`clothing-product-${n}-cta`]: {
       id: `clothing-product-${n}-cta`,
       type: "button",
-      props: { label: "Añadir al carrito", link: { kind: "external", href: "#" } },
+      props: { label: "Add to cart", link: { kind: "external", href: "#" } },
       style: {
         base: {
           ...defaultStyleFor("button").base,
@@ -345,7 +306,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-topbar-text": {
         id: "clothing-topbar-text",
         type: "text",
-        props: { content: "Envío gratis en pedidos superiores a 50 € · Devoluciones en 30 días" },
+        props: { content: "Free shipping on orders over €50 · 30-day returns" },
         style: { base: { appearance: { color: { token: "colors.primary.on" } } } },
       },
       "clothing-topbar-lang": {
@@ -418,7 +379,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-hero-title": {
         id: "clothing-hero-title",
         type: "text",
-        props: { content: "<strong>La colección Otoño/Invierno 2026</strong>" },
+        props: { content: "<strong>The Autumn/Winter 2026 collection</strong>" },
         style: {
           base: {
             size: { maxWidth: "22ch" },
@@ -438,7 +399,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-hero-sub": {
         id: "clothing-hero-sub",
         type: "text",
-        props: { content: "Prendas atemporales, tejidos sostenibles y un calce pensado para el uso diario." },
+        props: { content: "Timeless pieces, sustainable fabrics and a fit made for everyday wear." },
         style: {
           base: {
             size: { maxWidth: "48ch" },
@@ -454,7 +415,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-hero-cta": {
         id: "clothing-hero-cta",
         type: "button",
-        props: { label: "Ver la colección", link: { kind: "anchor", nodeId: "clothing-products-section" } },
+        props: { label: "Shop the collection", link: { kind: "anchor", nodeId: "clothing-products-section" } },
         style: {
           base: {
             ...defaultStyleFor("button").base,
@@ -501,7 +462,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-products-title": {
         id: "clothing-products-title",
         type: "text",
-        props: { content: "<strong>Los más vendidos</strong>" },
+        props: { content: "<strong>Best sellers</strong>" },
         style: {
           base: {
             typography: {
@@ -547,7 +508,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-tab-outerwear": {
         id: "clothing-tab-outerwear",
         type: "tab",
-        props: { label: "Abrigos" },
+        props: { label: "Outerwear" },
         style: defaultStyleFor("tab"),
         children: ["clothing-products-grid-outerwear"],
       },
@@ -566,7 +527,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-tab-bottoms": {
         id: "clothing-tab-bottoms",
         type: "tab",
-        props: { label: "Pantalones" },
+        props: { label: "Bottoms" },
         style: defaultStyleFor("tab"),
         children: ["clothing-products-grid-bottoms"],
       },
@@ -585,7 +546,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-tab-knitwear": {
         id: "clothing-tab-knitwear",
         type: "tab",
-        props: { label: "Punto y calzado" },
+        props: { label: "Knitwear & shoes" },
         style: defaultStyleFor("tab"),
         children: ["clothing-products-grid-knitwear"],
       },
@@ -603,29 +564,29 @@ export function buildClothingStorePageFragment(): NodeFragment {
       },
       ...productCard(
         1,
-        "Abrigo oversize de mezcla de lana",
-        "Abrigo oversize beige de lana sobre una modelo",
+        "Wool blend oversized coat",
+        "Beige oversized wool coat on a model",
         "129,00 €",
         "https://images.unsplash.com/photo-1601379327928-bedfaf9da2d0?w=600&q=80&auto=format&fit=crop",
       ),
       ...productCard(
         2,
-        "Jeans rectos de tiro alto",
-        "Modelo con jeans rectos de tiro alto",
+        "High-waist straight jeans",
+        "Model wearing high-waist straight jeans",
         "69,00 €",
         "https://images.unsplash.com/photo-1637069585336-827b298fe84a?w=600&q=80&auto=format&fit=crop",
       ),
       ...productCard(
         3,
-        "Suéter de cuello alto en lana merino",
-        "Suéter de cuello alto en lana merino color crudo",
+        "Merino wool turtleneck sweater",
+        "Cream merino wool turtleneck sweater",
         "79,00 €",
         "https://images.unsplash.com/photo-1580331451062-99ff652288d7?w=600&q=80&auto=format&fit=crop",
       ),
       ...productCard(
         4,
-        "Botines de cuero",
-        "Botines de cuero color marrón",
+        "Leather ankle boots",
+        "Brown leather ankle boots",
         "149,00 €",
         "https://images.unsplash.com/photo-1626432424546-104e5fdbe556?w=600&q=80&auto=format&fit=crop",
       ),
@@ -658,9 +619,9 @@ export function buildClothingStorePageFragment(): NodeFragment {
         },
         children: ["clothing-benefit-1", "clothing-benefit-2", "clothing-benefit-3"],
       },
-      ...benefit(1, "Truck", "Envíos", "<strong>Envío gratis</strong>", "En todos los pedidos superiores a 50 €, entrega en 24–48h."),
-      ...benefit(2, "RotateCcw", "Devoluciones", "<strong>Devoluciones en 30 días</strong>", "¿Cambiaste de opinión? Devoluciones gratuitas hasta 30 días después de la compra."),
-      ...benefit(3, "ShieldCheck", "Pago seguro", "<strong>Pago seguro</strong>", "Tarjeta, PayPal o transferencia, siempre cifrado."),
+      ...benefit(1, "Truck", "Shipping", "<strong>Free shipping</strong>", "On all orders over €50, delivered in 24–48h."),
+      ...benefit(2, "RotateCcw", "Returns", "<strong>30-day returns</strong>", "Changed your mind? Free returns within 30 days of purchase."),
+      ...benefit(3, "ShieldCheck", "Secure payment", "<strong>Secure payment</strong>", "Card, PayPal or bank transfer, always encrypted."),
 
       // --- Banda 3 (claro): logo cloud de marcas/certificaciones -----------
       "clothing-logos-section": {
@@ -694,7 +655,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-logos-title": {
         id: "clothing-logos-title",
         type: "text",
-        props: { content: "<strong>Tejidos con los que trabajamos</strong>" },
+        props: { content: "<strong>Fabrics we work with</strong>" },
         style: {
           base: {
             typography: { fontSize: "clamp(1.75rem, 4vw, 2.5rem)", fontWeight: { token: "typography.weights.bold" }, lineHeight: "1.15" },
@@ -754,7 +715,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-newsletter-title": {
         id: "clothing-newsletter-title",
         type: "text",
-        props: { content: "<strong>Obtén 10% de descuento en tu primer pedido</strong>" },
+        props: { content: "<strong>Get 10% off your first order</strong>" },
         style: {
           base: {
             typography: { fontSize: "clamp(1.75rem, 4vw, 2.5rem)", fontWeight: { token: "typography.weights.bold" }, lineHeight: "1.15" },
@@ -765,7 +726,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-newsletter-sub": {
         id: "clothing-newsletter-sub",
         type: "text",
-        props: { content: "Suscríbete a nuestra newsletter y sé el primero en enterarte de novedades y rebajas." },
+        props: { content: "Subscribe to our newsletter and be the first to know about new arrivals and sales." },
         style: {
           base: {
             size: { maxWidth: "62ch" },
@@ -801,13 +762,13 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-newsletter-input": {
         id: "clothing-newsletter-input",
         type: "input",
-        props: { name: "email", placeholder: "tucorreo@ejemplo.com", type: "email", required: true, disabled: false },
+        props: { name: "email", placeholder: "your@email.com", type: "email", required: true, disabled: false },
         style: defaultStyleFor("input"),
       },
       "clothing-newsletter-submit": {
         id: "clothing-newsletter-submit",
         type: "button-submit",
-        props: { label: "Obtener mi descuento", disabled: false },
+        props: { label: "Get my discount", disabled: false },
         style: {
           base: {
             ...defaultStyleFor("button-submit").base,
@@ -856,40 +817,40 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-faq-1": {
         id: "clothing-faq-1",
         type: "accordion-item",
-        props: { label: "¿Cómo encuentro mi talla?", openByDefault: true },
+        props: { label: "How do I find my size?", openByDefault: true },
         style: defaultStyleFor("accordion-item"),
         children: ["clothing-faq-1-text"],
       },
       "clothing-faq-1-text": {
         id: "clothing-faq-1-text",
         type: "text",
-        props: { content: "<p>Consulta la guía de tallas en cada página de producto: incluye medidas de pecho, cintura y cadera para cada talla.</p>" },
+        props: { content: "<p>Check our size guide on each product page — it includes chest, waist and hip measurements for every size.</p>" },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
       "clothing-faq-2": {
         id: "clothing-faq-2",
         type: "accordion-item",
-        props: { label: "¿Puedo cambiar una prenda por otra talla?", openByDefault: false },
+        props: { label: "Can I exchange an item for a different size?", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["clothing-faq-2-text"],
       },
       "clothing-faq-2-text": {
         id: "clothing-faq-2-text",
         type: "text",
-        props: { content: "<p>Sí, cambios gratuitos hasta 30 días después de la entrega, siempre que la prenda no esté usada y conserve sus etiquetas originales.</p>" },
+        props: { content: "<p>Yes, free exchanges within 30 days of delivery, as long as the item is unworn and has its original tags.</p>" },
         style: { base: { size: { maxWidth: "70ch" }, appearance: { color: { token: "colors.muted" } } } },
       },
       "clothing-faq-3": {
         id: "clothing-faq-3",
         type: "accordion-item",
-        props: { label: "¿Cuánto tarda el envío?", openByDefault: false },
+        props: { label: "How long does shipping take?", openByDefault: false },
         style: defaultStyleFor("accordion-item"),
         children: ["clothing-faq-3-text"],
       },
       "clothing-faq-3-text": {
         id: "clothing-faq-3-text",
         type: "text",
-        props: { content: "<p>Los pedidos nacionales llegan en 24–48h. Los envíos internacionales tardan entre 3 y 7 días hábiles.</p>" },
+        props: { content: "<p>Orders within the country arrive in 24–48h. International shipping takes 3–7 business days.</p>" },
         style: { base: { appearance: { color: { token: "colors.muted" } } } },
       },
 
@@ -915,7 +876,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-footer-copyright": {
         id: "clothing-footer-copyright",
         type: "text",
-        props: { content: "© 2026 Nordika Studio. Todos los derechos reservados." },
+        props: { content: "© 2026 Nordika Studio. All rights reserved." },
         style: {
           base: {
             size: { width: "100%" },
@@ -969,7 +930,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-footer-about-body": {
         id: "clothing-footer-about-body",
         type: "text",
-        props: { content: "Ropa sostenible para el día a día, diseñada en Barcelona desde 2015." },
+        props: { content: "Sustainable everyday clothing, designed in Barcelona since 2015." },
         style: { base: { appearance: { color: { token: "colors.surface.alt" } } } },
       },
       "clothing-footer-contact-col": {
@@ -982,7 +943,7 @@ export function buildClothingStorePageFragment(): NodeFragment {
       "clothing-footer-contact-title": {
         id: "clothing-footer-contact-title",
         type: "text",
-        props: { content: "<strong>Atención al cliente</strong>" },
+        props: { content: "<strong>Customer service</strong>" },
         style: { base: { appearance: { color: { token: "colors.surface.default" } } } },
       },
       "clothing-footer-contact-body": {

@@ -37,7 +37,7 @@ function LabelRender(ctx: RenderContext) {
     ? undefined
     : stylePropertiesToCSSObject(resolveStyle(node.style, breakpoint, DEFAULT_BREAKPOINTS));
 
-  const text = typeof node.props.text === "string" ? node.props.text : "Etiqueta";
+  const text = typeof node.props.text === "string" ? node.props.text : "Label";
   // `for` es palabra reservada en JS; React usa `htmlFor`
   const htmlFor = typeof node.props.for === "string" && node.props.for
     ? node.props.for
@@ -65,7 +65,7 @@ export const labelDefinition: ComponentDefinition = {
   category: "form",
   acceptsChildren: false,
   defaultProps: {
-    text: "Etiqueta",
+    text: "Label",
     for: "",
   },
   defaultStyle: structuredClone(LABEL_DEFAULT_STYLE),

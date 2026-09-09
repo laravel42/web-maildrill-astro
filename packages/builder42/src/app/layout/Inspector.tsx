@@ -49,30 +49,32 @@ export function Inspector() {
       }
     >
       <div className="pbx-inspector__body">
-        {!node ? (
-          <SiteSettingsPanel />
-        ) : (
-          <>
-            {showSliderHint ? (
-              <div className="pbx-overflow-hint" role="status">
-                <span>
-                  {t("overflow.overflowsPrefix")}
-                  <code>{activeBreakpoint}</code>
-                  {t("overflow.overflowsSuffix")}
-                </span>
-                <button
-                  type="button"
-                  className="pbx-overflow-hint__btn"
-                  onClick={convertToSlider}
-                >
-                  {t("overflow.convertToSlider")}
-                </button>
-              </div>
-            ) : null}
+        <SiteSettingsPanel
+          element={
+            node ? (
+              <>
+                {showSliderHint ? (
+                  <div className="pbx-overflow-hint" role="status">
+                    <span>
+                      {t("overflow.overflowsPrefix")}
+                      <code>{activeBreakpoint}</code>
+                      {t("overflow.overflowsSuffix")}
+                    </span>
+                    <button
+                      type="button"
+                      className="pbx-overflow-hint__btn"
+                      onClick={convertToSlider}
+                    >
+                      {t("overflow.convertToSlider")}
+                    </button>
+                  </div>
+                ) : null}
 
-            <InspectorForm node={node} />
-          </>
-        )}
+                <InspectorForm node={node} />
+              </>
+            ) : null
+          }
+        />
       </div>
     </aside>
   );

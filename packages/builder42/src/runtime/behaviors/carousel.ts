@@ -68,7 +68,7 @@ function createDotsNav(count: number): { nav: HTMLElement; dots: HTMLButtonEleme
   const nav = document.createElement("div");
   nav.className = "pb-carousel__dots";
   nav.setAttribute("role", "tablist");
-  nav.setAttribute("aria-label", "Diapositivas");
+  nav.setAttribute("aria-label", "Slides");
   const dots: HTMLButtonElement[] = [];
   for (let i = 0; i < count; i++) {
     const dot = document.createElement("button");

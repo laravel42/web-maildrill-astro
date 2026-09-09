@@ -133,6 +133,7 @@ function BehaviorOptionField({
       field={field}
       value={value}
       label={fieldLabel}
+      optionKeyPrefix={`behaviors.fields.${behaviorType}.${field.key}`}
       onChange={(v) => setBehaviorOption(nodeId, behaviorType, field.key, v)}
     />
   );

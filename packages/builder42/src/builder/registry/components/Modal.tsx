@@ -116,7 +116,7 @@ function ModalRender(ctx: RenderContext) {
           {children}
           {isEmpty ? (
             <span className="pbx-empty-hint" data-empty-hint>
-              Modal vacío — suelta componentes aquí
+              Empty modal — drop components here
             </span>
           ) : null}
         </div>
@@ -171,7 +171,7 @@ export const modalDefinition: ComponentDefinition = {
   acceptsChildren: true,
   editsInOverlay: true,
   defaultProps: {
-    title: "Únete a nuestra newsletter",
+    title: "Join our newsletter",
   },
   defaultStyle: structuredClone(MODAL_DEFAULT_STYLE),
   css: MODAL_CSS,

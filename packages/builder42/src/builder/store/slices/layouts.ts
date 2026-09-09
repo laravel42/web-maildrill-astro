@@ -93,13 +93,10 @@ export const createLayoutsSlice: SliceCreator<LayoutsSlice> = (set) => ({
         .filter((l) => l !== "");
       if (declared.length > 0) {
         const meta = draft.site.meta;
-        if (!meta.i18n) {
-          meta.i18n = {
-            locales: [...new Set([meta.defaultLang, ...declared])],
-            defaultLocale: meta.defaultLang,
-            routeStrategy: "prefix-except-default",
-          };
-        } else {
+        // Only extend locales when the site is already multilingual. Applying
+        // a template must not turn a monolingual Maildrill landing into an
+        // es/en/it site the host cannot manage (docs/landing-pages-builder-plan T0).
+        if (meta.i18n) {
           for (const locale of declared) {
             if (!meta.i18n.locales.includes(locale)) meta.i18n.locales.push(locale);
           }

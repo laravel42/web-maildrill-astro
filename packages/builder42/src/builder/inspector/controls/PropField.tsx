@@ -5,13 +5,19 @@ import type { BuilderNode } from "@/builder/model/types";
 import type { FieldSchema } from "@/builder/registry/types";
 import { LocaleQuickAccess } from "./LocaleQuickAccess";
 import { propControlUsesRowLayout, renderPropControl } from "./propControls/registry";
+import { translatePropField } from "./translateField";
 
 export function PropField({ node, field }: { node: BuilderNode; field: FieldSchema }) {
   const { t } = useTranslation("inspector");
+  const { t: tc } = useTranslation("common");
   const setProp = useDocumentStore((s) => s.setProp);
   const editingLocale = useDocumentStore((s) => s.editingLocale);
   const defaultLang = useDocumentStore((s) => s.site.meta.defaultLang);
   const activePage = useDocumentStore((s) => s.site.pages[s.activePageId]);
+  const translatedField = useMemo(
+    () => translatePropField(tc, node.type, field),
+    [tc, node.type, field],
+  );
   const defaultValue = node.props[field.key];
   const labelId = useId();
 
@@ -31,7 +37,7 @@ export function PropField({ node, field }: { node: BuilderNode; field: FieldSche
   const commit = (v: string) => setProp(node.id, field.key, v);
   const showUntranslated = field.translatable && editingLocale !== defaultLang && !isTranslated;
 
-  const isRowLayout = propControlUsesRowLayout(field.control);
+  const isRowLayout = propControlUsesRowLayout(translatedField.control);
 
   // Asociación label↔control (fix, docs/54 §5: "Label sin asociar (tab
   // Props)" — antes el label era un `<span>` sin `htmlFor`/`id`/
@@ -49,7 +55,7 @@ export function PropField({ node, field }: { node: BuilderNode; field: FieldSche
       aria-labelledby={labelId}
     >
       <div className="pbx-control__header">
-        <span className="pbx-control__label" id={labelId}>{field.label}</span>
+        <span className="pbx-control__label" id={labelId}>{translatedField.label}</span>
 
         {/* Badge "sin traducir" */}
         {showUntranslated ? (
@@ -59,12 +65,12 @@ export function PropField({ node, field }: { node: BuilderNode; field: FieldSche
         ) : null}
 
         {/* Acceso rápido de idioma unificado (Globe + código) */}
-        {field.translatable ? <LocaleQuickAccess /> : null}
+        {translatedField.translatable ? <LocaleQuickAccess /> : null}
       </div>
 
       {/* Cuerpo del control — delegado al registry por `field.control` (P4) */}
       <div className="pbx-control__body">
-        {renderPropControl({ node, field, raw, value, commit, setProp, t })}
+        {renderPropControl({ node, field: translatedField, raw, value, commit, setProp, t })}
       </div>
     </div>
   );

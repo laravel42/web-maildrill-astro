@@ -230,7 +230,7 @@ export const textDefinition: ComponentDefinition = {
   acceptsChildren: false,
   editableInline: true,
   disallowsClickAction: true,
-  defaultProps: { content: "Texto de ejemplo" },
+  defaultProps: { content: "Sample text" },
   defaultStyle: { base: { appearance: { color: { token: "colors.text" } } } },
   propsSchema: {
     fields: [

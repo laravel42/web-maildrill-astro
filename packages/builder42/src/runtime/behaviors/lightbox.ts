@@ -52,8 +52,8 @@ export type Cleanup = () => void;
 
 const DEFAULT_DURATION = 180;
 const DEFAULT_CLOSE_LABEL = "Cerrar";
-const DEFAULT_PREV_LABEL = "Imagen anterior";
-const DEFAULT_NEXT_LABEL = "Imagen siguiente";
+const DEFAULT_PREV_LABEL = "Previous image";
+const DEFAULT_NEXT_LABEL = "Next image";
 /** px mínimos de desplazamiento horizontal para contar como swipe (no un tap/scroll accidental). */
 const SWIPE_THRESHOLD = 40;
 

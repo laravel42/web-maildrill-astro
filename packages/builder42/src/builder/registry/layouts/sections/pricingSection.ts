@@ -156,8 +156,8 @@ export function buildPricingSectionFragment(): NodeFragment {
       planName: "Starter",
       price: "$29",
       period: "/mes",
-      features: ["Hasta 2,500 contactos", "10 campañas al mes", "Canales: email + SMS", "Soporte por email"],
-      ctaLabel: "Elegir Starter",
+      features: ["Up to 2,500 contacts", "10 campaigns per month", "Channels: email + SMS", "Email support"],
+      ctaLabel: "Choose Starter",
       ctaLink: { kind: "external", href: "#" },
       popular: false,
       popularLabel: "Popular",
@@ -172,16 +172,16 @@ export function buildPricingSectionFragment(): NodeFragment {
       planName: "Growth",
       price: "$99",
       period: "/mes",
-      features: ["Hasta 25,000 contactos", "Campañas ilimitadas", "Canales: email, SMS, WhatsApp y voz", "Soporte prioritario 24/7"],
-      ctaLabel: "Elegir Growth",
+      features: ["Up to 25,000 contacts", "Unlimited campaigns", "Channels: email, SMS, WhatsApp, and voice", "Priority support 24/7"],
+      ctaLabel: "Choose Growth",
       ctaLink: { kind: "external", href: "#" },
       popular: true,
-      popularLabel: "Más elegido",
+      popularLabel: "Most chosen",
     },
     cardStyle("popular"),
   );
   withPlanIcon(growthNodes, "pricing-section-growth", "Rocket", "popular");
-  applyRibbonBadge(growthNodes, "pricing-section-growth", "Más elegido");
+  applyRibbonBadge(growthNodes, "pricing-section-growth", "Most chosen");
   applyLargerPrice(growthNodes, "pricing-section-growth");
 
   const enterpriseNodes = pricingCardFragment(
@@ -191,12 +191,12 @@ export function buildPricingSectionFragment(): NodeFragment {
       price: "$299",
       period: "/mes",
       features: [
-        "Contactos ilimitados",
-        "Campañas y automatizaciones ilimitadas",
-        "Canales: email, SMS, WhatsApp y voz",
-        "Soporte dedicado + SLA garantizado",
+        "Unlimited contacts",
+        "Unlimited campaigns and automations",
+        "Channels: email, SMS, WhatsApp, and voice",
+        "Dedicated support + guaranteed SLA",
       ],
-      ctaLabel: "Elegir Enterprise",
+      ctaLabel: "Choose Enterprise",
       ctaLink: { kind: "external", href: "#" },
       popular: false,
       popularLabel: "Popular",

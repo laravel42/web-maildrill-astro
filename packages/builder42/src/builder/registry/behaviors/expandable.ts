@@ -46,8 +46,8 @@ export const expandableBehavior: BehaviorDefinition = {
   appliesTo: (node) => getDefinition(node.type)?.acceptsChildren ?? false,
   defaultOptions: {
     collapsedHeight: 200,
-    expandLabel: "Ver más",
-    collapseLabel: "Ver menos",
+    expandLabel: "Show more",
+    collapseLabel: "Show less",
     fade: true,
   },
   optionsSchema: {

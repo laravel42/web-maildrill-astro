@@ -114,7 +114,7 @@ export const alertDefinition: ComponentDefinition = {
   label: "Alerta",
   category: "content",
   acceptsChildren: false,
-  defaultProps: { message: "Este es un mensaje importante.", variant: "info", showIcon: true },
+  defaultProps: { message: "This is an important message.", variant: "info", showIcon: true },
   defaultStyle: structuredClone(ALERT_DEFAULT_STYLE),
   propsSchema: {
     fields: [

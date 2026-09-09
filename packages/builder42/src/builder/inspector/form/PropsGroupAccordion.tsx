@@ -6,6 +6,7 @@ import type { FieldSchema } from "@/builder/registry/types";
 import { PropField } from "../controls/PropField";
 import { GENERAL_PROP_GROUP } from "./constants";
 import { PropGroupIcon } from "./GroupIcons";
+import { propGroupSlug } from "../controls/translateField";
 
 /**
  * Acordeón de un grupo de props. Mismo patrón visual que StyleGroupAccordion
@@ -21,10 +22,13 @@ export function PropsGroupAccordion({
   fields: FieldSchema[];
 }) {
   const { t } = useTranslation("inspector");
+  const { t: tc } = useTranslation("common");
   const [open, setOpen] = useState(true);
 
   const label =
-    groupName === GENERAL_PROP_GROUP ? t("form.propsGeneral") : groupName;
+    groupName === GENERAL_PROP_GROUP
+      ? t("form.propsGeneral")
+      : tc(`propGroups.${propGroupSlug(groupName)}`, { defaultValue: groupName });
 
   return (
     <div className={`pbx-style-group${open ? " pbx-style-group--open" : " pbx-style-group--collapsed"}`}>
@@ -39,7 +43,7 @@ export function PropsGroupAccordion({
           <PropGroupIcon />
         </span>
         <span className="pbx-style-group__name">{label}</span>
-        <span className="pbx-style-group__count" title={`${fields.length} campo(s)`}>
+        <span className="pbx-style-group__count" title={t("form.fieldCount", { count: fields.length })}>
           {fields.length}
         </span>
         <span className="pbx-style-group__chevron" aria-hidden="true">

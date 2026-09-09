@@ -77,7 +77,7 @@ export function ColorField({
         <div
           className="pbx-color-field__opacity"
           role="group"
-          aria-label={t("styleField.opacity", { defaultValue: "Opacidad" })}
+          aria-label={t("styleField.opacity", { defaultValue: "Opacity" })}
         >
           <CommittableInput value={opacity} onCommit={onCommitOpacity} />
           <span className="pbx-color-field__opacity-suffix" aria-hidden="true">

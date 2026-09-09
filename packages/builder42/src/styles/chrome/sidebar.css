@@ -55,7 +55,7 @@
 .pbx-side-tabs__panel {
   flex: 1;
   overflow: auto;
-  padding: 12px 12px 16px;
+  padding: 6px 8px 8px;
   contain: layout style;
 }
 
@@ -68,36 +68,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-bottom: 18px;
-}
-
-/* Encabezado de categorÃ­a con lÃ­nea divisora */
-.pbx-palette__category {
-  margin: 0 0 6px;
-  font-size: var(--pb-chrome-font-size-sm);
-  font-weight: var(--pb-chrome-font-weight-bold);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--pb-chrome-text-faint);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  line-height: var(--pb-chrome-line-height-tight);
-}
-
-.pbx-palette__category::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(to right, var(--pb-chrome-accent-light), var(--pb-chrome-border));
-}
-
-/* Icono de categorÃ­a */
-.pbx-palette__cat-icon {
-  width: 14px;
-  height: 14px;
-  color: var(--pb-chrome-accent-on-surface);
-  flex-shrink: 0;
+  margin-bottom: 8px;
 }
 
 /* Grid de 3 columnas cuadradas (Fase 11.g, feedback de usuario: la paleta

@@ -56,7 +56,7 @@ function SectionRender(ctx: RenderContext) {
       {children}
       {!exportMode && isEmpty ? (
         <span className="pbx-empty-hint" data-empty-hint>
-          Sección vacía — suelta componentes aquí
+          Empty section — drop components here
         </span>
       ) : null}
     </section>
@@ -65,7 +65,7 @@ function SectionRender(ctx: RenderContext) {
 
 export const sectionDefinition: ComponentDefinition = {
   type: "section",
-  label: "Sección",
+  label: "Section",
   category: "layout",
   acceptsChildren: true,
   defaultProps: {},

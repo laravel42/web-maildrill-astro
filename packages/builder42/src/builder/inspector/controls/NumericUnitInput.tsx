@@ -368,7 +368,7 @@ function NumericPill({
             }
           }
         }}
-        aria-label="valor numérico"
+        aria-label="numeric value"
       />
 
       {/* Unidad — trigger del dropdown */}

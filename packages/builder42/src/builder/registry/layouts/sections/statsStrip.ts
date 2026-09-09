@@ -154,7 +154,7 @@ export function buildStatsStripFragment(): NodeFragment {
         props: { name: "Zap", title: "" },
         style: iconStyle(),
       },
-      ...withResponsiveValue(statFragment("stats-strip-1-stat", { value: "10M+", label: "mensajes entregados al mes" }, statRootStyle()), "stats-strip-1-stat"),
+      ...withResponsiveValue(statFragment("stats-strip-1-stat", { value: "10M+", label: "messages delivered per month" }, statRootStyle()), "stats-strip-1-stat"),
       "stats-strip-2": {
         id: "stats-strip-2",
         type: "container",
@@ -168,7 +168,7 @@ export function buildStatsStripFragment(): NodeFragment {
         props: { name: "ShieldCheck", title: "" },
         style: iconStyle(),
       },
-      ...withResponsiveValue(statFragment("stats-strip-2-stat", { value: "99.9%", label: "tasa de entrega (deliverability)" }, statRootStyle()), "stats-strip-2-stat"),
+      ...withResponsiveValue(statFragment("stats-strip-2-stat", { value: "99.9%", label: "delivery rate (deliverability)" }, statRootStyle()), "stats-strip-2-stat"),
       "stats-strip-3": {
         id: "stats-strip-3",
         type: "container",
@@ -182,7 +182,7 @@ export function buildStatsStripFragment(): NodeFragment {
         props: { name: "Globe", title: "" },
         style: iconStyle(),
       },
-      ...withResponsiveValue(statFragment("stats-strip-3-stat", { value: "4", label: "canales: email, SMS, WhatsApp y voz" }, statRootStyle()), "stats-strip-3-stat"),
+      ...withResponsiveValue(statFragment("stats-strip-3-stat", { value: "4", label: "channels: email, SMS, WhatsApp, and voice" }, statRootStyle()), "stats-strip-3-stat"),
     },
   };
 }

@@ -34,16 +34,17 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import { I18nextProvider } from "react-i18next";
 import { MotionConfig } from "framer-motion";
-import { Header } from "@/app/layout/Header";
 import { Sidebar } from "@/app/layout/Sidebar";
 import { Canvas } from "@/app/layout/Canvas";
 import { Inspector } from "@/app/layout/Inspector";
 import { TokensStyle } from "@/app/layout/TokensStyle";
 import { BehaviorsStyle } from "@/app/layout/BehaviorsStyle";
 import { ComponentsStyle } from "@/app/layout/ComponentsStyle";
+import { HostCanvasToolbar } from "@/app/layout/HostToolbar";
+import { EmbeddedChromeContext } from "@/app/EmbeddedChrome";
 import { useUndoRedoShortcuts } from "@/builder/store/useTemporalStore";
 import { useDocumentStore } from "@/builder/store/documentStore";
-import { useLocalConfig } from "@/hooks/useLocalConfig";
+import { readConfig, useLocalConfig, writeConfig } from "@/hooks/useLocalConfig";
 import { applyTheme, setThemeHostControlled, type ThemeMode } from "@/hooks/useThemeMode";
 import { createEditorI18n } from "@/i18n";
 import { setApiAdapters, type ApiAdapters } from "@/services/apiAdapters";
@@ -68,6 +69,8 @@ export interface Builder42EditorProps {
   locale?: string;
   /** Adapters inyectables para IA/Unsplash/publicación (I9/D8). Todos opcionales. */
   adapters?: ApiAdapters;
+  /** Notifies the host that the working document (or site meta) changed. */
+  onDirty?: () => void;
 }
 
 /**
@@ -95,7 +98,7 @@ function resolveInitialSite(input: Builder42EditorProps["site"]): BuilderSite {
   if (typeof input === "string") {
     const result = loadSiteFromValue(JSON.parse(input));
     if (!result.ok) {
-      throw new Error(`Builder42Editor: sitio inicial inválido — ${result.errors.join("; ")}`);
+      throw new Error(`Builder42Editor: invalid initial site — ${result.errors.join("; ")}`);
     }
     return result.value;
   }
@@ -103,7 +106,7 @@ function resolveInitialSite(input: Builder42EditorProps["site"]): BuilderSite {
 }
 
 export const Builder42Editor = forwardRef<Builder42EditorHandle, Builder42EditorProps>(
-  function Builder42Editor({ site, onSave, onClose, themeMode = "host", locale, adapters }, ref) {
+  function Builder42Editor({ site, onSave, onClose, themeMode = "host", locale, adapters, onDirty }, ref) {
     const i18nInstance = useMemo(() => createEditorI18n(locale), [locale]);
     const loadSite = useDocumentStore((s) => s.loadSite);
     const getFlushedSite = useDocumentStore((s) => s.getFlushedSite);
@@ -147,6 +150,23 @@ export const Builder42Editor = forwardRef<Builder42EditorHandle, Builder42Editor
       return () => setThemeHostControlled(false);
     }, [themeMode]);
 
+    // Embed defaults to Simple so Tokens / zip / Code stay off the first screen.
+    // Do not override an explicit choice already stored from a previous session.
+    useMemo(() => {
+      if (themeMode === "host" && !readConfig("experienceLevelChosen")) {
+        writeConfig("experienceLevel", "simple");
+        writeConfig("experienceLevelChosen", true);
+      }
+    }, [themeMode]);
+
+    useEffect(() => {
+      if (!onDirty) return;
+      return useDocumentStore.subscribe((state, prev) => {
+        if (state.document === prev.document && state.site === prev.site) return;
+        onDirty();
+      });
+    }, [onDirty]);
+
     useImperativeHandle(
       ref,
       () => ({
@@ -174,17 +194,23 @@ interface Builder42EditorInnerProps {
  * sitio inicial ya está en el store (evita un frame con el sitio mínimo
  * antes del `site` real de la prop).
  *
- * `onClose` hoy no tiene un punto de anclaje en el chrome compartido
- * (`Header.tsx` no lo conoce, D1) — queda reservado para cuando el host
- * quiera un botón de cierre propio dentro del editor; por ahora el host lo
- * invoca desde SU chrome vía la `ref` (`Builder42EditorHandle`) sin que este
- * componente lo consuma todavía. Se documenta para que no se pierda en F8.
+ * `onClose` hoy no tiene un punto de anclaje in the shared chrome — the host
+ * drives Back/Esc from `ChannelEditorShell`. Edit/Preview, viewport, and
+ * undo/redo live in the 50px canvas bar (`HostCanvasToolbar`), matching the
+ * email editor's `#ee-editor-header`.
  */
 function Builder42EditorInner({ i18nInstance }: Builder42EditorInnerProps) {
   useUndoRedoShortcuts();
   const isPreview = useDocumentStore((s) => s.view === "preview");
+  const view = useDocumentStore((s) => s.view);
+  const setView = useDocumentStore((s) => s.setView);
   const [sidebarCollapsed] = useLocalConfig("sidebarCollapsed");
   const [inspectorCollapsed] = useLocalConfig("inspectorCollapsed");
+
+  // Code/JSON are standalone export surfaces; the embed never offers them.
+  useEffect(() => {
+    if (view === "code" || view === "json") setView("edit");
+  }, [view, setView]);
 
   const bodyClasses = ["pbx-body"];
   if (isPreview) bodyClasses.push("pbx-body--preview");
@@ -194,17 +220,21 @@ function Builder42EditorInner({ i18nInstance }: Builder42EditorInnerProps) {
   return (
     <I18nextProvider i18n={i18nInstance}>
       <MotionConfig reducedMotion="user">
-        <div className="pbx-app pbx-app--embedded">
-          <TokensStyle />
-          <BehaviorsStyle />
-          <ComponentsStyle />
-          <Header />
-          <div className={bodyClasses.join(" ")}>
-            {isPreview ? null : <Sidebar />}
-            <Canvas />
-            {isPreview ? null : <Inspector />}
+        <EmbeddedChromeContext.Provider value={true}>
+          <div className="pbx-app pbx-app--embedded">
+            <TokensStyle />
+            <BehaviorsStyle />
+            <ComponentsStyle />
+            <div className={bodyClasses.join(" ")}>
+              {isPreview ? null : <Sidebar />}
+              <div className="pbx-canvas-col">
+                <HostCanvasToolbar />
+                <Canvas />
+              </div>
+              {isPreview ? null : <Inspector />}
+            </div>
           </div>
-        </div>
+        </EmbeddedChromeContext.Provider>
       </MotionConfig>
     </I18nextProvider>
   );

@@ -27,15 +27,19 @@ export function ViewportDropdown() {
   const ActiveIcon = viewportIcon(activeBreakpoint);
 
   return (
-    <Dropdown placement="bottom-end" className="pbx-header__viewport-dropdown">
+    <Dropdown
+      placement="bottom-start"
+      className="pbx-header__viewport-dropdown pbx-host-toolbar__views"
+    >
       <button
         type="button"
         data-c42-dropdown-trigger
-        className="pbx-history__btn"
+        className="pbx-host-toolbar__view pbx-host-toolbar__view--active"
         title={t("viewport.label")}
         aria-label={t(`viewports.${activeBreakpoint}`)}
       >
         <ActiveIcon size={16} aria-hidden="true" />
+        <span>{t(`viewports.${activeBreakpoint}`)}</span>
       </button>
       <div data-c42-dropdown-menu className="pbx-header__viewport-menu">
         {VIEWPORT_ITEMS.map((vp) => (
