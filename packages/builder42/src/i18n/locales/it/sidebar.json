@@ -19,7 +19,8 @@
       "layout": "Struttura",
       "content": "Contenuto",
       "form": "Modulo",
-      "navigation": "Navigazione"
+      "navigation": "Navigazione",
+      "sections": "Sezioni"
     }
   },
   "templates": {
@@ -43,7 +44,7 @@
       "features3Col": "Features (3 colonne)",
       "features3ColDesc": "Griglia responsive con immagine e card",
       "pricingSection": "Pricing",
-      "pricingSectionDesc": "Due card prezzi affiancate",
+      "pricingSectionDesc": "Tre card prezzi con il piano centrale in evidenza",
       "ctaBanner": "Banner di call to action",
       "ctaBannerDesc": "Titolo, sottotitolo e pulsante su sfondo in evidenza",
       "statsStrip": "Striscia di statistiche",

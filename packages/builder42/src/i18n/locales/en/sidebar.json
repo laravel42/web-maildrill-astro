@@ -19,7 +19,8 @@
       "layout": "Layout",
       "content": "Content",
       "form": "Form",
-      "navigation": "Navigation"
+      "navigation": "Navigation",
+      "sections": "Sections"
     }
   },
   "templates": {
@@ -43,7 +44,7 @@
       "features3Col": "Features (3 columns)",
       "features3ColDesc": "Responsive grid with image and feature cards",
       "pricingSection": "Pricing",
-      "pricingSectionDesc": "Two pricing cards side by side",
+      "pricingSectionDesc": "Three pricing cards with the middle plan highlighted",
       "ctaBanner": "Call-to-action banner",
       "ctaBannerDesc": "Title, subtitle and button on a highlighted background",
       "statsStrip": "Stats strip",

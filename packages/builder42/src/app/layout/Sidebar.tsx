@@ -20,6 +20,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import { getDefinition, listDefinitionsByCategory } from "@/builder/registry/componentRegistry";
+import { listLayoutsByCategory, type SectionLayoutDefinition } from "@/builder/registry/layoutRegistry";
 import { useDraggable } from "@/builder/dnd/useDraggable";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { useReorderControlsVisible } from "@/hooks/usePointerCoarse";
@@ -40,6 +41,7 @@ import type { LucideProps } from "lucide-react";
 import type { ComponentType } from "react";
 import { TokensEditor } from "./TokensEditor";
 import { TemplatesPanel } from "./TemplatesPanel";
+import { SectionTemplateCard } from "./TemplateCard";
 
 // ---------------------------------------------------------------------------
 // Iconos por categoría — Lucide (Fase 11.f), 16×16 vía CSS, currentColor
@@ -188,6 +190,14 @@ function SidebarItem({ def }: { def: ComponentDefinition }) {
 function ComponentsPanel() {
   const { t } = useTranslation("sidebar");
   const groups = listDefinitionsByCategory();
+  // Plantillas de sección (docs/builder-sections-plan.md — ronda de
+  // reorganización): antes vivían en el panel "Plantillas"; ahora se muestran
+  // como el último grupo de la paleta de "Componentes", mismas tarjetas
+  // (`SectionTemplateCard`, `TemplateCard.tsx`) y mismo pick & insert por
+  // drag/tap — solo cambia dónde aparecen, no su comportamiento.
+  const sectionLayouts = listLayoutsByCategory()
+    .flatMap((g) => g.layouts)
+    .filter((l): l is SectionLayoutDefinition => l.category === "section");
   const basicsGroups = useMemo(
     () =>
       BASICS_GROUPS.map((g) => ({
@@ -237,6 +247,20 @@ function ComponentsPanel() {
           </CategoryAccordion>
         );
       })}
+      {sectionLayouts.length > 0 ? (
+        <CategoryAccordion
+          key="sections"
+          title={t("palette.categories.sections")}
+          count={sectionLayouts.length}
+          icon={<LayoutGrid size={14} aria-hidden="true" />}
+        >
+          <div className="pbx-template__grid">
+            {sectionLayouts.map((layout) => (
+              <SectionTemplateCard key={layout.id} layout={layout} />
+            ))}
+          </div>
+        </CategoryAccordion>
+      ) : null}
     </>
   );
 }

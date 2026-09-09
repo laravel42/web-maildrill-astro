@@ -19,7 +19,8 @@
       "layout": "Estructura",
       "content": "Contenido",
       "form": "Formulario",
-      "navigation": "Navegación"
+      "navigation": "Navegación",
+      "sections": "Secciones"
     }
   },
   "templates": {
@@ -43,7 +44,7 @@
       "features3Col": "Features (3 columnas)",
       "features3ColDesc": "Grid responsive con imagen y tarjetas",
       "pricingSection": "Pricing",
-      "pricingSectionDesc": "Dos tarjetas de precios en fila",
+      "pricingSectionDesc": "Tres tarjetas de precios con el plan del medio destacado",
       "ctaBanner": "Banda de llamada a la acción",
       "ctaBannerDesc": "Título, subtítulo y botón sobre fondo destacado",
       "statsStrip": "Franja de estadísticas",
