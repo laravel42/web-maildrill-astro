@@ -3,7 +3,8 @@
     "components": "Componentes",
     "tokens": "Tokens",
     "templates": "Plantillas",
-    "ariaLabel": "Panel lateral"
+    "ariaLabel": "Panel lateral",
+    "panelHandleLabel": "Biblioteca"
   },
   "palette": {
     "hint": "Arrastra o haz clic en un componente para añadirlo a la página.",

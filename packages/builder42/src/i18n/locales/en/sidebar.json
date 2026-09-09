@@ -3,7 +3,8 @@
     "components": "Components",
     "tokens": "Tokens",
     "templates": "Templates",
-    "ariaLabel": "Side panel"
+    "ariaLabel": "Side panel",
+    "panelHandleLabel": "Library"
   },
   "palette": {
     "hint": "Drag or click a component onto the page.",

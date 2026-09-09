@@ -11,7 +11,7 @@
  * patrón que `.wts-panel-handle-label`/`Library` en wa-template-studio.
  *
  * `side="left"` para el Sidebar (pestaña pegada a su borde derecho, label
- * "Componentes"); `side="right"` para el Inspector (pestaña pegada a su
+ * "Biblioteca"); `side="right"` para el Inspector (pestaña pegada a su
  * borde izquierdo, label "Inspector").
  */
 
@@ -31,7 +31,7 @@ export function PanelHandle({
   const { t: tSidebar } = useTranslation("sidebar");
   const { t: tInspector } = useTranslation("inspector");
   const label = side === "left" ? tHeader("panels.toggleSidebar") : tHeader("panels.toggleInspector");
-  const panelName = side === "left" ? tSidebar("tabs.components") : tInspector("title");
+  const panelName = side === "left" ? tSidebar("tabs.panelHandleLabel") : tInspector("title");
 
   // Cuando el panel está abierto, la flecha apunta hacia SU propio borde
   // (colapsar); cuando está colapsado, apunta hacia el canvas (expandir) —
