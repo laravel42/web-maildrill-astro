@@ -5,6 +5,7 @@ import { adminRoutes } from './routes/admin';
 import { healthRoutes } from './routes/health';
 import { messageRoutes } from './routes/messages';
 import { webhookRoutes } from './routes/webhooks';
+import { sesWebhookRoutes } from './routes/ses-webhook';
 
 /**
  * The messaging app's business routes, without health. Exported so the unified
@@ -15,6 +16,7 @@ import { webhookRoutes } from './routes/webhooks';
 export async function messagingRoutes(app: FastifyInstance): Promise<void> {
   await app.register(messageRoutes);
   await app.register(webhookRoutes);
+  await app.register(sesWebhookRoutes);
   await app.register(adminRoutes);
 }
 

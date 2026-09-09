@@ -3,6 +3,7 @@ import type { MessagingProvider } from './core';
 import { MockProvider } from './mock';
 import { InfobipProvider } from './infobip';
 import { CloudflareProvider } from './cloudflare';
+import { SesProvider } from './ses';
 import { buildProviderSendEvent, emitProviderSend } from './send-observer';
 
 const instances = new Map<string, MessagingProvider>();
@@ -32,7 +33,9 @@ export function getProvider(driver: string = config.provider.driver): MessagingP
         ? new InfobipProvider()
         : driver === 'cloudflare'
           ? new CloudflareProvider()
-          : new MockProvider();
+          : driver === 'ses'
+            ? new SesProvider()
+            : new MockProvider();
     provider = observeSend(raw);
     instances.set(driver, provider);
   }
