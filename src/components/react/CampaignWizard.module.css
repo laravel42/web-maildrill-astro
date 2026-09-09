@@ -416,33 +416,83 @@
   width: 100%;
 }
 
-/* Step 3 — template picker (3-column grid, all channels). */
-.tplGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+/* Step 1 — template picker in the right column. */
+.tplSidebar {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.tplSidebarHead {
+  flex: none;
+  margin-bottom: 12px;
+}
+
+.tplSidebarTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: var(--text);
+}
+
+.tplSidebarHint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text3);
+}
+
+.tplSidebarEmpty {
+  margin: 0;
+  padding: 14px 14px;
+  border: 1px dashed color-mix(in srgb, var(--text) 18%, transparent);
+  border-radius: 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text2);
+}
+
+.tplSidebarList {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  margin-bottom: 16px;
+  padding: 2px 2px 4px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text) 28%, transparent) transparent;
 }
 
-@media (max-width: 640px) {
-  .tplGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.tplSidebarList .tplPreview {
+  height: 84px;
+}
+.tplSidebarList .tplCard {
+  flex: none;
 }
 
-@media (max-width: 420px) {
-  .tplGrid {
-    grid-template-columns: minmax(0, 1fr);
-  }
+/* Step 3 — the template already chosen on step 1. */
+.tplChosen {
+  max-width: 240px;
+}
+.tplChosen .tplCard {
+  cursor: default;
+}
+.tplChosen .tplCard:hover {
+  border-color: var(--accent);
 }
 
-/* Step 3 — template picker cards with gallery-style mockups. */
+/* Template cards — sidebar stack and content-step confirmation. */
 .tplCard {
   display: flex;
   flex-direction: column;
+  width: 100%;
   border: 1.5px solid var(--border2);
   background: var(--surface);
-  border-radius: 12;
+  border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
   padding: 0;
@@ -450,9 +500,18 @@
   font: inherit;
   color: inherit;
 }
+.tplCard:hover {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border2));
+}
+.tplCard:focus-visible {
+  border-radius: 12px;
+}
 .tplCardOn {
   border-color: var(--accent);
   background: var(--accent-tint);
+}
+.tplCardOn:hover {
+  border-color: var(--accent);
 }
 .tplPreview {
   height: 100px;
@@ -471,7 +530,7 @@
 }
 .tplSub {
   font-size: 11.5px;
-  color: var(--muted);
+  color: var(--text3);
   margin-top: 2px;
 }
 

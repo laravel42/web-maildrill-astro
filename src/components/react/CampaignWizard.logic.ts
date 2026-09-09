@@ -17,9 +17,9 @@ import type {
 } from './CampaignWizard.types';
 
 export const CONTENT_SUB: Record<ChannelType, string> = {
-  email: 'Choose your template',
+  email: 'Review your email',
   sms: 'Write your text message',
-  whatsapp: 'Pick your WhatsApp message template',
+  whatsapp: 'Prepare your WhatsApp message',
   voice: 'Write your voice script',
 };
 
@@ -238,6 +238,8 @@ export type WizardValidationInput = {
   audienceList: AudienceChoice[];
   message: string;
   selTpl: Template | null;
+  /** Whether the active channel currently has any selectable templates. */
+  hasChannelTemplates: boolean;
   live: boolean;
   mode: 'create' | 'edit';
   schedule: Schedule;
@@ -254,6 +256,30 @@ export function isWizardStepBlocked(input: WizardValidationInput): boolean {
   return false;
 }
 
+/**
+ * Template is chosen on step 1's sidebar. Email always needs one; WhatsApp
+ * needs one when any approved templates exist. SMS and voice can skip.
+ */
+function templatePickReason(
+  channel: ChannelType,
+  selTpl: Template | null,
+  live: boolean,
+  hasChannelTemplates: boolean,
+): string | null {
+  if (channel === 'email') {
+    if (live) {
+      if (!selTpl?.id) return 'Choose a template — an email campaign needs content to send.';
+    } else if (!selTpl) {
+      return 'Choose a template to continue.';
+    }
+    return null;
+  }
+  if (channel === 'whatsapp' && hasChannelTemplates && !selTpl) {
+    return 'Choose a WhatsApp template to continue.';
+  }
+  return null;
+}
+
 /** Why the current step cannot advance, or null when Continue / Send is allowed. */
 export function getStepBlockedReason(input: WizardValidationInput): string | null {
   const {
@@ -268,6 +294,7 @@ export function getStepBlockedReason(input: WizardValidationInput): string | nul
     audienceList,
     message,
     selTpl,
+    hasChannelTemplates,
     live,
   } = input;
   const isEmail = channel === 'email';
@@ -283,26 +310,21 @@ export function getStepBlockedReason(input: WizardValidationInput): string | nul
         }
         if (!fromEmail.trim()) return 'Choose a sender to continue.';
       }
-      return null;
+      return templatePickReason(channel, selTpl, live, hasChannelTemplates);
     case 2:
       if (audienceList.length === 0) {
         return 'Create a list or segment under Audience before continuing.';
       }
       if (audienceIds.size === 0) return 'Pick at least one audience to continue.';
       return null;
-    case 3:
-      if (isEmail) {
-        if (live) {
-          if (!selTpl?.id) return 'Choose a template — an email campaign needs content to send.';
-        } else if (!selTpl) {
-          return 'Choose a template to continue.';
-        }
-        return null;
-      }
-      if (!selTpl && !message.trim()) {
+    case 3: {
+      const tplReason = templatePickReason(channel, selTpl, live, hasChannelTemplates);
+      if (tplReason) return tplReason;
+      if (!isEmail && !selTpl && !message.trim()) {
         return 'Write a message or choose a template to continue.';
       }
       return null;
+    }
     // 4 (tracking) and 5 (schedule) have no text-blocking conditions; the
     // schedule step's time validity gates via isWizardStepBlocked only.
     case 6:

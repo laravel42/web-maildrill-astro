@@ -15,6 +15,7 @@ const base: Omit<WizardValidationInput, 'step'> = {
   ],
   message: '',
   selTpl: { id: 'tpl-1', name: 'Summer Sale', thumb: '#000', cat: 'Promo' },
+  hasChannelTemplates: true,
   live: true,
   mode: 'create',
   schedule: 'now',
@@ -28,13 +29,57 @@ describe('getStepBlockedReason', () => {
     expect(getStepBlockedReason({ ...base, step: 1 })).toBeNull();
   });
 
+  it('requires a template on step 1 for email', () => {
+    expect(getStepBlockedReason({ ...base, step: 1, selTpl: null })).toMatch(/template/i);
+    expect(
+      getStepBlockedReason({
+        ...base,
+        step: 1,
+        live: true,
+        selTpl: { name: 'Fixture', thumb: '', cat: '' },
+      }),
+    ).toMatch(/template/i);
+  });
+
+  it('requires a WhatsApp template on step 1 when approved templates exist', () => {
+    expect(
+      getStepBlockedReason({
+        ...base,
+        step: 1,
+        channel: 'whatsapp',
+        selTpl: null,
+        hasChannelTemplates: true,
+      }),
+    ).toMatch(/whatsapp template/i);
+    expect(
+      getStepBlockedReason({
+        ...base,
+        step: 1,
+        channel: 'whatsapp',
+        selTpl: null,
+        hasChannelTemplates: false,
+      }),
+    ).toBeNull();
+  });
+
+  it('does not require a template on step 1 for SMS', () => {
+    expect(
+      getStepBlockedReason({
+        ...base,
+        step: 1,
+        channel: 'sms',
+        selTpl: null,
+      }),
+    ).toBeNull();
+  });
+
   it('requires a verified sending domain and From on step 1 for live email', () => {
-    expect(
-      getStepBlockedReason({ ...base, step: 1, domainsReady: false }),
-    ).toMatch(/loading sending domains/i);
-    expect(
-      getStepBlockedReason({ ...base, step: 1, verifiedDomains: [], fromEmail: '' }),
-    ).toMatch(/sending domain/i);
+    expect(getStepBlockedReason({ ...base, step: 1, domainsReady: false })).toMatch(
+      /loading sending domains/i,
+    );
+    expect(getStepBlockedReason({ ...base, step: 1, verifiedDomains: [], fromEmail: '' })).toMatch(
+      /sending domain/i,
+    );
     expect(getStepBlockedReason({ ...base, step: 1, fromEmail: '' })).toMatch(/sender/i);
   });
 

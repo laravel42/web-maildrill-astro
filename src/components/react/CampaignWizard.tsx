@@ -49,7 +49,7 @@ export type { Props };
 /* ---------------------------------------------------------------------------
  * CampaignWizard — faithful React port of the 6-step campaign wizard modal.
  * The parent gates mounting (renders this only when open), so the modal shows
- * immediately. Logical step order is 1..6: Basics, Audience, Content, Tracking,
+ * immediately. Logical step order is 1..6: Basics (template sidebar), Audience, Content, Tracking,
  * Schedule, Review (matching `stepDefs` in the design).
  * ------------------------------------------------------------------------- */
 
@@ -153,6 +153,121 @@ function AudienceSection({
         </div>
       )}
     </section>
+  );
+}
+
+function TemplateCard({
+  t,
+  channel,
+  selected,
+  onSelect,
+}: {
+  t: Template;
+  channel: ChannelType;
+  selected: boolean;
+  onSelect?: (t: Template) => void;
+}) {
+  const inner = (
+    <>
+      <div className={styles.tplPreview}>
+        <GalleryPreview channel={channel} t={toGalleryPreviewData(t)} />
+      </div>
+      <div className={styles.tplMeta}>
+        <div className={styles.tplName}>{t.name}</div>
+        <div className={styles.tplSub}>{selected ? 'Selected' : t.cat}</div>
+      </div>
+    </>
+  );
+  if (!onSelect) {
+    return (
+      <div className={`${styles.tplCard} ${styles.tplCardOn}`} aria-current="true">
+        {inner}
+      </div>
+    );
+  }
+  return (
+    <button
+      type="button"
+      className={`${styles.tplCard}${selected ? ` ${styles.tplCardOn}` : ''}`}
+      aria-pressed={selected}
+      onClick={() => onSelect(t)}
+    >
+      {inner}
+    </button>
+  );
+}
+
+function TemplateSidebar({
+  channel,
+  templates,
+  selectedKey,
+  onSelect,
+}: {
+  channel: ChannelType;
+  templates: Template[];
+  selectedKey: string | null;
+  onSelect: (t: Template) => void;
+}) {
+  const required = channel === 'email' || channel === 'whatsapp';
+  return (
+    <div className={styles.tplSidebar}>
+      <div className={styles.tplSidebarHead}>
+        <h3 className={styles.tplSidebarTitle}>{channelLabel(channel)} templates</h3>
+        <p className={styles.tplSidebarHint}>
+          {required
+            ? 'Pick the template this campaign will send.'
+            : 'Start from a template, or skip and write the message later.'}
+        </p>
+      </div>
+      {templates.length === 0 ? (
+        <p className={styles.tplSidebarEmpty}>
+          {channel === 'email' ? (
+            <>
+              No saved {channelLabel(channel)} templates yet. Create one under{' '}
+              <a href={routes.app.templates} className="acrd__link">
+                Templates
+              </a>{' '}
+              before continuing.
+            </>
+          ) : channel === 'whatsapp' ? (
+            <>
+              No approved WhatsApp templates yet. Create one under{' '}
+              <a href={routes.app.templates} className="acrd__link">
+                Templates
+              </a>
+              , or write the message on the next content step to send through SMS.
+            </>
+          ) : (
+            <>
+              No saved {channelLabel(channel)} templates yet. Create one under{' '}
+              <a href={routes.app.templates} className="acrd__link">
+                Templates
+              </a>
+              , or write the message later.
+            </>
+          )}
+        </p>
+      ) : (
+        <div
+          className={styles.tplSidebarList}
+          role="group"
+          aria-label={`${channelLabel(channel)} templates`}
+        >
+          {templates.map((t) => {
+            const sel = selectedKey === templateKey(t);
+            return (
+              <TemplateCard
+                key={templateKey(t)}
+                t={t}
+                channel={channel}
+                selected={sel}
+                onSelect={onSelect}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -578,6 +693,7 @@ export default function CampaignWizard({
     audienceList,
     message,
     selTpl,
+    hasChannelTemplates: templates.length > 0,
     live,
     mode,
     schedule,
@@ -596,6 +712,7 @@ export default function CampaignWizard({
     audienceList,
     message,
     selTpl,
+    hasChannelTemplates: templates.length > 0,
     live,
     mode,
     schedule,
@@ -828,7 +945,8 @@ export default function CampaignWizard({
               <>
                 <h3 style={h3Style}>Let&rsquo;s start with the basics</h3>
                 <p style={{ ...pStyle, margin: '0 0 24px' }}>
-                  Choose a channel, name your campaign and set the sender.
+                  Choose a channel, name your campaign and set the sender. Pick a template in the
+                  sidebar.
                 </p>
                 <label style={labelStyle}>Channel</label>
                 <div className={styles.channelGrid} role="radiogroup" aria-label="Channel">
@@ -1029,53 +1147,16 @@ export default function CampaignWizard({
                 <h3 style={h3Style}>{contentSub}</h3>
                 <p style={{ ...pStyle, margin: '0 0 18px' }}>
                   {isEmail
-                    ? 'Choose a saved email template for this campaign.'
-                    : channel === 'whatsapp'
-                      ? 'Start from a template and set variable placeholder values if any.'
-                      : 'Start from a template or build from scratch.'}
+                    ? 'This campaign will send the template you picked. Go back to choose a different one.'
+                    : channel === 'whatsapp' && templates.length > 0
+                      ? 'This campaign will send the approved template you picked. Go back to choose a different one.'
+                      : 'Write the message this campaign will send.'}
                 </p>
-                <label style={{ ...labelStyle, marginBottom: 8 }}>
-                  {channelLabel(channel)} templates
-                </label>
-                {templates.length === 0 && (
-                  <p
-                    style={{
-                      ...pStyle,
-                      padding: '14px 16px',
-                      border: '1px dashed var(--border2)',
-                      borderRadius: 12,
-                      margin: '0 0 16px',
-                    }}
-                  >
-                    {isEmail
-                      ? `No saved ${channelLabel(channel)} templates yet. Create one under Templates before continuing.`
-                      : channel === 'whatsapp'
-                        ? 'No approved WhatsApp templates yet. Create one under Templates, or write the message below to send through SMS channel.'
-                        : `No saved ${channelLabel(channel)} templates yet. Create one under Templates, or write the message below.`}
-                  </p>
+                {selTpl && (isEmail || (channel === 'whatsapp' && templates.length > 0)) && (
+                  <div className={styles.tplChosen}>
+                    <TemplateCard t={selTpl} channel={channel} selected />
+                  </div>
                 )}
-                <div className={styles.tplGrid}>
-                  {templates.map((t) => {
-                    const sel = selectedTemplateKey === templateKey(t);
-                    return (
-                      <button
-                        key={templateKey(t)}
-                        type="button"
-                        className={`${styles.tplCard}${sel ? ` ${styles.tplCardOn}` : ''}`}
-                        aria-pressed={sel}
-                        onClick={() => selectTemplate(t)}
-                      >
-                        <div className={styles.tplPreview}>
-                          <GalleryPreview channel={channel} t={toGalleryPreviewData(t)} />
-                        </div>
-                        <div className={styles.tplMeta}>
-                          <div className={styles.tplName}>{t.name}</div>
-                          <div className={styles.tplSub}>{sel ? 'Selected' : t.cat}</div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
 
                 {/* WhatsApp with approved templates is template-only; free text is for
                     SMS/voice, or WhatsApp when nothing approved (typing flips to SMS). */}
@@ -1271,7 +1352,7 @@ export default function CampaignWizard({
             )}
           </div>
 
-          {/* right live preview */}
+          {/* right: template sidebar on step 1, live preview after */}
           <div
             className={styles.previewCol}
             style={{
@@ -1280,424 +1361,438 @@ export default function CampaignWizard({
               borderLeft: `1px solid color-mix(in srgb, ${channelMeta.color} 28%, var(--divider))`,
             }}
           >
-            <div className={styles.previewFit} data-preview-fit>
-              {isEmail ? (
-                selTpl ? (
-                  <div className={styles.previewEmailLive}>
-                    {selTpl.id && live ? (
-                      <TemplatePreview
-                        id={selTpl.id}
-                        channel="email"
-                        live={live}
-                        fallback={<FauxEmail t={toGalleryPreviewData(selTpl)} variant="drawer" />}
-                      />
-                    ) : (
-                      <FauxEmail t={toGalleryPreviewData(selTpl)} variant="drawer" />
-                    )}
-                  </div>
+            {step === 1 ? (
+              <TemplateSidebar
+                channel={channel}
+                templates={templates}
+                selectedKey={selectedTemplateKey}
+                onSelect={selectTemplate}
+              />
+            ) : (
+              <div className={styles.previewFit} data-preview-fit>
+                {isEmail ? (
+                  selTpl ? (
+                    <div className={styles.previewEmailLive}>
+                      {selTpl.id && live ? (
+                        <TemplatePreview
+                          id={selTpl.id}
+                          channel="email"
+                          live={live}
+                          fallback={<FauxEmail t={toGalleryPreviewData(selTpl)} variant="drawer" />}
+                        />
+                      ) : (
+                        <FauxEmail t={toGalleryPreviewData(selTpl)} variant="drawer" />
+                      )}
+                    </div>
+                  ) : (
+                    <div className={styles.previewEmpty}>
+                      <Icon name="mail" size={wz(28)} stroke={1.6} />
+                      <span>Select a template to preview</span>
+                    </div>
+                  )
                 ) : (
-                  <div className={styles.previewEmpty}>
-                    <Icon name="mail" size={wz(28)} stroke={1.6} />
-                    <span>Select a template to preview</span>
-                  </div>
-                )
-              ) : (
-                /* Phone mock preview for SMS / WhatsApp / Voice. */
-                <div
-                  className={styles.previewPhoneShell}
-                  style={{
-                    width: '100%',
-                    maxWidth: PREVIEW_PHONE_W,
-                    background: '#0b0b0f',
-                    borderRadius: wz(34),
-                    padding: wz(10),
-                    boxShadow: '0 10px 30px rgba(28,25,23,.22)',
-                  }}
-                >
+                  /* Phone mock preview for SMS / WhatsApp / Voice. */
                   <div
-                    className={styles.previewPhoneScreen}
+                    className={styles.previewPhoneShell}
                     style={{
-                      background: statusBg,
-                      borderRadius: wz(26),
+                      width: '100%',
+                      maxWidth: PREVIEW_PHONE_W,
+                      background: '#0b0b0f',
+                      borderRadius: wz(34),
+                      padding: wz(10),
+                      boxShadow: '0 10px 30px rgba(28,25,23,.22)',
                     }}
                   >
                     <div
+                      className={styles.previewPhoneScreen}
                       style={{
-                        width: wz(72),
-                        height: wz(18),
-                        background: '#000',
-                        borderRadius: `0 0 ${wz(10)}px ${wz(10)}px`,
-                        position: 'absolute',
-                        top: 0,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        zIndex: 2,
+                        background: statusBg,
+                        borderRadius: wz(26),
                       }}
-                    />
-                    <PhoneStatusBar color={statusColor} />
-
-                    {channel === 'voice' && (
+                    >
                       <div
-                        className={styles.previewChannelBody}
                         style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: `${wz(14)}px ${wz(16)}px ${wz(18)}px`,
-                          background: 'linear-gradient(180deg,#26221d,#0b0b0f)',
-                          color: '#fff',
+                          width: wz(72),
+                          height: wz(18),
+                          background: '#000',
+                          borderRadius: `0 0 ${wz(10)}px ${wz(10)}px`,
+                          position: 'absolute',
+                          top: 0,
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          zIndex: 2,
                         }}
-                      >
-                        <div style={{ textAlign: 'center', marginTop: wz(12) }}>
-                          <div
-                            style={{
-                              fontSize: wz(10.5),
-                              color: 'rgba(255,255,255,.5)',
-                              fontWeight: 600,
-                              letterSpacing: '0.4px',
-                              marginBottom: wz(9),
-                            }}
-                          >
-                            INCOMING CALL
-                          </div>
-                          <div
-                            style={{
-                              width: wz(70),
-                              height: wz(70),
-                              borderRadius: '50%',
-                              background: 'var(--ch-voice)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: wz(24),
-                              fontWeight: 700,
-                              margin: '0 auto',
-                            }}
-                          >
-                            M
-                          </div>
-                          <div style={{ fontSize: wz(16), fontWeight: 600, marginTop: wz(13) }}>
-                            Maildrill
-                          </div>
-                          <div
-                            className="tnum"
-                            style={{
-                              fontSize: wz(11.5),
-                              color: 'rgba(255,255,255,.55)',
-                              marginTop: wz(4),
-                            }}
-                          >
-                            {activeSender.value}
-                          </div>
-                          <div
-                            className="tnum"
-                            style={{
-                              fontSize: wz(10),
-                              color: 'rgba(255,255,255,.4)',
-                              marginTop: wz(2),
-                            }}
-                          >
-                            {callDuration} · calling…
-                          </div>
-                        </div>
-                        <div style={{ width: '100%' }}>
-                          <div
-                            className={styles.previewBubble}
-                            style={{
-                              maxWidth: wz(180),
-                              margin: `0 auto ${wz(12)}px`,
-                              background: 'rgba(255,255,255,.08)',
-                              borderRadius: wz(12),
-                              padding: `${wz(8)}px ${wz(10)}px`,
-                              fontSize: wz(11),
-                              lineHeight: 1.45,
-                              color: 'rgba(255,255,255,.85)',
-                            }}
-                          >
-                            {msgPreview}
-                          </div>
-                          <div
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                              gap: wz(18),
-                              flexShrink: 0,
-                            }}
-                          >
-                            <div
-                              className={styles.voiceCallAction}
-                              style={{
-                                width: wz(42),
-                                height: wz(42),
-                                minWidth: wz(42),
-                                minHeight: wz(42),
-                                background: 'rgba(255,255,255,.12)',
-                                color: '#fff',
-                              }}
-                            >
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                aria-hidden="true"
-                              >
-                                <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0" />
-                                <path d="M19 11a7 7 0 0 1-14 0M12 18v3" />
-                                <line x1="3" y1="3" x2="21" y2="21" />
-                              </svg>
-                            </div>
-                            <div
-                              className={styles.voiceCallAction}
-                              style={{
-                                width: wz(50),
-                                height: wz(50),
-                                minWidth: wz(50),
-                                minHeight: wz(50),
-                                background: '#e11d48',
-                                transform: 'rotate(135deg)',
-                              }}
-                            >
-                              <svg
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="#fff"
-                                aria-hidden="true"
-                              >
-                                <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1z" />
-                              </svg>
-                            </div>
-                            <div
-                              className={styles.voiceCallAction}
-                              style={{
-                                width: wz(42),
-                                height: wz(42),
-                                minWidth: wz(42),
-                                minHeight: wz(42),
-                                background: 'rgba(255,255,255,.12)',
-                                color: '#fff',
-                              }}
-                            >
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                                aria-hidden="true"
-                              >
-                                <circle cx="6" cy="6" r="1.6" />
-                                <circle cx="12" cy="6" r="1.6" />
-                                <circle cx="18" cy="6" r="1.6" />
-                                <circle cx="6" cy="12" r="1.6" />
-                                <circle cx="12" cy="12" r="1.6" />
-                                <circle cx="18" cy="12" r="1.6" />
-                                <circle cx="6" cy="18" r="1.6" />
-                                <circle cx="12" cy="18" r="1.6" />
-                                <circle cx="18" cy="18" r="1.6" />
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                      />
+                      <PhoneStatusBar color={statusColor} />
 
-                    {channel === 'sms' && (
-                      <div
-                        className={styles.previewChannelBody}
-                        style={{ background: '#e9eaec', display: 'flex', flexDirection: 'column' }}
-                      >
+                      {channel === 'voice' && (
                         <div
+                          className={styles.previewChannelBody}
                           style={{
-                            padding: `${wz(10)}px ${wz(14)}px ${wz(9)}px`,
-                            textAlign: 'center',
-                            background: '#f6f6f7',
-                            borderBottom: '1px solid rgba(0,0,0,.06)',
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: wz(32),
-                              height: wz(32),
-                              borderRadius: '50%',
-                              background: '#c7c9cc',
-                              margin: `0 auto ${wz(4)}px`,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: wz(12),
-                              fontWeight: 700,
-                              color: '#fff',
-                            }}
-                          >
-                            M
-                          </div>
-                          <div style={{ fontSize: wz(11), fontWeight: 600, color: '#0b0b0f' }}>
-                            Maildrill
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            flex: 1,
-                            minHeight: 0,
-                            overflow: 'hidden',
-                            padding: `${wz(14)}px ${wz(12)}px`,
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: wz(3),
-                            justifyContent: 'flex-end',
-                          }}
-                        >
-                          <div
-                            className={styles.previewBubble}
-                            style={{
-                              alignSelf: 'flex-start',
-                              maxWidth: '82%',
-                              background: '#fff',
-                              borderRadius: `${wz(16)}px ${wz(16)}px ${wz(16)}px ${wz(4)}px`,
-                              padding: `${wz(9)}px ${wz(13)}px`,
-                              fontSize: wz(11.5),
-                              lineHeight: 1.45,
-                              color: '#0b0b0f',
-                              boxShadow: '0 1px 1px rgba(0,0,0,.05)',
-                            }}
-                          >
-                            {msgPreview}
-                          </div>
-                          <div
-                            style={{
-                              alignSelf: 'flex-start',
-                              fontSize: wz(9),
-                              color: '#9a9a9e',
-                              margin: `${wz(2)}px ${wz(6)}px 0`,
-                              flex: 'none',
-                            }}
-                          >
-                            Delivered
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {channel === 'whatsapp' && (
-                      <div
-                        className={styles.previewChannelBody}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          background: '#e5ddd0',
-                          backgroundImage: 'radial-gradient(rgba(0,0,0,.04) 1px, transparent 1px)',
-                          backgroundSize: `${wz(13)}px ${wz(13)}px`,
-                        }}
-                      >
-                        <div
-                          style={{
-                            background: '#075e54',
-                            color: '#fff',
-                            padding: `${wz(10)}px ${wz(13)}px`,
-                            display: 'flex',
                             alignItems: 'center',
-                            gap: wz(9),
+                            justifyContent: 'space-between',
+                            padding: `${wz(14)}px ${wz(16)}px ${wz(18)}px`,
+                            background: 'linear-gradient(180deg,#26221d,#0b0b0f)',
+                            color: '#fff',
                           }}
                         >
-                          <svg
-                            width={wz(15)}
-                            height={wz(15)}
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#fff"
-                            strokeWidth="2.4"
-                            aria-hidden="true"
-                          >
-                            <path d="M15 6l-6 6 6 6" />
-                          </svg>
-                          <div
-                            style={{
-                              width: wz(25),
-                              height: wz(25),
-                              borderRadius: '50%',
-                              background: 'rgba(255,255,255,.22)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: wz(11),
-                              fontWeight: 700,
-                            }}
-                          >
-                            M
-                          </div>
-                          <div style={{ lineHeight: 1.15 }}>
-                            <div style={{ fontSize: wz(11.5), fontWeight: 700 }}>Maildrill</div>
-                            <div className="tnum" style={{ fontSize: wz(9), opacity: 0.8 }}>
-                              {activeSender.value}
-                            </div>
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            flex: 1,
-                            minHeight: 0,
-                            overflow: 'hidden',
-                            padding: `${wz(14)}px ${wz(11)}px`,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'flex-end',
-                          }}
-                        >
-                          <div
-                            className={styles.previewBubble}
-                            style={{
-                              alignSelf: 'flex-start',
-                              maxWidth: '82%',
-                              background: '#fff',
-                              borderRadius: `${wz(2)}px ${wz(12)}px ${wz(12)}px ${wz(12)}px`,
-                              padding: `${wz(9)}px ${wz(12)}px ${wz(15)}px`,
-                              fontSize: wz(11.5),
-                              lineHeight: 1.45,
-                              color: '#111',
-                              boxShadow: '0 1px 1px rgba(0,0,0,.1)',
-                              position: 'relative',
-                            }}
-                          >
-                            {msgPreview}
-                            <span
+                          <div style={{ textAlign: 'center', marginTop: wz(12) }}>
+                            <div
                               style={{
-                                position: 'absolute',
-                                bottom: wz(5),
-                                right: wz(10),
-                                fontSize: wz(9),
-                                color: '#8a8a8e',
+                                fontSize: wz(10.5),
+                                color: 'rgba(255,255,255,.5)',
+                                fontWeight: 600,
+                                letterSpacing: '0.4px',
+                                marginBottom: wz(9),
+                              }}
+                            >
+                              INCOMING CALL
+                            </div>
+                            <div
+                              style={{
+                                width: wz(70),
+                                height: wz(70),
+                                borderRadius: '50%',
+                                background: 'var(--ch-voice)',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: wz(2),
+                                justifyContent: 'center',
+                                fontSize: wz(24),
+                                fontWeight: 700,
+                                margin: '0 auto',
                               }}
                             >
-                              9:41
-                              <svg
-                                width={wz(13)}
-                                height={wz(9)}
-                                viewBox="0 0 16 11"
-                                fill="none"
-                                stroke="#53bdeb"
-                                strokeWidth="1.6"
-                                aria-hidden="true"
+                              M
+                            </div>
+                            <div style={{ fontSize: wz(16), fontWeight: 600, marginTop: wz(13) }}>
+                              Maildrill
+                            </div>
+                            <div
+                              className="tnum"
+                              style={{
+                                fontSize: wz(11.5),
+                                color: 'rgba(255,255,255,.55)',
+                                marginTop: wz(4),
+                              }}
+                            >
+                              {activeSender.value}
+                            </div>
+                            <div
+                              className="tnum"
+                              style={{
+                                fontSize: wz(10),
+                                color: 'rgba(255,255,255,.4)',
+                                marginTop: wz(2),
+                              }}
+                            >
+                              {callDuration} · calling…
+                            </div>
+                          </div>
+                          <div style={{ width: '100%' }}>
+                            <div
+                              className={styles.previewBubble}
+                              style={{
+                                maxWidth: wz(180),
+                                margin: `0 auto ${wz(12)}px`,
+                                background: 'rgba(255,255,255,.08)',
+                                borderRadius: wz(12),
+                                padding: `${wz(8)}px ${wz(10)}px`,
+                                fontSize: wz(11),
+                                lineHeight: 1.45,
+                                color: 'rgba(255,255,255,.85)',
+                              }}
+                            >
+                              {msgPreview}
+                            </div>
+                            <div
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                gap: wz(18),
+                                flexShrink: 0,
+                              }}
+                            >
+                              <div
+                                className={styles.voiceCallAction}
+                                style={{
+                                  width: wz(42),
+                                  height: wz(42),
+                                  minWidth: wz(42),
+                                  minHeight: wz(42),
+                                  background: 'rgba(255,255,255,.12)',
+                                  color: '#fff',
+                                }}
                               >
-                                <path d="M1 6l3.5 3.5L11 2" />
-                                <path d="M6 6l3.5 3.5L16 2" />
-                              </svg>
-                            </span>
+                                <svg
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  aria-hidden="true"
+                                >
+                                  <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0" />
+                                  <path d="M19 11a7 7 0 0 1-14 0M12 18v3" />
+                                  <line x1="3" y1="3" x2="21" y2="21" />
+                                </svg>
+                              </div>
+                              <div
+                                className={styles.voiceCallAction}
+                                style={{
+                                  width: wz(50),
+                                  height: wz(50),
+                                  minWidth: wz(50),
+                                  minHeight: wz(50),
+                                  background: '#e11d48',
+                                  transform: 'rotate(135deg)',
+                                }}
+                              >
+                                <svg
+                                  width="20"
+                                  height="20"
+                                  viewBox="0 0 24 24"
+                                  fill="#fff"
+                                  aria-hidden="true"
+                                >
+                                  <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1z" />
+                                </svg>
+                              </div>
+                              <div
+                                className={styles.voiceCallAction}
+                                style={{
+                                  width: wz(42),
+                                  height: wz(42),
+                                  minWidth: wz(42),
+                                  minHeight: wz(42),
+                                  background: 'rgba(255,255,255,.12)',
+                                  color: '#fff',
+                                }}
+                              >
+                                <svg
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                  aria-hidden="true"
+                                >
+                                  <circle cx="6" cy="6" r="1.6" />
+                                  <circle cx="12" cy="6" r="1.6" />
+                                  <circle cx="18" cy="6" r="1.6" />
+                                  <circle cx="6" cy="12" r="1.6" />
+                                  <circle cx="12" cy="12" r="1.6" />
+                                  <circle cx="18" cy="12" r="1.6" />
+                                  <circle cx="6" cy="18" r="1.6" />
+                                  <circle cx="12" cy="18" r="1.6" />
+                                  <circle cx="18" cy="18" r="1.6" />
+                                </svg>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+
+                      {channel === 'sms' && (
+                        <div
+                          className={styles.previewChannelBody}
+                          style={{
+                            background: '#e9eaec',
+                            display: 'flex',
+                            flexDirection: 'column',
+                          }}
+                        >
+                          <div
+                            style={{
+                              padding: `${wz(10)}px ${wz(14)}px ${wz(9)}px`,
+                              textAlign: 'center',
+                              background: '#f6f6f7',
+                              borderBottom: '1px solid rgba(0,0,0,.06)',
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: wz(32),
+                                height: wz(32),
+                                borderRadius: '50%',
+                                background: '#c7c9cc',
+                                margin: `0 auto ${wz(4)}px`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: wz(12),
+                                fontWeight: 700,
+                                color: '#fff',
+                              }}
+                            >
+                              M
+                            </div>
+                            <div style={{ fontSize: wz(11), fontWeight: 600, color: '#0b0b0f' }}>
+                              Maildrill
+                            </div>
+                          </div>
+                          <div
+                            style={{
+                              flex: 1,
+                              minHeight: 0,
+                              overflow: 'hidden',
+                              padding: `${wz(14)}px ${wz(12)}px`,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: wz(3),
+                              justifyContent: 'flex-end',
+                            }}
+                          >
+                            <div
+                              className={styles.previewBubble}
+                              style={{
+                                alignSelf: 'flex-start',
+                                maxWidth: '82%',
+                                background: '#fff',
+                                borderRadius: `${wz(16)}px ${wz(16)}px ${wz(16)}px ${wz(4)}px`,
+                                padding: `${wz(9)}px ${wz(13)}px`,
+                                fontSize: wz(11.5),
+                                lineHeight: 1.45,
+                                color: '#0b0b0f',
+                                boxShadow: '0 1px 1px rgba(0,0,0,.05)',
+                              }}
+                            >
+                              {msgPreview}
+                            </div>
+                            <div
+                              style={{
+                                alignSelf: 'flex-start',
+                                fontSize: wz(9),
+                                color: '#9a9a9e',
+                                margin: `${wz(2)}px ${wz(6)}px 0`,
+                                flex: 'none',
+                              }}
+                            >
+                              Delivered
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {channel === 'whatsapp' && (
+                        <div
+                          className={styles.previewChannelBody}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            background: '#e5ddd0',
+                            backgroundImage:
+                              'radial-gradient(rgba(0,0,0,.04) 1px, transparent 1px)',
+                            backgroundSize: `${wz(13)}px ${wz(13)}px`,
+                          }}
+                        >
+                          <div
+                            style={{
+                              background: '#075e54',
+                              color: '#fff',
+                              padding: `${wz(10)}px ${wz(13)}px`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: wz(9),
+                            }}
+                          >
+                            <svg
+                              width={wz(15)}
+                              height={wz(15)}
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="#fff"
+                              strokeWidth="2.4"
+                              aria-hidden="true"
+                            >
+                              <path d="M15 6l-6 6 6 6" />
+                            </svg>
+                            <div
+                              style={{
+                                width: wz(25),
+                                height: wz(25),
+                                borderRadius: '50%',
+                                background: 'rgba(255,255,255,.22)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: wz(11),
+                                fontWeight: 700,
+                              }}
+                            >
+                              M
+                            </div>
+                            <div style={{ lineHeight: 1.15 }}>
+                              <div style={{ fontSize: wz(11.5), fontWeight: 700 }}>Maildrill</div>
+                              <div className="tnum" style={{ fontSize: wz(9), opacity: 0.8 }}>
+                                {activeSender.value}
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            style={{
+                              flex: 1,
+                              minHeight: 0,
+                              overflow: 'hidden',
+                              padding: `${wz(14)}px ${wz(11)}px`,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              justifyContent: 'flex-end',
+                            }}
+                          >
+                            <div
+                              className={styles.previewBubble}
+                              style={{
+                                alignSelf: 'flex-start',
+                                maxWidth: '82%',
+                                background: '#fff',
+                                borderRadius: `${wz(2)}px ${wz(12)}px ${wz(12)}px ${wz(12)}px`,
+                                padding: `${wz(9)}px ${wz(12)}px ${wz(15)}px`,
+                                fontSize: wz(11.5),
+                                lineHeight: 1.45,
+                                color: '#111',
+                                boxShadow: '0 1px 1px rgba(0,0,0,.1)',
+                                position: 'relative',
+                              }}
+                            >
+                              {msgPreview}
+                              <span
+                                style={{
+                                  position: 'absolute',
+                                  bottom: wz(5),
+                                  right: wz(10),
+                                  fontSize: wz(9),
+                                  color: '#8a8a8e',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: wz(2),
+                                }}
+                              >
+                                9:41
+                                <svg
+                                  width={wz(13)}
+                                  height={wz(9)}
+                                  viewBox="0 0 16 11"
+                                  fill="none"
+                                  stroke="#53bdeb"
+                                  strokeWidth="1.6"
+                                  aria-hidden="true"
+                                >
+                                  <path d="M1 6l3.5 3.5L11 2" />
+                                  <path d="M6 6l3.5 3.5L16 2" />
+                                </svg>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
