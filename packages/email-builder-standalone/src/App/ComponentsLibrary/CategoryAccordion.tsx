@@ -1,22 +1,23 @@
 /**
  * CategoryAccordion — the outer accordion shell for one Components
  * Library category (Sections / Primitives / Layouts / Templates /
- * Themes). Renders a header with the category title and a count badge,
- * plus a collapsible body. Expanded state is controlled by the parent
- * drawer so multiple categories can stay open independently.
+ * Themes). Header + count match builder42 `pbx-style-group` (`.eb-style-group`
+ * in the host). Expanded state is controlled by the parent drawer.
  */
 
 import React from 'react';
 
 import ExpandMoreOutlined from '@mui/icons-material/ExpandMore';
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Chip,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
+
+function groupClass(expanded: boolean) {
+  return `eb-style-group${expanded ? ' eb-style-group--open' : ''}`;
+}
+
+function groupLabel(title: string, countLabel: string) {
+  // Roles arrive as "banner" / "BANNER"; match builder42 "Essentials (4)".
+  return `${title.toLowerCase()} (${countLabel})`;
+}
 
 export default function CategoryAccordion({
   title,
@@ -40,43 +41,28 @@ export default function CategoryAccordion({
 
   return (
     <Accordion
+      className={groupClass(expanded)}
       expanded={expanded}
       onChange={(_, isExpanded) => onToggle(isExpanded)}
       disableGutters
       square
-      sx={{
-        boxShadow: 'none',
-        borderTop: (theme) => `1px solid ${theme.palette.divider}`,
-        '&:before': { display: 'none' },
-      }}
+      elevation={0}
     >
       <AccordionSummary
-        expandIcon={<ExpandMoreOutlined />}
-        sx={{
-          px: 0,
-          minHeight: 40,
-          '& .MuiAccordionSummary-content': { my: 0.75, alignItems: 'center' },
-        }}
+        className="eb-style-group__trigger"
+        expandIcon={<ExpandMoreOutlined className="eb-style-group__chevron" />}
+        disableRipple
       >
-        <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
-          <Typography variant="subtitle2">{title}</Typography>
-          <Chip
-            size="small"
-            label={badge}
-            sx={{ height: 18, fontSize: '0.65rem', '& .MuiChip-label': { px: 0.75 } }}
-          />
-        </Stack>
+        <span className="eb-style-group__name">{groupLabel(title, badge)}</span>
       </AccordionSummary>
-      <AccordionDetails sx={{ p: 0, pb: 1.5 }}>{children}</AccordionDetails>
+      <AccordionDetails className="eb-style-group__body">{children}</AccordionDetails>
     </Accordion>
   );
 }
 
 /**
- * SubcategoryAccordion — lighter, indented accordion used for the axis
- * subdivisions (section roles / primitive types / layout shapes) nested
- * inside a `CategoryAccordion`. Uses an `overline` header so it reads as
- * a second-level group.
+ * SubcategoryAccordion — axis subdivisions (section roles / primitive
+ * types / layout shapes). Same chrome as the outer category group.
  */
 export function SubcategoryAccordion({
   title,
@@ -93,32 +79,21 @@ export function SubcategoryAccordion({
 }) {
   return (
     <Accordion
+      className={groupClass(expanded)}
       expanded={expanded}
       onChange={(_, isExpanded) => onToggle(isExpanded)}
       disableGutters
       square
-      sx={{
-        boxShadow: 'none',
-        backgroundColor: 'transparent',
-        '&:before': { display: 'none' },
-      }}
+      elevation={0}
     >
       <AccordionSummary
-        expandIcon={<ExpandMoreOutlined sx={{ fontSize: 18 }} />}
-        sx={{
-          px: 0,
-          minHeight: 32,
-          '& .MuiAccordionSummary-content': { my: 0.25, alignItems: 'center', gap: 0.5 },
-        }}
+        className="eb-style-group__trigger"
+        expandIcon={<ExpandMoreOutlined className="eb-style-group__chevron" />}
+        disableRipple
       >
-        <Typography variant="overline" color="text.secondary" sx={{ lineHeight: 1.4 }}>
-          {title}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          ({count})
-        </Typography>
+        <span className="eb-style-group__name">{groupLabel(title, String(count))}</span>
       </AccordionSummary>
-      <AccordionDetails sx={{ p: 0, pb: 1 }}>{children}</AccordionDetails>
+      <AccordionDetails className="eb-style-group__body">{children}</AccordionDetails>
     </Accordion>
   );
 }

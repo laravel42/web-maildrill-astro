@@ -1,0 +1,35 @@
+/* Email undo/redo — same group as landing HostHistory. */
+.pbx-history {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.pbx-history__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: var(--editor-control-h, 38px);
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text3, #78716c);
+  cursor: pointer;
+}
+
+.pbx-history__btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.pbx-history__btn:not(:disabled):hover {
+  color: var(--text, #1c1917);
+  background: var(--surface2, #f5f5f4);
+}
+
+.pbx-history__btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}

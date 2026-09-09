@@ -2,6 +2,7 @@
   "header": {
     "undo": "Annulla (CTRL + Z)",
     "redo": "Ripeti (CTRL + Y)",
+    "history": "Cronologia",
     "copy_html": "Copia HTML",
     "copy_json": "Copia JSON",
     "edit": "Modifica",
@@ -504,7 +505,7 @@
       "blockCount": "{{count}} blocchi"
     },
     "drawer": {
-      "title": "Libreria componenti",
+      "title": "LIBRERIA",
       "handle": "Libreria",
       "handleOpen": "Apri la libreria componenti",
       "handleClose": "Chiudi la libreria componenti",

@@ -2,6 +2,7 @@
   "header": {
     "undo": "Undo (CTRL + Z)",
     "redo": "Redo (CTRL + Y)",
+    "history": "History",
     "copy_html": "Copy HTML",
     "copy_json": "Copy JSON",
     "edit": "Edit",
@@ -547,7 +548,7 @@
       "blockCount": "{{count}} blocks"
     },
     "drawer": {
-      "title": "Components library",
+      "title": "LIBRARY",
       "handle": "Library",
       "handleOpen": "Open components library",
       "handleClose": "Close components library",

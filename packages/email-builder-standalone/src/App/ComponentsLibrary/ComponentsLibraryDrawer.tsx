@@ -30,15 +30,13 @@ import { useTranslation } from 'react-i18next';
 
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import Inventory2Outlined from '@mui/icons-material/Inventory2Outlined';
-import RefreshOutlined from '@mui/icons-material/RefreshOutlined';
 import {
   Alert,
   Box,
-  IconButton,
+  Skeleton,
   Stack,
   Tab,
   Tabs,
-  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -47,7 +45,6 @@ import EmptyState from '../../components/EmptyState';
 import { resolveBackendUrl } from '../../components/UnsplashImagePicker/unsplash-api';
 import {
   getComponentsStorageMode,
-  setComponentsLibraryDrawerOpen,
   useComponentsLibraryDrawerOpen,
   useComponentsLibraryEnabled,
   useComponentsLibraryRefreshNonce,
@@ -212,6 +209,51 @@ function LibraryCard({
   // card just dispatches `(category, axis, id, name)` to the central
   // store on enter/leave. See `LibraryHoverPreviewPortal.tsx`.
 
+  const hoverHandlers = {
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) =>
+      requestHoverEnter({
+        anchor: e.currentTarget,
+        category,
+        axis: item.axis,
+        id: item.id,
+        name: item.name,
+        primitiveBlock: category === 'primitive' ? item.block : undefined,
+      }),
+    onMouseLeave: requestHoverLeave,
+  };
+
+  if (category === 'template') {
+    return (
+      <div
+        className="eb-template-card eb-template-card--page"
+        {...hoverHandlers}
+      >
+        <div className="eb-template-card__body">
+          <div className="eb-template-card__preview">
+            {thumbnailPending ? (
+              <Skeleton variant="rectangular" animation="wave" height="100%" width="100%" />
+            ) : thumbnailUrl ? (
+              <img src={thumbnailUrl} alt="" loading="lazy" decoding="async" />
+            ) : (
+              <div className="eb-template-card__preview--empty">
+                {t('componentsLibrary.thumbnail.placeholder', 'No preview')}
+              </div>
+            )}
+          </div>
+          <span className="eb-template-card__label-row">
+            <span className="eb-template-card__label">{item.name}</span>
+          </span>
+        </div>
+        <button
+          type="button"
+          className="eb-template-card__action"
+          aria-label={item.name}
+          onClick={onClick ? () => onClick(item) : undefined}
+        />
+      </div>
+    );
+  }
+
   return (
     <Box
       ref={(node: HTMLDivElement | null) => {
@@ -221,17 +263,7 @@ function LibraryCard({
         // event target, not from this ref.
         if (isDraggable && node) (dragRef as unknown as (n: HTMLElement) => void)(node);
       }}
-      onMouseEnter={(e) =>
-        requestHoverEnter({
-          anchor: e.currentTarget,
-          category,
-          axis: item.axis,
-          id: item.id,
-          name: item.name,
-          primitiveBlock: category === 'primitive' ? item.block : undefined,
-        })
-      }
-      onMouseLeave={requestHoverLeave}
+      {...hoverHandlers}
       onClick={onClick ? () => onClick(item) : undefined}
       sx={{
         p: 1,
@@ -314,10 +346,12 @@ const VIRTUAL_PAGE_SIZE = 24;
 function VirtualizedGrid({
   items,
   columns,
+  className,
   renderItem,
 }: {
   items: LibraryItem[];
   columns: number;
+  className?: string;
   renderItem: (item: LibraryItem) => React.ReactNode;
 }) {
   const [count, setCount] = useState(VIRTUAL_PAGE_SIZE);
@@ -345,11 +379,16 @@ function VirtualizedGrid({
   return (
     <Box sx={{ mt: 1.5 }}>
       <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-          gap: 0.5,
-        }}
+        className={className}
+        sx={
+          className
+            ? undefined
+            : {
+                display: 'grid',
+                gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+                gap: 0.5,
+              }
+        }
       >
         {items.slice(0, count).map((it) => renderItem(it))}
       </Box>
@@ -440,6 +479,7 @@ function CategoryListingBody({
       <VirtualizedGrid
         items={list}
         columns={columns ?? 2}
+        className={category === 'template' ? 'eb-template-grid' : undefined}
         renderItem={(it) => (
           <LibraryCard
             key={it.id}
@@ -453,11 +493,16 @@ function CategoryListingBody({
       />
     ) : (
       <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: columns ? `repeat(${columns}, minmax(0, 1fr))` : '1fr',
-          gap: 0.5,
-        }}
+        className={category === 'template' ? 'eb-template-grid' : undefined}
+        sx={
+          category === 'template'
+            ? undefined
+            : {
+                display: 'grid',
+                gridTemplateColumns: columns ? `repeat(${columns}, minmax(0, 1fr))` : '1fr',
+                gap: 0.5,
+              }
+        }
       >
         {list.map((it) => (
           <LibraryCard
@@ -481,7 +526,13 @@ function CategoryListingBody({
       );
     }
     if (loading && items.length === 0) {
-      return <LibrarySkeletonGrid columns={columns ?? 2} count={4} />;
+      return (
+        <LibrarySkeletonGrid
+          columns={columns ?? 2}
+          count={4}
+          thumbnailHeight={category === 'template' ? 168 : 120}
+        />
+      );
     }
     if (!loading && items.length === 0) {
       return (
@@ -842,22 +893,6 @@ export default function ComponentsLibraryDrawer() {
     clearHoverPreviewCache();
   }, [libraryRefreshNonce]);
 
-  const handleClose = () => {
-    // Cancel any pending preview opens and hide the singleton popper —
-    // otherwise a card hover that was mid-delay could fire after the
-    // drawer is gone and pin a popper to a detached anchor.
-    resetHoverPreview();
-    setComponentsLibraryDrawerOpen(false);
-  };
-  const handleRefresh = () => {
-    // Bump every category's refresh key so each tab refetches.
-    setSectionsRefreshKey((k) => k + 1);
-    setTemplatesRefreshKey((k) => k + 1);
-    // Drop the hover preview's subtree cache so the next hover fetches
-    // fresh — listings and previews stay in sync.
-    clearHoverPreviewCache();
-  };
-
   /** When rename succeeds, bump the matching category so its listing refetches. */
   const bumpAfterRename = useCallback((category: FetchableLibraryCategory) => {
     switch (category) {
@@ -905,64 +940,19 @@ export default function ComponentsLibraryDrawer() {
       >
         {open ? (
           <>
-            <Stack
-              direction="row"
-              sx={{
-                px: 1.5,
-                py: 1,
-                borderBottom: `1px solid ${theme.palette.divider}`,
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <Typography variant="subtitle2">{t('componentsLibrary.drawer.title')}</Typography>
-              <Stack direction="row" spacing={0.5}>
-                <Tooltip title={t('componentsLibrary.drawer.refresh')}>
-                  <IconButton size="small" onClick={handleRefresh}>
-                    <RefreshOutlined fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title={t('componentsLibrary.drawer.close')}>
-                  <IconButton size="small" onClick={handleClose}>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <polyline points="11 17 6 12 11 7" />
-                      <polyline points="18 17 13 12 18 7" />
-                    </svg>
-                  </IconButton>
-                </Tooltip>
-              </Stack>
-            </Stack>
-
-            <Box sx={{ px: 1.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+            <Box className="eb-side-tabs">
               <Tabs
                 value={activeTab}
                 onChange={(_, v: string) => setActiveTab(v)}
                 variant="fullWidth"
-                slotProps={{ indicator: { sx: { height: '3px', borderRadius: '4px' } } }}
-                sx={{ minHeight: 40 }}
+                aria-label={t('componentsLibrary.drawer.title')}
               >
                 {visibleCategories.map((c) => (
                   <Tab
                     key={c.key}
                     value={c.key}
                     label={t(c.labelKey)}
-                    sx={{
-                      minHeight: 40,
-                      minWidth: 0,
-                      px: 1,
-                      fontSize: '0.72rem',
-                      textTransform: 'none',
-                    }}
+                    disableRipple
                   />
                 ))}
               </Tabs>

@@ -2,6 +2,7 @@
   "header": {
     "undo": "Deshacer (CTRL + Z)",
     "redo": "Rehacer (CTRL + Y)",
+    "history": "Historial",
     "copy_html": "Copiar HTML",
     "copy_json": "Copiar JSON",
     "edit": "Editar",
@@ -504,7 +505,7 @@
       "blockCount": "{{count}} bloques"
     },
     "drawer": {
-      "title": "Biblioteca de componentes",
+      "title": "BIBLIOTECA",
       "handle": "Biblioteca",
       "handleOpen": "Abrir biblioteca de componentes",
       "handleClose": "Cerrar biblioteca de componentes",

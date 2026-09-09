@@ -12,6 +12,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Reader, TReaderDocument } from '@eb/email-builder';
 import { ContentCopyOutlined } from '@mui/icons-material';
+import { Redo2, Undo2 } from 'lucide-react';
 import {
   Alert,
   Box,
@@ -76,6 +77,7 @@ import HtmlPanel from './HtmlPanel';
 import JsonPanel from './JsonPanel';
 import MainTabsGroup from './MainTabsGroup';
 import renderToStaticMarkup from './renderToStaticMarkup';
+import './history.css';
 
 const CSS_HEADER_CHAR_LIMIT = 16350;
 
@@ -161,7 +163,6 @@ export default function TemplatePanel({
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
   const previewContainer = useRef<HTMLDivElement>(null);
-  const [lastWidth, setLastWidth] = useState<number>(0);
   const theme = useTheme();
   const [copySuccess, setCopySuccess] = useState(false);
   const containerGrow = useContainerGrow();
@@ -271,30 +272,6 @@ export default function TemplatePanel({
       window.removeEventListener('email-builder-update-template', handleTemplateUpdate);
     };
   }, [selectedMainTab]);
-
-  useEffect(() => {
-    const updateContainerWidth = () => {
-      if (previewContainer.current?.offsetWidth) {
-        setLastWidth(previewContainer.current.offsetWidth);
-      }
-    };
-
-    // Initial update
-    updateContainerWidth();
-
-    // Add resize observer to track width changes
-    const resizeObserver = new ResizeObserver(updateContainerWidth);
-    if (previewContainer.current) {
-      resizeObserver.observe(previewContainer.current);
-    }
-
-    return () => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- ResizeObserver is disconnected wholesale in cleanup; capturing the ref into a var is unnecessary here
-      if (previewContainer.current) {
-        resizeObserver.disconnect();
-      }
-    };
-  }, [previewContainer]);
 
   // Keyboard shortcuts listener
   // OPTIMIZACIÓN: Calcular CSS info solo cuando cambia el documento
@@ -411,11 +388,7 @@ export default function TemplatePanel({
   const rightButtonsHeader = useCallback(() => {
     switch (selectedMainTab) {
       case 'preview':
-        return (
-          <>
-            <ScreenSizeSelector />
-          </>
-        );
+        return null;
       case 'html':
         return (
           <Tooltip
@@ -447,58 +420,28 @@ export default function TemplatePanel({
       default:
         return (
           <>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <Tooltip title={t('header.undo')}>
-                <div
-                  onClick={undo}
-                  className={`buttonsUndoRedo ${!canUndo ? 'disabledButton' : ''} `}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                  >
-                    <g
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="3"
-                    >
-                      <path d="M3 7v6h6" />
-                      <path d="M21 17a9 9 0 0 0-9-9a9 9 0 0 0-6 2.3L3 13" />
-                    </g>
-                  </svg>
-                </div>
-              </Tooltip>
-              <Tooltip title={t('header.redo')}>
-                <div
-                  onClick={redo}
-                  className={`buttonsUndoRedo ${!canRedo ? 'disabledButton' : ''} `}
-                  style={{ transform: 'rotateY(180deg)' }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                  >
-                    <g
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="3"
-                    >
-                      <path d="M3 7v6h6" />
-                      <path d="M21 17a9 9 0 0 0-9-9a9 9 0 0 0-6 2.3L3 13" />
-                    </g>
-                  </svg>
-                </div>
-              </Tooltip>
+            <div className="pbx-history" role="group" aria-label={t('header.history')}>
+              <button
+                type="button"
+                className="pbx-history__btn"
+                title={t('header.undo')}
+                aria-label={t('header.undo')}
+                disabled={!canUndo}
+                onClick={undo}
+              >
+                <Undo2 size={16} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="pbx-history__btn"
+                title={t('header.redo')}
+                aria-label={t('header.redo')}
+                disabled={!canRedo}
+                onClick={redo}
+              >
+                <Redo2 size={16} aria-hidden="true" />
+              </button>
             </div>
-            <ScreenSizeSelector />
             {enableComponentTree && <ToggleComponentTreeButton />}
           </>
         );
@@ -561,13 +504,18 @@ export default function TemplatePanel({
         Save
       </button>
       <Box sx={hasFixedHeight ? { flexShrink: 0 } : undefined}>
-        <StickyWrapper threshold={'.preview-container-end'} disabled={!sticky} topOffset={0}>
-          <div id="ee-editor-header">
+        <StickyWrapper
+          threshold={'.preview-container-end'}
+          disabled={!sticky}
+          topOffset={0}
+          style={{ width: '100%' }}
+        >
+          <div id="ee-editor-header" style={{ width: '100%' }}>
             <div
               style={{
                 position: 'relative',
                 height: 50,
-                width: lastWidth || '100%',
+                width: '100%',
                 borderBottom: 1,
                 borderColor: 'divider',
                 backgroundColor: theme.palette.background.paper,
@@ -595,8 +543,7 @@ export default function TemplatePanel({
                 </Stack>
                 {/* `gap` rather than Stack's `spacing`: since the MUI 9 upgrade
                     spacing renders no margin at all here (every child comes out
-                    with margin-left: 0), leaving the search, undo/redo and
-                    viewport controls flush against each other. */}
+                    with margin-left: 0), leaving undo/redo flush against each other. */}
                 <Stack direction="row" sx={{ alignItems: 'center', gap: 1.5 }}>
                   {rightButtonsHeader()}
                 </Stack>
@@ -609,6 +556,9 @@ export default function TemplatePanel({
                   transform: 'translate(-50%, -50%)',
                   zIndex: 1,
                   pointerEvents: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
                   '& > *': { pointerEvents: 'auto' },
                 }}
               >
@@ -618,6 +568,7 @@ export default function TemplatePanel({
                   enableHtmlTab={enableHtmlTab}
                   enableJsonTab={enableJsonTab}
                 />
+                <ScreenSizeSelector />
               </Box>
             </div>
             {cssHeaderInfo &&
@@ -796,12 +747,9 @@ export default function TemplatePanel({
                 }
               }}
             >
-              {/* Compensar el gutter para no desplazar el contenido exportable */}
-              <Box sx={{ ml: '-24px', width: 'calc(100% + 24px)' }}>
-                <EditorRenderContextBridge>
-                  <EditorBlock id="root" />
-                </EditorRenderContextBridge>
-              </Box>
+              <EditorRenderContextBridge>
+                <EditorBlock id="root" />
+              </EditorRenderContextBridge>
             </RenderWatcher>
           </Box>
         </Box>
