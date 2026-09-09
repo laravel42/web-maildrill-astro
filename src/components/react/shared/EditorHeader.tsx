@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import type { ChannelType } from '@/types/app';
 import Icon from '../Icon';
-import { CHANNEL } from './channels';
+import { resolveEditorIdentity, type EditorIdentity } from './channels';
 import styles from './EditorHeader.module.css';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved';
@@ -9,10 +9,27 @@ export type SaveStatus = 'idle' | 'saving' | 'saved';
 export type LanguageOption = { code: string; label: string };
 
 type Props = {
-  channel: ChannelType;
+  /**
+   * Channel this editor is for (email/sms/whatsapp/voice). Optional now that the
+   * header also serves non-channel editors (Landings): pass `identity` instead
+   * for those. Exactly one of `channel`/`identity` is expected.
+   */
+  channel?: ChannelType;
+  /**
+   * Presentation identity for a non-channel editor (e.g. Landings). Wins over
+   * `channel` if both are given. See `resolveEditorIdentity`.
+   */
+  identity?: EditorIdentity;
   name: string;
   onNameChange: (value: string) => void;
   kind?: 'template' | 'campaign';
+  /**
+   * Noun for the copy this header generates ("{Noun} name", "Save {noun}",
+   * "Untitled {noun}"). Defaults from `kind` (template/campaign) for the channel
+   * editors; Landings passes 'landing' so the header reads natively without a
+   * new `kind`. Lower-case; the section label capitalises it.
+   */
+  nounLabel?: string;
   /** Autosave indicator state. */
   status?: SaveStatus;
   /** Optional category picker — omit `categories` to hide it (e.g. campaigns). */
@@ -31,12 +48,8 @@ type Props = {
   /** Sends a real test message to the signed-in user; button hidden when omitted. */
   onSendTest?: () => void;
   onSaveDraft: () => void;
-};
-
-const STATUS_LABEL: Record<SaveStatus, string> = {
-  idle: 'Draft',
-  saving: 'Saving…',
-  saved: 'Autosaved',
+  /** True while there are unsaved canvas/name edits (idle + dirty → "Unsaved changes"). */
+  isDirty?: boolean;
 };
 
 function BackArrow() {
@@ -144,9 +157,11 @@ function LanguagePicker({
  */
 export default function EditorHeader({
   channel,
+  identity,
   name,
   onNameChange,
   kind = 'template',
+  nounLabel,
   status = 'idle',
   category,
   categories,
@@ -159,13 +174,26 @@ export default function EditorHeader({
   onBack,
   onSendTest,
   onSaveDraft,
+  isDirty = false,
 }: Props) {
-  const meta = CHANNEL[channel];
-  const section = kind === 'campaign' ? 'Campaigns' : 'Templates';
-  const placeholder = kind === 'campaign' ? 'Untitled campaign' : 'Untitled template';
+  const meta = resolveEditorIdentity({ identity, channel });
+  // The noun this header talks about. Channel editors derive it from `kind`
+  // (template/campaign); a non-channel editor (Landings) passes `nounLabel`
+  // directly so it reads "Landing name" / "Save landing" without a new `kind`.
+  const noun = nounLabel ?? (kind === 'campaign' ? 'campaign' : 'template');
+  const section = `${noun.charAt(0).toUpperCase()}${noun.slice(1)}`;
+  const placeholder = `Untitled ${noun}`;
   // Name the thing being saved. "Save draft" said nothing about what it was,
-  // and this header is shared with the campaign editor.
-  const saveLabel = kind === 'campaign' ? 'Save campaign' : 'Save template';
+  // and this header is shared with the campaign and landing editors.
+  const saveLabel = `Save ${noun}`;
+  const statusLabel =
+    status === 'saving'
+      ? 'Saving…'
+      : status === 'saved'
+        ? 'Autosaved'
+        : isDirty
+          ? 'Unsaved changes'
+          : 'Draft';
   const [nameError, setNameError] = useState<string | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -173,7 +201,7 @@ export default function EditorHeader({
      rather than silently filed as "Untitled". */
   const handleSave = () => {
     if (!name.trim()) {
-      setNameError(`Give this ${kind} a name before saving.`);
+      setNameError(`Give this ${noun} a name before saving.`);
       nameRef.current?.focus();
       return;
     }
@@ -275,8 +303,10 @@ export default function EditorHeader({
 
       <div className={styles.right}>
         <span className={styles.status} role="status">
-          <span className={`${styles.dot} ${status === 'saving' ? styles.dotSaving : ''}`} />
-          {STATUS_LABEL[status]}
+          <span
+            className={`${styles.dot}${status === 'saving' ? ` ${styles.dotSaving}` : ''}${isDirty && status !== 'saving' ? ` ${styles.dotUnsaved}` : ''}`}
+          />
+          {statusLabel}
         </span>
         {onSendTest && (
           <button type="button" className={styles.sbtn} onClick={onSendTest}>

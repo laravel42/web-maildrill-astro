@@ -1,14 +1,19 @@
 import type { CSSProperties, ReactNode } from 'react';
 import EditorHeader, { type LanguageOption, type SaveStatus } from './EditorHeader';
 import type { ChannelType } from '@/types/app';
-import { CHANNEL } from './channels';
+import { resolveEditorIdentity, type EditorIdentity } from './channels';
 import shellStyles from './ChannelEditorShell.module.css';
 
 type Props = {
-  channel: ChannelType;
+  /** Channel editor (email/sms/whatsapp/voice). Omit and pass `identity` for a non-channel editor. */
+  channel?: ChannelType;
+  /** Presentation identity for a non-channel editor (e.g. Landings). Wins over `channel`. */
+  identity?: EditorIdentity;
   name: string;
   onNameChange: (value: string) => void;
   kind?: 'template' | 'campaign';
+  /** Noun for the header's generated copy (e.g. 'landing'); see `EditorHeader`. */
+  nounLabel?: string;
   status?: SaveStatus;
   category?: string;
   categories?: readonly string[];
@@ -26,6 +31,7 @@ type Props = {
   toast?: ReactNode;
   className?: string;
   stageClassName?: string;
+  isDirty?: boolean;
 };
 
 /**
@@ -38,14 +44,20 @@ export default function ChannelEditorShell({
   className,
   stageClassName,
   channel,
+  identity,
   ...headerProps
 }: Props) {
+  const meta = resolveEditorIdentity({ identity, channel });
   return (
     <div
       className={`${shellStyles.shell}${className ? ` ${className}` : ''}`}
-      style={{ '--editor-channel-color': CHANNEL[channel].hex } as CSSProperties}
+      style={{ '--editor-channel-color': meta.hex } as CSSProperties}
     >
-      <EditorHeader channel={channel} {...headerProps} />
+      <EditorHeader
+        channel={channel}
+        identity={identity}
+        {...headerProps}
+      />
       <div className={`${shellStyles.stage}${stageClassName ? ` ${stageClassName}` : ''}`}>
         {children}
       </div>

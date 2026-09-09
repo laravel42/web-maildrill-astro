@@ -1,25 +1,34 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Builder42EditorHandle, Builder42EditorProps, BuilderSite } from 'builder42';
 import { retryDynamicImport } from '@/lib/app/retry-dynamic-import';
 import { landingBuilderAdapters } from '@/lib/app/builder42-adapters';
+import Icon from './Icon';
+import ChannelEditorShell, { shellStyles } from './shared/ChannelEditorShell';
+import ConfirmDialog from './shared/ConfirmDialog';
+import { LANDING_IDENTITY } from './shared/channels';
+import { useAutosave } from './shared/useAutosave';
+import { useToast } from './shared/useToast';
 import styles from './LandingPageBuilder.module.css';
 
 /**
- * Full-screen wrapper around Builder42 (vendored `packages/builder42/`, D9/F8 of
- * docs/52 in the pb-static repo) — the visual landing-page editor, mounted as a
- * creator of landing pages inside Maildrill's workspace.
+ * Full-screen wrapper around Builder42 (vendored `packages/builder42/`) — the
+ * visual landing-page editor, mounted as a creator of landing pages inside
+ * Maildrill's workspace.
  *
- * Same client-only + retry pattern as `VisualEmailBuilder.tsx`: the package pulls
- * in react-dom/client and browser-only APIs (drag-and-drop, ProseMirror), so it
- * must never load during Astro SSR. Unlike the email builder, this wrapper does
- * NOT use `ChannelEditorShell` — that shell is scoped to `ChannelType`
- * ('email' | 'sms' | 'whatsapp' | 'voice'), a messaging-channel concept a
- * landing page isn't. This ships its own minimal full-screen shell instead,
- * with a small header bar for Save/Close — the vendored editor's OWN chrome
- * (`Header.tsx`) doesn't know about this host's `onSave`/`onClose` by design
- * (docs/52 F7: those are only reachable via `Builder42EditorHandle`, the
- * imperative ref, so the shared chrome stays untouched between standalone
- * and embedded mode).
+ * Presents through the SAME shared shell as the email editor
+ * (`ChannelEditorShell` + `EditorHeader`, via `VisualEmailBuilder.tsx`) so the
+ * two read as one product: identical top bar, centred name field, indigo Save
+ * button, and bottom-centre toast. A landing is NOT a
+ * messaging channel, so it passes `LANDING_IDENTITY` (plain indigo `--accent`,
+ * the `landing` icon) instead of a `channel` — the shell was generalised beyond
+ * `ChannelType` for exactly this.
+ *
+ * Same client-only + retry pattern as `VisualEmailBuilder.tsx`: the package
+ * pulls in react-dom/client and browser-only APIs (drag-and-drop, ProseMirror),
+ * so it must never load during Astro SSR. Edit/Preview, viewport, and undo/redo
+ * live in Builder42's 50px canvas bar (same row as the email `#ee-editor-header`).
+ * Builder42's own document header is not mounted in embed. Save/close still
+ * go through `Builder42EditorHandle`.
  */
 
 type BuilderComponent = React.ComponentType<
@@ -29,7 +38,7 @@ type BuilderComponent = React.ComponentType<
 type Props = {
   /** Existing site to reopen for editing (BuilderSite JSON), if any. */
   initialSite?: BuilderSite | string;
-  /** Row name, shown in the host bar so it's clear which landing is open. */
+  /** Row name, shown in the shell's name field so it's clear which landing is open. */
   siteName?: string | null;
   onClose: () => void;
   onSave: (site: BuilderSite) => Promise<void> | void;
@@ -39,16 +48,44 @@ export default function LandingPageBuilder({ initialSite, siteName, onClose, onS
   const editorRef = useRef<Builder42EditorHandle>(null);
   const [Builder, setBuilder] = useState<BuilderComponent | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  // Editable copy of the site's display name, shown in the host's own bar —
-  // the vendored editor has no UI of its own for this (`meta.name` is only
-  // ever read internally, for the publish slug/export title). Seeded from the
-  // row's name; falls back to the initial site's own `meta.name` for a
-  // reopened landing whose row name and document had drifted apart, then to
-  // the empty placeholder for a brand-new one.
+  const { toast, tone, show } = useToast();
+  // Editable copy of the site's display name, shown in the shell's own name
+  // field — the vendored editor has no UI of its own for this (`meta.name` is
+  // only ever read internally, for the publish slug/export title). Seeded from
+  // the row's name; falls back to the initial site's own `meta.name` for a
+  // reopened landing whose row name and document had drifted apart, then to an
+  // empty placeholder for a brand-new one.
   const [name, setName] = useState(
     () => siteName ?? (typeof initialSite === 'object' ? initialSite?.meta.name : null) ?? '',
   );
+
+  // Persist current content: flush the editor's working copy through the
+  // imperative handle, which calls the host `onSave` with the whole site.
+  // Throws on failure so autosave/flush report it (mirrors VisualEmailBuilder).
+  const persistErrorRef = useRef<string | null>(null);
+  const persist = async () => {
+    const el = editorRef.current;
+    if (!el) throw new Error('Editor not ready');
+    persistErrorRef.current = null;
+    try {
+      await el.save();
+    } catch (err) {
+      persistErrorRef.current =
+        err instanceof Error ? err.message : 'Couldn’t save this landing.';
+      throw err;
+    }
+  };
+  const { status, isDirty, markDirty, flush } = useAutosave(persist);
+  const [leaveBlocked, setLeaveBlocked] = useState(false);
+  const pendingClose = useRef(false);
+  const prevSaveStatus = useRef(status);
+
+  useEffect(() => {
+    if (status === 'saved' && prevSaveStatus.current !== 'saved') {
+      show('Autosaved');
+    }
+    prevSaveStatus.current = status;
+  }, [status, show]);
 
   // Client-only load of the editor + its stylesheet (kept out of SSR) — same
   // reasoning as VisualEmailBuilder's own effect.
@@ -70,70 +107,124 @@ export default function LandingPageBuilder({ initialSite, siteName, onClose, onS
     };
   }, []);
 
-  // Esc closes the editor (mirrors VisualEmailBuilder's own shortcut).
+  // The editor loads its initial site asynchronously (dynamic import, then its
+  // own mount effect) — if the user edited the name before that finished, push
+  // the current value in now so it isn't silently dropped.
+  // Runs only when `Builder` becomes available (deps intentionally exclude
+  // `name`: the current value is read once, at editor-ready time, not tracked).
+  const nameRef = useRef(name);
+  nameRef.current = name;
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  // The editor loads its initial site asynchronously (dynamic import, then
-  // its own mount effect) — if the user edited the name field before that
-  // finished, push the current value in now so it isn't silently dropped.
-  useEffect(() => {
-    if (Builder) editorRef.current?.setSiteName(name);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (Builder) editorRef.current?.setSiteName(nameRef.current);
   }, [Builder]);
 
-  // Pushes the host's name field into the editor's own document as it's
-  // typed, so `site.meta.name` is never stale by the time Save reads it
-  // (`getFlushedSite()` inside the handle's `save()`/`onSave`).
+  // Pushes the shell's name field into the editor's own document as it's typed,
+  // so `site.meta.name` is never stale by the time Save reads it
+  // (`getFlushedSite()` inside the handle's `save()`), and marks the draft dirty
+  // so the autosave status reflects the pending change.
   const handleNameChange = (value: string) => {
     setName(value);
     editorRef.current?.setSiteName(value);
+    markDirty();
   };
 
-  const handleSave = async () => {
-    if (!editorRef.current) return;
-    setSaving(true);
-    try {
-      await editorRef.current.save();
-    } finally {
-      setSaving(false);
+  const handleSaveDraft = useCallback(async () => {
+    const ok = await flush();
+    if (ok) {
+      show(`“${name.trim() || 'Untitled landing'}” saved`);
+    } else {
+      show(persistErrorRef.current || 'Could not save.', 'alert');
     }
-  };
+  }, [flush, name, show]);
+
+  const overlayOpen = () =>
+    Boolean(document.querySelector('[data-c42-modal], [role="alertdialog"]'));
+
+  const requestClose = useCallback(async () => {
+    if (overlayOpen()) return;
+    if (status === 'saving') {
+      pendingClose.current = true;
+      return;
+    }
+    if (!isDirty) {
+      onClose();
+      return;
+    }
+    const ok = await flush();
+    if (ok) onClose();
+    else setLeaveBlocked(true);
+  }, [flush, isDirty, onClose, status]);
+
+  useEffect(() => {
+    if (!pendingClose.current) return;
+    if (status === 'saved') {
+      pendingClose.current = false;
+      onClose();
+    } else if (status === 'idle' && isDirty) {
+      pendingClose.current = false;
+      setLeaveBlocked(true);
+    }
+  }, [isDirty, onClose, status]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [isDirty]);
+
+  // Esc closes the editor unless a modal/dialog is in front. ⌘S / Ctrl+S saves.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        void handleSaveDraft();
+        return;
+      }
+      if (e.key !== 'Escape') return;
+      if (overlayOpen()) return;
+      void requestClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleSaveDraft, requestClose]);
 
   return (
-    <div className={styles.shell}>
-      <div className={styles.bar}>
-        <button type="button" className="sbtn" onClick={onClose}>
-          Back
-        </button>
-        <input
-          className={styles.title}
-          type="text"
-          value={name}
-          onChange={(e) => handleNameChange(e.target.value)}
-          placeholder="Untitled landing"
-          aria-label="Landing name"
-          spellCheck={false}
-        />
-        <button
-          type="button"
-          className="sbtn sbtn-primary"
-          onClick={() => void handleSave()}
-          disabled={saving || !Builder}
-        >
-          {saving ? 'Saving…' : 'Save'}
-        </button>
-      </div>
-      <div className={styles.stage}>
+    <>
+      <ChannelEditorShell
+        identity={LANDING_IDENTITY}
+        nounLabel="landing"
+        name={name}
+        onNameChange={handleNameChange}
+        status={status}
+        isDirty={isDirty}
+        onBack={() => void requestClose()}
+        onSaveDraft={() => void handleSaveDraft()}
+        toast={
+          toast ? (
+            <div
+              className={`${shellStyles.toast}${tone === 'alert' ? ` ${shellStyles.toastAlert}` : ''}`}
+              role={tone === 'alert' ? 'alert' : 'status'}
+              style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
+            >
+              <span className={shellStyles.toastIcon}>
+                <Icon name={tone === 'alert' ? 'x' : 'check'} size={13} stroke={3} />
+              </span>
+              {toast}
+            </div>
+          ) : null
+        }
+      >
         {loadError ? (
-          <div className={styles.state}>
+          <div className={shellStyles.state}>
             <p>Couldn&apos;t load the landing page editor.</p>
-            <p className={styles.muted}>{loadError}</p>
+            <p className={shellStyles.muted}>{loadError}</p>
+            <p className={shellStyles.muted}>
+              This usually means the page outlived a server restart or an update — reloading fixes it.
+            </p>
             <button type="button" className="sbtn" onClick={() => window.location.reload()}>
               Reload page
             </button>
@@ -143,7 +234,8 @@ export default function LandingPageBuilder({ initialSite, siteName, onClose, onS
             ref={editorRef}
             site={initialSite}
             onSave={onSave}
-            onClose={onClose}
+            onClose={() => void requestClose()}
+            onDirty={markDirty}
             themeMode="host"
             // Maildrill's workspace is English-only, and the editor's own
             // auto-translate feature is reported off by `landingBuilderAdapters`
@@ -152,12 +244,25 @@ export default function LandingPageBuilder({ initialSite, siteName, onClose, onS
             adapters={landingBuilderAdapters}
           />
         ) : (
-          <div className={styles.state}>
-            <span className={styles.spinner} aria-hidden="true" />
-            <p className={styles.muted}>Loading editor…</p>
+          <div className={shellStyles.state}>
+            <span className={shellStyles.spinner} aria-hidden="true" />
+            <p className={shellStyles.muted}>Loading editor…</p>
           </div>
         )}
-      </div>
-    </div>
+      </ChannelEditorShell>
+      {leaveBlocked ? (
+        <div className={styles.leaveGuard}>
+          <ConfirmDialog
+            title="Couldn’t save this landing"
+            message="Leave anyway? The latest edits on the canvas will be lost."
+            confirmLabel="Leave"
+            cancelLabel="Stay"
+            tone="danger"
+            onConfirm={onClose}
+            onCancel={() => setLeaveBlocked(false)}
+          />
+        </div>
+      ) : null}
+    </>
   );
 }

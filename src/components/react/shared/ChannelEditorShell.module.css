@@ -19,6 +19,226 @@
   flex-direction: column;
 }
 
+/* Email editor Edit/Preview — same segmented control as landing HostViews. */
+.stage :global(.eb-view-tabs) {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: var(--editor-control-h, 38px);
+  padding: 2px;
+  border: 1px solid var(--border2);
+  border-radius: 9px;
+  background: var(--surface2);
+  box-sizing: border-box;
+}
+
+.stage :global(.eb-view-tabs__btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text3);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.stage :global(.eb-view-tabs__btn:hover) {
+  color: var(--text);
+}
+
+.stage :global(.eb-view-tabs__btn--active) {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.stage :global(.eb-view-tabs__btn:focus-visible) {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Email editor desktop/mobile — same pill + menu as landing viewport. */
+.stage :global(.eb-viewport) {
+  position: relative;
+}
+
+.stage :global(.eb-viewport .eb-view-tabs__btn) {
+  gap: 6px;
+}
+
+.stage :global(.eb-viewport__menu) {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  min-width: 168px;
+  padding: 4px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border2);
+  border-radius: 9px;
+  box-shadow: 0 8px 28px rgba(28, 25, 23, 0.12);
+}
+
+.stage :global(.eb-viewport__item) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text2);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.stage :global(.eb-viewport__item:hover) {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+.stage :global(.eb-viewport__item--active) {
+  color: var(--accent-text);
+  background: var(--accent-tint);
+}
+
+/* Email undo/redo — same group as landing HostHistory. */
+.stage :global(.pbx-history) {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.stage :global(.pbx-history__btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: var(--editor-control-h, 38px);
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text3);
+  cursor: pointer;
+}
+
+.stage :global(.pbx-history__btn:disabled) {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.stage :global(.pbx-history__btn:not(:disabled):hover) {
+  color: var(--text);
+  background: var(--surface2);
+}
+
+.stage :global(.pbx-history__btn:focus-visible) {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Email undo/redo — same group as landing HostHistory. */
+.stage :global(.pbx-history) {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.stage :global(.pbx-history__btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: var(--editor-control-h, 38px);
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text3);
+  cursor: pointer;
+}
+
+.stage :global(.pbx-history__btn:disabled) {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.stage :global(.pbx-history__btn:not(:disabled):hover) {
+  color: var(--text);
+  background: var(--surface2);
+}
+
+.stage :global(.pbx-history__btn:focus-visible) {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Landing inner canvas bar — same 50px row as email `#ee-editor-header`. */
+.stage :global(.pbx-canvas-toolbar) {
+  --editor-control-h: 38px;
+  background: var(--surface);
+  border-bottom-color: var(--border);
+}
+
+.stage :global(.pbx-canvas-toolbar .pbx-host-toolbar__views) {
+  height: var(--editor-control-h);
+}
+
+.stage :global(.pbx-canvas-toolbar .pbx-header__viewport-dropdown) {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+
+.stage :global(.pbx-canvas-toolbar .pbx-history__btn),
+.stage :global(.pbx-canvas-toolbar .pbx-panel-toggle__btn) {
+  color: var(--text3);
+  width: 32px;
+  height: var(--editor-control-h);
+  transform: none;
+}
+
+.stage :global(.pbx-canvas-toolbar .pbx-history__btn:not(:disabled):hover),
+.stage :global(.pbx-canvas-toolbar .pbx-panel-toggle__btn:hover) {
+  color: var(--text);
+  background: var(--surface2);
+  transform: none;
+}
+
+.stage :global(.pbx-canvas-toolbar .pbx-header__viewport-menu) {
+  z-index: 20;
+  min-width: 168px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border2);
+  box-shadow: 0 8px 28px rgba(28, 25, 23, 0.12);
+}
+
+.stage :global(.pbx-canvas-toolbar .pbx-header__viewport-item) {
+  color: var(--text2);
+}
+
+.stage :global(.pbx-canvas-toolbar .pbx-header__viewport-item:hover) {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+.stage :global(.pbx-canvas-toolbar .pbx-header__viewport-item--active) {
+  color: var(--accent-text);
+  background: var(--accent-tint);
+}
+
 /* Same 22px dot grid as the Automations composer (`FlowCanvas`). Scoped under
    the shell so every channel template editor matches; `!important` beats the
    MUI canvas bgcolor on the preview Box. */
@@ -38,6 +258,237 @@
     var(--border) 1px,
     transparent 0
   ) !important;
+}
+
+/* Library drawer tabs — same strip as builder42 `.pbx-side-tabs`,
+   height locked to the 50px email editor header so the two share a row. */
+.stage :global(.eb-side-tabs) {
+  display: flex;
+  align-items: flex-end;
+  box-sizing: border-box;
+  height: 50px;
+  background: var(--border2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 8px 0;
+}
+
+.stage :global(.eb-side-tabs .MuiTabs-root) {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+}
+
+.stage :global(.eb-side-tabs .MuiTabs-flexContainer) {
+  gap: 2px;
+}
+
+.stage :global(.eb-side-tabs .MuiTabs-indicator) {
+  display: none;
+}
+
+.stage :global(.eb-side-tabs .MuiTab-root) {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  height: 41px;
+  padding: 0 8px;
+  margin-bottom: -1px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+  border-bottom: 3px solid transparent;
+  background: var(--surface2);
+  color: var(--text3);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 1;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease;
+}
+
+.stage :global(.eb-side-tabs .MuiTab-root:hover) {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.stage :global(.eb-side-tabs .MuiTab-root.Mui-selected) {
+  color: var(--accent-text);
+  background: var(--surface);
+  border-bottom-color: var(--accent-text);
+}
+
+.stage :global(.eb-side-tabs .MuiTab-root.Mui-selected:hover) {
+  color: var(--accent-text);
+}
+
+.stage :global(.eb-side-tabs .MuiTab-root:focus-visible) {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Library category groups — same chrome as builder42 `.pbx-style-group`. */
+.stage :global(.eb-style-group) {
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-img);
+  background: transparent;
+  box-shadow: none;
+}
+
+.stage :global(.eb-style-group::before) {
+  display: none;
+}
+
+.stage :global(.eb-style-group__trigger) {
+  min-height: 0;
+  padding: 7px 10px;
+  gap: 6px;
+  background: var(--surface2);
+  color: var(--text);
+  border-radius: var(--radius-img);
+  transition: background 160ms ease;
+}
+
+.stage :global(.eb-style-group--open .eb-style-group__trigger) {
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius-btn) var(--radius-btn) 0 0;
+}
+
+.stage :global(.eb-style-group__trigger:hover) {
+  background: var(--sidebar-hover);
+}
+
+.stage :global(.eb-style-group__trigger:focus-visible) {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.stage :global(.eb-style-group__trigger .MuiAccordionSummary-content) {
+  margin: 0;
+  align-items: center;
+}
+
+.stage :global(.eb-style-group__name) {
+  flex: 1;
+  font-family: inherit;
+  font-size: var(--fs-sm2);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: capitalize;
+}
+
+.stage :global(.eb-style-group__chevron) {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.stage :global(.eb-style-group__body) {
+  padding: 4px 10px 8px;
+  background: var(--surface);
+  border-radius: 0 0 var(--radius-btn) var(--radius-btn);
+}
+
+/* Email template cards — same chrome as landing `.pbx-template-card--page`. */
+.stage :global(.eb-template-grid) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stage :global(.eb-template-card) {
+  position: relative;
+  display: flex;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-img);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.stage :global(.eb-template-card--page) {
+  height: 200px;
+}
+
+.stage :global(.eb-template-card__body) {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.stage :global(.eb-template-card__action) {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  cursor: pointer;
+}
+
+.stage :global(.eb-template-card:has(.eb-template-card__action:hover)),
+.stage :global(.eb-template-card:has(.eb-template-card__action:focus-visible)) {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+
+.stage :global(.eb-template-card__action:focus-visible) {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.stage :global(.eb-template-card__preview) {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  overflow: hidden;
+  border-radius: var(--radius-img) var(--radius-img) 0 0;
+  background: var(--surface2);
+}
+
+.stage :global(.eb-template-card__preview .MuiSkeleton-root) {
+  height: 100%;
+}
+
+.stage :global(.eb-template-card__preview img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+
+.stage :global(.eb-template-card__preview--empty) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text3);
+  font-size: 11px;
+}
+
+.stage :global(.eb-template-card__label-row) {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  padding: 6px 12px 8px;
+}
+
+.stage :global(.eb-template-card__label) {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .stage > * {
@@ -103,4 +554,13 @@
   align-items: center;
   justify-content: center;
   flex: none;
+}
+
+.toastAlert {
+  background: var(--danger-strong, #b91c1c);
+  color: #fff;
+}
+
+.toastAlert .toastIcon {
+  background: rgba(255, 255, 255, 0.18);
 }

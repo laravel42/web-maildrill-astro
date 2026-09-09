@@ -10,6 +10,7 @@ import type { SaveStatus } from './EditorHeader';
  */
 export function useAutosave(save: () => Promise<void> | void, interval = 5000) {
   const [status, setStatus] = useState<SaveStatus>('idle');
+  const [isDirty, setIsDirty] = useState(false);
   const dirty = useRef(false);
   const inFlight = useRef(false);
   const saveRef = useRef(save);
@@ -17,6 +18,7 @@ export function useAutosave(save: () => Promise<void> | void, interval = 5000) {
 
   const markDirty = useCallback(() => {
     dirty.current = true;
+    setIsDirty(true);
     // Editing after a save makes the draft dirty again, so stop reporting
     // "saved" — otherwise the header keeps claiming a saved state while the
     // user types. A save already in flight is left alone.
@@ -31,10 +33,12 @@ export function useAutosave(save: () => Promise<void> | void, interval = 5000) {
     setStatus('saving');
     try {
       await saveRef.current();
+      setIsDirty(false);
       setStatus('saved');
       return true;
     } catch {
       dirty.current = true;
+      setIsDirty(true);
       setStatus('idle');
       return false;
     } finally {
@@ -49,5 +53,5 @@ export function useAutosave(save: () => Promise<void> | void, interval = 5000) {
     return () => window.clearInterval(id);
   }, [interval, run]);
 
-  return { status, markDirty, flush };
+  return { status, isDirty, markDirty, flush };
 }

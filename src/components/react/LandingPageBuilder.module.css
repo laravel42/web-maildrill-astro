@@ -1,133 +1,42 @@
-.shell {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  background: var(--surface, #fff);
-  color: var(--text);
-  font-family: 'Geist', system-ui, sans-serif;
-}
-
-.bar {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  height: 48px;
-  padding: 0 12px;
-  background: var(--surface, #fff);
-  border-bottom: 1px solid var(--border, #ecebe6);
-}
-
-/* Centred between Back and Save; truncates rather than pushing them around. */
-.title {
-  flex: 1;
-  min-width: 0;
-  text-align: center;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text2, #6b7280);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  /* This is a plain <input type="text"> with no border/background rules of
-     its own — without this reset, the browser's user-agent stylesheet paints
-     its default inset border (a hard, near-black line in Chrome/Firefox),
-     which read as visually broken against the rest of this bar (reported:
-     "Untitled landing" title field). Transparent + no border keeps it looking
-     like a label until focused. */
-  font-family: inherit;
-  background: transparent;
-  border: none;
-  outline: none;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm, 6px);
-  transition: background-color 0.12s ease, box-shadow 0.12s ease;
-}
-
-.title:hover {
-  background: var(--surface2, #f3f2ee);
-}
-
-.title:focus-visible {
-  background: var(--surface2, #f3f2ee);
-  box-shadow: 0 0 0 2px var(--accent, #4f46e5);
-}
-
-.title::placeholder {
-  color: var(--text3, #a5a39a);
-  font-weight: 500;
-}
-
-.stage {
-  position: relative;
-  z-index: 1;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.state {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 32px;
-  text-align: center;
-}
-
-.muted {
-  color: var(--text2, #6b7280);
-  font-size: 14px;
-}
-
-.spinner {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2px solid var(--border, #ecebe6);
-  border-top-color: var(--accent, #4f46e5);
-  animation: builder42-spin 0.8s linear infinite;
-}
-
-@keyframes builder42-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 /*
+ * The landing editor's shell, name field, Save button, autosave status,
+ * spinner and toast now come from the shared `ChannelEditorShell` /
+ * `EditorHeader` (the same chrome the email editor uses) — see
+ * `LandingPageBuilder.tsx`. The only styling that stays local is the modal
+ * stacking fix below, which is specific to embedding Builder42 inside that
+ * full-screen shell.
+ *
  * Builder42's own modals (`.pbx-modal`, e.g. the page-template "replace
  * content?" confirm dialog) are portalled straight to `document.body`
- * (`SimpleModal.tsx`), landing in the ROOT stacking context — not inside
- * `.shell` above. Builder42's vendored CSS gives them `z-index: 100`
- * (`chrome/modals.css`), which was fine as a standalone app, but here
- * `.shell` itself is `position: fixed; z-index: 1000` (same root stacking
- * context, needed to sit above the dashboard's own sidebar/topbar). Because
- * both are `position: fixed` siblings under `body`, `.shell` (1000) wins
- * over the modal (100): the confirm dialog renders, but `.shell`'s own
+ * (`SimpleModal.tsx`), landing in the ROOT stacking context — not inside the
+ * shell. Builder42's vendored CSS gives them `z-index: 100`
+ * (`chrome/modals.css`), which was fine as a standalone app, but here the
+ * shell (`ChannelEditorShell`) is `position: fixed; z-index: 1000` (same root
+ * stacking context, needed to sit above the dashboard's own sidebar/topbar).
+ * Because both are `position: fixed` siblings under `body`, the shell (1000)
+ * wins over the modal (100): the confirm dialog renders, but the shell's own
  * canvas intercepts every pointer event over it — clicking "Apply template"
- * silently hits the canvas underneath instead (reported as "the modal
- * doesn't appear" / "no puedo confirmar el reemplazo").
+ * silently hits the canvas underneath instead (reported as "the modal doesn't
+ * appear" / "no puedo confirmar el reemplazo").
  *
  * Fix lives here, not in the vendored package (`packages/VENDOR.md`'s "zero
- * code patches" goal for Builder42): raise the modal's own z-index above
- * `.shell`, matching this host's existing convention for modals nested
- * inside a full-screen editor shell (`MediaPickerModal`/`SendTestModal` use
- * 1400 over `ChannelEditorShell`'s own 1000, same pattern).
+ * code patches" goal for Builder42): raise the modal's own z-index above the
+ * shell, matching this host's existing convention for modals nested inside a
+ * full-screen editor shell (`MediaPickerModal`/`SendTestModal` use 1400 over
+ * `ChannelEditorShell`'s own 1000, same pattern).
  *
  * `.pbx-modal.pbx-modal` (repeated) doubles this selector's specificity
  * (0,2,0) over Builder42's own `.pbx-modal` (0,1,0): `builder42/style.css`
  * loads via a dynamic `import()` in `LandingPageBuilder.tsx`'s effect, so it
- * lands in `<head>` AFTER this CSS module's own stylesheet — equal
- * specificity would let source order flip the winner.
+ * lands in `<head>` AFTER this CSS module's own stylesheet — equal specificity
+ * would let source order flip the winner.
  */
 :global(.pbx-modal.pbx-modal) {
   z-index: 1400;
+}
+
+.leaveGuard {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
 }

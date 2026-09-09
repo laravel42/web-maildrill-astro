@@ -8,6 +8,87 @@
         "value": "geist",
         "createdAt": "2026-08-27T10:01:42.155Z",
         "reason": "Existing ChannelEditorShell / product UI font already shipped across Maildrill editors; not introducing a new face in this change."
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "packages/email-builder-standalone/src/App/ComponentsLibrary/ComponentsLibraryDrawer.tsx"
+        ],
+        "createdAt": "2026-09-09T03:24:00.000Z",
+        "reason": "Agent: pre-existing drawer width animation; this change only restyles the Blocks/Templates tab strip"
+      },
+      {
+        "rule": "border-accent-on-rounded",
+        "value": "*",
+        "files": [
+          "src/components/react/shared/ChannelEditorShell.module.css"
+        ],
+        "createdAt": "2026-09-09T03:24:00.037Z",
+        "reason": "Agent: matches builder42 .pbx-side-tabs (top-radius + 3px accent underline), user asked to style email library tabs the same"
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "packages/builder42/src/styles/chrome/canvas.css"
+        ],
+        "createdAt": "2026-09-09T03:46:25.991Z",
+        "reason": "Agent: pre-existing viewport width transition on .pbx-canvas__frame; this change only adds the empty-canvas overlay."
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "packages/builder42/src/builder/registry/behaviors/expandable.ts"
+        ],
+        "createdAt": "2026-09-09T04:02:30.310Z",
+        "reason": "Agent: pre-existing max-height transition on .pb-expandable--collapsed; this change only translates default Show more/less copy."
+      },
+      {
+        "rule": "layout-transition",
+        "value": "padding",
+        "files": [
+          "packages/email-builder-standalone/src/App/TemplatePanel/index.tsx"
+        ],
+        "createdAt": "2026-09-09T06:01:04.530Z",
+        "reason": "Pre-existing MUI header padding transition when the library drawer opens; this edit only relocates the viewport control."
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "packages/email-builder-standalone/src/App/TemplatePanel/index.tsx"
+        ],
+        "createdAt": "2026-09-09T06:01:29.527Z",
+        "reason": "Agent: pre-existing MUI header padding transition when the library drawer opens; this edit only relocates the viewport control next to Edit/Preview."
+      },
+      {
+        "rule": "overused-font",
+        "value": "geist",
+        "files": [
+          "src/components/react/shared/ChannelEditorShell.module.css"
+        ],
+        "createdAt": "2026-09-09T06:06:45.432Z",
+        "reason": "Agent: existing ChannelEditorShell font already ignored as geist; detector reports Geist on this file when adding HostHistory styles."
+      },
+      {
+        "rule": "overused-font",
+        "value": "*",
+        "files": [
+          "src/components/react/shared/ChannelEditorShell.module.css"
+        ],
+        "createdAt": "2026-09-09T06:06:50.843Z",
+        "reason": "Agent: pre-existing Geist on ChannelEditorShell; this edit only adds HostHistory button styles matching the landing editor."
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "packages/email-builder-standalone/src/App/index.tsx"
+        ],
+        "createdAt": "2026-09-09T06:24:06.860Z",
+        "reason": "Agent: pre-existing compact-rail width transitions; this edit only removes the LIBRARY tab handle."
       }
     ]
   }

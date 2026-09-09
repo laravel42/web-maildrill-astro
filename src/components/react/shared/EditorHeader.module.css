@@ -40,6 +40,11 @@
   color: var(--text);
   background: var(--surface2);
 }
+.back:focus-visible {
+  outline: none;
+  color: var(--text);
+  box-shadow: var(--focus-ring);
+}
 
 .nameField {
   display: flex;
@@ -356,6 +361,9 @@
   background: var(--success-strong, #22c55e);
 }
 .dotSaving {
+  background: var(--warning-strong, #d97706);
+}
+.dotUnsaved {
   background: var(--warning-strong, #d97706);
 }
 

@@ -26,19 +26,16 @@ type Props = {
 
 export default function LandingPageBuilderPage({ id, name, document, live }: Props) {
   const [landingId, setLandingId] = useState(id);
-  const [error, setError] = useState<string | null>(null);
   const [closed, setClosed] = useState(false);
 
   const handleSave = useCallback(
     async (site: BuilderSite) => {
       if (!live) {
-        setError('This landing can’t be saved — the workspace session is missing. Sign in again.');
-        return;
+        throw new Error(
+          'This landing can’t be saved — the workspace session is missing. Sign in again.',
+        );
       }
-      setError(null);
       const document_ = site as unknown as Record<string, unknown>;
-      // The editor owns the site's display name (`meta.name`); mirroring it onto
-      // the row keeps the list and the editor from disagreeing.
       const siteName = site.meta?.name?.trim() || 'Untitled landing';
       try {
         if (landingId) {
@@ -46,17 +43,12 @@ export default function LandingPageBuilderPage({ id, name, document, live }: Pro
         } else {
           const created = await landingsApi.create({ name: siteName, document: document_ });
           setLandingId(created.id);
-          // Replace, not push: the pre-save URL is not a state worth going back to.
           window.history.replaceState({}, '', routes.app.landingBuilder(created.id));
         }
       } catch (err) {
-        setError(
-          err instanceof ApiError
-            ? `Couldn’t save this landing: ${err.message}`
-            : 'Couldn’t save this landing.',
-        );
-        // Rethrow so the editor's own save state doesn't report success.
-        throw err;
+        throw err instanceof ApiError
+          ? new Error(`Couldn’t save this landing: ${err.message}`)
+          : new Error('Couldn’t save this landing.');
       }
     },
     [landingId, live],
@@ -70,34 +62,11 @@ export default function LandingPageBuilderPage({ id, name, document, live }: Pro
   if (closed) return null;
 
   return (
-    <>
-      {error ? (
-        <div
-          role="alert"
-          style={{
-            position: 'fixed',
-            top: 12,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 200,
-            maxWidth: '90vw',
-            padding: '10px 14px',
-            borderRadius: 10,
-            border: '1px solid var(--danger)',
-            background: 'var(--danger-bg)',
-            color: 'var(--danger-strong)',
-            fontSize: 13,
-          }}
-        >
-          {error}
-        </div>
-      ) : null}
-      <LandingPageBuilder
-        initialSite={(document as unknown as BuilderSite) ?? undefined}
-        siteName={name}
-        onSave={handleSave}
-        onClose={handleClose}
-      />
-    </>
+    <LandingPageBuilder
+      initialSite={(document as unknown as BuilderSite) ?? undefined}
+      siteName={name}
+      onSave={handleSave}
+      onClose={handleClose}
+    />
   );
 }

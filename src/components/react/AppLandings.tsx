@@ -23,11 +23,9 @@ const PAGE_SIZE = 25;
 type SortKey = 'name' | 'updatedAt' | 'createdAt' | 'publishedAt';
 
 /**
- * Landings list. Each row is one whole Builder42 site, so the columns are the
- * ones that matter for getting it live — status against the published copy, the
- * public URL, how many pages it holds, and its document weight (which is what
- * decides whether publishing will succeed) — not campaign metrics, which an
- * unpublished landing does not have.
+ * Landings list. Each row is one whole Builder42 site: name, how many pages
+ * it holds, and document weight. Publishing is not wired yet, so the list
+ * does not advertise a public URL or a Publish action until that lands.
  */
 export default function AppLandings({
   initial,
@@ -318,7 +316,7 @@ export default function AppLandings({
                       <Icon name="arrow-up-right" size={12} />
                     </a>
                   ) : (
-                    <span className={styles.muted}>Not published</span>
+                    <span className={styles.muted}>—</span>
                   )}
                 </div>
                 <div className={`${styles.numeric} tnum`}>{row.pageCount}</div>
@@ -371,16 +369,6 @@ export default function AppLandings({
                           <Icon name="globe" size={14} /> Copy public URL
                         </button>
                       ) : null}
-                      {/* Publishing is not wired yet; shown disabled so the
-                          capability is discoverable instead of missing. */}
-                      <button
-                        type="button"
-                        role="menuitem"
-                        disabled
-                        title="Publishing isn’t available yet."
-                      >
-                        <Icon name="send" size={14} /> Publish
-                      </button>
                       <button
                         type="button"
                         role="menuitem"
@@ -430,7 +418,7 @@ export default function AppLandings({
       {renaming ? (
         <ConfirmDialog
           title={`Rename “${renaming.name}”`}
-          message="This is the workspace name — it doesn’t change a published URL."
+          message="This is the workspace name."
           confirmLabel="Rename"
           tone="default"
           onConfirm={() => void rename()}

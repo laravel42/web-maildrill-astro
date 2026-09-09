@@ -8,10 +8,9 @@
  * browser never names a workspace. See `src/lib/app/api.ts`.
  *
  * Publishing is deliberately not wired yet (see
- * `docs/landing-pages-builder-integration.md`): the two publish verbs exist
- * here so the UI can render their affordances disabled instead of hiding a
- * concept the model already has, and the backend answers them with
- * `not_implemented` until that phase lands.
+ * `docs/landing-pages-builder-integration.md`). The two publish verbs exist
+ * on this client for the hosting phase; the list does not advertise them
+ * until that lands.
  */
 import { api } from './api';
 
