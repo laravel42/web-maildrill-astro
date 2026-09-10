@@ -237,7 +237,8 @@ Worker roles: `dispatch`, `events`, `publisher`, `scheduler`, `maintenance`, `te
 | [`README.md`](README.md)                                       | Quick start, API surface                                                                  |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)                 | Original messaging-engine design (long; some webhook-centric language is **stale** vs §3) |
 | [`docs/posthog-infobip-hog.md`](docs/posthog-infobip-hog.md)   | Infobip→PostHog + poller + HogQL env                                                      |
-| [`docs/email-providers.md`](docs/email-providers.md)           | Email `MessagingProvider` drivers (Infobip/Cloudflare/SES), selection, SES/SNS setup       |
+| [`docs/posthog-ses-hog.md`](docs/posthog-ses-hog.md)           | SES→SNS→PostHog Hog function (same poller, SES-specific payload mapping)                  |
+| [`docs/email-providers.md`](docs/email-providers.md)           | Email `MessagingProvider` drivers (Infobip/Cloudflare/SES), selection, SES Tenants, throttling |
 | [`docs/infobip-api-scheme.md`](docs/infobip-api-scheme.md)     | Product/Infobip data model notes                                                          |
 | [`docs/posthog-views.sql`](docs/posthog-views.sql)             | Optional PostHog SQL views                                                                |
 | [`docs/billing-architecture.md`](docs/billing-architecture.md) | Wallet/ledger/pricing design, ER + sequence diagrams, API surface                         |
