@@ -13,9 +13,7 @@ const base: Omit<WizardValidationInput, 'step'> = {
   audienceList: [
     { id: 'list-1', kind: 'list', name: 'Newsletter', desc: 'Subscribers', count: 100 },
   ],
-  message: '',
   selTpl: { id: 'tpl-1', name: 'Summer Sale', thumb: '#000', cat: 'Promo' },
-  hasChannelTemplates: true,
   live: true,
   mode: 'create',
   schedule: 'now',
@@ -41,36 +39,20 @@ describe('getStepBlockedReason', () => {
     ).toMatch(/template/i);
   });
 
-  it('requires a WhatsApp template on step 1 when approved templates exist', () => {
-    expect(
-      getStepBlockedReason({
-        ...base,
-        step: 1,
-        channel: 'whatsapp',
-        selTpl: null,
-        hasChannelTemplates: true,
-      }),
-    ).toMatch(/whatsapp template/i);
-    expect(
-      getStepBlockedReason({
-        ...base,
-        step: 1,
-        channel: 'whatsapp',
-        selTpl: null,
-        hasChannelTemplates: false,
-      }),
-    ).toBeNull();
-  });
+  // Every channel is template-only — there is no composer downstream that
+  // could supply content later, so step 1's pick is required everywhere.
+  it.each(['sms', 'voice', 'whatsapp'] as const)(
+    'requires a template on step 1 for %s',
+    (channel) => {
+      expect(getStepBlockedReason({ ...base, step: 1, channel, selTpl: null })).toMatch(/template/i);
+      expect(getStepBlockedReason({ ...base, step: 1, channel })).toBeNull();
+    },
+  );
 
-  it('does not require a template on step 1 for SMS', () => {
+  it('names the WhatsApp requirement as an approved template', () => {
     expect(
-      getStepBlockedReason({
-        ...base,
-        step: 1,
-        channel: 'sms',
-        selTpl: null,
-      }),
-    ).toBeNull();
+      getStepBlockedReason({ ...base, step: 1, channel: 'whatsapp', selTpl: null }),
+    ).toMatch(/approved whatsapp template/i);
   });
 
   it('requires a verified sending domain and From on step 1 for live email', () => {
@@ -90,39 +72,18 @@ describe('getStepBlockedReason', () => {
     ).toMatch(/list or segment/i);
   });
 
-  it('requires email template id in live mode on step 3', () => {
+  it('never blocks the tracking step (step 3) — toggles are optional', () => {
+    expect(getStepBlockedReason({ ...base, step: 3 })).toBeNull();
+    expect(isWizardStepBlocked({ ...base, step: 3 })).toBe(false);
+    expect(getStepBlockedReason({ ...base, step: 3, channel: 'voice' })).toBeNull();
+  });
+
+  it('blocks the schedule step (step 4) silently when the time is in the past', () => {
+    expect(getStepBlockedReason({ ...base, step: 4, schedule: 'now' })).toBeNull();
     expect(
       getStepBlockedReason({
         ...base,
-        step: 3,
-        selTpl: null,
-      }),
-    ).toMatch(/template/i);
-  });
-
-  it('requires message or template for SMS on step 3', () => {
-    const sms = {
-      ...base,
-      channel: 'sms' as const,
-      selTpl: null,
-      message: '',
-    };
-    expect(getStepBlockedReason({ ...sms, step: 3 })).toMatch(/message or choose a template/i);
-    expect(getStepBlockedReason({ ...sms, step: 3, message: 'Hi there' })).toBeNull();
-  });
-
-  it('never blocks the tracking step (step 4) — toggles are optional', () => {
-    expect(getStepBlockedReason({ ...base, step: 4 })).toBeNull();
-    expect(isWizardStepBlocked({ ...base, step: 4 })).toBe(false);
-    expect(getStepBlockedReason({ ...base, step: 4, channel: 'voice' })).toBeNull();
-  });
-
-  it('blocks step 5 without a message when schedule is in the past', () => {
-    expect(getStepBlockedReason({ ...base, step: 5, schedule: 'now' })).toBeNull();
-    expect(
-      getStepBlockedReason({
-        ...base,
-        step: 5,
+        step: 4,
         schedule: 'later',
         scheduledDate: '2020-01-01',
         scheduledTime: '09:00',
@@ -131,7 +92,7 @@ describe('getStepBlockedReason', () => {
     expect(
       isWizardStepBlocked({
         ...base,
-        step: 5,
+        step: 4,
         schedule: 'later',
         scheduledDate: '2020-01-01',
         scheduledTime: '09:00',
@@ -140,7 +101,7 @@ describe('getStepBlockedReason', () => {
     expect(
       isWizardStepBlocked({
         ...base,
-        step: 5,
+        step: 4,
         schedule: 'later',
         scheduledDate: '2099-06-15',
         scheduledTime: '09:00',
@@ -148,10 +109,17 @@ describe('getStepBlockedReason', () => {
     ).toBe(false);
   });
 
-  it('reuses send guard on step 6 in live create mode', () => {
+  it('reuses the send guard on the review step (step 5) in live create mode', () => {
     expect(
-      getStepBlockedReason({ ...base, step: 6, audienceIds: new Set(), selTpl: null }),
+      getStepBlockedReason({ ...base, step: 5, audienceIds: new Set(), selTpl: null }),
     ).toMatch(/audience before sending/i);
-    expect(getStepBlockedReason({ ...base, step: 6, mode: 'edit' })).toBeNull();
+    expect(getStepBlockedReason({ ...base, step: 5, selTpl: null })).toMatch(/template/i);
+    expect(getStepBlockedReason({ ...base, step: 5, mode: 'edit' })).toBeNull();
+  });
+
+  it('requires a template before sending on the text channels too', () => {
+    expect(
+      getStepBlockedReason({ ...base, step: 5, channel: 'sms', selTpl: null }),
+    ).toMatch(/template/i);
   });
 });

@@ -467,80 +467,190 @@
   scrollbar-color: color-mix(in srgb, var(--text) 28%, transparent) transparent;
 }
 
-.tplSidebarList .tplPreview {
-  height: 84px;
+/* The reused library gallery card sizes its preview as a fixed-height
+   thumbnail, which crops a real email down to its first inch. Both overrides
+   below combine with `.tplGalleryCard` for specificity: the base sizing comes
+   from `AppTemplates.module.css`, a different CSS module whose class can't be
+   named from here.
+
+   `fill` — the email slideshow shows ONE template at a time in a tall column,
+   so the preview takes every pixel the rest of the card doesn't need, and the
+   framed email is read rather than cropped. `.tplGalleryMeta` below is what
+   frees that space: the library card lets the meta block absorb the slack so
+   equal-height grid cards pin their stats to the bottom, which here just
+   opened a dead gap under the category bar. */
+.tplGalleryCard .tplPreviewFill {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  overflow: hidden;
+  align-items: stretch;
+  padding: 0;
+  /* An email shorter than the column leaves slack under the frame; white (the
+     colour the framed email already forces on itself, in both themes) keeps
+     that as one continuous canvas instead of a grey band under the message. */
+  background: #fff;
 }
-.tplSidebarList .tplCard {
+
+/* The framed email IS the card's top surface here, so the preview root's own
+   card chrome (border + rounded corners, sized for a drawer) is dropped
+   rather than nested inside the card's. Matched by position: the class
+   belongs to TemplatePreview's CSS module and can't be named from here. */
+.tplGalleryCard .tplPreviewFill > * {
+  border: 0;
+  border-radius: 0;
+}
+
+.tplGalleryCard .tplGalleryMeta {
   flex: none;
+  /* Opaque, so selecting a card tints its frame and not the name/stats block
+     underneath — that text reads the same whether or not it's the pick. */
+  background: var(--surface);
 }
 
-/* Step 3 — the template already chosen on step 1. */
-.tplChosen {
-  max-width: 240px;
-}
-.tplChosen .tplCard {
-  cursor: default;
-}
-.tplChosen .tplCard:hover {
-  border-color: var(--accent);
+/* `compact` — real message-body/WA-bubble content varies in length, unlike
+   the fixed-size decorative fixture; size to content (bounded, scrollable)
+   so more templates fit inline. */
+.tplGalleryCard .tplPreviewCompact {
+  height: auto;
+  min-height: 56px;
+  max-height: 220px;
+  overflow-y: auto;
+  align-items: flex-start;
+  padding: 10px 12px;
 }
 
-/* Template cards — sidebar stack and content-step confirmation. */
-.tplCard {
+/* Step 1 — horizontal, one-at-a-time slideshow of real templates. */
+.tplSlideshow {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  width: 100%;
+  gap: 10px;
+}
+
+.tplSlideshowTrack {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.tplSlideshowTrack::-webkit-scrollbar {
+  display: none;
+}
+
+.tplSlide {
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+  display: flex;
+  padding: 2px;
+}
+
+/* Wizard selection chrome layered on top of the reused library gallery card
+   (`AppTemplates.module.css` `.gcard`/`.preview`/`.gcatbar`/`.gmeta`/…). */
+.tplGalleryCard {
   border: 1.5px solid var(--border2);
   background: var(--surface);
-  border-radius: 12px;
-  overflow: hidden;
-  cursor: pointer;
+  border-radius: 16px;
   padding: 0;
+  width: 100%;
   text-align: left;
   font: inherit;
   color: inherit;
+  cursor: pointer;
 }
-.tplCard:hover {
+.tplGalleryCard:hover {
   border-color: color-mix(in srgb, var(--accent) 42%, var(--border2));
 }
-.tplCard:focus-visible {
-  border-radius: 12px;
-}
-.tplCardOn {
+.tplGalleryCardOn {
   border-color: var(--accent);
   background: var(--accent-tint);
 }
-.tplCardOn:hover {
+.tplGalleryCardOn:hover {
   border-color: var(--accent);
 }
-.tplPreview {
-  height: 100px;
-  background: var(--surface2);
-  padding: 10px 12px 0;
+
+.tplSlideshowNav {
+  flex: none;
   display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: flex-end;
-}
-.tplMeta {
-  padding: 10px 12px 12px;
-}
-.tplName {
-  font-size: 12.5px;
-  font-weight: 600;
-}
-.tplSub {
-  font-size: 11.5px;
-  color: var(--text3);
-  margin-top: 2px;
+  gap: 10px;
 }
 
+.tplSlideshowArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  background: none;
+  color: color-mix(in srgb, var(--text) 62%, transparent);
+  padding: 0;
+  cursor: pointer;
+}
+.tplSlideshowArrow:hover:not(:disabled) {
+  color: var(--accent);
+}
+.tplSlideshowArrow:disabled {
+  opacity: 0.22;
+  cursor: default;
+}
+
+.tplSlideshowDots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tplSlideshowDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: color-mix(in srgb, var(--text) 22%, transparent);
+  cursor: pointer;
+}
+.tplSlideshowDotOn {
+  width: 16px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+.iconFlip {
+  transform: rotate(180deg);
+}
+
+/* Steps 2+ on email: the message fills the column edge to edge, so it is
+   judged at the width and height it will actually be read at rather than as
+   an inset thumbnail. White because the framed email forces white on itself
+   in both themes; a shorter email leaves canvas, not a tinted band. */
 .previewEmailLive {
+  flex: 1;
   width: 100%;
-  max-height: 100%;
+  height: 100%;
   min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  background: #fff;
+}
+
+/* Drop the preview root's own drawer chrome (border, rounded corners) — full
+   bleed has no frame to sit inside. Matched by position, and qualified by the
+   column for weight: the class belongs to TemplatePreview's CSS module, so it
+   can't be named here, and a bare `.previewEmailLive > *` would only tie with
+   it on specificity — leaving bundle order to decide the winner. */
+.previewCol .previewEmailLive > * {
+  border: 0;
+  border-radius: 0;
+  max-height: 100%;
 }
 
 .previewEmpty {
@@ -553,16 +663,6 @@
   color: var(--text3);
   font-size: 13px;
   text-align: center;
-}
-
-.previewCol .previewEmailLive :global(.pvViewport) {
-  max-height: 100%;
-  border-radius: 10px;
-}
-
-.previewCol .previewEmailLive :global(.pvMsg) {
-  min-height: 120px;
-  font-size: 12px;
 }
 
 .previewPhoneShell {

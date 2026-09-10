@@ -16,13 +16,6 @@ import type {
   TemplateChoice,
 } from './CampaignWizard.types';
 
-export const CONTENT_SUB: Record<ChannelType, string> = {
-  email: 'Review your email',
-  sms: 'Write your text message',
-  whatsapp: 'Prepare your WhatsApp message',
-  voice: 'Write your voice script',
-};
-
 /** "Newsletter (856)" — one audience as shown in the review step and toasts. */
 export function audienceLabelOf(a: AudienceChoice | null): string {
   if (!a) return 'No audience selected';
@@ -236,10 +229,7 @@ export type WizardValidationInput = {
   channel: ChannelType;
   audienceIds: Set<string>;
   audienceList: AudienceChoice[];
-  message: string;
   selTpl: Template | null;
-  /** Whether the active channel currently has any selectable templates. */
-  hasChannelTemplates: boolean;
   live: boolean;
   mode: 'create' | 'edit';
   schedule: Schedule;
@@ -250,32 +240,27 @@ export type WizardValidationInput = {
 /** Whether Continue / Send should be disabled (includes schedule validity without a user-facing message). */
 export function isWizardStepBlocked(input: WizardValidationInput): boolean {
   if (getStepBlockedReason(input) !== null) return true;
-  if (input.step === 5 && input.schedule === 'later') {
+  if (input.step === 4 && input.schedule === 'later') {
     return !isScheduledInFuture(input.scheduledDate, input.scheduledTime);
   }
   return false;
 }
 
 /**
- * Template is chosen on step 1's sidebar. Email always needs one; WhatsApp
- * needs one when any approved templates exist. SMS and voice can skip.
+ * Every campaign sends a saved template, on every channel — there is no
+ * ad-hoc composer, so the step-1 pick is the campaign's content and nothing
+ * downstream can supply it later. In fixture mode a card without an id still
+ * counts: there is no backend to hold a real one.
  */
 function templatePickReason(
   channel: ChannelType,
   selTpl: Template | null,
   live: boolean,
-  hasChannelTemplates: boolean,
 ): string | null {
-  if (channel === 'email') {
-    if (live) {
-      if (!selTpl?.id) return 'Choose a template — an email campaign needs content to send.';
-    } else if (!selTpl) {
-      return 'Choose a template to continue.';
-    }
-    return null;
-  }
-  if (channel === 'whatsapp' && hasChannelTemplates && !selTpl) {
-    return 'Choose a WhatsApp template to continue.';
+  if (live ? !selTpl?.id : !selTpl) {
+    return channel === 'whatsapp'
+      ? 'Choose an approved WhatsApp template to continue.'
+      : `Choose a template — a ${channel === 'email' ? 'campaign' : channel} campaign needs content to send.`;
   }
   return null;
 }
@@ -292,9 +277,7 @@ export function getStepBlockedReason(input: WizardValidationInput): string | nul
     channel,
     audienceIds,
     audienceList,
-    message,
     selTpl,
-    hasChannelTemplates,
     live,
   } = input;
   const isEmail = channel === 'email';
@@ -310,31 +293,23 @@ export function getStepBlockedReason(input: WizardValidationInput): string | nul
         }
         if (!fromEmail.trim()) return 'Choose a sender to continue.';
       }
-      return templatePickReason(channel, selTpl, live, hasChannelTemplates);
+      return templatePickReason(channel, selTpl, live);
     case 2:
       if (audienceList.length === 0) {
         return 'Create a list or segment under Audience before continuing.';
       }
       if (audienceIds.size === 0) return 'Pick at least one audience to continue.';
       return null;
-    case 3: {
-      const tplReason = templatePickReason(channel, selTpl, live, hasChannelTemplates);
-      if (tplReason) return tplReason;
-      if (!isEmail && !selTpl && !message.trim()) {
-        return 'Write a message or choose a template to continue.';
-      }
-      return null;
-    }
-    // 4 (tracking) and 5 (schedule) have no text-blocking conditions; the
+    // 3 (tracking) and 4 (schedule) have no text-blocking conditions; the
     // schedule step's time validity gates via isWizardStepBlocked only.
-    case 6:
+    case 5:
       return getCampaignSendBlockedReason(input);
     default:
       return null;
   }
 }
 
-/** Final send guard for live create mode — same rules as step 5 validation. */
+/** Final send guard for live create mode — same rules as the per-step validation. */
 export function getCampaignSendBlockedReason(
   input: Omit<WizardValidationInput, 'step'>,
 ): string | null {
@@ -346,7 +321,6 @@ export function getCampaignSendBlockedReason(
     domainsReady,
     audienceIds,
     audienceList,
-    message,
     selTpl,
     live,
     mode,
@@ -365,21 +339,17 @@ export function getCampaignSendBlockedReason(
     }
     if (!fromEmail.trim()) return 'Choose a sender before sending.';
   }
-  const draftContent = isEmail ? undefined : message.trim() ? { text: message } : undefined;
-  if (!selTpl?.id && !draftContent) {
-    return isEmail
-      ? 'Choose a template — an email campaign needs content to send.'
-      : 'Write a message before sending.';
+  if (!selTpl?.id) {
+    return `Choose a template — a ${isEmail ? 'campaign' : channel} campaign needs content to send.`;
   }
   return null;
 }
 
-/** Left-rail step definitions: `[title, subtitle]`. Step 3's subtitle is channel-specific. */
-export function buildStepDefs(contentSub: string): [string, string][] {
+/** Left-rail step definitions: `[title, subtitle]`. */
+export function buildStepDefs(): [string, string][] {
   return [
     ['Sender', 'Basics'],
     ['Audience', 'Choose recipients'],
-    ['Content', contentSub],
     ['Tracking', 'Engagement options'],
     ['Schedule', 'Set delivery'],
     ['Review', 'Check everything'],
@@ -387,7 +357,7 @@ export function buildStepDefs(contentSub: string): [string, string][] {
 }
 
 /* ---------------------------------------------------------------------------
- * Tracking step (step 4)
+ * Tracking step (step 3)
  * ------------------------------------------------------------------------- */
 
 export type TrackingCapability = {

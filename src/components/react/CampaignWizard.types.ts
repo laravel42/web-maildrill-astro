@@ -1,7 +1,7 @@
 import type { ChannelSenders } from '@/lib/app/channel-senders';
 import type { ChannelType, TemplateApprovalStatus } from '@/types/app';
 
-export type Step = 1 | 2 | 3 | 4 | 5 | 6;
+export type Step = 1 | 2 | 3 | 4 | 5;
 export type Schedule = 'now' | 'later';
 
 /**
@@ -62,9 +62,9 @@ export type CampaignDraft = {
   listId?: string;
   /** Primary segment for APIs that accept a single selector. */
   segmentId?: string;
-  /** Set when the campaign sends a saved template rather than ad-hoc content. */
+  /** The saved template this campaign sends — required on every channel. */
   templateId?: string;
-  /** Ad-hoc message body, used by SMS/WhatsApp/Voice instead of a template. */
+  /** Send-time payload: email subject/from, the resolved body for the text channels, tracking flags. */
   content?: Record<string, unknown>;
   /** Human label for the chosen audience, for toasts and the review step. */
   audienceLabel: string;
@@ -88,7 +88,7 @@ export type Props = {
   initialAudienceIds?: string[];
   /** Saved template of the campaign being edited. */
   initialTemplateId?: string | null;
-  /** Saved body of the campaign being edited (SMS/WhatsApp/Voice). */
+  /** Saved body of the campaign being edited (SMS/WhatsApp/Voice) — previewed, not editable. */
   initialMessage?: string;
   initialSchedule?: Schedule;
   /** Saved scheduled send time (edit mode). */

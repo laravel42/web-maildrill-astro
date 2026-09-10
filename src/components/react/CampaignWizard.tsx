@@ -1,20 +1,21 @@
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { ChannelType } from '@/types/app';
 import { api } from '@/lib/app/api';
-import type { ApiTemplate } from '@/lib/app/template-map';
+import { toGalleryTemplate, templateEngagement, type ApiTemplate } from '@/lib/app/template-map';
+import { CATEGORY_COLOR } from '@/lib/app/templates-data';
 import type { ChannelSenders } from '@/lib/app/channel-senders';
 import { channelSender } from '@/lib/app/channel-senders';
 import Icon from './Icon';
 import GalleryPreview, { FauxEmail, type GalleryPreviewData } from './shared/GalleryPreview';
 import TemplatePreview from './shared/TemplatePreview';
+import libStyles from './AppTemplates.module.css';
 import { CHANNEL, CHANNEL_ORDER, channelLabel } from './shared/channels';
-import { formatDuration, smsSegments, voiceSeconds } from './shared/messaging';
+import { formatDuration, voiceSeconds } from './shared/messaging';
 import { useEscapeClose } from './shared/useEscapeClose';
 import {
   audiencesLabelOf,
   buildReviewRows,
   buildStepDefs,
-  CONTENT_SUB,
   emailSenderForDomain,
   getStepBlockedReason,
   isWizardStepBlocked,
@@ -47,10 +48,12 @@ import {
 export type { Props };
 
 /* ---------------------------------------------------------------------------
- * CampaignWizard — faithful React port of the 6-step campaign wizard modal.
+ * CampaignWizard — faithful React port of the campaign wizard modal.
  * The parent gates mounting (renders this only when open), so the modal shows
- * immediately. Logical step order is 1..6: Basics (template sidebar), Audience, Content, Tracking,
- * Schedule, Review (matching `stepDefs` in the design).
+ * immediately. Logical step order is 1..5: Basics (template sidebar), Audience,
+ * Tracking, Schedule, Review (matching `stepDefs`). Every campaign sends a
+ * saved template, so the content it sends is settled on step 1 — there is no
+ * separate compose step on any channel.
  * ------------------------------------------------------------------------- */
 
 const INDIGO = '#4f46e5';
@@ -156,39 +159,113 @@ function AudienceSection({
   );
 }
 
-function TemplateCard({
+/**
+ * One template card for the step-1 picker (slideshow + inline list). Reuses
+ * the Templates library's own gallery-card markup and CSS
+ * (`AppTemplates.module.css`) so a template looks the same here as it does
+ * there: real content preview, category bar, and the same
+ * delivery-rate/opens/clicks/failed + created-ago line (`templateEngagement`),
+ * fetched once per card in `live` mode. Fixture mode (no backend) or a
+ * template with no id yet falls back to the decorative preview with no stats.
+ */
+function TemplateGalleryCard({
   t,
   channel,
+  live,
   selected,
   onSelect,
+  previewFit,
 }: {
   t: Template;
   channel: ChannelType;
+  live: boolean;
   selected: boolean;
-  onSelect?: (t: Template) => void;
+  onSelect: (t: Template) => void;
+  /**
+   * How the preview area is sized, overriding the library card's fixed
+   * thumbnail height. `fill` (email slideshow) gives the preview every pixel
+   * the card doesn't need, so a real email is read, not cropped to a
+   * thumbnail; `compact` (SMS/WhatsApp/Voice list) shrinks to the message
+   * body so more templates fit inline.
+   */
+  previewFit: 'fill' | 'compact';
 }) {
+  const [full, setFull] = useState<ApiTemplate | null>(null);
+
+  useEffect(() => {
+    if (!live || !t.id) return;
+    let alive = true;
+    void (async () => {
+      try {
+        const row = await api.get<ApiTemplate>(`templates/${t.id}`);
+        if (alive) setFull(row);
+      } catch {
+        /* card still renders via TemplatePreview's own loading/error state */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [t.id, live]);
+
+  const gallery = full ? toGalleryTemplate(full) : null;
+  const category = gallery?.category ?? t.cat;
+  const categoryColor = CATEGORY_COLOR[category as keyof typeof CATEGORY_COLOR] ?? 'var(--accent)';
+  const metrics = gallery ? templateEngagement(gallery) : [];
+
+  const previewFitClass =
+    previewFit === 'fill' ? styles.tplPreviewFill : styles.tplPreviewCompact;
+
   const inner = (
     <>
-      <div className={styles.tplPreview}>
-        <GalleryPreview channel={channel} t={toGalleryPreviewData(t)} />
+      <div className={`${libStyles.preview} ${previewFitClass}`} data-preview-fit>
+        {t.id && live ? (
+          <TemplatePreview
+            id={t.id}
+            channel={channel}
+            live={live}
+            fallback={<GalleryPreview channel={channel} t={toGalleryPreviewData(t)} />}
+          />
+        ) : (
+          <GalleryPreview channel={channel} t={toGalleryPreviewData(t)} />
+        )}
       </div>
-      <div className={styles.tplMeta}>
-        <div className={styles.tplName}>{t.name}</div>
-        <div className={styles.tplSub}>{selected ? 'Selected' : t.cat}</div>
+      <div
+        className={libStyles.gcatbar}
+        style={{
+          color: `color-mix(in srgb, ${categoryColor} 55%, var(--text))`,
+          background: `color-mix(in srgb, ${categoryColor} 12%, transparent)`,
+        }}
+      >
+        {category}
+      </div>
+      <div className={`${libStyles.gmeta} ${styles.tplGalleryMeta}`}>
+        <div className={libStyles.gname}>{t.name}</div>
+        <div className={libStyles.gsub}>
+          {metrics.map((m, i) => (
+            <span
+              key={m.key}
+              className={`${libStyles.metric}${m.measured ? '' : ` ${libStyles.metricNone}`}`}
+              title={m.hint}
+            >
+              {i > 0 ? '· ' : ''}
+              <span className="tnum">{m.value}</span> {m.label}
+            </span>
+          ))}
+          {gallery ? (
+            <span className={libStyles.updated} title={`Created ${gallery.createdOn}`}>
+              {gallery.updated}
+            </span>
+          ) : null}
+        </div>
       </div>
     </>
   );
-  if (!onSelect) {
-    return (
-      <div className={`${styles.tplCard} ${styles.tplCardOn}`} aria-current="true">
-        {inner}
-      </div>
-    );
-  }
+
   return (
     <button
       type="button"
-      className={`${styles.tplCard}${selected ? ` ${styles.tplCardOn}` : ''}`}
+      className={`${libStyles.gcard} ${styles.tplGalleryCard}${selected ? ` ${styles.tplGalleryCardOn}` : ''}`}
       aria-pressed={selected}
       onClick={() => onSelect(t)}
     >
@@ -197,31 +274,131 @@ function TemplateCard({
   );
 }
 
-function TemplateSidebar({
+/**
+ * Horizontal, one-at-a-time slideshow of the channel's real templates —
+ * arrows/dots to page, scroll-snap for swipe/trackpad. Each slide is a
+ * `TemplateGalleryCard` — the same card the inline list (SMS/WhatsApp/Voice)
+ * and the Templates library use.
+ */
+function TemplateSlideshow({
   channel,
   templates,
   selectedKey,
   onSelect,
+  live,
 }: {
   channel: ChannelType;
   templates: Template[];
   selectedKey: string | null;
   onSelect: (t: Template) => void;
+  live: boolean;
 }) {
-  const required = channel === 'email' || channel === 'whatsapp';
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [index, setIndex] = useState(0);
+
+  const scrollToIndex = (i: number) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const clamped = Math.max(0, Math.min(i, templates.length - 1));
+    const slide = track.children[clamped] as HTMLElement | undefined;
+    slide?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+    setIndex(clamped);
+  };
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const onScroll = () => {
+      const width = track.clientWidth || 1;
+      setIndex(Math.max(0, Math.min(Math.round(track.scrollLeft / width), templates.length - 1)));
+    };
+    track.addEventListener('scroll', onScroll, { passive: true });
+    return () => track.removeEventListener('scroll', onScroll);
+  }, [templates.length]);
+
+  return (
+    <div className={styles.tplSlideshow}>
+      <div className={styles.tplSlideshowTrack} ref={trackRef} role="group" aria-label="Templates">
+        {templates.map((t) => (
+          <div key={templateKey(t)} className={styles.tplSlide}>
+            <TemplateGalleryCard
+              t={t}
+              channel={channel}
+              live={live}
+              selected={selectedKey === templateKey(t)}
+              onSelect={onSelect}
+              previewFit="fill"
+            />
+          </div>
+        ))}
+      </div>
+      {templates.length > 1 ? (
+        <div className={styles.tplSlideshowNav}>
+          <button
+            type="button"
+            className={styles.tplSlideshowArrow}
+            onClick={() => scrollToIndex(index - 1)}
+            disabled={index === 0}
+            aria-label="Previous template"
+          >
+            <Icon name="chevron-right" size={22} stroke={2.6} className={styles.iconFlip} />
+          </button>
+          <div className={styles.tplSlideshowDots}>
+            {templates.map((t, i) => (
+              <button
+                key={templateKey(t)}
+                type="button"
+                className={`${styles.tplSlideshowDot}${i === index ? ` ${styles.tplSlideshowDotOn}` : ''}`}
+                onClick={() => scrollToIndex(i)}
+                aria-label={`Go to ${t.name}`}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            className={styles.tplSlideshowArrow}
+            onClick={() => scrollToIndex(index + 1)}
+            disabled={index === templates.length - 1}
+            aria-label="Next template"
+          >
+            <Icon name="chevron-right" size={22} stroke={2.6} />
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function TemplateSidebar({
+  channel,
+  templates,
+  selectedKey,
+  onSelect,
+  live,
+}: {
+  channel: ChannelType;
+  templates: Template[];
+  selectedKey: string | null;
+  onSelect: (t: Template) => void;
+  live: boolean;
+}) {
   return (
     <div className={styles.tplSidebar}>
       <div className={styles.tplSidebarHead}>
         <h3 className={styles.tplSidebarTitle}>{channelLabel(channel)} templates</h3>
-        <p className={styles.tplSidebarHint}>
-          {required
-            ? 'Pick the template this campaign will send.'
-            : 'Start from a template, or skip and write the message later.'}
-        </p>
+        <p className={styles.tplSidebarHint}>Pick the template this campaign will send.</p>
       </div>
       {templates.length === 0 ? (
         <p className={styles.tplSidebarEmpty}>
-          {channel === 'email' ? (
+          {channel === 'whatsapp' ? (
+            <>
+              No approved WhatsApp templates yet. Create one under{' '}
+              <a href={routes.app.templates} className="acrd__link">
+                Templates
+              </a>{' '}
+              and submit it for approval before continuing.
+            </>
+          ) : (
             <>
               No saved {channelLabel(channel)} templates yet. Create one under{' '}
               <a href={routes.app.templates} className="acrd__link">
@@ -229,24 +406,16 @@ function TemplateSidebar({
               </a>{' '}
               before continuing.
             </>
-          ) : channel === 'whatsapp' ? (
-            <>
-              No approved WhatsApp templates yet. Create one under{' '}
-              <a href={routes.app.templates} className="acrd__link">
-                Templates
-              </a>
-              , or write the message on the next content step to send through SMS.
-            </>
-          ) : (
-            <>
-              No saved {channelLabel(channel)} templates yet. Create one under{' '}
-              <a href={routes.app.templates} className="acrd__link">
-                Templates
-              </a>
-              , or write the message later.
-            </>
           )}
         </p>
+      ) : channel === 'email' ? (
+        <TemplateSlideshow
+          channel={channel}
+          templates={templates}
+          selectedKey={selectedKey}
+          onSelect={onSelect}
+          live={live}
+        />
       ) : (
         <div
           className={styles.tplSidebarList}
@@ -256,12 +425,14 @@ function TemplateSidebar({
           {templates.map((t) => {
             const sel = selectedKey === templateKey(t);
             return (
-              <TemplateCard
+              <TemplateGalleryCard
                 key={templateKey(t)}
                 t={t}
                 channel={channel}
                 selected={sel}
                 onSelect={onSelect}
+                live={live}
+                previewFit="compact"
               />
             );
           })}
@@ -326,7 +497,7 @@ function ReviewRowValue({ row, live }: { row: ReviewRow; live: boolean }) {
   return <span className={styles.reviewValue}>{row.value}</span>;
 }
 
-/* One engagement-tracking option for step 4: mechanism, per-channel note, switch. */
+/* One engagement-tracking option for step 3: mechanism, per-channel note, switch. */
 function TrackCard({
   icon,
   title,
@@ -373,7 +544,7 @@ function TrackCard({
   );
 }
 
-/* Selectable radio card used for Schedule (step 5). */
+/* Selectable radio card used for Schedule (step 4). */
 function RadioCard({
   selected,
   onSelect,
@@ -530,7 +701,7 @@ export default function CampaignWizard({
 
   const isEmail = channel === 'email';
 
-  /* Step 4 — what this channel can measure, and the effective (capability-
+  /* Step 3 — what this channel can measure, and the effective (capability-
      gated) choice. A switch left on from another channel never leaks into a
      channel that can't honor it. */
   const trackingCaps = trackingCapabilities(channel);
@@ -603,32 +774,28 @@ export default function CampaignWizard({
         .map(templateCard)
     : TEMPLATES[channel];
   const selTpl = templates.find((t) => templateKey(t) === selectedTemplateKey) ?? null;
+  /** Email past the picker, with something to show: the preview takes the whole column. */
+  const emailPreviewFlush = isEmail && step > 1 && selTpl !== null;
 
-  // Non-email content metrics.
-  const messageLen = message.length;
-  const voiceSecs = voiceSeconds(message);
-  const segments = smsSegments(messageLen);
-  const count2 = channel === 'voice' ? voiceSecs : segments;
-  const count2Label = channel === 'voice' ? 'sec (est.)' : 'segment(s)';
-  const callDuration = formatDuration(voiceSecs);
-  const msgPreview = message || 'Hi Andrea, your message preview will appear here as you type…';
+  // Phone-mock preview of the chosen template's body (text channels).
+  const callDuration = formatDuration(voiceSeconds(message));
+  const msgPreview = message || 'Pick a template to preview the message here…';
 
   // Phone mock chrome.
   const statusBg = channel === 'voice' ? '#26221d' : channel === 'whatsapp' ? '#075e54' : '#f6f6f7';
   const statusColor = channel === 'sms' ? '#0b0b0f' : '#fff';
 
-  const contentSub = CONTENT_SUB[channel];
-  const stepDefs = buildStepDefs(contentSub);
+  const stepDefs = buildStepDefs();
 
   const title = mode === 'edit' ? 'Edit campaign' : 'New campaign';
   const nextLabel =
-    step === 6
+    step === 5
       ? mode === 'edit'
         ? 'Save changes'
         : schedule === 'now'
           ? 'Send campaign'
           : 'Schedule campaign'
-      : step === 5
+      : step === 4
         ? 'Continue to review →'
         : 'Continue →';
 
@@ -641,11 +808,11 @@ export default function CampaignWizard({
         ? 'Campaign queued for delivery'
         : 'Campaign scheduled';
 
-  /* Email: template supplies html; subject is campaign metadata (step 1). Other
-     channels send the typed message. Both persist under the campaign's `content`.
-     Tracking flags are stored only where the channel can honor them, as
-     explicit booleans — `false` is the meaningful opt-out the provider acts
-     on (voice stores none). */
+  /* Email: the template supplies html; subject is campaign metadata (step 1).
+     Text channels persist the chosen template's resolved body. Both ride the
+     campaign's `content`. Tracking flags are stored only where the channel can
+     honor them, as explicit booleans — `false` is the meaningful opt-out the
+     provider acts on (voice stores none). */
   const trackingContent: Record<string, boolean> = {
     ...(trackingCaps.opens.enabled ? { trackOpens } : {}),
     ...(trackingCaps.clicks.enabled ? { trackClicks } : {}),
@@ -691,9 +858,7 @@ export default function CampaignWizard({
     channel,
     audienceIds,
     audienceList,
-    message,
     selTpl,
-    hasChannelTemplates: templates.length > 0,
     live,
     mode,
     schedule,
@@ -710,9 +875,7 @@ export default function CampaignWizard({
     channel,
     audienceIds,
     audienceList,
-    message,
     selTpl,
-    hasChannelTemplates: templates.length > 0,
     live,
     mode,
     schedule,
@@ -722,7 +885,7 @@ export default function CampaignWizard({
 
   const handlePrimary = () => {
     if (primaryDisabled) return;
-    if (step < 6) {
+    if (step < 5) {
       const nextStep = (step + 1) as Step;
       window.posthog?.capture('campaign_wizard_step_advanced', {
         from_step: step,
@@ -778,19 +941,6 @@ export default function CampaignWizard({
     setChannel(next);
     setSelectedTemplateKey(null);
     setMessage('');
-  };
-
-  /**
-   * Freeform WhatsApp text isn't sendable without an approved template — when the
-   * gallery is empty and the user starts typing, flip the campaign to SMS and keep
-   * the draft (same outcome the empty-state copy describes).
-   */
-  const onMessageChange = (value: string) => {
-    if (channel === 'whatsapp' && templates.length === 0 && value.trim()) {
-      setChannel('sms');
-      setSelectedTemplateKey(null);
-    }
-    setMessage(value);
   };
 
   const reviewRows = buildReviewRows(
@@ -1144,65 +1294,6 @@ export default function CampaignWizard({
 
             {step === 3 && (
               <>
-                <h3 style={h3Style}>{contentSub}</h3>
-                <p style={{ ...pStyle, margin: '0 0 18px' }}>
-                  {isEmail
-                    ? 'This campaign will send the template you picked. Go back to choose a different one.'
-                    : channel === 'whatsapp' && templates.length > 0
-                      ? 'This campaign will send the approved template you picked. Go back to choose a different one.'
-                      : 'Write the message this campaign will send.'}
-                </p>
-                {selTpl && (isEmail || (channel === 'whatsapp' && templates.length > 0)) && (
-                  <div className={styles.tplChosen}>
-                    <TemplateCard t={selTpl} channel={channel} selected />
-                  </div>
-                )}
-
-                {/* WhatsApp with approved templates is template-only; free text is for
-                    SMS/voice, or WhatsApp when nothing approved (typing flips to SMS). */}
-                {!isEmail && (channel !== 'whatsapp' || templates.length === 0) && (
-                  <>
-                    <label style={labelStyle}>Message</label>
-                    <textarea
-                      value={message}
-                      onChange={(e) => onMessageChange(e.target.value)}
-                      placeholder="Hi [first_name], our flash sale ends tonight — 50% off everything. Shop now: mldr.io/sale"
-                      style={{
-                        width: '100%',
-                        minHeight: 120,
-                        resize: 'vertical',
-                        border: '1px solid var(--border2)',
-                        borderRadius: 10,
-                        padding: '11px 12px',
-                        fontSize: 13.5,
-                        fontFamily: "'Geist', system-ui, sans-serif",
-                        lineHeight: 1.5,
-                        color: 'var(--text2)',
-                        background: 'var(--surface)',
-                      }}
-                    />
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginTop: 8,
-                        fontSize: 11.5,
-                        color: 'var(--muted)',
-                      }}
-                    >
-                      <span className="tnum">{messageLen} characters</span>
-                      <span className="tnum">
-                        {count2} {count2Label}
-                      </span>
-                    </div>
-                  </>
-                )}
-              </>
-            )}
-
-            {step === 4 && (
-              <>
                 <h3 style={h3Style}>Measure engagement</h3>
                 <p style={{ ...pStyle, margin: '0 0 18px' }}>
                   Choose what this {channelLabel(channel)} campaign records after it sends.
@@ -1265,7 +1356,7 @@ export default function CampaignWizard({
               </>
             )}
 
-            {step === 5 && (
+            {step === 4 && (
               <div className={styles.scheduleStep}>
                 <h3 style={h3Style}>When should this send?</h3>
                 <p className={styles.scheduleIntro} style={pStyle}>
@@ -1307,7 +1398,7 @@ export default function CampaignWizard({
               </div>
             )}
 
-            {step === 6 && (
+            {step === 5 && (
               <>
                 <h3 style={h3Style}>Review your campaign</h3>
                 <p style={pStyle}>Double-check everything before you send.</p>
@@ -1356,8 +1447,12 @@ export default function CampaignWizard({
           <div
             className={styles.previewCol}
             style={{
-              padding: wz(22),
-              background: `color-mix(in srgb, ${channelMeta.tint} 72%, var(--surface))`,
+              /* Past the picker, an email preview is the column: full bleed,
+                 so the message is judged at the size it will be read at. The
+                 phone-mock channels keep the inset, which is what makes the
+                 handset read as a device sitting on the tinted surface. */
+              padding: emailPreviewFlush ? 0 : wz(22),
+              background: `color-mix(in srgb, ${channelMeta.tint} 38%, var(--surface))`,
               borderLeft: `1px solid color-mix(in srgb, ${channelMeta.color} 28%, var(--divider))`,
             }}
           >
@@ -1367,6 +1462,7 @@ export default function CampaignWizard({
                 templates={templates}
                 selectedKey={selectedTemplateKey}
                 onSelect={selectTemplate}
+                live={live}
               />
             ) : (
               <div className={styles.previewFit} data-preview-fit>
