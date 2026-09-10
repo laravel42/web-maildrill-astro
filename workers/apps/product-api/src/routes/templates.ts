@@ -20,6 +20,7 @@ import {
   submitMessage,
   submitTemplateForApproval,
 } from '@maildrill/services';
+import { sendTransactionalEmail } from '@maildrill/providers';
 
 const TAG = ['Templates'];
 const createSchema = z.object({
@@ -117,7 +118,8 @@ export async function templateRoutes(appRaw: FastifyInstance): Promise<void> {
     {
       schema: {
         tags: TAG,
-        summary: 'Send the template as a real test message to one or more recipients',
+        summary:
+          'Send the template as a real test message to one or more recipients (email rides the Cloudflare transactional relay, not the campaign email driver)',
         params: idParam,
         body: testSendBody,
       },
@@ -176,6 +178,30 @@ export async function templateRoutes(appRaw: FastifyInstance): Promise<void> {
           );
           content = { text: mergeSubscriberTokens(filled, recipient) };
         }
+
+        if (isEmail) {
+          // A template test is "show me what this renders to an inbox", not a
+          // real campaign send — route it through the same always-on
+          // Cloudflare relay transactional mail already uses, rather than
+          // whatever PROVIDER_EMAIL_DRIVER (Infobip/SES/…) is configured for
+          // real campaigns. That keeps testing reliable even when the
+          // campaign email driver is mid-setup or misconfigured, and it never
+          // touches the messages/queue pipeline or consumes billing usage.
+          const subject =
+            typeof content.subject === 'string' && content.subject ? content.subject : template.name;
+          const html = typeof content.html === 'string' ? content.html : '';
+          const text = typeof content.text === 'string' ? content.text : '';
+          const result = await sendTransactionalEmail({ to, subject, html, text });
+          if (!result.accepted) {
+            return reply.code(502).send({
+              error: result.skipped
+                ? 'Email test-send is not configured — set SMTP_HOST/SMTP_USER/SMTP_PASS (or CLOUDFLARE_ACCOUNT_ID/CLOUDFLARE_EMAIL_API_TOKEN) for the Cloudflare relay.'
+                : `Could not send test email to ${to}: ${result.error ?? 'unknown error'}`,
+            });
+          }
+          continue;
+        }
+
         const { message } = await submitMessage({
           tenantId: req.tenantId,
           channel: template.channel,
