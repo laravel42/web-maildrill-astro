@@ -70,6 +70,22 @@ describe('SesProvider', () => {
       });
     });
 
+    it('tags the send with the workspace SES Tenant when provided, for reputation isolation', async () => {
+      const send = vi.fn().mockResolvedValue({ MessageId: 'ses-msg-3' });
+      const provider = new SesProvider(settings, fakeClient(send));
+      await provider.send({ ...base, sesTenantName: 'ws-t1' });
+      const command = send.mock.calls[0]![0] as { input: Record<string, unknown> };
+      expect(command.input.TenantName).toBe('ws-t1');
+    });
+
+    it('omits TenantName when the workspace has no SES Tenant (falls back to account-wide reputation)', async () => {
+      const send = vi.fn().mockResolvedValue({ MessageId: 'ses-msg-4' });
+      const provider = new SesProvider(settings, fakeClient(send));
+      await provider.send(base);
+      const command = send.mock.calls[0]![0] as { input: Record<string, unknown> };
+      expect(command.input.TenantName).toBeUndefined();
+    });
+
     it('falls back to the configured From when the campaign carries none', async () => {
       const send = vi.fn().mockResolvedValue({ MessageId: 'x' });
       const provider = new SesProvider(settings, fakeClient(send));
@@ -244,6 +260,68 @@ describe('SesProvider', () => {
     it('returns no events for an unrecognized body', async () => {
       const events = await provider.normalizeWebhook({ headers: {}, body: { foo: 'bar' }, rawBody: '', kind: 'delivery' });
       expect(events).toHaveLength(0);
+    });
+  });
+
+  describe('createEntity (SES Tenant provisioning)', () => {
+    it('creates a tenant and associates the shared identity + configuration set', async () => {
+      const send = vi.fn(async (command: { constructor: { name: string } }) => {
+        if (command.constructor.name === 'CreateTenantCommand') {
+          return { TenantArn: 'arn:aws:ses:us-east-1:111122223333:tenant/ws-t1' };
+        }
+        if (command.constructor.name === 'CreateTenantResourceAssociationCommand') {
+          return {};
+        }
+        throw new Error(`unexpected command: ${command.constructor.name}`);
+      });
+      const provider = new SesProvider(settings, fakeClient(send as never));
+      const result = await provider.createEntity({ entityId: 'ws-t1', entityName: 'Acme' });
+
+      expect(result).toEqual({ ok: true, existed: false });
+      const calls = send.mock.calls.map(([c]) => c.constructor.name);
+      expect(calls).toEqual(['CreateTenantCommand', 'CreateTenantResourceAssociationCommand', 'CreateTenantResourceAssociationCommand']);
+
+      const assocCalls = send.mock.calls.filter(([c]) => c.constructor.name === 'CreateTenantResourceAssociationCommand');
+      const arns = assocCalls.map(([c]) => (c as unknown as { input: { ResourceArn: string } }).input.ResourceArn);
+      expect(arns).toContain('arn:aws:ses:us-east-1:111122223333:identity/maildrill.net');
+      expect(arns).toContain('arn:aws:ses:us-east-1:111122223333:configuration-set/maildrill-campaigns');
+    });
+
+    it('treats an already-existing tenant as success and still (re-)associates resources', async () => {
+      const send = vi.fn(async (command: { constructor: { name: string } }) => {
+        if (command.constructor.name === 'CreateTenantCommand') {
+          throw Object.assign(new Error('exists'), { name: 'AlreadyExistsException' });
+        }
+        if (command.constructor.name === 'GetTenantCommand') {
+          return { Tenant: { TenantArn: 'arn:aws:ses:us-east-1:111122223333:tenant/ws-t1' } };
+        }
+        return {};
+      });
+      const provider = new SesProvider(settings, fakeClient(send as never));
+      const result = await provider.createEntity({ entityId: 'ws-t1', entityName: 'Acme' });
+      expect(result).toEqual({ ok: true, existed: true });
+    });
+
+    it('treats an already-associated resource as success rather than failing the whole call', async () => {
+      const send = vi.fn(async (command: { constructor: { name: string } }) => {
+        if (command.constructor.name === 'CreateTenantCommand') {
+          return { TenantArn: 'arn:aws:ses:us-east-1:111122223333:tenant/ws-t1' };
+        }
+        throw Object.assign(new Error('already associated'), { name: 'AlreadyExistsException' });
+      });
+      const provider = new SesProvider(settings, fakeClient(send as never));
+      const result = await provider.createEntity({ entityId: 'ws-t1', entityName: 'Acme' });
+      expect(result).toEqual({ ok: true, existed: false });
+    });
+
+    it('fails with the SES message when tenant creation errors for another reason', async () => {
+      const send = vi.fn(async () => {
+        throw Object.assign(new Error('boom'), { name: 'TooManyRequestsException' });
+      });
+      const provider = new SesProvider(settings, fakeClient(send as never));
+      const result = await provider.createEntity({ entityId: 'ws-t1', entityName: 'Acme' });
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain('boom');
     });
   });
 });

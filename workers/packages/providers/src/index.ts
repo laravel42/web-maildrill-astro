@@ -12,3 +12,4 @@ export {
 } from './transactional';
 export { setProviderHttpSink, type ProviderHttpEvent } from './http-observer';
 export { setProviderSendSink, type ProviderSendEvent } from './send-observer';
+export { clearRateLimiters } from './rate-limiter';

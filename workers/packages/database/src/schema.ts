@@ -146,6 +146,18 @@ export const tenants = pgTable('tenants', {
    */
   infobipEntityProvisionedAt: ts('infobip_entity_provisioned_at'),
   /**
+   * AWS SES Tenant name this workspace's email is sent under, for per-workspace
+   * reputation/sending-status isolation inside the one shared SES account (SES
+   * Multi-Tenant Management — CreateTenant / SendEmail's TenantName). Same
+   * shape and lifecycle as `infobipEntityId` above: assigned locally and
+   * unconditionally at workspace creation (reuses the same `ws-<tenantId>`
+   * id), confirmed remotely only when `sesTenantProvisionedAt` is set. Only
+   * meaningful when the SES email driver is in use.
+   */
+  sesTenantName: text('ses_tenant_name').unique(),
+  /** When SES acknowledged the tenant (created it, or reported it already existed). */
+  sesTenantProvisionedAt: ts('ses_tenant_provisioned_at'),
+  /**
    * Workspace settings bag (not first-class columns), mirroring
    * users.preferences: branding {brandName, logoUrl, accentColor,
    * emailFooter}, ai {summaries, subject, sendtime}.

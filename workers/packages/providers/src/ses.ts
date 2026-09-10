@@ -1,6 +1,9 @@
 import {
   SESv2Client,
   SendEmailCommand,
+  CreateTenantCommand,
+  GetTenantCommand,
+  CreateTenantResourceAssociationCommand,
   type MessageHeader,
   type MessageTag,
 } from '@aws-sdk/client-sesv2';
@@ -16,6 +19,7 @@ import { emitProviderHttp } from './http-observer';
 import {
   asRecord,
   str,
+  type EntityProvisionResult,
   type MessagingProvider,
   type NormalizedProviderEvent,
   type ProviderSendError,
@@ -33,7 +37,12 @@ export interface SesEmailSettings {
 
 /** Only the subset of SESv2Client used here, so tests can inject a fake. */
 export interface SesClientLike {
-  send(command: SendEmailCommand): Promise<{ MessageId?: string; $metadata?: { requestId?: string; httpStatusCode?: number } }>;
+  send(
+    command: SendEmailCommand,
+  ): Promise<{ MessageId?: string; $metadata?: { requestId?: string; httpStatusCode?: number } }>;
+  send(command: CreateTenantCommand): Promise<{ TenantArn?: string }>;
+  send(command: GetTenantCommand): Promise<{ Tenant?: { TenantArn?: string } }>;
+  send(command: CreateTenantResourceAssociationCommand): Promise<Record<string, never>>;
 }
 
 const SES_TAG_NAME = /^[a-zA-Z0-9_-]{1,256}$/;
@@ -148,9 +157,109 @@ export class SesProvider implements MessagingProvider {
       },
       ConfigurationSetName: this.settings.configurationSet || undefined,
       EmailTags: tags,
+      TenantName: input.sesTenantName || undefined,
     });
 
     return this.dispatch(command);
+  }
+
+  /**
+   * Provision an SES Tenant (SES Multi-Tenant Management) for a workspace and
+   * associate it with the account's shared sending identity and configuration
+   * set — a tenant can only send using resources explicitly associated with
+   * it. One shared identity/configuration set can be associated with many
+   * tenants (AWS's own resource-sharing model), so this never provisions
+   * per-workspace domains/DNS; isolation comes entirely from tagging every
+   * `SendEmail` call with `TenantName`, which gives each workspace its own
+   * reputation and sending-status tracking inside the one shared account.
+   *
+   * Idempotent: an existing tenant (`AlreadyExistsException`) is looked up by
+   * name and treated as success so resource association still runs — a
+   * tenant created before the shared identity existed, or before this method
+   * shipped, ends up fully wired on the next call rather than staying half
+   * set up forever.
+   *
+   * The identity associated is the domain half of `AWS_SES_FROM_EMAIL`,
+   * assumed verified as a domain identity per the standard setup — if the
+   * verified identity is actually an email address instead, this will fail
+   * per-recipient sends until that's corrected, not silently degrade.
+   */
+  async createEntity(input: { entityId: string; entityName: string }): Promise<EntityProvisionResult> {
+    if (!this.settings.region) {
+      return { ok: false, error: 'ses tenant: set AWS_SES_REGION' };
+    }
+    const client = this.getClient();
+    let tenantArn: string | undefined;
+    let existed = false;
+    try {
+      const created = await client.send(new CreateTenantCommand({ TenantName: input.entityId }));
+      tenantArn = created.TenantArn;
+    } catch (err) {
+      if ((err as { name?: string } | null)?.name === 'AlreadyExistsException') {
+        existed = true;
+        try {
+          const got = await client.send(new GetTenantCommand({ TenantName: input.entityId }));
+          tenantArn = got.Tenant?.TenantArn;
+        } catch (getErr) {
+          return { ok: false, error: `ses tenant: lookup after AlreadyExists failed: ${formatSdkError(getErr)}` };
+        }
+      } else {
+        return { ok: false, error: `ses tenant: ${formatSdkError(err)}` };
+      }
+    }
+
+    const accountId = tenantArn ? accountIdFromArn(tenantArn) : undefined;
+    if (!accountId) {
+      return { ok: false, error: 'ses tenant: could not determine AWS account id from tenant ARN' };
+    }
+
+    // The verified sending identity may be a domain (e.g. maildrill.net) or a
+    // single email address (e.g. hello@laravel42.com) — SES treats these as
+    // distinct identity resources with no relationship in the ARN, and there
+    // is no API to ask "which kind is this From address verified as" without
+    // a GetEmailIdentity call this method doesn't otherwise need. Try both;
+    // NotFoundException on whichever one isn't real is expected, not fatal —
+    // exactly one of the two exists in a correctly configured account.
+    const identityDomain = (this.settings.from.split('@')[1] ?? '').trim();
+    const identityNames = [this.settings.from, identityDomain].filter(Boolean);
+    const resourceArns = identityNames.map(
+      (name) => `arn:aws:ses:${this.settings.region}:${accountId}:identity/${name}`,
+    );
+    if (this.settings.configurationSet) {
+      resourceArns.push(
+        `arn:aws:ses:${this.settings.region}:${accountId}:configuration-set/${this.settings.configurationSet}`,
+      );
+    }
+
+    let anyIdentityAssociated = false;
+    for (const resourceArn of resourceArns) {
+      const isIdentity = resourceArn.includes(':identity/');
+      try {
+        await client.send(
+          new CreateTenantResourceAssociationCommand({ ResourceArn: resourceArn, TenantName: input.entityId }),
+        );
+        if (isIdentity) anyIdentityAssociated = true;
+      } catch (err) {
+        const name = (err as { name?: string } | null)?.name;
+        if (name === 'AlreadyExistsException') {
+          if (isIdentity) anyIdentityAssociated = true;
+          continue;
+        }
+        // Expected for whichever of the two identity guesses isn't real —
+        // only fatal for the configuration-set ARN, which has no guesswork.
+        if (name === 'NotFoundException' && isIdentity) continue;
+        return { ok: false, error: `ses tenant: associate ${resourceArn} failed: ${formatSdkError(err)}` };
+      }
+    }
+
+    if (!anyIdentityAssociated) {
+      return {
+        ok: false,
+        error: `ses tenant: neither "${this.settings.from}" nor "${identityDomain}" matched a real SES identity — this tenant has no usable sending identity`,
+      };
+    }
+
+    return { ok: true, existed };
   }
 
   private validationError(message: string): ProviderSendResult {
@@ -241,6 +350,12 @@ export class SesProvider implements MessagingProvider {
       },
     ];
   }
+}
+
+/** `arn:aws:ses:{region}:{account-id}:tenant/{name}` — account id is field index 4. */
+function accountIdFromArn(arn: string): string | undefined {
+  const parts = arn.split(':');
+  return parts[4] || undefined;
 }
 
 function safeStringify(value: unknown): string {
