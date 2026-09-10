@@ -766,6 +766,43 @@
 
 /* @keyframes extraído a chrome/motion.css (docs/28) — ver módulo */
 
+/* Barra lateral de acciones del nodo SELECCIONADO (duplicar/eliminar,
+ * `NodeActionsRail.tsx`, homologación UI/UX fase C). Mismo lenguaje visual
+ * que `.pbx-drag-handle` (fondo de acento sólido, texto claro, radio,
+ * sombra), pero columna VERTICAL anclada al lado derecho del nodo en vez de
+ * una fila horizontal arriba — mismo patrón que el `TuneMenu` lateral de
+ * email-builder. `top`/`left` se fijan inline en coordenadas del frame
+ * (centro vertical del nodo + su ancho + un margen), igual que
+ * `SelectionHandle`/`HoverHandle`. Chrome de edición: solo se monta en modo
+ * `edit`, nunca sale al HTML exportado (P8). */
+.pbx-node-actions-rail {
+  position: absolute;
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--pb-chrome-accent);
+  border-radius: var(--pb-chrome-radius-sm);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--pb-chrome-accent) 40%, transparent);
+  animation: pbx-drag-handle-enter 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* `IconButton` dentro de la barra: mismo criterio de contraste que
+ * `.pbx-reorder-arrows__btn` — blanco translúcido sobre el fondo SÓLIDO del
+ * acento (no un par texto/fondo con rol semántico propio, docs/52 F5). El
+ * intent "danger" del botón eliminar se deja con su color propio (rojo)
+ * para no perder la semántica de "acción destructiva" incluso dentro de la
+ * pastilla de acento. */
+.pbx-node-actions-rail .pbx-icon-btn--ghost {
+  color: rgba(255, 255, 255, 0.85);
+}
+.pbx-node-actions-rail .pbx-icon-btn--ghost:hover:not(:disabled) {
+  color: var(--pb-chrome-text-on-accent);
+  background: rgba(255, 255, 255, 0.18);
+}
+
 /* Animación de SALIDA (bug real, feedback de usuario: sin `motion.div`/
  * `AnimatePresence`, deseleccionar desmontaba la pestaña de golpe — sin
  * ninguna transición, un salto abrupto). `SelectionHandle.tsx` mantiene el

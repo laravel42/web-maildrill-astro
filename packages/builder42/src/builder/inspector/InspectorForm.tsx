@@ -1,18 +1,26 @@
 /**
  * InspectorForm — formulario generado desde los schemas del registry (docs/03
  * §3). Header de **2 filas** — fila 1: `Breadcrumb` (movido aquí desde
- * `app/layout/Inspector.tsx`); fila 2: tabs (Props/Estilo/Interactividad) +
- * botón de **papelera** que borra el nodo. El cierre del panel se retiró de
- * aquí (antes un `×` en la fila 1, D2 de docs/41 §5.1) y ahora vive como
- * `PanelHandle` anclado al borde del panel — mismo patrón que
- * email-builder/wa-template-studio (una pestaña vertical siempre visible en
- * vez de un botón dentro del propio contenido del panel), homologando el
- * diseño entre los tres builders. Se eliminan el chip de tipo grande
- * (`pbx-node-type-chip`) y la barra `ESTILO · EDITANDO [bp]`
+ * `app/layout/Inspector.tsx`); fila 2: tabs (Props/Estilo/Interactividad). El
+ * cierre del panel se retiró de aquí (antes un `×` en la fila 1, D2 de
+ * docs/41 §5.1) y ahora vive como `PanelHandle` anclado al borde del panel —
+ * mismo patrón que email-builder/wa-template-studio (una pestaña vertical
+ * siempre visible en vez de un botón dentro del propio contenido del panel),
+ * homologando el diseño entre los tres builders. Se eliminan el chip de tipo
+ * grande (`pbx-node-type-chip`) y la barra `ESTILO · EDITANDO [bp]`
  * (`pbx-style-tab__bar`) — el breakpoint activo ya se controla desde el
  * selector de viewport del `Header` y desde los puntos de `VisibilityStrip`
  * (el segmented de breakpoints que vivía aquí se retiró por ser un tercer
  * control redundante con esos dos, sin aportar una función propia).
+ *
+ * El botón de papelera (borrar nodo) YA NO vive aquí (homologación UI/UX,
+ * fase C): se movió a `builder/dnd/NodeActionsRail.tsx`, una barra lateral
+ * vertical junto al nodo seleccionado en el canvas — mismo patrón que el
+ * `TuneMenu` de email-builder (acciones de bloque en una franja lateral, no
+ * enterradas al fondo de un panel). Evita repetir el mismo control en dos
+ * sitios a la vez. La lógica de confirmación-si-tiene-hijos y el toast con
+ * "Deshacer" se movieron TAL CUAL (mismo comportamiento), solo cambió su
+ * ubicación visual.
  *
  * docs/41 §5.2/§7 (Paso 7): la tab Estilo monta `VisibilityStrip` (sustituye
  * a `controls/VisibilityField.tsx`) y, cuando el nodo está oculto en el
@@ -40,11 +48,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import { useDocumentStore } from "@/builder/store/documentStore";
-import { undo } from "@/builder/store/useTemporalStore";
 import { getDefinition } from "@/builder/registry/componentRegistry";
 import { hasNodeSpecificBehaviors } from "@/builder/registry/behaviorRegistry";
 import type { BuilderNode } from "@/builder/model/types";
-import { IconButton, CloseIcon, Trash2, SimpleModal, ToastHost, useToast } from "@/components";
 import { Breadcrumb } from "@/app/layout/Breadcrumb";
 import { CompositeSlotsSection } from "./controls/CompositeSlotsSection";
 import { BehaviorsSection } from "./BehaviorsSection";
@@ -56,92 +62,10 @@ import { StylePanel } from "./panel/StylePanel";
 import { VisibilityStrip, useIsNodeHiddenAtActiveBreakpoint } from "./panel/VisibilityStrip";
 import type { InspectorTab } from "./form/types";
 
-/**
- * Confirmación de borrado cuando el nodo tiene hijos (docs/46 Fase 1, H1).
- * Mismo patrón StrictMode-safe que `PageLayoutConfirmModal`
- * (`app/layout/TemplatesPanel.tsx`): el `Modal` de c42-react pierde el
- * estado que lo activó bajo `React.StrictMode` cuando se monta tras una
- * actualización de estado posterior al montaje inicial — exactamente este
- * caso (click en la papelera → aparece el modal). `SimpleModal`
- * reimplementa el mismo contrato de marcado/CSS sin ese defecto.
- */
-function DeleteNodeConfirmModal({ onConfirm, onClose }: { onConfirm: () => void; onClose: () => void }) {
-  const { t } = useTranslation("inspector");
-
-  function handleConfirm() {
-    onConfirm();
-    onClose();
-  }
-
-  return (
-    <SimpleModal className="pbx-modal" onClose={onClose}>
-      <div data-c42-modal-overlay className="pbx-modal__overlay" />
-      <div data-c42-modal-content className="pbx-modal__content pbx-template-confirm">
-        <div className="pbx-modal__header">
-          <div>
-            <h3 className="pbx-modal__title">{t("panel.deleteConfirm.title")}</h3>
-            <p className="pbx-modal__subtitle">{t("panel.deleteConfirm.body")}</p>
-          </div>
-          <IconButton
-            icon={CloseIcon}
-            intent="ghost"
-            size="md"
-            label={t("panel.deleteConfirm.cancel")}
-            data-c42-modal-close
-          />
-        </div>
-        <div className="pbx-modal__body pbx-template-confirm__actions">
-          <button type="button" className="pbx-template-confirm__btn" onClick={onClose}>
-            {t("panel.deleteConfirm.cancel")}
-          </button>
-          <button
-            type="button"
-            className="pbx-template-confirm__btn pbx-template-confirm__btn--primary"
-            onClick={handleConfirm}
-          >
-            {t("panel.deleteConfirm.confirm")}
-          </button>
-        </div>
-      </div>
-    </SimpleModal>
-  );
-}
-
 export function InspectorForm({ node }: { node: BuilderNode }) {
   const { t } = useTranslation("inspector");
   const def = getDefinition(node.type);
-  const removeSelected = useDocumentStore((s) => s.removeSelected);
   const [tab, setTab] = useState<InspectorTab>("props");
-  // docs/46 Fase 1 (H1): confirmación solo si el nodo a borrar tiene hijos
-  // (subárbol) — borrar una hoja es inmediato, sin interrumpir al usuario
-  // experto. En ambos casos se emite un toast con "Deshacer" (no bloqueante).
-  const [pendingDelete, setPendingDelete] = useState(false);
-  const { toast, show: showToast, hide: hideToast } = useToast();
-
-  function handleDeleteClick() {
-    const hasChildren = (node.children?.length ?? 0) > 0;
-    if (hasChildren) {
-      setPendingDelete(true);
-      return;
-    }
-    performDelete();
-  }
-
-  function performDelete() {
-    removeSelected();
-    // Guarda de mínimos de slots (docs/23 §4, `slices/tree.ts`
-    // `removeSelected`): si el nodo es una slot y su composite ya está en
-    // `slots.min`, `removeSelected` es un no-op silencioso. Verificar que el
-    // nodo realmente se borró antes de anunciar el toast — evita un
-    // "eliminado" falso (docs/46 Fase 1).
-    const stillExists = !!useDocumentStore.getState().document.nodes[node.id];
-    if (stillExists) return;
-    showToast({
-      message: t("panel.deleteToast.message"),
-      actionLabel: t("panel.deleteToast.undo"),
-      onAction: undo,
-    });
-  }
   // D3 (docs/41 §3, §5.2, §8 criterio 8): panel atenuado cuando el nodo está
   // oculto en el breakpoint activo. Atenuación SELECTIVA (nunca opacity global
   // — rompería AA): la clase la consumen encabezados/iconos/labels vía CSS,
@@ -193,7 +117,9 @@ export function InspectorForm({ node }: { node: BuilderNode }) {
           <Breadcrumb />
         </div>
 
-        {/* Fila 2 (docs/41 §5.1): tabs + segmented de breakpoints + papelera (D2). */}
+        {/* Fila 2 (docs/41 §5.1): tabs + segmented de breakpoints. La papelera
+            de borrar nodo se movió a `NodeActionsRail` (fase C, homologación
+            UI/UX) — ya no vive en esta fila. */}
         <div className="pbx-inspector-tabs" role="tablist" aria-label={t("tabs.ariaLabel")}>
           {tabs.map((it) => (
             <button
@@ -220,13 +146,6 @@ export function InspectorForm({ node }: { node: BuilderNode }) {
             </button>
           ))}
           <div className="pbx-inspector-tabs__spacer" />
-          <IconButton
-            icon={Trash2}
-            size="md"
-            intent="danger"
-            onClick={handleDeleteClick}
-            label={t("panel.deleteNode")}
-          />
         </div>
       </div>
 
@@ -270,11 +189,6 @@ export function InspectorForm({ node }: { node: BuilderNode }) {
           </motion.div>
         </AnimatePresence>
       </div>
-
-      {pendingDelete ? (
-        <DeleteNodeConfirmModal onConfirm={performDelete} onClose={() => setPendingDelete(false)} />
-      ) : null}
-      <ToastHost toast={toast} onClose={hideToast} />
     </div>
   );
 }

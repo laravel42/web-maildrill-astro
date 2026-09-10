@@ -22,6 +22,7 @@ import { writeDocIntoSite } from "@/builder/model/site";
 import { useLocalConfig } from "@/hooks/useLocalConfig";
 import { useAutoScroll } from "@/builder/dnd/useAutoScroll";
 import { SelectionHandle } from "@/builder/dnd/SelectionHandle";
+import { NodeActionsRail } from "@/builder/dnd/NodeActionsRail";
 import { HoverHandle } from "@/builder/dnd/HoverHandle";
 import { TextToolbar } from "@/builder/canvas/TextToolbar";
 import { ModalEditorOverlay } from "@/builder/canvas/ModalEditorOverlay";
@@ -99,6 +100,7 @@ export function Canvas() {
         </ErrorBoundary>
         {interactive ? <CanvasEmptyStart /> : null}
         {interactive ? <SelectionHandle frameRef={frameRef} /> : null}
+        {interactive ? <NodeActionsRail frameRef={frameRef} /> : null}
         {interactive ? <HoverHandle frameRef={frameRef} /> : null}
         {interactive ? <TextToolbar frameRef={frameRef} /> : null}
         {interactive ? <ModalEditorOverlay /> : null}
