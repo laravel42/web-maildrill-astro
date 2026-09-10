@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../Icon';
+import Modal from '../shared/Modal';
 import { ApiError } from '@/lib/app/api';
 import {
   automationsApi,
@@ -76,14 +77,6 @@ export default function TestPanel({
     [],
   );
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   const poll = useCallback(
     (runId: string, attempt = 0) => {
       automationsApi
@@ -134,15 +127,19 @@ export default function TestPanel({
   };
 
   return (
-    <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Test automation">
-      <button type="button" className={styles.scrim} aria-label="Close" onClick={onClose} />
-      <section className={styles.panel}>
-        <header className={styles.head}>
-          <h2>Test this automation</h2>
-          <button type="button" className="kbtn" aria-label="Close" onClick={onClose}>
-            <Icon name="x" size={16} />
-          </button>
-        </header>
+    <Modal
+      open
+      onClose={onClose}
+      title="Test this automation"
+      overlayClassName={styles.overlay}
+      panelClassName={styles.panel}
+    >
+      <header className={styles.head}>
+        <h2>Test this automation</h2>
+        <button type="button" className="kbtn" aria-label="Close" onClick={onClose}>
+          <Icon name="x" size={16} />
+        </button>
+      </header>
 
         <div className={styles.body}>
           <label className={styles.field}>
@@ -253,7 +250,6 @@ export default function TestPanel({
             </div>
           ) : null}
         </div>
-      </section>
-    </div>
+    </Modal>
   );
 }

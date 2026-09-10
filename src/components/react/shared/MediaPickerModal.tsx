@@ -5,6 +5,7 @@ import { api } from '@/lib/app/api';
 import type { ApiMediaAsset } from '@/lib/app/media-map';
 import { anyMatchesSearchQuery } from '@/lib/app/search-match';
 import Icon from '../Icon';
+import Modal from './Modal';
 import ColFilter from './ColFilter';
 import FilterChipsRow from './FilterChipsRow';
 import FolderFilter from './FolderFilter';
@@ -45,8 +46,8 @@ function isImage(a: ApiMediaAsset): boolean {
  * Modal that lists every image in the workspace media library and lets the
  * user pick one: click selects (one at a time), Insert confirms. Used by the
  * email builder's "Browse gallery" button; the caller decides what inserting
- * does (e.g. set the selected block's image). Escape handling is the
- * caller's: it owns what Esc means while it's open.
+ * does (e.g. set the selected block's image). Escape, focus trap, and scroll
+ * lock all come from the shared Modal shell.
  */
 export default function MediaPickerModal({
   onPick,
@@ -257,20 +258,20 @@ export default function MediaPickerModal({
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div
-        className={styles.modal}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Choose an image from your media library"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className={styles.head}>
-          <span className={styles.title}>Media library</span>
-          <button type="button" className="iconbtn" onClick={onClose} aria-label="Close">
-            <Icon name="x" size={16} />
-          </button>
-        </div>
+    <Modal
+      open
+      onClose={onClose}
+      title="Media library"
+      panelClassName={styles.modal}
+      size="xl"
+      zIndex={1400}
+    >
+      <div className={styles.head}>
+        <span className={styles.title}>Media library</span>
+        <button type="button" className="iconbtn" onClick={onClose} aria-label="Close">
+          <Icon name="x" size={16} />
+        </button>
+      </div>
 
         {state === 'ready' && images.length > 0 && (
           <div className={styles.toolbar}>
@@ -408,7 +409,6 @@ export default function MediaPickerModal({
             Insert
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

@@ -4,6 +4,7 @@ import ConfirmDialog from './shared/ConfirmDialog';
 import ListEditorModal from './ListEditorModal';
 import SubscriberImportModal from './shared/SubscriberImportModal';
 import { useToast } from './shared/useToast';
+import ToastHost from './shared/ToastHost';
 import { api, ApiError } from '@/lib/app/api';
 import { routes } from '@/config/routes';
 import type { ChannelType } from '@/types/app';
@@ -821,18 +822,7 @@ export default function AppListDetail({
         </div>
       </main>
 
-      {toast && (
-        <div
-          className={styles.toast}
-          role="status"
-          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-        >
-          <span className={styles.toastIc}>
-            <Icon name="check" size={13} stroke={3} />
-          </span>
-          {toast}
-        </div>
-      )}
+      <ToastHost toast={toast} />
 
       {confirmDelete && (
         <ConfirmDialog

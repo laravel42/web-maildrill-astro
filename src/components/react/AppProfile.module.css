@@ -695,37 +695,10 @@ select.input {
   gap: 9px;
 }
 
-/* ---------- Toast (app standard — not in the comp, shown transiently) ---------- */
-.toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: var(--z-toast);
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  background: var(--text);
-  color: var(--bg);
-  padding: 12px 16px 12px 13px;
-  border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(28, 25, 23, 0.3);
-  font-size: 13px;
-  font-weight: 500;
-}
-.wrapSavebar .toast {
+/* Toast (`ToastHost`, global `.atoast`) sits above the savebar when both are
+   visible — the two must not overlap at the bottom of the screen. */
+.wrapSavebar :global(.atoast) {
   bottom: 76px;
-}
-.toastIc {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #22c55e;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
 }
 
 /* ---------- Motion ---------- */
@@ -804,8 +777,7 @@ select.input {
 @media print {
   .savebar,
   .btn,
-  .revoke,
-  .toast {
+  .revoke {
     display: none !important;
   }
   body {
@@ -828,25 +800,12 @@ select.input {
    Modal shell mirrors the Settings modal (head + body + footer on surface2)
    so the two screens read as one system. */
 
-.modalOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal);
-  background: rgba(28, 25, 23, 0.4);
-  backdrop-filter: blur(3px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px;
-}
+/* Overlay/panel shell now comes from shared/Modal (.amodal-overlay/.amodal);
+   .modal only overrides the width and scroll behavior. */
 .modal {
   width: 440px;
-  max-width: 100%;
   max-height: calc(100vh - 64px);
   overflow-y: auto;
-  background: var(--surface);
-  border-radius: 20px;
-  box-shadow: 0 24px 60px rgba(28, 25, 23, 0.28);
 }
 .modalHead {
   display: flex;
@@ -990,11 +949,4 @@ select.input {
 .sessionIconAlert {
   background: color-mix(in srgb, var(--warning) 14%, transparent);
   color: var(--warning);
-}
-
-.toastAlert .toastIc {
-  background: var(--warning);
-}
-.toastAlert {
-  box-shadow: 0 12px 32px rgba(217, 119, 6, 0.32);
 }

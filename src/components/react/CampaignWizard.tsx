@@ -5,11 +5,11 @@ import type { ApiTemplate } from '@/lib/app/template-map';
 import type { ChannelSenders } from '@/lib/app/channel-senders';
 import { channelSender } from '@/lib/app/channel-senders';
 import Icon from './Icon';
+import Modal from './shared/Modal';
 import GalleryPreview, { FauxEmail, type GalleryPreviewData } from './shared/GalleryPreview';
 import TemplatePreview from './shared/TemplatePreview';
 import { CHANNEL, CHANNEL_ORDER, channelLabel } from './shared/channels';
 import { formatDuration, smsSegments, voiceSeconds } from './shared/messaging';
-import { useEscapeClose } from './shared/useEscapeClose';
 import {
   audiencesLabelOf,
   buildReviewRows,
@@ -521,9 +521,6 @@ export default function CampaignWizard({
   const activeSender = channelSender(channel, resolvedSenders);
   const emailSenderOptions = verifiedDomains.map(emailSenderForDomain);
 
-  // Escape closes the modal.
-  useEscapeClose(onClose);
-
   useEffect(() => {
     window.posthog?.capture('campaign_wizard_opened', { channel, mode });
   }, []);
@@ -822,75 +819,40 @@ export default function CampaignWizard({
   const pStyle: CSSProperties = { margin: '0 0 22px', fontSize: 13, color: 'var(--text4)' };
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 95,
-        background: 'rgba(28,25,23,.4)',
-        backdropFilter: 'blur(3px)',
-        WebkitBackdropFilter: 'blur(3px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: wz(32),
-        animation: 'fade .16s ease',
-      }}
-    >
+    <Modal open onClose={onClose} title={title} panelClassName={styles.dialog}>
       <div
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
         style={{
-          width: wz(960),
-          maxWidth: '100%',
-          height: wz(600),
-          maxHeight: '100%',
-          background: 'var(--surface)',
-          borderRadius: wz(20),
-          boxShadow: '0 24px 60px rgba(28,25,23,.28)',
-          overflow: 'hidden',
           display: 'flex',
-          flexDirection: 'column',
-          animation: 'pop .2s ease',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: `${wz(12)}px ${wz(25)}px`,
+          borderBottom: '1px solid var(--divider)',
         }}
       >
-        {/* header */}
-        <div
+        <div style={{ fontWeight: 600, fontSize: wz(15) }}>{title}</div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="sbtn"
+          aria-label="Close"
           style={{
+            width: wz(28),
+            height: wz(28),
+            border: 'none',
+            background: 'var(--surface2)',
+            borderRadius: wz(8),
+            cursor: 'pointer',
+            color: 'var(--text4)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: `${wz(12)}px ${wz(25)}px`,
-            borderBottom: '1px solid var(--divider)',
+            justifyContent: 'center',
           }}
         >
-          <div style={{ fontWeight: 600, fontSize: wz(15) }}>{title}</div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="sbtn"
-            aria-label="Close"
-            style={{
-              width: wz(28),
-              height: wz(28),
-              border: 'none',
-              background: 'var(--surface2)',
-              borderRadius: wz(8),
-              cursor: 'pointer',
-              color: 'var(--text4)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Icon name="x" size={wz(15)} />
-          </button>
-        </div>
+          <Icon name="x" size={wz(15)} />
+        </button>
+      </div>
 
-        {/* step index — read-only; use footer Back/Next to navigate */}
+      {/* step index — read-only; use footer Back/Next to navigate */}
         <nav className={styles.stepNav} aria-label="Campaign steps">
           <ol className={styles.stepList}>
             {stepDefs.map(([sTitle, sSub], i) => {
@@ -1847,7 +1809,6 @@ export default function CampaignWizard({
             {nextLabel}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

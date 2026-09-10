@@ -1,15 +1,13 @@
 .overlay {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-drawer, 70);
-  display: flex;
+  /* Combined with the shared .amodal-overlay base class from shared/Modal —
+     this only overrides the alignment/z-index to keep TestPanel's original
+     right-anchored drawer look (it predates .adrawer and keeps its own
+     bespoke width/shape here rather than being restyled to match). */
   justify-content: flex-end;
-}
-.scrim {
-  position: absolute;
-  inset: 0;
+  z-index: var(--z-drawer, 70);
+  padding: 0;
   background: rgba(28, 25, 23, 0.3);
-  border: none;
+  backdrop-filter: none;
 }
 .panel {
   position: relative;
@@ -20,6 +18,7 @@
   flex-direction: column;
   background: var(--surface);
   border-left: 1px solid var(--border2);
+  border-radius: 0;
   box-shadow: -8px 0 40px rgba(28, 25, 23, 0.18);
 }
 .head {

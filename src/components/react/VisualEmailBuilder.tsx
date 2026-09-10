@@ -15,7 +15,7 @@ import {
   TEMPLATE_LANGUAGE_OPTIONS,
   templateLanguageFlagSrc,
 } from '@/lib/app/template-language';
-import Icon from './Icon';
+import ToastHost from './shared/ToastHost';
 import MediaPickerModal, { type MediaPickerImage } from './shared/MediaPickerModal';
 import SendTestModal from './shared/SendTestModal';
 import { useToast } from './shared/useToast';
@@ -205,17 +205,18 @@ export default function VisualEmailBuilder({
     return () => timers.forEach(clearTimeout);
   }, [Builder, loadError]);
 
-  // Esc closes the media picker or test dialog when open, else the editor.
+  // Esc closes the editor. The media picker and send-test dialog are now
+  // Modal instances that own their own Escape handling (stopping propagation
+  // before it reaches this window listener), so this only fires when neither
+  // is open.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      if (mediaOpen) setMediaOpen(false);
-      else if (testOpen) setTestOpen(false);
-      else onClose();
+      onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose, mediaOpen, testOpen]);
+  }, [onClose]);
 
   // Persist current content (throws on failure so autosave/flush can react).
   const persist = async () => {
@@ -288,20 +289,7 @@ export default function VisualEmailBuilder({
       onBack={onClose}
       onSendTest={onSendTest ? () => setTestOpen(true) : undefined}
       onSaveDraft={() => void handleSaveDraft()}
-      toast={
-        toast ? (
-          <div
-            className={shellStyles.toast}
-            role="status"
-            style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-          >
-            <span className={shellStyles.toastIcon}>
-              <Icon name="check" size={13} stroke={3} />
-            </span>
-            {toast}
-          </div>
-        ) : null
-      }
+      toast={<ToastHost toast={toast} />}
     >
       {loadError ? (
         <div className={shellStyles.state}>

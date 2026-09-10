@@ -243,24 +243,6 @@
   color: inherit;
 }
 
-.toast {
-  position: fixed;
-  left: 50%;
-  bottom: 26px;
-  transform: translateX(-50%);
-  z-index: var(--z-toast, 90);
-  padding: 10px 16px;
-  border-radius: 10px;
-  background: var(--ink);
-  color: var(--on-ink);
-  font-size: 13px;
-  font-weight: 500;
-  box-shadow: var(--shadow-lg);
-}
-.toastAlert {
-  background: var(--danger-strong);
-}
-
 /* Narrow: the public URL and page count are the first things to go — the name,
    status and size still answer "can I publish this?". */
 @media (max-width: 1000px) {

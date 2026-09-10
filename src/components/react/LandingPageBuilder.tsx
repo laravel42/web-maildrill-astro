@@ -2,13 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Builder42EditorHandle, Builder42EditorProps, BuilderSite } from 'builder42';
 import { retryDynamicImport } from '@/lib/app/retry-dynamic-import';
 import { landingBuilderAdapters } from '@/lib/app/builder42-adapters';
-import Icon from './Icon';
+import ToastHost from './shared/ToastHost';
 import ChannelEditorShell, { shellStyles } from './shared/ChannelEditorShell';
 import ConfirmDialog from './shared/ConfirmDialog';
 import { LANDING_IDENTITY } from './shared/channels';
 import { useAutosave } from './shared/useAutosave';
 import { useToast } from './shared/useToast';
-import styles from './LandingPageBuilder.module.css';
+// Global z-index fix for Builder42's own modals nested inside this shell —
+// see LandingPageBuilder.module.css. No local classes are used from it.
+import './LandingPageBuilder.module.css';
 
 /**
  * Full-screen wrapper around Builder42 (vendored `packages/builder42/`) — the
@@ -195,20 +197,7 @@ export default function LandingPageBuilder({ initialSite, siteName, onClose, onS
         isDirty={isDirty}
         onBack={() => void requestClose()}
         onSaveDraft={() => void handleSaveDraft()}
-        toast={
-          toast ? (
-            <div
-              className={`${shellStyles.toast}${tone === 'alert' ? ` ${shellStyles.toastAlert}` : ''}`}
-              role={tone === 'alert' ? 'alert' : 'status'}
-              style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-            >
-              <span className={shellStyles.toastIcon}>
-                <Icon name={tone === 'alert' ? 'x' : 'check'} size={13} stroke={3} />
-              </span>
-              {toast}
-            </div>
-          ) : null
-        }
+        toast={<ToastHost toast={toast} tone={tone} />}
       >
         {loadError ? (
           <div className={shellStyles.state}>
@@ -243,17 +232,15 @@ export default function LandingPageBuilder({ initialSite, siteName, onClose, onS
         )}
       </ChannelEditorShell>
       {leaveBlocked ? (
-        <div className={styles.leaveGuard}>
-          <ConfirmDialog
-            title="Couldn’t save this landing"
-            message="Leave anyway? The latest edits on the canvas will be lost."
-            confirmLabel="Leave"
-            cancelLabel="Stay"
-            tone="danger"
-            onConfirm={onClose}
-            onCancel={() => setLeaveBlocked(false)}
-          />
-        </div>
+        <ConfirmDialog
+          title="Couldn’t save this landing"
+          message="Leave anyway? The latest edits on the canvas will be lost."
+          confirmLabel="Leave"
+          cancelLabel="Stay"
+          tone="danger"
+          onConfirm={onClose}
+          onCancel={() => setLeaveBlocked(false)}
+        />
       ) : null}
     </>
   );

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Icon from './Icon';
-import { useEscapeClose } from './shared/useEscapeClose';
+import Modal from './shared/Modal';
 import { api, ApiError } from '@/lib/app/api';
 import {
   FIELD_TYPES,
@@ -39,8 +39,6 @@ export default function CustomFieldsModal({
   const [keyDraft, setKeyDraft] = useState('');
   const [typeDraft, setTypeDraft] = useState<FieldType>('text');
   const [busy, setBusy] = useState(false);
-
-  useEscapeClose(onClose);
 
   useEffect(() => {
     if (!live) return;
@@ -164,30 +162,18 @@ export default function CustomFieldsModal({
   };
 
   return (
-    <div
-      className={styles.overlay}
-      onClick={onClose}
-      style={{ animation: 'ovfade .18s var(--ease-out)' }}
-    >
-      <div
-        className={styles.cfm}
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Custom fields"
-        style={{ animation: 'pop .18s ease' }}
-      >
-        <div className={styles.head}>
-          <div className={styles.headText}>
-            <span className={styles.title}>Custom fields</span>
-            <span className={styles.scope}>Shared across all lists</span>
-          </div>
-          <button type="button" className={styles.x} onClick={onClose} aria-label="Close">
-            <Icon name="x" size={16} />
-          </button>
+    <Modal open onClose={onClose} title="Custom fields" panelClassName={styles.cfm}>
+      <div className={styles.head}>
+        <div className={styles.headText}>
+          <span className={styles.title}>Custom fields</span>
+          <span className={styles.scope}>Shared across all lists</span>
         </div>
+        <button type="button" className={styles.x} onClick={onClose} aria-label="Close">
+          <Icon name="x" size={16} />
+        </button>
+      </div>
 
-        <div className={styles.body}>
+      <div className={styles.body}>
           {loading ? (
             <div className="aempty">Loading fields…</div>
           ) : loadError ? (
@@ -259,20 +245,19 @@ export default function CustomFieldsModal({
               </div>
             )}
           </div>
-        </div>
-
-        <div className={styles.foot}>
-          <button
-            type="button"
-            className={styles.done}
-            onClick={() => void save()}
-            disabled={busy || loading || loadError}
-          >
-            <Icon name="save" size={14} stroke={2} />
-            {busy ? 'Saving…' : 'Save'}
-          </button>
-        </div>
       </div>
-    </div>
+
+      <div className={styles.foot}>
+        <button
+          type="button"
+          className={styles.done}
+          onClick={() => void save()}
+          disabled={busy || loading || loadError}
+        >
+          <Icon name="save" size={14} stroke={2} />
+          {busy ? 'Saving…' : 'Save'}
+        </button>
+      </div>
+    </Modal>
   );
 }
