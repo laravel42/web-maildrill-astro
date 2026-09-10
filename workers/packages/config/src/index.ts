@@ -85,6 +85,16 @@ const EnvSchema = z.object({
   INFOBIP_BASE_URL: z.string().default(''),
   INFOBIP_API_KEY: z.string().default(''),
   INFOBIP_FROM: z.string().default('no-reply@maildrill.net'),
+  /**
+   * Outbound send throttle (messages/sec) applied in-process before every
+   * Infobip API call, on top of (not instead of) DISPATCH_CONCURRENCY and the
+   * BullMQ dispatch worker's own RATE_LIMIT_MAX/RATE_LIMIT_DURATION_MS limiter
+   * — that one is global across every channel and provider; this one is
+   * scoped to Infobip specifically, so raising SES's or Cloudflare's ceiling
+   * never risks exceeding Infobip's. 0 = unthrottled (the historical default;
+   * existing deployments are unaffected until this is set).
+   */
+  INFOBIP_MAX_SEND_RATE: int(0),
   /** E.164 numeric sender shared by SMS / WhatsApp / Voice when a channel override is unset. */
   INFOBIP_PHONE_FROM: z.string().default(''),
   /** Per-channel sender overrides; each falls back to INFOBIP_PHONE_FROM. */
@@ -180,6 +190,8 @@ const EnvSchema = z.object({
   CLOUDFLARE_EMAIL_API_TOKEN: z.string().default(''),
   /** Default sender when a campaign doesn't carry its own From address. */
   CLOUDFLARE_EMAIL_FROM: z.string().default('no-reply@maildrill.net'),
+  /** Same per-provider throttle as INFOBIP_MAX_SEND_RATE, scoped to Cloudflare. 0 = unthrottled. */
+  CLOUDFLARE_MAX_SEND_RATE: int(0),
   /**
    * Cloudflare Queue that Email Sending event subscriptions publish to
    * (delivered/deferred/bounced/failed/rejected/complained). Empty → the
@@ -206,6 +218,24 @@ const EnvSchema = z.object({
    * wired to /webhooks/ses/sns — sends without one are fire-and-forget.
    */
   AWS_SES_CONFIGURATION_SET: z.string().default(''),
+  /**
+   * Same per-provider throttle as INFOBIP_MAX_SEND_RATE, scoped to SES. Set
+   * this just under whatever `aws sesv2 get-account` reports as the account's
+   * granted max send rate — SES throttles (TooManyRequestsException) with no
+   * in-process protection otherwise once DISPATCH_CONCURRENCY is raised for
+   * volume. Default 14/s matches a brand-new SES account's typical starting
+   * quota; raise it once `aws sesv2 get-account` confirms a higher grant. 0 =
+   * unthrottled.
+   */
+  SES_MAX_SEND_RATE: int(14),
+  /**
+   * Redis-backed daily send cap for SES, shared fleet-wide (unlike the
+   * per-second rate above, which is per-process) — see rate-limiter.ts.
+   * Default 50,000/day is a conservative starting ceiling; raise alongside
+   * SES_MAX_SEND_RATE once the account's granted daily quota is confirmed.
+   * 0 = uncapped.
+   */
+  SES_MAX_SEND_PER_DAY: int(50_000),
   WEBHOOK_INFOBIP_SECRET: z.string().default('change-me'),
   DISPATCH_CONCURRENCY: int(10),
   DISPATCH_MAX_ATTEMPTS: int(5),
@@ -452,6 +482,7 @@ export const config = {
     billingCallbackUrl: env.INFOBIP_BILLING_CALLBACK_URL,
     billingCallbackToken: env.INFOBIP_BILLING_CALLBACK_TOKEN,
     billingCallbackTransport: env.INFOBIP_BILLING_CALLBACK_TRANSPORT,
+    maxSendRate: env.INFOBIP_MAX_SEND_RATE,
     /**
      * Where Infobip should POST the billing-usage result, and how we get it
      * back.
@@ -533,11 +564,14 @@ export const config = {
     eventsQueueId: env.CLOUDFLARE_EVENTS_QUEUE_ID,
     eventsApiToken: env.CLOUDFLARE_EVENTS_API_TOKEN || env.CLOUDFLARE_EMAIL_API_TOKEN,
     eventsPollIntervalMs: env.CLOUDFLARE_EVENTS_POLL_INTERVAL_MS,
+    maxSendRate: env.CLOUDFLARE_MAX_SEND_RATE,
   },
   ses: {
     region: env.AWS_SES_REGION,
     from: env.AWS_SES_FROM_EMAIL,
     configurationSet: env.AWS_SES_CONFIGURATION_SET,
+    maxSendRate: env.SES_MAX_SEND_RATE,
+    maxSendPerDay: env.SES_MAX_SEND_PER_DAY,
   },
   media: {
     region: env.AWS_REGION,
