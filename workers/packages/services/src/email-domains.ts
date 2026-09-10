@@ -3,19 +3,35 @@ import { config } from '@maildrill/config';
 import { db, emailDomains } from '@maildrill/database';
 import { ConflictError, NotFoundError, ValidationError } from '@maildrill/domain';
 import { ensureInfobipApplication, knownTenantInfobipEntityId } from '@maildrill/identity';
-import { resolvePlatformFields } from '@maildrill/providers';
+import { resolvePlatformFields, SesProvider } from '@maildrill/providers';
 import { createLogger } from '@maildrill/observability';
 
 const log = createLogger({ component: 'email-domains' });
 
 /**
- * Sending-domain management (Settings → Domains). Infobip's domain API is
- * account-level — one registration per domain name across the whole Infobip
- * account — so we keep a local `email_domains` row that ties each domain to a
- * workspace. List/mutate only return or touch domains this tenant has
- * explicitly registered (or claimed via register when the name already exists
- * on Infobip and is unowned). Never auto-inherit the full Infobip account list.
+ * Sending-domain management (Settings → Domains). Both providers' domain
+ * APIs are account-level — one registration per domain name across the
+ * whole account — so we keep a local `email_domains` row that ties each
+ * domain to a workspace. List/mutate only return or touch domains this
+ * tenant has explicitly registered (or claimed via register when the name
+ * already exists on the provider and is unowned). Never auto-inherit the
+ * full provider-account domain list.
+ *
+ * Which provider's API actually gets called is driven by
+ * `PROVIDER_EMAIL_DRIVER`: SES when it's `ses`, Infobip otherwise (`infobip`,
+ * `cloudflare`, or unset all fall back to Infobip's domain API — Cloudflare's
+ * email routing has no equivalent domain-identity concept of its own).
  */
+
+function usesSes(): boolean {
+  return config.provider.emailDriver === 'ses';
+}
+
+let sesProviderInstance: SesProvider | undefined;
+function sesProvider(): SesProvider {
+  if (!sesProviderInstance) sesProviderInstance = new SesProvider();
+  return sesProviderInstance;
+}
 
 export interface EmailDomainDnsRecord {
   recordType: string;
@@ -32,6 +48,7 @@ export interface EmailDomain {
 }
 
 export function emailDomainsConfigured(): boolean {
+  if (usesSes()) return Boolean(config.ses.region);
   return Boolean(config.infobip.baseUrl && config.infobip.apiKey);
 }
 
@@ -147,6 +164,19 @@ async function listProviderDomains(): Promise<EmailDomain[]> {
 export async function listEmailDomains(tenantId: string): Promise<EmailDomain[]> {
   const mine = await ownedNames(tenantId);
   if (mine.size === 0) return [];
+
+  if (usesSes()) {
+    // SES has no per-account "list mine" call that's cheaper than asking for
+    // each owned identity directly — GetEmailIdentity is a single lookup per
+    // domain, same cost ListEmailIdentities' enumeration would still need to
+    // pay to get DKIM tokens and status per result.
+    const provider = sesProvider();
+    const domains = await Promise.all(
+      Array.from(mine).map((name) => provider.getDomainIdentity(name)),
+    );
+    return domains.filter((d): d is EmailDomain => d !== null);
+  }
+
   const all = await listProviderDomains();
   // Infobip may echo mixed-case names; ownership rows are always lowercase.
   return all.filter((d) => mine.has(normalizeDomain(d.domainName)));
@@ -169,7 +199,7 @@ export async function registerEmailDomain(
     throw new ValidationError('enter a valid domain, e.g. mail.acme.com');
   }
 
-  // Already claimed locally — short-circuit before hitting Infobip.
+  // Already claimed locally — short-circuit before hitting the provider.
   const local = await db.select().from(emailDomains).where(eq(emailDomains.domainName, name)).limit(1);
   if (local[0]) {
     if (local[0].tenantId !== tenantId) {
@@ -178,6 +208,17 @@ export async function registerEmailDomain(
     const existing = await getEmailDomain(tenantId, name);
     if (existing) return existing;
     throw new ConflictError(`${name} is already registered`);
+  }
+
+  if (usesSes()) {
+    // SES has no per-workspace domain concept — the whole account shares one
+    // IAM policy already scoped to `identity/*` (see IAM setup docs), so a
+    // new domain identity needs no application/entity association step the
+    // way Infobip's CPaaS X model requires.
+    const result = await sesProvider().createDomainIdentity(name);
+    if (!result.ok) throw new ValidationError(`could not register ${name}: ${result.error}`);
+    await claimDomain(tenantId, name);
+    return result.domain;
   }
 
   // `POST /email/1/domains` takes the CPaaS X identity as top-level fields
@@ -286,6 +327,9 @@ export async function getEmailDomain(
     .where(and(eq(emailDomains.tenantId, tenantId), eq(emailDomains.domainName, name)))
     .limit(1);
   if (!owned[0]) return null;
+
+  if (usesSes()) return sesProvider().getDomainIdentity(name);
+
   const { status, json } = await infobip('GET', `/email/1/domains/${encodeURIComponent(name)}`);
   if (status === 404) return null;
   if (status !== 200) {
@@ -301,23 +345,35 @@ export async function getEmailDomain(
  */
 export async function deleteEmailDomain(tenantId: string, domainName: string): Promise<void> {
   const name = await assertOwned(tenantId, domainName);
-  const { status, json } = await infobip('DELETE', `/email/1/domains/${encodeURIComponent(name)}`);
-  // Already gone is a success for the caller's purposes.
-  if (status !== 204 && status !== 200 && status !== 404) {
-    throw new ValidationError(infobipErrorText(json) ?? `could not delete ${name} (${status})`);
+
+  if (usesSes()) {
+    await sesProvider().deleteDomainIdentity(name);
+  } else {
+    const { status, json } = await infobip('DELETE', `/email/1/domains/${encodeURIComponent(name)}`);
+    // Already gone is a success for the caller's purposes.
+    if (status !== 204 && status !== 200 && status !== 404) {
+      throw new ValidationError(infobipErrorText(json) ?? `could not delete ${name} (${status})`);
+    }
   }
+
   await db
     .delete(emailDomains)
     .where(and(eq(emailDomains.tenantId, tenantId), eq(emailDomains.domainName, name)));
 }
 
-/** Ask Infobip to re-check DNS, then return the refreshed state. */
+/**
+ * Ask the provider to re-check DNS, then return the refreshed state. SES has
+ * no forced-recheck API — it polls DNS on its own schedule — so for SES this
+ * just re-fetches the identity's current (possibly still-pending) status.
+ */
 export async function verifyEmailDomain(
   tenantId: string,
   domainName: string,
 ): Promise<EmailDomain> {
   const name = await assertOwned(tenantId, domainName);
-  await infobip('POST', `/email/1/domains/${encodeURIComponent(name)}/verify`);
+  if (!usesSes()) {
+    await infobip('POST', `/email/1/domains/${encodeURIComponent(name)}/verify`);
+  }
   const domain = await getEmailDomain(tenantId, name);
   if (!domain) throw new ValidationError(`${name} is not registered`);
   return domain;

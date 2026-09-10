@@ -4,6 +4,10 @@ import {
   CreateTenantCommand,
   GetTenantCommand,
   CreateTenantResourceAssociationCommand,
+  CreateEmailIdentityCommand,
+  GetEmailIdentityCommand,
+  DeleteEmailIdentityCommand,
+  PutEmailIdentityMailFromAttributesCommand,
   type MessageHeader,
   type MessageTag,
 } from '@aws-sdk/client-sesv2';
@@ -43,6 +47,29 @@ export interface SesClientLike {
   send(command: CreateTenantCommand): Promise<{ TenantArn?: string }>;
   send(command: GetTenantCommand): Promise<{ Tenant?: { TenantArn?: string } }>;
   send(command: CreateTenantResourceAssociationCommand): Promise<Record<string, never>>;
+  send(command: CreateEmailIdentityCommand): Promise<Record<string, unknown>>;
+  send(command: GetEmailIdentityCommand): Promise<SesGetEmailIdentityResult>;
+  send(command: DeleteEmailIdentityCommand): Promise<Record<string, never>>;
+  send(command: PutEmailIdentityMailFromAttributesCommand): Promise<Record<string, never>>;
+}
+
+interface SesGetEmailIdentityResult {
+  VerifiedForSendingStatus?: boolean;
+  DkimAttributes?: { Status?: string; Tokens?: string[] };
+  MailFromAttributes?: { MailFromDomain?: string; MailFromDomainStatus?: string };
+}
+
+export interface SesDomainDnsRecord {
+  recordType: string;
+  name: string;
+  expectedValue: string;
+  verified: boolean;
+}
+
+export interface SesDomainIdentity {
+  domainName: string;
+  active: boolean;
+  dnsRecords: SesDomainDnsRecord[];
 }
 
 const SES_TAG_NAME = /^[a-zA-Z0-9_-]{1,256}$/;
@@ -262,6 +289,74 @@ export class SesProvider implements MessagingProvider {
     return { ok: true, existed };
   }
 
+  /**
+   * Register (or re-fetch) a domain sending identity — Settings → Domains
+   * when `PROVIDER_EMAIL_DRIVER=ses`. Easy DKIM is on by default for a new
+   * domain identity (no separate ownership-verification TXT record; the 3
+   * DKIM CNAMEs double as proof of control), and a custom MAIL FROM
+   * subdomain is set in the same call so both DNS batches are returned
+   * together on first registration instead of a second round trip.
+   *
+   * `mailFromDomain` defaults to `mkt.<domain>` — an SES custom MAIL FROM
+   * domain can never equal the identity domain itself (SES rejects that
+   * combination), so a subdomain is mandatory, not stylistic.
+   */
+  async createDomainIdentity(
+    domainName: string,
+    mailFromDomain: string = `mkt.${domainName}`,
+  ): Promise<{ ok: true; domain: SesDomainIdentity } | { ok: false; error: string }> {
+    if (!this.settings.region) {
+      return { ok: false, error: 'ses: set AWS_SES_REGION' };
+    }
+    const client = this.getClient();
+    try {
+      await client.send(new CreateEmailIdentityCommand({ EmailIdentity: domainName }));
+    } catch (err) {
+      if ((err as { name?: string } | null)?.name !== 'AlreadyExistsException') {
+        return { ok: false, error: `ses: create identity failed: ${formatSdkError(err)}` };
+      }
+    }
+    try {
+      await client.send(
+        new PutEmailIdentityMailFromAttributesCommand({
+          EmailIdentity: domainName,
+          MailFromDomain: mailFromDomain,
+          BehaviorOnMxFailure: 'USE_DEFAULT_VALUE',
+        }),
+      );
+    } catch (err) {
+      return { ok: false, error: `ses: set mail-from domain failed: ${formatSdkError(err)}` };
+    }
+    const domain = await this.getDomainIdentity(domainName);
+    if (!domain) {
+      return { ok: false, error: 'ses: identity created but could not be re-fetched' };
+    }
+    return { ok: true, domain };
+  }
+
+  /** `null` on a domain that has no SES identity (never registered, or already deleted). */
+  async getDomainIdentity(domainName: string): Promise<SesDomainIdentity | null> {
+    const client = this.getClient();
+    try {
+      const res = await client.send(new GetEmailIdentityCommand({ EmailIdentity: domainName }));
+      return toSesDomainIdentity(domainName, res, this.settings.region);
+    } catch (err) {
+      if ((err as { name?: string } | null)?.name === 'NotFoundException') return null;
+      throw err;
+    }
+  }
+
+  /** Irreversible: destroys the DKIM keys, so re-adding the domain later issues new DNS records. */
+  async deleteDomainIdentity(domainName: string): Promise<void> {
+    const client = this.getClient();
+    try {
+      await client.send(new DeleteEmailIdentityCommand({ EmailIdentity: domainName }));
+    } catch (err) {
+      if ((err as { name?: string } | null)?.name === 'NotFoundException') return;
+      throw err;
+    }
+  }
+
   private validationError(message: string): ProviderSendResult {
     return {
       accepted: false,
@@ -350,6 +445,52 @@ export class SesProvider implements MessagingProvider {
       },
     ];
   }
+}
+
+/**
+ * SES only reports one aggregate DKIM status for all 3 tokens (no
+ * per-record verification), so every DKIM CNAME is marked verified/not
+ * together. MAIL FROM's MX + SPF-TXT pair share `MailFromDomainStatus` the
+ * same way.
+ */
+function toSesDomainIdentity(
+  domainName: string,
+  res: SesGetEmailIdentityResult,
+  region: string,
+): SesDomainIdentity {
+  const dkim = res.DkimAttributes;
+  const dkimVerified = dkim?.Status === 'SUCCESS';
+  const dnsRecords: SesDomainDnsRecord[] = (dkim?.Tokens ?? []).map((token) => ({
+    recordType: 'CNAME',
+    name: `${token}._domainkey.${domainName}`,
+    expectedValue: `${token}.dkim.amazonses.com`,
+    verified: dkimVerified,
+  }));
+
+  const mailFromDomain = res.MailFromAttributes?.MailFromDomain;
+  if (mailFromDomain) {
+    const mailFromVerified = res.MailFromAttributes?.MailFromDomainStatus === 'SUCCESS';
+    dnsRecords.push(
+      {
+        recordType: 'MX',
+        name: mailFromDomain,
+        expectedValue: `10 feedback-smtp.${region}.amazonses.com`,
+        verified: mailFromVerified,
+      },
+      {
+        recordType: 'TXT',
+        name: mailFromDomain,
+        expectedValue: '"v=spf1 include:amazonses.com ~all"',
+        verified: mailFromVerified,
+      },
+    );
+  }
+
+  return {
+    domainName,
+    active: Boolean(res.VerifiedForSendingStatus) && dkimVerified,
+    dnsRecords,
+  };
 }
 
 /** `arn:aws:ses:{region}:{account-id}:tenant/{name}` — account id is field index 4. */

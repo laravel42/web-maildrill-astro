@@ -2,7 +2,13 @@ export * from './core';
 export { MockProvider } from './mock';
 export { InfobipProvider, resolvePlatformFields } from './infobip';
 export { CloudflareProvider, type CloudflareEmailSettings } from './cloudflare';
-export { SesProvider, type SesEmailSettings, type SesClientLike } from './ses';
+export {
+  SesProvider,
+  type SesEmailSettings,
+  type SesClientLike,
+  type SesDomainIdentity,
+  type SesDomainDnsRecord,
+} from './ses';
 export { getProvider } from './registry';
 export {
   createTransactionalMailer,
