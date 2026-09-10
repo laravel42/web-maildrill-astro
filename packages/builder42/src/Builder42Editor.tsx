@@ -204,7 +204,7 @@ function Builder42EditorInner({ i18nInstance }: Builder42EditorInnerProps) {
   const isPreview = useDocumentStore((s) => s.view === "preview");
   const view = useDocumentStore((s) => s.view);
   const setView = useDocumentStore((s) => s.setView);
-  const [sidebarCollapsed] = useLocalConfig("sidebarCollapsed");
+  const [sidebarMode] = useLocalConfig("sidebarMode");
   const [inspectorCollapsed] = useLocalConfig("inspectorCollapsed");
 
   // Code/JSON are standalone export surfaces; the embed never offers them.
@@ -214,7 +214,7 @@ function Builder42EditorInner({ i18nInstance }: Builder42EditorInnerProps) {
 
   const bodyClasses = ["pbx-body"];
   if (isPreview) bodyClasses.push("pbx-body--preview");
-  if (sidebarCollapsed) bodyClasses.push("pbx-body--sidebar-collapsed");
+  if (sidebarMode === "compact") bodyClasses.push("pbx-body--sidebar-compact");
   if (inspectorCollapsed) bodyClasses.push("pbx-body--inspector-collapsed");
 
   return (

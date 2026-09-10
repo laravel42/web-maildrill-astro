@@ -8,7 +8,7 @@
  * justificarse en línea (criterio docs/22 §4).
  */
 /* ---- Sidebar ------------------------------------------------------------ */
-.pbx-body--sidebar-collapsed .pbx-sidebar,
+.pbx-body--sidebar-compact .pbx-sidebar,
 .pbx-body--inspector-collapsed .pbx-inspector {
   overflow: hidden;
 }
@@ -362,4 +362,80 @@
   border-radius: var(--pb-chrome-radius-xs);
   padding: 2px 6px;
   font-size: 12px;
+}
+
+/* ---- Riel compacto del sidebar (fase B, homologación UI/UX) ------------
+ * Cuerpo del sidebar en modo "compact": lista vertical angosta con los
+ * tiles de bloques esenciales/utilidades — mismo concepto que
+ * `CompactBlocksList` de email-builder, adaptado al lenguaje visual de
+ * `.pbx-palette__item` (icono + label, sin el grid de 3 columnas que
+ * necesita más ancho). El sidebar NUNCA colapsa por debajo de este ancho
+ * (168px, ver `shell.css` `.pbx-body--sidebar-compact`). */
+.pbx-compact-rail {
+  padding: 8px 6px;
+}
+
+.pbx-compact-rail__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pbx-compact-rail__tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 8px 4px;
+  border: 1px solid var(--pb-chrome-border);
+  border-radius: var(--pb-chrome-radius-md);
+  background: var(--pb-chrome-surface);
+  cursor: grab;
+  font: inherit;
+  color: var(--pb-chrome-text);
+  transition: border-color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+
+.pbx-compact-rail__tile:hover {
+  border-color: var(--pb-chrome-accent);
+  background: var(--pb-chrome-accent-subtle);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
+  color: var(--pb-chrome-accent-on-surface);
+}
+
+.pbx-compact-rail__tile:focus-visible {
+  outline: none;
+  box-shadow: var(--pb-chrome-focus-ring);
+}
+
+.pbx-compact-rail__tile--dragging {
+  opacity: 0.45;
+  cursor: grabbing;
+}
+
+.pbx-compact-rail__tile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: inherit;
+}
+
+.pbx-compact-rail__tile-icon-svg {
+  width: 18px;
+  height: 18px;
+}
+
+.pbx-compact-rail__tile-label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: var(--pb-chrome-line-height-tight);
+  text-align: center;
 }

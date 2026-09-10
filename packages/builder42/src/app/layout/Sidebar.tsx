@@ -14,6 +14,14 @@
  *
  * Fase 11: iconos SVG por categoría, micro-icono por tipo de componente,
  * paleta como cards con hover visual.
+ *
+ * Homologación UI/UX (fase B): el sidebar ya NO colapsa a ancho 0 — tiene
+ * dos estados únicos, "compact" y "open" (`sidebarMode`, `useLocalConfig`).
+ * En "compact" se muestra un riel angosto (`CompactRail`) con solo los
+ * bloques esenciales + utilidades (mismos tipos que el grupo "Básicos" de
+ * abajo) en tiles verticales icon+label — mismo concepto que el rail
+ * compacto de email-builder (`CompactBlocksList.tsx`). El sidebar siempre
+ * ocupa como mínimo ese ancho, nunca desaparece del todo.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -144,7 +152,7 @@ function CategoryAccordion({
   );
 }
 
-function SidebarItem({ def }: { def: ComponentDefinition }) {
+function SidebarItem({ def, compact = false }: { def: ComponentDefinition; compact?: boolean }) {
   const { t } = useTranslation("sidebar");
   const { t: tc } = useTranslation("common");
   const ref = useRef<HTMLElement>(null);
@@ -196,6 +204,27 @@ function SidebarItem({ def }: { def: ComponentDefinition }) {
     startPickInsertNew,
   ]);
 
+  if (compact) {
+    // Tile vertical del riel compacto (mismo concepto que `CompactBlockTile`
+    // de email-builder): icono arriba en un chip, label debajo, sin el grip
+    // decorativo de la card completa (el riel angosto no tiene espacio para
+    // esa affordance extra, y el drag sigue funcionando igual vía `ref`).
+    return (
+      <button
+        ref={ref as React.Ref<HTMLButtonElement>}
+        type="button"
+        className={"pbx-compact-rail__tile" + (dragging ? " pbx-compact-rail__tile--dragging" : "")}
+        onClick={handleClick}
+        title={`${translatedLabel} — ${t("palette.dragTooltip")}`}
+      >
+        <span className="pbx-compact-rail__tile-icon">
+          <ComponentTypeIcon type={def.type} className="pbx-compact-rail__tile-icon-svg" />
+        </span>
+        <span className="pbx-compact-rail__tile-label">{translatedLabel}</span>
+      </button>
+    );
+  }
+
   return (
     <button
       ref={ref as React.Ref<HTMLButtonElement>}
@@ -208,6 +237,36 @@ function SidebarItem({ def }: { def: ComponentDefinition }) {
       <ComponentTypeIcon type={def.type} className="pbx-palette__icon" />
       <span className="pbx-palette__label">{translatedLabel}</span>
     </button>
+  );
+}
+
+/**
+ * CompactRail — cuerpo del sidebar en modo "compact" (fase B, homologación
+ * UI/UX): reutiliza los MISMOS tipos que el grupo "Básicos" (`BASICS_GROUPS`,
+ * arriba) — esenciales + contenido + utilidad — aplanados en una sola lista
+ * vertical de tiles, sin categorías/acordeones. Mismo concepto que
+ * `CompactBlocksList` de email-builder: un riel angosto con solo lo
+ * frecuente. El toggle a "open" ya vive en `PanelHandle` (anclado al borde
+ * del slot) — no se repite un segundo control de expandir aquí dentro
+ * (mismo criterio de "una sola fuente de verdad visual por acción" de la
+ * fase C).
+ */
+function CompactRail() {
+  const basicsDefs = useMemo(
+    () =>
+      BASICS_GROUPS.flatMap((g) => g.types)
+        .map((type) => getDefinition(type))
+        .filter((def): def is ComponentDefinition => def != null),
+    [],
+  );
+  return (
+    <div className="pbx-compact-rail">
+      <div className="pbx-compact-rail__list">
+        {basicsDefs.map((def) => (
+          <SidebarItem key={`compact-${def.type}`} def={def} compact />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -292,64 +351,71 @@ const ALL_TAB_IDS: SideTab[] = ["components", "tokens", "templates"];
 export function Sidebar() {
   const { t } = useTranslation("sidebar");
   const [tab, setTab] = useState<SideTab>("components");
-  const [sidebarCollapsed, setSidebarCollapsed] = useLocalConfig("sidebarCollapsed");
+  const [sidebarMode, setSidebarMode] = useLocalConfig("sidebarMode");
   const embedded = useEmbeddedChrome();
   const { isSimple } = useExperienceLevel();
   // Embed: Tokens stay off the first screen (Simple). Advanced still gets them.
   const tabIds = embedded && isSimple ? ALL_TAB_IDS.filter((id) => id !== "tokens") : ALL_TAB_IDS;
   const activeTab = tabIds.includes(tab) ? tab : "components";
+  const isCompact = sidebarMode === "compact";
 
   return (
-    <div className={"pbx-panel-slot pbx-panel-slot--left" + (sidebarCollapsed ? " pbx-panel-slot--collapsed" : "")}>
-      <aside
-        className={
-          "pbx-sidebar" +
-          (!sidebarCollapsed ? " pbx-sidebar--open" : "")
-        }
-      >
-        <div className="pbx-side-tabs" role="tablist" aria-label={t("tabs.ariaLabel")}>
-          {tabIds.map((id) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              id={`pbx-side-tab-${id}`}
-              aria-selected={activeTab === id}
-              aria-controls={`pbx-side-panel-${id}`}
-              className={"pbx-side-tabs__trigger" + (activeTab === id ? " pbx-side-tabs__trigger--active" : "")}
-              onClick={() => setTab(id)}
-            >
-              {t(`tabs.${id}`)}
-            </button>
-          ))}
-        </div>
+    <div className={"pbx-panel-slot pbx-panel-slot--left" + (isCompact ? " pbx-panel-slot--compact" : "")}>
+      <aside className={"pbx-sidebar" + (!isCompact ? " pbx-sidebar--open" : " pbx-sidebar--compact")}>
+        {isCompact ? (
+          // Modo "compact" (fase B): sin tabs — solo el riel de bloques
+          // esenciales/utilidades. Tokens/Plantillas requieren la vista
+          // completa ("open"), igual que en email-builder el rail compacto
+          // solo ofrece los bloques base, no Sections/Templates/búsqueda.
+          <CompactRail />
+        ) : (
+          <>
+            <div className="pbx-side-tabs" role="tablist" aria-label={t("tabs.ariaLabel")}>
+              {tabIds.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  id={`pbx-side-tab-${id}`}
+                  aria-selected={activeTab === id}
+                  aria-controls={`pbx-side-panel-${id}`}
+                  className={"pbx-side-tabs__trigger" + (activeTab === id ? " pbx-side-tabs__trigger--active" : "")}
+                  onClick={() => setTab(id)}
+                >
+                  {t(`tabs.${id}`)}
+                </button>
+              ))}
+            </div>
 
-        <div
-          className="pbx-side-tabs__panel"
-          role="tabpanel"
-          id={`pbx-side-panel-${activeTab}`}
-          aria-labelledby={`pbx-side-tab-${activeTab}`}
-        >
-          {activeTab === "components" ? (
-            <ComponentsPanel />
-          ) : activeTab === "tokens" ? (
-            <TokensEditor />
-          ) : (
-            <TemplatesPanel />
-          )}
-        </div>
+            <div
+              className="pbx-side-tabs__panel"
+              role="tabpanel"
+              id={`pbx-side-panel-${activeTab}`}
+              aria-labelledby={`pbx-side-tab-${activeTab}`}
+            >
+              {activeTab === "components" ? (
+                <ComponentsPanel />
+              ) : activeTab === "tokens" ? (
+                <TokensEditor />
+              ) : (
+                <TemplatesPanel />
+              )}
+            </div>
+          </>
+        )}
       </aside>
 
-      {/* Pestaña de colapsar/expandir anclada al borde derecho del panel —
+      {/* Pestaña de compactar/expandir anclada al borde derecho del panel —
           homologa el patrón de email-builder/wa-template-studio (siempre
           visible, sin depender del header). Sustituye a `PanelToggleButtons`.
           Vive FUERA del `<aside>` (hermano, dentro de `.pbx-panel-slot`) para
           no interferir con su `overflow: auto` — ver comentario en
-          `chrome/sidebar.css`. */}
+          `chrome/sidebar.css`. Ya NO colapsa a 0 (fase B): alterna entre
+          "compact" (riel angosto) y "open" (paleta completa). */}
       <PanelHandle
         side="left"
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        collapsed={isCompact}
+        onToggle={() => setSidebarMode(isCompact ? "open" : "compact")}
       />
     </div>
   );

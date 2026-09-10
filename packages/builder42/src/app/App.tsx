@@ -19,13 +19,13 @@ import { useLocalConfig } from "@/hooks/useLocalConfig";
 export function App() {
   useUndoRedoShortcuts();
   const isPreview = useDocumentStore((s) => s.view === "preview");
-  const [sidebarCollapsed] = useLocalConfig("sidebarCollapsed");
+  const [sidebarMode] = useLocalConfig("sidebarMode");
   const [inspectorCollapsed] = useLocalConfig("inspectorCollapsed");
   const [experienceLevelChosen] = useLocalConfig("experienceLevelChosen");
 
   const bodyClasses = ["pbx-body"];
   if (isPreview) bodyClasses.push("pbx-body--preview");
-  if (sidebarCollapsed) bodyClasses.push("pbx-body--sidebar-collapsed");
+  if (sidebarMode === "compact") bodyClasses.push("pbx-body--sidebar-compact");
   if (inspectorCollapsed) bodyClasses.push("pbx-body--inspector-collapsed");
 
   return (

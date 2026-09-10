@@ -59,8 +59,16 @@ export interface ConfigMap {
    * mostrar/ocultar siempre, independiente del dispositivo.
    */
   reorderControls: "auto" | "on" | "off";
-  /** Panel lateral izquierdo colapsado (Fase 11.10). */
-  sidebarCollapsed: boolean;
+  /**
+   * Modo del panel lateral izquierdo (Fase 11.10, homologación UI/UX fase B):
+   * "open" muestra la paleta completa (categorías/acordeones); "compact" la
+   * reduce a un riel angosto con solo los bloques esenciales/utilidades en
+   * tiles verticales icon+label — mismo concepto que el rail compacto de
+   * email-builder (`CompactBlocksList.tsx`, `COMPACT_LIBRARY_DRAWER_WIDTH`).
+   * A propósito NO hay un tercer estado "colapsado a 0": el sidebar siempre
+   * ocupa como mínimo el ancho compacto, nunca desaparece del todo.
+   */
+  sidebarMode: "compact" | "open";
   /** Panel inspector derecho colapsado (Fase 11.10). */
   inspectorCollapsed: boolean;
   /**
@@ -95,7 +103,7 @@ const DEFAULTS: ConfigMap = {
   outputZipTimestamp: true,
   invisibleBubblePos: { x: -1, y: -1 },
   reorderControls: "auto",
-  sidebarCollapsed: false,
+  sidebarMode: "open",
   inspectorCollapsed: false,
   experienceLevel: "advanced",
   experienceLevelChosen: false,
