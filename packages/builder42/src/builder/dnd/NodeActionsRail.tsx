@@ -175,9 +175,12 @@ export function NodeActionsRail({ frameRef }: NodeActionsRailProps) {
         // Verticalmente centrada en el alto del nodo (igual que TuneMenu de
         // email-builder cuando se ancla al lado, no arriba/abajo).
         top: nr.top - fr.top + nr.height / 2 - railHeight / 2,
-        // Pegada al borde derecho del nodo, con un pequeño espacio — misma
-        // idea que `right: -3rem` del TuneMenu original.
-        left: nr.left - fr.left + nr.width + 8,
+        // Pegada AL BORDE del nodo, sin espacio (petición del usuario, este
+        // commit — antes +8px de separación): se ve como una pestaña que
+        // sale del propio elemento, no como un menú flotante aparte. El
+        // radio de esquina también se ajustó a "solo lado derecho"
+        // (`canvas-nodes.css`) para reforzar esa lectura.
+        left: nr.left - fr.left + nr.width,
       });
     };
     measure();
