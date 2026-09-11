@@ -675,3 +675,36 @@ Verificación: `astro check` → 0 errores, 0 warnings, 3 hints
 
 **Siguiente paso al retomar:** visto bueno visual del usuario; luego
 Tanda 5 (roles `hero` + `logo`).
+
+## 13. Tanda 5 — `sections`, roles `hero` + `logo` (10/85, 50/146 acumulado)
+
+**Estado: implementado en código, pendiente visto bueno visual.**
+
+| # | id | Nombre | Role | Estructura (`blocks`) |
+|---|---|---|---|---|
+| 1 | `04033fa8-61be-4f01-b046-eae103b4ea5e` | Centered | hero | `Container > eyebrow+h1+texto+Button+link` — bloque único centrado |
+| 2 | `37898f65-478b-4026-a10e-f98931e292c5` | Image card with pill CTA | hero | `Container > Container(bg imagen, rounded) > h1+texto+Button pill` |
+| 3 | `3881fe2f-2a14-453a-8993-bc96d5c2f8ca` | Split mobile reflow | hero | `Container > ColumnsContainer[2: h1+texto+Button col0, Image col1]` |
+| 4 | `4fae03fe-d95d-405c-890d-08a6d8edbb9c` | "Footer" (catálogo dice role=hero, mal-etiquetado) | hero | `Container(bg color) > SocialMedia+texto+Divider+ColumnsContainer[links, imagen]` — diseñado según estructura real (footer), no el rol nominal |
+| 5 | `bf07aee7-3472-40fc-a289-e98e9acddbaf` | Logo + headline | hero | `Container > Image(logo)+h1+texto+Button` — apilado vertical |
+| 6 | `2d705565-c805-4571-b446-977543111c5a` | Wordmark | logo | `Container > NotionText(h2 "ACME")` — texto puro |
+| 7 | `3cf56fed-981a-4c87-862d-cea340dfd16d` | Logo + tagline | logo | `Container > Image(logo)+texto tagline` |
+| 8 | `4f9491aa-be6c-4c95-ba75-e077fb9763d0` | Left aligned | logo | `Container > Image(logo, izquierda)` — un solo bloque |
+| 9 | `624b4835-df2d-46cb-af3a-a666a8af6585` | On BG image | logo | `Container(bg imagen) > Image(logo)` |
+| 10 | `71b06d77-9da6-4fe3-be3a-ad3b6785af0c` | Cornered card | logo | `Container > Container(esquinas superiores redondeadas) > Image(logo)+texto tagline` |
+
+Nota sobre #4: catalogado como `role: "hero"` en `localPresets.data.json`
+pero su árbol de `blocks` es estructuralmente un footer (SocialMedia +
+Divider + 2 columnas links/imagen). Se diseñó el icono según la
+estructura real, consistente con el criterio de todo el plan (analizar
+`blocks`, no asumir el `role` como verdad absoluta).
+
+Micro-variaciones: **#6/#7** logo simple centrado, #6 sin imagen (solo
+texto), #7 con imagen+tagline; **#8/#9** logo solo, #8 sin fondo
+(izquierda), #9 con fondo tintado (imagen de fondo, centrado).
+
+`SECTION_ICONS` extendido con las 10 entradas; `role` ampliado a
+incluir `'hero' | 'logo'`. Verificación: `astro check` sin errores
+nuevos, `vitest run` → 43/43 archivos, 303/303 tests.
+
+**Siguiente paso:** Tanda 6 (roles `nav` + `pricing`).

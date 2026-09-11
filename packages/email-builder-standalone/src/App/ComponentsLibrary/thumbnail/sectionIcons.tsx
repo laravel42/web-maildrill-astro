@@ -9,13 +9,14 @@
  * Tanda 2 (10/146): `sections`, roles `cta` + `faq`.
  * Tanda 3 (10/146): `sections`, roles `features` + `footer`.
  * Tanda 4 (10/146): `sections`, roles `gallery` + `header`.
+ * Tanda 5 (10/146): `sections`, roles `hero` + `logo`.
  * Keyed by the item's stable `id` from `localPresets.data.json` — NOT
  * by role, since the design is per-component, not per-category/role.
  *
  * Status: **draft, pending visual approval**. Rendered here so the
  * user can review each icon in the real Components Library UI before
  * approving the tanda and moving on to the next one. Do not treat this
- * map as final/complete — only the 40 ids below are designed so far.
+ * map as final/complete — only the 50 ids below are designed so far.
  */
 
 import React from 'react';
@@ -31,7 +32,9 @@ export type SectionIconEntry = {
     | 'features'
     | 'footer'
     | 'gallery'
-    | 'header';
+    | 'header'
+    | 'hero'
+    | 'logo';
   svg: React.ReactNode;
 };
 
@@ -661,9 +664,138 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       </svg>
     ),
   },
+
+  // ---- Tanda 5 — sections, roles `hero` + `logo` (10/146) ----
+
+  // #1 — Centered (hero)
+  '04033fa8-61be-4f01-b046-eae103b4ea5e': {
+    name: 'Centered',
+    role: 'hero',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={10.5} y1={3} x2={13.5} y2={3} strokeWidth={1} />
+        <line x1={6} y1={6.5} x2={18} y2={6.5} />
+        <line x1={7.5} y1={9.5} x2={16.5} y2={9.5} strokeWidth={1} />
+        <rect x={9} y={12.5} width={6} height={3} rx={1.2} />
+        <line x1={8} y1={19} x2={16} y2={19} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #2 — Image card with pill CTA (hero)
+  '37898f65-478b-4026-a10e-f98931e292c5': {
+    name: 'Image card with pill CTA',
+    role: 'hero',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2.5} y={3} width={19} height={18} rx={2.5} fill="currentColor" fillOpacity={0.08} />
+        <line x1={7} y1={9} x2={17} y2={9} />
+        <line x1={8.5} y1={12} x2={15.5} y2={12} strokeWidth={1} />
+        <rect x={9} y={15} width={6} height={3} rx={1.5} />
+      </svg>
+    ),
+  },
+  // #3 — Split mobile reflow (hero)
+  '3881fe2f-2a14-453a-8993-bc96d5c2f8ca': {
+    name: 'Split mobile reflow',
+    role: 'hero',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={2.5} y1={6} x2={10} y2={6} />
+        <line x1={2.5} y1={9} x2={9} y2={9} strokeWidth={1} />
+        <rect x={2.5} y={12.5} width={6} height={3} rx={1.2} />
+        <rect x={13} y={4} width={8.5} height={16} rx={1.4} />
+      </svg>
+    ),
+  },
+  // #4 — "Footer" (catalog role is "hero" but the block tree is a real
+  // footer: SocialMedia + text + Divider + 2-col links/image — designed
+  // from the actual structure, not the mislabeled role).
+  '4fae03fe-d95d-405c-890d-08a6d8edbb9c': {
+    name: 'Footer',
+    role: 'hero',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={2} width={20} height={20} rx={1.5} fill="currentColor" fillOpacity={0.08} />
+        <circle cx={4.8} cy={6} r={1.3} />
+        <circle cx={8.4} cy={6} r={1.3} />
+        <circle cx={12} cy={6} r={1.3} />
+        <line x1={3.5} y1={10.5} x2={16.5} y2={10.5} strokeWidth={1} />
+        <line x1={2.5} y1={13.5} x2={21.5} y2={13.5} strokeWidth={1} />
+        <line x1={4} y1={17.5} x2={10.5} y2={17.5} strokeWidth={1} />
+        <rect x={15.5} y={15.5} width={6} height={4.5} rx={1} />
+      </svg>
+    ),
+  },
+  // #5 — Logo + headline (hero)
+  'bf07aee7-3472-40fc-a289-e98e9acddbaf': {
+    name: 'Logo + headline',
+    role: 'hero',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={8.5} y={3} width={7} height={4.5} rx={1} />
+        <line x1={6} y1={11.5} x2={18} y2={11.5} />
+        <line x1={7.5} y1={14.5} x2={16.5} y2={14.5} strokeWidth={1} />
+        <rect x={9} y={17} width={6} height={3} rx={1.2} />
+      </svg>
+    ),
+  },
+  // #6 — Wordmark (logo)
+  '2d705565-c805-4571-b446-977543111c5a': {
+    name: 'Wordmark',
+    role: 'logo',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={6} y1={12} x2={18} y2={12} strokeWidth={3} />
+      </svg>
+    ),
+  },
+  // #7 — Logo + tagline (logo)
+  '3cf56fed-981a-4c87-862d-cea340dfd16d': {
+    name: 'Logo + tagline',
+    role: 'logo',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={8} y={6} width={8} height={6} rx={1.1} />
+        <line x1={7} y1={16} x2={17} y2={16} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #8 — Left aligned (logo)
+  '4f9491aa-be6c-4c95-ba75-e077fb9763d0': {
+    name: 'Left aligned',
+    role: 'logo',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2.5} y={9} width={9} height={6} rx={1.1} />
+      </svg>
+    ),
+  },
+  // #9 — On BG image (logo)
+  '624b4835-df2d-46cb-af3a-a666a8af6585': {
+    name: 'On BG image',
+    role: 'logo',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={2} width={20} height={20} rx={1.5} fill="currentColor" fillOpacity={0.08} />
+        <rect x={8} y={9} width={8} height={6} rx={1.1} />
+      </svg>
+    ),
+  },
+  // #10 — Cornered card (logo)
+  '71b06d77-9da6-4fe3-be3a-ad3b6785af0c': {
+    name: 'Cornered card',
+    role: 'logo',
+    svg: (
+      <svg {...strokeProps}>
+        <path d="M2.5 8.5A6 6 0 0 1 8.5 2.5h7A6 6 0 0 1 21.5 8.5V21.5h-19z" />
+        <rect x={8} y={8} width={8} height={5.5} rx={1} />
+        <line x1={7.5} y1={17} x2={16.5} y2={17} strokeWidth={1} />
+      </svg>
+    ),
+  },
 };
 
-/** Looks up the designed icon for an item id, if any (Tanda 1+2+3+4: 40/146). */
+/** Looks up the designed icon for an item id, if any (Tanda 1-5: 50/146). */
 export function getSectionIcon(id: string): SectionIconEntry | null {
   return SECTION_ICONS[id] ?? null;
 }
