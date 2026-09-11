@@ -81,12 +81,21 @@ function CompactBlockTile({ index }: { index: number }) {
         // sidebar.css: `padding: 8px 4px; gap: 4px`) — ícono SIN
         // fondo/caja propia, igual que en BlockTile
         // (BlocksCategoryContent.tsx): ahí `.pbx-compact-rail__tile-icon`
-        // solo centra, no tiene `background`.
+        // solo centra, no tiene `background`. Border sólido (no dashed)
+        // + color exacto de `--pb-chrome-border`
+        // (`theme.palette.grey[200]`) — `dragTileShellSx` traía un
+        // border punteado (`divider`). Color `text.secondary`
+        // (`--pb-chrome-text`), NO `text.disabled`: en Builder42 el rail
+        // compacto (`.pbx-compact-rail__tile`) usa un color más intenso
+        // que el panel expandido (`.pbx-palette__icon`, `--text-faint`)
+        // — no son el mismo tono, confirmado en sidebar.css.
         p: '8px 4px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         gap: 0.5,
+        border: '1px solid',
+        borderColor: theme.palette.grey[200],
         color: 'text.secondary',
       }}
     >

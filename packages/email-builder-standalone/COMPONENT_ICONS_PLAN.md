@@ -1,11 +1,18 @@
 # Plan — Iconos 2D outline para componentes complejos (Email Builder)
 
-Estado: **en progreso — Tanda 1 diseñada, pendiente de aprobación final**.
+Estado: **Tanda 1 implementada en código y ajustada visualmente
+(sesión 2) — pendiente de aprobación final del usuario antes de
+Tanda 2**.
 Alcance de esta fase: **solo `packages/email-builder-standalone`**. La
 réplica del mismo enfoque en Builder42 es una fase futura separada, no
 incluida aquí (confirmado por el usuario).
 
 ## ⏸️ AL RETOMAR LA SESIÓN — leer esto primero
+
+**Sesión 2 (esta)**: la Tanda 1 se implementó en código (no solo
+diseño en el plan) y se ajustó visualmente en varias iteraciones con
+feedback directo del usuario viendo el resultado real en el editor.
+Ver §8b para el detalle completo de lo implementado y corregido.
 
 Quedan **2 preguntas abiertas de §6** que el usuario dijo que quiere
 revisar apenas empiece la siguiente sesión, antes de seguir con la
@@ -25,10 +32,11 @@ La tercera pregunta de §6 (picker de icono al guardar un componente
 NUEVO tras la migración) **no bloquea** el trabajo de tandas — solo
 bloquea cerrar §5 (fase de implementación) más adelante.
 
-Ver §8 para el estado detallado de la Tanda 1 (10/10 iconos propuestos,
+Ver §8 para el diseño original de la Tanda 1 (10/10 iconos propuestos,
 con micro-variaciones ya aplicadas en los 4 pares estructuralmente
-idénticos, pendiente el visto bueno final del usuario antes de pasar a
-la Tanda 2: roles `cta` + `faq`).
+idénticos) y §8b para el estado real de implementación tras los
+ajustes de la sesión 2, antes de pasar a la Tanda 2: roles `cta` +
+`faq`.
 
 ## 1. Qué se reemplaza y por qué
 
@@ -284,19 +292,19 @@ compatible con dark mode automático):
 
 ```svg
 <!-- #1 Announcement mobile-tight -->
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <rect x="1.5" y="9.5" width="21" height="5" rx="0.8"/>
   <line x1="4" y1="12" x2="20" y2="12"/>
 </svg>
 
 <!-- #2 Announcement bar -->
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <rect x="3.5" y="8.5" width="17" height="7" rx="1.2"/>
   <line x1="6" y1="12" x2="18" y2="12"/>
 </svg>
 
 <!-- #3 Cornered sale card -->
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <rect x="3" y="3" width="18" height="18" rx="1.5"/>
   <path d="M3 3h5v2.5a1 1 0 0 1-1 1H3z" stroke-width="1.2"/>
   <line x1="5.5" y1="11.5" x2="16" y2="11.5"/>
@@ -305,7 +313,7 @@ compatible con dark mode automático):
 </svg>
 
 <!-- #4 Promo CTA -->
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <rect x="3" y="3" width="18" height="18" rx="1.5"/>
   <rect x="8.5" y="5.5" width="7" height="2.5" rx="1.2"/>
   <line x1="5.5" y1="11.5" x2="18.5" y2="11.5"/>
@@ -314,7 +322,7 @@ compatible con dark mode automático):
 </svg>
 
 <!-- #5 Sale banner -->
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <rect x="2" y="8" width="20" height="8" rx="1"/>
   <line x1="4.5" y1="11" x2="11" y2="11"/>
   <line x1="4.5" y1="13.5" x2="9" y2="13.5"/>
@@ -322,7 +330,7 @@ compatible con dark mode automático):
 </svg>
 
 <!-- #6 Option A vs B -->
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <rect x="2.5" y="3.5" width="8.5" height="17" rx="1"/>
   <rect x="13" y="3.5" width="8.5" height="17" rx="1"/>
   <line x1="4.5" y1="7" x2="9" y2="7"/>
@@ -332,7 +340,7 @@ compatible con dark mode automático):
 </svg>
 
 <!-- #7 Mobile-reflow A vs B -->
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <rect x="2.5" y="3.5" width="8.5" height="17" rx="1"/>
   <rect x="13" y="3.5" width="8.5" height="17" rx="1"/>
   <line x1="4.5" y1="7" x2="9" y2="7"/>
@@ -343,7 +351,7 @@ compatible con dark mode automático):
 </svg>
 
 <!-- #8 Before / After -->
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <rect x="2.5" y="3.5" width="8.5" height="17" rx="1"/>
   <rect x="13" y="3.5" width="8.5" height="17" rx="1"/>
   <rect x="4" y="5" width="5.5" height="6" rx="0.6"/>
@@ -355,7 +363,7 @@ compatible con dark mode automático):
 </svg>
 
 <!-- #9 Feature matrix -->
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <line x1="3" y1="4.5" x2="12" y2="4.5"/>
   <rect x="2.5" y="7.5" width="19" height="13" rx="1"/>
   <line x1="9.5" y1="7.5" x2="9.5" y2="20.5"/>
@@ -366,9 +374,9 @@ compatible con dark mode automático):
 </svg>
 
 <!-- #10 Top-accent matrix -->
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
   <rect x="2.5" y="7.5" width="19" height="13" rx="1"/>
-  <line x1="2.5" y1="8.3" x2="21.5" y2="8.3" stroke-width="3"/>
+  <line x1="2.5" y1="8.3" x2="21.5" y2="8.3" stroke-width="4"/>
   <line x1="9.5" y1="10.5" x2="9.5" y2="20.5"/>
   <line x1="15.5" y1="10.5" x2="15.5" y2="20.5"/>
   <line x1="2.5" y1="13.5" x2="21.5" y2="13.5"/>
@@ -382,6 +390,111 @@ arriba en "AL RETOMAR LA SESIÓN", confirmar el visto bueno de esta
 tanda (o ajustes puntuales), y solo entonces avanzar a la **Tanda 2**
 (roles `cta` + `faq`, siguiente en orden alfabético dentro de
 `sections`).
+
+## 8b. Implementación real y ajustes (sesión 2)
+
+A diferencia de §8 (diseño en el plan, sin tocar código), en esta
+sesión la Tanda 1 se implementó y ajustó visualmente en el editor real,
+con feedback directo del usuario tras cada cambio. Trabajado en un
+**worktree aislado** (`../web-maildrill-astro-email-inputs`, rama
+`fix/email-builder-inspector-input-height`) mientras otro agente
+trabajaba en paralelo sobre el repo principal (`feat/ui-polish-p1`);
+una vez ese trabajo terminó y se commiteó, los cambios se portaron al
+repo principal vía `git cherry-pick` (commits `e6a9b58`, `c8a9988`,
+`aa84f2a`, luego iterados directamente ahí).
+
+### Archivos nuevos/tocados
+
+- **`thumbnail/sectionIcons.tsx`** (nuevo) — mapa `id -> SVG` de los 10
+  iconos de la Tanda 1. `getSectionIcon(id)` hace el lookup.
+- **`thumbnail/LibraryCardThumbnail.tsx`** — nueva prop `iconId`: si el
+  id tiene icono diseñado, se renderiza con prioridad sobre el
+  PNG/placeholder existente (coexistencia temporal para revisión, no
+  el reemplazo total de §5 todavía).
+- **`ComponentsLibraryDrawer.tsx`** — pasa `iconId={item.id}` a
+  `LibraryCardThumbnail`; además, varios ajustes de layout que
+  terminaron siendo parte de este trabajo (ver "Ajustes de layout"
+  abajo).
+- **`BlocksCategoryContent.tsx` / `CompactBlocksList.tsx`** — los
+  tiles de bloques base (Text/Image/Button/...) se ajustaron al mismo
+  tiempo porque comparten el mismo criterio visual (ver abajo).
+- **`theme.ts`** — overrides de `MuiAccordionSummary`/
+  `MuiAccordionDetails` (fondo transparente).
+- **`documents/editor/EditorContext.tsx`** — `lateralPanel` (ancho del
+  inspector).
+
+### Iteraciones de ajuste visual (todas verificadas contra el código
+fuente real de Builder42, no contra memoria/estimación)
+
+1. **Tamaño del icono**: 32px → 56px → **28px** (valor final,
+   homologado a `.pbx-palette__icon` de `sidebar.css`, comentado ahí
+   como "grande, protagonista de la card"). Se descartó una cifra de
+   27px que el usuario recordaba de memoria al no encontrar sustento en
+   el código de Builder42.
+2. **Mecanismo de sizing en `BlockTile`/`CompactBlockTile`** (iconos
+   `@mui/icons-material`, NO los SVG de `sectionIcons.tsx`): 3 intentos
+   hasta dar con uno determinista —
+   `sx={{ '& svg': {...} }}` en el Box padre (resultado inconsistente
+   entre pruebas) → `cloneElement(icon, { sx })` (sin efecto,
+   problema conocido de MUI: `mui/material-ui#34056`) →
+   **`cloneElement(icon, { style })`** (atributo HTML inline, máxima
+   especificidad, funcionó).
+3. **Anchos de side panels**: sidebar 380px→**312px** (expandido),
+   164px→**168px** (compacto); inspector 320px→**326px** — valores
+   reales de `.pbx-body { grid-template-columns: 312px 1fr 326px }`
+   (`shell.css`).
+4. **Estructura del tile de bloque**: eliminado el `Box` wrapper con
+   `bgcolor`/`borderRadius` alrededor del icono — `.pbx-palette__item`/
+   `.pbx-palette__icon` NO llevan fondo propio en el icono, va directo
+   con `color` sobre la card. Ajustado a `min-height: 76px`,
+   `padding: 10px 6px`, `gap: 8px` (valores reales de
+   `.pbx-palette__item`).
+5. **Grid de secciones**: `columns={2}` → **`columns={3}`**, igual a
+   `.pbx-palette { grid-template-columns: repeat(3, 1fr) }`.
+6. **Border de todas las cards**: `dashed` (con `divider`) →
+   **`solid`** con `theme.palette.grey[200]` (mapeado 1:1 a
+   `--pb-chrome-border`/`--border` del host) — Builder42 nunca usa
+   border punteado en estas cards.
+7. **`LibraryCard` (sections/layouts/templates)**: eliminado el `Box`
+   wrapper extra que envolvía el `DragIndicatorIcon` + nombre (y el
+   propio `DragIndicatorIcon`, con su import) — Builder42 no tiene un
+   grip de arrastre en línea con el texto, solo un overlay absoluto al
+   hover (`.pbx-palette__grip`), no replicado por no ser parte del
+   pedido explícito. Contenedor del icono en `LibraryCardThumbnail`
+   también perdió su `border: dashed` + `backgroundColor` propios (doble
+   caja redundante con la card exterior).
+8. **Altura de card completa**: el `height` del thumbnail interno NO es
+   igual al `min-height: 76px` de `.pbx-palette__item` — ese 76px es el
+   alto TOTAL del tile (icono + label + padding + gap). Ajustado el
+   `height` del thumbnail a 28px (no 76px) para que la card completa,
+   sumando padding (`10px 6px`) + gap (`8px`) + label, totalice ~76px.
+9. **Color del trazo**: `#57554e`/`#A1A1AA` (`--pb-chrome-text-muted`/
+   `--text3`, token incorrecto) → **`#a5a39a`/`#8a8371`**
+   (`--pb-chrome-text-faint`/`--muted`, el token real que usa
+   `.pbx-palette__icon`).
+10. **Stroke-width**: `1.25` (estimado, sin verificar) → **`2`**
+    (confirmado en `ComponentTypeIcon.tsx`: no pasa `strokeWidth`
+    explícito a sus iconos Lucide, usa el default real de la librería).
+    El acento del icono #10 (línea superior gruesa) se reescaló de `3`
+    a `4` para mantener la misma proporción relativa (2× la base) tras
+    subir la base de 1.5 a 2.
+11. **Fondo de accordion**: agregado override de
+    `MuiAccordionSummary`/`MuiAccordionDetails` a `transparent`
+    (incluyendo `.Mui-expanded`) — MUI aplica por defecto un tinte
+    sutil al header expandido que `.pbx-palette__accordion-*` no tiene
+    (ese CSS solo controla `overflow`, nunca `background`).
+
+### Pendiente al retomar
+
+- **Confirmación visual final del usuario** sobre el estado actual
+  (color, stroke, tamaño, alturas, grid de 3 columnas) antes de dar
+  por cerrada la Tanda 1.
+- Las 2 preguntas abiertas de §6 (`primitives`, `templates`).
+- **Verificación de tipos/build**: `astro check` → **0 errores, 0
+  warnings, 3 hints** (mismos hints preexistentes documentados en
+  `INSPECTOR_INPUT_HEIGHT_AUDIT.md`, no relacionados). `vitest run` →
+  **43/43 archivos, 303/303 tests pasando**. Ambas corridas al cierre
+  de esta sesión, tras todos los cambios de §8b.
 
 ### Tandas pendientes (orden planeado, sections)
 

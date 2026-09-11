@@ -28,13 +28,11 @@ const strokeProps = {
   viewBox: '0 0 24 24',
   fill: 'none',
   stroke: 'currentColor',
-  // Homologado con Builder42: sus iconos de layout/estructura (ej.
-  // Modal.tsx, Select.tsx en builder/registry/components) usan trazos
-  // finos (1.5–1.6px reales), no el strokeWidth=2 "de acción" de los
-  // iconos Lucide del chrome (botones, checks). Bajado de 1.5 a 1.25
-  // porque a 32-40px de render el mismo número se percibe más grueso
-  // que en un icono Lucide de 16-24px con padding interno propio.
-  strokeWidth: 1.25,
+  // Corregido: `ComponentTypeIcon.tsx` (Builder42) NO pasa `strokeWidth`
+  // explícito a sus iconos Lucide (`.pbx-palette__icon`) — usan el
+  // default real de Lucide, que es `strokeWidth={2}`, no 1.25/1.5 como
+  // se había asumido antes sin confirmar contra el código fuente.
+  strokeWidth: 2,
   strokeLinecap: 'round' as const,
   strokeLinejoin: 'round' as const,
 };
@@ -174,7 +172,9 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <rect x={2.5} y={7.5} width={19} height={13} rx={1} />
-        <line x1={2.5} y1={8.3} x2={21.5} y2={8.3} strokeWidth={3} />
+        {/* Acento 2x la base (antes 3 sobre base 1.5, ahora 4 sobre base 2 —
+            misma proporción relativa tras corregir strokeWidth a 2). */}
+        <line x1={2.5} y1={8.3} x2={21.5} y2={8.3} strokeWidth={4} />
         <line x1={9.5} y1={10.5} x2={9.5} y2={20.5} />
         <line x1={15.5} y1={10.5} x2={15.5} y2={20.5} />
         <line x1={2.5} y1={13.5} x2={21.5} y2={13.5} />

@@ -77,6 +77,11 @@ function BlockTile({ index }: { index: number }) {
         // fondo/caja propia — ahí el ícono va directo con `color` sobre
         // el fondo de la card, sin ningún wrapper `bgcolor`/`borderRadius`
         // que lo encajone y lo haga verse chico respecto a la card.
+        // Border sólido (no dashed) + color exacto `--pb-chrome-border`
+        // (`theme.palette.grey[200]`, mapeado 1:1 a `--border` del host
+        // en theme.ts) — `dragTileShellSx` traía un border punteado
+        // (`divider`) pensado para el resto de tiles de drag, distinto
+        // al de Builder42.
         minHeight: 76,
         p: '10px 6px',
         display: 'flex',
@@ -84,7 +89,13 @@ function BlockTile({ index }: { index: number }) {
         alignItems: 'center',
         justifyContent: 'center',
         gap: 1,
-        color: 'text.secondary',
+        border: '1px solid',
+        borderColor: theme.palette.grey[200],
+        // `--pb-chrome-text-faint` (`--muted`) — mismo color que
+        // `.pbx-palette__icon` en reposo, mapeado a `theme.palette.
+        // text.disabled` (`#a5a39a` claro / `#52525B` oscuro, ver
+        // theme.ts `textColors.disabled`).
+        color: 'text.disabled',
       }}
     >
       {

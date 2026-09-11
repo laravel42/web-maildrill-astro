@@ -80,26 +80,29 @@ export default function LibraryCardThumbnail({
     return (
       <Box
         sx={{
-          ...baseStyle,
-          border: `1px dashed ${theme.palette.warning.main}`,
+          width: '100%',
+          height,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          // Color explícito (no heredado de `text.secondary` vía sx) —
-          // mismo valor que --pb-chrome-text-muted de Builder42 (--text3,
-          // #57554e claro / #A1A1AA oscuro) para que el trazo se vea
-          // exactamente igual de "tenue", no más oscuro por herencia
-          // distinta de currentColor en algún wrapper intermedio.
-          color: theme.palette.mode === 'dark' ? '#A1A1AA' : '#57554e',
-          // Tamaño: Builder42 no tiene un icono de tile de biblioteca 1:1
-          // (sus tarjetas de sección/plantilla escalan HTML real, no SVG,
-          // ver templates.css `.pbx-template-card__preview`) — la
-          // referencia de proporción más cercana es
-          // `.pbx-compact-rail__tile-icon-svg` (18px dentro de una caja de
-          // 24px, ratio ~75%). 32px en una caja de 120px (~27%) se veía
-          // chico en comparación; 56px (~47%) se acerca más sin dominar
-          // la tarjeta.
+          // Homologado con Builder42 (`.pbx-palette__icon`): SIN
+          // border/background propios — el ícono va directo, transparente,
+          // sobre el fondo/borde que ya aporta la card exterior
+          // (`LibraryCard`, ComponentsLibraryDrawer.tsx). El
+          // `border: dashed` + `backgroundColor` que tenía antes eran un
+          // contenedor interno redundante con doble caja (card exterior +
+          // caja del ícono), justo lo que Builder42 no hace.
           //
+          // Color explícito (no heredado de `text.secondary` vía sx) —
+          // corregido a `--pb-chrome-text-faint` (`--muted` del host),
+          // el token real que usa `.pbx-palette__icon` en Builder42
+          // (sidebar.css) — NO `--pb-chrome-text-muted`/`--text3`, que es
+          // un tono distinto y más oscuro (error de la iteración
+          // anterior, antes de que ambos tamaños coincidieran y la
+          // diferencia de tono se hiciera evidente). `#a5a39a` claro
+          // (tokens.css light, == `--muted`) / `#8a8371` oscuro
+          // (dark.css: `--pb-chrome-text-faint`).
+          color: theme.palette.mode === 'dark' ? '#8a8371' : '#a5a39a',
           // 28px — mismo valor que `.pbx-palette__icon` de Builder42
           // (sidebar.css: "Icono del tipo de componente — grande,
           // protagonista de la card"), la única referencia real medida en

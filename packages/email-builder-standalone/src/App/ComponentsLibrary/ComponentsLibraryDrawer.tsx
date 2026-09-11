@@ -28,7 +28,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDrag } from 'react-dnd';
 import { useTranslation } from 'react-i18next';
 
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import Inventory2Outlined from '@mui/icons-material/Inventory2Outlined';
 import {
   Alert,
@@ -274,15 +273,21 @@ function LibraryCard({
       {...hoverHandlers}
       onClick={onClick ? () => onClick(item) : undefined}
       sx={{
-        p: 1,
+        // Homologado con Builder42 (`.pbx-palette__item`, sidebar.css:
+        // `padding: 10px 6px; gap: 8px`) — antes `p: 1` (8px uniforme).
+        p: '10px 6px',
         borderRadius: 1,
-        border: '1px dashed',
-        borderColor: theme.palette.divider,
+        // Homologado con Builder42 (`.pbx-palette__item`, sidebar.css:
+        // `border: 1px solid var(--pb-chrome-border)`) — sólido, no
+        // dashed; color exacto `theme.palette.grey[200]` (mapeado 1:1 a
+        // `--border` del host en theme.ts), no `divider` (tono distinto).
+        border: '1px solid',
+        borderColor: theme.palette.grey[200],
         cursor: onClick ? 'pointer' : 'grab',
         opacity: isDragging ? 0.5 : 1,
         display: 'flex',
         flexDirection: 'column',
-        gap: 0.75,
+        gap: 1,
         transition: 'background-color 120ms ease, border-color 120ms ease',
         '&:hover': {
           backgroundColor: theme.palette.action.hover,
@@ -301,7 +306,13 @@ function LibraryCard({
           loading={thumbnailPending}
           // Point 8 (EMAIL_BUILDER_TASKS.md): Templates previews were too
           // small — double the default 120px height for that category only.
-          height={category === 'template' ? 240 : undefined}
+          // Homologado con Builder42 (`.pbx-palette__item`, min-height
+          // 76px): ese 76px es el alto TOTAL del tile (icono + label +
+          // padding + gap), no solo la zona del ícono. Con el padding
+          // (10px×2=20px), border (2px) y gap (8px) de este componente,
+          // la zona del ícono debe rondar ~28-30px para que la card
+          // completa (icono + label ~18px) sume ~76px.
+          height={category === 'template' ? 240 : 28}
           placeholderText={t('componentsLibrary.thumbnail.placeholder', 'No preview')}
           // Draft icon review (COMPONENT_ICONS_PLAN.md, Tanda 1) — only
           // renders when this item's id has a hand-designed icon; falls
@@ -309,39 +320,26 @@ function LibraryCard({
           iconId={item.id}
         />
       )}
-      <Box
+      {
+        // Homologado con Builder42 (`.pbx-palette__item`): el label va
+        // directo, sin un Box wrapper extra ni el DragIndicatorIcon en
+        // línea — ahí el grip de arrastre (`.pbx-palette__grip`) es un
+        // overlay `position: absolute`, visible solo al hover/focus, NO
+        // un ícono que ocupe espacio junto al texto.
+      }
+      <Typography
+        variant="body2"
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 0.75,
+          fontSize: '0.8rem',
+          fontWeight: 500,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}
+        title={item.name}
       >
-        <DragIndicatorIcon
-          sx={{
-            fontSize: 16,
-            color: 'text.secondary',
-            flexShrink: 0,
-            // Templates are click-only — hide the drag affordance so the
-            // card doesn't look draggable.
-            display: isDraggable ? 'inline-flex' : 'none',
-          }}
-        />
-        <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Typography
-            variant="body2"
-            sx={{
-              fontSize: '0.8rem',
-              fontWeight: 500,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-            title={item.name}
-          >
-            {item.name}
-          </Typography>
-        </Box>
-      </Box>
+        {item.name}
+      </Typography>
     </Box>
   );
 }
@@ -703,7 +701,9 @@ function SectionsCategoryContent({
       category="section"
       loading={loading}
       error={error}
-      columns={2}
+      // Homologado con Builder42 (`.pbx-palette`, sidebar.css:
+      // `grid-template-columns: repeat(3, 1fr)`) — antes 2 columnas.
+      columns={3}
       groupLabelKey="componentsLibrary.sectionRole"
       search={search}
       sort={sort}

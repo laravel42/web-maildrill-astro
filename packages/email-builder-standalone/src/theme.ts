@@ -1402,6 +1402,29 @@ const getTheme = (
           },
         },
       },
+      // Homologado con Builder42 (`.pbx-palette__accordion-*`,
+      // sidebar.css): el body/header del acordeón NO tiene background
+      // propio, ni siquiera en estado expandido — comparte el mismo
+      // fondo que el resto del sidebar. MUI aplica por defecto un fondo
+      // sutil (`rgba(0,0,0,.03)`/`.06`) a `AccordionSummary` cuando
+      // `expanded`, que no existe en Builder42.
+      MuiAccordionSummary: {
+        styleOverrides: {
+          root: {
+            backgroundColor: 'transparent',
+            '&.Mui-expanded': {
+              backgroundColor: 'transparent',
+            },
+          },
+        },
+      },
+      MuiAccordionDetails: {
+        styleOverrides: {
+          root: {
+            backgroundColor: 'transparent',
+          },
+        },
+      },
       MuiCardHeader: {
         styleOverrides: {
           title: {
