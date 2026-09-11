@@ -28,7 +28,13 @@ const strokeProps = {
   viewBox: '0 0 24 24',
   fill: 'none',
   stroke: 'currentColor',
-  strokeWidth: 1.5,
+  // Homologado con Builder42: sus iconos de layout/estructura (ej.
+  // Modal.tsx, Select.tsx en builder/registry/components) usan trazos
+  // finos (1.5–1.6px reales), no el strokeWidth=2 "de acción" de los
+  // iconos Lucide del chrome (botones, checks). Bajado de 1.5 a 1.25
+  // porque a 32-40px de render el mismo número se percibe más grueso
+  // que en un icono Lucide de 16-24px con padding interno propio.
+  strokeWidth: 1.25,
   strokeLinecap: 'round' as const,
   strokeLinejoin: 'round' as const,
 };

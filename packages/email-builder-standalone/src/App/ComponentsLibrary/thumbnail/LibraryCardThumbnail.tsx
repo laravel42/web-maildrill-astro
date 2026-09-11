@@ -85,8 +85,21 @@ export default function LibraryCardThumbnail({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'text.secondary',
-          '& svg': { width: 40, height: 40 },
+          // Color explícito (no heredado de `text.secondary` vía sx) —
+          // mismo valor que --pb-chrome-text-muted de Builder42 (--text3,
+          // #57554e claro / #A1A1AA oscuro) para que el trazo se vea
+          // exactamente igual de "tenue", no más oscuro por herencia
+          // distinta de currentColor en algún wrapper intermedio.
+          color: theme.palette.mode === 'dark' ? '#A1A1AA' : '#57554e',
+          // Tamaño: Builder42 no tiene un icono de tile de biblioteca 1:1
+          // (sus tarjetas de sección/plantilla escalan HTML real, no SVG,
+          // ver templates.css `.pbx-template-card__preview`) — la
+          // referencia de proporción más cercana es
+          // `.pbx-compact-rail__tile-icon-svg` (18px dentro de una caja de
+          // 24px, ratio ~75%). 32px en una caja de 120px (~27%) se veía
+          // chico en comparación; 56px (~47%) se acerca más sin dominar
+          // la tarjeta.
+          '& svg': { width: 56, height: 56 },
         }}
         aria-label={alt}
         title={`${designedIcon.name} (${designedIcon.role}) — draft icon, Tanda 1`}

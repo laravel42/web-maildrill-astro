@@ -95,7 +95,18 @@ function CompactBlockTile({ index }: { index: number }) {
           color: 'text.secondary',
         }}
       >
-        {entry.icon}
+        {
+          // Homologado con Builder42 (`.pbx-palette__icon`, "grande,
+          // protagonista de la card") — mismo criterio que BlockTile
+          // (BlocksCategoryContent.tsx). `style` inline (no `sx`) — ver
+          // nota detallada en BlocksCategoryContent.tsx: `sx` vía
+          // cloneElement no ganó de forma determinista contra
+          // `.MuiSvgIcon-root` (mui/material-ui#34056); `style` inline
+          // se renderiza como atributo HTML, máxima especificidad.
+          React.cloneElement(entry.icon, {
+            style: { fontSize: 28, width: 28, height: 28 },
+          })
+        }
       </Box>
       <Typography
         variant="body2"

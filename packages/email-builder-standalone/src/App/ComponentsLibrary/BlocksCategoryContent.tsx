@@ -90,7 +90,27 @@ function BlockTile({ index }: { index: number }) {
           color: 'text.secondary',
         }}
       >
-        {entry.icon}
+        {
+          // Homologado con Builder42 (`.pbx-palette__icon`, sidebar.css:
+          // "Icono del tipo de componente — grande, protagonista de la
+          // card", 28px dentro de un tile de 76px de alto). El default
+          // de MUI (24px) se veía chico en comparación.
+          //
+          // Dos intentos previos no dieron un resultado determinista:
+          // `sx={{ '& svg': {...} }}` en el Box padre (medido ~27px,
+          // luego ~52px según la ventana) y `cloneElement(..., { sx })`
+          // (sin cambio visible) — MUI's SvgIcon resuelve su tamaño vía
+          // `.MuiSvgIcon-root`/`fontSizeMedium`, cuya especificidad real
+          // en la cascada de Emotion no está garantizada a perder contra
+          // un `sx` inyectado desde fuera (confirmado como problema
+          // conocido: mui/material-ui#34056, "ownerState passed to
+          // SvgIcon changes the font size"). `style` inline de React se
+          // renderiza como atributo HTML `style=""`, máxima especificidad
+          // posible — no hay clase CSS que pueda ganarle.
+          React.cloneElement(entry.icon, {
+            style: { fontSize: 32, width: 32, height: 32 },
+          })
+        }
       </Box>
       <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
         {t(entry.labelKey)}
