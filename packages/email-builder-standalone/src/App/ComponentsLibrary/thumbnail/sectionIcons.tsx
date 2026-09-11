@@ -10,13 +10,14 @@
  * Tanda 3 (10/146): `sections`, roles `features` + `footer`.
  * Tanda 4 (10/146): `sections`, roles `gallery` + `header`.
  * Tanda 5 (10/146): `sections`, roles `hero` + `logo`.
+ * Tanda 6 (10/146): `sections`, roles `nav` + `pricing`.
  * Keyed by the item's stable `id` from `localPresets.data.json` — NOT
  * by role, since the design is per-component, not per-category/role.
  *
  * Status: **draft, pending visual approval**. Rendered here so the
  * user can review each icon in the real Components Library UI before
  * approving the tanda and moving on to the next one. Do not treat this
- * map as final/complete — only the 50 ids below are designed so far.
+ * map as final/complete — only the 60 ids below are designed so far.
  */
 
 import React from 'react';
@@ -34,7 +35,9 @@ export type SectionIconEntry = {
     | 'gallery'
     | 'header'
     | 'hero'
-    | 'logo';
+    | 'logo'
+    | 'nav'
+    | 'pricing';
   svg: React.ReactNode;
 };
 
@@ -793,9 +796,181 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       </svg>
     ),
   },
+
+  // ---- Tanda 6 — sections, roles `nav` + `pricing` (10/146) ----
+
+  // #1 — Pill links (nav)
+  '037c8276-fc0c-43d7-bae6-e7239e395358': {
+    name: 'Pill links',
+    role: 'nav',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2.5} y={9.5} width={5.5} height={5} rx={2.5} />
+        <rect x={9.2} y={9.5} width={5.5} height={5} rx={2.5} />
+        <rect x={16} y={9.5} width={5.5} height={5} rx={2.5} />
+      </svg>
+    ),
+  },
+  // #2 — BG image band (nav)
+  '241630b5-f1c7-4e5d-bbfe-c54db0ae984d': {
+    name: 'BG image band',
+    role: 'nav',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={2} width={20} height={20} rx={1.5} fill="currentColor" fillOpacity={0.08} />
+        <line x1={4.5} y1={12} x2={8} y2={12} strokeWidth={1} />
+        <line x1={9.5} y1={12} x2={12.5} y2={12} strokeWidth={1} />
+        <line x1={14} y1={12} x2={17} y2={12} strokeWidth={1} />
+        <line x1={18.5} y1={12} x2={19.5} y2={12} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #3 — Logo + links (nav)
+  '2af2bf4e-90d1-42a1-ba8a-369955157b4f': {
+    name: 'Logo + links',
+    role: 'nav',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2.5} y={9.5} width={7} height={5} rx={1} />
+        <line x1={13.5} y1={10.5} x2={16.5} y2={10.5} strokeWidth={1} />
+        <line x1={17.5} y1={10.5} x2={19.5} y2={10.5} strokeWidth={1} />
+        <line x1={20.5} y1={10.5} x2={21.5} y2={10.5} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #4 — Mobile-stack categories (nav)
+  '645106fd-44c0-4d9d-ba9a-9519f5b0802e': {
+    name: 'Mobile-stack categories',
+    role: 'nav',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={2.5} y1={3} x2={6.5} y2={3} strokeWidth={2.5} />
+        <line x1={2.5} y1={6.5} x2={7.5} y2={6.5} strokeWidth={1} />
+        <line x1={2.5} y1={9} x2={7} y2={9} strokeWidth={1} />
+        <line x1={9.2} y1={3} x2={13.2} y2={3} strokeWidth={2.5} />
+        <line x1={9.2} y1={6.5} x2={14.2} y2={6.5} strokeWidth={1} />
+        <line x1={9.2} y1={9} x2={13.7} y2={9} strokeWidth={1} />
+        <line x1={16} y1={3} x2={20} y2={3} strokeWidth={2.5} />
+        <line x1={16} y1={6.5} x2={21} y2={6.5} strokeWidth={1} />
+        <line x1={16} y1={9} x2={20.5} y2={9} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #5 — Categories (nav) — same 3-group link grid as #4 (Mobile-stack
+  // categories); structurally identical except for the mobile-stack
+  // flag, which has no visual analogue in a static icon.
+  '91915ee2-5d62-46c3-89b3-654cac1670ef': {
+    name: 'Categories',
+    role: 'nav',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={2.5} y1={3} x2={6.5} y2={3} strokeWidth={2.5} />
+        <line x1={2.5} y1={6.5} x2={7.5} y2={6.5} strokeWidth={1} />
+        <line x1={2.5} y1={9} x2={7} y2={9} strokeWidth={1} />
+        <line x1={9.2} y1={3} x2={13.2} y2={3} strokeWidth={2.5} />
+        <line x1={9.2} y1={6.5} x2={14.2} y2={6.5} strokeWidth={1} />
+        <line x1={9.2} y1={9} x2={13.7} y2={9} strokeWidth={1} />
+        <line x1={16} y1={3} x2={20} y2={3} strokeWidth={2.5} />
+        <line x1={16} y1={6.5} x2={21} y2={6.5} strokeWidth={1} />
+        <line x1={16} y1={9} x2={20.5} y2={9} strokeWidth={1} />
+        <line x1={2.5} y1={13} x2={21.5} y2={13} strokeWidth={1} strokeDasharray="1.5 1.5" />
+      </svg>
+    ),
+  },
+  // #6 — Monthly / Annual (pricing)
+  '36ea3e52-d5a2-41b8-86b7-3dea022fa658': {
+    name: 'Monthly / Annual',
+    role: 'pricing',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={9} y1={2.2} x2={15} y2={2.2} />
+        <rect x={2} y={5} width={9.3} height={16} rx={1.6} />
+        <rect x={12.7} y={5} width={9.3} height={16} rx={1.6} strokeWidth={2.6} />
+        <line x1={4.2} y1={8} x2={9.1} y2={8} strokeWidth={1} />
+        <line x1={4.2} y1={10.5} x2={7.5} y2={10.5} />
+        <line x1={14.9} y1={8} x2={19.8} y2={8} strokeWidth={1} />
+        <line x1={14.9} y1={10.5} x2={18.2} y2={10.5} />
+        <rect x={4.2} y={17} width={4.9} height={2.4} rx={1} />
+        <rect x={14.9} y={17} width={4.9} height={2.4} rx={1} />
+      </svg>
+    ),
+  },
+  // #7 — Cornered cards row (pricing)
+  '42e75ffc-b7ef-4486-b25b-e57eda80b179': {
+    name: 'Cornered cards row',
+    role: 'pricing',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={9} y1={2.2} x2={15} y2={2.2} />
+        <rect x={2} y={5.5} width={6} height={15.5} rx={2.6} />
+        <rect x={9} y={5.5} width={6} height={15.5} rx={2.6} strokeWidth={2.6} />
+        <rect x={16} y={5.5} width={6} height={15.5} rx={2.6} />
+        <line x1={3} y1={9} x2={6.5} y2={9} strokeWidth={1} />
+        <line x1={10} y1={9} x2={13.5} y2={9} strokeWidth={1} />
+        <line x1={17} y1={9} x2={20.5} y2={9} strokeWidth={1} />
+        <rect x={3} y={17.5} width={4} height={2} rx={0.8} />
+        <rect x={10} y={17.5} width={4} height={2} rx={0.8} />
+        <rect x={17} y={17.5} width={4} height={2} rx={0.8} />
+      </svg>
+    ),
+  },
+  // #8 — Single feature card (pricing)
+  '7fcd1b9a-a856-4375-b6f9-a095d97288b7': {
+    name: 'Single feature card',
+    role: 'pricing',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={3} y={3} width={18} height={18} rx={1.8} />
+        <line x1={3} y1={4.5} x2={21} y2={4.5} strokeWidth={2.6} />
+        <line x1={9} y1={7} x2={15} y2={7} />
+        <line x1={7} y1={11} x2={11.2} y2={11} strokeWidth={1} />
+        <line x1={12.8} y1={11} x2={17} y2={11} strokeWidth={1} />
+        <rect x={9} y={15} width={6} height={2.6} rx={1} />
+      </svg>
+    ),
+  },
+  // #9 — Mobile-stacked plans (pricing) — same 2-plan layout as #6
+  // (Monthly / Annual), with a soft gradient card fill and a "Save 20%"
+  // badge above the highlighted plan.
+  'ac3e7550-d9c2-4757-b470-c3d8001811b9': {
+    name: 'Mobile-stacked plans',
+    role: 'pricing',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={9} y1={2.2} x2={15} y2={2.2} />
+        <rect x={2} y={5} width={9.3} height={16} rx={2.2} />
+        <rect x={12.7} y={7.2} width={9.3} height={13.8} rx={2.2} fill="currentColor" fillOpacity={0.08} />
+        <rect x={14.9} y={8.4} width={5} height={2} rx={1} />
+        <line x1={4.2} y1={9.5} x2={9.1} y2={9.5} strokeWidth={1} />
+        <line x1={4.2} y1={12} x2={7.5} y2={12} />
+        <line x1={14.9} y1={12.5} x2={19.8} y2={12.5} strokeWidth={1} />
+        <line x1={14.9} y1={15} x2={18.2} y2={15} />
+        <rect x={4.2} y={17.8} width={4.9} height={2.2} rx={1} />
+        <rect x={14.9} y={17.8} width={4.9} height={2.2} rx={1} />
+      </svg>
+    ),
+  },
+  // #10 — 3 tiers with highlight (pricing)
+  'adcd51b6-b598-49e6-a228-1b21d1e25155': {
+    name: '3 tiers with highlight',
+    role: 'pricing',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={10} y1={1.5} x2={14} y2={1.5} strokeWidth={1} />
+        <line x1={7.5} y1={3.6} x2={16.5} y2={3.6} />
+        <rect x={2} y={7} width={6} height={14.5} rx={1.6} />
+        <rect x={9} y={5.6} width={6} height={15.9} rx={1.6} strokeWidth={2.6} />
+        <rect x={16} y={7} width={6} height={14.5} rx={1.6} />
+        <rect x={9.8} y={6.6} width={4.4} height={1.6} rx={0.8} />
+        <rect x={3} y={16.5} width={4} height={2} rx={0.8} />
+        <rect x={10} y={17.5} width={4} height={2} rx={0.8} />
+        <rect x={17} y={16.5} width={4} height={2} rx={0.8} />
+      </svg>
+    ),
+  },
 };
 
-/** Looks up the designed icon for an item id, if any (Tanda 1-5: 50/146). */
+/** Looks up the designed icon for an item id, if any (Tanda 1-6: 60/146). */
 export function getSectionIcon(id: string): SectionIconEntry | null {
   return SECTION_ICONS[id] ?? null;
 }

@@ -708,3 +708,35 @@ incluir `'hero' | 'logo'`. Verificación: `astro check` sin errores
 nuevos, `vitest run` → 43/43 archivos, 303/303 tests.
 
 **Siguiente paso:** Tanda 6 (roles `nav` + `pricing`).
+
+## 14. Tanda 6 — `sections`, roles `nav` + `pricing` (10/85, 60/146 acumulado)
+
+**Estado: implementado en código, pendiente visto bueno visual.**
+
+| # | id | Nombre | Role | Estructura |
+|---|---|---|---|---|
+| 1 | `037c8276-fc0c-43d7-bae6-e7239e395358` | Pill links | nav | `Container > NotionText(3 links pill inline)` |
+| 2 | `241630b5-f1c7-4e5d-bbfe-c54db0ae984d` | BG image band | nav | `Container(bg imagen dark) > NotionText(5 links inline blancos)` |
+| 3 | `2af2bf4e-90d1-42a1-ba8a-369955157b4f` | Logo + links | nav | `Container > ColumnsContainer[2: logo, links]` |
+| 4 | `645106fd-44c0-4d9d-ba9a-9519f5b0802e` | Mobile-stack categories | nav | `Container > ColumnsContainer[3: grupo título+links]` |
+| 5 | `91915ee2-5d62-46c3-89b3-654cac1670ef` | Categories | nav | idéntico a #4 sin `stackColumnsOnMobile` |
+| 6 | `36ea3e52-d5a2-41b8-86b7-3dea022fa658` | Monthly / Annual | pricing | `Container > título + ColumnsContainer[2 cards, 1 destacada borde grueso]` |
+| 7 | `42e75ffc-b7ef-4486-b25b-e57eda80b179` | Cornered cards row | pricing | `Container > título + ColumnsContainer[3 cards esquina asimétrica, 1 destacada]` |
+| 8 | `7fcd1b9a-a856-4375-b6f9-a095d97288b7` | Single feature card | pricing | `Container > Container(1 card, borde superior grueso) > título+precio+2 listas+Button+legal` |
+| 9 | `ac3e7550-d9c2-4757-b470-c3d8001811b9` | Mobile-stacked plans | pricing | igual a #6, degradado + badge "Save 20%" |
+| 10 | `adcd51b6-b598-49e6-a228-1b21d1e25155` | 3 tiers with highlight | pricing | `Container > eyebrow+título+texto + ColumnsContainer[3 cards, 1 con badge "Most popular"]` |
+
+Micro-variaciones: **#4/#5** estructuralmente idénticos (solo difieren
+en el flag `stackColumnsOnMobile`, sin análogo visual estático) — #5
+usa el mismo grid con una línea punteada adicional bajo el grupo para
+diferenciarlo mínimamente en el listado. **#6/#9** mismo layout de 2
+planes, #9 con relleno degradado (`fillOpacity`) y badge sobre la card
+destacada. **#7/#10** 3 cards de planes, #7 con esquina redondeada más
+pronunciada (aprox. de la asimetría real) sin intro, #10 con
+eyebrow+texto y badge "Most popular" centrado en la card del medio.
+
+`SECTION_ICONS` extendido con las 10 entradas; `role` ampliado a
+incluir `'nav' | 'pricing'`. Verificación: `vitest run` → 43/43
+archivos, 303/303 tests; sin diagnósticos LSP nuevos.
+
+**Siguiente paso:** Tanda 7 (roles `social_proof` + `stats`).
