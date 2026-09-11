@@ -11,13 +11,14 @@
  * Tanda 4 (10/146): `sections`, roles `gallery` + `header`.
  * Tanda 5 (10/146): `sections`, roles `hero` + `logo`.
  * Tanda 6 (10/146): `sections`, roles `nav` + `pricing`.
+ * Tanda 7 (10/146): `sections`, roles `social_proof` + `stats`.
  * Keyed by the item's stable `id` from `localPresets.data.json` — NOT
  * by role, since the design is per-component, not per-category/role.
  *
  * Status: **draft, pending visual approval**. Rendered here so the
  * user can review each icon in the real Components Library UI before
  * approving the tanda and moving on to the next one. Do not treat this
- * map as final/complete — only the 60 ids below are designed so far.
+ * map as final/complete — only the 70 ids below are designed so far.
  */
 
 import React from 'react';
@@ -37,7 +38,9 @@ export type SectionIconEntry = {
     | 'hero'
     | 'logo'
     | 'nav'
-    | 'pricing';
+    | 'pricing'
+    | 'social_proof'
+    | 'stats';
   svg: React.ReactNode;
 };
 
@@ -968,9 +971,167 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       </svg>
     ),
   },
+
+  // ---- Tanda 7 — sections, roles `social_proof` + `stats` (10/146) ----
+
+  // #1 — BG image quote band (social_proof)
+  '164d7f04-5b3e-492e-937d-46dc1a98207d': {
+    name: 'BG image quote band',
+    role: 'social_proof',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={2} width={20} height={20} rx={1.5} fill="currentColor" fillOpacity={0.08} />
+        <line x1={9.5} y1={5.5} x2={14.5} y2={5.5} strokeWidth={1} />
+        <line x1={6.5} y1={8.5} x2={17.5} y2={8.5} />
+        <circle cx={12} cy={14} r={2.4} />
+        <line x1={9} y1={18.5} x2={15} y2={18.5} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #2 — Pill rating card (social_proof)
+  '419a3823-cfd6-4cfd-b07f-c37ac71d736f': {
+    name: 'Pill rating card',
+    role: 'social_proof',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2.5} y={8.5} width={19} height={7} rx={3.5} />
+        <line x1={7} y1={11} x2={17} y2={11} strokeWidth={1} />
+        <line x1={8.5} y1={13.7} x2={15.5} y2={13.7} />
+      </svg>
+    ),
+  },
+  // #3 — Stat + logos (social_proof)
+  '43ef55b1-6f84-4e6e-a6e9-494c604b62bf': {
+    name: 'Stat + logos',
+    role: 'social_proof',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={9} y1={4} x2={15} y2={4} strokeWidth={2.6} />
+        <line x1={8} y1={7.5} x2={16} y2={7.5} strokeWidth={1} />
+        <rect x={2.5} y={13} width={5.5} height={5} rx={1} />
+        <rect x={9.2} y={13} width={5.5} height={5} rx={1} />
+        <rect x={16} y={13} width={5.5} height={5} rx={1} />
+      </svg>
+    ),
+  },
+  // #4 — Press quotes (social_proof)
+  '56f3d4cd-3506-48ac-9222-9fe9d6f2b261': {
+    name: 'Press quotes',
+    role: 'social_proof',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={2.5} y1={5} x2={7} y2={5} />
+        <line x1={2.5} y1={8} x2={6} y2={8} strokeWidth={1} />
+        <line x1={9.2} y1={5} x2={13.7} y2={5} />
+        <line x1={9.2} y1={8} x2={12.7} y2={8} strokeWidth={1} />
+        <line x1={16} y1={5} x2={20.5} y2={5} />
+        <line x1={16} y1={8} x2={19.5} y2={8} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #5 — Logos mobile stack (social_proof)
+  '9e322371-a8b4-4856-bb6c-931ec1e43938': {
+    name: 'Logos mobile stack',
+    role: 'social_proof',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={9} y1={4} x2={15} y2={4} strokeWidth={1} />
+        <rect x={2.5} y={9.5} width={5.5} height={5} rx={1} />
+        <rect x={9.2} y={9.5} width={5.5} height={5} rx={1} />
+        <rect x={16} y={9.5} width={5.5} height={5} rx={1} />
+      </svg>
+    ),
+  },
+  // #6 — Mobile-stack with icons (stats)
+  '403ab92c-2906-40f9-8e9e-b86519788bab': {
+    name: 'Mobile-stack with icons',
+    role: 'stats',
+    svg: (
+      <svg {...strokeProps}>
+        <circle cx={4.5} cy={5.5} r={1.6} />
+        <line x1={2.5} y1={10} x2={6.5} y2={10} strokeWidth={2.4} />
+        <line x1={2.5} y1={13.3} x2={6.5} y2={13.3} strokeWidth={1} />
+        <circle cx={12} cy={5.5} r={1.6} />
+        <line x1={9.5} y1={10} x2={14.5} y2={10} strokeWidth={2.4} />
+        <line x1={9.5} y1={13.3} x2={14.5} y2={13.3} strokeWidth={1} />
+        <circle cx={19.5} cy={5.5} r={1.6} />
+        <line x1={17.5} y1={10} x2={21.5} y2={10} strokeWidth={2.4} />
+        <line x1={17.5} y1={13.3} x2={21.5} y2={13.3} strokeWidth={1} />
+        <line x1={2.5} y1={18} x2={21.5} y2={18} strokeWidth={1} strokeDasharray="1.5 1.5" />
+      </svg>
+    ),
+  },
+  // #7 — 4 metrics grid (stats)
+  '487d3679-619d-4e38-ba82-daf16e6a985d': {
+    name: '4 metrics grid',
+    role: 'stats',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={9} y1={2.2} x2={15} y2={2.2} />
+        <line x1={4} y1={7} x2={9} y2={7} strokeWidth={2.6} />
+        <line x1={4} y1={9.7} x2={8.5} y2={9.7} strokeWidth={1} />
+        <line x1={15} y1={7} x2={20} y2={7} strokeWidth={2.6} />
+        <line x1={15} y1={9.7} x2={19.5} y2={9.7} strokeWidth={1} />
+        <line x1={4} y1={15} x2={9} y2={15} strokeWidth={2.6} />
+        <line x1={4} y1={17.7} x2={8.5} y2={17.7} strokeWidth={1} />
+        <line x1={15} y1={15} x2={20} y2={15} strokeWidth={2.6} />
+        <line x1={15} y1={17.7} x2={19.5} y2={17.7} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #8 — Highlight + context (stats)
+  '5ba31193-4e40-4e7e-a15d-674735bc7509': {
+    name: 'Highlight + context',
+    role: 'stats',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={2.5} y1={11} x2={9} y2={11} strokeWidth={3.2} />
+        <line x1={12.5} y1={7.5} x2={21.5} y2={7.5} strokeWidth={1} />
+        <line x1={12.5} y1={10} x2={20} y2={10} strokeWidth={1} />
+        <rect x={12.5} y={13} width={7} height={3} rx={1.2} />
+      </svg>
+    ),
+  },
+  // #9 — Stats with icons (stats) — same 3-col icon+number+label grid as
+  // #6 (Mobile-stack with icons); no mobile-stack flag here.
+  'a2ccde5c-4903-4962-804f-77978c5f8463': {
+    name: 'Stats with icons',
+    role: 'stats',
+    svg: (
+      <svg {...strokeProps}>
+        <circle cx={4.5} cy={5.5} r={1.6} />
+        <line x1={2.5} y1={10} x2={6.5} y2={10} strokeWidth={2.4} />
+        <line x1={2.5} y1={13.3} x2={6.5} y2={13.3} strokeWidth={1} />
+        <circle cx={12} cy={5.5} r={1.6} />
+        <line x1={9.5} y1={10} x2={14.5} y2={10} strokeWidth={2.4} />
+        <line x1={9.5} y1={13.3} x2={14.5} y2={13.3} strokeWidth={1} />
+        <circle cx={19.5} cy={5.5} r={1.6} />
+        <line x1={17.5} y1={10} x2={21.5} y2={10} strokeWidth={2.4} />
+        <line x1={17.5} y1={13.3} x2={21.5} y2={13.3} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #10 — Cornered cards 4-up (stats)
+  'c174aa06-7d33-4247-a551-26f61c4868e5': {
+    name: 'Cornered cards 4-up',
+    role: 'stats',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={9} y1={2.2} x2={15} y2={2.2} />
+        <rect x={3} y={5.5} width={8} height={6.5} rx={2.2} />
+        <rect x={13} y={5.5} width={8} height={6.5} rx={2.2} />
+        <rect x={3} y={13.5} width={8} height={6.5} rx={2.2} />
+        <rect x={13} y={13.5} width={8} height={6.5} rx={2.2} />
+        <line x1={4.5} y1={8.3} x2={8} y2={8.3} strokeWidth={1.8} />
+        <line x1={14.5} y1={8.3} x2={18} y2={8.3} strokeWidth={1.8} />
+        <line x1={4.5} y1={16.3} x2={8} y2={16.3} strokeWidth={1.8} />
+        <line x1={14.5} y1={16.3} x2={18} y2={16.3} strokeWidth={1.8} />
+      </svg>
+    ),
+  },
 };
 
-/** Looks up the designed icon for an item id, if any (Tanda 1-6: 60/146). */
+/** Looks up the designed icon for an item id, if any (Tanda 1-7: 70/146). */
 export function getSectionIcon(id: string): SectionIconEntry | null {
   return SECTION_ICONS[id] ?? null;
 }

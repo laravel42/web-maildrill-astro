@@ -740,3 +740,31 @@ incluir `'nav' | 'pricing'`. Verificación: `vitest run` → 43/43
 archivos, 303/303 tests; sin diagnósticos LSP nuevos.
 
 **Siguiente paso:** Tanda 7 (roles `social_proof` + `stats`).
+
+## 15. Tanda 7 — `sections`, roles `social_proof` + `stats` (10/85, 70/146 acumulado)
+
+**Estado: implementado en código, pendiente visto bueno visual.**
+
+| # | id | Nombre | Role | Estructura |
+|---|---|---|---|---|
+| 1 | `164d7f04-5b3e-492e-937d-46dc1a98207d` | BG image quote band | social_proof | `Container(bg imagen) > estrellas+quote(h2)+avatar(pill)+nombre+cargo` |
+| 2 | `419a3823-cfd6-4cfd-b07f-c37ac71d736f` | Pill rating card | social_proof | `Container > Container(pill) > estrellas+rating texto` |
+| 3 | `43ef55b1-6f84-4e6e-a6e9-494c604b62bf` | Stat + logos | social_proof | `Container > número+texto + ColumnsContainer[3 logos]` |
+| 4 | `56f3d4cd-3506-48ac-9222-9fe9d6f2b261` | Press quotes | social_proof | `Container > ColumnsContainer[3: quote+fuente]` |
+| 5 | `9e322371-a8b4-4856-bb6c-931ec1e43938` | Logos mobile stack | social_proof | `Container > eyebrow + ColumnsContainer[3 logos]` |
+| 6 | `403ab92c-2906-40f9-8e9e-b86519788bab` | Mobile-stack with icons | stats | `Container > ColumnsContainer[3: emoji+número+label]` |
+| 7 | `487d3679-619d-4e38-ba82-daf16e6a985d` | 4 metrics grid | stats | `Container > título + ColumnsContainer[2] fila1 + Spacer + ColumnsContainer[2] fila2` — 4 stats, grid 2×2 plano |
+| 8 | `5ba31193-4e40-4e7e-a15d-674735bc7509` | Highlight + context | stats | `Container > ColumnsContainer[2: número grande col0, texto+Button col1]` |
+| 9 | `a2ccde5c-4903-4962-804f-77978c5f8463` | Stats with icons | stats | igual a #6, sin mobile-stack |
+| 10 | `c174aa06-7d33-4247-a551-26f61c4868e5` | Cornered cards 4-up | stats | `Container > título + 2×ColumnsContainer[2] con cards esquina asimétrica` — 4 stats en cards |
+
+Micro-variaciones: **#6/#9** mismo grid 3-col icono+número+label,
+distinguidos con línea punteada bajo el grupo en #6 (mismo criterio
+usado en `nav` #4/#5). **#7/#10** ambos grid 2×2 de stats, #7 plano
+sin marco, #10 cada stat en card con esquina asimétrica.
+
+`SECTION_ICONS` extendido; `role` ampliado a incluir
+`'social_proof' | 'stats'`. Verificación: `vitest run` → 43/43
+archivos, 303/303 tests; sin diagnósticos LSP nuevos.
+
+**Siguiente paso:** Tanda 8 (roles `steps` + `team`).
