@@ -254,7 +254,17 @@ export function TemplateHoverPreviewPortal() {
       window.removeEventListener("resize", measure);
       window.removeEventListener("scroll", measure, true);
     };
-  }, [active, preview, zoomed, previewViewport, maxPreviewHeight]);
+    // `measuredContentHeight` es dependencia deliberada: al aparecer, este
+    // efecto corre ANTES de que el otro `useLayoutEffect` termine de medir
+    // `innerRef.scrollHeight` (mismo ciclo de commit, sin orden garantizado
+    // entre efectos hermanos) — con `boxEl.offsetHeight` aún en su tamaño
+    // "viejo"/estimado, `top` queda calculado contra un alto de caja
+    // incorrecto y el popover aparece desalineado hasta el primer `scroll`
+    // (que sí volvía a llamar `measure()`, ocultando el bug). Al depender de
+    // `measuredContentHeight` este efecto se re-ejecuta en cuanto el alto
+    // real del contenido se conoce, re-posicionando `top`/`left` sin esperar
+    // a un scroll accidental.
+  }, [active, preview, zoomed, previewViewport, maxPreviewHeight, measuredContentHeight]);
 
   if (!active || !layout) return null;
 
