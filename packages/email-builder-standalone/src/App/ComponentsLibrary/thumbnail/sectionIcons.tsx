@@ -5,14 +5,15 @@
  * `feat/ui-polish-p1`) for the full design plan, inventory, and
  * per-tanda workflow.
  *
- * Tanda 1 (10/146): `sections`, roles `banner` + `comparison`. Keyed by
- * the item's stable `id` from `localPresets.data.json` — NOT by role,
- * since the design is per-component, not per-category/role.
+ * Tanda 1 (10/146): `sections`, roles `banner` + `comparison`.
+ * Tanda 2 (10/146): `sections`, roles `cta` + `faq`.
+ * Keyed by the item's stable `id` from `localPresets.data.json` — NOT
+ * by role, since the design is per-component, not per-category/role.
  *
  * Status: **draft, pending visual approval**. Rendered here so the
  * user can review each icon in the real Components Library UI before
  * approving the tanda and moving on to the next one. Do not treat this
- * map as final/complete — only the 10 ids below are designed so far.
+ * map as final/complete — only the 20 ids below are designed so far.
  */
 
 import React from 'react';
@@ -20,7 +21,7 @@ import React from 'react';
 /** viewBox 0 0 24 24, outline-only, inherits `currentColor` (theme text). */
 export type SectionIconEntry = {
   name: string;
-  role: 'banner' | 'comparison';
+  role: 'banner' | 'comparison' | 'cta' | 'faq';
   svg: React.ReactNode;
 };
 
@@ -183,9 +184,157 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       </svg>
     ),
   },
+
+  // ---- Tanda 2 — sections, roles `cta` + `faq` (10/146) ----
+
+  // #1 — Centered band (cta)
+  '2bfc7466-90a7-43fc-bcd1-a65a9fbe3589': {
+    name: 'Centered band',
+    role: 'cta',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={3} width={20} height={18} rx={1.5} />
+        <line x1={7} y1={9} x2={17} y2={9} />
+        <line x1={8.5} y1={12} x2={15.5} y2={12} />
+        <rect x={8.5} y={15} width={7} height={3} rx={1} />
+      </svg>
+    ),
+  },
+  // #2 — Two-column mobile stack (cta)
+  '6c4e2918-c5c6-4598-94e5-807550ad2944': {
+    name: 'Two-column mobile stack',
+    role: 'cta',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={4} width={20} height={16} rx={1.5} />
+        <line x1={4.5} y1={9} x2={12} y2={9} />
+        <line x1={4.5} y1={12} x2={10.5} y2={12} />
+        <rect x={14.5} y={9.5} width={6.5} height={6} rx={1} />
+      </svg>
+    ),
+  },
+  // #3 — Newsletter (cta)
+  '6eae46e2-6b5f-4a3f-8f14-b48d5ddda2fd': {
+    name: 'Newsletter',
+    role: 'cta',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={3} width={20} height={18} rx={1.5} />
+        <line x1={7} y1={8} x2={17} y2={8} />
+        <line x1={8.5} y1={11} x2={15.5} y2={11} />
+        <rect x={8.5} y={13.5} width={7} height={3} rx={1} />
+        <line x1={7.5} y1={19} x2={16.5} y2={19} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #4 — BG image promo card (cta)
+  '71da79ee-59c5-4492-ab8d-09076a6afe94': {
+    name: 'BG image promo card',
+    role: 'cta',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={1.5} y={1.5} width={21} height={21} rx={1} strokeWidth={1} />
+        <rect x={3.5} y={3.5} width={17} height={17} rx={2.5} />
+        <rect x={9} y={6.5} width={6} height={2} rx={1} />
+        <line x1={7} y1={12} x2={17} y2={12} />
+        <rect x={9} y={15.5} width={6} height={2.8} rx={1} />
+      </svg>
+    ),
+  },
+  // #5 — Card (cta)
+  '78b538c5-54d0-4de2-a407-d5b8004f262d': {
+    name: 'Card',
+    role: 'cta',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={3} width={20} height={18} rx={1.5} strokeWidth={1} />
+        <rect x={4.5} y={6} width={15} height={12} rx={1.8} />
+        <line x1={7.5} y1={10} x2={16.5} y2={10} />
+        <rect x={8.5} y={13} width={7} height={2.6} rx={1} />
+        <line x1={8} y1={17} x2={16} y2={17} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #6 — FAQ + contact CTA (faq)
+  '2f03b3cf-34be-4d04-b08e-9a1b9a244146': {
+    name: 'FAQ + contact CTA',
+    role: 'faq',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={8} y1={2.5} x2={16} y2={2.5} />
+        <line x1={2.5} y1={6} x2={10} y2={6} />
+        <line x1={2.5} y1={8.5} x2={8} y2={8.5} strokeWidth={1} />
+        <line x1={2.5} y1={12} x2={10} y2={12} />
+        <line x1={2.5} y1={14.5} x2={8} y2={14.5} strokeWidth={1} />
+        <rect x={2.5} y={17.5} width={19} height={5} rx={1.2} />
+      </svg>
+    ),
+  },
+  // #7 — Pill question rows (faq)
+  '6344fb2f-fc29-4ef5-b441-acf01fa649c8': {
+    name: 'Pill question rows',
+    role: 'faq',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={8} y1={2.2} x2={16} y2={2.2} />
+        <rect x={2.5} y={4.7} width={19} height={4.2} rx={2.1} />
+        <rect x={2.5} y={10.7} width={19} height={4.2} rx={2.1} />
+        <rect x={2.5} y={16.7} width={19} height={4.2} rx={2.1} />
+      </svg>
+    ),
+  },
+  // #8 — FAQ with categories (faq)
+  'c404de6f-0227-4e69-8971-f37f74fe7b0f': {
+    name: 'FAQ with categories',
+    role: 'faq',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={2.5} y1={3} x2={8.5} y2={3} strokeWidth={2.5} />
+        <line x1={2.5} y1={6.5} x2={11} y2={6.5} />
+        <line x1={2.5} y1={9} x2={9} y2={9} strokeWidth={1} />
+        <line x1={2.5} y1={13} x2={8.5} y2={13} strokeWidth={2.5} />
+        <line x1={2.5} y1={16.5} x2={11} y2={16.5} />
+        <line x1={2.5} y1={19} x2={9} y2={19} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #9 — FAQ list (faq)
+  'cebd6caa-c867-4e45-b778-3cdb06636df2': {
+    name: 'FAQ list',
+    role: 'faq',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={7} y1={2.5} x2={17} y2={2.5} />
+        <line x1={2.5} y1={6.5} x2={11} y2={6.5} />
+        <line x1={2.5} y1={9} x2={9} y2={9} strokeWidth={1} />
+        <line x1={2.5} y1={11.5} x2={21.5} y2={11.5} strokeWidth={1} />
+        <line x1={2.5} y1={14} x2={11} y2={14} />
+        <line x1={2.5} y1={16.5} x2={9} y2={16.5} strokeWidth={1} />
+        <line x1={2.5} y1={19} x2={21.5} y2={19} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #10 — Mobile reflow 2 columns (faq)
+  'cec0c438-d335-46e6-9ad9-1f65dfd45aae': {
+    name: 'Mobile reflow 2 columns',
+    role: 'faq',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={8} y1={2.2} x2={16} y2={2.2} />
+        <line x1={2.5} y1={6} x2={9.5} y2={6} />
+        <line x1={2.5} y1={8.3} x2={7.5} y2={8.3} strokeWidth={1} />
+        <line x1={2.5} y1={12} x2={9.5} y2={12} />
+        <line x1={2.5} y1={14.3} x2={7.5} y2={14.3} strokeWidth={1} />
+        <line x1={14.5} y1={6} x2={21.5} y2={6} />
+        <line x1={14.5} y1={8.3} x2={19.5} y2={8.3} strokeWidth={1} />
+        <line x1={14.5} y1={12} x2={21.5} y2={12} />
+        <line x1={14.5} y1={14.3} x2={19.5} y2={14.3} strokeWidth={1} />
+      </svg>
+    ),
+  },
 };
 
-/** Looks up the designed icon for an item id, if any (Tanda 1: 10/146). */
+/** Looks up the designed icon for an item id, if any (Tanda 1+2: 20/146). */
 export function getSectionIcon(id: string): SectionIconEntry | null {
   return SECTION_ICONS[id] ?? null;
 }

@@ -423,6 +423,12 @@ repo principal vía `git cherry-pick` (commits `e6a9b58`, `c8a9988`,
 - **`documents/editor/EditorContext.tsx`** — `lateralPanel` (ancho del
   inspector).
 
+> **⚠️ Corrección post-sesión (ver sesión 3 más abajo)**: el commit
+> `e6a9b58` (altura de inputs/chips, primero de la cadena de 3 en
+> `fix/email-builder-inspector-input-height`) **no se había
+> cherry-pickeado** a `feat/ui-polish-p1` a pesar de estar documentado
+> como portado — solo `c8a9988` y `aa84f2a` habían llegado. Ver §10.
+
 ### Iteraciones de ajuste visual (todas verificadas contra el código
 fuente real de Builder42, no contra memoria/estimación)
 
@@ -511,3 +517,96 @@ fuente real de Builder42, no contra memoria/estimación)
 
 Este orden es tentativo y puede reajustarse según las respuestas a las
 preguntas abiertas.
+
+## 9. Tanda 2 — `sections`, roles `cta` + `faq` (10/85, 20/146 acumulado)
+
+**Estado: iconos implementados en código en `sectionIcons.tsx`
+(`SECTION_ICONS`), pendiente visto bueno visual del usuario en el
+editor real** — mismo flujo que la Tanda 1 (§8b): análisis
+estructural desde `localPresets.data.json`, propuesta SVG, aplicado
+directamente al mapa existente (no hace falta tocar
+`LibraryCardThumbnail.tsx`/`ComponentsLibraryDrawer.tsx`, el wiring de
+`iconId` ya quedó conectado en la Tanda 1).
+
+| # | id | Nombre | Role | Estructura (`blocks`) |
+|---|---|---|---|---|
+| 1 | `2bfc7466-90a7-43fc-bcd1-a65a9fbe3589` | Centered band | cta | `Container(dark bg) > título + texto + Button` — bloque único centrado |
+| 2 | `6c4e2918-c5c6-4598-94e5-807550ad2944` | Two-column mobile stack | cta | `Container > ColumnsContainer[2: (título+texto) col0, Button col1]` |
+| 3 | `6eae46e2-6b5f-4a3f-8f14-b48d5ddda2fd` | Newsletter | cta | `Container > título + texto + Button + texto legal` — igual a #1 con línea extra abajo |
+| 4 | `71da79ee-59c5-4492-ab8d-09076a6afe94` | BG image promo card | cta | `Container > Container(bg image, rounded) > badge + título + texto + Button` |
+| 5 | `78b538c5-54d0-4de2-a407-d5b8004f262d` | Card | cta | `Container > Container(bordered card) > título + texto + Button + texto legal` |
+| 6 | `2f03b3cf-34be-4d04-b08e-9a1b9a244146` | FAQ + contact CTA | faq | `Container > título FAQ + 2×(pregunta+respuesta, Divider) + Spacer + Container(card: título+texto+Button)` |
+| 7 | `6344fb2f-fc29-4ef5-b441-acf01fa649c8` | Pill question rows | faq | `Container > título + 3×(Container pill[pregunta] + respuesta)` |
+| 8 | `c404de6f-0227-4e69-8971-f37f74fe7b0f` | FAQ with categories | faq | `Container > (título categoría + pregunta+respuesta) + Divider+Spacer + (título categoría + pregunta+respuesta)` |
+| 9 | `cebd6caa-c867-4e45-b778-3cdb06636df2` | FAQ list | faq | `Container > título + 3×(pregunta+respuesta) con Divider entre cada uno` |
+| 10 | `cec0c438-d335-46e6-9ad9-1f65dfd45aae` | Mobile reflow 2 columns | faq | `Container > título + ColumnsContainer[2 col simétricas: cada una con 2×(pregunta+respuesta)+Spacer]` |
+
+Micro-variaciones aplicadas (mismo criterio que la Tanda 1):
+- **#1/#3** (Centered band / Newsletter): banda única centrada; #3
+  añade la línea de texto legal bajo el botón.
+- **#4/#5** (BG image promo card / Card): card anidada
+  `Container>Container`; #4 con badge arriba (sin borde propio, fondo
+  de imagen tratado como bloque sólido), #5 con borde fino y texto
+  legal abajo (sin badge).
+- **#6/#7/#8/#9/#10** (los 5 `faq`): átomo repetido pregunta
+  (línea gruesa) + respuesta (línea fina), variando el contenedor:
+  lista plana con dividers (#9), lista + card de contacto final (#6),
+  filas en pill (#7), agrupado por categoría con encabezado en negrita
+  (#8), o en 2 columnas (#10).
+
+`SECTION_ICONS` actualizado con las 10 entradas nuevas (type
+`SectionIconEntry.role` extendido a `'banner' | 'comparison' | 'cta' |
+'faq'`). Verificación tras el cambio: `astro check` → **0 errores, 0
+warnings, 3 hints** (mismos hints preexistentes, no relacionados);
+`vitest run` → **43/43 archivos, 303/303 tests pasando** — sin
+regresión frente al estado post-Tanda 1.
+
+**Siguiente paso al retomar:** visto bueno visual del usuario sobre
+estos 10 iconos en el editor real; luego avanzar a la **Tanda 3**
+(roles `features` + `footer`, siguiente en el orden planeado).
+
+## 10. Sesión 3 — corrección: commit de alturas de inputs/chips faltante
+
+El usuario reportó que los inputs del inspector y los chips de
+selección de breakpoint/configuración por bloque **no tenían la
+altura homologada con Builder42**, a pesar de que §8b documenta ese
+trabajo como ya portado a `feat/ui-polish-p1` vía cherry-pick de 3
+commits (`e6a9b58`, `c8a9988`, `aa84f2a`).
+
+**Causa raíz confirmada** (`git merge-base --is-ancestor e6a9b58 HEAD`
+→ falso; `git cherry e6a9b58~1 fix/email-builder-inspector-input-height`
+marcó los 3 commits como no aplicados): solo `c8a9988` (borrador Tanda
+1 de iconos) y `aa84f2a` (ajuste de tamaño/color de esos iconos) habían
+llegado a `feat/ui-polish-p1`. **`e6a9b58` — el commit que de verdad
+homologa alturas (`INPUT_HEIGHT` 36→32 en `inputStyles.ts`,
+`MuiToggleButtonGroup` en `theme.ts`, pills de `ThemePanel`/
+`ChipsFilterRow`) — nunca se había cherry-pickeado**, pese a estar
+listado en la nota de §8b. El working tree en `feat/ui-polish-p1`
+confirmaba `INPUT_HEIGHT = 36` sin el comentario de homologación, y
+`git log e6a9b58..HEAD` para ese archivo no mostraba ningún commit
+posterior — es decir, el cambio simplemente nunca entró, no fue
+revertido.
+
+**Corrección aplicada**: `git cherry-pick e6a9b58` sobre
+`feat/ui-polish-p1` (auto-merge limpio en `theme.ts`, sin conflictos;
+nuevo commit `6cf99de`). Trae:
+- `INPUT_HEIGHT` (`inputStyles.ts`): 36px → 32px, con el comentario de
+  homologación (`--pb-chrome-panel-row-height` de Builder42).
+- `ColorInput`/`BaseColorInput` swatch principal: 36px → 32px.
+- `MuiToggleButtonGroup` (`theme.ts`): altura fija 32px.
+- `ThemePanel` pill selector + `ChipsFilterRow`: radio 999px → 8px,
+  estado activo con fondo tenue (`#eef0ff`) + texto intenso
+  (`#4f46e5`) en vez del pill sólido por defecto de MUI Chip.
+- Nuevo archivo `INSPECTOR_INPUT_HEIGHT_AUDIT.md` (auditoría previa
+  referenciada por el commit).
+
+Verificado tras el cherry-pick: `astro check` → 0 errores, 0 warnings,
+3 hints (mismos hints preexistentes). `vitest run` → 43/43 archivos,
+303/303 tests.
+
+**Lección**: la nota de §8b sobre "cambios portados vía cherry-pick"
+no se verificó contra `git log`/`git merge-base` en su momento — quedó
+como una afirmación no comprobada. A futuro, cualquier traspaso de
+cambios entre worktrees debe confirmarse con
+`git merge-base --is-ancestor <commit> HEAD` antes de documentarlo
+como completado.
