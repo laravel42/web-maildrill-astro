@@ -768,3 +768,30 @@ sin marco, #10 cada stat en card con esquina asimétrica.
 archivos, 303/303 tests; sin diagnósticos LSP nuevos.
 
 **Siguiente paso:** Tanda 8 (roles `steps` + `team`).
+
+## 16. Tanda 8 — `sections`, roles `steps` + `team` (10/85, 80/146 acumulado)
+
+**Estado: implementado en código, pendiente visto bueno visual.**
+
+| # | id | Nombre | Role | Estructura |
+|---|---|---|---|---|
+| 1 | `02621ec6-b152-4fa6-8bce-390c31ea3986` | Mobile vertical timeline | steps | `Container > 3×(ColumnsContainer[num+título+texto], Divider)` — timeline vertical |
+| 2 | `4d7a6968-7d71-4de8-9a7a-457927c5f70e` | How it works | steps | `Container > eyebrow+título + ColumnsContainer[3: num+título+texto]` |
+| 3 | `88d32150-af31-482b-b77f-19afdeea27cc` | Pill numbered cards | steps | `Container > título + ColumnsContainer[3: pill "STEP N"+Spacer+card borde superior]` |
+| 4 | `94205636-ff4c-4095-aa97-3bf4c78f3c17` | BG image hero + numbered cards | steps | `Container > Container(bg imagen) eyebrow+título + Spacer + ColumnsContainer[3 cards]` |
+| 5 | `a7d991de-6787-40da-944e-858abe0fa977` | Process with images | steps | `Container > ColumnsContainer[3: num+imagen+título+texto]` |
+| 6 | `038aeb83-d141-4f04-927f-ed02a0995a72` | Cornered member cards | team | `Container > ColumnsContainer[3: card avatar+nombre+cargo+Button social]` |
+| 7 | `353542c8-6e6f-4eff-911f-d5d26e087ddb` | BG image team band | team | `Container > Container(bg imagen) eyebrow+título+texto + Spacer + ColumnsContainer[3: avatar+nombre+cargo+links]` |
+| 8 | `741f0e71-8b8e-4884-9828-06eff2bc6f71` | Mobile-stacked grid | team | `Container > ColumnsContainer[3: avatar+nombre+cargo+bio+links]` — sin card ni Button |
+| 9 | `9c62ea3b-1248-475d-8686-3409f7ea6233` | 2 founders | team | `Container > ColumnsContainer[2: avatar+nombre+cargo+bio+links]` |
+| 10 | `cd3b47fc-4701-4547-b634-0935b674c827` | 3 member cards | team | `Container > ColumnsContainer[3: avatar+nombre+cargo]` — sin bio ni links |
+
+`SECTION_ICONS` extendido; `role` ampliado a incluir
+`'steps' | 'team'`. Verificación: `vitest run` → 43/43 archivos,
+303/303 tests; sin diagnósticos LSP nuevos.
+
+Con esta tanda se completan 80/85 `sections` — solo queda el role
+`testimonial` (5 items), agrupado con el inicio de `layouts` en la
+Tanda 9 según el orden planeado en §8b.
+
+**Siguiente paso:** Tanda 9 (`testimonial` + inicio de `layouts`).
