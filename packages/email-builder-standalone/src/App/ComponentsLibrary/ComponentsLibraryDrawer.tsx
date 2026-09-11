@@ -295,6 +295,10 @@ function LibraryCard({
           // small — double the default 120px height for that category only.
           height={category === 'template' ? 240 : undefined}
           placeholderText={t('componentsLibrary.thumbnail.placeholder', 'No preview')}
+          // Draft icon review (COMPONENT_ICONS_PLAN.md, Tanda 1) — only
+          // renders when this item's id has a hand-designed icon; falls
+          // back to the existing PNG/placeholder otherwise.
+          iconId={item.id}
         />
       )}
       <Box

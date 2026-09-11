@@ -23,6 +23,8 @@ import React from 'react';
 import ImageNotSupportedOutlinedIcon from '@mui/icons-material/ImageNotSupportedOutlined';
 import { Box, Skeleton, Typography, useTheme } from '@mui/material';
 
+import { getSectionIcon } from './sectionIcons';
+
 export type LibraryCardThumbnailProps = {
   /** Source URL when a thumbnail exists; null shows the placeholder. */
   src: string | null;
@@ -38,6 +40,16 @@ export type LibraryCardThumbnailProps = {
   loading?: boolean;
   /** Optional placeholder caption — defaults to a localised fallback. */
   placeholderText?: string;
+  /**
+   * Item id — looked up against the hand-designed icon set
+   * (`sectionIcons.tsx`, COMPONENT_ICONS_PLAN.md). **Draft / in
+   * review**: only the items designed so far (Tanda 1: 10/146) render
+   * an icon; everything else falls back to the existing PNG/placeholder
+   * behaviour unchanged. Takes priority over `src` so the designed
+   * icon is visible for review even for items that already have a
+   * captured PNG.
+   */
+  iconId?: string;
 };
 
 export default function LibraryCardThumbnail({
@@ -46,6 +58,7 @@ export default function LibraryCardThumbnail({
   height = 120,
   loading = false,
   placeholderText,
+  iconId,
 }: LibraryCardThumbnailProps) {
   const theme = useTheme();
 
@@ -56,6 +69,32 @@ export default function LibraryCardThumbnail({
     backgroundColor: theme.palette.background.default,
     display: 'block',
   };
+
+  const designedIcon = iconId ? getSectionIcon(iconId) : null;
+
+  // Hand-designed icon (COMPONENT_ICONS_PLAN.md) — draft, pending visual
+  // approval. Takes priority over the captured PNG so the user can review
+  // it in place without needing the full "replace the thumbnail pipeline"
+  // migration to land first.
+  if (designedIcon) {
+    return (
+      <Box
+        sx={{
+          ...baseStyle,
+          border: `1px dashed ${theme.palette.warning.main}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'text.secondary',
+          '& svg': { width: 40, height: 40 },
+        }}
+        aria-label={alt}
+        title={`${designedIcon.name} (${designedIcon.role}) — draft icon, Tanda 1`}
+      >
+        {designedIcon.svg}
+      </Box>
+    );
+  }
 
   // Pending generation (local mode): show an animated skeleton rather than
   // the "No preview" placeholder, so a queued card reads as "loading" not
