@@ -833,3 +833,37 @@ contenido de texto que no existe en el dato real.
 archivos, 303/303 tests; sin diagnósticos LSP nuevos.
 
 **Siguiente paso:** Tanda 10 (resto de `layouts`, 8/13 restantes).
+
+## 18. Tanda 10 — resto de `layouts` (8/13, completa layouts 13/13) — 98/146 acumulado
+
+**Estado: implementado en código, pendiente visto bueno visual.**
+
+Con esta tanda se completan `layouts` (13/13) y, junto con la Tanda 9,
+también `sections` (85/85) — el catálogo completo de esas dos
+categorías queda diseñado.
+
+| # | id | Nombre | Shape | Estructura |
+|---|---|---|---|---|
+| 1 | `6dfb5ae2-a92f-4b3b-92ac-6146d851da7f` | Feature trio | columns-3 | 3 cards con acento superior grueso, esquinas inferiores redondeadas |
+| 2 | `7b429d27-b6bd-43f6-9bdc-f3917dc3b2d9` | Pricing trio | columns-3 | 2 cards acento superior + 1 card degradado destacada en medio |
+| 3 | `cb2adfc1-4a36-437b-a18f-84708b76f684` | Gallery grid | columns-3 | 3 cards con imagen de fondo, iguales |
+| 4 | `0218f056-aebf-4d19-b742-508e467cad8e` | Spotlight (image overlay) | container | 1 card blanca centrada dentro de banda con imagen de fondo |
+| 5 | `46b33349-e766-4bef-a443-a500da282912` | Gradient hero band | container | 1 card blanca centrada dentro de banda con degradado |
+| 6 | `e928d346-3cbe-4ceb-aa54-0eb15a8e80d1` | Feature grid 2×2 | container | 2 filas de 2 cards (anidado) dentro de sección con fondo suave |
+| 7 | `f60bfba6-d3c7-4327-8c5c-34642cf44546` | Stacked sections | container | 3 cards apiladas verticalmente |
+| 8 | `f6c65ea8-78ca-4ef1-9a70-0c6f652b6954` | Split callout | container | banda tintada con 2 cards en split 60/40 |
+
+Micro-variaciones: **#1/#2** ambos 3 cards con acento superior grueso,
+#2 sustituye la card del medio por una destacada con relleno degradado
+(sin acento). **#4/#5** mismo patrón "banda + card centrada", #4 con
+relleno sólido (imagen), #5 con línea diagonal punteada simulando la
+dirección del degradado.
+
+`SECTION_ICONS` no necesitó extender el tipo `role` — todos usan
+`'layout'` (ya agregado en la Tanda 9). Verificación: `vitest run` →
+43/43 archivos, 303/303 tests; sin diagnósticos LSP nuevos.
+
+**Siguiente paso:** Tandas 11-13, `templates` (20 items, raíz
+`EmailLayout`) — pendiente resolver antes la pregunta abierta de §6
+sobre si necesitan un lenguaje de icono distinto (documento completo
+vs. section individual).

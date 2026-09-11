@@ -15,13 +15,15 @@
  * Tanda 8 (10/146): `sections`, roles `steps` + `team`.
  * Tanda 9 (10/146): `sections` role `testimonial` (5/85, completes
  * sections) + `layouts` (5/13, first batch).
+ * Tanda 10 (8/146): `layouts`, remaining 8/13 — completes layouts
+ * (13/13).
  * Keyed by the item's stable `id` from `localPresets.data.json` — NOT
  * by role, since the design is per-component, not per-category/role.
  *
  * Status: **draft, pending visual approval**. Rendered here so the
  * user can review each icon in the real Components Library UI before
  * approving the tanda and moving on to the next one. Do not treat this
- * map as final/complete — only the 90 ids below are designed so far.
+ * map as final/complete — only the 98 ids below are designed so far.
  */
 
 import React from 'react';
@@ -1465,9 +1467,120 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       </svg>
     ),
   },
+
+  // ---- Tanda 10 — layouts, rest (8/13, completes layouts) ----
+
+  // #1 — Feature trio (layout, columns-3)
+  '6dfb5ae2-a92f-4b3b-92ac-6146d851da7f': {
+    name: 'Feature trio',
+    role: 'layout',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={4} width={6} height={16} rx={1.4} />
+        <rect x={9} y={4} width={6} height={16} rx={1.4} />
+        <rect x={16} y={4} width={6} height={16} rx={1.4} />
+        <line x1={2} y1={4.8} x2={8} y2={4.8} strokeWidth={3} />
+        <line x1={9} y1={4.8} x2={15} y2={4.8} strokeWidth={3} />
+        <line x1={16} y1={4.8} x2={22} y2={4.8} strokeWidth={3} />
+      </svg>
+    ),
+  },
+  // #2 — Pricing trio (layout, columns-3, highlighted middle tier)
+  '7b429d27-b6bd-43f6-9bdc-f3917dc3b2d9': {
+    name: 'Pricing trio',
+    role: 'layout',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={4} width={6} height={16} rx={1.4} />
+        <line x1={2} y1={4.8} x2={8} y2={4.8} strokeWidth={3} />
+        <rect x={9} y={2.5} width={6} height={19} rx={2} fill="currentColor" fillOpacity={0.14} />
+        <rect x={16} y={4} width={6} height={16} rx={1.4} />
+        <line x1={16} y1={4.8} x2={22} y2={4.8} strokeWidth={3} />
+      </svg>
+    ),
+  },
+  // #3 — Gallery grid (layout, columns-3, 3 identical bg-image cards)
+  'cb2adfc1-4a36-437b-a18f-84708b76f684': {
+    name: 'Gallery grid',
+    role: 'layout',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={4} width={6} height={16} rx={2} fill="currentColor" fillOpacity={0.1} />
+        <rect x={9} y={4} width={6} height={16} rx={2} fill="currentColor" fillOpacity={0.1} />
+        <rect x={16} y={4} width={6} height={16} rx={2} fill="currentColor" fillOpacity={0.1} />
+      </svg>
+    ),
+  },
+  // #4 — Spotlight (image overlay) (layout, container: bg-image band +
+  // centered inset card)
+  '0218f056-aebf-4d19-b742-508e467cad8e': {
+    name: 'Spotlight (image overlay)',
+    role: 'layout',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={2} width={20} height={20} rx={2.2} fill="currentColor" fillOpacity={0.12} />
+        <rect x={6} y={7} width={12} height={10} rx={1.8} strokeDasharray="1.6 1.4" />
+      </svg>
+    ),
+  },
+  // #5 — Gradient hero band (layout, container: gradient band + centered
+  // inset card) — same "band + inset card" pattern as #4, gradient
+  // fill instead of an image (diagonal hatch stands in for the
+  // gradient direction).
+  '46b33349-e766-4bef-a443-a500da282912': {
+    name: 'Gradient hero band',
+    role: 'layout',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={2} width={20} height={20} rx={2.2} />
+        <line x1={4} y1={20} x2={20} y2={4} strokeWidth={1} strokeDasharray="1.4 1.4" />
+        <rect x={6} y={7} width={12} height={10} rx={1.8} fill="currentColor" fillOpacity={0.12} strokeDasharray="0" />
+      </svg>
+    ),
+  },
+  // #6 — Feature grid 2×2 (layout, container wrapping two 2-col rows)
+  'e928d346-3cbe-4ceb-aa54-0eb15a8e80d1': {
+    name: 'Feature grid 2×2',
+    role: 'layout',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={1.5} y={1.5} width={21} height={21} rx={1.6} strokeWidth={1} />
+        <rect x={4} y={4} width={7.5} height={7} rx={1.4} />
+        <rect x={12.5} y={4} width={7.5} height={7} rx={1.4} />
+        <rect x={4} y={13} width={7.5} height={7} rx={1.4} />
+        <rect x={12.5} y={13} width={7.5} height={7} rx={1.4} />
+      </svg>
+    ),
+  },
+  // #7 — Stacked sections (layout, container wrapping 3 stacked cards)
+  'f60bfba6-d3c7-4327-8c5c-34642cf44546': {
+    name: 'Stacked sections',
+    role: 'layout',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={1.5} y={1.5} width={21} height={21} rx={1.6} strokeWidth={1} />
+        <rect x={4} y={3.5} width={16} height={4.5} rx={1.2} />
+        <rect x={4} y={9.5} width={16} height={4.5} rx={1.2} />
+        <rect x={4} y={15.5} width={16} height={4.5} rx={1.2} />
+      </svg>
+    ),
+  },
+  // #8 — Split callout (layout, container: tinted band + 60/40 card
+  // split)
+  'f6c65ea8-78ca-4ef1-9a70-0c6f652b6954': {
+    name: 'Split callout',
+    role: 'layout',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={1.5} y={5} width={21} height={14} rx={2.2} fill="currentColor" fillOpacity={0.08} />
+        <rect x={3.5} y={7.2} width={11} height={9.6} rx={1.6} />
+        <rect x={16} y={7.2} width={6.5} height={9.6} rx={1.6} />
+      </svg>
+    ),
+  },
 };
 
-/** Looks up the designed icon for an item id, if any (Tanda 1-9: 90/146). */
+/** Looks up the designed icon for an item id, if any (Tanda 1-10: 98/146). */
 export function getSectionIcon(id: string): SectionIconEntry | null {
   return SECTION_ICONS[id] ?? null;
 }
