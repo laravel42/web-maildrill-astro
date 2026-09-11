@@ -601,8 +601,18 @@ const getTheme = (
               border: 0,
               borderRadius: 0,
               margin: 0,
-              paddingTop: theme.spacing(1),
-              paddingBottom: theme.spacing(1),
+              // Fixed height (not just vertical padding) so this segmented
+              // control matches the app's other inputs and Builder42's
+              // --pb-chrome-panel-row-height (32px) regardless of the
+              // label's line-height. See
+              // packages/email-builder-standalone/INSPECTOR_INPUT_HEIGHT_AUDIT.md
+              height: '32px',
+              boxSizing: 'border-box',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingTop: 0,
+              paddingBottom: 0,
               paddingLeft: theme.spacing(1.25),
               paddingRight: theme.spacing(1.25),
               textTransform: 'none',
