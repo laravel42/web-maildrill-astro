@@ -642,3 +642,36 @@ Verificación: `astro check` → 0 errores, 0 warnings, 3 hints
 
 **Siguiente paso al retomar:** visto bueno visual del usuario; luego
 Tanda 4 (roles `gallery` + `header`).
+
+## 12. Tanda 4 — `sections`, roles `gallery` + `header` (10/85, 40/146 acumulado)
+
+**Estado: iconos implementados en código en `sectionIcons.tsx`
+(`SECTION_ICONS`), pendiente visto bueno visual del usuario.**
+
+| # | id | Nombre | Role | Estructura (`blocks`) |
+|---|---|---|---|---|
+| 1 | `127b953d-476a-4714-bd26-ee909bd10eac` | 3 product cards | gallery | `Container > ColumnsContainer[3: card(imagen+título+precio+Button)]` |
+| 2 | `4bc7b5e2-d31a-47e7-a23d-89903c1b180e` | Hero + thumbnails | gallery | `Container > imagen grande + Spacer + ColumnsContainer[3 imágenes pequeñas]` |
+| 3 | `5228ffb8-1cc6-4f35-afd4-8b670da9614b` | Cornered product cards | gallery | igual a #1, esquinas asimétricas + Button pill |
+| 4 | `7dd4acee-36dd-4b01-bd7d-99f7da123919` | BG image lookbook hero | gallery | `Container > Container(bg imagen) título+texto+Button + Spacer + ColumnsContainer[3 imágenes]` |
+| 5 | `a17f162d-07ae-4830-8491-6eb2fb60ff07` | Mobile-stack 2 featured | gallery | `Container > ColumnsContainer[2: imagen+título+link]` |
+| 6 | `20751f09-4ff1-4c57-b60d-78b314ba6797` | Mobile-tight logo | header | `Container(borde inferior mobile) > logo + tagline` — apilado centrado |
+| 7 | `35742add-9d96-4f7e-8985-e8f8141ad927` | Logo + CTA | header | `Container > ColumnsContainer[2: logo col0, Button col1]` |
+| 8 | `8a46ec83-0f12-46c1-85b1-1134324c7a22` | Logo + nav | header | `Container > ColumnsContainer[2: logo col0, links inline col1]` |
+| 9 | `bd457ce3-75f4-4161-9e3e-6937c9594ae5` | Preheader + logo | header | `Container > texto preheader + logo` — apilado vertical |
+| 10 | `c08045a7-4237-43a3-8f12-e3abfa8b09f6` | Pill nav buttons | header | `Container > ColumnsContainer[2: logo col0, Container(5 Button pill) col1]` |
+
+Micro-variaciones: **#1/#3** mismo grid 3-card imagen+título+precio+
+botón, #3 con esquinas más redondeadas (aproximación de la asimetría
+real, ya que SVG `rect` no soporta radio por esquina individual en
+este set) y botón pill vs. rectangular; **#7/#8/#10** los 3 son
+"logo izquierda + elemento derecha", variando ese elemento (botón
+sólido, links de texto, o varios botones pill).
+
+`SECTION_ICONS` extendido con las 10 entradas; `role` del tipo
+`SectionIconEntry` ampliado a incluir `'gallery' | 'header'`.
+Verificación: `astro check` → 0 errores, 0 warnings, 3 hints
+(preexistentes); `vitest run` → 43/43 archivos, 303/303 tests.
+
+**Siguiente paso al retomar:** visto bueno visual del usuario; luego
+Tanda 5 (roles `hero` + `logo`).

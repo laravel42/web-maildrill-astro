@@ -8,13 +8,14 @@
  * Tanda 1 (10/146): `sections`, roles `banner` + `comparison`.
  * Tanda 2 (10/146): `sections`, roles `cta` + `faq`.
  * Tanda 3 (10/146): `sections`, roles `features` + `footer`.
+ * Tanda 4 (10/146): `sections`, roles `gallery` + `header`.
  * Keyed by the item's stable `id` from `localPresets.data.json` — NOT
  * by role, since the design is per-component, not per-category/role.
  *
  * Status: **draft, pending visual approval**. Rendered here so the
  * user can review each icon in the real Components Library UI before
  * approving the tanda and moving on to the next one. Do not treat this
- * map as final/complete — only the 30 ids below are designed so far.
+ * map as final/complete — only the 40 ids below are designed so far.
  */
 
 import React from 'react';
@@ -22,7 +23,15 @@ import React from 'react';
 /** viewBox 0 0 24 24, outline-only, inherits `currentColor` (theme text). */
 export type SectionIconEntry = {
   name: string;
-  role: 'banner' | 'comparison' | 'cta' | 'faq' | 'features' | 'footer';
+  role:
+    | 'banner'
+    | 'comparison'
+    | 'cta'
+    | 'faq'
+    | 'features'
+    | 'footer'
+    | 'gallery'
+    | 'header';
   svg: React.ReactNode;
 };
 
@@ -497,9 +506,164 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       </svg>
     ),
   },
+
+  // ---- Tanda 4 — sections, roles `gallery` + `header` (10/146) ----
+
+  // #1 — 3 product cards (gallery)
+  '127b953d-476a-4714-bd26-ee909bd10eac': {
+    name: '3 product cards',
+    role: 'gallery',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={4} width={6} height={16} rx={1.4} />
+        <rect x={9} y={4} width={6} height={16} rx={1.4} />
+        <rect x={16} y={4} width={6} height={16} rx={1.4} />
+        <rect x={3} y={5.5} width={4} height={4} rx={0.6} />
+        <rect x={10} y={5.5} width={4} height={4} rx={0.6} />
+        <rect x={17} y={5.5} width={4} height={4} rx={0.6} />
+        <line x1={3} y1={14.5} x2={6.5} y2={14.5} strokeWidth={1} />
+        <line x1={10} y1={14.5} x2={13.5} y2={14.5} strokeWidth={1} />
+        <line x1={17} y1={14.5} x2={20.5} y2={14.5} strokeWidth={1} />
+        <rect x={3} y={16.8} width={4} height={2} rx={0.6} />
+        <rect x={10} y={16.8} width={4} height={2} rx={0.6} />
+        <rect x={17} y={16.8} width={4} height={2} rx={0.6} />
+      </svg>
+    ),
+  },
+  // #2 — Hero + thumbnails (gallery)
+  '4bc7b5e2-d31a-47e7-a23d-89903c1b180e': {
+    name: 'Hero + thumbnails',
+    role: 'gallery',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2.5} y={2.5} width={19} height={11} rx={1.4} />
+        <rect x={2.5} y={15.5} width={5.5} height={6} rx={1} />
+        <rect x={9.2} y={15.5} width={5.5} height={6} rx={1} />
+        <rect x={16} y={15.5} width={5.5} height={6} rx={1} />
+      </svg>
+    ),
+  },
+  // #3 — Cornered product cards (gallery)
+  '5228ffb8-1cc6-4f35-afd4-8b670da9614b': {
+    name: 'Cornered product cards',
+    role: 'gallery',
+    svg: (
+      <svg {...strokeProps}>
+        {/* Asymmetric corners (topLeft+bottomRight rounded, others square) —
+            approximated with a single rounded rect per card since SVG rect
+            doesn't support per-corner radius; the pill button (vs. #1's
+            rectangle) is the clearer visual differentiator here. */}
+        <rect x={2} y={4} width={6} height={16} rx={2.2} />
+        <rect x={9} y={4} width={6} height={16} rx={2.2} />
+        <rect x={16} y={4} width={6} height={16} rx={2.2} />
+        <rect x={3} y={5.5} width={4} height={4} rx={0.6} />
+        <rect x={10} y={5.5} width={4} height={4} rx={0.6} />
+        <rect x={17} y={5.5} width={4} height={4} rx={0.6} />
+        <line x1={3} y1={14.5} x2={6.5} y2={14.5} strokeWidth={1} />
+        <line x1={10} y1={14.5} x2={13.5} y2={14.5} strokeWidth={1} />
+        <line x1={17} y1={14.5} x2={20.5} y2={14.5} strokeWidth={1} />
+        <rect x={3} y={16.6} width={4} height={2.4} rx={1.2} />
+        <rect x={10} y={16.6} width={4} height={2.4} rx={1.2} />
+        <rect x={17} y={16.6} width={4} height={2.4} rx={1.2} />
+      </svg>
+    ),
+  },
+  // #4 — BG image lookbook hero (gallery)
+  '7dd4acee-36dd-4b01-bd7d-99f7da123919': {
+    name: 'BG image lookbook hero',
+    role: 'gallery',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={2} width={20} height={10.5} rx={1.4} fill="currentColor" fillOpacity={0.08} />
+        <line x1={8} y1={6} x2={16} y2={6} />
+        <rect x={9.5} y={9} width={5} height={2.2} rx={1} />
+        <rect x={2} y={15} width={5.7} height={6.5} rx={1} />
+        <rect x={9.15} y={15} width={5.7} height={6.5} rx={1} />
+        <rect x={16.3} y={15} width={5.7} height={6.5} rx={1} />
+      </svg>
+    ),
+  },
+  // #5 — Mobile-stack 2 featured (gallery)
+  'a17f162d-07ae-4830-8491-6eb2fb60ff07': {
+    name: 'Mobile-stack 2 featured',
+    role: 'gallery',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={3} width={9} height={9} rx={1.2} />
+        <line x1={2.5} y1={14.5} x2={10.5} y2={14.5} strokeWidth={1} />
+        <line x1={2.5} y1={17} x2={7.5} y2={17} strokeWidth={1} />
+        <rect x={13} y={3} width={9} height={9} rx={1.2} />
+        <line x1={13.5} y1={14.5} x2={21.5} y2={14.5} strokeWidth={1} />
+        <line x1={13.5} y1={17} x2={18.5} y2={17} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #6 — Mobile-tight logo (header)
+  '20751f09-4ff1-4c57-b60d-78b314ba6797': {
+    name: 'Mobile-tight logo',
+    role: 'header',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={8.5} y={6} width={7} height={6} rx={1} />
+        <line x1={6} y1={16.5} x2={18} y2={16.5} strokeWidth={1} />
+        <line x1={2.5} y1={20.5} x2={21.5} y2={20.5} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #7 — Logo + CTA (header)
+  '35742add-9d96-4f7e-8985-e8f8141ad927': {
+    name: 'Logo + CTA',
+    role: 'header',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2.5} y={9} width={7.5} height={6} rx={1} />
+        <rect x={14.5} y={10} width={7} height={4} rx={1} />
+        <line x1={2.5} y1={20.5} x2={21.5} y2={20.5} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #8 — Logo + nav (header)
+  '8a46ec83-0f12-46c1-85b1-1134324c7a22': {
+    name: 'Logo + nav',
+    role: 'header',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2.5} y={9.5} width={7} height={5} rx={1} />
+        <line x1={13.5} y1={10.5} x2={16.5} y2={10.5} strokeWidth={1} />
+        <line x1={17.5} y1={10.5} x2={19.5} y2={10.5} strokeWidth={1} />
+        <line x1={20.5} y1={10.5} x2={21.5} y2={10.5} strokeWidth={1} />
+        <line x1={2.5} y1={20.5} x2={21.5} y2={20.5} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #9 — Preheader + logo (header)
+  'bd457ce3-75f4-4161-9e3e-6937c9594ae5': {
+    name: 'Preheader + logo',
+    role: 'header',
+    svg: (
+      <svg {...strokeProps}>
+        <line x1={6} y1={5.5} x2={18} y2={5.5} strokeWidth={1} />
+        <rect x={8.5} y={9.5} width={7} height={6} rx={1} />
+        <line x1={2.5} y1={20.5} x2={21.5} y2={20.5} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #10 — Pill nav buttons (header)
+  'c08045a7-4237-43a3-8f12-e3abfa8b09f6': {
+    name: 'Pill nav buttons',
+    role: 'header',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2.5} y={10} width={7} height={5} rx={1} />
+        <rect x={12.5} y={10.7} width={3.6} height={3} rx={1.5} />
+        <rect x={16.6} y={10.7} width={4.9} height={3} rx={1.5} />
+        <line x1={2.5} y1={20.5} x2={21.5} y2={20.5} strokeWidth={1} />
+      </svg>
+    ),
+  },
 };
 
-/** Looks up the designed icon for an item id, if any (Tanda 1+2+3: 30/146). */
+/** Looks up the designed icon for an item id, if any (Tanda 1+2+3+4: 40/146). */
 export function getSectionIcon(id: string): SectionIconEntry | null {
   return SECTION_ICONS[id] ?? null;
 }
