@@ -78,11 +78,19 @@ import LibraryCardPrimitiveRender from './thumbnail/LibraryCardPrimitiveRender';
 import LibraryCardThumbnail from './thumbnail/LibraryCardThumbnail';
 import { resolveThumbnailUrl } from './thumbnail/thumbnailUrl';
 
-/** Width (in px) when the drawer is open. Collapses to 0 when closed. */
-export const COMPONENTS_LIBRARY_DRAWER_WIDTH = 380;
+/**
+ * Width (in px) when the drawer is open. Homologado con Builder42
+ * (`.pbx-body`, shell.css: `grid-template-columns: 312px 1fr 326px`) —
+ * antes 380px, notablemente más ancho que el sidebar real de Builder42.
+ */
+export const COMPONENTS_LIBRARY_DRAWER_WIDTH = 312;
 
-/** Width (in px) when the drawer is collapsed to its compact base-blocks rail. */
-export const COMPACT_LIBRARY_DRAWER_WIDTH = 164;
+/**
+ * Width (in px) when the drawer is collapsed to its compact base-blocks
+ * rail. Homologado con Builder42 (`.pbx-body--sidebar-compact`,
+ * shell.css: 168px) — ya estaba casi idéntico (antes 164px).
+ */
+export const COMPACT_LIBRARY_DRAWER_WIDTH = 168;
 
 /** Card axis is per-category: role | type | shape | none. */
 type LibraryItem = {

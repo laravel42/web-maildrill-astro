@@ -77,37 +77,30 @@ function CompactBlockTile({ index }: { index: number }) {
       onClick={handleClick}
       sx={{
         ...dragTileShellSx(theme, { dragging: isDragging }),
-        p: 1,
+        // Homologado con Builder42 (`.pbx-compact-rail__tile`,
+        // sidebar.css: `padding: 8px 4px; gap: 4px`) — ícono SIN
+        // fondo/caja propia, igual que en BlockTile
+        // (BlocksCategoryContent.tsx): ahí `.pbx-compact-rail__tile-icon`
+        // solo centra, no tiene `background`.
+        p: '8px 4px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         gap: 0.5,
+        color: 'text.secondary',
       }}
     >
-      <Box
-        sx={{
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'center',
-          p: 0.75,
-          borderRadius: 0.5,
-          bgcolor: theme.palette.action.hover,
-          color: 'text.secondary',
-        }}
-      >
-        {
-          // Homologado con Builder42 (`.pbx-palette__icon`, "grande,
-          // protagonista de la card") — mismo criterio que BlockTile
-          // (BlocksCategoryContent.tsx). `style` inline (no `sx`) — ver
-          // nota detallada en BlocksCategoryContent.tsx: `sx` vía
-          // cloneElement no ganó de forma determinista contra
-          // `.MuiSvgIcon-root` (mui/material-ui#34056); `style` inline
-          // se renderiza como atributo HTML, máxima especificidad.
-          React.cloneElement(entry.icon, {
-            style: { fontSize: 28, width: 28, height: 28 },
-          })
-        }
-      </Box>
+      {
+        // Rail compacto (164px de ancho) — equivalente real en
+        // Builder42 es `.pbx-compact-rail__tile-icon-svg` (18px), NO
+        // `.pbx-palette__icon` (28px, panel EXPANDIDO — ver BlockTile en
+        // BlocksCategoryContent.tsx). `style` inline (no `sx`) — ver
+        // nota detallada ahí: `sx` vía cloneElement no ganó de forma
+        // determinista contra `.MuiSvgIcon-root` (mui/material-ui#34056).
+        React.cloneElement(entry.icon, {
+          style: { fontSize: 18, width: 18, height: 18 },
+        })
+      }
       <Typography
         variant="body2"
         sx={{

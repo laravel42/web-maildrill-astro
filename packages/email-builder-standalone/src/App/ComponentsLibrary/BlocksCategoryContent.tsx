@@ -72,46 +72,32 @@ function BlockTile({ index }: { index: number }) {
       onClick={handleClick}
       sx={{
         ...dragTileShellSx(theme, { dragging: isDragging }),
-        p: 1.5,
+        // Homologado con Builder42 (`.pbx-palette__item`, sidebar.css):
+        // `min-height` (no padding fijo que empuje la altura) + icono SIN
+        // fondo/caja propia — ahí el ícono va directo con `color` sobre
+        // el fondo de la card, sin ningún wrapper `bgcolor`/`borderRadius`
+        // que lo encajone y lo haga verse chico respecto a la card.
+        minHeight: 76,
+        p: '10px 6px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 0.75,
+        justifyContent: 'center',
+        gap: 1,
+        color: 'text.secondary',
       }}
     >
-      <Box
-        sx={{
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'center',
-          p: 1,
-          borderRadius: 0.5,
-          bgcolor: theme.palette.action.hover,
-          color: 'text.secondary',
-        }}
-      >
-        {
-          // Homologado con Builder42 (`.pbx-palette__icon`, sidebar.css:
-          // "Icono del tipo de componente — grande, protagonista de la
-          // card", 28px dentro de un tile de 76px de alto). El default
-          // de MUI (24px) se veía chico en comparación.
-          //
-          // Dos intentos previos no dieron un resultado determinista:
-          // `sx={{ '& svg': {...} }}` en el Box padre (medido ~27px,
-          // luego ~52px según la ventana) y `cloneElement(..., { sx })`
-          // (sin cambio visible) — MUI's SvgIcon resuelve su tamaño vía
-          // `.MuiSvgIcon-root`/`fontSizeMedium`, cuya especificidad real
-          // en la cascada de Emotion no está garantizada a perder contra
-          // un `sx` inyectado desde fuera (confirmado como problema
-          // conocido: mui/material-ui#34056, "ownerState passed to
-          // SvgIcon changes the font size"). `style` inline de React se
-          // renderiza como atributo HTML `style=""`, máxima especificidad
-          // posible — no hay clase CSS que pueda ganarle.
-          React.cloneElement(entry.icon, {
-            style: { fontSize: 32, width: 32, height: 32 },
-          })
-        }
-      </Box>
+      {
+        // 28px — mismo valor que `.pbx-palette__icon` de Builder42
+        // (sidebar.css: "icono grande, protagonista de la card"),
+        // unificado con LibraryCardThumbnail.tsx. `style` inline (no
+        // `sx`) — `sx` vía cloneElement no ganó de forma determinista
+        // contra `.MuiSvgIcon-root` (mui/material-ui#34056); `style`
+        // inline se renderiza como atributo HTML, máxima especificidad.
+        React.cloneElement(entry.icon, {
+          style: { fontSize: 28, width: 28, height: 28 },
+        })
+      }
       <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
         {t(entry.labelKey)}
       </Typography>

@@ -21,7 +21,10 @@ import { getUndoRedoState, resetUndoRedoStore, updateUndoRedoState } from './Und
 
 // Inspector width when expanded. 385 crowded the canvas; 320 still fits the
 // widest control rows (colour + swatch, paired number inputs) without wrapping.
-export const lateralPanel = 320;
+// Homologado con Builder42 (`.pbx-body`, shell.css:
+// `grid-template-columns: 312px 1fr 326px`) — antes 320px, ya muy
+// cercano; 326px lo iguala exactamente al inspector real de Builder42.
+export const lateralPanel = 326;
 export const DEFAULT_IMAGE_PLACEHOLDER =
   'https://ddc4vowthkjlv.cloudfront.net/uploads/gallery/1/69cc1b1083b90.jpg';
 

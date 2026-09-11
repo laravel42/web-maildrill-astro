@@ -99,7 +99,16 @@ export default function LibraryCardThumbnail({
           // 24px, ratio ~75%). 32px en una caja de 120px (~27%) se veía
           // chico en comparación; 56px (~47%) se acerca más sin dominar
           // la tarjeta.
-          '& svg': { width: 56, height: 56 },
+          //
+          // 28px — mismo valor que `.pbx-palette__icon` de Builder42
+          // (sidebar.css: "Icono del tipo de componente — grande,
+          // protagonista de la card"), la única referencia real medida en
+          // su código fuente para este contexto (no hay un ícono de 27px
+          // en Builder42; se descartó esa cifra al no encontrar
+          // sustento en el código). Mismo valor unificado en
+          // BlockTile/CompactBlockTile (BlocksCategoryContent.tsx,
+          // CompactBlocksList.tsx).
+          '& svg': { width: 28, height: 28 },
         }}
         aria-label={alt}
         title={`${designedIcon.name} (${designedIcon.role}) — draft icon, Tanda 1`}
