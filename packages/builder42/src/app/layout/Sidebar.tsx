@@ -53,6 +53,7 @@ import type { ComponentType } from "react";
 import { TokensEditor } from "./TokensEditor";
 import { TemplatesPanel } from "./TemplatesPanel";
 import { SectionTemplateCard } from "./TemplateCard";
+import { TemplateHoverPreviewPortal } from "@/builder/dnd/TemplateHoverPreviewPortal";
 
 // ---------------------------------------------------------------------------
 // Iconos por categoría — Lucide (Fase 11.f), 16×16 vía CSS, currentColor
@@ -417,6 +418,11 @@ export function Sidebar() {
         collapsed={isCompact}
         onToggle={() => setSidebarMode(isCompact ? "open" : "compact")}
       />
+
+      {/* Singleton del hover-preview ampliado (fase A): un único portal para
+          TODAS las TemplateCard/SectionTemplateCard, alimentado vía
+          `templateHoverPreviewStore` — evita montar un popover por tarjeta. */}
+      <TemplateHoverPreviewPortal />
     </div>
   );
 }

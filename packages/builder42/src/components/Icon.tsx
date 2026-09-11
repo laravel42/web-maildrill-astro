@@ -40,6 +40,9 @@ export {
   Smartphone,
   Tablet,
   Monitor,
+  // ---- Preview ampliado de templates (fase A, homologación UI/UX) -----
+  ZoomIn,
+  ZoomOut,
   // ---- Tema (Fase 11.d) + perfil / idioma -----------------------------
   Sun,
   Moon,

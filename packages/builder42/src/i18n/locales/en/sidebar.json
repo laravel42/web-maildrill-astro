@@ -28,6 +28,12 @@
     "hint": "Apply a page template or tap a section to place it on the canvas.",
     "sectionTooltip": "Tap to pick and place on the canvas",
     "descInfoLabel": "View description",
+    "preview": {
+      "desktop": "Desktop view",
+      "mobile": "Mobile view",
+      "zoom": "Zoom in",
+      "fit": "Fit to view"
+    },
     "categories": {
       "page": "Page templates",
       "section": "Section templates"
