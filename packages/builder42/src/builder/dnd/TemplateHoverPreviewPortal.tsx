@@ -54,11 +54,15 @@ const PREVIEW_BASE_WIDTH = 1200;
 const PREVIEW_MOBILE_WIDTH = 420;
 
 /** Caja de despliegue del popover — igual criterio de topes que email-builder
- * (una caja con tope máximo, nunca a pantalla completa). */
+ * (una caja con tope máximo, nunca a pantalla completa). El tope máximo es
+ * dinámico (`maxPreviewHeight`, más abajo): una fracción generosa del alto
+ * del viewport, no un número fijo — el preview antes se veía "corto" con
+ * mucho espacio libre sin usar por debajo. */
 const BOX_WIDTH = 420;
-const BOX_MAX_HEIGHT = 560;
 const BOX_MIN_HEIGHT = 96;
 const VIEWPORT_EDGE_GAP = 12;
+/** Fracción del alto de la ventana que el popover puede ocupar como máximo. */
+const MAX_HEIGHT_VIEWPORT_RATIO = 0.85;
 
 type PreviewMarkup = { html: string; css: string };
 
@@ -155,7 +159,26 @@ export function TemplateHoverPreviewPortal() {
   useWebFontLinks(themeFamilies, active !== null);
 
   const boxRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<Box | null>(null);
+  // Alto REAL del contenido renderizado (sin escalar) — medido contra el
+  // propio div `__inner`, no un número fijo (bug real, feedback de usuario:
+  // el preview se veía "corto" con mucho espacio libre por debajo sin usar,
+  // porque antes se asumía un alto de referencia constante de 900px en vez
+  // de medir el contenido real, que suele ser más alto).
+  const [measuredContentHeight, setMeasuredContentHeight] = useState<number | null>(null);
+  // Alto de la ventana, reactivo a resize — el tope máximo del popover es una
+  // fracción de este valor, no un px fijo (mismo criterio que el `zoomed`
+  // fit-mode del hover de email-builder).
+  const [viewportH, setViewportH] = useState(() =>
+    typeof window !== "undefined" ? window.innerHeight : 800,
+  );
+
+  useEffect(() => {
+    const onResize = () => setViewportH(window.innerHeight);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   // Reinicia zoom/viewport cada vez que cambia la tarjeta activa — mismo
   // criterio que email-builder (no arrastrar el estado de una tarjeta a la
@@ -164,6 +187,37 @@ export function TemplateHoverPreviewPortal() {
     setZoomed(false);
     setPreviewViewport("desktop");
   }, [active?.layout.id]);
+
+  // Mide el alto real del contenido inyectado (el div `__inner`, ANTES de
+  // aplicar `transform: scale`, ver `getBoundingClientRect` vs. `offsetHeight`
+  // — se usa `scrollHeight` del propio nodo para capturar el alto natural sin
+  // que el `transform` lo afecte, ya que `transform` no cambia el layout box).
+  // `useLayoutEffect` (no `useEffect`): mide ANTES del primer paint del
+  // contenido nuevo, para no pintar un frame con la altura vieja/estimada
+  // (bug real: con `useEffect` el navegador pintaba primero con el alto de
+  // referencia de 1600px o el de la tarjeta anterior, recortando el
+  // contenido real hasta el siguiente frame).
+  useLayoutEffect(() => {
+    const el = innerRef.current;
+    if (!el) {
+      setMeasuredContentHeight(null);
+      return;
+    }
+    const measure = () => setMeasuredContentHeight(el.scrollHeight || null);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [preview, layout?.id]);
+
+  // Tope máximo del popover: una fracción generosa del alto del viewport en
+  // vez de un px fijo — con esto el preview puede crecer tanto como haya
+  // espacio real en pantalla.
+  const maxPreviewHeight = Math.max(
+    BOX_MIN_HEIGHT,
+    Math.round(viewportH * MAX_HEIGHT_VIEWPORT_RATIO) - VIEWPORT_EDGE_GAP * 2,
+  );
 
   useLayoutEffect(() => {
     if (!active) {
@@ -175,7 +229,7 @@ export function TemplateHoverPreviewPortal() {
       const boxEl = boxRef.current;
       const boxWidth = boxEl?.offsetWidth ?? BOX_WIDTH;
       const viewportW = window.innerWidth;
-      const viewportH = window.innerHeight;
+      const currentViewportH = window.innerHeight;
 
       // Preferencia: a la derecha de la tarjeta. Si no cabe, a la izquierda.
       const spaceRight = viewportW - anchorRect.right;
@@ -186,10 +240,10 @@ export function TemplateHoverPreviewPortal() {
 
       // Verticalmente alineado con el tope de la tarjeta, acotado para no
       // desbordar el viewport por abajo.
-      const boxHeight = boxEl?.offsetHeight ?? BOX_MAX_HEIGHT;
+      const boxHeight = boxEl?.offsetHeight ?? maxPreviewHeight;
       const top = Math.min(
         Math.max(VIEWPORT_EDGE_GAP, anchorRect.top),
-        viewportH - boxHeight - VIEWPORT_EDGE_GAP,
+        currentViewportH - boxHeight - VIEWPORT_EDGE_GAP,
       );
       setBox({ top, left });
     };
@@ -200,13 +254,37 @@ export function TemplateHoverPreviewPortal() {
       window.removeEventListener("resize", measure);
       window.removeEventListener("scroll", measure, true);
     };
-  }, [active, preview, zoomed, previewViewport]);
+  }, [active, preview, zoomed, previewViewport, maxPreviewHeight]);
 
   if (!active || !layout) return null;
 
   const emuWidth = previewViewport === "mobile" ? PREVIEW_MOBILE_WIDTH : PREVIEW_BASE_WIDTH;
-  const scale = zoomed ? BOX_WIDTH / emuWidth : Math.min(1, (BOX_WIDTH - 16) / emuWidth);
-  const contentHeight = 900; // tope de referencia; el contenido real puede ser más corto (overflow: hidden lo recorta visualmente).
+  // Alto de referencia para el cálculo de escala: el medido de verdad si ya
+  // se conoce (tras el primer paint del contenido real), o un estimado
+  // generoso mientras tanto — nunca un número fijo que recorte templates
+  // altos.
+  const contentHeight = measuredContentHeight ?? 1600;
+  const fitWidthScale = Math.min(1, (BOX_WIDTH - 16) / emuWidth);
+  // Modo "fit" (sin zoom): la página debe verse COMPLETA, sin recortes — la
+  // escala considera tanto el ancho disponible como el alto máximo del
+  // popover (`maxPreviewHeight`), tomando el menor de los dos factores para
+  // que ningún eje se desborde. Antes solo se escalaba por ancho y la altura
+  // del viewport se topaba a `maxPreviewHeight` con `overflow: hidden`,
+  // cortando el resto de la página.
+  const fitHeightScale = Math.min(1, maxPreviewHeight / contentHeight);
+  const fitScale = Math.min(fitWidthScale, fitHeightScale);
+  // Modo "zoom": detalle a mayor escala (ancho completo del box) — aquí SÍ se
+  // permite que el contenido exceda el alto visible; el viewport se vuelve
+  // scrolleable (`overflow-y: auto` vía `.is-zoomed`, ver templates.css) en
+  // vez de recortar.
+  const zoomScale = BOX_WIDTH / emuWidth;
+  const scale = zoomed ? zoomScale : fitScale;
+  // Alto del viewport: en modo fit, se ajusta al contenido ya escalado para
+  // caber completo (nunca por encima de `maxPreviewHeight`); en modo zoom, se
+  // fija al tope máximo disponible y el resto se recorre con scroll interno.
+  const viewportHeight = zoomed
+    ? maxPreviewHeight
+    : Math.max(BOX_MIN_HEIGHT, Math.min(maxPreviewHeight, contentHeight * scale));
 
   return createPortal(
     <div
@@ -258,18 +336,30 @@ export function TemplateHoverPreviewPortal() {
         </button>
       </div>
       <div
-        className="pbx-template-hover-preview__viewport"
-        style={{ height: Math.max(BOX_MIN_HEIGHT, Math.min(BOX_MAX_HEIGHT, contentHeight * scale)) }}
+        className={`pbx-template-hover-preview__viewport${zoomed ? " is-zoomed" : ""}`}
+        style={{ height: viewportHeight }}
       >
         {preview ? (
           <>
             <style>{[tokensCss, preview.css].filter(Boolean).join("\n\n")}</style>
+            {/* Wrapper con el tamaño REAL post-escala (no solo `transform`,
+             * que no afecta la layout box y por tanto no genera scrollbars
+             * proporcionales): en modo zoom esto es lo que le da al
+             * `overflow-y: auto` del `__viewport` algo que recorrer. En modo
+             * fit el wrapper mide igual que el contenido visible, así que no
+             * hay scroll (la página completa ya cabe). */}
             <div
-              className="pbx-template-hover-preview__inner"
-              data-layout={layout.id}
-              style={{ width: emuWidth, transform: `scale(${scale})` }}
-              dangerouslySetInnerHTML={{ __html: preview.html }}
-            />
+              className="pbx-template-hover-preview__scale-wrap"
+              style={{ width: emuWidth * scale, height: contentHeight * scale }}
+            >
+              <div
+                ref={innerRef}
+                className="pbx-template-hover-preview__inner"
+                data-layout={layout.id}
+                style={{ width: emuWidth, transform: `scale(${scale})` }}
+                dangerouslySetInnerHTML={{ __html: preview.html }}
+              />
+            </div>
           </>
         ) : loading ? (
           <span className="pbx-template-card__spinner" />

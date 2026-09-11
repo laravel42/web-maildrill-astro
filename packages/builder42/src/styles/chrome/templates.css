@@ -314,8 +314,26 @@
 
 .pbx-template-hover-preview__viewport {
   position: relative;
+  display: flex;
+  justify-content: center;
   overflow: hidden;
   background: var(--pb-chrome-canvas-bg, #fff);
+}
+
+/* Modo zoom: el contenido a mayor escala puede exceder el alto visible — se
+ * habilita scroll vertical en vez de recortar (el ancho sigue centrado y sin
+ * scroll horizontal, ya que el `scale-wrap` nunca excede `BOX_WIDTH`). */
+.pbx-template-hover-preview__viewport.is-zoomed {
+  overflow-y: auto;
+  align-items: flex-start;
+}
+
+/* Wrapper con el tamaño REAL post-escala (ver comentario en el componente) —
+ * es lo que le da altura de layout de verdad al contenido escalado, para que
+ * el `overflow` del `__viewport` tenga algo que recorrer/centrar. */
+.pbx-template-hover-preview__scale-wrap {
+  position: relative;
+  flex-shrink: 0;
 }
 
 .pbx-template-hover-preview__inner {
