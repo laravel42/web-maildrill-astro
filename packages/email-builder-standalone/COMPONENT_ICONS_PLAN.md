@@ -795,3 +795,41 @@ Con esta tanda se completan 80/85 `sections` — solo queda el role
 Tanda 9 según el orden planeado en §8b.
 
 **Siguiente paso:** Tanda 9 (`testimonial` + inicio de `layouts`).
+
+## 17. Tanda 9 — `sections` role `testimonial` (5/85, completa sections) + `layouts` (5/13) — 90/146 acumulado
+
+**Estado: implementado en código, pendiente visto bueno visual.**
+
+Con esta tanda se completan los 85/85 items de la categoría `sections`.
+Los 5 restantes son `layouts` — un tipo de item distinto: esquemas de
+composición **vacíos** (`childrenIds: []`, sin `role`, identificados
+por `shape`), no secciones con contenido real. El tipo
+`SectionIconEntry.role` se extendió con un valor propio `'layout'`
+(no reutiliza ningún role de `sections`) para reflejar esa diferencia
+de naturaleza.
+
+| # | id | Nombre | Categoría | Estructura |
+|---|---|---|---|---|
+| 1 | `57f8146b-cf8c-43de-bf76-3b33c808910f` | Quote with author | testimonial | `Container > ColumnsContainer[2: avatar col0, quote+estrellas+autor col1]` |
+| 2 | `af63d2e0-f52b-4382-ac69-1751852c2403` | Pill avatar cards | testimonial | `Container > ColumnsContainer[3: card(esquinas sup.) estrellas+quote+avatar+nombre+cargo+Button]` |
+| 3 | `cede2521-b110-48f6-8d58-11b419f9ad10` | Mobile-stack 3 quotes | testimonial | `Container > ColumnsContainer[3: card estrellas+quote+Divider+avatar+nombre+cargo]` |
+| 4 | `d292fda6-dabd-4963-89b8-7fc28ee428e2` | BG image featured quote | testimonial | `Container(bg imagen) > estrellas+quote(h2)+avatar+nombre+cargo` |
+| 5 | `df94d9e8-1e31-4339-a036-5ea5e99233a8` | 3 testimonial cards | testimonial | igual a #2 sin el Button final |
+| 6 | `53f33c42-9871-46cd-b000-5d1327215e10` | Media + text | layout (columns-2, 45/55) | `ColumnsContainer`: card bg-imagen + card blanca — sin contenido real |
+| 7 | `98cdcd2a-8db3-428f-894e-835a7414861a` | Hero split | layout (columns-2, 60/40) | inverso de #6 (orden y proporción) |
+| 8 | `a8fabafc-6419-4827-82ad-7fe9e0789a88` | Sidebar shell | layout (columns-2, 32/68) | sidebar + 2 cards apiladas en columna principal |
+| 9 | `c4f900a4-071c-45e6-89b2-9a164f6cd905` | Magazine | layout (columns-2, 66/34) | `ColumnsContainer` anidado 2-up en col principal + aside |
+| 10 | `10bf9ad2-303c-474e-a247-a28b25ed4a97` | Bento grid | layout (columns-3) | 3 cards de acabado mixto (degradado · imagen · glass) |
+
+Micro-variaciones: **#2/#5** mismo grid 3-card con estrellas+quote+
+avatar+nombre+cargo, #2 añade Button "Read more". **#6/#7** mismo
+split de 2 cards, invertido. Los iconos de `layouts` (#6-10) usan
+`fillOpacity`/`strokeDasharray` para distinguir "card con imagen de
+fondo" (relleno sólido) de "card vacía" (borde punteado), sin sugerir
+contenido de texto que no existe en el dato real.
+
+`SECTION_ICONS` extendido con las 10 entradas; `role` ampliado con
+`'testimonial' | 'layout'`. Verificación: `vitest run` → 43/43
+archivos, 303/303 tests; sin diagnósticos LSP nuevos.
+
+**Siguiente paso:** Tanda 10 (resto de `layouts`, 8/13 restantes).

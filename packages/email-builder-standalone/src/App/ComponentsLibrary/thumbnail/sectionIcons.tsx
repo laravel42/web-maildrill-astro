@@ -13,13 +13,15 @@
  * Tanda 6 (10/146): `sections`, roles `nav` + `pricing`.
  * Tanda 7 (10/146): `sections`, roles `social_proof` + `stats`.
  * Tanda 8 (10/146): `sections`, roles `steps` + `team`.
+ * Tanda 9 (10/146): `sections` role `testimonial` (5/85, completes
+ * sections) + `layouts` (5/13, first batch).
  * Keyed by the item's stable `id` from `localPresets.data.json` — NOT
  * by role, since the design is per-component, not per-category/role.
  *
  * Status: **draft, pending visual approval**. Rendered here so the
  * user can review each icon in the real Components Library UI before
  * approving the tanda and moving on to the next one. Do not treat this
- * map as final/complete — only the 80 ids below are designed so far.
+ * map as final/complete — only the 90 ids below are designed so far.
  */
 
 import React from 'react';
@@ -43,7 +45,9 @@ export type SectionIconEntry = {
     | 'social_proof'
     | 'stats'
     | 'steps'
-    | 'team';
+    | 'team'
+    | 'testimonial'
+    | 'layout';
   svg: React.ReactNode;
 };
 
@@ -1307,9 +1311,163 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       </svg>
     ),
   },
+
+  // ---- Tanda 9 — sections `testimonial` (5/85) + layouts (5/13) ----
+
+  // #1 — Quote with author (testimonial)
+  '57f8146b-cf8c-43de-bf76-3b33c808910f': {
+    name: 'Quote with author',
+    role: 'testimonial',
+    svg: (
+      <svg {...strokeProps}>
+        <circle cx={4.5} cy={12} r={3} />
+        <line x1={10} y1={8.5} x2={20} y2={8.5} />
+        <line x1={10} y1={12} x2={17} y2={12} strokeWidth={1} />
+        <line x1={10} y1={15} x2={16.5} y2={15} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #2 — Pill avatar cards (testimonial)
+  'af63d2e0-f52b-4382-ac69-1751852c2403': {
+    name: 'Pill avatar cards',
+    role: 'testimonial',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={3} width={6.5} height={16.5} rx={2.6} />
+        <rect x={9} y={3} width={6.5} height={16.5} rx={2.6} />
+        <rect x={16} y={3} width={6.5} height={16.5} rx={2.6} />
+        <line x1={3.2} y1={6} x2={7.3} y2={6} strokeWidth={1} />
+        <circle cx={5.25} cy={11} r={1.6} />
+        <rect x={3.7} y={14.5} width={3.1} height={1.6} rx={0.8} />
+        <line x1={10.2} y1={6} x2={14.3} y2={6} strokeWidth={1} />
+        <circle cx={12.25} cy={11} r={1.6} />
+        <rect x={10.7} y={14.5} width={3.1} height={1.6} rx={0.8} />
+        <line x1={17.2} y1={6} x2={21.3} y2={6} strokeWidth={1} />
+        <circle cx={19.25} cy={11} r={1.6} />
+        <rect x={17.7} y={14.5} width={3.1} height={1.6} rx={0.8} />
+      </svg>
+    ),
+  },
+  // #3 — Mobile-stack 3 quotes (testimonial)
+  'cede2521-b110-48f6-8d58-11b419f9ad10': {
+    name: 'Mobile-stack 3 quotes',
+    role: 'testimonial',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={3} width={6.5} height={16.5} rx={1.4} />
+        <rect x={9} y={3} width={6.5} height={16.5} rx={1.4} />
+        <rect x={16} y={3} width={6.5} height={16.5} rx={1.4} />
+        <line x1={3.2} y1={6} x2={7.3} y2={6} strokeWidth={1} />
+        <line x1={3.2} y1={11} x2={7.3} y2={11} strokeWidth={1} strokeDasharray="1 1" />
+        <circle cx={5.25} cy={14.5} r={1.4} />
+        <line x1={10.2} y1={6} x2={14.3} y2={6} strokeWidth={1} />
+        <line x1={10.2} y1={11} x2={14.3} y2={11} strokeWidth={1} strokeDasharray="1 1" />
+        <circle cx={12.25} cy={14.5} r={1.4} />
+        <line x1={17.2} y1={6} x2={21.3} y2={6} strokeWidth={1} />
+        <line x1={17.2} y1={11} x2={21.3} y2={11} strokeWidth={1} strokeDasharray="1 1" />
+        <circle cx={19.25} cy={14.5} r={1.4} />
+      </svg>
+    ),
+  },
+  // #4 — BG image featured quote (testimonial)
+  'd292fda6-dabd-4963-89b8-7fc28ee428e2': {
+    name: 'BG image featured quote',
+    role: 'testimonial',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={2} width={20} height={20} rx={1.5} fill="currentColor" fillOpacity={0.08} />
+        <line x1={9.5} y1={5.5} x2={14.5} y2={5.5} strokeWidth={1} />
+        <line x1={6.5} y1={8.5} x2={17.5} y2={8.5} />
+        <circle cx={12} cy={14} r={2.4} />
+        <line x1={9} y1={18.5} x2={15} y2={18.5} strokeWidth={1} />
+      </svg>
+    ),
+  },
+  // #5 — 3 testimonial cards (testimonial) — same 3-card layout as #2
+  // (Pill avatar cards) without the trailing "Read more" button.
+  'df94d9e8-1e31-4339-a036-5ea5e99233a8': {
+    name: '3 testimonial cards',
+    role: 'testimonial',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={3} width={6.5} height={16.5} rx={2.6} />
+        <rect x={9} y={3} width={6.5} height={16.5} rx={2.6} />
+        <rect x={16} y={3} width={6.5} height={16.5} rx={2.6} />
+        <line x1={3.2} y1={6} x2={7.3} y2={6} strokeWidth={1} />
+        <line x1={3.2} y1={9.5} x2={7.3} y2={9.5} strokeWidth={1} />
+        <circle cx={5.25} cy={14.5} r={1.6} />
+        <line x1={10.2} y1={6} x2={14.3} y2={6} strokeWidth={1} />
+        <line x1={10.2} y1={9.5} x2={14.3} y2={9.5} strokeWidth={1} />
+        <circle cx={12.25} cy={14.5} r={1.6} />
+        <line x1={17.2} y1={6} x2={21.3} y2={6} strokeWidth={1} />
+        <line x1={17.2} y1={9.5} x2={21.3} y2={9.5} strokeWidth={1} />
+        <circle cx={19.25} cy={14.5} r={1.6} />
+      </svg>
+    ),
+  },
+  // #6 — Media + text (layout, columns-2, 45/55) — empty composition
+  // scaffold (no real content, `childrenIds: []`): icon shows only the
+  // column geometry (image card + text card), no inner detail.
+  '53f33c42-9871-46cd-b000-5d1327215e10': {
+    name: 'Media + text',
+    role: 'layout',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={4} width={9} height={16} rx={2} fill="currentColor" fillOpacity={0.08} />
+        <rect x={13} y={4} width={9} height={16} rx={2} strokeDasharray="2 1.4" />
+      </svg>
+    ),
+  },
+  // #7 — Hero split (layout, columns-2, 60/40)
+  '98cdcd2a-8db3-428f-894e-835a7414861a': {
+    name: 'Hero split',
+    role: 'layout',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={4} width={12} height={16} rx={2} strokeDasharray="2 1.4" />
+        <rect x={16} y={4} width={6} height={16} rx={2} fill="currentColor" fillOpacity={0.08} />
+      </svg>
+    ),
+  },
+  // #8 — Sidebar shell (layout, columns-2, 32/68)
+  'a8fabafc-6419-4827-82ad-7fe9e0789a88': {
+    name: 'Sidebar shell',
+    role: 'layout',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={4} width={6} height={16} rx={2} fill="currentColor" fillOpacity={0.08} />
+        <rect x={10} y={4} width={12} height={7} rx={1.8} strokeDasharray="2 1.4" />
+        <rect x={10} y={13} width={12} height={7} rx={1.8} strokeDasharray="2 1.4" />
+      </svg>
+    ),
+  },
+  // #9 — Magazine (layout, columns-2, 66/34, nested 2-up in main col)
+  'c4f900a4-071c-45e6-89b2-9a164f6cd905': {
+    name: 'Magazine',
+    role: 'layout',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={4} width={7} height={16} rx={1.8} strokeDasharray="2 1.4" />
+        <rect x={10.2} y={4} width={7} height={16} rx={1.8} strokeDasharray="2 1.4" />
+        <rect x={17.4} y={4} width={4.6} height={16} rx={1.8} fill="currentColor" fillOpacity={0.08} />
+      </svg>
+    ),
+  },
+  // #10 — Bento grid (layout, columns-3, gradient · image · glass)
+  '10bf9ad2-303c-474e-a247-a28b25ed4a97': {
+    name: 'Bento grid',
+    role: 'layout',
+    svg: (
+      <svg {...strokeProps}>
+        <rect x={2} y={4} width={6} height={16} rx={2} fill="currentColor" fillOpacity={0.16} />
+        <rect x={9} y={4} width={6} height={16} rx={2} fill="currentColor" fillOpacity={0.08} />
+        <rect x={16} y={4} width={6} height={16} rx={2} strokeDasharray="1.4 1.4" />
+      </svg>
+    ),
+  },
 };
 
-/** Looks up the designed icon for an item id, if any (Tanda 1-8: 80/146). */
+/** Looks up the designed icon for an item id, if any (Tanda 1-9: 90/146). */
 export function getSectionIcon(id: string): SectionIconEntry | null {
   return SECTION_ICONS[id] ?? null;
 }
