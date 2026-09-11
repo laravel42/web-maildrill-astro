@@ -610,3 +610,35 @@ como una afirmación no comprobada. A futuro, cualquier traspaso de
 cambios entre worktrees debe confirmarse con
 `git merge-base --is-ancestor <commit> HEAD` antes de documentarlo
 como completado.
+
+## 11. Tanda 3 — `sections`, roles `features` + `footer` (10/85, 30/146 acumulado)
+
+**Estado: iconos implementados en código en `sectionIcons.tsx`
+(`SECTION_ICONS`), pendiente visto bueno visual del usuario.**
+
+| # | id | Nombre | Role | Estructura (`blocks`) |
+|---|---|---|---|---|
+| 1 | `445b8b55-10bc-4171-8800-b4d48c425b50` | 3 columns with icons | features | `Container > eyebrow+título + ColumnsContainer[3: emoji+título+texto]` |
+| 2 | `525f66f6-293d-434f-9f39-6b608a1ef320` | Image-backed showcase rows | features | `Container > ColumnsContainer[2: imagen col0, texto col1] + Spacer + ColumnsContainer[2: texto col0, imagen col1]` — filas alternadas |
+| 3 | `70add1ca-9009-43d3-9386-bac9479f2bfb` | Gradient cards | features | igual a #1, cada columna es card con borde+degradado |
+| 4 | `ad7f3a04-80a7-4e24-8793-7250d55387fb` | 4-up grid | features | `Container > título + ColumnsContainer[2] fila1 + Spacer + ColumnsContainer[2] fila2` — grid 2×2 |
+| 5 | `cff4cce6-7006-429c-8fda-993c17fed9f8` | Checklist | features | `Container > título + ColumnsContainer[2: lista checks col0, lista checks col1]` |
+| 6 | `1a254a1d-4d36-4a4f-9ab4-0197c3adb4bf` | Dark BG with pattern | footer | `Container(dark bg imagen) > logo + ColumnsContainer[3 grupos links] + Divider + dirección + unsubscribe` |
+| 7 | `1a97c98f-a4d4-4610-b416-1a73be62e899` | Pill social row | footer | `Container > título + ColumnsContainer[3 Button pill social] + Divider + ColumnsContainer[2 grupos links] + copyright` |
+| 8 | `5d9a93e2-d086-478e-946c-c1c34ad70904` | Full | footer | igual a #6, fondo claro plano (sin imagen) |
+| 9 | `6fc20489-3492-49aa-9b58-322f70bc442e` | Social + links | footer | `Container > social lineal + ColumnsContainer[2 grupos links] + Divider + copyright` |
+| 10 | `a42a309f-9d55-49db-a891-1899d04095af` | Minimal | footer | `Container > nombre marca + unsubscribe/copyright` — 2 líneas, sin columnas |
+
+Micro-variaciones: **#1/#3** mismo grid 3-col, #3 con marco de card;
+**#6/#8** misma estructura logo+3 grupos+divider+dirección, #6 con
+fondo tintado (`fillOpacity`) para distinguir el dark-bg de #8 (fondo
+claro); **#7/#9** ambos social+links+copyright, #7 con pills de redes
++3 grupos, #9 con social lineal+2 grupos (más compacto).
+
+`SECTION_ICONS` extendido con las 10 entradas; `role` del tipo
+`SectionIconEntry` ampliado a incluir `'features' | 'footer'`.
+Verificación: `astro check` → 0 errores, 0 warnings, 3 hints
+(preexistentes); `vitest run` → 43/43 archivos, 303/303 tests.
+
+**Siguiente paso al retomar:** visto bueno visual del usuario; luego
+Tanda 4 (roles `gallery` + `header`).
