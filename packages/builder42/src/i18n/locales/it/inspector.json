@@ -636,6 +636,7 @@
     },
     "visibility": {
       "fieldLabel": "Visibilità",
+      "help": "L'occhio nasconde l'elemento nel breakpoint attivo e in tutti quelli più larghi, a meno che tu non lo sovrascriva in uno di essi. Per renderlo di nuovo visibile a partire da una certa dimensione, passa a quel breakpoint con i pulsanti sotto e premi \"Sovrascrivi qui\" (o l'occhio, se è già visibile).",
       "overrideHere": "Sovrascrivi qui",
       "toggleShow": "Mostra a {{bp}}",
       "toggleHide": "Nascondi a {{bp}}",

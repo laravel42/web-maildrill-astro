@@ -557,8 +557,12 @@
 }
 
 /* --- Dots de breakpoint para tokens responsive (docs/49) — mismo patrón
-   visual/aria que `.pbx-visibility-strip__dots`/`__dot` (`inspector-panel.css`),
-   pero "set"/"heredado" en vez de "oculto"/"visible". --- */
+   visual/aria que tenía antes `VisibilityStrip` (ver docs/17-followup: ese
+   strip reemplazó sus dots por chips icono+abreviatura, `.pbx-visibility-strip__bp`
+   en `inspector-panel.css`, por falta de contexto visual; este componente es
+   un caso distinto — "set"/"heredado" de un token, no "oculto"/"visible" de
+   un nodo — y conserva el dot simple mientras no se reporte el mismo
+   problema aquí). --- */
 .pbx-responsive-scalar__dots {
   display: flex;
   align-items: center;

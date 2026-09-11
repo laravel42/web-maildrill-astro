@@ -351,9 +351,16 @@
   color: var(--pb-chrome-accent-on-surface);
   background: var(--pb-chrome-accent-subtle);
 }
-/* Portaleado a <body>: posición la fija floating-ui (left/top inline). */
+/* Portaleado a <body>: posición la fija floating-ui (left/top inline).
+   z-index alto a propósito (fix, este commit — reportado por el usuario: el
+   tooltip no se veía al hacer hover, tapado por otro stacking context del
+   chrome aunque esté portado a <body>). Mismo criterio ya usado en
+   `templates.css` para el hover-preview de templates: un z-index con margen
+   generoso por encima de TODOS los demás popovers/paneles del chrome
+   (ninguno pasa de 200 hoy), en vez de competir cerca del límite superior
+   existente. */
 .pbx-field-help__content {
-  z-index: 100;
+  z-index: 2000;
   width: max-content;
   max-width: 260px;
   padding: 8px 10px;

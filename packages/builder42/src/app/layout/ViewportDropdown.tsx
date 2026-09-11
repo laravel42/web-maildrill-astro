@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Dropdown, Smartphone, Tablet, Monitor } from "@/components";
 import { useDocumentStore } from "@/builder/store/documentStore";
+import { viewportIcon } from "@/builder/model/breakpointIcons";
 import type { Breakpoint } from "@/builder/model/types";
 import type { ComponentType } from "react";
 import type { LucideProps } from "lucide-react";
@@ -12,12 +13,6 @@ const VIEWPORT_ITEMS: { value: Breakpoint; Icon: ComponentType<LucideProps> }[] 
   { value: "lg", Icon: Monitor },
   { value: "xl", Icon: Monitor },
 ];
-
-function viewportIcon(value: Breakpoint): ComponentType<LucideProps> {
-  if (value === "base" || value === "sm") return Smartphone;
-  if (value === "md") return Tablet;
-  return Monitor;
-}
 
 export function ViewportDropdown() {
   const { t } = useTranslation("header");
