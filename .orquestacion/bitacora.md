@@ -90,10 +90,24 @@ F2b | anchors Builder42              | builder42 src/app, src/builder        | 8
 F3a | steps + copy EmailBuilder      | email-builder-standalone/src/tour     | 48a39c7 | green
 F3b | steps + copy Builder42         | builder42/src/app/tour                | 0bc74b1 | green
 F4  | entry points + persistence     | both packages + 2 host wrappers       | 9ce4192 | green
-F5  | popover theme                  | builder42 chrome css + EB runtime map | —       | next
+F5  | popover theme                  | builder42 chrome css + EB runtime map | 267adbc | green
 F6  | e2e Playwright                 | tests/e2e                             | —       | BLOCKED by B1
+B1  | fix /404.html prerender        | TBD by diagnosis                      | —       | next
 F7  | docs + telemetry               | docs/AGENTS.md, packages/VENDOR.md    | —       | pending
 ```
+
+Gate run for F5 (orchestrator, `8dec9dd..267adbc`): scope respected; **zero deleted lines in the
+whole commit**; history intact; lint/check/tests identical to baseline plus the new suites
+(builder42 12 files/112 tests, email-builder 7/45). Both new test files are pure additions
+(178/0 and 190/0), so no pre-existing assertion was touched.
+
+Mutation-tested that the new tests bite, then restored:
+
+- removed the `tour.css` line from `chrome.css` → 3 failures in `tour-theme-barrels.test.ts`;
+  file restored to an identical SHA256.
+- reverted `useEmailBuilderTour.ts` to its pre-F5 version → 6 of 7 failures in
+  `useEmailBuilderTour.tour-theme.test.tsx`, with real assertions
+  (`expected '' to be '#4f46e5'`); tree restored with an empty `git diff`.
 
 ---
 
@@ -122,3 +136,18 @@ Not caused by the tour work: that layout has not changed since 2026-09-06 (`460e
 lockfile did not move `astro`, and the failure reproduces on a clean tree at `3fe09f3` with
 `dist/`, `.astro/` and `node_modules/.vite` wiped. **Blocks F6**, since the Playwright e2e needs a
 build. Needs its own task before F6.
+
+**B2 — `@md/product-tour`'s `createTour` has no `onPopoverRender` passthrough.** Verified: the
+engine only accepts `popoverClass` (`packages/product-tour/src/createTour.ts:53,128`). Plan §2
+assumed EmailBuilder would stamp its runtime theme variables inside driver.js's
+`onPopoverRender`, so F5 had to locate the popover wrapper with a `MutationObserver` on
+`document.body` instead (`useEmailBuilderTour.ts:138-148`, documented in that file's own header).
+It works and is unit-tested, but a small engine passthrough would delete the observer entirely.
+Candidate follow-up task, not a defect. The engine was out of F5's scope, correctly reported
+rather than changed.
+
+**B3 — F5's light/dark visual review is still owed.** Nobody has seen the themed popover render:
+the subagent had no browser and said so. Plan §4 F5 asks for a light/dark comparison and a check
+of stage clipping over compact rails and absolutely-positioned panels (§1.4.8). The code-level
+part is verified (full `--md-tour-*` coverage against `theme.css`, APCA clean); the eyes-on part
+is pending and cannot be closed by a subagent.
