@@ -92,7 +92,8 @@ F3b | steps + copy Builder42         | builder42/src/app/tour                | 0
 F4  | entry points + persistence     | both packages + 2 host wrappers       | 9ce4192 | green
 F5  | popover theme                  | builder42 chrome css + EB runtime map | 267adbc | green
 B1  | fix /404.html prerender        | astro.config.ts                       | 68c32ae | green
-F6  | e2e Playwright                 | tests/e2e                             | —       | next
+B5  | fix e2e auth setup            | tests/e2e/**                          | —       | stopped: cause outside scope (B6)
+F6  | e2e Playwright                 | tests/e2e                             | —       | BLOCKED by B6
 F7  | docs + telemetry               | docs/AGENTS.md, packages/VENDOR.md    | —       | pending
 ```
 
@@ -145,6 +146,46 @@ Two dead ends ruled out empirically before finding it, worth not repeating: the 
 relative to `</BaseLayout>` is irrelevant (moving it inside changes nothing), and
 `experimental.incrementalBuild` is not enabled. It was also not a dirty cache: it reproduced at
 `3fe09f3` with `dist/`, `.astro/` and `node_modules/.vite` wiped.
+
+**B6 — `AUTH_SECRET` has no value in this environment's `.env`, so Auth.js 500s and login is broken
+locally.** Not just the e2e: any sign-in attempt in this dev environment dies the same way.
+
+Symptom: the whole Playwright suite is unusable. `tests/e2e/auth.setup.ts` fails and, because the
+`chromium` project depends on `setup`, **64 tests never run**:
+
+```
+[setup] > auth.setup.ts:17 > authenticate
+  TimeoutError: page.waitForURL ... navigated to "http://localhost:4321/login?error=expired"
+  1 failed, 64 did not run
+```
+
+`error=expired` is misleading. Traced with a real request capture: the mint works
+(`POST /api/login-verify` → 200 with a ticket, and the `magic_link_tokens` row comes back with
+`consumed_at` populated ~70 ms later, so `verifyLoginCode` accepted it), and a matching
+`auth_tickets` row is issued with `purpose='login'`. The failure is one layer later:
+`GET /api/auth/csrf` → **500** "There was a problem with the server configuration", and
+`POST /api/auth/callback/credentials` → 500. The ticket is never exchanged.
+
+Cause: `.env` line 9 is `AUTH_SECRET=` followed only by the hint comment
+(`# Auth.js session secret - openssl rand -base64 32`), so the effective value is empty and
+`@auth/core` (via `auth-astro`, wired in `auth.config.ts`) refuses to operate. `auth.config.ts`
+itself is correct — it reads `import.meta.env.AUTH_SECRET ?? process.env.AUTH_SECRET`; the value is
+what is missing. Ruled out: a stale server process (the :4321 listener started today, `.env` was
+last modified 2026-09-02) and clock drift (Postgres `now()` and the host agree to the second).
+Worth recording: a first reading of that line measured a 50-character value, which was the comment
+text, not a secret — the shape of the line is what fooled it.
+
+Two hypotheses were refuted along the way, both with direct evidence, so nobody re-walks them: the
+orchestrator's guess that the row shape no longer matched the verifier (schema is
+`id, email, token_hash, expires_at, consumed_at, created_at` — exactly what the mint writes, and
+`sha256Hex` is byte-identical to the harness's hash), and the login allowlist (consulted only when
+*requesting* a code, never in `verifyLoginCode`, and `PUBLIC_LOGIN_ALLOWLIST` is empty i.e. open).
+
+The fix is one line in `.env`, but that file holds credentials and belongs to whoever runs this
+environment, so it is not being changed autonomously: generate a real secret
+(`openssl rand -base64 32`) and assign it to `AUTH_SECRET`. Since sign-in is currently 500ing there
+are no valid sessions to invalidate by setting it. **The e2e baseline cannot be measured, and F6
+cannot be verified, until this is resolved.**
 
 **B4 — verification greps must never recurse into `node_modules`.** A handoff's boundary checks were
 written as `Get-ChildItem -Path packages\builder42 -Recurse -Include *.ts,*.tsx | Select-String ...`.
