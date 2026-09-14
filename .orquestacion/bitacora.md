@@ -200,11 +200,26 @@ F5  | popover theme                  | builder42 chrome css + EB runtime map | 2
 B1  | fix /404.html prerender        | astro.config.ts                       | 68c32ae | green
 B5  | fix e2e auth setup            | tests/e2e/**                          | —       | closed: not a harness bug (see B6)
 F6  | e2e Playwright                 | tests/e2e/tour.spec.ts                | 860212c | green (8 pass, 2 fixme, 1 skip → B7/B8/B9)
-B7  | duplicate tour instances       | both tour hooks                       | —       | next
-B8  | Escape does not dismiss tour   | product-tour escape guard             | —       | next (with B7)
-B9  | landings has no relaunch entry | builder42 embed chrome                | —       | next (with B7)
+B7  | duplicate tour instances       | engine registry + EB hook             | 4e842fd | green (1 new e2e red → B10)
+B8  | Escape does not dismiss tour   | product-tour escape guard             | 4e842fd | green (same commit)
+B10 | ⌘K palette relaunch entry red  | EB CommandPalette + EB tour hook      | —       | next: closes the red B7B8 left
+B9  | landings has no relaunch entry | builder42 HostToolbar (D9)            | —       | after B10
 F7  | docs + telemetry               | docs/AGENTS.md, packages/VENDOR.md    | —       | pending
 ```
+
+Gate run for B7B8 (orchestrator, `3588311..4e842fd`): 4 files, all inside the declared scope; **zero deletions**; `3588311` still an ancestor of `HEAD`. Re-measured by the orchestrator, not taken from the report: `pnpm check` → 337 files, 0/0/3 (identical); `pnpm lint` → the same 3 baseline errors **by name**, no new ones; `@md/product-tour` 5 files/38 tests (was 4/27 — the new file is a pure `317 0` addition), builder42 12/112, email-builder 7/45, root 43/303, `tsc -p packages/product-tour` 0.
+
+Read the test diff: `tests/e2e/tour.spec.ts` is `141 63`, and every deleted line is either the two `test.fixme` wrappers (replaced by four real tests) or the file-level comment that documented the bug. The only touched pre-existing assertions are the authorised `.first()` → `toHaveCount(1)` tightenings in the landings block. **No assertion was lowered.**
+
+Mutation-tested that the new engine tests bite: restored `createTour.ts` from `3588311` → **6 of 11** new tests failed (both D7 sequential/concurrent-start cases, the relaunch case, the post-`stop()` resurrection case, and both D8 Escape cases); restored, `git status` clean again and 38/38 green.
+
+e2e re-measured by the orchestrator (`--project=chromium --no-deps --workers=1 --retries=0`):
+**11 passed / 1 skipped / 1 failed** of 13. The four new tests pass in **both** editors — single instance throughout, a full step walk to Done with real clicks (no `force`, no pointer interception), and Escape closing the tour with the editor still open. B7 and B8 are fixed and proven.
+
+The one failure is a **new red by name** and is tracked as **B10**:
+`tour.spec.ts:106 › email editor tour › relaunches from the command palette`.
+
+Not reverted, deliberately: the commit is verified correct on its own subject, the failure is isolated to one relaunch entry point, and the evidence says that test was passing for the wrong reason before (see B10). Reverting would trade a proven fix for a false green. The chain is **red with one task**; the cap is two, and B10 closes it.
 
 Gate run for F6 (orchestrator, `9fedf77..860212c`): two new files under `tests/e2e/` only, 340
 insertions, **zero deletions**, history intact. Full suite re-measured with
@@ -249,6 +264,43 @@ auditor subagent is launched.
 ---
 
 ## Findings
+
+**B10 — the ⌘K command-palette relaunch entry is red, and the evidence says it was passing for the
+wrong reason.** `tour.spec.ts:106 › relaunches from the command palette` was green at baseline and
+fails after B7B8, with the popover never appearing within 10 s of the click. Measured by the
+orchestrator, not reported: the *header help button* relaunch test (`tour.spec.ts:90`) still passes,
+so `requestTourRestart()` → nonce → rebuild → `start()` works end to end; only the palette path
+fails. The B7B8 subagent reports (by execution) that in this environment the palette input never
+takes focus after `Ctrl+K`, that neither typed filtering nor `ArrowDown`/`Enter` navigate the list,
+and that even a raw `page.mouse.click()` on the visible "View the guided tour" row never reaches
+`onSelect`/`runCommand('tour:restart')`. Under the old code the tour auto-started ~2–3 s after mount
+*regardless of any click* (the restart-nonce effect fired on the mount's own `tourEnabled` false→true
+flip and ignored persistence entirely), which is exactly long enough to satisfy this test after its
+instant `toHaveCount(0)` check — and the test's own pre-existing `force: true` comment ("the tour's
+own overlay appears the instant this click is delivered") describes that same masking. Still to
+determine by execution: whether the defect is in `CommandPalette/index.tsx`'s
+`@josecortez1/c42-react` wiring (broken for real users too) or in the test's `force: true` click
+strategy, which was only ever justified by the masking. Owner: B10.
+
+**B11 — B7B8's own fix swallows a restart requested while the tour flag is still false.** Found by
+the orchestrator reading the diff, not reported by the subagent. In
+`useEmailBuilderTour.ts` the new guard is ordered:
+
+```ts
+if (restartNonce === lastHandledRestartNonce.current) return;
+lastHandledRestartNonce.current = restartNonce;   // ← marked handled…
+if (!tourEnabled) return;                          // ← …then dropped
+```
+
+The nonce is marked handled *before* the `tourEnabled` gate, so a relaunch requested while
+`tourEnabled` is `false` is consumed and never fires: when the flag flips true the effect re-runs,
+sees the nonce as already handled, and returns. The old code did fire in that case (its guard only
+skipped the very first render), and the new comment in that file claims this case still works — it
+does not. Not user-visible on the current routes (`tourEnabled` is already `true` by the time either
+entry point is reachable, which is why the header-button test still passes), so it is a latent
+regression, not the cause of B10. Fix: move the bookkeeping assignment below the `tourEnabled` gate.
+Owner: B10 (same file).
+
 
 **B1 — RESOLVED (`68c32ae`).** `pnpm build` failed prerendering `/404.html`: `renderScript` could
 not resolve the built path for the inline `<script>` in `src/layouts/MarketingLayout.astro`,
